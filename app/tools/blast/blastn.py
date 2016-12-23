@@ -1,0 +1,14 @@
+from app.tools.blast.blast import Blast
+
+
+class Blastn(Blast):
+    """
+    Nucleotide - nucleotide BLAST.
+    """
+
+    def __init__(self, camel):
+        """
+        Initialize tool.
+        :return: None
+        """
+        super(Blastn, self).__init__('blastn', '2.2.30', camel)
