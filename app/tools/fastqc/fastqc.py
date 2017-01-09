@@ -60,6 +60,25 @@ class FastQC(Tool):
                     return full_path
         raise IOError("No output directory for FastQC input {} found.".format(input_file))
 
+    @staticmethod
+    def _analyze_summary_file(summary_file):
+        """
+        Analyze fastqc output summary.txt (of a given input file)
+        :param summary_file: FastQC summary file
+        :return: Dictionary containing the summary information
+        """
+        summary_info = {'passed': True, 'warnings': [], 'fails': []}
+        with open(summary_file, 'r') as input_handle:
+            for line in input_handle.readlines():
+                status, test_name, _ = line.split('\t')
+                if status == 'WARN':
+                    summary_info['warnings'].append(test_name)
+                elif status == 'FAIL':
+                    summary_info['fails'].append(test_name)
+        if len(summary_info['fails']) > 0:
+            summary_info['passed'] = False
+        return summary_info
+
     def __set_output(self):
         """
         Set the output of FastQC.
@@ -69,6 +88,7 @@ class FastQC(Tool):
         self._tool_outputs['TXT'] = []
         for input_file in self._tool_inputs['FASTQ']:
             output_folder = self.__get_output_folder(self._folder, input_file)
+            self.informs[input_file.path] = FastQC._analyze_summary_file(os.path.join(output_folder, 'summary.txt'))
             for output_file in os.listdir(output_folder):
                 if output_file == 'fastqc_report.html':
                     self._tool_outputs['HTML'].append(ToolIOFile(os.path.join(output_folder, output_file)))
