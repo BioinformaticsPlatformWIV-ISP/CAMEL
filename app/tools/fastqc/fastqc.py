@@ -1,6 +1,6 @@
 import os
 
-from app.io.tool_io_file import ToolIOFile
+from app.io.tooliofile import ToolIOFile
 from app.tools.tool import Tool
 
 
@@ -52,8 +52,7 @@ class FastQC(Tool):
         :param input_file: Input file name
         :return: Output folder
         """
-        input_file = os.path.join(execution_folder, input_file.path)
-        sample_base_name = os.path.splitext(os.path.basename(input_file))[0]
+        sample_base_name = input_file.basename.split('.')[0]
         for sub_folder in os.listdir(execution_folder):
             if sub_folder.startswith(sample_base_name) and sub_folder.endswith('_fastqc'):
                 full_path = os.path.join(execution_folder, sub_folder)
@@ -63,7 +62,7 @@ class FastQC(Tool):
 
     def __set_output(self):
         """
-        Set the output of fastqc.
+        Set the output of FastQC.
         :return: None
         """
         self._tool_outputs['HTML'] = []
