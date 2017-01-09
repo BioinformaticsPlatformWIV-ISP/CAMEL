@@ -1,17 +1,20 @@
-from app.io.tool_io import ToolIO
+from app.components.files.fileutils import FileUtils
+from app.io.toolio import ToolIO
 
 
 class ToolIOValue(ToolIO):
     """
     Class that represents an input / output value of a tool.
     """
+    TYPE_NAME = 'value'
 
-    def __init__(self, value):
+    def __init__(self, value, logged=True):
         """
         Initializes a tool input / output value.
         :param value: Value
+        :param logged: If True, the output can be logged
         """
-        super(ToolIO, self).__init__()
+        super(ToolIOValue, self).__init__(logged)
         self._value = value
 
     @property
@@ -21,6 +24,14 @@ class ToolIOValue(ToolIO):
         :return: Value
         """
         return self._value
+
+    @property
+    def hash(self):
+        """
+        Returns the hash value.
+        :return: Hash value
+        """
+        return FileUtils.hash_value(self.value)
 
     def __str__(self):
         """
@@ -34,7 +45,7 @@ class ToolIOValue(ToolIO):
         Internal representation
         :return: Internal representation representation
         """
-        return 'ToolIOValue("{}")'.format(self.value)
+        return 'ToolIOValue({})'.format(repr(self.value))
 
     def is_valid(self):
         """

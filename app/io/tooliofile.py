@@ -1,20 +1,23 @@
 import os
 
-from app.io.tool_io import ToolIO
+from app.components.files.fileutils import FileUtils
+from app.io.toolio import ToolIO
 
 
 class ToolIOFile(ToolIO):
     """
     Class that represents an input / output file of a tool.
     """
+    TYPE_NAME = 'file'
 
-    def __init__(self, path):
+    def __init__(self, path, logged=True):
         """
         Initializes a tool input / output file.
         :param path: Path to the file
+        :param logged: If True, the output can be logged
         """
-        super(ToolIO, self).__init__()
-        self._path = path
+        super(ToolIOFile, self).__init__(logged)
+        self._path = os.path.abspath(path)
 
     def __str__(self):
         """
@@ -26,7 +29,7 @@ class ToolIOFile(ToolIO):
     def __repr__(self):
         """
         Internal representation
-        :return: Internal representation representation
+        :return: Internal representation
         """
         return 'ToolIOFile("{}")'.format(self.path)
 
@@ -70,3 +73,11 @@ class ToolIOFile(ToolIO):
         :return: Size
         """
         return os.path.getsize(self._path)
+
+    @property
+    def hash(self):
+        """
+        Returns the hash value of this file.
+        :return: Hash
+        """
+        return FileUtils.hash_file(self.path)
