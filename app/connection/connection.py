@@ -7,14 +7,17 @@ class Connection(object):
     Class meant to create a connection to the database.
     """
 
-    def __init__(self, config):
+    def __init__(self, config, db='local'):
         """
         Initializes the connection object with user credentials
         Database configuration is read from the users folder, from a YAML file
         Cross OS compatible due to expanduser function
+        :param config: Location of the configuration file with the connection parameters
+        :param db: Database to connect to
         """
         with open(config) as f:
             self.config = yaml.safe_load(f)
+        self._db = db
 
     @property
     def connection(self):
@@ -22,10 +25,10 @@ class Connection(object):
         Returns a database connection.
         :return: Connection
         """
-        conn = psycopg2.connect(host=self.config['local']['host'],
-                                dbname=self.config['local']['dbname'],
-                                user=self.config['local']['user'],
-                                password=self.config['local']['password'])
+        conn = psycopg2.connect(host=self.config[self._db]['host'],
+                                dbname=self.config[self._db]['dbname'],
+                                user=self.config[self._db]['user'],
+                                password=self.config[self._db]['password'])
         conn.autocommit = True
         return conn
 
