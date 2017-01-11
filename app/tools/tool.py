@@ -1,13 +1,9 @@
 import abc
-import copy
-
 import logging
-import os
 
 from app.command.command import Command
-from app.io.tool_io import ToolIO
-from app.loggers.log_manager import LogManager
-from app.services.tool_service import ToolService
+from app.io.toolio import ToolIO
+from app.services.toolservice import ToolService
 
 
 class Tool(object):
@@ -21,16 +17,18 @@ class Tool(object):
         """
         Initializes a tool.
         """
+        logging.debug("Initializing tool: {} {}".format(name, version))
         self._name = name
         self._version = version
         self._tool_inputs = {}
         self._tool_outputs = {}
+        self._informs = {}
+        self._input_informs = {}
         self._tool_service = ToolService(name, version, camel.connection)
         self._tool_command = self._tool_service.get_tool_command()
         self._parameters = self._tool_service.get_default_parameters()
         self._command = Command()
         self._folder = None
-        self._log_handler = None
 
     @property
     def name(self):
@@ -39,6 +37,30 @@ class Tool(object):
         :return: Name
         """
         return '{} {}'.format(self._name, self._version)
+
+    @property
+    def tool_id(self):
+        """
+        Returns the tool id.
+        :return: Tool id
+        """
+        return self._tool_service.tool_id
+
+    @property
+    def tool_outputs(self):
+        """
+        Returns the tool outputs.
+        :return: Tool outputs
+        """
+        return self._tool_outputs
+
+    @property
+    def informs(self):
+        """
+        Returns the tool informs.
+        :return: Informs
+        """
+        return self._informs
 
     @property
     def stdout(self):
@@ -56,13 +78,29 @@ class Tool(object):
         """
         return self._command.stderr
 
+    @property
+    def parameter_overview(self):
+        """
+        Returns an overview of the parameters as a string.
+        :return: Parameters overview
+        """
+        return ', '.join(["{}: '{}'".format(p, self._parameters[p].value) for p in sorted(self._parameters)])
+
     def add_input_files(self, input_files):
         """
-        Sets the input files for a tool.
+        Updates the input files for a tool.
         :param input_files: New input files
         :return: None
         """
         self._tool_inputs.update(input_files)
+
+    def add_input_informs(self, informs):
+        """
+        Updates the input informs for a tool.
+        :param informs: New informs
+        :return: None
+        """
+        self._input_informs.update(informs)
 
     def update_parameters(self, **kwargs):
         """
@@ -75,9 +113,18 @@ class Tool(object):
             if not parameter:
                 raise ValueError("{} has no parameter '{}'".format(self._name, parameter_name))
             if new_value is False:
+                if parameter_name not in self._parameters:
+                    raise ValueError("Cannot disable parameter '{}' (not present in parameters)".format(parameter_name))
+                logging.info("Disabling parameter: {}".format(parameter_name))
                 del(self._parameters[parameter_name])
             else:
                 parameter.value = str(new_value)
+                if parameter_name not in self._parameters:
+                    logging.info("Parameter '{}' added, value: {}".format(parameter_name, parameter.value))
+                else:
+                    old_value = self._parameters[parameter_name].value
+                    logging.info("Parameter '{}' value '{}' changed to '{}'".format(
+                        parameter_name, old_value, new_value))
                 self._parameters[parameter_name] = parameter
 
     def run(self, folder='.'):
@@ -87,14 +134,13 @@ class Tool(object):
         :return: None
         """
         self._folder = folder
-        self._log_handler = LogManager.get_file_handler(os.path.join(self._folder, 'debug.log'), logging.DEBUG)
-        logging.getLogger().addHandler(self._log_handler)
         logging.info('Running tool {}'.format(self.name))
+        logging.info('Working directory: {}'.format(self._folder))
+        logging.info('Tool parameters: {}'.format(self.parameter_overview))
         self._check_parameters()
         self._check_input()
         self._execute_tool()
         self._check_output()
-        logging.getLogger().removeHandler(self._log_handler)
 
     def get_outputs(self, key):
         """
@@ -104,7 +150,7 @@ class Tool(object):
         """
         if key not in self._tool_outputs:
             raise ValueError("No output file with key '{}' found".format(key))
-        return copy.copy(self._tool_outputs[key])
+        return self._tool_outputs[key]
 
     def _build_dependencies(self):
         """
@@ -133,15 +179,17 @@ class Tool(object):
                 options.append(parameter.option)
         return options
 
-    def _execute_command(self):
+    def _execute_command(self, folder=None):
         """
         Executes a the command.
         :return: None
         """
+        if folder is None:
+            folder = self._folder
         if self._command.command is None:
             raise ValueError("Command is 'None'.")
         self._command.command = self._build_dependencies() + self._command.command
-        self._command.run_command(self._folder)
+        self._command.run_command(folder)
 
     @abc.abstractmethod
     def _execute_tool(self):
@@ -186,25 +234,3 @@ class Tool(object):
                     raise ValueError("'{} {}' is not a tool output object".format(tool_output, type(tool_output)))
                 if not tool_output.is_valid():
                     raise ValueError("Invalid tool output with key {}: {}".format(output_key, tool_output))
-
-    def display(self):
-        """
-        Displays the current state of the tool.
-        :return: None
-        """
-        print('{} {}'.format(self._name, self._version))
-        print('-'*20)
-        print('- Input -')
-        for key, value in self._tool_inputs.iteritems():
-            print('{}: {}'.format(key, ', '.join([str(o) for o in value])))
-        print('')
-        print('- Parameters -')
-        for name, parameter in self._parameters.iteritems():
-            print('{}: {}'.format(name, parameter))
-        print('')
-        print('- Output -')
-        for key, value in self._tool_outputs.iteritems():
-            print('{}: {}'.format(key, ', '.join([str(o) for o in value])))
-        print('')
-        print('-'*20)
-        print('')

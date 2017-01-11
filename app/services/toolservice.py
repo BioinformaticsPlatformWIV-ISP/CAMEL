@@ -20,6 +20,14 @@ class ToolService(Service):
         super(ToolService, self).__init__(connection)
         self._tool_id = self.__get_tool_id(tool_name, tool_version)
 
+    @property
+    def tool_id(self):
+        """
+        Returns the id of the tool in the database.
+        :return: Id
+        """
+        return self._tool_id
+
     def __get_tool_id(self, name, version):
         """
         Returns the tool id for this tool.
@@ -56,7 +64,7 @@ class ToolService(Service):
         WHERE tool_id = %s
         AND td.dependency_id = d.dependency_id;
         """
-        dependencies = self.db_connection.query(sql, [self._tool_id]    )
+        dependencies = self.db_connection.query(sql, [self._tool_id])
         return None if len(dependencies) == 1 else ' '.join([dep[0] for dep in dependencies[1:]])
 
     def get_default_parameters(self):

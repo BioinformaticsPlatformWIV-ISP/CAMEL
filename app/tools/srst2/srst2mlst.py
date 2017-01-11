@@ -1,7 +1,8 @@
+import logging
 import os
 
-from app.io.tool_io_file import ToolIOFile
-from app.io.tool_io_value import ToolIOValue
+from app.io.tooliofile import ToolIOFile
+from app.io.tooliovalue import ToolIOValue
 from app.tools.tool import Tool
 
 
@@ -72,7 +73,7 @@ class Srst2Mlst(Tool):
         if 'FASTA' not in self._tool_inputs:
             raise IOError('No FASTA file with MLST alleles found.')
         if 'MLST' not in self._tool_inputs:
-            print("No MLST definitions found. Only performing allele detection.")
+            logging.info("No MLST definitions found. Only performing allele detection.")
 
     def _get_output_file_key(self, filename):
         """

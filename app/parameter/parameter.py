@@ -1,6 +1,9 @@
 class Parameter(object):
     """
     Represents a tool parameter.
+
+    TODO:
+    Add parameter source ('Tool default (D)', 'Pipeline parameter (P), 'Job parameter (J)')
     """
 
     def __init__(self, name, option, value):
