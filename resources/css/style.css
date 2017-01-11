@@ -1,0 +1,108 @@
+.green {
+    background-color: #6EBE50;
+}
+
+.lightgreen {
+    background-color: #BEDCBE;
+}
+.red {
+    background-color: #ff8080;
+}
+
+.grey {
+    background-color: #bfbfbf;
+}
+
+.yellow {
+    background-color: #f4d142;
+}
+
+.top_header {
+    text-align: center;
+}
+
+.analysis_info {
+    padding-bottom: 16px;
+}
+
+.alert-box {
+    color:#555;
+    border-radius:10px;
+    font-family:Tahoma,Geneva,Arial,sans-serif;font-size:11px;
+    padding:10px 10px 10px 36px;
+    margin:10px;
+}
+
+.alert-box span {
+    font-weight:bold;
+    text-transform:uppercase;
+}
+
+.error {
+    background:#ffecec;
+    border:1px solid #f5aca6;
+}
+
+.warning {
+    background:#fff8c4;
+    border:1px solid #f2c779;
+}
+
+.not-available {
+    color:red;
+    size:2
+}
+
+hr {
+  margin-top: 20px;
+  margin-bottom: 20px;
+  border: 0;
+  border-top: 1px solid #eee;
+}
+
+.text-center {
+    text-align: center
+}
+
+/* Global table settings */
+table {
+    border-collapse: collapse;
+}
+
+td {
+    padding: 4px 8px;
+}
+
+th {
+    padding: 4px 8px;
+}
+
+/* Table for displaying information in key-value format */
+table.information {
+    border: 1px solid white;
+}
+
+table.information td {
+    border: 1px solid white;
+}
+
+table.information tr > td:first-child {
+    font-weight: bold;
+}
+
+/* Table for displaying data */
+table.data {
+    border: 1px solid black;
+}
+
+table.data td {
+    border: 1px solid black;
+    min-width: 45px;
+    text-align: center;
+}
+
+table.data th {
+    border: 1px solid black;
+    font-weight: bold;
+    background-color: #f2f2f2;
+}
