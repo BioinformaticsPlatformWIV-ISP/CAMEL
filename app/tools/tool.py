@@ -2,6 +2,7 @@ import abc
 import logging
 
 from app.command.command import Command
+from app.error.invalidparametererror import InvalidParameterError
 from app.io.toolio import ToolIO
 from app.services.toolservice import ToolService
 
@@ -84,7 +85,8 @@ class Tool(object):
         Returns an overview of the parameters as a string.
         :return: Parameters overview
         """
-        return ', '.join(["{}: '{}'".format(p, self._parameters[p].value) for p in sorted(self._parameters)])
+        return ', '.join(["{}: '{}'".format(p, self._parameters[p].value) for p in sorted(self._parameters)]) if \
+            len(self._parameters) > 0 else '/'
 
     def add_input_files(self, input_files):
         """
@@ -111,7 +113,7 @@ class Tool(object):
         for parameter_name, new_value in kwargs.iteritems():
             parameter = self._tool_service.get_parameter(parameter_name)
             if not parameter:
-                raise ValueError("{} has no parameter '{}'".format(self._name, parameter_name))
+                raise InvalidParameterError("{} has no parameter '{}'".format(self._name, parameter_name))
             if new_value is False:
                 if parameter_name not in self._parameters:
                     raise ValueError("Cannot disable parameter '{}' (not present in parameters)".format(parameter_name))
@@ -126,6 +128,14 @@ class Tool(object):
                     logging.info("Parameter '{}' value '{}' changed to '{}'".format(
                         parameter_name, old_value, new_value))
                 self._parameters[parameter_name] = parameter
+
+    def clear_parameters(self):
+        """
+        Clears all the parameters of the given tool.
+        :return: None
+        """
+        logging.info("Removing {} parameters".format(len(self._parameters)))
+        self._parameters.clear()
 
     def run(self, folder='.'):
         """
