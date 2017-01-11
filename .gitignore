@@ -1,0 +1,7 @@
+.cache
+.eggs
+camel.egg-info
+.idea
+camel_env
+*.pyc
+*~
