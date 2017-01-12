@@ -12,7 +12,7 @@ class FileUtils(object):
     @staticmethod
     def hash_file(file_name, block_size=65536):
         """
-        Creates a hash for the file with a default block size of 65536 and the sha512 algorithm.
+        Creates a hash for the file with a default block size of 65536 and the sha256 algorithm.
         :param file_name: File that needs to be hashed
         :param block_size: Block size to be used
         :return: String of the hash with alphanumeric symbols
@@ -41,7 +41,7 @@ class FileUtils(object):
     @staticmethod
     def hash_directory(path):
         """
-        Creates a hash for a folder with a default block size of 65536 and the sha512 algorithm.
+        Creates a hash for a folder with a default block size of 65536 and the sha256 algorithm.
         :param path: Directory path
         :return: String of the hash with alphanumeric symbols
         """
