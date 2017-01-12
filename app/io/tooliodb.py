@@ -1,9 +1,9 @@
 import os.path
 
-import settings
 from app.components.files.fileutils import FileUtils
 from app.connection.connection import Connection
 from app.io.toolio import ToolIO
+from config import DB_CONFIG
 
 
 class ToolIODb(ToolIO):
@@ -21,7 +21,7 @@ class ToolIODb(ToolIO):
         :param config: Configuration file for the database connection
         """
         super(ToolIODb, self).__init__(logged)
-        self._config = os.path.join(settings.CONFIG_ROOT, 'db.yml') if config is None else config
+        self._config = DB_CONFIG if config is None else config
         self._name = name
         self._version = version
         self._path = self.__get_location()
