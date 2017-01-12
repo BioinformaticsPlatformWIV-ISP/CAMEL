@@ -52,7 +52,5 @@ class Command(object):
             cwd=folder)
         [self._stdout, self._stderr] = self._procedure.communicate()
         self._return_code = self._procedure.returncode
-        if self.stdout:
-            logging.debug('stdout: {}'.format(self._stdout))
-        if self.stderr:
-            logging.debug('stderr: {}'.format(self._stderr))
+        logging.debug('stdout: {}'.format(self._stdout))
+        logging.debug('stderr: {}'.format(self._stderr))
