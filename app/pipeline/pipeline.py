@@ -16,12 +16,12 @@ class Pipeline(object):
     Class meant to handle the workflow of steps.
     """
 
-    def __init__(self, yaml_file, camel, db_parameters=False, db_logging=False):
+    def __init__(self, yaml_file, camel, db_pipeline_parameters=False, db_logging=False):
         """
         Initializes a pipeline.
         :param yaml_file: Pipeline YAML file
         :param camel: CAMEL instance
-        :param db_parameters: Use pipeline parameters from the database.
+        :param db_pipeline_parameters: Use pipeline parameters from the database.
         :param db_logging: If True, inputs & outputs are logged in the database.
         """
         self._camel = camel
@@ -34,12 +34,12 @@ class Pipeline(object):
         self._parse_yaml_file(yaml_file)
         self._pipeline_service = None
         self._job_id = None
-        if db_parameters is True:
+        if db_pipeline_parameters is True:
             self._pipeline_service = PipelineService(self._name, camel.connection)
             self._update_steps_in_db()
             self._load_db_pipeline_parameters()
         if db_logging is True:
-            if db_parameters is False:
+            if db_pipeline_parameters is False:
                 raise ValueError("Cannot log outputs if 'db_parameters' is False.")
             self._pipeline_service = PipelineService(self._name, camel.connection)
             self._job_id = self._pipeline_service.insert_pipeline_job()
@@ -59,6 +59,14 @@ class Pipeline(object):
         :return: Job id
         """
         return self._job_id
+
+    @property
+    def steps(self):
+        """
+        Returns the pipeline steps.
+        :return: List of step objects
+        """
+        return self._steps
 
     def set_initial_input(self, files):
         """
@@ -172,8 +180,12 @@ class Pipeline(object):
         Loads options from the database.
         :return: None
         """
+        logging.info("Loading pipeline parameters from database")
         for step_name, parameter in self._pipeline_service.get_pipeline_parameters():
             step = self._get_step(step_name)
+            if step is None:
+                raise ValueError("Cannot add parameter '{}', step '{}' does not exist".format(
+                    parameter.name, step_name))
             step.add_pipeline_options({parameter.name: parameter.value})
 
     def _create_folder(self, destination_path):
