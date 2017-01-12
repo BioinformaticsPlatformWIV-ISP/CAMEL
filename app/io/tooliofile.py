@@ -59,6 +59,14 @@ class ToolIOFile(ToolIO):
         return os.path.basename(self.path)
 
     @property
+    def file_extension(self):
+        """
+        Returns the file extension.
+        :return: File extension
+        """
+        return os.path.splitext(self.path)[-1]
+
+    @property
     def exists(self):
         """
         Checks whether this file exists.
