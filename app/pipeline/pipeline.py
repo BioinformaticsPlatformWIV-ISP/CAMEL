@@ -1,8 +1,7 @@
 import logging
-import os
-
 import time
 
+import os
 import re
 import yaml
 
