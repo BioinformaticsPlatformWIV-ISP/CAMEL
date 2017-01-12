@@ -7,12 +7,12 @@ class Camel(object):
     Main class for camel.
     """
 
-    def __init__(self, database_config):
+    def __init__(self, database_config, logging_config):
         """
         Initializes a CAMEL system.
         """
         self._connection = Connection(database_config)
-        LogManager.initialize()
+        LogManager.initialize(logging_config)
 
     @property
     def connection(self):

@@ -13,12 +13,13 @@ class LogManager(object):
     _pipeline_handlers = []
 
     @staticmethod
-    def initialize():
+    def initialize(config_file):
         """
         Initializes the log manager.
+        :param config_file: Configuration file
         :return: None
         """
-        with open('config/logging.yml', 'rt') as f:
+        with open(config_file, 'rt') as f:
             config = yaml.load(f.read())
         logging.config.dictConfig(config)
         LogManager._step_handlers = [h for h in logging.getLogger().handlers if h.get_name().startswith('step')]

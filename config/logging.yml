@@ -4,8 +4,7 @@
 version: 1
 formatters:
   basic:
-#    format: '%(levelname)7s - %(asctime)s - %(message)s'
-     format: '%(module)15s - %(levelname)7s - %(message)s'
+    format: '%(module)15s - %(levelname)7s - %(message)s'
 handlers:
   console:
     class: logging.StreamHandler
