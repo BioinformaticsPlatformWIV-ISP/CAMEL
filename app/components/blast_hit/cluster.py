@@ -29,4 +29,5 @@ class Cluster(object):
         """
         if hit.query != self.seq_id:
             return False
+        # noinspection PyTypeChecker
         return len(self._region.intersection(range(hit.query_start, hit.query_end))) != 0
