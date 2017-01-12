@@ -120,7 +120,10 @@ class Tool(object):
                 logging.info("Disabling parameter: {}".format(parameter_name))
                 del(self._parameters[parameter_name])
             else:
-                parameter.value = str(new_value)
+                if new_value is True:
+                    parameter.value = None
+                else:
+                    parameter.value = str(new_value)
                 if parameter_name not in self._parameters:
                     logging.info("Parameter '{}' added, value: {}".format(parameter_name, parameter.value))
                 else:
