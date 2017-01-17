@@ -9,7 +9,7 @@ from app.components.resistance.resfinderparser import ResFinderParser
 from app.tools.export.htmlreporter import HtmlReporter
 
 
-class HtmlReporterResistanceCharacterization(HtmlReporter):
+class HtmlReporterResChar(HtmlReporter):
     """
     Tool that creates HTML reports for the resistance characterization pipeline.
     """
@@ -20,7 +20,7 @@ class HtmlReporterResistanceCharacterization(HtmlReporter):
         :param camel: Camel instance
         :return: None
         """
-        super(HtmlReporterResistanceCharacterization, self).__init__(camel)
+        super(HtmlReporterResChar, self).__init__(camel)
 
     def _create_report(self):
         """
@@ -48,7 +48,7 @@ class HtmlReporterResistanceCharacterization(HtmlReporter):
             raise ValueError("No blast hits found")
         if 'TXT' not in self._tool_inputs:
             raise ValueError("No alignment inputs found")
-        super(HtmlReporterResistanceCharacterization, self)._check_input()
+        super(HtmlReporterResChar, self)._check_input()
 
     def __add_gene_output_table(self):
         """

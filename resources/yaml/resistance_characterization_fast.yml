@@ -45,7 +45,7 @@ steps:
     from: Hit_filtering
 
 - id: Report_generation
-  tool: !!python/name:app.tools.pipelines.resistance_characterization.htmlreporter.HtmlReporterResistanceCharacterization
+  tool: !!python/name:app.tools.pipelines.resistance_characterization.htmlreporterreschar.HtmlReporterResChar
   inputs:
   - name: HTML
     from: initial
