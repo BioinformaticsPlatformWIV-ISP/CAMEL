@@ -21,6 +21,7 @@ class HtmlReporterResChar(HtmlReporter):
         :return: None
         """
         super(HtmlReporterResChar, self).__init__(camel)
+        self.__subfolder = None
 
     def _create_report(self):
         """
