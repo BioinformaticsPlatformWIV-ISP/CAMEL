@@ -227,12 +227,12 @@ class Tool(object):
         Checks if the tool input is valid.
         :return: None
         """
-        for output_key, output_list in self._tool_inputs.iteritems():
-            for tool_output in output_list:
-                if tool_output is None:
-                    raise ValueError("Tool input with key {} is None".format(output_key))
-                if not tool_output.is_valid():
-                    raise ValueError("Invalid tool input with key {}: {}".format(output_key, tool_output))
+        for input_key, input_list in self._tool_inputs.iteritems():
+            for tool_input in input_list:
+                if tool_input is None:
+                    raise ValueError("Tool input with key {} is None".format(input_key))
+                if not tool_input.is_valid():
+                    raise ValueError("Invalid tool input with key {}: {}".format(input_key, tool_input))
 
     def _check_output(self):
         """
