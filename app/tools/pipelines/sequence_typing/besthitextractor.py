@@ -172,7 +172,7 @@ class BestHitExtractor(Tool):
         :return: Allele identifier
         """
         if not regex:
-            regex = self._parameters['default_allele_id_regex'][1]
+            regex = self._parameters['default_allele_id_regex'].value
         m = re.findall(BestHitExtractor.__cleanup_regex(regex), allele_name)
         if not len(m) == 1:
             raise StandardError("Cannot determine allele identifier for '{}' (RE: {})".format(allele_name, regex))
