@@ -40,6 +40,8 @@ class ToolIOFile(ToolIO):
         """
         if not self.exists:
             return False
+        if not os.path.isfile(self.path):
+            return False
         return True
 
     @property

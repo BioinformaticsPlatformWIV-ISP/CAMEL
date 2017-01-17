@@ -40,6 +40,8 @@ class ToolIODirectory(ToolIO):
         """
         if not self.exists:
             return False
+        if not os.path.isdir(self.path):
+            return False
         return True
 
     @property
