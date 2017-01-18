@@ -35,9 +35,7 @@ class AlignmentExtractor(Tool):
         hits = self._input_informs['hits']
         for locus, alignments_file in zip(AlignmentExtractor.__get_hit_keys_ordered(hits), self._tool_inputs['TXT']):
             alignments = AlignmentExtraction.get_alignments(alignments_file.path)
-            if hits[locus]['hit_type'] in (BestHitExtractor.NO_HIT, BestHitExtractor.MULTIPLE_HITS):
-                self._tool_outputs['TXT'].append(None)
-            else:
+            if hits[locus]['hit_type'] not in (BestHitExtractor.NO_HIT, BestHitExtractor.MULTIPLE_HITS):
                 hit = hits[locus]['hit']
                 key = AlignmentExtraction.get_key(hit.database_gene, hit.query)
                 if key in alignments:
