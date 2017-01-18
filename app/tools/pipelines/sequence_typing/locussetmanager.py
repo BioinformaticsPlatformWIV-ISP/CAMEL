@@ -104,7 +104,7 @@ class LocusSetManager(Tool):
         if 'limit_locus_sets' in self._parameters:
             return sorted(locus_folders)[0:int(self._parameters['limit_locus_sets'][1])]
         else:
-            return sorted(locus_folders)[0:20]
+            return sorted(locus_folders)
 
     @staticmethod
     def __get_locus_metadata(locus_folder):
