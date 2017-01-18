@@ -64,7 +64,10 @@ class ToolIODirectory(ToolIO):
         Returns the basename of the input / output directory.
         :return: Basename
         """
-        return os.path.basename(self.path)
+        if self.path.endswith('/'):
+            return os.path.basename(os.path.dirname(self.path))
+        else:
+            return os.path.basename(self.path)
 
     @property
     def exists(self):
