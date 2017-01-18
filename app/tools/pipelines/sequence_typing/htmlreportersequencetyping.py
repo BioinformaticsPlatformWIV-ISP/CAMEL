@@ -51,8 +51,6 @@ class HtmlReporterSequenceTyping(HtmlReporter):
             raise ValueError("No locus set directory input found")
         if 'TSV' not in self._tool_inputs:
             raise ValueError("No allele detection table input found")
-        if 'TXT' not in self._tool_inputs:
-            raise ValueError("No alignments input found")
         if 'locus_info' not in self._input_informs:
             raise ValueError("No locus set manager info found")
         if 'hits' not in self._input_informs:
@@ -112,28 +110,23 @@ class HtmlReporterSequenceTyping(HtmlReporter):
         """
         table_data = []
         header = ['Locus', 'Allele', '% Identity', 'HSP length / Locus length', 'Type', 'Alignment']
-        for locus, locus_data in self._input_informs['hits'].iteritems():
-            table_row = []
-            hit = locus_data['hit']
-            table_row.append(locus)
-            table_row.append(HtmlReporterSequenceTyping.__get_allele_id_cell(
-                locus_data['allele_id'], locus_data['url'], locus_data['hit_type']))
-            table_row.append(hit.percent_identity)
-            table_row.append('{}/{}'.format(hit.alignment_length, hit.database_gene_length))
-            table_row.append(locus_data['type'])
-            table_row.append(self.__save_alignment(locus))
-            table_data.append(table_row)
+        with open(self._tool_inputs['TSV'][0].path) as input_handle:
+            for line in input_handle.readlines()[1:]:
+                locus, allele_id, identity, length, type_, hit = line.split('\t')
+                table_row = [locus, self.__get_allele_id_cell(allele_id, locus, hit.strip()), identity, length, type_,
+                             self.__save_alignment(locus)]
+                table_data.append(table_row)
         self._report.add_table(table_data, header, table_attributes=[('class', 'data')])
 
-    @staticmethod
-    def __get_allele_id_cell(id_, url, type_):
+    def __get_allele_id_cell(self, id_, locus, type_):
         """
         Returns the a HtmlTableCell for the given allele id.
         :param id_: Allele id
-        :param url: Url
+        :param locus: Locus
         :param type_: Hit type
         :return: Table cell
         """
+        url = self._input_informs['hits'][locus]['url']
         color = HtmlReporterSequenceTyping.COLOR_CODES[type_]
         return HtmlTableCell(id_, [('class', color)], url)
 
@@ -143,7 +136,7 @@ class HtmlReporterSequenceTyping(HtmlReporter):
         :param locus: Name of the locus
         :return: Table cell containing a link to the alignment
         """
-        for alignment in self._tool_inputs['TXT']:
+        for alignment in self._tool_inputs.get('TXT', []):
             if alignment.basename == '{}.txt'.format(locus):
                 path = os.path.join(self.__subfolder, 'alignments', alignment.basename)
                 return HtmlTableCell('view', link=self._save_file(alignment.path, path))
