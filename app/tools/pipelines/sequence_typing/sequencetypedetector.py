@@ -70,7 +70,7 @@ class SequenceTypeDetector(Tool):
                 match = True
                 for gene_name in gene_alleles:
                     if match:
-                        st_allele_id = line.split('\t')[gene_indices[gene_name]]
+                        st_allele_id = line.strip().split('\t')[gene_indices[gene_name]]
                         detected_allele_id = gene_alleles[gene_name]
                         if st_allele_id != 'N' and st_allele_id != detected_allele_id:
                             match = False
