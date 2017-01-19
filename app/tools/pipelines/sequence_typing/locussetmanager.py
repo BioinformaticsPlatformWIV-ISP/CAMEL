@@ -86,8 +86,8 @@ class LocusSetManager(Tool):
             metadata_file = os.path.join(folder, 'scheme_metadata.txt')
             with open(metadata_file) as metadata_handle:
                 self._informs['locus_set_metadata'] = json.load(metadata_handle)
-        except IOError as err:
-            logging.warning('Problem retrieving metadata for {} ({})'.format(folder, err.message))
+        except IOError:
+            logging.warning('Problem retrieving metadata for {}'.format(folder))
 
     def __get_locus_folders(self):
         """
@@ -112,6 +112,7 @@ class LocusSetManager(Tool):
         Returns the metadata from the given locus folder.
         :return: Dictionary of metadata
         """
+        logging.debug("Retrieving metadata from: {}".format(locus_folder))
         try:
             with open(os.path.join(locus_folder, 'locus_metadata.txt')) as metadata_handle:
                 metadata = json.load(metadata_handle)
