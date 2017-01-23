@@ -120,7 +120,7 @@ class Pipeline(object):
         :return: None
         """
         for step_name, step_options in options.iteritems():
-            step = self._get_step(step_name)
+            step = self.get_step(step_name)
             if step is None:
                 raise ValueError("No step named '{}'".format(step_name))
             step.add_job_options(step_options)
@@ -182,7 +182,7 @@ class Pipeline(object):
         """
         logging.info("Loading pipeline parameters from database")
         for step_name, parameter in self._pipeline_service.get_pipeline_parameters():
-            step = self._get_step(step_name)
+            step = self.get_step(step_name)
             if step is None:
                 raise ValueError("Cannot add parameter '{}', step '{}' does not exist".format(
                     parameter.name, step_name))
@@ -233,7 +233,7 @@ class Pipeline(object):
 
         if next_step_name == 'exit':
             return None
-        next_step = self._get_step(next_step_name)
+        next_step = self.get_step(next_step_name)
         if next_step is None:
             raise ValueError("Step '{}' is missing in step specification".format(next_step_name))
         return next_step
@@ -252,9 +252,9 @@ class Pipeline(object):
                         step.add_input(input_.alias, self._initial_input[input_.name])
                     except KeyError:
                         raise ValueError("Initial input does not contain key '{}'".format(input_.name))
-                elif self._get_step(input_.source) is not None:
+                elif self.get_step(input_.source) is not None:
                     try:
-                        step.add_input(input_.alias, self._get_step(input_.source).outputs[input_.name])
+                        step.add_input(input_.alias, self.get_step(input_.source).outputs[input_.name])
                     except KeyError as err:
                         logging.warning("Step {} has no output {}".format(input_.source, err.message))
                 else:
@@ -270,12 +270,12 @@ class Pipeline(object):
         """
         for inform in step.inform_specification:
             logging.info("Preparing inform: {}".format(str(inform)))
-            source_step = self._get_step(inform.source)
+            source_step = self.get_step(inform.source)
             if source_step is None:
                 raise ValueError("No step named '{}'".format(inform.source))
             step.add_inform(inform.alias, source_step.informs)
 
-    def _get_step(self, step_name):
+    def get_step(self, step_name):
         """
         Returns the step with the given name.
         :param step_name: Step name
@@ -313,7 +313,7 @@ class Pipeline(object):
         :return: Inform value
         """
         try:
-            return self._get_step(step_name).informs[key]
+            return self.get_step(step_name).informs[key]
         except KeyError as err:
             raise ValueError("Cannot retrieve '{}' informs from '{}'".format(err.message, step_name))
 
