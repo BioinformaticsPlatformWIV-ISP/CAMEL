@@ -82,25 +82,22 @@ class Pipeline(object):
 
     def set_configs(self, configs):
         """
-        Setup the configuration variables of pipeline
-        :param configs: dictionary containing configuration variables
+        Sets up the configuration of the pipeline.
+        :param configs: Configuration
         :return: None
         """
+        logging.info("Pipeline configuration: {}".format(configs))
         self._configs = configs
 
-    def run(self, destination_path, configs=None):
+    def run(self, destination_path):
         """
         Runs the pipeline.
         :param destination_path:
-        :param configs: configuration for the pipeline
         :return: None
         """
         self._create_folder(destination_path)
         logging.info("Working directory: {}".format(self._folder))
         LogManager.attach_pipeline_handlers(self._folder)
-        if configs is not None:
-            logging.info("Pipeline configuration: {}".format(configs))
-            self.set_configs(configs)
         logging.info("Running pipeline {}".format(self._name))
         self._steps[0].step_inputs = self._initial_input
         if self._db_logging:
