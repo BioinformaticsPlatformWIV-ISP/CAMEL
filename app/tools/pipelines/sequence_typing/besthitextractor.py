@@ -198,7 +198,7 @@ class BestHitExtractor(Tool):
         :param allele_id: id of the detected allele
         :return: URL of the allele information
         """
-        if allele_id == '-':
+        if allele_id == '-' or locus_url is None:
             return None
         locus_id = locus_url.split('/')[-1]
         database = self._parameters['database'].value
