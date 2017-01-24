@@ -16,10 +16,10 @@ class Pipeline(object):
     Class meant to handle the workflow of steps.
     """
 
-    def __init__(self, yaml_file, camel, db_pipeline_parameters=False, db_logging=False):
+    def __init__(self, yaml_files, camel, db_pipeline_parameters=False, db_logging=False):
         """
         Initializes a pipeline.
-        :param yaml_file: Pipeline YAML file
+        :param yaml_files: Pipeline YAML files
         :param camel: CAMEL instance
         :param db_pipeline_parameters: Use pipeline parameters from the database.
         :param db_logging: If True, inputs & outputs are logged in the database.
@@ -31,7 +31,7 @@ class Pipeline(object):
         self._steps = []
         self._destination_path = None
         self._folder = None
-        self._parse_yaml_file(yaml_file)
+        self._parse_yaml_files(yaml_files)
         self._pipeline_service = None
         self._job_id = None
         if db_pipeline_parameters is True:
@@ -125,10 +125,10 @@ class Pipeline(object):
                 raise ValueError("No step named '{}'".format(step_name))
             step.add_job_options(step_options)
 
-    def _parse_yaml_file(self, yaml_files):
+    def _parse_yaml_files(self, yaml_files):
         """
         Parses the YAML file to get the name and the steps.
-        :param yaml_file: list of YAML files
+        :param yaml_files: list of YAML files
         :return: None
         """
         for yaml_file in yaml_files:
