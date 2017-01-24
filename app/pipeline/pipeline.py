@@ -16,10 +16,10 @@ class Pipeline(object):
     Class meant to handle the workflow of steps.
     """
 
-    def __init__(self, yaml_file, camel, db_pipeline_parameters=False, db_logging=False):
+    def __init__(self, yaml_files, camel, db_pipeline_parameters=False, db_logging=False):
         """
         Initializes a pipeline.
-        :param yaml_file: Pipeline YAML file
+        :param yaml_files: Pipeline YAML files
         :param camel: CAMEL instance
         :param db_pipeline_parameters: Use pipeline parameters from the database.
         :param db_logging: If True, inputs & outputs are logged in the database.
@@ -28,11 +28,10 @@ class Pipeline(object):
         self._db_logging = db_logging
         self._name = None
         self._initial_input = None
-        self._configs = None
-        self._steps = None
+        self._steps = []
         self._destination_path = None
         self._folder = None
-        self._parse_yaml_file(yaml_file)
+        self._parse_yaml_files(yaml_files)
         self._pipeline_service = None
         self._job_id = None
         if db_pipeline_parameters is True:
@@ -80,19 +79,9 @@ class Pipeline(object):
         else:
             raise TypeError("Input object should be a dictionary")
 
-    def set_configs(self, configs):
-        """
-        Sets up the configuration of the pipeline.
-        :param configs: Configuration
-        :return: None
-        """
-        logging.info("Pipeline configuration: {}".format(configs))
-        self._configs = configs
-
     def run(self, destination_path):
         """
         Runs the pipeline.
-        :param destination_path:
         :return: None
         """
         self._create_folder(destination_path)
@@ -136,19 +125,21 @@ class Pipeline(object):
                 raise ValueError("No step named '{}'".format(step_name))
             step.add_job_options(step_options)
 
-    def _parse_yaml_file(self, yaml_file):
+    def _parse_yaml_files(self, yaml_files):
         """
         Parses the YAML file to get the name and the steps.
-        :param yaml_file: YAML file
+        :param yaml_files: list of YAML files
         :return: None
         """
-        with open(yaml_file) as input_handle:
-            yaml_data = yaml.load(input_handle)
-        try:
-            self._name = yaml_data['name']
-            self._parse_steps(yaml_data['steps'])
-        except KeyError as err:
-            raise ValueError("'{}' missing in pipeline specification '{}'".format(err.message, yaml_file))
+        for yaml_file in yaml_files:
+            with open(yaml_file) as input_handle:
+                yaml_data = yaml.load(input_handle)
+                try:
+                    if self._name is None:
+                        self._name = yaml_data['name']
+                    self._parse_steps(yaml_data['steps'])
+                except KeyError as err:
+                    raise ValueError("'{}' missing in pipeline specification '{}'".format(err.message, yaml_file))
 
     def _parse_steps(self, step_data):
         """
@@ -156,7 +147,6 @@ class Pipeline(object):
         :param step_data: Step data
         :return: None
         """
-        self._steps = []
         for step in step_data:
             try:
                 new_step = Step(step['id'], step['tool'](self._camel), self, self._camel)
@@ -221,7 +211,7 @@ class Pipeline(object):
         if current_step.next_step_specification is None:
             index = self._steps.index(current_step)
             try:
-                next_step_name = self._steps[index + 1].name
+                next_step_name = self._steps[index+1].name
             except IndexError:
                 next_step_name = 'exit'
         else:
@@ -308,31 +298,13 @@ class Pipeline(object):
         for match in all_matches:
             if match.count('.') == 1:
                 step_name, key = match[1:].split('.')
-                if step_name == 'pipeline_configs':
-                    expression = re.sub(r'\${}.{}\b'.format(step_name, key), '{!r}'.format(
-                        self._get_pipeline_config_value(key)), expression)
-                else:
-                    expression = re.sub(r'\${}.{}\b'.format(step_name, key), '{!r}'.format(
-                        self._get_inform_value(key, step_name)), expression)
+                expression = expression.replace(match, '{!r}'.format(self._get_inform_value(key, step_name)))
             elif match.count('.') == 0:
                 key = match[1:]
-                expression = re.sub(r'\${}\b'.format(key), '{!r}'.format(
-                    self._get_inform_value(key, current_step.name)), expression)
+                expression = expression.replace(match, '{!r}'.format(self._get_inform_value(key, current_step.name)))
             else:
                 raise ValueError("Invalid condition: {}".format(match))
-
         return expression
-
-    def _get_pipeline_config_value(self, key):
-        """
-        Returns the given pipeline config value.
-        :param key: Key
-        :return: config value
-        """
-        try:
-            return self._configs[key]
-        except KeyError as err:
-            raise ValueError("Cannot retrieve '{}' from pipeline configs '{}'".format(err.message, self._configs))
 
     def _get_inform_value(self, key, step_name):
         """
