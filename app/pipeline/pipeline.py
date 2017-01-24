@@ -221,7 +221,7 @@ class Pipeline(object):
         if current_step.next_step_specification is None:
             index = self._steps.index(current_step)
             try:
-                next_step_name = self._steps[index + 1].name
+                next_step_name = self._steps[index+1].name
             except IndexError:
                 next_step_name = 'exit'
         else:
