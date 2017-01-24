@@ -7,13 +7,14 @@ from app.components.html.htmlhelper import HtmlHelper
 from app.io.tooliodirectory import ToolIODirectory
 from app.io.tooliofile import ToolIOFile
 from app.pipeline.pipeline import Pipeline
+from config import DB_CONFIG, LOGGING_CONFIG
 from resources import CSS_STYLE, YAML_RES_CHAR_FAST
 
 
 # Initialize Camel
 main_directory = os.path.dirname(os.path.dirname(__file__))
-camel = Camel(os.path.join(main_directory, 'config/db.yml'),
-              os.path.join(main_directory, 'config/logging.yml'))
+camel = Camel(os.path.join(main_directory, DB_CONFIG),
+              os.path.join(main_directory, LOGGING_CONFIG))
 
 # The pipeline checks for resistance genes using Blastn and reports the output in a HTML report.
 # Pipeline objects have to be initialized with a YAML file and a CAMEL instance.
