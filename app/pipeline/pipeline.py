@@ -96,15 +96,24 @@ class Pipeline(object):
         :return: None
         """
         self._create_folder(destination_path)
-        logging.info("Working directory: {}".format(self._folder))
         LogManager.attach_pipeline_handlers(self._folder)
-        logging.info("Running pipeline {}".format(self._name))
+        self._log_pipeline_state()
         self._steps[0].step_inputs = self._initial_input
         if self._db_logging:
             self._log_initial_input()
         self._execute_pipeline_steps()
         logging.info("Finished running pipeline")
         LogManager.detach_pipeline_handlers()
+
+    def _log_pipeline_state(self):
+        """
+        Logs the state of the pipeline before running.
+        :return: None
+        """
+        logging.info("Running pipeline {}".format(self._name))
+        logging.info("Working directory: {}".format(self._folder))
+        logging.info("Initial input: {}".format(self._initial_input if self._initial_input else '/'))
+        logging.info("Pipeline config: {}".format(self._configs if self._configs else '/'))
 
     def _execute_pipeline_steps(self):
         """
