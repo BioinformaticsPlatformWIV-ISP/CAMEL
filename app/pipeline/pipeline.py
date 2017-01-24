@@ -28,7 +28,7 @@ class Pipeline(object):
         self._db_logging = db_logging
         self._name = None
         self._initial_input = None
-        self._steps = None
+        self._steps = []
         self._destination_path = None
         self._folder = None
         self._parse_yaml_file(yaml_file)
@@ -125,19 +125,21 @@ class Pipeline(object):
                 raise ValueError("No step named '{}'".format(step_name))
             step.add_job_options(step_options)
 
-    def _parse_yaml_file(self, yaml_file):
+    def _parse_yaml_file(self, yaml_files):
         """
         Parses the YAML file to get the name and the steps.
-        :param yaml_file: YAML file
+        :param yaml_file: list of YAML files
         :return: None
         """
-        with open(yaml_file) as input_handle:
-            yaml_data = yaml.load(input_handle)
-        try:
-            self._name = yaml_data['name']
-            self._parse_steps(yaml_data['steps'])
-        except KeyError as err:
-            raise ValueError("'{}' missing in pipeline specification '{}'".format(err.message, yaml_file))
+        for yaml_file in yaml_files:
+            with open(yaml_file) as input_handle:
+                yaml_data = yaml.load(input_handle)
+                try:
+                    if self._name is None:
+                        self._name = yaml_data['name']
+                    self._parse_steps(yaml_data['steps'])
+                except KeyError as err:
+                    raise ValueError("'{}' missing in pipeline specification '{}'".format(err.message, yaml_file))
 
     def _parse_steps(self, step_data):
         """
@@ -145,7 +147,6 @@ class Pipeline(object):
         :param step_data: Step data
         :return: None
         """
-        self._steps = []
         for step in step_data:
             try:
                 new_step = Step(step['id'], step['tool'](self._camel), self, self._camel)
@@ -210,7 +211,7 @@ class Pipeline(object):
         if current_step.next_step_specification is None:
             index = self._steps.index(current_step)
             try:
-                next_step_name = self._steps[index+1].name
+                next_step_name = self._steps[index + 1].name
             except IndexError:
                 next_step_name = 'exit'
         else:
