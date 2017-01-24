@@ -1,0 +1,55 @@
+import os
+
+from app.io.tooliofile import ToolIOFile
+from app.tools.samtools.samtools import Samtools
+
+
+class SamtoolsDepth(Samtools):
+    """
+    Calculates the coverage depth of an alignment.
+    """
+
+    def __init__(self, camel):
+        """
+        Initializes this tool.
+        :param camel: Camel instance
+        """
+        super(SamtoolsDepth, self).__init__('samtools depth', '1.3', camel)
+
+    def _check_input(self):
+        """
+        Checks the input.
+        :return: None
+        """
+        if 'BAM' not in self._tool_inputs:
+            raise ValueError("No BAM input file found")
+        if len(self._tool_inputs['BAM']) != 1:
+            raise ValueError("Exactly one BAM input file expected")
+        super(Samtools, self)._check_input()
+
+    def _execute_tool(self):
+        """
+        Executes this tool.
+        :return: None
+        """
+        self.__build_command()
+        self._execute_command()
+        self.__set_output()
+
+    def __build_command(self):
+        """
+        Builds the command.
+        :return: None
+        """
+        self._command.command = ' '.join(
+            [self._tool_command,
+             ' '.join(self._build_options(['output_filename'])),
+             self._tool_inputs['BAM'][0].path,
+             ' > {}'.format(self._parameters['output_filename'].value)])
+
+    def __set_output(self):
+        """
+        Sets the output of this tool.
+        :return: None
+        """
+        self._tool_outputs['TXT'] = [ToolIOFile(os.path.join(self._folder, self._parameters['output_filename'].value))]
