@@ -28,6 +28,7 @@ class Pipeline(object):
         self._db_logging = db_logging
         self._name = None
         self._initial_input = None
+        self._configs = None
         self._steps = None
         self._destination_path = None
         self._folder = None
@@ -79,14 +80,27 @@ class Pipeline(object):
         else:
             raise TypeError("Input object should be a dictionary")
 
-    def run(self, destination_path):
+    def set_configs(self, configs):
+        """
+        Setup the configuration variables of pipeline
+        :param configs: dictionary containing configuration variables
+        :return: None
+        """
+        self._configs = configs
+
+    def run(self, destination_path, configs=None):
         """
         Runs the pipeline.
+        :param destination_path:
+        :param configs: configuration for the pipeline
         :return: None
         """
         self._create_folder(destination_path)
         logging.info("Working directory: {}".format(self._folder))
         LogManager.attach_pipeline_handlers(self._folder)
+        if configs is not None:
+            logging.info("Pipeline configuration: {}".format(configs))
+            self.set_configs(configs)
         logging.info("Running pipeline {}".format(self._name))
         self._steps[0].step_inputs = self._initial_input
         if self._db_logging:
@@ -210,7 +224,7 @@ class Pipeline(object):
         if current_step.next_step_specification is None:
             index = self._steps.index(current_step)
             try:
-                next_step_name = self._steps[index+1].name
+                next_step_name = self._steps[index + 1].name
             except IndexError:
                 next_step_name = 'exit'
         else:
@@ -297,13 +311,31 @@ class Pipeline(object):
         for match in all_matches:
             if match.count('.') == 1:
                 step_name, key = match[1:].split('.')
-                expression = expression.replace(match, '{!r}'.format(self._get_inform_value(key, step_name)))
+                if step_name == 'pipeline_configs':
+                    expression = re.sub(r'\${}.{}\b'.format(step_name, key), '{!r}'.format(
+                        self._get_pipeline_config_value(key)), expression)
+                else:
+                    expression = re.sub(r'\${}.{}\b'.format(step_name, key), '{!r}'.format(
+                        self._get_inform_value(key, step_name)), expression)
             elif match.count('.') == 0:
                 key = match[1:]
-                expression = expression.replace(match, '{!r}'.format(self._get_inform_value(key, current_step.name)))
+                expression = re.sub(r'\${}\b'.format(key), '{!r}'.format(
+                    self._get_inform_value(key, current_step.name)), expression)
             else:
                 raise ValueError("Invalid condition: {}".format(match))
+
         return expression
+
+    def _get_pipeline_config_value(self, key):
+        """
+        Returns the given pipeline config value.
+        :param key: Key
+        :return: config value
+        """
+        try:
+            return self._configs[key]
+        except KeyError as err:
+            raise ValueError("Cannot retrieve '{}' from pipeline configs '{}'".format(err.message, self._configs))
 
     def _get_inform_value(self, key, step_name):
         """
