@@ -20,7 +20,7 @@ camel = Camel(DB_CONFIG, LOGGING_CONFIG)
 # - db_pipeline_parameters: If True, the pipeline parameters will be loaded from the database
 # - db_logging: If True, the initial pipeline input, the step outputs and the job parameters will be logged in the
 #               database.
-pipeline = Pipeline(YAML_RES_CHAR_FAST, camel, True, False)
+pipeline = Pipeline([YAML_RES_CHAR_FAST], camel, True, False)
 
 # The pipeline steps can be checked by using the pipeline.steps property
 print("Pipeline steps:")
