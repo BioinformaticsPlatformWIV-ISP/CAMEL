@@ -15,7 +15,7 @@ class FileSystemHelper(object):
         value = unicodedata.normalize('NFKD', unicode(value)).encode('ascii', 'ignore')
         value = unicode(re.sub('[^\w\s-]', '', value).strip())
         value = unicode(re.sub('[-\s]+', '-', value))
-        return value
+        return str(value)
 
     @staticmethod
     def get_file_with_extension(input_folder, extension):
