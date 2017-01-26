@@ -1,5 +1,6 @@
 import os
 
+from app.error.toolexecutionerror import ToolExecutionError
 from app.io.tooliofile import ToolIOFile
 from app.tools.tool import Tool
 
@@ -43,6 +44,15 @@ class FastQC(Tool):
                                           ' '.join(in_file.path for in_file in self._tool_inputs['FASTQ']),
                                           '--outdir .',
                                           ' '.join(self._build_options())])
+
+    def _check_command_output(self):
+        """
+        Checks if the command output is valid.
+        :return: None
+        """
+        for line in self.stderr.splitlines():
+            if not line.startswith('Started analysis'):
+                raise ToolExecutionError("Error executing FastQC: {}".format(self.stderr.strip()))
 
     @staticmethod
     def __get_output_folder(execution_folder, input_file):
