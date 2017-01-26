@@ -177,10 +177,9 @@ class Step(object):
         """
         if len(new_input) == 0:
             return
-        if key in self._step_inputs:
-            self._step_inputs[key].extend(new_input)
-        else:
-            self._step_inputs[key] = new_input
+        if key not in self._step_inputs:
+            self._step_inputs[key] = []
+        self._step_inputs[key].extend(new_input)
         logging.info("Input '{}' added: {}".format(key, new_input))
 
     def add_inform(self, key, inform):
