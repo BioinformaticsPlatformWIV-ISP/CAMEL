@@ -3,6 +3,7 @@ import logging
 
 from app.command.command import Command
 from app.error.invalidparametererror import InvalidParameterError
+from app.error.toolexecutionerror import ToolExecutionError
 from app.io.toolio import ToolIO
 from app.services.toolservice import ToolService
 
@@ -203,6 +204,17 @@ class Tool(object):
             raise ValueError("Command is 'None'.")
         self._command.command = self._build_dependencies() + self._command.command
         self._command.run_command(folder)
+        self._check_command_output()
+
+    def _check_command_output(self):
+        """
+        Checks if the command was executed successfully.
+        :return: None
+        """
+        if self.stderr != '':
+            raise ToolExecutionError("Command execution failed (stderr: {}).".format(self.stderr))
+        elif self._command.returncode != 0:
+            raise ToolExecutionError("Command execution failed (Exit code: {})".format(self._command.returncode))
 
     @abc.abstractmethod
     def _execute_tool(self):
