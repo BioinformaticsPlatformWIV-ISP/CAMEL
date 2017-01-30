@@ -94,3 +94,11 @@ class BlastFormatterLoop(Tool):
             return 'JSON'
         else:
             return 'TXT'
+
+    def _check_command_output(self):
+        """
+        Checks the command output for errors.
+        :return: None
+        """
+        if 'error' in self._command.stderr.lower():
+            raise ValueError("Error executing {}: {}".format(self.name, self._command.stderr.strip()))

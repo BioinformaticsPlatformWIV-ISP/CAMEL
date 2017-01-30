@@ -67,7 +67,6 @@ class BlastLoop(Tool):
         """
         self._command.command = self.__build_command(query, subject)
         self._execute_command()
-        self.__check_command_output()
         self._tool_outputs[self.__get_output_key()].append(
             ToolIOFile(os.path.join(self._folder, self.__get_output_name(query, subject))))
 
@@ -142,7 +141,7 @@ class BlastLoop(Tool):
         else:
             return 'TXT'
 
-    def __check_command_output(self):
+    def _check_command_output(self):
         """
         Checks the command output for errors.
         :return: None

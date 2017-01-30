@@ -80,3 +80,11 @@ class BlastFormatter(Tool):
         :return: None
         """
         self._tool_outputs[self.__output_key] = [ToolIOFile(os.path.join(self._folder, self.__get_output_name()))]
+
+    def _check_command_output(self):
+        """
+        Checks the command output for errors.
+        :return: None
+        """
+        if 'error' in self._command.stderr.lower():
+            raise ValueError("Error executing {}: {}".format(self.name, self._command.stderr.strip()))
