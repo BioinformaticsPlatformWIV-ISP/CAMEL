@@ -15,7 +15,7 @@ class FastQC(Tool):
         Initializes FastQC.
         :param camel: Camel instance
         """
-        super(FastQC, self).__init__('FastQC', '0.11.2', camel)
+        super(FastQC, self).__init__('FastQC', '0.11.5', camel)
 
     def _execute_tool(self):
         """
