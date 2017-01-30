@@ -93,13 +93,6 @@ class HtmlReporterSequenceTyping(HtmlReporter):
         """
         if self._input_informs['sequence_type_detection']['sequence_type'] == 'ND':
             return 'red'
-        hit_types = list(self._input_informs['hits'][locus]['hit_type'] for locus in self._input_informs['hits'])
-        if any(hit_type in (BestHitExtractor.NO_HIT, BestHitExtractor.MULTIPLE_HITS) for hit_type in hit_types):
-            return 'red'
-        elif BestHitExtractor.IMPERFECT_LENGTH_HIT in hit_types:
-            return 'grey'
-        elif BestHitExtractor.IMPERFECT_IDENTITY_HIT in hit_types:
-            return 'lightgreen'
         else:
             return 'green'
 
