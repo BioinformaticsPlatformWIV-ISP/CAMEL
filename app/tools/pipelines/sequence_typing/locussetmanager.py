@@ -53,7 +53,7 @@ class LocusSetManager(Tool):
             self._informs[fasta_file] = locus_metadata
             self._informs['gene_names'].append(locus_metadata['name'])
             self.__add_locus_to_output(fasta_file, locus_metadata['type'])
-        self.__add_locus_set_metadata()
+        self.__add_scheme_metadata()
 
         profile_definitions = self.__get_sequence_type_profiles()
         if profile_definitions:
@@ -76,7 +76,7 @@ class LocusSetManager(Tool):
             raise IOError("'{}' is not a directory".format(self._tool_inputs['DIR'][0].path))
         super(LocusSetManager, self)._check_input()
 
-    def __add_locus_set_metadata(self):
+    def __add_scheme_metadata(self):
         """
         Adds the locus set metadata to the informs.
         :return: None
@@ -85,7 +85,7 @@ class LocusSetManager(Tool):
         try:
             metadata_file = os.path.join(folder, 'scheme_metadata.txt')
             with open(metadata_file) as metadata_handle:
-                self._informs['locus_set_metadata'] = json.load(metadata_handle)
+                self._informs['scheme_metadata'] = json.load(metadata_handle)
         except IOError:
             logging.warning('Problem retrieving metadata for {}'.format(folder))
 
@@ -95,12 +95,12 @@ class LocusSetManager(Tool):
         :return: List of paths
         """
         locus_folders = []
-        locus_set_folder = self._tool_inputs['DIR'][0]
-        logging.info('Checking directory: {}'.format(locus_set_folder))
-        for subfolder in os.listdir(locus_set_folder.path):
-            locus_folder = os.path.join(locus_set_folder.path, subfolder)
+        scheme_folder = self._tool_inputs['DIR'][0]
+        logging.info('Checking directory: {}'.format(scheme_folder))
+        for subfolder in os.listdir(scheme_folder.path):
+            locus_folder = os.path.join(scheme_folder.path, subfolder)
             if os.path.isdir(locus_folder):
-                locus_folders.append(os.path.join(locus_set_folder.path, locus_folder))
+                locus_folders.append(os.path.join(scheme_folder.path, locus_folder))
         if 'limit_locus_sets' in self._parameters:
             return sorted(locus_folders)[0:int(self._parameters['limit_locus_sets'][1])]
         else:

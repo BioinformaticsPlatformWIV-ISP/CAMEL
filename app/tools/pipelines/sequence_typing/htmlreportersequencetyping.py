@@ -33,7 +33,7 @@ class HtmlReporterSequenceTyping(HtmlReporter):
         :return: None
         """
         self.__subfolder = os.path.join('sequence_typing', self.__get_locus_set_directory_name().lower())
-        self._report.add_header(self.__get_locus_name(), 3)
+        self._report.add_header(self.__scheme_title(), 3)
         if self._input_informs['locus_info']['has_profile_definitions']:
             self.__add_sequence_type_table()
         self.__add_output_table()
@@ -68,12 +68,12 @@ class HtmlReporterSequenceTyping(HtmlReporter):
         """
         return os.path.splitext(self._tool_inputs['DIR_LS'][0].basename)[0]
 
-    def __get_locus_name(self):
+    def __scheme_title(self):
         """
-        Returns the name of the locus.
-        :return: Name of the locus
+        Returns the title for the scheme.
+        :return: Scheme title
         """
-        return self._input_informs['locus_info']['locus_set_metadata']['description']
+        return self._input_informs['locus_info']['scheme_metadata']['title']
 
     def __add_sequence_type_table(self):
         """
@@ -150,7 +150,7 @@ class HtmlReporterSequenceTyping(HtmlReporter):
         Adds database information.
         :return: None
         """
-        informs = self._input_informs['locus_info']['locus_set_metadata']
+        informs = self._input_informs['locus_info']['scheme_metadata']
         self._report.add_paragraph('Last update: {}'.format(informs['last_updated']))
         self._report.add_line_break()
 
