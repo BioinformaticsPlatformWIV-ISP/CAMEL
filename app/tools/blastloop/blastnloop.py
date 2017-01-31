@@ -11,4 +11,4 @@ class BlastnLoop(BlastLoop):
         Initializes this tool.
         :param camel: Camel instance
         """
-        super(BlastnLoop, self).__init__('blastn (looping)', '2.2.30', camel)
+        super(BlastnLoop, self).__init__('blastn (looping)', '2.6.0', camel)

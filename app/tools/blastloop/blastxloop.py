@@ -10,4 +10,4 @@ class BlastxLoop(BlastLoop):
         """
         Initializes this tool.
         """
-        super(BlastxLoop, self).__init__('blastx (looping)', '2.2.30', camel)
+        super(BlastxLoop, self).__init__('blastx (looping)', '2.6.0', camel)

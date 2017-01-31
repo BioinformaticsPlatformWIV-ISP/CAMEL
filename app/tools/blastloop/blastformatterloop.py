@@ -17,7 +17,7 @@ class BlastFormatterLoop(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super(BlastFormatterLoop, self).__init__('blast_formatter (looping)', '2.2.30', camel)
+        super(BlastFormatterLoop, self).__init__('blast_formatter (looping)', '2.6.0', camel)
 
     def _execute_tool(self):
         """
