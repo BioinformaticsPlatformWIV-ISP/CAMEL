@@ -1,3 +1,4 @@
+import datetime
 import os
 
 from app.components.html.tablecell import HtmlTableCell
@@ -151,7 +152,8 @@ class HtmlReporterSequenceTyping(HtmlReporter):
         :return: None
         """
         informs = self._input_informs['locus_info']['scheme_metadata']
-        self._report.add_paragraph('Last update: {}'.format(informs['last_updated']))
+        date = datetime.date(*[int(x) for x in informs['last_updated'].split('-')])
+        self._report.add_paragraph('Last update: {}'.format(date.strftime('%d-%m-%Y')))
         self._report.add_line_break()
 
     def __add_linked_data(self):
