@@ -1,6 +1,7 @@
 import logging
 import os
 
+from app.error.toolexecutionerror import ToolExecutionError
 from app.io.tooliofile import ToolIOFile
 from app.io.tooliovalue import ToolIOValue
 from app.tools.tool import Tool
@@ -17,7 +18,7 @@ class Srst2Mlst(Tool):
         Initialize SRST2 MLST tool.
         :param camel: Camel instance
         """
-        super(Srst2Mlst, self).__init__('SRST2_MLST', '0.1.5', camel)
+        super(Srst2Mlst, self).__init__('SRST2_MLST', '0.2.0', camel)
 
     def _execute_tool(self):
         """
@@ -35,9 +36,8 @@ class Srst2Mlst(Tool):
         """
         return ' '.join([self._tool_command,
                          self.__build_input_string(),
-                         '--mlst_db {}'.format(self._tool_inputs['FASTA'][0].path),
-                         ' '.join(self._build_options(excluded_parameters=['threads'])),
-                         '--other "--threads {}"'.format(self._parameters['threads'].value)])
+                         self.__build_database_string(),
+                         ' '.join(self._build_options())])
 
     def __build_input_string(self):
         """
@@ -48,6 +48,16 @@ class Srst2Mlst(Tool):
             return '--input_pe {}'.format(' '.join([f.path for f in self._tool_inputs['FASTQ_PE']]))
         else:
             return '--input_se {}'.format(self._tool_inputs['FASTQ_SE'][0].path)
+
+    def __build_database_string(self):
+        """
+        Builds a string containing the database arguments.
+        :return: Database options string
+        """
+        string = '--mlst_db {}'.format(self._tool_inputs['FASTA'][0].path)
+        if 'TSV' in self._tool_inputs:
+            string += ' --mlst_definitions {}'.format(self._tool_inputs['TSV'][0].path)
+        return string
 
     def __set_output(self):
         """
@@ -109,3 +119,11 @@ class Srst2Mlst(Tool):
             elif len(content) == 2:
                 return content[1].split('\t')[1]
             raise ValueError("Invalid SRST2 output file. Content: '{}'".format(content))
+
+    def _check_command_output(self):
+        """
+        Checks if the command execution was successful.
+        :return: None
+        """
+        if 'SRST2 has finished' not in self.stderr.splitlines()[-1]:
+            raise ToolExecutionError("SRST2 execution failed: {}".format(self.stderr))
