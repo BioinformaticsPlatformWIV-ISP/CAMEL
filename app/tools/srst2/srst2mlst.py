@@ -102,8 +102,6 @@ class Srst2Mlst(Tool):
             return 'TSV_Scores'
         elif filename.endswith('consensus_alleles.fasta'):
             return 'FASTA'
-        elif filename.endswith('.log'):
-            return 'LOG'
 
     @staticmethod
     def __get_sequence_type(output_file):
