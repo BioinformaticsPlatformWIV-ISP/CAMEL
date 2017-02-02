@@ -130,5 +130,5 @@ class Blast(Tool):
         Checks the command output for errors.
         :return: None
         """
-        if 'error' in self._command.stderr.lower():
+        if 'error' in self.stderr.lower():
             raise ValueError("Error executing {}: {}".format(self.name, self._command.stderr.strip()))
