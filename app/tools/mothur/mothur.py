@@ -1,0 +1,119 @@
+import logging
+import random
+
+import abc
+import os
+
+from app.tools.tool import Tool
+
+
+class Mothur(Tool):
+    """
+    A super class that contains all functions that are shared between
+    Mothur commands.
+    """
+
+    def __init__(self, name, version, camel):
+        """
+        Initialize tool
+        :param name: Name of the tool
+        :param version: Version of the tool
+        :param camel: Camel instance
+        :return: None
+        """
+        super(Mothur, self).__init__(name, version, camel)
+        # For reproducibility a seed is specified for each operation
+        self._seed = random.randint(1, 10000000)
+        logging.debug('Set seed to: {}'.format(self._seed))
+
+    def _execute_tool(self):
+        """
+        Runs Prinseq
+        :return: None
+        """
+        self._build_command()
+        self._execute_command()
+        self._set_output()
+
+    def _check_input(self):
+        """
+        Checks whether the given inputs are valid:
+        - Files with a '-' in the name are not allowed
+        :return: None
+        """
+        super(Mothur, self)._check_input()
+        for input_key, input_list in self._tool_inputs.iteritems():
+            for tool_input in input_list:
+                if '-' in tool_input.path:
+                    raise ValueError("Tool input with '-' character in name: {}".format(tool_input.path))
+
+    def _build_command(self):
+        """
+        Concatenates required parameters and options to build the command to run
+        :return: None
+        """
+        if self._tool_command.count('{') == 2:
+            self._command.command = self._tool_command.format(self._build_input_string(), self._build_options())
+        else:
+            self._command.command = self._tool_command.format(self._build_input_string())
+
+    @abc.abstractmethod
+    def _build_input_string(self):
+        """
+        Creates the string with the input files and input/output directories
+        :return: None
+        """
+        pass
+
+    @abc.abstractmethod
+    def _set_output(self):
+        """
+        Sets the name of the output files in the output file object
+        :return: None
+        """
+        pass
+
+    def _build_options(self, excluded_parameters=None, separator='='):
+        """
+        Creates the string with all the specified parameters
+        :param excluded_parameters: list of parameters to be skipped (Optional)
+        :param separator: separator used to combine the option and value (Optional)
+        :return: String with command parameters
+        """
+        option_list = super(Mothur, self)._build_options(excluded_parameters, separator)
+        option_list += ['seed=' + str(self._seed)]
+        return ', ' + ', '.join(option_list)
+
+    def _get_labels(self):
+        """
+        Returns the labels that are in a list file or the ones that are specified as a parameter.
+        :return: List of labels
+        """
+        if 'label' in self._parameters:
+            return self._parameters['label'][1].strip().split('-')
+        # If no label parameter is specified all the labels in the file
+        # will be used
+        with open(self._tool_inputs['TSV_List'][0].path, 'r') as label_file:
+            return [line.split(None, 1)[0] for line in label_file]
+
+    def _check_command_output(self):
+        """
+        Analyzes output to discover if the run was successful. If an error was present in stdout, a RuntimeError is
+        raised and stdout is displayed
+        :return: None
+        """
+        for line in self.stdout.splitlines():
+            if line.startswith('[ERROR]') or line.startswith('Unable to open'):
+                raise RuntimeError('\n'.join(self.stdout.splitlines()) + '\n' +
+                                   '!!! Mothur failed to run !!! See above for more information.')
+
+    def _get_basename(self, input_key='FASTA', suffix='.'):
+        """
+        Returns the prefix that will be used in the output. Example: Input file /test/data/file1.run1.fastq will return
+        the following prefix: /test/data/file1.run1 (suffix = '.fastq')
+        :param suffix: Suffix that has to be removed
+        :param input_key: Key of the input file to be used
+        :return: String with the prefix used in the output
+        """
+        infile = os.path.basename(self._tool_inputs[input_key][0].path)
+        return self._folder + '/' + infile[:infile.rfind(suffix)]
