@@ -36,6 +36,7 @@ class Prinseq(Tool):
         - No other input keys are allowed
         :return: None
         """
+        super(Prinseq, self)._check_input()
         if len(self._tool_inputs.keys()) != 1:
             raise ValueError('Too many input keys given voor PRINSEQ: {!r}'.format(self._tool_inputs))
         if self._tool_inputs.keys()[0] not in ['FASTQ_PE', 'FASTA_PE', 'FASTQ_SE', 'FASTA_SE']:
@@ -47,9 +48,6 @@ class Prinseq(Tool):
         elif key.endswith('SE') and len(self._tool_inputs[key]) != 1:
             raise ValueError('Invalid number (!= 1) of files given for SE key'
                              'for PRINSEQ: {!r}'.format(self._tool_inputs))
-        for infile in value:
-            if not infile.is_valid():
-                raise ValueError('Illegal file given for PRINSEQ: {!r}'.format(self._tool_inputs))
 
     def __build_command(self):
         """
@@ -112,4 +110,3 @@ class Prinseq(Tool):
                                                      ToolIOFile(basename + '.prinseq_2_singletons.' + filetype)]
         else:
             self._tool_outputs[format_key + 'SE'] = [ToolIOFile(basename + '.prinseq.' + filetype)]
-        logging.debug('Created the following output files: {!r}'.format(self._tool_outputs))
