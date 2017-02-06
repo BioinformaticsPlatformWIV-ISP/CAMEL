@@ -18,7 +18,7 @@ class Map(Bowtie2):
         """
         Initialize Bowtie2
         :param camel: Camel instance
-        :return: none
+        :return: None
         """
         super(Map, self).__init__('bowtie2 map', '2.3.0', camel)
 
@@ -52,7 +52,7 @@ class Map(Bowtie2):
     def _execute_tool(self):
         """
         Function to run Bowtie2 to map reads
-        :return: none
+        :return: None
         """
         self.__set_input()
         self.__set_output()
@@ -68,13 +68,13 @@ class Map(Bowtie2):
         if 'SAMPLE_NAME' in self._tool_inputs:
             sample_name = self._tool_inputs['SAMPLE_NAME'][0].value
         else:
-            sample_name = self.SAMPLE_NAME
+            sample_name = Map.SAMPLE_NAME
         self._readgroup_str += " --rg-id {!r}".format(sample_name)
 
     def _check_input(self):
         """
         Check input for Bowtie2 mapping
-        :return: none
+        :return: None
         """
         # Note that Bowtie2 can map both PE and SE reads together
         if 'FASTQ_PE' in self._tool_inputs:
@@ -100,9 +100,9 @@ class Map(Bowtie2):
     def __set_output(self):
         """
         Set output for Bowtie2 read mapping
-        :return none
+        :return None
         """
-        sam_filename = os.path.join(self._folder, self.OUTPUT_NAME)
+        sam_filename = os.path.join(self._folder, Map.OUTPUT_NAME)
         self._tool_outputs['SAM'] = [ToolIOFile(sam_filename)]
         self._output_str = "-S {}".format(sam_filename)
 
@@ -188,7 +188,7 @@ class Map(Bowtie2):
     def __build_command(self):
         """
         Build command to run Bowtie2
-        :return: none
+        :return: None
         """
         self._command.command = '{} {} {} {} {} {}'.format(
             self._tool_command,
@@ -220,7 +220,7 @@ class Map(Bowtie2):
         """
         Set mapping result statistics information
         :param line: the content of current line (from self._command.stderr)
-        :return: none
+        :return: None
         """
         # search for all numbers
         res = re.findall("([\d|.]+)", line)
@@ -244,7 +244,7 @@ class Map(Bowtie2):
     def __set_inform(self):
         """
         Analyse the result of Bowtie2 reads mapping, and extra result statistics into tool inform
-        :return: none
+        :return: None
         """
         self.informs['tool_name'] = 'Bowtie2'
         self.informs['mod'] = self._mod
