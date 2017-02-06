@@ -19,7 +19,7 @@ class Map(BWA):
         """
         Initialize Map
         :param camel: Camel instance
-        :return: none
+        :return: None
         """
         super(Map, self).__init__('bwa_mem', '0.7.15', camel)
         self._fastq_inputs_str = None
@@ -28,7 +28,7 @@ class Map(BWA):
     def _execute_tool(self):
         """
         Function to run BWA mem to map reads
-        :return: none
+        :return: None
         """
         self.__set_input()
         self.__set_output()
@@ -43,14 +43,14 @@ class Map(BWA):
         if 'SAMPLE_NAME' in self._tool_inputs:
             sample_name = self._tool_inputs['SAMPLE_NAME'][0].value
         else:
-            sample_name = self.SAMPLE_NAME
+            sample_name = Map.SAMPLE_NAME
         # Read Group format: '@RG\tID:foo\tSM:bar'
         self._readgroup_str += " -R '@RG\tID:{0}\tSM:{0}'".format(sample_name)
 
     def _check_input(self):
         """
         Check input for BWA mem.
-        :return: none
+        :return: None
         """
         super(Map, self)._check_input()
 
@@ -75,14 +75,14 @@ class Map(BWA):
     def __set_output(self):
         """
         Set proper outputs for BAW mem
-        : return: none
+        :return: None
         """
-        self._tool_outputs['SAM'] = [ToolIOFile(os.path.join(self._folder, self.OUTPUT_NAME))]
+        self._tool_outputs['SAM'] = [ToolIOFile(os.path.join(self._folder, Map.OUTPUT_NAME))]
 
     def __build_command(self):
         """
         Build command to run BWA mem
-        : return: none
+        :return: None
         """
         self._command.command = '{} {} {} {} {} > {}'.format(
             self._tool_command,

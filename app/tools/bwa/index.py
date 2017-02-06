@@ -14,7 +14,7 @@ class Index(BWA):
         """
         Initialize BWA index
         :param camel: Camel instance
-        :return: none
+        :return: None
         """
         super(Index, self).__init__('bwa_index', '0.7.15', camel)
         self._refgenome_fasta = None
@@ -22,7 +22,7 @@ class Index(BWA):
     def _execute_tool(self):
         """
         Function to run BWA index
-        :return: none
+        :return: None
         """
         self.__build_command()
         self._execute_command()
@@ -33,19 +33,19 @@ class Index(BWA):
         Get the filename used for multi fasta file representing complete genome
         :return: name of the multi fasta file with complete path
         """
-        return os.path.join(self._folder, self.MULTI_FASTA_GENOME_FILE)
+        return os.path.join(self._folder, Index.MULTI_FASTA_GENOME_FILE)
 
     def _check_input(self):
         """
         Check FASTA_REF input and concatenate them if multiple fasta input files
-        :return: none
+        :return: None
         """
-        no_of_inputs = len(self._tool_inputs['FASTA_REF'])
-        if no_of_inputs > 1:
+        nb_of_inputs = len(self._tool_inputs['FASTA_REF'])
+        if nb_of_inputs > 1:
             multifasta_file = self.__get_multi_fasta_genome_filename()
             FileUtils.concatenate_files(multifasta_file, [f.path for f in self._tool_inputs['FASTA_REF']])
             self._refgenome_fasta = multifasta_file
-        elif no_of_inputs == 0:
+        elif nb_of_inputs == 0:
             raise ValueError("Required reference genome (FASTA) input file is missing.")
         else:
             self._refgenome_fasta = self._tool_inputs['FASTA_REF'][0].path
@@ -53,14 +53,14 @@ class Index(BWA):
     def __set_output(self):
         """
         Set output for BWA index
-        :return: none
+        :return: None
         """
         self._tool_outputs['INDEX_GENOME_PREFIX'] = [ToolIOValue(self._refgenome_fasta)]
 
     def __build_command(self):
         """
         Build the command to run BWA index
-        :return: none
+        :return: None
         """
         self._command.command = '{} {} {}'.format(
             self._tool_command, ' '.join(self._build_options()), self._refgenome_fasta
