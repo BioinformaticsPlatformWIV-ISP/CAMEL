@@ -36,6 +36,7 @@ class Quast(Tool):
         - Only one input file allowed for FASTA_Ref, TSV_Gene, and TSV_Operon, multiple files allowed for FASTA
         :return: None
         """
+        super(Quast, self)._check_input()
         if 'FASTA' not in self._tool_inputs:
             raise ValueError('No valid input key given for QUAST: {!r}'.format(self._tool_inputs))
         for key, values in self._tool_inputs.iteritems():
