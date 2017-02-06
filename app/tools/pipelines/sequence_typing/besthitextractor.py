@@ -1,10 +1,10 @@
+import logging
+
 import os
 import re
 
-import logging
-
-from app.components.blast_hit.blasthitfiltering import BlastHitFiltering
-from app.components.blast_hit.blasthitparser import BlastHitParser
+from app.components.blasttyping.blasthitfiltering import BlastHitFiltering
+from app.components.blasttyping.blasthitparser import BlastHitParser
 from app.io.tooliofile import ToolIOFile
 from app.tools.tool import Tool
 
