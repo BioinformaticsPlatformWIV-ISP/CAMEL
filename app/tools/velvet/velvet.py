@@ -1,0 +1,66 @@
+import abc
+from app.tools.tool import Tool
+
+
+class Velvet(Tool):
+    """ Super class for Velvet related tools: velveth, VelvetOptimiser to handle inputs """
+    __metaclass__ = abc.ABCMeta
+
+    FILEOPT_MAPPING = {
+        'FASTA_REF': '-reference -fasta',
+        'FASTA_long': '-long -fasta',
+        'FASTQ_long': '-long -fastq',
+        'FASTA_longPE': '-longPaired -fasta -separate',
+        'FASTQ_longPE': '-longPaired -fastq -separate',
+        'FASTA_SE': '-short -fasta',
+        'FASTA_PE': '-shortPaired -fasta -separate',
+        'FASTA_SE_2': '-short2 -fasta',
+        'FASTA_SE_3': '-short3 -fasta',
+        'FASTA_PE_2': '-shortPaired2 -fasta -separate',
+        'FASTA_PE_3': '-shortPaired3 -fasta -separate',
+        'FASTQ_SE': '-short -fastq',
+        'FASTQ_PE': '-shortPaired -fastq -separate',
+        'FASTQ_SE_2': '-short2 -fastq',
+        'FASTQ_SE_3': '-short3 -fastq',
+        'FASTQ_PE_2': '-shortPaired2 -fastq -separate',
+        'FASTQ_PE_3': '-shortPaired3 -fastq -separate',
+    }
+
+    def __init__(self, tool, version, camel):
+        """
+        Initialize Velveth
+        :param camel: Camel instance
+        :param tool: the tool
+        :param version: version of the tool
+        :return: None
+        """
+        super(Velvet, self).__init__(tool, version, camel)
+        self._input_string = None
+
+    def _check_input(self):
+        """
+        Handle specific input for file handling
+        :return: None
+        """
+        input_options = []
+        contains_short_library = False
+
+        for key, fileopt in self.FILEOPT_MAPPING.items():
+            if key in self._tool_inputs:
+                if key.find('PE') > 0:
+                    input_options.append(
+                        fileopt + " " + " ".join([f.path for f in self._tool_inputs[key]]))
+                else:
+                    input_options.append(
+                        fileopt + " " + self._tool_inputs[key][0].path)
+
+            if key in ('FASTA_SE', 'FASTA_PE', 'FASTQ_SE', 'FASTQ_PE'):
+                contains_short_library = True
+
+        if not contains_short_library:
+            raise KeyError("No PE or SE library required found in tool_inputs keys: {}".format(
+                self._tool_inputs.keys()))
+
+        self._input_string = " ".join(input_options)
+
+        super(Velvet, self)._check_input()
