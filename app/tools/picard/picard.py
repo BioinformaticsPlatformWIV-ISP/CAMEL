@@ -38,7 +38,7 @@ class Picard(Tool):
     def _execute_tool(self):
         """
         Function to run Picard function
-        :return: none
+        :return: None
         """
         self._set_output()
         self._build_command()
