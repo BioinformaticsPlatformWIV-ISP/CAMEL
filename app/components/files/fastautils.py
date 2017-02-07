@@ -1,3 +1,4 @@
+import os
 from Bio import SeqIO
 from app.command.command import Command
 
@@ -48,7 +49,7 @@ class FastaUtils(object):
         if command is None:
             command = Command()
         command.command = cmd
-        command.run_command()
+        command.run_command(os.path.dirname(os.path.abspath(infile)))
         if command.stderr != '':
             raise RuntimeError(command.stderr, cmd)
         return int(command.stdout.rstrip())

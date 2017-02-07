@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 
@@ -107,7 +108,7 @@ class GATK(Tool):
         # log WARNINGS in info.log
         for l in self.stdout.split('\n'):
             if re.match('WARNING', l):
-                self._logger.info(" GATK - {}".format(l))
+                logging.info(" GATK - {}".format(l))
 
             # The Genome Analysis Toolkit (GATK) v3.4-0-g7e26428
             match = re.search('The Genome Analysis Toolkit (GATK) (.+),', l)
