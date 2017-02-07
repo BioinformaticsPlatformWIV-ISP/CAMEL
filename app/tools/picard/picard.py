@@ -38,7 +38,7 @@ class Picard(Tool):
     def _execute_tool(self):
         """
         Function to run Picard function
-        :return: none
+        :return: None
         """
         self._set_output()
         self._build_command()
@@ -70,7 +70,8 @@ class Picard(Tool):
         """
         for input_file in self.required_inputs:
             if input_file not in self._tool_inputs:
-                raise KeyError('Picard {!r} required input file of type {!r} is missing!'.format(self.function_name, input_file))
+                raise KeyError('Picard {!r} required input file of type {!r} is missing!'.format(
+                    self.function_name, input_file))
 
     def _set_input(self):
         """

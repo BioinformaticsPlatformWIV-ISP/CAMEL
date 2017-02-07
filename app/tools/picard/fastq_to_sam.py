@@ -37,7 +37,7 @@ class FastqToSam(Picard):
         if 'SAMPLE_NAME' in self._tool_inputs:
             self._input_string += " SM={0} RG={0}".format(self._tool_inputs['SAMPLE_NAME'][0].value)
         else:
-            self._input_string += " SM={0} RG={0}".format(self.SAMPLE_NAME)
+            self._input_string += " SM={0} RG={0}".format(FastqToSam.SAMPLE_NAME)
 
     def _set_inform(self):
         """

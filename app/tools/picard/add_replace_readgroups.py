@@ -25,5 +25,5 @@ class AddOrReplaceReadGroups(Picard):
         if 'SAMPLE_NAME' in self._tool_inputs:
             sample_name = self._tool_inputs['SAMPLE_NAME'][0].value
         else:
-            sample_name = self.SAMPLE_NAME
+            sample_name = AddOrReplaceReadGroups.SAMPLE_NAME
         self._input_string += " RGSM={0} RGID={0}".format(sample_name)

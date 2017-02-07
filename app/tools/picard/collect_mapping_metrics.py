@@ -44,17 +44,6 @@ class CollectMultipleMetrics(Picard):
         self.required_inputs = ['FASTA_REF']
         self.outfile_prefix = None
 
-    # def run_tool(self):
-    #     """
-    #     Function to run picard function
-    #     :return: None
-    #     """
-    #     self._set_input()
-    #     self._build_command()
-    #     super(Picard, self).run_tool()
-    #     self._set_output()
-    #     self.analyze_result()
-
     def _set_output(self):
         """
         Set the output for Picard CollectMultipleMetrics function
@@ -107,7 +96,7 @@ class CollectMultipleMetrics(Picard):
         set the Alignment Summary statistics output
         :return: None
         """
-        alignment_summary_file = self.outfile_prefix + self.OUTPUT_FILE_SUFFIX['AlignmentSummary']
+        alignment_summary_file = self.outfile_prefix + CollectMultipleMetrics.OUTPUT_FILE_SUFFIX['AlignmentSummary']
         self._tool_outputs['TXT_AlignmentSummary'] = [ToolIOFile(alignment_summary_file)]
 
     def __analyze_alignement_summary(self):
@@ -152,9 +141,9 @@ class CollectMultipleMetrics(Picard):
         set the Insert Size statistics output
         :return: None
         """
-        metrics_file = self.outfile_prefix + self.OUTPUT_FILE_SUFFIX['InsertSize']
+        metrics_file = self.outfile_prefix + CollectMultipleMetrics.OUTPUT_FILE_SUFFIX['InsertSize']
         self._tool_outputs['TXT_InsertSize'] = [ToolIOFile(metrics_file)]
-        figure_file = self.outfile_prefix + self.OUTPUT_FILE_SUFFIX['InsertSizeFigure']
+        figure_file = self.outfile_prefix + CollectMultipleMetrics.OUTPUT_FILE_SUFFIX['InsertSizeFigure']
         if os.path.exists(figure_file):
             self._tool_outputs['PDF_InsertSizeFigure'] = [ToolIOFile(figure_file)]
 
@@ -195,9 +184,9 @@ class CollectMultipleMetrics(Picard):
         set the Mapping Quality statistics output
         :return: None
         """
-        metrics_file = self.outfile_prefix + self.OUTPUT_FILE_SUFFIX['MapQualityDistribution']
+        metrics_file = self.outfile_prefix + CollectMultipleMetrics.OUTPUT_FILE_SUFFIX['MapQualityDistribution']
         self._tool_outputs['TXT_MapQualityDistribution'] = [ToolIOFile(metrics_file)]
-        figure_file = self.outfile_prefix + self.OUTPUT_FILE_SUFFIX['MapQualityDistributionFigure']
+        figure_file = self.outfile_prefix + CollectMultipleMetrics.OUTPUT_FILE_SUFFIX['MapQualityDistributionFigure']
         self._tool_outputs['PDF_MapQualityDistributionFigure'] = [ToolIOFile(figure_file)]
 
     def __set_gc_bias_output(self):
@@ -205,11 +194,11 @@ class CollectMultipleMetrics(Picard):
         set the GC Bias statistics output
         :return: None
         """
-        metrics_file = self.outfile_prefix + self.OUTPUT_FILE_SUFFIX['GcBias']
+        metrics_file = self.outfile_prefix + CollectMultipleMetrics.OUTPUT_FILE_SUFFIX['GcBias']
         self._tool_outputs['TXT_GcBiasDetail'] = [ToolIOFile(metrics_file)]
-        summary_file = self.outfile_prefix + self.OUTPUT_FILE_SUFFIX['GcBiasSummary']
+        summary_file = self.outfile_prefix + CollectMultipleMetrics.OUTPUT_FILE_SUFFIX['GcBiasSummary']
         self._tool_outputs['TXT_GcBiasSummary'] = [ToolIOFile(summary_file)]
-        figure_file = self.outfile_prefix + self.OUTPUT_FILE_SUFFIX['GcBiasFigure']
+        figure_file = self.outfile_prefix + CollectMultipleMetrics.OUTPUT_FILE_SUFFIX['GcBiasFigure']
         self._tool_outputs['PDF_GcBiasFigure'] = [ToolIOFile(figure_file)]
 
     def __analyze_gc_bias(self):

@@ -35,7 +35,7 @@ class MergeBamAlignment(Picard):
     def _set_inform(self):
         """
         Analyse the result of picard run and update tool.informs
-        :return: Noneo
+        :return: None
         """
         for l in self.stdout.split('\n'):
             m = re.search('Finished reading (\d+) total records from alignment SAM/BAM.', l)
