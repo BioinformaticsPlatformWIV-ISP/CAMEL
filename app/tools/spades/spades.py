@@ -18,7 +18,7 @@ class SPAdes(Tool):
         """
         Initialize tool
         :param camel: Camel instance
-        :return: none
+        :return: None
         """
         super(SPAdes, self).__init__('spades', '3.6.2', camel)
         self._input_string = None
@@ -26,7 +26,7 @@ class SPAdes(Tool):
     def _execute_tool(self):
         """
         Function to run SPAdes to do de novo assembly
-        :return: none
+        :return: None
         """
         self.__set_output()
         self.__build_command()
@@ -113,7 +113,7 @@ class SPAdes(Tool):
         """
         SPAdes specific input file checking and handling. For the supported inputs of SPAdes and of this implementation,
         see wiki
-        :return: none
+        :return: None
         """
         infiles_options = []
         se_count = 0
@@ -171,19 +171,19 @@ class SPAdes(Tool):
     def __set_output(self):
         """
         Specify the output of tool and the command line options
-        :return: none
+        :return: None
         """
         output_dir = os.path.join(self._folder, self._parameters['output_dir'].value)
         self._tool_outputs.update({
-            'FASTA_Contig': [ToolIOFile(os.path.join(output_dir, self.FASTA_CONTIG))],
-            'FASTA_Scaffolds': [ToolIOFile(os.path.join(output_dir, self.FASTA_SCAFFOLDS))],
-            'FASTG': [ToolIOFile(os.path.join(output_dir, self.FASTG))]
+            'FASTA_Contig': [ToolIOFile(os.path.join(output_dir, SPAdes.FASTA_CONTIG))],
+            'FASTA_Scaffolds': [ToolIOFile(os.path.join(output_dir, SPAdes.FASTA_SCAFFOLDS))],
+            'FASTG': [ToolIOFile(os.path.join(output_dir, SPAdes.FASTG))]
         })
 
     def __build_command(self):
         """
         Build the command to run tool
-        :return: none
+        :return: None
         """
         self._command.command = " ".join([
             self._tool_command, self._input_string, " ".join(self._build_options())
