@@ -22,16 +22,16 @@ class Picard(Tool):
         """
         super(Picard, self).__init__(tool_name, version, camel)
 
-        self.function_name = None
+        self._function_name = None
         # parameters that should not be handled by self.build_options function
-        self.specific_parameters = []
+        self._specific_parameters = []
         # alternative types of files that can be used as main input of a picard tool
         # - reads mapping input: 'SAM', 'BAM'
         # - variance input: 'VCF' 'BCF'
         # ...
-        self.supported_inputs = ['SAM', 'BAM']
+        self._supported_inputs = ['SAM', 'BAM']
         # individual files of different types that is required: e.g, FASTA_REF
-        self.required_inputs = []
+        self._required_inputs = []
         self._input_string = ''
         self._output_string = ''
 
@@ -54,11 +54,11 @@ class Picard(Tool):
 
         self._check_required_inputs()
 
-        if len(self.supported_inputs) != 0:
+        if len(self._supported_inputs) != 0:
             input_type, input_files = self._check_supported_input()
             if len(input_files) > 1:
                 raise ValueError("Can only specify one file of type {!r} as input of Picard {!r}.".format(
-                    input_type, self.function_name))
+                    input_type, self._function_name))
             self._input_string = " I={}".format(input_files[0].path)
 
         self._set_input()
@@ -68,9 +68,9 @@ class Picard(Tool):
         Check input requirements to run Picard function
         :return: None
         """
-        for input_file in self.required_inputs:
+        for input_file in self._required_inputs:
             if input_file not in self._tool_inputs:
-                raise KeyError('Picard {!r} required input file of type {!r} is missing!'.format(self.function_name, input_file))
+                raise KeyError('Picard {!r} required input file of type {!r} is missing!'.format(self._function_name, input_file))
 
     def _set_input(self):
         """
@@ -85,12 +85,12 @@ class Picard(Tool):
         Check supported (alternatives but still required) input to run Picard function
         :return: None
         """
-        for input_type in self.supported_inputs:
+        for input_type in self._supported_inputs:
             if input_type in self._tool_inputs:
                 return input_type, self._tool_inputs[input_type]
 
         raise KeyError('None of the supported input types {!r} of Picard {!r} is specified!'.format(
-            self.supported_inputs, self.function_name))
+            self._supported_inputs, self._function_name))
 
     def _set_output(self):
         """
@@ -106,7 +106,7 @@ class Picard(Tool):
         """
         self._command.command = " ".join([
             self._tool_command, self._input_string, self._output_string,
-            " ".join(self._build_options(excluded_parameters=self.specific_parameters, delimiter='='))
+            " ".join(self._build_options(excluded_parameters=self._specific_parameters, delimiter='='))
         ])
 
     def _set_inform(self):
@@ -126,7 +126,7 @@ class Picard(Tool):
         run_status = stdout_lines[-2].rstrip()
         if not re.match('Exit status: 0', run_status):
             raise ToolExecutionError("Picard {!r} fails to run, error msg: \n{}".format(
-                self.function_name, self.stdout))
+                self._function_name, self.stdout))
 
         # log WARNINGs in info.log
         for l in stdout_lines:

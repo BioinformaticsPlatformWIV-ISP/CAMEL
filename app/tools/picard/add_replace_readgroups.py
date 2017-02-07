@@ -15,7 +15,7 @@ class AddOrReplaceReadGroups(Picard):
         """
         super(AddOrReplaceReadGroups, self).__init__('Picard AddOrReplaceReadGroups', '2.6.0', camel)
 
-        self.function_name = 'AddOrReplaceReadGroups'
+        self._function_name = 'AddOrReplaceReadGroups'
 
     def _set_input(self):
         """

@@ -40,9 +40,9 @@ class CollectMultipleMetrics(Picard):
         :return: None
         """
         super(CollectMultipleMetrics, self).__init__('Picard CollectMultipleMetrics', '2.6.0', camel)
-        self.function_name = 'CollectMultipleMetrics'
-        self.required_inputs = ['FASTA_REF']
-        self.outfile_prefix = None
+        self._function_name = 'CollectMultipleMetrics'
+        self._required_inputs = ['FASTA_REF']
+        self._outfile_prefix = None
 
     # def run_tool(self):
     #     """

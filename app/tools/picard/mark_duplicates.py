@@ -16,8 +16,8 @@ class MarkDuplicates(Picard):
         """
         super(MarkDuplicates, self).__init__('Picard MarkDuplicates', '2.6.0', camel)
 
-        self.function_name = 'MarkDuplicates'
-        self.supported_inputs = ['BAM']
+        self._function_name = 'MarkDuplicates'
+        self._supported_inputs = ['BAM']
 
     def _set_inform(self):
         """

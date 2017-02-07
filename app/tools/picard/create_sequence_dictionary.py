@@ -17,10 +17,10 @@ class CreateSequenceDictionary(Picard):
         """
         super(CreateSequenceDictionary, self).__init__('Picard CreateSequenceDictionary', '2.6.0', camel)
 
-        self.function_name = 'CreateSequenceDictionary'
-        self.required_inputs = ['FASTA_REF']
-        self.supported_inputs = []
-        self.specific_parameters = ['output_ext']
+        self._function_name = 'CreateSequenceDictionary'
+        self._required_inputs = ['FASTA_REF']
+        self._supported_inputs = []
+        self._specific_parameters = ['output_ext']
 
     def _set_output(self):
         """

@@ -16,9 +16,9 @@ class MergeBamAlignment(Picard):
         """
         super(MergeBamAlignment, self).__init__('Picard MergeBamAlignment', '2.6.0', camel)
 
-        self.function_name = 'MergeBamAlignment'
-        self.supported_inputs = []
-        self.required_inputs = ['BAM_UNMAPPED', 'BAM_ALIGNED', 'FASTA_REF']
+        self._function_name = 'MergeBamAlignment'
+        self._supported_inputs = []
+        self._required_inputs = ['BAM_UNMAPPED', 'BAM_ALIGNED', 'FASTA_REF']
 
     def _set_input(self):
         """

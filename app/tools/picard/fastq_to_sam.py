@@ -17,7 +17,7 @@ class FastqToSam(Picard):
         """
         super(FastqToSam, self).__init__('Picard FastqToSam', '2.6.0', camel)
 
-        self.function_name = 'FastqToSam'
+        self._function_name = 'FastqToSam'
 
     def _check_input(self):
         """
