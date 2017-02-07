@@ -13,14 +13,14 @@ class Velveth(Velvet):
         """
         Initialize Velveth
         :param camel: Camel instance
-        :return: none
+        :return: None
         """
         super(Velveth, self).__init__('velveth', '1.2.10', camel)
 
     def _execute_tool(self):
         """
         Function to run BWA index
-        :return: none
+        :return: None
         """
         self.__build_command()
         self._execute_command()
@@ -30,7 +30,7 @@ class Velveth(Velvet):
     def __build_command(self):
         """
         Build the command to run tool
-        :return: none
+        :return: None
         """
         self._command.command = "{} {} {} {} {}".format(
             self._tool_command,
@@ -43,7 +43,7 @@ class Velveth(Velvet):
     def __set_output(self):
         """
         Specify the output of tool and the command line options
-        :return: none
+        :return: None
         """
         self._tool_outputs['DIR_DB'] = [
             ToolIODirectory(os.path.join(self._folder, self._parameters['output_dir'].value))

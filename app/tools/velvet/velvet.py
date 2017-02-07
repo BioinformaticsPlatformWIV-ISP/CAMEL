@@ -45,7 +45,7 @@ class Velvet(Tool):
         input_options = []
         contains_short_library = False
 
-        for key, fileopt in self.FILEOPT_MAPPING.items():
+        for key, fileopt in Velvet.FILEOPT_MAPPING.items():
             if key in self._tool_inputs:
                 if key.find('PE') > 0:
                     input_options.append(

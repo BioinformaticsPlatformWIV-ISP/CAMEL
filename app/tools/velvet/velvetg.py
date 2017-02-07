@@ -17,7 +17,7 @@ class Velvetg(Tool):
         """
         Initialize Velvetg
         :param camel: Camel instance
-        :return: none
+        :return: None
         """
         super(Velvetg, self).__init__('velvetg', '1.2.10', camel)
         self._output_dir = None
@@ -25,7 +25,7 @@ class Velvetg(Tool):
     def _execute_tool(self):
         """
         Function to run BWA index
-        :return: none
+        :return: None
         """
         self.__build_command()
         self._execute_command()
@@ -35,7 +35,7 @@ class Velvetg(Tool):
     def _check_input(self):
         """
         Check input for velvetg
-        :return: none
+        :return: None
         """
         if 'DIR_DB' not in self._tool_inputs:
             raise ValueError('Velveth DB path (DIR_DB) is missing.')
@@ -47,14 +47,14 @@ class Velvetg(Tool):
     def __set_output(self):
         """
         Set output for velvetg
-        :return: none
+        :return: None
         """
-        self._tool_outputs['FASTA_Contig'] = [ToolIOFile(os.path.join(self._output_dir, self.OUTPUT_FASTA))]
+        self._tool_outputs['FASTA_Contig'] = [ToolIOFile(os.path.join(self._output_dir, Velvetg.OUTPUT_FASTA))]
 
     def __build_command(self):
         """
         Set command to run velvetg
-        :return: none
+        :return: None
         """
         self._command.command = "{} {} {}".format(
             self._tool_command,
@@ -66,17 +66,17 @@ class Velvetg(Tool):
         Analyze the result of velvetg run to extract statistics. Three sources are analyzed: analyze Log file for basic
         assembly statistics; stats.txt for contigs stats (idea from VelvetOptimiser); and command line output
         (self._command.stdout) for 'Paired Library insert' & 'Coverage stats'
-        :return: none
+        :return: None
         """
         self.informs['tool_name'] = 'Velvet'
 
         self.informs.update(
-            VelvetgOutputAnalyzer.analyze_log_file(os.path.join(self._output_dir, self.LOG_FILE))
+            VelvetgOutputAnalyzer.analyze_log_file(os.path.join(self._output_dir, Velvetg.LOG_FILE))
         )
         self.informs['kmer'] = int(self._input_informs['velveth']['kmer'])
         self.informs.update(VelvetgOutputAnalyzer.analyze_velvetg_output(self.informs, self.stdout))
         # analyze self._command.stdout before stats file, as some information
         # from output is required to analyze the later.
         self.informs.update(
-            VelvetgOutputAnalyzer.analyze_stats_file(self.informs, os.path.join(self._output_dir, self.STATS_FILE))
+            VelvetgOutputAnalyzer.analyze_stats_file(self.informs, os.path.join(self._output_dir, Velvetg.STATS_FILE))
         )
