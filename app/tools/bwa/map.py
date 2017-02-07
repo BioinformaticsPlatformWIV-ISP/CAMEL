@@ -45,7 +45,7 @@ class Map(BWA):
         else:
             sample_name = Map.SAMPLE_NAME
         # Read Group format: '@RG\tID:foo\tSM:bar'
-        self._readgroup_str += " -R '@RG\tID:{0}\tSM:{0}'".format(sample_name)
+        self._readgroup_str += "@RG\tID:{0}\tSM:{0}".format(sample_name)
 
     def _check_input(self):
         """
@@ -84,7 +84,7 @@ class Map(BWA):
         Build command to run BWA mem
         :return: None
         """
-        self._command.command = '{} {} {} {} {} > {}'.format(
+        self._command.command = '{} {} -R {!r} {} {} > {}'.format(
             self._tool_command,
             ' '.join(self._build_options()),
             self._readgroup_str,
