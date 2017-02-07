@@ -17,12 +17,12 @@ class Seqtk(Tool):
         :return: None
         """
         super(Seqtk, self).__init__(tool_name, version, camel)
-        self.function_name = ''
+        self._function_name = ''
         # parameters that should not be handled by self.build_options function
-        self.specific_parameters = []
+        self._specific_parameters = []
         # alternative types of files that can be used as main input of a seqtk tool
         # - FASTA or FASTQ
-        self.supported_inputs = ['FASTA', 'FASTQ', 'FASTA_SE', 'FASTQ_SE', 'FASTA_PE', 'FASTQ_PE']
+        self._supported_inputs = ['FASTA', 'FASTQ', 'FASTA_SE', 'FASTQ_SE', 'FASTA_PE', 'FASTQ_PE']
         self.input_mode = None       # 'SE' or 'PE'
         self.input_file_type = None  # 'FASTQ' or 'FASTA'
         self._input_string = ''
@@ -33,7 +33,7 @@ class Seqtk(Tool):
     def _execute_tool(self):
         """
         Function to run BWA index
-        :return: none
+        :return: None
         """
         self._set_output()
         self._build_command()
@@ -44,7 +44,7 @@ class Seqtk(Tool):
         Check input requirements to run a seqtk tool
         :return: None
         """
-        if len(self.supported_inputs) != 0:
+        if len(self._supported_inputs) != 0:
             input_type = self.__get_supported_input_type()
             self._input_files = [f.path for f in self._tool_inputs[input_type]]
             self.__check_supported_input_files()
@@ -54,7 +54,7 @@ class Seqtk(Tool):
         Check the type of supported_inputs (alternatives but still required) specified in _tool_inputs and return it
         :return: type of supported_input found
         """
-        for input_type in self.supported_inputs:
+        for input_type in self._supported_inputs:
             if input_type in self._tool_inputs:
                 type_inform = input_type.split("_")
                 if len(type_inform) > 1:
@@ -66,7 +66,7 @@ class Seqtk(Tool):
                 return input_type
 
         raise KeyError('Seqtk function {!r} required {!r} input is missing!'.format(
-            self.function_name, self.supported_inputs))
+            self._function_name, self._supported_inputs))
 
     def __check_supported_input_files(self):
         """
@@ -74,9 +74,9 @@ class Seqtk(Tool):
         :return: None
         """
         if self.input_mode == 'SE' and len(self._input_files) != 1:
-            raise ValueError("Seqtk function {} SE mode supports only one input file.".format(self.function_name))
+            raise ValueError("Seqtk function {} SE mode supports only one input file.".format(self._function_name))
         elif self.input_mode == 'PE' and len(self._input_files) != 2:
-            raise ValueError("Seqtk function {} PE mode supports only two input files.".format(self.function_name))
+            raise ValueError("Seqtk function {} PE mode supports only two input files.".format(self._function_name))
 
     @abc.abstractmethod
     def _set_output(self):
@@ -93,7 +93,7 @@ class Seqtk(Tool):
         """
         self._command.command = "{} {} {} > {}".format(
             self._tool_command,
-            " ".join(self._build_options(excluded_parameters=self.specific_parameters)),
+            " ".join(self._build_options(excluded_parameters=self._specific_parameters)),
             self._input_string,
             self._output_string
         )

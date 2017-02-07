@@ -17,9 +17,9 @@ class Convert(Seqtk):
         """
         super(Convert, self).__init__('Seqtk Convert', '1.2', camel)
 
-        self.function_name = 'Convert'
-        self.supported_inputs = ['FASTQ']
-        self.specific_parameters = ['output_file']
+        self._function_name = 'Convert'
+        self._supported_inputs = ['FASTQ']
+        self._specific_parameters = ['output_file']
 
     def _check_input(self):
         """
@@ -30,12 +30,12 @@ class Convert(Seqtk):
 
         if 'FASTQ' not in self._tool_inputs:
             raise KeyError(
-                'Seqtk function {!r} required FASTQ file is not specified in tool_inputs: {}!'.format(self.function_name, self._tool_inputs))
+                'Seqtk function {!r} required FASTQ file is not specified in tool_inputs: {}!'.format(self._function_name, self._tool_inputs))
 
         elif len(self._tool_inputs['FASTQ']) != 1:
             raise ValueError(
                 "Seqtk function {} supports only one input file of FASTQ type got {!r}.".format(
-                    self.function_name, self._tool_inputs['FASTQ']))
+                    self._function_name, self._tool_inputs['FASTQ']))
 
         self._input_string = self._tool_inputs['FASTQ'][0].path
 

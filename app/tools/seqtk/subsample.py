@@ -18,8 +18,8 @@ class Subsample(Seqtk):
         :return: None
         """
         super(Subsample, self).__init__('Seqtk Subsample', '1.2', camel)
-        self.function_name = 'Subsample'
-        self.specific_parameters = ['combine_output', 'output_prefix', 'fraction']
+        self._function_name = 'Subsample'
+        self._specific_parameters = ['combine_output', 'output_prefix', 'fraction']
         self.combine_output = False
 
     def _execute_tool(self):
@@ -63,7 +63,7 @@ class Subsample(Seqtk):
         """
         self._command.command = "{} {} {} {} > {}".format(
             self._tool_command,
-            " ".join(self._build_options(excluded_parameters=self.specific_parameters)),
+            " ".join(self._build_options(excluded_parameters=self._specific_parameters)),
             input_file,
             self._parameters['fraction'].value,
             output_file
