@@ -13,8 +13,6 @@ class Genomecov(Bedtools):
     def __init__(self, camel):
         """
         Initialize a samtools tool.
-        :param tool_name: Tool name
-        :param version: Tool version
         :param camel: Camel instance
         :return: None
         """
@@ -49,11 +47,11 @@ class Genomecov(Bedtools):
         :return: None
         """
         if any(param in self._parameters.keys() for param in ['BedGraphWithZeroCoverage', 'BedGraph']):
-            self._output_filename = self.OUTPUT_FILE_BASENAME + ".bed"
+            self._output_filename = Genomecov.OUTPUT_FILE_BASENAME + ".bed"
             self._tool_outputs['TXT_BED'] = [ToolIOFile(os.path.join(self._folder, self._output_filename))]
 
         if any(param in self._parameters.keys() for param in ['DepthWithZeroCoord', 'Depth']):
-            self._output_filename = self.OUTPUT_FILE_BASENAME + ".tsv"
+            self._output_filename = Genomecov.OUTPUT_FILE_BASENAME + ".tsv"
             self._tool_outputs['TSV'] = [ToolIOFile(os.path.join(self._folder, self._output_filename))]
 
     def _check_parameters(self):

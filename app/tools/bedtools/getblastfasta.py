@@ -18,7 +18,7 @@ class GetBlastFasta(GetFasta):
         """
         Initialize tool
         :param camel: Camel instance
-        :return: none
+        :return: None
         """
         super(GetBlastFasta, self).__init__(camel, 'bedtools getblastfasta', '2.25.0')
 
@@ -35,7 +35,7 @@ class GetBlastFasta(GetFasta):
 
     def _execute_tool(self):
         """
-        Executes this tool.
+        Executes this tool
         :return: None
         """
         self.__set_input()
@@ -46,7 +46,7 @@ class GetBlastFasta(GetFasta):
     def __run_getfasta(self, bed_file, fasta_file):
         """
         Run Bedtools getfasta command to extract sequences based on input BED files
-        :return: none
+        :return: None
         """
         self._input_string = " ".join(self._input_specs) + " -bed {}".format(bed_file)
         self._output_string = "-fo {}".format(fasta_file)
@@ -56,7 +56,7 @@ class GetBlastFasta(GetFasta):
     def __build_command(self):
         """
         Build the command to run tool
-        :return: none
+        :return: None
         """
         self._command.command = "{} {} {} {}".format(
             self._tool_command, self._input_string, self._output_string,
@@ -66,7 +66,7 @@ class GetBlastFasta(GetFasta):
     def _check_input(self):
         """
         Check input for bedtools getfasta
-        :return: none
+        :return: None
         """
         self._check_required_inputs()
 
@@ -80,7 +80,7 @@ class GetBlastFasta(GetFasta):
     def __set_input(self):
         """
         Set porper input for bedtools getfasta
-        :return: none
+        :return: None
         """
         self.__output_blasthits_to_bed(self._tool_inputs['TSV_BLAST'][0].path)
 
@@ -132,7 +132,7 @@ class GetBlastFasta(GetFasta):
         """
         Output blast hits into separate bed files
         :param blasthits: list of blasthits extracted from blast output
-        :return: none
+        :return: None
         """
         opened_files = {}
         target = self._parameters['target'].value
@@ -166,7 +166,7 @@ class GetBlastFasta(GetFasta):
         """
         Output blast hits into one bed file
         :param blasthits: list of blasthits extracted from blast output
-        :return: none
+        :return: None
         """
         bed_file = os.path.join(self._folder, self.BED_FILE)
         target = self._parameters['target'].value
@@ -191,7 +191,7 @@ class GetBlastFasta(GetFasta):
         """
         Output hits dict into one or multiple bed files based on 'mode'
         :param blasthits_file: the tsv file of blast outfmt 6
-        :return: none
+        :return: None
         """
         blastn_file = BlastnTSVFile(blasthits_file, with_seq=False)
         blasthits = blastn_file.read_hits_as_list()
@@ -207,7 +207,7 @@ class GetBlastFasta(GetFasta):
     def __set_output(self):
         """
         Set the output specification
-        :return: none
+        :return: None
         """
         self._FASTA_files = [os.path.splitext(f)[0] + ".fa" for f in self._BED_files]
         self._tool_outputs.update({
