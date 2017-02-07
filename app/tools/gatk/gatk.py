@@ -31,7 +31,7 @@ class GATK(Tool):
     def _execute_tool(self):
         """
         Run a GATK function
-        :return: none
+        :return: None
         """
         self._set_input()
         self._set_output()

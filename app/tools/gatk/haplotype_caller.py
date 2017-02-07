@@ -32,6 +32,10 @@ class HaplotypeCaller(GATK):
         self._input_string += "-I {} ".format(bam_file)
 
     def _set_output(self):
+        """
+        Set the output specification
+        :return: None
+        """
         super(HaplotypeCaller, self)._set_output()
 
         if 'bamOutput' in self._parameters:
