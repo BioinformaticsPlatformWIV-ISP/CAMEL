@@ -22,6 +22,7 @@ class Velveth(Velvet):
         Function to run BWA index
         :return: None
         """
+        self._set_input()
         self.__build_command()
         self._execute_command()
         self.__set_output()
