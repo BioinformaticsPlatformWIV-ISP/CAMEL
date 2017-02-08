@@ -12,7 +12,7 @@ class Bowtie2Map(Bowtie2):
     fastq format due to lack of use.
     """
     OUTPUT_NAME = 'bowtie2_readmap.sam'
-    SAMPLE_NAME = 'sampleA'
+    DEFAULT_SAMPLE_NAME = 'sampleA'
 
     def __init__(self, camel):
         """
@@ -46,7 +46,6 @@ class Bowtie2Map(Bowtie2):
         self._mod = None
         self._fastq_inputs_str = ''
         self._refgenome_str = ''
-        self._output_str = ''
         self._readgroup_str = ''
 
     def _execute_tool(self):
@@ -65,22 +64,9 @@ class Bowtie2Map(Bowtie2):
         Set extra input
         :return: None
         """
-        if 'SAMPLE_NAME' in self._tool_inputs:
-            sample_name = self._tool_inputs['SAMPLE_NAME'][0].value
-        else:
-            sample_name = Bowtie2Map.SAMPLE_NAME
-        self._readgroup_str += " --rg-id {!r}".format(sample_name)
-
-    def _check_input(self):
-        """
-        Check input for Bowtie2 mapping
-        :return: None
-        """
         # Note that Bowtie2 can map both PE and SE reads together
         if 'FASTQ_PE' in self._tool_inputs:
             self._mod = 'PE'
-            if len(self._tool_inputs['FASTQ_PE']) != 2:
-                raise ValueError("Paired end input requires exactly 2 files.")
             self._fastq_inputs_str += ' -1 {} -2 {}'.format(
                 self._tool_inputs['FASTQ_PE'][0].path, self._tool_inputs['FASTQ_PE'][1].path
             )
@@ -88,23 +74,37 @@ class Bowtie2Map(Bowtie2):
             if not self._mod:
                 self._mod = 'SE'
             self._fastq_inputs_str += ' -U {}'.format(",".join(f.path for f in self._tool_inputs['FASTQ_SE']))
-        if not self._fastq_inputs_str:
-            raise ValueError("No FASTQ_PE of FASTQ_SE input found")
+
+        self._refgenome_str = "-x {}".format(self._tool_inputs['INDEX_GENOME_PREFIX'][0].value)
+
+        if 'SAMPLE_NAME' in self._tool_inputs:
+            sample_name = self._tool_inputs['SAMPLE_NAME'][0].value
+        else:
+            sample_name = Bowtie2Map.DEFAULT_SAMPLE_NAME
+        self._readgroup_str += " --rg-id {!r}".format(sample_name)
+
+    def _check_input(self):
+        """
+        Check input for Bowtie2 mapping
+        :return: None
+        """
+        super(Bowtie2Map, self)._check_input()
+
+        if 'FASTQ_PE' in self._tool_inputs:
+            if len(self._tool_inputs['FASTQ_PE']) != 2:
+                raise ValueError("Paired end input requires exactly 2 files.")
+        elif 'FASTQ_SE' not in self._tool_inputs:
+            raise ValueError("No FASTQ_PE or FASTQ_SE input found")
 
         if 'INDEX_GENOME_PREFIX' not in self._tool_inputs:
             raise ValueError('No genome index input (INDEX_GENOME_PREFIX) found.')
-        self._refgenome_str = "-x {}".format(self._tool_inputs['INDEX_GENOME_PREFIX'][0].value)
-
-        super(Bowtie2Map, self)._check_input()
 
     def __set_output(self):
         """
         Set output for Bowtie2 read mapping
         :return None
         """
-        sam_filename = os.path.join(self._folder, Bowtie2Map.OUTPUT_NAME)
-        self._tool_outputs['SAM'] = [ToolIOFile(sam_filename)]
-        self._output_str = "-S {}".format(sam_filename)
+        self._tool_outputs['SAM'] = [ToolIOFile(os.path.join(self._folder, Bowtie2Map.OUTPUT_NAME))]
 
     @staticmethod
     def __check_mode_exclusiveness(options):
@@ -114,7 +114,7 @@ class Bowtie2Map(Bowtie2):
         """
         if ('end-to-end' in options) and ('local' in options):
             raise InvalidParameterError(
-                "Bowtie2 reads mapping modes 'end-to-end' and 'local' are exclusive to each other, cannot be specifed at the same time!"
+                "Bowtie2 reads mapping modes 'end-to-end' and 'local' are exclusive to each other, cannot be specified at the same time!"
             )
 
     @staticmethod
@@ -190,16 +190,16 @@ class Bowtie2Map(Bowtie2):
         Build command to run Bowtie2
         :return: None
         """
-        self._command.command = '{} {} {} {} {} {}'.format(
+        self._command.command = '{} {} {} {} {} -S {}'.format(
             self._tool_command,
             " ".join(self._build_options()),
             self._readgroup_str,
             self._refgenome_str,
             self._fastq_inputs_str,
-            self._output_str
+            self._tool_outputs['SAM'][0].path
         )
 
-    def __set_time_info(self, line):
+    def __set_time_inform(self, line):
         """
         Set running time related information
         :param line: the content of current line (from self._command.stderr)
@@ -251,6 +251,6 @@ class Bowtie2Map(Bowtie2):
 
         # parse output to extract information
         for l in self.stderr.splitlines():
-            time_inform_set = self.__set_time_info(l)
+            time_inform_set = self.__set_time_inform(l)
             if not time_inform_set:
                 self.__set_mapping_inform(l)

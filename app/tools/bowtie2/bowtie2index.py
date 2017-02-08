@@ -26,6 +26,7 @@ class Bowtie2Index(Bowtie2):
         Function to run BWA index
         :return: None
         """
+        self.__set_input()
         self.__build_command()
         self._execute_command()
         self.__set_output()
@@ -42,15 +43,26 @@ class Bowtie2Index(Bowtie2):
         Check FASTA_REF input and concatenate them if multiple fasta input files
         :return: None
         """
+        super(Bowtie2Index, self)._check_input()
+
+        if len(self._tool_inputs['FASTA_REF']) == 0:
+            raise ValueError("Required reference genome (FASTA) input file is missing.")
+
+    def __set_input(self):
+        """
+        Set the input
+        :return: None
+        """
         nb_of_inputs = len(self._tool_inputs['FASTA_REF'])
+
         if nb_of_inputs > 1:
             multifasta_file = self.__get_multi_fasta_genome_filename()
             FileUtils.concatenate_files(multifasta_file, [f.path for f in self._tool_inputs['FASTA_REF']])
             self._refgenome_fasta = multifasta_file
-        elif nb_of_inputs == 0:
-            raise ValueError("Required reference genome (FASTA) input file is missing.")
         else:
-            self._refgenome_fasta = self._tool_inputs['FASTA_REF'][0].path
+            fasta_file_path = self._tool_inputs['FASTA_REF'][0].path
+            self._refgenome_fasta = os.path.join(self._folder, os.path.basename(fasta_file_path))
+            os.symlink(fasta_file_path, self._refgenome_fasta)
 
     def __set_output(self):
         """
