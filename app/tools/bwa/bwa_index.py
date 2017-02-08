@@ -5,8 +5,8 @@ from app.io.tooliovalue import ToolIOValue
 from app.tools.bwa.bwa import BWA
 
 
-class Index(BWA):
-    """Index genome using 'bwa index' from BWA for read mapping"""
+class BWAIndex(BWA):
+    """BWAIndex genome using 'bwa index' from BWA for read mapping"""
 
     MULTI_FASTA_GENOME_FILE = 'complete_genome.fasta'
 
@@ -16,7 +16,7 @@ class Index(BWA):
         :param camel: Camel instance
         :return: None
         """
-        super(Index, self).__init__('bwa_index', '0.7.15', camel)
+        super(BWAIndex, self).__init__('bwa_index', '0.7.15', camel)
         self._refgenome_fasta = None
 
     def _execute_tool(self):
@@ -33,7 +33,7 @@ class Index(BWA):
         Get the filename used for multi fasta file representing complete genome
         :return: name of the multi fasta file with complete path
         """
-        return os.path.join(self._folder, Index.MULTI_FASTA_GENOME_FILE)
+        return os.path.join(self._folder, BWAIndex.MULTI_FASTA_GENOME_FILE)
 
     def _check_input(self):
         """

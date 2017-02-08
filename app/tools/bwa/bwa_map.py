@@ -4,7 +4,7 @@ from app.io.tooliofile import ToolIOFile
 from app.tools.bwa.bwa import BWA
 
 
-class Map(BWA):
+class BWAMap(BWA):
     """
     Reads mapping using 'bwa mem' from BWA
 
@@ -17,11 +17,11 @@ class Map(BWA):
 
     def __init__(self, camel):
         """
-        Initialize Map
+        Initialize BWAMap
         :param camel: Camel instance
         :return: None
         """
-        super(Map, self).__init__('bwa_mem', '0.7.15', camel)
+        super(BWAMap, self).__init__('bwa_mem', '0.7.15', camel)
         self._fastq_inputs_str = None
         self._readgroup_str = ''
 
@@ -43,7 +43,7 @@ class Map(BWA):
         if 'SAMPLE_NAME' in self._tool_inputs:
             sample_name = self._tool_inputs['SAMPLE_NAME'][0].value
         else:
-            sample_name = Map.SAMPLE_NAME
+            sample_name = BWAMap.SAMPLE_NAME
         # Read Group format: '@RG\tID:foo\tSM:bar'
         self._readgroup_str += "@RG\tID:{0}\tSM:{0}".format(sample_name)
 
@@ -52,7 +52,7 @@ class Map(BWA):
         Check input for BWA mem.
         :return: None
         """
-        super(Map, self)._check_input()
+        super(BWAMap, self)._check_input()
 
         if 'FASTQ_PE' in self._tool_inputs:
             if len(self._tool_inputs['FASTQ_PE']) != 2:
@@ -77,7 +77,7 @@ class Map(BWA):
         Set proper outputs for BAW mem
         :return: None
         """
-        self._tool_outputs['SAM'] = [ToolIOFile(os.path.join(self._folder, Map.OUTPUT_NAME))]
+        self._tool_outputs['SAM'] = [ToolIOFile(os.path.join(self._folder, BWAMap.OUTPUT_NAME))]
 
     def __build_command(self):
         """
