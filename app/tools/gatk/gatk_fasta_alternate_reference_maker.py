@@ -11,7 +11,7 @@ from app.components.sequence_extraction import Alphabet
 from app.components.sequence_extraction import MASK_NT
 
 
-class FastaAlternateReferenceMaker(GATK):
+class GATKFastaAlternateReferenceMaker(GATK):
     """
     Class for GATK FastaAlternateReferenceMaker function
     """
@@ -22,7 +22,7 @@ class FastaAlternateReferenceMaker(GATK):
         :param camel: Camel instance
         :return: None
         """
-        super(FastaAlternateReferenceMaker, self).__init__('gatk FastaAlternateReferenceMaker', '3.4.46', camel)
+        super(GATKFastaAlternateReferenceMaker, self).__init__('gatk FastaAlternateReferenceMaker', '3.4.46', camel)
         self._function_name = 'FastaAlternateReferenceMaker'
         self._required_inputs = ['VCF']
         self._output_type = 'FASTA'
@@ -36,7 +36,7 @@ class FastaAlternateReferenceMaker(GATK):
         Run GATK FastaAlternateReferenceMaker
         :return: None
         """
-        super(FastaAlternateReferenceMaker, self)._execute_tool()
+        super(GATKFastaAlternateReferenceMaker, self)._execute_tool()
 
         if self._concatenate_sequence:
             FastaUtils.write(self.__concatenate_sequence_segments(), self._fasta_concatenated)
@@ -46,7 +46,7 @@ class FastaAlternateReferenceMaker(GATK):
         Checks tool parameters
         :return: None
         """
-        super(FastaAlternateReferenceMaker, self)._check_parameters()
+        super(GATKFastaAlternateReferenceMaker, self)._check_parameters()
 
         if 'concatenate_sequence_segments' in self._parameters:
             self._concatenate_sequence = True
@@ -62,14 +62,14 @@ class FastaAlternateReferenceMaker(GATK):
                     "FastaAlternateReferenceMaker opt 'concatenate_sequence_segments' required 'TXT_intervals' input is missing, option disabled.")
                 self._concatenate_sequence = False
 
-        super(FastaAlternateReferenceMaker, self)._check_input()
+        super(GATKFastaAlternateReferenceMaker, self)._check_input()
 
     def _set_input(self):
         """
         Set the input specification
         :return: None
         """
-        super(FastaAlternateReferenceMaker, self)._set_input()
+        super(GATKFastaAlternateReferenceMaker, self)._set_input()
 
         if 'VCF_SNPmask' in self._tool_inputs:
             self._input_string += "--snpmask {} ".format(self._tool_inputs['VCF_SNPmask'][0].path)
@@ -79,7 +79,7 @@ class FastaAlternateReferenceMaker(GATK):
         Set the output specification
         :return: None
         """
-        super(FastaAlternateReferenceMaker, self)._set_output()
+        super(GATKFastaAlternateReferenceMaker, self)._set_output()
         # set default output type self._output_type: 'FASTA'
         self._fasta_extracted = self._tool_outputs['FASTA'][0].path
 

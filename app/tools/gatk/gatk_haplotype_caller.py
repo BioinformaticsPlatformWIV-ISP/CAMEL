@@ -4,7 +4,7 @@ from app.io.tooliofile import ToolIOFile
 from app.tools.gatk.gatk import GATK
 
 
-class HaplotypeCaller(GATK):
+class GATKHaplotypeCaller(GATK):
     """
     Class for GATK HaplotypeCaller function
     """
@@ -15,7 +15,7 @@ class HaplotypeCaller(GATK):
         :param camel: Camel instance
         :return: None
         """
-        super(HaplotypeCaller, self).__init__('gatk HaplotypeCaller', '3.4.46', camel)
+        super(GATKHaplotypeCaller, self).__init__('gatk HaplotypeCaller', '3.4.46', camel)
 
         self._function_name = 'HaplotypeCaller'
         self._required_inputs = ['BAM', 'FASTA_REF']
@@ -26,7 +26,7 @@ class HaplotypeCaller(GATK):
         Set the input specification
         :return: None
         """
-        super(HaplotypeCaller, self)._set_input()
+        super(GATKHaplotypeCaller, self)._set_input()
 
         bam_file = self._tool_inputs['BAM'][0].path
         self._input_string += "-I {} ".format(bam_file)
@@ -36,7 +36,7 @@ class HaplotypeCaller(GATK):
         Set the output specification
         :return: None
         """
-        super(HaplotypeCaller, self)._set_output()
+        super(GATKHaplotypeCaller, self)._set_output()
 
         if 'bamOutput' in self._parameters:
             self._tool_outputs['BAM'] = [ToolIOFile(os.path.join(self._folder, self._parameters['bamOutput'].value))]

@@ -4,7 +4,7 @@ import re
 from app.tools.gatk.gatk import GATK
 
 
-class SelectVariants(GATK):
+class GATKSelectVariants(GATK):
     """
     Class for GATK SelectVariants function
     """
@@ -15,7 +15,7 @@ class SelectVariants(GATK):
         :param camel: Camel instance
         :return: None
         """
-        super(SelectVariants, self).__init__('gatk SelectVariants', '3.4.46', camel)
+        super(GATKSelectVariants, self).__init__('gatk SelectVariants', '3.4.46', camel)
         self._function_name = 'SelectVariants'
         self._specific_parameters = ['selectTypeToExlcude', 'selectTypeToInclude']
         self._required_inputs = ['VCF']
@@ -42,7 +42,7 @@ class SelectVariants(GATK):
         Set the input specification
         :return: None
         """
-        super(SelectVariants, self)._set_input()
+        super(GATKSelectVariants, self)._set_input()
 
         # To extract only certain samples
         if 'SAMPLES' in self._tool_inputs:

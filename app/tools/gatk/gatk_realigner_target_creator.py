@@ -3,7 +3,7 @@ import logging
 from app.tools.gatk.gatk import GATK
 
 
-class RealignerTargetCreator(GATK):
+class GATKRealignerTargetCreator(GATK):
     """
     Class for GATK RealignerTargetCreator function
     """
@@ -14,7 +14,7 @@ class RealignerTargetCreator(GATK):
         :param camel: Camel instance
         :return: None
         """
-        super(RealignerTargetCreator, self).__init__('gatk RealignerTargetCreator', '3.4.46', camel)
+        super(GATKRealignerTargetCreator, self).__init__('gatk RealignerTargetCreator', '3.4.46', camel)
 
         self._function_name = 'RealignerTargetCreator'
         self._required_inputs = ['BAM', 'FASTA_REF']
@@ -26,7 +26,7 @@ class RealignerTargetCreator(GATK):
         Set the input specification
         :return: None
         """
-        super(RealignerTargetCreator, self)._set_input()
+        super(GATKRealignerTargetCreator, self)._set_input()
 
         bam_file = self._tool_inputs['BAM'][0].path
         self._input_string += "-I {} ".format(bam_file)

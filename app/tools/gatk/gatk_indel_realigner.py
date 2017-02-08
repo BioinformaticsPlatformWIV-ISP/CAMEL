@@ -2,7 +2,7 @@ import logging
 from app.tools.gatk.gatk import GATK
 
 
-class IndelRealigner(GATK):
+class GATKIndelRealigner(GATK):
     """
     Class for GATK IndelRealigner function
     """
@@ -13,7 +13,7 @@ class IndelRealigner(GATK):
         :param camel: Camel instance
         :return: None
         """
-        super(IndelRealigner, self).__init__('gatk IndelRealigner', '3.4.46', camel)
+        super(GATKIndelRealigner, self).__init__('gatk IndelRealigner', '3.4.46', camel)
 
         self._function_name = 'IndelRealigner'
         self._required_inputs = ['BAM', 'FASTA_REF', 'TXT_realign_intervals']
@@ -25,7 +25,7 @@ class IndelRealigner(GATK):
         Set the input specification
         :return: None
         """
-        super(IndelRealigner, self)._set_input()
+        super(GATKIndelRealigner, self)._set_input()
 
         bam_file = self._tool_inputs['BAM'][0].path
         self._input_string += "-I {} ".format(bam_file)

@@ -1,6 +1,7 @@
 import logging
 import os
 import re
+import abc
 
 from app.error.toolexecutionerror import ToolExecutionError
 from app.io.tooliofile import ToolIOFile
@@ -11,6 +12,7 @@ class GATK(Tool):
     """
     Super class for GATK tools
     """
+    __metaclass__ = abc.ABCMeta
 
     def __init__(self, tool_name, version, camel):
         """
