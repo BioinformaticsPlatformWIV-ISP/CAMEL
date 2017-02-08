@@ -37,18 +37,17 @@ class Velvetg(Tool):
         Check input for velvetg
         :return: None
         """
+        super(Velvetg, self)._check_input()
+
         if 'DIR_DB' not in self._tool_inputs:
             raise ValueError('Velveth DB path (DIR_DB) is missing.')
-
-        self._output_dir = self._tool_inputs['DIR_DB'][0].path
-
-        super(Velvetg, self)._check_input()
 
     def __set_output(self):
         """
         Set output for velvetg
         :return: None
         """
+        self._output_dir = self._tool_inputs['DIR_DB'][0].path
         self._tool_outputs['FASTA_Contig'] = [ToolIOFile(os.path.join(self._output_dir, Velvetg.OUTPUT_FASTA))]
 
     def __build_command(self):

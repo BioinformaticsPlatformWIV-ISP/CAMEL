@@ -42,25 +42,23 @@ class Velvet(Tool):
         Handle specific input for file handling
         :return: None
         """
+        super(Velvet, self)._check_input()
+
+        if not any(key in self._tool_inputs for key in ('FASTA_SE', 'FASTA_PE', 'FASTQ_SE', 'FASTQ_PE')):
+            raise KeyError("No required PE or SE library input(s) found")
+
+    def _set_input(self):
+        """
+        Set input
+        :return: None
+        """
         input_options = []
-        contains_short_library = False
 
         for key, fileopt in Velvet.FILEOPT_MAPPING.items():
             if key in self._tool_inputs:
                 if key.find('PE') > 0:
-                    input_options.append(
-                        fileopt + " " + " ".join([f.path for f in self._tool_inputs[key]]))
+                    input_options.append(fileopt + " " + " ".join([f.path for f in self._tool_inputs[key]]))
                 else:
-                    input_options.append(
-                        fileopt + " " + self._tool_inputs[key][0].path)
-
-            if key in ('FASTA_SE', 'FASTA_PE', 'FASTQ_SE', 'FASTQ_PE'):
-                contains_short_library = True
-
-        if not contains_short_library:
-            raise KeyError("No PE or SE library required found in tool_inputs keys: {}".format(
-                self._tool_inputs.keys()))
+                    input_options.append(fileopt + " " + self._tool_inputs[key][0].path)
 
         self._input_string = " ".join(input_options)
-
-        super(Velvet, self)._check_input()
