@@ -6,7 +6,7 @@ from app.io.tooliofile import ToolIOFile
 from app.tools.seqtk.seqtk import Seqtk
 
 
-class Subsample(Seqtk):
+class SeqtkSubsample(Seqtk):
     """
     Class that subsamples fastq/fasta file(s) using seqkt
     """
@@ -17,7 +17,7 @@ class Subsample(Seqtk):
         :param camel: Camel instance
         :return: None
         """
-        super(Subsample, self).__init__('Seqtk Subsample', '1.2', camel)
+        super(SeqtkSubsample, self).__init__('Seqtk Subsample', '1.2', camel)
         self._function_name = 'Subsample'
         self._specific_parameters = ['combine_output', 'output_prefix', 'fraction']
         self.combine_output = False

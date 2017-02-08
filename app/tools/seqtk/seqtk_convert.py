@@ -4,7 +4,7 @@ from app.io.tooliofile import ToolIOFile
 from app.tools.seqtk.seqtk import Seqtk
 
 
-class Convert(Seqtk):
+class SeqtkConvert(Seqtk):
     """
     Class that converts fastq/fasta file using seqtk
     """
@@ -15,7 +15,7 @@ class Convert(Seqtk):
         :param camel: Camel instance
         :return: None
         """
-        super(Convert, self).__init__('Seqtk Convert', '1.2', camel)
+        super(SeqtkConvert, self).__init__('Seqtk Convert', '1.2', camel)
 
         self._function_name = 'Convert'
         self._supported_inputs = ['FASTQ']

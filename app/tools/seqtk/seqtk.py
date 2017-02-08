@@ -7,6 +7,7 @@ class Seqtk(Tool):
     """
     Base class for all seqtk functionality
     """
+    __metaclass__ = abc.ABCMeta
 
     def __init__(self, tool_name, version, camel):
         """
@@ -84,7 +85,7 @@ class Seqtk(Tool):
         Set the output specification
         :return: None
         """
-        return
+        pass
 
     def _build_command(self):
         """
