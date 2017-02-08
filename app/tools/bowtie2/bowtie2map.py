@@ -6,7 +6,7 @@ from app.io.tooliofile import ToolIOFile
 from app.tools.bowtie2.bowtie2 import Bowtie2
 
 
-class Map(Bowtie2):
+class Bowtie2Map(Bowtie2):
     """
     Reads mapping using Bowtie2. It does **not** support using both PE and SE reads. Does **not** support interleaved
     fastq format due to lack of use.
@@ -20,7 +20,7 @@ class Map(Bowtie2):
         :param camel: Camel instance
         :return: None
         """
-        super(Map, self).__init__('bowtie2 map', '2.3.0', camel)
+        super(Bowtie2Map, self).__init__('bowtie2 map', '2.3.0', camel)
 
         self._time_inform_mapping = {
             'Time loading reference': 'time_loading_reference',
@@ -68,7 +68,7 @@ class Map(Bowtie2):
         if 'SAMPLE_NAME' in self._tool_inputs:
             sample_name = self._tool_inputs['SAMPLE_NAME'][0].value
         else:
-            sample_name = Map.SAMPLE_NAME
+            sample_name = Bowtie2Map.SAMPLE_NAME
         self._readgroup_str += " --rg-id {!r}".format(sample_name)
 
     def _check_input(self):
@@ -95,14 +95,14 @@ class Map(Bowtie2):
             raise ValueError('No genome index input (INDEX_GENOME_PREFIX) found.')
         self._refgenome_str = "-x {}".format(self._tool_inputs['INDEX_GENOME_PREFIX'][0].value)
 
-        super(Map, self)._check_input()
+        super(Bowtie2Map, self)._check_input()
 
     def __set_output(self):
         """
         Set output for Bowtie2 read mapping
         :return None
         """
-        sam_filename = os.path.join(self._folder, Map.OUTPUT_NAME)
+        sam_filename = os.path.join(self._folder, Bowtie2Map.OUTPUT_NAME)
         self._tool_outputs['SAM'] = [ToolIOFile(sam_filename)]
         self._output_str = "-S {}".format(sam_filename)
 
@@ -169,21 +169,21 @@ class Map(Bowtie2):
             'very-sensitive'
         ]
         if 'end-to-end' in options:
-            Map.__check_wrong_preset('end-to-end', options, local_preset)
-            Map.__check_presets_exclusiveness('end-to-end', end_to_end_preset, options)
+            Bowtie2Map.__check_wrong_preset('end-to-end', options, local_preset)
+            Bowtie2Map.__check_presets_exclusiveness('end-to-end', end_to_end_preset, options)
         elif 'local' in options:
-            Map.__check_wrong_preset('local', options, end_to_end_preset)
-            Map.__check_presets_exclusiveness('local', local_preset, options)
+            Bowtie2Map.__check_wrong_preset('local', options, end_to_end_preset)
+            Bowtie2Map.__check_presets_exclusiveness('local', local_preset, options)
 
     def _check_parameters(self):
         """
         Check the exclusiveness of different mods of Bowtie2 and the exclusiveness of presets for each mod and between mods
         """
-        super(Map, self)._check_parameters()
+        super(Bowtie2Map, self)._check_parameters()
 
         options = set(self._parameters.keys())
-        Map.__check_mode_exclusiveness(options)
-        Map.__check_mode_preset_conflicts(options)
+        Bowtie2Map.__check_mode_exclusiveness(options)
+        Bowtie2Map.__check_mode_preset_conflicts(options)
 
     def __build_command(self):
         """
