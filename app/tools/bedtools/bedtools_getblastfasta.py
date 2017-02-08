@@ -3,11 +3,11 @@ import re
 
 from app.io.tooliofile import ToolIOFile
 from app.io.tooliovalue import ToolIOValue
-from app.tools.bedtools.getfasta import GetFasta
+from app.tools.bedtools.bedtools_getfasta import BedtoolsGetFasta
 from app.components.sequence_extraction.blastn_customized_output import BlastnTSVFile
 
 
-class GetBlastFasta(GetFasta):
+class BedtoolsGetBlastFasta(BedtoolsGetFasta):
     """
     Use Bedtools getfasta function to extract sequences based on BLAST aglinment, targeted sequences can be extracted
     from either BLAST query or subject.
@@ -20,7 +20,7 @@ class GetBlastFasta(GetFasta):
         :param camel: Camel instance
         :return: None
         """
-        super(GetBlastFasta, self).__init__(camel, 'bedtools getblastfasta', '2.25.0')
+        super(BedtoolsGetBlastFasta, self).__init__(camel, 'bedtools getblastfasta', '2.25.0')
 
         self._required_inputs = ['TSV_BLAST', 'FASTA']
 
@@ -75,7 +75,7 @@ class GetBlastFasta(GetFasta):
         if len(self._tool_inputs['FASTA']) != 1:
             raise ValueError("Exactly one FASTA input file expected.")
 
-        super(GetFasta, self)._check_input()
+        super(BedtoolsGetFasta, self)._check_input()
 
     def __set_input(self):
         """

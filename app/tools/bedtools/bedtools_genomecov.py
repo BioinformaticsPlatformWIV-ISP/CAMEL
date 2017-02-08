@@ -4,7 +4,7 @@ from app.io.tooliofile import ToolIOFile
 from app.tools.bedtools.bedtools import Bedtools
 
 
-class Genomecov(Bedtools):
+class BedtoolsGenomecov(Bedtools):
     """
     Bedtools Genomecov func class
     """
@@ -16,7 +16,7 @@ class Genomecov(Bedtools):
         :param camel: Camel instance
         :return: None
         """
-        super(Genomecov, self).__init__('bedtools genomecov', '2.25.0', camel)
+        super(BedtoolsGenomecov, self).__init__('bedtools genomecov', '2.25.0', camel)
         self._output_filename = None
         self._required_inputs = ['BAM']
 
@@ -47,11 +47,11 @@ class Genomecov(Bedtools):
         :return: None
         """
         if any(param in self._parameters.keys() for param in ['BedGraphWithZeroCoverage', 'BedGraph']):
-            self._output_filename = Genomecov.OUTPUT_FILE_BASENAME + ".bed"
+            self._output_filename = BedtoolsGenomecov.OUTPUT_FILE_BASENAME + ".bed"
             self._tool_outputs['TXT_BED'] = [ToolIOFile(os.path.join(self._folder, self._output_filename))]
 
         if any(param in self._parameters.keys() for param in ['DepthWithZeroCoord', 'Depth']):
-            self._output_filename = Genomecov.OUTPUT_FILE_BASENAME + ".tsv"
+            self._output_filename = BedtoolsGenomecov.OUTPUT_FILE_BASENAME + ".tsv"
             self._tool_outputs['TSV'] = [ToolIOFile(os.path.join(self._folder, self._output_filename))]
 
     def _check_parameters(self):
@@ -59,7 +59,7 @@ class Genomecov(Bedtools):
         Check the parameters
         :return: None
         """
-        super(Genomecov, self)._check_parameters()
+        super(BedtoolsGenomecov, self)._check_parameters()
 
         # OUTPUT_FORMAT_OPTIONS are mutually exclusive, only ONE can be specified.
         OUTPUT_FORMAT_OPTIONS = ['BedGraphWithZeroCoverage', 'BedGraph', 'DepthWithZeroCoverage', 'Depth']
@@ -86,4 +86,4 @@ class Genomecov(Bedtools):
         if len(self._tool_inputs['BAM']) != 1:
             raise ValueError("Exactly one BAM input file expected.")
 
-        super(Genomecov, self)._check_input()
+        super(BedtoolsGenomecov, self)._check_input()

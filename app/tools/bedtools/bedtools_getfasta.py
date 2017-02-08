@@ -4,7 +4,7 @@ from app.io.tooliofile import ToolIOFile
 from app.tools.bedtools.bedtools import Bedtools
 
 
-class GetFasta(Bedtools):
+class BedtoolsGetFasta(Bedtools):
     """
     Bedtools GetFasta func class
     """
@@ -18,7 +18,7 @@ class GetFasta(Bedtools):
         :param camel: Camel instance
         :return: None
         """
-        super(GetFasta, self).__init__(tool_name, version, camel)
+        super(BedtoolsGetFasta, self).__init__(tool_name, version, camel)
         self._required_inputs = ['BED', 'FASTA']
 
     def _execute_tool(self):
@@ -62,4 +62,4 @@ class GetFasta(Bedtools):
         if len(self._tool_inputs['FASTA']) != 1:
             raise ValueError("Exactly one FASTA input file expected.")
 
-        super(GetFasta, self)._check_input()
+        super(BedtoolsGetFasta, self)._check_input()
