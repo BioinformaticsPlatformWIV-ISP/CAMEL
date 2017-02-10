@@ -28,14 +28,15 @@ class SPAdes(Tool):
         Function to run SPAdes to do de novo assembly
         :return: None
         """
+        self.__check_and_set_input()
         self.__set_output()
         self.__build_command()
         self._execute_command()
 
     @staticmethod
-    def __set_input_files(input_type, files, ordinal='0'):
+    def __compose_input_str(input_type, files, ordinal='0'):
         """
-        Auxilary functions to set input option string for a given type of inputs
+        Compose input option string
         :param input_type: type of the input
         :param files: input files of given type
         :param ordinal: string represents the ordinal of the library, '0'=NA, '1'=1st, '2'=2nd, etc.
@@ -46,12 +47,8 @@ class SPAdes(Tool):
             return "--s{} {}".format(ordinal, files)
 
         elif input_type in ('pe', 'mp', 'hqmp'):
-            if len(files) == 2:
-                return "--{0}{1}-1 {2} --{0}{1}-2 {3}".format(input_type, ordinal, files[0], files[1])
-            else:
-                raise StandardError(
-                    "For input type {} of SPAdes two input files are required (one for"
-                    " each orientation), however {} found: {}.".format(input_type, len(files), ",".join(files)))
+            return "--{0}{1}-1 {2} --{0}{1}-2 {3}".format(input_type, ordinal, files[0], files[1])
+
         elif input_type in ('pe-s', 'mp-s', 'hqmp-s'):
             input_type = input_type.split("-")[0]
             # unpaired reads from pe, mp, hqmp libraries
@@ -64,7 +61,7 @@ class SPAdes(Tool):
     @staticmethod
     def __check_shortreads_library_limitation(reads_type, count):
         """
-        Check whether the number of libraries of given type exists maximum (5)
+        Check whether the number of libraries of given type exceed maximum (5)
         :param reads_type: the type of the library
         :param count: the identified number of libraries of a given type
         """
@@ -77,13 +74,13 @@ class SPAdes(Tool):
     @staticmethod
     def __check_min_input_requirement(se_count, pe_count, inputs):
         """
-        Check whether the minimum input requirement is meet, at least one library of type SE or PE
+        Check whether the minimum input requirement, at least one library of type SE or PE
         :param se_count: number of SE libraries
         :param pe_count: number of PE libraries
         :param inputs: dictionary of input files
         """
         if se_count == 0 and pe_count == 0:
-            raise StandardError("SPAdes requires at least one library of SE or PE read to work, none is found. "
+            raise StandardError("SPAdes requires at least one library of SE or PE read to work, none is found."
                                 "tool_inputs: {}".format(inputs))
 
     def __set_long_sequences(self, key_informs, files, infiles_options):
@@ -97,22 +94,21 @@ class SPAdes(Tool):
         if key_informs[1] == 'contigs':
             if key_informs[2] == 'untrusted':
                 # untrusted contigs
-                infiles_options.append(self.__set_input_files('untrusted-contigs', files))
+                infiles_options.append(self.__compose_input_str('untrusted-contigs', files))
             else:
                 # trusted contigs
-                infiles_options.append(self.__set_input_files('trusted-contigs', files))
+                infiles_options.append(self.__compose_input_str('trusted-contigs', files))
             return True
         elif key_informs[1] in ('sanger', 'pacbio', 'nanopore'):
             # sanger, pacbio, or nanopore reads
-            infiles_options.append(self.__set_input_files(key_informs[1], files))
+            infiles_options.append(self.__compose_input_str(key_informs[1], files))
             return True
         else:
             return False
 
-    def _check_input(self):
+    def __check_and_set_input(self):
         """
-        SPAdes specific input file checking and handling. For the supported inputs of SPAdes and of this implementation,
-        see wiki
+        SPAdes specific input file checking and handling. For the supported input types check wiki.
         :return: None
         """
         infiles_options = []
@@ -145,8 +141,13 @@ class SPAdes(Tool):
                     elif key_informs[1] == 'MP':
                         mp_count += 1
 
+                if key_informs[1].lower() in ('pe', 'mp', 'hqmp'):
+                    if len(files) != 2:
+                        raise StandardError(
+                            "For input type {!r}, SPAdes requirses two and only two files!".format(key_informs[1]))
+
                 infiles_options.append(
-                    self.__set_input_files(key_informs[1], files, key_informs[2]))
+                    self.__compose_input_str(key_informs[1], files, key_informs[2]))
 
             # long sequences
             elif not self.__set_long_sequences(key_informs, files, infiles_options):
@@ -165,8 +166,6 @@ class SPAdes(Tool):
         self.__check_min_input_requirement(se_count, pe_count, self._tool_inputs)
 
         self._input_string = " ".join(infiles_options)
-
-        super(SPAdes, self)._check_input()
 
     def __set_output(self):
         """
