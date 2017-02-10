@@ -48,11 +48,10 @@ class BWAMap(BWA):
             self._fastq_inputs_str = "-p {}".format(self._tool_inputs['FASTQ_INT'][0].path)
 
         if 'SAMPLE_NAME' in self._tool_inputs:
-            sample_name = self._tool_inputs['SAMPLE_NAME'][0].value
-        else:
-            sample_name = BWAMap.DEFAULT_SAMPLE_NAME
-        # Read Group format: '@RG\tID:foo\tSM:bar'
-        self._readgroup_str += "@RG\tID:{0}\tSM:{0}".format(sample_name)
+            self._readgroup_str += "@RG\tID:{0}\tSM:{0}".format(self._tool_inputs['SAMPLE_NAME'][0].value)
+        elif 'add_read_group' in self._parameters:
+            # Read Group format: '@RG\tID:foo\tSM:bar'
+            self._readgroup_str += "@RG\tID:{0}\tSM:{0}".format(BWAMap.DEFAULT_SAMPLE_NAME)
 
     def _check_input(self):
         """
@@ -88,11 +87,20 @@ class BWAMap(BWA):
         Build command to run BWA mem
         :return: None
         """
-        self._command.command = '{} {} -R {!r} {} {} > {}'.format(
-            self._tool_command,
-            ' '.join(self._build_options()),
-            self._readgroup_str,
-            self._tool_inputs['INDEX_GENOME_PREFIX'][0].value,
-            self._fastq_inputs_str,
-            self._tool_outputs['SAM'][0].path
-        )
+        if self._readgroup_str:
+            self._command.command = '{} {} -R {!r} {} {} > {}'.format(
+                self._tool_command,
+                ' '.join(self._build_options()),
+                self._readgroup_str,
+                self._tool_inputs['INDEX_GENOME_PREFIX'][0].value,
+                self._fastq_inputs_str,
+                self._tool_outputs['SAM'][0].path
+            )
+        else:
+            self._command.command = '{} {} {} {} > {}'.format(
+                self._tool_command,
+                ' '.join(self._build_options()),
+                self._tool_inputs['INDEX_GENOME_PREFIX'][0].value,
+                self._fastq_inputs_str,
+                self._tool_outputs['SAM'][0].path
+            )
