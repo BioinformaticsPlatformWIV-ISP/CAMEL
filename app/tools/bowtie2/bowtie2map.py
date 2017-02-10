@@ -78,11 +78,12 @@ class Bowtie2Map(Bowtie2):
         self._refgenome_str = "-x {}".format(self._tool_inputs['INDEX_GENOME_PREFIX'][0].value)
 
         if 'SAMPLE_NAME' in self._tool_inputs:
-            sample_name = self._tool_inputs['SAMPLE_NAME'][0].value
-            self._readgroup_str += " --rg-id {!r}".format(sample_name)
-        elif 'read_group' in self._parameters:
-            sample_name = Bowtie2Map.DEFAULT_SAMPLE_NAME
-            self._readgroup_str += " --rg-id {!r}".format(sample_name)
+            self._readgroup_str += " --rg-id {!r}".format(self._tool_inputs['SAMPLE_NAME'][0].value)
+        elif 'read_group_id' in self._parameters:
+            if self._parameters['read_group_id'].value == '':
+                self._readgroup_str += " --rg-id {!r}".format(Bowtie2Map.DEFAULT_SAMPLE_NAME)
+            else:
+                self._readgroup_str += " --rg-id {!r}".format(self._parameters['read_group_id'].value)
 
     def _check_input(self):
         """
@@ -191,14 +192,23 @@ class Bowtie2Map(Bowtie2):
         Build command to run Bowtie2
         :return: None
         """
-        self._command.command = '{} {} {} {} {} -S {}'.format(
-            self._tool_command,
-            " ".join(self._build_options()),
-            self._readgroup_str,
-            self._refgenome_str,
-            self._fastq_inputs_str,
-            self._tool_outputs['SAM'][0].path
-        )
+        if self._readgroup_str:
+            self._command.command = '{} {} {} {} {} -S {}'.format(
+                self._tool_command,
+                " ".join(self._build_options(excluded_parameters=['read_group_id'])),
+                self._readgroup_str,
+                self._refgenome_str,
+                self._fastq_inputs_str,
+                self._tool_outputs['SAM'][0].path
+            )
+        else:
+            self._command.command = '{} {} {} {} -S {}'.format(
+                self._tool_command,
+                " ".join(self._build_options()),
+                self._refgenome_str,
+                self._fastq_inputs_str,
+                self._tool_outputs['SAM'][0].path
+            )
 
     def __set_time_inform(self, line):
         """
