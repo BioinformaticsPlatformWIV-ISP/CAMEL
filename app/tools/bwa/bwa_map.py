@@ -90,7 +90,7 @@ class BWAMap(BWA):
         if self._readgroup_str:
             self._command.command = '{} {} -R {!r} {} {} > {}'.format(
                 self._tool_command,
-                ' '.join(self._build_options()),
+                ' '.join(self._build_options(excluded_parameters=['add_read_group'])),
                 self._readgroup_str,
                 self._tool_inputs['INDEX_GENOME_PREFIX'][0].value,
                 self._fastq_inputs_str,
