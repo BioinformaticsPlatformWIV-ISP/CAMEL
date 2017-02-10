@@ -79,9 +79,10 @@ class Bowtie2Map(Bowtie2):
 
         if 'SAMPLE_NAME' in self._tool_inputs:
             sample_name = self._tool_inputs['SAMPLE_NAME'][0].value
-        else:
+            self._readgroup_str += " --rg-id {!r}".format(sample_name)
+        elif 'read_group' in self._parameters:
             sample_name = Bowtie2Map.DEFAULT_SAMPLE_NAME
-        self._readgroup_str += " --rg-id {!r}".format(sample_name)
+            self._readgroup_str += " --rg-id {!r}".format(sample_name)
 
     def _check_input(self):
         """
