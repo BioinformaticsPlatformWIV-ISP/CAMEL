@@ -1,6 +1,7 @@
 import os
 import re
 
+from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from app.io.tooliofile import ToolIOFile
 from app.tools.tool import Tool
 
@@ -66,7 +67,7 @@ class SPAdes(Tool):
         :param count: the identified number of libraries of a given type
         """
         if count > 5:
-            raise StandardError(
+            raise InvalidInputSpecificationError(
                 "SPAdes does not support more than 5 libraries of input type {}, {} are found.".format(
                     reads_type, count)
             )
@@ -80,8 +81,8 @@ class SPAdes(Tool):
         :param inputs: dictionary of input files
         """
         if se_count == 0 and pe_count == 0:
-            raise StandardError("SPAdes requires at least one library of SE or PE read to work, none is found."
-                                "tool_inputs: {}".format(inputs))
+            raise InvalidInputSpecificationError("SPAdes requires at least one library of SE or PE read to work, none is found."
+                                                 "tool_inputs: {}".format(inputs))
 
     def __set_long_sequences(self, key_informs, files, infiles_options):
         """
@@ -143,7 +144,7 @@ class SPAdes(Tool):
 
                 if key_informs[1].lower() in ('pe', 'mp', 'hqmp'):
                     if len(files) != 2:
-                        raise StandardError(
+                        raise InvalidInputSpecificationError(
                             "For input type {!r}, SPAdes requirses two and only two files!".format(key_informs[1]))
 
                 infiles_options.append(
@@ -151,7 +152,7 @@ class SPAdes(Tool):
 
             # long sequences
             elif not self.__set_long_sequences(key_informs, files, infiles_options):
-                raise ValueError("Unsupported input library type {!r} for SPAdes.".format(key))
+                raise InvalidInputSpecificationError("Unsupported input library type {!r} for SPAdes.".format(key))
 
         # check short reads library count (not more then 5)
         reads_types = ['se', 'pe', 'mp', 'hqmp']
