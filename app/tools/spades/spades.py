@@ -21,7 +21,7 @@ class SPAdes(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super(SPAdes, self).__init__('spades', '3.6.2', camel)
+        super(SPAdes, self).__init__('spades', '3.10.0', camel)
         self._input_string = None
 
     def _execute_tool(self):
