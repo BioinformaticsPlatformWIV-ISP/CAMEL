@@ -1,3 +1,4 @@
+import logging
 import psycopg2
 import yaml
 
@@ -29,6 +30,7 @@ class Connection(object):
                                 dbname=self.config[self._db]['dbname'],
                                 user=self.config[self._db]['user'],
                                 password=self.config[self._db]['password'])
+        logging.debug("Connected to '{}' on {}".format(self.config[self._db]['dbname'], self.config[self._db]['host']))
         conn.autocommit = True
         return conn
 
