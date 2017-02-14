@@ -148,7 +148,10 @@ class Bowtie2Map(Bowtie2):
         :return: None
         """
         for p in wrong_presets:
-            if p in options:
+            # Note '-' is replaced with '_' for parameter name in db. Original name is used in here and the error
+            # message for consistency and clarity.
+            p_ = p.replace('-', '_')
+            if p_ in options:
                 raise InvalidParameterError(
                     "Bowtie2 incompatible preset: reads mapping mode {}, preset {!r}.".format(align_mode, p))
 
