@@ -68,7 +68,7 @@ class Trimmomatic(Tool):
             options = self.__build_pe_command()
         else:
             options = self.__build_se_command()
-        options += self._build_options(excluded_parameters=['baseout', 'threads', 'illuminaclip-PE', 'illuminaclip-SE'],
+        options += self._build_options(excluded_parameters=['baseout', 'threads', 'illuminaclip_PE', 'illuminaclip_SE'],
                                        delimiter='')
         self._command.command = '{} {}'.format(self._tool_command, ' '.join(options))
 
@@ -82,7 +82,7 @@ class Trimmomatic(Tool):
             str(self._parameters['threads']),
             self._tool_inputs['FASTQ_SE'][0].path,
             self._parameters['baseout'].value,
-            self._parameters['illuminaclip-SE'].option + self._parameters['illuminaclip-SE'].value,
+            self._parameters['illuminaclip_SE'].option + self._parameters['illuminaclip_SE'].value,
         ]
 
     def __build_pe_command(self):
@@ -95,7 +95,7 @@ class Trimmomatic(Tool):
             str(self._parameters['baseout']),
             str(self._parameters['threads']),
             ' '.join(f.path for f in self._tool_inputs['FASTQ_PE']),
-            self._parameters['illuminaclip-PE'].option + self._parameters['illuminaclip-PE'].value
+            self._parameters['illuminaclip_PE'].option + self._parameters['illuminaclip_PE'].value
         ]
 
     def __set_output(self):

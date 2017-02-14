@@ -1,6 +1,6 @@
 import logging
 
-from app.components.blast_hit.blasthit import BlastHit
+from app.components.blasttyping.blasthit import BlastHit
 
 
 class BlastHitParser(object):
