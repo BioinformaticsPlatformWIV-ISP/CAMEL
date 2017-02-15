@@ -1,6 +1,8 @@
-from app.components.blast_hit.blasthitclustering import BlastHitClustering
-from app.components.blast_hit.blasthitfiltering import BlastHitFiltering
-from app.components.blast_hit.blasthitparser import BlastHitParser
+
+
+from app.components.blasttyping.blasthitclustering import BlastHitClustering
+from app.components.blasttyping.blasthitfiltering import BlastHitFiltering
+from app.components.blasttyping.blasthitparser import BlastHitParser
 from app.io.tooliovalue import ToolIOValue
 from app.tools.tool import Tool
 

@@ -11,4 +11,4 @@ class Blastn(Blast):
         Initialize tool.
         :return: None
         """
-        super(Blastn, self).__init__('blastn', '2.2.30', camel)
+        super(Blastn, self).__init__('blastn', '2.6.0', camel)

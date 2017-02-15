@@ -17,7 +17,7 @@ class BlastFormatterLoop(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super(BlastFormatterLoop, self).__init__('blast_formatter (looping)', '2.2.30', camel)
+        super(BlastFormatterLoop, self).__init__('blast_formatter (looping)', '2.6.0', camel)
 
     def _execute_tool(self):
         """
@@ -100,5 +100,5 @@ class BlastFormatterLoop(Tool):
         Checks the command output for errors.
         :return: None
         """
-        if 'error' in self._command.stderr.lower():
+        if 'error' in self.stderr.lower():
             raise ValueError("Error executing {}: {}".format(self.name, self._command.stderr.strip()))

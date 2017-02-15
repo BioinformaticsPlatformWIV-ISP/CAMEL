@@ -1,6 +1,6 @@
 import logging
 
-from app.components.blast_hit.cluster import Cluster
+from app.components.blasttyping.cluster import Cluster
 
 
 class BlastHitClustering(object):
