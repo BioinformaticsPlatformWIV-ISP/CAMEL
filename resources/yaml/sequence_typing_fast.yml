@@ -125,6 +125,8 @@ steps:
     alias: DIR_LS
   - name: TXT
     from: Text_alignment_extraction
+  - name: SAMPLE_NAME
+    from: initial
   informs:
   - from: Locus_set_manager
     alias: locus_info
