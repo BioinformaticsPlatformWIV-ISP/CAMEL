@@ -4,6 +4,7 @@ from app.tools.picard.picard import Picard
 
 
 class MarkDuplicates(Picard):
+
     """
     Class for Picard MarkDuplicates function
     """
@@ -14,7 +15,7 @@ class MarkDuplicates(Picard):
         :param camel: Camel instance
         :return: None
         """
-        super(MarkDuplicates, self).__init__('Picard MarkDuplicates', '2.6.0', camel)
+        super(MarkDuplicates, self).__init__('Picard MarkDuplicates', '2.8.3', camel)
 
         self._function_name = 'MarkDuplicates'
         self._supported_inputs = ['BAM']

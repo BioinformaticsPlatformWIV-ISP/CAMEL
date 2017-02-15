@@ -4,6 +4,7 @@ from app.tools.picard.picard import Picard
 
 
 class FastqToSam(Picard):
+
     """
     Class for Picard FastqToSam function
     """
@@ -15,7 +16,7 @@ class FastqToSam(Picard):
         :param camel: Camel instance
         :return: None
         """
-        super(FastqToSam, self).__init__('Picard FastqToSam', '2.6.0', camel)
+        super(FastqToSam, self).__init__('Picard FastqToSam', '2.8.3', camel)
 
         self._function_name = 'FastqToSam'
 

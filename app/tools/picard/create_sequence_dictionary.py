@@ -5,6 +5,7 @@ from app.tools.picard.picard import Picard
 
 
 class CreateSequenceDictionary(Picard):
+
     """
     Class for Picard CreateSequenceDictionary function
     """
@@ -15,7 +16,7 @@ class CreateSequenceDictionary(Picard):
         :param camel: Camel instance
         :return: None
         """
-        super(CreateSequenceDictionary, self).__init__('Picard CreateSequenceDictionary', '2.6.0', camel)
+        super(CreateSequenceDictionary, self).__init__('Picard CreateSequenceDictionary', '2.8.3', camel)
 
         self._function_name = 'CreateSequenceDictionary'
         self._required_inputs = ['FASTA_REF']

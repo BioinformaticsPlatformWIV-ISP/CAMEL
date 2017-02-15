@@ -4,6 +4,7 @@ from app.tools.picard.picard import Picard
 
 
 class MergeBamAlignment(Picard):
+
     """
     Class for Picard MergeBamAlignment function
     """
@@ -14,7 +15,7 @@ class MergeBamAlignment(Picard):
         :param camel: Camel instance
         :return: None
         """
-        super(MergeBamAlignment, self).__init__('Picard MergeBamAlignment', '2.6.0', camel)
+        super(MergeBamAlignment, self).__init__('Picard MergeBamAlignment', '2.8.3', camel)
 
         self._function_name = 'MergeBamAlignment'
         self._supported_inputs = []

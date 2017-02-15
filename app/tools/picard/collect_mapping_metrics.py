@@ -7,6 +7,7 @@ from app.tools.picard.picard import Picard
 
 
 class CollectMultipleMetrics(Picard):
+
     """
     Class for Picard CollectMultipleMetrics function to calculate various QC matrics for readmap
 
@@ -39,7 +40,7 @@ class CollectMultipleMetrics(Picard):
         :param camel: Camel instance
         :return: None
         """
-        super(CollectMultipleMetrics, self).__init__('Picard CollectMultipleMetrics', '2.6.0', camel)
+        super(CollectMultipleMetrics, self).__init__('Picard CollectMultipleMetrics', '2.8.3', camel)
         self._function_name = 'CollectMultipleMetrics'
         self._required_inputs = ['FASTA_REF']
         self._outfile_prefix = None
@@ -106,7 +107,7 @@ class CollectMultipleMetrics(Picard):
         """
         # Example content of AlignmentSummaryMetrics
         #
-        # ## METRICS CLASS        picard.analysis.AlignmentSummaryMetrics
+        # METRICS CLASS        picard.analysis.AlignmentSummaryMetrics
         #         CATEGORY        TOTAL_READS     PF_READS        PCT_PF_READS    PF_NOISE_READS  PF_READS_ALIGNED        PCT_PF_READS_ALIGNED    PF_ALIGNED_BASES        PF_HQ_ALIGNED_READS     PF_HQ_ALIGNED_BASES     PF_HQ_ALIGNED_Q20_BASES PF_HQ_MEDIAN_MISMATCHES PF_MISMATCH_RATE        PF_HQ_ERROR_RATE        PF_INDEL_RATE   MEAN_READ_LENGTH        READS_ALIGNED_IN_PAIRS  PCT_READS_ALIGNED_IN_PAIRS      BAD_CYCLES      STRAND_BALANCE  PCT_CHIMERAS    PCT_ADAPTER     SAMPLE  LIBRARY READ_GROUP
         # FIRST_OF_PAIR   545327  545327  1       0       515082  0.944538        64189044        498204  62163596        62093230        0       0.003405        0.003358        0.000026        125.249694      505685  0.981756        0       0.501747        0.002396        0.000013
         # SECOND_OF_PAIR  545327  545327  1       0       509899  0.935033        57174661        493387  55411098        55322270        0       0.000938        0.000885        0.000025        111.532987      505685  0.991736        0       0.498722        0.002396        0
@@ -154,7 +155,7 @@ class CollectMultipleMetrics(Picard):
         """
         # Example content:
         #
-        # ## METRICS CLASS        picard.analysis.InsertSizeMetrics
+        # METRICS CLASS        picard.analysis.InsertSizeMetrics
         # MEDIAN_INSERT_SIZE      MEDIAN_ABSOLUTE_DEVIATION       MIN_INSERT_SIZE MAX_INSERT_SIZE MEAN_INSERT_SIZE        STANDARD_DEVIATION      READ_PAIRS      PAIR_ORIENTATION        WIDTH_OF_10_PERCENT     WIDTH_OF_20_PERCENT     WIDTH_OF_30_PERCENT     WIDTH_OF_40_PERCENT     WIDTH_OF_50_PERCENT     WIDTH_OF_60_PERCENT     WIDTH_OF_70_PERCENT     WIDTH_OF_80_PERCENT     WIDTH_OF_90_PERCENT     WIDTH_OF_99_PERCENT     SAMPLE  LIBRARY READ_GROUP
         # 438     22      24      4853839 431.875202      61.702551       497091  FR      9       17      27      35      45      57      69      85      111     763
         #
