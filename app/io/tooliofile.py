@@ -72,10 +72,7 @@ class ToolIOFile(ToolIO):
         Checks whether this file exists.
         :return: True if the file exists, False otherwise
         """
-        if os.path.islink(self.path):
-            return os.path.isfile(os.path.realpath(self.path))
-        else:
-            return os.path.isfile(self._path)
+        return os.path.isfile(self._path)
 
     @property
     def size(self):
