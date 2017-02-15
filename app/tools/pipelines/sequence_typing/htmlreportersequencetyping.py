@@ -1,6 +1,7 @@
 import datetime
 import os
 
+from app.components.filesystemhelper import FileSystemHelper
 from app.components.html.tablecell import HtmlTableCell
 from app.tools.export.htmlreporter import HtmlReporter
 from app.tools.pipelines.sequence_typing.besthitextractor import BestHitExtractor
@@ -60,6 +61,8 @@ class HtmlReporterSequenceTyping(HtmlReporter):
             raise ValueError("No allele metadata info found")
         if 'metadata_sequence_type' not in self._input_informs:
             raise ValueError("No sequence type metadata found")
+        if 'SAMPLE_NAME' not in self._tool_inputs:
+            raise ValueError("No sample name input found")
         super(HtmlReporterSequenceTyping, self)._check_input()
 
     def __get_locus_set_directory_name(self):
@@ -141,8 +144,9 @@ class HtmlReporterSequenceTyping(HtmlReporter):
         Adds a download link for the output table.
         :return: None
         """
-        table_path = os.path.join(self.__subfolder, 'alleles_{}.tsv'.format(
-            self.__get_locus_set_directory_name().lower()))
+        table_path = os.path.join(self.__subfolder, 'alleles-{}-{}.tsv'.format(
+            self.__get_locus_set_directory_name().lower(),
+            FileSystemHelper.make_valid(self._tool_inputs['SAMPLE_NAME'][0].value)))
         self._save_file(self._tool_inputs['TSV'][0].path, table_path)
         self._report.add_link_to_file('Download (TSV)', table_path)
 
