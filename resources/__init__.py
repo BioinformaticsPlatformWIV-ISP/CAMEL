@@ -7,3 +7,5 @@ CSS_STYLE = os.path.join(_resources_folder, 'css', 'style.css')
 # YAML
 YAML_RES_CHAR_FAST = os.path.join(_resources_folder, 'yaml', 'resistance_characterization_fast.yml')
 YAML_TYPING_FAST = os.path.join(_resources_folder, 'yaml', 'sequence_typing_fast.yml')
+YAML_READ_TRIMMING = os.path.join(_resources_folder, 'yaml', 'read_trimming.yml')
+YAML_ASSEMBLY_VELVETOPTIMISER = os.path.join(_resources_folder, 'yaml', 'assembly_velvetoptimiser.yml')
