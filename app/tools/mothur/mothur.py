@@ -91,9 +91,9 @@ class Mothur(Tool):
         """
         if 'label' in self._parameters:
             return self._parameters['label'][1].strip().split('-')
-        # If no label parameter is specified all the labels in the file
-        # will be used
+        # If no label parameter is specified all the labels in the file will be used
         with open(self._tool_inputs['TSV_List'][0].path, 'r') as label_file:
+            label_file.readline()
             return [line.split(None, 1)[0] for line in label_file]
 
     def _check_command_output(self):
@@ -111,9 +111,17 @@ class Mothur(Tool):
         """
         Returns the prefix that will be used in the output. Example: Input file /test/data/file1.run1.fastq will return
         the following prefix: /test/data/file1.run1 (suffix = '.fastq')
-        :param suffix: Suffix that has to be removed
+        :param suffix: Suffix that indicates the point where the path has to be cut (from the right)
         :param input_key: Key of the input file to be used
         :return: String with the prefix used in the output
         """
         infile = os.path.basename(self._tool_inputs[input_key][0].path)
         return self._folder + '/' + infile[:infile.rfind(suffix)]
+
+    def _get_extension(self, input_key='FASTA'):
+        """
+        Returns the extension of the file
+        :param input_key: Key of the input file to be used
+        :return:
+        """
+        return os.path.splitext(self._tool_inputs[input_key][0].path)[1]

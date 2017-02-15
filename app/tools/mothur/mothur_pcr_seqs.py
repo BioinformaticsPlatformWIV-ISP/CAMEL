@@ -1,5 +1,6 @@
 from app.tools.mothur.mothur import Mothur
 from app.io.tooliofile import ToolIOFile
+from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 
 
 class MothurPcrSeqs(Mothur):
@@ -13,7 +14,7 @@ class MothurPcrSeqs(Mothur):
         :param camel: Camel instance
         :return: None
         """
-        super(MothurPcrSeqs, self).__init__('mothur_pcr_seqs', '1.39.0', camel)
+        super(MothurPcrSeqs, self).__init__('mothur_pcr_seqs', '1.39.1', camel)
 
     def _check_input(self):
         """
@@ -25,15 +26,15 @@ class MothurPcrSeqs(Mothur):
         """
         super(MothurPcrSeqs, self)._check_input()
         if 'FASTA' not in self._tool_inputs:
-            raise RuntimeError('No input file given for Mothur pcr.seqs: {!r}'.format(self._tool_inputs))
+            raise InvalidInputSpecificationError('No input file given for Mothur pcr.seqs: {!r}'.format(self._tool_inputs))
         if len(self._tool_inputs['FASTA']) != 1:
-            raise RuntimeError('Invalid number (max = 1) of files given for Mothur \
-                                pcr.seqs: {!r}'.format(self._tool_inputs))
+            raise InvalidInputSpecificationError('Invalid number (max = 1) of files given for Mothur \
+                                                 pcr.seqs: {!r}'.format(self._tool_inputs))
         if len(self._tool_inputs.keys()) > 2:
-            raise RuntimeError('Too many input keys given voor Mothur pcr.seqs: {!r}'.format(self._tool_inputs))
+            raise InvalidInputSpecificationError('Too many input keys given voor Mothur pcr.seqs: {!r}'.format(self._tool_inputs))
         for key, input_files in self._tool_inputs.iteritems():
             if key not in ['FASTA', 'TSV_Oligos']:
-                raise RuntimeError('Invalid input key given for Mothur pcr.seqs: {!r}'.format(self._tool_inputs))
+                raise InvalidInputSpecificationError('Invalid input key given for Mothur pcr.seqs: {!r}'.format(self._tool_inputs))
 
     def _build_input_string(self):
         """

@@ -2,6 +2,7 @@ import re
 
 from app.io.tooliofile import ToolIOFile
 from app.tools.mothur.mothur import Mothur
+from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 
 
 class MothurMakeContigs(Mothur):
@@ -15,7 +16,7 @@ class MothurMakeContigs(Mothur):
         :param camel: Camel instance
         :return: None
         """
-        super(MothurMakeContigs, self).__init__('mothur_make_contigs', '1.39.0', camel)
+        super(MothurMakeContigs, self).__init__('mothur_make_contigs', '1.39.1', camel)
 
     def _check_input(self):
         """
@@ -27,18 +28,18 @@ class MothurMakeContigs(Mothur):
         """
         super(MothurMakeContigs, self)._check_input()
         if len(self._tool_inputs.keys()) != 1:
-            raise RuntimeError('Too many input keys given for Mothur make.contigs: {!r}'.format(self._tool_inputs))
+            raise InvalidInputSpecificationError('Too many input keys given for Mothur make.contigs: {!r}'.format(self._tool_inputs))
         for key, input_files in self._tool_inputs.iteritems():
             if key not in ['FASTQ_PE', 'FASTA_PE', 'TSV_File', 'TSV_Oligos']:
-                raise RuntimeError('Invalid input key given for Mothur make.contigs: {!r}'.format(self._tool_inputs))
+                raise InvalidInputSpecificationError('Invalid input key given for Mothur make.contigs: {!r}'.format(self._tool_inputs))
             if key in ['FASTQ_PE', 'FASTA_PE']:
                 if len(input_files) != 2:
-                    raise RuntimeError('Invalid number of files given for Mothur \
-                                        make.contigs: {!r}'.format(self._tool_inputs))
+                    raise InvalidInputSpecificationError('Invalid number of files given for Mothur \
+                                                         make.contigs: {!r}'.format(self._tool_inputs))
             else:
                 if len(input_files) != 1:
-                    raise RuntimeError('Invalid number of files given for Mothur \
-                                        make.contigs: {!r}'.format(self._tool_inputs))
+                    raise InvalidInputSpecificationError('Invalid number of files given for Mothur \
+                                                         make.contigs: {!r}'.format(self._tool_inputs))
 
     def _build_input_string(self):
         """
@@ -77,7 +78,7 @@ class MothurMakeContigs(Mothur):
 
     def _execute_tool(self):
         """
-        Runs Prinseq
+        Runs make.contigs
         :return: None
         """
         self._build_command()

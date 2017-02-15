@@ -1,5 +1,6 @@
 from app.tools.mothur.mothur import Mothur
 from app.io.tooliofile import ToolIOFile
+from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 
 
 class MothurSummarySeqs(Mothur):
@@ -14,7 +15,7 @@ class MothurSummarySeqs(Mothur):
         :param camel: Camel instance
         :return: None
         """
-        super(MothurSummarySeqs, self).__init__('mothur_summary_seqs', '1.39.0', camel)
+        super(MothurSummarySeqs, self).__init__('mothur_summary_seqs', '1.39.1', camel)
 
     def _check_input(self):
         """
@@ -26,13 +27,13 @@ class MothurSummarySeqs(Mothur):
         """
         super(MothurSummarySeqs, self)._check_input()
         if 'FASTA' not in self._tool_inputs:
-            raise RuntimeError('No input file given for Mothur summary.seqs: {!r}'.format(self._tool_inputs))
+            raise InvalidInputSpecificationError('No input file given for Mothur summary.seqs: {!r}'.format(self._tool_inputs))
         for key, input_files in self._tool_inputs.iteritems():
             if key not in ['FASTA', 'TSV_Counts']:
-                raise RuntimeError('Invalid input key given for Mothur summary.seqs: {!r}'.format(self._tool_inputs))
+                raise InvalidInputSpecificationError('Invalid input key given for Mothur summary.seqs: {!r}'.format(self._tool_inputs))
             if len(input_files) != 1:
-                raise RuntimeError('Invalid number (max = 1) of files given for Mothur \
-                                   summary.seqs: {!r}'.format(self._tool_inputs))
+                raise InvalidInputSpecificationError('Invalid number (max = 1) of files given for Mothur \
+                                                     summary.seqs: {!r}'.format(self._tool_inputs))
 
     def _build_input_string(self):
         """
