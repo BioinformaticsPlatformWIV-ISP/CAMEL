@@ -6,6 +6,7 @@ from app.tools.tool import Tool
 
 
 class FastQC(Tool):
+
     """
     FastQC tool.
     """
@@ -63,6 +64,8 @@ class FastQC(Tool):
         :return: Output folder
         """
         sample_base_name = input_file.basename.split('.')[0]
+        if re.search(r'\.fastq$', sample_base_name):
+            sample_base_name = re.sub(r'\.fastq$', '', sample_base_name)
         for sub_folder in os.listdir(execution_folder):
             if sub_folder.startswith(sample_base_name) and sub_folder.endswith('_fastqc'):
                 full_path = os.path.join(execution_folder, sub_folder)
