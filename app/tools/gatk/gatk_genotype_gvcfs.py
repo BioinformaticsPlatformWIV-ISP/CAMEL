@@ -2,6 +2,7 @@ from app.tools.gatk.gatk import GATK
 
 
 class GATKGenotypeGVCFs(GATK):
+
     """
     Class for GATK GenotypeGVCFs function
     """
@@ -12,7 +13,7 @@ class GATKGenotypeGVCFs(GATK):
         :param camel: Camel instance
         :return: None
         """
-        super(GATKGenotypeGVCFs, self).__init__('gatk GenotypeGVCFs', '3.4.46', camel)
+        super(GATKGenotypeGVCFs, self).__init__('gatk GenotypeGVCFs', '3.7', camel)
 
         self._function_name = 'GenotypeGVCFs'
         self._required_inputs = ['gVCF', 'FASTA_REF']

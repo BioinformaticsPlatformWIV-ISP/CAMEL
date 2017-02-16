@@ -5,6 +5,7 @@ from app.tools.gatk.gatk import GATK
 
 
 class GATKSelectVariants(GATK):
+
     """
     Class for GATK SelectVariants function
     """
@@ -15,7 +16,7 @@ class GATKSelectVariants(GATK):
         :param camel: Camel instance
         :return: None
         """
-        super(GATKSelectVariants, self).__init__('gatk SelectVariants', '3.4.46', camel)
+        super(GATKSelectVariants, self).__init__('gatk SelectVariants', '3.7', camel)
         self._function_name = 'SelectVariants'
         self._specific_parameters = ['selectTypeToExlcude', 'selectTypeToInclude']
         self._required_inputs = ['VCF']

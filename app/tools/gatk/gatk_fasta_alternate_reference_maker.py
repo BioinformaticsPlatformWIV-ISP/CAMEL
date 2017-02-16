@@ -12,6 +12,7 @@ from app.components.sequence_extraction import MASK_NT
 
 
 class GATKFastaAlternateReferenceMaker(GATK):
+
     """
     Class for GATK FastaAlternateReferenceMaker function
     """
@@ -22,7 +23,7 @@ class GATKFastaAlternateReferenceMaker(GATK):
         :param camel: Camel instance
         :return: None
         """
-        super(GATKFastaAlternateReferenceMaker, self).__init__('gatk FastaAlternateReferenceMaker', '3.4.46', camel)
+        super(GATKFastaAlternateReferenceMaker, self).__init__('gatk FastaAlternateReferenceMaker', '3.7', camel)
         self._function_name = 'FastaAlternateReferenceMaker'
         self._required_inputs = ['VCF']
         self._output_type = 'FASTA'

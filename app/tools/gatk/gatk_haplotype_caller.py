@@ -5,6 +5,7 @@ from app.tools.gatk.gatk import GATK
 
 
 class GATKHaplotypeCaller(GATK):
+
     """
     Class for GATK HaplotypeCaller function
     """
@@ -15,7 +16,7 @@ class GATKHaplotypeCaller(GATK):
         :param camel: Camel instance
         :return: None
         """
-        super(GATKHaplotypeCaller, self).__init__('gatk HaplotypeCaller', '3.4.46', camel)
+        super(GATKHaplotypeCaller, self).__init__('gatk HaplotypeCaller', '3.7', camel)
 
         self._function_name = 'HaplotypeCaller'
         self._required_inputs = ['BAM', 'FASTA_REF']
