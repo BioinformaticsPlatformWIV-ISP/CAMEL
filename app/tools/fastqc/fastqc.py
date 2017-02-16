@@ -1,4 +1,5 @@
 import os
+import re
 
 from app.error.toolexecutionerror import ToolExecutionError
 from app.io.tooliofile import ToolIOFile
