@@ -11,8 +11,8 @@ class Camel(object):
         """
         Initializes a CAMEL system.
         """
-        self._connection = Connection(database_config)
         LogManager.initialize(logging_config)
+        self._connection = Connection(database_config)
 
     @property
     def connection(self):
