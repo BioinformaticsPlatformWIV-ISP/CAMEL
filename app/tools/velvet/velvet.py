@@ -3,6 +3,7 @@ from app.tools.tool import Tool
 
 
 class Velvet(Tool):
+
     """ Super class for Velvet related tools: velveth, VelvetOptimiser to handle inputs """
     __metaclass__ = abc.ABCMeta
 
@@ -57,8 +58,8 @@ class Velvet(Tool):
         for key, fileopt in Velvet.FILEOPT_MAPPING.items():
             if key in self._tool_inputs:
                 if key.find('PE') > 0:
-                    input_options.append(fileopt + " " + " ".join([f.path for f in self._tool_inputs[key]]))
+                    input_options.append("{} {}".format(fileopt, " ".join([f.path for f in self._tool_inputs[key]])))
                 else:
-                    input_options.append(fileopt + " " + self._tool_inputs[key][0].path)
+                    input_options.append("{} {}".format(fileopt, self._tool_inputs[key][0].path))
 
         self._input_string = " ".join(input_options)
