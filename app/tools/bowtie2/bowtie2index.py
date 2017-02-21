@@ -6,6 +6,7 @@ from app.tools.bowtie2.bowtie2 import Bowtie2
 
 
 class Bowtie2Index(Bowtie2):
+
     """
     Index genome using 'bowtie2-build' cmd of Bowtie2
     """
@@ -60,9 +61,8 @@ class Bowtie2Index(Bowtie2):
             FileUtils.concatenate_files(multifasta_file, [f.path for f in self._tool_inputs['FASTA_REF']])
             self._refgenome_fasta = multifasta_file
         else:
-            fasta_file_path = self._tool_inputs['FASTA_REF'][0].path
-            self._refgenome_fasta = os.path.join(self._folder, os.path.basename(fasta_file_path))
-            os.symlink(fasta_file_path, self._refgenome_fasta)
+            self._refgenome_fasta = os.path.join(self._folder, self._tool_inputs['FASTA_REF'][0].basename)
+            os.symlink(self._tool_inputs['FASTA_REF'][0].path, self._refgenome_fasta)
 
     def __set_output(self):
         """
