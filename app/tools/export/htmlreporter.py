@@ -1,3 +1,5 @@
+import tempfile
+
 import abc
 import os
 
@@ -41,7 +43,10 @@ class HtmlReporter(Tool):
         Executes this tool.
         :return: None
         """
-        self._report = HtmlHelper(self._tool_inputs['HTML'][0].path)
+        if 'disable_html_output' not in self._parameters:
+            self._report = HtmlHelper(self._tool_inputs['HTML'][0].path)
+        else:
+            self._report = tempfile.NamedTemporaryFile().name
         self._output_folder = self._tool_inputs['DIR'][0].path
         self._create_report()
         self._report.close()
