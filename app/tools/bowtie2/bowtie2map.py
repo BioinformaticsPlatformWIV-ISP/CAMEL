@@ -7,12 +7,34 @@ from app.tools.bowtie2.bowtie2 import Bowtie2
 
 
 class Bowtie2Map(Bowtie2):
+
     """
     Reads mapping using Bowtie2. It does **not** support using both PE and SE reads. Does **not** support interleaved
     fastq format due to lack of use.
     """
     OUTPUT_NAME = 'bowtie2_readmap.sam'
     DEFAULT_SAMPLE_NAME = 'sampleA'
+    TIME_INFORM_MAPPING = {
+        'Time loading reference': 'time_loading_reference',
+        'Time loading forward index': 'time_loading_forward_index',
+        'Time loading mirror index': 'time_loading_reverse_index',
+        'Time searching': 'time_searching',
+        'Multiseed full-index search': 'time_multiseed_full-index_search',
+        'Overall time': 'time_total'
+    }
+    ALIGN_INFORM_MAPPING = {
+        'were unpaired; ': 'stats_singe_reads_in',
+        'were paired; ': 'stats_paired_reads_in',
+        'aligned concordantly 0 times': 'stats_pair_0_concord_map',
+        'aligned concordantly exactly 1 time': 'stats_pair_1_concord_map',
+        'aligned concordantly >1 times': 'stats_pair_n_concord_maps',
+        'aligned discordantly 1 time': 'stats_pair_disconcord_maps',
+        'aligned 0 times': 'stats_single_0_map',
+        'aligned exactly 1 time': 'stats_single_1_map',
+        'aligned >1 times': 'stats_single_n_maps',
+        'reads; of these:': 'stats_reads_count',
+        'overall alignment rate': 'stats_map_rate'
+    }
 
     def __init__(self, camel):
         """
@@ -22,27 +44,6 @@ class Bowtie2Map(Bowtie2):
         """
         super(Bowtie2Map, self).__init__('bowtie2 map', '2.3.0', camel)
 
-        self._time_inform_mapping = {
-            'Time loading reference': 'time_loading_reference',
-            'Time loading forward index': 'time_loading_forward_index',
-            'Time loading mirror index': 'time_loading_reverse_index',
-            'Time searching': 'time_searching',
-            'Multiseed full-index search': 'time_multiseed_full-index_search',
-            'Overall time': 'time_total'
-        }
-        self._align_inform_mapping = {
-            'were unpaired; ': 'stats_singe_reads_in',
-            'were paired; ': 'stats_paired_reads_in',
-            'aligned concordantly 0 times': 'stats_pair_0_concord_map',
-            'aligned concordantly exactly 1 time': 'stats_pair_1_concord_map',
-            'aligned concordantly >1 times': 'stats_pair_n_concord_maps',
-            'aligned discordantly 1 time': 'stats_pair_disconcord_maps',
-            'aligned 0 times': 'stats_single_0_map',
-            'aligned exactly 1 time': 'stats_single_1_map',
-            'aligned >1 times': 'stats_single_n_maps',
-            'reads; of these:': 'stats_reads_count',
-            'overall alignment rate': 'stats_map_rate'
-        }
         self._mod = None
         self._fastq_inputs_str = ''
         self._refgenome_str = ''
@@ -223,7 +224,7 @@ class Bowtie2Map(Bowtie2):
         res = re.search(': (\d[\d|:]+)', line)
         if res:
             time = res.group().replace(": ", "")
-            for pattern, key in self._time_inform_mapping.items():
+            for pattern, key in Bowtie2Map.TIME_INFORM_MAPPING.items():
                 if line.find(pattern) >= 0:
                     self.informs[key] = time
                     return True
@@ -245,7 +246,7 @@ class Bowtie2Map(Bowtie2):
                 self.informs['stats_pair_map_single'] = "{}".format(res[0])
                 return
 
-            for pattern, key in self._align_inform_mapping.items():
+            for pattern, key in Bowtie2Map.ALIGN_INFORM_MAPPING.items():
                 if line.find(pattern) > 0:
                     if len(res) > 1:
                         # two numbers found: count, percentage
