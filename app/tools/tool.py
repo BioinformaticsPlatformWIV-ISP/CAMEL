@@ -95,7 +95,11 @@ class Tool(object):
         :param input_files: New input files
         :return: None
         """
-        self._tool_inputs.update(input_files)
+        for key, items in input_files.iteritems():
+            if key in self._tool_inputs:
+                self._tool_inputs[key] += items
+            else:
+                self._tool_inputs[key] = items
 
     def add_input_informs(self, informs):
         """
