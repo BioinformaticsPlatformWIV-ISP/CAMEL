@@ -1,6 +1,7 @@
 SUPPORT_COLUMNS = ["qseqid", "sseqid", "pident", "length", "mismatch", "gapopen", "gaps", "qstart", "qend",
                    "sstart", "send", "evalue", "bitscore", "strand", "qcovs", "qcovhsp", "sseq", "qseq"]
 
+REQUIRED_COLUMNS = ["qseqid", "sseqid", "pident", "length", "qstart", "qend", "sstart", "send", "evalue", "bitscore"]
 
 DEFAULT_COLUMNS = ["qseqid", "sseqid", "pident", "length", "mismatch",
                    "gapopen", "qstart", "qend", "sstart", "send", "evalue", "bitscore"]

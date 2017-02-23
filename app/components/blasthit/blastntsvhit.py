@@ -1,7 +1,7 @@
 import logging
 import re
 
-from app.components.blasthit import SUPPORT_COLUMNS, DEFAULT_COLUMNS, INT_COLUMNS, FLOAT_COLUMNS
+from app.components.blasthit import SUPPORT_COLUMNS, DEFAULT_COLUMNS, INT_COLUMNS, FLOAT_COLUMNS, REQUIRED_COLUMNS
 
 
 class BlastnTSVHit(object):
@@ -28,6 +28,11 @@ class BlastnTSVHit(object):
 
         if len(hit_inform) != len(columns):
             raise ValueError("Number of data column differs from the number of headers.")
+
+        hit_attrs = columns.keys()
+        for key in REQUIRED_COLUMNS:
+            if key not in hit_attrs:
+                raise ValueError("Required blast hit data column {!r} is missing.".format(key))
 
         for idx, col_name in enumerate(columns):
 
