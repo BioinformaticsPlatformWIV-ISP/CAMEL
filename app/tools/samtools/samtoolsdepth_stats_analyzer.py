@@ -202,7 +202,7 @@ class SamtoolsDepthStatsAnalyzer(Tool):
         return coverages, segment_coverages, segment_gaps, segment_base_count
 
     @staticmethod
-    def update_tail_gaps(segment_gaps, seq_id, last_pos, refseq_length={}):
+    def update_tail_gaps(segment_gaps, seq_id, last_pos, refseq_length=None):
         """
         Update segment_gaps with the tail gaps or a open gap if length is unknown
         :param segment_gaps: dictionary contain gaps of segments
@@ -211,6 +211,7 @@ class SamtoolsDepthStatsAnalyzer(Tool):
         :param refseq_length: the dictionary containing the length of each reference sequence segment
         :return: segment_gaps updated with tail gaps
         """
+        if refseq_length is None: refseq_length = {}
         last_gap = None
         if refseq_length:
             if seq_id in refseq_length:
