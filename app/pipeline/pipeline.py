@@ -95,7 +95,7 @@ class Pipeline(object):
         :param destination_path:
         :return: None
         """
-        self._create_folder(destination_path)
+        self._create_folder(os.path.abspath(destination_path))
         LogManager.attach_pipeline_handlers(self._folder)
         self._log_pipeline_state()
         self._steps[0].step_inputs = self._initial_input
