@@ -1,5 +1,6 @@
 class InvalidInputSpecificationError(ValueError):
+
     """
-    This is raised when an invalid parameter is supplied to a tool.
+    Error that is raised when a tool is ran with invalid input.
     """
     pass
