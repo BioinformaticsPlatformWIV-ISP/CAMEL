@@ -4,6 +4,7 @@ import random
 import abc
 import os
 
+from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from app.tools.tool import Tool
 
 
@@ -45,7 +46,7 @@ class Mothur(Tool):
         for input_key, input_list in self._tool_inputs.iteritems():
             for tool_input in input_list:
                 if '-' in tool_input.path:
-                    raise ValueError("Tool input with '-' character in name: {}".format(tool_input.path))
+                    raise InvalidInputSpecificationError("Tool input with '-' character in name: {}".format(tool_input.path))
 
     def _build_command(self):
         """
@@ -122,6 +123,6 @@ class Mothur(Tool):
         """
         Returns the extension of the file
         :param input_key: Key of the input file to be used
-        :return:
+        :return: Extension of the file
         """
         return os.path.splitext(self._tool_inputs[input_key][0].path)[1]
