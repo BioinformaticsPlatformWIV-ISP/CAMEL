@@ -1,5 +1,5 @@
-SUPPORT_COLUMNS = ["qseqid", "sseqid", "pident", "length", "mismatch", "gapopen", "gaps", "qstart", "qend",
-                   "sstart", "send", "evalue", "bitscore", "strand", "qcovs", "qcovhsp", "sseq", "qseq"]
+SUPPORTED_COLUMNS = ["qseqid", "sseqid", "pident", "length", "mismatch", "gapopen", "gaps", "qstart", "qend",
+                     "sstart", "send", "evalue", "bitscore", "strand", "qcovs", "qcovhsp", "sseq", "qseq"]
 
 REQUIRED_COLUMNS = ["qseqid", "sseqid", "pident", "length", "qstart", "qend", "sstart", "send", "evalue", "bitscore"]
 
@@ -9,8 +9,9 @@ DEFAULT_COLUMNS = ["qseqid", "sseqid", "pident", "length", "mismatch",
 SEQEXTRACTION_COLUMNS = ["qseqid", "sseqid", "pident", "length", "mismatch", "gapopen", "gaps",
                          "qstart", "qend", "sstart", "send", "evalue", "bitscore", "strand", "qcovs", "qcovhsp"]
 
-SEQEXTRACTION_COLUMNS_WITH_SEQS = ["qseqid", "sseqid", "pident", "length", "mismatch", "gapopen", "gaps", "qstart", "qend",
-                                   "sstart", "send", "qseq", "sseq", "evalue", "bitscore", "strand", "qcovs", "qcovhsp"]
+SEQEXTRACTION_COLUMNS_WITH_SEQS = [
+    "qseqid", "sseqid", "pident", "length", "mismatch", "gapopen", "gaps", "qstart", "qend",
+    "sstart", "send", "qseq", "sseq", "evalue", "bitscore", "strand", "qcovs", "qcovhsp"]
 
 INT_COLUMNS = ['length', 'mismatch', 'gapopen', 'gaps', 'qstart', 'qend', 'sstart', 'send', 'qcovs', 'qcovhsp']
 

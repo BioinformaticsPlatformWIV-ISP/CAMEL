@@ -1,10 +1,11 @@
 import logging
 import re
 
-from app.components.blasthit import SUPPORT_COLUMNS, DEFAULT_COLUMNS, INT_COLUMNS, FLOAT_COLUMNS, REQUIRED_COLUMNS
+from app.components.blasthit import SUPPORTED_COLUMNS, DEFAULT_COLUMNS, INT_COLUMNS, FLOAT_COLUMNS, REQUIRED_COLUMNS
 
 
 class BlastnTSVHit(object):
+
     """
     Class to handle customized blastn tabular output
 
@@ -23,21 +24,13 @@ class BlastnTSVHit(object):
         """
         Initialize
         :param hit: the txt string describe hit
+        :param columns: specified data column names
         """
         hit_inform = hit.split("\t")
-
-        if len(hit_inform) != len(columns):
-            raise ValueError("Number of data column differs from the number of headers.")
-
-        hit_attrs = columns.keys()
-        for key in REQUIRED_COLUMNS:
-            if key not in hit_attrs:
-                raise ValueError("Required blast hit data column {!r} is missing.".format(key))
+        self._columns = columns
+        self.__check_validity(hit_inform)
 
         for idx, col_name in enumerate(columns):
-
-            if col_name not in SUPPORT_COLUMNS:
-                raise ValueError("Supported blastn tsv output data {!r}.".format(col_name))
 
             try:
                 if col_name in INT_COLUMNS:
@@ -52,7 +45,22 @@ class BlastnTSVHit(object):
                 raise
 
         self._hit_str = hit
-        self._columns = columns
+
+    def __check_validity(self, hit_inform):
+        """
+        Check the validity of the blast hit & its columns
+        :param hit_inform: the blast hit data in list
+        """
+        if len(hit_inform) != len(self.columns):
+            raise ValueError("Number of data column differs from the number of headers.")
+
+        for key in REQUIRED_COLUMNS:
+            if key not in self.columns:
+                raise ValueError("Required blast hit data column {!r} is missing.".format(key))
+
+        for col_name in self.columns:
+            if col_name not in SUPPORTED_COLUMNS:
+                raise ValueError("Not supported blastn tsv output data {!r}.".format(col_name))
 
     def __str__(self):
         return self._hit_str
@@ -75,7 +83,7 @@ class BlastnTSVHit(object):
     @property
     def hit_id(self):
         """
-        Generate a uniq hit id with sstart, send, and sstrand information
+        Generate a unique hit id with sstart, send, and sstrand information
         :return: hit id as string
         """
         # Example id: NODE_10_length_1700_cov_25.444118:25-983(-)
