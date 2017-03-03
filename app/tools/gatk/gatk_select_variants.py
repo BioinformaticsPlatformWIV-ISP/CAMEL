@@ -1,6 +1,8 @@
 import logging
 import re
 
+from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from app.error.invalidparametererror import InvalidParameterError
 from app.tools.gatk.gatk import GATK
 
 
@@ -30,13 +32,26 @@ class GATKSelectVariants(GATK):
         if 'select' in self._parameters:
             select_exp = self._parameters['select'].value
             if not select_exp:
-                raise ValueError(
+                raise InvalidParameterError(
                     "Selection criterion of 'select' option is required.")
             if re.search('\s', select_exp):
-                raise ValueError(
+                raise InvalidParameterError(
                     "No space in the 'select' option JEXL expression. e.g., 'DQ>100', not 'DQ > 100'. Expression specified {}.".format(select_exp))
         else:
             logging.warning("GATK SelectVariants run without specify variant selection criterion.")
+
+    def _check_input(self):
+        """
+        Check input for a tool and prepare command line parameters for input
+        :return: None
+        """
+        super(GATKSelectVariants, self)._check_input()
+
+        if 'VCF_concordance' in self._tool_inputs and len(self._tool_inputs['VCF_concordance']) > 1:
+            raise InvalidInputSpecificationError('SelectVariant support only ONE concordance VCF file.')
+
+        if 'VCF_discordance' in self._tool_inputs and len(self._tool_inputs['VCF_discordance']) > 1:
+            raise InvalidInputSpecificationError('SelectVariant support only ONE discordance VCF file.')
 
     def _set_input(self):
         """
@@ -58,16 +73,10 @@ class GATKSelectVariants(GATK):
         # Variant comparison (with those reported in another VCF file)
         # - concordance only
         if 'VCF_concordance' in self._tool_inputs:
-            if len(self._tool_inputs['VCF_concordance']) > 1:
-                raise ValueError('SelectVariant support only ONE concordance VCF file.')
-            else:
-                self._input_string += '--concordance {} '.format(self._tool_inputs['VCF_concordance'][0].path)
+            self._input_string += '--concordance {} '.format(self._tool_inputs['VCF_concordance'][0].path)
         # - discordance only
         if 'VCF_discordance' in self._tool_inputs:
-            if len(self._tool_inputs['VCF_discordance']) > 1:
-                raise ValueError('SelectVariant support only ONE discordance VCF file.')
-            else:
-                self._input_string += '--discordance {} '.format(self._tool_inputs['VCF_discordance'][0].path)
+            self._input_string += '--discordance {} '.format(self._tool_inputs['VCF_discordance'][0].path)
 
     def _set_specific_parameters(self):
         """

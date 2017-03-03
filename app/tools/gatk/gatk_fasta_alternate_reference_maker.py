@@ -135,7 +135,7 @@ class GATKFastaAlternateReferenceMaker(GATK):
         :return: segments concatenated sequences
         """
         extracted_seq_dict = FastaUtils.read_as_dict(self._fasta_extracted)
-        seq_intervals = [x.strip() for x in open(self._tool_inputs['TXT_intervals'][0].path, 'r').readlines()]
+        seq_intervals = [x.strip() for x in open(self._tool_inputs['TXT_intervals'][0].path, 'r')]
         seq_intervals_ordered = self.__rearrange_seq_intervals(seq_intervals)
 
         concatenated_seqs = []
