@@ -3,12 +3,14 @@ import os
 import re
 import abc
 
+from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from app.error.toolexecutionerror import ToolExecutionError
 from app.io.tooliofile import ToolIOFile
 from app.tools.tool import Tool
 
 
 class GATK(Tool):
+
     """
     Super class for GATK tools
     """
@@ -50,7 +52,7 @@ class GATK(Tool):
         """
         for input_file in self._required_inputs:
             if input_file not in self._tool_inputs:
-                raise KeyError('GATK {!r} required {!r} input is missing in _tool_inputs!'.format(
+                raise InvalidInputSpecificationError('GATK {!r} required {!r} input is missing in _tool_inputs!'.format(
                     self._function_name, input_file))
 
     def _set_input(self):
@@ -76,6 +78,7 @@ class GATK(Tool):
             ToolIOFile(os.path.join(self._folder, self._parameters['output'].value))
         ]
 
+    @abc.abstractmethod
     def _set_specific_parameters(self):
         """
         Set specific parameters that need special handling
