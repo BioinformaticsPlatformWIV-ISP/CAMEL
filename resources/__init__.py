@@ -11,3 +11,4 @@ YAML_READ_TRIMMING = os.path.join(_resources_folder, 'yaml', 'read_trimming.yml'
 YAML_ASSEMBLY_VELVETOPTIMISER = os.path.join(_resources_folder, 'yaml', 'assembly_velvetoptimiser.yml')
 YAML_READ_MAPPING_BOWTIE2 = os.path.join(_resources_folder, 'yaml', 'read_mapping_bowtie2.yml')
 YAML_SAMTOOLS_SNP = os.path.join(_resources_folder, 'yaml', 'samtools_snp_calling.yml')
+YAML_TRIMMING_ASSEMBLY_SPADES = os.path.join(_resources_folder, 'yaml', 'trimming_assembly_spades.yml')
