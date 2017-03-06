@@ -88,11 +88,11 @@ class LegacyBlastx(Tool):
         Creates the string with the input files and output directories
         :return: String with the input parameters
         """
-        input_string = '-p blastx'
-        input_string += ' -d {}'.format(self._tool_inputs['DB'][0].path)
-        input_string += ' -i {}'.format(infile.path)
-        input_string += ' -o {}.blastx'.format(os.path.join(self._folder, os.path.splitext(os.path.basename(infile.path))[0]))
-        return input_string
+        items = ['-p blastx',
+                 '-d {}'.format(self._tool_inputs['DB'][0].path),
+                 '-i {}'.format(infile.path),
+                 '-o {}.blastx'.format(os.path.join(self._folder, os.path.splitext(os.path.basename(infile.path))[0]))]
+        return ' '.join(items)
 
     def __prepare_input_files(self):
         """

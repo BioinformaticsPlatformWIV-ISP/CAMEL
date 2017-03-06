@@ -215,10 +215,9 @@ class Carma(Tool):
         Creates the string with the input and output files
         :return: String with the input parameters
         """
-        input_string = ''
-        input_string += ' --input {}'.format(self._tool_inputs[self._input_key][0].path)
-        input_string += ' --output {}'.format(self.__get_output_filename())
-        return input_string
+        items = ['--input {}'.format(self._tool_inputs[self._input_key][0].path),
+                 '--output {}'.format(self.__get_output_filename())]
+        return ' '.join(items)
 
     def __build_command(self):
         """
