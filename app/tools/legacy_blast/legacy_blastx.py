@@ -54,7 +54,7 @@ class LegacyBlastx(Tool):
             raise InvalidInputSpecificationError('Invalid number (max = 1) of files per key given '
                                                  'for legacy blastx: {!r}'.format(self._tool_inputs))
         if len(self._tool_inputs.keys()) > 2:
-            raise InvalidInputSpecificationError('Too many input keys given voor legacy blastx: {!r}'.format(self._tool_inputs))
+            raise InvalidInputSpecificationError('Too many input keys given for legacy blastx: {!r}'.format(self._tool_inputs))
 
     def _check_command_output(self):
         """

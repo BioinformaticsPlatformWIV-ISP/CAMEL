@@ -58,7 +58,7 @@ class Carma(Tool):
         if 'FASTA' in self._tool_inputs == ('BLASTX' in self._tool_inputs != 'EGT' in self._tool_inputs):
             raise InvalidInputSpecificationError('Invalid input keys given for CARMA: {!r}'.format(self._tool_inputs))
         if len(self._tool_inputs.keys()) != 1:
-            raise InvalidInputSpecificationError('Too many input keys given voor CARMA: {!r}'.format(self._tool_inputs))
+            raise InvalidInputSpecificationError('Too many input keys given for CARMA: {!r}'.format(self._tool_inputs))
         for value in self._tool_inputs.values():
             if len(value) > 1:
                 raise InvalidInputSpecificationError('Invalid number (max = 1) of files per key given '
