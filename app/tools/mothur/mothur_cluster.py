@@ -51,21 +51,21 @@ class MothurCluster(Mothur):
         Creates the string with the input files and output directories
         :return: String with the input parameters
         """
-        input_string = ''
+        items = []
         # Only DIST or PHY is allowed, not both
         if 'DIST' in self._tool_inputs:
-            input_string = 'column={}'.format(self._tool_inputs['DIST'][0])
+            items.append('column={}'.format(self._tool_inputs['DIST'][0]))
         elif 'PHY' in self._tool_inputs:
-            input_string = 'phylip={}'.format(self._tool_inputs['PHY'][0])
+            items.append('phylip={}'.format(self._tool_inputs['PHY'][0]))
         elif 'FASTA' in self._tool_inputs:
-            input_string = 'fasta={}'.format(self._tool_inputs['FASTA'][0])
+            items.append('fasta={}'.format(self._tool_inputs['FASTA'][0]))
         # Either TSV_Counts or TSV_Names can be given, not both
         if 'TSV_Counts' in self._tool_inputs:
-            input_string += ', count={}'.format(self._tool_inputs['TSV_Counts'][0])
+            items.append('count={}'.format(self._tool_inputs['TSV_Counts'][0]))
         elif 'TSV_Names' in self._tool_inputs:
-            input_string += ', name={}'.format(self._tool_inputs['TSV_Names'][0])
-        input_string += ', outputdir={}'.format(self._folder)
-        return input_string
+            items.append('name={}'.format(self._tool_inputs['TSV_Names'][0]))
+        items.append('outputdir={}'.format(self._folder))
+        return ', '.join(items)
 
     def _set_output(self):
         """

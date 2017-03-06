@@ -41,18 +41,18 @@ class MothurClassifyOtu(Mothur):
         Creates the string with the input files and output directories
         :return: String with the input parameters
         """
-        input_string = 'list={}'.format(self._tool_inputs['TSV_List'][0])
-        input_string += ', taxonomy={}'.format(self._tool_inputs['TSV_Taxonomy'][0])
+        items = ['list={}'.format(self._tool_inputs['TSV_List'][0]),
+                 'taxonomy={}'.format(self._tool_inputs['TSV_Taxonomy'][0])]
         if 'TSV_Counts' in self._tool_inputs:
-            input_string += ', count={}'.format(self._tool_inputs['TSV_Counts'][0])
+            items.append('count={}'.format(self._tool_inputs['TSV_Counts'][0]))
         if 'TSV_Groups' in self._tool_inputs:
-            input_string += ', group={}'.format(self._tool_inputs['TSV_Groups'][0])
+            items.append('group={}'.format(self._tool_inputs['TSV_Groups'][0]))
         if 'TSV_Names' in self._tool_inputs:
-            input_string += ', name={}'.format(self._tool_inputs['TSV_Names'][0])
+            items.append('name={}'.format(self._tool_inputs['TSV_Names'][0]))
         if 'TSV_RefTaxonomy' in self._tool_inputs:
-            input_string += ', reftaxonomy={}'.format(self._tool_inputs['TSV_RefTaxonomy'][0])
-        input_string += ', outputdir={0}'.format(self._folder)
-        return input_string
+            items.append('reftaxonomy={}'.format(self._tool_inputs['TSV_RefTaxonomy'][0]))
+        items.append('outputdir={}'.format(self._folder))
+        return ', '.join(items)
 
     def _set_output(self):
         """
@@ -60,9 +60,6 @@ class MothurClassifyOtu(Mothur):
         :return: None
         """
         labels = super(MothurClassifyOtu, self)._get_labels()
-        print '*********************************************************************'
-        print labels
-        print '*********************************************************************'
         self._tool_outputs.update({'TSV_Taxonomy': [], 'TSV_Summary': []})
         basename = super(MothurClassifyOtu, self)._get_basename('TSV_List')
         # Each label creates a seperate output

@@ -41,17 +41,17 @@ class MothurMakeShared(Mothur):
         Creates the string with the input files and output directories
         :return: String with the input parameters
         """
-        input_string = ''
+        items = []
         if 'TSV_List' in self._tool_inputs:
-            input_string = 'list={}'.format(self._tool_inputs['TSV_List'][0])
+            items.append('list={}'.format(self._tool_inputs['TSV_List'][0]))
         elif 'BIOM' in self._tool_inputs:
-            input_string = 'biom={}'.format(self._tool_inputs['BIOM'][0])
+            items.append('biom={}'.format(self._tool_inputs['BIOM'][0]))
         if 'TSV_Counts' in self._tool_inputs:
-            input_string += ', count={}'.format(self._tool_inputs['TSV_Counts'][0])
+            items.append('count={}'.format(self._tool_inputs['TSV_Counts'][0]))
         if 'TSV_Groups' in self._tool_inputs:
-            input_string += ', group={}'.format(self._tool_inputs['TSV_Groups'][0])
-        input_string += ', outputdir={}'.format(self._folder)
-        return input_string
+            items.append('group={}'.format(self._tool_inputs['TSV_Groups'][0]))
+        items.append('outputdir={}'.format(self._folder))
+        return ', '.join(items)
 
     def _set_output(self):
         """

@@ -43,7 +43,7 @@ class MothurRemoveLineage(Mothur):
         Creates the string with the input files and output directories
         :return: String with the input parameters
         """
-        input_string = 'taxonomy={}'.format(self._tool_inputs['TSV_Taxonomy'][0])
+        items = ['taxonomy={}'.format(self._tool_inputs['TSV_Taxonomy'][0])]
         input_parameters = {'FASTA': 'fasta=',
                             'TSV_Names': 'name=',
                             'TSV_Counts': 'count=',
@@ -53,10 +53,9 @@ class MothurRemoveLineage(Mothur):
         for key, input_files in self._tool_inputs.iteritems():
             # Based on the key the correct option flag is added to the input string
             if key != 'TSV_Taxonomy':
-                input_string += ', ' + input_parameters[key]
-                input_string += input_files[0].path
-        input_string += ', outputdir={}'.format(self._folder)
-        return input_string
+                items.append('{}{}'.format(input_parameters[key], input_files[0].path))
+        items.append('outputdir={}'.format(self._folder))
+        return ', '.join(items)
 
     def _set_output(self):
         """

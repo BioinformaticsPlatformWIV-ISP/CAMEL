@@ -42,9 +42,9 @@ class MothurPairwiseSeqs(Mothur):
         Creates the string with the input files and output directories
         :return: String with the input parameters
         """
-        input_string = 'fasta={0}'.format(self._tool_inputs['FASTA'][0])
-        input_string += ', outputdir={0}'.format(self._folder)
-        return input_string
+        items = ['fasta={0}'.format(self._tool_inputs['FASTA'][0]),
+                 'outputdir={0}'.format(self._folder)]
+        return ', '.join(items)
 
     def _set_output(self):
         """

@@ -49,22 +49,22 @@ class MothurGetOturep(Mothur):
         Creates the string with the input files and output directories
         :return: String with the input parameters
         """
-        input_string = ''
+        items = []
         if 'PHY' in self._tool_inputs:
-            input_string += 'phylip={}'.format(self._tool_inputs['PHY'][0])
+            items.append('phylip={}'.format(self._tool_inputs['PHY'][0]))
         else:
-            input_string += 'column={}'.format(self._tool_inputs['DIST'][0])
-        input_string += ', list={}'.format(self._tool_inputs['TSV_List'][0])
+            items.append('column={}'.format(self._tool_inputs['DIST'][0]))
+        items.append('list={}'.format(self._tool_inputs['TSV_List'][0]))
         if 'TSV_Names' in self._tool_inputs:
-            input_string += ', name={}'.format(self._tool_inputs['TSV_Names'][0])
+            items.append('name={}'.format(self._tool_inputs['TSV_Names'][0]))
         elif 'TSV_Counts' in self._tool_inputs:
-            input_string += ', count={}'.format(self._tool_inputs['TSV_Counts'][0])
+            items.append('count={}'.format(self._tool_inputs['TSV_Counts'][0]))
         if 'FASTA' in self._tool_inputs:
-            input_string += ', fasta={}'.format(self._tool_inputs['FASTA'][0])
+            items.append('fasta={}'.format(self._tool_inputs['FASTA'][0]))
         if 'TSV_Groups' in self._tool_inputs:
-            input_string += ', group={}'.format(self._tool_inputs['TSV_Groups'][0])
-        input_string += ', outputdir={}'.format(self._folder)
-        return input_string
+            items.append('group={}'.format(self._tool_inputs['TSV_Groups'][0]))
+        items.append('outputdir={}'.format(self._folder))
+        return ', '.join(items)
 
     def _set_output(self):
         """

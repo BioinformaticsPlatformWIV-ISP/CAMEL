@@ -31,16 +31,16 @@ class MothurFilterSeqs(Mothur):
             raise InvalidInputSpecificationError('Invalid number (max = 1) of files given for Mothur \
                                                  filter.seqs: {!r}'.format(self._tool_inputs))
         if len(self._tool_inputs.keys()) != 1:
-            raise InvalidInputSpecificationError('Too many input keys given voor Mothur filter.seqs: {!r}'.format(self._tool_inputs))
+            raise InvalidInputSpecificationError('Too many input keys given for Mothur filter.seqs: {!r}'.format(self._tool_inputs))
 
     def _build_input_string(self):
         """
         Creates the string with the input files and output directories
         :return: String with the input parameters
         """
-        input_string = 'fasta={}'.format(self._tool_inputs['FASTA'][0])
-        input_string += ', outputdir={}'.format(self._folder)
-        return input_string
+        items = ['fasta={}'.format(self._tool_inputs['FASTA'][0]),
+                 'outputdir={}'.format(self._folder)]
+        return ', '.join(items)
 
     def _set_output(self):
         """

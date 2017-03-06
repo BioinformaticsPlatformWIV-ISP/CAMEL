@@ -21,7 +21,7 @@ class MothurChimeraUchime(Mothur):
         Checks whether the given inputs are valid:
         - FASTA key is required
         - Either TSV_Names or TSV_Counts is required
-        - FASTA_REF and TSV_Groups are allowed as additional input
+        - FASTA_Ref and TSV_Groups are allowed as additional input
         - Only one input file per key is allowed
         - The use of TSV_Names is not yet implemented (lack of documentation)
         :return: None
@@ -34,7 +34,7 @@ class MothurChimeraUchime(Mothur):
             raise InvalidInputSpecificationError('Missing input files (key) for Mothur '
                                                  'chimera.uchime: {!r}'.format(self._tool_inputs))
         for key, input_files in self._tool_inputs.iteritems():
-            if key not in ['FASTA', 'TSV_Counts', 'TSV_Names', 'TSV_Groups', 'FASTA_REF']:
+            if key not in ['FASTA', 'TSV_Counts', 'TSV_Names', 'TSV_Groups', 'FASTA_Ref']:
                 raise InvalidInputSpecificationError('Invalid input key given for Mothur '
                                                      'chimera.uchime: {!r}'.format(self._tool_inputs))
             if len(input_files) != 1:
@@ -46,17 +46,17 @@ class MothurChimeraUchime(Mothur):
         Creates the string with the input files and output directories
         :return: String with the input parameters
         """
-        input_string = 'fasta={}'.format(self._tool_inputs['FASTA'][0])
+        items = ['fasta={}'.format(self._tool_inputs['FASTA'][0])]
         if 'TSV_Counts' in self._tool_inputs:
-            input_string += ', count={}'.format(self._tool_inputs['TSV_Counts'][0])
+            items.append('count={}'.format(self._tool_inputs['TSV_Counts'][0]))
         elif 'TSV_Names' in self._tool_inputs:
-            input_string += ', name={}'.format(self._tool_inputs['TSV_Names'][0])
+            items.append('name={}'.format(self._tool_inputs['TSV_Names'][0]))
         if 'TSV_Groups' in self._tool_inputs:
-            input_string += ', group={}'.format(self._tool_inputs['TSV_Groups'][0])
-        if 'FASTA_REF' in self._tool_inputs:
-            input_string += ', reference={}'.format(self._tool_inputs['FASTA_REF'][0])
-        input_string += ', outputdir={}'.format(self._folder)
-        return input_string
+            items.append('group={}'.format(self._tool_inputs['TSV_Groups'][0]))
+        if 'FASTA_Ref' in self._tool_inputs:
+            items.append('reference={}'.format(self._tool_inputs['FASTA_Ref'][0]))
+        items.append('outputdir={}'.format(self._folder))
+        return ', '.join(items)
 
     def _set_output(self):
         """

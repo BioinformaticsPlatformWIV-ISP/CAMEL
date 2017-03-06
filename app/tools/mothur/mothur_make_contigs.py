@@ -48,18 +48,18 @@ class MothurMakeContigs(Mothur):
         outputdir=/test/data/outputdir
         :return: String with the input parameters
         """
-        input_string = ''
+        items = []
         for key, input_files in self._tool_inputs.iteritems():
             if key == 'FASTQ_PE':
-                input_string = 'ffastq={}, rfastq={}'.format(input_files[0], input_files[1])
+                items.append('ffastq={}, rfastq={}'.format(input_files[0], input_files[1]))
             elif key == 'FASTA_PE':
-                input_string = 'ffasta={}, rfasta={}'.format(input_files[0], input_files[1])
+                items.append('ffasta={}, rfasta={}'.format(input_files[0], input_files[1]))
             elif key == 'TSV_File':
-                input_string = 'file={}'.format(input_files[0])
+                items.append('file={}'.format(input_files[0]))
         if 'TSV_Oligos' in self._tool_inputs:
-            input_string += ', oligos={}'.format(self._tool_inputs['TSV_Oligos'][0])
-        input_string += ', outputdir={}'.format(self._folder)
-        return input_string
+            items.append('oligos={}'.format(self._tool_inputs['TSV_Oligos'][0]))
+        items.append('outputdir={}'.format(self._folder))
+        return ', '.join(items)
 
     def _set_output(self):
         """

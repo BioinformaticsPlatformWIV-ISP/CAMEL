@@ -40,25 +40,25 @@ class MothurClusterSplit(Mothur):
         Creates the string with the input files and output directories
         :return: String with the input parameters
         """
-        input_string = ''
+        items = []
         # DIST, PHY and FASTA are mutually exclusive
         if 'DIST' in self._tool_inputs:
-            input_string = 'column={}'.format(self._tool_inputs['fDIST'][0])
+            items.append('column={}'.format(self._tool_inputs['fDIST'][0]))
         elif 'PHY' in self._tool_inputs:
-            input_string = 'phylip={}'.format(self._tool_inputs['PHY'][0])
+            items.append('phylip={}'.format(self._tool_inputs['PHY'][0]))
         elif 'FASTA' in self._tool_inputs:
-            input_string = 'fasta={}'.format(self._tool_inputs['FASTA'][0])
+            items.append('fasta={}'.format(self._tool_inputs['FASTA'][0]))
         elif 'TSV_File' in self._tool_inputs:
-            input_string = 'file={}'.format(self._tool_inputs['TSV_File'][0])
+            items.append('file={}'.format(self._tool_inputs['TSV_File'][0]))
         # Other keys are not mutually exclusive
         if 'TSV_Counts' in self._tool_inputs:
-            input_string += ', count={}'.format(self._tool_inputs['TSV_Counts'][0])
+            items.append('count={}'.format(self._tool_inputs['TSV_Counts'][0]))
         if 'TSV_Names' in self._tool_inputs:
-            input_string += ', name={}'.format(self._tool_inputs['TSV_Names'][0])
+            items.append('name={}'.format(self._tool_inputs['TSV_Names'][0]))
         if 'TSV_Taxonomy' in self._tool_inputs:
-            input_string += ', taxonomy={}'.format(self._tool_inputs['TSV_Taxonomy'][0])
-        input_string += ', outputdir={}'.format(self._folder)
-        return input_string
+            items.append('taxonomy={}'.format(self._tool_inputs['TSV_Taxonomy'][0]))
+        items.append('outputdir={}'.format(self._folder))
+        return ', '.join(items)
 
     def _set_output(self):
         """

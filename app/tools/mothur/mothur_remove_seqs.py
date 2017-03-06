@@ -47,7 +47,7 @@ class MothurRemoveSeqs(Mothur):
         :return: String with the input parameters
         """
         # TSV_Accnos is required so will always be available
-        input_string = 'accnos={}'.format(self._tool_inputs['TSV_Accnos'][0])
+        items = ['accnos={}'.format(self._tool_inputs['TSV_Accnos'][0])]
         input_parameters = {'FASTA': 'fasta=',
                             'FASTQ': 'fastq=',
                             'TSV_Names': 'name=',
@@ -61,10 +61,9 @@ class MothurRemoveSeqs(Mothur):
             # Only two keys are possible so the one that is not TSV_Accnos
             # will define the option flag that is needed
             if key != 'TSV_Accnos':
-                input_string += ', ' + input_parameters[key]
-                input_string += input_files[0].path
-        input_string += ', outputdir={}'.format(self._folder)
-        return input_string
+                items.append('{}{}'.format(input_parameters[key], input_files[0].path))
+        items.append('outputdir={}'.format(self._folder))
+        return ', '.join(items)
 
     def _set_output(self):
         """

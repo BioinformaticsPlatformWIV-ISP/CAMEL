@@ -37,17 +37,17 @@ class MothurAlignSeqs(Mothur):
             raise InvalidInputSpecificationError('Invalid number (max = 1) of files per key given for Mothur \
                                                  align.seqs: {!r}'.format(self._tool_inputs))
         if len(self._tool_inputs.keys()) > 2:
-            raise InvalidInputSpecificationError('Too many input keys given voor Mothur align.seqs: {!r}'.format(self._tool_inputs))
+            raise InvalidInputSpecificationError('Too many input keys given for Mothur align.seqs: {!r}'.format(self._tool_inputs))
 
     def _build_input_string(self):
         """
         Creates the string with the input files and output directories
         :return: String with the input parameters
         """
-        input_string = 'fasta={}'.format(self._tool_inputs['FASTA'][0])
-        input_string += ', reference={}'.format(self._tool_inputs['FASTA_Ref'][0])
-        input_string += ', outputdir={}'.format(self._folder)
-        return input_string
+        items = ['fasta={}'.format(self._tool_inputs['FASTA'][0]),
+                 'reference={}'.format(self._tool_inputs['FASTA_Ref'][0]),
+                 'outputdir={}'.format(self._folder)]
+        return ', '.join(items)
 
     def _set_output(self):
         """

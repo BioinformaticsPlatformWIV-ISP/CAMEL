@@ -29,9 +29,7 @@ class MothurClassifySeqs(Mothur):
         :return: None
         """
         super(MothurClassifySeqs, self)._check_input()
-        if 'FASTA' not in self._tool_inputs or \
-                'FASTA_Ref' not in self._tool_inputs or \
-                'TSV_Taxonomy' not in self._tool_inputs:
+        if not all(key in self._tool_inputs for key in ['FASTA', 'FASTA_REF', 'TSV_Taxonomy']):
             raise InvalidInputSpecificationError('Missing input files (keys) for Mothur '
                                                  'classify.seqs: {!r}'.format(self._tool_inputs))
         for key, input_files in self._tool_inputs.iteritems():
@@ -47,18 +45,18 @@ class MothurClassifySeqs(Mothur):
         Creates the string with the input files and output directories
         :return: String with the input parameters
         """
-        input_string = 'fasta={}'.format(self._tool_inputs['FASTA'][0])
-        input_string += ', reference={}'.format(self._tool_inputs['FASTA_Ref'][0])
-        input_string += ', taxonomy={}'.format(self._tool_inputs['TSV_Taxonomy'][0])
+        items = ['fasta={}'.format(self._tool_inputs['FASTA'][0]),
+                 'reference={}'.format(self._tool_inputs['FASTA_Ref'][0]),
+                 'taxonomy={}'.format(self._tool_inputs['TSV_Taxonomy'][0])]
         # TSV_Counts, TSV_Names and TSV_Groups are mutually exclusive
         if 'TSV_Counts' in self._tool_inputs:
-            input_string += ', count={}'.format(self._tool_inputs['TSV_Counts'][0])
+            items.append('count={}'.format(self._tool_inputs['TSV_Counts'][0]))
         elif 'TSV_Names' in self._tool_inputs:
-            input_string += ', name={}'.format(self._tool_inputs['TSV_Names'][0])
+            items.append('name={}'.format(self._tool_inputs['TSV_Names'][0]))
         elif 'TSV_Groups' in self._tool_inputs:
-            input_string += ', group={}'.format(self._tool_inputs['TSV_Groups'][0])
-        input_string += ', outputdir={}'.format(self._folder)
-        return input_string
+            items.append('group={}'.format(self._tool_inputs['TSV_Groups'][0]))
+        items.append('outputdir={}'.format(self._folder))
+        return ', '.join(items)
 
     def _set_output(self):
         """

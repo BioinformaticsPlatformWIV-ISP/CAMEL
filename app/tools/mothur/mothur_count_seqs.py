@@ -33,7 +33,7 @@ class MothurCountSeqs(Mothur):
             raise InvalidInputSpecificationError('Invalid number (max = 1) of files given for Mothur \
                                                  count.seqs: {!r}'.format(self._tool_inputs))
         if len(self._tool_inputs.keys()) > 2:
-            raise InvalidInputSpecificationError('Too many input keys given voor Mothur count.seqs: {!r}'.format(self._tool_inputs))
+            raise InvalidInputSpecificationError('Too many input keys given for Mothur count.seqs: {!r}'.format(self._tool_inputs))
         for key, input_files in self._tool_inputs.iteritems():
             if key not in ['TSV_Names', 'TSV_Groups']:
                 raise InvalidInputSpecificationError('Invalid input key given for Mothur count.seqs: {!r}'.format(self._tool_inputs))
@@ -45,12 +45,12 @@ class MothurCountSeqs(Mothur):
         outputdir=/test/data/outputdir
         :return: String with the input parameters
         """
-        input_string = 'name={}'.format(self._tool_inputs['TSV_Names'][0])
+        items = ['name={}'.format(self._tool_inputs['TSV_Names'][0])]
         # Only TSV_Groups can be an additional input key
         if 'TSV_Groups' in self._tool_inputs:
-            input_string += ', group={}'.format(self._tool_inputs['TSV_Groups'][0])
-        input_string += ', outputdir={}'.format(self._folder)
-        return input_string
+            items.append('group={}'.format(self._tool_inputs['TSV_Groups'][0]))
+        items.append('outputdir={}'.format(self._folder))
+        return ', '.join(items)
 
     def _set_output(self):
         """

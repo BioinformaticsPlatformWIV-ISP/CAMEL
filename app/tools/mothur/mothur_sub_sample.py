@@ -40,25 +40,25 @@ class MothurSubSample(Mothur):
         Creates the string with the input files and output directories
         :return: String with the input parameters
         """
-        input_string = ''
+        items = []
         if 'FASTA' in self._tool_inputs:
-            input_string = 'fasta={}'.format(self._tool_inputs['FASTA'][0])
+            items.append('fasta={}'.format(self._tool_inputs['FASTA'][0]))
         elif 'TSV_List' in self._tool_inputs:
-            input_string = 'list={}'.format(self._tool_inputs['TSV_List'][0])
+            items.append('list={}'.format(self._tool_inputs['TSV_List'][0]))
         elif 'TSV_Shared' in self._tool_inputs:
-            input_string = 'shared={}'.format(self._tool_inputs['TSV_Shared'][0])
+            items.append('shared={}'.format(self._tool_inputs['TSV_Shared'][0]))
         elif 'TSV_Rabund' in self._tool_inputs:
-            input_string = 'rabund={}'.format(self._tool_inputs['TSV_Rabund'][0])
+            items.append('rabund={}'.format(self._tool_inputs['TSV_Rabund'][0]))
         elif 'TSV_Sabund' in self._tool_inputs:
-            input_string = 'sabund={}'.format(self._tool_inputs['TSV_Sabund'][0])
+            items.append('sabund={}'.format(self._tool_inputs['TSV_Sabund'][0]))
         if 'TSV_Names' in self._tool_inputs:
-            input_string += ', name={}'.format(self._tool_inputs['TSV_Names'][0])
+            items.append('name={}'.format(self._tool_inputs['TSV_Names'][0]))
         if 'TSV_Counts' in self._tool_inputs:
-            input_string += ', count={}'.format(self._tool_inputs['TSV_Counts'][0])
+            items.append('count={}'.format(self._tool_inputs['TSV_Counts'][0]))
         if 'TSV_Groups' in self._tool_inputs:
-            input_string += ', group={}'.format(self._tool_inputs['TSV_Groups'][0])
-        input_string += ', outputdir={}'.format(self._folder)
-        return input_string
+            items.append('group={}'.format(self._tool_inputs['TSV_Groups'][0]))
+        items.append('outputdir={}'.format(self._folder))
+        return ', '.join(items)
 
     def _set_output(self):
         """

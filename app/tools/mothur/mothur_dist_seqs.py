@@ -41,9 +41,9 @@ class MothurDistSeqs(Mothur):
         Creates the string with the input files and output directories
         :return: String with the input parameters
         """
-        input_string = 'fasta={}'.format(self._tool_inputs['FASTA'][0])
-        input_string += ', outputdir={}'.format(self._folder)
-        return input_string
+        items = ['fasta={}'.format(self._tool_inputs['FASTA'][0]),
+                 'outputdir={}'.format(self._folder)]
+        return ', '.join(items)
 
     def _set_output(self):
         """

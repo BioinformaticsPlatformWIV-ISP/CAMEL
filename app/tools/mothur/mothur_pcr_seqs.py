@@ -31,7 +31,7 @@ class MothurPcrSeqs(Mothur):
             raise InvalidInputSpecificationError('Invalid number (max = 1) of files given for Mothur \
                                                  pcr.seqs: {!r}'.format(self._tool_inputs))
         if len(self._tool_inputs.keys()) > 2:
-            raise InvalidInputSpecificationError('Too many input keys given voor Mothur pcr.seqs: {!r}'.format(self._tool_inputs))
+            raise InvalidInputSpecificationError('Too many input keys given for Mothur pcr.seqs: {!r}'.format(self._tool_inputs))
         for key, input_files in self._tool_inputs.iteritems():
             if key not in ['FASTA', 'TSV_Oligos']:
                 raise InvalidInputSpecificationError('Invalid input key given for Mothur pcr.seqs: {!r}'.format(self._tool_inputs))
@@ -43,11 +43,11 @@ class MothurPcrSeqs(Mothur):
         outputdir=/test/data/outputdir
         :return: String with the input parameters
         """
-        input_string = 'fasta={}'.format(self._tool_inputs['FASTA'][0])
+        items = ['fasta={}'.format(self._tool_inputs['FASTA'][0])]
         if 'TSV_Oligos' in self._tool_inputs:
-            input_string += ', oligos={}'.format(self._tool_inputs['TSV_Oligos'][0])
-        input_string += ', outputdir={}'.format(self._folder)
-        return input_string
+            items.append('oligos={}'.format(self._tool_inputs['TSV_Oligos'][0]))
+        items.append('outputdir={}'.format(self._folder))
+        return ', '.join(items)
 
     def _set_output(self):
         """

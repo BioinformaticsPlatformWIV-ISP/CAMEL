@@ -38,17 +38,17 @@ class MothurCountGroups(Mothur):
         Creates the string with the input files and output directories
         :return: String with the input parameters
         """
-        input_string = ''
+        items = []
         if 'TSV_Counts' in self._tool_inputs:
-            input_string = 'count={}'.format(self._tool_inputs['TSV_Counts'][0])
+            items.append('count={}'.format(self._tool_inputs['TSV_Counts'][0]))
         elif 'TSV_Groups' in self._tool_inputs:
-            input_string = 'group={}'.format(self._tool_inputs['TSV_Groups'][0])
+            items.append('group={}'.format(self._tool_inputs['TSV_Groups'][0]))
         elif 'TSV_Shared' in self._tool_inputs:
-            input_string = 'shared={}'.format(self._tool_inputs['TSV_Shared'][0])
+            items.append('shared={}'.format(self._tool_inputs['TSV_Shared'][0]))
         if 'TSV_Accnos' in self._tool_inputs:
-            input_string += ', reftaxonomy={}'.format(self._tool_inputs['TSV_Accnos'][0])
-        input_string += ', outputdir={}'.format(self._folder)
-        return input_string
+            items.append('reftaxonomy={}'.format(self._tool_inputs['TSV_Accnos'][0]))
+        items.append('outputdir={}'.format(self._folder))
+        return ', '.join(items)
 
     def _set_output(self):
         """

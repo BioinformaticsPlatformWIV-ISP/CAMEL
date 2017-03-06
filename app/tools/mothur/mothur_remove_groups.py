@@ -41,7 +41,7 @@ class MothurRemoveGroups(Mothur):
         Creates the string with the input files and output directories
         :return: String with the input parameters
         """
-        input_string = ''
+        items = []
         input_parameters = {'FASTA': 'fasta=',
                             'TSV_Names': 'name=',
                             'TSV_Counts': 'count=',
@@ -51,12 +51,9 @@ class MothurRemoveGroups(Mothur):
                             'TSV_Taxonomy': 'taxonomy='}
         # Based on the key the correct option flag is added to the input string
         for key, input_files in self._tool_inputs.iteritems():
-            input_string += ', ' + input_parameters[key]
-            input_string += input_files[0].path
-        input_string += ', outputdir={}'.format(self._folder)
-        # There is now a comma and a space in the beginning of the string
-        input_string = input_string[2:]
-        return input_string
+            items.append('{}{}'.format(input_parameters[key], input_files[0].path))
+        items.append('outputdir={}'.format(self._folder))
+        return ', '.join(items)
 
     def _set_output(self):
         """
