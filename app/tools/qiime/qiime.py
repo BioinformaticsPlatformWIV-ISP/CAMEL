@@ -1,0 +1,118 @@
+import logging
+
+import abc
+import os
+
+from app.error.toolexecutionerror import ToolExecutionError
+from app.io.tooliofile import ToolIOFile
+from app.tools.tool import Tool
+
+
+class Qiime(Tool):
+    """
+    A super class that contains all functions that are shared between Qiime scripts.
+    """
+
+    def __init__(self, name, version, camel):
+        """
+        Initialize tool
+        :param name: Name of the tool
+        :param version: Version of the tool
+        :param camel: Camel instance
+        :return: None
+        """
+        super(Qiime, self).__init__(name, version, camel)
+        self._parameter_file = 'parameters.txt'
+
+    def _execute_tool(self):
+        """
+        Runs Prinseq
+        :return: None
+        """
+        self._build_command()
+        self._execute_command()
+        self._set_output()
+        self._add_log_filename()
+
+    def _build_options(self, excluded_parameters=None, separator=' '):
+        """
+        Creates the string with all the specified parameters
+        :param excluded_parameters: list of parameters to be skipped (Optional)
+        :param separator: separator used to combine the option and value (Optional)
+        :return: String with command parameters
+        """
+        option_list = []
+        for name, param in self._parameters.iteritems():
+            if ':' in name:
+                self.__write_to_parameter_file(param)
+            else:
+                if param.value is None:
+                    option_list.append(param.option)
+                else:
+                    option_list.append('{}{}{}'.format(param.option, separator, param.value))
+        return '' if len(option_list) == 0 else ' '.join(option_list)
+
+    def _build_command(self):
+        """
+        Concatenates required parameters and options to build the command to run
+        :return: None
+        """
+        self._command.command = '{} {} {}'.format(self._tool_command, self._build_input_string(), self._build_options())
+
+    @abc.abstractmethod
+    def _build_input_string(self):
+        """
+        Creates the string with the input files and input/output directories
+        :return: None
+        """
+        pass
+
+    @abc.abstractmethod
+    def _set_output(self):
+        """
+        Sets the name of the output files in the output file object
+        :return: None
+        """
+        pass
+
+    def __write_to_parameter_file(self, parameter):
+        """
+        Write the given parameter to the parameter file
+        :param parameter: Paramater dictionary to write to the file
+        :return: None
+        """
+        param_file = os.path.join(self._folder, self._parameter_file)
+        with open(param_file, 'a') as outfile:
+            outfile.write(parameter.option + ' ' + parameter.value + '\n')
+
+    def _get_basename(self, input_key='FASTA', suffix='.'):
+        """
+        Returns the prefix that will be used in the output.
+        Example: Input file /test/data/file1.run1.fastq will return the
+        following prefix: /test/data/file1.run1 (suffix = '.fastq')
+        :param suffix: Suffix that has to be removed
+        :param input_key: Key of the input file to be used
+        :return: String with the prefix used in the output
+        """
+        infile = os.path.basename(self._tool_inputs[input_key][0].path)
+        return os.path.join(self._folder, infile[:infile.rfind(suffix)])
+
+    def _add_log_filename(self):
+        """
+        Searches for the log file that was created during the run and adds this to the output
+        :return: None
+        """
+        log_files = [ToolIOFile(os.path.join(self._folder, f)) for f in os.listdir(self._folder) if f.startswith('log_')]
+        if len(log_files) > 0:
+            self._tool_outputs['LOG'] = log_files
+            logging.debug('Added log file to outputs: {}'.format(self._tool_outputs))
+
+    def _check_command_output(self):
+        """
+        Checks if the command was executed successfully.
+        :return: None
+        """
+        if self.stderr != '' and 'error' in self.stderr.lower():
+            raise ToolExecutionError("Command execution failed (stderr: {}).".format(self.stderr))
+        elif self._command.returncode != 0:
+            raise ToolExecutionError("Command execution failed (Exit code: {})".format(self._command.returncode))
