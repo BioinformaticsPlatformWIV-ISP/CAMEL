@@ -52,7 +52,6 @@ steps:
 
   - name: DIR_HTML
     from: initial
-    alias: DIR
 
   - name: DIR
     from: initial
