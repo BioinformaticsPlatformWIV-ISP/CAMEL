@@ -1,5 +1,6 @@
 import re
 
+from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from app.tools.picard.picard import Picard
 
 
@@ -33,7 +34,7 @@ class FastqToSam(Picard):
         elif 'FASTQ_SE' in self._tool_inputs:
             self._input_string = 'FASTQ={}'.format(self._tool_inputs['FASTQ_SE'][0].path)
         else:
-            raise KeyError('Picard FastqToSam requires FASTQ_SE or FASTQ_PE input.')
+            InvalidInputSpecificationError('Picard FastqToSam requires FASTQ_SE or FASTQ_PE input.')
 
         if 'SAMPLE_NAME' in self._tool_inputs:
             self._input_string += " SM={0} RG={0}".format(self._tool_inputs['SAMPLE_NAME'][0].value)

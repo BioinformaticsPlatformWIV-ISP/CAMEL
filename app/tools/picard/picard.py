@@ -3,12 +3,14 @@ import os
 import re
 import abc
 
+from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from app.error.toolexecutionerror import ToolExecutionError
 from app.io.tooliofile import ToolIOFile
 from app.tools.tool import Tool
 
 
 class Picard(Tool):
+
     """
     Super class for Picard tools
     """
@@ -59,7 +61,7 @@ class Picard(Tool):
         if len(self._supported_inputs) != 0:
             input_type, input_files = self._check_supported_input()
             if len(input_files) > 1:
-                raise ValueError("Can only specify one file of type {!r} as input of Picard {!r}.".format(
+                raise InvalidInputSpecificationError("Can only specify one file of type {!r} as input of Picard {!r}.".format(
                     input_type, self._function_name))
             self._input_string = " I={}".format(input_files[0].path)
 
@@ -72,7 +74,8 @@ class Picard(Tool):
         """
         for input_file in self._required_inputs:
             if input_file not in self._tool_inputs:
-                raise KeyError('Picard {!r} required input file of type {!r} is missing!'.format(self._function_name, input_file))
+                raise InvalidInputSpecificationError(
+                    'Picard {!r} required input file of type {!r} is missing!'.format(self._function_name, input_file))
 
     def _set_input(self):
         """
@@ -91,7 +94,7 @@ class Picard(Tool):
             if input_type in self._tool_inputs:
                 return input_type, self._tool_inputs[input_type]
 
-        raise KeyError('None of the supported input types {!r} of Picard {!r} is specified!'.format(
+        raise InvalidInputSpecificationError('None of the supported input types {!r} of Picard {!r} is specified!'.format(
             self._supported_inputs, self._function_name))
 
     def _set_output(self):
