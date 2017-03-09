@@ -9,9 +9,9 @@ from app.tools.picard.picard import Picard
 class CollectMultipleMetrics(Picard):
 
     """
-    Class for Picard CollectMultipleMetrics function to calculate various QC matrics for readmap
+    Class for Picard CollectMultipleMetrics function to calculate various QC metrics for readmap
 
-    Matrics calculated:
+    Metrics calculated:
     - CollectAlignmentSummaryMetrics
     - CollectInsertSizeMetrics
     - QualityScoreDistribution
@@ -52,47 +52,47 @@ class CollectMultipleMetrics(Picard):
         """
         self.outfile_prefix = os.path.join(self._folder, self._parameters['output_prefix'].value)
 
-        # Known Matrics: CollectAlignmentSummaryMetrics, CollectInsertSizeMetrics, QualityScoreDistribution,
+        # Known Metrics: CollectAlignmentSummaryMetrics, CollectInsertSizeMetrics, QualityScoreDistribution,
         #   MeanQualityByCycle, CollectBaseDistributionByCycle, CollectGcBiasMetrics, RnaSeqMetrics,
         #   CollectSequencingArtifactMetrics, CollectQualityYieldMetrics
         for key in self._parameters:
-            if re.match('matrics_', key):
-                if key == 'matrics_CollectAlignmentSummaryMetrics':
-                    self.__set_alignement_summary_output()
-                elif key == 'matrics_CollectInsertSizeMetrics':
+            if re.match('metrics_', key):
+                if key == 'metrics_CollectAlignmentSummaryMetrics':
+                    self.__set_alignment_summary_output()
+                elif key == 'metrics_CollectInsertSizeMetrics':
                     self.__set_insert_size_output()
-                elif key == 'matrics_QualityScoreDistribution':
+                elif key == 'metrics_QualityScoreDistribution':
                     self.__set_mapping_quality_output()
-                elif key == 'matrics_CollectGcBiasMetrics':
+                elif key == 'metrics_CollectGcBiasMetrics':
                     self.__set_gc_bias_output()
                 else:  # MeanQualityByCycle, CollectBaseDistributionByCycle, RnaSeqMetrics, CollectSequencingArtifactMetrics, CollectQualityYieldMetrics
                     logging.warning(
-                        "Picard CollectMultipleMetrics unsupported matrics {!r}, its results will not be analyzed or returned.".format(key))
+                        "Picard CollectMultipleMetrics unsupported metrics {!r}, its results will not be analyzed or returned.".format(key))
 
     def _set_inform(self):
         """
         Analyse the result of picard run and update tool.informs
         :return: None
         """
-        # Known Matrics: CollectAlignmentSummaryMetrics, CollectInsertSizeMetrics, QualityScoreDistribution,
+        # Known Metrics: CollectAlignmentSummaryMetrics, CollectInsertSizeMetrics, QualityScoreDistribution,
         #   MeanQualityByCycle, CollectBaseDistributionByCycle, CollectGcBiasMetrics, RnaSeqMetrics,
         #   CollectSequencingArtifactMetrics, CollectQualityYieldMetrics
         for key in self._parameters:
-            if re.match('matrics_', key):
-                if key == 'matrics_CollectAlignmentSummaryMetrics':
-                    self.__analyze_alignement_summary()
-                elif key == 'matrics_CollectInsertSizeMetrics':
+            if re.match('metrics_', key):
+                if key == 'metrics_CollectAlignmentSummaryMetrics':
+                    self.__analyze_alignment_summary()
+                elif key == 'metrics_CollectInsertSizeMetrics':
                     self.__analyze_insert_size()
-                elif key == 'matrics_CollectGcBiasMetrics':
+                elif key == 'metrics_CollectGcBiasMetrics':
                     self.__analyze_gc_bias()
-                elif key == 'matrics_QualityScoreDistribution':
+                elif key == 'metrics_QualityScoreDistribution':
                     # No output to analyze, set to prevent going to 'else' case
                     continue
                 else:  # MeanQualityByCycle, CollectBaseDistributionByCycle, RnaSeqMetrics, CollectSequencingArtifactMetrics, CollectQualityYieldMetrics
                     logging.warning(
-                        "Picard CollectMultipleMetrics unsupported matrics {!r}, its results will not be analyzed or returned.".format(key))
+                        "Picard CollectMultipleMetrics unsupported metrics {!r}, its results will not be analyzed or returned.".format(key))
 
-    def __set_alignement_summary_output(self):
+    def __set_alignment_summary_output(self):
         """
         set the Alignment Summary statistics output
         :return: None
@@ -100,7 +100,7 @@ class CollectMultipleMetrics(Picard):
         alignment_summary_file = self.outfile_prefix + CollectMultipleMetrics.OUTPUT_FILE_SUFFIX['AlignmentSummary']
         self._tool_outputs['TXT_AlignmentSummary'] = [ToolIOFile(alignment_summary_file)]
 
-    def __analyze_alignement_summary(self):
+    def __analyze_alignment_summary(self):
         """
         Analyze the Alignment Summary statistics
         :return: None
@@ -117,7 +117,7 @@ class CollectMultipleMetrics(Picard):
         # Ref: http://broadinstitute.github.io/picard/picard-metric-definitions.html#AlignmentSummaryMetrics
         align_stats = {}
         with open(self._tool_outputs['TXT_AlignmentSummary'][0].path, 'r') as inf:
-            for l in inf.readlines():
+            for l in inf:
                 if re.match('PAIR', l):
                     pair_informs = l.split("\t")
                     align_stats['TOTAL_READS'] = pair_informs[1]
@@ -162,7 +162,7 @@ class CollectMultipleMetrics(Picard):
         data_row = False
         self.informs['InsertSize_stats'] = {}
         with open(self._tool_outputs['TXT_InsertSize'][0].path, 'r') as inf:
-            for l in inf.readlines():
+            for l in inf:
                 if re.match('MEDIAN_INSERT_SIZE', l):
                     data_row = True
                     continue
@@ -210,7 +210,7 @@ class CollectMultipleMetrics(Picard):
         # Only GC Bias summary is analyzed
         self.informs['GCBias_stats'] = {}
         with open(self._tool_outputs['TXT_GcBiasSummary'][0].path, 'r') as inf:
-            for l in inf.readlines():
+            for l in inf:
                 if re.match('All Reads', l):
                     informs = l.split("\t")
                     self.informs['GCBias_stats']['AT_DROPOUT'] = informs[4]
