@@ -13,6 +13,10 @@ class FastqUtils(object):
     """
     Helper to perform FASTQ file related functions
     """
+    # TODO remove command parameters in func 'count_reads', 'sort_fastq_by_identifier',
+    #      'convert_fastqs_to_interleaved_fastq', 'convert_interleaved_fastq_to_individual_fastqs'
+
+    # TODO replace convert_interleaved_fastq_to_individual_fastqs into split_interleaved_fastq
 
     def __init__(self):
         pass
@@ -25,7 +29,7 @@ class FastqUtils(object):
         :param command: Command class object to run command
         :return: number of reads in fastq file
         """
-        cmd = "cat " + infile + " | paste - - - - | wc -l"
+        cmd = "cat {!r} | paste - - - - | wc -l".format(infile)
         if command is None:
             command = Command()
         command.command = cmd
@@ -43,7 +47,7 @@ class FastqUtils(object):
         :param command: Command class object to run command
         :return: None
         """
-        cmd = "cat " + infile + " | paste - - - - | sort -k1,1 -t \" \" | tr \"\t\" \"\n\" > " + outfile
+        cmd = "cat {!r} | paste - - - - | sort -k1,1 -t \" \" | tr \"\t\" \"\n\" > {!r}".format(infile, outfile)
         if command is None:
             command = Command()
         command.command = cmd
@@ -63,7 +67,7 @@ class FastqUtils(object):
         :param command: Command class object to run command
         :return: None
         """
-        cmd = "paste <(paste - - - - < {}) <(paste - - - - < {}) | tr '\t' '\n' \ > {}".format(
+        cmd = "paste <(paste - - - - < {!r}) <(paste - - - - < {!r}) | tr '\t' '\n' \ > {!r}".format(
             pe_1_file, pe_2_file, interleaved_file)
         if command is None:
             command = Command()
@@ -83,7 +87,20 @@ class FastqUtils(object):
         :param command: Command class object to run command
         :return: None
         """
-        cmd = "paste - - - - - - - - < {} | tee >(cut -f 1-4 | tr '\t' '\n' > {}) | cut -f 5-8 | tr '\t' '\n' > {}".format(
+        FastqUtils.split_interleaved_fastq(interleaved_file, pe_1_file, pe_2_file, command=None)
+
+    @staticmethod
+    def split_interleaved_fastq(interleaved_file, pe_1_file, pe_2_file, command=None):
+        """
+        Split a interleaved fastq file into two fastq files each containing one group of reads. Input interleaved fastq
+        file must be sorted. No CHECKS are performed.
+        :param interleaved_file: interleaved fastq file containing both groups of reads
+        :param pe_1_file: fastq file will hold the first group of reads
+        :param pe_2_file: fastq file will hold the second group of reads
+        :param command: Command class object to run command
+        :return: None
+        """
+        cmd = "paste - - - - - - - - < {!r} | tee >(cut -f 1-4 | tr '\t' '\n' > {!r}) | cut -f 5-8 | tr '\t' '\n' > {!r}".format(
             interleaved_file, pe_1_file, pe_2_file)
         if command is None:
             command = Command()
@@ -160,7 +177,7 @@ class FastqUtils(object):
         :param other_dict: Dictionary with reads of the other file
         :param pe_outf: Output file for the paired reads
         :param se_outf: Output file for the orphans
-        :return:
+        :return: None
         """
         FastqUtils._write_read_to_file(read_dict[FastqUtils._get_read_name(read)], pe_outf)
         read_dict.pop(FastqUtils._get_read_name(read))

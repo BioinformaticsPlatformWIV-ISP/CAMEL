@@ -78,17 +78,16 @@ class GATK(Tool):
             ToolIOFile(os.path.join(self._folder, self._parameters['output'].value))
         ]
 
-    @abc.abstractmethod
     def _set_specific_parameters(self):
         """
-        Set specific parameters that need special handling
+        Set specific parameters that need special handling when required
         :return: None
         """
         pass
 
     def _build_command(self):
         """
-        Bui ld the command to run tool
+        Build the command to run tool
         :return: None
         """
         self._option_string += " ".join(self._build_options(excluded_parameters=self._specific_parameters))
@@ -98,7 +97,7 @@ class GATK(Tool):
 
     def _check_command_output(self):
         """
-        Chech the result of GATK tool run
+        Check the result of GATK tool run
         :return: None
         """
         if not re.match('Exit status: 0', self.stdout.split('\n')[-2].rstrip()):
@@ -115,7 +114,7 @@ class GATK(Tool):
             if re.match('WARNING', l):
                 logging.info(" GATK - {}".format(l))
 
-            # The Genome Analysis Toolkit (GATK) v3.4-0-g7e26428
+            # E.g., The Genome Analysis Toolkit (GATK) v3.4-0-g7e26428
             match = re.search('The Genome Analysis Toolkit (GATK) (.+),', l)
             if match:
                 self.informs['tool_name'] = 'GATK'

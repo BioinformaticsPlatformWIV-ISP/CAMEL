@@ -4,9 +4,11 @@ from app.command.command import Command
 
 
 class FastaUtils(object):
+
     """
     Helper to perform FASTA file related functions
     """
+    # TODO remove command parameters in func 'count_reads'
 
     @staticmethod
     def read_as_index_dict(fasta):
@@ -45,7 +47,7 @@ class FastaUtils(object):
         :param infile: file name of the fasta file to count
         :return: number of reads in fasta file
         """
-        cmd = "cat " + infile + " | paste - - | wc -l"
+        cmd = "cat {!r} | paste - - | wc -l".format(infile)
         if command is None:
             command = Command()
         command.command = cmd
