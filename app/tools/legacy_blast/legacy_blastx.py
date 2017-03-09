@@ -33,10 +33,18 @@ class LegacyBlastx(Tool):
             self._execute_command()
         self.__set_output()
         if len(self._fasta) > 1:
-            FileUtils.concatenate_files(self._tool_outputs['BLASTX'][0].path, [os.path.splitext(f.path)[0] + '.blastx' for f in self._fasta])
-            for infile in self._fasta:
-                os.remove(infile.path)
-                os.remove(os.path.splitext(infile.path)[0] + '.blastx')
+            self.__concatenate_split_outputs()
+
+    def __concatenate_split_outputs(self):
+        """
+        Concatenates the outputs of the split input file into one big output file
+        :return: None
+        """
+        FileUtils.concatenate_files(self._tool_outputs['BLASTX'][0].path,
+                                    [os.path.splitext(f.path)[0] + '.blastx' for f in self._fasta])
+        for infile in self._fasta:
+            os.remove(infile.path)
+            os.remove(os.path.splitext(infile.path)[0] + '.blastx')
 
     def _check_input(self):
         """
@@ -48,7 +56,7 @@ class LegacyBlastx(Tool):
         """
         super(LegacyBlastx, self)._check_input()
         if 'FASTA' not in self._tool_inputs or 'DB' not in self._tool_inputs:
-            raise InvalidInputSpecificationError('Not enough valid input files given for '
+            raise InvalidInputSpecificationError('FASTA or DB input files missing from input for '
                                                  'legacy blastx: {!r}'.format(self._tool_inputs))
         if len(self._tool_inputs['FASTA']) != 1 or len(self._tool_inputs['DB']) != 1:
             raise InvalidInputSpecificationError('Invalid number (max = 1) of files per key given '
@@ -61,9 +69,8 @@ class LegacyBlastx(Tool):
         Checks if the command was executed successfully.
         :return: None
         """
-        for line in self.stderr.splitlines():
-            if 'ERROR' in line:
-                raise ToolExecutionError("Command execution failed (stderr: {}).".format(self.stderr))
+        if 'ERROR' in self.stderr:
+            raise ToolExecutionError("Command execution failed (stderr: {}).".format(self.stderr))
         if self._command.returncode != 0:
             raise ToolExecutionError("Command execution failed (Exit code: {})".format(self._command.returncode))
 

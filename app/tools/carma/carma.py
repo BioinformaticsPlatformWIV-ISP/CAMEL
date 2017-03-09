@@ -55,7 +55,7 @@ class Carma(Tool):
         :return: None
         """
         super(Carma, self)._check_input()
-        if 'FASTA' in self._tool_inputs == ('BLASTX' in self._tool_inputs != 'EGT' in self._tool_inputs):
+        if [x in self._tool_inputs for x in ('FASTA', 'BLASTX', 'EGT')].count(True) != 1:
             raise InvalidInputSpecificationError('Invalid input keys given for CARMA: {!r}'.format(self._tool_inputs))
         if len(self._tool_inputs.keys()) != 1:
             raise InvalidInputSpecificationError('Too many input keys given for CARMA: {!r}'.format(self._tool_inputs))
@@ -69,9 +69,8 @@ class Carma(Tool):
         Checks if the command was executed successfully.
         :return: None
         """
-        for line in self.stderr.splitlines():
-            if 'ERROR' in line:
-                raise ToolExecutionError("Command execution failed (stderr: {}).".format(self.stderr))
+        if 'ERROR' in self.stderr:
+            raise ToolExecutionError("Command execution failed (stderr: {}).".format(self.stderr))
         if self._command.returncode != 0:
             raise ToolExecutionError("Command execution failed (Exit code: {})".format(self._command.returncode))
 
@@ -175,7 +174,7 @@ class Carma(Tool):
         :return: String with the prefix used in the output
         """
         infile = os.path.basename(self._tool_inputs[self._input_key][0].path)
-        return os.path.join(self._folder, infile[:infile.rfind('.')])
+        return os.path.join(self._folder, os.path.splitext(infile)[0])
 
     def __get_output_filename(self):
         """
