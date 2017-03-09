@@ -37,13 +37,14 @@ class KrakenReport(Tool):
         :return: None
         """
         if 'TSV' not in self._tool_inputs or 'DB' not in self._tool_inputs:
-            raise InvalidInputSpecificationError('Invalid input keys given for Kraken-report: {!r}'.format(self._tool_inputs))
+            raise InvalidInputSpecificationError('TSV or DB input keys are missing for Kraken-report: {!r}'.format(self._tool_inputs))
         for value in self._tool_inputs.values():
             if len(value) > 1:
-                raise InvalidInputSpecificationError('Invalid number of files per key given '
+                raise InvalidInputSpecificationError('More than one file per key given '
                                                      'for Kraken-report: {!r}'.format(self._tool_inputs))
         if len(self._tool_inputs.keys()) > 2:
-            raise InvalidInputSpecificationError('Too many input keys given voor Kraken-report: {!r}'.format(self._tool_inputs))
+            raise InvalidInputSpecificationError('Too many input keys given for Kraken-report '
+                                                 '(only TSV and DB allowed): {!r}'.format(self._tool_inputs))
 
     def __get_basename(self):
         """
