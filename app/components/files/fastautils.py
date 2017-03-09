@@ -8,7 +8,6 @@ class FastaUtils(object):
     """
     Helper to perform FASTA file related functions
     """
-    # TODO remove command parameters in func 'count_reads'
 
     @staticmethod
     def read_as_index_dict(fasta):
@@ -41,15 +40,14 @@ class FastaUtils(object):
             SeqIO.write(sequences, output_handle, "fasta")
 
     @staticmethod
-    def count_reads(infile, command=None):
+    def count_reads(infile):
         """
         Count how many reads in a fastq file
         :param infile: file name of the fasta file to count
         :return: number of reads in fasta file
         """
         cmd = "cat {!r} | paste - - | wc -l".format(infile)
-        if command is None:
-            command = Command()
+        command = Command()
         command.command = cmd
         command.run_command(os.path.dirname(os.path.abspath(infile)))
         if command.stderr != '':

@@ -13,10 +13,7 @@ class FastqUtils(object):
     """
     Helper to perform FASTQ file related functions
     """
-    # TODO remove command parameters in func 'count_reads', 'sort_fastq_by_identifier',
-    #      'convert_fastqs_to_interleaved_fastq', 'convert_interleaved_fastq_to_individual_fastqs'
-
-    # TODO replace convert_interleaved_fastq_to_individual_fastqs into split_interleaved_fastq
+    # Note that func convert_interleaved_fastq_to_individual_fastqs has been renamed as split_interleaved_fastq
 
     def __init__(self):
         pass
@@ -39,24 +36,22 @@ class FastqUtils(object):
         return int(command.stdout.rstrip())
 
     @staticmethod
-    def sort_fastq_by_identifier(infile, outfile, command=None):
+    def sort_fastq_by_identifier(infile, outfile):
         """
         Function to sort the reads in a fastq file
         :param infile: file name of the file to sort
         :param outfile: file name of the sorted file
-        :param command: Command class object to run command
         :return: None
         """
         cmd = "cat {!r} | paste - - - - | sort -k1,1 -t \" \" | tr \"\t\" \"\n\" > {!r}".format(infile, outfile)
-        if command is None:
-            command = Command()
+        command = Command()
         command.command = cmd
         command.run_command(os.path.dirname(os.path.abspath(outfile)))
         if command.stderr != '':
             raise RuntimeError(command.stderr, cmd)
 
     @staticmethod
-    def convert_fastqs_to_interleaved_fastq(pe_1_file, pe_2_file, interleaved_file, command=None):
+    def convert_fastqs_to_interleaved_fastq(pe_1_file, pe_2_file, interleaved_file):
         """
         Convert two ordered fastq file into a interleaved fastq file, NO CHECKS are performed. If checks are needed, call
         'create_paired_end' instead.
@@ -64,46 +59,41 @@ class FastqUtils(object):
         :param pe_1_file: fastq file containing the first group of reads
         :param pe_2_file: fastq file containing the second group of reads
         :param interleaved_file: interleaved fastq file to be generated
-        :param command: Command class object to run command
         :return: None
         """
         cmd = "paste <(paste - - - - < {!r}) <(paste - - - - < {!r}) | tr '\t' '\n' \ > {!r}".format(
             pe_1_file, pe_2_file, interleaved_file)
-        if command is None:
-            command = Command()
+        command = Command()
         command.command = cmd
         command.run_command(os.path.dirname(os.path.abspath(interleaved_file)))
         if command.stderr != '':
             raise RuntimeError(command.stderr, cmd)
 
     @staticmethod
-    def convert_interleaved_fastq_to_individual_fastqs(interleaved_file, pe_1_file, pe_2_file, command=None):
+    def convert_interleaved_fastq_to_individual_fastqs(interleaved_file, pe_1_file, pe_2_file):
         """
         Convert a interleaved fastq file into two fastq files each containing one group of reads. Input interleaved fastq
         file must be sorted. No CHECKS are performed.
         :param interleaved_file: interleaved fastq file containing both groups of reads
         :param pe_1_file: fastq file will hold the first group of reads
         :param pe_2_file: fastq file will hold the second group of reads
-        :param command: Command class object to run command
         :return: None
         """
-        FastqUtils.split_interleaved_fastq(interleaved_file, pe_1_file, pe_2_file, command=None)
+        FastqUtils.split_interleaved_fastq(interleaved_file, pe_1_file, pe_2_file)
 
     @staticmethod
-    def split_interleaved_fastq(interleaved_file, pe_1_file, pe_2_file, command=None):
+    def split_interleaved_fastq(interleaved_file, pe_1_file, pe_2_file):
         """
         Split a interleaved fastq file into two fastq files each containing one group of reads. Input interleaved fastq
         file must be sorted. No CHECKS are performed.
         :param interleaved_file: interleaved fastq file containing both groups of reads
         :param pe_1_file: fastq file will hold the first group of reads
         :param pe_2_file: fastq file will hold the second group of reads
-        :param command: Command class object to run command
         :return: None
         """
         cmd = "paste - - - - - - - - < {!r} | tee >(cut -f 1-4 | tr '\t' '\n' > {!r}) | cut -f 5-8 | tr '\t' '\n' > {!r}".format(
             interleaved_file, pe_1_file, pe_2_file)
-        if command is None:
-            command = Command()
+        command = Command()
         command.command = cmd
         command.run_command(os.path.dirname(os.path.abspath(pe_1_file)))
         if command.stderr != '':
