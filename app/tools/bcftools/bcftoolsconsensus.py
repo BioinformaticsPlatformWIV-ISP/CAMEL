@@ -1,6 +1,7 @@
 import os
 
 from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from app.error.toolexecutionerror import ToolExecutionError
 from app.io.tooliofile import ToolIOFile
 from app.tools.tool import Tool
 
@@ -61,5 +62,5 @@ class BcftoolsConsensus(Tool):
         Checks if the command executed successfully.
         :return: None
         """
-        if self._command.returncode == 0:
-            return
+        if self._command.returncode != 0:
+            raise ToolExecutionError("Tool did not run successfully")
