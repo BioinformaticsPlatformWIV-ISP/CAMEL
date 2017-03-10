@@ -3,10 +3,12 @@ import shutil
 
 import os
 import re
-from app.io.tooliofile import ToolIOFile
+
 from app.command.command import Command
-from app.tools.tool import Tool
 from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from app.error.toolexecutionerror import ToolExecutionError
+from app.io.tooliofile import ToolIOFile
+from app.tools.tool import Tool
 
 
 class Phymmbl(Tool):
@@ -140,3 +142,11 @@ class Phymmbl(Tool):
         """
         input_string = self._tool_inputs['FASTA'][0].path
         self._command.command = self._tool_command + ' {}'.format(input_string)
+
+    def _check_command_output(self):
+        """
+        Checks if the command was executed successfully.
+        :return: None
+        """
+        if self._command.returncode != 0:
+            raise ToolExecutionError("Command execution failed (Exit code: {})".format(self._command.returncode))
