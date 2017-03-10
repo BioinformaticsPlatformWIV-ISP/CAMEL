@@ -1,3 +1,4 @@
+import logging
 import os
 
 from app.components.blast.alignmentextraction import AlignmentExtraction
@@ -30,6 +31,8 @@ class AlignmentExtractor(Tool):
         """
         alignments = AlignmentExtraction.get_alignments(self._tool_inputs['TXT'][0].path)
         self._tool_outputs['TXT'] = []
+        if 'VAL_Hits' not in self._tool_inputs:
+            return
         for input_ in self._tool_inputs['VAL_Hits']:
             key = AlignmentExtraction.get_key(input_.value.database_gene, input_.value.query)
             if key in alignments:
@@ -46,7 +49,7 @@ class AlignmentExtractor(Tool):
         if 'TXT' not in self._tool_inputs:
             raise ValueError("No TXT input found.")
         if 'VAL_Hits' not in self._tool_inputs:
-            raise ValueError("No blast hits input found")
+            logging.warning("No blast hits input found")
         super(AlignmentExtractor, self)._check_input()
 
     def __save_alignment(self, subject_name, alignment):
