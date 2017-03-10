@@ -23,7 +23,7 @@ class Deconseq(Tool):
 
     def _execute_tool(self):
         """
-        Runs Prinseq
+        Runs Deconseq
         :return: None
         """
         self.__set_input_key()
@@ -70,7 +70,7 @@ class Deconseq(Tool):
 
     def __set_output(self):
         """
-        Sets the name of the output files, and fills the common stream object with them
+        Sets the name of the output files
         :return: None
         """
         basename = self.__get_basename()
