@@ -113,8 +113,8 @@ class Phymmbl(Tool):
 
     def __clean_temp_directory(self):
         """
-        Moves the output files that were created to the correct output directory and removes the temporary version of
-        PhymmBL after setting the current folder back to the original working folder
+        Removes all non-output files from the running directory (i.e. all files that were copied from the binaries
+        directory and symlinks that were created)
         :return: None
         """
         output_folder = os.path.join(self._folder, 'phymmbl')
