@@ -6,6 +6,7 @@ import re
 from app.io.tooliofile import ToolIOFile
 from app.command.command import Command
 from app.tools.tool import Tool
+from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 
 
 class Phymmbl(Tool):
@@ -45,12 +46,15 @@ class Phymmbl(Tool):
         """
         super(Phymmbl, self)._check_input()
         if 'FASTA' not in self._tool_inputs or 'DB' not in self._tool_inputs:
-            raise ValueError('Invalid input key given for PhymmBL, only FASTA and DB allowed: {!r}'.format(self._tool_inputs))
+            raise InvalidInputSpecificationError('Invalid input key given for PhymmBL, '
+                                                 'only FASTA and DB allowed: {!r}'.format(self._tool_inputs))
         if len(self._tool_inputs.keys()) != 2:
-            raise ValueError('Invalid number of input keys given voor PhymmBL, only FASTA and DB allowed: {!r}'.format(self._tool_inputs))
+            raise InvalidInputSpecificationError('Invalid number of input keys given voor PhymmBL, '
+                                                 'only FASTA and DB allowed: {!r}'.format(self._tool_inputs))
         for value in self._tool_inputs.values():
             if len(value) > 1:
-                raise ValueError('Invalid number (max = 1) of files per key given for PhymmBL: {!r}'.format(self._tool_inputs))
+                raise InvalidInputSpecificationError('Invalid number (max = 1) of files per '
+                                                     'key given for PhymmBL: {!r}'.format(self._tool_inputs))
 
     def __build_output_name(self, prefix):
         """
