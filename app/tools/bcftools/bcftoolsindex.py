@@ -24,7 +24,7 @@ class BcftoolsIndex(Samtools):
         :return: None
         """
         if not any(key in self._tool_inputs for key in ('BCF', 'VCF_GZ')):
-            raise InvalidInputSpecificationError("No input file found")
+            raise InvalidInputSpecificationError("No input file found (BCF / VCF_GZ supported)")
         if len(self._tool_inputs) != 1:
             raise InvalidInputSpecificationError("Only one type of input is supported (VCF_GZ or BCF)")
         super(BcftoolsIndex, self)._check_input()
@@ -39,7 +39,7 @@ class BcftoolsIndex(Samtools):
         self.__build_command(input_file_path)
         self._execute_command()
         self._check_stderr()
-        self._tool_outputs[self._input_key] = [ToolIOFile(input_file_path)]
+        self.__set_output(input_file_path)
 
     def __symlink_input(self):
         """
@@ -62,3 +62,11 @@ class BcftoolsIndex(Samtools):
             self._tool_command,
             ' '.join(self._build_options()),
             input_file_path])
+
+    def __set_output(self, input_file_path):
+        """
+        Sets the output of this tool.
+        :param input_file_path: Path to the input file symlink
+        :return: None
+        """
+        self._tool_outputs[self._input_key] = [ToolIOFile(input_file_path)]

@@ -24,7 +24,7 @@ class BcftoolsView(Tool):
         :return: None
         """
         if not any(key in self._tool_inputs for key in ('BCF', 'VCF', 'VCF_GZ')):
-            raise InvalidInputSpecificationError("No input file found")
+            raise InvalidInputSpecificationError("No input file found (BCF / VCF_GZ / VCF supported)")
         super(BcftoolsView, self)._check_input()
 
     def _execute_tool(self):
