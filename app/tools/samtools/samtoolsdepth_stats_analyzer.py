@@ -6,6 +6,7 @@ from app.tools.tool import Tool
 
 
 class SamtoolsDepthStatsAnalyzer(Tool):
+
     """
     Customized tool to analyze samtools depth output to extract Reads Mapping statistics
     """
@@ -62,13 +63,13 @@ class SamtoolsDepthStatsAnalyzer(Tool):
         )
 
         if 'FASTA_REF' in self._tool_inputs:
-            genome_base_coverage, segament_base_coverage = self.__calculate_base_coverage(
+            genome_base_coverage, segment_base_coverage = self.__calculate_base_coverage(
                 segment_base_count, refseq_length)
         else:
             genome_base_coverage = 'NA'
-            segament_base_coverage = {}
+            segment_base_coverage = {}
             for seq_id in segment_base_count:
-                segament_base_coverage[seq_id] = 'NA'
+                segment_base_coverage[seq_id] = 'NA'
 
         # whole genome statistics
         median = StatisticsUtils.median(coverages)
@@ -95,7 +96,7 @@ class SamtoolsDepthStatsAnalyzer(Tool):
             self.informs['segment_coverage_cv'][seq_id] = StatisticsUtils.cov(seq_coverage)
             self.informs['segment_coverage_iqr'][seq_id] = StatisticsUtils.interquantile(seq_coverage)
             self.informs['segment_coverage_std'][seq_id] = StatisticsUtils.std(seq_coverage)
-            self.informs['segment_base_coverage'][seq_id] = segament_base_coverage[seq_id]
+            self.informs['segment_base_coverage'][seq_id] = segment_base_coverage[seq_id]
 
     @staticmethod
     def __calculate_base_coverage(segment_base_count, refseq_length):
@@ -211,7 +212,8 @@ class SamtoolsDepthStatsAnalyzer(Tool):
         :param refseq_length: the dictionary containing the length of each reference sequence segment
         :return: segment_gaps updated with tail gaps
         """
-        if refseq_length is None: refseq_length = {}
+        if refseq_length is None:
+            refseq_length = {}
         last_gap = None
         if refseq_length:
             if seq_id in refseq_length:

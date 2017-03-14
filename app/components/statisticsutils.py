@@ -4,6 +4,7 @@ import scipy.stats
 
 
 class StatisticsUtils(object):
+
     """
     Class providing statistic utility functions
     """
@@ -26,7 +27,10 @@ class StatisticsUtils(object):
         :return: interquantile of the data (25%~75%)
         """
         numpy_array = np.array(array)
-        return np.percentile(numpy_array, 75, interpolation='higher') - np.percentile(numpy_array, 25, interpolation='lower')
+        interquantile = np.percentile(numpy_array, 75, interpolation='higher') - np.percentile(
+            numpy_array, 25, interpolation='lower')
+        # Note: numpy func 'to_list' convert a numpy array into a normal python data type
+        return interquantile.to_list()
 
     @staticmethod
     def median(array):
@@ -35,13 +39,7 @@ class StatisticsUtils(object):
         :param array: data array
         :return: Median value
         """
-        sorted_list = sorted(array)
-        middle = len(array) // 2
-        logging.debug("Median: len {} middle {} sorted_len {}".format(len(array), middle, len(sorted_list)))
-        if len(array) % 2:
-            return sorted_list[middle]
-        else:
-            return (sorted_list[middle] + sorted_list[middle - 1]) / 2
+        return np.median(array).to_list()
 
     @staticmethod
     def cov(array):
@@ -50,7 +48,7 @@ class StatisticsUtils(object):
         :param array: data array
         :return: coefficient of variation of array
         """
-        return scipy.stats.variation(array)
+        return scipy.stats.variation(array).to_list()
 
     @staticmethod
     def std(array):
@@ -59,4 +57,4 @@ class StatisticsUtils(object):
         :param array: data array
         :return: standard deviation of array
         """
-        return np.std(np.array(array))
+        return np.std(np.array(array)).to_list()
