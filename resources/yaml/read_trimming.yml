@@ -27,7 +27,7 @@ steps:
   inputs:
   - name: HTML
     from: initial
-  - name: DIR
+  - name: DIR_HTML
     from: initial
   - name: HTML
     from: FastQC_pre_trimming
