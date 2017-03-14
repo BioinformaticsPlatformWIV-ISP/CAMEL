@@ -116,19 +116,19 @@ class GATK(Tool):
 
             # E.g., The Genome Analysis Toolkit (GATK) v3.4-0-g7e26428
             match = re.search('The Genome Analysis Toolkit (GATK) (.+),', l)
-            if match:
+            if match is not None:
                 self.informs['tool_name'] = 'GATK'
                 self.informs['tool_version'] = match.group(1)
             # Total filtering statistics
             #   0 reads were filtered out during the traversal out of approximately 1090654 total reads (0.00%)
             match = re.search(
                 '(\d+) reads were filtered out during the traversal out of approximately (\d+) total reads \((.+%)\)', l)
-            if match:
+            if match is not None:
                 self.informs['reads_total'] = match.group(2)
                 if match.group(1) != '0':
                     self.informs['filtered_reads'] = "{}({})".format(match.group(1), match.group(3))
             # per Filter statistics:
             #    0 reads (0.00% of total) failing BadCigarFilter
             match = re.search('(\d+) reads \((.+%) of total\) failing (.+)', l)
-            if match and match.group(1) != '0':
+            if match is not None and match.group(1) != '0':
                 self.informs[match.group(3)] = "{}({})".format(match.group(1), match.group(2))
