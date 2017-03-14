@@ -48,7 +48,6 @@ class QiimeJoinPairedEnds(Qiime):
         Creates the string with the input files and output directories
         :return: String with the input parameters
         """
-        input_string = '-f {}'.format(self._tool_inputs['FASTQ_PE'][0])
-        input_string += ' -r {}'.format(self._tool_inputs['FASTQ_PE'][1])
-        input_string += ' -o {}'.format(self._folder)
-        return input_string
+        return ' '.join(['-f {}'.format(self._tool_inputs['FASTQ_PE'][0]),
+                         '-r {}'.format(self._tool_inputs['FASTQ_PE'][1]),
+                         '-o {}'.format(self._folder)])

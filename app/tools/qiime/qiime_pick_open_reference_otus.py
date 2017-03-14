@@ -53,7 +53,7 @@ class QiimePickOpenReferenceOtus(Qiime):
         """
         otu_output = 'final_otu_map'
         if 'min_otu_size' in self._parameters:
-            otu_output += '_mc' + self._parameters['min_otu_size'].value + '.txt'
+            otu_output += '_mc{}.txt'.format(self._parameters['min_otu_size'].value)
         else:
             otu_output += '_mc2.txt'
         return otu_output
