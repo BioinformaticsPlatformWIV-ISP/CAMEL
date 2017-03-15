@@ -32,8 +32,8 @@ class SeqtkSubsample(Seqtk):
         self.__set_cmd_output()
         logging.debug("Seqtk Subsample input informs: input_mode {}, input_file_type {}".format(
             self.input_mode, self.input_file_type))
-        for idx, value in enumerate(self._input_files):
-            self.__build_command_with_iofiles(self._input_files[idx], self._output_files[idx])
+        for idx, infile in enumerate(self._tool_inputs[self.input_type]):
+            self.__build_command_with_iofiles(infile.path, self._output_files[idx])
             self._execute_command()
         self._set_output()
 
