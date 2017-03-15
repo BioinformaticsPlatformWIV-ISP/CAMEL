@@ -41,12 +41,12 @@ class FastqToSam(Picard):
         else:
             self._input_string += " SM={0} RG={0}".format(FastqToSam.SAMPLE_NAME)
 
-    def _set_inform(self):
+    def _set_informs(self):
         """
         Analyse the result of picard run and update tool.informs
         :return: None
         """
-        for l in self.stdout.split('\n'):
+        for l in self.stdout.splitlines():
             m = re.search('Auto-detected quality format as: ([a-zA-Z]+)', l)
             if m:
                 if m.group(1) == 'Standard':

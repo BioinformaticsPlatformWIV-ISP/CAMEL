@@ -47,7 +47,7 @@ class Picard(Tool):
         self._set_output()
         self._build_command()
         self._execute_command()
-        self._set_inform()
+        self._set_informs()
 
     def _check_input(self):
         """
@@ -114,7 +114,7 @@ class Picard(Tool):
             " ".join(self._build_options(excluded_parameters=self._specific_parameters, delimiter='='))
         ])
 
-    def _set_inform(self):
+    def _set_informs(self):
         """
         Analyse the result of picard run and update tool.informs, implement when necessary
         :return: None
@@ -124,18 +124,16 @@ class Picard(Tool):
     def _check_command_output(self):
         """
         Analyse the result of Picard run
-        :return: stdout_lines, standard output separated into lines
+        :return: None
         """
-        stdout_lines = self.stdout.split('\n')
+        stdout_lines = self.stdout.splitlines()
 
-        run_status = stdout_lines[-2].rstrip()
+        run_status = stdout_lines[-2]
         if not re.match('Exit status: 0', run_status):
             raise ToolExecutionError("Picard {!r} fails to run, error msg: \n{}".format(
                 self._function_name, self.stdout))
 
-        # log WARNINGs in info.log
+        # log WARNINGs
         for l in stdout_lines:
             if re.match('WARNING', l):
                 logging.warning(" Picard - {}".format(l))
-
-        return stdout_lines

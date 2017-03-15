@@ -20,12 +20,12 @@ class MarkDuplicates(Picard):
         self._function_name = 'MarkDuplicates'
         self._supported_inputs = ['BAM']
 
-    def _set_inform(self):
+    def _set_informs(self):
         """
         Analyse the result of picard run and update tool.informs
         :return: None
         """
-        for l in self.stdout.split('\n'):
+        for l in self.stdout.splitlines():
             m = re.search('Read (\d+) records. (\d+) pairs never matched', l)
             if m:
                 self.informs['reads_total'] = m.group(1)
