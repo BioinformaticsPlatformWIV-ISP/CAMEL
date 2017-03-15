@@ -5,8 +5,9 @@ from app.tools.seqtk.seqtk import Seqtk
 
 
 class SeqtkConvert(Seqtk):
+
     """
-    Class that converts fastq/fasta file using seqtk
+    Class that converts fastq into fasta file using seqtk
     """
 
     def __init__(self, camel):
@@ -21,23 +22,12 @@ class SeqtkConvert(Seqtk):
         self._supported_inputs = ['FASTQ']
         self._specific_parameters = ['output_file']
 
-    def _check_input(self):
+    def _set_input_string(self):
         """
-        Check and set self._input_files based on self._tool_inputs, this function supports different type of input than superclass
-        :return: None
+        Set the input specification
+        :return: input_string containing input specification
         """
-        super(Seqtk, self)._check_input()
-
-        if 'FASTQ' not in self._tool_inputs:
-            raise KeyError(
-                'Seqtk function {!r} required FASTQ file is not specified in tool_inputs: {}!'.format(self._function_name, self._tool_inputs))
-
-        elif len(self._tool_inputs['FASTQ']) != 1:
-            raise ValueError(
-                "Seqtk function {} supports only one input file of FASTQ type got {!r}.".format(
-                    self._function_name, self._tool_inputs['FASTQ']))
-
-        self._input_string = self._tool_inputs['FASTQ'][0].path
+        return self._tool_inputs['FASTQ'][0].path
 
     def _set_output(self):
         """

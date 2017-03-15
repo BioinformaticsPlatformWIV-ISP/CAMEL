@@ -7,6 +7,7 @@ from app.tools.seqtk.seqtk import Seqtk
 
 
 class SeqtkSubsample(Seqtk):
+
     """
     Class that subsamples fastq/fasta file(s) using seqkt
     """
@@ -18,27 +19,27 @@ class SeqtkSubsample(Seqtk):
         :return: None
         """
         super(SeqtkSubsample, self).__init__('Seqtk Subsample', '1.2', camel)
+        self._supported_inputs = ['FASTA', 'FASTQ', 'FASTA_PE', 'FASTQ_PE']
         self._function_name = 'Subsample'
         self._specific_parameters = ['combine_output', 'output_prefix', 'fraction']
-        self.combine_output = False
+        self._output_files = []
 
     def _execute_tool(self):
         """
         Function to run seqtk subsample
         :return: None
         """
-        self._set_output()
+        self.__set_cmd_output()
         logging.debug("Seqtk Subsample input informs: input_mode {}, input_file_type {}".format(
             self.input_mode, self.input_file_type))
         for idx, value in enumerate(self._input_files):
             self.__build_command_with_iofiles(self._input_files[idx], self._output_files[idx])
             self._execute_command()
-        if self.input_mode == 'PE':
-            self.__set_pe_tool_outputs()
+        self._set_output()
 
-    def _set_output(self):
+    def __set_cmd_output(self):
         """
-        Set the output specification
+        Set the output specification for run seqtk subsample command
         :return: None
         """
         output_file_prefix = self._parameters['output_prefix'].value
@@ -46,17 +47,15 @@ class SeqtkSubsample(Seqtk):
 
         if self.input_mode == 'SE':
             self._output_files = [os.path.join(self._folder, output_file_prefix + output_suffix)]
-            self._tool_outputs[self.input_file_type] = [ToolIOFile(self._output_files)]
         elif self.input_mode == 'PE':
             self._output_files = [
                 os.path.join(self._folder, output_file_prefix + "_1" + output_suffix),
                 os.path.join(self._folder, output_file_prefix + "_2" + output_suffix)
             ]
-            # for PE mode, final output is set in __set_pe_tool_outputs after output files are generated
 
     def __build_command_with_iofiles(self, input_file, output_file):
         """
-        Build the command to seqtk sample
+        Build the command to seqtk subsample
         :param input_file:
         :param output_file:
         :return: None
@@ -69,17 +68,31 @@ class SeqtkSubsample(Seqtk):
             output_file
         )
 
-    def __set_pe_tool_outputs(self):
+    def _set_output(self):
         """
-        Set self._tool_output based on parameter 'combined_output'
+        Set self._tool_outputs specification
+        """
+        if self.input_mode == 'PE':
+            self.__set_pe_outputs()
+        else:
+            self.__set_se_output()
+
+    def __set_se_output(self):
+        """
+        Set self._tool_outputs specification for SE mode
+        """
+        self._tool_outputs[self.input_file_type] = [ToolIOFile(self._output_files[0])]
+
+    def __set_pe_outputs(self):
+        """
+        Set self._tool_output for PE mode
         :return: None
         """
-        if 'combine_output' in self._parameters and self._parameters['combine_output'].value == 'true':
-            # combine outputs of individual PE reads into one file
-            self.combine_output = True
-            output_file = os.path.join(
-                self._folder, self._parameters['output_prefix'].value + self.__get_output_file_suffix()
-            )
+        # for PE mode, final output depend on combine_output option
+        if 'combine_output' in self._parameters:
+            # Tag if set: combine outputs of individual PE reads into one file
+            output_file = os.path.join(self._folder,
+                                       self._parameters['output_prefix'].value + self.__get_output_file_suffix())
             FileUtils.concatenate_files(output_file, self._output_files)
             self._tool_outputs[self.input_file_type] = [ToolIOFile(output_file)]
 
