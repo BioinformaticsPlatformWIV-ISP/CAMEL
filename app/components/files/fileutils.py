@@ -1,3 +1,5 @@
+import errno
+import fileinput
 import hashlib
 import os
 
@@ -60,3 +62,29 @@ class FileUtils(object):
         hasher = hashlib.sha256()
         hasher.update(pickle.dumps(value))
         return hasher.hexdigest()
+
+    @staticmethod
+    def silent_remove(file_name):
+        """
+        Silently remove a file, if file does not exist, capture the error
+        :param file_name: file to be removed (complete path)
+        """
+        try:
+            os.remove(file_name)
+        except OSError as e:
+            if e.errno != errno.ENOENT:  # errno.ENOENT = no such file or directory
+                raise  # re-raise exception if a different error occured
+
+    @staticmethod
+    def concatenate_files(output_filename, input_files):
+        """
+        Concatenate the input files specified into one output file
+        :param input_files: input files to be concatenated
+        :param output_filename: Filename of the output
+        :return: None
+        """
+        fin = fileinput.input(input_files)
+        with open(output_filename, 'w') as fout:
+            for line in fin:
+                fout.write(line)
+        fin.close()

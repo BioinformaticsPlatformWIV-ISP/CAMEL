@@ -1,3 +1,5 @@
+import tempfile
+
 import abc
 import os
 
@@ -41,8 +43,11 @@ class HtmlReporter(Tool):
         Executes this tool.
         :return: None
         """
-        self._report = HtmlHelper(self._tool_inputs['HTML'][0].path)
-        self._output_folder = self._tool_inputs['DIR'][0].path
+        if 'disable_html_output' not in self._parameters:
+            self._report = HtmlHelper(self._tool_inputs['HTML'][0].path)
+        else:
+            self._report = HtmlHelper(tempfile.NamedTemporaryFile().name)
+        self._output_folder = self._tool_inputs['DIR_HTML'][0].path
         self._create_report()
         self._report.close()
 
@@ -53,9 +58,9 @@ class HtmlReporter(Tool):
         """
         if 'HTML' not in self._tool_inputs:
             raise ValueError("No HTML input found")
-        if 'DIR' not in self._tool_inputs:
+        if 'DIR_HTML' not in self._tool_inputs:
             raise ValueError("No output directory found")
-        if not isinstance(self._tool_inputs['DIR'][0], ToolIODirectory):
+        if not isinstance(self._tool_inputs['DIR_HTML'][0], ToolIODirectory):
             raise ValueError("'DIR' input is not a directory")
         super(HtmlReporter, self)._check_input()
 

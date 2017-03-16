@@ -125,7 +125,7 @@ class Tool(object):
                 logging.info("Disabling parameter: {}".format(parameter_name))
                 del(self._parameters[parameter_name])
             else:
-                if new_value is True:
+                if new_value is True or new_value is None:
                     parameter.value = None
                 else:
                     parameter.value = str(new_value)
