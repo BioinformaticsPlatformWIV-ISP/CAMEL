@@ -73,7 +73,7 @@ class Itsx(Tool):
         if os.path.isfile(basename + '.chimeric.fasta'):
             self._tool_outputs['FASTA_Chimeric'] = [ToolIOFile(basename + '.chimeric.fasta')]
 
-    def build_input_string(self):
+    def __build_input_string(self):
         """
         Creates the string with the input files and output directories
         :return: String with the input parameters
@@ -86,7 +86,7 @@ class Itsx(Tool):
         Concatenates required parameters and options to build the command to run 'make.contigs'
         :return: None
         """
-        input_string = self.build_input_string()
+        input_string = self.__build_input_string()
         options_string = ' '.join(self._build_options())
         self._command.command = '{} {} {}'.format(self._tool_command, input_string, options_string)
 
