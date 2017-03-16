@@ -23,7 +23,6 @@ class FastqUtils(object):
         """
         Count how many reads in a fastq file
         :param infile: file name of the fastq file to count
-        :param command: Command class object to run command
         :return: number of reads in fastq file
         """
         cmd = "cat {!r} | paste - - - - | wc -l".format(infile)
