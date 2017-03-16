@@ -19,7 +19,7 @@ class FastqUtils(object):
         pass
 
     @staticmethod
-    def count_reads(infile, command=None):
+    def count_reads(infile):
         """
         Count how many reads in a fastq file
         :param infile: file name of the fastq file to count
@@ -27,8 +27,7 @@ class FastqUtils(object):
         :return: number of reads in fastq file
         """
         cmd = "cat {!r} | paste - - - - | wc -l".format(infile)
-        if command is None:
-            command = Command()
+        command = Command()
         command.command = cmd
         command.run_command(os.path.dirname(os.path.abspath(infile)))
         if command.stderr != '':
