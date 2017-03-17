@@ -58,7 +58,7 @@ class Kraken(Tool):
         Returns the prefix that will be used in the output.
         :return: String with the prefix used in the output
         """
-        infile = os.path.basename(self._tool_inputs[self._input_key][0].path)
+        infile = self._tool_inputs[self._input_key][0].basename
         return os.path.join(self._folder, os.path.splitext(infile)[0])
 
     def __set_output(self):
