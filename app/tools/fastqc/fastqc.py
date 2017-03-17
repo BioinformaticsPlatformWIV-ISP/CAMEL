@@ -64,9 +64,10 @@ class FastQC(Tool):
         :param input_file: Input file name
         :return: Output folder
         """
-        sample_base_name = input_file.basename.split('.')[0]
-        if re.search(r'\.fastq$', sample_base_name):
-            sample_base_name = re.sub(r'\.fastq$', '', sample_base_name)
+        sample_base_name, ext = os.path.splitext(input_file.basename)
+        if ext != '.fastq':
+            # compressed file, XXXX.fastq.gz or XXXX.fastq.bz2
+            sample_base_name, ext = os.path.splitext(sample_base_name)
         for sub_folder in os.listdir(execution_folder):
             if sub_folder.startswith(sample_base_name) and sub_folder.endswith('_fastqc'):
                 full_path = os.path.join(execution_folder, sub_folder)
