@@ -277,7 +277,7 @@ class Pipeline(object):
                     try:
                         step.add_input(input_.alias, self.get_step(input_.source).outputs[input_.name])
                     except KeyError as err:
-                        logging.warning("Step {} has no output {}".format(input_.source, err.message))
+                        logging.warning("Step {} has no output {}".format(input_.source, input_.name))
                 else:
                     raise ValueError("No step named '{}'".format(input_.source))
             elif type(input_) is Step.ExternalInput:
