@@ -1,10 +1,13 @@
 import os
 
+
+from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from app.io.tooliofile import ToolIOFile
 from app.tools.bedtools.bedtools import Bedtools
 
 
 class BedtoolsGetFasta(Bedtools):
+
     """
     Bedtools GetFasta func class
     """
@@ -58,8 +61,8 @@ class BedtoolsGetFasta(Bedtools):
         self._check_required_inputs()
 
         if len(self._tool_inputs['BED']) != 1:
-            raise ValueError("Exactly one BED input file expected.")
+            raise InvalidInputSpecificationError("Exactly one BED input file expected.")
         if len(self._tool_inputs['FASTA']) != 1:
-            raise ValueError("Exactly one FASTA input file expected.")
+            raise InvalidInputSpecificationError("Exactly one FASTA input file expected.")
 
         super(BedtoolsGetFasta, self)._check_input()

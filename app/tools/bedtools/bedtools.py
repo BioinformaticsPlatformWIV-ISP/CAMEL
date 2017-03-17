@@ -1,10 +1,12 @@
 import abc
 
+from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from app.error.toolexecutionerror import ToolExecutionError
 from app.tools.tool import Tool
 
 
 class Bedtools(Tool):
+
     """
     The master class for Bedtools toolset
     """
@@ -37,4 +39,4 @@ class Bedtools(Tool):
         if self._required_inputs:
             for input_type in self._required_inputs:
                 if input_type not in self._tool_inputs:
-                    raise ValueError("No required {!r} input found".format(input_type))
+                    raise InvalidInputSpecificationError("No required {!r} input found".format(input_type))

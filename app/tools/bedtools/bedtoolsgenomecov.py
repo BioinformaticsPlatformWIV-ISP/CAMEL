@@ -1,10 +1,13 @@
 import os
 
+from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from app.error.invalidparametererror import InvalidParameterError
 from app.io.tooliofile import ToolIOFile
 from app.tools.bedtools.bedtools import Bedtools
 
 
 class BedtoolsGenomecov(Bedtools):
+
     """
     Bedtools Genomecov func class
     """
@@ -74,7 +77,7 @@ class BedtoolsGenomecov(Bedtools):
                     params_excluded.remove(param)
                     output_opt_found = True
                 else:
-                    raise ValueError("Only one output option should be specified.")
+                    raise InvalidParameterError("Only one output option should be specified.")
 
     def _check_input(self):
         """
@@ -84,6 +87,6 @@ class BedtoolsGenomecov(Bedtools):
         self._check_required_inputs()
 
         if len(self._tool_inputs['BAM']) != 1:
-            raise ValueError("Exactly one BAM input file expected.")
+            raise InvalidInputSpecificationError("Exactly one BAM input file expected.")
 
         super(BedtoolsGenomecov, self)._check_input()

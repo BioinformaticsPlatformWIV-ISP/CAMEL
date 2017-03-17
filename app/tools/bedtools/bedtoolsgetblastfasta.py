@@ -1,6 +1,8 @@
 import os
 import re
 
+from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from app.error.invalidparametererror import InvalidParameterError
 from app.io.tooliofile import ToolIOFile
 from app.io.tooliovalue import ToolIOValue
 from app.tools.bedtools.bedtools_getfasta import BedtoolsGetFasta
@@ -8,6 +10,7 @@ from app.components.sequence_extraction.blastn_customized_output import BlastnTS
 
 
 class BedtoolsGetBlastFasta(BedtoolsGetFasta):
+
     """
     Use Bedtools getfasta function to extract sequences based on BLAST aglinment, targeted sequences can be extracted
     from either BLAST query or subject.
@@ -71,9 +74,9 @@ class BedtoolsGetBlastFasta(BedtoolsGetFasta):
         self._check_required_inputs()
 
         if len(self._tool_inputs['TSV_BLAST']) != 1:
-            raise ValueError("Exactly one TSV_BLAST input file expected.")
+            raise InvalidInputSpecificationError("Exactly one TSV_BLAST input file expected.")
         if len(self._tool_inputs['FASTA']) != 1:
-            raise ValueError("Exactly one FASTA input file expected.")
+            raise InvalidInputSpecificationError("Exactly one FASTA input file expected.")
 
         super(BedtoolsGetFasta, self)._check_input()
 
@@ -146,7 +149,7 @@ class BedtoolsGetBlastFasta(BedtoolsGetFasta):
                     key = self.__remove_special_characters(hit.sseqid)  # 'subject id'as key
                     bed_info = self.__retrieve_query_sequence(hit)
                 else:
-                    raise StandardError(
+                    raise InvalidParameterError(
                         "Unsupported target {!r} for Bedtools GetBlastFasta, should be 'subject' or 'query'.".format(target))
 
                 if key not in opened_files:
@@ -178,7 +181,7 @@ class BedtoolsGetBlastFasta(BedtoolsGetFasta):
                 elif target == 'query':
                     bed_info = self.__retrieve_query_sequence(hit)
                 else:
-                    raise StandardError(
+                    raise InvalidParameterError(
                         "Unsupported target {!r} for Bedtools GetBlastFasta, should be 'subject' or 'query'.".format(target))
 
                 outf.write("\t".join(map(str, bed_info)) + "\n")
@@ -201,7 +204,7 @@ class BedtoolsGetBlastFasta(BedtoolsGetFasta):
         elif mode == 'individual':
             self.__output_blasthits_to_separate_bed(blasthits)
         else:
-            raise StandardError(
+            raise InvalidParameterError(
                 "Unsupported mode {!r} for Bedtools GetBlastFasta, should be 'all' or 'individual'.".format(mode))
 
     def __set_output(self):
