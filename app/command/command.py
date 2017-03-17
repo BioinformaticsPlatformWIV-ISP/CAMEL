@@ -7,12 +7,12 @@ class Command(object):
     Class meant to handle the execution of commands
     """
 
-    def __init__(self):
+    def __init__(self, command=None):
         self._stdout = None
         self._stderr = None
         self._procedure = None
         self._return_code = None
-        self._command = None
+        self._command = command
 
     @property
     def stderr(self):

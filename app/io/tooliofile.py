@@ -31,7 +31,7 @@ class ToolIOFile(ToolIO):
         Internal representation
         :return: Internal representation
         """
-        return 'ToolIOFile("{}")'.format(self.path)
+        return 'ToolIOFile("{}", {} bytes)'.format(self.path, self.size)
 
     def is_valid(self):
         """

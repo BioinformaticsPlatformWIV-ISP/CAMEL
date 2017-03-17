@@ -95,7 +95,7 @@ class Pipeline(object):
         :param destination_path:
         :return: None
         """
-        self._create_folder(destination_path)
+        self._create_folder(os.path.abspath(destination_path))
         LogManager.attach_pipeline_handlers(self._folder)
         self._log_pipeline_state()
         self._steps[0].step_inputs = self._initial_input
@@ -276,8 +276,8 @@ class Pipeline(object):
                 elif self.get_step(input_.source) is not None:
                     try:
                         step.add_input(input_.alias, self.get_step(input_.source).outputs[input_.name])
-                    except KeyError as err:
-                        logging.warning("Step {} has no output {}".format(input_.source, err.message))
+                    except KeyError:
+                        logging.warning("Step {} has no output {}".format(input_.source, input_.name))
                 else:
                     raise ValueError("No step named '{}'".format(input_.source))
             elif type(input_) is Step.ExternalInput:

@@ -1,5 +1,6 @@
 import logging
 
+from app.components.filesystemhelper import FileSystemHelper
 from app.tools.tool import Tool
 
 
@@ -49,9 +50,10 @@ class SequenceTypeDetector(Tool):
         gene_indices = {}
         with open(profiles_file.path) as profiles:
             header = profiles.readline()
+            genes_in_header = [FileSystemHelper.make_valid(x) for x in header.strip().split('\t')]
             for gene_name in gene_names:
                 try:
-                    gene_indices[gene_name] = header.strip().split('\t').index(gene_name)
+                    gene_indices[gene_name] = genes_in_header.index(gene_name)
                 except ValueError:
                     raise StandardError("Gene {} not found in '{}'".format(gene_name, profiles_file))
         return gene_indices
