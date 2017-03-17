@@ -74,14 +74,16 @@ class Kraken(Tool):
         Creates the string with the input and output files
         :return: String with the input parameters
         """
-        inputs = {
-            'FASTA': lambda: '{}'.format(self._tool_inputs['FASTA'][0]),
-            'FASTQ': lambda: '{} {}'.format('--fastq-input', self._tool_inputs['FASTQ'][0]),
-            'FASTQ_PE': lambda: '{} {} {}'.format(self._tool_inputs['FASTQ_PE'][0], self._tool_inputs['FASTQ_PE'][1], '--paired --fastq-input')
-        }
-        command_parts = [inputs[self._input_key](),
-                         '--db {}'.format(self._tool_inputs['DB'][0]),
-                         '--output {}'.format(self.__get_basename() + '.output.tsv')]
+        command_parts = []
+        if self._input_key == 'FASTA':
+            command_parts.append('{}'.format(self._tool_inputs['FASTA'][0]))
+        elif self._input_key == 'FASTQ':
+            command_parts.append('{} {}'.format('--fastq-input', self._tool_inputs['FASTQ'][0]))
+        else:
+            command_parts.append('{} {} {}'.format(self._tool_inputs['FASTQ_PE'][0], self._tool_inputs['FASTQ_PE'][1],
+                                                   '--paired --fastq-input'))
+        command_parts += ['--db {}'.format(self._tool_inputs['DB'][0]),
+                          '--output {}'.format(self.__get_basename() + '.output.tsv')]
         return ' '.join(command_parts)
 
     def __set_input_key(self):
