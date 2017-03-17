@@ -9,15 +9,13 @@ from app.tools.picard.picard import Picard
 class CollectMultipleMetrics(Picard):
 
     """
-    Class for Picard CollectMultipleMetrics function to calculate various QC metrics for readmap
+    Class for Picard CollectMultipleMetrics function to calculate various QC metrics for read mapping
 
     Metrics calculated:
     - CollectAlignmentSummaryMetrics
     - CollectInsertSizeMetrics
     - QualityScoreDistribution
     - CollectGcBiasMetrics
-
-    run_picard.sh CollectMultipleMetrics R=/data/refgenomes/influenza.A/cyril/genomes/A_Alabama_05_2010-H3N2.fa I=bwa_readmap.sorted.bam O=bwa_readmap PROGRAM=CollectInsertSizeMetrics PROGRAM=CollectAlignmentSummaryMetrics PROGRAM=QualityScoreDistribution PROGRAM=CollectGcBiasMetrics
     """
     OUTPUT_FILE_SUFFIX = {
         'AlignmentSummary': '.alignment_summary_metrics',
@@ -69,7 +67,7 @@ class CollectMultipleMetrics(Picard):
                     logging.warning(
                         "Picard CollectMultipleMetrics unsupported metrics {!r}, its results will not be analyzed or returned.".format(key))
 
-    def _set_inform(self):
+    def _set_informs(self):
         """
         Analyse the result of picard run and update tool.informs
         :return: None
@@ -170,7 +168,7 @@ class CollectMultipleMetrics(Picard):
                     if l.strip() == '':
                         break
                     informs = l.split("\t")
-                    # Only take statistics for FR reads
+                    # Only take statistics for FR (READ_PAIRS) reads
                     if informs[7] == 'FR':
                         self.informs['InsertSize_stats']['MEDIAN_INSERT_SIZE'] = informs[0]
                         self.informs['InsertSize_stats']['MEDIAN_ABSOLUTE_DEVIATION'] = informs[1]
