@@ -62,9 +62,11 @@ class MothurSummarySeqs(Mothur):
         Runs Prinseq
         :return: None
         """
+        self._create_symlinks()
         self._build_command()
         self._execute_command()
         self.__write_stats_to_file()
+        self._remove_symlinks()
         self._set_output()
 
     def __write_stats_to_file(self):

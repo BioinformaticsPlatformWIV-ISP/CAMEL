@@ -6,6 +6,7 @@ import os
 
 from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from app.tools.tool import Tool
+from app.io.tooliofile import ToolIOFile
 
 
 class Mothur(Tool):
@@ -26,27 +27,46 @@ class Mothur(Tool):
         # For reproducibility a seed is specified for each operation
         self._seed = random.randint(1, 10000000)
         logging.debug('Set seed to: {}'.format(self._seed))
+        self.__symlinks = []
 
     def _execute_tool(self):
         """
         Runs Prinseq
         :return: None
         """
+        self._create_symlinks()
         self._build_command()
         self._execute_command()
+        self._remove_symlinks()
         self._set_output()
 
-    def _check_input(self):
+    def _create_symlinks(self):
         """
-        Checks whether the given inputs are valid:
-        - Files with a '-' in the name are not allowed
+        Creates symlinks to all input files as Mothur does not allow the '-' character in the file names
         :return: None
         """
-        super(Mothur, self)._check_input()
+        new_inputs = {}
         for input_key, input_list in self._tool_inputs.iteritems():
+            new_inputs[input_key] = []
             for tool_input in input_list:
                 if '-' in tool_input.path:
-                    raise InvalidInputSpecificationError("Tool input with '-' character in name: {}".format(tool_input.path))
+                    target_dir = os.path.dirname(os.path.dirname(self._folder))
+                    link_name = os.path.join(target_dir, tool_input.basename)
+                    os.symlink(tool_input.path, link_name)
+                    self.__symlinks.append(link_name)
+                    new_inputs[input_key] += [ToolIOFile(link_name)]
+                else:
+                    new_inputs[input_key] += [tool_input]
+        print new_inputs
+        self._tool_inputs = new_inputs
+
+    def _remove_symlinks(self):
+        """
+        Removes all symlinks that were created by the tool
+        :return: None
+        """
+        for link in self.__symlinks:
+            os.remove(link)
 
     def _build_command(self):
         """

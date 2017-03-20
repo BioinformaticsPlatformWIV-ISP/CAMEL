@@ -81,10 +81,12 @@ class MothurMakeContigs(Mothur):
         Runs make.contigs
         :return: None
         """
+        self._create_symlinks()
         self._build_command()
         self._execute_command()
         if self.__check_read_name_warning():
             self.__run_on_single_processor()
+        self._remove_symlinks()
         self._set_output()
 
     def __check_read_name_warning(self):
