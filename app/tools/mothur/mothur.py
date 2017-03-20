@@ -7,6 +7,7 @@ import os
 from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from app.tools.tool import Tool
 from app.io.tooliofile import ToolIOFile
+import tempfile
 
 
 class Mothur(Tool):
@@ -28,6 +29,7 @@ class Mothur(Tool):
         self._seed = random.randint(1, 10000000)
         logging.debug('Set seed to: {}'.format(self._seed))
         self.__symlinks = []
+        self.__temp_dir = tempfile.mkdtemp()
 
     def _execute_tool(self):
         """
@@ -50,8 +52,7 @@ class Mothur(Tool):
             new_inputs[input_key] = []
             for tool_input in input_list:
                 if '-' in tool_input.path:
-                    target_dir = os.path.dirname(os.path.dirname(self._folder))
-                    link_name = os.path.join(target_dir, tool_input.basename)
+                    link_name = os.path.join(self.__temp_dir, tool_input.basename)
                     os.symlink(tool_input.path, link_name)
                     self.__symlinks.append(link_name)
                     new_inputs[input_key] += [ToolIOFile(link_name)]
@@ -62,11 +63,12 @@ class Mothur(Tool):
 
     def _remove_symlinks(self):
         """
-        Removes all symlinks that were created by the tool
+        Removes all symlinks and the temporary directory that were created by the tool
         :return: None
         """
         for link in self.__symlinks:
             os.remove(link)
+        os.rmdir(self.__temp_dir)
 
     def _build_command(self):
         """
