@@ -49,21 +49,21 @@ class MothurScreenSeqs(Mothur):
         # As there can be only one file per key, this first file of the list is added
         for key, input_files in self._tool_inputs.iteritems():
             if key == 'FASTA':
-                items.append('fasta={}, '.format(input_files[0]))
+                items.append('fasta={}'.format(input_files[0]))
             elif key == 'TSV_Groups':
-                items.append('group={}, '.format(input_files[0]))
+                items.append('group={}'.format(input_files[0]))
             elif key == 'TSV_Summary':
-                items.append('summary={}, '.format(input_files[0]))
+                items.append('summary={}'.format(input_files[0]))
             elif key == 'TSV_Names':
-                items.append('name={}, '.format(input_files[0]))
+                items.append('name={}'.format(input_files[0]))
             elif key == 'TSV_AlignReport':
-                items.append('alignreport={}, '.format(input_files[0]))
+                items.append('alignreport={}'.format(input_files[0]))
             elif key == 'TSV_ContigsReport':
-                items.append('contigreport={}, '.format(input_files[0]))
+                items.append('contigreport={}'.format(input_files[0]))
             elif key == 'TSV_Taxonomy':
-                items.append('taxonomy={}, '.format(input_files[0]))
+                items.append('taxonomy={}'.format(input_files[0]))
             elif key == 'TSV_Counts':
-                items.append('count={}, '.format(input_files[0]))
+                items.append('count={}'.format(input_files[0]))
         items.append('outputdir={}'.format(self._folder))
         return ', '.join(items)
 
