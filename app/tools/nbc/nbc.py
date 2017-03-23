@@ -47,7 +47,7 @@ class Nbc(Tool):
         if 'FASTA' not in self._tool_inputs or 'DB' not in self._tool_inputs:
             raise InvalidInputSpecificationError('Invalid input keys given for NBC, FASTA and DB required: {!r}'.format(self._tool_inputs))
         if len(self._tool_inputs.keys()) != 2:
-            raise InvalidInputSpecificationError('Invalid number of input keys given voor NBC, '
+            raise InvalidInputSpecificationError('Invalid number of input keys given for NBC, '
                                                  'only FASTA and DB allowed: {!r}'.format(self._tool_inputs))
         if len(self._tool_inputs['FASTA']) > 1 or len(self._tool_inputs['DB']) > 1:
             raise InvalidInputSpecificationError('Invalid number (max = 1) of files per key given for NBC: {!r}'.format(self._tool_inputs))
