@@ -39,7 +39,7 @@ class Megahit(Tool):
         """
         super(Megahit, self)._check_input()
         if len(self._tool_inputs.keys()) != 1:
-            raise InvalidInputSpecificationError('Invalid number of input keys given voor Megahit '
+            raise InvalidInputSpecificationError('Invalid number of input keys given for Megahit '
                                                  '(only 1 allowed): {!r}'.format(self._tool_inputs))
         if self._tool_inputs.keys()[0] not in ['FASTQ_PE', 'FASTA_PE', 'FASTQ_SE', 'FASTA_SE', 'FASTQ_INT', 'FASTA_INT']:
             raise InvalidInputSpecificationError('Not enough valid input files given for Megahit '
