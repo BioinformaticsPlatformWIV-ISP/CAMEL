@@ -29,7 +29,7 @@ class FragGeneScan(Tool):
         self._execute_command()
         self.__set_output()
 
-    def __check_input(self):
+    def _check_input(self):
         """
         Checks whether the given inputs are valid:
         - FASTA key is required
