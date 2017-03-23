@@ -47,7 +47,7 @@ class Deconseq(Tool):
                 raise InvalidInputSpecificationError('Illegal number of input files (max = 1) '
                                                      'provided for DeconSeq: {!r}'.format(self._tool_inputs))
         if len(self._tool_inputs.keys()) != 1:
-            raise InvalidInputSpecificationError('Too many input keys given voor DeconSeq, '
+            raise InvalidInputSpecificationError('Too many input keys given for DeconSeq, '
                                                  'only FASTQ or FASTA allowed: {!r}'.format(self._tool_inputs))
 
     def __get_basename(self):
