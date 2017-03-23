@@ -29,7 +29,7 @@ class Mothur(Tool):
         self._seed = random.randint(1, 10000000)
         logging.debug('Set seed to: {}'.format(self._seed))
         self.__symlinks = []
-        self.__temp_dir = tempfile.mkdtemp()
+        self.__temp_dir = tempfile.mkdtemp(dir='/scratch/temp')
 
     def _execute_tool(self):
         """
