@@ -39,8 +39,8 @@ class Mothur(Tool):
         self._create_symlinks()
         self._build_command()
         self._execute_command()
-        self._remove_symlinks()
         self._set_output()
+        self._remove_symlinks()
 
     def _create_symlinks(self):
         """

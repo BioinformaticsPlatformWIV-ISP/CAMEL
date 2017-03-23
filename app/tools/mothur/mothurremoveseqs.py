@@ -1,6 +1,10 @@
-from app.tools.mothur.mothur import Mothur
-from app.io.tooliofile import ToolIOFile
+import logging
+
+import os
+
 from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from app.io.tooliofile import ToolIOFile
+from app.tools.mothur.mothur import Mothur
 
 
 class MothurRemoveSeqs(Mothur):
@@ -40,6 +44,7 @@ class MothurRemoveSeqs(Mothur):
             if len(input_files) != 1:
                 raise InvalidInputSpecificationError('Invalid number (max = 1) of files given for Mothur \
                                                      remove.seqs: {!r}'.format(self._tool_inputs))
+        self.__check_empty_input()
 
     def _build_input_string(self):
         """
@@ -86,3 +91,9 @@ class MothurRemoveSeqs(Mothur):
             if key != 'TSV_Accnos':
                 basename = super(MothurRemoveSeqs, self)._get_basename(key, output_extensions[key][0])
                 self._tool_outputs[key] = [ToolIOFile(basename + output_extensions[key][1])]
+
+    def __check_empty_input(self):
+        if os.path.getsize(self._tool_inputs['TSV_Accnos'][0].path) == 0:
+            with open(self._tool_inputs['TSV_Accnos'][0].path, 'wb') as outf:
+                outf.write('adding_dummy_entry_as_original_file_is_empty\n')
+                logging.warning('WARNING: ACCNOS file was empty, added a dummy record!')

@@ -29,7 +29,7 @@ class MothurClassifySeqs(Mothur):
         :return: None
         """
         super(MothurClassifySeqs, self)._check_input()
-        if not all(key in self._tool_inputs for key in ['FASTA', 'FASTA_REF', 'TSV_Taxonomy']):
+        if not all(key in self._tool_inputs for key in ['FASTA', 'FASTA_Ref', 'TSV_Taxonomy']):
             raise InvalidInputSpecificationError('Missing input files (keys) for Mothur '
                                                  'classify.seqs: {!r}'.format(self._tool_inputs))
         for key, input_files in self._tool_inputs.iteritems():
