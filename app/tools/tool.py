@@ -245,6 +245,8 @@ class Tool(object):
         """
         for input_key, input_list in self._tool_inputs.iteritems():
             for tool_input in input_list:
+                if not isinstance(tool_input, ToolIO):
+                    raise ValueError("Tool input '{}' is not a ToolIO object".format(tool_input))
                 if tool_input is None:
                     raise ValueError("Tool input with key {} is None".format(input_key))
                 if not tool_input.is_valid():
