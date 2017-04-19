@@ -14,7 +14,7 @@ steps:
   - name: BAM
     from: initial
 
-- id: SNP_calling
+- id: Variant_calling
   tool: !!python/name:app.tools.bcftools.bcftoolscall.BcftoolsCall
   inputs:
   - name: VCF_GZ
@@ -24,7 +24,7 @@ steps:
   tool: !!python/name:app.tools.bcftools.bcftoolsindex.BcftoolsIndex
   inputs:
   - name: VCF_GZ
-    from: SNP_calling
+    from: Variant_calling
 
 - id: Stats_collection
   tool: !!python/name:app.tools.bcftools.bcftoolsindexstats.BcftoolsIndexStats
@@ -44,4 +44,8 @@ steps:
   tool: !!python/name:app.tools.bcftools.bcftoolsview.BcftoolsView
   inputs:
   - name: VCF_GZ
-    from: SNP_calling
+    from: Variant_calling
+
+pipeline-outputs:
+- name: VCF
+  from: Unzip_VCF
