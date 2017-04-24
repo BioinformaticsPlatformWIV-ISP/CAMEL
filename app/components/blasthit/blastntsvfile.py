@@ -4,6 +4,7 @@ from app.components.blasthit.blastntsvhitwithseq import BlastnTSVHitWithSeq
 
 
 class BlastnTSVFile(object):
+
     """
     Class to handle blastn tsv output file
     """
@@ -13,7 +14,7 @@ class BlastnTSVFile(object):
         """
         Initialize the class
         """
-        self.blastn_tsv = blastn_tsv
+        self._blastn_tsv = blastn_tsv
         self.with_seq = with_seq
         if self.with_seq:
             self.hit_class = BlastnTSVHitWithSeq
@@ -42,6 +43,7 @@ class BlastnTSVFile(object):
         :return: columns without SEQ_COLUMNS
         """
         if self.with_seq:
+            # create a new copy of self.columns
             columns = []
             columns += self.columns
             for col in SEQ_COLUMNS:
@@ -54,7 +56,7 @@ class BlastnTSVFile(object):
     def columns(self):
         """
         Returns column names
-        :return: _columns
+        :return: column names
         """
         return self._columns
 
@@ -64,7 +66,7 @@ class BlastnTSVFile(object):
         :return: hits grouped by key
         """
         hits = {}
-        with open(self.blastn_tsv, 'r') as hits_file:
+        with open(self._blastn_tsv, 'r') as hits_file:
             for hit_inform in hits_file.readlines():
                 hit = self.hit_class(hit_inform, self._columns)
                 seqid = hit.qseqid if key == 'qseqid' else hit.sseqid
@@ -80,7 +82,7 @@ class BlastnTSVFile(object):
         :return: hits in a list
         """
         hits = []
-        with open(self.blastn_tsv, 'r') as hits_file:
+        with open(self._blastn_tsv, 'r') as hits_file:
             for hit_inform in hits_file.readlines():
                 hits.append(self.hit_class(hit_inform, self._columns))
         return hits

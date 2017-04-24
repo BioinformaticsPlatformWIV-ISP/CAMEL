@@ -3,6 +3,7 @@ from app.components.blasthit.blastntsvhit import BlastnTSVHit
 
 
 class BlastnTSVHitWithSeq(BlastnTSVHit):
+
     """
     Class to handle customized blastn tabular output with algined sequences
 
@@ -25,7 +26,7 @@ class BlastnTSVHitWithSeq(BlastnTSVHit):
     def __extract_none_seq_informs(self):
         """
         Extracts hit inform without sequence fields (sseq, qseq)
-        :return: 
+        :return: seq informs in list
         """
         informs = []
         for x in self.columns:
