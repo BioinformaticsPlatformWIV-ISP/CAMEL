@@ -49,10 +49,6 @@ class Quast(Tool):
             if key in ['FASTA_Ref', 'TSV_Gene', 'TSV_Operon'] and len(values) > 1:
                 raise InvalidInputSpecificationError(
                     'Too many input files given for QUAST: {!r}'.format(self._tool_inputs))
-            for infile in values:
-                if not infile.is_valid():
-                    raise InvalidInputSpecificationError(
-                        'Illegal input file given for QUAST: {!r}'.format(self._tool_inputs))
 
     def __build_command(self):
         """
