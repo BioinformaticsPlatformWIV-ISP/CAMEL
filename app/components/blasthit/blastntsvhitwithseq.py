@@ -1,4 +1,3 @@
-from app.components.blasthit import SEQEXTRACTION_COLUMNS_WITH_SEQS, SEQ_COLUMNS
 from app.components.blasthit.blastntsvhit import BlastnTSVHit
 
 
@@ -10,13 +9,20 @@ class BlastnTSVHitWithSeq(BlastnTSVHit):
     Supported blastn outfmt 6 columns:
     'qseqid sseqid pident length mismatch gapopen gaps qstart qend sstart send qseq sseq evalue bitscore strand qcovs qcovhsp'
     """
+    # TODO MOVED TO PIPELINE SPECIFIC CODE
+    SEQEXTRACTION_COLUMNS_WITH_SEQS = [
+        "qseqid", "sseqid", "pident", "length", "mismatch", "gapopen", "gaps", "qstart", "qend",
+        "sstart", "send", "qseq", "sseq", "evalue", "bitscore", "strand", "qcovs", "qcovhsp"
+    ]
 
-    def __init__(self, hit, columns=SEQEXTRACTION_COLUMNS_WITH_SEQS):
+    SEQ_COLUMNS = ['sseq', 'qseq']
+
+    def __init__(self, hit, columns=BlastnTSVHitWithSeq.SEQEXTRACTION_COLUMNS_WITH_SEQS):
         """
         Initialize
         :param hit: the txt string describe hit
         """
-        if any(col not in columns for col in SEQ_COLUMNS):
+        if any(col not in columns for col in BlastnTSVHitWithSeq.SEQ_COLUMNS):
             raise ValueError("BlastnTSVHitWithSeq requires both sseq and qseq to be reported.")
 
         super(BlastnTSVHitWithSeq, self).__init__(hit, columns)

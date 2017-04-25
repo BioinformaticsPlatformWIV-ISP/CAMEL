@@ -1,14 +1,13 @@
-from app.components.blasthit import DEFAULT_COLUMNS, SEQEXTRACTION_COLUMNS_WITH_SEQS, SEQ_COLUMNS
 from app.components.blasthit.blastntsvhit import BlastnTSVHit
 from app.components.blasthit.blastntsvhitwithseq import BlastnTSVHitWithSeq
 
 
-class BlastnTSVFile(object):
+class BlastnFMT6File(object):
 
     """
-    Class to handle blastn tsv output file
+    Class to handle blastn outfmt 6 tsv file
     """
-    # TODO remove funcs for backward compatibility
+    # TODO remove old funcs in favor of properties
 
     def __init__(self, blastn_tsv, with_seq=False, columns=None):
         """
@@ -22,19 +21,10 @@ class BlastnTSVFile(object):
             self.hit_class = BlastnTSVHit
         if columns is None:
             if with_seq:
-                self._columns = SEQEXTRACTION_COLUMNS_WITH_SEQS
-            else:
-                self._columns = DEFAULT_COLUMNS
+                raise ValueError(
+                    "Required blastn data 'columns' information missing to handle blastn output including hit sequences.")
         else:
             self._columns = columns
-
-    def get_inform_column_names(self):
-        # backward compatibility, will be removed
-        return self.inform_columns()
-
-    def get_column_names(self):
-        # backward compatibility, will be removed
-        return self.columns()
 
     @property
     def inform_columns(self):
@@ -43,10 +33,10 @@ class BlastnTSVFile(object):
         :return: columns without SEQ_COLUMNS
         """
         if self.with_seq:
-            # create a new copy of self.columns
+            # a new copy of self.columns need to be created
             columns = []
             columns += self.columns
-            for col in SEQ_COLUMNS:
+            for col in BlastnTSVHitWithSeq.SEQ_COLUMNS:
                 columns.remove(col)
             return columns
         else:
@@ -86,3 +76,13 @@ class BlastnTSVFile(object):
             for hit_inform in hits_file.readlines():
                 hits.append(self.hit_class(hit_inform, self._columns))
         return hits
+
+    # TODO remove old functions in favor of properties
+
+    # def get_inform_column_names(self):
+    # backward compatibility, will be removed
+    #     return self.inform_columns()
+
+    # def get_column_names(self):
+    # backward compatibility, will be removed
+    #     return self.columns()
