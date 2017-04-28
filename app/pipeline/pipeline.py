@@ -285,12 +285,21 @@ class Pipeline(object):
                     try:
                         step.add_input(input_.alias, self._initial_input[input_.name])
                     except KeyError:
-                        raise ValueError("Initial input does not contain key '{}'".format(input_.name))
+                        if input_.required is True:
+                            raise ValueError("Initial input does not contain key '{}'".format(input_.name))
+                        else:
+                            logging.warning("Optional input '{}' not found in step '{}'".format(
+                                input_.name, input_.source))
                 elif self.get_step(input_.source) is not None:
                     try:
                         step.add_input(input_.alias, self.get_step(input_.source).outputs[input_.name])
                     except KeyError:
-                        logging.warning("Step {} has no output {}".format(input_.source, input_.name))
+                        if input_.required is True:
+                            raise ValueError("Step '{}' output does not contain key '{}'".format(
+                                input_.source, input_.name))
+                        else:
+                            logging.warning("Optional input '{}' not found in step '{}'".format(
+                                input_.name, input_.source))
                 else:
                     raise ValueError("No step named '{}'".format(input_.source))
             elif type(input_) is Step.ExternalInput:
