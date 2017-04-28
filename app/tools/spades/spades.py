@@ -7,6 +7,7 @@ from app.tools.tool import Tool
 
 
 class SPAdes(Tool):
+
     """
     SPAdes de novo short-reads or hybrid assembler, especially supports handling of single-cell (MDA) data utilizing its
     own reads error correction method
@@ -93,9 +94,13 @@ class SPAdes(Tool):
         :return: True if input type is recognized, otherwise False
         """
         if key_informs[1] == 'contigs':
-            if key_informs[2] == 'untrusted':
-                # untrusted contigs
-                infiles_options.append(self.__compose_input_str('untrusted-contigs', files))
+            if key_informs[2] is not None:
+                if key_informs[2] == 'untrusted':
+                    # untrusted contigs
+                    infiles_options.append(self.__compose_input_str('untrusted-contigs', files))
+                else:
+                    raise InvalidInputSpecificationError(
+                        "Unsupported SPAdes contig input specification found {!r}. Supports only FAST{{Q/A}}_contigs(_untrusted).".format("_".join(key_informs)))
             else:
                 # trusted contigs
                 infiles_options.append(self.__compose_input_str('trusted-contigs', files))
@@ -125,6 +130,10 @@ class SPAdes(Tool):
             # short reads: SE, PE, MP, HQMP, and their unpaired reads
             #              (PE-S, MP-S, HQMP-S)
             if key_informs[1] in {'SE', 'PE', 'PE-S', 'MP', 'MP-S'}:
+                if len(key_informs) != 3:
+                    raise InvalidInputSpecificationError(
+                        "SPAdes input specification requires a strict format: {{FASTQ/FASTA}}_{{SE/PE/PE-S/MP/MP-S}}_{{(HQ)1..5}}. Found an unsupported one {!r}.".format(key))
+
                 res = re.match("HQ(\d)", key_informs[2])
                 if res:
                     # HQMP reads
