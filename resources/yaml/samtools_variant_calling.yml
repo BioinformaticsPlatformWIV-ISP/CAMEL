@@ -49,3 +49,6 @@ steps:
 pipeline-outputs:
 - name: VCF
   from: Unzip_VCF
+
+- name: VCF_GZ
+  from: Variant_calling
