@@ -1,12 +1,12 @@
+import logging
 import shutil
 
 import os
 
-from app.tools.tool import Tool
-from app.error.toolexecutionerror import ToolExecutionError
 from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from app.error.toolexecutionerror import ToolExecutionError
 from app.io.tooliofile import ToolIOFile
-import logging
+from app.tools.tool import Tool
 
 
 class Interproscan(Tool):
@@ -127,4 +127,4 @@ class Interproscan(Tool):
         option_list = super(Interproscan, self)._build_options()
         option_list.append('--output-dir {}'.format(self._folder))
         option_list.append('--tempdir {}'.format(self.__get_temp_dir()))
-        return '' if len(option_list) == 0 else ' '.join(option_list)
+        return ' '.join(option_list)
