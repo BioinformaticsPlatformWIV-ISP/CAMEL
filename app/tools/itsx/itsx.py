@@ -45,7 +45,7 @@ class Itsx(Tool):
         if len(self._tool_inputs['FASTA']) != 1:
             raise InvalidInputSpecificationError('Invalid number (max = 1) of FASTA files given for ITSx: {!r}'.format(self._tool_inputs))
         if len(self._tool_inputs.keys()) > 2:
-            raise InvalidInputSpecificationError('Too many input keys given voor ITSx (only FASTA allowed): {!r}'.format(self._tool_inputs))
+            raise InvalidInputSpecificationError('Too many input keys given for ITSx (only FASTA allowed): {!r}'.format(self._tool_inputs))
 
     def __get_basename(self):
         """
@@ -88,7 +88,7 @@ class Itsx(Tool):
         """
         input_string = self.__build_input_string()
         options_string = ' '.join(self._build_options())
-        self._command.command = '{} {} {}'.format(self._tool_command, input_string, options_string)
+        self._command.command = ' '.join([self._tool_command, input_string, options_string])
 
     def _check_command_output(self):
         """
