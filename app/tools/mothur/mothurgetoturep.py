@@ -1,6 +1,6 @@
-from app.tools.mothur.mothur import Mothur
-from app.io.tooliofile import ToolIOFile
 from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from app.io.tooliofile import ToolIOFile
+from app.tools.mothur.mothur import Mothur
 
 
 class MothurGetOturep(Mothur):
@@ -20,16 +20,14 @@ class MothurGetOturep(Mothur):
     def _check_input(self):
         """
         Checks whether the given inputs are valid:
-        - FASTA is required
-        - DIST_Phy or DIST_Col key is required
+        - PHY or DIST key is required
         - TSV_List key is required
+        - In case of DIST key as input, TSV_Counts is also required
         - Additional allowed keys: 'TSV_Counts', 'FASTA', 'TSV_Names', 'TSV_Groups'
         - Only one input file per key allowed
         :return: None
         """
         super(MothurGetOturep, self)._check_input()
-        if 'FASTA' not in self._tool_inputs:
-            raise InvalidInputSpecificationError('No fasta file given for Mothur get.oturep: {!r}'.format(self._tool_inputs))
         if not (('PHY' in self._tool_inputs) != ('DIST' in self._tool_inputs)) \
                 or 'TSV_List' not in self._tool_inputs:
             raise InvalidInputSpecificationError('Missing input files (keys) for Mothur '
@@ -37,6 +35,9 @@ class MothurGetOturep(Mothur):
         if 'TSV_Counts' in self._tool_inputs and 'TSV_Names' in self._tool_inputs:
             raise InvalidInputSpecificationError('Both Count and Names file is not allowed for Mothur '
                                                  'get.oturep: {!r}'.format(self._tool_inputs))
+        if 'DIST' in self._tool_inputs and ('TSV_Counts' not in self._tool_inputs and 'TSV_Names' not in self._tool_inputs):
+            raise InvalidInputSpecificationError('TSV_Counts or TSV_Names required of column distance matrix is given '
+                                                 'for Mothur get.oturep: {!r}'.format(self._tool_inputs))
         for key, input_files in self._tool_inputs.iteritems():
             if key not in ['PHY', 'DIST', 'FASTA', 'TSV_Counts', 'TSV_Names', 'TSV_Groups', 'TSV_List']:
                 raise InvalidInputSpecificationError('Invalid input key given for Mothur get.oturep: {!r}'.format(self._tool_inputs))
@@ -72,10 +73,14 @@ class MothurGetOturep(Mothur):
         :return: None
         """
         basename = super(MothurGetOturep, self)._get_basename('TSV_List')
-        self._tool_outputs['FASTA'] = [ToolIOFile(basename + '.unique.rep.fasta')]
         labels = super(MothurGetOturep, self)._get_labels()
+        self._tool_outputs['FASTA'] = []
+        for label in labels:
+            self._tool_outputs['FASTA'] += [ToolIOFile(basename + '.' + label + '.rep.fasta')]
         if 'TSV_Counts' in self._tool_inputs:
-            self._tool_outputs['TSV_Counts'] = [ToolIOFile(basename + '.unique.rep.count_table')]
+            self._tool_outputs['TSV_Counts'] = []
+            for label in labels:
+                self._tool_outputs['TSV_Counts'] += [ToolIOFile(basename + '.' + label + '.rep.count_table')]
         elif 'TSV_Names' in self._tool_inputs:
             self._tool_outputs['TSV_Names'] = []
             for label in labels:
