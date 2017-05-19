@@ -1,6 +1,6 @@
+from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from app.io.tooliofile import ToolIOFile
 from app.tools.mothur.mothur import Mothur
-from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 
 
 class MothurCountSeqs(Mothur):

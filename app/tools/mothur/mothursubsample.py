@@ -1,11 +1,11 @@
-from app.tools.mothur.mothur import Mothur
-from app.io.tooliofile import ToolIOFile
 from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from app.io.tooliofile import ToolIOFile
+from app.tools.mothur.mothur import Mothur
 
 
 class MothurSubSample(Mothur):
     """
-    The count.groups command counts sequences from a specific group or set of groups.
+    The sub.sample command can be used as a way to normalize your data, or create a smaller set from your original set.
     """
 
     def __init__(self, camel):
@@ -30,7 +30,7 @@ class MothurSubSample(Mothur):
             if len(input_files) != 1:
                 raise InvalidInputSpecificationError('Invalid number (max = 1) of files given for Mothur \
                                                      sub.sample: {!r}'.format(self._tool_inputs))
-        # Check if more than one of the primary input keys is present.mn
+        # Check if more than one of the primary input keys is present
         if len(set(allowed_primary_input).intersection(self._tool_inputs.keys())) > 1:
             raise InvalidInputSpecificationError('Too many primary input keys given for '
                                                  'Mothur sub.sample: {!r}'.format(self._tool_inputs))

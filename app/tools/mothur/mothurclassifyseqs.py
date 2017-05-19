@@ -1,7 +1,8 @@
-from app.tools.mothur.mothur import Mothur
-from app.io.tooliofile import ToolIOFile
 import os.path
+
 from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from app.io.tooliofile import ToolIOFile
+from app.tools.mothur.mothur import Mothur
 
 
 class MothurClassifySeqs(Mothur):

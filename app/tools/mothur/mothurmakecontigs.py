@@ -1,8 +1,8 @@
 import re
 
+from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from app.io.tooliofile import ToolIOFile
 from app.tools.mothur.mothur import Mothur
-from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 
 
 class MothurMakeContigs(Mothur):
@@ -86,7 +86,7 @@ class MothurMakeContigs(Mothur):
         self._execute_command()
         if self.__check_read_name_warning():
             self.__run_on_single_processor()
-        self._remove_symlinks()
+        self._symlink_cleanup()
         self._set_output()
 
     def __check_read_name_warning(self):

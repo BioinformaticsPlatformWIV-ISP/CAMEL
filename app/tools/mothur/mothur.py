@@ -1,13 +1,12 @@
 import logging
 import random
+import tempfile
 
 import abc
 import os
 
-from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
-from app.tools.tool import Tool
 from app.io.tooliofile import ToolIOFile
-import tempfile
+from app.tools.tool import Tool
 
 
 class Mothur(Tool):
@@ -33,14 +32,14 @@ class Mothur(Tool):
 
     def _execute_tool(self):
         """
-        Runs Prinseq
+        Runs Mothur
         :return: None
         """
         self._create_symlinks()
         self._build_command()
         self._execute_command()
         self._set_output()
-        self._remove_symlinks()
+        self._symlink_cleanup()
 
     def _create_symlinks(self):
         """
@@ -61,7 +60,7 @@ class Mothur(Tool):
         print new_inputs
         self._tool_inputs = new_inputs
 
-    def _remove_symlinks(self):
+    def _symlink_cleanup(self):
         """
         Removes all symlinks and the temporary directory that were created by the tool
         :return: None
@@ -134,11 +133,11 @@ class Mothur(Tool):
         """
         Returns the prefix that will be used in the output. Example: Input file /test/data/file1.run1.fastq will return
         the following prefix: /test/data/file1.run1 (suffix = '.fastq')
-        :param suffix: Suffix that indicates the point where the path has to be cut (from the right)
+        :param suffix: String that indicates the point where the path has to be cut (from the right)
         :param input_key: Key of the input file to be used
         :return: String with the prefix used in the output
         """
-        infile = os.path.basename(self._tool_inputs[input_key][0].path)
+        infile = self._tool_inputs[input_key][0].basename
         return self._folder + '/' + infile[:infile.rfind(suffix)]
 
     def _get_extension(self, input_key='FASTA'):

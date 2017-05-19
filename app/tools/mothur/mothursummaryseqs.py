@@ -1,6 +1,6 @@
-from app.tools.mothur.mothur import Mothur
-from app.io.tooliofile import ToolIOFile
 from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from app.io.tooliofile import ToolIOFile
+from app.tools.mothur.mothur import Mothur
 
 
 class MothurSummarySeqs(Mothur):
@@ -66,7 +66,7 @@ class MothurSummarySeqs(Mothur):
         self._build_command()
         self._execute_command()
         self.__write_stats_to_file()
-        self._remove_symlinks()
+        self._symlink_cleanup()
         self._set_output()
 
     def __write_stats_to_file(self):

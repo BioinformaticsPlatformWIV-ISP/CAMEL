@@ -1,6 +1,8 @@
-from app.tools.mothur.mothur import Mothur
-from app.io.tooliofile import ToolIOFile
+import logging
+
 from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from app.io.tooliofile import ToolIOFile
+from app.tools.mothur.mothur import Mothur
 
 
 class MothurPreCluster(Mothur):
@@ -58,20 +60,24 @@ class MothurPreCluster(Mothur):
         Sets the name of the output files, and fills the common stream object with them
         :return: None
         """
-        basename = super(MothurPreCluster, self)._get_basename()
-        self._tool_outputs['FASTA'] = [ToolIOFile(basename + '.precluster.fasta')]
-        group_names = []
-        if 'TSV_Counts' in self._tool_inputs:
-            group_names = self.__get_group_names()
-            # One file is always in the output when TSV_Counts is specified (.precluster.count_table)
-            self._tool_outputs['TSV_Counts'] = [ToolIOFile(basename + '.precluster.count_table')]
-        elif 'TSV_Names' in self._tool_inputs:
-            group_names = self.__get_group_names()
-        if len(group_names) != 0:
-            self._tool_outputs['TSV_Map'] = []
-            for item in group_names:
-                # For each group a precluster map file is created
-                self._tool_outputs['TSV_Map'].append(ToolIOFile(basename + '.precluster.' + item + '.map'))
+        if 'skip_step' in self._parameters:
+            self._tool_outputs['FASTA'] = [ToolIOFile(self._tool_inputs['FASTA'][0].path)]
+            self._tool_outputs['TSV_Counts'] = [ToolIOFile(self._tool_inputs['TSV_Counts'][0].path)]
+        else:
+            basename = super(MothurPreCluster, self)._get_basename()
+            self._tool_outputs['FASTA'] = [ToolIOFile(basename + '.precluster.fasta')]
+            group_names = []
+            if 'TSV_Counts' in self._tool_inputs:
+                group_names = self.__get_group_names()
+                # One file is always in the output when TSV_Counts is specified (.precluster.count_table)
+                self._tool_outputs['TSV_Counts'] = [ToolIOFile(basename + '.precluster.count_table')]
+            elif 'TSV_Names' in self._tool_inputs:
+                group_names = self.__get_group_names()
+            if len(group_names) != 0:
+                self._tool_outputs['TSV_Map'] = []
+                for item in group_names:
+                    # For each group a precluster map file is created
+                    self._tool_outputs['TSV_Map'].append(ToolIOFile(basename + '.precluster.' + item + '.map'))
 
     def __get_group_names(self):
         """
@@ -92,3 +98,27 @@ class MothurPreCluster(Mothur):
         elif 'TSV_Names' in self._tool_inputs:
             raise RuntimeError('Using a names file is not yet implemented for pre.cluster!')
         return group_names
+
+    def _build_options(self, excluded_parameters=None, separator='='):
+        """
+        Creates the string with all the specified parameters
+        :param excluded_parameters: list of parameters to be skipped (Optional)
+        :param separator: separator used to combine the option and value (Optional)
+        :return: String with command parameters
+        """
+        return super(MothurPreCluster, self)._build_options(excluded_parameters=['skip_step'], separator=separator)
+
+    def _execute_tool(self):
+        """
+        Runs Mothur Pre.cluster
+        :return: None
+        """
+        if 'skip_step' not in self._parameters:
+            self._create_symlinks()
+            self._build_command()
+            self._execute_command()
+            self._set_output()
+            self._remove_symlinks()
+        else:
+            self._set_output()
+            logging.warning("Skipping the precluster step as requested by setting the skip_step parameter!")
