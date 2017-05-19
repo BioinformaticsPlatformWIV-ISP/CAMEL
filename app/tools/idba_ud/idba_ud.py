@@ -42,7 +42,7 @@ class IdbaUd(Tool):
         if 'FASTA' not in self._tool_inputs:
             raise InvalidInputSpecificationError('Invalid input key given for IDBA_UD, FASTA is required: {!r}'.format(self._tool_inputs))
         if len(self._tool_inputs.keys()) != 1:
-            raise InvalidInputSpecificationError('Invalid number of input keys given voor IDB_UD, only FASTA is allowed: {!r}'.format(self._tool_inputs))
+            raise InvalidInputSpecificationError('Invalid number of input keys given for IDBA_UD, only FASTA is allowed: {!r}'.format(self._tool_inputs))
         if len(self._tool_inputs['FASTA']) > 5:
             raise InvalidInputSpecificationError('Invalid number of files given for IDBA_UD, maximum is 5: {!r}'.format(self._tool_inputs))
 
