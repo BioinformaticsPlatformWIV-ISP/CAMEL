@@ -162,7 +162,7 @@ class FastQCAdditionalChecks(Tool):
         :return: Difference
         """
         max_difference = 0.0
-        last_base = int(data[-1].split('\t')[0].split('-')[1])
+        last_base = int(data[-1].split('\t')[0].split('-')[-1])
         logging.debug("Checking A-T, G-C difference between base {} and {}".format(
             nb_of_skipped_bases, last_base - nb_of_skipped_bases_end))
         for row in data[1:]:

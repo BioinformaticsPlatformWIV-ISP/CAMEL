@@ -1,3 +1,4 @@
+import logging
 import os
 
 from app.components.files.tsvexporter import TsvExporter
@@ -30,13 +31,12 @@ class HtmlReporterResChar(HtmlReporter):
         """
         self.__subfolder = os.path.join('resistance_characterization', self.__get_database_name().lower())
         self._report.add_header(self.__get_database_name(), 3)
-        if len(self._tool_inputs['VAL_Hits']) == 0:
+        if 'VAL_Hits' not in self._tool_inputs:
             self._report.add_paragraph('No hits found.')
         else:
             self.__add_gene_output_table()
         self._report.add_paragraph('Last updated: {}'.format(self._input_informs['database_info']['last_updated']))
         self._report.add_horizontal_line()
-        self._tool_outputs['DIR'] = [self._tool_inputs['DIR'][0]]
 
     def _check_input(self):
         """
@@ -46,8 +46,8 @@ class HtmlReporterResChar(HtmlReporter):
         if 'database_info' not in self._input_informs:
             raise ValueError("No database info found")
         if 'VAL_Hits' not in self._tool_inputs:
-            raise ValueError("No blast hits found")
-        if 'TXT' not in self._tool_inputs:
+            logging.warning("No blast hits found")
+        elif 'TXT' not in self._tool_inputs:
             raise ValueError("No alignment inputs found")
         super(HtmlReporterResChar, self)._check_input()
 

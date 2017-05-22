@@ -9,6 +9,7 @@ from app.tools.tool import Tool
 
 
 class Trimmomatic(Tool):
+
     """
     A flexible read trimming tool for Illumina NGS Data.
     """
@@ -18,7 +19,7 @@ class Trimmomatic(Tool):
         Initializes Trimmomatic.
         :param camel: Camel instance
         """
-        super(Trimmomatic, self).__init__('Trimmomatic', '0.32', camel)
+        super(Trimmomatic, self).__init__('Trimmomatic', '0.36', camel)
         self._mode = None
 
     def _execute_tool(self):
