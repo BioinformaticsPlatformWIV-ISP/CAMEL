@@ -30,6 +30,8 @@ class Pipeline(object):
         self._initial_input = None
         self._configs = None
         self._steps = []
+        self._outputs = {}
+        self._pipeline_output_specification = []
         self._destination_path = None
         self._folder = None
         self._parse_yaml_files(yaml_files)
@@ -69,6 +71,14 @@ class Pipeline(object):
         """
         return self._steps
 
+    @property
+    def outputs(self):
+        """
+        Returns the pipeline outputs.
+        :return: Pipeline outputs
+        """
+        return self._outputs
+
     def set_initial_input(self, files):
         """
         Sets the initial input files of the pipeline.
@@ -102,6 +112,7 @@ class Pipeline(object):
         if self._db_logging:
             self._log_initial_input()
         self._execute_pipeline_steps()
+        self._set_pipeline_output()
         logging.info("Finished running pipeline")
         LogManager.detach_pipeline_handlers()
 
@@ -158,6 +169,8 @@ class Pipeline(object):
                     if self._name is None:
                         self._name = yaml_data['name']
                     self._parse_steps(yaml_data['steps'])
+                    if 'pipeline-outputs' in yaml_data:
+                        self._pipeline_output_specification.extend(yaml_data['pipeline-outputs'])
                 except KeyError as err:
                     raise ValueError("'{}' missing in pipeline specification '{}'".format(err.message, yaml_file))
 
@@ -272,12 +285,21 @@ class Pipeline(object):
                     try:
                         step.add_input(input_.alias, self._initial_input[input_.name])
                     except KeyError:
-                        raise ValueError("Initial input does not contain key '{}'".format(input_.name))
+                        if input_.required is True:
+                            raise ValueError("Initial input does not contain key '{}'".format(input_.name))
+                        else:
+                            logging.warning("Optional input '{}' not found in step '{}'".format(
+                                input_.name, input_.source))
                 elif self.get_step(input_.source) is not None:
                     try:
                         step.add_input(input_.alias, self.get_step(input_.source).outputs[input_.name])
-                    except KeyError as err:
-                        logging.warning("Step {} has no output {}".format(input_.source, err.message))
+                    except KeyError:
+                        if input_.required is True:
+                            raise ValueError("Step '{}' output does not contain key '{}'".format(
+                                input_.source, input_.name))
+                        else:
+                            logging.warning("Optional input '{}' not found in step '{}'".format(
+                                input_.name, input_.source))
                 else:
                     raise ValueError("No step named '{}'".format(input_.source))
             elif type(input_) is Step.ExternalInput:
@@ -382,3 +404,28 @@ class Pipeline(object):
                 if files[i].logged:
                     self._pipeline_service.log_initial_input(self._job_id, files[i].TYPE_NAME, key, i, files[i].hash)
                     logging.debug('Initial input {} ({}) logged'.format(key, i))
+
+    def _set_pipeline_output(self):
+        """
+        Sets the pipeline output based on the YAML specification.
+        :return: None
+        """
+        logging.info("Resolving pipeline output")
+        for output_specification in self._pipeline_output_specification:
+            try:
+                output_key = output_specification.get('alias', output_specification['name'])
+            except KeyError:
+                raise ValueError("'name' is required for the pipeline output specification")
+            try:
+                step = self.get_step(output_specification['from'])
+            except KeyError:
+                raise ValueError("'from' is required for the pipeline output specification")
+            if step is None:
+                raise ValueError("Step '{}' not found".format(output_specification['from']))
+            if output_key not in self._outputs:
+                self._outputs[output_key] = []
+            try:
+                self._outputs[output_key].extend(step.outputs[output_specification['name']])
+            except KeyError:
+                logging.warning("Step '{}' does not have an output '{}'".format(
+                    output_specification['from'], output_specification['name']))
