@@ -118,7 +118,7 @@ class MothurPreCluster(Mothur):
             self._build_command()
             self._execute_command()
             self._set_output()
-            self._remove_symlinks()
+            self._symlink_cleanup()
         else:
             self._set_output()
             logging.warning("Skipping the precluster step as requested by setting the skip_step parameter!")
