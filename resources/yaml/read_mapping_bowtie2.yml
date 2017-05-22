@@ -12,14 +12,16 @@ steps:
   inputs:
   - name: FASTQ_PE
     from: initial
+  - name: INDEX_GENOME_PREFIX
+    from: Reference_indexing
   - name: FASTQ_SE_FORWARD
     from: initial
     alias: FASTQ_SE
+    required: False
   - name: FASTQ_SE_REVERSE
     from: initial
     alias: FASTQ_SE
-  - name: INDEX_GENOME_PREFIX
-    from: Reference_indexing
+    required: False
 
 - id: Sam_to_bam_conversion
   tool: !!python/name:app.tools.samtools.samtoolsview.SamtoolsView
@@ -38,3 +40,7 @@ steps:
   inputs:
   - name: BAM
     from: Alignment_sorting
+
+pipeline-outputs:
+- name: BAM
+  from: BAM_indexing

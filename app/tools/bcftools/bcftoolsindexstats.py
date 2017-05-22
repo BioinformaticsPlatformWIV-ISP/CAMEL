@@ -23,7 +23,7 @@ class BcftoolsIndexStats(Tool):
         :return: None
         """
         if not any(key in self._tool_inputs for key in ('BCF', 'VCF_GZ')):
-            raise InvalidInputSpecificationError("No input file found (BCF / VCF_GZ supported)")
+            raise InvalidInputSpecificationError("No input file found")
         if len(self._tool_inputs) != 1:
             raise InvalidInputSpecificationError("Only one type of input is supported (VCF_GZ or BCF)")
         super(BcftoolsIndexStats, self)._check_input()
@@ -33,9 +33,10 @@ class BcftoolsIndexStats(Tool):
         Executes this tool.
         :return: None
         """
+        input_key = self._tool_inputs.keys()[0]
         self._command.command = '{} {}'.format(
             self._tool_command,
-            self._tool_inputs[self._tool_inputs.keys()[0]][0].path
+            self._tool_inputs[input_key][0].path
         )
         self._execute_command()
         self.__analyze_stdout()
@@ -49,4 +50,5 @@ class BcftoolsIndexStats(Tool):
         for line in self.stdout.splitlines():
             reference, size, snps = line.split('\t')
             self._informs['variants_per_reference'][reference] = int(snps)
-        self._informs['total_variants'] = sum(self._informs['variants_per_reference'].values)
+        self._informs['total_variants'] = sum(self._informs['variants_per_reference'][ref] for ref in
+                                              self._informs['variants_per_reference'].keys())
