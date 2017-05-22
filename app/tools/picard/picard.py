@@ -128,7 +128,7 @@ class Picard(Tool):
         """
         stdout_lines = self.stdout.splitlines()
 
-        run_status = stdout_lines[-2]
+        run_status = stdout_lines[-1]
         if not re.match('Exit status: 0', run_status):
             raise ToolExecutionError("Picard {!r} fails to run, error msg: \n{}".format(
                 self._function_name, self.stdout))
