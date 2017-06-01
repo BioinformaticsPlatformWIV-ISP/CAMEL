@@ -55,10 +55,9 @@ class QuastInformExtractor(Tool):
             self._informs[key] = {}
 
         with open(self._tool_inputs['TSV'][0].path, 'r') as inf:
-            for l in inf.readlines():
-                l = l.strip()
-                if len(l.split("\t")) > 1:
-                    stats_key, stats_value = l.split("\t")
+            for line in [l.strip() for l in inf.readlines()]:
+                if len(line.split("\t")) > 1:
+                    stats_key, stats_value = line.split("\t")
                     for qc_sect, qc_sect_stats in qc_stats.iteritems():
                         if stats_key in qc_sect_stats:
                             self._informs[qc_sect][stats_key] = stats_value
