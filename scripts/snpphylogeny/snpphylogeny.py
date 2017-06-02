@@ -10,6 +10,7 @@ from Bio import SeqIO
 from app.camel import Camel
 from app.components.files.fastqutils import FastqUtils
 from app.components.vcf import vcfutils
+from app.error.toolexecutionerror import ToolExecutionError
 from app.io.tooliodirectory import ToolIODirectory
 from app.io.tooliofile import ToolIOFile
 from app.io.tooliovalue import ToolIOValue
@@ -38,7 +39,6 @@ class SnpPhylogeny(object):
         self._camel = Camel()
         self._destination_path = os.path.abspath('.')
         self._args = self._parse_arguments()
-        os.mkdir(self._args.dir_html)
         self._html = HtmlReporterSnpPhylogeny(self._name, self._args.dir_html)
         self._sample_names = self.__get_sample_names()
         self._bam_files = []
@@ -51,9 +51,9 @@ class SnpPhylogeny(object):
         :return: Arguments
         """
         argument_parser = argparse.ArgumentParser()
-        argument_parser.add_argument('--html')
-        argument_parser.add_argument('--dir-html')
-        argument_parser.add_argument('--reference')
+        argument_parser.add_argument('--html', required=True)
+        argument_parser.add_argument('--dir-html', required=True)
+        argument_parser.add_argument('--reference', required=True)
         argument_parser.add_argument('--reference-name')
         argument_parser.add_argument('--sample', nargs=5, action='append', required=True)
         argument_parser.add_argument('--trim-reads', action='store_true')
@@ -88,6 +88,7 @@ class SnpPhylogeny(object):
         :return: None
         """
         try:
+            os.mkdir(self._args.dir_html)
             self.__check_input()
             # Initialize HTML report
             self._html.initialize()
@@ -112,7 +113,12 @@ class SnpPhylogeny(object):
                         "SNP matrix is too small ({} positions) to construct a phylogenetic tree.".format(size))
                 # Tree building
                 model = self._run_model_selection(snp_matrix)
-                self._run_tree_building(snp_matrix, model)
+                try:
+                    self._run_tree_building(snp_matrix, model)
+                except ToolExecutionError:
+                    self._html.add_error_message(
+                        """Could not build bootstrap tree, check the logs for more details. 
+                        The SNP matrix might be too small, try using less stringent filters.""")
             except ValueError as err:
                 self._html.add_error_message(err.message)
             # Save report
@@ -144,7 +150,8 @@ class SnpPhylogeny(object):
         Returns the default input for the SNP pipeline.
         :return: Input reads dictionary
         """
-        return [{'FASTQ_PE': [ToolIOFile(fwd_data), ToolIOFile(rev_data)]} for _, _, fwd_data, _, rev_data in self._args.sample]
+        return [{'FASTQ_PE': [ToolIOFile(fwd_data), ToolIOFile(rev_data)]} for
+                _, _, fwd_data, _, rev_data in self._args.sample]
 
     def __run_read_trimming(self):
         """
@@ -152,7 +159,8 @@ class SnpPhylogeny(object):
         :return: None
         """
         trimming_pipelines = {}
-        for (sample_name, _, forward_data, _, reverse_data), i in zip(self._args.sample, range(0, len(self._args.sample))):
+        for (sample_name, _, forward_data, _, reverse_data), i in zip(
+                self._args.sample, range(0, len(self._args.sample))):
             pipeline = Pipeline([YAML_READ_TRIMMING], self._camel, True)
             pipeline.set_initial_input({
                 'FASTQ': [ToolIOFile(forward_data), ToolIOFile(reverse_data)],
@@ -172,9 +180,10 @@ class SnpPhylogeny(object):
         """
         Runs the SNP calling pipeline. Has to be implemented by the subclasses.
         :param reads: PE reads for all samples
-        :return: None
+        :return: SNP matrix, output files
+        :rtype: ToolIOFile, [ToolIOFile]
         """
-        pass
+        return
 
     @staticmethod
     def __get_snp_matrix_size(snp_matrix):
