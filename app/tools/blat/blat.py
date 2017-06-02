@@ -8,7 +8,7 @@ from app.tools.tool import Tool
 
 class Blat(Tool):
     """
-    BLAT is a bioinformatics software a tool which performs rapid mRNA/DNA and cross-species protein alignments. BLAT
+    BLAT is a bioinformatics software tool which performs rapid mRNA/DNA and cross-species protein alignments. BLAT
     is more accurate and 500 times faster than popular existing tools for mRNA/DNA alignments and 50 times faster for
     protein alignments at sensitivity settings typically used when comparing vertebrate sequences.
     """
