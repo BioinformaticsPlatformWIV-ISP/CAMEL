@@ -103,11 +103,11 @@ class Interproscan(Tool):
         Returns the path to the temporary directory and creates it if it does not yet exist
         :return: Path to temporary directory
         """
-        if os.path.isfile(os.path.join(self._folder, 'temp')):
-            raise IOError('A file with the name temp already exists!')
-        if not os.path.isdir(os.path.join(self._folder, 'temp')):
-            os.mkdir(os.path.join(self._folder, 'temp'))
-        return os.path.join(self._folder, 'temp')
+        if os.path.isfile(os.path.join(self._folder, 'temp_ips')):
+            raise IOError('A file with the name temp_ips already exists!')
+        if not os.path.isdir(os.path.join(self._folder, 'temp_ips')):
+            os.mkdir(os.path.join(self._folder, 'temp_ips'))
+        return os.path.join(self._folder, 'temp_ips')
 
     def _check_command_output(self):
         """
