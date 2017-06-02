@@ -54,7 +54,7 @@ class Orphelia(Tool):
 
     def __set_output(self):
         """
-        Sets the name of the output files, and fills the common stream object with them
+        Sets the name of the output files
         :return: None
         """
         self._tool_outputs['COORD'] = [ToolIOFile(os.path.join(self._folder, 'gene.pred'))]
