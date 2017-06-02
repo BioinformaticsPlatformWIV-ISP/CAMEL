@@ -76,21 +76,21 @@ class RefCovSort(Tool):
         else:
             sort_by = 'coverage'
         if 'post_cov_cutoff' in self._parameters and 'post_depth_cutoff' in self._parameters:
-            awk_cmd = " | awk '{{if($2>={0} && $6>={1})print;}}'".format(self._parameters['post_cov_cutoff'].value,
-                                                                         self._parameters['post_depth_cutoff'].value)
+            awk_cmd = "| awk '{{if($2>={0} && $6>={1})print;}}'".format(self._parameters['post_cov_cutoff'].value,
+                                                                        self._parameters['post_depth_cutoff'].value)
         elif 'post_cov_cutoff' in self._parameters:
-            awk_cmd = " | awk '{{if($2>={0})print;}}' ".format(self._parameters['post_cov_cutoff'].value)
+            awk_cmd = "| awk '{{if($2>={0})print;}}'".format(self._parameters['post_cov_cutoff'].value)
         elif 'post_depth_cutoff' in self._parameters:
-            awk_cmd = " | awk '{{if($6>={0})print;}}' ".format(self._parameters['post_depth_cutoff'].value)
+            awk_cmd = "| awk '{{if($6>={0})print;}}'".format(self._parameters['post_depth_cutoff'].value)
         else:
             awk_cmd = ''
         # Sort by coverage (default, column 2) then sort by read depth (column 6)
         if sort_by == 'coverage':
-            sort_cmd = "sort -k2,2nr -k6,6nr -t$'\t' "
+            sort_cmd = "sort -k2,2nr -k6,6nr -t$'\t'"
         # Else: sort by read depth first (column 6) then sort by coverage (column 2)
         else:
-            sort_cmd = "sort -k6,6nr -k2,2nr -t$'\t' "
-        self._command.command = sort_cmd + self._tool_inputs['TSV'][0].path + awk_cmd + ' > ' + self.__get_output_name()
+            sort_cmd = "sort -k6,6nr -k2,2nr -t$'\t'"
+        self._command.command = ' '.join([sort_cmd, self._tool_inputs['TSV'][0].path, awk_cmd, '>', self.__get_output_name()])
 
     def _check_command_output(self):
         """

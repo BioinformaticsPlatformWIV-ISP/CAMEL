@@ -46,7 +46,7 @@ class RefCov(Tool):
                 raise InvalidInputSpecificationError('Invalid input given for RefCov '
                                                      '(BAM/BED and 1 file per key): {!r}'.format(self._tool_inputs))
         if len(self._tool_inputs.keys()) > 2:
-            raise InvalidInputSpecificationError('Too many input keys given voor RefCov (only BAM/BED allowed): {!r}'.format(self._tool_inputs))
+            raise InvalidInputSpecificationError('Too many input keys given for RefCov (only BAM/BED allowed): {!r}'.format(self._tool_inputs))
 
     def __build_basename(self, infiles):
         """
@@ -54,7 +54,7 @@ class RefCov(Tool):
         :param infiles: List of input files
         :return: Prefix used in the output
         """
-        return os.path.join(self._folder, os.path.splitext(infiles[0])[0] + '_' + os.path.splitext(infiles[1])[0])
+        return os.path.join(self._folder, '_'.join([os.path.splitext(f.path)[0] for f in infiles]))
 
     def __get_basename(self):
         """
