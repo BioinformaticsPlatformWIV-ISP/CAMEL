@@ -52,7 +52,7 @@ class SamtoolsSnpPhylogeny(SnpPhylogeny):
         for input_reads in all_reads:
             self._bam_files.append(self.__run_read_mapping(input_reads))
         for bam_file in self._bam_files:
-            self._vcf_files_unfiltered.append(self.__run_snp_calling(bam_file))
+            self._vcf_files_unfiltered.append(self.__run_samtools_variant_calling_pipeline(bam_file))
         filtering = VcfFiltering(self._camel, self._destination_path, self._args)
         for sample_name, vcf_file, bam_file in zip(self._sample_names, self._vcf_files_unfiltered, self._bam_files):
             self._vcf_files.append(filtering.apply(sample_name, vcf_file, bam_file))
@@ -74,7 +74,7 @@ class SamtoolsSnpPhylogeny(SnpPhylogeny):
         SamtoolsSnpPhylogeny.__cleanup_read_mapping_files(pipeline)
         return pipeline.outputs['BAM'][0]
 
-    def __run_snp_calling(self, bam_file):
+    def __run_samtools_variant_calling_pipeline(self, bam_file):
         """
         Runs the SNP calling step.
         :param bam_file: BAM file
@@ -125,7 +125,7 @@ class SamtoolsSnpPhylogeny(SnpPhylogeny):
     def __get_output_files(self):
         """
         Returns the output files.
-        :return: List with: (Name, Filename, Output files)
+        :return: List with: (Name, Filename template, Output files)
         """
         return [
             ('Alignment (BAM)', 'alignment_{}.bam', self._bam_files),
