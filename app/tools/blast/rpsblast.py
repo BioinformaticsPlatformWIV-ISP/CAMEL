@@ -1,6 +1,7 @@
 from app.tools.blast.blast import Blast
 from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 
+
 class RpsBlast(Blast):
     """
     Protein domain search
