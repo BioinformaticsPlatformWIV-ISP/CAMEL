@@ -168,7 +168,7 @@ class Nbc(Tool):
     @staticmethod
     def __get_cutoff(length):
         """
-        Returns the cutoff that can be used to see whether an assigment is significant
+        Returns the cutoff that can be used to see whether an assignment is significant
         :param length: Length of the read
         :return: Cutoff
         """
