@@ -51,7 +51,7 @@ class Phymmbl(Tool):
             raise InvalidInputSpecificationError('Invalid input key given for PhymmBL, '
                                                  'only FASTA and DB allowed: {!r}'.format(self._tool_inputs))
         if len(self._tool_inputs.keys()) != 2:
-            raise InvalidInputSpecificationError('Invalid number of input keys given voor PhymmBL, '
+            raise InvalidInputSpecificationError('Invalid number of input keys given for PhymmBL, '
                                                  'only FASTA and DB allowed: {!r}'.format(self._tool_inputs))
         for value in self._tool_inputs.values():
             if len(value) > 1:
@@ -124,7 +124,6 @@ class Phymmbl(Tool):
         :return: None
         """
         output_folder = os.path.join(self._folder, 'phymmbl')
-        print output_folder
         for item in os.listdir(output_folder):
             if item.startswith(('rawBlastOutput', 'rawPhymmOutput', 'results')):
                 continue
