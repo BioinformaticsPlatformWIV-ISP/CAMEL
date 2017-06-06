@@ -108,7 +108,9 @@ class Orphelia(Tool):
         :param command: Lmod load command
         :return: Lmod load command without the orphelia module (or empty string if no other modules are left)
         """
-        return re.sub(r'orphelia/[0-9.\s]+', '', command) if re.sub(r'orphelia/[0-9.\s]+', '', command) > 15 else ''
+        sub = re.sub(r'orphelia/[0-9.\s]+', '', command)
+        # A module load command should be at least 15 characters to actually have a module that needs to be loaded
+        return sub if len(sub) > 15 else ''
 
     def __get_working_folder(self):
         """
