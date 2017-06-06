@@ -99,7 +99,8 @@ class Nbc(Tool):
 
     def __process_output(self, read_lengths):
         """
-        Converts the raw output to a table with more information
+        Converts the raw output to a table with more information (i.e. the read name, the raw score, the significance
+        cutoff, whether the score is significant (True/False) and the species name that was identified
         :return: None
         """
         with open(os.path.join(self._folder, 'processed_output.tsv'), 'wb') as outf:
@@ -110,8 +111,11 @@ class Nbc(Tool):
                         lines = []
                         for line in infile:
                             lines.append(self.__to_floats(line))
-                        names = self.__get_read_names(lines)
-                        for line in zip(*lines)[1:]:
+                        zipped_lines = zip(*lines)
+                        # The list of species names is the first entry of the zipped lines
+                        names = zipped_lines[0]
+                        for line in zipped_lines[1:]:
+                            # Find the entry with the highest value as this is the best hit
                             index = line.index(max(line[1:]))
                             self.__write_to_output(outf, line, names, index, read_lengths)
 
