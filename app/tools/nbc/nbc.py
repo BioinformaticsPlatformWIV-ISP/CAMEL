@@ -136,15 +136,6 @@ class Nbc(Tool):
                 new_items.append(item)
         return new_items
 
-    @staticmethod
-    def __get_read_names(lines):
-        """
-        Returns the list of species names found in the raw tabulated file
-        :param lines: List of lines from the raw tabulated file
-        :return: List of names
-        """
-        return zip(*lines)[0]
-
     def __write_to_output(self, outf, line, names, index, read_lengths):
         """
         Writes the final output based on the given parameters
