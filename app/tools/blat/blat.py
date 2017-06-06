@@ -78,11 +78,10 @@ class Blat(Tool):
         Returns the output key that has to be used based on the specified parameters in the database
         :return: Output key to use
         """
-        try:
-            return 'TSV' if self._parameters['out'].value in ['psl', 'pslx', 'blast', 'blast8', 'blast9'] else \
-                self._parameters['out'].value.upper()
-        except KeyError:
-            return 'TSV'
+        output_key = 'TSV'
+        if 'out' in self._parameters and self._parameters['out'].value not in ['psl', 'pslx', 'blast', 'blast8', 'blast9']:
+            output_key = self._parameters['out'].value.upper()
+        return output_key
 
     def __get_output_extension(self):
         """
