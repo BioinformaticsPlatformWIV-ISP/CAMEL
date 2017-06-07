@@ -9,10 +9,11 @@ class SAMBAMutils(object):
     """
 
     @staticmethod
-    def is_empty(infile):
+    def get_record_count(infile):
         """
-        Check whether a SAM/BAM file contains only header
-        :return: True if infile contains no read records
+        Count the total number of records in a SAM/BAM file
+        :param infile: input SAM/BAM file
+        :return: the number of records in SAM/BAN file
         """
         _, file_ext = os.path.splitext(infile)
         if file_ext.lower() == '.sam':
@@ -20,8 +21,13 @@ class SAMBAMutils(object):
         elif file_ext.lower() == '.bam':
             map_file = pysam.AlignmentFile(infile, "rb")
 
-        read_count = map_file.count(until_eof=True)
-        if read_count == 0:
-            return True
-        else:
-            return False
+        return map_file.count(until_eof=True)
+
+    @staticmethod
+    def is_empty(infile):
+        """
+        Check whether a SAM/BAM file contains only header
+        :param infile: input SAM/BAM file
+        :return: True if infile contains no read records
+        """
+        return SAMBAMutils.get_record_count(infile) == 0
