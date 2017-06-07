@@ -38,13 +38,13 @@ class BedtoolsGetFasta(Bedtools):
         Builds the command.
         :return: None
         """
-        self._command.command = '{} {} {} {} {}'.format(
+        self._command.command = ' '.join[
             self._tool_command,
             ' '.join(self._build_options()),
             '-bed {}'.format(self._tool_inputs['BED'][0].path),
             '-fi {}'.format(self._tool_inputs['FASTA'][0].path),
             '-fo {}'.format(self.OUTPUT_FASTA)
-        )
+        ]
 
     def __set_output(self):
         """

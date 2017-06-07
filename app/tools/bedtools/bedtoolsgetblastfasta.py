@@ -5,8 +5,8 @@ from app.error.invalidinputspecificationerror import InvalidInputSpecificationEr
 from app.error.invalidparametererror import InvalidParameterError
 from app.io.tooliofile import ToolIOFile
 from app.io.tooliovalue import ToolIOValue
-from app.tools.bedtools.bedtools_getfasta import BedtoolsGetFasta
-from app.components.sequence_extraction.blastn_customized_output import BlastnTSVFile
+from app.tools.bedtools.bedtoolsgetfasta import BedtoolsGetFasta
+from app.components.blasthit.blastntsvfile import BlastnTSVFile
 
 
 class BedtoolsGetBlastFasta(BedtoolsGetFasta):
@@ -61,10 +61,12 @@ class BedtoolsGetBlastFasta(BedtoolsGetFasta):
         Build the command to run tool
         :return: None
         """
-        self._command.command = "{} {} {} {}".format(
-            self._tool_command, self._input_string, self._output_string,
+        self._command.command = " ".join[
+            self._tool_command,
+            self._input_string,
+            self._output_string,
             " ".join(self._build_options(excluded_parameters=self._specific_parameters))
-        )
+        ]
 
     def _check_input(self):
         """
@@ -82,7 +84,7 @@ class BedtoolsGetBlastFasta(BedtoolsGetFasta):
 
     def __set_input(self):
         """
-        Set porper input for bedtools getfasta
+        Set proper input for bedtools getfasta
         :return: None
         """
         self.__output_blasthits_to_bed(self._tool_inputs['TSV_BLAST'][0].path)
@@ -93,8 +95,8 @@ class BedtoolsGetBlastFasta(BedtoolsGetFasta):
     def __retrieve_query_sequence(hit):
         """
         Extract blast query sequences information for extraction
-        :param hit: one blast hit information parsed from blast tablular output
-        :return: bed information properly formated
+        :param hit: one blast hit information parsed from blast tabular output
+        :return: bed information properly formatted
         """
         # customized blast outfmt 6 data columns
         # 'qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore strand qcovs'
@@ -216,7 +218,5 @@ class BedtoolsGetBlastFasta(BedtoolsGetFasta):
         self._tool_outputs.update({
             'BED': [ToolIOFile(x) for x in self._BED_files],
             'FASTA': [ToolIOFile(x) for x in self._FASTA_files],
-            'Targets': [ToolIOValue(x) for x in self._targets],
-            # ??? Check the necessity to have this output
-            'Target_file_prefix': [ToolIOValue(x) for x in self._target_file_prefix]
+            'Targets': [ToolIOValue(x) for x in self._targets]
         })
