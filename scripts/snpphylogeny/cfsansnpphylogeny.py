@@ -33,7 +33,7 @@ class CFSANSnpPhylogeny(SnpPhylogeny):
     def _run_snp_calling(self, reads):
         """
         Runs the SNP calling on the input samples.
-        :param reads: List of PE reads for all samples
+        :param reads: List of input reads for all samples
         :return: SNP matrix, output files
         """
         cfsan = CfsanSnpPipeline(self._camel)

@@ -43,13 +43,13 @@ class SamtoolsSnpPhylogeny(SnpPhylogeny):
         argument_parser.add_argument('--min-zscore', default=1.96, type=float)
         argument_parser.add_argument('--y-mult', default=10, type=float)
 
-    def _run_snp_calling(self, all_reads):
+    def _run_snp_calling(self, reads):
         """
         Runs the samtools mpileup SNP calling on all input samples.
-        :param all_reads: List of PE reads for all samples
+        :param reads: List of read inputs for the SNP calling
         :return: SNP matrix, output files
         """
-        for input_reads in all_reads:
+        for input_reads in reads:
             self._bam_files.append(self.__run_read_mapping(input_reads))
         for bam_file in self._bam_files:
             self._vcf_files_unfiltered.append(self.__run_samtools_variant_calling_pipeline(bam_file))
