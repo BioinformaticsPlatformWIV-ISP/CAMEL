@@ -26,7 +26,7 @@ class QiimeSplitLibrariesFastq(Qiime):
         - Only one file allowed per key
         :return: None
         """
-        if 'FASTA' not in self._tool_inputs and 'FASTQ' not in self._tool_inputs:
+        if 'FASTA' in self._tool_inputs == 'FASTQ' in self._tool_inputs:
             raise InvalidInputSpecificationError('Invalid input files (keys) given for '
                                                  'split_libraries_fastq: {!r}'.format(self._tool_inputs))
         for key, input_files in self._tool_inputs.iteritems():

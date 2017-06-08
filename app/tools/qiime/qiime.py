@@ -36,28 +36,29 @@ class Qiime(Tool):
 
     def _build_options(self, excluded_parameters=None, separator=' '):
         """
-        Creates the string with all the specified parameters
+        Creates a file with parameters that are not part of the parameter string and returns the parameter string to
+        be used.
         :param excluded_parameters: list of parameters to be skipped (Optional)
         :param separator: separator used to combine the option and value (Optional)
         :return: String with command parameters
         """
-        option_list = []
+        file_params = []
         for name, param in self._parameters.iteritems():
             if ':' in name:
                 self.__write_to_parameter_file(param)
-            else:
-                if param.value is None:
-                    option_list.append(param.option)
-                else:
-                    option_list.append('{}{}{}'.format(param.option, separator, param.value))
-        return '' if len(option_list) == 0 else ' '.join(option_list)
+                file_params.append(name)
+        if excluded_parameters is not None:
+            file_params += excluded_parameters
+        return super(Qiime, self)._build_options(excluded_parameters=file_params, delimiter=separator)
 
     def _build_command(self):
         """
         Concatenates required parameters and options to build the command to run
         :return: None
         """
-        self._command.command = '{} {} {}'.format(self._tool_command, self._build_input_string(), self._build_options())
+        # _build_options needs to be executed first as _build_input_string will use the parameter file
+        options = self._build_options()
+        self._command.command = '{} {} {}'.format(self._tool_command, self._build_input_string(), options)
 
     @abc.abstractmethod
     def _build_input_string(self):
