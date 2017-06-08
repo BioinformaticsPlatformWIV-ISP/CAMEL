@@ -103,6 +103,11 @@ class Nbc(Tool):
         cutoff, whether the score is significant (True/False) and the species name that was identified
         :return: None
         """
+        # Example output file
+        # names Read1        Read2        Read3        Read4        Read5
+        # name1 -4394.422894 -4481.248143 -4466.777268 -4449.821487 -4481.248143
+        # name2 -4479.885575 -4419.27694  -4449.581257 -4495.037734 -4495.037734
+        # name3 -4495.461521 -4495.461521 -4495.461521 -4466.004776 -4466.004776
         with open(os.path.join(self._folder, 'processed_output.tsv'), 'wb') as outf:
             outf.write('\t'.join(['Read name', 'Score', 'Cutoff', 'Significant', 'Species\n']))
             for entry in os.listdir(self._folder):
@@ -112,7 +117,6 @@ class Nbc(Tool):
                         for line in infile:
                             lines.append(self.__to_floats(line))
                         zipped_lines = zip(*lines)
-                        # The list of species names is the first entry of the zipped lines
                         names = zipped_lines[0]
                         for line in zipped_lines[1:]:
                             # Find the entry with the highest value as this is the best hit
