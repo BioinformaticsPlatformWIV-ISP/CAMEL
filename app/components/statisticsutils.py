@@ -20,17 +20,17 @@ class StatisticsUtils(object):
         return StatisticsUtils.median(np.absolute([x - median for x in array]))
 
     @staticmethod
-    def interquantile(array):
+    def interquartile(array):
         """
-        Calculate interquantile of the data
+        Calculate interquartile of the data
         :param array: data array
-        :return: interquantile of the data (25%~75%)
+        :return: interquartile of the data (25%~75%)
         """
         numpy_array = np.array(array)
-        interquantile = np.percentile(numpy_array, 75, interpolation='higher') - np.percentile(
+        interquartile = np.percentile(numpy_array, 75, interpolation='higher') - np.percentile(
             numpy_array, 25, interpolation='lower')
         # Note: numpy func 'to_list' convert a numpy array into a normal python data type
-        return interquantile.to_list()
+        return interquartile.tolist()
 
     @staticmethod
     def median(array):
@@ -39,7 +39,7 @@ class StatisticsUtils(object):
         :param array: data array
         :return: Median value
         """
-        return np.median(array).to_list()
+        return np.median(array).tolist()
 
     @staticmethod
     def cov(array):
@@ -48,7 +48,7 @@ class StatisticsUtils(object):
         :param array: data array
         :return: coefficient of variation of array
         """
-        return scipy.stats.variation(array).to_list()
+        return scipy.stats.variation(array).tolist()
 
     @staticmethod
     def std(array):
@@ -57,4 +57,4 @@ class StatisticsUtils(object):
         :param array: data array
         :return: standard deviation of array
         """
-        return np.std(np.array(array)).to_list()
+        return np.std(np.array(array)).tolist()

@@ -18,7 +18,7 @@ class SamtoolsDepthStatsAnalyzer(Tool):
         Initializes this tool
         :param camel: Camel instance
         """
-        super(SamtoolsDepthStatsAnalyzer, self).__init__('samtools depth stats analyzer', '1.3', camel)
+        super(SamtoolsDepthStatsAnalyzer, self).__init__('samtools depth stats analyzer', '1.3.1', camel)
 
     def _execute_tool(self):
         """
@@ -74,7 +74,7 @@ class SamtoolsDepthStatsAnalyzer(Tool):
         # whole genome statistics
         median = StatisticsUtils.median(coverages)
         self.informs['median_coverage'] = median
-        self.informs['coverage_iqr'] = StatisticsUtils.interquantile(coverages)
+        self.informs['coverage_iqr'] = StatisticsUtils.interquartile(coverages)
         self.informs['coverage_cv'] = StatisticsUtils.cov(coverages)
         self.informs['coverage_mad'] = StatisticsUtils.mad(coverages, median)
         self.informs['coverage_std'] = StatisticsUtils.std(coverages)
@@ -94,7 +94,7 @@ class SamtoolsDepthStatsAnalyzer(Tool):
             self.informs['segment_median_coverage'][seq_id] = median
             self.informs['segment_coverage_mad'][seq_id] = StatisticsUtils.mad(seq_coverage, median)
             self.informs['segment_coverage_cv'][seq_id] = StatisticsUtils.cov(seq_coverage)
-            self.informs['segment_coverage_iqr'][seq_id] = StatisticsUtils.interquantile(seq_coverage)
+            self.informs['segment_coverage_iqr'][seq_id] = StatisticsUtils.interquartile(seq_coverage)
             self.informs['segment_coverage_std'][seq_id] = StatisticsUtils.std(seq_coverage)
             self.informs['segment_base_coverage'][seq_id] = segment_base_coverage[seq_id]
 

@@ -5,6 +5,7 @@ from app.tools.samtools.samtools import Samtools
 
 
 class SamtoolsDepth(Samtools):
+
     """
     Calculates the coverage depth of an alignment.
     """
@@ -14,7 +15,7 @@ class SamtoolsDepth(Samtools):
         Initializes this tool.
         :param camel: Camel instance
         """
-        super(SamtoolsDepth, self).__init__('samtools depth', '1.3', camel)
+        super(SamtoolsDepth, self).__init__('samtools depth', '1.3.1', camel)
 
     def _check_input(self):
         """

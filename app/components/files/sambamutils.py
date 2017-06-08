@@ -13,7 +13,7 @@ class SAMBAMutils(object):
         """
         Count the total number of records in a SAM/BAM file
         :param infile: input SAM/BAM file
-        :return: the number of records in SAM/BAN file
+        :return: the number of records in SAM/BAM file
         """
         _, file_ext = os.path.splitext(infile)
         if file_ext.lower() == '.sam':
