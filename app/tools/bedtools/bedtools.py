@@ -36,7 +36,7 @@ class Bedtools(Tool):
         Check required input
         :return: None
         """
-        if self._required_inputs:
+        if len(self._required_inputs) > 0:
             for input_type in self._required_inputs:
                 if input_type not in self._tool_inputs:
                     raise InvalidInputSpecificationError("No required {!r} input found".format(input_type))
