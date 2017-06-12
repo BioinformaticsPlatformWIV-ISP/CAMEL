@@ -126,13 +126,10 @@ class ModelSelection(Tool):
         Analyzes the output file.
         :return: None
         """
-        try:
-            with open(self._tool_outputs['CSV'][0].path) as handle:
-                self._informs['model'] = handle.readlines()[1].split(',')[0]
-                self._informs['model_full'] = MLTreeConstruction.SUBSTITUTION_MODELS[self._informs['model']]
-                logging.info("Selected model: {}".format(self._informs['model']))
-        except KeyError:
-            raise ToolExecutionError("No output file generated")
+        with open(self._tool_outputs['CSV'][0].path) as handle:
+            self._informs['model'] = handle.readlines()[1].split(',')[0].split('+')[0]
+            self._informs['model_full'] = MLTreeConstruction.SUBSTITUTION_MODELS[self._informs['model']]
+            logging.info("Selected model: {}".format(self._informs['model']))
 
     def _check_command_output(self):
         """
