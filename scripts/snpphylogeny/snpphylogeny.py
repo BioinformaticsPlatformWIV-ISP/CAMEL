@@ -1,5 +1,8 @@
 import shutil
 
+import logging
+import traceback
+
 import os
 
 import abc
@@ -120,6 +123,7 @@ class SnpPhylogeny(object):
                         """Could not build bootstrap tree, check the logs for more details. 
                         The SNP matrix might be too small, try using less stringent filters.""")
             except ValueError as err:
+                logging.info(traceback.format_exc())
                 self._html.add_error_message(err.message)
             # Save report
             with open(self._args.html, 'w') as handle:
@@ -228,7 +232,9 @@ class SnpPhylogeny(object):
             model_selection.update_parameters(missing_data_treatment='Partial deletion',
                                               site_coverage_cutoff=self._args.site_cov_cutoff)
         model_selection.update_parameters(branch_swap_filter=self._args.branch_swap.title().replace('_', ' '))
-        model_selection.run(self._destination_path)
+        model_selection_dir = os.path.join(self._destination_path, 'model_selection')
+        os.mkdir(model_selection_dir)
+        model_selection.run(model_selection_dir)
         self._html.add_model_selection_section(model_selection)
         return model_selection.informs['model']
 
