@@ -43,7 +43,9 @@ class CFSANSnpPhylogeny(SnpPhylogeny):
         for input_set, sample_name in zip(reads, self._sample_names):
             cfsan.add_input_files({'FASTQ': input_set['FASTQ_PE']})
             cfsan.add_input_files({'VAL_Name': [ToolIOValue(sample_name)]})
-        cfsan.run(os.path.abspath('.'))
+        cfsan_path = os.path.join(self._destination_path, 'cfsan')
+        os.mkdir(cfsan_path)
+        cfsan.run(cfsan_path)
         self._cfsan_informs = cfsan.informs
 
         if self._args.selected_matrix == 'preserved':
@@ -94,11 +96,11 @@ class CFSANSnpPhylogeny(SnpPhylogeny):
         Collects the per sample analysis metrics.
         :return: List of header + values for each sample
         """
-        header = [mapping[1] for mapping in CFSANSnpPhylogeny.COLUMN_MAPPING]
+        header = ['Sample'] + [mapping[1] for mapping in CFSANSnpPhylogeny.COLUMN_MAPPING]
         data = []
         for sample_name in sorted(self._cfsan_informs.keys()):
-            data.append([self._cfsan_informs[sample_name][key] for key in [mapping[0] for mapping in
-                                                                           CFSANSnpPhylogeny.COLUMN_MAPPING]])
+            data.append([sample_name] + [self._cfsan_informs[sample_name][key] for
+                                         key in [mapping[0] for mapping in CFSANSnpPhylogeny.COLUMN_MAPPING]])
         return [header] + data
 
 
