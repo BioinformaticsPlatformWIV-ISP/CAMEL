@@ -115,9 +115,9 @@ class SnpPhylogeny(object):
                     raise ValueError(
                         "SNP matrix is too small ({} positions) to construct a phylogenetic tree.".format(size))
                 # Tree building
-                model = self._run_model_selection(snp_matrix)
+                model, rates = self._run_model_selection(snp_matrix)
                 try:
-                    self._run_tree_building(snp_matrix, model)
+                    self._run_tree_building(snp_matrix, model, rates)
                 except ToolExecutionError:
                     self._html.add_error_message(
                         """Could not build bootstrap tree, check the logs for more details. 
@@ -236,26 +236,27 @@ class SnpPhylogeny(object):
         os.mkdir(model_selection_dir)
         model_selection.run(model_selection_dir)
         self._html.add_model_selection_section(model_selection)
-        return model_selection.informs['model']
+        return model_selection.informs['model'], model_selection.informs['rates_among_sites']
 
-    def _run_tree_building(self, snp_matrix, model):
+    def _run_tree_building(self, snp_matrix, model, rates):
         """
         Builds a phylogenetic tree based on the given SNP matrix.
         :param snp_matrix: SNP matrix
         :param model: Selected model
+        :param rates: Rates among sites
         :return: Tree building instance
         """
         tree_building = MLTreeConstruction(self._camel)
         tree_building.add_input_files({'FASTA': [snp_matrix]})
         tree_building.update_parameters(bootstrap_replications=self._args.bootstraps,
                                         test_of_phylogeny='Bootstrap method')
-        if '+G+I' in model:
+        if rates == 'G+I':
             tree_building.update_parameters(rates_among_sites='G+I')
             tree_building.update_parameters(gamma_categories='5')
-        elif '+G' in model:
+        elif rates == 'G':
             tree_building.update_parameters(rates_among_sites='G')
             tree_building.update_parameters(gamma_categories='5')
-        elif '+I' in model:
+        elif rates == 'I':
             tree_building.update_parameters(rates_among_sites='I')
         else:
             tree_building.update_parameters(rates_among_sites='U')
@@ -268,7 +269,7 @@ class SnpPhylogeny(object):
             tree_building.update_parameters(missing_data_treatment='Partial deletion',
                                             site_coverage_cutoff=self._args.site_cov_cutoff)
 
-        tree_building.update_parameters(model=model.split('+')[0])
+        tree_building.update_parameters(model=model)
         tree_building.update_parameters(branch_swap_filter=self._args.branch_swap.title().replace('_', ' '))
         tree_building.update_parameters(heuristic_method=self._args.ml_method.upper())
         tree_building.run(self._destination_path)
