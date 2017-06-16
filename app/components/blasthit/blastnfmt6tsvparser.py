@@ -74,7 +74,11 @@ class BlastnFmt6TSVParser(object):
         """
         if key not in ('qseqid', 'sseqid'):
             raise InvalidParameterError(
-                "Function 'read_hits_as_hash' support only using qseqid/sseqid as key, {} is provided.".format(key))
+                "Function 'read_hits_as_hash' support only using qseqid/sseqid as key, {!r} is provided.".format(key))
+
+        if key not in self._columns:
+            raise InvalidParameterError(
+                "Blastn output does not contain required key column {!r}. Columns available {!r}.".format(key, self._columns))
 
         hits = {}
         with open(self._blastn_tsv, 'r') as hits_file:
