@@ -199,7 +199,7 @@ class BedtoolsGetBlastFasta(BedtoolsGetFasta):
         :return: None
         """
         blastn_file = BlastnFmt6TSVParser(
-            blasthits_file, with_seq=False, columns="qseqid sseqid pident length mismatch gapopen gaps qstart qend sstart send evalue bitscore sstrand qcovs qcovhsp".split(" "))
+            blasthits_file, columns="qseqid sseqid pident length mismatch gapopen gaps qstart qend sstart send evalue bitscore sstrand qcovs qcovhsp".split(" "))
         blasthits = blastn_file.read_hits_as_list()
         mode = self._parameters['mode'].value
         if mode == 'all':
