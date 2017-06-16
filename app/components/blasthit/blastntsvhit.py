@@ -63,7 +63,7 @@ class BlastnTSVHit(object):
         Returns column names
         :return: _columns
         """
-        return self._column
+        return self._columns
 
 
     # TODO remove following pipeline specific function

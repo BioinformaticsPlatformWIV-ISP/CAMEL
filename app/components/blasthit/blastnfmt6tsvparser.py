@@ -73,7 +73,7 @@ class BlastnFmt6TSVParser(object):
         :return: blastn hits grouped by key in hash
         """
         if key not in ('qseqid', 'sseqid'):
-            raise Inva2lidParameterError(
+            raise InvalidParameterError(
                 "Function 'read_hits_as_hash' support only using qseqid/sseqid as key, {} is provided.".format(key))
 
         hits = {}
