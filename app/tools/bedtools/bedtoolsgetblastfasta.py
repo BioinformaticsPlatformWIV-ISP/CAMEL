@@ -6,7 +6,7 @@ from app.error.invalidparametererror import InvalidParameterError
 from app.io.tooliofile import ToolIOFile
 from app.io.tooliovalue import ToolIOValue
 from app.tools.bedtools.bedtoolsgetfasta import BedtoolsGetFasta
-from app.components.blasthit.blastntsvfile import BlastnTSVFile
+from app.components.blasthit.blastnfmt6tsvparser import BlastnFmt6TSVParser
 
 
 class BedtoolsGetBlastFasta(BedtoolsGetFasta):
@@ -198,7 +198,7 @@ class BedtoolsGetBlastFasta(BedtoolsGetFasta):
         :param blasthits_file: the tsv file of blast outfmt 6
         :return: None
         """
-        blastn_file = BlastnTSVFile(
+        blastn_file = BlastnFmt6TSVParser(
             blasthits_file, with_seq=False, columns="qseqid sseqid pident length mismatch gapopen gaps qstart qend sstart send evalue bitscore sstrand qcovs qcovhsp".split(" "))
         blasthits = blastn_file.read_hits_as_list()
         mode = self._parameters['mode'].value
