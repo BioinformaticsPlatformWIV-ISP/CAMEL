@@ -136,8 +136,8 @@ class SamtoolsDepthStatsAnalyzer(Tool):
     @staticmethod
     def collect_inform(output_path, refseq_length, cov_cutoff=0):
         """
-        Collect coverage data from Samtools Depth output file
-        :param output_path: Path to the output files.
+        Collect coverage data from Samtools Depth output file, counting the bases covered, and discover gaps.
+        :param output_path: Path to the output files
         :param cov_cutoff: coverage cutoff, only positions with coverage higher or equal to this cutoff are counted. Default 0.
         :param refseq_length: the dictionary contaning the length of genome segments
         :return: coverages over complete genome
@@ -149,6 +149,17 @@ class SamtoolsDepthStatsAnalyzer(Tool):
         # - samtools depth uses 1-based coordinate (1st base start at 1)
         # - gap: (start, end) closed definition, start and end inclusive. 1-based postion coordinate (1st base start at 1)
         # - when no gaps found for a segment, an empty list is initialized. This behavior is required for sequence extraction step later.
+        #
+        # Example output excerpt:
+        #
+        #    gi|407484675|ref|NC_018659.1|   88541   164
+        #    gi|407484675|ref|NC_018659.1|   88542   161
+        #    gi|407484675|ref|NC_018659.1|   88543   160
+        #    gi|407484675|ref|NC_018659.1|   88544   157
+        #    gi|407484773|ref|NC_018660.1|   4       1089
+        #    gi|407484773|ref|NC_018660.1|   5       1115
+        #    gi|407484773|ref|NC_018660.1|   6       1153
+        #
         coverages = []
         segment_coverages = {}
         segment_base_count = {}
@@ -161,43 +172,37 @@ class SamtoolsDepthStatsAnalyzer(Tool):
                 seq_id = inform[0]
                 pos = int(inform[1])
                 count = int(inform[2])
-                # only position has coverage higher than cov_cutoff are counted
+                # Note only position has coverage higher than cov_cutoff are counted
                 if count > cov_cutoff:
                     coverages.append(count)
                     if seq_id == last_seq_id:
-                        # same sequence segment
+                        # Update the statistics for current sequence (seqid) and update gap if exists
                         segment_coverages[seq_id].append(count)
                         segment_base_count[seq_id] += 1
-                        if last_pos == 0:
-                            # Heading gap
-                            if SamtoolsDepthStatsAnalyzer.is_gap(pos, 0):
-                                segment_gaps[seq_id].append((1, pos - 1))
-                        elif SamtoolsDepthStatsAnalyzer.is_gap(pos, last_pos):
+                        if SamtoolsDepthStatsAnalyzer.is_gap(pos, last_pos):
                             segment_gaps[seq_id].append((last_pos + 1, pos - 1))
 
                     else:
-                        # new sequence segment
-                        #
-                        # handle the possible gap at the tail of previous sequence
+                        # If a new sequence starts (see the output excerpt above), first update the last sequence with
+                        # the possible tail gap, then initialize the statistics for the new sequence. Note that heading
+                        # gap needs to be checked for the new sequence, as it is not guaranteed that the first base
+                        # covered starts at base 1. (as shown in the example above)
+
                         if last_seq_id is not None:
-                            segment_gaps = SamtoolsDepthStatsAnalyzer.update_tail_gaps(
+                            SamtoolsDepthStatsAnalyzer.update_tail_gaps(
                                 segment_gaps, last_seq_id, last_pos, refseq_length)
 
-                        # initialization new sequence
                         segment_coverages[seq_id] = [count]
                         segment_base_count[seq_id] = 1
                         segment_gaps[seq_id] = []
                         if SamtoolsDepthStatsAnalyzer.is_gap(pos, 0):
-                            # Heading gap
                             segment_gaps[seq_id].append((1, pos - 1))
 
                     last_seq_id = seq_id
                     last_pos = pos
 
-        # handle the tail gap of the last sequence
-        segment_gaps = SamtoolsDepthStatsAnalyzer.update_tail_gaps(
-            segment_gaps, last_seq_id, last_pos, refseq_length
-        )
+        # Handle the tail gap of the last sequence
+        SamtoolsDepthStatsAnalyzer.update_tail_gaps(segment_gaps, last_seq_id, last_pos, refseq_length)
 
         return coverages, segment_coverages, segment_gaps, segment_base_count
 
@@ -209,7 +214,7 @@ class SamtoolsDepthStatsAnalyzer(Tool):
         :param seq_id: sequence id of which the gaps will be updated
         :param last_pos: the last position which is covered by reads
         :param refseq_length: the dictionary containing the length of each reference sequence segment
-        :return: segment_gaps updated with tail gaps
+        :return: None
         """
         if refseq_length is None:
             refseq_length = {}
@@ -222,6 +227,7 @@ class SamtoolsDepthStatsAnalyzer(Tool):
             else:
                 logging.warning("Reference sequence with id {!r} is missing from FASTA_REF input.".format(seq_id))
                 last_gap = (last_pos + 1, 'end')
+
         else:
             last_gap = (last_pos + 1, 'end')
 
@@ -230,5 +236,3 @@ class SamtoolsDepthStatsAnalyzer(Tool):
                 segment_gaps[seq_id].append(last_gap)
             else:
                 segment_gaps[seq_id] = [last_gap]
-
-        return segment_gaps
