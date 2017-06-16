@@ -1,56 +1,60 @@
+import logging
+
+from app.components.blasthit import BLASTN_INT_COLUMNS, BLASTN_FLOAT_COLUMNS, BLASTN_SEQ_COLUMNS
+
+
 class BlastnTSVHit(object):
 
     """
-    Class to handle customized blastn tabular output
-
-    Supported blastn outfmt 6 columns:
-    'qseqid sseqid pident length mismatch gapopen gaps qstart qend sstart send evalue bitscore strand qcovs qcovhsp'
+    Class to handle blastn outfmt 6 hit w/o sequence information (sseq/qseq).
     """
-    # Note that although one would expect that qcovs and qcovhsp is float, in fact, they are reported as integer (as I
-    # never see decimal digits reported). Indirectly, another package also think they are integer (see below). A direct
-    # proof will need to check the source code.
-    #
-    # Reference: http://scikit-bio.org/docs/0.4.1/generated/skbio.io.format.blast6.html
-    DEFAULT_COLUMNS = ["qseqid", "sseqid", "pident", "length", "mismatch",
-                       "gapopen", "qstart", "qend", "sstart", "send", "evalue", "bitscore"]
-    INT_COLUMNS = ['length', 'mismatch', 'gapopen', 'gaps', 'qstart', 'qend', 'sstart', 'send', 'qcovs', 'qcovhsp']
-    FLOAT_COLUMNS = ['pident', 'bitscore']
 
-    # TODO MOVED TO PIPELINE SPECIFIC CODE
-    SEQEXTRACTION_COLUMNS = [
-        "qseqid", "sseqid", "pident", "length", "mismatch", "gapopen", "gaps",
-        "qstart", "qend", "sstart", "send", "evalue", "bitscore", "strand", "qcovs", "qcovhsp"
-    ]
-
-    def __init__(self, hit, columns=BlastnTSVHit.DEFAULT_COLUMNS):
+    def __init__(self, hit, columns):
         """
-        Initialize
+        Initialize BlastnTSVHit instance
         :param hit: the txt string describe hit
         :param columns: specified data column names
+        :return: None
         """
         hit_inform = hit.split("\t")
         self._columns = columns
-
-        for idx, col_name in enumerate(columns):
-
+        self._hit_str = hit
+        self._check_validity(hit_inform)
+        for col_name, data in zip(columns, hit_inform):
             try:
-                if col_name in BlastnTSVHit.INT_COLUMNS:
-                    setattr(self, col_name, int(hit_inform[idx]))
-                elif col_name in BlastnTSVHit.FLOAT_COLUMNS:
-                    setattr(self, col_name, float(hit_inform[idx]))
+                if col_name in BLASTN_INT_COLUMNS:
+                    setattr(self, col_name, int(data))
+                elif col_name in BLASTN_FLOAT_COLUMNS:
+                    setattr(self, col_name, float(data))
                 else:
-                    setattr(self, col_name, hit_inform[idx])
+                    setattr(self, col_name, data)
             except ValueError:
-                logging.error("ValueError handling column {!r} at pos {} with value {!r}.".format(
-                    col_name, idx, hit[idx]))
+                logging.error("Blastn hit data incompatible with its column specification, column name {!r} value {!r}.".format(
+                    col_name, data))
                 raise
 
-        self._hit_str = hit
+    def _check_validity(self, hit_inform):
+        """
+        Check the validity of the blast hit & its columns. If fails, raise error.
+        :param hit_inform: hit information in list
+        """
+        # the length of data column and headers should match
+        if len(hit_inform) != len(self._columns):
+            raise ValueError(
+                "The number of data of blastn hit differs from the number of headers specified. Headers {!r}, data {!r}".format(self._columns, hit_inform))
+
+        # should NOT contain any sequence data column
+        if any(x in self._columns for x in BLASTN_SEQ_COLUMNS):
+            raise ValueError(
+                "BlastnTSVHit class does not handle blastn output with sequence information (sseq/qseq specifier).")
 
     def __str__(self):
         return self._hit_str
 
     def __repr__(self):
+        """
+        Overwrite to have a better printing results with pprint (easier for debug).
+        """
         return str(self)
 
     @property
