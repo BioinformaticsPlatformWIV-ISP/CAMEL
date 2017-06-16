@@ -8,7 +8,7 @@ from app.tools.tool import Tool
 class SamtoolsDepthStatsAnalyzer(Tool):
 
     """
-    Customized tool to analyze samtools depth output to extract Reads Mapping statistics
+    Customized tool to analyze samtools depth output to extract read mapping statistics
     """
     # set a value > 0, larger to allow call gaps only with gaps of length larger then MINIMAL_GAP_LEN
     MINIMAL_GAP_LEN = 1  # 15
@@ -45,18 +45,17 @@ class SamtoolsDepthStatsAnalyzer(Tool):
         Analyze the depth output to gather various statistics
         :return: None
         """
-
         cov_cutoff = int(self._parameters['coverage_cutoff'].value) if ('coverage_cutoff' in self._parameters) else 0
 
         refseq_length = {}
         if 'FASTA_REF' in self._tool_inputs:
             for ref_seq_id, seq in FastaUtils.read_as_dict(self._tool_inputs['FASTA_REF'][0].path).iteritems():
                 refseq_length[ref_seq_id] = len(seq)
-            logging.debug(' FASTA_REF refseq length: {}'.format(refseq_length))
+            logging.debug('FASTA_REF refseq length: {}'.format(refseq_length))
             self.informs['refseq_length'] = refseq_length
         else:
-            logging.warning("No FASTA_REF input, reference sequence length unknown. \n   - An end gap for each covered "
-                            "reference sequence. \n   - no base coverage calculation")
+            logging.warning(
+                "No FASTA_REF input, reference sequence length unknown. An end gap will be reported for each covered reference sequence, and base coverage calculation skipped.")
 
         coverages, segment_coverages, segment_gaps, segment_base_count = SamtoolsDepthStatsAnalyzer.collect_inform(
             self._tool_inputs['TXT'][0].path, refseq_length, cov_cutoff
@@ -104,8 +103,8 @@ class SamtoolsDepthStatsAnalyzer(Tool):
         Calculate the base coverage
         :param segment_base_count: base count per segment
         :param refseq_length: reference sequence length per segment
-        :return: genome base coverge
-        :return: per segment base coverge
+        :return: genome base coverage
+        :return: per segment base coverage
         """
         genome_base_cov = None
         segment_base_cov = {}
@@ -181,7 +180,7 @@ class SamtoolsDepthStatsAnalyzer(Tool):
                         #
                         # handle the possible gap at the tail of previous sequence
                         if last_seq_id is not None:
-                            segment_gaps == SamtoolsDepthStatsAnalyzer.update_tail_gaps(
+                            segment_gaps = SamtoolsDepthStatsAnalyzer.update_tail_gaps(
                                 segment_gaps, last_seq_id, last_pos, refseq_length)
 
                         # initialization new sequence
@@ -196,7 +195,7 @@ class SamtoolsDepthStatsAnalyzer(Tool):
                     last_pos = pos
 
         # handle the tail gap of the last sequence
-        segment_gaps == SamtoolsDepthStatsAnalyzer.update_tail_gaps(
+        segment_gaps = SamtoolsDepthStatsAnalyzer.update_tail_gaps(
             segment_gaps, last_seq_id, last_pos, refseq_length
         )
 
