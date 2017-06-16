@@ -12,6 +12,8 @@ class BedtoolsGenomecov(Bedtools):
     Bedtools Genomecov func class
     """
     OUTPUT_FILE_BASENAME = 'bedtools_genomecov'
+    # OUTPUT_FORMAT_OPTIONS are mutually exclusive, only ONE can be specified.
+    OUTPUT_FORMAT_OPTIONS = ['BedGraphWithZeroCoverage', 'BedGraph', 'DepthWithZeroCoverage', 'Depth']
 
     def __init__(self, camel):
         """
@@ -49,11 +51,11 @@ class BedtoolsGenomecov(Bedtools):
         Sets the output of this tool.
         :return: None
         """
-        if any(param in self._parameters.keys() for param in ['BedGraphWithZeroCoverage', 'BedGraph']):
+        if any(param in self._parameters.keys() for param in BedtoolsGenomecov.OUTPUT_FORMAT_OPTIONS[:2]):
             self._output_filename = BedtoolsGenomecov.OUTPUT_FILE_BASENAME + ".bed"
             self._tool_outputs['TXT_BED'] = [ToolIOFile(os.path.join(self._folder, self._output_filename))]
 
-        if any(param in self._parameters.keys() for param in ['DepthWithZeroCoord', 'Depth']):
+        if any(param in self._parameters.keys() for param in BedtoolsGenomecov.OUTPUT_FORMAT_OPTIONS[2:]):
             self._output_filename = BedtoolsGenomecov.OUTPUT_FILE_BASENAME + ".tsv"
             self._tool_outputs['TSV'] = [ToolIOFile(os.path.join(self._folder, self._output_filename))]
 
@@ -64,11 +66,8 @@ class BedtoolsGenomecov(Bedtools):
         """
         super(BedtoolsGenomecov, self)._check_parameters()
 
-        # OUTPUT_FORMAT_OPTIONS are mutually exclusive, only ONE can be specified.
-        OUTPUT_FORMAT_OPTIONS = ['BedGraphWithZeroCoverage', 'BedGraph', 'DepthWithZeroCoverage', 'Depth']
-
         params_excluded = []
-        params_excluded += OUTPUT_FORMAT_OPTIONS
+        params_excluded += BedtoolsGenomecov.OUTPUT_FORMAT_OPTIONS
         output_opt_found = False
 
         for param in self._parameters.keys():

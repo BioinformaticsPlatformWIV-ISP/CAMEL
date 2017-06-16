@@ -11,7 +11,7 @@ class BedtoolsGetFasta(Bedtools):
     """
     Bedtools GetFasta func class
     """
-    OUTPUT_FASTA = 'bedtools_getfata_extracted_sequences.fa'
+    DEFAULT_OUTPUT_NAME = 'bedtools_getfata_extracted_sequences.fa'
 
     def __init__(self, camel, tool_name='bedtools getfasta', version='2.25.0'):
         """
@@ -38,20 +38,20 @@ class BedtoolsGetFasta(Bedtools):
         Builds the command.
         :return: None
         """
-        self._command.command = ' '.join[
+        self._command.command = ' '.join([
             self._tool_command,
             ' '.join(self._build_options()),
             '-bed {}'.format(self._tool_inputs['BED'][0].path),
             '-fi {}'.format(self._tool_inputs['FASTA'][0].path),
-            '-fo {}'.format(self.OUTPUT_FASTA)
-        ]
+            '-fo {}'.format(self.DEFAULT_OUTPUT_NAME)
+        ])
 
     def __set_output(self):
         """
         Sets the output of this tool.
         :return: None
         """
-        self._tool_outputs['FASTA'] = [ToolIOFile(os.path.join(self._folder, self.OUTPUT_FASTA))]
+        self._tool_outputs['FASTA'] = [ToolIOFile(os.path.join(self._folder, self.DEFAULT_OUTPUT_NAME))]
 
     def _check_input(self):
         """

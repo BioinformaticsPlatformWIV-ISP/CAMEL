@@ -61,12 +61,12 @@ class BedtoolsGetBlastFasta(BedtoolsGetFasta):
         Build the command to run tool
         :return: None
         """
-        self._command.command = " ".join[
+        self._command.command = " ".join([
             self._tool_command,
             self._input_string,
             self._output_string,
             " ".join(self._build_options(excluded_parameters=self._specific_parameters))
-        ]
+        ])
 
     def _check_input(self):
         """
@@ -112,7 +112,7 @@ class BedtoolsGetBlastFasta(BedtoolsGetFasta):
         """
         Extract blast subject sequences information for extraction
         :param hit: one blast hit information parsed from blast tablular output
-        :return: bed information properly formated
+        :return: bed information properly formatted
         """
         # customized blast outfmt 6 data columns
         # 'qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore strand qcovs'
@@ -198,7 +198,8 @@ class BedtoolsGetBlastFasta(BedtoolsGetFasta):
         :param blasthits_file: the tsv file of blast outfmt 6
         :return: None
         """
-        blastn_file = BlastnTSVFile(blasthits_file, with_seq=False)
+        blastn_file = BlastnTSVFile(
+            blasthits_file, with_seq=False, columns="qseqid sseqid pident length mismatch gapopen gaps qstart qend sstart send evalue bitscore sstrand qcovs qcovhsp".split(" "))
         blasthits = blastn_file.read_hits_as_list()
         mode = self._parameters['mode'].value
         if mode == 'all':
