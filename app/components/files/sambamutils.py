@@ -1,6 +1,8 @@
 import os
 import pysam
 
+from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+
 
 class SAMBAMutils(object):
 
@@ -20,6 +22,9 @@ class SAMBAMutils(object):
             map_file = pysam.AlignmentFile(infile, "r")
         elif file_ext.lower() == '.bam':
             map_file = pysam.AlignmentFile(infile, "rb")
+        else:
+            raise InvalidInputSpecificationError(
+                "SAMBAMutils supports only SAM/BAM file, wrong input file {!r} specified.".format(infile))
 
         return map_file.count(until_eof=True)
 

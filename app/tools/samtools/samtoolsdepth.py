@@ -53,4 +53,34 @@ class SamtoolsDepth(Samtools):
         Sets the output of this tool.
         :return: None
         """
-        self._tool_outputs['TXT'] = [ToolIOFile(os.path.join(self._folder, self._parameters['output_filename'].value))]
+        output_file_path = os.path.join(self._folder, self._parameters['output_filename'].value)
+        self._tool_outputs['TXT'] = [ToolIOFile(output_file_path)]
+        self._informs['median_depth'] = SamtoolsDepth.calculate_median_coverage(output_file_path)
+
+    @staticmethod
+    def median(input_list):
+        """
+        Returns the median value of a list.
+        :return:
+        """
+        sorted_list = sorted(input_list)
+        middle = len(input_list) // 2
+        if len(input_list) % 2:
+            return sorted_list[middle]
+        else:
+            median = (sorted_list[middle] + sorted_list[middle - 1]) / 2
+            return median
+
+    @staticmethod
+    def calculate_median_coverage(output_path):
+        """
+        Calculates the median coverage.
+        :param output_path: Path to the output files.
+        :return: None
+        """
+        coverage_values = []
+        with open(output_path) as output_file:
+            for line in output_file.readlines():
+                seq_id, pos, count = line.split('\t')
+                coverage_values.append(int(count))
+        return SamtoolsDepth.median(coverage_values)

@@ -3,7 +3,7 @@ import re
 
 from app.error.toolexecutionerror import ToolExecutionError
 from app.io.tooliofile import ToolIOFile
-from app.tools.velvet.velvetg_output_analyzer import VelvetgOutputAnalyzer
+from app.tools.velvet.velvetgoutputanalyzer import VelvetgOutputAnalyzer
 from app.tools.velvet.velvet import Velvet
 
 

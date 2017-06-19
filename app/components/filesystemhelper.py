@@ -14,7 +14,7 @@ class FileSystemHelper(object):
         """
         value = unicodedata.normalize('NFKD', unicode(value)).encode('ascii', 'ignore')
         value = unicode(re.sub('[^\w\s-]', '', value).strip())
-        value = unicode(re.sub('[-\s]+', '-', value))
+        value = unicode(re.sub('[-\s]+', '_', value))
         return str(value)
 
     @staticmethod

@@ -1,0 +1,199 @@
+import os
+import re
+
+from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from app.io.tooliofile import ToolIOFile
+from app.tools.tool import Tool
+
+
+class SPAdes(Tool):
+
+    """
+    SPAdes de novo short-reads or hybrid assembler, especially supports handling of single-cell (MDA) data utilizing its
+    own reads error correction method
+    """
+    FASTA_CONTIG = 'contigs.fasta'
+    FASTA_SCAFFOLDS = 'scaffolds.fasta'
+    FASTG = 'assembly_graph.fastg'
+
+    def __init__(self, camel):
+        """
+        Initialize tool
+        :param camel: Camel instance
+        :return: None
+        """
+        super(SPAdes, self).__init__('spades', '3.10.0', camel)
+        self._input_string = None
+
+    def _execute_tool(self):
+        """
+        Function to run SPAdes to do de novo assembly
+        :return: None
+        """
+        self.__check_and_set_input()
+        self.__set_output()
+        self.__build_command()
+        self._execute_command()
+
+    @staticmethod
+    def __compose_input_str(input_type, files, ordinal='0'):
+        """
+        Compose input option string
+        :param input_type: type of the input
+        :param files: input files of given type
+        :param ordinal: string represents the ordinal of the library, '0'=NA, '1'=1st, '2'=2nd, etc.
+        :return: input option string of given input
+        """
+        input_type = input_type.lower()
+        if input_type == 'se':
+            return "--s{} {}".format(ordinal, files)
+
+        elif input_type in ('pe', 'mp', 'hqmp'):
+            return "--{0}{1}-1 {2} --{0}{1}-2 {3}".format(input_type, ordinal, files[0], files[1])
+
+        elif input_type in ('pe-s', 'mp-s', 'hqmp-s'):
+            input_type = input_type.split("-")[0]
+            # unpaired reads from pe, mp, hqmp libraries
+            return " ".join(["--{}{}-s {}".format(input_type, ordinal, f) for f in files])
+
+        else:
+            # other types: contigs, sanger, pacbio, nanopore
+            return " ".join(["--{} {}".format(input_type, f) for f in files])
+
+    @staticmethod
+    def __check_shortreads_library_limitation(reads_type, count):
+        """
+        Check whether the number of libraries of given type exceed maximum (5)
+        :param reads_type: the type of the library
+        :param count: the identified number of libraries of a given type
+        """
+        if count > 5:
+            raise InvalidInputSpecificationError(
+                "SPAdes does not support more than 5 libraries of input type {}, {} are found.".format(
+                    reads_type, count)
+            )
+
+    @staticmethod
+    def __check_min_input_requirement(se_count, pe_count, inputs):
+        """
+        Check whether the minimum input requirement, at least one library of type SE or PE
+        :param se_count: number of SE libraries
+        :param pe_count: number of PE libraries
+        :param inputs: dictionary of input files
+        """
+        if se_count == 0 and pe_count == 0:
+            raise InvalidInputSpecificationError("SPAdes requires at least one library of SE or PE read to work, none is found."
+                                                 "tool_inputs: {}".format(inputs))
+
+    def __set_long_sequences(self, key_informs, files, infiles_options):
+        """
+        Set long sequences part of the input specification
+        :param key_informs: the information in the key of input file
+        :param files: the corresponding files of a given key
+        :param infiles_options: a list of input file specifications, updated if necessary
+        :return: True if input type is recognized, otherwise False
+        """
+        if key_informs[1] == 'contigs':
+            if key_informs[2] is not None:
+                if key_informs[2] == 'untrusted':
+                    # untrusted contigs
+                    infiles_options.append(self.__compose_input_str('untrusted-contigs', files))
+                else:
+                    raise InvalidInputSpecificationError(
+                        "Unsupported SPAdes contig input specification found {!r}. Supports only FAST{{Q/A}}_contigs(_untrusted).".format("_".join(key_informs)))
+            else:
+                # trusted contigs
+                infiles_options.append(self.__compose_input_str('trusted-contigs', files))
+            return True
+        elif key_informs[1] in ('sanger', 'pacbio', 'nanopore'):
+            # sanger, pacbio, or nanopore reads
+            infiles_options.append(self.__compose_input_str(key_informs[1], files))
+            return True
+        else:
+            return False
+
+    def __check_and_set_input(self):
+        """
+        SPAdes specific input file checking and handling. For the supported input types check wiki.
+        :return: None
+        """
+        infiles_options = []
+        se_count = 0
+        pe_count = 0
+        mp_count = 0
+        hqmp_count = 0
+        for key in self._tool_inputs:
+
+            key_informs = key.split("_")
+            files = [f.path for f in self._tool_inputs[key]]
+
+            # short reads: SE, PE, MP, HQMP, and their unpaired reads
+            #              (PE-S, MP-S, HQMP-S)
+            if key_informs[1] in {'SE', 'PE', 'PE-S', 'MP', 'MP-S'}:
+                if len(key_informs) != 3:
+                    raise InvalidInputSpecificationError(
+                        "SPAdes input specification requires a strict format: {{FASTQ/FASTA}}_{{SE/PE/PE-S/MP/MP-S}}_{{(HQ)1..5}}. Found an unsupported one {!r}.".format(key))
+
+                res = re.match("HQ(\d)", key_informs[2])
+                if res:
+                    # HQMP reads
+                    if key_informs[1] == 'MP':
+                        key_informs[1] = 'HQMP'
+                        hqmp_count += 1
+                    else:
+                        key_informs[1] = 'HQMP-S'
+                else:
+                    # SE, PE, MP reads
+                    if key_informs[1] == 'SE':
+                        se_count += 1
+                    elif key_informs[1] == 'PE':
+                        pe_count += 1
+                    elif key_informs[1] == 'MP':
+                        mp_count += 1
+
+                if key_informs[1].lower() in ('pe', 'mp', 'hqmp'):
+                    if len(files) != 2:
+                        raise InvalidInputSpecificationError(
+                            "For input type {!r}, SPAdes requirses two and only two files!".format(key_informs[1]))
+
+                infiles_options.append(
+                    self.__compose_input_str(key_informs[1], files, key_informs[2]))
+
+            # long sequences
+            elif not self.__set_long_sequences(key_informs, files, infiles_options):
+                raise InvalidInputSpecificationError("Unsupported input library type {!r} for SPAdes.".format(key))
+
+        # check short reads library count (not more then 5)
+        reads_types = ['se', 'pe', 'mp', 'hqmp']
+        reads_types_count = [se_count, pe_count, mp_count, hqmp_count]
+        map(
+            self.__check_shortreads_library_limitation,
+            reads_types,
+            reads_types_count
+        )
+
+        # check basic input requirement
+        self.__check_min_input_requirement(se_count, pe_count, self._tool_inputs)
+
+        self._input_string = " ".join(infiles_options)
+
+    def __set_output(self):
+        """
+        Specify the output of tool and the command line options
+        :return: None
+        """
+        output_dir = os.path.join(self._folder, self._parameters['output_dir'].value)
+        self._tool_outputs.update({
+            'FASTA_Contig': [ToolIOFile(os.path.join(output_dir, SPAdes.FASTA_CONTIG))],
+            'FASTA_Scaffolds': [ToolIOFile(os.path.join(output_dir, SPAdes.FASTA_SCAFFOLDS))],
+            'FASTG': [ToolIOFile(os.path.join(output_dir, SPAdes.FASTG))]
+        })
+
+    def __build_command(self):
+        """
+        Build the command to run tool
+        :return: None
+        """
+        self._command.command = " ".join([
+            self._tool_command, self._input_string, " ".join(self._build_options())
+        ])

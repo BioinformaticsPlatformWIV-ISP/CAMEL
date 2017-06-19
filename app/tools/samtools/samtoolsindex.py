@@ -15,7 +15,7 @@ class SamtoolsIndex(Samtools):
         Initializes this tool.
         :param camel: Camel instance
         """
-        super(SamtoolsIndex, self).__init__('samtools index', '1.3', camel)
+        super(SamtoolsIndex, self).__init__('samtools index', '1.3.1', camel)
 
     def _check_input(self):
         """
