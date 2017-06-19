@@ -14,6 +14,7 @@ class FastQCAdditionalChecks(Tool):
         :param camel: Camel instance
         """
         super(FastQCAdditionalChecks, self).__init__('FastQC additional checks', '0.1', camel)
+        self._modules = None
 
     def _check_input(self):
         """
@@ -30,27 +31,28 @@ class FastQCAdditionalChecks(Tool):
         :return: None
         """
         for input_file in self._tool_inputs['TXT']:
-            modules = self.__get_modules(input_file)
+            self._modules = self.__get_modules(input_file)
+
             current_informs = {
                 'Mean Q-score drop':
-                    self.__test_mean_qscore_drop(modules['Per base sequence quality']),
+                    self.__test_mean_qscore_drop(self._modules['Per base sequence quality']),
 
                 'Average quality score':
-                    self.__test_average_read_quality(modules['Per sequence quality scores']),
+                    self.__test_average_read_quality(self._modules['Per sequence quality scores']),
 
                 'Per base sequence content':
-                    self.__test_per_base_sequence_content(modules['Per base sequence content']),
+                    self.__test_per_base_sequence_content(self._modules['Per base sequence content']),
 
                 'GC content':
-                    self.__test_gc_content(modules['Basic Statistics']),
+                    self.__test_gc_content(self._modules['Basic Statistics']),
 
                 'Maximal N-fraction':
-                    self.__test_max_n_count(modules['Per base N content']),
+                    self.__test_max_n_count(self._modules['Per base N content']),
 
                 'Sequence length distribution':
-                    self.__test_sequence_length_distribution(modules['Sequence Length Distribution'])
+                    self.__test_sequence_length_distribution(self._modules['Sequence Length Distribution'])
             }
-            self.informs[self.__get_sample_name(modules['Basic Statistics'])] = current_informs
+            self.informs[self.__get_sample_name(self._modules['Basic Statistics'])] = current_informs
 
     @staticmethod
     def __get_modules(input_file):
@@ -83,6 +85,31 @@ class FastQCAdditionalChecks(Tool):
         for line in data:
             if line.startswith('Filename'):
                 return line.split('\t')[1]
+
+    def __get_total_reads(self):
+        """
+        Returns the total number of reads.
+        :return: Total nb of reads
+        """
+        for line in self._modules['Basic Statistics']:
+            if line.startswith('Total Sequences'):
+                return int(line.split('\t')[1])
+
+    def __get_length_cutoff(self, percentage):
+        """
+        Returns the sequence length for which the given percentage of reads is bigger.
+        :param percentage: Percentage
+        :return: Length cutoff
+        """
+        total_reads = self.__get_total_reads()
+        percent_reads_passed = 0.0
+        sequence_length_data = self._modules['Sequence Length Distribution']
+        for line in sequence_length_data[1:]:
+            interval, count = line.strip().split('\t')
+            percent_reads_passed += 100 * float(count) / total_reads
+            if percent_reads_passed > (100.0-percentage):
+                last_base = int(sequence_length_data[-1].split('\t')[0].split('-')[-1])
+                return last_base - int(interval.split('-')[0])
 
     @staticmethod
     def __get_mean_qscore_drop(data, threshold):
@@ -186,7 +213,13 @@ class FastQCAdditionalChecks(Tool):
         per_base_sequence_content_fail = float(self._parameters['per_base_sequence_content_fail'].value)
         per_base_sequence_content_warn = float(self._parameters['per_base_sequence_content_warn'].value)
         skipped_bases = int(self._parameters['per_base_sequence_content_skipped'].value)
-        skipped_bases_end = int(self._parameters['per_base_sequence_content_skipped_end'].value)
+
+        param_value = self._parameters['per_base_sequence_content_skipped_end'].value
+        if '%' in param_value:
+            percentage_reads_skipped = float(param_value.replace('%', ''))
+            skipped_bases_end = self.__get_length_cutoff(percentage_reads_skipped)
+        else:
+            skipped_bases_end = int(self._parameters['per_base_sequence_content_skipped_end'].value)
 
         max_difference = self.__get_max_sequence_content_difference(data, skipped_bases, skipped_bases_end)
         logging.debug("Maximal difference between A/T or C/G: {:.2f}".format(max_difference))
@@ -328,10 +361,11 @@ class FastQCAdditionalChecks(Tool):
         max_fraction = float(self._parameters['sequence_length_fraction'].value)
 
         fraction_below_fail = self.__get_fraction_of_sequences_below_threshold(data, threshold_fail)
-        logging.debug("Fraction of sequences with length below fail threshold: {:.2f}".format(fraction_below_fail))
-
+        logging.debug("Fraction of sequences with length below fail threshold: {:.2f} (max: {})".format(
+            fraction_below_fail, max_fraction))
         fraction_below_warn = self.__get_fraction_of_sequences_below_threshold(data, threshold_warn)
-        logging.debug("Fraction of sequences with length below warn threshold: {:.2f}".format(fraction_below_warn))
+        logging.debug("Fraction of sequences with length below warn threshold: {:.2f} (max: {})".format(
+            fraction_below_warn, max_fraction))
 
         if self.__get_fraction_of_sequences_below_threshold(data, threshold_fail) > max_fraction:
             return 'Fail'

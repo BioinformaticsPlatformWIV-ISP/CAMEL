@@ -50,12 +50,12 @@ class QualityCriteriaChecker(Tool):
         """
         logging.debug("Checking FastQC additional checks")
         informs = self._input_informs['fastqc_checks']
-        for input_file in informs:
-            for test_name, state in informs[input_file].iteritems():
-                if state == 'Warn':
+        for input_file, index in zip(informs['samples'], range(0, len(informs['samples']))):
+            for test_name, state in informs['tests'].items():
+                if state[index] == 'Warn':
                     self.informs['warnings'].append("'{}' had a warning for the '{}' test".format(
                         input_file, test_name))
-                if state == 'Fail':
+                if state[index] == 'Fail':
                     self.informs['fails'].append("'{}' does not pass '{}' test".format(input_file, test_name))
 
     def __check_assembly_mapping_rate(self):
