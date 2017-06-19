@@ -12,9 +12,8 @@ class BlastnFmt6TSVParser(object):
     """
     Class to parse blastn outfmt 6 generated TSV file and return hits (as hash or list)
     """
-    # TODO remove old funcs in favor of properties
-    DEFAULT_OUTFMT6_COLUMNS = "qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore".split(
-        " ")
+    DEFAULT_OUTFMT6_COLUMNS = ('qseqid', 'sseqid', 'pident', 'length', 'mismatch',
+                               'gapopen', 'qstart', 'qend', 'sstart', 'send', 'evalue', 'bitscore')
 
     def __init__(self, blastn_tsv, columns=None):
         """
@@ -101,13 +100,3 @@ class BlastnFmt6TSVParser(object):
             for hit_inform in hits_file.readlines():
                 hits.append(self.hit_class(hit_inform, self._columns))
         return hits
-
-    # TODO remove old functions in favor of properties
-
-    # def get_inform_column_names(self):
-    # backward compatibility, will be removed
-    #     return self.inform_columns()
-
-    # def get_column_names(self):
-    # backward compatibility, will be removed
-    #     return self.columns()
