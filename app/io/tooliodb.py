@@ -12,18 +12,20 @@ class ToolIODb(ToolIO):
     """
     TYPE_NAME = 'db'
 
-    def __init__(self, name, version='latest', logged=True, config=None):
+    def __init__(self, name, version='latest', logged=True, config=None, prefix=None):
         """
         Initializes a tool input / output database.
         :param name: Name of the database
         :param version: Version of the database
         :param logged: If True, the output can be logged
         :param config: Configuration file for the database connection
+        :param prefix: Prefix for the database to append to the path
         """
         super(ToolIODb, self).__init__(logged)
         self._config = DB_CONFIG if config is None else config
         self._name = name
         self._version = version
+        self._prefix = prefix
         self._path = self.__get_location()
 
     @property
@@ -70,7 +72,10 @@ class ToolIODb(ToolIO):
         Checks whether this file exists.
         :return: True if the file exists, False otherwise
         """
-        return os.path.isfile(self.path) if not self.is_dir() else True
+        if self._prefix is None:
+            return os.path.isfile(self.path) if not self.is_dir() else True
+        else:
+            return os.path.isdir(os.path.dirname(self._path))
 
     @property
     def hash(self):
@@ -86,9 +91,9 @@ class ToolIODb(ToolIO):
         :return: Database location
         """
         if self._version.lower() == 'latest':
-            return self.__get_latest_loc()
+            return self.__get_latest_loc() if self._prefix is None else os.path.join(self.__get_latest_loc(), self._prefix)
         else:
-            return self.__get_version_loc()
+            return self.__get_version_loc() if self._prefix is None else os.path.join(self.__get_version_loc(), self._prefix)
 
     def __get_latest_loc(self):
         """

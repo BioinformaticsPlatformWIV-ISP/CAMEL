@@ -11,7 +11,7 @@ class Step(object):
     """
     This class represents a step in a pipeline. It executes a single tool.
     """
-    StepInput = namedtuple('StepInput', ('name', 'source', 'alias',))
+    StepInput = namedtuple('StepInput', ('name', 'source', 'alias', 'required',))
     ExternalInput = namedtuple('ExternalInput', ('files', 'alias',))
     StepInform = namedtuple('StepInform', ('source', 'alias'))
 
@@ -98,7 +98,8 @@ class Step(object):
                     specification.append(Step.ExternalInput(files, item['alias']))
                 else:
                     alias = item['alias'] if 'alias' in item else item['name']
-                    specification.append(Step.StepInput(item['name'], item['from'], alias))
+                    required = item.get('required', False)
+                    specification.append(Step.StepInput(item['name'], item['from'], alias, required))
             except KeyError as err:
                 raise ValueError("'{}' missing from input specification: {}".format(err.message, item.items()))
         return specification

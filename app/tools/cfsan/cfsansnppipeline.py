@@ -55,6 +55,7 @@ class CfsanSnpPipeline(Tool):
         :return: Path to reference FASTA
         """
         link_name = os.path.join(self._folder, self._tool_inputs['FASTA'][0].basename)
+        logging.info("Creating symlink for reference FASTA file: {}".format(link_name))
         os.symlink(self._tool_inputs['FASTA'][0].path, link_name)
         return link_name
 
@@ -84,7 +85,7 @@ class CfsanSnpPipeline(Tool):
         :return: Sample name
         """
         if 'VAL_Name' in self._tool_inputs:
-            return self._tool_inputs['VAL_Name'][index / 2].value
+            return self._tool_inputs['VAL_Name'][index / 2].value.replace(' ', '_')
 
         filename = self._tool_inputs['FASTQ'][index].path
         m = re.match('.*/(.*)_\d\.[fastq]+$', filename)

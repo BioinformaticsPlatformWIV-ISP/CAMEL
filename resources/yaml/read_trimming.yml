@@ -21,6 +21,12 @@ steps:
   - name: FASTQ_PE
     from: Read_trimming
     alias: FASTQ
+  next-step:
+  - when:
+      condition: $pipeline_configs.SKIP_REPORT == True
+      step-id: exit
+  - default:
+      step-id: Report_generation
 
 - id: Report_generation
   tool: !!python/name:app.tools.pipelines.read_trimming.htmlreporterreadtrimming.HtmlReporterReadTrimming
