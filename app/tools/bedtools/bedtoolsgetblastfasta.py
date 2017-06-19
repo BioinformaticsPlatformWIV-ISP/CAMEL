@@ -14,7 +14,7 @@ class BedtoolsGetBlastFasta(BedtoolsGetFasta):
     """
     Use Bedtools getfasta function to extract sequences based on BLAST alignment (outfmt6 TSV) and query/subject
     sequences (FASTA). The tool can extract all hit sequences into one fasta file, or alternatively, group hit
-    sequeneces per target (BLAST query or subject) and output into separate fasta files. Note that query sequence MUST
+    sequences per target (BLAST query or subject) and output into separate fasta files. Note that query sequence MUST
     be extracted from query fasta file and subject sequence should be extracted from subject fasta file.
     """
     DEFAULT_BEDFILE_NAME = 'blasthits_sequences.bed'
