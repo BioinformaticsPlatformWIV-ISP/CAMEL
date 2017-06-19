@@ -12,10 +12,12 @@ from app.components.blasthit.blastnfmt6tsvparser import BlastnFmt6TSVParser
 class BedtoolsGetBlastFasta(BedtoolsGetFasta):
 
     """
-    Use Bedtools getfasta function to extract sequences based on BLAST aglinment, targeted sequences can be extracted
-    from either BLAST query or subject.
+    Use Bedtools getfasta function to extract sequences based on BLAST alignment (outfmt6 TSV) and query/subject
+    sequences (FASTA). The tool can extract all hit sequences into one fasta file, or alternatively, group hit
+    sequeneces per target (BLAST query or subject) and output into separate fasta files. Note that query sequence MUST
+    be extracted from query fasta file and subject sequence should be extracted from subject fasta file.
     """
-    BED_FILE = 'blasthits_sequences.bed'
+    DEFAULT_BEDFILE_NAME = 'blasthits_sequences.bed'
 
     def __init__(self, camel):
         """
@@ -28,9 +30,9 @@ class BedtoolsGetBlastFasta(BedtoolsGetFasta):
         self._required_inputs = ['TSV_BLAST', 'FASTA']
 
         self._specific_parameters = ['mode', 'target', 'outputfile_name']
-        self._BED_files = []
+        self._bed_files = []
         self._targets = []
-        self._target_file_prefix = []
+        self._target_file_prefixes = []
         self._input_specs = []
         self._FASTA_files = []
         self._input_string = ''
@@ -43,7 +45,7 @@ class BedtoolsGetBlastFasta(BedtoolsGetFasta):
         """
         self.__set_input()
         self.__set_output()
-        for bed_file, fasta_file in zip(self._BED_files, self._FASTA_files):
+        for bed_file, fasta_file in zip(self._bed_files, self._FASTA_files):
             self.__run_getfasta(bed_file, fasta_file)
 
     def __run_getfasta(self, bed_file, fasta_file):
@@ -70,7 +72,7 @@ class BedtoolsGetBlastFasta(BedtoolsGetFasta):
 
     def _check_input(self):
         """
-        Check input for bedtools getfasta
+        Check the input specifications
         :return: None
         """
         self._check_required_inputs()
@@ -84,58 +86,46 @@ class BedtoolsGetBlastFasta(BedtoolsGetFasta):
 
     def __set_input(self):
         """
-        Set proper input for bedtools getfasta
+        Set input(s) for bedtools getfasta
         :return: None
         """
         self.__output_blasthits_to_bed(self._tool_inputs['TSV_BLAST'][0].path)
 
         self._input_specs = ["-fi {}".format(self._tool_inputs['FASTA'][0].path)]
 
-    @staticmethod
-    def __retrieve_query_sequence(hit):
+    def __set_output(self):
         """
-        Extract blast query sequences information for extraction
-        :param hit: one blast hit information parsed from blast tabular output
-        :return: bed information properly formatted
+        Set the output specifications
+        :return: None
         """
-        # customized blast outfmt 6 data columns
-        # 'qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore strand qcovs'
-        # BED format: chrom, chromStart, chromEnd, name, score, strand
-        if hit.sstart < hit.send:
-            bed_info = [hit.qseqid, hit.qstart - 1, hit.qend, hit.sseqid, 0, '+']
-        else:
-            bed_info = [hit.qseqid, hit.qstart - 1, hit.qend, hit.sseqid, 0, '-']
-        return bed_info
+        self._FASTA_files = [os.path.splitext(f)[0] + ".fa" for f in self._bed_files]
+        self._tool_outputs.update({
+            'BED': [ToolIOFile(x) for x in self._bed_files],
+            'FASTA': [ToolIOFile(x) for x in self._FASTA_files],
+            'Targets': [ToolIOValue(x) for x in self._targets]
+        })
 
-    @staticmethod
-    def __retrieve_subject_sequence(hit):
+    def __output_blasthits_to_bed(self, blasthits_file):
         """
-        Extract blast subject sequences information for extraction
-        :param hit: one blast hit information parsed from blast tablular output
-        :return: bed information properly formatted
+        Output hits dict into one or multiple bed files based on 'mode'
+        :param blasthits_file: blastn outfmt 6 tsv file
+        :return: None
         """
-        # customized blast outfmt 6 data columns
-        # 'qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore strand qcovs'
-        # BED format: chrom, chromStart, chromEnd, name, score, strand
-        if hit.sstart < hit.send:
-            bed_info = [hit.sseqid, hit.sstart - 1, hit.send, hit.qseqid, 0, '+']
+        blastn_file = BlastnFmt6TSVParser(
+            blasthits_file, columns="qseqid sseqid pident length mismatch gapopen gaps qstart qend sstart send evalue bitscore sstrand qcovs qcovhsp".split(" "))
+        blasthits = blastn_file.read_hits_as_list()
+        mode = self._parameters['mode'].value
+        if mode == 'all':
+            self.__output_blasthits_to_one_bed(blasthits)
+        elif mode == 'individual':
+            self.__output_blasthits_to_separate_bed(blasthits)
         else:
-            bed_info = [hit.sseqid, hit.send - 1, hit.sstart, hit.qseqid, 0, '-']
-        return bed_info
-
-    @staticmethod
-    def __remove_special_characters(string_in):
-        """
-        Remove special characters in a string so it can be used in filename
-        :param string_in: input string might contain special characters
-        :return: string with special characters replaced
-        """
-        string_out = re.sub('[^A-Za-z0-9]+', '_', string_in).strip()
-        return string_out
+            raise InvalidParameterError(
+                "Unsupported mode {!r} for Bedtools GetBlastFasta, should be 'all' or 'individual'.".format(mode))
 
     def __output_blasthits_to_separate_bed(self, blasthits):
         """
-        Output blast hits into separate bed files
+        Output blast hits into separate bed files (per target)
         :param blasthits: list of blasthits extracted from blast output
         :return: None
         """
@@ -145,9 +135,11 @@ class BedtoolsGetBlastFasta(BedtoolsGetFasta):
         try:
             for hit in blasthits:
                 if target == 'subject':
+                    target_id = hit.qseqid
                     key = self.__remove_special_characters(hit.qseqid)  # 'query id' as key
                     bed_info = self.__retrieve_subject_sequence(hit)
                 elif target == 'query':
+                    target_id = hit.qseqid
                     key = self.__remove_special_characters(hit.sseqid)  # 'subject id'as key
                     bed_info = self.__retrieve_query_sequence(hit)
                 else:
@@ -155,10 +147,10 @@ class BedtoolsGetBlastFasta(BedtoolsGetFasta):
                         "Unsupported target {!r} for Bedtools GetBlastFasta, should be 'subject' or 'query'.".format(target))
 
                 if key not in opened_files:
-                    bed_file = os.path.join(self._folder, key + '-' + self.BED_FILE)
-                    self._targets.append(hit.qseqid)
-                    self._target_file_prefix.append(key)
-                    self._BED_files.append(bed_file)
+                    bed_file = os.path.join(self._folder, key + '-' + self.DEFAULT_BEDFILE_NAME)
+                    self._targets.append(target_id)
+                    self._target_file_prefixes.append(key)
+                    self._bed_files.append(bed_file)
                     opened_files[key] = open(bed_file, 'w')
 
                 opened_files[key].write("\t".join(map(str, bed_info)) + "\n")
@@ -173,7 +165,7 @@ class BedtoolsGetBlastFasta(BedtoolsGetFasta):
         :param blasthits: list of blasthits extracted from blast output
         :return: None
         """
-        bed_file = os.path.join(self._folder, self.BED_FILE)
+        bed_file = os.path.join(self._folder, self.DEFAULT_BEDFILE_NAME)
         target = self._parameters['target'].value
 
         with open(bed_file, 'w') as outf:
@@ -189,35 +181,42 @@ class BedtoolsGetBlastFasta(BedtoolsGetFasta):
                 outf.write("\t".join(map(str, bed_info)) + "\n")
 
         self._targets = []
-        self._target_file_prefix = []
-        self._BED_files.append(bed_file)
+        self._target_file_prefixes = []
+        self._bed_files.append(bed_file)
 
-    def __output_blasthits_to_bed(self, blasthits_file):
+    @staticmethod
+    def __remove_special_characters(string_in):
         """
-        Output hits dict into one or multiple bed files based on 'mode'
-        :param blasthits_file: the tsv file of blast outfmt 6
-        :return: None
+        Remove special characters in a string so it can be used in filename
+        :param string_in: input string
+        :return: string with special characters replaced
         """
-        blastn_file = BlastnFmt6TSVParser(
-            blasthits_file, columns="qseqid sseqid pident length mismatch gapopen gaps qstart qend sstart send evalue bitscore sstrand qcovs qcovhsp".split(" "))
-        blasthits = blastn_file.read_hits_as_list()
-        mode = self._parameters['mode'].value
-        if mode == 'all':
-            self.__output_blasthits_to_one_bed(blasthits)
-        elif mode == 'individual':
-            self.__output_blasthits_to_separate_bed(blasthits)
+        return re.sub('[^A-Za-z0-9]+', '_', string_in).strip()
+
+    @staticmethod
+    def __retrieve_query_sequence(hit):
+        """
+        Extract blastn query hit sequences
+        :param hit: one blast hit information parsed from blast tabular output
+        :return: bed information properly formatted
+        """
+        # blastn hits with qseqid, sseqid, qstart, qend, sstart, send
+        #
+        # BED format: chrom, chromStart, chromEnd, name, score, strand
+        return [hit.qseqid, hit.qstart - 1, hit.qend, hit.sseqid, 0, '+']
+
+    @staticmethod
+    def __retrieve_subject_sequence(hit):
+        """
+        Extract blastn subject hit sequences
+        :param hit: one blast hit information parsed from blast tablular output
+        :return: bed information properly formatted
+        """
+        # blastn hits with qseqid, sseqid, qstart, qend, sstart, send
+        #
+        # BED format: chrom, chromStart, chromEnd, name, score, strand
+        if hit.sstart < hit.send:
+            bed_info = [hit.sseqid, hit.sstart - 1, hit.send, hit.qseqid, 0, '+']
         else:
-            raise InvalidParameterError(
-                "Unsupported mode {!r} for Bedtools GetBlastFasta, should be 'all' or 'individual'.".format(mode))
-
-    def __set_output(self):
-        """
-        Set the output specification
-        :return: None
-        """
-        self._FASTA_files = [os.path.splitext(f)[0] + ".fa" for f in self._BED_files]
-        self._tool_outputs.update({
-            'BED': [ToolIOFile(x) for x in self._BED_files],
-            'FASTA': [ToolIOFile(x) for x in self._FASTA_files],
-            'Targets': [ToolIOValue(x) for x in self._targets]
-        })
+            bed_info = [hit.sseqid, hit.send - 1, hit.sstart, hit.qseqid, 0, '-']
+        return bed_info
