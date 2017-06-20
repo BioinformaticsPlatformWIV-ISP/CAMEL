@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 
@@ -31,9 +32,9 @@ class SPAdes(Tool):
         :return: None
         """
         self.__check_and_set_input()
-        self.__set_output()
         self.__build_command()
         self._execute_command()
+        self.__set_output()
 
     @staticmethod
     def __compose_input_str(input_type, files, ordinal='0'):
@@ -188,6 +189,10 @@ class SPAdes(Tool):
             'FASTA_Scaffolds': [ToolIOFile(os.path.join(output_dir, SPAdes.FASTA_SCAFFOLDS))],
             'FASTG': [ToolIOFile(os.path.join(output_dir, SPAdes.FASTG))]
         })
+        for output_key, files in self._tool_outputs.items():
+            if not os.path.isfile(files[0].path):
+                logging.warning("{} file not generated.".format(output_key))
+                self._tool_outputs.pop(output_key)
 
     def __build_command(self):
         """
