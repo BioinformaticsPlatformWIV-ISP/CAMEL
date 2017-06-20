@@ -122,7 +122,6 @@ class CfsanSnpPipeline(Tool):
             self._tool_outputs[key] = []
         with open(os.path.join(self._folder, 'sampleDirectories.txt')) as handle:
             for line in handle.readlines():
-                print(line)
                 sample_directory = line.strip()
                 self._tool_outputs['VCF_Cons'].append(ToolIOFile(os.path.join(sample_directory, 'consensus.vcf')))
                 self._tool_outputs['VCF_Cons_preserved'].append(
