@@ -12,9 +12,9 @@ class FileSystemHelper(object):
         :param value: Input value
         :return: URL- and filename friendly value
         """
-        value = unicodedata.normalize('NFKD', unicode(value)).encode('ascii', 'ignore')
-        value = unicode(re.sub('[^\w\s-]', '', value).strip())
-        value = unicode(re.sub('[-\s]+', '_', value))
+        value = unicodedata.normalize('NFKD', str(value)).encode('ascii', 'ignore')
+        value = str(re.sub('[^\w\s-]', '', value).strip())
+        value = str(re.sub('[-\s]+', '_', value))
         return str(value)
 
     @staticmethod

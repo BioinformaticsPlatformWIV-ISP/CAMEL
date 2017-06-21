@@ -21,7 +21,7 @@ class SequenceTypeMetadataExtractor(Tool):
 
     def _execute_tool(self):
         self.__add_st_metadata_to_informs(self._tool_inputs['TSV'][0])
-        logging.info("Metadata for sequence type: {}".format(self.informs['metadata'].items()))
+        logging.info("Metadata for sequence type: {}".format(list(self.informs['metadata'].items())))
         filename = os.path.join(self._folder, 'metadata.tsv')
         self.__save_sequence_type_metadata(filename)
         self._tool_outputs['TSV'] = [ToolIOFile(filename)]
@@ -106,7 +106,7 @@ class SequenceTypeMetadataExtractor(Tool):
         """
         metadata = self.informs['metadata']
         with open(filename, 'w') as output_file:
-            output_file.write('\t'.join(metadata.keys()))
+            output_file.write('\t'.join(list(metadata.keys())))
             output_file.write('\n')
-            output_file.write('\t'.join(metadata.values()))
+            output_file.write('\t'.join(list(metadata.values())))
             output_file.write('\n')

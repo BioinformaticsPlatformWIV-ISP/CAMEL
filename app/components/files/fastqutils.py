@@ -139,7 +139,7 @@ class FastqUtils(object):
         :param outfile: File to write to
         :return:
         """
-        for key in read_dict.keys():
+        for key in list(read_dict.keys()):
             FastqUtils._write_read_to_file(read_dict[key], outfile)
             read_dict.pop(key)
 

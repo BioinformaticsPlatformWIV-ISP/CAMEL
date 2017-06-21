@@ -167,11 +167,11 @@ class SPAdes(Tool):
         # check short reads library count (not more then 5)
         reads_types = ['se', 'pe', 'mp', 'hqmp']
         reads_types_count = [se_count, pe_count, mp_count, hqmp_count]
-        map(
+        list(map(
             self.__check_shortreads_library_limitation,
             reads_types,
             reads_types_count
-        )
+        ))
 
         # check basic input requirement
         self.__check_min_input_requirement(se_count, pe_count, self._tool_inputs)

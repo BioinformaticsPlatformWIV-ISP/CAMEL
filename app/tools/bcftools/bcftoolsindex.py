@@ -34,7 +34,7 @@ class BcftoolsIndex(Samtools):
         Executes this tool.
         :return: None
         """
-        self._input_key = self._tool_inputs.keys()[0]
+        self._input_key = list(self._tool_inputs.keys())[0]
         input_file_path = self.__symlink_input()
         self.__build_command(input_file_path)
         self._execute_command()

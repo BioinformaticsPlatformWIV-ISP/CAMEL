@@ -148,7 +148,7 @@ class LegacyBlastx(Tool):
             batch = []
             while len(batch) < batch_size:
                 try:
-                    entry = iterator.next()
+                    entry = next(iterator)
                 except StopIteration:
                     entry = None
                 if entry is None:

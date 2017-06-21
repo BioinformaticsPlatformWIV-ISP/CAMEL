@@ -174,6 +174,6 @@ class GATKFastaAlternateReferenceMaker(GATK):
 
         # Note: seq_record in extracted_seq_dict has been updated with ids, now output into self._fasta_extracted with
         #       updated ids
-        FastaUtils.write(extracted_seq_dict.values(), self._fasta_extracted)
+        FastaUtils.write(list(extracted_seq_dict.values()), self._fasta_extracted)
 
         return concatenated_seqs

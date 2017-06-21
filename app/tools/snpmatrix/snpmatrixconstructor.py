@@ -67,7 +67,7 @@ class SnpMatrixConstructor(Tool):
         with open(output_file, 'w') as handle:
             for sample in sorted(samples):
                 matrix_row = ''
-                for position in sorted(snps.keys(), key=lambda p: (p.contig, p.position)):
+                for position in sorted(list(snps.keys()), key=lambda p: (p.contig, p.position)):
                     if sample in snps[position]:
                         matrix_row += str(snps[position][sample])
                     else:

@@ -50,8 +50,8 @@ class Step(object):
         self._add_pipeline_parameters()
         self._add_job_parameters()
         self._tool.run(self._folder)
-        logging.info('Step output: {}'.format(self.outputs.items()))
-        logging.info('Step informs: {}'.format(self.informs.items()))
+        logging.info('Step output: {}'.format(list(self.outputs.items())))
+        logging.info('Step informs: {}'.format(list(self.informs.items())))
         if self._pipeline.job_id is not None:
             self._log_outputs()
             self._log_job_parameters()
@@ -101,7 +101,7 @@ class Step(object):
                     required = item.get('required', False)
                     specification.append(Step.StepInput(item['name'], item['from'], alias, required))
             except KeyError as err:
-                raise ValueError("'{}' missing from input specification: {}".format(err, item.items()))
+                raise ValueError("'{}' missing from input specification: {}".format(err, list(item.items())))
         return specification
 
     @input_specification.setter
@@ -126,7 +126,7 @@ class Step(object):
             try:
                 specification.append(Step.StepInform(item['from'], item['alias']))
             except KeyError as err:
-                raise ValueError("'{}' missing from inform specification: {}".format(err, item.items()))
+                raise ValueError("'{}' missing from inform specification: {}".format(err, list(item.items())))
         return specification
 
     @inform_specification.setter

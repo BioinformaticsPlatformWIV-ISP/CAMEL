@@ -33,7 +33,7 @@ class BcftoolsIndexStats(Tool):
         Executes this tool.
         :return: None
         """
-        input_key = self._tool_inputs.keys()[0]
+        input_key = list(self._tool_inputs.keys())[0]
         self._command.command = '{} {}'.format(
             self._tool_command,
             self._tool_inputs[input_key][0].path

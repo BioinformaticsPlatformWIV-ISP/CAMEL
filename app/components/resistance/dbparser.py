@@ -6,12 +6,10 @@ from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 
 
-class DatabaseParser(object):
+class DatabaseParser(object, metaclass=abc.ABCMeta):
     """
     Superclass for parsing FASTA databases.
     """
-
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self):
         """

@@ -8,12 +8,10 @@ from app.io.toolio import ToolIO
 from app.services.toolservice import ToolService
 
 
-class Tool(object):
+class Tool(object, metaclass=abc.ABCMeta):
     """
     Contains the common functionality of tools.
     """
-
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self, name, version, camel):
         """

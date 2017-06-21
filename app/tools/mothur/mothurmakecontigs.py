@@ -67,7 +67,7 @@ class MothurMakeContigs(Mothur):
         :return: None
         """
         # As only one key is allowed, take the basename from the file(s) in the first key
-        basename = super(MothurMakeContigs, self)._get_basename(self._tool_inputs.keys()[0], '.')
+        basename = super(MothurMakeContigs, self)._get_basename(list(self._tool_inputs.keys())[0], '.')
         self._tool_outputs['FASTA_Contig'] = [ToolIOFile(basename + '.trim.contigs.fasta')]
         self._tool_outputs['FASTA_Scrap'] = [ToolIOFile(basename + '.scrap.contigs.fasta')]
         self._tool_outputs['QUAL_Contig'] = [ToolIOFile(basename + '.trim.contigs.qual')]

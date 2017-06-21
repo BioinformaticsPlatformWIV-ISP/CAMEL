@@ -4,12 +4,10 @@ from abc import ABCMeta
 from yattag import Doc
 
 
-class HtmlElement(object):
+class HtmlElement(object, metaclass=ABCMeta):
     """
     Base class for HTML tags.
     """
-
-    __metaclass__ = ABCMeta
 
     def __init__(self):
         """

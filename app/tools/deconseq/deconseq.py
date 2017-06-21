@@ -95,7 +95,7 @@ class Deconseq(Tool):
         Sets the instance variable self._input_key
         :return: None
         """
-        self._input_key = self._tool_inputs.keys()[0]
+        self._input_key = list(self._tool_inputs.keys())[0]
 
     def __build_command(self):
         """
