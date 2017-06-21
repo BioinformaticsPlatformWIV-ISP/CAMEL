@@ -33,7 +33,7 @@ class MothurClassifySeqs(Mothur):
         if not all(key in self._tool_inputs for key in ['FASTA', 'FASTA_Ref', 'TSV_Taxonomy']):
             raise InvalidInputSpecificationError('Missing input files (keys) for Mothur '
                                                  'classify.seqs: {!r}'.format(self._tool_inputs))
-        for key, input_files in self._tool_inputs.iteritems():
+        for key, input_files in self._tool_inputs.items():
             if key not in ['FASTA', 'FASTA_Ref', 'TSV_Taxonomy', 'TSV_Counts', 'TSV_Names', 'TSV_Groups']:
                 raise InvalidInputSpecificationError('Invalid input key given for Mothur '
                                                      'classify.seqs: {!r}'.format(self._tool_inputs))
@@ -79,7 +79,7 @@ class MothurClassifySeqs(Mothur):
         was not set.
         :return: String with extension
         """
-        for name, parameter in self._parameters.iteritems():
+        for name, parameter in self._parameters.items():
             if name == 'method' and parameter.value == 'knn':
                 return '.knn'
         return '.wang'
@@ -94,4 +94,4 @@ class MothurClassifySeqs(Mothur):
         """
         taxonomy = os.path.basename(self._tool_inputs['TSV_Taxonomy'][0].path)
         parts = taxonomy.split('.')
-        return '.' + parts[-2]
+        return '.' + str(parts[-2])

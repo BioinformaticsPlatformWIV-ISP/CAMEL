@@ -32,7 +32,8 @@ class ToolIO(object):
         """
         pass
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def hash(self):
         """
         Returns the hash value.

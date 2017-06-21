@@ -65,7 +65,6 @@ class BlastnTSVHit(object):
         """
         return self._column
 
-
     # TODO remove following pipeline specific function
 
     # def get_hit_id(self):

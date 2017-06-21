@@ -47,7 +47,7 @@ class Mothur(Tool):
         :return: None
         """
         new_inputs = {}
-        for input_key, input_list in self._tool_inputs.iteritems():
+        for input_key, input_list in self._tool_inputs.items():
             new_inputs[input_key] = []
             for tool_input in input_list:
                 if '-' in tool_input.path:
@@ -57,7 +57,6 @@ class Mothur(Tool):
                     new_inputs[input_key] += [ToolIOFile(link_name)]
                 else:
                     new_inputs[input_key] += [tool_input]
-        print new_inputs
         self._tool_inputs = new_inputs
 
     def _symlink_cleanup(self):

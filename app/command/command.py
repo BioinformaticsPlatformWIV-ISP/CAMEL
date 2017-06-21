@@ -1,5 +1,5 @@
 import logging
-import subprocess32
+import subprocess
 
 
 class Command(object):
@@ -43,14 +43,15 @@ class Command(object):
         logging.info('Executing command: {}'.format(self.command))
         if self.command is None:
             raise ValueError("Invalid command 'None'")
-        self._procedure = subprocess32.Popen(
+        self._procedure = subprocess.run(
             self._command,
-            stdout=subprocess32.PIPE,
-            stderr=subprocess32.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             shell=True,
             executable='/bin/bash',
             cwd=folder)
-        [self._stdout, self._stderr] = self._procedure.communicate()
+        self._stdout = self._procedure.stdout.decode('utf-8')
+        self._stderr = self._procedure.stderr.decode('utf-8')
         self._return_code = self._procedure.returncode
         logging.debug('stdout: {}'.format(self._stdout))
         logging.debug('stderr: {}'.format(self._stderr))

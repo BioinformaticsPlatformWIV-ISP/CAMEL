@@ -39,7 +39,7 @@ class Deconseq(Tool):
         - No other input keys are allowed
         :return: None
         """
-        for key, value in self._tool_inputs.iteritems():
+        for key, value in self._tool_inputs.items():
             if key not in ['FASTQ', 'FASTA']:
                 raise InvalidInputSpecificationError('Illegal input key given for DeconSeq, '
                                                      'only FASTQ or FASTA allowed: {!r}'.format(self._tool_inputs))

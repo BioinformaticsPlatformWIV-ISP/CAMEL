@@ -1,7 +1,7 @@
 import collections
 
 from app.parameter.parameter import Parameter
-from service import Service
+from app.services.service import Service
 
 
 class ToolService(Service):

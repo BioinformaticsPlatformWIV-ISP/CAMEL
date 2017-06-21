@@ -137,7 +137,7 @@ class CfsanSnpPipeline(Tool):
         Analyzes the metrics file and adds the information to the informs.
         :return: None
         """
-        saved_columns = [2] + range(5, 14)
+        saved_columns = [2] + list(range(5, 14))
         metrics_file = os.path.join(self._folder, 'metrics.tsv')
         if not os.path.isfile(metrics_file):
             raise IOError("No metrics file generated.")

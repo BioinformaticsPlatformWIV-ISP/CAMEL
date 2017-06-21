@@ -35,7 +35,7 @@ class HitFiltering(Tool):
         :return: None
         """
         if 'TSV' not in self._tool_inputs:
-            raise StandardError("No 'TSV' input found.")
+            raise Exception("No 'TSV' input found.")
         super(HitFiltering, self)._check_input()
 
     @staticmethod

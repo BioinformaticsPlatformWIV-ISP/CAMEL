@@ -1,4 +1,4 @@
-from itertools import izip_longest as zip_longest
+from itertools import zip_longest
 
 import os
 import re
@@ -114,7 +114,7 @@ class FastqUtils(object):
         elif rhs.endswith('/1') or rhs.endswith('/2'):
             return rhs.split('/', 1)[0]
         else:
-            raise StandardError("Read name is in an illegal format: {}".format(read.name))
+            raise Exception("Read name is in an illegal format: {}".format(read.name))
 
     @staticmethod
     def _write_read_to_file(read_out, outfile):

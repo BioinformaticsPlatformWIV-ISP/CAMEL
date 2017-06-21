@@ -101,7 +101,7 @@ class Step(object):
                     required = item.get('required', False)
                     specification.append(Step.StepInput(item['name'], item['from'], alias, required))
             except KeyError as err:
-                raise ValueError("'{}' missing from input specification: {}".format(err.message, item.items()))
+                raise ValueError("'{}' missing from input specification: {}".format(err, item.items()))
         return specification
 
     @input_specification.setter
@@ -126,7 +126,7 @@ class Step(object):
             try:
                 specification.append(Step.StepInform(item['from'], item['alias']))
             except KeyError as err:
-                raise ValueError("'{}' missing from inform specification: {}".format(err.message, item.items()))
+                raise ValueError("'{}' missing from inform specification: {}".format(err, item.items()))
         return specification
 
     @inform_specification.setter
@@ -157,7 +157,7 @@ class Step(object):
                 else:
                     raise ValueError("Next step specification is not valid: {}".format(branch))
             except KeyError as err:
-                raise ValueError("{} missing from step specification".format(err.message))
+                raise ValueError("{} missing from step specification".format(err))
         return specification
 
     @next_step_specification.setter
@@ -257,7 +257,7 @@ class Step(object):
         Logs the outputs in the database.
         :return: None
         """
-        for key, files in self.outputs.iteritems():
+        for key, files in self.outputs.items():
             for i in range(0, len(files)):
                 if files[i].logged:
                     output_data = [self._pipeline.job_id, self.step_id, files[i].TYPE_NAME, key, i, files[i].hash]
@@ -269,7 +269,7 @@ class Step(object):
         Logs the job parameters in the database.
         :return: None
         """
-        for parameter_name, parameter_value in self._job_options.iteritems():
+        for parameter_name, parameter_value in self._job_options.items():
             parameter_id = self._step_service.get_parameter_id(self._tool.tool_id, parameter_name)
             self._step_service.log_job_parameter(parameter_id, self.step_id, self._pipeline.job_id, parameter_value)
             logging.debug("Job parameter '{}' logged".format(parameter_name))

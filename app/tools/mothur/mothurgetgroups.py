@@ -29,7 +29,7 @@ class MothurGetGroups(Mothur):
         if 'TSV_Groups' not in self._tool_inputs and 'TSV_Counts' not in self._tool_inputs:
             raise InvalidInputSpecificationError('Not enough valid input files given for Mothur '
                                                  'get.groups: {!r}'.format(self._tool_inputs))
-        for key, input_files in self._tool_inputs.iteritems():
+        for key, input_files in self._tool_inputs.items():
             if key not in ['FASTA', 'TSV_Names', 'TSV_Counts', 'TSV_Groups',
                            'TSV_Accnos', 'TSV_List', 'TSV_Taxonomy']:
                 raise InvalidInputSpecificationError('Invalid input key given for Mothur get.groups: {!r}'.format(self._tool_inputs))
@@ -51,7 +51,7 @@ class MothurGetGroups(Mothur):
                             'TSV_Accnos': 'accnos=',
                             'TSV_Taxonomy': 'taxonomy='}
         # Based on the key the correct option flag is added to the input string
-        for key, input_files in self._tool_inputs.iteritems():
+        for key, input_files in self._tool_inputs.items():
             items.append('{}{}'.format(input_parameters[key], input_files[0].path))
         items.append('outputdir={}'.format(self._folder))
         return ', '.join(items)
@@ -68,6 +68,6 @@ class MothurGetGroups(Mothur):
                              'TSV_List': ['.', '.pick.list'],
                              'TSV_Taxonomy': ['.', '.pick.taxonomy']}
         # Based on the key the correct output file is added to the input string
-        for key, input_files in self._tool_inputs.iteritems():
+        for key, input_files in self._tool_inputs.items():
             basename = super(MothurGetGroups, self)._get_basename(key, output_extensions[key][0])
             self._tool_outputs[key] = [ToolIOFile(basename + output_extensions[key][1])]

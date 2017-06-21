@@ -75,7 +75,7 @@ class SequenceTypeMetadataExtractor(Tool):
         metadata_columns = self.__get_metadata_columns(mlst_scheme_file)
         sequence_type = self._input_informs['type_detection']['sequence_type']
         scheme_line = self.__get_sequence_type_line(mlst_scheme_file, sequence_type)
-        for index, name in sorted(metadata_columns.iteritems()):
+        for index, name in sorted(metadata_columns.items()):
             if scheme_line:
                 value = scheme_line.split('\t')[index].strip()
                 if value == '':

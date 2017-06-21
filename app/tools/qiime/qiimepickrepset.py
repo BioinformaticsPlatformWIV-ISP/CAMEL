@@ -29,7 +29,7 @@ class QiimePickRepSet(Qiime):
         """
         if 'TSV_Otu' not in self._tool_inputs:
             raise InvalidInputSpecificationError('Invalid input files (keys) given for pick_rep_set: {!r}'.format(self._tool_inputs))
-        for key, input_files in self._tool_inputs.iteritems():
+        for key, input_files in self._tool_inputs.items():
             if key not in ['FASTA', 'TSV_Otu']:
                 raise InvalidInputSpecificationError('Invalid input key given for pick_rep_set: {!r}'.format(self._tool_inputs))
             if len(self._tool_inputs[key]) != 1:

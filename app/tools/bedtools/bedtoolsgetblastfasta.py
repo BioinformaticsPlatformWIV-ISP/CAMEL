@@ -156,7 +156,7 @@ class BedtoolsGetBlastFasta(BedtoolsGetFasta):
                 opened_files[key].write("\t".join(map(str, bed_info)) + "\n")
 
         finally:
-            for k, f in opened_files.iteritems():
+            for k, f in opened_files.items():
                 f.close()
 
     def __output_blasthits_to_one_bed(self, blasthits):

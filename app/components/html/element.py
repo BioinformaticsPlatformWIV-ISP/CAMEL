@@ -18,7 +18,8 @@ class HtmlElement(object):
         self._doc, self._tag, self._text = Doc().tagtext()
         self._html = self._generate_html()
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def text_value(self):
         """
         Textual value of the HtmlElement.

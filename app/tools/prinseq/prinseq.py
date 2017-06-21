@@ -1,8 +1,8 @@
 import os
-import logging
-from app.tools.tool import Tool
-from app.io.tooliofile import ToolIOFile
+
 from app.error.toolexecutionerror import ToolExecutionError
+from app.io.tooliofile import ToolIOFile
+from app.tools.tool import Tool
 
 
 class Prinseq(Tool):
