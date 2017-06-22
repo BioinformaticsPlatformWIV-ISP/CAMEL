@@ -64,3 +64,12 @@ class BlastnTSVHit(object):
         :return: _columns
         """
         return self._columns
+
+    @property
+    def has_data(blastn_data_specifier):
+        """
+        Check whether blastn hit object has specific data
+        :param blastn_data_specifier: a specifier for blastn outfmt 6
+        :return: True if has data, False otherwise
+        """
+        return blastn_data_specifier in self._columns

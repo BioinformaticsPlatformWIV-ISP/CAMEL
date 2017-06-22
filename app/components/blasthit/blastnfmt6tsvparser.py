@@ -1,3 +1,4 @@
+import logging
 import copy
 
 
@@ -83,7 +84,7 @@ class BlastnFmt6TSVParser(object):
         with open(self._blastn_tsv, 'r') as hits_file:
             for hit_inform in hits_file.readlines():
                 hit = self.hit_class(hit_inform, self._columns)
-                seqid = hit.qseqid if key == 'qseqid' else hit.sseqid
+                seqid = getattr(hit, key)
                 if seqid in hits:
                     hits[seqid].append(hit)
                 else:
