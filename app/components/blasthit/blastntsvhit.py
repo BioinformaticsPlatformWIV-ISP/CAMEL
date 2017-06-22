@@ -68,7 +68,7 @@ class BlastnTSVHit(object):
         return self._columns
 
     @property
-    def has_data(blastn_data_specifier):
+    def has_data(self, blastn_data_specifier):
         """
         Check whether blastn hit object has specific data
         :param blastn_data_specifier: a specifier for blastn outfmt 6
