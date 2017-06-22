@@ -17,6 +17,7 @@ class BlastnTSVHit(object):
         :return: None
         """
         hit_inform = hit.split("\t")
+        hit_inform[-1] = hit_inform[-1].rstrip()
         self._columns = columns
         self._hit_str = hit
         self._check_validity(hit_inform)
@@ -28,6 +29,7 @@ class BlastnTSVHit(object):
                     setattr(self, col_name, float(data))
                 else:
                     setattr(self, col_name, data)
+
             except ValueError:
                 logging.error("Blastn hit data incompatible with its column specification, column name {!r} value {!r}.".format(
                     col_name, data))
