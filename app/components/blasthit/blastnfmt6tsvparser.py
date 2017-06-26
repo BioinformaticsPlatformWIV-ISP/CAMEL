@@ -1,9 +1,7 @@
 import copy
 
 
-from app.components.blasthit import BLASTN_SEQ_COLUMNS
-from app.components.blasthit.blastntsvhit import BlastnTSVHit
-from app.components.blasthit.blastntsvhitwithseq import BlastnTSVHitWithSeq
+from app.components.blasthit import BLASTN_INT_COLUMNS, BLASTN_FLOAT_COLUMNS, BLASTN_SEQ_COLUMNS
 from app.error.invalidparametererror import InvalidParameterError
 
 
@@ -30,10 +28,6 @@ class BlastnFmt6TSVParser(object):
             self._columns = columns
 
         self.with_seq = self.__has_seq_in_columns()
-        if self.with_seq:
-            self.hit_class = BlastnTSVHitWithSeq
-        else:
-            self.hit_class = BlastnTSVHit
 
     @property
     def inform_columns(self):
@@ -65,6 +59,44 @@ class BlastnFmt6TSVParser(object):
         """
         return any(x in self._columns for x in BLASTN_SEQ_COLUMNS)
 
+    def __check_hit_valid_ity(self, hit_informs):
+        """
+        Check the validity of a blastn hit
+        :param hit_informs: one blastn outfmt6 hit information in list
+        :return: True if valid, raise ValueError otherwise
+        """
+        if len(hit_informs) != len(self._columns):
+            raise ValueError(
+                "The number of data of blastn hit differs from the number of headers specified. #Header {!r} vs #data {!r}. Headers {!r}, data {!r}".format(len(self._columns), len(hit_informs), self._columns, hit_informs))
+
+    def __parse_blastn_hit_data(self, hit_data):
+        """
+        Parse blastn outfmt6 hit data (row) to create a hit (as dictionary)
+        :param hit_data: blastn outfmt6 hit record (one row in tsv file)
+        :return: blastn hit in dict
+        """
+        hit_informs = hit_data.split("\t")
+        hit_informs[-1] = hit_informs[-1].rstrip()
+
+        self.__check_hit_valid_ity(hit_informs)
+
+        blastn_hit = {}
+        for col_name, data in zip(self._columns, hit_informs):
+            try:
+                if col_name in BLASTN_INT_COLUMNS:
+                    blastn_hit[col_name] = int(data)
+                elif col_name in BLASTN_FLOAT_COLUMNS:
+                    blastn_hit[col_name] = float(data)
+                else:
+                    blastn_hit[col_name] = data
+
+            except ValueError:
+                logging.error("INCOMPATIBLEDATA, Blastn hit data incompatible with its column specification, column name {!r} value {!r}.".format(
+                    col_name, data))
+                raise ValueError
+
+        return blastn_hit
+
     def read_hits_as_hash(self, key='qseqid'):
         """
         Returns hits information as hash, grouped by 'key'.
@@ -81,9 +113,9 @@ class BlastnFmt6TSVParser(object):
 
         hits = {}
         with open(self._blastn_tsv, 'r') as hits_file:
-            for hit_inform in hits_file.readlines():
-                hit = self.hit_class(hit_inform, self._columns)
-                seqid = getattr(hit, key)
+            for hit_data in hits_file:
+                hit = self.__parse_blastn_hit_data(hit_data)
+                seqid = hit[key]
                 if seqid in hits:
                     hits[seqid].append(hit)
                 else:
@@ -97,6 +129,6 @@ class BlastnFmt6TSVParser(object):
         """
         hits = []
         with open(self._blastn_tsv, 'r') as hits_file:
-            for hit_inform in hits_file.readlines():
-                hits.append(self.hit_class(hit_inform, self._columns))
+            for hit_data in hits_file:
+                hit = self.__parse_blastn_hit_data(hit_data)
         return hits
