@@ -17,6 +17,7 @@ class BedtoolsGetBlastFasta(BedtoolsGetFasta):
     sequences per target (BLAST query or subject) and output into separate fasta files. Note that query sequence MUST
     be extracted from query fasta file and subject sequence should be extracted from subject fasta file.
     """
+    # TODO: update blastnhit related code upon update blastnfmt6tsvparser
     DEFAULT_BEDFILE_NAME = 'blasthits_sequences.bed'
 
     def __init__(self, camel):
