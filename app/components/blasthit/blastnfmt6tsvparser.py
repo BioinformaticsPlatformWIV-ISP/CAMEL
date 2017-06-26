@@ -1,3 +1,4 @@
+import logging
 import copy
 
 
@@ -131,4 +132,5 @@ class BlastnFmt6TSVParser(object):
         with open(self._blastn_tsv, 'r') as hits_file:
             for hit_data in hits_file:
                 hit = self.__parse_blastn_hit_data(hit_data)
+                hits.append(hit)
         return hits
