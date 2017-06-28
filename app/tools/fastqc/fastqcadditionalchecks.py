@@ -47,7 +47,7 @@ class FastQCAdditionalChecks(Tool):
                     self.__test_gc_content(self._modules['Basic Statistics']),
 
                 'Maximal N-fraction':
-                    self.__test_max_n_count(self._modules['Per base N content']),
+                    self.__test_max_n_fraction(self._modules['Per base N content']),
 
                 'Sequence length distribution':
                     self.__test_sequence_length_distribution(self._modules['Sequence Length Distribution'])
@@ -301,33 +301,33 @@ class FastQCAdditionalChecks(Tool):
             return 'Pass'
 
     @staticmethod
-    def __get_max_n_count(data):
+    def __get_max_n_fraction(data):
         """
-        Returns the maximum N count.
+        Returns the maximum N fraction.
         :param data: Per base N content data
-        :return: Count
+        :return: Fraction
         """
-        max_count = 0.0
+        max_fraction = 0.0
         for row in data[1:]:
-            base, n_count = row.split('\t')
-            if float(n_count) > max_count:
-                max_count = float(n_count)
-        return max_count
+            base, n_fraction = row.split('\t')
+            if float(n_fraction) > max_fraction:
+                max_fraction = float(n_fraction)
+        return max_fraction
 
-    def __test_max_n_count(self, data):
+    def __test_max_n_fraction(self, data):
         """
-        Tests whether the N count is below a threshold for every base.
+        Tests whether the N fraction is below a threshold for every base.
         :param data: Per base N content data
         :return: 'Pass', 'Warn' or 'Fail'
         """
-        threshold_fail = float(self._parameters['n_count_threshold_fail'].value)
-        threshold_warn = float(self._parameters['n_count_threshold_warn'].value)
-        max_n_count = self.__get_max_n_count(data)
-        logging.debug("Maximal N count: {:.4f}".format(max_n_count))
+        threshold_fail = float(self._parameters['n_fraction_threshold_fail'].value)
+        threshold_warn = float(self._parameters['n_fraction_threshold_warn'].value)
+        max_n_fraction = self.__get_max_n_fraction(data)
+        logging.debug("Maximal N fraction: {:.4f}".format(max_n_fraction))
 
-        if max_n_count > threshold_fail:
+        if max_n_fraction > threshold_fail:
             return 'Fail'
-        elif max_n_count > threshold_warn:
+        elif max_n_fraction > threshold_warn:
             return 'Warn'
         else:
             return 'Pass'
