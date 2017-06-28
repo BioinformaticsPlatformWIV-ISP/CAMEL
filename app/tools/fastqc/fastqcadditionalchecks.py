@@ -14,7 +14,6 @@ class FastQCAdditionalChecks(Tool):
         :param camel: Camel instance
         """
         super(FastQCAdditionalChecks, self).__init__('FastQC additional checks', '0.1', camel)
-        self._modules = None
 
     def _check_input(self):
         """
@@ -80,30 +79,35 @@ class FastQCAdditionalChecks(Tool):
                     return line.split('\t')[1].strip()
         raise ValueError("Cannot determine sample name from: {}".format(data))
 
-    def __get_total_reads(self):
+    @staticmethod
+    def __get_total_reads(modules):
         """
         Returns the total number of reads.
+        :param modules: Data modules
         :return: Total nb of reads
         """
-        for line in self._modules['Basic Statistics']:
+        for line in modules['Basic Statistics']:
             if line.startswith('Total Sequences'):
                 return int(line.split('\t')[1])
 
-    def __get_length_cutoff(self, percentage):
+    @staticmethod
+    def __get_length_cutoff(modules, percentage):
         """
         Returns the sequence length for which the given percentage of reads is bigger.
+        :param modules: Modules with data
         :param percentage: Percentage
         :return: Length cutoff
         """
-        total_reads = self.__get_total_reads()
+        total_reads = FastQCAdditionalChecks.__get_total_reads(modules)
         percent_reads_passed = 0.0
-        sequence_length_data = self._modules['Sequence Length Distribution']
+        sequence_length_data = modules['Sequence Length Distribution']
+        last_base = int(sequence_length_data[-1].split('\t')[0].split('-')[-1])
         for line in sequence_length_data[1:]:
             interval, count = line.strip().split('\t')
             percent_reads_passed += 100 * float(count) / total_reads
             if percent_reads_passed > (100.0-percentage):
-                last_base = int(sequence_length_data[-1].split('\t')[0].split('-')[-1])
                 return last_base - int(interval.split('-')[0])
+        return 0
 
     @staticmethod
     def __get_mean_qscore_drop(data, threshold):
@@ -214,8 +218,9 @@ class FastQCAdditionalChecks(Tool):
 
         param_value = self._parameters['per_base_sequence_content_skipped_end'].value
         if '%' in param_value:
+            logging.info("Dropping {} of reads before checking GC/AT".format(param_value))
             percentage_reads_skipped = float(param_value.replace('%', ''))
-            skipped_bases_end = self.__get_length_cutoff(percentage_reads_skipped)
+            skipped_bases_end = self.__get_length_cutoff(modules, percentage_reads_skipped)
         else:
             skipped_bases_end = int(self._parameters['per_base_sequence_content_skipped_end'].value)
 
@@ -317,7 +322,7 @@ class FastQCAdditionalChecks(Tool):
 
     def __test_max_n_fraction(self, modules):
         """
-        Tests whether the N count is below a threshold for every base.
+        Tests whether the N fraction is below a threshold for every base.
         :param modules: Parsed FastQC data
         :return: 'Pass', 'Warn' or 'Fail'
         """
@@ -325,7 +330,7 @@ class FastQCAdditionalChecks(Tool):
         threshold_fail = float(self._parameters['n_fraction_threshold_fail'].value)
         threshold_warn = float(self._parameters['n_fraction_threshold_warn'].value)
         max_n_fraction = self.__get_max_n_fraction(data)
-        logging.debug("Maximal N count: {:.4f}".format(max_n_fraction))
+        logging.debug("Maximal N fraction: {:.4f}".format(max_n_fraction))
 
         if max_n_fraction > threshold_fail:
             return 'Fail'
