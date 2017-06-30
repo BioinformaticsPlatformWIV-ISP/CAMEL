@@ -5,12 +5,11 @@ from app.error.toolexecutionerror import ToolExecutionError
 from app.tools.tool import Tool
 
 
-class Bedtools(Tool):
+class Bedtools(Tool, metaclass=abc.ABCMeta):
 
     """
     The master class for Bedtools toolset
     """
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self, tool_name, version, camel):
         """

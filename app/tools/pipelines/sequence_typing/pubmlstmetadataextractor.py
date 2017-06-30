@@ -49,7 +49,7 @@ class PubmlstMetadataExtractor(Tool):
             label, value = PubMLSTParser.parse_page(allele_url)
             self.informs[allele_name] = ['{} ({})'.format(label, allele_name), value]
         except RuntimeError as err:
-            logging.warning('Cannot retrieve linked data for {} ({}, {})'.format(name, err.message, allele_url))
+            logging.warning('Cannot retrieve linked data for {} ({}, {})'.format(name, err, allele_url))
 
     @staticmethod
     def __clean_allele_id(allele_id):

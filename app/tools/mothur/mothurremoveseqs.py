@@ -37,7 +37,7 @@ class MothurRemoveSeqs(Mothur):
                                                  'remove.seqs: {!r}'.format(self._tool_inputs))
         if len(self._tool_inputs.keys()) > 3:
             raise InvalidInputSpecificationError('Too many input keys given for Mothur remove.seqs: {!r}'.format(self._tool_inputs))
-        for key, input_files in self._tool_inputs.iteritems():
+        for key, input_files in self._tool_inputs.items():
             if key not in ['TSV_Accnos', 'FASTA', 'TSV_Names', 'TSV_Counts', 'TSV_Groups',
                            'TSV_AlignReport', 'TSV_List', 'TSV_Taxonomy', 'TSV_Qfile', 'FASTQ']:
                 raise InvalidInputSpecificationError('Invalid input key given for Mothur remove.seqs: {!r}'.format(self._tool_inputs))
@@ -62,7 +62,7 @@ class MothurRemoveSeqs(Mothur):
                             'TSV_List': 'list=',
                             'TSV_Taxonomy': 'taxonomy=',
                             'TSV_Qfile': 'qfile='}
-        for key, input_files in self._tool_inputs.iteritems():
+        for key, input_files in self._tool_inputs.items():
             # Only two keys are possible so the one that is not TSV_Accnos
             # will define the option flag that is needed
             if key != 'TSV_Accnos':
@@ -86,7 +86,7 @@ class MothurRemoveSeqs(Mothur):
                              'TSV_List': ['.', '.pick.list'],
                              'TSV_Taxonomy': ['.', '.pick.taxonomy'],
                              'TSV_Qfile': ['.', '.pick.qual']}
-        for key, input_files in self._tool_inputs.iteritems():
+        for key, input_files in self._tool_inputs.items():
             # The TSV_Accnos file does not directly lead to output
             if key != 'TSV_Accnos':
                 basename = super(MothurRemoveSeqs, self)._get_basename(key, output_extensions[key][0])
@@ -94,6 +94,6 @@ class MothurRemoveSeqs(Mothur):
 
     def __check_empty_input(self):
         if os.path.getsize(self._tool_inputs['TSV_Accnos'][0].path) == 0:
-            with open(self._tool_inputs['TSV_Accnos'][0].path, 'wb') as outf:
+            with open(self._tool_inputs['TSV_Accnos'][0].path, 'wt', encoding='utf-8') as outf:
                 outf.write('adding_dummy_entry_as_original_file_is_empty\n')
                 logging.warning('WARNING: ACCNOS file was empty, added a dummy record!')

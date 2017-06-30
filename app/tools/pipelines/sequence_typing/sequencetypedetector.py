@@ -55,7 +55,7 @@ class SequenceTypeDetector(Tool):
                 try:
                     gene_indices[gene_name] = genes_in_header.index(gene_name)
                 except ValueError:
-                    raise StandardError("Gene {} not found in '{}'".format(gene_name, profiles_file))
+                    raise Exception("Gene {} not found in '{}'".format(gene_name, profiles_file))
         return gene_indices
 
     def __get_sequence_type(self, profiles_file, gene_alleles):
@@ -65,7 +65,7 @@ class SequenceTypeDetector(Tool):
         :param gene_alleles: Alleles for the genes.
         :return: Sequence type and metadata
         """
-        gene_indices = self.__get_gene_indices(gene_alleles.keys(), profiles_file)
+        gene_indices = self.__get_gene_indices(list(gene_alleles.keys()), profiles_file)
         with open(profiles_file.path) as profiles:
             content = profiles.readlines()
             for line in content[1:]:

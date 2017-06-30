@@ -4,12 +4,10 @@ from abc import ABCMeta
 from yattag import Doc
 
 
-class HtmlElement(object):
+class HtmlElement(object, metaclass=ABCMeta):
     """
     Base class for HTML tags.
     """
-
-    __metaclass__ = ABCMeta
 
     def __init__(self):
         """
@@ -18,7 +16,8 @@ class HtmlElement(object):
         self._doc, self._tag, self._text = Doc().tagtext()
         self._html = self._generate_html()
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def text_value(self):
         """
         Textual value of the HtmlElement.

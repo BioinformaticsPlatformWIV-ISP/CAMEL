@@ -28,7 +28,7 @@ class MothurClassifyOtu(Mothur):
         if 'TSV_List' not in self._tool_inputs or 'TSV_Taxonomy' not in self._tool_inputs:
             raise InvalidInputSpecificationError('Invalid input files (keys) given for Mothur '
                                                  'classify.otu: {!r}'.format(self._tool_inputs))
-        for key, input_files in self._tool_inputs.iteritems():
+        for key, input_files in self._tool_inputs.items():
             if key not in ['TSV_List', 'TSV_Taxonomy', 'TSV_Groups', 'TSV_Counts', 'TSV_Names', 'TSV_RefTaxonomy']:
                 raise InvalidInputSpecificationError('Invalid input key given for Mothur '
                                                      'classify.otu: {!r}'.format(self._tool_inputs))

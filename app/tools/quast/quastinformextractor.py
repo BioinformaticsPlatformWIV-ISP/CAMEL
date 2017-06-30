@@ -58,7 +58,7 @@ class QuastInformExtractor(Tool):
             for line in [l.strip() for l in inf.readlines()]:
                 if len(line.split("\t")) > 1:
                     stats_key, stats_value = line.split("\t")
-                    for qc_sect, qc_sect_stats in qc_stats.iteritems():
+                    for qc_sect, qc_sect_stats in qc_stats.items():
                         if stats_key in qc_sect_stats:
                             self._informs[qc_sect][stats_key] = stats_value
                             break

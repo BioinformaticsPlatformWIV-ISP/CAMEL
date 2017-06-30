@@ -38,7 +38,7 @@ class MothurGetOturep(Mothur):
         if 'DIST' in self._tool_inputs and ('TSV_Counts' not in self._tool_inputs and 'TSV_Names' not in self._tool_inputs):
             raise InvalidInputSpecificationError('TSV_Counts or TSV_Names required of column distance matrix is given '
                                                  'for Mothur get.oturep: {!r}'.format(self._tool_inputs))
-        for key, input_files in self._tool_inputs.iteritems():
+        for key, input_files in self._tool_inputs.items():
             if key not in ['PHY', 'DIST', 'FASTA', 'TSV_Counts', 'TSV_Names', 'TSV_Groups', 'TSV_List']:
                 raise InvalidInputSpecificationError('Invalid input key given for Mothur get.oturep: {!r}'.format(self._tool_inputs))
             if len(input_files) != 1:

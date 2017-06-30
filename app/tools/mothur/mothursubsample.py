@@ -24,7 +24,7 @@ class MothurSubSample(Mothur):
         """
         super(MothurSubSample, self)._check_input()
         allowed_primary_input = ['FASTA', 'TSV_List', 'TSV_Shared', 'TSV_Rabund', 'TSV_Sabund']
-        for key, input_files in self._tool_inputs.iteritems():
+        for key, input_files in self._tool_inputs.items():
             if key not in allowed_primary_input and key not in ['TSV_Groups', 'TSV_Counts', 'TSV_Names']:
                 raise InvalidInputSpecificationError('Invalid input key given for Mothur sub.sample: {!r}'.format(self._tool_inputs))
             if len(input_files) != 1:
@@ -70,7 +70,7 @@ class MothurSubSample(Mothur):
                              'TSV_Shared': ['.', '.subsample.shared'],
                              'TSV_Rabund': ['.', '.subsample.rabund'],
                              'TSV_Sabund': ['.', '.subsample.sabund']}
-        for key, input_files in self._tool_inputs.iteritems():
+        for key, input_files in self._tool_inputs.items():
             if key in output_extensions:
                 basename = super(MothurSubSample, self)._get_basename(key, output_extensions[key][0])
                 self._tool_outputs[key] = []

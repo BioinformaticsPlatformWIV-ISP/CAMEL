@@ -41,7 +41,7 @@ class RefCov(Tool):
         super(RefCov, self)._check_input()
         if 'BAM' not in self._tool_inputs:
             raise InvalidInputSpecificationError('BAM input key is required for RefCov: {!r}'.format(self._tool_inputs))
-        for key, value in self._tool_inputs.iteritems():
+        for key, value in self._tool_inputs.items():
             if key not in ['BAM', 'BED'] or len(value) > 1:
                 raise InvalidInputSpecificationError('Invalid input given for RefCov '
                                                      '(BAM/BED and 1 file per key): {!r}'.format(self._tool_inputs))

@@ -4,6 +4,5 @@ bs4==0.0.1
 psycopg2==2.6.2
 PyVCF==0.6.8
 PyYAML==3.12
-subprocess32==3.2.7
 yattag==1.7.2
 screed==0.9

@@ -41,10 +41,10 @@ class Megahit(Tool):
         if len(self._tool_inputs.keys()) != 1:
             raise InvalidInputSpecificationError('Invalid number of input keys given for Megahit '
                                                  '(only 1 allowed): {!r}'.format(self._tool_inputs))
-        if self._tool_inputs.keys()[0] not in ['FASTQ_PE', 'FASTA_PE', 'FASTQ_SE', 'FASTA_SE', 'FASTQ_INT', 'FASTA_INT']:
+        if list(self._tool_inputs.keys())[0] not in ['FASTQ_PE', 'FASTA_PE', 'FASTQ_SE', 'FASTA_SE', 'FASTQ_INT', 'FASTA_INT']:
             raise InvalidInputSpecificationError('Not enough valid input files given for Megahit '
                                                  '(only FASTQ/A - SE, PE, or INT allowed): {!r}'.format(self._tool_inputs))
-        key, value = self._tool_inputs.items()[0]
+        key, value = list(self._tool_inputs.items())[0]
         if (key.endswith('PE') and len(value) != 2) or (not key.endswith('PE') and len(value) != 1):
             raise ValueError('Invalid number (2 for PE, 1 for SE or INT) of files per key given '
                              'for Megahit: {!r}'.format(self._tool_inputs))
@@ -54,7 +54,7 @@ class Megahit(Tool):
         Sets the instance variable self.__input_key
         :return: None
         """
-        self.__input_key = self._tool_inputs.keys()[0]
+        self.__input_key = list(self._tool_inputs.keys())[0]
 
     def __set_output(self):
         """

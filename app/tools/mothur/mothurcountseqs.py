@@ -34,7 +34,7 @@ class MothurCountSeqs(Mothur):
                                                  count.seqs: {!r}'.format(self._tool_inputs))
         if len(self._tool_inputs.keys()) > 2:
             raise InvalidInputSpecificationError('Too many input keys given for Mothur count.seqs: {!r}'.format(self._tool_inputs))
-        for key, input_files in self._tool_inputs.iteritems():
+        for key, input_files in self._tool_inputs.items():
             if key not in ['TSV_Names', 'TSV_Groups']:
                 raise InvalidInputSpecificationError('Invalid input key given for Mothur count.seqs: {!r}'.format(self._tool_inputs))
 

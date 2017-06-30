@@ -42,7 +42,7 @@ class Quast(Tool):
         if 'FASTA' not in self._tool_inputs:
             raise InvalidInputSpecificationError(
                 'QUAST required FASTA input is missing: {!r}'.format(self._tool_inputs))
-        for key, values in self._tool_inputs.iteritems():
+        for key, values in self._tool_inputs.items():
             if key not in ['FASTA', 'FASTA_Ref', 'TSV_Gene', 'TSV_Operon']:
                 raise InvalidInputSpecificationError(
                     'Illegal input key given for QUAST: {!r}'.format(self._tool_inputs))
@@ -101,7 +101,7 @@ class Quast(Tool):
             'HTML_alignment_viewer': 'icarus_viewers/alignment_viewer.html',
             'HTML_contig_size_viewer': 'icarus_viewers/contig_size_viewer.html'
         }
-        for key, value in icarus_output_keys.iteritems():
+        for key, value in icarus_output_keys.items():
             if key == 'HTML_alignment_viewer' and 'FASTA_Ref' not in self._tool_inputs:
                 # skip HTML_alignment_viewer when no reference genome is provided
                 continue

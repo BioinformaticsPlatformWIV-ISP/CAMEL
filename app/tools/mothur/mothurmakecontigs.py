@@ -29,7 +29,7 @@ class MothurMakeContigs(Mothur):
         super(MothurMakeContigs, self)._check_input()
         if len(self._tool_inputs.keys()) != 1:
             raise InvalidInputSpecificationError('Too many input keys given for Mothur make.contigs: {!r}'.format(self._tool_inputs))
-        for key, input_files in self._tool_inputs.iteritems():
+        for key, input_files in self._tool_inputs.items():
             if key not in ['FASTQ_PE', 'FASTA_PE', 'TSV_File', 'TSV_Oligos']:
                 raise InvalidInputSpecificationError('Invalid input key given for Mothur make.contigs: {!r}'.format(self._tool_inputs))
             if key in ['FASTQ_PE', 'FASTA_PE']:
@@ -49,7 +49,7 @@ class MothurMakeContigs(Mothur):
         :return: String with the input parameters
         """
         items = []
-        for key, input_files in self._tool_inputs.iteritems():
+        for key, input_files in self._tool_inputs.items():
             if key == 'FASTQ_PE':
                 items.append('ffastq={}, rfastq={}'.format(input_files[0], input_files[1]))
             elif key == 'FASTA_PE':
@@ -67,7 +67,7 @@ class MothurMakeContigs(Mothur):
         :return: None
         """
         # As only one key is allowed, take the basename from the file(s) in the first key
-        basename = super(MothurMakeContigs, self)._get_basename(self._tool_inputs.keys()[0], '.')
+        basename = super(MothurMakeContigs, self)._get_basename(list(self._tool_inputs.keys())[0], '.')
         self._tool_outputs['FASTA_Contig'] = [ToolIOFile(basename + '.trim.contigs.fasta')]
         self._tool_outputs['FASTA_Scrap'] = [ToolIOFile(basename + '.scrap.contigs.fasta')]
         self._tool_outputs['QUAL_Contig'] = [ToolIOFile(basename + '.trim.contigs.qual')]

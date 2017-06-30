@@ -9,12 +9,11 @@ from app.io.tooliofile import ToolIOFile
 from app.tools.tool import Tool
 
 
-class Picard(Tool):
+class Picard(Tool, metaclass=abc.ABCMeta):
 
     """
     Super class for Picard tools
     """
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self, tool_name, version, camel):
         """

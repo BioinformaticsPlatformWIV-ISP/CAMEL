@@ -8,7 +8,7 @@ import yaml
 from app.components.filesystemhelper import FileSystemHelper
 from app.loggers.logmanager import LogManager
 from app.services.pipelineservice import PipelineService
-from step import Step
+from app.pipeline.step import Step
 
 
 class Pipeline(object):
@@ -150,7 +150,7 @@ class Pipeline(object):
         :param options: Options with step name as key
         :return: None
         """
-        for step_name, step_options in options.iteritems():
+        for step_name, step_options in options.items():
             step = self.get_step(step_name)
             if step is None:
                 raise ValueError("No step named '{}'".format(step_name))
@@ -172,7 +172,7 @@ class Pipeline(object):
                     if 'pipeline-outputs' in yaml_data:
                         self._pipeline_output_specification.extend(yaml_data['pipeline-outputs'])
                 except KeyError as err:
-                    raise ValueError("'{}' missing in pipeline specification '{}'".format(err.message, yaml_file))
+                    raise ValueError("'{}' missing in pipeline specification '{}'".format(err, yaml_file))
 
     def _parse_steps(self, step_data):
         """
@@ -191,7 +191,7 @@ class Pipeline(object):
                     new_step.next_step_specification = step['next-step']
                 self._steps.append(new_step)
             except KeyError as err:
-                raise ValueError("'{}' missing in step specification {}".format(err.message, step_data.index(step)))
+                raise ValueError("'{}' missing in step specification {}".format(err, step_data.index(step)))
 
     def _update_steps_in_db(self):
         """
@@ -364,7 +364,7 @@ class Pipeline(object):
         try:
             return self._configs[key]
         except KeyError as err:
-            raise ValueError("Cannot retrieve '{}' from pipeline configs '{}'".format(err.message, self._configs))
+            raise ValueError("Cannot retrieve '{}' from pipeline configs '{}'".format(err, self._configs))
 
     def _get_inform_value(self, key, step_name):
         """
@@ -376,7 +376,7 @@ class Pipeline(object):
         try:
             return self.get_step(step_name).informs[key]
         except KeyError as err:
-            raise ValueError("Cannot retrieve '{}' informs from '{}'".format(err.message, step_name))
+            raise ValueError("Cannot retrieve '{}' informs from '{}'".format(err, step_name))
 
     @staticmethod
     def _evaluate_expression(expression):
@@ -388,10 +388,10 @@ class Pipeline(object):
         try:
             result = eval(expression)
         except SyntaxError as err:
-            raise StandardError("Invalid condition: {0} ({1})".format(expression, err))
+            raise Exception("Invalid condition: {0} ({1})".format(expression, err))
 
         if not type(result) is bool:
-            raise StandardError('Condition did not evaluate to boolean value ({0})'.format(expression))
+            raise Exception('Condition did not evaluate to boolean value ({0})'.format(expression))
         return result
 
     def _log_initial_input(self):
@@ -399,7 +399,7 @@ class Pipeline(object):
         Logs the initial input of the pipeline.
         :return: None
         """
-        for key, files in self._initial_input.iteritems():
+        for key, files in self._initial_input.items():
             for i in range(0, len(files)):
                 if files[i].logged:
                     self._pipeline_service.log_initial_input(self._job_id, files[i].TYPE_NAME, key, i, files[i].hash)

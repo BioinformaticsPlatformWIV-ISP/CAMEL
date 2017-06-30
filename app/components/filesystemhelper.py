@@ -12,10 +12,10 @@ class FileSystemHelper(object):
         :param value: Input value
         :return: URL- and filename friendly value
         """
-        value = unicodedata.normalize('NFKD', unicode(value)).encode('ascii', 'ignore')
-        value = unicode(re.sub('[^\w\s-]', '', value).strip())
-        value = unicode(re.sub('[-\s]+', '_', value))
-        return str(value)
+        value = str(unicodedata.normalize('NFKD', str(value)).encode('ascii', 'ignore'))
+        value = re.sub('[^\w\s-]', '', value).strip()
+        value = re.sub('[-\s]+', '_', value)
+        return value
 
     @staticmethod
     def get_file_with_extension(input_folder, extension):

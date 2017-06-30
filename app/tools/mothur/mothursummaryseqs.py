@@ -28,7 +28,7 @@ class MothurSummarySeqs(Mothur):
         super(MothurSummarySeqs, self)._check_input()
         if 'FASTA' not in self._tool_inputs:
             raise InvalidInputSpecificationError('No input file given for Mothur summary.seqs: {!r}'.format(self._tool_inputs))
-        for key, input_files in self._tool_inputs.iteritems():
+        for key, input_files in self._tool_inputs.items():
             if key not in ['FASTA', 'TSV_Counts']:
                 raise InvalidInputSpecificationError('Invalid input key given for Mothur summary.seqs: {!r}'.format(self._tool_inputs))
             if len(input_files) != 1:
@@ -74,7 +74,7 @@ class MothurSummarySeqs(Mothur):
         Writes the statistics that were output to stdout to a file
         :return: None
         """
-        output_file = file(self._get_basename() + '.stats', 'w')
+        output_file = open(self._get_basename() + '.stats', 'wt', encoding='utf-8')
         write_to_output = False
         for line in self._command.stdout.splitlines():
             # The first line of the stats starts with two tabs (i.e. \t\tStart\tEnd...)
