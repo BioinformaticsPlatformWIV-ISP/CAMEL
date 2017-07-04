@@ -1,0 +1,17 @@
+# This is used to configure the CAMEL loggers.
+# Step handlers can be added by using a name that starts with 'step', pipeline handlers start with 'pipeline'.
+# These handlers will create separate log files for each step / pipeline.
+version: 1
+formatters:
+  basic:
+    format: '%(module)15s - %(levelname)7s - %(message)s'
+handlers:
+  console:
+    class: logging.StreamHandler
+    level: DEBUG
+    formatter: basic
+    stream: ext://sys.stdout
+
+root:
+  level: DEBUG
+  handlers: [console]
