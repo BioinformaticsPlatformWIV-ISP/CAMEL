@@ -10,21 +10,22 @@ class SnakeStep(Step):
     This class represents a step in a Snakemake pipeline. It executes a single tool.
     """
 
-    def __init__(self, name, tool, pipeline_name, job_id, camel, folder, db_logging=False):
+    def __init__(self, name, tool, camel, folder, config):
         """
         Initializes the step
         :param name: Name of the step
         :param tool: Tool that needs to be executed
-        :param pipeline: Pipeline object of which this step is a part
-        :param camel: Camel object
+        :param config: Dictionary with a Camel instance, logging (boolean), pipeline_name and job_id values 
         :param folder: Working directory where the tool has to run
         """
+        if not all([x in config for x in ['logging', 'pipeline_name', 'pipeline_job_id']]):
+            raise ValueError('Not all required keys (logging, pipeline_name, pipeline_job_id) are given in the config dictionary: {}'.format(config))
         super(SnakeStep, self).__init__(name, tool, None, camel)
-        self._db_logging = db_logging
-        self._pipeline_service = PipelineService(pipeline_name, camel.connection)
+        self._db_logging = config['logging']
+        self._pipeline_service = PipelineService(config['pipeline_name'], camel.connection)
         self.__set_step_id()
         self._folder = folder
-        self._job_id = job_id
+        self._job_id = config['pipeline_job_id']
 
     def __set_step_id(self):
         """

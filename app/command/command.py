@@ -34,10 +34,11 @@ class Command(object):
     def command(self, cmd):
         self._command = cmd
 
-    def run_command(self, folder):
+    def run_command(self, folder, stderr_handle=subprocess.PIPE):
         """
         Runs the command given at command initialization
         :param folder: Folder where the command is executed
+        :param stderr_handle: Handle for the standard error (e.g. PIPE or STDOUT)
         :return: None
         """
         logging.info('Executing command: {}'.format(self.command))
@@ -46,12 +47,13 @@ class Command(object):
         self._procedure = subprocess.run(
             self._command,
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            stderr=stderr_handle,
             shell=True,
             executable='/bin/bash',
             cwd=folder)
         self._stdout = self._procedure.stdout.decode('utf-8')
-        self._stderr = self._procedure.stderr.decode('utf-8')
+        if self._stderr is not None:
+            self._stderr = self._procedure.stderr.decode('utf-8')
         self._return_code = self._procedure.returncode
         logging.debug('stdout: {}'.format(self._stdout))
         logging.debug('stderr: {}'.format(self._stderr))

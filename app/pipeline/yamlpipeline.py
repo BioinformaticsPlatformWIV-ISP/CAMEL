@@ -385,3 +385,11 @@ class YAMLPipeline(Pipeline):
             except KeyError:
                 logging.warning("Step '{}' does not have an output '{}'".format(
                     output_specification['from'], output_specification['name']))
+
+    def set_initial_input(self, files):
+        """
+        Sets the initial inputs for the pipeline allowing it to be logged if logging is requested.
+        :param files: Dictionary of input files
+        :return: None
+        """
+        super(YAMLPipeline, self).set_initial_input(files)

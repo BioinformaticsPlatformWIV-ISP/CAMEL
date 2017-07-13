@@ -1,7 +1,9 @@
 import logging
 
+from abc import ABC, abstractmethod
 
-class Pipeline(object):
+
+class Pipeline(ABC):
     """
     Class meant to handle the workflow of steps.
     """
@@ -56,6 +58,7 @@ class Pipeline(object):
                     self._pipeline_service.log_initial_input(self._job_id, files[i].TYPE_NAME, key, i, files[i].hash)
                     logging.debug('Initial input {} ({}) logged'.format(key, i))
 
+    @abstractmethod
     def set_initial_input(self, files):
         """
         Sets the initial input files of the pipeline.

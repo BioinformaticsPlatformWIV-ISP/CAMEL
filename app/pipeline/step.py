@@ -1,8 +1,11 @@
-from app.services.stepservice import StepService
 import logging
 
+from abc import ABC, abstractmethod
 
-class Step(object):
+from app.services.stepservice import StepService
+
+
+class Step(ABC):
     """
     This class represents a step in a pipeline. It executes a single tool.
     """
@@ -101,3 +104,7 @@ class Step(object):
         if len(self._job_options) > 0:
             logging.info("Adding job parameters")
             self._tool.update_parameters(**self._job_options)
+
+    @abstractmethod
+    def run_step(self):
+        pass
