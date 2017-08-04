@@ -1,7 +1,7 @@
 version: 1
 formatters:
   basic:
-    format: '%(module)15s - %(levelname)7s - %(message)s'
+    format: '%(process)6d - %(module)15s - %(levelname)7s - %(message)s'
 handlers:
   console:
     class: logging.StreamHandler
