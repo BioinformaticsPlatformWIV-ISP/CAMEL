@@ -52,8 +52,10 @@ class Command(object):
             executable='/bin/bash',
             cwd=folder)
         self._stdout = self._procedure.stdout.decode('utf-8')
-        if self._stderr is not None:
+        if self._procedure.stderr is not None:
             self._stderr = self._procedure.stderr.decode('utf-8')
+        else:
+            self._stderr = ''
         self._return_code = self._procedure.returncode
         logging.debug('stdout: {}'.format(self._stdout))
         logging.debug('stderr: {}'.format(self._stderr))
