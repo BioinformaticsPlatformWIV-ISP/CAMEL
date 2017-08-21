@@ -9,7 +9,6 @@ class FastqToSam(Picard):
     """
     Class for Picard FastqToSam function
     """
-    SAMPLE_NAME = 'sampleA'
 
     def __init__(self, camel):
         """
