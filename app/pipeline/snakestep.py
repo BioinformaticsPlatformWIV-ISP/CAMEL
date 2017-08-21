@@ -1,5 +1,6 @@
 import logging
 
+from app.loggers.logmanager import LogManager
 from app.pipeline.step import Step
 from app.services.pipelineservice import PipelineService
 from app.services.stepservice import StepService
@@ -42,6 +43,7 @@ class SnakeStep(Step):
         Runs the current step.
         :return: None
         """
+        LogManager.attach_step_handlers(self._folder)
         self._tool.add_input_files(self._step_inputs)
         self._tool.add_input_informs(self._input_informs)
         logging.info("Default parameters loaded: {}".format(self._tool.parameter_overview))
@@ -54,6 +56,7 @@ class SnakeStep(Step):
         if self._db_logging is True:
             self._log_outputs()
             self._log_job_parameters()
+        LogManager.detach_step_handlers()
 
     @property
     def name(self):
