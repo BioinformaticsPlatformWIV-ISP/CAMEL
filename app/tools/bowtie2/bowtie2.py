@@ -4,9 +4,8 @@ from app.error.toolexecutionerror import ToolExecutionError
 from app.tools.tool import Tool
 
 
-class Bowtie2(Tool):
+class Bowtie2(Tool, metaclass=abc.ABCMeta):
     """Super class for read mapping using Bowtie2"""
-    __metaclass__ = abc.ABCMeta
 
     def _check_command_output(self):
         """

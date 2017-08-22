@@ -27,7 +27,7 @@ class MothurClusterSplit(Mothur):
         :return: None
         """
         super(MothurClusterSplit, self)._check_input()
-        for key, input_files in self._tool_inputs.iteritems():
+        for key, input_files in self._tool_inputs.items():
             if key not in ['PHY', 'DIST', 'TSV_Names', 'TSV_Taxonomy', 'FASTA', 'TSV_File', 'TSV_Counts']:
                 raise InvalidInputSpecificationError('Invalid input key given for Mothur '
                                                      'cluster.split: {!r}'.format(self._tool_inputs))
@@ -82,7 +82,7 @@ class MothurClusterSplit(Mothur):
         :return: String with extension
         """
         extension = ''
-        for name, parameter in self._parameters.iteritems():
+        for name, parameter in self._parameters.items():
             if name == 'method':
                 if parameter.value == 'nearest':
                     extension = '.nn.unique_list.list'
@@ -99,7 +99,7 @@ class MothurClusterSplit(Mothur):
         changes the output.
         :return: Key to be used for the output
         """
-        for name, parameter in self._parameters.iteritems():
+        for name, parameter in self._parameters.items():
             if name == 'cluster':
                 if parameter.value.upper() == 'FALSE':
                     return 'TSV_File'

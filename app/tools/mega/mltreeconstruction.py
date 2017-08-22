@@ -150,7 +150,7 @@ class MLTreeConstruction(Tool):
                 branch_swap_filter=self.__get_parameter_value('branch_swap_filter'),
                 gamma_categories=self.__get_parameter_value('gamma_categories'),
                 missing_data_treatment=self.__get_parameter_value('missing_data_treatment'),
-                site_coverage_cutoff =self.__get_parameter_value('site_coverage_cutoff'),
+                site_coverage_cutoff=self.__get_parameter_value('site_coverage_cutoff'),
                 threads=self.__get_parameter_value('threads')
             ))
         return config_file

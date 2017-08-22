@@ -25,7 +25,7 @@ class MothurCountGroups(Mothur):
         :return: None
         """
         super(MothurCountGroups, self)._check_input()
-        for key, input_files in self._tool_inputs.iteritems():
+        for key, input_files in self._tool_inputs.items():
             if key not in ['TSV_Groups', 'TSV_Counts', 'TSV_Shared', 'TSV_Accnos']:
                 raise InvalidInputSpecificationError('Invalid input key given for Mothur '
                                                      'count.groups: {!r}'.format(self._tool_inputs))

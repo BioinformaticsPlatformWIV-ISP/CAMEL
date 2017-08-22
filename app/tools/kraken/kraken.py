@@ -45,7 +45,7 @@ class Kraken(Tool):
         """
         if not any(key in self._tool_inputs for key in ('FASTA', 'FASTQ', 'FASTQ_PE')) or 'DB' not in self._tool_inputs:
             raise InvalidInputSpecificationError('FASTA/Q input or DB input missing for Kraken: {!r}'.format(self._tool_inputs))
-        for key, value in self._tool_inputs.iteritems():
+        for key, value in self._tool_inputs.items():
             if (key != 'FASTQ_PE' and len(value) > 1) or (key == 'FASTQ_PE' and len(value) != 2):
                 raise InvalidInputSpecificationError('There is more than 1 FASTA/Q file or more/less than two FASTQ_PE '
                                                      'files given for Kraken: {!r}'.format(self._tool_inputs))

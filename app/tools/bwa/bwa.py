@@ -3,9 +3,8 @@ from app.error.toolexecutionerror import ToolExecutionError
 from app.tools.tool import Tool
 
 
-class BWA(Tool):
+class BWA(Tool, metaclass=abc.ABCMeta):
     """Super class for reads mapping using BWA"""
-    __metaclass__ = abc.ABCMeta
 
     def _check_command_output(self):
         """

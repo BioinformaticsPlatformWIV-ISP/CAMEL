@@ -2,10 +2,9 @@ import abc
 from app.tools.tool import Tool
 
 
-class Velvet(Tool):
+class Velvet(Tool, metaclass=abc.ABCMeta):
 
     """ Super class for Velvet related tools: velveth, VelvetOptimiser to handle inputs """
-    __metaclass__ = abc.ABCMeta
 
     FILEOPT_MAPPING = {
         'FASTA_REF': '-reference -fasta',

@@ -29,7 +29,7 @@ class MothurUniqueSeqs(Mothur):
         super(MothurUniqueSeqs, self)._check_input()
         if 'FASTA' not in self._tool_inputs:
             raise InvalidInputSpecificationError('No input file given for Mothur unique.seqs: {!r}'.format(self._tool_inputs))
-        for key, input_files in self._tool_inputs.iteritems():
+        for key, input_files in self._tool_inputs.items():
             if key not in ['FASTA', 'TSV_Counts']:
                 raise InvalidInputSpecificationError('Invalid input key given for Mothur unique.seqs: {!r}'.format(self._tool_inputs))
             if len(input_files) != 1:

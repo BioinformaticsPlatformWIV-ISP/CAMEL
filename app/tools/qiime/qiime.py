@@ -43,7 +43,7 @@ class Qiime(Tool):
         :return: String with command parameters
         """
         file_params = []
-        for name, param in self._parameters.iteritems():
+        for name, param in self._parameters.items():
             if ':' in name:
                 self.__write_to_parameter_file(param)
                 file_params.append(name)

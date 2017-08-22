@@ -5,6 +5,7 @@ import re
 
 
 class FileSystemHelper(object):
+
     @staticmethod
     def make_valid(value):
         """
@@ -12,10 +13,8 @@ class FileSystemHelper(object):
         :param value: Input value
         :return: URL- and filename friendly value
         """
-        value = unicodedata.normalize('NFKD', unicode(value)).encode('ascii', 'ignore')
-        value = unicode(re.sub('[^\w\s-]', '', value).strip())
-        value = unicode(re.sub('[-\s]+', '_', value))
-        return str(value)
+        value = value.replace(' ', '_')
+        return "".join([c for c in value if re.match(r'[\w\-_]', c)])
 
     @staticmethod
     def get_file_with_extension(input_folder, extension):

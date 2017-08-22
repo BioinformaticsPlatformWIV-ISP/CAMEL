@@ -30,7 +30,7 @@ class MothurRemoveLineage(Mothur):
         if 'TSV_Taxonomy' not in self._tool_inputs:
             raise InvalidInputSpecificationError('Not enough valid input files given for Mothur '
                                                  'remove.lineage: {!r}'.format(self._tool_inputs))
-        for key, input_files in self._tool_inputs.iteritems():
+        for key, input_files in self._tool_inputs.items():
             if key not in ['FASTA', 'TSV_Names', 'TSV_Counts', 'TSV_Groups',
                            'TSV_AlignReport', 'TSV_List', 'TSV_Taxonomy']:
                 raise InvalidInputSpecificationError('Invalid input key given for Mothur remove.lineage: {!r}'.format(self._tool_inputs))
@@ -50,7 +50,7 @@ class MothurRemoveLineage(Mothur):
                             'TSV_Groups': 'group=',
                             'TSV_AlignReport': 'alignreport=',
                             'TSV_List': 'list='}
-        for key, input_files in self._tool_inputs.iteritems():
+        for key, input_files in self._tool_inputs.items():
             # Based on the key the correct option flag is added to the input string
             if key != 'TSV_Taxonomy':
                 items.append('{}{}'.format(input_parameters[key], input_files[0].path))
@@ -71,6 +71,6 @@ class MothurRemoveLineage(Mothur):
                              'TSV_AlignReport': ['.align.report', '.pick.align.report'],
                              'TSV_List': ['.', '.pick.list'],
                              'TSV_Taxonomy': ['.', '.pick.taxonomy']}
-        for key, input_files in self._tool_inputs.iteritems():
+        for key, input_files in self._tool_inputs.items():
             basename = super(MothurRemoveLineage, self)._get_basename(key, output_extensions[key][0])
             self._tool_outputs[key] = [ToolIOFile(basename + output_extensions[key][1])]

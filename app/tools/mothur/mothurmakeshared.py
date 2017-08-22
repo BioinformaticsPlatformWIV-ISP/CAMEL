@@ -29,7 +29,7 @@ class MothurMakeShared(Mothur):
         if not (('TSV_List' in self._tool_inputs) != ('BIOM' in self._tool_inputs)):
             raise InvalidInputSpecificationError('Invalid input files (keys) given for Mothur make.shared, only '
                                                  'TSV_List or BIOM allowed: {!r}'.format(self._tool_inputs))
-        for key, input_files in self._tool_inputs.iteritems():
+        for key, input_files in self._tool_inputs.items():
             if key not in ['TSV_List', 'BIOM', 'TSV_Groups', 'TSV_Counts']:
                 raise InvalidInputSpecificationError('Invalid input key given for Mothur make.shared: {!r}'.format(self._tool_inputs))
             if len(input_files) != 1:

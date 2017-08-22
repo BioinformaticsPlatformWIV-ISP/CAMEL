@@ -32,7 +32,7 @@ class MothurPcrSeqs(Mothur):
                                                  pcr.seqs: {!r}'.format(self._tool_inputs))
         if len(self._tool_inputs.keys()) > 2:
             raise InvalidInputSpecificationError('Too many input keys given for Mothur pcr.seqs: {!r}'.format(self._tool_inputs))
-        for key, input_files in self._tool_inputs.iteritems():
+        for key, input_files in self._tool_inputs.items():
             if key not in ['FASTA', 'TSV_Oligos']:
                 raise InvalidInputSpecificationError('Invalid input key given for Mothur pcr.seqs: {!r}'.format(self._tool_inputs))
 

@@ -31,7 +31,7 @@ class QiimePickOtus(Qiime):
         """
         if 'FASTA' not in self._tool_inputs:
             raise InvalidInputSpecificationError('Invalid input files (keys) given for pick_otus: {!r}'.format(self._tool_inputs))
-        for key, input_files in self._tool_inputs.iteritems():
+        for key, input_files in self._tool_inputs.items():
             if key not in ['FASTA', 'FASTA_Ref', 'BLAST_DB', 'SORTMERNA_DB']:
                 raise InvalidInputSpecificationError('Invalid input key given for pick_otus: {!r}'.format(self._tool_inputs))
             if len(self._tool_inputs[key]) != 1:

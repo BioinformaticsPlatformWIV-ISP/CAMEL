@@ -109,7 +109,7 @@ class Phymmbl(Tool):
             try:
                 os.symlink(os.path.join(self._tool_inputs['DB'][0].path, directory),
                            os.path.join(self._folder, 'phymmbl', directory))
-            except OSError, e:
+            except OSError as e:
                 if e.errno == errno.EEXIST:
                     shutil.rmtree(os.path.join(self._folder, 'phymmbl', directory))
                     os.symlink(os.path.join(self._tool_inputs['DB'][0].path, directory),

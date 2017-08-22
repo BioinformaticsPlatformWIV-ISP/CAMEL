@@ -1,10 +1,10 @@
 local:
-    host: 10.0.0.238
+    host: bioit-db1
     dbname: camel_dev_2
     user: camel
     password: 1fiJjjEjx0Ii
 db_loc:
-    host: 10.0.0.238
+    host: bioit-db1
     dbname: bioit_db_info
     user: camel
     password: 1fiJjjEjx0Ii

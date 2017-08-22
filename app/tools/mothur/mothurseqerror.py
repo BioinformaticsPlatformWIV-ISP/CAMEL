@@ -28,7 +28,7 @@ class MothurSeqError(Mothur):
         if 'FASTA' not in self._tool_inputs or 'FASTA_REF' not in self._tool_inputs:
             raise InvalidInputSpecificationError('Invalid input files (keys) given for Mothur '
                                                  'seq.error: {!r}'.format(self._tool_inputs))
-        for key, input_files in self._tool_inputs.iteritems():
+        for key, input_files in self._tool_inputs.items():
             if key in ['TSV_Names', 'TSV_Counts', 'TSV_Qfile']:
                 raise InvalidInputSpecificationError('These input keys are not yet implemented as documentation for these keys'
                                                      ' is not yet available: {!r}'.format(self._tool_inputs))

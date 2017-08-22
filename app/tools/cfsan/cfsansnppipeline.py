@@ -122,7 +122,6 @@ class CfsanSnpPipeline(Tool):
             self._tool_outputs[key] = []
         with open(os.path.join(self._folder, 'sampleDirectories.txt')) as handle:
             for line in handle.readlines():
-                print(line)
                 sample_directory = line.strip()
                 self._tool_outputs['VCF_Cons'].append(ToolIOFile(os.path.join(sample_directory, 'consensus.vcf')))
                 self._tool_outputs['VCF_Cons_preserved'].append(
@@ -138,7 +137,7 @@ class CfsanSnpPipeline(Tool):
         Analyzes the metrics file and adds the information to the informs.
         :return: None
         """
-        saved_columns = [2] + range(5, 14)
+        saved_columns = [2] + list(range(5, 14))
         metrics_file = os.path.join(self._folder, 'metrics.tsv')
         if not os.path.isfile(metrics_file):
             raise IOError("No metrics file generated.")

@@ -35,7 +35,7 @@ class MothurPreCluster(Mothur):
         if 'TSV_Names' not in self._tool_inputs and 'TSV_Counts' not in self._tool_inputs:
             raise InvalidInputSpecificationError('Missing input files (key) for Mothur '
                                                  'pre.cluster: {!r}'.format(self._tool_inputs))
-        for key, input_files in self._tool_inputs.iteritems():
+        for key, input_files in self._tool_inputs.items():
             if key not in ['FASTA', 'TSV_Counts', 'TSV_Names', 'TSV_Groups']:
                 raise InvalidInputSpecificationError('Invalid input key given for Mothur pre.cluster: {!r}'.format(self._tool_inputs))
             if len(input_files) != 1:

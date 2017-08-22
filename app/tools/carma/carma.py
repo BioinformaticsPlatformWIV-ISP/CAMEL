@@ -79,7 +79,7 @@ class Carma(Tool):
         Sets the input key that is provided as input
         :return: None
         """
-        self._input_key = self._tool_inputs.keys()[0]
+        self._input_key = list(self._tool_inputs.keys())[0]
 
     def __create_config_file(self):
         """

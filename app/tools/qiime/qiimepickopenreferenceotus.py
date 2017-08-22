@@ -29,7 +29,7 @@ class QiimePickOpenReferenceOtus(Qiime):
         if 'FASTA' not in self._tool_inputs:
             raise InvalidInputSpecificationError('Invalid input files (keys) given for '
                                                  'pick_open_reference_otus: {!r}'.format(self._tool_inputs))
-        for key, input_files in self._tool_inputs.iteritems():
+        for key, input_files in self._tool_inputs.items():
             if key not in ['FASTA', 'FASTA_REF', 'TSV_Taxonomy']:
                 raise InvalidInputSpecificationError('Invalid input key given for pick_open_reference_otus: {!r}'.format(self._tool_inputs))
             if len(input_files) != 1:

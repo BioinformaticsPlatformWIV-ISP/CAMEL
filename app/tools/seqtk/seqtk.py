@@ -4,12 +4,11 @@ from app.tools.tool import Tool
 from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 
 
-class Seqtk(Tool):
+class Seqtk(Tool, metaclass=abc.ABCMeta):
 
     """
     Base class for all seqtk functionality
     """
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self, tool_name, version, camel):
         """

@@ -93,7 +93,7 @@ class Nbc(Tool):
         :return: None
         """
         dir_list = os.listdir(self._tool_inputs['DB'][0].path)
-        with open(os.path.join(self._folder, 'genomes.txt'), 'wb') as outfile:
+        with open(os.path.join(self._folder, 'genomes.txt'), 'wt', encoding='utf-8') as outfile:
             for entry in dir_list:
                 outfile.write(entry + '\n')
 
@@ -108,7 +108,7 @@ class Nbc(Tool):
         # name1 -4394.422894 -4481.248143 -4466.777268 -4449.821487 -4481.248143
         # name2 -4479.885575 -4419.27694  -4449.581257 -4495.037734 -4495.037734
         # name3 -4495.461521 -4495.461521 -4495.461521 -4466.004776 -4466.004776
-        with open(os.path.join(self._folder, 'processed_output.tsv'), 'wb') as outf:
+        with open(os.path.join(self._folder, 'processed_output.tsv'), 'wt', encoding='utf-8') as outf:
             outf.write('\t'.join(['Read name', 'Score', 'Cutoff', 'Significant', 'Species\n']))
             for entry in os.listdir(self._folder):
                 if entry.endswith('.csv.gz'):
@@ -116,7 +116,7 @@ class Nbc(Tool):
                         lines = []
                         for line in infile:
                             lines.append(self.__to_floats(line))
-                        zipped_lines = zip(*lines)
+                        zipped_lines = list(zip(*lines))
                         names = zipped_lines[0]
                         for line in zipped_lines[1:]:
                             # Find the entry with the highest value as this is the best hit
@@ -178,7 +178,7 @@ class Nbc(Tool):
         Stores all read lengths in a dictionary with the read name as key and the length as value
         :return: Dictionary of read lenghts
         """
-        with open(self._tool_inputs['FASTA'][0].path, 'rb') as infile:
+        with open(self._tool_inputs['FASTA'][0].path, 'rt', encoding='utf-8') as infile:
             read_lengths = {}
             current_id = ''
             for line in infile:

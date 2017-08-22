@@ -16,7 +16,6 @@ class MothurCluster(Mothur):
         :param camel: Camel instance
         :return: None
         """
-        tool_name = ()
         super(MothurCluster, self).__init__('mothur_cluster', '1.39.1', camel)
 
     def _check_input(self):
@@ -38,7 +37,7 @@ class MothurCluster(Mothur):
             if 'FASTA' not in self._tool_inputs or 'TSV_Counts' not in self._tool_inputs:
                 raise InvalidInputSpecificationError('Fasta and count table required for Mothur cluster with Vsearch '
                                                      'method: {!r}'.format(self._tool_inputs))
-        for key, input_files in self._tool_inputs.iteritems():
+        for key, input_files in self._tool_inputs.items():
             if key not in ['DIST', 'TSV_Names', 'TSV_Counts', 'PHY', 'FASTA']:
                 raise InvalidInputSpecificationError('Invalid input key given for Mothur '
                                                      'cluster: {!r}'.format(self._tool_inputs))

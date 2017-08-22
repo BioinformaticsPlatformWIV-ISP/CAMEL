@@ -30,7 +30,7 @@ class MothurScreenSeqs(Mothur):
         super(MothurScreenSeqs, self)._check_input()
         if 'FASTA' not in self._tool_inputs:
             raise InvalidInputSpecificationError('No input file given for Mothur screen.seqs: {!r}'.format(self._tool_inputs))
-        for key, input_files in self._tool_inputs.iteritems():
+        for key, input_files in self._tool_inputs.items():
             if key not in ['FASTA', 'TSV_Summary', 'TSV_Groups', 'TSV_AlignReport', 'TSV_ContigReport',
                            'TSV_Names', 'TSV_Counts', 'TSV_Qfile', 'TSV_Taxonomy']:
                 raise InvalidInputSpecificationError('Invalid input key given for Mothur screen.seqs: {!r}'.format(self._tool_inputs))
@@ -47,7 +47,7 @@ class MothurScreenSeqs(Mothur):
         """
         items = []
         # As there can be only one file per key, this first file of the list is added
-        for key, input_files in self._tool_inputs.iteritems():
+        for key, input_files in self._tool_inputs.items():
             if key == 'FASTA':
                 items.append('fasta={}'.format(input_files[0]))
             elif key == 'TSV_Groups':

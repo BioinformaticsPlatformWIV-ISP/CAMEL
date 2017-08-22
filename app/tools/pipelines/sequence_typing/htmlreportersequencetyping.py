@@ -85,9 +85,9 @@ class HtmlReporterSequenceTyping(HtmlReporter):
         :return: None
         """
         metadata = self._input_informs['metadata_sequence_type']['metadata']
-        sequence_type_cell = HtmlTableCell(metadata.values()[0], [('class', self.__get_sequence_type_color())])
-        table_data = [[sequence_type_cell] + metadata.values()[1:]]
-        header = [key.replace('_', ' ') for key in metadata.keys()]
+        sequence_type_cell = HtmlTableCell(list(metadata.values())[0], [('class', self.__get_sequence_type_color())])
+        table_data = [[sequence_type_cell] + list(metadata.values())[1:]]
+        header = [key.replace('_', ' ') for key in list(metadata.keys())]
         self._report.add_table(table_data, header, [('class', 'data')])
 
     def __get_sequence_type_color(self):

@@ -175,7 +175,7 @@ class BestHitExtractor(Tool):
             regex = self._parameters['default_allele_id_regex'].value
         m = re.findall(BestHitExtractor.__cleanup_regex(regex), allele_name)
         if not len(m) == 1:
-            raise StandardError("Cannot determine allele identifier for '{}' (RE: {})".format(allele_name, regex))
+            raise Exception("Cannot determine allele identifier for '{}' (RE: {})".format(allele_name, regex))
         return m[0]
 
     @staticmethod

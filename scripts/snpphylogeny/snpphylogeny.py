@@ -114,6 +114,8 @@ class SnpPhylogeny(object):
                 if size < 5:
                     raise ValueError(
                         "SNP matrix is too small ({} positions) to construct a phylogenetic tree.".format(size))
+                elif size > 10000:
+                    raise ValueError("SNP matrix is too big ({}) positions, please use more stringent filtering settings".format(size))
                 # Tree building
                 model, rates = self._run_model_selection(snp_matrix)
                 try:
