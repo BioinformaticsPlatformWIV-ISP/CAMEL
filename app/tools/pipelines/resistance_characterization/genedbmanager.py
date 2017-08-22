@@ -66,7 +66,7 @@ class GeneDBManager(Tool):
         :param input_folder: Input folder
         :return: List of 'name' and 'last_updated' of the locus
         """
-        dir_name = os.path.basename(os.readlink(input_folder))
+        dir_name = os.path.basename(os.path.realpath(input_folder))
         last_updated = '-'.join([dir_name[6:8], dir_name[4:6], dir_name[0:4]])
         name = os.path.split(os.path.dirname(input_folder))[-1]
         return name, last_updated

@@ -16,7 +16,7 @@ class SamtoolsView(Samtools):
         Initializes this tool.
         :param camel: Camel instance
         """
-        super(SamtoolsView, self).__init__('samtools view', '1.3', camel)
+        super(SamtoolsView, self).__init__('samtools view', '1.3.1', camel)
         self.__input_key = None
 
     def _check_input(self):

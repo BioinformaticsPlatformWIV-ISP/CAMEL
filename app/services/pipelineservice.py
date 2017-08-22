@@ -73,6 +73,20 @@ class PipelineService(Service):
         WHERE pipe_id = %s;"""
         return {result[0]: result[1] for result in self.db_connection.query(sql, [self._pipeline_id])[1:]}
 
+    def get_step_id(self, name):
+        """
+        Returns the id of the pipeline step with the given name in the database.
+        :param name: Name of the step
+        :return: Step id if the step exists, else None
+        """
+        sql = """
+        SELECT pipeline_step_id
+        FROM pipelines.pipeline_step
+        WHERE pipe_id = %s
+        AND name = %s;"""
+        results = self.db_connection.query(sql, [self._pipeline_id, name])
+        return results[1][0] if len(results) > 1 else None
+
     def get_pipeline_parameters(self):
         """
         Returns the pipeline parameters.
@@ -94,6 +108,31 @@ class PipelineService(Service):
             if disabled:
                 value = False
             parameters.append([step_name, Parameter(name, option, value)])
+        return parameters
+
+    def get_pipeline_step_parameters(self, name):
+        """
+        Returns the pipeline parameters for step with the specified name.
+        :param name: Name of the step
+        :return: Pipeline parameters list
+        """
+        sql = """
+        SELECT s.name, p.name, p.option, sp.value, sp.disabled
+        FROM pipelines.step_tools_parameter sp, tools.tool_parameter p, pipelines.pipeline_step s
+        WHERE sp.tool_parameter_id = p.tool_parameter_id
+        AND sp.pipeline_step_id IN (
+          SELECT pipeline_step_id FROM pipelines.pipeline_step
+          WHERE pipe_id = %s
+          AND name = %s)
+        AND sp.active is True
+        AND sp.pipeline_step_id = s.pipeline_step_id
+        ORDER BY sp.p_index;
+        """
+        parameters = []
+        for step_name, name, option, value, disabled in self.db_connection.query(sql, [self._pipeline_id, name])[1:]:
+            if disabled:
+                value = False
+            parameters.append([Parameter(name, option, value)])
         return parameters
 
     def log_initial_input(self, pipeline_job_id, type_, key, index, hash_value):

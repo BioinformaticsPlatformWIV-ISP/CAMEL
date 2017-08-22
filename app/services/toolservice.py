@@ -1,7 +1,7 @@
 import collections
 
 from app.parameter.parameter import Parameter
-from service import Service
+from app.services.service import Service
 
 
 class ToolService(Service):
@@ -73,7 +73,7 @@ class ToolService(Service):
         :return: Default parameters
         """
         sql = """
-        SELECT name, option, value, p_index
+        SELECT name, option, value, COALESCE(p_index, 0) as p_index
         FROM tools.tool_parameter
         WHERE tool_id = %s
         AND active = TRUE;

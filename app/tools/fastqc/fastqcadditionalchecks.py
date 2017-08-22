@@ -29,28 +29,21 @@ class FastQCAdditionalChecks(Tool):
         Performs the quality checks.
         :return: None
         """
+        test_functions = {
+            'Mean Q-score drop': self.__test_mean_qscore_drop,
+            'Average quality score': self.__test_average_read_quality,
+            'Per base sequence content': self.__test_per_base_sequence_content,
+            'GC content': self.__test_gc_content,
+            'Maximal N-fraction': self.__test_max_n_fraction,
+            'Sequence Length Distribution': self.__test_sequence_length_distribution
+        }
+        self._informs.update({'samples': [], 'tests': {k: [] for k in test_functions.keys()},
+                              'values': {'average_read_quality': [], 'GC_content': []}})
         for input_file in self._tool_inputs['TXT']:
+            self._informs['samples'].append(self.__get_sample_name(input_file.path))
             modules = self.__get_modules(input_file)
-            current_informs = {
-                'Mean Q-score drop':
-                    self.__test_mean_qscore_drop(modules['Per base sequence quality']),
-
-                'Average quality score':
-                    self.__test_average_read_quality(modules['Per sequence quality scores']),
-
-                'Per base sequence content':
-                    self.__test_per_base_sequence_content(modules['Per base sequence content']),
-
-                'GC content':
-                    self.__test_gc_content(modules['Basic Statistics']),
-
-                'Maximal N-fraction':
-                    self.__test_max_n_count(modules['Per base N content']),
-
-                'Sequence length distribution':
-                    self.__test_sequence_length_distribution(modules['Sequence Length Distribution'])
-            }
-            self.informs[self.__get_sample_name(modules['Basic Statistics'])] = current_informs
+            for test_name, test in test_functions.items():
+                self._informs['tests'][test_name].append(test(modules))
 
     @staticmethod
     def __get_modules(input_file):
@@ -80,9 +73,41 @@ class FastQCAdditionalChecks(Tool):
         :param data: Basic statistics data
         :return: GC content
         """
-        for line in data:
-            if line.startswith('Filename'):
-                return line.split('\t')[1]
+        with open(data) as handle:
+            for line in handle.readlines():
+                if line.startswith('Filename'):
+                    return line.split('\t')[1].strip()
+        raise ValueError("Cannot determine sample name from: {}".format(data))
+
+    @staticmethod
+    def __get_total_reads(modules):
+        """
+        Returns the total number of reads.
+        :param modules: Data modules
+        :return: Total nb of reads
+        """
+        for line in modules['Basic Statistics']:
+            if line.startswith('Total Sequences'):
+                return int(line.split('\t')[1])
+
+    @staticmethod
+    def __get_length_cutoff(modules, percentage):
+        """
+        Returns the sequence length for which the given percentage of reads is bigger.
+        :param modules: Modules with data
+        :param percentage: Percentage
+        :return: Length cutoff
+        """
+        total_reads = FastQCAdditionalChecks.__get_total_reads(modules)
+        percent_reads_passed = 0.0
+        sequence_length_data = modules['Sequence Length Distribution']
+        last_base = int(sequence_length_data[-1].split('\t')[0].split('-')[-1])
+        for line in sequence_length_data[1:]:
+            interval, count = line.strip().split('\t')
+            percent_reads_passed += 100 * float(count) / total_reads
+            if percent_reads_passed > (100.0-percentage):
+                return last_base - int(interval.split('-')[0])
+        return 0
 
     @staticmethod
     def __get_mean_qscore_drop(data, threshold):
@@ -99,12 +124,13 @@ class FastQCAdditionalChecks(Tool):
                 return float(base.split('-')[0])
         return float('inf')
 
-    def __test_mean_qscore_drop(self, data):
+    def __test_mean_qscore_drop(self, modules):
         """
         Test to see at which base the mean qscore drops below a threshold.
-        :param data: Mean qscore data
+        :param modules: Parsed FastQC data
         :return: 'Pass', 'Warning' or 'Fail'.
         """
+        data = modules['Per base sequence quality']
         fail_length = float(self._parameters['qscore_drop_fail_length'].value)
         warn_length = float(self._parameters['qscore_drop_warn_length'].value)
         threshold = float(self._parameters['qscore_drop_threshold'].value)
@@ -134,15 +160,17 @@ class FastQCAdditionalChecks(Tool):
             total_quality += float(quality) * float(count)
         return total_quality / total_count
 
-    def __test_average_read_quality(self, data):
+    def __test_average_read_quality(self, modules):
         """
         Tests the average read quality.
-        :param data: Per sequence quality scores data
+        :param modules: Parsed FastQC data
         :return: 'Pass', 'Warning' or 'Fail'
         """
+        data = modules['Per sequence quality scores']
         read_quality_fail = float(self._parameters['average_read_quality_fail'].value)
         read_quality_warn = float(self._parameters['average_read_quality_warn'].value)
         average_read_quality = self.__get_average_read_quality(data)
+        self._informs['values']['average_read_quality'].append(average_read_quality)
         logging.debug("Average read quality: {:.2f}".format(average_read_quality))
 
         if average_read_quality < read_quality_fail:
@@ -162,7 +190,7 @@ class FastQCAdditionalChecks(Tool):
         :return: Difference
         """
         max_difference = 0.0
-        last_base = int(data[-1].split('\t')[0].split('-')[1])
+        last_base = int(data[-1].split('\t')[0].split('-')[-1])
         logging.debug("Checking A-T, G-C difference between base {} and {}".format(
             nb_of_skipped_bases, last_base - nb_of_skipped_bases_end))
         for row in data[1:]:
@@ -177,16 +205,24 @@ class FastQCAdditionalChecks(Tool):
                     max_difference = gc_difference
         return max_difference
 
-    def __test_per_base_sequence_content(self, data):
+    def __test_per_base_sequence_content(self, modules):
         """
         Test whether difference between A-T & C-G is below a threshold at every position.
-        :param data: Per base sequence content data
+        :param modules: Parsed FastQC data
         :return: 'Pass', 'Warn' or 'Fail'
         """
+        data = modules['Per base sequence content']
         per_base_sequence_content_fail = float(self._parameters['per_base_sequence_content_fail'].value)
         per_base_sequence_content_warn = float(self._parameters['per_base_sequence_content_warn'].value)
         skipped_bases = int(self._parameters['per_base_sequence_content_skipped'].value)
-        skipped_bases_end = int(self._parameters['per_base_sequence_content_skipped_end'].value)
+
+        param_value = self._parameters['per_base_sequence_content_skipped_end'].value
+        if '%' in param_value:
+            logging.info("Dropping {} of reads before checking GC/AT".format(param_value))
+            percentage_reads_skipped = float(param_value.replace('%', ''))
+            skipped_bases_end = self.__get_length_cutoff(modules, percentage_reads_skipped)
+        else:
+            skipped_bases_end = int(self._parameters['per_base_sequence_content_skipped_end'].value)
 
         max_difference = self.__get_max_sequence_content_difference(data, skipped_bases, skipped_bases_end)
         logging.debug("Maximal difference between A/T or C/G: {:.2f}".format(max_difference))
@@ -245,18 +281,21 @@ class FastQCAdditionalChecks(Tool):
         for line in data:
             if line.startswith('%GC'):
                 return float(line.split('\t')[1])
+        raise ValueError('GC content not found in FastQC data file')
 
-    def __test_gc_content(self, data):
+    def __test_gc_content(self, modules):
         """
         Checks the GC content modus.
-        :param data: Per sequence GC content data
+        :param modules: Parsed FastQC data
         :return: 'Pass', 'Warn' or 'Fail'
         """
+        data = modules['Basic Statistics']
         reference_gc_content = float(self._parameters['gc_content_reference'].value)
         gc_content_difference_warn = float(self._parameters['gc_content_difference_warn'].value)
         gc_content_difference_fail = float(self._parameters['gc_content_difference_fail'].value)
 
         gc_content = self.__get_gc_content(data)
+        self._informs['values']['GC_content'].append(gc_content)
         logging.debug("Detected GC content: {:.2f}".format(gc_content))
         difference = abs(gc_content - reference_gc_content)
 
@@ -268,33 +307,34 @@ class FastQCAdditionalChecks(Tool):
             return 'Pass'
 
     @staticmethod
-    def __get_max_n_count(data):
+    def __get_max_n_fraction(data):
         """
-        Returns the maximum N count.
+        Returns the maximum N fraction.
         :param data: Per base N content data
-        :return: Count
+        :return: Fraction
         """
-        max_count = 0.0
+        max_fraction = 0.0
         for row in data[1:]:
-            base, n_count = row.split('\t')
-            if float(n_count) > max_count:
-                max_count = float(n_count)
-        return max_count
+            base, n_fraction = row.split('\t')
+            if float(n_fraction) > max_fraction:
+                max_fraction = float(n_fraction)
+        return max_fraction
 
-    def __test_max_n_count(self, data):
+    def __test_max_n_fraction(self, modules):
         """
-        Tests whether the N count is below a threshold for every base.
-        :param data: Per base N content data
+        Tests whether the N fraction is below a threshold for every base.
+        :param modules: Parsed FastQC data
         :return: 'Pass', 'Warn' or 'Fail'
         """
-        threshold_fail = float(self._parameters['n_count_threshold_fail'].value)
-        threshold_warn = float(self._parameters['n_count_threshold_warn'].value)
-        max_n_count = self.__get_max_n_count(data)
-        logging.debug("Maximal N count: {:.4f}".format(max_n_count))
+        data = modules['Per base N content']
+        threshold_fail = float(self._parameters['n_fraction_threshold_fail'].value)
+        threshold_warn = float(self._parameters['n_fraction_threshold_warn'].value)
+        max_n_fraction = self.__get_max_n_fraction(data)
+        logging.debug("Maximal N fraction: {:.4f}".format(max_n_fraction))
 
-        if max_n_count > threshold_fail:
+        if max_n_fraction > threshold_fail:
             return 'Fail'
-        elif max_n_count > threshold_warn:
+        elif max_n_fraction > threshold_warn:
             return 'Warn'
         else:
             return 'Pass'
@@ -317,21 +357,23 @@ class FastQCAdditionalChecks(Tool):
             total_sequences += float(count)
         return sequences_below_threshold / total_sequences
 
-    def __test_sequence_length_distribution(self, data):
+    def __test_sequence_length_distribution(self, modules):
         """
         Checks if there are not too much short sequences.
-        :param data: Sequence length distribution data
+        :param modules: Parsed FastQC data
         :return: 'Pass', 'Warn' or 'Fail'
         """
+        data = modules['Sequence Length Distribution']
         threshold_fail = float(self._parameters['sequence_length_threshold_fail'].value)
         threshold_warn = float(self._parameters['sequence_length_threshold_warn'].value)
         max_fraction = float(self._parameters['sequence_length_fraction'].value)
 
         fraction_below_fail = self.__get_fraction_of_sequences_below_threshold(data, threshold_fail)
-        logging.debug("Fraction of sequences with length below fail threshold: {:.2f}".format(fraction_below_fail))
-
+        logging.debug("Fraction of sequences with length below fail threshold: {:.2f} (max: {})".format(
+            fraction_below_fail, max_fraction))
         fraction_below_warn = self.__get_fraction_of_sequences_below_threshold(data, threshold_warn)
-        logging.debug("Fraction of sequences with length below warn threshold: {:.2f}".format(fraction_below_warn))
+        logging.debug("Fraction of sequences with length below warn threshold: {:.2f} (max: {})".format(
+            fraction_below_warn, max_fraction))
 
         if self.__get_fraction_of_sequences_below_threshold(data, threshold_fail) > max_fraction:
             return 'Fail'

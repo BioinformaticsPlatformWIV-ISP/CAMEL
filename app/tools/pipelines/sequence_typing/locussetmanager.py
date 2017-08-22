@@ -148,4 +148,4 @@ class LocusSetManager(Tool):
         elif type_ == 'peptide':
             self._tool_outputs['DB_Prot'].append(ToolIOFile(fasta_file))
         else:
-            raise StandardError("Unrecognized type: '{}' in folder '{}'".format(type_, fasta_file))
+            raise Exception("Unrecognized type: '{}' in folder '{}'".format(type_, fasta_file))

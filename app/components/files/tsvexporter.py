@@ -29,7 +29,7 @@ class TsvExporter(object):
                 for i in range(0, len(row)):
                     if i in drop_columns:
                         continue
-                    if isinstance(row[i], basestring):
+                    if isinstance(row[i], str):
                         row_data.append(row[i])
                     if isinstance(row[i], HtmlElement):
                         row_data.append(row[i].text_value)

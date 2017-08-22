@@ -1,11 +1,13 @@
 import os
 
+from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from app.error.toolexecutionerror import ToolExecutionError
 from app.io.tooliofile import ToolIOFile
 from app.tools.tool import Tool
 
 
 class Quast(Tool):
+
     """
     QUAST evaluates genome assemblies. QUAST works both with and without a reference genome. The tool accepts multiple
     assemblies, thus is suitable for comparison.
@@ -38,15 +40,15 @@ class Quast(Tool):
         """
         super(Quast, self)._check_input()
         if 'FASTA' not in self._tool_inputs:
-            raise ValueError('No valid input key given for QUAST: {!r}'.format(self._tool_inputs))
-        for key, values in self._tool_inputs.iteritems():
+            raise InvalidInputSpecificationError(
+                'QUAST required FASTA input is missing: {!r}'.format(self._tool_inputs))
+        for key, values in self._tool_inputs.items():
             if key not in ['FASTA', 'FASTA_Ref', 'TSV_Gene', 'TSV_Operon']:
-                raise ValueError('Illegal input key given for QUAST: {!r}'.format(self._tool_inputs))
+                raise InvalidInputSpecificationError(
+                    'Illegal input key given for QUAST: {!r}'.format(self._tool_inputs))
             if key in ['FASTA_Ref', 'TSV_Gene', 'TSV_Operon'] and len(values) > 1:
-                raise ValueError('Too many input files given for QUAST: {!r}'.format(self._tool_inputs))
-            for infile in values:
-                if not infile.is_valid():
-                    raise ValueError('Illegal input file given for QUAST: {!r}'.format(self._tool_inputs))
+                raise InvalidInputSpecificationError(
+                    'Too many input files given for QUAST: {!r}'.format(self._tool_inputs))
 
     def __build_command(self):
         """
@@ -93,3 +95,14 @@ class Quast(Tool):
         output_keys = ['HTML', 'TEX', 'TSV', 'TXT']
         for key in output_keys:
             self._tool_outputs[key] = [ToolIOFile('{}.{}'.format(os.path.join(self._folder, 'report'), key.lower()))]
+        # for icarus browser
+        icarus_output_keys = {
+            'HTML_icarus': 'icarus.html',
+            'HTML_alignment_viewer': 'icarus_viewers/alignment_viewer.html',
+            'HTML_contig_size_viewer': 'icarus_viewers/contig_size_viewer.html'
+        }
+        for key, value in icarus_output_keys.items():
+            if key == 'HTML_alignment_viewer' and 'FASTA_Ref' not in self._tool_inputs:
+                # skip HTML_alignment_viewer when no reference genome is provided
+                continue
+            self._tool_outputs[key] = [ToolIOFile(os.path.join(self._folder, value))]

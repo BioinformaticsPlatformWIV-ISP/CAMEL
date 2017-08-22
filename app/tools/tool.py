@@ -8,12 +8,10 @@ from app.io.toolio import ToolIO
 from app.services.toolservice import ToolService
 
 
-class Tool(object):
+class Tool(object, metaclass=abc.ABCMeta):
     """
     Contains the common functionality of tools.
     """
-
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self, name, version, camel):
         """
@@ -95,7 +93,7 @@ class Tool(object):
         :param input_files: New input files
         :return: None
         """
-        for key, items in input_files.iteritems():
+        for key, items in input_files.items():
             if key in self._tool_inputs:
                 self._tool_inputs[key] += items
             else:
@@ -115,7 +113,7 @@ class Tool(object):
         :param kwargs: Parameters in key value format
         :return: None
         """
-        for parameter_name, new_value in kwargs.iteritems():
+        for parameter_name, new_value in kwargs.items():
             parameter = self._tool_service.get_parameter(parameter_name)
             if not parameter:
                 raise InvalidParameterError("{} has no parameter '{}'".format(self._name, parameter_name))
@@ -125,7 +123,7 @@ class Tool(object):
                 logging.info("Disabling parameter: {}".format(parameter_name))
                 del(self._parameters[parameter_name])
             else:
-                if new_value is True:
+                if new_value is True or new_value is None:
                     parameter.value = None
                 else:
                     parameter.value = str(new_value)
@@ -188,7 +186,7 @@ class Tool(object):
         :return: Options string
         """
         options = []
-        for name, parameter in self._parameters.iteritems():
+        for name, parameter in self._parameters.items():
             if (excluded_parameters is not None) and (name in excluded_parameters):
                 continue
             if parameter.value is not None:
@@ -243,8 +241,10 @@ class Tool(object):
         Checks if the tool input is valid.
         :return: None
         """
-        for input_key, input_list in self._tool_inputs.iteritems():
+        for input_key, input_list in self._tool_inputs.items():
             for tool_input in input_list:
+                if not isinstance(tool_input, ToolIO):
+                    raise ValueError("Tool input '{}' is not a ToolIO object".format(tool_input))
                 if tool_input is None:
                     raise ValueError("Tool input with key {} is None".format(input_key))
                 if not tool_input.is_valid():
@@ -255,7 +255,7 @@ class Tool(object):
         Checks if the output is valid.
         :return: None
         """
-        for output_key, output_list in self._tool_outputs.iteritems():
+        for output_key, output_list in self._tool_outputs.items():
             for tool_output in output_list:
                 if tool_output is None:
                     raise ValueError("Tool output with key {} is None".format(output_key))

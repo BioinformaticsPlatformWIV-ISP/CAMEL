@@ -52,7 +52,7 @@ class BlastFormatterLoop(Tool):
         :return: None
         """
         if 'error' in self._command.stderr.lower():
-            raise StandardError("Problem running blast_formatter: {}".format(self._command.stderr))
+            raise Exception("Problem running blast_formatter: {}".format(self._command.stderr))
 
     def __run_blast_formatter(self, blast_archive, output_name):
         """

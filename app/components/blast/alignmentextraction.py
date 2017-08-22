@@ -32,7 +32,7 @@ class AlignmentExtraction(object):
                 subject = text_part.split('\n')[0].split(' ')[0]
                 key = (subject, query)
                 if key in alignments:
-                    raise ValueError("Duplicate key: {}\n{}".format(key, sorted(alignments.keys(),
+                    raise ValueError("Duplicate key: {}\n{}".format(key, sorted(list(alignments.keys()),
                                                                                 key=lambda x: (x[1], x[0]))))
                 alignments[key] = AlignmentExtraction.__clean_alignment(text_part)
             if AlignmentExtraction.__get_query(text_part):
