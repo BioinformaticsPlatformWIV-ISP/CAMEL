@@ -2,6 +2,7 @@ import vcf
 
 
 class VCFUtils(object):
+
     """
     Helper to perform VCF file related functions
     """
@@ -19,7 +20,7 @@ class VCFUtils(object):
         :param vcf_file: the vcf file to be checked (with complete path)
         :return: True if is a multiple sampel VCF file
         """
-        vcf_reader = vcf.Reader(open(vcf_file, 'r'))
+        vcf_reader = vcf.Reader(filename=vcf_file)
         if len(vcf_reader.samples) > 1:
             return True
         else:
@@ -32,7 +33,7 @@ class VCFUtils(object):
         :param vcf_file: the vcf file to be checked (with complete path)
         :return: vcf_reader that can called to retrieve the record
         """
-        return vcf.Reader(open(vcf_file, 'r'))
+        return vcf.Reader(filename=vcf_file)
 
     @staticmethod
     def retrieve_variants(vcf_file, types=[], excluded_types=[]):
@@ -45,7 +46,7 @@ class VCFUtils(object):
 
         KNOWN TYPES: 'tv', 'unknown', 'ts', 'ins', 'del', 'indel', 'snp'
         """
-        vcf_reader = vcf.Reader(open(vcf_file, 'r'))
+        vcf_reader = vcf.Reader(filename=vcf_file)
         records = []
         if types and excluded_types:
             # both types and excluded_types set
