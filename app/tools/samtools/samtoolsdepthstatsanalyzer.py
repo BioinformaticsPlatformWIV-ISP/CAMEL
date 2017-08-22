@@ -26,7 +26,6 @@ class SamtoolsDepthStatsAnalyzer(Tool):
         :return: None
         """
         self.__analyze_depth_output()
-        # self.__set_informs()
 
     def _check_input(self):
         """
@@ -49,7 +48,7 @@ class SamtoolsDepthStatsAnalyzer(Tool):
 
         refseq_length = {}
         if 'FASTA_REF' in self._tool_inputs:
-            for ref_seq_id, seq in FastaUtils.read_as_dict(self._tool_inputs['FASTA_REF'][0].path).iteritems():
+            for ref_seq_id, seq in FastaUtils.read_as_dict(self._tool_inputs['FASTA_REF'][0].path).items():
                 refseq_length[ref_seq_id] = len(seq)
             logging.debug('FASTA_REF refseq length: {}'.format(refseq_length))
             self.informs['refseq_length'] = refseq_length
@@ -88,7 +87,7 @@ class SamtoolsDepthStatsAnalyzer(Tool):
         self.informs['segment_coverage_iqr'] = {}
         self.informs['segment_coverage_std'] = {}
         self.informs['segment_base_coverage'] = {}
-        for seq_id, seq_coverage in segment_coverages.iteritems():
+        for seq_id, seq_coverage in segment_coverages.items():
             median = StatisticsUtils.median(seq_coverage)
             self.informs['segment_median_coverage'][seq_id] = median
             self.informs['segment_coverage_mad'][seq_id] = StatisticsUtils.mad(seq_coverage, median)
@@ -167,7 +166,7 @@ class SamtoolsDepthStatsAnalyzer(Tool):
         last_pos = 0
         last_seq_id = None
         with open(output_path) as output_file:
-            for line in output_file.readlines():
+            for line in output_file:
                 inform = line.split('\t')
                 seq_id = inform[0]
                 pos = int(inform[1])
