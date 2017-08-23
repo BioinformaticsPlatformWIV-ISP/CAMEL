@@ -1,9 +1,7 @@
-import tempfile
-
 import abc
 import os
-
 import shutil
+import tempfile
 
 from app.components.html.htmlhelper import HtmlHelper
 from app.io.tooliodirectory import ToolIODirectory
@@ -50,6 +48,7 @@ class HtmlReporter(Tool):
         self._output_folder = self._tool_inputs['DIR_HTML'][0].path
         self._create_report()
         self._report.close()
+        self._tool_outputs['HTML'] = self._tool_inputs['HTML'].copy()
 
     def _check_input(self):
         """

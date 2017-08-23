@@ -1,4 +1,4 @@
-import urllib
+import requests
 from bs4 import BeautifulSoup
 
 
@@ -15,10 +15,10 @@ class PubMLSTParser(object):
         :return: Linked data
         """
         try:
-            response = urllib.urlopen(url).read()
+            response = requests.get(url)
         except:
-            raise RuntimeError('URL does not exist')
-        html = BeautifulSoup(PubMLSTParser.__cleanup_html(response))
+            raise RuntimeError("Cannot retrieve url: {}".format(url))
+        html = BeautifulSoup(PubMLSTParser.__cleanup_html(response.text), 'html.parser')
         try:
             html_value = html.find(text='Linked data').findNext('dd')
             html_label = html.find(text='Linked data').findNext('dt')
