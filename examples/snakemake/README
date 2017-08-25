@@ -1,6 +1,8 @@
 # Description
 This folder contains some examples on how to integrate CAMEL with Snakemake.
 
+A presentation explaining some key concepts can be found on the BIOIT wiki:
+- https://bioit.wiv-isp.be/wiki/snakemake
 
 # Notes
 - In order to run the scripts, the home of the Camel instance needs to be added to the PYTHONPATH:
