@@ -95,7 +95,7 @@ def add_pickle_inputs(tool, snake_input, keys=None):
             raise KeyError("Key '{}' not found in snakemake input".format(key))
         value = pickle.load(open(snake_input[key], 'rb'))
         if key.startswith('INFORMS'):
-            inform_key = ''.join(key.split('_')[1:])
+            inform_key = '_'.join(key.split('_')[1:])
             tool.add_input_informs({inform_key: value})
             logging.debug("Informs '{!r}' added".format(value))
         else:
