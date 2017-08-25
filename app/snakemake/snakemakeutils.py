@@ -112,6 +112,7 @@ def dump_tool_outputs(tool, snake_output, keys=None, ignore_missing_output=False
     :param ignore_missing_output: If False, an error is raised when an output is not generated
     :return: None
     """
+    logging.info("Dumping tool outputs")
     if keys is None:
         keys = snake_output.keys()
     for key in keys:
@@ -159,6 +160,7 @@ def run_tool(tool, snake_input, snake_output, working_dir):
     :param working_dir: Working directory
     :return: None
     """
+    logging.info("Running tool: {}".format(tool.name))
     add_pickle_inputs(tool, snake_input)
     tool.run(working_dir)
     dump_tool_outputs(tool, snake_output)
