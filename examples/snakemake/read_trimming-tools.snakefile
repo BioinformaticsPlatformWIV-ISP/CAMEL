@@ -77,7 +77,8 @@ rule read_trimming:
 rule fastqc_post_trimming:
     # In this rule reports are generated for the trimmed reads.
     # The run_tool function is used, this function will first call the add_pickle_inputs before and the
-    # dump_tool_outputs after tool execution.
+    # dump_tool_outputs after tool execution. You can also specify the working directory of the tool. It is recommended
+    # to use this function to run CAMEL tools.
     input:
         FASTQ=os.path.join(working_dir, "read_trimming/fastq_pe.io")
     output:
@@ -96,6 +97,8 @@ rule report_read_trimming:
     # This rule creates the HTML report for the trimming pipeline.
     # The HTML input cannot be added as a pickle because it is a file that has to be created on the fly. The regular
     # Camel way of adding tool inputs is used instead. The other files are added the same way as before.
+    # We also add the informs generated in the read trimming step. Keys that start with 'INFORMS' will be added as input
+    # informs. In this case the informs are added with key 'trimming'.
     input:
         HTML_Pre=os.path.join(working_dir, "fastqc_pre_trimming/html.io"),
         HTML_Post=os.path.join(working_dir, "fastqc_post_trimming/html.io"),
