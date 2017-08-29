@@ -6,10 +6,10 @@ from app.components.blasthit import BLASTN_INT_COLUMNS, BLASTN_FLOAT_COLUMNS, BL
 from app.error.invalidparametererror import InvalidParameterError
 
 
-class BlastnFmt6TSVParser(object):
+class BlastnFormat6TSVParser(object):
 
     """
-    Class to parse blastn outfmt 6 generated TSV file and return hits (as hash or list)
+    Class to parse blastn output format 6 generated TSV file and return hits (as hash or list)
     """
     DEFAULT_OUTFMT6_COLUMNS = ('qseqid', 'sseqid', 'pident', 'length', 'mismatch',
                                'gapopen', 'qstart', 'qend', 'sstart', 'send', 'evalue', 'bitscore')
@@ -18,13 +18,13 @@ class BlastnFmt6TSVParser(object):
         """
         Initialize the BlastnFmt6TSVParser
         :param blastn_tsv: blastn tsv output file as input
-        :param columns: the data columns specified for blastn outfmt 6. Default one is provided, for customized run, this should be provided.
+        :param columns: data columns specified for outfmt 6. Default one is provided, for customized run, this should be provided.
         :return: None
         """
         self._blastn_tsv = blastn_tsv
 
         if columns is None:
-            self._columns = BlastnFmt6TSVParser.DEFAULT_OUTFMT6_COLUMNS
+            self._columns = BlastnFormat6TSVParser.DEFAULT_OUTFMT6_COLUMNS
         else:
             self._columns = columns
 
@@ -33,8 +33,8 @@ class BlastnFmt6TSVParser(object):
     @property
     def inform_columns(self):
         """
-        Returns columns without BLASTN_SEQ_COLUMNS (e.g., for html output) for convenient data output. To output sequences is not
-        desirable in most cases as it is hard to have a nice format.
+        Returns columns without BLASTN_SEQ_COLUMNS (e.g., for html output) for convenient data output. To output
+        sequences is not desirable in most cases as it is hard to have a nice format.
         :return: columns without BLASTN_SEQ_COLUMNS
         """
         if self.with_seq:
@@ -92,7 +92,7 @@ class BlastnFmt6TSVParser(object):
                     blastn_hit[col_name] = data
 
             except ValueError:
-                logging.error("INCOMPATIBLEDATA, Blastn hit data incompatible with its column specification, column name {!r} value {!r}.".format(
+                logging.error("IncompatibleData, Blastn hit data incompatible with its column specification, column name {!r} value {!r}.".format(
                     col_name, data))
                 raise ValueError
 
