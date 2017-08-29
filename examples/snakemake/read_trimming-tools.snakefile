@@ -2,7 +2,7 @@ import os
 
 from app.camel import Camel
 from app.io.tooliofile import ToolIOFile
-from app.snakemake import snakemakeutils
+from app.snakemake.snakemakeutils import SnakemakeUtils
 
 camel = Camel()
 working_dir = config['working_dir']
@@ -26,7 +26,7 @@ rule prepare_initial_input:
         FASTQ=os.path.join(working_dir, "initial_input/fastq.io"),
         DIR_HTML=os.path.join(working_dir, "initial_input/dir_html.io")
     run:
-        snakemakeutils.pickle_snake_input(input, output)
+        SnakemakeUtils.pickle_snake_input(input, output)
 
 rule fastqc_pre_trimming:
     # This rule creates a HTML report to assess raw data quality before the read trimming step.
@@ -45,10 +45,10 @@ rule fastqc_pre_trimming:
         from app.tools.fastqc.fastqc import FastQC
         fastqc = FastQC(camel)
         fastqc.update_parameters(threads=threads)
-        snakemakeutils.add_pickle_input(fastqc, 'FASTQ', input.FASTQ)
+        SnakemakeUtils.add_pickle_input(fastqc, 'FASTQ', input.FASTQ)
         fastqc.run(params.working_dir)
-        snakemakeutils.dump_tool_output(fastqc, 'TXT', output.TXT)
-        snakemakeutils.dump_tool_output(fastqc, 'HTML', output.HTML)
+        SnakemakeUtils.dump_tool_output(fastqc, 'TXT', output.TXT)
+        SnakemakeUtils.dump_tool_output(fastqc, 'HTML', output.HTML)
 
 
 rule read_trimming:
@@ -70,9 +70,9 @@ rule read_trimming:
         from app.tools.trimmomatic.trimmomatic import Trimmomatic
         trimmomatic = Trimmomatic(camel)
         trimmomatic.update_parameters(threads=threads)
-        snakemakeutils.add_pickle_inputs(trimmomatic, input)
+        SnakemakeUtils.add_pickle_inputs(trimmomatic, input)
         trimmomatic.run(params.working_dir)
-        snakemakeutils.dump_tool_outputs(trimmomatic, output)
+        SnakemakeUtils.dump_tool_outputs(trimmomatic, output)
 
 rule fastqc_post_trimming:
     # In this rule reports are generated for the trimmed reads.
@@ -91,7 +91,7 @@ rule fastqc_post_trimming:
         from app.tools.fastqc.fastqc import FastQC
         fastqc = FastQC(camel)
         fastqc.update_parameters(threads=threads)
-        snakemakeutils.run_tool(fastqc, input, output, params.working_dir)
+        SnakemakeUtils.run_tool(fastqc, input, output, params.working_dir)
 
 rule report_read_trimming:
     # This rule creates the HTML report for the trimming pipeline.
@@ -117,4 +117,4 @@ rule report_read_trimming:
         report_path = os.path.join(params.working_dir, 'report_trimming.html')
         open(report_path, 'w').close()
         reporter.add_input_files({'HTML': [ToolIOFile(report_path)]})
-        snakemakeutils.run_tool(reporter, input, output, params.working_dir)
+        SnakemakeUtils.run_tool(reporter, input, output, params.working_dir)
