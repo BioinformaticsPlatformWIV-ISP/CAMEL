@@ -54,6 +54,8 @@ class GATK(Tool, metaclass=abc.ABCMeta):
                 raise InvalidInputSpecificationError('GATK {!r} required {!r} input is missing in _tool_inputs!'.format(
                     self._function_name, input_file))
 
+        super(GATK, self)._check_input()
+
     def _set_input(self):
         """
         Set the input specification
