@@ -21,7 +21,6 @@ class BedtoolsBamToBed(Bedtools):
         super(BedtoolsBamToBed, self).__init__(tool_name, version, camel)
         self._required_inputs = ['BAM']
 
-
     def _execute_tool(self):
         """
         Executes this tool.
@@ -31,14 +30,13 @@ class BedtoolsBamToBed(Bedtools):
         self.__build_command()
         self._execute_command()
 
-
     def __build_command(self):
         """
         Builds the command with input, options and output strings.
         :return: None
         """
 
-        build_options = ' '.join(self._build_options(excluded_parameters = 'output_filename'))
+        build_options = ' '.join(self._build_options(excluded_parameters='output_filename'))
 
         self._check_input()
         input_string = "-i {} ".format(self._tool_inputs['BAM'][0].path)
@@ -50,7 +48,6 @@ class BedtoolsBamToBed(Bedtools):
             build_options,
             input_string,
             output_string])
-
 
     def _check_input(self):
         """
@@ -64,7 +61,6 @@ class BedtoolsBamToBed(Bedtools):
 
         super(BedtoolsBamToBed, self)._check_input()
 
-
     def __set_output(self):
         """
         Sets the output of this tool.
@@ -72,4 +68,3 @@ class BedtoolsBamToBed(Bedtools):
         """
 
         self._tool_outputs['BED'] = [ToolIOFile(os.path.join(self._folder, self._parameters['output_filename'].value))]
-

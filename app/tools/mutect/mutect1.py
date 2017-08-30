@@ -9,15 +9,13 @@ from app.error.toolexecutionerror import ToolExecutionError
 from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 
 
-
-class Mutect1 (Tool):
+class Mutect1(Tool):
     """
     Class for the tool Mutect (v1). Mutect performs variant calling for oncology-related NGS data. 
     V1 only calls snps, not indels.
     """
 
-
-    def __init__(self,camel):
+    def __init__(self, camel):
         """
         Initialize Mutect1 tool.
         :param camel: Camel instance
@@ -25,7 +23,7 @@ class Mutect1 (Tool):
         """
         super(Mutect1, self).__init__('Mutect1', '1.1.7', camel)
 
-        self._required_inputs = ['TUMOR_BAM']
+        self._required_inputs = ['BAM_TUMOR']
 
     def _execute_tool(self):
         """
@@ -41,11 +39,12 @@ class Mutect1 (Tool):
         Check that input is valid (super method) and that required parameters are present.
         :return: None
         """
-        super(Mutect1,self)._check_input()
+        super(Mutect1, self)._check_input()
 
-        for input_file in self._required_inputs:
-            if input_file not in self._tool_inputs:
-                raise InvalidInputSpecificationError('Mutect1 required {} input is missing in _tool_inputs!'.format(input_file))
+        for input_key in self._required_inputs:
+            if input_key not in self._tool_inputs:
+                raise InvalidInputSpecificationError(
+                    'Mutect1 required {} input is missing in tool inputs!'.format(input_key))
 
     def __build_command(self):
         """
@@ -56,7 +55,6 @@ class Mutect1 (Tool):
         input_string = self.__create_input_string()
         options_string = ' '.join(self._build_options())
         self._command.command = ' '.join([self._tool_command, input_string, options_string])
-
 
     def __create_input_string(self):
         """
@@ -95,7 +93,6 @@ class Mutect1 (Tool):
 
         return input_string
 
-
     def __set_output(self):
         """
         Set the output specifications in the Camel ouptut list: 
@@ -105,17 +102,17 @@ class Mutect1 (Tool):
         :return: None
         """
 
-        self._tool_outputs['TXT_CALL_STATS'] = [ToolIOFile(os.path.join(self._folder, self._parameters['output_callstats_file'].value))]
+        self._tool_outputs['TXT_CALL_STATS'] = [
+            ToolIOFile(os.path.join(self._folder, self._parameters['output_callstats_file'].value))]
         if 'output_vcf_file' in self._parameters:
-            self._tool_outputs['VCF'] = [ToolIOFile(os.path.join(self._folder, self._parameters['output_vcf_file'].value))]
-
+            self._tool_outputs['VCF'] = [
+                ToolIOFile(os.path.join(self._folder, self._parameters['output_vcf_file'].value))]
 
     def _check_command_output(self):
         """
         Check the result of GATK tool run
         :return: None
         """
-        if  len(self.stdout.split('\n')) > 1:
+        if len(self.stdout.split('\n')) > 1:
             if not re.match('Exit status: 0', self.stdout.split('\n')[-2].rstrip()):
                 raise ToolExecutionError("Mutect1 fails to run, message: \n{}".format(self.stdout))
-

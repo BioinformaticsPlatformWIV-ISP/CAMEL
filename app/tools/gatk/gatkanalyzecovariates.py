@@ -11,7 +11,8 @@ class GATKAnalyzeCovariates(GATK):
     """
     Class for the GATK AnalyzeCovariates tool.
     """
-    def __init__(self,camel):
+
+    def __init__(self, camel):
         """
         Initialize GATKAnalyzeCovariates tool.
         :param camel: Camel instance
@@ -22,7 +23,6 @@ class GATKAnalyzeCovariates(GATK):
 
         self._function_name = 'AnalyzeCovariates'
         self._required_inputs = ['TABLE_BEFORE', 'TABLE_AFTER']
-
 
     def _set_input(self):
         """
@@ -49,7 +49,6 @@ class GATKAnalyzeCovariates(GATK):
             self._input_string += "-R {} ".format(self.__fasta_ref)
             logging.info("Setting fasta reference to default: {}".format(self.__fasta_ref))
 
-
     def _set_output(self):
         """
         Set the output specifications in the ouptut_string: 
@@ -63,9 +62,8 @@ class GATKAnalyzeCovariates(GATK):
 
         if self._parameters['write_csv_output'].value == 'True':
             if 'csv_output' in self._parameters:
-                self._tool_outputs['CSV'] = [ToolIOFile(os.path.join(self._folder, self._parameters['csv_output'].value))]
-
-
+                self._tool_outputs['CSV'] = [
+                    ToolIOFile(os.path.join(self._folder, self._parameters['csv_output'].value))]
 
     def _set_specific_parameters(self):
         """
@@ -81,7 +79,6 @@ class GATKAnalyzeCovariates(GATK):
         if self._parameters['write_csv_output'].value == 'False':
             self._specific_parameters.append('csv_output')
 
-
     def _check_parameters(self):
         """
         Check that parameters make sense and that mandatory parameters were specified.
@@ -90,6 +87,6 @@ class GATKAnalyzeCovariates(GATK):
 
         super(GATKAnalyzeCovariates, self)._check_parameters()
 
-        if self._parameters['write_csv_output'].value not in ('False','True'):
+        if self._parameters['write_csv_output'].value not in ('False', 'True'):
             raise InvalidParameterError("Unrecognized boolean value: {}. Value should be 'True' or 'False'".format(
                 self._parameters['write_csv_output'].value))

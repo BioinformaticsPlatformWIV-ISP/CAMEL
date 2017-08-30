@@ -11,6 +11,7 @@ class GATKBaseRecalibrator(GATK):
     """
     Class for GATK BaseRecalibrator tool.
     """
+
     def __init__(self, camel):
         """
         Initialize GATKBaseRecalibrator tool.
@@ -25,7 +26,6 @@ class GATKBaseRecalibrator(GATK):
         self.__snps_known_sites_path = ''
         self.__indels_known_sites_path = ''
 
-
     def _set_input(self):
         """
         Set the input specification in the input_string
@@ -35,8 +35,7 @@ class GATKBaseRecalibrator(GATK):
         # set input BAM
         self._input_string += "-I {} ".format(self._tool_inputs['BAM'][0].path)
 
-
-        #set reference genome, known snps and known indels
+        # set reference genome, known snps and known indels
         if 'FASTA_REF' in self._tool_inputs:
             self._input_string += "-R {} ".format(self._tool_inputs['FASTA_REF'][0].path)
         else:
@@ -61,11 +60,10 @@ class GATKBaseRecalibrator(GATK):
             self._input_string += "-knownSites {} ".format(self.__indels_known_sites_path)
             logging.info("Setting known indels to default: {}".format(self.__indels_known_sites_path))
 
-
     def _set_output(self):
         """
         Set the output specification in the output_string
         :return: None
         """
-        self._tool_outputs['TXT_RecalibrationTable'] = [ToolIOFile(os.path.join(self._folder, self._parameters['recal_table_output'].value))]
-
+        self._tool_outputs['TXT_RecalibrationTable'] = [
+            ToolIOFile(os.path.join(self._folder, self._parameters['recal_table_output'].value))]

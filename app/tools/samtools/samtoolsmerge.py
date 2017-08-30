@@ -1,15 +1,32 @@
 import os
 
-from app.error.toolexecutionerror import ToolExecutionError
 from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from app.error.toolexecutionerror import ToolExecutionError
 from app.io.tooliofile import ToolIOFile
 from app.tools.samtools.samtools import Samtools
 import logging
 
 
 class SamtoolsMerge(Samtools):
-    """
+    """ 
+    ==============
+    SamtoolsMerge 1.3.1.
+    ==============
     Merges bam/sam files into one.
+    
+    required inputs:
+    ----------------
+    "BAM" / "SAM":  At least one bam or sam file. All files should be of same type.
+    
+    Output:
+    -------
+    "BAM" / "SAM":  one bam or sam file. Output filetype depends on output file extension; bam assumed if no valid 
+                    extension is found.
+    
+    Mandatory parameters:
+    ---------------------
+    - output_filename
+                    default value:  merged.bam
     """
 
     def __init__(self, camel):
@@ -44,9 +61,7 @@ class SamtoolsMerge(Samtools):
         self.__output_file_type = self.__determine_output_file_type()
         self.__build_command()
         self._execute_command()
-        self._check_stderr()
         self.__set_output()
-
 
     def __build_command(self):
         """
@@ -55,21 +70,10 @@ class SamtoolsMerge(Samtools):
         """
         self._command.command = ' '.join([
             self._tool_command,
-            ' '.join(self._build_options(excluded_parameters = ('output_filename'))),
+            ' '.join(self._build_options(excluded_parameters=('output_filename'))),
             self._parameters['output_filename'].value,
             ' '.join([file.path for file in self._tool_inputs[self.__input_file_type]])
-            ])
-
-
-    def _check_stderr(self):
-        """
-        Validates the stderr.
-        :return: None
-        TODO
-        """
-
-        super(SamtoolsMerge, self)._check_stderr()
-
+        ])
 
     def __set_output(self):
         """
@@ -78,7 +82,6 @@ class SamtoolsMerge(Samtools):
         """
         output_file_path = os.path.join(self._folder, self._parameters['output_filename'].value)
         self._tool_outputs[self.__output_file_type] = [ToolIOFile(output_file_path)]
-
 
     def __determine_output_file_type(self):
         """
@@ -95,4 +98,11 @@ class SamtoolsMerge(Samtools):
         return filetype
 
     def _check_command_output(self):
-        pass
+        """
+        Checks the command output.
+        Supersedes function in Tool class because warnings printed to stderr can cause false abort.
+        """
+        self._check_stderr()
+
+        if self._command.returncode != 0:
+            raise ToolExecutionError("Command execution failed (Exit code: {})".format(self._command.returncode))
