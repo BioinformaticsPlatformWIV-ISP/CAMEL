@@ -10,7 +10,7 @@ class BedtoolsMerge(Bedtools):
     Tool class for Bedtools merge function.
     """
 
-    def __init__(self, camel, tool_name='bedtools merge', version='2.25.0'):
+    def __init__(self, camel):
         """
         Initialize a samtools tool.
         :param tool_name: Tool name
@@ -18,10 +18,8 @@ class BedtoolsMerge(Bedtools):
         :param camel: Camel instance
         :return: None
         """
-        super(BedtoolsMerge, self).__init__(tool_name, version, camel)
-        # self._required_inputs = ['BED']
+        super(BedtoolsMerge, self).__init__('bedtools merge', '2.25.0', camel)
         self.__input_type = ""
-
 
     def _execute_tool(self):
         """
@@ -35,7 +33,6 @@ class BedtoolsMerge(Bedtools):
         self.__set_output()
         self.__build_command()
         self._execute_command()
-
 
     def __build_command(self):
         """
@@ -55,7 +52,6 @@ class BedtoolsMerge(Bedtools):
             input_string,
             output_string])
 
-
     def _check_input(self):
         """
         Checks the input.
@@ -63,7 +59,6 @@ class BedtoolsMerge(Bedtools):
         """
         self._check_required_inputs()
         super(BedtoolsMerge, self)._check_input()
-
 
     def _check_required_inputs(self):
         """
@@ -74,15 +69,17 @@ class BedtoolsMerge(Bedtools):
         """
 
         if len(self._tool_inputs) != 1:
-            raise InvalidInputSpecificationError("{} input file(s) specified. Bedtools merge takes exactly ONE input (BAM or BED).".format(len(self._tool_inputs)))
+            raise InvalidInputSpecificationError(
+                "{} input file(s) specified. Bedtools merge takes exactly ONE input (BAM or BED).".format(
+                    len(self._tool_inputs)))
         elif "BAM" in self._tool_inputs:
             self.__input_type = "BAM"
         elif "BED" in self._tool_inputs:
             self.__input_type = "BED"
         else:
-            raise InvalidInputSpecificationError("Input file specified with wrong file type ({}). Accepted types are BAM or BED.".format(self._tool_inputs.keys()[0]))
-
-
+            raise InvalidInputSpecificationError(
+                "Input file specified with wrong file type ({}). Accepted types are BAM or BED.".format(
+                    self._tool_inputs.keys()[0]))
 
     def __set_output(self):
         """

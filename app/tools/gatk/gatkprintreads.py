@@ -22,7 +22,6 @@ class GATKPrintReads(GATK):
         self._function_name = 'PrintReads'
         self._required_inputs = ['BAM', 'BQSR']
 
-
     def _set_input(self):
         """
         Set the input specification in the input_string
@@ -35,7 +34,6 @@ class GATKPrintReads(GATK):
         # set input recalibration table
         self._input_string += "-BQSR {} ".format(self._tool_inputs['BQSR'][0].path)
 
-
         # set reference genome
         if 'FASTA_REF' in self._tool_inputs:
             self._input_string += "-R {} ".format(self._tool_inputs['FASTA_REF'][0].path)
@@ -45,7 +43,6 @@ class GATKPrintReads(GATK):
             self._input_string += "-R {} ".format(self.__fasta_ref)
             logging.info("Setting fasta reference to default: {}".format(self.__fasta_ref))
 
-
     def _set_output(self):
         """
         Set the output specification in the output_string:
@@ -53,7 +50,7 @@ class GATKPrintReads(GATK):
         Supersedes the _set_output fct in GATK class.
         :return: None
         """
-        self.__bam_output_file = self._parameters['bam_output'].value
-        self._tool_outputs['BAM'] = [ToolIOFile(os.path.join(self._folder, self.__bam_output_file))]
-        self.__bai_output_file = self.__bam_output_file[:-1]+"i"
-        self._tool_outputs['BAI'] = [ToolIOFile(os.path.join(self._folder, self.__bai_output_file))]
+        bam_output_file = self._parameters['bam_output'].value
+        self._tool_outputs['BAM'] = [ToolIOFile(os.path.join(self._folder, bam_output_file))]
+        bai_output_file = bam_output_file[:-1] + "i"
+        self._tool_outputs['BAI'] = [ToolIOFile(os.path.join(self._folder, bai_output_file))]

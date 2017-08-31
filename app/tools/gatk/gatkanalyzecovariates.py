@@ -11,7 +11,8 @@ class GATKAnalyzeCovariates(GATK):
     """
     Class for the GATK AnalyzeCovariates tool.
     """
-    def __init__(self,camel):
+
+    def __init__(self, camel):
         """
         Initialize GATKAnalyzeCovariates tool.
         :param camel: Camel instance
@@ -21,8 +22,7 @@ class GATKAnalyzeCovariates(GATK):
         super(GATKAnalyzeCovariates, self).__init__('gatk AnalyzeCovariates', '3.7', camel)
 
         self._function_name = 'AnalyzeCovariates'
-        self._required_inputs = ['TABLE_BEFORE', 'TABLE_AFTER']
-
+        self._required_inputs = ['TXT_TABLE_BEFORE', 'TXT_TABLE_AFTER']
 
     def _set_input(self):
         """
@@ -33,10 +33,10 @@ class GATKAnalyzeCovariates(GATK):
         """
 
         # set before and after covariates tables
-        if 'TABLE_BEFORE' in self._tool_inputs:
-            self._input_string += "-before {} ".format(self._tool_inputs['TABLE_BEFORE'][0].path)
-        if 'TABLE_AFTER' in self._tool_inputs:
-            self._input_string += "-after {} ".format(self._tool_inputs['TABLE_AFTER'][0].path)
+        if 'TXT_TABLE_BEFORE' in self._tool_inputs:
+            self._input_string += "-before {} ".format(self._tool_inputs['TXT_TABLE_BEFORE'][0].path)
+        if 'TXT_TABLE_AFTER' in self._tool_inputs:
+            self._input_string += "-after {} ".format(self._tool_inputs['TXT_TABLE_AFTER'][0].path)
         if 'BQSR' in self._tool_inputs:
             self._input_string += "-BQSR {} ".format(self._tool_inputs['BQSR'][0].path)
 
@@ -48,7 +48,6 @@ class GATKAnalyzeCovariates(GATK):
             self.__fasta_ref = ToolIODb('broad_b37_human_Genome_1K_v37')
             self._input_string += "-R {} ".format(self.__fasta_ref)
             logging.info("Setting fasta reference to default: {}".format(self.__fasta_ref))
-
 
     def _set_output(self):
         """
@@ -63,9 +62,8 @@ class GATKAnalyzeCovariates(GATK):
 
         if self._parameters['write_csv_output'].value == 'True':
             if 'csv_output' in self._parameters:
-                self._tool_outputs['CSV'] = [ToolIOFile(os.path.join(self._folder, self._parameters['csv_output'].value))]
-
-
+                self._tool_outputs['CSV'] = [
+                    ToolIOFile(os.path.join(self._folder, self._parameters['csv_output'].value))]
 
     def _set_specific_parameters(self):
         """
@@ -81,7 +79,6 @@ class GATKAnalyzeCovariates(GATK):
         if self._parameters['write_csv_output'].value == 'False':
             self._specific_parameters.append('csv_output')
 
-
     def _check_parameters(self):
         """
         Check that parameters make sense and that mandatory parameters were specified.
@@ -90,6 +87,6 @@ class GATKAnalyzeCovariates(GATK):
 
         super(GATKAnalyzeCovariates, self)._check_parameters()
 
-        if self._parameters['write_csv_output'].value not in ('False','True'):
+        if self._parameters['write_csv_output'].value not in ('False', 'True'):
             raise InvalidParameterError("Unrecognized boolean value: {}. Value should be 'True' or 'False'".format(
                 self._parameters['write_csv_output'].value))
