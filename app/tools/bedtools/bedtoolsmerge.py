@@ -10,7 +10,7 @@ class BedtoolsMerge(Bedtools):
     Tool class for Bedtools merge function.
     """
 
-    def __init__(self, camel, tool_name='bedtools merge', version='2.25.0'):
+    def __init__(self, camel):
         """
         Initialize a samtools tool.
         :param tool_name: Tool name
@@ -18,8 +18,7 @@ class BedtoolsMerge(Bedtools):
         :param camel: Camel instance
         :return: None
         """
-        super(BedtoolsMerge, self).__init__(tool_name, version, camel)
-        # self._required_inputs = ['BED']
+        super(BedtoolsMerge, self).__init__('bedtools merge', '2.25.0', camel)
         self.__input_type = ""
 
     def _execute_tool(self):

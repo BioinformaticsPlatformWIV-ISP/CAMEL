@@ -44,16 +44,16 @@ class GATKBaseRecalibrator(GATK):
             self._input_string += "-R {} ".format(self.__fasta_ref)
             logging.info("Setting fasta reference to default: {}".format(self.__fasta_ref))
 
-        if 'KNOWN_SNPS' in self._tool_inputs:
-            self._input_string += "-knownSites {} ".format(self._tool_inputs['KNOWN_SNPS'][0].path)
+        if 'VCF_KNOWN_SNPS' in self._tool_inputs:
+            self._input_string += "-knownSites {} ".format(self._tool_inputs['VCF_KNOWN_SNPS'][0].path)
         else:
             # set default
             self.__snps_known_sites_path = ToolIODb('broad_b37_snps_high_confidence')
             self._input_string += "-knownSites {} ".format(self.__snps_known_sites_path)
             logging.info("Setting known snps to default: {}".format(self.__snps_known_sites_path))
 
-        if 'KNOWN_INDELS' in self._tool_inputs:
-            self._input_string += "-knownSites {} ".format(self._tool_inputs['KNOWN_INDELS'][0].path)
+        if 'VCF_KNOWN_INDELS' in self._tool_inputs:
+            self._input_string += "-knownSites {} ".format(self._tool_inputs['VCF_KNOWN_INDELS'][0].path)
         else:
             # set default
             self.__indels_known_sites_path = ToolIODb('broad_b37_snps_high_confidence')

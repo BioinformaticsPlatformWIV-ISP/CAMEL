@@ -22,7 +22,7 @@ class GATKAnalyzeCovariates(GATK):
         super(GATKAnalyzeCovariates, self).__init__('gatk AnalyzeCovariates', '3.7', camel)
 
         self._function_name = 'AnalyzeCovariates'
-        self._required_inputs = ['TABLE_BEFORE', 'TABLE_AFTER']
+        self._required_inputs = ['TXT_TABLE_BEFORE', 'TXT_TABLE_AFTER']
 
     def _set_input(self):
         """
@@ -33,10 +33,10 @@ class GATKAnalyzeCovariates(GATK):
         """
 
         # set before and after covariates tables
-        if 'TABLE_BEFORE' in self._tool_inputs:
-            self._input_string += "-before {} ".format(self._tool_inputs['TABLE_BEFORE'][0].path)
-        if 'TABLE_AFTER' in self._tool_inputs:
-            self._input_string += "-after {} ".format(self._tool_inputs['TABLE_AFTER'][0].path)
+        if 'TXT_TABLE_BEFORE' in self._tool_inputs:
+            self._input_string += "-before {} ".format(self._tool_inputs['TXT_TABLE_BEFORE'][0].path)
+        if 'TXT_TABLE_AFTER' in self._tool_inputs:
+            self._input_string += "-after {} ".format(self._tool_inputs['TXT_TABLE_AFTER'][0].path)
         if 'BQSR' in self._tool_inputs:
             self._input_string += "-BQSR {} ".format(self._tool_inputs['BQSR'][0].path)
 
