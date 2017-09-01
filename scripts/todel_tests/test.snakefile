@@ -147,3 +147,5 @@ rule addreadgroups:
         parg.update_parameters(RG_sample_name=config["sample_name"])
         parg.run(os.path.join(working_dir, "addreadgroups"))
         SnakemakeUtils.dump_tool_output(parg, "BAM", output.BAM)
+
+

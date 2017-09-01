@@ -1,0 +1,5 @@
+to use snakemake:
+cd /scratch/todel/GATK_Camel_test/pipeline
+. /home/todel/PycharmProjects/camel_3.0/camel_3_env/bin/activate
+export PYTHONPATH=/home/todel/PycharmProjects/camel_3.0
+snakemake --snakefile /home/todel/PycharmProjects/camel_3.0/scripts/todel_tests/test.snakefile --configfile /home/todel/PycharmProjects/camel_3.0/scripts/todel_tests/config.yaml --cores 16
