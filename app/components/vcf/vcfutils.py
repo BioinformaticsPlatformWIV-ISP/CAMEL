@@ -16,15 +16,12 @@ class VCFUtils(object):
     @staticmethod
     def is_multi_sample(vcf_file):
         """
-        Function to check whether a VCF file contains mulitple sample
+        Function to check whether a VCF file contains multiple sample
         :param vcf_file: the vcf file to be checked (with complete path)
-        :return: True if is a multiple sampel VCF file
+        :return: True if is a multiple sample VCF file
         """
         vcf_reader = vcf.Reader(filename=vcf_file)
-        if len(vcf_reader.samples) > 1:
-            return True
-        else:
-            return False
+        return len(vcf_reader.samples) > 1
 
     @staticmethod
     def get_reader(vcf_file):
@@ -36,7 +33,7 @@ class VCFUtils(object):
         return vcf.Reader(filename=vcf_file)
 
     @staticmethod
-    def retrieve_variants(vcf_file, types=[], excluded_types=[]):
+    def retrieve_variants(vcf_file, types=None, excluded_types=None):
         """
         Function to retrieve certain types of variants
         :param vcf_file: the vcf file to retrieve data
@@ -46,20 +43,23 @@ class VCFUtils(object):
 
         KNOWN TYPES: 'tv', 'unknown', 'ts', 'ins', 'del', 'indel', 'snp'
         """
+        types = [] if types is None else types
+        excluded_types = [] if excluded_types is None else excluded_types
+
         vcf_reader = vcf.Reader(filename=vcf_file)
         records = []
-        if types and excluded_types:
+        if len(types) > 0 and len(excluded_types) > 0:
             # both types and excluded_types set
             for re in vcf_reader:
                 if any(x in types for x in [re.var_type, re.var_subtype]) and \
                    all(x not in excluded_types for x in [re.var_type, re.var_subtype]):
                     records.append(re)
-        elif types:
+        elif len(types) > 0:
             # only set types
             for re in vcf_reader:
                 if any(x in types for x in [re.var_type, re.var_subtype]):
                     records.append(re)
-        elif excluded_types:
+        elif len(excluded_types) > 0:
             # only set excluded_types
             for re in vcf_reader:
                 if all(x not in excluded_types for x in [re.var_type, re.var_subtype]):
