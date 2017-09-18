@@ -42,7 +42,7 @@ class BedtoolsMerge(Bedtools):
 
         input_string = "-i {} ".format(self._tool_inputs[self.__input_type][0].path)
 
-        build_options = ' '.join(self._build_options(excluded_parameters='output_filename'))
+        build_options = ' '.join(self._build_options(excluded_parameters={'output_filename'}))
 
         output_string = '> ' + self._parameters['output_filename'].value
 

@@ -35,7 +35,7 @@ class BedtoolsBamToBed(Bedtools):
         Builds the command with input, options and output strings.
         :return: None
         """
-        build_options = ' '.join(self._build_options(excluded_parameters='output_filename'))
+        build_options = ' '.join(self._build_options(excluded_parameters={'output_filename'}))
 
         self._check_input()
         input_string = "-i {} ".format(self._tool_inputs['BAM'][0].path)
