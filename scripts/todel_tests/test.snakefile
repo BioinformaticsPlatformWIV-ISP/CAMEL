@@ -149,3 +149,25 @@ rule addreadgroups:
         SnakemakeUtils.dump_tool_output(parg, "BAM", output.BAM)
 
 
+rule generateintervals:
+    input:
+        BAM=os.path.join(working_dir, "addreadgroups/bam.io")
+    output:
+        BED=os.path.join(working_dir, "generateintervals/bed.io")
+    run:
+        from app.tools.bedtools.bedtoolsmerge import BedtoolsMerge
+        btm = BedtoolsMerge(camel)
+        SnakemakeUtils.add_pickle_input(btm, "BAM", input.BAM)
+        btm.run(os.path.join(working_dir, "generateintervals"))
+        SnakemakeUtils.dump_tool_output(btm, "BED", output.BED)
+
+rule createrealignertargets:
+    input:
+
+    output:
+    run:
+        from app.tools.gatk.gatkrealignertargetcreator import GATKRealignerTargetCreator
+        grtc = GATKRealignerTargetCreator(camel)
+        SnakemakeUtils.add_pickle_input(grtc,"BAM",input.BAM)
+
+
