@@ -70,7 +70,7 @@ class SamtoolsMerge(Samtools):
         """
         self._command.command = ' '.join([
             self._tool_command,
-            ' '.join(self._build_options(excluded_parameters=('output_filename'))),
+            ' '.join(self._build_options(excluded_parameters={'output_filename'})),
             self._parameters['output_filename'].value,
             ' '.join([file.path for file in self._tool_inputs[self.__input_file_type]])
         ])
