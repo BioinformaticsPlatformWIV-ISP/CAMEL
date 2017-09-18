@@ -2,6 +2,7 @@ import logging
 
 from app.components.files.fastautils import FastaUtils
 from app.components.statisticsutils import StatisticsUtils
+from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from app.tools.tool import Tool
 
 
@@ -33,9 +34,9 @@ class SamtoolsDepthStatsAnalyzer(Tool):
         :return: None
         """
         if 'TXT' not in self._tool_inputs:
-            raise ValueError("No samtools depth output TXT file file found as input.")
+            raise InvalidInputSpecificationError("No samtools depth output TXT file file found as input.")
         if len(self._tool_inputs['TXT']) != 1:
-            raise ValueError("Exactly one samtools depth output TXT file as input expected.")
+            raise InvalidInputSpecificationError("Exactly one samtools depth output TXT file as input expected.")
 
         super(SamtoolsDepthStatsAnalyzer, self)._check_input()
 
