@@ -56,7 +56,7 @@ class GATKBaseRecalibrator(GATK):
             self._input_string += "-knownSites {} ".format(self._tool_inputs['VCF_KNOWN_INDELS'][0].path)
         else:
             # set default
-            self.__indels_known_sites_path = ToolIODb('broad_b37_snps_high_confidence')
+            self.__indels_known_sites_path = ToolIODb('broad_b37_indels_gold_standard')
             self._input_string += "-knownSites {} ".format(self.__indels_known_sites_path)
             logging.info("Setting known indels to default: {}".format(self.__indels_known_sites_path))
 

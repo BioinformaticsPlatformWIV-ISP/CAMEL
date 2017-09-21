@@ -9,7 +9,34 @@ import logging
 
 class GATKAnalyzeCovariates(GATK):
     """
-    Class for the GATK AnalyzeCovariates tool.
+    ==========================
+    GATK AnalyzeCovariates 3.7
+    ==========================
+    Analyses and generates plots about covariates analysed during Base Quality Score Recalibration step and used to recalibrate bases.
+    web: https://software.broadinstitute.org/gatk/gatkdocs/3.5-0/org_broadinstitute_gatk_tools_walkers_bqsr_AnalyzeCovariates.php
+    
+    Required inputs:
+    ----------------
+    'TXT_TABLE_BEFORE': Base quality score recalibration table on original data. GATK text format.
+    'TXT_TABLE_AFTER':  Base quality score recalibration table on recalibrated data. GATK text format.
+    
+    Optional input:
+    ---------------
+    'BQSR':             Base quality score recalibration table on extra data. GATK text format.
+    'FASTA_REF':        FASTA file containing the reference genome. If not specified, db default is used.
+     
+    Output:
+    -------
+    'PDF':              pdf document with graphs of recalibration.
+    
+    Optional output:
+    ---------------
+    'CSV':              csv with recalibration covariates data used for generating the pdf output. 
+                        Generated if 'csv_output' parameter set to 'True'
+    
+    Mandatory parameters:
+    ---------------------
+    - pdf_output       Default value: 'recal_QC_plots.pdf'
     """
 
     def __init__(self, camel):
