@@ -28,7 +28,7 @@ class SamtoolsMerge(Samtools):
     - output_filename
                     default value:  merged.bam
     """
-    
+
     def __init__(self, camel):
         """
         Initializes this tool.
