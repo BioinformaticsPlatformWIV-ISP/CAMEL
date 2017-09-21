@@ -26,7 +26,6 @@ class BedtoolsMerge(Bedtools):
         Executes this tool.
         :return: None
         """
-        self._check_input()
         if self.__input_type == "BAM":
             self.update_parameters(use_bed_output=True)
 
@@ -39,7 +38,6 @@ class BedtoolsMerge(Bedtools):
         Builds the command with input, options and output strings.
         :return: None
         """
-
         input_string = "-i {} ".format(self._tool_inputs[self.__input_type][0].path)
 
         build_options = ' '.join(self._build_options(excluded_parameters={'output_filename'}))
@@ -67,7 +65,6 @@ class BedtoolsMerge(Bedtools):
         Inputs must be one of either BAM or BED.
         :return: None
         """
-
         if len(self._tool_inputs) != 1:
             raise InvalidInputSpecificationError(
                 "{} input file(s) specified. Bedtools merge takes exactly ONE input (BAM or BED).".format(
@@ -86,5 +83,4 @@ class BedtoolsMerge(Bedtools):
         Sets the output of this tool.
         :return: None
         """
-
         self._tool_outputs['BED'] = [ToolIOFile(os.path.join(self._folder, self._parameters['output_filename'].value))]
