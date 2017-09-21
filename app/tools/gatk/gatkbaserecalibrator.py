@@ -59,6 +59,9 @@ class GATKBaseRecalibrator(GATK):
             self.__indels_known_sites_path = ToolIODb('broad_b37_snps_high_confidence')
             self._input_string += "-knownSites {} ".format(self.__indels_known_sites_path)
             logging.info("Setting known indels to default: {}".format(self.__indels_known_sites_path))
+            
+        if 'TXT_intervals' in self._tool_inputs:
+            self._input_string += "-L {} ".format(self._tool_inputs['TXT_intervals'][0].path)
 
     def _set_output(self):
         """
