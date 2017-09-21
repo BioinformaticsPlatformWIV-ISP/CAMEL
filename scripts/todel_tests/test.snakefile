@@ -26,8 +26,7 @@ def prepare_addreadgroups_input(wildcards):
 rule all:
     # This rule makes sure that all other rules are executed.
     input:
-        # os.path.join(working_dir, "addreadgroups/bam.io")
-        os.path.join(working_dir, "printreads/bam.io")
+        os.path.join(working_dir, "analyzecovariates/pdf.io")
 
 rule prepare_initial_input:
     input:
@@ -210,7 +209,6 @@ rule indelrealigner:
 
 rule basequalityrecalibration:
     input:
-        INTERVALS=os.path.join(working_dir, "realignertargetcreator/intervals.io"),
         BAM=os.path.join(working_dir, "indelrealigner/bam.io"),
         BED=os.path.join(working_dir, "generate_intervals/bed.io"),
     output:
@@ -223,7 +221,6 @@ rule basequalityrecalibration:
         bqsr.add_input_files({"FASTA_REF":[ToolIODb('broad_b37_human_Genome_1K_v37')]})
         bqsr.update_parameters(threads=threads)
         SnakemakeUtils.add_pickle_input(bqsr,"BAM",input.BAM)
-        SnakemakeUtils.add_pickle_input(bqsr,"TXT_realign_intervals",input.INTERVALS)
         SnakemakeUtils.add_pickle_input(bqsr,"TXT_intervals", input.BED)
         bqsr.run(os.path.join(working_dir, "basequalityrecalibration"))
         SnakemakeUtils.dump_tool_output(bqsr,"TXT_RecalibrationTable",output.TXT)
@@ -232,7 +229,6 @@ rule printreads:
     input:
         BAM=os.path.join(working_dir, "indelrealigner/bam.io"),
         TXT=os.path.join(working_dir, "basequalityrecalibration/txt.io"),
-        INTERVALS=os.path.join(working_dir, "realignertargetcreator/intervals.io"),
     output:
         BAM=os.path.join(working_dir, "printreads/bam.io"),
     threads: 5
@@ -244,8 +240,55 @@ rule printreads:
         gpr.update_parameters(threads=threads)
         SnakemakeUtils.add_pickle_input(gpr,"BAM",input.BAM)
         SnakemakeUtils.add_pickle_input(gpr,"BQSR",input.TXT)
-        SnakemakeUtils.add_pickle_input(gpr,"TXT_realign_intervals",input.INTERVALS)
         gpr.run(os.path.join(working_dir, "printreads"))
         SnakemakeUtils.dump_tool_output(gpr,"BAM",output.BAM)
 
-# rule basequalityrecalibration2:
+rule basequalityrecalibration2:
+    input:
+        BAM = os.path.join(working_dir, "printreads/bam.io"),
+        BED = os.path.join(working_dir, "generate_intervals/bed.io"),
+    output:
+        TXT = os.path.join(working_dir, "basequalityrecalibration2/txt.io"),
+    threads: 5
+    run:
+        from app.tools.gatk.gatkbaserecalibrator import GATKBaseRecalibrator
+        from app.io.tooliodb import ToolIODb
+
+        bqsr = GATKBaseRecalibrator(camel)
+        bqsr.add_input_files({"FASTA_REF": [ToolIODb('broad_b37_human_Genome_1K_v37')]})
+        bqsr.update_parameters(threads=threads)
+        SnakemakeUtils.add_pickle_input(bqsr, "BAM", input.BAM)
+        SnakemakeUtils.add_pickle_input(bqsr, "TXT_intervals", input.BED)
+        bqsr.run(os.path.join(working_dir, "basequalityrecalibration2"))
+        SnakemakeUtils.dump_tool_output(bqsr, "TXT_RecalibrationTable", output.TXT)
+
+rule analyzecovariates:
+    input:
+        TXT_BEFORE=os.path.join(working_dir, "basequalityrecalibration/txt.io"),
+        TXT_AFTER=os.path.join(working_dir, "basequalityrecalibration2/txt.io"),
+    output:
+        PDF=os.path.join(working_dir, "analyzecovariates/pdf.io"),
+    run:
+        from app.tools.gatk.gatkanalyzecovariates import GATKAnalyzeCovariates
+
+        gac = GATKAnalyzeCovariates(camel)
+        SnakemakeUtils.add_pickle_input(gac,"TXT_TABLE_BEFORE",input.TXT_BEFORE)
+        SnakemakeUtils.add_pickle_input(gac,"TXT_TABLE_AFTER",input.TXT_AFTER)
+        gac.run(os.path.join(working_dir, "analyzecovariates"))
+        SnakemakeUtils.dump_tool_output(gac, "PDF", output.PDF)
+
+rule mutect1:
+    input:
+        BAM=os.path.join(working_dir, "printreads/bam.io"),
+    output:
+        TXT=os.path.join(working_dir, "mutect1/txt.io"),
+        VCF=os.path.join(working_dir, "mutect1/vcf.io"),
+    run:
+        from app.tools.mutect.mutect1 import Mutect1
+        mut=Mutect1(camel)
+        SnakemakeUtils.add_pickle_input(mut,'BAM_TUMOR',input.BAM)
+        mut.update_parameters(output_vcf_file='True')
+        mut.run(os.path.join(working_dir, "mutect1"))
+        SnakemakeUtils.dump_tool_output(mut,'TXT_CALL_STATS',output.TXT)
+        SnakemakeUtils.dump_tool_output(mut,'VCF',output.VCF)
+
