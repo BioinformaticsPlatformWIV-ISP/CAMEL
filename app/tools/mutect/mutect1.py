@@ -11,8 +11,34 @@ from app.error.invalidinputspecificationerror import InvalidInputSpecificationEr
 
 class Mutect1(Tool):
     """
-    Class for the tool Mutect (v1). Mutect performs variant calling for oncology-related NGS data. 
-    V1 only calls snps, not indels.
+    ===========
+    Mutect (v1).
+    ===========
+    Performs variant calling for oncology-related NGS data. 
+    Mutect V1 only calls snps, not indels. For indels, use Mutect2.
+    
+    Required inputs:
+    ----------------
+    "BAM_TUMOR":  BAM file with tumour data
+    
+    Optional input:
+    ---------------
+    "NORMAL_BAM": BAM file with normal data for tumor-normal matching.
+    "FASTA_REF": FASTA file containing the reference genome. If not specified, db default is used.
+    "DBSNP_VCF": DbSNP reference vcf file location. If not specified, db defaults is used.
+    
+    Output:
+    -------
+    "TXT_CALL_STATS": GATK Call stats text based file. Parseable by scripts or in excel sheets.
+    
+    Optional output:
+    ---------------
+    "VCF": VCF file. Generated if 'output_vcf_file' parameter set to 'True'
+    
+    Mandatory parameters:
+    ---------------------
+    - output_callstats_file
+                    default value:  call_stats.txt
     """
 
     def __init__(self, camel):
@@ -104,7 +130,7 @@ class Mutect1(Tool):
 
         self._tool_outputs['TXT_CALL_STATS'] = [
             ToolIOFile(os.path.join(self._folder, self._parameters['output_callstats_file'].value))]
-        if 'output_vcf_file' in self._parameters:
+        if 'output_vcf_file' in self._parameters and self._parameters['output_vcf_file'] == 'True':
             self._tool_outputs['VCF'] = [
                 ToolIOFile(os.path.join(self._folder, self._parameters['output_vcf_file'].value))]
 
