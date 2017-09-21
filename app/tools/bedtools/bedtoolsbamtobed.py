@@ -14,8 +14,6 @@ class BedtoolsBamToBed(Bedtools):
         """
         Initialize a samtools tool.
         :param tool_name: Tool name
-        :param version: Tool version
-        :param camel: Camel instance
         :return: None
         """
         super(BedtoolsBamToBed, self).__init__('bedtools bamtobed', '2.25.0', camel)
@@ -37,7 +35,6 @@ class BedtoolsBamToBed(Bedtools):
         """
         build_options = ' '.join(self._build_options(excluded_parameters={'output_filename'}))
 
-        self._check_input()
         input_string = "-i {} ".format(self._tool_inputs['BAM'][0].path)
 
         output_string = '> ' + self._parameters['output_filename'].value
