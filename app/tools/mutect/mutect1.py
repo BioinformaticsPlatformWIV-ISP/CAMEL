@@ -51,6 +51,7 @@ class Mutect1(Tool):
         super(Mutect1, self).__init__('Mutect1', '1.1.7', camel)
 
         self._required_inputs = ['BAM_TUMOR']
+        self.excluded_parameters=['generate_vcf_file']
 
     def _execute_tool(self):
         """
@@ -80,7 +81,7 @@ class Mutect1(Tool):
         :return: 
         """
         input_string = self.__create_input_string()
-        options_string = ' '.join(self._build_options())
+        options_string = ' '.join(self._build_options(excluded_parameters=self.excluded_parameters))
         self._command.command = ' '.join([self._tool_command, input_string, options_string])
 
     def __create_input_string(self):
@@ -90,9 +91,9 @@ class Mutect1(Tool):
         - reference fasta (default or superseded)
         - tumour BAM file
         - normal tissue BAM file (optional)
+        - Intervals list for acceleration
         :return: Input_string
         """
-
         input_string = ""
         # set reference genome
         if 'FASTA_REF' in self._tool_inputs:
@@ -124,6 +125,20 @@ class Mutect1(Tool):
 
         return input_string
 
+    def _build_options(self, excluded_parameters=None, delimiter=' '):
+        """
+        Builds the options string.
+        :parameter delimiter: Delimiter between option and value
+        :return: Options string
+        """
+        if self._parameters['generate_vcf_file'] == "False":
+            excluded_parameters.append('output_vcf_file')
+
+        options = super(Mutect1, self)._build_options()
+
+        return options
+
+
     def __set_output(self):
         """
         Set the output specifications in the Camel ouptut list: 
@@ -132,7 +147,6 @@ class Mutect1(Tool):
         Supersedes _set_output in GATK class.
         :return: None
         """
-
         self._tool_outputs['TXT_CALL_STATS'] = [
             ToolIOFile(os.path.join(self._folder, self._parameters['output_callstats_file'].value))]
         if 'output_vcf_file' in self._parameters and self._parameters['output_vcf_file'] == 'True':
