@@ -58,6 +58,7 @@ rule fastqc_post_trimming:
         from app.tools.fastqc.fastqc import FastQC
         fastqc = FastQC(camel)
         fastqc.update_parameters(threads=threads)
+        SnakemakeUtils.add_pickle_inputs(fastqc, input)
         step = SnakeStep(rule, fastqc, camel, params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(fastqc, output)
