@@ -105,7 +105,7 @@ class Mutect1(Tool):
 
         # Use intervals to restrict search if supplied.
         if 'TXT_intervals' in self._tool_inputs:
-            self._input_string += "-L {} ".format(self._tool_inputs['TXT_intervals'][0].path)
+            input_string += "-L {} ".format(self._tool_inputs['TXT_intervals'][0].path)
 
         # set reference dbSNP db
         if 'VCF_DBSNP' in self._tool_inputs:
