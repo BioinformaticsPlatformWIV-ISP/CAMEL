@@ -19,13 +19,14 @@ class Mutect1(Tool):
     
     Required inputs:
     ----------------
-    "BAM_TUMOR":  BAM file with tumour data
+    "BAM_TUMOR":        BAM file with tumour data
     
     Optional input:
     ---------------
-    "NORMAL_BAM": BAM file with normal data for tumor-normal matching.
-    "FASTA_REF": FASTA file containing the reference genome. If not specified, db default is used.
-    "DBSNP_VCF": DbSNP reference vcf file location. If not specified, db defaults is used.
+    "BAM_NORMAL":       BAM file with normal data for tumor-normal matching.
+    "FASTA_REF":        FASTA file containing the reference genome. If not specified, db default is used.
+    "VCF_DBSNP":        DbSNP reference vcf file location. If not specified, db defaults is used.
+    "TXT_intervals":    Intervals list to restrict search by GATK. Accelerates analysis. Bed or GATK intervals list 
     
     Output:
     -------
@@ -102,20 +103,24 @@ class Mutect1(Tool):
             input_string += "-R {} ".format(self.__fasta_ref)
             logging.info("Setting fasta reference to default: {}".format(self.__fasta_ref))
 
+        # Use intervals to restrict search if supplied.
+        if 'TXT_intervals' in self._tool_inputs:
+            self._input_string += "-L {} ".format(self._tool_inputs['TXT_intervals'][0].path)
+
         # set reference dbSNP db
-        if 'DBSNP_VCF' in self._tool_inputs:
-            input_string += "--dbsnp {} ".format(self._tool_inputs['DBSNP_VCF'][0].path)
+        if 'VCF_DBSNP' in self._tool_inputs:
+            input_string += "--dbsnp {} ".format(self._tool_inputs['VCF_DBSNP'][0].path)
         else:
             # set default
             self.__dbsnp_path = ToolIODb('broad_b37_dbSNP-138')
             input_string += "--dbsnp {} ".format(self.__dbsnp_path)
             logging.info("Setting dbSNP reference to default: {}".format(self.__dbsnp_path))
 
-        if 'TUMOR_BAM' in self._tool_inputs:
-            input_string += "-I:tumor {} ".format(self._tool_inputs['TUMOR_BAM'][0].path)
+        if 'BAM_TUMOR' in self._tool_inputs:
+            input_string += "-I:tumor {} ".format(self._tool_inputs['BAM_TUMOR'][0].path)
 
-        if 'NORMAL_BAM' in self._tool_inputs:
-            input_string += "-I:normal {} ".format(self._tool_inputs['NORMAL_BAM'][0].path)
+        if 'BAM_NORMAL' in self._tool_inputs:
+            input_string += "-I:normal {} ".format(self._tool_inputs['BAM_NORMAL'][0].path)
 
         return input_string
 
