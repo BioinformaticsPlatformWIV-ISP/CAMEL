@@ -19,13 +19,14 @@ class Mutect1(Tool):
     
     Required inputs:
     ----------------
-    "BAM_TUMOR":  BAM file with tumour data
+    "BAM_TUMOR":        BAM file with tumour data
     
     Optional input:
     ---------------
-    "BAM_NORMAL": BAM file with normal data for tumor-normal matching.
-    "FASTA_REF": FASTA file containing the reference genome. If not specified, db default is used.
-    "VCF_DBSNP": DbSNP reference vcf file location. If not specified, db defaults is used.
+    "BAM_NORMAL":       BAM file with normal data for tumor-normal matching.
+    "FASTA_REF":        FASTA file containing the reference genome. If not specified, db default is used.
+    "VCF_DBSNP":        DbSNP reference vcf file location. If not specified, db defaults is used.
+    "TXT_intervals":    Intervals list to restrict search by GATK. Accelerates analysis. Bed or GATK intervals list 
     
     Output:
     -------
@@ -101,6 +102,10 @@ class Mutect1(Tool):
             self.__fasta_ref = ToolIODb('broad_b37_human_Genome_1K_v37')
             input_string += "-R {} ".format(self.__fasta_ref)
             logging.info("Setting fasta reference to default: {}".format(self.__fasta_ref))
+
+        # Use intervals to restrict search if supplied.
+        if 'TXT_intervals' in self._tool_inputs:
+            self._input_string += "-L {} ".format(self._tool_inputs['TXT_intervals'][0].path)
 
         # set reference dbSNP db
         if 'VCF_DBSNP' in self._tool_inputs:
