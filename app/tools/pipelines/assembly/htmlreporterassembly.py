@@ -51,11 +51,11 @@ class HtmlReporterAssembly(HtmlReporter):
         """
         quast_informs = self._input_informs['quast']
         table_data = [
-            ('Assembler', assembler),
-            ('N50', quast_informs['contig'].get('N50', '-')),
-            ('Number of contigs', quast_informs['contig'].get('# contigs (>= 0 bp)', '-')),
-            ('Number of contigs (>1000bp)', quast_informs['contig'].get('# contigs (>= 1000 bp)', '-')),
-            ('Total length', quast_informs['genome'].get('Total length'))
+            ('Assembler:', assembler),
+            ('N50:', quast_informs['contig'].get('N50', '-')),
+            ('Number of contigs:', quast_informs['contig'].get('# contigs (>= 0 bp)', '-')),
+            ('Number of contigs (>1000bp):', quast_informs['contig'].get('# contigs (>= 1000 bp)', '-')),
+            ('Total length:', quast_informs['genome'].get('Total length'))
         ]
         self._report.add_table(table_data, table_attributes=[('class', 'information')])
 
