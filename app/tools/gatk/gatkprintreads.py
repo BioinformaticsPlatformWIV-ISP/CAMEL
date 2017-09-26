@@ -20,7 +20,7 @@ class GATKPrintReads(GATK):
         super(GATKPrintReads, self).__init__('gatk PrintReads', '3.7', camel)
 
         self._function_name = 'PrintReads'
-        self._required_inputs = ['BAM', 'BQSR']
+        self._required_inputs = ['BAM', 'BQSR','FASTA_REF']
 
     def _set_input(self):
         """
@@ -35,13 +35,7 @@ class GATKPrintReads(GATK):
         self._input_string += "-BQSR {} ".format(self._tool_inputs['BQSR'][0].path)
 
         # set reference genome
-        if 'FASTA_REF' in self._tool_inputs:
-            self._input_string += "-R {} ".format(self._tool_inputs['FASTA_REF'][0].path)
-        else:
-            # set default
-            self.__fasta_ref = ToolIODb('broad_b37_human_Genome_1K_v37')
-            self._input_string += "-R {} ".format(self.__fasta_ref)
-            logging.info("Setting fasta reference to default: {}".format(self.__fasta_ref))
+        self._input_string += "-R {} ".format(self._tool_inputs['FASTA_REF'][0].path)
 
     def _set_output(self):
         """
