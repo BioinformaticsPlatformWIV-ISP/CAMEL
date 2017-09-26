@@ -26,7 +26,7 @@ def prepare_addreadgroups_input(wildcards):
 rule all:
     # This rule makes sure that all other rules are executed.
     input:
-        os.path.join(working_dir, "analyzecovariates/pdf.io")
+        os.path.join(working_dir, "mutect1/txt.io")
 
 rule prepare_initial_input:
     input:
@@ -280,6 +280,7 @@ rule analyzecovariates:
 rule mutect1:
     input:
         BAM=os.path.join(working_dir, "printreads/bam.io"),
+        BED = os.path.join(working_dir, "generate_intervals/bed.io"),
     output:
         TXT=os.path.join(working_dir, "mutect1/txt.io"),
         VCF=os.path.join(working_dir, "mutect1/vcf.io"),
@@ -287,7 +288,8 @@ rule mutect1:
         from app.tools.mutect.mutect1 import Mutect1
         mut=Mutect1(camel)
         SnakemakeUtils.add_pickle_input(mut,'BAM_TUMOR',input.BAM)
-        mut.update_parameters(output_vcf_file='True')
+        SnakemakeUtils.add_pickle_input(mut,"TXT_intervals",input.BED)
+        mut.update_parameters(generate_vcf_file='True')
         mut.run(os.path.join(working_dir, "mutect1"))
         SnakemakeUtils.dump_tool_output(mut,'TXT_CALL_STATS',output.TXT)
         SnakemakeUtils.dump_tool_output(mut,'VCF',output.VCF)
