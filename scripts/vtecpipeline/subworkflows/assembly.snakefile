@@ -14,9 +14,9 @@ rule velvet_optimiser:
     run:
         from app.tools.velvetoptimiser.velvetoptimiser import VelvetOptimiser
         velvet_optimiser = VelvetOptimiser(camel)
-        velvet_optimiser.update_parameters(threads=threads, hash_start=51, hash_end=51)
         SnakemakeUtils.add_pickle_inputs(velvet_optimiser, input)
         step = SnakeStep(rule, velvet_optimiser, camel, params.running_dir, config)
+        velvet_optimiser.update_parameters(threads=threads)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(velvet_optimiser, output)
 
@@ -36,13 +36,13 @@ rule spades:
     run:
         from app.tools.spades.spades import SPAdes
         spades = SPAdes(camel)
-        spades.update_parameters(threads=threads)
         spades.add_input_files({
             'FASTQ_PE_1': SnakemakeUtils.load_object(input.FASTQ_PE),
             'FASTQ_PE-S_1': SnakemakeUtils.load_object(input.FASTQ_SE_FORWARD) +
                             SnakemakeUtils.load_object(input.FASTQ_SE_REVERSE)
         })
         step = SnakeStep(rule, spades, camel, params.running_dir, config)
+        spades.update_parameters(threads=threads)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(spades, output)
 
