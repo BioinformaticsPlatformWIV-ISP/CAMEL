@@ -7,6 +7,7 @@ from app.io.tooliodb import ToolIODb
 from app.tools.tool import Tool
 from app.error.toolexecutionerror import ToolExecutionError
 from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from app.error.invalidparametererror import  InvalidParameterError
 
 
 class Mutect1(Tool):
@@ -51,13 +52,14 @@ class Mutect1(Tool):
         super(Mutect1, self).__init__('Mutect1', '1.1.7', camel)
 
         self._required_inputs = ['BAM_TUMOR']
-        self.excluded_parameters=['generate_vcf_file']
+        self._excluded_parameters=['generate_vcf_file']
 
     def _execute_tool(self):
         """
         Runs Mutect1
         :return: None
         """
+
         self.__build_command()
         self._execute_command()
         self.__set_output()
@@ -74,6 +76,29 @@ class Mutect1(Tool):
                 raise InvalidInputSpecificationError(
                     'Mutect1 required {} input is missing in tool inputs!'.format(input_key))
 
+    def _check_parameters(self):
+        """
+        Checks that parameters are valid.
+        :return: None 
+        """
+        super(Mutect1,self)._check_parameters()
+
+        self._check_allowed_values(self._parameters['generate_vcf_file'],('True','False'))
+
+
+    def _check_allowed_values(self,parameter,values):
+        """
+        Checks that a parameter value is one of several allowed values.
+        :parameter parameter:   the parameter to test
+        :parameter values:      values to test against
+        :type parameter:        Parameter
+        :type values:           tuple
+        :return:                None
+        """
+        if parameter.value not in values:
+            raise InvalidParameterError("Unrecognized value for parameter {}: {}. Value should be {}.".format(parameter.name,
+                parameter.value, ' or '.join(values)))
+
     def __build_command(self):
         """
         Build the command to run the tool.
@@ -81,7 +106,7 @@ class Mutect1(Tool):
         :return: 
         """
         input_string = self.__create_input_string()
-        options_string = ' '.join(self._build_options(excluded_parameters=self.excluded_parameters))
+        options_string = ' '.join(self._build_options(excluded_parameters=self._excluded_parameters))
         self._command.command = ' '.join([self._tool_command, input_string, options_string])
 
     def __create_input_string(self):
@@ -131,13 +156,12 @@ class Mutect1(Tool):
         :parameter delimiter: Delimiter between option and value
         :return: Options string
         """
-        if self._parameters['generate_vcf_file'] == "False":
+        if self._parameters['generate_vcf_file'].value == "False":
             excluded_parameters.append('output_vcf_file')
 
-        options = super(Mutect1, self)._build_options()
+        options = super(Mutect1, self)._build_options(excluded_parameters=excluded_parameters, delimiter=delimiter)
 
         return options
-
 
     def __set_output(self):
         """
@@ -149,7 +173,7 @@ class Mutect1(Tool):
         """
         self._tool_outputs['TXT_CALL_STATS'] = [
             ToolIOFile(os.path.join(self._folder, self._parameters['output_callstats_file'].value))]
-        if 'output_vcf_file' in self._parameters and self._parameters['output_vcf_file'] == 'True':
+        if self._parameters['generate_vcf_file'].value == 'True':
             self._tool_outputs['VCF'] = [
                 ToolIOFile(os.path.join(self._folder, self._parameters['output_vcf_file'].value))]
 
