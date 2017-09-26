@@ -5,6 +5,8 @@
 #      proof will need to check the source code.
 #
 #      Reference: http://scikit-bio.org/docs/0.4.1/generated/skbio.io.format.blast6.html
+#
+# ------------------------------------------------------------------------
 
 BLASTN_INT_COLUMNS = ('qlen', 'slen', 'qstart', 'qend', 'sstart', 'send', 'score', 'length', 'nident', 'mismatch',
                       'positive', 'gapopen', 'gaps', 'qcovs', 'qcovhsp')

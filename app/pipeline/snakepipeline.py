@@ -59,13 +59,13 @@ class SnakePipeline(Pipeline):
         :param key: Optional input file key
         :return: List of input files
         """
-        iofiles = []
+        io_files = []
         if key is None:
             for values in self._initial_input.values():
-                iofiles += values
+                io_files += values
         else:
-            iofiles = self._initial_input[key]
+            io_files = self._initial_input[key]
         files = []
-        for file_ in iofiles:
+        for file_ in io_files:
             files.append(file_.path)
         return files
