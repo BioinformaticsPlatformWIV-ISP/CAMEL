@@ -1,4 +1,5 @@
 import vcf
+from app.error.invalidparametererror import InvalidParameterError
 
 
 class VCFUtils(object):
@@ -26,7 +27,7 @@ class VCFUtils(object):
     @staticmethod
     def get_reader(vcf_file):
         """
-        Function to read in vcf files
+        Function to obtain a vcf file reader
         :param vcf_file: the vcf file to be checked (with complete path)
         :return: vcf_reader that can called to retrieve the record
         """
@@ -35,13 +36,17 @@ class VCFUtils(object):
     @staticmethod
     def retrieve_variants(vcf_file, types=None, excluded_types=None):
         """
-        Function to retrieve certain types of variants
-        :param vcf_file: the vcf file to retrieve data
-        :param types: types of variants to be retrieved
+        Function to retrieve certain types of variants. Parameter
+        'types' and 'excluded_types' is mutual exclusive. Either specify
+        'types' to retrieved only certain variants or specify
+        'excluded_types' to exclude variants.
+
+        KNOWN TYPES: 'tv', 'unknown', 'ts', 'ins', 'del', 'indel', 'snp
+
+        :param vcf_file: [optional] the vcf file to retrieve data
+        :param types: [optional] types of variants to be retrieved
         :param excluded_types: types of variants to be excluded
         :return: list of records of types
-
-        KNOWN TYPES: 'tv', 'unknown', 'ts', 'ins', 'del', 'indel', 'snp'
         """
         types = [] if types is None else types
         excluded_types = [] if excluded_types is None else excluded_types
@@ -49,25 +54,21 @@ class VCFUtils(object):
         vcf_reader = vcf.Reader(filename=vcf_file)
         records = []
         if len(types) > 0 and len(excluded_types) > 0:
-            # both types and excluded_types set
-            for re in vcf_reader:
-                if any(x in types for x in [re.var_type, re.var_subtype]) and \
-                   all(x not in excluded_types for x in [re.var_type, re.var_subtype]):
-                    records.append(re)
+            raise InvalidParameterError(
+                "Mutually exclusive parameters 'included types' and 'excluded types' are specified. Only one is allowed.")
         elif len(types) > 0:
             # only set types
-            for re in vcf_reader:
-                if any(x in types for x in [re.var_type, re.var_subtype]):
-                    records.append(re)
+            for rcd in vcf_reader:
+                if any(x in types for x in [rcd.var_type, rcd.var_subtype]):
+                    records.append(rcd)
         elif len(excluded_types) > 0:
             # only set excluded_types
-            for re in vcf_reader:
-                if all(x not in excluded_types for x in [re.var_type, re.var_subtype]):
-                    records.append(re)
+            for rcd in vcf_reader:
+                if all(x not in excluded_types for x in [rcd.var_type, rcd.var_subtype]):
+                    records.append(rcd)
         else:
             # no conditions
-            for re in vcf_reader:
-                records.append(re)
+            list(vcf_reader)
 
         return records
 
