@@ -5,6 +5,7 @@ from app.tools.samtools.samtools import Samtools
 
 
 class SamtoolsDepth(Samtools):
+
     """
     Calculates the coverage depth of an alignment.
     """

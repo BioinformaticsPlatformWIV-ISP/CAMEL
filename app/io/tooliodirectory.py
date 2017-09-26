@@ -17,7 +17,7 @@ class ToolIODirectory(ToolIO):
         :param logged: If True, the output can be logged
         """
         super(ToolIODirectory, self).__init__(logged)
-        self._path = path
+        self._path = os.path.abspath(path)
 
     def __str__(self):
         """
