@@ -73,20 +73,6 @@ class Mutect1(Tool):
         :return: None 
         """
         super(Mutect1,self)._check_parameters()
-        self._check_allowed_values(self._parameters['generate_vcf_file'],('True','False'))
-
-    def _check_allowed_values(self,parameter,values):
-        """
-        Checks that a parameter value is one of several allowed values.
-        :parameter parameter:   the parameter to test
-        :parameter values:      values to test against
-        :type parameter:        Parameter
-        :type values:           tuple
-        :return:                None
-        """
-        if parameter.value not in values:
-            raise InvalidParameterError("Unrecognized value for parameter {}: {}. Value should be {}.".format(parameter.name,
-                parameter.value, ' or '.join(values)))
 
     def __build_command(self):
         """
