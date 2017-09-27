@@ -2,9 +2,6 @@ import os
 
 from app.io.tooliofile import ToolIOFile
 from app.tools.gatk.gatk import GATK
-from app.io.tooliodb import ToolIODb
-
-import logging
 
 
 class GATKBaseRecalibrator(GATK):
