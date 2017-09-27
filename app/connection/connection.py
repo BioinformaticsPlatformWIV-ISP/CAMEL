@@ -19,7 +19,6 @@ class Connection(object):
         with open(config) as f:
             self.config = yaml.safe_load(f)
         self._db = db
-        self.connection = self.get_connection()
 
     def get_connection(self):
         """
@@ -30,7 +29,6 @@ class Connection(object):
                                 dbname=self.config[self._db]['dbname'],
                                 user=self.config[self._db]['user'],
                                 password=self.config[self._db]['password'])
-        logging.info("Connected to '{}' on {}".format(self.config[self._db]['dbname'], self.config[self._db]['host']))
         conn.autocommit = True
         return conn
 
@@ -41,9 +39,10 @@ class Connection(object):
         :param params: optional parameters to send in the query
         :return:
         """
-        cursor = self.connection.cursor()
-        self.execute(cursor, query, params)
-        return [[x[0].title() for x in cursor.description]] + [r for r in cursor.fetchall()]
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            self.execute(cursor, query, params)
+            return [[x[0].title() for x in cursor.description]] + [r for r in cursor.fetchall()]
 
     def insert(self, query, params):
         """
@@ -52,9 +51,10 @@ class Connection(object):
         :param params: parameters to send in the query
         :return: Returned db value or None depending on the query
         """
-        cursor = self.connection.cursor()
-        self.execute(cursor, query, params)
-        return cursor.fetchone()[0] if 'RETURNING' in query else None
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            self.execute(cursor, query, params)
+            return cursor.fetchone()[0] if 'RETURNING' in query else None
 
     @staticmethod
     def execute(cursor, query, params=None):
