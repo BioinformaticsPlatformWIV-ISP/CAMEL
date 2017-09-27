@@ -5,7 +5,6 @@ from app.io.tooliofile import ToolIOFile
 from app.tools.tool import Tool
 from app.error.toolexecutionerror import ToolExecutionError
 from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
-from app.error.invalidparametererror import  InvalidParameterError
 
 
 class Mutect1(Tool):

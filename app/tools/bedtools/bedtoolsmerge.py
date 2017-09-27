@@ -13,8 +13,6 @@ class BedtoolsMerge(Bedtools):
     def __init__(self, camel):
         """
         Initialize a samtools tool.
-        :param tool_name: Tool name
-        :param version: Tool version
         :param camel: Camel instance
         :return: None
         """
