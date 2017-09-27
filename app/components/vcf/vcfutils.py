@@ -12,7 +12,9 @@ class VCFUtils(object):
     INDEL_INS = 'ins'
     INDEL_DEL = 'del'
     SNP = 'snp'
-    SV = 'sv'
+    SNP_TS = 'ts'  # Transition SNP
+    SNP_TV = 'tv'  # Transversion SNP
+    UNKNOWN = 'unknown'  # Variants other than indel & snp
 
     @staticmethod
     def is_multi_sample(vcf_file):
@@ -41,7 +43,8 @@ class VCFUtils(object):
         'types' to retrieved only certain variants or specify
         'excluded_types' to exclude variants.
 
-        KNOWN TYPES: 'tv', 'unknown', 'ts', 'ins', 'del', 'indel', 'snp
+        TYPES: 'unknown', ''indel', 'snp'
+        SUBTYPES: 'tv', 'ts', 'ins', 'del'
 
         :param vcf_file: [optional] the vcf file to retrieve data
         :param types: [optional] types of variants to be retrieved
@@ -51,12 +54,13 @@ class VCFUtils(object):
         types = [] if types is None else types
         excluded_types = [] if excluded_types is None else excluded_types
 
-        vcf_reader = vcf.Reader(filename=vcf_file)
-        records = []
         if len(types) > 0 and len(excluded_types) > 0:
             raise InvalidParameterError(
                 "Mutually exclusive parameters 'included types' and 'excluded types' are specified. Only one is allowed.")
-        elif len(types) > 0:
+
+        vcf_reader = vcf.Reader(filename=vcf_file)
+        records = []
+        if len(types) > 0:
             # only set types
             for rcd in vcf_reader:
                 if any(x in types for x in [rcd.var_type, rcd.var_subtype]):
@@ -68,7 +72,7 @@ class VCFUtils(object):
                     records.append(rcd)
         else:
             # no conditions
-            list(vcf_reader)
+            records = list(vcf_reader)
 
         return records
 
