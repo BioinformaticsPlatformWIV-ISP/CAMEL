@@ -8,6 +8,9 @@ class VCFUtils(object):
     Helper to perform VCF file related functions
     """
 
+    # CONSTANTs defined to provide consistent definition in camel and buffer
+    # potential future change of internal types defined by vcf package. To be
+    # used when call function 'retrieve_variants'.
     INDEL = 'indel'
     INDEL_INS = 'ins'
     INDEL_DEL = 'del'
