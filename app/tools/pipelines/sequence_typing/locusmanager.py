@@ -50,7 +50,8 @@ class LocusManager(Tool):
         self._tool_outputs['FASTA'] = [ToolIOFile(fasta_file)]
         self._informs = self.__get_metadata(os.path.join(locus_folder, 'locus_metadata.txt'))
 
-    def __get_metadata(self, metadata_file):
+    @staticmethod
+    def __get_metadata(metadata_file):
         """
         Retrieves the metadata from a JSON file.
         :param metadata_file: Metadata file
@@ -58,7 +59,7 @@ class LocusManager(Tool):
         """
         try:
             with open(metadata_file) as handle:
-                self._informs = json.load(handle)
+                return json.load(handle)
         except FileNotFoundError:
             message = "Locus metadata not found in '{}'".format(os.path.dirname(metadata_file))
             logging.error(message)
