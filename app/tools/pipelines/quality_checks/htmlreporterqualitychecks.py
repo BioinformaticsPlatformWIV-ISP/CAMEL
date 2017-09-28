@@ -70,12 +70,9 @@ class HtmlReporterQualityChecks(HtmlReporter):
         :return: None
         """
         informs = self._input_informs['additional_checks']
-        test_names = informs[list(informs.keys())[0]].keys()
         table_data = []
-        for test_name in test_names:
-            table_data.append(
-                [test_name] + [self.__get_test_status_cell(informs[sample_name][test_name]) for sample_name in
-                               informs.keys()])
+        for test_name, test_results in sorted(informs['tests'].items()):
+            table_data.append([test_name] + [self.__get_test_status_cell(result) for result in test_results])
         header = ['Test', 'Forward', 'Reverse']
         self._report.add_table(table_data, header, [('class', 'data')])
 

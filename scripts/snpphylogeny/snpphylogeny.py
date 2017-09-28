@@ -1,5 +1,8 @@
 import shutil
 
+import logging
+import traceback
+
 import os
 
 import abc
@@ -10,6 +13,7 @@ from Bio import SeqIO
 from app.camel import Camel
 from app.components.files.fastqutils import FastqUtils
 from app.components.vcf import vcfutils
+from app.error.toolexecutionerror import ToolExecutionError
 from app.io.tooliodirectory import ToolIODirectory
 from app.io.tooliofile import ToolIOFile
 from app.io.tooliovalue import ToolIOValue
@@ -38,7 +42,6 @@ class SnpPhylogeny(object):
         self._camel = Camel()
         self._destination_path = os.path.abspath('.')
         self._args = self._parse_arguments()
-        os.mkdir(self._args.dir_html)
         self._html = HtmlReporterSnpPhylogeny(self._name, self._args.dir_html)
         self._sample_names = self.__get_sample_names()
         self._bam_files = []
@@ -51,9 +54,9 @@ class SnpPhylogeny(object):
         :return: Arguments
         """
         argument_parser = argparse.ArgumentParser()
-        argument_parser.add_argument('--html')
-        argument_parser.add_argument('--dir-html')
-        argument_parser.add_argument('--reference')
+        argument_parser.add_argument('--html', required=True)
+        argument_parser.add_argument('--dir-html', required=True)
+        argument_parser.add_argument('--reference', required=True)
         argument_parser.add_argument('--reference-name')
         argument_parser.add_argument('--sample', nargs=5, action='append', required=True)
         argument_parser.add_argument('--trim-reads', action='store_true')
@@ -88,6 +91,7 @@ class SnpPhylogeny(object):
         :return: None
         """
         try:
+            os.mkdir(self._args.dir_html)
             self.__check_input()
             # Initialize HTML report
             self._html.initialize()
@@ -110,10 +114,18 @@ class SnpPhylogeny(object):
                 if size < 5:
                     raise ValueError(
                         "SNP matrix is too small ({} positions) to construct a phylogenetic tree.".format(size))
+                elif size > 10000:
+                    raise ValueError("SNP matrix is too big ({}) positions, please use more stringent filtering settings".format(size))
                 # Tree building
-                model = self._run_model_selection(snp_matrix)
-                self._run_tree_building(snp_matrix, model)
+                model, rates = self._run_model_selection(snp_matrix)
+                try:
+                    self._run_tree_building(snp_matrix, model, rates)
+                except ToolExecutionError:
+                    self._html.add_error_message(
+                        """Could not build bootstrap tree, check the logs for more details. 
+                        The SNP matrix might be too small, try using less stringent filters.""")
             except ValueError as err:
+                logging.info(traceback.format_exc())
                 self._html.add_error_message(err.message)
             # Save report
             with open(self._args.html, 'w') as handle:
@@ -144,7 +156,8 @@ class SnpPhylogeny(object):
         Returns the default input for the SNP pipeline.
         :return: Input reads dictionary
         """
-        return [{'FASTQ_PE': [ToolIOFile(fwd_data), ToolIOFile(rev_data)]} for _, _, fwd_data, _, rev_data in self._args.sample]
+        return [{'FASTQ_PE': [ToolIOFile(fwd_data), ToolIOFile(rev_data)]} for
+                _, _, fwd_data, _, rev_data in self._args.sample]
 
     def __run_read_trimming(self):
         """
@@ -152,7 +165,8 @@ class SnpPhylogeny(object):
         :return: None
         """
         trimming_pipelines = {}
-        for (sample_name, _, forward_data, _, reverse_data), i in zip(self._args.sample, range(0, len(self._args.sample))):
+        for (sample_name, _, forward_data, _, reverse_data), i in zip(
+                self._args.sample, range(0, len(self._args.sample))):
             pipeline = Pipeline([YAML_READ_TRIMMING], self._camel, True)
             pipeline.set_initial_input({
                 'FASTQ': [ToolIOFile(forward_data), ToolIOFile(reverse_data)],
@@ -172,9 +186,10 @@ class SnpPhylogeny(object):
         """
         Runs the SNP calling pipeline. Has to be implemented by the subclasses.
         :param reads: PE reads for all samples
-        :return: None
+        :return: SNP matrix, output files
+        :rtype: ToolIOFile, [ToolIOFile]
         """
-        pass
+        return
 
     @staticmethod
     def __get_snp_matrix_size(snp_matrix):
@@ -219,28 +234,31 @@ class SnpPhylogeny(object):
             model_selection.update_parameters(missing_data_treatment='Partial deletion',
                                               site_coverage_cutoff=self._args.site_cov_cutoff)
         model_selection.update_parameters(branch_swap_filter=self._args.branch_swap.title().replace('_', ' '))
-        model_selection.run(self._destination_path)
+        model_selection_dir = os.path.join(self._destination_path, 'model_selection')
+        os.mkdir(model_selection_dir)
+        model_selection.run(model_selection_dir)
         self._html.add_model_selection_section(model_selection)
-        return model_selection.informs['model']
+        return model_selection.informs['model'], model_selection.informs['rates_among_sites']
 
-    def _run_tree_building(self, snp_matrix, model):
+    def _run_tree_building(self, snp_matrix, model, rates):
         """
         Builds a phylogenetic tree based on the given SNP matrix.
         :param snp_matrix: SNP matrix
         :param model: Selected model
+        :param rates: Rates among sites
         :return: Tree building instance
         """
         tree_building = MLTreeConstruction(self._camel)
         tree_building.add_input_files({'FASTA': [snp_matrix]})
         tree_building.update_parameters(bootstrap_replications=self._args.bootstraps,
                                         test_of_phylogeny='Bootstrap method')
-        if '+G+I' in model:
+        if rates == 'G+I':
             tree_building.update_parameters(rates_among_sites='G+I')
             tree_building.update_parameters(gamma_categories='5')
-        elif '+G' in model:
+        elif rates == 'G':
             tree_building.update_parameters(rates_among_sites='G')
             tree_building.update_parameters(gamma_categories='5')
-        elif '+I' in model:
+        elif rates == 'I':
             tree_building.update_parameters(rates_among_sites='I')
         else:
             tree_building.update_parameters(rates_among_sites='U')
@@ -253,7 +271,7 @@ class SnpPhylogeny(object):
             tree_building.update_parameters(missing_data_treatment='Partial deletion',
                                             site_coverage_cutoff=self._args.site_cov_cutoff)
 
-        tree_building.update_parameters(model=model.split('+')[0])
+        tree_building.update_parameters(model=model)
         tree_building.update_parameters(branch_swap_filter=self._args.branch_swap.title().replace('_', ' '))
         tree_building.update_parameters(heuristic_method=self._args.ml_method.upper())
         tree_building.run(self._destination_path)

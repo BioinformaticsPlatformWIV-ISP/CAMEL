@@ -62,7 +62,6 @@ class ModelSelection(Tool):
         Executes this tool.
         :return: None
         """
-        # self.__clear_output_files()
         self.__build_command()
         self._execute_command()
         self.__set_output()
@@ -126,13 +125,18 @@ class ModelSelection(Tool):
         Analyzes the output file.
         :return: None
         """
-        try:
-            with open(self._tool_outputs['CSV'][0].path) as handle:
-                self._informs['model'] = handle.readlines()[1].split(',')[0]
-                self._informs['model_full'] = MLTreeConstruction.SUBSTITUTION_MODELS[self._informs['model']]
-                logging.info("Selected model: {}".format(self._informs['model']))
-        except KeyError:
-            raise ToolExecutionError("No output file generated")
+        with open(self._tool_outputs['CSV'][0].path) as handle:
+            first_line = handle.readlines()[1]
+            # The line has the following structure: K2+G+I, ...
+            # The model is the first part (K2), +G means Gamma categories per site, +I means invariant sites
+            complete_model = first_line.split(',')[0]
+            self._informs['model'] = first_line.split(',')[0].split('+')[0]
+            self._informs['model_full'] = MLTreeConstruction.SUBSTITUTION_MODELS[self._informs['model']]
+
+            complete_rates = '+'.join(complete_model.split('+')[1:])
+            self._informs['rates_among_sites'] = 'U' if complete_rates == '' else complete_rates
+            self._informs['rates_among_sites_full'] = MLTreeConstruction.RATES_AMONG_SITES[self._informs[
+                'rates_among_sites']]
 
     def _check_command_output(self):
         """

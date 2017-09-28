@@ -7,17 +7,43 @@ class QuastInformExtractor(Tool):
     """
     Customized tool to parse QUAST TXT output to gather assembly QC information
     """
-    COUNTING_STATIS = ['# N\'s per 100 kbp', '# mismatches per 100 kbp', '# indels per 100 kbp']
-    CONTIG_STATIS = ['# contigs', 'N50', 'NG50', 'NGA50', 'Largest alignment', 'Largest contig']
-    GENOME_STATIS = ['Total length', 'Total aligned length', 'Reference length',
-                     'Unaligned length', 'Genome fraction (%)', 'Duplication ratio']
-    GC_STATIS = ['GC (%)', 'Reference GC (%)']
-    ABNORMAL_STATIS = ['# misassemblies', '# misassembled contigs',
-                       'Misassembled contigs length', '# unaligned contigs']
+
+    KEY_MAPPING = {
+        'counts': (
+            '# N\'s per 100 kbp',
+            '# mismatches per 100 kbp',
+            '# indels per 100 kbp'),
+        'contig': (
+            '# contigs',
+            '# contigs (>= 0 bp)',
+            '# contigs (>= 1000 bp)',
+            'N50',
+            'NG50',
+            'NGA50',
+            'Largest alignment',
+            'Largest contig'),
+        'genome': (
+            'Total length',
+            'Total length (>= 0bp)',
+            'Total length (>= 1000bp)',
+            'Total aligned length',
+            'Reference length',
+            'Unaligned length',
+            'Genome fraction (%)',
+            'Duplication ratio'),
+        'gc': (
+            'GC (%)',
+            'Reference GC (%)'),
+        'abnormal': (
+            '# misassemblies',
+            '# misassembled contigs',
+            'Misassembled contigs length',
+            '# unaligned contigs')
+    }
 
     def __init__(self, camel):
         """
-        Initialize QuastInformExtraction
+        Initialize this tool.
         :param camel: Camel instance
         :return: None
         """
@@ -25,7 +51,7 @@ class QuastInformExtractor(Tool):
 
     def _execute_tool(self):
         """
-        Entry point to run InterProScan
+        Execute this tool.
         :return: None
         """
         self.__set_informs()
@@ -37,29 +63,17 @@ class QuastInformExtractor(Tool):
         """
         super(QuastInformExtractor, self)._check_input()
         if 'TSV' not in self._tool_inputs:
-            raise InvalidInputSpecificationError('Quast TSV output required for QuastInformExtraction is missing.')
+            raise InvalidInputSpecificationError("TSV input file is required.")
 
     def __set_informs(self):
         """
-        Extract Quast QC information from input
+        Extract Quast QC information from input file.
         :return: None
         """
-        qc_stats = {
-            'counts': QuastInformExtractor.COUNTING_STATIS,
-            'contig': QuastInformExtractor.CONTIG_STATIS,
-            'genome': QuastInformExtractor.GENOME_STATIS,
-            'gc': QuastInformExtractor.GC_STATIS,
-            'abnormals': QuastInformExtractor.ABNORMAL_STATIS
-        }
-        for key in qc_stats.keys():
-            self._informs[key] = {}
-
-        with open(self._tool_inputs['TSV'][0].path, 'r') as inf:
-            for l in inf.readlines():
-                l = l.strip()
-                if len(l.split("\t")) > 1:
-                    stats_key, stats_value = l.split("\t")
-                    for qc_sect, qc_sect_stats in qc_stats.iteritems():
-                        if stats_key in qc_sect_stats:
-                            self._informs[qc_sect][stats_key] = stats_value
-                            break
+        self._informs = {k: {} for k in QuastInformExtractor.KEY_MAPPING.keys()}
+        with open(self._tool_inputs['TSV'][0].path, 'r') as handle:
+            for key, value in [l.strip().split('\t') for l in handle.readlines()]:
+                for mapping_name, mapping_keys in QuastInformExtractor.KEY_MAPPING.items():
+                    if key in mapping_keys:
+                        self._informs[mapping_name][key] = value
+                        break

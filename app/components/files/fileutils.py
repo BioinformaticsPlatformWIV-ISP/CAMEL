@@ -7,6 +7,7 @@ import pickle
 
 
 class FileUtils(object):
+
     """
     Helper object to perform common operations on the file system.
     """
@@ -49,7 +50,7 @@ class FileUtils(object):
         """
         hasher = hashlib.sha256()
         for file_ in sorted(FileUtils.get_all_files(path)):
-            hasher.update(FileUtils.hash_file(file_))
+            hasher.update(FileUtils.hash_file(file_).encode('ascii'))
         return hasher.hexdigest()
 
     @staticmethod

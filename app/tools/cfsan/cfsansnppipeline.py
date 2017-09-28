@@ -55,6 +55,7 @@ class CfsanSnpPipeline(Tool):
         :return: Path to reference FASTA
         """
         link_name = os.path.join(self._folder, self._tool_inputs['FASTA'][0].basename)
+        logging.info("Creating symlink for reference FASTA file: {}".format(link_name))
         os.symlink(self._tool_inputs['FASTA'][0].path, link_name)
         return link_name
 
@@ -84,7 +85,7 @@ class CfsanSnpPipeline(Tool):
         :return: Sample name
         """
         if 'VAL_Name' in self._tool_inputs:
-            return self._tool_inputs['VAL_Name'][index / 2].value
+            return self._tool_inputs['VAL_Name'][index / 2].value.replace(' ', '_')
 
         filename = self._tool_inputs['FASTQ'][index].path
         m = re.match('.*/(.*)_\d\.[fastq]+$', filename)
@@ -121,7 +122,6 @@ class CfsanSnpPipeline(Tool):
             self._tool_outputs[key] = []
         with open(os.path.join(self._folder, 'sampleDirectories.txt')) as handle:
             for line in handle.readlines():
-                print(line)
                 sample_directory = line.strip()
                 self._tool_outputs['VCF_Cons'].append(ToolIOFile(os.path.join(sample_directory, 'consensus.vcf')))
                 self._tool_outputs['VCF_Cons_preserved'].append(
@@ -137,7 +137,7 @@ class CfsanSnpPipeline(Tool):
         Analyzes the metrics file and adds the information to the informs.
         :return: None
         """
-        saved_columns = [2] + range(5, 14)
+        saved_columns = [2] + list(range(5, 14))
         metrics_file = os.path.join(self._folder, 'metrics.tsv')
         if not os.path.isfile(metrics_file):
             raise IOError("No metrics file generated.")

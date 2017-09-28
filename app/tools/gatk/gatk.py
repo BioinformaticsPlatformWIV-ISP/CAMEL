@@ -9,12 +9,11 @@ from app.io.tooliofile import ToolIOFile
 from app.tools.tool import Tool
 
 
-class GATK(Tool):
+class GATK(Tool, metaclass=abc.ABCMeta):
 
     """
     Super class for GATK tools
     """
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self, tool_name, version, camel):
         """
@@ -54,6 +53,8 @@ class GATK(Tool):
             if input_file not in self._tool_inputs:
                 raise InvalidInputSpecificationError('GATK {!r} required {!r} input is missing in _tool_inputs!'.format(
                     self._function_name, input_file))
+
+        super(GATK, self)._check_input()
 
     def _set_input(self):
         """
@@ -100,9 +101,11 @@ class GATK(Tool):
         Check the result of GATK tool run
         :return: None
         """
+        if self.stdout == "":
+            raise ToolExecutionError("GATK tool {} fails to run as stdout is empty.\n{}".format(self._function_name))
         if not re.match('Exit status: 0', self.stdout.split('\n')[-2].rstrip()):
-            raise ToolExecutionError("GATK tool {} fails to run, message: \n{}".format(
-                self._function_name, self.stdout))
+            raise ToolExecutionError(
+                "GATK tool {} fails to run, message: \n{}".format(self._function_name, self.stdout))
 
     def _set_informs(self):
         """

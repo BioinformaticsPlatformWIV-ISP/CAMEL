@@ -76,7 +76,7 @@ class ResFinderParser(DatabaseParser):
         """
         m = re.match('^.*?\d_((?:N[CZ]_)?[A-Z\d]+(?:\.\d)?)$', header)
         if not m:
-            raise StandardError('Cannot retrieve annotation from: {}'.format(header))
+            raise Exception('Cannot retrieve annotation from: {}'.format(header))
         return m.group(1)
 
     @staticmethod
@@ -88,7 +88,7 @@ class ResFinderParser(DatabaseParser):
         """
         m = re.match('.*_(\d+)$', header)
         if not m:
-            raise StandardError('Cannot retrieve seq id from: {}'.format(header))
+            raise Exception('Cannot retrieve seq id from: {}'.format(header))
         return m.group(1)
 
     @staticmethod
@@ -100,5 +100,5 @@ class ResFinderParser(DatabaseParser):
         """
         m = re.match('^([A-Za-z\d()\']+)(\d*)', header)
         if not m:
-            raise StandardError('Cannot retrieve gene name from: {}'.format(header))
+            raise Exception('Cannot retrieve gene name from: {}'.format(header))
         return m.group(1)

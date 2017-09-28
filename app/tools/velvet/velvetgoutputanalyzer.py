@@ -1,10 +1,11 @@
 import re
 import logging
 
-import subprocess32
+import subprocess
 
 
 class VelvetgOutputAnalyzer(object):
+
     """Class provides the functions to analyze the velvetg outputs"""
 
     @staticmethod
@@ -17,7 +18,7 @@ class VelvetgOutputAnalyzer(object):
         :return: informs, dictionary containing update velvetg run information
         """
         informs = {}
-        info_str = subprocess32.check_output(['tail', '-1', log_file])
+        info_str = subprocess.check_output(['tail', '-1', log_file], encoding='ascii')
         res = re.match(
             r'Final graph has (\d+) nodes and n50 of (\d+), max (\d+), total (\d+), using (\d+)/(\d+) reads', info_str)
         if res:

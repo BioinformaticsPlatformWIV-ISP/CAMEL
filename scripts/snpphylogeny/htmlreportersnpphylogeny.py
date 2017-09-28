@@ -277,6 +277,8 @@ class HtmlReporterSnpPhylogeny(object):
             self._text("Model Selection")
         with self._tag('p'):
             self._text("Selected model: {}".format(model_selection.informs['model_full']))
+            self._doc.stag('br')
+            self._text("Rates among sites: {}".format(model_selection.informs['rates_among_sites_full']))
         shutil.copy(model_selection.tool_outputs['CSV'][0].path,
                     os.path.join(self._output_directory, 'model_selection_overview.csv'))
         with self._tag('a', href='model_selection_overview.csv'):

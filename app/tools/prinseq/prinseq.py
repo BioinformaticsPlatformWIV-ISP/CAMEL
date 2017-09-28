@@ -1,8 +1,8 @@
 import os
-import logging
-from app.tools.tool import Tool
-from app.io.tooliofile import ToolIOFile
+
 from app.error.toolexecutionerror import ToolExecutionError
+from app.io.tooliofile import ToolIOFile
+from app.tools.tool import Tool
 
 
 class Prinseq(Tool):
@@ -39,9 +39,9 @@ class Prinseq(Tool):
         super(Prinseq, self)._check_input()
         if len(self._tool_inputs.keys()) != 1:
             raise ValueError('Too many input keys given voor PRINSEQ: {!r}'.format(self._tool_inputs))
-        if self._tool_inputs.keys()[0] not in ['FASTQ_PE', 'FASTA_PE', 'FASTQ_SE', 'FASTA_SE']:
+        if list(self._tool_inputs.keys())[0] not in ['FASTQ_PE', 'FASTA_PE', 'FASTQ_SE', 'FASTA_SE']:
             raise ValueError('Invalid input key given for PRINSEQ: {!r}'.format(self._tool_inputs))
-        key, value = self._tool_inputs.items()[0]
+        key, value = list(self._tool_inputs.items())[0]
         if key.endswith('PE') and len(self._tool_inputs[key]) != 2:
             raise ValueError('Invalid number (!= 2) of files given for PE key'
                              'for PRINSEQ: {!r}'.format(self._tool_inputs))
@@ -64,7 +64,7 @@ class Prinseq(Tool):
         :return: String with the input parameters
         """
         # Only one key is allowed
-        input_key = self._tool_inputs.keys()[0]
+        input_key = list(self._tool_inputs.keys())[0]
         basename = self.__get_basename()
         filetype = 'fastq' if input_key.startswith('FASTQ') else 'fasta'
         input_string = '-{} {}'.format(filetype, self._tool_inputs[input_key][0].path)
@@ -79,7 +79,7 @@ class Prinseq(Tool):
         Returns the prefix that will be used in the output.
         :return: String with the prefix used in the output
         """
-        infile = os.path.basename(self._tool_inputs.values()[0][0].path)
+        infile = os.path.basename(list(self._tool_inputs.values())[0][0].path)
         return os.path.join(self._folder, infile[:infile.rfind('.')])
 
     def _check_command_output(self):
@@ -100,7 +100,7 @@ class Prinseq(Tool):
         """
         basename = self.__get_basename()
         # Only one key is allowed
-        input_key = self._tool_inputs.keys()[0]
+        input_key = list(self._tool_inputs.keys())[0]
         format_key = input_key[:6]
         filetype = 'fastq' if input_key.startswith('FASTQ') else 'fasta'
         if input_key.endswith('PE'):

@@ -71,4 +71,4 @@ class Connection(object):
             else:
                 cursor.execute(query)
         except psycopg2.Error as e:
-            raise ValueError("Error executing SQL query: {}".format(e.message))
+            raise ValueError("Error executing SQL query: {}".format(e))

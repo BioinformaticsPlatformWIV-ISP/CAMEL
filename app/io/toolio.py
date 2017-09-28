@@ -2,12 +2,10 @@ import abc
 from abc import ABCMeta
 
 
-class ToolIO(object):
+class ToolIO(object, metaclass=ABCMeta):
     """
     Class that represents the input or output of a tool.
     """
-
-    __metaclass__ = ABCMeta
 
     def __init__(self, logged):
         """
@@ -32,7 +30,8 @@ class ToolIO(object):
         """
         pass
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def hash(self):
         """
         Returns the hash value.

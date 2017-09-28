@@ -7,12 +7,10 @@ from app.io.tooliofile import ToolIOFile
 from app.tools.tool import Tool
 
 
-class BlastLoop(Tool):
+class BlastLoop(Tool, metaclass=ABCMeta):
     """
     Tool that loops over input files to run BLAST multiple times.
     """
-
-    __metaclass__ = ABCMeta
 
     def __init__(self, tool_name, version, camel):
         """

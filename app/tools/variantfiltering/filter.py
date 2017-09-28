@@ -4,12 +4,10 @@ from app.error.invalidinputspecificationerror import InvalidInputSpecificationEr
 from app.tools.tool import Tool
 
 
-class Filter(Tool):
+class Filter(Tool, metaclass=abc.ABCMeta):
     """
     Base class for variant filters.
     """
-
-    __metaclass__ = abc.ABCMeta
 
     def _check_input(self):
         """

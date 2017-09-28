@@ -155,8 +155,8 @@ class GATKFastaAlternateReferenceMaker(GATK):
                 numb_padding = pos_start - last_end_pos - 1
                 logging.debug("number of padding: {}, seq_length {}, interval {}, seq_record {}".format(
                     numb_padding, len(seq_record.seq), interval, str(seq_record)))
-                # no inspection PyTypeChecker
-                concatenate_seq += MASK_NT * (numb_padding) + str(seq_record.seq)
+                # noinspection PyTypeChecker
+                concatenate_seq += MASK_NT * numb_padding + str(seq_record.seq)
             else:
                 # a new sequence segament
                 if last_seq_id is not None:
@@ -174,6 +174,6 @@ class GATKFastaAlternateReferenceMaker(GATK):
 
         # Note: seq_record in extracted_seq_dict has been updated with ids, now output into self._fasta_extracted with
         #       updated ids
-        FastaUtils.write(extracted_seq_dict.values(), self._fasta_extracted)
+        FastaUtils.write(list(extracted_seq_dict.values()), self._fasta_extracted)
 
         return concatenated_seqs

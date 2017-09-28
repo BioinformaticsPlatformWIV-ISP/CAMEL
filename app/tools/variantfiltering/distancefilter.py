@@ -93,7 +93,7 @@ class DistanceFilter(Filter):
         for contig_name, contig in contigs.items():
             index = DistanceFilter.__generate_variant_index(variants, contig_name)
             logging.debug("Checking contig: {}".format(contig_name))
-            positions = range(0, int(self._parameters['min_distance'].value))
+            positions = list(range(0, int(self._parameters['min_distance'].value)))
             while positions[-1] < contig.length:
                 snps = [index[pos] for pos in positions if pos in index]
                 if len(snps) > 1:

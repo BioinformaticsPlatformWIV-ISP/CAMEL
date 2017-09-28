@@ -4,7 +4,7 @@
 version: 1
 formatters:
   basic:
-    format: '%(module)15s - %(levelname)7s - %(message)s'
+    format: '%(process)6d - %(module)15s - %(levelname)7s - %(message)s'
 handlers:
   console:
     class: logging.StreamHandler
@@ -42,3 +42,5 @@ handlers:
 root:
   level: DEBUG
   handlers: [console, main_debug, step_info, step_debug, pipeline_info]
+
+disable_existing_loggers: False

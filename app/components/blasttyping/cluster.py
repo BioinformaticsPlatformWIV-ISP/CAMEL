@@ -19,7 +19,7 @@ class Cluster(object):
         :return: None
         """
         self.hits.append(hit)
-        self._region = self._region.union(range(hit.query_start, hit.query_end))
+        self._region = self._region.union(list(range(hit.query_start, hit.query_end)))
 
     def overlaps(self, hit):
         """
@@ -30,4 +30,4 @@ class Cluster(object):
         if hit.query != self.seq_id:
             return False
         # noinspection PyTypeChecker
-        return len(self._region.intersection(range(hit.query_start, hit.query_end))) != 0
+        return len(self._region.intersection(list(range(hit.query_start, hit.query_end)))) != 0
