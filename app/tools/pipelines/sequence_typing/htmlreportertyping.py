@@ -11,6 +11,14 @@ from app.tools.tool import Tool
 class HtmlReporterTyping(Tool):
     """
     Tool that creates HTML reports for the sequence typing pipeline.
+
+    Input:
+        - HTML: Path to the HTML file to write the report
+        - DIR: Directory to store files that are included in the HTML report
+        - Informs 'Scheme': Information about the scheme
+        - VAL_Hits: Hits detected for each locus
+    Output:
+        - HTML: Path to the generated report
     """
 
     def __init__(self, camel):
