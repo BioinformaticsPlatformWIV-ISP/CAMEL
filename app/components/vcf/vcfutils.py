@@ -26,8 +26,7 @@ class VCFUtils(object):
         :param vcf_file: the vcf file to be checked (with complete path)
         :return: True if is a multiple sample VCF file
         """
-        vcf_reader = vcf.Reader(filename=vcf_file)
-        return len(vcf_reader.samples) > 1
+        return len(vcf.Reader(filename=vcf_file).samples) > 1
 
     @staticmethod
     def get_reader(vcf_file):
