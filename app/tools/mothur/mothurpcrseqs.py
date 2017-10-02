@@ -64,7 +64,7 @@ class MothurPcrSeqs(Mothur):
         """
         for line in self.stdout.splitlines():
             if line.startswith('[ERROR]: name mismatch in pcr.seqs'):
-                # Hopefuly temporary fix for bug in Mothur that gives these error messages
+                # Hopefully temporary fix for bug in Mothur that gives these error messages
                 pass
             elif line.startswith('[ERROR]') or line.startswith('Unable to open'):
                 raise RuntimeError(self.stdout + '\n' + '!!! Mothur failed to run !!! See above for more information.')
