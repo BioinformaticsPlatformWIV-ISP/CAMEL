@@ -38,9 +38,7 @@ class MothurPcrSeqs(Mothur):
 
     def _build_input_string(self):
         """
-        Creates the string with the input files and input/output directories
-        Example: fasta=File1.trim.contig.fasta, inputdir=/test/data/input/,
-        outputdir=/test/data/outputdir
+        Creates the string with the input files and output directories
         :return: String with the input parameters
         """
         items = ['fasta={}'.format(self._tool_inputs['FASTA'][0])]
@@ -69,5 +67,4 @@ class MothurPcrSeqs(Mothur):
                 # Hopefuly temporary fix for bug in Mothur that gives these error messages
                 pass
             elif line.startswith('[ERROR]') or line.startswith('Unable to open'):
-                raise RuntimeError('\n'.join(self.stdout.splitlines()) + '\n' +
-                                   '!!! Mothur failed to run !!! See above for more information.')
+                raise RuntimeError(self.stdout + '\n' + '!!! Mothur failed to run !!! See above for more information.')
