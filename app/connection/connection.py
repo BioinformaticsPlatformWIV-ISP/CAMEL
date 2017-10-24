@@ -1,4 +1,3 @@
-import logging
 import psycopg2
 import yaml
 
@@ -66,9 +65,6 @@ class Connection(object):
         :return:
         """
         try:
-            if params:
-                cursor.execute(query, params)
-            else:
-                cursor.execute(query)
+            cursor.execute(query, params)
         except psycopg2.Error as e:
             raise ValueError("Error executing SQL query: {}".format(e))
