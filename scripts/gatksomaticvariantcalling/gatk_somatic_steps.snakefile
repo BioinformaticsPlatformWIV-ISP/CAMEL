@@ -10,17 +10,28 @@ from app.snakemake.snakemakeutils import SnakemakeUtils
 camel = Camel()
 working_dir = config['working_dir']
 
+def prepare_addreadgroups_input(wildcards):
+    """
+    Prepares input for addreadgroups rule. Acts as a static fork in workflow based on config file (execution of markduplicates or not).
+    :param wildcards: 
+    :return: 
+    """
+    if config["run_markDuplicates"]:
+        BAM = os.path.join(working_dir, "markduplicates/bam.io")
+    elif not config["run_markDuplicates"]:
+        BAM = os.path.join(working_dir, "picardsortbam/sortedbam.io")
+    return BAM
+
+
 rule all:
     # This rule makes sure that all other rules are executed.
     input:
-        os.path.join(working_dir, "addreadgroups/bam.io")
-
+        os.path.join(working_dir, "mutect1/txt.io")
 
 rule prepare_initial_input:
     input:
         FASTQ=config['fastq_pe'],
         # DIR_OUT=[os.path.dirname(config['report'])]
-
     output:
         FASTQ=os.path.join(working_dir, "initial_input/fastq.io"),
         # DIR_OUT=os.path.join(working_dir, "initial_input/dir_html.io")
@@ -31,12 +42,12 @@ rule prepare_initial_input:
 rule prepare_bwa_input:
     input:
         FASTA_GENOME=config['ref_genome']
+        # FASTA_GENOME=ToolIODb('broad_b37_human_Genome_1K_v37')
     output:
         FASTA_GENOME=os.path.join(working_dir, "initial_input/human_g1k_v37.fa.io")
     run:
         IO_FASTA_GENOME = [ToolIOValue(input.FASTA_GENOME)]
         SnakemakeUtils.dump_object(IO_FASTA_GENOME, output.FASTA_GENOME)
-
 
 
 rule bwa_alignment:
@@ -103,6 +114,7 @@ rule picardsortbam:
     run:
         from app.tools.picard.sortsam import SortSam
         pss = SortSam(camel)
+        pss.update_parameters(sort_order="coordinate")
         SnakemakeUtils.add_pickle_input(pss,"BAM",input.BAM)
         pss.run(os.path.join(working_dir, "picardsortbam"))
         SnakemakeUtils.dump_tool_output(pss, "BAM", output.BAM)
@@ -122,28 +134,163 @@ rule markduplicates:
         SnakemakeUtils.dump_tool_output(pmd, "BAM", output.BAM)
         # SnakemakeUtils.dump_tool_output(pss, "METRICS", output.METRICS)
 
-rule determine_addreadgroups_input:
-    # choose input for addreadgroups.
-    # Depends on execution of markDuplicates (see config file).
-    # Implements a static fork in the workflow.
-    output:
-        ADDREADGROUPS_INPUT = os.path.join(working_dir, "addreadgroups/bam_input.io")
-    run:
-        if config["run_markDuplicates"]:
-            BAM = [ToolIOFile(os.path.join(working_dir, "markduplicates/bam.io"))]
-        elif not config["run_markDuplicates"]:
-            BAM = [ToolIOFile(os.path.join(working_dir, "picardsortbam/sortedbam.io"))]
-        SnakemakeUtils.dump_object(BAM, output.ADDREADGROUPS_INPUT)
-
 rule addreadgroups:
     input:
-        BAM=os.path.join(working_dir, "addreadgroups/bam_input.io")
+        BAM=prepare_addreadgroups_input,
     output:
-        BAM=os.path.join(working_dir, "addreadgroups/bam.io")
+        BAM=os.path.join(working_dir, "addreadgroups/bam.io"),
     run:
         from app.tools.picard.addorreplacereadgroups import AddOrReplaceReadGroups
         parg = AddOrReplaceReadGroups(camel)
+        parg.update_parameters(create_index='true')
         SnakemakeUtils.add_pickle_input(parg, "BAM", input.BAM)
-        parg.update_parameters(RG_sample_name=config["sample_name"])
+        # parg.update_parameters(RG_sample_name=config["sample_name"])
         parg.run(os.path.join(working_dir, "addreadgroups"))
         SnakemakeUtils.dump_tool_output(parg, "BAM", output.BAM)
+
+rule bamtobed:
+    input:
+        BAM=os.path.join(working_dir, "addreadgroups/bam.io"),
+    output:
+        BED=os.path.join(working_dir, "bamtobed/bed.io"),
+    run:
+        from app.tools.bedtools.bedtoolsbamtobed import BedtoolsBamToBed
+        btb = BedtoolsBamToBed(camel)
+        SnakemakeUtils.add_pickle_input(btb, "BAM", input.BAM)
+        btb.run(os.path.join(working_dir, "bamtobed"))
+        SnakemakeUtils.dump_tool_output(btb,"BED",output.BED)
+
+rule generate_intervals:
+    input:
+        BED=os.path.join(working_dir, "bamtobed/bed.io"),
+    output:
+        BED=os.path.join(working_dir, "generate_intervals/bed.io"),
+    run:
+        from app.tools.bedtools.bedtoolsmerge import BedtoolsMerge
+        btm = BedtoolsMerge(camel)
+        SnakemakeUtils.add_pickle_input(btm, "BED", input.BED)
+        btm.run(os.path.join(working_dir, "generate_intervals"))
+        SnakemakeUtils.dump_tool_output(btm, "BED", output.BED)
+
+rule realignertargetcreator:
+    input:
+        BAM=os.path.join(working_dir, "addreadgroups/bam.io"),
+        BED=os.path.join(working_dir, "generate_intervals/bed.io"),
+    output:
+        INTERVALS=os.path.join(working_dir, "realignertargetcreator/intervals.io"),
+    run:
+        from app.tools.gatk.gatkrealignertargetcreator import GATKRealignerTargetCreator
+        from app.io.tooliodb import ToolIODb
+        grtc = GATKRealignerTargetCreator(camel)
+        # add default human genome fasta file
+        grtc.add_input_files({"FASTA_REF":[ToolIODb('broad_b37_human_Genome_1K_v37')]})
+        SnakemakeUtils.add_pickle_input(grtc,"BAM",input.BAM)
+        SnakemakeUtils.add_pickle_input(grtc,"TXT_intervals",input.BED)
+        grtc.run(os.path.join(working_dir, "realignertargetcreator"))
+        SnakemakeUtils.dump_tool_output(grtc, "TXT_realign_intervals", output.INTERVALS)
+
+rule indelrealigner:
+    input:
+        INTERVALS=os.path.join(working_dir, "realignertargetcreator/intervals.io"),
+        BAM=os.path.join(working_dir, "addreadgroups/bam.io"),
+        BED=os.path.join(working_dir, "generate_intervals/bed.io"),
+    output:
+        BAM=os.path.join(working_dir, "indelrealigner/bam.io"),
+    run:
+        from app.tools.gatk.gatkindelrealigner import GATKIndelRealigner
+        from app.io.tooliodb import ToolIODb
+        gir=GATKIndelRealigner(camel)
+        gir.add_input_files({"FASTA_REF":[ToolIODb('broad_b37_human_Genome_1K_v37')]})
+        SnakemakeUtils.add_pickle_input(gir,"TXT_intervals",input.BED)
+        SnakemakeUtils.add_pickle_input(gir,"BAM",input.BAM)
+        SnakemakeUtils.add_pickle_input(gir,"TXT_realign_intervals",input.INTERVALS)
+        gir.run(os.path.join(working_dir, "indelrealigner"))
+        SnakemakeUtils.dump_tool_output(gir,"BAM",output.BAM)
+
+rule basequalityrecalibration:
+    input:
+        BAM=os.path.join(working_dir, "indelrealigner/bam.io"),
+        BED=os.path.join(working_dir, "generate_intervals/bed.io"),
+    output:
+        TXT=os.path.join(working_dir, "basequalityrecalibration/txt.io"),
+    threads: 5
+    run:
+        from app.tools.gatk.gatkbaserecalibrator import GATKBaseRecalibrator
+        from app.io.tooliodb import ToolIODb
+        bqsr=GATKBaseRecalibrator(camel)
+        bqsr.add_input_files({"FASTA_REF":[ToolIODb('broad_b37_human_Genome_1K_v37')]})
+        bqsr.update_parameters(threads=threads)
+        SnakemakeUtils.add_pickle_input(bqsr,"BAM",input.BAM)
+        SnakemakeUtils.add_pickle_input(bqsr,"TXT_intervals", input.BED)
+        bqsr.run(os.path.join(working_dir, "basequalityrecalibration"))
+        SnakemakeUtils.dump_tool_output(bqsr,"TXT_RecalibrationTable",output.TXT)
+
+rule printreads:
+    input:
+        BAM=os.path.join(working_dir, "indelrealigner/bam.io"),
+        TXT=os.path.join(working_dir, "basequalityrecalibration/txt.io"),
+    output:
+        BAM=os.path.join(working_dir, "printreads/bam.io"),
+    threads: 5
+    run:
+        from app.tools.gatk.gatkprintreads import GATKPrintReads
+        from app.io.tooliodb import ToolIODb
+        gpr=GATKPrintReads(camel)
+        gpr.add_input_files({"FASTA_REF":[ToolIODb('broad_b37_human_Genome_1K_v37')]})
+        gpr.update_parameters(threads=threads)
+        SnakemakeUtils.add_pickle_input(gpr,"BAM",input.BAM)
+        SnakemakeUtils.add_pickle_input(gpr,"BQSR",input.TXT)
+        gpr.run(os.path.join(working_dir, "printreads"))
+        SnakemakeUtils.dump_tool_output(gpr,"BAM",output.BAM)
+
+rule basequalityrecalibration2:
+    input:
+        BAM = os.path.join(working_dir, "printreads/bam.io"),
+        BED = os.path.join(working_dir, "generate_intervals/bed.io"),
+    output:
+        TXT = os.path.join(working_dir, "basequalityrecalibration2/txt.io"),
+    threads: 5
+    run:
+        from app.tools.gatk.gatkbaserecalibrator import GATKBaseRecalibrator
+        from app.io.tooliodb import ToolIODb
+
+        bqsr = GATKBaseRecalibrator(camel)
+        bqsr.add_input_files({"FASTA_REF": [ToolIODb('broad_b37_human_Genome_1K_v37')]})
+        bqsr.update_parameters(threads=threads)
+        SnakemakeUtils.add_pickle_input(bqsr, "BAM", input.BAM)
+        SnakemakeUtils.add_pickle_input(bqsr, "TXT_intervals", input.BED)
+        bqsr.run(os.path.join(working_dir, "basequalityrecalibration2"))
+        SnakemakeUtils.dump_tool_output(bqsr, "TXT_RecalibrationTable", output.TXT)
+
+rule analyzecovariates:
+    input:
+        TXT_BEFORE=os.path.join(working_dir, "basequalityrecalibration/txt.io"),
+        TXT_AFTER=os.path.join(working_dir, "basequalityrecalibration2/txt.io"),
+    output:
+        PDF=os.path.join(working_dir, "analyzecovariates/pdf.io"),
+    run:
+        from app.tools.gatk.gatkanalyzecovariates import GATKAnalyzeCovariates
+
+        gac = GATKAnalyzeCovariates(camel)
+        SnakemakeUtils.add_pickle_input(gac,"TXT_TABLE_BEFORE",input.TXT_BEFORE)
+        SnakemakeUtils.add_pickle_input(gac,"TXT_TABLE_AFTER",input.TXT_AFTER)
+        gac.run(os.path.join(working_dir, "analyzecovariates"))
+        SnakemakeUtils.dump_tool_output(gac, "PDF", output.PDF)
+
+rule mutect1:
+    input:
+        BAM=os.path.join(working_dir, "printreads/bam.io"),
+        BED = os.path.join(working_dir, "generate_intervals/bed.io"),
+    output:
+        TXT=os.path.join(working_dir, "mutect1/txt.io"),
+        VCF=os.path.join(working_dir, "mutect1/vcf.io"),
+    run:
+        from app.tools.mutect.mutect1 import Mutect1
+        mut=Mutect1(camel)
+        SnakemakeUtils.add_pickle_input(mut,'BAM_TUMOR',input.BAM)
+        SnakemakeUtils.add_pickle_input(mut,"TXT_intervals",input.BED)
+        mut.update_parameters(generate_vcf_file='True')
+        mut.run(os.path.join(working_dir, "mutect1"))
+        SnakemakeUtils.dump_tool_output(mut,'TXT_CALL_STATS',output.TXT)
+        SnakemakeUtils.dump_tool_output(mut,'VCF',output.VCF)
+

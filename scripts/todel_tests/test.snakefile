@@ -57,13 +57,17 @@ rule bwa_alignment:
     output:
         SAM=os.path.join(working_dir, "bwa_alignment/sam.io")
     threads: 16
+    params:
+        working_dir=os.path.join(working_dir, "bwa_alignment")
     run:
         from app.tools.bwa.bwamap import BWAMap
         bwa_mem = BWAMap(camel)
         SnakemakeUtils.add_pickle_input(bwa_mem, 'FASTQ_PE', input.FASTQ)
         SnakemakeUtils.add_pickle_input(bwa_mem, 'INDEX_GENOME_PREFIX', input.FASTA_GENOME)
         bwa_mem.update_parameters(threads=threads)
-        bwa_mem.run(os.path.join(working_dir, "bwa_alignment"))
+        # bwa_mem.run(os.path.join(working_dir, "bwa_alignment"))
+        step = SnakeStep(rule, bwa_mem, camel, params.working_dir, config)
+        step.run_step()
         SnakemakeUtils.dump_tool_output(bwa_mem, "SAM", output.SAM)
 
 
@@ -219,6 +223,8 @@ rule basequalityrecalibration:
         from app.io.tooliodb import ToolIODb
         bqsr=GATKBaseRecalibrator(camel)
         bqsr.add_input_files({"FASTA_REF":[ToolIODb('broad_b37_human_Genome_1K_v37')]})
+        bqsr.add_input_files({"VCF_KNOWN_SNPS":[ToolIODb('broad_b37_snps_high_confidence')]})
+        bqsr.add_input_files({"VCF_KNOWN_INDELS":[ToolIODb('broad_b37_indels_gold_standard')]})
         bqsr.update_parameters(threads=threads)
         SnakemakeUtils.add_pickle_input(bqsr,"BAM",input.BAM)
         SnakemakeUtils.add_pickle_input(bqsr,"TXT_intervals", input.BED)
@@ -286,10 +292,11 @@ rule mutect1:
         VCF=os.path.join(working_dir, "mutect1/vcf.io"),
     run:
         from app.tools.mutect.mutect1 import Mutect1
+        from app.io.tooliodb import ToolIODb
         mut=Mutect1(camel)
         SnakemakeUtils.add_pickle_input(mut,'BAM_TUMOR',input.BAM)
         SnakemakeUtils.add_pickle_input(mut,"TXT_intervals",input.BED)
-        mut.update_parameters(generate_vcf_file='True')
+        mut.add_input_files({"FASTA_REF":[ToolIODb('broad_b37_human_Genome_1K_v37')]})
         mut.run(os.path.join(working_dir, "mutect1"))
         SnakemakeUtils.dump_tool_output(mut,'TXT_CALL_STATS',output.TXT)
         SnakemakeUtils.dump_tool_output(mut,'VCF',output.VCF)
