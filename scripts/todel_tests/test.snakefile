@@ -26,7 +26,7 @@ def prepare_addreadgroups_input(wildcards):
 rule all:
     # This rule makes sure that all other rules are executed.
     input:
-        os.path.join(working_dir, "mutect1/txt.io")
+        os.path.join(working_dir, "mutect1/vcf.io")
 
 rule prepare_initial_input:
     input:
@@ -76,11 +76,15 @@ rule samtobam:
         SAM=os.path.join(working_dir, "bwa_alignment/sam.io"),
     output:
         BAM=os.path.join(working_dir, "bwa_alignment/bam.io"),
+    params:
+        working_dir = os.path.join(working_dir, "bwa_alignment")
     run:
         from app.tools.samtools.samtoolsview import SamtoolsView
         smv = SamtoolsView(camel)
         SnakemakeUtils.add_pickle_input(smv,"SAM",input.SAM)
-        smv.run(os.path.join(working_dir, "bwa_alignment"))
+        # smv.run(os.path.join(working_dir, "bwa_alignment"))
+        step = SnakeStep(rule, smv, camel, params.working_dir, config)
+        step.run_step()
         SnakemakeUtils.dump_tool_output(smv, "BAM", output.BAM)
 
 
@@ -89,11 +93,15 @@ rule sortbam:
         BAM=os.path.join(working_dir, "bwa_alignment/bam.io"),
     output:
         BAM=os.path.join(working_dir, "bwa_alignment/sortedbam.io"),
+    params:
+        working_dir = os.path.join(working_dir, "bwa_alignment")
     run:
         from app.tools.samtools.samtoolssort import SamtoolsSort
         sms = SamtoolsSort(camel)
         SnakemakeUtils.add_pickle_input(sms,"BAM",input.BAM)
-        sms.run(os.path.join(working_dir, "bwa_alignment"))
+        # sms.run(os.path.join(working_dir, "bwa_alignment"))
+        step = SnakeStep(rule, sms, camel, params.working_dir, config)
+        step.run_step()
         SnakemakeUtils.dump_tool_output(sms, "BAM", output.BAM)
 
 
@@ -102,11 +110,15 @@ rule indexbam:
         BAM=os.path.join(working_dir, "bwa_alignment/sortedbam.io"),
     output:
         BAM=os.path.join(working_dir, "samtools_index/bam_after_index.io"),
+    params:
+        working_dir = os.path.join(working_dir, "samtools_index")
     run:
         from app.tools.samtools.samtoolsindex import SamtoolsIndex
         smi = SamtoolsIndex(camel)
         SnakemakeUtils.add_pickle_input(smi,"BAM",input.BAM)
-        smi.run(os.path.join(working_dir, "samtools_index"))
+        # smi.run(os.path.join(working_dir, "samtools_index"))
+        step = SnakeStep(rule, smi, camel, params.working_dir, config)
+        step.run_step()
         SnakemakeUtils.dump_tool_output(smi, "BAM", output.BAM)
 
 
@@ -115,12 +127,16 @@ rule picardsortbam:
         BAM=os.path.join(working_dir, "samtools_index/bam_after_index.io"),
     output:
         BAM=os.path.join(working_dir, "picardsortbam/sortedbam.io"),
+    params:
+        working_dir = os.path.join(working_dir, "picardsortbam")
     run:
         from app.tools.picard.sortsam import SortSam
         pss = SortSam(camel)
         pss.update_parameters(sort_order="coordinate")
         SnakemakeUtils.add_pickle_input(pss,"BAM",input.BAM)
-        pss.run(os.path.join(working_dir, "picardsortbam"))
+        # pss.run(os.path.join(working_dir, "picardsortbam"))
+        step = SnakeStep(rule, pss, camel, params.working_dir, config)
+        step.run_step()
         SnakemakeUtils.dump_tool_output(pss, "BAM", output.BAM)
 
 
@@ -130,11 +146,15 @@ rule markduplicates:
     output:
         BAM=os.path.join(working_dir, "markduplicates/bam.io"),
         # METRICS=os.path.join(working_dir, "markduplicates/duplicates_mark.matrics.io"), not implemented in tool and maybe not useful. will see.
+    params:
+        working_dir = os.path.join(working_dir, "markduplicates")
     run:
         from app.tools.picard.markduplicates import MarkDuplicates
         pmd = MarkDuplicates(camel)
         SnakemakeUtils.add_pickle_input(pmd, "BAM", input.BAM)
-        pmd.run(os.path.join(working_dir, "markduplicates"))
+        # pmd.run(os.path.join(working_dir, "markduplicates"))
+        step = SnakeStep(rule, pmd, camel, params.working_dir, config)
+        step.run_step()
         SnakemakeUtils.dump_tool_output(pmd, "BAM", output.BAM)
         # SnakemakeUtils.dump_tool_output(pss, "METRICS", output.METRICS)
 
@@ -143,13 +163,17 @@ rule addreadgroups:
         BAM=prepare_addreadgroups_input,
     output:
         BAM=os.path.join(working_dir, "addreadgroups/bam.io"),
+    params:
+        working_dir = os.path.join(working_dir, "addreadgroups")
     run:
         from app.tools.picard.addorreplacereadgroups import AddOrReplaceReadGroups
         parg = AddOrReplaceReadGroups(camel)
         parg.update_parameters(create_index='true')
         SnakemakeUtils.add_pickle_input(parg, "BAM", input.BAM)
         # parg.update_parameters(RG_sample_name=config["sample_name"])
-        parg.run(os.path.join(working_dir, "addreadgroups"))
+        step = SnakeStep(rule, parg, camel, params.working_dir, config)
+        step.run_step()
+        # parg.run(os.path.join(working_dir, "addreadgroups"))
         SnakemakeUtils.dump_tool_output(parg, "BAM", output.BAM)
 
 rule bamtobed:
@@ -157,11 +181,15 @@ rule bamtobed:
         BAM=os.path.join(working_dir, "addreadgroups/bam.io"),
     output:
         BED=os.path.join(working_dir, "bamtobed/bed.io"),
+    params:
+        working_dir = os.path.join(working_dir, "bamtobed")
     run:
         from app.tools.bedtools.bedtoolsbamtobed import BedtoolsBamToBed
         btb = BedtoolsBamToBed(camel)
         SnakemakeUtils.add_pickle_input(btb, "BAM", input.BAM)
-        btb.run(os.path.join(working_dir, "bamtobed"))
+        # btb.run(os.path.join(working_dir, "bamtobed"))
+        step = SnakeStep(rule, btb, camel, params.working_dir, config)
+        step.run_step()
         SnakemakeUtils.dump_tool_output(btb,"BED",output.BED)
 
 rule generate_intervals:
@@ -169,11 +197,15 @@ rule generate_intervals:
         BED=os.path.join(working_dir, "bamtobed/bed.io"),
     output:
         BED=os.path.join(working_dir, "generate_intervals/bed.io"),
+    params:
+        working_dir = os.path.join(working_dir, "generate_intervals")
     run:
         from app.tools.bedtools.bedtoolsmerge import BedtoolsMerge
         btm = BedtoolsMerge(camel)
         SnakemakeUtils.add_pickle_input(btm, "BED", input.BED)
-        btm.run(os.path.join(working_dir, "generate_intervals"))
+        # btm.run(os.path.join(working_dir, "generate_intervals"))
+        step = SnakeStep(rule, btm, camel, params.working_dir, config)
+        step.run_step()
         SnakemakeUtils.dump_tool_output(btm, "BED", output.BED)
 
 rule realignertargetcreator:
@@ -182,6 +214,8 @@ rule realignertargetcreator:
         BED=os.path.join(working_dir, "generate_intervals/bed.io"),
     output:
         INTERVALS=os.path.join(working_dir, "realignertargetcreator/intervals.io"),
+    params:
+        working_dir = os.path.join(working_dir, "realignertargetcreator")
     run:
         from app.tools.gatk.gatkrealignertargetcreator import GATKRealignerTargetCreator
         from app.io.tooliodb import ToolIODb
@@ -190,7 +224,9 @@ rule realignertargetcreator:
         grtc.add_input_files({"FASTA_REF":[ToolIODb('broad_b37_human_Genome_1K_v37')]})
         SnakemakeUtils.add_pickle_input(grtc,"BAM",input.BAM)
         SnakemakeUtils.add_pickle_input(grtc,"TXT_intervals",input.BED)
-        grtc.run(os.path.join(working_dir, "realignertargetcreator"))
+        # grtc.run(os.path.join(working_dir, "realignertargetcreator"))
+        step = SnakeStep(rule, grtc, camel, params.working_dir, config)
+        step.run_step()
         SnakemakeUtils.dump_tool_output(grtc, "TXT_realign_intervals", output.INTERVALS)
 
 rule indelrealigner:
@@ -200,6 +236,8 @@ rule indelrealigner:
         BED=os.path.join(working_dir, "generate_intervals/bed.io"),
     output:
         BAM=os.path.join(working_dir, "indelrealigner/bam.io"),
+    params:
+        working_dir = os.path.join(working_dir, "indelrealigner")
     run:
         from app.tools.gatk.gatkindelrealigner import GATKIndelRealigner
         from app.io.tooliodb import ToolIODb
@@ -208,7 +246,9 @@ rule indelrealigner:
         SnakemakeUtils.add_pickle_input(gir,"TXT_intervals",input.BED)
         SnakemakeUtils.add_pickle_input(gir,"BAM",input.BAM)
         SnakemakeUtils.add_pickle_input(gir,"TXT_realign_intervals",input.INTERVALS)
-        gir.run(os.path.join(working_dir, "indelrealigner"))
+        # gir.run(os.path.join(working_dir, "indelrealigner"))
+        step = SnakeStep(rule, gir, camel, params.working_dir, config)
+        step.run_step()
         SnakemakeUtils.dump_tool_output(gir,"BAM",output.BAM)
 
 rule basequalityrecalibration:
@@ -218,6 +258,8 @@ rule basequalityrecalibration:
     output:
         TXT=os.path.join(working_dir, "basequalityrecalibration/txt.io"),
     threads: 5
+    params:
+        working_dir = os.path.join(working_dir, "basequalityrecalibration")
     run:
         from app.tools.gatk.gatkbaserecalibrator import GATKBaseRecalibrator
         from app.io.tooliodb import ToolIODb
@@ -228,7 +270,9 @@ rule basequalityrecalibration:
         bqsr.update_parameters(threads=threads)
         SnakemakeUtils.add_pickle_input(bqsr,"BAM",input.BAM)
         SnakemakeUtils.add_pickle_input(bqsr,"TXT_intervals", input.BED)
-        bqsr.run(os.path.join(working_dir, "basequalityrecalibration"))
+        step = SnakeStep(rule, bqsr, camel, params.working_dir, config)
+        step.run_step()
+        # bqsr.run(os.path.join(working_dir, "basequalityrecalibration"))
         SnakemakeUtils.dump_tool_output(bqsr,"TXT_RecalibrationTable",output.TXT)
 
 rule printreads:
@@ -238,6 +282,8 @@ rule printreads:
     output:
         BAM=os.path.join(working_dir, "printreads/bam.io"),
     threads: 5
+    params:
+        working_dir = os.path.join(working_dir, "printreads")
     run:
         from app.tools.gatk.gatkprintreads import GATKPrintReads
         from app.io.tooliodb import ToolIODb
@@ -246,7 +292,9 @@ rule printreads:
         gpr.update_parameters(threads=threads)
         SnakemakeUtils.add_pickle_input(gpr,"BAM",input.BAM)
         SnakemakeUtils.add_pickle_input(gpr,"BQSR",input.TXT)
-        gpr.run(os.path.join(working_dir, "printreads"))
+        # gpr.run(os.path.join(working_dir, "printreads"))
+        step = SnakeStep(rule, gpr, camel, params.working_dir, config)
+        step.run_step()
         SnakemakeUtils.dump_tool_output(gpr,"BAM",output.BAM)
 
 rule basequalityrecalibration2:
@@ -256,6 +304,8 @@ rule basequalityrecalibration2:
     output:
         TXT = os.path.join(working_dir, "basequalityrecalibration2/txt.io"),
     threads: 5
+    params:
+        working_dir = os.path.join(working_dir, "basequalityrecalibration2")
     run:
         from app.tools.gatk.gatkbaserecalibrator import GATKBaseRecalibrator
         from app.io.tooliodb import ToolIODb
@@ -265,7 +315,9 @@ rule basequalityrecalibration2:
         bqsr.update_parameters(threads=threads)
         SnakemakeUtils.add_pickle_input(bqsr, "BAM", input.BAM)
         SnakemakeUtils.add_pickle_input(bqsr, "TXT_intervals", input.BED)
-        bqsr.run(os.path.join(working_dir, "basequalityrecalibration2"))
+        # bqsr.run(os.path.join(working_dir, "basequalityrecalibration2"))
+        step = SnakeStep(rule, bqsr, camel, params.working_dir, config)
+        step.run_step()
         SnakemakeUtils.dump_tool_output(bqsr, "TXT_RecalibrationTable", output.TXT)
 
 rule analyzecovariates:
@@ -274,13 +326,16 @@ rule analyzecovariates:
         TXT_AFTER=os.path.join(working_dir, "basequalityrecalibration2/txt.io"),
     output:
         PDF=os.path.join(working_dir, "analyzecovariates/pdf.io"),
+    params:
+        working_dir = os.path.join(working_dir, "analyzecovariates")
     run:
         from app.tools.gatk.gatkanalyzecovariates import GATKAnalyzeCovariates
-
         gac = GATKAnalyzeCovariates(camel)
         SnakemakeUtils.add_pickle_input(gac,"TXT_TABLE_BEFORE",input.TXT_BEFORE)
         SnakemakeUtils.add_pickle_input(gac,"TXT_TABLE_AFTER",input.TXT_AFTER)
-        gac.run(os.path.join(working_dir, "analyzecovariates"))
+        step = SnakeStep(rule, gac, camel, params.working_dir, config)
+        step.run_step()
+        # gac.run(os.path.join(working_dir, "analyzecovariates"))
         SnakemakeUtils.dump_tool_output(gac, "PDF", output.PDF)
 
 rule mutect1:
@@ -290,6 +345,8 @@ rule mutect1:
     output:
         TXT=os.path.join(working_dir, "mutect1/txt.io"),
         VCF=os.path.join(working_dir, "mutect1/vcf.io"),
+    params:
+        working_dir = os.path.join(working_dir, "mutect1")
     run:
         from app.tools.mutect.mutect1 import Mutect1
         from app.io.tooliodb import ToolIODb
@@ -297,7 +354,9 @@ rule mutect1:
         SnakemakeUtils.add_pickle_input(mut,'BAM_TUMOR',input.BAM)
         SnakemakeUtils.add_pickle_input(mut,"TXT_intervals",input.BED)
         mut.add_input_files({"FASTA_REF":[ToolIODb('broad_b37_human_Genome_1K_v37')]})
-        mut.run(os.path.join(working_dir, "mutect1"))
+        step = SnakeStep(rule, mut, camel, params.working_dir, config)
+        step.run_step()
+        # mut.run(os.path.join(working_dir, "mutect1"))
         SnakemakeUtils.dump_tool_output(mut,'TXT_CALL_STATS',output.TXT)
         SnakemakeUtils.dump_tool_output(mut,'VCF',output.VCF)
 

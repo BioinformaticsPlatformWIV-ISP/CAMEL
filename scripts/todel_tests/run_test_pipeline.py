@@ -1,3 +1,7 @@
+"""
+Generates a runtime config yml file for the snakemake pipeline.
+Runs the snakemake pipeline.
+"""
 import os
 import yaml
 
@@ -28,12 +32,12 @@ if __name__ == '__main__':
         pipeline.set_initial_input({'FASTQ_PE': [ToolIOFile(f) for f in config_data['fastq_pe']]})
 
     # Create a new config file
-    with open('temp_config.yaml', 'w') as handle:
+    with open('runtime_config.yaml', 'w') as handle:
         yaml.dump(config_data, handle)
 
     # Execute the snakemake workflow
     command = Command('snakemake --configfile {} --snakefile {}'.format(
-        'temp_config.yaml', os.path.join(os.path.dirname(__file__), 'test.snakefile')
+        'runtime_config.yaml', os.path.join(os.path.dirname(__file__), 'test.snakefile')
     ))
     command.run_command('.')
     print('Stdout: {}\n'.format(command.stdout))
