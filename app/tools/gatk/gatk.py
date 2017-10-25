@@ -101,9 +101,11 @@ class GATK(Tool, metaclass=abc.ABCMeta):
         Check the result of GATK tool run
         :return: None
         """
+        if self.stdout == "":
+            raise ToolExecutionError("GATK tool {} fails to run as stdout is empty.\n{}".format(self._function_name))
         if not re.match('Exit status: 0', self.stdout.split('\n')[-2].rstrip()):
-            raise ToolExecutionError("GATK tool {} fails to run, message: \n{}".format(
-                self._function_name, self.stdout))
+            raise ToolExecutionError(
+                "GATK tool {} fails to run, message: \n{}".format(self._function_name, self.stdout))
 
     def _set_informs(self):
         """

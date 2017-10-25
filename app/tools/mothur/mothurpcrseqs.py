@@ -38,9 +38,7 @@ class MothurPcrSeqs(Mothur):
 
     def _build_input_string(self):
         """
-        Creates the string with the input files and input/output directories
-        Example: fasta=File1.trim.contig.fasta, inputdir=/test/data/input/,
-        outputdir=/test/data/outputdir
+        Creates the string with the input files and output directories
         :return: String with the input parameters
         """
         items = ['fasta={}'.format(self._tool_inputs['FASTA'][0])]
@@ -55,4 +53,18 @@ class MothurPcrSeqs(Mothur):
         :return: None
         """
         basename = super(MothurPcrSeqs, self)._get_basename()
-        self._tool_outputs['FASTA'] = [ToolIOFile(basename + '.pcr.fasta')]
+        extension = self._tool_inputs['FASTA'][0].file_extension
+        self._tool_outputs['FASTA'] = [ToolIOFile('{}.pcr{}'.format(basename, extension))]
+
+    def _check_command_output(self):
+        """
+        Analyzes output to discover if the run was successful. If an error was present in stdout, a RuntimeError is
+        raised and stdout is displayed
+        :return: None
+        """
+        for line in self.stdout.splitlines():
+            if line.startswith('[ERROR]: name mismatch in pcr.seqs'):
+                # Hopefully temporary fix for bug in Mothur that gives these error messages
+                pass
+            elif line.startswith('[ERROR]') or line.startswith('Unable to open'):
+                raise RuntimeError(self.stdout + '\n' + '!!! Mothur failed to run !!! See above for more information.')

@@ -20,7 +20,7 @@ class GATKSelectVariants(GATK):
         """
         super(GATKSelectVariants, self).__init__('gatk SelectVariants', '3.7', camel)
         self._function_name = 'SelectVariants'
-        self._specific_parameters = ['selectTypeToExlcude', 'selectTypeToInclude']
+        self._specific_parameters = ['selectTypeToExlcude', 'selectTypeToInclude', 'select']
         self._required_inputs = ['VCF']
         self._output_type = 'VCF'
 
@@ -88,11 +88,15 @@ class GATKSelectVariants(GATK):
             value = self._parameters['selectTypeToExclude'].value
             excluded_types = value.split(",")
             for ex_type in excluded_types:
-                self._option_string += "{} {} ".format(option, ex_type)
+                self._option_string += "{} {!r} ".format(option, ex_type)
 
         if 'selectTypeToInclude' in self._parameters:
             option = self._parameters['selectTypeToInclude'].option
             value = self._parameters['selectTypeToInclude'].value
             selected_types = value.split(",")
             for se_type in selected_types:
-                self._option_string += "{} {} ".format(option, se_type)
+                self._option_string += "{} {!r} ".format(option, se_type)
+
+        if 'select' in self._parameters:
+            select_opt = self._parameters['select']
+            self._option_string += "{} {!r} ".format(select_opt.option, select_opt.value)
