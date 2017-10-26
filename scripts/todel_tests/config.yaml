@@ -1,9 +1,5 @@
-# Input / output
-report: output/report.html
-output_dir: output
 working_dir: '/scratch/todel/GATK_Camel_test/pipeline/working/'
 
-# Input
 fastq_pe:
   - '/scratch/todel/GATK_Camel_test/pipeline/inputs_and_files/input1.fq'
   - '/scratch/todel/GATK_Camel_test/pipeline/inputs_and_files/input2.fq'
