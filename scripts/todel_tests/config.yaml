@@ -11,6 +11,8 @@ fastq_pe:
 ref_genome:
   - '/data/refgenomes/Human/GATK-BroadIns/b37-genome/human_g1k_v37.fa'
 
-run_markDuplicates: False
+fasta_ref: 'broad_b37_human_Genome_1K_v37'
+vcf_known_snps: 'broad_b37_snps_high_confidence'
+vcf_known_indels: 'broad_b37_indels_gold_standard'
 
-sample_name: 'testsample'
+run_markDuplicates: False
