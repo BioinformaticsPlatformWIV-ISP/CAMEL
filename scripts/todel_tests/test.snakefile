@@ -31,17 +31,19 @@ rule all:
     input:
         os.path.join(working_dir, "mutect1/vcf.io"),
         os.path.join(working_dir, "analyzecovariates/pdf.io")
+        # os.path.join(working_dir, "initial_input/fastq.io")
 
 
 
 rule prepare_initial_input:
     """ Prepare input for the pipeline: generates io file from PE or SE fastq file(s) """
     input:
-        FASTQ=config['fastq_pe'],
+        FASTQ=config['fastq'],
     output:
         FASTQ=os.path.join(working_dir, "initial_input/fastq.io"),
     run:
         SnakemakeUtils.pickle_snake_input(input, output)
+
 
 
 rule prepare_references_io:
@@ -87,7 +89,10 @@ rule bwa_alignment:
     run:
         from app.tools.bwa.bwamap import BWAMap
         bwa_mem = BWAMap(camel)
-        SnakemakeUtils.add_pickle_input(bwa_mem, 'FASTQ_PE', input.FASTQ)
+        if config['PE']:
+            SnakemakeUtils.add_pickle_input(bwa_mem, 'FASTQ_PE', input.FASTQ)
+        if config['SE']:
+            SnakemakeUtils.add_pickle_input(bwa_mem, 'FASTQ_SE', input.FASTQ)
         SnakemakeUtils.add_pickle_input(bwa_mem, 'INDEX_GENOME_PREFIX', input.FASTA_GENOME)
         bwa_mem.update_parameters(threads=threads)
         step = SnakeStep(rule, bwa_mem, camel, params.working_dir, config)
@@ -127,6 +132,8 @@ rule sortbam:
     run:
         from app.tools.samtools.samtoolssort import SamtoolsSort
         sms = SamtoolsSort(camel)
+        if 'bam_output' in config:
+            sms.update_parameters(output_filename = config['bam_output'])
         SnakemakeUtils.add_pickle_input(sms,"BAM",input.BAM)
         step = SnakeStep(rule, sms, camel, params.working_dir, config)
         step.run_step()
@@ -396,6 +403,7 @@ rule analyzecovariates:
     run:
         from app.tools.gatk.gatkanalyzecovariates import GATKAnalyzeCovariates
         gac = GATKAnalyzeCovariates(camel)
+        gac.update_parameters(pdf_output = config['covar_output'])
         SnakemakeUtils.add_pickle_input(gac,"FASTA_REF",input.FASTA_REF)
         SnakemakeUtils.add_pickle_input(gac,"TXT_TABLE_BEFORE",input.TXT_BEFORE)
         SnakemakeUtils.add_pickle_input(gac,"TXT_TABLE_AFTER",input.TXT_AFTER)
@@ -424,6 +432,10 @@ rule mutect1:
         SnakemakeUtils.add_pickle_input(mut,'BAM_TUMOR',input.BAM)
         SnakemakeUtils.add_pickle_input(mut,"TXT_intervals",input.BED)
         SnakemakeUtils.add_pickle_input(mut, "FASTA_REF", input.FASTA_REF)
+        if 'txt_output' in config:
+            mut.update_parameters(output_callstats_file = config['txt_output'])
+        if 'vcf_output' in config:
+            mut.update_parameters(output_vcf_file = config['vcf_output'])
         step = SnakeStep(rule, mut, camel, params.working_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_output(mut,'TXT_CALL_STATS',output.TXT)
