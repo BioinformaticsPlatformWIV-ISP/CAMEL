@@ -7,6 +7,8 @@ from app.camel import Camel
 from app.command.command import Command
 from app.io.tooliofile import ToolIOFile
 from app.pipeline.snakepipeline import SnakePipeline
+import time
+import datetime
 
 
 
@@ -133,12 +135,16 @@ class GATKSomaticMain(object):
         #     self.pipeline.set_initial_input({'FASTQ_PE': [ToolIOFile(f) for f in self.config_data['fastq_pe']]})
 
         # Execute the snakemake workflow
-        to_execute = 'snakemake --configfile {} --snakefile {}'.format(self.runtime_config_name, self.SNAKEFILE)
+        to_execute = 'snakemake --configfile {} --snakefile {} -pouetpouet'.format(self.runtime_config_name, self.SNAKEFILE)
         command = Command(to_execute)
         command.run_command(os.getcwd(), subprocess.STDOUT)
         if command.returncode != 0:
-            print('Stdout: {}\n'.format(command.stdout))
-            print('Stderr: {}\n'.format(command.stderr))
+            with open("/scratch/todel/logs_gatk_galaxy/{}_Stdout".format(datetime.datetime.fromtimestamp(time.time()).strftime("%Y%m%d_%H%M%S-%f")),"w") as file_out:
+                file_out.write(command.stdout)
+            with open("/scratch/todel/logs_gatk_galaxy/{}_Stderr".format(datetime.datetime.fromtimestamp(time.time()).strftime("%Y%m%d_%H%M%S-%f")),"w") as file_out:
+                file_out.write(command.stderr)
+            # print('Stdout: {}\n'.format(command.stdout))
+            # print('Stderr: {}\n'.format(command.stderr))
             raise RuntimeError("Error executing Snakemake. Check log for more information")
 
 
