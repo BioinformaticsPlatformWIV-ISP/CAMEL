@@ -135,7 +135,7 @@ class GATKSomaticMain(object):
         #     self.pipeline.set_initial_input({'FASTQ_PE': [ToolIOFile(f) for f in self.config_data['fastq_pe']]})
 
         # Execute the snakemake workflow
-        to_execute = 'snakemake --configfile {} --snakefile {} -pouetpouet'.format(self.runtime_config_name, self.SNAKEFILE)
+        to_execute = 'snakemake --configfile {} --snakefile {} '.format(self.runtime_config_name, self.SNAKEFILE)
         command = Command(to_execute)
         command.run_command(os.getcwd(), subprocess.STDOUT)
         if command.returncode != 0:
