@@ -139,9 +139,9 @@ class GATKSomaticMain(object):
         command = Command(to_execute)
         command.run_command(os.getcwd(), subprocess.STDOUT)
         if command.returncode != 0:
-            with open("/scratch/todel/logs_gatk_galaxy/{}_Stdout".format(datetime.datetime.fromtimestamp(time.time()).strftime("%Y%m%d_%H%M%S-%f")),"w") as file_out:
+            with open("/home/galaxy/galaxy/temp_logs_td/{}_Stdout".format(datetime.datetime.fromtimestamp(time.time()).strftime("%Y%m%d_%H%M%S-%f")),"w") as file_out:
                 file_out.write(command.stdout)
-            with open("/scratch/todel/logs_gatk_galaxy/{}_Stderr".format(datetime.datetime.fromtimestamp(time.time()).strftime("%Y%m%d_%H%M%S-%f")),"w") as file_out:
+            with open("/home/galaxy/galaxy/temp_logs_td/{}_Stderr".format(datetime.datetime.fromtimestamp(time.time()).strftime("%Y%m%d_%H%M%S-%f")),"w") as file_out:
                 file_out.write(command.stderr)
             # print('Stdout: {}\n'.format(command.stdout))
             # print('Stderr: {}\n'.format(command.stderr))
