@@ -16,7 +16,7 @@ class GATKSomaticMain(object):
     Generates a config yml file based on CL arguments and runs the pipeline.
     """
     DB_LOGGING = True
-    SNAKEFILE = os.path.join(os.path.dirname(__file__), 'test.snakefile')
+    SNAKEFILE = os.path.join(os.path.dirname(__file__), 'gatk_somatic_steps.snakefile')
 
 
     def __init__(self):
