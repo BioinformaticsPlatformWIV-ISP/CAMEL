@@ -137,9 +137,10 @@ class GATKSomaticMain(object):
         command = Command(to_execute)
         command.run_command(os.getcwd(), subprocess.STDOUT)
         if command.returncode != 0:
+            print('Stdout: {}\n'.format(command.stdout))
+            print('Stderr: {}\n'.format(command.stderr))
             raise RuntimeError("Error executing Snakemake. Check log for more information")
-        # print('Stdout: {}\n'.format(command.stdout))
-        # print('Stderr: {}\n'.format(command.stderr))
+
 
 if __name__ == '__main__':
     main = GATKSomaticMain()
