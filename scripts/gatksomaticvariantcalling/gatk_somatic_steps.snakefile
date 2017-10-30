@@ -24,28 +24,36 @@ def prepare_addreadgroups_input(wildcards):
 
 
 rule all:
-    # This rule makes sure that all other rules are executed.
-    # Last file to be generated in pipeline is vcf.io.
+    """
+    This rule makes sure that all other rules are executed.
+    Last file to be generated in pipeline is vcf.io.
+    """
     input:
-        os.path.join(working_dir, "mutect1/vcf.io")
+        os.path.join(working_dir, "mutect1/vcf.io"),
+        os.path.join(working_dir, "analyzecovariates/pdf.io")
+        # os.path.join(working_dir, "initial_input/fastq.io")
+
 
 
 rule prepare_initial_input:
-    # Prepare input for the pipeline: generates io file from PE or SE fastq file(s)
+    """ Prepare input for the pipeline: generates io file from PE or SE fastq file(s) """
     input:
-        FASTQ=config['fastq_pe'],
+        FASTQ=config['fastq'],
     output:
         FASTQ=os.path.join(working_dir, "initial_input/fastq.io"),
     run:
         SnakemakeUtils.pickle_snake_input(input, output)
 
 
+
 rule prepare_references_io:
-    # Prepare reference genome IO files for snakemake to use: generate io files for
-    # - the reference genome fasta (value and file objects)
-    # - the snp vcf file
-    # - the indel vcf file.
-    # Requires reference names from db_loc to be present in the config file.
+    """
+    Prepare reference genome IO files for snakemake to use: generate io files for
+    - the reference genome fasta (value and file objects)
+    - the snp vcf file
+    - the indel vcf file.
+    Requires reference names from db_loc to be present in the config file.
+    """
     output:
         FASTA_GENOME=os.path.join(working_dir, "initial_input/fasta_reference_human_value.io"),
         FASTA_GENOME_FILE=os.path.join(working_dir, "initial_input/fasta_reference_human.io"), # for tools that require ToolIOFile instead of ToolIOValue
@@ -67,6 +75,9 @@ rule prepare_references_io:
 
 
 rule bwa_alignment:
+    """
+    Reads alignment using bwa mem.
+    """
     input:
         FASTQ=os.path.join(working_dir, "initial_input/fastq.io"),
         FASTA_GENOME=os.path.join(working_dir, "initial_input/fasta_reference_human_value.io"),
@@ -78,7 +89,10 @@ rule bwa_alignment:
     run:
         from app.tools.bwa.bwamap import BWAMap
         bwa_mem = BWAMap(camel)
-        SnakemakeUtils.add_pickle_input(bwa_mem, 'FASTQ_PE', input.FASTQ)
+        if config['PE']:
+            SnakemakeUtils.add_pickle_input(bwa_mem, 'FASTQ_PE', input.FASTQ)
+        if config['SE']:
+            SnakemakeUtils.add_pickle_input(bwa_mem, 'FASTQ_SE', input.FASTQ)
         SnakemakeUtils.add_pickle_input(bwa_mem, 'INDEX_GENOME_PREFIX', input.FASTA_GENOME)
         bwa_mem.update_parameters(threads=threads)
         step = SnakeStep(rule, bwa_mem, camel, params.working_dir, config)
@@ -87,6 +101,9 @@ rule bwa_alignment:
 
 
 rule samtobam:
+    """
+    Sam-to-bam conversion (samtools).
+    """
     input:
         SAM=os.path.join(working_dir, "bwa_alignment/sam.io"),
     output:
@@ -103,6 +120,9 @@ rule samtobam:
 
 
 rule sortbam:
+    """
+    pre-indexing Bam sorting (samtools). 
+    """
     input:
         BAM=os.path.join(working_dir, "bwa_alignment/bam.io"),
     output:
@@ -112,6 +132,8 @@ rule sortbam:
     run:
         from app.tools.samtools.samtoolssort import SamtoolsSort
         sms = SamtoolsSort(camel)
+        if 'bam_output' in config:
+            sms.update_parameters(output_filename = config['bam_output'])
         SnakemakeUtils.add_pickle_input(sms,"BAM",input.BAM)
         step = SnakeStep(rule, sms, camel, params.working_dir, config)
         step.run_step()
@@ -119,6 +141,9 @@ rule sortbam:
 
 
 rule indexbam:
+    """
+    Bam indexing (samtools).
+    """
     input:
         BAM=os.path.join(working_dir, "bwa_alignment/sortedbam.io"),
     output:
@@ -135,6 +160,9 @@ rule indexbam:
 
 
 rule picardsortbam:
+    """
+    Bam sorting (picard).
+    """
     input:
         BAM=os.path.join(working_dir, "samtools_index/bam_after_index.io"),
     output:
@@ -152,6 +180,9 @@ rule picardsortbam:
 
 
 rule markduplicates:
+    """
+    Optional reads deduplication (picard).
+    """
     input:
         BAM=os.path.join(working_dir, "picardsortbam/sortedbam.io"),
     output:
@@ -168,6 +199,9 @@ rule markduplicates:
 
 
 rule addreadgroups:
+    """
+    Read group adding (picard)
+    """
     input:
         BAM=prepare_addreadgroups_input,
     output:
@@ -185,6 +219,9 @@ rule addreadgroups:
 
 
 rule bamtobed:
+    """
+    Bam-to-bed conversion for interval generation for optimisation (bedtools).
+    """
     input:
         BAM=os.path.join(working_dir, "addreadgroups/bam.io"),
     output:
@@ -201,6 +238,9 @@ rule bamtobed:
 
 
 rule generate_intervals:
+    """
+    Interval generation for optimisation (bedtools).
+    """
     input:
         BED=os.path.join(working_dir, "bamtobed/bed.io"),
     output:
@@ -217,6 +257,9 @@ rule generate_intervals:
 
 
 rule realignertargetcreator:
+    """
+    Indel realigner intervals creation (GATK).
+    """
     input:
         BAM=os.path.join(working_dir, "addreadgroups/bam.io"),
         BED=os.path.join(working_dir, "generate_intervals/bed.io"),
@@ -229,7 +272,6 @@ rule realignertargetcreator:
     run:
         from app.tools.gatk.gatkrealignertargetcreator import GATKRealignerTargetCreator
         grtc = GATKRealignerTargetCreator(camel)
-        # add default human genome fasta file
         SnakemakeUtils.add_pickle_input(grtc,"FASTA_REF",input.FASTA_REF)
         SnakemakeUtils.add_pickle_input(grtc,"BAM",input.BAM)
         SnakemakeUtils.add_pickle_input(grtc,"TXT_intervals",input.BED)
@@ -239,6 +281,9 @@ rule realignertargetcreator:
 
 
 rule indelrealigner:
+    """
+    Indel realignment (GATK).
+    """
     input:
         INTERVALS=os.path.join(working_dir, "realignertargetcreator/intervals.io"),
         BAM=os.path.join(working_dir, "addreadgroups/bam.io"),
@@ -261,6 +306,9 @@ rule indelrealigner:
 
 
 rule basequalityrecalibration:
+    """
+    Base quality recalibration (GATK).
+    """
     input:
         BAM=os.path.join(working_dir, "indelrealigner/bam.io"),
         BED=os.path.join(working_dir, "generate_intervals/bed.io"),
@@ -287,6 +335,9 @@ rule basequalityrecalibration:
 
 
 rule printreads:
+    """
+    Post-recalibration reads printing (GATK). 
+    """
     input:
         BAM=os.path.join(working_dir, "indelrealigner/bam.io"),
         TXT=os.path.join(working_dir, "basequalityrecalibration/txt.io"),
@@ -309,10 +360,15 @@ rule printreads:
 
 
 rule basequalityrecalibration2:
+    """
+    Second base quality recalibration for quality control (GATK).
+    """
     input:
         BAM = os.path.join(working_dir, "printreads/bam.io"),
         BED = os.path.join(working_dir, "generate_intervals/bed.io"),
         FASTA_REF=os.path.join(working_dir, "initial_input/fasta_reference_human.io"),
+        VCF_KNOWN_SNPS=os.path.join(working_dir, "initial_input/vcf_known_snps.io"),
+        VCF_KNOWN_INDELS=os.path.join(working_dir, "initial_input/vcf_known_indels.io"),
     output:
         TXT = os.path.join(working_dir, "basequalityrecalibration2/txt.io"),
     threads: 5
@@ -323,17 +379,23 @@ rule basequalityrecalibration2:
         bqsr = GATKBaseRecalibrator(camel)
         bqsr.update_parameters(threads=threads)
         SnakemakeUtils.add_pickle_input(bqsr,"FASTA_REF",input.FASTA_REF)
-        SnakemakeUtils.add_pickle_input(bqsr, "BAM", input.BAM)
-        SnakemakeUtils.add_pickle_input(bqsr, "TXT_intervals", input.BED)
+        SnakemakeUtils.add_pickle_input(bqsr,"VCF_KNOWN_SNPS",input.VCF_KNOWN_SNPS)
+        SnakemakeUtils.add_pickle_input(bqsr,"VCF_KNOWN_INDELS",input.VCF_KNOWN_INDELS)
+        SnakemakeUtils.add_pickle_input(bqsr,"BAM",input.BAM)
+        SnakemakeUtils.add_pickle_input(bqsr,"TXT_intervals", input.BED)
         step = SnakeStep(rule, bqsr, camel, params.working_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_output(bqsr, "TXT_RecalibrationTable", output.TXT)
 
 
 rule analyzecovariates:
+    """
+    Covariates analysis and BQSR report generation (GATK) 
+    """
     input:
         TXT_BEFORE=os.path.join(working_dir, "basequalityrecalibration/txt.io"),
         TXT_AFTER=os.path.join(working_dir, "basequalityrecalibration2/txt.io"),
+        FASTA_REF=os.path.join(working_dir, "initial_input/fasta_reference_human.io"),
     output:
         PDF=os.path.join(working_dir, "analyzecovariates/pdf.io"),
     params:
@@ -341,6 +403,8 @@ rule analyzecovariates:
     run:
         from app.tools.gatk.gatkanalyzecovariates import GATKAnalyzeCovariates
         gac = GATKAnalyzeCovariates(camel)
+        gac.update_parameters(pdf_output = config['covar_output'])
+        SnakemakeUtils.add_pickle_input(gac,"FASTA_REF",input.FASTA_REF)
         SnakemakeUtils.add_pickle_input(gac,"TXT_TABLE_BEFORE",input.TXT_BEFORE)
         SnakemakeUtils.add_pickle_input(gac,"TXT_TABLE_AFTER",input.TXT_AFTER)
         step = SnakeStep(rule, gac, camel, params.working_dir, config)
@@ -349,6 +413,9 @@ rule analyzecovariates:
 
 
 rule mutect1:
+    """
+    Variant calling (mutect1).
+    """
     input:
         BAM=os.path.join(working_dir, "printreads/bam.io"),
         BED = os.path.join(working_dir, "generate_intervals/bed.io"),
@@ -365,6 +432,10 @@ rule mutect1:
         SnakemakeUtils.add_pickle_input(mut,'BAM_TUMOR',input.BAM)
         SnakemakeUtils.add_pickle_input(mut,"TXT_intervals",input.BED)
         SnakemakeUtils.add_pickle_input(mut, "FASTA_REF", input.FASTA_REF)
+        if 'txt_output' in config:
+            mut.update_parameters(output_callstats_file = config['txt_output'])
+        if 'vcf_output' in config:
+            mut.update_parameters(output_vcf_file = config['vcf_output'])
         step = SnakeStep(rule, mut, camel, params.working_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_output(mut,'TXT_CALL_STATS',output.TXT)

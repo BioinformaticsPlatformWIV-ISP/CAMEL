@@ -42,11 +42,12 @@ class GATKSomaticMain(object):
         # various
         ap.add_argument('-W', '--wdir', dest='work_dir', metavar='work_dir', help='Working directory')
 
-        # input/output
+        # input
         gp = ap.add_mutually_exclusive_group(required=True)
         gp.add_argument('-PE', '--Paired_end', metavar='fq_file', dest='paired_end', help='Paired-end fastq files.', nargs='+')
         gp.add_argument('-SE', '--Single_end', metavar='fq_file', dest='single_end', help='Single-end fastq files.', nargs='+')
 
+        # output
         ap.add_argument('--vcf_output', dest='vcf_output', metavar='vcf_output', help='Output vcf file')
         ap.add_argument('--tab_output', dest='tab_output', metavar='tab_output', help='Output variant-call table file')
         ap.add_argument('--covar_output', dest='covar_output', metavar='covar_output', help='Output covariates analysis pdf')
