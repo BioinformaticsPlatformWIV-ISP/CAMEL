@@ -58,7 +58,6 @@ class SamtoolsMerge(Samtools):
         Executes this tool.
         :return: None
         """
-        self.__output_file_type = self.__determine_output_file_type()
         self.__build_command()
         self._execute_command()
         self.__set_output()
@@ -80,8 +79,9 @@ class SamtoolsMerge(Samtools):
         Sets the output of this tool.
         :return: None
         """
+        output_file_type = self.__determine_output_file_type()
         output_file_path = os.path.join(self._folder, self._parameters['output_filename'].value)
-        self._tool_outputs[self.__output_file_type] = [ToolIOFile(output_file_path)]
+        self._tool_outputs[output_file_type] = [ToolIOFile(output_file_path)]
 
     def __determine_output_file_type(self):
         """
