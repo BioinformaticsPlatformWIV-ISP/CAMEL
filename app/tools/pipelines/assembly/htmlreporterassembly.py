@@ -24,10 +24,7 @@ class HtmlReporterAssembly(HtmlReporter):
         :return: None
         """
         self._report.add_header('Assembly', 2)
-        if 'velvet_optimiser' in self._input_informs:
-            self.__add_velvetoptimiser_info()
-        else:
-            self.__add_spades_info()
+        self.__add_assembly_info(self._tool_inputs['ASSEMBLER'][0].value)
         self.__add_assembly_download_link()
         self._report.add_horizontal_line()
 
@@ -39,31 +36,26 @@ class HtmlReporterAssembly(HtmlReporter):
         if 'FASTA_Contig' not in self._tool_inputs:
             raise InvalidInputSpecificationError("No assembly input found")
         if 'SAMPLE_NAME' not in self._tool_inputs:
-            raise ValueError("No sample name input found")
+            raise InvalidInputSpecificationError("No sample name input found")
+        if 'ASSEMBLER' not in self._tool_inputs:
+            raise InvalidInputSpecificationError("No assembler input found")
+        if 'quast' not in self._input_informs:
+            raise InvalidInputSpecificationError("Quast informs are required")
         super(HtmlReporterAssembly, self)._check_input()
 
-    def __add_velvetoptimiser_info(self):
+    def __add_assembly_info(self, assembler):
         """
-        Adds a table with the VelvetOptimiser info.
+        Adds the assembly info.
+        :param assembler: Name of the assembler that was used.
         :return: None
         """
-        informs = self._input_informs['velvet_optimiser']
+        quast_informs = self._input_informs['quast']
         table_data = [
-            ['Assembler:', 'VelvetOptimiser'],
-            ['Kmer used:', informs['kmer']],
-            ['N50:', informs['n50']]
-        ]
-        self._report.add_table(table_data, table_attributes=[('class', 'information')])
-
-    def __add_spades_info(self):
-        """
-        Adds the SPAdes info.
-        :return: None
-        """
-        table_data = [
-            [['Assembler:', 'SPAdes'],
-             ['Kmer user:', '/'],
-             ['N50:', '/']]
+            ('Assembler:', assembler),
+            ('N50:', quast_informs['contig'].get('N50', '-')),
+            ('Number of contigs:', quast_informs['contig'].get('# contigs (>= 0 bp)', '-')),
+            ('Number of contigs (>1000bp):', quast_informs['contig'].get('# contigs (>= 1000 bp)', '-')),
+            ('Total length:', quast_informs['genome'].get('Total length'))
         ]
         self._report.add_table(table_data, table_attributes=[('class', 'information')])
 

@@ -132,7 +132,7 @@ class PipelineService(Service):
         for step_name, name, option, value, disabled in self.db_connection.query(sql, [self._pipeline_id, name])[1:]:
             if disabled:
                 value = False
-            parameters.append([Parameter(name, option, value)])
+            parameters.append(Parameter(name, option, value))
         return parameters
 
     def log_initial_input(self, pipeline_job_id, type_, key, index, hash_value):

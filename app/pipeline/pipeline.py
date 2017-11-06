@@ -31,6 +31,14 @@ class Pipeline(ABC):
         return self._job_id
 
     @property
+    def name(self):
+        """
+        Returns the pipeline name.
+        :return: Name
+        """
+        return self._name
+
+    @property
     def pipeline_service(self):
         """
         Returns the pipeline service
