@@ -6,6 +6,7 @@ import subprocess
 from app.camel import Camel
 from app.command.command import Command
 from app.io.tooliofile import ToolIOFile
+from app.io.tooliovalue import ToolIOValue
 from app.pipeline.snakepipeline import SnakePipeline
 import time
 import datetime
@@ -18,6 +19,7 @@ class GATKSomaticMain(object):
     Generates a config yml file based on CL arguments and runs the pipeline.
     """
     DB_LOGGING = True
+    DEBUG = True
     SNAKEFILE = os.path.join(os.path.dirname(__file__), 'gatk_somatic_steps.snakefile')
 
 
@@ -130,22 +132,27 @@ class GATKSomaticMain(object):
 
         self.__generate_config_file()
 
-        # Setting the initial input makes sure that they are logged
-        # if self.DB_LOGGING:
-        #     self.pipeline.set_initial_input({'FASTQ_PE': [ToolIOFile(f) for f in self.config_data['fastq_pe']]})
+        # Set the initial input
+        input_dict = dict()
+        if self.DB_LOGGING:
+            if self._args.paired_end:
+                input_dict['FASTQ_PE'] = [ToolIOFile(f) for f in self.config_data['fastq']]
+            elif self._args.single_end:
+                input_dict['FASTQ_SE'] = [ToolIOFile(f) for f in self.config_data['fastq']]
+            input_dict['MarkDuplicates'] = [ToolIOValue(self._args.markduplicates)]
+
+            self.pipeline.set_initial_input(input_dict)
 
         # Execute the snakemake workflow
         to_execute = 'snakemake --configfile {} --snakefile {} '.format(self.runtime_config_name, self.SNAKEFILE)
         command = Command(to_execute)
         command.run_command(os.getcwd(), subprocess.STDOUT)
-        if command.returncode != 0:
+        if command.returncode != 0 and self.DEBUG:
             with open("/home/galaxy/galaxy/temp_logs_td/{}_Stdout".format(datetime.datetime.fromtimestamp(time.time()).strftime("%Y%m%d_%H%M%S-%f")),"w") as file_out:
                 file_out.write(command.stdout)
             with open("/home/galaxy/galaxy/temp_logs_td/{}_Stderr".format(datetime.datetime.fromtimestamp(time.time()).strftime("%Y%m%d_%H%M%S-%f")),"w") as file_out:
                 file_out.write(command.stderr)
-            # print('Stdout: {}\n'.format(command.stdout))
-            # print('Stderr: {}\n'.format(command.stderr))
-            raise RuntimeError("Error executing Snakemake. Check log for more information")
+            raise RuntimeError("Error executing Snakemake. Check log for more information.")
 
 
 if __name__ == '__main__':

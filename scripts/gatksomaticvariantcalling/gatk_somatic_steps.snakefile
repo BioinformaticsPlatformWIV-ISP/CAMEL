@@ -172,7 +172,6 @@ rule picardsortbam:
     run:
         from app.tools.picard.sortsam import SortSam
         pss = SortSam(camel)
-        pss.update_parameters(sort_order="coordinate")
         SnakemakeUtils.add_pickle_input(pss,"BAM",input.BAM)
         step = SnakeStep(rule, pss, camel, params.working_dir, config)
         step.run_step()
@@ -211,7 +210,6 @@ rule addreadgroups:
     run:
         from app.tools.picard.addorreplacereadgroups import AddOrReplaceReadGroups
         parg = AddOrReplaceReadGroups(camel)
-        parg.update_parameters(create_index='true')
         SnakemakeUtils.add_pickle_input(parg, "BAM", input.BAM)
         step = SnakeStep(rule, parg, camel, params.working_dir, config)
         step.run_step()
