@@ -13,3 +13,6 @@ YAML_READ_TRIMMING = os.path.join(_resources_folder, 'yaml', 'read_trimming.yml'
 YAML_RES_CHAR_FAST = os.path.join(_resources_folder, 'yaml', 'resistance_characterization_fast.yml')
 YAML_TRIMMING_ASSEMBLY_SPADES = os.path.join(_resources_folder, 'yaml', 'trimming_assembly_spades.yml')
 YAML_TYPING_FAST = os.path.join(_resources_folder, 'yaml', 'sequence_typing_fast.yml')
+
+# Static
+LOGO_WIV = os.path.join(_resources_folder, 'static', 'logo-wiv-isp.png')
