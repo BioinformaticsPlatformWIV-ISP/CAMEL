@@ -64,6 +64,7 @@ class GATKSomaticMain(object):
 
         # MarkDuplicates flag
         ap.add_argument('--mark_duplicates', dest='markduplicates', help='Mark duplicate reads.', action='store_true')
+        ap.add_argument('--job_id', dest='job_id', metavar='job_id', help='Job ID for debugging and logging.', default=datetime.datetime.fromtimestamp(time.time()).strftime("%Y%m%d_%H%M%S-%f"))
 
         return ap.parse_args()
 
@@ -120,7 +121,7 @@ class GATKSomaticMain(object):
 
     def run(self):
         """
-        Sets-up and runs the pipeline.  
+        Sets-up and runs the pipeline and logs stderr and stdout if running the command fails.
         :return: None 
         """
 
@@ -143,16 +144,16 @@ class GATKSomaticMain(object):
 
             self.pipeline.set_initial_input(input_dict)
 
-        # Execute the snakemake workflow
+        # Execute the snakemake workflow and log stdout and stderr if command fails.
         to_execute = 'snakemake --configfile {} --snakefile {} '.format(self.runtime_config_name, self.SNAKEFILE)
         command = Command(to_execute)
         command.run_command(os.getcwd(), subprocess.STDOUT)
-        if command.returncode != 0 and self.DEBUG:
-            with open("/home/galaxy/galaxy/temp_logs_td/{}_Stdout".format(datetime.datetime.fromtimestamp(time.time()).strftime("%Y%m%d_%H%M%S-%f")),"w") as file_out:
+        if command.returncode != 0:
+            with open("/scratch/temp/galaxy_logs/{}_Stdout".format(self.args.job_id),"w") as file_out:
                 file_out.write(command.stdout)
-            with open("/home/galaxy/galaxy/temp_logs_td/{}_Stderr".format(datetime.datetime.fromtimestamp(time.time()).strftime("%Y%m%d_%H%M%S-%f")),"w") as file_out:
+            with open("/scratch/temp/galaxy_logs/{}_Stderr".format(self.args.job_id),"w") as file_out:
                 file_out.write(command.stderr)
-            raise RuntimeError("Error executing Snakemake. Check log for more information.")
+            raise RuntimeError("Error executing Snakemake. Check log ('/scratch/temp/galaxy_logs/{}_Stderr') for more information.".format(self.args.job_id))
 
 
 if __name__ == '__main__':
