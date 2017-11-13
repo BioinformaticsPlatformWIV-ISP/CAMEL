@@ -48,6 +48,7 @@ class GATKAnalyzeCovariates(GATK):
         Set the input specification in the input_string: 
         - before and after covariates tables (and optional BQSR table)
         - reference fasta (default or superseded).
+        Overrides base class method.
         :return: None
         """
         self._input_string += "-before {} ".format(self._tool_inputs['TXT_TABLE_BEFORE'][0].path)
@@ -69,11 +70,3 @@ class GATKAnalyzeCovariates(GATK):
         self._tool_outputs['PDF'] = [ToolIOFile(os.path.join(self._folder, self._parameters['pdf_output'].value))]
 
         self._tool_outputs['CSV'] = [ToolIOFile(os.path.join(self._folder, self._parameters['csv_output'].value))]
-
-    def _check_parameters(self):
-        """
-        Check that parameters make sense and that mandatory parameters were specified.
-        :return: None
-        """
-
-        super(GATKAnalyzeCovariates, self)._check_parameters()

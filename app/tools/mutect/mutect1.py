@@ -43,7 +43,7 @@ class Mutect1(Tool):
         :return: None
         """
         super(Mutect1, self).__init__('Mutect1', '1.1.7', camel)
-        self._required_inputs = ['BAM_TUMOR','FASTA_REF']
+        self._required_inputs = ['BAM_TUMOR', 'FASTA_REF']
 
     def _execute_tool(self):
         """
@@ -71,7 +71,7 @@ class Mutect1(Tool):
         Checks that parameters are valid.
         :return: None 
         """
-        super(Mutect1,self)._check_parameters()
+        super(Mutect1, self)._check_parameters()
 
     def __build_command(self):
         """
@@ -117,7 +117,6 @@ class Mutect1(Tool):
         Set the output specifications in the Camel ouptut list: 
         - plots pdf file, 
         - data csv file (optional)
-        Supersedes _set_output in GATK class.
         :return: None
         """
         self._tool_outputs['TXT_CALL_STATS'] = [
@@ -127,7 +126,7 @@ class Mutect1(Tool):
 
     def _check_command_output(self):
         """
-        Check the result of GATK tool run
+        Check the result of Mutect1 tool run
         :return: None
         """
         if len(self.stdout.split('\n')) > 1:
