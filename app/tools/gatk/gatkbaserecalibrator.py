@@ -18,7 +18,7 @@ class GATKBaseRecalibrator(GATK):
         super(GATKBaseRecalibrator, self).__init__('gatk BaseRecalibrator', '3.7', camel)
 
         self._function_name = 'BaseRecalibrator'
-        self._required_inputs = ['BAM','FASTA_REF']
+        self._required_inputs = ['BAM', 'FASTA_REF']
         self._output_type = 'TXT_RecalibrationTable'
         self.__snps_known_sites_path = ''
         self.__indels_known_sites_path = ''
@@ -26,6 +26,7 @@ class GATKBaseRecalibrator(GATK):
     def _set_input(self):
         """
         Set the input specification in the input_string
+        Overrides method in parent class.
         :return: None
         """
 
@@ -34,7 +35,6 @@ class GATKBaseRecalibrator(GATK):
 
         # set reference genome, known snps and known indels
         self._input_string += "-R {} ".format(self._tool_inputs['FASTA_REF'][0].path)
-
 
         if 'VCF_KNOWN_SNPS' in self._tool_inputs:
             self._input_string += "-knownSites {} ".format(self._tool_inputs['VCF_KNOWN_SNPS'][0].path)
@@ -48,6 +48,7 @@ class GATKBaseRecalibrator(GATK):
     def _set_output(self):
         """
         Set the output specification in the output_string
+        Overrides method in parent class.
         :return: None
         """
         self._tool_outputs['TXT_RecalibrationTable'] = [

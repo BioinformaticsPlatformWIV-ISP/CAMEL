@@ -12,7 +12,7 @@ class BedtoolsBamToBed(Bedtools):
 
     def __init__(self, camel):
         """
-        Initialize a samtools tool.
+        Initialize a bedtools tool.
         :param camel: a camel instance.
         :return: None
         """

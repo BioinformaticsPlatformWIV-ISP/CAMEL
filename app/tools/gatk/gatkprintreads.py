@@ -18,11 +18,12 @@ class GATKPrintReads(GATK):
         super(GATKPrintReads, self).__init__('gatk PrintReads', '3.7', camel)
 
         self._function_name = 'PrintReads'
-        self._required_inputs = ['BAM', 'BQSR','FASTA_REF']
+        self._required_inputs = ['BAM', 'BQSR', 'FASTA_REF']
 
     def _set_input(self):
         """
         Set the input specification in the input_string
+        Overrides method in parent class
         :return: None
         """
 
