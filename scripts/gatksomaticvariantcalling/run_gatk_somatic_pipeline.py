@@ -149,11 +149,11 @@ class GATKSomaticMain(object):
         command = Command(to_execute)
         command.run_command(os.getcwd(), subprocess.STDOUT)
         if command.returncode != 0:
-            with open("/scratch/temp/galaxy_logs/{}_Stdout".format(self.args.job_id),"w") as file_out:
+            with open("/scratch/temp/galaxy_logs/{}_Stdout".format(self._args.job_id),"w") as file_out:
                 file_out.write(command.stdout)
-            with open("/scratch/temp/galaxy_logs/{}_Stderr".format(self.args.job_id),"w") as file_out:
+            with open("/scratch/temp/galaxy_logs/{}_Stderr".format(self._args.job_id),"w") as file_out:
                 file_out.write(command.stderr)
-            raise RuntimeError("Error executing Snakemake. Check log ('/scratch/temp/galaxy_logs/{}_Stderr') for more information.".format(self.args.job_id))
+            raise RuntimeError("Error executing Snakemake. Check log ('/scratch/temp/galaxy_logs/{}_Stderr') for more information.".format(self._args.job_id))
 
 
 if __name__ == '__main__':
