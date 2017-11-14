@@ -21,6 +21,14 @@ class HtmlReport(HtmlBase):
         self._filename = filename
         self._output_dir = output_dir
 
+    @property
+    def output_dir(self):
+        """
+        Returns the output directory.
+        :return: Output directory
+        """
+        return self._output_dir
+
     def save(self):
         """
         Saves the report.
@@ -55,22 +63,11 @@ class HtmlReport(HtmlBase):
         :param pipeline_name: Name of the pipeline
         :return: None
         """
+        if self._output_dir is None:
+            raise ValueError("Can't add the pipeline header without an output directory")
         with self.get_tag('div', [('class', 'header')]):
             with self.get_tag('div', [('id', 'header_title')]):
                 self._doc.stag('img', src='logo-wiv-isp.png', alt='WIV-ISP Belgium', id='header_logo')
                 self._doc.text("{} Report".format(pipeline_name))
         shutil.copy(LOGO_WIV, self._output_dir)
 
-    def add_section_files(self, report_section):
-        """
-        Adds file belonging to a report section.
-        :param report_section: Report section.
-        :return: None
-        """
-        for file_path, relative_path in report_section.files:
-            if not os.path.isfile(file_path):
-                raise ValueError("Cannot add file (does not exist) '{}'".format(file_path))
-            relative_dir = os.path.join(self._output_dir, os.path.dirname(relative_path))
-            if not os.path.isdir(relative_dir):
-                os.makedirs(relative_dir)
-            shutil.copy(file_path, os.path.join(self._output_dir, relative_path))
