@@ -1,4 +1,7 @@
 import logging
+import os
+
+import shutil
 
 from app.components.html.htmlelement import HtmlElement
 
@@ -26,6 +29,21 @@ class HtmlReportSection(HtmlElement):
         :return: Files
         """
         return self._files
+
+    def copy_files(self, output_directory):
+        """
+        Exports the files belonging to this section to the given directory.
+        :param output_directory: Output directory
+        :return: None
+        """
+        logging.info("Exporting report section files")
+        for file_path, relative_path in self.files:
+            if not os.path.isfile(file_path):
+                raise ValueError("Cannot add file (does not exist) '{}'".format(file_path))
+            relative_dir = os.path.join(output_directory, os.path.dirname(relative_path))
+            if not os.path.isdir(relative_dir):
+                os.makedirs(relative_dir)
+            shutil.copy(file_path, os.path.join(output_directory, relative_path))
 
     def add_file(self, input_file, relative_path):
         """
