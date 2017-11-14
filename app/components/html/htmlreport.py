@@ -70,4 +70,3 @@ class HtmlReport(HtmlBase):
                 self._doc.stag('img', src='logo-wiv-isp.png', alt='WIV-ISP Belgium', id='header_logo')
                 self._doc.text("{} Report".format(pipeline_name))
         shutil.copy(LOGO_WIV, self._output_dir)
-
