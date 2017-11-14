@@ -15,13 +15,13 @@ class HtmlTableCell(HtmlElement):
         :param link: Link to add to the cell text
         """
         self._as_text = text
-        if color:
+        if color is not None:
             color_attribute = [('class', color)]
-            if attributes:
+            if attributes is not None:
                 attributes += color_attribute
             else:
                 attributes = color_attribute
-        if link:
+        if link is not None:
             super(HtmlTableCell, self).__init__('td', None, attributes)
             self.add_html_object(HtmlElement('a', text, [('href', link)]))
         else:
