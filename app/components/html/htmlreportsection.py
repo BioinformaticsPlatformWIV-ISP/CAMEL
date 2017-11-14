@@ -37,6 +37,8 @@ class HtmlReportSection(HtmlElement):
         :return: None
         """
         logging.info("Exporting report section files")
+        if output_directory is None or not os.path.isdir(output_directory):
+            raise ValueError("Invalid output directory: {}".format(output_directory))
         for file_path, relative_path in self.files:
             if not os.path.isfile(file_path):
                 raise ValueError("Cannot add file (does not exist) '{}'".format(file_path))
