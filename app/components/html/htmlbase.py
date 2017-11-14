@@ -12,7 +12,7 @@ class HtmlBase(object):
 
     def __init__(self):
         """
-        Initializes a HTML base object.
+        Initializes an HTML base object.
         """
         self._doc = yattag.SimpleDoc()
 
@@ -159,12 +159,12 @@ class HtmlBase(object):
 
     def add_html_object(self, input_object):
         """
-        Adds a HTML object.
+        Adds an HTML object.
         :param input_object: Input object
         :return: None
         """
         if not isinstance(input_object, HtmlBase):
-            raise ValueError("{} is not a HTML object")
+            raise ValueError("{} is not an HTML object")
         self._doc.asis(input_object.to_html())
 
     def add_raw(self, html_code):

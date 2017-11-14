@@ -10,7 +10,7 @@ class HtmlElement(HtmlBase):
 
     def __init__(self, tag, text=None, attributes=None):
         """
-        Initializes a HTML element.
+        Initializes an HTML element.
         :param tag: Tag
         :param attributes: HTML attributes
         :param text: Text

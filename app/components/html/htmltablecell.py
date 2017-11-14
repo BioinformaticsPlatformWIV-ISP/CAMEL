@@ -3,7 +3,7 @@ from app.components.html.htmlelement import HtmlElement
 
 class HtmlTableCell(HtmlElement):
     """
-    This class represents a cell in a HTML table.
+    This class represents a cell in an HTML table.
     """
 
     def __init__(self, text, color=None, attributes=None, link=None):

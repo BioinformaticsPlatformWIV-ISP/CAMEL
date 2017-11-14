@@ -8,7 +8,7 @@ from resources import LOGO_WIV
 
 class HtmlReport(HtmlBase):
     """
-    This class represents a HTML report.
+    This class represents an HTML report.
     """
 
     def __init__(self, filename, output_dir=None):
@@ -35,7 +35,7 @@ class HtmlReport(HtmlBase):
 
     def initialize(self, title, css_style=None):
         """
-        Initializes a HTML report.
+        Initializes an HTML report.
         :param title: Report title
         :param css_style: CSS style
         :return: None
