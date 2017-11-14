@@ -36,7 +36,7 @@ class HtmlBase(object):
         :param attributes: Additional HTML arguments (key-value)
         :return: None
         """
-        with self.get_tag('h%s' % str(level), attributes):
+        with self.get_tag('h{}'.format(str(level)), attributes):
             self._doc.text(text)
 
     def add_paragraph(self, text, attributes=None):
@@ -72,7 +72,7 @@ class HtmlBase(object):
         :return: None
         """
         with self.get_tag('table', table_attributes):
-            if column_names:
+            if column_names is not None:
                 self._add_table_header(column_names)
             for row in data:
                 self._add_table_row(row)
