@@ -3,6 +3,7 @@ import os
 
 from app.components.blast.alignmentextraction import AlignmentExtraction
 from app.components.filesystemhelper import FileSystemHelper
+from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from app.io.tooliofile import ToolIOFile
 from app.tools.tool import Tool
 
@@ -34,9 +35,9 @@ class AlignmentExtractor(Tool):
         if 'VAL_Hits' not in self._tool_inputs:
             return
         for input_ in self._tool_inputs['VAL_Hits']:
-            key = AlignmentExtraction.get_key(input_.value.database_gene, input_.value.query)
+            key = AlignmentExtraction.get_key(input_.value.subject, input_.value.query)
             if key in alignments:
-                alignment = self.__save_alignment(input_.value.database_gene, alignments[key])
+                alignment = self.__save_alignment(input_.value.subject, alignments[key])
                 self._tool_outputs['TXT'].append(ToolIOFile(alignment))
             else:
                 raise ValueError("No alignment found for: '{}'".format(key))
@@ -47,7 +48,7 @@ class AlignmentExtractor(Tool):
         :return: None
         """
         if 'TXT' not in self._tool_inputs:
-            raise ValueError("No TXT input found.")
+            raise InvalidInputSpecificationError("No TXT input found.")
         if 'VAL_Hits' not in self._tool_inputs:
             logging.warning("No blast hits input found")
         super(AlignmentExtractor, self)._check_input()
