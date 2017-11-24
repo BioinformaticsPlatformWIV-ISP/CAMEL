@@ -103,21 +103,16 @@ rule report_assembly:
         FASTA_Contig=os.path.join(__WORKING_DIR, 'assembly', 'fasta.io'),
         INFORMS_quast=os.path.join(__WORKING_DIR, 'quast', 'informs.io')
     output:
-        HTML=os.path.join(__WORKING_DIR, 'report_assembly', 'html.io')
+        VAL_HTML=os.path.join(__WORKING_DIR, 'report_assembly', 'html.io')
     params:
         running_dir = os.path.join(__WORKING_DIR, 'report_assembly'),
-        output_dir=config['output_dir'],
         sample_name=config['sample_name'],
         assembler=config['assembler']
     run:
         from app.tools.pipelines.assembly.htmlreporterassembly import HtmlReporterAssembly
         reporter = HtmlReporterAssembly(camel)
-        report_path = os.path.join(params.running_dir, 'report_assembly.html')
-        open(report_path, 'w').close()
         reporter.add_input_files(
-            {'HTML': [ToolIOFile(report_path)],
-             'DIR_HTML': [ToolIODirectory(params.output_dir)],
-             'SAMPLE_NAME': [ToolIOValue(params.sample_name)],
+            {'SAMPLE_NAME': [ToolIOValue(params.sample_name)],
              'ASSEMBLER': [ToolIOValue(params.assembler)]})
         SnakemakeUtils.add_pickle_inputs(reporter, input)
         step = SnakeStep(rule, reporter, camel, params.running_dir, config)
