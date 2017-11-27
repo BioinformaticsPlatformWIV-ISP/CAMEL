@@ -20,6 +20,8 @@ class GATKSomaticMain(object):
     DB_LOGGING = True
     DEBUG = True
     SNAKEFILE = os.path.join(os.path.dirname(__file__), 'gatk_somatic_steps.snakefile')
+    FROM_GALAXY = False
+    CORES = 5
 
     def __init__(self):
         """
@@ -67,6 +69,11 @@ class GATKSomaticMain(object):
 
         # MarkDuplicates flag
         ap.add_argument('--mark_duplicates', dest='markduplicates', help='Mark duplicate reads.', action='store_true')
+
+        # run from galaxy flag
+        ap.add_argument('--from_galaxy', dest='from_galaxy', help='Indicates that the command is run from galaxy. Useful for logging stderr.', action='store_true')
+
+        # job id
         ap.add_argument('--job_id', dest='job_id', metavar='job_id', help='Job ID for debugging and logging.',
                         default=datetime.datetime.fromtimestamp(time.time()).strftime("%Y%m%d_%H%M%S-%f"))
 
@@ -146,11 +153,11 @@ class GATKSomaticMain(object):
 
             self.pipeline.set_initial_input(input_dict)
 
-        # Execute the snakemake workflow and log stdout and stderr if command fails.
-        to_execute = 'snakemake --configfile {} --snakefile {} '.format(self.runtime_config_name, self.SNAKEFILE)
+        # Execute the snakemake workflow and log stdout and stderr if command fails (if pipeline is run from galaxy).
+        to_execute = 'snakemake --configfile {} --snakefile {} --cores {}'.format(self.runtime_config_name, self.SNAKEFILE, self.CORES)
         command = Command(to_execute)
         command.run_command(os.getcwd(), subprocess.STDOUT)
-        if command.returncode != 0:
+        if command.returncode != 0 and self._args.from_galaxy:
             with open("/scratch/temp/galaxy_logs/{}_Stdout".format(self._args.job_id), "w") as file_out:
                 file_out.write(command.stdout)
             with open("/scratch/temp/galaxy_logs/{}_Stderr".format(self._args.job_id), "w") as file_out:
