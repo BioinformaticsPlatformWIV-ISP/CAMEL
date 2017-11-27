@@ -51,7 +51,7 @@ class HtmlReportSection(HtmlElement):
         """
         Adds the file to the report.
         :param input_file: Input file
-        :param relative_path: Relative path
+        :param relative_path: path where the file will be saved relative to the report output directory
         :return: None
         """
         logging.info("Adding file to report section: {}".format(relative_path))
