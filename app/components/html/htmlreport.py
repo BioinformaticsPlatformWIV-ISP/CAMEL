@@ -39,7 +39,7 @@ class HtmlReport(HtmlBase):
             raise ValueError("Report with filename 'None' cannot be saved")
         with open(self._filename, 'w') as handle:
             self._doc.asis('<!DOCTYPE HTML>')
-            handle.write(self._doc.getvalue())
+            handle.write(self.to_html())
 
     def initialize(self, title, css_style=None):
         """
