@@ -3,7 +3,8 @@ import shutil
 
 import datetime
 
-from app.components.html.htmlhelper import HtmlHelper
+from app.components.html.htmlreport import HtmlReport
+from app.components.html.htmlreportsection import HtmlReportSection
 from resources import CSS_STYLE
 
 
@@ -29,13 +30,13 @@ class HtmlReporter(object):
         :param fastq_names: Name of the FASTQ input files (None if FASTA input)
         :return: None
         """
-        report = HtmlHelper(self._report)
+        # TODO: Fix report
+        report = HtmlReport(self._report)
         report.initialize('MLST Output', CSS_STYLE)
         report.add_table([['Analysis date:', datetime.datetime.now().strftime('%d/%m/%Y - %X')],
                           ['Input file(s):', fasta_name if fasta_name is not None else ', '.join(fastq_names)]],
                          table_attributes=[('class', 'information')])
-        report.add_horizontal_line()
-        report.close()
+        report.save()
 
     def __create_output_dir(self):
         """
@@ -53,7 +54,7 @@ class HtmlReporter(object):
         :param trimming_info: Trimming info
         :return: None
         """
-        report = HtmlHelper(self._report)
+        report = HtmlReportSection('Read Trimming')
         report.add_header('Read Trimming', 3)
         table_data = [
             ['Input Reads Pairs:', trimming_info['paired_reads_in']],
@@ -63,8 +64,6 @@ class HtmlReporter(object):
             ['Dropped:', trimming_info['reads_drop']]
         ]
         report.add_table(table_data, table_attributes=[('class', 'information')])
-        report.add_horizontal_line()
-        report.close()
 
     def add_fastqc_section(self, reports):
         """
@@ -72,7 +71,7 @@ class HtmlReporter(object):
         :param reports: FastQC reports
         :return: None
         """
-        report = HtmlHelper(self._report)
+        report = HtmlReportSection("FastQC")
         report.add_header('Post-trimming QC reports', 3)
         output_folder = os.path.join(self._output_dir, 'fastqc')
         os.mkdir(output_folder)
@@ -81,8 +80,6 @@ class HtmlReporter(object):
             shutil.copy(fqc_report.path, os.path.join(output_folder, new_name))
             report.add_link_to_file('{}_{}.html'.format(os.path.splitext(fqc_report.basename)[0], orientation),
                                     os.path.join('fastqc', new_name))
-        report.add_horizontal_line()
-        report.close()
 
     def add_assembly_section(self, sample_name, assembly):
         """
@@ -91,12 +88,10 @@ class HtmlReporter(object):
         :param assembly: Assembly FASTA file
         :return: None
         """
-        report = HtmlHelper(self._report)
+        report = HtmlReportSection("Assembly")
         report.add_header('Assembly', 3)
         output_dir = os.path.join(self._output_dir, 'assembly')
         os.mkdir(output_dir)
         assembly_name = 'contigs_{}.fasta'.format(sample_name)
         shutil.copy(assembly.path, os.path.join(output_dir, assembly_name))
         report.add_link_to_file('Assembly (FASTA)', os.path.join('assembly', assembly_name))
-        report.add_horizontal_line()
-        report.close()

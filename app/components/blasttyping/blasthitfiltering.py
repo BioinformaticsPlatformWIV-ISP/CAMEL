@@ -24,12 +24,12 @@ class BlastHitFiltering(object):
         perfect_hits = BlastHitFiltering.__get_perfect_hits(hits)
         if len(perfect_hits) >= 1:
             logging.debug('{} perfect hit(s) found: {}'.format(
-                len(perfect_hits), ', '.join([x.database_gene for x in perfect_hits])))
-            return sorted(perfect_hits, key=lambda h: h.database_gene_length, reverse=True)[0:1]
+                len(perfect_hits), ', '.join([h.subject for h in perfect_hits])))
+            return [sorted(perfect_hits, key=lambda h: h.subject_length, reverse=True)[0]]
         else:
             best_hits = BlastHitFiltering.__get_best_imperfect_hits(hits)
             logging.debug('No perfect hits found, {} equivalent imperfect hits found: {}'.format(
-                len(best_hits), ', '.join([x.database_gene for x in best_hits])))
+                len(best_hits), ', '.join([h.subject for h in best_hits])))
             return best_hits
 
     @staticmethod
@@ -39,7 +39,7 @@ class BlastHitFiltering(object):
         :param hits: List of hits
         :return: List of perfect hits
         """
-        return [hit for hit in hits if BlastHitFiltering.get_hit_type(hit) == 'Perfect']
+        return [h for h in hits if h.is_perfect_hit()]
 
     @staticmethod
     def __get_best_imperfect_hits(hits):
@@ -73,7 +73,7 @@ class BlastHitFiltering(object):
         :param hit: Blast hit
         :return: Length score
         """
-        return hit.database_gene_length - hit.alignment_length + hit.nb_of_gaps
+        return hit.subject_length - hit.alignment_length + hit.gaps
 
     @staticmethod
     def filter_percent_identity(hits, min_percent_identity):
@@ -96,23 +96,7 @@ class BlastHitFiltering(object):
         :param min_coverage: Minimal coverage
         :return: Filtered hits
         """
-        filtered_hits = [hit for hit in hits if hit.database_gene_coverage >= min_coverage]
+        filtered_hits = [hit for hit in hits if hit.subject_coverage >= min_coverage]
         logging.info('{}/{} hits passed length coverage filtering ({} %)'.format(
             len(filtered_hits), len(hits), min_coverage))
         return filtered_hits
-
-    @staticmethod
-    def get_hit_type(hit):
-        """
-        Returns the type of hit.
-        :param hit: BLAST hit
-        :return: Type of hit ('Perfect', 'No hit', 'Imperfect short', 'Imperfect Identity')
-        """
-        if hit is None:
-            return 'No Hit'
-        elif hit.database_gene_length == hit.alignment_length and hit.percent_identity == 100.0:
-            return 'Perfect'
-        elif hit.database_gene_length == hit.alignment_length:
-            return 'Imperfect identity'
-        else:
-            return 'Imperfect short'

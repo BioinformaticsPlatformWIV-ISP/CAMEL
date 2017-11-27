@@ -3,7 +3,7 @@ import os
 import shutil
 import tempfile
 
-from app.components.html.htmlhelper import HtmlHelper
+from app.components.html.htmlreport import HtmlReport
 from app.io.tooliodirectory import ToolIODirectory
 from app.tools.tool import Tool
 
@@ -42,12 +42,12 @@ class HtmlReporter(Tool):
         :return: None
         """
         if 'disable_html_output' not in self._parameters:
-            self._report = HtmlHelper(self._tool_inputs['HTML'][0].path)
+            self._report = HtmlReport(self._tool_inputs['HTML'][0].path)
         else:
-            self._report = HtmlHelper(tempfile.NamedTemporaryFile().name)
+            self._report = HtmlReport(tempfile.NamedTemporaryFile().name)
         self._output_folder = self._tool_inputs['DIR_HTML'][0].path
         self._create_report()
-        self._report.close()
+        self._report.save()
         self._tool_outputs['HTML'] = self._tool_inputs['HTML'].copy()
 
     def _check_input(self):

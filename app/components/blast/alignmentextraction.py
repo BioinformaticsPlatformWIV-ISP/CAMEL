@@ -30,13 +30,14 @@ class AlignmentExtraction(object):
             if AlignmentExtraction.__is_alignment(text_part):
                 query = last_query
                 subject = text_part.split('\n')[0].split(' ')[0]
-                key = (subject, query)
+                key = AlignmentExtraction.get_key(subject, query)
                 if key in alignments:
                     raise ValueError("Duplicate key: {}\n{}".format(key, sorted(list(alignments.keys()),
                                                                                 key=lambda x: (x[1], x[0]))))
                 alignments[key] = AlignmentExtraction.__clean_alignment(text_part)
-            if AlignmentExtraction.__get_query(text_part):
-                last_query = AlignmentExtraction.__get_query(text_part)
+            new_query = AlignmentExtraction.__get_query(text_part)
+            if new_query is not None:
+                last_query = new_query
         logging.info("{} alignments found in '{}'".format(len(alignments), os.path.basename(alignment_file)))
         return alignments
 
@@ -91,7 +92,7 @@ class AlignmentExtraction(object):
         :param alignment: Alignment
         :return: Line number
         """
-        match = re.search(r'(Sbjct  \d+ +[\w-]+  \d+\n\n\n)', alignment)
+        match = re.search(r'(Sbjct[ ]{2}\d+ +[\w-]+[ ]{2}\d+\n\n\n)', alignment)
         if match:
             last_line = match.group(1)
             return alignment.split('\n').index(last_line.strip())
