@@ -31,7 +31,8 @@ class HtmlElement(HtmlBase):
     # noinspection PyArgumentList
     def to_html(self):
         """
-        Converts this element to HTML code.
+        Converts this element to HTML code. A novel Doc() instance is created in order to nest the content of this
+        elements Doc() inside the tag associated with this HtmlElement.
         :return: HTML code
         """
         if self._attributes is None:
