@@ -1,3 +1,5 @@
+import os.path
+
 from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from app.io.tooliofile import ToolIOFile
 from app.tools.mothur.mothur import Mothur
@@ -55,6 +57,8 @@ class MothurPcrSeqs(Mothur):
         basename = super(MothurPcrSeqs, self)._get_basename()
         extension = self._tool_inputs['FASTA'][0].file_extension
         self._tool_outputs['FASTA'] = [ToolIOFile('{}.pcr{}'.format(basename, extension))]
+        if os.path.isfile('{}.bad.accnos'.format(basename)):
+            self._tool_outputs['TEXT'] = [ToolIOFile('{}.bad.accnos'.format(basename))]
 
     def _check_command_output(self):
         """
