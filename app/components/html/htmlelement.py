@@ -28,6 +28,13 @@ class HtmlElement(HtmlBase):
         """
         return self._tag_text
 
+    def _has_nested_content(self):
+        """
+        Returns true if this HTML element has nested content.
+        :return: True if there is nested content
+        """
+        return len(self._doc.getvalue()) != 0
+
     # noinspection PyArgumentList
     def to_html(self):
         """
@@ -38,12 +45,14 @@ class HtmlElement(HtmlBase):
         if self._attributes is None:
             self._attributes = []
         doc, tag, text = Doc().tagtext()
-        if len(self._doc.getvalue()) == 0 and self._tag_text is None:
+        if not self._has_nested_content() and self._tag_text is None:
+            # If there is no content / text in the tag, a self closing tag (stag) is created
             doc.stag(self._tag_name, *self._attributes)
         else:
+            # Otherwise the content / text is added inside of the tag
             with tag(self._tag_name, *self._attributes):
                 if self._tag_text is not None:
                     text(self._tag_text)
-                if len(self._doc.getvalue()) != 0:
+                if self._has_nested_content():
                     doc.asis(self._doc.getvalue())
         return doc.getvalue()
