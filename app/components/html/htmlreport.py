@@ -3,6 +3,7 @@ import os
 import shutil
 
 from app.components.html.htmlbase import HtmlBase
+from app.components.html.htmlelement import HtmlElement
 from resources import LOGO_WIV
 
 
@@ -70,3 +71,12 @@ class HtmlReport(HtmlBase):
                 self._doc.stag('img', src='logo-wiv-isp.png', alt='WIV-ISP Belgium', id='header_logo')
                 self._doc.text("{} Report".format(pipeline_name))
         shutil.copy(LOGO_WIV, self._output_dir)
+
+    def to_html(self):
+        """
+        Returns the report HTML code.
+        :return: HTML code.
+        """
+        parent = HtmlElement('html')
+        parent.add_raw(self._doc.getvalue())
+        return parent.to_html()
