@@ -235,6 +235,8 @@ rule srst2_gene_detection:
     """
     input:
         FASTQ_PE=os.path.join(__WORKING_DIR, 'read_trimming', 'fastq-pe.io'),
+        FASTQ_SE_FORWARD=os.path.join(__WORKING_DIR, 'read_trimming', 'fastq-se-forward.io'),
+        FASTQ_SE_REVERSE=os.path.join(__WORKING_DIR, 'read_trimming', 'fastq-se-reverse.io'),
         FASTA=os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'clustered', 'fasta.io'),
     output:
         TSV=os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'srst2', 'tsv.io')
@@ -244,7 +246,9 @@ rule srst2_gene_detection:
     run:
         from app.tools.srst2.srst2gene import Srst2Gene
         srst2 = Srst2Gene(camel)
-        SnakemakeUtils.add_pickle_inputs(srst2, input)
+        SnakemakeUtils.add_pickle_inputs(srst2, input, ['FASTQ_PE', 'FASTA'])
+        srst2.add_input_files({'FASTQ_SE':
+            SnakemakeUtils.load_object(input.FASTQ_SE_FORWARD) + SnakemakeUtils.load_object(input.FASTQ_SE_REVERSE)})
         step = SnakeStep(rule, srst2, camel, params.running_dir, config)
         srst2.update_parameters(threads=threads, forward_designator='1P', reverse_designator='2P')
         step.run_step()
@@ -327,10 +331,10 @@ rule combine_gene_detection_reports:
     Combines the reports from the different databases.
     """
     input:
-        HTML_Res=expand(os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report_gene_detection', 'html.io'), db=[d.name for d in DATABASES['resistance']]),
-        HTML_Vir=expand(os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report_gene_detection', 'html.io'), db=[d.name for d in DATABASES['virulence']]),
-        HTML_Pla=expand(os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report_gene_detection', 'html.io'), db=[d.name for d in DATABASES['plasmid']]),
-        HTML_Ser=expand(os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report_gene_detection', 'html.io'), db=[d.name for d in DATABASES['serotype']]),
+        HTML_Res=expand(os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report_gene_detection', 'html.io'), db=[d.name for d in DATABASES['resistance'] if d.name in config['gene_detection'].get('resistance', [])]),
+        HTML_Vir=expand(os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report_gene_detection', 'html.io'), db=[d.name for d in DATABASES['virulence'] if d.name in config['gene_detection'].get('virulence', [])]),
+        HTML_Pla=expand(os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report_gene_detection', 'html.io'), db=[d.name for d in DATABASES['plasmid'] if d.name in config['gene_detection'].get('plasmid', [])]),
+        HTML_Ser=expand(os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report_gene_detection', 'html.io'), db=[d.name for d in DATABASES['serotype'] if d.name in config['gene_detection'].get('serotype', [])]),
         VAL_serotype=os.path.join(__WORKING_DIR, 'gene_detection', 'serotype_detection', 'val_serotype.io') if len(DATABASES['serotype']) > 0 else []
     output:
         os.path.join(__WORKING_DIR, 'report_gene_detection', 'html.io')
