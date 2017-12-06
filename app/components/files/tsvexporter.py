@@ -1,4 +1,4 @@
-from app.components.html.element import HtmlElement
+from app.components.html.htmlelement import HtmlElement
 
 
 class TsvExporter(object):
@@ -32,6 +32,6 @@ class TsvExporter(object):
                     if isinstance(row[i], str):
                         row_data.append(row[i])
                     if isinstance(row[i], HtmlElement):
-                        row_data.append(row[i].text_value)
+                        row_data.append(row[i].text)
                 output_file.write('\t'.join(row_data))
                 output_file.write('\n')
