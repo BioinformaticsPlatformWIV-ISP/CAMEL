@@ -84,4 +84,5 @@ rule report_read_trimming:
         SnakemakeUtils.add_pickle_inputs(reporter, input)
         step = SnakeStep(rule, reporter, camel, params.running_dir, config)
         step.run_step()
+        reporter.tool_outputs['VAL_HTML'][0].value.copy_files(params.output_dir)
         SnakemakeUtils.dump_tool_outputs(reporter, output)

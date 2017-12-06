@@ -8,6 +8,7 @@ from app.tools.tool import Tool
 
 
 class HtmlReporterAssembly(Tool):
+
     """
     Tool to create HTML reports for the Assembly.
     """
@@ -18,7 +19,7 @@ class HtmlReporterAssembly(Tool):
         :param camel: CAMEL instance
         :return: None
         """
-        super(HtmlReporterAssembly, self).__init__('HTML Reporter', '0.1', camel)
+        super().__init__('HTML Reporter', '0.1', camel)
         self.__subfolder = 'assembly'
         self._report_section = None
 

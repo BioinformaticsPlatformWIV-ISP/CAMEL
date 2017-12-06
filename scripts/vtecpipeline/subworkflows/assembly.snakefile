@@ -9,7 +9,8 @@ rule velvet_optimiser:
     output:
         FASTA_Contig=os.path.join(__WORKING_DIR, 'assembly_velvet', 'fasta.io')
     params:
-        running_dir=os.path.join(__WORKING_DIR, 'assembly_velvet')
+        running_dir=os.path.join(__WORKING_DIR, 'assembly_velvet'),
+        fast = config.get('assembly_fast', False)
     threads: 8
     run:
         from app.tools.velvetoptimiser.velvetoptimiser import VelvetOptimiser
@@ -17,6 +18,8 @@ rule velvet_optimiser:
         SnakemakeUtils.add_pickle_inputs(velvet_optimiser, input)
         step = SnakeStep(rule, velvet_optimiser, camel, params.running_dir, config)
         velvet_optimiser.update_parameters(threads=threads)
+        if params.fast:
+            velvet_optimiser.update_parameters(hash_start=51, hash_end=51)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(velvet_optimiser, output)
 
@@ -31,7 +34,8 @@ rule spades:
     output:
         FASTA_Contig=os.path.join(__WORKING_DIR, 'assembly_spades', 'fasta.io')
     params:
-        running_dir=os.path.join(__WORKING_DIR, 'assembly_spades')
+        running_dir=os.path.join(__WORKING_DIR, 'assembly_spades'),
+        fast=config.get('assembly_fast', False)
     threads: 8
     run:
         from app.tools.spades.spades import SPAdes
@@ -43,6 +47,8 @@ rule spades:
         })
         step = SnakeStep(rule, spades, camel, params.running_dir, config)
         spades.update_parameters(threads=threads)
+        if params.fast:
+            spades.update_parameters(only_assembly=True, kmers='55', careful=False)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(spades, output)
 
@@ -117,4 +123,5 @@ rule report_assembly:
         SnakemakeUtils.add_pickle_inputs(reporter, input)
         step = SnakeStep(rule, reporter, camel, params.running_dir, config)
         step.run_step()
+        reporter.tool_outputs['VAL_HTML'][0].value.copy_files(params.output_dir)
         SnakemakeUtils.dump_tool_outputs(reporter, output)

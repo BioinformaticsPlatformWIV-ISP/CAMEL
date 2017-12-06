@@ -61,7 +61,10 @@ class DBManagerClustered(Tool):
         :return: Mapping as a dictionary
         """
         try:
+<<<<<<< HEAD
             print('looking for mapping in {}'.format(input_folder))
+=======
+>>>>>>> origin/bebog-vtec-gene_detection
             with open(os.path.join(input_folder, 'mapping.txt')) as handle:
                 return json.load(handle)
         except FileNotFoundError:
