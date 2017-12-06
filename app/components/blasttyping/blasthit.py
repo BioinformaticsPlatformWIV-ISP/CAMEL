@@ -89,6 +89,5 @@ class BlastHit(object):
         if not len(output_values) == 7:
             raise ValueError("Invalid Blast output line: {}".format(line))
 
-        hit = BlastHit(output_values[0], output_values[1], output_values[2], output_values[3], output_values[4],
-                       output_values[5], output_values[6])
-        return hit
+        return BlastHit(output_values[0], output_values[1], output_values[2], output_values[3], output_values[4],
+                        output_values[5], output_values[6])
