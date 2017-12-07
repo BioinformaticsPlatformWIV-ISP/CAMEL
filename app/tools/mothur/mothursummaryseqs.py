@@ -96,16 +96,16 @@ class MothurSummarySeqs(Mothur):
         with open(self._get_basename() + '.stats', 'rt', encoding='utf-8') as statsfile:
             for line in statsfile:
                 if not line.startswith('\t\t'):
-                    line = line.strip().split('\t')
-                    if line[0] in ['Minimum:', '2.5%-tile:', '25%-tile:', 'Median:', '75%-tile:', '97.5%-tile:',
-                                   'Maximum:', 'Mean:']:
-                        self._informs[line[0][:-1]] = {}
-                        for i in range(1, len(line)):
+                    line_informs = line.strip().split('\t')
+                    if line_informs[0] in ['Minimum:', '2.5%-tile:', '25%-tile:', 'Median:', '75%-tile:', '97.5%-tile:',
+                                           'Maximum:', 'Mean:']:
+                        self._informs[line_informs[0][:-1]] = {}
+                        for i in range(1, len(line_informs)):
                             try:
-                                self._informs[line[0][:-1]][columns[i]] = int(line[i])
+                                self._informs[line_informs[0][:-1]][columns[i]] = int(line_informs[i])
                             except ValueError:
-                                self._informs[line[0][:-1]][columns[i]] = float(line[i])
-                    elif line[0].lower().startswith('# of unique'):
-                        self._informs['unique'] = int(line[1])
-                    elif line[0].lower().startswith('# of seqs') or line[0].lower().startswith('total # of seqs'):
-                        self._informs['total'] = int(line[1])
+                                self._informs[line_informs[0][:-1]][columns[i]] = float(line_informs[i])
+                    elif line_informs[0].lower().startswith('# of unique'):
+                        self._informs['unique'] = int(line_informs[1])
+                    elif line_informs[0].lower().startswith('# of seqs') or line_informs[0].lower().startswith('total # of seqs'):
+                        self._informs['total'] = int(line_informs[1])
