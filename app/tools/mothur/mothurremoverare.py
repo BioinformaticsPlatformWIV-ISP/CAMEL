@@ -34,8 +34,8 @@ class MothurRemoveRare(Mothur):
                                                  remove.rare: {!r}'.format(self._tool_inputs))
         if len(self._tool_inputs.keys()) > 2:
             raise InvalidInputSpecificationError('Too many input keys given for Mothur remove.rare: {!r}'.format(self._tool_inputs))
-        for key, input_files in self._tool_inputs.items():
-            if key not in ['TSV_List', 'TSV_Counts']:
+        for key in self._tool_inputs.keys():
+            if key not in {'TSV_List', 'TSV_Counts'}:
                 raise InvalidInputSpecificationError('Invalid input key given for Mothur remove.rare: {!r}'.format(self._tool_inputs))
 
     def _build_input_string(self):
