@@ -34,9 +34,7 @@ class HtmlReporterGeneDetection(Tool):
         self._subfolder = os.path.join('gene_detection', FileSystemHelper.make_valid(db_name))
 
         # Add output table
-        # if len(self._tool_inputs['VAL_Hits']) == 0:
-        # TODO: how to handle empty input
-        if 'VAL_Hits' not in self._tool_inputs:
+        if len(self._tool_inputs['VAL_Hits']) == 0:
             self._report_section.add_paragraph('No hits found.')
         else:
             header = self._tool_inputs['VAL_Hits'][0].value.get_html_column_names()
