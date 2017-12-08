@@ -9,6 +9,7 @@ from app.tools.tool import Tool
 
 
 class HtmlReporterGeneDetection(Tool):
+
     """
     Tool that creates HTML reports for the resistance characterization pipeline.
     """
@@ -32,15 +33,10 @@ class HtmlReporterGeneDetection(Tool):
         self._report_section = HtmlReportSection(db_name, 3)
         self._subfolder = os.path.join('gene_detection', FileSystemHelper.make_valid(db_name))
 
-<<<<<<< HEAD
-        # If hits were detected, add the output table
-        if len(self._tool_inputs['VAL_Hits']) == 0:
-            self._report_section.add_paragraph('No hits found.')
-        else:
-            self._add_output_table()
-=======
         # Add output table
-        if len(self._tool_inputs['VAL_Hits']) == 0:
+        # if len(self._tool_inputs['VAL_Hits']) == 0:
+        # TODO: how to handle empty input
+        if 'VAL_Hits' not in self._tool_inputs:
             self._report_section.add_paragraph('No hits found.')
         else:
             header = self._tool_inputs['VAL_Hits'][0].value.get_html_column_names()
@@ -55,7 +51,6 @@ class HtmlReporterGeneDetection(Tool):
                 FileSystemHelper.make_valid(self._tool_inputs['SAMPLE_NAME'][0].value)))
             self._report_section.add_file(tsv_file, relative_path)
             self._report_section.add_link_to_file("Download (TSV)", relative_path)
->>>>>>> origin/bebog-vtec-gene_detection
 
         # Add database information
         self._report_section.add_paragraph('Last updated: {}'.format(self._input_informs['db_info'].get(
@@ -74,24 +69,3 @@ class HtmlReporterGeneDetection(Tool):
         if 'SAMPLE_NAME' not in self._tool_inputs:
             raise InvalidInputSpecificationError("Sample name input is required")
         super(HtmlReporterGeneDetection, self)._check_input()
-<<<<<<< HEAD
-
-    def _add_output_table(self):
-        """
-        Adds the output table containing the detected genes.
-        :return: None
-        """
-        header = self._tool_inputs['VAL_Hits'][0].value.get_html_column_names()
-        table_data = [hit.to_html_row(self._report_section, self._subfolder) for hit in [
-            t.value for t in self._tool_inputs['VAL_Hits']]]
-        self._report_section.add_table(table_data, header, [('class', 'data')])
-
-        # Add a download link to the TSV file
-        tsv_file = self._tool_inputs['TSV'][0].path
-        relative_path = os.path.join(self._subfolder, 'genes-{}-{}.tsv'.format(
-            FileSystemHelper.make_valid(self._input_informs['db_info']['name']),
-            FileSystemHelper.make_valid(self._tool_inputs['SAMPLE_NAME'][0].value)))
-        self._report_section.add_file(tsv_file, relative_path)
-        self._report_section.add_link_to_file("Download (TSV)", relative_path)
-=======
->>>>>>> origin/bebog-vtec-gene_detection

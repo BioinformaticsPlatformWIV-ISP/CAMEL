@@ -1,9 +1,12 @@
-from app.components.html.tablecell import HtmlTableCell
-from app.error.pipelineexecutionerror import PipelineExecutionError
-from app.tools.export.htmlreporter import HtmlReporter
+from app.components.html.htmlreportsection import HtmlReportSection
+from app.components.html.htmltablecell import HtmlTableCell
+from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from app.io.tooliovalue import ToolIOValue
+from app.tools.tool import Tool
 
 
-class HtmlReporterQualityChecks(HtmlReporter):
+class HtmlReporterQualityChecks(Tool):
+
     """
     Tool to create HTML report for the quality checks pipeline.
     """
@@ -20,36 +23,37 @@ class HtmlReporterQualityChecks(HtmlReporter):
         :param camel: CAMEL instance
         :return: None
         """
-        super(HtmlReporterQualityChecks, self).__init__(camel)
+        super().__init__('HTML Reporter', '0.1', camel)
         self.__sub_folder = 'quality_control'
+        self._report_section = HtmlReportSection('Additional Quality Checks')
 
-    def _create_report(self):
+    def _execute_tool(self):
         """
-        Creates the HTML report.
+        Executes this tool.
         :return: None
         """
-        self._report.add_header('Additional Quality Checks', 2)
         self.__add_additional_checks_section()
         self.__add_fastqc_checks()
         self.__add_explanation_fastqc_checks()
         self.__add_warnings()
         self.__add_errors()
+        self._tool_outputs['VAL_HTML'] = [ToolIOValue(self._report_section)]
 
     def _check_input(self):
         """
         Checks if the input is valid.
         :return: None
         """
-        if 'VAL_cgMLST_Stats' not in self._tool_inputs:
-            raise ValueError("No cgMLST stats input found")
+        # if 'cgmlst' not in self._input_informs:
+        #    raise InvalidInputSpecificationError("No cgMLST info found")
         if 'coverage' not in self._input_informs:
-            raise ValueError("No coverage info found")
+            raise InvalidInputSpecificationError("No coverage info found")
         if 'mapping' not in self._input_informs:
-            raise ValueError("No mapping info found")
+            raise InvalidInputSpecificationError("No mapping info found")
         if 'additional_checks' not in self._input_informs:
-            raise ValueError("No additional quality check info found")
+            raise InvalidInputSpecificationError("No additional quality check info found")
         if 'quality_criteria' not in self._input_informs:
-            raise ValueError("No quality criteria info found")
+            raise InvalidInputSpecificationError("No quality criteria info found")
         super(HtmlReporterQualityChecks, self)._check_input()
 
     def __add_additional_checks_section(self):
@@ -59,10 +63,10 @@ class HtmlReporterQualityChecks(HtmlReporter):
         """
         data = [
             ['Median coverage:', self._input_informs['coverage']['median_depth']],
-            ['cgMLST genes found:', self.__get_cgmlst_stats()],
+            ['cgMLST genes found:', '-TODO-'],  # self.__get_cgmlst_stats()],
             ['Reads mapping back to assembly:', '{}%'.format(self._input_informs['mapping']['stats_map_rate'])]
         ]
-        self._report.add_table(data, table_attributes=[('class', 'information')])
+        self._report_section.add_table(data, table_attributes=[('class', 'information')])
 
     def __add_fastqc_checks(self):
         """
@@ -74,7 +78,7 @@ class HtmlReporterQualityChecks(HtmlReporter):
         for test_name, test_results in sorted(informs['tests'].items()):
             table_data.append([test_name] + [self.__get_test_status_cell(result) for result in test_results])
         header = ['Test', 'Forward', 'Reverse']
-        self._report.add_table(table_data, header, [('class', 'data')])
+        self._report_section.add_table(table_data, header, [('class', 'data')])
 
     @staticmethod
     def __get_test_status_cell(result):
@@ -83,7 +87,7 @@ class HtmlReporterQualityChecks(HtmlReporter):
         :param result: Test result
         :return: HTML table cell
         """
-        return HtmlTableCell(result, [('class', HtmlReporterQualityChecks.COLOR_CODES[result])])
+        return HtmlTableCell(result, color=HtmlReporterQualityChecks.COLOR_CODES[result])
 
     def __add_explanation_fastqc_checks(self):
         """
@@ -102,16 +106,17 @@ class HtmlReporterQualityChecks(HtmlReporter):
                                                ' there can be "normal".'],
             ['Sequence length distribution test', 'checks if the fraction of short sequences is below a threshold.']
         ]
-        self._report.add_labeled_list(test_explanations)
+        self._report_section.add_labeled_list(test_explanations)
 
     def __get_cgmlst_stats(self):
         """
         Returns the cgMLST stats.
         :return: Formatted string with the cgMLST stats
         """
-        cgmlst_stats = self._tool_inputs['VAL_cgMLST_Stats'][0].value
-        return '{0:}/{1:} ({2:.0f}%)'.format(cgmlst_stats['hits_found'], cgmlst_stats['nb_of_loci'],
-                                             100 * float(cgmlst_stats['hits_found']) / cgmlst_stats['nb_of_loci'])
+        cgmlst_stats = self._input_informs['cgmlst']
+        return '{0:}/{1:} ({2:.0f}%)'.format(
+            cgmlst_stats['hits_found'], cgmlst_stats['nb_of_loci'],
+            100 * float(cgmlst_stats['hits_found']) / cgmlst_stats['nb_of_loci'])
 
     def __add_warnings(self):
         """
@@ -119,7 +124,7 @@ class HtmlReporterQualityChecks(HtmlReporter):
         :return: None
         """
         for warning in self._input_informs['quality_criteria']['warnings']:
-            self._report.add_warning_message(warning)
+            self._report_section.add_warning_message(warning)
 
     def __add_errors(self):
         """
@@ -128,11 +133,10 @@ class HtmlReporterQualityChecks(HtmlReporter):
         """
         passed = True
         for error in self._input_informs['quality_criteria']['fails']:
-            self._report.add_error_message('{}, pipeline aborted'.format(error))
+            self._report_section.add_error_message('{}, pipeline aborted'.format(error))
             passed = False
 
         debug_mode = 'debug_mode' in self._parameters
         if not passed and not debug_mode:
-            self._report.add_horizontal_line()
-            self._report.close()
-            raise PipelineExecutionError("Quality not sufficient to run pipeline")
+            # TODO: Handle execution stops with Snakemake?
+            pass

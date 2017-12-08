@@ -5,6 +5,7 @@ from app.tools.tool import Tool
 
 
 class QualityCriteriaChecker(Tool):
+
     """
     Tools that checks if the quality of the data is sufficient to proceed.
     """
@@ -21,8 +22,8 @@ class QualityCriteriaChecker(Tool):
         Checks if the input is valid.
         :return: None
         """
-        if 'VAL_cgMLST_Stats' not in self._tool_inputs:
-            raise InvalidInputSpecificationError("No cgMLST stats input found")
+        # if 'VAL_cgMLST_Stats' not in self._tool_inputs:
+        #    raise InvalidInputSpecificationError("No cgMLST stats input found")
         if 'coverage' not in self._input_informs:
             raise InvalidInputSpecificationError("No coverage information found")
         if 'mapping' not in self._input_informs:
@@ -41,7 +42,7 @@ class QualityCriteriaChecker(Tool):
         self.__check_additional_fastqc_tests()
         self.__check_assembly_mapping_rate()
         self.__check_coverage()
-        self.__check_cgmlst()
+        # self.__check_cgmlst()
 
     def __check_additional_fastqc_tests(self):
         """
