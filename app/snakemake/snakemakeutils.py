@@ -9,6 +9,7 @@ from app.io.tooliovalue import ToolIOValue
 
 
 class SnakemakeUtils(object):
+
     """
     This class contains utility functions for working with snakemake and CAMEL.
     """
@@ -84,15 +85,18 @@ class SnakemakeUtils(object):
         SnakemakeUtils.dump_object(tool.tool_outputs[key], path)
 
     @staticmethod
-    def add_pickle_inputs(tool, snake_input, keys=None):
+    def add_pickle_inputs(tool, snake_input, keys=None, optionals=None):
         """
         Adds pickled inputs from the snakemake input.
         :param tool: Tool
         :param snake_input: Snakemake input
         :param keys: Keys to add. If None, all keys are added
+        :param optionals: optional inputs
         :return: None
         """
         logging.info("Adding pickled inputs from snakemake input")
+        if optionals is None:
+            optionals = []
         if keys is None:
             keys = snake_input.keys()
         for key in keys:
@@ -105,6 +109,9 @@ class SnakemakeUtils(object):
                 tool.add_input_informs({inform_key: value})
                 logging.debug("Informs '{!r}' added".format(value))
             else:
+                if key in optionals and len(value) == 0:
+                    logging.debug("Optional Input '{!r}' empty, skipped".format(value))
+                    continue
                 tool.add_input_files({key: value})
                 logging.debug("Input '{!r}' added".format(value))
 
