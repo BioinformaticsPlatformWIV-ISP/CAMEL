@@ -18,7 +18,7 @@ def prepare_addreadgroups_input(wildcards):
     """
     if config["run_markDuplicates"]:
         BAM = os.path.join(working_dir, "markduplicates/bam.io")
-    elif not config["run_markDuplicates"]:
+    else:
         BAM = os.path.join(working_dir, "picardsortbam/sortedbam.io")
     return BAM
 
@@ -31,7 +31,6 @@ rule all:
     input:
         os.path.join(working_dir, "mutect1/vcf.io"),
         os.path.join(working_dir, "analyzecovariates/pdf.io")
-        # os.path.join(working_dir, "initial_input/fastq.io")
 
 
 
