@@ -64,3 +64,11 @@ class HtmlReporterContamination(Tool):
         relative_path = os.path.join(self._subfolder, 'krona_report.html')
         self._report_section.add_file(self._tool_inputs['HTML_Krona'][0].path, relative_path)
         self._report_section.add_link_to_file('Krona Report', relative_path)
+        # CURRENTLY DISABLED: test show 'krona_out.html.files' only contain reads to nodes association data. Not required for showing Krona figures.
+        #
+        # Add Krona HTML related files under /krona_out.html.files
+        # krona_html_files_dir = os.path.join(
+        #     os.path.dirname(self._tool_inputs['HTML_Krona'][0].path), 'krona_out.html.files')
+        # for _file in os.listdir(krona_html_files_dir):
+        #     file_relative_path = os.path.join(self._subfolder, 'krona_out.html.files', os.path.basename(_file))
+        #     self._report_section.add_file(os.path.join(krona_html_files_dir, _file), file_relative_path)
