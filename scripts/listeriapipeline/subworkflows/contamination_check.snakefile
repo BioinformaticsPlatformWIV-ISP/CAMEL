@@ -56,13 +56,15 @@ rule kraken_report_parser:
         TSV = os.path.join(__WORKING_DIR, 'contamination_check', 'tsv-report.io')
     output:
         INFORMS = os.path.join(__WORKING_DIR, 'contamination_check', 'informs-contamination.io')
+    params:
+        running_dir = os.path.join(__WORKING_DIR, 'contamination_check')
     run:
         from app.tools.kraken.krakenreportparser import KrakenReportParser
         report_parser = KrakenReportParser(camel)
         # parameter updated in pipeline.step_tools_parameter table
         # report_parser.update_parameters(expected_species='Listeria monocytogenes')
         SnakemakeUtils.add_pickle_inputs(report_parser, input)
-        step = SnakeStep(rule, report_parser, camel, '.', config)
+        step = SnakeStep(rule, report_parser, camel, params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(report_parser, output)
 
