@@ -101,6 +101,8 @@ class ListeriaMain(object):
         :return: config_file_path (string)
         """
         if self.DEBUG:
+            logging.info("Run pipeline with debugging settings ...")
+
             # DEBUG running setting
             self._args.assembler = 'VelvetOptimiser'
             self._args.kraken_db = '/data/kraken/latest/abfhpv_lite/'
@@ -134,7 +136,7 @@ class ListeriaMain(object):
         """
         logging.info("Creating config file.")
         with open(path, 'w') as handle:
-            yaml.dump({'logging': False, 'pipeline_name': 'VTEC Pipeline', 'pipeline_job_id': 3},
+            yaml.dump({'logging': False, 'pipeline_name': 'Listeria Pipeline', 'pipeline_job_id': 3},
                       handle, default_flow_style=False)
             yaml.dump({'report': self._args.output_html}, handle, default_flow_style=False)
             yaml.dump({'output_dir': self._args.output_dir}, handle, default_flow_style=False)
