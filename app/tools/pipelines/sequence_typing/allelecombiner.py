@@ -29,7 +29,7 @@ class AlleleCombiner(Tool):
         """
         output_file_path = os.path.join(self._folder, self._parameters['output_filename'].value)
         with open(output_file_path, 'w') as handle:
-            handle.write('\t'.join(self._tool_inputs['VAL_Hits'][0].value.TABLE_COLUMNS))
+            handle.write('\t'.join(self._tool_inputs['VAL_Hits'][0].value.get_table_column_names()))
             handle.write('\n')
             for hit in [t.value for t in self._tool_inputs['VAL_Hits']]:
                 handle.write(hit.to_table_row())

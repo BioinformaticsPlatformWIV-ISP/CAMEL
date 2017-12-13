@@ -1,6 +1,7 @@
 import logging
 
 from app.components.filesystemhelper import FileSystemHelper
+from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from app.tools.tool import Tool
 
 
@@ -9,24 +10,37 @@ class SequenceTypeDetector(Tool):
     Tool that manages MLST schemes. Also reports scheme metadata information in the informs.
     """
 
+    SYMBOL_NO_ST = 'ND'
+
     def __init__(self, camel):
         """
         Initialize this tool.
         :param camel: Camel instance
         :return: None
         """
-        super(SequenceTypeDetector, self).__init__('Sequence Typing: Sequence Type Detector', '0.1', camel)
+        super(SequenceTypeDetector, self).__init__('Typing: Sequence Type Detector', '0.1', camel)
 
     def _execute_tool(self):
         """
         Executes this tool.
         :return: None
         """
-        hits = self._input_informs['hits']
-        allele_ids = {locus: hits[locus]['allele_id'] for locus in hits}
-        sequence_type = self.__get_sequence_type(self._tool_inputs['TSV'][0], allele_ids)
+        # Get the sequence type
+        profiles_file = self._tool_inputs['TSV'][0]
+        allele_ids = {h.value.locus: h.value.allele_id for h in self._tool_inputs['VAL_Hits']}
+        sequence_type = self.__get_sequence_type(profiles_file, allele_ids)
         self._informs['sequence_type'] = sequence_type
         logging.info("Detected sequence type: {}".format(sequence_type))
+
+        # Retrieve metadata
+        column_indices = self.__get_metadata_columns(profiles_file, allele_ids.keys())
+        if sequence_type != SequenceTypeDetector.SYMBOL_NO_ST:
+            line_parts = self.__get_sequence_type_line(profiles_file, sequence_type, 0).split('\t')
+            metadata = {column: line_parts[index].strip() for index, column in column_indices.items()}
+            logging.info("Metadata for sequence type: {!r}".format(metadata))
+        else:
+            metadata = {column: '-' for index, column in column_indices.items()}
+        self._informs['metadata'] = metadata
 
     def _check_input(self):
         """
@@ -34,9 +48,9 @@ class SequenceTypeDetector(Tool):
         :return: None
         """
         if 'TSV' not in self._tool_inputs:
-            raise ValueError("No sequence type definitions 'TSV' input found.")
-        if 'hits' not in self._input_informs:
-            raise ValueError("No hits info found.")
+            raise InvalidInputSpecificationError("Sequence type profiles are required")
+        if 'VAL_Hits' not in self._tool_inputs:
+            raise InvalidInputSpecificationError("No hits input found")
         super(SequenceTypeDetector, self)._check_input()
 
     @staticmethod
@@ -74,9 +88,43 @@ class SequenceTypeDetector(Tool):
                     if match:
                         st_allele_id = line.strip().split('\t')[gene_indices[gene_name]]
                         detected_allele_id = gene_alleles[gene_name]
-                        if st_allele_id != 'N' and st_allele_id != detected_allele_id:
+                        if st_allele_id not in ('N', '0') and st_allele_id != detected_allele_id:
                             match = False
                             break
                 if match:
                     return line.split('\t')[0]
-        return 'ND'
+        return SequenceTypeDetector.SYMBOL_NO_ST
+
+    @staticmethod
+    def __get_sequence_type_line(scheme_file, sequence_type, index=0):
+        """
+        Returns the line corresponding to the given sequence type.
+        :param scheme_file: Scheme file
+        :param sequence_type: Sequence type
+        :param index: Index of the sequence type
+        :return: Line containing the sequence type
+        """
+        clean_sequence_type = sequence_type.replace('?', '').replace('*', '')
+        with open(scheme_file.path) as input_mlst:
+            lines = input_mlst.readlines()
+            for line in lines:
+                st = line.split('\t')[index]
+                if st == clean_sequence_type:
+                    return line
+
+    @staticmethod
+    def __get_metadata_columns(mlst_scheme_file, gene_names):
+        """
+        Returns the metadata columns from the profiles file.
+        :param mlst_scheme_file: Profiles file
+        :param gene_names: Names of the genes (are not included in metadata)
+        :return: Metadata columns
+        """
+        with open(mlst_scheme_file.path) as handle:
+            header = handle.readline().strip().split('\t')
+
+        metadata_columns = {}
+        for i in range(0, len(header)):
+            if header[i] not in gene_names:
+                metadata_columns[i] = header[i].strip().replace('_', ' ')
+        return metadata_columns
