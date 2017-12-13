@@ -9,6 +9,9 @@ from app.tools.tool import Tool
 
 
 class SpoTyping(Tool):
+    """
+    SpoTyping: fast and accurate in silico Mycobacterium spoligotyping from sequence reads.
+    """
 
     def __init__(self, camel):
         """
