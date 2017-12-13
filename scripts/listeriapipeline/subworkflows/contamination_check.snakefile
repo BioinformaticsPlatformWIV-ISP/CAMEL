@@ -96,11 +96,13 @@ rule contamination_report:
     output:
         VAL_HTML = os.path.join(__WORKING_DIR, 'contamination_check', 'html.io')
     params:
-        running_dir = os.path.join(__WORKING_DIR, 'contamination_check')
+        running_dir = os.path.join(__WORKING_DIR, 'contamination_check'),
+        output_dir = config['output_dir']
     run:
         from app.tools.pipelines.quality_checks.htmlreportercontamination import HtmlReporterContamination
         reporter = HtmlReporterContamination(camel)
         SnakemakeUtils.add_pickle_inputs(reporter, input)
         step = SnakeStep(rule, reporter, camel, params.running_dir, config)
         step.run_step()
+        reporter.tool_outputs['VAL_HTML'][0].value.copy_files(params.output_dir)
         SnakemakeUtils.dump_tool_outputs(reporter, output)
