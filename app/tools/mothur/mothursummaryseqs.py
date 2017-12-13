@@ -97,16 +97,16 @@ class MothurSummarySeqs(Mothur):
             for line in statsfile:
                 if not line.startswith('\t\t'):
                     line_informs = line.strip().split('\t')
-                    if line_informs[0] in {'Minimum:', '2.5%-tile:', '25%-tile:', 'Median:', '75%-tile:', '97.5%-tile:',
-                                           'Maximum:'}:
-                        self._informs[line_informs[0][:-1]] = {}
+                    category = line_informs[0].strip()
+                    if category in {'Minimum:', '2.5%-tile:', '25%-tile:', 'Median:', '75%-tile:', '97.5%-tile:', 'Maximum:'}:
+                        self._informs[category[:-1]] = {}
                         for i in range(1, len(line_informs)):
-                            self._informs[line_informs[0][:-1]][columns[i]] = int(line_informs[i])
-                    elif line_informs[0] == 'Mean:':
-                        self._informs[line_informs[0][:-1]] = {}
+                            self._informs[category[:-1]][columns[i]] = int(line_informs[i])
+                    elif category == 'Mean:':
+                        self._informs[category[:-1]] = {}
                         for i in range(1, len(line_informs)):
-                            self._informs[line_informs[0][:-1]][columns[i]] = float(line_informs[i])
-                    elif line_informs[0].lower().startswith('# of unique'):
+                            self._informs[category[:-1]][columns[i]] = float(line_informs[i])
+                    elif category.lower().startswith('# of unique'):
                         self._informs['unique'] = int(line_informs[1])
-                    elif line_informs[0].lower().startswith('# of seqs') or line_informs[0].lower().startswith('total # of seqs'):
+                    elif category.lower().startswith('# of seqs') or category.lower().startswith('total # of seqs'):
                         self._informs['total'] = int(line_informs[1])
