@@ -69,7 +69,7 @@ class SnakemakeUtils(object):
         logging.debug("Adding pickled input with key '{}' from file '{}' to tool '{}'".format(
             key, path, tool.name))
         value = SnakemakeUtils.load_object(path)
-        if optional and len(value) != 0:
+        if optional and len(value) == 0:
             logging.debug("Optional Input '{!r}' empty, skipped".format(key))
         else:
             tool.add_input_files({key: value})
