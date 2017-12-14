@@ -57,17 +57,22 @@ class SnakemakeUtils(object):
         return converted_value
 
     @staticmethod
-    def add_pickle_input(tool, key, path):
+    def add_pickle_input(tool, key, path, optional=False):
         """
-        Adds a pickled input to a tool.
+        Adds a pickled input to a tool. For optional input whose value is empty, it is skipped.
         :param tool: Tool
         :param key: Key
         :param path: Pickle path
+        :param optional: True for optional input, False otherwise
         :return: None
         """
         logging.debug("Adding pickled input with key '{}' from file '{}' to tool '{}'".format(
             key, path, tool.name))
-        tool.add_input_files({key: SnakemakeUtils.load_object(path)})
+        value = SnakemakeUtils.load_object(path)
+        if optional and len(value) == 0:
+            logging.debug("Optional Input '{!r}' empty, skipped".format(key))
+        else:
+            tool.add_input_files({key: value})
 
     @staticmethod
     def dump_tool_output(tool, key, path):
@@ -87,11 +92,12 @@ class SnakemakeUtils(object):
     @staticmethod
     def add_pickle_inputs(tool, snake_input, keys=None, optionals=None):
         """
-        Adds pickled inputs from the snakemake input.
+        Adds pickled inputs from the snakemake input. If 'optionals' is specified, any optional input in that
+        list will be skipped if its value is empty (no input file).
         :param tool: Tool
         :param snake_input: Snakemake input
         :param keys: Keys to add. If None, all keys are added
-        :param optionals: optional inputs
+        :param optionals: list of keys specifying optional inputs
         :return: None
         """
         logging.info("Adding pickled inputs from snakemake input")
@@ -110,7 +116,7 @@ class SnakemakeUtils(object):
                 logging.debug("Informs '{!r}' added".format(value))
             else:
                 if key in optionals and len(value) == 0:
-                    logging.debug("Optional Input '{!r}' empty, skipped".format(value))
+                    logging.debug("Optional Input '{!r}' empty, skipped".format(key))
                     continue
                 tool.add_input_files({key: value})
                 logging.debug("Input '{!r}' added".format(value))
