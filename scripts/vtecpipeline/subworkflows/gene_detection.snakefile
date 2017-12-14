@@ -327,10 +327,10 @@ rule combine_gene_detection_reports:
     Combines the reports from the different databases.
     """
     input:
-        HTML_Res=expand(os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report_gene_detection', 'html.io'), db=[d.name for d in DATABASES['resistance'] if d.name in config['gene_detection'].get('resistance', [])]),
-        HTML_Vir=expand(os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report_gene_detection', 'html.io'), db=[d.name for d in DATABASES['virulence'] if d.name in config['gene_detection'].get('virulence', [])]),
-        HTML_Pla=expand(os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report_gene_detection', 'html.io'), db=[d.name for d in DATABASES['plasmid'] if d.name in config['gene_detection'].get('plasmid', [])]),
-        HTML_Ser=expand(os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report_gene_detection', 'html.io'), db=[d.name for d in DATABASES['serotype'] if d.name in config['gene_detection'].get('serotype', [])]),
+        HTML_Res=expand(os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report_gene_detection', 'html.io'), db=[d.name for d in DATABASES['resistance'] if d.name in config.get('gene_detection', {}).get('resistance', [])]),
+        HTML_Vir=expand(os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report_gene_detection', 'html.io'), db=[d.name for d in DATABASES['virulence'] if d.name in config.get('gene_detection', {}).get('virulence', [])]),
+        HTML_Pla=expand(os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report_gene_detection', 'html.io'), db=[d.name for d in DATABASES['plasmid'] if d.name in config.get('gene_detection', {}).get('plasmid', [])]),
+        HTML_Ser=expand(os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report_gene_detection', 'html.io'), db=[d.name for d in DATABASES['serotype'] if d.name in config.get('gene_detection', {}).get('serotype', [])]),
         VAL_serotype=os.path.join(__WORKING_DIR, 'gene_detection', 'serotype_detection', 'val_serotype.io') if len(DATABASES['serotype']) > 0 else []
     output:
         os.path.join(__WORKING_DIR, 'report_gene_detection', 'html.io')
