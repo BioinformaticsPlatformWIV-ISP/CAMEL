@@ -59,7 +59,7 @@ class SnakemakeUtils(object):
     @staticmethod
     def add_pickle_input(tool, key, path, optional=False):
         """
-        Adds a pickled input to a tool.
+        Adds a pickled input to a tool. For optional input whose value is empty, it is skipped.
         :param tool: Tool
         :param key: Key
         :param path: Pickle path
@@ -93,11 +93,12 @@ class SnakemakeUtils(object):
     @staticmethod
     def add_pickle_inputs(tool, snake_input, keys=None, optionals=None):
         """
-        Adds pickled inputs from the snakemake input.
+        Adds pickled inputs from the snakemake input. If 'optionals' is specified, any optional input in that
+        list will be skipped if its value is empty (no input file).
         :param tool: Tool
         :param snake_input: Snakemake input
         :param keys: Keys to add. If None, all keys are added
-        :param optionals: optional inputs
+        :param optionals: list of keys specifying optional inputs
         :return: None
         """
         logging.info("Adding pickled inputs from snakemake input")
