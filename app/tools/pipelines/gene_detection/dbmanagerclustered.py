@@ -30,7 +30,7 @@ class DBManagerClustered(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super(DBManagerClustered, self).__init__('Gene Detection: DB Manager Clustered', '0.1', camel)
+        super().__init__('Gene Detection: DB Manager Clustered', '0.1', camel)
 
     def _execute_tool(self):
         """

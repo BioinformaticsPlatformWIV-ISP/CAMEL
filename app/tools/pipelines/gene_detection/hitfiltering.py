@@ -35,7 +35,7 @@ class HitFiltering(Tool):
         Initializes this tool.
         :param camel: Camel instance
         """
-        super(HitFiltering, self).__init__('Gene Detection: Hit Filtering', '0.1', camel)
+        super().__init__('Gene Detection: Hit Filtering', '0.1', camel)
 
     def _execute_tool(self):
         """

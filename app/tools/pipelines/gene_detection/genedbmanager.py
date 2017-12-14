@@ -28,7 +28,7 @@ class GeneDBManager(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super(GeneDBManager, self).__init__('Resistance Characterization: Gene Database Manager', '0.1', camel)
+        super().__init__('Resistance Characterization: Gene Database Manager', '0.1', camel)
 
     def _execute_tool(self):
         """
