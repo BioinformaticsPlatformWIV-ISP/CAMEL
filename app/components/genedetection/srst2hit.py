@@ -22,15 +22,8 @@ class SRST2Hit(GeneDetectionHit):
         :param accession: Accession number
         """
         super().__init__(locus)
-        if mismatches == '':
-            self._mismatches = '0'
-        else:
-            self._mismatches = mismatches
-
-        if uncertainty == '':
-            self._uncertainty = '-'
-        else:
-            self._uncertainty = uncertainty
+        self._mismatches = mismatches if mismatches != '' else '0'
+        self._uncertainty = uncertainty if uncertainty != '' else '-'
         self._depth = depth
         self._coverage = coverage
         self._length = length
@@ -93,6 +86,9 @@ class SRST2Hit(GeneDetectionHit):
     def color(self):
         """
         Returns the hit color.
+        Green: No mismatches and completely covered
+        Light green: Completely covered with mismatches
+        Grey: Not completely covered and mismatches
         :return: Color
         """
         if self._mismatches == '0' and self._coverage == 100.0:
