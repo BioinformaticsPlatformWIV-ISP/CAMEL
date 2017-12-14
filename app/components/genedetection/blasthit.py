@@ -244,7 +244,6 @@ class BlastHit(GeneDetectionHit):
         Green: Perfect hit
         Light green: Full length hit with one or more mismatches
         Grey: Non-full length hit
-        Red: No-hit
         :return: Color
         """
         if self.is_perfect_hit():
