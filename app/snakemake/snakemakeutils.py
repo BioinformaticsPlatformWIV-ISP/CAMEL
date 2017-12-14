@@ -71,7 +71,6 @@ class SnakemakeUtils(object):
         value = SnakemakeUtils.load_object(path)
         if optional and len(value) != 0:
             logging.debug("Optional Input '{!r}' empty, skipped".format(key))
-            tool.add_input_files({key: value})
         else:
             tool.add_input_files({key: value})
 
