@@ -6,6 +6,7 @@ from app.tools.tool import Tool
 
 
 class SequenceTypeDetector(Tool):
+
     """
     Tool that manages MLST schemes. Also reports scheme metadata information in the informs.
     """
@@ -35,9 +36,15 @@ class SequenceTypeDetector(Tool):
         # Retrieve metadata
         column_indices = self.__get_metadata_columns(profiles_file, allele_ids.keys())
         if sequence_type != SequenceTypeDetector.SYMBOL_NO_ST:
-            line_parts = self.__get_sequence_type_line(profiles_file, sequence_type, 0).split('\t')
-            metadata = {column: line_parts[index].strip() for index, column in column_indices.items()}
-            logging.info("Metadata for sequence type: {!r}".format(metadata))
+            line = self.__get_sequence_type_line(profiles_file, sequence_type, 0)
+            # Check for Neo type (which is not contained in profiles_file)
+            if line is not None:
+                line_parts = line.split('\t')
+                metadata = {column: line_parts[index].strip() for index, column in column_indices.items()}
+                logging.info("Metadata for sequence type: {!r}".format(metadata))
+            else:
+                metadata = {column: '-' for index, column in column_indices.items()}
+                logging.info("Neo typing found for sequence type: {!r}".format(metadata))
         else:
             metadata = {column: '-' for index, column in column_indices.items()}
         self._informs['metadata'] = metadata
