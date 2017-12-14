@@ -217,7 +217,7 @@ class BlastHit(GeneDetectionHit):
     def to_html_row(self, report_section, sub_directory):
         """
         Converts the hit into a HTML table row
-        :param report_section: Section is passed to save the alignments
+        :param report_section: HTML Section that will contain the hit table
         :param sub_directory: Subdirectory to save the alignments
         :return: HTML row elements
         """
