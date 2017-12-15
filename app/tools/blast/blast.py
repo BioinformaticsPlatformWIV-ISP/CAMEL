@@ -1,5 +1,6 @@
 import os
 
+from app.error.toolexecutionerror import ToolExecutionError
 from app.io.tooliofile import ToolIOFile
 from app.tools.tool import Tool
 
@@ -83,11 +84,12 @@ class Blast(Tool):
         Builds the command line string.
         :return: None
         """
-        self._command.command = ' '.join([self._tool_command,
-                                          '-query {}'.format(self._tool_inputs['FASTA'][0].path),
-                                          self.__get_subject_argument(),
-                                          '-out {}'.format(self.__get_output_filename()),
-                                          ' '.join(self._build_options(excluded_parameters=('output_filename',)))])
+        self._command.command = ' '.join([
+            self._tool_command,
+            '-query {}'.format(self._tool_inputs['FASTA'][0].path),
+            self.__get_subject_argument(),
+            '-out {}'.format(self.__get_output_filename()),
+            ' '.join(self._build_options(excluded_parameters=('output_filename',)))])
 
     def __get_subject_argument(self):
         """
@@ -130,5 +132,5 @@ class Blast(Tool):
         Checks the command output for errors.
         :return: None
         """
-        if 'error' in self.stderr.lower():
-            raise ValueError("Error executing {}: {}".format(self.name, self._command.stderr.strip()))
+        if 'error' in self.stderr.lower() or self._command.returncode != 0:
+            raise ToolExecutionError("Error executing {}: {}".format(self.name, self._command.stderr.strip()))
