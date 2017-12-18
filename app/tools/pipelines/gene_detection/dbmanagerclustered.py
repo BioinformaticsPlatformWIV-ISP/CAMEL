@@ -21,7 +21,7 @@ class DBManagerClustered(Tool):
     - FASTA: FASTA file from the input directory
 
     INFORMS:
-    - Parsed mapping file
+    - Parsed mapping file (mapping the converted sequence ids e.g. seq_1 back to the original ones)
     """
 
     def __init__(self, camel):
