@@ -183,6 +183,9 @@ class BlastHit(GeneDetectionHit):
     def set_extra_column(self, name, value):
         """
         Sets the extra column information.
+        This extra column is used to contains some additional metadata associated with this hit. It is included in
+        the tabular output and the HTML output. It consists of a column name and a value.
+        E.g.: name - 'Protein function', value - 'Heat shock protein'
         :param name: Name of the extra column
         :param value: Value of the extra column
         :return: None
