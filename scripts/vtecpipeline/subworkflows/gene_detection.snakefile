@@ -380,10 +380,12 @@ rule get_serotype:
         INFORMS_metadata_O=os.path.join(__WORKING_DIR, 'gene_detection', 'O_type', 'database_manager', 'informs.io')
     output:
         VAL_serotype=os.path.join(__WORKING_DIR, 'gene_detection', 'serotype', 'val_st.io')
+    params:
+        running_dir=os.path.join(__WORKING_DIR, 'gene_detection', 'serotype')
     run:
         from app.tools.pipelines.gene_detection.serotypedetector import SerotypeDetector
         detector = SerotypeDetector(camel)
         SnakemakeUtils.add_pickle_inputs(detector, input)
-        step = SnakeStep(rule, detector, camel, '.', config)
+        step = SnakeStep(rule, detector, camel, params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(detector, output)
