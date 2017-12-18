@@ -43,7 +43,6 @@ class BlastHit(GeneDetectionHit):
     def create_from_dict(input_dict):
         """
         Creates a hit object from a dictionary containing the blast output.
-        Allele id is set to None, it is extracted afterwards only for the best hits.
         :param input_dict: Input dictionary
         :return: Hit object
         """
