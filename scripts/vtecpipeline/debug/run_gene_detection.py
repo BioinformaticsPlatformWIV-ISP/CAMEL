@@ -51,6 +51,7 @@ def _parse_arguments():
     argument_parser.add_argument("--detection-method", default='fast')
     return argument_parser.parse_args()
 
+
 if __name__ == '__main__':
     args = _parse_arguments()
     logging.basicConfig(level=logging.DEBUG)
@@ -67,12 +68,16 @@ if __name__ == '__main__':
         yaml.dump({'logging': False}, handle, default_flow_style=False)
         yaml.dump({'pipeline_name': 'VTEC Pipeline'}, handle, default_flow_style=False)
         yaml.dump({'pipeline_job_id': 3}, handle, default_flow_style=False)
+        db_config = {}
         if args.resistance is not None:
-            yaml.dump({'gene_detection': {'resistance': args.resistance.split(','),
-                                          'virulence': args.virulence.split(','),
-                                          'serotype': args.resistance.split(','),
-                                          'plasmid': args.resistance.split(',')}},
-                      handle, default_flow_style=False)
+            db_config['resistance'] = args.resistance.split(',')
+        if args.virulence is not None:
+            db_config['virulence'] = args.virulence.split(',')
+        if args.serotype is not None:
+            db_config['serotype'] = args.serotype.split(',')
+        if args.plasmid is not None:
+            db_config['plasmid'] = args.plasmid.split(',')
+        yaml.dump({'gene_detection': db_config}, handle, default_flow_style=False)
         yaml.dump({'skip_assembly': True}, handle, default_flow_style=False)
         yaml.dump({'skip_trimming': True}, handle, default_flow_style=False)
 
