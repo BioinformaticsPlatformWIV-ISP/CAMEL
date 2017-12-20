@@ -31,7 +31,7 @@ class BlastHit(GeneDetectionHit):
         self._pident = pident
         self._slen = slen
         self._sseq = sseq
-        self._qsedid = qseqid
+        self._qseqid = qseqid
         self._qstart = qstart
         self._qend = qend
         self._accession = accession
@@ -89,7 +89,7 @@ class BlastHit(GeneDetectionHit):
         Returns the query.
         :return: Query
         """
-        return self._qsedid
+        return self._qseqid
 
     @property
     def query_start(self):
