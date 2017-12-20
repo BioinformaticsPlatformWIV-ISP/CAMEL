@@ -383,8 +383,8 @@ rule get_serotype:
     params:
         running_dir=os.path.join(__WORKING_DIR, 'gene_detection', 'serotype')
     run:
-        from app.tools.pipelines.gene_detection.serotypedetector import SerotypeDetector
-        detector = SerotypeDetector(camel)
+        from app.tools.pipelines.gene_detection.serotypedetectorecoli import SerotypeDetectorEcoli
+        detector = SerotypeDetectorEcoli(camel)
         SnakemakeUtils.add_pickle_inputs(detector, input)
         step = SnakeStep(rule, detector, camel, params.running_dir, config)
         step.run_step()
