@@ -9,11 +9,11 @@ from app.tools.tool import Tool
 
 class SRST2HitExtractor(Tool):
     """
-    This tool extracts this from SRST2 output.
+    This tool extracts hits from SRST2 output.
 
     INPUT:
         - TSV: SRST2 output file
-        - Mapping: Mapping of sequence ids to the original headers
+        - mapping: Mapping of sequence ids to the original headers
         - db_info: Database information
 
     OUTPUT:
