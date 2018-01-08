@@ -1,6 +1,3 @@
-# TODO Listeria serogrouping
-
-
 from app.components.html.htmlelement import HtmlElement
 from app.components.html.htmlreportsection import HtmlReportSection
 
@@ -79,7 +76,7 @@ rule database_manager:
         FASTA = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'database_manager', 'fasta.io'),
         INFORMS = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'database_manager', 'informs.io')
     params:
-        db_path = lambda wildcards: get_database(wildcards.db).path,
+        def db_path(wildcards): return get_database(wildcards.db).path,
         running_dir = os.path.join(__WORKING_DIR, 'gene_detection', '{db}')
     run:
         from app.tools.pipelines.gene_detection.dbmanager import DBManager
@@ -141,9 +138,12 @@ rule hit_filtering:
         TSV = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'tsv-filtered.io')
     params:
         running_dir = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'hit_filtering'),
-        percent_identity = lambda wildcards: get_database(wildcards.db).pi_threshold,
-        extra_column = lambda wildcards: get_database(wildcards.db).extra_column,
-        output_filename = lambda wildcards: os.path.join(__WORKING_DIR, 'hits-{}-{}.tsv'.format(
+
+        def percent_identity(wildcards): return get_database(wildcards.db).pi_threshold,
+
+        def extra_column(wildcards): return get_database(wildcards.db).extra_column,
+
+        def output_filename(wildcards): return os.path.join(__WORKING_DIR, 'hits-{}-{}.tsv'.format(
             FileSystemHelper.make_valid(config['sample_name']),
             FileSystemHelper.make_valid(wildcards.db)))
     run:
@@ -211,7 +211,8 @@ rule get_clustered_db:
         INFORMS = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'clustered', 'mapping.io')
     params:
         running_dir = os.path.join(__WORKING_DIR, 'gene_detection', '{db}'),
-        db_path = lambda wildcards: get_database(wildcards.db).path_clustered
+
+        def db_path(wildcards): return get_database(wildcards.db).path_clustered
     run:
         from app.tools.pipelines.gene_detection.dbmanagerclustered import DBManagerClustered
         db_manager = DBManagerClustered(camel)
@@ -258,7 +259,8 @@ rule srst2_hit_extraction:
         TSV = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'tsv-srst2.io')
     params:
         running_dir = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'srst2'),
-        output_filename = lambda wildcards: os.path.join(__WORKING_DIR, 'hits-{}-{}.tsv'.format(
+
+        def output_filename(wildcards): return os.path.join(__WORKING_DIR, 'hits-{}-{}.tsv'.format(
             FileSystemHelper.make_valid(config['sample_name']),
             FileSystemHelper.make_valid(wildcards.db)))
     run:
@@ -329,11 +331,6 @@ rule combine_gene_detection_reports:
                           d.name for d in DATABASES['virulence']]),
         HTML_Pla = expand(os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report_gene_detection', 'html.io'), db=[
                           d.name for d in DATABASES['plasmid']]),
-        # Temporarily disable serotyping code
-#        HTML_Ser = expand(os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report_gene_detection', 'html.io'), db=[
-#                          d.name for d in DATABASES['serogroup']]),
-#        VAL_serogroup = os.path.join(__WORKING_DIR, 'gene_detection', 'serogroup_detection', 'val_serogroup.io') if len(
-#            DATABASES['serogroup']) > 0 else []
     output:
         os.path.join(__WORKING_DIR, 'report_gene_detection', 'html.io')
     params:
@@ -344,7 +341,6 @@ rule combine_gene_detection_reports:
         for title, input_html in [('Resistance Characterization', input.HTML_Res),
                                   ('Virulence Detection', input.HTML_Vir),
                                   ('Plasmid Replicon Detection', input.HTML_Pla),
-                                  #                                  ('Serogroup Determination', input.HTML_Ser)
                                   ]:
             if len(input_html) > 0:
                 gene_detection_module.add_module_header(title)
@@ -353,30 +349,4 @@ rule combine_gene_detection_reports:
                     report_section.copy_files(params.output_dir)
                     gene_detection_module.add_html_object(report_section)
 
-                if title == 'Serogroup Determination':
-                    section_serogroup = HtmlReportSection(None)
-                    # serogroup = SnakemakeUtils.load_object(input.VAL_serogroup)[0].value
-                    section_serogroup.add_paragraph("Predicted serogroup: {}".format('NA'))
-                    gene_detection_module.add_html_object(section_serogroup)
-
         SnakemakeUtils.dump_object([ToolIOValue(gene_detection_module)], output[0])
-
-# TODO rule serotyping for VTEC, need to be adapted
-rule get_serogroup:
-    """
-    Retrieves the serogroup based on the H and O typing.
-    """
-    input:
-        VAL_Hits_H = os.path.join(__WORKING_DIR, 'gene_detection', 'H_type', 'selected-hits.io'),
-        VAL_Hits_O = os.path.join(__WORKING_DIR, 'gene_detection', 'O_type', 'selected-hits.io'),
-        INFORMS_metadata_H = os.path.join(__WORKING_DIR, 'gene_detection', 'H_type', 'database_manager', 'informs.io'),
-        INFORMS_metadata_O = os.path.join(__WORKING_DIR, 'gene_detection', 'O_type', 'database_manager', 'informs.io')
-    output:
-        VAL_serogroup = os.path.join(__WORKING_DIR, 'gene_detection', 'serogroup_detection', 'val_serogroup.io')
-    run:
-        from app.tools.pipelines.gene_detection.serogroupdetector import SerogroupDetector
-        detector = SerotypeDetector(camel)
-        SnakemakeUtils.add_pickle_inputs(detector, input)
-        step = SnakeStep(rule, detector, camel, '.', config)
-        step.run_step()
-        SnakemakeUtils.dump_tool_outputs(detector, output)
