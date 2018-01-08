@@ -120,10 +120,8 @@ class ListeriaMain(object):
             # create a softlink to Galaxy report/summary
             sl_report = os.path.join(self._args.output_dir, 'galaxy_run_report.html')
             os.symlink(self._args.output_html, sl_report)
-            # self._args.output_html = sl_report
             sl_summary = os.path.join(self._args.output_dir, 'galaxy_summary.tsv')
             os.symlink(self._args.output_summary, sl_summary)
-            # self._args.output_summary = sl_summary
             # Move to working dir, so that everything is created under (ep. for camel.log)
             os.chdir(self._args.working_dir)
 
