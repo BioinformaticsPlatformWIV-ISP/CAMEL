@@ -55,10 +55,10 @@ rule combine_reports:
     input:
         config.get('report'),
         os.path.join(__WORKING_DIR, 'report_read_trimming', 'html.io'),
-        os.path.join(__WORKING_DIR, 'contamination_check', 'html.io'),
+#        os.path.join(__WORKING_DIR, 'contamination_check', 'html.io'),
         os.path.join(__WORKING_DIR, 'report_assembly', 'html.io'),
-        os.path.join(__WORKING_DIR, 'report_quality_checks', 'html.io'),
-        os.path.join(__WORKING_DIR, 'report_gene_detection', 'html.io') if 'gene_detection' in config else [],
+#        os.path.join(__WORKING_DIR, 'report_quality_checks', 'html.io'),
+#        os.path.join(__WORKING_DIR, 'report_gene_detection', 'html.io') if 'gene_detection' in config else [],
 #        os.path.join(__WORKING_DIR, 'report_sequence_typing', 'html.io') if 'sequence_typing' in config else [],
     params:
         output_dir = config['output_dir'],
@@ -85,10 +85,8 @@ rule combine_reports:
 
 onsuccess:
     print("ONSUCCESS: pipeline run finished.")
-    INFORM_STORAGE.clear()
-
 
 onerror:
     print("ONERROR: pipeline fails to finish. log file {!r}".format(log))
-    shutil.copy(log, os.path.join(config.get('output_dir'), 'snake_error.log'))
-    shutil.copy(os.path.join(os.getcwd(), 'camel.log'), os.path.join(config.get('output_dir'), 'snake_camel.log'))
+    # shutil.copy(log, os.path.join(config.get('output_dir'), 'snake_error.log'))
+    # shutil.copy(os.path.join(os.getcwd(), 'camel.log'), os.path.join(config.get('output_dir'), 'snake_camel.log'))
