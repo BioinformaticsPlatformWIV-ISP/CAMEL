@@ -38,14 +38,20 @@ class ListeriaMain(object):
         parser.add_argument('--output-summary', help="Output file for the summary")
         parser.add_argument('--output-html', help="Output file for the HTML report")
         parser.add_argument('--output-dir', help="Output directory for the files in the HTML report")
+        # gene detection
         parser.add_argument('--resfinder', action='store_true')
         parser.add_argument('--argannot', action='store_true')
         parser.add_argument('--card', action='store_true')
         parser.add_argument('--virulencefinder', action='store_true')
-        parser.add_argument('--serogrouping', action='store_true')
         parser.add_argument('--plasmidfinder', action='store_true')
+        # sequence typing
+        parser.add_argument('--species_confirmation', action='store_true')
         parser.add_argument('--mlst', action='store_true')
         parser.add_argument('--cgmlst', action='store_true')
+        parser.add_argument('--serogrouping', action='store_true')
+        parser.add_argument('--pubmlst_metal', action='store_true')
+        parser.add_argument('--pubmlst_resistance', action='store_true')
+        parser.add_argument('--pubmlst_virulence', action='store_true')
         return parser.parse_args()
 
     def __init__(self):
@@ -58,6 +64,21 @@ class ListeriaMain(object):
         else:
             self._sample_name = FastqUtils.get_sample_name(self._args.fastq_names[0])
         self._fastq_input = self.__symlink_input_files()
+
+    def __symlink_input_files(self):
+        """
+        Creates a symbolic link to the input files.
+        :return: Complete path to the symlinks
+        """
+        logging.info("Creating symbolic links for the input files")
+        if not os.path.isdir('input_files'):
+            os.mkdir('input_files')
+        links = []
+        for name, file_ in zip(self._args.fastq_names, self._args.fastq_pe):
+            path = os.path.abspath(os.path.join('input_files', name))
+            os.symlink(file_, path)
+            links.append(path)
+        return links
 
     def run(self):
         """
@@ -80,21 +101,6 @@ class ListeriaMain(object):
         print(command.stdout)
         print(command.stderr)
 
-    def __symlink_input_files(self):
-        """
-        Creates a symbolic link to the input files.
-        :return: Complete path to the symlinks
-        """
-        logging.info("Creating symbolic links for the input files")
-        if not os.path.isdir('input_files'):
-            os.mkdir('input_files')
-        links = []
-        for name, file_ in zip(self._args.fastq_names, self._args.fastq_pe):
-            path = os.path.abspath(os.path.join('input_files', name))
-            os.symlink(file_, path)
-            links.append(path)
-        return links
-
     def __initialize_run_config(self):
         """
         Initialize run setting and config based on self.DEBUG tag
@@ -111,8 +117,13 @@ class ListeriaMain(object):
             self._args.working_dir = os.path.join(self.DEBUG_DIR_ROOT, time.strftime("%Y%m%d_%H%M%S"))
             self._args.output_dir = os.path.join(self._args.working_dir, 'final_report')
             os.makedirs(self._args.output_dir)
-            self._args.output_html = os.path.join(self._args.output_dir, 'galaxy_run_report.html')
-
+            # create a softlink to Galaxy report/summary
+            sl_report = os.path.join(self._args.output_dir, 'galaxy_run_report.html')
+            os.symlink(self._args.output_html, sl_report)
+            # self._args.output_html = sl_report
+            sl_summary = os.path.join(self._args.output_dir, 'galaxy_summary.tsv')
+            os.symlink(self._args.output_summary, sl_summary)
+            # self._args.output_summary = sl_summary
             # Move to working dir, so that everything is created under (ep. for camel.log)
             os.chdir(self._args.working_dir)
 
@@ -147,6 +158,7 @@ class ListeriaMain(object):
             # yaml.dump({'detection_method': self._args.analysis_type}, handle, default_flow_style=False)
             yaml.dump({'detection_method': 'fast'}, handle, default_flow_style=False)
             yaml.dump({'fastq_pe': self._fastq_input}, handle, default_flow_style=False)
+
             # Gene detection
             gene_detection = {}
             resistance_dbs = self.__get_resistance_db_config()
@@ -161,12 +173,20 @@ class ListeriaMain(object):
 
             # Sequence typing
             sequence_typing_dbs = []
+            if self._args.species_confirmation:
+                sequence_typing_dbs.append('species_confirmation')
             if self._args.mlst:
                 sequence_typing_dbs.append('MLST-Pasteur')
             if self._args.cgmlst:
                 sequence_typing_dbs.append('cgMLST')
             if self._args.serogrouping:
-                sequence_typing_dbs.append('serogrouping')
+                sequence_typing_dbs.append('serogroup')
+            if self._args.pubmlst_virulence:
+                sequence_typing_dbs.append('virulence')
+            if self._args.pubmlst_resistance:
+                sequence_typing_dbs.append('antibiotic_resistance')
+            if self._args.pubmlst_metal:
+                sequence_typing_dbs.append('metal_detergent_resistance')
             if len(sequence_typing_dbs) > 0:
                 yaml.dump({'sequence_typing': sequence_typing_dbs}, handle, default_flow_style=False)
 
