@@ -67,7 +67,7 @@ class HtmlReporterTyping(Tool):
         """
         header = self._tool_inputs['VAL_Hits'][0].value.get_html_column_names()
         hits = [t.value for t in self._tool_inputs['VAL_Hits']]
-        table_data = [hit.to_html_row(self._output_folder, self._sub_folder) for hit in hits]
+        table_data = [hit.to_html_row(self._report_section, self._sub_folder) for hit in hits]
         self._report_section.add_table(table_data, header, [('class', 'data')])
 
         tsv_file = self._tool_inputs['TSV'][0].path
