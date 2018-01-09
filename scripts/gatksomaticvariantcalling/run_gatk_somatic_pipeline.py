@@ -70,6 +70,9 @@ class GATKSomaticMain(object):
         # MarkDuplicates flag
         ap.add_argument('--mark_duplicates', dest='markduplicates', help='Mark duplicate reads.', action='store_true')
 
+        # Downsampling
+        ap.add_argument('--downsampling_type', dest='downsampling_type', help='Type of downsampling to performe on reads (by MuTect). NONE,ALL_READS,BY_SAMPLE. Default: BY_SAMPLE. Perform or not downsampling on reads. By default, MuTect downsamples to 1000 reads. Usage example: --downsample None (disables downsampling).')
+        ap.add_argument('--downsampling_target', dest='downsampling_target', help='Target value for downsampling to performe on reads (by MuTect). Default: 1000. Usage example: --downsample 10000 (sets target value to 10000 reads).')
         # run from galaxy flag
         ap.add_argument('--from_galaxy', dest='from_galaxy', help='Indicates that the command is run from galaxy. Useful for logging stderr.', action='store_true')
 
@@ -124,6 +127,11 @@ class GATKSomaticMain(object):
         # Flag for MarkDuplicates
         self.config_data['run_markDuplicates'] = self._args.markduplicates
 
+        # Downsampling (MuTect)
+        if self._args.downsampling_type:
+            self.config_data['downsampling_type'] = self._args.downsampling_type
+        if self._args.downsampling_target:
+            self.config_data['downsampling_target'] = self._args.downsampling_target
         # Create and write to config file
         with open(self.runtime_config_name, 'w') as handle:
             yaml.dump(self.config_data, handle)

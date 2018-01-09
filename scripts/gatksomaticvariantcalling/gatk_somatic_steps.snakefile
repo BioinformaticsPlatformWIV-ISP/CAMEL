@@ -400,7 +400,8 @@ rule analyzecovariates:
     run:
         from app.tools.gatk.gatkanalyzecovariates import GATKAnalyzeCovariates
         gac = GATKAnalyzeCovariates(camel)
-        gac.update_parameters(pdf_output = config['covar_output'])
+        if 'covar_output' in config:
+            gac.update_parameters(pdf_output = config['covar_output'])
         SnakemakeUtils.add_pickle_input(gac,"FASTA_REF",input.FASTA_REF)
         SnakemakeUtils.add_pickle_input(gac,"TXT_TABLE_BEFORE",input.TXT_BEFORE)
         SnakemakeUtils.add_pickle_input(gac,"TXT_TABLE_AFTER",input.TXT_AFTER)
@@ -417,22 +418,27 @@ rule mutect1:
         BAM=os.path.join(working_dir, "printreads/bam.io"),
         BED = os.path.join(working_dir, "generate_intervals/bed.io"),
         FASTA_REF=os.path.join(working_dir, "initial_input/fasta_reference_human.io"),
+        VCF_KNOWN_SNPS=os.path.join(working_dir, "initial_input/vcf_known_snps.io"),
     output:
         TXT=os.path.join(working_dir, "mutect1/txt.io"),
         VCF=os.path.join(working_dir, "mutect1/vcf.io"),
     params:
         working_dir = os.path.join(working_dir, "mutect1"),
-        FASTA_REF = config['fasta_ref']
     run:
         from app.tools.mutect.mutect1 import Mutect1
         mut=Mutect1(camel)
         SnakemakeUtils.add_pickle_input(mut,'BAM_TUMOR',input.BAM)
         SnakemakeUtils.add_pickle_input(mut,"TXT_intervals",input.BED)
         SnakemakeUtils.add_pickle_input(mut, "FASTA_REF", input.FASTA_REF)
+        SnakemakeUtils.add_pickle_input(mut, "VCF_DBSNP", input.VCF_KNOWN_SNPS)
         if 'txt_output' in config:
             mut.update_parameters(output_callstats_file = config['txt_output'])
         if 'vcf_output' in config:
             mut.update_parameters(output_vcf_file = config['vcf_output'])
+        if 'downsampling_target' in config:
+            mut.update_parameters(downsampling_coverage_target=config['downsampling_target'])
+        if 'downsampling_type' in config:
+            mut.update_parameters(downsampling_type=config['downsampling_type'])
         step = SnakeStep(rule, mut, camel, params.working_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_output(mut,'TXT_CALL_STATS',output.TXT)
