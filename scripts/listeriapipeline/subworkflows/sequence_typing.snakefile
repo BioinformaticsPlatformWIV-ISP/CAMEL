@@ -140,7 +140,7 @@ rule srst2_allele_detection:
     Allele detection using SRST2.
     """
     input:
-        FASTQ_PE = os.path.join(__WORKING_DIR, 'sequence_typing', 'read_trimming', 'fastq-pe.io'),
+        FASTQ_PE = os.path.join(__WORKING_DIR, 'read_trimming', 'fastq-pe.io'),
         FASTA = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', 'fasta-{locus}.io'),
         INFORMS_locus = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', 'informs-{locus}.io')
     output:
