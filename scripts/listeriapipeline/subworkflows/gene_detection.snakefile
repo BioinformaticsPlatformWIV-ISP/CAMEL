@@ -1,5 +1,5 @@
-from app.components.html.htmlelement import HtmlElement
 from app.components.html.htmlreportsection import HtmlReportSection
+from app.components.html.htmlelement import HtmlElement
 
 
 class GeneDatabase(object):
@@ -76,7 +76,7 @@ rule database_manager:
         FASTA = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'database_manager', 'fasta.io'),
         INFORMS = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'database_manager', 'informs.io')
     params:
-        def db_path(wildcards): return get_database(wildcards.db).path,
+        db_path = lambda wildcards: get_database(wildcards.db).path,
         running_dir = os.path.join(__WORKING_DIR, 'gene_detection', '{db}')
     run:
         from app.tools.pipelines.gene_detection.dbmanager import DBManager
@@ -138,12 +138,9 @@ rule hit_filtering:
         TSV = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'tsv-filtered.io')
     params:
         running_dir = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'hit_filtering'),
-
-        def percent_identity(wildcards): return get_database(wildcards.db).pi_threshold,
-
-        def extra_column(wildcards): return get_database(wildcards.db).extra_column,
-
-        def output_filename(wildcards): return os.path.join(__WORKING_DIR, 'hits-{}-{}.tsv'.format(
+        percent_identity = lambda wildcards: get_database(wildcards.db).pi_threshold,
+        extra_column = lambda wildcards: get_database(wildcards.db).extra_column,
+        output_filename = lambda wildcards: os.path.join(__WORKING_DIR, 'hits-{}-{}.tsv'.format(
             FileSystemHelper.make_valid(config['sample_name']),
             FileSystemHelper.make_valid(wildcards.db)))
     run:
@@ -211,8 +208,7 @@ rule get_clustered_db:
         INFORMS = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'clustered', 'mapping.io')
     params:
         running_dir = os.path.join(__WORKING_DIR, 'gene_detection', '{db}'),
-
-        def db_path(wildcards): return get_database(wildcards.db).path_clustered
+        db_path = lambda wildcards: get_database(wildcards.db).path_clustered
     run:
         from app.tools.pipelines.gene_detection.dbmanagerclustered import DBManagerClustered
         db_manager = DBManagerClustered(camel)
@@ -259,8 +255,7 @@ rule srst2_hit_extraction:
         TSV = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'tsv-srst2.io')
     params:
         running_dir = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'srst2'),
-
-        def output_filename(wildcards): return os.path.join(__WORKING_DIR, 'hits-{}-{}.tsv'.format(
+        output_filename = lambda wildcards: os.path.join(__WORKING_DIR, 'hits-{}-{}.tsv'.format(
             FileSystemHelper.make_valid(config['sample_name']),
             FileSystemHelper.make_valid(wildcards.db)))
     run:
@@ -338,10 +333,10 @@ rule combine_gene_detection_reports:
         output_dir = config['output_dir']
     run:
         gene_detection_module = HtmlElement('div')
-        for title, input_html in [('Resistance Characterization', input.HTML_Res),
-                                  ('Virulence Detection', input.HTML_Vir),
-                                  ('Plasmid Replicon Detection', input.HTML_Pla),
-                                  ]:
+        for title, input_html in [
+                ('Resistance Characterization', input.HTML_Res),
+                ('Virulence Detection', input.HTML_Vir),
+                ('Plasmid Replicon Detection', input.HTML_Pla)]:
             if len(input_html) > 0:
                 gene_detection_module.add_module_header(title)
                 for pickle in input_html:
