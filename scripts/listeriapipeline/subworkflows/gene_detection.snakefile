@@ -140,7 +140,7 @@ rule hit_filtering:
         running_dir = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'hit_filtering'),
         percent_identity = lambda wildcards: get_database(wildcards.db).pi_threshold,
         extra_column = lambda wildcards: get_database(wildcards.db).extra_column,
-        output_filename = lambda wildcards: os.path.join(__WORKING_DIR, 'hits-{}-{}.tsv'.format(
+        output_filename = lambda wildcards: os.path.join(__WORKING_DIR, 'gene_detection', wildcards.db, 'hits-{}-{}.tsv'.format(
             FileSystemHelper.make_valid(config['sample_name']),
             FileSystemHelper.make_valid(wildcards.db)))
     run:
@@ -255,7 +255,7 @@ rule srst2_hit_extraction:
         TSV = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'tsv-srst2.io')
     params:
         running_dir = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'srst2'),
-        output_filename = lambda wildcards: os.path.join(__WORKING_DIR, 'hits-{}-{}.tsv'.format(
+        output_filename = lambda wildcards: os.path.join(__WORKING_DIR, 'gene_detection', wildcards.db, 'hits-{}-{}.tsv'.format(
             FileSystemHelper.make_valid(config['sample_name']),
             FileSystemHelper.make_valid(wildcards.db)))
     run:
@@ -321,11 +321,11 @@ rule combine_gene_detection_reports:
     """
     input:
         HTML_Res = expand(os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report_gene_detection', 'html.io'), db=[
-                          d.name for d in DATABASES['resistance']]),
+                          d.name for d in DATABASES['resistance'] if d.name in config['gene_detection']]),
         HTML_Vir = expand(os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report_gene_detection', 'html.io'), db=[
-                          d.name for d in DATABASES['virulence']]),
+                          d.name for d in DATABASES['virulence'] if d.name in config['gene_detection']]),
         HTML_Pla = expand(os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report_gene_detection', 'html.io'), db=[
-                          d.name for d in DATABASES['plasmid']]),
+                          d.name for d in DATABASES['plasmid'] if d.name in config['gene_detection']]),
     output:
         os.path.join(__WORKING_DIR, 'report_gene_detection', 'html.io')
     params:
