@@ -38,7 +38,7 @@ DATABASES = {
         GeneDatabase('ResFinder',
                      '/data/sequence_db/ResFinder',
                      '/data/srst2/gene_db/ResFinder-clustered_80',
-                     None, 90)
+                     None, 98)
     ],
     'virulence': [
         GeneDatabase('VirulenceFinder',
