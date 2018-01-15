@@ -20,11 +20,21 @@
 
 
 - Pipeline development
-  + Basic QC
-  + Contamination check
-  + Assembly
-  + Gene Typing 
+  + Basic and Advanced QC [D]
+  + Contamination check and species confirmation  [D]
+  + Assembly [D]
+  + Gene Typing
+    + Resistance: Resfinder, CARD, ARG-annot [D]
+    + VirulenceFinder [D]
+    + PlasmidFinder [D]
+  
   + Sequence Typing
+    + 7 gene MLST [D]
+    + cgMLST [D]
+    + Serogrouping [D]
+    + Resistance: pubMLST antibiotic resistance [D]
+    + Virulence: pubMLST virulence loci [D]
+    + pubMLST metal & detergent resistance loci [D]
 
 
 ------------------------------------------------------------------
