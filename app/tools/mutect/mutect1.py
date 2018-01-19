@@ -22,8 +22,8 @@ class Mutect1(Tool):
     Optional input:
     ---------------
     "BAM_NORMAL":       BAM file with normal data for tumor-normal matching.
-    "FASTA_REF":        FASTA file containing the reference genome. If not specified, db default is used.
-    "VCF_DBSNP":        DbSNP reference vcf file location. If not specified, db defaults is used.
+    "FASTA_REF":        FASTA file containing the reference genome.
+    "VCF_DBSNP":        DbSNP reference vcf file location.
     "TXT_intervals":    Intervals list to restrict search by GATK. Accelerates analysis. Bed or GATK intervals list 
     
     Output:
