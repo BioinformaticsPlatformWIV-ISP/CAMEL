@@ -441,6 +441,8 @@ rule mutect1:
             mut.update_parameters(downsampling_type=config['downsampling_type'])
         if 'gap_events_threshold' in config:
             mut.update_parameters(gap_events_threshold=config['gap_events_threshold'])
+        if 'strand_artifact_lod' in  config:
+            mut.update_parameters(strand_artifact_lod=config['strand_artifact_lod'])
         step = SnakeStep(rule, mut, camel, params.working_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_output(mut,'TXT_CALL_STATS',output.TXT)

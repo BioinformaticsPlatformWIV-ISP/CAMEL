@@ -75,7 +75,11 @@ class GATKSomaticMain(object):
         ap.add_argument('--downsampling_target', dest='downsampling_target', help='Target value for downsampling to performe on reads (by MuTect). Default: 1000. Usage example: --downsample 10000 (sets target value to 10000 reads).')
 
         # gap_events_threshold (MuTect)
-        ap.add_argument('--gap_events_threshold', dest='gap_events_threshold',help='Number of reads allowed to contain insdels around a fixed window (MuTect default 11 bp) before being marked as gap_event and filtered-out.')
+        ap.add_argument('--gap_events_threshold', dest='gap_events_threshold', help='Number of reads allowed to contain insdels around a fixed window (MuTect default 11 bp) before being marked as gap_event and filtered-out.')
+
+        # gap_events_threshold (MuTect)
+        ap.add_argument('--strand_artifact_lod', dest='strand_artifact_lod', help='Log-odds ratio for strand bias. Default MuTect: 2.0; disable: -99999')
+
 
         # run from galaxy flag
         ap.add_argument('--from_galaxy', dest='from_galaxy', help='Indicates that the command is run from galaxy. Useful for logging stderr.', action='store_true')
@@ -140,9 +144,9 @@ class GATKSomaticMain(object):
         # gap_event_threshold
         if self._args.gap_events_threshold:
             self.config_data['gap_events_threshold'] = self._args.gap_events_threshold
-        # gap_event_threshold
-        if self._args.gap_events_threshold:
-            self.config_data['gap_events_threshold'] = self._args.gap_events_threshold
+        # strand_artifact_lod
+        if self._args.strand_artifact_lod:
+            self.config_data['strand_artifact_lod'] = self._args.strand_artifact_lod
 
         # Create and write to config file
         with open(self.runtime_config_name, 'w') as handle:
