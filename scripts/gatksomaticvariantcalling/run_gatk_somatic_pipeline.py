@@ -18,9 +18,9 @@ class GATKSomaticMain(object):
     Generates a config yml file based on CL arguments and runs the pipeline.
     """
     DB_LOGGING = True
-    DEBUG = True
+    # DEBUG = True
     SNAKEFILE = os.path.join(os.path.dirname(__file__), 'gatk_somatic_steps.snakefile')
-    FROM_GALAXY = False
+    # FROM_GALAXY = False
     CORES = 5
 
     def __init__(self):
@@ -29,8 +29,8 @@ class GATKSomaticMain(object):
         :return: None
         """
         self._args = None
-        self.config_data = dict()
-        self.pipeline = None
+        self._config_data = dict()
+        self._pipeline = None
 
         # Name of config file generated at runtime for snakemake pipeline
         self.runtime_config_name = os.path.join(os.getcwd(), 'runtime_config.yaml')
@@ -47,9 +47,9 @@ class GATKSomaticMain(object):
 
         # input
         gp = ap.add_mutually_exclusive_group(required=True)
-        gp.add_argument('-PE', '--Paired_end', metavar='fq_file', dest='paired_end', help='Paired-end fastq files.',
+        gp.add_argument('-PE', '--paired_end', metavar='fq_file', dest='paired_end', help='Paired-end fastq files.',
                         nargs='+')
-        gp.add_argument('-SE', '--Single_end', metavar='fq_file', dest='single_end', help='Single-end fastq files.',
+        gp.add_argument('-SE', '--single_end', metavar='fq_file', dest='single_end', help='Single-end fastq files.',
                         nargs='+')
 
         # output
@@ -86,7 +86,7 @@ class GATKSomaticMain(object):
 
         # job id
         ap.add_argument('--job_id', dest='job_id', metavar='job_id', help='Job ID for debugging and logging.',
-                        default=datetime.datetime.fromtimestamp(time.time()).strftime("%Y%m%d_%H%M%S-%f"))
+                        default=datetime.datetime.now().strftime("%Y%m%d_%H%M%S-%f"))
 
         return ap.parse_args()
 
@@ -97,60 +97,60 @@ class GATKSomaticMain(object):
         """
 
         # Add the job id to the config
-        self.config_data['pipeline_job_id'] = self.pipeline.job_id
-        self.config_data['pipeline_name'] = self.pipeline.name
-        self.config_data['logging'] = self.DB_LOGGING
+        self._config_data['pipeline_job_id'] = self._pipeline.job_id
+        self._config_data['pipeline_name'] = self._pipeline.name
+        self._config_data['logging'] = self.DB_LOGGING
 
         # Set working directory: if not given as CLA, set to current working directory (Galaxy)
-        if not self._args.work_dir:
-            self.config_data['working_dir'] = os.getcwd()
+        if self._args.work_dir:
+            self._config_data['working_dir'] = self._args.work_dir
         else:
-            self.config_data['working_dir'] = self._args.work_dir
+            self._config_data['working_dir'] = os.getcwd()
 
         # References
-        self.config_data['fasta_ref'] = self._args.fasta_ref
-        self.config_data['vcf_known_snps'] = self._args.vcf_known_snps
-        self.config_data['vcf_known_indels'] = self._args.vcf_known_indels
+        self._config_data['fasta_ref'] = self._args.fasta_ref
+        self._config_data['vcf_known_snps'] = self._args.vcf_known_snps
+        self._config_data['vcf_known_indels'] = self._args.vcf_known_indels
 
         # Input fastq files
         if self._args.paired_end:
-            self.config_data['fastq'] = self._args.paired_end
-            self.config_data['PE'] = True
-            self.config_data['SE'] = False
+            self._config_data['fastq'] = self._args.paired_end
+            self._config_data['PE'] = True
+            self._config_data['SE'] = False
         if self._args.single_end:
-            self.config_data['fastq'] = self._args.single_end
-            self.config_data['SE'] = True
-            self.config_data['PE'] = False
+            self._config_data['fastq'] = self._args.single_end
+            self._config_data['SE'] = True
+            self._config_data['PE'] = False
 
         # Output filenames
         if self._args.vcf_output:
-            self.config_data['vcf_output'] = self._args.vcf_output
+            self._config_data['vcf_output'] = self._args.vcf_output
         if self._args.tab_output:
-            self.config_data['txt_output'] = self._args.tab_output
+            self._config_data['txt_output'] = self._args.tab_output
         if self._args.covar_output:
-            self.config_data['covar_output'] = self._args.covar_output
+            self._config_data['covar_output'] = self._args.covar_output
         if self._args.bam_output:
-            self.config_data['bam_output'] = self._args.bam_output
+            self._config_data['bam_output'] = self._args.bam_output
 
         # Flag for MarkDuplicates
-        self.config_data['run_markDuplicates'] = self._args.markduplicates
+        self._config_data['run_markDuplicates'] = self._args.markduplicates
 
         # MuTect parameters
         # Downsampling
         if self._args.downsampling_type:
-            self.config_data['downsampling_type'] = self._args.downsampling_type
+            self._config_data['downsampling_type'] = self._args.downsampling_type
         if self._args.downsampling_target:
-            self.config_data['downsampling_target'] = self._args.downsampling_target
+            self._config_data['downsampling_target'] = self._args.downsampling_target
         # gap_event_threshold
         if self._args.gap_events_threshold:
-            self.config_data['gap_events_threshold'] = self._args.gap_events_threshold
+            self._config_data['gap_events_threshold'] = self._args.gap_events_threshold
         # strand_artifact_lod
         if self._args.strand_artifact_lod:
-            self.config_data['strand_artifact_lod'] = self._args.strand_artifact_lod
+            self._config_data['strand_artifact_lod'] = self._args.strand_artifact_lod
 
         # Create and write to config file
         with open(self.runtime_config_name, 'w') as handle:
-            yaml.dump(self.config_data, handle)
+            yaml.dump(self._config_data, handle)
 
     def run(self):
         """
@@ -160,7 +160,7 @@ class GATKSomaticMain(object):
 
         # Create a pipeline object
         camel = Camel()
-        self.pipeline = SnakePipeline('GATK somatic calling', camel, self.DB_LOGGING)
+        self._pipeline = SnakePipeline('GATK somatic calling', camel, self.DB_LOGGING)
 
         self._args = self.__parse_command_line()
 
@@ -170,17 +170,17 @@ class GATKSomaticMain(object):
         input_dict = dict()
         if self.DB_LOGGING:
             if self._args.paired_end:
-                input_dict['FASTQ_PE'] = [ToolIOFile(f) for f in self.config_data['fastq']]
+                input_dict['FASTQ_PE'] = [ToolIOFile(f) for f in self._config_data['fastq']]
             elif self._args.single_end:
-                input_dict['FASTQ_SE'] = [ToolIOFile(f) for f in self.config_data['fastq']]
+                input_dict['FASTQ_SE'] = [ToolIOFile(f) for f in self._config_data['fastq']]
             input_dict['MarkDuplicates'] = [ToolIOValue(self._args.markduplicates)]
 
-            self.pipeline.set_initial_input(input_dict)
+            self._pipeline.set_initial_input(input_dict)
 
         # Execute the snakemake workflow and log stdout and stderr if command fails (if pipeline is run from galaxy).
         to_execute = 'snakemake --configfile {} --snakefile {} --cores {}'.format(self.runtime_config_name, self.SNAKEFILE, self.CORES)
         command = Command(to_execute)
-        command.run_command(os.getcwd(), subprocess.STDOUT)
+        command.run_command(self._args.work_dir, subprocess.STDOUT)
         if command.returncode != 0 and self._args.from_galaxy:
             with open("/scratch/temp/galaxy_logs/{}_Stdout".format(self._args.job_id), "w") as file_out:
                 file_out.write(command.stdout)
