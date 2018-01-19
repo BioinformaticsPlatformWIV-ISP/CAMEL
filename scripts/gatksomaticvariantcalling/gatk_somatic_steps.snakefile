@@ -93,8 +93,8 @@ rule bwa_alignment:
         if config['SE']:
             SnakemakeUtils.add_pickle_input(bwa_mem, 'FASTQ_SE', input.FASTQ)
         SnakemakeUtils.add_pickle_input(bwa_mem, 'INDEX_GENOME_PREFIX', input.FASTA_GENOME)
-        bwa_mem.update_parameters(threads=threads)
         step = SnakeStep(rule, bwa_mem, camel, params.working_dir, config)
+        bwa_mem.update_parameters(threads=threads)
         step.run_step()
         SnakemakeUtils.dump_tool_output(bwa_mem, "SAM", output.SAM)
 
@@ -112,7 +112,7 @@ rule samtobam:
     run:
         from app.tools.samtools.samtoolsview import SamtoolsView
         smv = SamtoolsView(camel)
-        SnakemakeUtils.add_pickle_input(smv,"SAM",input.SAM)
+        SnakemakeUtils.add_pickle_input(smv, "SAM", input.SAM)
         step = SnakeStep(rule, smv, camel, params.working_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_output(smv, "BAM", output.BAM)
@@ -131,10 +131,10 @@ rule sortbam:
     run:
         from app.tools.samtools.samtoolssort import SamtoolsSort
         sms = SamtoolsSort(camel)
-        if 'bam_output' in config:
-            sms.update_parameters(output_filename = config['bam_output'])
         SnakemakeUtils.add_pickle_input(sms,"BAM",input.BAM)
         step = SnakeStep(rule, sms, camel, params.working_dir, config)
+        if 'bam_output' in config:
+            sms.update_parameters(output_filename=config['bam_output'])
         step.run_step()
         SnakemakeUtils.dump_tool_output(sms, "BAM", output.BAM)
 
@@ -259,7 +259,7 @@ rule realignertargetcreator:
     """
     input:
         BAM=os.path.join(working_dir, "addreadgroups/bam.io"),
-        BED=os.path.join(working_dir, "generate_intervals/bed.io"),
+        TXT_intervals=os.path.join(working_dir, "generate_intervals/bed.io"),
         FASTA_REF=os.path.join(working_dir, "initial_input/fasta_reference_human.io"),
 
     output:
@@ -269,9 +269,7 @@ rule realignertargetcreator:
     run:
         from app.tools.gatk.gatkrealignertargetcreator import GATKRealignerTargetCreator
         grtc = GATKRealignerTargetCreator(camel)
-        SnakemakeUtils.add_pickle_input(grtc,"FASTA_REF",input.FASTA_REF)
-        SnakemakeUtils.add_pickle_input(grtc,"BAM",input.BAM)
-        SnakemakeUtils.add_pickle_input(grtc,"TXT_intervals",input.BED)
+        SnakemakeUtils.add_pickle_inputs(grtc, input)
         step = SnakeStep(rule, grtc, camel, params.working_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_output(grtc, "TXT_realign_intervals", output.INTERVALS)
@@ -282,9 +280,9 @@ rule indelrealigner:
     Indel realignment (GATK).
     """
     input:
-        INTERVALS=os.path.join(working_dir, "realignertargetcreator/intervals.io"),
+        TXT_realign_intervals=os.path.join(working_dir, "realignertargetcreator/intervals.io"),
         BAM=os.path.join(working_dir, "addreadgroups/bam.io"),
-        BED=os.path.join(working_dir, "generate_intervals/bed.io"),
+        TXT_intervals=os.path.join(working_dir, "generate_intervals/bed.io"),
         FASTA_REF=os.path.join(working_dir, "initial_input/fasta_reference_human.io"),
     output:
         BAM=os.path.join(working_dir, "indelrealigner/bam.io"),
@@ -293,10 +291,7 @@ rule indelrealigner:
     run:
         from app.tools.gatk.gatkindelrealigner import GATKIndelRealigner
         gir=GATKIndelRealigner(camel)
-        SnakemakeUtils.add_pickle_input(gir,"FASTA_REF",input.FASTA_REF)
-        SnakemakeUtils.add_pickle_input(gir,"TXT_intervals",input.BED)
-        SnakemakeUtils.add_pickle_input(gir,"BAM",input.BAM)
-        SnakemakeUtils.add_pickle_input(gir,"TXT_realign_intervals",input.INTERVALS)
+        SnakemakeUtils.add_pickle_inputs(gir, input)
         step = SnakeStep(rule, gir, camel, params.working_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_output(gir,"BAM",output.BAM)
@@ -308,7 +303,7 @@ rule basequalityrecalibration:
     """
     input:
         BAM=os.path.join(working_dir, "indelrealigner/bam.io"),
-        BED=os.path.join(working_dir, "generate_intervals/bed.io"),
+        TXT_intervals=os.path.join(working_dir, "generate_intervals/bed.io"),
         FASTA_REF=os.path.join(working_dir, "initial_input/fasta_reference_human.io"),
         VCF_KNOWN_SNPS=os.path.join(working_dir, "initial_input/vcf_known_snps.io"),
         VCF_KNOWN_INDELS=os.path.join(working_dir, "initial_input/vcf_known_indels.io"),
@@ -320,13 +315,9 @@ rule basequalityrecalibration:
     run:
         from app.tools.gatk.gatkbaserecalibrator import GATKBaseRecalibrator
         bqsr=GATKBaseRecalibrator(camel)
-        SnakemakeUtils.add_pickle_input(bqsr,"FASTA_REF",input.FASTA_REF)
-        SnakemakeUtils.add_pickle_input(bqsr,"VCF_KNOWN_SNPS",input.VCF_KNOWN_SNPS)
-        SnakemakeUtils.add_pickle_input(bqsr,"VCF_KNOWN_INDELS",input.VCF_KNOWN_INDELS)
-        SnakemakeUtils.add_pickle_input(bqsr,"BAM",input.BAM)
-        SnakemakeUtils.add_pickle_input(bqsr,"TXT_intervals", input.BED)
-        bqsr.update_parameters(threads=threads)
+        SnakemakeUtils.add_pickle_inputs(bqsr, input)
         step = SnakeStep(rule, bqsr, camel, params.working_dir, config)
+        bqsr.update_parameters(threads=threads)
         step.run_step()
         SnakemakeUtils.dump_tool_output(bqsr,"TXT_RecalibrationTable",output.TXT)
 
@@ -337,7 +328,7 @@ rule printreads:
     """
     input:
         BAM=os.path.join(working_dir, "indelrealigner/bam.io"),
-        TXT=os.path.join(working_dir, "basequalityrecalibration/txt.io"),
+        BQSR=os.path.join(working_dir, "basequalityrecalibration/txt.io"),
         FASTA_REF=os.path.join(working_dir, "initial_input/fasta_reference_human.io"),
     output:
         BAM=os.path.join(working_dir, "printreads/bam.io"),
@@ -347,11 +338,9 @@ rule printreads:
     run:
         from app.tools.gatk.gatkprintreads import GATKPrintReads
         gpr=GATKPrintReads(camel)
-        gpr.update_parameters(threads=threads)
-        SnakemakeUtils.add_pickle_input(gpr,"FASTA_REF",input.FASTA_REF)
-        SnakemakeUtils.add_pickle_input(gpr,"BAM",input.BAM)
-        SnakemakeUtils.add_pickle_input(gpr,"BQSR",input.TXT)
+        SnakemakeUtils.add_pickle_inputs(gpr, input)
         step = SnakeStep(rule, gpr, camel, params.working_dir, config)
+        gpr.update_parameters(threads=threads)
         step.run_step()
         SnakemakeUtils.dump_tool_output(gpr,"BAM",output.BAM)
 
@@ -362,7 +351,7 @@ rule basequalityrecalibration2:
     """
     input:
         BAM = os.path.join(working_dir, "printreads/bam.io"),
-        BED = os.path.join(working_dir, "generate_intervals/bed.io"),
+        TXT_intervals = os.path.join(working_dir, "generate_intervals/bed.io"),
         FASTA_REF=os.path.join(working_dir, "initial_input/fasta_reference_human.io"),
         VCF_KNOWN_SNPS=os.path.join(working_dir, "initial_input/vcf_known_snps.io"),
         VCF_KNOWN_INDELS=os.path.join(working_dir, "initial_input/vcf_known_indels.io"),
@@ -374,13 +363,9 @@ rule basequalityrecalibration2:
     run:
         from app.tools.gatk.gatkbaserecalibrator import GATKBaseRecalibrator
         bqsr = GATKBaseRecalibrator(camel)
-        bqsr.update_parameters(threads=threads)
-        SnakemakeUtils.add_pickle_input(bqsr,"FASTA_REF",input.FASTA_REF)
-        SnakemakeUtils.add_pickle_input(bqsr,"VCF_KNOWN_SNPS",input.VCF_KNOWN_SNPS)
-        SnakemakeUtils.add_pickle_input(bqsr,"VCF_KNOWN_INDELS",input.VCF_KNOWN_INDELS)
-        SnakemakeUtils.add_pickle_input(bqsr,"BAM",input.BAM)
-        SnakemakeUtils.add_pickle_input(bqsr,"TXT_intervals", input.BED)
+        SnakemakeUtils.add_pickle_inputs(bqsr, input)
         step = SnakeStep(rule, bqsr, camel, params.working_dir, config)
+        bqsr.update_parameters(threads=threads)
         step.run_step()
         SnakemakeUtils.dump_tool_output(bqsr, "TXT_RecalibrationTable", output.TXT)
 
@@ -390,8 +375,8 @@ rule analyzecovariates:
     Covariates analysis and BQSR report generation (GATK) 
     """
     input:
-        TXT_BEFORE=os.path.join(working_dir, "basequalityrecalibration/txt.io"),
-        TXT_AFTER=os.path.join(working_dir, "basequalityrecalibration2/txt.io"),
+        TXT_TABLE_BEFORE=os.path.join(working_dir, "basequalityrecalibration/txt.io"),
+        TXT_TABLE_AFTER=os.path.join(working_dir, "basequalityrecalibration2/txt.io"),
         FASTA_REF=os.path.join(working_dir, "initial_input/fasta_reference_human.io"),
     output:
         PDF=os.path.join(working_dir, "analyzecovariates/pdf.io"),
@@ -400,12 +385,10 @@ rule analyzecovariates:
     run:
         from app.tools.gatk.gatkanalyzecovariates import GATKAnalyzeCovariates
         gac = GATKAnalyzeCovariates(camel)
+        SnakemakeUtils.add_pickle_inputs(gac, input)
+        step = SnakeStep(rule, gac, camel, params.working_dir, config)
         if 'covar_output' in config:
             gac.update_parameters(pdf_output = config['covar_output'])
-        SnakemakeUtils.add_pickle_input(gac,"FASTA_REF",input.FASTA_REF)
-        SnakemakeUtils.add_pickle_input(gac,"TXT_TABLE_BEFORE",input.TXT_BEFORE)
-        SnakemakeUtils.add_pickle_input(gac,"TXT_TABLE_AFTER",input.TXT_AFTER)
-        step = SnakeStep(rule, gac, camel, params.working_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_output(gac, "PDF", output.PDF)
 
@@ -415,22 +398,20 @@ rule mutect1:
     Variant calling (mutect1).
     """
     input:
-        BAM=os.path.join(working_dir, "printreads/bam.io"),
-        BED = os.path.join(working_dir, "generate_intervals/bed.io"),
+        BAM_TUMOR=os.path.join(working_dir, "printreads/bam.io"),
+        TXT_intervals = os.path.join(working_dir, "generate_intervals/bed.io"),
         FASTA_REF=os.path.join(working_dir, "initial_input/fasta_reference_human.io"),
-        VCF_KNOWN_SNPS=os.path.join(working_dir, "initial_input/vcf_known_snps.io"),
+        VCF_DBSNP=os.path.join(working_dir, "initial_input/vcf_known_snps.io"),
     output:
-        TXT=os.path.join(working_dir, "mutect1/txt.io"),
+        TXT_CALL_STATS=os.path.join(working_dir, "mutect1/txt.io"),
         VCF=os.path.join(working_dir, "mutect1/vcf.io"),
     params:
         working_dir = os.path.join(working_dir, "mutect1"),
     run:
         from app.tools.mutect.mutect1 import Mutect1
         mut=Mutect1(camel)
-        SnakemakeUtils.add_pickle_input(mut,'BAM_TUMOR',input.BAM)
-        SnakemakeUtils.add_pickle_input(mut,"TXT_intervals",input.BED)
-        SnakemakeUtils.add_pickle_input(mut, "FASTA_REF", input.FASTA_REF)
-        SnakemakeUtils.add_pickle_input(mut, "VCF_DBSNP", input.VCF_KNOWN_SNPS)
+        SnakemakeUtils.add_pickle_inputs(mut, input)
+        step = SnakeStep(rule, mut, camel, params.working_dir, config)
         if 'txt_output' in config:
             mut.update_parameters(output_callstats_file = config['txt_output'])
         if 'vcf_output' in config:
@@ -443,7 +424,5 @@ rule mutect1:
             mut.update_parameters(gap_events_threshold=config['gap_events_threshold'])
         if 'strand_artifact_lod' in  config:
             mut.update_parameters(strand_artifact_lod=config['strand_artifact_lod'])
-        step = SnakeStep(rule, mut, camel, params.working_dir, config)
         step.run_step()
-        SnakemakeUtils.dump_tool_output(mut,'TXT_CALL_STATS',output.TXT)
-        SnakemakeUtils.dump_tool_output(mut,'VCF',output.VCF)
+        SnakemakeUtils.dump_tool_outputs(mut, output)
