@@ -40,11 +40,30 @@
 ------------------------------------------------------------------
   KNOW ISSUES
 ------------------------------------------------------------------
-- VirulenceFinder (gene detection)
+- VirulenceFinder (gene detection BLAST)
   * issue: gene lisK is missing from our report (compared to CGE results)
   * reason: lisK overlaps with gene lisR for 2 bases, hence then removed by HitFiltering, as only one hit per cluster is reported
   * solution:  pending with Bert ...
 
+
+
+- PubMLST virulence schema issue
+  * issue: locus naming issue
+    - gene has a different name on profile page than the one retrieved from API
+      + http://bigsdb.pasteur.fr/perl/bigsdb/bigsdb.pl?db=pubmlst_listeria_seqdef_public&page=downloadAlleles&scheme_id=5&render=1
+    - the link in profile page uses the one reported in API ...
+    - example:
+      + in gene page: http://bigsdb.pasteur.fr/perl/bigsdb/bigsdb.pl?db=pubmlst_listeria_seqdef_public&page=locusInfo&locus=LIPI3_llsH
+      + Locus information showing the name __LMOf2365_1114__
+  * involved genes (profile page names: schema loci names):
+    - LMOf2365_1112a, LMOf2365_1116, LMOf2365_1118, LMOf2365_1113, LMOf2365_1114, LMOf2365_1119, LMOf2365_1115, LMOf2365_1117:
+      + mapped to LIPI3_lls(A,B,D,G,H,P,X,Y)
+    - codY, pdeE: lmo1280, lmo2491
+  * solution:
+    - no clear solution yet
+    - simply check does not find the source of the mapping
+      + only in schema page
+      + not in schema profile, not in loci information ...
 
 
 
