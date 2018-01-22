@@ -98,8 +98,8 @@ class SequenceTypeDetector(Tool):
                         st_allele_id = line.strip().split('\t')[gene_indices[gene_name]]
                         detected_allele_id = gene_alleles[gene_name]
                         logging.debug(f'gene_name {gene_name}: st_allele_id {st_allele_id}, detected_allele_id {detected_allele_id}')
+                        # if st_allele_id not in ('N', '0') and st_allele_id != detected_allele_id:
                         if st_allele_id not in ('N') and st_allele_id != detected_allele_id:
-                        #if st_allele_id not in ('N', '0') and st_allele_id != detected_allele_id:
                             match = False
                             break
                 if match:
