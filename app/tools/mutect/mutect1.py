@@ -12,24 +12,24 @@ class Mutect1(Tool):
     ===========
     Mutect (v1).
     ===========
-    Performs variant calling for oncology-related NGS data. 
+    Performs somatic variant calling, e.g. for oncology-related NGS data. 
     Mutect V1 only calls snps, not indels. For indels, use Mutect2.
     
     Required inputs:
     ----------------
-    "BAM_TUMOR":        BAM file with tumour data
+    "BAM_TUMOR":        ToolIOFile object. BAM file with tumour data
     
     Optional input:
     ---------------
-    "BAM_NORMAL":       BAM file with normal data for tumor-normal matching.
-    "FASTA_REF":        FASTA file containing the reference genome.
-    "VCF_DBSNP":        DbSNP reference vcf file location.
-    "TXT_intervals":    Intervals list to restrict search by GATK. Accelerates analysis. Bed or GATK intervals list 
+    "BAM_NORMAL":       ToolIOFile object. BAM file with normal data for tumor-normal matching.
+    "FASTA_REF":        ToolIOFile object. FASTA file containing the reference genome.
+    "VCF_DBSNP":        ToolIOFile object. DbSNP reference vcf file location.
+    "TXT_intervals":    ToolIOFile object. Intervals list to restrict search by GATK. Accelerates analysis. Bed or GATK intervals list 
     
     Output:
     -------
-    "TXT_CALL_STATS": GATK Call stats text based file. Parseable by scripts or in excel sheets.
-    "VCF": VCF file.
+    "TXT_CALL_STATS":   ToolIOFile object. GATK Call stats text based file. Parse-able by scripts or in excel sheets.
+    "VCF":              ToolIOFile object. VCF file.
     
     Mandatory parameters:
     ---------------------

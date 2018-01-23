@@ -133,8 +133,6 @@ rule sortbam:
         sms = SamtoolsSort(camel)
         SnakemakeUtils.add_pickle_input(sms,"BAM",input.BAM)
         step = SnakeStep(rule, sms, camel, params.working_dir, config)
-        if 'bam_output' in config:
-            sms.update_parameters(output_filename=config['bam_output'])
         step.run_step()
         SnakemakeUtils.dump_tool_output(sms, "BAM", output.BAM)
 
@@ -330,6 +328,7 @@ rule printreads:
         BAM=os.path.join(working_dir, "indelrealigner/bam.io"),
         BQSR=os.path.join(working_dir, "basequalityrecalibration/txt.io"),
         FASTA_REF=os.path.join(working_dir, "initial_input/fasta_reference_human.io"),
+        TXT_intervals = os.path.join(working_dir, "generate_intervals/bed.io"),
     output:
         BAM=os.path.join(working_dir, "printreads/bam.io"),
     threads: 5
@@ -341,6 +340,8 @@ rule printreads:
         SnakemakeUtils.add_pickle_inputs(gpr, input)
         step = SnakeStep(rule, gpr, camel, params.working_dir, config)
         gpr.update_parameters(threads=threads)
+        if 'bam_output' in config:
+            gpr.update_parameters(bam_output=config['bam_output'])
         step.run_step()
         SnakemakeUtils.dump_tool_output(gpr,"BAM",output.BAM)
 
