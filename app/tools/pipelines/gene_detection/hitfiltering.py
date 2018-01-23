@@ -3,7 +3,7 @@ import os
 from app.components.blast.blastformat7parser import BlastFormat7Parser
 from app.components.blasttyping.blasthitclustering import BlastHitClustering
 from app.components.blasttyping.blasthitfiltering import BlastHitFiltering
-from app.components.genedetection.blasthit import BlastHit
+from app.components.genedetection.genedetectionblasthit import GeneDetectionBlastHit
 from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from app.io.tooliofile import ToolIOFile
 from app.io.tooliovalue import ToolIOValue
@@ -42,7 +42,7 @@ class HitFiltering(Tool):
         :return: None
         """
         blast_output_data = BlastFormat7Parser.parse_output_file(self._tool_inputs['TSV'][0].path)
-        hits = [BlastHit.create_from_dict(output) for output in blast_output_data]
+        hits = [GeneDetectionBlastHit.create_from_dict(output) for output in blast_output_data]
         hits = BlastHitFiltering.filter_percent_identity(hits, float(self._parameters['min_percent_identity'].value))
         hits = BlastHitFiltering.filter_coverage(hits, float(self._parameters['min_coverage'].value))
         hits = sorted(HitFiltering.__get_best_hit_per_position(hits), key=lambda h: h.subject)

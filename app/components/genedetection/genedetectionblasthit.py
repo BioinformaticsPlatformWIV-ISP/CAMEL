@@ -4,7 +4,7 @@ from app.components.genedetection.genedetectionhit import GeneDetectionHit
 from app.components.html.htmltablecell import HtmlTableCell
 
 
-class BlastHit(GeneDetectionHit):
+class GeneDetectionBlastHit(GeneDetectionHit):
     """
     Gene detection hit detected by blast.
     """
@@ -47,9 +47,9 @@ class BlastHit(GeneDetectionHit):
         :return: Hit object
         """
         try:
-            return BlastHit(None, input_dict['sseqid'], float(input_dict['pident']), input_dict['slen'],
-                            input_dict['sseq'], input_dict['qseqid'], input_dict['qstart'], input_dict['qend'], None,
-                            None)
+            return GeneDetectionBlastHit(None, input_dict['sseqid'], float(input_dict['pident']), input_dict['slen'],
+                                         input_dict['sseq'], input_dict['qseqid'], input_dict['qstart'], input_dict['qend'], None,
+                                         None)
         except KeyError as err:
             raise ValueError("Cannot create hit from dictionary {} missing - {!r}".format(err, input_dict))
 
@@ -59,8 +59,8 @@ class BlastHit(GeneDetectionHit):
         :return: Table column names
         """
         if self._extra_column_name is None:
-            return BlastHit._TABLE_COLUMNS
-        columns = BlastHit._TABLE_COLUMNS.copy()
+            return GeneDetectionBlastHit._TABLE_COLUMNS
+        columns = GeneDetectionBlastHit._TABLE_COLUMNS.copy()
         columns.insert(-2, self._extra_column_name)
         return columns
 
@@ -70,8 +70,8 @@ class BlastHit(GeneDetectionHit):
         :return: HTML column names
         """
         if self._extra_column_name is None:
-            return BlastHit._HTML_COLUMNS
-        columns = BlastHit._HTML_COLUMNS.copy()
+            return GeneDetectionBlastHit._HTML_COLUMNS
+        columns = GeneDetectionBlastHit._HTML_COLUMNS.copy()
         columns.insert(-3, self._extra_column_name)
         return columns
 
