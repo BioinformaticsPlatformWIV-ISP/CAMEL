@@ -8,7 +8,6 @@ from app.command.command import Command
 from app.io.tooliofile import ToolIOFile
 from app.io.tooliovalue import ToolIOValue
 from app.pipeline.snakepipeline import SnakePipeline
-import time
 import datetime
 
 
