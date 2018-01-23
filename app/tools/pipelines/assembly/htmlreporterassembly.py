@@ -28,7 +28,7 @@ class HtmlReporterAssembly(Tool):
         :return: None
         """
         self._report_section = HtmlReportSection('Assembly')
-        self.__add_assembly_info(self._tool_inputs['ASSEMBLER'][0].value)
+        self.__add_assembly_info()
         self.__add_assembly_download_link()
         self._tool_outputs['VAL_HTML'] = [ToolIOValue(self._report_section, False)]
 
@@ -47,7 +47,7 @@ class HtmlReporterAssembly(Tool):
             raise InvalidInputSpecificationError("Quast informs are required")
         super()._check_input()
 
-    def __add_assembly_info(self, assembler):
+    def __add_assembly_info(self):
         """
         Adds the assembly info.
         :param assembler: Name of the assembler that was used.
@@ -55,7 +55,7 @@ class HtmlReporterAssembly(Tool):
         """
         quast_informs = self._input_informs['quast']
         table_data = [
-            ('Assembler:', assembler),
+            ('Assembler:', self._tool_inputs['ASSEMBLER'][0].value),
             ('N50:', quast_informs['contig'].get('N50', '-')),
             ('Number of contigs:', quast_informs['contig'].get('# contigs (>= 0 bp)', '-')),
             ('Number of contigs (>1000bp):', quast_informs['contig'].get('# contigs (>= 1000 bp)', '-')),
