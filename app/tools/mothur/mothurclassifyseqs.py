@@ -69,7 +69,7 @@ class MothurClassifySeqs(Mothur):
         method_extension = self.__get_method_extension()
         tax_extension = self.__get_tax_extension()
         self._tool_outputs['TSV_Taxonomy'] = [ToolIOFile(basename + tax_extension + method_extension + '.taxonomy')]
-        self._tool_outputs['TSV_TaxSummary'] = [ToolIOFile(basename + tax_extension + method_extension + '.tax.summary')]
+        self._tool_outputs['TSV_Summary'] = [ToolIOFile(basename + tax_extension + method_extension + '.tax.summary')]
 
     def __get_method_extension(self):
         """

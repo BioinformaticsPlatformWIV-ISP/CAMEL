@@ -137,7 +137,7 @@ class Mothur(Tool):
         :return: String with the prefix used in the output
         """
         infile = self._tool_inputs[input_key][0].basename
-        return self._folder + '/' + infile[:infile.rfind(suffix)]
+        return os.path.join(self._folder, infile[:infile.rfind(suffix)])
 
     def _get_extension(self, input_key='FASTA'):
         """

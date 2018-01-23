@@ -59,7 +59,7 @@ class MothurSummarySeqs(Mothur):
 
     def _execute_tool(self):
         """
-        Runs Prinseq
+        Runs Mothur summary.seqs
         :return: None
         """
         self._create_symlinks()
@@ -68,6 +68,7 @@ class MothurSummarySeqs(Mothur):
         self.__write_stats_to_file()
         self._symlink_cleanup()
         self._set_output()
+        self.__set_informs()
 
     def __write_stats_to_file(self):
         """
@@ -83,5 +84,29 @@ class MothurSummarySeqs(Mothur):
             if write_to_output is True:
                 output_file.write(line + '\n')
             # The last line of the stats starts with a '#' (i.e. # of Seqs...)
-            if line.startswith('#'):
+            if line.strip() == '' and write_to_output is True:
                 break
+
+    def __set_informs(self):
+        """
+        Adds the summary statistics to the informs.
+        :return: None
+        """
+        columns = ['Description', 'Start', 'End', 'NBases', 'Ambigs', 'Polymer', 'NumSeqs']
+        with open(self._get_basename() + '.stats', 'rt', encoding='utf-8') as statsfile:
+            for line in statsfile:
+                if not line.startswith('\t\t'):
+                    line_informs = line.strip().split('\t')
+                    category = line_informs[0].strip()
+                    if category in {'Minimum:', '2.5%-tile:', '25%-tile:', 'Median:', '75%-tile:', '97.5%-tile:', 'Maximum:'}:
+                        self._informs[category[:-1]] = {}
+                        for i in range(1, len(line_informs)):
+                            self._informs[category[:-1]][columns[i]] = int(line_informs[i])
+                    elif category == 'Mean:':
+                        self._informs[category[:-1]] = {}
+                        for i in range(1, len(line_informs)):
+                            self._informs[category[:-1]][columns[i]] = float(line_informs[i])
+                    elif category.lower().startswith('# of unique'):
+                        self._informs['unique'] = int(line_informs[1])
+                    elif category.lower().startswith('# of seqs') or category.lower().startswith('total # of seqs'):
+                        self._informs['total'] = int(line_informs[1])

@@ -1,28 +1,43 @@
-.green {
-    background-color: #6EBE50;
+body {
+    max-width: 960px;
+    min-width: 640px;
 }
 
-.lightgreen {
-    background-color: #BEDCBE;
-}
-.red {
-    background-color: #ff8080;
-}
-
-.grey {
-    background-color: #bfbfbf;
-}
-
-.yellow {
-    background-color: #f4d142;
+div.header {
+    background-color: #eaeaea;
+    border: 1px solid #000000;
+    margin:0;
+    padding: 0.5em;
+    font-size: 200%;
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: bold;
+    border-radius: 4px;
 }
 
-.top_header {
-    text-align: center;
+div.sub_header {
+    background-color: #eaeaea;
+    border: 1px solid #000000;
+    padding: 0.25em 0.25em 0.25em 0.8em;
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: bold;
+    border-radius: 4px;
 }
 
-.analysis_info {
-    padding-bottom: 16px;
+div.report_section {
+    border-bottom:1px solid #dfdfdf;
+    font-family: Arial, Helvetica, sans-serif;
+    padding: 0.3em 1em 1em;
+}
+
+#header_logo {
+    vertical-align: middle;
+    clear: right;
+    display: inline-block;
+    margin-right: 16px;
+}
+
+table.information tr > td:first-child {
+    font-weight: bold;
 }
 
 .alert-box {
@@ -53,16 +68,30 @@
     size:2
 }
 
-hr {
-  margin-top: 20px;
-  margin-bottom: 20px;
-  border: 0;
-  border-top: 1px solid #eee;
+/* Background colors */
+.green {
+    background-color: #6EBE50;
 }
 
-.text-center {
-    text-align: center
+.lightgreen {
+    background-color: #BEDCBE;
 }
+.red {
+    background-color: #ff8080;
+}
+
+.grey {
+    background-color: #bfbfbf;
+}
+
+.yellow {
+    background-color: #f4d142;
+}
+
+.orange {
+    background-color: #ffa839;
+}
+
 
 /* Global table settings */
 table {
@@ -70,24 +99,11 @@ table {
 }
 
 td {
-    padding: 4px 8px;
+    padding: 4px 4px;
 }
 
 th {
-    padding: 4px 8px;
-}
-
-/* Table for displaying information in key-value format */
-table.information {
-    border: 1px solid white;
-}
-
-table.information td {
-    border: 1px solid white;
-}
-
-table.information tr > td:first-child {
-    font-weight: bold;
+    padding: 4px 4px;
 }
 
 /* Table for displaying data */

@@ -3,10 +3,10 @@
 import os
 
 from app.camel import Camel
-from app.components.html.htmlhelper import HtmlHelper
+from app.components.html.htmlreport import HtmlReport
 from app.io.tooliodirectory import ToolIODirectory
 from app.io.tooliofile import ToolIOFile
-from app.pipeline.pipeline import Pipeline
+from app.pipeline.yamlpipeline import YAMLPipeline
 from config import DB_CONFIG, LOGGING_CONFIG
 from resources import CSS_STYLE, YAML_RES_CHAR_FAST
 
@@ -20,7 +20,7 @@ camel = Camel(DB_CONFIG, LOGGING_CONFIG)
 # - db_pipeline_parameters: If True, the pipeline parameters will be loaded from the database
 # - db_logging: If True, the initial pipeline input, the step outputs and the job parameters will be logged in the
 #               database.
-pipeline = Pipeline([YAML_RES_CHAR_FAST], camel, True, False)
+pipeline = YAMLPipeline([YAML_RES_CHAR_FAST], camel, True, False)
 
 # The pipeline steps can be checked by using the pipeline.steps property
 print("Pipeline steps:")
@@ -31,9 +31,9 @@ for step in pipeline.steps:
 report_path = '/data/temp/bebog/report_reschar.html'
 if os.path.isfile(report_path):
     os.remove(report_path)
-report = HtmlHelper(report_path)
+report = HtmlReport(report_path)
 report.initialize('Resistance Characterization Pipeline', CSS_STYLE)
-report.close()
+report.save()
 report_file = ToolIOFile(report_path)
 report_dir = ToolIODirectory(os.path.dirname(report_path))
 
