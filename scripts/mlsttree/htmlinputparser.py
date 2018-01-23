@@ -15,7 +15,7 @@ def __get_scheme_dir(html_file, html_name):
     st_dir = os.path.join(files_dir, 'sequence_typing')
     if not os.path.isdir(st_dir):
         raise ValueError("Input file '{}' is not a valid sequence typing output".format(html_name))
-    if 0 >= len(os.listdir(st_dir)) > 1:
+    if len(os.listdir(st_dir)) != 1:
         raise ValueError("Multiple sequence typing outputs found")
     return os.path.join(st_dir, os.listdir(st_dir)[0])
 
@@ -40,19 +40,22 @@ def __parse_st_output(scheme_dir):
     Parses the sequence typing output file.
     :return: Allele ids
     """
-    tabular_file = [os.path.join(scheme_dir, x) for x in os.listdir(scheme_dir) if x.endswith('.tsv')][0]
+    try:
+        tabular_file = [os.path.join(scheme_dir, x) for x in os.listdir(scheme_dir) if x.endswith('.tsv')][0]
+    except IndexError:
+        raise FileNotFoundError("No tabular output file found")
     with open(tabular_file) as handle:
         header = handle.readline()
-        if not header.split('\t')[0] == 'Locus' and header.split('\t')[1] == 'Allele':
-            raise ValueError("Invalid tabular file: {}".format(tabular_file))
+        if header.split('\t')[0] != 'Locus' or header.split('\t')[1] != 'Allele':
+            raise ValueError("Invalid format in tabular file: {}".format(tabular_file))
         allele_ids = [(line.split('\t')[0], line.split('\t')[1]) for line in handle.readlines()]
         logging.info('Nb. of alleles: {}'.format(len(allele_ids)))
         return allele_ids
 
 
-def parse(html_input):
+def parse_all(html_input):
     """
-    Parses the HTML input.
+    Parses all HTML input files that were provided trough the command line arguments.
     :return: Allele ids
     """
     allele_ids = {}

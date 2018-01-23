@@ -103,7 +103,7 @@ def render(camel, tree_file, output):
     """
     Renders the tree to image.
     :param camel: Camel instance
-    :param tree_file: Tree
+    :param tree_file: Tree file in Newick format
     :param output: Image output
     :return: None
     """

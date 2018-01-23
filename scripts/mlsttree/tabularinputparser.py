@@ -6,22 +6,22 @@ import os
 def __parse_tabular_output(output_file, file_name):
     """
     Parses a tabular output file.
-    :param output_file: Output file
-    :param file_name: Output file name
+    :param output_file: Output file data file
+    :param file_name: Output file display name in Galaxy
     :return: Allele ids
     """
     with open(output_file) as handle:
         header = handle.readline()
-        if not header.split('\t')[0] == 'Locus' and header.split('\t')[1] == 'Allele':
+        if header.split('\t')[0] != 'Locus' or header.split('\t')[1] != 'Allele':
             raise ValueError("Invalid tabular file: {}".format(file_name))
         allele_ids = [(line.split('\t')[0], line.split('\t')[1]) for line in handle.readlines()]
         logging.info('Nb. of alleles: {}'.format(len(allele_ids)))
         return allele_ids
 
 
-def parse(tabular_input):
+def parse_all(tabular_input):
     """
-    Parses the tabular input.
+    Parses all tabular input files that were provided trough the command line arguments.
     :param tabular_input: Tabular input
     :return: Allele ids
     """

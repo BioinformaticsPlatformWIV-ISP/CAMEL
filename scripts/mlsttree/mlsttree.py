@@ -23,9 +23,9 @@ if __name__ == '__main__':
     args = _parse_arguments()
     allele_ids = {}
     if args.input_html:
-        allele_ids = htmlinputparser.parse(args.input_html)
+        allele_ids = htmlinputparser.parse_all(args.input_html)
     elif args.input_tab:
-        allele_ids = tabularinputparser.parse(args.input_tab)
+        allele_ids = tabularinputparser.parse_all(args.input_tab)
     if len(allele_ids) < 3:
         raise ValueError("At least 3 samples are required")
 
