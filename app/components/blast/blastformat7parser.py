@@ -54,13 +54,13 @@ class BlastFormat7Parser(object):
     }
 
     @staticmethod
-    def __is_valid_blast_output(content):
+    def __is_valid_blast_output(lines_blast_output):
         """
         Checks if the output is valid Blastn / Blastx output.
-        :param content: Content
+        :param lines_blast_output: Lines from the Blastn / Blastx output file.
         :return: True if valid
         """
-        if re.match(r'# BLAST[NX] \d+\.\d+\.\d+\+', content[0].strip()) is None:
+        if re.match(r'# BLAST[NX] \d+\.\d+\.\d+\+', lines_blast_output[0].strip()) is None:
             return False
         return True
 

@@ -6,6 +6,9 @@ from app.components.blasttyping.cluster import Cluster
 class BlastHitClustering(object):
     """
     Class that clusters overlapping BlastHit objects.
+    Hits are considered overlapping if:
+    - They are located on the same contig
+    - They have at least one base overlap
     """
 
     @staticmethod

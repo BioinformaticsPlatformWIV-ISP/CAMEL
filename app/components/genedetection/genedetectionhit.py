@@ -62,7 +62,7 @@ class GeneDetectionHit(ABC):
     @abc.abstractmethod
     def to_html_row(self, report_section, sub_directory):
         """
-        Returns the hit as a row in a table.
+        Returns the hit as a row in a HTML table.
         :param report_section: Section is passed to save the alignments
         :param sub_directory: Subdirectory to save the alignments
         :return: Table row
