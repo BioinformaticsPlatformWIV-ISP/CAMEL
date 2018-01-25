@@ -1,6 +1,7 @@
 import argparse
 import logging
 import os
+import sys
 import subprocess
 import time
 import yaml
@@ -19,7 +20,7 @@ class ListeriaMain(object):
     SNAKE_FILE = os.path.join(os.path.dirname(__file__), 'pipeline_listeria.snakefile')
     LOG_IO = False
     THREADS = 8
-    DEBUG = True
+    DEBUG = False
     DEBUG_DIR_ROOT = '/scratch/qiafu/listeria_pipeline/Galaxy_runs/'
 
     @staticmethod
@@ -135,6 +136,13 @@ class ListeriaMain(object):
             config_file_path = os.path.join(self._args.working_dir, 'snake_conf.yml')
             self.__create_config_file(config_file_path)
 
+        # Output configuration file
+        with open(config_file_path, 'r') as cfg:
+            print("-- Running configuration:")
+            print(cfg.read())
+            print("-- End of  configuration")
+        sys.stdout.flush()
+
         return config_file_path
 
     def __create_config_file(self, path):
@@ -152,22 +160,19 @@ class ListeriaMain(object):
             yaml.dump({'working_dir': self._args.working_dir}, handle, default_flow_style=False)
             yaml.dump({'sample_name': self._sample_name}, handle, default_flow_style=False)
             yaml.dump({'assembler': self._args.assembler}, handle, default_flow_style=False)
-            # TODO re-enable normal method
-            # yaml.dump({'detection_method': self._args.analysis_type}, handle, default_flow_style=False)
-            yaml.dump({'detection_method': 'fast'}, handle, default_flow_style=False)
+            yaml.dump({'detection_method': self._args.analysis_type}, handle, default_flow_style=False)
             yaml.dump({'fastq_pe': self._fastq_input}, handle, default_flow_style=False)
 
             # Gene detection
-            gene_detection = {}
+            gene_detection_dbs = []
             resistance_dbs = self.__get_resistance_db_config()
             if len(resistance_dbs) > 0:
-                gene_detection['resistance_characterization'] = resistance_dbs
+                gene_detection_dbs = resistance_dbs
             if self._args.virulencefinder:
-                gene_detection['virulence_detection'] = ['VirulenceFinder']
+                gene_detection_dbs += 'VirulenceFinder'
             if self._args.plasmidfinder:
-                gene_detection['plasmid_replicon_detection'] = ['Gram_positive']
-            if len(gene_detection) > 0:
-                yaml.dump({'gene_detection': gene_detection}, handle, default_flow_style=False)
+                gene_detection_dbs += 'Gram_positive'
+            yaml.dump({'gene_detection': gene_detection_dbs}, handle, default_flow_style=False)
 
             # Sequence typing
             sequence_typing_dbs = []
@@ -185,8 +190,7 @@ class ListeriaMain(object):
                 sequence_typing_dbs.append('antibiotic_resistance')
             if self._args.pubmlst_metal:
                 sequence_typing_dbs.append('metal_detergent_resistance')
-            if len(sequence_typing_dbs) > 0:
-                yaml.dump({'sequence_typing': sequence_typing_dbs}, handle, default_flow_style=False)
+            yaml.dump({'sequence_typing': sequence_typing_dbs}, handle, default_flow_style=False)
 
             # Kraken databaxse
             yaml.dump({'db_kraken': self._args.kraken_db}, handle, default_flow_style=False)
