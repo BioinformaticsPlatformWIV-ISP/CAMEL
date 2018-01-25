@@ -14,22 +14,22 @@ class GATKAnalyzeCovariates(GATK):
     
     Required inputs:
     ----------------
-    'TXT_TABLE_BEFORE': Base quality score recalibration table on original data. GATK text format.
-    'TXT_TABLE_AFTER':  Base quality score recalibration table on recalibrated data. GATK text format.
-    'FASTA_REF':        FASTA file containing the reference genome. If not specified, db default is used.
+    'TXT_TABLE_BEFORE': ToolIOFile object. Base quality score recalibration table on original data. GATK text format.
+    'TXT_TABLE_AFTER':  ToolIOFile object. Base quality score recalibration table on recalibrated data. GATK text format.
+    'FASTA_REF':        ToolIOFile object. FASTA file containing the reference genome. 
     
     Optional input:
     ---------------
-    'BQSR':             Base quality score recalibration table on extra data. GATK text format.
+    'BQSR':             ToolIOFile object. Base quality score recalibration table on extra data. GATK text format.
     
     Output:
     -------
-    'PDF':              pdf document with graphs of recalibration.
-    'CSV':              csv with recalibration covariates data used for generating the pdf output. 
+    'PDF':              ToolIOFile object. pdf document with graphs of recalibration.
+    'CSV':              ToolIOFile object. csv with recalibration covariates data used for generating the pdf output. 
     
     Mandatory parameters:
     ---------------------
-    - pdf_output       Default value: 'recal_QC_plots.pdf'
+    - pdf_output       pdf output file name. Default value: 'recal_QC_plots.pdf'
     """
 
     def __init__(self, camel):

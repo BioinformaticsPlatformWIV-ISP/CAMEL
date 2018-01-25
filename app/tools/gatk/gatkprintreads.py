@@ -6,7 +6,30 @@ from app.tools.gatk.gatk import GATK
 
 class GATKPrintReads(GATK):
     """
-    Class for the GATK PrintReads tool.
+    ==========================
+    GATK PrintReads 3.7
+    ==========================
+    Print reads from a SAM/BAM/CRAM file. 
+    Example: apply recalibration table to BAM file.
+    https://software.broadinstitute.org/gatk/documentation/tooldocs/4.beta.4/org_broadinstitute_hellbender_tools_PrintReads.php
+    
+    Required inputs:
+    ----------------
+    'BAM':              ToolIOFile object. Input BAM file.
+    'FASTA_REF':        ToolIOFile object. FASTA file containing the reference genome.
+    
+    Optional inputs:
+    ---------------- 
+    'BQSR':             ToolIOFile object. BQSR file from base quality recalibration step to apply to input BAM.
+    "TXT_intervals":    ToolIOFile object. Intervals list to restrict breadth and accelerate analysis. Bed or GATK intervals list.
+    
+    Output:
+    -------
+    'TXT_RecalibrationTable': ToolIOFile object. Text file containing recalibration data.
+    
+    Parameters:
+    ----------
+    - bam_output       Output BAM file name. Default value: 'recalibrated.bam'       
     """
 
     def __init__(self, camel):
@@ -18,7 +41,7 @@ class GATKPrintReads(GATK):
         super(GATKPrintReads, self).__init__('gatk PrintReads', '3.7', camel)
 
         self._function_name = 'PrintReads'
-        self._required_inputs = ['BAM', 'BQSR', 'FASTA_REF']
+        self._required_inputs = ['BAM', 'FASTA_REF']
 
     def _set_input(self):
         """
@@ -26,12 +49,16 @@ class GATKPrintReads(GATK):
         Overrides method in parent class
         :return: None
         """
-
         # set input BAM
         self._input_string += "-I {} ".format(self._tool_inputs['BAM'][0].path)
 
         # set input recalibration table
-        self._input_string += "-BQSR {} ".format(self._tool_inputs['BQSR'][0].path)
+        if 'BQSR' in self._tool_inputs:
+            self._input_string += "-BQSR {} ".format(self._tool_inputs['BQSR'][0].path)
+
+        # Intervals
+        if 'TXT_intervals' in self._tool_inputs:
+            self._input_string += "-L {} ".format(self._tool_inputs['TXT_intervals'][0].path)
 
         # set reference genome
         self._input_string += "-R {} ".format(self._tool_inputs['FASTA_REF'][0].path)
