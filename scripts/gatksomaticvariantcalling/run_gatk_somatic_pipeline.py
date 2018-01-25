@@ -18,9 +18,7 @@ class GATKSomaticMain(object):
     Generates a config yml file based on CL arguments and runs the pipeline.
     """
     DB_LOGGING = True
-    # DEBUG = True
     SNAKEFILE = os.path.join(os.path.dirname(__file__), 'gatk_somatic_steps.snakefile')
-    # FROM_GALAXY = False
     CORES = 5
 
     def __init__(self):
@@ -38,8 +36,7 @@ class GATKSomaticMain(object):
         # set galaxy dump directory in case of failure
         with open(MAIN_CONFIG) as f:
             config = yaml.safe_load(f)
-            self._galaxy_dump_dir = os.paht.join(config["galaxy"]["dump_dir"], "GATK_somatic_calling")
-
+            self._galaxy_dump_dir = os.path.join(config["galaxy"]["dump_dir"], "GATK_somatic_calling")
 
     def __parse_command_line(self):
         """
@@ -85,7 +82,6 @@ class GATKSomaticMain(object):
 
         # gap_events_threshold (MuTect)
         ap.add_argument('--strand_artifact_lod', dest='strand_artifact_lod', help='Log-odds ratio for strand bias. Default MuTect: 2.0; disable: -99999')
-
 
         # run from galaxy flag
         ap.add_argument('--from_galaxy', dest='from_galaxy', help='Indicates that the command is run from galaxy. Useful for logging stderr.', action='store_true')
@@ -184,13 +180,13 @@ class GATKSomaticMain(object):
             self._pipeline.set_initial_input(input_dict)
 
         # Execute the snakemake workflow and log stdout and stderr if command fails (if pipeline is run from galaxy).
-        to_execute = 'snakemake --configfile {} --snakefile {} --cores {}'.format(self.runtime_config_name, self.SNAKEFILE, self.CORES)
+        to_execute = 'snakemake --configfile {} --snakefile {} --cores {} pouetpouet'.format(self.runtime_config_name, self.SNAKEFILE, self.CORES)
         command = Command(to_execute)
         command.run_command(self._args.work_dir, subprocess.STDOUT)
         if command.returncode != 0 and self._args.from_galaxy:
-            with open(os.path.join(self._galaxy_dump_dir, "{}_Stdout".format(self._args.job_id), "w")) as file_out:
+            with open(os.path.join(self._galaxy_dump_dir, "{}_Stdout".format(self._args.job_id)), "w") as file_out:
                 file_out.write(command.stdout)
-            with open(os.path.join(self._galaxy_dump_dir, "{}_Stderr".format(self._args.job_id), "w")) as file_out:
+            with open(os.path.join(self._galaxy_dump_dir, "{}_Stderr".format(self._args.job_id)), "w") as file_out:
                 file_out.write(command.stderr)
             raise RuntimeError(
                 "Error executing Snakemake. Check log ('{}') for more information.".format(os.path.join(self._galaxy_dump_dir, "{}_Stderr".format(
