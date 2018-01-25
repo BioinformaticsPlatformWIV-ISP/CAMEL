@@ -180,7 +180,7 @@ class GATKSomaticMain(object):
             self._pipeline.set_initial_input(input_dict)
 
         # Execute the snakemake workflow and log stdout and stderr if command fails (if pipeline is run from galaxy).
-        to_execute = 'snakemake --configfile {} --snakefile {} --cores {} pouetpouet'.format(self.runtime_config_name, self.SNAKEFILE, self.CORES)
+        to_execute = 'snakemake --configfile {} --snakefile {} --cores {}'.format(self.runtime_config_name, self.SNAKEFILE, self.CORES)
         command = Command(to_execute)
         command.run_command(self._args.work_dir, subprocess.STDOUT)
         if command.returncode != 0 and self._args.from_galaxy:
