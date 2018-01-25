@@ -58,8 +58,8 @@ rule combine_reports:
 #        os.path.join(__WORKING_DIR, 'contamination_check', 'html.io'),
         os.path.join(__WORKING_DIR, 'report_assembly', 'html.io'),
 #        os.path.join(__WORKING_DIR, 'report_quality_checks', 'html.io'),
-#        os.path.join(__WORKING_DIR, 'report_gene_detection', 'html.io') if 'gene_detection' in config else [],
-#        os.path.join(__WORKING_DIR, 'report_sequence_typing', 'html.io') if 'sequence_typing' in config else [],
+        os.path.join(__WORKING_DIR, 'report_gene_detection', 'html.io') if len(config['gene_detection']) != 0 else [],
+        os.path.join(__WORKING_DIR, 'report_sequence_typing', 'html.io') if len(config['sequence_typing']) != 0 else [],
     params:
         output_dir = config['output_dir'],
         version = __PIPELINE_VERSION,
@@ -88,5 +88,6 @@ onsuccess:
 
 onerror:
     print("ONERROR: pipeline fails to finish. log file {!r}".format(log))
-    # shutil.copy(log, os.path.join(config.get('output_dir'), 'snake_error.log'))
-    # shutil.copy(os.path.join(os.getcwd(), 'camel.log'), os.path.join(config.get('output_dir'), 'snake_camel.log'))
+    GALAXY_ERROR_LOG_DIR = '/scratch/qiafu/listeria_pipeline/Galaxy_runs'
+    shutil.copy(log, os.path.join(GALAXY_ERROR_LOG_DIR, os.path.basename(log)))
+    shutil.copy(os.path.join(os.getcwd(), 'camel.log'), os.path.join(GALAXY_ERROR_LOG_DIR, os.path.basename(log)+'_camel.log'))
