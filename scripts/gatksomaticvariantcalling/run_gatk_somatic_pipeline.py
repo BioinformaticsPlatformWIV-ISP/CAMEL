@@ -9,6 +9,7 @@ from app.io.tooliofile import ToolIOFile
 from app.io.tooliovalue import ToolIOValue
 from app.pipeline.snakepipeline import SnakePipeline
 import datetime
+from config import MAIN_CONFIG
 
 
 class GATKSomaticMain(object):
@@ -33,6 +34,12 @@ class GATKSomaticMain(object):
 
         # Name of config file generated at runtime for snakemake pipeline
         self.runtime_config_name = os.path.join(os.getcwd(), 'runtime_config.yaml')
+
+        # set galaxy dump directory in case of failure
+        with open(MAIN_CONFIG) as f:
+            config = yaml.safe_load(f)
+            self._galaxy_dump_dir = os.paht.join(config["galaxy"]["dump_dir"], "GATK_somatic_calling")
+
 
     def __parse_command_line(self):
         """
@@ -181,13 +188,13 @@ class GATKSomaticMain(object):
         command = Command(to_execute)
         command.run_command(self._args.work_dir, subprocess.STDOUT)
         if command.returncode != 0 and self._args.from_galaxy:
-            with open("/scratch/temp/galaxy_logs/{}_Stdout".format(self._args.job_id), "w") as file_out:
+            with open(os.path.join(self._galaxy_dump_dir, "{}_Stdout".format(self._args.job_id), "w")) as file_out:
                 file_out.write(command.stdout)
-            with open("/scratch/temp/galaxy_logs/{}_Stderr".format(self._args.job_id), "w") as file_out:
+            with open(os.path.join(self._galaxy_dump_dir, "{}_Stderr".format(self._args.job_id), "w")) as file_out:
                 file_out.write(command.stderr)
             raise RuntimeError(
-                "Error executing Snakemake. Check log ('/scratch/temp/galaxy_logs/{}_Stderr') for more information.".format(
-                    self._args.job_id))
+                "Error executing Snakemake. Check log ('{}') for more information.".format(os.path.join(self._galaxy_dump_dir, "{}_Stderr".format(
+                    self._args.job_id))))
 
 
 if __name__ == '__main__':
