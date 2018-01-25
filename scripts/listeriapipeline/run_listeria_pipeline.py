@@ -169,9 +169,9 @@ class ListeriaMain(object):
             if len(resistance_dbs) > 0:
                 gene_detection_dbs = resistance_dbs
             if self._args.virulencefinder:
-                gene_detection_dbs += 'VirulenceFinder'
+                gene_detection_dbs.append('VirulenceFinder')
             if self._args.plasmidfinder:
-                gene_detection_dbs += 'Gram_positive'
+                gene_detection_dbs.append('Gram_positive')
             yaml.dump({'gene_detection': gene_detection_dbs}, handle, default_flow_style=False)
 
             # Sequence typing
