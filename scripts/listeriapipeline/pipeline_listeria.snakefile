@@ -55,9 +55,9 @@ rule combine_reports:
     input:
         config.get('report'),
         os.path.join(__WORKING_DIR, 'report_read_trimming', 'html.io'),
-#        os.path.join(__WORKING_DIR, 'contamination_check', 'html.io'),
+        os.path.join(__WORKING_DIR, 'contamination_check', 'html.io'),
         os.path.join(__WORKING_DIR, 'report_assembly', 'html.io'),
-#        os.path.join(__WORKING_DIR, 'report_quality_checks', 'html.io'),
+        os.path.join(__WORKING_DIR, 'report_quality_checks', 'html.io'),
         os.path.join(__WORKING_DIR, 'report_gene_detection', 'html.io') if len(config['gene_detection']) != 0 else [],
         os.path.join(__WORKING_DIR, 'report_sequence_typing', 'html.io') if len(config['sequence_typing']) != 0 else [],
     params:
