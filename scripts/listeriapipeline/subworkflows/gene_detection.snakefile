@@ -1,6 +1,5 @@
-from app.components.html.htmlreportsection import HtmlReportSection
 from app.components.html.htmlelement import HtmlElement
-
+from app.components.html.htmlreportsection import HtmlReportSection
 
 class GeneDatabase(object):
 
@@ -54,6 +53,13 @@ DATABASES = {
     ]
 }
 
+def get_db_keys(db_group):
+    """
+    Returns the database keys for the databases belong to a db group.
+    :param db_group: The database group defined in DATABASES (e.g. 'resistance')
+    :return: Database keys
+    """
+    return [d.name for d in DATABASES[db_group] if d.name in config['gene_detection']]
 
 def get_database(name):
     """
@@ -66,6 +72,7 @@ def get_database(name):
             if db.name == name:
                 return db
     raise ValueError("Database '{}' not found".format(name))
+
 
 
 rule database_manager:
@@ -135,7 +142,7 @@ rule hit_filtering:
         INFORMS_db_info = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'database_manager', 'informs.io')
     output:
         VAL_Hits = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'hit_filtering', 'blast-hits.io'),
-        TSV = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'tsv-filtered.io')
+        TSV = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'hit_filtering', 'tsv-filtered.io')
     params:
         running_dir = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'hit_filtering'),
         percent_identity = lambda wildcards: get_database(wildcards.db).pi_threshold,
@@ -252,7 +259,7 @@ rule srst2_hit_extraction:
         INFORMS_mapping = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'clustered', 'mapping.io')
     output:
         VAL_Hits = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'srst2', 'srst2-hits.io'),
-        TSV = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'tsv-srst2.io')
+        TSV = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'srst2', 'tsv-srst2.io')
     params:
         running_dir = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'srst2'),
         output_filename = lambda wildcards: os.path.join(__WORKING_DIR, 'gene_detection', wildcards.db, 'hits-{}-{}.tsv'.format(
@@ -276,9 +283,9 @@ rule gene_detection_get_hits:
             'detection_method'] == 'fast' else [],
         hits_srst2 = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'srst2', 'srst2-hits.io') if config[
             'detection_method'] == 'normal' else [],
-        tsv_blast = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'tsv-filtered.io') if config[
+        tsv_blast = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'hit_filtering', 'tsv-filtered.io') if config[
             'detection_method'] == 'fast' else [],
-        tsv_srst2 = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'tsv-srst2.io') if config[
+        tsv_srst2 = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'srst2', 'tsv-srst2.io') if config[
             'detection_method'] == 'normal' else []
     output:
         VAL_Hits = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'selected-hits.io'),
@@ -302,9 +309,9 @@ rule report_gene_detection:
         INFORMS_db_info = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'database_manager', 'informs.io'),
         TSV = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'selected-tsv.io')
     output:
-        VAL_HTML = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report_gene_detection', 'html.io')
+        VAL_HTML = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report', 'html.io')
     params:
-        running_dir = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report_gene_detection'),
+        running_dir = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report'),
         sample_name = config['sample_name']
     run:
         from app.tools.pipelines.gene_detection.htmlreportergenedetection import HtmlReporterGeneDetection
@@ -320,16 +327,13 @@ rule combine_gene_detection_reports:
     Combines the reports from the different databases.
     """
     input:
-        HTML_Res = expand(os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report_gene_detection', 'html.io'), db=[
-                          d.name for d in DATABASES['resistance'] if d.name in config['gene_detection']]),
-        HTML_Vir = expand(os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report_gene_detection', 'html.io'), db=[
-                          d.name for d in DATABASES['virulence'] if d.name in config['gene_detection']]),
-        HTML_Pla = expand(os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report_gene_detection', 'html.io'), db=[
-                          d.name for d in DATABASES['plasmid'] if d.name in config['gene_detection']]),
+        HTML_Res = expand(os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report', 'html.io'), db=get_db_keys('resistance')),
+        HTML_Vir = expand(os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report', 'html.io'), db=get_db_keys('virulence')),
+        HTML_Pla = expand(os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report', 'html.io'), db=get_db_keys('plasmid'))
     output:
         os.path.join(__WORKING_DIR, 'report_gene_detection', 'html.io')
     params:
-        running_dir = os.path.join(__WORKING_DIR, 'gene_detection', 'report_gene_detection'),
+        running_dir = os.path.join(__WORKING_DIR, 'gene_detection', 'report'),
         output_dir = config['output_dir']
     run:
         gene_detection_module = HtmlElement('div')
