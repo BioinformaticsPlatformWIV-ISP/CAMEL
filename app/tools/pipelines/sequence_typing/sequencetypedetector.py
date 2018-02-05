@@ -1,12 +1,15 @@
 import logging
 
-from app.components.filesystemhelper import FileSystemHelper
-from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+import collections
+
 from app.tools.tool import Tool
+from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+
+
+STProfile = collections.namedtuple('STProfile', 'name alleles metadata')
 
 
 class SequenceTypeDetector(Tool):
-
     """
     Tool that manages MLST schemes. Also reports scheme metadata information in the informs.
     """
@@ -20,34 +23,22 @@ class SequenceTypeDetector(Tool):
         :return: None
         """
         super(SequenceTypeDetector, self).__init__('Typing: Sequence Type Detector', '0.1', camel)
+        self._wildcards = None
+        self._symbol_allele_absent = None
+        self._metadata_columns = []
 
     def _execute_tool(self):
         """
         Executes this tool.
         :return: None
         """
-        # Get the sequence type
-        profiles_file = self._tool_inputs['TSV'][0]
+        profiles_file = self._tool_inputs['TSV'][0].path
         allele_ids = {h.value.locus: h.value.allele_id for h in self._tool_inputs['VAL_Hits']}
-        sequence_type = self.__get_sequence_type(profiles_file, allele_ids)
-        self._informs['sequence_type'] = sequence_type
-        logging.info("Detected sequence type: {}".format(sequence_type))
-
-        # Retrieve metadata
-        column_indices = self.__get_metadata_columns(profiles_file, allele_ids.keys())
-        if sequence_type != SequenceTypeDetector.SYMBOL_NO_ST:
-            line = self.__get_sequence_type_line(profiles_file, sequence_type, 0)
-            # Check for Neo type (which is not contained in profiles_file)
-            if line is not None:
-                line_parts = line.split('\t')
-                metadata = {column: line_parts[index].strip() for index, column in column_indices.items()}
-                logging.info("Metadata for sequence type: {!r}".format(metadata))
-            else:
-                metadata = {column: '-' for index, column in column_indices.items()}
-                logging.info("Neo typing found for sequence type: {!r}".format(metadata))
-        else:
-            metadata = {column: '-' for index, column in column_indices.items()}
-        self._informs['metadata'] = metadata
+        profiles = self.__parse_profiles(profiles_file, allele_ids.keys())
+        sequence_type = self.__get_sequence_type(profiles, allele_ids)
+        self._informs['sequence_type'] = sequence_type if sequence_type is not None else STProfile(
+            SequenceTypeDetector.SYMBOL_NO_ST, None, [(k, '-') for k, _ in self._metadata_columns])
+        logging.info("Detected sequence type: {}".format(self._informs['sequence_type'].name))
 
     def _check_input(self):
         """
@@ -60,78 +51,56 @@ class SequenceTypeDetector(Tool):
             raise InvalidInputSpecificationError("No hits input found")
         super(SequenceTypeDetector, self)._check_input()
 
-    @staticmethod
-    def __get_gene_indices(gene_names, profiles_file):
+    def __parse_profiles(self, profiles_file, gene_names):
         """
-        Returns the gene indices from the given MLST profiles file.
-        :param gene_names: Names of the genes
-        :param profiles_file: MLST profiles file
-        :return: Dictionary of gene name : index
+        Parses the sequence type profiles.
+        :param profiles_file: Profiles file
+        :return: List of profiles
         """
-        gene_indices = {}
-        with open(profiles_file.path) as profiles:
-            header = profiles.readline()
-            genes_in_header = [FileSystemHelper.make_valid(x) for x in header.strip().split('\t')]
-            for gene_name in gene_names:
-                try:
-                    gene_indices[gene_name] = genes_in_header.index(gene_name)
-                except ValueError:
-                    raise Exception("Gene {} not found in '{}'".format(gene_name, profiles_file))
-        return gene_indices
+        profiles = []
+        with open(profiles_file) as handle:
+            header = handle.readline().strip().split('\t')
+            gene_indices = {gene_name: header.index(gene_name) for gene_name in gene_names}
+            self._metadata_columns = [(p, header.index(p)) for p in header if p not in gene_names]
+            for line in handle.readlines():
+                parts = line.split('\t')
+                parts[-1] = parts[-1].strip()
+                alleles = {gene_name: parts[gene_indices[gene_name]] for gene_name in gene_names}
+                metadata = [(name, parts[i]) for name, i in self._metadata_columns]
+                profiles.append(STProfile(parts[0], alleles, metadata))
+        return profiles
 
-    def __get_sequence_type(self, profiles_file, gene_alleles):
+    def __alleles_match(self, detected_allele, profile_allele):
+        """
+        Checks whether two alleles match.
+        :param detected_allele: Detected allele
+        :param profile_allele: Allele from the ST profile
+        :return: True if the alleles match
+        """
+        if profile_allele == self._symbol_allele_absent:
+            return detected_allele == '-'
+        elif profile_allele in self._wildcards:
+            return True
+        return detected_allele == profile_allele
+
+    def __get_sequence_type(self, profiles, gene_alleles):
         """
         Returns the sequence type corresponding to the given gene alleles.
-        :param profiles_file: File containing the ST profiles
+        :param profiles: Sequence type profiles
         :param gene_alleles: Alleles for the genes.
         :return: Sequence type and metadata
         """
-        gene_indices = self.__get_gene_indices(list(gene_alleles.keys()), profiles_file)
-        with open(profiles_file.path) as profiles:
-            content = profiles.readlines()
-            for line in content[1:]:
-                match = True
-                for gene_name in gene_alleles:
-                    if match:
-                        st_allele_id = line.strip().split('\t')[gene_indices[gene_name]]
-                        detected_allele_id = gene_alleles[gene_name]
-                        if st_allele_id not in ('N', '0') and st_allele_id != detected_allele_id:
-                            match = False
-                            break
-                if match:
-                    return line.split('\t')[0]
-        return SequenceTypeDetector.SYMBOL_NO_ST
-
-    @staticmethod
-    def __get_sequence_type_line(scheme_file, sequence_type, index=0):
-        """
-        Returns the line corresponding to the given sequence type.
-        :param scheme_file: Scheme file
-        :param sequence_type: Sequence type
-        :param index: Index of the sequence type
-        :return: Line containing the sequence type
-        """
-        clean_sequence_type = sequence_type.replace('?', '').replace('*', '')
-        with open(scheme_file.path) as input_mlst:
-            lines = input_mlst.readlines()
-            for line in lines:
-                st = line.split('\t')[index]
-                if st == clean_sequence_type:
-                    return line
-
-    @staticmethod
-    def __get_metadata_columns(mlst_scheme_file, gene_names):
-        """
-        Returns the metadata columns from the profiles file.
-        :param mlst_scheme_file: Profiles file
-        :param gene_names: Names of the genes (are not included in metadata)
-        :return: Metadata columns
-        """
-        with open(mlst_scheme_file.path) as handle:
-            header = handle.readline().strip().split('\t')
-
-        metadata_columns = {}
-        for i in range(0, len(header)):
-            if header[i] not in gene_names:
-                metadata_columns[i] = header[i].strip().replace('_', ' ')
-        return metadata_columns
+        if 'allele_absent_symbol' in self._parameters:
+            self._symbol_allele_absent = self._parameters['allele_absent_symbol'].value
+        self._wildcards = self._parameters['allele_wildcard'].value.split(',')
+        logging.debug("Wildcards: [{}]¸ Symbol allele absent: {}".format(
+            ', '.join(self._wildcards), self._symbol_allele_absent))
+        for profile in profiles:
+            matched = True
+            for gene_name, allele in gene_alleles.items():
+                if not self.__alleles_match(allele, profile.alleles[gene_name]):
+                    matched = False
+                    break
+            if matched:
+                return profile
+        return None

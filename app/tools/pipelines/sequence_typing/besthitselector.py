@@ -1,4 +1,5 @@
 import logging
+<<<<<<< HEAD
 import re
 
 # from app.components.blast.blasthitparser import BlastHitParser
@@ -12,6 +13,21 @@ from app.tools.tool import Tool
 
 class BestHitSelector(Tool):
 
+=======
+
+import re
+
+from app.components.sequencetyping.sequencetypingblasthit import SequenceTypingBlastHit
+from app.tools.tool import Tool
+
+from app.components.blast.blastformat7parser import BlastFormat7Parser
+from app.components.blasttyping.blasthitfiltering import BlastHitFiltering
+from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from app.io.tooliovalue import ToolIOValue
+
+
+class BestHitSelector(Tool):
+>>>>>>> origin/bebog-sequence_typing
     """
     This tool selects the best hit from a tabular blast output.
     The blast output needs to be generated with the following outfmt option:
@@ -61,7 +77,12 @@ class BestHitSelector(Tool):
         :return: Blast hits
         """
         blast_output_data = BlastFormat7Parser.parse_output_file(self._tool_inputs['TSV'][0].path)
+<<<<<<< HEAD
         hits = [BlastHit.create_from_dict(output_dict, metadata.get('type')) for output_dict in blast_output_data]
+=======
+        hits = [SequenceTypingBlastHit.create_from_dict(output_dict, metadata.get('type')) for output_dict in
+                blast_output_data]
+>>>>>>> origin/bebog-sequence_typing
         logging.info("{} hits parsed".format(len(hits)))
         return hits
 
@@ -74,7 +95,12 @@ class BestHitSelector(Tool):
         """
         if len(hits) == 0:
             logging.info("No hit passed filtering")
+<<<<<<< HEAD
             detected_allele = BlastHit.generate_empty_hit(metadata.get('name'), self._input_informs['locus']['type'])
+=======
+            detected_allele = SequenceTypingBlastHit.generate_empty_hit(
+                metadata.get('name'), self._input_informs['locus']['type'])
+>>>>>>> origin/bebog-sequence_typing
         else:
             detected_allele = self.__select_best_hit(hits, metadata.get('name'), metadata.get('type'))
         if detected_allele.allele_id not in ('?', '-'):
@@ -95,9 +121,15 @@ class BestHitSelector(Tool):
         if len(best_hits) == 1:
             return best_hits[0]
         elif len(best_hits) > 1:
+<<<<<<< HEAD
             return BlastHit.generate_multi_hit(locus_name, locus_type)
         else:
             return BlastHit.generate_empty_hit(locus_name, locus_type)
+=======
+            return SequenceTypingBlastHit.generate_multi_hit(locus_name, locus_type)
+        else:
+            return SequenceTypingBlastHit.generate_empty_hit(locus_name, locus_type)
+>>>>>>> origin/bebog-sequence_typing
 
     def __get_allele_id(self, full_allele_name, regex):
         """
@@ -108,6 +140,7 @@ class BestHitSelector(Tool):
         """
         if regex is None:
             regex = self._parameters['default_allele_id_regex'].value
+<<<<<<< HEAD
         m = re.findall(BestHitSelector.__cleanup_regex(regex), full_allele_name)
         if not len(m) == 1:
             raise ValueError("Cannot determine allele identifier for '{}' (RE: {})".format(full_allele_name, regex))
@@ -125,3 +158,9 @@ class BestHitSelector(Tool):
         for char, repl in characters_to_replace:
             cleaned_regex = cleaned_regex.replace(char, repl)
         return cleaned_regex
+=======
+        m = re.findall(regex, full_allele_name)
+        if not len(m) == 1:
+            raise ValueError("Cannot determine allele identifier for '{}' (RE: {})".format(full_allele_name, regex))
+        return m[0]
+>>>>>>> origin/bebog-sequence_typing

@@ -1,21 +1,19 @@
 import abc
-from abc import ABC
-
-from app.components.html.htmltablecell import HtmlTableCell
 
 
-class GeneDetectionHit(ABC):
+class SequenceTypingHit(metaclass=abc.ABCMeta):
     """
-    This class represents a gene detection hit.
+    This class represents a sequence typing hit.
     """
 
-    def __init__(self, locus):
+    def __init__(self, locus, allele_id):
         """
         Initializes the typing hit.
         :param locus: Locus
+        :param allele_id: Allele id of the hit
         """
         self._locus = locus
-        self._accession = None
+        self._allele_id = allele_id
 
     @property
     def locus(self):
@@ -35,21 +33,21 @@ class GeneDetectionHit(ABC):
         self._locus = locus
 
     @property
-    def accession(self):
+    def allele_id(self):
         """
-        Returns the accession number of the hit.
-        :return: Accession number
+        Returns the allele id.
+        :return: Allele id
         """
-        return self._accession
+        return self._allele_id
 
-    @accession.setter
-    def accession(self, accession):
+    @allele_id.setter
+    def allele_id(self, allele_id):
         """
-        Sets the accession number of the hit.
-        :param accession: Accession
+        Sets the allele id.
+        :param allele_id: Allele id
         :return: None
         """
-        self._accession = accession
+        self._allele_id = allele_id
 
     @abc.abstractmethod
     def to_table_row(self):
@@ -60,11 +58,11 @@ class GeneDetectionHit(ABC):
         pass
 
     @abc.abstractmethod
-    def to_html_row(self, report_section, sub_directory):
+    def to_html_row(self, report_section, sub_dir=None):
         """
-        Returns the hit as a row in a HTML table.
+        Returns the hit as a row in a table.
         :param report_section: Section is passed to save the alignments
-        :param sub_directory: Subdirectory to save the alignments
+        :param sub_dir: Specific subdirectory of the base directory to store report files
         :return: Table row
         """
         pass
@@ -85,22 +83,10 @@ class GeneDetectionHit(ABC):
         """
         pass
 
-    @property
     @abc.abstractmethod
-    def color(self):
+    def is_perfect_hit(self):
         """
-        Color for the hit.
-        :return: Color
+        Returns true if this is a perfect hit.
+        :return: True if perfect
         """
         pass
-
-    def get_accession_cell(self):
-        """
-        Returns the table cell for the accession.
-        :return: Table cell.
-        """
-        if self._accession is None:
-            return '-'
-        else:
-            link = 'https://www.ncbi.nlm.nih.gov/nuccore/{}'.format(self._accession)
-            return HtmlTableCell(self._accession, self.color, link=link)

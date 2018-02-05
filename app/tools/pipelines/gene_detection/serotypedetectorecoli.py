@@ -3,9 +3,9 @@ from app.io.tooliovalue import ToolIOValue
 from app.tools.tool import Tool
 
 
-class SerotypeDetector(Tool):
+class SerotypeDetectorEcoli(Tool):
     """
-    This tool detects the serotype based on gene hits.
+    This tool detects the E. coli serotype based on gene hits.
     """
 
     def __init__(self, camel):

@@ -64,6 +64,9 @@ class HtmlReporterGeneDetection(Tool):
             raise InvalidInputSpecificationError("No database info found")
         if 'VAL_Hits' not in self._tool_inputs:
             logging.warning("No blast hits found")
+        if ('VAL_Hits' in self._tool_inputs) and (len(self._tool_inputs['VAL_Hits']) > 0) and \
+                ('TSV' not in self._tool_inputs):
+            raise InvalidInputSpecificationError("TSV input is required when hits were detected.")
         if 'SAMPLE_NAME' not in self._tool_inputs:
             raise InvalidInputSpecificationError("Sample name input is required")
         super(HtmlReporterGeneDetection, self)._check_input()

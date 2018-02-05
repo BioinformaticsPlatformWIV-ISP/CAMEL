@@ -1,7 +1,8 @@
 import logging
 
-from app.components.pubmlst.pubmlstparser import PubMLSTParser
 from app.tools.tool import Tool
+
+from app.components.pubmlst.pubmlstparser import PubMLSTParser
 
 
 class PubmlstMetadataExtractor(Tool):

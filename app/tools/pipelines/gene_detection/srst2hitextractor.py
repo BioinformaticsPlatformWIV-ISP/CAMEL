@@ -1,6 +1,6 @@
 import os
 
-from app.components.genedetection.srst2hit import SRST2Hit
+from app.components.genedetection.genedetectionsrst2hit import GeneDetectionSRST2Hit
 from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from app.io.tooliofile import ToolIOFile
 from app.io.tooliovalue import ToolIOValue
@@ -9,11 +9,11 @@ from app.tools.tool import Tool
 
 class SRST2HitExtractor(Tool):
     """
-    This tool extracts this from SRST2 output.
+    This tool extracts hits from SRST2 output.
 
     INPUT:
         - TSV: SRST2 output file
-        - Mapping: Mapping of sequence ids to the original headers
+        - mapping: Mapping of sequence ids to the original headers
         - db_info: Database information
 
     OUTPUT:
@@ -38,7 +38,7 @@ class SRST2HitExtractor(Tool):
             tsv_input = self._tool_inputs['TSV'][0].path
             with open(tsv_input) as handle:
                 for line in handle.readlines()[1:]:
-                    hits.append(SRST2Hit.create_from_srst2_output_line(
+                    hits.append(GeneDetectionSRST2Hit.create_from_srst2_output_line(
                         line, self._input_informs['mapping'], self._input_informs['db_info']['metadata']))
         self._tool_outputs['VAL_Hits'] = sorted([ToolIOValue(h) for h in hits], key=lambda v: v.value.locus)
         output_path = os.path.join(self._folder, self._parameters['output_filename'].value)

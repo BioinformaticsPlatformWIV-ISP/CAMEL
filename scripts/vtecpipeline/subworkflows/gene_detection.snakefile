@@ -22,6 +22,18 @@ class GeneDatabase(object):
         self.pi_threshold = pi_threshold
 
 
+
+def get_db_keys(section_name):
+    """
+    Returns the database keys for the resistance databases.
+    :param section_name: The name of the section (e.g. 'resistance')
+    :return: Database keys
+    """
+    if 'gene_detection' not in config:
+        return []
+    return config['gene_detection'].get(section_name, [])
+
+
 # Database configuration
 DATABASES = {
     'resistance': [
@@ -309,9 +321,9 @@ rule report_gene_detection:
         INFORMS_db_info=os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'database_manager', 'informs.io'),
         TSV=os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'selected-tsv.io')
     output:
-        VAL_HTML=os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report_gene_detection', 'html.io')
+        VAL_HTML=os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report', 'html.io')
     params:
-        running_dir=os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report_gene_detection'),
+        running_dir=os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report'),
         sample_name=config['sample_name']
     run:
         from app.tools.pipelines.gene_detection.htmlreportergenedetection import HtmlReporterGeneDetection
@@ -327,15 +339,14 @@ rule combine_gene_detection_reports:
     Combines the reports from the different databases.
     """
     input:
-        HTML_Res=expand(os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report_gene_detection', 'html.io'), db=[d.name for d in DATABASES['resistance'] if d.name in config['gene_detection'].get('resistance', [])]),
-        HTML_Vir=expand(os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report_gene_detection', 'html.io'), db=[d.name for d in DATABASES['virulence'] if d.name in config['gene_detection'].get('virulence', [])]),
-        HTML_Pla=expand(os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report_gene_detection', 'html.io'), db=[d.name for d in DATABASES['plasmid'] if d.name in config['gene_detection'].get('plasmid', [])]),
-        HTML_Ser=expand(os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report_gene_detection', 'html.io'), db=[d.name for d in DATABASES['serotype'] if d.name in config['gene_detection'].get('serotype', [])]),
-        VAL_serotype=os.path.join(__WORKING_DIR, 'gene_detection', 'serotype_detection', 'val_serotype.io') if len(DATABASES['serotype']) > 0 else []
+        HTML_Res=expand(os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report', 'html.io'), db=get_db_keys('resistance')),
+        HTML_Vir=expand(os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report', 'html.io'), db=get_db_keys('virulence')),
+        HTML_Pla=expand(os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report', 'html.io'), db=get_db_keys('plasmid')),
+        HTML_Ser=expand(os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report', 'html.io'), db=get_db_keys('serotype')),
+        VAL_serotype=os.path.join(__WORKING_DIR, 'gene_detection', 'serotype', 'val_st.io') if len(get_db_keys('serotype')) > 0 else []
     output:
         os.path.join(__WORKING_DIR, 'report_gene_detection', 'html.io')
     params:
-        running_dir=os.path.join(__WORKING_DIR, 'gene_detection', 'report_gene_detection'),
         output_dir=config['output_dir']
     run:
         gene_detection_module = HtmlElement('div')
@@ -368,11 +379,13 @@ rule get_serotype:
         INFORMS_metadata_H=os.path.join(__WORKING_DIR, 'gene_detection', 'H_type', 'database_manager', 'informs.io'),
         INFORMS_metadata_O=os.path.join(__WORKING_DIR, 'gene_detection', 'O_type', 'database_manager', 'informs.io')
     output:
-        VAL_serotype=os.path.join(__WORKING_DIR, 'gene_detection', 'serotype_detection', 'val_serotype.io')
+        VAL_serotype=os.path.join(__WORKING_DIR, 'gene_detection', 'serotype', 'val_st.io')
+    params:
+        running_dir=os.path.join(__WORKING_DIR, 'gene_detection', 'serotype')
     run:
-        from app.tools.pipelines.gene_detection.serotypedetector import SerotypeDetector
-        detector = SerotypeDetector(camel)
+        from app.tools.pipelines.gene_detection.serotypedetectorecoli import SerotypeDetectorEcoli
+        detector = SerotypeDetectorEcoli(camel)
         SnakemakeUtils.add_pickle_inputs(detector, input)
-        step = SnakeStep(rule, detector, camel, '.', config)
+        step = SnakeStep(rule, detector, camel, params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(detector, output)

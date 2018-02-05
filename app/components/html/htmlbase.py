@@ -164,7 +164,7 @@ class HtmlBase(object):
         :return: None
         """
         if not isinstance(input_object, HtmlBase):
-            raise ValueError("{} is not an HTML object")
+            raise ValueError("{} is not an HTML object".format(input_object))
         self._doc.asis(input_object.to_html())
 
     def add_raw(self, html_code):

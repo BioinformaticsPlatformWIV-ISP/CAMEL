@@ -17,7 +17,7 @@ class HtmlReporterReadTrimming(Tool):
         :param camel: CAMEL instance
         :return: None
         """
-        super(HtmlReporterReadTrimming, self).__init__('HTML Reporter', '0.1', camel)
+        super().__init__('HTML Reporter', '0.1', camel)
         self.__subfolder = 'read_trimming'
         self._report_section = None
 
@@ -27,7 +27,7 @@ class HtmlReporterReadTrimming(Tool):
         :return: None
         """
         self._report_section = HtmlReportSection('Read Trimming')
-        self.__add_section_qc_pre()
+        self.__add_qc_pre_section()
         self.__add_trimming_section()
         self.__add_qc_post_section()
         self._tool_outputs['VAL_HTML'] = [ToolIOValue(self._report_section, False)]
@@ -45,9 +45,9 @@ class HtmlReporterReadTrimming(Tool):
             raise InvalidInputSpecificationError("No post-trimming reports found")
         if 'trimming' not in self._input_informs:
             raise InvalidInputSpecificationError("No trimming info found")
-        super(HtmlReporterReadTrimming, self)._check_input()
+        super()._check_input()
 
-    def __add_section_qc_pre(self):
+    def __add_qc_pre_section(self):
         """
         Adds the pre trimming QC section
         :return: None

@@ -23,7 +23,7 @@ class AlignmentExtractor(Tool):
         Initializes this tool.
         :param camel: Camel instance
         """
-        super(AlignmentExtractor, self).__init__('Resistance Characterization: Alignment Extraction', '0.1', camel)
+        super().__init__('Resistance Characterization: Alignment Extraction', '0.1', camel)
 
     def _execute_tool(self):
         """

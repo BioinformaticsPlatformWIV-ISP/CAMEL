@@ -33,7 +33,7 @@ class DBManager(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super(DBManager, self).__init__('Gene Detection: DB Manager', '0.1', camel)
+        super().__init__('Gene Detection: DB Manager', '0.1', camel)
 
     def _execute_tool(self):
         """

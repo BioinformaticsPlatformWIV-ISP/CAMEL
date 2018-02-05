@@ -81,6 +81,7 @@ class AlignmentExtraction(object):
     def __clean_alignment(alignment):
         """
         Cleans the given alignment. Trailing information is removed.
+        :param alignment: Input alignment
         :return: Cleaned alignment
         """
         return '\n'.join(alignment.split('\n')[0:AlignmentExtraction.__get_alignment_end_line_number(alignment) + 1])
@@ -89,10 +90,10 @@ class AlignmentExtraction(object):
     def __get_alignment_end_line_number(alignment):
         """
         Returns the line number of the last line of the alignment.
-        :param alignment: Alignment
+        :param alignment: Alignment in BLAST output format 0, if the provided input is no alignment an error is raised.
         :return: Line number
         """
-        match = re.search(r'(Sbjct[ ]{2}\d+ +[\w-]+[ ]{2}\d+\n\n\n)', alignment)
+        match = re.search(r'(Sbjct {2}\d+ +[\w-]+ {2}\d+\n\n\n)', alignment)
         if match:
             last_line = match.group(1)
             return alignment.split('\n').index(last_line.strip())

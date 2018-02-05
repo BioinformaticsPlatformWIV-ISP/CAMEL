@@ -2,7 +2,7 @@ from app.components.genedetection.genedetectionhit import GeneDetectionHit
 from app.components.html.htmltablecell import HtmlTableCell
 
 
-class SRST2Hit(GeneDetectionHit):
+class GeneDetectionSRST2Hit(GeneDetectionHit):
     """
     Sequence tying hit detected by SRST2.
     """
@@ -22,15 +22,8 @@ class SRST2Hit(GeneDetectionHit):
         :param accession: Accession number
         """
         super().__init__(locus)
-        if mismatches == '':
-            self._mismatches = '0'
-        else:
-            self._mismatches = mismatches
-
-        if uncertainty == '':
-            self._uncertainty = '-'
-        else:
-            self._uncertainty = uncertainty
+        self._mismatches = mismatches if mismatches != '' else '0'
+        self._uncertainty = uncertainty if uncertainty != '' else '-'
         self._depth = depth
         self._coverage = coverage
         self._length = length
@@ -57,8 +50,8 @@ class SRST2Hit(GeneDetectionHit):
         parts = line.split('\t')
         allele_full = mapping[parts[3]].split(' ')[0]
         allele_metadata = metadata[allele_full]
-        return SRST2Hit(allele_full, allele_metadata['allele'], parts[6], parts[7], parts[5], float(parts[4]),
-                        int(parts[9]), allele_metadata.get('accession', '-'))
+        return GeneDetectionSRST2Hit(allele_full, allele_metadata['allele'], parts[6], parts[7], parts[5],
+                                     float(parts[4]), int(parts[9]), allele_metadata.get('accession', '-'))
 
     def to_table_row(self):
         """
@@ -93,6 +86,9 @@ class SRST2Hit(GeneDetectionHit):
     def color(self):
         """
         Returns the hit color.
+        Green: No mismatches and completely covered
+        Light green: Completely covered with mismatches
+        Grey: Not completely covered and mismatches
         :return: Color
         """
         if self._mismatches == '0' and self._coverage == 100.0:
@@ -107,11 +103,11 @@ class SRST2Hit(GeneDetectionHit):
         Returns the column names for the HTML output.
         :return: Column names
         """
-        return SRST2Hit._TABLE_COLUMNS
+        return GeneDetectionSRST2Hit._TABLE_COLUMNS
 
     def get_table_column_names(self):
         """
         Returns the column names for the tabular output.
         :return: Column names
         """
-        return SRST2Hit._TABLE_COLUMNS
+        return GeneDetectionSRST2Hit._TABLE_COLUMNS

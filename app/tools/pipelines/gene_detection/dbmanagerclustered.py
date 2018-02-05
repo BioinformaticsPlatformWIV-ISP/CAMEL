@@ -22,7 +22,7 @@ class DBManagerClustered(Tool):
     - FASTA: FASTA file from the input directory
 
     INFORMS:
-    - Parsed mapping file
+    - Parsed mapping file (mapping the converted sequence ids e.g. seq_1 back to the original ones)
     """
 
     def __init__(self, camel):
@@ -31,7 +31,7 @@ class DBManagerClustered(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super(DBManagerClustered, self).__init__('Gene Detection: DB Manager Clustered', '0.1', camel)
+        super().__init__('Gene Detection: DB Manager Clustered', '0.1', camel)
 
     def _execute_tool(self):
         """

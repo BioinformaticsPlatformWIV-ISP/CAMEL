@@ -1,21 +1,23 @@
 import os
 
-from app.components.genedetection.genedetectionhit import GeneDetectionHit
 from app.components.html.htmltablecell import HtmlTableCell
+from app.components.sequencetyping.sequencetypinghit import SequenceTypingHit
 
 
-class BlastHit(GeneDetectionHit):
+class SequenceTypingBlastHit(SequenceTypingHit):
     """
-    Gene detection hit detected by blast.
+    Sequence tying hit detected by blast.
     """
 
-    _TABLE_COLUMNS = ['Locus', '% Identity', 'HSP/Locus length', 'Contig', 'Position in contig', 'Accession']
+    _TABLE_COLUMNS = ['Locus', 'Allele', '% Identity', 'HSP/Locus length', 'Type']
     _HTML_COLUMNS = _TABLE_COLUMNS + ['Alignment']
 
-    def __init__(self, locus, subject, pident, slen, sseq, qseqid, qstart, qend, accession, alignment_path):
+    def __init__(self, locus, allele_id, type_, subject, pident, slen, sseq, qseqid, qstart, qend):
         """
         Initializes the hit.
         :param locus: Locus
+        :param allele_id: Allele id
+        :param type_: Locus type ('DNA', 'peptide')
         :param subject: Subject
         :param pident: Percent identity
         :param slen: Subject length
@@ -23,58 +25,100 @@ class BlastHit(GeneDetectionHit):
         :param qseqid: Query sequence id
         :param qstart: Start of the alignment in the query
         :param qend: End of the alignment in the query
-        :param accession: NCBI accession number
-        :param alignment_path: Path to the alignment visualization file
         """
-        super().__init__(locus)
+        super().__init__(locus, allele_id)
         self._subject = subject
         self._pident = pident
+        self._type = type_
         self._slen = slen
         self._sseq = sseq
         self._qsedid = qseqid
         self._qstart = qstart
         self._qend = qend
-        self._accession = accession
-        self._alignment_path = alignment_path
-        self._extra_column_value = None
-        self._extra_column_name = None
+        self._alignment_path = None
 
     @staticmethod
-    def create_from_dict(input_dict):
+    def create_from_dict(input_dict, type_):
         """
         Creates a hit object from a dictionary containing the blast output.
         Allele id is set to None, it extracted afterwards only for the best hits.
         :param input_dict: Input dictionary
+        :param type_: Locus type
         :return: Hit object
         """
         try:
-            return BlastHit(None, input_dict['sseqid'], float(input_dict['pident']), input_dict['slen'],
-                            input_dict['sseq'], input_dict['qseqid'], input_dict['qstart'], input_dict['qend'], None,
-                            None)
+            return SequenceTypingBlastHit(None, None, type_, input_dict['sseqid'], float(input_dict['pident']),
+                                          input_dict['slen'], input_dict['sseq'], input_dict['qseqid'],
+                                          input_dict['qstart'], input_dict['qend'])
         except KeyError as err:
             raise ValueError("Cannot create hit from dictionary {} missing - {!r}".format(err, input_dict))
+
+    def to_table_row(self):
+        """
+        Converts the hit into a table row.
+        :return: Table row
+        """
+        return '\t'.join([
+            self.locus,
+            self.allele_id,
+            str(self._pident),
+            self.length_statistic,
+            self._type])
+
+    def to_html_row(self, report_section, sub_dir=None):
+        """
+        Converts the hit into a HTML table row
+        :param report_section: Section is passed to save the alignments
+        :param sub_dir: Specific subdirectory of the base directory to store report files
+        :return: HTML row elements
+        """
+        if self._alignment_path is None:
+            alignment_cell = '-'
+        else:
+            relative_path = os.path.join(sub_dir, 'alignments', os.path.basename(self._alignment_path))
+            report_section.add_file(self._alignment_path, relative_path)
+            alignment_cell = HtmlTableCell('view', link=relative_path)
+        return [
+            self.locus,
+            HtmlTableCell(self.allele_id, self.color),
+            str(self._pident),
+            self.length_statistic,
+            self._type,
+            alignment_cell]
 
     def get_table_column_names(self):
         """
         Returns the table column names.
         :return: Table column names
         """
-        if self._extra_column_name is None:
-            return BlastHit._TABLE_COLUMNS
-        columns = BlastHit._TABLE_COLUMNS.copy()
-        columns.insert(-2, self._extra_column_name)
-        return columns
+        return self._TABLE_COLUMNS
 
     def get_html_column_names(self):
         """
         Returns the HTML column names.
         :return: HTML column names
         """
-        if self._extra_column_name is None:
-            return BlastHit._HTML_COLUMNS
-        columns = BlastHit._HTML_COLUMNS.copy()
-        columns.insert(-3, self._extra_column_name)
-        return columns
+        return self._HTML_COLUMNS
+
+    @staticmethod
+    def generate_empty_hit(locus, type_):
+        """
+        Returns an empty hit.
+        :param locus: Locus
+        :param type_: Locus type
+        :return: None
+        """
+        return SequenceTypingBlastHit(locus, '-', type_, '-', '-', '-', '-', '-', '-', '-')
+
+    @staticmethod
+    def generate_multi_hit(locus, type_):
+        """
+        Returns a multi hit.
+        :param locus: Locus
+        :param type_: Locus type
+        :return: None
+        """
+        return SequenceTypingBlastHit(locus, '?', type_, '-', '-', '-', '-', '-', '-', '-')
 
     @property
     def subject(self):
@@ -91,22 +135,6 @@ class BlastHit(GeneDetectionHit):
         :return: Query
         """
         return self._qsedid
-
-    @property
-    def query_start(self):
-        """
-        Returns the start position of the query in the alignment.
-        :return: Query start
-        """
-        return self._qstart
-
-    @property
-    def query_end(self):
-        """
-        Returns the end position of the query in the alignment.
-        :return: Query end
-        """
-        return self._qend
 
     @property
     def subject_length(self):
@@ -175,69 +203,12 @@ class BlastHit(GeneDetectionHit):
         """
         self._alignment_path = alignment_path
 
-    @property
-    def extra_column_value(self):
-        """
-        Returns the value of the extra column.
-        :return: Extra column
-        """
-        return self._extra_column_value
-
-    def set_extra_column(self, name, value):
-        """
-        Sets the extra column information.
-        :param name: Name of the extra column
-        :param value: Value of the extra column
-        :return: None
-        """
-        self._extra_column_value = value
-        self._extra_column_name = name
-
     def is_perfect_hit(self):
         """
         Returns true if the hit is perfect (100% identity over complete length)
         :return: True if perfect
         """
         return (self.percent_identity == 100.0) and (self._slen == self.alignment_length)
-
-    def to_table_row(self):
-        """
-        Converts the hit into a table row.
-        :return: Table row
-        """
-        row_data = [
-            self.locus,
-            str(self._pident),
-            self.length_statistic,
-            self.query,
-            '{}..{}'.format(self._qstart, self._qend),
-            self._accession if self.accession is not None else '-']
-        if self._extra_column_value is not None:
-            row_data.insert(-2, self._extra_column_value)
-        return '\t'.join(row_data)
-
-    def to_html_row(self, report_section, sub_directory):
-        """
-        Converts the hit into a HTML table row
-        :param report_section: Section is passed to save the alignments
-        :param sub_directory: Subdirectory to save the alignments
-        :return: HTML row elements
-        """
-        if self._alignment_path is None:
-            alignment_cell = '-'
-        else:
-            relative_path = os.path.join(sub_directory, 'alignments', os.path.basename(self._alignment_path))
-            report_section.add_file(self._alignment_path, relative_path)
-            alignment_cell = HtmlTableCell('view', self.color, link=relative_path)
-        html_data = [
-            self.locus,
-            str(self._pident),
-            self.length_statistic,
-            self.query,
-            '{}..{}'.format(self._qstart, self._qend)]
-        if self._extra_column_value is not None:
-            html_data.insert(-1, self._extra_column_value)
-        return [HtmlTableCell(v, self.color) for v in html_data] + [self.get_accession_cell()] + [alignment_cell]
 
     @property
     def color(self):
@@ -255,3 +226,7 @@ class BlastHit(GeneDetectionHit):
             return 'lightgreen'
         elif self.percent_identity != '-':
             return 'grey'
+        elif self.allele_id == '?':
+            return 'yellow'
+        else:
+            return 'red'
