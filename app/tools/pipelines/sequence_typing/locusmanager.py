@@ -1,21 +1,12 @@
 import json
 import logging
-<<<<<<< HEAD
 import os
-=======
-
-import os
-from app.tools.tool import Tool
->>>>>>> origin/bebog-sequence_typing
 
 from app.components.filesystemhelper import FileSystemHelper
 from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from app.error.toolexecutionerror import ToolExecutionError
 from app.io.tooliofile import ToolIOFile
-<<<<<<< HEAD
 from app.tools.tool import Tool
-=======
->>>>>>> origin/bebog-sequence_typing
 
 
 class LocusManager(Tool):
