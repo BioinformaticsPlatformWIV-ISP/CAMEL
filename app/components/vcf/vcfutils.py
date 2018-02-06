@@ -85,6 +85,8 @@ class VCFUtils(object):
         :param vcf_file: VCF file.
         :return: Number of variants
         """
+        if vcf_file is None:
+            raise ValueError("VCF file should not be None")
         vcf_reader = vcf.Reader(filename=vcf_file)
         variants = list(vcf_reader)
         return sum(variant.ALT != [None] for variant in variants)
