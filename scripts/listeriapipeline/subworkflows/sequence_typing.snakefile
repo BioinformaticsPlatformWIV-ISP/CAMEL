@@ -1,6 +1,13 @@
-from app.components.html.htmlelement import HtmlElement
-from app.io.tooliovalue import ToolIOValue
+"""
+This Snakefile can be used to perform sequence typing.
+There are two approaches:
+- Fast: blastn for nucleotide loci and blastx for protein loci.
+- Normal: SRST2 for nucleotide loci and blastx for protein loci.
 
+The sequence typing databases need to be added to the config file under the 'sequence_typing' section.
+Each database need to be specified as 'Key': 'Path to DB folder'.
+"""
+OUTPUT_TYPING_REPORT = os.path.join(__WORKING_DIR, 'sequence_typing', 'report-html.io')
 
 def get_loci(folder):
     """
@@ -8,10 +15,10 @@ def get_loci(folder):
     :param folder: Database folder.
     :return: Loci from database
     """
-    # for testing, only first 10 genes
-    # return [d for d in os.listdir(folder) if os.path.isdir(os.path.join(folder, d)) and not d.startswith('.')][0:10]
+    # for testing, oxnly first 10 genes
+    # return sorted([d for d in os.listdir(folder) if os.path.isdir(os.path.join(folder, d)) and not d.startswith('.')][0:10])
     # for real, all genes
-    return [d for d in os.listdir(folder) if os.path.isdir(os.path.join(folder, d)) and not d.startswith('.')]
+    return sorted([d for d in os.listdir(folder) if os.path.isdir(os.path.join(folder, d)) and not d.startswith('.')])
 
 
 def has_profiles(scheme):
@@ -23,17 +30,27 @@ def has_profiles(scheme):
     folder = SCHEMES.get(scheme)
     return os.path.isfile(os.path.join(folder, 'profiles.tsv'))
 
+def get_locus_type(scheme, locus):
+    """
+    Returns the type of locus ('DNA', 'peptide').
+    :param scheme: Scheme (e.g. 'MLST')
+    :param locus: Locus (e.g. 'abcZ')
+    :return: Locus type
+    """
+    import json
+    locus_directory = os.path.join(SCHEMES[scheme], locus)
+    locus_metadata_file = os.path.join(locus_directory, 'locus_metadata.txt')
+    if not os.path.isfile(locus_metadata_file):
+        raise FileNotFoundError("No metadata found in '{}'".format(locus_directory))
+    with open(locus_metadata_file) as handle:
+        try:
+            return json.load(handle)['type']
+        except KeyError:
+            raise ValueError("Metadata file does not contain locus type ({})".format(locus_directory))
 
-SCHEMES = {
-    'cgMLST': '/data/sequence_typing/listeria/cgmlst',
-    'MLST-Pasteur': '/data/sequence_typing/listeria/mlst/',
-    'species_confirmation': '/data/sequence_typing/listeria/species_confirmation/',
-    'serogroup': '/data/sequence_typing/listeria/serogroup',
-    'virulence': '/data/sequence_typing/listeria/virulence',
-    'antibiotic_resistance': '/data/sequence_typing/listeria/antibiotic_resistance',
-    'metal_detergent_resistance': '/data/sequence_typing/listeria/metal_detergent_resistance',
-}
+SCHEMES = config['sequence_typing']
 LOCI = {k: get_loci(SCHEMES.get(k)) for k in SCHEMES.keys()}
+
 
 
 rule extract_locus_set_info:
@@ -43,12 +60,15 @@ rule extract_locus_set_info:
     input:
         lambda wildcards: SCHEMES.get(wildcards.scheme)
     output:
-        INFORMS = os.path.join(__WORKING_DIR, 'sequence_typing', 'informs-{scheme}.io')
+        INFORMS = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', 'informs-{scheme}.io')
+    params:
+        running_dir=os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}')
     run:
         from app.tools.pipelines.sequence_typing.locussetmanager import LocusSetManager
         locus_set_manager = LocusSetManager(camel)
         locus_set_manager.add_input_files({'DIR': [ToolIODirectory(input[0])]})
-        locus_set_manager.run()
+        step = SnakeStep(rule, locus_set_manager, camel, params.running_dir, config)
+        step.run_step()
         SnakemakeUtils.dump_object(locus_set_manager.informs, output.INFORMS)
 
 rule extract_locus_info:
@@ -58,13 +78,16 @@ rule extract_locus_info:
     input:
         lambda wildcards: os.path.join(SCHEMES.get(wildcards.scheme), wildcards.locus)
     output:
-        FASTA = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', 'fasta-{locus}.io'),
-        INFORMS = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', 'informs-{locus}.io')
+        FASTA = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', '{locus}', 'fasta-{locus}.io'),
+        INFORMS = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', '{locus}', 'informs-{locus}.io')
+    params:
+        running_dir=os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}')
     run:
         from app.tools.pipelines.sequence_typing.locusmanager import LocusManager
         locus_manager = LocusManager(camel)
         locus_manager.add_input_files({'DIR': [ToolIODirectory(input[0])]})
-        locus_manager.run('.')
+        step = SnakeStep(rule, locus_manager, camel, params.running_dir, config)
+        step.run_step()
         SnakemakeUtils.dump_tool_outputs(locus_manager, output)
 
 rule pickle_dump_sequence_type_definitions:
@@ -84,50 +107,53 @@ rule blastn_allele_detection:
     """
     input:
         FASTA = os.path.join(__WORKING_DIR, 'assembly', 'fasta.io'),
-        DB_BLAST = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', 'fasta-{locus}.io'),
-        INFORMS_locus = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', 'informs-{locus}.io')
+        DB_BLAST = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', '{locus}', 'fasta-{locus}.io'),
+        INFORMS_locus = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', '{locus}', 'informs-{locus}.io')
     output:
         VAL_Hit = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', '{locus}', 'hit-blast.io')
     params:
-        working_dir = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', '{locus}')
-    threads:
-        1
+        running_dir = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', '{locus}')
+    threads: 1
     run:
         from app.tools.blast.blastformatter import BlastFormatter
         from app.tools.blast.blastn import Blastn
+        from app.tools.blast.blastx import Blastx
         from app.tools.pipelines.sequence_typing.besthitselector import BestHitSelector
         from app.tools.pipelines.sequence_typing.alignmentextractor import AlignmentExtractor
 
         # Blastn alignment
-        blastn = Blastn(camel)
-        SnakemakeUtils.add_pickle_input(blastn, 'FASTA', input.FASTA)
-        SnakemakeUtils.add_pickle_input(blastn, 'DB_BLAST', input.DB_BLAST)
-        blastn.update_parameters(threads=threads)
-        blastn.run(params.working_dir)
+        if get_locus_type(wildcards.scheme, wildcards.locus) == 'DNA':
+            blast = Blastn(camel)
+        else:
+            blast = Blastx(camel)
+        SnakemakeUtils.add_pickle_input(blast, 'FASTA', input.FASTA)
+        SnakemakeUtils.add_pickle_input(blast, 'DB_BLAST', input.DB_BLAST)
+        blast.update_parameters(threads=threads)
+        blast.run(params.running_dir)
 
         # TSV generation
         formatter_tsv = BlastFormatter(camel)
         formatter_tsv.update_parameters(output_format='"7 pident sseqid sseq slen qseqid qstart qend"')
-        formatter_tsv.add_input_files({'ASN': blastn.tool_outputs['ASN']})
-        formatter_tsv.run(params.working_dir)
+        formatter_tsv.add_input_files({'ASN': blast.tool_outputs['ASN']})
+        formatter_tsv.run(params.running_dir)
 
         # Best hit selection
         hit_selector = BestHitSelector(camel)
         hit_selector.add_input_files({'TSV': formatter_tsv.tool_outputs['TSV']})
         hit_selector.add_input_informs({'locus': SnakemakeUtils.load_object(input.INFORMS_locus)})
-        hit_selector.run(params.working_dir)
+        hit_selector.run(params.running_dir)
 
         # Text alignment generation
         formatter_text = BlastFormatter(camel)
         formatter_text.update_parameters(output_format='0', num_alignments=1000)
-        formatter_text.add_input_files({'ASN': blastn.tool_outputs['ASN']})
-        formatter_text.run(params.working_dir)
+        formatter_text.add_input_files({'ASN': blast.tool_outputs['ASN']})
+        formatter_text.run(params.running_dir)
 
         # Alignment extraction
         extractor = AlignmentExtractor(camel)
         extractor.add_input_files({'TXT': formatter_text.tool_outputs['TXT'],
                                    'VAL_Hits': hit_selector.tool_outputs['VAL_Hit']})
-        extractor.run(params.working_dir)
+        extractor.run(params.running_dir)
 
         # Add the alignment to the hit object
         if len(extractor.tool_outputs['TXT']) > 0:
@@ -141,21 +167,21 @@ rule srst2_allele_detection:
     """
     input:
         FASTQ_PE = os.path.join(__WORKING_DIR, 'read_trimming', 'fastq-pe.io'),
-        FASTA = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', 'fasta-{locus}.io'),
-        INFORMS_locus = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', 'informs-{locus}.io')
+        FASTA = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', '{locus}', 'fasta-{locus}.io'),
+        INFORMS_locus = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', '{locus}', 'informs-{locus}.io')
     output:
         VAL_Hit = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', '{locus}', 'hit-srst2.io')
     params:
-        working_dir = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', '{locus}')
+        running_dir = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', '{locus}')
     threads:
         4
     run:
-        # TODO: Add unpaired reads
         from app.tools.srst2.srst2alleledetector import SRST2AlleleDetector
         detector = SRST2AlleleDetector(camel)
         SnakemakeUtils.add_pickle_inputs(detector, input)
+        step = SnakeStep(rule, detector, camel, params.running_dir, config)
         detector.update_parameters(threads=threads, forward_designator='1P', reverse_designator='2P')
-        detector.run(params.working_dir)
+        step.run_step()
         SnakemakeUtils.dump_tool_outputs(detector, output)
 
 rule combine_hits:
@@ -169,7 +195,7 @@ rule combine_hits:
         hits_srst2 = lambda wildcards: expand(os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', '{locus}', 'hit-srst2.io'),
                                               locus=LOCI.get(wildcards.scheme), scheme=wildcards.scheme) if config['detection_method'] == 'normal' else []
     output:
-        os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', 'all-hits.io')
+        os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', 'hits-combined.io')
     run:
         list_of_hits = []
         for pickle in input.hits_blast + input.hits_srst2:
@@ -181,26 +207,27 @@ rule combine_loci:
     Combines the output of all loci of a scheme into a tabular output file.
     """
     input:
-        hits = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', 'all-hits.io'),
-        INFORMS_Loci = lambda wildcards: expand(os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', 'informs-{locus}.io'),
-                                                locus=LOCI.get(wildcards.scheme), scheme=wildcards.scheme)
+        hits=os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', 'hits-combined.io'),
+        INFORMS_Loci=lambda wildcards: expand(os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', '{locus}', 'informs-{locus}.io'),
+                                              locus=LOCI.get(wildcards.scheme), scheme=wildcards.scheme)
     output:
-        TSV = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', 'tsv-combined.io')
+        TSV=os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', 'tsv-combined.io')
     params:
-        working_dir = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}'),
-        output_filename = lambda wildcards: os.path.join(__WORKING_DIR, 'sequence_typing', 'typing-{}-{}.tsv'.format(
-            FileSystemHelper.make_valid(config['sample_name']),
-            FileSystemHelper.make_valid(wildcards.scheme)))
+        running_dir=os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}'),
+        sample_name=FileSystemHelper.make_valid(config['sample_name']),
+        scheme=FileSystemHelper.make_valid('{scheme}')
     run:
         from app.tools.pipelines.sequence_typing.allelecombiner import AlleleCombiner
         list_of_informs = []
         for pickle in input.INFORMS_Loci:
             list_of_informs.append(SnakemakeUtils.load_object(pickle))
         combiner = AlleleCombiner(camel)
-        combiner.update_parameters(output_filename=params.output_filename)
+        step = SnakeStep(rule, combiner, camel, params.running_dir, config)
+        output_path = os.path.join(params.running_dir, 'typing-{}-{}.tsv'.format(params.scheme, params.sample_name))
+        combiner.update_parameters(output_filename=output_path)
         combiner.add_input_files({'VAL_Hits': SnakemakeUtils.load_object(input.hits)})
-        combiner.add_input_informs({'Loci': list_of_informs})
-        combiner.run(params.working_dir)
+        combiner.add_input_informs({'loci': list_of_informs})
+        step.run_step()
         SnakemakeUtils.dump_tool_outputs(combiner, output)
 
 rule detect_sequence_type:
@@ -208,21 +235,20 @@ rule detect_sequence_type:
     Detects the sequence type based on the detected alleles.
     """
     input:
-        VAL_Hits = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', 'all-hits.io'),
+        VAL_Hits = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', 'hits-combined.io'),
         TSV = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', 'tsv-profiles.io')
     output:
-        INFORMS = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', 'sequence_type-informs.io')
+        INFORMS = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', 'informs-ST.io')
     params:
         running_dir = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}')
     run:
-        from app.tools.pipelines.sequence_typing.listeria.sequencetypedetector import SequenceTypeDetector
+        from app.tools.pipelines.sequence_typing.sequencetypedetector import SequenceTypeDetector
         sequence_type_detector = SequenceTypeDetector(camel)
-        #  SnakemakeUtils.run_tool(sequence_type_detector, input, output, '.')
         SnakemakeUtils.add_pickle_inputs(sequence_type_detector, input)
         step = SnakeStep(rule, sequence_type_detector, camel, params.running_dir, config)
+        sequence_type_detector.update_parameters(allele_wildcard='N', allele_absent_symbol='0')
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(sequence_type_detector, output)
-
 
 rule create_report:
     """
@@ -230,21 +256,22 @@ rule create_report:
     """
     input:
         TSV = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', 'tsv-combined.io'),
-        INFORMS_Scheme = os.path.join(__WORKING_DIR, 'sequence_typing', 'informs-{scheme}.io'),
-        INFORMS_ST = lambda wildcards: os.path.join(__WORKING_DIR, 'sequence_typing', '{}', 'sequence_type-informs.io').format(
+        INFORMS_Scheme = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', 'informs-{scheme}.io'),
+        INFORMS_ST = lambda wildcards: os.path.join(__WORKING_DIR, 'sequence_typing', '{}', 'informs-ST.io').format(
             wildcards.scheme) if has_profiles(wildcards.scheme) else [],
-        VAL_Hits = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', 'all-hits.io'),
+        VAL_Hits = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', 'hits-combined.io'),
     output:
-        VAL_HTML = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', 'report_sequence_typing', 'html.io')
+        VAL_HTML = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', 'report', 'html.io')
     params:
-        running_dir = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', 'report_sequence_typing'),
+        running_dir = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', 'report'),
     run:
         from app.tools.pipelines.sequence_typing.htmlreportertyping import HtmlReporterTyping
         reporter = HtmlReporterTyping(camel)
         if len(input.INFORMS_ST) != 0:
             reporter.add_input_informs({'ST': SnakemakeUtils.load_object(input.INFORMS_ST)})
         SnakemakeUtils.add_pickle_inputs(reporter, input, ['TSV', 'INFORMS_Scheme', 'VAL_Hits'])
-        reporter.run(params.running_dir)
+        step = SnakeStep(rule, reporter, camel, params.running_dir, config)
+        step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
 
 rule combine_sequence_typing_reports:
@@ -252,12 +279,12 @@ rule combine_sequence_typing_reports:
     Combines the reports of all sequence typing schemes.
     """
     input:
-        VAL_HTML = expand(os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', 'report_sequence_typing', 'html.io'),
+        VAL_HTML = expand(os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', 'report', 'html.io'),
                           scheme=config.get('sequence_typing', None))
     output:
-        VAL_HTML = os.path.join(__WORKING_DIR, 'report_sequence_typing', 'html.io')
+        OUTPUT_TYPING_REPORT
     params:
-        running_dir = os.path.join(__WORKING_DIR, 'report_sequence_typing'),
+        running_dir = os.path.join(__WORKING_DIR, 'sequence_typing'),
         output_dir = config['output_dir']
     run:
         typing_module = HtmlElement('div')
