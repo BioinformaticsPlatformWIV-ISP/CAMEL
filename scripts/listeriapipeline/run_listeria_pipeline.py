@@ -111,7 +111,7 @@ class ListeriaMain(object):
             logging.info("Run pipeline with debugging settings ...")
 
             # DEBUG running setting
-            self._args.assembler = 'VelvetOptimiser'
+            # self._args.assembler = 'VelvetOptimiser'
             self._args.kraken_db = '/data/kraken/latest/abfhpv_lite/'
 
             # DEBUG report and directory structure
@@ -131,7 +131,9 @@ class ListeriaMain(object):
             self.__create_config_file(config_file_path)
 
         else:
-            self._args.kraken_db = '/data/kraken/latest/abfhpv/'
+            self._args.kraken_db = '/data/kraken/latest/abfhpv_lite/'
+            # On dev2 there is not enough mem to run complete db if multiple runs are executed.
+            # self._args.kraken_db = '/data/kraken/latest/abfhpv/'
             self._args.working_dir = os.path.abspath(os.getcwd())
             config_file_path = os.path.join(self._args.working_dir, 'snake_conf.yml')
             self.__create_config_file(config_file_path)
@@ -175,21 +177,21 @@ class ListeriaMain(object):
             yaml.dump({'gene_detection': gene_detection_dbs}, handle, default_flow_style=False)
 
             # Sequence typing
-            sequence_typing_dbs = []
+            sequence_typing_dbs = {}
             if self._args.species_confirmation:
-                sequence_typing_dbs.append('species_confirmation')
+                sequence_typing_dbs['species_confirmation'] = '/data/sequence_typing/listeria/species_confirmation/'
             if self._args.mlst:
-                sequence_typing_dbs.append('MLST-Pasteur')
+                sequence_typing_dbs['MLST-Pasteur'] = '/data/sequence_typing/listeria/mlst/'
             if self._args.cgmlst:
-                sequence_typing_dbs.append('cgMLST')
+                sequence_typing_dbs['cgMLST'] = '/data/sequence_typing/listeria/cgmlst'
             if self._args.serogrouping:
-                sequence_typing_dbs.append('serogroup')
+                sequence_typing_dbs['serogroup'] = '/data/sequence_typing/listeria/serogroup'
             if self._args.pubmlst_virulence:
-                sequence_typing_dbs.append('virulence')
+                sequence_typing_dbs['virulence'] = '/data/sequence_typing/listeria/virulence'
             if self._args.pubmlst_resistance:
-                sequence_typing_dbs.append('antibiotic_resistance')
+                sequence_typing_dbs['antibiotic_resistance'] = '/data/sequence_typing/listeria/antibiotic_resistance'
             if self._args.pubmlst_metal:
-                sequence_typing_dbs.append('metal_detergent_resistance')
+                sequence_typing_dbs['metal_detergent_resistance'] = '/data/sequence_typing/listeria/metal_detergent_resistance'
             yaml.dump({'sequence_typing': sequence_typing_dbs}, handle, default_flow_style=False)
 
             # Kraken databaxse
