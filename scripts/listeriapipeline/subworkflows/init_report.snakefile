@@ -1,6 +1,3 @@
-from app.components.html.htmlreport import HtmlReport
-
-
 rule initialize_report:
     """
     Initializes the HTML report.
