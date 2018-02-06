@@ -1,6 +1,8 @@
+import yaml
+
 from app.connection.connection import Connection
 from app.loggers.logmanager import LogManager
-from config import DB_CONFIG, LOGGING_CONFIG
+from config import DB_CONFIG, LOGGING_CONFIG, MAIN_CONFIG
 
 
 class Camel(object):
@@ -15,6 +17,9 @@ class Camel(object):
         LogManager.initialize(logging_config)
         self._connection = Connection(database_config)
 
+        with open(MAIN_CONFIG) as f:
+            self._config = yaml.safe_load(f)
+
     @property
     def connection(self):
         """
@@ -22,3 +27,11 @@ class Camel(object):
         :return: Database connection
         """
         return self._connection
+
+    @property
+    def config(self):
+        """
+        Returns the main config as specified in app/config/main.yml
+        :return: Dict
+        """
+        return self._config
