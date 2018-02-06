@@ -1,15 +1,8 @@
 import os
-<<<<<<< HEAD
 
 from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from app.io.tooliofile import ToolIOFile
 from app.tools.tool import Tool
-=======
-from app.tools.tool import Tool
-
-from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
-from app.io.tooliofile import ToolIOFile
->>>>>>> origin/bebog-sequence_typing
 
 
 class AlleleCombiner(Tool):

@@ -1,17 +1,10 @@
 import os
-<<<<<<< HEAD
-=======
-from app.tools.tool import Tool
->>>>>>> origin/bebog-sequence_typing
 
 from app.components.filesystemhelper import FileSystemHelper
 from app.components.html.htmlreportsection import HtmlReportSection
 from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from app.io.tooliovalue import ToolIOValue
-<<<<<<< HEAD
 from app.tools.tool import Tool
-=======
->>>>>>> origin/bebog-sequence_typing
 
 
 class HtmlReporterTyping(Tool):
@@ -63,15 +56,9 @@ class HtmlReporterTyping(Tool):
         Adds the sequence type to the report.
         :return: None
         """
-<<<<<<< HEAD
-        self._report_section.add_table([
-            self._input_informs['ST']['metadata'].values()],
-            self._input_informs['ST']['metadata'].keys(), [('class', 'data')])
-=======
         profile = self._input_informs['ST']['sequence_type']
         self._report_section.add_table([[value for _, value in profile.metadata]], [key for key, _ in profile.metadata],
                                        [('class', 'data')])
->>>>>>> origin/bebog-sequence_typing
 
     def __add_output_table(self):
         """
@@ -85,10 +72,7 @@ class HtmlReporterTyping(Tool):
 
         tsv_file = self._tool_inputs['TSV'][0].path
         relative_path = os.path.join(self._sub_folder, os.path.basename(tsv_file))
-<<<<<<< HEAD
-=======
         self._report_section.add_file(tsv_file, relative_path)
->>>>>>> origin/bebog-sequence_typing
         self._report_section.add_link_to_file("Download (TSV)", relative_path)
 
     def _check_input(self):
@@ -100,9 +84,6 @@ class HtmlReporterTyping(Tool):
             raise InvalidInputSpecificationError("Scheme information is required")
         if 'VAL_Hits' not in self._tool_inputs:
             raise InvalidInputSpecificationError("Typing hit input is required")
-<<<<<<< HEAD
-=======
         if 'TSV' not in self._tool_inputs:
             raise InvalidInputSpecificationError("Tabular input (TSV) is required")
->>>>>>> origin/bebog-sequence_typing
         super()._check_input()
