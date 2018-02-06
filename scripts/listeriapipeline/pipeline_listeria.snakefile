@@ -1,5 +1,5 @@
 import sys
-sys.path.append('/home/qiafu/Work/camel3_tmp/')
+sys.path.append('/home/qiafu/Work/camel3/')
 
 
 import datetime
