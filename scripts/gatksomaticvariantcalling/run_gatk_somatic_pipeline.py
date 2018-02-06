@@ -9,6 +9,7 @@ from app.io.tooliofile import ToolIOFile
 from app.io.tooliovalue import ToolIOValue
 from app.pipeline.snakepipeline import SnakePipeline
 import datetime
+from config import MAIN_CONFIG
 
 
 class GATKSomaticMain(object):
@@ -17,9 +18,7 @@ class GATKSomaticMain(object):
     Generates a config yml file based on CL arguments and runs the pipeline.
     """
     DB_LOGGING = True
-    # DEBUG = True
     SNAKEFILE = os.path.join(os.path.dirname(__file__), 'gatk_somatic_steps.snakefile')
-    # FROM_GALAXY = False
     CORES = 5
 
     def __init__(self):
@@ -33,6 +32,11 @@ class GATKSomaticMain(object):
 
         # Name of config file generated at runtime for snakemake pipeline
         self.runtime_config_name = os.path.join(os.getcwd(), 'runtime_config.yaml')
+
+        self.camel = Camel()
+
+        # set galaxy dump directory in case of failure
+        self._galaxy_dump_dir = os.path.join(self.camel.config["galaxy"]["dump_dir"], "GATK_somatic_calling")
 
     def __parse_command_line(self):
         """
@@ -79,12 +83,11 @@ class GATKSomaticMain(object):
         # gap_events_threshold (MuTect)
         ap.add_argument('--strand_artifact_lod', dest='strand_artifact_lod', help='Log-odds ratio for strand bias. Default MuTect: 2.0; disable: -99999')
 
-
         # run from galaxy flag
         ap.add_argument('--from_galaxy', dest='from_galaxy', help='Indicates that the command is run from galaxy. Useful for logging stderr.', action='store_true')
 
         # job id
-        ap.add_argument('--job_id', dest='job_id', metavar='job_id', help='Job ID for debugging and logging.',
+        ap.add_argument('--job_id', dest='job_id', metavar='job_id', help='Job ID for debugging and logging. (Not the same as internal camel pipeline job id!)',
                         default=datetime.datetime.now().strftime("%Y%m%d_%H%M%S-%f"))
 
         return ap.parse_args()
@@ -95,7 +98,7 @@ class GATKSomaticMain(object):
         :return: None
         """
 
-        # Add the job id to the config
+        # Add the camel pipeline info to the config
         self._config_data['pipeline_job_id'] = self._pipeline.job_id
         self._config_data['pipeline_name'] = self._pipeline.name
         self._config_data['logging'] = self.DB_LOGGING
@@ -158,8 +161,8 @@ class GATKSomaticMain(object):
         """
 
         # Create a pipeline object
-        camel = Camel()
-        self._pipeline = SnakePipeline('GATK somatic calling', camel, self.DB_LOGGING)
+
+        self._pipeline = SnakePipeline('GATK somatic calling', self.camel, self.DB_LOGGING)
 
         self._args = self.__parse_command_line()
 
@@ -181,13 +184,13 @@ class GATKSomaticMain(object):
         command = Command(to_execute)
         command.run_command(self._args.work_dir, subprocess.STDOUT)
         if command.returncode != 0 and self._args.from_galaxy:
-            with open("/scratch/temp/galaxy_logs/{}_Stdout".format(self._args.job_id), "w") as file_out:
+            with open(os.path.join(self._galaxy_dump_dir, "{}_Stdout".format(self._args.job_id)), "w") as file_out:
                 file_out.write(command.stdout)
-            with open("/scratch/temp/galaxy_logs/{}_Stderr".format(self._args.job_id), "w") as file_out:
+            with open(os.path.join(self._galaxy_dump_dir, "{}_Stderr".format(self._args.job_id)), "w") as file_out:
                 file_out.write(command.stderr)
             raise RuntimeError(
-                "Error executing Snakemake. Check log ('/scratch/temp/galaxy_logs/{}_Stderr') for more information.".format(
-                    self._args.job_id))
+                "Error executing Snakemake. Check log ('{}') for more information.".format(os.path.join(self._galaxy_dump_dir, "{}_Stderr".format(
+                    self._args.job_id))))
 
 
 if __name__ == '__main__':
