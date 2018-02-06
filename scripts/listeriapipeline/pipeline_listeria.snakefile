@@ -8,6 +8,7 @@ import shutil
 from app.camel import Camel
 from app.components.filesystemhelper import FileSystemHelper
 from app.components.html.htmlreport import HtmlReport
+from app.components.html.htmlelement import HtmlElement
 from app.components.html.htmlreportsection import HtmlReportSection
 from app.io.tooliodirectory import ToolIODirectory
 from app.io.tooliofile import ToolIOFile
@@ -29,9 +30,9 @@ __SUMMARY_DIR = os.path.join(__WORKING_DIR, 'summary_info')
 include: WORKFLOW_INIT_REPORT
 include: WORKFLOW_READ_TRIMMING
 include: WORKFLOW_ASSEMBLY
-# include: WORKFLOW_CONTAMINATION_CHECK
-# include: WORKFLOW_QUALITY_CHECKS
-# include: WORKFLOW_GENE_DETECTION
+include: WORKFLOW_CONTAMINATION_CHECK
+include: WORKFLOW_QUALITY_CHECKS
+include: WORKFLOW_GENE_DETECTION
 include: WORKFLOW_SEQUENCE_TYPING
 
 # 4. Set the pipeline version
@@ -49,12 +50,12 @@ if not os.path.isdir(__SUMMARY_DIR):
 # 7. Final rule to combine sub-reports for the final output
 rule combine_reports:
     input:
-        os.path.join(__WORKING_DIR, 'report_read_trimming', 'html.io'),
-        # os.path.join(__WORKING_DIR, 'contamination_check', 'html.io'),
-        os.path.join(__WORKING_DIR, 'report_assembly', 'html.io'),
-        # os.path.join(__WORKING_DIR, 'report_quality_checks', 'html.io'),
-        # os.path.join(__WORKING_DIR, 'report_gene_detection', 'html.io') if len(config['gene_detection']) != 0 else [],
-        os.path.join(__WORKING_DIR, 'report_sequence_typing', 'html.io') if len(config['sequence_typing']) != 0 else [],
+        READ_TRIMMING_REPORT,
+        CONTAMINATION_REPORT,
+        ASSEMBLY_REPORT,
+        QUALITY_CHECKS_REPORT,
+        GENE_DETECTION_REPORT if len(config['gene_detection']) != 0 else [],
+        TYPING_REPORT if len(config['sequence_typing']) != 0 else [],
     params:
         report_dir = config.get('report'),
         output_dir = config['output_dir'],

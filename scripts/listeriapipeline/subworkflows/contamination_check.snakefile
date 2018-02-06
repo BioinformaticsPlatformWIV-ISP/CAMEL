@@ -1,3 +1,7 @@
+CONTAMINATION_WORKING_DIR = os.path.join(__WORKING_DIR, 'contamination_check')
+CONTAMINATION_REPORT = os.path.join(CONTAMINATION_WORKING_DIR, 'report-html.io')
+
+
 rule get_kraken_db:
     """
     Converts the Kraken database.
@@ -5,7 +9,7 @@ rule get_kraken_db:
     input:
         DB = config.get('db_kraken')
     output:
-        os.path.join(__WORKING_DIR, 'contamination_check', 'db.io')
+        os.path.join(CONTAMINATION_WORKING_DIR, 'db.io')
     run:
         print("Kraken DB: {}".format(input.DB))
         SnakemakeUtils.dump_object([ToolIODirectory(input.DB)], output[0])
@@ -15,12 +19,12 @@ rule kraken:
     Kraken run to assign taxonomic labels to reads.
     """
     input:
-        FASTQ_PE = os.path.join(__WORKING_DIR, 'read_trimming', 'fastq-pe.io'),
-        DB = os.path.join(__WORKING_DIR, 'contamination_check', 'db.io')
+        FASTQ_PE = TRIMMED_READS_PE,
+        DB = os.path.join(CONTAMINATION_WORKING_DIR, 'db.io')
     output:
-        TSV = os.path.join(__WORKING_DIR, 'contamination_check', 'tsv.io')
+        TSV = os.path.join(CONTAMINATION_WORKING_DIR, 'tsv.io')
     params:
-        running_dir = os.path.join(__WORKING_DIR, 'contamination_check')
+        running_dir = os.path.join(CONTAMINATION_WORKING_DIR)
     run:
         from app.tools.kraken.kraken import Kraken
         kraken = Kraken(camel)
@@ -34,12 +38,12 @@ rule kraken_report:
     Creates a report based on the Kraken output.
     """
     input:
-        TSV = os.path.join(__WORKING_DIR, 'contamination_check', 'tsv.io'),
-        DB = os.path.join(__WORKING_DIR, 'contamination_check', 'db.io')
+        TSV = os.path.join(CONTAMINATION_WORKING_DIR, 'tsv.io'),
+        DB = os.path.join(CONTAMINATION_WORKING_DIR, 'db.io')
     output:
-        TSV = os.path.join(__WORKING_DIR, 'contamination_check', 'tsv-report.io')
+        TSV = os.path.join(CONTAMINATION_WORKING_DIR, 'tsv-report.io')
     params:
-        running_dir = os.path.join(__WORKING_DIR, 'contamination_check')
+        running_dir = os.path.join(CONTAMINATION_WORKING_DIR)
     run:
         from app.tools.kraken.krakenreport import KrakenReport
         kraken_report = KrakenReport(camel)
@@ -53,11 +57,11 @@ rule kraken_report_parser:
     Parses the Kraken report and looks for contamination at the species level.
     """
     input:
-        TSV = os.path.join(__WORKING_DIR, 'contamination_check', 'tsv-report.io')
+        TSV = os.path.join(CONTAMINATION_WORKING_DIR, 'tsv-report.io')
     output:
-        INFORMS = os.path.join(__WORKING_DIR, 'contamination_check', 'informs-contamination.io')
+        INFORMS = os.path.join(CONTAMINATION_WORKING_DIR, 'informs-contamination.io')
     params:
-        running_dir = os.path.join(__WORKING_DIR, 'contamination_check')
+        running_dir = os.path.join(CONTAMINATION_WORKING_DIR)
     run:
         from app.tools.kraken.krakenreportparser import KrakenReportParser
         report_parser = KrakenReportParser(camel)
@@ -73,11 +77,11 @@ rule krona:
     Creates an interactive pie chart displaying the Kraken output.
     """
     input:
-        TSV = os.path.join(__WORKING_DIR, 'contamination_check', 'tsv.io')
+        TSV = os.path.join(CONTAMINATION_WORKING_DIR, 'tsv.io')
     output:
-        HTML = os.path.join(__WORKING_DIR, 'contamination_check', 'html-krona.io')
+        HTML = os.path.join(CONTAMINATION_WORKING_DIR, 'html-krona.io')
     params:
-        running_dir = os.path.join(__WORKING_DIR, 'contamination_check')
+        running_dir = os.path.join(CONTAMINATION_WORKING_DIR)
     run:
         from app.tools.krona.krona import Krona
         krona = Krona(camel)
@@ -91,12 +95,12 @@ rule contamination_report:
     Creates a report containing the results of the contamination check.
     """
     input:
-        HTML_Krona = os.path.join(__WORKING_DIR, 'contamination_check', 'html-krona.io'),
-        INFORMS_species = os.path.join(__WORKING_DIR, 'contamination_check', 'informs-contamination.io')
+        HTML_Krona = os.path.join(CONTAMINATION_WORKING_DIR, 'html-krona.io'),
+        INFORMS_species = os.path.join(CONTAMINATION_WORKING_DIR, 'informs-contamination.io')
     output:
-        VAL_HTML = os.path.join(__WORKING_DIR, 'contamination_check', 'html.io')
+        VAL_HTML = CONTAMINATION_REPORT
     params:
-        running_dir = os.path.join(__WORKING_DIR, 'contamination_check'),
+        running_dir = os.path.join(CONTAMINATION_WORKING_DIR),
         output_dir = config['output_dir']
     run:
         from app.tools.pipelines.quality_checks.htmlreportercontamination import HtmlReporterContamination

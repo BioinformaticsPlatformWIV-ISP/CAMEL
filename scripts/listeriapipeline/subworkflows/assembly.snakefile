@@ -1,15 +1,19 @@
+ASSEMBLY_WORKING_DIR = os.path.join(__WORKING_DIR, 'assembly')
+ASSEMBLY_REPORT = os.path.join(ASSEMBLY_WORKING_DIR, 'report-html.io')
+FASTA_ASSEMBLY = os.path.join(ASSEMBLY_WORKING_DIR, 'fasta.io')
+
 rule velvet_optimiser:
     """
     De-novo assembly using VelvetOptimiser.
     """
     input:
-        FASTQ_PE = os.path.join(__WORKING_DIR, 'read_trimming', 'fastq-pe.io'),
-        FASTQ_SE_FORWARD = os.path.join(__WORKING_DIR, 'read_trimming', 'fastq-se-forward.io'),
-        FASTQ_SE_REVERSE = os.path.join(__WORKING_DIR, 'read_trimming', 'fastq-se-reverse.io'),
+        FASTQ_PE = TRIMMED_READS_PE,
+        FASTQ_SE_FORWARD = TRIMMED_READS_SE_FORWARD,
+        FASTQ_SE_REVERSE = TRIMMED_READS_SE_REVERSE
     output:
-        FASTA_Contig = os.path.join(__WORKING_DIR, 'assembly_velvet', 'fasta.io')
+        FASTA_Contig = os.path.join(ASSEMBLY_WORKING_DIR, 'velvet', 'fasta.io')
     params:
-        running_dir = os.path.join(__WORKING_DIR, 'assembly_velvet'),
+        running_dir = os.path.join(ASSEMBLY_WORKING_DIR, 'velvet'),
         fast = config.get('assembly_fast', False)
     threads:
         8
@@ -29,13 +33,13 @@ rule spades:
     De-novo assembly using SPAdes.
     """
     input:
-        FASTQ_PE = os.path.join(__WORKING_DIR, 'read_trimming', 'fastq-pe.io'),
-        FASTQ_SE_FORWARD = os.path.join(__WORKING_DIR, 'read_trimming', 'fastq-se-forward.io'),
-        FASTQ_SE_REVERSE = os.path.join(__WORKING_DIR, 'read_trimming', 'fastq-se-reverse.io'),
+        FASTQ_PE = TRIMMED_READS_PE,
+        FASTQ_SE_FORWARD = TRIMMED_READS_SE_FORWARD,
+        FASTQ_SE_REVERSE = TRIMMED_READS_SE_REVERSE
     output:
-        FASTA_Contig = os.path.join(__WORKING_DIR, 'assembly_spades', 'fasta.io')
+        FASTA_Contig = os.path.join(ASSEMBLY_WORKING_DIR, 'spades', 'fasta.io')
     params:
-        running_dir = os.path.join(__WORKING_DIR, 'assembly_spades'),
+        running_dir = os.path.join(ASSEMBLY_WORKING_DIR, 'spades'),
         fast = config.get('assembly_fast', False)
     threads:
         8
@@ -59,11 +63,10 @@ rule select_assembly:
     This rule selects the right assembler based on the config file.
     """
     input:
-        os.path.join(__WORKING_DIR, 'assembly_spades', 'fasta.io') if config.get('assembler') == 'SPAdes' else [],
-        os.path.join(__WORKING_DIR, 'assembly_velvet', 'fasta.io') if config.get(
-            'assembler') == 'VelvetOptimiser' else []
+        os.path.join(ASSEMBLY_WORKING_DIR, 'spades', 'fasta.io') if config.get('assembler') == 'SPAdes' else [],
+        os.path.join(ASSEMBLY_WORKING_DIR, 'velvet', 'fasta.io') if config.get('assembler') == 'VelvetOptimiser' else []
     output:
-        os.path.join(__WORKING_DIR, 'assembly', 'fasta.io')
+        FASTA_ASSEMBLY
     run:
         import shutil
         shutil.copyfile(input[0], output[0])
@@ -73,11 +76,11 @@ rule quast:
     Generates assembly statistics using QUAST.
     """
     input:
-        FASTA = os.path.join(__WORKING_DIR, 'assembly', 'fasta.io')
+        FASTA = FASTA_ASSEMBLY
     output:
-        TSV = os.path.join(__WORKING_DIR, 'quast', 'tsv.io')
+        TSV = os.path.join(ASSEMBLY_WORKING_DIR, 'quast', 'tsv.io')
     params:
-        running_dir = os.path.join(__WORKING_DIR, 'quast')
+        running_dir = os.path.join(ASSEMBLY_WORKING_DIR, 'quast')
     run:
         from app.tools.quast.quast import Quast
         quast = Quast(camel)
@@ -91,11 +94,11 @@ rule quast_inform_extractor:
     Extracts the information from the QUAST output file.
     """
     input:
-        TSV = os.path.join(__WORKING_DIR, 'quast', 'tsv.io')
+        TSV = os.path.join(ASSEMBLY_WORKING_DIR, 'quast', 'tsv.io')
     output:
-        INFORMS = os.path.join(__WORKING_DIR, 'quast', 'informs.io')
+        INFORMS = os.path.join(ASSEMBLY_WORKING_DIR, 'quast', 'informs.io')
     params:
-        running_dir = os.path.join(__WORKING_DIR, 'quast')
+        running_dir = os.path.join(ASSEMBLY_WORKING_DIR, 'quast')
     run:
         from app.tools.quast.quastinformextractor import QuastInformExtractor
         quast_inform_extractor = QuastInformExtractor(camel)
@@ -109,12 +112,12 @@ rule report_assembly:
     Creates the HTML report for the assembly.
     """
     input:
-        FASTA_Contig = os.path.join(__WORKING_DIR, 'assembly', 'fasta.io'),
-        INFORMS_quast = os.path.join(__WORKING_DIR, 'quast', 'informs.io')
+        FASTA_Contig = FASTA_ASSEMBLY,
+        INFORMS_quast = os.path.join(ASSEMBLY_WORKING_DIR, 'quast', 'informs.io')
     output:
-        VAL_HTML = os.path.join(__WORKING_DIR, 'report_assembly', 'html.io')
+        VAL_HTML = ASSEMBLY_REPORT
     params:
-        running_dir = os.path.join(__WORKING_DIR, 'report_assembly'),
+        running_dir = os.path.join(ASSEMBLY_WORKING_DIR),
         sample_name = config['sample_name'],
         assembler = config['assembler'],
         output_dir = config['output_dir']

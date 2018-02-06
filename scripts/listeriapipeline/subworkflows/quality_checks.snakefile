@@ -1,13 +1,17 @@
+QUALITY_CHECKS_WORKING_DIR=os.path.join(__WORKING_DIR, 'quality_checks')
+QUALITY_CHECKS_REPORT=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'report-html.io')
+
+
 rule FastQC_additional_checks:
     """
     Tests additional quality metrics based on the FastQC data file output.
     """
     input:
-        TXT=os.path.join(__WORKING_DIR, 'post_trimming', 'txt.io')
+        TXT=TRIMMED_READS_QC_TXT
     output:
-        INFORMS=os.path.join(__WORKING_DIR, 'fastqc_checks', 'informs.io')
+        INFORMS=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'fastqc_checks', 'informs.io')
     params:
-        running_dir=os.path.join(__WORKING_DIR, 'fastqc_checks')
+        running_dir=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'fastqc_checks')
     run:
         from app.tools.fastqc.fastqcadditionalchecks import FastQCAdditionalChecks
         fastqc_checks = FastQCAdditionalChecks(camel)
@@ -21,11 +25,11 @@ rule Assembly_indexing:
     Creates a Bowtie2 index for the assembly.
     """
     input:
-        FASTA_REF=os.path.join(__WORKING_DIR, 'assembly', 'fasta.io')
+        FASTA_REF=FASTA_ASSEMBLY
     output:
-        INDEX_GENOME_PREFIX=os.path.join(__WORKING_DIR, 'assembly_indexing', 'genome_prefix.io')
+        INDEX_GENOME_PREFIX=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'assembly_indexing', 'genome_prefix.io')
     params:
-        running_dir=os.path.join(__WORKING_DIR, 'assembly_indexing')
+        running_dir=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'assembly_indexing')
     run:
         from app.tools.bowtie2.bowtie2index import Bowtie2Index
         bowtie2_index = Bowtie2Index(camel)
@@ -39,15 +43,15 @@ rule Read_mapping:
     Maps the trimmed reads to the assembly.
     """
     input:
-        FASTQ_PE=os.path.join(__WORKING_DIR, 'read_trimming', 'fastq-pe.io'),
-        FASTQ_SE_FORWARD=os.path.join(__WORKING_DIR, 'read_trimming', 'fastq-se-forward.io'),
-        FASTQ_SE_REVERSE=os.path.join(__WORKING_DIR, 'read_trimming', 'fastq-se-reverse.io'),
-        INDEX_GENOME_PREFIX=os.path.join(__WORKING_DIR, 'assembly_indexing', 'genome_prefix.io')
+        FASTQ_PE=TRIMMED_READS_PE,
+        FASTQ_SE_FORWARD=TRIMMED_READS_SE_FORWARD,
+        FASTQ_SE_REVERSE=TRIMMED_READS_SE_REVERSE,
+        INDEX_GENOME_PREFIX=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'assembly_indexing', 'genome_prefix.io')
     output:
-        SAM=os.path.join(__WORKING_DIR, 'read_mapping', 'sam.io'),
-        INFORMS=os.path.join(__WORKING_DIR, 'read_mapping', 'informs.io')
+        SAM=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'read_mapping', 'sam.io'),
+        INFORMS=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'read_mapping', 'informs.io')
     params:
-        running_dir=os.path.join(__WORKING_DIR, 'read_mapping')
+        running_dir=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'read_mapping')
     run:
         from app.tools.bowtie2.bowtie2map import Bowtie2Map
         bowtie2_map = Bowtie2Map(camel)
@@ -61,11 +65,11 @@ rule Sam_to_bam_conversion:
     Converts the mapped reads SAM file to BAM format.
     """
     input:
-        SAM=os.path.join(__WORKING_DIR, 'read_mapping', 'sam.io')
+        SAM=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'read_mapping', 'sam.io')
     output:
-        BAM=os.path.join(__WORKING_DIR, 'read_mapping', 'bam.io')
+        BAM=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'read_mapping', 'bam.io')
     params:
-        running_dir=os.path.join(__WORKING_DIR, 'read_mapping')
+        running_dir=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'read_mapping')
     run:
         from app.tools.samtools.samtoolsview import SamtoolsView
         samtools_view = SamtoolsView(camel)
@@ -79,11 +83,11 @@ rule Alignment_sorting:
     Sorts the alignment.
     """
     input:
-        BAM=os.path.join(__WORKING_DIR, 'read_mapping', 'bam.io')
+        BAM=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'read_mapping', 'bam.io')
     output:
-        BAM=os.path.join(__WORKING_DIR, 'alignment_sorting', 'bam-sorted.io')
+        BAM=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'alignment_sorting', 'bam-sorted.io')
     params:
-        running_dir=os.path.join(__WORKING_DIR, 'alignment_sorting')
+        running_dir=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'alignment_sorting')
     run:
         from app.tools.samtools.samtoolssort import SamtoolsSort
         samtools_sort = SamtoolsSort(camel)
@@ -97,11 +101,11 @@ rule Coverage_calculation:
     Determines the read depth at every position to estimate the coverage.
     """
     input:
-        BAM=os.path.join(__WORKING_DIR, 'alignment_sorting', 'bam-sorted.io')
+        BAM=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'alignment_sorting', 'bam-sorted.io')
     output:
-        INFORMS=os.path.join(__WORKING_DIR, 'coverage_calculation', 'informs.io')
+        INFORMS=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'coverage_calculation', 'informs.io')
     params:
-        running_dir=os.path.join(__WORKING_DIR, 'coverage_calculation')
+        running_dir=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'coverage_calculation')
     run:
         from app.tools.samtools.samtoolsdepth import SamtoolsDepth
         samtools_depth = SamtoolsDepth(camel)
@@ -115,13 +119,13 @@ rule Check_quality_criteria:
     Checks if the quality criteria were met.
     """
     input:
-        INFORMS_coverage=os.path.join(__WORKING_DIR, 'coverage_calculation', 'informs.io'),
-        INFORMS_fastqc_checks=os.path.join(__WORKING_DIR, 'fastqc_checks', 'informs.io'),
-        INFORMS_mapping=os.path.join(__WORKING_DIR, 'read_mapping', 'informs.io')
+        INFORMS_coverage=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'coverage_calculation', 'informs.io'),
+        INFORMS_fastqc_checks=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'fastqc_checks', 'informs.io'),
+        INFORMS_mapping=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'read_mapping', 'informs.io')
     output:
-        INFORMS=os.path.join(__WORKING_DIR, 'quality_checks', 'informs.io')
+        INFORMS=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'quality_checks', 'informs.io')
     params:
-        running_dir=os.path.join(__WORKING_DIR, 'quality_checks')
+        running_dir=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'quality_checks')
     run:
         from app.tools.pipelines.quality_checks.qualitycriteriachecker import QualityCriteriaChecker
         quality_checker = QualityCriteriaChecker(camel)
@@ -135,14 +139,14 @@ rule Report_quality_checks:
     Creates a report containing the quality checks information.
     """
     input:
-        INFORMS_coverage=os.path.join(__WORKING_DIR, 'coverage_calculation', 'informs.io'),
-        INFORMS_mapping=os.path.join(__WORKING_DIR, 'read_mapping', 'informs.io'),
-        INFORMS_additional_checks=os.path.join(__WORKING_DIR, 'fastqc_checks', 'informs.io'),
-        INFORMS_quality_criteria=os.path.join(__WORKING_DIR, 'quality_checks', 'informs.io')
+        INFORMS_coverage=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'coverage_calculation', 'informs.io'),
+        INFORMS_mapping=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'read_mapping', 'informs.io'),
+        INFORMS_additional_checks=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'fastqc_checks', 'informs.io'),
+        INFORMS_quality_criteria=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'quality_checks', 'informs.io')
     output:
-        VAL_HTML=os.path.join(__WORKING_DIR, 'report_quality_checks', 'html.io')
+        VAL_HTML=QUALITY_CHECKS_REPORT
     params:
-        running_dir=os.path.join(__WORKING_DIR, 'report_quality_checks')
+        running_dir=os.path.join(QUALITY_CHECKS_WORKING_DIR)
     run:
         from app.tools.pipelines.quality_checks.htmlreporterqualitychecks import HtmlReporterQualityChecks
         reporter = HtmlReporterQualityChecks(camel)

@@ -1,3 +1,11 @@
+READ_TRIMMING_WORKING_DIR = os.path.join(__WORKING_DIR, 'read_trimming')
+READ_TRIMMING_REPORT = os.path.join(READ_TRIMMING_WORKING_DIR, 'report-html.io')
+TRIMMED_READS_PE = os.path.join(READ_TRIMMING_WORKING_DIR, 'trimming', 'fastq-pe.io')
+TRIMMED_READS_SE_FORWARD = os.path.join(READ_TRIMMING_WORKING_DIR, 'trimming', 'fastq-se-forward.io')
+TRIMMED_READS_SE_REVERSE = os.path.join(READ_TRIMMING_WORKING_DIR, 'trimming', 'fastq-se-reverse.io')
+TRIMMING_INFORM = os.path.join(READ_TRIMMING_WORKING_DIR, 'trimming', 'informs.io')
+TRIMMED_READS_QC_TXT = os.path.join(READ_TRIMMING_WORKING_DIR, 'post_trimming', 'txt.io')
+
 rule fastqc_pre_trimming:
     """
     Creates FastQC reports for the raw reads.
@@ -5,10 +13,10 @@ rule fastqc_pre_trimming:
     input:
         FASTQ = config['fastq_pe']
     output:
-        HTML = os.path.join(__WORKING_DIR, 'pre_trimming', 'html.io'),
-        TXT = os.path.join(__WORKING_DIR, 'pre_trimming', 'txt.io')
+        HTML = os.path.join(READ_TRIMMING_WORKING_DIR, 'pre_trimming', 'html.io'),
+        TXT = os.path.join(READ_TRIMMING_WORKING_DIR, 'pre_trimming', 'txt.io')
     params:
-        running_dir = os.path.join(__WORKING_DIR, 'pre_trimming')
+        running_dir = os.path.join(READ_TRIMMING_WORKING_DIR, 'pre_trimming')
     threads:
         8
     run:
@@ -27,14 +35,14 @@ rule read_trimming:
     input:
         FASTQ = config['fastq_pe']
     output:
-        FASTQ_PE = os.path.join(__WORKING_DIR, 'read_trimming', 'fastq-pe.io'),
-        FASTQ_SE_FORWARD = os.path.join(__WORKING_DIR, 'read_trimming', 'fastq-se-forward.io'),
-        FASTQ_SE_REVERSE = os.path.join(__WORKING_DIR, 'read_trimming', 'fastq-se-reverse.io'),
-        INFORMS = os.path.join(__WORKING_DIR, 'read_trimming', 'informs.io')
+        FASTQ_PE = TRIMMED_READS_PE,
+        FASTQ_SE_FORWARD = TRIMMED_READS_SE_FORWARD,
+        FASTQ_SE_REVERSE = TRIMMED_READS_SE_REVERSE,
+        INFORMS = TRIMMING_INFORM
     threads:
         8
     params:
-        running_dir = os.path.join(__WORKING_DIR, 'read_trimming')
+        running_dir = os.path.join(READ_TRIMMING_WORKING_DIR, 'trimming')
     run:
         from app.tools.trimmomatic.trimmomatic import Trimmomatic
         trimmomatic = Trimmomatic(camel)
@@ -49,12 +57,12 @@ rule fastqc_post_trimming:
     Creates FastQC reports of the trimmed reads.
     """
     input:
-        FASTQ = os.path.join(__WORKING_DIR, 'read_trimming', 'fastq-pe.io'),
+        FASTQ = TRIMMED_READS_PE
     output:
-        HTML = os.path.join(__WORKING_DIR, 'post_trimming', 'html.io'),
-        TXT = os.path.join(__WORKING_DIR, 'post_trimming', 'txt.io')
+        HTML = os.path.join(READ_TRIMMING_WORKING_DIR, 'post_trimming', 'html.io'),
+        TXT = TRIMMED_READS_QC_TXT
     params:
-        running_dir = os.path.join(__WORKING_DIR, 'post_trimming')
+        running_dir = os.path.join(READ_TRIMMING_WORKING_DIR, 'post_trimming')
     threads:
         8
     run:
@@ -71,16 +79,16 @@ rule report_read_trimming:
     Creates the HTML report with the trimming output files and statistics.
     """
     input:
-        HTML_Pre = os.path.join(__WORKING_DIR, 'pre_trimming', 'html.io'),
-        HTML_Post = os.path.join(__WORKING_DIR, 'post_trimming', 'html.io'),
-        FASTQ_PE = os.path.join(__WORKING_DIR, 'read_trimming', 'fastq-pe.io'),
-        FASTQ_SE_FORWARD = os.path.join(__WORKING_DIR, 'read_trimming', 'fastq-se-forward.io'),
-        FASTQ_SE_REVERSE = os.path.join(__WORKING_DIR, 'read_trimming', 'fastq-se-reverse.io'),
-        INFORMS_trimming = os.path.join(__WORKING_DIR, 'read_trimming', 'informs.io')
+        HTML_Pre = os.path.join(READ_TRIMMING_WORKING_DIR, 'pre_trimming', 'html.io'),
+        HTML_Post = os.path.join(READ_TRIMMING_WORKING_DIR, 'post_trimming', 'html.io'),
+        FASTQ_PE = TRIMMED_READS_PE,
+        FASTQ_SE_FORWARD = TRIMMED_READS_SE_FORWARD,
+        FASTQ_SE_REVERSE = TRIMMED_READS_SE_REVERSE,
+        INFORMS_trimming = TRIMMING_INFORM
     output:
-        VAL_HTML = os.path.join(__WORKING_DIR, 'report_read_trimming', 'html.io')
+        VAL_HTML = READ_TRIMMING_REPORT
     params:
-        running_dir = os.path.join(__WORKING_DIR, 'report_read_trimming'),
+        running_dir = os.path.join(READ_TRIMMING_WORKING_DIR),
         output_dir = config['output_dir']
     run:
         from app.tools.pipelines.read_trimming.htmlreporterreadtrimming import HtmlReporterReadTrimming

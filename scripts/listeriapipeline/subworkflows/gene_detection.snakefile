@@ -1,5 +1,5 @@
-from app.components.html.htmlelement import HtmlElement
-from app.components.html.htmlreportsection import HtmlReportSection
+GENE_DETECTION_WORKING_DIR = os.path.join(__WORKING_DIR, 'gene_detection')
+GENE_DETECTION_REPORT = os.path.join(GENE_DETECTION_WORKING_DIR, 'report-html.io')
 
 class GeneDatabase(object):
 
@@ -80,11 +80,11 @@ rule database_manager:
     Retrieves the FASTA file and the metadata from a database folder.
     """
     output:
-        FASTA = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'database_manager', 'fasta.io'),
-        INFORMS = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'database_manager', 'informs.io')
+        FASTA = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'database_manager', 'fasta.io'),
+        INFORMS = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'database_manager', 'informs.io')
     params:
         db_path = lambda wildcards: get_database(wildcards.db).path,
-        running_dir = os.path.join(__WORKING_DIR, 'gene_detection', '{db}')
+        running_dir = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}')
     run:
         from app.tools.pipelines.gene_detection.dbmanager import DBManager
         db_manager = DBManager(camel)
@@ -99,12 +99,12 @@ rule blastn:
     Performs local alignment using Blastn+.
     """
     input:
-        FASTA = os.path.join(__WORKING_DIR, 'assembly', 'fasta.io'),
-        DB_BLAST = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'database_manager', 'fasta.io')
+        FASTA = FASTA_ASSEMBLY,
+        DB_BLAST = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'database_manager', 'fasta.io')
     output:
-        ASN = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'blastn', 'asn.io')
+        ASN = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'blastn', 'asn.io')
     params:
-        running_dir = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'blastn')
+        running_dir = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'blastn')
     run:
         from app.tools.blast.blastn import Blastn
         blastn = Blastn(camel)
@@ -119,11 +119,11 @@ rule tsv_generation:
     Generates tabular output format to extract hit statistics.
     """
     input:
-        ASN = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'blastn', 'asn.io')
+        ASN = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'blastn', 'asn.io')
     output:
-        TSV = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'tsv_generation', 'tsv.io')
+        TSV = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'tsv_generation', 'tsv.io')
     params:
-        running_dir = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'tsv_generation')
+        running_dir = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'tsv_generation')
     run:
         from app.tools.blast.blastformatter import BlastFormatter
         blast_formatter = BlastFormatter(camel)
@@ -138,16 +138,16 @@ rule hit_filtering:
     Extracts the hit information based on the database metadata.
     """
     input:
-        TSV = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'tsv_generation', 'tsv.io'),
-        INFORMS_db_info = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'database_manager', 'informs.io')
+        TSV = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'tsv_generation', 'tsv.io'),
+        INFORMS_db_info = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'database_manager', 'informs.io')
     output:
-        VAL_Hits = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'hit_filtering', 'blast-hits.io'),
-        TSV = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'hit_filtering', 'tsv-filtered.io')
+        VAL_Hits = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'hit_filtering', 'blast-hits.io'),
+        TSV = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'hit_filtering', 'tsv-filtered.io')
     params:
-        running_dir = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'hit_filtering'),
+        running_dir = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'hit_filtering'),
         percent_identity = lambda wildcards: get_database(wildcards.db).pi_threshold,
         extra_column = lambda wildcards: get_database(wildcards.db).extra_column,
-        output_filename = lambda wildcards: os.path.join(__WORKING_DIR, 'gene_detection', wildcards.db, 'hits-{}-{}.tsv'.format(
+        output_filename = lambda wildcards: os.path.join(GENE_DETECTION_WORKING_DIR, wildcards.db, 'hits-{}-{}.tsv'.format(
             FileSystemHelper.make_valid(config['sample_name']),
             FileSystemHelper.make_valid(wildcards.db)))
     run:
@@ -168,11 +168,11 @@ rule text_alignment_generation:
     Generates alignments in the text format.
     """
     input:
-        ASN = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'blastn', 'asn.io')
+        ASN = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'blastn', 'asn.io')
     output:
-        TXT = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'alignment_generation', 'txt.io')
+        TXT = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'alignment_generation', 'txt.io')
     params:
-        running_dir = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'alignment_generation')
+        running_dir = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'alignment_generation')
     run:
         from app.tools.blast.blastformatter import BlastFormatter
         blast_formatter = BlastFormatter(camel)
@@ -187,12 +187,12 @@ rule text_alignment_extraction:
     Extracts a text alignment for the selected hits and attaches them to the hit objects.
     """
     input:
-        TXT = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'alignment_generation', 'txt.io'),
-        VAL_Hits = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'hit_filtering', 'blast-hits.io')
+        TXT = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'alignment_generation', 'txt.io'),
+        VAL_Hits = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'hit_filtering', 'blast-hits.io')
     output:
-        VAL_Hits = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'alignment_extraction', 'blast-hits.io')
+        VAL_Hits = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'alignment_extraction', 'blast-hits.io')
     params:
-        running_dir = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'alignment_extraction')
+        running_dir = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'alignment_extraction')
     run:
         from app.tools.pipelines.gene_detection.alignmentextractor import AlignmentExtractor
         alignment_extractor = AlignmentExtractor(camel)
@@ -211,10 +211,10 @@ rule get_clustered_db:
     Returns the clustered database that can be used by SRST2.
     """
     output:
-        FASTA = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'clustered', 'fasta.io'),
-        INFORMS = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'clustered', 'mapping.io')
+        FASTA = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'clustered', 'fasta.io'),
+        INFORMS = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'clustered', 'mapping.io')
     params:
-        running_dir = os.path.join(__WORKING_DIR, 'gene_detection', '{db}'),
+        running_dir = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}'),
         db_path = lambda wildcards: get_database(wildcards.db).path_clustered
     run:
         from app.tools.pipelines.gene_detection.dbmanagerclustered import DBManagerClustered
@@ -229,12 +229,12 @@ rule srst2_gene_detection:
     Read-mapping based gene detection using SRST2.
     """
     input:
-        FASTQ_PE = os.path.join(__WORKING_DIR, 'read_trimming', 'fastq-pe.io'),
-        FASTA = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'clustered', 'fasta.io'),
+        FASTQ_PE = TRIMMED_READS_PE,
+        FASTA = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'clustered', 'fasta.io'),
     output:
-        TSV = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'srst2', 'tsv.io')
+        TSV = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'srst2', 'tsv.io')
     params:
-        running_dir = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'srst2')
+        running_dir = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'srst2')
     threads:
         4
     run:
@@ -254,15 +254,15 @@ rule srst2_hit_extraction:
     Extracts hits from the SRST2 output.
     """
     input:
-        TSV = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'srst2', 'tsv.io'),
-        INFORMS_db_info = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'database_manager', 'informs.io'),
-        INFORMS_mapping = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'clustered', 'mapping.io')
+        TSV = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'srst2', 'tsv.io'),
+        INFORMS_db_info = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'database_manager', 'informs.io'),
+        INFORMS_mapping = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'clustered', 'mapping.io')
     output:
-        VAL_Hits = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'srst2', 'srst2-hits.io'),
-        TSV = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'srst2', 'tsv-srst2.io')
+        VAL_Hits = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'srst2', 'srst2-hits.io'),
+        TSV = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'srst2', 'tsv-srst2.io')
     params:
-        running_dir = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'srst2'),
-        output_filename = lambda wildcards: os.path.join(__WORKING_DIR, 'gene_detection', wildcards.db, 'hits-{}-{}.tsv'.format(
+        running_dir = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'srst2'),
+        output_filename = lambda wildcards: os.path.join(GENE_DETECTION_WORKING_DIR, wildcards.db, 'hits-{}-{}.tsv'.format(
             FileSystemHelper.make_valid(config['sample_name']),
             FileSystemHelper.make_valid(wildcards.db)))
     run:
@@ -279,17 +279,17 @@ rule gene_detection_get_hits:
     Retrieves the hits from the blastn / SRST2 detection method based on the config
     """
     input:
-        hits_blast = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'alignment_extraction', 'blast-hits.io') if config[
+        hits_blast = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'alignment_extraction', 'blast-hits.io') if config[
             'detection_method'] == 'fast' else [],
-        hits_srst2 = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'srst2', 'srst2-hits.io') if config[
+        hits_srst2 = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'srst2', 'srst2-hits.io') if config[
             'detection_method'] == 'normal' else [],
-        tsv_blast = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'hit_filtering', 'tsv-filtered.io') if config[
+        tsv_blast = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'hit_filtering', 'tsv-filtered.io') if config[
             'detection_method'] == 'fast' else [],
-        tsv_srst2 = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'srst2', 'tsv-srst2.io') if config[
+        tsv_srst2 = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'srst2', 'tsv-srst2.io') if config[
             'detection_method'] == 'normal' else []
     output:
-        VAL_Hits = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'selected-hits.io'),
-        TSV = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'selected-tsv.io')
+        VAL_Hits = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'selected-hits.io'),
+        TSV = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'selected-tsv.io')
     run:
         if len(input.hits_blast) > 0:
             shutil.copyfile(input.hits_blast, output.VAL_Hits)
@@ -305,13 +305,13 @@ rule report_gene_detection:
     Creates HTML reports for the gene detection.
     """
     input:
-        VAL_Hits = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'selected-hits.io'),
-        INFORMS_db_info = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'database_manager', 'informs.io'),
-        TSV = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'selected-tsv.io')
+        VAL_Hits = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'selected-hits.io'),
+        INFORMS_db_info = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'database_manager', 'informs.io'),
+        TSV = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'selected-tsv.io')
     output:
-        VAL_HTML = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report', 'html.io')
+        VAL_HTML = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'report', 'html.io')
     params:
-        running_dir = os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report'),
+        running_dir = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'report'),
         sample_name = config['sample_name']
     run:
         from app.tools.pipelines.gene_detection.htmlreportergenedetection import HtmlReporterGeneDetection
@@ -327,13 +327,13 @@ rule combine_gene_detection_reports:
     Combines the reports from the different databases.
     """
     input:
-        HTML_Res = expand(os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report', 'html.io'), db=get_db_keys('resistance')),
-        HTML_Vir = expand(os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report', 'html.io'), db=get_db_keys('virulence')),
-        HTML_Pla = expand(os.path.join(__WORKING_DIR, 'gene_detection', '{db}', 'report', 'html.io'), db=get_db_keys('plasmid'))
+        HTML_Res = expand(os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'report', 'html.io'), db=get_db_keys('resistance')),
+        HTML_Vir = expand(os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'report', 'html.io'), db=get_db_keys('virulence')),
+        HTML_Pla = expand(os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'report', 'html.io'), db=get_db_keys('plasmid'))
     output:
-        os.path.join(__WORKING_DIR, 'report_gene_detection', 'html.io')
+        GENE_DETECTION_REPORT
     params:
-        running_dir = os.path.join(__WORKING_DIR, 'gene_detection', 'report'),
+        running_dir = os.path.join(GENE_DETECTION_WORKING_DIR, 'report'),
         output_dir = config['output_dir']
     run:
         gene_detection_module = HtmlElement('div')
@@ -347,5 +347,4 @@ rule combine_gene_detection_reports:
                     report_section = SnakemakeUtils.load_object(pickle)[0].value
                     report_section.copy_files(params.output_dir)
                     gene_detection_module.add_html_object(report_section)
-
         SnakemakeUtils.dump_object([ToolIOValue(gene_detection_module)], output[0])

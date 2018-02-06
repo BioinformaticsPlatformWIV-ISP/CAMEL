@@ -7,7 +7,8 @@ There are two approaches:
 The sequence typing databases need to be added to the config file under the 'sequence_typing' section.
 Each database need to be specified as 'Key': 'Path to DB folder'.
 """
-OUTPUT_TYPING_REPORT = os.path.join(__WORKING_DIR, 'sequence_typing', 'report-html.io')
+TYPING_WORKING_DIR = os.path.join(__WORKING_DIR, 'sequence_typing')
+TYPING_REPORT = os.path.join(TYPING_WORKING_DIR, 'report-html.io')
 
 def get_loci(folder):
     """
@@ -60,9 +61,9 @@ rule extract_locus_set_info:
     input:
         lambda wildcards: SCHEMES.get(wildcards.scheme)
     output:
-        INFORMS = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', 'informs-{scheme}.io')
+        INFORMS = os.path.join(TYPING_WORKING_DIR, '{scheme}', 'informs-{scheme}.io')
     params:
-        running_dir=os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}')
+        running_dir=os.path.join(TYPING_WORKING_DIR, '{scheme}')
     run:
         from app.tools.pipelines.sequence_typing.locussetmanager import LocusSetManager
         locus_set_manager = LocusSetManager(camel)
@@ -78,10 +79,10 @@ rule extract_locus_info:
     input:
         lambda wildcards: os.path.join(SCHEMES.get(wildcards.scheme), wildcards.locus)
     output:
-        FASTA = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', '{locus}', 'fasta-{locus}.io'),
-        INFORMS = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', '{locus}', 'informs-{locus}.io')
+        FASTA = os.path.join(TYPING_WORKING_DIR, '{scheme}', '{locus}', 'fasta-{locus}.io'),
+        INFORMS = os.path.join(TYPING_WORKING_DIR, '{scheme}', '{locus}', 'informs-{locus}.io')
     params:
-        running_dir=os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}')
+        running_dir=os.path.join(TYPING_WORKING_DIR, '{scheme}')
     run:
         from app.tools.pipelines.sequence_typing.locusmanager import LocusManager
         locus_manager = LocusManager(camel)
@@ -97,7 +98,7 @@ rule pickle_dump_sequence_type_definitions:
     input:
         lambda wildcards: SCHEMES.get(wildcards.scheme)
     output:
-        os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', 'tsv-profiles.io')
+        os.path.join(TYPING_WORKING_DIR, '{scheme}', 'tsv-profiles.io')
     run:
         SnakemakeUtils.dump_object([ToolIOFile(os.path.join(input[0], 'profiles.tsv'))], output[0])
 
@@ -106,13 +107,13 @@ rule blastn_allele_detection:
     Allele detection using blastn.
     """
     input:
-        FASTA = os.path.join(__WORKING_DIR, 'assembly', 'fasta.io'),
-        DB_BLAST = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', '{locus}', 'fasta-{locus}.io'),
-        INFORMS_locus = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', '{locus}', 'informs-{locus}.io')
+        FASTA = FASTA_ASSEMBLY,
+        DB_BLAST = os.path.join(TYPING_WORKING_DIR, '{scheme}', '{locus}', 'fasta-{locus}.io'),
+        INFORMS_locus = os.path.join(TYPING_WORKING_DIR, '{scheme}', '{locus}', 'informs-{locus}.io')
     output:
-        VAL_Hit = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', '{locus}', 'hit-blast.io')
+        VAL_Hit = os.path.join(TYPING_WORKING_DIR, '{scheme}', '{locus}', 'hit-blast.io')
     params:
-        running_dir = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', '{locus}')
+        running_dir = os.path.join(TYPING_WORKING_DIR, '{scheme}', '{locus}')
     threads: 1
     run:
         from app.tools.blast.blastformatter import BlastFormatter
@@ -166,13 +167,13 @@ rule srst2_allele_detection:
     Allele detection using SRST2.
     """
     input:
-        FASTQ_PE = os.path.join(__WORKING_DIR, 'read_trimming', 'fastq-pe.io'),
-        FASTA = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', '{locus}', 'fasta-{locus}.io'),
-        INFORMS_locus = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', '{locus}', 'informs-{locus}.io')
+        FASTQ_PE = TRIMMED_READS_PE,
+        FASTA = os.path.join(TYPING_WORKING_DIR, '{scheme}', '{locus}', 'fasta-{locus}.io'),
+        INFORMS_locus = os.path.join(TYPING_WORKING_DIR, '{scheme}', '{locus}', 'informs-{locus}.io')
     output:
-        VAL_Hit = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', '{locus}', 'hit-srst2.io')
+        VAL_Hit = os.path.join(TYPING_WORKING_DIR, '{scheme}', '{locus}', 'hit-srst2.io')
     params:
-        running_dir = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', '{locus}')
+        running_dir = os.path.join(TYPING_WORKING_DIR, '{scheme}', '{locus}')
     threads:
         4
     run:
@@ -190,12 +191,12 @@ rule combine_hits:
     using SRST2 depending on the config.
     """
     input:
-        hits_blast = lambda wildcards: expand(os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', '{locus}', 'hit-blast.io'),
+        hits_blast = lambda wildcards: expand(os.path.join(TYPING_WORKING_DIR, '{scheme}', '{locus}', 'hit-blast.io'),
                                               locus=LOCI.get(wildcards.scheme), scheme=wildcards.scheme) if config['detection_method'] == 'fast' else [],
-        hits_srst2 = lambda wildcards: expand(os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', '{locus}', 'hit-srst2.io'),
+        hits_srst2 = lambda wildcards: expand(os.path.join(TYPING_WORKING_DIR, '{scheme}', '{locus}', 'hit-srst2.io'),
                                               locus=LOCI.get(wildcards.scheme), scheme=wildcards.scheme) if config['detection_method'] == 'normal' else []
     output:
-        os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', 'hits-combined.io')
+        os.path.join(TYPING_WORKING_DIR, '{scheme}', 'hits-combined.io')
     run:
         list_of_hits = []
         for pickle in input.hits_blast + input.hits_srst2:
@@ -207,13 +208,13 @@ rule combine_loci:
     Combines the output of all loci of a scheme into a tabular output file.
     """
     input:
-        hits=os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', 'hits-combined.io'),
-        INFORMS_Loci=lambda wildcards: expand(os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', '{locus}', 'informs-{locus}.io'),
+        hits=os.path.join(TYPING_WORKING_DIR, '{scheme}', 'hits-combined.io'),
+        INFORMS_Loci=lambda wildcards: expand(os.path.join(TYPING_WORKING_DIR, '{scheme}', '{locus}', 'informs-{locus}.io'),
                                               locus=LOCI.get(wildcards.scheme), scheme=wildcards.scheme)
     output:
-        TSV=os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', 'tsv-combined.io')
+        TSV=os.path.join(TYPING_WORKING_DIR, '{scheme}', 'tsv-combined.io')
     params:
-        running_dir=os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}'),
+        running_dir=os.path.join(TYPING_WORKING_DIR, '{scheme}'),
         sample_name=FileSystemHelper.make_valid(config['sample_name']),
         scheme=FileSystemHelper.make_valid('{scheme}')
     run:
@@ -235,12 +236,12 @@ rule detect_sequence_type:
     Detects the sequence type based on the detected alleles.
     """
     input:
-        VAL_Hits = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', 'hits-combined.io'),
-        TSV = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', 'tsv-profiles.io')
+        VAL_Hits = os.path.join(TYPING_WORKING_DIR, '{scheme}', 'hits-combined.io'),
+        TSV = os.path.join(TYPING_WORKING_DIR, '{scheme}', 'tsv-profiles.io')
     output:
-        INFORMS = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', 'informs-ST.io')
+        INFORMS = os.path.join(TYPING_WORKING_DIR, '{scheme}', 'informs-ST.io')
     params:
-        running_dir = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}')
+        running_dir = os.path.join(TYPING_WORKING_DIR, '{scheme}')
     run:
         from app.tools.pipelines.sequence_typing.sequencetypedetector import SequenceTypeDetector
         sequence_type_detector = SequenceTypeDetector(camel)
@@ -255,15 +256,15 @@ rule create_report:
     Creates a report with the sequence typing output.
     """
     input:
-        TSV = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', 'tsv-combined.io'),
-        INFORMS_Scheme = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', 'informs-{scheme}.io'),
-        INFORMS_ST = lambda wildcards: os.path.join(__WORKING_DIR, 'sequence_typing', '{}', 'informs-ST.io').format(
+        TSV = os.path.join(TYPING_WORKING_DIR, '{scheme}', 'tsv-combined.io'),
+        INFORMS_Scheme = os.path.join(TYPING_WORKING_DIR, '{scheme}', 'informs-{scheme}.io'),
+        INFORMS_ST = lambda wildcards: os.path.join(TYPING_WORKING_DIR, '{}', 'informs-ST.io').format(
             wildcards.scheme) if has_profiles(wildcards.scheme) else [],
-        VAL_Hits = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', 'hits-combined.io'),
+        VAL_Hits = os.path.join(TYPING_WORKING_DIR, '{scheme}', 'hits-combined.io'),
     output:
-        VAL_HTML = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', 'report', 'html.io')
+        VAL_HTML = os.path.join(TYPING_WORKING_DIR, '{scheme}', 'report', 'html.io')
     params:
-        running_dir = os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', 'report'),
+        running_dir = os.path.join(TYPING_WORKING_DIR, '{scheme}', 'report'),
     run:
         from app.tools.pipelines.sequence_typing.htmlreportertyping import HtmlReporterTyping
         reporter = HtmlReporterTyping(camel)
@@ -279,12 +280,12 @@ rule combine_sequence_typing_reports:
     Combines the reports of all sequence typing schemes.
     """
     input:
-        VAL_HTML = expand(os.path.join(__WORKING_DIR, 'sequence_typing', '{scheme}', 'report', 'html.io'),
+        VAL_HTML = expand(os.path.join(TYPING_WORKING_DIR, '{scheme}', 'report', 'html.io'),
                           scheme=config.get('sequence_typing', None))
     output:
-        OUTPUT_TYPING_REPORT
+        TYPING_REPORT
     params:
-        running_dir = os.path.join(__WORKING_DIR, 'sequence_typing'),
+        running_dir = os.path.join(TYPING_WORKING_DIR),
         output_dir = config['output_dir']
     run:
         typing_module = HtmlElement('div')
