@@ -40,6 +40,7 @@ class HtmlReportSection(HtmlElement):
         if output_directory is None or not os.path.isdir(output_directory):
             raise ValueError("Invalid output directory: {}".format(output_directory))
         for file_path, relative_path in self.files:
+            logging.info("Copying file: {} - {}".format(file_path, relative_path))
             if not os.path.isfile(file_path):
                 raise ValueError("Cannot add file (does not exist) '{}'".format(file_path))
             relative_dir = os.path.join(output_directory, os.path.dirname(relative_path))
