@@ -1,0 +1,51 @@
+#
+# Example config.yaml file to run pipeline with VO and fast method for all analyses
+#
+# -----------------------------------------------------------------
+
+# CAMEL
+enabled_db_logging: True
+
+# Logging
+logging: False
+pipeline_name: Listeria Pipeline
+pipeline_job_id: 3
+
+
+# Input / output
+report: /scratch/qiafu/listeria_pipeline/working/report_final/report.html
+output_dir: /scratch/qiafu/listeria_pipeline/working/report_final/
+working_dir: /scratch/qiafu/listeria_pipeline/working/
+
+
+# Sample information
+sample_name: SRR1005531
+fastq_pe:
+  - /data/testdata/listeria/cgMLST_Pasteur/SRR1005531_1.fastq.gz
+  - /data/testdata/listeria/cgMLST_Pasteur/SRR1005531_2.fastq.gz
+
+
+# Settings
+assembler: VelvetOptimiser # VelvetOptimiser/SPAdes
+detection_method: fast # normal/fast
+
+
+# Gene Detecction DBs
+gene_detection: [VirulenceFinder, Gram_positive, ARG-ANNOT, CARD, ResFinder]
+
+
+# Sequence Typing DBs
+sequence_typing:
+   cgMLST: /data/sequence_typing/listeria/cgmlst
+   MLST-Pasteur: /data/sequence_typing/listeria/mlst/
+   species_confirmation: /data/sequence_typing/listeria/species_confirmation/
+   serogroup: /data/sequence_typing/listeria/serogroup
+   virulence: /data/sequence_typing/listeria/virulence
+   antibiotic_resistance: /data/sequence_typing/listeria/antibiotic_resistance
+   metal_detergent_resistance: /data/sequence_typing/listeria/metal_detergent_resistance
+
+
+# Kraken
+db_kraken: /data/kraken/latest/abfhpv_lite
+# lite db is incomplete, for testing only
+# db_kraken: /data/kraken/latest/abfhpv
