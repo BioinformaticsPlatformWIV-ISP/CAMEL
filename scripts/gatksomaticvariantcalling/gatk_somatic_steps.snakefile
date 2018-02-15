@@ -22,6 +22,52 @@ def prepare_addreadgroups_input(wildcards):
         BAM = os.path.join(working_dir, "picardsortbam/sortedbam.io")
     return BAM
 
+def prepare_printreads_input(wildcards):
+    """
+    Prepares input for printreads rule. 
+    Acts as a static fork in workflow based on config file (execution of indel realignment or not). 
+    :return: 
+    """
+    if config["run_indel_realignment"]:
+        BAM = os.path.join(working_dir, "indelrealigner/bam.io"),
+    else:
+        BAM = os.path.join(working_dir, "addreadgroups/bam.io")
+    return BAM
+
+def prepare_basequalityrecalibration_input(wildcards):
+    """
+    Prepares input for basequalityrecalibration rule. 
+    Acts as a static fork in workflow based on config file (execution of indel realignment or not). 
+    :return: 
+    """
+    if config["run_indel_realignment"]:
+        BAM = os.path.join(working_dir, "indelrealigner/bam.io"),
+    else:
+        BAM = os.path.join(working_dir, "addreadgroups/bam.io")
+    return BAM
+
+def define_final_output(wildcards):
+    """
+    Defines the expected output of the pipeline for the rule "all", depending on the variant caller(s) used.
+    :param wildcards: 
+    :return: 
+    """
+    output = []
+    output.append(output.append(os.path.join(working_dir, "analyzecovariates/pdf.io")))
+    if "mutect1" in config["variant_caller"]:
+        output.append(os.path.join(working_dir, "mutect1/vcf.io"),)
+    if "mutect2" in config["variant_caller"]:
+        output.append(os.path.join(working_dir, "mutect2/vcf.io"), )
+    return output
+
+# rule all:
+#     """
+#     This rule makes sure that all other rules are executed.
+#     Last file to be generated in pipeline is vcf.io.
+#     """
+#     input:
+#         os.path.join(working_dir, "mutect1/vcf.io"),
+#         os.path.join(working_dir, "analyzecovariates/pdf.io")
 
 rule all:
     """
@@ -29,9 +75,7 @@ rule all:
     Last file to be generated in pipeline is vcf.io.
     """
     input:
-        os.path.join(working_dir, "mutect1/vcf.io"),
-        os.path.join(working_dir, "analyzecovariates/pdf.io")
-
+        define_final_output
 
 
 rule prepare_initial_input:
@@ -325,7 +369,7 @@ rule printreads:
     Post-recalibration reads printing (GATK). 
     """
     input:
-        BAM=os.path.join(working_dir, "indelrealigner/bam.io"),
+        BAM=prepare_printreads_input,
         BQSR=os.path.join(working_dir, "basequalityrecalibration/txt.io"),
         FASTA_REF=os.path.join(working_dir, "initial_input/fasta_reference_human.io"),
         TXT_intervals = os.path.join(working_dir, "generate_intervals/bed.io"),
@@ -396,7 +440,7 @@ rule analyzecovariates:
 
 rule mutect1:
     """
-    Variant calling (mutect1).
+    Variant calling (MuTect1).
     """
     input:
         BAM_TUMOR=os.path.join(working_dir, "printreads/bam.io"),
@@ -413,17 +457,48 @@ rule mutect1:
         mut=Mutect1(camel)
         SnakemakeUtils.add_pickle_inputs(mut, input)
         step = SnakeStep(rule, mut, camel, params.working_dir, config)
-        if 'txt_output' in config:
-            mut.update_parameters(output_callstats_file = config['txt_output'])
-        if 'vcf_output' in config:
-            mut.update_parameters(output_vcf_file = config['vcf_output'])
-        if 'downsampling_target' in config:
-            mut.update_parameters(downsampling_coverage_target=config['downsampling_target'])
-        if 'downsampling_type' in config:
-            mut.update_parameters(downsampling_type=config['downsampling_type'])
+        if 'mutect1_tab_output' in config:
+            mut.update_parameters(output_callstats_file = config['mutect1_tab_output'])
+        if 'mutect1_vcf_output' in config:
+            mut.update_parameters(output_vcf_file = config['mutect1_vcf_output'])
+        if 'MuTect1_downsampling_target' in config:
+            mut.update_parameters(downsampling_coverage_target=config['MuTect1_downsampling_target'])
+        if 'MuTect1_downsampling_type' in config:
+            mut.update_parameters(downsampling_type=config['MuTect1_downsampling_type'])
         if 'gap_events_threshold' in config:
             mut.update_parameters(gap_events_threshold=config['gap_events_threshold'])
         if 'strand_artifact_lod' in  config:
             mut.update_parameters(strand_artifact_lod=config['strand_artifact_lod'])
+        step.run_step()
+        SnakemakeUtils.dump_tool_outputs(mut, output)
+
+
+rule mutect2:
+    """
+    Variant calling (MuTect2).
+    """
+    input:
+        BAM_TUMOR=os.path.join(working_dir, "printreads/bam.io"),
+        TXT_intervals = os.path.join(working_dir, "generate_intervals/bed.io"),
+        FASTA_REF=os.path.join(working_dir, "initial_input/fasta_reference_human.io"),
+        VCF_DBSNP=os.path.join(working_dir, "initial_input/vcf_known_snps.io"),
+    output:
+        TXT_CALL_STATS=os.path.join(working_dir, "mutect2/txt.io"),
+        VCF=os.path.join(working_dir, "mutect2/vcf.io"),
+    params:
+        working_dir = os.path.join(working_dir, "mutect2"),
+    threads: 5
+    run:
+        from app.tools.gatk.gatkmutect2 import GATKMuTect2
+        mut=GATKMuTect2(camel)
+        SnakemakeUtils.add_pickle_inputs(mut, input)
+        step = SnakeStep(rule, mut, camel, params.working_dir, config)
+        mut.update_parameters(threads=threads)
+        if 'mutect2_vcf_output' in config:
+            mut.update_parameters(output_vcf_file = config['vcf_output'])
+        if 'MuTect2_downsampling_target' in config:
+            mut.update_parameters(downsampling_coverage_target=config['MuTect2_downsampling_target'])
+        if 'MuTect2_downsampling_type' in config:
+            mut.update_parameters(downsampling_type=config['MuTect2_downsampling_type'])
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(mut, output)

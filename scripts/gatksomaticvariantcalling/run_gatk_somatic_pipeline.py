@@ -52,11 +52,7 @@ class GATKSomaticMain(object):
                         nargs='+')
 
         # Variant caller to use
-        vc = ap.add_argument_group(required=True)
-        # MuTect1 flag
-        vc.add_argument('--mutect1', dest='mutect1', help='Perform variant calling with MuTect1.', action='store_true')
-        # MuTect2 flag
-        vc.add_argument('--mutect2', dest='mutect2', help='Perform variant calling with MuTect2.', action='store_true')
+        ap.add_argument('-V', '--variant_caller', metavar='variant_caller', dest='variant_caller', help='Variant caller to use.', nargs='+', choices=["mutect1", "mutect2"])
 
         # output
         ap.add_argument('--mutect1_vcf_output', dest='mutect1_vcf_output', metavar='mutect1_vcf_output', help='Output vcf file from MuTect1.')
@@ -76,7 +72,6 @@ class GATKSomaticMain(object):
 
         # MarkDuplicates flag
         ap.add_argument('--mark_duplicates', dest='markduplicates', help='Mark duplicate reads.', action='store_true')
-
 
         # MuTect1:
         # Downsampling
@@ -101,6 +96,9 @@ class GATKSomaticMain(object):
 
         # run from galaxy flag
         ap.add_argument('--from_galaxy', dest='from_galaxy', help='Indicates that the command is run from galaxy. Useful for logging stderr.', action='store_true')
+
+        # number of threads
+        ap.add_argument('--threads', dest='threads', help='Maximum number of threads for snakemake to allow.', default=self.CORES)
 
         # job id
         ap.add_argument('--job_id', dest='job_id', metavar='job_id', help='Job ID for debugging and logging.',
@@ -140,6 +138,9 @@ class GATKSomaticMain(object):
             self._config_data['SE'] = True
             self._config_data['PE'] = False
 
+        # variant caller choice
+        self._config_data['variant_caller'] = self._args.variant_caller
+
         # Output filenames
         if self._args.mutect1_vcf_output:
             self._config_data['mutect1_vcf_output'] = self._args.mutect1_vcf_output
@@ -155,7 +156,7 @@ class GATKSomaticMain(object):
         # Flag for MarkDuplicates
         self._config_data['run_markDuplicates'] = self._args.markduplicates
 
-        # MuTect parameters
+        # MuTect1 parameters
         # Downsampling
         if self._args.MuTect1_downsampling_type:
             self._config_data['MuTect1_downsampling_type'] = self._args.MuTect1_downsampling_type
@@ -170,17 +171,22 @@ class GATKSomaticMain(object):
 
         # MuTect2 parameters
         # Downsampling
-        if self._args.MuTect1_downsampling_type:
-            self._config_data['MuTect1_downsampling_type'] = self._args.MuTect1_downsampling_type
-        if self._args.downsampling_target:
-            self._config_data['downsampling_target'] = self._args.downsampling_target
-        # gap_event_threshold
-        if self._args.gap_events_threshold:
-            self._config_data['gap_events_threshold'] = self._args.gap_events_threshold
-        # strand_artifact_lod
-        if self._args.strand_artifact_lod:
-            self._config_data['strand_artifact_lod'] = self._args.strand_artifact_lod
+        if self._args.MuTect2_downsampling_type:
+            self._config_data['MuTect2_downsampling_type'] = self._args.MuTect2_downsampling_type
+        if self._args.MuTect2_downsampling_target:
+            self._config_data['MuTect2_downsampling_target'] = self._args.MuTect2_downsampling_target
 
+        # Indel realigner flag (indel realignment only required for MuTect1)
+        if self._args.variant_caller == "Mutect1":
+            self._config_data['run_indel_realignment'] = "True"
+        else:
+            self._config_data['run_indel_realignment'] = "False"
+
+        # threads
+        if self._args.threads:
+            self._config_data['threads'] = self._args.threads
+        else:
+            self._config_data['threads'] = self._args.threads
         # Create and write to config file
         with open(self.runtime_config_name, 'w') as handle:
             yaml.dump(self._config_data, handle)
@@ -211,7 +217,7 @@ class GATKSomaticMain(object):
             self._pipeline.set_initial_input(input_dict)
 
         # Execute the snakemake workflow and log stdout and stderr if command fails (if pipeline is run from galaxy).
-        to_execute = 'snakemake --configfile {} --snakefile {} --cores {}'.format(self.runtime_config_name, self.SNAKEFILE, self.CORES)
+        to_execute = 'snakemake --configfile {} --snakefile {} --cores {}'.format(self.runtime_config_name, self.SNAKEFILE, self._args.threads)
         command = Command(to_execute)
         command.run_command(self._args.work_dir, subprocess.STDOUT)
         if command.returncode != 0 and self._args.from_galaxy:
