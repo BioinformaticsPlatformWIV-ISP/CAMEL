@@ -1,49 +1,51 @@
+from typing import Dict, Tuple, Optional
+
+from psycopg2.extras import Json
+from snakemake.io import Wildcards
+
+from app.connection.connection import Connection
 from app.services.service import Service
 
 
 class StepService(Service):
     """
-    This class will perform operations on the DB regarding steps. This service is attached to a single step instance.
+    This class will perform operations on the DB regarding steps.
     """
 
-    def __init__(self, step_id, connection):
+    def __init__(self, connection: Connection) -> None:
         """
         Initializes step service.
-        :param step_id: Step id
         :param connection: Connection to the database
         :return: None
         """
         super(StepService, self).__init__(connection)
-        self._step_id = step_id
 
-    def log_output(self, output_data):
+    def log_output(self, output_data: Tuple[int, str, Wildcards, str, str, int, str, bool]) -> None:
         """
-        Logs the given output data for this step.
+        Logs the given output data for this step. The output data should be a list that contains (in order):
+        pipeline job id, rule name, wildcards, type (e.g. file), key (e.g. FASTQ_PE), index of the file (i.e. first,
+        second, ... file), hash of the file
         :param output_data: Output data
         :return: None
         """
+        if output_data[2] is not None:
+            output_data = output_data[:2] + (Json(self.__wildcards_to_dict(output_data[2])),) + output_data[3:]
         sql = """
-        INSERT INTO logging.input_output(pipeline_job_id, pipeline_step_id, type, key, index, hash)
-        VALUES (%s, %s, %s, %s, %s, %s);
+        INSERT INTO logging.input_output(pipeline_job_id, rule_name, wildcards, type, key, index, hash, pipeline_io)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s);
         """
         self.db_connection.insert(sql, output_data)
 
-    def log_job_parameter(self, parameter_id, pipeline_step_id, pipeline_job_id, value):
+    @staticmethod
+    def __wildcards_to_dict(wildcards: Wildcards) -> Optional[Dict[str, str]]:
         """
-        Logs a job parameter to the database.
-        :return: None
+        Extracts the wildcard names and values from the Snakemake Wildcards object and returns them as a dictionary.
+        :param wildcards: Wildcards object from snakemake
+        :return: Dictionary with wilcards names (key) and values (value)
         """
-        sql = """
-        INSERT INTO pipelines.job_step_tools_parameter (parameter_id, pipeline_step_id, pipeline_job_id, value,
-          disabled)
-        VALUES (%s, %s, %s, %s, %s)"""
-        self.db_connection.insert(sql, [parameter_id, pipeline_step_id, pipeline_job_id, value, value is False])
-
-    def get_parameter_id(self, tool_id, parameter_name):
-        sql = """
-        SELECT tp.tool_parameter_id
-        FROM  tools.tool_parameter tp, tools.tool t
-        WHERE tp.tool_id = t.tool_id
-        AND t.tool_id = %s
-        AND tp.name = %s;"""
-        return self.db_connection.query(sql, [tool_id, parameter_name])[1][0]
+        if wildcards is None:
+            return None
+        dict_ = {}
+        for key in wildcards.keys().keys():
+            dict_[key[0]] = wildcards.get(key[0])
+        return dict_

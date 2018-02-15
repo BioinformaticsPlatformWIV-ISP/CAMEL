@@ -8,9 +8,8 @@ class ToolIOFile(ToolIO):
     """
     Class that represents an input / output file of a tool.
     """
-    TYPE_NAME = 'file'
 
-    def __init__(self, path, logged=True):
+    def __init__(self, path: str, logged: bool=True) -> None:
         """
         Initializes a tool input / output file.
         :param path: Path to the file
@@ -19,31 +18,29 @@ class ToolIOFile(ToolIO):
         super(ToolIOFile, self).__init__(logged)
         self._path = os.path.abspath(path)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         String representation
         :return: String representation
         """
         return self._path
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         Internal representation
         :return: Internal representation
         """
-        return 'ToolIOFile("{}", {} bytes)'.format(self.path, self.size)
+        return f'ToolIOFile("{self.path}", {self.size} bytes)'
 
-    def is_valid(self):
+    def is_valid(self) -> bool:
         """
         Checks if the tool input / output file is valid.
         :return: True if valid
         """
-        if not self.exists:
-            return False
-        return True
+        return self.exists
 
     @property
-    def path(self):
+    def path(self) -> str:
         """
         Returns the path to the input / output file.
         :return: Path
@@ -51,7 +48,7 @@ class ToolIOFile(ToolIO):
         return self._path
 
     @property
-    def basename(self):
+    def basename(self) -> str:
         """
         Returns the basename of the input / output file.
         :return: Basename
@@ -59,7 +56,7 @@ class ToolIOFile(ToolIO):
         return os.path.basename(self.path)
 
     @property
-    def file_extension(self):
+    def file_extension(self) -> str:
         """
         Returns the file extension.
         :return: File extension
@@ -67,7 +64,7 @@ class ToolIOFile(ToolIO):
         return os.path.splitext(self.path)[-1]
 
     @property
-    def exists(self):
+    def exists(self) -> bool:
         """
         Checks whether this file exists.
         :return: True if the file exists, False otherwise
@@ -75,7 +72,7 @@ class ToolIOFile(ToolIO):
         return os.path.isfile(self._path)
 
     @property
-    def size(self):
+    def size(self) -> int:
         """
         Returns the size of this file.
         :return: Size
@@ -83,9 +80,17 @@ class ToolIOFile(ToolIO):
         return os.path.getsize(self._path)
 
     @property
-    def hash(self):
+    def hash(self) -> str:
         """
         Returns the hash value of this file.
         :return: Hash
         """
         return FileUtils.hash_file(self.path)
+
+    @property
+    def type_name(self) -> str:
+        """
+        Returns the type of the IO object.
+        :return: Type value
+        """
+        return 'file'

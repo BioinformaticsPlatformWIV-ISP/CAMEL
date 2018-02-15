@@ -1,9 +1,12 @@
+from app.connection.connection import Connection
+
+
 class Service(object):
     """
     Parent class for services that interact with the database.
     """
 
-    def __init__(self, connection):
+    def __init__(self, connection: Connection) -> None:
         """
         Initializes a connection object for transactions (update and insert)
         Initializes a cursor to perform queries and iterate through objects

@@ -1,37 +1,52 @@
 import logging
+from typing import Dict, List
 
-from abc import ABC, abstractmethod
+from snakemake.io import Wildcards
 
+from app.camel import Camel
+from app.io.toolio import ToolIO
+from app.loggers.logmanager import LogManager
+from app.services.pipelineservice import PipelineService
 from app.services.stepservice import StepService
+from app.tools.tool import Tool
 
 
-class Step(ABC):
+class Step(object):
     """
-    This class represents a step in a pipeline. It executes a single tool.
+    This class represents a step in a Snakemake pipeline. It executes a single tool.
     """
 
-    def __init__(self, name, tool, pipeline, camel):
+    def __init__(self, rule_name: str, tool: Tool, camel: Camel, folder: str, config: dict,
+                 wildcards: Wildcards=None, pipeline_output: bool=False, log_step: bool=False) -> None:
         """
         Initializes a step.
-        :param name: Name of the step
-        :param tool: Tool that needs to be executed
-        :param pipeline: Pipeline object of which this step is a part
+        :param rule_name: Name of the snakerule
+        :param tool: Tool object of the tool that needs to be executed
         :param camel: Camel object
+        :param folder: Folder in which the step is being run
+        :param config: Snakemake config dictionary
+        :param wildcards: Wildcards object from snakemake
+        :param pipeline_output: Boolean to indicate whether outputs are pipeline outputs
+        :param log_step: Boolean to indicate whether outputs for this step have to be logged
         """
-        self._name = name
+        self._name = rule_name
         self._tool = tool
-        self._step_id = None
-        self._folder = None
         self._step_inputs = {}
         self._input_informs = {}
-        self._pipeline = pipeline
         self._camel = camel
         self._pipeline_options = {}
         self._job_options = {}
-        self._step_service = None
+        self._db_step_logging = config['step_logging'] if config['step_logging'] is True else log_step
+        self._db_logging = config['logging']
+        self._pipeline_service = PipelineService(config['pipeline_name'], camel.connection)
+        self._step_service = StepService(camel.connection)
+        self._folder = folder
+        self._job_id = config['pipeline_job_id']
+        self._pipeline_output = pipeline_output
+        self._wildcards = wildcards
 
     @property
-    def name(self):
+    def name(self) -> str:
         """
         Returns the name of this step.
         :return: Name
@@ -39,24 +54,7 @@ class Step(ABC):
         return self._name
 
     @property
-    def step_id(self):
-        """
-        Returns the database id of this step.
-        :return: Database id
-        """
-        return self._step_id
-
-    @step_id.setter
-    def step_id(self, id_):
-        """
-        Sets the database id.
-        :return: None
-        """
-        self._step_id = id_
-        self._step_service = StepService(id_, self._camel.connection)
-
-    @property
-    def outputs(self):
+    def outputs(self) -> Dict[str, List[ToolIO]]:
         """
         Returns the outputs of this step.
         :return: Outputs
@@ -64,22 +62,31 @@ class Step(ABC):
         return self._tool.tool_outputs
 
     @property
-    def informs(self):
+    def informs(self) -> dict:
         """
         Returns the informs of this step.
         :return: Informs
         """
         return self._tool.informs
 
-    def add_pipeline_options(self, options):
+    def add_inputs(self, dict_: dict) -> None:
         """
-        Adds pipeline options to the step, pipeline options can override tool default options.
-        :param options: Pipeline options
+        Adds the inputs to the step
+        :param dict_: Dictionary with input objects
         :return: None
         """
-        self._pipeline_options.update(options)
+        self._step_inputs = dict_
 
-    def add_job_options(self, options):
+    def add_informs(self, dict_) -> None:
+        """
+        Adds informs to the step.
+        :param dict_: Dictionary with the informs
+        :return: None
+        """
+        self._input_informs = dict_
+        logging.info("Inform added: {}".format(dict_))
+
+    def add_job_options(self, options: dict) -> None:
         """
         Adds job options to the step, job options can override pipeline options.
         :param options: Job options
@@ -87,16 +94,7 @@ class Step(ABC):
         """
         self._job_options.update(options)
 
-    def _add_pipeline_parameters(self):
-        """
-        Adds the pipeline parameters.
-        :return: None
-        """
-        if len(self._pipeline_options) > 0:
-            logging.info("Adding pipeline parameters")
-            self._tool.update_parameters(**self._pipeline_options)
-
-    def _add_job_parameters(self):
+    def _add_job_parameters(self) -> None:
         """
         Adds the job parameters.
         :return: None
@@ -105,6 +103,33 @@ class Step(ABC):
             logging.info("Adding job parameters")
             self._tool.update_parameters(**self._job_options)
 
-    @abstractmethod
-    def run_step(self):
-        pass
+    def run_step(self) -> None:
+        """
+        Runs the current step.
+        :return: None
+        """
+        LogManager.attach_step_handlers(self._folder)
+        self._tool.add_input_files(self._step_inputs)
+        self._tool.add_input_informs(self._input_informs)
+        logging.info("Default parameters loaded: {}".format(self._tool.parameter_overview))
+        self._add_job_parameters()
+        self._tool.run(self._folder)
+        logging.info('Step output: {}'.format(list(self.outputs.items())))
+        logging.info('Step informs: {}'.format(list(self.informs.items())))
+        if (self._db_logging and self._db_step_logging) or (self._db_logging and self._pipeline_output):
+            self._log_outputs()
+        LogManager.detach_step_handlers()
+
+    def _log_outputs(self) -> None:
+        """
+        Logs the outputs in the database.
+        :return: None
+        """
+        for key, files in self.outputs.items():
+            for i in range(0, len(files)):
+                if files[i].logged:
+                    output_data = (self._job_id, self._name, self._wildcards, files[i].type_name, key, i,
+                                   files[i].hash, self._pipeline_output)
+                    logging.debug('OUTPUT DATA: {}'.format(output_data))
+                    self._step_service.log_output(output_data)
+                    logging.debug('Output {} ({}) logged'.format(key, i))

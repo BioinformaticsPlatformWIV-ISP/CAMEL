@@ -10,9 +10,8 @@ class ToolIODb(ToolIO):
     """
     Class that represents an input / output database of a tool.
     """
-    TYPE_NAME = 'db'
 
-    def __init__(self, name, version='latest', logged=True, config=None, prefix=None):
+    def __init__(self, name: str, version: str='latest', logged: bool=True, config: str=None, prefix: str=None):
         """
         Initializes a tool input / output database.
         :param name: Name of the database
@@ -29,37 +28,35 @@ class ToolIODb(ToolIO):
         self._path = self.__get_location()
 
     @property
-    def path(self):
+    def path(self) -> str:
         """
         Returns the value.
         :return: Value
         """
         return self._path
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         String representation
         :return: String representation
         """
         return str(self.path)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         Internal representation
         :return: Internal representation representation
         """
-        return 'ToolIODb("{}")'.format(self.path)
+        return f'ToolIODb("{self.path}")'
 
-    def is_valid(self):
+    def is_valid(self) -> bool:
         """
         Checks if the tool input / output file is valid.
         :return: True if valid
         """
-        if not self.exists:
-            return False
-        return True
+        return self.exists
 
-    def is_dir(self):
+    def is_dir(self) -> bool:
         """
         Checks whether the database is a directory or a file
         :return: True when the database is a directory
@@ -67,7 +64,7 @@ class ToolIODb(ToolIO):
         return True if os.path.isdir(self.path) else False
 
     @property
-    def exists(self):
+    def exists(self) -> bool:
         """
         Checks whether this file exists.
         :return: True if the file exists, False otherwise
@@ -78,14 +75,22 @@ class ToolIODb(ToolIO):
             return os.path.isdir(os.path.dirname(self._path))
 
     @property
-    def hash(self):
+    def hash(self) -> str:
         """
         Returns the hash value.
         :return: Hash value
         """
         return FileUtils.hash_directory(self.path) if self.is_dir() else FileUtils.hash_file(self.path)
 
-    def __get_location(self):
+    @property
+    def type_name(self) -> str:
+        """
+        Returns the type of the IO object.
+        :return: Type value
+        """
+        return 'db'
+
+    def __get_location(self) -> str:
         """
         Returns the location of the database
         :return: Database location
@@ -95,7 +100,7 @@ class ToolIODb(ToolIO):
         else:
             return self.__get_version_loc() if self._prefix is None else os.path.join(self.__get_version_loc(), self._prefix)
 
-    def __get_latest_loc(self):
+    def __get_latest_loc(self) -> str:
         """
         Gets the location of the 'latest' database
         :return: Database location
@@ -107,7 +112,7 @@ class ToolIODb(ToolIO):
                       AND db_loc.available IS TRUE"""
         return self.__check_and_return_loc(db_conn.query(sql, (self._name, )))
 
-    def __get_version_loc(self):
+    def __get_version_loc(self) -> str:
         """
         Gets the location of the database with the specified version
         :return: Database location
@@ -119,17 +124,15 @@ class ToolIODb(ToolIO):
                       AND db_loc.available IS TRUE"""
         return self.__check_and_return_loc(db_conn.query(sql, (self._name, self._version)))
 
-    def __check_and_return_loc(self, results):
+    def __check_and_return_loc(self, results) -> str:
         """
         Checks whether a single database is returned from the database. Otherwise an exception is thrown.
         :param results: Array with the results of the database query
         :return: Database location
         """
         if len(results) == 1:
-            raise ValueError('No available database found with name {} and version {}'.format(self._name,
-                                                                                              self._version))
+            raise ValueError(f'No available database found with name {self._name} and version {self._version}')
         elif len(results) > 2:
-            raise ValueError('Too many results found for database with name {} and version {}'.format(self._name,
-                                                                                                      self._version))
+            raise ValueError(f'Too many results found for database with name {self._name} and version {self._version}')
         else:
             return results[1][0]

@@ -7,7 +7,7 @@ class ToolIO(object, metaclass=ABCMeta):
     Class that represents the input or output of a tool.
     """
 
-    def __init__(self, logged):
+    def __init__(self, logged: bool) -> None:
         """
         Initializes a tool input / output.
         :param logged: If true, the output can be logged
@@ -15,7 +15,7 @@ class ToolIO(object, metaclass=ABCMeta):
         self._logged = logged
 
     @property
-    def logged(self):
+    def logged(self) -> bool:
         """
         Returns True if the output is logged.
         :return: True / False
@@ -23,7 +23,7 @@ class ToolIO(object, metaclass=ABCMeta):
         return self._logged
 
     @abc.abstractmethod
-    def is_valid(self):
+    def is_valid(self) -> bool:
         """
         Checks whether the tool input / output is valid.
         :return: None
@@ -32,9 +32,18 @@ class ToolIO(object, metaclass=ABCMeta):
 
     @property
     @abc.abstractmethod
-    def hash(self):
+    def hash(self) -> str:
         """
         Returns the hash value.
         :return: Hash value
+        """
+        pass
+
+    @property
+    @abc.abstractmethod
+    def type_name(self) -> str:
+        """
+        Returns the type of the IO object.
+        :return: Type value
         """
         pass

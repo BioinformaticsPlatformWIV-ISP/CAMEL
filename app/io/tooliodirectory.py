@@ -8,9 +8,8 @@ class ToolIODirectory(ToolIO):
     """
     Class that represents an input / output directory of a tool.
     """
-    TYPE_NAME = 'dir'
 
-    def __init__(self, path, logged=True):
+    def __init__(self, path: str, logged: bool=True) -> None:
         """
         Initializes a tool input / output directory.
         :param path: Path to the directory
@@ -19,31 +18,29 @@ class ToolIODirectory(ToolIO):
         super(ToolIODirectory, self).__init__(logged)
         self._path = os.path.abspath(path)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         String representation
         :return: String representation
         """
         return self._path
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         Internal representation
         :return: Internal representation
         """
         return 'ToolIODirectory("{}")'.format(self.path)
 
-    def is_valid(self):
+    def is_valid(self) -> bool:
         """
         Checks if the tool input / output directory is valid.
         :return: True if valid
         """
-        if not self.exists:
-            return False
-        return True
+        return self.exists
 
     @property
-    def hash(self):
+    def hash(self) -> str:
         """
         Returns the hash value.
         :return: Hash value
@@ -51,7 +48,7 @@ class ToolIODirectory(ToolIO):
         return FileUtils.hash_directory(self.path)
 
     @property
-    def path(self):
+    def path(self) -> str:
         """
         Returns the path to the input / output directory.
         :return: Path
@@ -59,7 +56,7 @@ class ToolIODirectory(ToolIO):
         return self._path
 
     @property
-    def basename(self):
+    def basename(self) -> str:
         """
         Returns the basename of the input / output directory.
         :return: Basename
@@ -70,9 +67,17 @@ class ToolIODirectory(ToolIO):
             return os.path.basename(self.path)
 
     @property
-    def exists(self):
+    def exists(self) -> bool:
         """
         Checks whether this directory exists.
         :return: True if the directory exists, False otherwise
         """
         return os.path.isdir(self._path)
+
+    @property
+    def type_name(self) -> str:
+        """
+        Returns the type of the IO object.
+        :return: Type value
+        """
+        return 'dir'
