@@ -115,8 +115,8 @@ class Mutect1(Tool):
     def __set_output(self):
         """
         Set the output specifications in the Camel ouptut list: 
-        - plots pdf file, 
-        - data csv file (optional)
+        - call_stats file
+        - vcf file
         :return: None
         """
         self._tool_outputs['TXT_CALL_STATS'] = [
