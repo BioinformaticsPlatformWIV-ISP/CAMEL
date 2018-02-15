@@ -9,7 +9,6 @@ from app.io.tooliofile import ToolIOFile
 from app.io.tooliovalue import ToolIOValue
 from app.pipeline.snakepipeline import SnakePipeline
 import datetime
-from config import MAIN_CONFIG
 
 
 class GATKSomaticMain(object):
@@ -18,7 +17,9 @@ class GATKSomaticMain(object):
     Generates a config yml file based on CL arguments and runs the pipeline.
     """
     DB_LOGGING = True
-    SNAKEFILE = os.path.join(os.path.dirname(__file__), 'gatk_somatic_steps.snakefile')
+    # DEBUG = True
+    SNAKEFILE = os.path.join(os.path.dirname(__file__), 'gatk_somatic_steps_test.snakefile')
+    # FROM_GALAXY = False
     CORES = 5
 
     def __init__(self):
@@ -32,11 +33,6 @@ class GATKSomaticMain(object):
 
         # Name of config file generated at runtime for snakemake pipeline
         self.runtime_config_name = os.path.join(os.getcwd(), 'runtime_config.yaml')
-
-        self.camel = Camel()
-
-        # set galaxy dump directory in case of failure
-        self._galaxy_dump_dir = os.path.join(self.camel.config["galaxy"]["dump_dir"], "GATK_somatic_calling")
 
     def __parse_command_line(self):
         """
@@ -56,10 +52,11 @@ class GATKSomaticMain(object):
                         nargs='+')
 
         # output
-        ap.add_argument('--vcf_output', dest='vcf_output', metavar='vcf_output', help='Output vcf file')
-        ap.add_argument('--tab_output', dest='tab_output', metavar='tab_output', help='Output variant-call table file')
-        ap.add_argument('--covar_output', dest='covar_output', metavar='covar_output',
-                        help='Output covariates analysis pdf')
+        ap.add_argument('--mutect1_vcf_output', dest='mutect1_vcf_output', metavar='mutect1_vcf_output', help='Output vcf file from MuTect1.')
+        ap.add_argument('--mutect1_tab_output', dest='mutect1_tab_output', metavar='mutect1_tab_output', help='Output variant-call table file for MuTect1.')
+        ap.add_argument('--mutect2_vcf_output', dest='mutect2_vcf_output', metavar='mutect2_vcf_output', help='Output vcf file from MuTect2.')
+
+        ap.add_argument('--covar_output', dest='covar_output', metavar='covar_output',help='Output covariates analysis pdf')
         ap.add_argument('--bam_output', dest='bam_output', metavar='bam_output', help='Aligned BAM file')
 
         # references
@@ -74,7 +71,8 @@ class GATKSomaticMain(object):
         ap.add_argument('--mark_duplicates', dest='markduplicates', help='Mark duplicate reads.', action='store_true')
 
         # Downsampling
-        ap.add_argument('--downsampling_type', dest='downsampling_type', help='Type of downsampling to performe on reads (by MuTect). NONE,ALL_READS,BY_SAMPLE. Default: BY_SAMPLE. Perform or not downsampling on reads. By default, MuTect downsamples to 1000 reads. Usage example: --downsample None (disables downsampling).')
+        ap.add_argument('--downsampling_type', dest='downsampling_type', help='Type of downsampling to performe on reads (by MuTect). NONE,ALL_READS,BY_SAMPLE. Default: BY_SAMPLE. '
+                                                                              'Perform or not downsampling on reads. By default, MuTect downsamples to 1000 reads. Usage example: --downsample None (disables downsampling).')
         ap.add_argument('--downsampling_target', dest='downsampling_target', help='Target value for downsampling to performe on reads (by MuTect). Default: 1000. Usage example: --downsample 10000 (sets target value to 10000 reads).')
 
         # gap_events_threshold (MuTect)
@@ -83,11 +81,12 @@ class GATKSomaticMain(object):
         # gap_events_threshold (MuTect)
         ap.add_argument('--strand_artifact_lod', dest='strand_artifact_lod', help='Log-odds ratio for strand bias. Default MuTect: 2.0; disable: -99999')
 
+
         # run from galaxy flag
         ap.add_argument('--from_galaxy', dest='from_galaxy', help='Indicates that the command is run from galaxy. Useful for logging stderr.', action='store_true')
 
         # job id
-        ap.add_argument('--job_id', dest='job_id', metavar='job_id', help='Job ID for debugging and logging. (Not the same as internal camel pipeline job id!)',
+        ap.add_argument('--job_id', dest='job_id', metavar='job_id', help='Job ID for debugging and logging.',
                         default=datetime.datetime.now().strftime("%Y%m%d_%H%M%S-%f"))
 
         return ap.parse_args()
@@ -98,7 +97,7 @@ class GATKSomaticMain(object):
         :return: None
         """
 
-        # Add the camel pipeline info to the config
+        # Add the job id to the config
         self._config_data['pipeline_job_id'] = self._pipeline.job_id
         self._config_data['pipeline_name'] = self._pipeline.name
         self._config_data['logging'] = self.DB_LOGGING
@@ -125,10 +124,12 @@ class GATKSomaticMain(object):
             self._config_data['PE'] = False
 
         # Output filenames
-        if self._args.vcf_output:
-            self._config_data['vcf_output'] = self._args.vcf_output
-        if self._args.tab_output:
-            self._config_data['txt_output'] = self._args.tab_output
+        if self._args.mutect1_vcf_output:
+            self._config_data['mutect1_vcf_output'] = self._args.mutect1_vcf_output
+        if self._args.mutect1_tab_output:
+            self._config_data['mutect1_tab_output'] = self._args.mutect1_tab_output
+        if self._args.mutect2_vcf_output:
+            self._config_data['mutect2_vcf_output'] = self._args.mutect2_vcf_output
         if self._args.covar_output:
             self._config_data['covar_output'] = self._args.covar_output
         if self._args.bam_output:
@@ -161,8 +162,8 @@ class GATKSomaticMain(object):
         """
 
         # Create a pipeline object
-
-        self._pipeline = SnakePipeline('GATK somatic calling', self.camel, self.DB_LOGGING)
+        camel = Camel()
+        self._pipeline = SnakePipeline('GATK somatic calling', camel, self.DB_LOGGING)
 
         self._args = self.__parse_command_line()
 
@@ -184,13 +185,13 @@ class GATKSomaticMain(object):
         command = Command(to_execute)
         command.run_command(self._args.work_dir, subprocess.STDOUT)
         if command.returncode != 0 and self._args.from_galaxy:
-            with open(os.path.join(self._galaxy_dump_dir, "{}_Stdout".format(self._args.job_id)), "w") as file_out:
+            with open("/scratch/temp/galaxy_logs/{}_Stdout".format(self._args.job_id), "w") as file_out:
                 file_out.write(command.stdout)
-            with open(os.path.join(self._galaxy_dump_dir, "{}_Stderr".format(self._args.job_id)), "w") as file_out:
+            with open("/scratch/temp/galaxy_logs/{}_Stderr".format(self._args.job_id), "w") as file_out:
                 file_out.write(command.stderr)
             raise RuntimeError(
-                "Error executing Snakemake. Check log ('{}') for more information.".format(os.path.join(self._galaxy_dump_dir, "{}_Stderr".format(
-                    self._args.job_id))))
+                "Error executing Snakemake. Check log ('/scratch/temp/galaxy_logs/{}_Stderr') for more information.".format(
+                    self._args.job_id))
 
 
 if __name__ == '__main__':
