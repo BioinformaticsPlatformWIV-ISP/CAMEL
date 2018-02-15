@@ -43,9 +43,11 @@ rule FastQC_pre_trimming:
     run:
         from app.tools.fastqc.fastqc import FastQC
         fastqc = FastQC(camel)
-        fastqc.update_parameters(threads=threads)
         SnakemakeUtils.add_pickle_inputs(fastqc, input)
         step = SnakeStep(rule, fastqc, camel, params.working_dir, config)
+        #
+        # update_parameters should happen after creating SnakeStep which retrieves the default parameters from DB
+        fastqc.update_parameters(threads=threads)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(fastqc, output)
 
@@ -64,9 +66,9 @@ rule Read_trimming:
     run:
         from app.tools.trimmomatic.trimmomatic import Trimmomatic
         trimmomatic = Trimmomatic(camel)
-        trimmomatic.update_parameters(threads=threads)
         SnakemakeUtils.add_pickle_inputs(trimmomatic, input)
         step = SnakeStep(rule, trimmomatic, camel, params.working_dir, config)
+        trimmomatic.update_parameters(threads=threads)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(trimmomatic, output)
 
@@ -83,9 +85,9 @@ rule FastQC_post_trimming:
     run:
         from app.tools.fastqc.fastqc import FastQC
         fastqc = FastQC(camel)
-        fastqc.update_parameters(threads=threads)
         SnakemakeUtils.add_pickle_inputs(fastqc, input)
         step = SnakeStep(rule, fastqc, camel, params.working_dir, config)
+        fastqc.update_parameters(threads=threads)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(fastqc, output)
 
