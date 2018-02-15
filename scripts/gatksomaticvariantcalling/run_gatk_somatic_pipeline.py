@@ -52,11 +52,11 @@ class GATKSomaticMain(object):
                         nargs='+')
 
         # Variant caller to use
-        vc = ap.add
+        vc = ap.add_argument_group(required=True)
         # MuTect1 flag
-        ap.add_argument('--mutect1', dest='mutect1', help='Perform variant calling with MuTect1.', action='store_true')
+        vc.add_argument('--mutect1', dest='mutect1', help='Perform variant calling with MuTect1.', action='store_true')
         # MuTect2 flag
-        ap.add_argument('--mutect2', dest='mutect2', help='Perform variant calling with MuTect2.', action='store_true')
+        vc.add_argument('--mutect2', dest='mutect2', help='Perform variant calling with MuTect2.', action='store_true')
 
         # output
         ap.add_argument('--mutect1_vcf_output', dest='mutect1_vcf_output', metavar='mutect1_vcf_output', help='Output vcf file from MuTect1.')
