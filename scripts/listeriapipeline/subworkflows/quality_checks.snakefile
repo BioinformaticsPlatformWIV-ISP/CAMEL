@@ -56,6 +56,8 @@ rule Read_mapping:
         from app.tools.bowtie2.bowtie2map import Bowtie2Map
         bowtie2_map = Bowtie2Map(camel)
         step = SnakeStep(rule, bowtie2_map, camel, params.running_dir, config)
+        # set proper maximum_fragment_length for 2x300 sequencing (MiSeq)
+        bowtie2_map.update_parameters(maximum_fragment_length=1500)
         SnakemakeUtils.add_pickle_inputs(bowtie2_map, input)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(bowtie2_map, output)
