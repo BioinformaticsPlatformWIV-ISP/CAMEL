@@ -1,9 +1,9 @@
 from collections import OrderedDict
+from typing import List, Optional
 
 from app.connection.connection import Connection
 from app.parameter.parameter import Parameter
 from app.services.service import Service
-from typing import List, Optional
 
 
 class ToolService(Service):

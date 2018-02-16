@@ -1,6 +1,7 @@
+from typing import Hashable
+
 from app.components.files.fileutils import FileUtils
 from app.io.toolio import ToolIO
-from typing import Hashable
 
 
 class ToolIOValue(ToolIO):
