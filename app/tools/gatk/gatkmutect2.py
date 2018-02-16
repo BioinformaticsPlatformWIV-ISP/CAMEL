@@ -81,11 +81,8 @@ class GATKMuTect2(GATK):
         """
         Supersedes parent class function.
         Set the output specifications in the Camel ouptut list: 
-        - call_stats file
         - vcf file
         :return: None
         """
-        self._tool_outputs['TXT_CALL_STATS'] = [
-            ToolIOFile(os.path.join(self._folder, self._parameters['output_callstats_file'].value))]
-        # self._tool_outputs['VCF'] = [
-        #     ToolIOFile(os.path.join(self._folder, self._parameters['output_vcf_file'].value))]
+        self._tool_outputs['VCF'] = [
+            ToolIOFile(os.path.join(self._folder, self._parameters['output_vcf_file'].value))]

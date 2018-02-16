@@ -18,7 +18,7 @@ class GATKSomaticMain(object):
     """
     DB_LOGGING = True
     # DEBUG = True
-    SNAKEFILE = os.path.join(os.path.dirname(__file__), 'gatk_somatic_steps_test.snakefile')
+    SNAKEFILE = os.path.join(os.path.dirname(__file__), 'gatk_somatic_steps.snakefile')
     # FROM_GALAXY = False
     CORES = 5
 
@@ -30,9 +30,6 @@ class GATKSomaticMain(object):
         self._args = None
         self._config_data = dict()
         self._pipeline = None
-
-        # Name of config file generated at runtime for snakemake pipeline
-        self.runtime_config_name = os.path.join(os.getcwd(), 'runtime_config.yaml')
 
     def __parse_command_line(self):
         """
@@ -52,7 +49,7 @@ class GATKSomaticMain(object):
                         nargs='+')
 
         # Variant caller to use
-        ap.add_argument('-V', '--variant_caller', metavar='variant_caller', dest='variant_caller', help='Variant caller to use.', nargs='+', choices=["mutect1", "mutect2"])
+        ap.add_argument('-V', '--variant_caller', metavar='variant_caller', dest='variant_caller', help='Variant caller to use.', choices=["mutect1", "mutect2"])
 
         # output
         ap.add_argument('--mutect1_vcf_output', dest='mutect1_vcf_output', metavar='mutect1_vcf_output', help='Output vcf file from MuTect1.')
@@ -75,10 +72,10 @@ class GATKSomaticMain(object):
 
         # MuTect1:
         # Downsampling
-        ap.add_argument('--MuTect1_downsampling_type', dest='MuTect1_downsampling_type',
+        ap.add_argument('--mutect1_downsampling_type', dest='MuTect1_downsampling_type',
                         help='Type of downsampling to performe on reads (by MuTect). NONE,ALL_READS,BY_SAMPLE. Default: BY_SAMPLE. Perform or not downsampling on reads. '
                              'By default, MuTect downsamples to 1000 reads. Usage example: --downsample None (disables downsampling).')
-        ap.add_argument('--MuTect1_downsampling_target', dest='MuTect1_downsampling_target', help='Target value for downsampling to performe on reads (by MuTect). Default: 1000. Usage example: --downsample 10000 (sets target value to 10000 reads).')
+        ap.add_argument('--mutect1_downsampling_target', dest='MuTect1_downsampling_target', help='Target value for downsampling to performe on reads (by MuTect). Default: 1000. Usage example: --downsample 10000 (sets target value to 10000 reads).')
 
         # gap_events_threshold
         ap.add_argument('--gap_events_threshold', dest='gap_events_threshold', help='For MuTect1; number of reads allowed to contain insdels around a fixed window (MuTect1 default 11 bp) before being marked as gap_event and filtered-out.')
@@ -88,10 +85,10 @@ class GATKSomaticMain(object):
 
         # MuTect2:
         # Downsampling
-        ap.add_argument('--MuTect2_downsampling_type', dest='MuTect2_downsampling_type',
+        ap.add_argument('--mutect2_downsampling_type', dest='MuTect2_downsampling_type',
                         help='Type of downsampling to performe on reads (by MuTect). NONE,ALL_READS,BY_SAMPLE. Default: BY_SAMPLE. '
                              'Perform or not downsampling on reads. By default, MuTect2 downsamples to 1000 reads. Usage example: --downsample None (disables downsampling).')
-        ap.add_argument('--MuTect2_downsampling_target', dest='MuTect2_downsampling_target',
+        ap.add_argument('--mutect2_downsampling_target', dest='MuTect2_downsampling_target',
                         help='Target value for downsampling to performe on reads (by MuTect2). Default: 1000. Usage example: --downsample 10000 (sets target value to 10000 reads).')
 
         # run from galaxy flag
@@ -99,6 +96,15 @@ class GATKSomaticMain(object):
 
         # number of threads
         ap.add_argument('--threads', dest='threads', help='Maximum number of threads for snakemake to allow.', default=self.CORES)
+
+        # snakemake arguments
+        # snakemake unlock
+        ap.add_argument('--unlock', dest='unlock', action="store_const", const="--unlock", help='Unlock snakemake working directory.', default="")
+        # snakemake dag
+        ap.add_argument('--dag', dest='dag', action="store_const", const="--dag", help='Generate snakemake DAG.', default="")
+        # dryrun
+        # snakemake dag
+        ap.add_argument('--dryrun', dest='dryrun', action="store_const", const="--dryrun", help='Snakemake dryrun; generates the list of jobs.', default="")
 
         # job id
         ap.add_argument('--job_id', dest='job_id', metavar='job_id', help='Job ID for debugging and logging.',
@@ -111,6 +117,9 @@ class GATKSomaticMain(object):
         Generates a yaml config file based on CLA.
         :return: None
         """
+
+        # Name of config file generated at runtime for snakemake pipeline
+        self.runtime_config_name = os.path.join(os.getcwd(), 'runtime_config_{}.yaml'.format(self._args.job_id))
 
         # Add the job id to the config
         self._config_data['pipeline_job_id'] = self._pipeline.job_id
@@ -177,10 +186,10 @@ class GATKSomaticMain(object):
             self._config_data['MuTect2_downsampling_target'] = self._args.MuTect2_downsampling_target
 
         # Indel realigner flag (indel realignment only required for MuTect1)
-        if self._args.variant_caller == "Mutect1":
-            self._config_data['run_indel_realignment'] = "True"
-        else:
-            self._config_data['run_indel_realignment'] = "False"
+        if self._args.variant_caller == "mutect1":
+            self._config_data['run_indel_realignment'] = True
+        elif self._args.variant_caller == "mutect2":
+            self._config_data['run_indel_realignment'] = False
 
         # threads
         if self._args.threads:
@@ -217,7 +226,8 @@ class GATKSomaticMain(object):
             self._pipeline.set_initial_input(input_dict)
 
         # Execute the snakemake workflow and log stdout and stderr if command fails (if pipeline is run from galaxy).
-        to_execute = 'snakemake --configfile {} --snakefile {} --cores {}'.format(self.runtime_config_name, self.SNAKEFILE, self._args.threads)
+        snakemake_params = " ".join([self._args.unlock, self._args.dag, self._args.dryrun])
+        to_execute = 'snakemake --configfile {config} --snakefile {snakefile} --cores {cores} {snakemake_params}'.format(config=self.runtime_config_name, snakefile=self.SNAKEFILE, cores=self._args.threads, snakemake_params=snakemake_params)
         command = Command(to_execute)
         command.run_command(self._args.work_dir, subprocess.STDOUT)
         if command.returncode != 0 and self._args.from_galaxy:
