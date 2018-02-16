@@ -1,7 +1,10 @@
+import bz2
 import logging
 import pickle
+import time
 
 import os
+from shutil import copyfileobj
 
 from app.io.tooliodirectory import ToolIODirectory
 from app.io.tooliofile import ToolIOFile
@@ -183,3 +186,18 @@ class SnakemakeUtils(object):
         SnakemakeUtils.add_pickle_inputs(tool, snake_input)
         tool.run(working_dir)
         SnakemakeUtils.dump_tool_outputs(tool, snake_output)
+
+    @staticmethod
+    def dump_config(config_path: str, job_id: int, folder: str) -> None:
+        """
+        Dumps the Snakemake config file in the given folder.
+        :param config_path: Path of the config file
+        :param job_id: Pipeline job id
+        :param folder: Folder to store the config file
+        :return: None
+        """
+        logging.info("Dumping config file '{}' in: {}".format(os.path.basename(config_path), folder))
+        outfile = os.path.join(folder, 'config_{}_{}.bz2'.format(job_id, time.strftime("%Y%m%d")))
+        with open(config_path, 'rb') as handle_in:
+            with bz2.BZ2File(outfile, 'wb', compresslevel=9) as handle_out:
+                copyfileobj(handle_in, handle_out)
