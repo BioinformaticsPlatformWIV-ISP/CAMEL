@@ -3,10 +3,10 @@ from typing import List, Optional
 
 from app.connection.connection import Connection
 from app.parameter.parameter import Parameter
-from app.services.service import Service
+from app.services.basetoolservice import BaseToolService
 
 
-class ToolService(Service):
+class ToolService(BaseToolService):
     """
     This class will perform operations on the DB regarding tools (retrieve tool parameters, info, etc).
     """
@@ -81,6 +81,22 @@ class ToolService(Service):
         AND active = TRUE;
         """
         query_result = self.db_connection.query(sql, (self._tool_id,))
+        parameters = OrderedDict()
+        for name, option, value, _ in sorted(query_result[1:], key=lambda x: x[3]):
+            parameters[name] = Parameter(name, option, value)
+        return parameters
+
+    def get_all_parameters(self) -> OrderedDict:
+        """
+        Returns all parameters for this tool.
+        :return: All parameters
+        """
+        sql = """
+        SELECT name, option, value, COALESCE(p_index, 0) as p_index
+        FROM tools.tool_parameter
+        WHERE tool_id = %s;
+        """
+        query_result = self.db_connection.query(sql, [self._tool_id])
         parameters = OrderedDict()
         for name, option, value, _ in sorted(query_result[1:], key=lambda x: x[3]):
             parameters[name] = Parameter(name, option, value)
