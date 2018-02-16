@@ -4,3 +4,12 @@ galaxy:
   # directory to dump stderr/stdout or data in case of pipeline error while running from galaxy
   # as Galaxy removes data and truncates stderr and stdout.
   dump_dir: "/scratch/temp/galaxy_dumps/"
+
+config_dump_dir: /scratch/temp/pipeline_configs
+
+# There are two options to retrieve default tool parameters and dependencies:
+# - db (default): Retrieves tool parameters, dependencies, tool_command, tool_id, etc from the database configured in
+#                 db.yml.
+# - yaml:         Retrieves tool parameters, dependencies, tool_command from the YAML files listed in the tool_data
+#                 directory.
+tool_service: db

@@ -1,11 +1,11 @@
-import abc
 import logging
+
+import abc
 
 from app.command.command import Command
 from app.error.invalidparametererror import InvalidParameterError
 from app.error.toolexecutionerror import ToolExecutionError
 from app.io.toolio import ToolIO
-from app.services.toolservice import ToolService
 
 
 class Tool(object, metaclass=abc.ABCMeta):
@@ -24,7 +24,7 @@ class Tool(object, metaclass=abc.ABCMeta):
         self._tool_outputs = {}
         self._informs = {}
         self._input_informs = {}
-        self._tool_service = ToolService(name, version, camel.connection)
+        self._tool_service = camel.get_tool_service(name, version)
         self._tool_command = self._tool_service.get_tool_command()
         self._parameters = self._tool_service.get_default_parameters()
         self._command = Command()
