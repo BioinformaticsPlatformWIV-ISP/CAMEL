@@ -74,7 +74,7 @@ class GATKSomaticMain(object):
         ap.add_argument('--downsampling_type', dest='downsampling_type',
                         help='Type of downsampling to performe on reads (by MuTect/MuTect2). NONE,ALL_READS,BY_SAMPLE. Default: BY_SAMPLE. Perform or not downsampling on reads. '
                              'By default, MuTect/MuTect2 downsamples to 1000 reads. Usage example: --downsample None (disables downsampling).')
-        ap.add_argument('--downsampling_target', dest='downsampling_target', help='Target value for downsampling to perform on reads (by MuTect/MuTect2). Default: 1000. Usage example: --downsample 10000 (sets target value to 10000 reads).')
+        ap.add_argument('--downsampling_target', dest='downsampling_target', help='Target value for downsampling to perform on reads (by MuTect/MuTect2). Default: 1000. Usage example: --downsample 100000 (sets target value to 100000 reads, effectively disables it).')
         # MuTect1:
         # gap_events_threshold
         ap.add_argument('--gap_events_threshold', dest='gap_events_threshold', help='For MuTect1; number of reads allowed to contain insdels around a fixed window (MuTect1 default 11 bp) before being marked as gap_event and filtered-out.')
