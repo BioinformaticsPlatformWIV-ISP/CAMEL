@@ -61,11 +61,11 @@ class GATKSomaticMain(object):
 
         # references
         ap.add_argument('-R', '--fasta_ref', dest='fasta_ref', metavar='fasta_ref',
-                        help='Human genome reference fasta file name (as in db_loc).', required=True)
+                        help='Human genome reference fasta file name (as in db_loc).', required=True, choices=["broad_b37_human_Genome_1K_v37"])
         ap.add_argument('-S', '--vcf_snps', metavar='vcf_snps', dest='vcf_known_snps',
-                        help='Known variant sites (snps) vcf file name (as in db_loc).', required=True)
+                        help='Known variant sites (snps) vcf file name (as in db_loc).', required=True, choices=["broad_b37_snps_high_confidence"])
         ap.add_argument('-I', '--vcf_indels', metavar='vcf_indels', dest='vcf_known_indels',
-                        help='Known variant sites (indels) vcf file name (as in db_loc).', required=True)
+                        help='Known variant sites (indels) vcf file name (as in db_loc).', required=True, choices=["broad_b37_indels_gold_standard"])
 
         # MarkDuplicates flag
         ap.add_argument('--mark_duplicates', dest='markduplicates', help='Mark duplicate reads.', action='store_true')
