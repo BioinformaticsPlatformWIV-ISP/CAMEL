@@ -7,7 +7,7 @@ from app.components.filesystemhelper import FileSystemHelper
 from app.connection.connection import Connection
 from app.loggers.logmanager import LogManager
 from app.services.basetoolservice import BaseToolService
-from app.services.toolservice import ToolService
+from app.services.dbtoolservice import DbToolService
 from app.services.yamltoolservice import YAMLToolService
 from config import DB_CONFIG, LOGGING_CONFIG, MAIN_CONFIG
 from tool_data import TOOL_DATA_DIR
@@ -64,7 +64,7 @@ class Camel(object):
         logging.debug('Retrieving tool service')
         source = self._config.get('tool_service', 'db')
         if source == 'db':
-            return ToolService(tool_name, tool_version, self.connection)
+            return DbToolService(tool_name, tool_version, self.connection)
         elif source == 'yaml':
             tool_data_path = Camel.get_tool_data_path(tool_name, tool_version)
             if not os.path.isfile(tool_data_path):

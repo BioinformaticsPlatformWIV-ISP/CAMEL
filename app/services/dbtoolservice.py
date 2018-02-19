@@ -6,7 +6,7 @@ from app.parameter.parameter import Parameter
 from app.services.basetoolservice import BaseToolService
 
 
-class ToolService(BaseToolService):
+class DbToolService(BaseToolService):
     """
     This class will perform operations on the DB regarding tools (retrieve tool parameters, info, etc).
     """
@@ -19,7 +19,7 @@ class ToolService(BaseToolService):
         :param connection: Connection to the database
         :return: none
         """
-        super(ToolService, self).__init__(connection)
+        super(DbToolService, self).__init__(connection)
         self._tool_id = self.__get_tool_id(tool_name, tool_version)
 
     @property
