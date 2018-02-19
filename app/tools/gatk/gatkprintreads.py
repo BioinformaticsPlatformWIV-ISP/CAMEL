@@ -25,7 +25,7 @@ class GATKPrintReads(GATK):
     
     Output:
     -------
-    'TXT_RecalibrationTable': ToolIOFile object. Text file containing recalibration data.
+    'BAM':              ToolIOFile object. TBAM file containing (eg.) recalibrated reads.
     
     Parameters:
     ----------
@@ -42,6 +42,7 @@ class GATKPrintReads(GATK):
 
         self._function_name = 'PrintReads'
         self._required_inputs = ['BAM', 'FASTA_REF']
+        self._specific_parameters = ["bam_external_output"]
 
     def _set_input(self):
         """
@@ -72,5 +73,27 @@ class GATKPrintReads(GATK):
         """
         bam_output_file = self._parameters['bam_output'].value
         self._tool_outputs['BAM'] = [ToolIOFile(os.path.join(self._folder, bam_output_file))]
-        bai_output_file = bam_output_file[:-1] + "i"
-        self._tool_outputs['BAI'] = [ToolIOFile(os.path.join(self._folder, bai_output_file))]
+        # bai_output_file = bam_output_file[:-1] + "i"
+        # self._tool_outputs['BAI'] = [ToolIOFile(os.path.join(self._folder, bai_output_file))]
+
+    def run(self, folder='.'):
+        """
+        Runs this tool.
+        :param folder: Folder to run the tool in.
+        :return: None
+        """
+        super(GATKPrintReads, self).run(folder)
+        self.__hardlink_output()
+
+    def __hardlink_output(self):
+        """
+        Create a hardlink for the output. This "encapsulates" the pipeline files as the internally-used names don't change 
+        based on user input and the symlink serves as the external reference.
+        This is mainly to avoid issues with file names (eg. gatk mutect2 fails because of galaxy ".dat" files). 
+        :return: None
+        """
+        hardlink_output_path = self._parameters['bam_external_output'].value
+        new_path = os.path.join(self._folder, hardlink_output_path)
+        if os.path.exists(new_path):
+            os.remove(new_path)
+        os.link(self._tool_outputs['BAM'][0].path, new_path)

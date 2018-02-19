@@ -376,7 +376,7 @@ rule printreads:
         step = SnakeStep(rule, gpr, camel, params.working_dir, config)
         gpr.update_parameters(threads=threads)
         if 'bam_output' in config:
-            gpr.update_parameters(bam_output=config['bam_output'])
+            gpr.update_parameters(bam_external_output=config['bam_output'])
         step.run_step()
         SnakemakeUtils.dump_tool_output(gpr,"BAM",output.BAM)
 
@@ -485,10 +485,10 @@ rule mutect2:
         step = SnakeStep(rule, mut2, camel, params.working_dir, config)
         mut2.update_parameters(threads=threads)
         if 'mutect2_vcf_output' in config:
-            mut2.update_parameters(output_vcf_file = config['vcf_output'])
+            mut2.update_parameters(output_vcf_file = config['mutect2_vcf_output'])
         if 'MuTect2_downsampling_target' in config:
             mut2.update_parameters(downsampling_coverage_target=config['MuTect2_downsampling_target'])
-        if 'MuTect2_downsampling_type' in config:
-            mut2.update_parameters(downsampling_type=config['MuTect2_downsampling_type'])
+        # if 'MuTect2_downsampling_type' in config:
+        #     mut2.update_parameters(downsampling_type=config['MuTect2_downsampling_type'])
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(mut2, output)

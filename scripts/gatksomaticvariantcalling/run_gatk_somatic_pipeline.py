@@ -70,13 +70,12 @@ class GATKSomaticMain(object):
         # MarkDuplicates flag
         ap.add_argument('--mark_duplicates', dest='markduplicates', help='Mark duplicate reads.', action='store_true')
 
-        # MuTect1:
         # Downsampling
-        ap.add_argument('--mutect1_downsampling_type', dest='MuTect1_downsampling_type',
-                        help='Type of downsampling to performe on reads (by MuTect). NONE,ALL_READS,BY_SAMPLE. Default: BY_SAMPLE. Perform or not downsampling on reads. '
-                             'By default, MuTect downsamples to 1000 reads. Usage example: --downsample None (disables downsampling).')
-        ap.add_argument('--mutect1_downsampling_target', dest='MuTect1_downsampling_target', help='Target value for downsampling to performe on reads (by MuTect). Default: 1000. Usage example: --downsample 10000 (sets target value to 10000 reads).')
-
+        ap.add_argument('--downsampling_type', dest='downsampling_type',
+                        help='Type of downsampling to performe on reads (by MuTect/MuTect2). NONE,ALL_READS,BY_SAMPLE. Default: BY_SAMPLE. Perform or not downsampling on reads. '
+                             'By default, MuTect/MuTect2 downsamples to 1000 reads. Usage example: --downsample None (disables downsampling).')
+        ap.add_argument('--downsampling_target', dest='downsampling_target', help='Target value for downsampling to perform on reads (by MuTect/MuTect2). Default: 1000. Usage example: --downsample 10000 (sets target value to 10000 reads).')
+        # MuTect1:
         # gap_events_threshold
         ap.add_argument('--gap_events_threshold', dest='gap_events_threshold', help='For MuTect1; number of reads allowed to contain insdels around a fixed window (MuTect1 default 11 bp) before being marked as gap_event and filtered-out.')
 
@@ -84,13 +83,6 @@ class GATKSomaticMain(object):
         ap.add_argument('--strand_artifact_lod', dest='strand_artifact_lod', help='For MuTect1; log-odds ratio for strand bias. Default MuTect: 2.0; disable: -99999')
 
         # MuTect2:
-        # Downsampling
-        ap.add_argument('--mutect2_downsampling_type', dest='MuTect2_downsampling_type',
-                        help='Type of downsampling to performe on reads (by MuTect). NONE,ALL_READS,BY_SAMPLE. Default: BY_SAMPLE. '
-                             'Perform or not downsampling on reads. By default, MuTect2 downsamples to 1000 reads. Usage example: --downsample None (disables downsampling).')
-        ap.add_argument('--mutect2_downsampling_target', dest='MuTect2_downsampling_target',
-                        help='Target value for downsampling to performe on reads (by MuTect2). Default: 1000. Usage example: --downsample 10000 (sets target value to 10000 reads).')
-
         # run from galaxy flag
         ap.add_argument('--from_galaxy', dest='from_galaxy', help='Indicates that the command is run from galaxy. Useful for logging stderr.', action='store_true')
 
@@ -166,24 +158,24 @@ class GATKSomaticMain(object):
         self._config_data['run_markDuplicates'] = self._args.markduplicates
 
         # MuTect1 parameters
-        # Downsampling
-        if self._args.MuTect1_downsampling_type:
-            self._config_data['MuTect1_downsampling_type'] = self._args.MuTect1_downsampling_type
-        if self._args.MuTect1_downsampling_target:
-            self._config_data['MuTect1_downsampling_target'] = self._args.MuTect1_downsampling_target
-        # gap_event_threshold
-        if self._args.gap_events_threshold:
-            self._config_data['gap_events_threshold'] = self._args.gap_events_threshold
-        # strand_artifact_lod
-        if self._args.strand_artifact_lod:
-            self._config_data['strand_artifact_lod'] = self._args.strand_artifact_lod
+        if self._config_data['variant_caller'] == "mutect1":
+            # Downsampling
+            if self._args.downsampling_type:
+                self._config_data['MuTect1_downsampling_type'] = self._args.downsampling_type
+            if self._args.downsampling_target:
+                self._config_data['MuTect1_downsampling_target'] = self._args.downsampling_target
+            # gap_event_threshold
+            if self._args.gap_events_threshold:
+                self._config_data['gap_events_threshold'] = self._args.gap_events_threshold
+            # strand_artifact_lod
+            if self._args.strand_artifact_lod:
+                self._config_data['strand_artifact_lod'] = self._args.strand_artifact_lod
 
         # MuTect2 parameters
-        # Downsampling
-        if self._args.MuTect2_downsampling_type:
-            self._config_data['MuTect2_downsampling_type'] = self._args.MuTect2_downsampling_type
-        if self._args.MuTect2_downsampling_target:
-            self._config_data['MuTect2_downsampling_target'] = self._args.MuTect2_downsampling_target
+        if self._config_data['variant_caller'] == "mutect2":
+            # Downsampling
+            if self._args.downsampling_target:
+                self._config_data['MuTect2_downsampling_target'] = self._args.downsampling_target
 
         # Indel realigner flag (indel realignment only required for MuTect1)
         if self._args.variant_caller == "mutect1":
