@@ -53,7 +53,7 @@ class Camel(object):
         :return: Path
         """
         return os.path.join(TOOL_DATA_DIR, '{}-{}.yml'.format(
-            FileSystemHelper.make_valid(tool_name),
+            FileSystemHelper.make_valid(tool_name).lower(),
             FileSystemHelper.make_valid(tool_version)))
 
     def get_tool_service(self, tool_name: str, tool_version: str) -> BaseToolService:
