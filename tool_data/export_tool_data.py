@@ -5,7 +5,7 @@ import os
 import yaml
 
 from app.camel import Camel
-from app.services.toolservice import ToolService
+from app.services.dbtoolservice import DbToolService
 
 
 """
@@ -41,7 +41,7 @@ def _get_tool_data(camel: Camel, tool_name: str, version: str):
     :param version: Tool version
     :return: Tool data
     """
-    tool_service = ToolService(tool_name, version, camel.connection)
+    tool_service = DbToolService(tool_name, version, camel.connection)
 
     # Collect tool data
     tool_data = {
