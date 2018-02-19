@@ -4,10 +4,10 @@ import yaml
 from app.camel import Camel
 from app.command.command import Command
 from app.io.tooliofile import ToolIOFile
-from app.pipeline.snakepipeline import SnakePipeline
+from app.pipeline.pipeline import Pipeline
 
 DB_LOGGING = False
-
+STEP_DB_LOGGING = False
 
 if __name__ == '__main__':
     # Load the data of the other config file
@@ -16,12 +16,13 @@ if __name__ == '__main__':
 
     # Create a pipeline object
     camel = Camel()
-    pipeline = SnakePipeline('Read Trimming', camel, DB_LOGGING)
+    pipeline = Pipeline('Read Trimming', camel, DB_LOGGING)
 
     # Add the job id to the config
     config_data['pipeline_job_id'] = pipeline.job_id
     config_data['pipeline_name'] = pipeline.name
     config_data['logging'] = DB_LOGGING
+    config_data['step_logging'] = STEP_DB_LOGGING
 
     # Setting the initial input makes sure that they are logged
     if DB_LOGGING:

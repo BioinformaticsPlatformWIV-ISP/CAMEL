@@ -2,7 +2,7 @@ import os
 
 from app.camel import Camel
 from app.io.tooliofile import ToolIOFile
-from app.pipeline.snakestep import SnakeStep
+from app.pipeline.step import Step
 from app.snakemake.snakemakeutils import SnakemakeUtils
 
 camel = Camel()
@@ -45,7 +45,7 @@ rule FastQC_pre_trimming:
         fastqc = FastQC(camel)
         fastqc.update_parameters(threads=threads)
         SnakemakeUtils.add_pickle_inputs(fastqc, input)
-        step = SnakeStep(rule, fastqc, camel, params.working_dir, config)
+        step = Step(rule, fastqc, camel, params.working_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(fastqc, output)
 
@@ -66,7 +66,7 @@ rule Read_trimming:
         trimmomatic = Trimmomatic(camel)
         trimmomatic.update_parameters(threads=threads)
         SnakemakeUtils.add_pickle_inputs(trimmomatic, input)
-        step = SnakeStep(rule, trimmomatic, camel, params.working_dir, config)
+        step = Step(rule, trimmomatic, camel, params.working_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(trimmomatic, output)
 
@@ -85,7 +85,7 @@ rule FastQC_post_trimming:
         fastqc = FastQC(camel)
         fastqc.update_parameters(threads=threads)
         SnakemakeUtils.add_pickle_inputs(fastqc, input)
-        step = SnakeStep(rule, fastqc, camel, params.working_dir, config)
+        step = Step(rule, fastqc, camel, params.working_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(fastqc, output)
 
@@ -110,7 +110,7 @@ rule Report_generation:
         open(report_path, 'w').close()
         reporter.add_input_files({'HTML': [ToolIOFile(report_path)]})
         SnakemakeUtils.add_pickle_inputs(reporter, input)
-        step = SnakeStep(rule, reporter, camel, params.working_dir, config)
+        step = Step(rule, reporter, camel, params.working_dir, config)
         step.run_step()
         SnakemakeUtils.run_tool(reporter, input, output, params.working_dir)
         SnakemakeUtils.dump_tool_outputs(reporter, output)
