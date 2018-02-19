@@ -38,7 +38,7 @@ class HtmlReport(HtmlBase):
         logging.info("Saving report '{}'".format(os.path.basename(self._filename)))
         if self._filename is None:
             raise ValueError("Report with filename 'None' cannot be saved")
-        with open(self._filename, 'w') as handle:
+        with open(self._filename, 'w', encoding='utf-8') as handle:
             self.add_raw('<!DOCTYPE HTML>')
             handle.write(self.to_html())
 
