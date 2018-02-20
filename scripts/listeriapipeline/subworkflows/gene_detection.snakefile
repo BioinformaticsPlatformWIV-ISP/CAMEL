@@ -333,7 +333,6 @@ rule combine_gene_detection_reports:
     output:
         GENE_DETECTION_REPORT
     params:
-        running_dir = os.path.join(GENE_DETECTION_WORKING_DIR, 'report'),
         output_dir = config['output_dir']
     run:
         gene_detection_module = HtmlElement('div')
