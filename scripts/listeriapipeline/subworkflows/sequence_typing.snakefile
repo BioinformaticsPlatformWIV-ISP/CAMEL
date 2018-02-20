@@ -9,6 +9,7 @@ Each database need to be specified as 'Key': 'Path to DB folder'.
 """
 TYPING_WORKING_DIR = os.path.join(__WORKING_DIR, 'sequence_typing')
 TYPING_REPORT = os.path.join(TYPING_WORKING_DIR, 'report-html.io')
+SPECIES_CONFIRM_ST_REPORT = os.path.join(TYPING_WORKING_DIR, 'species-confirm-st-report-html.io')
 
 def get_loci(folder):
     """
@@ -280,12 +281,10 @@ rule combine_sequence_typing_reports:
     Combines the reports of all sequence typing schemes.
     """
     input:
-        VAL_HTML = expand(os.path.join(TYPING_WORKING_DIR, '{scheme}', 'report', 'html.io'),
-                          scheme=config.get('sequence_typing', None))
+        VAL_HTML = expand(os.path.join(TYPING_WORKING_DIR, '{scheme}', 'report', 'html.io'), scheme=__OTHER_ST_DBS)
     output:
         TYPING_REPORT
     params:
-        running_dir = os.path.join(TYPING_WORKING_DIR),
         output_dir = config['output_dir']
     run:
         typing_module = HtmlElement('div')
@@ -296,3 +295,21 @@ rule combine_sequence_typing_reports:
                 report_section.copy_files(params.output_dir)
                 typing_module.add_html_object(report_section)
         SnakemakeUtils.dump_object([ToolIOValue(typing_module)], output[0])
+
+rule species_confirmation_report:
+    input:
+        VAL_HTML = expand(os.path.join(TYPING_WORKING_DIR, '{scheme}', 'report', 'html.io'), scheme=__SPECIES_CONFIRM_ST_DBS)
+    output:
+        SPECIES_CONFIRM_ST_REPORT
+    params:
+        output_dir = config['output_dir']
+    run:
+        species_confirm_module = HtmlElement('div')
+        species_confirm_module.add_module_header('Species Identification')
+        for pickle in input.VAL_HTML:
+            report_section = SnakemakeUtils.load_object(pickle)[0].value
+            report_section.copy_files(params.output_dir)
+            species_confirm_module.add_html_object(report_section)
+        SnakemakeUtils.dump_object([ToolIOValue(species_confirm_module)], output[0])
+
+

@@ -25,15 +25,18 @@ from scripts.listeriapipeline.subworkflows import WORKFLOW_INIT_REPORT, WORKFLOW
 # 2. Get the working dir from the config
 __WORKING_DIR = config.get('working_dir', '.')
 __SUMMARY_DIR = os.path.join(__WORKING_DIR, 'summary_info')
+__SPECIES_CONFIRM_ST_DBS = ['species_confirmation', 'MLST-Pasteur', 'serogroup']
+__OTHER_ST_DBS = [x for x in config.get('sequence_typing', []) if x not in __SPECIES_CONFIRM_ST_DBS]
+
 
 # 3. Add the workflows
 include: WORKFLOW_INIT_REPORT
 include: WORKFLOW_READ_TRIMMING
 include: WORKFLOW_ASSEMBLY
 include: WORKFLOW_CONTAMINATION_CHECK
+include: WORKFLOW_SEQUENCE_TYPING
 include: WORKFLOW_QUALITY_CHECKS
 include: WORKFLOW_GENE_DETECTION
-include: WORKFLOW_SEQUENCE_TYPING
 
 # 4. Set the pipeline version
 __PIPELINE_VERSION = "0.2"
@@ -54,8 +57,9 @@ rule combine_reports:
         CONTAMINATION_REPORT,
         ASSEMBLY_REPORT,
         QUALITY_CHECKS_REPORT,
+        SPECIES_CONFIRM_ST_REPORT,
         GENE_DETECTION_REPORT if len(config['gene_detection']) != 0 else [],
-        TYPING_REPORT if len(config['sequence_typing']) != 0 else [],
+        TYPING_REPORT if len(__OTHER_ST_DBS) != 0 else [],
     params:
         report_dir = config.get('report'),
         output_dir = config['output_dir'],
