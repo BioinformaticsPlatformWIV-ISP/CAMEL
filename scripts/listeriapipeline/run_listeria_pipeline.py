@@ -46,10 +46,10 @@ class ListeriaMain(object):
         parser.add_argument('--virulencefinder', action='store_true')
         parser.add_argument('--plasmidfinder', action='store_true')
         # sequence typing
-        parser.add_argument('--species_confirmation', action='store_true')
-        parser.add_argument('--mlst', action='store_true')
-        parser.add_argument('--cgmlst', action='store_true')
-        parser.add_argument('--serogrouping', action='store_true')
+        parser.add_argument('--species_confirmation', default=True)
+        parser.add_argument('--mlst', default=True)
+        parser.add_argument('--cgmlst', default=True)
+        parser.add_argument('--serogrouping', default=True)
         parser.add_argument('--pubmlst_metal', action='store_true')
         parser.add_argument('--pubmlst_resistance', action='store_true')
         parser.add_argument('--pubmlst_virulence', action='store_true')
@@ -131,9 +131,8 @@ class ListeriaMain(object):
             self.__create_config_file(config_file_path)
 
         else:
-            self._args.kraken_db = '/data/kraken/latest/abfhpv_lite/'
             # On dev2 there is not enough mem to run complete db if multiple runs are executed.
-            # self._args.kraken_db = '/data/kraken/latest/abfhpv/'
+            self._args.kraken_db = '/data/kraken/latest/abfhpv/'
             self._args.working_dir = os.path.abspath(os.getcwd())
             config_file_path = os.path.join(self._args.working_dir, 'snake_conf.yml')
             self.__create_config_file(config_file_path)
