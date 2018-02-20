@@ -116,11 +116,25 @@ rule Coverage_calculation:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(samtools_depth, output)
 
+rule Get_cgMLST_stats:
+    """
+    Retrieves the number of cgMLST genes that were detected (only perfect hits are considered).
+    """
+    input:
+        hits=os.path.join(TYPING_WORKING_DIR, 'cgMLST', 'hits-combined.io')
+    output:
+        INFORMS=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'informs-cgmlst.io')
+    run:
+        all_hits = SnakemakeUtils.load_object(input.hits)
+        nb_perfect = len([v for v in all_hits if v.value.is_perfect_hit()])
+        SnakemakeUtils.dump_object({'hits_found': nb_perfect, 'nb_of_loci': len(all_hits)}, output.INFORMS)
+        
 rule Check_quality_criteria:
     """
     Checks if the quality criteria were met.
     """
     input:
+        INFORMS_cgmlst=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'informs-cgmlst.io'),
         INFORMS_coverage=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'coverage_calculation', 'informs.io'),
         INFORMS_fastqc_checks=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'fastqc_checks', 'informs.io'),
         INFORMS_mapping=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'read_mapping', 'informs.io')
@@ -132,6 +146,8 @@ rule Check_quality_criteria:
         from app.tools.pipelines.quality_checks.qualitycriteriachecker import QualityCriteriaChecker
         quality_checker = QualityCriteriaChecker(camel)
         step = SnakeStep(rule, quality_checker, camel, params.running_dir, config)
+        # cgMLST detection perc. cutoff: 90 minimal requirement (pandemic), 95 acceptable (isolates), 97 good
+        quality_checker.update_parameters(minimal_cgmlst_percentage_genes_fail=90, minimal_cgmlst_percentage_genes_warn=95)
         SnakemakeUtils.add_pickle_inputs(quality_checker, input)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(quality_checker, output)
@@ -144,7 +160,8 @@ rule Report_quality_checks:
         INFORMS_coverage=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'coverage_calculation', 'informs.io'),
         INFORMS_mapping=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'read_mapping', 'informs.io'),
         INFORMS_additional_checks=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'fastqc_checks', 'informs.io'),
-        INFORMS_quality_criteria=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'quality_checks', 'informs.io')
+        INFORMS_quality_criteria=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'quality_checks', 'informs.io'),
+        INFORMS_cgmlst=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'informs-cgmlst.io')
     output:
         VAL_HTML=QUALITY_CHECKS_REPORT
     params:

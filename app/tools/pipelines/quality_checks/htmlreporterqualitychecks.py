@@ -44,8 +44,8 @@ class HtmlReporterQualityChecks(Tool):
         Checks if the input is valid.
         :return: None
         """
-        # if 'cgmlst' not in self._input_informs:
-        #    raise InvalidInputSpecificationError("No cgMLST info found")
+        if 'cgmlst' not in self._input_informs:
+            raise InvalidInputSpecificationError("No cgMLST info found")
         if 'coverage' not in self._input_informs:
             raise InvalidInputSpecificationError("No coverage info found")
         if 'mapping' not in self._input_informs:
@@ -63,7 +63,7 @@ class HtmlReporterQualityChecks(Tool):
         """
         data = [
             ['Median coverage:', self._input_informs['coverage']['median_depth']],
-            ['cgMLST genes found:', '-TODO-'],  # self.__get_cgmlst_stats()],
+            ['cgMLST genes found:', self.__get_cgmlst_stats()],
             ['Reads mapping back to assembly:', '{}%'.format(self._input_informs['mapping']['stats_map_rate'])]
         ]
         self._report_section.add_table(data, table_attributes=[('class', 'information')])
@@ -114,7 +114,7 @@ class HtmlReporterQualityChecks(Tool):
         :return: Formatted string with the cgMLST stats
         """
         cgmlst_stats = self._input_informs['cgmlst']
-        return '{0:}/{1:} ({2:.0f}%)'.format(
+        return '{0:}/{1:} ({2:.2f}%)'.format(
             cgmlst_stats['hits_found'], cgmlst_stats['nb_of_loci'],
             100 * float(cgmlst_stats['hits_found']) / cgmlst_stats['nb_of_loci'])
 

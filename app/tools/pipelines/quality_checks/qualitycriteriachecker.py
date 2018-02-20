@@ -22,8 +22,8 @@ class QualityCriteriaChecker(Tool):
         Checks if the input is valid.
         :return: None
         """
-        # if 'VAL_cgMLST_Stats' not in self._tool_inputs:
-        #    raise InvalidInputSpecificationError("No cgMLST stats input found")
+        if 'cgmlst' not in self._input_informs:
+            raise InvalidInputSpecificationError("No cgMLST information found")
         if 'coverage' not in self._input_informs:
             raise InvalidInputSpecificationError("No coverage information found")
         if 'mapping' not in self._input_informs:
@@ -42,7 +42,7 @@ class QualityCriteriaChecker(Tool):
         self.__check_additional_fastqc_tests()
         self.__check_assembly_mapping_rate()
         self.__check_coverage()
-        # self.__check_cgmlst()
+        self.__check_cgmlst()
 
     def __check_additional_fastqc_tests(self):
         """
@@ -90,7 +90,7 @@ class QualityCriteriaChecker(Tool):
         Checks if the fraction of detected cgMLST genes is sufficient.
         :return: None
         """
-        cgmlst_stats = self._tool_inputs['VAL_cgMLST_Stats'][0].value
+        cgmlst_stats = self._input_informs['cgmlst']
         fraction_of_genes_detected = 100.0 * float(cgmlst_stats['hits_found']) / cgmlst_stats['nb_of_loci']
         min_fail = self._parameters['minimal_cgmlst_percentage_genes_fail'].value
         if fraction_of_genes_detected < float(min_fail):
