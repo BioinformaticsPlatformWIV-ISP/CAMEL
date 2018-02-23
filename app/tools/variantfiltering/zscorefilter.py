@@ -132,6 +132,6 @@ class ZScoreFilter(Filter):
             '--output {}'.format(self.output_path)
         ])
         if os.path.getsize(regions_file) != 0:
-            self._command.command += ' --regions-file {}'.format(regions_file)
+            self._command.command += ' --targets-file {}'.format(regions_file)
         else:
             self._command.command += ' --exclude 1'
