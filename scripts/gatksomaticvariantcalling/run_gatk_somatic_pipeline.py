@@ -101,6 +101,8 @@ class GATKSomaticMain(object):
         # job id
         ap.add_argument('--job_id', dest='job_id', metavar='job_id', help='Job ID for debugging and logging.',
                         default=datetime.datetime.now().strftime("%Y%m%d_%H%M%S-%f"))
+        # TEST mutect threads
+        ap.add_argument('--test_mutect_nct', dest='test_mutect_nct', metavar='test_mutect_nct', help='Threads to use for mutect2.')
 
         return ap.parse_args()
 
@@ -182,6 +184,10 @@ class GATKSomaticMain(object):
             self._config_data['run_indel_realignment'] = True
         elif self._args.variant_caller == "mutect2":
             self._config_data['run_indel_realignment'] = False
+
+        # test mutect threads
+        if self._args.test_mutect_nct:
+            self._config_data['mutect_nct'] = self._args.test_mutect_nct
 
         # threads
         if self._args.threads:

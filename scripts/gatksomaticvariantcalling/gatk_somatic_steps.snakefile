@@ -483,7 +483,12 @@ rule mutect2:
         mut2=GATKMuTect2(camel)
         SnakemakeUtils.add_pickle_inputs(mut2, input)
         step = SnakeStep(rule, mut2, camel, params.working_dir, config)
-        mut2.update_parameters(threads=threads)
+        # mut2.update_parameters(threads=threads)
+        # mut2.update_parameters(threads=10)
+        if 'mutect_nct' in config:
+            mut2.update_parameters(threads=config['mutect_nct'])
+        else:
+            mut2.update_parameters(threads=threads)
         if 'mutect2_vcf_output' in config:
             mut2.update_parameters(output_vcf_file = config['mutect2_vcf_output'])
         if 'MuTect2_downsampling_target' in config:
