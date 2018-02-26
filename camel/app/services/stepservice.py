@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from typing import Dict, Tuple, Optional
 
 from psycopg2.extras import Json
@@ -41,11 +42,11 @@ class StepService(Service):
         """
         Extracts the wildcard names and values from the Snakemake Wildcards object and returns them as a dictionary.
         :param wildcards: Wildcards object from snakemake
-        :return: Dictionary with wilcards names (key) and values (value)
+        :return: Dictionary with wildcards names (key) and values (value)
         """
         if wildcards is None:
             return None
-        dict_ = {}
-        for key in wildcards.keys().keys():
-            dict_[key[0]] = wildcards.get(key[0])
+        dict_ = OrderedDict()
+        for key, value in sorted(wildcards.items()):
+            dict_[key] = value
         return dict_

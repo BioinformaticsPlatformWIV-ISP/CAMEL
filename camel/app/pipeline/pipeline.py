@@ -9,19 +9,20 @@ class Pipeline(object):
     Class meant to handle the workflow of steps.
     """
 
-    def __init__(self, name: str, camel: Camel, db_logging: bool=False, job_id: int=None) -> None:
+    def __init__(self, name: str, camel: Camel, logging_level: str=None, job_id: int=None) -> None:
         """
         Initializes a pipeline.
         :param camel: CAMEL instance
-        :param db_logging: If True, inputs & outputs are logged in the database.
+        :param logging_level: Logging level ('step', 'pipeline' or None)
         """
         self._camel = camel
         self._name = name
         self._initial_input = None
         self._configs = None
         self._job_id = None
-        self._db_logging = db_logging
-        if db_logging:
+        self._logging_level = logging_level
+        self._db_logging = logging_level in ('pipeline', 'step')
+        if self._db_logging:
             self._pipeline_service = PipelineService(self._name, camel.connection)
             self._job_id = self._pipeline_service.insert_pipeline_job() if job_id is None else job_id
         else:
@@ -61,12 +62,12 @@ class Pipeline(object):
         return self._configs
 
     @property
-    def db_logging(self):
+    def logging_level(self) -> str:
         """
-        Returns the boolean that says whether or not to log in the database
-        :return: True/False
+        Returns the logging level of this pipeline.
+        :return: Logging level
         """
-        return self._db_logging
+        return self._logging_level
 
     def set_initial_input(self, files: dict) -> None:
         """
@@ -75,7 +76,7 @@ class Pipeline(object):
         :return: None
         """
         self._initial_input = files
-        if self.db_logging:
+        if self._db_logging:
             self._log_initial_input()
 
     def get_initial_input(self, key: str=None) -> list:

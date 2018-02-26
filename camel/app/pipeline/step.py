@@ -6,7 +6,6 @@ from snakemake.io import Wildcards
 from camel.app.camel import Camel
 from camel.app.io.toolio import ToolIO
 from camel.app.loggers.logmanager import LogManager
-from camel.app.services.pipelineservice import PipelineService
 from camel.app.services.stepservice import StepService
 from camel.app.tools.tool import Tool
 
@@ -17,7 +16,7 @@ class Step(object):
     """
 
     def __init__(self, rule_name: str, tool: Tool, camel: Camel, folder: str, config: dict,
-                 wildcards: Wildcards=None, pipeline_output: bool=False, log_step: bool=False) -> None:
+                 wildcards: Wildcards=None, pipeline_output: bool=False, log_step: bool=None) -> None:
         """
         Initializes a step.
         :param rule_name: Name of the snakerule
@@ -36,12 +35,10 @@ class Step(object):
         self._camel = camel
         self._pipeline_options = {}
         self._job_options = {}
-        self._db_step_logging = config['step_logging'] if config['step_logging'] is True else log_step
-        self._db_logging = config['logging']
-        self._pipeline_service = PipelineService(config['pipeline_name'], camel.connection)
+        self._db_logging = Step.step_is_logged(config.get('logging_level'), log_step, pipeline_output)
         self._step_service = StepService(camel.connection)
         self._folder = folder
-        self._job_id = config['pipeline_job_id']
+        self._job_id = config['pipeline_job_id'] if self._db_logging else None
         self._pipeline_output = pipeline_output
         self._wildcards = wildcards
 
@@ -116,7 +113,7 @@ class Step(object):
         self._tool.run(self._folder)
         logging.info('Step output: {}'.format(list(self.outputs.items())))
         logging.info('Step informs: {}'.format(list(self.informs.items())))
-        if (self._db_logging and self._db_step_logging) or (self._db_logging and self._pipeline_output):
+        if self._db_logging:
             self._log_outputs()
         LogManager.detach_step_handlers()
 
@@ -125,6 +122,7 @@ class Step(object):
         Logs the outputs in the database.
         :return: None
         """
+        logging.info("Logging step outputs")
         for key, files in self.outputs.items():
             for i in range(0, len(files)):
                 if files[i].logged:
@@ -133,3 +131,27 @@ class Step(object):
                     logging.debug('OUTPUT DATA: {}'.format(output_data))
                     self._step_service.log_output(output_data)
                     logging.debug('Output {} ({}) logged'.format(key, i))
+
+    @staticmethod
+    def step_is_logged(logging_level: str, log_step: bool, pipeline_output: bool) -> bool:
+        """
+        This helper function is used to check whether a step should be logged depending on the logging level set in the
+        config and the variables passed to the step object.
+        :param logging_level: Logging level as defined in the config
+        :param log_step: Boolean to indicate if this step should be logged (overwrites the logging level is it is not
+        :param pipeline_output: True if this step is a pipeline output
+        set to None.
+        :return: True if the step should be logged, False otherwise.
+        """
+        if logging_level == 'step':
+            if log_step is None or log_step is True:
+                return True
+            else:
+                return False
+        elif logging_level == 'pipeline':
+            if log_step is True or pipeline_output is True:
+                return True
+            else:
+                return False
+        else:
+            return False
