@@ -72,8 +72,8 @@ class GATKSomaticMain(object):
 
         # Downsampling
         ap.add_argument('--downsampling_type', dest='downsampling_type',
-                        help='Type of downsampling to performe on reads (by MuTect/MuTect2). NONE,ALL_READS,BY_SAMPLE. Default: BY_SAMPLE. Perform or not downsampling on reads. '
-                             'By default, MuTect/MuTect2 downsamples to 1000 reads. Usage example: --downsample None (disables downsampling).')
+                        help='Type of downsampling to perform on reads (by MuTect). NONE,ALL_READS,BY_SAMPLE. Default: BY_SAMPLE. Perform or not downsampling on reads. '
+                             'By default, MuTect downsamples to 1000 reads. Usage example: --downsample None (disables downsampling).')
         ap.add_argument('--downsampling_target', dest='downsampling_target', help='Target value for downsampling to perform on reads (by MuTect/MuTect2). Default: 1000. Usage example: --downsample 100000 (sets target value to 100000 reads, effectively disables it).')
         # MuTect1:
         # gap_events_threshold
@@ -102,7 +102,7 @@ class GATKSomaticMain(object):
         ap.add_argument('--job_id', dest='job_id', metavar='job_id', help='Job ID for debugging and logging.',
                         default=datetime.datetime.now().strftime("%Y%m%d_%H%M%S-%f"))
         # TEST mutect threads
-        ap.add_argument('--test_mutect_nct', dest='test_mutect_nct', metavar='test_mutect_nct', help='Threads to use for mutect2.')
+        ap.add_argument('--test_mutect_nct', dest='test_mutect_nct', metavar='test_mutect_nct', help='Threads to use for mutect2. Multithreading leads to longer runtime on targeted data.')
 
         return ap.parse_args()
 
