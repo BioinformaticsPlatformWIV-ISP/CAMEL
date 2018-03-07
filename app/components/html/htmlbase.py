@@ -164,7 +164,7 @@ class HtmlBase(object):
         :return: None
         """
         if not isinstance(input_object, HtmlBase):
-            raise ValueError("{} is not an HTML object")
+            raise ValueError("{} is not an HTML object".format(input_object))
         self._doc.asis(input_object.to_html())
 
     def add_raw(self, html_code):
@@ -184,12 +184,16 @@ class HtmlBase(object):
             raise ValueError("Cannot add None as text to the HTML object")
         self._doc.text(text)
 
-    def add_module_header(self, text):
+    def add_module_header(self, text, id_=None):
         """
         Adds a sub header.
         :param text: Header text
+        :param id_: Html id
         :return: None
         """
-        with self.get_tag('div', [('class', 'sub_header')]):
+        attributes = [('class', 'sub_header')]
+        if id_ is not None:
+            attributes.append(('id', id_))
+        with self.get_tag('div', attributes):
             with self.get_tag('h2'):
                 self._doc.text(text)

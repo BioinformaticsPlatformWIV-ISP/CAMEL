@@ -75,17 +75,15 @@ rule report_read_trimming:
         FASTQ_SE_REVERSE = os.path.join(__WORKING_DIR, 'read_trimming', 'fastq-se-reverse.io'),
         INFORMS_trimming=os.path.join(__WORKING_DIR, 'read_trimming', 'informs.io')
     output:
-        HTML=os.path.join(__WORKING_DIR, 'report_read_trimming', 'html.io')
+        VAL_HTML=os.path.join(__WORKING_DIR, 'report_read_trimming', 'html.io')
     params:
         running_dir=os.path.join(__WORKING_DIR, 'report_read_trimming'),
         output_dir=config['output_dir']
     run:
         from app.tools.pipelines.read_trimming.htmlreporterreadtrimming import HtmlReporterReadTrimming
         reporter = HtmlReporterReadTrimming(camel)
-        report_path = os.path.join(params.running_dir, 'report_trimming.html')
-        open(report_path, 'w').close()
-        reporter.add_input_files({'HTML': [ToolIOFile(report_path)], 'DIR_HTML': [ToolIODirectory(params.output_dir)]})
         SnakemakeUtils.add_pickle_inputs(reporter, input)
         step = SnakeStep(rule, reporter, camel, params.running_dir, config)
         step.run_step()
+        reporter.tool_outputs['VAL_HTML'][0].value.copy_files(params.output_dir)
         SnakemakeUtils.dump_tool_outputs(reporter, output)

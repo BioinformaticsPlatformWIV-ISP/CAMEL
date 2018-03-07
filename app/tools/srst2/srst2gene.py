@@ -95,5 +95,5 @@ class Srst2Gene(Tool):
         Checks if the command execution was successful.
         :return: None
         """
-        if 'SRST2 has finished' not in self.stderr.splitlines()[-1]:
+        if self._command.returncode != 0:
             raise ToolExecutionError("SRST2 execution failed: {}".format(self.stderr))

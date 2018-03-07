@@ -1,5 +1,6 @@
 import os
 
+from app.error.toolexecutionerror import ToolExecutionError
 from app.io.tooliofile import ToolIOFile
 from app.tools.tool import Tool
 
@@ -86,5 +87,5 @@ class BlastFormatter(Tool):
         Checks the command output for errors.
         :return: None
         """
-        if 'error' in self._command.stderr.lower():
-            raise ValueError("Error executing {}: {}".format(self.name, self._command.stderr.strip()))
+        if 'error' in self.stderr.lower() or self._command.returncode != 0:
+            raise ToolExecutionError("Error executing {}: {}".format(self.name, self._command.stderr.strip()))

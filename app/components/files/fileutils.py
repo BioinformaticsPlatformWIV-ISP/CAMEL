@@ -23,12 +23,12 @@ class FileUtils(object):
         if not os.path.isfile(file_name):
             raise IOError("'{}' is not a file".format(file_name))
         hasher = hashlib.sha256()
-        file_to_hash = open(file_name, 'rb')
-        buf = file_to_hash.read(block_size)
-        while len(buf) > 0:
-            hasher.update(buf)
+        with open(file_name, 'rb') as file_to_hash:
             buf = file_to_hash.read(block_size)
-        return hasher.hexdigest()
+            while len(buf) > 0:
+                hasher.update(buf)
+                buf = file_to_hash.read(block_size)
+            return hasher.hexdigest()
 
     @staticmethod
     def get_all_files(directory_path):
