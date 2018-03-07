@@ -81,9 +81,10 @@ class ZScoreFilter(Filter):
         with open(pileup_file, 'r') as handle:
             content = handle.readlines()
             for line in content:
-                chrom = line.split('\t')[0]
-                pos = line.split('\t')[1]
-                bases = line.strip().split('\t')[4]
+                parts = line.strip().split('\t')
+                chrom = parts[0]
+                pos = parts[1]
+                bases = parts[4]
                 actg_counts = ZScoreFilter.get_actg_counts(bases)
                 x = max(actg_counts)
                 actg_counts.remove(x)
