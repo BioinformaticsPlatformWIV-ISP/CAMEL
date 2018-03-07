@@ -16,6 +16,9 @@ class ZScoreFilter(Filter):
     Z = (X-Y) / sqrt(X+Y)
     Where X is the number of reads having the most common nucleotide at that position and Y the number of reads
     supporting other nucleotides.
+
+    If the 'y_multiplier' parameter is set, positions for which the following condition does not hold are filtered out:
+    X = Y * {y_multiplier}
     """
 
     def __init__(self, camel):
