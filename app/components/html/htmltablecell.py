@@ -22,10 +22,10 @@ class HtmlTableCell(HtmlElement):
             else:
                 attributes = color_attribute
         if link is not None:
-            super(HtmlTableCell, self).__init__('td', None, attributes)
+            super().__init__('td', None, attributes)
             self.add_html_object(HtmlElement('a', text, [('href', link)]))
         else:
-            super(HtmlTableCell, self).__init__('td', text, attributes)
+            super().__init__('td', text, attributes)
 
     @property
     def text(self):
