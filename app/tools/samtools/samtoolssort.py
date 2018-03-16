@@ -66,3 +66,11 @@ class SamtoolsSort(Samtools):
             raise ToolExecutionError("Expected {} output not generated".format(self._name))
         output_key = self._parameters['output_format'].value.upper()
         self._tool_outputs[output_key] = [ToolIOFile(output_path)]
+
+    def _check_command_output(self):
+        """
+        Checks if the command was executed successfully. Supersedes that of Tool class as samtools prints warnings to stderr.
+        :return: None
+        """
+        if self._command.returncode != 0:
+            raise ToolExecutionError("Command execution failed (Exit code: {})".format(self._command.returncode))
