@@ -87,13 +87,15 @@ class GATKPrintReads(GATK):
 
     def __hardlink_output(self):
         """
-        Create a hardlink for the output. This "encapsulates" the pipeline files as the internally-used names don't change 
-        based on user input and the symlink serves as the external reference.
-        This is mainly to avoid issues with file names (eg. gatk mutect2 fails because of galaxy ".dat" files). 
+        Create a hardlink for the output bam file, if this one is to be used as output of a pipeline. This "isolates" the pipeline files as the internally-used names don't change 
+        based on user input. The symlink serves as the external reference.
+        This is mainly to avoid issues with file names (eg. gatk mutect2 fails because of galaxy calling ".bam" files ".dat"). 
+        Only do it if specified in parameters and not the same file.
         :return: None
         """
-        hardlink_output_path = self._parameters['bam_external_output'].value
-        new_path = os.path.join(self._folder, hardlink_output_path)
-        if os.path.exists(new_path):
-            os.remove(new_path)
-        os.link(self._tool_outputs['BAM'][0].path, new_path)
+        if 'bam_external_output' in self._parameters and os.path.split(self._parameters['bam_external_output'].value) != os.path.split(self._tool_outputs['BAM'][0].path):
+            hardlink_output_path = self._parameters['bam_external_output'].value
+            new_path = os.path.join(self._folder, hardlink_output_path)
+            if os.path.exists(new_path):
+                os.remove(new_path)
+            os.link(self._tool_outputs['BAM'][0].path, new_path)

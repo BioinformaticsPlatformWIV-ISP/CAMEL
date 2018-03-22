@@ -49,12 +49,14 @@ class GATKSomaticMain(object):
                         nargs='+')
 
         # Variant caller to use
-        ap.add_argument('-V', '--variant_caller', metavar='variant_caller', dest='variant_caller', help='Variant caller to use.', choices=["mutect1", "mutect2"])
+        ap.add_argument('-V', '--variant_caller', metavar='variant_caller', dest='variant_caller', help='Variant caller to use.', choices=["mutect1", "mutect2"], required=True )
 
         # output
         ap.add_argument('--mutect1_vcf_output', dest='mutect1_vcf_output', metavar='mutect1_vcf_output', help='Output vcf file from MuTect1.')
         ap.add_argument('--mutect1_tab_output', dest='mutect1_tab_output', metavar='mutect1_tab_output', help='Output variant-call table file for MuTect1.')
         ap.add_argument('--mutect2_vcf_output', dest='mutect2_vcf_output', metavar='mutect2_vcf_output', help='Output vcf file from MuTect2.')
+        ap.add_argument('--mutect2_bam_output', dest='mutect2_bam_output', metavar='mutect2_bam_output',
+                        help='Output bam file from MuTect2: File to which assembled haplotypes should be written.')
 
         ap.add_argument('--covar_output', dest='covar_output', metavar='covar_output', help='Output covariates analysis pdf')
         ap.add_argument('--bam_output', dest='bam_output', metavar='bam_output', help='Aligned BAM file')
@@ -151,6 +153,8 @@ class GATKSomaticMain(object):
             self._config_data['mutect1_tab_output'] = self._args.mutect1_tab_output
         if self._args.mutect2_vcf_output:
             self._config_data['mutect2_vcf_output'] = self._args.mutect2_vcf_output
+        if self._args.mutect2_bam_output:
+            self._config_data['mutect2_bam_output'] = self._args.mutect2_bam_output
         if self._args.covar_output:
             self._config_data['covar_output'] = self._args.covar_output
         if self._args.bam_output:

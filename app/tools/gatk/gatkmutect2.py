@@ -26,7 +26,6 @@ class GATKMuTect2(GATK):
 
     Output:
     -------
-    "TXT_CALL_STATS":   ToolIOFile object. GATK Call stats text based file. Parse-able by scripts or in excel sheets.
     "VCF":              ToolIOFile object. VCF file.
 
     Mandatory parameters:

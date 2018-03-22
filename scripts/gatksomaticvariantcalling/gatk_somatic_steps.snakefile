@@ -486,9 +486,9 @@ rule mutect2:
             mut2.update_parameters(threads=config['mutect_nct'])
         if 'mutect2_vcf_output' in config:
             mut2.update_parameters(output_vcf_file = config['mutect2_vcf_output'])
+        if 'mutect2_bam_output' in config:
+            mut2.update_parameters(output_bam_file=config['mutect2_bam_output'])
         if 'MuTect2_downsampling_target' in config:
             mut2.update_parameters(downsampling_coverage_target=config['MuTect2_downsampling_target'])
-        # if 'MuTect2_downsampling_type' in config:
-        #     mut2.update_parameters(downsampling_type=config['MuTect2_downsampling_type'])
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(mut2, output)
