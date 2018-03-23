@@ -18,7 +18,7 @@ class GATKSomaticMain(object):
     """
     DB_LOGGING = True
     # DEBUG = True
-    SNAKEFILE = os.path.join(os.path.dirname(__file__), 'gatk_somatic_steps.snakefile')
+    SNAKEFILE = os.path.join(os.path.dirname(__file__), 'gatk_somatic_steps_test.snakefile')
     # FROM_GALAXY = False
     CORES = 5
 
@@ -198,6 +198,10 @@ class GATKSomaticMain(object):
             self._config_data['threads'] = self._args.threads
         else:
             self._config_data['threads'] = self._args.threads
+
+        # run from Galaxy (for output files naming)
+        self._config_data['from_galaxy'] = self._args.from_galaxy
+
         # Create and write to config file
         with open(self.runtime_config_name, 'w') as handle:
             yaml.dump(self._config_data, handle)

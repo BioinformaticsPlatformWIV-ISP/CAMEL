@@ -46,27 +46,99 @@ def prepare_basequalityrecalibration_input(wildcards):
         BAM = os.path.join(working_dir, "addreadgroups/bam.io")
     return BAM
 
-def define_final_output(wildcards):
+def define_pipeline_outputs(wildcards):
     """
     Defines the expected output of the pipeline for the rule "all", depending on the variant caller(s) used.
     Acts as a static fork in workflow based on config file (variant caller used).
     :param wildcards: 
     :return: VCF iofile path
     """
+    results = dict()
+    results["PDF"] = os.path.join(working_dir, "analyzecovariates/pdf.io")
+    results["BAM"] = os.path.join(working_dir, "printreads/bam.io")
+
     if "mutect1" in config["variant_caller"]:
-        VCF = os.path.join(working_dir, "mutect1/vcf.io"),
+        results["VCF_MUTECT1"] = os.path.join(working_dir, "mutect1/vcf.io"),
+        results["TXT_CALL_STATS"] = os.path.join(working_dir, "mutect1/txt.io"),
+
     if "mutect2" in config["variant_caller"]:
-        VCF = os.path.join(working_dir, "mutect2/vcf.io"),
-    return VCF
+        results["VCF_MUTECT2"] = os.path.join(working_dir, "mutect2/vcf.io"),
+        if 'mutect2_bam_output' in config:
+            results["BAM_MUTECT2"] = os.path.join(working_dir, "mutect2/bam.io"),
+            results["BAI_MUTECT2"] = os.path.join(working_dir, "mutect2/bai.io"),
+
+    return results
 
 rule all:
     """
     This rule makes sure that all other rules are executed.
-    Last files to be generated in pipeline are vcf.io (mutect1 or 2) and pdf report for covariates analysis.
+    Requires the done.flag file to be present in ./output directory.
     """
     input:
-        VCF = define_final_output,
-        PDF = os.path.join(working_dir, "analyzecovariates/pdf.io")
+        DONE = os.path.join(working_dir, "output/done.flag"),
+
+
+rule move_output:
+    """
+    Hard-links output of pipeline to final path.
+    If using as stand-alone, hard-links to 'output' directory and renames according to pipeline parameters.
+    If using Galaxy, ahrd-links to the galaxy-defined path.
+    """
+    input:
+        unpack(define_pipeline_outputs),
+
+    output:
+        touch(os.path.join(working_dir, "output/done.flag")),
+
+    run:
+        import os
+        if config['from_galaxy']:
+            if 'mutect1_tab_output' in config:
+                tab_init_path = SnakemakeUtils.load_object(input.TXT_CALL_STATS)[0]
+                os.link(tab_init_path.path, config['mutect1_tab_output'])
+            if 'mutect1_vcf_output' in config:
+                vcf_init_path = SnakemakeUtils.load_object(input.VCF_MUTECT1)[0]
+                os.link(vcf_init_path.path, config['mutect1_vcf_output'])
+            if 'mutect2_vcf_output' in config:
+                vcf_init_path = SnakemakeUtils.load_object(input.VCF_MUTECT2)[0]
+                os.link(vcf_init_path.path, config['mutect2_vcf_output'])
+            if 'mutect2_bam_output' in config:
+                bam_init_path = SnakemakeUtils.load_object(input.BAM_MUTECT2)[0]
+                os.link(bam_init_path.path, config['mutect2_bam_output'])
+            if 'covar_output' in config:
+                pdf_init_path = SnakemakeUtils.load_object(input.PDF)[0]
+                os.link(pdf_init_path.path, config['covar_output'])
+            if 'bam_output' in config:
+                bam_init_path = SnakemakeUtils.load_object(input.BAM)[0]
+                os.link(bam_init_path.path, config['bam_output'])
+
+        else:
+            if 'mutect1_tab_output' in config:
+                tab_init_path = SnakemakeUtils.load_object(input.TXT_CALL_STATS)[0]
+                os.link(tab_init_path.path, os.path.join(working_dir, "output/", config['mutect1_tab_output']))
+            if 'mutect1_vcf_output' in config:
+                vcf_init_path = SnakemakeUtils.load_object(input.VCF_MUTECT1)[0]
+                os.link(vcf_init_path.path, os.path.join(working_dir, "output/", config['mutect1_vcf_output']))
+            if 'mutect2_vcf_output' in config:
+                vcf_init_path = SnakemakeUtils.load_object(input.VCF_MUTECT2)[0]
+                os.link(vcf_init_path.path, os.path.join(working_dir, "output/", config['mutect2_vcf_output']))
+            if 'mutect2_bam_output' in config:
+                bam_init_path = SnakemakeUtils.load_object(input.BAM_MUTECT2)[0]
+                os.link(bam_init_path.path, os.path.join(working_dir, "output/", config['mutect2_bam_output']))
+                bai_init_path = SnakemakeUtils.load_object(input.BAI_MUTECT2)[0]
+                if os.path.splitext(config['mutect2_bam_output'])[1] == ".bam":
+                    bai_output = os.path.splitext(config['mutect2_bam_output'])[0]+".bai"
+                else:
+                    bai_output = config['mutect2_bam_output']+".bai"
+                os.link(bai_init_path.path, os.path.join(working_dir, "output/", bai_output))
+            if 'covar_output' in config:
+                pdf_init_path = SnakemakeUtils.load_object(input.PDF)[0]
+                os.link(pdf_init_path.path, os.path.join(working_dir, "output/", config['covar_output']))
+            if 'bam_output' in config:
+                bam_init_path = SnakemakeUtils.load_object(input.BAM)[0]
+                os.link(bam_init_path.path, os.path.join(working_dir, "output/", config['bam_output']))
+
+
 
 
 rule prepare_initial_input:
@@ -375,8 +447,8 @@ rule printreads:
         SnakemakeUtils.add_pickle_inputs(gpr, input)
         step = SnakeStep(rule, gpr, camel, params.working_dir, config)
         gpr.update_parameters(threads=threads)
-        if 'bam_output' in config:
-            gpr.update_parameters(bam_external_output=config['bam_output'])
+        # if 'bam_output' in config:
+        #     gpr.update_parameters(bam_external_output=config['bam_output'])
         step.run_step()
         SnakemakeUtils.dump_tool_output(gpr,"BAM",output.BAM)
 
@@ -448,10 +520,10 @@ rule mutect1:
         mut=Mutect1(camel)
         SnakemakeUtils.add_pickle_inputs(mut, input)
         step = SnakeStep(rule, mut, camel, params.working_dir, config)
-        if 'mutect1_tab_output' in config:
-            mut.update_parameters(output_callstats_file = config['mutect1_tab_output'])
-        if 'mutect1_vcf_output' in config:
-            mut.update_parameters(output_vcf_file = config['mutect1_vcf_output'])
+        # if 'mutect1_tab_output' in config:
+        #     mut.update_parameters(output_callstats_file = config['mutect1_tab_output'])
+        # if 'mutect1_vcf_output' in config:
+        #     mut.update_parameters(output_vcf_file = config['mutect1_vcf_output'])
         if 'MuTect1_downsampling_target' in config:
             mut.update_parameters(downsampling_coverage_target=config['MuTect1_downsampling_target'])
         if 'MuTect1_downsampling_type' in config:
@@ -475,6 +547,8 @@ rule mutect2:
         VCF_DBSNP=os.path.join(working_dir, "initial_input/vcf_known_snps.io"),
     output:
         VCF=os.path.join(working_dir, "mutect2/vcf.io"),
+        BAM=os.path.join(working_dir, "mutect2/bam.io"),
+        BAI=os.path.join(working_dir, "mutect2/bai.io"),
     params:
         working_dir = os.path.join(working_dir, "mutect2"),
     run:
@@ -484,11 +558,13 @@ rule mutect2:
         step = SnakeStep(rule, mut2, camel, params.working_dir, config)
         if 'mutect_nct' in config:
             mut2.update_parameters(threads=config['mutect_nct'])
-        if 'mutect2_vcf_output' in config:
-            mut2.update_parameters(output_vcf_file = config['mutect2_vcf_output'])
         if 'mutect2_bam_output' in config:
-            mut2.update_parameters(output_bam_file=config['mutect2_bam_output'])
+            mut2.update_parameters(output_bam=True)
         if 'MuTect2_downsampling_target' in config:
             mut2.update_parameters(downsampling_coverage_target=config['MuTect2_downsampling_target'])
         step.run_step()
-        SnakemakeUtils.dump_tool_outputs(mut2, output)
+        # set output: bam optional, vcf always generated
+        SnakemakeUtils.dump_tool_output(mut2, "VCF", output.VCF)
+        if 'mutect2_bam_output' in config:
+            SnakemakeUtils.dump_tool_output(mut2, "BAM", output.BAM)
+            SnakemakeUtils.dump_tool_output(mut2, "BAI", output.BAI)

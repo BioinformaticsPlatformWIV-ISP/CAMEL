@@ -44,6 +44,7 @@ class GATKMuTect2(GATK):
 
         self._function_name = 'MuTect2'
         self._required_inputs = ['BAM_TUMOR', 'FASTA_REF']
+        self._specific_parameters = ["output_bam"]
 
     def _set_input(self):
         """
@@ -85,3 +86,9 @@ class GATKMuTect2(GATK):
         """
         self._tool_outputs['VCF'] = [
             ToolIOFile(os.path.join(self._folder, self._parameters['output_vcf_file'].value))]
+        if 'output_bam' in self._parameters:
+            if 'output_bam_file' not in self._parameters:
+                self.update_parameters(output_bam_file=self._tool_service.get_parameter("output_bam_file").value)
+            self._tool_outputs['BAM'] = [ToolIOFile(os.path.join(self._folder, self._parameters['output_bam_file'].value))]
+            self._tool_outputs['BAI'] = [
+                ToolIOFile(os.path.join(self._folder, os.path.splitext(self._parameters['output_bam_file'].value)[0] + ".bai"))]
