@@ -72,7 +72,7 @@ def define_pipeline_outputs(wildcards):
 rule all:
     """
     This rule makes sure that all other rules are executed.
-    Requires the done.flag file to be present in ./output directory.
+    Requires the done.flag file to be present in ./output directory. This flag is created when the move_output rule finishes.
     """
     input:
         DONE = os.path.join(working_dir, "output/done.flag"),
