@@ -184,15 +184,21 @@ class SPAdes(Tool):
         :return: None
         """
         output_dir = os.path.join(self._folder, self._parameters['output_dir'].value)
-        self._tool_outputs.update({
-            'FASTA_Contig': [ToolIOFile(os.path.join(output_dir, SPAdes.FASTA_CONTIG))],
-            'FASTA_Scaffolds': [ToolIOFile(os.path.join(output_dir, SPAdes.FASTA_SCAFFOLDS))],
-            'FASTG': [ToolIOFile(os.path.join(output_dir, SPAdes.FASTG))]
-        })
-        for output_key, files in self._tool_outputs.items():
-            if not os.path.isfile(files[0].path):
-                logging.warning("{} file not generated.".format(output_key))
-                self._tool_outputs.pop(output_key)
+        self.__check_and_set_output('FASTA_Contig', os.path.join(output_dir, SPAdes.FASTA_CONTIG))
+        self.__check_and_set_output('FASTA_Scaffolds', os.path.join(output_dir, SPAdes.FASTA_SCAFFOLDS))
+        self.__check_and_set_output('FASTG', os.path.join(output_dir, SPAdes.FASTG))
+
+    def __check_and_set_output(self, output_key, output_file):
+        """
+        Check the existance of output_file. Update self._tool_outputs only when file exists.
+        :param output_key: output key to be set in self._tool_outputs
+        :param output_file: output_file to be stored in self._tool_outputs
+        :return: None
+        """
+        if not os.path.isfile(output_file):
+            logging.warning("{} file not generated.".format(output_key))
+        else:
+            self._tool_outputs[output_key] = [ToolIOFile(output_file)]
 
     def __build_command(self):
         """
