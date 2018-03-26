@@ -108,7 +108,7 @@ class ToolIODb(ToolIO):
         sql = """SELECT location FROM databases.db_loc 
                     WHERE db_loc.name = %s 
                     AND db_loc.available IS TRUE"""
-        sql += "AND db_loc.latest IS TRUE" if (version == 'latest') else "AND db_loc.version = %s"
+        sql += " AND db_loc.latest IS TRUE" if (version == 'latest') else " AND db_loc.version = %s"
         if prefix is None:
             return self.__check_and_return_loc(db_conn.query(sql, (self._name,)))
         else:
