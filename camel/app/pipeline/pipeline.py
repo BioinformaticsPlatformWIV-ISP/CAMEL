@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 
 from camel.app.camel import Camel
 from camel.app.services.pipelineservice import PipelineService
@@ -20,6 +21,8 @@ class Pipeline(object):
         self._initial_input = None
         self._configs = None
         self._job_id = None
+        if not self.is_valid_logging_level(logging_level):
+            raise ValueError(f"Logging level '{logging_level}' is not a valid logging level!")
         self._logging_level = logging_level
         self._db_logging = logging_level in ('pipeline', 'step')
         if self._db_logging:
@@ -30,7 +33,7 @@ class Pipeline(object):
         logging.info("Created pipeline {}".format(self._name))
 
     @property
-    def job_id(self):
+    def job_id(self) -> Optional[int]:
         """
         Returns the job id of this pipeline.
         :return: Job id
@@ -38,7 +41,7 @@ class Pipeline(object):
         return self._job_id
 
     @property
-    def name(self):
+    def name(self) -> str:
         """
         Returns the pipeline name.
         :return: Name
@@ -46,7 +49,7 @@ class Pipeline(object):
         return self._name
 
     @property
-    def pipeline_service(self):
+    def pipeline_service(self) -> Optional[PipelineService]:
         """
         Returns the pipeline service
         :return: Pipeline service
@@ -54,7 +57,7 @@ class Pipeline(object):
         return self._pipeline_service
 
     @property
-    def configs(self):
+    def configs(self) -> dict:
         """
         Returns the pipeline configs
         :return: Pipeline configs
@@ -68,6 +71,15 @@ class Pipeline(object):
         :return: Logging level
         """
         return self._logging_level
+
+    @staticmethod
+    def is_valid_logging_level(logging_level: str) -> bool:
+        """
+        Checks whether the given logging level is valid
+        :param logging_level: Logging level to be checked
+        :return: True if the level is allowed
+        """
+        return logging_level in ('pipeline', 'step', None)
 
     def set_initial_input(self, files: dict) -> None:
         """
@@ -92,10 +104,7 @@ class Pipeline(object):
                 io_files += values
         else:
             io_files = self._initial_input[key]
-        files = []
-        for file_ in io_files:
-            files.append(file_.path)
-        return files
+        return [file_.path for file_ in io_files]
 
     def set_configs(self, configs: dict) -> None:
         """
@@ -106,7 +115,7 @@ class Pipeline(object):
         logging.info("Pipeline configuration: {}".format(configs))
         self._configs = configs
 
-    def _log_initial_input(self):
+    def _log_initial_input(self) -> None:
         """
         Logs the initial input of the pipeline.
         :return: None

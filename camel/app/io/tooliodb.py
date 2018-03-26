@@ -70,7 +70,7 @@ class ToolIODb(ToolIO):
         :return: True if the file exists, False otherwise
         """
         if self._prefix is None:
-            return os.path.isfile(self.path) if not self.is_dir() else True
+            return True if self.is_dir() else os.path.isfile(self.path)
         else:
             return os.path.isdir(os.path.dirname(self._path))
 
@@ -95,34 +95,24 @@ class ToolIODb(ToolIO):
         Returns the location of the database
         :return: Database location
         """
-        if self._version.lower() == 'latest':
-            return self.__get_latest_loc() if self._prefix is None else os.path.join(self.__get_latest_loc(), self._prefix)
+        return self.__get_db_location(self._version.lower()) if self._prefix is None else os.path.join(self.__get_db_location(self._version.lower()), self._prefix)
+
+    def __get_db_location(self, version: str, prefix: str=None) -> str:
+        """
+        Gets the location of the database in the file system
+        :param version: Version of the database
+        :param prefix: Prefix for the database
+        :return: Database location in the file system
+        """
+        db_conn = Connection(self._config, 'db_loc')
+        sql = """SELECT location FROM databases.db_loc 
+                    WHERE db_loc.name = %s 
+                    AND db_loc.available IS TRUE"""
+        sql += "AND db_loc.latest IS TRUE" if (version == 'latest') else "AND db_loc.version = %s"
+        if prefix is None:
+            return self.__check_and_return_loc(db_conn.query(sql, (self._name,)))
         else:
-            return self.__get_version_loc() if self._prefix is None else os.path.join(self.__get_version_loc(), self._prefix)
-
-    def __get_latest_loc(self) -> str:
-        """
-        Gets the location of the 'latest' database
-        :return: Database location
-        """
-        db_conn = Connection(self._config, 'db_loc')
-        sql = """SELECT location FROM databases.db_loc
-                    WHERE db_loc.name = %s
-                      AND db_loc.latest IS TRUE
-                      AND db_loc.available IS TRUE"""
-        return self.__check_and_return_loc(db_conn.query(sql, (self._name, )))
-
-    def __get_version_loc(self) -> str:
-        """
-        Gets the location of the database with the specified version
-        :return: Database location
-        """
-        db_conn = Connection(self._config, 'db_loc')
-        sql = """SELECT location FROM databases.db_loc
-                    WHERE db_loc.name = %s
-                      AND db_loc.version = %s
-                      AND db_loc.available IS TRUE"""
-        return self.__check_and_return_loc(db_conn.query(sql, (self._name, self._version)))
+            return self.__check_and_return_loc(db_conn.query(sql, (self._name, self._version)))
 
     def __check_and_return_loc(self, results) -> str:
         """
@@ -130,9 +120,7 @@ class ToolIODb(ToolIO):
         :param results: Array with the results of the database query
         :return: Database location
         """
-        if len(results) == 1:
-            raise ValueError(f'No available database found with name {self._name} and version {self._version}')
-        elif len(results) > 2:
-            raise ValueError(f'Too many results found for database with name {self._name} and version {self._version}')
+        if len(results) != 2:
+            raise ValueError(f'There can be only one database with name {self._name} and version {self._version}, but {len(results)-1} were found!')
         else:
             return results[1][0]

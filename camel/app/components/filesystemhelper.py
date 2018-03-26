@@ -1,12 +1,13 @@
-import os
+from typing import List
 
+import os
 import re
 
 
 class FileSystemHelper(object):
 
     @staticmethod
-    def make_valid(value):
+    def make_valid(value: str) -> str:
         """
         Converts arbitrary strings to URL- and filename friendly values.
         :param value: Input value
@@ -16,7 +17,7 @@ class FileSystemHelper(object):
         return "".join([c for c in value if re.match(r'[\w\-_]', c)])
 
     @staticmethod
-    def get_file_with_extension(input_folder, extension):
+    def get_file_with_extension(input_folder: str, extension: str) -> str:
         """
         Returns a single file with the given extension from the given directory.
         :param input_folder: Input directory
@@ -31,7 +32,7 @@ class FileSystemHelper(object):
         return all_files[0]
 
     @staticmethod
-    def get_files_with_extension(folder, extension):
+    def get_files_with_extension(folder: str, extension: str) -> List[str]:
         """
         Returns the files with the given extension from the folder.
         :param folder: Input folder
