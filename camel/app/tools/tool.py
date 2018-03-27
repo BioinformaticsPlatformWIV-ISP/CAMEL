@@ -116,7 +116,7 @@ class Tool(object, metaclass=abc.ABCMeta):
         """
         self._input_informs.update(informs)
 
-    def update_parameters(self, **kwargs: Dict[str, Union[str, int, None]]) -> None:
+    def update_parameters(self, **kwargs: Union[str, int, None, Dict[str, Union[str, int, None]]]) -> None:
         """
         Updates the parameters for this tool.
         :param kwargs: Parameters in key value format
