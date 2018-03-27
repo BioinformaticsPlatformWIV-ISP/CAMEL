@@ -82,7 +82,7 @@ rule move_output:
     """
     Hard-links output of pipeline to final path.
     If using as stand-alone, hard-links to 'output' directory and renames according to pipeline parameters.
-    If using Galaxy, ahrd-links to the galaxy-defined path.
+    If using Galaxy, hard-links to the galaxy-defined path.
     """
     input:
         unpack(define_pipeline_outputs),
@@ -520,10 +520,6 @@ rule mutect1:
         mut=Mutect1(camel)
         SnakemakeUtils.add_pickle_inputs(mut, input)
         step = SnakeStep(rule, mut, camel, params.working_dir, config)
-        # if 'mutect1_tab_output' in config:
-        #     mut.update_parameters(output_callstats_file = config['mutect1_tab_output'])
-        # if 'mutect1_vcf_output' in config:
-        #     mut.update_parameters(output_vcf_file = config['mutect1_vcf_output'])
         if 'MuTect1_downsampling_target' in config:
             mut.update_parameters(downsampling_coverage_target=config['MuTect1_downsampling_target'])
         if 'MuTect1_downsampling_type' in config:

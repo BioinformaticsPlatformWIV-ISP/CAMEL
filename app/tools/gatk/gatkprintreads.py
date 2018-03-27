@@ -73,8 +73,6 @@ class GATKPrintReads(GATK):
         """
         bam_output_file = self._parameters['bam_output'].value
         self._tool_outputs['BAM'] = [ToolIOFile(os.path.join(self._folder, bam_output_file))]
-        # bai_output_file = bam_output_file[:-1] + "i"
-        # self._tool_outputs['BAI'] = [ToolIOFile(os.path.join(self._folder, bai_output_file))]
 
     def run(self, folder='.'):
         """

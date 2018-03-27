@@ -80,7 +80,7 @@ class GATKMuTect2(GATK):
     def _set_output(self):
         """
         Supersedes parent class function.
-        Set the output specifications in the Camel ouptut list: 
+        Set the output specifications in the Camel output list: 
         - vcf file
         :return: None
         """
