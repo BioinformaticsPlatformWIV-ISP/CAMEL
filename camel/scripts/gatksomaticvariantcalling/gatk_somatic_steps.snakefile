@@ -3,7 +3,7 @@ import os
 from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.io.tooliovalue import ToolIOValue
-from camel.app.pipeline.snakestep import SnakeStep
+from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 
 camel = Camel()
@@ -200,7 +200,7 @@ rule bwa_alignment:
         if config['SE']:
             SnakemakeUtils.add_pickle_input(bwa_mem, 'FASTQ_SE', input.FASTQ)
         SnakemakeUtils.add_pickle_input(bwa_mem, 'INDEX_GENOME_PREFIX', input.FASTA_GENOME)
-        step = SnakeStep(rule, bwa_mem, camel, params.working_dir, config)
+        step = Step(rule, bwa_mem, camel, params.working_dir, config)
         bwa_mem.update_parameters(threads=threads)
         step.run_step()
         SnakemakeUtils.dump_tool_output(bwa_mem, "SAM", output.SAM)
@@ -220,7 +220,7 @@ rule samtobam:
         from camel.app.tools.samtools.samtoolsview import SamtoolsView
         smv = SamtoolsView(camel)
         SnakemakeUtils.add_pickle_input(smv, "SAM", input.SAM)
-        step = SnakeStep(rule, smv, camel, params.working_dir, config)
+        step = Step(rule, smv, camel, params.working_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_output(smv, "BAM", output.BAM)
 
@@ -239,7 +239,7 @@ rule sortbam:
         from camel.app.tools.samtools.samtoolssort import SamtoolsSort
         sms = SamtoolsSort(camel)
         SnakemakeUtils.add_pickle_input(sms,"BAM",input.BAM)
-        step = SnakeStep(rule, sms, camel, params.working_dir, config)
+        step = Step(rule, sms, camel, params.working_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_output(sms, "BAM", output.BAM)
 
@@ -258,7 +258,7 @@ rule indexbam:
         from camel.app.tools.samtools.samtoolsindex import SamtoolsIndex
         smi = SamtoolsIndex(camel)
         SnakemakeUtils.add_pickle_input(smi,"BAM",input.BAM)
-        step = SnakeStep(rule, smi, camel, params.working_dir, config)
+        step = Step(rule, smi, camel, params.working_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_output(smi, "BAM", output.BAM)
 
@@ -277,7 +277,8 @@ rule picardsortbam:
         from camel.app.tools.picard.sortsam import SortSam
         pss = SortSam(camel)
         SnakemakeUtils.add_pickle_input(pss,"BAM",input.BAM)
-        step = SnakeStep(rule, pss, camel, params.working_dir, config)
+        step = Step(rule, pss, camel, params.working_dir, config)
+        pss.update_parameters(sort_order='coordinate')
         step.run_step()
         SnakemakeUtils.dump_tool_output(pss, "BAM", output.BAM)
 
@@ -296,7 +297,7 @@ rule markduplicates:
         from camel.app.tools.picard.markduplicates import MarkDuplicates
         pmd = MarkDuplicates(camel)
         SnakemakeUtils.add_pickle_input(pmd, "BAM", input.BAM)
-        step = SnakeStep(rule, pmd, camel, params.working_dir, config)
+        step = Step(rule, pmd, camel, params.working_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_output(pmd, "BAM", output.BAM)
 
@@ -315,7 +316,8 @@ rule addreadgroups:
         from camel.app.tools.picard.addorreplacereadgroups import AddOrReplaceReadGroups
         parg = AddOrReplaceReadGroups(camel)
         SnakemakeUtils.add_pickle_input(parg, "BAM", input.BAM)
-        step = SnakeStep(rule, parg, camel, params.working_dir, config)
+        step = Step(rule, parg, camel, params.working_dir, config)
+        parg.update_parameters(create_index='true')
         step.run_step()
         SnakemakeUtils.dump_tool_output(parg, "BAM", output.BAM)
 
@@ -334,7 +336,7 @@ rule bamtobed:
         from camel.app.tools.bedtools.bedtoolsbamtobed import BedtoolsBamToBed
         btb = BedtoolsBamToBed(camel)
         SnakemakeUtils.add_pickle_input(btb, "BAM", input.BAM)
-        step = SnakeStep(rule, btb, camel, params.working_dir, config)
+        step = Step(rule, btb, camel, params.working_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_output(btb,"BED",output.BED)
 
@@ -353,7 +355,7 @@ rule generate_intervals:
         from camel.app.tools.bedtools.bedtoolsmerge import BedtoolsMerge
         btm = BedtoolsMerge(camel)
         SnakemakeUtils.add_pickle_input(btm, "BED", input.BED)
-        step = SnakeStep(rule, btm, camel, params.working_dir, config)
+        step = Step(rule, btm, camel, params.working_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_output(btm, "BED", output.BED)
 
@@ -375,7 +377,7 @@ rule realignertargetcreator:
         from camel.app.tools.gatk.gatkrealignertargetcreator import GATKRealignerTargetCreator
         grtc = GATKRealignerTargetCreator(camel)
         SnakemakeUtils.add_pickle_inputs(grtc, input)
-        step = SnakeStep(rule, grtc, camel, params.working_dir, config)
+        step = Step(rule, grtc, camel, params.working_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_output(grtc, "TXT_realign_intervals", output.INTERVALS)
 
@@ -397,7 +399,7 @@ rule indelrealigner:
         from camel.app.tools.gatk.gatkindelrealigner import GATKIndelRealigner
         gir=GATKIndelRealigner(camel)
         SnakemakeUtils.add_pickle_inputs(gir, input)
-        step = SnakeStep(rule, gir, camel, params.working_dir, config)
+        step = Step(rule, gir, camel, params.working_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_output(gir,"BAM",output.BAM)
 
@@ -421,7 +423,7 @@ rule basequalityrecalibration:
         from camel.app.tools.gatk.gatkbaserecalibrator import GATKBaseRecalibrator
         bqsr=GATKBaseRecalibrator(camel)
         SnakemakeUtils.add_pickle_inputs(bqsr, input)
-        step = SnakeStep(rule, bqsr, camel, params.working_dir, config)
+        step = Step(rule, bqsr, camel, params.working_dir, config)
         bqsr.update_parameters(threads=threads)
         step.run_step()
         SnakemakeUtils.dump_tool_output(bqsr,"TXT_RecalibrationTable",output.TXT)
@@ -445,7 +447,7 @@ rule printreads:
         from camel.app.tools.gatk.gatkprintreads import GATKPrintReads
         gpr=GATKPrintReads(camel)
         SnakemakeUtils.add_pickle_inputs(gpr, input)
-        step = SnakeStep(rule, gpr, camel, params.working_dir, config)
+        step = Step(rule, gpr, camel, params.working_dir, config)
         gpr.update_parameters(threads=threads)
         # if 'bam_output' in config:
         #     gpr.update_parameters(bam_external_output=config['bam_output'])
@@ -472,7 +474,7 @@ rule basequalityrecalibration2:
         from camel.app.tools.gatk.gatkbaserecalibrator import GATKBaseRecalibrator
         bqsr = GATKBaseRecalibrator(camel)
         SnakemakeUtils.add_pickle_inputs(bqsr, input)
-        step = SnakeStep(rule, bqsr, camel, params.working_dir, config)
+        step = Step(rule, bqsr, camel, params.working_dir, config)
         bqsr.update_parameters(threads=threads)
         step.run_step()
         SnakemakeUtils.dump_tool_output(bqsr, "TXT_RecalibrationTable", output.TXT)
@@ -494,7 +496,7 @@ rule analyzecovariates:
         from camel.app.tools.gatk.gatkanalyzecovariates import GATKAnalyzeCovariates
         gac = GATKAnalyzeCovariates(camel)
         SnakemakeUtils.add_pickle_inputs(gac, input)
-        step = SnakeStep(rule, gac, camel, params.working_dir, config)
+        step = Step(rule, gac, camel, params.working_dir, config)
         if 'covar_output' in config:
             gac.update_parameters(pdf_output = config['covar_output'])
         step.run_step()
@@ -519,7 +521,7 @@ rule mutect1:
         from camel.app.tools.mutect.mutect1 import Mutect1
         mut=Mutect1(camel)
         SnakemakeUtils.add_pickle_inputs(mut, input)
-        step = SnakeStep(rule, mut, camel, params.working_dir, config)
+        step = Step(rule, mut, camel, params.working_dir, config)
         if 'MuTect1_downsampling_target' in config:
             mut.update_parameters(downsampling_coverage_target=config['MuTect1_downsampling_target'])
         if 'MuTect1_downsampling_type' in config:
@@ -548,10 +550,10 @@ rule mutect2:
     params:
         working_dir = os.path.join(working_dir, "mutect2"),
     run:
-        from app.tools.gatk.gatkmutect2 import GATKMuTect2
+        from camel.app.tools.gatk.gatkmutect2 import GATKMuTect2
         mut2=GATKMuTect2(camel)
         SnakemakeUtils.add_pickle_inputs(mut2, input)
-        step = SnakeStep(rule, mut2, camel, params.working_dir, config)
+        step = Step(rule, mut2, camel, params.working_dir, config)
         if 'mutect_nct' in config:
             mut2.update_parameters(threads=config['mutect_nct'])
         if 'mutect2_bam_output' in config:

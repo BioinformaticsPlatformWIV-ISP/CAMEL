@@ -7,7 +7,7 @@ from camel.app.camel import Camel
 from camel.app.command.command import Command
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.io.tooliovalue import ToolIOValue
-from camel.app.pipeline.snakepipeline import SnakePipeline
+from camel.app.pipeline.pipeline import Pipeline
 import datetime
 from camel.config import MAIN_CONFIG
 
@@ -18,9 +18,7 @@ class GATKSomaticMain(object):
     Generates a config yml file based on CL arguments and runs the pipeline.
     """
     DB_LOGGING = True
-    # DEBUG = True
-    SNAKEFILE = os.path.join(os.path.dirname(__file__), 'gatk_somatic_steps_test.snakefile')
-    # FROM_GALAXY = False
+    SNAKEFILE = os.path.join(os.path.dirname(__file__), 'gatk_somatic_steps.snakefile')
     CORES = 5
 
     def __init__(self):
@@ -32,6 +30,7 @@ class GATKSomaticMain(object):
         self._config_data = dict()
         self._pipeline = None
 
+        self.camel = Camel()
         # set galaxy dump directory in case of failure
         self._galaxy_dump_dir = os.path.join(self.camel.config["galaxy"]["dump_dir"], "GATK_somatic_calling")
 
@@ -53,7 +52,7 @@ class GATKSomaticMain(object):
                         nargs='+')
 
         # Variant caller to use
-        ap.add_argument('-V', '--variant_caller', metavar='variant_caller', dest='variant_caller', help='Variant caller to use.', choices=["mutect1", "mutect2"], required=True )
+        ap.add_argument('-V', '--variant_caller', metavar='variant_caller', dest='variant_caller', help='Variant caller to use.', choices=["mutect1", "mutect2"], required=True)
 
         # output
         ap.add_argument('--mutect1_vcf_output', dest='mutect1_vcf_output', metavar='mutect1_vcf_output', help='Output vcf file from MuTect1.')
@@ -217,8 +216,7 @@ class GATKSomaticMain(object):
         """
 
         # Create a pipeline object
-        camel = Camel()
-        self._pipeline = SnakePipeline('GATK somatic calling', camel, self.DB_LOGGING)
+        self._pipeline = Pipeline('GATK somatic calling', self.camel, self.DB_LOGGING)
 
         self._args = self.__parse_command_line()
 
