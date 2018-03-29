@@ -2,6 +2,7 @@ import os
 import yaml
 import argparse
 import subprocess
+import bz2
 
 from camel.app.camel import Camel
 from camel.app.command.command import Command
@@ -209,6 +210,12 @@ class GATKSomaticMain(object):
         with open(self.runtime_config_name, 'w') as handle:
             yaml.dump(self._config_data, handle)
 
+    def __archive_config_file(self):
+        outfile = '/scratch/todel/temp/GATK_MuTect_configs/config_{}_{}.bz2'.format(self._args.job_id, datetime.datetime.now().strftime("%Y%m%d_%H%M%S-%f"))
+        with open(self.config_file, 'rb') as inf:
+            with bz2.BZ2File(outfile, 'wb', compresslevel=9) as outf:
+                copyfileobj(inf, outf)
+
     def run(self):
         """
         Sets-up and runs the pipeline and logs stderr and stdout if running the command fails.
@@ -221,6 +228,8 @@ class GATKSomaticMain(object):
         self._args = self.__parse_command_line()
 
         self.__generate_config_file()
+
+        self.__archive_config_file()
 
         # Set the initial input
         input_dict = dict()
