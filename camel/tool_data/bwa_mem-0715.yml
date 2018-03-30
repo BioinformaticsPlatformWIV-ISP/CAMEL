@@ -1,0 +1,9 @@
+dependencies: bwa/0.7.15
+parameters:
+  add_read_group: {default: false, mandatory: false, option: null, value: null}
+  all_alns: {default: false, mandatory: false, option: -a, value: null}
+  min_seed_len: {default: true, mandatory: false, option: -k, value: '19'}
+  reseeding: {default: true, mandatory: false, option: -r, value: '1.5'}
+  short_split_off: {default: true, mandatory: false, option: -M, value: null}
+  threads: {default: true, mandatory: false, option: -t, value: '6'}
+tool_command: bwa mem

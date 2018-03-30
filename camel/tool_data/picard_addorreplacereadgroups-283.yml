@@ -1,0 +1,11 @@
+dependencies: java/1.8.0 picard/2.8.3
+parameters:
+  RG_id: {default: true, mandatory: false, option: RGID, value: ReadGroupNA}
+  RG_library: {default: true, mandatory: false, option: RGLB, value: libraryNA}
+  RG_platform: {default: true, mandatory: false, option: RGPL, value: ILLUMINA}
+  RG_platform_unit: {default: true, mandatory: false, option: RGPU, value: PlatformUnitNA}
+  RG_sample_name: {default: true, mandatory: false, option: RGSM, value: sampleNA}
+  create_index: {default: false, mandatory: false, option: CREATE_INDEX, value: 'true'}
+  output: {default: true, mandatory: false, option: O, value: readgroup_updated.bam}
+  sort_order: {default: false, mandatory: false, option: SORT_ORDER, value: queryname}
+tool_command: run_picard.sh AddOrReplaceReadGroups
