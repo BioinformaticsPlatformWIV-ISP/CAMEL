@@ -7,18 +7,19 @@ import bz2
 from camel.app.camel import Camel
 from camel.app.command.command import Command
 from camel.app.io.tooliofile import ToolIOFile
-from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.pipeline.pipeline import Pipeline
 import datetime
-from camel.config import MAIN_CONFIG
 
 
 class GATKSomaticMain(object):
     """
     Main class to run the GATK somatic variant caller pipeline.
-    Generates a config yml file based on CL arguments and runs the pipeline.
+    Generates a config yml file based on CL arguments;
+    Dumps a compressed bz2 file of the config file for easy rerun of the pipepline if needed
+    Runs the pipeline.
     """
     DB_LOGGING = True
+    LOGGING_LEVEL = 'pipeline'
     SNAKEFILE = os.path.join(os.path.dirname(__file__), 'gatk_somatic_steps.snakefile')
     CORES = 5
 
@@ -32,8 +33,13 @@ class GATKSomaticMain(object):
         self._pipeline = None
 
         self.camel = Camel()
-        # set galaxy dump directory in case of failure
+
+        # galaxy dump directory in case of failure
         self._galaxy_dump_dir = os.path.join(self.camel.config["galaxy"]["dump_dir"], "GATK_somatic_calling")
+
+        # compressed config files dump directory
+        self._config_dump_dir = os.path.join(self.camel.config["config_dump_dir"])
+        # self._config_dump_dir = "/scratch/todel/temp/GATK_MuTect_configs"
 
     def __parse_command_line(self):
         """
@@ -107,8 +113,11 @@ class GATKSomaticMain(object):
         # job id
         ap.add_argument('--job_id', dest='job_id', metavar='job_id', help='Job ID for debugging and logging.',
                         default=datetime.datetime.now().strftime("%Y%m%d_%H%M%S-%f"))
-        # TEST mutect threads
+        # mutect threads (mainly for testing)
         ap.add_argument('--test_mutect_nct', dest='test_mutect_nct', metavar='test_mutect_nct', help='Threads to use for mutect2. Multithreading leads to longer runtime on targeted data.')
+
+        # re-use pre-generated config file
+        ap.add_argument('--config_file', dest='input_config_file', metavar='input_config_file', help='Pre-generated config file to use for pipeline run. All other arguments will be not used.', default=None)
 
         return ap.parse_args()
 
@@ -119,12 +128,14 @@ class GATKSomaticMain(object):
         """
 
         # Name of config file generated at runtime for snakemake pipeline
-        self.runtime_config_name = os.path.join(os.getcwd(), 'runtime_config_{}.yaml'.format(self._args.job_id))
+        self.runtime_config_path = os.path.join(os.getcwd(), 'runtime_config_{}.yaml'.format(self._args.job_id))
+
+        # logging level
+        self._config_data['logging_level'] = self.LOGGING_LEVEL
 
         # Add the job id to the config
         self._config_data['pipeline_job_id'] = self._pipeline.job_id
         self._config_data['pipeline_name'] = self._pipeline.name
-        self._config_data['logging'] = self.DB_LOGGING
 
         # Set working directory: if not given as CLA, set to current working directory (Galaxy)
         if self._args.work_dir:
@@ -207,27 +218,39 @@ class GATKSomaticMain(object):
         self._config_data['from_galaxy'] = self._args.from_galaxy
 
         # Create and write to config file
-        with open(self.runtime_config_name, 'w') as handle:
+        with open(self.runtime_config_path, 'w') as handle:
             yaml.dump(self._config_data, handle)
 
     def __archive_config_file(self):
-        outfile = '/scratch/todel/temp/GATK_MuTect_configs/config_{}_{}.bz2'.format(self._args.job_id, datetime.datetime.now().strftime("%Y%m%d_%H%M%S-%f"))
-        with open(self.config_file, 'rb') as inf:
-            with bz2.BZ2File(outfile, 'wb', compresslevel=9) as outf:
-                copyfileobj(inf, outf)
+        """
+        Dump yaml config file as compressed bz2 file in the config dump dir.
+        :return: 
+        """
+        outfile = os.path.join(self._config_dump_dir, 'config_{}_{}.bz2'.format(self._args.job_id, datetime.datetime.now().strftime("%Y%m%d_%H%M%S-%f")))
+        with bz2.BZ2File(outfile, 'wb', compresslevel=9) as handle:
+            yaml.dump(self._config_data, handle, encoding=('utf-8'))
 
     def run(self):
         """
         Sets-up and runs the pipeline and logs stderr and stdout if running the command fails.
+        Logs the initial input.
         :return: None 
         """
 
         # Create a pipeline object
-        self._pipeline = Pipeline('GATK somatic calling', self.camel, self.DB_LOGGING)
+        self._pipeline = Pipeline(name='GATK somatic calling', camel=self.camel, logging_level=self.LOGGING_LEVEL)
 
         self._args = self.__parse_command_line()
 
-        self.__generate_config_file()
+        if self._args.input_config_file is not None:
+            self.runtime_config_path = os.path.join(os.getcwd(), self._args.input_config_file)
+
+            if os.path.isfile(self.runtime_config_path):
+                self._config_data = yaml.load(self.runtime_config_path)
+            else:
+                raise FileNotFoundError("Config file '{}' not found.".format(self.runtime_config_path))
+        else:
+            self.__generate_config_file()
 
         self.__archive_config_file()
 
@@ -238,13 +261,14 @@ class GATKSomaticMain(object):
                 input_dict['FASTQ_PE'] = [ToolIOFile(f) for f in self._config_data['fastq']]
             elif self._args.single_end:
                 input_dict['FASTQ_SE'] = [ToolIOFile(f) for f in self._config_data['fastq']]
-            input_dict['MarkDuplicates'] = [ToolIOValue(self._args.markduplicates)]
+
+            input_dict['YAML_config'] = [ToolIOFile(self.runtime_config_path)]
 
             self._pipeline.set_initial_input(input_dict)
 
         # Execute the snakemake workflow and log stdout and stderr if command fails (if pipeline is run from galaxy).
         snakemake_params = " ".join([self._args.unlock, self._args.dag, self._args.dryrun])
-        to_execute = 'snakemake --configfile {config} --snakefile {snakefile} --cores {cores} {snakemake_params}'.format(config=self.runtime_config_name, snakefile=self.SNAKEFILE, cores=self._args.threads, snakemake_params=snakemake_params)
+        to_execute = 'snakemake --configfile {config} --snakefile {snakefile} --cores {cores} {snakemake_params}'.format(config=self.runtime_config_path, snakefile=self.SNAKEFILE, cores=self._args.threads, snakemake_params=snakemake_params)
         command = Command(to_execute)
         command.run_command(self._args.work_dir, subprocess.STDOUT)
         if command.returncode != 0 and self._args.from_galaxy:

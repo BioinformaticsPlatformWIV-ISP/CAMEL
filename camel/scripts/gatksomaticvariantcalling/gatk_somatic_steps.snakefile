@@ -447,10 +447,8 @@ rule printreads:
         from camel.app.tools.gatk.gatkprintreads import GATKPrintReads
         gpr=GATKPrintReads(camel)
         SnakemakeUtils.add_pickle_inputs(gpr, input)
-        step = Step(rule, gpr, camel, params.working_dir, config)
+        step = Step(rule_name=rule, tool=gpr, camel=camel, folder=params.working_dir, config=config, pipeline_output=True)
         gpr.update_parameters(threads=threads)
-        # if 'bam_output' in config:
-        #     gpr.update_parameters(bam_external_output=config['bam_output'])
         step.run_step()
         SnakemakeUtils.dump_tool_output(gpr,"BAM",output.BAM)
 
@@ -496,7 +494,7 @@ rule analyzecovariates:
         from camel.app.tools.gatk.gatkanalyzecovariates import GATKAnalyzeCovariates
         gac = GATKAnalyzeCovariates(camel)
         SnakemakeUtils.add_pickle_inputs(gac, input)
-        step = Step(rule, gac, camel, params.working_dir, config)
+        step = Step(rule_name=rule, tool=gac, camel=camel, folder=params.working_dir, config=config, pipeline_output=True)
         if 'covar_output' in config:
             gac.update_parameters(pdf_output = config['covar_output'])
         step.run_step()
@@ -521,7 +519,7 @@ rule mutect1:
         from camel.app.tools.mutect.mutect1 import Mutect1
         mut=Mutect1(camel)
         SnakemakeUtils.add_pickle_inputs(mut, input)
-        step = Step(rule, mut, camel, params.working_dir, config)
+        step = Step(rule_name=rule, tool=mut, camel=camel, folder=params.working_dir, config=config, pipeline_output=True)
         if 'MuTect1_downsampling_target' in config:
             mut.update_parameters(downsampling_coverage_target=config['MuTect1_downsampling_target'])
         if 'MuTect1_downsampling_type' in config:
@@ -553,7 +551,7 @@ rule mutect2:
         from camel.app.tools.gatk.gatkmutect2 import GATKMuTect2
         mut2=GATKMuTect2(camel)
         SnakemakeUtils.add_pickle_inputs(mut2, input)
-        step = Step(rule, mut2, camel, params.working_dir, config)
+        step = Step(rule_name=rule, tool=mut2, camel=camel, folder=params.working_dir, config=config, pipeline_output=True)
         if 'mutect_nct' in config:
             mut2.update_parameters(threads=config['mutect_nct'])
         if 'mutect2_bam_output' in config:
