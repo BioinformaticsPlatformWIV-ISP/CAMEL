@@ -29,6 +29,7 @@ class GATKSomaticMain(object):
         :return: None
         """
         self._args = None
+        self.__ap = None
         self._config_data = dict()
         self._pipeline = None
 
@@ -52,14 +53,14 @@ class GATKSomaticMain(object):
         ap.add_argument('-W', '--wdir', dest='work_dir', metavar='work_dir', help='Working directory')
 
         # input
-        gp = ap.add_mutually_exclusive_group(required=True)
+        gp = ap.add_mutually_exclusive_group()
         gp.add_argument('-PE', '--paired_end', metavar='fq_file', dest='paired_end', help='Paired-end fastq files.',
                         nargs='+')
         gp.add_argument('-SE', '--single_end', metavar='fq_file', dest='single_end', help='Single-end fastq files.',
                         nargs='+')
 
         # Variant caller to use
-        ap.add_argument('-V', '--variant_caller', metavar='variant_caller', dest='variant_caller', help='Variant caller to use.', choices=["mutect1", "mutect2"], required=True)
+        ap.add_argument('-V', '--variant_caller', metavar='variant_caller', dest='variant_caller', help='Variant caller to use.', choices=["mutect1", "mutect2"])
 
         # output
         ap.add_argument('--mutect1_vcf_output', dest='mutect1_vcf_output', metavar='mutect1_vcf_output', help='Output vcf file from MuTect1.')
@@ -73,11 +74,11 @@ class GATKSomaticMain(object):
 
         # references
         ap.add_argument('-R', '--fasta_ref', dest='fasta_ref', metavar='fasta_ref',
-                        help='Human genome reference fasta file name (as in db_loc).', required=True, choices=["broad_b37_human_Genome_1K_v37"])
+                        help='Human genome reference fasta file name (as in db_loc).', choices=["broad_b37_human_Genome_1K_v37"])
         ap.add_argument('-S', '--vcf_snps', metavar='vcf_snps', dest='vcf_known_snps',
-                        help='Known variant sites (snps) vcf file name (as in db_loc).', required=True, choices=["broad_b37_snps_high_confidence"])
+                        help='Known variant sites (snps) vcf file name (as in db_loc).', choices=["broad_b37_snps_high_confidence"])
         ap.add_argument('-I', '--vcf_indels', metavar='vcf_indels', dest='vcf_known_indels',
-                        help='Known variant sites (indels) vcf file name (as in db_loc).', required=True, choices=["broad_b37_indels_gold_standard"])
+                        help='Known variant sites (indels) vcf file name (as in db_loc).', choices=["broad_b37_indels_gold_standard"])
 
         # MarkDuplicates flag
         ap.add_argument('--mark_duplicates', dest='markduplicates', help='Mark duplicate reads.', action='store_true')
@@ -119,7 +120,26 @@ class GATKSomaticMain(object):
         # re-use pre-generated config file
         ap.add_argument('--config_file', dest='input_config_file', metavar='input_config_file', help='Pre-generated config file to use for pipeline run. All other arguments will be not used.', default=None)
 
-        return ap.parse_args()
+        return ap
+
+    def __check_inputs(self):
+        """
+        Checks the inputs provided to the pipeline via the command-line.
+        Checks that the inputs are coherent and that required arguments are provided. Argparse could do it but doesn't provide multi-level grouping (groups of groups of arguments).
+        :return: 
+        """
+        required_args_msg = "Required arguments: fasta_ref, vcf_snps, vcf_indels, variant_caller, [paired_end or single_end]."
+        try:
+            if self._args.input_config_file is None:
+                if self._args.fasta_ref is None or self._args.vcf_known_snps is None or self._args.vcf_known_indels is None or self._args.variant_caller is None or (self._args.paired_end is None and self._args.single_end is None):
+                    raise ValueError("input_config_file not provided and at least one of the required arguments is missing.")
+            else:
+                print("Warning: using pre-generated config file.\nThis bypasses the command-line arguments checks and can cause unexpected behaviour. \nCL parameters will be ignored and config file will be used instead.")
+        except ValueError as error:
+            self.__ap.print_usage()
+            print("run_gatk_somatic_pipeline.py: error: {}".format(error))
+            print(required_args_msg)
+            quit()
 
     def __generate_config_file(self):
         """
@@ -221,6 +241,33 @@ class GATKSomaticMain(object):
         with open(self.runtime_config_path, 'w') as handle:
             yaml.dump(self._config_data, handle)
 
+    def __generate_config_file_from_pregenerated(self):
+        """
+        Imports data from pre-gerenerated config yaml file and generates new config file (new pipeline_job_id and runtime_config filename).
+        If input file doesn't exist, raise error.
+        :return: 
+        """
+        self.pregenerated_config_path = os.path.join(os.getcwd(), self._args.input_config_file)
+        if os.path.isfile(self.pregenerated_config_path):
+            with open(self.pregenerated_config_path, "r") as handle_in:
+                self._config_data = yaml.load(handle_in)
+        else:
+            raise FileNotFoundError("Config file '{}' not found.".format(self.pregenerated_config_path))
+
+        # pipeline job id
+        self._config_data['pipeline_job_id'] = self._pipeline.job_id
+
+        # Name of config file generated at runtime for snakemake pipeline
+        if self._args.job_id is not None:
+            self.runtime_config_path = os.path.join(os.getcwd(), 'runtime_config_{}.yaml'.format(self._args.job_id))
+        else:
+            self.runtime_config_path = os.path.join(os.getcwd(),
+                                                    'runtime_config_{}.yaml'.format(datetime.datetime.now().strftime("%Y%m%d_%H%M%S-%f")))
+
+        # Create and write to config file
+        with open(self.runtime_config_path, 'w') as handle:
+            yaml.dump(self._config_data, handle)
+
     def __archive_config_file(self):
         """
         Dump yaml config file as compressed bz2 file in the config dump dir.
@@ -240,15 +287,17 @@ class GATKSomaticMain(object):
         # Create a pipeline object
         self._pipeline = Pipeline(name='GATK somatic calling', camel=self.camel, logging_level=self.LOGGING_LEVEL)
 
-        self._args = self.__parse_command_line()
+        self.__ap = self.__parse_command_line()
+        self._args = self.__ap.parse_args()
+        self.__check_inputs()
 
         if self._args.input_config_file is not None:
-            self.runtime_config_path = os.path.join(os.getcwd(), self._args.input_config_file)
+            try:
+                self.__generate_config_file_from_pregenerated()
+            except FileNotFoundError as error:
+                print("run_gatk_somatic_pipeline.py: error: {}".format(error))
+                quit()
 
-            if os.path.isfile(self.runtime_config_path):
-                self._config_data = yaml.load(self.runtime_config_path)
-            else:
-                raise FileNotFoundError("Config file '{}' not found.".format(self.runtime_config_path))
         else:
             self.__generate_config_file()
 
