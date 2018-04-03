@@ -1,4 +1,9 @@
+import json
+import logging
+from typing import List
+
 import os
+import re
 
 from app.components.blast.blastformat7parser import BlastFormat7Parser
 from app.components.blasttyping.blasthitclustering import BlastHitClustering
@@ -25,8 +30,11 @@ class HitFiltering(Tool):
         VAL_Hits: A list with the detected hit objects.
 
     Important parameters:
-        extra_column_key & extra_column_name: If set, an extra metadata column is added to the detected hits. The key
-            needs to match the key in the metadata dictionary.
+    - extra_column_key & extra_column_name: If set, an extra metadata column is added to the detected hits. The key
+      needs to match the key in the metadata dictionary.
+    - filtering_method: Determines how the hits are filters. There are two options supported:
+        * 'cluster' (default): The best hit for each cluster is reported.
+        * 'score': The n best hits according to hit score are reported (controlled by the 'score_limit' parameter).
     """
 
     def __init__(self, camel):
@@ -45,8 +53,16 @@ class HitFiltering(Tool):
         hits = [GeneDetectionBlastHit.create_from_dict(output) for output in blast_output_data]
         hits = BlastHitFiltering.filter_percent_identity(hits, float(self._parameters['min_percent_identity'].value))
         hits = BlastHitFiltering.filter_coverage(hits, float(self._parameters['min_coverage'].value))
-        hits = sorted(HitFiltering.__get_best_hit_per_position(hits), key=lambda h: h.subject)
+
+        logging.info("Filtering method: '{}'".format(self._parameters['filtering_method'].value))
+        if self._parameters['filtering_method'].value == 'cluster':
+            hits = HitFiltering.__get_best_hit_per_cluster(hits)
+            hits.sort(key=lambda h: (h.locus, h.query_start))
+        elif self._parameters['filtering_method'].value == 'score':
+            limit = self._parameters['score_limit'].value if 'score_limit' in self._parameters else 5
+            hits = hits[:limit]
         self.__add_metadata(hits)
+
         output_path = os.path.join(self._folder, self._parameters['output_filename'].value)
         self.__create_output_file(hits, output_path)
         self._tool_outputs['TSV'] = [ToolIOFile(output_path)]
@@ -68,15 +84,41 @@ class HitFiltering(Tool):
         :return: None
         """
         for hit in hits:
-            locus_metadata = self._input_informs['db_info']['metadata'][hit.subject]
-            hit.locus = locus_metadata['allele']
-            hit.accession = locus_metadata['accession']
+            new_id = hit.subject.split('__')[3]
+            full_header = self._input_informs['db_info']['mapping'].get(new_id)
+            m = re.match('^(.*) ({.*})$', full_header)
+            metadata = json.loads(m.group(2))
+
+            hit.locus = metadata['allele']
+            hit.accession = metadata['accession']
             if 'extra_column_key' in self._parameters:
-                hit.set_extra_column(self._parameters['extra_column_name'].value,
-                                     locus_metadata[self._parameters['extra_column_key'].value])
+                column_value = metadata[self._parameters['extra_column_key'].value]
+                if not column_value:
+                    column_value = '-'
+                hit.set_extra_column(self._parameters['extra_column_name'].value, column_value)
         self._tool_outputs['VAL_Hits'] = [ToolIOValue(hit) for hit in hits]
 
     @staticmethod
+    def __get_best_hit_per_cluster(hits: List[GeneDetectionBlastHit]) -> List[GeneDetectionBlastHit]:
+        """
+        Returns the best hit for each cluster.
+        :param hits: Hits
+        :return: Best matching hits
+        """
+        hits_per_cluster = {}
+        for hit in hits:
+            cluster = hit.subject.split('__')[1]
+            if cluster not in hits_per_cluster:
+                hits_per_cluster[cluster] = []
+            hits_per_cluster[cluster].append(hit)
+
+        reported_hits = []
+        for _, hits in hits_per_cluster.items():
+            reported_hits.extend(BlastHitFiltering.detect_best_hits(hits))
+        return reported_hits
+
+    @staticmethod
+    @DeprecationWarning
     def __get_best_hit_per_position(hits):
         """
         Returns the best hit for each group of overlapping BLAST hits.
