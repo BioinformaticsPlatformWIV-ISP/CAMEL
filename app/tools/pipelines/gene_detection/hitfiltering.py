@@ -9,6 +9,7 @@ from app.components.blast.blastformat7parser import BlastFormat7Parser
 from app.components.blasttyping.blasthitclustering import BlastHitClustering
 from app.components.blasttyping.blasthitfiltering import BlastHitFiltering
 from app.components.genedetection.genedetectionblasthit import GeneDetectionBlastHit
+from app.components.genedetection.genedetectionutils import GeneDetectionUtils
 from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from app.io.tooliofile import ToolIOFile
 from app.io.tooliovalue import ToolIOValue
@@ -86,8 +87,7 @@ class HitFiltering(Tool):
         for hit in hits:
             new_id = hit.subject.split('__')[3]
             full_header = self._input_informs['db_info']['mapping'].get(new_id)
-            m = re.match('^(.*) ({.*})$', full_header)
-            metadata = json.loads(m.group(2))
+            _, metadata = GeneDetectionUtils.parse_header(full_header)
 
             hit.locus = metadata['allele']
             hit.accession = metadata['accession']

@@ -1,8 +1,7 @@
 import ast
-import json
-import re
 
 from app.components.genedetection.genedetectionhit import GeneDetectionHit
+from app.components.genedetection.genedetectionutils import GeneDetectionUtils
 from app.components.html.htmltablecell import HtmlTableCell
 
 
@@ -55,9 +54,7 @@ class GeneDetectionSRST2Hit(GeneDetectionHit):
         """
         parts = line.split('\t')
         full_header = mapping.get(parts[3])
-        m = re.match('^(.*) ({.*})$', full_header)
-        allele_full = m.group(1)
-        metadata = json.loads(m.group(2))
+        allele_full, metadata = GeneDetectionUtils.parse_header(full_header)
         hit = GeneDetectionSRST2Hit(allele_full, metadata['allele'], parts[6], parts[7], float(parts[5]),
                                     float(parts[4]), int(parts[9]), metadata.get('accession', '-'))
         if extra_column is not None:
