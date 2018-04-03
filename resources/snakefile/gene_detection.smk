@@ -271,7 +271,7 @@ rule Gene_detection_dump_summary_info:
     Dumps the summary information from the gene detection in tabular format.
     """
     input:
-        INFORMS_hits=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'selected-hits.io')
+        INFORMS_hits=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'hit_selection', 'selected-hits.io'),
     output:
         os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_SUMMARY)
     params:
