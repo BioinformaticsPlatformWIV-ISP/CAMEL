@@ -138,7 +138,8 @@ rule Gene_detection_text_alignment_extraction:
     """
     input:
         TXT=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'alignment_generation', 'txt.io'),
-        VAL_Hits=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'hit_filtering', 'blast-hits.io')
+        VAL_Hits=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'hit_filtering', 'blast-hits.io'),
+        INFORMS_db_info=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'db_manager', 'informs.io')
     output:
         VAL_Hits=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'alignment_extraction', 'blast-hits.io')
     params:
