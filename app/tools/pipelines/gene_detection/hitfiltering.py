@@ -118,20 +118,6 @@ class HitFiltering(Tool):
         return reported_hits
 
     @staticmethod
-    @DeprecationWarning
-    def __get_best_hit_per_position(hits):
-        """
-        Returns the best hit for each group of overlapping BLAST hits.
-        :param hits: Input hits
-        :return: Best matching hits
-        """
-        groups = BlastHitClustering.cluster_overlapping(hits)
-        reported_hits = []
-        for group in groups:
-            reported_hits.extend(BlastHitFiltering.detect_best_hits(group.hits))
-        return reported_hits
-
-    @staticmethod
     def __create_output_file(hits, path):
         """
         Creates the tabular output file.
