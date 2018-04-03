@@ -90,7 +90,7 @@ class HitFiltering(Tool):
             _, metadata = GeneDetectionUtils.parse_header(full_header)
 
             hit.locus = metadata['allele']
-            hit.accession = metadata['accession']
+            hit.accession = metadata.get('accession')
             if 'extra_column_key' in self._parameters:
                 column_value = metadata[self._parameters['extra_column_key'].value]
                 if not column_value:
