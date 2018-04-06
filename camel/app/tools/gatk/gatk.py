@@ -24,7 +24,6 @@ class GATK(Tool, metaclass=abc.ABCMeta):
         :return: None
         """
         super(GATK, self).__init__(tool_name, version, camel)
-        self._function_name = ''
         self._specific_parameters = []
         self._required_inputs = []
         self._input_string = ''
@@ -52,7 +51,7 @@ class GATK(Tool, metaclass=abc.ABCMeta):
         for input_file in self._required_inputs:
             if input_file not in self._tool_inputs:
                 raise InvalidInputSpecificationError('GATK {!r} required {!r} input is missing in _tool_inputs!'.format(
-                    self._function_name, input_file))
+                    self._name, input_file))
 
         super(GATK, self)._check_input()
 
@@ -102,10 +101,10 @@ class GATK(Tool, metaclass=abc.ABCMeta):
         :return: None
         """
         if self.stdout == "":
-            raise ToolExecutionError("GATK tool {} fails to run as stdout is empty.\n".format(self._function_name))
+            raise ToolExecutionError("GATK tool {} fails to run as stdout is empty.\n".format(self._name))
         if not re.match('Exit status: 0', self.stdout.split('\n')[-2].rstrip()):
             raise ToolExecutionError(
-                "GATK tool {} fails to run, message: \n{}".format(self._function_name, self.stdout))
+                "GATK tool {} fails to run, message: \n{}".format(self._name, self.stdout))
 
     def _set_informs(self):
         """

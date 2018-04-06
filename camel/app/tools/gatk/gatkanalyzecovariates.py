@@ -40,7 +40,6 @@ class GATKAnalyzeCovariates(GATK):
         """
         super(GATKAnalyzeCovariates, self).__init__('gatk AnalyzeCovariates', '3.7', camel)
 
-        self._function_name = 'AnalyzeCovariates'
         self._required_inputs = ['TXT_TABLE_BEFORE', 'TXT_TABLE_AFTER', 'FASTA_REF']
 
     def _set_input(self):

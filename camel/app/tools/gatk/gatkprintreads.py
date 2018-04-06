@@ -40,7 +40,6 @@ class GATKPrintReads(GATK):
         """
         super(GATKPrintReads, self).__init__('gatk PrintReads', '3.7', camel)
 
-        self._function_name = 'PrintReads'
         self._required_inputs = ['BAM', 'FASTA_REF']
         self._specific_parameters = ["bam_external_output"]
 
