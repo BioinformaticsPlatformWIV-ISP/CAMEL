@@ -104,9 +104,8 @@ class GATKSomaticMain(object):
 
         # downsampling type to perform
         ap.add_argument('--mutect2_downsampling_type', dest='MuTect2_downsampling_type',
-                        help='Type of downsampling to perform on reads (by MuTect2). NONE,ALL_READS,BY_SAMPLE. Default: BY_SAMPLE. Perform or not downsampling on reads. '
-                             'By default, MuTect downsamples to 1000 reads. Usage example: --downsample None (disables downsampling).', default='NONE')
-
+                        help='Type of downsampling to perform on reads (by MuTect2). NONE,ALL_READS,BY_SAMPLE. Default: NONE. Perform or not downsampling on reads. '
+                             'Usage example: --downsample None (disables downsampling).', default='NONE', choices=['NONE', 'SAMPLE', 'ALL_READS'])
 
         # snakemake arguments
         # snakemake unlock
@@ -114,7 +113,6 @@ class GATKSomaticMain(object):
         # snakemake dag
         ap.add_argument('--dag', dest='dag', action="store_const", const="--dag", help='Generate snakemake DAG.', default="")
         # dryrun
-        # snakemake dag
         ap.add_argument('--dryrun', dest='dryrun', action="store_const", const="--dryrun", help='Snakemake dryrun; generates the list of jobs.', default="")
 
         # job id
