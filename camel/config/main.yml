@@ -12,4 +12,4 @@ config_dump_dir: /scratch/temp/pipeline_configs
 #                 db.yml.
 # - yaml:         Retrieves tool parameters, dependencies, tool_command from the YAML files listed in the tool_data
 #                 directory.
-tool_service: yaml
+tool_service: db
