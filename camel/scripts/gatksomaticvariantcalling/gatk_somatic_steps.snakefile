@@ -559,7 +559,8 @@ rule mutect2:
         # if 'MuTect2_downsampling_target' in config:
         #     mut2.update_parameters(downsampling_coverage_target=config['MuTect2_downsampling_target'])
         # Testing
-        mut2.update_parameters(downsampling_type="NONE")
+        if 'MuTect2_downsampling_type' in config:
+            mut2.update_parameters(downsampling_type="NONE")
         step.run_step()
         # set output: bam optional, vcf always generated
         SnakemakeUtils.dump_tool_output(mut2, "VCF", output.VCF)

@@ -102,6 +102,12 @@ class GATKSomaticMain(object):
         # number of threads
         ap.add_argument('--threads', dest='threads', help='Maximum number of threads for snakemake to allow.', default=self.CORES)
 
+        # downsampling type to perform
+        ap.add_argument('--mutect2_downsampling_type', dest='MuTect2_downsampling_type',
+                        help='Type of downsampling to perform on reads (by MuTect2). NONE,ALL_READS,BY_SAMPLE. Default: BY_SAMPLE. Perform or not downsampling on reads. '
+                             'By default, MuTect downsamples to 1000 reads. Usage example: --downsample None (disables downsampling).', default='NONE')
+
+
         # snakemake arguments
         # snakemake unlock
         ap.add_argument('--unlock', dest='unlock', action="store_const", const="--unlock", help='Unlock snakemake working directory.', default="")
@@ -217,6 +223,8 @@ class GATKSomaticMain(object):
             # Downsampling
             if self._args.downsampling_target:
                 self._config_data['MuTect2_downsampling_target'] = self._args.downsampling_target
+            if self._args.MuTect2_downsampling_type:
+                self._config_data['MuTect2_downsampling_type'] = self._args.MuTect2_downsampling_type
 
         # Indel realigner flag (indel realignment only required for MuTect1)
         if self._args.variant_caller == "mutect1":
