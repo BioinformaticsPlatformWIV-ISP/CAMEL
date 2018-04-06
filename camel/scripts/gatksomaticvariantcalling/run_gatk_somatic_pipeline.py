@@ -1,4 +1,5 @@
 import os
+import sys
 import yaml
 import argparse
 import subprocess
@@ -29,17 +30,17 @@ class GATKSomaticMain(object):
         :return: None
         """
         self._args = None
-        self.__ap = None
+        self._ap = None
         self._config_data = dict()
         self._pipeline = None
 
-        self.camel = Camel()
+        self._camel = Camel()
 
         # galaxy dump directory in case of failure
-        self._galaxy_dump_dir = os.path.join(self.camel.config["galaxy"]["dump_dir"], "GATK_somatic_calling")
+        self._galaxy_dump_dir = os.path.join(self._camel.config["galaxy"]["dump_dir"], "GATK_somatic_calling")
 
         # compressed config files dump directory
-        self._config_dump_dir = os.path.join(self.camel.config["config_dump_dir"])
+        self._config_dump_dir = os.path.join(self._camel.config["config_dump_dir"])
         # self._config_dump_dir = "/scratch/todel/temp/GATK_MuTect_configs"
 
     def __parse_command_line(self):
@@ -136,10 +137,10 @@ class GATKSomaticMain(object):
             else:
                 print("Warning: using pre-generated config file.\nThis bypasses the command-line arguments checks and can cause unexpected behaviour. \nCL parameters will be ignored and config file will be used instead.")
         except ValueError as error:
-            self.__ap.print_usage()
+            self._ap.print_usage()
             print("run_gatk_somatic_pipeline.py: error: {}".format(error))
             print(required_args_msg)
-            quit()
+            sys.exit(0)
 
     def __generate_config_file(self):
         """
@@ -247,12 +248,12 @@ class GATKSomaticMain(object):
         If input file doesn't exist, raise error.
         :return: 
         """
-        self.pregenerated_config_path = os.path.join(os.getcwd(), self._args.input_config_file)
-        if os.path.isfile(self.pregenerated_config_path):
-            with open(self.pregenerated_config_path, "r") as handle_in:
+        pregenerated_config_path = os.path.join(os.getcwd(), self._args.input_config_file)
+        if os.path.isfile(pregenerated_config_path):
+            with open(pregenerated_config_path, "r") as handle_in:
                 self._config_data = yaml.load(handle_in)
         else:
-            raise FileNotFoundError("Config file '{}' not found.".format(self.pregenerated_config_path))
+            raise FileNotFoundError("Config file '{}' not found.".format(pregenerated_config_path))
 
         # pipeline job id
         self._config_data['pipeline_job_id'] = self._pipeline.job_id
@@ -285,18 +286,17 @@ class GATKSomaticMain(object):
         """
 
         # Create a pipeline object
-        self._pipeline = Pipeline(name='GATK somatic calling', camel=self.camel, logging_level=self.LOGGING_LEVEL)
+        self._pipeline = Pipeline(name='GATK somatic calling', camel=self._camel, logging_level=self.LOGGING_LEVEL)
 
-        self.__ap = self.__parse_command_line()
-        self._args = self.__ap.parse_args()
+        self._ap = self.__parse_command_line()
+        self._args = self._ap.parse_args()
         self.__check_inputs()
 
         if self._args.input_config_file is not None:
             try:
                 self.__generate_config_file_from_pregenerated()
             except FileNotFoundError as error:
-                print("run_gatk_somatic_pipeline.py: error: {}".format(error))
-                quit()
+                sys.exit("run_gatk_somatic_pipeline.py: error: {}".format(error))
 
         else:
             self.__generate_config_file()
@@ -321,12 +321,12 @@ class GATKSomaticMain(object):
         command = Command(to_execute)
         command.run_command(self._args.work_dir, subprocess.STDOUT)
         if command.returncode != 0 and self._args.from_galaxy:
-            with open(os.path.join(self._galaxy_dump_dir, "{}_Stdout".format(self._args.job_id)), "w") as file_out:
+            with open(os.path.join(self._galaxy_dump_dir, "{}.out".format(self._args.job_id)), "w") as file_out:
                 file_out.write(command.stdout)
-            with open(os.path.join(self._galaxy_dump_dir, "{}_Stderr".format(self._args.job_id)), "w") as file_out:
+            with open(os.path.join(self._galaxy_dump_dir, "{}.err".format(self._args.job_id)), "w") as file_out:
                 file_out.write(command.stderr)
             raise RuntimeError(
-                "Error executing Snakemake. Check log ('{}') for more information.".format(os.path.join(self._galaxy_dump_dir, "{}_Stderr".format(
+                "Error executing Snakemake. Check log ('{}') for more information.".format(os.path.join(self._galaxy_dump_dir, "{}.err".format(
                     self._args.job_id))))
 
 
