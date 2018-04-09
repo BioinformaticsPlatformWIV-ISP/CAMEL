@@ -543,8 +543,8 @@ rule mutect2:
         VCF_DBSNP=os.path.join(working_dir, "initial_input/vcf_known_snps.io"),
     output:
         VCF=os.path.join(working_dir, "mutect2/vcf.io"),
-        BAM=os.path.join(working_dir, "mutect2/bam.io"),
-        BAI=os.path.join(working_dir, "mutect2/bai.io"),
+        BAM=os.path.join(working_dir, "mutect2/bam.io") if 'mutect2_bam_output' in config else [],
+        BAI=os.path.join(working_dir, "mutect2/bai.io") if 'mutect2_bam_output' in config else [],
     params:
         working_dir = os.path.join(working_dir, "mutect2"),
     run:
@@ -564,8 +564,6 @@ rule mutect2:
         if 'MuTect2_force_active' in config and config["MuTect2_force_active"]:
             mut2.update_parameters(force_active=True)
         if 'MuTect2_active_region_out' in config:
-            print(mut2._parameters)
-
             mut2.update_parameters(active_region_out=config['MuTect2_active_region_out'])
         step.run_step()
         # set output: bam optional, vcf always generated
@@ -573,3 +571,4 @@ rule mutect2:
         if 'mutect2_bam_output' in config:
             SnakemakeUtils.dump_tool_output(mut2, "BAM", output.BAM)
             SnakemakeUtils.dump_tool_output(mut2, "BAI", output.BAI)
+
