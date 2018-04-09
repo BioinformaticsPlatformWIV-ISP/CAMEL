@@ -111,6 +111,9 @@ class GATKSomaticMain(object):
         # force active regions
         ap.add_argument('--mutect2_force_active', dest='MuTect2_force_active',
                         help='Force active regions (see --forceActive param in MuTect2 online doc).', action='store_true')
+        ap.addargument('--mutect2_disable_optimizations', dest='MuTect2_disable_optimizations',
+                        help='disable optimizations in active regions.', action='store_true')
+
         # active region output file name.
         ap.add_argument('--mutect2_active_region_out', dest='MuTect2_active_region_out',
                         help='Output active region file name.', default='None')
@@ -239,6 +242,8 @@ class GATKSomaticMain(object):
                 self._config_data['MuTect2_downsampling_type'] = self._args.MuTect2_downsampling_type
             if self._args.MuTect2_force_active:
                 self._config_data['MuTect2_force_active'] = True
+            if self._args.MuTect2_disable_optimizations:
+                self._config_data['MuTect2_disable_optimizations'] = True
             if self._args.MuTect2_active_region_out:
                 self._config_data['MuTect2_active_region_out'] = self._args.MuTect2_active_region_out
             if self._args.MuTect2_output_mode:

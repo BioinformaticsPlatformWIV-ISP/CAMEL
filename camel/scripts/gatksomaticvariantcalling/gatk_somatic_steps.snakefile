@@ -567,6 +567,8 @@ rule mutect2:
             mut2.update_parameters(active_region_out=config['MuTect2_active_region_out'])
         if 'MuTect2_output_mode' in config:
             mut2.update_parameters(output_mode=config['MuTect2_output_mode'])
+        if 'MuTect2_disable_optimizations' in config:
+            mut2.update_parameters(disable_optimizations=True)
         step.run_step()
         # set output: bam optional, vcf always generated
         SnakemakeUtils.dump_tool_output(mut2, "VCF", output.VCF)

@@ -44,7 +44,7 @@ class GATKMuTect2(GATK):
 
         self._function_name = 'MuTect2'
         self._required_inputs = ['BAM_TUMOR', 'FASTA_REF']
-        self._specific_parameters.extend(["output_bam", "force_active"])
+        self._specific_parameters.extend(["output_bam", "force_active", "disable_optimizations"])
 
     def _set_input(self):
         """
@@ -101,6 +101,8 @@ class GATKMuTect2(GATK):
         self._option_string += " ".join(self._build_options(excluded_parameters=self._specific_parameters))
         if "force_active" in self._parameters:
             self._option_string += " --forceActive "
+        if "disable_optimizations" in self._parameters:
+            self._option_string += " --disableOptimizations "
 
         self._command.command = " ".join([
             self._tool_command, self._input_string, self._output_string, self._option_string
