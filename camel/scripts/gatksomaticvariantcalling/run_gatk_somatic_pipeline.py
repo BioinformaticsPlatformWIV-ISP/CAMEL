@@ -111,7 +111,7 @@ class GATKSomaticMain(object):
         # force active regions
         ap.add_argument('--mutect2_force_active', dest='MuTect2_force_active',
                         help='Force active regions (see --forceActive param in MuTect2 online doc).', action='store_true')
-        ap.addargument('--mutect2_disable_optimizations', dest='MuTect2_disable_optimizations',
+        ap.add_argument('--mutect2_disable_optimizations', dest='MuTect2_disable_optimizations',
                         help='disable optimizations in active regions.', action='store_true')
 
         # active region output file name.
