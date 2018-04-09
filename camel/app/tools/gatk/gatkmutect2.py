@@ -44,7 +44,7 @@ class GATKMuTect2(GATK):
 
         self._function_name = 'MuTect2'
         self._required_inputs = ['BAM_TUMOR', 'FASTA_REF']
-        self._specific_parameters.append("output_bam")
+        self._specific_parameters.append("output_bam", "force_active")
 
     def _set_input(self):
         """
@@ -92,3 +92,16 @@ class GATKMuTect2(GATK):
             self._tool_outputs['BAM'] = [ToolIOFile(os.path.join(self._folder, self._parameters['output_bam_file'].value))]
             self._tool_outputs['BAI'] = [
                 ToolIOFile(os.path.join(self._folder, os.path.splitext(self._parameters['output_bam_file'].value)[0] + ".bai"))]
+
+    def _build_command(self):
+        """
+        Build the command to run tool. Supersedes that of parent class.
+        :return: None
+        """
+        self._option_string += " ".join(self._build_options(excluded_parameters=self._specific_parameters))
+        if "force_active" in self._parameters:
+            self._option_string += " --forceActive "
+
+        self._command.command = " ".join([
+            self._tool_command, self._input_string, self._output_string, self._option_string
+        ])
