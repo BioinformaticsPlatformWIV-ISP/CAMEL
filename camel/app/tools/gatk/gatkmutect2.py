@@ -44,7 +44,7 @@ class GATKMuTect2(GATK):
 
         self._function_name = 'MuTect2'
         self._required_inputs = ['BAM_TUMOR', 'FASTA_REF']
-        self._specific_parameters.append("output_bam", "force_active")
+        self._specific_parameters.extend(["output_bam", "force_active"])
 
     def _set_input(self):
         """
