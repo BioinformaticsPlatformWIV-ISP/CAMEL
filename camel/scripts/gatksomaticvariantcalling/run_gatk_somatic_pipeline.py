@@ -107,6 +107,14 @@ class GATKSomaticMain(object):
                         help='Type of downsampling to perform on reads (by MuTect2). NONE,ALL_READS,BY_SAMPLE. Default: NONE. Perform or not downsampling on reads. '
                              'Usage example: --downsample None (disables downsampling).', default='NONE', choices=['NONE', 'SAMPLE', 'ALL_READS'])
 
+        # MuTect2 debugging
+        # force active regions
+        ap.add_argument('--mutect2_force_active', dest='MuTect2_force_active',
+                        help='Force active regions (see --forceActive param in MuTect2 online doc).', action='store_true')
+
+        ap.add_argument('--mutect2_active_region_out', dest='MuTect2_active_region_out',
+                        help='Output active region file name.', default='None')
+
         # snakemake arguments
         # snakemake unlock
         ap.add_argument('--unlock', dest='unlock', action="store_const", const="--unlock", help='Unlock snakemake working directory.', default="")
@@ -223,6 +231,11 @@ class GATKSomaticMain(object):
                 self._config_data['MuTect2_downsampling_target'] = self._args.downsampling_target
             if self._args.MuTect2_downsampling_type:
                 self._config_data['MuTect2_downsampling_type'] = self._args.MuTect2_downsampling_type
+            if self._args.MuTect2_force_active:
+                self._config_data['MuTect2_force_active'] = self._args.MuTect2_force_active
+            if self._args.MuTect2_active_region_out:
+                self._config_data['MuTect2_active_region_out'] = self._args.MuTect2_active_region_out
+
 
         # Indel realigner flag (indel realignment only required for MuTect1)
         if self._args.variant_caller == "mutect1":

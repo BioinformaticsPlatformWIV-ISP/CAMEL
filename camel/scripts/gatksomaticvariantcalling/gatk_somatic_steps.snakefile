@@ -561,6 +561,10 @@ rule mutect2:
         # Testing
         if 'MuTect2_downsampling_type' in config:
             mut2.update_parameters(downsampling_type="NONE")
+        if 'MuTect2_force_active' in config:
+            mut2.update_parameters(force_active=True)
+        if 'MuTect2_active_region_out' in config:
+            mut2.update_parameters(active_region_out=config['active_region_out'])
         step.run_step()
         # set output: bam optional, vcf always generated
         SnakemakeUtils.dump_tool_output(mut2, "VCF", output.VCF)
