@@ -565,7 +565,7 @@ rule mutect2:
             mut2.update_parameters(force_active=True)
         if 'MuTect2_active_region_out' in config:
             mut2.update_parameters(active_region_out=config['MuTect2_active_region_out'])
-        if 'MuTect2_output_mode' in in config:
+        if 'MuTect2_output_mode' in config:
             mut2.update_parameters(output_mode=config['MuTect2_output_mode'])
         step.run_step()
         # set output: bam optional, vcf always generated
