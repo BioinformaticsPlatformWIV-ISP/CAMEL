@@ -104,16 +104,22 @@ class GATKSomaticMain(object):
 
         # downsampling type to perform
         ap.add_argument('--mutect2_downsampling_type', dest='MuTect2_downsampling_type',
-                        help='Type of downsampling to perform on reads (by MuTect2). NONE,ALL_READS,BY_SAMPLE. Default: NONE. Perform or not downsampling on reads. '
-                             'Usage example: --downsample None (disables downsampling).', default='NONE', choices=['NONE', 'SAMPLE', 'ALL_READS'])
+                        help='Type of downsampling to perform on reads (by MuTect2). NONE,ALL_READS,BY_SAMPLE. Default: NONE.'
+                             'Usage example: --downsample None (disables downsampling).', choices=['NONE', 'SAMPLE', 'ALL_READS'])
 
         # MuTect2 debugging
         # force active regions
         ap.add_argument('--mutect2_force_active', dest='MuTect2_force_active',
                         help='Force active regions (see --forceActive param in MuTect2 online doc).', action='store_true')
-
+        # active region output file name.
         ap.add_argument('--mutect2_active_region_out', dest='MuTect2_active_region_out',
                         help='Output active region file name.', default='None')
+        # downsampling type to perform
+        ap.add_argument('--mutect2_output_mode', dest='MuTect2_output_mode',
+                        help='Output_mode for vcf (MuTect2). EMIT_VARIANTS_ONLY,EMIT_ALL_CONFIDENT_SITES,EMIT_ALL_SITES.'
+                             'Usage example: --downsample None (disables downsampling).', choices=['EMIT_VARIANTS_ONLY', 'EMIT_ALL_CONFIDENT_SITES', 'EMIT_ALL_SITES'])
+
+
 
         # snakemake arguments
         # snakemake unlock
@@ -235,7 +241,8 @@ class GATKSomaticMain(object):
                 self._config_data['MuTect2_force_active'] = True
             if self._args.MuTect2_active_region_out:
                 self._config_data['MuTect2_active_region_out'] = self._args.MuTect2_active_region_out
-
+            if self._args.MuTect2_output_mode:
+                self._config_data['MuTect2_output_mode'] = self._args.MuTect2_output_mode
 
         # Indel realigner flag (indel realignment only required for MuTect1)
         if self._args.variant_caller == "mutect1":
