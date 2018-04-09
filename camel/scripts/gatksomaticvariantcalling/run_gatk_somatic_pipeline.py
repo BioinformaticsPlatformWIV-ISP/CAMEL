@@ -232,7 +232,7 @@ class GATKSomaticMain(object):
             if self._args.MuTect2_downsampling_type:
                 self._config_data['MuTect2_downsampling_type'] = self._args.MuTect2_downsampling_type
             if self._args.MuTect2_force_active:
-                self._config_data['MuTect2_force_active'] = self._args.MuTect2_force_active
+                self._config_data['MuTect2_force_active'] = True
             if self._args.MuTect2_active_region_out:
                 self._config_data['MuTect2_active_region_out'] = self._args.MuTect2_active_region_out
 
