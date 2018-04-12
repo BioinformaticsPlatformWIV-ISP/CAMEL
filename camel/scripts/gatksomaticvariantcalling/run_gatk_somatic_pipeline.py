@@ -114,7 +114,9 @@ class GATKSomaticMain(object):
         ap.add_argument('--mutect2_disable_optimizations', dest='MuTect2_disable_optimizations',
                         help='disable optimizations in active regions.', action='store_true')
 
-        # active region output file name.
+        # active region output file.
+        ap.add_argument('--mutect2_output_active_region_bam', dest='MuTect2_output_active_region_bam',
+                        help='Output active region file.', action='store_true')
         ap.add_argument('--mutect2_active_region_bam_file', dest='MuTect2_active_region_bam_file',
                         help='Output active region file name.', default='None')
         # downsampling type to perform
@@ -244,8 +246,11 @@ class GATKSomaticMain(object):
                 self._config_data['MuTect2_force_active'] = True
             if self._args.MuTect2_disable_optimizations:
                 self._config_data['MuTect2_disable_optimizations'] = True
+            if self._args.MuTect2_output_active_region_bam:
+                self._config_data['MuTect2_output_active_region_bam'] = self._args.MuTect2_output_active_region_bam
             if self._args.MuTect2_active_region_bam_file:
                 self._config_data['MuTect2_active_region_bam_file'] = self._args.MuTect2_active_region_bam_file
+
             if self._args.MuTect2_output_mode:
                 self._config_data['MuTect2_output_mode'] = self._args.MuTect2_output_mode
 
