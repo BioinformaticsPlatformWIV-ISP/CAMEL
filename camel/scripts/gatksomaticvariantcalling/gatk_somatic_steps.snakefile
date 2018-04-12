@@ -556,15 +556,17 @@ rule mutect2:
             mut2.update_parameters(threads=config['mutect_nct'])
         if 'mutect2_bam_output' in config:
             mut2.update_parameters(output_bam=True)
-        # if 'MuTect2_downsampling_target' in config:
-        #     mut2.update_parameters(downsampling_coverage_target=config['MuTect2_downsampling_target'])
+        if 'MuTect2_downsampling_target' in config:
+            mut2.update_parameters(downsampling_coverage_target=config['MuTect2_downsampling_target'])
         # Testing
         if 'MuTect2_downsampling_type' in config:
             mut2.update_parameters(downsampling_type=config['MuTect2_downsampling_type'])
         if 'MuTect2_force_active' in config and config["MuTect2_force_active"]:
             mut2.update_parameters(force_active=True)
+        if 'MuTect2_output_active_region_bam' in config and config['MuTect2_output_active_region_bam']:
+            mut2.update_parameters(output_active_region_bam=True)
         if 'MuTect2_active_region_out' in config:
-            mut2.update_parameters(active_region_out=config['MuTect2_active_region_out'])
+            mut2.update_parameters(active_region_bam_file=config['MuTect2_active_region_bam_file'])
         if 'MuTect2_output_mode' in config:
             mut2.update_parameters(output_mode=config['MuTect2_output_mode'])
         if 'MuTect2_disable_optimizations' in config:
