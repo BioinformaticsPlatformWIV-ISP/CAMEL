@@ -4,7 +4,7 @@ import os
 import random
 import vcf
 
-from app.tools.variantfiltering.filter import Filter
+from camel.app.tools.variantfiltering.filter import Filter
 
 
 class DistanceFilter(Filter):

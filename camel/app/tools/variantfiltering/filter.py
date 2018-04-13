@@ -3,10 +3,10 @@ import logging
 import abc
 import os
 
-from app.components.vcf.vcfutils import VCFUtils
-from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
-from app.io.tooliofile import ToolIOFile
-from app.tools.tool import Tool
+from camel.app.components.vcf.vcfutils import VCFUtils
+from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from camel.app.io.tooliofile import ToolIOFile
+from camel.app.tools.tool import Tool
 
 
 class Filter(Tool, metaclass=abc.ABCMeta):
@@ -29,7 +29,7 @@ class Filter(Tool, metaclass=abc.ABCMeta):
         """
         if 'VCF_GZ' not in self._tool_inputs:
             raise InvalidInputSpecificationError("No compressed VCF input found")
-        super(Filter, self)._check_input()
+        super()._check_input()
 
     def _execute_tool(self):
         """

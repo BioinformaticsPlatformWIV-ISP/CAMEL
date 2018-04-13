@@ -3,13 +3,13 @@ import unittest
 import os
 import tempfile
 
-from app.camel import Camel
-from app.io.tooliofile import ToolIOFile
-from app.tools.variantfiltering.depthfilter import DepthFilter
-from app.tools.variantfiltering.distancefilter import DistanceFilter
-from app.tools.variantfiltering.mappingqualityfilter import MappingQualityFilter
-from app.tools.variantfiltering.snpqualityfilter import SnpQualityFilter
-from app.tools.variantfiltering.zscorefilter import ZScoreFilter
+from camel.app.camel import Camel
+from camel.app.io.tooliofile import ToolIOFile
+from camel.app.tools.variantfiltering.depthfilter import DepthFilter
+from camel.app.tools.variantfiltering.distancefilter import DistanceFilter
+from camel.app.tools.variantfiltering.mappingqualityfilter import MappingQualityFilter
+from camel.app.tools.variantfiltering.snpqualityfilter import SnpQualityFilter
+from camel.app.tools.variantfiltering.zscorefilter import ZScoreFilter
 
 
 class TestVariantFiltering(unittest.TestCase):

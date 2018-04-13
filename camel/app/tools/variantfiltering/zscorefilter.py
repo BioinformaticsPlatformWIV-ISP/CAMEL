@@ -4,9 +4,9 @@ import math
 import os
 import vcf
 
-from app.command.command import Command
-from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
-from app.tools.variantfiltering.filter import Filter
+from camel.app.command.command import Command
+from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from camel.app.tools.variantfiltering.filter import Filter
 
 
 class ZScoreFilter(Filter):
@@ -68,9 +68,8 @@ class ZScoreFilter(Filter):
                 handle.write('{}\t{}\n'.format(variant.CHROM, variant.POS))
 
         path = os.path.join(self._folder, 'positions.pileup')
-        pileup_command = Command()
-        pileup_command.command = '{}samtools mpileup --count-orphans --positions {} {} > {}'.format(
-            self._build_dependencies(), positions_file, self._tool_inputs['BAM'][0].path, path)
+        pileup_command = Command('{}samtools mpileup --count-orphans --positions {} {} > {}'.format(
+            self._build_dependencies(), positions_file, self._tool_inputs['BAM'][0].path, path))
         pileup_command.run_command(self._folder)
         return path
 

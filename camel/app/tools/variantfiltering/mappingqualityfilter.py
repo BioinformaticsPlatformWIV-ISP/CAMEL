@@ -1,4 +1,4 @@
-from app.tools.variantfiltering.filter import Filter
+from camel.app.tools.variantfiltering.filter import Filter
 
 
 class MappingQualityFilter(Filter):

@@ -1,5 +1,5 @@
-from app.error.invalidparametererror import InvalidParameterError
-from app.tools.variantfiltering.filter import Filter
+from camel.app.error.invalidparametererror import InvalidParameterError
+from camel.app.tools.variantfiltering.filter import Filter
 
 
 class DepthFilter(Filter):
@@ -21,7 +21,7 @@ class DepthFilter(Filter):
         """
         if not any([param in self._parameters for param in ('min_depth', 'min_relative_depth', 'min_reverse_depth')]):
             raise InvalidParameterError('No filtering parameter found')
-        super(DepthFilter, self)._check_parameters()
+        super()._check_parameters()
 
     def _apply_filter(self):
         """
