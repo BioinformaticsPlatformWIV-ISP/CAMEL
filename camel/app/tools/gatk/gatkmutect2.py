@@ -103,7 +103,9 @@ class GATKMuTect2(GATK):
             self._option_string += " --forceActive "
         if "disable_optimizations" in self._parameters:
             self._option_string += " --disableOptimizations "
+        print(self._parameters)
         if "output_active_region_bam" in self._parameters:
+            print(self._tool_service.get_parameter("active_region_bam_file").value)
             if "active_region_bam_file" not in self._parameters:
                 self.update_parameters(active_region_bam_file=self._tool_service.get_parameter("active_region_bam_file").value)
 
