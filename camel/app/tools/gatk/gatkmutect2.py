@@ -97,9 +97,9 @@ class GATKMuTect2(GATK):
         Build the command to run tool. Supersedes that of parent class.
         :return: None
         """
-        if "output_active_region_bam" in self._parameters:
-            if "active_region_bam_file" not in self._parameters:
-                self.update_parameters(active_region_bam_file=self._tool_service.get_parameter("active_region_bam_file").value)
+        if "output_active_region_igv" in self._parameters:
+            if "active_region_igv_file" not in self._parameters:
+                self.update_parameters(active_region_igv_file=self._tool_service.get_parameter("active_region_igv_file").value)
 
         self._option_string += " ".join(self._build_options(excluded_parameters=self._specific_parameters))
 
