@@ -563,10 +563,10 @@ rule mutect2:
             mut2.update_parameters(downsampling_type=config['MuTect2_downsampling_type'])
         if 'MuTect2_force_active' in config and config["MuTect2_force_active"]:
             mut2.update_parameters(force_active=True)
-        if 'MuTect2_output_active_region_bam' in config and config['MuTect2_output_active_region_bam']:
-            mut2.update_parameters(output_active_region_bam=True)
-        if 'MuTect2_active_region_out' in config:
-            mut2.update_parameters(active_region_bam_file=config['MuTect2_active_region_bam_file'])
+        if 'MuTect2_output_active_region_igv' in config and config['MuTect2_output_active_region_igv']:
+            mut2.update_parameters(output_active_region_igv=True)
+        if 'MuTect2_active_region_igv_file' in config:
+            mut2.update_parameters(active_region_igv_file=config['MuTect2_active_region_igv_file'])
         if 'MuTect2_output_mode' in config:
             mut2.update_parameters(output_mode=config['MuTect2_output_mode'])
         if 'MuTect2_disable_optimizations' in config:
