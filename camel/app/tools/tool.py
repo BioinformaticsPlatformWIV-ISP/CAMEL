@@ -183,6 +183,8 @@ class Tool(object, metaclass=abc.ABCMeta):
         :param tool_version: Tool version
         :return: Path
         """
+        if 'tool_parameter_loc' not in self._camel.config:
+            raise ValueError(f'The location of the tool parameter file(s) is not specified in the Camel object!')
         return os.path.join(self._camel.config['tool_parameter_loc'], '{}-{}.yml'.format(
             FileSystemHelper.make_valid(tool_name).lower(),
             FileSystemHelper.make_valid(tool_version)))
@@ -192,8 +194,8 @@ class Tool(object, metaclass=abc.ABCMeta):
         Returns the tool service for the tool with the given name and version.
         :return: Tool service
         """
-        logging.debug('Retrieving tool service')
         source = self._camel.config.get('tool_service', 'db')
+        logging.debug(f'Retrieving tool service. Source = {source}')
         if source == 'db':
             return DbToolService(tool_name, tool_version, self._camel.connection)
         elif source == 'yaml':

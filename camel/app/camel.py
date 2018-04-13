@@ -24,8 +24,6 @@ class Camel(object):
             self._config = yaml.safe_load(f)
 
         if self._config.get('tool_service', 'db') == 'yaml':
-            if tool_parameter_loc is None:
-                raise ValueError(f'Illegal path given to tool parameter YAML files! Path given: {tool_parameter_loc}')
             self._config['tool_parameter_loc'] = tool_parameter_loc
 
     @property
