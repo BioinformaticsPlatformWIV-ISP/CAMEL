@@ -1,4 +1,5 @@
 import logging
+from itertools import chain
 from typing import Optional
 
 from camel.app.camel import Camel
@@ -93,17 +94,12 @@ class Pipeline(object):
 
     def get_initial_input(self, key: str=None) -> list:
         """
-        Returns a list of file name strings so that they can be used in Snakemake. If a key is given only the files
-        for that key are returned, otherwise all files in the dictionary are returned.
+        Returns a list of file paths so that they can be used in Snakemake. If a key is given only the file paths
+        for that key are returned, otherwise all file paths in the dictionary are returned.
         :param key: Optional input file key
-        :return: List of input files
+        :return: List of input file paths
         """
-        io_files = []
-        if key is None:
-            for values in self._initial_input.values():
-                io_files += values
-        else:
-            io_files = self._initial_input[key]
+        io_files = list(chain(*self._initial_input.values())) if key is None else self._initial_input[key]
         return [file_.path for file_ in io_files]
 
     def set_configs(self, configs: dict) -> None:
