@@ -13,7 +13,6 @@ from camel.app.io.toolio import ToolIO
 from camel.app.services.basetoolservice import BaseToolService
 from camel.app.services.dbtoolservice import DbToolService
 from camel.app.services.yamltoolservice import YAMLToolService
-from camel.tool_data import TOOL_DATA_DIR
 
 
 class Tool(object, metaclass=abc.ABCMeta):
@@ -177,15 +176,14 @@ class Tool(object, metaclass=abc.ABCMeta):
             raise ValueError("No output file with key '{}' found".format(key))
         return self._tool_outputs[key]
 
-    @staticmethod
-    def get_tool_data_path(tool_name: str, tool_version: str) -> str:
+    def get_tool_data_path(self, tool_name: str, tool_version: str) -> str:
         """
         Returns the path of the tool data for the tool with the given name and version.
         :param tool_name: Tool name
         :param tool_version: Tool version
         :return: Path
         """
-        return os.path.join(TOOL_DATA_DIR, '{}-{}.yml'.format(
+        return os.path.join(self._camel.config['tool_parameter_loc'], '{}-{}.yml'.format(
             FileSystemHelper.make_valid(tool_name).lower(),
             FileSystemHelper.make_valid(tool_version)))
 
