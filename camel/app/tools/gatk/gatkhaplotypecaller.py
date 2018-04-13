@@ -18,7 +18,6 @@ class GATKHaplotypeCaller(GATK):
         """
         super(GATKHaplotypeCaller, self).__init__('gatk HaplotypeCaller', '3.7', camel)
 
-        self._function_name = 'HaplotypeCaller'
         self._required_inputs = ['BAM', 'FASTA_REF']
         self._output_type = 'VCF'
 

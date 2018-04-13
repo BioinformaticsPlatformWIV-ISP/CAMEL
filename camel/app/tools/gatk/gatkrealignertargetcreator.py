@@ -17,7 +17,6 @@ class GATKRealignerTargetCreator(GATK):
         """
         super(GATKRealignerTargetCreator, self).__init__('gatk RealignerTargetCreator', '3.7', camel)
 
-        self._function_name = 'RealignerTargetCreator'
         self._required_inputs = ['BAM', 'FASTA_REF']
         self._output_type = 'TXT_realign_intervals'
         logging.info(""" NOTE: From GATK 3.6 on, Indel realignment is no longer necessary for variant discovery if you plan to use a variant

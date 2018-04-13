@@ -42,7 +42,6 @@ class GATKMuTect2(GATK):
         """
         super(GATKMuTect2, self).__init__('gatk MuTect2', '3.7', camel)
 
-        self._function_name = 'MuTect2'
         self._required_inputs = ['BAM_TUMOR', 'FASTA_REF']
         self._specific_parameters.extend(["output_bam", "output_active_region_bam"])
 

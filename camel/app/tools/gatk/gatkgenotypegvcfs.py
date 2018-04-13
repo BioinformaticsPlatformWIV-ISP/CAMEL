@@ -15,7 +15,6 @@ class GATKGenotypeGVCFs(GATK):
         """
         super(GATKGenotypeGVCFs, self).__init__('gatk GenotypeGVCFs', '3.7', camel)
 
-        self._function_name = 'GenotypeGVCFs'
         self._required_inputs = ['gVCF', 'FASTA_REF']
         self._output_type = 'VCF_MultipleSample'
 

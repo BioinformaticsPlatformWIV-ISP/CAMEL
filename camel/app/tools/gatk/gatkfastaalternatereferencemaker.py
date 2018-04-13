@@ -24,7 +24,6 @@ class GATKFastaAlternateReferenceMaker(GATK):
         :return: None
         """
         super(GATKFastaAlternateReferenceMaker, self).__init__('gatk FastaAlternateReferenceMaker', '3.7', camel)
-        self._function_name = 'FastaAlternateReferenceMaker'
         self._required_inputs = ['VCF']
         self._output_type = 'FASTA'
         self._specific_parameters = ['concatenate_sequence_segments']

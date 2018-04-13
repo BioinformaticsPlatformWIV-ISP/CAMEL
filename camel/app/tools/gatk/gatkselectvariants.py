@@ -19,7 +19,6 @@ class GATKSelectVariants(GATK):
         :return: None
         """
         super(GATKSelectVariants, self).__init__('gatk SelectVariants', '3.7', camel)
-        self._function_name = 'SelectVariants'
         self._specific_parameters = ['selectTypeToExlcude', 'selectTypeToInclude', 'select']
         self._required_inputs = ['VCF']
         self._output_type = 'VCF'

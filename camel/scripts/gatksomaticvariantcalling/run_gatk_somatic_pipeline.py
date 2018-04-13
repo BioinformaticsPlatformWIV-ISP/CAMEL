@@ -1,4 +1,5 @@
 import os
+import sys
 import yaml
 import argparse
 import subprocess
@@ -16,7 +17,7 @@ class GATKSomaticMain(object):
     Main class to run the GATK somatic variant caller pipeline.
     Generates a config yml file based on CL arguments;
     Dumps a compressed bz2 file of the config file for easy rerun of the pipepline if needed
-    Runs the pipeline.
+    (Re)runs the pipeline.
     """
     DB_LOGGING = True
     LOGGING_LEVEL = 'pipeline'
@@ -29,98 +30,157 @@ class GATKSomaticMain(object):
         :return: None
         """
         self._args = None
-        self.__ap = None
+        self._ap = None
         self._config_data = dict()
         self._pipeline = None
 
-        self.camel = Camel()
+        self._camel = Camel()
 
         # galaxy dump directory in case of failure
-        self._galaxy_dump_dir = os.path.join(self.camel.config["galaxy"]["dump_dir"], "GATK_somatic_calling")
+        self._galaxy_dump_dir = os.path.join(self._camel.config["galaxy"]["dump_dir"], "GATK_somatic_calling")
 
-        # compressed config files dump directory
-        self._config_dump_dir = os.path.join(self.camel.config["config_dump_dir"])
+        # dump directory for compressed config files
+        self._config_dump_dir = os.path.join(self._camel.config["config_dump_dir"])
         # self._config_dump_dir = "/scratch/todel/temp/GATK_MuTect_configs"
+
+    def run(self):
+        """
+        Sets-up and runs the pipeline and logs stderr and stdout if running the command fails.
+        Logs the initial input.
+        :return: None 
+        """
+        self._pipeline = Pipeline(name='GATK somatic calling', camel=self._camel, logging_level=self.LOGGING_LEVEL)
+        self._args = self.__parse_command_line()
+        self.__check_inputs()
+
+        if self._args.input_config_file is not None:
+            try:
+                self.__generate_config_from_previous()
+            except FileNotFoundError as error:
+                sys.exit("run_gatk_somatic_pipeline.py: error: {}".format(error))
+        else:
+            self.__generate_config_file()
+
+        self.__archive_config_file()
+
+        self.__log_initial_input()
+
+        self.__execute_snakemake_pipeline()
+
+    def __log_initial_input(self):
+        """
+        Logs initial inputs.
+        :return: 
+        """
+        input_dict = dict()
+        if self.DB_LOGGING:
+            if self._args.paired_end:
+                input_dict['FASTQ_PE'] = [ToolIOFile(f) for f in self._config_data['fastq']]
+            elif self._args.single_end:
+                input_dict['FASTQ_SE'] = [ToolIOFile(f) for f in self._config_data['fastq']]
+
+            input_dict['YAML_config'] = [ToolIOFile(self.runtime_config_path)]
+
+            self._pipeline.set_initial_input(input_dict)
+
+    def __execute_snakemake_pipeline(self):
+        """
+        Execute the snakemake workflow 
+        if pipeline is run from galaxy, log stdout and stderr when command fails.
+        :return: 
+        """
+        snakemake_params = " ".join([self._args.unlock, self._args.dag, self._args.dryrun])
+        to_execute = 'snakemake --configfile {config} --snakefile {snakefile} --cores {cores} {snakemake_params}'.format(config=self.runtime_config_path, snakefile=self.SNAKEFILE, cores=self._args.threads, snakemake_params=snakemake_params)
+        command = Command(to_execute)
+        command.run_command(self._args.work_dir, subprocess.STDOUT)
+        if command.returncode != 0 and self._args.from_galaxy:
+            with open(os.path.join(self._galaxy_dump_dir, "{}.out".format(self._args.job_id)), "w") as file_out:
+                file_out.write(command.stdout)
+            with open(os.path.join(self._galaxy_dump_dir, "{}.err".format(self._args.job_id)), "w") as file_out:
+                file_out.write(command.stderr)
+            raise RuntimeError(
+                "Error executing Snakemake. Check log ('{}') for more information.".format(os.path.join(self._galaxy_dump_dir, "{}.err".format(
+                    self._args.job_id))))
 
     def __parse_command_line(self):
         """
         Parses the command line arguments.
-        :return: Arguments
+        :return: argparse.ArgumentParser object
         """
-        ap = argparse.ArgumentParser(description='Run the GATK somatic variant caller pipeline.')
+        self._ap = argparse.ArgumentParser(description='Run the GATK somatic variant caller pipeline.')
 
         # various
-        ap.add_argument('-W', '--wdir', dest='work_dir', metavar='work_dir', help='Working directory')
+        self._ap.add_argument('-W', '--wdir', dest='work_dir', metavar='work_dir', help='Working directory')
 
         # input
-        gp = ap.add_mutually_exclusive_group()
+        gp = self._ap.add_mutually_exclusive_group()
         gp.add_argument('-PE', '--paired_end', metavar='fq_file', dest='paired_end', help='Paired-end fastq files.',
                         nargs='+')
         gp.add_argument('-SE', '--single_end', metavar='fq_file', dest='single_end', help='Single-end fastq files.',
                         nargs='+')
 
         # Variant caller to use
-        ap.add_argument('-V', '--variant_caller', metavar='variant_caller', dest='variant_caller', help='Variant caller to use.', choices=["mutect1", "mutect2"])
+        self._ap.add_argument('-V', '--variant_caller', metavar='variant_caller', dest='variant_caller', help='Variant caller to use.', choices=["mutect1", "mutect2"])
 
         # output
-        ap.add_argument('--mutect1_vcf_output', dest='mutect1_vcf_output', metavar='mutect1_vcf_output', help='Output vcf file from MuTect1.')
-        ap.add_argument('--mutect1_tab_output', dest='mutect1_tab_output', metavar='mutect1_tab_output', help='Output variant-call table file for MuTect1.')
-        ap.add_argument('--mutect2_vcf_output', dest='mutect2_vcf_output', metavar='mutect2_vcf_output', help='Output vcf file from MuTect2.')
-        ap.add_argument('--mutect2_bam_output', dest='mutect2_bam_output', metavar='mutect2_bam_output',
-                        help='Output bam file from MuTect2: File to which assembled haplotypes should be written.')
+        self._ap.add_argument('--mutect1_vcf_output', dest='mutect1_vcf_output', metavar='mutect1_vcf_output', help='Output vcf file from MuTect1.')
+        self._ap.add_argument('--mutect1_tab_output', dest='mutect1_tab_output', metavar='mutect1_tab_output', help='Output variant-call table file for MuTect1.')
+        self._ap.add_argument('--mutect2_vcf_output', dest='mutect2_vcf_output', metavar='mutect2_vcf_output', help='Output vcf file from MuTect2.')
+        self._ap.add_argument('--mutect2_bam_output', dest='mutect2_bam_output', metavar='mutect2_bam_output',
+                              help='Output bam file from MuTect2: File to which assembled haplotypes should be written.')
 
-        ap.add_argument('--covar_output', dest='covar_output', metavar='covar_output', help='Output covariates analysis pdf')
-        ap.add_argument('--bam_output', dest='bam_output', metavar='bam_output', help='Aligned BAM file')
+        self._ap.add_argument('--covar_output', dest='covar_output', metavar='covar_output', help='Output covariates analysis pdf')
+        self._ap.add_argument('--bam_output', dest='bam_output', metavar='bam_output', help='Aligned BAM file')
 
         # references
-        ap.add_argument('-R', '--fasta_ref', dest='fasta_ref', metavar='fasta_ref',
-                        help='Human genome reference fasta file name (as in db_loc).', choices=["broad_b37_human_Genome_1K_v37"])
-        ap.add_argument('-S', '--vcf_snps', metavar='vcf_snps', dest='vcf_known_snps',
-                        help='Known variant sites (snps) vcf file name (as in db_loc).', choices=["broad_b37_snps_high_confidence"])
-        ap.add_argument('-I', '--vcf_indels', metavar='vcf_indels', dest='vcf_known_indels',
-                        help='Known variant sites (indels) vcf file name (as in db_loc).', choices=["broad_b37_indels_gold_standard"])
+        self._ap.add_argument('-R', '--fasta_ref', dest='fasta_ref', metavar='fasta_ref',
+                              help='Human genome reference fasta file name (as in db_loc).', choices=["broad_b37_human_Genome_1K_v37"])
+        self._ap.add_argument('-S', '--vcf_snps', metavar='vcf_snps', dest='vcf_known_snps',
+                              help='Known variant sites (snps) vcf file name (as in db_loc).', choices=["broad_b37_snps_high_confidence"])
+        self._ap.add_argument('-I', '--vcf_indels', metavar='vcf_indels', dest='vcf_known_indels',
+                              help='Known variant sites (indels) vcf file name (as in db_loc).', choices=["broad_b37_indels_gold_standard"])
 
         # MarkDuplicates flag
-        ap.add_argument('--mark_duplicates', dest='markduplicates', help='Mark duplicate reads.', action='store_true')
+        self._ap.add_argument('--mark_duplicates', dest='markduplicates', help='Mark duplicate reads.', action='store_true')
 
         # Downsampling
-        ap.add_argument('--downsampling_type', dest='downsampling_type',
-                        help='Type of downsampling to perform on reads (by MuTect). NONE,ALL_READS,BY_SAMPLE. Default: BY_SAMPLE. Perform or not downsampling on reads. '
+        self._ap.add_argument('--downsampling_type', dest='downsampling_type',
+                              help='Type of downsampling to perform on reads (by MuTect). NONE,ALL_READS,BY_SAMPLE. Default: BY_SAMPLE. Perform or not downsampling on reads. '
                              'By default, MuTect downsamples to 1000 reads. Usage example: --downsample None (disables downsampling).')
-        ap.add_argument('--downsampling_target', dest='downsampling_target', help='Target value for downsampling to perform on reads (by MuTect/MuTect2). Default: 1000. Usage example: --downsample 100000 (sets target value to 100000 reads, effectively disables it).')
+        self._ap.add_argument('--downsampling_target', dest='downsampling_target', help='Target value for downsampling to perform on reads (by MuTect/MuTect2). Default: 1000. Usage example: --downsample 100000 (sets target value to 100000 reads, effectively disables it).')
         # MuTect1:
         # gap_events_threshold
-        ap.add_argument('--gap_events_threshold', dest='gap_events_threshold', help='For MuTect1; number of reads allowed to contain insdels around a fixed window (MuTect1 default 11 bp) before being marked as gap_event and filtered-out.')
+        self._ap.add_argument('--gap_events_threshold', dest='gap_events_threshold', help='For MuTect1; number of reads allowed to contain insdels around a fixed window (MuTect1 default 11 bp) before being marked as gap_event and filtered-out.')
 
         # strand_artifact_lod
-        ap.add_argument('--strand_artifact_lod', dest='strand_artifact_lod', help='For MuTect1; log-odds ratio for strand bias. Default MuTect: 2.0; disable: -99999')
+        self._ap.add_argument('--strand_artifact_lod', dest='strand_artifact_lod', help='For MuTect1; log-odds ratio for strand bias. Default MuTect: 2.0; disable: -99999')
 
         # MuTect2:
         # run from galaxy flag
-        ap.add_argument('--from_galaxy', dest='from_galaxy', help='Indicates that the command is run from galaxy. Useful for logging stderr.', action='store_true')
+        self._ap.add_argument('--from_galaxy', dest='from_galaxy', help='Indicates that the command is run from galaxy. Useful for logging stderr.', action='store_true')
 
         # number of threads
-        ap.add_argument('--threads', dest='threads', help='Maximum number of threads for snakemake to allow.', default=self.CORES)
+        self._ap.add_argument('--threads', dest='threads', help='Maximum number of threads for snakemake to allow.', default=self.CORES)
 
         # downsampling type to perform
-        ap.add_argument('--mutect2_downsampling_type', dest='MuTect2_downsampling_type',
+        self._ap.add_argument('--mutect2_downsampling_type', dest='MuTect2_downsampling_type',
                         help='Type of downsampling to perform on reads (by MuTect2). NONE,ALL_READS,BY_SAMPLE. Default: NONE.'
                              'Usage example: --downsample None (disables downsampling).', choices=['NONE', 'SAMPLE', 'ALL_READS'])
 
         # MuTect2 debugging
         # force active regions
-        ap.add_argument('--mutect2_force_active', dest='MuTect2_force_active',
+        self._ap.add_argument('--mutect2_force_active', dest='MuTect2_force_active',
                         help='Force active regions (see --forceActive param in MuTect2 online doc).', action='store_true')
-        ap.add_argument('--mutect2_disable_optimizations', dest='MuTect2_disable_optimizations',
+        self._ap.add_argument('--mutect2_disable_optimizations', dest='MuTect2_disable_optimizations',
                         help='disable optimizations in active regions.', action='store_true')
 
         # active region output file.
-        ap.add_argument('--mutect2_output_active_region_bam', dest='MuTect2_output_active_region_bam',
+        self._ap.add_argument('--mutect2_output_active_region_bam', dest='MuTect2_output_active_region_bam',
                         help='Output active region file.', action='store_true')
-        ap.add_argument('--mutect2_active_region_bam_file', dest='MuTect2_active_region_bam_file',
+        self._ap.add_argument('--mutect2_active_region_bam_file', dest='MuTect2_active_region_bam_file',
                         help='Output active region file name.', default='None')
         # downsampling type to perform
-        ap.add_argument('--mutect2_output_mode', dest='MuTect2_output_mode',
+        self._ap.add_argument('--mutect2_output_mode', dest='MuTect2_output_mode',
                         help='Output_mode for vcf (MuTect2). EMIT_VARIANTS_ONLY,EMIT_ALL_CONFIDENT_SITES,EMIT_ALL_SITES.'
                              'Usage example: --downsample None (disables downsampling).', choices=['EMIT_VARIANTS_ONLY', 'EMIT_ALL_CONFIDENT_SITES', 'EMIT_ALL_SITES'])
 
@@ -128,27 +188,28 @@ class GATKSomaticMain(object):
 
         # snakemake arguments
         # snakemake unlock
-        ap.add_argument('--unlock', dest='unlock', action="store_const", const="--unlock", help='Unlock snakemake working directory.', default="")
+        self._ap.add_argument('--unlock', dest='unlock', action="store_const", const="--unlock", help='Unlock snakemake working directory.', default="")
         # snakemake dag
-        ap.add_argument('--dag', dest='dag', action="store_const", const="--dag", help='Generate snakemake DAG.', default="")
+        self._ap.add_argument('--dag', dest='dag', action="store_const", const="--dag", help='Generate snakemake DAG.', default="")
         # dryrun
-        ap.add_argument('--dryrun', dest='dryrun', action="store_const", const="--dryrun", help='Snakemake dryrun; generates the list of jobs.', default="")
+        # snakemake dag
+        self._ap.add_argument('--dryrun', dest='dryrun', action="store_const", const="--dryrun", help='Snakemake dryrun; generates the list of jobs.', default="")
 
         # job id
-        ap.add_argument('--job_id', dest='job_id', metavar='job_id', help='Job ID for debugging and logging.',
-                        default=datetime.datetime.now().strftime("%Y%m%d_%H%M%S-%f"))
+        self._ap.add_argument('--job_id', dest='job_id', metavar='job_id', help='Job ID for debugging and logging.',
+                              default=datetime.datetime.now().strftime("%Y%m%d_%H%M%S-%f"))
         # mutect threads (mainly for testing)
-        ap.add_argument('--test_mutect_nct', dest='test_mutect_nct', metavar='test_mutect_nct', help='Threads to use for mutect2. Multithreading leads to longer runtime on targeted data.')
+        self._ap.add_argument('--test_mutect_nct', dest='test_mutect_nct', metavar='test_mutect_nct', help='Threads to use for mutect2. Multithreading leads to longer runtime on targeted data.')
 
         # re-use pre-generated config file
-        ap.add_argument('--config_file', dest='input_config_file', metavar='input_config_file', help='Pre-generated config file to use for pipeline run. All other arguments will be not used.', default=None)
+        self._ap.add_argument('--config_file', dest='input_config_file', metavar='input_config_file', help='Pre-generated config file to use for pipeline run. All other arguments will be not used.', default=None)
 
-        return ap
+        return self._ap.parse_args()
 
     def __check_inputs(self):
         """
         Checks the inputs provided to the pipeline via the command-line.
-        Checks that the inputs are coherent and that required arguments are provided. Argparse could do it but doesn't provide multi-level grouping (groups of groups of arguments).
+        Checks that the inputs are coherent and that required arguments are provided. Extension to argparse.
         :return: 
         """
         required_args_msg = "Required arguments: fasta_ref, vcf_snps, vcf_indels, variant_caller, [paired_end or single_end]."
@@ -159,10 +220,10 @@ class GATKSomaticMain(object):
             else:
                 print("Warning: using pre-generated config file.\nThis bypasses the command-line arguments checks and can cause unexpected behaviour. \nCL parameters will be ignored and config file will be used instead.")
         except ValueError as error:
-            self.__ap.print_usage()
+            self._ap.print_usage()
             print("run_gatk_somatic_pipeline.py: error: {}".format(error))
             print(required_args_msg)
-            quit()
+            sys.exit(0)
 
     def __generate_config_file(self):
         """
@@ -277,18 +338,19 @@ class GATKSomaticMain(object):
         with open(self.runtime_config_path, 'w') as handle:
             yaml.dump(self._config_data, handle)
 
-    def __generate_config_file_from_pregenerated(self):
+    def __generate_config_from_previous(self):
         """
-        Imports data from pre-gerenerated config yaml file and generates new config file (new pipeline_job_id and runtime_config filename).
+        Imports data from pre-gerenerated config yaml file (replaces previous data) and 
+        generates new config file with new pipeline_job_id and runtime_config filename.
         If input file doesn't exist, raise error.
         :return: 
         """
-        self.pregenerated_config_path = os.path.join(os.getcwd(), self._args.input_config_file)
-        if os.path.isfile(self.pregenerated_config_path):
-            with open(self.pregenerated_config_path, "r") as handle_in:
+        previous_config_path = os.path.join(os.getcwd(), self._args.input_config_file)
+        if os.path.isfile(previous_config_path):
+            with open(previous_config_path, "r") as handle_in:
                 self._config_data = yaml.load(handle_in)
         else:
-            raise FileNotFoundError("Config file '{}' not found.".format(self.pregenerated_config_path))
+            raise FileNotFoundError("Config file '{}' not found.".format(previous_config_path))
 
         # pipeline job id
         self._config_data['pipeline_job_id'] = self._pipeline.job_id
@@ -312,58 +374,6 @@ class GATKSomaticMain(object):
         outfile = os.path.join(self._config_dump_dir, 'config_{}_{}.bz2'.format(self._args.job_id, datetime.datetime.now().strftime("%Y%m%d_%H%M%S-%f")))
         with bz2.BZ2File(outfile, 'wb', compresslevel=9) as handle:
             yaml.dump(self._config_data, handle, encoding=('utf-8'))
-
-    def run(self):
-        """
-        Sets-up and runs the pipeline and logs stderr and stdout if running the command fails.
-        Logs the initial input.
-        :return: None 
-        """
-
-        # Create a pipeline object
-        self._pipeline = Pipeline(name='GATK somatic calling', camel=self.camel, logging_level=self.LOGGING_LEVEL)
-
-        self.__ap = self.__parse_command_line()
-        self._args = self.__ap.parse_args()
-        self.__check_inputs()
-
-        if self._args.input_config_file is not None:
-            try:
-                self.__generate_config_file_from_pregenerated()
-            except FileNotFoundError as error:
-                print("run_gatk_somatic_pipeline.py: error: {}".format(error))
-                quit()
-
-        else:
-            self.__generate_config_file()
-
-        self.__archive_config_file()
-
-        # Set the initial input
-        input_dict = dict()
-        if self.DB_LOGGING:
-            if self._args.paired_end:
-                input_dict['FASTQ_PE'] = [ToolIOFile(f) for f in self._config_data['fastq']]
-            elif self._args.single_end:
-                input_dict['FASTQ_SE'] = [ToolIOFile(f) for f in self._config_data['fastq']]
-
-            input_dict['YAML_config'] = [ToolIOFile(self.runtime_config_path)]
-
-            self._pipeline.set_initial_input(input_dict)
-
-        # Execute the snakemake workflow and log stdout and stderr if command fails (if pipeline is run from galaxy).
-        snakemake_params = " ".join([self._args.unlock, self._args.dag, self._args.dryrun])
-        to_execute = 'snakemake --configfile {config} --snakefile {snakefile} --cores {cores} {snakemake_params}'.format(config=self.runtime_config_path, snakefile=self.SNAKEFILE, cores=self._args.threads, snakemake_params=snakemake_params)
-        command = Command(to_execute)
-        command.run_command(self._args.work_dir, subprocess.STDOUT)
-        if command.returncode != 0 and self._args.from_galaxy:
-            with open(os.path.join(self._galaxy_dump_dir, "{}_Stdout".format(self._args.job_id)), "w") as file_out:
-                file_out.write(command.stdout)
-            with open(os.path.join(self._galaxy_dump_dir, "{}_Stderr".format(self._args.job_id)), "w") as file_out:
-                file_out.write(command.stderr)
-            raise RuntimeError(
-                "Error executing Snakemake. Check log ('{}') for more information.".format(os.path.join(self._galaxy_dump_dir, "{}_Stderr".format(
-                    self._args.job_id))))
 
 
 if __name__ == '__main__':

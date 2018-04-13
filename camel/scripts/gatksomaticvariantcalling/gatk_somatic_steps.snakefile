@@ -88,10 +88,10 @@ rule move_output:
         unpack(define_pipeline_outputs),
 
     output:
-        touch(os.path.join(working_dir, "output/done.flag")),
+        touch(os.path.join(working_dir, "output", "done.flag")),
 
     run:
-        import os
+        # import os
         if config['from_galaxy']:
             if 'mutect1_tab_output' in config:
                 tab_init_path = SnakemakeUtils.load_object(input.TXT_CALL_STATS)[0]
@@ -167,17 +167,17 @@ rule prepare_references_io:
         VCF_KNOWN_INDELS=os.path.join(working_dir, "initial_input/vcf_known_indels.io"),
     run:
         from camel.app.io.tooliodb import ToolIODb
-        FASTA_GENOME = config['fasta_ref'],
-        VCF_KNOWN_SNPS = config['vcf_known_snps'],
-        VCF_KNOWN_INDELS = config['vcf_known_indels'],
-        IO_FASTA_GENOME = [ToolIOValue(ToolIODb(FASTA_GENOME).path)]
-        IO_FILE_FASTA_GENOME = [ToolIOFile(ToolIODb(FASTA_GENOME).path)]
-        IO_VCF_KNOWN_SNPS = [ToolIOFile(ToolIODb(VCF_KNOWN_SNPS).path)]
-        IO_VCF_KNOWN_INDELS = [ToolIOFile(ToolIODb(VCF_KNOWN_INDELS).path)]
-        SnakemakeUtils.dump_object(IO_FASTA_GENOME, output.FASTA_GENOME)
-        SnakemakeUtils.dump_object(IO_FILE_FASTA_GENOME, output.FASTA_GENOME_FILE)
-        SnakemakeUtils.dump_object(IO_VCF_KNOWN_SNPS, output.VCF_KNOWN_SNPS)
-        SnakemakeUtils.dump_object(IO_VCF_KNOWN_INDELS, output.VCF_KNOWN_INDELS)
+        fasta_genome = config['fasta_ref'],
+        vcf_known_snps = config['vcf_known_snps'],
+        vcf_known_indels = config['vcf_known_indels'],
+        io_fasta_genome = [ToolIOValue(ToolIODb(fasta_genome).path)]
+        io_file_fasta_genome = [ToolIOFile(ToolIODb(fasta_genome).path)]
+        io_vcf_known_snps = [ToolIOFile(ToolIODb(vcf_known_snps).path)]
+        io_vcf_known_indels = [ToolIOFile(ToolIODb(vcf_known_indels).path)]
+        SnakemakeUtils.dump_object(io_fasta_genome, output.FASTA_GENOME)
+        SnakemakeUtils.dump_object(io_file_fasta_genome, output.FASTA_GENOME_FILE)
+        SnakemakeUtils.dump_object(io_vcf_known_snps, output.VCF_KNOWN_SNPS)
+        SnakemakeUtils.dump_object(io_vcf_known_indels, output.VCF_KNOWN_INDELS)
 
 
 rule bwa_alignment:
