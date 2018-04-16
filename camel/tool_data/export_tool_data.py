@@ -7,15 +7,16 @@ import os
 import yaml
 
 from camel.app.camel import Camel
-from camel.app.tools.tool import Tool
+from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.services.dbtoolservice import DbToolService
 
 """
-This scripts is used to export tool data from the database to a YAML file.
+This script is used to export tool data from the database to a YAML file.
 The YAML file name is generated based on the name and version of the tool. 
 
-It can be ran from the command line:
+It can be run from the command line:
 export_tool_data.py --tool-name TOOL_NAME --version VERSION
+export_tool_data.py --tool-list TOOL_LIST
 
 It can also be ran from within Python by importing it:
 from camel.tool_data. import export_tool_data
@@ -33,6 +34,7 @@ def _parse_arguments():
     argument_parser.add_argument('--tool-version', required=False)
     argument_parser.add_argument('--tool-list', required=False)
     argument_parser.add_argument('--force', required=False, action='store_true')
+    argument_parser.add_argument('--output-dir', required=False, default=os.getcwd())
     return argument_parser.parse_args()
 
 
@@ -75,7 +77,9 @@ def export_tool_data(camel: Camel, tool_name: str, tool_version: str, force=Fals
     :param force: If True, existing files are overwritten
     :return: None
     """
-    output_path = Tool.get_tool_data_path(tool_name, tool_version)
+    output_path = os.path.join(args.output_dir, '{}-{}.yml'.format(
+            FileSystemHelper.make_valid(tool_name).lower(),
+            FileSystemHelper.make_valid(tool_version)))
     logging.info("Exporting tool data for {} {} to: {}".format(tool_name, tool_version, output_path))
     if os.path.exists(output_path) and force is False:
         raise FileExistsError("Tool data file already exists: {}".format(output_path))
