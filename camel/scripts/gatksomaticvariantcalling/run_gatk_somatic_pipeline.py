@@ -23,7 +23,7 @@ class GATKSomaticMain(object):
     LOGGING_LEVEL = 'pipeline'
     SNAKEFILE = os.path.join(os.path.dirname(__file__), 'gatk_somatic_steps.snakefile')
     CORES = 5
-    TOOL_PARAM_DIR = "/home/todel/PycharmProjects/camel_3.0_mutect2/camel_3.0/camel/scripts/gatksomaticvariantcalling/tool_data/"
+    TOOL_PARAM_DIR = os.path.join(os.path.dirname(__file__), 'tool_data')
 
     def __init__(self):
         """
