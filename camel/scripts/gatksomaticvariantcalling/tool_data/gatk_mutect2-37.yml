@@ -1,10 +1,17 @@
 dependencies: gatk/3.7
 parameters:
+  active_region_igv_file: {default: false, mandatory: false, option: --activeRegionOut,
+    value: active_region_out.igv}
+  disable_optimizations: {default: false, mandatory: false, option: --disableOptimizations,
+    value: 'False'}
   downsampling_coverage_target: {default: true, mandatory: false, option: -maxReadsInRegionPerSample,
     value: '1000000'}
   downsampling_type: {default: false, mandatory: false, option: -dt, value: NONE}
+  force_active: {default: false, mandatory: false, option: --forceActive, value: 'False'}
+  output_active_region_igv: {default: false, mandatory: false, option: null, value: 'False'}
   output_bam: {default: false, mandatory: false, option: null, value: 'True'}
   output_bam_file: {default: false, mandatory: false, option: --bamOutput, value: bamOutput.bam}
+  output_mode: {default: false, mandatory: false, option: --output_mode, value: EMIT_VARIANTS_ONLY}
   output_vcf_file: {default: true, mandatory: true, option: -o, value: variant_call.vcf}
   threads: {default: false, mandatory: false, option: -nct, value: '1'}
 tool_command: run_gatk.sh -T MuTect2

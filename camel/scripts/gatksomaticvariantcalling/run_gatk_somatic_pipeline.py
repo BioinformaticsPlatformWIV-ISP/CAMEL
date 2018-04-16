@@ -23,6 +23,7 @@ class GATKSomaticMain(object):
     LOGGING_LEVEL = 'pipeline'
     SNAKEFILE = os.path.join(os.path.dirname(__file__), 'gatk_somatic_steps.snakefile')
     CORES = 5
+    TOOL_PARAM_DIR = "/home/todel/PycharmProjects/camel_3.0_mutect2/camel_3.0/camel/scripts/gatksomaticvariantcalling/tool_data/"
 
     def __init__(self):
         """
@@ -34,7 +35,7 @@ class GATKSomaticMain(object):
         self._config_data = dict()
         self._pipeline = None
 
-        self._camel = Camel()
+        self._camel = Camel(tool_parameter_loc=self.TOOL_PARAM_DIR)
 
         # galaxy dump directory in case of failure
         self._galaxy_dump_dir = os.path.join(self._camel.config["galaxy"]["dump_dir"], "GATK_somatic_calling")
