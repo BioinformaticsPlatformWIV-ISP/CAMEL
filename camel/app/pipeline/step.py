@@ -74,7 +74,7 @@ class Step(object):
         """
         self._step_inputs = dict_
 
-    def add_informs(self, dict_) -> None:
+    def add_informs(self, dict_: dict) -> None:
         """
         Adds informs to the step.
         :param dict_: Dictionary with the informs

@@ -1,4 +1,6 @@
 import logging
+from itertools import chain
+from typing import Optional
 
 from camel.app.camel import Camel
 from camel.app.services.pipelineservice import PipelineService
@@ -20,6 +22,8 @@ class Pipeline(object):
         self._initial_input = None
         self._configs = None
         self._job_id = None
+        if not self.is_valid_logging_level(logging_level):
+            raise ValueError(f"Logging level '{logging_level}' is not a valid logging level!")
         self._logging_level = logging_level
         self._db_logging = logging_level in ('pipeline', 'step')
         if self._db_logging:
@@ -30,7 +34,7 @@ class Pipeline(object):
         logging.info("Created pipeline {}".format(self._name))
 
     @property
-    def job_id(self):
+    def job_id(self) -> Optional[int]:
         """
         Returns the job id of this pipeline.
         :return: Job id
@@ -38,7 +42,7 @@ class Pipeline(object):
         return self._job_id
 
     @property
-    def name(self):
+    def name(self) -> str:
         """
         Returns the pipeline name.
         :return: Name
@@ -46,7 +50,7 @@ class Pipeline(object):
         return self._name
 
     @property
-    def pipeline_service(self):
+    def pipeline_service(self) -> Optional[PipelineService]:
         """
         Returns the pipeline service
         :return: Pipeline service
@@ -54,7 +58,7 @@ class Pipeline(object):
         return self._pipeline_service
 
     @property
-    def configs(self):
+    def configs(self) -> dict:
         """
         Returns the pipeline configs
         :return: Pipeline configs
@@ -69,6 +73,15 @@ class Pipeline(object):
         """
         return self._logging_level
 
+    @staticmethod
+    def is_valid_logging_level(logging_level: str) -> bool:
+        """
+        Checks whether the given logging level is valid
+        :param logging_level: Logging level to be checked
+        :return: True if the level is allowed
+        """
+        return logging_level in ('pipeline', 'step', None)
+
     def set_initial_input(self, files: dict) -> None:
         """
         Sets the initial inputs for the pipeline allowing it to be logged if logging is requested.
@@ -81,21 +94,13 @@ class Pipeline(object):
 
     def get_initial_input(self, key: str=None) -> list:
         """
-        Returns a list of file name strings so that they can be used in Snakemake. If a key is given only the files
-        for that key are returned, otherwise all files in the dictionary are returned.
+        Returns a list of file paths so that they can be used in Snakemake. If a key is given only the file paths
+        for that key are returned, otherwise all file paths in the dictionary are returned.
         :param key: Optional input file key
-        :return: List of input files
+        :return: List of input file paths
         """
-        io_files = []
-        if key is None:
-            for values in self._initial_input.values():
-                io_files += values
-        else:
-            io_files = self._initial_input[key]
-        files = []
-        for file_ in io_files:
-            files.append(file_.path)
-        return files
+        io_files = list(chain(*self._initial_input.values())) if key is None else self._initial_input[key]
+        return [file_.path for file_ in io_files]
 
     def set_configs(self, configs: dict) -> None:
         """
@@ -106,7 +111,7 @@ class Pipeline(object):
         logging.info("Pipeline configuration: {}".format(configs))
         self._configs = configs
 
-    def _log_initial_input(self):
+    def _log_initial_input(self) -> None:
         """
         Logs the initial input of the pipeline.
         :return: None

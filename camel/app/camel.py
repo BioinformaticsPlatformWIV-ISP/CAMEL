@@ -1,16 +1,8 @@
-import logging
-
-import os
 import yaml
 
-from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.connection.connection import Connection
 from camel.app.loggers.logmanager import LogManager
-from camel.app.services.basetoolservice import BaseToolService
-from camel.app.services.dbtoolservice import DbToolService
-from camel.app.services.yamltoolservice import YAMLToolService
 from camel.config import DB_CONFIG, LOGGING_CONFIG, MAIN_CONFIG
-from camel.tool_data import TOOL_DATA_DIR
 
 
 class Camel(object):
@@ -18,9 +10,12 @@ class Camel(object):
     Main class for camel.
     """
 
-    def __init__(self, database_config=DB_CONFIG, logging_config=LOGGING_CONFIG):
+    def __init__(self, database_config: str=DB_CONFIG, logging_config: str=LOGGING_CONFIG, tool_parameter_loc: str=None) -> None:
         """
         Initializes a CAMEL system.
+        :param database_config: Location of database config file
+        :param logging_config: Location of logging config file
+        :param tool_parameter_loc: Location of tool parameter YAML files
         """
         LogManager.initialize(logging_config)
         self._connection = Connection(database_config)
@@ -28,8 +23,11 @@ class Camel(object):
         with open(MAIN_CONFIG) as f:
             self._config = yaml.safe_load(f)
 
+        if self._config.get('tool_service', 'db') == 'yaml':
+            self._config['tool_parameter_loc'] = tool_parameter_loc
+
     @property
-    def connection(self):
+    def connection(self) -> Connection:
         """
         Returns the database connection.
         :return: Database connection
@@ -37,38 +35,9 @@ class Camel(object):
         return self._connection
 
     @property
-    def config(self):
+    def config(self) -> dict:
         """
         Returns the main config as specified in app/config/main.yml
         :return: Dict
         """
         return self._config
-
-    @staticmethod
-    def get_tool_data_path(tool_name: str, tool_version: str) -> str:
-        """
-        Returns the path of the tool data for the tool with the given name and version.
-        :param tool_name: Tool name
-        :param tool_version: Tool version
-        :return: Path
-        """
-        return os.path.join(TOOL_DATA_DIR, '{}-{}.yml'.format(
-            FileSystemHelper.make_valid(tool_name).lower(),
-            FileSystemHelper.make_valid(tool_version)))
-
-    def get_tool_service(self, tool_name: str, tool_version: str) -> BaseToolService:
-        """
-        Returns the tool service for the tool with the given name and version.
-        :return: Tool service
-        """
-        logging.debug('Retrieving tool service')
-        source = self._config.get('tool_service', 'db')
-        if source == 'db':
-            return DbToolService(tool_name, tool_version, self.connection)
-        elif source == 'yaml':
-            tool_data_path = Camel.get_tool_data_path(tool_name, tool_version)
-            if not os.path.isfile(tool_data_path):
-                raise FileNotFoundError('Tool data file not found: {}'.format(os.path.basename(tool_data_path)))
-            return YAMLToolService(tool_data_path)
-        else:
-            raise ValueError("Invalid 'tool_service' value: {}".format(source))

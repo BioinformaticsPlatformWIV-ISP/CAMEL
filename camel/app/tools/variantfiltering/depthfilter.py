@@ -1,10 +1,4 @@
-import logging
-
-import os
-
-from camel.app.components.vcf.vcfutils import VCFUtils
 from camel.app.error.invalidparametererror import InvalidParameterError
-from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.variantfiltering.filter import Filter
 
 
@@ -27,22 +21,15 @@ class DepthFilter(Filter):
         """
         if not any([param in self._parameters for param in ('min_depth', 'min_relative_depth', 'min_reverse_depth')]):
             raise InvalidParameterError('No filtering parameter found')
-        super(DepthFilter, self)._check_parameters()
+        super()._check_parameters()
 
-    def _execute_tool(self):
+    def _apply_filter(self):
         """
-        Executes this tool.
+        Applies the filtering on the variants.
         :return: None
         """
-        nb_of_variants_pre = VCFUtils.count_variants(self._tool_inputs['VCF_GZ'][0].path)
         self.__build_command()
         self._execute_command()
-        output_file = os.path.join(self._folder, self._parameters['output_filename'].value)
-        self._tool_outputs['VCF_GZ'] = [ToolIOFile(output_file)]
-        nb_of_variants_post = VCFUtils.count_variants(output_file)
-        logging.info('{}/{} variants passed depth filtering'.format(nb_of_variants_post, nb_of_variants_pre))
-        self._informs['variants_in'] = nb_of_variants_pre
-        self._informs['variants_out'] = nb_of_variants_post
 
     def __create_exclude_string(self):
         """
@@ -68,5 +55,5 @@ class DepthFilter(Filter):
             "--exclude '{}'".format(self.__create_exclude_string()),
             self._tool_inputs['VCF_GZ'][0].path,
             '--output-type z',
-            '--output {}'.format(self._parameters['output_filename'].value)
+            '--output {}'.format(self.output_path)
         ])

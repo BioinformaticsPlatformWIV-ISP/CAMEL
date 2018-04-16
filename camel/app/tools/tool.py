@@ -1,11 +1,18 @@
 import logging
+from typing import Dict, Optional, List, Union
 
 import abc
+import os
 
+from camel.app.camel import Camel
 from camel.app.command.command import Command
+from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.error.invalidparametererror import InvalidParameterError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.toolio import ToolIO
+from camel.app.services.basetoolservice import BaseToolService
+from camel.app.services.dbtoolservice import DbToolService
+from camel.app.services.yamltoolservice import YAMLToolService
 
 
 class Tool(object, metaclass=abc.ABCMeta):
@@ -13,7 +20,7 @@ class Tool(object, metaclass=abc.ABCMeta):
     Contains the common functionality of tools.
     """
 
-    def __init__(self, name, version, camel):
+    def __init__(self, name: str, version: str, camel: Camel) -> None:
         """
         Initializes a tool.
         """
@@ -24,14 +31,15 @@ class Tool(object, metaclass=abc.ABCMeta):
         self._tool_outputs = {}
         self._informs = {}
         self._input_informs = {}
-        self._tool_service = camel.get_tool_service(name, version)
+        self._camel = camel
+        self._tool_service = self.get_tool_service(name, version)
         self._tool_command = self._tool_service.get_tool_command()
         self._parameters = self._tool_service.get_default_parameters()
         self._command = Command()
         self._folder = None
 
     @property
-    def name(self):
+    def name(self) -> str:
         """
         Returns the name of this tool.
         :return: Name
@@ -39,7 +47,7 @@ class Tool(object, metaclass=abc.ABCMeta):
         return '{} {}'.format(self._name, self._version)
 
     @property
-    def tool_id(self):
+    def tool_id(self) -> int:
         """
         Returns the tool id.
         :return: Tool id
@@ -47,7 +55,7 @@ class Tool(object, metaclass=abc.ABCMeta):
         return self._tool_service.tool_id
 
     @property
-    def tool_outputs(self):
+    def tool_outputs(self) -> Dict[str, List[ToolIO]]:
         """
         Returns the tool outputs.
         :return: Tool outputs
@@ -55,7 +63,7 @@ class Tool(object, metaclass=abc.ABCMeta):
         return self._tool_outputs
 
     @property
-    def informs(self):
+    def informs(self) -> dict:
         """
         Returns the tool informs.
         :return: Informs
@@ -63,7 +71,7 @@ class Tool(object, metaclass=abc.ABCMeta):
         return self._informs
 
     @property
-    def stdout(self):
+    def stdout(self) -> Optional[str]:
         """
         Returns the command line stdout.
         :return: Stdout
@@ -71,7 +79,7 @@ class Tool(object, metaclass=abc.ABCMeta):
         return self._command.stdout
 
     @property
-    def stderr(self):
+    def stderr(self) -> Optional[str]:
         """
         Returns the command line stderr.
         :return: Stderr
@@ -79,7 +87,7 @@ class Tool(object, metaclass=abc.ABCMeta):
         return self._command.stderr
 
     @property
-    def parameter_overview(self):
+    def parameter_overview(self) -> str:
         """
         Returns an overview of the parameters as a string.
         :return: Parameters overview
@@ -87,7 +95,7 @@ class Tool(object, metaclass=abc.ABCMeta):
         return ', '.join(["{}: '{}'".format(p, self._parameters[p].value) for p in sorted(self._parameters)]) if \
             len(self._parameters) > 0 else '/'
 
-    def add_input_files(self, input_files):
+    def add_input_files(self, input_files: Dict[str, List[ToolIO]]) -> None:
         """
         Updates the input files for a tool.
         :param input_files: New input files
@@ -99,7 +107,7 @@ class Tool(object, metaclass=abc.ABCMeta):
             else:
                 self._tool_inputs[key] = items
 
-    def add_input_informs(self, informs):
+    def add_input_informs(self, informs: dict) -> None:
         """
         Updates the input informs for a tool.
         :param informs: New informs
@@ -107,7 +115,7 @@ class Tool(object, metaclass=abc.ABCMeta):
         """
         self._input_informs.update(informs)
 
-    def update_parameters(self, **kwargs):
+    def update_parameters(self, **kwargs: Union[str, int, None, bool, Dict[str, Union[str, int, None, bool]]]) -> None:
         """
         Updates the parameters for this tool.
         :param kwargs: Parameters in key value format
@@ -135,7 +143,7 @@ class Tool(object, metaclass=abc.ABCMeta):
                         parameter_name, old_value, new_value))
                 self._parameters[parameter_name] = parameter
 
-    def clear_parameters(self):
+    def clear_parameters(self) -> None:
         """
         Clears all the parameters of the given tool.
         :return: None
@@ -143,7 +151,7 @@ class Tool(object, metaclass=abc.ABCMeta):
         logging.info("Removing {} parameters".format(len(self._parameters)))
         self._parameters.clear()
 
-    def run(self, folder='.'):
+    def run(self, folder: str='.') -> None:
         """
         Runs this tool.
         :param folder: Folder to run the tool in.
@@ -158,7 +166,7 @@ class Tool(object, metaclass=abc.ABCMeta):
         self._execute_tool()
         self._check_output()
 
-    def get_outputs(self, key):
+    def get_outputs(self, key: str) -> List[ToolIO]:
         """
         Returns the outputs with the given key.
         :param key: output key
@@ -168,7 +176,37 @@ class Tool(object, metaclass=abc.ABCMeta):
             raise ValueError("No output file with key '{}' found".format(key))
         return self._tool_outputs[key]
 
-    def _build_dependencies(self):
+    def get_tool_data_path(self, tool_name: str, tool_version: str) -> str:
+        """
+        Returns the path of the tool data for the tool with the given name and version.
+        :param tool_name: Tool name
+        :param tool_version: Tool version
+        :return: Path
+        """
+        if 'tool_parameter_loc' not in self._camel.config:
+            raise ValueError(f'The location of the tool parameter file(s) is not specified in the Camel object!')
+        return os.path.join(self._camel.config['tool_parameter_loc'], '{}-{}.yml'.format(
+            FileSystemHelper.make_valid(tool_name).lower(),
+            FileSystemHelper.make_valid(tool_version)))
+
+    def get_tool_service(self, tool_name: str, tool_version: str) -> BaseToolService:
+        """
+        Returns the tool service for the tool with the given name and version.
+        :return: Tool service
+        """
+        source = self._camel.config.get('tool_service', 'db')
+        logging.debug(f'Retrieving tool service. Source = {source}')
+        if source == 'db':
+            return DbToolService(tool_name, tool_version, self._camel.connection)
+        elif source == 'yaml':
+            tool_data_path = self.get_tool_data_path(tool_name, tool_version)
+            if not os.path.isfile(tool_data_path):
+                raise FileNotFoundError('Tool data file not found: {}'.format(os.path.basename(tool_data_path)))
+            return YAMLToolService(tool_data_path)
+        else:
+            raise ValueError("Invalid 'tool_service' value: {}".format(source))
+
+    def _build_dependencies(self) -> str:
         """
         Builds the dependencies.
         :return: Command to load dependencies
@@ -179,7 +217,7 @@ class Tool(object, metaclass=abc.ABCMeta):
         else:
             return ''
 
-    def _build_options(self, excluded_parameters=None, delimiter=' '):
+    def _build_options(self, excluded_parameters: List[str]=None, delimiter: str=' ') -> List[str]:
         """
         Builds the options string.
         :parameter delimiter: Delimiter between option and value
@@ -195,9 +233,9 @@ class Tool(object, metaclass=abc.ABCMeta):
                 options.append(parameter.option)
         return options
 
-    def _execute_command(self, folder=None):
+    def _execute_command(self, folder: str=None) -> None:
         """
-        Executes a the command.
+        Executes the command.
         :return: None
         """
         if folder is None:
@@ -208,7 +246,7 @@ class Tool(object, metaclass=abc.ABCMeta):
         self._command.run_command(folder)
         self._check_command_output()
 
-    def _check_command_output(self):
+    def _check_command_output(self) -> None:
         """
         Checks if the command was executed successfully.
         :return: None
@@ -226,7 +264,7 @@ class Tool(object, metaclass=abc.ABCMeta):
         """
         pass
 
-    def _check_parameters(self):
+    def _check_parameters(self) -> None:
         """
         Checks if the tool parameters are valid.
         :return: None
@@ -236,7 +274,7 @@ class Tool(object, metaclass=abc.ABCMeta):
             if mandatory_parameter not in self._parameters:
                 raise ValueError("Mandatory parameter {} not set".format(mandatory_parameter))
 
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
         Checks if the tool input is valid.
         :return: None
@@ -250,7 +288,7 @@ class Tool(object, metaclass=abc.ABCMeta):
                 if not tool_input.is_valid():
                     raise ValueError("Invalid tool input with key {}: {}".format(input_key, tool_input))
 
-    def _check_output(self):
+    def _check_output(self) -> None:
         """
         Checks if the output is valid.
         :return: None

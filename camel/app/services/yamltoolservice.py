@@ -51,9 +51,8 @@ class YAMLToolService(BaseToolService):
         """
         param_dict = OrderedDict()
         for p_name, p_data in self._tool_data['parameters'].items():
-            if p_data['default'] is False:
-                continue
-            param_dict[p_name] = Parameter(p_name, p_data['option'], p_data['value'])
+            if p_data['default'] is True:
+                param_dict[p_name] = Parameter(p_name, p_data['option'], p_data['value'])
         return param_dict
 
     def get_names_mandatory_parameter(self) -> List[str]:

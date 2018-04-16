@@ -7,6 +7,7 @@ import os
 import yaml
 
 from camel.app.camel import Camel
+from camel.app.tools.tool import Tool
 from camel.app.services.dbtoolservice import DbToolService
 
 """
@@ -74,7 +75,7 @@ def export_tool_data(camel: Camel, tool_name: str, tool_version: str, force=Fals
     :param force: If True, existing files are overwritten
     :return: None
     """
-    output_path = Camel.get_tool_data_path(tool_name, tool_version)
+    output_path = Tool.get_tool_data_path(tool_name, tool_version)
     logging.info("Exporting tool data for {} {} to: {}".format(tool_name, tool_version, output_path))
     if os.path.exists(output_path) and force is False:
         raise FileExistsError("Tool data file already exists: {}".format(output_path))
@@ -98,7 +99,7 @@ if __name__ == '__main__':
     args = _parse_arguments()
     if args.tool_name is not None and args.tool_list is not None:
         logging.error('The arguments tool-name and tool-list are mutually exclusive!')
-        sys.exit(2)
+        sys.exit('The arguments tool-name and tool-list are mutually exclusive!')
     if args.tool_name is not None:
         export_tool_data(c, args.tool_name, args.tool_version, args.force)
     if args.tool_list is not None:
