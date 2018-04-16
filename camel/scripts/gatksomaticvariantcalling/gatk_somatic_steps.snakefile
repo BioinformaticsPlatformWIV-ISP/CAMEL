@@ -6,8 +6,10 @@ from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 
-camel = Camel()
 working_dir = config['working_dir']
+TOOL_PARAM_DIR = config['TOOL_PARAM_DIR']
+
+camel = Camel(tool_parameter_loc=TOOL_PARAM_DIR)
 
 
 def prepare_addreadgroups_input(wildcards):

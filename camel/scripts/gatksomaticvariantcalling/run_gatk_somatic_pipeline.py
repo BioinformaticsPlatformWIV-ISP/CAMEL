@@ -238,6 +238,9 @@ class GATKSomaticMain(object):
         # logging level
         self._config_data['logging_level'] = self.LOGGING_LEVEL
 
+        # tool parameters directory
+        self._config_data['TOOL_PARAM_DIR'] = self.TOOL_PARAM_DIR
+
         # Add the job id to the config
         self._config_data['pipeline_job_id'] = self._pipeline.job_id
         self._config_data['pipeline_name'] = self._pipeline.name
