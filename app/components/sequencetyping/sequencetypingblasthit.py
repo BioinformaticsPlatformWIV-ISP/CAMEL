@@ -80,7 +80,7 @@ class SequenceTypingBlastHit(SequenceTypingHit):
             alignment_cell = HtmlTableCell('view', link=relative_path)
         return [
             self.locus,
-            HtmlTableCell(self.allele_id, self.color),
+            HtmlTableCell(self.allele_id, self.color, link=self.compose_allele_link_url(self.locus, self.allele_id)),
             str(self._pident),
             self.length_statistic,
             self._type,

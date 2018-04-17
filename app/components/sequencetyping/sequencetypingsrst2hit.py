@@ -75,7 +75,7 @@ class SequenceTypingSRST2Hit(SequenceTypingHit):
             color = 'lightgreen'
         else:
             color = 'grey'
-        return HtmlTableCell(self.allele_id, color)
+        return HtmlTableCell(self.allele_id, color, link=self.compose_allele_link_url(self.locus, self.allele_id))
 
     def is_perfect_hit(self):
         """

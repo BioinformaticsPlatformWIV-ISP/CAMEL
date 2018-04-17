@@ -132,7 +132,8 @@ class ListeriaMain(object):
 
         else:
             # On dev2 there is not enough mem to run complete db if multiple runs are executed.
-            self._args.kraken_db = '/data/kraken/latest/abfhpv/'
+            self._args.kraken_db = '/data/kraken/latest/abfhpv_lite/'
+            # self._args.kraken_db = '/data/kraken/latest/abfhpv/'
             self._args.working_dir = os.path.abspath(os.getcwd())
             config_file_path = os.path.join(self._args.working_dir, 'snake_conf.yml')
             self.__create_config_file(config_file_path)

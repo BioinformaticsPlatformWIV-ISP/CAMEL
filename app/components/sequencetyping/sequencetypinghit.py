@@ -90,3 +90,12 @@ class SequenceTypingHit(metaclass=abc.ABCMeta):
         :return: True if perfect
         """
         pass
+
+    @staticmethod
+    def compose_allele_link_url(locus, allele_id):
+        """
+        """
+        if allele_id not in ('-', '?'):
+            return "http://bigsdb.pasteur.fr/perl/bigsdb/bigsdb.pl?db=pubmlst_listeria_seqdef_public&page=alleleInfo&locus={}&allele_id={}".format(locus, allele_id)
+        else:
+            None
