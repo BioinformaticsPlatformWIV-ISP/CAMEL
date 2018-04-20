@@ -4,11 +4,11 @@ import unittest
 import os
 import tempfile
 
-from app.camel import Camel
-from app.components.html.htmlexpandablediv import HtmlExpandableDiv
-from app.components.html.htmlreport import HtmlReport
-from resources import CSS_STYLE
-from resources.javascript import JQUERY_SRC
+from camel.app.camel import Camel
+from camel.app.components.html.htmlexpandablediv import HtmlExpandableDiv
+from camel.app.components.html.htmlreport import HtmlReport
+from camel.resources import CSS_STYLE
+from camel.resources.javascript import JQUERY_SRC
 
 
 class TestReadTrimming(unittest.TestCase):

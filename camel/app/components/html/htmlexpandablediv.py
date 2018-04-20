@@ -2,7 +2,7 @@ from typing import List, Tuple
 
 from yattag import Doc
 
-from app.components.html.htmlelement import HtmlElement
+from camel.app.components.html.htmlelement import HtmlElement
 
 
 class HtmlExpandableDiv(HtmlElement):
