@@ -351,8 +351,8 @@ class FastQCAdditionalChecks(Tool):
         total_sequences = 0.0
         for row in data[1:]:
             length_interval, count = row.split('\t')
-            interval_lower = float(length_interval.split('-')[1])
-            if interval_lower < threshold:
+            interval_upper = float(length_interval.split('-')[-1])
+            if interval_upper <= threshold:
                 sequences_below_threshold += float(count)
             total_sequences += float(count)
         return sequences_below_threshold / total_sequences
