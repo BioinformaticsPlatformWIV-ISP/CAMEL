@@ -207,7 +207,7 @@ class GeneDetectionBlastHit(GeneDetectionHit):
         """
         row_data = [
             self.locus,
-            str(self.percent_identity),
+            '{:.2f}'.format(self.percent_identity),
             self.length_statistic,
             self.query,
             '{}..{}'.format(self.query_start, self.query_end),
@@ -231,7 +231,7 @@ class GeneDetectionBlastHit(GeneDetectionHit):
             alignment_cell = HtmlTableCell('view', self.color, link=relative_path)
         html_data = [
             self.locus,
-            str(self.percent_identity),
+            '{:.2f}'.format(self.percent_identity),
             self.length_statistic,
             self.query,
             '{}..{}'.format(self.query_start, self.query_end)]

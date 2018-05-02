@@ -36,15 +36,16 @@ class FastQC(Tool):
             raise ValueError("Required FASTQ input file is missing for FastQC.")
         super(FastQC, self)._check_input()
 
-    def __build_command(self):
+    def __build_command(self) -> None:
         """
-        Concatenates required parameters and options to build the command to run fastQC
-        :return: none
+        Builds the command line call to execute FastQC.
+        :return: None
         """
-        self._command.command = ' '.join([self._tool_command,
-                                          ' '.join(in_file.path for in_file in self._tool_inputs['FASTQ']),
-                                          '--outdir .',
-                                          ' '.join(self._build_options())])
+        self._command.command = ' '.join([
+            self._tool_command,
+            ' '.join(in_file.path for in_file in self._tool_inputs['FASTQ']),
+            '--outdir .',
+            ' '.join(self._build_options())])
 
     def _check_command_output(self):
         """

@@ -1,9 +1,3 @@
-import logging
-import os
-
-from app.components.vcf import vcfutils
-from app.error.invalidparametererror import InvalidParameterError
-from app.io.tooliofile import ToolIOFile
 from app.tools.variantfiltering.filter import Filter
 
 
@@ -19,29 +13,13 @@ class MappingQualityFilter(Filter):
         """
         super(MappingQualityFilter, self).__init__('Variant Filter: Mapping Quality', '0.1', camel)
 
-    def _check_parameters(self):
+    def _apply_filter(self):
         """
-        Checks the command line parameters.
+        Applies the filtering on the variants.
         :return: None
         """
-        if 'min_mapping_quality' not in self._parameters:
-            raise InvalidParameterError("Parameter 'min_mapping_quality' not found")
-        super(MappingQualityFilter, self)._check_parameters()
-
-    def _execute_tool(self):
-        """
-        Executes this tool.
-        :return: None
-        """
-        nb_of_variants_pre = vcfutils.count_variants(self._tool_inputs['VCF_GZ'][0].path)
         self.__build_command()
         self._execute_command()
-        output_file = os.path.join(self._folder, self._parameters['output_filename'].value)
-        self._tool_outputs['VCF_GZ'] = [ToolIOFile(output_file)]
-        nb_of_variants_post = vcfutils.count_variants(output_file)
-        logging.info('{}/{} variants passed mapping quality filtering'.format(nb_of_variants_post, nb_of_variants_pre))
-        self._informs['variants_in'] = nb_of_variants_pre
-        self._informs['variants_out'] = nb_of_variants_post
 
     def __build_command(self):
         """
@@ -53,5 +31,5 @@ class MappingQualityFilter(Filter):
             "--exclude 'MQ<{}'".format(self._parameters['min_mapping_quality'].value),
             self._tool_inputs['VCF_GZ'][0].path,
             '--output-type z',
-            '--output {}'.format(self._parameters['output_filename'].value)
+            '--output {}'.format(self.output_path)
         ])

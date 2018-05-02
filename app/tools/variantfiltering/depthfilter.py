@@ -1,10 +1,4 @@
-import logging
-
-import os
-
-from app.components.vcf import vcfutils
 from app.error.invalidparametererror import InvalidParameterError
-from app.io.tooliofile import ToolIOFile
 from app.tools.variantfiltering.filter import Filter
 
 
@@ -29,20 +23,13 @@ class DepthFilter(Filter):
             raise InvalidParameterError('No filtering parameter found')
         super(DepthFilter, self)._check_parameters()
 
-    def _execute_tool(self):
+    def _apply_filter(self):
         """
-        Executes this tool.
+        Applies the filtering on the variants.
         :return: None
         """
-        nb_of_variants_pre = vcfutils.count_variants(self._tool_inputs['VCF_GZ'][0].path)
         self.__build_command()
         self._execute_command()
-        output_file = os.path.join(self._folder, self._parameters['output_filename'].value)
-        self._tool_outputs['VCF_GZ'] = [ToolIOFile(output_file)]
-        nb_of_variants_post = vcfutils.count_variants(output_file)
-        logging.info('{}/{} variants passed depth filtering'.format(nb_of_variants_post, nb_of_variants_pre))
-        self._informs['variants_in'] = nb_of_variants_pre
-        self._informs['variants_out'] = nb_of_variants_post
 
     def __create_exclude_string(self):
         """
@@ -68,5 +55,5 @@ class DepthFilter(Filter):
             "--exclude '{}'".format(self.__create_exclude_string()),
             self._tool_inputs['VCF_GZ'][0].path,
             '--output-type z',
-            '--output {}'.format(self._parameters['output_filename'].value)
+            '--output {}'.format(self.output_path)
         ])

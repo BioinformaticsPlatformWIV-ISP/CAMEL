@@ -1,4 +1,7 @@
+import ast
+
 from app.components.genedetection.genedetectionhit import GeneDetectionHit
+from app.components.genedetection.genedetectionutils import GeneDetectionUtils
 from app.components.html.htmltablecell import HtmlTableCell
 
 
@@ -29,6 +32,8 @@ class GeneDetectionSRST2Hit(GeneDetectionHit):
         self._length = length
         self._accession = accession
         self._subject = subject
+        self._extra_column_value = None
+        self._extra_column_name = None
 
     @property
     def subject(self):
@@ -39,33 +44,40 @@ class GeneDetectionSRST2Hit(GeneDetectionHit):
         return self._subject
 
     @staticmethod
-    def create_from_srst2_output_line(line, mapping, metadata):
+    def create_from_srst2_output_line(line, mapping, extra_column):
         """
         Creates a hit object from a line in the output of SRST2.
         :param line: SRST2 output line
         :param mapping: Mapping to original sequences
-        :param metadata: Database metadata
+        :param extra_column: Additional column for the hit
         :return: Hit object
         """
         parts = line.split('\t')
-        allele_full = mapping[parts[3]].split(' ')[0]
-        allele_metadata = metadata[allele_full]
-        return GeneDetectionSRST2Hit(allele_full, allele_metadata['allele'], parts[6], parts[7], parts[5],
-                                     float(parts[4]), int(parts[9]), allele_metadata.get('accession', '-'))
+        full_header = mapping.get(parts[3])
+        allele_full, metadata = GeneDetectionUtils.parse_header(full_header)
+        hit = GeneDetectionSRST2Hit(allele_full, metadata['allele'], parts[6], parts[7], float(parts[5]),
+                                    float(parts[4]), int(parts[9]), metadata.get('accession', '-'))
+        if extra_column is not None:
+            name, key = ast.literal_eval(extra_column)
+            hit.set_extra_column(name, metadata[key])
+        return hit
 
     def to_table_row(self):
         """
         Returns the hit as a table row.
         :return: Table row
         """
-        return "\t".join([
+        row_data = [
             self.locus,
             str(self._length),
-            str(self._coverage),
+            '{:.2f}'.format(self._coverage),
             self._mismatches,
             self._uncertainty,
-            str(self._depth),
-            self._accession])
+            '{:.2f}'.format(self._depth),
+            self._accession]
+        if self._extra_column_value is not None:
+            row_data.insert(-1, self._extra_column_value)
+        return '\t'.join(row_data)
 
     def to_html_row(self, base_dir=None, sub_dir=None):
         """
@@ -74,13 +86,16 @@ class GeneDetectionSRST2Hit(GeneDetectionHit):
         :param sub_dir: Specific subdirectory of the base directory to store report files
         :return: Table row
         """
-        return [HtmlTableCell(t, self.color) for t in [
+        html_data = [
             self.locus,
             self._length,
-            self._coverage,
+            '{:.2f}'.format(self._coverage),
             self._mismatches,
             self._uncertainty,
-            self._depth]] + [self.get_accession_cell()]
+            '{:.2f}'.format(self._depth)]
+        if self._extra_column_value is not None:
+            html_data.append(self._extra_column_value)
+        return [HtmlTableCell(v, self.color) for v in html_data] + [self.get_accession_cell()]
 
     @property
     def color(self):
@@ -100,14 +115,35 @@ class GeneDetectionSRST2Hit(GeneDetectionHit):
 
     def get_html_column_names(self):
         """
-        Returns the column names for the HTML output.
-        :return: Column names
+        Returns the HTML column names.
+        :return: HTML column names
         """
-        return GeneDetectionSRST2Hit._TABLE_COLUMNS
+        if self._extra_column_name is None:
+            return GeneDetectionSRST2Hit._TABLE_COLUMNS
+        columns = GeneDetectionSRST2Hit._TABLE_COLUMNS.copy()
+        columns.insert(-1, self._extra_column_name)
+        return columns
 
     def get_table_column_names(self):
         """
-        Returns the column names for the tabular output.
-        :return: Column names
+        Returns the table column names.
+        :return: Table column names
         """
-        return GeneDetectionSRST2Hit._TABLE_COLUMNS
+        if self._extra_column_name is None:
+            return GeneDetectionSRST2Hit._TABLE_COLUMNS
+        columns = GeneDetectionSRST2Hit._TABLE_COLUMNS.copy()
+        columns.insert(-1, self._extra_column_name)
+        return columns
+
+    def set_extra_column(self, name, value):
+        """
+        Sets the extra column information.
+        This extra column is used to contains some additional metadata associated with this hit. It is included in
+        the tabular output and the HTML output. It consists of a column name and a value.
+        E.g.: name - 'Protein function', value - 'Heat shock protein'
+        :param name: Name of the extra column
+        :param value: Value of the extra column
+        :return: None
+        """
+        self._extra_column_value = value
+        self._extra_column_name = name

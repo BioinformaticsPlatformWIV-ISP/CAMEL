@@ -39,7 +39,8 @@ class SRST2HitExtractor(Tool):
             with open(tsv_input) as handle:
                 for line in handle.readlines()[1:]:
                     hits.append(GeneDetectionSRST2Hit.create_from_srst2_output_line(
-                        line, self._input_informs['mapping'], self._input_informs['db_info']['metadata']))
+                        line, self._input_informs['db']['mapping'],
+                        self._parameters['extra_column'].value if 'extra_column' in self._parameters else None))
         self._tool_outputs['VAL_Hits'] = sorted([ToolIOValue(h) for h in hits], key=lambda v: v.value.locus)
         output_path = os.path.join(self._folder, self._parameters['output_filename'].value)
         self.__create_output_file(hits, output_path)
@@ -52,9 +53,7 @@ class SRST2HitExtractor(Tool):
         """
         if 'TSV' not in self._tool_inputs:
             raise InvalidInputSpecificationError("TSV input is required")
-        if 'mapping' not in self._input_informs:
-            raise InvalidInputSpecificationError("Sequence id mapping is required")
-        if 'db_info' not in self._input_informs:
+        if 'db' not in self._input_informs:
             raise InvalidInputSpecificationError("Database information is required")
         super()._check_input()
 

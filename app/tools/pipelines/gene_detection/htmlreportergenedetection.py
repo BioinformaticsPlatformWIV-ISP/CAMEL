@@ -30,7 +30,7 @@ class HtmlReporterGeneDetection(Tool):
         :return: None
         """
         db_name = self._input_informs['db_info']['name']
-        self._report_section = HtmlReportSection(db_name, 3)
+        self._report_section = HtmlReportSection(self._input_informs['db_info']['title'], 3)
         self._subfolder = os.path.join('gene_detection', FileSystemHelper.make_valid(db_name))
 
         # Add output table
@@ -38,8 +38,8 @@ class HtmlReporterGeneDetection(Tool):
             self._report_section.add_paragraph('No hits found.')
         else:
             header = self._tool_inputs['VAL_Hits'][0].value.get_html_column_names()
-            table_data = [hit.to_html_row(self._report_section, self._subfolder) for hit in [
-                t.value for t in self._tool_inputs['VAL_Hits']]]
+            table_data = [hit.to_html_row(self._report_section, self._subfolder) for hit in
+                          [t.value for t in self._tool_inputs['VAL_Hits']]]
             self._report_section.add_table(table_data, header, [('class', 'data')])
 
             # Add a download link to the TSV file
