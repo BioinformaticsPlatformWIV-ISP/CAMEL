@@ -3,7 +3,7 @@
 galaxy:
   # directory to dump stderr/stdout or data in case of pipeline error while running from galaxy
   # as Galaxy removes data and truncates stderr and stdout.
-  dump_dir: "/scratch/temp/galaxy_dumps/"
+  dump_dir: /scratch/temp/galaxy_dumps/
 
 config_dump_dir: /scratch/temp/pipeline_configs
 
@@ -15,4 +15,4 @@ config_dump_dir: /scratch/temp/pipeline_configs
 tool_service: db
 
 testing:
-  testfiles_dir: "/data/camel/testdata/"
+  testfiles_dir: /data/camel/testdata/
