@@ -39,7 +39,7 @@ class HtmlReporterGeneDetection(Tool):
         else:
             header = self._tool_inputs['VAL_Hits'][0].value.get_html_column_names()
             table_data = [hit.to_html_row(self._report_section, self._subfolder) for hit in
-                          [t.value for t in self._tool_inputs['VAL_Hits']]]
+                          sorted([t.value for t in self._tool_inputs['VAL_Hits']], key=lambda hit: hit.locus)]
             self._report_section.add_table(table_data, header, [('class', 'data')])
 
             # Add a download link to the TSV file
