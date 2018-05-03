@@ -1,78 +1,9 @@
+from app.io.tooliodb import ToolIODb
+from app.io.tooliodirectory import ToolIODirectory
+
+
 GENE_DETECTION_WORKING_DIR = os.path.join(__WORKING_DIR, 'gene_detection')
 GENE_DETECTION_REPORT = os.path.join(GENE_DETECTION_WORKING_DIR, 'report-html.io')
-
-class GeneDatabase(object):
-
-    """
-    This class represents a gene database.
-    """
-
-    def __init__(self, name, path, path_clustered, extra_column, pi_threshold):
-        """
-        Initializes a gene database.
-        :param name: Database name
-        :param path: Path to the database directory.
-        :param path_clustered: Path to the clustered database directory
-        :param extra_column: Extra column containing metadata (name, key)
-        :param pi_threshold: Percent identity threshold
-        """
-        self.name = name
-        self.path = path
-        self.path_clustered = path_clustered
-        self.extra_column = extra_column
-        self.pi_threshold = pi_threshold
-
-
-# Database configuration (possibly move?)
-DATABASES = {
-    'resistance': [
-        GeneDatabase('ARG-ANNOT',
-                     '/data/sequence_db/ARG-ANNOT',
-                     '/data/srst2/gene_db/ARG-ANNOT-clustered_80',
-                     None, 90),
-        GeneDatabase('CARD',
-                     '/data/sequence_db/CARD',
-                     '/data/srst2/gene_db/CARD-clustered_80',
-                     None, 90),
-        GeneDatabase('ResFinder',
-                     '/data/sequence_db/ResFinder',
-                     '/data/srst2/gene_db/ResFinder-clustered_80',
-                     None, 98)
-    ],
-    'virulence': [
-        GeneDatabase('VirulenceFinder',
-                     '/data/sequence_db/VirulenceFinder-Listeria/',
-                     '/data/srst2/gene_db/VirulenceFinder-Listeria-clustered_80/',
-                     ('Protein function', 'protein_function',), 90),
-    ],
-    'plasmid': [
-        GeneDatabase('Gram_positive',
-                     '/data/sequence_db/PlasmidFinder-gram_positive/',
-                     '/data/srst2/gene_db/PlasmidFinder-gram_positive-clustered_80/',
-                     ['Notes', 'notes'], 95)
-    ]
-}
-
-def get_db_keys(db_group):
-    """
-    Returns the database keys for the databases belong to a db group.
-    :param db_group: The database group defined in DATABASES (e.g. 'resistance')
-    :return: Database keys
-    """
-    return [d.name for d in DATABASES[db_group] if d.name in config['gene_detection']]
-
-def get_database(name):
-    """
-    Returns the database with the given name.
-    :param name: Database name
-    :return: Database
-    """
-    for db_type in DATABASES:
-        for db in DATABASES[db_type]:
-            if db.name == name:
-                return db
-    raise ValueError("Database '{}' not found".format(name))
-
 
 
 rule database_manager:
@@ -83,12 +14,11 @@ rule database_manager:
         FASTA = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'database_manager', 'fasta.io'),
         INFORMS = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'database_manager', 'informs.io')
     params:
-        db_path = lambda wildcards: get_database(wildcards.db).path,
         running_dir = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}')
     run:
         from app.tools.pipelines.gene_detection.dbmanager import DBManager
         db_manager = DBManager(camel)
-        db_manager.add_input_files({'DIR': [ToolIODirectory(params.db_path)]})
+        db_manager.add_input_files({'DIR': [ToolIODirectory(ToolIODb(wildcards.db).path)]})
         SnakemakeUtils.add_pickle_inputs(db_manager, input)
         step = SnakeStep(rule, db_manager, camel, params.running_dir, config)
         step.run_step()
@@ -145,8 +75,10 @@ rule hit_filtering:
         TSV = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'hit_filtering', 'tsv-filtered.io')
     params:
         running_dir = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'hit_filtering'),
-        percent_identity = lambda wildcards: get_database(wildcards.db).pi_threshold,
-        extra_column = lambda wildcards: get_database(wildcards.db).extra_column,
+        filtering_method=lambda wildcards: config['gene_detection'][wildcards.db].get('filtering_method'),
+        min_percent_identity = lambda wildcards: config['gene_detection'][wildcards.db].get('min_percent_identity'),
+        min_coverage = lambda wildcards: config['gene_detection'][wildcards.db].get('min_coverage'),
+        extra_column = lambda wildcards: config['gene_detection'][wildcards.db].get('extra_column'),
         output_filename = lambda wildcards: os.path.join(GENE_DETECTION_WORKING_DIR, wildcards.db, 'hits-{}-{}.tsv'.format(
             FileSystemHelper.make_valid(config['sample_name']),
             FileSystemHelper.make_valid(wildcards.db)))
@@ -155,11 +87,20 @@ rule hit_filtering:
         hit_filtering = HitFiltering(camel)
         SnakemakeUtils.add_pickle_inputs(hit_filtering, input)
         step = SnakeStep(rule, hit_filtering, camel, params.running_dir, config)
-        hit_filtering.update_parameters(min_percent_identity=params.percent_identity,
-                                        output_filename=params.output_filename)
+
+        # Update parameters
+        hit_filtering.update_parameters(output_filename=os.path.join(params.running_dir, params.output_filename))
+        if params.filtering_method is not None:
+            hit_filtering.update_parameters(filtering_method=params.filtering_method)
+        if params.min_percent_identity is not None:
+            hit_filtering.update_parameters(min_percent_identity=params.min_percent_identity)
+        if params.min_coverage is not None:
+            hit_filtering.update_parameters(min_coverage=params.min_coverage)
         if params.extra_column is not None:
-            hit_filtering.update_parameters(extra_column_name=params.extra_column[0],
-                                            extra_column_key=params.extra_column[1])
+           hit_filtering.update_parameters(
+               extra_column_name=params.extra_column[0], extra_column_key=params.extra_column[1])
+
+        # Run tool
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(hit_filtering, output)
 
@@ -188,7 +129,8 @@ rule text_alignment_extraction:
     """
     input:
         TXT = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'alignment_generation', 'txt.io'),
-        VAL_Hits = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'hit_filtering', 'blast-hits.io')
+        VAL_Hits = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'hit_filtering', 'blast-hits.io'),
+        INFORMS_db_info=os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'database_manager', 'informs.io')
     output:
         VAL_Hits = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'alignment_extraction', 'blast-hits.io')
     params:
@@ -206,31 +148,13 @@ rule text_alignment_extraction:
             hits_with_alignment.append(io_value)
         SnakemakeUtils.dump_object(hits_with_alignment, output.VAL_Hits)
 
-rule get_clustered_db:
-    """
-    Returns the clustered database that can be used by SRST2.
-    """
-    output:
-        FASTA = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'clustered', 'fasta.io'),
-        INFORMS = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'clustered', 'mapping.io')
-    params:
-        running_dir = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}'),
-        db_path = lambda wildcards: get_database(wildcards.db).path_clustered
-    run:
-        from app.tools.pipelines.gene_detection.dbmanagerclustered import DBManagerClustered
-        db_manager = DBManagerClustered(camel)
-        step = SnakeStep(rule, db_manager, camel, params.running_dir, config)
-        db_manager.add_input_files({'DIR': [ToolIODirectory(params.db_path)]})
-        step.run_step()
-        SnakemakeUtils.dump_tool_outputs(db_manager, output)
-
 rule srst2_gene_detection:
     """
     Read-mapping based gene detection using SRST2.
     """
     input:
         FASTQ_PE = TRIMMED_READS_PE,
-        FASTA = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'clustered', 'fasta.io'),
+        FASTA = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'database_manager', 'fasta.io'),
     output:
         TSV = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'srst2', 'tsv.io')
     params:
@@ -255,8 +179,7 @@ rule srst2_hit_extraction:
     """
     input:
         TSV = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'srst2', 'tsv.io'),
-        INFORMS_db_info = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'database_manager', 'informs.io'),
-        INFORMS_mapping = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'clustered', 'mapping.io')
+        INFORMS_db = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'database_manager', 'informs.io'),
     output:
         VAL_Hits = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'srst2', 'srst2-hits.io'),
         TSV = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'srst2', 'tsv-srst2.io')
@@ -327,22 +250,29 @@ rule combine_gene_detection_reports:
     Combines the reports from the different databases.
     """
     input:
-        HTML_Res = expand(os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'report', 'html.io'), db=get_db_keys('resistance')),
-        HTML_Vir = expand(os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'report', 'html.io'), db=get_db_keys('virulence')),
-        HTML_Pla = expand(os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'report', 'html.io'), db=get_db_keys('plasmid'))
+        HTML_reports = expand(os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'report', 'html.io'), db=config['gene_detection']),
     output:
         GENE_DETECTION_REPORT
     params:
-        output_dir = config['output_dir']
+        output_dir = config['output_dir'],
+        dbs = config['gene_detection']
     run:
         gene_detection_module = HtmlElement('div')
-        for title, input_html in [
-                ('Resistance Characterization', input.HTML_Res),
-                ('Virulence Detection', input.HTML_Vir),
-                ('Plasmid Replicon Detection', input.HTML_Pla)]:
-            if len(input_html) > 0:
-                gene_detection_module.add_module_header(title)
-                for pickle in input_html:
+        gene_detection_db_sections = {
+            'Resistance Characterization': ['resfinder' ,'card', 'arg_annot'],
+            'Virulence Detection': ['virulencefinder_listeria'],
+            'Plasmid Replicon Detection': ['plasmidfinder_grampositive']
+        }
+        section_reports = {key: [] for key in gene_detection_db_sections.keys()}
+        for section, dbs in gene_detection_db_sections.items():
+            for db in dbs:
+                if db in params.dbs:
+                    section_reports[section].append(os.path.join(GENE_DETECTION_WORKING_DIR, db, 'report', 'html.io'))
+
+        for section, reports in section_reports.items():
+            gene_detection_module.add_module_header(section)
+            if len(reports) > 0:
+                for pickle in reports:
                     report_section = SnakemakeUtils.load_object(pickle)[0].value
                     report_section.copy_files(params.output_dir)
                     gene_detection_module.add_html_object(report_section)
