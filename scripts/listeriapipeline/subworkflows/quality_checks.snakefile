@@ -128,13 +128,22 @@ rule Get_cgMLST_stats:
         all_hits = SnakemakeUtils.load_object(input.hits)
         nb_perfect = len([v for v in all_hits if v.value.is_perfect_hit()])
         SnakemakeUtils.dump_object({'hits_found': nb_perfect, 'nb_of_loci': len(all_hits)}, output.INFORMS)
+
+rule Get_cgMLST_dummy_stats:
+    """
+    Dummy rule to create dummy cgMLST stats when cgmlst is skipped
+    """
+    output:
+        INFORMS=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'informs-cgmlst-dummy.io')
+    run:
+        SnakemakeUtils.dump_object({'hits_found': 1, 'nb_of_loci': 1}, output.INFORMS)
         
 rule Check_quality_criteria:
     """
     Checks if the quality criteria were met.
     """
     input:
-        INFORMS_cgmlst=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'informs-cgmlst.io'),
+        INFORMS_cgmlst=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'informs-cgmlst.io') if 'cgMLST' in config['sequence_typing'] else os.path.join(QUALITY_CHECKS_WORKING_DIR, 'informs-cgmlst-dummy.io'),
         INFORMS_coverage=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'coverage_calculation', 'informs.io'),
         INFORMS_fastqc_checks=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'fastqc_checks', 'informs.io'),
         INFORMS_mapping=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'read_mapping', 'informs.io')
@@ -161,7 +170,8 @@ rule Report_quality_checks:
         INFORMS_mapping=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'read_mapping', 'informs.io'),
         INFORMS_additional_checks=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'fastqc_checks', 'informs.io'),
         INFORMS_quality_criteria=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'quality_checks', 'informs.io'),
-        INFORMS_cgmlst=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'informs-cgmlst.io')
+        INFORMS_cgmlst=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'informs-cgmlst.io') if 'cgMLST' in config['sequence_typing'] else os.path.join(QUALITY_CHECKS_WORKING_DIR, 'informs-cgmlst-dummy.io')
+        #INFORMS_cgmlst=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'informs-cgmlst.io')
     output:
         VAL_HTML=QUALITY_CHECKS_REPORT
     params:
