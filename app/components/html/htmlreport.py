@@ -69,8 +69,7 @@ class HtmlReport(HtmlBase):
         with self.get_tag('div', [('class', 'header')]):
             with self.get_tag('div', [('id', 'header_title')]):
                 self._doc.stag('img', src=os.path.basename(LOGO_SCIENSANO), alt='Sciensano Belgium', id='header_logo', height=80)
-                self._doc.text("{} report".format(pipeline_name))
-                # self.add_text("{} report".format(pipeline_name))
+                self.add_text("{} report".format(pipeline_name))
         shutil.copy(LOGO_SCIENSANO, self._output_dir)
 
     def to_html(self):

@@ -1,3 +1,5 @@
+import bs4
+from bs4 import BeautifulSoup
 from yattag import Doc
 
 from app.components.html.htmlbase import HtmlBase
@@ -52,7 +54,14 @@ class HtmlElement(HtmlBase):
             # Otherwise the content / text is added inside of the tag
             with tag(self._tag_name, *self._attributes):
                 if self._tag_text is not None:
-                    text(self._tag_text)
+                    html = BeautifulSoup(str(self._tag_text), 'html.parser')
+                    for part in html.contents:
+                        if isinstance(part, bs4.element.Tag):
+                            doc.asis(f'<{part.name}>')
+                            doc.text(part.text)
+                            doc.asis(f'</{part.name}>')
+                        else:
+                            doc.text(part)
                 if self._has_nested_content():
                     doc.asis(self._doc.getvalue())
         return doc.getvalue()
