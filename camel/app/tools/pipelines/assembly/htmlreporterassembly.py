@@ -50,16 +50,15 @@ class HtmlReporterAssembly(Tool):
     def __add_assembly_info(self):
         """
         Adds the assembly info.
-        :param assembler: Name of the assembler that was used.
         :return: None
         """
         quast_informs = self._input_informs['quast']
         table_data = [
             ('Assembler:', self._tool_inputs['ASSEMBLER'][0].value),
-            ('N50:', quast_informs['contig'].get('N50', '-')),
-            ('Number of contigs:', quast_informs['contig'].get('# contigs (>= 0 bp)', '-')),
-            ('Number of contigs (>1000bp):', quast_informs['contig'].get('# contigs (>= 1000 bp)', '-')),
-            ('Total length:', quast_informs['genome'].get('Total length'))
+            ('N50:', '{:,}'.format(int(quast_informs['contig']['N50']))),
+            ('Number of contigs:', '{:,}'.format(int(quast_informs['contig']['# contigs (>= 0 bp)']))),
+            ('Number of contigs (>1000 bases):', '{:,}'.format(int(quast_informs['contig']['# contigs (>= 1000 bp)']))),
+            ('Total length:', '{:,}'.format(int(quast_informs['genome']['Total length'])))
         ]
         self._report_section.add_table(table_data, table_attributes=[('class', 'information')])
 

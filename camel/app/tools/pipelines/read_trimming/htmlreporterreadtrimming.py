@@ -26,7 +26,7 @@ class HtmlReporterReadTrimming(Tool):
         Executes this tool.
         :return: None
         """
-        self._report_section = HtmlReportSection('Read Trimming')
+        self._report_section = HtmlReportSection('Read trimming')
         self.__add_qc_pre_section()
         self.__add_trimming_section()
         self.__add_qc_post_section()
@@ -74,15 +74,16 @@ class HtmlReporterReadTrimming(Tool):
         Adds the read trimming section.
         :return: None
         """
-        self._report_section.add_header('Read Trimming', 3)
+        self._report_section.add_header('Read trimming', 3)
         trimming_info = self._input_informs['trimming']
         table_data = [
-            ['Input Reads Pairs:', trimming_info['paired_reads_in']],
-            ['Both Surviving:', trimming_info['paired_reads_out']],
-            ['Forward Only Surviving:', trimming_info['forward_only_reads']],
-            ['Reverse Only Surviving:', trimming_info['reverse_only_reads']],
-            ['Dropped:', trimming_info['reads_drop']]
+            ['Input reads pairs:', '{:,}'.format(int(trimming_info['paired_reads_in']))],
         ]
+        for label, key in [('Both surviving:', 'paired_reads_out'), ('Forward only surviving:', 'forward_only_reads'),
+                           ('Reverse only surviving:', 'reverse_only_reads'), ('Dropped', 'reads_drop')]:
+            count, perc = trimming_info[key].split(' ')
+            table_data.append([label, '{:,} {}'.format(int(count), perc)])
+
         self._report_section.add_table(table_data, table_attributes=[('class', 'information')])
         self.__add_trimmed_reads()
 
