@@ -1,5 +1,6 @@
 ASSEMBLY_WORKING_DIR = os.path.join(__WORKING_DIR, 'assembly')
 ASSEMBLY_REPORT = os.path.join(ASSEMBLY_WORKING_DIR, 'report-html.io')
+ASSEMBLY_SUMMARY = os.path.join(ASSEMBLY_WORKING_DIR, 'report-summary.tsv')
 FASTA_ASSEMBLY = os.path.join(ASSEMBLY_WORKING_DIR, 'fasta.io')
 
 rule velvet_optimiser:
@@ -132,3 +133,29 @@ rule report_assembly:
         step.run_step()
         reporter.tool_outputs['VAL_HTML'][0].value.copy_files(params.output_dir)
         SnakemakeUtils.dump_tool_outputs(reporter, output)
+
+rule summary_assembly:
+    """
+    Creates a tabular summary for the assembly.
+    """
+    input:
+        INFORMS_quast = os.path.join(ASSEMBLY_WORKING_DIR, 'quast', 'informs.io')
+    output:
+        ASSEMBLY_SUMMARY
+    params:
+        running_dir = os.path.join(ASSEMBLY_WORKING_DIR),
+        sample_name = config['sample_name'],
+        assembler = config['assembler'],
+        output_dir = config['output_dir']
+    run:
+        quast_informs = SnakemakeUtils.load_object(input.INFORMS_quast)
+        summary_data = [
+            ('n50', quast_informs['contig']['N50']),
+            ('nb_contigs', quast_informs['contig']['# contigs']),
+            ('nb_contigs_lt_1000', quast_informs['contig']['# contigs (>= 1000 bp)']),
+            ('total_length', quast_informs['genome']['Total length'])
+        ]
+        with open(output[0], 'w') as handle:
+            for key, value in summary_data:
+                handle.write(f'{key}\t{value}')
+                handle.write('\n')
