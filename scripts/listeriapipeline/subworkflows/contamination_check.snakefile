@@ -1,5 +1,6 @@
 CONTAMINATION_WORKING_DIR = os.path.join(__WORKING_DIR, 'contamination_check')
 CONTAMINATION_REPORT = os.path.join(CONTAMINATION_WORKING_DIR, 'report-html.io')
+CONTAMINATION_SUMMARY = os.path.join(CONTAMINATION_WORKING_DIR, 'report-summary.tsv')
 
 
 rule get_kraken_db:
@@ -110,3 +111,27 @@ rule contamination_report:
         step.run_step()
         reporter.tool_outputs['VAL_HTML'][0].value.copy_files(params.output_dir)
         SnakemakeUtils.dump_tool_outputs(reporter, output)
+
+rule contamination_summary:
+    """
+    Creates a tabular summary containing the results of the contamination check.
+    """
+    input:
+        INFORMS_species = os.path.join(CONTAMINATION_WORKING_DIR, 'informs-contamination.io')
+    output:
+        CONTAMINATION_SUMMARY
+    params:
+        running_dir = os.path.join(CONTAMINATION_WORKING_DIR),
+        output_dir = config['output_dir']
+    run:
+        informs = SnakemakeUtils.load_object(input.INFORMS_species)
+        summary_data = [
+            ('expected_species', informs['expected'][0]),
+            ('expected_species_occurrence', informs['expected'][1]),
+            ('contaminants_warn', str(informs['contaminants_warn'])),
+            ('contaminants_fail', str(informs['contaminants_fail']))
+        ]
+        with open(output[0], 'w') as handle:
+            for key, value in summary_data:
+                handle.write(f'{key}\t{value}')
+                handle.write('\n')
