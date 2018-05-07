@@ -1,6 +1,6 @@
 QUALITY_CHECKS_WORKING_DIR=os.path.join(__WORKING_DIR, 'quality_checks')
 QUALITY_CHECKS_REPORT=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'report-html.io')
-
+QUALITY_CHECKS_SUMMARY=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'report-summary.tsv')
 
 rule FastQC_additional_checks:
     """
@@ -171,7 +171,6 @@ rule Report_quality_checks:
         INFORMS_additional_checks=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'fastqc_checks', 'informs.io'),
         INFORMS_quality_criteria=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'quality_checks', 'informs.io'),
         INFORMS_cgmlst=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'informs-cgmlst.io') if 'cgMLST' in config['sequence_typing'] else os.path.join(QUALITY_CHECKS_WORKING_DIR, 'informs-cgmlst-dummy.io')
-        #INFORMS_cgmlst=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'informs-cgmlst.io')
     output:
         VAL_HTML=QUALITY_CHECKS_REPORT
     params:
@@ -183,3 +182,42 @@ rule Report_quality_checks:
         SnakemakeUtils.add_pickle_inputs(reporter, input)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
+
+rule Summary_quality_checks:
+    """
+    Creates a tabular summary containing the quality checks information.
+    """
+    input:
+        INFORMS_coverage=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'coverage_calculation', 'informs.io'),
+        INFORMS_mapping=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'read_mapping', 'informs.io'),
+        INFORMS_additional_checks=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'fastqc_checks', 'informs.io'),
+        INFORMS_cgmlst=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'informs-cgmlst.io') if 'cgMLST' in config['sequence_typing'] else os.path.join(QUALITY_CHECKS_WORKING_DIR, 'informs-cgmlst-dummy.io')
+    output:
+        QUALITY_CHECKS_SUMMARY
+    params:
+        running_dir=os.path.join(QUALITY_CHECKS_WORKING_DIR)
+    run:
+        informs_cgmlst = SnakemakeUtils.load_object(input.INFORMS_cgmlst)
+        informs_qc_checks = SnakemakeUtils.load_object(input.INFORMS_additional_checks)['tests']
+        summary_data = [
+            ('coverage', SnakemakeUtils.load_object(input.INFORMS_coverage)['median_depth']),
+            ('assembly_mapping_rate', SnakemakeUtils.load_object(input.INFORMS_mapping)['stats_map_rate']),
+            ('cgmlst_hits_found', informs_cgmlst['hits_found']),
+            ('cgmlst_nb_loci', informs_cgmlst['nb_of_loci']),
+            ('check_avg_qs_fwd', informs_qc_checks['Average quality score'][0]),
+            ('check_avg_qs_rev', informs_qc_checks['Average quality score'][1]),
+            ('check_gc_fwd', informs_qc_checks['GC content'][0]),
+            ('check_gc_rev', informs_qc_checks['GC content'][1]),
+            ('check_n_fraction_fwd', informs_qc_checks['Maximal N-fraction'][0]),
+            ('check_n_fraction_rev', informs_qc_checks['Maximal N-fraction'][1]),
+            ('check_qs_drop_fwd', informs_qc_checks['Mean Q-score drop'][0]),
+            ('check_qs_drop_rev', informs_qc_checks['Mean Q-score drop'][1]),
+            ('check_pb_seq_content_fwd', informs_qc_checks['Per base sequence content'][0]),
+            ('check_pb_seq_content_rev', informs_qc_checks['Per base sequence content'][1]),
+            ('check_slen_dist_fwd', informs_qc_checks['Sequence Length Distribution'][0]),
+            ('check_slen_dist_rev', informs_qc_checks['Sequence Length Distribution'][1]),
+        ]
+        with open(output[0], 'w') as handle:
+            for key, value in summary_data:
+                handle.write(f'{key}\t{value}')
+                handle.write('\n')
