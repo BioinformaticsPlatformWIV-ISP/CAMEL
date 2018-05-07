@@ -1,4 +1,5 @@
 import logging
+import re
 
 from app.tools.tool import Tool
 
@@ -29,13 +30,15 @@ class FastQCAdditionalChecks(Tool):
         Performs the quality checks.
         :return: None
         """
+        self._informs['max_read_length'] = self.__get_max_read_length(self._tool_inputs['TXT_RAW'][0].path)
+
         test_functions = {
             'Mean Q-score drop': self.__test_mean_qscore_drop,
             'Average quality score': self.__test_average_read_quality,
             'Per base sequence content': self.__test_per_base_sequence_content,
             'GC content': self.__test_gc_content,
             'Maximal N-fraction': self.__test_max_n_fraction,
-            'Sequence Length Distribution': self.__test_sequence_length_distribution
+            'Sequence length distribution': self.__test_sequence_length_distribution
         }
         self._informs.update({'samples': [], 'tests': {k: [] for k in test_functions.keys()},
                               'values': {'average_read_quality': [], 'GC_content': []}})
@@ -44,6 +47,22 @@ class FastQCAdditionalChecks(Tool):
             modules = self.__get_modules(input_file)
             for test_name, test in test_functions.items():
                 self._informs['tests'][test_name].append(test(modules))
+
+    @staticmethod
+    def __get_max_read_length(data_file):
+        """
+        Returns the maximum read length as reported by FastQC.
+        This is based on the FastQC report of the raw reads (because in theory all reads could be trimmed at the end).
+        :return: Maximum read length
+        """
+        with open(data_file) as handle:
+            for line in handle.readlines():
+                if line.startswith('Sequence length'):
+                    m = re.match('.*[-\t](\d+?)$', line.strip())
+                    if not m:
+                        raise ValueError('Invalid format: {}'.format(line.strip()))
+                    return int(m.group(1))
+        raise ValueError('Cannot parse max read length from: {}'.format(data_file))
 
     @staticmethod
     def __get_modules(input_file):
@@ -364,8 +383,10 @@ class FastQCAdditionalChecks(Tool):
         :return: 'Pass', 'Warn' or 'Fail'
         """
         data = modules['Sequence Length Distribution']
-        threshold_fail = float(self._parameters['sequence_length_threshold_fail'].value)
-        threshold_warn = float(self._parameters['sequence_length_threshold_warn'].value)
+        threshold_fail = 0.40 * self._informs['max_read_length']
+        self._informs['length_fail'] = threshold_fail
+        threshold_warn = 0.6667 * self._informs['max_read_length']
+        self._informs['length_warn'] = threshold_warn
         max_fraction = float(self._parameters['sequence_length_fraction'].value)
 
         fraction_below_fail = self.__get_fraction_of_sequences_below_threshold(data, threshold_fail)
