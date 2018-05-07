@@ -97,22 +97,39 @@ rule move_output:
         if config['from_galaxy']:
             if 'mutect1_tab_output' in config:
                 tab_init_path = SnakemakeUtils.load_object(input.TXT_CALL_STATS)[0]
-                os.link(tab_init_path.path, config['mutect1_tab_output'])
+                try:
+                    os.link(tab_init_path.path, config['mutect1_tab_output'])
+                except FileExistsError:
+                    os.remove(config['mutect1_tab_output'])
+                    os.link(tab_init_path.path, config['mutect1_tab_output'])
             if 'mutect1_vcf_output' in config:
                 vcf_init_path = SnakemakeUtils.load_object(input.VCF_MUTECT1)[0]
-                os.link(vcf_init_path.path, config['mutect1_vcf_output'])
+                try:
+                    os.link(vcf_init_path.path, config['mutect1_vcf_output'])
+                except FileExistsError:
+                    os.remove(config['mutect1_vcf_output'])
+                    os.link(vcf_init_path.path, config['mutect1_vcf_output'])
             if 'mutect2_vcf_output' in config:
                 vcf_init_path = SnakemakeUtils.load_object(input.VCF_MUTECT2)[0]
-                os.link(vcf_init_path.path, config['mutect2_vcf_output'])
+                try:
+                    os.link(vcf_init_path.path, config['mutect2_vcf_output'])
+                except FileExistsError:
+                    os.remove(config['mutect2_vcf_output'])
+                    os.link(vcf_init_path.path, config['mutect2_vcf_output'])
             if 'mutect2_bam_output' in config:
                 bam_init_path = SnakemakeUtils.load_object(input.BAM_MUTECT2)[0]
-                os.link(bam_init_path.path, config['mutect2_bam_output'])
-            if 'covar_output' in config:
-                pdf_init_path = SnakemakeUtils.load_object(input.PDF)[0]
-                os.link(pdf_init_path.path, config['covar_output'])
+                try:
+                    os.link(bam_init_path.path, config['mutect2_bam_output'])
+                except FileExistsError:
+                    os.remove(config['mutect2_bam_output'])
+                    os.link(bam_init_path.path, config['mutect2_bam_output'])
             if 'bam_output' in config:
                 bam_init_path = SnakemakeUtils.load_object(input.BAM)[0]
-                os.link(bam_init_path.path, config['bam_output'])
+                try:
+                    os.link(bam_init_path.path, config['bam_output'])
+                except FileExistsError:
+                    os.remove(config['bam_output'])
+                    os.link(bam_init_path.path, config['bam_output'])
 
         else:
             if 'mutect1_tab_output' in config:
