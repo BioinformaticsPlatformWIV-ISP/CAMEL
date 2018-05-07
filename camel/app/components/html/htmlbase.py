@@ -1,7 +1,9 @@
 from typing import Tuple, List, Union
 
 import abc
+import bs4
 import yattag
+from bs4 import BeautifulSoup
 from yattag import SimpleDoc
 
 
@@ -39,7 +41,7 @@ class HtmlBase(object):
         :return: None
         """
         with self.get_tag('h{}'.format(str(level)), attributes):
-            self._doc.text(text)
+            self.add_text(text)
 
     def add_paragraph(self, text: str, attributes: List[Tuple[str, str]]=None):
         """
@@ -49,7 +51,7 @@ class HtmlBase(object):
         :return: None
         """
         with self.get_tag('p', attributes):
-            self._doc.text(text)
+            self.add_text(text)
 
     def add_line_break(self):
         """
@@ -90,7 +92,7 @@ class HtmlBase(object):
         with self.get_tag('tr'):
             for name in column_names:
                 with self.get_tag('th'):
-                    self._doc.text(name)
+                    self.add_text(name)
 
     def _add_table_row(self, data: List[Union[str, int]]) -> None:
         """
@@ -104,7 +106,7 @@ class HtmlBase(object):
                     self._doc.asis(value.to_html())
                 else:
                     with self.get_tag('td'):
-                        self._doc.text(value)
+                        self.add_text(value)
 
     def add_link_to_file(self, link_text: str, file_: str) -> None:
         """
@@ -131,7 +133,7 @@ class HtmlBase(object):
         with self._doc.tag('div', klass='alert-box error'):
             with self._doc.tag('span'):
                 self._doc.text('error: ')
-            self._doc.text(message)
+            self.add_text(message)
 
     def add_warning_message(self, message: str) -> None:
         """
@@ -142,9 +144,9 @@ class HtmlBase(object):
         with self._doc.tag('div', klass='alert-box warning'):
             with self._doc.tag('span'):
                 self._doc.text('warning: ')
-            self._doc.text(message)
+            self.add_text(message)
 
-    def add_labeled_list(self, rows: List[str], ordered=False, attributes: List[Tuple[str, str]]=None) -> None:
+    def add_labeled_list(self, rows: List[List[str]], ordered=False, attributes: List[Tuple[str, str]]=None) -> None:
         """
         Adds a labeled list.
         :param rows: List of label-text pairs
@@ -158,7 +160,7 @@ class HtmlBase(object):
                 with self._doc.tag('li'):
                     with self._doc.tag('b'):
                         self._doc.text('{}: '.format(label))
-                    self._doc.text(text)
+                    self.add_text(text)
 
     def add_html_object(self, input_object: 'HtmlBase') -> None:
         """
@@ -185,7 +187,14 @@ class HtmlBase(object):
         """
         if text is None:
             raise ValueError("Cannot add None as text to the HTML object")
-        self._doc.text(text)
+        html = BeautifulSoup(str(text), 'html.parser')
+        for part in html.contents:
+            if isinstance(part, bs4.element.Tag):
+                self._doc.asis(f'<{part.name}>')
+                self._doc.text(part.text)
+                self._doc.asis(f'</{part.name}>')
+            else:
+                self._doc.text(part)
 
     def add_module_header(self, text: str, id_: str=None) -> None:
         """

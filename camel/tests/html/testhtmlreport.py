@@ -11,7 +11,7 @@ from camel.resources import CSS_STYLE
 from camel.resources.javascript import JQUERY_SRC
 
 
-class TestReadTrimming(unittest.TestCase):
+class TestHtmlReporter(unittest.TestCase):
     """
     Tests the HtmlReport and related classes.
     """
@@ -26,7 +26,7 @@ class TestReadTrimming(unittest.TestCase):
         Sets up the resources before running the test.
         :return: None
         """
-        self.running_dir = tempfile.mkdtemp(None, 'camel_', '/scratch/temp')
+        self.running_dir = tempfile.mkdtemp(None, 'camel_', TestHtmlReporter.camel.config['temp_dir'])
 
     def test_html_report(self):
         """
@@ -55,6 +55,19 @@ class TestReadTrimming(unittest.TestCase):
         table_data = [['row', i] for i in range(0, 40)]
         div.add_table(table_data, ['Col 1', 'Col 2'], [('class', 'data')])
         report.add_html_object(div)
+        report.save()
+        logging.info("Report saved in: {}".format(report_path))
+        self.assertGreater(os.path.getsize(report_path), 0)
+
+    def test_pipeline_header(self):
+        """
+        Tests adding a pipeline header to a report.
+        :return: None
+        """
+        report_path = os.path.join(self.running_dir, 'report.html')
+        report = HtmlReport(report_path, self.running_dir, include_js=[JQUERY_SRC])
+        report.initialize("Test report", CSS_STYLE)
+        report.add_pipeline_header('My <i>pipeline</i>')
         report.save()
         logging.info("Report saved in: {}".format(report_path))
         self.assertGreater(os.path.getsize(report_path), 0)

@@ -15,4 +15,4 @@ YAML_TRIMMING_ASSEMBLY_SPADES = os.path.join(_resources_folder, 'yaml', 'trimmin
 YAML_TYPING_FAST = os.path.join(_resources_folder, 'yaml', 'sequence_typing_fast.yml')
 
 # Static
-LOGO_WIV = os.path.join(_resources_folder, 'static', 'logo-wiv-isp.png')
+LOGO_SCIENSANO = os.path.join(_resources_folder, 'static', 'logo-sciensano.png')
