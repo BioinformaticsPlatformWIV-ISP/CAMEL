@@ -4,7 +4,7 @@ from app.io.tooliodirectory import ToolIODirectory
 
 GENE_DETECTION_WORKING_DIR = os.path.join(__WORKING_DIR, 'gene_detection')
 GENE_DETECTION_REPORT = os.path.join(GENE_DETECTION_WORKING_DIR, 'report-html.io')
-
+GENE_DETECTION_DB_SUMMARY = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'report-summary.tsv')
 
 rule database_manager:
     """
@@ -244,6 +244,25 @@ rule report_gene_detection:
         SnakemakeUtils.add_pickle_inputs(reporter, input)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
+
+rule summary_gene_detection:
+    """
+    Creates a tabular summary for gene detection on a {db}.
+    """
+    input:
+        INFORMS_hits=os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'selected-hits.io'),
+    output:
+        GENE_DETECTION_DB_SUMMARY
+    params:
+        running_dir=os.path.join('gene_detection', '{db}', 'summary')
+    run:
+        informs = SnakemakeUtils.load_object(input.INFORMS_hits)
+        hit_info = []
+        for hit in informs:
+            hit_info.append(hit.value.to_table_row().split('\t'))
+        with open(output[0], 'w') as handle:
+            handle.write('hits_{}\t{}'.format(wildcards.db, json.dumps(hit_info)))
+            handle.write('\n')
 
 rule combine_gene_detection_reports:
     """
