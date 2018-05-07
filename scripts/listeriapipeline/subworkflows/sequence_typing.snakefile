@@ -9,6 +9,7 @@ Each database need to be specified as 'Key': 'Path to DB folder'.
 """
 TYPING_WORKING_DIR = os.path.join(__WORKING_DIR, 'sequence_typing')
 TYPING_REPORT = os.path.join(TYPING_WORKING_DIR, 'report-html.io')
+TYPING_SCHEME_SUMMARY = os.path.join(TYPING_WORKING_DIR, '{scheme}', 'report-summary.io')
 SPECIES_CONFIRM_ST_REPORT = os.path.join(TYPING_WORKING_DIR, 'species-confirm-st-report-html.io')
 
 def get_loci(folder):
@@ -17,9 +18,6 @@ def get_loci(folder):
     :param folder: Database folder.
     :return: Loci from database
     """
-    # for testing, oxnly first 10 genes
-    # return sorted([d for d in os.listdir(folder) if os.path.isdir(os.path.join(folder, d)) and not d.startswith('.')][0:10])
-    # for real, all genes
     return sorted([d for d in os.listdir(folder) if os.path.isdir(os.path.join(folder, d)) and not d.startswith('.')])
 
 
@@ -276,6 +274,32 @@ rule create_report:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
 
+rule create_scheme_summary:
+    """
+    Create a tabular summary with the sequence typing output on a scheme
+    """
+    input:
+        VAL_Hits=os.path.join(TYPING_WORKING_DIR, '{scheme}', 'hits-combined.io'),
+        INFORMS_ST=lambda wildcards: os.path.join(TYPING_WORKING_DIR, wildcards.scheme, 'informs-ST.io') if has_profiles(wildcards.scheme) else []
+    output:
+        TYPING_SCHEME_SUMMARY
+    params:
+        scheme_name=lambda wildcards: wildcards.scheme
+    run:
+        if len(input.INFORMS_ST) == 0:
+            st_metadata = []
+        else:
+            st_metadata = SnakemakeUtils.load_object(input.INFORMS_ST)['sequence_type'].metadata
+        hits = SnakemakeUtils.load_object(input.VAL_Hits)
+        with open(output[0], 'w') as handle:
+            for k, v in st_metadata:
+                handle.write(f'{params.scheme_name}-{k}\t{v}')
+                handle.write('\n')
+            for hit in hits:
+                key = '{}-{}'.format(params.scheme_name, hit.value.locus)
+                handle.write(f'{key}\t{hit.value.allele_id}')
+                handle.write('\n')
+
 rule combine_sequence_typing_reports:
     """
     Combines the reports of all sequence typing schemes.
@@ -311,5 +335,4 @@ rule species_confirmation_report:
             report_section.copy_files(params.output_dir)
             species_confirm_module.add_html_object(report_section)
         SnakemakeUtils.dump_object([ToolIOValue(species_confirm_module)], output[0])
-
 
