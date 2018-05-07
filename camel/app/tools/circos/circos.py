@@ -60,6 +60,6 @@ class Circos(Tool):
             raise ToolExecutionError('No PNG output file generated')
         self._tool_outputs['PNG'] = [ToolIOFile(png_path)]
         svg_path = os.path.join(self._folder, 'circos.svg')
-        if not os.path.isfile(png_path):
+        if not os.path.isfile(svg_path):
             raise ToolExecutionError('No SVG output file generated')
         self._tool_outputs['SVG'] = [ToolIOFile(svg_path)]
