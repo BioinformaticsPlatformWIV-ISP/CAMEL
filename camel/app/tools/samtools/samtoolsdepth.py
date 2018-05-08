@@ -54,7 +54,7 @@ class SamtoolsDepth(Samtools):
         :return: None
         """
         output_file_path = os.path.join(self._folder, self._parameters['output_filename'].value)
-        self._tool_outputs['TXT'] = [ToolIOFile(output_file_path)]
+        self._tool_outputs['TSV'] = [ToolIOFile(output_file_path)]
         self._informs['median_depth'] = SamtoolsDepth.calculate_median_coverage(output_file_path)
 
     @staticmethod
