@@ -127,20 +127,30 @@ rule combine_reports:
         for pickle in input:
             section = SnakemakeUtils.load_object(pickle)[0].value
             report.add_html_object(section)
-
-        section_log = HtmlReportSection('Runnning log')
-        log_filepath = 'camel.log'
-        section_log.add_file(os.path.join(os.getcwd(), 'camel.log'), log_filepath)
-        section_log.add_link_to_file('camel.log', log_filepath)
-        report.add_html_object(section_log)
+            
         report.save()
-
 
 onsuccess:
     print("ONSUCCESS: pipeline run finished.")
+    section_log = HtmlReportSection('Runnning log')
+    log_filepath = 'camel.log'
+    section_log.add_file(os.path.join(os.getcwd(), 'camel.log'), log_filepath)
+    section_log.add_link_to_file('camel.log', log_filepath)
+    section_log.copy_files(config['output_dir'])
+    report = HtmlReport(REPORT_HTML, config['output_dir'])
+    report.add_html_object(section_log)
+    report.close()
 
 onerror:
     print("ONERROR: pipeline fails to finish. log file {!r}".format(log))
     GALAXY_ERROR_LOG_DIR = '/scratch/qiafu/listeria_pipeline/Galaxy_runs'
     shutil.copy(log, os.path.join(GALAXY_ERROR_LOG_DIR, os.path.basename(log)))
     shutil.copy(os.path.join(os.getcwd(), 'camel.log'), os.path.join(GALAXY_ERROR_LOG_DIR, os.path.basename(log)+'_camel.log'))
+    section_log = HtmlReportSection('Runnning log')
+    log_filepath = 'camel.log'
+    section_log.add_file(os.path.join(os.getcwd(), 'camel.log'), log_filepath)
+    section_log.add_link_to_file('camel.log', log_filepath)
+    section_log.copy_files(config['output_dir'])
+    report = HtmlReport(REPORT_HTML, config['output_dir'])
+    report.add_html_object(section_log)
+    report.close()
