@@ -5,6 +5,7 @@ TRIMMED_READS_PE = os.path.join(READ_TRIMMING_WORKING_DIR, 'trimming', 'fastq-pe
 TRIMMED_READS_SE_FORWARD = os.path.join(READ_TRIMMING_WORKING_DIR, 'trimming', 'fastq-se-forward.io')
 TRIMMED_READS_SE_REVERSE = os.path.join(READ_TRIMMING_WORKING_DIR, 'trimming', 'fastq-se-reverse.io')
 TRIMMING_INFORM = os.path.join(READ_TRIMMING_WORKING_DIR, 'trimming', 'informs.io')
+ORIG_READS_QC_TXT = os.path.join(READ_TRIMMING_WORKING_DIR, 'pre_trimming', 'txt.io')
 TRIMMED_READS_QC_TXT = os.path.join(READ_TRIMMING_WORKING_DIR, 'post_trimming', 'txt.io')
 
 rule fastqc_pre_trimming:
@@ -15,7 +16,7 @@ rule fastqc_pre_trimming:
         FASTQ = config['fastq_pe']
     output:
         HTML = os.path.join(READ_TRIMMING_WORKING_DIR, 'pre_trimming', 'html.io'),
-        TXT = os.path.join(READ_TRIMMING_WORKING_DIR, 'pre_trimming', 'txt.io')
+        TXT = ORIG_READS_QC_TXT
     params:
         running_dir = os.path.join(READ_TRIMMING_WORKING_DIR, 'pre_trimming')
     threads:

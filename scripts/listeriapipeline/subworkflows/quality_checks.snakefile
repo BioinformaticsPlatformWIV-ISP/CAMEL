@@ -7,7 +7,8 @@ rule FastQC_additional_checks:
     Tests additional quality metrics based on the FastQC data file output.
     """
     input:
-        TXT=TRIMMED_READS_QC_TXT
+        TXT=TRIMMED_READS_QC_TXT,
+        TXT_RAW=ORIG_READS_QC_TXT
     output:
         INFORMS=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'fastqc_checks', 'informs.io')
     params:
@@ -214,8 +215,8 @@ rule Summary_quality_checks:
             ('check_qs_drop_rev', informs_qc_checks['Mean Q-score drop'][1]),
             ('check_pb_seq_content_fwd', informs_qc_checks['Per base sequence content'][0]),
             ('check_pb_seq_content_rev', informs_qc_checks['Per base sequence content'][1]),
-            ('check_slen_dist_fwd', informs_qc_checks['Sequence Length Distribution'][0]),
-            ('check_slen_dist_rev', informs_qc_checks['Sequence Length Distribution'][1]),
+            ('check_slen_dist_fwd', informs_qc_checks['Sequence length distribution'][0]),
+            ('check_slen_dist_rev', informs_qc_checks['Sequence length distribution'][1]),
         ]
         with open(output[0], 'w') as handle:
             for key, value in summary_data:
