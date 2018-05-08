@@ -42,6 +42,15 @@ class HtmlReport(HtmlBase):
             self.add_raw('<!DOCTYPE HTML>')
             handle.write(self.to_html())
 
+    def close(self):
+        """
+        Close report after adding content into it.
+        :return: None
+        """
+        logging.info("Extending report '{}'".format(os.path.basename(self._filename)))
+        with open(self._filename, 'a') as handle:
+            handle.write(self._doc.getvalue())
+
     def initialize(self, title, css_style=None):
         """
         Initializes an HTML report.
