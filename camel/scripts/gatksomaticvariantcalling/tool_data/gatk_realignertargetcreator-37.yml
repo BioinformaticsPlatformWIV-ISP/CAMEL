@@ -1,0 +1,11 @@
+dependencies: java/1.8.0 gatk/3.7
+parameters:
+  intervals: {default: false, mandatory: false, option: -L, value: null}
+  maxInterval: {default: false, mandatory: false, option: -maxInterval, value: '500'}
+  minReadsAtLocus: {default: false, mandatory: false, option: --minReadsAtLocus, value: '4'}
+  mismatchFraction: {default: false, mandatory: false, option: --mismatchFraction,
+    value: '0.0'}
+  output: {default: true, mandatory: false, option: -o, value: indel_realigner.intervals}
+  window: {default: false, mandatory: false, option: -window, value: '10'}
+  windowSize: {default: false, mandatory: false, option: --windowSize, value: '10'}
+tool_command: run_gatk.sh -T RealignerTargetCreator

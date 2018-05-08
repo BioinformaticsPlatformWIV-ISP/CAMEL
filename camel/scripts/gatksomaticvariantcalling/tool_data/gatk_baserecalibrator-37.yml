@@ -1,0 +1,6 @@
+dependencies: java/1.8.0 gatk/3.7
+parameters:
+  intervals: {default: false, mandatory: false, option: -L, value: null}
+  recal_table_output: {default: true, mandatory: true, option: -o, value: recalibrationData.tabl}
+  threads: {default: true, mandatory: false, option: -nct, value: '5'}
+tool_command: run_gatk.sh -T BaseRecalibrator
