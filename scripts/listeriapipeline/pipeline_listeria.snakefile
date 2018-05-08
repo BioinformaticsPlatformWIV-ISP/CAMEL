@@ -38,7 +38,7 @@ include: WORKFLOW_QUALITY_CHECKS
 include: WORKFLOW_GENE_DETECTION
 
 # 4. Set the pipeline version
-__PIPELINE_VERSION = "0.2"
+__PIPELINE_VERSION = config.get('pipeline_version')
 
 # 5. Create a CAMEL instance to run tools
 camel = Camel()

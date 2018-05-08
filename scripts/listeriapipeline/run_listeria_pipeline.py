@@ -16,7 +16,7 @@ class ListeriaMain(object):
     Main class to run the Listeria pipeline.
     """
 
-    PIPELINE_VERSION = '0.1'
+    PIPELINE_VERSION = '0.3'
     SNAKE_FILE = os.path.join(os.path.dirname(__file__), 'pipeline_listeria.snakefile')
     LOG_IO = False
     THREADS = 8
@@ -171,16 +171,17 @@ class ListeriaMain(object):
         """
         logging.info("Creating config file.")
         with open(path, 'w') as handle:
+            yaml.dump({'sample_name': self._sample_name}, handle, default_flow_style=False)
+            yaml.dump({'pipeline_version': self.PIPELINE_VERSION}, handle, default_flow_style=False)
+            yaml.dump({'fastq_pe': self._fastq_input}, handle, default_flow_style=False)
+            yaml.dump({'assembler': self._args.assembler}, handle, default_flow_style=False)
+            yaml.dump({'detection_method': self._args.analysis_type}, handle, default_flow_style=False)
             yaml.dump({'logging': False, 'pipeline_name': 'Listeria Pipeline', 'pipeline_job_id': 3},
                       handle, default_flow_style=False)
             yaml.dump({'report_html': self._args.output_html}, handle, default_flow_style=False)
             yaml.dump({'report_summary': self._args.output_summary}, handle, default_flow_style=False)
             yaml.dump({'output_dir': self._args.output_dir}, handle, default_flow_style=False)
             yaml.dump({'working_dir': self._args.working_dir}, handle, default_flow_style=False)
-            yaml.dump({'sample_name': self._sample_name}, handle, default_flow_style=False)
-            yaml.dump({'assembler': self._args.assembler}, handle, default_flow_style=False)
-            yaml.dump({'detection_method': self._args.analysis_type}, handle, default_flow_style=False)
-            yaml.dump({'fastq_pe': self._fastq_input}, handle, default_flow_style=False)
 
             # Gene detection
             gene_detection_dbs = self.__get_gene_detection_db_config()
