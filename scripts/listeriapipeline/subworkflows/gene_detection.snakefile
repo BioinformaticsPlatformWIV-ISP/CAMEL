@@ -289,8 +289,8 @@ rule combine_gene_detection_reports:
                     section_reports[section].append(os.path.join(GENE_DETECTION_WORKING_DIR, db, 'report', 'html.io'))
 
         for section, reports in section_reports.items():
-            gene_detection_module.add_module_header(section)
             if len(reports) > 0:
+                gene_detection_module.add_module_header(section)
                 for pickle in reports:
                     report_section = SnakemakeUtils.load_object(pickle)[0].value
                     report_section.copy_files(params.output_dir)
