@@ -94,17 +94,31 @@ class HtmlReporterQualityChecks(Tool):
         Adds an explanation of the quality checks.
         :return: None
         """
+        informs = self._input_informs['additional_checks']
         test_explanations = [
             ['Average quality score test', 'checks whether the average read quality is above a threshold.'],
-            ['GC content test', 'checks if the detected GC content is close enough to the expected GC content for this '
-                                'organism.'],
-            ['Maximal N-fraction test', 'checks whether the maximal N fraction at any read position is below a '
-                                        'threshold.'],
-            ['Mean Q-score drop test', 'checks at which base the mean Qscore drops below a given threshold.'],
-            ['Per base sequence content test', 'checks whether difference between A-T and C-G is below a threshold at '
-                                               'every position. The beginning of the reads can be skipped, as the peaks'
+            ['GC content test', 'checks if the detected GC content is close enough to the expected GC content for this organism.'],
+            ['Maximal N-fraction test', 'checks whether the maximal N fraction at any read position is below a threshold.'],
+            ['Mean Q-score drop test', 'checks whether the average position in the reads where the mean Q-score drops '
+                                       'below <b>28</b> is above the warning / fail threshold.'],
+            ['Per base sequence content test', 'checks whether the difference between A-T and C-G is below a threshold '
+                                               'at every position. The beginning of the reads are skipped, as the peaks'
                                                ' there can be "normal".'],
-            ['Sequence length distribution test', 'checks if the fraction of short sequences is below a threshold.']
+            ['Sequence length distribution test', 'checks if the fraction of short sequences is below a threshold. The '
+                                                  'warning and fail thresholds are determined dynamically based on the '
+                                                  'length of the raw input reads (<b>{}</b>), the warning threshold is '
+                                                  'set to 66.67% percent of this value (<b>{:.0f}</b>), the fail '
+                                                  'threshold as 40.00% (<b>{:.0f}</b>).'.format(informs['max_read_length'], informs['length_warn'], informs['length_fail'])]
+            # ['Average quality score test', 'checks whether the average read quality is above a threshold.'],
+            # ['GC content test', 'checks if the detected GC content is close enough to the expected GC content for this '
+            #                     'organism.'],
+            # ['Maximal N-fraction test', 'checks whether the maximal N fraction at any read position is below a '
+            #                             'threshold.'],
+            # ['Mean Q-score drop test', 'checks at which base the mean Qscore drops below a given threshold.'],
+            # ['Per base sequence content test', 'checks whether difference between A-T and C-G is below a threshold at '
+            #                                    'every position. The beginning of the reads can be skipped, as the peaks'
+            #                                    ' there can be "normal".'],
+            # ['Sequence length distribution test', 'checks if the fraction of short sequences is below a threshold.']
         ]
         self._report_section.add_labeled_list(test_explanations)
 
