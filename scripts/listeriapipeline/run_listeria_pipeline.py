@@ -22,6 +22,32 @@ class ListeriaMain(object):
     THREADS = 8
     DEBUG = False
     DEBUG_DIR_ROOT = '/scratch/qiafu/listeria_pipeline/Galaxy_runs/'
+    # map gene detection db to its db_loc entry (for db path retrieve)
+    DB_GENE_DETECTION = {
+        'resfinder': 'resfinder',
+        'card': 'card',
+        'argannot': 'arg_annot',
+        'virulencefinder': 'virulencefinder_listeria',
+        'plasmidfinder': 'plasmidfinder_grampositive'
+    }
+
+    def run(self):
+        """
+        Runs the pipeline.
+        :return: None
+        """
+        self._args = ListeriaMain._parse_arguments()
+        self.__preprocess()
+        config_file_path = self.__initialize_run_config()
+        command = Command('snakemake --cores {} --configfile {} --snakefile {} 2>&1'.format(
+            ListeriaMain.THREADS, config_file_path, ListeriaMain.SNAKE_FILE))
+        command.run_command(os.getcwd(), subprocess.STDOUT)
+        if command.returncode != 0:
+            print(command.stdout)
+            print(command.stderr)
+            raise RuntimeError("Error executing Snakemake. Check log for more information")
+        print(command.stdout)
+        print(command.stderr)
 
     @staticmethod
     def _parse_arguments():
@@ -51,20 +77,30 @@ class ListeriaMain(object):
         parser.add_argument('--cgmlst', default=True)
         parser.add_argument('--serogrouping', default=True)
         parser.add_argument('--pubmlst_metal', action='store_true')
-        parser.add_argument('--pubmlst_resistance', action='store_true')
+        parser.add_argument('--pubmlst_antibiotic', action='store_true')
         parser.add_argument('--pubmlst_virulence', action='store_true')
         return parser.parse_args()
 
-    def __init__(self):
+    def __preprocess(self):
         """
-        Initializes the main class.
+        preprocess based on arguments and prepare to run pipeline
         """
-        self._args = ListeriaMain._parse_arguments()
+        # sample name
         if self._args.sample_name:
             self._sample_name = self._args.sample_name
         else:
             self._sample_name = FastqUtils.get_sample_name(self._args.fastq_names[0])
+
+        # input data file
         self._fastq_input = self.__symlink_input_files()
+
+        # output directory and files
+        if not os.path.isdir(self._args.output_dir):
+            os.mkdir(self._args.output_dir)
+        if os.path.isfile(self._args.output_html):
+            os.remove(self._args.output_html)
+        if os.path.isfile(self._args.output_summary):
+            os.remove(self._args.output_summary)
 
     def __symlink_input_files(self):
         """
@@ -81,27 +117,6 @@ class ListeriaMain(object):
             links.append(path)
         return links
 
-    def run(self):
-        """
-        Runs the pipeline.
-        :return: None
-        """
-        config_file_path = self.__initialize_run_config()
-
-        if not os.path.isdir(self._args.output_dir):
-            os.mkdir(self._args.output_dir)
-        if os.path.isfile(self._args.output_html):
-            os.remove(self._args.output_html)
-        command = Command('snakemake --cores {} --configfile {} --snakefile {}'.format(
-            ListeriaMain.THREADS, config_file_path, ListeriaMain.SNAKE_FILE))
-        command.run_command(os.getcwd(), subprocess.STDOUT)
-        if command.returncode != 0:
-            print(command.stdout)
-            print(command.stderr)
-            raise RuntimeError("Error executing Snakemake. Check log for more information")
-        print(command.stdout)
-        print(command.stderr)
-
     def __initialize_run_config(self):
         """
         Initialize run setting and config based on self.DEBUG tag
@@ -111,7 +126,8 @@ class ListeriaMain(object):
             logging.info("Run pipeline with debugging settings ...")
 
             # DEBUG running setting
-            # self._args.assembler = 'VelvetOptimiser'
+            self._args.assembler = 'VelvetOptimiser'
+            self._args.cgmlst = False
             self._args.kraken_db = '/data/kraken/latest/abfhpv_lite/'
 
             # DEBUG report and directory structure
@@ -142,7 +158,7 @@ class ListeriaMain(object):
         with open(config_file_path, 'r') as cfg:
             print("-- Running configuration:")
             print(cfg.read())
-            print("-- End of  configuration")
+            print("-- End of configuration")
         sys.stdout.flush()
 
         return config_file_path
@@ -157,7 +173,8 @@ class ListeriaMain(object):
         with open(path, 'w') as handle:
             yaml.dump({'logging': False, 'pipeline_name': 'Listeria Pipeline', 'pipeline_job_id': 3},
                       handle, default_flow_style=False)
-            yaml.dump({'report': self._args.output_html}, handle, default_flow_style=False)
+            yaml.dump({'report_html': self._args.output_html}, handle, default_flow_style=False)
+            yaml.dump({'report_summary': self._args.output_summary}, handle, default_flow_style=False)
             yaml.dump({'output_dir': self._args.output_dir}, handle, default_flow_style=False)
             yaml.dump({'working_dir': self._args.working_dir}, handle, default_flow_style=False)
             yaml.dump({'sample_name': self._sample_name}, handle, default_flow_style=False)
@@ -166,15 +183,8 @@ class ListeriaMain(object):
             yaml.dump({'fastq_pe': self._fastq_input}, handle, default_flow_style=False)
 
             # Gene detection
-            gene_detection_dbs = []
-            resistance_dbs = self.__get_resistance_db_config()
-            if len(resistance_dbs) > 0:
-                gene_detection_dbs = resistance_dbs
-            if self._args.virulencefinder:
-                gene_detection_dbs.append('VirulenceFinder')
-            if self._args.plasmidfinder:
-                gene_detection_dbs.append('Gram_positive')
-            yaml.dump({'gene_detection': gene_detection_dbs}, handle, default_flow_style=False)
+            gene_detection_dbs = self.__get_gene_detection_db_config()
+            yaml.dump({'gene_detection': {db: {} for db in gene_detection_dbs}}, handle, default_flow_style=False)
 
             # Sequence typing
             sequence_typing_dbs = {}
@@ -188,7 +198,7 @@ class ListeriaMain(object):
                 sequence_typing_dbs['serogroup'] = '/data/sequence_typing/listeria/serogroup'
             if self._args.pubmlst_virulence:
                 sequence_typing_dbs['virulence'] = '/data/sequence_typing/listeria/virulence'
-            if self._args.pubmlst_resistance:
+            if self._args.pubmlst_antibiotic:
                 sequence_typing_dbs['antibiotic_resistance'] = '/data/sequence_typing/listeria/antibiotic_resistance'
             if self._args.pubmlst_metal:
                 sequence_typing_dbs['metal_detergent_resistance'] = '/data/sequence_typing/listeria/metal_detergent_resistance'
@@ -197,19 +207,23 @@ class ListeriaMain(object):
             # Kraken databaxse
             yaml.dump({'db_kraken': self._args.kraken_db}, handle, default_flow_style=False)
 
-    def __get_resistance_db_config(self):
+    def __get_gene_detection_db_config(self):
         """
-        Returns the resistance characterization database config.
-        :return: Database config
+        Returns the gene detection related databases.
+        :return: list of databases
         """
         dbs = []
         if self._args.argannot:
-            dbs.append('ARG-ANNOT')
+            dbs.append('argannot')
         if self._args.card:
-            dbs.append('CARD')
+            dbs.append('card')
         if self._args.resfinder:
-            dbs.append('ResFinder')
-        return dbs
+            dbs.append('resfinder')
+        if self._args.virulencefinder:
+            dbs.append('virulencefinder')
+        if self._args.plasmidfinder:
+            dbs.append('plasmidfinder')
+        return [self.DB_GENE_DETECTION[db] for db in dbs]
 
 
 if __name__ == '__main__':
