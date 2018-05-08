@@ -4,7 +4,7 @@ import shutil
 
 from app.components.html.htmlbase import HtmlBase
 from app.components.html.htmlelement import HtmlElement
-from resources import LOGO_WIV
+from resources import LOGO_SCIENSANO
 
 
 class HtmlReport(HtmlBase):
@@ -68,9 +68,10 @@ class HtmlReport(HtmlBase):
             raise ValueError("Can't add the pipeline header without an output directory")
         with self.get_tag('div', [('class', 'header')]):
             with self.get_tag('div', [('id', 'header_title')]):
-                self._doc.stag('img', src='logo-wiv-isp.png', alt='WIV-ISP Belgium', id='header_logo')
-                self._doc.text("{} Report".format(pipeline_name))
-        shutil.copy(LOGO_WIV, self._output_dir)
+                self._doc.stag('img', src=os.path.basename(LOGO_SCIENSANO), alt='Sciensano Belgium', id='header_logo', height=80)
+                self._doc.text("{} report".format(pipeline_name))
+                # self.add_text("{} report".format(pipeline_name))
+        shutil.copy(LOGO_SCIENSANO, self._output_dir)
 
     def to_html(self):
         """
