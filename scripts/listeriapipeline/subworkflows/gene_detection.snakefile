@@ -55,6 +55,7 @@ rule tsv_generation:
         blast_formatter = BlastFormatter(camel)
         SnakemakeUtils.add_pickle_inputs(blast_formatter, input)
         step = Step(rule, blast_formatter, camel, params.running_dir, config)
+        blast_formatter.update_parameters(output_format='"7 pident sseqid sseq slen qseqid qstart qend"')
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(blast_formatter, output)
 
