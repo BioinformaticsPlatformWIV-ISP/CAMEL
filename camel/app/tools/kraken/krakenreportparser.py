@@ -1,5 +1,5 @@
-from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
-from app.tools.tool import Tool
+from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from camel.app.tools.tool import Tool
 
 
 class KrakenReportParser(Tool):
