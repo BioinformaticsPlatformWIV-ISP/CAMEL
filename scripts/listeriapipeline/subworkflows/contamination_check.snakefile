@@ -27,10 +27,10 @@ rule kraken:
     params:
         running_dir = os.path.join(CONTAMINATION_WORKING_DIR)
     run:
-        from app.tools.kraken.kraken import Kraken
+        from camel.app.tools.kraken.kraken import Kraken
         kraken = Kraken(camel)
         SnakemakeUtils.add_pickle_inputs(kraken, input)
-        step = SnakeStep(rule, kraken, camel, params.running_dir, config)
+        step = Step(rule, kraken, camel, params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(kraken, output)
 
@@ -46,10 +46,10 @@ rule kraken_report:
     params:
         running_dir = os.path.join(CONTAMINATION_WORKING_DIR)
     run:
-        from app.tools.kraken.krakenreport import KrakenReport
+        from camel.app.tools.kraken.krakenreport import KrakenReport
         kraken_report = KrakenReport(camel)
         SnakemakeUtils.add_pickle_inputs(kraken_report, input)
-        step = SnakeStep(rule, kraken_report, camel, params.running_dir, config)
+        step = Step(rule, kraken_report, camel, params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(kraken_report, output)
 
@@ -62,14 +62,14 @@ rule kraken_report_parser:
     output:
         INFORMS = os.path.join(CONTAMINATION_WORKING_DIR, 'informs-contamination.io')
     params:
-        running_dir = os.path.join(CONTAMINATION_WORKING_DIR)
+        running_dir = os.path.join(CONTAMINATION_WORKING_DIR),
+        expected_species = config['kraken_expspecies']
     run:
-        from app.tools.kraken.krakenreportparser import KrakenReportParser
+        from camel.app.tools.kraken.krakenreportparser import KrakenReportParser
         report_parser = KrakenReportParser(camel)
-        # parameter updated in pipeline.step_tools_parameter table
-        # report_parser.update_parameters(expected_species='Listeria monocytogenes')
+        report_parser.update_parameters(expected_species=params.expected_species)
         SnakemakeUtils.add_pickle_inputs(report_parser, input)
-        step = SnakeStep(rule, report_parser, camel, params.running_dir, config)
+        step = Step(rule, report_parser, camel, params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(report_parser, output)
 
@@ -84,10 +84,10 @@ rule krona:
     params:
         running_dir = os.path.join(CONTAMINATION_WORKING_DIR)
     run:
-        from app.tools.krona.krona import Krona
+        from camel.app.tools.krona.krona import Krona
         krona = Krona(camel)
         SnakemakeUtils.add_pickle_inputs(krona, input)
-        step = SnakeStep(rule, krona, camel, params.running_dir, config)
+        step = Step(rule, krona, camel, params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(krona, output)
 
@@ -104,10 +104,10 @@ rule contamination_report:
         running_dir = os.path.join(CONTAMINATION_WORKING_DIR),
         output_dir = config['output_dir']
     run:
-        from app.tools.pipelines.quality_checks.htmlreportercontamination import HtmlReporterContamination
+        from camel.app.tools.pipelines.quality_checks.htmlreportercontamination import HtmlReporterContamination
         reporter = HtmlReporterContamination(camel)
         SnakemakeUtils.add_pickle_inputs(reporter, input)
-        step = SnakeStep(rule, reporter, camel, params.running_dir, config)
+        step = Step(rule, reporter, camel, params.running_dir, config, pipeline_output=True, wildcards=wildcards)
         step.run_step()
         reporter.tool_outputs['VAL_HTML'][0].value.copy_files(params.output_dir)
         SnakemakeUtils.dump_tool_outputs(reporter, output)
