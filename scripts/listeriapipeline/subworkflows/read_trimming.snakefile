@@ -22,10 +22,10 @@ rule fastqc_pre_trimming:
     threads:
         8
     run:
-        from app.tools.fastqc.fastqc import FastQC
+        from camel.app.tools.fastqc.fastqc import FastQC
         fastqc = FastQC(camel)
         fastqc.add_input_files({'FASTQ': [ToolIOFile(x) for x in input.FASTQ]})
-        step = SnakeStep(rule, fastqc, camel, params.running_dir, config)
+        step = Step(rule, fastqc, camel, params.running_dir, config)
         fastqc.update_parameters(threads=threads)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(fastqc, output)
@@ -46,10 +46,10 @@ rule read_trimming:
     params:
         running_dir = os.path.join(READ_TRIMMING_WORKING_DIR, 'trimming')
     run:
-        from app.tools.trimmomatic.trimmomatic import Trimmomatic
+        from camel.app.tools.trimmomatic.trimmomatic import Trimmomatic
         trimmomatic = Trimmomatic(camel)
         trimmomatic.add_input_files({'FASTQ_PE': [ToolIOFile(x) for x in input.FASTQ]})
-        step = SnakeStep(rule, trimmomatic, camel, params.running_dir, config)
+        step = Step(rule, trimmomatic, camel, params.running_dir, config)
         trimmomatic.update_parameters(threads=threads)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(trimmomatic, output)
@@ -68,10 +68,10 @@ rule fastqc_post_trimming:
     threads:
         8
     run:
-        from app.tools.fastqc.fastqc import FastQC
+        from camel.app.tools.fastqc.fastqc import FastQC
         fastqc = FastQC(camel)
         SnakemakeUtils.add_pickle_inputs(fastqc, input)
-        step = SnakeStep(rule, fastqc, camel, params.running_dir, config)
+        step = Step(rule, fastqc, camel, params.running_dir, config)
         fastqc.update_parameters(threads=threads)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(fastqc, output)
@@ -93,10 +93,10 @@ rule report_read_trimming:
         running_dir = os.path.join(READ_TRIMMING_WORKING_DIR),
         output_dir = config['output_dir']
     run:
-        from app.tools.pipelines.read_trimming.htmlreporterreadtrimming import HtmlReporterReadTrimming
+        from camel.app.tools.pipelines.read_trimming.htmlreporterreadtrimming import HtmlReporterReadTrimming
         reporter = HtmlReporterReadTrimming(camel)
         SnakemakeUtils.add_pickle_inputs(reporter, input, optionals=['FASTQ_SE_FORWARD', 'FASTQ_SE_REVERSE'])
-        step = SnakeStep(rule, reporter, camel, params.running_dir, config)
+        step = Step(rule, reporter, camel, params.running_dir, config)
         step.run_step()
         reporter.tool_outputs['VAL_HTML'][0].value.copy_files(params.output_dir)
         SnakemakeUtils.dump_tool_outputs(reporter, output)
