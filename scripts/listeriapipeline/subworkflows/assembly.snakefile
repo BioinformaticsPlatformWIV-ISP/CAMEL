@@ -19,10 +19,10 @@ rule velvet_optimiser:
     threads:
         8
     run:
-        from app.tools.velvetoptimiser.velvetoptimiser import VelvetOptimiser
+        from camel.app.tools.velvetoptimiser.velvetoptimiser import VelvetOptimiser
         velvet_optimiser = VelvetOptimiser(camel)
         SnakemakeUtils.add_pickle_inputs(velvet_optimiser, input)
-        step = SnakeStep(rule, velvet_optimiser, camel, params.running_dir, config)
+        step = Step(rule, velvet_optimiser, camel, params.running_dir, config)
         velvet_optimiser.update_parameters(threads=threads)
         if params.fast:
             velvet_optimiser.update_parameters(hash_start=51, hash_end=51)
@@ -45,14 +45,14 @@ rule spades:
     threads:
         8
     run:
-        from app.tools.spades.spades import SPAdes
+        from camel.app.tools.spades.spades import SPAdes
         spades = SPAdes(camel)
         spades.add_input_files({
             'FASTQ_PE_1': SnakemakeUtils.load_object(input.FASTQ_PE),
             'FASTQ_PE-S_1': SnakemakeUtils.load_object(input.FASTQ_SE_FORWARD) +
             SnakemakeUtils.load_object(input.FASTQ_SE_REVERSE)
         })
-        step = SnakeStep(rule, spades, camel, params.running_dir, config)
+        step = Step(rule, spades, camel, params.running_dir, config)
         spades.update_parameters(threads=threads)
         if params.fast:
             spades.update_parameters(only_assembly=True, kmers='55', careful=False)
@@ -83,10 +83,10 @@ rule quast:
     params:
         running_dir = os.path.join(ASSEMBLY_WORKING_DIR, 'quast')
     run:
-        from app.tools.quast.quast import Quast
+        from camel.app.tools.quast.quast import Quast
         quast = Quast(camel)
         SnakemakeUtils.add_pickle_inputs(quast, input)
-        step = SnakeStep(rule, quast, camel, params.running_dir, config)
+        step = Step(rule, quast, camel, params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(quast, output)
 
@@ -101,10 +101,10 @@ rule quast_inform_extractor:
     params:
         running_dir = os.path.join(ASSEMBLY_WORKING_DIR, 'quast')
     run:
-        from app.tools.quast.quastinformextractor import QuastInformExtractor
+        from camel.app.tools.quast.quastinformextractor import QuastInformExtractor
         quast_inform_extractor = QuastInformExtractor(camel)
         SnakemakeUtils.add_pickle_inputs(quast_inform_extractor, input)
-        step = SnakeStep(rule, quast_inform_extractor, camel, params.running_dir, config)
+        step = Step(rule, quast_inform_extractor, camel, params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(quast_inform_extractor, output)
 
@@ -123,13 +123,13 @@ rule report_assembly:
         assembler = config['assembler'],
         output_dir = config['output_dir']
     run:
-        from app.tools.pipelines.assembly.htmlreporterassembly import HtmlReporterAssembly
+        from camel.app.tools.pipelines.assembly.htmlreporterassembly import HtmlReporterAssembly
         reporter = HtmlReporterAssembly(camel)
         reporter.add_input_files(
             {'SAMPLE_NAME': [ToolIOValue(params.sample_name)],
              'ASSEMBLER': [ToolIOValue(params.assembler)]})
         SnakemakeUtils.add_pickle_inputs(reporter, input)
-        step = SnakeStep(rule, reporter, camel, params.running_dir, config)
+        step = Step(rule, reporter, camel, params.running_dir, config)
         step.run_step()
         reporter.tool_outputs['VAL_HTML'][0].value.copy_files(params.output_dir)
         SnakemakeUtils.dump_tool_outputs(reporter, output)
