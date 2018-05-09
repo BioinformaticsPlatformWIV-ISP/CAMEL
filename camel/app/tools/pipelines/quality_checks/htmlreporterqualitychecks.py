@@ -1,6 +1,6 @@
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.io.tooliovalue import ToolIOValue
-from camel.app.components.html.tablecell import HtmlTableCell
+from camel.app.components.html.htmltablecell import HtmlTableCell
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.tools.tool import Tool
 
