@@ -1,12 +1,12 @@
 import os
 import re
 
-from app.components.sequencetyping.sequencetypingsrst2hit import SequenceTypingSRST2Hit
-from app.components.sequencetyping.sequencetypingutils import SequenceTypingUtils
-from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
-from app.error.toolexecutionerror import ToolExecutionError
-from app.io.tooliovalue import ToolIOValue
-from app.tools.tool import Tool
+from camel.app.components.sequencetyping.sequencetypingsrst2hit import SequenceTypingSRST2Hit
+from camel.app.components.sequencetyping.sequencetypingutils import SequenceTypingUtils
+from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from camel.app.error.toolexecutionerror import ToolExecutionError
+from camel.app.io.tooliovalue import ToolIOValue
+from camel.app.tools.tool import Tool
 
 
 class SRST2AlleleDetector(Tool):

@@ -1,8 +1,8 @@
 import os
 
-from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
-from app.io.tooliofile import ToolIOFile
-from app.tools.tool import Tool
+from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from camel.app.io.tooliofile import ToolIOFile
+from camel.app.tools.tool import Tool
 
 
 class AlleleCombiner(Tool):

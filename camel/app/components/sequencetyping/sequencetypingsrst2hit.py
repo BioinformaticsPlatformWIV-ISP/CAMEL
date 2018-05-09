@@ -1,5 +1,5 @@
-from app.components.html.htmltablecell import HtmlTableCell
-from app.components.sequencetyping.sequencetypinghit import SequenceTypingHit
+from camel.app.components.html.htmltablecell import HtmlTableCell
+from camel.app.components.sequencetyping.sequencetypinghit import SequenceTypingHit
 
 
 class SequenceTypingSRST2Hit(SequenceTypingHit):

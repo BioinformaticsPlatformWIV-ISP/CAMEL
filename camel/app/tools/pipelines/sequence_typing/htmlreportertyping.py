@@ -1,10 +1,10 @@
 import os
 
-from app.components.filesystemhelper import FileSystemHelper
-from app.components.html.htmlreportsection import HtmlReportSection
-from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
-from app.io.tooliovalue import ToolIOValue
-from app.tools.tool import Tool
+from camel.app.components.filesystemhelper import FileSystemHelper
+from camel.app.components.html.htmlreportsection import HtmlReportSection
+from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from camel.app.io.tooliovalue import ToolIOValue
+from camel.app.tools.tool import Tool
 
 
 class HtmlReporterTyping(Tool):

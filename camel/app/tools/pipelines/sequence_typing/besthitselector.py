@@ -1,12 +1,12 @@
 import logging
 import re
 
-from app.components.blast.blastformat7parser import BlastFormat7Parser
-from app.components.blasttyping.blasthitfiltering import BlastHitFiltering
-from app.components.sequencetyping.sequencetypingblasthit import SequenceTypingBlastHit
-from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
-from app.io.tooliovalue import ToolIOValue
-from app.tools.tool import Tool
+from camel.app.components.blast.blastformat7parser import BlastFormat7Parser
+from camel.app.components.blasttyping.blasthitfiltering import BlastHitFiltering
+from camel.app.components.sequencetyping.sequencetypingblasthit import SequenceTypingBlastHit
+from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from camel.app.io.tooliovalue import ToolIOValue
+from camel.app.tools.tool import Tool
 
 
 class BestHitSelector(Tool):

@@ -2,11 +2,11 @@ import json
 import logging
 import os
 
-from app.components.filesystemhelper import FileSystemHelper
-from app.error.invalidinputspecificationerror import InvalidInputSpecificationError
-from app.error.toolexecutionerror import ToolExecutionError
-from app.io.tooliofile import ToolIOFile
-from app.tools.tool import Tool
+from camel.app.components.filesystemhelper import FileSystemHelper
+from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from camel.app.error.toolexecutionerror import ToolExecutionError
+from camel.app.io.tooliofile import ToolIOFile
+from camel.app.tools.tool import Tool
 
 
 class LocusManager(Tool):
