@@ -1,7 +1,7 @@
-from app.command.command import Command
-from app.components.html.htmlreport import HtmlReport
-from app.snakemake.snakemakeutils import SnakemakeUtils
-from resources import CSS_STYLE
+from camel.app.command.command import Command
+from camel.app.components.html.htmlreport import HtmlReport
+from camel.app.snakemake.snakemakeutils import SnakemakeUtils
+from camel.resources import CSS_STYLE
 
 
 class SnakemakeTestUtils(object):
