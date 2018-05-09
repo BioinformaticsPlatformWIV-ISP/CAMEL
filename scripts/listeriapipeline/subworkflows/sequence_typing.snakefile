@@ -64,10 +64,10 @@ rule extract_locus_set_info:
     params:
         running_dir=os.path.join(TYPING_WORKING_DIR, '{scheme}')
     run:
-        from app.tools.pipelines.sequence_typing.locussetmanager import LocusSetManager
+        from camel.app.tools.pipelines.sequence_typing.locussetmanager import LocusSetManager
         locus_set_manager = LocusSetManager(camel)
         locus_set_manager.add_input_files({'DIR': [ToolIODirectory(input[0])]})
-        step = SnakeStep(rule, locus_set_manager, camel, params.running_dir, config)
+        step = Step(rule, locus_set_manager, camel, params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_object(locus_set_manager.informs, output.INFORMS)
 
@@ -83,10 +83,10 @@ rule extract_locus_info:
     params:
         running_dir=os.path.join(TYPING_WORKING_DIR, '{scheme}')
     run:
-        from app.tools.pipelines.sequence_typing.locusmanager import LocusManager
+        from camel.app.tools.pipelines.sequence_typing.locusmanager import LocusManager
         locus_manager = LocusManager(camel)
         locus_manager.add_input_files({'DIR': [ToolIODirectory(input[0])]})
-        step = SnakeStep(rule, locus_manager, camel, params.running_dir, config)
+        step = Step(rule, locus_manager, camel, params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(locus_manager, output)
 
@@ -115,11 +115,11 @@ rule blastn_allele_detection:
         running_dir = os.path.join(TYPING_WORKING_DIR, '{scheme}', '{locus}')
     threads: 1
     run:
-        from app.tools.blast.blastformatter import BlastFormatter
-        from app.tools.blast.blastn import Blastn
-        from app.tools.blast.blastx import Blastx
-        from app.tools.pipelines.sequence_typing.besthitselector import BestHitSelector
-        from app.tools.pipelines.sequence_typing.alignmentextractor import AlignmentExtractor
+        from camel.app.tools.blast.blastformatter import BlastFormatter
+        from camel.app.tools.blast.blastn import Blastn
+        from camel.app.tools.blast.blastx import Blastx
+        from camel.app.tools.pipelines.sequence_typing.besthitselector import BestHitSelector
+        from camel.app.tools.pipelines.sequence_typing.alignmentextractor import AlignmentExtractor
 
         # Blastn alignment
         if get_locus_type(wildcards.scheme, wildcards.locus) == 'DNA':
@@ -176,10 +176,10 @@ rule srst2_allele_detection:
     threads:
         4
     run:
-        from app.tools.srst2.srst2alleledetector import SRST2AlleleDetector
+        from camel.app.tools.srst2.srst2alleledetector import SRST2AlleleDetector
         detector = SRST2AlleleDetector(camel)
         SnakemakeUtils.add_pickle_inputs(detector, input)
-        step = SnakeStep(rule, detector, camel, params.running_dir, config)
+        step = Step(rule, detector, camel, params.running_dir, config)
         detector.update_parameters(threads=threads, forward_designator='1P', reverse_designator='2P')
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(detector, output)
@@ -217,12 +217,12 @@ rule combine_loci:
         sample_name=FileSystemHelper.make_valid(config['sample_name']),
         scheme=FileSystemHelper.make_valid('{scheme}')
     run:
-        from app.tools.pipelines.sequence_typing.allelecombiner import AlleleCombiner
+        from camel.app.tools.pipelines.sequence_typing.allelecombiner import AlleleCombiner
         list_of_informs = []
         for pickle in input.INFORMS_Loci:
             list_of_informs.append(SnakemakeUtils.load_object(pickle))
         combiner = AlleleCombiner(camel)
-        step = SnakeStep(rule, combiner, camel, params.running_dir, config)
+        step = Step(rule, combiner, camel, params.running_dir, config)
         output_path = os.path.join(params.running_dir, 'typing-{}-{}.tsv'.format(params.scheme, params.sample_name))
         combiner.update_parameters(output_filename=output_path)
         combiner.add_input_files({'VAL_Hits': SnakemakeUtils.load_object(input.hits)})
@@ -242,10 +242,10 @@ rule detect_sequence_type:
     params:
         running_dir = os.path.join(TYPING_WORKING_DIR, '{scheme}')
     run:
-        from app.tools.pipelines.sequence_typing.sequencetypedetector import SequenceTypeDetector
+        from camel.app.tools.pipelines.sequence_typing.sequencetypedetector import SequenceTypeDetector
         sequence_type_detector = SequenceTypeDetector(camel)
         SnakemakeUtils.add_pickle_inputs(sequence_type_detector, input)
-        step = SnakeStep(rule, sequence_type_detector, camel, params.running_dir, config)
+        step = Step(rule, sequence_type_detector, camel, params.running_dir, config)
         sequence_type_detector.update_parameters(allele_wildcard='N', allele_absent_symbol='0')
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(sequence_type_detector, output)
@@ -265,12 +265,12 @@ rule create_report:
     params:
         running_dir = os.path.join(TYPING_WORKING_DIR, '{scheme}', 'report'),
     run:
-        from app.tools.pipelines.sequence_typing.htmlreportertyping import HtmlReporterTyping
+        from camel.app.tools.pipelines.sequence_typing.htmlreportertyping import HtmlReporterTyping
         reporter = HtmlReporterTyping(camel)
         if len(input.INFORMS_ST) != 0:
             reporter.add_input_informs({'ST': SnakemakeUtils.load_object(input.INFORMS_ST)})
         SnakemakeUtils.add_pickle_inputs(reporter, input, ['TSV', 'INFORMS_Scheme', 'VAL_Hits'])
-        step = SnakeStep(rule, reporter, camel, params.running_dir, config)
+        step = Step(rule, reporter, camel, params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
 
