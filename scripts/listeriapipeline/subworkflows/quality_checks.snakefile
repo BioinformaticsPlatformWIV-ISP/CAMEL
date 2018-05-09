@@ -14,9 +14,9 @@ rule FastQC_additional_checks:
     params:
         running_dir=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'fastqc_checks')
     run:
-        from app.tools.fastqc.fastqcadditionalchecks import FastQCAdditionalChecks
+        from camel.app.tools.fastqc.fastqcadditionalchecks import FastQCAdditionalChecks
         fastqc_checks = FastQCAdditionalChecks(camel)
-        step = SnakeStep(rule, fastqc_checks, camel, params.running_dir, config)
+        step = Step(rule, fastqc_checks, camel, params.running_dir, config)
         SnakemakeUtils.add_pickle_inputs(fastqc_checks, input)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(fastqc_checks, output)
@@ -32,9 +32,9 @@ rule Assembly_indexing:
     params:
         running_dir=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'assembly_indexing')
     run:
-        from app.tools.bowtie2.bowtie2index import Bowtie2Index
+        from camel.app.tools.bowtie2.bowtie2index import Bowtie2Index
         bowtie2_index = Bowtie2Index(camel)
-        step = SnakeStep(rule, bowtie2_index, camel, params.running_dir, config)
+        step = Step(rule, bowtie2_index, camel, params.running_dir, config)
         SnakemakeUtils.add_pickle_inputs(bowtie2_index, input)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(bowtie2_index, output)
@@ -54,9 +54,9 @@ rule Read_mapping:
     params:
         running_dir=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'read_mapping')
     run:
-        from app.tools.bowtie2.bowtie2map import Bowtie2Map
+        from camel.app.tools.bowtie2.bowtie2map import Bowtie2Map
         bowtie2_map = Bowtie2Map(camel)
-        step = SnakeStep(rule, bowtie2_map, camel, params.running_dir, config)
+        step = Step(rule, bowtie2_map, camel, params.running_dir, config)
         # set proper maximum_fragment_length for 2x300 sequencing (MiSeq)
         bowtie2_map.update_parameters(maximum_fragment_length=1500)
         SnakemakeUtils.add_pickle_inputs(bowtie2_map, input)
@@ -74,9 +74,9 @@ rule Sam_to_bam_conversion:
     params:
         running_dir=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'read_mapping')
     run:
-        from app.tools.samtools.samtoolsview import SamtoolsView
+        from camel.app.tools.samtools.samtoolsview import SamtoolsView
         samtools_view = SamtoolsView(camel)
-        step = SnakeStep(rule, samtools_view, camel, params.running_dir, config)
+        step = Step(rule, samtools_view, camel, params.running_dir, config)
         SnakemakeUtils.add_pickle_inputs(samtools_view, input)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(samtools_view, output)
@@ -92,9 +92,9 @@ rule Alignment_sorting:
     params:
         running_dir=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'alignment_sorting')
     run:
-        from app.tools.samtools.samtoolssort import SamtoolsSort
+        from camel.app.tools.samtools.samtoolssort import SamtoolsSort
         samtools_sort = SamtoolsSort(camel)
-        step = SnakeStep(rule, samtools_sort, camel, params.running_dir, config)
+        step = Step(rule, samtools_sort, camel, params.running_dir, config)
         SnakemakeUtils.add_pickle_inputs(samtools_sort, input)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(samtools_sort, output)
@@ -110,9 +110,9 @@ rule Coverage_calculation:
     params:
         running_dir=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'coverage_calculation')
     run:
-        from app.tools.samtools.samtoolsdepth import SamtoolsDepth
+        from camel.app.tools.samtools.samtoolsdepth import SamtoolsDepth
         samtools_depth = SamtoolsDepth(camel)
-        step = SnakeStep(rule, samtools_depth, camel, params.running_dir, config)
+        step = Step(rule, samtools_depth, camel, params.running_dir, config)
         SnakemakeUtils.add_pickle_inputs(samtools_depth, input)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(samtools_depth, output)
@@ -153,9 +153,9 @@ rule Check_quality_criteria:
     params:
         running_dir=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'quality_checks')
     run:
-        from app.tools.pipelines.quality_checks.qualitycriteriachecker import QualityCriteriaChecker
+        from camel.app.tools.pipelines.quality_checks.qualitycriteriachecker import QualityCriteriaChecker
         quality_checker = QualityCriteriaChecker(camel)
-        step = SnakeStep(rule, quality_checker, camel, params.running_dir, config)
+        step = Step(rule, quality_checker, camel, params.running_dir, config)
         # cgMLST detection perc. cutoff: 90 minimal requirement (pandemic), 95 acceptable (isolates), 97 good
         quality_checker.update_parameters(minimal_cgmlst_percentage_genes_fail=90, minimal_cgmlst_percentage_genes_warn=95)
         SnakemakeUtils.add_pickle_inputs(quality_checker, input)
@@ -177,9 +177,9 @@ rule Report_quality_checks:
     params:
         running_dir=os.path.join(QUALITY_CHECKS_WORKING_DIR)
     run:
-        from app.tools.pipelines.quality_checks.htmlreporterqualitychecks import HtmlReporterQualityChecks
+        from camel.app.tools.pipelines.quality_checks.htmlreporterqualitychecks import HtmlReporterQualityChecks
         reporter = HtmlReporterQualityChecks(camel)
-        step = SnakeStep(rule, reporter, camel, params.running_dir, config)
+        step = Step(rule, reporter, camel, params.running_dir, config)
         SnakemakeUtils.add_pickle_inputs(reporter, input)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
