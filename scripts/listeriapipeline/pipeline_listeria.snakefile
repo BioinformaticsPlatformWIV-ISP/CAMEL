@@ -1,24 +1,26 @@
 import sys
-sys.path.append('/home/qiafu/Work/camel3/')
-
-
 import datetime
 import os
 import shutil
-from app.camel import Camel
-from app.components.filesystemhelper import FileSystemHelper
-from app.components.html.htmlreport import HtmlReport
-from app.components.html.htmlelement import HtmlElement
-from app.components.html.htmlreportsection import HtmlReportSection
-from app.io.tooliodirectory import ToolIODirectory
-from app.io.tooliofile import ToolIOFile
-from app.io.tooliovalue import ToolIOValue
-from app.snakemake.snakemakeutils import SnakemakeUtils
-from app.pipeline.snakestep import SnakeStep
+
+
+from camel.app.camel import Camel
+from camel.app.components.filesystemhelper import FileSystemHelper
+from camel.app.components.html.htmlreport import HtmlReport
+from camel.app.components.html.htmlelement import HtmlElement
+from camel.app.components.html.htmlreportsection import HtmlReportSection
+from camel.app.io.tooliodb import ToolIODb
+from camel.app.io.tooliodirectory import ToolIODirectory
+from camel.app.io.tooliofile import ToolIOFile
+from camel.app.io.tooliovalue import ToolIOValue
+from camel.app.snakemake.snakemakeutils import SnakemakeUtils
+from camel.app.pipeline.step import Step
+from camel.resources import CSS_STYLE
+
+
 
 
 # 1. Get the sub workflows
-from resources import CSS_STYLE
 from scripts.listeriapipeline.subworkflows import WORKFLOW_INIT_REPORT, WORKFLOW_ASSEMBLY, WORKFLOW_READ_TRIMMING, \
     WORKFLOW_GENE_DETECTION, WORKFLOW_SEQUENCE_TYPING, WORKFLOW_CONTAMINATION_CHECK, WORKFLOW_QUALITY_CHECKS
 
