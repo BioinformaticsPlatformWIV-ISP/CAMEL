@@ -15,7 +15,7 @@ class BcftoolsIndexStats(Tool):
         Initializes this tool.
         :param camel: CAMEL instance.
         """
-        super(BcftoolsIndexStats, self).__init__('bcftools index stats', '1.3.1', camel)
+        super(BcftoolsIndexStats, self).__init__('bcftools index stats', '1.6', camel)
 
     def _check_input(self):
         """

@@ -18,7 +18,7 @@ class BcftoolsCall(Tool):
         Initializes this tool.
         :param camel: CAMEL instance
         """
-        super(BcftoolsCall, self).__init__('bcftools call', '1.3.1', camel)
+        super(BcftoolsCall, self).__init__('bcftools call', '1.6', camel)
 
     def _check_parameters(self):
         """
