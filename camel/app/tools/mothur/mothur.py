@@ -51,7 +51,7 @@ class Mothur(Tool):
             new_inputs[input_key] = []
             for tool_input in input_list:
                 if '-' in tool_input.path:
-                    link_name = os.path.join(self.__temp_dir, tool_input.basename)
+                    link_name = os.path.join(self.__temp_dir, tool_input.basename.replace('-', '_'))
                     os.symlink(tool_input.path, link_name)
                     self.__symlinks.append(link_name)
                     new_inputs[input_key] += [ToolIOFile(link_name)]
