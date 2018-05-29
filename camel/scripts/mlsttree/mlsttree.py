@@ -42,7 +42,7 @@ def __create_tabular_output(a_ids: Dict[str, List[Tuple[str, str]]], output_path
 
     # Save to file
     logging.info(f"Creating tabular output file: {output_path}")
-    with open(args.output_path, 'w') as handle:
+    with open(output_path, 'w') as handle:
         for row in table_data:
             handle.write('\t'.join(row))
             handle.write('\n')
