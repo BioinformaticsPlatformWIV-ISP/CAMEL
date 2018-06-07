@@ -69,26 +69,32 @@ class Trimmomatic(Tool):
         Builds the command to run in single end mode.
         :return: Command options
         """
-        return [
-            self._mode,
-            str(self._parameters['threads']),
-            self._tool_inputs['FASTQ_SE'][0].path,
-            self._parameters['baseout'].value,
-            self._parameters['illuminaclip_SE'].option + self._parameters['illuminaclip_SE'].value,
-        ]
+        options = [self._mode]
+        if 'threads' in self._parameters:
+            options.append(str(self._parameters['threads']))
+        options.append(self._tool_inputs['FASTQ_SE'][0].path)
+        if 'baseout' in self._parameters:
+            options.append(str(self._parameters['baseout']))
+        if 'illuminaclip_PE' in self._parameters:
+            options.append(self._parameters['illuminaclip_SE'].option + self._parameters['illuminaclip_SE'].value)
+
+        return options
 
     def __build_pe_command(self):
         """
         Builds the command to run in paired end mode.
         :return: Command options
         """
-        return [
-            self._mode,
-            str(self._parameters['baseout']),
-            str(self._parameters['threads']),
-            ' '.join(f.path for f in self._tool_inputs['FASTQ_PE']),
-            self._parameters['illuminaclip_PE'].option + self._parameters['illuminaclip_PE'].value
-        ]
+        options = [self._mode]
+        if 'baseout' in self._parameters:
+            options.append(str(self._parameters['baseout']))
+        if 'threads' in self._parameters:
+            options.append(str(self._parameters['threads']))
+        options.append(' '.join(f.path for f in self._tool_inputs['FASTQ_PE']))
+        if 'illuminaclip_PE' in self._parameters:
+            options.append(self._parameters['illuminaclip_PE'].option + self._parameters['illuminaclip_PE'].value)
+
+        return options
 
     def __set_output(self):
         """
