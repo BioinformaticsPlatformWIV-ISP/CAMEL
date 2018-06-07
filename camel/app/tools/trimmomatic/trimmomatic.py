@@ -51,15 +51,6 @@ class Trimmomatic(Tool):
             raise ValueError("No FASTQ_PE of FASTQ_SE input found")
         super(Trimmomatic, self)._check_input()
 
-    def _check_parameters(self):
-        """
-        Checks the parameters.
-        :return: None
-        """
-        if '.gz' in self._parameters['baseout'].value:
-            raise InvalidParameterError("Zipped output is not supported.")
-        super(Trimmomatic, self)._check_parameters()
-
     def __build_command(self):
         """
         Builds the command.
