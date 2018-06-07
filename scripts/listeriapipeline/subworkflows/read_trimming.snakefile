@@ -50,7 +50,9 @@ rule read_trimming:
         trimmomatic = Trimmomatic(camel)
         trimmomatic.add_input_files({'FASTQ_PE': [ToolIOFile(x) for x in input.FASTQ]})
         step = Step(rule, trimmomatic, camel, params.running_dir, config)
-        trimmomatic.update_parameters(threads=threads)
+        adapter_base_names = {'nextera': 'NexteraPE', 'truseq2': 'TruSeq2', 'truseq3': 'TruSeq3'}
+        adapter = '$TRIMMOMATIC_ADAPTER_DIR/{}-PE.fa:2:30:10'.format(adapter_base_names[config['library']])
+        trimmomatic.update_parameters(threads=threads, illuminaclip_PE=adapter)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(trimmomatic, output)
 

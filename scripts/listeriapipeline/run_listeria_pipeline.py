@@ -175,7 +175,8 @@ class ListeriaMain(object):
                 'sample_name': self._sample_name,
                 'fastq_pe': self._fastq_input,
                 'assembler': self._args.assembler,
-                'detection_method': self._args.analysis_type
+                'detection_method': self._args.analysis_type,
+                'library': self._args.library
             }, handle, default_flow_style=False)
             yaml.dump({
                 'pipeline_version': self.PIPELINE_VERSION,
