@@ -185,7 +185,11 @@ class GATKSomaticMain(object):
                         help='Output_mode for vcf (MuTect2). EMIT_VARIANTS_ONLY,EMIT_ALL_CONFIDENT_SITES,EMIT_ALL_SITES.'
                              'Usage example: --downsample None (disables downsampling).', choices=['EMIT_VARIANTS_ONLY', 'EMIT_ALL_CONFIDENT_SITES', 'EMIT_ALL_SITES'])
 
-
+        # remove first bases in reads
+        self._ap.add_argument('--rm_bases_from_reads', dest='bases_to_rm_from_reads',
+                              help="Number of bases to systematically remove from reads before procesing. Useful for "
+                                   "amplicon-based sequencing if many False Positive technical artifacts are observed at that position. By default, inactive.",
+                              default=0)
 
         # snakemake arguments
         # snakemake unlock
@@ -337,6 +341,13 @@ class GATKSomaticMain(object):
 
         # run from Galaxy (for output files naming)
         self._config_data['from_galaxy'] = self._args.from_galaxy
+
+        # remove bases from beginning of reads
+        if self._args.bases_to_rm_from_reads == "0":
+            self._config_data['run_remove_first_base'] = False
+        else:
+            self._config_data['run_remove_first_base'] = True
+            self._config_data['bases_to_rm_from_reads'] = self._args.bases_to_rm_from_reads
 
         # Create and write to config file
         with open(self.runtime_config_path, 'w') as handle:

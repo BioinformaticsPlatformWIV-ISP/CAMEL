@@ -11,6 +11,17 @@ TOOL_PARAM_DIR = config['TOOL_PARAM_DIR']
 
 camel = Camel(tool_parameter_loc=TOOL_PARAM_DIR)
 
+def prepare_bwa_alignment_input(wildcards):
+    """
+    Prepares input for bwa_alignment rule. 
+    Acts as a static fork in workflow based on config file (execution of first base trimming or not). 
+    :return: BAM iofile path
+    """
+    if config["run_remove_first_base"]==True:
+        FASTQ = os.path.join(working_dir, "removefirstbase/fastq.io")
+    else:
+        FASTQ = os.path.join(working_dir, "initial_input/fastq.io")
+    return FASTQ
 
 def prepare_addreadgroups_input(wildcards):
     """
@@ -199,12 +210,38 @@ rule prepare_references_io:
         SnakemakeUtils.dump_object(io_vcf_known_indels, output.VCF_KNOWN_INDELS)
 
 
+rule removefirstbases:
+    """
+    Remove first base of reads to avoid technical artifacts in amplicon sequencing.
+    """
+    input:
+        FASTQ=os.path.join(working_dir, "initial_input/fastq.io"),
+    output:
+        FASTQ=os.path.join(working_dir, "removefirstbase/fastq.io")
+    threads: 8
+    params:
+        working_dir=os.path.join(working_dir, "removefirstbase"),
+    run:
+        from camel.app.tools.trimmomatic.trimmomatic import Trimmomatic
+        trimm = Trimmomatic(camel)
+        if config['PE']:
+            SnakemakeUtils.add_pickle_input(trimm, 'FASTQ_PE', input.FASTQ)
+        if config['SE']:
+            SnakemakeUtils.add_pickle_input(trimm, 'FASTQ_SE', input.FASTQ)
+        trimm.update_parameters(threads=threads)
+        trimm.update_parameters(head_crop=config['bases_to_rm_from_reads'])
+        step = Step(rule, trimm, camel, params.working_dir, config)
+        step.run_step()
+        SnakemakeUtils.dump_tool_output(trimm, "FASTQ_PE", output.FASTQ)
+
+
+
 rule bwa_alignment:
     """
     Reads alignment using bwa mem.
     """
     input:
-        FASTQ=os.path.join(working_dir, "initial_input/fastq.io"),
+        FASTQ=prepare_bwa_alignment_input,
         FASTA_GENOME=os.path.join(working_dir, "initial_input/fasta_reference_human_value.io"),
     output:
         SAM=os.path.join(working_dir, "bwa_alignment/sam.io")
@@ -599,4 +636,5 @@ rule mutect2:
         else:
             SnakemakeUtils.dump_object("placeholder for empty output.", output.BAM)
             SnakemakeUtils.dump_object("placeholder for empty output.", output.BAI)
+
 
