@@ -2,7 +2,11 @@ import sys
 import datetime
 import os
 import shutil
+import logging
+import yaml
 
+logging.config.dictConfig(yaml.load(open('pipeline_logging.yml', 'r')))
+sys.path.append('/data/testdir/qiafu/Work/camel3/')
 
 from camel.app.camel import Camel
 from camel.app.components.filesystemhelper import FileSystemHelper
@@ -16,8 +20,6 @@ from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.pipeline.step import Step
 from camel.resources import CSS_STYLE
-
-
 
 
 # 1. Get the sub workflows
