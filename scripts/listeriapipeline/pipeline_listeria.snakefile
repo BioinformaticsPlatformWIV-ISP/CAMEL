@@ -3,6 +3,7 @@ import datetime
 import os
 import shutil
 import logging
+import logging.config
 import yaml
 
 logging.config.dictConfig(yaml.load(open('pipeline_logging.yml', 'r')))
