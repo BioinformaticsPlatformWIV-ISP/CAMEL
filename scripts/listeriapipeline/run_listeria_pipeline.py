@@ -30,6 +30,15 @@ class ListeriaMain(object):
         'virulencefinder': 'virulencefinder_listeria',
         'plasmidfinder': 'plasmidfinder_grampositive'
     }
+    DB_SEUENCE_TYPING = {
+        'species_confirmation': '/data/sequence_typing/listeria/species_confirmation/',
+        'MLST-Pasteur': '/data/sequence_typing/listeria/mlst/',
+        'cgMLST': '/data/sequence_typing/listeria/cgmlst',
+        'serogroup': '/data/sequence_typing/listeria/serogroup',
+        'virulence': '/data/sequence_typing/listeria/virulence',
+        'antibiotic_resistance': '/data/sequence_typing/listeria/antibiotic_resistance',
+        'metal_detergent_resistance': '/data/sequence_typing/listeria/metal_detergent_resistance'
+    }
 
     def run(self):
         """
@@ -192,26 +201,9 @@ class ListeriaMain(object):
             }, handle, default_flow_style=False)
 
             # Gene detection
-            gene_detection_dbs = self.__get_gene_detection_db_config()
-            yaml.dump({'gene_detection': {db: {} for db in gene_detection_dbs}}, handle, default_flow_style=False)
-
+            yaml.dump({'gene_detection': {db: {} for db in self.__get_gene_detection_db_config()}}, handle, default_flow_style=False)
             # Sequence typing
-            sequence_typing_dbs = {}
-            if self._args.species_confirmation:
-                sequence_typing_dbs['species_confirmation'] = '/data/sequence_typing/listeria/species_confirmation/'
-            if self._args.mlst:
-                sequence_typing_dbs['MLST-Pasteur'] = '/data/sequence_typing/listeria/mlst/'
-            if self._args.cgmlst:
-                sequence_typing_dbs['cgMLST'] = '/data/sequence_typing/listeria/cgmlst'
-            if self._args.serogrouping:
-                sequence_typing_dbs['serogroup'] = '/data/sequence_typing/listeria/serogroup'
-            if self._args.pubmlst_virulence:
-                sequence_typing_dbs['virulence'] = '/data/sequence_typing/listeria/virulence'
-            if self._args.pubmlst_antibiotic:
-                sequence_typing_dbs['antibiotic_resistance'] = '/data/sequence_typing/listeria/antibiotic_resistance'
-            if self._args.pubmlst_metal:
-                sequence_typing_dbs['metal_detergent_resistance'] = '/data/sequence_typing/listeria/metal_detergent_resistance'
-            yaml.dump({'sequence_typing': sequence_typing_dbs}, handle, default_flow_style=False)
+            yaml.dump({'sequence_typing': self.__get_sequence_typing_db_config()}, handle, default_flow_style=False)
 
             # Kraken databaxse
             yaml.dump({'db_kraken': self._args.kraken_db}, handle, default_flow_style=False)
@@ -234,6 +226,29 @@ class ListeriaMain(object):
         if self._args.plasmidfinder:
             dbs.append('plasmidfinder')
         return [self.DB_GENE_DETECTION[db] for db in dbs]
+
+    def __get_sequence_typing_db_config(self):
+        """
+        Returns the sequence typing related databases
+        :return: dictionary of seqtype db and location(path)
+        """
+        sequence_typing_dbs = {}
+        if self._args.species_confirmation:
+            sequence_typing_dbs['species_confirmation'] = self.DB_SEUENCE_TYPING['species_confirmation']
+        if self._args.mlst:
+            sequence_typing_dbs['MLST-Pasteur'] = self.DB_SEUENCE_TYPING['MLST-Pasteur']
+        if self._args.cgmlst:
+            sequence_typing_dbs['cgMLST'] = self.DB_SEUENCE_TYPING['cgMLST']
+        if self._args.serogrouping:
+            sequence_typing_dbs['serogroup'] = self.DB_SEUENCE_TYPING['serogroup']
+        if self._args.pubmlst_virulence:
+            sequence_typing_dbs['virulence'] = self.DB_SEUENCE_TYPING['virulence']
+        if self._args.pubmlst_antibiotic:
+            sequence_typing_dbs['antibiotic_resistance'] = self.DB_SEUENCE_TYPING['antibiotic_resistance']
+        if self._args.pubmlst_metal:
+            sequence_typing_dbs['metal_detergent_resistance'] = self.DB_SEUENCE_TYPING['metal_detergent_resistance']
+
+        return sequence_typing_dbs
 
 
 if __name__ == '__main__':
