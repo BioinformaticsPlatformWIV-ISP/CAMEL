@@ -18,7 +18,7 @@ rule FastQC_additional_checks:
         fastqc_checks = FastQCAdditionalChecks(camel)
         step = Step(rule, fastqc_checks, camel, params.running_dir, config)
         SnakemakeUtils.add_pickle_inputs(fastqc_checks, input)
-        fastqc_checks.update_parameters(gc_content_reference=39)
+        fastqc_checks.update_parameters(gc_content_reference=39, per_base_sequence_content_skipped_end='0.5%')
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(fastqc_checks, output)
 
