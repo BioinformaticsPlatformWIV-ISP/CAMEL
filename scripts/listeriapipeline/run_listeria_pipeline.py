@@ -30,7 +30,7 @@ class ListeriaMain(object):
         'virulencefinder': 'virulencefinder_listeria',
         'plasmidfinder': 'plasmidfinder_grampositive'
     }
-    DB_SEUENCE_TYPING = {
+    DB_SEQUENCE_TYPING = {
         'species_confirmation': '/data/sequence_typing/listeria/species_confirmation/',
         'MLST-Pasteur': '/data/sequence_typing/listeria/mlst/',
         'cgMLST': '/data/sequence_typing/listeria/cgmlst',
@@ -234,19 +234,19 @@ class ListeriaMain(object):
         """
         sequence_typing_dbs = {}
         if self._args.species_confirmation:
-            sequence_typing_dbs['species_confirmation'] = self.DB_SEUENCE_TYPING['species_confirmation']
+            sequence_typing_dbs['species_confirmation'] = self.DB_SEQUENCE_TYPING['species_confirmation']
         if self._args.mlst:
-            sequence_typing_dbs['MLST-Pasteur'] = self.DB_SEUENCE_TYPING['MLST-Pasteur']
+            sequence_typing_dbs['MLST-Pasteur'] = self.DB_SEQUENCE_TYPING['MLST-Pasteur']
         if self._args.cgmlst:
-            sequence_typing_dbs['cgMLST'] = self.DB_SEUENCE_TYPING['cgMLST']
+            sequence_typing_dbs['cgMLST'] = self.DB_SEQUENCE_TYPING['cgMLST']
         if self._args.serogrouping:
-            sequence_typing_dbs['serogroup'] = self.DB_SEUENCE_TYPING['serogroup']
+            sequence_typing_dbs['serogroup'] = self.DB_SEQUENCE_TYPING['serogroup']
         if self._args.pubmlst_virulence:
-            sequence_typing_dbs['virulence'] = self.DB_SEUENCE_TYPING['virulence']
+            sequence_typing_dbs['virulence'] = self.DB_SEQUENCE_TYPING['virulence']
         if self._args.pubmlst_antibiotic:
-            sequence_typing_dbs['antibiotic_resistance'] = self.DB_SEUENCE_TYPING['antibiotic_resistance']
+            sequence_typing_dbs['antibiotic_resistance'] = self.DB_SEQUENCE_TYPING['antibiotic_resistance']
         if self._args.pubmlst_metal:
-            sequence_typing_dbs['metal_detergent_resistance'] = self.DB_SEUENCE_TYPING['metal_detergent_resistance']
+            sequence_typing_dbs['metal_detergent_resistance'] = self.DB_SEQUENCE_TYPING['metal_detergent_resistance']
 
         return sequence_typing_dbs
 
