@@ -1,8 +1,6 @@
 import logging
 import re
 
-import re
-
 from camel.app.tools.tool import Tool
 
 
