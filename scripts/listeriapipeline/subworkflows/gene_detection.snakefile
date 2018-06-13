@@ -1,6 +1,6 @@
 GENE_DETECTION_WORKING_DIR = os.path.join(__WORKING_DIR, 'gene_detection')
 GENE_DETECTION_REPORT = os.path.join(GENE_DETECTION_WORKING_DIR, 'report-html.io')
-GENE_DETECTION_DB_SUMMARY = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'report-summary.tsv')
+GENE_DETECTION_DB_SUMMARY = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'report', 'summary.tsv')
 
 rule database_manager:
     """
@@ -251,7 +251,7 @@ rule summary_gene_detection:
     output:
         GENE_DETECTION_DB_SUMMARY
     params:
-        running_dir=os.path.join('gene_detection', '{db}', 'summary')
+        running_dir=os.path.join('gene_detection', '{db}', 'report')
     run:
         informs = SnakemakeUtils.load_object(input.INFORMS_hits)
         hit_info = []
