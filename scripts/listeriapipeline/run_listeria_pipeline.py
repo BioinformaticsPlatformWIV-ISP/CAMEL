@@ -30,14 +30,15 @@ class ListeriaMain(object):
         'virulencefinder': 'virulencefinder_listeria',
         'plasmidfinder': 'plasmidfinder_grampositive'
     }
+    DB_SEQUENCE_TYPING_ROOT = '/data/sequence_typing/listeria/'
     DB_SEQUENCE_TYPING = {
-        'species_confirmation': '/data/sequence_typing/listeria/species_confirmation/',
-        'MLST-Pasteur': '/data/sequence_typing/listeria/mlst/',
-        'cgMLST': '/data/sequence_typing/listeria/cgmlst',
-        'serogroup': '/data/sequence_typing/listeria/serogroup',
-        'virulence': '/data/sequence_typing/listeria/virulence',
-        'antibiotic_resistance': '/data/sequence_typing/listeria/antibiotic_resistance',
-        'metal_detergent_resistance': '/data/sequence_typing/listeria/metal_detergent_resistance'
+        'species_confirmation': os.path.join(DB_SEQUENCE_TYPING_ROOT, 'species_confirmation'),
+        'MLST-Pasteur': os.path.join(DB_SEQUENCE_TYPING_ROOT, 'mlst'),
+        'cgMLST': os.path.join(DB_SEQUENCE_TYPING_ROOT, 'cgmlst'),
+        'serogroup': os.path.join(DB_SEQUENCE_TYPING_ROOT, 'serogroup'),
+        'virulence': os.path.join(DB_SEQUENCE_TYPING_ROOT, 'virulence'),
+        'antibiotic_resistance': os.path.join(DB_SEQUENCE_TYPING_ROOT, 'antibiotic_resistance'),
+        'metal_detergent_resistance': os.path.join(DB_SEQUENCE_TYPING_ROOT, 'metal_detergent_resistance')
     }
 
     def run(self):
