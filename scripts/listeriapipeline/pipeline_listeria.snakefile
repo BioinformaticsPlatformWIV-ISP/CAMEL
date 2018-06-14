@@ -1,4 +1,3 @@
-import sys
 import datetime
 import os
 import shutil
@@ -10,7 +9,6 @@ import yaml
 # using snakemake utility func 'srcdir' to get the directory of snakefile
 logging_cfg = srcdir("pipeline_logging.yml")
 logging.config.dictConfig(yaml.load(open(logging_cfg, 'r')))
-sys.path.append('/data/testdir/qiafu/Work/camel3/')
 
 
 from camel.app.camel import Camel
