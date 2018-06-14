@@ -49,3 +49,5 @@ sequence_typing:
 db_kraken: /data/kraken/latest/abfhpv_lite
 # lite db is incomplete, for testing only
 # db_kraken: /data/kraken/latest/abfhpv
+kraken_expspecies: Listeria monocytogenes
+# specify target species
