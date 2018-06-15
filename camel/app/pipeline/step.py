@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, List
+from typing import Dict, List, Union
 
 from snakemake.io import Wildcards
 
@@ -26,7 +26,7 @@ class Step(object):
         :param config: Snakemake config dictionary
         :param wildcards: Wildcards object from snakemake
         :param pipeline_output: Boolean to indicate whether outputs are pipeline outputs
-        :param log_step: Boolean to indicate whether outputs for this step have to be logged
+        :param log_step: Boolean to indicate whether outputs for this step have to be logged (overrides logging level 'step' if False)
         :param log_keys: List of keys from the output that need to be logged
         """
         self._name = rule_name
@@ -144,14 +144,13 @@ class Step(object):
         return True if self._log_keys is None else key in self._log_keys
 
     @staticmethod
-    def step_is_logged(logging_level: str, log_step: bool, pipeline_output: bool) -> bool:
+    def step_is_logged(logging_level: str, log_step: Union[bool, None], pipeline_output: bool) -> bool:
         """
         This helper function is used to check whether a step should be logged depending on the logging level set in the
         config and the variables passed to the step object.
         :param logging_level: Logging level as defined in the config
-        :param log_step: Boolean to indicate if this step should be logged (overwrites the logging level is it is not
+        :param log_step: Boolean to indicate if this step should be logged (None for default behaviour)
         :param pipeline_output: True if this step is a pipeline output
-        set to None.
         :return: True if the step should be logged, False otherwise.
         """
         if logging_level == 'step':
