@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, List
+from typing import Dict, List, Union
 
 from snakemake.io import Wildcards
 
@@ -16,7 +16,7 @@ class Step(object):
     """
 
     def __init__(self, rule_name: str, tool: Tool, camel: Camel, folder: str, config: dict,
-                 wildcards: Wildcards=None, pipeline_output: bool=False, log_step: bool=None) -> None:
+                 wildcards: Wildcards=None, pipeline_output: bool=False, log_step: Union[bool, None]=None, log_keys: List[str]=None) -> None:
         """
         Initializes a step.
         :param rule_name: Name of the snakerule
@@ -26,7 +26,8 @@ class Step(object):
         :param config: Snakemake config dictionary
         :param wildcards: Wildcards object from snakemake
         :param pipeline_output: Boolean to indicate whether outputs are pipeline outputs
-        :param log_step: Boolean to indicate whether outputs for this step have to be logged
+        :param log_step: Boolean to indicate whether outputs for this step have to be logged (overrides logging level 'step' if False)
+        :param log_keys: List of keys from the output that need to be logged
         """
         self._name = rule_name
         self._tool = tool
@@ -41,6 +42,7 @@ class Step(object):
         self._job_id = config['pipeline_job_id'] if self._db_logging else None
         self._pipeline_output = pipeline_output
         self._wildcards = wildcards
+        self._log_keys = log_keys
 
     @property
     def name(self) -> str:
@@ -124,23 +126,31 @@ class Step(object):
         """
         logging.info("Logging step outputs")
         for key, files in self.outputs.items():
-            for i in range(0, len(files)):
-                if files[i].logged:
-                    output_data = (self._job_id, self._name, self._wildcards, files[i].type_name, key, i,
-                                   files[i].hash, self._pipeline_output)
-                    logging.debug('OUTPUT DATA: {}'.format(output_data))
-                    self._step_service.log_output(output_data)
-                    logging.debug('Output {} ({}) logged'.format(key, i))
+            if self._log_key(key):
+                for i in range(0, len(files)):
+                    if files[i].logged:
+                        output_data = (self._job_id, self._name, self._wildcards, files[i].type_name, key, i,
+                                       files[i].hash, self._pipeline_output)
+                        logging.debug('OUTPUT DATA: {}'.format(output_data))
+                        self._step_service.log_output(output_data)
+                        logging.debug('Output {} ({}) logged'.format(key, i))
+
+    def _log_key(self, key) -> bool:
+        """
+        Checks whether the files with the given output key need to be logged.
+        :param key: Output key to check
+        :return: True/False
+        """
+        return True if self._log_keys is None else key in self._log_keys
 
     @staticmethod
-    def step_is_logged(logging_level: str, log_step: bool, pipeline_output: bool) -> bool:
+    def step_is_logged(logging_level: str, log_step: Union[bool, None], pipeline_output: bool) -> bool:
         """
         This helper function is used to check whether a step should be logged depending on the logging level set in the
         config and the variables passed to the step object.
         :param logging_level: Logging level as defined in the config
-        :param log_step: Boolean to indicate if this step should be logged (overwrites the logging level is it is not
+        :param log_step: Boolean to indicate if this step should be logged (None for default behaviour)
         :param pipeline_output: True if this step is a pipeline output
-        set to None.
         :return: True if the step should be logged, False otherwise.
         """
         if logging_level == 'step':

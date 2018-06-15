@@ -23,7 +23,7 @@ class ToolIODb(ToolIO):
         super(ToolIODb, self).__init__(logged)
         self._config = DB_CONFIG if config is None else config
         self._name = name
-        self._version = version
+        self._version = self.__get_latest_db_version() if version == 'latest' else version
         self._prefix = prefix
         self._path = self.__get_location()
 
@@ -90,37 +90,48 @@ class ToolIODb(ToolIO):
         """
         return 'db'
 
+    @property
+    def version(self) -> str:
+        """
+        Return the database version
+        :return: Datbase version
+        """
+        return self._version
+
     def __get_location(self) -> str:
         """
         Returns the location of the database
         :return: Database location
         """
-        return self.__get_db_location(self._version.lower()) if self._prefix is None else os.path.join(self.__get_db_location(self._version.lower()), self._prefix)
+        return self.__get_db_location() if self._prefix is None else os.path.join(self.__get_db_location(), self._prefix)
 
-    def __get_db_location(self, version: str, prefix: str=None) -> str:
+    def __get_db_location(self) -> str:
         """
         Gets the location of the database in the file system
-        :param version: Version of the database
-        :param prefix: Prefix for the database
         :return: Database location in the file system
         """
         db_conn = Connection(self._config, 'db_loc')
         sql = """SELECT location FROM databases.db_loc 
                     WHERE db_loc.name = %s 
-                    AND db_loc.available IS TRUE"""
-        sql += " AND db_loc.latest IS TRUE" if (version == 'latest') else " AND db_loc.version = %s"
-        if prefix is None:
-            return self.__check_and_return_loc(db_conn.query(sql, (self._name,)))
-        else:
-            return self.__check_and_return_loc(db_conn.query(sql, (self._name, self._version)))
+                    AND db_loc.available IS TRUE 
+                    AND db_loc.version = %s"""
+        return self.__check_and_return(db_conn.query(sql, (self._name, self._version)))
 
-    def __check_and_return_loc(self, results) -> str:
+    def __check_and_return(self, results) -> str:
         """
         Checks whether a single database is returned from the database. Otherwise an exception is thrown.
         :param results: Array with the results of the database query
-        :return: Database location
+        :return: First item of the first record (e.g. database location or version)
         """
         if len(results) != 2:
             raise ValueError(f'There can be only one database with name {self._name} and version {self._version}, but {len(results)-1} were found!')
         else:
             return results[1][0]
+
+    def __get_latest_db_version(self):
+        db_conn = Connection(self._config, 'db_loc')
+        sql = """SELECT version FROM databases.db_loc 
+                    WHERE db_loc.name = %s 
+                    AND db_loc.available IS TRUE 
+                    AND db_loc.latest IS TRUE"""
+        return self.__check_and_return(db_conn.query(sql, (self._name,)))
