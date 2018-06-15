@@ -157,7 +157,7 @@ rule srst2_gene_detection:
     params:
         running_dir = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'srst2')
     threads:
-        4
+        8
     run:
         from camel.app.tools.srst2.srst2gene import Srst2Gene
         srst2 = Srst2Gene(camel)

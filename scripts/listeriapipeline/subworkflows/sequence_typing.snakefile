@@ -174,7 +174,7 @@ rule srst2_allele_detection:
     params:
         running_dir = os.path.join(TYPING_WORKING_DIR, '{scheme}', '{locus}')
     threads:
-        4
+        8
     run:
         from camel.app.tools.srst2.srst2alleledetector import SRST2AlleleDetector
         detector = SRST2AlleleDetector(camel)

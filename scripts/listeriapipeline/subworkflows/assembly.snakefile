@@ -17,7 +17,7 @@ rule velvet_optimiser:
         running_dir = os.path.join(ASSEMBLY_WORKING_DIR, 'velvet'),
         fast = config.get('assembly_fast', False)
     threads:
-        8
+        6
     run:
         from camel.app.tools.velvetoptimiser.velvetoptimiser import VelvetOptimiser
         velvet_optimiser = VelvetOptimiser(camel)
@@ -43,7 +43,7 @@ rule spades:
         running_dir = os.path.join(ASSEMBLY_WORKING_DIR, 'spades'),
         fast = config.get('assembly_fast', False)
     threads:
-        8
+        6
     run:
         from camel.app.tools.spades.spades import SPAdes
         spades = SPAdes(camel)
@@ -82,11 +82,14 @@ rule quast:
         TSV = os.path.join(ASSEMBLY_WORKING_DIR, 'quast', 'tsv.io')
     params:
         running_dir = os.path.join(ASSEMBLY_WORKING_DIR, 'quast')
+    threads:
+        8
     run:
         from camel.app.tools.quast.quast import Quast
         quast = Quast(camel)
         SnakemakeUtils.add_pickle_inputs(quast, input)
         step = Step(rule, quast, camel, params.running_dir, config)
+        quast.update_parameters(threads=threads)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(quast, output)
 

@@ -26,11 +26,14 @@ rule kraken:
         TSV = os.path.join(CONTAMINATION_WORKING_DIR, 'tsv.io')
     params:
         running_dir = os.path.join(CONTAMINATION_WORKING_DIR)
+    threads:
+        6
     run:
         from camel.app.tools.kraken.kraken import Kraken
         kraken = Kraken(camel)
         SnakemakeUtils.add_pickle_inputs(kraken, input)
         step = Step(rule, kraken, camel, params.running_dir, config)
+        kraken.update_parameters(threads=threads)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(kraken, output)
 

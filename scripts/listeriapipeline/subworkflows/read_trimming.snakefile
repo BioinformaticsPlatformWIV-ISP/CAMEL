@@ -20,7 +20,7 @@ rule fastqc_pre_trimming:
     params:
         running_dir = os.path.join(READ_TRIMMING_WORKING_DIR, 'pre_trimming')
     threads:
-        8
+        6
     run:
         from camel.app.tools.fastqc.fastqc import FastQC
         fastqc = FastQC(camel)
@@ -42,7 +42,7 @@ rule read_trimming:
         FASTQ_SE_REVERSE = TRIMMED_READS_SE_REVERSE,
         INFORMS = TRIMMING_INFORM
     threads:
-        8
+        6
     params:
         running_dir = os.path.join(READ_TRIMMING_WORKING_DIR, 'trimming')
     run:
@@ -71,7 +71,7 @@ rule fastqc_post_trimming:
     params:
         running_dir = os.path.join(READ_TRIMMING_WORKING_DIR, 'post_trimming')
     threads:
-        8
+        6
     run:
         from camel.app.tools.fastqc.fastqc import FastQC
         fastqc = FastQC(camel)

@@ -54,12 +54,14 @@ rule Read_mapping:
         INFORMS=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'read_mapping', 'informs.io')
     params:
         running_dir=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'read_mapping')
+    threads:
+        8
     run:
         from camel.app.tools.bowtie2.bowtie2map import Bowtie2Map
         bowtie2_map = Bowtie2Map(camel)
         step = Step(rule, bowtie2_map, camel, params.running_dir, config)
         # set proper maximum_fragment_length for 2x300 sequencing (MiSeq)
-        bowtie2_map.update_parameters(maximum_fragment_length=1500)
+        bowtie2_map.update_parameters(threads=threads, maximum_fragment_length=1500)
         SnakemakeUtils.add_pickle_inputs(bowtie2_map, input)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(bowtie2_map, output)
@@ -74,10 +76,13 @@ rule Sam_to_bam_conversion:
         BAM=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'read_mapping', 'bam.io')
     params:
         running_dir=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'read_mapping')
+    threads:
+        8
     run:
         from camel.app.tools.samtools.samtoolsview import SamtoolsView
         samtools_view = SamtoolsView(camel)
         step = Step(rule, samtools_view, camel, params.running_dir, config)
+        samtools_view.update_parameters(threads=threads)
         SnakemakeUtils.add_pickle_inputs(samtools_view, input)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(samtools_view, output)
@@ -92,10 +97,13 @@ rule Alignment_sorting:
         BAM=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'alignment_sorting', 'bam-sorted.io')
     params:
         running_dir=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'alignment_sorting')
+    threads:
+        8
     run:
         from camel.app.tools.samtools.samtoolssort import SamtoolsSort
         samtools_sort = SamtoolsSort(camel)
         step = Step(rule, samtools_sort, camel, params.running_dir, config)
+        samtools_sort.update_parameters(threads=threads)
         SnakemakeUtils.add_pickle_inputs(samtools_sort, input)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(samtools_sort, output)
