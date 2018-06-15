@@ -16,7 +16,7 @@ class Step(object):
     """
 
     def __init__(self, rule_name: str, tool: Tool, camel: Camel, folder: str, config: dict,
-                 wildcards: Wildcards=None, pipeline_output: bool=False, log_step: bool=None, log_keys: List[str]=None) -> None:
+                 wildcards: Wildcards=None, pipeline_output: bool=False, log_step: Union[bool, None]=None, log_keys: List[str]=None) -> None:
         """
         Initializes a step.
         :param rule_name: Name of the snakerule
