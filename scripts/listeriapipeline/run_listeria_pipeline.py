@@ -202,7 +202,7 @@ class ListeriaMain(object):
             }, handle, default_flow_style=False)
 
             # Gene detection
-            yaml.dump({'gene_detection': {db: {} for db in self.__get_gene_detection_db_config()}}, handle, default_flow_style=False)
+            yaml.dump({'gene_detection': self.__get_gene_detection_db_config()}, handle, default_flow_style=False)
             # Sequence typing
             yaml.dump({'sequence_typing': self.__get_sequence_typing_db_config()}, handle, default_flow_style=False)
 
@@ -213,20 +213,35 @@ class ListeriaMain(object):
     def __get_gene_detection_db_config(self):
         """
         Returns the gene detection related databases.
-        :return: list of databases
+        :return: dict of database configs
         """
-        dbs = []
+        dbs = {}
         if self._args.argannot:
-            dbs.append('argannot')
+            dbs[self.DB_GENE_DETECTION['argannot']] = {
+                'min_percent_identity': 90.0,
+                'min_coverage': 60.0
+            }
         if self._args.card:
-            dbs.append('card')
+            dbs[self.DB_GENE_DETECTION['card']] = {
+                'min_percent_identity': 90.0,
+                'min_coverage': 60.0
+            }
         if self._args.resfinder:
-            dbs.append('resfinder')
+            dbs[self.DB_GENE_DETECTION['resfinder']] = {
+                'min_percent_identity': 90.0,
+                'min_coverage': 60.0
+            }
         if self._args.virulencefinder:
-            dbs.append('virulencefinder')
+            dbs[self.DB_GENE_DETECTION['virulencefinder']] = {
+                'min_percent_identity': 90.0,
+                'min_coverage': 60.0
+            }
         if self._args.plasmidfinder:
-            dbs.append('plasmidfinder')
-        return [self.DB_GENE_DETECTION[db] for db in dbs]
+            dbs[self.DB_GENE_DETECTION['plasmidfinder']] = {
+                'min_percent_identity': 95.0,
+                'min_coverage': 60.0
+            }
+        return dbs
 
     def __get_sequence_typing_db_config(self):
         """
