@@ -53,7 +53,7 @@ rule spades:
             SnakemakeUtils.load_object(input.FASTQ_SE_REVERSE)
         })
         step = Step(rule, spades, camel, params.running_dir, config)
-        spades.update_parameters(threads=threads)
+        spades.update_parameters(threads=threads, cov_cutoff='off')
         if params.fast:
             spades.update_parameters(only_assembly=True, kmers='55', careful=False)
         step.run_step()
