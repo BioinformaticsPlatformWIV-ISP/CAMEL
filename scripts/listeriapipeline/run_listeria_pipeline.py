@@ -211,8 +211,8 @@ class ListeriaMain(object):
             yaml.dump({'kraken_expspecies': 'Listeria monocytogenes'}, handle, default_flow_style=False)
 
             # SequenceTyping imperfect hits handling: two options,
-            # - st_mark_imprefect_hit: imperfect hits is reported with mark '(p)
-            # yaml.dump({'st_mark_imprefect_hit': True}, handle, default_flow_style=False)
+            # - st_mark_impeefect_hit: imperfect hits is reported with mark '(p)
+            # yaml.dump({'st_mark_imperfect_hit': True}, handle, default_flow_style=False)
             # - st_imperfect_as_nohit: imperfect hits will be skip, nohit will be reported in place (pubmlst style)
             yaml.dump({'st_imperfect_as_nohit': True}, handle, default_flow_style=False)
 

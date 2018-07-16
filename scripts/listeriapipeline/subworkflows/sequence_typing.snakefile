@@ -297,15 +297,15 @@ rule create_scheme_summary:
                 handle.write('\n')
             for hit in hits:
                 key = '{}-{}'.format(params.scheme_name, hit.value.locus)
-                                if 'st_mark_imprefect_hit' in config or 'st_imprefect_as_nohit' in config:
+                if 'st_mark_imperfect_hit' in config or 'st_imperfect_as_nohit' in config:
                     if hit.value.is_perfect_hit():
                         # perfect match
                         handle.write(f'{key}\t{hit.value.allele_id}')
                     elif hit.value.allele_id.isdigit():
                         # partial match
-                        if config['st_mark_imprefect_hit']:
+                        if config['st_mark_imperfect_hit']:
                             handle.write(f'{key}\t{hit.value.allele_id}(p)')
-                        elif config['st_imprefect_as_nohit']:
+                        elif config['st_imperfect_as_nohit']:
                             handle.write(f'{key}\t-')
                     else:
                         # other cases (no match(-), double match(?))
