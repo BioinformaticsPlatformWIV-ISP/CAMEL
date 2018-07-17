@@ -32,7 +32,13 @@ class SequenceTypeDetector(Tool):
         :return: None
         """
         profiles_file = self._tool_inputs['TSV'][0].path
-        allele_ids = {h.value.locus: h.value.allele_id for h in self._tool_inputs['VAL_Hits']}
+        # allele_ids = {h.value.locus: h.value.allele_id for h in self._tool_inputs['VAL_Hits']}
+        allele_ids = {}
+        for h in self._tool_inputs['VAL_Hits']:
+            if h.value.is_perfect_hit():
+                allele_ids[h.value.locus] = h.value.allele_id
+            else:
+                allele_ids[h.value.locus] = '-'
         profiles = self.__parse_profiles(profiles_file, allele_ids.keys())
         sequence_type = self.__get_sequence_type(profiles, allele_ids)
         self._informs['sequence_type'] = sequence_type if sequence_type is not None else STProfile(
