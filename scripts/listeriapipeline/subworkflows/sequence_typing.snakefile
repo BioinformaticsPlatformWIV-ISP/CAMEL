@@ -303,9 +303,9 @@ rule create_scheme_summary:
                         handle.write(f'{key}\t{hit.value.allele_id}')
                     elif hit.value.allele_id.isdigit():
                         # partial match
-                        if config['st_mark_imperfect_hit']:
+                        if 'st_mark_imperfect_hit' in config:
                             handle.write(f'{key}\t{hit.value.allele_id}(p)')
-                        elif config['st_imperfect_as_nohit']:
+                        elif 'st_imperfect_as_nohit' in config:
                             handle.write(f'{key}\t-')
                     else:
                         # other cases (no match(-), double match(?))
