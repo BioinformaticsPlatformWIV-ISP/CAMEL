@@ -99,14 +99,14 @@ class HtmlReporterReadTrimming(Tool):
             self._report_section.add_link_to_file('Trimmed reads paired ({})'.format(orientation), relative_path)
         self._report_section.add_line_break()
 
-        if 'FASTQ_SE_FORWARD' in self._tool_inputs:
+        if 'FASTQ_SE_FORWARD' in self._tool_inputs and len(self._tool_inputs['FASTQ_SE_FORWARD']) > 0:
             relative_path = os.path.join(self.__subfolder, 'read_trimming', 'trimmed_reads_unpaired_forward.fastq')
             self._report_section.add_file(self._tool_inputs['FASTQ_SE_FORWARD'][0].path, relative_path)
             self._report_section.add_link_to_file('Trimmed reads unpaired (forward)', relative_path)
         else:
             self._report_section.add_link_to_file('Trimmed reads unpaired (forward)', None)
 
-        if 'FASTQ_SE_REVERSE' in self._tool_inputs:
+        if 'FASTQ_SE_REVERSE' in self._tool_inputs and len(self._tool_inputs['FASTQ_SE_REVERSE']) > 0:
             relative_path = os.path.join(self.__subfolder, 'read_trimming', 'trimmed_reads_unpaired_reverse.fastq')
             self._report_section.add_file(self._tool_inputs['FASTQ_SE_REVERSE'][0].path, relative_path)
             self._report_section.add_link_to_file('Trimmed reads unpaired (reverse)', relative_path)
