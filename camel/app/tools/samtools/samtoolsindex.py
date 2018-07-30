@@ -45,7 +45,11 @@ class SamtoolsIndex(Samtools):
         errors when there are no writing permissions on the directory of the input file.
         :return: Path to symlink input
         """
-        new_path = os.path.join(self._folder, self._tool_inputs['BAM'][0].basename)
+        if 'output_filename' in self._parameters:
+            basename = self._parameters['output_filename'].value
+        else:
+            basename = self._tool_inputs['BAM'][0].basename
+        new_path = os.path.join(self._folder, basename)
         os.symlink(self._tool_inputs['BAM'][0].path, new_path)
         return new_path
 
@@ -57,7 +61,7 @@ class SamtoolsIndex(Samtools):
         """
         self._command.command = ' '.join([
             self._tool_command,
-            ' '.join(self._build_options()),
+            ' '.join(self._build_options(excluded_parameters=['output_filename'])),
             input_file_path])
 
     def _check_stderr(self):
