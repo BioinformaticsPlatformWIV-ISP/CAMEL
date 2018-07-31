@@ -63,6 +63,8 @@ class SamtoolsDepth(Samtools):
         Returns the median value of a list.
         :return:
         """
+        if len(input_list) == 0:
+            return 0
         sorted_list = sorted(input_list)
         middle = len(input_list) // 2
         if len(input_list) % 2:
