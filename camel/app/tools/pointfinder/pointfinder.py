@@ -64,7 +64,7 @@ class PointFinder(Tool):
         Determines the blastn path based on the dependencies.
         :return: blastn path
         """
-        logging.info('Retrieving blastn path')
+        logging.debug('Retrieving blastn path')
         self._command.command = 'echo $PATH'
         self._execute_command()
         for path in self._command.stdout.split(':'):
@@ -78,7 +78,7 @@ class PointFinder(Tool):
         Returns the date of the last update.
         :return: Date of the last update.
         """
-        logging.info("Retrieving date of the last update.")
+        logging.debug("Retrieving date of the last update.")
         self._command.command = 'echo $POINTFINDER_DB'
         self._execute_command()
         db_path = self._command.stdout.strip()
@@ -95,10 +95,6 @@ class PointFinder(Tool):
         """
         self._tool_outputs['TSV'] = [ToolIOFile(os.path.join(self._folder, 'PointFinder_results.txt'))]
         self._tool_outputs['TXT'] = [ToolIOFile(os.path.join(self._folder, 'PointFinder_table.txt'))]
-
-        for key in self._tool_outputs:
-            if not self._tool_outputs[key][0].exists:
-                raise ToolExecutionError("'{}' file not generated".format(key))
 
     def _check_command_output(self):
         """
