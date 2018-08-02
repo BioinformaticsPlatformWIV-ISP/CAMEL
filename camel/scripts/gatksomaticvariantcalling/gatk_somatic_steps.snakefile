@@ -73,6 +73,7 @@ def define_pipeline_outputs(wildcards):
     if "mutect1" in config["variant_caller"]:
         results["VCF_MUTECT1"] = os.path.join(working_dir, "mutect1/vcf.io"),
         results["TXT_CALL_STATS"] = os.path.join(working_dir, "mutect1/txt.io"),
+        results["VCF_VEP"] = os.path.join(working_dir, "vep/vcf.io"),
 
     if "mutect2" in config["variant_caller"]:
         results["VCF_MUTECT2"] = os.path.join(working_dir, "mutect2/vcf.io"),
@@ -637,4 +638,24 @@ rule mutect2:
             SnakemakeUtils.dump_object("placeholder for empty output.", output.BAM)
             SnakemakeUtils.dump_object("placeholder for empty output.", output.BAI)
 
+rule vep:
+    """
+    Variant annotation with Vep (ensembl).
+    """
+    input:
+        # TODO: add fork if mutect2
+        VCF=os.path.join(working_dir, "mutect1/vcf.io"),
+    output:
+        VCF=os.path.join(working_dir, "vep/vcf.io"),
+    params:
+        working_dir = os.path.join(working_dir, "vep"),
+    run:
+        from camel.app.tools.vep import Vep
+        DB_PATH = [ToolIOFile(ToolIODb("Vep_homo_sapiens_93_GRCh37").path)]
+        run_vep =Vep(camel)
+        SnakemakeUtils.add_pickle_inputs(run_vep, input)
+        SnakemakeUtils.add_pickle_input(run_vep, "DB_PATH", DB_PATH)
+        step = Step(rule_name=rule, tool=run_vep, camel=camel, folder=params.working_dir, config=config, pipeline_output=True)
 
+        step.run_step()
+        SnakemakeUtils.dump_tool_output(run_vep, "VCF", output.VCF)
