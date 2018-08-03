@@ -650,11 +650,12 @@ rule vep:
     params:
         working_dir = os.path.join(working_dir, "vep"),
     run:
-        from camel.app.tools.vep import Vep
-        DB_PATH = [ToolIOFile(ToolIODb("Vep_homo_sapiens_93_GRCh37").path)]
+        from camel.app.tools.vep.vep import Vep
+        from camel.app.io.tooliodb import ToolIODb
+        DB_PATH = ToolIODb("Vep_homo_sapiens_93_GRCh37").path
         run_vep =Vep(camel)
         SnakemakeUtils.add_pickle_inputs(run_vep, input)
-        SnakemakeUtils.add_pickle_input(run_vep, "DB_PATH", DB_PATH)
+        run_vep.update_parameters(db_loc=DB_PATH)
         step = Step(rule_name=rule, tool=run_vep, camel=camel, folder=params.working_dir, config=config, pipeline_output=True)
 
         step.run_step()

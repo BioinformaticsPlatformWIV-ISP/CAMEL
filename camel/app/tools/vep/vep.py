@@ -10,19 +10,13 @@ from camel.app.error.invalidinputspecificationerror import InvalidInputSpecifica
 class Vep(Tool):
     """
     ===========
-    
+    Variant Effect Predictor: annotates and predicts effects of variants in vcf.
+    Oriented towards genetics more than somatic variants.
     ===========
     
     Required inputs:
     ----------------
     "VCF":              ToolIOFile object. VCF or TXT (whitespace seperated) file with variants.
-
-    Optional input:
-    ---------------
-    "BAM_NORMAL":       ToolIOFile object. BAM file with normal data for tumor-normal matching.
-    "FASTA_REF":        ToolIOFile object. FASTA file containing the reference genome.
-    "VCF_DBSNP":        ToolIOFile object. DbSNP reference vcf file location.
-    "TXT_intervals":    ToolIOFile object. Intervals list to restrict search by GATK. Accelerates analysis. Bed or GATK intervals list 
 
     Output:
     -------
@@ -31,8 +25,10 @@ class Vep(Tool):
 
     Mandatory parameters:
     ---------------------
-    - output_file
-                    default value:  vep_annotated.vcf
+    - db_loc        Location of database to use for annotation
+                    default: None
+    - output_file   Output filename.
+                    default:  vep_annotated.vcf
     
     Other parameters:
     -----------------
@@ -46,7 +42,7 @@ class Vep(Tool):
         :return: None
         """
         super(Vep, self).__init__('Vep', '93', camel)
-        self._required_inputs = ['VCF', 'DB_PATH']
+        self._required_inputs = ['VCF']
 
     def _execute_tool(self):
         """
@@ -87,7 +83,7 @@ class Vep(Tool):
 
         options_string = "--cache --offline "
         options_string += " ".join(self._build_options())
-        options_string += " --dir_cache {} ".format(self._tool_inputs['DB_PATH'][0].path)
+        options_string += " --dir_cache {} ".format(self._parameters['db_loc'].value)
 
         self._command.command = ' '.join([self._tool_command, input_string, options_string])
 
@@ -109,4 +105,4 @@ class Vep(Tool):
         :return: None
         """
         if not self.stdout == "" and "ERROR" in self.stdout:
-            raise ToolExecutionError("Vep fails to run, message: \n{}".format(self.stdout))
+            raise ToolExecutionError("Vep failed to run with message: \n{}".format(self.stdout))
