@@ -191,6 +191,12 @@ class GATKSomaticMain(object):
                                    "amplicon-based sequencing if many False Positive technical artifacts are observed at that position. By default, inactive.",
                               default=0)
 
+        # annotation
+        self._ap.add_argument('--vep', dest='run_vep', help='Run Variant Effect Predictor', action='store_true')
+        self._ap.add_argument('--vep_output', dest='vep_output', help="Output file name for Variant Effect Predictor.", default="vep_output.vcf")
+        self._ap.add_argument('--oncotator', dest='run_oncotator', help='Run oncotator.', action='store_true')
+        self._ap.add_argument('--oncotator_output', dest='oncotator_output', help="Output file name for oncotator.", default="oncotator_output.tsv")
+
         # snakemake arguments
         # snakemake unlock
         self._ap.add_argument('--unlock', dest='unlock', action="store_const", const="--unlock", help='Unlock snakemake working directory.', default="")
@@ -348,6 +354,19 @@ class GATKSomaticMain(object):
         else:
             self._config_data['run_remove_first_base'] = True
             self._config_data['bases_to_rm_from_reads'] = self._args.bases_to_rm_from_reads
+
+        # annotations
+        if self._args.run_vep:
+            self._config_data['run_vep'] = True
+            self._config_data['out_vep'] = self._args.vep_output
+        else:
+            self._config_data['run_vep'] = False
+
+        if self._args.run_oncotator:
+            self._config_data['run_oncotator'] = True
+            self._config_data['out_oncotator'] = self._args.oncotator_output
+        else:
+            self._config_data['run_oncotator'] = False
 
         # Create and write to config file
         with open(self.runtime_config_path, 'w') as handle:

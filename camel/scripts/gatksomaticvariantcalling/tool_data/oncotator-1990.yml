@@ -1,0 +1,9 @@
+dependencies: oncotator/1.9.9.0
+parameters:
+  canonical_tx_file: {default: false, mandatory: false, option: -c, value: null}
+  db_dir: {default: true, mandatory: true, option: --db-dir, value: ''}
+  input_format: {default: false, mandatory: false, option: -i, value: VCF}
+  output_file_name: {default: false, mandatory: true, option: null, value: oncotator.tsv}
+  output_format: {default: false, mandatory: false, option: -o, value: SIMPLE_TSV}
+  tx_mode: {default: true, mandatory: false, option: --tx-mode, value: EFFECT}
+tool_command: oncotator

@@ -1,5 +1,4 @@
 import os
-import re
 
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.tool import Tool
@@ -83,7 +82,6 @@ class Vep(Tool):
 
         options_string = "--cache --offline "
         options_string += " ".join(self._build_options())
-        options_string += " --dir_cache {} ".format(self._parameters['db_loc'].value)
 
         self._command.command = ' '.join([self._tool_command, input_string, options_string])
 
@@ -94,7 +92,7 @@ class Vep(Tool):
         - vcf file
         :return: None
         """
-        self._tool_outputs['VCF'] = [ToolIOFile(os.path.join(self._folder, self._parameters['output_file'].value))]
+        self._tool_outputs['OUT'] = [ToolIOFile(os.path.join(self._folder, self._parameters['output_file'].value))]
 
         html_file_name = "{}_summary.html".format(os.path.join(self._folder, self._parameters['output_file'].value))
         self._tool_outputs['HTML'] = [ToolIOFile(html_file_name)]
