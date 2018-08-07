@@ -196,6 +196,8 @@ class GATKSomaticMain(object):
         self._ap.add_argument('--vep_output', dest='vep_output', help="Output file name for Variant Effect Predictor.", default="vep_output.vcf")
         self._ap.add_argument('--oncotator', dest='run_oncotator', help='Run oncotator.', action='store_true')
         self._ap.add_argument('--oncotator_output', dest='oncotator_output', help="Output file name for oncotator.", default="oncotator_output.tsv")
+        self._ap.add_argument('--oncotator_tx_mode', dest='oncotator_tx_mode', help="tx mode for oncotator (canonical or effect).",
+                              default="EFFECT", choices=["CANONICAL", "EFFECT"])
 
         # snakemake arguments
         # snakemake unlock
@@ -365,6 +367,7 @@ class GATKSomaticMain(object):
         if self._args.run_oncotator:
             self._config_data['run_oncotator'] = True
             self._config_data['out_oncotator'] = self._args.oncotator_output
+            self._config_data['oncotator_tx_mode'] = self._args.oncotator_tx_mode
         else:
             self._config_data['run_oncotator'] = False
 

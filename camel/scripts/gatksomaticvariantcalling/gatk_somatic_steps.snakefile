@@ -705,6 +705,8 @@ rule oncotator:
         CANONICAL_VARS_PATH = ToolIODb("tx_exact_uniprot_matchesAKT1_CRLF2_FGFR1").path
         octr =Oncotator(camel)
         SnakemakeUtils.add_pickle_inputs(octr, input)
+        if "oncotator_tx_mode" in config:
+            octr.update_parameters(tx_mode=config["oncotator_tx_mode"])
         octr.update_parameters(db_dir=DB_PATH, canonical_tx_file=CANONICAL_VARS_PATH, input_format="VCF", output_file_name=config['out_oncotator'])
         step = Step(rule_name=rule, tool=octr, camel=camel, folder=params.working_dir, config=config, pipeline_output=True)
         step.run_step()
