@@ -1,10 +1,11 @@
 import json
+from typing import Tuple
+
 import os
 
-from Bio import SeqIO
-
-from camel.app.components.filesystemhelper import FileSystemHelper
+from camel.app.components.genedetection.mapping import Mapping
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliodirectory import ToolIODirectory
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.tool import Tool
@@ -20,11 +21,14 @@ class DBManager(Tool):
 
     OUTPUT:
     - FASTA: FASTA file from the input directory
+    - FASTA_clustered: Clustered FASTA file
 
     INFORMS:
-    - last_updated: Last update date from the database
+    - title: Database title
     - name: Database name
-    - metadata: Metadata for all sequences in the FASTA file (parsed JSON from headers).
+    - last_updated: Date of the last database update
+    - clustering_cutoff: Clustering cutoff of the database
+    - mapping: Mapping of converted sequence names to original headers
     """
 
     def __init__(self, camel):
@@ -35,17 +39,16 @@ class DBManager(Tool):
         """
         super().__init__('Gene Detection: DB Manager', '0.1', camel)
 
-    def _execute_tool(self):
+    def _execute_tool(self) -> None:
         """
         Runs this tool.
         :return: None
         """
         input_folder = self._tool_inputs['DIR'][0].path
-        fasta_file = DBManager.__get_database_file(input_folder)
-        self._tool_outputs['FASTA'] = [fasta_file]
-        self.__add_informs(input_folder, fasta_file)
+        self.__set_database_files(input_folder)
+        self.__add_informs(input_folder)
 
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
         Checks whether the input is correct.
         :return: None
@@ -56,20 +59,36 @@ class DBManager(Tool):
             raise InvalidInputSpecificationError("'{}' is not a directory".format(self._tool_inputs['DIR'][0]))
         super(DBManager, self)._check_input()
 
-    def __add_informs(self, input_folder, fasta_file):
+    def __add_informs(self, input_folder: str) -> None:
         """
         Adds the informs.
         :param input_folder: Input database folder
-        :param fasta_file: FASTA file
         :return: None
         """
-        name, last_updated = self.__get_database_info(input_folder)
-        self._informs['name'] = name
-        self._informs['last_updated'] = last_updated
-        self._informs['metadata'] = self.__parse_metadata(fasta_file)
+        if not os.path.isfile(os.path.join(input_folder, 'db_metadata.txt')):
+            raise FileNotFoundError("No database metadata found in: {}".format(input_folder))
+        with open(os.path.join(input_folder, 'db_metadata.txt')) as handle:
+            metadata = json.load(handle)
+        self._informs.update(metadata)
+        try:
+            self._informs['mapping'] = self.__get_mapping(input_folder)
+        except ToolExecutionError:
+            raise FileNotFoundError(f'No mapping found in: {input_folder}')
 
     @staticmethod
-    def __get_database_info(input_folder):
+    def __get_mapping(input_folder: str) -> Mapping:
+        """
+        Returns the mapping.
+        :param input_folder: Input folder
+        :return: Mapping as a dictionary
+        """
+        try:
+            return Mapping.parse(os.path.join(input_folder, 'mapping.txt'))
+        except FileNotFoundError:
+            raise ToolExecutionError("No mapping found in {}".format(input_folder))
+
+    @staticmethod
+    def __get_database_info(input_folder: str) -> Tuple[str, str]:
         """
         Returns the info on the locus.
         :param input_folder: Input folder
@@ -83,27 +102,13 @@ class DBManager(Tool):
         name = os.path.basename(input_folder)
         return name, last_update
 
-    @staticmethod
-    def __parse_metadata(fasta_file):
-        """
-        Parses the FASTA file metadata.
-        :param fasta_file: FASTA file
-        :return: Metadata
-        """
-        metadata = {}
-        with open(fasta_file.path) as handle:
-            for seq in SeqIO.parse(handle, 'fasta'):
-                metadata_str = ' '.join(seq.description.split(' ')[1:])
-                metadata[seq.id] = json.loads(metadata_str)
-        return metadata
-
-    @staticmethod
-    def __get_database_file(folder):
+    def __set_database_files(self, folder: str) -> None:
         """
         Returns the FASTA file from the given folder.
         :return: Database file
         """
-        try:
-            return ToolIOFile(FileSystemHelper.get_file_with_extension(folder, '.fasta'))
-        except IOError:
-            raise IOError("Cannot retrieve FASTA file from folder: '{}'".format(folder))
+        for f in os.listdir(folder):
+            if f.endswith('.fasta') and 'clustered' in f:
+                self._tool_outputs['FASTA_clustered'] = [ToolIOFile(os.path.join(folder, f))]
+            elif f.endswith('.fasta'):
+                self._tool_outputs['FASTA'] = [ToolIOFile(os.path.join(folder, f))]
