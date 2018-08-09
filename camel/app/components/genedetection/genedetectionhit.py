@@ -1,6 +1,7 @@
 import abc
 from abc import ABC
 
+from camel.app.components.genedetection.genedetectionutils import GeneDetectionUtils
 from camel.app.components.html.htmltablecell import HtmlTableCell
 
 
@@ -49,7 +50,7 @@ class GeneDetectionHit(ABC):
         :param accession: Accession
         :return: None
         """
-        self._accession = accession
+        self._accession = str(accession)
 
     @abc.abstractmethod
     def to_table_row(self):
@@ -69,21 +70,21 @@ class GeneDetectionHit(ABC):
         """
         pass
 
-    @abc.abstractmethod
-    def get_table_column_names(self):
-        """
-        Returns the table column names.
-        :return: Table column names
-        """
-        pass
-
-    @abc.abstractmethod
-    def get_html_column_names(self):
-        """
-        Returns the HTML column names.
-        :return: HTML column names
-        """
-        pass
+    # @abc.abstractmethod
+    # def get_table_column_names(self):
+    #     """
+    #     Returns the table column names.
+    #     :return: Table column names
+    #     """
+    #     pass
+    #
+    # @abc.abstractmethod
+    # def get_html_column_names(self):
+    #     """
+    #     Returns the HTML column names.
+    #     :return: HTML column names
+    #     """
+    #     pass
 
     @property
     @abc.abstractmethod
@@ -101,6 +102,8 @@ class GeneDetectionHit(ABC):
         """
         if self._accession is None:
             return '-'
-        else:
+        elif GeneDetectionUtils.is_ncbi_accession(self.accession):
             link = 'https://www.ncbi.nlm.nih.gov/nuccore/{}'.format(self._accession)
             return HtmlTableCell(self._accession, self.color, link=link)
+        else:
+            return HtmlTableCell(self._accession, self.color)
