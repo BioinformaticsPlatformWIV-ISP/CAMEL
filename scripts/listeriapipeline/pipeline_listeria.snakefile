@@ -5,6 +5,8 @@ import logging
 import logging.config
 import yaml
 
+import sys
+sys.path.append('/data/testdir/qiafu/Work/camel3/')
 
 # using snakemake utility func 'srcdir' to get the directory of snakefile
 logging_cfg = srcdir("pipeline_logging.yml")
@@ -22,7 +24,7 @@ from camel.app.io.tooliofile import ToolIOFile
 from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.pipeline.step import Step
-from camel.resources import CSS_STYLE
+from camel.resources import CSS_STYLE, LISTERIA_CITATIONS
 
 
 # 1. Get the sub workflows
@@ -134,6 +136,11 @@ rule combine_reports:
         for pickle in input:
             section = SnakemakeUtils.load_object(pickle)[0].value
             report.add_html_object(section)
+
+        section = HtmlReportSection('Citations')
+        with open(LISTERIA_CITATIONS, 'r', encoding='utf8') as handle:
+            section.add_raw(handle.read())
+        report.add_html_object(section)
             
         report.save()
 
