@@ -1,5 +1,6 @@
 import os
 
+from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.tool import Tool
 from camel.app.error.toolexecutionerror import ToolExecutionError
@@ -34,7 +35,7 @@ class Oncotator(Tool):
                     Default: None
     """
 
-    def __init__(self, camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initialize Mutect1 tool.
         :param camel: Camel instance
@@ -43,7 +44,7 @@ class Oncotator(Tool):
         super(Oncotator, self).__init__('Oncotator', '1.9.9.0', camel)
         self._required_inputs = ['VCF']
 
-    def _execute_tool(self):
+    def _execute_tool(self) -> None:
         """
         Runs tool
         :return: None
@@ -52,14 +53,26 @@ class Oncotator(Tool):
         self._execute_command()
         self.__set_output()
 
-    def _check_parameters(self):
+    def _check_parameters(self) -> None:
         """
         Checks that parameters are valid.
         :return: None 
         """
         super(Oncotator, self)._check_parameters()
 
-    def __build_command(self):
+    def _check_input(self) -> None:
+        """
+        Check that input is valid (super method) and that required parameters are present.
+        :return: None
+        """
+        super(Oncotator, self)._check_input()
+
+        for input_key in self._required_inputs:
+            if input_key not in self._tool_inputs:
+                raise InvalidInputSpecificationError(
+                    'Oncotator required {} input is missing in tool inputs!'.format(input_key))
+
+    def __build_command(self) -> None:
         """
         Build the command to run the tool.
         :return: 
@@ -70,7 +83,7 @@ class Oncotator(Tool):
 
         self._command.command = "{command} {options_string} {input_string} {output_string} hg19".format(command=self._tool_command, options_string=options_string, input_string=input_string, output_string=output_string)
 
-    def __set_output(self):
+    def __set_output(self) -> None:
         """
         Set the output specifications in the Camel ouptut list: 
         - output file
@@ -78,7 +91,7 @@ class Oncotator(Tool):
         """
         self._tool_outputs['OUT_FILE'] = [ToolIOFile(os.path.join(self._folder, self._parameters['output_file_name'].value))]
 
-    def _check_command_output(self):
+    def _check_command_output(self) -> None:
         """
         Check the result of tool run
         :return: None

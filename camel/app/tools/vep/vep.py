@@ -1,5 +1,6 @@
 import os
 
+from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.tool import Tool
 from camel.app.error.toolexecutionerror import ToolExecutionError
@@ -34,7 +35,7 @@ class Vep(Tool):
     - output_in_vcf    output in vcf format instead of default text format
     """
 
-    def __init__(self, camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initialize Mutect1 tool.
         :param camel: Camel instance
@@ -43,7 +44,7 @@ class Vep(Tool):
         super(Vep, self).__init__('Vep', '93', camel)
         self._required_inputs = ['VCF']
 
-    def _execute_tool(self):
+    def _execute_tool(self) -> None:
         """
         Runs Mutect1
         :return: None
@@ -52,7 +53,7 @@ class Vep(Tool):
         self._execute_command()
         self.__set_output()
 
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
         Check that input is valid (super method) and that required parameters are present.
         :return: None
@@ -64,14 +65,7 @@ class Vep(Tool):
                 raise InvalidInputSpecificationError(
                     'Vep required {} input is missing in tool inputs!'.format(input_key))
 
-    def _check_parameters(self):
-        """
-        Checks that parameters are valid.
-        :return: None 
-        """
-        super(Vep, self)._check_parameters()
-
-    def __build_command(self):
+    def __build_command(self) -> None:
         """
         Build the command to run the tool.
         By default, use cache provided in DB_PATH and run offline.
@@ -85,7 +79,7 @@ class Vep(Tool):
 
         self._command.command = ' '.join([self._tool_command, input_string, options_string])
 
-    def __set_output(self):
+    def __set_output(self) -> None:
         """
         Set the output specifications in the Camel ouptut list: 
         - html file
@@ -97,7 +91,7 @@ class Vep(Tool):
         html_file_name = "{}_summary.html".format(os.path.join(self._folder, self._parameters['output_file'].value))
         self._tool_outputs['HTML'] = [ToolIOFile(html_file_name)]
 
-    def _check_command_output(self):
+    def _check_command_output(self) -> None:
         """
         Check the result of Vep tool run
         :return: None
