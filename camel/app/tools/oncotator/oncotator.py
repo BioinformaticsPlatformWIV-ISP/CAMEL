@@ -42,7 +42,7 @@ class Oncotator(Tool):
         :return: None
         """
         super(Oncotator, self).__init__('Oncotator', '1.9.9.0', camel)
-        self._required_inputs = ['VCF']
+        self._required_inputs = ['IN_FILE']
 
     def _execute_tool(self) -> None:
         """

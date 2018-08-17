@@ -153,7 +153,7 @@ rule move_output:
                 try:
                     os.link(vep_out_init_path.path, config['out_vep'])
                 except FileExistsError:
-                    os.remove(config['vep_output'])
+                    os.remove(config['out_vep'])
                     os.link(vep_out_init_path.path, config['out_vep'])
             if config['run_oncotator']:
                 tsv_oncotator_init_path = SnakemakeUtils.load_object(input.OUT_ONCOTATOR)[0]
@@ -680,7 +680,7 @@ rule vep:
         DB_PATH = ToolIODb("Vep_homo_sapiens_93_GRCh37").path
         run_vep =Vep(camel)
         SnakemakeUtils.add_pickle_inputs(run_vep, input)
-        run_vep.update_parameters(db_loc=DB_PATH, output_file=config['out_vep'])
+        run_vep.update_parameters(db_loc=DB_PATH)
         step = Step(rule_name=rule, tool=run_vep, camel=camel, folder=params.working_dir, config=config, pipeline_output=True)
         step.run_step()
         SnakemakeUtils.dump_tool_output(run_vep, "OUT", output.OUT)
@@ -707,7 +707,7 @@ rule oncotator:
         SnakemakeUtils.add_pickle_inputs(octr, input)
         if "oncotator_tx_mode" in config:
             octr.update_parameters(tx_mode=config["oncotator_tx_mode"])
-        octr.update_parameters(db_dir=DB_PATH, canonical_tx_file=CANONICAL_VARS_PATH, input_format="VCF", output_file_name=config['out_oncotator'])
+        octr.update_parameters(db_dir=DB_PATH, canonical_tx_file=CANONICAL_VARS_PATH, input_format="VCF")
         step = Step(rule_name=rule, tool=octr, camel=camel, folder=params.working_dir, config=config, pipeline_output=True)
         step.run_step()
         SnakemakeUtils.dump_tool_output(octr, "OUT_FILE", output.TSV)
