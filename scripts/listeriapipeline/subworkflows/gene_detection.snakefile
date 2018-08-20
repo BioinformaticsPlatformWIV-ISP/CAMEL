@@ -2,31 +2,33 @@ GENE_DETECTION_WORKING_DIR = os.path.join(__WORKING_DIR, 'gene_detection')
 GENE_DETECTION_REPORT = os.path.join(GENE_DETECTION_WORKING_DIR, 'report-html.io')
 GENE_DETECTION_DB_SUMMARY = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'report', 'summary.tsv')
 
-rule database_manager:
+rule Gene_detection_db_manager:
     """
     Retrieves the FASTA file and the metadata from a database folder.
     """
     output:
         FASTA = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'database_manager', 'fasta.io'),
+        FASTA_clustered = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'database_manager', 'fasta-clust.io'),
         INFORMS = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'database_manager', 'informs.io')
     params:
-        running_dir = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}')
+        running_dir = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}'),
+        db_version = lambda wildcards: config['gene_detection'][wildcards.db]['version']
     run:
-        from camel.app.tools.pipelines.gene_detection.dbmanager import DBManager
+        from camel.app.tools.pipelines.genedetection.dbmanager import DBManager
         db_manager = DBManager(camel)
-        db_manager.add_input_files({'DIR': [ToolIODirectory(ToolIODb(wildcards.db).path)]})
+        db_manager.add_input_files({'DIR': [ToolIODirectory(ToolIODb(wildcards.db, version=params.db_version).path)]})
         SnakemakeUtils.add_pickle_inputs(db_manager, input)
         step = Step(rule, db_manager, camel, params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(db_manager, output)
 
-rule blastn:
+rule Gene_detection_blastn:
     """
     Performs local alignment using Blastn+.
     """
     input:
         FASTA = FASTA_ASSEMBLY,
-        DB_BLAST = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'database_manager', 'fasta.io')
+        DB_BLAST = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'database_manager', 'fasta-clust.io')
     output:
         ASN = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'blastn', 'asn.io')
     params:
@@ -40,7 +42,7 @@ rule blastn:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(blastn, output)
 
-rule tsv_generation:
+rule Gene_detection_tsv_generation:
     """
     Generates tabular output format to extract hit statistics.
     """
@@ -59,7 +61,7 @@ rule tsv_generation:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(blast_formatter, output)
 
-rule hit_filtering:
+rule Gene_detection_hit_filtering:
     """
     Filters hits based on percent identity and query coverage.
     Extracts the hit information based on the database metadata.
@@ -80,8 +82,8 @@ rule hit_filtering:
             FileSystemHelper.make_valid(config['sample_name']),
             FileSystemHelper.make_valid(wildcards.db)))
     run:
-        from camel.app.tools.pipelines.gene_detection.hitfiltering import HitFiltering
-        hit_filtering = HitFiltering(camel)
+        from camel.app.tools.pipelines.genedetection.blasthitfiltering import BlastHitFiltering
+        hit_filtering = BlastHitFiltering(camel)
         SnakemakeUtils.add_pickle_inputs(hit_filtering, input)
         step = Step(rule, hit_filtering, camel, params.running_dir, config)
 
@@ -101,7 +103,7 @@ rule hit_filtering:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(hit_filtering, output)
 
-rule text_alignment_generation:
+rule Gene_detection_text_alignment_generation:
     """
     Generates alignments in the text format.
     """
@@ -120,7 +122,7 @@ rule text_alignment_generation:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(blast_formatter, output)
 
-rule text_alignment_extraction:
+rule Gene_detection_text_alignment_extraction:
     """
     Extracts a text alignment for the selected hits and attaches them to the hit objects.
     """
@@ -133,7 +135,7 @@ rule text_alignment_extraction:
     params:
         running_dir = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'alignment_extraction')
     run:
-        from camel.app.tools.pipelines.gene_detection.alignmentextractor import AlignmentExtractor
+        from camel.app.tools.pipelines.genedetection.alignmentextractor import AlignmentExtractor
         alignment_extractor = AlignmentExtractor(camel)
         SnakemakeUtils.add_pickle_inputs(alignment_extractor, input)
         step = Step(rule, alignment_extractor, camel, params.running_dir, config)
@@ -145,13 +147,13 @@ rule text_alignment_extraction:
             hits_with_alignment.append(io_value)
         SnakemakeUtils.dump_object(hits_with_alignment, output.VAL_Hits)
 
-rule srst2_gene_detection:
+rule Gene_detection_srst2:
     """
     Read-mapping based gene detection using SRST2.
     """
     input:
         FASTQ_PE = TRIMMED_READS_PE,
-        FASTA = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'database_manager', 'fasta.io'),
+        FASTA = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'database_manager', 'fasta-clust.io'),
     output:
         TSV = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'srst2', 'tsv.io')
     params:
@@ -170,7 +172,7 @@ rule srst2_gene_detection:
         else:
             SnakemakeUtils.dump_object([], output.TSV)
 
-rule srst2_hit_extraction:
+rule Gene_detection_srst2_hit_extraction:
     """
     Extracts hits from the SRST2 output.
     """
@@ -182,19 +184,20 @@ rule srst2_hit_extraction:
         TSV = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'srst2', 'tsv-srst2.io')
     params:
         running_dir = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'srst2'),
+        extra_column=lambda wildcards: config['gene_detection'][wildcards.db].get('extra_column', None),
         output_filename = lambda wildcards: os.path.join(GENE_DETECTION_WORKING_DIR, wildcards.db, 'hits-{}-{}.tsv'.format(
             FileSystemHelper.make_valid(config['sample_name']),
             FileSystemHelper.make_valid(wildcards.db)))
     run:
-        from camel.app.tools.pipelines.gene_detection.srst2hitextractor import SRST2HitExtractor
+        from camel.app.tools.pipelines.genedetection.srst2hitextractor import SRST2HitExtractor
         extractor = SRST2HitExtractor(camel)
         step = Step(rule, extractor, camel, params.running_dir, config)
         SnakemakeUtils.add_pickle_inputs(extractor, input)
-        extractor.update_parameters(output_filename=params.output_filename)
+        extractor.update_parameters(output_filename=params.output_filename, extra_column=params.extra_column)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(extractor, output)
 
-rule gene_detection_get_hits:
+rule Gene_detection_get_hits:
     """
     Retrieves the hits from the blastn / SRST2 detection method based on the config
     """
@@ -220,7 +223,26 @@ rule gene_detection_get_hits:
         else:
             shutil.copyfile(input.tsv_srst2, output.TSV)
 
-rule report_gene_detection:
+rule Gene_detection_get_column_names:
+    output:
+        INFORMS_columns=os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'report', 'informs-columns.io')
+    params:
+        detection_method=lambda wildcards: GeneDetectionUtils.get_detection_method_key(config, wildcards.db),
+        extra_column=lambda wildcards: config['gene_detection'][wildcards.db].get('extra_column')
+    run:
+        from camel.app.components.genedetection.genedetectionblasthit import GeneDetectionBlastHit
+        from camel.app.components.genedetection.genedetectionsrst2hit import GeneDetectionSRST2Hit
+        if params.detection_method == 'blast':
+            columns = GeneDetectionBlastHit.get_column_names_html(params.extra_column[0] if params.extra_column is not
+                                                                                            None else None)
+        elif params.detection_method == 'srst2':
+            columns = GeneDetectionSRST2Hit.get_column_names_html(params.extra_column[0] if params.extra_column is not
+                                                                                            None else None)
+        else:
+            raise ValueError(f"Invalid detection method: {params.detection_method}")
+        SnakemakeUtils.dump_object(columns, output.INFORMS_columns)
+
+rule Gene_detection_report:
     """
     Creates HTML reports for the gene detection.
     """
@@ -234,7 +256,7 @@ rule report_gene_detection:
         running_dir = os.path.join(GENE_DETECTION_WORKING_DIR, '{db}', 'report'),
         sample_name = config['sample_name']
     run:
-        from camel.app.tools.pipelines.gene_detection.htmlreportergenedetection import HtmlReporterGeneDetection
+        from camel.app.tools.pipelines.genedetection.htmlreportergenedetection import HtmlReporterGeneDetection
         reporter = HtmlReporterGeneDetection(camel)
         step = Step(rule, reporter, camel, params.running_dir, config)
         reporter.add_input_files({'SAMPLE_NAME': [ToolIOValue(params.sample_name)]})
@@ -242,7 +264,7 @@ rule report_gene_detection:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
 
-rule summary_gene_detection:
+rule Gene_detection_summary:
     """
     Creates a tabular summary for gene detection on a {db}.
     """
@@ -261,7 +283,7 @@ rule summary_gene_detection:
             handle.write('hits_{}\t{}'.format(wildcards.db, json.dumps(hit_info)))
             handle.write('\n')
 
-rule combine_gene_detection_reports:
+rule Gene_detection_combine_reports:
     """
     Combines the reports from the different databases.
     """
