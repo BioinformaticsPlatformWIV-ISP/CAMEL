@@ -44,8 +44,10 @@ class HtmlReporterQualityChecks(Tool):
         Checks if the input is valid.
         :return: None
         """
-        if 'cgmlst' not in self._input_informs:
-            raise InvalidInputSpecificationError("No cgMLST info found")
+        if 'mlst_genes' not in self._input_informs:
+            raise InvalidInputSpecificationError("No MLST gene hits info found")
+        if 'mlst_type' not in self._input_informs:
+            raise InvalidInputSpecificationError("No MLST type info found, should be cgmlst or classic_mlst.")
         if 'coverage' not in self._input_informs:
             raise InvalidInputSpecificationError("No coverage info found")
         if 'mapping' not in self._input_informs:
@@ -63,7 +65,7 @@ class HtmlReporterQualityChecks(Tool):
         """
         data = [
             ['Median coverage:', self._input_informs['coverage']['median_depth']],
-            ['cgMLST genes found:', self.__get_cgmlst_stats()],
+            self.__get_mlst_stats(),
             ['Reads mapping back to assembly:', '{}%'.format(self._input_informs['mapping']['stats_map_rate'])]
         ]
         self._report_section.add_table(data, table_attributes=[('class', 'information')])
@@ -112,15 +114,20 @@ class HtmlReporterQualityChecks(Tool):
         ]
         self._report_section.add_labeled_list(test_explanations)
 
-    def __get_cgmlst_stats(self):
+    def __get_mlst_stats(self):
         """
-        Returns the cgMLST stats.
+        Returns the MLST stats (percentage of gene hits).
         :return: Formatted string with the cgMLST stats
         """
-        cgmlst_stats = self._input_informs['cgmlst']
-        return '{0:}/{1:} ({2:.2f}%)'.format(
-            cgmlst_stats['hits_found'], cgmlst_stats['nb_of_loci'],
-            100 * float(cgmlst_stats['hits_found']) / cgmlst_stats['nb_of_loci'])
+        mlst_stats = self._input_informs['mlst_genes']
+        gene_hits_inform = '{0:}/{1:} ({2:.2f}%)'.format(
+            mlst_stats['hits_found'], mlst_stats['nb_of_loci'],
+            100 * float(mlst_stats['hits_found']) / mlst_stats['nb_of_loci'])
+        mlst_type = self._input_informs['mlst_type']
+        if mlst_type == 'cgmlst':
+            return ['cgMLST genes found:', gene_hits_inform]
+        else:
+            return ['Classic MLST genes found:', gene_hits_inform]
 
     def __add_warnings(self):
         """
