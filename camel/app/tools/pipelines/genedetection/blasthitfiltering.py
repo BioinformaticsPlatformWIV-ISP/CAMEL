@@ -48,9 +48,9 @@ class BlastHitFiltering(Tool):
         :return: None
         """
         hits = self.__parse_input(self._tool_inputs['TSV'][0].path)
-        self.__filter_hits(hits)
-        self.__add_metadata(hits)
-        self.__set_output(hits)
+        filtered_hits = self.__filter_hits(hits)
+        self.__add_metadata(filtered_hits)
+        self.__set_output(filtered_hits)
 
     def _check_input(self) -> None:
         """
