@@ -29,7 +29,6 @@ rule Gene_detection_db_manager:
         from camel.app.tools.pipelines.genedetection.dbmanager import DBManager
         db_manager = DBManager(camel)
         db_manager.add_input_files({'DIR': [ToolIODirectory(params.db_path)]})
-        SnakemakeUtils.add_pickle_inputs(db_manager, input)
         step = Step(rule, db_manager, camel, params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(db_manager, output)
