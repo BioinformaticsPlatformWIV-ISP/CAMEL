@@ -30,6 +30,36 @@ class ListeriaMain(object):
         'virulencefinder': 'virulencefinder_listeria',
         'plasmidfinder': 'plasmidfinder_grampositive'
     }
+    DB_GENE_DETECTION_DB_PARAMS = {
+        'resfinder': {
+            'min_percent_identity': 90.0,
+            'min_coverage': 60.0,
+            'version': '20180817',
+            'extra_column': ['Antibiotics', 'antibiotics']
+        },
+        'card': {
+            'min_percent_identity': 90.0,
+            'min_coverage': 60.0,
+            'version': '20180817',
+        },
+        'argannot': {
+            'min_percent_identity': 90.0,
+            'min_coverage': 60.0,
+            'version': '20180817',
+        },
+        'virulencefinder': {
+            'min_percent_identity': 90.0,
+            'min_coverage': 60.0,
+            'version': '20180817',
+            'extra_column': ['Protein function', 'protein_function']
+        },
+        'plasmidfinder': {
+            'min_percent_identity': 90.0,
+            'min_coverage': 60.0,
+            'version': '20180817',
+            'extra_column': ['Notes', 'notes']
+        }
+    }
     DB_SEQUENCE_TYPING_ROOT = '/data/sequence_typing/listeria/'
     DB_SEQUENCE_TYPING = {
         'species_confirmation': os.path.join(DB_SEQUENCE_TYPING_ROOT, 'species_confirmation'),
@@ -82,10 +112,10 @@ class ListeriaMain(object):
         parser.add_argument('--virulencefinder', action='store_true')
         parser.add_argument('--plasmidfinder', action='store_true')
         # sequence typing
-        parser.add_argument('--species_confirmation', default=True)
-        parser.add_argument('--mlst', default=True)
-        parser.add_argument('--cgmlst', default=True)
-        parser.add_argument('--serogrouping', default=True)
+        parser.add_argument('--species_confirmation', action='store_true')
+        parser.add_argument('--mlst', action='store_true')
+        parser.add_argument('--cgmlst', action='store_true')
+        parser.add_argument('--serogrouping', action='store_true')
         parser.add_argument('--pubmlst_metal', action='store_true')
         parser.add_argument('--pubmlst_antibiotic', action='store_true')
         parser.add_argument('--pubmlst_virulence', action='store_true')
@@ -223,30 +253,15 @@ class ListeriaMain(object):
         """
         dbs = {}
         if self._args.argannot:
-            dbs[self.DB_GENE_DETECTION['argannot']] = {
-                'min_percent_identity': 90.0,
-                'min_coverage': 60.0
-            }
+            dbs[self.DB_GENE_DETECTION['argannot']] = self.DB_GENE_DETECTION_DB_PARAMS['argannot']
         if self._args.card:
-            dbs[self.DB_GENE_DETECTION['card']] = {
-                'min_percent_identity': 90.0,
-                'min_coverage': 60.0
-            }
+            dbs[self.DB_GENE_DETECTION['card']] = self.DB_GENE_DETECTION_DB_PARAMS['card']
         if self._args.resfinder:
-            dbs[self.DB_GENE_DETECTION['resfinder']] = {
-                'min_percent_identity': 90.0,
-                'min_coverage': 60.0
-            }
+            dbs[self.DB_GENE_DETECTION['resfinder']] = self.DB_GENE_DETECTION_DB_PARAMS['resfinder']
         if self._args.virulencefinder:
-            dbs[self.DB_GENE_DETECTION['virulencefinder']] = {
-                'min_percent_identity': 90.0,
-                'min_coverage': 60.0
-            }
+            dbs[self.DB_GENE_DETECTION['virulencefinder']] = self.DB_GENE_DETECTION_DB_PARAMS['virulencefinder']
         if self._args.plasmidfinder:
-            dbs[self.DB_GENE_DETECTION['plasmidfinder']] = {
-                'min_percent_identity': 95.0,
-                'min_coverage': 60.0
-            }
+            dbs[self.DB_GENE_DETECTION['plasmidfinder']] = self.DB_GENE_DETECTION_DB_PARAMS['plasmidfinder']
         return dbs
 
     def __get_sequence_typing_db_config(self):
