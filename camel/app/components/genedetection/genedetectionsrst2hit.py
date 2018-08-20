@@ -30,12 +30,12 @@ class GeneDetectionSRST2Hit(GeneDetectionHit):
         :param accession: Accession number
         """
         super().__init__(locus)
+        self.accession = accession
         self._mismatches = mismatches if mismatches != '' else '0'
         self._uncertainty = uncertainty if uncertainty != '' else '-'
         self._depth = depth
         self._coverage = coverage
         self._length = length
-        self._accession = str(accession)
         self._subject = subject
         self._extra_column_value = None
         self._extra_column_name = None

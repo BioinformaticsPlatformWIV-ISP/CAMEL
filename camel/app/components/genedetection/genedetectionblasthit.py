@@ -29,6 +29,7 @@ class GeneDetectionBlastHit(GeneDetectionHit):
         :param alignment_path: Path to the alignment visualization file
         """
         super().__init__(locus)
+        self.accession = str(accession)
         self._subject = subject
         self._pident = pident
         self._slen = slen
@@ -36,7 +37,6 @@ class GeneDetectionBlastHit(GeneDetectionHit):
         self._qseqid = qseqid
         self._qstart = qstart
         self._qend = qend
-        self._accession = str(accession)
         self._alignment_path = alignment_path
         self._extra_column_value = None
         self._extra_column_name = None
