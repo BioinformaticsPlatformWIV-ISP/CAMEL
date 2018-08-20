@@ -53,7 +53,7 @@ LOCI = {k: get_loci(SCHEMES.get(k)) for k in SCHEMES.keys()}
 
 
 
-rule extract_locus_set_info:
+rule Sequence_typing_extract_locus_set_info:
     """
     Extracts the scheme metadata.
     """
@@ -71,7 +71,7 @@ rule extract_locus_set_info:
         step.run_step()
         SnakemakeUtils.dump_object(locus_set_manager.informs, output.INFORMS)
 
-rule extract_locus_info:
+rule Sequence_typing_extract_locus_info:
     """
     Extracts the metadata for a single locus.
     """
@@ -90,7 +90,7 @@ rule extract_locus_info:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(locus_manager, output)
 
-rule pickle_dump_sequence_type_definitions:
+rule Sequence_typing_pickle_dump_sequence_type_definitions:
     """
     Retrieves the sequence type definitions and converts them to CAMEL IO pickles.
     """
@@ -101,7 +101,7 @@ rule pickle_dump_sequence_type_definitions:
     run:
         SnakemakeUtils.dump_object([ToolIOFile(os.path.join(input[0], 'profiles.tsv'))], output[0])
 
-rule blastn_allele_detection:
+rule Sequence_typing_blastn_allele_detection:
     """
     Allele detection using blastn.
     """
@@ -161,7 +161,7 @@ rule blastn_allele_detection:
             best_hit.alignment_path = extractor.tool_outputs['TXT'][0].path
         SnakemakeUtils.dump_object(hit_selector.tool_outputs['VAL_Hit'], output.VAL_Hit)
 
-rule srst2_allele_detection:
+rule Sequence_typing_srst2_allele_detection:
     """
     Allele detection using SRST2.
     """
@@ -184,7 +184,7 @@ rule srst2_allele_detection:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(detector, output)
 
-rule combine_hits:
+rule Sequence_typing_combine_hits:
     """
     Combines hits from one scheme into a list. This also ensures that the allele detection is done using blast or
     using SRST2 depending on the config.
@@ -202,7 +202,7 @@ rule combine_hits:
             list_of_hits += SnakemakeUtils.load_object(pickle)
         SnakemakeUtils.dump_object(list_of_hits, output[0])
 
-rule combine_loci:
+rule Sequence_typing_combine_loci:
     """
     Combines the output of all loci of a scheme into a tabular output file.
     """
@@ -230,7 +230,7 @@ rule combine_loci:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(combiner, output)
 
-rule detect_sequence_type:
+rule Sequence_typing_detect_sequence_type:
     """
     Detects the sequence type based on the detected alleles.
     """
@@ -250,31 +250,33 @@ rule detect_sequence_type:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(sequence_type_detector, output)
 
-rule create_report:
+rule Sequence_typing_create_report:
     """
     Creates a report with the sequence typing output.
     """
     input:
         TSV = os.path.join(TYPING_WORKING_DIR, '{scheme}', 'tsv-combined.io'),
         INFORMS_Scheme = os.path.join(TYPING_WORKING_DIR, '{scheme}', 'informs-{scheme}.io'),
-        INFORMS_ST = lambda wildcards: os.path.join(TYPING_WORKING_DIR, '{}', 'informs-ST.io').format(
-            wildcards.scheme) if has_profiles(wildcards.scheme) else [],
+        INFORMS_ST = lambda wildcards: os.path.join(TYPING_WORKING_DIR, wildcards.scheme, 'informs-ST.io') if has_profiles(wildcards.scheme) else [],
         VAL_Hits = os.path.join(TYPING_WORKING_DIR, '{scheme}', 'hits-combined.io'),
     output:
         VAL_HTML = os.path.join(TYPING_WORKING_DIR, '{scheme}', 'report', 'html.io')
     params:
         running_dir = os.path.join(TYPING_WORKING_DIR, '{scheme}', 'report'),
+        sample_name=config['sample_name']
     run:
         from camel.app.tools.pipelines.sequence_typing.htmlreportertyping import HtmlReporterTyping
         reporter = HtmlReporterTyping(camel)
         if len(input.INFORMS_ST) != 0:
             reporter.add_input_informs({'ST': SnakemakeUtils.load_object(input.INFORMS_ST)})
-        SnakemakeUtils.add_pickle_inputs(reporter, input, ['TSV', 'INFORMS_Scheme', 'VAL_Hits'])
+        reporter.add_input_informs({'scheme': SnakemakeUtils.load_object(input.INFORMS_Scheme)})
+        SnakemakeUtils.add_pickle_inputs(reporter, input, ['TSV', 'VAL_Hits'])
+        reporter.add_input_files({'VAL_SAMPLE': [ToolIOValue(params.sample_name)]})
         step = Step(rule, reporter, camel, params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
 
-rule create_scheme_summary:
+rule Sequence_typing_create_summary:
     """
     Create a tabular summary with the sequence typing output on a scheme
     """
@@ -314,7 +316,7 @@ rule create_scheme_summary:
                     handle.write(f'{key}\t{hit.value.allele_id}')
                 handle.write('\n')
 
-rule combine_sequence_typing_reports:
+rule Sequence_typing_combine_typing_reports:
     """
     Combines the reports of all sequence typing schemes.
     """
@@ -334,7 +336,7 @@ rule combine_sequence_typing_reports:
                 typing_module.add_html_object(report_section)
         SnakemakeUtils.dump_object([ToolIOValue(typing_module)], output[0])
 
-rule species_confirmation_report:
+rule Sequence_typing_species_confirmation_report:
     input:
         VAL_HTML = expand(os.path.join(TYPING_WORKING_DIR, '{scheme}', 'report', 'html.io'), scheme=__SPECIES_CONFIRM_ST_DBS)
     output:
