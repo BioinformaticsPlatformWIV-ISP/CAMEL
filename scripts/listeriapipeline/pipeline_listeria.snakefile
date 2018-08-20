@@ -34,7 +34,7 @@ from scripts.listeriapipeline.subworkflows import WORKFLOW_INIT_REPORT, WORKFLOW
 # 2. Get the working dir from the config
 __WORKING_DIR = config.get('working_dir', '.')
 __SUMMARY_DIR = os.path.join(__WORKING_DIR, 'summary_info')
-__SPECIES_CONFIRM_ST_DBS = ['species_confirmation', 'MLST-Pasteur', 'serogroup']
+__SPECIES_CONFIRM_ST_DBS = ['species_confirmation', 'MLST-Pasteur']
 __OTHER_ST_DBS = [x for x in config.get('sequence_typing', []) if x not in __SPECIES_CONFIRM_ST_DBS]
 
 
