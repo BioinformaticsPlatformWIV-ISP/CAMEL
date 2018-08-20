@@ -37,7 +37,13 @@ class SequenceTypingSRST2Hit(SequenceTypingHit):
         Returns the hit as a table row.
         :return: Table row
         """
-        return "\t".join([self.locus, self.allele_id, self._mismatches, self._uncertainty, self._depth])
+        return "\t".join([
+            self.locus,
+            self.allele_id,
+            self._mismatches,
+            self._uncertainty,
+            '{:.2f}'.format(float(self._depth)) if self._depth != '-' else '-'
+        ])
 
     def to_html_row(self, base_dir=None, sub_dir=None):
         """
@@ -46,7 +52,13 @@ class SequenceTypingSRST2Hit(SequenceTypingHit):
         :param sub_dir: Specific subdirectory of the base directory to store report files
         :return: Table row
         """
-        return [self.locus, self.get_allele_id_cell(), self._mismatches, self._uncertainty, self._depth]
+        return [
+            self.locus,
+            self.get_allele_id_cell(),
+            self._mismatches,
+            self._uncertainty,
+            '{:.2f}'.format(float(self._depth)) if self._depth != '-' else '-'
+        ]
 
     def get_table_column_names(self):
         """
@@ -75,7 +87,7 @@ class SequenceTypingSRST2Hit(SequenceTypingHit):
             color = 'lightgreen'
         else:
             color = 'grey'
-        return HtmlTableCell(self.allele_id, color, link=self.compose_allele_link_url(self.locus, self.allele_id))
+        return HtmlTableCell(self.allele_id, color)
 
     def is_perfect_hit(self):
         """

@@ -24,7 +24,7 @@ class LocusSetManager(Tool):
         """
         super().__init__('Typing: Locus Set Manager', '0.1', camel)
 
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
         Checks if the specified input is correct.
         :return: None
@@ -33,7 +33,7 @@ class LocusSetManager(Tool):
             raise InvalidInputSpecificationError("DIR input is required")
         super()._check_input()
 
-    def _execute_tool(self):
+    def _execute_tool(self) -> None:
         """
         Executes this tool.
         :return: None

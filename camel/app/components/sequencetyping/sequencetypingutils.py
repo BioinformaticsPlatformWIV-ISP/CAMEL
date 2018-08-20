@@ -21,5 +21,20 @@ class SequenceTypingUtils(object):
                 if m is None:
                     raise ValueError("Cannot determine allele delimiter")
                 delimiter = m.group(1)
-                logging.info("Detected delimited: '{}'".format(delimiter))
+                logging.info("Detected delimiter: '{}'".format(delimiter))
                 return delimiter
+
+    @staticmethod
+    def get_allele_id(complete_name: str, regex: str=None) -> str:
+        """
+        Returns the allele id from a complete name.
+        :param complete_name: Complete name (e.g. abcZ_2)
+        :param regex: Allele id regex (e.g. '\d+$')
+        :return: Allele id
+        """
+        if regex is None:
+            regex = '\d+$'
+        m = re.findall(regex, complete_name)
+        if not len(m) == 1:
+            raise ValueError("Cannot determine allele identifier for '{}' (RE: {})".format(complete_name, regex))
+        return m[0]

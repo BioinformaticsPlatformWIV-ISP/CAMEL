@@ -1,12 +1,14 @@
 import json
 import logging
+from typing import Dict
+
 import os
+from camel.app.tools.tool import Tool
 
 from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
-from camel.app.tools.tool import Tool
 
 
 class LocusManager(Tool):
@@ -31,7 +33,7 @@ class LocusManager(Tool):
         """
         super().__init__('Typing: Locus Manager', '0.1', camel)
 
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
         Checks if the specified input is correct.
         :return: None
@@ -40,7 +42,7 @@ class LocusManager(Tool):
             raise InvalidInputSpecificationError("DIR input is required")
         super()._check_input()
 
-    def _execute_tool(self):
+    def _execute_tool(self) -> None:
         """
         Executes this tool.
         :return: None
@@ -51,7 +53,7 @@ class LocusManager(Tool):
         self._informs = self.__get_metadata(os.path.join(locus_folder, 'locus_metadata.txt'))
 
     @staticmethod
-    def __get_metadata(metadata_file):
+    def __get_metadata(metadata_file) -> Dict[str, str]:
         """
         Retrieves the metadata from a JSON file.
         :param metadata_file: Metadata file

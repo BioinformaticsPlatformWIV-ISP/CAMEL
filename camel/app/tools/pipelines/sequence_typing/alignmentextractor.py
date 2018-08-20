@@ -1,11 +1,13 @@
 import os
 
-from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
-from camel.app.error.toolexecutionerror import ToolExecutionError
+from camel.app.camel import Camel
+from camel.app.tools.tool import Tool
+
 from camel.app.components.blast.alignmentextraction import AlignmentExtraction
 from camel.app.components.filesystemhelper import FileSystemHelper
+from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
-from camel.app.tools.tool import Tool
 
 
 class AlignmentExtractor(Tool):
@@ -20,14 +22,14 @@ class AlignmentExtractor(Tool):
         - TXT: Text file containing the extracted alignment of the hit
     """
 
-    def __init__(self, camel):
+    def __init__(self, camel: Camel):
         """
         Initializes this tool.
         :param camel: Camel instance
         """
         super(AlignmentExtractor, self).__init__('Typing: Alignment Extractor', '0.1', camel)
 
-    def _execute_tool(self):
+    def _execute_tool(self) -> None:
         """
         Runs this tool.
         :return: None
@@ -44,7 +46,7 @@ class AlignmentExtractor(Tool):
         else:
             raise ToolExecutionError("No alignment found for: '{}'".format(key))
 
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
         Checks if the required inputs are specified.
         :return: None
@@ -57,7 +59,7 @@ class AlignmentExtractor(Tool):
             raise InvalidInputSpecificationError("Can only extract one alignment")
         super(AlignmentExtractor, self)._check_input()
 
-    def __save_alignment(self, subject_name, alignment):
+    def __save_alignment(self, subject_name: str, alignment: str) -> str:
         """
         Saves the given alignment.
         :param alignment: Alignment

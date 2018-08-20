@@ -1,4 +1,5 @@
 import abc
+from typing import Optional
 
 
 class SequenceTypingHit(metaclass=abc.ABCMeta):
@@ -14,6 +15,7 @@ class SequenceTypingHit(metaclass=abc.ABCMeta):
         """
         self._locus = locus
         self._allele_id = allele_id
+        self._allele_page_url_template = None
 
     @property
     def locus(self):
@@ -48,6 +50,24 @@ class SequenceTypingHit(metaclass=abc.ABCMeta):
         :return: None
         """
         self._allele_id = allele_id
+
+    def set_allele_page_url_template(self, url_template: str) -> None:
+        """
+        Sets the allele page URL template.
+        :param url_template: : URL template
+        :return: None
+        """
+        self._allele_page_url_template = url_template
+
+    @property
+    def allele_page_url(self) -> Optional[str]:
+        """
+        Returns the allele info page URL if there is one.
+        :return: Allele page URL
+        """
+        if self._allele_page_url_template is None:
+            return None
+        return self._allele_page_url_template.format(allele_id=self.allele_id)
 
     @abc.abstractmethod
     def to_table_row(self):
@@ -90,12 +110,3 @@ class SequenceTypingHit(metaclass=abc.ABCMeta):
         :return: True if perfect
         """
         pass
-
-    @staticmethod
-    def compose_allele_link_url(locus, allele_id):
-        """
-        """
-        if allele_id not in ('-', '?'):
-            return "http://bigsdb.pasteur.fr/perl/bigsdb/bigsdb.pl?db=pubmlst_listeria_seqdef_public&page=alleleInfo&locus={}&allele_id={}".format(locus, allele_id)
-        else:
-            None

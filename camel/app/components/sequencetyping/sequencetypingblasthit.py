@@ -28,7 +28,7 @@ class SequenceTypingBlastHit(SequenceTypingHit):
         """
         super().__init__(locus, allele_id)
         self._subject = subject
-        self._pident = pident
+        self._pident = float(pident) if pident != '-' else None
         self._type = type_
         self._slen = slen
         self._sseq = sseq
@@ -61,7 +61,7 @@ class SequenceTypingBlastHit(SequenceTypingHit):
         return '\t'.join([
             self.locus,
             self.allele_id,
-            str(self._pident),
+            '{:.2f}'.format(self.percent_identity) if self.percent_identity is not None else '-',
             self.length_statistic,
             self._type])
 
@@ -80,8 +80,8 @@ class SequenceTypingBlastHit(SequenceTypingHit):
             alignment_cell = HtmlTableCell('view', link=relative_path)
         return [
             self.locus,
-            HtmlTableCell(self.allele_id, self.color, link=self.compose_allele_link_url(self.locus, self.allele_id)),
-            str(self._pident),
+            HtmlTableCell(self.allele_id, self.color, link=self.allele_page_url),
+            '{:.2f}'.format(self.percent_identity) if self.percent_identity is not None else '-',
             self.length_statistic,
             self._type,
             alignment_cell]

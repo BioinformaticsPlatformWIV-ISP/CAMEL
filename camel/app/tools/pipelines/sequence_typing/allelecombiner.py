@@ -1,8 +1,8 @@
 import os
+from camel.app.tools.tool import Tool
 
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliofile import ToolIOFile
-from camel.app.tools.tool import Tool
 
 
 class AlleleCombiner(Tool):
@@ -22,7 +22,7 @@ class AlleleCombiner(Tool):
         """
         super().__init__('Typing: Allele Combiner', '0.1', camel)
 
-    def _execute_tool(self):
+    def _execute_tool(self) -> None:
         """
         Executes this tool.
         :return: None
@@ -36,7 +36,7 @@ class AlleleCombiner(Tool):
                 handle.write('\n')
         self._tool_outputs['TSV'] = [ToolIOFile(output_file_path)]
 
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
         Checks if the provided tool input is valid.
         :return: None
