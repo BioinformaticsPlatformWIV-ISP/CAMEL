@@ -1,5 +1,4 @@
 import json
-from typing import Tuple
 
 import os
 
@@ -61,8 +60,8 @@ class DBManager(Tool):
 
     def __add_informs(self, input_folder: str) -> None:
         """
-        Adds the informs.
-        :param input_folder: Input database folder
+        Adds the informs by parsing the JSON file containing the metadata in the database directory.
+        :param input_folder: Input database directory
         :return: None
         """
         if not os.path.isfile(os.path.join(input_folder, 'db_metadata.txt')):
@@ -70,37 +69,19 @@ class DBManager(Tool):
         with open(os.path.join(input_folder, 'db_metadata.txt')) as handle:
             metadata = json.load(handle)
         self._informs.update(metadata)
-        try:
-            self._informs['mapping'] = self.__get_mapping(input_folder)
-        except ToolExecutionError:
-            raise FileNotFoundError(f'No mapping found in: {input_folder}')
+        self._informs['mapping'] = self.__get_mapping(input_folder)
 
     @staticmethod
     def __get_mapping(input_folder: str) -> Mapping:
         """
-        Returns the mapping.
+        Returns the mapping of the standardized header to the original header.
         :param input_folder: Input folder
-        :return: Mapping as a dictionary
+        :return: Header mapping
         """
         try:
             return Mapping.parse(os.path.join(input_folder, 'mapping.txt'))
         except FileNotFoundError:
             raise ToolExecutionError("No mapping found in {}".format(input_folder))
-
-    @staticmethod
-    def __get_database_info(input_folder: str) -> Tuple[str, str]:
-        """
-        Returns the info on the locus.
-        :param input_folder: Input folder
-        :return: List of 'name' and 'last_updated' of the locus
-        """
-        try:
-            with open(os.path.join(input_folder, 'last_update')) as handle:
-                last_update = handle.read().strip()
-        except FileNotFoundError:
-            last_update = 'NA'
-        name = os.path.basename(input_folder)
-        return name, last_update
 
     def __set_database_files(self, folder: str) -> None:
         """
