@@ -67,7 +67,7 @@ class SequenceTypingHit(metaclass=abc.ABCMeta):
         """
         if self._allele_page_url_template is None:
             return None
-        return self._allele_page_url_template.format(allele_id=self.allele_id)
+        return self._allele_page_url_template.format(self._locus, self.allele_id)
 
     @abc.abstractmethod
     def to_table_row(self):
