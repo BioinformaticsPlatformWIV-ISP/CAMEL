@@ -1,9 +1,10 @@
 import logging
 import os
 
-from camel.app.components.genedetection.genedetectionutils import GeneDetectionUtils
 from camel.app.components.blast.alignmentextraction import AlignmentExtraction
 from camel.app.components.filesystemhelper import FileSystemHelper
+from camel.app.components.genedetection.genedetectionutils import GeneDetectionUtils
+from camel.app.components.genedetection.mapping import Mapping
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.tool import Tool
@@ -24,9 +25,9 @@ class AlignmentExtractor(Tool):
         Initializes this tool.
         :param camel: Camel instance
         """
-        super().__init__('Resistance Characterization: Alignment Extraction', '0.1', camel)
+        super().__init__('Gene Detection: Alignment Extractor', '0.1', camel)
 
-    def _execute_tool(self):
+    def _execute_tool(self) -> None:
         """
         Executes this tool.
         :return: None
@@ -44,7 +45,7 @@ class AlignmentExtractor(Tool):
             else:
                 raise ValueError("No alignment found for: '{}'".format(key))
 
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
         Checks if the required inputs are specified.
         :return: None
@@ -57,7 +58,7 @@ class AlignmentExtractor(Tool):
             raise InvalidInputSpecificationError("Database information is required")
         super(AlignmentExtractor, self)._check_input()
 
-    def __save_alignment(self, subject_name, alignment, mapping):
+    def __save_alignment(self, subject_name: str, alignment: str, mapping: Mapping) -> str:
         """
         Saves the given alignment.
         :param subject_name: Subject name

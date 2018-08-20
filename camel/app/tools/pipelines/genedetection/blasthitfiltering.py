@@ -1,10 +1,10 @@
 import logging
-import os
 from typing import List
 
+import os
 
 from camel.app.components.blast.blastformat7parser import BlastFormat7Parser
-from camel.app.components.blasttyping.blasthitfiltering import BlastHitFiltering
+from camel.app.components.blasttyping.blasthitfilteringhelper import BlastHitFilteringHelper
 from camel.app.components.genedetection.genedetectionblasthit import GeneDetectionBlastHit
 from camel.app.components.genedetection.genedetectionutils import GeneDetectionUtils
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
@@ -13,7 +13,7 @@ from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.tools.tool import Tool
 
 
-class HitFiltering(Tool):
+class BlastHitFiltering(Tool):
     """
     Class that filters blast hits and reports the best hits. Perfect hits are always reported. The best hits are
     selected from groups of overlapping hits.
@@ -42,30 +42,17 @@ class HitFiltering(Tool):
         """
         super().__init__('Gene Detection: Hit Filtering', '0.1', camel)
 
-    def _execute_tool(self):
+    def _execute_tool(self) -> None:
         """
         Executes this tool.
         :return: None
         """
-        blast_output_data = BlastFormat7Parser.parse_output_file(self._tool_inputs['TSV'][0].path)
-        hits = [GeneDetectionBlastHit.create_from_dict(output) for output in blast_output_data]
-        hits = BlastHitFiltering.filter_percent_identity(hits, float(self._parameters['min_percent_identity'].value))
-        hits = BlastHitFiltering.filter_coverage(hits, float(self._parameters['min_coverage'].value))
-
-        logging.info("Filtering method: '{}'".format(self._parameters['filtering_method'].value))
-        if self._parameters['filtering_method'].value == 'cluster':
-            hits = HitFiltering.__get_best_hit_per_cluster(hits)
-            hits.sort(key=lambda h: (h.locus, h.query_start))
-        elif self._parameters['filtering_method'].value == 'score':
-            limit = self._parameters['score_limit'].value if 'score_limit' in self._parameters else 5
-            hits = hits[:limit]
+        hits = self.__parse_input(self._tool_inputs['TSV'][0].path)
+        hits = self.__filter_hits(hits)
         self.__add_metadata(hits)
+        self.__set_output(hits)
 
-        output_path = os.path.join(self._folder, self._parameters['output_filename'].value)
-        self.__create_output_file(hits, output_path)
-        self._tool_outputs['TSV'] = [ToolIOFile(output_path)]
-
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
         Checks whether the input is correct.
         :return: None
@@ -74,9 +61,18 @@ class HitFiltering(Tool):
             raise InvalidInputSpecificationError("No 'TSV' input found.")
         if 'db_info' not in self._input_informs:
             raise InvalidInputSpecificationError("No database informs found")
-        super(HitFiltering, self)._check_input()
+        super(BlastHitFiltering, self)._check_input()
 
-    def __add_metadata(self, hits):
+    def __parse_input(self, tsv_file: str) -> List[GeneDetectionBlastHit]:
+        """
+        Parses the tabular input file.
+        :param tsv_file: TSV input file
+        :return: Parsed BLAST hits
+        """
+        blast_output_data = BlastFormat7Parser.parse_output_file(tsv_file)
+        return [GeneDetectionBlastHit.create_from_dict(output) for output in blast_output_data]
+
+    def __add_metadata(self, hits: List[GeneDetectionBlastHit]) -> None:
         """
         Adds metadata to the filtered hits.
         :return: None
@@ -93,7 +89,6 @@ class HitFiltering(Tool):
                 if not column_value:
                     column_value = '-'
                 hit.set_extra_column(self._parameters['extra_column_name'].value, column_value)
-        self._tool_outputs['VAL_Hits'] = [ToolIOValue(hit) for hit in hits]
 
     @staticmethod
     def __get_best_hit_per_cluster(hits: List[GeneDetectionBlastHit]) -> List[GeneDetectionBlastHit]:
@@ -108,14 +103,45 @@ class HitFiltering(Tool):
             if cluster not in hits_per_cluster:
                 hits_per_cluster[cluster] = []
             hits_per_cluster[cluster].append(hit)
+        logging.debug('{} cluster(s) with hits'.format(len(hits_per_cluster)))
 
         reported_hits = []
         for _, hits in hits_per_cluster.items():
-            reported_hits.extend(BlastHitFiltering.detect_best_hits(hits))
+            selected_hits = BlastHitFilteringHelper.detect_best_hits(hits)
+            reported_hits.extend(selected_hits)
         return reported_hits
 
+    def __filter_hits(self, hits: List[GeneDetectionBlastHit]) -> List[GeneDetectionBlastHit]:
+        """
+        Filters hits based on the given tool parameters.
+        :param hits: Input BLAST hits
+        :return: List of filtered BLAST hits
+        """
+        hits = BlastHitFilteringHelper.filter_percent_identity(hits, float(
+            self._parameters['min_percent_identity'].value))
+        hits = BlastHitFilteringHelper.filter_coverage(hits, float(self._parameters['min_coverage'].value))
+        logging.info("Filtering method: '{}'".format(self._parameters['filtering_method'].value))
+        if self._parameters['filtering_method'].value == 'cluster':
+            hits = BlastHitFiltering.__get_best_hit_per_cluster(hits)
+            hits.sort(key=lambda h: (h.locus, h.query_start))
+        elif self._parameters['filtering_method'].value == 'score':
+            limit = self._parameters['score_limit'].value if 'score_limit' in self._parameters else 5
+            hits = hits[:limit]
+        return hits
+
+    def __set_output(self, hits: List[GeneDetectionBlastHit]) -> None:
+        """
+        Sets the output of this tool.
+        :param hits: Detected hits
+        :return: None
+        """
+        self._tool_outputs['VAL_Hits'] = [ToolIOValue(hit) for hit in hits]
+        output_path = os.path.join(self._folder, self._parameters['output_filename'].value)
+        self.__create_output_file(hits, output_path)
+        self._tool_outputs['TSV'] = [ToolIOFile(output_path)]
+
     @staticmethod
-    def __create_output_file(hits, path):
+    def __create_output_file(hits: List[GeneDetectionBlastHit], path: str):
         """
         Creates the tabular output file.
         :param hits: Detected hits
@@ -124,7 +150,7 @@ class HitFiltering(Tool):
         """
         with open(path, 'w') as handle:
             if len(hits) > 0:
-                handle.write('\t'.join(hits[0].get_table_column_names()))
+                handle.write('\t'.join(hits[0].column_names_tabular))
                 handle.write('\n')
                 for hit in hits:
                     handle.write(hit.to_table_row())

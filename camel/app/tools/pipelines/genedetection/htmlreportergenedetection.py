@@ -1,0 +1,91 @@
+import logging
+
+import os
+
+from camel.app.components.filesystemhelper import FileSystemHelper
+from camel.app.components.html.htmlreportsection import HtmlReportSection
+from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from camel.app.io.tooliovalue import ToolIOValue
+from camel.app.tools.tool import Tool
+
+
+class HtmlReporterGeneDetection(Tool):
+    """
+    Tool that creates HTML reports for the gene detection pipeline.
+    """
+
+    def __init__(self, camel):
+        """
+        Initialize this tool.
+        :param camel: Camel instance
+        :return: None
+        """
+        super().__init__('Gene Detection: Report', '0.1', camel)
+        self._sub_folder = None
+        self._report_section = None
+
+    def _execute_tool(self) -> None:
+        """
+        Executes this tool.
+        :return: None
+        """
+        self.__initialize_report()
+        if len(self._tool_inputs['VAL_Hits']) == 0:
+            self._report_section.add_paragraph('No hits found.')
+        else:
+            self.__add_output_table()
+        self.__add_database_information()
+
+        # Add a warning when the detection method is different from the general detection
+        if 'forced_detection_method' in self._parameters:
+            self._report_section.add_warning_message(
+                f"Detection was done using '{self._parameters['forced_detection_method'].value}'")
+        self._tool_outputs['VAL_HTML'] = [ToolIOValue(self._report_section)]
+
+    def _check_input(self) -> None:
+        """
+        Checks if the input is valid.
+        :return: None
+        """
+        if 'db_info' not in self._input_informs:
+            raise InvalidInputSpecificationError("No database info found")
+        if 'VAL_Hits' not in self._tool_inputs:
+            logging.warning("No blast hits found")
+        if ('VAL_Hits' in self._tool_inputs) and (len(self._tool_inputs['VAL_Hits']) > 0) and \
+                ('TSV' not in self._tool_inputs):
+            raise InvalidInputSpecificationError("TSV input is required when hits were detected.")
+        if 'SAMPLE_NAME' not in self._tool_inputs:
+            raise InvalidInputSpecificationError("Sample name input is required")
+        super(HtmlReporterGeneDetection, self)._check_input()
+
+    def __initialize_report(self) -> None:
+        """
+        Initializes the HTML report.
+        :return: None
+        """
+        db_name = self._input_informs['db_info']['name']
+        self._report_section = HtmlReportSection(self._input_informs['db_info']['title'], 3)
+        self._sub_folder = os.path.join('genedetection', FileSystemHelper.make_valid(db_name))
+
+    def __add_output_table(self) -> None:
+        """
+        Adds the output table.
+        :return: None
+        """
+        header = self._tool_inputs['VAL_Hits'][0].value.column_names_html
+        table_data = [hit.to_html_row(self._report_section, self._sub_folder) for hit in
+                      sorted([t.value for t in self._tool_inputs['VAL_Hits']], key=lambda hit: hit.locus)]
+        self._report_section.add_table(table_data, header, [('class', 'data')])
+        relative_path = os.path.join(self._sub_folder, 'genes-{}-{}.tsv'.format(
+            FileSystemHelper.make_valid(self._input_informs['db_info']['name']),
+            FileSystemHelper.make_valid(self._tool_inputs['SAMPLE_NAME'][0].value)))
+        self._report_section.add_file(self._tool_inputs['TSV'][0].path, relative_path)
+        self._report_section.add_link_to_file("Download (TSV)", relative_path)
+
+    def __add_database_information(self) -> None:
+        """
+        Adds the database information to the report.
+        :return: None
+        """
+        self._report_section.add_paragraph('Last updated: {}'.format(self._input_informs['db_info'].get(
+            'last_updated', '{LAST_UPDATED}')))
