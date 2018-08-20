@@ -70,22 +70,6 @@ class GeneDetectionHit(ABC):
         """
         pass
 
-    # @abc.abstractmethod
-    # def get_table_column_names(self):
-    #     """
-    #     Returns the table column names.
-    #     :return: Table column names
-    #     """
-    #     pass
-    #
-    # @abc.abstractmethod
-    # def get_html_column_names(self):
-    #     """
-    #     Returns the HTML column names.
-    #     :return: HTML column names
-    #     """
-    #     pass
-
     @property
     @abc.abstractmethod
     def color(self):
