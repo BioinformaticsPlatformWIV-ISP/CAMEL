@@ -6,7 +6,7 @@ import json
 class Mapping(object):
     """
     This class contains a mapping of the converted sequence name to the original header.
-    The main purpose of this class is to avoid cluttering of the log with the complete mapping.
+    The main purpose of this class is to avoid cluttering of the log with the complete mapping as a dictionary.
     """
 
     def __init__(self, content: Dict[str, str]):
