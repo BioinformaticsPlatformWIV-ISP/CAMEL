@@ -139,6 +139,20 @@ rule Get_cgMLST_stats:
         nb_perfect = len([v for v in all_hits if v.value.is_perfect_hit()])
         SnakemakeUtils.dump_object({'hits_found': nb_perfect, 'nb_of_loci': len(all_hits)}, output.INFORMS)
 
+rule Get_MLST_stats:
+    """
+    Retrieves the number of MLST genes that were detected (only perfect hits are considered). Backup plan in case the
+    user choose to skip cgMSLT.
+    """
+    input:
+        hits=os.path.join(TYPING_WORKING_DIR, 'MLST-Pasteur', 'hits-combined.io')
+    output:
+        INFORMS=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'informs-mlst.io')
+    run:
+        all_hits = SnakemakeUtils.load_object(input.hits)
+        nb_perfect = len([v for v in all_hits if v.value.is_perfect_hit()])
+        SnakemakeUtils.dump_object({'hits_found': nb_perfect, 'nb_of_loci': len(all_hits)}, output.INFORMS)
+
 rule Get_cgMLST_dummy_stats:
     """
     Dummy rule to create dummy cgMLST stats when cgmlst is skipped
@@ -153,7 +167,7 @@ rule Check_quality_criteria:
     Checks if the quality criteria were met.
     """
     input:
-        INFORMS_cgmlst=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'informs-cgmlst.io') if 'cgMLST' in config['sequence_typing'] else os.path.join(QUALITY_CHECKS_WORKING_DIR, 'informs-cgmlst-dummy.io'),
+        INFORMS_cgmlst=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'informs-cgmlst.io') if 'cgMLST' in config['sequence_typing'] else os.path.join(QUALITY_CHECKS_WORKING_DIR, 'informs-mlst.io'),
         INFORMS_coverage=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'coverage_calculation', 'informs.io'),
         INFORMS_fastqc_checks=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'fastqc_checks', 'informs.io'),
         INFORMS_mapping=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'read_mapping', 'informs.io')
@@ -180,7 +194,7 @@ rule Report_quality_checks:
         INFORMS_mapping=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'read_mapping', 'informs.io'),
         INFORMS_additional_checks=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'fastqc_checks', 'informs.io'),
         INFORMS_quality_criteria=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'quality_checks', 'informs.io'),
-        INFORMS_cgmlst=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'informs-cgmlst.io') if 'cgMLST' in config['sequence_typing'] else os.path.join(QUALITY_CHECKS_WORKING_DIR, 'informs-cgmlst-dummy.io')
+        INFORMS_mlst_genes=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'informs-cgmlst.io') if 'cgMLST' in config['sequence_typing'] else os.path.join(QUALITY_CHECKS_WORKING_DIR, 'informs-mlst.io')
     output:
         VAL_HTML=QUALITY_CHECKS_REPORT
     params:
@@ -189,6 +203,10 @@ rule Report_quality_checks:
         from camel.app.tools.pipelines.quality_checks.htmlreporterqualitychecks import HtmlReporterQualityChecks
         reporter = HtmlReporterQualityChecks(camel)
         step = Step(rule, reporter, camel, params.running_dir, config)
+        if 'cgMLST' in config['sequence_typing']:
+            reporter.add_input_informs({'mlst_type': 'cgmlst'})
+        else:
+            reporter.add_input_informs({'mlst_type': 'classic_mlst'})
         SnakemakeUtils.add_pickle_inputs(reporter, input)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
@@ -201,19 +219,26 @@ rule Summary_quality_checks:
         INFORMS_coverage=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'coverage_calculation', 'informs.io'),
         INFORMS_mapping=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'read_mapping', 'informs.io'),
         INFORMS_additional_checks=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'fastqc_checks', 'informs.io'),
-        INFORMS_cgmlst=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'informs-cgmlst.io') if 'cgMLST' in config['sequence_typing'] else os.path.join(QUALITY_CHECKS_WORKING_DIR, 'informs-cgmlst-dummy.io')
+        INFORMS_mlst_genes=os.path.join(QUALITY_CHECKS_WORKING_DIR, 'informs-cgmlst.io') if 'cgMLST' in config['sequence_typing'] else os.path.join(QUALITY_CHECKS_WORKING_DIR, 'informs-mlst.io')
     output:
         QUALITY_CHECKS_SUMMARY
     params:
         running_dir=os.path.join(QUALITY_CHECKS_WORKING_DIR)
     run:
-        informs_cgmlst = SnakemakeUtils.load_object(input.INFORMS_cgmlst)
+        informs_mlst_genes = SnakemakeUtils.load_object(input.INFORMS_mlst_genes)
         informs_qc_checks = SnakemakeUtils.load_object(input.INFORMS_additional_checks)['tests']
         summary_data = [
             ('coverage', SnakemakeUtils.load_object(input.INFORMS_coverage)['median_depth']),
-            ('assembly_mapping_rate', SnakemakeUtils.load_object(input.INFORMS_mapping)['stats_map_rate']),
-            ('cgmlst_hits_found', informs_cgmlst['hits_found']),
-            ('cgmlst_nb_loci', informs_cgmlst['nb_of_loci']),
+            ('assembly_mapping_rate', SnakemakeUtils.load_object(input.INFORMS_mapping)['stats_map_rate'])]
+        if 'cgMLST' in config['sequence_typing']:
+            summary_data += [
+                ('cgmlst_hits_found', informs_mlst_genes['hits_found']),
+                ('cgmlst_nb_loci', informs_mlst_genes['nb_of_loci'])]
+        else:
+            summary_data += [
+                ('classic_mlst_hits_found', informs_mlst_genes['hits_found']),
+                ('classic_mlst_nb_loci', informs_mlst_genes['nb_of_loci'])]
+        summary_data += [
             ('check_avg_qs_fwd', informs_qc_checks['Average quality score'][0]),
             ('check_avg_qs_rev', informs_qc_checks['Average quality score'][1]),
             ('check_gc_fwd', informs_qc_checks['GC content'][0]),
