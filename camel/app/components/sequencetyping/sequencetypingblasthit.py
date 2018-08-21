@@ -224,7 +224,7 @@ class SequenceTypingBlastHit(SequenceTypingHit):
             return 'green'
         elif self._slen == self.alignment_length:
             return 'lightgreen'
-        elif self.percent_identity != '-':
+        elif self.percent_identity is not None:
             return 'grey'
         elif self.allele_id == '?':
             return 'yellow'
