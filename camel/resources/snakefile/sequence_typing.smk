@@ -302,7 +302,7 @@ rule Sequence_typing_combine_loci:
     params:
         running_dir=os.path.join(config['working_dir'], 'typing', '{scheme}'),
         sample_name=FileSystemHelper.make_valid(config['sample_name']),
-        scheme=FileSystemHelper.make_valid('{scheme}')
+        scheme=lambda wildcards: FileSystemHelper.make_valid(wildcards.scheme)
     run:
         from camel.app.tools.pipelines.sequence_typing.allelecombiner import AlleleCombiner
         list_of_informs = []
