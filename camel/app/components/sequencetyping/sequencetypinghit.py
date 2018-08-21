@@ -69,6 +69,8 @@ class SequenceTypingHit(metaclass=abc.ABCMeta):
         """
         if self._allele_page_url_template is None:
             return None
+        if self.allele_id == '-':
+            return None
         return self._allele_page_url_template.format(self._locus, self.allele_id)
 
     @abc.abstractmethod
