@@ -16,6 +16,8 @@ class SequenceTypingHit(metaclass=abc.ABCMeta):
         self._locus = locus
         self._allele_id = allele_id
         self._allele_page_url_template = None
+        # Listeria url template
+        self.set_allele_page_url_template("http://bigsdb.pasteur.fr/perl/bigsdb/bigsdb.pl?db=pubmlst_listeria_seqdef_public&page=alleleInfo&locus={}&allele_id={}")
 
     @property
     def locus(self):
