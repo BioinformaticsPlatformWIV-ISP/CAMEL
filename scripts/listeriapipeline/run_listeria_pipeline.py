@@ -6,6 +6,7 @@ import subprocess
 import time
 import yaml
 
+from camel.app.camel.camel import Camel
 from camel.app.command.command import Command
 from camel.app.components.files.fastqutils import FastqUtils
 
@@ -289,6 +290,9 @@ class ListeriaMain(object):
 
 
 if __name__ == '__main__':
+
+    # initialize camel object to initialize logging configuration
+    camel = Camel()
 
     logging.basicConfig(level=logging.DEBUG)
     main = ListeriaMain()
