@@ -1,3 +1,14 @@
+------------------------------------------------------------------
+  OVERVIEW
+------------------------------------------------------------------
+
+- Pipeline v0.3 released 20180822
+  + new gene detection & sequence typing code
+  + camel3 ready
+  + Known issues
+    - consistent handling of inperfect hits
+    - allele url integrated with DB metadata
+
 
 - Gene DB available
   + /data/sequence_db
@@ -16,7 +27,6 @@
   + PubMLST resistance gene
   + PubMLST virulence gene
   + PubMLST metal & detergent gene
-  
 
 
 - Pipeline development
@@ -37,13 +47,46 @@
     + pubMLST metal & detergent resistance loci [D]
 
 
+
+
+
 ------------------------------------------------------------------
-  KNOW ISSUES
+  TODO & KNOW ISSUES
 ------------------------------------------------------------------
-- VirulenceFinder (gene detection BLAST)
-  * issue: gene lisK is missing from our report (compared to CGE results)
-  * reason: lisK overlaps with gene lisR for 2 bases, hence then removed by HitFiltering, as only one hit per cluster is reported
-  * solution:  pending with Bert ...
+- gene link url issue
+  + Listeria specific fix included in v0.3 release
+  + Bert will check and fix this issue in the long term
+
+
+
+
+------------------------------------------------------------------
+  KNOW ISSUES [RESOLVED]
+------------------------------------------------------------------
+- adapt to make cgMLST optional, if skipped, using classic MLST instead for QC
+
+- add references
+
+- camel3 (new camel & db updated, tag: listeria_v0.3_camel3_v2)
+
+
+- updated quality_check html report (descriptions)
+- input SUMMARY file initialization (fixed)
+- (new) Sequence Length Distribution
+- logo wiv -> sciensano
+
+
+- serogrouping:
+  + issue: wrong group (row in profile file) detected
+  + reason:
+    * by default SequenceTypeDetector allows part of profile to have DON'T-CARE genes specified as 'N' or '0' in
+      profile file, hence a profile to be selected that matches only part of detected gene alleles.
+      However, for Listeria, serogrouping profile, '0' means this gene should be absent...
+      Hence, the wrong type is detected by default SequenceTypeDetector
+    
+  + SOLUTION:
+    * Temporarily, a Listeria specific SequenceTypeDetector class is developed (might need a different one than default one)
+    * Better, make this an option of SequenceTypeDetector to be more flexible
 
 
 
@@ -67,21 +110,6 @@
 
 
 
-- serogrouping:
-  + issue: wrong group (row in profile file) detected
-  + reason:
-    * by default SequenceTypeDetector allows part of profile to have DON'T-CARE genes specified as 'N' or '0' in
-      profile file, hence a profile to be selected that matches only part of detected gene alleles.
-      However, for Listeria, serogrouping profile, '0' means this gene should be absent...
-      Hence, the wrong type is detected by default SequenceTypeDetector
-    
-  + SOLUTION:
-    * Temporarily, a Listeria specific SequenceTypeDetector class is developed (might need a different one than default one)
-    * Better, make this an option of SequenceTypeDetector to be more flexible
-  
-
-
-
 - sequence typing with SRST2:
   * issue with locus has '_' in it name  (virulence genes)
     + srst2 using mlst_delimiter to separate gene_name and allele from fasta header (seqid). However, when gene_name itself contains '_', this will fail to identify correct gene_name and allele
@@ -96,14 +124,11 @@
 
 
 
+- VirulenceFinder (gene detection BLAST)
+  * issue: gene lisK is missing from our report (compared to CGE results)
+  * reason: lisK overlaps with gene lisR for 2 bases, hence then removed by HitFiltering, as only one hit per cluster is reported
+  * solution:  pending with Bert ...
 
 
-
-
-
-
-------------------------------------------------------------------
-  KNOW ISSUES [RESOLVED]
-------------------------------------------------------------------
 - sequence typing
   + some locs are not typed by the code... [Resolved, for testing, only top 10 genes are used]
