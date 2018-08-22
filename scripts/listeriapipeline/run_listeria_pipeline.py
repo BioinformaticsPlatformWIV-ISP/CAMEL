@@ -6,7 +6,7 @@ import subprocess
 import time
 import yaml
 
-from camel.app.camel.camel import Camel
+from camel.app.camel import Camel
 from camel.app.command.command import Command
 from camel.app.components.files.fastqutils import FastqUtils
 
