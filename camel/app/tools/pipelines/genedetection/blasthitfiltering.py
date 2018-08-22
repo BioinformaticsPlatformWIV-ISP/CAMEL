@@ -8,6 +8,7 @@ from camel.app.components.blasttyping.blasthitfilteringhelper import BlastHitFil
 from camel.app.components.genedetection.genedetectionblasthit import GeneDetectionBlastHit
 from camel.app.components.genedetection.genedetectionutils import GeneDetectionUtils
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.tools.tool import Tool
@@ -125,8 +126,9 @@ class BlastHitFiltering(Tool):
             hits = BlastHitFiltering.__get_best_hit_per_cluster(hits)
             hits.sort(key=lambda h: (h.locus, h.query_start))
         elif self._parameters['filtering_method'].value == 'score':
-            limit = self._parameters['score_limit'].value if 'score_limit' in self._parameters else 5
-            hits = hits[:limit]
+            if 'score_nb_of_hits' not in self._parameters:
+                raise ToolExecutionError("'score_nb_of_hits' needs to be set when the filtering method is 'score'")
+            hits = hits[:self._parameters['score_nb_of_hits'].value]
         return hits
 
     def __set_output(self, hits: List[GeneDetectionBlastHit]) -> None:
