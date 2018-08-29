@@ -12,6 +12,7 @@ class SequenceTypingUtils(object):
     def determine_delimiter(fasta_file):
         """
         Returns the delimiter that is used in the FASTA file. Supported delimiters are '-' and '_'.
+        For example a FASTA file with the first entry '>abcZ_2' will return '_' as the delimiter.
         :param fasta_file: FASTA file
         :return: None
         """
