@@ -42,5 +42,5 @@ class AlleleCombiner(Tool):
         :return: None
         """
         if 'VAL_Hits' not in self._tool_inputs:
-            raise InvalidInputSpecificationError("Hit input is required")
+            raise InvalidInputSpecificationError("A list of sequence typing hit objects ('VAL_Hits') is required.")
         super()._check_input()
