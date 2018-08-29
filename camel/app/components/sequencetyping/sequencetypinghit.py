@@ -1,13 +1,17 @@
 import abc
-from typing import Optional
+from typing import Optional, List, Any
+
+from camel.app.components.html.htmlreportsection import HtmlReportSection
 
 
 class SequenceTypingHit(metaclass=abc.ABCMeta):
     """
-    This class represents a sequence typing hit.
+    This class represents is the base class for sequence typing hits. All hits should define the locus to which they
+    belong and the allele that was detected. Abstract methods should be implemented by sub-classes so other classes
+    can rely on these methods to provide the required functionality regardless of detection method.
     """
 
-    def __init__(self, locus, allele_id):
+    def __init__(self, locus: str, allele_id: str):
         """
         Initializes the typing hit.
         :param locus: Locus
@@ -18,7 +22,7 @@ class SequenceTypingHit(metaclass=abc.ABCMeta):
         self._allele_page_url_template = None
 
     @property
-    def locus(self):
+    def locus(self) -> str:
         """
         Returns the hit locus.
         :return: Locus
@@ -26,7 +30,7 @@ class SequenceTypingHit(metaclass=abc.ABCMeta):
         return self._locus
 
     @locus.setter
-    def locus(self, locus):
+    def locus(self, locus: str):
         """
         Sets the locus.
         :param locus: Locus
@@ -35,7 +39,7 @@ class SequenceTypingHit(metaclass=abc.ABCMeta):
         self._locus = locus
 
     @property
-    def allele_id(self):
+    def allele_id(self) -> str:
         """
         Returns the allele id.
         :return: Allele id
@@ -43,7 +47,7 @@ class SequenceTypingHit(metaclass=abc.ABCMeta):
         return self._allele_id
 
     @allele_id.setter
-    def allele_id(self, allele_id):
+    def allele_id(self, allele_id: str):
         """
         Sets the allele id.
         :param allele_id: Allele id
@@ -70,7 +74,7 @@ class SequenceTypingHit(metaclass=abc.ABCMeta):
         return self._allele_page_url_template.format(allele_id=self.allele_id)
 
     @abc.abstractmethod
-    def to_table_row(self):
+    def to_table_row(self) -> List[Any]:
         """
         Returns the hit as a row in a table.
         :return: Table row
@@ -78,7 +82,7 @@ class SequenceTypingHit(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def to_html_row(self, report_section, sub_dir=None):
+    def to_html_row(self, report_section: HtmlReportSection, sub_dir: str=None) -> List[Any]:
         """
         Returns the hit as a row in a table.
         :param report_section: Section is passed to save the alignments
@@ -88,7 +92,7 @@ class SequenceTypingHit(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def get_table_column_names(self):
+    def get_table_column_names(self) -> List[str]:
         """
         Returns the table column names.
         :return: Table column names
@@ -96,7 +100,7 @@ class SequenceTypingHit(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def get_html_column_names(self):
+    def get_html_column_names(self) -> List[str]:
         """
         Returns the HTML column names.
         :return: HTML column names
@@ -104,7 +108,7 @@ class SequenceTypingHit(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def is_perfect_hit(self):
+    def is_perfect_hit(self) -> bool:
         """
         Returns true if this is a perfect hit.
         :return: True if perfect
