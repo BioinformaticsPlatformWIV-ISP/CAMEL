@@ -10,6 +10,7 @@ Each database need to be specified as 'Key': 'Path to DB folder'.
 from typing import List
 
 import os
+import json
 
 from camel.app.camel import Camel
 from camel.app.components.filesystemhelper import FileSystemHelper
@@ -61,7 +62,6 @@ def get_locus_type(scheme: str, locus: str) -> str:
     :param locus: Locus (e.g. 'abcZ')
     :return: Locus type
     """
-    import json
     locus_directory = os.path.join(SCHEMES[scheme], locus)
     locus_metadata_file = os.path.join(locus_directory, 'locus_metadata.txt')
     if not os.path.isfile(locus_metadata_file):
@@ -151,10 +151,13 @@ rule Sequence_typing_blast_allele_detection:
         from camel.app.tools.pipelines.sequence_typing.alignmentextractor import AlignmentExtractor
 
         # Blast alignment
-        if get_locus_type(wildcards.scheme, wildcards.locus) == 'DNA':
+        locus_type = get_locus_type(wildcards.scheme, wildcards.locus)
+        if locus_type == 'DNA':
             blast = Blastn(camel)
-        else:
+        elif locus_type == 'peptide':
             blast = Blastx(camel)
+        else:
+            raise ValueError(f"Invalid locus type: {locus_type}")
         SnakemakeUtils.add_pickle_input(blast, 'DB_BLAST', input.DB_BLAST)
         SnakemakeUtils.add_pickle_input(blast, 'FASTA', input.FASTA)
         blast.update_parameters(threads=threads)
