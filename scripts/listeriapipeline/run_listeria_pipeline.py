@@ -9,7 +9,7 @@ import yaml
 from camel.app.camel import Camel
 from camel.app.command.command import Command
 from camel.app.components.files.fastqutils import FastqUtils
-from camel.pipeline import Pipeline
+from camel.app.pipeline.pipeline import Pipeline
 
 
 class ListeriaMain(object):
@@ -226,7 +226,7 @@ class ListeriaMain(object):
             yaml.dump({
                 'pipeline_version': self.PIPELINE_VERSION,
                 'pipeline_name': pipeline_name,
-                'pipeline_job_id': _pipeline.pipeline_jo,
+                'pipeline_job_id': _pipeline.job_id,
                 'logging_level': self.LOGGING_LEVEL,
             }, handle, default_flow_style=False)
             yaml.dump({
