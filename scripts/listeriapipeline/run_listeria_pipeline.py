@@ -24,6 +24,7 @@ class ListeriaMain(object):
     THREADS = 8
     DEBUG = False
     DEBUG_DIR_ROOT = '/scratch/qiafu/listeria_pipeline/Galaxy_runs/'
+    BD_KRAKEN = '/data/kraken/latest/abfhpv_lite/'  # On dev2 there is not enough mem to run complete db abfhpv, unless manually load into /run/shm
     # map gene detection db to its db_loc entry (for db path retrieve)
     DB_GENE_DETECTION = {
         'resfinder': 'resfinder',
@@ -189,9 +190,7 @@ class ListeriaMain(object):
             self.__create_config_file(config_file_path)
 
         else:
-            # On dev2 there is not enough mem to run complete db if multiple runs are executed.
-            self._args.kraken_db = '/data/kraken/latest/abfhpv_lite/'
-            # self._args.kraken_db = '/data/kraken/latest/abfhpv/'
+            self._args.kraken_db = self.DB_KRAKEN
             self._args.working_dir = os.path.abspath(os.getcwd())
             config_file_path = os.path.join(self._args.working_dir, 'snake_conf.yml')
             self.__create_config_file(config_file_path)
