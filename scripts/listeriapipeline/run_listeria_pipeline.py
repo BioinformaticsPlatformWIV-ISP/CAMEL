@@ -9,6 +9,7 @@ import yaml
 from camel.app.camel import Camel
 from camel.app.command.command import Command
 from camel.app.components.files.fastqutils import FastqUtils
+from camel.pipeline import Pipeline
 
 
 class ListeriaMain(object):
@@ -19,7 +20,7 @@ class ListeriaMain(object):
 
     PIPELINE_VERSION = '0.4'
     SNAKE_FILE = os.path.join(os.path.dirname(__file__), 'pipeline_listeria.snakefile')
-    LOG_IO = False
+    LOGGING_LEVEL = 'pipeline'   # 'step'
     THREADS = 8
     DEBUG = False
     DEBUG_DIR_ROOT = '/scratch/qiafu/listeria_pipeline/Galaxy_runs/'
@@ -211,6 +212,9 @@ class ListeriaMain(object):
         :return: None
         """
         logging.info("Creating config file.")
+        pipeline_name = 'Listeria Pipeline'
+        _pipeline = Pipeline(name=pipeline_name, camel=Camel(), logging_level=self.LOGGING_LEVEL)
+
         with open(path, 'w') as handle:
             yaml.dump({
                 'sample_name': self._sample_name,
@@ -221,9 +225,9 @@ class ListeriaMain(object):
             }, handle, default_flow_style=False)
             yaml.dump({
                 'pipeline_version': self.PIPELINE_VERSION,
-                'pipeline_name': 'Listeria Pipeline',
-                'pipeline_job_id': 3,
-                'logging_level': 'pipeline',
+                'pipeline_name': pipeline_name,
+                'pipeline_job_id': _pipeline.pipeline_jo,
+                'logging_level': self.LOGGING_LEVEL,
             }, handle, default_flow_style=False)
             yaml.dump({
                 'report_html': self._args.output_html,
