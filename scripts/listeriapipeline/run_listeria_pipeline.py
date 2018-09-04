@@ -24,7 +24,7 @@ class ListeriaMain(object):
     THREADS = 8
     DEBUG = False
     DEBUG_DIR_ROOT = '/scratch/qiafu/listeria_pipeline/Galaxy_runs/'
-    BD_KRAKEN = '/data/kraken/latest/abfhpv_lite/'  # On dev2 there is not enough mem to run complete db abfhpv, unless manually load into /run/shm
+    DB_KRAKEN = '/data/kraken/latest/abfhpv_lite/'  # On dev2 there is not enough mem to run complete db abfhpv, unless manually load into /run/shm
     # map gene detection db to its db_loc entry (for db path retrieve)
     DB_GENE_DETECTION = {
         'resfinder': 'resfinder',
