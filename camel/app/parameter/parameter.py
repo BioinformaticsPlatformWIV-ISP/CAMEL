@@ -56,3 +56,10 @@ class Parameter(object):
             return '{} {}'.format(self._option, self._value)
         else:
             return self._option
+
+    def __repr__(self) -> str:
+        """
+        Returns the internal representation.
+        :return: Internal representation.
+        """
+        return f"Parameter(name='{self.name}', val='{self.value}')"
