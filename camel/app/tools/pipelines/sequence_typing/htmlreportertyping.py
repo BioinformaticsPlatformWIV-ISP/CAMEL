@@ -65,7 +65,7 @@ class HtmlReporterTyping(Tool):
         """
         profile = self._input_informs['ST']['sequence_type']
         header = [key for key, _ in profile.metadata]
-        table_data = [[value for _, value in profile.metadata]]
+        table_data = [[value if value != '' else '-' for _, value in profile.metadata]]
         st = table_data[0][0]
         table_data[0][0] = HtmlTableCell(st, 'green' if st != '-' else 'red')
         self._report_section.add_table(table_data, header, table_attributes=[('class', 'data')])
