@@ -3,6 +3,8 @@ import os
 
 from camel.app.components.blast.alignmentextraction import AlignmentExtraction
 from camel.app.components.filesystemhelper import FileSystemHelper
+from camel.app.components.genedetection.genedetectionutils import GeneDetectionUtils
+from camel.app.components.genedetection.mapping import Mapping
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.tool import Tool
@@ -23,9 +25,9 @@ class AlignmentExtractor(Tool):
         Initializes this tool.
         :param camel: Camel instance
         """
-        super().__init__('Resistance Characterization: Alignment Extraction', '0.1', camel)
+        super().__init__('Gene Detection: Alignment Extractor', '0.1', camel)
 
-    def _execute_tool(self):
+    def _execute_tool(self) -> None:
         """
         Executes this tool.
         :return: None
@@ -37,12 +39,13 @@ class AlignmentExtractor(Tool):
         for input_ in self._tool_inputs['VAL_Hits']:
             key = AlignmentExtraction.get_key(input_.value.subject, input_.value.query)
             if key in alignments:
-                alignment = self.__save_alignment(input_.value.subject, alignments[key])
+                alignment = self.__save_alignment(input_.value.subject, alignments[key],
+                                                  self._input_informs['db_info']['mapping'])
                 self._tool_outputs['TXT'].append(ToolIOFile(alignment))
             else:
                 raise ValueError("No alignment found for: '{}'".format(key))
 
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
         Checks if the required inputs are specified.
         :return: None
@@ -51,15 +54,21 @@ class AlignmentExtractor(Tool):
             raise InvalidInputSpecificationError("No TXT input found.")
         if 'VAL_Hits' not in self._tool_inputs:
             logging.warning("No blast hits input found")
+        if 'db_info' not in self._input_informs:
+            raise InvalidInputSpecificationError("Database information is required")
         super(AlignmentExtractor, self)._check_input()
 
-    def __save_alignment(self, subject_name, alignment):
+    def __save_alignment(self, subject_name: str, alignment: str, mapping: Mapping) -> str:
         """
         Saves the given alignment.
+        :param subject_name: Subject name
         :param alignment: Alignment
+        :param mapping: Mapping
         :return: Filename of the saved alignment
         """
-        filename = os.path.join(self._folder, '{}.txt'.format(FileSystemHelper.make_valid(subject_name)))
+        id_ = subject_name.split('__')[2]
+        original_seq_id, metadata = GeneDetectionUtils.parse_header(mapping.get(id_))
+        filename = os.path.join(self._folder, '{}.txt'.format(FileSystemHelper.make_valid(metadata['allele'])))
         with open(filename, 'w') as output_handle:
-            output_handle.write(alignment)
+            output_handle.write(alignment.replace(subject_name, original_seq_id))
         return filename

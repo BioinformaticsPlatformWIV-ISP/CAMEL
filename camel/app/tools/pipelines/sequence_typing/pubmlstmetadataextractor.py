@@ -1,7 +1,8 @@
 import logging
 
-from camel.app.components.pubmlst.pubmlstparser import PubMLSTParser
 from camel.app.tools.tool import Tool
+
+from camel.app.components.pubmlst.pubmlstparser import PubMLSTParser
 
 
 class PubmlstMetadataExtractor(Tool):
@@ -21,7 +22,7 @@ class PubmlstMetadataExtractor(Tool):
         """
         super(PubmlstMetadataExtractor, self).__init__('Sequence Typing: PubMLST Metadata Extractor', '0.1', camel)
 
-    def _execute_tool(self):
+    def _execute_tool(self) -> None:
         """
         Runs this tool.
         :return: None
@@ -36,7 +37,7 @@ class PubmlstMetadataExtractor(Tool):
             if loci in checked_loci:
                 self.__add_linked_data(loci, allele_info['allele_id'], allele_info['url'])
 
-    def __add_linked_data(self, name, allele_id, allele_url):
+    def __add_linked_data(self, name: str, allele_id: str, allele_url: str) -> None:
         """
         Adds the linked data for this allele.
         :param name: Gene name
@@ -52,7 +53,7 @@ class PubmlstMetadataExtractor(Tool):
             logging.warning('Cannot retrieve linked data for {} ({}, {})'.format(name, err, allele_url))
 
     @staticmethod
-    def __clean_allele_id(allele_id):
+    def __clean_allele_id(allele_id: str) -> str:
         """
         Removes mismatch (*) or uncertainty (?) indicators from the allele id.
         :param allele_id: Allele identifier

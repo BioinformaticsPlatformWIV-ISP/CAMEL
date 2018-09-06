@@ -1,6 +1,8 @@
 import os
+from typing import List, Optional
 
 from camel.app.components.genedetection.genedetectionhit import GeneDetectionHit
+from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.html.htmltablecell import HtmlTableCell
 
 
@@ -27,6 +29,7 @@ class GeneDetectionBlastHit(GeneDetectionHit):
         :param alignment_path: Path to the alignment visualization file
         """
         super().__init__(locus)
+        self.accession = str(accession)
         self._subject = subject
         self._pident = pident
         self._slen = slen
@@ -34,7 +37,6 @@ class GeneDetectionBlastHit(GeneDetectionHit):
         self._qseqid = qseqid
         self._qstart = qstart
         self._qend = qend
-        self._accession = accession
         self._alignment_path = alignment_path
         self._extra_column_value = None
         self._extra_column_name = None
@@ -48,32 +50,52 @@ class GeneDetectionBlastHit(GeneDetectionHit):
         """
         try:
             return GeneDetectionBlastHit(None, input_dict['sseqid'], float(input_dict['pident']), input_dict['slen'],
-                                         input_dict['sseq'], input_dict['qseqid'], input_dict['qstart'], input_dict['qend'], None,
-                                         None)
+                                         input_dict['sseq'], input_dict['qseqid'], input_dict['qstart'],
+                                         input_dict['qend'], None, None)
         except KeyError as err:
             raise ValueError("Cannot create hit from dictionary {} missing - {!r}".format(err, input_dict))
 
-    def get_table_column_names(self):
+    @staticmethod
+    def get_column_names_html(extra_column_name: Optional[str]=None) -> List[str]:
         """
-        Returns the table column names.
-        :return: Table column names
+        Returns the column names for the HTML output.
+        :param extra_column_name: Extra column name (None if there is None)
+        :return: List of column names
         """
-        if self._extra_column_name is None:
-            return GeneDetectionBlastHit._TABLE_COLUMNS
-        columns = GeneDetectionBlastHit._TABLE_COLUMNS.copy()
-        columns.insert(-2, self._extra_column_name)
+        if extra_column_name is None:
+            return GeneDetectionBlastHit._HTML_COLUMNS
+        columns = GeneDetectionBlastHit._HTML_COLUMNS.copy()
+        columns.insert(-2, extra_column_name)
         return columns
 
-    def get_html_column_names(self):
+    @property
+    def column_names_html(self):
         """
         Returns the HTML column names.
         :return: HTML column names
         """
-        if self._extra_column_name is None:
-            return GeneDetectionBlastHit._HTML_COLUMNS
-        columns = GeneDetectionBlastHit._HTML_COLUMNS.copy()
-        columns.insert(-3, self._extra_column_name)
+        return GeneDetectionBlastHit.get_column_names_html(self._extra_column_name)
+
+    @staticmethod
+    def get_column_names_tabular(extra_column_name: Optional[str]=None) -> List[str]:
+        """
+        Returns the column names for the tabular output.
+        :param extra_column_name: Extra column name (None if there is None)
+        :return: List of column names
+        """
+        if extra_column_name is None:
+            return GeneDetectionBlastHit._TABLE_COLUMNS
+        columns = GeneDetectionBlastHit._TABLE_COLUMNS.copy()
+        columns.insert(-1, extra_column_name)
         return columns
+
+    @property
+    def column_names_tabular(self):
+        """
+        Returns the table column names.
+        :return: Table column names
+        """
+        return GeneDetectionBlastHit.get_column_names_tabular(self._extra_column_name)
 
     @property
     def subject(self):
@@ -207,20 +229,21 @@ class GeneDetectionBlastHit(GeneDetectionHit):
         """
         row_data = [
             self.locus,
-            str(self.percent_identity),
+            '{:.2f}'.format(self.percent_identity),
             self.length_statistic,
             self.query,
             '{}..{}'.format(self.query_start, self.query_end),
             self.accession if self.accession is not None else '-']
         if self._extra_column_value is not None:
-            row_data.insert(-2, self._extra_column_value)
+            row_data.insert(-1, self._extra_column_value)
         return '\t'.join(row_data)
 
-    def to_html_row(self, report_section, sub_directory):
+    def to_html_row(self, report_section: HtmlReportSection, sub_directory: str, color: bool=True):
         """
         Converts the hit into a HTML table row. It also links the alignment file (if there is one) to the HTML report.
         :param report_section: HTML Section that will contain the hit table
         :param sub_directory: Subdirectory to save the alignments
+        :param color: If True, row is colored
         :return: HTML row elements
         """
         if self.alignment_path is None:
@@ -228,16 +251,17 @@ class GeneDetectionBlastHit(GeneDetectionHit):
         else:
             relative_path = os.path.join(sub_directory, 'alignments', os.path.basename(self.alignment_path))
             report_section.add_file(self.alignment_path, relative_path)
-            alignment_cell = HtmlTableCell('view', self.color, link=relative_path)
+            alignment_cell = HtmlTableCell('view', self.color if color else False, link=relative_path)
         html_data = [
             self.locus,
-            str(self.percent_identity),
+            '{:.2f}'.format(self.percent_identity),
             self.length_statistic,
             self.query,
             '{}..{}'.format(self.query_start, self.query_end)]
         if self._extra_column_value is not None:
-            html_data.insert(-1, self._extra_column_value)
-        return [HtmlTableCell(v, self.color) for v in html_data] + [self.get_accession_cell()] + [alignment_cell]
+            html_data.append(self._extra_column_value)
+        return [HtmlTableCell(v, self.color if color else None) for v in html_data] + [self.get_accession_cell()] + \
+               [alignment_cell]
 
     @property
     def color(self):

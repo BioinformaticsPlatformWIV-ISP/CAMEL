@@ -1,7 +1,7 @@
 import logging
 
 
-class BlastHitFiltering(object):
+class BlastHitFilteringHelper(object):
     """
     Class that filters list of BlastHit objects.
     """
@@ -21,13 +21,13 @@ class BlastHitFiltering(object):
         logging.debug("Detecting best from list of {} hit(s)".format(len(hits)))
         if len(hits) == 0:
             raise ValueError("Input list is empty")
-        perfect_hits = BlastHitFiltering.__get_perfect_hits(hits)
+        perfect_hits = BlastHitFilteringHelper.__get_perfect_hits(hits)
         if len(perfect_hits) >= 1:
             logging.debug('{} perfect hit(s) found: {}'.format(
                 len(perfect_hits), ', '.join([h.subject for h in perfect_hits])))
             return [sorted(perfect_hits, key=lambda h: h.subject_length, reverse=True)[0]]
         else:
-            best_hits = BlastHitFiltering.__get_best_imperfect_hits(hits)
+            best_hits = BlastHitFilteringHelper.__get_best_imperfect_hits(hits)
             logging.debug('No perfect hits found, {} equivalent imperfect hits found: {}'.format(
                 len(best_hits), ', '.join([h.subject for h in best_hits])))
             return best_hits
@@ -49,8 +49,9 @@ class BlastHitFiltering(object):
         :param hits: List of hits
         :return: Best hit
         """
-        lowest_length_score = min([BlastHitFiltering.__calculate_length_score(hit) for hit in hits])
-        lowest_ls_hits = [hit for hit in hits if BlastHitFiltering.__calculate_length_score(hit) == lowest_length_score]
+        lowest_length_score = min([BlastHitFilteringHelper.__calculate_length_score(hit) for hit in hits])
+        lowest_ls_hits = [hit for hit in hits if
+                          BlastHitFilteringHelper.__calculate_length_score(hit) == lowest_length_score]
 
         highest_pident = max([hit.percent_identity for hit in lowest_ls_hits])
         highest_pident_hits = [hit for hit in lowest_ls_hits if hit.percent_identity == highest_pident]
