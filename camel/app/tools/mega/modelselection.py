@@ -1,6 +1,6 @@
-import logging
 import os
 
+from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.invalidparametererror import InvalidParameterError
 from camel.app.error.toolexecutionerror import ToolExecutionError
@@ -16,14 +16,14 @@ class ModelSelection(Tool):
 
     DEFAULT_OUTPUT_NAME = 'model_selection'
 
-    def __init__(self, camel):
+    def __init__(self, camel: Camel):
         """
         Initializes this tool.
         :param camel: CAMEL instance
         """
         super(ModelSelection, self).__init__('MEGA: Model Selection', '7.0.20', camel)
 
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
         Checks if the input is valid.
         :return: None
@@ -32,7 +32,7 @@ class ModelSelection(Tool):
             raise InvalidInputSpecificationError("No SNP Matrix FASTA input file found")
         super(ModelSelection, self)._check_input()
 
-    def _check_parameters(self):
+    def _check_parameters(self) -> None:
         """
         Checks if the parameters are valid.
         :return: None
@@ -57,7 +57,7 @@ class ModelSelection(Tool):
             raise InvalidInputSpecificationError("Cannot read config file.")
         super(ModelSelection, self)._check_parameters()
 
-    def _execute_tool(self):
+    def _execute_tool(self) -> None:
         """
         Executes this tool.
         :return: None
@@ -67,19 +67,7 @@ class ModelSelection(Tool):
         self.__set_output()
         self.__analyze_output_file()
 
-    def __clear_output_files(self):
-        """
-        Clears the output folder.
-        :return: None
-        """
-        output_files = [os.path.join(self._folder, '{}.csv'.format(ModelSelection.DEFAULT_OUTPUT_NAME)),
-                        os.path.join(self._folder, '{}_summary.txt'.format(ModelSelection.DEFAULT_OUTPUT_NAME))]
-        for output_file in output_files:
-            if os.path.isfile(output_file):
-                os.remove(output_file)
-                logging.debug("Removing '{}' from MEGA output folder".format(output_file))
-
-    def __build_command(self):
+    def __build_command(self) -> None:
         """
         Builds the command line call.
         :return: None
@@ -92,10 +80,10 @@ class ModelSelection(Tool):
             '-o {}'.format(ModelSelection.DEFAULT_OUTPUT_NAME)
         ])
 
-    def __generate_config_file(self):
+    def __generate_config_file(self) -> str:
         """
         Generates the config file.
-        :return: None
+        :return: Path to config file
         """
         with open(self._parameters['config_file_template'].value) as handle:
             template = handle.read()
@@ -110,7 +98,7 @@ class ModelSelection(Tool):
             ))
         return config_file
 
-    def __set_output(self):
+    def __set_output(self) -> None:
         """
         Sets the output of this tool.
         :return: None
@@ -120,7 +108,7 @@ class ModelSelection(Tool):
         self._tool_outputs['TXT'] = [ToolIOFile(os.path.join(self._folder, '{}_summary.txt'.format(
             ModelSelection.DEFAULT_OUTPUT_NAME)))]
 
-    def __analyze_output_file(self):
+    def __analyze_output_file(self) -> None:
         """
         Analyzes the output file.
         :return: None
@@ -138,7 +126,7 @@ class ModelSelection(Tool):
             self._informs['rates_among_sites_full'] = MLTreeConstruction.RATES_AMONG_SITES[self._informs[
                 'rates_among_sites']]
 
-    def _check_command_output(self):
+    def _check_command_output(self) -> None:
         """
         Checks the command output to see if the program executed correctly.
         :return: None
