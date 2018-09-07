@@ -1,6 +1,6 @@
-import logging
 import os
 
+from camel.app.camel import Camel
 from camel.app.error.invalidparametererror import InvalidParameterError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
@@ -43,23 +43,23 @@ class MLTreeConstruction(Tool):
         'G+I': 'Gamma Distributed With Invariant Sites (G+I)'
     }
 
-    def __init__(self, camel):
+    def __init__(self, camel: Camel):
         """
         Initializes this tool.
         :param camel: CAMEL instance
         """
         super(MLTreeConstruction, self).__init__('MEGA: ML Tree Construction', '7.0.20', camel)
 
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
         Checks if the provided input is valid.
         :return: None
         """
         super(MLTreeConstruction, self)._check_input()
 
-    def _check_parameters(self):
+    def _check_parameters(self) -> None:
         """
-        Checks if the parameters are valid.
+        Checks if the provided parameters are valid.
         :return: None
         """
         if self._parameters['test_of_phylogeny'].value not in ('None', 'Bootstrap method'):
@@ -84,29 +84,16 @@ class MLTreeConstruction(Tool):
             raise InvalidParameterError("Gamma categories are only used when 'G' or 'G+I' rate models are used.")
         super(MLTreeConstruction, self)._check_parameters()
 
-    def _execute_tool(self):
+    def _execute_tool(self) -> None:
         """
         Executes this tool.
         :return: None
         """
-        # self.__clear_output_files()
         self.__build_command()
         self._execute_command()
         self.__set_output()
 
-    def __clear_output_files(self):
-        """
-        Clears the output folder.
-        :return: None
-        """
-        output_files = [os.path.join(self._folder, '{}.nwk'.format(MLTreeConstruction.DEFAULT_OUTPUT_NAME)),
-                        os.path.join(self._folder, '{}_summary.txt'.format(MLTreeConstruction.DEFAULT_OUTPUT_NAME))]
-        for output_file in output_files:
-            if os.path.isfile(output_file):
-                os.remove(output_file)
-                logging.debug("Removing '{}' from MEGA output folder".format(output_file))
-
-    def __build_command(self):
+    def __build_command(self) -> None:
         """
         Builds the command line call.
         :return: None
@@ -119,7 +106,7 @@ class MLTreeConstruction(Tool):
             '-o {}'.format(MLTreeConstruction.DEFAULT_OUTPUT_NAME)
         ])
 
-    def __get_parameter_value(self, name):
+    def __get_parameter_value(self, name: str) -> str:
         """
         Returns the value of the parameter with the given name. Returns 'Not Applicable' if the parameter is not
         specified.
@@ -130,10 +117,10 @@ class MLTreeConstruction(Tool):
             return self._parameters[name].value
         return 'Not Applicable'
 
-    def __generate_config_file(self):
+    def __generate_config_file(self) -> str:
         """
         Generates the config file.
-        :return: None
+        :return: Path to output file
         """
         with open(self._parameters['config_file_template'].value) as handle:
             template = handle.read()
@@ -155,7 +142,7 @@ class MLTreeConstruction(Tool):
             ))
         return config_file
 
-    def __set_output(self):
+    def __set_output(self) -> None:
         """
         Sets the output of this tool.
         :return: None
@@ -165,7 +152,7 @@ class MLTreeConstruction(Tool):
         self._tool_outputs['TXT'] = [ToolIOFile(os.path.join(self._folder, '{}_summary.txt'.format(
             MLTreeConstruction.DEFAULT_OUTPUT_NAME)))]
 
-    def _check_command_output(self):
+    def _check_command_output(self) -> None:
         """
         Checks the command output to see if the tool executed correctly.
         :return: None
