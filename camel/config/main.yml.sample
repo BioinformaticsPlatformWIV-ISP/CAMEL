@@ -16,3 +16,5 @@ tool_service: db
 
 testing:
   testfiles_dir: /data/camel/testdata/
+
+temp_dir: /scratch/temp
