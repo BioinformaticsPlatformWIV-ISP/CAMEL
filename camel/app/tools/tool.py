@@ -10,6 +10,9 @@ from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.error.invalidparametererror import InvalidParameterError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.toolio import ToolIO
+from camel.app.io.tooliodirectory import ToolIODirectory
+from camel.app.io.tooliofile import ToolIOFile
+from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.services.basetoolservice import BaseToolService
 from camel.app.services.dbtoolservice import DbToolService
 from camel.app.services.yamltoolservice import YAMLToolService
@@ -55,7 +58,7 @@ class Tool(object, metaclass=abc.ABCMeta):
         return self._tool_service.tool_id
 
     @property
-    def tool_outputs(self) -> Dict[str, List[ToolIO]]:
+    def tool_outputs(self) -> Dict[str, List[Union[ToolIOFile, ToolIOValue, ToolIODirectory, ToolIO]]]:
         """
         Returns the tool outputs.
         :return: Tool outputs
