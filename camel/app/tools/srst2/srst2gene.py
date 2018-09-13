@@ -1,4 +1,5 @@
 import logging
+
 import os
 
 from camel.app.error.toolexecutionerror import ToolExecutionError
@@ -95,5 +96,7 @@ class Srst2Gene(Tool):
         Checks if the command execution was successful.
         :return: None
         """
+        if 'Could not determine forward/reverse read status' in self._command.stderr:
+            raise ToolExecutionError("Invalid names for the FASTQ files")
         if self._command.returncode != 0:
             raise ToolExecutionError("SRST2 execution failed: {}".format(self.stderr))

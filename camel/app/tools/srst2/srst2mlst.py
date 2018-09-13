@@ -82,7 +82,7 @@ class Srst2Mlst(Tool):
         super(Srst2Mlst, self)._check_input()
         if 'FASTA' not in self._tool_inputs:
             raise IOError('No FASTA file with MLST alleles found.')
-        if 'MLST' not in self._tool_inputs:
+        if 'TSV' not in self._tool_inputs:
             logging.info("No MLST definitions found. Only performing allele detection.")
 
     def _get_output_file_key(self, filename):
