@@ -1,5 +1,5 @@
 import argparse
-from typing import Tuple, List
+from typing import Tuple, List, Optional
 
 import os
 import shutil
