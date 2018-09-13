@@ -19,7 +19,7 @@ class MainMega(object):
 
     SNP_MATRIX_FILENAME = 'snp_matrix.fasta'
 
-    def __init__(self, args: argparse.Namespace=None):
+    def __init__(self, args: Optional[argparse.Namespace]=None):
         """
         Initializes the main script.
         """
