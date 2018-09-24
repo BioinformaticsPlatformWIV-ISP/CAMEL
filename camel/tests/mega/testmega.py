@@ -44,6 +44,7 @@ class TestMEGA(unittest.TestCase):
             action='model',
             output_model=output_file,
             missing_data='complete_deletion',
+            site_cov_cutoff=50,
             branch_swap='weak'
         )
         mega = MainMega(args)
@@ -64,6 +65,7 @@ class TestMEGA(unittest.TestCase):
             rates='G',
             output_tree=output_file,
             missing_data='use_all_sites',
+            site_cov_cutoff=50,
             branch_swap='moderate',
             ml_method='spr3',
             bootstraps=10
@@ -111,6 +113,7 @@ class TestMEGA(unittest.TestCase):
             output_model=output_file_model,
             output_snp_matrix=output_file_snp_matrix,
             missing_data='use_all_sites',
+            site_cov_cutoff=50,
             branch_swap='very_strong'
         )
         mega = MainMega(args)
