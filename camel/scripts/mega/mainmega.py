@@ -35,9 +35,9 @@ class MainMega(object):
         argument_parser = argparse.ArgumentParser()
         argument_parser.add_argument('--fasta', help="Input SNP matrix FASTA file")
         argument_parser.add_argument('--vcf', action='append', nargs=2)
-        argument_parser.add_argument('--output-tree', type=str, help="Output Newick tree file")
-        argument_parser.add_argument('--output-model', type=str, help="Output tabular model selection file")
-        argument_parser.add_argument('--output-snp-matrix', type=str,
+        argument_parser.add_argument('--output-tree', help="Output Newick tree file")
+        argument_parser.add_argument('--output-model', help="Output tabular model selection file")
+        argument_parser.add_argument('--output-snp-matrix',
                                      help='If set, the SNP matrix is exported to this FASTA file')
         argument_parser.add_argument('--action', choices=['both', 'model', 'tree'], required=True)
         argument_parser.add_argument('--missing-data', required=True,
