@@ -47,13 +47,14 @@ class SnpMatrixConstructor(Tool):
         sample_names = []
         for vcf_file, sample_name in zip(self._tool_inputs['VCF'], self._tool_inputs['SAMPLE_NAME']):
             sample_names.append(sample_name.value)
-            vcf_reader = vcf.Reader(open(vcf_file.path))
-            for record in vcf_reader:
-                if 'INDEL' not in record.INFO:
-                    position = SnpPosition(record.CHROM, record.POS, record.REF)
-                    if position not in snps:
-                        snps[position] = {}
-                    snps[position][sample_name.value] = record.ALT[0]
+            with open(vcf_file.path) as handle:
+                vcf_reader = vcf.Reader(handle)
+                for record in vcf_reader:
+                    if 'INDEL' not in record.INFO:
+                        position = SnpPosition(record.CHROM, record.POS, record.REF)
+                        if position not in snps:
+                            snps[position] = {}
+                        snps[position][sample_name.value] = record.ALT[0]
         logging.info("{} SNP positions found across all samples".format(len(snps)))
         return sample_names, snps
 
