@@ -5,6 +5,7 @@ import os
 import shutil
 
 from camel.app.camel import Camel
+from camel.app.components.phylogeny.megautils import MEGAUtils
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.tools.mega.mltreeconstruction import MLTreeConstruction
@@ -19,7 +20,7 @@ class MainMega(object):
 
     SNP_MATRIX_FILENAME = 'snp_matrix.fasta'
 
-    def __init__(self, args: Optional[argparse.Namespace]=None):
+    def __init__(self, args: Optional[argparse.Namespace]=None) -> None:
         """
         Initializes the main script.
         """
@@ -96,18 +97,13 @@ class MainMega(object):
         :return: Model, rates parameter
         """
         model_selection = ModelSelection(self._camel)
+        MEGAUtils.update_model_selection_parameters(
+            model_selection, self._args.missing_data, self._args.branch_swap, self._args.site_cov_cutoff)
         model_selection.add_input_files({'FASTA': [ToolIOFile(fasta_path)]})
-        if self._args.missing_data == 'complete_deletion':
-            model_selection.update_parameters(missing_data_treatment='Complete deletion')
-        elif self._args.missing_data == 'use_all_sites':
-            model_selection.update_parameters(missing_data_treatment='Use all sites')
-        elif self._args.missing_data == 'partial_deletion':
-            model_selection.update_parameters(missing_data_treatment='Partial deletion',
-                                              site_coverage_cutoff=self._args.site_cov_cutoff)
-        model_selection.update_parameters(branch_swap_filter=self._args.branch_swap.title().replace('_', ' '))
-        model_selection_dir = os.path.join(self._args.working_dir, 'model_selection')
-        os.mkdir(model_selection_dir)
-        model_selection.run(model_selection_dir)
+        working_dir = os.path.join(self._args.working_dir, 'model_selection')
+        if not os.path.isdir(working_dir):
+            os.mkdir(working_dir)
+        model_selection.run(working_dir)
         shutil.copyfile(model_selection.tool_outputs['CSV'][0].path, self._args.output_model)
         return model_selection.informs['model'], model_selection.informs['rates_among_sites']
 
@@ -121,32 +117,13 @@ class MainMega(object):
         """
         tree_building = MLTreeConstruction(self._camel)
         tree_building.add_input_files({'FASTA': [ToolIOFile(fasta_path)]})
-        tree_building.update_parameters(bootstrap_replications=self._args.bootstraps,
-                                        test_of_phylogeny='Bootstrap method')
-        if rates == 'G+I':
-            tree_building.update_parameters(rates_among_sites='G+I')
-            tree_building.update_parameters(gamma_categories='5')
-        elif rates == 'G':
-            tree_building.update_parameters(rates_among_sites='G')
-            tree_building.update_parameters(gamma_categories='5')
-        elif rates == 'I':
-            tree_building.update_parameters(rates_among_sites='I')
-        else:
-            tree_building.update_parameters(rates_among_sites='U')
-
-        if self._args.missing_data == 'complete_deletion':
-            tree_building.update_parameters(missing_data_treatment='Complete deletion')
-        elif self._args.missing_data == 'use_all_sites':
-            tree_building.update_parameters(missing_data_treatment='Use all sites')
-        elif self._args.missing_data == 'partial_deletion':
-            tree_building.update_parameters(missing_data_treatment='Partial deletion',
-                                            site_coverage_cutoff=self._args.site_cov_cutoff)
-        tree_building.update_parameters(model=model)
-        tree_building.update_parameters(branch_swap_filter=self._args.branch_swap.title().replace('_', ' '))
-        tree_building.update_parameters(heuristic_method=self._args.ml_method.upper())
-        tree_building_dir = os.path.join(self._args.working_dir, 'tree_building')
-        os.mkdir(tree_building_dir)
-        tree_building.run(tree_building_dir)
+        MEGAUtils.update_tree_building_parameters(
+            tree_building, model, rates, self._args.bootstraps, self._args.missing_data, self._args.site_cov_cutoff,
+            self._args.ml_method, self._args.branch_swap)
+        working_dir = os.path.join(self._args.working_dir, 'tree_building')
+        if not os.path.isdir(working_dir):
+            os.mkdir(working_dir)
+        tree_building.run(working_dir)
         shutil.copyfile(tree_building.tool_outputs['NWK'][0].path, self._args.output_tree)
 
 
