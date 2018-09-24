@@ -15,7 +15,7 @@ class MainSrst2Gene(object):
     Main script to run the base SRST2 gene detection tool from galaxy.
     """
 
-    def __init__(self, args: Optional[argparse.Namespace]=None):
+    def __init__(self, args: Optional[argparse.Namespace]=None) -> None:
         """
         Initializes the wrapper.
         :param args: (Optional) arguments, if not specified arguments are parsed from command line
