@@ -1,3 +1,5 @@
+from typing import Optional
+
 import yaml
 
 from camel.app.connection.connection import Connection
@@ -10,14 +12,20 @@ class Camel(object):
     Main class for camel.
     """
 
-    def __init__(self, database_config: str=DB_CONFIG, logging_config: str=LOGGING_CONFIG, tool_parameter_loc: str=None) -> None:
+    _current_instance = None
+    _logger_is_initialized = False
+
+    def __init__(self, database_config: str=DB_CONFIG, logging_config: Optional[str]=LOGGING_CONFIG,
+                 tool_parameter_loc: str=None) -> None:
         """
         Initializes a CAMEL system.
         :param database_config: Location of database config file
         :param logging_config: Location of logging config file
         :param tool_parameter_loc: Location of tool parameter YAML files
         """
-        LogManager.initialize(logging_config)
+        if not Camel._logger_is_initialized and logging_config is not None:
+            LogManager.initialize(logging_config)
+            Camel._logger_is_initialized = True
         self._connection = Connection(database_config)
 
         with open(MAIN_CONFIG) as f:
@@ -41,3 +49,13 @@ class Camel(object):
         :return: Dict
         """
         return self._config
+
+    @staticmethod
+    def get_instance() -> 'Camel':
+        """
+        This method can be used to avoid recreating the CAMEL object multiple times.
+        :return: Initialized CAMEL instance
+        """
+        if Camel._current_instance is None:
+            Camel._current_instance = Camel()
+        return Camel._current_instance
