@@ -5,13 +5,14 @@ from camel.app.camel import Camel
 from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.components.genedetection.genedetectionutils import GeneDetectionUtils
 from camel.app.components.html.htmlreportsection import HtmlReportSection
+from camel.app.components.sequencetyping.sequencetypingutils import SequenceTypingUtils
 from camel.app.io.tooliodirectory import ToolIODirectory
 from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile.gene_detection import *
 
-camel = Camel()
+camel = Camel.get_instance()
 
 
 rule Gene_detection_db_manager:
@@ -32,7 +33,6 @@ rule Gene_detection_db_manager:
         step = Step(rule, db_manager, camel, params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(db_manager, output)
-
 
 rule Gene_detection_blastn:
     """
@@ -109,8 +109,7 @@ rule Gene_detection_hit_filtering:
         if params.min_coverage is not None:
             hit_filtering.update_parameters(min_coverage=params.min_coverage)
         if params.extra_column is not None:
-           hit_filtering.update_parameters(
-               extra_column_name=params.extra_column[0], extra_column_key=params.extra_column[1])
+           hit_filtering.update_parameters(extra_column_name=params.extra_column[0], extra_column_key=params.extra_column[1])
 
         # Run tool
         step.run_step()
@@ -177,7 +176,9 @@ rule Gene_detection_srst2:
         srst2 = Srst2Gene(camel)
         SnakemakeUtils.add_pickle_inputs(srst2, input)
         step = Step(rule, srst2, camel, params.running_dir, config)
-        srst2.update_parameters(threads=threads, forward_designator='1P', reverse_designator='2P')
+        fwd_read_path = SnakemakeUtils.load_object(input.FASTQ_PE)[0].path
+        fwd_designator, rev_designator = SequenceTypingUtils.determine_read_status(fwd_read_path)
+        srst2.update_parameters(threads=threads, forward_designator=fwd_designator, reverse_designator=rev_designator)
         step.run_step()
         if 'TSV' in srst2.tool_outputs:
             SnakemakeUtils.dump_tool_outputs(srst2, output)
@@ -242,11 +243,9 @@ rule Gene_detection_get_column_names:
         from camel.app.components.genedetection.genedetectionblasthit import GeneDetectionBlastHit
         from camel.app.components.genedetection.genedetectionsrst2hit import GeneDetectionSRST2Hit
         if params.detection_method == 'blast':
-            columns = GeneDetectionBlastHit.get_column_names_html(params.extra_column[0] if params.extra_column is not
-                                                                                            None else None)
+            columns = GeneDetectionBlastHit.get_column_names_html(params.extra_column[0] if params.extra_column is not None else None)
         elif params.detection_method == 'srst2':
-            columns = GeneDetectionSRST2Hit.get_column_names_html(params.extra_column[0] if params.extra_column is not
-                                                                                            None else None)
+            columns = GeneDetectionSRST2Hit.get_column_names_html(params.extra_column[0] if params.extra_column is not None else None)
         else:
             raise ValueError(f"Invalid detection method: {params.detection_method}")
         SnakemakeUtils.dump_object(columns, output.INFORMS_columns)
