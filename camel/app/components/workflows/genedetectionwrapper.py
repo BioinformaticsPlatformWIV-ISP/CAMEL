@@ -29,8 +29,7 @@ class GeneDetectionWrapper(object):
         self._working_dir = working_dir
         self._output = None
 
-    def run_workflow_blast(self, fasta_path: str, sample_name: str, db_data: Dict[str, Any],
-                           threads: int=8) -> None:
+    def run_workflow_blast(self, fasta_path: str, sample_name: str, db_data: Dict[str, Any], threads: int=8) -> None:
         """
         Runs the gene detection workflow using BLAST.
         :param fasta_path: Input FASTA file
@@ -49,7 +48,7 @@ class GeneDetectionWrapper(object):
             report_section=SnakemakeUtils.load_object(output_path)[0].value)
 
     def run_workflow_srst2(self, fastq_pe_path: List[str], sample_name: str, db_data: Dict[str, Any],
-                           threads: Optional[int]=8) -> None:
+                           threads: int=8) -> None:
         """
         Runs the gene detection workflow using SRST2.
         :param fastq_pe_path: Input PE FASTQ files
