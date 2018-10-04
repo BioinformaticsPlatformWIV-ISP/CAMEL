@@ -100,7 +100,7 @@ rule Assembly_report:
 
 rule Assembly_dump_summary_info:
     """
-    Dumps the summary information from the read trimming pipeline.
+    Dumps the summary information from the assembly pipeline.
     """
     input:
         INFORMS_quast=os.path.join(config['working_dir'], 'assembly_spades', 'quast', 'informs.io')
