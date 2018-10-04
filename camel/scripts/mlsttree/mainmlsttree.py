@@ -80,6 +80,8 @@ class MainMlstTree(object):
     def __get_locus_names(self, allele_ids_by_sample: Dict[str, List[Tuple[str, str]]]) -> List[str]:
         """
         Returns the locus names.
+        A loop is used to return only the first element as the locus names are identical for all entries in the
+        dictionary. An error is raised when the allele id dictionary is empty.
         :param allele_ids_by_sample: Allele ids by sample
         :return: List of locus names
         """
