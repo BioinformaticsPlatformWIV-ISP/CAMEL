@@ -32,7 +32,7 @@ class MainScriptHelper(object):
         """
         Runs the read trimming workflow.
         :param fastq_reads_raw: Raw FASTQ PE reads
-        :param report: If True, the output is added to the given report
+        :param report: If set, the output is added to the given report
         :return: Tuple of trimmed PE reads, trimmed forward reads, trimmed reverse reads
         """
         trimming = ReadTrimmingWrapper(os.path.join(self._working_dir, 'trimming'))
@@ -45,13 +45,13 @@ class MainScriptHelper(object):
             trimming.output.trimmed_reads_se_rev
 
     def assemble_fastq_reads(self, fastq_pe: List[str], fastq_names: List[str], perform_trimming: bool,
-                             report: Optional[HtmlReport]=None, kmers: str=None) -> ToolIOFile:
+                             report: Optional[HtmlReport]=None, kmers: Optional[str]=None) -> ToolIOFile:
         """
         Assembles FASTQ reads using SPAdes
         :param fastq_pe: FASTQ PE read paths
         :param fastq_names: FASTQ file names
         :param perform_trimming: If True, reads are trimmed before the assembly
-        :param report: If True, the output is added to the given report
+        :param report: If set, the output is added to the given report
         :param kmers: Comma separated list of Kmers to use for the assembly
         :return: ToolIOFile FASTA object with the assembled contigs
         """
@@ -86,16 +86,13 @@ class MainScriptHelper(object):
                 return FastqUtils.get_sample_name(args.fastq_pe_names[0])
             except ValueError as e:
                 logging.warning(str(e))
-                return 'NA'
         elif args.fastq_pe is not None:
             try:
                 return FastqUtils.get_sample_name(args.fastq_pe[0])
             except ValueError as e:
                 logging.warning(str(e))
-                return 'NA'
-        else:
-            logging.warning("Cannot determine sample name from given arguments")
-            return 'NA'
+        logging.warning("Cannot determine sample name from given arguments")
+        return 'NA'
 
     @staticmethod
     def determine_input_files(args: argparse.Namespace) -> str:
