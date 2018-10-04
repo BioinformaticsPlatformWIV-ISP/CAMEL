@@ -30,12 +30,13 @@ class GeneDetectionWrapper(object):
         self._output = None
 
     def run_workflow_blast(self, fasta_path: str, sample_name: str, db_data: Dict[str, Any],
-                           threads: Optional[int]=8) -> None:
+                           threads: int=8) -> None:
         """
-        Runs the read trimming workflow.
+        Runs the gene detection workflow using BLAST.
         :param fasta_path: Input FASTA file
         :param sample_name: Sample name
-        :param db_data: Database configuration
+        :param db_data: Database configuration data (should contain at least 'path' as key referring to the location of
+          the database.)
         :param threads: Number of threads to use
         :return: None
         """
@@ -50,7 +51,7 @@ class GeneDetectionWrapper(object):
     def run_workflow_srst2(self, fastq_pe_path: List[str], sample_name: str, db_data: Dict[str, Any],
                            threads: Optional[int]=8) -> None:
         """
-        Runs the read trimming workflow.
+        Runs the gene detection workflow using SRST2.
         :param fastq_pe_path: Input PE FASTQ files
         :param sample_name: Sample name
         :param db_data: Database configuration
@@ -91,7 +92,7 @@ class GeneDetectionWrapper(object):
 
     def __get_config_data(self, sample_name: str, db_data: Dict[str, Any], detection_method: str) -> Dict[str, Any]:
         """
-        Creates the Snakemake configuration file
+        Returns the configuration data for Snakemake.
         :param sample_name: Sample name
         :param db_data: Database information
         :param detection_method: Detection method
