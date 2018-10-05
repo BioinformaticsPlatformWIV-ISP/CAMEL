@@ -74,7 +74,7 @@ class HtmlReporterGeneDetection(Tool):
         """
         header = self._tool_inputs['VAL_Hits'][0].value.column_names_html
         table_data = [hit.to_html_row(self._report_section, self._sub_folder) for hit in
-                      [t.value for t in self._tool_inputs['VAL_Hits']]]
+                      [t.value for t in sorted(self._tool_inputs['VAL_Hits'], key=lambda x: x.value.locus)]]
         self._report_section.add_table(table_data, header, [('class', 'data')])
         relative_path = os.path.join(self._sub_folder, 'genes-{}-{}.tsv'.format(
             FileSystemHelper.make_valid(self._input_informs['db_info']['name']),
