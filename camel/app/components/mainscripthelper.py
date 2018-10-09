@@ -109,6 +109,8 @@ class MainScriptHelper(object):
             return ', '.join(args.fastq_pe_names)
         elif args.fastq_pe is not None:
             return ', '.join([os.path.basename(f) for f in args.fastq_pe])
+        logging.warning("Cannot determine input files from given arguments")
+        return 'NA'
 
     @staticmethod
     def add_common_arguments(argument_parser: argparse.ArgumentParser) -> None:
