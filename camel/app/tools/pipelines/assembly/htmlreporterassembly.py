@@ -38,13 +38,13 @@ class HtmlReporterAssembly(Tool):
         :return: None
         """
         if 'FASTA_Contig' not in self._tool_inputs:
-            raise InvalidInputSpecificationError("No assembly input found")
+            raise InvalidInputSpecificationError("No assembly input found ('FASTA_contig')")
         if 'SAMPLE_NAME' not in self._tool_inputs:
-            raise InvalidInputSpecificationError("No sample name input found")
+            raise InvalidInputSpecificationError("No sample name input found ('SAMPLE_NAME')")
         if 'ASSEMBLER' not in self._tool_inputs:
-            raise InvalidInputSpecificationError("No assembler input found")
+            raise InvalidInputSpecificationError("No assembler input found ('ASSEMBLER')")
         if 'quast' not in self._input_informs:
-            raise InvalidInputSpecificationError("Quast informs are required")
+            raise InvalidInputSpecificationError("Quast informs are required ('quast')")
         super()._check_input()
 
     def __add_assembly_info(self):
