@@ -1,3 +1,4 @@
+import humanize
 import os
 
 from camel.app.components.files.fileutils import FileUtils
@@ -30,7 +31,7 @@ class ToolIOFile(ToolIO):
         Internal representation
         :return: Internal representation
         """
-        return f'ToolIOFile("{self.path}", {self.size} bytes)'
+        return f'ToolIOFile("{self.path}", {humanize.naturalsize(self.size)})'
 
     def is_valid(self) -> bool:
         """

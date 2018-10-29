@@ -1,6 +1,7 @@
 requests==2.18.3
 beautifulsoup4==4.5.3
 biopython==1.66
+humanize==0.5.1
 bs4==0.0.1
 psycopg2==2.6.2
 PyVCF==0.6.8
