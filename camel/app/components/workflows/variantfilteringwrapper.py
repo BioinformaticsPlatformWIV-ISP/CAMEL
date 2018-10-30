@@ -36,7 +36,7 @@ class VariantFilteringWrapper(object):
         self._output = None
 
     @property
-    def output(self) -> 'VariantFilteringOutput':
+    def output(self) -> VariantFilteringOutput:
         """
         Returns the filtered VCF file
         :return: VCF file path
