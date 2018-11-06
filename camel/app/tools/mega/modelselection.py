@@ -21,7 +21,7 @@ class ModelSelection(Tool):
         Initializes this tool.
         :param camel: CAMEL instance
         """
-        super(ModelSelection, self).__init__('MEGA: Model Selection', '7.0.20', camel)
+        super(ModelSelection, self).__init__('MEGA: Model Selection', '10.0.4', camel)
 
     def _check_input(self) -> None:
         """
@@ -94,7 +94,8 @@ class ModelSelection(Tool):
                 branch_swap_filter=self._parameters['branch_swap_filter'].value,
                 missing_data_treatment=self._parameters['missing_data_treatment'].value,
                 site_coverage_cutoff=self._parameters['site_coverage_cutoff'].value if
-                'site_coverage_cutoff' in self._parameters else 'Not Applicable'
+                'site_coverage_cutoff' in self._parameters else 'Not Applicable',
+                threads=self._parameters['threads'].value
             ))
         return config_file
 
