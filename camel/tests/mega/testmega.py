@@ -45,7 +45,8 @@ class TestMEGA(unittest.TestCase):
             output_model=output_file,
             missing_data='complete_deletion',
             site_cov_cutoff=50,
-            branch_swap='weak'
+            branch_swap='weak',
+            threads=4
         )
         mega = MainMega(args)
         mega.run()
@@ -68,7 +69,8 @@ class TestMEGA(unittest.TestCase):
             site_cov_cutoff=50,
             branch_swap='moderate',
             ml_method='spr3',
-            bootstraps=10
+            bootstraps=10,
+            threads=4
         )
         mega = MainMega(args)
         mega.run()
@@ -91,7 +93,8 @@ class TestMEGA(unittest.TestCase):
             site_cov_cutoff=50,
             branch_swap='weak',
             ml_method='nni',
-            bootstraps=10
+            bootstraps=10,
+            threads=4
         )
         mega = MainMega(args)
         mega.run()
@@ -114,7 +117,8 @@ class TestMEGA(unittest.TestCase):
             output_snp_matrix=output_file_snp_matrix,
             missing_data='use_all_sites',
             site_cov_cutoff=50,
-            branch_swap='very_strong'
+            branch_swap='very_strong',
+            threads=4
         )
         mega = MainMega(args)
         mega.run()

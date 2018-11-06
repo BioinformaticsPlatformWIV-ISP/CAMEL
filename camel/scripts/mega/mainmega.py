@@ -52,6 +52,7 @@ class MainMega(object):
         argument_parser.add_argument('--model', choices=['JC', 'K2', 'T92', 'HKY', 'TN93', 'GTR'])
         argument_parser.add_argument('--rates', choices=['G+I', 'G', 'I', 'U'], default='U')
         argument_parser.add_argument('--working-dir', default=os.path.abspath('.'))
+        argument_parser.add_argument('--threads', type=int, default=3)
         return argument_parser.parse_args()
 
     def run(self) -> None:
@@ -98,7 +99,8 @@ class MainMega(object):
         """
         model_selection = ModelSelection(self._camel)
         MEGAUtils.update_model_selection_parameters(
-            model_selection, self._args.missing_data, self._args.branch_swap, self._args.site_cov_cutoff)
+            model_selection, self._args.missing_data, self._args.branch_swap, self._args.site_cov_cutoff,
+            self._args.threads)
         model_selection.add_input_files({'FASTA': [ToolIOFile(fasta_path)]})
         working_dir = os.path.join(self._args.working_dir, 'model_selection')
         if not os.path.isdir(working_dir):
@@ -119,7 +121,7 @@ class MainMega(object):
         tree_building.add_input_files({'FASTA': [ToolIOFile(fasta_path)]})
         MEGAUtils.update_tree_building_parameters(
             tree_building, model, rates, self._args.bootstraps, self._args.missing_data, self._args.site_cov_cutoff,
-            self._args.ml_method, self._args.branch_swap)
+            self._args.ml_method, self._args.branch_swap, self._args.threads)
         working_dir = os.path.join(self._args.working_dir, 'tree_building')
         if not os.path.isdir(working_dir):
             os.mkdir(working_dir)
