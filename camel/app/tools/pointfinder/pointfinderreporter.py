@@ -45,7 +45,7 @@ class PointFinderReporter(Tool):
         self.__add_output_table(header, data)
         self._section.add_paragraph('Last update: {}'.format(self._input_informs['pointfinder']['last_update']))
         self._tool_outputs['VAL_HTML'] = [ToolIOValue(self._section)]
-        self._informs['pointfinder'] = data
+        self._informs['mutations'] = data
 
     def __parse_input_file(self) -> Tuple[List[str], List[List[str]]]:
         """
