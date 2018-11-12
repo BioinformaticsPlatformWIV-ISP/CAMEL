@@ -130,7 +130,8 @@ class Tool(object, metaclass=abc.ABCMeta):
                 raise InvalidParameterError("{} has no parameter '{}'".format(self._name, parameter_name))
             if new_value is False:
                 if parameter_name not in self._parameters:
-                    raise ValueError("Cannot disable parameter '{}' (not present in parameters)".format(parameter_name))
+                    logging.warning("Cannot disable parameter '{}' (not present in parameters)".format(parameter_name))
+                    continue
                 logging.info("Disabling parameter: {}".format(parameter_name))
                 del(self._parameters[parameter_name])
             else:
