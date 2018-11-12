@@ -95,16 +95,10 @@ class MainCalling(object):
             },
             'variant_filtering': {}
         }
-        # for k, v in [('calling_method', self._args.calling_method), ('skip_variants', self._args.skip_variants),
-        #              ('mutation_rate', self._args.mutation_rate), ('minimal_mq', self._args.minimal_mq),
-        #              ('minimal_bq', self._args.minimal_bq), ('count_orphans', self._args.count_orphans),
-        #              ('disable_baq', self._args.disable_baq)]:
-        #     if (k in self._args) and (v is not None):
-        for k in ['calling_method', 'calling_method', 'skip_variants', 'mutation_rate', 'minimal_mq', 'count_orphans',
+        for k in ['calling_method', 'skip_variants', 'mutation_rate', 'minimal_bq', 'minimal_mq', 'count_orphans',
                   'disable_baq']:
             if (k in self._args) and (vars(self._args)[k] is not None):
                 config_data['variant_calling'][k] = vars(self._args)[k]
-        print(config_data)
         if ('output_all_sites' in self._args) and self._args.output_all_sites is True:
             config_data['variant_calling']['variants_only'] = False
         return config_data
