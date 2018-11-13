@@ -15,7 +15,7 @@ class BcftoolsFilter(Tool):
         Initializes this tool.
         :param camel: CAMEL instance
         """
-        super().__init__('bcftools filter', '1.6', camel)
+        super().__init__('bcftools filter', '1.9', camel)
 
     def _check_input(self):
         """
