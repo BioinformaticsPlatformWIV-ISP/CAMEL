@@ -19,7 +19,7 @@ class SamtoolsDepthStatsAnalyzer(Tool):
         Initializes this tool
         :param camel: Camel instance
         """
-        super(SamtoolsDepthStatsAnalyzer, self).__init__('samtools depth stats analyzer', '1.3.1', camel)
+        super(SamtoolsDepthStatsAnalyzer, self).__init__('samtools depth stats analyzer', '1.9', camel)
 
     def _execute_tool(self):
         """

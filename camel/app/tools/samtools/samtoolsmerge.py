@@ -8,21 +8,21 @@ import logging
 
 
 class SamtoolsMerge(Samtools):
-    """ 
+    """
     ==============
-    SamtoolsMerge 1.3.1.
+    SamtoolsMerge 1.9.
     ==============
     Merges bam/sam files into one.
-    
+
     required inputs:
     ----------------
     "BAM" / "SAM":  At least one bam or sam file. All files should be of same type.
-    
+
     Output:
     -------
-    "BAM" / "SAM":  one bam or sam file. Output filetype depends on output file extension; bam assumed if no valid 
+    "BAM" / "SAM":  one bam or sam file. Output filetype depends on output file extension; bam assumed if no valid
                     extension is found.
-    
+
     Mandatory parameters:
     ---------------------
     - output_filename
@@ -35,7 +35,7 @@ class SamtoolsMerge(Samtools):
         :param camel: Camel instance
         :return: None
         """
-        super(SamtoolsMerge, self).__init__('samtools merge', '1.3.1', camel)
+        super(SamtoolsMerge, self).__init__('samtools merge', '1.9', camel)
 
     def _check_input(self):
         """
@@ -86,7 +86,7 @@ class SamtoolsMerge(Samtools):
     def __determine_output_file_type(self):
         """
         Determines the output file type to use based on output_filename.
-        :return: filetype string ("BAM" or "SAM") 
+        :return: filetype string ("BAM" or "SAM")
         """
         if self._parameters['output_filename'].value.split(".")[-1].lower() == "bam":
             filetype = "BAM"
