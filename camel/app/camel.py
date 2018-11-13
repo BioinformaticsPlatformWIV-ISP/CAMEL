@@ -31,7 +31,7 @@ class Camel(object):
         with open(MAIN_CONFIG) as f:
             self._config = yaml.safe_load(f)
 
-        if self._config.get('tool_service', 'db') == 'yaml':
+        if self._config.get('tool_service', 'db') == 'yaml' and 'tool_parameter_loc' not in self._config:
             self._config['tool_parameter_loc'] = tool_parameter_loc
 
     @property
