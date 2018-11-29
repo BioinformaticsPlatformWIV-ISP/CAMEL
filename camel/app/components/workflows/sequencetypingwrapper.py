@@ -73,10 +73,11 @@ class SequenceTypingWrapper(object):
             os.makedirs(self._working_dir)
         if workflow_input.fastq_pe is None:
             raise ValueError('FASTQ input is required to run the SRST2 analysis')
-        if len(SequenceTypingUtils.get_loci(workflow_input.db_path)['peptide']) > 0 and workflow_input.fasta is None:
-            raise ValueError('FASTA input is required when there are protein loci in the scheme')
-        else:
-            self.__create_blast_input(workflow_input.fasta.path)
+        if len(SequenceTypingUtils.get_loci(workflow_input.db_path)['peptide']) > 0:
+            if workflow_input.fasta is None:
+                raise ValueError('FASTA input is required when there are protein loci in the scheme')
+            else:
+                self.__create_blast_input(workflow_input.fasta.path)
         self.__create_srst2_input([f.path for f in workflow_input.fastq_pe])
         config_path = self.__create_config_file(
             workflow_input.sample_name, 'srst2', workflow_input.db_key, workflow_input.db_path)
