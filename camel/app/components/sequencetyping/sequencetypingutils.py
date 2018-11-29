@@ -1,6 +1,8 @@
+import json
 import logging
-from typing import Tuple, Dict
+from typing import Tuple, Dict, List
 
+import os
 import re
 from Bio import SeqIO
 
@@ -83,3 +85,43 @@ class SequenceTypingUtils(object):
                 else:
                     result_dict['found'] += 1
         return result_dict
+
+    @staticmethod
+    def get_locus_type(locus_directory: str) -> str:
+        """
+        Returns the type of locus ('DNA', 'peptide').
+        :param locus_directory: Locus directory
+        :return: Locus type
+        """
+        locus_metadata_file = os.path.join(locus_directory, 'locus_metadata.txt')
+        with open(locus_metadata_file) as handle:
+            try:
+                return json.load(handle)['type']
+            except KeyError:
+                raise ValueError(f"Metadata file does not contain locus type (dir: {locus_directory})")
+
+    @staticmethod
+    def get_loci(scheme_dir: str) -> Dict[str, List[str]]:
+        """
+        Returns the loci from the given database.
+        :param scheme_dir: Database folder.
+        :return: Loci by type ('DNA', 'peptide')
+        """
+        loci_by_type = {'DNA': [], 'peptide': []}
+        for locus_dir in sorted(os.listdir(scheme_dir)):
+            if not os.path.isdir(os.path.join(scheme_dir, locus_dir)) or locus_dir.startswith('.'):
+                continue
+            locus_type = SequenceTypingUtils.get_locus_type(os.path.join(scheme_dir, locus_dir))
+            loci_by_type[locus_type].append(locus_dir)
+        return loci_by_type
+
+    @staticmethod
+    def has_profiles(all_schemes: Dict[str, str], scheme_key: str) -> bool:
+        """
+        Returns True if the scheme has profiles.
+        :param all_schemes: Dictionary of all schemes
+        :param scheme_key: Scheme
+        :return: True if the scheme has profiles file
+        """
+        folder = all_schemes.get(scheme_key)
+        return os.path.isfile(os.path.join(folder, 'profiles.tsv'))
