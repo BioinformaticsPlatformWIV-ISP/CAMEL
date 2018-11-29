@@ -1,14 +1,14 @@
 import json
+from typing import List, Optional
+
 import os
 
-from camel.app.components.html.htmlexpandablediv import HtmlExpandableDiv
-from camel.app.components.html.htmltablecell import HtmlTableCell
-from camel.app.tools.tool import Tool
-
 from camel.app.components.filesystemhelper import FileSystemHelper
+from camel.app.components.html.htmlexpandablediv import HtmlExpandableDiv
 from camel.app.components.html.htmlreportsection import HtmlReportSection
-from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from camel.app.components.html.htmltablecell import HtmlTableCell
 from camel.app.io.tooliovalue import ToolIOValue
+from camel.app.tools.tool import Tool
 
 
 class HtmlReporterTyping(Tool):
@@ -44,7 +44,16 @@ class HtmlReporterTyping(Tool):
         self.__initialize_report()
         if 'ST' in self._input_informs:
             self.__add_sequence_type()
-        self.__add_output_table()
+
+        # Add tables with the detected hits
+        add_subtitle = True if all(len(self._tool_inputs[f'hits_{key}']) > 1 for key in ('nucl', 'pept')) else False
+        if len(self._tool_inputs['hits_nucl']):
+            self.__add_output_table(self._tool_inputs['TSV_nucl'][0].path, self._tool_inputs['hits_nucl'],
+                                    'Nucleotide loci' if add_subtitle else None)
+        if len(self._tool_inputs['hits_pept']):
+            self.__add_output_table(self._tool_inputs['TSV_pept'][0].path, self._tool_inputs['hits_pept'],
+                                    'Peptide loci' if add_subtitle else None)
+
         self._report_section.add_paragraph('Last updated: {}'.format(self._input_informs['scheme']['last_updated']))
         self._tool_outputs['VAL_HTML'] = [ToolIOValue(self._report_section)]
         self.__export_analysis_metadata()
@@ -70,24 +79,30 @@ class HtmlReporterTyping(Tool):
         table_data[0][0] = HtmlTableCell(st, 'green' if st != '-' else 'red')
         self._report_section.add_table(table_data, header, table_attributes=[('class', 'data')])
 
-    def __add_output_table(self) -> None:
+    def __add_output_table(self, output_tsv: str, hits_io: List[ToolIOValue], sub_header: Optional[str]) -> None:
         """
         Adds the output table with the detected alleles.
+        :param output_tsv: Tabular output file
+        :param hits_io: Detected hits
+        :param sub_header: If not None, this sub header is added to the report
         :return: None
         """
-        header = self._tool_inputs['VAL_Hits'][0].value.get_html_column_names()
-        hits = [t.value for t in self._tool_inputs['VAL_Hits']]
-        table_data = [hit.to_html_row(self._report_section, self._sub_folder) for hit in hits]
-        if len(self._tool_inputs['VAL_Hits']) > 12:
+        table_header = hits_io[0].value.get_html_column_names()
+        table_data = [h.value.to_html_row(self._report_section, self._sub_folder) for h in hits_io]
+
+        if sub_header is not None:
+            self._report_section.add_header(sub_header, 4)
+
+        # Add slider for big tables
+        if len(hits_io) > 12:
             div = HtmlExpandableDiv('table-{}'.format(self._input_informs['scheme']['name'].lower()), 'alleles')
-            div.add_table(table_data, header, [('class', 'data')])
+            div.add_table(table_data, table_header, [('class', 'data')])
             self._report_section.add_html_object(div)
         else:
-            self._report_section.add_table(table_data, header, [('class', 'data')])
+            self._report_section.add_table(table_data, table_header, [('class', 'data')])
 
-        tsv_file = self._tool_inputs['TSV'][0].path
-        relative_path = os.path.join(self._sub_folder, os.path.basename(tsv_file))
-        self._report_section.add_file(tsv_file, relative_path)
+        relative_path = os.path.join(self._sub_folder, os.path.basename(output_tsv))
+        self._report_section.add_file(output_tsv, relative_path)
         self._report_section.add_link_to_file("Download (TSV)", relative_path)
 
     def _check_input(self) -> None:
@@ -95,14 +110,14 @@ class HtmlReporterTyping(Tool):
         Checks if the provided input is valid.
         :return: None
         """
-        if 'scheme' not in self._input_informs:
-            raise InvalidInputSpecificationError("Scheme information is required")
-        if 'VAL_Hits' not in self._tool_inputs:
-            raise InvalidInputSpecificationError("Typing hit input is required")
-        if 'TSV' not in self._tool_inputs:
-            raise InvalidInputSpecificationError("Tabular input (TSV) is required")
-        if 'VAL_SAMPLE' not in self._tool_inputs:
-            raise InvalidInputSpecificationError("Sample name input is required")
+        # if 'scheme' not in self._input_informs:
+        #     raise InvalidInputSpecificationError("Scheme information is required")
+        # if 'VAL_Hits' not in self._tool_inputs:
+        #     raise InvalidInputSpecificationError("Typing hit input is required")
+        # if 'TSV' not in self._tool_inputs:
+        #     raise InvalidInputSpecificationError("Tabular input (TSV) is required")
+        # if 'VAL_SAMPLE' not in self._tool_inputs:
+        #     raise InvalidInputSpecificationError("Sample name input is required")
         super()._check_input()
 
     def __export_analysis_metadata(self) -> None:
