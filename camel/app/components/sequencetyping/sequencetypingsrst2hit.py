@@ -1,3 +1,5 @@
+from typing import Optional
+
 from camel.app.components.html.htmltablecell import HtmlTableCell
 from camel.app.components.sequencetyping.sequencetypinghit import SequenceTypingHit
 
@@ -32,12 +34,13 @@ class SequenceTypingSRST2Hit(SequenceTypingHit):
         """
         return SequenceTypingSRST2Hit(locus, '-', '-', '-', '-')
 
-    def to_table_row(self):
+    def to_table_row(self, separator: Optional[str]='\t'):
         """
         Returns the hit as a table row.
+        :param separator: Separator for the table row
         :return: Table row
         """
-        return "\t".join([
+        return separator.join([
             self.locus,
             self.allele_id,
             self._mismatches,
@@ -87,7 +90,7 @@ class SequenceTypingSRST2Hit(SequenceTypingHit):
             color = 'lightgreen'
         else:
             color = 'grey'
-        return HtmlTableCell(self.allele_id, color)
+        return HtmlTableCell(self.allele_id, color, link=self.allele_page_url)
 
     def is_perfect_hit(self):
         """
@@ -95,3 +98,10 @@ class SequenceTypingSRST2Hit(SequenceTypingHit):
         :return: True if perfect
         """
         return self._mismatches == "0" and self._uncertainty == "-"
+
+    def __repr__(self) -> str:
+        """
+        Returns the internal representation.
+        :return: Representation
+        """
+        return f"TypingSrst2Hit('{self.locus}', allele_id='{self.allele_id}', mismatch='{self._mismatches}')"
