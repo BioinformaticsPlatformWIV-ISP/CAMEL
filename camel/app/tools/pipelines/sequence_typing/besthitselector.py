@@ -81,7 +81,6 @@ class BestHitSelector(Tool):
         if detected_allele.allele_id not in ('?', '-'):
             detected_allele.allele_id = SequenceTypingUtils.get_allele_id(
                 detected_allele.subject, self._input_informs['locus']['allele_id_regex'])
-            detected_allele.set_allele_page_url_template(self._input_informs['locus'].get('allele_page_url'))
         return detected_allele
 
     @staticmethod
