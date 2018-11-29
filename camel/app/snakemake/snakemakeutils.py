@@ -98,13 +98,14 @@ class SnakemakeUtils(object):
 
     @staticmethod
     def add_pickle_inputs(tool: Tool, snake_input: Any, keys: Optional[List[str]]=None,
-                          optionals: Optional[List[str]]=None) -> None:
+                          excluded_keys: Optional[List[str]]=None, optionals: Optional[List[str]]=None) -> None:
         """
         Adds pickled inputs from the snakemake input. If 'optionals' is specified, any optional input in that
         list will be skipped if its value is empty (no input file).
         :param tool: Tool
         :param snake_input: Snakemake input
         :param keys: Keys to add. If None, all keys are added
+        :param excluded_keys: For the keys in this list the files are not added
         :param optionals: list of keys specifying optional inputs
         :return: None
         """
@@ -117,6 +118,8 @@ class SnakemakeUtils(object):
             logging.debug("Adding input '{}'".format(key))
             if key not in snake_input.keys():
                 raise KeyError("Key '{}' not found in snakemake input".format(key))
+            if (excluded_keys is not None) and (key in excluded_keys):
+                continue
             with open(snake_input[key], 'rb') as handle:
                 value = pickle.load(handle)
             if key.startswith('INFORMS'):
