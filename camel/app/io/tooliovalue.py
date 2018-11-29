@@ -1,4 +1,4 @@
-from typing import Hashable
+from typing import Any
 
 from camel.app.components.files.fileutils import FileUtils
 from camel.app.io.toolio import ToolIO
@@ -9,7 +9,7 @@ class ToolIOValue(ToolIO):
     Class that represents an input / output value of a tool.
     """
 
-    def __init__(self, value: Hashable, logged: bool=True) -> None:
+    def __init__(self, value: Any, logged: bool=True) -> None:
         """
         Initializes a tool input / output value.
         :param value: Value
@@ -19,7 +19,7 @@ class ToolIOValue(ToolIO):
         self._value = value
 
     @property
-    def value(self) -> Hashable:
+    def value(self) -> Any:
         """
         Returns the value.
         :return: Value

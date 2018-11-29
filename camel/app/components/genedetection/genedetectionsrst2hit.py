@@ -14,7 +14,7 @@ class GeneDetectionSRST2Hit(GeneDetectionHit):
     Gene detection hit detected by SRST2.
     """
 
-    _TABLE_COLUMNS = ['Locus', 'Length', 'Coverage', 'Mismatches', 'Uncertainty', 'Depth', 'Accession']
+    _TABLE_COLUMNS = ['Locus', 'Length', '% Covered', 'Mismatches', 'Uncertainty', 'Depth', 'Accession']
     _HTML_COLUMNS = _TABLE_COLUMNS
 
     def __init__(self, subject, locus, mismatches, uncertainty, depth, coverage, length, accession):
