@@ -69,6 +69,8 @@ class AlignmentExtractor(Tool):
         id_ = subject_name.split('__')[2]
         original_seq_id, metadata = GeneDetectionUtils.parse_header(mapping.get(id_))
         filename = os.path.join(self._folder, '{}.txt'.format(FileSystemHelper.make_valid(metadata['allele'])))
+        alignment = alignment.replace(subject_name, original_seq_id)
+        alignment = alignment.replace('Query  ', 'Contig ').replace('Sbjct  ', 'Gene   ')
         with open(filename, 'w') as output_handle:
-            output_handle.write(alignment.replace(subject_name, original_seq_id))
+            output_handle.write(alignment)
         return filename
