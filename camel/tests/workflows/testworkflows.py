@@ -37,8 +37,8 @@ class TestWorkflows(unittest.TestCase):
     input_typing_db_protein = os.path.join(test_file_dir, 'typing', 'scheme_pora_neisseria')
     input_typing_db_mixed = os.path.join(test_file_dir, 'typing', 'scheme_fhbp_neisseria')
     input_typing_reads = [
-        ToolIOFile(os.path.join(test_file_dir, 'typing', 'S15BD05018_S58_L001_1.fastq.gz')),
-        ToolIOFile(os.path.join(test_file_dir, 'typing', 'S15BD05018_S58_L001_1.fastq.gz'))
+        ToolIOFile(os.path.join(test_file_dir, 'typing', 'S15BD05018_S58_L001_1.fastq')),
+        ToolIOFile(os.path.join(test_file_dir, 'typing', 'S15BD05018_S58_L001_1.fastq'))
     ]
 
     def setUp(self) -> None:
