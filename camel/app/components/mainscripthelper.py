@@ -80,7 +80,7 @@ class MainScriptHelper(object):
         elif args.fasta_name is not None:
             return os.path.splitext(args.fasta_name)[0]
         elif args.fasta is not None:
-            return os.path.splitext(os.path.basename(args.fasta_path))[0]
+            return os.path.splitext(os.path.basename(args.fasta))[0]
         elif args.fastq_pe_names is not None:
             try:
                 return FastqUtils.get_sample_name(args.fastq_pe_names[0])
