@@ -4,6 +4,7 @@ import logging
 from typing import Any, Dict, List, Optional
 
 import os
+import shutil
 
 from camel.app.components.html.htmlreport import HtmlReport
 from camel.app.components.html.htmlreportsection import HtmlReportSection
@@ -65,10 +66,11 @@ class MainGeneDetection(object):
         db_data = self.__get_db_metadata()
         if self._args.detection_method == 'blast':
             fasta_file = self.__get_blast_input()
-            self.__run_gene_detection_blast(fasta_file, db_data)
+            output = self.__run_gene_detection_blast(fasta_file, db_data)
         else:
             fastq_files = self.__get_srst2_input()
-            self.__run_gene_detection_srst2(fastq_files, db_data)
+            output = self.__run_gene_detection_srst2(fastq_files, db_data)
+        self.__export_output(output)
 
     def __init_report(self) -> None:
         """
@@ -145,7 +147,8 @@ class MainGeneDetection(object):
             })
         return metadata
 
-    def __run_gene_detection_blast(self, fasta_file: ToolIOFile, db_data: Dict[str, Any]) -> None:
+    def __run_gene_detection_blast(self, fasta_file: ToolIOFile, db_data: Dict[str, Any]) -> \
+            GeneDetectionWrapper.GeneDetectionOutput:
         """
         Runs the gene detection workflow.
         :param fasta_file: FASTA file
@@ -154,11 +157,10 @@ class MainGeneDetection(object):
         """
         wrapper = GeneDetectionWrapper(os.path.join(self._args.working_dir, 'resfinder'))
         wrapper.run_workflow_blast(fasta_file.path, self._sample_name, db_data)
-        self._report.add_html_object(wrapper.output.report_section)
-        wrapper.output.report_section.copy_files(self._report.output_dir)
-        self._report.save()
+        return wrapper.output
 
-    def __run_gene_detection_srst2(self, fastq_pe: List[ToolIOFile], db_data: Dict[str, Any]) -> None:
+    def __run_gene_detection_srst2(self, fastq_pe: List[ToolIOFile], db_data: Dict[str, Any]) -> \
+            GeneDetectionWrapper.GeneDetectionOutput:
         """
         Runs the gene detection workflow in srst2 mode.
         :param fastq_pe: Paired end FASTQ input
@@ -167,8 +169,18 @@ class MainGeneDetection(object):
         """
         wrapper = GeneDetectionWrapper(os.path.join(self._args.working_dir, 'resfinder'))
         wrapper.run_workflow_srst2([f.path for f in fastq_pe], self._sample_name, db_data)
-        self._report.add_html_object(wrapper.output.report_section)
-        wrapper.output.report_section.copy_files(self._report.output_dir)
+        return wrapper.output
+
+    def __export_output(self, output: GeneDetectionWrapper.GeneDetectionOutput) -> None:
+        """
+        Exports the output of the workflow.
+        :param output: Output
+        :return: None
+        """
+        self._report.add_html_object(output.report_section)
+        output.report_section.copy_files(self._report.output_dir)
+        if output.log_file is not None:
+            shutil.copyfile(output.log_file, os.path.join(self._report.output_dir, 'log.txt'))
         self._report.save()
 
 

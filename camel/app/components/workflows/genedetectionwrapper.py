@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 
 import os
 
@@ -20,6 +20,7 @@ class GeneDetectionWrapper(object):
     @dataclass
     class GeneDetectionOutput:
         report_section: HtmlReportSection
+        log_file: Optional[str] = None
 
     def __init__(self, working_dir: str) -> None:
         """
@@ -44,8 +45,7 @@ class GeneDetectionWrapper(object):
         output_path = os.path.join(self._working_dir, OUTPUT_GENE_DETECTION_REPORT.format(db='db'))
         SnakePipelineUtils.run_snakemake(
             SNAKEFILE_GENE_DETECTION, config_data, [output_path], self._working_dir, threads)
-        self._output = GeneDetectionWrapper.GeneDetectionOutput(
-            report_section=SnakemakeUtils.load_object(output_path)[0].value)
+        self.__set_output(output_path)
 
     def run_workflow_srst2(self, fastq_pe_path: List[str], sample_name: str, db_data: Dict[str, Any],
                            threads: int=8) -> None:
@@ -62,8 +62,7 @@ class GeneDetectionWrapper(object):
         output_path = os.path.join(self._working_dir, OUTPUT_GENE_DETECTION_REPORT.format(db='db'))
         SnakePipelineUtils.run_snakemake(
             SNAKEFILE_GENE_DETECTION, config_data, [output_path], self._working_dir, threads)
-        self._output = GeneDetectionWrapper.GeneDetectionOutput(
-            report_section=SnakemakeUtils.load_object(output_path)[0].value)
+        self.__set_output(output_path)
 
     def __create_input_blast(self, fasta_path: str) -> None:
         """
@@ -103,6 +102,18 @@ class GeneDetectionWrapper(object):
             'detection_method': detection_method,
             'gene_detection': {'db': db_data}
         }
+
+    def __set_output(self, report_path: str) -> None:
+        """
+        Sets the output of the workflow.
+        :param report_path: Report path
+        :return: None
+        """
+        log_file_path = os.path.join(self._working_dir, 'camel.log')
+        self._output = GeneDetectionWrapper.GeneDetectionOutput(
+            report_section=SnakemakeUtils.load_object(report_path)[0].value,
+            log_file=log_file_path if os.path.isfile(log_file_path) else None
+        )
 
     @property
     def output(self) -> 'GeneDetectionWrapper.GeneDetectionOutput':
