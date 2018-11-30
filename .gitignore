@@ -5,4 +5,4 @@ camel.egg-info
 camel_env
 *.pyc
 *~
-tool_data/*.yml
+camel/tool_data/*.yml
