@@ -40,7 +40,7 @@ class SequenceTypingWrapper(object):
 
     def __init__(self, working_dir: str) -> None:
         """
-        Initializes the read trimming helper.
+        Initializes the read sequence typing helper.
         :param working_dir: Working directory
         """
         self._working_dir = working_dir
