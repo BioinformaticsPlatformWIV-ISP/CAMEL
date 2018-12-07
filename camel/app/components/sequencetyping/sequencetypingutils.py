@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import Tuple, Dict, List
+from typing import Tuple, Dict, Any
 
 import os
 import re
@@ -22,7 +22,7 @@ class SequenceTypingUtils(object):
         """
         with open(fasta_file) as handle:
             for seq in SeqIO.parse(handle, 'fasta'):
-                m = re.match('.*([-_])\d+$', seq.id)
+                m = re.match('.*([-_])\\d+$', seq.id)
                 if m is None:
                     raise ValueError("Cannot determine allele delimiter")
                 delimiter = m.group(1)
@@ -30,7 +30,7 @@ class SequenceTypingUtils(object):
                 return delimiter
 
     @staticmethod
-    def get_allele_id(complete_name: str, regex: str=None) -> str:
+    def get_allele_id(complete_name: str, regex: str = None) -> str:
         """
         Returns the allele id from a complete name.
         :param complete_name: Complete name (e.g. abcZ_2)
@@ -38,7 +38,7 @@ class SequenceTypingUtils(object):
         :return: Allele id
         """
         if regex is None:
-            regex = '\d+$'
+            regex = '\\d+$'
         m = re.findall(regex, complete_name)
         if not len(m) == 1:
             raise ValueError("Cannot determine allele identifier for '{}' (RE: {})".format(complete_name, regex))
@@ -53,9 +53,9 @@ class SequenceTypingUtils(object):
         :param read_name: Input read name
         :return: Forward designator, reverse designator
         """
-        if re.match('.*(_[12]P\.).*', read_name) is not None:
+        if re.match('.*(_[12]P\\.).*', read_name) is not None:
             return '1P', '2P'
-        elif re.match('.*(_[12]\.).*', read_name) is not None:
+        elif re.match('.*(_[12]\\.).*', read_name) is not None:
             return '_1', '_2'
         raise ValueError(f"Cannot determine read name from: {read_name}")
 
@@ -87,33 +87,14 @@ class SequenceTypingUtils(object):
         return result_dict
 
     @staticmethod
-    def get_locus_type(locus_directory: str) -> str:
+    def parse_scheme_metadata(scheme_dir: str) -> Dict[str, Any]:
         """
-        Returns the type of locus ('DNA', 'peptide').
-        :param locus_directory: Locus directory
-        :return: Locus type
+        Parses the metadata associated with the given scheme.
+        :param scheme_dir: Scheme directory
+        :return: Metadata
         """
-        locus_metadata_file = os.path.join(locus_directory, 'locus_metadata.txt')
-        with open(locus_metadata_file) as handle:
-            try:
-                return json.load(handle)['type']
-            except KeyError:
-                raise ValueError(f"Metadata file does not contain locus type (dir: {locus_directory})")
-
-    @staticmethod
-    def get_loci(scheme_dir: str) -> Dict[str, List[str]]:
-        """
-        Returns the loci from the given database.
-        :param scheme_dir: Database folder.
-        :return: Loci by type ('DNA', 'peptide')
-        """
-        loci_by_type = {'DNA': [], 'peptide': []}
-        for locus_dir in sorted(os.listdir(scheme_dir)):
-            if not os.path.isdir(os.path.join(scheme_dir, locus_dir)) or locus_dir.startswith('.'):
-                continue
-            locus_type = SequenceTypingUtils.get_locus_type(os.path.join(scheme_dir, locus_dir))
-            loci_by_type[locus_type].append(locus_dir)
-        return loci_by_type
+        with open(os.path.join(scheme_dir, 'scheme_metadata.txt')) as handle:
+            return json.load(handle)
 
     @staticmethod
     def has_profiles(all_schemes: Dict[str, str], scheme_key: str) -> bool:

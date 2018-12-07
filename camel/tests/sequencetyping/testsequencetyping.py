@@ -19,7 +19,8 @@ class TestSequenceTyping(unittest.TestCase):
 
     # Input files
     test_file_dir = os.path.join(camel.config['testing']['testfiles_dir'])
-    input_db_nucl = os.path.join(test_file_dir, 'typing', 'scheme_mlst_neisseria')
+    # input_db_nucl = os.path.join(test_file_dir, 'typing', 'scheme_mlst_neisseria')
+    input_db_nucl = '/data/sequence_typing/neisseria/mlst'
     input_db_protein = os.path.join(test_file_dir, 'typing', 'scheme_pora_neisseria')
     input_db_mixed = os.path.join(test_file_dir, 'typing', 'scheme_fhbp_neisseria')
     input_fasta = ToolIOFile(os.path.join(test_file_dir, 'typing', 'neisseria_mc58.fasta'))

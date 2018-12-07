@@ -7,6 +7,7 @@ from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.components.html.htmlexpandablediv import HtmlExpandableDiv
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.html.htmltablecell import HtmlTableCell
+from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.tools.tool import Tool
 
@@ -47,10 +48,10 @@ class HtmlReporterTyping(Tool):
 
         # Add tables with the detected hits
         add_subtitle = True if all(len(self._tool_inputs[f'hits_{key}']) > 1 for key in ('nucl', 'pept')) else False
-        if len(self._tool_inputs['hits_nucl']):
+        if len(self._tool_inputs['hits_nucl']) != 0:
             self.__add_output_table(self._tool_inputs['TSV_nucl'][0].path, self._tool_inputs['hits_nucl'],
                                     'Nucleotide loci' if add_subtitle else None)
-        if len(self._tool_inputs['hits_pept']):
+        if len(self._tool_inputs['hits_pept']) != 0:
             self.__add_output_table(self._tool_inputs['TSV_pept'][0].path, self._tool_inputs['hits_pept'],
                                     'Peptide loci' if add_subtitle else None)
 
@@ -110,14 +111,8 @@ class HtmlReporterTyping(Tool):
         Checks if the provided input is valid.
         :return: None
         """
-        # if 'scheme' not in self._input_informs:
-        #     raise InvalidInputSpecificationError("Scheme information is required")
-        # if 'VAL_Hits' not in self._tool_inputs:
-        #     raise InvalidInputSpecificationError("Typing hit input is required")
-        # if 'TSV' not in self._tool_inputs:
-        #     raise InvalidInputSpecificationError("Tabular input (TSV) is required")
-        # if 'VAL_SAMPLE' not in self._tool_inputs:
-        #     raise InvalidInputSpecificationError("Sample name input is required")
+        if 'scheme' not in self._input_informs:
+            raise InvalidInputSpecificationError("Scheme information is required")
         super()._check_input()
 
     def __export_analysis_metadata(self) -> None:

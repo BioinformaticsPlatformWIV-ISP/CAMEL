@@ -46,7 +46,7 @@ class SequenceTypingWrapper(object):
         self._working_dir = working_dir
         self._output = None
 
-    def run_workflow_blast(self, workflow_input: SequenceTypingInput, threads: Optional[int]=8) -> None:
+    def run_workflow_blast(self, workflow_input: SequenceTypingInput, threads: Optional[int] = 8) -> None:
         """
         Runs the BLAST based sequence typing workflow.
         :param workflow_input: Workflow input
@@ -62,7 +62,7 @@ class SequenceTypingWrapper(object):
             workflow_input.sample_name, 'blast', workflow_input.db_key, workflow_input.db_path)
         self.__run_snakefile(config_path, workflow_input.db_key, threads)
 
-    def run_workflow_srst2(self, workflow_input: SequenceTypingInput, threads: Optional[int]=8) -> None:
+    def run_workflow_srst2(self, workflow_input: SequenceTypingInput, threads: Optional[int] = 8) -> None:
         """
         RUns the SRST2 based sequence typing workflow.
         :param workflow_input: Input for the workflow
@@ -73,7 +73,8 @@ class SequenceTypingWrapper(object):
             os.makedirs(self._working_dir)
         if workflow_input.fastq_pe is None:
             raise ValueError('FASTQ input is required to run the SRST2 analysis')
-        if len(SequenceTypingUtils.get_loci(workflow_input.db_path)['peptide']) > 0:
+        scheme_metadata = SequenceTypingUtils.parse_scheme_metadata(workflow_input.db_path)
+        if len([l for l in scheme_metadata['loci'] if l['type'] == 'peptide']) > 0:
             if workflow_input.fasta is None:
                 raise ValueError('FASTA input is required when there are protein loci in the scheme')
             else:

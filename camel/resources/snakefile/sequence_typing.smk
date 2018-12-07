@@ -18,7 +18,13 @@ from camel.resources.snakefile.sequence_typing import OUTPUT_TYPING_REPORT, OUTP
 ##################
 camel = Camel.get_instance()
 SCHEMES = config['sequence_typing']
-loci_by_scheme_by_type = {k: SequenceTypingUtils.get_loci(d) for k, d in config['sequence_typing'].items()}
+SCHEME_METADATA = {name: SequenceTypingUtils.parse_scheme_metadata(path) for name, path in SCHEMES.items()}
+loci_by_scheme_by_type = {
+    name: {
+        'DNA': [locus['name'] for locus in metadata['loci'] if locus['type'] == 'DNA'],
+        'peptide': [locus['name'] for locus in metadata['loci'] if locus['type'] == 'peptide']
+    } for name, metadata in SCHEME_METADATA.items()
+}
 
 ##############################
 # Allele detection workflows #
