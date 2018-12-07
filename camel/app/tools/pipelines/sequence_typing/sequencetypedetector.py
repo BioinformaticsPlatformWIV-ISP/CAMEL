@@ -1,19 +1,21 @@
 import logging
+from dataclasses import dataclass
+from typing import List, Dict, Union, Tuple, Optional
 
-import collections
-from typing import List, Dict, Union
-
-from camel.app.tools.tool import Tool
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
-
-
-STProfile = collections.namedtuple('STProfile', 'name alleles metadata')
+from camel.app.tools.tool import Tool
 
 
 class SequenceTypeDetector(Tool):
     """
     Tool that manages MLST schemes. Also reports scheme metadata information in the informs.
     """
+
+    @dataclass
+    class STProfile:
+        name: str
+        metadata: List[Tuple[str, str]]
+        alleles: Optional[Dict[str, str]] = None
 
     SYMBOL_NO_ST = 'ND'
 
@@ -33,12 +35,12 @@ class SequenceTypeDetector(Tool):
         Executes this tool.
         :return: None
         """
-        profiles_file = self._tool_inputs['TSV'][0].path
-        allele_ids = {h.value.locus: h.value.allele_id for h in self._tool_inputs['VAL_Hits']}
-        profiles = self.__parse_profiles(profiles_file, list(allele_ids.keys()))
+        allele_ids = {h.value.locus: h.value.allele_id for h in
+                      self._tool_inputs['hits_nucl'] + self._tool_inputs['hits_pept']}
+        profiles = self.__parse_profiles(list(allele_ids.keys()))
         sequence_type = self.__get_sequence_type(profiles, allele_ids)
-        self._informs['sequence_type'] = sequence_type if sequence_type is not None else STProfile(
-            SequenceTypeDetector.SYMBOL_NO_ST, None, [(k, '-') for k, _ in self._metadata_columns])
+        self._informs['sequence_type'] = sequence_type if sequence_type is not None else SequenceTypeDetector.STProfile(
+            SequenceTypeDetector.SYMBOL_NO_ST, metadata=[(k, '-') for k, _ in self._metadata_columns])
         logging.info("Detected sequence type: {}".format(self._informs['sequence_type'].name))
 
     def _check_input(self) -> None:
@@ -47,19 +49,19 @@ class SequenceTypeDetector(Tool):
         :return: None
         """
         if 'TSV' not in self._tool_inputs:
-            raise InvalidInputSpecificationError("Sequence type profiles are required")
-        if 'VAL_Hits' not in self._tool_inputs:
-            raise InvalidInputSpecificationError("No hits input found")
+            raise InvalidInputSpecificationError("Sequence type profiles ('TSV') are required.")
+        if len(self._tool_inputs['hits_nucl']) + len(self._tool_inputs['hits_pept']) == 0:
+            raise InvalidInputSpecificationError("Typing hits are required.")
         super(SequenceTypeDetector, self)._check_input()
 
-    def __parse_profiles(self, profiles_file: str, gene_names: List[str]) -> List[STProfile]:
+    def __parse_profiles(self, gene_names: List[str]) -> List[STProfile]:
         """
         Parses the sequence type profiles.
-        :param profiles_file: Profiles file
+        :param gene_names: Name of the genes
         :return: List of profiles
         """
         profiles = []
-        with open(profiles_file) as handle:
+        with open(self._tool_inputs['TSV'][0].path) as handle:
             header = handle.readline().strip().split('\t')
             gene_indices = {gene_name: header.index(gene_name) for gene_name in gene_names}
             self._metadata_columns = [(p, header.index(p)) for p in header if p not in gene_names]
@@ -68,7 +70,7 @@ class SequenceTypeDetector(Tool):
                 parts[-1] = parts[-1].strip()
                 alleles = {gene_name: parts[gene_indices[gene_name]] for gene_name in gene_names}
                 metadata = [(name, parts[i]) for name, i in self._metadata_columns]
-                profiles.append(STProfile(parts[0], alleles, metadata))
+                profiles.append(SequenceTypeDetector.STProfile(name=parts[0], alleles=alleles, metadata=metadata))
         return profiles
 
     def __alleles_match(self, detected_allele: str, profile_allele: str) -> bool:

@@ -53,12 +53,13 @@ class SequenceTypingBlastHit(SequenceTypingHit):
         except KeyError as err:
             raise ValueError("Cannot create hit from dictionary {} missing - {!r}".format(err, input_dict))
 
-    def to_table_row(self):
+    def to_table_row(self, separator: str='\t'):
         """
         Converts the hit into a table row.
+        :param separator: Separator
         :return: Table row
         """
-        return '\t'.join([
+        return separator.join([
             self.locus,
             self.allele_id,
             '{:.2f}'.format(self.percent_identity) if self.percent_identity is not None else '-',
@@ -230,3 +231,11 @@ class SequenceTypingBlastHit(SequenceTypingHit):
             return 'yellow'
         else:
             return 'red'
+
+    def __repr__(self) -> str:
+        """
+        Returns the internal representation.
+        :return: Representation
+        """
+        return "TypingBlastHit('{}', allele_id='{}', %id={}, len={})".format(
+            self.locus, self.allele_id, self.percent_identity, self.length_statistic)

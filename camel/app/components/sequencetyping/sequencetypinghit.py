@@ -71,12 +71,15 @@ class SequenceTypingHit(metaclass=abc.ABCMeta):
         """
         if self._allele_page_url_template is None:
             return None
+        elif self._allele_id in ('?', '-'):
+            return None
         return self._allele_page_url_template.format(allele_id=self.allele_id)
 
     @abc.abstractmethod
-    def to_table_row(self) -> List[Any]:
+    def to_table_row(self, separator: Optional[str]='\t') -> List[Any]:
         """
         Returns the hit as a row in a table.
+        :param separator: Separator
         :return: Table row
         """
         pass

@@ -1,6 +1,8 @@
+import json
 import logging
-from typing import Tuple, Dict
+from typing import Tuple, Dict, Any
 
+import os
 import re
 from Bio import SeqIO
 
@@ -20,7 +22,7 @@ class SequenceTypingUtils(object):
         """
         with open(fasta_file) as handle:
             for seq in SeqIO.parse(handle, 'fasta'):
-                m = re.match('.*([-_])\d+$', seq.id)
+                m = re.match('.*([-_])\\d+$', seq.id)
                 if m is None:
                     raise ValueError("Cannot determine allele delimiter")
                 delimiter = m.group(1)
@@ -28,7 +30,7 @@ class SequenceTypingUtils(object):
                 return delimiter
 
     @staticmethod
-    def get_allele_id(complete_name: str, regex: str=None) -> str:
+    def get_allele_id(complete_name: str, regex: str = None) -> str:
         """
         Returns the allele id from a complete name.
         :param complete_name: Complete name (e.g. abcZ_2)
@@ -36,7 +38,7 @@ class SequenceTypingUtils(object):
         :return: Allele id
         """
         if regex is None:
-            regex = '\d+$'
+            regex = '\\d+$'
         m = re.findall(regex, complete_name)
         if not len(m) == 1:
             raise ValueError("Cannot determine allele identifier for '{}' (RE: {})".format(complete_name, regex))
@@ -51,9 +53,9 @@ class SequenceTypingUtils(object):
         :param read_name: Input read name
         :return: Forward designator, reverse designator
         """
-        if re.match('.*(_[12]P\.).*', read_name) is not None:
+        if re.match('.*(_[12]P\\.).*', read_name) is not None:
             return '1P', '2P'
-        elif re.match('.*(_[12]\.).*', read_name) is not None:
+        elif re.match('.*(_[12]\\.).*', read_name) is not None:
             return '_1', '_2'
         raise ValueError(f"Cannot determine read name from: {read_name}")
 
@@ -83,3 +85,24 @@ class SequenceTypingUtils(object):
                 else:
                     result_dict['found'] += 1
         return result_dict
+
+    @staticmethod
+    def parse_scheme_metadata(scheme_dir: str) -> Dict[str, Any]:
+        """
+        Parses the metadata associated with the given scheme.
+        :param scheme_dir: Scheme directory
+        :return: Metadata
+        """
+        with open(os.path.join(scheme_dir, 'scheme_metadata.txt')) as handle:
+            return json.load(handle)
+
+    @staticmethod
+    def has_profiles(all_schemes: Dict[str, str], scheme_key: str) -> bool:
+        """
+        Returns True if the scheme has profiles.
+        :param all_schemes: Dictionary of all schemes
+        :param scheme_key: Scheme
+        :return: True if the scheme has profiles file
+        """
+        folder = all_schemes.get(scheme_key)
+        return os.path.isfile(os.path.join(folder, 'profiles.tsv'))
