@@ -1,10 +1,12 @@
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 import os
+import re
 
 from camel.app.camel import Camel
 from camel.app.components.html.htmlexpandablediv import HtmlExpandableDiv
 from camel.app.components.html.htmlreportsection import HtmlReportSection
+from camel.app.components.html.htmltablecell import HtmlTableCell
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.tools.tool import Tool
@@ -16,6 +18,7 @@ class PointFinderReporter(Tool):
     """
 
     TITLE = 'PointFinder'
+    URL_PUBMED = 'https://www.ncbi.nlm.nih.gov/pubmed/{id}'
 
     def __init__(self, camel: Camel):
         """
@@ -42,6 +45,7 @@ class PointFinderReporter(Tool):
         :return: None
         """
         header, data = self.__parse_input_file()
+        data = self.__add_pubmed_links(data)
         self.__add_output_table(header, data)
         self._section.add_paragraph('Last update: {}'.format(self._input_informs['pointfinder']['last_update']))
         self._tool_outputs['VAL_HTML'] = [ToolIOValue(self._section)]
@@ -66,7 +70,7 @@ class PointFinderReporter(Tool):
         else:
             return 'pointfinder.tsv'
 
-    def __add_output_table(self, header: List[str], data: List[List[str]]) -> None:
+    def __add_output_table(self, header: List[str], data: List[List[Union[str, HtmlTableCell]]]) -> None:
         """
         Adds the output table.
         :param header: Output table header
@@ -79,3 +83,22 @@ class PointFinderReporter(Tool):
         relative_path = os.path.join('pointfinder', self.__generate_output_filename())
         self._section.add_file(self._tool_inputs['TSV'][0].path, relative_path)
         self._section.add_link_to_file('Download (TSV)', relative_path)
+
+    def __add_pubmed_links(self, data: List[List[str]]) -> List[List[Union[str, HtmlTableCell]]]:
+        """
+        Adds PubMed links for mutations that have an associated PMID.
+        :param data: Data
+        :return: Data with links added
+        """
+        edited_data = []
+        for row in data:
+            m = re.match('^(\\d+)$', row[-1])
+            if not m:
+                new_row = row
+            else:
+                pmid = int(m.group(1))
+                new_row = row[:-1]
+                # noinspection PyTypeChecker
+                new_row.append(HtmlTableCell(str(pmid), link=PointFinderReporter.URL_PUBMED.format(id=pmid)))
+            edited_data.append(new_row)
+        return edited_data
