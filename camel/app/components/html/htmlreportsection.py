@@ -18,6 +18,7 @@ class HtmlReportSection(HtmlElement):
         :param level: Header level
         """
         super(HtmlReportSection, self).__init__('div', attributes=[('class', 'report_section')])
+        self._title = title
         if title is not None:
             self.add_header(title, level)
         self._files = []
@@ -57,3 +58,10 @@ class HtmlReportSection(HtmlElement):
         """
         logging.info("Adding file to report section: {}".format(relative_path))
         self._files.append((input_file, relative_path,))
+
+    def __repr__(self) -> str:
+        """
+        Returns the internal representation.
+        :return: String representation
+        """
+        return f"HtmlReportSection(title='{self._title}')"
