@@ -7,6 +7,7 @@ import os
 from Bio import SeqIO
 
 from camel.app.camel import Camel
+from camel.app.components.files.fastqutils import FastqUtils
 from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.components.html.htmlelement import HtmlElement
 from camel.app.components.html.htmlreport import HtmlReport
@@ -134,6 +135,8 @@ class SnpPhylogenyUtils(object):
         """
         samples = []
         for sample_name, fwd_name, fwd_read, rev_name, rev_read in args.sample:
+            if (sample_name is None) or (len(sample_name) == 0):
+                sample_name = FastqUtils.get_sample_name(fwd_name)
             samples.append(SnpPhylogenyUtils.Sample(
                 sample_name, FileSystemHelper.make_valid(sample_name),
                 [ToolIOFile(fwd_read), ToolIOFile(rev_read)],
@@ -142,7 +145,16 @@ class SnpPhylogenyUtils(object):
 
         # Check for duplicate names
         if len(set(s.name_valid for s in samples)) != len(args.sample):
-            raise InvalidInputError("Duplicate sample names are not allowed.")
+            sample_names = [s.name_valid for s in samples]
+            duplicate_sample_names = [x for x in set(sample_names) if sample_names.count(x) > 1]
+            raise InvalidInputError("Duplicate sample names are not allowed. Conflicting sample(s): {}".format(
+                ', '.join(["'{}' ({} times)".format(n, sample_names.count(n)) for n in duplicate_sample_names])))
+
+        # Check for empty sample names
+        empty_samples = [s for s in samples if len(s.name_valid) == 0]
+        if len(empty_samples) > 0:
+            raise InvalidInputError("Empty sample name for sample(s): {}".format(', '.join([
+                str(s.reads_names) for s in empty_samples])))
 
         # Sort samples by name
         return sorted(samples, key=lambda s: s.name_valid)
