@@ -65,6 +65,7 @@ class BasePhylo(object, metaclass=abc.ABCMeta):
         """
         if self._args.trim_reads:
             mapping_input_by_sample = {}
+            trimming_output_by_sample = {}
             for sample in self._samples:
                 working_dir = os.path.join(self._args.working_dir, sample.name_valid, 'trimming')
                 wrapper = ReadTrimmingWrapper(working_dir)
@@ -75,6 +76,8 @@ class BasePhylo(object, metaclass=abc.ABCMeta):
                     se_fwd=wrapper.output.trimmed_reads_se_fwd[0],
                     se_rev=wrapper.output.trimmed_reads_se_rev[0]
                 )
+                trimming_output_by_sample[sample] = wrapper.output
+            SnpPhylogenyUtils.add_trimming_section(self._report, trimming_output_by_sample)
             return mapping_input_by_sample
         else:
             SnpPhylogenyUtils.add_trimming_section_empty(self._report)
