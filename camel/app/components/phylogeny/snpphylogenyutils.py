@@ -207,20 +207,23 @@ class SnpPhylogenyUtils(object):
         report.save()
 
     @staticmethod
-    def construct_snp_matrix(sample_names: List[str], vcf_files: List[ToolIOFile], working_dir: str) -> ToolIOFile:
+    def construct_snp_matrix(sample_names: List[str], vcf_files: List[ToolIOFile], working_dir: str,
+                             include_ref: bool = False) -> ToolIOFile:
         """
         Constructs a SNP matrix based on the given VCF files.
         :param sample_names: Sample names
         :param vcf_files: VCF files
         :param working_dir: Working directory
+        :param include_ref: If True, the reference is included in the SNP matrix
         :return: SNP matrix ToolIOFile
         """
         if not os.path.isdir(working_dir):
             os.makedirs(working_dir)
         snp_matrix_constructor = SnpMatrixConstructor(Camel.get_instance())
+        snp_matrix_constructor.update_parameters(include_ref='true' if include_ref else 'false')
         snp_matrix_constructor.add_input_files({
             'VCF': vcf_files,
-            'SAMPLE_NAME': [ToolIOValue(s) for s in sample_names]
+            'SAMPLE_NAME': [ToolIOValue(s) for s in sample_names],
         })
         snp_matrix_constructor.run(working_dir)
         return snp_matrix_constructor.tool_outputs['FASTA'][0]
