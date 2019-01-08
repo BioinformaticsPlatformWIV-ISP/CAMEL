@@ -29,3 +29,15 @@ class SnpPosition(object):
         :return: Hash
         """
         return hash((self.contig, self.position))
+
+    def __lt__(self, other: 'SnpPosition') -> bool:
+        """
+        Compares two SNP positions.
+        :param other: Other SNP position
+        :return: True if the other is larger
+        """
+        print('calling lt')
+        if self.contig == other.contig:
+            return self.position < other.position
+        else:
+            return self.contig > other.contig
