@@ -1,3 +1,6 @@
+from distutils.util import strtobool
+
+
 class Parameter(object):
     """
     Represents a tool parameter.
@@ -63,3 +66,11 @@ class Parameter(object):
         :return: Internal representation.
         """
         return f"Parameter(name='{self.name}', val='{self.value}')"
+
+    def as_boolean(self) -> bool:
+        """
+        Returns the parameter value as a boolean.
+        Raises and error when the string cannot be converted.
+        :return: Boolean value
+        """
+        return bool(strtobool(self._value))
