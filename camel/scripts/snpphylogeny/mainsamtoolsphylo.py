@@ -27,6 +27,23 @@ class MainSamtoolsPhylo(BasePhylo):
     FilteringOutBySample = Dict[SnpPhylogenyUtils.Sample, VariantFilteringWrapper.VariantFilteringOutput]
     CallingOutBySample = Dict[SnpPhylogenyUtils.Sample, VariantCallingWrapper.VariantCallingOutput]
 
+    PARAMETER_MAPPING = {
+        'depth': {
+            'min_total_depth': {'title': 'Min total depth', 'arg': lambda args: args.min_total_depth},
+            'min_fwd_depth': {'title': 'Min forward depth', 'arg': lambda args: args.min_forward_depth},
+            'min_rev_depth': {'title': 'Min reverse depth', 'arg': lambda args: args.min_reverse_depth}},
+        'snp_quality': {
+            'min_snp_quality': {'title': 'Min SNP quality', 'arg': lambda args: args.min_snp_quality}},
+        'mapping_quality': {
+            'min_mapping_quality': {'title': 'Min mapping quality', 'arg': lambda args: args.min_mapping_quality}},
+        'distance': {
+            'min_distance': {'title': 'Min variant distance', 'arg': lambda args: args.min_distance},
+            'keep_best': {'title': 'Keep best', 'arg': lambda args: args.keep_best}},
+        'zscore': {
+            'min_zscore': {'title': 'Min Z-score', 'arg': lambda args: args.min_zscore},
+            'y_multiplier': {'title': 'Y-multiplier', 'arg': lambda args: args.y_mult}}
+    }
+
     def __init__(self, args: Optional[argparse.Namespace] = None):
         """
         Initializes the main script.
@@ -76,7 +93,7 @@ class MainSamtoolsPhylo(BasePhylo):
         argument_parser.add_argument('--min-total-depth', default=10, type=int)
         argument_parser.add_argument('--min-forward-depth', default=1, type=int)
         argument_parser.add_argument('--min-reverse-depth', default=1, type=int)
-        argument_parser.add_argument('--min-snp-quality', default=25, type=float)
+        argument_parser.add_argument('--min-snp-quality', default=25, type=int)
         argument_parser.add_argument('--min-mapping-quality', default=30, type=int)
         argument_parser.add_argument('--min-distance', default=10, type=int)
         argument_parser.add_argument('--keep-best', action='store_true')
@@ -140,22 +157,10 @@ class MainSamtoolsPhylo(BasePhylo):
         Returns the dictionary with filtering options.
         :return: Filtering options as a dictionary
         """
-        return {
-            'depth': {
-                'min_total_depth': self._args.min_total_depth,
-                'min_fwd_depth': self._args.min_forward_depth,
-                'min_rev_depth': self._args.min_reverse_depth},
-            'snp_quality': {
-                'min_snp_quality': self._args.min_snp_quality},
-            'mapping_quality': {
-                'min_mapping_quality': self._args.min_mapping_quality},
-            'distance': {
-                'min_distance': self._args.min_distance,
-                'keep_best': self._args.keep_best},
-            'zscore': {
-                'min_zscore': self._args.min_zscore,
-                'y_multiplier': self._args.y_mult}
-        }
+        options = {}
+        for group, params in MainSamtoolsPhylo.PARAMETER_MAPPING.items():
+            options[group] = {name: value['arg'](self._args) for name, value in params.items()}
+        return options
 
     def __add_snp_filtering_section(self, filtering_out_by_sample: FilteringOutBySample) -> None:
         """
@@ -173,8 +178,22 @@ class MainSamtoolsPhylo(BasePhylo):
             table_data.append(row)
         header = ['Sample', 'Depth', 'SNP quality', 'Mapping quality', 'Distance', 'Z-score']
         section.add_table(table_data, header, [('class', 'data')])
+        self.__add_filtering_options_table(section)
         self._report.add_html_object(section)
         self._report.save()
+
+    def __add_filtering_options_table(self, section: HtmlReportSection) -> None:
+        """
+        Adds a table with the filtering options to the report.
+        :return: None
+        """
+        section.add_paragraph('Filtering settings:')
+        table_data = []
+        for group, params in MainSamtoolsPhylo.PARAMETER_MAPPING.items():
+            for param_name, param_value in params.items():
+                table_data.append([param_value['title'], param_value['arg'](self._args)])
+        header = ['Filter', 'Value']
+        section.add_table(table_data, header, [('class', 'data')])
 
     def __add_metrics_section(self, calling_out_by_sample: CallingOutBySample,
                               filtering_out_by_sample: FilteringOutBySample) -> None:
