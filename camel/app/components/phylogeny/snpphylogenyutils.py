@@ -306,9 +306,11 @@ class SnpPhylogenyUtils(object):
         """
         snp_matrix_size = SnpPhylogenyUtils.get_snp_matrix_size(snp_matrix)
         if snp_matrix_size > size_max:
-            raise ValueError(f'SNP matrix is too big ({snp_matrix_size}) to perform model selection / tree building')
+            raise ValueError('SNP matrix is too big ({}, max={}) to perform model selection / tree building'.format(
+                snp_matrix_size, size_max))
         elif snp_matrix_size < size_min:
-            raise ValueError(f'SNP matrix is too small ({snp_matrix_size}) to perform model selection / tree building')
+            raise ValueError('SNP matrix is too small ({}, min={}) to perform model selection / tree building'.format(
+                    snp_matrix_size, size_min))
 
     @staticmethod
     def add_model_selection_section(report: HtmlReport, model_selection: Optional[ModelSelection] = None,
