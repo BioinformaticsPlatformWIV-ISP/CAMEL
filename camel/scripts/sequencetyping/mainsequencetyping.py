@@ -21,7 +21,7 @@ class MainSequenceTyping(object):
     Class to run sequence typing tool, it supports both BLAST+ and SRST2 as detection methods for alleles.
     """
 
-    def __init__(self, args: argparse.Namespace=None):
+    def __init__(self, args: argparse.Namespace = None):
         """
         Initializes the main script.
         """
@@ -46,6 +46,7 @@ class MainSequenceTyping(object):
         argument_parser.add_argument('--kmers', help="Kmers to use for assembly", type=str)
         argument_parser.add_argument('--scheme-dir', required=True, type=str)
         argument_parser.add_argument('--detection-method', type=str, choices=['blast', 'srst2'], default='blast')
+        argument_parser.add_argument('--report-include-fastq', action='store_true')
         return argument_parser.parse_args()
 
     def run(self):
@@ -58,7 +59,7 @@ class MainSequenceTyping(object):
         db_data = self.__get_db_metadata(self._args.scheme_dir)
         if self._args.detection_method == 'blast':
             fasta_file = self.__get_fasta_file_blast()
-            self.__run_sequence_typing_blast(fasta_file, db_data['name'], self._args.scheme_dir)
+            self.__run_sequence_typing_blast(fasta_file.path, db_data['name'], self._args.scheme_dir)
         elif self._args.detection_method == 'srst2':
             input_pe = self.__get_paired_reads_srst2()
             self.__run_sequence_typing_srst2(input_pe, db_data['name'], self._args.scheme_dir)
@@ -88,16 +89,21 @@ class MainSequenceTyping(object):
         self._report.add_html_object(section)
         self._report.save()
 
-    def __get_fasta_file_blast(self) -> str:
+    def __get_fasta_file_blast(self) -> ToolIOFile:
         """
         Returns the input FASTA file
         :return: FASTA file
         """
         if self._args.fasta is not None:
-            return self._args.fasta
+            return ToolIOFile(self._args.fasta)
         else:
-            return self._helper.assemble_fastq_reads(
-                self._args.fastq_pe, self._args.fastq_pe_names, self._args.trim_reads, self._report).path
+            if self._args.trim_reads:
+                assembly_input = self._helper.trim_reads(
+                    self._args.fastq_pe, self._report, self._args.threads, self._args.report_include_fastq)
+            else:
+                assembly_input = self._helper.symlink_fastq_pe_input(
+                    self._args.fastq_pe, self._args.fastq_pe_names, self._args.working_dir)
+            return self._helper.assemble_fastq_reads(assembly_input, self._report, self._args.kmers, self._args.threads)
 
     def __get_paired_reads_srst2(self) -> List[str]:
         """
@@ -107,7 +113,9 @@ class MainSequenceTyping(object):
         if self._args.fastq_pe is None:
             raise ValueError("FASTQ PE input needs to be provided")
         if self._args.trim_reads is True:
-            return [x.path for x in self._helper.trim_reads(self._args.fastq_pe, self._report)[0]]
+            trimming_output = self._helper.trim_reads(
+                self._args.fastq_pe, self._report, self._args.threads, self._args.report_include_fastq)
+            return [x.path for x in trimming_output.pe]
         else:
             gzipped = self._args.fastq_pe[0].endswith('.gz')
             return SnakePipelineUtils.symlink_input_files(

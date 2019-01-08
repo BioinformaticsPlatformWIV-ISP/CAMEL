@@ -68,17 +68,19 @@ class MainScriptHelper(object):
         return MainScriptHelper.TrimmingOutput([ToolIOFile(x) for x in links], [], [])
 
     def assemble_fastq_reads(self, assembly_input: TrimmingOutput, report: Optional[HtmlReport] = None,
-                             kmers: Optional[str] = None) -> ToolIOFile:
+                             kmers: Optional[str] = None, threads: int = 8) -> ToolIOFile:
         """
         Assembles FASTQ reads using SPAdes
         :param assembly_input: Assembly input
         :param report: If set, the output is added to the given report
         :param kmers: Comma separated list of Kmers to use for the assembly
+        :param threads: Number of threads to use
         :return: ToolIOFile FASTA object with the assembled contigs
         """
         logging.info("Starting de-novo assembly")
         assembly = AssemblyWrapper(os.path.join(self._working_dir, 'assembly'))
-        assembly.run_workflow(self._sample_name, assembly_input.pe, assembly_input.se_fwd, assembly_input.se_rev, kmers)
+        assembly.run_workflow(
+            self._sample_name, assembly_input.pe, assembly_input.se_fwd, assembly_input.se_rev, kmers, threads)
         if report is not None:
             report.add_html_object(assembly.output.report_section)
             assembly.output.report_section.copy_files(report.output_dir)
