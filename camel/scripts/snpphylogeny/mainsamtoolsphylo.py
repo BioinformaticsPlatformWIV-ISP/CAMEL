@@ -68,7 +68,8 @@ class MainSamtoolsPhylo(BasePhylo):
         snp_matrix = SnpPhylogenyUtils.construct_snp_matrix(
             [s.name_valid for s in self._samples],
             [filtering_out_by_sample[s].vcf_filtered for s in self._samples],
-            os.path.join(self._args.working_dir, 'snp_matrix')
+            os.path.join(self._args.working_dir, 'snp_matrix'),
+            self._args.include_ref
         )
 
         # Add sections to the report
@@ -99,7 +100,8 @@ class MainSamtoolsPhylo(BasePhylo):
         argument_parser.add_argument('--keep-best', action='store_true')
         argument_parser.add_argument('--min-zscore', default=1.96, type=float)
         argument_parser.add_argument('--y-mult', default=10, type=float)
-        argument_parser.add_argument('--export_bam', action='store_true')
+        argument_parser.add_argument('--export-bam', action='store_true')
+        argument_parser.add_argument('--include-ref', action='store_true')
         return argument_parser.parse_args()
 
     def __prepare_reference(self) -> str:
