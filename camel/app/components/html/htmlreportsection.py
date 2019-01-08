@@ -49,15 +49,17 @@ class HtmlReportSection(HtmlElement):
                 os.makedirs(relative_dir)
             shutil.copy(file_path, os.path.join(output_directory, relative_path))
 
-    def add_file(self, input_file, relative_path):
+    def add_file(self, input_file: str, relative_path: str) -> str:
         """
         Adds the file to the report.
+        Returns the relative path parameter so it is easier to use in list comprehensions.
         :param input_file: Input file
         :param relative_path: path where the file will be saved relative to the report output directory
-        :return: None
+        :return: Relative path
         """
         logging.info("Adding file to report section: {}".format(relative_path))
         self._files.append((input_file, relative_path,))
+        return relative_path
 
     def __repr__(self) -> str:
         """

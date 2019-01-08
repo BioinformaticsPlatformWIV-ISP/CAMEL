@@ -1,5 +1,3 @@
-from typing import Any, Dict
-
 import os
 
 from camel.app.camel import Camel
