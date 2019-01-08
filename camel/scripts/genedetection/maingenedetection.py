@@ -123,7 +123,7 @@ class MainGeneDetection(object):
             else:
                 assembly_input = self._helper.symlink_fastq_pe_input(
                     self._args.fastq_pe, self._args.fastq_pe_names, self._args.working_dir)
-            return self._helper.assemble_fastq_reads(assembly_input, self._report, self._args.kmers)
+            return self._helper.assemble_fastq_reads(assembly_input, self._report, self._args.kmers, self._args.threads)
 
     def __get_srst2_input(self) -> List[ToolIOFile]:
         """
