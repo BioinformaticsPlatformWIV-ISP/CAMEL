@@ -35,18 +35,20 @@ class ReadTrimmingWrapper(object):
         self._working_dir = working_dir
         self._output = None
 
-    def run_workflow(self, pe_reads: List[str], threads: int=8) -> None:
+    def run_workflow(self, pe_reads: List[str], threads: int = 8, export_fastq: bool = False) -> None:
         """
         Runs the read trimming workflow.
         :param pe_reads: Input PE FASTQ reads
         :param threads: Number of threads to use
+        :param export_fastq: If True, FASTQ files are included in the report
         :return: None
         """
         config_data = {
             'working_dir': self._working_dir,
             'fastq_pe': [
                 {'name': os.path.basename(pe_reads[0]), 'path': pe_reads[0]},
-                {'name': os.path.basename(pe_reads[1]), 'path': pe_reads[1]}]
+                {'name': os.path.basename(pe_reads[1]), 'path': pe_reads[1]}],
+            'read_trimming': {'export_fastq': str(export_fastq)}
         }
         output_path = os.path.join(self._working_dir, OUTPUT_READ_TRIMMING_REPORT)
         SnakePipelineUtils.run_snakemake(

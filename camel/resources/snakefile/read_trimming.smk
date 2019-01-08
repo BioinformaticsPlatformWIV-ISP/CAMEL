@@ -105,12 +105,14 @@ rule Trimming_report:
     output:
         VAL_HTML=os.path.join(config['working_dir'], OUTPUT_READ_TRIMMING_REPORT)
     params:
-        running_dir=os.path.join(config['working_dir'], 'read_trimming', 'report')
+        running_dir=os.path.join(config['working_dir'], 'read_trimming', 'report'),
+        export_fastq=config['read_trimming'].get('export_fastq', 'false')
     run:
         from camel.app.tools.pipelines.read_trimming.htmlreporterreadtrimming import HtmlReporterReadTrimming
         reporter = HtmlReporterReadTrimming(camel)
         SnakemakeUtils.add_pickle_inputs(reporter, input)
         step = Step(rule, reporter, camel, params.running_dir, config)
+        reporter.update_parameters(export_fastq=params.export_fastq)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
 

@@ -1,6 +1,7 @@
 import argparse
 import logging
-from typing import List, Optional, Tuple
+from dataclasses import dataclass
+from typing import List, Optional
 
 import os
 
@@ -19,6 +20,12 @@ class MainScriptHelper(object):
     'ResFinder local' can be done by this class.
     """
 
+    @dataclass
+    class TrimmingOutput:
+        pe: List[ToolIOFile]
+        se_fwd: List[ToolIOFile]
+        se_rev: List[ToolIOFile]
+
     def __init__(self, working_dir: str, sample_name: str):
         """
         Initializes the helper class.
@@ -27,42 +34,51 @@ class MainScriptHelper(object):
         self._working_dir = working_dir
         self._sample_name = sample_name
 
-    def trim_reads(self, fastq_reads_raw: List[str], report: Optional[HtmlReport]=None) -> \
-            Tuple[List[ToolIOFile], List[ToolIOFile], List[ToolIOFile]]:
+    def trim_reads(self, fastq_reads_raw: List[str], report: Optional[HtmlReport] = None, threads: int = 8,
+                   export_fastq: bool = False) -> TrimmingOutput:
         """
         Runs the read trimming workflow.
         :param fastq_reads_raw: Raw FASTQ PE reads
         :param report: If set, the output is added to the given report
+        :param threads: Number of threads
+        :param export_fastq: If True, FASTQ files are included in the report
         :return: Tuple of trimmed PE reads, trimmed forward reads, trimmed reverse reads
         """
+        logging.info("Trimming FASTQ input reads")
         trimming = ReadTrimmingWrapper(os.path.join(self._working_dir, 'trimming'))
-        trimming.run_workflow(fastq_reads_raw)
+        trimming.run_workflow(fastq_reads_raw, threads, export_fastq)
         if report is not None:
             report.add_html_object(trimming.output.report_section)
             trimming.output.report_section.copy_files(report.output_dir)
             report.save()
-        return trimming.output.trimmed_reads_pe, trimming.output.trimmed_reads_se_fwd, \
-            trimming.output.trimmed_reads_se_rev
+        # noinspection PyCallByClass
+        return MainScriptHelper.TrimmingOutput(
+            trimming.output.trimmed_reads_pe, trimming.output.trimmed_reads_se_fwd,
+            trimming.output.trimmed_reads_se_rev)
 
-    def assemble_fastq_reads(self, fastq_pe: List[str], fastq_names: List[str], perform_trimming: bool,
-                             report: Optional[HtmlReport]=None, kmers: Optional[str]=None) -> ToolIOFile:
+    def symlink_fastq_pe_input(self, fastq_pe: List[str], fastq_names: List[str], working_dir: str) -> TrimmingOutput:
+        """
+        Symlinks the FASTQ PE input.
+        :return: Assembly input object
+        """
+        logging.info("Symlinking FASTQ input reads in working directory")
+        links = SnakePipelineUtils.symlink_input_files(
+            os.path.join(working_dir, 'input'), fastq_pe, fastq_names)
+        # noinspection PyCallByClass
+        return MainScriptHelper.TrimmingOutput([ToolIOFile(x) for x in links], [], [])
+
+    def assemble_fastq_reads(self, assembly_input: TrimmingOutput, report: Optional[HtmlReport] = None,
+                             kmers: Optional[str] = None) -> ToolIOFile:
         """
         Assembles FASTQ reads using SPAdes
-        :param fastq_pe: FASTQ PE read paths
-        :param fastq_names: FASTQ file names
-        :param perform_trimming: If True, reads are trimmed before the assembly
+        :param assembly_input: Assembly input
         :param report: If set, the output is added to the given report
         :param kmers: Comma separated list of Kmers to use for the assembly
         :return: ToolIOFile FASTA object with the assembled contigs
         """
-        if perform_trimming is True:
-            assembly_input = self.trim_reads(fastq_pe, report)
-        else:
-            links = SnakePipelineUtils.symlink_input_files(
-                os.path.join(self._working_dir, 'input'), fastq_pe, fastq_names)
-            assembly_input = ([ToolIOFile(x) for x in links], [], [])
+        logging.info("Starting de-novo assembly")
         assembly = AssemblyWrapper(os.path.join(self._working_dir, 'assembly'))
-        assembly.run_workflow(self._sample_name, assembly_input[0], assembly_input[1], assembly_input[2], kmers)
+        assembly.run_workflow(self._sample_name, assembly_input.pe, assembly_input.se_fwd, assembly_input.se_rev, kmers)
         if report is not None:
             report.add_html_object(assembly.output.report_section)
             assembly.output.report_section.copy_files(report.output_dir)
