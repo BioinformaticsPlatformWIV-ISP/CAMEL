@@ -1,7 +1,7 @@
 import argparse
 import datetime
 from dataclasses import dataclass
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Union
 
 import os
 from Bio import SeqIO
@@ -227,7 +227,8 @@ class SnpPhylogenyUtils(object):
 
     @staticmethod
     def add_output_files_section(report: HtmlReport, column_names: List[str],
-                                 output_files: Dict['SnpPhylogenyUtils.Sample', List[str]], snp_matrix: str):
+                                 output_files: Dict['SnpPhylogenyUtils.Sample', List[Union[str, None]]],
+                                 snp_matrix: str):
         """
         Adds the section with the output files.
         :param report: Report
@@ -247,12 +248,17 @@ class SnpPhylogenyUtils(object):
         ]
         section.add_table(table_data_snp_matrix, table_attributes=[('class', 'information')])
 
-        # Add other output files
+        # Add other output files table
         table_data = []
         for sample, output in output_files.items():
-            # noinspection PyTypeChecker
-            table_data.append([sample.name_full] + [HtmlTableCell('Download', link=section.add_file(
-                f, os.path.join(sample.name_valid, os.path.basename(f)))) for f in output])
+            row = [sample.name_full]
+            for file_ in output:
+                if file_ is None:
+                    row.append('Not available')
+                else:
+                    relative_path = os.path.join(sample.name_valid, os.path.basename(file_))
+                    row.append(HtmlTableCell('Download', link=section.add_file(file_, relative_path)))
+                table_data.append(row)
         header = ['Sample'] + column_names
         section.add_table(table_data, header, [('class', 'data')])
         report.add_html_object(section)

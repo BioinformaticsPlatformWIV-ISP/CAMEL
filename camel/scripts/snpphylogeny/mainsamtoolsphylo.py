@@ -82,6 +82,7 @@ class MainSamtoolsPhylo(BasePhylo):
         argument_parser.add_argument('--keep-best', action='store_true')
         argument_parser.add_argument('--min-zscore', default=1.96, type=float)
         argument_parser.add_argument('--y-mult', default=10, type=float)
+        argument_parser.add_argument('--export_bam', action='store_true')
         return argument_parser.parse_args()
 
     def __prepare_reference(self) -> str:
@@ -198,7 +199,7 @@ class MainSamtoolsPhylo(BasePhylo):
         :return: None
         """
         output_files = {sample: [
-            calling_out_by_sample[sample].bam_file.path,
+            calling_out_by_sample[sample].bam_file.path if self._args.export_bam else None,
             calling_out_by_sample[sample].vcf_unfiltered.path,
             filtering_out_by_sample[sample].vcf_filtered.path
         ] for sample in self._samples}
