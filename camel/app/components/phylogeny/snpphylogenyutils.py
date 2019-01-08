@@ -18,11 +18,14 @@ from camel.app.components.phylogeny.newickutils import NewickUtils
 from camel.app.components.workflows.readtrimmingwrapper import ReadTrimmingWrapper
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.io.tooliovalue import ToolIOValue
+from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.app.tools.mega.mltreeconstruction import MLTreeConstruction
 from camel.app.tools.mega.modelselection import ModelSelection
 from camel.app.tools.snpmatrix.snpmatrixconstructor import SnpMatrixConstructor
 from camel.resources import CSS_STYLE
+from camel.scripts.snpphylogeny import SNAKEFILE_TRIMMING_ALL
+from camel.scripts.snpphylogeny.snakefile.trimming_all import TRIMMING_ALL
 
 
 class InvalidInputError(ValueError):
@@ -158,6 +161,25 @@ class SnpPhylogenyUtils(object):
 
         # Sort samples by name
         return sorted(samples, key=lambda s: s.name_valid)
+
+    @staticmethod
+    def trim_all_reads(samples: List[Sample], working_dir: str, threads: int = 8) -> Dict[
+            'SnpPhylogenyUtils.Sample', ReadTrimmingWrapper.ReadTrimmingOutput]:
+        """
+        Trims all the reads in parallel using Snakemake.
+        :param samples: List of samples
+        :param working_dir: Working directory
+        :param threads: Number of threads
+        :return: None
+        """
+        config_data = {
+            'working_dir': working_dir,
+            'samples': {s.name_valid: [f.path for f in s.reads_raw] for s in samples}}
+        output_file = os.path.join(working_dir, TRIMMING_ALL)
+        SnakePipelineUtils.run_snakemake(
+            SNAKEFILE_TRIMMING_ALL, config_data, [output_file], working_dir, threads)
+        trimming_out_by_sample = SnakemakeUtils.load_object(output_file)
+        return {s: trimming_out_by_sample[s.name_valid] for s in samples}
 
     @staticmethod
     def add_trimming_section_empty(report: HtmlReport) -> None:

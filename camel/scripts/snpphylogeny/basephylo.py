@@ -1,12 +1,11 @@
 import argparse
 import logging
-import os
 from typing import Optional, List, Dict
 
 import abc
+import os
 
 from camel.app.components.phylogeny.snpphylogenyutils import SnpPhylogenyUtils, InvalidInputError
-from camel.app.components.workflows.readtrimmingwrapper import ReadTrimmingWrapper
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.mega.modelselection import ModelSelection
@@ -64,20 +63,17 @@ class BasePhylo(object, metaclass=abc.ABCMeta):
         :return: Mapping input per sample
         """
         if self._args.trim_reads:
+            trimming_output_by_sample = SnpPhylogenyUtils.trim_all_reads(
+                self._samples, os.path.join(self._args.working_dir, 'trimming'))
+            SnpPhylogenyUtils.add_trimming_section(self._report, trimming_output_by_sample)
             mapping_input_by_sample = {}
-            trimming_output_by_sample = {}
-            for sample in self._samples:
-                working_dir = os.path.join(self._args.working_dir, sample.name_valid, 'trimming')
-                wrapper = ReadTrimmingWrapper(working_dir)
-                wrapper.run_workflow([f.path for f in sample.reads_raw])
+            for sample, output in trimming_output_by_sample.items():
                 # noinspection PyCallByClass
                 mapping_input_by_sample[sample] = SnpPhylogenyUtils.MappingInput(
-                    pe=wrapper.output.trimmed_reads_pe,
-                    se_fwd=wrapper.output.trimmed_reads_se_fwd[0],
-                    se_rev=wrapper.output.trimmed_reads_se_rev[0]
+                    pe=output.trimmed_reads_pe,
+                    se_fwd=output.trimmed_reads_se_fwd[0],
+                    se_rev=output.trimmed_reads_se_rev[0]
                 )
-                trimming_output_by_sample[sample] = wrapper.output
-            SnpPhylogenyUtils.add_trimming_section(self._report, trimming_output_by_sample)
             return mapping_input_by_sample
         else:
             SnpPhylogenyUtils.add_trimming_section_empty(self._report)
