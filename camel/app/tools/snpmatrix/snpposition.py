@@ -36,7 +36,6 @@ class SnpPosition(object):
         :param other: Other SNP position
         :return: True if the other is larger
         """
-        print('calling lt')
         if self.contig == other.contig:
             return self.position < other.position
         else:
