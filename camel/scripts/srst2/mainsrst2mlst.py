@@ -16,7 +16,7 @@ class MainSrst2Mlst(object):
     Main script to run the base SRST2 sequence typing tool from galaxy.
     """
 
-    def __init__(self, args: Optional[argparse.Namespace]=None) -> None:
+    def __init__(self, args: Optional[argparse.Namespace] = None) -> None:
         """
         Initializes the wrapper.
         :param args: (Optional) arguments, if not specified arguments are parsed from command line

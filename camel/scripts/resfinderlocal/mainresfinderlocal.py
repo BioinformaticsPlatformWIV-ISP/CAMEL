@@ -19,7 +19,7 @@ class MainResFinderLocal(object):
     This class is used to run the main ResFinder local script.
     """
 
-    def __init__(self, args: argparse.Namespace=None) -> None:
+    def __init__(self, args: argparse.Namespace = None) -> None:
         """
         Initializes the main script.
         :param args: Arguments (optional)
@@ -42,9 +42,11 @@ class MainResFinderLocal(object):
         argument_parser.add_argument('--fastq-pe', help="Input PE FASTQ files", nargs=2)
         argument_parser.add_argument('--fastq-pe-names', help="Input PE FASTQ file names", nargs=2)
         argument_parser.add_argument('--trim-reads', help="Perform read trimming", action='store_true')
+        argument_parser.add_argument('--kmers', help="Kmers to use for assembly")
         argument_parser.add_argument('--min-percent-identity', type=int, default=90)
         argument_parser.add_argument('--min-coverage', type=int, default=60)
         argument_parser.add_argument('--resfinder-db', type=str, required=True)
+        argument_parser.add_argument('--report-include-fastq', action='store_true')
         return argument_parser.parse_args()
 
     def run(self) -> None:
@@ -92,8 +94,13 @@ class MainResFinderLocal(object):
         if self._args.fasta is not None:
             return ToolIOFile(self._args.fasta)
         else:
-            return self._helper.assemble_fastq_reads(
-                self._args.fastq_pe, self._args.fastq_pe_names, self._args.trim_reads, self._report)
+            if self._args.trim_reads:
+                assembly_input = self._helper.trim_reads(
+                    self._args.fastq_pe, self._report, self._args.threads, self._args.report_include_fastq)
+            else:
+                assembly_input = self._helper.symlink_fastq_pe_input(
+                    self._args.fastq_pe, self._args.fastq_pe_names, self._args.working_dir)
+            return self._helper.assemble_fastq_reads(assembly_input, self._report, self._args.kmers, self._args.threads)
 
     def __get_db_data(self) -> Dict[str, Any]:
         """
