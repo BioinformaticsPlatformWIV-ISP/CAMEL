@@ -104,11 +104,42 @@ class TestVariantFiltering(unittest.TestCase):
         """
         number_variants_in = VCFUtils.count_variants(TestVariantFiltering.FILE_VCF_GZ_UNFILTERED.path)
         output_file_vcf = os.path.join(self.running_dir, 'filtered_variants.vcf')
+        output_file_stats = os.path.join(self.running_dir, 'filter_stats.txt')
         args = argparse.Namespace(
             vcf=TestVariantFiltering.FILE_VCF_GZ_UNFILTERED.path,
             bam=TestVariantFiltering.FILE_BAM.path,
             working_dir=self.running_dir,
             output_vcf=output_file_vcf,
+            output_stats=output_file_stats,
+            min_total_depth=10,
+            min_forward_depth=1,
+            min_reverse_depth=1,
+            min_snp_quality=20,
+            min_mapping_quality=25,
+            min_distance=10,
+            keep_best=True,
+            min_zscore=1.96,
+            y_mult=4
+        )
+        main_filtering = MainFiltering(args)
+        main_filtering.run()
+        self.assertGreater(os.path.getsize(output_file_vcf), 0)
+        self.assertGreater(os.path.getsize(output_file_stats), 0)
+        self.assertLess(VCFUtils.count_variants(output_file_vcf), number_variants_in)
+
+    def test_variant_filtering_main_no_bam(self) -> None:
+        """
+        Tests the main script for the variant filtering.
+        :return: None
+        """
+        number_variants_in = VCFUtils.count_variants(TestVariantFiltering.FILE_VCF_GZ_UNFILTERED.path)
+        output_file_vcf = os.path.join(self.running_dir, 'filtered_variants.vcf')
+        args = argparse.Namespace(
+            vcf=TestVariantFiltering.FILE_VCF_GZ_UNFILTERED.path,
+            bam=None,
+            working_dir=self.running_dir,
+            output_vcf=output_file_vcf,
+            output_stats=None,
             min_total_depth=10,
             min_forward_depth=1,
             min_reverse_depth=1,
