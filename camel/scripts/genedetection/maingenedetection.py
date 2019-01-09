@@ -162,7 +162,7 @@ class MainGeneDetection(object):
         :return: None
         """
         wrapper = GeneDetectionWrapper(os.path.join(self._args.working_dir, 'resfinder'))
-        wrapper.run_workflow_blast(fasta_file.path, self._sample_name, db_data)
+        wrapper.run_workflow_blast(fasta_file.path, self._sample_name, db_data, self._args.threads)
         return wrapper.output
 
     def __run_gene_detection_srst2(self, fastq_pe: List[ToolIOFile], db_data: Dict[str, Any]) -> \
@@ -174,7 +174,7 @@ class MainGeneDetection(object):
         :return: None
         """
         wrapper = GeneDetectionWrapper(os.path.join(self._args.working_dir, 'resfinder'))
-        wrapper.run_workflow_srst2([f.path for f in fastq_pe], self._sample_name, db_data)
+        wrapper.run_workflow_srst2([f.path for f in fastq_pe], self._sample_name, db_data, self._args.threads)
         return wrapper.output
 
     def __export_output(self, output: GeneDetectionWrapper.GeneDetectionOutput) -> None:
