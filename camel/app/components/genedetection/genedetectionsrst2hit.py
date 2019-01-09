@@ -14,16 +14,18 @@ class GeneDetectionSRST2Hit(GeneDetectionHit):
     Gene detection hit detected by SRST2.
     """
 
-    _TABLE_COLUMNS = ['Locus', 'Length', '% Covered', 'Mismatches', 'Uncertainty', 'Depth', 'Accession']
+    _TABLE_COLUMNS = ['Locus', 'Length', '% Covered', 'Mismatches', 'Uncertainty', 'Divergence (%)', 'Depth',
+                      'Accession']
     _HTML_COLUMNS = _TABLE_COLUMNS
 
-    def __init__(self, subject, locus, mismatches, uncertainty, depth, coverage, length, accession):
+    def __init__(self, subject, locus, mismatches, uncertainty, divergence, depth, coverage, length, accession):
         """
         Initializes the hit.
         :param subject: Full name of the subject sequence
         :param locus: Locus
         :param mismatches: Mismatches between reads and allele
         :param uncertainty: Uncertainty between reads and allele
+        :param divergence: Divergence
         :param depth: mean read depth across allele
         :param coverage: Indicates the % of gene that was covered
         :param length: Locus length
@@ -35,6 +37,7 @@ class GeneDetectionSRST2Hit(GeneDetectionHit):
         self._uncertainty = uncertainty if uncertainty != '' else '-'
         self._depth = depth
         self._coverage = coverage
+        self._divergence = divergence
         self._length = length
         self._subject = subject
         self._extra_column_value = None
@@ -62,8 +65,8 @@ class GeneDetectionSRST2Hit(GeneDetectionHit):
         m = re.match('^(.*) ({.*})$', full_header)
         allele_full = m.group(1)
         metadata = json.loads(m.group(2))
-        hit = GeneDetectionSRST2Hit(allele_full, metadata['allele'], parts[6], parts[7], float(parts[5]),
-                                    float(parts[4]), int(parts[9]), metadata.get('accession', '-'))
+        hit = GeneDetectionSRST2Hit(allele_full, metadata['allele'], parts[6], parts[7], float(parts[8]),
+                                    float(parts[5]), float(parts[4]), int(parts[9]), metadata.get('accession', '-'))
         if extra_column_value is not None:
             name, key = GeneDetectionUtils.parse_extra_column_param(extra_column_value)
             hit.set_extra_column(name, metadata[key])
@@ -80,6 +83,7 @@ class GeneDetectionSRST2Hit(GeneDetectionHit):
             '{:.2f}'.format(self._coverage),
             self._mismatches,
             self._uncertainty,
+            '{:.2f}'.format(self._divergence),
             '{:.2f}'.format(self._depth),
             self.accession]
         if self._extra_column_value is not None:
@@ -99,6 +103,7 @@ class GeneDetectionSRST2Hit(GeneDetectionHit):
             '{:.2f}'.format(self._coverage),
             self._mismatches,
             self._uncertainty,
+            '{:.2f}'.format(self._divergence),
             '{:.2f}'.format(self._depth)]
         if self._extra_column_value is not None:
             html_data.append(self._extra_column_value)
@@ -121,7 +126,7 @@ class GeneDetectionSRST2Hit(GeneDetectionHit):
             return 'grey'
 
     @staticmethod
-    def get_column_names_html(extra_column_name: Optional[str]=None) -> List[str]:
+    def get_column_names_html(extra_column_name: Optional[str] = None) -> List[str]:
         """
         Returns the column names for the HTML output.
         :param extra_column_name: Extra column name (None if there is None)
