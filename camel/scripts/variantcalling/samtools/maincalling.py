@@ -19,7 +19,7 @@ class MainCalling(object):
     Class to run samtools variant calling using CAMEL.
     """
 
-    def __init__(self, args: Optional[argparse.Namespace]=None) -> None:
+    def __init__(self, args: Optional[argparse.Namespace] = None) -> None:
         """
         Initializes the main script.
         """
