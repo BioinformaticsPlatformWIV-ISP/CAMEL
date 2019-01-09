@@ -1,4 +1,7 @@
+import logging
+
 import os
+import shutil
 
 from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
@@ -20,6 +23,9 @@ def filter_is_disabled(filter_key: str) -> bool:
     if filter_key not in config['variant_filtering']:
         return False
     return config['variant_filtering'][filter_key].get('disabled', False)
+
+import pprint
+pprint.pprint(config)
 
 
 rule Variant_filtering_depth:
@@ -178,9 +184,15 @@ rule Variant_filtering_zscore:
             zscore_filter.update_parameters(min_zscore=params.min_zscore)
         if params.y_multiplier is not None:
             zscore_filter.update_parameters(y_multiplier=params.y_multiplier)
-        SnakemakeUtils.add_pickle_inputs(zscore_filter, input)
-        step.run_step()
-        SnakemakeUtils.dump_tool_outputs(zscore_filter, output)
+
+        if len(SnakemakeUtils.load_object(input.BAM)) == 0:
+            logging.info("No BAM input found, skipping Z-score filter.")
+            shutil.copyfile(input.VCF_GZ, output.VCF_GZ)
+            SnakemakeUtils.dump_object({'variants_in': 'NA', 'variants_out': 'NA'}, output.INFORMS)
+        else:
+            SnakemakeUtils.add_pickle_inputs(zscore_filter, input)
+            step.run_step()
+            SnakemakeUtils.dump_tool_outputs(zscore_filter, output)
 
 rule Variant_filtering_unzip_vcf_zscore:
     """

@@ -2,8 +2,8 @@ import argparse
 from typing import Any, Dict
 
 import os
-
 import shutil
+import yaml
 
 from camel.app.camel import Camel
 from camel.app.components.workflows.variantfilteringwrapper import VariantFilteringWrapper
@@ -14,7 +14,7 @@ class MainFiltering(object):
     Class to run the samtools variant filtering using CAMEL.
     """
 
-    def __init__(self, args: argparse.Namespace=None) -> None:
+    def __init__(self, args: argparse.Namespace = None) -> None:
         """
         Initializes the main script.
         """
@@ -31,6 +31,7 @@ class MainFiltering(object):
         argument_parser.add_argument('--vcf', required=True, help="Input VCF file")
         argument_parser.add_argument('--bam')
         argument_parser.add_argument('--output-vcf', required=True)
+        argument_parser.add_argument('--output-stats')
         argument_parser.add_argument('--working-dir', default=os.path.abspath('.'))
         argument_parser.add_argument('--min-total-depth', default=10, type=int)
         argument_parser.add_argument('--min-forward-depth', default=1, type=int)
@@ -51,6 +52,9 @@ class MainFiltering(object):
         wrapper = VariantFilteringWrapper(self._args.working_dir)
         wrapper.run_workflow(self._args.vcf, self._args.bam, filtering_options=self.__get_filtering_options())
         shutil.copyfile(wrapper.output.vcf_filtered.path, self._args.output_vcf)
+        if self._args.output_stats is not None:
+            with open(self._args.output_stats, 'w') as handle:
+                yaml.dump(wrapper.output.stats, handle)
 
     def __get_filtering_options(self) -> Dict[str, Any]:
         """

@@ -71,9 +71,10 @@ class VariantFilteringWrapper(object):
             target_dir = os.path.dirname(os.path.join(self._working_dir, destination))
             if not os.path.isdir(target_dir):
                 os.makedirs(target_dir)
-            SnakemakeUtils.dump_object([ToolIOFile(path)], os.path.join(self._working_dir, destination))
+            SnakemakeUtils.dump_object([ToolIOFile(path)] if path is not None else [],
+                                       os.path.join(self._working_dir, destination))
 
-    def run_workflow(self, vcf_file: str, bam_file: str, filtering_options: Dict, cores: int=8) -> None:
+    def run_workflow(self, vcf_file: str, bam_file: str, filtering_options: Dict, cores: int = 8) -> None:
         """
         Runs the variant calling workflow.
         :param vcf_file: Input VCF file
