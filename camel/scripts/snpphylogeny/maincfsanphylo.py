@@ -57,6 +57,7 @@ class MainCfsanPhylo(BasePhylo):
         argument_parser = argparse.ArgumentParser()
         SnpPhylogenyUtils.add_common_arguments(argument_parser)
         argument_parser.add_argument('--selected-matrix', choices=['preserved', 'regular'])
+        argument_parser.add_argument('--report-include-bam', action='store_true')
         return argument_parser.parse_args()
 
     def __prepare_reference(self) -> str:
@@ -111,7 +112,7 @@ class MainCfsanPhylo(BasePhylo):
         :return: None
         """
         output_files = {self._samples[i]: [
-            cfsan.tool_outputs['BAM'][i].path,
+            cfsan.tool_outputs['BAM'][i].path if self._args.report_include_bam else None,
             cfsan.tool_outputs['VCF'][i].path,
             cfsan.tool_outputs['VCF_preserved'][i].path
         ] for i in range(0, len(cfsan.tool_outputs['Sample_names']))}
