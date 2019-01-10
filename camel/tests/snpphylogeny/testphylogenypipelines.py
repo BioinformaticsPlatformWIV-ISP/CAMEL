@@ -71,7 +71,7 @@ class TestSnpPhylogenyPipelines(unittest.TestCase):
             bootstraps=10,
             ml_method='spr3',
             threads=8,
-            export_bam=False,
+            report_include_bam=False,
             include_ref=True
         )
         main = MainSamtoolsPhylo(args)
@@ -99,7 +99,8 @@ class TestSnpPhylogenyPipelines(unittest.TestCase):
             ml_method='spr3',
             threads=8,
             export_bam=False,
-            selected_matrix='regular'
+            selected_matrix='regular',
+            report_include_bam=False
         )
         main = MainCfsanPhylo(args)
         main.run()
