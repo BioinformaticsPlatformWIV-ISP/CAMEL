@@ -24,9 +24,6 @@ def filter_is_disabled(filter_key: str) -> bool:
         return False
     return config['variant_filtering'][filter_key].get('disabled', False)
 
-import pprint
-pprint.pprint(config)
-
 
 rule Variant_filtering_depth:
     """

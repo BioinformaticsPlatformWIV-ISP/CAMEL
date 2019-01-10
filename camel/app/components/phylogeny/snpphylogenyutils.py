@@ -283,7 +283,7 @@ class SnpPhylogenyUtils(object):
                 else:
                     relative_path = os.path.join(sample.name_valid, os.path.basename(file_))
                     row.append(HtmlTableCell('Download', link=section.add_file(file_, relative_path)))
-                table_data.append(row)
+            table_data.append(row)
         header = ['Sample'] + column_names
         section.add_table(table_data, header, [('class', 'data')])
         report.add_html_object(section)
