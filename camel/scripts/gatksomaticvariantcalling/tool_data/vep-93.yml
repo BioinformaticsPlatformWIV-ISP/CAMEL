@@ -1,0 +1,8 @@
+dependencies: vep/93
+parameters:
+  db_loc: {default: false, mandatory: true, option: --dir_cache, value: null}
+  output_file: {default: true, mandatory: false, option: -o, value: vep_annotated.tsv}
+  output_in_vcf: {default: false, mandatory: false, option: --vcf, value: null}
+  species: {default: false, mandatory: false, option: --species, value: human}
+  threads: {default: false, mandatory: false, option: fork, value: '1'}
+tool_command: vep
