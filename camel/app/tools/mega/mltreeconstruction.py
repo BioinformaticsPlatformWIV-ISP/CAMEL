@@ -4,6 +4,7 @@ from camel.app.camel import Camel
 from camel.app.error.invalidparametererror import InvalidParameterError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.tools.mega import TEMPLATE_TREE_CONSTRUCTION
 from camel.app.tools.tool import Tool
 
 
@@ -122,7 +123,7 @@ class MLTreeConstruction(Tool):
         Generates the config file.
         :return: Path to output file
         """
-        with open(self._parameters['config_file_template'].value) as handle:
+        with open(TEMPLATE_TREE_CONSTRUCTION) as handle:
             template = handle.read()
 
         config_file = os.path.join(self._folder, 'config.mao')

@@ -5,6 +5,7 @@ from camel.app.error.invalidinputspecificationerror import InvalidInputSpecifica
 from camel.app.error.invalidparametererror import InvalidParameterError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.tools.mega import TEMPLATE_MODEL_SELECT
 from camel.app.tools.mega.mltreeconstruction import MLTreeConstruction
 from camel.app.tools.tool import Tool
 
@@ -53,7 +54,7 @@ class ModelSelection(Tool):
         else:
             if 'site_coverage_cutoff' in self._parameters:
                 raise InvalidParameterError("Site coverage cutoff is only applicable for 'Partial deletion'")
-        if not os.path.isfile(self._parameters['config_file_template'].value):
+        if not os.path.isfile(TEMPLATE_MODEL_SELECT):
             raise InvalidInputSpecificationError("Cannot read config file.")
         super(ModelSelection, self)._check_parameters()
 
@@ -85,7 +86,7 @@ class ModelSelection(Tool):
         Generates the config file.
         :return: Path to config file
         """
-        with open(self._parameters['config_file_template'].value) as handle:
+        with open(TEMPLATE_MODEL_SELECT) as handle:
             template = handle.read()
 
         config_file = os.path.join(self._folder, 'config.mao')
