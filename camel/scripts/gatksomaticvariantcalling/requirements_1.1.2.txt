@@ -1,0 +1,14 @@
+requests==2.18.3
+beautifulsoup4==4.5.3
+bs4==0.0.1
+psycopg2>=2.6.2
+humanize==0.5.1
+PyVCF==0.6.8
+PyYAML==3.12
+yattag==1.9.2
+pysam==0.11.2.2
+numpy==1.13.0
+scipy==0.19.0
+screed==0.9
+snakemake>=4.0.0
+biopython==1.66
