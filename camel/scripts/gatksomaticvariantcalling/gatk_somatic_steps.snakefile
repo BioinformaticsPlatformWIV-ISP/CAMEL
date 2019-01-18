@@ -61,8 +61,10 @@ def prepare_basequalityrecalibration_input(wildcards):
 
 def define_pipeline_outputs(wildcards):
     """
-    Defines the expected output of the pipeline for the rule "all", depending on the variant caller(s) used.
-    Acts as a static fork in workflow based on config file (variant caller used).
+    Defines the expected output of the pipeline for the rule "all", depending on:
+    - the variant caller(s) used 
+    - if using vep or oncotator to annotate or none.
+    Acts as a static fork in workflow based on config file.
     :param wildcards: 
     :return: VCF iofile path
     """
@@ -79,6 +81,11 @@ def define_pipeline_outputs(wildcards):
         if 'mutect2_bam_output' in config:
             results["BAM_MUTECT2"] = os.path.join(working_dir, "mutect2/bam.io"),
             results["BAI_MUTECT2"] = os.path.join(working_dir, "mutect2/bai.io"),
+
+    if config['run_vep']:
+        results["OUT_VEP"] = os.path.join(working_dir, "vep/tsv.io"),
+    if config['run_oncotator']:
+        results["OUT_ONCOTATOR"] = os.path.join(working_dir, "oncotator/tsv.io"),
 
     return results
 
@@ -141,6 +148,21 @@ rule move_output:
                 except FileExistsError:
                     os.remove(config['bam_output'])
                     os.link(bam_init_path.path, config['bam_output'])
+            if config['run_vep']:
+                vep_out_init_path = SnakemakeUtils.load_object(input.OUT_VEP)[0]
+                try:
+                    os.link(vep_out_init_path.path, config['out_vep'])
+                except FileExistsError:
+                    os.remove(config['out_vep'])
+                    os.link(vep_out_init_path.path, config['out_vep'])
+            if config['run_oncotator']:
+                tsv_oncotator_init_path = SnakemakeUtils.load_object(input.OUT_ONCOTATOR)[0]
+                try:
+                    os.link(tsv_oncotator_init_path.path, config['out_oncotator'])
+                except FileExistsError:
+                    os.remove(config['out_oncotator'])
+                    os.link(tsv_oncotator_init_path.path, config['out_oncotator'])
+
 
         else:
             if 'mutect1_tab_output' in config:
@@ -167,8 +189,12 @@ rule move_output:
             if 'bam_output' in config:
                 bam_init_path = SnakemakeUtils.load_object(input.BAM)[0]
                 os.link(bam_init_path.path, os.path.join(working_dir, "output/", config['bam_output']))
-
-
+            if config['run_vep']:
+                out_vep_init_path = SnakemakeUtils.load_object(input.OUT_VEP)[0]
+                os.link(out_vep_init_path.path, os.path.join(working_dir, "output/", config['out_vep']))
+            if config['run_oncotator']:
+                tsv_oncotator_init_path = SnakemakeUtils.load_object(input.OUT_ONCOTATOR)[0]
+                os.link(tsv_oncotator_init_path.path, os.path.join(working_dir, "output/", config['out_oncotator']))
 
 
 rule prepare_initial_input:
@@ -637,4 +663,51 @@ rule mutect2:
             SnakemakeUtils.dump_object("placeholder for empty output.", output.BAM)
             SnakemakeUtils.dump_object("placeholder for empty output.", output.BAI)
 
+rule vep:
+    """
+    Variant annotation with Vep (ensembl).
+    """
+    input:
+        # TODO: add fork if mutect2
+        VCF=os.path.join(working_dir, "mutect1/vcf.io"),
+    output:
+        OUT=os.path.join(working_dir, "vep/tsv.io"),
+    params:
+        working_dir = os.path.join(working_dir, "vep"),
+    run:
+        from camel.app.tools.vep.vep import Vep
+        from camel.app.io.tooliodb import ToolIODb
+        DB_PATH = ToolIODb("Vep_homo_sapiens_93_GRCh37").path
+        run_vep =Vep(camel)
+        SnakemakeUtils.add_pickle_inputs(run_vep, input)
+        run_vep.update_parameters(db_loc=DB_PATH)
+        step = Step(rule_name=rule, tool=run_vep, camel=camel, folder=params.working_dir, config=config, pipeline_output=True)
+        step.run_step()
+        SnakemakeUtils.dump_tool_output(run_vep, "OUT", output.OUT)
 
+
+rule oncotator:
+    """
+    Variant annotation with oncotator (broad).
+    """
+    input:
+        # TODO: add fork if mutect2
+        IN_FILE=os.path.join(working_dir, "mutect1/vcf.io"),
+    output:
+        TSV=os.path.join(working_dir, "oncotator/tsv.io"),
+    params:
+        working_dir = os.path.join(working_dir, "oncotator"),
+    run:
+        from camel.app.tools.oncotator.oncotator import Oncotator
+        from camel.app.io.tooliodb import ToolIODb
+
+        DB_PATH = ToolIODb("oncotator_v1_ds_April052016").path
+        CANONICAL_VARS_PATH = ToolIODb("tx_exact_uniprot_matchesAKT1_CRLF2_FGFR1").path
+        octr =Oncotator(camel)
+        SnakemakeUtils.add_pickle_inputs(octr, input)
+        if "oncotator_tx_mode" in config:
+            octr.update_parameters(tx_mode=config["oncotator_tx_mode"])
+        octr.update_parameters(db_dir=DB_PATH, canonical_tx_file=CANONICAL_VARS_PATH, input_format="VCF")
+        step = Step(rule_name=rule, tool=octr, camel=camel, folder=params.working_dir, config=config, pipeline_output=True)
+        step.run_step()
+        SnakemakeUtils.dump_tool_output(octr, "OUT_FILE", output.TSV)

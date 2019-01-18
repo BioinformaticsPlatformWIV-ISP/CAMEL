@@ -123,6 +123,7 @@ class GATKSomaticMain(object):
         # Variant caller to use
         self._ap.add_argument('-V', '--variant_caller', metavar='variant_caller', dest='variant_caller', help='Variant caller to use.', choices=["mutect1", "mutect2"])
 
+
         # output
         self._ap.add_argument('--mutect1_vcf_output', dest='mutect1_vcf_output', metavar='mutect1_vcf_output', help='Output vcf file from MuTect1.')
         self._ap.add_argument('--mutect1_tab_output', dest='mutect1_tab_output', metavar='mutect1_tab_output', help='Output variant-call table file for MuTect1.')
@@ -191,13 +192,20 @@ class GATKSomaticMain(object):
                                    "amplicon-based sequencing if many False Positive technical artifacts are observed at that position. By default, inactive.",
                               default=0)
 
+        # annotation
+        self._ap.add_argument('--vep', dest='run_vep', help='Run Variant Effect Predictor; only executed with mutect1.', action='store_true')
+        self._ap.add_argument('--vep_output', dest='vep_output', help="Output file name for Variant Effect Predictor.", default="vep_output.vcf")
+        self._ap.add_argument('--oncotator', dest='run_oncotator', help='Run oncotator; only executed with mutect1.', action='store_true')
+        self._ap.add_argument('--oncotator_output', dest='oncotator_output', help="Output file name for oncotator.", default="oncotator_output.tsv")
+        self._ap.add_argument('--oncotator_tx_mode', dest='oncotator_tx_mode', help="tx mode for oncotator (canonical or effect).",
+                              default="EFFECT", choices=["CANONICAL", "EFFECT"])
+
         # snakemake arguments
         # snakemake unlock
         self._ap.add_argument('--unlock', dest='unlock', action="store_const", const="--unlock", help='Unlock snakemake working directory.', default="")
         # snakemake dag
         self._ap.add_argument('--dag', dest='dag', action="store_const", const="--dag", help='Generate snakemake DAG.', default="")
         # dryrun
-        # snakemake dag
         self._ap.add_argument('--dryrun', dest='dryrun', action="store_const", const="--dryrun", help='Snakemake dryrun; generates the list of jobs.', default="")
 
         # job id
@@ -348,6 +356,28 @@ class GATKSomaticMain(object):
         else:
             self._config_data['run_remove_first_base'] = True
             self._config_data['bases_to_rm_from_reads'] = self._args.bases_to_rm_from_reads
+
+        # annotations (Beta; only executed with mutect1 for now)
+        if self._args.variant_caller == "mutect1":
+            if self._args.run_vep:
+                self._config_data['run_vep'] = True
+                self._config_data['out_vep'] = self._args.vep_output
+            else:
+                self._config_data['run_vep'] = False
+
+            if self._args.run_oncotator:
+                self._config_data['run_oncotator'] = True
+                self._config_data['out_oncotator'] = self._args.oncotator_output
+                self._config_data['oncotator_tx_mode'] = self._args.oncotator_tx_mode
+            else:
+                self._config_data['run_oncotator'] = False
+        else:
+            if self._args.run_oncotator:
+                print("--oncotator parameter set, but ignored because not using mutect1.")
+            if self._args.run_vep:
+                print("--vep parameter set, but ignored because not using mutect1.")
+            self._config_data['run_vep'] = False
+            self._config_data['run_oncotator'] = False
 
         # Create and write to config file
         with open(self.runtime_config_path, 'w') as handle:
