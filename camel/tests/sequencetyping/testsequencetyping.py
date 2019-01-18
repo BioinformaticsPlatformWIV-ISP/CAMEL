@@ -120,7 +120,8 @@ class TestSequenceTyping(unittest.TestCase):
             trim_reads=True,
             working_dir=self.running_dir,
             detection_method='srst2',
-            threads=8
+            threads=8,
+            report_include_fastq=False
         )
         main = MainSequenceTyping(args)
         main.run()

@@ -28,7 +28,7 @@ class TestBcftools(unittest.TestCase):
         Sets up the resources before running the test.
         :return: None
         """
-        self.running_dir = tempfile.mkdtemp(None, 'camel_', '/scratch/temp')
+        self.running_dir = tempfile.mkdtemp(None, 'camel_', TestBcftools.camel.config['temp_dir'])
 
     def test_bcftools_csq(self):
         """
