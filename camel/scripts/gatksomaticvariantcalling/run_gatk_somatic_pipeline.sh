@@ -7,4 +7,6 @@ echo $@
 #python3 /home/todel/PycharmProjects/camel_3.0/camel/scripts/gatksomaticvariantcalling/run_gatk_somatic_pipeline.py "$@"  --wdir $PWD
 
 # for real running with lmod
-python3 /usr/local/bin/BIOIT/GATK_somatic_variant_calling/camel_3.0/camel/scripts/gatksomaticvariantcalling/run_gatk_somatic_pipeline.py "$@"
+SOURCE="${BASH_SOURCE[0]}"
+DIR="$( dirname "$SOURCE" )"
+python3 $DIR/run_gatk_somatic_pipeline.py "$@"
