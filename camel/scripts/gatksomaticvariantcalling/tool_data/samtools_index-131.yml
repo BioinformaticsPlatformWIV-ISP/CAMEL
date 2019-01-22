@@ -3,4 +3,5 @@ parameters:
   csi_min_interval: {default: false, mandatory: false, option: -m, value: '14'}
   generate_bai_index: {default: false, mandatory: false, option: -b, value: null}
   generate_csi_index: {default: false, mandatory: false, option: -c, value: null}
+  output_filename: {default: false, mandatory: false, option: null, value: null}
 tool_command: samtools index

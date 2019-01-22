@@ -1,4 +1,4 @@
-dependencies: java/1.8.0 gatk/3.7
+dependencies: java/jdk-1.8.0_172 gatk/3.7
 parameters:
   csv_output: {default: true, mandatory: false, option: -csv, value: recal_QC_data.csv}
   pdf_output: {default: true, mandatory: true, option: -plots, value: recal_QC_plots.pdf}
