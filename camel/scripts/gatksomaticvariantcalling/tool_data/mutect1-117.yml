@@ -1,4 +1,4 @@
-dependencies: mutect/1.1.7 java/jdk-1.7.0_80
+dependencies: mutect/1.1.7 java/1.7.0_80
 parameters:
   dbsnp_normal_lod: {default: false, mandatory: false, option: --dbsnp_normal_lod,
     value: '5.5'}
