@@ -1,8 +1,10 @@
+#!/usr/bin/env python
 import argparse
 import itertools
 import logging
-import os
 from typing import Optional, List
+
+import os
 
 from camel.app.camel import Camel
 from camel.app.components.phylogeny.snpphylogenyutils import SnpPhylogenyUtils

@@ -1,7 +1,9 @@
+#!/usr/bin/env python
 import argparse
 import logging
-import os
 from typing import Optional, Dict, Any
+
+import os
 
 from camel.app.camel import Camel
 from camel.app.components.html.htmlreportsection import HtmlReportSection

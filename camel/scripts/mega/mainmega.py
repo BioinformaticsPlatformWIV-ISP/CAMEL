@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import argparse
 from typing import Tuple, List, Optional
 
@@ -20,7 +21,7 @@ class MainMega(object):
 
     SNP_MATRIX_FILENAME = 'snp_matrix.fasta'
 
-    def __init__(self, args: Optional[argparse.Namespace]=None) -> None:
+    def __init__(self, args: Optional[argparse.Namespace] = None) -> None:
         """
         Initializes the main script.
         """
@@ -130,5 +131,6 @@ class MainMega(object):
 
 
 if __name__ == '__main__':
+    Camel.get_instance()
     main = MainMega()
     main.run()
