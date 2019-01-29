@@ -44,7 +44,7 @@ table.information tr > td:first-child {
 .alert-box {
     color:#555;
     border-radius:10px;
-    font-family:Tahoma,Geneva,Arial,sans-serif;font-size:11px;
+    font-family:Tahoma,Geneva,Arial,sans-serif;font-size:14px;
     padding:10px 10px 10px 36px;
     margin:10px;
 }
@@ -181,4 +181,8 @@ input:checked + .slider:before {
 
 .slider.round:before {
   border-radius: 50%;
+}
+
+.header-subtitle {
+  color: #6d6d6d;
 }
