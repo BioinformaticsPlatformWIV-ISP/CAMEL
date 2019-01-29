@@ -55,7 +55,7 @@ class DbToolService(BaseToolService):
         """
         return self.db_connection.query(sql, (self._tool_id,))[1][0]
 
-    def get_dependencies(self) -> Optional[str]:
+    def get_dependencies(self) -> List[str]:
         """
         Gets the dependencies for the tool from the database
         : return: String with whitespace separated list of dependencies
@@ -67,7 +67,7 @@ class DbToolService(BaseToolService):
         AND td.dependency_id = d.dependency_id;
         """
         dependencies = self.db_connection.query(sql, (self._tool_id,))
-        return None if len(dependencies) == 1 else ' '.join([dep[0] for dep in dependencies[1:]])
+        return [] if len(dependencies) == 1 else [dep[0] for dep in dependencies[1:]]
 
     def get_default_parameters(self) -> OrderedDict:
         """

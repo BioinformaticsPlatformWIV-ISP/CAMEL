@@ -39,10 +39,10 @@ class BaseToolService(Service, metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def get_dependencies(self) -> Optional[str]:
+    def get_dependencies(self) -> List[str]:
         """
         Gets the dependencies for the tool from the database
-        :return: String with whitespace separated list of dependencies
+        :return: List with dependencies as string
         """
         pass
 
