@@ -1,3 +1,4 @@
+import datetime
 from typing import List
 
 import os
@@ -5,6 +6,11 @@ import re
 
 
 class FileSystemHelper(object):
+    """
+    This class contains utility function to work with the file system.
+    """
+
+    TIMESTAMP_FILENAME = "%Y%m%d-%H%M%S"
 
     @staticmethod
     def make_valid(value: str) -> str:
@@ -40,3 +46,12 @@ class FileSystemHelper(object):
         :return: List of paths to files
         """
         return [os.path.join(folder, file_) for file_ in os.listdir(folder) if file_.endswith(extension)]
+
+    @staticmethod
+    def get_timestamp_str(timestamp: datetime.datetime = datetime.datetime.now()) -> str:
+        """
+        Returns the given time stamp as a string that can be used in a filename.
+        :param timestamp: Timestamp (default to current time)
+        :return: Timestamp as string
+        """
+        return timestamp.strftime(FileSystemHelper.TIMESTAMP_FILENAME)
