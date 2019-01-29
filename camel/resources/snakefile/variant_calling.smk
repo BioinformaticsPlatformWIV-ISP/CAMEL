@@ -160,7 +160,8 @@ rule Variant_calling_bcftools_call:
     input:
         VCF_GZ=os.path.join(config['working_dir'], 'variant_calling', 'mpileup', 'vcf_gz.io')
     output:
-        VCF_GZ=os.path.join(config['working_dir'], 'variant_calling', 'calling', 'vcf_gz.io')
+        VCF_GZ=os.path.join(config['working_dir'], 'variant_calling', 'calling', 'vcf_gz.io'),
+        INFORMS=os.path.join(config['working_dir'], 'variant_calling', 'calling', 'informs.io')
     params:
         running_dir=os.path.join(config['working_dir'], 'variant_calling', 'calling'),
         ploidy=config['variant_calling']['ploidy'],
@@ -259,6 +260,7 @@ rule Variant_calling_report:
         VCF_filt_regions=os.path.join(config['working_dir'], 'variant_filtering', 'regions', 'vcf.io') if get_filtering_param(config, 'region', 'bed_file') is not None else [],
         INFORMS_reference=os.path.join(config['working_dir'], 'variant_calling', 'reference', 'informs.io'),
         INFORMS_mapping=os.path.join(config['working_dir'], 'variant_calling', 'read_mapping', 'informs.io'),
+        INFORMS_calling=os.path.join(config['working_dir'], 'variant_calling', 'calling', 'informs.io'),
         JSON=os.path.join(config['working_dir'], OUTPUT_VARIANT_FILTERING_STATS)
     output:
         VAL_HTML=os.path.join(config['working_dir'], OUTPUT_VARIANT_CALLING_REPORT),

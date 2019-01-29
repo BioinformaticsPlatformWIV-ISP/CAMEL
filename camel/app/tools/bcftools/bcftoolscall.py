@@ -48,6 +48,7 @@ class BcftoolsCall(Tool):
         self.__build_command()
         self._execute_command()
         self.__set_output()
+        self._informs['version'] = self.get_dependency_version('bcftools')
 
     def __get_input_file_path(self):
         """
