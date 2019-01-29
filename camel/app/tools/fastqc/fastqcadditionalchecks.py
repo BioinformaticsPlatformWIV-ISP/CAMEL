@@ -31,7 +31,7 @@ class FastQCAdditionalChecks(Tool):
         Performs the quality checks.
         :return: None
         """
-        self._informs['max_read_length'] = self.__get_max_read_length(self._tool_inputs['TXT_RAW'][0].path)
+        self._informs['mode_read_length'] = self._get_mode_read_length(self._tool_inputs['TXT_RAW'][0].path)
 
         test_functions = {
             'Mean Q-score drop': self.__test_mean_qscore_drop,
@@ -50,7 +50,7 @@ class FastQCAdditionalChecks(Tool):
                 self._informs['tests'][test_name].append(test(modules))
 
     @staticmethod
-    def __get_max_read_length(data_file):
+    def __get_max_read_length(data_file: str) -> int:
         """
         Returns the maximum read length as reported by FastQC.
         This is based on the FastQC report of the raw reads (because in theory all reads could be trimmed at the end).
@@ -59,11 +59,41 @@ class FastQCAdditionalChecks(Tool):
         with open(data_file) as handle:
             for line in handle.readlines():
                 if line.startswith('Sequence length'):
-                    m = re.match('.*[-\t](\d+?)$', line.strip())
+                    m = re.match('.*[-\t](\\d+?)$', line.strip())
                     if not m:
                         raise ValueError('Invalid format: {}'.format(line.strip()))
                     return int(m.group(1))
         raise ValueError('Cannot parse max read length from: {}'.format(data_file))
+
+    @staticmethod
+    def _get_mode_read_length(data_file: str) -> int:
+        """
+        Returns the median read length as reported by FastQC.
+        :param data_file: Data file
+        :return: Median read length
+        """
+        target_lines = []
+        keep = False
+        with open(data_file) as handle:
+            for line in handle.readlines():
+                if keep is True:
+                    if line.startswith('>>END_MODULE'):
+                        break
+                    else:
+                        target_lines.append(line.strip())
+                if line.startswith('>>Sequence Length Distribution'):
+                    keep = True
+
+        max_count = 0
+        mode = 0
+        for line in target_lines[1:]:
+            parts = line.split('\t')
+            count = float(parts[-1])
+            if count > max_count:
+                max_count = count
+                interval_median = sum([int(x) for x in parts[0].split('-')]) / 2 if '-' in parts[0] else int(parts[0])
+                mode = int(interval_median)
+        return mode
 
     @staticmethod
     def __get_modules(input_file):
@@ -330,14 +360,15 @@ class FastQCAdditionalChecks(Tool):
     def __get_max_n_fraction(data):
         """
         Returns the maximum N fraction.
+        Note: FastQC reports in % per position so to obtain fraction it is divided by 100.
         :param data: Per base N content data
         :return: Fraction
         """
         max_fraction = 0.0
         for row in data[1:]:
-            base, n_fraction = row.split('\t')
-            if float(n_fraction) > max_fraction:
-                max_fraction = float(n_fraction)
+            base, n_percentage = row.split('\t')
+            if float(n_percentage) > max_fraction:
+                max_fraction = float(n_percentage) / 100
         return max_fraction
 
     def __test_max_n_fraction(self, modules):
@@ -350,7 +381,8 @@ class FastQCAdditionalChecks(Tool):
         threshold_fail = float(self._parameters['n_fraction_threshold_fail'].value)
         threshold_warn = float(self._parameters['n_fraction_threshold_warn'].value)
         max_n_fraction = self.__get_max_n_fraction(data)
-        logging.debug("Maximal N fraction: {:.4f}".format(max_n_fraction))
+        logging.debug("Maximal N fraction: {:.4f} (fail: {:.4f}, warn: {:.4f})".format(
+            max_n_fraction, threshold_fail, threshold_warn))
 
         if max_n_fraction > threshold_fail:
             return 'Fail'
@@ -384,18 +416,18 @@ class FastQCAdditionalChecks(Tool):
         :return: 'Pass', 'Warn' or 'Fail'
         """
         data = modules['Sequence Length Distribution']
-        threshold_fail = 0.40 * self._informs['max_read_length']
+        threshold_fail = 0.40 * self._informs['mode_read_length']
         self._informs['length_fail'] = threshold_fail
-        threshold_warn = 0.6667 * self._informs['max_read_length']
+        threshold_warn = 0.6667 * self._informs['mode_read_length']
         self._informs['length_warn'] = threshold_warn
         max_fraction = float(self._parameters['sequence_length_fraction'].value)
 
         fraction_below_fail = self.__get_fraction_of_sequences_below_threshold(data, threshold_fail)
-        logging.debug("Fraction of sequences with length below fail threshold: {:.2f} (max: {})".format(
-            fraction_below_fail, max_fraction))
+        logging.debug("Fraction of sequences with length below fail threshold ({:.0f}): {:.2f} (max: {})".format(
+            threshold_fail, fraction_below_fail, max_fraction))
         fraction_below_warn = self.__get_fraction_of_sequences_below_threshold(data, threshold_warn)
-        logging.debug("Fraction of sequences with length below warn threshold: {:.2f} (max: {})".format(
-            fraction_below_warn, max_fraction))
+        logging.debug("Fraction of sequences with length below warn threshold ({:.0f}): {:.2f} (max: {})".format(
+            threshold_warn, fraction_below_warn, max_fraction))
 
         if self.__get_fraction_of_sequences_below_threshold(data, threshold_fail) > max_fraction:
             return 'Fail'

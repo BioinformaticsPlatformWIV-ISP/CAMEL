@@ -3,6 +3,7 @@ from datetime import date
 import os
 import re
 
+from camel.app.components.html.htmlelement import HtmlElement
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.html.htmltablecell import HtmlTableCell
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
@@ -36,13 +37,15 @@ class HtmlReporterContamination(Tool):
         """
         super().__init__('HTML Reporter: Contamination', '0.1', camel)
         self._subfolder = 'contamination_check'
-        self._report_section = HtmlReportSection(HtmlReporterContamination.TITLE)
+        self._report_section = None
 
     def _execute_tool(self):
         """
         Executes this tool.
         :return: None
         """
+        self._report_section = HtmlReportSection(
+            HtmlReporterContamination.TITLE, subtitle=self._input_informs['kraken']['version'])
         self.__add_species_table()
         self.__add_detailed_table(self._tool_inputs['TSV'][0].path)
         self.__add_krona_report()
@@ -69,7 +72,7 @@ class HtmlReporterContamination(Tool):
         :param db_path: Database path
         :return: None
         """
-        m = re.match('.*kraken/(\d{4})(\d{2})(\d{2})/abfhpv_lite', os.path.realpath(db_path))
+        m = re.match('.*kraken/(\\d{4})(\\d{2})(\\d{2})/abfhpv.*$', os.path.realpath(db_path))
         if m:
             d = date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
             value = d.strftime('%d-%m-%Y')
@@ -85,10 +88,14 @@ class HtmlReporterContamination(Tool):
         header = ['Species', 'Percentage']
         expected_name, expected_perc = self._input_informs['species']['expected']
         expected_perc = '{:.2f}'.format(float(expected_perc))
-        table_data = [[
-            HtmlTableCell('<i>{}</i>'.format(expected_name), 'green'),
-            HtmlTableCell(expected_perc, 'green')]
+        table_data = [
+            [HtmlElement('th', 'Expected', [('colspan', 2)])],
+            [HtmlTableCell('<i>{}</i>'.format(expected_name), 'green'), HtmlTableCell(expected_perc, 'green')],
+            [HtmlElement('th', 'Contaminants', [('colspan', 2)])]
         ]
+        if (len(self._input_informs['species']['contaminants_fail']) +
+                len(self._input_informs['species']['contaminants_warn']) == 0):
+            table_data.append([HtmlTableCell('None found', attributes=[('colspan', 2)])])
         for species_name, percentage in self._input_informs['species']['contaminants_fail']:
             table_data.append([
                 HtmlTableCell('<i>{}</i>'.format(species_name), 'red'),
