@@ -1,3 +1,4 @@
+import logging
 from typing import List, Tuple, Any, Dict
 
 import os
@@ -6,7 +7,7 @@ import yaml
 from camel.app.command.command import Command
 from camel.app.components.html.htmlelement import HtmlElement
 from camel.app.components.html.htmlreportsection import HtmlReportSection
-from camel.app.error.pipelineexecutionerror import PipelineExecutionError
+from camel.app.error.snakemakeexecutionerror import SnakemakeExecutionError
 from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 
@@ -59,7 +60,7 @@ class SnakePipelineUtils(object):
         return section
 
     @staticmethod
-    def create_empty_report_section(title: str, output_file: str, header_level: int=3) -> None:
+    def create_empty_report_section(title: str, output_file: str, header_level: int = 3) -> None:
         """
         Creates an empty report section.
         :param title: Section title
@@ -95,12 +96,29 @@ class SnakePipelineUtils(object):
         return links
 
     @staticmethod
-    def run_snakemake(snakefile: str, config_data: Dict[str, Any], targets: List[str], working_dir: str,
+    def generate_config_file(config_data: Dict[str, Any], output_dir: str, output_basename: str = 'config.yml') -> str:
+        """
+        Generates a configuration file for Snakemake in YAML file format.
+        :param config_data: Configuration data
+        :param output_dir: Output directory
+        :param output_basename: Output basename
+        :return: Path to config file
+        """
+        config_path = os.path.join(output_dir, output_basename)
+        if not os.path.isdir(output_dir):
+            os.makedirs(output_dir)
+        with open(config_path, 'w') as handle:
+            yaml.dump(config_data, handle)
+        logging.info(f"Configuration file created: {config_path}")
+        return config_path
+
+    @staticmethod
+    def run_snakemake(snakefile: str, config_path: str, targets: List[str], working_dir: str,
                       threads: int = 8) -> None:
         """
         Helper function to run snakemake workflows.
         :param snakefile: Workflow snakefile
-        :param config_data: Configuration data
+        :param config_path: Path to configuration file
         :param targets: Target output files
         :param working_dir: Working directory
         :param threads: Number of threads to use
@@ -108,15 +126,10 @@ class SnakePipelineUtils(object):
         """
         if not os.path.isdir(working_dir):
             os.makedirs(working_dir)
-
-        config_path = os.path.join(working_dir, 'config.yml')
-        with open(config_path, 'w') as handle:
-            yaml.dump(config_data, handle)
-
         command = Command('snakemake --snakefile {} --configfile {} {} --cores {}'.format(
             snakefile, config_path, ' '.join(targets), threads))
         command.run_command(working_dir)
         print(f'Stdout:\n{command.stdout}')
         print(f'Stderr:\n{command.stderr}')
         if command.returncode != 0:
-            raise PipelineExecutionError("Snakemake execution failed")
+            raise SnakemakeExecutionError(command.stdout, command.stderr)
