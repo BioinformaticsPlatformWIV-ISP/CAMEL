@@ -22,6 +22,15 @@ class Filter(Tool, metaclass=abc.ABCMeta):
         super().__init__(*args)
         self._output_file = None
 
+    @property
+    @abc.abstractmethod
+    def full_name(self) -> str:
+        """
+        The full name for the filter.
+        :return: Full name
+        """
+        pass
+
     def _check_input(self):
         """
         Checks the input.
@@ -42,6 +51,7 @@ class Filter(Tool, metaclass=abc.ABCMeta):
         logging.info('{}/{} variants passed {} filtering'.format(nb_of_variants_post, nb_of_variants_pre, self._name))
         self._informs['variants_in'] = nb_of_variants_pre
         self._informs['variants_out'] = nb_of_variants_post
+        self._informs['full_name'] = self.full_name
         self._tool_outputs['VCF_GZ'] = [ToolIOFile(self.output_path)]
 
     @abc.abstractmethod

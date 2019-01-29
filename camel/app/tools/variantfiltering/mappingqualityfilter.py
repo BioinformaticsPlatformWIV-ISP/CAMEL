@@ -21,6 +21,14 @@ class MappingQualityFilter(Filter):
         self.__build_command()
         self._execute_command()
 
+    @property
+    def full_name(self) -> str:
+        """
+        Returns the full name for this filter.
+        :return: Full name
+        """
+        return 'Mapping quality'
+
     def __build_command(self):
         """
         Builds the command for this tool.

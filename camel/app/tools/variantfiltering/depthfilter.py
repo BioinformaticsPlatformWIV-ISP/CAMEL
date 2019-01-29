@@ -14,6 +14,14 @@ class DepthFilter(Filter):
         """
         super(DepthFilter, self).__init__('Variant Filter: Depth', '0.1', camel)
 
+    @property
+    def full_name(self) -> str:
+        """
+        Returns the full name for this filter.
+        :return: Full name
+        """
+        return 'Depth'
+
     def _check_parameters(self):
         """
         Checks the command line parameters.

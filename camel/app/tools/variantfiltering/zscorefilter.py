@@ -1,7 +1,5 @@
 import logging
 import math
-from dataclasses import dataclass
-from typing import List
 
 import os
 import vcf
@@ -9,35 +7,6 @@ import vcf
 from camel.app.command.command import Command
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.tools.variantfiltering.filter import Filter
-
-
-@dataclass(frozen=True)
-class PileupPosition:
-    """
-    This class represent a SNP position.
-    """
-    chrom: str
-    pos: int
-    bases: str
-    actg_counts: List[int]
-
-    @staticmethod
-    def from_pileup_line(line: str) -> 'PileupPosition':
-        """
-        Parses a position from a pileup output line.
-        :param line: Line
-        :return: Position
-        """
-        parts = line.strip().split('\t')
-        actg_counts = [parts[4].upper().count(base) for base in ('A', 'C', 'T', 'G')]
-        return PileupPosition(parts[0], int(parts[1]), parts[4], actg_counts)
-
-    def __str__(self) -> str:
-        """
-        Returns the string representation.
-        :return: String representation
-        """
-        return f"Pos(Chr={self.chrom}, pos={self.pos})"
 
 
 class ZScoreFilter(Filter):
@@ -59,12 +28,20 @@ class ZScoreFilter(Filter):
         """
         super(ZScoreFilter, self).__init__('Variant Filter: Z-score', '0.1', camel)
 
+    @property
+    def full_name(self) -> str:
+        """
+        Returns the full name for this filter.
+        :return: Full name
+        """
+        return 'Z-score'
+
     def _check_input(self):
         """
         Checks the input.
         :return: None
         """
-        if ('BAM' not in self._tool_inputs) or (len(self._tool_inputs['BAM']) == 0):
+        if 'BAM' not in self._tool_inputs:
             raise InvalidInputSpecificationError("No BAM input found")
         super(ZScoreFilter, self)._check_input()
 
@@ -114,24 +91,29 @@ class ZScoreFilter(Filter):
         with open(pileup_file, 'r') as handle:
             content = handle.readlines()
             for line in content:
-                pos = PileupPosition.from_pileup_line(line.strip())
-                x = max(pos.actg_counts)
-                y = sum([x for x in pos.actg_counts if x != max(pos.actg_counts)])
+                parts = line.strip().split('\t')
+                chrom = parts[0]
+                pos = parts[1]
+                bases = parts[4]
+                actg_counts = ZScoreFilter.get_actg_counts(bases)
+                x = max(actg_counts)
+                actg_counts.remove(x)
+                y = sum(actg_counts)
                 zscore = float(x - y) / math.sqrt(x + y)
-                logging.debug('Zscore at position {} = {:.2f}, counts={}, max={}'.format(
-                    pos, zscore, pos.actg_counts, x))
+                logging.debug('Zscore at position {}:{}= {:.2f} {}'.format(chrom, pos, zscore, actg_counts + [x]))
 
                 keep = True
                 if zscore < float(self._parameters['min_zscore'].value):
-                    logging.info("{} does not pass Z score test".format(pos))
+                    logging.info("{}:{} does not pass Z score test".format(chrom, pos))
                     keep = False
 
-                if ('y_multiplier' in self._parameters) and (x < float(self._parameters['y_multiplier'].value) * y):
-                    logging.info("{} does not pass Y multiplier test".format(pos))
-                    keep = False
+                if 'y_multiplier' in self._parameters:
+                    if x < float(self._parameters['y_multiplier'].value) * y:
+                        logging.info("{}:{} does not pass Y multiplier test".format(chrom, pos))
+                        keep = False
 
                 if keep:
-                    kept_positions.append('{}\t{}'.format(pos.chrom, pos.pos))
+                    kept_positions.append('{}\t{}'.format(chrom, pos))
         return kept_positions
 
     def _apply_filter(self):
