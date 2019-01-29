@@ -27,7 +27,7 @@ class HtmlReporterAssembly(Tool):
         Executes this tool.
         :return: None
         """
-        self._report_section = HtmlReportSection('Assembly')
+        self._report_section = HtmlReportSection('Assembly', subtitle=self._input_informs['spades']['version'])
         self.__add_assembly_info()
         self.__add_assembly_download_link()
         self._tool_outputs['VAL_HTML'] = [ToolIOValue(self._report_section, False)]
@@ -45,6 +45,8 @@ class HtmlReporterAssembly(Tool):
             raise InvalidInputSpecificationError("No assembler input found ('ASSEMBLER')")
         if 'quast' not in self._input_informs:
             raise InvalidInputSpecificationError("Quast informs are required ('quast')")
+        if 'spades' not in self._input_informs:
+            raise InvalidInputSpecificationError("SPAdes informs are required ('spades')")
         super()._check_input()
 
     def __add_assembly_info(self):

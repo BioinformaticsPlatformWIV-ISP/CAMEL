@@ -37,6 +37,7 @@ class Tool(object, metaclass=abc.ABCMeta):
         self._camel = camel
         self._tool_service = self.get_tool_service(name, version)
         self._tool_command = self._tool_service.get_tool_command()
+        self._dependencies = self._tool_service.get_dependencies()
         self._parameters = self._tool_service.get_default_parameters()
         self._command = Command()
         self._folder = None
@@ -72,6 +73,29 @@ class Tool(object, metaclass=abc.ABCMeta):
         :return: Informs
         """
         return self._informs
+
+    @property
+    def dependencies(self) -> List[str]:
+        """
+        Returns a list of dependencies for this tool.
+        :return: Dependencies
+        """
+        return self._dependencies
+
+    def get_dependency_version(self, name: str, full: bool = True) -> str:
+        """
+        Returns the version of the given dependency.
+        :param name: Dependency name
+        :param full: If True, the full dependency is returned (along with the name)
+        :return: Dependency version
+        """
+        for full_dependency in self._dependencies:
+            parts = full_dependency.split('/')
+            name_dep = parts[0]
+            if name == name_dep:
+                version = 'default' if len(parts) == 0 else parts[1]
+                return f'{name}/{version}' if full else version
+        raise ValueError(f'Tool {self.name} has no dependency: {name}')
 
     @property
     def stdout(self) -> Optional[str]:
@@ -155,7 +179,7 @@ class Tool(object, metaclass=abc.ABCMeta):
         logging.info("Removing {} parameters".format(len(self._parameters)))
         self._parameters.clear()
 
-    def run(self, folder: str='.') -> None:
+    def run(self, folder: str = '.') -> None:
         """
         Runs this tool.
         :param folder: Folder to run the tool in.
@@ -215,13 +239,9 @@ class Tool(object, metaclass=abc.ABCMeta):
         Builds the dependencies.
         :return: Command to load dependencies
         """
-        dependencies = self._tool_service.get_dependencies()
-        if dependencies is not None:
-            return 'module load ' + dependencies + '; '
-        else:
-            return ''
+        return '' if len(self._dependencies) == 0 else 'module load {}; '.format(' '.join(self._dependencies))
 
-    def _build_options(self, excluded_parameters: List[str]=None, delimiter: str=' ') -> List[str]:
+    def _build_options(self, excluded_parameters: List[str] = None, delimiter: str = ' ') -> List[str]:
         """
         Builds the options string.
         :parameter delimiter: Delimiter between option and value
@@ -237,7 +257,7 @@ class Tool(object, metaclass=abc.ABCMeta):
                 options.append(parameter.option)
         return options
 
-    def _execute_command(self, folder: str=None) -> None:
+    def _execute_command(self, folder: str = None) -> None:
         """
         Executes the command.
         :return: None

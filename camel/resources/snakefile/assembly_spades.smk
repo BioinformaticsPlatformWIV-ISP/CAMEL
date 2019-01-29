@@ -20,7 +20,8 @@ rule Assembly_spades:
         FASTQ_SE_FORWARD=os.path.join(config['working_dir'], OUTPUT_READ_TRIMMING_READS_SE_FWD),
         FASTQ_SE_REVERSE=os.path.join(config['working_dir'], OUTPUT_READ_TRIMMING_READS_SE_REV)
     output:
-        FASTA_Contig=os.path.join(config['working_dir'], 'assembly_spades', 'spades', 'fasta.io')
+        FASTA_Contig=os.path.join(config['working_dir'], 'assembly_spades', 'spades', 'fasta.io'),
+        INFORMS=os.path.join(config['working_dir'], 'assembly_spades', 'spades', 'informs.io')
     params:
         running_dir=os.path.join(config['working_dir'], 'assembly_spades', 'spades'),
         kmers=config['assembly'].get('kmers') if 'assembly' in config else None
@@ -82,6 +83,7 @@ rule Assembly_report:
     """
     input:
         FASTA_Contig=os.path.join(config['working_dir'], 'assembly_spades', 'spades', 'fasta.io'),
+        INFORMS_spades=os.path.join(config['working_dir'], 'assembly_spades', 'spades', 'informs.io'),
         INFORMS_quast=os.path.join(config['working_dir'], 'assembly_spades', 'quast', 'informs.io')
     output:
         VAL_HTML=os.path.join(config['working_dir'], 'assembly_spades', 'report', 'html.io')

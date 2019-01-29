@@ -35,6 +35,7 @@ class SPAdes(Tool):
         self.__build_command()
         self._execute_command()
         self.__set_output()
+        self.__set_informs()
 
     @staticmethod
     def __compose_input_str(input_type, files, ordinal='0'):
@@ -208,3 +209,10 @@ class SPAdes(Tool):
         self._command.command = " ".join([
             self._tool_command, self._input_string, " ".join(self._build_options())
         ])
+
+    def __set_informs(self) -> None:
+        """
+        Sets the informs for this tool.
+        :return: None
+        """
+        self._informs['version'] = self.get_dependency_version('SPAdes')
