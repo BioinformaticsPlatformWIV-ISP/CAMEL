@@ -42,9 +42,10 @@ class GeneDetectionWrapper(object):
         """
         self.__create_input_blast(fasta_path)
         config_data = self.__get_config_data(sample_name, db_data, 'blast')
+        config_file = SnakePipelineUtils.generate_config_file(config_data, self._working_dir)
         output_path = os.path.join(self._working_dir, OUTPUT_GENE_DETECTION_REPORT.format(db='db'))
         SnakePipelineUtils.run_snakemake(
-            SNAKEFILE_GENE_DETECTION, config_data, [output_path], self._working_dir, threads)
+            SNAKEFILE_GENE_DETECTION, config_file, [output_path], self._working_dir, threads)
         self.__set_output(output_path)
 
     def run_workflow_srst2(self, fastq_pe_path: List[str], sample_name: str, db_data: Dict[str, Any],
@@ -59,9 +60,10 @@ class GeneDetectionWrapper(object):
         """
         self.__create_input_srst2(fastq_pe_path)
         config_data = self.__get_config_data(sample_name, db_data, 'srst2')
+        config_file = SnakePipelineUtils.generate_config_file(config_data, self._working_dir)
         output_path = os.path.join(self._working_dir, OUTPUT_GENE_DETECTION_REPORT.format(db='db'))
         SnakePipelineUtils.run_snakemake(
-            SNAKEFILE_GENE_DETECTION, config_data, [output_path], self._working_dir, threads)
+            SNAKEFILE_GENE_DETECTION, config_file, [output_path], self._working_dir, threads)
         self.__set_output(output_path)
 
     def __create_input_blast(self, fasta_path: str) -> None:

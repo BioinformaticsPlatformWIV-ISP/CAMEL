@@ -9,6 +9,7 @@ from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.sequencetyping.sequencetypingutils import SequenceTypingUtils
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
+from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.resources.snakefile import SNAKEFILE_SEQUENCE_TYPING
 from camel.resources.snakefile.assembly_spades import OUTPUT_ASSEMBLY_FASTA
 from camel.resources.snakefile.read_trimming import OUTPUT_READ_TRIMMING_READS_PE
@@ -93,15 +94,12 @@ class SequenceTypingWrapper(object):
         :param db_path: Database path
         :return: Config file path
         """
-        config_path = os.path.join(self._working_dir, 'config_typing.yml')
-        with open(config_path, 'w') as handle:
-            yaml.dump({
+        return SnakePipelineUtils.generate_config_file({
                 'working_dir': self._working_dir,
                 'sample_name': sample_name,
                 'detection_method': detection_method,
                 'sequence_typing': {db_key: db_path}
-            }, handle)
-        return config_path
+            }, self._working_dir)
 
     def __create_blast_input(self, fasta_path: str) -> None:
         """
@@ -136,10 +134,8 @@ class SequenceTypingWrapper(object):
         :return: None
         """
         output_path = os.path.join(self._working_dir, OUTPUT_TYPING_REPORT.format(scheme=db_key))
-        command = Command('snakemake --snakefile {} --configfile {} {} --cores {}'.format(
-            SNAKEFILE_SEQUENCE_TYPING, config_path, output_path, threads
-        ))
-        command.run_command(self._working_dir)
+        SnakePipelineUtils.run_snakemake(
+            SNAKEFILE_SEQUENCE_TYPING, config_path, [output_path], self._working_dir, threads)
         self._output = SequenceTypingWrapper.SequenceTypingOutput(
             report_section=SnakemakeUtils.load_object(output_path)[0].value)
 

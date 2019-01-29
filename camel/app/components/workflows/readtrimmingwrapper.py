@@ -50,9 +50,10 @@ class ReadTrimmingWrapper(object):
                 {'name': os.path.basename(pe_reads[1]), 'path': pe_reads[1]}],
             'read_trimming': {'export_fastq': str(export_fastq)}
         }
+        config_file = SnakePipelineUtils.generate_config_file(config_data, self._working_dir)
         output_path = os.path.join(self._working_dir, OUTPUT_READ_TRIMMING_REPORT)
         SnakePipelineUtils.run_snakemake(
-            SNAKEFILE_READ_TRIMMING, config_data, [output_path], self._working_dir, threads)
+            SNAKEFILE_READ_TRIMMING, config_file, [output_path], self._working_dir, threads)
         self.__set_output(output_path)
 
     def __set_output(self, output_path: str) -> None:

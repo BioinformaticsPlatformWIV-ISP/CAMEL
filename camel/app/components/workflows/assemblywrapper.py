@@ -32,7 +32,7 @@ class AssemblyWrapper(object):
         self._output = None
 
     def run_workflow(self, sample_name: str, reads_pe: List[ToolIOFile], reads_se_fwd: List[ToolIOFile],
-                     reads_se_rev: List[ToolIOFile], kmers: str=None, threads: int=8) -> None:
+                     reads_se_rev: List[ToolIOFile], kmers: str = None, threads: int = 8) -> None:
         """
         Runs the read trimming workflow.
         :param reads_pe: Paired end reads
@@ -45,15 +45,16 @@ class AssemblyWrapper(object):
         """
         self.__prepare_input_files(reads_pe, reads_se_fwd, reads_se_rev)
         config_data = self.__get_config_data(sample_name, kmers)
+        config_file = SnakePipelineUtils.generate_config_file(config_data, self._working_dir)
         output_files = {
             'HTML': os.path.join(self._working_dir, OUTPUT_ASSEMBLY_REPORT),
             'FASTA': os.path.join(self._working_dir, OUTPUT_ASSEMBLY_FASTA)
         }
         SnakePipelineUtils.run_snakemake(
-            SNAKEFILE_ASSEMBLY_SPADES, config_data, list(output_files.values()), self._working_dir, threads)
+            SNAKEFILE_ASSEMBLY_SPADES, config_file, list(output_files.values()), self._working_dir, threads)
         self.__set_output(output_files)
 
-    def __get_config_data(self, sample_name: str, kmers: Optional[str]=None) -> Dict[str, Any]:
+    def __get_config_data(self, sample_name: str, kmers: Optional[str] = None) -> Dict[str, Any]:
         """
         Builds the configuration file to run the assembly workflow.
         :param sample_name: Sample name

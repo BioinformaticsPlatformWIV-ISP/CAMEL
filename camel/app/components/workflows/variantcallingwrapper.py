@@ -89,6 +89,7 @@ class VariantCallingWrapper(object):
         # Create input
         self.__create_input(input_files)
         config_data = self.__get_config_data(sample_name, reference_info, options)
+        config_file = SnakePipelineUtils.generate_config_file(config_data, self._working_dir)
 
         # Execute Snakemake
         output_files = {
@@ -97,7 +98,7 @@ class VariantCallingWrapper(object):
             'INFORMS_MAPPING': os.path.join(self._working_dir, OUTPUT_VARIANT_CALLING_MAPPING_INFORMS)
         }
         SnakePipelineUtils.run_snakemake(
-            SNAKEFILE_VARIANT_CALLING, config_data, list(output_files.values()), self._working_dir, cores)
+            SNAKEFILE_VARIANT_CALLING, config_file, list(output_files.values()), self._working_dir, cores)
 
         # Collect output
         self.__collect_output(output_files)

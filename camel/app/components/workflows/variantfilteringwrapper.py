@@ -3,12 +3,11 @@ from dataclasses import dataclass
 from typing import Dict
 
 import os
-import yaml
 
 from camel.app.camel import Camel
-from camel.app.command.command import Command
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
+from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.app.tools.bcftools.bcftoolsview import BcftoolsView
 from camel.resources.snakefile import SNAKEFILE_VARIANT_FILTERING
 from camel.resources.snakefile.variant_calling import OUTPUT_VARIANT_CALLING_BAM, \
@@ -89,22 +88,16 @@ class VariantFilteringWrapper(object):
         self.__create_input(vcf_gz_file, bam_file)
 
         # Create config
-        config_path = os.path.join(self._working_dir, 'config_variant_filtering.yaml')
-        with open(config_path, 'w') as handle:
-            yaml.dump({
-                'working_dir': self._working_dir,
-                'variant_filtering': filtering_options
-            }, handle)
+        config_path = SnakePipelineUtils.generate_config_file(
+            {'working_dir': self._working_dir, 'variant_filtering': filtering_options}, self._working_dir)
 
         # Execute Snakemake
         output_files = {
             'VCF': os.path.join(self._working_dir, OUTPUT_VARIANT_FILTERING_VCF),
             'STATS': os.path.join(self._working_dir, OUTPUT_VARIANT_FILTERING_STATS)
         }
-        command = Command('snakemake --snakefile {} --configfile {} {} --cores {}'.format(
-            SNAKEFILE_VARIANT_FILTERING, config_path, ' '.join(output_files.values()), cores
-        ))
-        command.run_command(self._working_dir)
+        SnakePipelineUtils.run_snakemake(
+            SNAKEFILE_VARIANT_FILTERING, config_path, list(output_files.values()), self._working_dir, cores)
         self.__set_output(output_files)
 
     def __set_output(self, output_files: Dict[str, str]) -> None:
