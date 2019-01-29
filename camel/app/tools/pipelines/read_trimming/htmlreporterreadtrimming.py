@@ -27,10 +27,10 @@ class HtmlReporterReadTrimming(Tool):
         Executes this tool.
         :return: None
         """
-        self._report_section = HtmlReportSection('Read trimming')
+        self._report_section = HtmlReportSection('Read trimming', subtitle=self._input_informs['trimming']['version'])
         self.__add_fastqc_reports('Pre-trimming', 'pre_trimming', 'HTML_Pre')
         self.__add_trimming_section_pe()
-        if self._parameters['export_fastq'].as_boolean() is True:
+        if self._parameters['export_fastq'] is not None and self._parameters['export_fastq'].as_boolean() is True:
             self.__add_trimmed_read_files()
         else:
             self._report_section.add_text("Trimmed FASTQ files not exported, change pipeline options to include them.")

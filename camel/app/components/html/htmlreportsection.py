@@ -11,17 +11,33 @@ class HtmlReportSection(HtmlElement):
     This class can be used to create a section in the HTML report.
     """
 
-    def __init__(self, title, level=2):
+    def __init__(self, title, level=2, subtitle: str = None):
         """
         Initializes a report section.
         :param title: Section title
         :param level: Header level
+        :param subtitle: Subtitle to put next to the header
         """
         super(HtmlReportSection, self).__init__('div', attributes=[('class', 'report_section')])
         self._title = title
-        if title is not None:
-            self.add_header(title, level)
+        if (title is not None) and (subtitle is not None):
+            self.add_header_with_subtitle(title, level, subtitle)
+        elif title is not None:
+            self.add_header(title, level, subtitle)
         self._files = []
+
+    def add_header_with_subtitle(self, header: str, level: int, subtitle: str) -> None:
+        """
+        Adds a header with a subtitle.
+        :param header: Header
+        :param level: Header level
+        :param subtitle: Subtitle
+        :return: None
+        """
+        with self.get_tag('h{}'.format(str(level))):
+            self.add_text(header + ' ')
+            with self.get_tag('small', [('class', 'header-subtitle')]):
+                self.add_text('({})'.format(subtitle))
 
     @property
     def files(self):
