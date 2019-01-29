@@ -62,6 +62,7 @@ class MainCalling(object):
         """
         # Create config file
         config_data = self.__create_snakemake_config_data()
+        config_file = SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir)
 
         # Copy input BAM file to the right location
         target_dir = os.path.join(self._args.working_dir, 'variant_calling', 'read_mapping')
@@ -72,7 +73,7 @@ class MainCalling(object):
         # Run Snakemake to generate output file
         output_path = os.path.join(self._args.working_dir, OUTPUT_VARIANT_CALLING_UNFILTERED_VCF)
         SnakePipelineUtils.run_snakemake(
-            SNAKEFILE_VARIANT_CALLING, config_data, [output_path], self._args.working_dir, self._args.threads)
+            SNAKEFILE_VARIANT_CALLING, config_file, [output_path], self._args.working_dir, self._args.threads)
 
         # Generate consensus sequence
         if self._args.output_consensus:
@@ -111,9 +112,10 @@ class MainCalling(object):
         :param config_data: Snakemake config data
         :return: None
         """
+        config_file = SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir, 'consensus.yml')
         output_path_consensus = os.path.join(self._args.working_dir, OUTPUT_VARIANT_CALLING_CONSENSUS)
         SnakePipelineUtils.run_snakemake(
-            SNAKEFILE_VARIANT_CALLING, config_data, [output_path_consensus], self._args.working_dir, self._args.threads)
+            SNAKEFILE_VARIANT_CALLING, config_file, [output_path_consensus], self._args.working_dir, self._args.threads)
         fasta_consensus = SnakemakeUtils.load_object(output_path_consensus)[0].path
         shutil.copyfile(fasta_consensus, output_path)
 
