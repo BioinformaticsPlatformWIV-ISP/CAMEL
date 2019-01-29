@@ -2,7 +2,10 @@ import os
 _current_dir = os.path.dirname(os.path.realpath(__file__))
 
 SNAKEFILE_ASSEMBLY_SPADES = os.path.join(_current_dir, 'assembly_spades.smk')
+SNAKEFILE_CONTAMINATION_CHECK_KRAKEN = os.path.join(_current_dir, 'contamination_check_kraken.smk')
 SNAKEFILE_GENE_DETECTION = os.path.join(_current_dir, 'gene_detection.smk')
+SNAKEFILE_ADV_QC = os.path.join(_current_dir, 'quality_checks.smk')
+SNAKEFILE_POINTFINDER = os.path.join(_current_dir, 'pointfinder.smk')
 SNAKEFILE_READ_TRIMMING = os.path.join(_current_dir, 'read_trimming.smk')
 SNAKEFILE_SEQUENCE_TYPING = os.path.join(_current_dir, 'sequence_typing.smk')
 SNAKEFILE_SEQUENCE_TYPING_BLAST = os.path.join(_current_dir, 'sequence_typing_blast.smk')
