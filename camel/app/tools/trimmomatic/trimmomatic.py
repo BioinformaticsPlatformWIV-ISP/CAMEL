@@ -128,6 +128,7 @@ class Trimmomatic(Tool):
         Adds the trimming statistics to the informs.
         :return: None
         """
+        self._informs['version'] = self.get_dependency_version('trimmomatic')
         self._informs['mode'] = self._mode
         for line in self.stdout.splitlines():
             qc_encoding = re.search("Quality encoding detected as (?P<encode>\w+)", line)
