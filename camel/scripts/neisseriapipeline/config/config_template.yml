@@ -1,0 +1,92 @@
+###################
+# General options #
+###################
+pipeline:
+  title: <i>Neisseria meningitidis</i> pipeline
+  name: Neisseria pipeline output
+  version: '{version}'
+
+# Logging variables
+logging: {logging}
+
+# Input files
+sample_name: {sample_name}
+{fastq_key}: {fastq_input}
+
+# Output files
+output_report: {output_report}
+output_tabular: {output_tabular}
+output_dir: {output_dir}
+
+# Working directory
+working_dir: {working_dir}
+
+# Analysis options
+detection_method: {detection_method}
+read_type: {read_type}
+
+#####################
+# Optional analyses #
+#####################
+analyses: {analyses}
+
+#########################
+# Tool specific options #
+#########################
+read_trimming:
+  export_fastq: '{export_fastq}'
+
+contamination_check:
+  db: /data/kraken/latest/abfhpv_lite
+  expected_species: Neisseria meningitidis
+
+expected_gc_content: 51.5
+
+quality_checks:
+  typing_scheme: {qc_typing_scheme}
+
+############################
+# Gene detection databases #
+############################
+gene_detection:
+  argannot:
+    path: /data/sequence_db_new/ARG-ANNOT
+    perc_identity_cutoff: 90
+
+  resfinder:
+    path: /data/sequence_db_new/ResFinder
+    perc_identity_cutoff: 90
+    extra_column: ['Antibiotic(s)', 'antibiotics']
+
+  card:
+    path: /data/sequence_db_new/CARD
+    perc_identity_cutoff: 90
+
+  ncbi_amr:
+    path: /data/sequence_db_new/NCBI_AMR/
+    perc_identity_cutoff: 90
+
+###################
+# Sequence typing #
+###################
+sequence_typing:
+  pora: /db/sequence_typing/neisseria/pora
+  porb: /db/sequence_typing/neisseria/porb
+  bast: /db/sequence_typing/neisseria/bast
+  feta: /db/sequence_typing/neisseria/feta
+  fhbp: /db/sequence_typing/neisseria/fhbp
+  resistance_genes: /db/sequence_typing/neisseria/resistance_genes
+  vaccine_targets: /db/sequence_typing/neisseria/vaccine_targets
+  rplf: /db/sequence_typing/neisseria/rplf
+  mlst: /db/sequence_typing/neisseria/mlst
+  cgmlst: /db/sequence_typing/neisseria/cgmlst
+  serogroup_a: /data/sequence_typing/neisseria/capsule_region_a_serogroup_a
+  serogroup_b: /data/sequence_typing/neisseria/capsule_region_a_serogroup_b
+  serogroup_c: /data/sequence_typing/neisseria/capsule_region_a_serogroup_c
+  serogroup_e: /data/sequence_typing/neisseria/capsule_region_a_serogroup_e
+  serogroup_h: /data/sequence_typing/neisseria/capsule_region_a_serogroup_h
+  serogroup_l: /data/sequence_typing/neisseria/capsule_region_a_serogroup_l
+  serogroup_w: /data/sequence_typing/neisseria/capsule_region_a_serogroup_w
+  serogroup_x: /data/sequence_typing/neisseria/capsule_region_a_serogroup_x
+  serogroup_y: /data/sequence_typing/neisseria/capsule_region_a_serogroup_y
+  serogroup_z: /data/sequence_typing/neisseria/capsule_region_a_serogroup_z
