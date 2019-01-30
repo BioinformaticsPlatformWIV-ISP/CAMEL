@@ -33,7 +33,7 @@ class SequenceTypingBlastHit(SequenceTypingHit):
         self._subject = subject
         self._pident = float(pident) if pident not in ('-', None) else None
         self._type = type_
-        self._slen = float(slen) if slen not in ('-', None) else None
+        self._slen = int(slen) if slen not in ('-', None) else None
         self._sseq = sseq
         self._qsedid = qseqid
         self._qstart = qstart
@@ -180,7 +180,7 @@ class SequenceTypingBlastHit(SequenceTypingHit):
         Returns the subject coverage in the format: {bases_covered}/{subject_length}.
         :return: Length statistic
         """
-        if self._slen == '-':
+        if self._slen in ('-', None):
             return '-'
         return '{}/{}'.format(self.alignment_length, self._slen)
 
