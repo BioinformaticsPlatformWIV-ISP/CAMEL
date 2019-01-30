@@ -14,8 +14,7 @@ from camel.resources.snakefile.gene_detection import INPUT_GENE_DETECTION_FASTA,
 from camel.resources.snakefile.pointfinder import OUTPUT_POINTFINDER_REPORT, OUTPUT_POINTFINDER_REPORT_EMPTY
 from camel.resources.snakefile.quality_checks import OUTPUT_QUALITY_CHECKS_REPORT
 from camel.resources.snakefile.read_trimming import OUTPUT_READ_TRIMMING_REPORT
-from camel.resources.snakefile.sequence_typing import OUTPUT_TYPING_REPORT, OUTPUT_TYPING_REPORT_EMPTY, \
-    get_sequence_typing_report
+from camel.resources.snakefile.sequence_typing import get_sequence_typing_report
 from camel.resources.snakefile.variant_calling import OUTPUT_VARIANT_CALLING_REPORT
 
 #######################
@@ -83,7 +82,7 @@ rule Combine_reports:
         report_resfinder=get_gene_detection_report('resfinder', config),
         report_argannot=get_gene_detection_report('argannot', config),
         report_card=get_gene_detection_report('card', config),
-        report_ncbi_amr=get_gene_detection_report('card', config),
+        report_ncbi_amr=get_gene_detection_report('ncbi_amr', config),
         report_pointfinder=os.path.join(config['working_dir'], OUTPUT_POINTFINDER_REPORT) if 'pointfinder' in config['analyses'] else os.path.join(config['working_dir'], OUTPUT_POINTFINDER_REPORT_EMPTY),
         report_virulence=get_gene_detection_report('virulencefinder', config),
         report_virulence_shiga=get_gene_detection_report('virulencefinder_shiga', config),
@@ -129,7 +128,7 @@ rule Combine_reports:
             ('Advanced QC', 'adv_qc', [input.report_kraken, input.report_adv_qc]),
             ('Variant calling', 'variant', [input.report_variant]),
             ('Resistance characterization', 'res', [input.report_resfinder, input.report_argannot, input.report_card,
-                                                    input.report_pointfinder]),
+                                                    input.report_ncbi_amr, input.report_pointfinder]),
             ('Virulence characterization', 'viru', [input.report_virulence, input.report_virulence_shiga]),
             ('Serotype determination', 'sero', [input.report_serotype_o_type, input.report_serotype_h_type,
                                                 input.report_serotype]),
