@@ -1,3 +1,5 @@
+from typing import Optional
+
 import os
 
 from camel.app.components.html.htmltablecell import HtmlTableCell
@@ -12,7 +14,8 @@ class SequenceTypingBlastHit(SequenceTypingHit):
     _TABLE_COLUMNS = ['Locus', 'Allele', '% Identity', 'HSP/Locus length', 'Type']
     _HTML_COLUMNS = _TABLE_COLUMNS + ['Alignment']
 
-    def __init__(self, locus, allele_id, type_, subject, pident, slen, sseq, qseqid, qstart, qend):
+    def __init__(self, locus: Optional[str], allele_id: Optional[str], type_, subject, pident, slen, sseq, qseqid,
+                 qstart, qend):
         """
         Initializes the hit.
         :param locus: Locus
@@ -28,9 +31,9 @@ class SequenceTypingBlastHit(SequenceTypingHit):
         """
         super().__init__(locus, allele_id)
         self._subject = subject
-        self._pident = float(pident) if pident != '-' else None
+        self._pident = float(pident) if pident not in ('-', None) else None
         self._type = type_
-        self._slen = slen
+        self._slen = float(slen) if slen not in ('-', None) else None
         self._sseq = sseq
         self._qsedid = qseqid
         self._qstart = qstart
@@ -53,7 +56,7 @@ class SequenceTypingBlastHit(SequenceTypingHit):
         except KeyError as err:
             raise ValueError("Cannot create hit from dictionary {} missing - {!r}".format(err, input_dict))
 
-    def to_table_row(self, separator: str='\t'):
+    def to_table_row(self, separator: str = '\t'):
         """
         Converts the hit into a table row.
         :param separator: Separator
@@ -162,12 +165,14 @@ class SequenceTypingBlastHit(SequenceTypingHit):
         return self._pident
 
     @property
-    def subject_coverage(self):
+    def subject_coverage(self) -> float:
         """
         Returns the fraction of the subject that is covered by the alignment.
         :return: % subject covered
         """
-        return 100.0 * float(self.alignment_length) / self._slen
+        if self.subject_length is None:
+            return 0.0
+        return 100.0 * float(self.alignment_length) / self.subject_length
 
     @property
     def length_statistic(self):

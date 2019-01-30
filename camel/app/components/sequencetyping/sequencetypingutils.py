@@ -1,8 +1,8 @@
 import json
 import logging
+import os
 from typing import Tuple, Dict, Any
 
-import os
 import re
 from Bio import SeqIO
 
@@ -16,7 +16,6 @@ class SequenceTypingUtils(object):
     def determine_delimiter(fasta_file):
         """
         Returns the delimiter that is used in the FASTA file. Supported delimiters are '-' and '_'.
-        For example a FASTA file with the first entry '>abcZ_2' will return '_' as the delimiter.
         :param fasta_file: FASTA file
         :return: None
         """
@@ -26,7 +25,7 @@ class SequenceTypingUtils(object):
                 if m is None:
                     raise ValueError("Cannot determine allele delimiter")
                 delimiter = m.group(1)
-                logging.info("Detected delimiter: '{}'".format(delimiter))
+                logging.info("Detected delimited: '{}'".format(delimiter))
                 return delimiter
 
     @staticmethod
