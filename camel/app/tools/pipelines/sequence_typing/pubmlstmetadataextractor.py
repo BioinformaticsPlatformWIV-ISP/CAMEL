@@ -47,7 +47,7 @@ class PubmlstMetadataExtractor(Tool):
         """
         allele_name = '_'.join([name, PubmlstMetadataExtractor.__clean_allele_id(allele_id)])
         try:
-            label, value = PubMLSTParser.parse_page(allele_url)
+            label, value = PubMLSTParser.parse_linked_data(allele_url)
             self.informs[allele_name] = ['{} ({})'.format(label, allele_name), value]
         except RuntimeError as err:
             logging.warning('Cannot retrieve linked data for {} ({}, {})'.format(name, err, allele_url))

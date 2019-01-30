@@ -1,5 +1,11 @@
+from typing import Tuple
+
 import requests
 from bs4 import BeautifulSoup
+
+
+class PubMLSTParsingError(RuntimeError):
+    pass
 
 
 class PubMLSTParser(object):
@@ -8,7 +14,7 @@ class PubMLSTParser(object):
     """
 
     @staticmethod
-    def parse_page(url):
+    def parse_linked_data(url: str) -> Tuple[str, str]:
         """
         Retrieves the linked data from a PubMLST page.
         :param url: URL of the web page to parse
@@ -16,15 +22,15 @@ class PubMLSTParser(object):
         """
         try:
             response = requests.get(url)
-        except:
-            raise RuntimeError("Cannot retrieve url: {}".format(url))
+        except requests.exceptions.ConnectionError as err:
+            raise PubMLSTParsingError(err)
         html = BeautifulSoup(PubMLSTParser.__cleanup_html(response.text), 'html.parser')
         try:
             html_value = html.find(text='Linked data').findNext('dd')
             html_label = html.find(text='Linked data').findNext('dt')
             return PubMLSTParser.__cleanup_label(html_label.text), html_value.text.replace(' PubMLST isolates', '')
         except AttributeError:
-            raise RuntimeError('Cannot find linked data')
+            raise PubMLSTParsingError('Cannot find linked data')
 
     @staticmethod
     def __cleanup_html(html_code):

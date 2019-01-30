@@ -84,7 +84,7 @@ rule Combine_reports:
         report_feta=get_sequence_typing_report('feta', config),
         report_rplf=get_sequence_typing_report('rplf', config),
         report_vaccine_targets=get_sequence_typing_report('vaccine_targets', config),
-        report_resistance_genes=get_sequence_typing_report('resistance_genes', config),
+        report_resistance_genes=os.path.join(config['working_dir'], 'typing', 'resistance_genes', 'metadata', 'report.html') if 'resistance_genes' in config['analyses'] else os.path.join(config['working_dir'], OUTPUT_TYPING_REPORT_EMPTY.format(scheme='resistance_genes')),
         report_fhbp=get_sequence_typing_report('fhbp', config),
         report_bast=get_sequence_typing_report('bast', config),
         report_serogroup=os.path.join(config['working_dir'], OUTPUT_SEROGROUP_DETERMINATION_REPORT if 'serogroup' in config['analyses'] else OUTPUT_SEROGROUP_DETERMINATION_REPORT_EMPTY),
@@ -212,3 +212,28 @@ rule Collect_read_mapping_input:
         else:
             output_dict = {'FASTQ_SE': SnakemakeUtils.load_object(input.IONTORRENT_FASTQ_SE)}
         SnakemakeUtils.dump_object(output_dict, output[0])
+
+
+rule Parse_additional_resistance_gene_metadata:
+    """
+    This rule is used to add resistance gene metadata for penA and rpoB genes.
+    The data is parsed from the PubMLST webpage.
+    """
+    input:
+        hits=os.path.join(config['working_dir'], OUTPUT_TYPING_HITS.format(scheme='resistance_genes', locus_type='DNA', detection_method=config['detection_method'])),
+        VAL_HTML=get_sequence_typing_report('resistance_genes', config),
+        INFORMS_pena=os.path.join(config['working_dir'], 'typing', 'resistance_genes', 'DNA', 'penA', 'informs.io'),
+        INFORMS_rpob=os.path.join(config['working_dir'], 'typing', 'resistance_genes', 'DNA', 'rpoB', 'informs.io')
+    output:
+        VAL_HTML=os.path.join(config['working_dir'], 'typing', 'resistance_genes', 'metadata', 'report.html')
+    params:
+        working_dir=os.path.join(config['working_dir'], 'typing', 'resistance_genes', 'metadata'),
+        loci='penA, rpoB'
+    run:
+        from camel.app.tools.pipelines.neisseria.resistancemetadataextractor import ResistanceMetadataExtractor
+        extractor = ResistanceMetadataExtractor(camel)
+        SnakemakeUtils.add_pickle_inputs(extractor, input)
+        step = Step(rule, extractor, camel, params.working_dir, config)
+        extractor.update_parameters(loci=params.loci)
+        step.run_step()
+        SnakemakeUtils.dump_tool_outputs(extractor, output)
