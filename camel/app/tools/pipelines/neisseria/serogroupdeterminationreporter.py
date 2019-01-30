@@ -23,11 +23,11 @@ class SerogroupDeterminationReporter(Tool):
         Executes this tool.
         :return: None
         """
-        detected_serogroup = self._input_informs['analysis']['serogroups_sorted'][0]['name']
+        detected_serogroup = self._input_informs['analysis']['detected_serogroup']
         self._section.add_paragraph(f'Detected serogroup: <b>{detected_serogroup}</b>')
         self.__add_table_detected_loci()
         self._tool_outputs['VAL_HTML'] = [ToolIOValue(self._section)]
-    
+
     def __add_table_detected_loci(self) -> None:
         """
         Adds the table with the detected loci.

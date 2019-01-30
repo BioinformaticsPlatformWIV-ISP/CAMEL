@@ -51,6 +51,8 @@ class SerogroupDetermination(Tool):
         # Sort serogroups based on category and fraction of perfect hits
         serogroup_stats.sort(key=lambda x: (x['category'], -x['fraction_perfect']))
         self._informs['serogroups_sorted'] = serogroup_stats
+        self._informs['detected_serogroup'] = serogroup_stats[0]['name'] if \
+            serogroup_stats[0]['fraction_perfect'] >= 0.6 else 'NA'
 
     def __get_detection_category(self, hits: List[SequenceTypingBlastHit]) -> DetectionCategory:
         """
