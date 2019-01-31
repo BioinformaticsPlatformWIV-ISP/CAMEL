@@ -1,5 +1,7 @@
 import os
 
+
+FOLDER_TRIMMING = 'read_trimming'
 OUTPUT_READ_TRIMMING_REPORT = os.path.join('read_trimming', 'report', 'html.io')
 OUTPUT_READ_TRIMMING_SUMMARY = os.path.join('read_trimming', 'summary', 'summary_out.tsv')
 OUTPUT_READ_TRIMMING_READS_PE = os.path.join('read_trimming', 'trimmomatic', 'fastq-pe.io')

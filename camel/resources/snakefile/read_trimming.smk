@@ -20,7 +20,7 @@ rule Pickle_fastq_input:
     Creates pickled FASTQ PE input.
     """
     input:
-        FASTQ=[x['path'] for x in config['fastq_pe']]
+        FASTQ=[x['path'] for x in config.get('fastq_pe', [])]
     output:
         FASTQ_PE=os.path.join(config['working_dir'], 'read_trimming', 'input', 'fastq-pe.io')
     run:
@@ -108,8 +108,8 @@ rule Trimming_report:
         running_dir=os.path.join(config['working_dir'], 'read_trimming', 'report'),
         export_fastq=config['read_trimming'].get('export_fastq', 'false')
     run:
-        from camel.app.tools.pipelines.read_trimming.htmlreporterreadtrimming import HtmlReporterReadTrimming
-        reporter = HtmlReporterReadTrimming(camel)
+        from camel.app.tools.pipelines.read_trimming.reportertrimming import ReporterTrimming
+        reporter = ReporterTrimming(camel)
         SnakemakeUtils.add_pickle_inputs(reporter, input)
         step = Step(rule, reporter, camel, params.running_dir, config)
         reporter.update_parameters(export_fastq=params.export_fastq)

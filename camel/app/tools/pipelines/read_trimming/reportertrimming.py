@@ -7,7 +7,7 @@ from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.tools.tool import Tool
 
 
-class HtmlReporterReadTrimming(Tool):
+class ReporterTrimming(Tool):
     """
     Tool to create HTML reports for the read trimming.
     """
@@ -18,7 +18,7 @@ class HtmlReporterReadTrimming(Tool):
         :param camel: CAMEL instance
         :return: None
         """
-        super().__init__('Trimming: Reporter', '0.1', camel)
+        super().__init__('Trimming: reporter', '0.1', camel)
         self.__sub_folder = 'read_trimming'
         self._report_section = None
 
@@ -79,15 +79,15 @@ class HtmlReporterReadTrimming(Tool):
         """
         self._report_section.add_header('Read trimming', 3)
         table_data = [
-            ['Input reads pairs:', HtmlReporterReadTrimming.__reformat_inform(
+            ['Input reads pairs:', ReporterTrimming.__reformat_inform(
                 self._input_informs['trimming']['paired_reads_in'])],
-            ['Both surviving:', HtmlReporterReadTrimming.__reformat_inform(
+            ['Both surviving:', ReporterTrimming.__reformat_inform(
                 self._input_informs['trimming']['paired_reads_out'])],
-            ['Forward only surviving:', HtmlReporterReadTrimming.__reformat_inform(
+            ['Forward only surviving:', ReporterTrimming.__reformat_inform(
                 self._input_informs['trimming']['forward_only_reads'])],
-            ['Reverse only surviving:', HtmlReporterReadTrimming.__reformat_inform(
+            ['Reverse only surviving:', ReporterTrimming.__reformat_inform(
                 self._input_informs['trimming']['reverse_only_reads'])],
-            ['Dropped:', HtmlReporterReadTrimming.__reformat_inform(
+            ['Dropped:', ReporterTrimming.__reformat_inform(
                 self._input_informs['trimming']['reads_drop'])]
         ]
         self._report_section.add_table(table_data, table_attributes=[('class', 'information')])
