@@ -48,7 +48,7 @@ class SPAdes(Tool):
         """
         input_type = input_type.lower()
         if input_type == 'se':
-            return "--s{} {}".format(ordinal, files)
+            return "--s{} {}".format(ordinal, files[0])
 
         elif input_type in ('pe', 'mp', 'hqmp'):
             return "--{0}{1}-1 {2} --{0}{1}-2 {3}".format(input_type, ordinal, files[0], files[1])
