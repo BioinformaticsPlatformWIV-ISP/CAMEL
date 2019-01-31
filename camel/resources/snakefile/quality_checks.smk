@@ -7,6 +7,7 @@ from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile.assembly_spades import OUTPUT_ASSEMBLY_FASTA
 from camel.resources.snakefile.quality_checks import OUTPUT_QUALITY_CHECKS_REPORT, OUTPUT_QUALITY_CHECKS_SUMMARY
+from camel.resources.snakefile.read_trimming_iontorrent import get_trimming_folder
 from camel.resources.snakefile.sequence_typing import OUTPUT_TYPING_HITS
 
 
@@ -15,8 +16,8 @@ rule FastQC_additional_checks:
     Tests additional quality metrics based on the FastQC data file output.
     """
     input:
-        TXT=os.path.join(config['working_dir'], 'read_trimming{}', 'fastqc-post', 'txt.io').format('' if  config.get('read_type', 'illumina') == 'illumina' else '_se'),
-        TXT_RAW=os.path.join(config['working_dir'], 'read_trimming{}', 'fastqc-pre', 'txt.io').format('' if  config.get('read_type', 'illumina') == 'illumina' else '_se')
+        TXT=os.path.join(get_trimming_folder(config), 'fastqc-post', 'txt.io'),
+        TXT_RAW=os.path.join(get_trimming_folder(config), 'fastqc-pre', 'txt.io')
     output:
         INFORMS=os.path.join(config['working_dir'], 'quality_checks', 'fastqc_checks', 'informs.io')
     params:

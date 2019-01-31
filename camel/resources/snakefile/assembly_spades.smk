@@ -7,18 +7,45 @@ from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile.assembly_spades import OUTPUT_ASSEMBLY_SUMMARY
 from camel.resources.snakefile.read_trimming import OUTPUT_READ_TRIMMING_READS_PE, OUTPUT_READ_TRIMMING_READS_SE_FWD, \
     OUTPUT_READ_TRIMMING_READS_SE_REV
+from camel.resources.snakefile.read_trimming_iontorrent import OUTPUT_TRIMMING_IT_READS
 
 camel = Camel.get_instance()
 
+
+rule Assembly_select_fastq_input:
+    """
+    This rule is used to select the assembly input based on the read type input specified in the config.
+    'illumina' (default): Trimmed PE reads + orphaned SE reads (optional)
+    'iontorrent': Trimmed SE reads
+    """
+    input:
+        ILLUMINA_FASTQ_PE=os.path.join(config['working_dir'], OUTPUT_READ_TRIMMING_READS_PE) if config.get('read_type', 'illumina') == 'illumina' else [],
+        ILLUMINA_FASTQ_SE_FWD=os.path.join(config['working_dir'], OUTPUT_READ_TRIMMING_READS_SE_FWD) if config.get('read_type', 'illumina') == 'illumina' else [],
+        ILLUMINA_FASTQ_SE_REV=os.path.join(config['working_dir'], OUTPUT_READ_TRIMMING_READS_SE_REV) if config.get('read_type', 'illumina') == 'illumina' else [],
+        IONTORRENT_FASTQ_SE=os.path.join(config['working_dir'], OUTPUT_TRIMMING_IT_READS) if config.get('read_type', 'illumina') == 'iontorrent' else []
+    output:
+        os.path.join(config['working_dir'], 'assembly_spades', 'spades', 'input.io')
+    params:
+        read_type=config.get('read_type', 'illumina')
+    run:
+        output_dict = {}
+        if params.read_type == 'illumina':
+            output_dict = {'FASTQ_PE_1': SnakemakeUtils.load_object(input.ILLUMINA_FASTQ_PE)}
+            se_reads = SnakemakeUtils.load_object(input.ILLUMINA_FASTQ_SE_FWD) + \
+                       SnakemakeUtils.load_object(input.ILLUMINA_FASTQ_SE_REV)
+            if len(se_reads) > 0:
+                output_dict['FASTQ_SE_1'] = se_reads
+        else:
+            tmp = SnakemakeUtils.load_object(input.IONTORRENT_FASTQ_SE)
+            output_dict = {'FASTQ_SE_1': SnakemakeUtils.load_object(input.IONTORRENT_FASTQ_SE)}
+        SnakemakeUtils.dump_object(output_dict, output[0])
 
 rule Assembly_spades:
     """
     De-novo assembly using SPAdes.
     """
     input:
-        FASTQ_PE=os.path.join(config['working_dir'], OUTPUT_READ_TRIMMING_READS_PE),
-        FASTQ_SE_FORWARD=os.path.join(config['working_dir'], OUTPUT_READ_TRIMMING_READS_SE_FWD),
-        FASTQ_SE_REVERSE=os.path.join(config['working_dir'], OUTPUT_READ_TRIMMING_READS_SE_REV)
+        INPUT_DICT=os.path.join(config['working_dir'], 'assembly_spades', 'spades', 'input.io')
     output:
         FASTA_Contig=os.path.join(config['working_dir'], 'assembly_spades', 'spades', 'fasta.io'),
         INFORMS=os.path.join(config['working_dir'], 'assembly_spades', 'spades', 'informs.io')
@@ -29,11 +56,7 @@ rule Assembly_spades:
     run:
         from camel.app.tools.spades.spades import SPAdes
         spades = SPAdes(camel)
-        spades.add_input_files({
-            'FASTQ_PE_1': SnakemakeUtils.load_object(input.FASTQ_PE),
-            'FASTQ_PE-S_1': SnakemakeUtils.load_object(input.FASTQ_SE_FORWARD) +
-                            SnakemakeUtils.load_object(input.FASTQ_SE_REVERSE)
-        })
+        spades.add_input_files(SnakemakeUtils.load_object(input.INPUT_DICT))
         step = Step(rule, spades, camel, params.running_dir, config)
         if params.kmers is not None:
             spades.update_parameters(kmers=params.kmers)

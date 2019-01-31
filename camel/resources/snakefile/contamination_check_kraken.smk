@@ -9,7 +9,7 @@ from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile.contamination_check_kraken import OUTPUT_CONTAMINATION_SUMMARY, \
     OUTPUT_CONTAMINATION_CHECK_REPORT_EMPTY, OUTPUT_CONTAMINATION_CHECK_REPORT
 from camel.resources.snakefile.read_trimming import OUTPUT_READ_TRIMMING_READS_PE
-
+from camel.resources.snakefile.read_trimming_iontorrent import OUTPUT_TRIMMING_IT_READS
 
 rule Contamination_check_get_db:
     """
@@ -28,7 +28,7 @@ rule Contamination_check_kraken:
     """
     input:
         FASTQ_PE=os.path.join(config['working_dir'], OUTPUT_READ_TRIMMING_READS_PE) if config.get('read_type', 'illumina') == 'illumina' else [],
-        FASTQ=os.path.join(config['working_dir'], OUTPUT_READ_TRIMMING_SE_READS) if config.get('read_type', 'illumina') == 'iontorrent' else [],
+        FASTQ=os.path.join(config['working_dir'], OUTPUT_TRIMMING_IT_READS) if config.get('read_type', 'illumina') == 'iontorrent' else [],
         DB=os.path.join(config['working_dir'], 'contamination_check', 'db.io')
     output:
         TSV=os.path.join(config['working_dir'], 'contamination_check', 'kraken', 'tsv.io'),
@@ -45,7 +45,6 @@ rule Contamination_check_kraken:
                 continue
             if len(input[key]) > 0:
                 kraken.add_input_files({key: SnakemakeUtils.load_object(input[key])})
-        print(kraken._tool_inputs)
         step = Step(rule, kraken, camel, params.running_dir, config)
         kraken.update_parameters(threads=threads)
         step.run_step()

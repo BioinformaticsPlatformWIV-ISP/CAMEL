@@ -11,6 +11,7 @@ from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile.read_trimming import OUTPUT_READ_TRIMMING_READS_PE, OUTPUT_READ_TRIMMING_READS_SE_FWD, \
     OUTPUT_READ_TRIMMING_READS_SE_REV
+from camel.resources.snakefile.read_trimming_iontorrent import OUTPUT_TRIMMING_IT_READS
 from camel.resources.snakefile.variant_calling import OUTPUT_VARIANT_CALLING_SUMMARY, \
     OUTPUT_VARIANT_CALLING_UNFILTERED_VCF, OUTPUT_VARIANT_CALLING_UNFILTERED_VCF_GZ, OUTPUT_VARIANT_CALLING_REPORT, \
     OUTPUT_VARIANT_CALLING_BAM, OUTPUT_VARIANT_CALLING_CONSENSUS, OUTPUT_VARIANT_CALLING_MAPPING_INFORMS
@@ -42,7 +43,8 @@ rule Variant_calling_collect_input:
     input:
         ILLUMINA_FASTQ_PE = os.path.join(config['working_dir'], OUTPUT_READ_TRIMMING_READS_PE) if config.get('read_type', 'illumina') == 'illumina' else [],
         ILLUMINA_FASTQ_SE_FWD = os.path.join(config['working_dir'], OUTPUT_READ_TRIMMING_READS_SE_FWD) if config.get('read_type', 'illumina') == 'illumina' else [],
-        ILLUMINA_FASTQ_SE_REV = os.path.join(config['working_dir'], OUTPUT_READ_TRIMMING_READS_SE_REV) if config.get('read_type', 'illumina') == 'illumina' else []
+        ILLUMINA_FASTQ_SE_REV = os.path.join(config['working_dir'], OUTPUT_READ_TRIMMING_READS_SE_REV) if config.get('read_type', 'illumina') == 'illumina' else [],
+        IONTORRENT_FASTQ_SE=os.path.join(config['working_dir'], OUTPUT_TRIMMING_IT_READS) if config.get('read_type', 'illumina') == 'iontorrent' else []
     output:
         FASTQ=os.path.join(config['working_dir'], 'variant_calling', 'input-fastq.io')
     params:
