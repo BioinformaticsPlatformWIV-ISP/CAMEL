@@ -2,6 +2,7 @@ from camel.app.camel import Camel
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile.sequence_typing import OUTPUT_TYPING_HITS
+from camel.scripts.neisseriapipeline.snakefile.serogroup_determination import OUTPUT_SEROGROUP_DETERMINATION_SUMMARY
 
 camel = Camel.get_instance()
 
@@ -60,3 +61,21 @@ rule Serogroup_determination_report_empty:
     run:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         SnakePipelineUtils.create_empty_report_section('Serogroup determination', output.VAL_HTML)
+
+
+rule Serogroup_determination_summary:
+    """
+    Collects the summary information for the serogroup determination.
+    """
+    input:
+        INFORMS_analysis=os.path.join(config['working_dir'], 'serogroup_determination', 'informs.io')
+    output:
+        os.path.join(config['working_dir'], OUTPUT_SEROGROUP_DETERMINATION_SUMMARY)
+    run:
+        informs = SnakemakeUtils.load_object(input.INFORMS_analysis)
+        with open(output[0], 'w') as handle:
+            for k, v in [('detected_serogroup', informs['detected_serogroup']),
+                         ('serogroup_perfect_hits', informs['serogroups_sorted'][0]['nb_perfect']),
+                         ('serogroup_total_loci', informs['serogroups_sorted'][0]['nb_loci_total'])]:
+                handle.write('\t'.join([k, str(v)]))
+                handle.write('\n')
