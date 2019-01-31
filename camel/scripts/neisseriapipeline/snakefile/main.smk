@@ -6,17 +6,18 @@ from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.resources.snakefile import SNAKEFILE_READ_TRIMMING, SNAKEFILE_ASSEMBLY_SPADES, SNAKEFILE_GENE_DETECTION, \
     SNAKEFILE_SEQUENCE_TYPING, SNAKEFILE_CONTAMINATION_CHECK_KRAKEN, SNAKEFILE_ADV_QC
-from camel.resources.snakefile.assembly_spades import OUTPUT_ASSEMBLY_REPORT, OUTPUT_ASSEMBLY_FASTA
+from camel.resources.snakefile.assembly_spades import OUTPUT_ASSEMBLY_REPORT, OUTPUT_ASSEMBLY_FASTA, \
+    OUTPUT_ASSEMBLY_SUMMARY
 from camel.resources.snakefile.contamination_check_kraken import OUTPUT_CONTAMINATION_CHECK_REPORT, \
-    OUTPUT_CONTAMINATION_CHECK_REPORT_EMPTY
+    OUTPUT_CONTAMINATION_CHECK_REPORT_EMPTY, OUTPUT_CONTAMINATION_SUMMARY
 from camel.scripts.neisseriapipeline import SNAKEFILE_SEROGROUP_DETERMINATION
 from camel.scripts.neisseriapipeline.snakefile.serogroup_determination import OUTPUT_SEROGROUP_DETERMINATION_REPORT, \
-    OUTPUT_SEROGROUP_DETERMINATION_REPORT_EMPTY
-from camel.resources.snakefile.gene_detection import INPUT_GENE_DETECTION_FASTA, get_gene_detection_report
-from camel.resources.snakefile.quality_checks import OUTPUT_QUALITY_CHECKS_REPORT
-from camel.resources.snakefile.read_trimming import OUTPUT_READ_TRIMMING_REPORT
-from camel.resources.snakefile.sequence_typing import get_sequence_typing_report
-
+    OUTPUT_SEROGROUP_DETERMINATION_REPORT_EMPTY, OUTPUT_SEROGROUP_DETERMINATION_SUMMARY
+from camel.resources.snakefile.gene_detection import INPUT_GENE_DETECTION_FASTA, get_gene_detection_report, \
+    OUTPUT_GENE_DETECTION_SUMMARY
+from camel.resources.snakefile.quality_checks import OUTPUT_QUALITY_CHECKS_REPORT, OUTPUT_QUALITY_CHECKS_SUMMARY
+from camel.resources.snakefile.read_trimming import OUTPUT_READ_TRIMMING_REPORT, OUTPUT_READ_TRIMMING_SUMMARY
+from camel.resources.snakefile.sequence_typing import get_sequence_typing_report, OUTPUT_TYPING_SUMMARY
 
 #######################
 # Included Snakefiles #
@@ -168,6 +169,25 @@ rule Combine_summary_files:
     """
     input:
         os.path.join(config['working_dir'], 'summary', 'summary-init.tsv'),
+        os.path.join(config['working_dir'], OUTPUT_READ_TRIMMING_SUMMARY),
+        os.path.join(config['working_dir'], OUTPUT_ASSEMBLY_SUMMARY),
+        os.path.join(config['working_dir'], OUTPUT_QUALITY_CHECKS_SUMMARY),
+        os.path.join(config['working_dir'], OUTPUT_CONTAMINATION_SUMMARY) if 'kraken' in config['analyses'] else [],
+        os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_SUMMARY.format(db='resfinder')) if 'resfinder' in config['analyses'] else [],
+        os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_SUMMARY.format(db='card')) if 'card' in config['analyses'] else [],
+        os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_SUMMARY.format(db='argannot')) if 'argannot' in config['analyses'] else [],
+        os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_SUMMARY.format(db='ncbi_amr')) if 'ncbi_amr' in config['analyses'] else [],
+        os.path.join(config['working_dir'], OUTPUT_TYPING_SUMMARY.format(scheme='mlst')) if 'mlst' in config['analyses'] else [],
+        os.path.join(config['working_dir'], OUTPUT_TYPING_SUMMARY.format(scheme='rplf')) if 'rplf' in config['analyses'] else [],
+        os.path.join(config['working_dir'], OUTPUT_TYPING_SUMMARY.format(scheme='bast')) if 'bast' in config['analyses'] else [],
+        os.path.join(config['working_dir'], OUTPUT_TYPING_SUMMARY.format(scheme='pora')) if 'pora' in config['analyses'] else [],
+        os.path.join(config['working_dir'], OUTPUT_TYPING_SUMMARY.format(scheme='porb')) if 'porb' in config['analyses'] else [],
+        os.path.join(config['working_dir'], OUTPUT_TYPING_SUMMARY.format(scheme='feta')) if 'feta' in config['analyses'] else [],
+        os.path.join(config['working_dir'], OUTPUT_TYPING_SUMMARY.format(scheme='fhbp')) if 'fhbp' in config['analyses'] else [],
+        os.path.join(config['working_dir'], OUTPUT_TYPING_SUMMARY.format(scheme='resistance_genes')) if 'resistance_genes' in config['analyses'] else [],
+        os.path.join(config['working_dir'], OUTPUT_TYPING_SUMMARY.format(scheme='vaccine_targets')) if 'vaccine_targets' in config['analyses'] else [],
+        os.path.join(config['working_dir'], OUTPUT_TYPING_SUMMARY.format(scheme='cgmlst')) if 'cgmlst' in config['analyses'] else [],
+        os.path.join(config['working_dir'], OUTPUT_SEROGROUP_DETERMINATION_SUMMARY)
     output:
         config.get('output_tabular')
     run:
