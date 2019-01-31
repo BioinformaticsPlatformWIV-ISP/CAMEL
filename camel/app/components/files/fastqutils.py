@@ -204,15 +204,20 @@ class FastqUtils(object):
             FastqUtils._flush_se_reads(read2_dict, se_outf)
 
     @staticmethod
-    def get_sample_name(fastq_path: str) -> str:
+    def get_sample_name(fastq_path: str, paired: bool = True) -> str:
         """
         Returns the sample name based on the given reads. It tries to match the following formats(in this order):
         - Sample - Name_S\d + _L\d + _R[12]_\d + .fastq(e.g.: S15BD00757_S20_L001_R2_001.fastq)
         - Sample - Name_1.fastq, Sample - Name_2.fastq(e.g.: reads_1.fastq)
         :param fastq_path: FASTQ path
+        :param paired: If True the input read is paired
         :return: Sample name
         """
         basename = os.path.basename(fastq_path)
+        if not paired:
+            for ext in ('.gz', '.fastq', '.fq'):
+                basename = basename.replace(ext, '')
+            return basename
         m = re.match(r'(.*?)(_S\d+)?(_L\d+)?_R[12]_\d+.[fastq]+(.gz)?$', basename)
         if m:
             return m.group(1)
