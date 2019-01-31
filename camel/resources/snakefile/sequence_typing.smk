@@ -228,7 +228,7 @@ rule Sequence_typing_dump_summary_info:
     input:
         hits_nucl=os.path.join(config['working_dir'], 'typing', '{scheme}', 'DNA', 'hits-url.io'),
         hits_pept=os.path.join(config['working_dir'], 'typing', '{scheme}', 'peptide', 'hits-url.io'),
-        INFORMS_ST=lambda wildcards: os.path.join(config['working_dir'], 'typing', wildcards.scheme, 'informs-st.io') if has_profiles(SCHEMES, wildcards.scheme) else []
+        INFORMS_ST=lambda wildcards: os.path.join(config['working_dir'], 'typing', wildcards.scheme, 'informs-st.io') if SequenceTypingUtils.has_profiles(SCHEMES, wildcards.scheme) else []
     output:
         os.path.join(config['working_dir'], OUTPUT_TYPING_SUMMARY)
     params:
