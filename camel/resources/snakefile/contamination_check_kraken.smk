@@ -36,6 +36,7 @@ rule Contamination_check_kraken:
     params:
         running_dir=os.path.join(config['working_dir'], 'contamination_check', 'kraken')
     threads: 8
+    priority: 1
     run:
         from camel.app.tools.kraken.kraken import Kraken
         kraken = Kraken(camel)
