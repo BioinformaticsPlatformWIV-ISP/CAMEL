@@ -20,7 +20,7 @@ class FileSystemHelper(object):
         :return: URL- and filename friendly value
         """
         value = value.replace(' ', '_')
-        return "".join([c for c in value if re.match(r'[\w\-_]', c)])
+        return "".join([c for c in value if re.match(r'[\w\-_\\.]', c)])
 
     @staticmethod
     def get_file_with_extension(input_folder: str, extension: str) -> str:
