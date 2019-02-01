@@ -5,6 +5,7 @@ import os
 import yaml
 
 from camel.app.command.command import Command
+from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.components.html.htmlelement import HtmlElement
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.error.snakemakeexecutionerror import SnakemakeExecutionError
@@ -73,13 +74,15 @@ class SnakePipelineUtils(object):
         SnakemakeUtils.dump_object([ToolIOValue(section)], output_file)
 
     @staticmethod
-    def symlink_input_files(output_dir: str, file_paths: List[str], file_names: List[str]) -> List[str]:
+    def symlink_input_files(output_dir: str, file_paths: List[str], file_names: List[str], sanitize: bool = False) ->\
+            List[str]:
         """
         Creates symlinks with the given names for the given files.
         This can be used for files that come from Galaxy that have a fixed name (dataset_XXXXX.dat).
         :param output_dir: Directory to save symlinks
         :param file_paths: Input file paths
         :param file_names: Input file names
+        :param sanitize: If True, file names are sanitized
         :return: List of absolute paths to symlinks
         """
         if len(file_names) != len(file_paths):
@@ -88,7 +91,7 @@ class SnakePipelineUtils(object):
             os.makedirs(output_dir)
         links = []
         for path, name in zip(file_paths, file_names):
-            link_path = os.path.join(output_dir, name)
+            link_path = os.path.join(output_dir, name if sanitize is False else FileSystemHelper.make_valid(name))
             if os.path.exists(link_path):
                 os.remove(link_path)
             os.symlink(path, link_path)
