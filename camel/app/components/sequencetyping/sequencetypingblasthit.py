@@ -216,6 +216,13 @@ class SequenceTypingBlastHit(SequenceTypingHit):
         """
         return (self.percent_identity == 100.0) and (self._slen == self.alignment_length)
 
+    def is_full_length(self) -> bool:
+        """
+        Returns true if this is a full length hit.
+        :return: True if the hit is full length
+        """
+        return self.subject_coverage == 100.0
+
     @property
     def color(self):
         """

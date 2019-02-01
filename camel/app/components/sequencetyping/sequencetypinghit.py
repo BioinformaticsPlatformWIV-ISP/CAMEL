@@ -117,3 +117,20 @@ class SequenceTypingHit(metaclass=abc.ABCMeta):
         :return: True if perfect
         """
         pass
+
+    @abc.abstractmethod
+    def is_full_length(self) -> bool:
+        """
+        Returns true if this is a full length hit.
+        :return: True if full length
+        """
+        pass
+
+    @property
+    @abc.abstractmethod
+    def color(self) -> str:
+        """
+        Returns the color for this hit.
+        :return: Color
+        """
+        pass

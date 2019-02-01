@@ -34,7 +34,7 @@ class SequenceTypingSRST2Hit(SequenceTypingHit):
         """
         return SequenceTypingSRST2Hit(locus, '-', '-', '-', '-')
 
-    def to_table_row(self, separator: Optional[str]='\t'):
+    def to_table_row(self, separator: Optional[str] = '\t'):
         """
         Returns the hit as a table row.
         :param separator: Separator for the table row
@@ -57,7 +57,7 @@ class SequenceTypingSRST2Hit(SequenceTypingHit):
         """
         return [
             self.locus,
-            self.get_allele_id_cell(),
+            HtmlTableCell(self.allele_id, self.color, link=self.allele_page_url),
             self._mismatches,
             self._uncertainty,
             '{:.2f}'.format(float(self._depth)) if self._depth != '-' else '-'
@@ -77,20 +77,20 @@ class SequenceTypingSRST2Hit(SequenceTypingHit):
         """
         return self._TABLE_COLUMNS
 
-    def get_allele_id_cell(self):
+    @property
+    def color(self) -> str:
         """
-        Returns the cell containing the allele id.
-        :return: HTML cell
+        Returns the color for this hit.
+        :return: Color
         """
         if self.allele_id == '-':
-            color = 'red'
+            return 'red'
         elif self.is_perfect_hit():
-            color = 'green'
+            return 'green'
         elif self._uncertainty == "-":
-            color = 'lightgreen'
+            return 'lightgreen'
         else:
-            color = 'grey'
-        return HtmlTableCell(self.allele_id, color, link=self.allele_page_url)
+            return 'grey'
 
     def is_perfect_hit(self):
         """
@@ -98,6 +98,13 @@ class SequenceTypingSRST2Hit(SequenceTypingHit):
         :return: True if perfect
         """
         return self._mismatches == "0" and self._uncertainty == "-"
+
+    def is_full_length(self) -> bool:
+        """
+        Returns true if this is a full length hit.
+        :return: True if full length
+        """
+        return 'hole' in self._mismatches
 
     def __repr__(self) -> str:
         """

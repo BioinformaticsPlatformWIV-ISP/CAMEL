@@ -62,7 +62,7 @@ class SerogroupDetermination(Tool):
         """
         if all(h.is_perfect_hit() for h in hits):
             return DetectionCategory.ALL_PERFECT
-        elif all(h.subject_coverage == 100.0 for h in hits):
+        elif all(h.is_full_length() for h in hits):
             return DetectionCategory.IMPERFECT_IDENTITY
         elif not any(h.allele_id == '-' for h in hits):
             return DetectionCategory.IMPERFECT_ALL
