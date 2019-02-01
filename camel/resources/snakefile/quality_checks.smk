@@ -62,6 +62,7 @@ rule Read_mapping_assembly:
         INFORMS=os.path.join(config['working_dir'], 'quality_checks', 'read_mapping', 'informs.io')
     params:
         running_dir=os.path.join(config['working_dir'], 'quality_checks', 'read_mapping')
+    priority: 1
     run:
         from camel.app.tools.bowtie2.bowtie2map import Bowtie2Map
         bowtie2_map = Bowtie2Map(camel)

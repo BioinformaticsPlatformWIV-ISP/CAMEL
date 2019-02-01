@@ -59,6 +59,7 @@ rule Trimming_trimmomatic:
         FASTQ_SE_REVERSE=os.path.join(config['working_dir'], OUTPUT_READ_TRIMMING_READS_SE_REV),
         INFORMS=os.path.join(config['working_dir'], OUTPUT_READ_TRIMMING_INFORMS)
     threads: 4
+    priority: 1
     params:
         running_dir=os.path.join(config['working_dir'], 'read_trimming', 'trimmomatic')
     run:

@@ -53,6 +53,7 @@ rule Assembly_spades:
         running_dir=os.path.join(config['working_dir'], 'assembly_spades', 'spades'),
         kmers=config['assembly'].get('kmers') if 'assembly' in config else None
     threads: 8
+    priority: 1
     run:
         from camel.app.tools.spades.spades import SPAdes
         spades = SPAdes(camel)
