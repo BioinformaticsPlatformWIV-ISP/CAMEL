@@ -35,7 +35,7 @@ include: SNAKEFILE_SEQUENCE_TYPING_SRST2
 #########
 # Rules #
 #########
-rule Sequence_typing_extract_schema_info:
+rule Typing_extract_schema_info:
     """
     Extracts the metadata for a scheme.
     """
@@ -53,7 +53,7 @@ rule Sequence_typing_extract_schema_info:
         step.run_step()
         SnakemakeUtils.dump_object(locus_set_manager.informs, output.INFORMS)
 
-rule Sequence_typing_pickle_dump_sequence_type_definitions:
+rule Typing_pickle_dump_sequence_type_definitions:
     """
     Retrieves the sequence type definitions and converts them to CAMEL IO pickles.
     """
@@ -153,13 +153,13 @@ rule Typing_add_allele_page_url:
             # Add the allele url to the hit
             for hit in hits:
                 locus_key = FileSystemHelper.make_valid(hit.value.locus).lower()
-                locus_metadata = metadata_by_locus_name[locus_key]
+                locus_metadata = metadata_by_locus_name[key]
                 hit.value.set_allele_page_url_template(locus_metadata.get('allele_page_url'))
 
             # Export hits
             SnakemakeUtils.dump_object(hits, output.get(f'hits_{key}'))
 
-rule Sequence_typing_create_report:
+rule Typing_create_report:
     """
     Creates a report with the sequence typing output.
     """
@@ -186,7 +186,7 @@ rule Sequence_typing_create_report:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
 
-rule Sequence_typing_create_report_empty:
+rule Typing_create_report_empty:
     """
     Creates an empty sequence typing report when the analysis is disabled.
     """
@@ -200,7 +200,7 @@ rule Sequence_typing_create_report_empty:
         section.add_paragraph('Analysis disabled')
         SnakemakeUtils.dump_object([ToolIOValue(section)], output[0])
 
-rule Sequence_typing_dump_summary_info:
+rule Typing_dump_summary_info:
     """
     Dumps the summary information in tabular format.
     """
