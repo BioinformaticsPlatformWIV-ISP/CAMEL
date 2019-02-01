@@ -1,5 +1,5 @@
 #dependencies: java/jdk-1.8.0_172 gatk/3.7
-dependencies: java/1.8.0_172 gatk/3.7
+dependencies: java/1.8.0_172 gatk/3.7 R_packages/3.5/ggplot2/3.1.0 R_packages/3.5/gplots/3.0.1.1 R_packages/3.5/gsalib/2.1 R_packages/3.5/reshape/0.8.8
 parameters:
   csv_output: {default: true, mandatory: false, option: -csv, value: recal_QC_data.csv}
   pdf_output: {default: true, mandatory: true, option: -plots, value: recal_QC_plots.pdf}

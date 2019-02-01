@@ -6,4 +6,4 @@ parameters:
   output_file_name: {default: true, mandatory: true, option: null, value: oncotator.tsv}
   output_format: {default: false, mandatory: false, option: -o, value: SIMPLE_TSV}
   tx_mode: {default: true, mandatory: false, option: --tx-mode, value: EFFECT}
-tool_command: oncotator
+tool_command: run_oncotator.sh
