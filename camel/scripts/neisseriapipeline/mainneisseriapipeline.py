@@ -87,8 +87,7 @@ class MainNeisseriaPipeline(object):
                 analyses=yaml.dump(analyses),
                 variant_filtering={},
                 qc_typing_scheme='cgmlst' if self._args.cgmlst else 'mlst',
-                export_fastq='true' if self._args.report_include_fastq else 'false',
-                export_bam='true' if self._args.report_include_bam else 'false'
+                export_fastq='true' if self._args.report_include_fastq else 'false'
             ))
         return SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir)
 
@@ -132,8 +131,6 @@ class MainNeisseriaPipeline(object):
         parser.add_argument('--output-summary', help="Output file for the summary")
         parser.add_argument('--output-html', help="Output file for the HTML report", required=True)
         parser.add_argument('--output-dir', help="Output directory for the files in the HTML report", required=True)
-        parser.add_argument('--report-include-bam', help="Output directory for the files in the HTML report",
-                            action='store_true')
         parser.add_argument('--report-include-fastq', help="Output directory for the files in the HTML report",
                             action='store_true')
 
