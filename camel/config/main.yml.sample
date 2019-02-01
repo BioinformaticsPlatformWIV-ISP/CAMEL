@@ -5,7 +5,8 @@ galaxy:
   # as Galaxy removes data and truncates stderr and stdout.
   dump_dir: /scratch/temp/galaxy_dumps/
 
-config_dump_dir: /scratch/temp/pipeline_configs
+config_dump_dir: /data/logging/snakemake
+error_log_dir: /data/logging/error_logs
 
 # There are two options to retrieve default tool parameters and dependencies:
 # - db (default): Retrieves tool parameters, dependencies, tool_command, tool_id, etc from the database configured in

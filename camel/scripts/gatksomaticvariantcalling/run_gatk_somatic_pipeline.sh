@@ -1,4 +1,5 @@
 #! /bin/bash
+# shell script to run the pipeline main file.
 echo 'running GATK somatic variant calling pipeline'
 echo $@
 # for testing

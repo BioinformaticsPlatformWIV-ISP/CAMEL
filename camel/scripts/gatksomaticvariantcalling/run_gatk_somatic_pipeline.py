@@ -3,7 +3,9 @@ import sys
 import yaml
 import argparse
 import subprocess
-import bz2
+# import bz2
+import gzip
+import logging
 
 from camel.app.camel import Camel
 from camel.app.command.command import Command
@@ -38,11 +40,10 @@ class GATKSomaticMain(object):
         self._camel = Camel(tool_parameter_loc=self.TOOL_PARAM_DIR)
 
         # galaxy dump directory in case of failure
-        self._galaxy_dump_dir = os.path.join(self._camel.config["galaxy"]["dump_dir"], "GATK_somatic_calling")
+        self._galaxy_dump_dir = os.path.join(self._camel.config["error_log_dir"])
 
         # dump directory for compressed config files
         self._config_dump_dir = os.path.join(self._camel.config["config_dump_dir"])
-        # self._config_dump_dir = "/scratch/todel/temp/GATK_MuTect_configs"
 
     def run(self):
         """
@@ -100,7 +101,7 @@ class GATKSomaticMain(object):
             with open(os.path.join(self._galaxy_dump_dir, "{}.err".format(self._args.job_id)), "w") as file_out:
                 file_out.write(command.stderr)
             raise RuntimeError(
-                "Error executing Snakemake. Check log ('{}') for more information.".format(os.path.join(self._galaxy_dump_dir, "{}.err".format(
+                "Error executing Snakemake. Check log ('{}') for more information.".format(os.path.join(self._galaxy_dump_dir, "{}.out".format(
                     self._args.job_id))))
 
     def __parse_command_line(self):
@@ -416,9 +417,20 @@ class GATKSomaticMain(object):
         Dump yaml config file as compressed bz2 file in the config dump dir.
         :return: 
         """
-        outfile = os.path.join(self._config_dump_dir, 'config_{}_{}.bz2'.format(self._args.job_id, datetime.datetime.now().strftime("%Y%m%d_%H%M%S-%f")))
-        with bz2.BZ2File(outfile, 'wb', compresslevel=9) as handle:
-            yaml.dump(self._config_data, handle, encoding=('utf-8'))
+        # outfile = os.path.join(self._config_dump_dir, 'config_{}_{}.bz2'.format(self._args.job_id, datetime.datetime.now().strftime("%Y%m%d_%H%M%S-%f")))
+        # with bz2.BZ2File(outfile, 'wb', compresslevel=9) as handle:
+        #     yaml.dump(self._config_data, handle, encoding=('utf-8'))
+
+        # TODO: use the pipeline.log_config_file(path) function in newer camel versions (>= 2019-01-29).
+        export_path = os.path.join(self._camel.config['config_dump_dir'], '{}.yml.gz'.format('_'.join([
+            datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
+            self._args.job_id if self._args.from_galaxy else 'NA',
+            str(self._pipeline.job_id) if self._pipeline.job_id is not None else 'NA',
+            self._pipeline.name
+        ])))
+        with gzip.open(export_path, 'wb', compresslevel=9) as stream_out:
+            yaml.dump(self._config_data, stream_out, encoding=('utf-8'))
+        logging.info(f"Config file exported to '{export_path}'")
 
 
 if __name__ == '__main__':
