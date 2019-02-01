@@ -1,10 +1,30 @@
 import json
 import logging
-import os
-from typing import Tuple, Dict, Any
+from typing import Tuple, Dict, Any, List
 
+import os
 import re
 from Bio import SeqIO
+
+
+class LocusMetadataHolder:
+    """
+    This holder class is used to avoid cluttering the log with huge metadata dictionaries.
+    """
+
+    def __init__(self, locus_metadata: List[Dict[str, Any]]) -> None:
+        """
+        Initializes the metadata holder.
+        :param locus_metadata: Locus metadata
+        """
+        self.metadata_by_locus_name = {l['name_valid']: l for l in locus_metadata}
+
+    def __repr__(self) -> str:
+        """
+        Returns the internal representation.
+        :return: Representation
+        """
+        return f'{self.__class__.__name__}({len(self.metadata_by_locus_name)} items)'
 
 
 class SequenceTypingUtils(object):
@@ -13,7 +33,7 @@ class SequenceTypingUtils(object):
     """
 
     @staticmethod
-    def determine_delimiter(fasta_file):
+    def determine_delimiter(fasta_file: str) -> str:
         """
         Returns the delimiter that is used in the FASTA file. Supported delimiters are '-' and '_'.
         :param fasta_file: FASTA file

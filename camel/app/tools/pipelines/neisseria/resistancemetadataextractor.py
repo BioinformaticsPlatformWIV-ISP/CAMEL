@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 
 from camel.app.camel import Camel
 from camel.app.components.pubmlst.pubmlstparser import PubMLSTParser, PubMLSTParsingError
@@ -44,14 +45,14 @@ class ResistanceMetadataExtractor(Tool):
         section.add_table(table_data, table_attributes=[('class', 'information')])
         self._tool_outputs['VAL_HTML'] = [ToolIOValue(section)]
 
-    def __get_allele_url(self, locus: str, allele_id: str) -> str:
+    def __get_allele_url(self, locus: str, allele_id: str) -> Optional[str]:
         """
         Retrieves the allele url for the given allele.
         :param locus: Locus
         :param allele_id: Allele id
         :return: Allele url
         """
-        locus_informs = self._input_informs[locus.lower()]
+        locus_informs = self._input_informs['scheme']['loci'].metadata_by_locus_name[locus.lower()]
         if allele_id == '-' or allele_id is None:
             return None
         return locus_informs['allele_page_url'].format(allele_id=allele_id)

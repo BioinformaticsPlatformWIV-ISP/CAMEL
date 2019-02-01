@@ -1,6 +1,8 @@
 import json
 import os
 
+from camel.app.camel import Camel
+from camel.app.components.sequencetyping.sequencetypingutils import LocusMetadataHolder
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.tools.tool import Tool
@@ -17,7 +19,7 @@ class LocusSetManager(Tool):
         The scheme metadata is added directly to the informs.
     """
 
-    def __init__(self, camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initializes this tool.
         :param camel: Camel instance
@@ -43,4 +45,6 @@ class LocusSetManager(Tool):
         if not os.path.isfile(metadata_path):
             raise ToolExecutionError("No scheme metadata found in '{}'".format(metadata_path))
         with open(metadata_path) as handle:
-            self._informs = json.load(handle)
+            metadata = json.load(handle)
+            metadata['loci'] = LocusMetadataHolder(metadata['loci'])
+            self._informs = metadata

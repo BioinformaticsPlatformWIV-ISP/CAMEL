@@ -29,19 +29,26 @@ rule Typing_srst2_allele_detection:
     """
     input:
         FASTQ=os.path.join(config['working_dir'], 'typing', 'input-fastq.io'),
-        FASTA=os.path.join(config['working_dir'], 'typing', '{scheme}', '{locus_type}', '{locus}', 'fasta.io'),
-        INFORMS_locus=os.path.join(config['working_dir'], 'typing', '{scheme}', '{locus_type}', '{locus}', 'informs.io')
+        INFORMS_scheme=os.path.join(config['working_dir'], 'typing', '{scheme}', 'informs-locus_set.io')
     output:
         VAL_Hit=os.path.join(config['working_dir'], 'typing', '{scheme}', '{locus_type}', '{locus}', 'hit-srst2.io')
     params:
-        running_dir=os.path.join(config['working_dir'], 'typing', '{scheme}', '{locus_type}', '{locus}')
+        running_dir=os.path.join(config['working_dir'], 'typing', '{scheme}', '{locus_type}', '{locus}'),
+        locus_name = lambda wildcards: wildcards.locus,
+        scheme_dir = lambda wildcards: SCHEMES[wildcards.scheme]
     threads: 4
     run:
         from camel.app.tools.srst2.srst2alleledetector import SRST2AlleleDetector
+
+        # Get metadata
+        scheme_informs = SnakemakeUtils.load_object(input.INFORMS_scheme)
+        locus_informs = scheme_informs['loci'].metadata_by_locus_name[params.locus_name]
+
         detector = SRST2AlleleDetector(camel)
-        SnakemakeUtils.add_pickle_inputs(detector, input, keys=['FASTA', 'INFORMS_locus'])
         fastq_input = SnakemakeUtils.load_object(input.FASTQ)
         detector.add_input_files(fastq_input)
+        detector.add_input_files({'FASTA': [ToolIOFile(os.path.join(params.scheme_dir, locus_informs['fasta_path']))]})
+        detector.add_input_informs({'locus': locus_informs})
         step = Step(rule, detector, camel, params.running_dir, config)
         if 'FASTQ_PE' in fastq_input:
             fwd_read_path = fastq_input['FASTQ_PE'][0].path

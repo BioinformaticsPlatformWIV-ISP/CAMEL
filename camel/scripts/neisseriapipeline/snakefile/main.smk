@@ -124,7 +124,7 @@ rule Combine_reports:
                                                     input.report_ncbi_amr]),
             ('Sequence typing', 'st', [input.report_mlst, input.report_rplf, input.report_bast, input.report_pora,
                                        input.report_porb, input.report_feta, input.report_resistance_genes,
-                                       input.report_vaccine_targets, input.report_cgmlst]),
+                                       input.report_vaccine_targets, input.report_fhbp, input.report_cgmlst]),
             ('Serogroup determination', 'serogroup', [input.report_serogroup]),
             ('Citations', 'citations', [input.report_citations])
         ]
@@ -187,7 +187,7 @@ rule Combine_summary_files:
         os.path.join(config['working_dir'], OUTPUT_TYPING_SUMMARY.format(scheme='resistance_genes')) if 'resistance_genes' in config['analyses'] else [],
         os.path.join(config['working_dir'], OUTPUT_TYPING_SUMMARY.format(scheme='vaccine_targets')) if 'vaccine_targets' in config['analyses'] else [],
         os.path.join(config['working_dir'], OUTPUT_TYPING_SUMMARY.format(scheme='cgmlst')) if 'cgmlst' in config['analyses'] else [],
-        os.path.join(config['working_dir'], OUTPUT_SEROGROUP_DETERMINATION_SUMMARY)
+        os.path.join(config['working_dir'], OUTPUT_SEROGROUP_DETERMINATION_SUMMARY) if 'serogroup' in config['analyses'] else []
     output:
         config.get('output_tabular')
     run:
@@ -242,8 +242,7 @@ rule Parse_additional_resistance_gene_metadata:
     input:
         hits=os.path.join(config['working_dir'], OUTPUT_TYPING_HITS.format(scheme='resistance_genes', locus_type='DNA', detection_method=config['detection_method'])),
         VAL_HTML=get_sequence_typing_report('resistance_genes', config),
-        INFORMS_pena=os.path.join(config['working_dir'], 'typing', 'resistance_genes', 'DNA', 'penA', 'informs.io'),
-        INFORMS_rpob=os.path.join(config['working_dir'], 'typing', 'resistance_genes', 'DNA', 'rpoB', 'informs.io')
+        INFORMS_scheme = os.path.join(config['working_dir'], 'typing', 'resistance_genes', 'informs-locus_set.io')
     output:
         VAL_HTML=os.path.join(config['working_dir'], 'typing', 'resistance_genes', 'metadata', 'report.html')
     params:

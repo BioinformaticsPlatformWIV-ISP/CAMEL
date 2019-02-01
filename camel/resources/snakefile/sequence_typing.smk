@@ -21,8 +21,8 @@ SCHEMES = config['sequence_typing']
 SCHEME_METADATA = {name: SequenceTypingUtils.parse_scheme_metadata(path) for name, path in SCHEMES.items()}
 loci_by_scheme_by_type = {
     name: {
-        'DNA': [locus['name'] for locus in metadata['loci'] if locus['type'] == 'DNA'],
-        'peptide': [locus['name'] for locus in metadata['loci'] if locus['type'] == 'peptide']
+        'DNA': [locus['name_valid'] for locus in metadata['loci'] if locus['type'] == 'DNA'],
+        'peptide': [locus['name_valid'] for locus in metadata['loci'] if locus['type'] == 'peptide']
     } for name, metadata in SCHEME_METADATA.items()
 }
 
@@ -52,25 +52,6 @@ rule Sequence_typing_extract_schema_info:
         step = Step(rule, locus_set_manager, camel, params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_object(locus_set_manager.informs, output.INFORMS)
-
-rule Sequence_typing_extract_locus_info:
-    """
-    Extracts the metadata for a single locus.
-    """
-    input:
-        lambda wildcards: os.path.join(SCHEMES[wildcards.scheme], wildcards.locus)
-    output:
-        FASTA=os.path.join(config['working_dir'], 'typing', '{scheme}', '{locus_type}', '{locus}', 'fasta.io'),
-        INFORMS=os.path.join(config['working_dir'], 'typing', '{scheme}', '{locus_type}', '{locus}', 'informs.io')
-    params:
-        running_dir=os.path.join(config['working_dir'], 'typing', '{scheme}')
-    run:
-        from camel.app.tools.pipelines.sequence_typing.locusmanager import LocusManager
-        locus_manager = LocusManager(camel)
-        locus_manager.add_input_files({'DIR': [ToolIODirectory(input[0])]})
-        step = Step(rule, locus_manager, camel, params.running_dir, config)
-        step.run_step()
-        SnakemakeUtils.dump_tool_outputs(locus_manager, output)
 
 rule Sequence_typing_pickle_dump_sequence_type_definitions:
     """
@@ -158,8 +139,7 @@ rule Typing_add_allele_page_url:
     input:
         hits_nucl=os.path.join(config['working_dir'], 'typing', '{scheme}', 'DNA', 'hits.io'),
         hits_pept=os.path.join(config['working_dir'], 'typing', '{scheme}', 'peptide', 'hits.io'),
-        informs_nucl=lambda wildcards: expand(os.path.join(config['working_dir'], 'typing', '{scheme}', 'DNA', '{locus}', 'informs.io'), scheme=wildcards.scheme, locus=loci_by_scheme_by_type[wildcards.scheme]['DNA']),
-        informs_pept=lambda wildcards: expand(os.path.join(config['working_dir'], 'typing', '{scheme}', 'peptide', '{locus}', 'informs.io'), scheme=wildcards.scheme, locus=loci_by_scheme_by_type[wildcards.scheme]['peptide'])
+        INFORMS_scheme = os.path.join(config['working_dir'], 'typing', '{scheme}', 'informs-locus_set.io')
     output:
         hits_nucl=os.path.join(config['working_dir'], 'typing', '{scheme}', 'DNA', 'hits-url.io'),
         hits_pept=os.path.join(config['working_dir'], 'typing', '{scheme}', 'peptide', 'hits-url.io')
@@ -168,14 +148,13 @@ rule Typing_add_allele_page_url:
             hits = SnakemakeUtils.load_object(input.get(f'hits_{key}'))
 
             # Load the informs
-            informs_by_loci = {}
-            for f in input.get(f'informs_{key}'):
-                informs = SnakemakeUtils.load_object(f)
-                informs_by_loci[informs['name']] = informs
+            metadata_by_locus_name = SnakemakeUtils.load_object(input.INFORMS_scheme)['loci'].metadata_by_locus_name
 
             # Add the allele url to the hit
             for hit in hits:
-                hit.value.set_allele_page_url_template(informs_by_loci[hit.value.locus].get('allele_page_url'))
+                locus_key = FileSystemHelper.make_valid(hit.value.locus).lower()
+                locus_metadata = metadata_by_locus_name[locus_key]
+                hit.value.set_allele_page_url_template(locus_metadata.get('allele_page_url'))
 
             # Export hits
             SnakemakeUtils.dump_object(hits, output.get(f'hits_{key}'))

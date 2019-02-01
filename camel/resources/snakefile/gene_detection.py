@@ -5,8 +5,8 @@ import os
 GENE_DETECTION_FASTA = os.path.join('gene_detection', '{db}', 'db_manager', 'fasta.io'),
 GENE_DETECTION_FASTA_CLUSTERED = os.path.join('gene_detection', '{db}', 'db_manager', 'fasta-clust.io'),
 
-INPUT_GENE_DETECTION_FASTA = os.path.join('gene_detection', '{db}', 'input', 'fasta.io')
-INPUT_GENE_DETECTION_FASTQ_PE = os.path.join('gene_detection', '{db}', 'input', 'fastq-pe.io')
+INPUT_GENE_DETECTION_FASTA = os.path.join('gene_detection', 'input', 'fasta.io')
+INPUT_GENE_DETECTION_FASTQ_PE = os.path.join('gene_detection', 'input', 'fastq-pe.io')
 
 OUTPUT_GENE_DETECTION_HITS_BLAST = os.path.join('gene_detection', '{db}', 'alignment_extraction', 'blast-hits.io')
 OUTPUT_GENE_DETECTION_HITS_SRST2 = os.path.join('gene_detection', '{db}', 'srst2', 'srst2-hits.io')

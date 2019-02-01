@@ -3,6 +3,7 @@ import logging
 import os
 
 from camel.app.camel import Camel
+from camel.app.io.tooliofile import ToolIOFile
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile.assembly_spades import OUTPUT_ASSEMBLY_FASTA
 from camel.resources.snakefile.sequence_typing import OUTPUT_TYPING_HITS
@@ -16,13 +17,14 @@ rule Typing_blast_allele_detection:
     """
     input:
         FASTA=os.path.join(config['working_dir'], OUTPUT_ASSEMBLY_FASTA),
-        DB_BLAST=os.path.join(config['working_dir'], 'typing', '{scheme}', '{locus_type}', '{locus}', 'fasta.io'),
-        INFORMS_locus=os.path.join(config['working_dir'], 'typing', '{scheme}', '{locus_type}', '{locus}', 'informs.io')
+        INFORMS_scheme=os.path.join(config['working_dir'], 'typing', '{scheme}', 'informs-locus_set.io')
     output:
         VAL_Hit=os.path.join(config['working_dir'], 'typing', '{scheme}', '{locus_type}', '{locus}', 'hit-blast.io')
     params:
         working_dir=os.path.join(config['working_dir'], 'typing', '{scheme}', '{locus_type}', '{locus}'),
-        locus_type=lambda wildcards: wildcards.locus_type
+        locus_type=lambda wildcards: wildcards.locus_type,
+        locus_name=lambda wildcards: wildcards.locus,
+        scheme_dir=lambda wildcards: SCHEMES[wildcards.scheme]
     threads: 1
     run:
         from camel.app.tools.blast.blastformatter import BlastFormatter
@@ -31,6 +33,10 @@ rule Typing_blast_allele_detection:
         from camel.app.tools.pipelines.sequence_typing.besthitselector import BestHitSelector
         from camel.app.tools.pipelines.sequence_typing.alignmentextractor import AlignmentExtractor
 
+        # Get metadata
+        scheme_informs = SnakemakeUtils.load_object(input.INFORMS_scheme)
+        locus_informs = scheme_informs['loci'].metadata_by_locus_name[params.locus_name]
+
         # Blast alignment
         if params.locus_type == 'DNA':
             blast = Blastn(camel)
@@ -38,8 +44,8 @@ rule Typing_blast_allele_detection:
             blast = Blastx(camel)
         else:
             raise ValueError(f"Invalid locus type: {wildcards.locus_type}")
-        SnakemakeUtils.add_pickle_input(blast, 'DB_BLAST', input.DB_BLAST)
         SnakemakeUtils.add_pickle_input(blast, 'FASTA', input.FASTA)
+        blast.add_input_files({'DB_BLAST': [ToolIOFile(os.path.join(params.scheme_dir, locus_informs['fasta_path']))]})
         blast.update_parameters(threads=threads)
         blast.run(params.working_dir)
 
@@ -52,7 +58,7 @@ rule Typing_blast_allele_detection:
         # Best hit selection
         hit_selector = BestHitSelector(camel)
         hit_selector.add_input_files({'TSV': formatter_tsv.tool_outputs['TSV']})
-        hit_selector.add_input_informs({'locus': SnakemakeUtils.load_object(input.INFORMS_locus)})
+        hit_selector.add_input_informs({'locus': locus_informs})
         hit_selector.run(params.working_dir)
 
         # Text alignment generation

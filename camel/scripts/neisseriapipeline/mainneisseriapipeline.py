@@ -20,7 +20,7 @@ class MainNeisseriaPipeline(object):
     Main class to run the Neisseria pipeline.
     """
 
-    PIPELINE_NAME = '<i>Neisseria meningitidis</i> pipeline'
+    PIPELINE_NAME = 'Neisseria pipeline'
     PIPELINE_VERSION = 1.1
 
     def run(self) -> None:
@@ -97,8 +97,10 @@ class MainNeisseriaPipeline(object):
         :return: Input key, input dictionary
         """
         if self._args.read_type == 'illumina':
+            fq_files = SnakePipelineUtils.symlink_input_files(
+                os.path.join(self._args.working_dir, 'input'), self._args.fastq_pe, self._args.fastq_pe_names, True)
             return 'fastq_pe', [{'name': name, 'path': path} for name, path in zip(
-                self._args.fastq_pe_names, self._args.fastq_pe)]
+                self._args.fastq_pe_names, fq_files)]
         else:
             return 'fastq_se', {'name': self._args.fastq_se_name, 'path': self._args.fastq_se}
 
