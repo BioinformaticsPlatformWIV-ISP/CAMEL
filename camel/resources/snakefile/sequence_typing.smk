@@ -153,7 +153,7 @@ rule Typing_add_allele_page_url:
             # Add the allele url to the hit
             for hit in hits:
                 locus_key = FileSystemHelper.make_valid(hit.value.locus).lower()
-                locus_metadata = metadata_by_locus_name[key]
+                locus_metadata = metadata_by_locus_name[locus_key]
                 hit.value.set_allele_page_url_template(locus_metadata.get('allele_page_url'))
 
             # Export hits
