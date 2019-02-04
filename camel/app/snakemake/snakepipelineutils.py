@@ -86,7 +86,8 @@ class SnakePipelineUtils(object):
         :return: List of absolute paths to symlinks
         """
         if len(file_names) != len(file_paths):
-            raise ValueError("File names and file paths should be the same length")
+            raise ValueError("File names ({}) and file paths ({}) should be the same length".format(
+                len(file_names), len(file_paths)))
         if not os.path.isdir(output_dir):
             os.makedirs(output_dir)
         links = []
@@ -132,7 +133,7 @@ class SnakePipelineUtils(object):
         command = Command('snakemake --snakefile {} --configfile {} {} --cores {}'.format(
             snakefile, config_path, ' '.join(targets), threads))
         command.run_command(working_dir)
-        print(f'Stdout:\n{command.stdout}')
-        print(f'Stderr:\n{command.stderr}')
+        print(f'- Stdout: -\n{command.stdout}')
+        print(f'- Stderr: -\n{command.stderr}')
         if command.returncode != 0:
             raise SnakemakeExecutionError(command.stdout, command.stderr)
