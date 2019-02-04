@@ -1,6 +1,7 @@
+#!/usr/bin/env python
 import argparse
 import logging
-from typing import Tuple, Any
+from typing import Tuple, Any, List, Dict
 
 import os
 import yaml
@@ -34,7 +35,10 @@ class MainSTECPipeline(object):
         # Construct pipeline and log input and config file
         pipeline = Pipeline(MainSTECPipeline.PIPELINE_NAME, Camel.get_instance(),
                             logging_level='pipeline' if self._args.db_logging else None)
-        pipeline.set_initial_input({'FASTQ_PE': [ToolIOFile(x) for x in self._args.fastq_pe]})
+        if self._args.fastq_pe is not None:
+            pipeline.set_initial_input({'FASTQ_PE': [ToolIOFile(x) for x in self._args.fastq_pe]})
+        else:
+            pipeline.set_initial_input({'FASTQ_SE': [ToolIOFile(self._args.fastq_se)]})
         config_file = self.__construct_config_file()
         pipeline.log_config_file(config_file)
 
@@ -51,15 +55,28 @@ class MainSTECPipeline(object):
         Initializes the main class.
         """
         self._args = MainSTECPipeline._parse_arguments()
-        self._args.fastq_names = [os.path.basename(fq) for fq in self._args.fastq_pe_names]
         if not os.path.isdir(self._args.output_dir):
             os.mkdir(self._args.output_dir)
-        if self._args.sample_name:
-            self._sample_name = self._args.sample_name
-        else:
-            self._sample_name = FastqUtils.get_sample_name(self._args.fastq_names[0])
-        self._fastq_input = SnakePipelineUtils.symlink_input_files(
-            os.path.join(os.getcwd(), 'input'), self._args.fastq_pe, self._args.fastq_names)
+        self._sample_name = self.__get_sample_name()
+
+    def __get_sample_name(self) -> str:
+        """
+        Determines the sample name from the command line arguments.
+        :return: Sample name
+        """
+        if self._args.sample_name is not None:
+            return self._args.sample_name
+        if self._args.fastq_pe is not None:
+            if self._args.fastq_pe_names is not None:
+                return FastqUtils.get_sample_name(self._args.fastq_pe_names[0])
+            else:
+                return FastqUtils.get_sample_name(self._args.fastq_pe[0])
+        if self._args.fastq_se is not None:
+            if self._args.fastq_se_name is not None:
+                return FastqUtils.get_sample_name(self._args.fastq_se_name, False)
+            else:
+                return FastqUtils.get_sample_name(self._args.fastq_se, False)
+        raise ValueError("Cannot determine sample name from command line arguments.")
 
     def __construct_config_file(self) -> str:
         """
@@ -91,16 +108,25 @@ class MainSTECPipeline(object):
             ))
         return SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir)
 
-    def __create_fastq_input_dict(self) -> Tuple[str, Any]:
+    def __create_fastq_input_dict(self) -> Tuple[str, List[Dict[str, Any]]]:
         """
         Creates the input dictionary with the FASTQ files.
         :return: Input key, input dictionary
         """
         if self._args.read_type == 'illumina':
+            if self._args.fastq_pe is None:
+                raise ValueError("Illumina input should be paired-end.")
+            fq_files = SnakePipelineUtils.symlink_input_files(
+                os.path.join(self._args.working_dir, 'input'), self._args.fastq_pe, self._args.fastq_pe_names, True)
             return 'fastq_pe', [{'name': name, 'path': path} for name, path in zip(
-                self._args.fastq_pe_names, self._args.fastq_pe)]
+                self._args.fastq_pe_names, fq_files)]
         else:
-            return 'fastq_se', {'name': self._args.fastq_se_name, 'path': self._args.fastq_se}
+            if self._args.fastq_se is None:
+                raise ValueError("IonTorrent input should be single-end.")
+            fq_file = SnakePipelineUtils.symlink_input_files(
+                os.path.join(self._args.working_dir, 'input'), [self._args.fastq_se], [self._args.fastq_se_name],
+                True)[0]
+            return 'fastq_se', [{'name': self._args.fastq_se_name, 'path': fq_file}]
 
     @staticmethod
     def _parse_arguments() -> argparse.Namespace:

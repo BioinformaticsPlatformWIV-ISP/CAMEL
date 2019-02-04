@@ -72,7 +72,7 @@ gene_detection:
     perc_identity_cutoff: 90
 
   ncbi_amr:
-    path: /db/gene_detection/ncbi_amr
+    path: /data/sequence_db_new/NCBI_AMR
     perc_identity_cutoff: 90
 
   virulencefinder:
@@ -106,5 +106,5 @@ gene_detection:
 sequence_typing:
   mlst_pasteur: /db/sequence_typing/ecoli/mlst-pasteur
   mlst_warwick: /db/sequence_typing/ecoli/mlst-warwick
-  cgmlst: /db/sequence_typing/ecoli/cgmlst
-  wgmlst: /db/sequence_typing/ecoli/wgmlst
+#  cgmlst: /db/sequence_typing/ecoli/cgmlst
+#  wgmlst: /db/sequence_typing/ecoli/wgmlst

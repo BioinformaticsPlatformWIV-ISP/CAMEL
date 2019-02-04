@@ -28,11 +28,14 @@ class SRST2AlleleDetector(Tool):
         Executes this tool.
         :return: None
         """
+        if 'FASTQ_PE' in self._tool_inputs:
+            input_str = '--input_pe {}'.format(' '.join([x.path for x in self._tool_inputs['FASTQ_PE']]))
+        else:
+            input_str = '--input_se {}'.format(self._tool_inputs['FASTQ_SE'][0].path)
         output_prefix = os.path.join(self._folder, 'allele_detection'.format(self._input_informs['locus']['name']))
-        self._command.command = '{} --input_pe {} {} --log --mlst_db {} --mlst_delimiter "{}" --output {} {}'.format(
+        self._command.command = '{} {} --log --mlst_db {} --mlst_delimiter "{}" --output {} {}'.format(
             self._tool_command,
-            self._tool_inputs['FASTQ_PE'][0].path,
-            self._tool_inputs['FASTQ_PE'][1].path,
+            input_str,
             self._tool_inputs['FASTA'][0].path,
             SequenceTypingUtils.determine_delimiter(self._tool_inputs['FASTA'][0].path),
             output_prefix,
@@ -48,8 +51,8 @@ class SRST2AlleleDetector(Tool):
         Checks if the required input is specified.
         :return: None
         """
-        if 'FASTQ_PE' not in self._tool_inputs or len(self._tool_inputs['FASTQ_PE']) != 2:
-            raise InvalidInputSpecificationError("Paired end FASTQ input is required")
+        if ('FASTQ_PE' not in self._tool_inputs) and ('FASTQ_SE' not in self._tool_inputs):
+            raise InvalidInputSpecificationError("FASTQ input (PE / SE) is required")
         if 'FASTA' not in self._tool_inputs:
             raise InvalidInputSpecificationError("Allele FASTA file is required")
         if 'locus' not in self._input_informs:
@@ -61,7 +64,9 @@ class SRST2AlleleDetector(Tool):
         Checks the command output.
         :return: None
         """
-        if self._command.returncode != 0:
+        if 'Could not determine forward/reverse read status' in self._command.stderr:
+            raise ToolExecutionError("Invalid names for the FASTQ files")
+        elif self._command.returncode != 0:
             raise ToolExecutionError("Error executing SRST2")
 
     @staticmethod

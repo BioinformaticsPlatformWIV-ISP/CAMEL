@@ -14,9 +14,10 @@ from camel.scripts.neisseriapipeline import SNAKEFILE_SEROGROUP_DETERMINATION
 from camel.scripts.neisseriapipeline.snakefile.serogroup_determination import OUTPUT_SEROGROUP_DETERMINATION_REPORT, \
     OUTPUT_SEROGROUP_DETERMINATION_REPORT_EMPTY, OUTPUT_SEROGROUP_DETERMINATION_SUMMARY
 from camel.resources.snakefile.gene_detection import INPUT_GENE_DETECTION_FASTA, get_gene_detection_report, \
-    OUTPUT_GENE_DETECTION_SUMMARY
+    OUTPUT_GENE_DETECTION_SUMMARY, INPUT_GENE_DETECTION_FASTQ
 from camel.resources.snakefile.quality_checks import OUTPUT_QUALITY_CHECKS_REPORT, OUTPUT_QUALITY_CHECKS_SUMMARY
-from camel.resources.snakefile.read_trimming import OUTPUT_READ_TRIMMING_REPORT, OUTPUT_READ_TRIMMING_SUMMARY
+from camel.resources.snakefile.read_trimming import OUTPUT_READ_TRIMMING_REPORT, OUTPUT_READ_TRIMMING_SUMMARY, \
+    OUTPUT_READ_TRIMMING_READS_PE
 from camel.resources.snakefile.sequence_typing import get_sequence_typing_report, OUTPUT_TYPING_SUMMARY
 
 #######################
@@ -196,7 +197,6 @@ rule Combine_summary_files:
                 with open(summary_input) as handle_in:
                     handle_out.write(handle_in.read())
 
-
 rule Link_assembly_gene_detection:
     """
     Links the output of the assembly to the input of the gene detection.
@@ -208,6 +208,16 @@ rule Link_assembly_gene_detection:
     shell:
         "cp {input} {output}"
 
+rule Link_trimming_gene_detection:
+    """
+    Links the output of the assembly to the input of the gene detection.
+    """
+    input:
+        os.path.join(config['working_dir'], OUTPUT_READ_TRIMMING_READS_PE)
+    output:
+        os.path.join(config['working_dir'], INPUT_GENE_DETECTION_FASTQ)
+    shell:
+        "cp {input} {output}"
 
 rule Collect_read_mapping_input:
     """

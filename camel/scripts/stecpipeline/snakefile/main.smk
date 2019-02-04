@@ -2,27 +2,30 @@ import os
 
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
+from camel.resources.snakefile.read_trimming import OUTPUT_READ_TRIMMING_READS_PE
+from camel.resources.snakefile.read_trimming_iontorrent import get_read_trimming_report, OUTPUT_TRIMMING_IT_SUMMARY, \
+    OUTPUT_TRIMMING_IT_READS
 
 from camel.scripts.stecpipeline import SNAKEFILE_SEROTYPE
 from camel.resources.snakefile import SNAKEFILE_READ_TRIMMING, SNAKEFILE_ASSEMBLY_SPADES, SNAKEFILE_GENE_DETECTION, \
     SNAKEFILE_SEQUENCE_TYPING, SNAKEFILE_VARIANT_CALLING, SNAKEFILE_VARIANT_FILTERING, \
-    SNAKEFILE_CONTAMINATION_CHECK_KRAKEN, SNAKEFILE_POINTFINDER, SNAKEFILE_ADV_QC
+    SNAKEFILE_CONTAMINATION_CHECK_KRAKEN, SNAKEFILE_POINTFINDER, SNAKEFILE_ADV_QC, SNAKEFILE_READ_TRIMMING_IONTORRENT
 from camel.resources.snakefile.assembly_spades import OUTPUT_ASSEMBLY_REPORT, OUTPUT_ASSEMBLY_FASTA
 from camel.resources.snakefile.contamination_check_kraken import OUTPUT_CONTAMINATION_CHECK_REPORT, \
     OUTPUT_CONTAMINATION_CHECK_REPORT_EMPTY
-from camel.resources.snakefile.gene_detection import INPUT_GENE_DETECTION_FASTA, get_gene_detection_report
+from camel.resources.snakefile.gene_detection import INPUT_GENE_DETECTION_FASTA, get_gene_detection_report, \
+    INPUT_GENE_DETECTION_FASTQ
 from camel.resources.snakefile.pointfinder import OUTPUT_POINTFINDER_REPORT, OUTPUT_POINTFINDER_REPORT_EMPTY
 from camel.resources.snakefile.quality_checks import OUTPUT_QUALITY_CHECKS_REPORT
-from camel.resources.snakefile.read_trimming import OUTPUT_READ_TRIMMING_REPORT
 from camel.resources.snakefile.sequence_typing import get_sequence_typing_report
 from camel.resources.snakefile.variant_calling import OUTPUT_VARIANT_CALLING_REPORT
+from camel.scripts.stecpipeline.snakefile.serotype_detection import OUTPUT_SEROTYPE_REPORT
 
 #######################
 # Included Snakefiles #
 #######################
-from camel.scripts.stecpipeline.snakefile.serotype_detection import OUTPUT_SEROTYPE_REPORT
-
 include: SNAKEFILE_READ_TRIMMING
+include: SNAKEFILE_READ_TRIMMING_IONTORRENT
 include: SNAKEFILE_CONTAMINATION_CHECK_KRAKEN
 include: SNAKEFILE_ADV_QC
 include: SNAKEFILE_ASSEMBLY_SPADES
@@ -55,7 +58,7 @@ rule Init_summary:
     run:
         import datetime
         analysis_date = datetime.datetime.now().strftime(SnakePipelineUtils.DATE_FORMAT)
-        input_filenames = ', '.join(entry['name'] for entry in config['fastq_pe'])
+        input_filenames = ', '.join(entry['name'] for entry in config['fastq_pe' if 'fastq_pe' in config else 'fastq_se'])
         with open(output.summary, 'w') as handle:
             for kv_pair in [
                 ('pipeline_name', config['pipeline']['name']),
@@ -74,7 +77,7 @@ rule Combine_reports:
     Rule to combine report sections into a single output report.
     """
     input:
-        report_trimming=os.path.join(config['working_dir'], OUTPUT_READ_TRIMMING_REPORT),
+        report_trimming=get_read_trimming_report(config),
         report_assembly=os.path.join(config['working_dir'], OUTPUT_ASSEMBLY_REPORT),
         report_kraken=os.path.join(config['working_dir'], OUTPUT_CONTAMINATION_CHECK_REPORT) if 'kraken' in config['analyses'] else os.path.join(config['working_dir'], OUTPUT_CONTAMINATION_CHECK_REPORT_EMPTY),
         report_adv_qc=os.path.join(config['working_dir'], OUTPUT_QUALITY_CHECKS_REPORT),
@@ -92,12 +95,13 @@ rule Combine_reports:
         report_serotype=os.path.join(config['working_dir'], OUTPUT_SEROTYPE_REPORT),
         report_mlst_warwick=get_sequence_typing_report('mlst_warwick', config),
         report_mlst_pasteur=get_sequence_typing_report('mlst_pasteur', config),
-        report_cgmlst=get_sequence_typing_report('cgmlst', config)
+        # report_cgmlst=get_sequence_typing_report('cgmlst', config),
+        report_citations = os.path.join(config['working_dir'], 'report', 'html-citations.io')
     output:
         report = config['output_report']
     params:
         sample_name = config['sample_name'],
-        fastq_input = config['fastq_pe'],
+        fastq_input = config['fastq_pe' if 'fastq_pe' in config else 'fastq_se'],
         output_dir = config['output_dir'],
         pipeline_info = config['pipeline'],
         detection_method = config['detection_method'],
@@ -133,7 +137,8 @@ rule Combine_reports:
             ('Serotype determination', 'sero', [input.report_serotype_o_type, input.report_serotype_h_type,
                                                 input.report_serotype]),
             ('Plasmid replicon detection', 'plasmid', [input.report_plasmidfinder]),
-            ('Sequence typing', 'st', [input.report_mlst_warwick, input.report_mlst_pasteur, input.report_cgmlst])
+            ('Sequence typing', 'st', [input.report_mlst_warwick, input.report_mlst_pasteur]),  #, input.report_cgmlst]),
+            ('Citations', 'citations', [input.report_citations])
         ]
 
         report.add_module_header('Sections')
@@ -162,6 +167,7 @@ rule Combine_summary_files:
     """
     input:
         os.path.join(config['working_dir'], 'summary', 'summary-init.tsv'),
+        os.path.join(config['working_dir'], OUTPUT_TRIMMING_IT_SUMMARY)
     output:
         config.get('output_tabular')
     run:
@@ -170,6 +176,18 @@ rule Combine_summary_files:
                 with open(summary_input) as handle_in:
                     handle_out.write(handle_in.read())
 
+rule Pickle_citations:
+    """
+    This rule creates a pickle with a report section containing the citations.
+    """
+    output:
+        os.path.join(config['working_dir'], 'report', 'html-citations.io')
+    run:
+        from camel.scripts.stecpipeline import CITATIONS_HTML
+        section_citations = HtmlReportSection('Citations')
+        with open(CITATIONS_HTML) as handle:
+            section_citations.add_raw(handle.read())
+        SnakemakeUtils.dump_object([ToolIOValue(section_citations)], output[0])
 
 rule Link_assembly_gene_detection:
     """
@@ -181,3 +199,20 @@ rule Link_assembly_gene_detection:
         os.path.join(config['working_dir'], INPUT_GENE_DETECTION_FASTA)
     shell:
         "cp {input} {output}"
+
+rule Link_trimming_gene_detection:
+    """
+    Links the output of the assembly to the input of the gene detection.
+    """
+    input:
+        PE=os.path.join(config['working_dir'], OUTPUT_READ_TRIMMING_READS_PE) if config.get('read_type', 'illumina') == 'illumina' else [],
+        SE=os.path.join(config['working_dir'], OUTPUT_TRIMMING_IT_READS) if config.get('read_type', 'illumina') == 'iontorrent' else []
+    output:
+        os.path.join(config['working_dir'], INPUT_GENE_DETECTION_FASTQ)
+    params:
+        read_type=config.get('read_type', 'illumina')
+    run:
+        if params.read_type == 'illumina':
+            SnakemakeUtils.dump_object(SnakemakeUtils.load_object(input.PE), output[0])
+        else:
+            SnakemakeUtils.dump_object(SnakemakeUtils.load_object(input.SE), output[0])
