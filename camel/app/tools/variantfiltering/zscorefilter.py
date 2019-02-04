@@ -100,16 +100,16 @@ class ZScoreFilter(Filter):
                 actg_counts.remove(x)
                 y = sum(actg_counts)
                 zscore = float(x - y) / math.sqrt(x + y)
-                logging.debug('Zscore at position {}:{}= {:.2f} {}'.format(chrom, pos, zscore, actg_counts + [x]))
+                # logging.debug('Zscore at position {}:{}= {:.2f} {}'.format(chrom, pos, zscore, actg_counts + [x]))
 
                 keep = True
                 if zscore < float(self._parameters['min_zscore'].value):
-                    logging.info("{}:{} does not pass Z score test".format(chrom, pos))
+                    # logging.info("{}:{} does not pass Z score test".format(chrom, pos))
                     keep = False
 
                 if 'y_multiplier' in self._parameters:
                     if x < float(self._parameters['y_multiplier'].value) * y:
-                        logging.info("{}:{} does not pass Y multiplier test".format(chrom, pos))
+                        # logging.info("{}:{} does not pass Y multiplier test".format(chrom, pos))
                         keep = False
 
                 if keep:

@@ -104,7 +104,7 @@ class DistanceFilter(Filter):
 
                 # Remove SNPs
                 for removed_snp in removed_snps:
-                    logging.debug("removing SNP {}:{}".format(removed_snp.CHROM, removed_snp.POS))
+                    # logging.debug("removing SNP {}:{}".format(removed_snp.CHROM, removed_snp.POS))
                     variants_by_pos.pop(removed_snp.POS)
 
             # Add the kept SNPs to the regions file
