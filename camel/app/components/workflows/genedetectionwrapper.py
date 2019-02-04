@@ -9,7 +9,7 @@ from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.resources.snakefile import SNAKEFILE_GENE_DETECTION
 from camel.resources.snakefile.gene_detection import INPUT_GENE_DETECTION_FASTA, OUTPUT_GENE_DETECTION_REPORT, \
-    INPUT_GENE_DETECTION_FASTQ_PE
+    INPUT_GENE_DETECTION_FASTQ
 
 
 class GeneDetectionWrapper(object):
@@ -30,7 +30,7 @@ class GeneDetectionWrapper(object):
         self._working_dir = working_dir
         self._output = None
 
-    def run_workflow_blast(self, fasta_path: str, sample_name: str, db_data: Dict[str, Any], threads: int=8) -> None:
+    def run_workflow_blast(self, fasta_path: str, sample_name: str, db_data: Dict[str, Any], threads: int = 8) -> None:
         """
         Runs the gene detection workflow using BLAST.
         :param fasta_path: Input FASTA file
@@ -49,7 +49,7 @@ class GeneDetectionWrapper(object):
         self.__set_output(output_path)
 
     def run_workflow_srst2(self, fastq_pe_path: List[str], sample_name: str, db_data: Dict[str, Any],
-                           threads: int=8) -> None:
+                           threads: int = 8) -> None:
         """
         Runs the gene detection workflow using SRST2.
         :param fastq_pe_path: Input PE FASTQ files
@@ -84,7 +84,7 @@ class GeneDetectionWrapper(object):
         :param fastq_pe: Pair of FASTQ PE files
         :return: None
         """
-        path = os.path.join(self._working_dir, INPUT_GENE_DETECTION_FASTQ_PE.format(db='db'))
+        path = os.path.join(self._working_dir, INPUT_GENE_DETECTION_FASTQ.format(db='db'))
         target_dir = os.path.dirname(path)
         if not os.path.isdir(target_dir):
             os.makedirs(target_dir)

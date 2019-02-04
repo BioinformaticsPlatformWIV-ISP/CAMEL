@@ -3,15 +3,17 @@ import os
 from camel.app.components.sequencetyping.sequencetypingutils import SequenceTypingUtils
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile.read_trimming import OUTPUT_READ_TRIMMING_READS_PE
+from camel.resources.snakefile.read_trimming_iontorrent import OUTPUT_TRIMMING_IT_READS
 from camel.resources.snakefile.sequence_typing import OUTPUT_TYPING_HITS
 
 
 rule Typing_srst2_select_input:
     """
-    Selects the input file for SRST2.
+    Selects the input for the SRST2 sequence typing. 
     """
     input:
-        FASTQ_PE=os.path.join(config['working_dir'], OUTPUT_READ_TRIMMING_READS_PE) if config.get('read_type', 'illumina') == 'illumina' else []
+        FASTQ_PE=os.path.join(config['working_dir'], OUTPUT_READ_TRIMMING_READS_PE) if config.get('read_type', 'illumina') == 'illumina' else [],
+        FASTQ_SE=os.path.join(config['working_dir'], OUTPUT_TRIMMING_IT_READS) if config.get('read_type', 'illumina') == 'iontorrent' else []
     output:
         FASTQ=os.path.join(config['working_dir'], 'typing', 'input-fastq.io')
     params:
@@ -49,6 +51,7 @@ rule Typing_srst2_allele_detection:
         detector.add_input_files(fastq_input)
         detector.add_input_files({'FASTA': [ToolIOFile(os.path.join(params.scheme_dir, locus_informs['fasta_path']))]})
         detector.add_input_informs({'locus': locus_informs})
+        detector.update_parameters(max_unaligned_overlap=150)
         step = Step(rule, detector, camel, params.running_dir, config)
         if 'FASTQ_PE' in fastq_input:
             fwd_read_path = fastq_input['FASTQ_PE'][0].path

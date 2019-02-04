@@ -162,9 +162,11 @@ rule Gene_detection_text_alignment_extraction:
 rule Gene_detection_srst2:
     """
     Read-mapping based gene detection using SRST2.
+    Input is a pickled dictionary with ToolIO files with either 'FASTQ_PE' or 'FASTQ_SE' as key.
+    If paired end input is provided, the read status ('_1', '_1P') is determined based on the read name. 
     """
     input:
-        FASTQ_PE=os.path.join(config['working_dir'], INPUT_GENE_DETECTION_FASTQ_PE),
+        FASTQ=os.path.join(config['working_dir'], INPUT_GENE_DETECTION_FASTQ),
         FASTA=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'db_manager', 'fasta-clust.io')
     output:
         TSV=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'srst2', 'tsv.io')
@@ -174,11 +176,15 @@ rule Gene_detection_srst2:
     run:
         from camel.app.tools.srst2.srst2gene import Srst2Gene
         srst2 = Srst2Gene(camel)
-        SnakemakeUtils.add_pickle_inputs(srst2, input)
+        input_files = SnakemakeUtils.load_object(input.FASTQ)
+        SnakemakeUtils.add_pickle_input(srst2, 'FASTA', input.FASTA)
+        srst2.add_input_files({'FASTQ_PE' if len(input_files) == 2 else 'FASTQ_SE': input_files})
         step = Step(rule, srst2, camel, params.running_dir, config)
-        fwd_read_path = SnakemakeUtils.load_object(input.FASTQ_PE)[0].path
-        fwd_designator, rev_designator = SequenceTypingUtils.determine_read_status(fwd_read_path)
-        srst2.update_parameters(threads=threads, forward_designator=fwd_designator, reverse_designator=rev_designator)
+        srst2.update_parameters(threads=threads)
+        if len(input_files) == 2:
+            fwd_read_path = input_files[0].path
+            fwd_designator, rev_designator = SequenceTypingUtils.determine_read_status(fwd_read_path)
+            srst2.update_parameters(forward_designator=fwd_designator, reverse_designator=rev_designator)
         step.run_step()
         if 'TSV' in srst2.tool_outputs:
             SnakemakeUtils.dump_tool_outputs(srst2, output)
