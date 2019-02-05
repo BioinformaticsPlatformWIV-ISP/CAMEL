@@ -219,7 +219,13 @@ class FastqUtils(object):
         m = re.match('(.*)_S\d+_L\d+_R[12]_\d+.[fastq]+$', fastq_filename)
         if m:
             return m.group(1)
+        m = re.match('(.*)_S\d+_L\d+_R[12]_\d+.[fastq.gz]+$', fastq_filename)
+        if m:
+            return m.group(1)
         m = re.match('(.*)_[12].[fastq]+$', fastq_filename)
+        if m:
+            return m.group(1)
+        m = re.match('(.*)_[12].[fastq.gz]+$', fastq_filename)
         if m:
             return m.group(1)
         raise ValueError("Cannot determine sample name from: {}".format(fastq_filename))
