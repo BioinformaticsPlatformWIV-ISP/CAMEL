@@ -157,7 +157,9 @@ onsuccess:
 
 onerror:
     print("ONERROR: pipeline fails to finish. log file {!r}".format(log))
-    GALAXY_ERROR_LOG_DIR = "/scratch/temp/galaxy_dumps/"
+    GALAXY_ERROR_LOG_DIR = "/scratch/galaxy_dumps/"
+    if not os.exists(GALAXY_ERROR_LOG_DIR):
+        os.makedirs(GALAXY_ERROR_LOG_DIR)
     shutil.copy(log, os.path.join(GALAXY_ERROR_LOG_DIR, os.path.basename(log)))
     shutil.copy(os.path.join(os.getcwd(), 'camel.log'), os.path.join(GALAXY_ERROR_LOG_DIR, os.path.basename(log)+'_camel.log'))
     section_log = HtmlReportSection('Runnning log')
