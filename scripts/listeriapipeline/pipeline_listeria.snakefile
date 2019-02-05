@@ -50,7 +50,7 @@ include: WORKFLOW_GENE_DETECTION
 __PIPELINE_VERSION = config.get('pipeline_version')
 
 # 5. Create a CAMEL instance to run tools
-camel = Camel(tool_parameter_loc='/usr/local/bin/BIOIT/camel_3.0_listeria/scripts/listeriapipeline/tool_data/')
+camel = Camel(tool_parameter_loc=os.path.join(os.environ['CAMEL_PATH'], 'scripts/listeriapipeline/tool_data/'))
 
 # 6. Create the directory to store the output files
 if not os.path.isdir(config['output_dir']):
