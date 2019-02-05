@@ -1,0 +1,4 @@
+dependencies: null
+parameters:
+  output_filename: {default: true, mandatory: true, option: null, value: typing_output.tsv}
+tool_command: null

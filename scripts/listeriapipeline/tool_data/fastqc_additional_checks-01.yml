@@ -1,0 +1,22 @@
+dependencies: null
+parameters:
+  average_read_quality_fail: {default: true, mandatory: true, option: null, value: '25'}
+  average_read_quality_warn: {default: true, mandatory: true, option: null, value: '30'}
+  gc_content_difference_fail: {default: true, mandatory: true, option: null, value: '4'}
+  gc_content_difference_warn: {default: true, mandatory: true, option: null, value: '2'}
+  gc_content_reference: {default: true, mandatory: true, option: null, value: '51.5'}
+  n_fraction_threshold_fail: {default: true, mandatory: true, option: null, value: '0.01'}
+  n_fraction_threshold_warn: {default: true, mandatory: true, option: null, value: '0.005'}
+  per_base_sequence_content_fail: {default: true, mandatory: true, option: null, value: '6'}
+  per_base_sequence_content_skipped: {default: true, mandatory: true, option: null,
+    value: '20'}
+  per_base_sequence_content_skipped_end: {default: true, mandatory: true, option: null,
+    value: '5'}
+  per_base_sequence_content_warn: {default: true, mandatory: true, option: null, value: '3'}
+  qscore_drop_fail_length: {default: true, mandatory: true, option: null, value: '150'}
+  qscore_drop_threshold: {default: true, mandatory: true, option: null, value: '30'}
+  qscore_drop_warn_length: {default: true, mandatory: true, option: null, value: '200'}
+  sequence_length_fraction: {default: true, mandatory: true, option: null, value: '0.5'}
+  sequence_length_threshold_fail: {default: true, mandatory: true, option: null, value: '150'}
+  sequence_length_threshold_warn: {default: true, mandatory: true, option: null, value: '175'}
+tool_command: null
