@@ -37,33 +37,33 @@ class ListeriaMain(object):
         'resfinder': {
             'min_percent_identity': 90.0,
             'min_coverage': 60.0,
-            'version': 'latest',
+            'version': '20190205',
             'extra_column': ['Antibiotics', 'antibiotics']
         },
         'card': {
             'min_percent_identity': 90.0,
             'min_coverage': 60.0,
-            'version': 'latest',
+            'version': '20190205',
         },
         'argannot': {
             'min_percent_identity': 90.0,
             'min_coverage': 60.0,
-            'version': 'latest',
+            'version': '20190205',
         },
         'virulencefinder': {
             'min_percent_identity': 90.0,
             'min_coverage': 60.0,
-            'version': 'latest',
+            'version': '20190205',
             'extra_column': ['Protein function', 'protein_function']
         },
         'plasmidfinder': {
             'min_percent_identity': 90.0,
             'min_coverage': 60.0,
-            'version': 'latest',
+            'version': '20190205',
             'extra_column': ['Notes', 'notes']
         }
     }
-    DB_SEQUENCE_TYPING_ROOT = '/data/sequence_typing/listeria/'
+    DB_SEQUENCE_TYPING_ROOT = '/db/sequence_typing/listeria/'
     DB_SEQUENCE_TYPING = {
         'species_confirmation': os.path.join(DB_SEQUENCE_TYPING_ROOT, 'species_confirmation'),
         'MLST-Pasteur': os.path.join(DB_SEQUENCE_TYPING_ROOT, 'mlst'),
