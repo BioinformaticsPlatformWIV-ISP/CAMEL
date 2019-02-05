@@ -18,13 +18,13 @@ class ListeriaMain(object):
     Main class to run the Listeria pipeline.
     """
 
-    PIPELINE_VERSION = '0.4'
+    PIPELINE_VERSION = '1.0'
     SNAKE_FILE = os.path.join(os.path.dirname(__file__), 'pipeline_listeria.snakefile')
     LOGGING_LEVEL = 'pipeline'   # 'step'
     THREADS = 8
     DEBUG = False
     DEBUG_DIR_ROOT = '/scratch/qiafu/listeria_pipeline/Galaxy_runs/'
-    DB_KRAKEN = '/data/kraken/latest/abfhpv_lite/'  # On dev2 there is not enough mem to run complete db abfhpv, unless manually load into /run/shm
+    DB_KRAKEN='/run/shm/kraken/latest/abfhpv'
     # map gene detection db to its db_loc entry (for db path retrieve)
     DB_GENE_DETECTION = {
         'resfinder': 'resfinder',
@@ -37,29 +37,29 @@ class ListeriaMain(object):
         'resfinder': {
             'min_percent_identity': 90.0,
             'min_coverage': 60.0,
-            'version': '20180817',
+            'version': 'latest',
             'extra_column': ['Antibiotics', 'antibiotics']
         },
         'card': {
             'min_percent_identity': 90.0,
             'min_coverage': 60.0,
-            'version': '20180817',
+            'version': 'latest',
         },
         'argannot': {
             'min_percent_identity': 90.0,
             'min_coverage': 60.0,
-            'version': '20180817',
+            'version': 'latest',
         },
         'virulencefinder': {
             'min_percent_identity': 90.0,
             'min_coverage': 60.0,
-            'version': '20180817',
+            'version': 'latest',
             'extra_column': ['Protein function', 'protein_function']
         },
         'plasmidfinder': {
             'min_percent_identity': 90.0,
             'min_coverage': 60.0,
-            'version': '20180817',
+            'version': 'latest',
             'extra_column': ['Notes', 'notes']
         }
     }
