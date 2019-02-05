@@ -23,8 +23,8 @@ class ListeriaMain(object):
     LOGGING_LEVEL = 'pipeline'   # 'step'
     THREADS = 8
     DEBUG = False
-    DEBUG_DIR_ROOT = '/scratch/qiafu/listeria_pipeline/Galaxy_runs/'
-    DB_KRAKEN='/run/shm/kraken/latest/abfhpv'
+    DEBUG_DIR_ROOT = '/scratch/listeria_pipeline/Galaxy_runs/'
+    DB_KRAKEN = '/db/kraken/latest/abfhpv'
     # map gene detection db to its db_loc entry (for db path retrieve)
     DB_GENE_DETECTION = {
         'resfinder': 'resfinder',
