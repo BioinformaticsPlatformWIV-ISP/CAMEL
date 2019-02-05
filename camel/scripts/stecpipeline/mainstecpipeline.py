@@ -157,10 +157,8 @@ class MainSTECPipeline(object):
         parser.add_argument('--output-summary', help="Output file for the summary")
         parser.add_argument('--output-html', help="Output file for the HTML report", required=True)
         parser.add_argument('--output-dir', help="Output directory for the files in the HTML report", required=True)
-        parser.add_argument('--report-include-bam', help="Output directory for the files in the HTML report",
-                            action='store_true')
-        parser.add_argument('--report-include-fastq', help="Output directory for the files in the HTML report",
-                            action='store_true')
+        parser.add_argument('--report-include-fastq', help="Include the FASTQ files in the report", action='store_true')
+        parser.add_argument('--report-include-bam', help="Include the BAM file in the report", action='store_true')
 
         # Kraken
         parser.add_argument('--kraken', action='store_true')
