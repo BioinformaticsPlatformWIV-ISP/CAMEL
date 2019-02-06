@@ -1,0 +1,14 @@
+dependencies: VelvetOptimiser/2.2.5 velvet/1.2.10
+parameters:
+  hash_end: {default: true, mandatory: false, option: -e, value: '251'}
+  hash_start: {default: true, mandatory: false, option: -s, value: '41'}
+  log_prefix: {default: true, mandatory: false, option: -p, value: asmb}
+  optFuncCov: {default: true, mandatory: false, option: --optFuncCov, value: Lbp}
+  optFuncKmer: {default: true, mandatory: false, option: --optFuncKmer, value: n50}
+  output_dir: {default: true, mandatory: true, option: --dir_final, value: assembly}
+  step: {default: true, mandatory: true, option: -x, value: '20'}
+  threads: {default: true, mandatory: false, option: -t, value: '4'}
+  velvetgopts: {default: true, mandatory: true, option: --velvetgoptions, value: -exp_cov
+      auto}
+  velvethopts: {default: true, mandatory: false, option: '', value: -create_binary}
+tool_command: VelvetOptimiser.pl

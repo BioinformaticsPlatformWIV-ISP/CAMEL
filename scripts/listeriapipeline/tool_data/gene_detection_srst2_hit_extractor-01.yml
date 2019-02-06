@@ -1,0 +1,5 @@
+dependencies: null
+parameters:
+  extra_column: {default: false, mandatory: false, option: null, value: null}
+  output_filename: {default: true, mandatory: true, option: null, value: hits-srst2.tsv}
+tool_command: null

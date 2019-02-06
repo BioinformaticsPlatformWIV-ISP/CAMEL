@@ -50,7 +50,7 @@ include: WORKFLOW_GENE_DETECTION
 __PIPELINE_VERSION = config.get('pipeline_version')
 
 # 5. Create a CAMEL instance to run tools
-camel = Camel()
+camel = Camel(tool_parameter_loc=os.path.join(os.environ['CAMEL_PATH'], 'scripts/listeriapipeline/tool_data/'))
 
 # 6. Create the directory to store the output files
 if not os.path.isdir(config['output_dir']):
@@ -157,7 +157,9 @@ onsuccess:
 
 onerror:
     print("ONERROR: pipeline fails to finish. log file {!r}".format(log))
-    GALAXY_ERROR_LOG_DIR = '/scratch/qiafu/listeria_pipeline/Galaxy_runs'
+    GALAXY_ERROR_LOG_DIR = "/scratch/galaxy_dumps/"
+    if not os.path.exists(GALAXY_ERROR_LOG_DIR):
+        os.makedirs(GALAXY_ERROR_LOG_DIR)
     shutil.copy(log, os.path.join(GALAXY_ERROR_LOG_DIR, os.path.basename(log)))
     shutil.copy(os.path.join(os.getcwd(), 'camel.log'), os.path.join(GALAXY_ERROR_LOG_DIR, os.path.basename(log)+'_camel.log'))
     section_log = HtmlReportSection('Runnning log')

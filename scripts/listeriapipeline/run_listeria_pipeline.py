@@ -18,13 +18,13 @@ class ListeriaMain(object):
     Main class to run the Listeria pipeline.
     """
 
-    PIPELINE_VERSION = '0.4'
+    PIPELINE_VERSION = '1.0'
     SNAKE_FILE = os.path.join(os.path.dirname(__file__), 'pipeline_listeria.snakefile')
     LOGGING_LEVEL = 'pipeline'   # 'step'
     THREADS = 8
     DEBUG = False
-    DEBUG_DIR_ROOT = '/scratch/qiafu/listeria_pipeline/Galaxy_runs/'
-    DB_KRAKEN = '/data/kraken/latest/abfhpv_lite/'  # On dev2 there is not enough mem to run complete db abfhpv, unless manually load into /run/shm
+    DEBUG_DIR_ROOT = '/scratch/listeria_pipeline/Galaxy_runs/'
+    DB_KRAKEN = '/db/kraken/latest/abfhpv'
     # map gene detection db to its db_loc entry (for db path retrieve)
     DB_GENE_DETECTION = {
         'resfinder': 'resfinder',
@@ -37,33 +37,33 @@ class ListeriaMain(object):
         'resfinder': {
             'min_percent_identity': 90.0,
             'min_coverage': 60.0,
-            'version': '20180817',
+            'version': '20190205',
             'extra_column': ['Antibiotics', 'antibiotics']
         },
         'card': {
             'min_percent_identity': 90.0,
             'min_coverage': 60.0,
-            'version': '20180817',
+            'version': '20190205',
         },
         'argannot': {
             'min_percent_identity': 90.0,
             'min_coverage': 60.0,
-            'version': '20180817',
+            'version': '20190205',
         },
         'virulencefinder': {
             'min_percent_identity': 90.0,
             'min_coverage': 60.0,
-            'version': '20180817',
+            'version': '20190205',
             'extra_column': ['Protein function', 'protein_function']
         },
         'plasmidfinder': {
             'min_percent_identity': 90.0,
             'min_coverage': 60.0,
-            'version': '20180817',
+            'version': '20190205',
             'extra_column': ['Notes', 'notes']
         }
     }
-    DB_SEQUENCE_TYPING_ROOT = '/data/sequence_typing/listeria/'
+    DB_SEQUENCE_TYPING_ROOT = '/db/sequence_typing/listeria/'
     DB_SEQUENCE_TYPING = {
         'species_confirmation': os.path.join(DB_SEQUENCE_TYPING_ROOT, 'species_confirmation'),
         'MLST-Pasteur': os.path.join(DB_SEQUENCE_TYPING_ROOT, 'mlst'),

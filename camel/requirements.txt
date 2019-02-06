@@ -2,7 +2,7 @@ requests==2.18.3
 beautifulsoup4==4.5.3
 biopython==1.66
 bs4==0.0.1
-psycopg2==2.6.2
+psycopg2>=2.7.6
 PyVCF==0.6.8
 PyYAML==3.12
 yattag==1.9.2

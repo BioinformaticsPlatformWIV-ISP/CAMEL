@@ -1,0 +1,11 @@
+dependencies: null
+parameters:
+  minimal_cgmlst_percentage_genes_fail: {default: true, mandatory: false, option: null,
+    value: '90'}
+  minimal_cgmlst_percentage_genes_warn: {default: true, mandatory: false, option: null,
+    value: '95'}
+  minimal_coverage_fail: {default: true, mandatory: false, option: null, value: '10'}
+  minimal_coverage_warn: {default: true, mandatory: false, option: null, value: '20'}
+  minimal_mapping_rate_fail: {default: true, mandatory: false, option: null, value: '90'}
+  minimal_mapping_rate_warn: {default: true, mandatory: false, option: null, value: '95'}
+tool_command: null
