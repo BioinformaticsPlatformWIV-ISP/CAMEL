@@ -63,7 +63,8 @@ def _get_tool_data(camel: Camel, tool_name: str, tool_version: str):
             'option': parameter.option,
             'value': parameter.value,
             'mandatory': parameter.name in mandatory_parameters,
-            'default': parameter.name in default_parameters
+            'default': parameter.name in default_parameters,
+            'p_index': parameter.p_index
         }
     return tool_data
 
