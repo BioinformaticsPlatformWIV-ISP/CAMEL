@@ -9,13 +9,14 @@ class Parameter(object):
     Add parameter source ('Tool default (D)', 'Pipeline parameter (P), 'Job parameter (J)')
     """
 
-    def __init__(self, name, option, value):
+    def __init__(self, name, option, value, p_index: int = 0):
         """
         Initializes a parameter.
         """
         self._name = name
         self._option = option
         self._value = value
+        self._p_index = p_index
 
     @property
     def name(self):
@@ -49,6 +50,14 @@ class Parameter(object):
         :return: None
         """
         self._value = value
+
+    @property
+    def p_index(self) -> int:
+        """
+        Returns the parameter index (used for ordering).
+        :return: P-index
+        """
+        return self._p_index
 
     def __str__(self):
         """

@@ -50,9 +50,9 @@ class YAMLToolService(BaseToolService):
         :return: Default parameters
         """
         param_dict = OrderedDict()
-        for p_name, p_data in self._tool_data['parameters'].items():
+        for p_name, p_data in sorted(self._tool_data['parameters'].items(), key=lambda x: x[1].get('p_index', 0)):
             if p_data['default'] is True:
-                param_dict[p_name] = Parameter(p_name, p_data['option'], p_data['value'])
+                param_dict[p_name] = Parameter(p_name, p_data['option'], p_data['value'], p_data.get('p_index'))
         return param_dict
 
     def get_names_mandatory_parameter(self) -> List[str]:
