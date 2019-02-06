@@ -1,6 +1,7 @@
 ASSEMBLY_WORKING_DIR = os.path.join(__WORKING_DIR, 'assembly')
 ASSEMBLY_REPORT = os.path.join(ASSEMBLY_WORKING_DIR, 'report-html.io')
 ASSEMBLY_SUMMARY = os.path.join(ASSEMBLY_WORKING_DIR, 'report-summary.tsv')
+FASTA_ASSEMBLY_RAW = os.path.join(ASSEMBLY_WORKING_DIR, 'fasta_raw.io')
 FASTA_ASSEMBLY = os.path.join(ASSEMBLY_WORKING_DIR, 'fasta.io')
 
 rule velvet_optimiser:
@@ -67,11 +68,25 @@ rule select_assembly:
         os.path.join(ASSEMBLY_WORKING_DIR, 'spades', 'fasta.io') if config.get('assembler') == 'SPAdes' else [],
         os.path.join(ASSEMBLY_WORKING_DIR, 'velvet', 'fasta.io') if config.get('assembler') == 'VelvetOptimiser' else []
     output:
-        FASTA_ASSEMBLY
+        FASTA_ASSEMBLY_RAW
     run:
         import shutil
         shutil.copyfile(input[0], output[0])
 
+rule contig_filtering:
+    input:
+        FASTA = FASTA_ASSEMBLY_RAW
+    output:
+        FASTA_ASSEMBLY
+    run:
+        from camel.app.tools.pipelines.assembly.contigqcfilter import ContigQCFilter
+        ctgfilter = ContigQCFilter(camel)
+        SnakemakeUtils.add_pickle_inputs(ctgfilter, input)
+        step = Step(rule, ctgfilter, camel, params.running_dir, config)
+        # ctgfilter.update_parameters(threads=threads)
+        step.run_step()
+        SnakemakeUtils.dump_tool_outputs(ctgfilter, output)
+        
 rule quast:
     """
     Generates assembly statistics using QUAST.
