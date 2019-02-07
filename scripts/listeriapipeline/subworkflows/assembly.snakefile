@@ -42,7 +42,7 @@ rule spades:
         FASTA_Contig = os.path.join(ASSEMBLY_WORKING_DIR, 'spades', 'fasta.io')
     params:
         running_dir = os.path.join(ASSEMBLY_WORKING_DIR, 'spades'),
-        cov_cutoff = config['assembly']['contig_min_depth_spades'],
+        cov_cutoff = config['assembly']['min_depth'],
         fast = config.get('assembly_fast', False)
     threads:
         6
@@ -83,7 +83,7 @@ rule contig_filtering:
     output:
         FASTA_contig = FASTA_ASSEMBLY
     params:
-        min_length = config['assembly']['contig_min_length']
+        min_length = config['assembly']['min_length'],
         running_dir = ASSEMBLY_WORKING_DIR
     run:
         from camel.app.tools.pipelines.assembly.contigqcfilter import ContigQCFilter

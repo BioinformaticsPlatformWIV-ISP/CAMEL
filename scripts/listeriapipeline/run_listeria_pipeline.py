@@ -109,7 +109,7 @@ class ListeriaMain(object):
         parser.add_argument('--output-html', help="Output file for the HTML report")
         parser.add_argument('--output-dir', help="Output directory for the files in the HTML report")
         # assembly
-        parser.add_argument('--contig-min-depth-spades', default=10.0, type=float, help='Minimal kmer depth filtering of contigs, SPAdes assembler only.')
+        parser.add_argument('--contig-min-depth', default=10.0, type=float, help='Minimal kmer depth filtering of contigs, SPAdes assembler only.')
         parser.add_argument('--contig-min-length', default=1000, type=int, help='Minimal length to keep a contig.')
         # gene detection
         parser.add_argument('--resfinder', action='store_true')
@@ -257,8 +257,8 @@ class ListeriaMain(object):
             yaml.dump({
                 'assembly': {
                     'assembler': self._args.assembler,
-                    'min_depth_filtering': self._args.contig_min_depth_spades,
-                    'min_length_filtering': self._args.contig_min_length
+                    'min_depth': self._args.contig_min_depth,
+                    'min_length': self._args.contig_min_length
                 }
             })
 
