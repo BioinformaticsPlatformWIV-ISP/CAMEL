@@ -259,7 +259,7 @@ class ListeriaMain(object):
                     'min_depth': self._args.contig_min_depth,
                     'min_length': self._args.contig_min_length
                 }
-            })
+            }, handle, default_flow_style=False)
 
     def __get_gene_detection_db_config(self):
         """
