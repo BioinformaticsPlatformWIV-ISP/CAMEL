@@ -98,8 +98,8 @@ class DbToolService(BaseToolService):
         """
         query_result = self.db_connection.query(sql, [self._tool_id])
         parameters = OrderedDict()
-        for name, option, value, _ in sorted(query_result[1:], key=lambda x: x[3]):
-            parameters[name] = Parameter(name, option, value)
+        for name, option, value, p_index in sorted(query_result[1:], key=lambda x: x[3]):
+            parameters[name] = Parameter(name, option, value, p_index)
         return parameters
 
     def get_names_mandatory_parameter(self) -> List[str]:
