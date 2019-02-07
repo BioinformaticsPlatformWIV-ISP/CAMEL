@@ -42,7 +42,7 @@ class FastaUtils(object):
     @staticmethod
     def count_reads(infile):
         """
-        Count how many reads in a fastq file
+        Count how many reads in a fasta file
         :param infile: file name of the fasta file to count
         :return: number of reads in fasta file
         """
