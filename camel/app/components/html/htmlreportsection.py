@@ -1,9 +1,13 @@
 import logging
+from typing import List, Union, Tuple
+
 import os
 
 import shutil
 
+from camel.app.components.html.htmlbase import HtmlBase
 from camel.app.components.html.htmlelement import HtmlElement
+from camel.app.components.html.htmltablecell import HtmlTableCell
 
 
 class HtmlReportSection(HtmlElement):
@@ -76,6 +80,20 @@ class HtmlReportSection(HtmlElement):
         logging.info("Adding file to report section: {}".format(relative_path))
         self._files.append((input_file, relative_path,))
         return relative_path
+
+    def add_table(self, data: List[List[Union[str, int, 'HtmlBase']]], column_names: List[str] = None,
+                  table_attributes: List[Tuple[str, str]] = None, msg_if_empty: str = 'None found') -> None:
+        """
+        Adds a table to the report section.
+        :param data: Table data
+        :param column_names: Column names
+        :param table_attributes: Table attributes
+        :param msg_if_empty: If set, this message is added when the data is empty
+        :return: None
+        """
+        if (msg_if_empty is not None) and (len(data) == 0):
+            data.append([HtmlTableCell(msg_if_empty, attributes=[('colspan', len(column_names))])])
+        super().add_table(data, column_names, table_attributes)
 
     def __repr__(self) -> str:
         """
