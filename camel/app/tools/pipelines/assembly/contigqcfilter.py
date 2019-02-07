@@ -58,8 +58,12 @@ class ContigQCFilter(Tool):
         Filter contigs shorter then 'min_length' parameter
         :return: None
         """
-        logging.info("Filtering contigs by minimal length cutoff ...")
         min_length = int(self._parameters['min_length'].value)
+        if min_length == 0:
+            logging.info("Filtering contigs by minimal length disabled (min_length cutoff set as 0) ...")
+            return
+        else:
+            logging.info("Filtering contigs by minimal length cutoff ...")
         for contig in self._contigs:
             if len(contig.seq) < min_length:
                 logging.info("\tContig {!r} ({}bp) shorter then minimal length required ({}) is removed.".format(contig.id, len(contig.seq), min_length))
