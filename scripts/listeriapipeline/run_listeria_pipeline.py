@@ -18,7 +18,7 @@ class ListeriaMain(object):
     Main class to run the Listeria pipeline.
     """
 
-    PIPELINE_VERSION = '1.0'
+    PIPELINE_VERSION = '1.1'
     SNAKE_FILE = os.path.join(os.path.dirname(__file__), 'pipeline_listeria.snakefile')
     LOGGING_LEVEL = 'pipeline'   # 'step'
     THREADS = 8
