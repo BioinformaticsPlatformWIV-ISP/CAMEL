@@ -1,9 +1,12 @@
+import json
 import logging
 
 import os
 
+from camel.app.command.command import Command
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
+from camel.app.io.tooliofile import ToolIOFile
 from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.tools.tool import Tool
 
@@ -11,6 +14,13 @@ from camel.app.tools.tool import Tool
 class SpoTyping(Tool):
     """
     SpoTyping: fast and accurate in silico Mycobacterium spoligotyping from sequence reads.
+
+    Input:
+        - FASTQ: 1 (SE) or 2 (PE) FASTQ files
+
+    Output:
+        - VAL_type_binary: Binary spoligotype
+        - VAL_type_octal: Octal spoligotype
     """
 
     def __init__(self, camel):
@@ -45,11 +55,14 @@ class SpoTyping(Tool):
         type_binary, type_octal = self._parse_output_file()
         self._tool_outputs['VAL_type_binary'] = [ToolIOValue(type_binary)]
         self._tool_outputs['VAL_type_octal'] = [ToolIOValue(type_octal)]
+        self._tool_outputs['LOG'] = [ToolIOFile(os.path.join(self._folder, '{}.log'.format(
+            self._parameters['output_basename'].value)))]
+        self._informs['version'] = self.get_dependency_version('SpoTyping')
 
     def _parse_output_file(self):
         """
         Parses the output file.
-        :return: Spoligotype (Binary), Spologitype(Octal)
+        :return: Spoligotype (Binary), Spoligotype (Octal)
         """
         output_file_path = os.path.join(self._folder, self._parameters['output_basename'].value)
         if not os.path.isfile(output_file_path):
@@ -63,7 +76,7 @@ class SpoTyping(Tool):
 
     def _check_command_output(self):
         """
-        Checks the command output to checks if the tool executed succesfully.
+        Checks the command output to checks if the tool executed successfully.
         :return: None
         """
         if self._command.returncode != 0:
@@ -72,3 +85,19 @@ class SpoTyping(Tool):
                 logging.warning('Could not contact SITVIT server')
             else:
                 raise ToolExecutionError(last_line)
+
+    def _extract_metadata(self, type_octal):
+        """
+        Extracts the metadata for the detected Spoligotype.
+        :return: Spoligotype metadata
+        """
+        command = Command('{} echo $SPOTYPING_METADATA'.format(self._build_dependencies()))
+        command.run_command(self._folder)
+        metadata_path = command.stdout.strip()
+        with open(metadata_path) as handle:
+            metadata = json.load(handle)
+        keys = ('SIT', 'geo', 'label', 'total')
+        if type_octal in metadata:
+            return {k: metadata[type_octal][k] for k in keys}
+        else:
+            return {k: 'NA' for k in keys}
