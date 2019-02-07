@@ -42,6 +42,7 @@ rule spades:
         FASTA_Contig = os.path.join(ASSEMBLY_WORKING_DIR, 'spades', 'fasta.io')
     params:
         running_dir = os.path.join(ASSEMBLY_WORKING_DIR, 'spades'),
+        cov_cutoff = config['assembly']['contig_min_depth_spades'],
         fast = config.get('assembly_fast', False)
     threads:
         6
@@ -54,7 +55,10 @@ rule spades:
             SnakemakeUtils.load_object(input.FASTQ_SE_REVERSE)
         })
         step = Step(rule, spades, camel, params.running_dir, config)
-        spades.update_parameters(threads=threads, cov_cutoff='off')
+        if int(params.cov_cutoff) == 0:
+            spades.update_parameters(threads=threads, cov_cutoff='off')
+        else:
+            spades.update_parameters(threads=threads, cov_cutoff=params.cov_cutoff)
         if params.fast:
             spades.update_parameters(only_assembly=True, kmers='55', careful=False)
         step.run_step()
@@ -79,13 +83,14 @@ rule contig_filtering:
     output:
         FASTA_contig = FASTA_ASSEMBLY
     params:
+        min_length = config['assembly']['contig_min_length']
         running_dir = ASSEMBLY_WORKING_DIR
     run:
         from camel.app.tools.pipelines.assembly.contigqcfilter import ContigQCFilter
         ctgfilter = ContigQCFilter(camel)
         SnakemakeUtils.add_pickle_inputs(ctgfilter, input)
         step = Step(rule, ctgfilter, camel, params.running_dir, config)
-        # ctgfilter.update_parameters(threads=threads)
+        ctgfilter.update_parameters(min_length=params.min_length)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(ctgfilter, output)
         

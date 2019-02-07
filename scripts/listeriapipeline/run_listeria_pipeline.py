@@ -108,6 +108,9 @@ class ListeriaMain(object):
         parser.add_argument('--output-summary', help="Output file for the summary")
         parser.add_argument('--output-html', help="Output file for the HTML report")
         parser.add_argument('--output-dir', help="Output directory for the files in the HTML report")
+        # assembly
+        parser.add_argument('--contig-min-depth-spades', default=10.0, type=float, help='Minimal kmer depth filtering of contigs, SPAdes assembler only.')
+        parser.add_argument('--contig-min-length', default=1000, type=int, help='Minimal length to keep a contig.')
         # gene detection
         parser.add_argument('--resfinder', action='store_true')
         parser.add_argument('--argannot', action='store_true')
@@ -249,6 +252,15 @@ class ListeriaMain(object):
             # yaml.dump({'st_mark_imperfect_hit': True}, handle, default_flow_style=False)
             # - st_imperfect_as_nohit: imperfect hits will be skip, nohit will be reported in place (pubmlst style)
             yaml.dump({'st_imperfect_as_nohit': True}, handle, default_flow_style=False)
+
+            # Assembly contig filtering options
+            yaml.dump({
+                'assembly': {
+                    'assembler': self._args.assembler,
+                    'min_depth_filtering': self._args.contig_min_depth_spades,
+                    'min_length_filtering': self._args.contig_min_length
+                }
+            })
 
     def __get_gene_detection_db_config(self):
         """
