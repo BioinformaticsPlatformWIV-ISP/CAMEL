@@ -75,9 +75,11 @@ rule select_assembly:
 
 rule contig_filtering:
     input:
-        FASTA = FASTA_ASSEMBLY_RAW
+        FASTA_contig = FASTA_ASSEMBLY_RAW
     output:
         FASTA_ASSEMBLY
+    params:
+        running_dir = ASSEMBLY_WORKING_DIR
     run:
         from camel.app.tools.pipelines.assembly.contigqcfilter import ContigQCFilter
         ctgfilter = ContigQCFilter(camel)

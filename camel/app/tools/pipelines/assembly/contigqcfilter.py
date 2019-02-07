@@ -19,7 +19,7 @@ class ContigQCFilter(Tool):
         Initialize this tool.
         :param camel: CAMEL instance
         """
-        super(ContigQCFilter, self).__init__('Contig Filter', '0.1', camel)
+        super(ContigQCFilter, self).__init__('ContigQCFilter', '0.1', camel)
         self._contigs = []
         self._contigs_remain = []
 
@@ -62,7 +62,7 @@ class ContigQCFilter(Tool):
         min_length = int(self._parameters['min_length'].value)
         for contig in self._contigs:
             if len(contig.seq) < min_length:
-                logging.info("\tContig {} ({}bp) shorter then minimal length required ({}) is removed.".format(contig.id, min_length))
+                logging.info("\tContig {!r} ({}bp) shorter then minimal length required ({}) is removed.".format(contig.id, len(contig.seq), min_length))
             else:
                 self._contigs_remain.append(contig)
         logging.info("{} contigs remain after filtering by minimal length cutoff.".format(len(self._contigs_remain)))
@@ -75,6 +75,6 @@ class ContigQCFilter(Tool):
         Output self._contigs_remain to output FASTA file and set output specs:
         :retrun: None
         """
-        fasta_file_out = os.path.join(self._folder, self._parameters['fasta_output'].value())
+        fasta_file_out = os.path.join(self._folder, self._parameters['fasta_output'].value)
         FastaUtils.write(self._contigs, fasta_file_out)
         self._tool_outputs['FASTA_contig'] = [ToolIOFile(fasta_file_out)]
