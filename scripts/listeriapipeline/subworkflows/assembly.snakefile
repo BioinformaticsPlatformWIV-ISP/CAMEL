@@ -69,8 +69,8 @@ rule select_assembly:
     This rule selects the right assembler based on the config file.
     """
     input:
-        os.path.join(ASSEMBLY_WORKING_DIR, 'spades', 'fasta.io') if config.get('assembler') == 'SPAdes' else [],
-        os.path.join(ASSEMBLY_WORKING_DIR, 'velvet', 'fasta.io') if config.get('assembler') == 'VelvetOptimiser' else []
+        os.path.join(ASSEMBLY_WORKING_DIR, 'spades', 'fasta.io') if config['assembly']['assembler'] == 'SPAdes' else [],
+        os.path.join(ASSEMBLY_WORKING_DIR, 'velvet', 'fasta.io') if config['assembly']['assembler'] == 'VelvetOptimiser' else []
     output:
         FASTA_ASSEMBLY_RAW
     run:
@@ -145,7 +145,7 @@ rule report_assembly:
     params:
         running_dir = os.path.join(ASSEMBLY_WORKING_DIR),
         sample_name = config['sample_name'],
-        assembler = config['assembler'],
+        assembler = config['assembly']['assembler'],
         output_dir = config['output_dir']
     run:
         from camel.app.tools.pipelines.assembly.htmlreporterassembly import HtmlReporterAssembly
@@ -170,7 +170,7 @@ rule summary_assembly:
     params:
         running_dir = os.path.join(ASSEMBLY_WORKING_DIR),
         sample_name = config['sample_name'],
-        assembler = config['assembler'],
+        assembler = config['assembly']['assembler'],
         output_dir = config['output_dir']
     run:
         quast_informs = SnakemakeUtils.load_object(input.INFORMS_quast)

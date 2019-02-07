@@ -221,7 +221,6 @@ class ListeriaMain(object):
             yaml.dump({
                 'sample_name': self._sample_name,
                 'fastq_pe': self._fastq_input,
-                'assembler': self._args.assembler,
                 'detection_method': self._args.analysis_type,
                 'library': self._args.library
             }, handle, default_flow_style=False)
@@ -253,7 +252,7 @@ class ListeriaMain(object):
             # - st_imperfect_as_nohit: imperfect hits will be skip, nohit will be reported in place (pubmlst style)
             yaml.dump({'st_imperfect_as_nohit': True}, handle, default_flow_style=False)
 
-            # Assembly contig filtering options
+            # Assembly
             yaml.dump({
                 'assembly': {
                     'assembler': self._args.assembler,
