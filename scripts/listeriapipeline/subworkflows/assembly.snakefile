@@ -77,7 +77,7 @@ rule contig_filtering:
     input:
         FASTA_contig = FASTA_ASSEMBLY_RAW
     output:
-        FASTA_ASSEMBLY
+        FASTA_contig = FASTA_ASSEMBLY
     params:
         running_dir = ASSEMBLY_WORKING_DIR
     run:
