@@ -1,0 +1,5 @@
+dependencies: null
+parameters:
+  fasta_output: {default: true, mandatory: true, option: null, value: contigs_filtered.fasta}
+  min_length: {default: true, mandatory: true, option: null, value: '1000'}
+tool_command: null
