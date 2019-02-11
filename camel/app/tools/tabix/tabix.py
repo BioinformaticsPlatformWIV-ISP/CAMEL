@@ -20,7 +20,7 @@ class Tabix(Tool):
         Initializes this tool.
         :param camel: CAMEL instance
         """
-        super().__init__('tabix', '1.6', camel)
+        super().__init__('tabix', '1.9', camel)
 
     def _execute_tool(self):
         """
