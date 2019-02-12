@@ -128,7 +128,7 @@ class BlastHitFiltering(Tool):
         elif self._parameters['filtering_method'].value == 'score':
             if 'score_nb_of_hits' not in self._parameters:
                 raise ToolExecutionError("'score_nb_of_hits' needs to be set when the filtering method is 'score'")
-            hits = hits[:self._parameters['score_nb_of_hits'].value]
+            hits = hits[:int(self._parameters['score_nb_of_hits'].value)]
         return hits
 
     def __set_output(self, hits: List[GeneDetectionBlastHit]) -> None:
