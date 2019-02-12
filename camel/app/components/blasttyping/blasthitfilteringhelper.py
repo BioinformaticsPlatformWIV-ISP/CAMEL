@@ -25,7 +25,8 @@ class BlastHitFilteringHelper(object):
         if len(perfect_hits) >= 1:
             logging.debug('{} perfect hit(s) found: {}'.format(
                 len(perfect_hits), ', '.join([h.subject for h in perfect_hits])))
-            return [sorted(perfect_hits, key=lambda h: h.subject_length, reverse=True)[0]]
+            max_length = max([h.subject_length for h in perfect_hits])
+            return [h for h in perfect_hits if h.subject_length == max_length]
         else:
             best_hits = BlastHitFilteringHelper.__get_best_imperfect_hits(hits)
             logging.debug('No perfect hits found, {} equivalent imperfect hits found: {}'.format(
