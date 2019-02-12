@@ -73,10 +73,10 @@ class Snpit(Tool):
         Creates a report section with the results of the tool.
         :return: Report section
         """
-        section = HtmlReportSection('Snpit')
+        section = HtmlReportSection('Snpit', 3)
         table_data = [
             ['Species:', '<i>{}</i>'.format(self._informs['species']) if self._informs['species'] != '' else 'NA'],
-            ['Lineage:', self._informs['lineage'] if self._informs['species'] != '' else 'NA'],
+            ['Lineage:', self._informs['lineage'] if self._informs['lineage'] != '' else 'NA'],
             ['Sublineage:', self._informs['sublineage'] if self._informs['sublineage'] != '' else 'NA'],
             ['Percent match:', '{:.2f}%'.format(self._informs['percent_matched'])]
         ]
