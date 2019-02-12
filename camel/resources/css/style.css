@@ -30,6 +30,11 @@ div.report_section {
     padding: 0.3em 1em 1em;
 }
 
+div.border_bottom {
+    border-bottom:1px solid #dfdfdf;
+    padding-bottom: 1em;
+}
+
 #header_logo {
     vertical-align: middle;
     clear: right;
@@ -92,6 +97,20 @@ table.information tr > td:first-child {
     background-color: #ffa839;
 }
 
+.plot_cds {
+    background-color: rgb(229, 196, 148);
+}
+
+.plot_rrna {
+    background-color: rgb(255, 217, 47);
+}
+
+.plot_intergenic {
+    background-color: rgb(252, 141, 98);
+}
+.plot_pseudo {
+    background-color: rgb(231, 138, 195);
+}
 
 /* Global table settings */
 table {
@@ -185,4 +204,9 @@ input:checked + .slider:before {
 
 .header-subtitle {
   color: #6d6d6d;
+}
+
+img.bordered {
+  border: 1px solid grey;
+  padding: 8px;
 }
