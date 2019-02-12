@@ -65,7 +65,7 @@ class HtmlReporterQualityChecks(Tool):
         """
         self._section.add_header('Metrics', 3)
         self.__add_qc_metric_with_plot(
-            'Median coverage',
+            'Median coverage (against assembly)',
             '{:.0f}X'.format(self._input_informs['coverage']['median_depth']),
             'PNG_cov'
         )
