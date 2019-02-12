@@ -229,9 +229,9 @@ rule Variant_filtering_region:
         vcf_file = SnakemakeUtils.load_object(input.VCF_GZ)[0]
         bcftools_filter.add_input_files({'VCF_GZ': [vcf_file]})
         if params.bed_file is not None:
-            bcftools_filter.add_input_files({'BED': [ToolIOFile(params.bed_file)]})
-        bcftools_filter.update_parameters(output_type='v', invert_targets=True,
-                                          output_filename='variants_regions_removed.vcf')
+            bcftools_filter.add_input_files({'BED_exclude': [ToolIOFile(params.bed_file)]})
+        bcftools_filter.update_parameters(
+            output_type='v', invert_targets=True, output_filename='variants_regions_removed.vcf')
         step = Step(rule, bcftools_filter, camel, params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_output(bcftools_filter, 'VCF', output.VCF)
