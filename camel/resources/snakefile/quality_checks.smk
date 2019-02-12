@@ -22,7 +22,7 @@ rule FastQC_additional_checks:
         INFORMS=os.path.join(config['working_dir'], 'quality_checks', 'fastqc_checks', 'informs.io')
     params:
         running_dir=os.path.join(config['working_dir'], 'quality_checks', 'fastqc_checks'),
-        gc_content=config['expected_gc_content']
+        gc_content=config['quality_checks']['expected_gc_content']
     run:
         from camel.app.tools.fastqc.fastqcadditionalchecks import FastQCAdditionalChecks
         fastqc_checks = FastQCAdditionalChecks(camel)
@@ -179,12 +179,12 @@ rule Check_quality_criteria:
 
 rule Visualize_qc_checks:
     """
-    Visualizes the QC checks.
+    Creates plots to visualize the QC checks, shows the warning and fail threshold along with the detected value.
     """
     input:
-        INFORMS_coverage=os.path.join(config['working_dir'], 'quality_checks', 'coverage_calculation', 'informs.io'),
-        INFORMS_cgmlst = os.path.join(config['working_dir'], 'quality_checks', 'metrics', 'informs-st.io'),
-        INFORMS_mapping = os.path.join(config['working_dir'], 'quality_checks', 'read_mapping', 'informs.io'),
+        INFORMS_cov=os.path.join(config['working_dir'], 'quality_checks', 'coverage_calculation', 'informs.io'),
+        INFORMS_mlst = os.path.join(config['working_dir'], 'quality_checks', 'metrics', 'informs-st.io'),
+        INFORMS_map = os.path.join(config['working_dir'], 'quality_checks', 'read_mapping', 'informs.io'),
     output:
         PNG_cov=os.path.join(config['working_dir'], 'quality_checks', 'visualization', 'png-cov.io'),
         PNG_st=os.path.join(config['working_dir'], 'quality_checks', 'visualization', 'png-st.io'),
@@ -204,9 +204,9 @@ rule Report_quality_checks:
     Creates a report containing the quality checks information.
     """
     input:
-        # PNG_cov=os.path.join(config['working_dir'], 'quality_checks', 'visualization', 'png-cov.io'),
-        # PNG_st=os.path.join(config['working_dir'], 'quality_checks', 'visualization', 'png-st.io'),
-        # PNG_mapping=os.path.join(config['working_dir'], 'quality_checks', 'visualization', 'png-mapping.io'),
+        PNG_cov=os.path.join(config['working_dir'], 'quality_checks', 'visualization', 'png-cov.io'),
+        PNG_st=os.path.join(config['working_dir'], 'quality_checks', 'visualization', 'png-st.io'),
+        PNG_mapping=os.path.join(config['working_dir'], 'quality_checks', 'visualization', 'png-mapping.io'),
         INFORMS_coverage=os.path.join(config['working_dir'], 'quality_checks', 'coverage_calculation', 'informs.io'),
         INFORMS_mapping=os.path.join(config['working_dir'], 'quality_checks', 'read_mapping', 'informs.io'),
         INFORMS_additional_checks=os.path.join(config['working_dir'], 'quality_checks', 'fastqc_checks', 'informs.io'),

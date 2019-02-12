@@ -1,3 +1,6 @@
+import os
+
+from camel.app.components.html.htmlelement import HtmlElement
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.html.htmltablecell import HtmlTableCell
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
@@ -23,36 +26,22 @@ class HtmlReporterQualityChecks(Tool):
         :return: None
         """
         super().__init__('Quality checks reporter', '0.1', camel)
-        self.__sub_folder = 'quality_control'
-        self._report_section = HtmlReportSection('Additional quality checks')
+        self._sub_folder = 'quality_control'
+        self._section = HtmlReportSection('Additional quality checks')
 
     def _execute_tool(self):
         """
         Executes this tool.
         :return: None
         """
-        self.__add_additional_checks_section()
-
-        # Add plots
-        # rel_path = os.path.join('qc_checks', 'coverage.png')
-        # self._report_section.add_file(self._tool_inputs['PNG_cov'][0].path, rel_path)
-        # self._report_section.add_html_object(HtmlElement('img', attributes=[('src', rel_path), ('width', 480)]))
-        # rel_path = os.path.join('qc_checks', 'typing.png')
-        # self._report_section.add_file(self._tool_inputs['PNG_st'][0].path, rel_path)
-        # self._report_section.add_html_object(HtmlElement('img', attributes=[('src', rel_path), ('width', 480)]))
-        # rel_path = os.path.join('qc_checks', 'mapping.png')
-        # self._report_section.add_file(self._tool_inputs['PNG_mapping'][0].path, rel_path)
-        # self._report_section.add_html_object(HtmlElement('img', attributes=[('src', rel_path), ('width', 480)]))
-        # self._report_section.add_line_break()
-
-        # Add table
+        self.__add_metrics_overview()
         self.__add_fastqc_checks()
         self.__add_explanation_fastqc_checks()
         self.__add_warnings()
         self.__add_errors()
-        self._tool_outputs['VAL_HTML'] = [ToolIOValue(self._report_section)]
+        self._tool_outputs['VAL_HTML'] = [ToolIOValue(self._section)]
 
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
         Checks if the input is valid.
         :return: None
@@ -69,32 +58,57 @@ class HtmlReporterQualityChecks(Tool):
             raise InvalidInputSpecificationError("No quality criteria info found")
         super(HtmlReporterQualityChecks, self)._check_input()
 
-    def __add_additional_checks_section(self):
+    def __add_metrics_overview(self) -> None:
         """
-        Adds the additional quality checks section.
+        Adds an overview with the QC metrics.
         :return: None
         """
-        data = [
-            ['Median coverage (against assembly):', '{:.0f}X'.format(self._input_informs['coverage']['median_depth'])],
-            ['{} genes found:'.format(self._input_informs['st_genes']['title']), self.__get_st_stats()],
-            ['Reads mapping back to assembly:', '{}%'.format(self._input_informs['mapping']['stats_map_rate'])]
-        ]
-        self._report_section.add_table(data, table_attributes=[('class', 'information')])
+        self._section.add_header('Metrics', 3)
+        self.__add_qc_metric_with_plot(
+            'Median coverage',
+            '{:.0f}X'.format(self._input_informs['coverage']['median_depth']),
+            'PNG_cov'
+        )
+        self.__add_qc_metric_with_plot(
+            '{} genes found'.format(self._input_informs['st_genes']['title']),
+            self.__get_st_stats(),
+            'PNG_st'
+        )
+        self.__add_qc_metric_with_plot(
+            'Reads mapping back to assembly',
+            '{}%'.format(self._input_informs['mapping']['stats_map_rate']),
+            'PNG_mapping'
+        )
 
-    def __add_fastqc_checks(self):
+    def __add_qc_metric_with_plot(self, title: str, value: str, img_key: str) -> None:
+        """
+        Adds a QC metric to the output report, along with the corresponding plot.
+        :param title: Title
+        :param value: Value
+        :param img_key: Image tool input key
+        :return: None
+        """
+        self._section.add_paragraph(f'<b>{title}</b>: {value}')
+        img_path = self._section.add_file(
+            self._tool_inputs[img_key][0].path, os.path.join(self._sub_folder, f'plot_{img_key.split("_")[-1]}.png'))
+        self._section.add_html_object(
+            HtmlElement('img', attributes=[('src', img_path), ('width', 480), ('class', 'bordered')]))
+
+    def __add_fastqc_checks(self) -> None:
         """
         Adds the table containing the additional QC checks.
         :return: None
         """
+        self._section.add_header('FastQC additional checks', 3)
         informs = self._input_informs['additional_checks']
         table_data = []
         for test_name, test_results in sorted(informs['tests'].items()):
             table_data.append([test_name] + [self.__get_test_status_cell(result) for result in test_results])
         header = ['Test', 'Forward', 'Reverse'] if len(informs['samples']) == 2 else ['Test', 'Result']
-        self._report_section.add_table(table_data, header, [('class', 'data')])
+        self._section.add_table(table_data, header, [('class', 'data')])
 
     @staticmethod
-    def __get_test_status_cell(result):
+    def __get_test_status_cell(result: str) -> HtmlTableCell:
         """
         Returns a table cell for the given test result.
         :param result: Test result
@@ -102,7 +116,7 @@ class HtmlReporterQualityChecks(Tool):
         """
         return HtmlTableCell(result, color=HtmlReporterQualityChecks.COLOR_CODES[result])
 
-    def __add_explanation_fastqc_checks(self):
+    def __add_explanation_fastqc_checks(self) -> None:
         """
         Adds an explanation of the quality checks.
         :return: None
@@ -127,7 +141,7 @@ class HtmlReporterQualityChecks(Tool):
                         self._input_informs['additional_checks']['length_warn'],
                         self._input_informs['additional_checks']['length_fail'])]
         ]
-        self._report_section.add_labeled_list(test_explanations)
+        self._section.add_labeled_list(test_explanations)
 
     def __get_st_stats(self) -> str:
         """
@@ -139,18 +153,18 @@ class HtmlReporterQualityChecks(Tool):
             st_stats['hits_found'], st_stats['nb_of_loci'],
             100 * float(st_stats['hits_found']) / st_stats['nb_of_loci'])
 
-    def __add_warnings(self):
+    def __add_warnings(self) -> None:
         """
         Adds warnings to the report.
         :return: None
         """
         for warning in self._input_informs['quality_criteria']['warnings']:
-            self._report_section.add_warning_message(warning)
+            self._section.add_warning_message(warning)
 
-    def __add_errors(self):
+    def __add_errors(self) -> None:
         """
         Adds the error messages to the report.
         :return: None
         """
         for error in self._input_informs['quality_criteria']['fails']:
-            self._report_section.add_error_message('{}, pipeline results can be inaccurate'.format(error))
+            self._section.add_error_message('{}, pipeline results can be inaccurate'.format(error))
