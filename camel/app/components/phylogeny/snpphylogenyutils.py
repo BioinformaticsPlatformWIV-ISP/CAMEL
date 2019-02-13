@@ -175,9 +175,10 @@ class SnpPhylogenyUtils(object):
         config_data = {
             'working_dir': working_dir,
             'samples': {s.name_valid: [f.path for f in s.reads_raw] for s in samples}}
+        config_file = SnakePipelineUtils.generate_config_file(config_data, working_dir)
         output_file = os.path.join(working_dir, TRIMMING_ALL)
         SnakePipelineUtils.run_snakemake(
-            SNAKEFILE_TRIMMING_ALL, config_data, [output_file], working_dir, threads)
+            SNAKEFILE_TRIMMING_ALL, config_file, [output_file], working_dir, threads)
         trimming_out_by_sample = SnakemakeUtils.load_object(output_file)
         return {s: trimming_out_by_sample[s.name_valid] for s in samples}
 
