@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import argparse
 import datetime
+import json
 import logging
 from typing import Any, Dict, List, Optional
 
@@ -152,6 +153,10 @@ class MainGeneDetection(object):
                 'min_percent_identity': self._args.blast_min_percent_identity,
                 'min_coverage': self._args.blast_min_percent_coverage
             })
+        with open(os.path.join(self._args.database_dir, 'db_metadata.txt')) as handle:
+            db_metadata = json.load(handle)
+            if 'extra_column' in db_metadata:
+                metadata['extra_column'] = [db_metadata['extra_column']['name'], db_metadata['extra_column']['key']]
         return metadata
 
     def __run_gene_detection_blast(self, fasta_file: ToolIOFile, db_data: Dict[str, Any]) -> \
