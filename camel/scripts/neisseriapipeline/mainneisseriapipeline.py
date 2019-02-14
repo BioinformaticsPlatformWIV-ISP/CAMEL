@@ -60,7 +60,7 @@ class MainNeisseriaPipeline(object):
         else:
             self._sample_name = FastqUtils.get_sample_name(self._args.fastq_names[0])
         self._fastq_input = SnakePipelineUtils.symlink_input_files(
-            os.path.join(os.getcwd(), 'input'), self._args.fastq_pe, self._args.fastq_names)
+            os.path.join(self._args.working_dir, 'input'), self._args.fastq_pe, self._args.fastq_names)
 
     def __construct_config_file(self) -> str:
         """
