@@ -1,3 +1,5 @@
+from typing import List, Any, Optional
+
 from camel.app.components.html.htmlelement import HtmlElement
 
 
@@ -7,7 +9,8 @@ class TsvExporter(object):
     """
 
     @staticmethod
-    def export(output_data, header, filename, drop_columns=()):
+    def export(output_data: List[List[Any]], header: Optional[List[str]], filename: str,
+               drop_columns: List[int] = None) -> None:
         """
         Exports output data in TSV format.
         :param output_data: Output data
@@ -16,22 +19,25 @@ class TsvExporter(object):
         :param drop_columns: Columns not included in the exported file
         :return: None
         """
+        if drop_columns is None:
+            drop_columns = []
         with open(filename, 'w') as output_file:
-            if header:
-                full_header = []
-                for i in range(0, len(header)):
-                    if i not in drop_columns:
-                        full_header.append(header[i].strip())
-                output_file.write('\t'.join(full_header))
+            if header is not None:
+                filtered_header = [h.strip() for i, h in enumerate(header) if i not in drop_columns]
+                output_file.write('\t'.join(filtered_header))
                 output_file.write('\n')
             for row in output_data:
-                row_data = []
-                for i in range(0, len(row)):
-                    if i in drop_columns:
-                        continue
-                    if isinstance(row[i], str):
-                        row_data.append(row[i])
-                    if isinstance(row[i], HtmlElement):
-                        row_data.append(row[i].text)
-                output_file.write('\t'.join(row_data))
+                filtered_row = [TsvExporter.__get_element_text(e) for i, e in enumerate(row) if i not in drop_columns]
+                output_file.write('\t'.join(filtered_row))
                 output_file.write('\n')
+
+    @staticmethod
+    def __get_element_text(element: Any) -> str:
+        """
+        Returns the text from the given element.
+        :param element: Element
+        :return: Text
+        """
+        if isinstance(element, HtmlElement):
+            return element.text
+        return str(element)
