@@ -93,7 +93,7 @@ class SnakePipelineUtils(object):
         links = []
         for path, name in zip(file_paths, file_names):
             link_path = os.path.join(output_dir, name if sanitize is False else FileSystemHelper.make_valid(name))
-            if os.path.exists(link_path):
+            if os.path.islink(link_path):
                 os.remove(link_path)
             os.symlink(path, link_path)
             links.append(link_path)
