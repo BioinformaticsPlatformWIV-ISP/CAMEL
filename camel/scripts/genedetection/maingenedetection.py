@@ -133,9 +133,10 @@ class MainGeneDetection(object):
         :return: Paired end FASTQ files
         """
         if self._args.trim_reads is False:
+            compressed = True if self._args.fastq_pe_names[0].endswith('.gz') else False
             links = SnakePipelineUtils.symlink_input_files(
                 os.path.join(self._args.working_dir, 'input'), self._args.fastq_pe,
-                [f'{self._sample_name}_{i}.fastq' for i in (1, 2)])
+                [f'{self._sample_name}_{i}.fastq{".gz" if compressed else ""}' for i in (1, 2)])
             return [ToolIOFile(l) for l in links]
         else:
             trimming_output = self._helper.trim_reads(
@@ -179,7 +180,7 @@ class MainGeneDetection(object):
         :param db_data: Database information dictionary
         :return: None
         """
-        wrapper = GeneDetectionWrapper(os.path.join(self._args.working_dir, 'resfinder'))
+        wrapper = GeneDetectionWrapper(os.path.join(self._args.working_dir, os.path.basename(db_data['path'])))
         wrapper.run_workflow_srst2([f.path for f in fastq_pe], self._sample_name, db_data, self._args.threads)
         return wrapper.output
 
