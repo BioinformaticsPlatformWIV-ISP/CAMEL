@@ -89,7 +89,8 @@ class HtmlReporterTyping(Tool):
         :return: None
         """
         table_header = hits_io[0].value.get_html_column_names()
-        table_data = [h.value.to_html_row(self._report_section, self._sub_folder) for h in hits_io]
+        table_data = [h.value.to_html_row(self._report_section, self._sub_folder) for h in sorted(hits_io, key=
+                      lambda x: x.value.locus)]
 
         if sub_header is not None:
             self._report_section.add_header(sub_header, 4)
