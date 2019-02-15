@@ -39,8 +39,6 @@ contamination_check:
   db: /data/kraken/latest/abfhpv_lite
   expected_species: Escherichia coli
 
-expected_gc_content: 50.5
-
 variant_calling:
   ploidy: 1
   reference:
@@ -53,6 +51,7 @@ variant_filtering:
 
 quality_checks:
   typing_scheme: {qc_typing_scheme}
+  expected_gc_content: 50.5
 
 ############################
 # Gene detection databases #

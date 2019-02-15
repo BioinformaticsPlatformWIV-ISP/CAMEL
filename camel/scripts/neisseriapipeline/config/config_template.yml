@@ -40,10 +40,9 @@ contamination_check:
   db: /db/kraken/latest/abfhpv_lite/
   expected_species: Neisseria meningitidis
 
-expected_gc_content: 51.5
-
 quality_checks:
   typing_scheme: {qc_typing_scheme}
+  expected_gc_content: 51.5
 
 ############################
 # Gene detection databases #
