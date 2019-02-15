@@ -42,11 +42,14 @@ class SamtoolsDepth(Samtools):
         Builds the command.
         :return: None
         """
-        self._command.command = ' '.join(
-            [self._tool_command,
-             ' '.join(self._build_options(['output_filename'])),
-             self._tool_inputs['BAM'][0].path,
-             ' > {}'.format(self._parameters['output_filename'].value)])
+        parts = [self._tool_command]
+        options = self._build_options(['output_filename'])
+        if len(options) > 0:
+            parts.extend(options)
+        if 'BED' in self._tool_inputs:
+            parts.append(f"-b {self._tool_inputs['BED'][0].path}")
+        parts.extend([self._tool_inputs['BAM'][0].path, ' > {}'.format(self._parameters['output_filename'].value)])
+        self._command.command = ' '.join(parts)
 
     def __set_output(self):
         """
