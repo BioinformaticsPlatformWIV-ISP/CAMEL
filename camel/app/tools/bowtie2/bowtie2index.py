@@ -62,7 +62,8 @@ class Bowtie2Index(Bowtie2):
             self._refgenome_fasta = multifasta_file
         else:
             self._refgenome_fasta = os.path.join(self._folder, self._tool_inputs['FASTA_REF'][0].basename)
-            os.symlink(self._tool_inputs['FASTA_REF'][0].path, self._refgenome_fasta)
+            if self._refgenome_fasta != self._tool_inputs['FASTA_REF'][0].path:
+                os.symlink(self._tool_inputs['FASTA_REF'][0].path, self._refgenome_fasta)
 
     def __set_output(self):
         """
