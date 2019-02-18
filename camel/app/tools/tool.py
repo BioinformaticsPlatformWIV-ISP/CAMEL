@@ -32,7 +32,7 @@ class Tool(object, metaclass=abc.ABCMeta):
         self._version = version
         self._tool_inputs = {}
         self._tool_outputs = {}
-        self._informs = {}
+        self._informs = {'_name': self.name, '_version': self._version}
         self._input_informs = {}
         self._camel = camel
         self._tool_service = self.get_tool_service(name, version)
@@ -267,6 +267,7 @@ class Tool(object, metaclass=abc.ABCMeta):
         if self._command.command is None:
             raise ValueError("Command is 'None'.")
         self._command.command = self._build_dependencies() + self._command.command
+        self._informs['_command'] = self._command.command
         self._command.run_command(folder)
         self._check_command_output()
 
