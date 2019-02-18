@@ -129,7 +129,9 @@ rule Variant_calling_mpileup:
         FASTA=os.path.join(config['working_dir'], 'variant_calling',  'reference', 'fasta.io'),
         BAM=os.path.join(config['working_dir'], 'variant_calling', 'alignment_sorting', 'bam-sorted.io')
     output:
-        VCF_GZ=os.path.join(config['working_dir'], 'variant_calling', 'mpileup', 'vcf_gz.io')
+        VCF_GZ=os.path.join(config['working_dir'], 'variant_calling', 'mpileup', 'vcf_gz.io'),
+        INFORMS=os.path.join(config['working_dir'], 'variant_calling', 'mpileup', 'informs.io')
+    priority: 1
     params:
         running_dir=os.path.join(config['working_dir'], 'variant_calling', 'mpileup'),
         count_orphans = config['variant_calling'].get('count_orphans', True),
