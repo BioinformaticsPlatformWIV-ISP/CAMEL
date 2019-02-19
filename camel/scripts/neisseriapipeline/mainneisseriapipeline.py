@@ -8,6 +8,7 @@ import yaml
 
 from camel.app.camel import Camel
 from camel.app.components.files.fastqutils import FastqUtils
+from camel.app.components.mainscripthelper import MainScriptHelper
 from camel.app.error.snakemakeexecutionerror import SnakemakeExecutionError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.pipeline.pipeline import Pipeline
@@ -41,7 +42,8 @@ class MainNeisseriaPipeline(object):
 
         # Run Snakemake
         try:
-            SnakePipelineUtils.run_snakemake(SNAKEFILE_MAIN, config_file, [], self._args.working_dir)
+            SnakePipelineUtils.run_snakemake(SNAKEFILE_MAIN, config_file, [], self._args.working_dir,
+                                             self._args.threads)
         except SnakemakeExecutionError as err:
             pipeline.log_error_to_file(err)
 
@@ -111,9 +113,8 @@ class MainNeisseriaPipeline(object):
         :return: Arguments
         """
         parser = argparse.ArgumentParser()
-
+        MainScriptHelper.add_common_arguments(parser)
         # Input
-        parser.add_argument('--sample-name', help="Name of the sample")
         parser.add_argument('--fastq-pe', nargs=2, help="FASTQ input files")
         parser.add_argument('--fastq-pe-names', nargs=2, help="FASTQ input file names")
         parser.add_argument('--fastq-se', help="Input SE FASTQ file")
@@ -125,14 +126,10 @@ class MainNeisseriaPipeline(object):
         # Configuration
         parser.add_argument('--detection-method', help="Type of allele detection: local alignment (blast), read "
                                                        "mapping (srst2)", choices=['blast', 'srst2'], required=True)
-        parser.add_argument('--threads', type=int, default=8)
-        parser.add_argument('--working-dir', default=os.path.abspath('.'), type=str)
         parser.add_argument('--db-logging', action='store_true')
 
         # Output
         parser.add_argument('--output-summary', help="Output file for the summary")
-        parser.add_argument('--output-html', help="Output file for the HTML report", required=True)
-        parser.add_argument('--output-dir', help="Output directory for the files in the HTML report", required=True)
         parser.add_argument('--report-include-fastq', help="Include the FASTQ files in the report", action='store_true')
 
         # Kraken

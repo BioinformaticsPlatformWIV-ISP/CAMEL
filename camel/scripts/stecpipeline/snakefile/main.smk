@@ -88,7 +88,7 @@ rule Combine_reports:
         report_ncbi_amr=get_gene_detection_report('ncbi_amr', config),
         report_pointfinder=os.path.join(config['working_dir'], OUTPUT_POINTFINDER_REPORT) if 'pointfinder' in config['analyses'] else os.path.join(config['working_dir'], OUTPUT_POINTFINDER_REPORT_EMPTY),
         report_virulence=get_gene_detection_report('virulencefinder', config),
-        report_virulence_shiga=get_gene_detection_report('virulencefinder_shiga', config),
+        report_virulence_shiga=get_gene_detection_report('virulencefinder_shiga', config, 'virulencefinder'),
         report_plasmidfinder=get_gene_detection_report('plasmidfinder', config),
         report_serotype_o_type=get_gene_detection_report('serotype_o', config, 'serotype'),
         report_serotype_h_type=get_gene_detection_report('serotype_h', config, 'serotype'),

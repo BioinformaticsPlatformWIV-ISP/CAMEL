@@ -44,7 +44,8 @@ class MainSTECPipeline(object):
 
         # Run Snakemake
         try:
-            SnakePipelineUtils.run_snakemake(SNAKEFILE_MAIN, config_file, [], self._args.working_dir)
+            SnakePipelineUtils.run_snakemake(SNAKEFILE_MAIN, config_file, [], self._args.working_dir,
+                                             self._args.threads)
         except SnakemakeExecutionError as err:
             pipeline.log_error_to_file(err)
 
