@@ -11,7 +11,7 @@ from camel.resources.snakefile.read_trimming_iontorrent import get_trimming_fold
 from camel.resources.snakefile.sequence_typing import OUTPUT_TYPING_HITS
 
 
-rule FastQC_additional_checks:
+rule QC_checks_fastQC_additional_checks:
     """
     Tests additional quality metrics based on the FastQC data file output.
     """
@@ -32,7 +32,7 @@ rule FastQC_additional_checks:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(fastqc_checks, output)
 
-rule Bowtie2_index_assembly:
+rule QC_checks_bowtie2_index_assembly:
     """
     Creates a Bowtie2 index for the assembly.
     """
@@ -50,7 +50,7 @@ rule Bowtie2_index_assembly:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(bowtie2_index, output)
 
-rule Read_mapping_assembly:
+rule QC_checks_map_against_assembly:
     """
     Maps the trimmed reads to the assembly.
     """
@@ -74,7 +74,7 @@ rule Read_mapping_assembly:
         SnakemakeUtils.dump_object([('mapping_rate', bowtie2_map.informs['stats_map_rate'])],
                            os.path.join(config['working_dir'], 'summary-{}.io'.format(rule.lower())))
 
-rule Sam_to_bam_conversion_assembly:
+rule QC_checks_SAM_to_BAM:
     """
     Converts the mapped reads SAM file to BAM format.
     """
@@ -92,7 +92,7 @@ rule Sam_to_bam_conversion_assembly:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(samtools_view, output)
 
-rule Alignment_sorting_assembly:
+rule QC_checks_sort_BAM:
     """
     Sorts the alignment.
     """
@@ -110,7 +110,7 @@ rule Alignment_sorting_assembly:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(samtools_sort, output)
 
-rule Coverage_calculation:
+rule QC_checks_calculate_coverage:
     """
     Determines the read depth at every position to estimate the coverage.
     """
@@ -130,7 +130,7 @@ rule Coverage_calculation:
         SnakemakeUtils.dump_object([('coverage', samtools_depth.informs['median_depth'])],
                                    os.path.join(config['working_dir'], 'summary-{}.io'.format(rule.lower())))
 
-rule Get_cgMLST_stats:
+rule QC_checks_get_cgMLST_stats:
     """
     Retrieves the number of cgMLST genes that were detected (only perfect hits are considered).
     """
@@ -156,7 +156,7 @@ rule Get_cgMLST_stats:
              'scheme_name': params.scheme_name},
             output.INFORMS)
 
-rule Check_quality_criteria:
+rule QC_checks_check_additional_metrics:
     """
     Checks if the quality criteria were met.
     """
@@ -177,7 +177,7 @@ rule Check_quality_criteria:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(quality_checker, output)
 
-rule Visualize_qc_checks:
+rule QC_checks_visualize_qc_checks:
     """
     Creates plots to visualize the QC checks, shows the warning and fail threshold along with the detected value.
     """
@@ -199,7 +199,7 @@ rule Visualize_qc_checks:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(visuzalization, output)
 
-rule Report_quality_checks:
+rule QC_checks_report:
     """
     Creates a report containing the quality checks information.
     """
@@ -224,7 +224,7 @@ rule Report_quality_checks:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
 
-rule Quality_checks_dump_summary_info:
+rule QC_checks_dump_summary_info:
     """ 
     Dumps the summary information in tabular format.
     """
