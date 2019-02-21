@@ -227,7 +227,7 @@ rule Gene_detection_get_hits:
         tsv_blast=lambda wildcards: os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_TSV_BLAST.format(db=wildcards.db)) if GeneDetectionUtils.get_detection_method_key(config, wildcards.db) == 'blast' else [],
         tsv_srst2=lambda wildcards: os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_TSV_SRST2.format(db=wildcards.db)) if GeneDetectionUtils.get_detection_method_key(config, wildcards.db) == 'srst2' else [],
     output:
-        VAL_Hits=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'hit_selection', 'selected-hits.io'),
+        VAL_Hits=os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_ALL_HITS),
         TSV=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'hit_selection', 'selected-tsv.io')
     run:
         if len(input.hits_blast) > 0:
@@ -241,7 +241,7 @@ rule Gene_detection_get_hits:
 
 rule Gene_detection_get_column_names:
     output:
-        INFORMS_columns=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'report', 'informs-columns.io')
+        INFORMS_columns=os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_COLUMNS)
     params:
         detection_method=lambda wildcards: GeneDetectionUtils.get_detection_method_key(config, wildcards.db),
         extra_column=lambda wildcards: config['gene_detection'][wildcards.db].get('extra_column')
@@ -274,7 +274,7 @@ rule Gene_detection_report:
         from camel.app.tools.pipelines.genedetection.htmlreportergenedetection import HtmlReporterGeneDetection
         reporter = HtmlReporterGeneDetection(camel)
         step = Step(rule, reporter, camel, params.running_dir, config)
-        if params.config_data.get('force_detection_method', config['detection_method']) != config['detection_method']:
+        if 'force_detection_method' in params.config_data:
             reporter.update_parameters(forced_detection_method = params.config_data['force_detection_method'])
         reporter.add_input_files({'SAMPLE_NAME': [ToolIOValue(params.sample_name)]})
         SnakemakeUtils.add_pickle_inputs(reporter, input)
