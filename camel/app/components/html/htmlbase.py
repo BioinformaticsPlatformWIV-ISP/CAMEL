@@ -20,7 +20,7 @@ class HtmlBase(object):
         """
         self._doc = yattag.SimpleDoc()
 
-    def get_tag(self, tag: str, attributes: List[Tuple[str, str]]=None) -> SimpleDoc.Tag:
+    def get_tag(self, tag: str, attributes: List[Tuple[str, str]] = None) -> SimpleDoc.Tag:
         """
         Returns a tag with the given attributes.
         :param tag: Tag
@@ -32,7 +32,7 @@ class HtmlBase(object):
         else:
             return self._doc.tag(tag)
 
-    def add_header(self, text: str, level: int, attributes: List[Tuple[str, str]]=None) -> None:
+    def add_header(self, text: str, level: int, attributes: List[Tuple[str, str]] = None) -> None:
         """
         Adds a header.
         :param text: Header text
@@ -43,7 +43,7 @@ class HtmlBase(object):
         with self.get_tag('h{}'.format(str(level)), attributes):
             self.add_text(text)
 
-    def add_paragraph(self, text: str, attributes: List[Tuple[str, str]]=None):
+    def add_paragraph(self, text: str, attributes: List[Tuple[str, str]] = None):
         """
         Adds a text paragraph
         :param text: Paragraph text
@@ -67,8 +67,8 @@ class HtmlBase(object):
         """
         return self._doc.getvalue()
 
-    def add_table(self, data: List[List[Union[str, int, 'HtmlBase']]], column_names: List[str]=None,
-                  table_attributes: List[Tuple[str, str]]=None) -> None:
+    def add_table(self, data: List[List[Union[str, int, 'HtmlBase']]], column_names: List[str] = None,
+                  table_attributes: List[Tuple[str, str]] = None) -> None:
         """
         Adds a table.
         :param data: Table data
@@ -130,10 +130,7 @@ class HtmlBase(object):
         :param message: Message text
         :return: None
         """
-        with self._doc.tag('div', klass='alert-box error'):
-            with self._doc.tag('span'):
-                self._doc.text('error: ')
-            self.add_text(message)
+        self.add_alert(message, 'error')
 
     def add_warning_message(self, message: str) -> None:
         """
@@ -141,12 +138,22 @@ class HtmlBase(object):
         :param message: Message text
         :return: None
         """
-        with self._doc.tag('div', klass='alert-box warning'):
+        self.add_alert(message, 'warning')
+
+    def add_alert(self, message: str, type_: str) -> None:
+        """
+        Adds an alert to the report.
+        Supported types: 'error', 'warning' and 'info'
+        :param message: Message to display
+        :param type_: Message type
+        :return: None
+        """
+        with self._doc.tag('div', klass=f'alert-box {type_}'):
             with self._doc.tag('span'):
-                self._doc.text('warning: ')
+                self._doc.text(f'{type_}: ')
             self.add_text(message)
 
-    def add_labeled_list(self, rows: List[List[str]], ordered=False, attributes: List[Tuple[str, str]]=None) -> None:
+    def add_labeled_list(self, rows: List[List[str]], ordered=False, attributes: List[Tuple[str, str]] = None) -> None:
         """
         Adds a labeled list.
         :param rows: List of label-text pairs
@@ -196,7 +203,7 @@ class HtmlBase(object):
             else:
                 self._doc.text(part)
 
-    def add_module_header(self, text: str, id_: str=None) -> None:
+    def add_module_header(self, text: str, id_: str = None) -> None:
         """
         Adds a sub header.
         :param text: Header text
