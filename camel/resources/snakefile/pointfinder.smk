@@ -72,7 +72,11 @@ rule PointFinder_dump_summary_info:
     output:
         os.path.join(config['working_dir'], OUTPUT_POINTFINDER_SUMMARY)
     run:
+        from camel.app.components.html.htmltablecell import HtmlTableCell
         informs = SnakemakeUtils.load_object(input.INFORMS)
+        mutations = []
+        for row in informs['mutations']:
+            mutations.append([e if not isinstance(e, HtmlTableCell) else e.text for e in row])
         with open(output[0], 'w') as handle:
-            handle.write('{}\t{}'.format('pointfinder_mutations', json.dumps(informs['mutations'])))
+            handle.write('{}\t{}'.format('pointfinder_mutations', json.dumps(mutations)))
             handle.write('\n')
