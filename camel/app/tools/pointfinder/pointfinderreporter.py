@@ -46,6 +46,7 @@ class PointFinderReporter(Tool):
         """
         header, data = self.__parse_input_file()
         data = self.__add_pubmed_links(data)
+        self._section.add_paragraph(f"Database: <i>{self._input_informs['pointfinder']['database']}</i>")
         self.__add_output_table(header, data)
         self._section.add_paragraph('Last update: {}'.format(self._input_informs['pointfinder']['last_update']))
         self._tool_outputs['VAL_HTML'] = [ToolIOValue(self._section)]

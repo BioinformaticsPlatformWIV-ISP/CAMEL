@@ -42,6 +42,7 @@ class PointFinder(Tool):
         self.__build_command(blastn_path)
         self._execute_command()
         self.__set_output()
+        self._informs['database'] = self._parameters['database'].value
 
     def __build_command(self, blastn_path: str) -> None:
         """
