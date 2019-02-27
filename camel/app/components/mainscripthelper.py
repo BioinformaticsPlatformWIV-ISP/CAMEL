@@ -1,7 +1,7 @@
 import argparse
 import logging
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 import os
 
@@ -13,18 +13,19 @@ from camel.app.io.tooliofile import ToolIOFile
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 
 
+@dataclass
+class ReadInput:
+    pe: List[ToolIOFile]
+    se_fwd: List[ToolIOFile]
+    se_rev: List[ToolIOFile]
+
+
 class MainScriptHelper(object):
     """
     This class is used as helper class for common operation for main scripts.
     For example the read trimming, de-novo assembly that is shared by tools such as 'MLST tool', 'Gene detection tool',
     'ResFinder local' can be done by this class.
     """
-
-    @dataclass
-    class TrimmingOutput:
-        pe: List[ToolIOFile]
-        se_fwd: List[ToolIOFile]
-        se_rev: List[ToolIOFile]
 
     def __init__(self, working_dir: str, sample_name: str):
         """
@@ -33,9 +34,10 @@ class MainScriptHelper(object):
         """
         self._working_dir = working_dir
         self._sample_name = sample_name
+        self._log_files = {}
 
     def trim_reads(self, fastq_reads_raw: List[str], report: Optional[HtmlReport] = None, threads: int = 8,
-                   export_fastq: bool = False) -> TrimmingOutput:
+                   export_fastq: bool = False) -> ReadInput:
         """
         Runs the read trimming workflow.
         :param fastq_reads_raw: Raw FASTQ PE reads
@@ -51,12 +53,12 @@ class MainScriptHelper(object):
             report.add_html_object(trimming.output.report_section)
             trimming.output.report_section.copy_files(report.output_dir)
             report.save()
-        # noinspection PyCallByClass
-        return MainScriptHelper.TrimmingOutput(
-            trimming.output.trimmed_reads_pe, trimming.output.trimmed_reads_se_fwd,
-            trimming.output.trimmed_reads_se_rev)
+        if trimming.output.log_file is not None:
+            self._log_files['trimming'] = trimming.output.log_file
+        return ReadInput(trimming.output.trimmed_reads_pe, trimming.output.trimmed_reads_se_fwd,
+                         trimming.output.trimmed_reads_se_rev)
 
-    def symlink_fastq_pe_input(self, fastq_pe: List[str], fastq_names: List[str], working_dir: str) -> TrimmingOutput:
+    def symlink_fastq_pe_input(self, fastq_pe: List[str], fastq_names: List[str], working_dir: str) -> ReadInput:
         """
         Symlinks the FASTQ PE input.
         :return: Assembly input object
@@ -64,10 +66,9 @@ class MainScriptHelper(object):
         logging.info("Symlinking FASTQ input reads in working directory")
         links = SnakePipelineUtils.symlink_input_files(
             os.path.join(working_dir, 'input'), fastq_pe, fastq_names)
-        # noinspection PyCallByClass
-        return MainScriptHelper.TrimmingOutput([ToolIOFile(x) for x in links], [], [])
+        return ReadInput([ToolIOFile(x) for x in links], [], [])
 
-    def assemble_fastq_reads(self, assembly_input: TrimmingOutput, report: Optional[HtmlReport] = None,
+    def assemble_fastq_reads(self, assembly_input: ReadInput, report: Optional[HtmlReport] = None,
                              kmers: Optional[str] = None, threads: int = 8) -> ToolIOFile:
         """
         Assembles FASTQ reads using SPAdes
@@ -85,6 +86,8 @@ class MainScriptHelper(object):
             report.add_html_object(assembly.output.report_section)
             assembly.output.report_section.copy_files(report.output_dir)
             report.save()
+        if assembly.output.log_file is not None:
+            self._log_files['assembly'] = assembly.output.log_file
         return assembly.output.fasta_contigs
 
     @staticmethod
@@ -93,11 +96,11 @@ class MainScriptHelper(object):
         Determines the sample names based on the given command line arguments.
         :return: Sample name
         """
-        if args.sample_name is not None:
+        if ('sample_name' in args) and (args.sample_name is not None):
             return args.sample_name
-        elif args.fasta_name is not None:
+        elif ('fasta_name' in args) and (args.fasta_name is not None):
             return os.path.splitext(args.fasta_name)[0]
-        elif args.fasta is not None:
+        elif ('fasta' in args) and (args.fasta is not None):
             return os.path.splitext(os.path.basename(args.fasta))[0]
         elif args.fastq_pe_names is not None:
             try:
@@ -142,3 +145,26 @@ class MainScriptHelper(object):
         argument_parser.add_argument('--output-html', required=True, type=str)
         argument_parser.add_argument('--working-dir', default=os.path.abspath('.'), type=str)
         argument_parser.add_argument('--threads', default=8, type=int)
+
+    @staticmethod
+    def prepare_galaxy_output(output_dir: str, output_html: str) -> None:
+        """
+        Prepares the Galaxy output files at the start of the script.
+        - The output HTML file is removed, so Snakemake can regenerate it
+        - The output directory is created if it does not exist yet.
+        :param output_dir: Output directory
+        :param output_html: Output report path
+        :return: None
+        """
+        if not os.path.isdir(output_dir):
+            os.mkdir(output_dir)
+        if os.path.isfile(output_html):
+            os.remove(output_html)
+
+    @property
+    def logs(self) -> Dict[str, str]:
+        """
+        Returns the log files (key: name, value: log file path).
+        :return: Logs
+        """
+        return self._log_files
