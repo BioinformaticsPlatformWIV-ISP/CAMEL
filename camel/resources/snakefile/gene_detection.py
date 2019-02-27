@@ -11,6 +11,7 @@ INPUT_GENE_DETECTION_FASTQ = os.path.join('gene_detection', 'input', 'fastq-pe.i
 OUTPUT_GENE_DETECTION_HITS_BLAST = os.path.join('gene_detection', '{db}', 'alignment_extraction', 'blast-hits.io')
 OUTPUT_GENE_DETECTION_HITS_SRST2 = os.path.join('gene_detection', '{db}', 'srst2', 'srst2-hits.io')
 OUTPUT_GENE_DETECTION_ALL_HITS = os.path.join('gene_detection', '{db}', 'hit_selection', 'selected-hits.io')
+OUTPUT_GENE_DETECTION_INFORMS = os.path.join('gene_detection', '{db}', 'hit_selection', 'informs.io')
 OUTPUT_GENE_DETECTION_COLUMNS = os.path.join('gene_detection', '{db}', 'report', 'informs-columns.io')
 
 OUTPUT_GENE_DETECTION_TSV_BLAST = os.path.join('gene_detection', '{db}', 'hit_filtering', 'tsv-filtered.io')

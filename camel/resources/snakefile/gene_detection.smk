@@ -42,7 +42,8 @@ rule Gene_detection_blastn:
         FASTA=os.path.join(config['working_dir'], INPUT_GENE_DETECTION_FASTA),
         DB_BLAST=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'db_manager', 'fasta-clust.io')
     output:
-        ASN=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'blastn', 'asn.io')
+        ASN = os.path.join(config['working_dir'], 'gene_detection', '{db}', 'blastn', 'asn.io'),
+        INFORMS = os.path.join(config['working_dir'], 'gene_detection', '{db}', 'blastn', 'informs.io')
     params:
         running_dir=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'blastn')
     run:
@@ -166,12 +167,14 @@ rule Gene_detection_srst2:
     If paired end input is provided, the read status ('_1', '_1P') is determined based on the read name. 
     """
     input:
-        FASTQ=os.path.join(config['working_dir'], INPUT_GENE_DETECTION_FASTQ),
-        FASTA=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'db_manager', 'fasta-clust.io')
+        FASTQ = os.path.join(config['working_dir'], INPUT_GENE_DETECTION_FASTQ),
+        FASTA = os.path.join(config['working_dir'], 'gene_detection', '{db}', 'db_manager', 'fasta-clust.io')
     output:
-        TSV=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'srst2', 'tsv.io')
+        TSV = os.path.join(config['working_dir'], 'gene_detection', '{db}', 'srst2', 'tsv.io'),
+        INFORMS = os.path.join(config['working_dir'], 'gene_detection', '{db}', 'srst2', 'informs.io')
     params:
-        running_dir=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'srst2')
+        running_dir=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'srst2'),
+        db_config = lambda wildcards: config['gene_detection'][wildcards.db]
     threads: 4
     run:
         from camel.app.tools.srst2.srst2gene import Srst2Gene
@@ -180,11 +183,20 @@ rule Gene_detection_srst2:
         SnakemakeUtils.add_pickle_input(srst2, 'FASTA', input.FASTA)
         srst2.add_input_files({'FASTQ_PE' if len(input_files) == 2 else 'FASTQ_SE': input_files})
         step = Step(rule, srst2, camel, params.running_dir, config)
+
+        # Update parameters
         srst2.update_parameters(threads=threads)
         if len(input_files) == 2:
             fwd_read_path = input_files[0].path
             fwd_designator, rev_designator = SequenceTypingUtils.determine_read_status(fwd_read_path)
             srst2.update_parameters(forward_designator=fwd_designator, reverse_designator=rev_designator)
+        if 'max_divergence' in params.db_config:
+            srst2.update_parameters(max_divergence=params.db_config['max_divergence'])
+        if 'min_coverage' in params.db_config:
+            srst2.update_parameters(min_coverage=params.db_config['min_coverage'])
+        srst2.update_parameters(max_unaligned_overlap=params.db_config.get('max_unaligned_overlap', 100))
+
+        # Run tool
         step.run_step()
         if 'TSV' in srst2.tool_outputs:
             SnakemakeUtils.dump_tool_outputs(srst2, output)
@@ -226,18 +238,16 @@ rule Gene_detection_get_hits:
         hits_srst2=lambda wildcards: os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_HITS_SRST2.format(db=wildcards.db)) if GeneDetectionUtils.get_detection_method_key(config, wildcards.db) == 'srst2' else [],
         tsv_blast=lambda wildcards: os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_TSV_BLAST.format(db=wildcards.db)) if GeneDetectionUtils.get_detection_method_key(config, wildcards.db) == 'blast' else [],
         tsv_srst2=lambda wildcards: os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_TSV_SRST2.format(db=wildcards.db)) if GeneDetectionUtils.get_detection_method_key(config, wildcards.db) == 'srst2' else [],
+        informs_blast=lambda wildcards: os.path.join(config['working_dir'], 'gene_detection', '{db}', 'blastn', 'informs.io') if GeneDetectionUtils.get_detection_method_key(config, wildcards.db) == 'blast' else [],
+        informs_srst2=lambda wildcards: os.path.join(config['working_dir'], 'gene_detection', '{db}', 'srst2', 'informs.io') if GeneDetectionUtils.get_detection_method_key(config, wildcards.db) == 'srst2' else []
     output:
-        VAL_Hits=os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_ALL_HITS),
-        TSV=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'hit_selection', 'selected-tsv.io')
+        VAL_Hits = os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_ALL_HITS),
+        TSV = os.path.join(config['working_dir'], 'gene_detection', '{db}', 'hit_selection', 'selected-tsv.io'),
+        INFORMS = os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_INFORMS)
     run:
-        if len(input.hits_blast) > 0:
-            shutil.copyfile(input.hits_blast, output.VAL_Hits)
-        else:
-            shutil.copyfile(input.hits_srst2, output.VAL_Hits)
-        if len(input.tsv_blast) > 0:
-            shutil.copyfile(input.tsv_blast, output.TSV)
-        else:
-            shutil.copyfile(input.tsv_srst2, output.TSV)
+        shutil.copyfile(input.hits_blast if len(input.hits_blast) > 0 else input.hits_srst2, output.VAL_Hits)
+        shutil.copyfile(input.tsv_blast if len(input.tsv_blast) > 0 else input.tsv_srst2, output.TSV)
+        shutil.copyfile(input.informs_blast if len(input.informs_blast) > 0 else input.informs_srst2, output.INFORMS)
 
 rule Gene_detection_get_column_names:
     output:
