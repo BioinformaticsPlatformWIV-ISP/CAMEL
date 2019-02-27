@@ -139,9 +139,9 @@ class MainGeneDetection(object):
                 [f'{self._sample_name}_{i}.fastq{".gz" if compressed else ""}' for i in (1, 2)])
             return [ToolIOFile(l) for l in links]
         else:
-            trimming_output = self._helper.trim_reads(
+            srst2_input = self._helper.trim_reads(
                 self._args.fastq_pe, self._report, self._args.threads, self._args.report_include_fastq)
-            return trimming_output.pe
+            return srst2_input.pe
 
     def __get_db_metadata(self) -> Dict[str, Any]:
         """
@@ -192,8 +192,8 @@ class MainGeneDetection(object):
         """
         self._report.add_html_object(output.report_section)
         output.report_section.copy_files(self._report.output_dir)
-        if output.log_file is not None:
-            shutil.copyfile(output.log_file, os.path.join(self._report.output_dir, 'log.txt'))
+        for key, path in self._helper.logs.items():
+            shutil.copyfile(path, os.path.join(self._report.output_dir, f'log_{key}.txt'))
         self._report.save()
 
 
