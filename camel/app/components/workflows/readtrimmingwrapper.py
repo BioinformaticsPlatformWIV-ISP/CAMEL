@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 import os
 
@@ -26,6 +26,7 @@ class ReadTrimmingWrapper(object):
         trimmed_reads_se_rev: List[ToolIOFile]
         informs_trimmomatic: Dict[str, Any]
         fastq_reports_pre: List[ToolIOFile]
+        log_file: Optional[str] = None
 
     def __init__(self, working_dir: str) -> None:
         """
@@ -62,6 +63,7 @@ class ReadTrimmingWrapper(object):
         :param output_path: Report output path
         :return: None
         """
+        log_path = os.path.join(self._working_dir, 'camel.log')
         self._output = ReadTrimmingWrapper.ReadTrimmingOutput(
             report_section=SnakemakeUtils.load_object(output_path)[0].value,
             trimmed_reads_pe=SnakemakeUtils.load_object(
@@ -73,7 +75,8 @@ class ReadTrimmingWrapper(object):
             informs_trimmomatic=SnakemakeUtils.load_object(
                 os.path.join(self._working_dir, OUTPUT_READ_TRIMMING_INFORMS)),
             fastq_reports_pre=SnakemakeUtils.load_object(
-                os.path.join(self._working_dir, OUTPUT_READ_TRIMMING_FASTQC_PRE))
+                os.path.join(self._working_dir, OUTPUT_READ_TRIMMING_FASTQC_PRE)),
+            log_file=log_path if os.path.isfile(log_path) else None
         )
 
     @property

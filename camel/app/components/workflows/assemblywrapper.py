@@ -22,6 +22,7 @@ class AssemblyWrapper(object):
     class AssemblyOutput:
         report_section: HtmlReportSection
         fasta_contigs: ToolIOFile
+        log_file: Optional[str]
 
     def __init__(self, working_dir: str) -> None:
         """
@@ -85,9 +86,11 @@ class AssemblyWrapper(object):
         :param output_files: Output files dictionary
         :return: None
         """
+        log_file_path = os.path.join(self._working_dir, 'camel.log')
         self._output = AssemblyWrapper.AssemblyOutput(
             report_section=SnakemakeUtils.load_object(output_files['HTML'])[0].value,
-            fasta_contigs=SnakemakeUtils.load_object(output_files['FASTA'])[0]
+            fasta_contigs=SnakemakeUtils.load_object(output_files['FASTA'])[0],
+            log_file=log_file_path if os.path.isfile(log_file_path) else None
         )
 
     @property
