@@ -47,6 +47,8 @@ class MainPointFinder(object):
         argument_parser.add_argument('--trim-reads', help="Perform read trimming", action='store_true')
         argument_parser.add_argument('--kmers', help="Kmers to use for assembly")
         argument_parser.add_argument('--report-include-fastq', action='store_true')
+        argument_parser.add_argument('--species', required=True, choices=[
+            'e.coli', 'gonorrhoeae', 'campylobacter', 'salmonella', 'tuberculosis'])
         return argument_parser.parse_args()
 
     def run(self) -> None:
@@ -59,6 +61,8 @@ class MainPointFinder(object):
         fasta_file = self.__get_fasta_file()
         pointfinder = self.__run_pointfinder(fasta_file)
         self.__run_reporter(pointfinder)
+        self._report.add_html_object(SnakePipelineUtils.create_commands_section([pointfinder.informs]))
+        self._report.save()
 
     def __init_report(self) -> None:
         """
@@ -109,6 +113,7 @@ class MainPointFinder(object):
         camel = Camel()
         pointfinder = PointFinder(camel)
         pointfinder.add_input_files({'FASTA': [fasta_file]})
+        pointfinder.update_parameters(database=self._args.species)
         pointfinder.run(self._args.working_dir)
         return pointfinder
 
@@ -124,7 +129,6 @@ class MainPointFinder(object):
         reporter.add_input_informs({'pointfinder': pointfinder.informs})
         reporter.run()
         self._report.add_html_object(reporter.tool_outputs['VAL_HTML'][0].value)
-        self._report.save()
 
 
 if __name__ == '__main__':
