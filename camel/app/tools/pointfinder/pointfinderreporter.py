@@ -78,12 +78,15 @@ class PointFinderReporter(Tool):
         :param data: Output table data
         :return: None
         """
-        div = HtmlExpandableDiv('pointfinder_mutations', 'mutations')
-        div.add_table(data, header, [('class', 'data')])
-        self._section.add_html_object(div)
-        relative_path = os.path.join('pointfinder', self.__generate_output_filename())
-        self._section.add_file(self._tool_inputs['TSV'][0].path, relative_path)
-        self._section.add_link_to_file('Download (TSV)', relative_path)
+        if len(data) > 0:
+            div = HtmlExpandableDiv('pointfinder_mutations', 'mutations')
+            div.add_table(data, header, [('class', 'data')])
+            self._section.add_html_object(div)
+            relative_path = os.path.join('pointfinder', self.__generate_output_filename())
+            self._section.add_file(self._tool_inputs['TSV'][0].path, relative_path)
+            self._section.add_link_to_file('Download (TSV)', relative_path)
+        else:
+            self._section.add_paragraph('No mutations found.')
 
     def __add_pubmed_links(self, data: List[List[str]]) -> List[List[Union[str, HtmlTableCell]]]:
         """
