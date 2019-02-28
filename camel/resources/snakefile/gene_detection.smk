@@ -198,8 +198,9 @@ rule Gene_detection_srst2:
 
         # Run tool
         step.run_step()
+        SnakemakeUtils.dump_object(srst2.informs, output.INFORMS)
         if 'TSV' in srst2.tool_outputs:
-            SnakemakeUtils.dump_tool_outputs(srst2, output)
+            SnakemakeUtils.dump_tool_output(srst2, 'TSV', output.TSV)
         else:
             SnakemakeUtils.dump_object([], output.TSV)
 
