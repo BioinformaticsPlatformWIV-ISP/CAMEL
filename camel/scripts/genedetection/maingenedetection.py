@@ -57,6 +57,8 @@ class MainGeneDetection(object):
         # SRST2 specific parameters
         argument_parser.add_argument('--srst2-min-cov', type=int, default=90)
         argument_parser.add_argument('--srst2-max-div', type=int, default=10)
+        argument_parser.add_argument('--srst2-max-unaligned-overlap', type=int, default=100)
+        argument_parser.add_argument('--srst2-max-mismatch', type=int, default=10)
         return argument_parser.parse_args()
 
     def run(self) -> None:
@@ -150,14 +152,24 @@ class MainGeneDetection(object):
         """
         metadata = {'path': self._args.database_dir}
         if self._args.detection_method == 'blast':
-            metadata.update({
+            metadata.update({'blast_filtering_options': {
                 'min_percent_identity': self._args.blast_min_percent_identity,
                 'min_coverage': self._args.blast_min_percent_coverage
-            })
+            }})
+        elif self._args.detection_method == 'srst2':
+            metadata.update({'srst2_options': {
+                'min_coverage': self._args.srst2_min_cov,
+                'max_divergence': self._args.srst2_max_div,
+                'max_unaligned_overlap': self._args.srst2_max_unaligned_overlap,
+                'max_mismatch': self._args.srst2_max_mismatch
+            }})
         with open(os.path.join(self._args.database_dir, 'db_metadata.txt')) as handle:
             db_metadata = json.load(handle)
             if 'extra_column' in db_metadata:
-                metadata['extra_column'] = [db_metadata['extra_column']['name'], db_metadata['extra_column']['key']]
+                metadata['extra_column'] = {
+                    'name': db_metadata['extra_column']['name'],
+                    'key': db_metadata['extra_column']['key']
+                }
         return metadata
 
     def __run_gene_detection_blast(self, fasta_file: ToolIOFile, db_data: Dict[str, Any]) -> \
@@ -192,8 +204,18 @@ class MainGeneDetection(object):
         """
         self._report.add_html_object(output.report_section)
         output.report_section.copy_files(self._report.output_dir)
+
+        # Add log files
+        dir_logs = os.path.join(self._report.output_dir, 'logs')
+        if not os.path.isdir(dir_logs):
+            os.makedirs(dir_logs)
+        shutil.copyfile(output.log_file, os.path.join(dir_logs, 'log_gene_detection.txt'))
         for key, path in self._helper.logs.items():
-            shutil.copyfile(path, os.path.join(self._report.output_dir, f'log_{key}.txt'))
+            shutil.copyfile(path, os.path.join(dir_logs, f'log_{key}.txt'))
+
+        # Add commands function
+        all_informs = self._helper.informs + [output.informs]
+        self._report.add_html_object(SnakePipelineUtils.create_commands_section(all_informs))
         self._report.save()
 
 

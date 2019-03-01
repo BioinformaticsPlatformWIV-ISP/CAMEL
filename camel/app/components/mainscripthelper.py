@@ -35,6 +35,7 @@ class MainScriptHelper(object):
         self._working_dir = working_dir
         self._sample_name = sample_name
         self._log_files = {}
+        self._informs = []
 
     def trim_reads(self, fastq_reads_raw: List[str], report: Optional[HtmlReport] = None, threads: int = 8,
                    export_fastq: bool = False) -> ReadInput:
@@ -55,6 +56,7 @@ class MainScriptHelper(object):
             report.save()
         if trimming.output.log_file is not None:
             self._log_files['trimming'] = trimming.output.log_file
+        self._informs.append(trimming.output.informs_trimmomatic)
         return ReadInput(trimming.output.trimmed_reads_pe, trimming.output.trimmed_reads_se_fwd,
                          trimming.output.trimmed_reads_se_rev)
 
@@ -88,6 +90,7 @@ class MainScriptHelper(object):
             report.save()
         if assembly.output.log_file is not None:
             self._log_files['assembly'] = assembly.output.log_file
+        self._informs.append(assembly.output.informs)
         return assembly.output.fasta_contigs
 
     @staticmethod
@@ -168,3 +171,11 @@ class MainScriptHelper(object):
         :return: Logs
         """
         return self._log_files
+
+    @property
+    def informs(self) -> List[Dict[str, str]]:
+        """
+        Returns the informs.
+        :return: List of informs
+        """
+        return self._informs

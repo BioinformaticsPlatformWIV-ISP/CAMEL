@@ -88,13 +88,9 @@ rule Gene_detection_hit_filtering:
         INFORMS=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'hit_filtering', 'informs.io')
     params:
         running_dir=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'hit_filtering'),
-        min_percent_identity=lambda wildcards: config['gene_detection'][wildcards.db].get('min_percent_identity'),
-        min_coverage=lambda wildcards: config['gene_detection'][wildcards.db].get('min_coverage'),
-        extra_column=lambda wildcards: config['gene_detection'][wildcards.db].get('extra_column'),
         output_filename = lambda wildcards: 'hits-{}-{}.tsv'.format(
-            FileSystemHelper.make_valid(config['sample_name']),
-            FileSystemHelper.make_valid(wildcards.db)),
-        filtering_method=lambda wildcards: config['gene_detection'][wildcards.db].get('filtering_method'),
+            FileSystemHelper.make_valid(config['sample_name']), FileSystemHelper.make_valid(wildcards.db)),
+        db_config = lambda wildcards: config['gene_detection'][wildcards.db]
     run:
         from camel.app.tools.pipelines.genedetection.blasthitfiltering import BlastHitFiltering
         hit_filtering = BlastHitFiltering(camel)
@@ -103,14 +99,12 @@ rule Gene_detection_hit_filtering:
 
         # Update parameters
         hit_filtering.update_parameters(output_filename=os.path.join(params.running_dir, params.output_filename))
-        if params.filtering_method is not None:
-            hit_filtering.update_parameters(filtering_method=params.filtering_method)
-        if params.min_percent_identity is not None:
-            hit_filtering.update_parameters(min_percent_identity=params.min_percent_identity)
-        if params.min_coverage is not None:
-            hit_filtering.update_parameters(min_coverage=params.min_coverage)
-        if params.extra_column is not None:
-           hit_filtering.update_parameters(extra_column_name=params.extra_column[0], extra_column_key=params.extra_column[1])
+        if 'blast_filtering_options' in params.db_config:
+            hit_filtering.update_parameters(**params.db_config['blast_filtering_options'])
+        if 'extra_column' in params.db_config:
+           hit_filtering.update_parameters(
+               extra_column_name=params.db_config['extra_column']['name'],
+               extra_column_key=params.db_config['extra_column']['key'])
 
         # Run tool
         step.run_step()
@@ -190,11 +184,8 @@ rule Gene_detection_srst2:
             fwd_read_path = input_files[0].path
             fwd_designator, rev_designator = SequenceTypingUtils.determine_read_status(fwd_read_path)
             srst2.update_parameters(forward_designator=fwd_designator, reverse_designator=rev_designator)
-        if 'max_divergence' in params.db_config:
-            srst2.update_parameters(max_divergence=params.db_config['max_divergence'])
-        if 'min_coverage' in params.db_config:
-            srst2.update_parameters(min_coverage=params.db_config['min_coverage'])
-        srst2.update_parameters(max_unaligned_overlap=params.db_config.get('max_unaligned_overlap', 100))
+        if 'srst2_options' in params.db_config:
+            srst2.update_parameters(**params.db_config['srst2_options'])
 
         # Run tool
         step.run_step()
@@ -216,17 +207,23 @@ rule Gene_detection_srst2_hit_extraction:
         TSV=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'hit_extraction', 'tsv-srst2.io')
     params:
         running_dir=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'srst2'),
-        extra_column=lambda wildcards: config['gene_detection'][wildcards.db].get('extra_column', None),
         output_filename = lambda wildcards: 'hits-{}-{}.tsv'.format(
             FileSystemHelper.make_valid(str(config['sample_name'])),
-            FileSystemHelper.make_valid(wildcards.db))
+            FileSystemHelper.make_valid(wildcards.db)),
+        db_config = lambda wildcards: config['gene_detection'][wildcards.db]
     run:
         from camel.app.tools.pipelines.genedetection.srst2hitextractor import SRST2HitExtractor
         extractor = SRST2HitExtractor(camel)
         step = Step(rule, extractor, camel, params.running_dir, config)
         SnakemakeUtils.add_pickle_inputs(extractor, input)
-        extractor.update_parameters(output_filename=os.path.join(params.running_dir, params.output_filename),
-                                    extra_column=params.extra_column)
+        extractor.update_parameters(output_filename=os.path.join(params.running_dir, params.output_filename))
+
+        # Add column with additional metadata
+        if 'extra_column' in params.db_config:
+            extractor.update_parameters(
+                extra_column_name=params.db_config['extra_column']['name'],
+                extra_column_key=params.db_config['extra_column']['key'])
+
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(extractor, output)
 

@@ -38,8 +38,9 @@ class HtmlReporterGeneDetection(Tool):
 
         # Add a warning when the detection method is different from the general detection
         if 'forced_detection_method' in self._parameters:
-            self._report_section.add_warning_message(
-                f"Detection was done using '{self._parameters['forced_detection_method'].value}'")
+            self._report_section.add_alert(
+                f"Detection for this DB is always done using '{self._parameters['forced_detection_method'].value}', "
+                f"regardless of pipeline setting.", 'info')
         self._tool_outputs['VAL_HTML'] = [ToolIOValue(self._report_section)]
 
     def _check_input(self) -> None:
@@ -65,7 +66,7 @@ class HtmlReporterGeneDetection(Tool):
         """
         db_name = self._input_informs['db_info']['name']
         self._report_section = HtmlReportSection(self._input_informs['db_info']['title'], 3)
-        self._sub_folder = os.path.join('genedetection', FileSystemHelper.make_valid(db_name))
+        self._sub_folder = os.path.join('gene_detection', FileSystemHelper.make_valid(db_name))
 
     def __add_output_table(self) -> None:
         """

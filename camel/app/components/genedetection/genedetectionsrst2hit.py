@@ -52,12 +52,14 @@ class GeneDetectionSRST2Hit(GeneDetectionHit):
         return self._subject
 
     @staticmethod
-    def create_from_srst2_output_line(line: str, mapping: Mapping, extra_column_value: Optional[str]):
+    def create_from_srst2_output_line(line: str, mapping: Mapping, extra_column_key: Optional[str],
+                                      extra_column_name: Optional[str]):
         """
         Creates a hit object from a line in the output of SRST2.
         :param line: SRST2 output line
         :param mapping: Mapping to original sequences
-        :param extra_column_value: Additional column for the hit
+        :param extra_column_key: Key for the extra column
+        :param extra_column_name: Name of the extra column
         :return: Hit object
         """
         parts = line.split('\t')
@@ -67,9 +69,8 @@ class GeneDetectionSRST2Hit(GeneDetectionHit):
         metadata = json.loads(m.group(2))
         hit = GeneDetectionSRST2Hit(allele_full, metadata['allele'], parts[6], parts[7], float(parts[8]),
                                     float(parts[5]), float(parts[4]), int(parts[9]), metadata.get('accession', '-'))
-        if extra_column_value is not None:
-            name, key = GeneDetectionUtils.parse_extra_column_param(extra_column_value)
-            hit.set_extra_column(name, metadata[key])
+        if extra_column_key is not None and extra_column_name is not None:
+            hit.set_extra_column(extra_column_name, metadata[extra_column_key])
         return hit
 
     def to_table_row(self):

@@ -1,3 +1,5 @@
+from typing import Optional, Tuple
+
 import os
 
 from camel.app.components.genedetection.genedetectionsrst2hit import GeneDetectionSRST2Hit
@@ -35,11 +37,11 @@ class SRST2HitExtractor(Tool):
         """
         hits = []
         if len(self._tool_inputs['TSV']) > 0:
+            key, name = self.__get_extra_column_info()
             tsv_input = self._tool_inputs['TSV'][0].path
             with open(tsv_input) as handle:
-                for line in handle.readlines()[1:]:
-                    hits.append(GeneDetectionSRST2Hit.create_from_srst2_output_line(
-                        line, self._input_informs['db']['mapping'], self._parameters['extra_column'].value))
+                hits = [GeneDetectionSRST2Hit.create_from_srst2_output_line(
+                    l, self._input_informs['db']['mapping'], key, name) for l in handle.readlines()[1:]]
         self._tool_outputs['VAL_Hits'] = sorted([ToolIOValue(h) for h in hits], key=lambda v: v.value.locus)
         output_path = os.path.join(self._folder, self._parameters['output_filename'].value)
         self.__create_output_file(hits, output_path)
@@ -55,6 +57,16 @@ class SRST2HitExtractor(Tool):
         if 'db' not in self._input_informs:
             raise InvalidInputSpecificationError("Database information is required")
         super()._check_input()
+
+    def __get_extra_column_info(self) -> Tuple[Optional[str], Optional[str]]:
+        """
+        Returns the information for the extra output column.
+        :return: Key, name
+        """
+        if ('extra_column_key' in self._parameters) and ('extra_column_name' in self._parameters):
+            return self._parameters['extra_column_key'].value, self._parameters['extra_column_name'].value
+        else:
+            return None, None
 
     @staticmethod
     def __create_output_file(hits, path):
