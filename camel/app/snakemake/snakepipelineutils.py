@@ -137,3 +137,16 @@ class SnakePipelineUtils(object):
         print(f'- Stderr: -\n{command.stderr}')
         if command.returncode != 0:
             raise SnakemakeExecutionError(command.stdout, command.stderr)
+
+    @staticmethod
+    def create_commands_section(tool_informs: List[Dict[str, Any]]) -> HtmlReportSection:
+        """
+        Creates a section with an overview of the commands.
+        :param tool_informs: Tool informs
+        :return: Commands section
+        """
+        section = HtmlReportSection('Commands')
+        for informs in tool_informs:
+            section.add_header(informs['_name'], 3)
+            section.add_html_object(HtmlElement('code', informs['_command'], [('class', 'command')]))
+        return section
