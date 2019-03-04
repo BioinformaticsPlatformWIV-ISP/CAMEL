@@ -86,7 +86,7 @@ class MainSTECPipeline(object):
         """
         analyses = [key for key in (
             'kraken', 'resfinder', 'argannot', 'card', 'ncbi_amr', 'mlst_pasteur', 'mlst_warwick', 'cgmlst',
-            'pointfinder', 'plasmidfinder', 'serotype') if vars(self._args)[key] is True]
+            'pointfinder', 'plasmidfinder', 'serotype', 'virulence') if vars(self._args)[key] is True]
         input_key, input_dict = self.__create_fastq_input_dict()
         with open(CONFIG_TEMPLATE) as handle_in:
             config_data = yaml.load(handle_in.read().format(
