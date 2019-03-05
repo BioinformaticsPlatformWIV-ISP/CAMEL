@@ -180,7 +180,7 @@ class MainGeneDetection(object):
         :param db_data: Database information dictionary
         :return: None
         """
-        wrapper = GeneDetectionWrapper(os.path.join(self._args.working_dir, 'resfinder'))
+        wrapper = GeneDetectionWrapper(os.path.join(self._args.working_dir, os.path.basename(db_data['path'])))
         wrapper.run_workflow_blast(fasta_file.path, self._sample_name, db_data, self._args.threads)
         return wrapper.output
 
