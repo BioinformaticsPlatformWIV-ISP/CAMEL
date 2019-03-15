@@ -91,7 +91,7 @@ class HtmlReportSection(HtmlElement):
         :param msg_if_empty: If set, this message is added when the data is empty
         :return: None
         """
-        if (msg_if_empty is not None) and (len(data) == 0):
+        if (msg_if_empty is not None) and (len(data) == 0) and (column_names is not None):
             data.append([HtmlTableCell(msg_if_empty, attributes=[('colspan', len(column_names))])])
         super().add_table(data, column_names, table_attributes)
 
