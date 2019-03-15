@@ -40,13 +40,16 @@ class MainGeneDetection(object):
         """
         argument_parser = argparse.ArgumentParser()
         MainScriptHelper.add_common_arguments(argument_parser)
-        argument_parser.add_argument('--fasta', help="Input FASTA file", type=str)
+        group_input = argument_parser.add_mutually_exclusive_group(required=True)
+        group_input.add_argument('--fasta', help="Input FASTA file", type=str)
         argument_parser.add_argument('--fasta-name', help="Input FASTA file name", type=str)
-        argument_parser.add_argument('--fastq-pe', help="Input PE FASTQ files", nargs=2)
+        group_input.add_argument('--fastq-pe', help="Input PE FASTQ files", nargs=2)
         argument_parser.add_argument('--fastq-pe-names', help="Input PE FASTQ file names", nargs=2)
         argument_parser.add_argument('--kmers', help="Kmers to use for assembly")
         argument_parser.add_argument('--trim-reads', help="Perform read trimming", action='store_true')
-        argument_parser.add_argument('--database-dir', type=str, required=True)
+        group_db = argument_parser.add_mutually_exclusive_group(required=True)
+        group_db.add_argument('--database-dir', type=str)
+        group_db.add_argument('--database-html', type=str)
         argument_parser.add_argument('--detection-method', type=str, choices=['blast', 'srst2'], default='blast')
         argument_parser.add_argument('--report-include-fastq', action='store_true')
 
@@ -70,10 +73,10 @@ class MainGeneDetection(object):
         self.__add_analysis_info_section()
         db_data = self.__get_db_metadata()
         if self._args.detection_method == 'blast':
-            fasta_file = self.__get_blast_input()
+            fasta_file = self._helper.get_blast_input(self._args, self._report)
             output = self.__run_gene_detection_blast(fasta_file, db_data)
         else:
-            fastq_files = self.__get_srst2_input()
+            fastq_files = self._helper.get_srst2_input(self._args, self._report)
             output = self.__run_gene_detection_srst2(fastq_files, db_data)
         self.__export_output(output)
 
@@ -113,44 +116,19 @@ class MainGeneDetection(object):
         self._report.add_html_object(section)
         self._report.save()
 
-    def __get_blast_input(self) -> ToolIOFile:
-        """
-        Returns the input FASTA file
-        :return: FASTA file
-        """
-        if self._args.fasta is not None:
-            return ToolIOFile(self._args.fasta)
-        else:
-            if self._args.trim_reads:
-                assembly_input = self._helper.trim_reads(
-                    self._args.fastq_pe, self._report, self._args.threads, self._args.report_include_fastq)
-            else:
-                assembly_input = self._helper.symlink_fastq_pe_input(
-                    self._args.fastq_pe, self._args.fastq_pe_names, self._args.working_dir)
-            return self._helper.assemble_fastq_reads(assembly_input, self._report, self._args.kmers, self._args.threads)
-
-    def __get_srst2_input(self) -> List[ToolIOFile]:
-        """
-        Returns the SRST2 input files.
-        :return: Paired end FASTQ files
-        """
-        if self._args.trim_reads is False:
-            compressed = True if self._args.fastq_pe_names[0].endswith('.gz') else False
-            links = SnakePipelineUtils.symlink_input_files(
-                os.path.join(self._args.working_dir, 'input'), self._args.fastq_pe,
-                [f'{self._sample_name}_{i}.fastq{".gz" if compressed else ""}' for i in (1, 2)])
-            return [ToolIOFile(l) for l in links]
-        else:
-            srst2_input = self._helper.trim_reads(
-                self._args.fastq_pe, self._report, self._args.threads, self._args.report_include_fastq)
-            return srst2_input.pe
-
     def __get_db_metadata(self) -> Dict[str, Any]:
         """
         Returns the database information dictionary.
         :return: Database information dictionary
         """
-        metadata = {'path': self._args.database_dir}
+        # Get database path
+        if self._args.database_dir is not None:
+            db_path = self._args.database_dir
+        else:
+            db_path = f"{'.'.join(self._args.database_html.split('.')[:-1])}_files"
+        metadata = {'path': db_path}
+
+        # Add specific options
         if self._args.detection_method == 'blast':
             metadata.update({'blast_filtering_options': {
                 'min_percent_identity': self._args.blast_min_percent_identity,
@@ -163,13 +141,12 @@ class MainGeneDetection(object):
                 'max_unaligned_overlap': self._args.srst2_max_unaligned_overlap,
                 'max_mismatch': self._args.srst2_max_mismatch
             }})
-        with open(os.path.join(self._args.database_dir, 'db_metadata.txt')) as handle:
+
+        # Add extra column
+        with open(os.path.join(db_path, 'db_metadata.txt')) as handle:
             db_metadata = json.load(handle)
             if 'extra_column' in db_metadata:
-                metadata['extra_column'] = {
-                    'name': db_metadata['extra_column']['name'],
-                    'key': db_metadata['extra_column']['key']
-                }
+                metadata['extra_column'] = db_metadata['extra_column']
         return metadata
 
     def __run_gene_detection_blast(self, fasta_file: ToolIOFile, db_data: Dict[str, Any]) -> \
@@ -213,7 +190,7 @@ class MainGeneDetection(object):
         for key, path in self._helper.logs.items():
             shutil.copyfile(path, os.path.join(dir_logs, f'log_{key}.txt'))
 
-        # Add commands function
+        # Add commands section
         all_informs = self._helper.informs + [output.informs]
         self._report.add_html_object(SnakePipelineUtils.create_commands_section(all_informs))
         self._report.save()
