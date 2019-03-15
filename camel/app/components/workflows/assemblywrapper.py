@@ -8,7 +8,8 @@ from camel.app.io.tooliofile import ToolIOFile
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.resources.snakefile import SNAKEFILE_ASSEMBLY_SPADES
-from camel.resources.snakefile.assembly_spades import OUTPUT_ASSEMBLY_REPORT, OUTPUT_ASSEMBLY_FASTA
+from camel.resources.snakefile.assembly_spades import OUTPUT_ASSEMBLY_REPORT, OUTPUT_ASSEMBLY_FASTA, \
+    OUTPUT_ASSEMBLY_INFORMS
 from camel.resources.snakefile.read_trimming import OUTPUT_READ_TRIMMING_READS_PE, \
     OUTPUT_READ_TRIMMING_READS_SE_REV, OUTPUT_READ_TRIMMING_READS_SE_FWD
 
@@ -22,6 +23,7 @@ class AssemblyWrapper(object):
     class AssemblyOutput:
         report_section: HtmlReportSection
         fasta_contigs: ToolIOFile
+        informs: Dict[str, Any]
         log_file: Optional[str]
 
     def __init__(self, working_dir: str) -> None:
@@ -49,7 +51,8 @@ class AssemblyWrapper(object):
         config_file = SnakePipelineUtils.generate_config_file(config_data, self._working_dir)
         output_files = {
             'HTML': os.path.join(self._working_dir, OUTPUT_ASSEMBLY_REPORT),
-            'FASTA': os.path.join(self._working_dir, OUTPUT_ASSEMBLY_FASTA)
+            'FASTA': os.path.join(self._working_dir, OUTPUT_ASSEMBLY_FASTA),
+            'INFORMS': os.path.join(self._working_dir, OUTPUT_ASSEMBLY_INFORMS)
         }
         SnakePipelineUtils.run_snakemake(
             SNAKEFILE_ASSEMBLY_SPADES, config_file, list(output_files.values()), self._working_dir, threads)
@@ -90,6 +93,7 @@ class AssemblyWrapper(object):
         self._output = AssemblyWrapper.AssemblyOutput(
             report_section=SnakemakeUtils.load_object(output_files['HTML'])[0].value,
             fasta_contigs=SnakemakeUtils.load_object(output_files['FASTA'])[0],
+            informs=SnakemakeUtils.load_object(output_files['INFORMS']),
             log_file=log_file_path if os.path.isfile(log_file_path) else None
         )
 
