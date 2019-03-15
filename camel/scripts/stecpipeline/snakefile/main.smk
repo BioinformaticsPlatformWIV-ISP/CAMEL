@@ -4,22 +4,25 @@ from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.resources.snakefile.read_trimming import OUTPUT_READ_TRIMMING_READS_PE
 from camel.resources.snakefile.read_trimming_iontorrent import get_read_trimming_report, OUTPUT_TRIMMING_IT_SUMMARY, \
-    OUTPUT_TRIMMING_IT_READS
+    OUTPUT_TRIMMING_IT_READS, get_read_trimming_summary
+from camel.resources.snakefile.variant_filtering import OUTPUT_VARIANT_FILTERING_SUMMARY
 
 from camel.scripts.stecpipeline import SNAKEFILE_SEROTYPE
 from camel.resources.snakefile import SNAKEFILE_READ_TRIMMING, SNAKEFILE_ASSEMBLY_SPADES, SNAKEFILE_GENE_DETECTION, \
     SNAKEFILE_SEQUENCE_TYPING, SNAKEFILE_VARIANT_CALLING, SNAKEFILE_VARIANT_FILTERING, \
     SNAKEFILE_CONTAMINATION_CHECK_KRAKEN, SNAKEFILE_POINTFINDER, SNAKEFILE_ADV_QC, SNAKEFILE_READ_TRIMMING_IONTORRENT
-from camel.resources.snakefile.assembly_spades import OUTPUT_ASSEMBLY_REPORT, OUTPUT_ASSEMBLY_FASTA
+from camel.resources.snakefile.assembly_spades import OUTPUT_ASSEMBLY_REPORT, OUTPUT_ASSEMBLY_FASTA, \
+    OUTPUT_ASSEMBLY_SUMMARY
 from camel.resources.snakefile.contamination_check_kraken import OUTPUT_CONTAMINATION_CHECK_REPORT, \
-    OUTPUT_CONTAMINATION_CHECK_REPORT_EMPTY
+    OUTPUT_CONTAMINATION_CHECK_REPORT_EMPTY, OUTPUT_CONTAMINATION_SUMMARY
 from camel.resources.snakefile.gene_detection import INPUT_GENE_DETECTION_FASTA, get_gene_detection_report, \
-    INPUT_GENE_DETECTION_FASTQ
-from camel.resources.snakefile.pointfinder import OUTPUT_POINTFINDER_REPORT, OUTPUT_POINTFINDER_REPORT_EMPTY
-from camel.resources.snakefile.quality_checks import OUTPUT_QUALITY_CHECKS_REPORT
-from camel.resources.snakefile.sequence_typing import get_sequence_typing_report
-from camel.resources.snakefile.variant_calling import OUTPUT_VARIANT_CALLING_REPORT
-from camel.scripts.stecpipeline.snakefile.serotype_detection import OUTPUT_SEROTYPE_REPORT
+    INPUT_GENE_DETECTION_FASTQ, OUTPUT_GENE_DETECTION_SUMMARY
+from camel.resources.snakefile.pointfinder import OUTPUT_POINTFINDER_REPORT, OUTPUT_POINTFINDER_REPORT_EMPTY, \
+    OUTPUT_POINTFINDER_SUMMARY
+from camel.resources.snakefile.quality_checks import OUTPUT_QUALITY_CHECKS_REPORT, OUTPUT_QUALITY_CHECKS_SUMMARY
+from camel.resources.snakefile.sequence_typing import get_sequence_typing_report, OUTPUT_TYPING_SUMMARY
+from camel.resources.snakefile.variant_calling import OUTPUT_VARIANT_CALLING_REPORT, OUTPUT_VARIANT_CALLING_SUMMARY
+from camel.scripts.stecpipeline.snakefile.serotype_detection import OUTPUT_SEROTYPE_REPORT, OUTPUT_SEROTYPE_SUMMARY
 
 #######################
 # Included Snakefiles #
@@ -95,7 +98,7 @@ rule Combine_reports:
         report_serotype=os.path.join(config['working_dir'], OUTPUT_SEROTYPE_REPORT),
         report_mlst_warwick=get_sequence_typing_report('mlst_warwick', config),
         report_mlst_pasteur=get_sequence_typing_report('mlst_pasteur', config),
-        # report_cgmlst=get_sequence_typing_report('cgmlst', config),
+        report_cgmlst=get_sequence_typing_report('cgmlst', config),
         report_citations = os.path.join(config['working_dir'], 'report', 'html-citations.io')
     output:
         report = config['output_report']
@@ -167,7 +170,26 @@ rule Combine_summary_files:
     """
     input:
         os.path.join(config['working_dir'], 'summary', 'summary-init.tsv'),
-        os.path.join(config['working_dir'], OUTPUT_TRIMMING_IT_SUMMARY)
+        get_read_trimming_summary(config),
+        os.path.join(config['working_dir'], OUTPUT_ASSEMBLY_SUMMARY),
+        os.path.join(config['working_dir'], OUTPUT_QUALITY_CHECKS_SUMMARY),
+        os.path.join(config['working_dir'], OUTPUT_CONTAMINATION_SUMMARY) if 'kraken' in config['analyses'] else [],
+        os.path.join(config['working_dir'], OUTPUT_VARIANT_CALLING_SUMMARY),
+        os.path.join(config['working_dir'], OUTPUT_VARIANT_FILTERING_SUMMARY),
+        os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_SUMMARY.format(db='resfinder')) if 'resfinder' in config['analyses'] else [],
+        os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_SUMMARY.format(db='card')) if 'card' in config['analyses'] else [],
+        os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_SUMMARY.format(db='argannot')) if 'argannot' in config['analyses'] else [],
+        os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_SUMMARY.format(db='ncbi_amr')) if 'ncbi_amr' in config['analyses'] else [],
+        os.path.join(config['working_dir'], OUTPUT_POINTFINDER_SUMMARY) if 'pointfinder' in config['analyses'] else [],
+        os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_SUMMARY.format(db='virulencefinder')) if 'virulence' in config['analyses'] else [],
+        os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_SUMMARY.format(db='virulencefinder_shiga')) if 'virulence' in config['analyses'] else [],
+        os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_SUMMARY.format(db='plasmidfinder')) if 'plasmid' in config['analyses'] else [],
+        os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_SUMMARY.format(db='serotype_h')) if 'serotype' in config['analyses'] else [],
+        os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_SUMMARY.format(db='serotype_o')) if 'serotype' in config['analyses'] else [],
+        os.path.join(config['working_dir'], OUTPUT_SEROTYPE_SUMMARY) if 'serotype' in config['analyses'] else [],
+        os.path.join(config['working_dir'], OUTPUT_TYPING_SUMMARY.format(scheme='mlst_pasteur')) if 'mlst_pasteur' in config['analyses'] else [],
+        os.path.join(config['working_dir'], OUTPUT_TYPING_SUMMARY.format(scheme='mlst_warwick')) if 'mlst_warwick' in config['analyses'] else [],
+        os.path.join(config['working_dir'], OUTPUT_TYPING_SUMMARY.format(scheme='cgmlst')) if 'cgmlst' in config['analyses'] else [],
     output:
         config.get('output_tabular')
     run:

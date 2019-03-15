@@ -21,7 +21,7 @@ class MainSTECPipeline(object):
     """
 
     PIPELINE_NAME = 'STEC pipeline'
-    PIPELINE_VERSION = 1.0
+    PIPELINE_VERSION = '0.5'
 
     def run(self) -> None:
         """
