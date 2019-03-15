@@ -3,6 +3,7 @@ import argparse
 import datetime
 import json
 import logging
+import shutil
 from typing import Any, Dict, List
 
 import os
@@ -10,7 +11,8 @@ import os
 from camel.app.components.html.htmlreport import HtmlReport
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.mainscripthelper import MainScriptHelper
-from camel.app.components.workflows.sequencetypingwrapper import SequenceTypingWrapper
+from camel.app.components.workflows.sequencetypingwrapper import SequenceTypingWrapper, SequenceTypingInput, \
+    SequenceTypingOutput
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.resources import CSS_STYLE
@@ -59,11 +61,14 @@ class MainSequenceTyping(object):
         self.__add_analysis_info_section()
         db_data = self.__get_db_metadata(self._args.scheme_dir)
         if self._args.detection_method == 'blast':
-            fasta_file = self.__get_fasta_file_blast()
-            self.__run_sequence_typing_blast(fasta_file.path, db_data['name'], self._args.scheme_dir)
+            fasta_file = self._helper.get_blast_input(self._args, self._report)
+            output = self.__run_sequence_typing_blast(fasta_file, db_data['name'], self._args.scheme_dir)
         elif self._args.detection_method == 'srst2':
-            input_pe = self.__get_paired_reads_srst2()
-            self.__run_sequence_typing_srst2(input_pe, db_data['name'], self._args.scheme_dir)
+            input_pe = self._helper.get_srst2_input(self._args, self._report)
+            output = self.__run_sequence_typing_srst2(input_pe, db_data['name'], self._args.scheme_dir)
+        else:
+            raise ValueError(f"Invalid detection method: {self._args.detection_method}")
+        self.__export_output(output)
 
     def __init_report(self) -> None:
         """
@@ -90,39 +95,6 @@ class MainSequenceTyping(object):
         self._report.add_html_object(section)
         self._report.save()
 
-    def __get_fasta_file_blast(self) -> ToolIOFile:
-        """
-        Returns the input FASTA file
-        :return: FASTA file
-        """
-        if self._args.fasta is not None:
-            return ToolIOFile(self._args.fasta)
-        else:
-            if self._args.trim_reads:
-                assembly_input = self._helper.trim_reads(
-                    self._args.fastq_pe, self._report, self._args.threads, self._args.report_include_fastq)
-            else:
-                assembly_input = self._helper.symlink_fastq_pe_input(
-                    self._args.fastq_pe, self._args.fastq_pe_names, self._args.working_dir)
-            return self._helper.assemble_fastq_reads(assembly_input, self._report, self._args.kmers, self._args.threads)
-
-    def __get_paired_reads_srst2(self) -> List[str]:
-        """
-        Returns the FASTQ PE input for SRST2.
-        :return: FASTQ PE files
-        """
-        if self._args.fastq_pe is None:
-            raise ValueError("FASTQ PE input needs to be provided")
-        if self._args.trim_reads is True:
-            trimming_output = self._helper.trim_reads(
-                self._args.fastq_pe, self._report, self._args.threads, self._args.report_include_fastq)
-            return [x.path for x in trimming_output.pe]
-        else:
-            gzipped = self._args.fastq_pe[0].endswith('.gz')
-            return SnakePipelineUtils.symlink_input_files(
-                os.path.join(self._args.working_dir, 'input'), self._args.fastq_pe,
-                [f"{self._sample_name}_{x}.fastq{'.gz' if gzipped else ''}" for x in (1, 2)])
-
     def __get_db_metadata(self, directory: str) -> Dict[str, Any]:
         """
         Returns the database metadata.
@@ -132,7 +104,7 @@ class MainSequenceTyping(object):
         with open(os.path.join(directory, 'scheme_metadata.txt')) as handle:
             return json.load(handle)
 
-    def __run_sequence_typing_blast(self, fasta_file: str, db_key: str, db_path: str) -> None:
+    def __run_sequence_typing_blast(self, fasta_file: ToolIOFile, db_key: str, db_path: str) -> SequenceTypingOutput:
         """
         Runs the sequence typing workflow using BLAST.
         :param fasta_file: Input FASTA file
@@ -141,29 +113,44 @@ class MainSequenceTyping(object):
         :return: None
         """
         wrapper = SequenceTypingWrapper(self._args.working_dir)
-        workflow_input = SequenceTypingWrapper.SequenceTypingInput(
-            sample_name=self._sample_name, fasta=ToolIOFile(fasta_file), db_path=db_path, db_key=db_key)
+        workflow_input = SequenceTypingInput(
+            sample_name=self._sample_name, fasta=ToolIOFile(fasta_file.path), db_path=db_path, db_key=db_key)
         wrapper.run_workflow_blast(workflow_input, self._args.threads)
-        self._report.add_html_object(wrapper.output.report_section)
-        wrapper.output.report_section.copy_files(self._report.output_dir)
-        self._report.save()
+        return wrapper.output
 
-    def __run_sequence_typing_srst2(self, fastq_pe: List[str], db_key: str, db_path: str) -> None:
+    def __run_sequence_typing_srst2(self, fastq_pe: List[ToolIOFile], db_key: str, db_path: str) -> \
+            SequenceTypingOutput:
         """
         Runs the sequence typing workflow using SRST2.
-        :param fastq_pe: In put FASTQ PE files
+        :param fastq_pe: Input FASTQ PE files
         :param db_key: Database key
         :param db_path: Database path
         :return: None
         """
         wrapper = SequenceTypingWrapper(self._args.working_dir)
-        workflow_input = SequenceTypingWrapper.SequenceTypingInput(
+        workflow_input = SequenceTypingInput(
             fasta=ToolIOFile(self._args.fasta) if self._args.fasta else None,
-            sample_name=self._sample_name, fastq_pe=[ToolIOFile(x) for x in fastq_pe],
-            db_key=db_key, db_path=db_path)
+            sample_name=self._sample_name, fastq_pe=fastq_pe, db_key=db_key, db_path=db_path)
         wrapper.run_workflow_srst2(workflow_input, self._args.threads)
-        self._report.add_html_object(wrapper.output.report_section)
-        wrapper.output.report_section.copy_files(self._report.output_dir)
+        return wrapper.output
+
+    def __export_output(self, output: SequenceTypingOutput) -> None:
+        """
+        Exports the output of the workflow.
+        :param output: Output
+        :return: None
+        """
+        self._report.add_html_object(output.report_section)
+        output.report_section.copy_files(self._report.output_dir)
+
+        # Add log files
+        dir_logs = os.path.join(self._report.output_dir, 'logs')
+        if not os.path.isdir(dir_logs):
+            os.makedirs(dir_logs)
+        shutil.copyfile(output.log_file, os.path.join(dir_logs, 'log_gene_detection.txt'))
+        for key, path in self._helper.logs.items():
+            shutil.copyfile(path, os.path.join(dir_logs, f'log_{key}.txt'))
+
         self._report.save()
 
 

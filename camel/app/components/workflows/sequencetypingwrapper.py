@@ -2,9 +2,7 @@ from dataclasses import dataclass
 from typing import Optional, List
 
 import os
-import yaml
 
-from camel.app.command.command import Command
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.sequencetyping.sequencetypingutils import SequenceTypingUtils
 from camel.app.io.tooliofile import ToolIOFile
@@ -16,28 +14,31 @@ from camel.resources.snakefile.read_trimming import OUTPUT_READ_TRIMMING_READS_P
 from camel.resources.snakefile.sequence_typing import OUTPUT_TYPING_REPORT
 
 
+@dataclass
+class SequenceTypingInput:
+    """
+    This class is used to construct the input for the sequence typing workflow.
+    """
+    sample_name: str
+    db_path: str
+    fasta: Optional[ToolIOFile] = None
+    fastq_pe: Optional[List[ToolIOFile]] = None
+    db_key: str = 'mlst'
+
+
+@dataclass
+class SequenceTypingOutput:
+    """
+    This class contains the output of the sequence typing workflow.
+    """
+    report_section: HtmlReportSection
+    log_file: Optional[str] = None
+
+
 class SequenceTypingWrapper(object):
     """
     This class is used as a wrapper class around the sequence typing Snakemake workflow.
     """
-
-    @dataclass
-    class SequenceTypingInput:
-        """
-        This class is used to construct the input for the sequence typing workflow.
-        """
-        sample_name: str
-        db_path: str
-        fasta: Optional[ToolIOFile] = None
-        fastq_pe: Optional[List[ToolIOFile]] = None
-        db_key: str = 'mlst'
-
-    @dataclass
-    class SequenceTypingOutput:
-        """
-        This class contains the output of the sequence typing workflow.
-        """
-        report_section: HtmlReportSection
 
     def __init__(self, working_dir: str) -> None:
         """
@@ -136,8 +137,11 @@ class SequenceTypingWrapper(object):
         output_path = os.path.join(self._working_dir, OUTPUT_TYPING_REPORT.format(scheme=db_key))
         SnakePipelineUtils.run_snakemake(
             SNAKEFILE_SEQUENCE_TYPING, config_path, [output_path], self._working_dir, threads)
-        self._output = SequenceTypingWrapper.SequenceTypingOutput(
-            report_section=SnakemakeUtils.load_object(output_path)[0].value)
+        log_file_path = os.path.join(self._working_dir, 'camel.log')
+        self._output = SequenceTypingOutput(
+            report_section=SnakemakeUtils.load_object(output_path)[0].value,
+            log_file=log_file_path if os.path.isfile(log_file_path) else None
+        )
 
     @property
     def output(self) -> SequenceTypingOutput:
