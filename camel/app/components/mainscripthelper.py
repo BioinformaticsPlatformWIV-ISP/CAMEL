@@ -179,3 +179,48 @@ class MainScriptHelper(object):
         :return: List of informs
         """
         return self._informs
+
+    def get_blast_input(self, args: argparse.Namespace, report: Optional[HtmlReport] = None) -> ToolIOFile:
+        """
+        Returns the input for BLAST based detection methods.
+        Takes into accounts:
+        - Type of input (FASTA / FASTQ)
+        - Read trimming (optional)
+        - Kmer setting for de-novo assembly
+        :param args: Command line arguments
+        :param report: HTML report
+        :return: FASTA input for BLAST.
+        """
+        dir_input = os.path.join(self._working_dir, 'input')
+
+        # FASTA input
+        if args.fasta is not None:
+            if args.fasta_name is not None:
+                link = SnakePipelineUtils.symlink_input_files(dir_input, [args.fasta], [args.fasta_name], True)[0]
+                return ToolIOFile(link)
+            else:
+                return ToolIOFile(args.fasta)
+
+        # FASTQ input
+        names = args.fastq_pe_names if args.fastq_pe_names else [os.path.basename(f) for f in args.fastq_pe]
+        fq_links = SnakePipelineUtils.symlink_input_files(dir_input, args.fastq_pe, names, True)
+        if args.trim_reads:
+            assembly_input = self.trim_reads(args.fastq_pe, report, args.threads, args.report_include_fastq)
+        else:
+            assembly_input = ReadInput([ToolIOFile(l) for l in fq_links], [], [])
+        return self.assemble_fastq_reads(assembly_input, report, args.kmers, args.threads)
+
+    def get_srst2_input(self, args: argparse.Namespace, report: Optional[HtmlReport] = None) -> List[ToolIOFile]:
+        """
+        Returns the input for SRST2 (forward + reverse reads).
+        :param args: Command line arguments
+        :param report: HTML report
+        :return: SRST2 input files
+        """
+        dir_input = os.path.join(self._working_dir, 'input')
+        names = args.fastq_pe_names if args.fastq_pe_names else [os.path.basename(f) for f in args.fastq_pe]
+        fq_links = SnakePipelineUtils.symlink_input_files(dir_input, args.fastq_pe, names, True)
+        if args.trim_reads is False:
+            return [ToolIOFile(l) for l in fq_links]
+        trimming_out = self.trim_reads(fq_links, report, args.threads, args.report_include_fastq)
+        return trimming_out.pe
