@@ -4,7 +4,7 @@ from camel.app.camel import Camel
 from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.resources.snakefile.assembly_spades import OUTPUT_ASSEMBLY_SUMMARY
+from camel.resources.snakefile.assembly_spades import OUTPUT_ASSEMBLY_SUMMARY, OUTPUT_ASSEMBLY_INFORMS
 from camel.resources.snakefile.read_trimming import OUTPUT_READ_TRIMMING_READS_PE, OUTPUT_READ_TRIMMING_READS_SE_FWD, \
     OUTPUT_READ_TRIMMING_READS_SE_REV
 from camel.resources.snakefile.read_trimming_iontorrent import OUTPUT_TRIMMING_IT_READS
@@ -48,7 +48,7 @@ rule Assembly_spades:
         INPUT_DICT=os.path.join(config['working_dir'], 'assembly_spades', 'spades', 'input.io')
     output:
         FASTA_Contig=os.path.join(config['working_dir'], 'assembly_spades', 'spades', 'fasta.io'),
-        INFORMS=os.path.join(config['working_dir'], 'assembly_spades', 'spades', 'informs.io')
+        INFORMS=os.path.join(config['working_dir'], OUTPUT_ASSEMBLY_INFORMS)
     params:
         running_dir=os.path.join(config['working_dir'], 'assembly_spades', 'spades'),
         kmers=config['assembly'].get('kmers') if 'assembly' in config else None
@@ -65,12 +65,32 @@ rule Assembly_spades:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(spades, output)
 
+rule Assembly_filter_small_contigs:
+    """
+    Filters out the small contigs.
+    """
+    input:
+        FASTA = os.path.join(config['working_dir'], 'assembly_spades', 'spades', 'fasta.io')
+    output:
+        FASTA = os.path.join(config['working_dir'], 'assembly_spades', 'filtering', 'fasta.io'),
+        INFORMS = os.path.join(config['working_dir'], 'assembly_spades', 'filtering', 'informs.io'),
+    params:
+        running_dir = os.path.join(config['working_dir'], 'assembly_spades', 'filtering')
+    run:
+        from camel.app.tools.seqtk.seqtkseq import SeqtkSeq
+        seqtk = SeqtkSeq(camel)
+        SnakemakeUtils.add_pickle_inputs(seqtk, input)
+        step = Step(rule, seqtk, camel, params.running_dir, config)
+        seqtk.update_parameters(output_filename='assembly_filtered.fasta', min_length=1000)
+        step.run_step()
+        SnakemakeUtils.dump_tool_outputs(seqtk, output)
+
 rule Assembly_quast:
     """
     Generates assembly statistics using QUAST.
     """
     input:
-        FASTA=os.path.join(config['working_dir'], 'assembly_spades', 'spades', 'fasta.io')
+        FASTA = os.path.join(config['working_dir'], 'assembly_spades', 'filtering', 'fasta.io')
     output:
         TSV=os.path.join(config['working_dir'], 'assembly_spades', 'quast', 'tsv.io')
     params:
@@ -106,7 +126,7 @@ rule Assembly_report:
     Creates the HTML report for the assembly.
     """
     input:
-        FASTA_Contig=os.path.join(config['working_dir'], 'assembly_spades', 'spades', 'fasta.io'),
+        FASTA_Contig = os.path.join(config['working_dir'], 'assembly_spades', 'filtering', 'fasta.io'),
         INFORMS_spades=os.path.join(config['working_dir'], 'assembly_spades', 'spades', 'informs.io'),
         INFORMS_quast=os.path.join(config['working_dir'], 'assembly_spades', 'quast', 'informs.io')
     output:
