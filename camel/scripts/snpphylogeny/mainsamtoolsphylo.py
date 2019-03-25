@@ -135,8 +135,9 @@ class MainSamtoolsPhylo(BasePhylo):
                         'calling_method': self._args.calling_method,
                         'skip_variants': 'indels'}
         }
+        config_file = SnakePipelineUtils.generate_config_file(config_data, working_dir)
         output_path = os.path.join(working_dir, OUTPUT_CALLING_ALL)
-        SnakePipelineUtils.run_snakemake(SNAKEFILE_SAMTOOLS_CALLING_ALL, config_data, [output_path], working_dir,
+        SnakePipelineUtils.run_snakemake(SNAKEFILE_SAMTOOLS_CALLING_ALL, config_file, [output_path], working_dir,
                                          self._args.threads)
         return {self.samples_by_name[name]: output for name, output in SnakemakeUtils.load_object(output_path).items()}
 
@@ -151,9 +152,10 @@ class MainSamtoolsPhylo(BasePhylo):
             calling_output_by_sample.items()
         }
         config_data = {'working_dir': working_dir, 'samples': samples, 'options': self.__get_filtering_options()}
+        config_file = SnakePipelineUtils.generate_config_file(config_data, working_dir)
         output_path = os.path.join(working_dir, OUTPUT_FILTERING_ALL)
         SnakePipelineUtils.run_snakemake(
-            SNAKEFILE_SAMTOOLS_FILTERING_ALL, config_data, [output_path], working_dir, self._args.threads)
+            SNAKEFILE_SAMTOOLS_FILTERING_ALL, config_file, [output_path], working_dir, self._args.threads)
         return {self.samples_by_name[name]: output for name, output in SnakemakeUtils.load_object(output_path).items()}
 
     def __get_filtering_options(self) -> Dict[str, Any]:
