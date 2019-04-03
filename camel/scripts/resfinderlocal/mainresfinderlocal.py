@@ -112,7 +112,7 @@ class MainResFinderLocal(object):
             'path': self._args.resfinder_db,
             'min_percent_identity': self._args.min_percent_identity,
             'min_coverage': self._args.min_coverage,
-            'extra_column': ['Antibiotic(s)', 'antibiotics']
+            'extra_column': {'name': 'Antibiotic(s)', 'key': 'antibiotics'}
         }
 
     def __run_gene_detection(self, fasta_file: ToolIOFile, db_data: Dict[str, Any]) -> None:
