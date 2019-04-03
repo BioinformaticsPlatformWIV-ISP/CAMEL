@@ -120,7 +120,8 @@ class TestSequenceTyping(unittest.TestCase):
             working_dir=self.running_dir,
             detection_method='srst2',
             threads=8,
-            report_include_fastq=False
+            report_include_fastq=False,
+            srst2_max_unaligned_overlap=123
         )
         main = MainSequenceTyping(args)
         main.run()
@@ -144,7 +145,8 @@ class TestSequenceTyping(unittest.TestCase):
             trim_reads=False,
             working_dir=self.running_dir,
             detection_method='srst2',
-            threads=8
+            threads=8,
+            srst2_max_unaligned_overlap=150
         )
         main = MainSequenceTyping(args)
         main.run()

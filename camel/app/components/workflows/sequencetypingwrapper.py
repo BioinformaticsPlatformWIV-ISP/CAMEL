@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, List
+from typing import Optional, List, Any, Dict
 
 import os
 
@@ -64,10 +64,12 @@ class SequenceTypingWrapper(object):
             workflow_input.sample_name, 'blast', workflow_input.db_key, workflow_input.db_path)
         self.__run_snakefile(config_path, workflow_input.db_key, threads)
 
-    def run_workflow_srst2(self, workflow_input: SequenceTypingInput, threads: Optional[int] = 8) -> None:
+    def run_workflow_srst2(self, workflow_input: SequenceTypingInput, srst2_options: Optional[Dict[str, Any]] = None,
+                           threads: Optional[int] = 8) -> None:
         """
         RUns the SRST2 based sequence typing workflow.
         :param workflow_input: Input for the workflow
+        :param srst2_options: Additional options for SRST2
         :param threads: Number of threads to use
         :return: None
         """
@@ -82,25 +84,31 @@ class SequenceTypingWrapper(object):
             else:
                 self.__create_blast_input(workflow_input.fasta.path)
         self.__create_srst2_input([f.path for f in workflow_input.fastq_pe])
+        additional_options = {'srst2': srst2_options} if srst2_options else None
         config_path = self.__create_config_file(
-            workflow_input.sample_name, 'srst2', workflow_input.db_key, workflow_input.db_path)
+            workflow_input.sample_name, 'srst2', workflow_input.db_key, workflow_input.db_path, additional_options)
         self.__run_snakefile(config_path, workflow_input.db_key, threads)
 
-    def __create_config_file(self, sample_name: str, detection_method: str, db_key: str, db_path: str) -> str:
+    def __create_config_file(self, sample_name: str, detection_method: str, db_key: str, db_path: str,
+                             additional_options: Optional[Dict[str, Any]] = None) -> str:
         """
         Creates the configuration file for the sequence typing workflow.
         :param sample_name: Sample name
         :param detection_method: Detection method ('blast', 'srst2)
         :param db_key: Database key (e.g. 'mlst')
         :param db_path: Database path
+        :param additional_options: Additional options to add to the configuration file.
         :return: Config file path
         """
-        return SnakePipelineUtils.generate_config_file({
-                'working_dir': self._working_dir,
-                'sample_name': sample_name,
-                'detection_method': detection_method,
-                'sequence_typing': {db_key: db_path}
-            }, self._working_dir)
+        data = {
+            'working_dir': self._working_dir,
+            'sample_name': sample_name,
+            'detection_method': detection_method,
+            'sequence_typing': {db_key: db_path}
+        }
+        if additional_options is not None:
+            data.update(additional_options)
+        return SnakePipelineUtils.generate_config_file(data, self._working_dir)
 
     def __create_blast_input(self, fasta_path: str) -> None:
         """

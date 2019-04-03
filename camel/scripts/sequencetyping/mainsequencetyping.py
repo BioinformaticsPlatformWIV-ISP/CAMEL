@@ -50,6 +50,7 @@ class MainSequenceTyping(object):
         argument_parser.add_argument('--scheme-dir', required=True, type=str)
         argument_parser.add_argument('--detection-method', type=str, choices=['blast', 'srst2'], default='blast')
         argument_parser.add_argument('--report-include-fastq', action='store_true')
+        argument_parser.add_argument('--srst2-max-unaligned-overlap', type=int, default=100)
         return argument_parser.parse_args()
 
     def run(self):
@@ -131,7 +132,8 @@ class MainSequenceTyping(object):
         workflow_input = SequenceTypingInput(
             fasta=ToolIOFile(self._args.fasta) if self._args.fasta else None,
             sample_name=self._sample_name, fastq_pe=fastq_pe, db_key=db_key, db_path=db_path)
-        wrapper.run_workflow_srst2(workflow_input, self._args.threads)
+        srst2_options = {'max_unaligned_overlap': self._args.srst2_max_unaligned_overlap}
+        wrapper.run_workflow_srst2(workflow_input, srst2_options, self._args.threads)
         return wrapper.output
 
     def __export_output(self, output: SequenceTypingOutput) -> None:
