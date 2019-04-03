@@ -7,6 +7,7 @@ import os
 from camel.app.camel import Camel
 from camel.app.command.command import Command
 from camel.app.components.filesystemhelper import FileSystemHelper
+from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.invalidparametererror import InvalidParameterError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.toolio import ToolIO
@@ -307,11 +308,12 @@ class Tool(object, metaclass=abc.ABCMeta):
         for input_key, input_list in self._tool_inputs.items():
             for tool_input in input_list:
                 if not isinstance(tool_input, ToolIO):
-                    raise ValueError("Tool input '{}' is not a ToolIO object".format(tool_input))
+                    raise InvalidInputSpecificationError("Tool input '{}' is not a ToolIO object".format(tool_input))
                 if tool_input is None:
-                    raise ValueError("Tool input with key {} is None".format(input_key))
+                    raise InvalidInputSpecificationError("Tool input with key {} is None".format(input_key))
                 if not tool_input.is_valid():
-                    raise ValueError("Invalid tool input with key {}: {}".format(input_key, tool_input))
+                    raise InvalidInputSpecificationError("Invalid tool input with key {}: {}".format(
+                        input_key, tool_input))
 
     def _check_output(self) -> None:
         """
