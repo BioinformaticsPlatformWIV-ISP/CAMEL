@@ -101,10 +101,10 @@ rule Gene_detection_hit_filtering:
         hit_filtering.update_parameters(output_filename=os.path.join(params.running_dir, params.output_filename))
         if 'blast_filtering_options' in params.db_config:
             hit_filtering.update_parameters(**params.db_config['blast_filtering_options'])
-        if 'extra_column' in params.db_config:
-           hit_filtering.update_parameters(
-               extra_column_name=params.db_config['extra_column']['name'],
-               extra_column_key=params.db_config['extra_column']['key'])
+        if params.db_config.get('extra_column') is not None:
+            hit_filtering.update_parameters(
+                extra_column_name=params.db_config['extra_column']['name'],
+                extra_column_key=params.db_config['extra_column']['key'])
 
         # Run tool
         step.run_step()
@@ -252,14 +252,15 @@ rule Gene_detection_get_column_names:
         INFORMS_columns=os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_COLUMNS)
     params:
         detection_method=lambda wildcards: GeneDetectionUtils.get_detection_method_key(config, wildcards.db),
-        extra_column=lambda wildcards: config['gene_detection'][wildcards.db].get('extra_column')
+        db_config = lambda wildcards: config['gene_detection'][wildcards.db]
     run:
         from camel.app.components.genedetection.genedetectionblasthit import GeneDetectionBlastHit
         from camel.app.components.genedetection.genedetectionsrst2hit import GeneDetectionSRST2Hit
+        extra_column_name = params.db_config['extra_column']['name'] if 'extra_column' in params.db_config else None
         if params.detection_method == 'blast':
-            columns = GeneDetectionBlastHit.get_column_names_html(params.extra_column[0] if params.extra_column is not None else None)
+            columns = GeneDetectionBlastHit.get_column_names_html(extra_column_name)
         elif params.detection_method == 'srst2':
-            columns = GeneDetectionSRST2Hit.get_column_names_html(params.extra_column[0] if params.extra_column is not None else None)
+            columns = GeneDetectionSRST2Hit.get_column_names_html(extra_column_name)
         else:
             raise ValueError(f"Invalid detection method: {params.detection_method}")
         SnakemakeUtils.dump_object(columns, output.INFORMS_columns)
