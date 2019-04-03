@@ -9,12 +9,12 @@ from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.tool import Tool
 
 
-class Filter(Tool, metaclass=abc.ABCMeta):
+class BaseFilter(Tool, metaclass=abc.ABCMeta):
     """
     Base class for variant filters.
     """
 
-    def __init__(self, *args):
+    def __init__(self, *args) -> None:
         """
         Initializes this filter.
         :param args: Initialization arguments
@@ -31,7 +31,7 @@ class Filter(Tool, metaclass=abc.ABCMeta):
         """
         pass
 
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
         Checks the input.
         :return: None
@@ -40,7 +40,7 @@ class Filter(Tool, metaclass=abc.ABCMeta):
             raise InvalidInputSpecificationError("No compressed VCF input found")
         super()._check_input()
 
-    def _execute_tool(self):
+    def _execute_tool(self) -> None:
         """
         Executes this tool.
         :return: None
@@ -55,7 +55,7 @@ class Filter(Tool, metaclass=abc.ABCMeta):
         self._tool_outputs['VCF_GZ'] = [ToolIOFile(self.output_path)]
 
     @abc.abstractmethod
-    def _apply_filter(self):
+    def _apply_filter(self) -> None:
         """
         Applies the filter to the input file.
         :return: None
@@ -63,7 +63,7 @@ class Filter(Tool, metaclass=abc.ABCMeta):
         pass
 
     @property
-    def output_path(self):
+    def output_path(self) -> str:
         """
         Returns the path to the output file.
         :return: Path
