@@ -21,7 +21,7 @@ class Blast(Tool):
         :param version: Tool version
         :param camel: Camel instance
         """
-        super(Blast, self).__init__(tool_name, version, camel)
+        super().__init__(tool_name, version, camel)
         self.__subject_key = None
 
     def _check_input(self):
@@ -89,7 +89,8 @@ class Blast(Tool):
             '-query {}'.format(self._tool_inputs['FASTA'][0].path),
             self.__get_subject_argument(),
             '-out {}'.format(self.__get_output_filename()),
-            ' '.join(self._build_options(excluded_parameters=('output_filename',)))])
+            ' '.join(self._build_options(excluded_parameters=['output_filename']))
+        ])
 
     def __get_subject_argument(self):
         """
