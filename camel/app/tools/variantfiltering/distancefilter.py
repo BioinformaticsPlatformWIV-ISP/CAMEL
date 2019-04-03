@@ -8,10 +8,10 @@ import vcf
 from vcf.model import _Record as Record
 
 from camel.app.camel import Camel
-from camel.app.tools.variantfiltering.filter import Filter
+from camel.app.tools.variantfiltering.basefilter import BaseFilter
 
 
-class DistanceFilter(Filter):
+class DistanceFilter(BaseFilter):
     """
     Filters variants based on distance.
 
@@ -25,7 +25,7 @@ class DistanceFilter(Filter):
         Initializes this tool.
         :param camel: CAMEL instance
         """
-        super(DistanceFilter, self).__init__('Variant Filter: Distance', '0.1', camel)
+        super().__init__('Variant Filter: Distance', '0.1', camel)
 
     @property
     def full_name(self) -> str:

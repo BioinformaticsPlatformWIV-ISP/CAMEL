@@ -1,7 +1,7 @@
-from camel.app.tools.variantfiltering.filter import Filter
+from camel.app.tools.variantfiltering.basefilter import BaseFilter
 
 
-class SnpQualityFilter(Filter):
+class SnpQualityFilter(BaseFilter):
     """
     Filters variants based on SNP quality.
     """
@@ -11,7 +11,7 @@ class SnpQualityFilter(Filter):
         Initializes this tool.
         :param camel: CAMEL instance
         """
-        super(SnpQualityFilter, self).__init__('Variant Filter: SNP Quality', '0.1', camel)
+        super().__init__('Variant Filter: SNP Quality', '0.1', camel)
 
     def _apply_filter(self):
         """

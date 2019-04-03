@@ -1,8 +1,9 @@
 from camel.app.error.invalidparametererror import InvalidParameterError
-from camel.app.tools.variantfiltering.filter import Filter
+
+from camel.app.tools.variantfiltering.basefilter import BaseFilter
 
 
-class DepthFilter(Filter):
+class DepthFilter(BaseFilter):
     """
     Filters variants based on absolute depth, forward depth and reverse depth.
     """
@@ -12,7 +13,7 @@ class DepthFilter(Filter):
         Initializes this tool.
         :param camel: CAMEL instance
         """
-        super(DepthFilter, self).__init__('Variant Filter: Depth', '0.1', camel)
+        super().__init__('Variant Filter: Depth', '0.1', camel)
 
     @property
     def full_name(self) -> str:

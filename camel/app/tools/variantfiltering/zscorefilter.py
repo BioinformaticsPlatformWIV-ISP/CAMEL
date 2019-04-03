@@ -1,15 +1,13 @@
-import logging
 import math
-
 import os
 import vcf
 
 from camel.app.command.command import Command
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
-from camel.app.tools.variantfiltering.filter import Filter
+from camel.app.tools.variantfiltering.basefilter import BaseFilter
 
 
-class ZScoreFilter(Filter):
+class ZScoreFilter(BaseFilter):
     """
     Filters variants based on Z-score.
     The Z-score is calculated as:
@@ -26,7 +24,7 @@ class ZScoreFilter(Filter):
         Initializes this tool.
         :param camel: CAMEL instance
         """
-        super(ZScoreFilter, self).__init__('Variant Filter: Z-score', '0.1', camel)
+        super().__init__('Variant Filter: Z-score', '0.1', camel)
 
     @property
     def full_name(self) -> str:

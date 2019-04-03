@@ -1,7 +1,7 @@
-from camel.app.tools.variantfiltering.filter import Filter
+from camel.app.tools.variantfiltering.basefilter import BaseFilter
 
 
-class MappingQualityFilter(Filter):
+class MappingQualityFilter(BaseFilter):
     """
     Filters variants based on mapping quality.
     """
@@ -11,7 +11,7 @@ class MappingQualityFilter(Filter):
         Initializes this tool.
         :param camel: CAMEL instance
         """
-        super(MappingQualityFilter, self).__init__('Variant Filter: Mapping Quality', '0.1', camel)
+        super().__init__('Variant Filter: Mapping Quality', '0.1', camel)
 
     def _apply_filter(self):
         """
