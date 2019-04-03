@@ -1,5 +1,6 @@
 import os
 
+from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
@@ -18,14 +19,14 @@ class Circos(Tool):
         SVG: Circos image rendered as SVG
     """
 
-    def __init__(self, camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initializes this tool.
         :param camel: CAMEL
         """
         super().__init__('Circos', '0.69-6', camel)
 
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
         Checks if the provided input is correct.
         :return: None
@@ -34,7 +35,7 @@ class Circos(Tool):
             raise InvalidInputSpecificationError("Circos configuration file ('TXT') is required.")
         super()._check_input()
 
-    def _execute_tool(self):
+    def _execute_tool(self) -> None:
         """
         Executes this tool.
         :return: None
@@ -43,14 +44,14 @@ class Circos(Tool):
         self._execute_command()
         self.__set_output()
 
-    def __build_command(self):
+    def __build_command(self) -> None:
         """
         Builds the command line call.
         :return: None
         """
         self._command.command = ' '.join([self._tool_command, '-conf', self._tool_inputs['TXT'][0].path])
 
-    def __set_output(self):
+    def __set_output(self) -> None:
         """
         Sets the tool output.
         :return: None
@@ -63,3 +64,11 @@ class Circos(Tool):
         if not os.path.isfile(svg_path):
             raise ToolExecutionError('No SVG output file generated')
         self._tool_outputs['SVG'] = [ToolIOFile(svg_path)]
+
+    def _check_command_output(self) -> None:
+        """
+        Checks if the tool ran successfully.
+        :return: None
+        """
+        if self._command.returncode != 0:
+            raise ToolExecutionError(f"Error executing '{self.name}': {self._command.stderr}")
