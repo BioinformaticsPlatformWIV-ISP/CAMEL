@@ -42,7 +42,7 @@ class YAMLToolService(BaseToolService):
         Gets the dependencies for the tool from the database
         :return: String with whitespace separated list of dependencies
         """
-        return self._tool_data['dependencies'].split(' ') if self._tool_data.get('dependencies') is not None else []
+        return self._tool_data['dependencies']
 
     def get_default_parameters(self) -> OrderedDict:
         """
