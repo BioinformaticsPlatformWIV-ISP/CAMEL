@@ -35,7 +35,7 @@ class SamtoolsMerge(Samtools):
         :param camel: Camel instance
         :return: None
         """
-        super(SamtoolsMerge, self).__init__('samtools merge', '1.9', camel)
+        super().__init__('samtools merge', '1.9', camel)
 
     def _check_input(self):
         """
@@ -69,7 +69,7 @@ class SamtoolsMerge(Samtools):
         """
         self._command.command = ' '.join([
             self._tool_command,
-            ' '.join(self._build_options(excluded_parameters={'output_filename'})),
+            ' '.join(self._build_options(excluded_parameters=['output_filename'])),
             self._parameters['output_filename'].value,
             ' '.join([file.path for file in self._tool_inputs[self.__input_file_type]])
         ])
