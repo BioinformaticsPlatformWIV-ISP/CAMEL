@@ -30,14 +30,15 @@ rule Typing_srst2_allele_detection:
     Allele detection using SRST2.
     """
     input:
-        FASTQ=os.path.join(config['working_dir'], 'typing', 'input-fastq.io'),
-        INFORMS_scheme=os.path.join(config['working_dir'], 'typing', '{scheme}', 'informs-locus_set.io')
+        FASTQ = os.path.join(config['working_dir'], 'typing', 'input-fastq.io'),
+        INFORMS_scheme = os.path.join(config['working_dir'], 'typing', '{scheme}', 'informs-locus_set.io')
     output:
-        VAL_Hit=os.path.join(config['working_dir'], 'typing', '{scheme}', '{locus_type}', '{locus}', 'hit-srst2.io')
+        VAL_Hit = os.path.join(config['working_dir'], 'typing', '{scheme}', '{locus_type}', '{locus}', 'hit-srst2.io')
     params:
-        running_dir=os.path.join(config['working_dir'], 'typing', '{scheme}', '{locus_type}', '{locus}'),
+        running_dir = os.path.join(config['working_dir'], 'typing', '{scheme}', '{locus_type}', '{locus}'),
         locus_name = lambda wildcards: wildcards.locus,
-        scheme_dir = lambda wildcards: SCHEMES[wildcards.scheme]
+        scheme_dir = lambda wildcards: SCHEMES[wildcards.scheme],
+        srst2_options = config.get('srst2')
     threads: 4
     run:
         from camel.app.tools.srst2.srst2alleledetector import SRST2AlleleDetector
@@ -51,7 +52,8 @@ rule Typing_srst2_allele_detection:
         detector.add_input_files(fastq_input)
         detector.add_input_files({'FASTA': [ToolIOFile(os.path.join(params.scheme_dir, locus_informs['fasta_path']))]})
         detector.add_input_informs({'locus': locus_informs})
-        detector.update_parameters(max_unaligned_overlap=150)
+        if (params.srst2_options is not None) and ('max_unaligned_overlap' in params.srst2_options):
+            detector.update_parameters(max_unaligned_overlap=params.srst2_options['max_unaligned_overlap'])
         step = Step(rule, detector, camel, params.running_dir, config)
         if 'FASTQ_PE' in fastq_input:
             fwd_read_path = fastq_input['FASTQ_PE'][0].path
