@@ -2,7 +2,6 @@ import re
 
 import os
 
-from camel.app.error.invalidparametererror import InvalidParameterError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.tool import Tool
@@ -19,7 +18,7 @@ class Trimmomatic(Tool):
         Initializes Trimmomatic.
         :param camel: Camel instance
         """
-        super(Trimmomatic, self).__init__('Trimmomatic', '0.36', camel)
+        super().__init__('Trimmomatic', '0.36', camel)
         self._mode = None
 
     def _execute_tool(self):
@@ -131,7 +130,7 @@ class Trimmomatic(Tool):
         self._informs['version'] = self.get_dependency_version('trimmomatic')
         self._informs['mode'] = self._mode
         for line in self.stdout.splitlines():
-            qc_encoding = re.search("Quality encoding detected as (?P<encode>\w+)", line)
+            qc_encoding = re.search("Quality encoding detected as (?P<encode>\\w+)", line)
             if qc_encoding:
                 self._informs['encoding'] = qc_encoding.group('encode')
             elif re.match("Input Read Pairs", line):
