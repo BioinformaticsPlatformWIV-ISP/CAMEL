@@ -1,6 +1,6 @@
 import os
 
-
+from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.bedtools.bedtools import Bedtools
@@ -13,18 +13,16 @@ class BedtoolsGetFasta(Bedtools):
     """
     DEFAULT_OUTPUT_NAME = 'bedtools_getfata_extracted_sequences.fa'
 
-    def __init__(self, camel, tool_name='bedtools getfasta', version='2.25.0'):
+    def __init__(self, camel: Camel) -> None:
         """
         Initialize a samtools tool.
-        :param tool_name: Tool name
-        :param version: Tool version
         :param camel: Camel instance
         :return: None
         """
-        super().__init__(tool_name, version, camel)
+        super().__init__('bedtools getfasta', '2.25.0', camel)
         self._required_inputs = ['BED', 'FASTA']
 
-    def _execute_tool(self):
+    def _execute_tool(self) -> None:
         """
         Executes this tool.
         :return: None
@@ -33,7 +31,7 @@ class BedtoolsGetFasta(Bedtools):
         self.__build_command()
         self._execute_command()
 
-    def __build_command(self):
+    def __build_command(self) -> None:
         """
         Builds the command.
         :return: None
@@ -46,14 +44,14 @@ class BedtoolsGetFasta(Bedtools):
             '-fo {}'.format(self.DEFAULT_OUTPUT_NAME)
         ])
 
-    def __set_output(self):
+    def __set_output(self) -> None:
         """
         Sets the output of this tool.
         :return: None
         """
         self._tool_outputs['FASTA'] = [ToolIOFile(os.path.join(self._folder, self.DEFAULT_OUTPUT_NAME))]
 
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
         Checks the input.
         :return: None
