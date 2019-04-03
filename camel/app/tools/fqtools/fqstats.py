@@ -14,7 +14,7 @@ class Fqstats(Tool):
         Initializes this tool.
         :param camel: Camel instance
         """
-        super(Fqstats, self).__init__('fqstats', '1.1',  camel)
+        super().__init__('fqstats', '1.1',  camel)
 
     def _check_input(self):
         """

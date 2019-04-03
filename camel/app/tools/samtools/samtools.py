@@ -22,7 +22,7 @@ class Samtools(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super(Samtools, self).__init__(tool_name, version,  camel)
+        super().__init__(tool_name, version,  camel)
 
     def _check_stderr(self):
         """

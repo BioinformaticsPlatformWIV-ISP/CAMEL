@@ -15,7 +15,7 @@ class MothurRarefactionSingle(Mothur):
         :param camel: Camel instance
         :return: None
         """
-        super(MothurRarefactionSingle, self).__init__('mothur_rarefaction_single', '1.39.1', camel)
+        super().__init__('mothur_rarefaction_single', '1.39.1', camel)
 
     def _check_input(self):
         """

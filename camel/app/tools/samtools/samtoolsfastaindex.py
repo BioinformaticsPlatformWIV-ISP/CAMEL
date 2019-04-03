@@ -17,7 +17,7 @@ class SamtoolsFastaIndex(Samtools):
         Initializes this tool.
         :param camel: Camel instance
         """
-        super(SamtoolsFastaIndex, self).__init__('samtools faidx', '1.9', camel)
+        super().__init__('samtools faidx', '1.9', camel)
 
     def _check_input(self):
         """

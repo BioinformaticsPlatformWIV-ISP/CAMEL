@@ -16,7 +16,7 @@ class Prinseq(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super(Prinseq, self).__init__('prinseq', '0.20.4', camel)
+        super().__init__('prinseq', '0.20.4', camel)
 
     def _execute_tool(self):
         """

@@ -19,7 +19,7 @@ class Fqconvert(Tool):
         :param camel: Camel instance
         """
         self._mode = None
-        super(Fqconvert, self).__init__('fqconvert', '1.1', camel)
+        super().__init__('fqconvert', '1.1', camel)
 
     def _execute_tool(self):
         """

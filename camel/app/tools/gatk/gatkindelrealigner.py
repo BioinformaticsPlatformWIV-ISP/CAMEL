@@ -14,7 +14,7 @@ class GATKIndelRealigner(GATK):
         :param camel: Camel instance
         :return: None
         """
-        super(GATKIndelRealigner, self).__init__('gatk IndelRealigner', '3.7', camel)
+        super().__init__('gatk IndelRealigner', '3.7', camel)
 
         self._required_inputs = ['BAM', 'FASTA_REF', 'TXT_realign_intervals']
         self._output_type = 'BAM'

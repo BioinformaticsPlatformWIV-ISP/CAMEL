@@ -23,7 +23,7 @@ class GATKFastaAlternateReferenceMaker(GATK):
         :param camel: Camel instance
         :return: None
         """
-        super(GATKFastaAlternateReferenceMaker, self).__init__('gatk FastaAlternateReferenceMaker', '3.7', camel)
+        super().__init__('gatk FastaAlternateReferenceMaker', '3.7', camel)
         self._required_inputs = ['VCF']
         self._output_type = 'FASTA'
         self._specific_parameters = ['concatenate_sequence_segments']

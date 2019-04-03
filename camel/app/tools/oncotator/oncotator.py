@@ -10,7 +10,7 @@ from camel.app.error.invalidinputspecificationerror import InvalidInputSpecifica
 class Oncotator(Tool):
     """
     ===========
-    Oncotator: anotates vcf with cancer-centered databases. 
+    Oncotator: anotates vcf with cancer-centered databases.
     ===========
 
     Required inputs:
@@ -30,7 +30,7 @@ class Oncotator(Tool):
 
     Other parameters:
     -----------------
-    - canonical_tx_file: 
+    - canonical_tx_file:
                     File to use to supersede specific variants known to be clinically relevant
                     Default: None
     """
@@ -41,7 +41,7 @@ class Oncotator(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super(Oncotator, self).__init__('Oncotator', '1.9.9.0', camel)
+        super().__init__('Oncotator', '1.9.9.0', camel)
         self._required_inputs = ['IN_FILE']
 
     def _execute_tool(self) -> None:
@@ -56,7 +56,7 @@ class Oncotator(Tool):
     def _check_parameters(self) -> None:
         """
         Checks that parameters are valid.
-        :return: None 
+        :return: None
         """
         super(Oncotator, self)._check_parameters()
 
@@ -75,7 +75,7 @@ class Oncotator(Tool):
     def __build_command(self) -> None:
         """
         Build the command to run the tool.
-        :return: 
+        :return:
         """
         input_string = " {}".format(self._tool_inputs['IN_FILE'][0].path)
         output_string = " {}".format(self._parameters['output_file_name'].value)
@@ -85,7 +85,7 @@ class Oncotator(Tool):
 
     def __set_output(self) -> None:
         """
-        Set the output specifications in the Camel ouptut list: 
+        Set the output specifications in the Camel ouptut list:
         - output file
         :return: None
         """

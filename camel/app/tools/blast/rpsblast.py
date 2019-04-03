@@ -13,7 +13,7 @@ class RpsBlast(Blast):
         :param camel: Camel instance
         :return: None
         """
-        super(RpsBlast, self).__init__('rpsblast', '2.6.0', camel)
+        super().__init__('rpsblast', '2.6.0', camel)
 
     def _check_input(self):
         """

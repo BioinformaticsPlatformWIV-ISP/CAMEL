@@ -19,7 +19,7 @@ class Quast(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super(Quast, self).__init__('quast', '4.4', camel)
+        super().__init__('quast', '4.4', camel)
 
     def _execute_tool(self):
         """

@@ -15,7 +15,7 @@ class MarkDuplicates(Picard):
         :param camel: Camel instance
         :return: None
         """
-        super(MarkDuplicates, self).__init__('Picard MarkDuplicates', '2.8.3', camel)
+        super().__init__('Picard MarkDuplicates', '2.8.3', camel)
 
         self._function_name = 'MarkDuplicates'
         self._supported_inputs = ['BAM']

@@ -21,7 +21,7 @@ class SnpMatrixConstructor(Tool):
         Initializes this tool.
         :param camel: CAMEL instance
         """
-        super(SnpMatrixConstructor, self).__init__('SNP Matrix Constructor', '0.1', camel)
+        super().__init__('SNP Matrix Constructor', '0.1', camel)
 
     def _check_input(self) -> None:
         """

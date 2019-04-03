@@ -21,7 +21,7 @@ class TreeVector(Tool):
         Initializes this tool.
         :param camel: CAMEL instance
         """
-        super(TreeVector, self).__init__('TreeVector', '1.0', camel)
+        super().__init__('TreeVector', '1.0', camel)
 
     def _check_input(self):
         """

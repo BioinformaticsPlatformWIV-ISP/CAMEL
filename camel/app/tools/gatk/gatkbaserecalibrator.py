@@ -13,24 +13,24 @@ class GATKBaseRecalibrator(GATK):
     web: https://gatkforums.broadinstitute.org/gatk/discussion/44/base-quality-score-recalibration-bqsr
     https://software.broadinstitute.org/gatk/gatkdocs/4.beta.5/org_broadinstitute_hellbender_tools_walkers_bqsr_BaseRecalibrator.php
     https://gatkforums.broadinstitute.org/gatk/discussion/2801/howto-recalibrate-base-quality-scores-run-bqsr
-    
+
     Required inputs:
     ----------------
     'BAM':              ToolIOFile object. Input BAM file.
-    'FASTA_REF':        ToolIOFile object. FASTA file containing the reference genome. 
-    
+    'FASTA_REF':        ToolIOFile object. FASTA file containing the reference genome.
+
     Optional input:
     ---------------
     'VCF_KNOWN_SNPS':   ToolIOFile object. GATK high confidence SNP vcf file location.
     'VCF_KNOWN_INDELS': ToolIOFile object. GATK high confidence indels vcf file location.
-    
+
     Output:
     -------
     'TXT_RecalibrationTable': ToolIOFile object. Text file containing recalibration data.
-    
+
     Mandatory parameters:
     ---------------------
-    - recal_table_output       recalibration table name. Default value: 'recalibrationData.tabl'    
+    - recal_table_output       recalibration table name. Default value: 'recalibrationData.tabl'
     """
 
     def __init__(self, camel):
@@ -39,7 +39,7 @@ class GATKBaseRecalibrator(GATK):
         :param camel: Camel instance
         :return: None
         """
-        super(GATKBaseRecalibrator, self).__init__('gatk BaseRecalibrator', '3.7', camel)
+        super().__init__('gatk BaseRecalibrator', '3.7', camel)
 
         self._required_inputs = ['BAM', 'FASTA_REF']
         self._output_type = 'TXT_RecalibrationTable'

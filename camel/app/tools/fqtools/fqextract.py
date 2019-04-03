@@ -14,7 +14,7 @@ class Fqextract(Tool):
         Initializes this tool.
         :param camel: Camel instance
         """
-        super(Fqextract, self).__init__('fqextract', '1.1', camel)
+        super().__init__('fqextract', '1.1', camel)
 
     def _check_input(self):
         """

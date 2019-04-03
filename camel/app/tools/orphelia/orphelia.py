@@ -22,7 +22,7 @@ class Orphelia(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super(Orphelia, self).__init__('orphelia', '74', camel)
+        super().__init__('orphelia', '74', camel)
 
     def _execute_tool(self):
         """

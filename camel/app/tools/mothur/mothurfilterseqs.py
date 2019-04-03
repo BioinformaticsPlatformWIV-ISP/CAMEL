@@ -14,7 +14,7 @@ class MothurFilterSeqs(Mothur):
         :param camel: Camel instance
         :return: None
         """
-        super(MothurFilterSeqs, self).__init__('mothur_filter_seqs', '1.39.1', camel)
+        super().__init__('mothur_filter_seqs', '1.39.1', camel)
 
     def _check_input(self):
         """

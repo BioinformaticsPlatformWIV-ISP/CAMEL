@@ -24,7 +24,7 @@ class VelvetOptimiser(Velvet):
         :param camel: Camel instance
         :return: None
         """
-        super(VelvetOptimiser, self).__init__('VelvetOptimiser', '2.2.5', camel)
+        super().__init__('VelvetOptimiser', '2.2.5', camel)
         self._output_dir = None
 
     def _execute_tool(self):

@@ -9,27 +9,27 @@ class GATKPrintReads(GATK):
     ==========================
     GATK PrintReads 3.7
     ==========================
-    Print reads from a SAM/BAM/CRAM file. 
+    Print reads from a SAM/BAM/CRAM file.
     Example: apply recalibration table to BAM file.
     https://software.broadinstitute.org/gatk/documentation/tooldocs/4.beta.4/org_broadinstitute_hellbender_tools_PrintReads.php
-    
+
     Required inputs:
     ----------------
     'BAM':              ToolIOFile object. Input BAM file.
     'FASTA_REF':        ToolIOFile object. FASTA file containing the reference genome.
-    
+
     Optional inputs:
-    ---------------- 
+    ----------------
     'BQSR':             ToolIOFile object. BQSR file from base quality recalibration step to apply to input BAM.
     "TXT_intervals":    ToolIOFile object. Intervals list to restrict breadth and accelerate analysis. Bed or GATK intervals list.
-    
+
     Output:
     -------
     'BAM':              ToolIOFile object. TBAM file containing (eg.) recalibrated reads.
-    
+
     Parameters:
     ----------
-    - bam_output       Output BAM file name. Default value: 'recalibrated.bam'       
+    - bam_output       Output BAM file name. Default value: 'recalibrated.bam'
     """
 
     def __init__(self, camel):
@@ -38,7 +38,7 @@ class GATKPrintReads(GATK):
         :param camel: Camel instance
         :return: None
         """
-        super(GATKPrintReads, self).__init__('gatk PrintReads', '3.7', camel)
+        super().__init__('gatk PrintReads', '3.7', camel)
 
         self._required_inputs = ['BAM', 'FASTA_REF']
         self._specific_parameters = ["bam_external_output"]

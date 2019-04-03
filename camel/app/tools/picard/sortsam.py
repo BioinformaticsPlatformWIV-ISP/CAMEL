@@ -13,5 +13,5 @@ class SortSam(Picard):
         :param camel: Camel instance
         :return: None
         """
-        super(SortSam, self).__init__('Picard SortSam', '2.8.3', camel)
+        super().__init__('Picard SortSam', '2.8.3', camel)
         self._function_name = 'SortSam'

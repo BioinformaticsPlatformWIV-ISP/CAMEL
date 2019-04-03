@@ -15,7 +15,7 @@ class MothurGetGroups(Mothur):
         :param camel: Camel instance
         :return: None
         """
-        super(MothurGetGroups, self).__init__('mothur_get_groups', '1.39.1', camel)
+        super().__init__('mothur_get_groups', '1.39.1', camel)
 
     def _check_input(self):
         """

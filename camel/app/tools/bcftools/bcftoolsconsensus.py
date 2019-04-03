@@ -16,7 +16,7 @@ class BcftoolsConsensus(Tool):
         Initializes this tool.
         :param camel: CAMEL instance
         """
-        super(BcftoolsConsensus, self).__init__('bcftools consensus', '1.9', camel)
+        super().__init__('bcftools consensus', '1.9', camel)
 
     def _check_input(self):
         """

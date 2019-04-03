@@ -19,7 +19,7 @@ class Blat(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super(Blat, self).__init__('blat', '36x2', camel)
+        super().__init__('blat', '36x2', camel)
 
     def _execute_tool(self):
         """

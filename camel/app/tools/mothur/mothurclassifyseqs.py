@@ -18,7 +18,7 @@ class MothurClassifySeqs(Mothur):
         :param camel: Camel instance
         :return: None
         """
-        super(MothurClassifySeqs, self).__init__('mothur_classify_seqs', '1.39.1', camel)
+        super().__init__('mothur_classify_seqs', '1.39.1', camel)
 
     def _check_input(self):
         """

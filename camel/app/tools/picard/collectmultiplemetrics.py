@@ -38,7 +38,7 @@ class CollectMultipleMetrics(Picard):
         :param camel: Camel instance
         :return: None
         """
-        super(CollectMultipleMetrics, self).__init__('Picard CollectMultipleMetrics', '2.8.3', camel)
+        super().__init__('Picard CollectMultipleMetrics', '2.8.3', camel)
         self._function_name = 'CollectMultipleMetrics'
         self._required_inputs = ['FASTA_REF']
         self._outfile_prefix = None

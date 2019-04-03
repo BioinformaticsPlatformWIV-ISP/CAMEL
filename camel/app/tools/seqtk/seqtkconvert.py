@@ -16,7 +16,7 @@ class SeqtkConvert(Seqtk):
         :param camel: Camel instance
         :return: None
         """
-        super(SeqtkConvert, self).__init__('Seqtk Convert', '1.2', camel)
+        super().__init__('Seqtk Convert', '1.2', camel)
 
         self._function_name = 'Convert'
         self._supported_inputs = ['FASTQ']

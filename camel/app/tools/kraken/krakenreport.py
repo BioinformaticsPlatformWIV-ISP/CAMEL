@@ -17,7 +17,7 @@ class KrakenReport(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super(KrakenReport, self).__init__('kraken_report', '0.10.5', camel)
+        super().__init__('kraken_report', '0.10.5', camel)
 
     def _execute_tool(self):
         """

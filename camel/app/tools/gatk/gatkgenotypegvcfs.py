@@ -13,7 +13,7 @@ class GATKGenotypeGVCFs(GATK):
         :param camel: Camel instance
         :return: None
         """
-        super(GATKGenotypeGVCFs, self).__init__('gatk GenotypeGVCFs', '3.7', camel)
+        super().__init__('gatk GenotypeGVCFs', '3.7', camel)
 
         self._required_inputs = ['gVCF', 'FASTA_REF']
         self._output_type = 'VCF_MultipleSample'

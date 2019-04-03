@@ -16,7 +16,7 @@ class MothurMakeContigs(Mothur):
         :param camel: Camel instance
         :return: None
         """
-        super(MothurMakeContigs, self).__init__('mothur_make_contigs', '1.39.1', camel)
+        super().__init__('mothur_make_contigs', '1.39.1', camel)
 
     def _check_input(self):
         """

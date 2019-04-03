@@ -20,7 +20,7 @@ class Carma(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super(Carma, self).__init__('carma', '20150505', camel)
+        super().__init__('carma', '20150505', camel)
         self._input_key = None
         self._carma_dir = 'carma3/20150505'
         self._hmmer_dir = 'hmmer/3.1b2'

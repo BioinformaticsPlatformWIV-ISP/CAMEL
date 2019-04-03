@@ -19,7 +19,7 @@ class Velvetg(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super(Velvetg, self).__init__('velvetg', '1.2.10', camel)
+        super().__init__('velvetg', '1.2.10', camel)
         self._output_dir = None
 
     def _execute_tool(self):

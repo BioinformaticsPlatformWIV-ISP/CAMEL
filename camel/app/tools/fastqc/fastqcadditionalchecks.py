@@ -15,7 +15,7 @@ class FastQCAdditionalChecks(Tool):
         Initialize this tool.
         :param camel: Camel instance
         """
-        super(FastQCAdditionalChecks, self).__init__('FastQC additional checks', '0.1', camel)
+        super().__init__('FastQC additional checks', '0.1', camel)
 
     def _check_input(self):
         """

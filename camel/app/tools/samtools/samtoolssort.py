@@ -16,7 +16,7 @@ class SamtoolsSort(Samtools):
         Initializes this tool.
         :param camel: Camel instance
         """
-        super(SamtoolsSort, self).__init__('samtools sort', '1.9', camel)
+        super().__init__('samtools sort', '1.9', camel)
 
     def _check_input(self):
         """

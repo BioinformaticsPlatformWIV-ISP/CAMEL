@@ -17,7 +17,7 @@ class MetaGeneAnnotator(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super(MetaGeneAnnotator, self).__init__('metageneannotator', '20080819', camel)
+        super().__init__('metageneannotator', '20080819', camel)
 
     def _execute_tool(self):
         """

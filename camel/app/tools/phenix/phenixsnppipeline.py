@@ -19,7 +19,7 @@ class PhenixSnpPipeline(Tool):
         Initializes the SNP calling pipeline.
         :param camel: CAMEL instance
         """
-        super(PhenixSnpPipeline, self).__init__('PHEnix SNP Pipeline', '1.2', camel)
+        super().__init__('PHEnix SNP Pipeline', '1.2', camel)
         self._sample_name = None
 
     def _check_input(self):

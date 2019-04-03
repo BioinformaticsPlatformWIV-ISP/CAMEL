@@ -19,7 +19,7 @@ class RefCovSort(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super(RefCovSort, self).__init__('refcov_sort', '0.3', camel)
+        super().__init__('refcov_sort', '0.3', camel)
 
     def _execute_tool(self):
         """

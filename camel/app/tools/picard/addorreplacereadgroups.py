@@ -13,7 +13,7 @@ class AddOrReplaceReadGroups(Picard):
         :param camel: Camel instance
         :return: None
         """
-        super(AddOrReplaceReadGroups, self).__init__('Picard AddOrReplaceReadGroups', '2.8.3', camel)
+        super().__init__('Picard AddOrReplaceReadGroups', '2.8.3', camel)
 
         self._function_name = 'AddOrReplaceReadGroups'
 

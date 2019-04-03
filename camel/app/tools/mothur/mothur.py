@@ -23,7 +23,7 @@ class Mothur(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super(Mothur, self).__init__(name, version, camel)
+        super().__init__(name, version, camel)
         # For reproducibility a seed is specified for each operation
         self._seed = random.randint(1, 10000000)
         logging.debug('Set seed to: {}'.format(self._seed))

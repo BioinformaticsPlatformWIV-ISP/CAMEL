@@ -16,7 +16,7 @@ class QiimeSplitLibrariesFastq(Qiime):
         :param camel: Camel instance
         :return: None
         """
-        super(QiimeSplitLibrariesFastq, self).__init__('qiime_split_libraries_fastq', '1.9.1', camel)
+        super().__init__('qiime_split_libraries_fastq', '1.9.1', camel)
 
     def _check_input(self):
         """

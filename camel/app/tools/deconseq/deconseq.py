@@ -18,7 +18,7 @@ class Deconseq(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super(Deconseq, self).__init__('deconseq', '0.4.3', camel)
+        super().__init__('deconseq', '0.4.3', camel)
         self._input_key = None
 
     def _execute_tool(self):

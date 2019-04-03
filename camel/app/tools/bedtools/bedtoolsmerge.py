@@ -7,24 +7,25 @@ from camel.app.io.tooliofile import ToolIOFile
 
 class BedtoolsMerge(Bedtools):
     """
-    Tool class for Bedtools merge function.    
+    Tool class for Bedtools merge function.
     ==========================
     Bedtools merge 2.25.0
     ==========================
     https://bedtools.readthedocs.io/en/latest/content/tools/merge.html?highlight=merge
-    bedtools merge combines overlapping or “book-ended” features in an interval file into a single feature which spans all of the combined features.
+    bedtools merge combines overlapping or “book-ended” features in an interval file into a single feature which spans
+    all of the combined features.
     Can use BAM as input and generate BED as output.
-    
+
     This camel implementation will generate BED file if BAM is given as input.
-    
+
     Required inputs:
     ----------------
     'BAM'/'BED':        Input BAM or BED file. (Max one file at a time)
-    
+
     Output:
     -------
     'BED':              Bed file with regions covered by input BAM/BED file.
-    
+
     Mandatory parameters:
     ---------------------
     - output_filename   Default value: 'output.bed'
@@ -36,7 +37,7 @@ class BedtoolsMerge(Bedtools):
         :param camel: Camel instance
         :return: None
         """
-        super(BedtoolsMerge, self).__init__('bedtools merge', '2.25.0', camel)
+        super().__init__('bedtools merge', '2.25.0', camel)
         self.__input_type = ""
 
     def _execute_tool(self):
@@ -57,9 +58,7 @@ class BedtoolsMerge(Bedtools):
         :return: None
         """
         input_string = "-i {} ".format(self._tool_inputs[self.__input_type][0].path)
-
-        build_options = ' '.join(self._build_options(excluded_parameters={'output_filename'}))
-
+        build_options = ' '.join(self._build_options(excluded_parameters=['output_filename']))
         output_string = '> ' + self._parameters['output_filename'].value
 
         self._command.command = ' '.join([

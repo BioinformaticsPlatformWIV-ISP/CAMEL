@@ -16,7 +16,7 @@ class QiimePickOpenReferenceOtus(Qiime):
         :param camel: Camel instance
         :return: None
         """
-        super(QiimePickOpenReferenceOtus, self).__init__('qiime_pick_open_reference_otus', '1.9.1', camel)
+        super().__init__('qiime_pick_open_reference_otus', '1.9.1', camel)
 
     def _check_input(self):
         """

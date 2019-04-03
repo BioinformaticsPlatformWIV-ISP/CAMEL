@@ -11,7 +11,7 @@ class Fqseqname(Tool):
         Initializes this tool.
         :param camel: Camel instance
         """
-        super(Fqseqname, self).__init__('fqseqname', '1.1', camel)
+        super().__init__('fqseqname', '1.1', camel)
 
     def _check_input(self):
         """

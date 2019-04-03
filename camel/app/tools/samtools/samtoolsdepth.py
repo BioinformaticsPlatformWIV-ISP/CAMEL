@@ -15,7 +15,7 @@ class SamtoolsDepth(Samtools):
         Initializes this tool.
         :param camel: Camel instance
         """
-        super(SamtoolsDepth, self).__init__('samtools depth', '1.9', camel)
+        super().__init__('samtools depth', '1.9', camel)
 
     def _check_input(self):
         """

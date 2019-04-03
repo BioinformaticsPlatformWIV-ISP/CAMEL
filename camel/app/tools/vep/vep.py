@@ -13,7 +13,7 @@ class Vep(Tool):
     Variant Effect Predictor: annotates and predicts effects of variants in vcf.
     Oriented towards genetics more than somatic variants.
     ===========
-    
+
     Required inputs:
     ----------------
     "VCF":              ToolIOFile object. VCF or TXT (whitespace seperated) file with variants.
@@ -29,7 +29,7 @@ class Vep(Tool):
                     default: None
     - output_file   Output filename.
                     default:  vep_annotated.vcf
-    
+
     Other parameters:
     -----------------
     - output_in_vcf    output in vcf format instead of default text format
@@ -41,7 +41,7 @@ class Vep(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super(Vep, self).__init__('Vep', '93', camel)
+        super().__init__('Vep', '93', camel)
         self._required_inputs = ['VCF']
 
     def _execute_tool(self) -> None:
@@ -70,7 +70,7 @@ class Vep(Tool):
         Build the command to run the tool.
         By default, use cache provided in DB_PATH and run offline.
         Concatenates strings into the command string.
-        :return: 
+        :return:
         """
         input_string = " -i {}".format(self._tool_inputs['VCF'][0].path)
 
@@ -81,7 +81,7 @@ class Vep(Tool):
 
     def __set_output(self) -> None:
         """
-        Set the output specifications in the Camel ouptut list: 
+        Set the output specifications in the Camel ouptut list:
         - html file
         - vcf file
         :return: None

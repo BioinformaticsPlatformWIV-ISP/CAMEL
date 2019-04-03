@@ -22,7 +22,7 @@ class ModelSelection(Tool):
         Initializes this tool.
         :param camel: CAMEL instance
         """
-        super(ModelSelection, self).__init__('MEGA: Model Selection', '10.0.4', camel)
+        super().__init__('MEGA: Model Selection', '10.0.4', camel)
 
     def _check_input(self) -> None:
         """

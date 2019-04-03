@@ -17,7 +17,7 @@ class Megahit(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super(Megahit, self).__init__('megahit', '1.1.1-2', camel)
+        super().__init__('megahit', '1.1.1-2', camel)
         self.__input_key = None
 
     def _execute_tool(self):

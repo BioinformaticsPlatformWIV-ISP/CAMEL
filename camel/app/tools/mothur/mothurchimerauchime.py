@@ -14,7 +14,7 @@ class MothurChimeraUchime(Mothur):
         :param camel: Camel instance
         :return: None
         """
-        super(MothurChimeraUchime, self).__init__('mothur_chimera_uchime', '1.39.1', camel)
+        super().__init__('mothur_chimera_uchime', '1.39.1', camel)
 
     def _check_input(self):
         """

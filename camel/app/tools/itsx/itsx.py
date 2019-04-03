@@ -20,7 +20,7 @@ class Itsx(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super(Itsx, self).__init__('itsx', '1.0.11', camel)
+        super().__init__('itsx', '1.0.11', camel)
 
     def _execute_tool(self):
         """

@@ -16,7 +16,7 @@ class QiimeJoinPairedEnds(Qiime):
         :param camel: Camel instance
         :return: None
         """
-        super(QiimeJoinPairedEnds, self).__init__('qiime_join_paired_ends', '1.9.1', camel)
+        super().__init__('qiime_join_paired_ends', '1.9.1', camel)
 
     def _check_input(self):
         """

@@ -23,7 +23,7 @@ class Picard(Tool, metaclass=abc.ABCMeta):
         :param camel: Camel instance
         :return: None
         """
-        super(Picard, self).__init__(tool_name, version, camel)
+        super().__init__(tool_name, version, camel)
 
         self._function_name = None
         # parameters that should not be handled by self.build_options function

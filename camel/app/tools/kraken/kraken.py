@@ -22,7 +22,7 @@ class Kraken(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super(Kraken, self).__init__('kraken', '0.10.5', camel)
+        super().__init__('kraken', '0.10.5', camel)
         self._input_key = None
 
     def _execute_tool(self):
@@ -34,7 +34,7 @@ class Kraken(Tool):
         self.__build_command()
         self._execute_command()
         self.__set_output()
-        self.informs['version'] = self.get_dependency_version('kraken')
+        self.informs['version'] = self.get_dependency_version('kraken_local')
 
     def _check_input(self):
         """

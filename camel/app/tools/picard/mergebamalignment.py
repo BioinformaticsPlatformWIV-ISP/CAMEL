@@ -15,7 +15,7 @@ class MergeBamAlignment(Picard):
         :param camel: Camel instance
         :return: None
         """
-        super(MergeBamAlignment, self).__init__('Picard MergeBamAlignment', '2.8.3', camel)
+        super().__init__('Picard MergeBamAlignment', '2.8.3', camel)
 
         self._function_name = 'MergeBamAlignment'
         self._supported_inputs = []

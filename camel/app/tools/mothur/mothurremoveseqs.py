@@ -19,7 +19,7 @@ class MothurRemoveSeqs(Mothur):
         :param camel: Camel instance
         :return: None
         """
-        super(MothurRemoveSeqs, self).__init__('mothur_remove_seqs', '1.39.1', camel)
+        super().__init__('mothur_remove_seqs', '1.39.1', camel)
 
     def _check_input(self):
         """

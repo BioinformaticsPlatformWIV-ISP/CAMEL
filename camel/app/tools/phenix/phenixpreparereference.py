@@ -16,7 +16,7 @@ class PhenixPrepareReference(Tool):
         Initializes the tool.
         :param camel: CAMEL instance
         """
-        super(PhenixPrepareReference, self).__init__('PHEnix Prepare Reference', '1.2', camel)
+        super().__init__('PHEnix Prepare Reference', '1.2', camel)
 
     def _check_input(self):
         """

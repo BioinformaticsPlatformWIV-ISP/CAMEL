@@ -16,7 +16,7 @@ class MothurChimeraVsearch(Mothur):
         :param camel: Camel instance
         :return: None
         """
-        super(MothurChimeraVsearch, self).__init__('mothur_chimera_vsearch', '1.39.1', camel)
+        super().__init__('mothur_chimera_vsearch', '1.39.1', camel)
 
     def _check_input(self):
         """

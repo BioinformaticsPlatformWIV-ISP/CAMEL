@@ -21,7 +21,7 @@ class Qiime(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super(Qiime, self).__init__(name, version, camel)
+        super().__init__(name, version, camel)
         self._parameter_file = 'parameters.txt'
 
     def _execute_tool(self):

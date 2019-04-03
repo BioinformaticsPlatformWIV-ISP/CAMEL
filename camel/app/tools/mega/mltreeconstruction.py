@@ -49,7 +49,7 @@ class MLTreeConstruction(Tool):
         Initializes this tool.
         :param camel: CAMEL instance
         """
-        super(MLTreeConstruction, self).__init__('MEGA: ML Tree Construction', '10.0.4', camel)
+        super().__init__('MEGA: ML Tree Construction', '10.0.4', camel)
 
     def _check_input(self) -> None:
         """

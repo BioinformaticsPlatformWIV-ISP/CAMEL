@@ -18,7 +18,7 @@ class CreateSequenceDictionary(Picard):
         :param camel: Camel instance
         :return: None
         """
-        super(CreateSequenceDictionary, self).__init__('Picard CreateSequenceDictionary', '2.8.3', camel)
+        super().__init__('Picard CreateSequenceDictionary', '2.8.3', camel)
 
         self._function_name = 'CreateSequenceDictionary'
         self._required_inputs = ['FASTA_REF']

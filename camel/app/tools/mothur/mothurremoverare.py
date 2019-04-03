@@ -15,7 +15,7 @@ class MothurRemoveRare(Mothur):
         :param camel: Camel instance
         :return: None
         """
-        super(MothurRemoveRare, self).__init__('mothur_remove_rare', '1.39.1', camel)
+        super().__init__('mothur_remove_rare', '1.39.1', camel)
 
     def _check_input(self):
         """

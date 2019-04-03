@@ -15,7 +15,7 @@ class MothurMakeShared(Mothur):
         :param camel: Camel instance
         :return: None
         """
-        super(MothurMakeShared, self).__init__('mothur_make_shared', '1.39.1', camel)
+        super().__init__('mothur_make_shared', '1.39.1', camel)
 
     def _check_input(self):
         """

@@ -19,7 +19,7 @@ class LegacyBlastx(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super(LegacyBlastx, self).__init__('legacy_blastx', '2.2.22', camel)
+        super().__init__('legacy_blastx', '2.2.22', camel)
         self._fasta = None
 
     def _execute_tool(self):

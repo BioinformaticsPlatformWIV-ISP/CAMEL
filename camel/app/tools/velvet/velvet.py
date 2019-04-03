@@ -34,7 +34,7 @@ class Velvet(Tool, metaclass=abc.ABCMeta):
         :param version: version of the tool
         :return: None
         """
-        super(Velvet, self).__init__(tool, version, camel)
+        super().__init__(tool, version, camel)
         self._input_string = None
 
     def _check_input(self):

@@ -16,7 +16,7 @@ class FastqToSam(Picard):
         :param camel: Camel instance
         :return: None
         """
-        super(FastqToSam, self).__init__('Picard FastqToSam', '2.8.3', camel)
+        super().__init__('Picard FastqToSam', '2.8.3', camel)
 
         self._function_name = 'FastqToSam'
 

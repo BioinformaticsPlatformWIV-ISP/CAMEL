@@ -19,7 +19,7 @@ class Bedtools(Tool, metaclass=abc.ABCMeta):
         :param camel: Camel instance
         :return: None
         """
-        super(Bedtools, self).__init__(tool_name, version,  camel)
+        super().__init__(tool_name, version,  camel)
         self._required_inputs = []
 
     def _check_command_output(self):

@@ -26,7 +26,7 @@ class BedtoolsGetBlastFasta(BedtoolsGetFasta):
         :param camel: Camel instance
         :return: None
         """
-        super(BedtoolsGetBlastFasta, self).__init__(camel, 'bedtools getblastfasta', '2.25.0')
+        super().__init__(camel, 'bedtools getblastfasta', '2.25.0')
 
         self._required_inputs = ['TSV_BLAST', 'FASTA']
 

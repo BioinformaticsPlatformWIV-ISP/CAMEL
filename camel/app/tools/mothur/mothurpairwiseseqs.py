@@ -17,7 +17,7 @@ class MothurPairwiseSeqs(Mothur):
         :param camel: Camel instance
         :return: None
         """
-        super(MothurPairwiseSeqs, self).__init__('mothur_pairwise_seqs', '1.39.1', camel)
+        super().__init__('mothur_pairwise_seqs', '1.39.1', camel)
 
     def _check_input(self):
         """

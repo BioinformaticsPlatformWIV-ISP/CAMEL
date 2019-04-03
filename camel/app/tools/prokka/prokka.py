@@ -24,7 +24,7 @@ class Prokka(Tool):
         Initializes this tool.
         :param camel: Camel instance
         """
-        super(Prokka, self).__init__('Prokka', '1.11', camel)
+        super().__init__('Prokka', '1.11', camel)
 
     def _execute_tool(self):
         """

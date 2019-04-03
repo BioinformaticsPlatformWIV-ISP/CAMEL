@@ -15,7 +15,7 @@ class GATKRealignerTargetCreator(GATK):
         :param camel: Camel instance
         :return: None
         """
-        super(GATKRealignerTargetCreator, self).__init__('gatk RealignerTargetCreator', '3.7', camel)
+        super().__init__('gatk RealignerTargetCreator', '3.7', camel)
 
         self._required_inputs = ['BAM', 'FASTA_REF']
         self._output_type = 'TXT_realign_intervals'

@@ -14,7 +14,7 @@ class MothurSubSample(Mothur):
         :param camel: Camel instance
         :return: None
         """
-        super(MothurSubSample, self).__init__('mothur_sub_sample', '1.39.1', camel)
+        super().__init__('mothur_sub_sample', '1.39.1', camel)
 
     def _check_input(self):
         """

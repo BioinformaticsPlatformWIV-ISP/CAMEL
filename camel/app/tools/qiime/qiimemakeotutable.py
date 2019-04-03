@@ -17,7 +17,7 @@ class QiimeMakeOtuTable(Qiime):
         :param camel: Camel instance
         :return: None
         """
-        super(QiimeMakeOtuTable, self).__init__('qiime_make_otu_table', '1.9.1', camel)
+        super().__init__('qiime_make_otu_table', '1.9.1', camel)
 
     def _check_input(self):
         """

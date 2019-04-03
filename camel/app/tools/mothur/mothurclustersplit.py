@@ -15,7 +15,7 @@ class MothurClusterSplit(Mothur):
         :param camel: Camel instance
         :return: None
         """
-        super(MothurClusterSplit, self).__init__('mothur_cluster_split', '1.39.1', camel)
+        super().__init__('mothur_cluster_split', '1.39.1', camel)
 
     def _check_input(self):
         """

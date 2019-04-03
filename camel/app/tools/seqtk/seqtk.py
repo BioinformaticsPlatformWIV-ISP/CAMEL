@@ -18,7 +18,7 @@ class Seqtk(Tool, metaclass=abc.ABCMeta):
         :param camel: Camel instance
         :return: None
         """
-        super(Seqtk, self).__init__(tool_name, version, camel)
+        super().__init__(tool_name, version, camel)
         self._function_name = ''
         # parameters that should not be handled by self.build_options function
         self._specific_parameters = []

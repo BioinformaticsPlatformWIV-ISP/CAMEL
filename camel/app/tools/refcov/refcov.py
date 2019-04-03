@@ -19,7 +19,7 @@ class RefCov(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super(RefCov, self).__init__('refcov', '0.3', camel)
+        super().__init__('refcov', '0.3', camel)
 
     def _execute_tool(self):
         """

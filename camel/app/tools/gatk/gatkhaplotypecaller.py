@@ -16,7 +16,7 @@ class GATKHaplotypeCaller(GATK):
         :param camel: Camel instance
         :return: None
         """
-        super(GATKHaplotypeCaller, self).__init__('gatk HaplotypeCaller', '3.7', camel)
+        super().__init__('gatk HaplotypeCaller', '3.7', camel)
 
         self._required_inputs = ['BAM', 'FASTA_REF']
         self._output_type = 'VCF'

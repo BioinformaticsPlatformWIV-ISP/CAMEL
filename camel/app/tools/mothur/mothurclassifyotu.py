@@ -14,7 +14,7 @@ class MothurClassifyOtu(Mothur):
         :param camel: Camel instance
         :return: None
         """
-        super(MothurClassifyOtu, self).__init__('mothur_classify_otu', '1.39.1', camel)
+        super().__init__('mothur_classify_otu', '1.39.1', camel)
 
     def _check_input(self):
         """

@@ -22,7 +22,7 @@ class Interproscan(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super(Interproscan, self).__init__('interproscan', '5.20-59.0', camel)
+        super().__init__('interproscan', '5.20-59.0', camel)
         self.__input_key = None
 
     def _execute_tool(self):

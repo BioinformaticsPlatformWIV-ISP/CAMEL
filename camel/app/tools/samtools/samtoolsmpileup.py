@@ -17,7 +17,7 @@ class SamtoolsMPileup(Samtools):
         Initializes this tool.
         :param camel: Camel instance
         """
-        super(SamtoolsMPileup, self).__init__('samtools mpileup', '1.9', camel)
+        super().__init__('samtools mpileup', '1.9', camel)
 
     def _check_parameters(self):
         """

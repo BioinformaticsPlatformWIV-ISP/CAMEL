@@ -30,7 +30,7 @@ class BWAMap(BWA):
         :param camel: Camel instance
         :return: None
         """
-        super(BWAMap, self).__init__('bwa_mem', '0.7.15', camel)
+        super().__init__('bwa_mem', '0.7.15', camel)
         self._fastq_inputs_str = None
         self._readgroup_str = ''
 

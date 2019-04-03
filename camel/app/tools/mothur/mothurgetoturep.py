@@ -15,7 +15,7 @@ class MothurGetOturep(Mothur):
         :param camel: Camel instance
         :return: None
         """
-        super(MothurGetOturep, self).__init__('mothur_get_oturep', '1.39.1', camel)
+        super().__init__('mothur_get_oturep', '1.39.1', camel)
 
     def _check_input(self):
         """

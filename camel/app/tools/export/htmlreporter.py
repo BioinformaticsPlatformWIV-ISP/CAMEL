@@ -24,7 +24,7 @@ class HtmlReporter(Tool):
             tool_name = 'HTML Reporter'
         if tool_version is None:
             tool_version = '0.1'
-        super(HtmlReporter, self).__init__(tool_name, tool_version, camel)
+        super().__init__(tool_name, tool_version, camel)
         self._report = None
         self._output_folder = None
 

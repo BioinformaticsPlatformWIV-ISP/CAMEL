@@ -47,7 +47,7 @@ class QuastInformExtractor(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super(QuastInformExtractor, self).__init__('Quast InformExtractor', '4.4', camel)
+        super().__init__('Quast InformExtractor', '4.4', camel)
 
     def _execute_tool(self):
         """

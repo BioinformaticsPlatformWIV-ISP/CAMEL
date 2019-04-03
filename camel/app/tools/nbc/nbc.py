@@ -22,7 +22,7 @@ class Nbc(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super(Nbc, self).__init__('NBC', '1.1', camel)
+        super().__init__('NBC', '1.1', camel)
 
     def _execute_tool(self):
         """

@@ -15,7 +15,7 @@ class Velveth(Velvet):
         :param camel: Camel instance
         :return: None
         """
-        super(Velveth, self).__init__('velveth', '1.2.10', camel)
+        super().__init__('velveth', '1.2.10', camel)
 
     def _execute_tool(self):
         """

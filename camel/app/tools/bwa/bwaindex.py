@@ -17,7 +17,7 @@ class BWAIndex(BWA):
         :param camel: Camel instance
         :return: None
         """
-        super(BWAIndex, self).__init__('bwa_index', '0.7.15', camel)
+        super().__init__('bwa_index', '0.7.15', camel)
         self._refgenome_fasta = None
 
     def _execute_tool(self):

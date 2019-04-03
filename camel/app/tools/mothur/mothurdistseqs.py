@@ -16,7 +16,7 @@ class MothurDistSeqs(Mothur):
         :param camel: Camel instance
         :return: None
         """
-        super(MothurDistSeqs, self).__init__('mothur_dist_seqs', '1.39.1', camel)
+        super().__init__('mothur_dist_seqs', '1.39.1', camel)
 
     def check_input(self):
         """

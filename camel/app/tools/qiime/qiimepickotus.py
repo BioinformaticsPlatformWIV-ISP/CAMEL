@@ -19,7 +19,7 @@ class QiimePickOtus(Qiime):
         :param camel: Camel instance
         :return: None
         """
-        super(QiimePickOtus, self).__init__('qiime_pick_otus', '1.9.1', camel)
+        super().__init__('qiime_pick_otus', '1.9.1', camel)
 
     def _check_input(self):
         """

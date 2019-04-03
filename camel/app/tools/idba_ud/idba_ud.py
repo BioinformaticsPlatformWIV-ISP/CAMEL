@@ -20,7 +20,7 @@ class IdbaUd(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super(IdbaUd, self).__init__('idba_ud', '1.1.1', camel)
+        super().__init__('idba_ud', '1.1.1', camel)
 
     def _execute_tool(self):
         """

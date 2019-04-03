@@ -17,7 +17,7 @@ class MothurPreCluster(Mothur):
         :param camel: Camel instance
         :return: None
         """
-        super(MothurPreCluster, self).__init__('mothur_pre_cluster', '1.39.1', camel)
+        super().__init__('mothur_pre_cluster', '1.39.1', camel)
 
     def _check_input(self):
         """

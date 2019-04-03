@@ -18,7 +18,7 @@ class FragGeneScan(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super(FragGeneScan, self).__init__('fraggenescan', '1.30', camel)
+        super().__init__('fraggenescan', '1.30', camel)
 
     def _execute_tool(self):
         """

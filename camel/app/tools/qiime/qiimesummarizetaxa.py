@@ -15,7 +15,7 @@ class QiimeSummarizeTaxa(Qiime):
         :param camel: Camel instance
         :return: None
         """
-        super(QiimeSummarizeTaxa, self).__init__('qiime_summarize_taxa', '1.9.1', camel)
+        super().__init__('qiime_summarize_taxa', '1.9.1', camel)
 
     def _check_input(self):
         """

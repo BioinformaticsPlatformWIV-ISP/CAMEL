@@ -26,7 +26,7 @@ class Phymmbl(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super(Phymmbl, self).__init__('phymmbl', '4.0', camel)
+        super().__init__('phymmbl', '4.0', camel)
 
     def _execute_tool(self):
         """
