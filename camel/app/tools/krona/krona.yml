@@ -1,0 +1,5 @@
+dependencies: [krona/2.7]
+parameters:
+  depth: {default: false, mandatory: false, option: -d, value: '10'}
+  no_rank: {default: true, mandatory: false, option: -k, value: null}
+tool_command: ktImportTaxonomy

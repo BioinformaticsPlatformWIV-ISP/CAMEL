@@ -1,0 +1,3 @@
+dependencies: [mothur/1.39.1]
+parameters: {}
+tool_command: mothur "#unique.seqs({0})"

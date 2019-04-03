@@ -1,0 +1,22 @@
+dependencies: [java/1.8.0, picard/2.8.3]
+parameters:
+  aligned_reads_only: {default: false, mandatory: false, option: ALIGNED_READS_ONLY,
+    p_index: 40, value: 'false'}
+  aligner_paring: {default: true, mandatory: false, option: ALIGNER_PROPER_PAIR_FLAGS,
+    p_index: 60, value: 'false'}
+  clip_overlapping_reads: {default: true, mandatory: false, option: CLIP_OVERLAPPING_READS,
+    p_index: 80, value: 'true'}
+  create_index: {default: true, mandatory: false, option: CREATE_INDEX, p_index: 20,
+    value: 'true'}
+  include_secondary_alignments: {default: true, mandatory: false, option: INCLUDE_SECONDARY_ALIGNMENTS,
+    p_index: 70, value: 'true'}
+  is_bisulfite_sequence: {default: false, mandatory: false, option: IS_BISULFITE_SEQUENCE,
+    p_index: 90, value: 'false'}
+  max_gaps: {default: true, mandatory: false, option: MAX_GAPS, p_index: 30, value: '1'}
+  orientations: {default: false, mandatory: false, option: ORIENTATIONS, p_index: 0,
+    value: null}
+  output: {default: true, mandatory: false, option: O, p_index: 0, value: alignment_merged.bam}
+  primary_alignment_strategy: {default: true, mandatory: false, option: PRIMARY_ALIGNMENT_STRATEGY,
+    p_index: 50, value: BestMapq}
+  sort_order: {default: true, mandatory: false, option: SORT_ORDER, p_index: 10, value: coordinate}
+tool_command: run_picard.sh MergeBamAlignment

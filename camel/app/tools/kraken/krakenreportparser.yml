@@ -1,0 +1,7 @@
+dependencies: []
+parameters:
+  expected_species: {default: true, mandatory: false, option: null, value: Neisseria
+      meningitidis}
+  threshold_fail: {default: true, mandatory: false, option: null, value: '5'}
+  threshold_warn: {default: true, mandatory: false, option: null, value: '1'}
+tool_command: null

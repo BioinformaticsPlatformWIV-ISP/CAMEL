@@ -1,0 +1,77 @@
+dependencies: [carma3/20150505]
+parameters:
+  blast: {default: false, mandatory: false, option: --blast, p_index: 0, value: null}
+  blast_egts: {default: false, mandatory: false, option: --blast-egts, p_index: 0,
+    value: /path/to/file}
+  blast_exe: {default: true, mandatory: false, option: blast, p_index: 0, value: 2.2.22}
+  blast_nr: {default: true, mandatory: false, option: blast_nr, p_index: 0, value: latest}
+  blast_nt: {default: true, mandatory: false, option: blast_nt, p_index: 0, value: latest}
+  blastn_evalue: {default: true, mandatory: false, option: blastn_evalue, p_index: 0,
+    value: '10.0'}
+  blastp_evalue: {default: true, mandatory: false, option: blastp_evalue, p_index: 0,
+    value: '10.0'}
+  blastx_evalue: {default: true, mandatory: false, option: blastx_evalue, p_index: 0,
+    value: '10.0'}
+  blosum_file: {default: true, mandatory: false, option: blosum_file, p_index: 0,
+    value: /usr/local/bin/blast/2.2.22/data/BLOSUM62}
+  carma_blastn_alignment_length: {default: true, mandatory: false, option: carma_blastn_alignment_length,
+    p_index: 0, value: '0'}
+  carma_blastn_biscore: {default: true, mandatory: false, option: carma_blastn_bitscore,
+    p_index: 0, value: '0.0'}
+  carma_blastn_evalue: {default: true, mandatory: false, option: carma_blastn_evalue,
+    p_index: 0, value: '100000000.01'}
+  carma_blastp_alignment_length: {default: true, mandatory: false, option: carma_blastp_alignment_length,
+    p_index: 0, value: '25'}
+  carma_blastp_bitscore: {default: true, mandatory: false, option: carma_blastp_bitscore,
+    p_index: 0, value: '35.0'}
+  carma_blastp_evalue: {default: true, mandatory: false, option: carma_blastp_evalue,
+    p_index: 0, value: '100000000.01'}
+  carma_blastx_alignment_length: {default: true, mandatory: false, option: carma_blastx_alignment_length,
+    p_index: 0, value: '25'}
+  carma_blastx_bitscore: {default: true, mandatory: false, option: carma_blastx_bitscore,
+    p_index: 0, value: '35.0'}
+  carma_blastx_evalue: {default: true, mandatory: false, option: carma_blastx_evalue,
+    p_index: 0, value: '100000000.01'}
+  classify_blast: {default: false, mandatory: false, option: --classify-blast, p_index: 0,
+    value: null}
+  classify_egt: {default: false, mandatory: false, option: --classify-egt, p_index: 0,
+    value: null}
+  classify_rdp: {default: false, mandatory: false, option: --classify-rdp, p_index: 0,
+    value: null}
+  clusteremail: {default: true, mandatory: false, option: clusteremail, p_index: 0,
+    value: none}
+  database: {default: false, mandatory: false, option: --database, p_index: 0, value: p}
+  delay: {default: false, mandatory: false, option: --delay, p_index: 0, value: '0'}
+  fasta_input: {default: false, mandatory: false, option: --fasta-input, p_index: 0,
+    value: /path/to/file}
+  hmmer: {default: false, mandatory: false, option: --hmmer, p_index: 0, value: null}
+  hmmscan_evalue: {default: true, mandatory: false, option: hmmscan_evalue, p_index: 0,
+    value: '0.1'}
+  lca_top_percent: {default: true, mandatory: false, option: LCA_top_percent, p_index: 0,
+    value: '0.10'}
+  max_blast_description_length: {default: true, mandatory: false, option: max_blast_description_length,
+    p_index: 0, value: '500000'}
+  max_number_of_chunks: {default: true, mandatory: false, option: maxNumberOfChunks,
+    p_index: 0, value: '100'}
+  message: {default: true, mandatory: false, option: message, p_index: 0, value: 'MESSAGE:'}
+  ncbi: {default: true, mandatory: false, option: ncbi, p_index: 0, value: latest}
+  ncbi_max: {default: true, mandatory: false, option: NCBI_MAX, p_index: 0, value: '2000000'}
+  pairwise_blosum_minoverlap: {default: true, mandatory: false, option: pairwise_blosum_minoverlap,
+    p_index: 0, value: '25.0'}
+  pairwise_blosum_minscore: {default: true, mandatory: false, option: pairwise_blosum_minscore,
+    p_index: 0, value: '30.0'}
+  pfam: {default: true, mandatory: false, option: pfam, p_index: 0, value: '28.0'}
+  query_multiplier: {default: true, mandatory: false, option: query_multiplier, p_index: 0,
+    value: '1.0'}
+  score_gapextension: {default: true, mandatory: false, option: score_gapextension,
+    p_index: 0, value: '-1'}
+  score_gapopen: {default: true, mandatory: false, option: score_gapopen, p_index: 0,
+    value: '-1'}
+  score_match: {default: true, mandatory: false, option: score_match, p_index: 0,
+    value: '1'}
+  score_mismatch: {default: true, mandatory: false, option: score_mismatch, p_index: 0,
+    value: '-3'}
+  type: {default: false, mandatory: false, option: --type, p_index: 0, value: n}
+  use_hard_threshold: {default: true, mandatory: false, option: use_hard_threshold,
+    p_index: 0, value: 'false'}
+tool_command: carma

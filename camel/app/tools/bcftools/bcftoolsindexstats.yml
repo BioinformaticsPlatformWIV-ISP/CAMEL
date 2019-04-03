@@ -1,0 +1,3 @@
+dependencies: [bcftools/1.9]
+parameters: {}
+tool_command: bcftools index --stats
