@@ -57,7 +57,7 @@ class MainResFinderLocal(object):
         """
         self.__init_report()
         self.__add_analysis_info_section()
-        fasta_file = self.__get_fasta_file()
+        fasta_file = self._helper.get_blast_input(self._args, self._report)
         db_data = self.__get_db_data()
         self.__run_gene_detection(fasta_file, db_data)
 
@@ -86,22 +86,6 @@ class MainResFinderLocal(object):
         ], table_attributes=[('class', 'information')])
         self._report.add_html_object(section)
         self._report.save()
-
-    def __get_fasta_file(self) -> ToolIOFile:
-        """
-        Returns the input FASTA file
-        :return: FASTA file
-        """
-        if self._args.fasta is not None:
-            return ToolIOFile(self._args.fasta)
-        else:
-            if self._args.trim_reads:
-                assembly_input = self._helper.trim_reads(
-                    self._args.fastq_pe, self._report, self._args.threads, self._args.report_include_fastq)
-            else:
-                assembly_input = self._helper.symlink_fastq_pe_input(
-                    self._args.fastq_pe, self._args.fastq_pe_names, self._args.working_dir)
-            return self._helper.assemble_fastq_reads(assembly_input, self._report, self._args.kmers, self._args.threads)
 
     def __get_db_data(self) -> Dict[str, Any]:
         """
