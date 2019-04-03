@@ -8,22 +8,23 @@ from camel.app.io.tooliofile import ToolIOFile
 class BedtoolsBamToBed(Bedtools):
     """
     Tool class for Bedtools BamtoBed function.
-    
+
     ==========================
     Bedtools bamtobed 2.25.0
     ==========================
     https://bedtools.readthedocs.io/en/latest/content/tools/bamtobed.html
-    bedtools bamtobed is a conversion utility that converts sequence alignments in BAM format into BED, BED12, and/or BEDPE records.
+    bedtools bamtobed is a conversion utility that converts sequence alignments in BAM format into BED, BED12, and/or
+    BEDPE records.
     This camel implementation only allows conversion to BED format.
-    
+
     Required inputs:
     ----------------
     'BAM':              Input bam file. (Max one file at a time)
-    
+
     Output:
     -------
     'BED':              Bed file with regions covered by input BAM file.
-    
+
     Mandatory parameters:
     ---------------------
     - output_filename   Default value: 'output.bed'
@@ -32,11 +33,11 @@ class BedtoolsBamToBed(Bedtools):
     def __init__(self, camel):
         """
         Initialize a bedtools tool.
-        
+
         :param camel: a camel instance.
         :return: None
         """
-        super(BedtoolsBamToBed, self).__init__('bedtools bamtobed', '2.25.0', camel)
+        super().__init__('bedtools bamtobed', '2.25.0', camel)
         self._required_inputs = ['BAM']
 
     def _execute_tool(self):
@@ -53,12 +54,9 @@ class BedtoolsBamToBed(Bedtools):
         Builds the command with input, options and output strings.
         :return: None
         """
-        build_options = ' '.join(self._build_options(excluded_parameters={'output_filename'}))
-
+        build_options = ' '.join(self._build_options(excluded_parameters=['output_filename']))
         input_string = "-i {} ".format(self._tool_inputs['BAM'][0].path)
-
         output_string = '> ' + self._parameters['output_filename'].value
-
         self._command.command = ' '.join([
             self._tool_command,
             build_options,
