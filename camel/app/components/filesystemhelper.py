@@ -1,3 +1,4 @@
+import binascii
 import datetime
 from typing import List
 
@@ -55,3 +56,14 @@ class FileSystemHelper(object):
         :return: Timestamp as string
         """
         return timestamp.strftime(FileSystemHelper.TIMESTAMP_FILENAME)
+
+    @staticmethod
+    def is_gzipped(path: str) -> bool:
+        """
+        Checks if the given file is compressed with gzip.
+        :param path: Path
+        :return: True if gzipped, False otherwise
+        """
+        with open(path, 'rb') as handle:
+            magic_number = binascii.hexlify(handle.read(2))
+        return magic_number == b'1f8b'
