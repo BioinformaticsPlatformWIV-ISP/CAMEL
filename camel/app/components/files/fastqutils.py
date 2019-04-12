@@ -11,15 +11,11 @@ from camel.app.command.command import Command
 class FastqUtils(object):
 
     """
-    Helper to perform FASTQ file related functions
+    This class contains utility function to work with FASTQ files.
     """
-    # Note that func convert_interleaved_fastq_to_individual_fastqs has been renamed as split_interleaved_fastq
-
-    def __init__(self):
-        pass
 
     @staticmethod
-    def count_reads(infile):
+    def count_reads(infile: str) -> int:
         """
         Count how many reads in a fastq file
         :param infile: file name of the fastq file to count
@@ -34,7 +30,7 @@ class FastqUtils(object):
         return int(command.stdout.rstrip())
 
     @staticmethod
-    def sort_fastq_by_identifier(infile, outfile):
+    def sort_fastq_by_identifier(infile: str, outfile: str) -> None:
         """
         Function to sort the reads in a fastq file
         :param infile: file name of the file to sort
@@ -49,17 +45,16 @@ class FastqUtils(object):
             raise RuntimeError(command.stderr, cmd)
 
     @staticmethod
-    def convert_fastqs_to_interleaved_fastq(pe_1_file, pe_2_file, interleaved_file):
+    def convert_fastqs_to_interleaved_fastq(pe_1_file: str, pe_2_file: str, interleaved_file: str) -> None:
         """
-        Convert two ordered fastq file into a interleaved fastq file, NO CHECKS are performed. If checks are needed, call
-        'create_paired_end' instead.
-
+        Convert two ordered fastq file into a interleaved fastq file, NO CHECKS are performed. If checks are needed,
+        call 'create_paired_end' instead.
         :param pe_1_file: fastq file containing the first group of reads
         :param pe_2_file: fastq file containing the second group of reads
         :param interleaved_file: interleaved fastq file to be generated
         :return: None
         """
-        cmd = "paste <(paste - - - - < {!r}) <(paste - - - - < {!r}) | tr '\t' '\n' \ > {!r}".format(
+        cmd = "paste <(paste - - - - < {!r}) <(paste - - - - < {!r}) | tr '\\t' '\\n' \\ > {!r}".format(
             pe_1_file, pe_2_file, interleaved_file)
         command = Command()
         command.command = cmd
@@ -68,10 +63,10 @@ class FastqUtils(object):
             raise RuntimeError(command.stderr, cmd)
 
     @staticmethod
-    def convert_interleaved_fastq_to_individual_fastqs(interleaved_file, pe_1_file, pe_2_file):
+    def convert_interleaved_fastq_to_individual_fastqs(interleaved_file: str, pe_1_file: str, pe_2_file: str) -> None:
         """
-        Convert a interleaved fastq file into two fastq files each containing one group of reads. Input interleaved fastq
-        file must be sorted. No CHECKS are performed.
+        Convert a interleaved fastq file into two fastq files each containing one group of reads. Input interleaved
+        fastq file must be sorted. No CHECKS are performed.
         :param interleaved_file: interleaved fastq file containing both groups of reads
         :param pe_1_file: fastq file will hold the first group of reads
         :param pe_2_file: fastq file will hold the second group of reads
@@ -80,7 +75,7 @@ class FastqUtils(object):
         FastqUtils.split_interleaved_fastq(interleaved_file, pe_1_file, pe_2_file)
 
     @staticmethod
-    def split_interleaved_fastq(interleaved_file, pe_1_file, pe_2_file):
+    def split_interleaved_fastq(interleaved_file: str, pe_1_file: str, pe_2_file: str) -> None:
         """
         Split a interleaved fastq file into two fastq files each containing one group of reads. Input interleaved fastq
         file must be sorted. No CHECKS are performed.
@@ -89,8 +84,8 @@ class FastqUtils(object):
         :param pe_2_file: fastq file will hold the second group of reads
         :return: None
         """
-        cmd = "paste - - - - - - - - < {!r} | tee >(cut -f 1-4 | tr '\t' '\n' > {!r}) | cut -f 5-8 | tr '\t' '\n' > {!r}".format(
-            interleaved_file, pe_1_file, pe_2_file)
+        cmd = "paste - - - - - - - - < {!r} | tee >(cut -f 1-4 | tr '\t' '\n' > {!r}) | cut -f 5-8 | tr '\t' '\n' > " \
+              "{!r}".format(interleaved_file, pe_1_file, pe_2_file)
         command = Command()
         command.command = cmd
         command.run_command(os.path.dirname(os.path.abspath(pe_1_file)))
@@ -98,7 +93,7 @@ class FastqUtils(object):
             raise RuntimeError(command.stderr, cmd)
 
     @staticmethod
-    def _get_read_name(read):
+    def _get_read_name(read) -> str:
         """
         Splits the read identification at the first whitespace character. Handles the cases: 'name/1' - '@name 1:rst' -
         '@name seq/1'.
@@ -186,7 +181,8 @@ class FastqUtils(object):
         """
         read1_dict = {}
         read2_dict = {}
-        with open(pe_out, 'wb') as pe_outf, open(se_out, 'wb') as se_outf, screed.open(s1_file) as screed_iter_1, screed.open(s2_file) as screed_iter_2:
+        with open(pe_out, 'wb') as pe_outf, open(se_out, 'wb') as se_outf, \
+                screed.open(s1_file) as screed_iter_1, screed.open(s2_file) as screed_iter_2:
             for read1, read2 in zip_longest(screed_iter_1, screed_iter_2):
                 # When the end of one file is reached before the other one, the line from that file will be None
                 if read1 is not None:
@@ -204,24 +200,14 @@ class FastqUtils(object):
             FastqUtils._flush_se_reads(read2_dict, se_outf)
 
     @staticmethod
-    def get_sample_name(fastq_path: str, paired: bool = True) -> str:
+    def get_sample_name(fastq_path: str) -> str:
         """
         Returns the sample name based on the given reads. It tries to match the following formats(in this order):
-        - Sample - Name_S\d + _L\d + _R[12]_\d + .fastq(e.g.: S15BD00757_S20_L001_R2_001.fastq)
-        - Sample - Name_1.fastq, Sample - Name_2.fastq(e.g.: reads_1.fastq)
         :param fastq_path: FASTQ path
-        :param paired: If True the input read is paired
         :return: Sample name
         """
         basename = os.path.basename(fastq_path)
-        if not paired:
-            for ext in ('.gz', '.fastq', '.fq'):
-                basename = basename.replace(ext, '')
-            return basename
-        m = re.match(r'(.*?)(_S\d+)?(_L\d+)?_R[12]_\d+.[fastq]+(.gz)?$', basename)
-        if m:
-            return m.group(1)
-        m = re.match('(.*)_[12].[fastq]+(.gz)?$', basename)
+        m = re.match(r'([.\w-]+?)(_S\d+)?(_L\d{3})?[_.]R?1P?(_\d+)?.(fastq|fq)(.gz)?', basename)
         if m:
             return m.group(1)
         raise ValueError("Cannot determine sample name from: {}".format(basename))
