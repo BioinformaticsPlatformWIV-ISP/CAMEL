@@ -45,7 +45,7 @@ class MainResFinderLocal(object):
         argument_parser.add_argument('--trim-reads', help="Perform read trimming", action='store_true')
         argument_parser.add_argument('--kmers', help="Kmers to use for assembly")
         argument_parser.add_argument('--min-percent-identity', type=int, default=90)
-        argument_parser.add_argument('--min-coverage', type=int, default=60)
+        argument_parser.add_argument('--min-percent-coverage', type=int, default=60)
         argument_parser.add_argument('--resfinder-db', type=str, required=True)
         argument_parser.add_argument('--report-include-fastq', action='store_true')
         return argument_parser.parse_args()
@@ -57,7 +57,8 @@ class MainResFinderLocal(object):
         """
         self.__init_report()
         self.__add_analysis_info_section()
-        fasta_file = self._helper.get_blast_input(self._args, self._report)
+        input_files = self._helper.symlink_input_files(self._args.fasta, self._args.fastq_pe)
+        fasta_file = self._helper.get_blast_input(input_files, self._args, self._report)
         db_data = self.__get_db_data()
         self.__run_gene_detection(fasta_file, db_data)
 
@@ -82,7 +83,7 @@ class MainResFinderLocal(object):
             ['Analysis date:', datetime.datetime.now().strftime(SnakePipelineUtils.DATE_FORMAT)],
             ['Input file(s):', self._helper.determine_input_files(self._args)],
             ['Selected % identity threshold:', f'{self._args.min_percent_identity}%'],
-            ['Selected % query covered threshold:', f'{self._args.min_coverage}%']
+            ['Selected % query covered threshold:', f'{self._args.min_percent_coverage}%']
         ], table_attributes=[('class', 'information')])
         self._report.add_html_object(section)
         self._report.save()
@@ -95,7 +96,7 @@ class MainResFinderLocal(object):
         return {
             'path': self._args.resfinder_db,
             'min_percent_identity': self._args.min_percent_identity,
-            'min_coverage': self._args.min_coverage,
+            'min_coverage': self._args.min_percent_coverage,
             'extra_column': {'name': 'Antibiotic(s)', 'key': 'antibiotics'}
         }
 
