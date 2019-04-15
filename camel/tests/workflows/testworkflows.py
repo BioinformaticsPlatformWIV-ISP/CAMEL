@@ -7,7 +7,7 @@ from camel.app.camel import Camel
 from camel.app.components.workflows.assemblywrapper import AssemblyWrapper
 from camel.app.components.workflows.genedetectionwrapper import GeneDetectionWrapper
 from camel.app.components.workflows.readtrimmingwrapper import ReadTrimmingWrapper
-from camel.app.components.workflows.sequencetypingwrapper import SequenceTypingWrapper
+from camel.app.components.workflows.sequencetypingwrapper import SequenceTypingWrapper, SequenceTypingInput
 from camel.app.io.tooliofile import ToolIOFile
 
 
@@ -115,7 +115,7 @@ class TestWorkflows(unittest.TestCase):
         :return: None
         """
         wrapper = SequenceTypingWrapper(self.running_dir)
-        workflow_input = SequenceTypingWrapper.SequenceTypingInput(
+        workflow_input = SequenceTypingInput(
             sample_name='test_sample',
             db_path=TestWorkflows.input_typing_db,
             fasta=TestWorkflows.input_typing_fasta
@@ -129,7 +129,7 @@ class TestWorkflows(unittest.TestCase):
         :return: None
         """
         wrapper = SequenceTypingWrapper(self.running_dir)
-        workflow_input = SequenceTypingWrapper.SequenceTypingInput(
+        workflow_input = SequenceTypingInput(
             sample_name='test_sample',
             db_key='pora',
             db_path=TestWorkflows.input_typing_db_protein,
@@ -144,7 +144,7 @@ class TestWorkflows(unittest.TestCase):
         :return: None
         """
         wrapper = SequenceTypingWrapper(self.running_dir)
-        workflow_input = SequenceTypingWrapper.SequenceTypingInput(
+        workflow_input = SequenceTypingInput(
             sample_name='test_sample',
             db_key='fhbp',
             db_path=TestWorkflows.input_typing_db_mixed,
@@ -159,12 +159,12 @@ class TestWorkflows(unittest.TestCase):
         :return: None
         """
         wrapper = SequenceTypingWrapper(self.running_dir)
-        workflow_input = SequenceTypingWrapper.SequenceTypingInput(
+        workflow_input = SequenceTypingInput(
             sample_name='test_sample',
             db_path=TestWorkflows.input_typing_db,
             fastq_pe=TestWorkflows.input_typing_reads
         )
-        wrapper.run_workflow_srst2(workflow_input, 8)
+        wrapper.run_workflow_srst2(workflow_input, {'max_unaligned_overlap': 100}, 8)
         self.assertGreater(len(wrapper.output.report_section.to_html()), 0)
 
     def test_typing_workflow_srst2_mixed(self) -> None:
@@ -173,11 +173,15 @@ class TestWorkflows(unittest.TestCase):
         :return: None
         """
         wrapper = SequenceTypingWrapper(self.running_dir)
-        workflow_input = SequenceTypingWrapper.SequenceTypingInput(
+        workflow_input = SequenceTypingInput(
             sample_name='test_sample',
             db_path=TestWorkflows.input_typing_db,
             fastq_pe=TestWorkflows.input_typing_reads,
             fasta=TestWorkflows.input_typing_fasta
         )
-        wrapper.run_workflow_srst2(workflow_input, 8)
+        wrapper.run_workflow_srst2(workflow_input, threads=8)
         self.assertGreater(len(wrapper.output.report_section.to_html()), 0)
+
+
+if __name__ == '__main__':
+    unittest.main()
