@@ -6,10 +6,11 @@ from typing import Optional, Dict, Any
 import os
 
 from camel.app.camel import Camel
+from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.components.html.htmlreportsection import HtmlReportSection
-from camel.app.components.phylogeny.snpphylogenyutils import SnpPhylogenyUtils
-from camel.app.components.workflows.variantcallingwrapper import VariantCallingWrapper
-from camel.app.components.workflows.variantfilteringwrapper import VariantFilteringWrapper
+from camel.app.components.phylogeny.snpphylogenyutils import SnpPhylogenyUtils, Sample, MappingInput
+from camel.app.components.workflows.variantcallingwrapper import VariantCallingOutput
+from camel.app.components.workflows.variantfilteringwrapper import VariantFilteringOutput
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
@@ -26,8 +27,8 @@ class MainSamtoolsPhylo(BasePhylo):
     """
 
     # Type aliases
-    FilteringOutBySample = Dict[SnpPhylogenyUtils.Sample, VariantFilteringWrapper.VariantFilteringOutput]
-    CallingOutBySample = Dict[SnpPhylogenyUtils.Sample, VariantCallingWrapper.VariantCallingOutput]
+    FilteringOutBySample = Dict[Sample, VariantFilteringOutput]
+    CallingOutBySample = Dict[Sample, VariantCallingOutput]
 
     PARAMETER_MAPPING = {
         'depth': {
@@ -83,6 +84,12 @@ class MainSamtoolsPhylo(BasePhylo):
         model_selection = self._run_model_selection(snp_matrix)
         self._run_tree_building(snp_matrix, model_selection)
 
+        # Add commands section
+        all_informs = self._informs + calling_out_by_sample[self._samples[0]].informs_all + filtering_out_by_sample[
+            self._samples[0]].informs
+        self._report.add_html_object(SnakePipelineUtils.create_commands_section(all_informs, self._args.working_dir))
+        self._report.save()
+
     @staticmethod
     def _parse_arguments() -> argparse.Namespace:
         """
@@ -111,15 +118,21 @@ class MainSamtoolsPhylo(BasePhylo):
         Prepares the reference genome.
         :return: Indexed reference genome prefix
         """
-        if not os.path.isdir(self._args.working_dir):
-            os.makedirs(self._args.working_dir)
+        dir_ref = os.path.join(self._args.working_dir, 'ref')
+        if not os.path.isdir(dir_ref):
+            os.makedirs(dir_ref)
+        link_path = os.path.join(dir_ref, FileSystemHelper.make_valid(
+            self._args.reference_name if self._args.reference_name else os.path.basename(self._args.reference)))
+        if os.path.islink(link_path):
+            os.remove(link_path)
+        os.symlink(self._args.reference, link_path)
         bt2_index = Bowtie2Index(Camel(logging_config=None))
-        bt2_index.add_input_files({'FASTA_REF': [ToolIOFile(self._args.reference)]})
-        bt2_index.run(self._args.working_dir)
+        bt2_index.add_input_files({'FASTA_REF': [ToolIOFile(link_path)]})
+        bt2_index.run(dir_ref)
         return bt2_index.tool_outputs['INDEX_GENOME_PREFIX'][0].value
 
-    def __run_variant_calling_workflow(self, reference: str, mapping_input: Dict[
-            SnpPhylogenyUtils.Sample, SnpPhylogenyUtils.MappingInput]) -> CallingOutBySample:
+    def __run_variant_calling_workflow(self, reference: str, mapping_input: Dict[Sample, MappingInput]) -> \
+            CallingOutBySample:
         """
         Runs the variant filtering workflow in parallel on all samples.
         :param reference: Reference genome path

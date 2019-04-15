@@ -1,6 +1,6 @@
 import json
 from dataclasses import dataclass
-from typing import Dict
+from typing import Dict, List, Any
 
 import os
 
@@ -12,19 +12,25 @@ from camel.app.tools.bcftools.bcftoolsview import BcftoolsView
 from camel.resources.snakefile import SNAKEFILE_VARIANT_FILTERING
 from camel.resources.snakefile.variant_calling import OUTPUT_VARIANT_CALLING_BAM, \
     OUTPUT_VARIANT_CALLING_UNFILTERED_VCF_GZ
-from camel.resources.snakefile.variant_filtering import OUTPUT_VARIANT_FILTERING_VCF, OUTPUT_VARIANT_FILTERING_STATS
+from camel.resources.snakefile.variant_filtering import OUTPUT_VARIANT_FILTERING_VCF, OUTPUT_VARIANT_FILTERING_STATS, \
+    OUTPUT_VARIANT_FILTERING_INFORMS
+
+
+@dataclass
+class VariantFilteringOutput:
+    """
+    This dataclass holds the output of the variant filtering workflow.
+    """
+    vcf_filtered: ToolIOFile
+    stats: Dict
+    nb_of_variants: int
+    informs: List[Dict[str, Any]]
 
 
 class VariantFilteringWrapper(object):
     """
     This class is used as a wrapper class around the variant filtering Snakemake workflow.
     """
-
-    @dataclass
-    class VariantFilteringOutput:
-        vcf_filtered: ToolIOFile
-        stats: Dict
-        nb_of_variants: int
 
     def __init__(self, working_dir: str) -> None:
         """
@@ -94,7 +100,8 @@ class VariantFilteringWrapper(object):
         # Execute Snakemake
         output_files = {
             'VCF': os.path.join(self._working_dir, OUTPUT_VARIANT_FILTERING_VCF),
-            'STATS': os.path.join(self._working_dir, OUTPUT_VARIANT_FILTERING_STATS)
+            'STATS': os.path.join(self._working_dir, OUTPUT_VARIANT_FILTERING_STATS),
+            'INFORMS': os.path.join(self._working_dir, OUTPUT_VARIANT_FILTERING_INFORMS)
         }
         SnakePipelineUtils.run_snakemake(
             SNAKEFILE_VARIANT_FILTERING, config_path, list(output_files.values()), self._working_dir, cores)
@@ -109,8 +116,9 @@ class VariantFilteringWrapper(object):
         json_file = SnakemakeUtils.load_object(output_files['STATS'])[0].path
         with open(json_file) as handle:
             stats = json.load(handle)
-        self._output = VariantFilteringWrapper.VariantFilteringOutput(
+        self._output = VariantFilteringOutput(
             vcf_filtered=SnakemakeUtils.load_object(output_files['VCF'])[0],
             stats=stats,
-            nb_of_variants=stats['zscore']['variants_out']
+            nb_of_variants=stats['zscore']['variants_out'],
+            informs=SnakemakeUtils.load_object(output_files['INFORMS'])
         )

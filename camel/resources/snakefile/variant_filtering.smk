@@ -9,7 +9,7 @@ from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile.variant_calling import OUTPUT_VARIANT_CALLING_UNFILTERED_VCF_GZ
 from camel.resources.snakefile.variant_filtering import OUTPUT_VARIANT_FILTERING_STATS, OUTPUT_VARIANT_FILTERING_VCF, \
-    OUTPUT_VARIANT_FILTERING_SUMMARY, get_filtering_param
+    OUTPUT_VARIANT_FILTERING_SUMMARY, get_filtering_param, OUTPUT_VARIANT_FILTERING_INFORMS
 
 camel = Camel.get_instance()
 
@@ -253,19 +253,25 @@ rule Variant_filtering_collect_stats:
         INFORMS_zscore=os.path.join(config['working_dir'], 'variant_filtering', 'zscore', 'informs.io'),
         INFORMS_region=os.path.join(config['working_dir'], 'variant_filtering', 'regions', 'informs.io')
     output:
-        JSON=os.path.join(config['working_dir'], OUTPUT_VARIANT_FILTERING_STATS)
+        JSON=os.path.join(config['working_dir'], OUTPUT_VARIANT_FILTERING_STATS),
+        INFORMS_ALL=os.path.join(config['working_dir'], OUTPUT_VARIANT_FILTERING_INFORMS)
     params:
         working_dir=os.path.join(config['working_dir'], 'variant_filtering', 'stats')
     run:
         import json
         filtering_data = {}
+        all_informs = []
         for input_key in input.keys():
             filter_name = input_key.replace('INFORMS_', '')
-            filtering_data[filter_name] = SnakemakeUtils.load_object(input[input_key])
+            informs = SnakemakeUtils.load_object(input[input_key])
+            filtering_data[filter_name] = informs
+            if all([x in informs for x in ('_name', '_command')]):
+                all_informs.append(informs)
         output_path = os.path.join(params.working_dir, 'stats.json')
         with open(output_path, 'w') as handle:
             json.dump(filtering_data, handle)
         SnakemakeUtils.dump_object([ToolIOFile(output_path)], output.JSON)
+        SnakemakeUtils.dump_object(all_informs, output.INFORMS_ALL)
 
 rule Variant_filtering_dump_summary_info:
     """
