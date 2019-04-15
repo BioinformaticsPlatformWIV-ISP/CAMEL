@@ -147,6 +147,7 @@ class SnakePipelineUtils(object):
         :return: Commands section
         """
         section = HtmlReportSection('Commands')
+        logging.debug(f"Exporting command for {len(tool_informs)} tools")
         for informs in tool_informs:
             section.add_header(informs['_name'], 3)
             command_txt = informs['_command'].replace(working_dir, '$WORKING')
