@@ -199,6 +199,8 @@ class FastqUtils(object):
             FastqUtils._flush_se_reads(read1_dict, se_outf)
             FastqUtils._flush_se_reads(read2_dict, se_outf)
 
+    PATTERN_FQ = r'([.\w-]+?)(_S\d+)?(_L\d{3})?[_.]R?1P?(_\d+)?.(fastq|fq)(.gz)?'
+
     @staticmethod
     def get_sample_name(fastq_path: str) -> str:
         """
@@ -207,7 +209,7 @@ class FastqUtils(object):
         :return: Sample name
         """
         basename = os.path.basename(fastq_path)
-        m = re.match(r'([.\w-]+?)(_S\d+)?(_L\d{3})?[_.]R?1P?(_\d+)?.(fastq|fq)(.gz)?', basename)
+        m = re.match(FastqUtils.PATTERN_FQ, basename)
         if m:
             return m.group(1)
         raise ValueError("Cannot determine sample name from: {}".format(basename))
