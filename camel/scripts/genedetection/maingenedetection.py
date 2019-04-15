@@ -71,12 +71,13 @@ class MainGeneDetection(object):
         """
         self.__init_report()
         self.__add_analysis_info_section()
+        input_files = self._helper.symlink_input_files(self._args.fasta, self._args.fastq_pe)
         db_data = self.__get_db_metadata()
         if self._args.detection_method == 'blast':
-            fasta_file = self._helper.get_blast_input(self._args, self._report)
+            fasta_file = self._helper.get_blast_input(input_files, self._args, self._report)
             output = self.__run_gene_detection_blast(fasta_file, db_data)
         else:
-            fastq_files = self._helper.get_srst2_input(self._args, self._report)
+            fastq_files = self._helper.get_srst2_input(input_files, self._args, self._report)
             output = self.__run_gene_detection_srst2(fastq_files, db_data)
         self.__export_output(output)
 
