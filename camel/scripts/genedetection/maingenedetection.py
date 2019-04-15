@@ -193,7 +193,7 @@ class MainGeneDetection(object):
 
         # Add commands section
         all_informs = self._helper.informs + [output.informs]
-        self._report.add_html_object(SnakePipelineUtils.create_commands_section(all_informs))
+        self._report.add_html_object(SnakePipelineUtils.create_commands_section(all_informs, self._args.working_dir))
         self._report.save()
 
 
