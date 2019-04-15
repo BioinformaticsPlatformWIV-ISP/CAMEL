@@ -178,14 +178,13 @@ class MainScriptHelper(object):
         :return: None
         """
         # Determine link locations
+        links = []
         if fasta_input is not None:
-            links = [('fasta', fasta_input, f'{self._sample_name}.fasta')]
-        elif fastq_pe_input is not None:
-            gzipped = FileSystemHelper.is_gzipped(fastq_pe_input[0])
-            links = [('fastq_pe', fq, f"{self._sample_name}_{read_nb}.fastq{'.gz' if gzipped else ''}") for
-                     read_nb, fq in enumerate(fastq_pe_input, start=1)]
-        else:
-            raise ValueError("Invalid arguments, FASTQ_PE or FASTA input should be provided")
+            links.append(['fasta', fasta_input, f'{self._sample_name}.fasta'])
+        if fastq_pe_input is not None:
+            for read_nb, fq in enumerate(fastq_pe_input, start=1):
+                gzipped = FileSystemHelper.is_gzipped(fq)
+                links.append(['fastq_pe', fq, f"{self._sample_name}_{read_nb}.fastq{'.gz' if gzipped else ''}"])
 
         # Create directory
         link_dir = os.path.join(self._working_dir, 'input')
@@ -204,6 +203,9 @@ class MainScriptHelper(object):
                 input_files[key].append(path_link)
             except KeyError:
                 input_files[key] = [path_link]
+
+        if len(input_files) == 0:
+            raise ValueError("No input files found.")
         return input_files
 
     def get_blast_input(self, input_files: Dict[str, List[str]], args: argparse.Namespace,
