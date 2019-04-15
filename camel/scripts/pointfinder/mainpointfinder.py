@@ -61,7 +61,8 @@ class MainPointFinder(object):
         fasta_file = self.__get_fasta_file()
         pointfinder = self.__run_pointfinder(fasta_file)
         self.__run_reporter(pointfinder)
-        self._report.add_html_object(SnakePipelineUtils.create_commands_section([pointfinder.informs]))
+        all_informs = self._helper.informs + [pointfinder.informs]
+        self._report.add_html_object(SnakePipelineUtils.create_commands_section(all_informs))
         self._report.save()
 
     def __init_report(self) -> None:
