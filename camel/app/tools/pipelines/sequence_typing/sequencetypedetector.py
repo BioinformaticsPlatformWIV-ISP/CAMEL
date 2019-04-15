@@ -6,16 +6,17 @@ from camel.app.error.invalidinputspecificationerror import InvalidInputSpecifica
 from camel.app.tools.tool import Tool
 
 
+@dataclass
+class STProfile:
+    name: str
+    metadata: List[Tuple[str, str]]
+    alleles: Optional[Dict[str, str]] = None
+
+
 class SequenceTypeDetector(Tool):
     """
     Tool that manages MLST schemes. Also reports scheme metadata information in the informs.
     """
-
-    @dataclass
-    class STProfile:
-        name: str
-        metadata: List[Tuple[str, str]]
-        alleles: Optional[Dict[str, str]] = None
 
     SYMBOL_NO_ST = 'ND'
 
@@ -25,7 +26,7 @@ class SequenceTypeDetector(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super(SequenceTypeDetector, self).__init__('Typing: Sequence Type Detector', '0.1', camel)
+        super().__init__('Typing: Sequence Type Detector', '0.1', camel)
         self._wildcards = None
         self._symbol_allele_absent = None
         self._metadata_columns = []
@@ -39,7 +40,7 @@ class SequenceTypeDetector(Tool):
                       self._tool_inputs['hits_nucl'] + self._tool_inputs['hits_pept']}
         profiles = self.__parse_profiles(list(allele_ids.keys()))
         sequence_type = self.__get_sequence_type(profiles, allele_ids)
-        self._informs['sequence_type'] = sequence_type if sequence_type is not None else SequenceTypeDetector.STProfile(
+        self._informs['sequence_type'] = sequence_type if sequence_type is not None else STProfile(
             SequenceTypeDetector.SYMBOL_NO_ST, metadata=[(k, '-') for k, _ in self._metadata_columns])
         logging.info("Detected sequence type: {}".format(self._informs['sequence_type'].name))
 
@@ -70,7 +71,7 @@ class SequenceTypeDetector(Tool):
                 parts[-1] = parts[-1].strip()
                 alleles = {gene_name: parts[gene_indices[gene_name]] for gene_name in gene_names}
                 metadata = [(name, parts[i]) for name, i in self._metadata_columns]
-                profiles.append(SequenceTypeDetector.STProfile(name=parts[0], alleles=alleles, metadata=metadata))
+                profiles.append(STProfile(name=parts[0], alleles=alleles, metadata=metadata))
         return profiles
 
     def __alleles_match(self, detected_allele: str, profile_allele: str) -> bool:

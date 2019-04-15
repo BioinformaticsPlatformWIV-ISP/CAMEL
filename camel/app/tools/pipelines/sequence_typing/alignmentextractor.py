@@ -27,7 +27,7 @@ class AlignmentExtractor(Tool):
         Initializes this tool.
         :param camel: Camel instance
         """
-        super(AlignmentExtractor, self).__init__('Typing: Alignment Extractor', '0.1', camel)
+        super().__init__('Typing: Alignment Extractor', '0.1', camel)
 
     def _execute_tool(self) -> None:
         """
