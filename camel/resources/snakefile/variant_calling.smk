@@ -1,5 +1,5 @@
 """
-This Snakefile performs variant calling and filtering using the samtools pipeline.
+This Snakefile performs variant calling using the samtools pipeline.
 """
 
 import os
@@ -14,7 +14,8 @@ from camel.resources.snakefile.read_trimming import OUTPUT_READ_TRIMMING_READS_P
 from camel.resources.snakefile.read_trimming_iontorrent import OUTPUT_TRIMMING_IT_READS
 from camel.resources.snakefile.variant_calling import OUTPUT_VARIANT_CALLING_SUMMARY, \
     OUTPUT_VARIANT_CALLING_UNFILTERED_VCF, OUTPUT_VARIANT_CALLING_UNFILTERED_VCF_GZ, OUTPUT_VARIANT_CALLING_REPORT, \
-    OUTPUT_VARIANT_CALLING_BAM, OUTPUT_VARIANT_CALLING_CONSENSUS, OUTPUT_VARIANT_CALLING_MAPPING_INFORMS
+    OUTPUT_VARIANT_CALLING_BAM, OUTPUT_VARIANT_CALLING_CONSENSUS, OUTPUT_VARIANT_CALLING_MAPPING_INFORMS, \
+    OUTPUT_VARIANT_CALLING_INFORMS_ALL
 from camel.resources.snakefile.variant_filtering import OUTPUT_VARIANT_FILTERING_VCF, OUTPUT_VARIANT_FILTERING_STATS, \
     get_filtering_param
 
@@ -303,3 +304,19 @@ rule Variant_calling_dump_summary_info:
             for key, value in summary_data:
                 handle.write(f'{key}\t{value}')
                 handle.write('\n')
+
+rule Variant_calling_collect_command_informs:
+    """
+    This rule is used to collect the commands that were used.
+    """
+    input:
+        INFORMS_mapping=os.path.join(config['working_dir'], 'variant_calling', 'read_mapping', 'informs.io'),
+        INFORMS_mpileup=os.path.join(config['working_dir'], 'variant_calling', 'mpileup', 'informs.io'),
+        INFORMS_calling=os.path.join(config['working_dir'], 'variant_calling', 'calling', 'informs.io')
+    output:
+        INFORMS_ALL=os.path.join(config['working_dir'], OUTPUT_VARIANT_CALLING_INFORMS_ALL)
+    run:
+        all_informs = []
+        for io_file in input:
+            all_informs.append(SnakemakeUtils.load_object(io_file))
+        SnakemakeUtils.dump_object(all_informs, output.INFORMS_ALL)

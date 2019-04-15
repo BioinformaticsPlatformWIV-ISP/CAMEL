@@ -9,3 +9,4 @@ OUTPUT_VARIANT_CALLING_CONSENSUS = os.path.join('variant_calling', 'consensus', 
 OUTPUT_VARIANT_CALLING_FILTERED_VCF = os.path.join('variant_calling', 'unzip_vcf_filtered', 'vcf.io')
 OUTPUT_VARIANT_CALLING_FILTERED_VCF_GZ = os.path.join('variant_calling', 'filter_zscore', 'vcf_gz-indexed.io')
 OUTPUT_VARIANT_CALLING_MAPPING_INFORMS = os.path.join('variant_calling', 'read_mapping', 'informs.io')
+OUTPUT_VARIANT_CALLING_INFORMS_ALL = os.path.join('variant_calling', 'commands.txt')
