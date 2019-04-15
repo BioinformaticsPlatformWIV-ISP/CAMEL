@@ -180,11 +180,12 @@ class MainScriptHelper(object):
         # Determine link locations
         links = []
         if fasta_input is not None:
-            links.append(['fasta', fasta_input, f'{self._sample_name}.fasta'])
+            links.append(['fasta', fasta_input, f'{FileSystemHelper.make_valid(self._sample_name)}.fasta'])
         if fastq_pe_input is not None:
             for read_nb, fq in enumerate(fastq_pe_input, start=1):
                 gzipped = FileSystemHelper.is_gzipped(fq)
-                links.append(['fastq_pe', fq, f"{self._sample_name}_{read_nb}.fastq{'.gz' if gzipped else ''}"])
+                filename = f"{FileSystemHelper.make_valid(self._sample_name)}_{read_nb}.fastq{'.gz' if gzipped else ''}"
+                links.append(['fastq_pe', fq, filename])
 
         # Create directory
         link_dir = os.path.join(self._working_dir, 'input')
