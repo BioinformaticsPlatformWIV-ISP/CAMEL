@@ -92,7 +92,7 @@ class SnakePipelineUtils(object):
             os.makedirs(output_dir)
         links = []
         for path, name in zip(file_paths, file_names):
-            link_path = os.path.join(output_dir, name if sanitize is False else FileSystemHelper.make_valid(name))
+            link_path = os.path.join(output_dir, FileSystemHelper.make_valid(name) if sanitize else name)
             if os.path.islink(link_path):
                 os.remove(link_path)
             os.symlink(path, link_path)
@@ -139,14 +139,16 @@ class SnakePipelineUtils(object):
             raise SnakemakeExecutionError(command.stdout, command.stderr)
 
     @staticmethod
-    def create_commands_section(tool_informs: List[Dict[str, Any]]) -> HtmlReportSection:
+    def create_commands_section(tool_informs: List[Dict[str, Any]], working_dir: str) -> HtmlReportSection:
         """
         Creates a section with an overview of the commands.
         :param tool_informs: Tool informs
+        :param working_dir: Working directory
         :return: Commands section
         """
         section = HtmlReportSection('Commands')
         for informs in tool_informs:
             section.add_header(informs['_name'], 3)
-            section.add_html_object(HtmlElement('code', informs['_command'], [('class', 'command')]))
+            command_txt = informs['_command'].replace(working_dir, '$WORKING')
+            section.add_html_object(HtmlElement('code', command_txt, [('class', 'command')]))
         return section
