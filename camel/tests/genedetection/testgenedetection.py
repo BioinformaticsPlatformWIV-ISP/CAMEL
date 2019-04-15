@@ -37,6 +37,12 @@ class TestGeneDetection(unittest.TestCase):
         self.running_dir = tempfile.mkdtemp(None, 'camel_', TestGeneDetection.camel.config['temp_dir'])
 
     def __get_basic_arguments(self, report_path: str, detection_method: str) -> argparse.Namespace:
+        """
+        Returns the basic arguments for the main script.
+        :param report_path: Report path
+        :param detection_method: Detection method
+        :return: Arguments
+        """
         return argparse.Namespace(
             sample_name=None,
             fasta=None,
@@ -81,6 +87,19 @@ class TestGeneDetection(unittest.TestCase):
         args = self.__get_basic_arguments(output_file_report, 'blast')
         args.fasta = TestGeneDetection.input_fasta_galaxy.path
         args.fasta_name = TestGeneDetection.input_fasta.basename
+        main = MainGeneDetection(args)
+        main.run()
+        self.assertGreater(os.path.getsize(output_file_report), 0)
+
+    def test_gene_detection_blast_fasta_input_spaces(self) -> None:
+        """
+        Tests the gene detection main script using blast.
+        :return: None
+        """
+        output_file_report = os.path.join(self.running_dir, 'report', 'report.html')
+        args = self.__get_basic_arguments(output_file_report, 'blast')
+        args.fasta = TestGeneDetection.input_fasta.path
+        args.fasta_name = 'my reference genome.fasta'
         main = MainGeneDetection(args)
         main.run()
         self.assertGreater(os.path.getsize(output_file_report), 0)
