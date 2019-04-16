@@ -1,7 +1,10 @@
+from typing import List
+
 import math
 import os
 import vcf
 
+from camel.app.camel import Camel
 from camel.app.command.command import Command
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.tools.variantfiltering.basefilter import BaseFilter
@@ -19,7 +22,7 @@ class ZScoreFilter(BaseFilter):
     X = Y * {y_multiplier}
     """
 
-    def __init__(self, camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initializes this tool.
         :param camel: CAMEL instance
@@ -34,7 +37,7 @@ class ZScoreFilter(BaseFilter):
         """
         return 'Z-score'
 
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
         Checks the input.
         :return: None
@@ -44,7 +47,7 @@ class ZScoreFilter(BaseFilter):
         super(ZScoreFilter, self)._check_input()
 
     @staticmethod
-    def calculate_zscore(x, y):
+    def calculate_zscore(x: int, y: int) -> float:
         """
         Calculates the Z-score.
         :param x: Number of reads with the most common nucleotide.
@@ -54,7 +57,7 @@ class ZScoreFilter(BaseFilter):
         return float(x - y) / math.sqrt(x + y)
 
     @staticmethod
-    def get_actg_counts(pileup_line):
+    def get_actg_counts(pileup_line: str) -> List[int]:
         """
         Get the count for each base
         :param pileup_line: Line of the pileup output.
@@ -62,16 +65,16 @@ class ZScoreFilter(BaseFilter):
         """
         return [pileup_line.upper().count(base) for base in ('A', 'C', 'T', 'G')]
 
-    def __create_pileup(self):
+    def __create_pileup(self) -> str:
         """
         Creates a pileup file with every position that covers a variant.
         :return: Path to pileup file
         """
-        vcf_reader = vcf.Reader(open(self._tool_inputs['VCF_GZ'][0].path, 'rb'))
         positions_file = os.path.join(self._folder, 'positions.txt')
-        with open(positions_file, 'w') as handle:
-            for variant in vcf_reader:
-                handle.write('{}\t{}\n'.format(variant.CHROM, variant.POS))
+        with open(self._tool_inputs['VCF_GZ'][0].path, 'rb') as handle_in:
+            with open(positions_file, 'w') as handle_out:
+                for variant in vcf.Reader(handle_in):
+                    handle_out.write('{}\t{}\n'.format(variant.CHROM, variant.POS))
 
         path = os.path.join(self._folder, 'positions.pileup')
         pileup_command = Command('{}samtools mpileup --count-orphans --positions {} {} > {}'.format(
@@ -79,7 +82,7 @@ class ZScoreFilter(BaseFilter):
         pileup_command.run_command(self._folder)
         return path
 
-    def __filter_positions(self, pileup_file):
+    def __filter_positions(self, pileup_file: str) -> List[str]:
         """
         Filters all variant positions based on the Z-score.
         :param pileup_file: Pileup file
@@ -114,7 +117,7 @@ class ZScoreFilter(BaseFilter):
                     kept_positions.append('{}\t{}'.format(chrom, pos))
         return kept_positions
 
-    def _apply_filter(self):
+    def _apply_filter(self) -> None:
         """
         Applies the filtering on the variants.
         :return: None
@@ -128,7 +131,7 @@ class ZScoreFilter(BaseFilter):
         self.__build_command(regions_file)
         self._execute_command()
 
-    def __build_command(self, regions_file):
+    def __build_command(self, regions_file: str) -> None:
         """
         Builds the command for this tool.
         :param regions_file: File with the included regions
