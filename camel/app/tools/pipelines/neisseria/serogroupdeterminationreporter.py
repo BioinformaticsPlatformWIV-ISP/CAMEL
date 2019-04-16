@@ -35,7 +35,7 @@ class SerogroupDeterminationReporter(Tool):
         """
         table_data = []
         for s in self._input_informs['analysis']['serogroups_sorted']:
-            row = [s['name'], '{:.2f}'.format(100 * s['fraction_perfect'])]
+            row = [s['name'], '{:.2f}'.format(100 * s['fraction_detected'])]
             for i in range(0, 7):
                 try:
                     locus_name, color = s['color_per_hit'][i]
