@@ -1,5 +1,4 @@
-from collections import OrderedDict
-from typing import Optional, List
+from typing import Optional, List, Dict
 
 import abc
 
@@ -47,7 +46,7 @@ class BaseToolService(Service, metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def get_default_parameters(self) -> OrderedDict[str, Parameter]:
+    def get_default_parameters(self) -> Dict[str, Parameter]:
         """
         Returns the default parameters for this tool.
         :return: Default parameters
