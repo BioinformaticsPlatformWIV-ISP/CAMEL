@@ -318,5 +318,7 @@ rule Variant_calling_collect_command_informs:
     run:
         all_informs = []
         for io_file in input:
-            all_informs.append(SnakemakeUtils.load_object(io_file))
+            informs = SnakemakeUtils.load_object(io_file)
+            informs['_tag'] = 'Variant calling'
+            all_informs.append(informs)
         SnakemakeUtils.dump_object(all_informs, output.INFORMS_ALL)

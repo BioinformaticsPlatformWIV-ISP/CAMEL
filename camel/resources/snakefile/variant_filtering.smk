@@ -9,7 +9,7 @@ from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile.variant_calling import OUTPUT_VARIANT_CALLING_UNFILTERED_VCF_GZ
 from camel.resources.snakefile.variant_filtering import OUTPUT_VARIANT_FILTERING_STATS, OUTPUT_VARIANT_FILTERING_VCF, \
-    OUTPUT_VARIANT_FILTERING_SUMMARY, get_filtering_param, OUTPUT_VARIANT_FILTERING_INFORMS
+    OUTPUT_VARIANT_FILTERING_SUMMARY, get_filtering_param, OUTPUT_VARIANT_FILTERING_INFORMS_ALL
 
 camel = Camel.get_instance()
 
@@ -254,7 +254,7 @@ rule Variant_filtering_collect_stats:
         INFORMS_region=os.path.join(config['working_dir'], 'variant_filtering', 'regions', 'informs.io')
     output:
         JSON=os.path.join(config['working_dir'], OUTPUT_VARIANT_FILTERING_STATS),
-        INFORMS_ALL=os.path.join(config['working_dir'], OUTPUT_VARIANT_FILTERING_INFORMS)
+        INFORMS_ALL=os.path.join(config['working_dir'], OUTPUT_VARIANT_FILTERING_INFORMS_ALL)
     params:
         working_dir=os.path.join(config['working_dir'], 'variant_filtering', 'stats')
     run:
@@ -271,6 +271,10 @@ rule Variant_filtering_collect_stats:
         with open(output_path, 'w') as handle:
             json.dump(filtering_data, handle)
         SnakemakeUtils.dump_object([ToolIOFile(output_path)], output.JSON)
+
+        # Add tag to distinguish commands
+        for inform in all_informs:
+            inform['_tag'] = 'Variant filtering'
         SnakemakeUtils.dump_object(all_informs, output.INFORMS_ALL)
 
 rule Variant_filtering_dump_summary_info:
