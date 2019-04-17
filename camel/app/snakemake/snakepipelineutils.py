@@ -149,7 +149,8 @@ class SnakePipelineUtils(object):
         section = HtmlReportSection('Commands')
         logging.debug(f"Exporting command for {len(tool_informs)} tools")
         for informs in tool_informs:
-            section.add_header(informs['_name'], 3)
+            header = f"{informs['_name']} - {informs['_tag']}" if '_tag' in informs else informs['_name']
+            section.add_header(header, 3)
             command_txt = informs['_command'].replace(working_dir, '$WORKING')
             section.add_html_object(HtmlElement('code', command_txt, [('class', 'command')]))
         return section
