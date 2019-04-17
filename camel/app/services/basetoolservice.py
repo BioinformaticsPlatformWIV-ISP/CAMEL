@@ -47,7 +47,7 @@ class BaseToolService(Service, metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def get_default_parameters(self) -> OrderedDict:
+    def get_default_parameters(self) -> OrderedDict[str, Parameter]:
         """
         Returns the default parameters for this tool.
         :return: Default parameters
@@ -63,7 +63,7 @@ class BaseToolService(Service, metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def get_parameter(self, parameter_name) -> Optional[Parameter]:
+    def get_parameter(self, parameter_name: str) -> Optional[Parameter]:
         """
         Returns the parameter with the given name.
         :param parameter_name: Parameter name
