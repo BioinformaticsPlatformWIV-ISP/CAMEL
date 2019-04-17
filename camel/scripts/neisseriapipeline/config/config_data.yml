@@ -1,35 +1,3 @@
-###################
-# General options #
-###################
-pipeline:
-  title: <i>Neisseria meningitidis</i> pipeline
-  name: Neisseria pipeline
-  version: '{version}'
-
-# Logging variables
-logging: {logging}
-
-# Input files
-sample_name: {sample_name}
-{fastq_key}: {fastq_input}
-
-# Output files
-output_report: {output_report}
-output_tabular: {output_tabular}
-output_dir: {output_dir}
-
-# Working directory
-working_dir: {working_dir}
-
-# Analysis options
-detection_method: {detection_method}
-read_type: {read_type}
-
-#####################
-# Optional analyses #
-#####################
-analyses: {analyses}
-
 #########################
 # Tool specific options #
 #########################
@@ -44,6 +12,12 @@ quality_checks:
   typing_scheme: {qc_typing_scheme}
   expected_gc_content: 51.5
 
+srst2:
+  max_unaligned_overlap: 141
+
+assembly:
+  cov_cutoff: 'off'
+
 ############################
 # Gene detection databases #
 ############################
@@ -55,7 +29,9 @@ gene_detection:
   resfinder:
     path: /db/gene_detection/ResFinder
     perc_identity_cutoff: 90
-    extra_column: ['Antibiotic(s)', 'antibiotics']
+    extra_column:
+      name: Antibiotic(s)
+      key: antibiotics
 
   card:
     path: /db/gene_detection/CARD
