@@ -13,7 +13,7 @@ from camel.resources.snakefile import SNAKEFILE_VARIANT_FILTERING
 from camel.resources.snakefile.variant_calling import OUTPUT_VARIANT_CALLING_BAM, \
     OUTPUT_VARIANT_CALLING_UNFILTERED_VCF_GZ
 from camel.resources.snakefile.variant_filtering import OUTPUT_VARIANT_FILTERING_VCF, OUTPUT_VARIANT_FILTERING_STATS, \
-    OUTPUT_VARIANT_FILTERING_INFORMS
+    OUTPUT_VARIANT_FILTERING_INFORMS_ALL
 
 
 @dataclass
@@ -101,7 +101,7 @@ class VariantFilteringWrapper(object):
         output_files = {
             'VCF': os.path.join(self._working_dir, OUTPUT_VARIANT_FILTERING_VCF),
             'STATS': os.path.join(self._working_dir, OUTPUT_VARIANT_FILTERING_STATS),
-            'INFORMS': os.path.join(self._working_dir, OUTPUT_VARIANT_FILTERING_INFORMS)
+            'INFORMS': os.path.join(self._working_dir, OUTPUT_VARIANT_FILTERING_INFORMS_ALL)
         }
         SnakePipelineUtils.run_snakemake(
             SNAKEFILE_VARIANT_FILTERING, config_path, list(output_files.values()), self._working_dir, cores)
