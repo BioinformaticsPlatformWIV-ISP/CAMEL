@@ -1,14 +1,13 @@
 from typing import Any, List, Union
 
 import abc
-from abc import ABC
 
 from camel.app.components.genedetection.genedetectionutils import GeneDetectionUtils
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.html.htmltablecell import HtmlTableCell
 
 
-class GeneDetectionHit(ABC):
+class GeneDetectionHit(object, metaclass=abc.ABCMeta):
     """
     This class represents a gene detection hit.
     """
