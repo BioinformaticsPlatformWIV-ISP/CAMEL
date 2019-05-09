@@ -6,11 +6,12 @@ from typing import List, Optional, Dict
 import os
 
 from camel.app.components.files.fastqutils import FastqUtils
+from camel.app.components.filesystemhelper import FileSystemHelper
+from camel.app.components.galaxy.galaxyutils import GalaxyUtils
 from camel.app.components.html.htmlreport import HtmlReport
 from camel.app.components.workflows.assemblywrapper import AssemblyWrapper
 from camel.app.components.workflows.readtrimmingwrapper import ReadTrimmingWrapper
 from camel.app.io.tooliofile import ToolIOFile
-from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 
 
 @dataclass
@@ -60,16 +61,6 @@ class MainScriptHelper(object):
         return ReadInput(trimming.output.trimmed_reads_pe, trimming.output.trimmed_reads_se_fwd,
                          trimming.output.trimmed_reads_se_rev)
 
-    def symlink_fastq_pe_input(self, fastq_pe: List[str], fastq_names: List[str], working_dir: str) -> ReadInput:
-        """
-        Symlinks the FASTQ PE input.
-        :return: Assembly input object
-        """
-        logging.info("Symlinking FASTQ input reads in working directory")
-        links = SnakePipelineUtils.symlink_input_files(
-            os.path.join(working_dir, 'input'), fastq_pe, fastq_names)
-        return ReadInput([ToolIOFile(x) for x in links], [], [])
-
     def assemble_fastq_reads(self, assembly_input: ReadInput, report: Optional[HtmlReport] = None,
                              kmers: Optional[str] = None, threads: int = 8) -> ToolIOFile:
         """
@@ -105,16 +96,14 @@ class MainScriptHelper(object):
             return os.path.splitext(args.fasta_name)[0]
         elif ('fasta' in args) and (args.fasta is not None):
             return os.path.splitext(os.path.basename(args.fasta))[0]
-        elif args.fastq_pe_names is not None:
+        elif (args.fastq_pe_names is not None) or (args.fastq_pe is not None):
+            names = args.fastq_pe_names if args.fastq_pe_names else [os.path.basename(x) for x in args.fastq_pe]
             try:
-                return FastqUtils.get_sample_name(args.fastq_pe_names[0])
-            except ValueError as e:
-                logging.warning(str(e))
-        elif args.fastq_pe is not None:
-            try:
-                return FastqUtils.get_sample_name(args.fastq_pe[0])
-            except ValueError as e:
-                logging.warning(str(e))
+                # See if it matches a standard FASTQ format
+                return FastqUtils.get_sample_name(names[0])
+            except ValueError:
+                # Check if it matches a Galaxy format
+                return GalaxyUtils.determine_sample_name_from_fq(names, 'NA')
         logging.warning("Cannot determine sample name from given arguments")
         return 'NA'
 
@@ -180,47 +169,83 @@ class MainScriptHelper(object):
         """
         return self._informs
 
-    def get_blast_input(self, args: argparse.Namespace, report: Optional[HtmlReport] = None) -> ToolIOFile:
+    def symlink_input_files(self, fasta_input: Optional[str] = None, fastq_pe_input: Optional[List[str]] = None) \
+            -> Dict[str, List[str]]:
+        """
+        Symlinks the input files.
+        :param fasta_input: FASTA input
+        :param fastq_pe_input: FASTQ PE input
+        :return: None
+        """
+        # Determine link locations
+        links = []
+        if fasta_input is not None:
+            links.append(['fasta', fasta_input, f'{FileSystemHelper.make_valid(self._sample_name)}.fasta'])
+        if fastq_pe_input is not None:
+            for read_nb, fq in enumerate(fastq_pe_input, start=1):
+                gzipped = FileSystemHelper.is_gzipped(fq)
+                filename = f"{FileSystemHelper.make_valid(self._sample_name)}_{read_nb}.fastq{'.gz' if gzipped else ''}"
+                links.append(['fastq_pe', fq, filename])
+
+        # Create directory
+        link_dir = os.path.join(self._working_dir, 'input')
+        if not os.path.isdir(link_dir):
+            os.makedirs(link_dir)
+
+        # Create symlinks
+        input_files = {}
+        for key, path_orig, link_name in links:
+            path_link = os.path.join(link_dir, link_name)
+            if os.path.islink(path_link):
+                os.remove(path_link)
+            logging.debug(f"Creating symbolic link: '{path_orig}' to '{path_link}'")
+            os.symlink(path_orig, path_link)
+            try:
+                input_files[key].append(path_link)
+            except KeyError:
+                input_files[key] = [path_link]
+
+        if len(input_files) == 0:
+            raise ValueError("No input files found.")
+        return input_files
+
+    def get_blast_input(self, input_files: Dict[str, List[str]], args: argparse.Namespace,
+                        report: Optional[HtmlReport] = None) -> ToolIOFile:
         """
         Returns the input for BLAST based detection methods.
         Takes into accounts:
         - Type of input (FASTA / FASTQ)
         - Read trimming (optional)
         - Kmer setting for de-novo assembly
+        :param input_files: Input files in a standardized format.
         :param args: Command line arguments
         :param report: HTML report
         :return: FASTA input for BLAST.
         """
-        dir_input = os.path.join(self._working_dir, 'input')
+        # Return FASTA file if there is one
+        if 'fasta' in input_files:
+            return ToolIOFile(input_files['fasta'][0])
 
-        # FASTA input
-        if args.fasta is not None:
-            if args.fasta_name is not None:
-                link = SnakePipelineUtils.symlink_input_files(dir_input, [args.fasta], [args.fasta_name], True)[0]
-                return ToolIOFile(link)
-            else:
-                return ToolIOFile(args.fasta)
-
-        # FASTQ input
-        names = args.fastq_pe_names if args.fastq_pe_names else [os.path.basename(f) for f in args.fastq_pe]
-        fq_links = SnakePipelineUtils.symlink_input_files(dir_input, args.fastq_pe, names, True)
+        # Trim reads if it is specified in the arguments
         if args.trim_reads:
-            assembly_input = self.trim_reads(fq_links, report, args.threads, args.report_include_fastq)
+            assembly_input = self.trim_reads(input_files['fastq_pe'], report, args.threads, args.report_include_fastq)
         else:
-            assembly_input = ReadInput([ToolIOFile(l) for l in fq_links], [], [])
+            assembly_input = ReadInput([ToolIOFile(l) for l in input_files['fastq_pe']], [], [])
+
+        # Perform de-novo assembly
         return self.assemble_fastq_reads(assembly_input, report, args.kmers, args.threads)
 
-    def get_srst2_input(self, args: argparse.Namespace, report: Optional[HtmlReport] = None) -> List[ToolIOFile]:
+    def get_srst2_input(self, input_files: Dict[str, List[str]], args: argparse.Namespace,
+                        report: Optional[HtmlReport] = None) -> List[ToolIOFile]:
         """
         Returns the input for SRST2 (forward + reverse reads).
+        :param input_files: Input files in a standardized format.
         :param args: Command line arguments
         :param report: HTML report
         :return: SRST2 input files
         """
-        dir_input = os.path.join(self._working_dir, 'input')
-        names = args.fastq_pe_names if args.fastq_pe_names else [os.path.basename(f) for f in args.fastq_pe]
-        fq_links = SnakePipelineUtils.symlink_input_files(dir_input, args.fastq_pe, names, True)
         if args.trim_reads is False:
-            return [ToolIOFile(l) for l in fq_links]
-        trimming_out = self.trim_reads(fq_links, report, args.threads, args.report_include_fastq)
-        return trimming_out.pe
+            return [ToolIOFile(p) for p in input_files['fastq_pe']]
+        else:
+            trimming_out = self.trim_reads(input_files['fastq_pe'], report, args.threads, args.report_include_fastq)
+            return trimming_out.pe

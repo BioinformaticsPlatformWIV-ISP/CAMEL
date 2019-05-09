@@ -1,6 +1,7 @@
 import logging
 
 import os
+import shutil
 
 from camel.app.camel import Camel
 from camel.app.components.filesystemhelper import FileSystemHelper
@@ -80,6 +81,8 @@ class CfsanSnpPipeline(Tool):
             logging.info("Adding sample '{}' as input".format(sample_name))
             sample_folder = os.path.join(reads_folder, sample_name)
             logging.info("Creating sample folder '{}'".format(sample_folder))
+            if os.path.isdir(sample_folder):
+                shutil.rmtree(sample_folder)
             os.mkdir(sample_folder)
             os.symlink(forward_reads.path, os.path.join(sample_folder, '{}_1.fastq'.format(sample_name)))
             os.symlink(reverse_reads.path, os.path.join(sample_folder, '{}_2.fastq'.format(sample_name)))

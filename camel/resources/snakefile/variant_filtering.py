@@ -3,6 +3,7 @@ from typing import Dict, Any
 import os
 
 OUTPUT_VARIANT_FILTERING_STATS = os.path.join('variant_filtering', 'stats', 'json.io')
+OUTPUT_VARIANT_FILTERING_INFORMS_ALL = os.path.join('variant_filtering', 'informs_all.io')
 OUTPUT_VARIANT_FILTERING_SUMMARY = os.path.join('variant_filtering', 'summary.tsv')
 OUTPUT_VARIANT_FILTERING_VCF = os.path.join('variant_filtering', 'unzip', 'vcf.io')
 OUTPUT_VARIANT_FILTERING_VCF_GZ = os.path.join('variant_filtering', 'zscore', 'vcf_gz.io')

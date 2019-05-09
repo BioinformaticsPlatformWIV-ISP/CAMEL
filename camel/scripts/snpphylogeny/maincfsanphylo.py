@@ -10,6 +10,7 @@ from camel.app.camel import Camel
 from camel.app.components.phylogeny.snpphylogenyutils import SnpPhylogenyUtils
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.io.tooliovalue import ToolIOValue
+from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.app.tools.cfsan.cfsansnppipeline import CfsanSnpPipeline
 from camel.scripts.snpphylogeny.basephylo import BasePhylo
 
@@ -50,6 +51,11 @@ class MainCfsanPhylo(BasePhylo):
         model_selection = self._run_model_selection(snp_matrix)
         self._run_tree_building(snp_matrix, model_selection)
 
+        # Add commands section
+        all_informs = self._informs
+        self._report.add_html_object(SnakePipelineUtils.create_commands_section(all_informs, self._args.working_dir))
+        self._report.save()
+
     @staticmethod
     def _parse_arguments() -> argparse.Namespace:
         """
@@ -87,6 +93,7 @@ class MainCfsanPhylo(BasePhylo):
         cfsan = CfsanSnpPipeline(Camel.get_instance())
         cfsan.add_input_files(cfsan_input)
         cfsan.run(self._args.working_dir)
+        self._informs.append(cfsan.informs)
         return cfsan
 
     def __add_metrics_section(self, cfsan: CfsanSnpPipeline) -> None:

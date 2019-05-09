@@ -1,4 +1,7 @@
 import logging
+from typing import List
+
+from camel.app.components.genedetection.genedetectionblasthit import GeneDetectionBlastHit
 
 
 class BlastHitFilteringHelper(object):
@@ -7,7 +10,7 @@ class BlastHitFilteringHelper(object):
     """
 
     @staticmethod
-    def detect_best_hits(hits):
+    def detect_best_hits(hits: List[GeneDetectionBlastHit]) -> List[GeneDetectionBlastHit]:
         """
         Detects the best hits out of a list of BLAST hits.
         Cases:
@@ -34,7 +37,7 @@ class BlastHitFilteringHelper(object):
             return best_hits
 
     @staticmethod
-    def __get_perfect_hits(hits):
+    def __get_perfect_hits(hits: List[GeneDetectionBlastHit]) -> List[GeneDetectionBlastHit]:
         """
         Returns all the perfect hits (full length, 100% identity).
         :param hits: List of hits
@@ -43,7 +46,7 @@ class BlastHitFilteringHelper(object):
         return [h for h in hits if h.is_perfect_hit()]
 
     @staticmethod
-    def __get_best_imperfect_hits(hits):
+    def __get_best_imperfect_hits(hits: List[GeneDetectionBlastHit]) -> List[GeneDetectionBlastHit]:
         """
         Returns the best imperfect hits from a list of blast hits. If there are multiple equivalent imperfect hits,
         all of them are returned.
@@ -63,7 +66,7 @@ class BlastHitFilteringHelper(object):
         return longest_alignment_hits
 
     @staticmethod
-    def __calculate_length_score(hit):
+    def __calculate_length_score(hit: GeneDetectionBlastHit) -> int:
         """
         Calculates the length score for a Blast hit.
         The score is calculated as described in: https://www.ncbi.nlm.nih.gov/pubmed/22238442
@@ -78,7 +81,8 @@ class BlastHitFilteringHelper(object):
         return hit.subject_length - hit.alignment_length + hit.gaps
 
     @staticmethod
-    def filter_percent_identity(hits, min_percent_identity):
+    def filter_percent_identity(hits: List[GeneDetectionBlastHit], min_percent_identity: float) -> \
+            List[GeneDetectionBlastHit]:
         """
         Filters a list of BLAST hits based on percent identity.
         :param hits: List of BLAST hits
@@ -91,7 +95,7 @@ class BlastHitFilteringHelper(object):
         return filtered_hits
 
     @staticmethod
-    def filter_coverage(hits, min_coverage):
+    def filter_coverage(hits: List[GeneDetectionBlastHit], min_coverage: float) -> List[GeneDetectionBlastHit]:
         """
         Filters a list of BLAST hits based on coverage.
         :param hits: List of BLAST hits

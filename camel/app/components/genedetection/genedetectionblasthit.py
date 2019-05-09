@@ -1,5 +1,5 @@
 import os
-from typing import List, Optional
+from typing import List, Optional, Any, Dict
 
 from camel.app.components.genedetection.genedetectionhit import GeneDetectionHit
 from camel.app.components.html.htmlreportsection import HtmlReportSection
@@ -42,7 +42,7 @@ class GeneDetectionBlastHit(GeneDetectionHit):
         self._extra_column_name = None
 
     @staticmethod
-    def create_from_dict(input_dict):
+    def create_from_dict(input_dict: Dict[str, Any]) -> 'GeneDetectionBlastHit':
         """
         Creates a hit object from a dictionary containing the blast output.
         :param input_dict: Input dictionary
@@ -56,7 +56,7 @@ class GeneDetectionBlastHit(GeneDetectionHit):
             raise ValueError("Cannot create hit from dictionary {} missing - {!r}".format(err, input_dict))
 
     @staticmethod
-    def get_column_names_html(extra_column_name: Optional[str]=None) -> List[str]:
+    def get_column_names_html(extra_column_name: Optional[str] = None) -> List[str]:
         """
         Returns the column names for the HTML output.
         :param extra_column_name: Extra column name (None if there is None)
@@ -77,7 +77,7 @@ class GeneDetectionBlastHit(GeneDetectionHit):
         return GeneDetectionBlastHit.get_column_names_html(self._extra_column_name)
 
     @staticmethod
-    def get_column_names_tabular(extra_column_name: Optional[str]=None) -> List[str]:
+    def get_column_names_tabular(extra_column_name: Optional[str] = None) -> List[str]:
         """
         Returns the column names for the tabular output.
         :param extra_column_name: Extra column name (None if there is None)
@@ -98,7 +98,7 @@ class GeneDetectionBlastHit(GeneDetectionHit):
         return GeneDetectionBlastHit.get_column_names_tabular(self._extra_column_name)
 
     @property
-    def subject(self):
+    def subject(self) -> str:
         """
         Returns the subject (locus + allele id).
         :return: Subject
@@ -106,7 +106,7 @@ class GeneDetectionBlastHit(GeneDetectionHit):
         return self._subject
 
     @property
-    def query(self):
+    def query(self) -> str:
         """
         Returns the query.
         :return: Query
@@ -130,7 +130,7 @@ class GeneDetectionBlastHit(GeneDetectionHit):
         return self._qend
 
     @property
-    def subject_length(self):
+    def subject_length(self) -> int:
         """
         Returns the subject length.
         :return: Subject length
@@ -138,7 +138,7 @@ class GeneDetectionBlastHit(GeneDetectionHit):
         return self._slen
 
     @property
-    def alignment_length(self):
+    def alignment_length(self) -> int:
         """
         Returns the alignment length.
         :return: Alignment length
@@ -146,7 +146,7 @@ class GeneDetectionBlastHit(GeneDetectionHit):
         return len(self._sseq)
 
     @property
-    def percent_identity(self):
+    def percent_identity(self) -> float:
         """
         Returns the percent identity.
         :return: Percent identity
@@ -154,7 +154,7 @@ class GeneDetectionBlastHit(GeneDetectionHit):
         return self._pident
 
     @property
-    def subject_coverage(self):
+    def subject_coverage(self) -> float:
         """
         Returns the fraction of the subject that is covered by the alignment.
         :return: % subject covered
@@ -162,7 +162,7 @@ class GeneDetectionBlastHit(GeneDetectionHit):
         return 100.0 * float(self.alignment_length) / self.subject_length
 
     @property
-    def length_statistic(self):
+    def length_statistic(self) -> str:
         """
         Returns the subject coverage in the format: {bases_covered}/{subject_length}.
         :return: Length statistic
@@ -170,7 +170,7 @@ class GeneDetectionBlastHit(GeneDetectionHit):
         return '{}/{}'.format(self.alignment_length, self.subject_length) if self.subject_length != '-' else '-'
 
     @property
-    def gaps(self):
+    def gaps(self) -> int:
         """
         Returns the number of gaps in the alignment.
         :return: Number of gaps
@@ -178,7 +178,7 @@ class GeneDetectionBlastHit(GeneDetectionHit):
         return self._sseq.count('-')
 
     @property
-    def alignment_path(self):
+    def alignment_path(self) -> str:
         """
         Returns the path to the alignment file.
         :return: Alignment file
@@ -186,7 +186,7 @@ class GeneDetectionBlastHit(GeneDetectionHit):
         return self._alignment_path
 
     @alignment_path.setter
-    def alignment_path(self, alignment_path):
+    def alignment_path(self, alignment_path: str) -> None:
         """
         Sets the alignment path.
         :param alignment_path: Alignment path
@@ -195,14 +195,14 @@ class GeneDetectionBlastHit(GeneDetectionHit):
         self._alignment_path = alignment_path
 
     @property
-    def extra_column_value(self):
+    def extra_column_value(self) -> str:
         """
         Returns the value of the extra column.
         :return: Extra column
         """
         return self._extra_column_value
 
-    def set_extra_column(self, name, value):
+    def set_extra_column(self, name: str, value: str) -> None:
         """
         Sets the extra column information.
         This extra column is used to contains some additional metadata associated with this hit. It is included in
@@ -215,14 +215,14 @@ class GeneDetectionBlastHit(GeneDetectionHit):
         self._extra_column_value = value
         self._extra_column_name = name
 
-    def is_perfect_hit(self):
+    def is_perfect_hit(self) -> bool:
         """
         Returns true if the hit is perfect (100% identity over complete length)
         :return: True if perfect
         """
         return (self.percent_identity == 100.0) and (self.subject_length == self.alignment_length)
 
-    def to_table_row(self):
+    def to_table_row(self) -> str:
         """
         Converts the hit into a table row.
         :return: Table row
@@ -238,7 +238,7 @@ class GeneDetectionBlastHit(GeneDetectionHit):
             row_data.insert(-1, self._extra_column_value)
         return '\t'.join(row_data)
 
-    def to_html_row(self, report_section: HtmlReportSection, sub_directory: str, color: bool=True):
+    def to_html_row(self, report_section: HtmlReportSection, sub_directory: str, color: bool = True) -> List[Any]:
         """
         Converts the hit into a HTML table row. It also links the alignment file (if there is one) to the HTML report.
         :param report_section: HTML Section that will contain the hit table
@@ -264,7 +264,7 @@ class GeneDetectionBlastHit(GeneDetectionHit):
                [alignment_cell]
 
     @property
-    def color(self):
+    def color(self) -> str:
         """
         Returns the color for this hit.
         Green: Perfect hit

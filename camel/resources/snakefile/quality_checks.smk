@@ -70,9 +70,8 @@ rule QC_checks_map_against_assembly:
         SnakemakeUtils.add_pickle_input(bowtie2_map, 'INDEX_GENOME_PREFIX', input.INDEX_GENOME_PREFIX)
         bowtie2_map.add_input_files(SnakemakeUtils.load_object(input.FASTQ))
         step.run_step()
+        bowtie2_map.informs['_tag'] = 'Coverage calculation'
         SnakemakeUtils.dump_tool_outputs(bowtie2_map, output)
-        SnakemakeUtils.dump_object([('mapping_rate', bowtie2_map.informs['stats_map_rate'])],
-                           os.path.join(config['working_dir'], 'summary-{}.io'.format(rule.lower())))
 
 rule QC_checks_SAM_to_BAM:
     """
@@ -126,9 +125,8 @@ rule QC_checks_calculate_coverage:
         step = Step(rule, samtools_depth, camel, params.running_dir, config)
         SnakemakeUtils.add_pickle_inputs(samtools_depth, input)
         step.run_step()
+        samtools_depth.informs['_tag'] = 'Coverage calculation'
         SnakemakeUtils.dump_tool_outputs(samtools_depth, output)
-        SnakemakeUtils.dump_object([('coverage', samtools_depth.informs['median_depth'])],
-                                   os.path.join(config['working_dir'], 'summary-{}.io'.format(rule.lower())))
 
 rule QC_checks_get_cgMLST_stats:
     """

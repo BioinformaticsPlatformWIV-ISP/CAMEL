@@ -18,8 +18,8 @@ rule Run_variant_calling_workflow:
         sample_name=lambda wildcards: wildcards.sample,
         sample_config=lambda wildcards: config['samples'][wildcards.sample]
     run:
-        from camel.app.components.workflows.variantcallingwrapper import VariantCallingWrapper
-        input_files = VariantCallingWrapper.VariantCallingInput(
+        from camel.app.components.workflows.variantcallingwrapper import VariantCallingWrapper, VariantCallingInput
+        input_files = VariantCallingInput(
             pe_reads=[ToolIOFile(x) for x in params.sample_config['PE']],
             se_reads_fwd=ToolIOFile(params.sample_config['SE_FWD']) if 'SE_FWD' in params.sample_config else None,
             se_reads_rev=ToolIOFile(params.sample_config['SE_REV']) if 'SE_REV' in params.sample_config else None

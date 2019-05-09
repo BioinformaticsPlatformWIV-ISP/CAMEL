@@ -1,4 +1,6 @@
 import vcf
+
+from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.error.invalidparametererror import InvalidParameterError
 
 
@@ -57,8 +59,8 @@ class VCFUtils(object):
         excluded_types = [] if excluded_types is None else excluded_types
 
         if len(types) > 0 and len(excluded_types) > 0:
-            raise InvalidParameterError(
-                "Mutually exclusive parameters 'included types' and 'excluded types' are specified. Only one is allowed.")
+            raise InvalidParameterError("Mutually exclusive parameters 'included types' and 'excluded types' are "
+                                        "specified. Only one is allowed.")
 
         vcf_reader = vcf.Reader(filename=vcf_file)
         records = []
@@ -87,6 +89,8 @@ class VCFUtils(object):
         """
         if vcf_file is None:
             raise ValueError("VCF file should not be None")
-        vcf_reader = vcf.Reader(filename=vcf_file)
-        variants = list(vcf_reader)
+        gzipped = FileSystemHelper.is_gzipped(vcf_file)
+        with open(vcf_file, 'rb' if gzipped else 'r') as handle:
+            vcf_reader = vcf.Reader(handle)
+            variants = list(vcf_reader)
         return sum(variant.ALT != [None] for variant in variants)

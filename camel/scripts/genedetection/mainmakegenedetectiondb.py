@@ -6,6 +6,7 @@ import os
 from typing import Optional
 
 from camel.app.camel import Camel
+from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.components.genedetection.dbhelper import DBHelper
 from camel.app.components.genedetection.genedetectionutils import GeneDetectionUtils
 from camel.app.components.html.htmlreport import HtmlReport
@@ -25,7 +26,7 @@ class MainMakeGeneDetectionDB(object):
         """
         self._args = args if args is not None else MainMakeGeneDetectionDB.parse_arguments()
         self._db_name = os.path.splitext(os.path.basename(
-            self._args.fasta_name if self._args.fasta_name else self._args.fasta))[0]
+            FileSystemHelper.make_valid(self._args.fasta_name) if self._args.fasta_name else self._args.fasta))[0]
         self._helper = DBHelper(self._db_name, self._args.working_dir)
         self._clusters = None
         self._new_name_by_header = None

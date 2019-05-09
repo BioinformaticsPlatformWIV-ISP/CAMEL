@@ -20,7 +20,7 @@ class PubmlstMetadataExtractor(Tool):
         Initializes this tool.
         :param camel: Camel instance
         """
-        super(PubmlstMetadataExtractor, self).__init__('Sequence Typing: PubMLST Metadata Extractor', '0.1', camel)
+        super().__init__('Sequence Typing: PubMLST Metadata Extractor', '0.1', camel)
 
     def _execute_tool(self) -> None:
         """

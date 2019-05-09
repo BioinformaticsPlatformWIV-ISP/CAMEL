@@ -1,7 +1,7 @@
 import argparse
 import datetime
 from dataclasses import dataclass
-from typing import List, Dict, Optional, Union
+from typing import List, Dict, Optional
 
 import os
 from Bio import SeqIO
@@ -32,56 +32,58 @@ class InvalidInputError(ValueError):
     pass
 
 
+@dataclass(frozen=True)
+class Sample:
+    """
+    This class is used to represent an input sample.
+    """
+    name_full: str
+    name_valid: str
+    reads_raw: List[ToolIOFile]
+    reads_names: List[str]
+
+    def __hash__(self) -> int:
+        """
+        Returns the hash value for this
+        :return: Hash value
+        """
+        return hash(self.name_valid)
+
+    def __eq__(self, other: 'Sample') -> bool:
+        """
+        Checks if two sample instances are equal.
+        :param other: Other instance
+        :return: True if equal, False otherwise
+        """
+        return self.name_valid == other.name_valid
+
+
+@dataclass
+class MappingInput:
+    """
+    This class contains the input for the read mapping step.
+    """
+    pe: List[ToolIOFile]
+    se_fwd: Optional[ToolIOFile] = None
+    se_rev: Optional[ToolIOFile] = None
+
+    def as_dict(self) -> Dict[str, str]:
+        """
+        Return the mapping input as a dictionary
+        :return: Mapping input in YAML format
+        """
+        d = {'PE': [x.path for x in self.pe]}
+        if self.se_fwd is not None:
+            d['SE_FWD'] = self.se_fwd.path
+        if self.se_rev is not None:
+            d['SE_REV'] = self.se_rev.path
+        return d
+
+
 class SnpPhylogenyUtils(object):
     """
     Utility class for the SNP phylogeny pipelines.
     """
-
-    @dataclass(frozen=True)
-    class Sample:
-        """
-        This class is used to represent an input sample.
-        """
-        name_full: str
-        name_valid: str
-        reads_raw: List[ToolIOFile]
-        reads_names: List[str]
-
-        def __hash__(self) -> int:
-            """
-            Returns the hash value for this
-            :return: Hash value
-            """
-            return hash(self.name_valid)
-
-        def __eq__(self, other: 'SnpPhylogenyUtils.Sample') -> bool:
-            """
-            Checks if two sample instances are equal.
-            :param other: Other instance
-            :return: True if equal, False otherwise
-            """
-            return self.name_valid == other.name_valid
-
-    @dataclass
-    class MappingInput:
-        """
-        This class contains the input for the read mapping step.
-        """
-        pe: List[ToolIOFile]
-        se_fwd: Optional[ToolIOFile] = None
-        se_rev: Optional[ToolIOFile] = None
-
-        def as_dict(self) -> Dict[str, str]:
-            """
-            Return the mapping input as a dictionary
-            :return: Mapping input in YAML format
-            """
-            d = {'PE': [x.path for x in self.pe]}
-            if self.se_fwd is not None:
-                d['SE_FWD'] = self.se_fwd.path
-            if self.se_rev is not None:
-                d['SE_REV'] = self.se_rev.path
-            return d
 
     @staticmethod
     def initialize_report(pipeline_name: str, args: argparse.Namespace) -> HtmlReport:
@@ -100,7 +102,8 @@ class SnpPhylogenyUtils(object):
         section.add_table([
             ['Analysis date:', datetime.datetime.now().strftime(SnakePipelineUtils.DATE_FORMAT)],
             ['Nb. of samples:', len(args.sample)],
-            ['Reference:', args.reference_name]], table_attributes=[('class', 'information')]
+            ['Reference:', args.reference_name if args.reference_name else os.path.basename(args.reference)]],
+            table_attributes=[('class', 'information')]
         )
         report.add_html_object(section)
         report.save()
@@ -122,15 +125,15 @@ class SnpPhylogenyUtils(object):
         argument_parser.add_argument('--sample', nargs=5, action='append', required=True)
         argument_parser.add_argument('--trim-reads', action='store_true')
         argument_parser.add_argument('--missing-data', choices=[
-            'complete_deletion', 'use_all_sites', 'partial_deletion'])
+            'complete_deletion', 'use_all_sites', 'partial_deletion'], default='use_all_sites')
         argument_parser.add_argument('--site-cov-cutoff', choices=range(0, 101), type=int)
         argument_parser.add_argument('--branch-swap', choices=[
-            'none', 'weak', 'very_weak', 'moderate', 'strong', 'very_strong'])
-        argument_parser.add_argument('--bootstraps', type=int, required=True)
-        argument_parser.add_argument('--ml-method', choices=['nni', 'spr3', 'spr5'], required=True)
+            'none', 'weak', 'very_weak', 'moderate', 'strong', 'very_strong'], default='moderate')
+        argument_parser.add_argument('--bootstraps', type=int, default=100)
+        argument_parser.add_argument('--ml-method', choices=['nni', 'spr3', 'spr5'], default='spr3')
 
     @staticmethod
-    def extract_samples(args: argparse.Namespace) -> List['SnpPhylogenyUtils.Sample']:
+    def extract_samples(args: argparse.Namespace) -> List[Sample]:
         """
         Returns the sample names (sorted alphabetically).
         :param args: Command line arguments
@@ -138,9 +141,9 @@ class SnpPhylogenyUtils(object):
         """
         samples = []
         for sample_name, fwd_name, fwd_read, rev_name, rev_read in args.sample:
-            if (sample_name is None) or (len(sample_name) == 0):
+            if (sample_name is None) or (len(FileSystemHelper.make_valid(sample_name)) == 0):
                 sample_name = FastqUtils.get_sample_name(fwd_name)
-            samples.append(SnpPhylogenyUtils.Sample(
+            samples.append(Sample(
                 sample_name, FileSystemHelper.make_valid(sample_name),
                 [ToolIOFile(fwd_read), ToolIOFile(rev_read)],
                 [fwd_name, rev_name]
@@ -164,7 +167,7 @@ class SnpPhylogenyUtils(object):
 
     @staticmethod
     def trim_all_reads(samples: List[Sample], working_dir: str, threads: int = 8) -> Dict[
-            'SnpPhylogenyUtils.Sample', ReadTrimmingWrapper.ReadTrimmingOutput]:
+            Sample, ReadTrimmingWrapper.ReadTrimmingOutput]:
         """
         Trims all the reads in parallel using Snakemake.
         :param samples: List of samples
@@ -196,7 +199,7 @@ class SnpPhylogenyUtils(object):
 
     @staticmethod
     def add_trimming_section(report: HtmlReport, trimming_output_by_sample: Dict[
-            'SnpPhylogenyUtils.Sample', ReadTrimmingWrapper.ReadTrimmingOutput]) -> None:
+            Sample, ReadTrimmingWrapper.ReadTrimmingOutput]) -> None:
         """
         Adds the trimming section to the report.
         :param report: HTML report
@@ -252,9 +255,8 @@ class SnpPhylogenyUtils(object):
         return snp_matrix_constructor.tool_outputs['FASTA'][0]
 
     @staticmethod
-    def add_output_files_section(report: HtmlReport, column_names: List[str],
-                                 output_files: Dict['SnpPhylogenyUtils.Sample', List[Union[str, None]]],
-                                 snp_matrix: str):
+    def add_output_files_section(report: HtmlReport, column_names: List[str], output_files: Dict[
+            Sample, List[Optional[str]]], snp_matrix: str) -> None:
         """
         Adds the section with the output files.
         :param report: Report
@@ -329,10 +331,10 @@ class SnpPhylogenyUtils(object):
         """
         snp_matrix_size = SnpPhylogenyUtils.get_snp_matrix_size(snp_matrix)
         if snp_matrix_size > size_max:
-            raise ValueError('SNP matrix is too big ({}, max={}) to perform model selection / tree building'.format(
+            raise ValueError('SNP matrix is too big ({}, max={}) to perform model selection / tree building.'.format(
                 snp_matrix_size, size_max))
         elif snp_matrix_size < size_min:
-            raise ValueError('SNP matrix is too small ({}, min={}) to perform model selection / tree building'.format(
+            raise ValueError('SNP matrix is too small ({}, min={}) to perform model selection / tree building.'.format(
                     snp_matrix_size, size_min))
 
     @staticmethod

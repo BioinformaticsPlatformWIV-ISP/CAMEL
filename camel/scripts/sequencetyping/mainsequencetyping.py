@@ -60,12 +60,13 @@ class MainSequenceTyping(object):
         """
         self.__init_report()
         self.__add_analysis_info_section()
+        input_files = self._helper.symlink_input_files(self._args.fasta, self._args.fastq_pe)
         db_data = self.__get_db_metadata(self._args.scheme_dir)
         if self._args.detection_method == 'blast':
-            fasta_file = self._helper.get_blast_input(self._args, self._report)
+            fasta_file = self._helper.get_blast_input(input_files, self._args, self._report)
             output = self.__run_sequence_typing_blast(fasta_file, db_data['name'], self._args.scheme_dir)
         elif self._args.detection_method == 'srst2':
-            input_pe = self._helper.get_srst2_input(self._args, self._report)
+            input_pe = self._helper.get_srst2_input(input_files, self._args, self._report)
             output = self.__run_sequence_typing_srst2(input_pe, db_data['name'], self._args.scheme_dir)
         else:
             raise ValueError(f"Invalid detection method: {self._args.detection_method}")

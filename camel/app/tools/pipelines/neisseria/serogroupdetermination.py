@@ -32,27 +32,31 @@ class SerogroupDetermination(Tool):
         :return: None
         """
         serogroup_stats = []
+
         for key in self._tool_inputs:
             # Extract hits and sort them
             hits = [h.value for h in self._tool_inputs[key]]
             hits.sort(key=lambda h: h.locus)
 
             # Determine the number of perfect hits
+            nb_detected = len([h for h in hits if h.allele_id != '-'])
             nb_perfect_hits = len([h for h in hits if h.is_perfect_hit()])
             serogroup_stats.append({
                 'name': key.split('_')[-1].upper(),
                 'category': self.__get_detection_category(hits).value,
                 'nb_loci_total': len(hits),
-                'nb_perfect': nb_perfect_hits,
-                'fraction_perfect': nb_perfect_hits / len(hits),
+                'nb_hits': nb_detected,
+                'nb_hits_perfect': nb_perfect_hits,
+                'fraction_detected': nb_detected / len(hits),
+                'fraction_detected_perfect': nb_perfect_hits / len(hits),
                 'color_per_hit': [(h.locus, h.color) for h in hits]
             })
 
         # Sort serogroups based on category and fraction of perfect hits
-        serogroup_stats.sort(key=lambda x: (x['category'], -x['fraction_perfect']))
+        serogroup_stats.sort(key=lambda x: (x['category'], -x['fraction_detected_perfect']))
         self._informs['serogroups_sorted'] = serogroup_stats
         self._informs['detected_serogroup'] = serogroup_stats[0]['name'] if \
-            serogroup_stats[0]['fraction_perfect'] >= 0.6 else 'NA'
+            serogroup_stats[0]['fraction_detected'] >= 0.6 else 'NA'
 
     def __get_detection_category(self, hits: List[SequenceTypingBlastHit]) -> DetectionCategory:
         """

@@ -232,6 +232,7 @@ rule Gene_detection_get_hits:
     Retrieves the hits from the blastn / SRST2 detection method based on the config
     """
     input:
+        informs_db=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'db_manager', 'informs.io'),
         hits_blast=lambda wildcards: os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_HITS_BLAST.format(db=wildcards.db)) if GeneDetectionUtils.get_detection_method_key(config, wildcards.db) == 'blast' else [],
         hits_srst2=lambda wildcards: os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_HITS_SRST2.format(db=wildcards.db)) if GeneDetectionUtils.get_detection_method_key(config, wildcards.db) == 'srst2' else [],
         tsv_blast=lambda wildcards: os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_TSV_BLAST.format(db=wildcards.db)) if GeneDetectionUtils.get_detection_method_key(config, wildcards.db) == 'blast' else [],
@@ -245,7 +246,10 @@ rule Gene_detection_get_hits:
     run:
         shutil.copyfile(input.hits_blast if len(input.hits_blast) > 0 else input.hits_srst2, output.VAL_Hits)
         shutil.copyfile(input.tsv_blast if len(input.tsv_blast) > 0 else input.tsv_srst2, output.TSV)
-        shutil.copyfile(input.informs_blast if len(input.informs_blast) > 0 else input.informs_srst2, output.INFORMS)
+        # Add a tag for the database to distinguish commands in the output
+        informs = SnakemakeUtils.load_object(input.informs_blast if len(input.informs_blast) > 0 else input.informs_srst2)
+        informs['_tag'] = SnakemakeUtils.load_object(input.informs_db)['title']
+        SnakemakeUtils.dump_object(informs, output.INFORMS)
 
 rule Gene_detection_get_column_names:
     output:

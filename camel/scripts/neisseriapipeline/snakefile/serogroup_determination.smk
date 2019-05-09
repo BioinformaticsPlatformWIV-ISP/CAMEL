@@ -75,7 +75,8 @@ rule Serogroup_determination_summary:
         informs = SnakemakeUtils.load_object(input.INFORMS_analysis)
         with open(output[0], 'w') as handle:
             for k, v in [('detected_serogroup', informs['detected_serogroup']),
-                         ('serogroup_perfect_hits', informs['serogroups_sorted'][0]['nb_perfect']),
+                         ('serogroup_nb_hits', informs['serogroups_sorted'][0]['nb_hits']),
+                         ('serogroup_nb_hits_perfect', informs['serogroups_sorted'][0]['nb_hits_perfect']),
                          ('serogroup_total_loci', informs['serogroups_sorted'][0]['nb_loci_total'])]:
                 handle.write('\t'.join([k, str(v)]))
                 handle.write('\n')

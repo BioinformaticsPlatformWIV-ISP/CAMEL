@@ -7,17 +7,17 @@ from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.resources.snakefile import SNAKEFILE_READ_TRIMMING, SNAKEFILE_ASSEMBLY_SPADES, SNAKEFILE_GENE_DETECTION, \
     SNAKEFILE_SEQUENCE_TYPING, SNAKEFILE_CONTAMINATION_CHECK_KRAKEN, SNAKEFILE_ADV_QC
 from camel.resources.snakefile.assembly_spades import OUTPUT_ASSEMBLY_REPORT, OUTPUT_ASSEMBLY_FASTA, \
-    OUTPUT_ASSEMBLY_SUMMARY
+    OUTPUT_ASSEMBLY_SUMMARY, OUTPUT_ASSEMBLY_INFORMS
 from camel.resources.snakefile.contamination_check_kraken import OUTPUT_CONTAMINATION_CHECK_REPORT, \
     OUTPUT_CONTAMINATION_CHECK_REPORT_EMPTY, OUTPUT_CONTAMINATION_SUMMARY
 from camel.scripts.neisseriapipeline import SNAKEFILE_SEROGROUP_DETERMINATION
 from camel.scripts.neisseriapipeline.snakefile.serogroup_determination import OUTPUT_SEROGROUP_DETERMINATION_REPORT, \
     OUTPUT_SEROGROUP_DETERMINATION_REPORT_EMPTY, OUTPUT_SEROGROUP_DETERMINATION_SUMMARY
 from camel.resources.snakefile.gene_detection import INPUT_GENE_DETECTION_FASTA, get_gene_detection_report, \
-    OUTPUT_GENE_DETECTION_SUMMARY, INPUT_GENE_DETECTION_FASTQ
+    OUTPUT_GENE_DETECTION_SUMMARY, INPUT_GENE_DETECTION_FASTQ, OUTPUT_GENE_DETECTION_INFORMS
 from camel.resources.snakefile.quality_checks import OUTPUT_QUALITY_CHECKS_REPORT, OUTPUT_QUALITY_CHECKS_SUMMARY
 from camel.resources.snakefile.read_trimming import OUTPUT_READ_TRIMMING_REPORT, OUTPUT_READ_TRIMMING_SUMMARY, \
-    OUTPUT_READ_TRIMMING_READS_PE
+    OUTPUT_READ_TRIMMING_READS_PE, OUTPUT_READ_TRIMMING_INFORMS
 from camel.resources.snakefile.sequence_typing import get_sequence_typing_report, OUTPUT_TYPING_SUMMARY
 
 #######################
@@ -90,7 +90,8 @@ rule Combine_reports:
         report_fhbp=get_sequence_typing_report('fhbp', config),
         report_bast=get_sequence_typing_report('bast', config),
         report_serogroup=os.path.join(config['working_dir'], OUTPUT_SEROGROUP_DETERMINATION_REPORT if 'serogroup' in config['analyses'] else OUTPUT_SEROGROUP_DETERMINATION_REPORT_EMPTY),
-        report_citations=os.path.join(config['working_dir'], 'report', 'html-citations.io')
+        report_citations=os.path.join(config['working_dir'], 'report', 'html-citations.io'),
+        report_commands=os.path.join(config['working_dir'], 'report', 'html-commands.io')
     output:
         report = config['output_report']
     params:
@@ -127,7 +128,8 @@ rule Combine_reports:
                                        input.report_porb, input.report_feta, input.report_resistance_genes,
                                        input.report_vaccine_targets, input.report_fhbp, input.report_cgmlst]),
             ('Serogroup determination', 'serogroup', [input.report_serogroup]),
-            ('Citations', 'citations', [input.report_citations])
+            ('Citations', 'citations', [input.report_citations]),
+            ('Commands', 'commands', [input.report_commands])
         ]
 
         report.add_module_header('Sections')
@@ -196,6 +198,26 @@ rule Combine_summary_files:
             for summary_input in input:
                 with open(summary_input) as handle_in:
                     handle_out.write(handle_in.read())
+
+rule Report_create_commands_section:
+    input:
+        INFORMS_trimming = os.path.join(config['working_dir'], OUTPUT_READ_TRIMMING_INFORMS),
+        INFORMS_assembly = os.path.join(config['working_dir'], OUTPUT_ASSEMBLY_INFORMS),
+        INFORMS_kraken = os.path.join(config['working_dir'], 'contamination_check', 'kraken', 'informs.io') if 'kraken' in config['analyses'] else [],
+        INFORMS_mapping = os.path.join(config['working_dir'], 'quality_checks', 'read_mapping', 'informs.io'),
+        INFORMS_depth=os.path.join(config['working_dir'], 'quality_checks', 'coverage_calculation', 'informs.io'),
+        INFORMS_resfinder = os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_INFORMS.format(db='resfinder')) if 'resfinder' in config['analyses'] else [],
+        INFORMS_card = os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_INFORMS.format(db='card')) if 'card' in config['analyses'] else [],
+        INFORMS_argannot = os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_INFORMS.format(db='argannot')) if 'argannot' in config['analyses'] else [],
+        INFORMS_ncbi_amr = os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_INFORMS.format(db='ncbi_amr')) if 'ncbi_amr' in config['analyses'] else [],
+    output:
+        HTML = os.path.join(config['working_dir'], 'report', 'html-commands.io')
+    params:
+        working_dir = config['working_dir']
+    run:
+        informs = [SnakemakeUtils.load_object(io)for io in input]
+        section = SnakePipelineUtils.create_commands_section(informs, params.working_dir)
+        SnakemakeUtils.dump_object([ToolIOValue(section)], output.HTML)
 
 rule Link_assembly_gene_detection:
     """

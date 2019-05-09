@@ -5,7 +5,7 @@ from typing import Optional, List, Dict
 import abc
 import os
 
-from camel.app.components.phylogeny.snpphylogenyutils import SnpPhylogenyUtils, InvalidInputError
+from camel.app.components.phylogeny.snpphylogenyutils import SnpPhylogenyUtils, InvalidInputError, Sample, MappingInput
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.mega.modelselection import ModelSelection
@@ -24,11 +24,12 @@ class BasePhylo(object, metaclass=abc.ABCMeta):
         """
         self._pipeline_name = pipeline_name
         self._args = args if args is not None else self._parse_arguments()
-        self._report = SnpPhylogenyUtils.initialize_report(self._pipeline_name, self._args)
         self._samples = self.__extract_samples()
+        self._report = SnpPhylogenyUtils.initialize_report(self._pipeline_name, self._args)
+        self._informs = []
 
     @property
-    def samples_by_name(self) -> Dict[str, SnpPhylogenyUtils.Sample]:
+    def samples_by_name(self) -> Dict[str, Sample]:
         """
         Returns the samples as a dictionary with the sample name as key.
         :return: Samples by name
@@ -44,7 +45,7 @@ class BasePhylo(object, metaclass=abc.ABCMeta):
         """
         pass
 
-    def __extract_samples(self) -> List[SnpPhylogenyUtils.Sample]:
+    def __extract_samples(self) -> List[Sample]:
         """
         Extracts sample objects from the provided input.
         :return: List of samples
@@ -57,7 +58,7 @@ class BasePhylo(object, metaclass=abc.ABCMeta):
             self._report.save()
             exit(0)
 
-    def _get_mapping_input(self) -> Dict[SnpPhylogenyUtils.Sample, SnpPhylogenyUtils.MappingInput]:
+    def _get_mapping_input(self) -> Dict[Sample, MappingInput]:
         """
         Returns the input for the read mapping.
         :return: Mapping input per sample
@@ -68,17 +69,16 @@ class BasePhylo(object, metaclass=abc.ABCMeta):
             SnpPhylogenyUtils.add_trimming_section(self._report, trimming_output_by_sample)
             mapping_input_by_sample = {}
             for sample, output in trimming_output_by_sample.items():
-                # noinspection PyCallByClass
-                mapping_input_by_sample[sample] = SnpPhylogenyUtils.MappingInput(
+                mapping_input_by_sample[sample] = MappingInput(
                     pe=output.trimmed_reads_pe,
                     se_fwd=output.trimmed_reads_se_fwd[0],
                     se_rev=output.trimmed_reads_se_rev[0]
                 )
+            self._informs.append(trimming_output_by_sample[self._samples[0]].informs_trimmomatic)
             return mapping_input_by_sample
         else:
             SnpPhylogenyUtils.add_trimming_section_empty(self._report)
-            # noinspection PyCallByClass
-            return {s: SnpPhylogenyUtils.MappingInput(pe=s.reads_raw) for s in self._samples}
+            return {s: MappingInput(pe=s.reads_raw) for s in self._samples}
 
     def _run_model_selection(self, snp_matrix: ToolIOFile) -> ModelSelection:
         """

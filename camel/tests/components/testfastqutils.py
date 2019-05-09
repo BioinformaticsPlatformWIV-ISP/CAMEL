@@ -13,28 +13,28 @@ class TestFastqUtils(unittest.TestCase):
         Tests the get sample name function for MiSEQ format.
         :return: None
         """
-        self.assertEquals(FastqUtils.get_sample_name('/data/temp/Z4686_S31_L001_R1_001.fastq.gz'), 'Z4686')
+        self.assertEqual(FastqUtils.get_sample_name('/data/temp/Z4686_S31_L001_R1_001.fastq.gz'), 'Z4686')
 
     def test_get_sample_name_miseq_fmt_no_s(self) -> None:
         """
         Tests the get sample name function for MiSEQ format without the sample number.
         :return: None
         """
-        self.assertEquals(FastqUtils.get_sample_name('/data/temp/Z4686_L001_R1_001.fastq.gz'), 'Z4686')
+        self.assertEqual(FastqUtils.get_sample_name('/data/temp/Z4686_L001_R1_001.fastq.gz'), 'Z4686')
 
     def test_get_sample_name_miseq_fmt_no_s_no_l(self) -> None:
         """
         Tests the get sample name function for MiSEQ format without the sample number and lane number.
         :return: None
         """
-        self.assertEquals(FastqUtils.get_sample_name('/data/temp/Z4686_R1_001.fastq.gz'), 'Z4686')
+        self.assertEqual(FastqUtils.get_sample_name('/data/temp/Z4686_R1_001.fastq.gz'), 'Z4686')
 
     def test_get_sample_name_simple_fmt(self) -> None:
         """
         Tests the get sample name function for the simple format.
         :return: None
         """
-        self.assertEquals(FastqUtils.get_sample_name('/data/temp/Z4686_1.fastq.gz'), 'Z4686')
+        self.assertEqual(FastqUtils.get_sample_name('/data/temp/Z4686_1.fastq.gz'), 'Z4686')
 
     def test_get_sample_name_invalid_fmt(self) -> None:
         """
@@ -43,6 +43,41 @@ class TestFastqUtils(unittest.TestCase):
         """
         with self.assertRaises(ValueError):
             FastqUtils.get_sample_name('/data/temp/invalid_name.fastq.gz')
+
+    def test_get_sample_name_with_dots(self) -> None:
+        """
+        Tests the get sample name function for an invalid filename.
+        :return: None
+        """
+        self.assertEqual(FastqUtils.get_sample_name('/data/temp/my-sample.1.fastq.gz'), 'my-sample')
+
+    def test_get_sample_name_fq_ext(self) -> None:
+        """
+        Tests the get sample name function for an invalid filename.
+        :return: None
+        """
+        self.assertEqual(FastqUtils.get_sample_name('/data/temp/my-sample_1.fq'), 'my-sample')
+
+    def test_get_sample_name_fq_ext_gzipped(self) -> None:
+        """
+        Tests the get sample name function for an invalid filename.
+        :return: None
+        """
+        self.assertEqual(FastqUtils.get_sample_name('/data/temp/my-sample_1.fq.gz'), 'my-sample')
+
+    def test_get_sample_name_with_p(self) -> None:
+        """
+        Tests the get sample name function for an invalid filename.
+        :return: None
+        """
+        self.assertEqual(FastqUtils.get_sample_name('/data/temp/my-sample_1P.fastq'), 'my-sample')
+
+    def test_get_sample_name_with_underscore(self) -> None:
+        """
+        Tests the get sample name function for an invalid filename.
+        :return: None
+        """
+        self.assertEqual(FastqUtils.get_sample_name('/data/temp/my_sample_1.fastq'), 'my_sample')
 
 
 if __name__ == '__main__':
