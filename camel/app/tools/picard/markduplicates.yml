@@ -1,0 +1,13 @@
+dependencies: [java/1.8.0, picard/2.8.3]
+parameters:
+  create_index: {default: true, mandatory: false, option: CREATE_INDEX, p_index: 20,
+    value: 'true'}
+  duplicate_scoring_strategy: {default: true, mandatory: false, option: DS, p_index: 30,
+    value: SUM_OF_BASE_QUALITIES}
+  matrics_output: {default: true, mandatory: false, option: M, p_index: 0, value: duplicates_mark.matrics}
+  output: {default: true, mandatory: false, option: O, p_index: 0, value: duplicates_marked.bam}
+  read_name_regex: {default: false, mandatory: false, option: READ_NAME_REGEX, p_index: 0,
+    value: ''}
+  remove_duplicates: {default: true, mandatory: false, option: REMOVE_DUPLICATES,
+    p_index: 10, value: 'false'}
+tool_command: run_picard.sh MarkDuplicates

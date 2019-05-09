@@ -1,0 +1,3 @@
+dependencies: [circos/0.69-6]
+parameters: {}
+tool_command: circos

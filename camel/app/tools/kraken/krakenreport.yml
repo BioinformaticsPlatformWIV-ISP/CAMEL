@@ -1,0 +1,3 @@
+dependencies: [kraken_local/0.10.5, jellyfish/1.1.11]
+parameters: {}
+tool_command: kraken-report

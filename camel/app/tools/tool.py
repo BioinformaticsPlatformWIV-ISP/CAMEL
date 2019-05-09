@@ -1,3 +1,4 @@
+import inspect
 import logging
 from typing import Dict, Optional, List, Union
 
@@ -212,11 +213,10 @@ class Tool(object, metaclass=abc.ABCMeta):
         :param tool_version: Tool version
         :return: Path
         """
-        if self._camel.config.get('tool_parameter_loc') is None:
-            raise ValueError(f"Tool parameter file location must be set when the 'tool_service' option is 'yaml'")
-        return os.path.join(self._camel.config['tool_parameter_loc'], '{}-{}.yml'.format(
-            FileSystemHelper.make_valid(tool_name).lower(),
-            FileSystemHelper.make_valid(tool_version)))
+        yaml_path = inspect.getfile(self.__class__).replace('.py', '.yml')
+        if not os.path.isfile(yaml_path):
+            raise FileNotFoundError(f"Tool data file for '{self.name}' not found ({yaml_path})")
+        return yaml_path
 
     def get_tool_service(self, tool_name: str, tool_version: str) -> BaseToolService:
         """

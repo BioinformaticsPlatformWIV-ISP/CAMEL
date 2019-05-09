@@ -1,0 +1,13 @@
+dependencies: [deconseq/0.4.3]
+parameters:
+  aln_threshold: {default: false, mandatory: false, option: -T, p_index: 0, value: '30'}
+  chunk_size: {default: false, mandatory: false, option: -S, p_index: 0, value: '10000000'}
+  coverage: {default: false, mandatory: false, option: -c, p_index: 0, value: '95'}
+  dbs: {default: false, mandatory: false, option: -dbs, p_index: 0, value: hsref}
+  dbs_retain: {default: false, mandatory: false, option: -dbs_retain, p_index: 0,
+    value: hsref}
+  identity: {default: false, mandatory: false, option: -i, p_index: 0, value: '94'}
+  keep_tmp_files: {default: false, mandatory: false, option: -keep_tmp_files, p_index: 0,
+    value: null}
+  z_best: {default: false, mandatory: false, option: -z, p_index: 0, value: '2'}
+tool_command: deconseq.pl

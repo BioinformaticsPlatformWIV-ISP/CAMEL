@@ -1,0 +1,4 @@
+dependencies: []
+parameters:
+  export_bam: {default: true, mandatory: false, option: null, value: 'false'}
+tool_command: null

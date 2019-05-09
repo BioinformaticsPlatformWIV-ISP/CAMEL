@@ -1,0 +1,7 @@
+dependencies: [bcftools/1.9]
+parameters:
+  min_depth: {default: true, mandatory: false, option: null, value: '10'}
+  min_forward_depth: {default: false, mandatory: false, option: null, value: '1'}
+  min_reverse_depth: {default: false, mandatory: false, option: null, value: '1'}
+  output_filename: {default: true, mandatory: true, option: null, value: variants_depth_filtered.vcf.gz}
+tool_command: bcftools filter
