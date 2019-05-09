@@ -1,0 +1,86 @@
+#########################
+# Tool specific options #
+#########################
+read_trimming: {}
+
+contamination_check:
+  db: /db/kraken/latest/abfhpv_lite/
+  expected_species: Escherichia coli
+
+quality_checks:
+  expected_gc_content: 50.5
+
+variant_calling:
+  ploidy: 1
+  reference:
+    path: /db/refgenomes/Escherichia_coli/NC_002695.2.fasta
+    name: <i>Escherichia coli</i> O157:H7 (NC_002695.2)
+    url: https://www.ncbi.nlm.nih.gov/nuccore/NC_002695.2
+
+variant_filtering: {variant_filtering}
+assembly_options:
+  cov_cutoff: 10
+
+############################
+# Gene detection databases #
+############################
+gene_detection:
+  argannot:
+    path: /db/gene_detection/ARG-ANNOT
+    perc_identity_cutoff: 90
+
+  resfinder:
+    path: /db/gene_detection/ResFinder
+    perc_identity_cutoff: 90
+    extra_column:
+
+  card:
+    path: /db/gene_detection/CARD
+    perc_identity_cutoff: 90
+
+  ncbi_amr:
+    path: /db/gene_detection/NCBI_AMR
+    perc_identity_cutoff: 90
+
+  virulencefinder:
+    path: /db/gene_detection/VirulenceFinder-Ecoli
+    perc_identity_cutoff: 90
+    extra_column:
+      name: Protein function
+      key: protein_function
+
+  virulencefinder_shiga:
+    path: /db/gene_detection/VirulenceFinder-Shiga
+    perc_identity_cutoff: 90
+    extra_column:
+      name: stx variant
+      key: stx_variant
+
+  plasmidfinder:
+    path: /db/gene_detection/PlasmidFinder-entero
+    perc_identity_cutoff: 95
+    extra_column:
+      name: Notes
+      key: notes
+
+  serotype_o:
+    path: /db/gene_detection/SerotypeFinder-O_type
+    perc_identity_cutoff: 90
+    extra_column:
+      name: Predicted serotype
+      key: predicted_serotype
+
+  serotype_h:
+    path: /db/gene_detection/SerotypeFinder-H_type
+    perc_identity_cutoff: 90
+    extra_column:
+      name: Predicted serotype
+      key: predicted_serotype
+
+###################
+# Sequence typing #
+###################
+sequence_typing:
+  mlst_pasteur: /db/sequence_typing/ecoli/mlst-pasteur
+  mlst_warwick: /db/sequence_typing/ecoli/mlst-warwick
+  cgmlst: /db/sequence_typing/ecoli/cgmlst
