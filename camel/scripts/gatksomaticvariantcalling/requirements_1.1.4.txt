@@ -1,7 +1,7 @@
 requests==2.18.3
 beautifulsoup4==4.5.3
 bs4==0.0.1
-psycopg2>=2.6.2
+psycopg2-binary==2.8.2
 humanize==0.5.1
 PyVCF==0.6.8
 PyYAML==3.12
