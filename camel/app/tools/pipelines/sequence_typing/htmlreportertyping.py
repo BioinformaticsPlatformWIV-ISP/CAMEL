@@ -89,15 +89,16 @@ class HtmlReporterTyping(Tool):
         :return: None
         """
         table_header = hits_io[0].value.get_html_column_names()
-        table_data = [h.value.to_html_row(self._report_section, self._sub_folder) for h in sorted(hits_io, key=
-                      lambda x: x.value.locus)]
+        table_data = [h.value.to_html_row(self._report_section, self._sub_folder) for h in sorted(
+            hits_io, key=lambda x: x.value.locus)]
 
         if sub_header is not None:
             self._report_section.add_header(sub_header, 4)
 
         # Add slider for big tables
         if len(hits_io) > 12:
-            div = HtmlExpandableDiv('table-{}'.format(self._input_informs['scheme']['name'].lower()), 'alleles')
+            div = HtmlExpandableDiv('table-{}'.format(
+                self._input_informs['scheme']['name'].lower()), f'alleles ({len(hits_io)})')
             div.add_table(table_data, table_header, [('class', 'data')])
             self._report_section.add_html_object(div)
         else:
