@@ -1,8 +1,9 @@
 import os
 
-from camel.app.tools.tool import Tool
-from camel.app.io.tooliofile import ToolIOFile
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from camel.app.error.toolexecutionerror import ToolExecutionError
+from camel.app.io.tooliofile import ToolIOFile
+from camel.app.tools.tool import Tool
 
 
 class KrakenReport(Tool):
@@ -78,3 +79,13 @@ class KrakenReport(Tool):
         """
         options_string = ' '.join(self._build_options())
         self._command.command = '{} {} {}'.format(self._tool_command, self.__build_input_string(), options_string)
+
+    def _check_command_output(self):
+        """
+        Checks if the command was executed successfully.
+        :return: None
+        """
+        if 'error' in self.stderr.lower():
+            raise ToolExecutionError("Command execution failed (stderr: {}).".format(self.stderr))
+        if self._command.returncode != 0:
+            raise ToolExecutionError("Command execution failed (Exit code: {})".format(self._command.returncode))

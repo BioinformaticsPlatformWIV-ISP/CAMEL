@@ -237,8 +237,8 @@ rule Gene_detection_get_hits:
         hits_srst2=lambda wildcards: os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_HITS_SRST2.format(db=wildcards.db)) if GeneDetectionUtils.get_detection_method_key(config, wildcards.db) == 'srst2' else [],
         tsv_blast=lambda wildcards: os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_TSV_BLAST.format(db=wildcards.db)) if GeneDetectionUtils.get_detection_method_key(config, wildcards.db) == 'blast' else [],
         tsv_srst2=lambda wildcards: os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_TSV_SRST2.format(db=wildcards.db)) if GeneDetectionUtils.get_detection_method_key(config, wildcards.db) == 'srst2' else [],
-        informs_blast=lambda wildcards: os.path.join(config['working_dir'], 'gene_detection', '{db}', 'blastn', 'informs.io') if GeneDetectionUtils.get_detection_method_key(config, wildcards.db) == 'blast' else [],
-        informs_srst2=lambda wildcards: os.path.join(config['working_dir'], 'gene_detection', '{db}', 'srst2', 'informs.io') if GeneDetectionUtils.get_detection_method_key(config, wildcards.db) == 'srst2' else []
+        informs_blast=lambda wildcards: os.path.join(config['working_dir'], 'gene_detection', wildcards.db, 'blastn', 'informs.io') if GeneDetectionUtils.get_detection_method_key(config, wildcards.db) == 'blast' else [],
+        informs_srst2=lambda wildcards: os.path.join(config['working_dir'], 'gene_detection', wildcards.db, 'srst2', 'informs.io') if GeneDetectionUtils.get_detection_method_key(config, wildcards.db) == 'srst2' else []
     output:
         VAL_Hits = os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_ALL_HITS),
         TSV = os.path.join(config['working_dir'], 'gene_detection', '{db}', 'hit_selection', 'selected-tsv.io'),
