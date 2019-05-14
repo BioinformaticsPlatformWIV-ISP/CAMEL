@@ -23,7 +23,7 @@ class SPAdes(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super().__init__('spades', '3.10.0', camel)
+        super().__init__('spades', '3.13.0', camel)
         self._input_string = None
 
     def _execute_tool(self):
@@ -84,8 +84,9 @@ class SPAdes(Tool):
         :param inputs: dictionary of input files
         """
         if se_count == 0 and pe_count == 0:
-            raise InvalidInputSpecificationError("SPAdes requires at least one library of SE or PE read to work, none is found."
-                                                 "tool_inputs: {}".format(inputs))
+            raise InvalidInputSpecificationError(
+                "SPAdes requires at least one library of SE or PE read to work, none is found. tool_inputs: {}".format(
+                    inputs))
 
     def __set_long_sequences(self, key_informs, files, infiles_options):
         """
@@ -102,7 +103,8 @@ class SPAdes(Tool):
                     infiles_options.append(self.__compose_input_str('untrusted-contigs', files))
                 else:
                     raise InvalidInputSpecificationError(
-                        "Unsupported SPAdes contig input specification found {!r}. Supports only FAST{{Q/A}}_contigs(_untrusted).".format("_".join(key_informs)))
+                        "Unsupported SPAdes contig input specification found {!r}. Supports only FAST{{Q/A}}_contigs("
+                        "_untrusted).".format("_".join(key_informs)))
             else:
                 # trusted contigs
                 infiles_options.append(self.__compose_input_str('trusted-contigs', files))
@@ -134,9 +136,10 @@ class SPAdes(Tool):
             if key_informs[1] in {'SE', 'PE', 'PE-S', 'MP', 'MP-S'}:
                 if len(key_informs) != 3:
                     raise InvalidInputSpecificationError(
-                        "SPAdes input specification requires a strict format: {{FASTQ/FASTA}}_{{SE/PE/PE-S/MP/MP-S}}_{{(HQ)1..5}}. Found an unsupported one {!r}.".format(key))
+                        "SPAdes input specification requires a strict format: {{FASTQ/FASTA}}_{{SE/PE/PE-S/MP/MP-S}}_"
+                        "{{(HQ)1..5}}. Found an unsupported one {!r}.".format(key))
 
-                res = re.match("HQ(\d)", key_informs[2])
+                res = re.match(r"HQ(\d)", key_informs[2])
                 if res:
                     # HQMP reads
                     if key_informs[1] == 'MP':
