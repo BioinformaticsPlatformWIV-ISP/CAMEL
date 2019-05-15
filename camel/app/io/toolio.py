@@ -15,7 +15,7 @@ class ToolIO(object, metaclass=ABCMeta):
         self._logged = logged
 
     @property
-    def logged(self) -> bool:
+    def is_logged(self) -> bool:
         """
         Returns True if the output is logged.
         :return: True / False

@@ -106,7 +106,7 @@ class Pipeline(object):
         """
         for key, files in self._initial_input.items():
             for i in range(0, len(files)):
-                if files[i].logged:
+                if files[i].is_logged:
                     self._pipeline_service.log_initial_input(self._job_id, files[i].type_name, key, i, files[i].hash)
                     logging.debug('Initial input {} ({}) logged'.format(key, i))
 

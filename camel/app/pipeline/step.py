@@ -6,7 +6,7 @@ from snakemake.io import Wildcards
 from camel.app.camel import Camel
 from camel.app.io.toolio import ToolIO
 from camel.app.loggers.logmanager import LogManager
-from camel.app.services.stepservice import StepService
+from camel.app.services.stepservice import StepService, StepOutput
 from camel.app.tools.tool import Tool
 
 
@@ -16,7 +16,8 @@ class Step(object):
     """
 
     def __init__(self, rule_name: str, tool: Tool, camel: Camel, folder: str, config: dict,
-                 wildcards: Wildcards=None, pipeline_output: bool=False, log_step: Union[bool, None]=None, log_keys: List[str]=None) -> None:
+                 wildcards: Wildcards = None, pipeline_output: bool = False, log_step: Union[bool, None] = None,
+                 log_keys: List[str] = None) -> None:
         """
         Initializes a step.
         :param rule_name: Name of the snakerule
@@ -26,7 +27,8 @@ class Step(object):
         :param config: Snakemake config dictionary
         :param wildcards: Wildcards object from snakemake
         :param pipeline_output: Boolean to indicate whether outputs are pipeline outputs
-        :param log_step: Boolean to indicate whether outputs for this step have to be logged (overrides logging level 'step' if False)
+        :param log_step: Boolean to indicate whether outputs for this step have to be logged (overrides logging level
+            'step' if False)
         :param log_keys: List of keys from the output that need to be logged
         """
         self._name = rule_name
@@ -124,18 +126,20 @@ class Step(object):
         Logs the outputs in the database.
         :return: None
         """
-        logging.info("Logging step outputs")
-        for key, files in self.outputs.items():
-            if self._log_key(key):
-                for i in range(0, len(files)):
-                    if files[i].logged:
-                        output_data = (self._job_id, self._name, self._wildcards, files[i].type_name, key, i,
-                                       files[i].hash, self._pipeline_output)
-                        logging.debug('OUTPUT DATA: {}'.format(output_data))
-                        self._step_service.log_output(output_data)
-                        logging.debug('Output {} ({}) logged'.format(key, i))
+        logging.info(f"Logging output for step '{self.name}'")
+        for key, io_list in self.outputs.items():
+            if not self._key_is_logged(key):
+                continue
+            for index, io_out in enumerate(io_list):
+                if not io_out.is_logged:
+                    continue
+                step_output = StepOutput(
+                    self._job_id, self._name, io_out.type_name, key, index, io_out.hash, self._wildcards)
+                logging.debug('Step output data: {}'.format(step_output))
+                self._step_service.log_output(step_output)
+                logging.debug('Output {} ({}) logged'.format(key, index))
 
-    def _log_key(self, key) -> bool:
+    def _key_is_logged(self, key) -> bool:
         """
         Checks whether the files with the given output key need to be logged.
         :param key: Output key to check
