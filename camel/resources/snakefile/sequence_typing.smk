@@ -49,7 +49,7 @@ rule Typing_extract_schema_info:
         from camel.app.tools.pipelines.sequence_typing.locussetmanager import LocusSetManager
         locus_set_manager = LocusSetManager(camel)
         locus_set_manager.add_input_files({'DIR': [ToolIODirectory(input[0])]})
-        step = Step(rule, locus_set_manager, camel, params.running_dir, config)
+        step = Step(rule, locus_set_manager, camel, params.running_dir, config, wildcards)
         step.run_step()
         SnakemakeUtils.dump_object(locus_set_manager.informs, output.INFORMS)
 
@@ -127,7 +127,7 @@ rule Typing_detect_sequence_type:
         from camel.app.tools.pipelines.sequence_typing.sequencetypedetector import SequenceTypeDetector
         sequence_type_detector = SequenceTypeDetector(camel)
         SnakemakeUtils.add_pickle_inputs(sequence_type_detector, input)
-        step = Step(rule, sequence_type_detector, camel, params.running_dir, config)
+        step = Step(rule, sequence_type_detector, camel, params.running_dir, config, wildcards)
         sequence_type_detector.update_parameters(allele_wildcard='N', allele_absent_symbol='0')
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(sequence_type_detector, output)
@@ -182,7 +182,7 @@ rule Typing_create_report:
            reporter.add_input_informs({'ST': SnakemakeUtils.load_object(input.INFORMS_ST)})
         SnakemakeUtils.add_pickle_inputs(reporter, input, excluded_keys=['INFORMS_ST'])
         reporter.add_input_files({'VAL_SAMPLE': [ToolIOValue(params.sample_name)]})
-        step = Step(rule, reporter, camel, params.running_dir, config)
+        step = Step(rule, reporter, camel, params.running_dir, config, wildcards)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
 

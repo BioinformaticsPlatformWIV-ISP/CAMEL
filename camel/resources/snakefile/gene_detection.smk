@@ -30,7 +30,7 @@ rule Gene_detection_db_manager:
         from camel.app.tools.pipelines.genedetection.dbmanager import DBManager
         db_manager = DBManager(camel)
         db_manager.add_input_files({'DIR': [ToolIODirectory(params.db_path)]})
-        step = Step(rule, db_manager, camel, params.running_dir, config)
+        step = Step(rule, db_manager, camel, params.running_dir, config, wildcards)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(db_manager, output)
 
@@ -50,7 +50,7 @@ rule Gene_detection_blastn:
         from camel.app.tools.blast.blastn import Blastn
         blastn = Blastn(camel)
         SnakemakeUtils.add_pickle_inputs(blastn, input)
-        step = Step(rule, blastn, camel, params.running_dir, config)
+        step = Step(rule, blastn, camel, params.running_dir, config, wildcards)
         blastn.update_parameters(threads=1)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(blastn, output)
@@ -69,7 +69,7 @@ rule Gene_detection_tsv_generation:
         from camel.app.tools.blast.blastformatter import BlastFormatter
         blast_formatter = BlastFormatter(camel)
         SnakemakeUtils.add_pickle_inputs(blast_formatter, input)
-        step = Step(rule, blast_formatter, camel, params.running_dir, config)
+        step = Step(rule, blast_formatter, camel, params.running_dir, config, wildcards)
         blast_formatter.update_parameters(output_format='"7 pident sseqid sseq slen qseqid qstart qend score"')
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(blast_formatter, output)
@@ -95,7 +95,7 @@ rule Gene_detection_hit_filtering:
         from camel.app.tools.pipelines.genedetection.blasthitfiltering import BlastHitFiltering
         hit_filtering = BlastHitFiltering(camel)
         SnakemakeUtils.add_pickle_inputs(hit_filtering, input)
-        step = Step(rule, hit_filtering, camel, params.running_dir, config)
+        step = Step(rule, hit_filtering, camel, params.running_dir, config, wildcards)
 
         # Update parameters
         hit_filtering.update_parameters(output_filename=os.path.join(params.running_dir, params.output_filename))
@@ -124,7 +124,7 @@ rule Gene_detection_text_alignment_generation:
         from camel.app.tools.blast.blastformatter import BlastFormatter
         blast_formatter = BlastFormatter(camel)
         SnakemakeUtils.add_pickle_inputs(blast_formatter, input)
-        step = Step(rule, blast_formatter, camel, params.running_dir, config)
+        step = Step(rule, blast_formatter, camel, params.running_dir, config, wildcards)
         blast_formatter.update_parameters(output_format='0', num_alignments=1000)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(blast_formatter, output)
@@ -145,7 +145,7 @@ rule Gene_detection_text_alignment_extraction:
         from camel.app.tools.pipelines.genedetection.alignmentextractor import AlignmentExtractor
         alignment_extractor = AlignmentExtractor(camel)
         SnakemakeUtils.add_pickle_inputs(alignment_extractor, input)
-        step = Step(rule, alignment_extractor, camel, params.running_dir, config)
+        step = Step(rule, alignment_extractor, camel, params.running_dir, config, wildcards)
         step.run_step()
         hits_with_alignment = []
         for io_value, alignment in zip(SnakemakeUtils.load_object(input.VAL_Hits),
@@ -176,7 +176,7 @@ rule Gene_detection_srst2:
         input_files = SnakemakeUtils.load_object(input.FASTQ)
         SnakemakeUtils.add_pickle_input(srst2, 'FASTA', input.FASTA)
         srst2.add_input_files({'FASTQ_PE' if len(input_files) == 2 else 'FASTQ_SE': input_files})
-        step = Step(rule, srst2, camel, params.running_dir, config)
+        step = Step(rule, srst2, camel, params.running_dir, config, wildcards)
 
         # Update parameters
         srst2.update_parameters(threads=threads)
@@ -214,7 +214,7 @@ rule Gene_detection_srst2_hit_extraction:
     run:
         from camel.app.tools.pipelines.genedetection.srst2hitextractor import SRST2HitExtractor
         extractor = SRST2HitExtractor(camel)
-        step = Step(rule, extractor, camel, params.running_dir, config)
+        step = Step(rule, extractor, camel, params.running_dir, config, wildcards)
         SnakemakeUtils.add_pickle_inputs(extractor, input)
         extractor.update_parameters(output_filename=os.path.join(params.running_dir, params.output_filename))
 
@@ -286,7 +286,7 @@ rule Gene_detection_report:
     run:
         from camel.app.tools.pipelines.genedetection.htmlreportergenedetection import HtmlReporterGeneDetection
         reporter = HtmlReporterGeneDetection(camel)
-        step = Step(rule, reporter, camel, params.running_dir, config)
+        step = Step(rule, reporter, camel, params.running_dir, config, wildcards)
         if 'force_detection_method' in params.config_data:
             reporter.update_parameters(forced_detection_method = params.config_data['force_detection_method'])
         reporter.add_input_files({'SAMPLE_NAME': [ToolIOValue(params.sample_name)]})
