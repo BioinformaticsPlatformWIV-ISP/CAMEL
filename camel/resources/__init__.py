@@ -4,6 +4,10 @@ _resources_folder = os.path.dirname(os.path.realpath(__file__))
 # CSS
 CSS_STYLE = os.path.join(_resources_folder, 'css', 'style.css')
 
+# FONTS
+FONT_SANS = os.path.join(_resources_folder, 'fonts', 'FreeSans.ttf')
+FONT_SANS_BOLD = os.path.join(_resources_folder, 'fonts', 'FreeSansBold.ttf')
+
 # YAML
 YAML_ASSEMBLY_VELVETOPTIMISER = os.path.join(_resources_folder, 'yaml', 'assembly_velvetoptimiser.yml')
 YAML_QUALITY_CHECKS = os.path.join(_resources_folder, 'yaml', 'quality_checks.yml')
