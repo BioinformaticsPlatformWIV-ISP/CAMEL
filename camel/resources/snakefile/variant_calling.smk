@@ -76,6 +76,7 @@ rule Variant_calling_read_mapping:
     params:
         running_dir=os.path.join(config['working_dir'], 'variant_calling', 'read_mapping')
     threads: 4
+    priority: 1
     run:
         from camel.app.tools.bowtie2.bowtie2map import Bowtie2Map
         bowtie2_map = Bowtie2Map(camel)
@@ -139,7 +140,6 @@ rule Variant_calling_mpileup:
         min_mapping_quality = config['variant_calling'].get('minimal_mq'),
         min_base_quality = config['variant_calling'].get('minimal_bq'),
         disable_baq = config['variant_calling'].get('disable_baq')
-    priority: 10
     threads: 8
     run:
         from camel.app.tools.samtools.samtoolsmpileup import SamtoolsMPileup
