@@ -79,6 +79,22 @@ class TestFastqUtils(unittest.TestCase):
         """
         self.assertEqual(FastqUtils.get_sample_name('/data/temp/my_sample_1.fastq'), 'my_sample')
 
+    def test_get_sample_name_se(self) -> None:
+        """
+        Tests the get sample name function for a single end sample name.
+        :return: None
+        """
+        self.assertEqual(FastqUtils.get_sample_name(
+            '/data/temp/my_sample.fastq', FastqUtils.PATTERN_FQ_SE), 'my_sample')
+
+    def test_get_sample_name_se_gzipped(self) -> None:
+        """
+        Tests the get sample name function for a single end sample name.
+        :return: None
+        """
+        self.assertEqual(FastqUtils.get_sample_name(
+            '/data/temp/my_sample.fastq.gz', FastqUtils.PATTERN_FQ_SE), 'my_sample')
+
 
 if __name__ == '__main__':
     unittest.main()
