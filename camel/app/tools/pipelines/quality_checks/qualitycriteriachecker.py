@@ -14,7 +14,7 @@ class QualityCriteriaChecker(Tool):
         Initialize this tool.
         :param camel: CAMEL instance
         """
-        super(QualityCriteriaChecker, self).__init__('Quality Criteria Checker', '0.1', camel)
+        super().__init__('Advanced QC: quality checker', '0.1', camel)
 
     def _check_input(self):
         """
