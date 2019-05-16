@@ -2,7 +2,8 @@ from typing import Dict, Any
 
 import os
 
-from camel.resources.snakefile.read_trimming import OUTPUT_READ_TRIMMING_REPORT, FOLDER_TRIMMING
+from camel.resources.snakefile.read_trimming import OUTPUT_READ_TRIMMING_REPORT, FOLDER_TRIMMING, \
+    OUTPUT_READ_TRIMMING_SUMMARY
 
 FOLDER_TRIMMING_IT = 'read_trimming_it'
 OUTPUT_TRIMMING_IT_REPORT = os.path.join('read_trimming_it', 'report', 'html.io')
@@ -20,6 +21,21 @@ def get_read_trimming_report(config: Dict[str, Any]) -> str:
         relative_path = OUTPUT_READ_TRIMMING_REPORT
     elif config['read_type'] == 'iontorrent':
         relative_path = OUTPUT_TRIMMING_IT_REPORT
+    else:
+        raise ValueError(f"Invalid read type: '{config['read_type']}'")
+    return os.path.join(config['working_dir'], relative_path)
+
+
+def get_read_trimming_summary(config: Dict[str, Any]) -> str:
+    """
+    Returns the path to the read trimming summary file.
+    :param config: Snakemake configuration
+    :return: Path to read trimming summary file
+    """
+    if ('read_type' not in config) or (config['read_type'] == 'illumina'):
+        relative_path = OUTPUT_READ_TRIMMING_SUMMARY
+    elif config['read_type'] == 'iontorrent':
+        relative_path = OUTPUT_TRIMMING_IT_SUMMARY
     else:
         raise ValueError(f"Invalid read type: '{config['read_type']}'")
     return os.path.join(config['working_dir'], relative_path)
