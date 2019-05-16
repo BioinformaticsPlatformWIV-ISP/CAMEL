@@ -50,7 +50,8 @@ class SamtoolsIndex(Samtools):
         else:
             basename = self._tool_inputs['BAM'][0].basename
         new_path = os.path.join(self._folder, basename)
-        os.symlink(self._tool_inputs['BAM'][0].path, new_path)
+        if (not os.path.islink(new_path)) and (new_path != self._tool_inputs['BAM'][0].path):
+            os.symlink(self._tool_inputs['BAM'][0].path, new_path)
         return new_path
 
     def __build_command(self, input_file_path):
