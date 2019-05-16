@@ -140,7 +140,7 @@ rule Variant_calling_mpileup:
         min_mapping_quality = config['variant_calling'].get('minimal_mq'),
         min_base_quality = config['variant_calling'].get('minimal_bq'),
         disable_baq = config['variant_calling'].get('disable_baq')
-    threads: 8
+    threads: 1
     run:
         from camel.app.tools.samtools.samtoolsmpileup import SamtoolsMPileup
         samtools_mpileup = SamtoolsMPileup(camel)
