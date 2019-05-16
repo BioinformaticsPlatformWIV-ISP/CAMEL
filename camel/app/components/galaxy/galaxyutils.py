@@ -26,7 +26,7 @@ class GalaxyUtils(object):
             logging.debug("Filename does not match any standard FASTQ format")
 
         # Trimmomatic output files
-        m = re.search(r'.+ on {}'.format(FastqUtils.PATTERN_FQ), fastq_pe_names[0])
+        m = re.search(r'.+ on {}'.format(FastqUtils.PATTERN_FQ_PE), fastq_pe_names[0])
         if m:
             return m.group(1)
 
