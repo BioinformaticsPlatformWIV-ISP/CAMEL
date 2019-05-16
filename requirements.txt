@@ -4,6 +4,7 @@ bs4==0.0.1
 Cython==0.29.5
 humanize==0.5.1
 numpy==1.13.0
+Pillow==5.4.1
 psycopg2-binary==2.7.6
 pydotplus==2.0.2
 PyVCF==0.6.8
