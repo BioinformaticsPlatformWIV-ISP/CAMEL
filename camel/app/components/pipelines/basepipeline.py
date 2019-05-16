@@ -1,6 +1,6 @@
 import argparse
 import logging
-from typing import Optional, Any, Dict, List
+from typing import Optional, Any, Dict, List, Tuple
 
 import abc
 import os
@@ -108,16 +108,24 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         else:
             return FastqUtils.get_sample_name(self._args.fastq_pe[0])
 
+    def _get_fastq_input_links(self) -> List[List[Tuple[str, str]]]:
+        """
+        Returns the links to the input FASTQ files.
+        :return: Links
+        """
+        links = []
+        for read_nb, path in enumerate(self._args.fastq_pe, start=1):
+            gzipped = FileSystemHelper.is_gzipped(path)
+            links.append([path, f"{self.sample_name}_{read_nb}.fastq{'.gz' if gzipped else ''}"])
+        return links
+
     def _symlink_input(self) -> List[Dict[str, Any]]:
         """
         Symlinks the input files.
         :return: List of FASTQ input dictionaries
         """
         # Determine link names
-        links = []
-        for read_nb, path in enumerate(self._args.fastq_pe, start=1):
-            gzipped = FileSystemHelper.is_gzipped(path)
-            links.append([path, f"{self.sample_name}_{read_nb}.fastq{'.gz' if gzipped else ''}"])
+        links = self._get_fastq_input_links()
 
         # Create directory
         dir_links = os.path.join(self._args.working_dir, 'input')
