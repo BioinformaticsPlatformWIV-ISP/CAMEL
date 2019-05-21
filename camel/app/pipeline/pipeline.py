@@ -105,10 +105,11 @@ class Pipeline(object):
         :return: None
         """
         for key, files in self._initial_input.items():
-            for i in range(0, len(files)):
-                if files[i].is_logged:
-                    self._pipeline_service.log_initial_input(self._job_id, files[i].type_name, key, i, files[i].hash)
-                    logging.debug('Initial input {} ({}) logged'.format(key, i))
+            for i, file_ in enumerate(files):
+                if not file_.is_logged:
+                    continue
+                self._pipeline_service.log_initial_input(self._job_id, file_.type_name, key, i, file_.hash)
+                logging.debug('Initial input {} ({}) logged'.format(key, i))
 
     def log_config_file(self, config_file: str, galaxy_job_id: Optional[str] = None) -> None:
         """
