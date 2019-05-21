@@ -1,4 +1,5 @@
 import datetime
+import logging
 
 from camel.app.connection.connection import Connection
 from camel.app.services.service import Service
@@ -40,6 +41,7 @@ class PipelineService(Service):
         Inserts a new job into the database and returns the resulting id
         :return: Job id
         """
+        logging.info(f"Inserting pipeline job (host: {self.db_connection.host}, db: {self.db_connection.db_name})")
         date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
         sql = """
           INSERT INTO pipelines.pipeline_job (date, pipeline_id)
