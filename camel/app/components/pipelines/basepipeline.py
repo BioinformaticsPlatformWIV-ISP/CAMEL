@@ -167,7 +167,7 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         :param input_data: FASTQ input files
         :return: Template data
         """
-        return {
+        template_data = {
             'pipeline': {
                 'name': self._name,
                 'version': f"{self._version}",
@@ -182,3 +182,7 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
             'detection_method': self._args.detection_method,
             'read_trimming': {'export_fastq': self._args.report_include_fastq}
         }
+        if self._pipeline.is_logged:
+            template_data['logging_level'] = self._pipeline.logging_level
+            template_data['pipeline_job_id'] = self._pipeline.job_id
+        return template_data
