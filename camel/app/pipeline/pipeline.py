@@ -30,13 +30,12 @@ class Pipeline(object):
         if not self.is_valid_logging_level(logging_level):
             raise ValueError(f"Logging level '{logging_level}' is not a valid logging level!")
         self._logging_level = logging_level
-        self._db_logging = logging_level in ('pipeline', 'step')
-        if self._db_logging:
+        if self.is_logged:
             self._pipeline_service = PipelineService(self._name, camel.connection)
             self._job_id = self._pipeline_service.insert_pipeline_job() if job_id is None else job_id
         else:
             self._pipeline_service = None
-        logging.info("Created pipeline '{}'".format(self._name))
+        logging.info("Created pipeline '{}' - logging level: '{}'".format(self._name, self._logging_level))
 
     @property
     def job_id(self) -> Optional[int]:
@@ -70,6 +69,14 @@ class Pipeline(object):
         """
         return self._logging_level
 
+    @property
+    def is_logged(self) -> bool:
+        """
+        Returns True if the pipeline should be logged ('step' or 'pipeline' level)
+        :return: True if the pipeline is logged
+        """
+        return self._logging_level in ('pipeline', 'step')
+
     @staticmethod
     def is_valid_logging_level(logging_level: str) -> bool:
         """
@@ -86,7 +93,7 @@ class Pipeline(object):
         :return: None
         """
         self._initial_input = files
-        if self._db_logging:
+        if self.is_logged:
             self._log_initial_input()
 
     def get_initial_input(self, key: str = None) -> list:
@@ -118,7 +125,7 @@ class Pipeline(object):
         :param config_file: Config file to export
         :return: None
         """
-        if self._db_logging is False:
+        if self.is_logged is False:
             logging.info("Logging disabled, config file not exported")
             return
         export_path = os.path.join(Camel.get_instance().config['config_dump_dir'], '{}.yml.gz'.format('_'.join([
@@ -137,7 +144,7 @@ class Pipeline(object):
         :param error: Error raised by Snakemake
         :return: None
         """
-        if self._db_logging is False:
+        if self.is_logged is False:
             logging.info("Logging disabled, error log not exported")
             output_logfile = 'NA (logging to file is disabled)'
         else:
