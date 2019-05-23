@@ -57,7 +57,6 @@ class SpoTyping(Tool):
         self._tool_outputs['VAL_type_octal'] = [ToolIOValue(type_octal)]
         self._tool_outputs['LOG'] = [ToolIOFile(os.path.join(self._folder, '{}.log'.format(
             self._parameters['output_basename'].value)))]
-        self._informs['version'] = self.get_dependency_version('SpoTyping')
 
     def _parse_output_file(self):
         """

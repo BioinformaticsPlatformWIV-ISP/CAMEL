@@ -261,7 +261,6 @@ class Bowtie2Map(Bowtie2):
         Analyse the result of Bowtie2 reads mapping, and extra result statistics into tool inform
         :return: None
         """
-        self.informs['version'] = self.get_dependency_version('bowtie2')
         self.informs['tool_name'] = 'Bowtie2'
         self.informs['mod'] = self._mod
 

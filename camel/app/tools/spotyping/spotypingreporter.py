@@ -45,7 +45,7 @@ class SpoTypingReporter(Tool):
         Executes this tool.
         :return: None
         """
-        self._section = HtmlReportSection(SpoTypingReporter.TITLE, subtitle=self._input_informs['metadata']['version'])
+        self._section = HtmlReportSection(SpoTypingReporter.TITLE, subtitle=self._input_informs['metadata']['_name'])
         metadata = self.__extract_metadata(self._tool_inputs['VAL_type_octal'][0].value)
         table_data = [
             ['Binary:', self._tool_inputs['VAL_type_binary'][0].value],

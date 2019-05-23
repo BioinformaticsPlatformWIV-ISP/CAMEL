@@ -45,7 +45,7 @@ class HtmlReporterContamination(Tool):
         :return: None
         """
         self._report_section = HtmlReportSection(
-            HtmlReporterContamination.TITLE, subtitle=self._input_informs['kraken']['version'])
+            HtmlReporterContamination.TITLE, subtitle=self._input_informs['kraken']['_name'])
         self.__add_species_table()
         self.__add_detailed_table(self._tool_inputs['TSV'][0].path)
         self.__add_krona_report()

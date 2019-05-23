@@ -27,7 +27,7 @@ class HtmlReporterAssembly(Tool):
         Executes this tool.
         :return: None
         """
-        self._report_section = HtmlReportSection('Assembly', subtitle=self._input_informs['spades']['version'])
+        self._report_section = HtmlReportSection('Assembly', subtitle=self._input_informs['spades']['_name'])
         self.__add_assembly_info()
         self.__add_assembly_download_link()
         self._tool_outputs['VAL_HTML'] = [ToolIOValue(self._report_section, False)]

@@ -27,7 +27,7 @@ class ReporterTrimming(Tool):
         Executes this tool.
         :return: None
         """
-        self._report_section = HtmlReportSection('Read trimming', subtitle=self._input_informs['trimming']['version'])
+        self._report_section = HtmlReportSection('Read trimming', subtitle=self._input_informs['trimming']['_name'])
         self.__add_fastqc_reports('Pre-trimming', 'pre_trimming', 'HTML_Pre')
         self.__add_trimming_section_pe()
         if self._parameters['export_fastq'] is not None and self._parameters['export_fastq'].as_boolean() is True:

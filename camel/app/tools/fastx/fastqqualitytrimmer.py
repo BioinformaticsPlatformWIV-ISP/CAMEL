@@ -53,4 +53,3 @@ class FastqQualityTrimmer(Tool):
         self._informs['input_reads'] = input_reads
         self._informs['output_reads'] = output_reads
         self._informs['perc_surviving'] = 100.0 * output_reads / input_reads
-        self._informs['version'] = self.get_dependency_version('fastx-toolkit')

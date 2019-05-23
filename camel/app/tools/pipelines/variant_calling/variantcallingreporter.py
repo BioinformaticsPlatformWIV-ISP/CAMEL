@@ -53,7 +53,7 @@ class VariantCallingReporter(Tool):
         :return: None
         """
         tool_versions = ', '.join([
-            self._input_informs['mapping']['version'], self._input_informs['calling']['version']])
+            self._input_informs['mapping']['_name'], self._input_informs['calling']['_name']])
         self._section = HtmlReportSection("Variant calling", subtitle=tool_versions)
         self.__add_reference_link()
         self.__add_mapping_info()

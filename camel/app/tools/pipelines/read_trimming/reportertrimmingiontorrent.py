@@ -25,7 +25,7 @@ class ReporterTrimmingIonTorrent(Tool):
         Executes this tool.
         :return: None
         """
-        self._report_section = HtmlReportSection('Read trimming', subtitle=self._input_informs['filt_len']['version'])
+        self._report_section = HtmlReportSection('Read trimming', subtitle=self._input_informs['filt_len']['_name'])
         self.__add_fastqc_report('Pre-filtering', 'pre', 'HTML_Pre')
         self.__add_filtering_section()
         self.__add_fastqc_report('Post-filtering', 'post', 'HTML_Post')

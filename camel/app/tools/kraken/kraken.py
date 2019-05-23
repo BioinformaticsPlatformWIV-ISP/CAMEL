@@ -34,7 +34,6 @@ class Kraken(Tool):
         self.__build_command()
         self._execute_command()
         self.__set_output()
-        self.informs['version'] = self.get_dependency_version('kraken_local')
 
     def _check_input(self):
         """
@@ -45,14 +44,15 @@ class Kraken(Tool):
         :return: None
         """
         if not any(key in self._tool_inputs for key in ('FASTA', 'FASTQ', 'FASTQ_PE')) or 'DB' not in self._tool_inputs:
-            raise InvalidInputSpecificationError('FASTA/Q input or DB input missing for Kraken: {!r}'.format(self._tool_inputs))
+            raise InvalidInputSpecificationError('FASTA/Q input or DB input missing for Kraken: {!r}'.format(
+                self._tool_inputs))
         for key, value in self._tool_inputs.items():
             if (key != 'FASTQ_PE' and len(value) > 1) or (key == 'FASTQ_PE' and len(value) != 2):
                 raise InvalidInputSpecificationError('There is more than 1 FASTA/Q file or more/less than two FASTQ_PE '
                                                      'files given for Kraken: {!r}'.format(self._tool_inputs))
         if len(self._tool_inputs.keys()) > 2:
-            raise InvalidInputSpecificationError('Too many input keys given for Kraken '
-                                                 '((FASTA or FASTQ or FASTQ_PE) and DB): {!r}'.format(self._tool_inputs))
+            raise InvalidInputSpecificationError('Too many input keys given for Kraken ((FASTA or FASTQ or FASTQ_PE) '
+                                                 'and DB): {!r}'.format(self._tool_inputs))
 
     def __get_basename(self):
         """

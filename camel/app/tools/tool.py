@@ -84,6 +84,7 @@ class Tool(object, metaclass=abc.ABCMeta):
         """
         return self._dependencies
 
+    @DeprecationWarning
     def get_dependency_version(self, name: str, full: bool = True) -> str:
         """
         Returns the version of the given dependency.
