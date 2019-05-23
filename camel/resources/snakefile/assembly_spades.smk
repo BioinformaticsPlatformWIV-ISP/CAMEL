@@ -51,7 +51,7 @@ rule Assembly_spades:
         INFORMS=os.path.join(config['working_dir'], OUTPUT_ASSEMBLY_INFORMS)
     params:
         running_dir=os.path.join(config['working_dir'], 'assembly_spades', 'spades'),
-        kmers=config['assembly'].get('kmers') if 'assembly' in config else None
+        assembly_options=config['assembly'] if 'assembly' in config else {}
     threads: 8
     priority: 1
     run:
@@ -59,8 +59,7 @@ rule Assembly_spades:
         spades = SPAdes(camel)
         spades.add_input_files(SnakemakeUtils.load_object(input.INPUT_DICT))
         step = Step(rule, spades, camel, params.running_dir, config)
-        if params.kmers is not None:
-            spades.update_parameters(kmers=params.kmers)
+        spades.update_parameters(**params.assembly_options)
         spades.update_parameters(threads=threads)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(spades, output)
@@ -73,7 +72,7 @@ rule Assembly_filter_small_contigs:
         FASTA = os.path.join(config['working_dir'], 'assembly_spades', 'spades', 'fasta.io')
     output:
         FASTA = os.path.join(config['working_dir'], 'assembly_spades', 'filtering', 'fasta.io'),
-        INFORMS = os.path.join(config['working_dir'], 'assembly_spades', 'filtering', 'informs.io'),
+        INFORMS = os.path.join(config['working_dir'], 'assembly_spades', 'filtering', 'informs.io')
     params:
         running_dir = os.path.join(config['working_dir'], 'assembly_spades', 'filtering')
     run:
