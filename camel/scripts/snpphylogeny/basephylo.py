@@ -63,22 +63,23 @@ class BasePhylo(object, metaclass=abc.ABCMeta):
         Returns the input for the read mapping.
         :return: Mapping input per sample
         """
+        fq_by_sample = SnpPhylogenyUtils.symlink_input_files(self._samples, self._args.working_dir)
         if self._args.trim_reads:
             trimming_output_by_sample = SnpPhylogenyUtils.trim_all_reads(
-                self._samples, os.path.join(self._args.working_dir, 'trimming'))
+                fq_by_sample, os.path.join(self._args.working_dir, 'trimming'))
             SnpPhylogenyUtils.add_trimming_section(self._report, trimming_output_by_sample)
             mapping_input_by_sample = {}
             for sample, output in trimming_output_by_sample.items():
                 mapping_input_by_sample[sample] = MappingInput(
                     pe=output.trimmed_reads_pe,
-                    se_fwd=output.trimmed_reads_se_fwd[0],
-                    se_rev=output.trimmed_reads_se_rev[0]
+                    se_fwd=output.trimmed_reads_se_fwd[0] if len(output.trimmed_reads_se_fwd) > 0 else None,
+                    se_rev=output.trimmed_reads_se_rev[0] if len(output.trimmed_reads_se_rev) > 0 else None
                 )
             self._informs.append(trimming_output_by_sample[self._samples[0]].informs_trimmomatic)
             return mapping_input_by_sample
         else:
             SnpPhylogenyUtils.add_trimming_section_empty(self._report)
-            return {s: MappingInput(pe=s.reads_raw) for s in self._samples}
+            return {s: MappingInput(pe=fq) for s, fq in fq_by_sample.items()}
 
     def _run_model_selection(self, snp_matrix: ToolIOFile) -> ModelSelection:
         """

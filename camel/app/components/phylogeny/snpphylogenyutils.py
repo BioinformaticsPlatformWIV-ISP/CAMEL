@@ -1,6 +1,8 @@
 import argparse
 import datetime
+import logging
 from dataclasses import dataclass
+from pathlib import Path
 from typing import List, Dict, Optional
 
 import os
@@ -166,24 +168,47 @@ class SnpPhylogenyUtils(object):
         return sorted(samples, key=lambda s: s.name_valid)
 
     @staticmethod
-    def trim_all_reads(samples: List[Sample], working_dir: str, threads: int = 8) -> Dict[
+    def symlink_input_files(samples: List[Sample], dir_working: str) -> Dict[Sample, List[ToolIOFile]]:
+        """
+        This function creates symlinks for the raw read files that belong to the given samples.
+        :param samples: Samples
+        :param dir_working: Working directory
+        :return: Symlink locations by sample
+        """
+        logging.info(f"Creating symlinks for input files for {len(samples)} samples")
+        symlink_dir = Path(dir_working) / 'input'
+        if not symlink_dir.exists():
+            os.makedirs(str(symlink_dir))
+        fq_by_sample = {s: [] for s in samples}
+        for sample in samples:
+            for nb, fq_file in enumerate(sample.reads_raw, 1):
+                is_gzipped = FileSystemHelper.is_gzipped(fq_file.path)
+                path_link = symlink_dir / f"{sample.name_valid}_1.fastq{'.gz' if is_gzipped else ''}"
+                if path_link.exists():
+                    os.remove(str(path_link))
+                os.symlink(fq_file.path, str(path_link))
+                fq_by_sample[sample].append(ToolIOFile(str(path_link)))
+        return fq_by_sample
+
+    @staticmethod
+    def trim_all_reads(fq_by_sample: Dict[Sample, List[ToolIOFile]], working_dir: str, threads: int = 8) -> Dict[
             Sample, ReadTrimmingWrapper.ReadTrimmingOutput]:
         """
         Trims all the reads in parallel using Snakemake.
-        :param samples: List of samples
+        :param fq_by_sample: FASTQ files by sample
         :param working_dir: Working directory
         :param threads: Number of threads
         :return: None
         """
         config_data = {
             'working_dir': working_dir,
-            'samples': {s.name_valid: [f.path for f in s.reads_raw] for s in samples}}
+            'samples': {s.name_valid: [f.path for f in fq] for s, fq in fq_by_sample.items()}}
         config_file = SnakePipelineUtils.generate_config_file(config_data, working_dir)
         output_file = os.path.join(working_dir, TRIMMING_ALL)
         SnakePipelineUtils.run_snakemake(
             SNAKEFILE_TRIMMING_ALL, config_file, [output_file], working_dir, threads)
         trimming_out_by_sample = SnakemakeUtils.load_object(output_file)
-        return {s: trimming_out_by_sample[s.name_valid] for s in samples}
+        return {s: trimming_out_by_sample[s.name_valid] for s in fq_by_sample}
 
     @staticmethod
     def add_trimming_section_empty(report: HtmlReport) -> None:
