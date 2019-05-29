@@ -183,7 +183,7 @@ class SnpPhylogenyUtils(object):
         for sample in samples:
             for nb, fq_file in enumerate(sample.reads_raw, 1):
                 is_gzipped = FileSystemHelper.is_gzipped(fq_file.path)
-                path_link = symlink_dir / f"{sample.name_valid}_1.fastq{'.gz' if is_gzipped else ''}"
+                path_link = symlink_dir / f"{sample.name_valid}_{nb}.fastq{'.gz' if is_gzipped else ''}"
                 if path_link.exists():
                     os.remove(str(path_link))
                 os.symlink(fq_file.path, str(path_link))
