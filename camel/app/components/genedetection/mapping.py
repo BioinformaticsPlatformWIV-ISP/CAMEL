@@ -26,6 +26,14 @@ class Mapping(object):
         with open(input_file) as handle:
             return Mapping(json.load(handle))
 
+    @property
+    def content(self) -> Dict[str, str]:
+        """
+        Returns the mapping content.
+        :return: Content
+        """
+        return self._content
+
     def __repr__(self) -> str:
         """
         Returns the printable representation of the mapping.
