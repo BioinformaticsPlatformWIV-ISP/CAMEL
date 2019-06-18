@@ -48,7 +48,8 @@ class MainPointFinder(object):
         argument_parser.add_argument('--kmers', help="Kmers to use for assembly")
         argument_parser.add_argument('--report-include-fastq', action='store_true')
         argument_parser.add_argument('--species', required=True, choices=[
-            'e.coli', 'gonorrhoeae', 'campylobacter', 'salmonella', 'tuberculosis'])
+            'campylobacter', 'enterococcus_faecalis', 'enterococcus_faecium', 'escherichia_coli', 'klebsiella',
+            'mycobacterium_tuberculosis', 'neisseria_gonorrhoeae', 'plasmodium_falciparum', 'salmonella'])
         return argument_parser.parse_args()
 
     def run(self) -> None:

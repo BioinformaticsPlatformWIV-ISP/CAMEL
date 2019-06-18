@@ -45,7 +45,7 @@ class TestPointFinder(unittest.TestCase):
             output_html=output_file_report,
             output_dir=os.path.dirname(output_file_report),
             working_dir=self.running_dir,
-            species='e.coli'
+            species='escherichia_coli'
         )
         main = MainPointFinder(args)
         main.run()
@@ -66,7 +66,7 @@ class TestPointFinder(unittest.TestCase):
             output_html=output_file_report,
             output_dir=os.path.dirname(output_file_report),
             working_dir=self.running_dir,
-            species='e.coli'
+            species='escherichia_coli'
         )
         main = MainPointFinder(args)
         main.run()
@@ -87,7 +87,7 @@ class TestPointFinder(unittest.TestCase):
             output_html=output_file_report,
             output_dir=os.path.dirname(output_file_report),
             working_dir=self.running_dir,
-            species='e.coli',
+            species='escherichia_coli',
             trim_reads=False,
             kmers=None,
             threads=4

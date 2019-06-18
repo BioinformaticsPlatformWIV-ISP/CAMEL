@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 
 import os
 import re
@@ -21,7 +22,7 @@ class PointFinder(Tool):
         Initializes this tool.
         :param camel: CAMEL instance
         """
-        super().__init__('PointFinder', '3.0', camel)
+        super().__init__('PointFinder', '20190227', camel)
 
     def _check_input(self):
         """
@@ -54,8 +55,9 @@ class PointFinder(Tool):
             'source $VENV;',
             self._tool_command,
             '--inputfiles {}'.format(self._tool_inputs['FASTA'][0].path),
+            '--method blastn',
             '--databasePath $POINTFINDER_DB',
-            '--blastPath {}'.format(blastn_path),
+            '--method_path {}'.format(blastn_path),
             '--out_path {}'.format(self._folder),
             ' '.join(self._build_options())
             ])
@@ -94,8 +96,11 @@ class PointFinder(Tool):
         Sets the output of this tool.
         :return: None
         """
-        self._tool_outputs['TSV'] = [ToolIOFile(os.path.join(self._folder, 'PointFinder_results.txt'))]
-        self._tool_outputs['TXT'] = [ToolIOFile(os.path.join(self._folder, 'PointFinder_table.txt'))]
+        output_dir = Path(self._folder)
+        self._tool_outputs['TSV'] = [ToolIOFile(next(
+            str(f) for f in output_dir.iterdir() if f.name.endswith('_results.tsv')))]
+        self._tool_outputs['TXT'] = [ToolIOFile(next(
+            str(f) for f in output_dir.iterdir() if f.name.endswith('_HTMLtable.txt')))]
 
     def _check_command_output(self):
         """

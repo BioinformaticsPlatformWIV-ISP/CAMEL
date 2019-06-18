@@ -1,7 +1,7 @@
-dependencies: [blast/2.6.0, PointFinder/3.0]
+dependencies: [blast/2.6.0, PointFinder/20190227]
 parameters:
-  database: {default: true, mandatory: true, option: --species, value: '''e.coli'''}
+  database: {default: true, mandatory: true, option: --species, value: '''escherichia_coli'''}
   min_cov: {default: false, mandatory: false, option: --min_cov, value: '60'}
   min_identity: {default: false, mandatory: false, option: --threshold, value: '80'}
-  unknown_mutations: {default: true, mandatory: false, option: --unknown_mut, value: 'true'}
-tool_command: PointFinder-3.0.py
+  unknown_mutations: {default: true, mandatory: false, option: --unknown_mut, value: null}
+tool_command: PointFinder.py
