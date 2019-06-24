@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Union
 
 import os
 
@@ -35,7 +35,8 @@ class AssemblyWrapper(object):
         self._output = None
 
     def run_workflow(self, sample_name: str, reads_pe: List[ToolIOFile], reads_se_fwd: List[ToolIOFile],
-                     reads_se_rev: List[ToolIOFile], kmers: str = None, threads: int = 8) -> None:
+                     reads_se_rev: List[ToolIOFile], kmers: str = None, cov_cutoff: Union[str, int] = 'off',
+                     threads: int = 8) -> None:
         """
         Runs the read trimming workflow.
         :param reads_pe: Paired end reads
@@ -43,11 +44,12 @@ class AssemblyWrapper(object):
         :param reads_se_rev: Single end reverse reads
         :param sample_name: Sample name
         :param kmers: Comma separated list of Kmer sizes to use for assembly
+        :param cov_cutoff: Coverage cutoff
         :param threads: Number of threads
         :return: None
         """
         self.__prepare_input_files(reads_pe, reads_se_fwd, reads_se_rev)
-        config_data = self.__get_config_data(sample_name, kmers)
+        config_data = self.__get_config_data(sample_name, kmers, cov_cutoff)
         config_file = SnakePipelineUtils.generate_config_file(config_data, self._working_dir)
         output_files = {
             'HTML': os.path.join(self._working_dir, OUTPUT_ASSEMBLY_REPORT),
@@ -58,16 +60,17 @@ class AssemblyWrapper(object):
             SNAKEFILE_ASSEMBLY_SPADES, config_file, list(output_files.values()), self._working_dir, threads)
         self.__set_output(output_files)
 
-    def __get_config_data(self, sample_name: str, kmers: Optional[str] = None) -> Dict[str, Any]:
+    def __get_config_data(self, sample_name: str, kmers: str, cov_cutoff: Union[int, str]) -> Dict[str, Any]:
         """
         Builds the configuration file to run the assembly workflow.
         :param sample_name: Sample name
         :param kmers: Comma separated list of Kmer sizes to use for the assembly
+        :param cov_cutoff: Coverage cutoff
         :return: Config data
         """
         config_data = {'sample_name': sample_name, 'working_dir': self._working_dir}
         if kmers is not None:
-            config_data['assembly'] = {'kmers': kmers}
+            config_data['assembly'] = {'spades': {'kmers': kmers, 'cov_cutoff': cov_cutoff}}
         return config_data
 
     def __prepare_input_files(self, reads_pe: List[ToolIOFile], reads_se_fwd: List[ToolIOFile],

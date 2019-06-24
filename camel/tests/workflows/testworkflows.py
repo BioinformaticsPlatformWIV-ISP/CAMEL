@@ -66,7 +66,7 @@ class TestWorkflows(unittest.TestCase):
         :return: None
         """
         wrapper = AssemblyWrapper(self.running_dir)
-        wrapper.run_workflow('test_sample', TestWorkflows.input_gene_reads_raw, [], [], kmers='25,29,33')
+        wrapper.run_workflow('test_sample', TestWorkflows.input_gene_reads_raw, [], [], kmers='25,29,33', cov_cutoff=11)
         self.assertGreater(wrapper.output.fasta_contigs.size, 0)
 
     def test_assembly_workflow_trimmed(self) -> None:
