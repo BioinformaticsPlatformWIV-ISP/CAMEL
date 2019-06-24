@@ -1,9 +1,11 @@
 import argparse
 import logging
+from pathlib import Path
 from typing import Optional, Any, Dict, List, Tuple
 
 import abc
 import os
+import shutil
 
 from camel.app.camel import Camel
 from camel.app.components.files.fastqutils import FastqUtils
@@ -156,6 +158,9 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         try:
             SnakePipelineUtils.run_snakemake(
                 self._snakefile, config_file, [], self._args.working_dir, self._args.threads)
+            log_file = Path(self._args.working_dir) / 'camel.log'
+            if log_file.exists():
+                shutil.copyfile(str(log_file), str(Path(self._args.output_dir) / 'camel.log'))
             logging.info("Pipeline finished successfully")
         except SnakemakeExecutionError as err:
             self._pipeline.log_error_to_file(err)
