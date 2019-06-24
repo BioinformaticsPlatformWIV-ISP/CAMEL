@@ -16,7 +16,9 @@ srst2:
   max_unaligned_overlap: 141
 
 assembly:
-  cov_cutoff: 'off'
+  spades:
+    cov_cutoff: 'off'
+  min_contig_length: 0
 
 ############################
 # Gene detection databases #
