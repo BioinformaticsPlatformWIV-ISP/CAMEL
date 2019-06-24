@@ -51,7 +51,7 @@ rule Assembly_spades:
         INFORMS=os.path.join(config['working_dir'], OUTPUT_ASSEMBLY_INFORMS)
     params:
         running_dir=os.path.join(config['working_dir'], 'assembly_spades', 'spades'),
-        assembly_options=config['assembly'] if 'assembly' in config else {}
+        spades_options=config.get('assembly', {}).get('spades', {})
     threads: 8
     priority: 1
     run:
@@ -59,7 +59,7 @@ rule Assembly_spades:
         spades = SPAdes(camel)
         spades.add_input_files(SnakemakeUtils.load_object(input.INPUT_DICT))
         step = Step(rule, spades, camel, params.running_dir, config)
-        spades.update_parameters(**params.assembly_options)
+        spades.update_parameters(**params.spades_options)
         spades.update_parameters(threads=threads)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(spades, output)
@@ -74,13 +74,14 @@ rule Assembly_filter_small_contigs:
         FASTA = os.path.join(config['working_dir'], 'assembly_spades', 'filtering', 'fasta.io'),
         INFORMS = os.path.join(config['working_dir'], 'assembly_spades', 'filtering', 'informs.io')
     params:
-        running_dir = os.path.join(config['working_dir'], 'assembly_spades', 'filtering')
+        running_dir = os.path.join(config['working_dir'], 'assembly_spades', 'filtering'),
+        min_contig_length = config['assembly'].get('min_contig_length', 0) if 'assembly' in config else 0
     run:
         from camel.app.tools.seqtk.seqtkseq import SeqtkSeq
         seqtk = SeqtkSeq(camel)
         SnakemakeUtils.add_pickle_inputs(seqtk, input)
         step = Step(rule, seqtk, camel, params.running_dir, config)
-        seqtk.update_parameters(output_filename='assembly_filtered.fasta', min_length=1000)
+        seqtk.update_parameters(output_filename='assembly_filtered.fasta', min_length=params.min_contig_length)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(seqtk, output)
 
