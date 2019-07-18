@@ -1,0 +1,157 @@
+import logging
+from dataclasses import dataclass
+from typing import Any, Dict, List
+
+from camel.app.camel import Camel
+from camel.app.components.blast.blastformat7parser import BlastFormat7Parser
+from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from camel.app.io.tooliovalue import ToolIOValue
+from camel.app.tools.tool import Tool
+
+
+@dataclass
+class SpaTypingHit:
+    """
+    This class represents a hit for a spa type.
+    """
+    spa_type: str
+    repeats: List[int]
+    length: int
+    percent_identity: float
+    percent_covered: float
+    blast_output: Dict[str, Any]
+
+    def is_perfect(self) -> bool:
+        """
+        Returns true if it is a perfect hit.
+        :return: True if perfect hit
+        """
+        return self.percent_identity == 100.0 and self.percent_covered == 100.0
+
+    @property
+    def genomic_coordinates(self) -> str:
+        """
+        Returns the genomic coordinates for the hit.
+        :return: Genomic coordinates
+        """
+        return f"{self.blast_output['qseqid']}:{self.blast_output['qstart']}-{self.blast_output['qend']}"
+
+    @property
+    def strand(self) -> str:
+        """
+        Returns the strand on which the spa sequence is located.
+        :return: Strand
+        """
+        return self.blast_output['sstrand']
+
+
+class SpaTyping(Tool):
+    """
+    This class is used to perform spa-typing based on blastn output.
+    """
+
+    BLASTN_OUTPUT_FORMAT = '"7 qseqid sseqid pident slen qstart qend length sseq sstrand"'
+
+    def __init__(self, camel: Camel):
+        """
+        Initializes this tool.
+        :param camel: CAMEL instance
+        """
+        super().__init__('Spa typing', '0.1', camel)
+
+    def _check_input(self) -> None:
+        """
+        Checks if the provided input is valid.
+        :return: None
+        """
+        if 'TSV' not in self._tool_inputs:
+            raise InvalidInputSpecificationError('Tabular BLAST input is required')
+        if 'CSV_profiles' not in self._tool_inputs:
+            raise InvalidInputSpecificationError('spa type profiles input is required')
+        super()._check_input()
+
+    def _execute_tool(self) -> None:
+        """
+        Executes this tool.
+        :return: None
+        """
+        profiles = SpaTyping.__parse_spa_type_profiles(self._tool_inputs['CSV_profiles'][0].path)
+        filtered_blast_output = self.__parse_blast_output(self._tool_inputs['TSV'][0].path)
+        spa_type_hits = self.__convert_blast_output(filtered_blast_output, profiles)
+        self.__set_output(spa_type_hits, profiles)
+
+    @staticmethod
+    def __parse_spa_type_profiles(profiles_tsv: str) -> Dict[str, List[int]]:
+        """
+        Parses the spa types from the tabular profiles file.
+        :return: Dictionary of spa types.
+        """
+        profiles = {}
+        with open(profiles_tsv) as handle:
+            for line in handle.readlines():
+                if line.startswith('NT'):
+                    continue
+                profile, repeats = line.strip().split(',')
+                profiles[profile] = [int(x) for x in repeats.split('-')]
+        return profiles
+
+    def __parse_blast_output(self, blast_output_path: str) -> List[Dict]:
+        """
+        Parses the tabular blast output, returns a list of hits sorted by percent covered and percent identity.
+        Hits that cover less than 90% or have less than 90% identity are filtered out.
+        :param blast_output_path: Path to the BLAST output file
+        :return: List of hits
+        """
+        blast_out = BlastFormat7Parser.parse_output_file(blast_output_path)
+        filtered_hits = []
+        for h in blast_out:
+            if (not SpaTyping.__calculate_percent_covered(h) > 90) or (not h['pident'] > 90):
+                continue
+            filtered_hits.append(h)
+        filtered_hits.sort(key=lambda x: self.__calculate_percent_covered(x), reverse=True)
+        return filtered_hits
+
+    def __convert_blast_output(self, blast_output: List[Dict[str, Any]], profiles: Dict[str, List[int]]) -> \
+            List[SpaTypingHit]:
+        """
+        Converts the BLAST output to spa typing hits.
+        :param blast_output: BLAST output
+        :return: List of spa typing hits
+        """
+        hits = []
+        for h in blast_output[:10]:
+            percent_covered = self.__calculate_percent_covered(h)
+            hits.append(SpaTypingHit(h['sseqid'], profiles[h['sseqid']], h['slen'], h['pident'], percent_covered, h))
+        hits.sort(reverse=True, key=lambda x: (x.percent_covered, x.percent_identity))
+        logging.debug(f"{len(hits)} hits detected")
+        return hits
+
+    def __set_output(self, spa_type_hits: List[SpaTypingHit], profiles: Dict[str, List[int]]) -> None:
+        """
+        Sets the output of this tool.
+        :param spa_type_hits: List of spa type hits
+        :param profiles: Dictionary of profiles with associated repeats
+        :return: None
+        """
+        perfect_hits = [h for h in spa_type_hits if h.is_perfect()]
+        logging.debug(f"{len(perfect_hits)} perfect hits found")
+        if len(perfect_hits) == 1:
+            self._informs['spa_type'] = perfect_hits[0].spa_type
+            self._informs['genomic_coordinates'] = perfect_hits[0].genomic_coordinates
+            self._informs['strand'] = perfect_hits[0].strand
+        elif len(perfect_hits) > 1:
+            all_types = [x.spa_type for x in perfect_hits]
+            self._informs['spa_type'] = f"ambiguous ({', '.join(sorted(all_types))})"
+        else:
+            self._informs['spa_type'] = 'NA'
+        self._informs['spa_type_repeats'] = profiles.get(self._informs['spa_type'], ['NA'])
+        self._tool_outputs['VAL_hits'] = [ToolIOValue(h) for h in spa_type_hits]
+
+    @staticmethod
+    def __calculate_percent_covered(blast_data: Dict[str, Any]) -> float:
+        """
+        Calculates the percentage of the subject sequence that is covered by the alignment.
+        :param blast_data: Dictionary containing the BLAST output data
+        :return: Percentage covered
+        """
+        return min(100 * blast_data['length'] / blast_data['slen'], 100.0)
