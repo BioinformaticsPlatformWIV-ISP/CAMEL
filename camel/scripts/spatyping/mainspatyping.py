@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import argparse
 from pathlib import Path
 from typing import Optional
@@ -17,9 +18,6 @@ from camel.app.tools.spatyping.spatyping import SpaTyping
 from camel.app.tools.spatyping.spatypingreporter import SpaTypingReporter
 from camel.resources import CSS_STYLE
 from camel.app.components.mainscripthelper import MainScriptHelper
-
-# PROFILES_CSV = '/data/pipelines/saureus/spatypes.csv'
-# PROFILES_FASTA = '/data/pipelines/saureus/profiles.fasta'
 
 
 class MainSpaTyping(object):
