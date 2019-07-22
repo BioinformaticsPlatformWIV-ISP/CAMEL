@@ -31,7 +31,7 @@ class MlstPyhloUtils(object):
             if not gene_name_a == gene_name_b:
                 raise ValueError(f'Gene names do not match ({gene_name_a}, {gene_name_b})')
 
-            if not allele_id_a not in ('-', '?') and allele_id_b not in ('-', '?'):
+            if allele_id_a not in ('-', '?') and allele_id_b not in ('-', '?'):
                 genes_common.append(gene_name_a)
 
                 if not allele_id_a == allele_id_b:

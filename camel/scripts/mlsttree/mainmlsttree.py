@@ -6,7 +6,7 @@ from typing import Dict, List, Tuple
 from Bio.Phylo.Newick import Tree
 
 from camel.app.camel import Camel
-from camel.app.components.phylogeny.mlsphylotutils import MlstPyhloUtils
+from camel.app.components.phylogeny.mlstphylotutils import MlstPyhloUtils
 from camel.app.components.phylogeny.mlstreportparser import MlstReportParser
 from camel.app.components.phylogeny.mlsttabularparser import MlstTabularParser
 from camel.app.components.phylogeny.newickutils import NewickUtils
@@ -17,7 +17,7 @@ class MainMlstTree(object):
     The main class for the MLST tree tool.
     """
 
-    def __init__(self, args: argparse.Namespace=None):
+    def __init__(self, args: argparse.Namespace = None):
         """
         Initializes the main scripts.
         :param args: Command line arguments
