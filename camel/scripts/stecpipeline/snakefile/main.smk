@@ -2,9 +2,9 @@ import os
 
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-from camel.resources.snakefile.read_trimming import OUTPUT_READ_TRIMMING_READS_PE, OUTPUT_READ_TRIMMING_INFORMS
+from camel.resources.snakefile.read_trimming import OUTPUT_READ_TRIMMING_READS_PE
 from camel.resources.snakefile.read_trimming_iontorrent import get_read_trimming_report, \
-    OUTPUT_TRIMMING_IT_READS, get_read_trimming_summary
+    OUTPUT_TRIMMING_IT_READS, get_read_trimming_summary, get_read_trimming_commands
 from camel.resources.snakefile.variant_filtering import OUTPUT_VARIANT_FILTERING_SUMMARY, \
     OUTPUT_VARIANT_FILTERING_INFORMS_ALL
 
@@ -245,7 +245,7 @@ rule Link_trimming_gene_detection:
 
 rule Report_create_commands_section:
     input:
-        INFORMS_trimming = os.path.join(config['working_dir'], OUTPUT_READ_TRIMMING_INFORMS),
+        INFORMS_trimming = get_read_trimming_commands(config),
         INFORMS_assembly = os.path.join(config['working_dir'], OUTPUT_ASSEMBLY_INFORMS),
         INFORMS_assembly_filt=os.path.join(config['working_dir'], 'assembly_spades', 'filtering', 'informs.io'),
         INFORMS_kraken = os.path.join(config['working_dir'], 'contamination_check', 'kraken', 'informs.io') if 'kraken' in config['analyses'] else [],

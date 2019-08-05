@@ -50,6 +50,8 @@ class MainSTECPipeline(BasePipeline):
         config_data['read_type'] = self._args.read_type
         config_data['quality_checks']['typing_scheme'] = 'cgmlst' if self._args.cgmlst else 'mlst_warwick'
         config_data['read_trimming']['export_fastq'] = 'true' if self._args.report_include_fastq else 'false'
+        if self._args.read_type == 'iontorrent':
+            config_data['assembly']['spades']['iontorrent'] = None
         return SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir)
 
     @staticmethod

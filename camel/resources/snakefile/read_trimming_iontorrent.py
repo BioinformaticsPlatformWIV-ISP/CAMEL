@@ -1,9 +1,9 @@
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 import os
 
 from camel.resources.snakefile.read_trimming import OUTPUT_READ_TRIMMING_REPORT, FOLDER_TRIMMING, \
-    OUTPUT_READ_TRIMMING_SUMMARY
+    OUTPUT_READ_TRIMMING_SUMMARY, OUTPUT_READ_TRIMMING_INFORMS
 
 FOLDER_TRIMMING_IT = 'read_trimming_it'
 OUTPUT_TRIMMING_IT_REPORT = os.path.join('read_trimming_it', 'report', 'html.io')
@@ -39,6 +39,22 @@ def get_read_trimming_summary(config: Dict[str, Any]) -> str:
     else:
         raise ValueError(f"Invalid read type: '{config['read_type']}'")
     return os.path.join(config['working_dir'], relative_path)
+
+
+def get_read_trimming_commands(config: Dict[str, Any]) -> List[str]:
+    """
+    Returns a list of informs IO files for the read trimming steps.
+    :return: List of informs IO files
+    """
+    if ('read_type' not in config) or (config['read_type'] == 'illumina'):
+        return [os.path.join(config['working_dir'], OUTPUT_READ_TRIMMING_INFORMS)]
+    elif config['read_type'] == 'iontorrent':
+        return [
+            os.path.join(config['working_dir'], 'read_trimming_it', 'trim_length', 'informs.io'),
+            os.path.join(config['working_dir'], 'read_trimming_it', 'trim_qual', 'informs.io')
+        ]
+    else:
+        raise ValueError(f"Invalid read type: '{config['read_type']}'")
 
 
 def get_trimming_folder(config: Dict[str, Any]) -> str:
