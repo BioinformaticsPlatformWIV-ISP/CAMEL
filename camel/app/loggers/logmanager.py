@@ -20,7 +20,7 @@ class LogManager(object):
         :return: None
         """
         with open(config_file, 'rt') as f:
-            config = yaml.load(f.read())
+            config = yaml.safe_load(f.read())
         logging.config.dictConfig(config)
         LogManager._step_handlers = [h for h in logging.getLogger().handlers if h.get_name().startswith('step')]
         LogManager._pipeline_handlers = [h for h in logging.getLogger().handlers if h.get_name().startswith('pipeline')]

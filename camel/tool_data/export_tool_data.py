@@ -96,7 +96,7 @@ def load_tool_list(tool_list_path: str) -> Dict[str, str]:
     :return: Dictionary with tool name as key and version as value
     """
     with open(tool_list_path) as handle:
-        return yaml.load(handle)
+        return yaml.safe_load(handle)
 
 
 if __name__ == '__main__':

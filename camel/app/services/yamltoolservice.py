@@ -20,7 +20,7 @@ class YAMLToolService(BaseToolService):
         """
         super().__init__(None)
         with open(tool_data_path) as handle:
-            self._tool_data = yaml.load(handle)
+            self._tool_data = yaml.safe_load(handle)
 
     @property
     def tool_id(self):
