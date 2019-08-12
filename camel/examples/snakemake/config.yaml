@@ -1,9 +1,0 @@
-# Input / output
-report: output/report.html
-output_dir: output
-working_dir: working
-
-# Input
-fastq_pe:
-  - '/scratch/bebog/S15BD00217_S12_L001_R1_001.fastq'
-  - '/scratch/bebog/S15BD00217_S12_L001_R2_001.fastq'
