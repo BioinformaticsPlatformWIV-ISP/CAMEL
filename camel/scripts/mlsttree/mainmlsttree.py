@@ -4,6 +4,7 @@ import logging
 from typing import Dict, List, Tuple
 
 from Bio.Phylo.Newick import Tree
+from Bio.Phylo.TreeConstruction import DistanceMatrix
 
 from camel.app.camel import Camel
 from camel.app.components.phylogeny.mlstphylotutils import MlstPyhloUtils
@@ -37,6 +38,7 @@ class MainMlstTree(object):
         ap.add_argument('--output', type=str)
         ap.add_argument('--output-image', type=str)
         ap.add_argument('--output-tabular', type=str)
+        ap.add_argument('--output-dist-matrix', type=str)
         ap.add_argument('--plot-type', default='clad', choices=['clad', 'phylo'])
         return ap.parse_args()
 
@@ -49,6 +51,8 @@ class MainMlstTree(object):
         if self._args.output_tabular:
             self.__create_tabular_output(allele_ids_by_sample, self._args.output_tabular)
         matrix = MlstPyhloUtils.calculate_distance_matrix(allele_ids_by_sample)
+        if self._args.output_dist_matrix is not None:
+            self.__export_distance_matrix(matrix)
         tree = MlstPyhloUtils.construct_tree(matrix, self._args.clustering_method)
         self.__export_tree(tree)
 
@@ -103,6 +107,16 @@ class MainMlstTree(object):
         if len(allele_ids_by_sample) < 3:
             raise ValueError("At least 3 samples are required")
         return allele_ids_by_sample
+
+    def __export_distance_matrix(self, matrix: DistanceMatrix) -> None:
+        """
+        Exports the distance matrix to a text file.
+        :param matrix: Distance matrix
+        :return: None
+        """
+        with open(self._args.output_dist_matrix, 'w') as h_out:
+            h_out.write(str(matrix))
+        logging.info(f"Distance matrix exported to: {self._args.output_dist_matrix}")
 
     def __export_tree(self, tree: Tree) -> None:
         """

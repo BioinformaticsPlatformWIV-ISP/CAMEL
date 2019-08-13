@@ -39,12 +39,14 @@ class TestMlstTree(unittest.TestCase):
         """
         output_file_newick = os.path.join(self.running_dir, 'my_tree.nwk')
         output_file_tabular = os.path.join(self.running_dir, 'my_tree.tsv')
+        output_file_dist_matrix = os.path.join(self.running_dir, 'dist_matrix.txt')
         output_file_image = os.path.join(self.running_dir, 'my_tree.png')
         args = argparse.Namespace(
             input_tab=[(p, os.path.basename(p)) for p in TestMlstTree.input_tabular_files],
             input_html=None,
             output_image=output_file_image,
             output_tabular=output_file_tabular,
+            output_dist_matrix=output_file_dist_matrix,
             output=output_file_newick,
             clustering_method='upgma',
             plot_type='clad',
@@ -55,3 +57,4 @@ class TestMlstTree(unittest.TestCase):
         self.assertGreater(os.path.getsize(output_file_newick), 0)
         self.assertGreater(os.path.getsize(output_file_tabular), 0)
         self.assertGreater(os.path.getsize(output_file_image), 0)
+        self.assertGreater(os.path.getsize(output_file_dist_matrix), 0)
