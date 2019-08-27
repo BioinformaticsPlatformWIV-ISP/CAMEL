@@ -1,4 +1,4 @@
-import collections
+from dataclasses import dataclass
 from typing import List
 
 from camel.app.camel import Camel
@@ -7,12 +7,16 @@ from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.tools.tool import Tool
 
 
+@dataclass
+class SerotypeHit(object):
+    gene: str
+    type_: str
+
+
 class SerotypeDetectorEcoli(Tool):
     """
     This tool detects the E. coli serotype based on gene hits.
     """
-
-    SerotypeHit = collections.namedtuple('SerotypeHit', 'gene type_')
 
     def __init__(self, camel: Camel):
         """
@@ -53,8 +57,7 @@ class SerotypeDetectorEcoli(Tool):
         with open(path) as handle:
             for line in handle.readlines()[1:]:
                 parts = line.split('\t')
-                # noinspection PyCallByClass
-                detected_genes.append(SerotypeDetectorEcoli.SerotypeHit(parts[0], parts[-2]))
+                detected_genes.append(SerotypeHit(parts[0], parts[-2]))
         return detected_genes
 
     def __get_h_type(self) -> str:
