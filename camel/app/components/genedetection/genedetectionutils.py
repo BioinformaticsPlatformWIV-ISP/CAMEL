@@ -1,9 +1,13 @@
 import json
 
 import ast
+import logging
+
 import bs4
 import re
 from typing import Tuple, Dict
+
+from Bio import SeqIO
 
 
 class GeneDetectionUtils(object):
@@ -32,7 +36,7 @@ class GeneDetectionUtils(object):
         :param accession: Accession
         :return: True if it is a NCBI accession
         """
-        m = re.match('\w{1,4}[\d.]+', accession)
+        m = re.match(r'\w{1,4}[\d.]+', accession)
         if m:
             return True
         return False
@@ -78,3 +82,20 @@ class GeneDetectionUtils(object):
             return name, key
         except SyntaxError:
             raise ValueError(f"Badly formatted parameter value: {value}")
+
+    @staticmethod
+    def parse_clusters(clustered_fasta: str) -> Dict[str, str]:
+        """
+        Parses the clusters from a clustered gene detection FASTA file.
+        :param clustered_fasta: Clustered FASTA file
+        :return: Mapping of seq_NN to cluster
+        """
+        cluster_by_seq = {}
+        with open(clustered_fasta) as handle:
+            for seq in SeqIO.parse(handle, 'fasta'):
+                parts = seq.id.split('__')
+                cluster_by_seq[parts[2]] = parts[1]
+        unique_clusters = set(cluster_by_seq.values())
+        logging.info(f"Clustering mapping parsed for {len(cluster_by_seq)} sequences ({len(unique_clusters)} "
+                     f"unique clusters)")
+        return cluster_by_seq
