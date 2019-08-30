@@ -211,7 +211,7 @@ class FastqUtils(object):
         :return: Sample name
         """
         basename = os.path.basename(fastq_path)
-        m = re.match(pattern, basename)
+        m = re.match(pattern, basename, re.IGNORECASE)
         if m:
             return m.group(1)
         raise ValueError("Cannot determine sample name from: {}".format(basename))

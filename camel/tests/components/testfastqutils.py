@@ -22,6 +22,13 @@ class TestFastqUtils(unittest.TestCase):
         """
         self.assertEqual(FastqUtils.get_sample_name('/data/temp/Z4686_L001_R1_001.fastq.gz'), 'Z4686')
 
+    def test_get_sample_name_miseq_fmt_no_s_lowercase(self) -> None:
+        """
+        Tests the get sample name function for MiSEQ format without the sample number.
+        :return: None
+        """
+        self.assertEqual(FastqUtils.get_sample_name('/data/temp/Z4686_L001_R1_001.fastq.gz'), 'Z4686')
+
     def test_get_sample_name_miseq_fmt_no_s_no_l(self) -> None:
         """
         Tests the get sample name function for MiSEQ format without the sample number and lane number.
