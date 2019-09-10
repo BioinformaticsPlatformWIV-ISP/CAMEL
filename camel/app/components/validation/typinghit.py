@@ -12,13 +12,14 @@ class TypingHit:
     p_covered: float
 
     @staticmethod
-    def parse(input_str: str) -> 'TypingHit':
+    def parse(input_str: str, delimiter: str = ',') -> 'TypingHit':
         """
         Parses a value from the summary output.
         :param input_str: Input string
+        :param delimiter: Delimiter for the hit string
         :return: Parsed typing hit
         """
-        parts = input_str.split(',')
+        parts = input_str.split(delimiter)
         try:
             p_covered = 100 * int(parts[3].split('/')[0]) / int(parts[3].split('/')[1])
         except ValueError:

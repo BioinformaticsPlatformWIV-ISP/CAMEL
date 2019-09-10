@@ -34,12 +34,13 @@ class MainMlstTree(object):
         ap = argparse.ArgumentParser()
         ap.add_argument('--input-html', nargs=2, action='append')
         ap.add_argument('--input-tab', nargs=2, action='append')
-        ap.add_argument('--clustering-method', choices=['nj', 'upgma'])
+        ap.add_argument('--clustering-method', choices=['nj', 'upgma'], default='nj')
         ap.add_argument('--output', type=str)
         ap.add_argument('--output-image', type=str)
         ap.add_argument('--output-tabular', type=str)
         ap.add_argument('--output-dist-matrix', type=str)
         ap.add_argument('--plot-type', default='clad', choices=['clad', 'phylo'])
+        ap.add_argument('--include-imperfect-hits', action='store_true')
         return ap.parse_args()
 
     def run(self) -> None:
@@ -101,9 +102,11 @@ class MainMlstTree(object):
         """
         allele_ids_by_sample = {}
         if self._args.input_html:
-            allele_ids_by_sample = MlstReportParser.parse_html_all(self._args.input_html)
+            allele_ids_by_sample = MlstReportParser.parse_html_all(
+                self._args.input_html, self._args.include_imperfect_hits)
         elif self._args.input_tab:
-            allele_ids_by_sample = MlstTabularParser.parse_tabular_all(self._args.input_tab)
+            allele_ids_by_sample = MlstTabularParser.parse_tabular_all(
+                self._args.input_tab, self._args.include_imperfect_hits)
         if len(allele_ids_by_sample) < 3:
             raise ValueError("At least 3 samples are required")
         return allele_ids_by_sample

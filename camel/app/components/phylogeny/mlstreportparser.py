@@ -46,23 +46,25 @@ class MlstReportParser(object):
         return metadata
 
     @staticmethod
-    def parse_typing_output(scheme_dir: str) -> List[Tuple[str, str]]:
+    def parse_typing_output(scheme_dir: str, include_imperfect: bool) -> List[Tuple[str, str]]:
         """
         Parses the sequence typing output file.
         :param scheme_dir: Folder containing the typing output
+        :param include_imperfect: If True, imperfect hits are included
         :return: Parsed allele ids
         """
         try:
             tabular_file = [os.path.join(scheme_dir, x) for x in os.listdir(scheme_dir) if x.endswith('.tsv')][0]
         except IndexError:
             raise FileNotFoundError("No tabular output file found")
-        return MlstTabularParser.parse_tabular_input(tabular_file)
+        return MlstTabularParser.parse_tabular_input(tabular_file, include_imperfect)
 
     @staticmethod
-    def parse_html_all(html_input: List[Tuple[str, str]]) -> Dict[str, List[Tuple[str, str]]]:
+    def parse_html_all(html_input: List[Tuple[str, str]], include_imperfect: bool) -> Dict[str, List[Tuple[str, str]]]:
         """
         Parses all HTML input files that were provided trough the command line arguments.
         :param html_input: List of HTML input tuples
+        :param include_imperfect: If True, imperfect hits are included
         :return: Parsed allele ids
         """
         allele_ids = {}
@@ -73,5 +75,5 @@ class MlstReportParser(object):
             if metadata['sample'] in allele_ids:
                 logging.warning("Duplicate sample! {}".format(metadata['sample']))
                 continue
-            allele_ids[metadata['sample']] = MlstReportParser.parse_typing_output(scheme_dir)
+            allele_ids[metadata['sample']] = MlstReportParser.parse_typing_output(scheme_dir, include_imperfect)
         return allele_ids
