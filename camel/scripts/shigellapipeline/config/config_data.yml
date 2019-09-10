@@ -1,0 +1,101 @@
+#########################
+# Tool specific options #
+#########################
+read_trimming:
+  export_fastq: '{export_fastq}'
+
+contamination_check:
+  db: /db/kraken/latest/abfhpv_lite/
+  expected_species: Escherichia coli
+
+quality_checks:
+  typing_scheme: {qc_typing_scheme}
+  expected_gc_content: 50.5
+
+variant_calling:
+  ploidy: 1
+  eport_bam: '{export_bam}'
+  reference:
+    path: /db/refgenomes/Escherichia_coli/NC_002695.2.fasta
+    name: <i>Escherichia coli</i> O157:H7 (NC_002695.2)
+    url: https://www.ncbi.nlm.nih.gov/nuccore/NC_002695.2
+
+variant_filtering: {{}}
+
+assembly:
+  spades:
+    cov_cutoff: 10
+  min_contig_length: 1000
+
+##################
+# Identification #
+##################
+subspecies_identification:
+  bed_speG: /db/pipelines/shigella/speG/speG.bed
+  threshold_speG_depth: 10
+
+flexneri_type:
+  fasta_gtr_promotor: /db/pipelines/shigella/flexneri_gtr_promotor/promotor.fasta
+  fasta_separate: /db/pipelines/shigella/flexneri_type_separate/
+  fasta_combined: /db/pipelines/shigella/flexneri_type/
+  tsv_profiles: /db/pipelines/shigella/flexneri_type_profiles/serotype_profiles.tsv
+
+############################
+# Gene detection databases #
+############################
+gene_detection:
+  argannot:
+    path: /db/gene_detection/ARG-ANNOT
+    perc_identity_cutoff: 90
+
+  resfinder:
+    path: /db/gene_detection/ResFinder
+    perc_identity_cutoff: 90
+    extra_column:
+      name: Antibiotic(s)
+      key: antibiotics
+
+  card:
+    path: /db/gene_detection/CARD
+    perc_identity_cutoff: 90
+
+  ncbi_amr:
+    path: /db/gene_detection/NCBI_AMR
+    perc_identity_cutoff: 90
+
+  virulencefinder:
+    path: /db/gene_detection/VirulenceFinder-Ecoli
+    perc_identity_cutoff: 90
+    extra_column:
+      name: Protein function
+      key: protein_function
+
+  virulencefinder_shiga:
+    path: /db/gene_detection/VirulenceFinder-Shiga
+    perc_identity_cutoff: 90
+    extra_column:
+      name: stx variant
+      key: stx_variant
+
+  plasmidfinder:
+    path: /db/gene_detection/PlasmidFinder-entero
+    perc_identity_cutoff: 95
+    extra_column:
+      name: Notes
+      key: notes
+
+  subspecies_identification:
+    path: /db/pipelines/shigella/subspecies_identification/
+    perc_identity_cutoff: 90
+
+  flexneri_type:
+    path: /db/pipelines/shigella/flexneri_type
+    perc_identity_cutoff: 90
+
+###################
+# Sequence typing #
+###################
+sequence_typing:
+  mlst_pasteur: /db/sequence_typing/ecoli/mlst-pasteur
+  mlst_warwick: /db/sequence_typing/ecoli/mlst-warwick
+  cgmlst: /db/sequence_typing/ecoli/cgmlst
