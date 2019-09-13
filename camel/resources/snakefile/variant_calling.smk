@@ -62,7 +62,6 @@ rule Variant_calling_collect_input:
             output_dict = {'FASTQ_SE': SnakemakeUtils.load_object(input.IONTORRENT_FASTQ_SE)}
         SnakemakeUtils.dump_object(output_dict, output[0])
 
-
 rule Variant_calling_read_mapping:
     """
     Maps the trimmed reads to the assembly.
@@ -122,6 +121,25 @@ rule Variant_calling_alignment_sorting:
         SnakemakeUtils.add_pickle_inputs(samtools_sort, input)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(samtools_sort, output)
+
+rule Variant_calling_calculate_depth:
+    """
+    Calculates the median depth of the alignment.
+    """
+    input:
+        BAM=os.path.join(config['working_dir'], OUTPUT_VARIANT_CALLING_BAM)
+    output:
+        INFORMS = os.path.join(config['working_dir'], 'variant_calling', 'depth', 'informs.io')
+    params:
+        running_dir = os.path.join(config['working_dir'], 'variant_calling', 'depth')
+    run:
+        from camel.app.tools.samtools.samtoolsdepth import SamtoolsDepth
+        samtools_depth = SamtoolsDepth(camel)
+        step = Step(rule, samtools_depth, camel, params.running_dir, config)
+        SnakemakeUtils.add_pickle_inputs(samtools_depth, input)
+        samtools_depth.update_parameters(output_all_positions_absolutely=None)
+        step.run_step()
+        SnakemakeUtils.dump_tool_outputs(samtools_depth, output)
 
 rule Variant_calling_mpileup:
     """
@@ -266,6 +284,7 @@ rule Variant_calling_report:
         INFORMS_reference=os.path.join(config['working_dir'], 'variant_calling', 'reference', 'informs.io'),
         INFORMS_mapping=os.path.join(config['working_dir'], 'variant_calling', 'read_mapping', 'informs.io'),
         INFORMS_calling=os.path.join(config['working_dir'], 'variant_calling', 'calling', 'informs.io'),
+        INFORMS_depth=os.path.join(config['working_dir'], 'variant_calling', 'depth', 'informs.io'),
         JSON=os.path.join(config['working_dir'], OUTPUT_VARIANT_FILTERING_STATS)
     output:
         VAL_HTML=os.path.join(config['working_dir'], OUTPUT_VARIANT_CALLING_REPORT),
@@ -292,13 +311,16 @@ rule Variant_calling_dump_summary_info:
     Dumps the summary information from the variant calling workflow.
     """
     input:
-        INFORMS_mapping=os.path.join(config['working_dir'], 'variant_calling', 'read_mapping', 'informs.io')
+        INFORMS_mapping=os.path.join(config['working_dir'], 'variant_calling', 'read_mapping', 'informs.io'),
+        INFORMS_depth=os.path.join(config['working_dir'], 'variant_calling', 'depth', 'informs.io')
     output:
         os.path.join(config['working_dir'], OUTPUT_VARIANT_CALLING_SUMMARY)
     run:
         informs_mapping = SnakemakeUtils.load_object(input.INFORMS_mapping)
+        informs_depth = SnakemakeUtils.load_object(input.INFORMS_depth)
         summary_data = [
-            ['vc-mapping_rate', informs_mapping['stats_map_rate']]
+            ['vc-mapping_rate', informs_mapping['stats_map_rate']],
+            ['vc-median_depth', informs_depth['median_depth']]
         ]
         with open(output[0], 'w') as handle:
             for key, value in summary_data:

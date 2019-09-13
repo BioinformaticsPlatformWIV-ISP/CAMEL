@@ -130,9 +130,10 @@ class VariantCallingReporter(Tool):
         """
         self._section.add_header('Read mapping', 4)
         table_data = [
-            ['{}%'.format(self._input_informs['mapping']['stats_map_rate'])]
+            ['{}%'.format(self._input_informs['mapping']['stats_map_rate']),
+             '{:.0f}'.format(self._input_informs['depth']['median_depth'])]
         ]
-        self._section.add_table(table_data, ['Mapping rate'], [('class', 'data')])
+        self._section.add_table(table_data, ['Mapping rate', 'Median depth'], [('class', 'data')])
         if bool(strtobool(self._parameters['export_bam'].value)) is True:
             relative_path = os.path.join('variant_calling', 'alignment-{}.bam'.format(
                 FileSystemHelper.make_valid(self._tool_inputs['VAL_Sample'][0].value)))
