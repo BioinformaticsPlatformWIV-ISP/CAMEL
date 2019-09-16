@@ -41,12 +41,12 @@ class MainSequenceTyping(object):
         """
         argument_parser = argparse.ArgumentParser()
         MainScriptHelper.add_common_arguments(argument_parser)
+        MainScriptHelper.add_assembly_arguments(argument_parser)
         argument_parser.add_argument('--fasta', help="Input FASTA file", type=str)
         argument_parser.add_argument('--fasta-name', help="Input FASTA file name", type=str)
         argument_parser.add_argument('--fastq-pe', help="Input PE FASTQ files", nargs=2)
         argument_parser.add_argument('--fastq-pe-names', help="Input PE FASTQ file names", nargs=2)
         argument_parser.add_argument('--trim-reads', help="Perform read trimming", action='store_true')
-        argument_parser.add_argument('--kmers', help="Kmers to use for assembly", type=str)
         argument_parser.add_argument('--scheme-dir', required=True, type=str)
         argument_parser.add_argument('--detection-method', type=str, choices=['blast', 'srst2'], default='blast')
         argument_parser.add_argument('--report-include-fastq', action='store_true')
@@ -150,10 +150,14 @@ class MainSequenceTyping(object):
         dir_logs = os.path.join(self._report.output_dir, 'logs')
         if not os.path.isdir(dir_logs):
             os.makedirs(dir_logs)
-        shutil.copyfile(output.log_file, os.path.join(dir_logs, 'log_gene_detection.txt'))
+        shutil.copyfile(output.log_file, os.path.join(dir_logs, 'log_sequence_typing.txt'))
         for key, path in self._helper.logs.items():
             shutil.copyfile(path, os.path.join(dir_logs, f'log_{key}.txt'))
 
+        # Add commands section
+        if len(self._helper.informs) > 0:
+            self._report.add_html_object(
+                SnakePipelineUtils.create_commands_section(self._helper.informs, self._args.working_dir))
         self._report.save()
 
 

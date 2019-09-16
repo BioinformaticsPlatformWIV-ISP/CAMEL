@@ -40,12 +40,12 @@ class MainGeneDetection(object):
         """
         argument_parser = argparse.ArgumentParser()
         MainScriptHelper.add_common_arguments(argument_parser)
+        MainScriptHelper.add_assembly_arguments(argument_parser)
         group_input = argument_parser.add_mutually_exclusive_group(required=True)
         group_input.add_argument('--fasta', help="Input FASTA file", type=str)
         argument_parser.add_argument('--fasta-name', help="Input FASTA file name", type=str)
         group_input.add_argument('--fastq-pe', help="Input PE FASTQ files", nargs=2)
         argument_parser.add_argument('--fastq-pe-names', help="Input PE FASTQ file names", nargs=2)
-        argument_parser.add_argument('--kmers', help="Kmers to use for assembly")
         argument_parser.add_argument('--trim-reads', help="Perform read trimming", action='store_true')
         group_db = argument_parser.add_mutually_exclusive_group(required=True)
         group_db.add_argument('--database-dir', type=str)

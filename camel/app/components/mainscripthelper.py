@@ -62,26 +62,30 @@ class MainScriptHelper(object):
                          trimming.output.trimmed_reads_se_rev)
 
     def assemble_fastq_reads(self, assembly_input: ReadInput, report: Optional[HtmlReport] = None,
-                             kmers: Optional[str] = None, threads: int = 8) -> ToolIOFile:
+                             kmers: Optional[str] = None, min_contig_length: int = 0, cov_cutoff: str = 'off',
+                             threads: int = 8) -> ToolIOFile:
         """
         Assembles FASTQ reads using SPAdes
         :param assembly_input: Assembly input
         :param report: If set, the output is added to the given report
         :param kmers: Comma separated list of Kmers to use for the assembly
+        :param min_contig_length: Minimal contig length
+        :param cov_cutoff: Contig coverage cutoff
         :param threads: Number of threads to use
         :return: ToolIOFile FASTA object with the assembled contigs
         """
         logging.info("Starting de-novo assembly")
         assembly = AssemblyWrapper(os.path.join(self._working_dir, 'assembly'))
         assembly.run_workflow(
-            self._sample_name, assembly_input.pe, assembly_input.se_fwd, assembly_input.se_rev, kmers, threads)
+            self._sample_name, assembly_input.pe, assembly_input.se_fwd, assembly_input.se_rev, kmers, cov_cutoff,
+            min_contig_length, threads)
         if report is not None:
             report.add_html_object(assembly.output.report_section)
             assembly.output.report_section.copy_files(report.output_dir)
             report.save()
         if assembly.output.log_file is not None:
             self._log_files['assembly'] = assembly.output.log_file
-        self._informs.append(assembly.output.informs)
+        self._informs.extend(assembly.output.informs)
         return assembly.output.fasta_contigs
 
     @staticmethod
@@ -137,6 +141,19 @@ class MainScriptHelper(object):
         argument_parser.add_argument('--output-html', required=True, type=str)
         argument_parser.add_argument('--working-dir', default=os.path.abspath('.'), type=str)
         argument_parser.add_argument('--threads', default=8, type=int)
+
+    @staticmethod
+    def add_assembly_arguments(argument_parser: argparse.ArgumentParser) -> None:
+        """
+        Adds the arguments that are used for the assembly.
+        :param argument_parser: Argument parser
+        :return: None
+        """
+        argument_parser.add_argument('--assembly-kmers', help="Kmers to use for assembly", type=str)
+        argument_parser.add_argument(
+            '--assembly-cov-cutoff', help="Minimal k-mer coverage for assembled contigs", type=int)
+        argument_parser.add_argument(
+            '--assembly-min-contig-length', help="Minimal length for assembled contigs", type=int)
 
     @staticmethod
     def prepare_galaxy_output(output_dir: str, output_html: str) -> None:
@@ -233,7 +250,14 @@ class MainScriptHelper(object):
             assembly_input = ReadInput([ToolIOFile(l) for l in input_files['fastq_pe']], [], [])
 
         # Perform de-novo assembly
-        return self.assemble_fastq_reads(assembly_input, report, args.kmers, args.threads)
+        if args.assembly_cov_cutoff is None:
+            cov_cutoff = 'off'
+        elif args.assembly_cov_cutoff == 0:
+            cov_cutoff = 'auto'
+        else:
+            cov_cutoff = str(args.assembly_cov_cutoff)
+        return self.assemble_fastq_reads(
+            assembly_input, report, args.assembly_kmers, args.assembly_min_contig_length, cov_cutoff, args.threads)
 
     def get_srst2_input(self, input_files: Dict[str, List[str]], args: argparse.Namespace,
                         report: Optional[HtmlReport] = None) -> List[ToolIOFile]:
