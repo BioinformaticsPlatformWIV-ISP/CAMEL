@@ -4,7 +4,8 @@ from camel.app.camel import Camel
 from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.resources.snakefile.assembly_spades import OUTPUT_ASSEMBLY_SUMMARY, OUTPUT_ASSEMBLY_INFORMS
+from camel.resources.snakefile.assembly_spades import OUTPUT_ASSEMBLY_SUMMARY, OUTPUT_ASSEMBLY_INFORMS, \
+    OUTPUT_ASSEMBLY_FILTERING_INFORMS
 from camel.resources.snakefile.read_trimming import OUTPUT_READ_TRIMMING_READS_PE, OUTPUT_READ_TRIMMING_READS_SE_FWD, \
     OUTPUT_READ_TRIMMING_READS_SE_REV
 from camel.resources.snakefile.read_trimming_iontorrent import OUTPUT_TRIMMING_IT_READS
@@ -72,7 +73,7 @@ rule Assembly_filter_small_contigs:
         FASTA = os.path.join(config['working_dir'], 'assembly_spades', 'spades', 'fasta.io')
     output:
         FASTA = os.path.join(config['working_dir'], 'assembly_spades', 'filtering', 'fasta.io'),
-        INFORMS = os.path.join(config['working_dir'], 'assembly_spades', 'filtering', 'informs.io')
+        INFORMS = os.path.join(config['working_dir'], OUTPUT_ASSEMBLY_FILTERING_INFORMS)
     params:
         running_dir = os.path.join(config['working_dir'], 'assembly_spades', 'filtering'),
         min_contig_length = config['assembly'].get('min_contig_length', 0) if 'assembly' in config else 0
