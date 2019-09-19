@@ -50,7 +50,8 @@ class TestMlstTree(unittest.TestCase):
             output=output_file_newick,
             clustering_method='upgma',
             plot_type='clad',
-            working_dir=self.running_dir
+            working_dir=self.running_dir,
+            include_imperfect_hits=False
         )
         mlst_tree = MainMlstTree(args)
         mlst_tree.run()
