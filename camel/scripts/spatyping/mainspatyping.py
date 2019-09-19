@@ -112,7 +112,7 @@ class MainSpaTyping(object):
         reporter.add_input_informs({'spa_typing': spa_typing.informs})
         reporter.add_input_files({'VAL_hits': spa_typing.tool_outputs['VAL_hits']})
         reporter.run(self._args.working_dir)
-        self._report.add_html_object(reporter.tool_outputs['VAL_HTML'][0].value)
+        self._helper.export_output_and_commands_section(self._report, reporter.tool_outputs['VAL_HTML'][0].value)
         self._report.save()
 
 
