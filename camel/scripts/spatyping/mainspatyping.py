@@ -1,23 +1,19 @@
 #!/usr/bin/env python
 import argparse
+import logging
 from pathlib import Path
 from typing import Optional
 
-import datetime
-
-import logging
 import os
 
 from camel.app.camel import Camel
 from camel.app.components.html.htmlreport import HtmlReport
-from camel.app.components.html.htmlreportsection import HtmlReportSection
+from camel.app.components.mainscripthelper import MainScriptHelper
 from camel.app.io.tooliofile import ToolIOFile
-from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.app.tools.blast.blastn import Blastn
 from camel.app.tools.spatyping.spatyping import SpaTyping
 from camel.app.tools.spatyping.spatypingreporter import SpaTypingReporter
 from camel.resources import CSS_STYLE
-from camel.app.components.mainscripthelper import MainScriptHelper
 
 
 class MainSpaTyping(object):
@@ -45,11 +41,7 @@ class MainSpaTyping(object):
         """
         argument_parser = argparse.ArgumentParser()
         MainScriptHelper.add_common_arguments(argument_parser)
-        argument_parser.add_argument('--fasta', type=str, help="Input FASTA file")
-        argument_parser.add_argument('--fasta-name', help="Input FASTA file name")
-        argument_parser.add_argument('--fastq-pe', help="Input PE FASTQ files", nargs=2)
-        argument_parser.add_argument('--fastq-pe-names', help="Input PE FASTQ file names", nargs=2)
-        argument_parser.add_argument('--trim-reads', help="Perform read trimming", action='store_true')
+        MainScriptHelper.add_input_files_arguments(argument_parser)
         argument_parser.add_argument('--db-path', help="Path to the database", default='/db/pipelines/saureus')
         return argument_parser.parse_args()
 
@@ -58,8 +50,9 @@ class MainSpaTyping(object):
         Executes this tool.
         :return: None
         """
-        self.__init_report()
-        self.__add_analysis_info_section()
+        self._report = self._helper.init_report(
+            self._args.output_html, self._args.output_dir, 'Spa typing report', f'<i>spa</i> typing')
+        self._helper.export_analysis_info_section(self._report, self._helper.determine_input_files(self._args))
         input_files = self._helper.symlink_input_files(self._args.fasta, self._args.fastq_pe)
         fasta_file = self._helper.get_blast_input(input_files, self._args, self._report)
         blastn_tsv_output = self.__run_blastn(fasta_file)
@@ -76,19 +69,6 @@ class MainSpaTyping(object):
             os.makedirs(self._args.output_dir)
         self._report.initialize('Spa typing', CSS_STYLE)
         self._report.add_pipeline_header('<i>spa</i> typing')
-        self._report.save()
-
-    def __add_analysis_info_section(self) -> None:
-        """
-        Adds the report section with the analysis info
-        :return: None
-        """
-        section = HtmlReportSection('Analysis info')
-        section.add_table([
-            ['Analysis date:', datetime.datetime.now().strftime(SnakePipelineUtils.DATE_FORMAT)],
-            ['Input file(s):', self._helper.determine_input_files(self._args)],
-        ], table_attributes=[('class', 'information')])
-        self._report.add_html_object(section)
         self._report.save()
 
     def __run_blastn(self, fasta_file: ToolIOFile) -> ToolIOFile:
