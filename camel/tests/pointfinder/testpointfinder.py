@@ -89,7 +89,9 @@ class TestPointFinder(unittest.TestCase):
             working_dir=self.running_dir,
             species='escherichia_coli',
             trim_reads=False,
-            kmers=None,
+            assembly_kmers=None,
+            assembly_cov_cutoff=5,
+            assembly_min_contig_length=1000,
             threads=4
         )
         main = MainPointFinder(args)
