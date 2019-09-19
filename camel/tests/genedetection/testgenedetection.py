@@ -63,7 +63,9 @@ class TestGeneDetection(unittest.TestCase):
             detection_method=detection_method,
             threads=4,
             report_include_fastq=False,
-            kmers=55
+            assembly_cov_cutoff=None,
+            assembly_min_contig_length=None,
+            assembly_kmers=55
         )
 
     def test_gene_detection_blast_fasta_input(self) -> None:

@@ -1,20 +1,14 @@
 #!/usr/bin/env python
 import argparse
-import datetime
 import json
 import logging
 from typing import Any, Dict, List, Optional
 
 import os
-import shutil
 
-from camel.app.components.html.htmlreport import HtmlReport
-from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.mainscripthelper import MainScriptHelper
-from camel.app.components.workflows.genedetectionwrapper import GeneDetectionWrapper
+from camel.app.components.workflows.genedetectionwrapper import GeneDetectionWrapper, GeneDetectionOutput
 from camel.app.io.tooliofile import ToolIOFile
-from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-from camel.resources import CSS_STYLE
 
 
 class MainGeneDetection(object):
@@ -41,12 +35,7 @@ class MainGeneDetection(object):
         argument_parser = argparse.ArgumentParser()
         MainScriptHelper.add_common_arguments(argument_parser)
         MainScriptHelper.add_assembly_arguments(argument_parser)
-        group_input = argument_parser.add_mutually_exclusive_group(required=True)
-        group_input.add_argument('--fasta', help="Input FASTA file", type=str)
-        argument_parser.add_argument('--fasta-name', help="Input FASTA file name", type=str)
-        group_input.add_argument('--fastq-pe', help="Input PE FASTQ files", nargs=2)
-        argument_parser.add_argument('--fastq-pe-names', help="Input PE FASTQ file names", nargs=2)
-        argument_parser.add_argument('--trim-reads', help="Perform read trimming", action='store_true')
+        MainScriptHelper.add_input_files_arguments(argument_parser)
         group_db = argument_parser.add_mutually_exclusive_group(required=True)
         group_db.add_argument('--database-dir', type=str)
         group_db.add_argument('--database-html', type=str)
@@ -69,7 +58,9 @@ class MainGeneDetection(object):
         Runs the main script.
         :return: None
         """
-        self.__init_report()
+        self._report = self._helper.init_report(
+            self._args.output_html, self._args.output_dir, 'Gene detection report',
+            f'Gene detection {self._args.detection_method}')
         self.__add_analysis_info_section()
         input_files = self._helper.symlink_input_files(self._args.fasta, self._args.fastq_pe)
         db_data = self.__get_db_metadata()
@@ -81,41 +72,25 @@ class MainGeneDetection(object):
             output = self.__run_gene_detection_srst2(fastq_files, db_data)
         self.__export_output(output)
 
-    def __init_report(self) -> None:
-        """
-        Initializes the HTML report
-        :return: None
-        """
-        self._report = HtmlReport(self._args.output_html, self._args.output_dir)
-        if not os.path.isdir(self._args.output_dir):
-            os.makedirs(self._args.output_dir)
-        self._report.initialize('Gene detection report', CSS_STYLE)
-        self._report.add_pipeline_header(f'Gene detection ({self._args.detection_method})')
-        self._report.save()
-
     def __add_analysis_info_section(self) -> None:
         """
         Adds the report section with the analysis info
         :return: None
         """
-        section = HtmlReportSection('Analysis info')
-        common_data = [
-            ['Analysis date:', datetime.datetime.now().strftime(SnakePipelineUtils.DATE_FORMAT)],
-            ['Input file(s):', self._helper.determine_input_files(self._args)]
-        ]
         if self._args.detection_method == 'blast':
-            common_data.extend([
+            data = [
                 ['% identity threshold:', f'{self._args.blast_min_percent_identity}%'],
                 ['% query covered threshold:', f'{self._args.blast_min_percent_coverage}%']
-            ])
+            ]
         elif self._args.detection_method == 'srst2':
-            common_data.extend([
+            data = [
                 ['Min. % coverage threshold:', f'{self._args.srst2_min_cov}%'],
                 ['Max. % divergence threshold:', f'{self._args.srst2_max_div}%']
-            ])
-        section.add_table(common_data, table_attributes=[('class', 'information')])
-        self._report.add_html_object(section)
-        self._report.save()
+            ]
+        else:
+            raise ValueError(f"Invalid detection method: {self._args.detection_method}")
+        input_files_str = self._helper.determine_input_files(self._args)
+        self._helper.export_analysis_info_section(self._report, input_files_str, data)
 
     def __get_db_metadata(self) -> Dict[str, Any]:
         """
@@ -150,8 +125,7 @@ class MainGeneDetection(object):
                 metadata['extra_column'] = db_metadata['extra_column']
         return metadata
 
-    def __run_gene_detection_blast(self, fasta_file: ToolIOFile, db_data: Dict[str, Any]) -> \
-            GeneDetectionWrapper.GeneDetectionOutput:
+    def __run_gene_detection_blast(self, fasta_file: ToolIOFile, db_data: Dict[str, Any]) -> GeneDetectionOutput:
         """
         Runs the gene detection workflow.
         :param fasta_file: FASTA file
@@ -162,8 +136,7 @@ class MainGeneDetection(object):
         wrapper.run_workflow_blast(fasta_file.path, self._sample_name, db_data, self._args.threads)
         return wrapper.output
 
-    def __run_gene_detection_srst2(self, fastq_pe: List[ToolIOFile], db_data: Dict[str, Any]) -> \
-            GeneDetectionWrapper.GeneDetectionOutput:
+    def __run_gene_detection_srst2(self, fastq_pe: List[ToolIOFile], db_data: Dict[str, Any]) -> GeneDetectionOutput:
         """
         Runs the gene detection workflow in srst2 mode.
         :param fastq_pe: Paired end FASTQ input
@@ -174,27 +147,15 @@ class MainGeneDetection(object):
         wrapper.run_workflow_srst2([f.path for f in fastq_pe], self._sample_name, db_data, self._args.threads)
         return wrapper.output
 
-    def __export_output(self, output: GeneDetectionWrapper.GeneDetectionOutput) -> None:
+    def __export_output(self, output: GeneDetectionOutput) -> None:
         """
         Exports the output of the workflow.
         :param output: Output
         :return: None
         """
-        self._report.add_html_object(output.report_section)
-        output.report_section.copy_files(self._report.output_dir)
-
-        # Add log files
-        dir_logs = os.path.join(self._report.output_dir, 'logs')
-        if not os.path.isdir(dir_logs):
-            os.makedirs(dir_logs)
-        shutil.copyfile(output.log_file, os.path.join(dir_logs, 'log_gene_detection.txt'))
-        for key, path in self._helper.logs.items():
-            shutil.copyfile(path, os.path.join(dir_logs, f'log_{key}.txt'))
-
-        # Add commands section
-        all_informs = self._helper.informs + [output.informs]
-        self._report.add_html_object(SnakePipelineUtils.create_commands_section(all_informs, self._args.working_dir))
-        self._report.save()
+        self._helper.logs['gene_detection'] = output.log_file
+        self._helper.informs.append(output.informs)
+        self._helper.export_output_and_commands_section(self._report, output.report_section)
 
 
 if __name__ == '__main__':

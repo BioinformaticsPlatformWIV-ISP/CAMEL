@@ -3,25 +3,28 @@ from typing import Dict, Any, List, Optional
 
 import os
 
+from camel.app.components.genedetection.genedetectionhit import GeneDetectionHit
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.resources.snakefile import SNAKEFILE_GENE_DETECTION
 from camel.resources.snakefile.gene_detection import INPUT_GENE_DETECTION_FASTA, OUTPUT_GENE_DETECTION_REPORT, \
-    INPUT_GENE_DETECTION_FASTQ, OUTPUT_GENE_DETECTION_INFORMS
+    INPUT_GENE_DETECTION_FASTQ, OUTPUT_GENE_DETECTION_INFORMS, OUTPUT_GENE_DETECTION_ALL_HITS
+
+
+@dataclass
+class GeneDetectionOutput:
+    report_section: HtmlReportSection
+    detected_hits: List[GeneDetectionHit]
+    informs: Dict[str, Any]
+    log_file: Optional[str] = None
 
 
 class GeneDetectionWrapper(object):
     """
     This class is used as a wrapper class around the gene detection Snakemake workflow.
     """
-
-    @dataclass
-    class GeneDetectionOutput:
-        report_section: HtmlReportSection
-        informs: Dict[str, Any]
-        log_file: Optional[str] = None
 
     def __init__(self, working_dir: str) -> None:
         """
@@ -30,6 +33,23 @@ class GeneDetectionWrapper(object):
         """
         self._working_dir = working_dir
         self._output = None
+
+    def __run_workflow(self, config_data: Dict[str, Any], threads: int) -> None:
+        """
+        Runs the gene detection workflow with the given config data and number of threads.
+        :param config_data: Config data
+        :param threads: Number of threads
+        :return: None
+        """
+        config_file = SnakePipelineUtils.generate_config_file(config_data, self._working_dir)
+        output_files = {
+            'report': os.path.join(self._working_dir, OUTPUT_GENE_DETECTION_REPORT.format(db='db')),
+            'informs': os.path.join(self._working_dir, OUTPUT_GENE_DETECTION_INFORMS.format(db='db')),
+            'hits': os.path.join(self._working_dir, OUTPUT_GENE_DETECTION_ALL_HITS.format(db='db'))
+        }
+        SnakePipelineUtils.run_snakemake(
+            SNAKEFILE_GENE_DETECTION, config_file, list(output_files.values()), self._working_dir, threads)
+        self.__set_output(output_files)
 
     def run_workflow_blast(self, fasta_path: str, sample_name: str, db_data: Dict[str, Any], threads: int = 8) -> None:
         """
@@ -43,14 +63,7 @@ class GeneDetectionWrapper(object):
         """
         self.__create_input_blast(fasta_path)
         config_data = self.__get_config_data(sample_name, db_data, 'blast')
-        config_file = SnakePipelineUtils.generate_config_file(config_data, self._working_dir)
-        output_files = {
-            'report': os.path.join(self._working_dir, OUTPUT_GENE_DETECTION_REPORT.format(db='db')),
-            'informs': os.path.join(self._working_dir, OUTPUT_GENE_DETECTION_INFORMS.format(db='db')),
-        }
-        SnakePipelineUtils.run_snakemake(
-            SNAKEFILE_GENE_DETECTION, config_file, list(output_files.values()), self._working_dir, threads)
-        self.__set_output(output_files)
+        self.__run_workflow(config_data, threads)
 
     def run_workflow_srst2(self, fastq_pe_path: List[str], sample_name: str, db_data: Dict[str, Any],
                            threads: int = 8) -> None:
@@ -64,14 +77,7 @@ class GeneDetectionWrapper(object):
         """
         self.__create_input_srst2(fastq_pe_path)
         config_data = self.__get_config_data(sample_name, db_data, 'srst2')
-        config_file = SnakePipelineUtils.generate_config_file(config_data, self._working_dir)
-        output_files = {
-            'report': os.path.join(self._working_dir, OUTPUT_GENE_DETECTION_REPORT.format(db='db')),
-            'informs': os.path.join(self._working_dir, OUTPUT_GENE_DETECTION_INFORMS.format(db='db')),
-        }
-        SnakePipelineUtils.run_snakemake(
-            SNAKEFILE_GENE_DETECTION, config_file, list(output_files.values()), self._working_dir, threads)
-        self.__set_output(output_files)
+        self.__run_workflow(config_data, threads)
 
     def __create_input_blast(self, fasta_path: str) -> None:
         """
@@ -119,14 +125,15 @@ class GeneDetectionWrapper(object):
         :return: None
         """
         log_file_path = os.path.join(self._working_dir, 'camel.log')
-        self._output = GeneDetectionWrapper.GeneDetectionOutput(
+        self._output = GeneDetectionOutput(
             report_section=SnakemakeUtils.load_object(output_files['report'])[0].value,
+            detected_hits=[v.value for v in SnakemakeUtils.load_object(output_files['hits'])],
             informs=SnakemakeUtils.load_object(output_files['informs']),
             log_file=log_file_path if os.path.isfile(log_file_path) else None
         )
 
     @property
-    def output(self) -> 'GeneDetectionWrapper.GeneDetectionOutput':
+    def output(self) -> GeneDetectionOutput:
         """
         Returns the output generated by the gene detection workflow.
         :return: Output
