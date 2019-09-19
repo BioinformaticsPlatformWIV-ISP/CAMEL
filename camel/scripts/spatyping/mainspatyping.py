@@ -42,6 +42,7 @@ class MainSpaTyping(object):
         argument_parser = argparse.ArgumentParser()
         MainScriptHelper.add_common_arguments(argument_parser)
         MainScriptHelper.add_input_files_arguments(argument_parser)
+        MainScriptHelper.add_assembly_arguments(argument_parser)
         argument_parser.add_argument('--db-path', help="Path to the database", default='/db/pipelines/saureus')
         return argument_parser.parse_args()
 
