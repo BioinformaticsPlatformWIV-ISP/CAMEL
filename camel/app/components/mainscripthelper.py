@@ -1,17 +1,23 @@
 import argparse
+import datetime
 import logging
 from dataclasses import dataclass
 from typing import List, Optional, Dict
 
 import os
+import shutil
 
 from camel.app.components.files.fastqutils import FastqUtils
 from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.components.galaxy.galaxyutils import GalaxyUtils
 from camel.app.components.html.htmlreport import HtmlReport
+from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.workflows.assemblywrapper import AssemblyWrapper
 from camel.app.components.workflows.readtrimmingwrapper import ReadTrimmingWrapper
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
+from camel.resources import CSS_STYLE
+from camel.resources.javascript import JQUERY_SRC
 
 
 @dataclass
@@ -141,6 +147,19 @@ class MainScriptHelper(object):
         argument_parser.add_argument('--output-html', required=True, type=str)
         argument_parser.add_argument('--working-dir', default=os.path.abspath('.'), type=str)
         argument_parser.add_argument('--threads', default=8, type=int)
+
+    @staticmethod
+    def add_input_files_arguments(argument_parser: argparse.ArgumentParser) -> None:
+        """
+        Adds the arguments for the input files (FASTA / FASTQ PE).
+        :param argument_parser: Argument parser
+        :return: None
+        """
+        argument_parser.add_argument('--fasta', help="Input FASTA file", type=str)
+        argument_parser.add_argument('--fasta-name', help="Input FASTA file name", type=str)
+        argument_parser.add_argument('--fastq-pe', help="Input PE FASTQ files", nargs=2)
+        argument_parser.add_argument('--fastq-pe-names', help="Input PE FASTQ file names", nargs=2)
+        argument_parser.add_argument('--trim-reads', help="Perform read trimming", action='store_true')
 
     @staticmethod
     def add_assembly_arguments(argument_parser: argparse.ArgumentParser) -> None:
@@ -273,3 +292,70 @@ class MainScriptHelper(object):
         else:
             trimming_out = self.trim_reads(input_files['fastq_pe'], report, args.threads, args.report_include_fastq)
             return trimming_out.pe
+
+    @staticmethod
+    def init_report(output_path: str, output_dir: str, title: str, header: str) -> HtmlReport:
+        """
+        Initializes the HTML report.
+        :param output_path: Output path
+        :param output_dir: Output directory
+        :param title: Report title
+        :param header: Report header
+        :return: Report
+        """
+        report = HtmlReport(output_path, output_dir, [JQUERY_SRC])
+        if not os.path.isdir(output_dir):
+            os.makedirs(output_dir)
+        report.initialize(title, CSS_STYLE)
+        report.add_pipeline_header(header)
+        report.save()
+        return report
+
+    def export_log_files(self, output_dir: str) -> None:
+        """
+        Exports the log files to the output directory.
+        :param output_dir: Output directory
+        :return: None
+        """
+        dir_logs = os.path.join(output_dir, 'logs')
+        if not os.path.isdir(dir_logs):
+            os.makedirs(dir_logs)
+        for key, path in self.logs.items():
+            shutil.copyfile(path, os.path.join(dir_logs, f'log_{key}.txt'))
+
+    def export_output_and_commands_section(self, report: HtmlReport, section: HtmlReportSection) -> None:
+        """
+        Adds the output and commands sections to the report.
+        Copies the log files to the output folder.
+        :param report: Report
+        :param section: Section to add
+        :return: None
+        """
+        report.add_html_object(section)
+        section.copy_files(report.output_dir)
+        self.export_log_files(report.output_dir)
+        if len(self._informs) > 0:
+            section_commands = SnakePipelineUtils.create_commands_section(self._informs, self._working_dir)
+            report.add_html_object(section_commands)
+        report.save()
+
+    @staticmethod
+    def export_analysis_info_section(
+            report: HtmlReport, input_files_str: str, additional_info: Optional[List[List[str]]] = None) -> None:
+        """
+        Exports the analysis info section.
+        :param report: Report
+        :param input_files_str: Input files as a string
+        :param additional_info: Additional information for the info table
+        :return: None
+        """
+        section = HtmlReportSection('Analysis info')
+        data = [
+            ['Analysis date:', datetime.datetime.now().strftime(SnakePipelineUtils.DATE_FORMAT)],
+            ['Input file(s):', input_files_str],
+        ]
+        if additional_info is not None:
+            data.extend(additional_info)
+        section.add_table(data, table_attributes=[('class', 'information')])
+        report.add_html_object(section)
+        report.save()
