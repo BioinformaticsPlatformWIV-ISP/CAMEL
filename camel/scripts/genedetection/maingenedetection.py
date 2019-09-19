@@ -40,7 +40,6 @@ class MainGeneDetection(object):
         group_db.add_argument('--database-dir', type=str)
         group_db.add_argument('--database-html', type=str)
         argument_parser.add_argument('--detection-method', type=str, choices=['blast', 'srst2'], default='blast')
-        argument_parser.add_argument('--report-include-fastq', action='store_true')
 
         # BLAST specific parameters
         argument_parser.add_argument('--blast-min-percent-identity', type=int, default=90)

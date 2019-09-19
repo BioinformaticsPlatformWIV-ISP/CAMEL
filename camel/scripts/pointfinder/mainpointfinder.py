@@ -35,7 +35,6 @@ class MainPointFinder(object):
         MainScriptHelper.add_common_arguments(argument_parser)
         MainScriptHelper.add_assembly_arguments(argument_parser)
         MainScriptHelper.add_input_files_arguments(argument_parser)
-        argument_parser.add_argument('--report-include-fastq', action='store_true')
         argument_parser.add_argument('--species', required=True, choices=[
             'campylobacter', 'enterococcus_faecalis', 'enterococcus_faecium', 'escherichia_coli', 'klebsiella',
             'mycobacterium_tuberculosis', 'neisseria_gonorrhoeae', 'plasmodium_falciparum', 'salmonella'])

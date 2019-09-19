@@ -38,7 +38,6 @@ class MainSequenceTyping(object):
         MainScriptHelper.add_input_files_arguments(argument_parser)
         argument_parser.add_argument('--scheme-dir', required=True, type=str)
         argument_parser.add_argument('--detection-method', type=str, choices=['blast', 'srst2'], default='blast')
-        argument_parser.add_argument('--report-include-fastq', action='store_true')
         argument_parser.add_argument('--srst2-max-unaligned-overlap', type=int, default=100)
         return argument_parser.parse_args()
 

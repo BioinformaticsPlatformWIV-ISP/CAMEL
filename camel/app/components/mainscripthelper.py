@@ -160,6 +160,8 @@ class MainScriptHelper(object):
         argument_parser.add_argument('--fastq-pe', help="Input PE FASTQ files", nargs=2)
         argument_parser.add_argument('--fastq-pe-names', help="Input PE FASTQ file names", nargs=2)
         argument_parser.add_argument('--trim-reads', help="Perform read trimming", action='store_true')
+        argument_parser.add_argument('--report-include-fastq', help="Include trimmed FASTQ files in the report",
+                                     action='store_true')
 
     @staticmethod
     def add_assembly_arguments(argument_parser: argparse.ArgumentParser) -> None:
