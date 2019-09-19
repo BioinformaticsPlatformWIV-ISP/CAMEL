@@ -1,22 +1,15 @@
 #!/usr/bin/env python
 import argparse
-import datetime
 import json
 import logging
-import shutil
 from typing import Any, Dict, List
 
 import os
 
-from camel.app.components.html.htmlreport import HtmlReport
-from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.mainscripthelper import MainScriptHelper
 from camel.app.components.workflows.sequencetypingwrapper import SequenceTypingWrapper, SequenceTypingInput, \
     SequenceTypingOutput
 from camel.app.io.tooliofile import ToolIOFile
-from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-from camel.resources import CSS_STYLE
-from camel.resources.javascript import JQUERY_SRC
 
 
 class MainSequenceTyping(object):
@@ -42,11 +35,7 @@ class MainSequenceTyping(object):
         argument_parser = argparse.ArgumentParser()
         MainScriptHelper.add_common_arguments(argument_parser)
         MainScriptHelper.add_assembly_arguments(argument_parser)
-        argument_parser.add_argument('--fasta', help="Input FASTA file", type=str)
-        argument_parser.add_argument('--fasta-name', help="Input FASTA file name", type=str)
-        argument_parser.add_argument('--fastq-pe', help="Input PE FASTQ files", nargs=2)
-        argument_parser.add_argument('--fastq-pe-names', help="Input PE FASTQ file names", nargs=2)
-        argument_parser.add_argument('--trim-reads', help="Perform read trimming", action='store_true')
+        MainScriptHelper.add_input_files_arguments(argument_parser)
         argument_parser.add_argument('--scheme-dir', required=True, type=str)
         argument_parser.add_argument('--detection-method', type=str, choices=['blast', 'srst2'], default='blast')
         argument_parser.add_argument('--report-include-fastq', action='store_true')
@@ -58,10 +47,12 @@ class MainSequenceTyping(object):
         Runs the workflow.
         :return: None
         """
-        self.__init_report()
-        self.__add_analysis_info_section()
+        self._report = self._helper.init_report(
+            self._args.output_html, self._args.output_dir, 'Sequence typing report',
+            f'Sequence typing {self._args.detection_method}')
+        self._helper.export_analysis_info_section(self._report, self._helper.determine_input_files(self._args))
         input_files = self._helper.symlink_input_files(self._args.fasta, self._args.fastq_pe)
-        db_data = self.__get_db_metadata(self._args.scheme_dir)
+        db_data = MainSequenceTyping.__get_db_metadata(self._args.scheme_dir)
         if self._args.detection_method == 'blast':
             fasta_file = self._helper.get_blast_input(input_files, self._args, self._report)
             output = self.__run_sequence_typing_blast(fasta_file, db_data['name'], self._args.scheme_dir)
@@ -72,32 +63,8 @@ class MainSequenceTyping(object):
             raise ValueError(f"Invalid detection method: {self._args.detection_method}")
         self.__export_output(output)
 
-    def __init_report(self) -> None:
-        """
-        Initializes the HTML report
-        :return: None
-        """
-        self._report = HtmlReport(self._args.output_html, self._args.output_dir, [JQUERY_SRC])
-        if not os.path.isdir(self._args.output_dir):
-            os.makedirs(self._args.output_dir)
-        self._report.initialize('Sequence typing report', CSS_STYLE)
-        self._report.add_pipeline_header(f'Sequence typing ({self._args.detection_method})')
-        self._report.save()
-
-    def __add_analysis_info_section(self) -> None:
-        """
-        Adds the report section with the analysis info
-        :return: None
-        """
-        section = HtmlReportSection('Analysis info')
-        section.add_table([
-            ['Analysis date:', datetime.datetime.now().strftime(SnakePipelineUtils.DATE_FORMAT)],
-            ['Input file(s):', self._helper.determine_input_files(self._args)],
-        ], table_attributes=[('class', 'information')])
-        self._report.add_html_object(section)
-        self._report.save()
-
-    def __get_db_metadata(self, directory: str) -> Dict[str, Any]:
+    @staticmethod
+    def __get_db_metadata(directory: str) -> Dict[str, Any]:
         """
         Returns the database metadata.
         :param directory: Database directory
@@ -143,22 +110,8 @@ class MainSequenceTyping(object):
         :param output: Output
         :return: None
         """
-        self._report.add_html_object(output.report_section)
-        output.report_section.copy_files(self._report.output_dir)
-
-        # Add log files
-        dir_logs = os.path.join(self._report.output_dir, 'logs')
-        if not os.path.isdir(dir_logs):
-            os.makedirs(dir_logs)
-        shutil.copyfile(output.log_file, os.path.join(dir_logs, 'log_sequence_typing.txt'))
-        for key, path in self._helper.logs.items():
-            shutil.copyfile(path, os.path.join(dir_logs, f'log_{key}.txt'))
-
-        # Add commands section
-        if len(self._helper.informs) > 0:
-            self._report.add_html_object(
-                SnakePipelineUtils.create_commands_section(self._helper.informs, self._args.working_dir))
-        self._report.save()
+        self._helper.logs['typing'] = output.log_file
+        self._helper.export_output_and_commands_section(self._report, output.report_section)
 
 
 if __name__ == '__main__':
