@@ -1,0 +1,116 @@
+from typing import List, Optional, Union
+
+import abc
+
+from camel.app.components.genedetection.genedetectionutils import GeneDetectionUtils
+from camel.app.components.html.htmlreportsection import HtmlReportSection
+from camel.app.components.html.htmltablecell import HtmlTableCell
+
+
+class GeneDetectionHitBase(object, metaclass=abc.ABCMeta):
+    """
+    This is the base class for hits detected by the gene detection workflows.
+    """
+
+    def __init__(self, locus: str, accession: Optional[str] = None) -> None:
+        """
+        Initializes the hit.
+        :param locus: Locus corresponding to the hit.
+        :param accession: Accession number
+        """
+        self._locus = locus
+        self._accession = accession
+        self._metadata = []
+
+    @property
+    def locus(self) -> str:
+        """
+        Returns the locus.
+        :return: Locus name
+        """
+        return self._locus
+
+    @abc.abstractmethod
+    def is_perfect_hit(self) -> bool:
+        """
+        Function to check if this is a perfect hit.
+        :return: True if perfect hit, False otherwise
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def is_full_length(self) -> bool:
+        """
+        Function to check if this is a full length hit.
+        :return: True if full length, False otherwise
+        """
+        raise NotImplementedError()
+
+    @property
+    @abc.abstractmethod
+    def color(self) -> str:
+        """
+        Returns the color for this hit based on the statistics.
+        :return: Color (as string)
+        """
+        raise NotImplementedError()
+
+    @property
+    @abc.abstractmethod
+    def table_column_names(self) -> List[str]:
+        """
+        Returns the names of the columns of the tabular output.
+        :return: List of column names
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def to_table_row(self) -> List[str]:
+        """
+        Returns the hit as a table row.
+        :return: List of table cell values
+        """
+        raise NotImplementedError()
+
+    @property
+    @abc.abstractmethod
+    def html_column_names(self) -> List[str]:
+        """
+        Returns the names of the columns of the HTML output.
+        :return: List of column names
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def to_html_row(self, report_section: HtmlReportSection, sub_directory: str, colored: bool = True) \
+            -> List[Union[str, HtmlTableCell]]:
+        """
+        Returns the hit as a HTML table row.
+        :param report_section: Section is passed to save additional data
+        :param sub_directory: Subdirectory to save the additional data
+        :param colored: If True, the row is colored
+        :return: List of table cell values
+        """
+        raise NotImplementedError()
+
+    def add_metadata(self, name: str, value: str) -> None:
+        """
+        Adds metadata to the hit.
+        :param name: Metadata title
+        :param value: Metadata value
+        :return: None
+        """
+        self._metadata.append({'name': name, 'value': value})
+
+    def _get_accession_cell(self) -> HtmlTableCell:
+        """
+        Returns the table cell for the accession.
+        :return: Table cell with accession
+        """
+        if self._accession is None:
+            return HtmlTableCell('-', self.color)
+        elif GeneDetectionUtils.is_ncbi_accession(self._accession):
+            link = f'https://www.ncbi.nlm.nih.gov/nuccore/{self._accession}'
+            return HtmlTableCell(self._accession, self.color, link=link)
+        else:
+            return HtmlTableCell(self._accession, self.color)

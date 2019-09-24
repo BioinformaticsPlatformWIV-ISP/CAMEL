@@ -3,7 +3,8 @@ from typing import List
 
 import os
 
-from camel.app.components.blast.blastformat7parser import BlastFormat7Parser
+from camel.app.camel import Camel
+from camel.app.components.blast.blasthitstatistics import BlastHitStatistics
 from camel.app.components.blasttyping.blasthitfilteringhelper import BlastHitFilteringHelper
 from camel.app.components.genedetection.genedetectionblasthit import GeneDetectionBlastHit
 from camel.app.components.genedetection.genedetectionutils import GeneDetectionUtils
@@ -36,7 +37,7 @@ class BlastHitFiltering(Tool):
         * 'score': The n best hits according to hit score are reported (controlled by the 'score_limit' parameter).
     """
 
-    def __init__(self, camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initializes this tool.
         :param camel: Camel instance
@@ -48,9 +49,8 @@ class BlastHitFiltering(Tool):
         Executes this tool.
         :return: None
         """
-        hits = self.__parse_input(self._tool_inputs['TSV'][0].path)
+        hits = self.__parse_tabular_blast_output(self._tool_inputs['TSV'][0].path)
         filtered_hits = self.__filter_hits(hits)
-        self.__add_metadata(filtered_hits)
         self.__set_output(filtered_hits)
 
     def _check_input(self) -> None:
@@ -64,53 +64,30 @@ class BlastHitFiltering(Tool):
             raise InvalidInputSpecificationError("No database informs found")
         super(BlastHitFiltering, self)._check_input()
 
-    def __parse_input(self, tsv_file: str) -> List[GeneDetectionBlastHit]:
+    def __parse_tabular_blast_output(self, tsv_file: str) -> List[GeneDetectionBlastHit]:
         """
         Parses the tabular input file.
         :param tsv_file: TSV input file
-        :return: Parsed BLAST hits
+        :return: Parsed BLAST hits per cluster
         """
-        blast_output_data = BlastFormat7Parser.parse_output_file(tsv_file)
-        return [GeneDetectionBlastHit.create_from_dict(output) for output in blast_output_data]
+        mapping = self._input_informs['db_info']['mapping']
+        hits = []
+        for stats in BlastHitStatistics.parse_blast_output(tsv_file):
+            # Parse BLAST output
+            seq_id = stats.subject_id.split('__')[2]
+            hit = GeneDetectionBlastHit(
+                mapping.get_metadata(seq_id, 'allele'),
+                mapping.get_metadata(seq_id, 'accession'),
+                stats
+            )
+            # Add metadata (when specified)
+            if ('extra_column_key' in self._parameters) and ('extra_column_name' in self._parameters):
+                metadata_value = mapping.get_metadata(seq_id, self._parameters['extra_column_key'].value)
+                hit.add_metadata(self._parameters['extra_column_name'].value, metadata_value)
+            hits.append(hit)
 
-    def __add_metadata(self, hits: List[GeneDetectionBlastHit]) -> None:
-        """
-        Adds metadata to the filtered hits.
-        :return: None
-        """
-        for hit in hits:
-            new_id = hit.subject.split('__')[3]
-            full_header = self._input_informs['db_info']['mapping'].get(new_id)
-            _, metadata = GeneDetectionUtils.parse_header(full_header)
-
-            hit.locus = metadata['allele']
-            hit.accession = metadata.get('accession')
-            if 'extra_column_key' in self._parameters:
-                column_value = metadata[self._parameters['extra_column_key'].value]
-                if not column_value:
-                    column_value = '-'
-                hit.set_extra_column(self._parameters['extra_column_name'].value, column_value)
-
-    @staticmethod
-    def __get_best_hit_per_cluster(hits: List[GeneDetectionBlastHit]) -> List[GeneDetectionBlastHit]:
-        """
-        Returns the best hit for each cluster.
-        :param hits: Hits
-        :return: Best matching hits
-        """
-        hits_per_cluster = {}
-        for hit in hits:
-            cluster = hit.subject.split('__')[1]
-            if cluster not in hits_per_cluster:
-                hits_per_cluster[cluster] = []
-            hits_per_cluster[cluster].append(hit)
-        logging.debug('{} cluster(s) with hits'.format(len(hits_per_cluster)))
-
-        reported_hits = []
-        for _, hits in hits_per_cluster.items():
-            selected_hits = BlastHitFilteringHelper.detect_best_hits(hits)
-            reported_hits.extend(selected_hits)
-        return reported_hits
+        logging.info(f"{len(hits)} hits parsed")
+        return hits
 
     def __filter_hits(self, hits: List[GeneDetectionBlastHit]) -> List[GeneDetectionBlastHit]:
         """
@@ -122,9 +99,13 @@ class BlastHitFiltering(Tool):
             self._parameters['min_percent_identity'].value))
         hits = BlastHitFilteringHelper.filter_coverage(hits, float(self._parameters['min_coverage'].value))
         logging.info("Filtering method: '{}'".format(self._parameters['filtering_method'].value))
+
+        # Report best hit(s) for each database cluster
         if self._parameters['filtering_method'].value == 'cluster':
             hits = BlastHitFiltering.__get_best_hit_per_cluster(hits)
-            hits.sort(key=lambda h: (h.locus, h.query_start))
+            hits.sort(key=lambda h: (h.locus, h.blast_stats.query_start))
+
+        # Report best N hits based on BLAST score
         elif self._parameters['filtering_method'].value == 'score':
             if 'score_nb_of_hits' not in self._parameters:
                 raise ToolExecutionError("'score_nb_of_hits' needs to be set when the filtering method is 'score'")
@@ -139,21 +120,26 @@ class BlastHitFiltering(Tool):
         """
         self._tool_outputs['VAL_Hits'] = [ToolIOValue(hit) for hit in hits]
         output_path = os.path.join(self._folder, self._parameters['output_filename'].value)
-        self.__create_output_file(hits, output_path)
+        GeneDetectionUtils.export_hits_tabular(hits, output_path)
         self._tool_outputs['TSV'] = [ToolIOFile(output_path)]
 
     @staticmethod
-    def __create_output_file(hits: List[GeneDetectionBlastHit], path: str):
+    def __get_best_hit_per_cluster(hits: List[GeneDetectionBlastHit]) -> List[GeneDetectionBlastHit]:
         """
-        Creates the tabular output file.
-        :param hits: Detected hits
-        :param path: Output path
-        :return: None
+        Returns the best hit for each cluster.
+        :param hits: All hits
+        :return: Best matching hits
         """
-        with open(path, 'w') as handle:
-            if len(hits) > 0:
-                handle.write('\t'.join(hits[0].column_names_tabular))
-                handle.write('\n')
-                for hit in hits:
-                    handle.write(hit.to_table_row())
-                    handle.write('\n')
+        hits_per_cluster = {}
+        for hit in hits:
+            cluster = hit.blast_stats.subject_id.split('__')[1]
+            if cluster not in hits_per_cluster:
+                hits_per_cluster[cluster] = []
+            hits_per_cluster[cluster].append(hit)
+        logging.debug('{} cluster(s) with hits'.format(len(hits_per_cluster)))
+
+        reported_hits = []
+        for _, hits in hits_per_cluster.items():
+            selected_hits = BlastHitFilteringHelper.detect_best_hits(hits)
+            reported_hits.extend(selected_hits)
+        return reported_hits

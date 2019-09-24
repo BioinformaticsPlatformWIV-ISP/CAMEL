@@ -1,10 +1,11 @@
 import logging
+
 import os
 
+from camel.app.camel import Camel
 from camel.app.components.blast.alignmentextraction import AlignmentExtraction
 from camel.app.components.filesystemhelper import FileSystemHelper
-from camel.app.components.genedetection.genedetectionutils import GeneDetectionUtils
-from camel.app.components.genedetection.mapping import Mapping
+from camel.app.components.genedetection.genedetectionblasthit import GeneDetectionBlastHit
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.tool import Tool
@@ -20,7 +21,7 @@ class AlignmentExtractor(Tool):
     - List of alignment files in the same order as the input ('TXT' key in the tool outputs)
     """
 
-    def __init__(self, camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initializes this tool.
         :param camel: Camel instance
@@ -36,11 +37,10 @@ class AlignmentExtractor(Tool):
         self._tool_outputs['TXT'] = []
         if 'VAL_Hits' not in self._tool_inputs:
             return
-        for input_ in self._tool_inputs['VAL_Hits']:
-            key = AlignmentExtraction.get_key(input_.value.subject, input_.value.query)
+        for hit in [io.value for io in self._tool_inputs['VAL_Hits']]:
+            key = AlignmentExtraction.get_key(hit.blast_stats.subject_id, hit.blast_stats.query_id)
             if key in alignments:
-                alignment = self.__save_alignment(input_.value.subject, alignments[key],
-                                                  self._input_informs['db_info']['mapping'])
+                alignment = self.__save_alignment(hit, alignments[key])
                 self._tool_outputs['TXT'].append(ToolIOFile(alignment))
             else:
                 raise ValueError("No alignment found for: '{}'".format(key))
@@ -54,23 +54,18 @@ class AlignmentExtractor(Tool):
             raise InvalidInputSpecificationError("No TXT input found.")
         if 'VAL_Hits' not in self._tool_inputs:
             logging.warning("No blast hits input found")
-        if 'db_info' not in self._input_informs:
-            raise InvalidInputSpecificationError("Database information is required")
         super(AlignmentExtractor, self)._check_input()
 
-    def __save_alignment(self, subject_name: str, alignment: str, mapping: Mapping) -> str:
+    def __save_alignment(self, hit: GeneDetectionBlastHit, alignment: str) -> str:
         """
         Saves the given alignment.
-        :param subject_name: Subject name
+        :param hit: BLAST hit
         :param alignment: Alignment
-        :param mapping: Mapping
         :return: Filename of the saved alignment
         """
-        id_ = subject_name.split('__')[2]
-        original_seq_id, metadata = GeneDetectionUtils.parse_header(mapping.get(id_))
-        filename = os.path.join(self._folder, '{}.txt'.format(FileSystemHelper.make_valid(metadata['allele'])))
-        alignment = alignment.replace(subject_name, original_seq_id)
-        alignment = alignment.replace('Query  ', 'Contig ').replace('Sbjct  ', 'Gene   ')
+        filename = os.path.join(self._folder, '{}.txt'.format(FileSystemHelper.make_valid(hit.locus)))
+        alignment = alignment.replace(hit.blast_stats.subject_id, hit.locus)
+        alignment = alignment.replace('Query  ', 'Contig ').replace('Sbjct  ', 'Locus  ')
         with open(filename, 'w') as output_handle:
             output_handle.write(alignment)
         return filename

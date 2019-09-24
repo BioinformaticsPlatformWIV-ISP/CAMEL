@@ -1,12 +1,10 @@
-import json
-
 import ast
+import json
 import logging
+from typing import Tuple, Dict, List
 
 import bs4
 import re
-from typing import Tuple, Dict
-
 from Bio import SeqIO
 
 
@@ -99,3 +97,21 @@ class GeneDetectionUtils(object):
         logging.info(f"Clustering mapping parsed for {len(cluster_by_seq)} sequences ({len(unique_clusters)} "
                      f"unique clusters)")
         return cluster_by_seq
+
+    @staticmethod
+    def export_hits_tabular(hits: List, output_path: str) -> None:
+        """
+        Creates the tabular output file.
+        :param hits: Detected hits
+        :param output_path: Output path
+        :return: None
+        """
+        logging.info(f"Exporting {len(hits)} hits to: {output_path}")
+        with open(output_path, 'w') as handle:
+            if len(hits) < 1:
+                return
+            handle.write('\t'.join(hits[0].table_column_names))
+            handle.write('\n')
+            for hit in hits:
+                handle.write('\t'.join(hit.to_table_row()))
+                handle.write('\n')

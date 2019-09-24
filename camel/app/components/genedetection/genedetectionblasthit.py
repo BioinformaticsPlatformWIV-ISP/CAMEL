@@ -1,184 +1,119 @@
-import os
-from typing import List, Optional, Any, Dict
+from pathlib import Path
+from typing import Optional, List, Union
 
-from camel.app.components.genedetection.genedetectionhit import GeneDetectionHit
+from camel.app.components.blast.blasthitstatistics import BlastHitStatistics
+from camel.app.components.genedetection.genedetectionhitbase import GeneDetectionHitBase
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.html.htmltablecell import HtmlTableCell
 
 
-class GeneDetectionBlastHit(GeneDetectionHit):
+class GeneDetectionBlastHit(GeneDetectionHitBase):
     """
-    Gene detection hit detected by blast.
+    This class represents a gene detection hit detected with BLAST.
     """
 
-    _TABLE_COLUMNS = ['Locus', '% Identity', 'HSP/Locus length', 'Contig', 'Position in contig', 'Accession']
-    _HTML_COLUMNS = _TABLE_COLUMNS + ['Alignment']
-
-    def __init__(self, locus, subject, pident, slen, sseq, qseqid, qstart, qend, accession, alignment_path):
+    def __init__(self, locus: str, accession: Optional[str], blast_stats: BlastHitStatistics) -> None:
         """
-        Initializes the hit.
+        Initializes this hit.
         :param locus: Locus
-        :param subject: Subject
-        :param pident: Percent identity
-        :param slen: Subject length
-        :param sseq: Aligned sequence of the subject
-        :param qseqid: Query sequence id
-        :param qstart: Start of the alignment in the query
-        :param qend: End of the alignment in the query
-        :param accession: NCBI accession number
-        :param alignment_path: Path to the alignment visualization file
+        :param accession: Accession
+        :param blast_stats: BLAST hit statistics
         """
-        super().__init__(locus)
-        self.accession = str(accession)
-        self._subject = subject
-        self._pident = pident
-        self._slen = slen
-        self._sseq = sseq
-        self._qseqid = qseqid
-        self._qstart = qstart
-        self._qend = qend
-        self._alignment_path = alignment_path
-        self._extra_column_value = None
-        self._extra_column_name = None
+        super().__init__(locus, accession)
+        self._blast_stats = blast_stats
+        self._alignment_path = None
 
-    @staticmethod
-    def create_from_dict(input_dict: Dict[str, Any]) -> 'GeneDetectionBlastHit':
+    def is_perfect_hit(self) -> bool:
         """
-        Creates a hit object from a dictionary containing the blast output.
-        :param input_dict: Input dictionary
-        :return: Hit object
+        Returns True if this is a perfect hit, False otherwise
+        :return: None
         """
-        try:
-            return GeneDetectionBlastHit(None, input_dict['sseqid'], float(input_dict['pident']), input_dict['slen'],
-                                         input_dict['sseq'], input_dict['qseqid'], input_dict['qstart'],
-                                         input_dict['qend'], None, None)
-        except KeyError as err:
-            raise ValueError("Cannot create hit from dictionary {} missing - {!r}".format(err, input_dict))
+        return self._blast_stats.is_perfect_hit()
 
-    @staticmethod
-    def get_column_names_html(extra_column_name: Optional[str] = None) -> List[str]:
+    def is_full_length(self) -> bool:
         """
-        Returns the column names for the HTML output.
-        :param extra_column_name: Extra column name (None if there is None)
+        Returns True if this is a full length hit, False otherwise.
+        :return: True if full length
+        """
+        return self._blast_stats.is_full_length()
+
+    @property
+    def color(self) -> str:
+        """
+        Returns the color for this hit based on the statistics.
+        :return: Color (as string)
+        """
+        if self.is_perfect_hit():
+            return 'green'
+        elif self.is_full_length():
+            return 'lightgreen'
+        return 'grey'
+
+    @property
+    def table_column_names(self) -> List[str]:
+        """
+        Returns the names of the columns of the tabular output.
         :return: List of column names
         """
-        if extra_column_name is None:
-            return GeneDetectionBlastHit._HTML_COLUMNS
-        columns = GeneDetectionBlastHit._HTML_COLUMNS.copy()
-        columns.insert(-2, extra_column_name)
+        columns = ['Locus', '% Identity', 'HSP/Locus length', 'Contig', 'Position in contig', 'Accession']
+        for metadata in self._metadata:
+            columns.insert(-1, metadata['name'])
         return columns
 
-    @property
-    def column_names_html(self):
+    def to_table_row(self) -> List[str]:
         """
-        Returns the HTML column names.
-        :return: HTML column names
+        Returns the hit as a table row.
+        :return: List of table cell values
         """
-        return GeneDetectionBlastHit.get_column_names_html(self._extra_column_name)
+        data = [
+            self.locus,
+            '{:.2f}'.format(self.blast_stats.percent_identity),
+            f'{self.blast_stats.length_statistic}',
+            self.blast_stats.query_id,
+            f'{self.blast_stats.query_start}..{self.blast_stats.query_end}',
+            self._accession if self._accession is not None else '-'
+        ]
+        for metadata in self._metadata:
+            data.insert(-1, metadata['value'])
+        return data
 
-    @staticmethod
-    def get_column_names_tabular(extra_column_name: Optional[str] = None) -> List[str]:
+    @property
+    def html_column_names(self) -> List[str]:
         """
-        Returns the column names for the tabular output.
-        :param extra_column_name: Extra column name (None if there is None)
+        Returns the names of the columns of the HTML output.
         :return: List of column names
         """
-        if extra_column_name is None:
-            return GeneDetectionBlastHit._TABLE_COLUMNS
-        columns = GeneDetectionBlastHit._TABLE_COLUMNS.copy()
-        columns.insert(-1, extra_column_name)
-        return columns
+        return self.table_column_names + ['Alignment']
+
+    def to_html_row(self, report_section: HtmlReportSection, sub_directory: str, colored: bool = True) -> List[
+            Union[str, HtmlTableCell]]:
+        """
+        Returns the hit as a HTML table row.
+        :param report_section: Section is passed to save additional data
+        :param sub_directory: Subdirectory to save the additional data
+        :param colored: If True, the row is colored
+        :return: List of table cell values
+        """
+        if self.alignment_path is None:
+            alignment_cell = '-'
+        else:
+            relative_path = str(Path(sub_directory) / 'alignments' / self.alignment_path.name)
+            report_section.add_file(str(self.alignment_path), relative_path)
+            alignment_cell = HtmlTableCell('view', self.color if colored else None, link=relative_path)
+
+        return [HtmlTableCell(v, self.color) for v in self.to_table_row()][:-1] + [self._get_accession_cell()] + \
+               [alignment_cell]
 
     @property
-    def column_names_tabular(self):
+    def blast_stats(self) -> BlastHitStatistics:
         """
-        Returns the table column names.
-        :return: Table column names
+        Returns the BLAST stats for this hit.
+        :return: BLAST stats
         """
-        return GeneDetectionBlastHit.get_column_names_tabular(self._extra_column_name)
+        return self._blast_stats
 
     @property
-    def subject(self) -> str:
-        """
-        Returns the subject (locus + allele id).
-        :return: Subject
-        """
-        return self._subject
-
-    @property
-    def query(self) -> str:
-        """
-        Returns the query.
-        :return: Query
-        """
-        return self._qseqid
-
-    @property
-    def query_start(self):
-        """
-        Returns the start position of the query in the alignment.
-        :return: Query start
-        """
-        return self._qstart
-
-    @property
-    def query_end(self):
-        """
-        Returns the end position of the query in the alignment.
-        :return: Query end
-        """
-        return self._qend
-
-    @property
-    def subject_length(self) -> int:
-        """
-        Returns the subject length.
-        :return: Subject length
-        """
-        return self._slen
-
-    @property
-    def alignment_length(self) -> int:
-        """
-        Returns the alignment length.
-        :return: Alignment length
-        """
-        return len(self._sseq)
-
-    @property
-    def percent_identity(self) -> float:
-        """
-        Returns the percent identity.
-        :return: Percent identity
-        """
-        return self._pident
-
-    @property
-    def subject_coverage(self) -> float:
-        """
-        Returns the fraction of the subject that is covered by the alignment.
-        :return: % subject covered
-        """
-        return 100.0 * float(self.alignment_length) / self.subject_length
-
-    @property
-    def length_statistic(self) -> str:
-        """
-        Returns the subject coverage in the format: {bases_covered}/{subject_length}.
-        :return: Length statistic
-        """
-        return '{}/{}'.format(self.alignment_length, self.subject_length) if self.subject_length != '-' else '-'
-
-    @property
-    def gaps(self) -> int:
-        """
-        Returns the number of gaps in the alignment.
-        :return: Number of gaps
-        """
-        return self._sseq.count('-')
-
-    @property
-    def alignment_path(self) -> str:
+    def alignment_path(self) -> Path:
         """
         Returns the path to the alignment file.
         :return: Alignment file
@@ -186,95 +121,10 @@ class GeneDetectionBlastHit(GeneDetectionHit):
         return self._alignment_path
 
     @alignment_path.setter
-    def alignment_path(self, alignment_path: str) -> None:
+    def alignment_path(self, alignment_path: Path) -> None:
         """
         Sets the alignment path.
         :param alignment_path: Alignment path
         :return: None
         """
         self._alignment_path = alignment_path
-
-    @property
-    def extra_column_value(self) -> str:
-        """
-        Returns the value of the extra column.
-        :return: Extra column
-        """
-        return self._extra_column_value
-
-    def set_extra_column(self, name: str, value: str) -> None:
-        """
-        Sets the extra column information.
-        This extra column is used to contains some additional metadata associated with this hit. It is included in
-        the tabular output and the HTML output. It consists of a column name and a value.
-        E.g.: name - 'Protein function', value - 'Heat shock protein'
-        :param name: Name of the extra column
-        :param value: Value of the extra column
-        :return: None
-        """
-        self._extra_column_value = value
-        self._extra_column_name = name
-
-    def is_perfect_hit(self) -> bool:
-        """
-        Returns true if the hit is perfect (100% identity over complete length)
-        :return: True if perfect
-        """
-        return (self.percent_identity == 100.0) and (self.subject_length == self.alignment_length)
-
-    def to_table_row(self) -> str:
-        """
-        Converts the hit into a table row.
-        :return: Table row
-        """
-        row_data = [
-            self.locus,
-            '{:.2f}'.format(self.percent_identity),
-            self.length_statistic,
-            self.query,
-            '{}..{}'.format(self.query_start, self.query_end),
-            self.accession if self.accession is not None else '-']
-        if self._extra_column_value is not None:
-            row_data.insert(-1, self._extra_column_value)
-        return '\t'.join(row_data)
-
-    def to_html_row(self, report_section: HtmlReportSection, sub_directory: str, color: bool = True) -> List[Any]:
-        """
-        Converts the hit into a HTML table row. It also links the alignment file (if there is one) to the HTML report.
-        :param report_section: HTML Section that will contain the hit table
-        :param sub_directory: Subdirectory to save the alignments
-        :param color: If True, row is colored
-        :return: HTML row elements
-        """
-        if self.alignment_path is None:
-            alignment_cell = '-'
-        else:
-            relative_path = os.path.join(sub_directory, 'alignments', os.path.basename(self.alignment_path))
-            report_section.add_file(self.alignment_path, relative_path)
-            alignment_cell = HtmlTableCell('view', self.color if color else False, link=relative_path)
-        html_data = [
-            self.locus,
-            '{:.2f}'.format(self.percent_identity),
-            self.length_statistic,
-            self.query,
-            '{}..{}'.format(self.query_start, self.query_end)]
-        if self._extra_column_value is not None:
-            html_data.append(self._extra_column_value)
-        return [HtmlTableCell(v, self.color if color else None) for v in html_data] + [self.get_accession_cell()] + \
-               [alignment_cell]
-
-    @property
-    def color(self) -> str:
-        """
-        Returns the color for this hit.
-        Green: Perfect hit
-        Light green: Full length hit with one or more mismatches
-        Grey: Non-full length hit
-        :return: Color
-        """
-        if self.is_perfect_hit():
-            return 'green'
-        elif self.subject_length == self.alignment_length:
-            return 'lightgreen'
-        elif self.percent_identity != '-':
-            return 'grey'

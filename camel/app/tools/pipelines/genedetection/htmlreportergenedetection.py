@@ -1,8 +1,11 @@
 import logging
+from typing import List
 
 import os
 
+from camel.app.camel import Camel
 from camel.app.components.filesystemhelper import FileSystemHelper
+from camel.app.components.genedetection.genedetectionhitbase import GeneDetectionHitBase
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliovalue import ToolIOValue
@@ -14,7 +17,7 @@ class HtmlReporterGeneDetection(Tool):
     Tool that creates HTML reports for the gene detection pipeline.
     """
 
-    def __init__(self, camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initialize this tool.
         :param camel: Camel instance
@@ -33,7 +36,7 @@ class HtmlReporterGeneDetection(Tool):
         if len(self._tool_inputs['VAL_Hits']) == 0:
             self._report_section.add_paragraph('No hits found.')
         else:
-            self.__add_output_table()
+            self.__add_output_table([h.value for h in self._tool_inputs['VAL_Hits']])
         self.__add_database_information()
 
         # Add a warning when the detection method is different from the general detection
@@ -68,15 +71,15 @@ class HtmlReporterGeneDetection(Tool):
         self._report_section = HtmlReportSection(self._input_informs['db_info']['title'], 3)
         self._sub_folder = os.path.join('gene_detection', FileSystemHelper.make_valid(db_name))
 
-    def __add_output_table(self) -> None:
+    def __add_output_table(self, hits: List[GeneDetectionHitBase]) -> None:
         """
         Adds the output table.
+        :param hits: Detected hits
         :return: None
         """
-        header = self._tool_inputs['VAL_Hits'][0].value.column_names_html
-        table_data = [hit.to_html_row(self._report_section, self._sub_folder) for hit in
-                      [t.value for t in sorted(self._tool_inputs['VAL_Hits'], key=lambda x: x.value.locus)]]
-        self._report_section.add_table(table_data, header, [('class', 'data')])
+        table_data = [hit.to_html_row(self._report_section, self._sub_folder) for hit in sorted(
+            hits, key=lambda x: x.locus)]
+        self._report_section.add_table(table_data, hits[0].html_column_names, [('class', 'data')])
         relative_path = os.path.join(self._sub_folder, 'genes-{}-{}.tsv'.format(
             FileSystemHelper.make_valid(self._input_informs['db_info']['name']),
             FileSystemHelper.make_valid(self._tool_inputs['SAMPLE_NAME'][0].value)))
