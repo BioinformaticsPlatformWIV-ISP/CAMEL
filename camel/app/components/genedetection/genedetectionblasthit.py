@@ -38,18 +38,6 @@ class GeneDetectionBlastHit(GeneDetectionHitBase):
         return self._blast_stats.is_full_length()
 
     @property
-    def color(self) -> str:
-        """
-        Returns the color for this hit based on the statistics.
-        :return: Color (as string)
-        """
-        if self.is_perfect_hit():
-            return 'green'
-        elif self.is_full_length():
-            return 'lightgreen'
-        return 'grey'
-
-    @property
     def table_column_names(self) -> List[str]:
         """
         Returns the names of the columns of the tabular output.

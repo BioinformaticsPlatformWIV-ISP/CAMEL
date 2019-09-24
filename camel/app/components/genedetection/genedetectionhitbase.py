@@ -47,13 +47,20 @@ class GeneDetectionHitBase(object, metaclass=abc.ABCMeta):
         raise NotImplementedError()
 
     @property
-    @abc.abstractmethod
     def color(self) -> str:
         """
-        Returns the color for this hit based on the statistics.
-        :return: Color (as string)
+        Returns the color for this hit.
+        Green: Perfect hit
+        Light green: Full length hit with one or more mismatches
+        Grey: Non-full length hit
+        :return: Color
         """
-        raise NotImplementedError()
+        if self.is_perfect_hit():
+            return 'green'
+        elif self.is_full_length():
+            return 'lightgreen'
+        else:
+            return 'grey'
 
     @property
     @abc.abstractmethod
