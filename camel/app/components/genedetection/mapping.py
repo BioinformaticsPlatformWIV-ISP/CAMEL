@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Optional
 
 import json
 
@@ -48,3 +48,20 @@ class Mapping(object):
         :return: Item
         """
         return self._content[key]
+
+    def get_metadata(self, seq_id: str, metadata_key: str, default: Optional[str] = None) -> str:
+        """
+        Returns the metadata value for the given key and sequence identifier.
+        :param seq_id: Sequence identifier
+        :param metadata_key: Metadata key
+        :param default: Default value if key not present in metadata
+        :return: None
+        """
+        if seq_id not in self._content:
+            raise ValueError(f"No sample with id '{seq_id}' in mapping")
+        metadata = json.loads(' '.join(self._content[seq_id].split(' ')[1:]))
+        if (metadata_key not in metadata) and (default is None):
+            raise ValueError(f"Key '{metadata_key}' not found in metadata")
+        elif default is not None:
+            return default
+        return metadata[metadata_key]
