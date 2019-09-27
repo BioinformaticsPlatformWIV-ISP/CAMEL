@@ -6,6 +6,7 @@ import screed
 
 
 from camel.app.command.command import Command
+from camel.app.components.filesystemhelper import FileSystemHelper
 
 
 class FastqUtils(object):
@@ -210,7 +211,7 @@ class FastqUtils(object):
         :param pattern: Regex to determine the sample name
         :return: Sample name
         """
-        basename = os.path.basename(fastq_path)
+        basename = FileSystemHelper.make_valid(os.path.basename(fastq_path))
         m = re.match(pattern, basename, re.IGNORECASE)
         if m:
             return m.group(1)
