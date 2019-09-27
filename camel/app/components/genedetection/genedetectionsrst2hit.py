@@ -45,7 +45,10 @@ class GeneDetectionSRST2Hit(GeneDetectionHitBase):
         Returns the names of the columns of the tabular output.
         :return: List of column names
         """
-        return ['Locus', 'Length', '% Covered', 'Mismatches', 'Uncertainty', 'Divergence (%)', 'Depth', 'Accession']
+        columns = ['Locus', 'Length', '% Covered', 'Mismatches', 'Uncertainty', 'Divergence (%)', 'Depth', 'Accession']
+        for metadata in self._metadata:
+            columns.insert(-1, metadata['name'])
+        return columns
 
     def to_table_row(self) -> List[str]:
         """
@@ -56,14 +59,14 @@ class GeneDetectionSRST2Hit(GeneDetectionHitBase):
             self.locus,
             str(self._length),
             '{:.2f}'.format(self._coverage),
-            self._mismatches,
-            self._uncertainty,
+            self._mismatches if self._mismatches != '' else '-',
+            self._uncertainty if self._uncertainty != '' else '-',
             '{:.2f}'.format(self._divergence),
             '{:.2f}'.format(self._depth),
             self._accession if self._accession is not None else '-'
         ]
         for metadata in self._metadata:
-            data.append(metadata['value'])
+            data.insert(-1, metadata['value'])
         return data
 
     @property
@@ -87,12 +90,11 @@ class GeneDetectionSRST2Hit(GeneDetectionHitBase):
             self.locus,
             str(self._length),
             '{:.2f}'.format(self._coverage),
-            self._mismatches,
-            self._uncertainty,
+            self._mismatches if self._mismatches != '' else '-',
+            self._uncertainty if self._uncertainty != '' else '-',
             '{:.2f}'.format(self._divergence),
-            '{:.2f}'.format(self._depth),
-            self._get_accession_cell()
+            '{:.2f}'.format(self._depth)
         ]
         for metadata in self._metadata:
             data.append(metadata['value'])
-        return [HtmlTableCell(value, self.color) for value in data]
+        return [HtmlTableCell(value, self.color) for value in data] + [self._get_accession_cell()]
