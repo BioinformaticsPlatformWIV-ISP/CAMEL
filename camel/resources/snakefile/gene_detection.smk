@@ -1,4 +1,6 @@
 import json
+from pathlib import Path
+
 import shutil
 
 from camel.app.camel import Camel
@@ -20,12 +22,12 @@ rule Gene_detection_db_manager:
     Retrieves the FASTA file and the metadata from a database folder.
     """
     output:
-        FASTA=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'db_manager', 'fasta.io'),
-        FASTA_clustered=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'db_manager', 'fasta-clust.io'),
-        INFORMS=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'db_manager', 'informs.io')
+        FASTA = os.path.join(config['working_dir'], 'gene_detection', '{db}', 'db_manager', 'fasta.io'),
+        FASTA_clustered = os.path.join(config['working_dir'], 'gene_detection', '{db}', 'db_manager', 'fasta-clust.io'),
+        INFORMS = os.path.join(config['working_dir'], 'gene_detection', '{db}', 'db_manager', 'informs.io')
     params:
-        db_path=lambda wildcards: config['gene_detection'][wildcards.db]['path'],
-        running_dir=os.path.join(config['working_dir'], 'gene_detection', '{db}')
+        db_path = lambda wildcards: config['gene_detection'][wildcards.db]['path'],
+        running_dir = os.path.join(config['working_dir'], 'gene_detection', '{db}')
     run:
         from camel.app.tools.pipelines.genedetection.dbmanager import DBManager
         db_manager = DBManager(camel)
@@ -34,18 +36,21 @@ rule Gene_detection_db_manager:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(db_manager, output)
 
+##########
+# BLASTN #
+##########
 rule Gene_detection_blastn:
     """
     Performs local alignment using Blastn+.
     """
     input:
-        FASTA=os.path.join(config['working_dir'], INPUT_GENE_DETECTION_FASTA),
-        DB_BLAST=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'db_manager', 'fasta-clust.io')
+        FASTA = os.path.join(config['working_dir'], INPUT_GENE_DETECTION_FASTA),
+        DB_BLAST = os.path.join(config['working_dir'], 'gene_detection', '{db}', 'db_manager', 'fasta-clust.io')
     output:
         ASN = os.path.join(config['working_dir'], 'gene_detection', '{db}', 'blastn', 'asn.io'),
-        INFORMS = os.path.join(config['working_dir'], 'gene_detection', '{db}', 'blastn', 'informs.io')
+        INFORMS = os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_INFORMS_METHOD.format(db='{db}', method='blast'))
     params:
-        running_dir=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'blastn')
+        running_dir = os.path.join(config['working_dir'], 'gene_detection', '{db}', 'blastn')
     run:
         from camel.app.tools.blast.blastn import Blastn
         blastn = Blastn(camel)
@@ -60,11 +65,11 @@ rule Gene_detection_tsv_generation:
     Generates tabular output format to extract hit statistics.
     """
     input:
-        ASN=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'blastn', 'asn.io')
+        ASN = os.path.join(config['working_dir'], 'gene_detection', '{db}', 'blastn', 'asn.io')
     output:
-        TSV=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'tsv_generation', 'tsv.io')
+        TSV = os.path.join(config['working_dir'], 'gene_detection', '{db}', 'tsv_generation', 'tsv.io')
     params:
-        running_dir=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'tsv_generation')
+        running_dir = os.path.join(config['working_dir'], 'gene_detection', '{db}', 'tsv_generation')
     run:
         from camel.app.tools.blast.blastformatter import BlastFormatter
         blast_formatter = BlastFormatter(camel)
@@ -80,14 +85,14 @@ rule Gene_detection_hit_filtering:
     Extracts the hit information based on the database metadata.
     """
     input:
-        TSV=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'tsv_generation', 'tsv.io'),
-        INFORMS_db_info=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'db_manager', 'informs.io')
+        TSV = os.path.join(config['working_dir'], 'gene_detection', '{db}', 'tsv_generation', 'tsv.io'),
+        INFORMS_db_info = os.path.join(config['working_dir'], 'gene_detection', '{db}', 'db_manager', 'informs.io')
     output:
-        VAL_Hits=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'hit_filtering', 'blast-hits.io'),
-        TSV=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'hit_filtering', 'tsv-filtered.io'),
-        INFORMS=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'hit_filtering', 'informs.io')
+        VAL_Hits = os.path.join(config['working_dir'], 'gene_detection', '{db}', 'hit_filtering', 'blast-hits.io'),
+        TSV = os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_TABULAR_METHOD.format(db='{db}', method='blast')),
+        INFORMS = os.path.join(config['working_dir'], 'gene_detection', '{db}', 'hit_filtering', 'informs.io')
     params:
-        running_dir=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'hit_filtering'),
+        running_dir = os.path.join(config['working_dir'], 'gene_detection', '{db}', 'hit_filtering'),
         output_filename = lambda wildcards: 'hits-{}-{}.tsv'.format(
             FileSystemHelper.make_valid(config['sample_name']), FileSystemHelper.make_valid(wildcards.db)),
         db_config = lambda wildcards: config['gene_detection'][wildcards.db]
@@ -115,11 +120,11 @@ rule Gene_detection_text_alignment_generation:
     Generates alignments in the text format.
     """
     input:
-        ASN=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'blastn', 'asn.io')
+        ASN = os.path.join(config['working_dir'], 'gene_detection', '{db}', 'blastn', 'asn.io')
     output:
-        TXT=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'alignment_generation', 'txt.io')
+        TXT = os.path.join(config['working_dir'], 'gene_detection', '{db}', 'alignment_generation', 'txt.io')
     params:
-        running_dir=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'alignment_generation')
+        running_dir = os.path.join(config['working_dir'], 'gene_detection', '{db}', 'alignment_generation')
     run:
         from camel.app.tools.blast.blastformatter import BlastFormatter
         blast_formatter = BlastFormatter(camel)
@@ -134,13 +139,12 @@ rule Gene_detection_text_alignment_extraction:
     Extracts a text alignment for the selected hits and attaches them to the hit objects.
     """
     input:
-        TXT=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'alignment_generation', 'txt.io'),
-        VAL_Hits=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'hit_filtering', 'blast-hits.io'),
-        INFORMS_db_info=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'db_manager', 'informs.io')
+        TXT = os.path.join(config['working_dir'], 'gene_detection', '{db}', 'alignment_generation', 'txt.io'),
+        VAL_Hits = os.path.join(config['working_dir'], 'gene_detection', '{db}', 'hit_filtering', 'blast-hits.io')
     output:
-        VAL_Hits=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'alignment_extraction', 'blast-hits.io')
+        VAL_Hits = os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_HITS_METHOD.format(method='blast', db='{db}'))
     params:
-        running_dir=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'alignment_extraction')
+        running_dir = os.path.join(config['working_dir'], 'gene_detection', '{db}', 'alignment_generation')
     run:
         from camel.app.tools.pipelines.genedetection.alignmentextractor import AlignmentExtractor
         alignment_extractor = AlignmentExtractor(camel)
@@ -148,12 +152,15 @@ rule Gene_detection_text_alignment_extraction:
         step = Step(rule, alignment_extractor, camel, params.running_dir, config, wildcards)
         step.run_step()
         hits_with_alignment = []
-        for io_value, alignment in zip(SnakemakeUtils.load_object(input.VAL_Hits),
-                                       alignment_extractor.tool_outputs['TXT']):
-            io_value.value.alignment_path = alignment.path
+        for io_value, alignment in zip(
+                SnakemakeUtils.load_object(input.VAL_Hits), alignment_extractor.tool_outputs['TXT']):
+            io_value.value.alignment_path = Path(alignment.path)
             hits_with_alignment.append(io_value)
         SnakemakeUtils.dump_object(hits_with_alignment, output.VAL_Hits)
 
+#########
+# SRST2 #
+#########
 rule Gene_detection_srst2:
     """
     Read-mapping based gene detection using SRST2.
@@ -164,14 +171,16 @@ rule Gene_detection_srst2:
         FASTQ = os.path.join(config['working_dir'], INPUT_GENE_DETECTION_FASTQ),
         FASTA = os.path.join(config['working_dir'], 'gene_detection', '{db}', 'db_manager', 'fasta-clust.io')
     output:
-        TSV = os.path.join(config['working_dir'], 'gene_detection', '{db}', 'srst2', 'tsv.io'),
-        INFORMS = os.path.join(config['working_dir'], 'gene_detection', '{db}', 'srst2', 'informs.io')
+        TSV = os.path.join(config['working_dir'], 'gene_detection', '{db}', 'srst2', 'tsv-srst2.io'),
+        INFORMS = os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_INFORMS_METHOD.format(db='{db}', method='srst2'))
     params:
         running_dir=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'srst2'),
         db_config = lambda wildcards: config['gene_detection'][wildcards.db]
     threads: 4
     run:
         from camel.app.tools.srst2.srst2gene import Srst2Gene
+        if not os.path.exists(params.running_dir):
+            os.makedirs(params.running_dir)
         srst2 = Srst2Gene(camel)
         input_files = SnakemakeUtils.load_object(input.FASTQ)
         SnakemakeUtils.add_pickle_input(srst2, 'FASTA', input.FASTA)
@@ -200,13 +209,13 @@ rule Gene_detection_srst2_hit_extraction:
     Extracts hits from the SRST2 output.
     """
     input:
-        TSV=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'srst2', 'tsv.io'),
-        INFORMS_db=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'db_manager', 'informs.io')
+        TSV = os.path.join(config['working_dir'], 'gene_detection', '{db}', 'srst2', 'tsv-srst2.io'),
+        INFORMS_db = os.path.join(config['working_dir'], 'gene_detection', '{db}', 'db_manager', 'informs.io')
     output:
-        VAL_Hits=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'srst2', 'srst2-hits.io'),
-        TSV=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'hit_extraction', 'tsv-srst2.io')
+        VAL_Hits = os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_HITS_METHOD.format(db='{db}', method='srst2')),
+        TSV = os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_TABULAR_METHOD.format(db='{db}', method='srst2'))
     params:
-        running_dir=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'srst2'),
+        running_dir = os.path.join(config['working_dir'], 'gene_detection', '{db}', 'srst2'),
         output_filename = lambda wildcards: 'hits-{}-{}.tsv'.format(
             FileSystemHelper.make_valid(str(config['sample_name'])),
             FileSystemHelper.make_valid(wildcards.db)),
@@ -227,27 +236,84 @@ rule Gene_detection_srst2_hit_extraction:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(extractor, output)
 
+#######
+# KMA #
+#######
+rule Gene_detection_KMA_get_db:
+    """
+    Retrieves the database for running KMA.
+    """
+    input:
+        FASTA = os.path.join(config['working_dir'], 'gene_detection', '{db}', 'db_manager', 'fasta.io')
+    output:
+        DB = os.path.join(config['working_dir'], 'gene_detection', '{db}', 'kma', 'db.io')
+    run:
+        fasta_path = Path(SnakemakeUtils.load_object(input.FASTA)[0].path)
+        db_name = fasta_path.parent.name
+        dir_kma = fasta_path.parent / 'kma'
+        if not dir_kma.exists():
+            raise FileNotFoundError(f"KMA database not found: {dir_kma}")
+        kma_path = fasta_path.parent / 'kma' / db_name.lower()
+        SnakemakeUtils.dump_object([ToolIOValue(kma_path)], output.DB)
+
+rule Gene_detection_KMA:
+    """
+    Runs KMA on a database with the gene detection.
+    """
+    input:
+        FASTQ_PE = os.path.join(config['working_dir'], INPUT_GENE_DETECTION_FASTQ),
+        DB = os.path.join(config['working_dir'], 'gene_detection', '{db}', 'kma', 'db.io')
+    output:
+        TSV = os.path.join(config['working_dir'], 'gene_detection', '{db}', 'kma', 'tsv-kma.io'),
+        INFORMS = os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_INFORMS_METHOD.format(method='kma', db='{db}'))
+    params:
+        running_dir = os.path.join(config['working_dir'], 'gene_detection', '{db}', 'kma')
+    run:
+        from camel.app.tools.kma.kma import KMA
+        kma = KMA(camel)
+        SnakemakeUtils.add_pickle_inputs(kma, input)
+        step = Step(rule, kma, camel, params.running_dir, config)
+        step.run_step()
+        SnakemakeUtils.dump_tool_outputs(kma, output)
+
+rule Gene_detection_KMA_hit_extraction:
+    """
+    Extracts and filters the hits detected by KMA.
+    """
+    input:
+        TSV = os.path.join(config['working_dir'], 'gene_detection', '{db}', 'kma', 'tsv-kma.io'),
+        INFORMS_db=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'db_manager', 'informs.io')
+    output:
+        VAL_hits = os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_HITS_METHOD.format(method='kma', db='{db}')),
+        TSV = os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_TABULAR_METHOD.format(method='kma', db='{db}'))
+    params:
+        running_dir = os.path.join(config['working_dir'], 'gene_detection', '{db}', 'kma')
+    run:
+        from camel.app.tools.kma.kmagenedetectionhitextractor import KMAGeneDetectionHitExtractor
+        extractor = KMAGeneDetectionHitExtractor(camel)
+        SnakemakeUtils.add_pickle_inputs(extractor, input)
+        step = Step(rule, extractor, camel, params.running_dir, config)
+        step.run_step()
+        SnakemakeUtils.dump_tool_outputs(extractor, output)
+
 rule Gene_detection_get_hits:
     """
     Retrieves the hits from the blastn / SRST2 detection method based on the config
     """
     input:
         informs_db=os.path.join(config['working_dir'], 'gene_detection', '{db}', 'db_manager', 'informs.io'),
-        hits_blast=lambda wildcards: os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_HITS_BLAST.format(db=wildcards.db)) if GeneDetectionUtils.get_detection_method_key(config, wildcards.db) == 'blast' else [],
-        hits_srst2=lambda wildcards: os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_HITS_SRST2.format(db=wildcards.db)) if GeneDetectionUtils.get_detection_method_key(config, wildcards.db) == 'srst2' else [],
-        tsv_blast=lambda wildcards: os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_TSV_BLAST.format(db=wildcards.db)) if GeneDetectionUtils.get_detection_method_key(config, wildcards.db) == 'blast' else [],
-        tsv_srst2=lambda wildcards: os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_TSV_SRST2.format(db=wildcards.db)) if GeneDetectionUtils.get_detection_method_key(config, wildcards.db) == 'srst2' else [],
-        informs_blast=lambda wildcards: os.path.join(config['working_dir'], 'gene_detection', wildcards.db, 'blastn', 'informs.io') if GeneDetectionUtils.get_detection_method_key(config, wildcards.db) == 'blast' else [],
-        informs_srst2=lambda wildcards: os.path.join(config['working_dir'], 'gene_detection', wildcards.db, 'srst2', 'informs.io') if GeneDetectionUtils.get_detection_method_key(config, wildcards.db) == 'srst2' else []
+        VAL_hits=lambda wildcards: os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_HITS_METHOD.format(db=wildcards.db, method=GeneDetectionUtils.get_detection_method_key(config, wildcards.db))),
+        TSV=lambda wildcards: os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_TABULAR_METHOD.format(db=wildcards.db, method=GeneDetectionUtils.get_detection_method_key(config, wildcards.db))),
+        INFORMS=lambda wildcards: os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_INFORMS_METHOD.format(db=wildcards.db, method=GeneDetectionUtils.get_detection_method_key(config, wildcards.db)))
     output:
-        VAL_Hits = os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_ALL_HITS),
+        VAL_hits = os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_ALL_HITS),
         TSV = os.path.join(config['working_dir'], 'gene_detection', '{db}', 'hit_selection', 'selected-tsv.io'),
         INFORMS = os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_INFORMS)
     run:
-        shutil.copyfile(input.hits_blast if len(input.hits_blast) > 0 else input.hits_srst2, output.VAL_Hits)
-        shutil.copyfile(input.tsv_blast if len(input.tsv_blast) > 0 else input.tsv_srst2, output.TSV)
+        shutil.copyfile(input.VAL_hits, output.VAL_hits)
+        shutil.copyfile(input.TSV, output.TSV)
         # Add a tag for the database to distinguish commands in the output
-        informs = SnakemakeUtils.load_object(input.informs_blast if len(input.informs_blast) > 0 else input.informs_srst2)
+        informs = SnakemakeUtils.load_object(input.INFORMS)
         informs['_tag'] = SnakemakeUtils.load_object(input.informs_db)['title']
         SnakemakeUtils.dump_object(informs, output.INFORMS)
 
@@ -324,7 +390,7 @@ rule Gene_detection_dump_summary_info:
         informs = SnakemakeUtils.load_object(input.INFORMS_hits)
         hit_info = []
         for hit in informs:
-            hit_info.append(hit.value.to_table_row().split('\t'))
+            hit_info.append(hit.value.to_table_row())
         with open(output[0], 'w') as handle:
             handle.write('hits_{}\t{}'.format(wildcards.db, json.dumps(hit_info)))
             handle.write('\n')

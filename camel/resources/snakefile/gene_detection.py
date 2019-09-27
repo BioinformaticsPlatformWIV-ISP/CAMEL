@@ -2,14 +2,19 @@ from typing import Any, Dict, Optional
 
 import os
 
+
+# Input files and database
 GENE_DETECTION_FASTA = os.path.join('gene_detection', '{db}', 'db_manager', 'fasta.io'),
 GENE_DETECTION_FASTA_CLUSTERED = os.path.join('gene_detection', '{db}', 'db_manager', 'fasta-clust.io'),
-
 INPUT_GENE_DETECTION_FASTA = os.path.join('gene_detection', 'input', 'fasta.io')
 INPUT_GENE_DETECTION_FASTQ = os.path.join('gene_detection', 'input', 'fastq-pe.io')
 
-OUTPUT_GENE_DETECTION_HITS_BLAST = os.path.join('gene_detection', '{db}', 'alignment_extraction', 'blast-hits.io')
-OUTPUT_GENE_DETECTION_HITS_SRST2 = os.path.join('gene_detection', '{db}', 'srst2', 'srst2-hits.io')
+# Generic output paths with a wildcard for the detection method
+OUTPUT_GENE_DETECTION_HITS_METHOD = os.path.join('gene_detection', '{db}', '{method}', 'hits.io')
+OUTPUT_GENE_DETECTION_TABULAR_METHOD = os.path.join('gene_detection', '{db}', '{method}', 'tsv.io')
+OUTPUT_GENE_DETECTION_INFORMS_METHOD = os.path.join('gene_detection', '{db}', '{method}', 'informs.io')
+
+# Selected hits and informs for the given database
 OUTPUT_GENE_DETECTION_ALL_HITS = os.path.join('gene_detection', '{db}', 'hit_selection', 'selected-hits.io')
 OUTPUT_GENE_DETECTION_INFORMS = os.path.join('gene_detection', '{db}', 'hit_selection', 'informs.io')
 OUTPUT_GENE_DETECTION_COLUMNS = os.path.join('gene_detection', '{db}', 'report', 'informs-columns.io')
@@ -17,6 +22,7 @@ OUTPUT_GENE_DETECTION_COLUMNS = os.path.join('gene_detection', '{db}', 'report',
 OUTPUT_GENE_DETECTION_TSV_BLAST = os.path.join('gene_detection', '{db}', 'hit_filtering', 'tsv-filtered.io')
 OUTPUT_GENE_DETECTION_TSV_SRST2 = os.path.join('gene_detection', '{db}', 'hit_extraction', 'tsv-srst2.io')
 
+# Report and summary outputs
 OUTPUT_GENE_DETECTION_REPORT = os.path.join('gene_detection', '{db}', 'report', 'html.io')
 OUTPUT_GENE_DETECTION_REPORT_EMPTY = os.path.join('gene_detection', '{db}', 'report', 'html-empty.io')
 OUTPUT_GENE_DETECTION_SUMMARY = os.path.join('gene_detection', '{db}', 'report', 'summary_out.tsv')
