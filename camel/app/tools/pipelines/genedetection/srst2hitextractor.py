@@ -70,7 +70,7 @@ class SRST2HitExtractor(Tool):
                 seq_id = parts[header_indices['allele']]
                 hits.append(GeneDetectionSRST2Hit(
                     mapping.get_metadata(seq_id, 'allele'),
-                    mapping.get_metadata(seq_id, 'accession', '-'),
+                    mapping.get_metadata(seq_id, 'accession'),
                     int(parts[header_indices['length']]),
                     parts[header_indices['diffs']],
                     parts[header_indices['uncertainty']],
@@ -78,9 +78,10 @@ class SRST2HitExtractor(Tool):
                     float(parts[header_indices['divergence']]),
                     float(parts[header_indices['depth']])
                 ))
+
                 # Add metadata (when specified)
                 if ('extra_column_key' in self._parameters) and ('extra_column_name' in self._parameters):
                     metadata_value = mapping.get_metadata(seq_id, self._parameters['extra_column_key'].value)
-                    hits[-1].add_metadata(self._parameters['extra_column_name'], metadata_value)
+                    hits[-1].add_metadata(self._parameters['extra_column_name'].value, metadata_value)
         logging.info(f"{len(hits)} hits parsed")
         return hits
