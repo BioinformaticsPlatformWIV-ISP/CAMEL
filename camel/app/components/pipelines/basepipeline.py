@@ -105,7 +105,9 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         Returns the sample name.
         :return: Sample name
         """
-        if self._args.fastq_pe_names is not None:
+        if self._args.sample_name is not None:
+            return FileSystemHelper.make_valid(self._args.sample_name)
+        elif self._args.fastq_pe_names is not None:
             return FastqUtils.get_sample_name(self._args.fastq_pe_names[0])
         else:
             return FastqUtils.get_sample_name(self._args.fastq_pe[0])
