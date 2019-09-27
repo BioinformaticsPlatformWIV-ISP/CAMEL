@@ -1,7 +1,8 @@
 import logging
-from typing import List
+from typing import List, Union
 
 from camel.app.components.genedetection.genedetectionblasthit import GeneDetectionBlastHit
+from camel.app.components.sequencetyping.sequencetypingblasthit import SequenceTypingBlastHit
 
 
 class BlastHitFilteringHelper(object):
@@ -9,8 +10,10 @@ class BlastHitFilteringHelper(object):
     Class that filters list of BlastHit objects.
     """
 
+    BlastHit = Union[GeneDetectionBlastHit, SequenceTypingBlastHit]
+
     @staticmethod
-    def detect_best_hits(hits: List[GeneDetectionBlastHit]) -> List[GeneDetectionBlastHit]:
+    def detect_best_hits(hits: List[BlastHit]) -> List[BlastHit]:
         """
         Detects the best hits out of a list of BLAST hits.
         Cases:
@@ -24,29 +27,20 @@ class BlastHitFilteringHelper(object):
         logging.debug("Detecting best from list of {} hit(s)".format(len(hits)))
         if len(hits) == 0:
             raise ValueError("Input list is empty")
-        perfect_hits = BlastHitFilteringHelper.__get_perfect_hits(hits)
+        perfect_hits = [h for h in hits if h.blast_stats.is_perfect_hit()]
         if len(perfect_hits) >= 1:
             logging.debug('{} perfect hit(s) found: {}'.format(
-                len(perfect_hits), ', '.join([h.subject for h in perfect_hits])))
-            max_length = max([h.subject_length for h in perfect_hits])
-            return [h for h in perfect_hits if h.subject_length == max_length]
+                len(perfect_hits), ', '.join([h.locus for h in perfect_hits])))
+            max_length = max([h.blast_stats.subject_length for h in perfect_hits])
+            return [h for h in perfect_hits if h.blast_stats.subject_length == max_length]
         else:
             best_hits = BlastHitFilteringHelper.__get_best_imperfect_hits(hits)
             logging.debug('No perfect hits found, {} equivalent imperfect hits found: {}'.format(
-                len(best_hits), ', '.join([h.subject for h in best_hits])))
+                len(best_hits), ', '.join([h.locus for h in best_hits])))
             return best_hits
 
     @staticmethod
-    def __get_perfect_hits(hits: List[GeneDetectionBlastHit]) -> List[GeneDetectionBlastHit]:
-        """
-        Returns all the perfect hits (full length, 100% identity).
-        :param hits: List of hits
-        :return: List of perfect hits
-        """
-        return [h for h in hits if h.is_perfect_hit()]
-
-    @staticmethod
-    def __get_best_imperfect_hits(hits: List[GeneDetectionBlastHit]) -> List[GeneDetectionBlastHit]:
+    def __get_best_imperfect_hits(hits: List[BlastHit]) -> List[BlastHit]:
         """
         Returns the best imperfect hits from a list of blast hits. If there are multiple equivalent imperfect hits,
         all of them are returned.
@@ -57,16 +51,17 @@ class BlastHitFilteringHelper(object):
         lowest_ls_hits = [hit for hit in hits if
                           BlastHitFilteringHelper.__calculate_length_score(hit) == lowest_length_score]
 
-        highest_pident = max([hit.percent_identity for hit in lowest_ls_hits])
-        highest_pident_hits = [hit for hit in lowest_ls_hits if hit.percent_identity == highest_pident]
+        highest_pident = max([hit.blast_stats.percent_identity for hit in lowest_ls_hits])
+        highest_pident_hits = [hit for hit in lowest_ls_hits if hit.blast_stats.percent_identity == highest_pident]
 
-        longest_alignment = max([hit.alignment_length for hit in highest_pident_hits])
-        longest_alignment_hits = [hit for hit in highest_pident_hits if hit.alignment_length == longest_alignment]
+        longest_alignment = max([hit.blast_stats.alignment_length for hit in highest_pident_hits])
+        longest_alignment_hits = [
+            hit for hit in highest_pident_hits if hit.blast_stats.alignment_length == longest_alignment]
 
         return longest_alignment_hits
 
     @staticmethod
-    def __calculate_length_score(hit: GeneDetectionBlastHit) -> int:
+    def __calculate_length_score(hit: BlastHit) -> int:
         """
         Calculates the length score for a Blast hit.
         The score is calculated as described in: https://www.ncbi.nlm.nih.gov/pubmed/22238442
@@ -78,31 +73,30 @@ class BlastHitFilteringHelper(object):
         :param hit: Blast hit
         :return: Length score
         """
-        return hit.subject_length - hit.alignment_length + hit.gaps
+        return hit.blast_stats.subject_length - hit.blast_stats.alignment_length + hit.blast_stats.gaps
 
     @staticmethod
-    def filter_percent_identity(hits: List[GeneDetectionBlastHit], min_percent_identity: float) -> \
-            List[GeneDetectionBlastHit]:
+    def filter_percent_identity(hits: List[BlastHit], min_percent_identity: float) -> List[BlastHit]:
         """
         Filters a list of BLAST hits based on percent identity.
         :param hits: List of BLAST hits
         :param min_percent_identity: Minimal percent identity
         :return: Filtered hits
         """
-        filtered_hits = [hit for hit in hits if hit.percent_identity >= min_percent_identity]
+        filtered_hits = [hit for hit in hits if hit.blast_stats.percent_identity >= min_percent_identity]
         logging.info('{}/{} hits passed percent identity filtering ({} %)'.format(
             len(filtered_hits), len(hits), min_percent_identity))
         return filtered_hits
 
     @staticmethod
-    def filter_coverage(hits: List[GeneDetectionBlastHit], min_coverage: float) -> List[GeneDetectionBlastHit]:
+    def filter_coverage(hits: List[BlastHit], min_coverage: float) -> List[BlastHit]:
         """
         Filters a list of BLAST hits based on coverage.
         :param hits: List of BLAST hits
         :param min_coverage: Minimal coverage
         :return: Filtered hits
         """
-        filtered_hits = [hit for hit in hits if hit.subject_coverage >= min_coverage]
+        filtered_hits = [hit for hit in hits if hit.blast_stats.subject_coverage >= min_coverage]
         logging.info('{}/{} hits passed length coverage filtering ({} %)'.format(
             len(filtered_hits), len(hits), min_coverage))
         return filtered_hits

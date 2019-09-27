@@ -3,7 +3,7 @@ from typing import Dict, Any, List, Optional
 
 import os
 
-from camel.app.components.genedetection.genedetectionhit import GeneDetectionHit
+from camel.app.components.genedetection.genedetectionhitbase import GeneDetectionHitBase
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
@@ -16,7 +16,7 @@ from camel.resources.snakefile.gene_detection import INPUT_GENE_DETECTION_FASTA,
 @dataclass
 class GeneDetectionOutput:
     report_section: HtmlReportSection
-    detected_hits: List[GeneDetectionHit]
+    detected_hits: List[GeneDetectionHitBase]
     informs: Dict[str, Any]
     log_file: Optional[str] = None
 
