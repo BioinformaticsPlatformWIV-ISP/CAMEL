@@ -109,6 +109,18 @@ class TestWorkflows(unittest.TestCase):
         wrapper.run_workflow_srst2([x.path for x in TestWorkflows.input_gene_reads_raw], 'test_sample', db_data)
         self.assertGreater(len(wrapper.output.report_section.to_html()), 0)
 
+    def test_gene_detection_workflow_kma(self) -> None:
+        """
+        Tests the gene detection workflow using SRST2.
+        :return: None
+        """
+        wrapper = GeneDetectionWrapper(self.running_dir)
+        db_data = {
+            'path': TestWorkflows.input_gene_db,
+        }
+        wrapper.run_workflow_kma([x.path for x in TestWorkflows.input_gene_reads_raw], 'test_sample', db_data)
+        self.assertGreater(len(wrapper.output.report_section.to_html()), 0)
+
     def test_typing_workflow_blast(self) -> None:
         """
         Tests the sequence typing workflow using BLAST+.

@@ -249,11 +249,12 @@ rule Gene_detection_KMA_get_db:
         DB = os.path.join(config['working_dir'], 'gene_detection', '{db}', 'kma', 'db.io')
     run:
         fasta_path = Path(SnakemakeUtils.load_object(input.FASTA)[0].path)
-        db_name = fasta_path.parent.name
+        with open(fasta_path.parent / 'db_metadata.txt') as handle:
+            metadata = json.load(handle)
         dir_kma = fasta_path.parent / 'kma'
         if not dir_kma.exists():
             raise FileNotFoundError(f"KMA database not found: {dir_kma}")
-        kma_path = fasta_path.parent / 'kma' / db_name.lower()
+        kma_path = fasta_path.parent / 'kma' / metadata['name'].lower()
         SnakemakeUtils.dump_object([ToolIOValue(kma_path)], output.DB)
 
 rule Gene_detection_KMA:
