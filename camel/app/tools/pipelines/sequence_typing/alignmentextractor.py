@@ -1,6 +1,7 @@
 import os
 
 from camel.app.camel import Camel
+from camel.app.components.sequencetyping.sequencetypingblasthit import SequenceTypingBlastHit
 from camel.app.tools.tool import Tool
 
 from camel.app.components.blast.alignmentextraction import AlignmentExtraction
@@ -22,7 +23,7 @@ class AlignmentExtractor(Tool):
         - TXT: Text file containing the extracted alignment of the hit
     """
 
-    def __init__(self, camel: Camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initializes this tool.
         :param camel: Camel instance
@@ -35,14 +36,15 @@ class AlignmentExtractor(Tool):
         :return: None
         """
         hit = self._tool_inputs['VAL_Hits'][0].value
-        if hit.subject == '-' and hit.query == '-':
+        if hit.allele_id in (SequenceTypingBlastHit.SYMBOL_MULTI_HIT, SequenceTypingBlastHit.SYMBOL_NO_HIT):
             self._tool_outputs['TXT'] = []
             return
         alignments_file = self._tool_inputs['TXT'][0].path
-        key = AlignmentExtraction.get_key(hit.subject, hit.query)
+        key = AlignmentExtraction.get_key(hit.blast_stats.subject_id, hit.blast_stats.query_id)
         alignments = AlignmentExtraction.get_alignments(alignments_file)
         if key in alignments:
-            self._tool_outputs['TXT'] = [ToolIOFile(self.__save_alignment(hit.subject, alignments[key]))]
+            self._tool_outputs['TXT'] = [ToolIOFile(self.__save_alignment(
+                f'{hit.locus}_{hit.allele_id}', alignments[key]))]
         else:
             raise ToolExecutionError("No alignment found for: '{}'".format(key))
 
@@ -59,13 +61,14 @@ class AlignmentExtractor(Tool):
             raise InvalidInputSpecificationError("Can only extract one alignment")
         super(AlignmentExtractor, self)._check_input()
 
-    def __save_alignment(self, subject_name: str, alignment: str) -> str:
+    def __save_alignment(self, allele_name: str, alignment: str) -> str:
         """
         Saves the given alignment.
+        :param allele_name: Allele name
         :param alignment: Alignment
         :return: Filename of the saved alignment
         """
-        filename = os.path.join(self._folder, '{}.txt'.format(FileSystemHelper.make_valid(subject_name)))
+        filename = os.path.join(self._folder, '{}.txt'.format(FileSystemHelper.make_valid(allele_name)))
         with open(filename, 'w') as output_handle:
             output_handle.write(alignment)
         return filename

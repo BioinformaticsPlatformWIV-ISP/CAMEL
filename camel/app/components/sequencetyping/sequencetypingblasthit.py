@@ -2,6 +2,7 @@ from typing import Optional
 
 import os
 
+from camel.app.components.blast.blasthitstatistics import BlastHitStatistics
 from camel.app.components.html.htmltablecell import HtmlTableCell
 from camel.app.components.sequencetyping.sequencetypinghit import SequenceTypingHit
 
@@ -13,48 +14,22 @@ class SequenceTypingBlastHit(SequenceTypingHit):
 
     _TABLE_COLUMNS = ['Locus', 'Allele', '% Identity', 'HSP/Locus length', 'Type']
     _HTML_COLUMNS = _TABLE_COLUMNS + ['Alignment']
+    SYMBOL_MULTI_HIT = '?'
+    SYMBOL_NO_HIT = '-'
 
-    def __init__(self, locus: Optional[str], allele_id: Optional[str], type_, subject, pident, slen, sseq, qseqid,
-                 qstart, qend):
+    def __init__(self, locus: Optional[str], allele_id: Optional[str], type_,
+                 blast_stats: Optional[BlastHitStatistics]) -> None:
         """
         Initializes the hit.
         :param locus: Locus
         :param allele_id: Allele id
         :param type_: Locus type ('DNA', 'peptide')
-        :param subject: Subject
-        :param pident: Percent identity
-        :param slen: Subject length
-        :param sseq: Aligned sequence of the subject
-        :param qseqid: Query sequence id
-        :param qstart: Start of the alignment in the query
-        :param qend: End of the alignment in the query
+        :param blast_stats: Blast hit statistics
         """
         super().__init__(locus, allele_id)
-        self._subject = subject
-        self._pident = float(pident) if pident not in ('-', None) else None
         self._type = type_
-        self._slen = int(slen) if slen not in ('-', None) else None
-        self._sseq = sseq
-        self._qsedid = qseqid
-        self._qstart = qstart
-        self._qend = qend
+        self._blast_stats = blast_stats
         self._alignment_path = None
-
-    @staticmethod
-    def create_from_dict(input_dict, type_):
-        """
-        Creates a hit object from a dictionary containing the blast output.
-        Allele id is set to None, it extracted afterwards only for the best hits.
-        :param input_dict: Input dictionary
-        :param type_: Locus type
-        :return: Hit object
-        """
-        try:
-            return SequenceTypingBlastHit(None, None, type_, input_dict['sseqid'], float(input_dict['pident']),
-                                          input_dict['slen'], input_dict['sseq'], input_dict['qseqid'],
-                                          input_dict['qstart'], input_dict['qend'])
-        except KeyError as err:
-            raise ValueError("Cannot create hit from dictionary {} missing - {!r}".format(err, input_dict))
 
     def to_table_row(self, separator: str = '\t'):
         """
@@ -65,8 +40,8 @@ class SequenceTypingBlastHit(SequenceTypingHit):
         return separator.join([
             self.locus,
             self.allele_id,
-            '{:.2f}'.format(self.percent_identity) if self.percent_identity is not None else '-',
-            self.length_statistic,
+            '{:.2f}'.format(self._blast_stats.percent_identity) if self.blast_stats else '-',
+            self.blast_stats.length_statistic if self.blast_stats else '-',
             self._type])
 
     def to_html_row(self, report_section, sub_dir=None):
@@ -85,8 +60,8 @@ class SequenceTypingBlastHit(SequenceTypingHit):
         return [
             self.locus,
             HtmlTableCell(self.allele_id, self.color, link=self.allele_page_url),
-            '{:.2f}'.format(self.percent_identity) if self.percent_identity is not None else '-',
-            self.length_statistic,
+            '{:.2f}'.format(self.blast_stats.percent_identity) if self.blast_stats else '-',
+            self.blast_stats.length_statistic if self.blast_stats else '-',
             self._type,
             alignment_cell]
 
@@ -105,92 +80,32 @@ class SequenceTypingBlastHit(SequenceTypingHit):
         return self._HTML_COLUMNS
 
     @staticmethod
-    def generate_empty_hit(locus, type_):
+    def generate_empty_hit(locus: str, type_: str) -> 'SequenceTypingBlastHit':
         """
         Returns an empty hit.
         :param locus: Locus
         :param type_: Locus type
         :return: None
         """
-        return SequenceTypingBlastHit(locus, '-', type_, '-', '-', '-', '-', '-', '-', '-')
+        return SequenceTypingBlastHit(locus, SequenceTypingBlastHit.SYMBOL_NO_HIT, type_, None)
 
     @staticmethod
-    def generate_multi_hit(locus, type_):
+    def generate_multi_hit(locus: str, type_: str) -> 'SequenceTypingBlastHit':
         """
         Returns a multi hit.
         :param locus: Locus
         :param type_: Locus type
         :return: None
         """
-        return SequenceTypingBlastHit(locus, '?', type_, '-', '-', '-', '-', '-', '-', '-')
+        return SequenceTypingBlastHit(locus, SequenceTypingBlastHit.SYMBOL_MULTI_HIT, type_, None)
 
     @property
-    def subject(self):
+    def blast_stats(self) -> BlastHitStatistics:
         """
-        Returns the subject (locus + allele id).
-        :return: Subject
+        Returns the BLAST statistics object.
+        :return: BLAST hit statistics
         """
-        return self._subject
-
-    @property
-    def query(self):
-        """
-        Returns the query.
-        :return: Query
-        """
-        return self._qsedid
-
-    @property
-    def subject_length(self):
-        """
-        Returns the subject length.
-        :return: Subject length
-        """
-        return self._slen
-
-    @property
-    def alignment_length(self):
-        """
-        Returns the alignment length.
-        :return: Alignment length
-        """
-        return len(self._sseq)
-
-    @property
-    def percent_identity(self):
-        """
-        Returns the percent identity.
-        :return: Percent identity
-        """
-        return self._pident
-
-    @property
-    def subject_coverage(self) -> float:
-        """
-        Returns the fraction of the subject that is covered by the alignment.
-        :return: % subject covered
-        """
-        if self.subject_length is None:
-            return 0.0
-        return 100.0 * float(self.alignment_length) / self.subject_length
-
-    @property
-    def length_statistic(self):
-        """
-        Returns the subject coverage in the format: {bases_covered}/{subject_length}.
-        :return: Length statistic
-        """
-        if self._slen in ('-', None):
-            return '-'
-        return '{}/{}'.format(self.alignment_length, self._slen)
-
-    @property
-    def gaps(self):
-        """
-        Returns the number of gaps in the alignment.
-        :return: Number of gaps
-        """
-        return self._sseq.count('-')
+        return self._blast_stats
 
     @property
     def alignment_path(self):
@@ -209,22 +124,8 @@ class SequenceTypingBlastHit(SequenceTypingHit):
         """
         self._alignment_path = alignment_path
 
-    def is_perfect_hit(self):
-        """
-        Returns true if the hit is perfect (100% identity over complete length)
-        :return: True if perfect
-        """
-        return (self.percent_identity == 100.0) and (self._slen == self.alignment_length)
-
-    def is_full_length(self) -> bool:
-        """
-        Returns true if this is a full length hit.
-        :return: True if the hit is full length
-        """
-        return self.subject_coverage == 100.0
-
     @property
-    def color(self):
+    def color(self) -> str:
         """
         Returns the color for this hit.
         Green: Perfect hit
@@ -233,21 +134,37 @@ class SequenceTypingBlastHit(SequenceTypingHit):
         Red: No-hit
         :return: Color
         """
-        if self.is_perfect_hit():
-            return 'green'
-        elif self._slen == self.alignment_length:
-            return 'lightgreen'
-        elif self.percent_identity is not None:
-            return 'grey'
-        elif self.allele_id == '?':
+        if self.allele_id == SequenceTypingBlastHit.SYMBOL_MULTI_HIT:
             return 'yellow'
-        else:
+        elif self.allele_id == SequenceTypingBlastHit.SYMBOL_NO_HIT:
             return 'red'
+        elif self.is_perfect_hit():
+            return 'green'
+        elif self.is_full_length():
+            return 'lightgreen'
+        return 'grey'
 
     def __repr__(self) -> str:
         """
         Returns the internal representation.
         :return: Representation
         """
-        return "TypingBlastHit('{}', allele_id='{}', %id={}, len={})".format(
-            self.locus, self.allele_id, self.percent_identity, self.length_statistic)
+        return f"TypingBlastHit('{self.locus}', allele_id='{self.allele_id}')"
+
+    def is_perfect_hit(self) -> bool:
+        """
+        Function to check if this is a perfect hit.
+        :return: True if perfect hit, False otherwise
+        """
+        if self._blast_stats is None:
+            return False
+        return self._blast_stats.is_perfect_hit()
+
+    def is_full_length(self) -> bool:
+        """
+        Function to check if this is a full length hit.
+        :return: True if full length, False otherwise
+        """
+        if self._blast_stats is None:
+            return False
+        return self._blast_stats.is_full_length()

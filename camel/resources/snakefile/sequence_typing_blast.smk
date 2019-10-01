@@ -32,6 +32,7 @@ rule Typing_blast_allele_detection:
         from camel.app.tools.blast.blastx import Blastx
         from camel.app.tools.pipelines.sequence_typing.besthitselector import BestHitSelector
         from camel.app.tools.pipelines.sequence_typing.alignmentextractor import AlignmentExtractor
+        from camel.app.components.blast.blasthitstatistics import BLASTN_OUTPUT_FORMAT
 
         # Get metadata
         scheme_informs = SnakemakeUtils.load_object(input.INFORMS_scheme)
@@ -51,7 +52,7 @@ rule Typing_blast_allele_detection:
 
         # TSV generation
         formatter_tsv = BlastFormatter(camel)
-        formatter_tsv.update_parameters(output_format='"7 pident sseqid sseq slen qseqid qstart qend"')
+        formatter_tsv.update_parameters(output_format=BLASTN_OUTPUT_FORMAT)
         formatter_tsv.add_input_files({'ASN': blast.tool_outputs['ASN']})
         formatter_tsv.run(params.working_dir)
 
