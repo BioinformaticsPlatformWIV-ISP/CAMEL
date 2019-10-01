@@ -2,13 +2,12 @@
 import argparse
 import json
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 import os
 
 from camel.app.components.mainscripthelper import MainScriptHelper
 from camel.app.components.workflows.genedetectionwrapper import GeneDetectionWrapper, GeneDetectionOutput
-from camel.app.io.tooliofile import ToolIOFile
 
 
 class MainGeneDetection(object):
@@ -39,7 +38,7 @@ class MainGeneDetection(object):
         group_db = argument_parser.add_mutually_exclusive_group(required=True)
         group_db.add_argument('--database-dir', type=str)
         group_db.add_argument('--database-html', type=str)
-        argument_parser.add_argument('--detection-method', type=str, choices=['blast', 'srst2'], default='blast')
+        argument_parser.add_argument('--detection-method', type=str, choices=['blast', 'srst2', 'kma'], default='blast')
 
         # BLAST specific parameters
         argument_parser.add_argument('--blast-min-percent-identity', type=int, default=90)
@@ -50,6 +49,10 @@ class MainGeneDetection(object):
         argument_parser.add_argument('--srst2-max-div', type=int, default=10)
         argument_parser.add_argument('--srst2-max-unaligned-overlap', type=int, default=100)
         argument_parser.add_argument('--srst2-max-mismatch', type=int, default=10)
+
+        # KMA specific parameters
+        argument_parser.add_argument('--kma-min-percent-identity', type=int, default=90)
+        argument_parser.add_argument('--kma-min-percent-coverage', type=int, default=60)
         return argument_parser.parse_args()
 
     def run(self) -> None:
@@ -63,13 +66,18 @@ class MainGeneDetection(object):
         self.__add_analysis_info_section()
         input_files = self._helper.symlink_input_files(self._args.fasta, self._args.fastq_pe)
         db_data = self.__get_db_metadata()
+
+        wrapper = GeneDetectionWrapper(self._args.working_dir)
         if self._args.detection_method == 'blast':
-            fasta_file = self._helper.get_blast_input(input_files, self._args, self._report)
-            output = self.__run_gene_detection_blast(fasta_file, db_data)
+            fasta_file = self._helper.get_blast_input(input_files, self._args, self._report).path
+            wrapper.run_workflow_blast(fasta_file, self._sample_name, db_data, self._args.threads)
+        elif self._args.detection_method == 'srst2':
+            fq_files = [f.path for f in self._helper.get_srst2_input(input_files, self._args, self._report)]
+            wrapper.run_workflow_srst2(fq_files, self._sample_name, db_data, self._args.threads)
         else:
-            fastq_files = self._helper.get_srst2_input(input_files, self._args, self._report)
-            output = self.__run_gene_detection_srst2(fastq_files, db_data)
-        self.__export_output(output)
+            fq_files = [f.path for f in self._helper.get_srst2_input(input_files, self._args, self._report)]
+            wrapper.run_workflow_kma(fq_files, self._sample_name, db_data, self._args.threads)
+        self.__export_output(wrapper.output)
 
     def __add_analysis_info_section(self) -> None:
         """
@@ -85,6 +93,11 @@ class MainGeneDetection(object):
             data = [
                 ['Min. % coverage threshold:', f'{self._args.srst2_min_cov}%'],
                 ['Max. % divergence threshold:', f'{self._args.srst2_max_div}%']
+            ]
+        elif self._args.detection_method == 'kma':
+            data = [
+                ['% identity threshold:', f'{self._args.kma_min_percent_identity}%'],
+                ['% query coverage threshold:', f'{self._args.kma_min_percent_coverage}%']
             ]
         else:
             raise ValueError(f"Invalid detection method: {self._args.detection_method}")
@@ -123,28 +136,6 @@ class MainGeneDetection(object):
             if 'extra_column' in db_metadata:
                 metadata['extra_column'] = db_metadata['extra_column']
         return metadata
-
-    def __run_gene_detection_blast(self, fasta_file: ToolIOFile, db_data: Dict[str, Any]) -> GeneDetectionOutput:
-        """
-        Runs the gene detection workflow.
-        :param fasta_file: FASTA file
-        :param db_data: Database information dictionary
-        :return: None
-        """
-        wrapper = GeneDetectionWrapper(self._args.working_dir)
-        wrapper.run_workflow_blast(fasta_file.path, self._sample_name, db_data, self._args.threads)
-        return wrapper.output
-
-    def __run_gene_detection_srst2(self, fastq_pe: List[ToolIOFile], db_data: Dict[str, Any]) -> GeneDetectionOutput:
-        """
-        Runs the gene detection workflow in srst2 mode.
-        :param fastq_pe: Paired end FASTQ input
-        :param db_data: Database information dictionary
-        :return: None
-        """
-        wrapper = GeneDetectionWrapper(os.path.join(self._args.working_dir, os.path.basename(db_data['path'])))
-        wrapper.run_workflow_srst2([f.path for f in fastq_pe], self._sample_name, db_data, self._args.threads)
-        return wrapper.output
 
     def __export_output(self, output: GeneDetectionOutput) -> None:
         """

@@ -55,6 +55,8 @@ class TestGeneDetection(unittest.TestCase):
             trim_reads=True,
             blast_min_percent_identity=90,
             blast_min_percent_coverage=70,
+            kma_min_percent_identity=90,
+            kma_min_percent_coverage=70,
             srst2_min_cov=60,
             srst2_max_div=50,
             srst2_max_unaligned_overlap=150,
@@ -226,6 +228,19 @@ class TestGeneDetection(unittest.TestCase):
         args.fastq_pe_names = ['Trimmomatic on Neisseria_2.fastq (R1 paired)',
                                'Trimmomatic on Neisseria_2.fastq (R2 paired)']
         args.trim_reads = False
+        main = MainGeneDetection(args)
+        main.run()
+        self.assertGreater(os.path.getsize(output_file_report), 0)
+
+    def test_gene_detection_kma(self) -> None:
+        """
+        Tests the gene detection main script using KMA.
+        :return: None
+        """
+        output_file_report = os.path.join(self.running_dir, 'report', 'report.html')
+        args = self.__get_basic_arguments(output_file_report, 'kma')
+        args.fastq_pe = [f.path for f in TestGeneDetection.input_reads_raw]
+        args.fastq_pe_names = [os.path.basename(p.path) for p in TestGeneDetection.input_reads_raw]
         main = MainGeneDetection(args)
         main.run()
         self.assertGreater(os.path.getsize(output_file_report), 0)
