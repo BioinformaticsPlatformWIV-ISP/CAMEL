@@ -1,0 +1,7 @@
+dependencies: [java/1.8.0_172, canu/1.8]
+parameters:
+  genome_size: {default: true, mandatory: true, option: genomeSize, p_index: 0, value: '4.8'}
+  output_directory: {default: true, mandatory: true, option: -d, p_index: 0, value: assembly_out}
+  output_prefix: {default: true, mandatory: true, option: -p, p_index: 0, value: sample}
+  threads: {default: true, mandatory: false, option: executiveThreads, value: '4'}
+tool_command: canu
