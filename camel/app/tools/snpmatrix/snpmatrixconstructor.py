@@ -81,7 +81,7 @@ class SnpMatrixConstructor(Tool):
         """
         vcf_records = []
         with open(vcf_path) as handle:
-            for record in list(vcf.Reader(handle))[:50]:
+            for record in list(vcf.Reader(handle)):
                 # Remove non SNP positions
                 if not record.is_snp:
                     continue
