@@ -86,6 +86,7 @@ class MainMega(object):
         :return: SNP matrix path
         """
         snp_matrix_constructor = SnpMatrixConstructor(self._camel)
+        snp_matrix_constructor.update_parameters(include_ref=None)
         snp_matrix_constructor.add_input_files({
             'VCF': [ToolIOFile(v) for v, _ in vcf_files],
             'SAMPLE_NAME': [ToolIOValue(n) for _, n in vcf_files]})

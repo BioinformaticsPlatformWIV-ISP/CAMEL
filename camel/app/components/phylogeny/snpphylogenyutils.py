@@ -271,7 +271,8 @@ class SnpPhylogenyUtils(object):
         if not os.path.isdir(working_dir):
             os.makedirs(working_dir)
         snp_matrix_constructor = SnpMatrixConstructor(Camel.get_instance())
-        snp_matrix_constructor.update_parameters(include_ref='true' if include_ref else 'false')
+        if include_ref:
+            snp_matrix_constructor.update_parameters(include_ref=None)
         snp_matrix_constructor.add_input_files({
             'VCF': vcf_files,
             'SAMPLE_NAME': [ToolIOValue(s) for s in sample_names],
