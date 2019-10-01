@@ -9,7 +9,8 @@ from camel.app.io.tooliofile import ToolIOFile
 from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.resources.snakefile import SNAKEFILE_SEQUENCE_TYPING_BLAST, SNAKEFILE_SEQUENCE_TYPING_SRST2
+from camel.resources.snakefile import SNAKEFILE_SEQUENCE_TYPING_BLAST, SNAKEFILE_SEQUENCE_TYPING_SRST2, \
+    SNAKEFILE_SEQUENCE_TYPING_KMA
 from camel.resources.snakefile.sequence_typing import OUTPUT_TYPING_REPORT, OUTPUT_TYPING_REPORT_EMPTY, \
     OUTPUT_TYPING_SUMMARY, OUTPUT_TYPING_HITS
 
@@ -31,6 +32,7 @@ loci_by_scheme_by_type = {
 ##############################
 include: SNAKEFILE_SEQUENCE_TYPING_BLAST
 include: SNAKEFILE_SEQUENCE_TYPING_SRST2
+include: SNAKEFILE_SEQUENCE_TYPING_KMA
 
 #########
 # Rules #
