@@ -7,13 +7,13 @@ import vcf
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
+# noinspection PyProtectedMember
+from vcf.model import _Record as VCFRecord
 
 from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.tool import Tool
-# noinspection PyProtectedMember
-from vcf.model import _Record as VCFRecord
 
 
 @dataclass(unsafe_hash=True, frozen=True)
@@ -49,8 +49,8 @@ class SnpMatrixConstructor(Tool):
         Executes this tool.
         :return: None
         """
-        print(self._parameters)
         sample_names = [io.value for io in self._tool_inputs['SAMPLE_NAME']]
+        logging.info(f"{len(sample_names)} samples provided")
         nucleotide_by_sample_by_position = self.__get_nucleotides_per_position()
         include_ref = 'include_ref' in self._parameters
         self._tool_outputs['FASTA'] = [self.__generate_matrix(
@@ -89,6 +89,7 @@ class SnpMatrixConstructor(Tool):
                 if (not include_filtered) and len(record.FILTER) > 0:
                     continue
                 vcf_records.append(record)
+        logging.info(f"{vcf_path} parsed: {len(vcf_records)} variant positions")
         return vcf_records
 
     def __generate_matrix(self, sample_names: List[str], nucl_by_pos: Dict[SNPPosition, Dict[str, str]],
