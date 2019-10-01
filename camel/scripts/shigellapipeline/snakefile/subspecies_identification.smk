@@ -1,8 +1,7 @@
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile.gene_detection import OUTPUT_GENE_DETECTION_ALL_HITS, OUTPUT_GENE_DETECTION_COLUMNS
 from camel.resources.snakefile.variant_calling import OUTPUT_VARIANT_CALLING_BAM, OUTPUT_VARIANT_CALLING_UNFILTERED_VCF
-from camel.scripts.shigellapipeline.snakefile.subspeciesidentification import OUTPUT_SUBSPECIES_SUMMARY
-
+from camel.scripts.shigellapipeline.snakefile.subspecies_identification import OUTPUT_SUBSPECIES_SUMMARY
 from camel.scripts.shigellapipeline.snakefile.subspecies_identification import OUTPUT_SPECIES_REPORT_EMPTY, \
     OUTPUT_SUBSPECIES_REPORT_EMPTY
 

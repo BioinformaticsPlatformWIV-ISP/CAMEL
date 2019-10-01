@@ -87,6 +87,7 @@ gene_detection:
   subspecies_identification:
     path: /db/pipelines/shigella/subspecies_identification/
     perc_identity_cutoff: 90
+    force_detection_method: srst2
 
   flexneri_type:
     path: /db/pipelines/shigella/flexneri_type
