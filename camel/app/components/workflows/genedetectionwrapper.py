@@ -79,6 +79,20 @@ class GeneDetectionWrapper(object):
         config_data = self.__get_config_data(sample_name, db_data, 'srst2')
         self.__run_workflow(config_data, threads)
 
+    def run_workflow_kma(self, fastq_pe_path: List[str], sample_name: str, db_data: Dict[str, Any],
+                         threads: int = 8) -> None:
+        """
+        Runs the gene detection workflow using KMA.
+        :param fastq_pe_path: Input PE FASTQ files
+        :param sample_name: Sample name
+        :param db_data: Database configuration
+        :param threads: Number of threads to use
+        :return: None
+        """
+        self.__create_input_srst2(fastq_pe_path)
+        config_data = self.__get_config_data(sample_name, db_data, 'kma')
+        self.__run_workflow(config_data, threads)
+
     def __create_input_blast(self, fasta_path: str) -> None:
         """
         Creates the input for the workflow in 'blast' mode.
