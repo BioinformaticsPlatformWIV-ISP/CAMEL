@@ -106,10 +106,10 @@ rule Typing_export_hits_tabular:
             SnakemakeUtils.dump_object([], output.TSV)
         else:
             with open(output_file, 'w') as handle_out:
-                handle_out.write('\t'.join(hits[0].value.get_table_column_names()))
+                handle_out.write('\t'.join(hits[0].value.table_column_names()))
                 handle_out.write('\n')
                 for h in hits:
-                    handle_out.write(h.value.to_table_row())
+                    handle_out.write('\t'.join(h.value.to_table_row()))
                     handle_out.write('\n')
             SnakemakeUtils.dump_object([ToolIOFile(output_file)], output.TSV)
 

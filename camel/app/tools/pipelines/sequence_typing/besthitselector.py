@@ -80,12 +80,12 @@ class BestHitSelector(Tool):
         """
         if len(hits) == 0:
             logging.info("No hit passed filtering")
-            return SequenceTypingBlastHit.generate_empty_hit(metadata_locus['name'], metadata_locus['type'])
+            return SequenceTypingBlastHit.create_empty_hit(metadata_locus['name'], metadata_locus['type'])
         else:
             best_hits = BlastHitFilteringHelper.detect_best_hits(hits)
             if len(best_hits) == 1:
                 return best_hits[0]
             elif len(best_hits) > 1:
-                return SequenceTypingBlastHit.generate_multi_hit(metadata_locus['name'], metadata_locus['type'])
+                return SequenceTypingBlastHit.create_multi_hit(metadata_locus['name'], metadata_locus['type'])
             else:
-                return SequenceTypingBlastHit.generate_empty_hit(metadata_locus['name'], metadata_locus['type'])
+                return SequenceTypingBlastHit.create_empty_hit(metadata_locus['name'], metadata_locus['type'])

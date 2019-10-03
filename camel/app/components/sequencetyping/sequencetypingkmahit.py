@@ -1,15 +1,13 @@
-from typing import Optional
+from typing import List
 
 from camel.app.components.html.htmltablecell import HtmlTableCell
-from camel.app.components.sequencetyping.sequencetypinghit import SequenceTypingHit
+from camel.app.components.sequencetyping.sequencetypinghitbase import SequenceTypingHitBase
 
 
-class SequenceTypingKMAHit(SequenceTypingHit):
+class SequenceTypingKMAHit(SequenceTypingHitBase):
     """
-    Sequence tying hit detected by SRST2.
+    Sequence tying hit detected by KMA.
     """
-
-    _TABLE_COLUMNS = ['Locus', 'Allele', 'Length', '% Identity', '% Coverage', 'Depth']
 
     def __init__(self, locus: str, allele_id: str, length: int, p_ident: float, p_cov: float, depth: float,
                  score: int) -> None:
@@ -31,7 +29,7 @@ class SequenceTypingKMAHit(SequenceTypingHit):
         self._score = score
 
     @staticmethod
-    def create_empty_hit(locus):
+    def create_empty_hit(locus: str) -> 'SequenceTypingKMAHit':
         """
         Creates an empty KMA hit.
         :param locus: Locus
@@ -39,20 +37,35 @@ class SequenceTypingKMAHit(SequenceTypingHit):
         """
         return SequenceTypingKMAHit(locus, '-', 0, 0, 0, 0, 0)
 
-    def to_table_row(self, separator: Optional[str] = '\t'):
+    @staticmethod
+    def table_column_names() -> List[str]:
         """
-        Returns the hit as a table row.
-        :param separator: Separator for the table row
+        Returns the column names for the tabular output.
+        :return: Table column names
+        """
+        return ['Locus', 'Allele', 'Length', '% Identity', '% Coverage', 'Depth']
+
+    def to_table_row(self) -> List[str]:
+        """
+        Returns the hit as a row in a table.
         :return: Table row
         """
-        return separator.join([
+        return [
             self.locus,
             self.allele_id,
             str(self._length),
             '{:.2f}'.format(float(self._p_ident)),
             '{:.2f}'.format(float(self._p_cov)),
             '{:.2f}'.format(float(self._depth))
-        ])
+        ]
+
+    @staticmethod
+    def html_column_names() -> List[str]:
+        """
+        Returns the HTML column names.
+        :return: HTML column names
+        """
+        return SequenceTypingKMAHit.table_column_names()
 
     def to_html_row(self, base_dir=None, sub_dir=None):
         """
@@ -69,20 +82,6 @@ class SequenceTypingKMAHit(SequenceTypingHit):
             '{:.2f}'.format(float(self._p_cov)),
             '{:.2f}'.format(float(self._depth)),
         ]
-
-    def get_table_column_names(self):
-        """
-        Returns the table column names.
-        :return: Table column names
-        """
-        return self._TABLE_COLUMNS
-
-    def get_html_column_names(self):
-        """
-        Returns the HTML column names.
-        :return: HTML column names
-        """
-        return self._TABLE_COLUMNS
 
     @property
     def color(self) -> str:

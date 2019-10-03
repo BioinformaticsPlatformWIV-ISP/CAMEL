@@ -1,24 +1,21 @@
-from typing import Optional
+from typing import Optional, List, Any
 
 import os
 
 from camel.app.components.blast.blasthitstatistics import BlastHitStatistics
+from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.html.htmltablecell import HtmlTableCell
-from camel.app.components.sequencetyping.sequencetypinghit import SequenceTypingHit
+from camel.app.components.sequencetyping.sequencetypinghitbase import SequenceTypingHitBase
 
 
-class SequenceTypingBlastHit(SequenceTypingHit):
+class SequenceTypingBlastHit(SequenceTypingHitBase):
     """
     Sequence tying hit detected by blast.
     """
 
-    _TABLE_COLUMNS = ['Locus', 'Allele', '% Identity', 'HSP/Locus length', 'Type']
-    _HTML_COLUMNS = _TABLE_COLUMNS + ['Alignment']
     SYMBOL_MULTI_HIT = '?'
-    SYMBOL_NO_HIT = '-'
 
-    def __init__(self, locus: Optional[str], allele_id: Optional[str], type_,
-                 blast_stats: Optional[BlastHitStatistics]) -> None:
+    def __init__(self, locus: str, allele_id: str, type_, blast_stats: Optional[BlastHitStatistics]) -> None:
         """
         Initializes the hit.
         :param locus: Locus
@@ -31,25 +28,41 @@ class SequenceTypingBlastHit(SequenceTypingHit):
         self._blast_stats = blast_stats
         self._alignment_path = None
 
-    def to_table_row(self, separator: str = '\t'):
+    @staticmethod
+    def table_column_names() -> List[str]:
         """
-        Converts the hit into a table row.
-        :param separator: Separator
+        Returns the column names for the tabular output.
+        :return: Table column names
+        """
+        return ['Locus', 'Allele', '% Identity', 'HSP/Locus length', 'Type']
+
+    def to_table_row(self) -> List[str]:
+        """
+        Returns the hit as a row in a table.
         :return: Table row
         """
-        return separator.join([
+        return [
             self.locus,
             self.allele_id,
             '{:.2f}'.format(self._blast_stats.percent_identity) if self.blast_stats else '-',
             self.blast_stats.length_statistic if self.blast_stats else '-',
-            self._type])
+            self._type
+        ]
 
-    def to_html_row(self, report_section, sub_dir=None):
+    @staticmethod
+    def html_column_names() -> List[str]:
         """
-        Converts the hit into a HTML table row
+        Returns the HTML column names.
+        :return: HTML column names
+        """
+        return SequenceTypingBlastHit.table_column_names() + ['Alignment']
+
+    def to_html_row(self, report_section: HtmlReportSection, sub_dir: str = None) -> List[Any]:
+        """
+        Returns the hit as a row in a table.
         :param report_section: Section is passed to save the alignments
         :param sub_dir: Specific subdirectory of the base directory to store report files
-        :return: HTML row elements
+        :return: HTML row
         """
         if self._alignment_path is None:
             alignment_cell = '-'
@@ -63,34 +76,21 @@ class SequenceTypingBlastHit(SequenceTypingHit):
             '{:.2f}'.format(self.blast_stats.percent_identity) if self.blast_stats else '-',
             self.blast_stats.length_statistic if self.blast_stats else '-',
             self._type,
-            alignment_cell]
-
-    def get_table_column_names(self):
-        """
-        Returns the table column names.
-        :return: Table column names
-        """
-        return self._TABLE_COLUMNS
-
-    def get_html_column_names(self):
-        """
-        Returns the HTML column names.
-        :return: HTML column names
-        """
-        return self._HTML_COLUMNS
+            alignment_cell
+        ]
 
     @staticmethod
-    def generate_empty_hit(locus: str, type_: str) -> 'SequenceTypingBlastHit':
+    def create_empty_hit(locus: str, type_: str) -> 'SequenceTypingBlastHit':
         """
         Returns an empty hit.
         :param locus: Locus
         :param type_: Locus type
         :return: None
         """
-        return SequenceTypingBlastHit(locus, SequenceTypingBlastHit.SYMBOL_NO_HIT, type_, None)
+        return SequenceTypingBlastHit(locus, SequenceTypingHitBase.SYMBOL_NO_HIT, type_, None)
 
     @staticmethod
-    def generate_multi_hit(locus: str, type_: str) -> 'SequenceTypingBlastHit':
+    def create_multi_hit(locus: str, type_: str) -> 'SequenceTypingBlastHit':
         """
         Returns a multi hit.
         :param locus: Locus
@@ -108,7 +108,7 @@ class SequenceTypingBlastHit(SequenceTypingHit):
         return self._blast_stats
 
     @property
-    def alignment_path(self):
+    def alignment_path(self) -> str:
         """
         Returns the path to the alignment file.
         :return: Alignment file
@@ -116,7 +116,7 @@ class SequenceTypingBlastHit(SequenceTypingHit):
         return self._alignment_path
 
     @alignment_path.setter
-    def alignment_path(self, alignment_path):
+    def alignment_path(self, alignment_path: str) -> None:
         """
         Sets the alignment path.
         :param alignment_path: Alignment path

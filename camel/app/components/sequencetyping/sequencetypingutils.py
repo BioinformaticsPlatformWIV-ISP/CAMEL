@@ -53,7 +53,7 @@ class SequenceTypingUtils(object):
         """
         Returns the allele id from a complete name.
         :param complete_name: Complete name (e.g. abcZ_2)
-        :param regex: Allele id regex (e.g. '\d+$')
+        :param regex: Allele id regex (e.g. '\\d+$')
         :return: Allele id
         """
         if regex is None:

@@ -1,17 +1,16 @@
-from typing import Optional
+from typing import List, Any
 
+from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.html.htmltablecell import HtmlTableCell
-from camel.app.components.sequencetyping.sequencetypinghit import SequenceTypingHit
+from camel.app.components.sequencetyping.sequencetypinghitbase import SequenceTypingHitBase
 
 
-class SequenceTypingSRST2Hit(SequenceTypingHit):
+class SequenceTypingSRST2Hit(SequenceTypingHitBase):
     """
     Sequence tying hit detected by SRST2.
     """
 
-    _TABLE_COLUMNS = ['Locus', 'Allele', 'Mismatches', 'Uncertainty', 'Depth']
-
-    def __init__(self, locus, allele_id, mismatches, uncertainty, depth):
+    def __init__(self, locus: str, allele_id: str, mismatches: str, uncertainty: str, depth: float) -> None:
         """
         Initializes the hit.
         :param locus: Locus
@@ -26,34 +25,49 @@ class SequenceTypingSRST2Hit(SequenceTypingHit):
         self._depth = depth
 
     @staticmethod
-    def create_empty_hit(locus):
+    def create_empty_hit(locus: str) -> 'SequenceTypingSRST2Hit':
         """
         Creates an empty SRST2 hit.
         :param locus: Locus
         :return: SRST2 hit
         """
-        return SequenceTypingSRST2Hit(locus, '-', '-', '-', '-')
+        return SequenceTypingSRST2Hit(locus, '-', '-', '-', 0.0)
 
-    def to_table_row(self, separator: Optional[str] = '\t'):
+    @staticmethod
+    def table_column_names() -> List[str]:
         """
-        Returns the hit as a table row.
-        :param separator: Separator for the table row
+        Returns the column names for the tabular output.
+        :return: Table column names
+        """
+        return ['Locus', 'Allele', 'Mismatches', 'Uncertainty', 'Depth']
+
+    def to_table_row(self) -> List[str]:
+        """
+        Returns the hit as a row in a table.
         :return: Table row
         """
-        return separator.join([
+        return [
             self.locus,
             self.allele_id,
             self._mismatches,
             self._uncertainty,
             '{:.2f}'.format(float(self._depth)) if self._depth != '-' else '-'
-        ])
+        ]
 
-    def to_html_row(self, base_dir=None, sub_dir=None):
+    @staticmethod
+    def html_column_names() -> List[str]:
+        """
+        Returns the HTML column names.
+        :return: HTML column names
+        """
+        return SequenceTypingSRST2Hit.table_column_names()
+
+    def to_html_row(self, report_section: HtmlReportSection, sub_dir: str = None) -> List[Any]:
         """
         Returns the hit as a HTML row.
-        :param base_dir: Base directory to store report
+        :param report_section: Section is passed to save the alignments
         :param sub_dir: Specific subdirectory of the base directory to store report files
-        :return: Table row
+        :return: HTML row
         """
         return [
             self.locus,
@@ -62,20 +76,6 @@ class SequenceTypingSRST2Hit(SequenceTypingHit):
             self._uncertainty,
             '{:.2f}'.format(float(self._depth)) if self._depth != '-' else '-'
         ]
-
-    def get_table_column_names(self):
-        """
-        Returns the table column names.
-        :return: Table column names
-        """
-        return self._TABLE_COLUMNS
-
-    def get_html_column_names(self):
-        """
-        Returns the HTML column names.
-        :return: HTML column names
-        """
-        return self._TABLE_COLUMNS
 
     @property
     def color(self) -> str:
@@ -92,17 +92,17 @@ class SequenceTypingSRST2Hit(SequenceTypingHit):
         else:
             return 'grey'
 
-    def is_perfect_hit(self):
+    def is_perfect_hit(self) -> bool:
         """
-        Returns true if this is a perfect hit.
-        :return: True if perfect
+        Function to check if this is a perfect hit.
+        :return: True if perfect hit, False otherwise
         """
         return self._mismatches == "0" and self._uncertainty == "-"
 
     def is_full_length(self) -> bool:
         """
-        Returns true if this is a full length hit.
-        :return: True if full length
+        Function to check if this is a full length hit.
+        :return: True if full length, False otherwise
         """
         return 'hole' in self._mismatches
 
@@ -111,4 +111,4 @@ class SequenceTypingSRST2Hit(SequenceTypingHit):
         Returns the internal representation.
         :return: Representation
         """
-        return f"TypingSrst2Hit('{self.locus}', allele_id='{self.allele_id}', mismatch='{self._mismatches}')"
+        return f"TypingSRST2Hit('{self.locus}', allele_id='{self.allele_id}', mismatch='{self._mismatches}')"

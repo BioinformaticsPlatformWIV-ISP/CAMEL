@@ -4,14 +4,16 @@ from typing import Optional, List, Any
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 
 
-class SequenceTypingHit(metaclass=abc.ABCMeta):
+class SequenceTypingHitBase(metaclass=abc.ABCMeta):
     """
     This class represents is the base class for sequence typing hits. All hits should define the locus to which they
     belong and the allele that was detected. Abstract methods should be implemented by sub-classes so other classes
     can rely on these methods to provide the required functionality regardless of detection method.
     """
 
-    def __init__(self, locus: str, allele_id: str):
+    SYMBOL_NO_HIT = '-'
+
+    def __init__(self, locus: str, allele_id: str) -> None:
         """
         Initializes the typing hit.
         :param locus: Locus
@@ -29,15 +31,6 @@ class SequenceTypingHit(metaclass=abc.ABCMeta):
         """
         return self._locus
 
-    @locus.setter
-    def locus(self, locus: str):
-        """
-        Sets the locus.
-        :param locus: Locus
-        :return: None
-        """
-        self._locus = locus
-
     @property
     def allele_id(self) -> str:
         """
@@ -45,15 +38,6 @@ class SequenceTypingHit(metaclass=abc.ABCMeta):
         :return: Allele id
         """
         return self._allele_id
-
-    @allele_id.setter
-    def allele_id(self, allele_id: str):
-        """
-        Sets the allele id.
-        :param allele_id: Allele id
-        :return: None
-        """
-        self._allele_id = allele_id
 
     def set_allele_page_url_template(self, url_template: str) -> None:
         """
@@ -75,17 +59,34 @@ class SequenceTypingHit(metaclass=abc.ABCMeta):
             return None
         return self._allele_page_url_template.format(allele_id=self.allele_id)
 
+    @staticmethod
     @abc.abstractmethod
-    def to_table_row(self, separator: Optional[str]='\t') -> List[Any]:
+    def table_column_names() -> List[str]:
         """
-        Returns the hit as a row in a table.
-        :param separator: Separator
-        :return: Table row
+        Returns the table column names.
+        :return: Table column names
         """
         pass
 
     @abc.abstractmethod
-    def to_html_row(self, report_section: HtmlReportSection, sub_dir: str=None) -> List[Any]:
+    def to_table_row(self) -> List[str]:
+        """
+        Returns the hit as a row in a table.
+        :return: Table row
+        """
+        pass
+
+    @staticmethod
+    @abc.abstractmethod
+    def html_column_names() -> List[str]:
+        """
+        Returns the HTML column names.
+        :return: HTML column names
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def to_html_row(self, report_section: HtmlReportSection, sub_dir: str = None) -> List[Any]:
         """
         Returns the hit as a row in a table.
         :param report_section: Section is passed to save the alignments
@@ -95,36 +96,20 @@ class SequenceTypingHit(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def get_table_column_names(self) -> List[str]:
-        """
-        Returns the table column names.
-        :return: Table column names
-        """
-        pass
-
-    @abc.abstractmethod
-    def get_html_column_names(self) -> List[str]:
-        """
-        Returns the HTML column names.
-        :return: HTML column names
-        """
-        pass
-
-    @abc.abstractmethod
     def is_perfect_hit(self) -> bool:
         """
-        Returns true if this is a perfect hit.
-        :return: True if perfect
+        Function to check if this is a perfect hit.
+        :return: True if perfect hit, False otherwise
         """
-        pass
+        raise NotImplementedError()
 
     @abc.abstractmethod
     def is_full_length(self) -> bool:
         """
-        Returns true if this is a full length hit.
-        :return: True if full length
+        Function to check if this is a full length hit.
+        :return: True if full length, False otherwise
         """
-        pass
+        raise NotImplementedError()
 
     @property
     @abc.abstractmethod
@@ -133,4 +118,4 @@ class SequenceTypingHit(metaclass=abc.ABCMeta):
         Returns the color for this hit.
         :return: Color
         """
-        pass
+        raise NotImplementedError()
