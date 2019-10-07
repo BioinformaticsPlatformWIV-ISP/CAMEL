@@ -1,9 +1,12 @@
 import binascii
 import datetime
+import logging
 from typing import List
 
 import os
 import re
+
+from camel.app.command.command import Command
 
 
 class FileSystemHelper(object):
@@ -67,3 +70,17 @@ class FileSystemHelper(object):
         with open(path, 'rb') as handle:
             magic_number = binascii.hexlify(handle.read(2))
         return magic_number == b'1f8b'
+
+    @staticmethod
+    def gzip_extract(input_gz_file: str, output_gz_file) -> None:
+        """
+        Extracts a GZIP compressed file, the original file is left untouched.
+        :param input_gz_file: Input GZ file
+        :param output_gz_file: Output path
+        :return: None
+        """
+        logging.info(f"Extracting: {input_gz_file}")
+        command = Command(f'gunzip -k -c {input_gz_file} > {output_gz_file}')
+        command.run_command('.')
+        if not command.returncode == 0:
+            raise RuntimeError(f"Cannot extract '{input_gz_file}': {command.stderr}")
