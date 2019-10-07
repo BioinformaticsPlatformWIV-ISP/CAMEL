@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 
 import os
 import shutil
@@ -71,22 +72,25 @@ class CfsanSnpPipeline(Tool):
         Creates the input for the pipeline.
         :return: Reads input folder
         """
-        reads_folder = os.path.join(self._folder, 'reads')
-        if not os.path.isdir(reads_folder):
-            os.mkdir(reads_folder)
-        for i in range(0, len(self._tool_inputs['FASTQ']), 2):
-            forward_reads = self._tool_inputs['FASTQ'][i]
-            reverse_reads = self._tool_inputs['FASTQ'][i + 1]
-            sample_name = FileSystemHelper.make_valid(self._tool_inputs['VAL_name'][i // 2].value)
-            logging.info("Adding sample '{}' as input".format(sample_name))
-            sample_folder = os.path.join(reads_folder, sample_name)
-            logging.info("Creating sample folder '{}'".format(sample_folder))
-            if os.path.isdir(sample_folder):
-                shutil.rmtree(sample_folder)
-            os.mkdir(sample_folder)
-            os.symlink(forward_reads.path, os.path.join(sample_folder, '{}_1.fastq'.format(sample_name)))
-            os.symlink(reverse_reads.path, os.path.join(sample_folder, '{}_2.fastq'.format(sample_name)))
-        return reads_folder
+        dir_reads = Path(self._folder) / 'reads'
+        if not dir_reads.exists():
+            dir_reads.mkdir()
+        for i, io_sample in zip(range(0, len(self._tool_inputs['FASTQ']), 2), self._tool_inputs['VAL_name']):
+            forward_reads = Path(self._tool_inputs['FASTQ'][i].path)
+            reverse_reads = Path(self._tool_inputs['FASTQ'][i + 1].path)
+            sample_name_valid = FileSystemHelper.make_valid(io_sample.value)
+            logging.info("Adding sample '{}' as input".format(sample_name_valid))
+            dir_sample = dir_reads / sample_name_valid
+            if dir_sample.is_dir():
+                shutil.rmtree(str(dir_sample))
+            dir_sample.mkdir()
+            if not FileSystemHelper.is_gzipped(forward_reads):
+                (dir_sample / f"{sample_name_valid}_1.fastq").symlink_to(forward_reads)
+                (dir_sample / f"{sample_name_valid}_2.fastq").symlink_to(reverse_reads)
+            else:
+                FileSystemHelper.gzip_extract(str(forward_reads), str(dir_sample / f"{sample_name_valid}_1.fastq"))
+                FileSystemHelper.gzip_extract(str(reverse_reads), str(dir_sample / f"{sample_name_valid}_2.fastq"))
+        return dir_reads
 
     def __build_command(self, reads_folder: str) -> None:
         """

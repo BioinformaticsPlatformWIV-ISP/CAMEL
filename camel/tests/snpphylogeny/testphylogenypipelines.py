@@ -1,5 +1,6 @@
 import argparse
 import unittest
+from typing import List
 
 import os
 import tempfile
@@ -27,7 +28,7 @@ class TestSnpPhylogenyPipelines(unittest.TestCase):
         self.running_dir = tempfile.mkdtemp(prefix='camel_', dir=TestSnpPhylogenyPipelines.camel.config['temp_dir'])
 
     @staticmethod
-    def __get_samples():
+    def __get_samples(gzipped: bool = False) -> List[List[str]]:
         """
         Returns the input samples.
         :return: Input samples
@@ -35,10 +36,10 @@ class TestSnpPhylogenyPipelines(unittest.TestCase):
         reads_dir = os.path.join(TestSnpPhylogenyPipelines.test_file_dir, 'phylogeny', 'lm_subset')
         return [[
                 f'Sample_{i}',
-                f'lm{i}_1.fastq',
-                os.path.join(reads_dir, f'lm{i}_1.fastq'),
-                f'lm{i}_2.fastq',
-                os.path.join(reads_dir, f'lm{i}_2.fastq')] for i in range(1, 5)]
+                f"lm{i}_1.fastq{'.gz' if gzipped else ''}",
+                os.path.join(reads_dir, f"lm{i}_1.fastq{'.gz' if gzipped else ''}"),
+                f"lm{i}_2.fastq{'.gz' if gzipped else ''}",
+                os.path.join(reads_dir, f"lm{i}_2.fastq{'.gz' if gzipped else ''}")] for i in range(1, 5)]
 
     def test_samtools_phylogeny(self) -> None:
         """
@@ -92,6 +93,34 @@ class TestSnpPhylogenyPipelines(unittest.TestCase):
             reference_name=os.path.basename(TestSnpPhylogenyPipelines.reference_fasta),
             reference=TestSnpPhylogenyPipelines.reference_fasta,
             trim_reads=True,
+            missing_data='complete_deletion',
+            branch_swap='none',
+            site_cov_cutoff=50,
+            bootstraps=10,
+            ml_method='spr3',
+            threads=8,
+            export_bam=False,
+            selected_matrix='regular',
+            report_include_bam=False
+        )
+        main = MainCfsanPhylo(args)
+        main.run()
+        self.assertGreater(os.path.getsize(output_file_report), 0)
+
+    def test_cfsan_phylogeny_gz_no_trim(self) -> None:
+        """
+        Tests the CFSAN Phylogeny pipeline with gzipped input files and no trimming enabled.
+        :return: None
+        """
+        output_file_report = os.path.join(self.running_dir, 'report', 'report.html')
+        args = argparse.Namespace(
+            sample=TestSnpPhylogenyPipelines.__get_samples(True),
+            output_html=output_file_report,
+            output_dir=os.path.dirname(output_file_report),
+            working_dir=self.running_dir,
+            reference_name=os.path.basename(TestSnpPhylogenyPipelines.reference_fasta),
+            reference=TestSnpPhylogenyPipelines.reference_fasta,
+            trim_reads=False,
             missing_data='complete_deletion',
             branch_swap='none',
             site_cov_cutoff=50,
