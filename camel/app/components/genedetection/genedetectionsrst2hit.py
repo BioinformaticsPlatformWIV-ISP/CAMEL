@@ -30,7 +30,7 @@ class GeneDetectionSRST2Hit(GeneDetectionHitBase):
         Function to check if this is a perfect hit.
         :return: True if perfect hit, False otherwise
         """
-        return self._mismatches == '0' and self.is_full_length()
+        return self._mismatches == '' and self.is_full_length()
 
     def is_full_length(self) -> bool:
         """
