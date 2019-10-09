@@ -226,6 +226,6 @@ rule Typing_dump_summary_info:
                 handle.write('\n')
             for hit in hits:
                 key = '{}-{}'.format(params.scheme_name, hit.value.locus)
-                allele_id = hit.value.to_table_row(separator=',')
+                allele_id = ','.join(hit.value.to_table_row())
                 handle.write(f'{key}\t{allele_id}')
                 handle.write('\n')
