@@ -77,7 +77,7 @@ class BlastHitFiltering(Tool):
             seq_id = stats.subject_id.split('__')[2]
             hit = GeneDetectionBlastHit(
                 mapping.get_metadata(seq_id, 'allele'),
-                mapping.get_metadata(seq_id, 'accession'),
+                mapping.get_metadata(seq_id, 'accession', '-'),
                 stats
             )
             # Add metadata (when specified)
