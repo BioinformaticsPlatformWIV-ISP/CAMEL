@@ -325,15 +325,24 @@ rule Gene_detection_get_column_names:
         detection_method=lambda wildcards: GeneDetectionUtils.get_detection_method_key(config, wildcards.db),
         db_config = lambda wildcards: config['gene_detection'][wildcards.db]
     run:
+        from camel.app.components.blast.blasthitstatistics import BlastHitStatistics
         from camel.app.components.genedetection.genedetectionblasthit import GeneDetectionBlastHit
         from camel.app.components.genedetection.genedetectionsrst2hit import GeneDetectionSRST2Hit
-        extra_column_name = params.db_config['extra_column']['name'] if 'extra_column' in params.db_config else None
+
+        # Create empty hit
         if params.detection_method == 'blast':
-            columns = GeneDetectionBlastHit.get_column_names_html(extra_column_name)
+            empty_hit = GeneDetectionBlastHit('Locus', None, BlastHitStatistics('subject', 0, '', 'query', 0, 0, 0.0))
         elif params.detection_method == 'srst2':
-            columns = GeneDetectionSRST2Hit.get_column_names_html(extra_column_name)
+            empty_hit = GeneDetectionSRST2Hit('Locus', None, 0, '', '', 0.0, 0.0, 0.0)
         else:
             raise ValueError(f"Invalid detection method: {params.detection_method}")
+
+        # Add metadata columns
+        if 'extra_column' in params.db_config:
+            empty_hit.add_metadata(params.db_config['extra_column']['name'], '')
+
+        # Save column names
+        columns = empty_hit.html_column_names
         SnakemakeUtils.dump_object(columns, output.INFORMS_columns)
 
 rule Gene_detection_report:

@@ -53,7 +53,7 @@ class SerogroupDetermination(Tool):
             })
 
         # Sort serogroups based on category and fraction of perfect hits
-        serogroup_stats.sort(key=lambda x: (x['category'], -x['fraction_detected_perfect']))
+        serogroup_stats.sort(key=lambda x: (x['category'], -x['fraction_detected'], -x['fraction_detected_perfect']))
         self._informs['serogroups_sorted'] = serogroup_stats
         self._informs['detected_serogroup'] = serogroup_stats[0]['name'] if \
             serogroup_stats[0]['fraction_detected'] >= 0.6 else 'NA'

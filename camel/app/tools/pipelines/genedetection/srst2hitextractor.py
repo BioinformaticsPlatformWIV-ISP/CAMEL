@@ -70,7 +70,7 @@ class SRST2HitExtractor(Tool):
                 seq_id = parts[header_indices['allele']]
                 hits.append(GeneDetectionSRST2Hit(
                     mapping.get_metadata(seq_id, 'allele'),
-                    mapping.get_metadata(seq_id, 'accession'),
+                    mapping.get_metadata(seq_id, 'accession', '-'),
                     int(parts[header_indices['length']]),
                     parts[header_indices['diffs']],
                     parts[header_indices['uncertainty']],

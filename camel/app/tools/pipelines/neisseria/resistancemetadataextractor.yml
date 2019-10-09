@@ -1,0 +1,4 @@
+dependencies: null
+parameters:
+  loci: {default: true, mandatory: true, option: null, value: 'locusA, locusB'}
+tool_command: null
