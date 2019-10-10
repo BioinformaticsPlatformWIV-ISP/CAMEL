@@ -26,6 +26,14 @@ class MainShigellaPipeline(BasePipeline):
         """
         super().__init__('Shigella pipeline', '0.4', SNAKEFILE_MAIN, args)
 
+    @property
+    def title(self) -> str:
+        """
+        Returns the title of the pipeline as it appears in the HTML output.
+        :return: Title
+        """
+        return '<i>Shigella</i> pipeline'
+
     def run(self) -> None:
         """
         Runs the pipeline.
