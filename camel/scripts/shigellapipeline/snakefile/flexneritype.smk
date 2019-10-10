@@ -238,7 +238,7 @@ rule Flexneri_parse_csq:
     params:
         running_dir = os.path.join(config['working_dir'], 'flexneri_type', 'loci', '{flexneri_locus}')
     run:
-        from camel.app.tools.pipelines.mycobacterium.csqparser import CsqParser
+        from camel.app.tools.bcftoolscsqparser.bcftoolscsqparser import CsqParser
         parser = CsqParser(camel)
         SnakemakeUtils.add_pickle_inputs(parser, input)
         step = Step(rule, parser, camel, params.running_dir, config)
