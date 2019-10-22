@@ -1,5 +1,6 @@
 import argparse
 import unittest
+from pathlib import Path
 
 import os
 import tempfile
@@ -17,11 +18,12 @@ class TestPointFinder(unittest.TestCase):
     running_dir = None
 
     # Input files
-    test_file_dir = os.path.join(camel.config['testing']['testfiles_dir'])
-    input_fasta_file = ToolIOFile(os.path.join(test_file_dir, 'pointfinder', 'ref_ecoli.fasta'))
-    input_fasta_file_salm = ToolIOFile(os.path.join(test_file_dir, 'pointfinder', 'salmonella_lt2_ref.fasta'))
-    input_fastq_raw_galaxy = [ToolIOFile('/data/camel/testdata/workflows/dataset_fwd_11.dat'),
-                              ToolIOFile('/data/camel/testdata/workflows/dataset_rev_10.dat')]
+    test_file_dir = Path(camel.config['testing']['testfiles_dir'])
+    input_fasta_file = ToolIOFile(str(test_file_dir / 'pointfinder' / 'ref_ecoli.fasta'))
+    input_fasta_file_salm = ToolIOFile(str(test_file_dir / 'pointfinder' / 'salmonella_lt2_ref.fasta'))
+    input_fastq_raw_galaxy = [
+        ToolIOFile(str(test_file_dir / 'workflows' / 'dataset_fwd_11.dat')),
+        ToolIOFile(str(test_file_dir / 'workflows' / 'dataset_rev_10.dat'))]
 
     def setUp(self) -> None:
         """

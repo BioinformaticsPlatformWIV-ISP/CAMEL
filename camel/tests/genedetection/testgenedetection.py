@@ -1,5 +1,6 @@
 import argparse
 import unittest
+from pathlib import Path
 
 import os
 import tempfile
@@ -18,16 +19,16 @@ class TestGeneDetection(unittest.TestCase):
     running_dir = None
 
     # Input files
-    test_file_dir = os.path.join(camel.config['testing']['testfiles_dir'])
-    input_fasta = ToolIOFile(os.path.join(test_file_dir, 'workflows', 'NC_002695.1.fasta'))
-    input_fasta_galaxy = ToolIOFile(os.path.join(test_file_dir, 'workflows', 'dataset_12.dat'))
-    input_reads_no_hit = [ToolIOFile(os.path.join(test_file_dir, 'workflows', 'ecoli_1.fastq')),
-                          ToolIOFile(os.path.join(test_file_dir, 'workflows', 'ecoli_2.fastq'))]
-    input_reads_raw = [ToolIOFile('/data/camel/testdata/gene_detection/reads-ds_1P.fastq'),
-                       ToolIOFile('/data/camel/testdata/gene_detection/reads-ds_2P.fastq')]
-    input_reads_raw_galaxy = [ToolIOFile('/data/camel/testdata/workflows/dataset_fwd_11.dat'),
-                              ToolIOFile('/data/camel/testdata/workflows/dataset_rev_10.dat')]
-    input_gene_detection_db = os.path.join(test_file_dir, 'gene_detection', 'db')
+    test_file_dir = Path(camel.config['testing']['testfiles_dir'])
+    input_fasta = ToolIOFile(str(test_file_dir / 'workflows' / 'NC_002695.1.fasta'))
+    input_fasta_galaxy = ToolIOFile(str(test_file_dir / 'workflows' / 'dataset_12.dat'))
+    input_reads_no_hit = [ToolIOFile(str(test_file_dir /'workflows' / 'ecoli_1.fastq')),
+                          ToolIOFile(str(test_file_dir / 'workflows' / 'ecoli_2.fastq'))]
+    input_reads_raw = [ToolIOFile(str(test_file_dir / 'gene_detection' / 'reads-ds_1P.fastq')),
+                       ToolIOFile(str(test_file_dir / 'gene_detection' / 'reads-ds_2P.fastq'))]
+    input_reads_raw_galaxy = [ToolIOFile(str(test_file_dir / 'workflows' / 'dataset_fwd_11.dat')),
+                              ToolIOFile(str(test_file_dir / 'workflows' / 'dataset_rev_10.dat'))]
+    input_gene_detection_db = str(test_file_dir / 'gene_detection' / 'db')
 
     def setUp(self):
         """
