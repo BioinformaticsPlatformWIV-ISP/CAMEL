@@ -7,7 +7,11 @@ class Command(object):
     Class meant to handle the execution of commands
     """
 
-    def __init__(self, command=None):
+    def __init__(self, command: str = None) -> None:
+        """
+        Initializes the command object.
+        :param command: (optional) Command line call
+        """
         self._stdout = None
         self._stderr = None
         self._procedure = None
@@ -15,26 +19,47 @@ class Command(object):
         self._command = command
 
     @property
-    def stderr(self):
+    def stderr(self) -> str:
+        """
+        Returns the stderr from the command execution.
+        :return: Standard error
+        """
         return self._stderr
 
     @property
-    def stdout(self):
+    def stdout(self) -> str:
+        """
+        Returns the stderr from the command execution.
+        :return: Standard error
+        """
         return self._stdout
 
     @property
-    def returncode(self):
+    def returncode(self) -> int:
+        """
+        Returns the exit code from the command execution.
+        :return: Exit code
+        """
         return self._return_code
 
     @property
-    def command(self):
+    def command(self) -> str:
+        """
+        Returns the command line call.
+        :return: Command line call
+        """
         return self._command
 
     @command.setter
-    def command(self, cmd):
+    def command(self, cmd: str) -> None:
+        """
+        Sets the command line call.
+        :param cmd: Command
+        :return: None
+        """
         self._command = cmd
 
-    def run_command(self, folder, stderr_handle=subprocess.PIPE):
+    def run_command(self, folder: str, stderr_handle=subprocess.PIPE) -> None:
         """
         Runs the command given at command initialization
         :param folder: Folder where the command is executed
