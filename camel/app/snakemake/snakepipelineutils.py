@@ -130,8 +130,8 @@ class SnakePipelineUtils(object):
         """
         if not os.path.isdir(working_dir):
             os.makedirs(working_dir)
-        command = Command('snakemake --snakefile {} --configfile {} {} --cores {}'.format(
-            snakefile, config_path, ' '.join(targets), threads))
+        command = Command('snakemake {} --snakefile {} --configfile {} --cores {}'.format(
+            ' '.join(targets), snakefile, config_path, threads))
         command.run_command(working_dir)
         print(f'- Stdout: -\n{command.stdout}')
         print(f'- Stderr: -\n{command.stderr}')
