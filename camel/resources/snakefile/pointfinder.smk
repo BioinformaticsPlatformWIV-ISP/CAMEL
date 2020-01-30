@@ -1,46 +1,42 @@
-import json
-import os
+from pathlib import Path
 
-from camel.app.components.html.htmlreportsection import HtmlReportSection
-from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.resources.snakefile.assembly_spades import OUTPUT_ASSEMBLY_FASTA
-from camel.resources.snakefile.pointfinder import OUTPUT_POINTFINDER_REPORT, OUTPUT_POINTFINDER_REPORT_EMPTY, \
-    OUTPUT_POINTFINDER_SUMMARY
+from camel.resources.snakefile import pointfinder, assembly_spades
 
-rule PointFinder_run:
+
+rule pointfinder_run:
     """
     This rule executes PointFinder on the input sample.
     """
     input:
-        FASTA=os.path.join(config['working_dir'], OUTPUT_ASSEMBLY_FASTA)
+        FASTA = Path(config['working_dir'])/ assembly_spades.OUTPUT_ASSEMBLY_FASTA
     output:
-        TSV=os.path.join(config['working_dir'], 'pointfinder', 'tsv.io'),
-        INFORMS=os.path.join(config['working_dir'], 'pointfinder', 'informs.io')
+        TSV = Path(config['working_dir']) / 'pointfinder' / 'tsv.io',
+        INFORMS = Path(config['working_dir']) / pointfinder.OUTPUT_POINTFINDER_INFORMS
     params:
-        running_dir=os.path.join(config['working_dir'], 'pointfinder')
+        running_dir = Path(config['working_dir']) / 'pointfinder'
     run:
         from camel.app.tools.pointfinder.pointfinder import PointFinder
-        pointfinder = PointFinder(camel)
-        SnakemakeUtils.add_pickle_inputs(pointfinder, input)
-        step = Step(rule, pointfinder, camel, params.running_dir, config)
+        pointfinder_ = PointFinder(camel)
+        SnakemakeUtils.add_pickle_inputs(pointfinder_, input)
+        step = Step(rule, pointfinder_, camel, params.running_dir, config)
         step.run_step()
-        SnakemakeUtils.dump_tool_outputs(pointfinder, output)
+        SnakemakeUtils.dump_tool_outputs(pointfinder_, output)
 
-rule PointFinder_report:
+rule pointfinder_report:
     """
     This rule creates the report for the pointfinder assay.
     """
     input:
-        TSV=os.path.join(config['working_dir'], 'pointfinder', 'tsv.io'),
-        INFORMS_pointfinder=os.path.join(config['working_dir'], 'pointfinder', 'informs.io')
+        TSV = rules.pointfinder_run.output.TSV,
+        INFORMS_pointfinder = rules.pointfinder_run.output.INFORMS
     output:
-        VAL_HTML=os.path.join(config['working_dir'], OUTPUT_POINTFINDER_REPORT),
-        INFORMS=os.path.join(config['working_dir'], 'pointfinder', 'informs-report.io')
+        VAL_HTML = Path(config['working_dir']) / pointfinder.OUTPUT_POINTFINDER_REPORT,
+        INFORMS = Path(config['working_dir']) / 'pointfinder' / 'informs-report.io'
     params:
-        running_dir=os.path.join(config['working_dir'], 'pointfinder'),
-        sample_name=config['sample_name']
+        running_dir = Path(config['working_dir']) / 'pointfinder',
+        sample_name = config['sample_name']
     run:
         from camel.app.tools.pointfinder.pointfinderreporter import PointFinderReporter
         pointfinder_reporter = PointFinderReporter(camel)
@@ -50,33 +46,34 @@ rule PointFinder_report:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(pointfinder_reporter, output)
 
-rule PointFinder_report_empty:
+rule pointfinder_report_empty:
     """
     Creates an empty HTML report for the PointFinder analysis.
     """
     output:
-        VAL_HTML=os.path.join(config['working_dir'], OUTPUT_POINTFINDER_REPORT_EMPTY)
+        VAL_HTML = Path(config['working_dir']) / pointfinder.OUTPUT_POINTFINDER_REPORT_EMPTY
     params:
-        running_dir=os.path.join(config['working_dir'], 'pointfinder')
+        running_dir = Path(config['working_dir']) / 'pointfinder'
     run:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         from camel.app.tools.pointfinder.pointfinderreporter import PointFinderReporter
         SnakePipelineUtils.create_empty_report_section(PointFinderReporter.TITLE, output.VAL_HTML)
 
-rule PointFinder_dump_summary_info:
+rule pointfinder_dump_summary_info:
     """
     Dumps the summary information for the PointFinder workflow in tabular format.
     """
     input:
-        INFORMS=os.path.join(config['working_dir'], 'pointfinder', 'informs-report.io')
+        INFORMS = Path(config['working_dir']) / 'pointfinder' / 'informs-report.io'
     output:
-        os.path.join(config['working_dir'], OUTPUT_POINTFINDER_SUMMARY)
+        TSV = Path(config['working_dir']) / pointfinder.OUTPUT_POINTFINDER_SUMMARY
     run:
+        import json
         from camel.app.components.html.htmltablecell import HtmlTableCell
         informs = SnakemakeUtils.load_object(input.INFORMS)
         mutations = []
         for row in informs['mutations']:
             mutations.append([e if not isinstance(e, HtmlTableCell) else e.text for e in row])
-        with open(output[0], 'w') as handle:
+        with open(output.TSV, 'w') as handle:
             handle.write('{}\t{}'.format('pointfinder_mutations', json.dumps(mutations)))
             handle.write('\n')
