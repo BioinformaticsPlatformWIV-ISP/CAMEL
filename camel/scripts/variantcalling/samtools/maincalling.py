@@ -1,18 +1,16 @@
 #!/usr/bin/env python
 import argparse
 import logging
+from pathlib import Path
 from typing import Dict, Any, Optional
 
-import os
 import shutil
 
 from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-from camel.resources.snakefile import SNAKEFILE_VARIANT_CALLING
-from camel.resources.snakefile.variant_calling import OUTPUT_VARIANT_CALLING_UNFILTERED_VCF, \
-    OUTPUT_VARIANT_CALLING_CONSENSUS
+from camel.resources.snakefile import variant_calling
 
 
 class MainCalling(object):
@@ -25,6 +23,7 @@ class MainCalling(object):
         Initializes the main script.
         """
         self._args = MainCalling._parse_arguments() if args is None else args
+        self._working_dir = Path(self._args.working_dir)
         self._camel = Camel()
 
     @staticmethod
@@ -42,7 +41,7 @@ class MainCalling(object):
         argument_parser.add_argument('--output', required=True)
         argument_parser.add_argument('--output-consensus',
                                      help="If specified, the consensus sequence is saved in this file.")
-        argument_parser.add_argument('--working-dir', default=os.path.abspath('.'))
+        argument_parser.add_argument('--working-dir', default=str(Path('.').absolute()))
         argument_parser.add_argument('--ploidy', choices=['GRCh37', 'GRCh38', 'X', 'Y', '1'], default='1')
         argument_parser.add_argument('--calling-method', choices=('consensus', 'multiallelic'))
         argument_parser.add_argument('--skip-variants', choices=['snps', 'indels'])
@@ -62,18 +61,19 @@ class MainCalling(object):
         """
         # Create config file
         config_data = self.__create_snakemake_config_data()
-        config_file = SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir)
+        config_file = SnakePipelineUtils.generate_config_file(config_data, self._working_dir)
 
         # Copy input BAM file to the right location
-        target_dir = os.path.join(self._args.working_dir, 'variant_calling', 'read_mapping')
-        if not os.path.isdir(target_dir):
-            os.makedirs(target_dir)
-        SnakemakeUtils.dump_object([ToolIOFile(self._args.bam)], os.path.join(target_dir, 'bam.io'))
+        target_dir = self._working_dir / 'variant_calling' / 'read_mapping'
+        if not target_dir.exists():
+            target_dir.mkdir(parents=True)
+        SnakemakeUtils.dump_object([ToolIOFile(self._args.bam)], str(target_dir / 'bam.io'))
 
         # Run Snakemake to generate output file
-        output_path = os.path.join(self._args.working_dir, OUTPUT_VARIANT_CALLING_UNFILTERED_VCF)
+        output_path = self._working_dir / variant_calling.OUTPUT_VARIANT_CALLING_UNFILTERED_VCF
         SnakePipelineUtils.run_snakemake(
-            SNAKEFILE_VARIANT_CALLING, config_file, [output_path], self._args.working_dir, self._args.threads)
+            variant_calling.SNAKEFILE_VARIANT_CALLING, config_file, [output_path], self._working_dir,
+            self._args.threads)
 
         # Generate consensus sequence
         if self._args.output_consensus:
@@ -112,10 +112,11 @@ class MainCalling(object):
         :param config_data: Snakemake config data
         :return: None
         """
-        config_file = SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir, 'consensus.yml')
-        output_path_consensus = os.path.join(self._args.working_dir, OUTPUT_VARIANT_CALLING_CONSENSUS)
+        config_file = SnakePipelineUtils.generate_config_file(config_data, self._working_dir, 'consensus.yml')
+        output_path_consensus = self._working_dir / variant_calling.OUTPUT_VARIANT_CALLING_CONSENSUS
         SnakePipelineUtils.run_snakemake(
-            SNAKEFILE_VARIANT_CALLING, config_file, [output_path_consensus], self._args.working_dir, self._args.threads)
+            variant_calling.SNAKEFILE_VARIANT_CALLING, config_file, [output_path_consensus], self._working_dir,
+            self._args.threads)
         fasta_consensus = SnakemakeUtils.load_object(output_path_consensus)[0].path
         shutil.copyfile(fasta_consensus, output_path)
 

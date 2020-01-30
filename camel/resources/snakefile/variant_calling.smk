@@ -1,101 +1,71 @@
 """
 This Snakefile performs variant calling using the samtools pipeline.
 """
-
-import os
+from pathlib import Path
 
 from camel.app.camel import Camel
-from camel.app.io.tooliofile import ToolIOFile
-from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.resources.snakefile.read_trimming import OUTPUT_READ_TRIMMING_READS_PE, OUTPUT_READ_TRIMMING_READS_SE_FWD, \
-    OUTPUT_READ_TRIMMING_READS_SE_REV
-from camel.resources.snakefile.read_trimming_iontorrent import OUTPUT_TRIMMING_IT_READS
-from camel.resources.snakefile.variant_calling import OUTPUT_VARIANT_CALLING_SUMMARY, \
-    OUTPUT_VARIANT_CALLING_UNFILTERED_VCF, OUTPUT_VARIANT_CALLING_UNFILTERED_VCF_GZ, OUTPUT_VARIANT_CALLING_REPORT, \
-    OUTPUT_VARIANT_CALLING_BAM, OUTPUT_VARIANT_CALLING_CONSENSUS, OUTPUT_VARIANT_CALLING_MAPPING_INFORMS, \
-    OUTPUT_VARIANT_CALLING_INFORMS_ALL
-from camel.resources.snakefile.variant_filtering import OUTPUT_VARIANT_FILTERING_VCF, OUTPUT_VARIANT_FILTERING_STATS, \
-    get_filtering_param
+from camel.resources.snakefile import variant_calling, variant_filtering
 
 camel = Camel.get_instance()
 
 
-rule Variant_calling_prep_reference:
+rule variant_calling_prep_reference:
     """
     Converts the reference to a Snakemake / CAMEL compatible format. Creates the reference metadata.
     """
     output:
-        INDEX_GENOME_PREFIX=os.path.join(config['working_dir'], 'variant_calling', 'reference', 'genome_prefix.io'),
-        FASTA=os.path.join(config['working_dir'], 'variant_calling', 'reference', 'fasta.io'),
-        INFORMS=os.path.join(config['working_dir'], 'variant_calling', 'reference', 'informs.io')
+        INDEX_GENOME_PREFIX = Path(config['working_dir']) / 'variant_calling' / 'reference' / 'genome_prefix.io',
+        FASTA = Path(config['working_dir']) / 'variant_calling' / 'reference' / 'fasta.io',
+        INFORMS = Path(config['working_dir']) / 'variant_calling' / 'reference' / 'informs.io'
     params:
-        reference=config['variant_calling'].get('reference')
+        reference = config['variant_calling'].get('reference')
     run:
+        from camel.app.io.tooliovalue import ToolIOValue
+        from camel.app.io.tooliofile import ToolIOFile
         SnakemakeUtils.dump_object([ToolIOValue(params.reference['path'])], output.INDEX_GENOME_PREFIX)
         SnakemakeUtils.dump_object([ToolIOFile(params.reference['path'])], output.FASTA)
         SnakemakeUtils.dump_object(params.reference, output.INFORMS)
 
-rule Variant_calling_collect_input:
-    """
-    Collects the input for the variant calling pipeline.
-    """
-    input:
-        ILLUMINA_FASTQ_PE = os.path.join(config['working_dir'], OUTPUT_READ_TRIMMING_READS_PE) if config.get('read_type', 'illumina') == 'illumina' else [],
-        ILLUMINA_FASTQ_SE_FWD = os.path.join(config['working_dir'], OUTPUT_READ_TRIMMING_READS_SE_FWD) if config.get('read_type', 'illumina') == 'illumina' else [],
-        ILLUMINA_FASTQ_SE_REV = os.path.join(config['working_dir'], OUTPUT_READ_TRIMMING_READS_SE_REV) if config.get('read_type', 'illumina') == 'illumina' else [],
-        IONTORRENT_FASTQ_SE=os.path.join(config['working_dir'], OUTPUT_TRIMMING_IT_READS) if config.get('read_type', 'illumina') == 'iontorrent' else []
-    output:
-        FASTQ=os.path.join(config['working_dir'], 'variant_calling', 'input-fastq.io')
-    params:
-        read_type = config.get('read_type', 'illumina')
-    run:
-        output_dict = {}
-        if params.read_type == 'illumina':
-            output_dict = {'FASTQ_PE': SnakemakeUtils.load_object(input.ILLUMINA_FASTQ_PE)}
-            se_reads = SnakemakeUtils.load_object(input.ILLUMINA_FASTQ_SE_FWD) + \
-                       SnakemakeUtils.load_object(input.ILLUMINA_FASTQ_SE_REV)
-            if len(se_reads) > 0:
-                output_dict['FASTQ_SE'] = se_reads
-        else:
-            output_dict = {'FASTQ_SE': SnakemakeUtils.load_object(input.IONTORRENT_FASTQ_SE)}
-        SnakemakeUtils.dump_object(output_dict, output[0])
 
-rule Variant_calling_read_mapping:
+rule variant_calling_read_mapping:
     """
     Maps the trimmed reads to the assembly.
     """
     input:
-        FASTQ=os.path.join(config['working_dir'], 'variant_calling', 'input-fastq.io'),
-        INDEX_GENOME_PREFIX=os.path.join(config['working_dir'], 'variant_calling', 'reference', 'genome_prefix.io')
+        IO = Path(config['working_dir']) / 'fq_dict.io',
+        INDEX_GENOME_PREFIX = rules.variant_calling_prep_reference.output.INDEX_GENOME_PREFIX
     output:
-        SAM=os.path.join(config['working_dir'], 'variant_calling', 'read_mapping', 'sam.io'),
-        INFORMS=os.path.join(config['working_dir'], OUTPUT_VARIANT_CALLING_MAPPING_INFORMS)
+        SAM = Path(config['working_dir']) / 'variant_calling' / 'read_mapping' / 'sam.io',
+        INFORMS = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_MAPPING_INFORMS
     params:
-        running_dir=os.path.join(config['working_dir'], 'variant_calling', 'read_mapping')
+        running_dir = Path(config['working_dir']) / 'variant_calling' / 'read_mapping'
     threads: 4
     priority: 1
     run:
+        from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         from camel.app.tools.bowtie2.bowtie2map import Bowtie2Map
         bowtie2_map = Bowtie2Map(camel)
         step = Step(rule, bowtie2_map, camel, params.running_dir, config)
         bowtie2_map.update_parameters(threads=threads)
         SnakemakeUtils.add_pickle_input(bowtie2_map, 'INDEX_GENOME_PREFIX', input.INDEX_GENOME_PREFIX)
-        bowtie2_map.add_input_files(SnakemakeUtils.load_object(input.FASTQ))
+        bowtie2_map.add_input_files(SnakePipelineUtils.extracts_fq_input(input.IO))
+        import pprint
+        pprint.pprint(bowtie2_map._tool_inputs)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(bowtie2_map, output)
 
-rule Variant_calling_sam_to_bam:
+rule variant_calling_sam_to_bam:
     """
     Converts the mapped reads SAM file to BAM format.
     """
     input:
-        SAM=os.path.join(config['working_dir'], 'variant_calling', 'read_mapping', 'sam.io')
+        SAM = rules.variant_calling_read_mapping.output.SAM
     output:
-        BAM=os.path.join(config['working_dir'], 'variant_calling', 'read_mapping', 'bam.io')
+        BAM = Path(config['working_dir']) / 'variant_calling' / 'read_mapping' / 'bam.io'
     params:
-        running_dir=os.path.join(config['working_dir'], 'variant_calling', 'read_mapping')
+        running_dir = Path(config['working_dir']) / 'variant_calling' / 'read_mapping'
     run:
         from camel.app.tools.samtools.samtoolsview import SamtoolsView
         samtools_view = SamtoolsView(camel)
@@ -104,16 +74,16 @@ rule Variant_calling_sam_to_bam:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(samtools_view, output)
 
-rule Variant_calling_alignment_sorting:
+rule variant_calling_alignment_sorting:
     """
     Sorts the alignment.
     """
     input:
-        BAM=os.path.join(config['working_dir'], 'variant_calling', 'read_mapping', 'bam.io')
+        BAM = rules.variant_calling_sam_to_bam.output.BAM
     output:
-        BAM=os.path.join(config['working_dir'], OUTPUT_VARIANT_CALLING_BAM)
+        BAM = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_BAM
     params:
-        running_dir=os.path.join(config['working_dir'], 'variant_calling', 'alignment_sorting')
+        running_dir = Path(config['working_dir']) / 'variant_calling' / 'alignment_sorting'
     run:
         from camel.app.tools.samtools.samtoolssort import SamtoolsSort
         samtools_sort = SamtoolsSort(camel)
@@ -122,16 +92,16 @@ rule Variant_calling_alignment_sorting:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(samtools_sort, output)
 
-rule Variant_calling_calculate_depth:
+rule variant_calling_calculate_depth:
     """
     Calculates the median depth of the alignment.
     """
     input:
-        BAM=os.path.join(config['working_dir'], OUTPUT_VARIANT_CALLING_BAM)
+        BAM = rules.variant_calling_alignment_sorting.output.BAM
     output:
-        INFORMS = os.path.join(config['working_dir'], 'variant_calling', 'depth', 'informs.io')
+        INFORMS = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_DEPTH_INFORMS
     params:
-        running_dir = os.path.join(config['working_dir'], 'variant_calling', 'depth')
+        running_dir = Path(config['working_dir']) / 'variant_calling' / 'depth'
     run:
         from camel.app.tools.samtools.samtoolsdepth import SamtoolsDepth
         samtools_depth = SamtoolsDepth(camel)
@@ -141,19 +111,19 @@ rule Variant_calling_calculate_depth:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(samtools_depth, output)
 
-rule Variant_calling_mpileup:
+rule variant_calling_mpileup:
     """
     This step creates a multi-way pileup using samtools.
     """
     input:
-        FASTA=os.path.join(config['working_dir'], 'variant_calling',  'reference', 'fasta.io'),
-        BAM=os.path.join(config['working_dir'], 'variant_calling', 'alignment_sorting', 'bam-sorted.io')
+        FASTA = rules.variant_calling_prep_reference.output.FASTA,
+        BAM = rules.variant_calling_alignment_sorting.output.BAM
     output:
-        VCF_GZ=os.path.join(config['working_dir'], 'variant_calling', 'mpileup', 'vcf_gz.io'),
-        INFORMS=os.path.join(config['working_dir'], 'variant_calling', 'mpileup', 'informs.io')
+        VCF_GZ = Path(config['working_dir']) / 'variant_calling' / 'mpileup' / 'vcf_gz.io',
+        INFORMS = Path(config['working_dir']) / 'variant_calling' / 'mpileup' / 'informs.io'
     priority: 1
     params:
-        running_dir=os.path.join(config['working_dir'], 'variant_calling', 'mpileup'),
+        running_dir = Path(config['working_dir']) / 'variant_calling' / 'mpileup',
         count_orphans = config['variant_calling'].get('count_orphans', True),
         min_mapping_quality = config['variant_calling'].get('minimal_mq'),
         min_base_quality = config['variant_calling'].get('minimal_bq'),
@@ -176,22 +146,22 @@ rule Variant_calling_mpileup:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(samtools_mpileup, output)
 
-rule Variant_calling_bcftools_call:
+rule variant_calling_bcftools_call:
     """
     Variant calling using bcftools. 
     """
     input:
-        VCF_GZ=os.path.join(config['working_dir'], 'variant_calling', 'mpileup', 'vcf_gz.io')
+        VCF_GZ = rules.variant_calling_mpileup.output.VCF_GZ
     output:
-        VCF_GZ=os.path.join(config['working_dir'], 'variant_calling', 'calling', 'vcf_gz.io'),
-        INFORMS=os.path.join(config['working_dir'], 'variant_calling', 'calling', 'informs.io')
+        VCF_GZ = Path(config['working_dir']) / 'variant_calling' / 'calling' / 'vcf_gz.io',
+        INFORMS = Path(config['working_dir']) / 'variant_calling' / 'calling' / 'informs.io'
     params:
-        running_dir=os.path.join(config['working_dir'], 'variant_calling', 'calling'),
-        ploidy=config['variant_calling']['ploidy'],
-        calling_method=config['variant_calling'].get('calling_method'),
-        skip_variants=config['variant_calling'].get('skip_variants'),
-        variants_only=config['variant_calling'].get('variants_only'),
-        mutation_rate=config['variant_calling'].get('mutation_rate')
+        running_dir = Path(config['working_dir']) / 'variant_calling' / 'calling',
+        ploidy = config['variant_calling'].get('ploidy', 1),
+        calling_method = config['variant_calling'].get('calling_method'),
+        skip_variants = config['variant_calling'].get('skip_variants'),
+        variants_only = config['variant_calling'].get('variants_only'),
+        mutation_rate = config['variant_calling'].get('mutation_rate')
     run:
         from camel.app.tools.bcftools.bcftoolscall import BcftoolsCall
         variant_caller = BcftoolsCall(camel)
@@ -215,16 +185,16 @@ rule Variant_calling_bcftools_call:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(variant_caller, output)
 
-rule Variant_calling_VCF_indexing:
+rule variant_calling_index_vcf_gz:
     """
     Indexes the VCF file.
     """
     input:
-        VCF_GZ=os.path.join(config['working_dir'], 'variant_calling', 'calling', 'vcf_gz.io')
+        VCF_GZ = rules.variant_calling_bcftools_call.output.VCF_GZ
     output:
-        VCF_GZ=os.path.join(config['working_dir'], OUTPUT_VARIANT_CALLING_UNFILTERED_VCF_GZ)
+        VCF_GZ = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_UNFILTERED_VCF_GZ
     params:
-        running_dir=os.path.join(config['working_dir'], 'variant_calling', 'calling')
+        running_dir = Path(config['working_dir']) / 'variant_calling' / 'calling'
     run:
         from camel.app.tools.bcftools.bcftoolsindex import BcftoolsIndex
         indexer = BcftoolsIndex(camel)
@@ -233,16 +203,16 @@ rule Variant_calling_VCF_indexing:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(indexer, output)
 
-rule Variant_calling_unzip_vcf:
+rule variant_calling_unzip_vcf:
     """
     Unzips the VCF file.
     """
     input:
-        VCF_GZ=os.path.join(config['working_dir'], 'variant_calling', 'calling', 'vcf_gz.io')
+        VCF_GZ = rules.variant_calling_bcftools_call.output.VCF_GZ
     output:
-        VCF=os.path.join(config['working_dir'], OUTPUT_VARIANT_CALLING_UNFILTERED_VCF)
+        VCF = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_UNFILTERED_VCF
     params:
-        running_dir=os.path.join(config['working_dir'], 'variant_calling', 'unzip_vcf')
+        running_dir = Path(config['working_dir']) / 'variant_calling' / 'unzip_vcf'
     run:
         from camel.app.tools.bcftools.bcftoolsview import BcftoolsView
         bcftools_view = BcftoolsView(camel)
@@ -252,47 +222,47 @@ rule Variant_calling_unzip_vcf:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(bcftools_view, output)
 
-rule Variant_calling_create_consensus:
+rule variant_calling_create_consensus:
     """
     Creates the consensus sequence by applying the detected variants to the reference genome.
     """
     input:
-        VCF_GZ=os.path.join(config['working_dir'], OUTPUT_VARIANT_CALLING_UNFILTERED_VCF_GZ),
-        FASTA=os.path.join(config['working_dir'], 'variant_calling', 'reference', 'fasta.io')
+        VCF_GZ = rules.variant_calling_index_vcf_gz.output.VCF_GZ,
+        FASTA = rules.variant_calling_prep_reference.output.FASTA
     output:
-        FASTA=os.path.join(config['working_dir'], OUTPUT_VARIANT_CALLING_CONSENSUS)
+        FASTA = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_CONSENSUS
     params:
-        running_dir=os.path.join(config['working_dir'], 'variant_calling', 'consensus'),
+        running_dir = Path(config['working_dir']) / 'variant_calling' / 'consensus',
         output_filename='bcftools_consensus.fasta'
     run:
         from camel.app.tools.bcftools.bcftoolsconsensus import BcftoolsConsensus
         bcftools_consensus = BcftoolsConsensus(camel)
         SnakemakeUtils.add_pickle_inputs(bcftools_consensus, input)
-        bcftools_consensus.update_parameters(output_filename=params.output_filename)
+        bcftools_consensus.update_parameters(output_filename = params.output_filename)
         step = Step(rule, bcftools_consensus, camel, params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(bcftools_consensus, output)
 
-rule Variant_calling_report:
+rule variant_calling_report:
     """
     Creates a report for the variant calling.
     """
     input:
-        VCF=os.path.join(config['working_dir'], OUTPUT_VARIANT_CALLING_UNFILTERED_VCF),
-        VCF_filt=os.path.join(config['working_dir'], OUTPUT_VARIANT_FILTERING_VCF),
-        VCF_filt_regions=os.path.join(config['working_dir'], 'variant_filtering', 'regions', 'vcf.io') if get_filtering_param(config, 'region', 'bed_file') is not None else [],
-        INFORMS_reference=os.path.join(config['working_dir'], 'variant_calling', 'reference', 'informs.io'),
-        INFORMS_mapping=os.path.join(config['working_dir'], 'variant_calling', 'read_mapping', 'informs.io'),
-        INFORMS_calling=os.path.join(config['working_dir'], 'variant_calling', 'calling', 'informs.io'),
-        INFORMS_depth=os.path.join(config['working_dir'], 'variant_calling', 'depth', 'informs.io'),
-        JSON=os.path.join(config['working_dir'], OUTPUT_VARIANT_FILTERING_STATS)
+        VCF = rules.variant_calling_unzip_vcf.output.VCF,
+        VCF_filt = Path(config['working_dir']) / variant_filtering.OUTPUT_VARIANT_FILTERING_VCF,
+        VCF_filt_regions = Path(config['working_dir'], 'variant_filtering', 'regions', 'vcf.io') if variant_filtering.get_filtering_param(config, 'region', 'bed_file') is not None else [],
+        INFORMS_reference = rules.variant_calling_prep_reference.output.INFORMS,
+        INFORMS_mapping = rules.variant_calling_read_mapping.output.INFORMS,
+        INFORMS_calling = rules.variant_calling_bcftools_call.output.INFORMS,
+        INFORMS_depth = rules.variant_calling_calculate_depth.output.INFORMS,
+        JSON = Path(config['working_dir']) / variant_filtering.OUTPUT_VARIANT_FILTERING_STATS
     output:
-        VAL_HTML=os.path.join(config['working_dir'], OUTPUT_VARIANT_CALLING_REPORT),
-        INFORMS=os.path.join(config['working_dir'], 'variant_calling', 'report', 'informs.io')
+        VAL_HTML = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_REPORT,
+        INFORMS = Path(config['working_dir']) / 'variant_calling' / 'report' / 'informs.io'
     params:
-        running_dir=os.path.join(config['working_dir'], 'variant_calling', 'report'),
-        regions_bed_file=get_filtering_param(config, 'region', 'bed_file'),
-        sample_name=config['sample_name']
+        running_dir = Path(config['working_dir']) / 'variant_calling' / 'report',
+        regions_bed_file = variant_filtering.get_filtering_param(config, 'region', 'bed_file'),
+        sample_name = config['sample_name']
     run:
         from camel.app.tools.pipelines.variant_calling.variantcallingreporter import VariantCallingReporter
         reporter = VariantCallingReporter(camel)
@@ -306,15 +276,15 @@ rule Variant_calling_report:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
 
-rule Variant_calling_dump_summary_info:
+rule variant_calling_dump_summary_info:
     """
     Dumps the summary information from the variant calling workflow.
     """
     input:
-        INFORMS_mapping=os.path.join(config['working_dir'], 'variant_calling', 'read_mapping', 'informs.io'),
-        INFORMS_depth=os.path.join(config['working_dir'], 'variant_calling', 'depth', 'informs.io')
+        INFORMS_mapping = rules.variant_calling_read_mapping.output.INFORMS,
+        INFORMS_depth = rules.variant_calling_calculate_depth.output.INFORMS
     output:
-        os.path.join(config['working_dir'], OUTPUT_VARIANT_CALLING_SUMMARY)
+        Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_SUMMARY
     run:
         informs_mapping = SnakemakeUtils.load_object(input.INFORMS_mapping)
         informs_depth = SnakemakeUtils.load_object(input.INFORMS_depth)
@@ -327,16 +297,16 @@ rule Variant_calling_dump_summary_info:
                 handle.write(f'{key}\t{value}')
                 handle.write('\n')
 
-rule Variant_calling_collect_command_informs:
+rule variant_calling_collect_command_informs:
     """
     This rule is used to collect the commands that were used.
     """
     input:
-        INFORMS_mapping=os.path.join(config['working_dir'], 'variant_calling', 'read_mapping', 'informs.io'),
-        INFORMS_mpileup=os.path.join(config['working_dir'], 'variant_calling', 'mpileup', 'informs.io'),
-        INFORMS_calling=os.path.join(config['working_dir'], 'variant_calling', 'calling', 'informs.io')
+        INFORMS_mapping = rules.variant_calling_read_mapping.output.INFORMS,
+        INFORMS_mpileup = rules.variant_calling_mpileup.output.INFORMS,
+        INFORMS_calling = rules.variant_calling_bcftools_call.output.INFORMS
     output:
-        INFORMS_ALL=os.path.join(config['working_dir'], OUTPUT_VARIANT_CALLING_INFORMS_ALL)
+        INFORMS_ALL = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_INFORMS_ALL
     run:
         all_informs = []
         for io_file in input:
