@@ -1,3 +1,4 @@
 dependencies: []
-parameters: {}
+parameters:
+  gc_content_ref: {default: false, mandatory: true, option: null, value: '0.0'}
 tool_command: null
