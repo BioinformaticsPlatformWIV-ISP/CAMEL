@@ -1,24 +1,19 @@
 from dataclasses import dataclass
+from pathlib import Path
 from typing import List, Optional, Dict, Any, Union
-
-import os
 
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-from camel.resources.snakefile import SNAKEFILE_ASSEMBLY_SPADES
-from camel.resources.snakefile.assembly_spades import OUTPUT_ASSEMBLY_REPORT, OUTPUT_ASSEMBLY_FASTA, \
-    OUTPUT_ASSEMBLY_INFORMS, OUTPUT_ASSEMBLY_FILTERING_INFORMS
-from camel.resources.snakefile.read_trimming import OUTPUT_READ_TRIMMING_READS_PE, \
-    OUTPUT_READ_TRIMMING_READS_SE_REV, OUTPUT_READ_TRIMMING_READS_SE_FWD
+from camel.resources.snakefile import assembly_spades
 
 
 @dataclass
 class AssemblyOutput:
     report_section: HtmlReportSection
     fasta_contigs: ToolIOFile
-    log_file: Optional[str]
+    log_file: Optional[Path]
     informs: List[Dict[str, Any]]
 
 
@@ -32,7 +27,7 @@ class AssemblyWrapper(object):
         Initializes the read trimming helper.
         :param working_dir: Working directory
         """
-        self._working_dir = working_dir
+        self._working_dir = Path(working_dir)
         self._output = None
 
     def run_workflow(self, sample_name: str, reads_pe: List[ToolIOFile], reads_se_fwd: List[ToolIOFile],
@@ -50,18 +45,21 @@ class AssemblyWrapper(object):
         :param threads: Number of threads
         :return: None
         """
+        if not self._working_dir.exists():
+            self._working_dir.mkdir(parents=True)
         self.__prepare_input_files(reads_pe, reads_se_fwd, reads_se_rev)
         config_data = self.__get_config_data(sample_name, kmers, cov_cutoff, min_contig_length)
         config_file = SnakePipelineUtils.generate_config_file(config_data, self._working_dir)
         output_files = {
-            'HTML': os.path.join(self._working_dir, OUTPUT_ASSEMBLY_REPORT),
-            'FASTA': os.path.join(self._working_dir, OUTPUT_ASSEMBLY_FASTA),
-            'INFORMS_spades': os.path.join(self._working_dir, OUTPUT_ASSEMBLY_INFORMS),
+            'HTML': self._working_dir / assembly_spades.OUTPUT_ASSEMBLY_REPORT,
+            'FASTA': self._working_dir / assembly_spades.OUTPUT_ASSEMBLY_FASTA,
+            'INFORMS_spades': self._working_dir / assembly_spades.OUTPUT_ASSEMBLY_INFORMS
         }
         if min_contig_length is not None:
-            output_files['INFORMS_seqtk'] = os.path.join(self._working_dir, OUTPUT_ASSEMBLY_FILTERING_INFORMS)
+            output_files['INFORMS_seqtk'] = self._working_dir / assembly_spades.OUTPUT_ASSEMBLY_FILTERING_INFORMS
         SnakePipelineUtils.run_snakemake(
-            SNAKEFILE_ASSEMBLY_SPADES, config_file, list(output_files.values()), self._working_dir, threads)
+            assembly_spades.SNAKEFILE_ASSEMBLY_SPADES, config_file, list(output_files.values()), self._working_dir,
+            threads)
         self.__set_output(output_files)
 
     def __get_config_data(self, sample_name: str, kmers: str, cov_cutoff: Union[int, str],
@@ -98,12 +96,10 @@ class AssemblyWrapper(object):
         Prepares the input files for the assembly workflow.
         :return: None
         """
-        dir_trimming_out = os.path.dirname(os.path.join(self._working_dir, OUTPUT_READ_TRIMMING_READS_PE))
-        if not os.path.isdir(dir_trimming_out):
-            os.makedirs(dir_trimming_out)
-        SnakemakeUtils.dump_object(reads_pe, os.path.join(self._working_dir, OUTPUT_READ_TRIMMING_READS_PE))
-        SnakemakeUtils.dump_object(reads_se_fwd, os.path.join(self._working_dir, OUTPUT_READ_TRIMMING_READS_SE_FWD))
-        SnakemakeUtils.dump_object(reads_se_rev, os.path.join(self._working_dir, OUTPUT_READ_TRIMMING_READS_SE_REV))
+        fq_dict = {'PE': reads_pe, 'SE_FWD': reads_se_fwd, 'SE_REV': reads_se_rev}
+        print(self._working_dir)
+        print(self._working_dir.exists())
+        SnakemakeUtils.dump_object(fq_dict, self._working_dir / 'fq_dict.io')
 
     def __set_output(self, output_files: Dict[str, str]) -> None:
         """
@@ -111,7 +107,7 @@ class AssemblyWrapper(object):
         :param output_files: Output files dictionary
         :return: None
         """
-        log_file_path = os.path.join(self._working_dir, 'camel.log')
+        log_file_path = self._working_dir / 'camel.log'
         informs = [SnakemakeUtils.load_object(output_files['INFORMS_spades'])]
         if 'INFORMS_seqtk' in output_files:
             informs.append(SnakemakeUtils.load_object(output_files['INFORMS_seqtk']))
@@ -119,7 +115,7 @@ class AssemblyWrapper(object):
             report_section=SnakemakeUtils.load_object(output_files['HTML'])[0].value,
             fasta_contigs=SnakemakeUtils.load_object(output_files['FASTA'])[0],
             informs=informs,
-            log_file=log_file_path if os.path.isfile(log_file_path) else None
+            log_file=log_file_path if log_file_path.exists() else None
         )
 
     @property

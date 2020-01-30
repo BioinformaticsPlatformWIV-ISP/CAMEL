@@ -1,5 +1,6 @@
 import json
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Dict, List, Any
 
 import os
@@ -9,11 +10,7 @@ from camel.app.io.tooliofile import ToolIOFile
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.app.tools.bcftools.bcftoolsview import BcftoolsView
-from camel.resources.snakefile import SNAKEFILE_VARIANT_FILTERING
-from camel.resources.snakefile.variant_calling import OUTPUT_VARIANT_CALLING_BAM, \
-    OUTPUT_VARIANT_CALLING_UNFILTERED_VCF_GZ
-from camel.resources.snakefile.variant_filtering import OUTPUT_VARIANT_FILTERING_VCF, OUTPUT_VARIANT_FILTERING_STATS, \
-    OUTPUT_VARIANT_FILTERING_INFORMS_ALL
+from camel.resources.snakefile import variant_filtering, variant_calling
 
 
 @dataclass
@@ -37,7 +34,7 @@ class VariantFilteringWrapper(object):
         Initializes the variant calling wrapper.
         :param working_dir: Working directory
         """
-        self._working_dir = working_dir
+        self._working_dir = Path(working_dir)
         self._output = None
 
     @property
@@ -71,8 +68,8 @@ class VariantFilteringWrapper(object):
         :param bam_file: Input BAM file
         :return: None
         """
-        for path, destination in [(vcf_gz_file, OUTPUT_VARIANT_CALLING_UNFILTERED_VCF_GZ),
-                                  (bam_file, OUTPUT_VARIANT_CALLING_BAM)]:
+        for path, destination in [(vcf_gz_file, variant_calling.OUTPUT_VARIANT_CALLING_UNFILTERED_VCF_GZ),
+                                  (bam_file, variant_calling.OUTPUT_VARIANT_CALLING_BAM)]:
             target_dir = os.path.dirname(os.path.join(self._working_dir, destination))
             if not os.path.isdir(target_dir):
                 os.makedirs(target_dir)
@@ -99,12 +96,13 @@ class VariantFilteringWrapper(object):
 
         # Execute Snakemake
         output_files = {
-            'VCF': os.path.join(self._working_dir, OUTPUT_VARIANT_FILTERING_VCF),
-            'STATS': os.path.join(self._working_dir, OUTPUT_VARIANT_FILTERING_STATS),
-            'INFORMS': os.path.join(self._working_dir, OUTPUT_VARIANT_FILTERING_INFORMS_ALL)
+            'VCF': self._working_dir / variant_filtering.OUTPUT_VARIANT_FILTERING_VCF,
+            'STATS': self._working_dir / variant_filtering.OUTPUT_VARIANT_FILTERING_STATS,
+            'INFORMS': self._working_dir / variant_filtering.OUTPUT_VARIANT_FILTERING_INFORMS_ALL
         }
         SnakePipelineUtils.run_snakemake(
-            SNAKEFILE_VARIANT_FILTERING, config_path, list(output_files.values()), self._working_dir, cores)
+            variant_filtering.SNAKEFILE_VARIANT_FILTERING, config_path, list(output_files.values()), self._working_dir,
+            cores)
         self.__set_output(output_files)
 
     def __set_output(self, output_files: Dict[str, str]) -> None:

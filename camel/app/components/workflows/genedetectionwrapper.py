@@ -1,16 +1,13 @@
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Dict, Any, List, Optional
-
-import os
 
 from camel.app.components.genedetection.genedetectionhitbase import GeneDetectionHitBase
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-from camel.resources.snakefile import SNAKEFILE_GENE_DETECTION
-from camel.resources.snakefile.gene_detection import INPUT_GENE_DETECTION_FASTA, OUTPUT_GENE_DETECTION_REPORT, \
-    INPUT_GENE_DETECTION_FASTQ, OUTPUT_GENE_DETECTION_INFORMS, OUTPUT_GENE_DETECTION_ALL_HITS
+from camel.resources.snakefile import gene_detection
 
 
 @dataclass
@@ -18,7 +15,7 @@ class GeneDetectionOutput:
     report_section: HtmlReportSection
     detected_hits: List[GeneDetectionHitBase]
     informs: Dict[str, Any]
-    log_file: Optional[str] = None
+    log_file: Optional[Path] = None
 
 
 class GeneDetectionWrapper(object):
@@ -31,7 +28,7 @@ class GeneDetectionWrapper(object):
         Initializes the read trimming helper.
         :param working_dir: Working directory
         """
-        self._working_dir = working_dir
+        self._working_dir = Path(working_dir)
         self._output = None
 
     def __run_workflow(self, config_data: Dict[str, Any], threads: int) -> None:
@@ -43,12 +40,13 @@ class GeneDetectionWrapper(object):
         """
         config_file = SnakePipelineUtils.generate_config_file(config_data, self._working_dir)
         output_files = {
-            'report': os.path.join(self._working_dir, OUTPUT_GENE_DETECTION_REPORT.format(db='db')),
-            'informs': os.path.join(self._working_dir, OUTPUT_GENE_DETECTION_INFORMS.format(db='db')),
-            'hits': os.path.join(self._working_dir, OUTPUT_GENE_DETECTION_ALL_HITS.format(db='db'))
+            'report': self._working_dir / str(gene_detection.OUTPUT_GENE_DETECTION_REPORT).format(db='db'),
+            'informs': self._working_dir / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='db'),
+            'hits': self._working_dir / str(gene_detection.OUTPUT_GENE_DETECTION_ALL_HITS).format(db='db')
         }
         SnakePipelineUtils.run_snakemake(
-            SNAKEFILE_GENE_DETECTION, config_file, list(output_files.values()), self._working_dir, threads)
+            gene_detection.SNAKEFILE_GENE_DETECTION, config_file, list(output_files.values()), self._working_dir,
+            threads)
         self.__set_output(output_files)
 
     def run_workflow_blast(self, fasta_path: str, sample_name: str, db_data: Dict[str, Any], threads: int = 8) -> None:
@@ -99,11 +97,10 @@ class GeneDetectionWrapper(object):
         :param fasta_path: FASTA file path
         :return: None
         """
-        path = os.path.join(self._working_dir, INPUT_GENE_DETECTION_FASTA.format(db='db'))
-        target_dir = os.path.dirname(path)
-        if not os.path.isdir(target_dir):
-            os.makedirs(target_dir)
-        SnakemakeUtils.dump_object([ToolIOFile(fasta_path)], path)
+        path = self._working_dir / str(gene_detection.INPUT_GENE_DETECTION_FASTA).format(db='db')
+        if not path.parent.exists():
+            path.parent.mkdir(parents=True)
+        SnakemakeUtils.dump_object([ToolIOFile(fasta_path)], str(path))
 
     def __create_input_srst2(self, fastq_pe: List[str]) -> None:
         """
@@ -111,11 +108,9 @@ class GeneDetectionWrapper(object):
         :param fastq_pe: Pair of FASTQ PE files
         :return: None
         """
-        path = os.path.join(self._working_dir, INPUT_GENE_DETECTION_FASTQ.format(db='db'))
-        target_dir = os.path.dirname(path)
-        if not os.path.isdir(target_dir):
-            os.makedirs(target_dir)
-        SnakemakeUtils.dump_object([ToolIOFile(fastq_pe[0]), ToolIOFile(fastq_pe[1])], path)
+        path = self._working_dir / 'fq_dict.io'
+        fq_dict = {'PE': [ToolIOFile(x) for x in fastq_pe]}
+        SnakemakeUtils.dump_object(fq_dict, path)
 
     def __get_config_data(self, sample_name: str, db_data: Dict[str, Any], detection_method: str) -> Dict[str, Any]:
         """
@@ -138,12 +133,12 @@ class GeneDetectionWrapper(object):
         :param output_files: Output files dictionary
         :return: None
         """
-        log_file_path = os.path.join(self._working_dir, 'camel.log')
+        log_file_path = self._working_dir / 'camel.log'
         self._output = GeneDetectionOutput(
             report_section=SnakemakeUtils.load_object(output_files['report'])[0].value,
             detected_hits=[v.value for v in SnakemakeUtils.load_object(output_files['hits'])],
             informs=SnakemakeUtils.load_object(output_files['informs']),
-            log_file=log_file_path if os.path.isfile(log_file_path) else None
+            log_file=log_file_path if log_file_path.exists() else None
         )
 
     @property

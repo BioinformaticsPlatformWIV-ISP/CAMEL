@@ -1,17 +1,12 @@
 from dataclasses import dataclass
+from pathlib import Path
 from typing import List, Dict, Optional, Any
-
-import os
 
 from camel.app.components.vcf.vcfutils import VCFUtils
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-from camel.resources.snakefile import SNAKEFILE_VARIANT_CALLING
-from camel.resources.snakefile.read_trimming import OUTPUT_READ_TRIMMING_READS_PE, OUTPUT_READ_TRIMMING_READS_SE_FWD, \
-    OUTPUT_READ_TRIMMING_READS_SE_REV
-from camel.resources.snakefile.variant_calling import OUTPUT_VARIANT_CALLING_BAM, \
-    OUTPUT_VARIANT_CALLING_UNFILTERED_VCF, OUTPUT_VARIANT_CALLING_MAPPING_INFORMS, OUTPUT_VARIANT_CALLING_INFORMS_ALL
+from camel.resources.snakefile import variant_calling
 
 
 @dataclass
@@ -48,7 +43,7 @@ class VariantCallingWrapper(object):
         Initializes the variant calling wrapper.
         :param working_dir: Working directory
         """
-        self._working_dir = working_dir
+        self._working_dir = Path(working_dir)
         self._output = None
 
     @property
@@ -65,17 +60,12 @@ class VariantCallingWrapper(object):
         :param input_files: Input files
         :return: None
         """
-        # Create directory
-        target_dir = os.path.dirname(os.path.join(self._working_dir, OUTPUT_READ_TRIMMING_READS_PE))
-        if not os.path.isdir(target_dir):
-            os.makedirs(target_dir)
-
-        # Dump files
-        SnakemakeUtils.dump_object(input_files.pe_reads, os.path.join(self._working_dir, OUTPUT_READ_TRIMMING_READS_PE))
-        SnakemakeUtils.dump_object([input_files.se_reads_fwd] if input_files.se_reads_fwd is not None else [],
-                                   os.path.join(self._working_dir, OUTPUT_READ_TRIMMING_READS_SE_FWD))
-        SnakemakeUtils.dump_object([input_files.se_reads_rev] if input_files.se_reads_rev is not None else [],
-                                   os.path.join(self._working_dir, OUTPUT_READ_TRIMMING_READS_SE_REV))
+        fq_dict = {'PE': input_files.pe_reads}
+        if input_files.se_reads_fwd is not None:
+            fq_dict['SE_FWD'] = input_files.se_reads_fwd
+        if input_files.se_reads_rev is not None:
+            fq_dict['SE_REV'] = input_files.se_reads_rev
+        SnakemakeUtils.dump_object(fq_dict, self._working_dir / 'fq_dict.io')
 
     def run_workflow(self, reference_info: Dict[str, any], sample_name: str,
                      input_files: VariantCallingInput, options: Dict[str, Any],
@@ -96,13 +86,14 @@ class VariantCallingWrapper(object):
 
         # Execute Snakemake
         output_files = {
-            'BAM': os.path.join(self._working_dir, OUTPUT_VARIANT_CALLING_BAM),
-            'VCF': os.path.join(self._working_dir, OUTPUT_VARIANT_CALLING_UNFILTERED_VCF),
-            'INFORMS_MAPPING': os.path.join(self._working_dir, OUTPUT_VARIANT_CALLING_MAPPING_INFORMS),
-            'INFORMS_ALL': os.path.join(self._working_dir, OUTPUT_VARIANT_CALLING_INFORMS_ALL)
+            'BAM': self._working_dir / variant_calling.OUTPUT_VARIANT_CALLING_BAM,
+            'VCF': self._working_dir / variant_calling.OUTPUT_VARIANT_CALLING_UNFILTERED_VCF,
+            'INFORMS_MAPPING': self._working_dir / variant_calling.OUTPUT_VARIANT_CALLING_MAPPING_INFORMS,
+            'INFORMS_ALL': self._working_dir / variant_calling.OUTPUT_VARIANT_CALLING_INFORMS_ALL
         }
         SnakePipelineUtils.run_snakemake(
-            SNAKEFILE_VARIANT_CALLING, config_file, list(output_files.values()), self._working_dir, cores)
+            variant_calling.SNAKEFILE_VARIANT_CALLING, config_file, list(output_files.values()), self._working_dir,
+            cores)
 
         # Collect output
         self.__collect_output(output_files)
