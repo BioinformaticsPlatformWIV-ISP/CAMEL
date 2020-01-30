@@ -28,13 +28,13 @@ class ReporterTrimming(Tool):
         :return: None
         """
         self._report_section = HtmlReportSection('Read trimming', subtitle=self._input_informs['trimming']['_name'])
-        self.__add_fastqc_reports('Pre-trimming', 'pre_trimming', 'HTML_Pre')
+        self.__add_fastqc_reports('Pre-trimming', 'pre_trimming', 'HTML_PRE')
         self.__add_trimming_section_pe()
         if self._parameters['export_fastq'] is not None and self._parameters['export_fastq'].as_boolean() is True:
             self.__add_trimmed_read_files()
         else:
             self._report_section.add_text("Trimmed FASTQ files not exported, change pipeline options to include them.")
-        self.__add_fastqc_reports('Post-trimming', 'post_trimming', 'HTML_Post')
+        self.__add_fastqc_reports('Post-trimming', 'post_trimming', 'HTML_POST')
         self._tool_outputs['VAL_HTML'] = [ToolIOValue(self._report_section, False)]
 
     def _check_input(self):
@@ -42,11 +42,11 @@ class ReporterTrimming(Tool):
         Checks if the input is valid.
         :return: None
         """
-        if 'HTML_Pre' not in self._tool_inputs:
+        if 'HTML_PRE' not in self._tool_inputs:
             raise InvalidInputSpecificationError("No pre-trimming reports found")
         if 'FASTQ_PE' not in self._tool_inputs and 'FASTQ_SE' not in self._tool_inputs:
             raise InvalidInputSpecificationError("No reads input found ('FASTQ_PE' or 'FASTQ_SE')")
-        if 'HTML_Post' not in self._tool_inputs:
+        if 'HTML_POST' not in self._tool_inputs:
             raise InvalidInputSpecificationError("No post-trimming reports found")
         if 'trimming' not in self._input_informs:
             raise InvalidInputSpecificationError("No trimming info found")

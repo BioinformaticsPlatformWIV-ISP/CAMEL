@@ -26,9 +26,9 @@ class ReporterTrimmingIonTorrent(Tool):
         :return: None
         """
         self._report_section = HtmlReportSection('Read trimming', subtitle=self._input_informs['filt_len']['_name'])
-        self.__add_fastqc_report('Pre-filtering', 'pre', 'HTML_Pre')
+        self.__add_fastqc_report('Pre-filtering', 'pre', 'HTML_PRE')
         self.__add_filtering_section()
-        self.__add_fastqc_report('Post-filtering', 'post', 'HTML_Post')
+        self.__add_fastqc_report('Post-filtering', 'post', 'HTML_POST')
         self._tool_outputs['VAL_HTML'] = [ToolIOValue(self._report_section)]
 
     def __add_fastqc_report(self, section_title: str, suffix: str, key: str) -> None:
