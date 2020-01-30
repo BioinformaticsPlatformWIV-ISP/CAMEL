@@ -1,81 +1,50 @@
-import os
+from pathlib import Path
 
 from camel.app.camel import Camel
-from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.resources.snakefile.assembly_spades import OUTPUT_ASSEMBLY_SUMMARY, OUTPUT_ASSEMBLY_INFORMS, \
-    OUTPUT_ASSEMBLY_FILTERING_INFORMS
-from camel.resources.snakefile.read_trimming import OUTPUT_READ_TRIMMING_READS_PE, OUTPUT_READ_TRIMMING_READS_SE_FWD, \
-    OUTPUT_READ_TRIMMING_READS_SE_REV
-from camel.resources.snakefile.read_trimming_iontorrent import OUTPUT_TRIMMING_IT_READS
+from camel.resources.snakefile import assembly_spades
+
 
 camel = Camel.get_instance()
 
 
-rule Assembly_select_fastq_input:
-    """
-    This rule is used to select the assembly input based on the read type input specified in the config.
-    'illumina' (default): Trimmed PE reads + orphaned SE reads (optional)
-    'iontorrent': Trimmed SE reads
-    """
-    input:
-        ILLUMINA_FASTQ_PE=os.path.join(config['working_dir'], OUTPUT_READ_TRIMMING_READS_PE) if config.get('read_type', 'illumina') == 'illumina' else [],
-        ILLUMINA_FASTQ_SE_FWD=os.path.join(config['working_dir'], OUTPUT_READ_TRIMMING_READS_SE_FWD) if config.get('read_type', 'illumina') == 'illumina' else [],
-        ILLUMINA_FASTQ_SE_REV=os.path.join(config['working_dir'], OUTPUT_READ_TRIMMING_READS_SE_REV) if config.get('read_type', 'illumina') == 'illumina' else [],
-        IONTORRENT_FASTQ_SE=os.path.join(config['working_dir'], OUTPUT_TRIMMING_IT_READS) if config.get('read_type', 'illumina') == 'iontorrent' else []
-    output:
-        os.path.join(config['working_dir'], 'assembly_spades', 'spades', 'input.io')
-    params:
-        read_type=config.get('read_type', 'illumina')
-    run:
-        output_dict = {}
-        if params.read_type == 'illumina':
-            output_dict = {'FASTQ_PE_1': SnakemakeUtils.load_object(input.ILLUMINA_FASTQ_PE)}
-            se_reads = SnakemakeUtils.load_object(input.ILLUMINA_FASTQ_SE_FWD) + \
-                       SnakemakeUtils.load_object(input.ILLUMINA_FASTQ_SE_REV)
-            if len(se_reads) > 0:
-                output_dict['FASTQ_SE_1'] = se_reads
-        else:
-            tmp = SnakemakeUtils.load_object(input.IONTORRENT_FASTQ_SE)
-            output_dict = {'FASTQ_SE_1': SnakemakeUtils.load_object(input.IONTORRENT_FASTQ_SE)}
-        SnakemakeUtils.dump_object(output_dict, output[0])
-
-rule Assembly_spades:
+rule assembly_spades_run:
     """
     De-novo assembly using SPAdes.
     """
     input:
-        INPUT_DICT=os.path.join(config['working_dir'], 'assembly_spades', 'spades', 'input.io')
+        IO = Path(config['working_dir']) / 'fq_dict.io'
     output:
-        FASTA_Contig=os.path.join(config['working_dir'], 'assembly_spades', 'spades', 'fasta.io'),
-        INFORMS=os.path.join(config['working_dir'], OUTPUT_ASSEMBLY_INFORMS)
+        FASTA_Contig = Path(config['working_dir']) /  'assembly_spades' / 'spades' / 'fasta.io',
+        INFORMS = Path(config['working_dir']) /  assembly_spades.OUTPUT_ASSEMBLY_INFORMS
     params:
-        running_dir=os.path.join(config['working_dir'], 'assembly_spades', 'spades'),
+        running_dir=Path(config['working_dir']) /  'assembly_spades' / 'spades',
         spades_options=config.get('assembly', {}).get('spades', {})
     threads: 8
     priority: 1
     run:
         from camel.app.tools.spades.spades import SPAdes
+        from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         spades = SPAdes(camel)
-        spades.add_input_files(SnakemakeUtils.load_object(input.INPUT_DICT))
+        spades.add_input_files(SnakePipelineUtils.extracts_fq_input(input.IO, 'FASTQ_PE_1', 'FASTQ_SE_1'))
         step = Step(rule, spades, camel, params.running_dir, config)
         spades.update_parameters(**params.spades_options)
         spades.update_parameters(threads=threads)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(spades, output)
 
-rule Assembly_filter_small_contigs:
+rule assembly_filter_contig_length:
     """
     Filters out the small contigs.
     """
     input:
-        FASTA = os.path.join(config['working_dir'], 'assembly_spades', 'spades', 'fasta.io')
+        FASTA = rules.assembly_spades_run.output.FASTA_Contig
     output:
-        FASTA = os.path.join(config['working_dir'], 'assembly_spades', 'filtering', 'fasta.io'),
-        INFORMS = os.path.join(config['working_dir'], OUTPUT_ASSEMBLY_FILTERING_INFORMS)
+        FASTA = Path(config['working_dir']) /  'assembly_spades' / 'filtering' / 'fasta.io',
+        INFORMS = Path(config['working_dir']) /  assembly_spades.OUTPUT_ASSEMBLY_FILTERING_INFORMS
     params:
-        running_dir = os.path.join(config['working_dir'], 'assembly_spades', 'filtering'),
+        running_dir = Path(config['working_dir']) / 'assembly_spades' / 'filtering',
         min_contig_length = config['assembly'].get('min_contig_length', 0) if 'assembly' in config else 0
     run:
         from camel.app.tools.seqtk.seqtkseq import SeqtkSeq
@@ -86,16 +55,16 @@ rule Assembly_filter_small_contigs:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(seqtk, output)
 
-rule Assembly_quast:
+rule assembly_quast:
     """
     Generates assembly statistics using QUAST.
     """
     input:
-        FASTA = os.path.join(config['working_dir'], 'assembly_spades', 'filtering', 'fasta.io')
+        FASTA = rules.assembly_filter_contig_length.output.FASTA
     output:
-        TSV=os.path.join(config['working_dir'], 'assembly_spades', 'quast', 'tsv.io')
+        TSV = Path(config['working_dir']) /  'assembly_spades' / 'quast' / 'tsv.io'
     params:
-        running_dir=os.path.join(config['working_dir'], 'assembly_spades', 'quast')
+        running_dir=Path(config['working_dir']) / 'assembly_spades' / 'quast'
     run:
         from camel.app.tools.quast.quast import Quast
         quast = Quast(camel)
@@ -104,16 +73,16 @@ rule Assembly_quast:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(quast, output)
 
-rule Assembly_quast_inform_extractor:
+rule assembly_quast_extract_informs:
     """
     Extracts the information from the QUAST output file.
     """
     input:
-        TSV=os.path.join(config['working_dir'], 'assembly_spades', 'quast', 'tsv.io')
+        TSV = rules.assembly_quast.output.TSV
     output:
-        INFORMS=os.path.join(config['working_dir'], 'assembly_spades', 'quast', 'informs.io')
+        INFORMS = Path(config['working_dir']) /  'assembly_spades' / 'quast' / 'informs.io'
     params:
-        running_dir=os.path.join(config['working_dir'], 'assembly_spades', 'quast')
+        running_dir=Path(config['working_dir']) /  'assembly_spades' / 'quast'
     run:
         from camel.app.tools.quast.quastinformextractor import QuastInformExtractor
         quast_inform_extractor = QuastInformExtractor(camel)
@@ -122,21 +91,22 @@ rule Assembly_quast_inform_extractor:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(quast_inform_extractor, output)
 
-rule Assembly_report:
+rule assembly_report:
     """
     Creates the HTML report for the assembly.
     """
     input:
-        FASTA_Contig = os.path.join(config['working_dir'], 'assembly_spades', 'filtering', 'fasta.io'),
-        INFORMS_spades=os.path.join(config['working_dir'], 'assembly_spades', 'spades', 'informs.io'),
-        INFORMS_quast=os.path.join(config['working_dir'], 'assembly_spades', 'quast', 'informs.io')
+        FASTA_Contig = rules.assembly_filter_contig_length.output.FASTA,
+        INFORMS_spades = rules.assembly_spades_run.output.INFORMS,
+        INFORMS_quast = rules.assembly_quast_extract_informs.output.INFORMS
     output:
-        VAL_HTML=os.path.join(config['working_dir'], 'assembly_spades', 'report', 'html.io')
+        VAL_HTML = Path(config['working_dir']) /  assembly_spades.OUTPUT_ASSEMBLY_REPORT
     params:
-        running_dir = os.path.join(config['working_dir'], 'assembly_spades', 'report'),
-        sample_name=config['sample_name']
+        running_dir = Path(config['working_dir']) /  'assembly_spades' / 'report',
+        sample_name = config['sample_name']
     run:
         from camel.app.tools.pipelines.assembly.htmlreporterassembly import HtmlReporterAssembly
+        from camel.app.io.tooliovalue import ToolIOValue
         reporter = HtmlReporterAssembly(camel)
         reporter.add_input_files({'SAMPLE_NAME': [ToolIOValue(params.sample_name)],
                                   'ASSEMBLER': [ToolIOValue('SPAdes')]})
@@ -145,16 +115,16 @@ rule Assembly_report:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
 
-rule Assembly_dump_summary_info:
+rule assembly_dump_summary_info:
     """
     Dumps the summary information from the assembly pipeline.
     """
     input:
-        INFORMS_quast=os.path.join(config['working_dir'], 'assembly_spades', 'quast', 'informs.io')
+        INFORMS_quast = rules.assembly_quast_extract_informs.output.INFORMS
     output:
-        os.path.join(config['working_dir'], OUTPUT_ASSEMBLY_SUMMARY)
+        Path(config['working_dir']) /  assembly_spades.OUTPUT_ASSEMBLY_SUMMARY
     params:
-        running_dir=os.path.join(config['working_dir'], 'assembly_spades', 'summary')
+        running_dir=Path(config['working_dir']) /  'assembly_spades' / 'summary'
     run:
         quast_informs = SnakemakeUtils.load_object(input.INFORMS_quast)
         summary_data = [
@@ -167,3 +137,100 @@ rule Assembly_dump_summary_info:
             for key, value in summary_data:
                 handle.write(f'{key}\t{value}')
                 handle.write('\n')
+
+rule assembly_bt2_index:
+    """
+    Creates a bowtie2 index for the assembly.
+    """
+    input:
+        FASTA_REF = rules.assembly_filter_contig_length.output.FASTA
+    output:
+        INDEX_GENOME_PREFIX = Path(config['working_dir']) / 'assembly_spades' / 'bowtie2' / 'genome_prefix.io'
+    params:
+        running_dir = Path(config['working_dir']) / 'assembly_spades' / 'bowtie2'
+    run:
+        from camel.app.tools.bowtie2.bowtie2index import Bowtie2Index
+        bowtie2_index = Bowtie2Index(camel)
+        step = Step(rule, bowtie2_index, camel, params.running_dir, config)
+        SnakemakeUtils.add_pickle_inputs(bowtie2_index, input)
+        step.run_step()
+        SnakemakeUtils.dump_tool_outputs(bowtie2_index, output)
+
+rule assembly_bt2_map:
+    """
+    Maps the reads against the assembled contigs.
+    """
+    input:
+        IO = Path(config['working_dir']) / 'fq_dict.io',
+        INDEX_GENOME_PREFIX = rules.assembly_bt2_index.output.INDEX_GENOME_PREFIX
+    output:
+        SAM = Path(config['working_dir']) / 'assembly_spades' / 'bowtie2' / 'sam.io',
+        INFORMS = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_MAPPING_INFORMS
+    params:
+        running_dir = Path(config['working_dir']) / 'assembly_spades' / 'bowtie2'
+    run:
+        from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
+        from camel.app.tools.bowtie2.bowtie2map import Bowtie2Map
+        bowtie2_map = Bowtie2Map(camel)
+        step = Step(rule, bowtie2_map, camel, str(params.running_dir), config)
+        bowtie2_map.add_input_files(SnakePipelineUtils.extracts_fq_input(input.IO))
+        SnakemakeUtils.add_pickle_input(bowtie2_map, 'INDEX_GENOME_PREFIX', input.INDEX_GENOME_PREFIX)
+        step.run_step()
+        bowtie2_map.informs['_tag'] = 'Coverage calculation'
+        SnakemakeUtils.dump_tool_outputs(bowtie2_map, output)
+
+rule assembly_bt2_sam_to_bam:
+    """
+    Converts the SAM file generated by bowtie2 to BAM format.
+    """
+    input:
+        SAM = rules.assembly_bt2_map.output.SAM
+    output:
+        BAM = Path(config['working_dir']) / 'assembly_spades' / 'bowtie2' / 'bam.io'
+    params:
+        running_dir = Path(config['working_dir']) / 'assembly_spades' / 'bowtie2'
+    run:
+        from camel.app.tools.samtools.samtoolsview import SamtoolsView
+        samtools_view = SamtoolsView(camel)
+        step = Step(rule, samtools_view, camel, params.running_dir, config)
+        SnakemakeUtils.add_pickle_inputs(samtools_view, input)
+        step.run_step()
+        SnakemakeUtils.dump_tool_outputs(samtools_view, output)
+
+rule assembly_bt2_sort_bam:
+    """
+    Sorts the BAM alignment.
+    """
+    input:
+        BAM = rules.assembly_bt2_sam_to_bam.output.BAM
+    output:
+        BAM = Path(config['working_dir']) / 'assembly_spades' / 'bowtie2' / 'bam_sorted.io'
+    params:
+        running_dir = Path(config['working_dir']) / 'assembly_spades' / 'bowtie2'
+    run:
+        from camel.app.tools.samtools.samtoolssort import SamtoolsSort
+        samtools_sort = SamtoolsSort(camel)
+        step = Step(rule, samtools_sort, camel, params.running_dir, config)
+        SnakemakeUtils.add_pickle_inputs(samtools_sort, input)
+        step.run_step()
+        SnakemakeUtils.dump_tool_outputs(samtools_sort, output)
+
+rule assembly_samtools_depth:
+    """
+    Runs samtools depth on the BAM file of the reads mapped to the assembly.
+    """
+    input:
+        BAM = rules.assembly_bt2_sort_bam.output.BAM
+    output:
+        TSV = Path(config['working_dir']) / 'assembly_spades' / 'samtools_depth' / 'tsv.io',
+        INFORMS = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_DEPTH_INFORMS
+    params:
+        running_dir = Path(config['working_dir']) / 'assembly_spades' / 'samtools_depth'
+    run:
+        from camel.app.tools.samtools.samtoolsdepth import SamtoolsDepth
+        samtools_depth = SamtoolsDepth(camel)
+        step = Step(rule, samtools_depth, camel, params.running_dir, config)
+        SnakemakeUtils.add_pickle_inputs(samtools_depth, input)
+        step.run_step()
+        samtools_depth.informs['_tag'] = 'Coverage calculation'
+        SnakemakeUtils.dump_tool_outputs(samtools_depth, output)
