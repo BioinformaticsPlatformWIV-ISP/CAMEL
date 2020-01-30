@@ -2,7 +2,7 @@
 import argparse
 import json
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Sequence
 
 import os
 
@@ -15,18 +15,18 @@ class MainGeneDetection(object):
     This class is used to run the gene detection tool.
     """
 
-    def __init__(self, args: Optional[argparse.Namespace] = None) -> None:
+    def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """
         Initializes the main script.
         :param args: Arguments (optional)
         """
-        self._args = args if args is not None else MainGeneDetection.parse_arguments()
+        self._args = MainGeneDetection.parse_arguments(args)
         self._sample_name = MainScriptHelper.determine_sample_name(self._args)
         self._helper = MainScriptHelper(self._args.working_dir, self._sample_name)
         self._report = None
 
     @staticmethod
-    def parse_arguments() -> argparse.Namespace:
+    def parse_arguments(args: Optional[Sequence[str]]) -> argparse.Namespace:
         """
         Parses the command line arguments.
         :return: Parsed arguments
@@ -53,7 +53,7 @@ class MainGeneDetection(object):
         # KMA specific parameters
         argument_parser.add_argument('--kma-min-percent-identity', type=int, default=90)
         argument_parser.add_argument('--kma-min-percent-coverage', type=int, default=60)
-        return argument_parser.parse_args()
+        return argument_parser.parse_args(args)
 
     def run(self) -> None:
         """
