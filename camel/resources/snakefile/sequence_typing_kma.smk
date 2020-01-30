@@ -55,7 +55,7 @@ rule Typing_KMA_combine_hits:
     input:
         input_nucl=lambda wildcards: expand(os.path.join(config['working_dir'], 'typing', wildcards.scheme, 'DNA', '{locus}', 'hit-kma.io'), locus=loci_by_scheme_by_type[wildcards.scheme]['DNA'])
     output:
-        os.path.join(config['working_dir'], OUTPUT_TYPING_HITS.format(locus_type='DNA', scheme='{scheme}', detection_method='kma'))
+        os.path.join(config['working_dir'], str(OUTPUT_TYPING_HITS).format(locus_type='DNA', scheme='{scheme}', detection_method='kma'))
     run:
         list_of_hits = []
         for pickle in input:

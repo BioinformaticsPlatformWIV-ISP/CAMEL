@@ -1,36 +1,18 @@
+from pathlib import Path
+
 import os
 
 from camel.app.components.sequencetyping.sequencetypingutils import SequenceTypingUtils
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.resources.snakefile.read_trimming import OUTPUT_READ_TRIMMING_READS_PE
-from camel.resources.snakefile.read_trimming_iontorrent import OUTPUT_TRIMMING_IT_READS
 from camel.resources.snakefile.sequence_typing import OUTPUT_TYPING_HITS
 
-
-rule Typing_srst2_select_input:
-    """
-    Selects the input for the SRST2 sequence typing. 
-    """
-    input:
-        FASTQ_PE=os.path.join(config['working_dir'], OUTPUT_READ_TRIMMING_READS_PE) if config.get('read_type', 'illumina') == 'illumina' else [],
-        FASTQ_SE=os.path.join(config['working_dir'], OUTPUT_TRIMMING_IT_READS) if config.get('read_type', 'illumina') == 'iontorrent' else []
-    output:
-        FASTQ=os.path.join(config['working_dir'], 'typing', 'input-fastq.io')
-    params:
-        read_type=config.get('read_type', 'illumina')
-    run:
-        input_dict = {}
-        for key in input.keys():
-            if len(input[key]) > 0:
-                input_dict[key] = SnakemakeUtils.load_object(input[key])
-        SnakemakeUtils.dump_object(input_dict, output[0])
 
 rule Typing_srst2_allele_detection:
     """
     Allele detection using SRST2.
     """
     input:
-        FASTQ = os.path.join(config['working_dir'], 'typing', 'input-fastq.io'),
+        IO = Path(config['working_dir']) / 'fq_dict.io',
         INFORMS_scheme = os.path.join(config['working_dir'], 'typing', '{scheme}', 'informs-locus_set.io')
     output:
         VAL_Hit = os.path.join(config['working_dir'], 'typing', '{scheme}', '{locus_type}', '{locus}', 'hit-srst2.io')
@@ -41,6 +23,7 @@ rule Typing_srst2_allele_detection:
         srst2_options = config.get('srst2')
     threads: 4
     run:
+        from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         from camel.app.tools.srst2.srst2alleledetector import SRST2AlleleDetector
 
         # Get metadata
@@ -48,7 +31,7 @@ rule Typing_srst2_allele_detection:
         locus_informs = scheme_informs['loci'].metadata_by_locus_name[params.locus_name]
 
         detector = SRST2AlleleDetector(camel)
-        fastq_input = SnakemakeUtils.load_object(input.FASTQ)
+        fastq_input = SnakePipelineUtils.extracts_fq_input(input.IO)
         detector.add_input_files(fastq_input)
         detector.add_input_files({'FASTA': [ToolIOFile(os.path.join(params.scheme_dir, locus_informs['fasta_path']))]})
         detector.add_input_informs({'locus': locus_informs})
@@ -70,7 +53,7 @@ rule Typing_srst2_combine_hits:
     input:
         input_nucl=lambda wildcards: expand(os.path.join(config['working_dir'], 'typing', wildcards.scheme, 'DNA', '{locus}', 'hit-srst2.io'), locus=loci_by_scheme_by_type[wildcards.scheme]['DNA'])
     output:
-        os.path.join(config['working_dir'], OUTPUT_TYPING_HITS.format(locus_type='DNA', scheme='{scheme}', detection_method='srst2'))
+        os.path.join(config['working_dir'], str(OUTPUT_TYPING_HITS).format(locus_type='DNA', scheme='{scheme}', detection_method='srst2'))
     run:
         list_of_hits = []
         for pickle in input:

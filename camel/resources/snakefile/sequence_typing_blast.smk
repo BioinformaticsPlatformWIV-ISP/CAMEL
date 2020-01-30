@@ -90,8 +90,8 @@ rule Typing_blast_combine_hits:
         input_pept=lambda wildcards: expand(os.path.join(config['working_dir'], 'typing', wildcards.scheme, 'peptide', '{locus}', 'hit-blast.io'), locus=loci_by_scheme_by_type[wildcards.scheme]['peptide']),
         cleanup_pept=lambda wildcards: expand(os.path.join(config['working_dir'], 'typing', wildcards.scheme, 'peptide', '{locus}', '.cleanup'), locus=loci_by_scheme_by_type[wildcards.scheme]['peptide'])
     output:
-        hits_nucl=os.path.join(config['working_dir'], OUTPUT_TYPING_HITS.format(scheme='{scheme}', detection_method='blast', locus_type='DNA')),
-        hits_pept=os.path.join(config['working_dir'], OUTPUT_TYPING_HITS.format(scheme='{scheme}', detection_method='blast', locus_type='peptide'))
+        hits_nucl=os.path.join(config['working_dir'], str(OUTPUT_TYPING_HITS).format(scheme='{scheme}', detection_method='blast', locus_type='DNA')),
+        hits_pept=os.path.join(config['working_dir'], str(OUTPUT_TYPING_HITS).format(scheme='{scheme}', detection_method='blast', locus_type='peptide'))
     run:
         for key in 'nucl', 'pept':
             list_of_hits = []

@@ -134,7 +134,7 @@ class SequenceTypingWrapper(object):
         :param threads: Number of threads to use
         :return: None
         """
-        output_path = self._working_dir / sequence_typing.OUTPUT_TYPING_REPORT.format(scheme=db_key)
+        output_path = self._working_dir / str(sequence_typing.OUTPUT_TYPING_REPORT).format(scheme=db_key)
         SnakePipelineUtils.run_snakemake(
             sequence_typing.SNAKEFILE_SEQUENCE_TYPING, config_path, [output_path], self._working_dir, threads)
         log_file_path = self._working_dir / 'camel.log'
