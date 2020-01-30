@@ -16,11 +16,11 @@ rule assembly_spades_run:
     input:
         IO = Path(config['working_dir']) / 'fq_dict.io'
     output:
-        FASTA_Contig = Path(config['working_dir']) /  'assembly_spades' / 'spades' / 'fasta.io',
-        INFORMS = Path(config['working_dir']) /  assembly_spades.OUTPUT_ASSEMBLY_INFORMS
+        FASTA_Contig = Path(config['working_dir']) / 'assembly_spades' / 'spades' / 'fasta.io',
+        INFORMS = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_INFORMS
     params:
-        running_dir=Path(config['working_dir']) /  'assembly_spades' / 'spades',
-        spades_options=config.get('assembly', {}).get('spades', {})
+        running_dir = Path(config['working_dir']) / 'assembly_spades' / 'spades',
+        spades_options = config.get('assembly', {}).get('spades', {})
     threads: 8
     priority: 1
     run:
@@ -41,8 +41,8 @@ rule assembly_filter_contig_length:
     input:
         FASTA = rules.assembly_spades_run.output.FASTA_Contig
     output:
-        FASTA = Path(config['working_dir']) /  'assembly_spades' / 'filtering' / 'fasta.io',
-        INFORMS = Path(config['working_dir']) /  assembly_spades.OUTPUT_ASSEMBLY_FILTERING_INFORMS
+        FASTA = Path(config['working_dir']) / 'assembly_spades' / 'filtering' / 'fasta.io',
+        INFORMS = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FILTERING_INFORMS
     params:
         running_dir = Path(config['working_dir']) / 'assembly_spades' / 'filtering',
         min_contig_length = config['assembly'].get('min_contig_length', 0) if 'assembly' in config else 0
@@ -62,9 +62,9 @@ rule assembly_quast:
     input:
         FASTA = rules.assembly_filter_contig_length.output.FASTA
     output:
-        TSV = Path(config['working_dir']) /  'assembly_spades' / 'quast' / 'tsv.io'
+        TSV = Path(config['working_dir']) / 'assembly_spades' / 'quast' / 'tsv.io'
     params:
-        running_dir=Path(config['working_dir']) / 'assembly_spades' / 'quast'
+        running_dir = Path(config['working_dir']) / 'assembly_spades' / 'quast'
     run:
         from camel.app.tools.quast.quast import Quast
         quast = Quast(camel)
@@ -80,9 +80,9 @@ rule assembly_quast_extract_informs:
     input:
         TSV = rules.assembly_quast.output.TSV
     output:
-        INFORMS = Path(config['working_dir']) /  'assembly_spades' / 'quast' / 'informs.io'
+        INFORMS = Path(config['working_dir']) / 'assembly_spades' / 'quast' / 'informs.io'
     params:
-        running_dir=Path(config['working_dir']) /  'assembly_spades' / 'quast'
+        running_dir = Path(config['working_dir']) / 'assembly_spades' / 'quast'
     run:
         from camel.app.tools.quast.quastinformextractor import QuastInformExtractor
         quast_inform_extractor = QuastInformExtractor(camel)
@@ -100,9 +100,9 @@ rule assembly_report:
         INFORMS_spades = rules.assembly_spades_run.output.INFORMS,
         INFORMS_quast = rules.assembly_quast_extract_informs.output.INFORMS
     output:
-        VAL_HTML = Path(config['working_dir']) /  assembly_spades.OUTPUT_ASSEMBLY_REPORT
+        VAL_HTML = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_REPORT
     params:
-        running_dir = Path(config['working_dir']) /  'assembly_spades' / 'report',
+        running_dir = Path(config['working_dir']) / 'assembly_spades' / 'report',
         sample_name = config['sample_name']
     run:
         from camel.app.tools.pipelines.assembly.htmlreporterassembly import HtmlReporterAssembly
@@ -122,9 +122,9 @@ rule assembly_dump_summary_info:
     input:
         INFORMS_quast = rules.assembly_quast_extract_informs.output.INFORMS
     output:
-        Path(config['working_dir']) /  assembly_spades.OUTPUT_ASSEMBLY_SUMMARY
+        Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_SUMMARY
     params:
-        running_dir=Path(config['working_dir']) /  'assembly_spades' / 'summary'
+        running_dir = Path(config['working_dir']) / 'assembly_spades' / 'summary'
     run:
         quast_informs = SnakemakeUtils.load_object(input.INFORMS_quast)
         summary_data = [
