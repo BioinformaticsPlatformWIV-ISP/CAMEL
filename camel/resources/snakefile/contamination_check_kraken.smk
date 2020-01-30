@@ -2,66 +2,65 @@
 This Snakefile is used to perform a contamination check using KRAKEN. A report is generated with statistics and an
 interactive KRONA visualization.
 """
-from camel.app.io.tooliodirectory import ToolIODirectory
-from camel.app.io.tooliovalue import ToolIOValue
+from pathlib import Path
+
+from camel.app.camel import Camel
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.resources.snakefile.contamination_check_kraken import OUTPUT_CONTAMINATION_SUMMARY, \
-    OUTPUT_CONTAMINATION_CHECK_REPORT_EMPTY, OUTPUT_CONTAMINATION_CHECK_REPORT
-from camel.resources.snakefile.read_trimming import OUTPUT_READ_TRIMMING_READS_PE
-from camel.resources.snakefile.read_trimming_iontorrent import OUTPUT_TRIMMING_IT_READS
+from camel.resources.snakefile import contamination_check_kraken
 
-rule Contamination_check_get_db:
+
+camel = Camel.get_instance()
+
+
+rule contamination_check_get_db:
     """
     Converts the Kraken database to a pickle IO object.
     """
     output:
-        os.path.join(config['working_dir'], 'contamination_check', 'db.io')
+        DB = Path(config['working_dir']) / 'contamination_check' / 'db.io'
     params:
-        db=config['contamination_check']['db']
+        db = config['contamination_check']['db']
     run:
-        SnakemakeUtils.dump_object([ToolIODirectory(params.db)], output[0])
+        from camel.app.io.tooliodirectory import ToolIODirectory
+        SnakemakeUtils.dump_object([ToolIODirectory(params.db)], output.DB)
 
-rule Contamination_check_kraken:
+rule contamination_check_kraken_run:
     """
     Assign taxonomic labels to reads using KRAKEN.
     """
     input:
-        FASTQ_PE=os.path.join(config['working_dir'], OUTPUT_READ_TRIMMING_READS_PE) if config.get('read_type', 'illumina') == 'illumina' else [],
-        FASTQ=os.path.join(config['working_dir'], OUTPUT_TRIMMING_IT_READS) if config.get('read_type', 'illumina') == 'iontorrent' else [],
-        DB=os.path.join(config['working_dir'], 'contamination_check', 'db.io')
+        IO = Path(config['working_dir']) / 'fq_dict.io',
+        DB = rules.contamination_check_get_db.output.DB
     output:
-        TSV=os.path.join(config['working_dir'], 'contamination_check', 'kraken', 'tsv.io'),
-        INFORMS=os.path.join(config['working_dir'], 'contamination_check', 'kraken', 'informs.io')
+        TSV = Path(config['working_dir']) / 'contamination_check' / 'kraken' / 'tsv.io',
+        INFORMS = Path(config['working_dir']) / 'contamination_check' / 'kraken' / 'informs.io'
     params:
-        running_dir=os.path.join(config['working_dir'], 'contamination_check', 'kraken')
+        running_dir = Path(config['working_dir']) / 'contamination_check' / 'kraken'
     threads: 8
     priority: 1
     run:
+        from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         from camel.app.tools.kraken.kraken import Kraken
         kraken = Kraken(camel)
         SnakemakeUtils.add_pickle_inputs(kraken, input, ['DB'])
-        for key in input.keys():
-            if key == 'DB':
-                continue
-            if len(input[key]) > 0:
-                kraken.add_input_files({key: SnakemakeUtils.load_object(input[key])})
+        kraken.add_input_files(SnakePipelineUtils.extracts_fq_input(input.IO, key_se='FASTQ', drop_se=True))
         step = Step(rule, kraken, camel, params.running_dir, config)
         kraken.update_parameters(threads=threads)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(kraken, output)
 
-rule Contamination_check_kraken_report:
+rule contamination_check_kraken_report:
     """
     Creteas a report based on the Kraken output.
     """
     input:
-        TSV=os.path.join(config['working_dir'], 'contamination_check', 'kraken', 'tsv.io'),
-        DB=os.path.join(config['working_dir'], 'contamination_check', 'db.io')
+        TSV = rules.contamination_check_kraken_run.output.TSV,
+        DB = rules.contamination_check_get_db.output.DB
     output:
-        TSV=os.path.join(config['working_dir'], 'contamination_check', 'kraken', 'tsv-report.io')
+        TSV = Path(config['working_dir']) / 'contamination_check' / 'kraken' / 'tsv-report.io'
     params:
-        running_dir=os.path.join(config['working_dir'], 'contamination_check', 'kraken')
+        running_dir = Path(config['working_dir']) / 'contamination_check' / 'kraken'
     run:
         from camel.app.tools.kraken.krakenreport import KrakenReport
         kraken_report = KrakenReport(camel)
@@ -70,17 +69,17 @@ rule Contamination_check_kraken_report:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(kraken_report, output)
 
-rule Contamination_check_kraken_report_parser:
+rule contamination_check_kraken_report_parser:
     """
     Parses the Kraken report and looks for contamination at the species level. 
     """
     input:
-        TSV=os.path.join(config['working_dir'], 'contamination_check', 'kraken', 'tsv-report.io')
+        TSV = rules.contamination_check_kraken_report.output.TSV
     output:
-        INFORMS=os.path.join(config['working_dir'], 'contamination_check', 'kraken', 'informs-contamination.io')
+        INFORMS = Path(config['working_dir']) / 'contamination_check' / 'kraken' / 'informs-contamination.io'
     params:
-        running_dir=os.path.join(config['working_dir'], 'contamination_check', 'kraken'),
-        expected_species=config['contamination_check']['expected_species']
+        running_dir = Path(config['working_dir']) / 'contamination_check' / 'kraken',
+        expected_species = config['contamination_check']['expected_species']
     run:
         from camel.app.tools.kraken.krakenreportparser import KrakenReportParser
         report_parser = KrakenReportParser(camel)
@@ -90,16 +89,16 @@ rule Contamination_check_kraken_report_parser:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(report_parser, output)
 
-rule Contamination_check_krona:
+rule contamination_check_krona:
     """
     Creates an interactive pie chart displaying the Kraken output.
     """
     input:
-        TSV=os.path.join(config['working_dir'], 'contamination_check', 'kraken', 'tsv.io')
+        TSV = rules.contamination_check_kraken_run.output.TSV
     output:
-        HTML=os.path.join(config['working_dir'], 'contamination_check', 'krona', 'html.io')
+        HTML = Path(config['working_dir']) / 'contamination_check' / 'krona' / 'html.io'
     params:
-        running_dir=os.path.join(config['working_dir'], 'contamination_check', 'krona')
+        running_dir = Path(config['working_dir']) / 'contamination_check' / 'krona'
     run:
         from camel.app.tools.krona.krona import Krona
         krona = Krona(camel)
@@ -108,20 +107,20 @@ rule Contamination_check_krona:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(krona, output)
 
-rule Contamination_check_report:
+rule contamination_check_report:
     """
     Creates a report containing the results of the contamination check.
     """
     input:
-        HTML_Krona=os.path.join(config['working_dir'], 'contamination_check', 'krona', 'html.io'),
-        INFORMS_species=os.path.join(config['working_dir'], 'contamination_check', 'kraken', 'informs-contamination.io'),
-        INFORMS_kraken=os.path.join(config['working_dir'], 'contamination_check', 'kraken', 'informs.io'),
-        TSV=os.path.join(config['working_dir'], 'contamination_check', 'kraken', 'tsv-report.io'),
-        DB=os.path.join(config['working_dir'], 'contamination_check', 'db.io')
+        HTML_Krona = rules.contamination_check_krona.output.HTML,
+        INFORMS_species = rules.contamination_check_kraken_report_parser.output.INFORMS,
+        INFORMS_kraken = rules.contamination_check_kraken_run.output.INFORMS,
+        TSV = rules.contamination_check_kraken_report.output.TSV,
+        DB = rules.contamination_check_get_db.output.DB
     output:
-        VAL_HTML=os.path.join(config['working_dir'], OUTPUT_CONTAMINATION_CHECK_REPORT)
+        VAL_HTML = Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT
     params:
-        running_dir=os.path.join(config['working_dir'], 'contamination_check', 'report')
+        running_dir = Path(config['working_dir']) / 'contamination_check' / 'report'
     run:
         from camel.app.tools.pipelines.quality_checks.htmlreportercontamination import HtmlReporterContamination
         reporter = HtmlReporterContamination(camel)
@@ -130,27 +129,28 @@ rule Contamination_check_report:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
 
-rule Contamination_check_report_empty:
+rule contamination_check_report_empty:
     """
     Generates an empty contamination check report.
     """
     output:
-        VAL_HTML=os.path.join(config['working_dir'], OUTPUT_CONTAMINATION_CHECK_REPORT_EMPTY)
+        VAL_HTML = Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT_EMPTY
     params:
-        running_dir=os.path.join(config['working_dir'], 'contamination_check', 'report')
+        running_dir = Path(config['working_dir']) / 'contamination_check' / 'report'
     run:
+        from camel.app.io.tooliovalue import ToolIOValue
         from camel.app.tools.pipelines.quality_checks.htmlreportercontamination import HtmlReporterContamination
         section = HtmlReporterContamination.generate_empty_section()
-        SnakemakeUtils.dump_object([ToolIOValue(section)], output[0])
+        SnakemakeUtils.dump_object([ToolIOValue(section)], output.VAL_HTML)
 
-rule Contamination_check_dump_summary_info:
+rule contamination_check_dump_summary_info:
     """
     Dumps the summary information for the contamination check in tabular format.
     """
     input:
-        INFORMS_species=os.path.join(config['working_dir'], 'contamination_check', 'kraken', 'informs-contamination.io')
+        INFORMS_species = rules.contamination_check_kraken_report_parser.output.INFORMS
     output:
-        os.path.join(config['working_dir'], OUTPUT_CONTAMINATION_SUMMARY)
+        TSV = Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_SUMMARY
     run:
         informs = SnakemakeUtils.load_object(input.INFORMS_species)
         summary_data = [
