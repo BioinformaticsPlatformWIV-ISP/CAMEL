@@ -224,7 +224,7 @@ rule combine_summary_files:
     In this rule all summary files are combined into a complete summary output file.
     """
     input:
-        Path(config['working_dir']) / 'summary' / 'summary-init.tsv',
+        rules.init_summary.output.TSV,
         trimming.get_trimming_summary(config),
         Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_SUMMARY,
         Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY,
