@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, Any, Optional, List, Union
+from typing import Dict, Any, Optional
 
 SNAKEFILE_SEQUENCE_TYPING = f'{Path(__file__).parent / Path(__file__).stem}.smk'
 SNAKEFILE_SEQUENCE_TYPING_BLAST = f'{Path(__file__).parent / Path(__file__).stem}_blast.smk'
