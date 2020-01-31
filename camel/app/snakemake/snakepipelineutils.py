@@ -55,6 +55,7 @@ class SnakePipelineUtils(object):
         :return: None
         """
         # Add the overview section
+        report.add_module_header('Sections')
         section = HtmlReportSection(None)
         overview_list = HtmlElement('ul')
         for title, key, _ in report_structure:

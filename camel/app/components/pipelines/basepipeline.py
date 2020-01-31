@@ -31,6 +31,7 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         self._version = version
         self._snakefile = snakefile
         self._args = self._parse_arguments() if args is None else args
+        self._working_dir = Path(self._args.working_dir)
         self._pipeline = Pipeline(name, Camel.get_instance(), 'pipeline' if self._args.db_logging else None)
 
     @staticmethod
@@ -132,9 +133,9 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         links = self._get_fastq_input_links()
 
         # Create directory
-        dir_links = os.path.join(self._args.working_dir, 'input')
-        if not os.path.isdir(dir_links):
-            os.makedirs(dir_links)
+        dir_links = self._working_dir / 'input'
+        if not dir_links.exists():
+            dir_links.mkdir(parents=True)
 
         # Link files
         paths_new = []
@@ -159,8 +160,8 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         MainScriptHelper.prepare_galaxy_output(self._args.output_dir, self._args.output_html)
         try:
             SnakePipelineUtils.run_snakemake(
-                self._snakefile, config_file, [], self._args.working_dir, self._args.threads)
-            log_file = Path(self._args.working_dir) / 'camel.log'
+                self._snakefile, config_file, [], self._working_dir, self._args.threads)
+            log_file = self._working_dir / 'camel.log'
             if log_file.exists():
                 shutil.copyfile(str(log_file), str(Path(self._args.output_dir) / 'camel.log'))
             logging.info("Pipeline finished successfully")
@@ -185,7 +186,7 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
             'output_report': self._args.output_html,
             'output_tabular': self._args.output_tsv,
             'output_dir': self._args.output_dir,
-            'working_dir': self._args.working_dir,
+            'working_dir': str(self._working_dir),
             'detection_method': self._args.detection_method,
             'read_trimming': {'export_fastq': self._args.report_include_fastq}
         }
