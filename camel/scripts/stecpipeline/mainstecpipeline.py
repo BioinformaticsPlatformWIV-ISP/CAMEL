@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import argparse
 import logging
+from pathlib import Path
 from typing import List, Dict, Optional, Tuple
 
 import yaml
@@ -52,7 +53,7 @@ class MainSTECPipeline(BasePipeline):
         config_data['read_trimming']['export_fastq'] = 'true' if self._args.report_include_fastq else 'false'
         if self._args.read_type == 'iontorrent':
             config_data['assembly']['spades']['iontorrent'] = None
-        return SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir)
+        return SnakePipelineUtils.generate_config_file(config_data, Path(self._args.working_dir))
 
     @staticmethod
     def _parse_arguments() -> argparse.Namespace:

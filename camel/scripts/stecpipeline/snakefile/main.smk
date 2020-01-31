@@ -77,6 +77,18 @@ rule select_fastq:
             shutil.copyfile(fq, output.IO_FASTQ)
 
 
+rule select_fasta:
+    """
+    This rules links the output of the assembly workflow to the other workflows. 
+    """
+    input:
+        FASTA = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA
+    output:
+        FASTA = Path(config['working_dir']) / gene_detection.INPUT_GENE_DETECTION_FASTA
+    shell:
+        "cp {input.FASTA} {output.FASTA};"
+
+
 rule report_pickle_citations:
     """
     This rule creates a pickle with a report section containing the citations.
