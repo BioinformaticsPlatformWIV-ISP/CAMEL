@@ -1,41 +1,28 @@
-import os
+from pathlib import Path
 
-from camel.app.components.html.htmlreportsection import HtmlReportSection
-from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-from camel.resources.snakefile import SNAKEFILE_READ_TRIMMING, SNAKEFILE_ASSEMBLY_SPADES, SNAKEFILE_GENE_DETECTION, \
-    SNAKEFILE_SEQUENCE_TYPING, SNAKEFILE_CONTAMINATION_CHECK_KRAKEN, SNAKEFILE_ADV_QC
-from camel.resources.snakefile.assembly_spades import OUTPUT_ASSEMBLY_REPORT, OUTPUT_ASSEMBLY_FASTA, \
-    OUTPUT_ASSEMBLY_SUMMARY, OUTPUT_ASSEMBLY_INFORMS
-from camel.resources.snakefile.contamination_check_kraken import OUTPUT_CONTAMINATION_CHECK_REPORT, \
-    OUTPUT_CONTAMINATION_CHECK_REPORT_EMPTY, OUTPUT_CONTAMINATION_SUMMARY
-from camel.scripts.neisseriapipeline import SNAKEFILE_SEROGROUP_DETERMINATION
-from camel.scripts.neisseriapipeline.snakefile.serogroup_determination import OUTPUT_SEROGROUP_DETERMINATION_REPORT, \
-    OUTPUT_SEROGROUP_DETERMINATION_REPORT_EMPTY, OUTPUT_SEROGROUP_DETERMINATION_SUMMARY
-from camel.resources.snakefile.gene_detection import INPUT_GENE_DETECTION_FASTA, get_gene_detection_report, \
-    OUTPUT_GENE_DETECTION_SUMMARY, INPUT_GENE_DETECTION_FASTQ, OUTPUT_GENE_DETECTION_INFORMS
-from camel.resources.snakefile.quality_checks import OUTPUT_QUALITY_CHECKS_REPORT, OUTPUT_QUALITY_CHECKS_SUMMARY
-from camel.resources.snakefile.read_trimming import OUTPUT_READ_TRIMMING_REPORT, OUTPUT_READ_TRIMMING_SUMMARY, \
-    OUTPUT_READ_TRIMMING_READS_PE, OUTPUT_READ_TRIMMING_INFORMS
-from camel.resources.snakefile.sequence_typing import get_sequence_typing_report, OUTPUT_TYPING_SUMMARY
+from camel.resources.snakefile import trimming, trimming_illumina, assembly_spades, quality_checks, \
+    contamination_check_kraken, gene_detection, sequence_typing
+from  camel.scripts.neisseriapipeline.snakefile import serogroup_determination
+
 
 #######################
 # Included Snakefiles #
 #######################
-include: SNAKEFILE_READ_TRIMMING
-include: SNAKEFILE_CONTAMINATION_CHECK_KRAKEN
-include: SNAKEFILE_ADV_QC
-include: SNAKEFILE_ASSEMBLY_SPADES
-include: SNAKEFILE_GENE_DETECTION
-include: SNAKEFILE_SEQUENCE_TYPING
-include: SNAKEFILE_SEROGROUP_DETERMINATION
+include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
+include: contamination_check_kraken.SNAKEFILE_CONTAMINATION_CHECK_KRAKEN
+include: quality_checks.SNAKEFILE_QUALITY_CHECKS
+include: assembly_spades.SNAKEFILE_ASSEMBLY_SPADES
+include: gene_detection.SNAKEFILE_GENE_DETECTION
+include: sequence_typing.SNAKEFILE_SEQUENCE_TYPING
+include: serogroup_determination.SNAKEFILE_SEROGROUP_DETERMINATION
 
 
 #########
 # Rules #
 #########
-rule All:
+rule all:
     """
     This rules ensures that the required output files are generated.
     """
@@ -44,17 +31,30 @@ rule All:
         config['output_tabular']
 
 
-rule Init_summary:
+rule select_fastq:
+    """
+    This rule creates an IO object with the trimmed FASTQ files.
+    Other workflows such as Kraken or Assembly rely on this dictionary to get input files (PE or SE).
+    """
+    input:
+        FASTQ_PE = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_DICT,
+    output:
+        IO_FASTQ = Path(config['working_dir']) / 'fq_dict.io'
+    shell:
+        "cp {input.FASTQ_PE} {output.IO_FASTQ};"
+
+
+rule init_summary:
     """
     Initializes the summary output file.
     """
     output:
-        summary = os.path.join(config['working_dir'], 'summary', 'summary-init.tsv')
+        TSV = Path(config['working_dir']) / 'summary' / 'summary-init.tsv'
     run:
         import datetime
         analysis_date = datetime.datetime.now().strftime(SnakePipelineUtils.DATE_FORMAT)
         input_filenames = ', '.join(entry['name'] for entry in config['fastq_pe'])
-        with open(output.summary, 'w') as handle:
+        with open(output.TSV, 'w') as handle:
             for kv_pair in [
                 ('pipeline_name', config['pipeline']['name']),
                 ('pipeline_version', config['pipeline']['version']),
@@ -66,32 +66,98 @@ rule Init_summary:
                 handle.write('\n')
 
 
-rule Combine_reports:
+rule report_pickle_citations:
+    """
+    This rule creates a pickle with a report section containing the citations.
+    """
+    output:
+        HTML = Path(config['working_dir']) / 'report' / 'html-citations.io'
+    run:
+        from camel.app.components.html.htmlreportsection import HtmlReportSection
+        from camel.app.io.tooliovalue import ToolIOValue
+        from camel.scripts.neisseriapipeline import CITATIONS_HTML, SNAKEFILE_SEROGROUP_DETERMINATION
+
+        section_citations = HtmlReportSection('Citations')
+        with open(CITATIONS_HTML) as handle:
+            section_citations.add_raw(handle.read())
+        SnakemakeUtils.dump_object([ToolIOValue(section_citations)], output[0])
+
+
+rule report_create_command_section:
+    """
+    Creates the report section containing the tool commands.
+    """
+    input:
+        INFORMS_trimming = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_INFORMS,
+        INFORMS_assembly = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_INFORMS,
+        INFORMS_kraken = Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_KRAKEN_INFORMS if 'kraken' in config['analyses'] else [],
+        INFORMS_mapping = quality_checks.get_mapping_rate_informs(config),
+        INFORMS_depth = quality_checks.get_depth_informs(config),
+        INFORMS_resfinder = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='resfinder') if 'resfinder' in config['analyses'] else [],
+        INFORMS_card = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='card') if 'card' in config['analyses'] else [],
+        INFORMS_argannot = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='argannot') if 'argannot' in config['analyses'] else [],
+        INFORMS_ncbi_amr = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='ncbi_amr') if 'ncbi_amr' in config['analyses'] else [],
+    output:
+        HTML = Path(config['working_dir']) / 'report' / 'html-commands.io'
+    params:
+        working_dir = config['working_dir']
+    run:
+        from camel.app.io.tooliovalue import ToolIOValue
+        informs = [SnakemakeUtils.load_object(io)for io in input]
+        section = SnakePipelineUtils.create_commands_section(informs, params.working_dir)
+        SnakemakeUtils.dump_object([ToolIOValue(section)], output.HTML)
+
+
+rule neisseria_additional_resistance_gene_metadata:
+    """
+    This rule is used to add resistance gene metadata for penA and rpoB genes.
+    The data is parsed from the PubMLST webpage.
+    """
+    input:
+        hits = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_HITS).format(scheme='resistance_genes', locus_type='DNA', detection_method=config['detection_method']),
+        VAL_HTML = sequence_typing.get_sequence_typing_report('resistance_genes', config),
+        INFORMS_scheme = Path(config['working_dir']) / 'typing' / 'resistance_genes' / 'informs-locus_set.io'
+    output:
+        VAL_HTML = Path(config['working_dir']) / 'typing' / 'resistance_genes' / 'metadata' / 'report.html'
+    params:
+        working_dir = Path(config['working_dir']) / 'typing' / 'resistance_genes' / 'metadata',
+        loci='penA, rpoB'
+    run:
+        from camel.app.tools.pipelines.neisseria.resistancemetadataextractor import ResistanceMetadataExtractor
+        extractor = ResistanceMetadataExtractor(camel)
+        SnakemakeUtils.add_pickle_inputs(extractor, input)
+        step = Step(rule, extractor, camel, params.working_dir, config)
+        extractor.update_parameters(loci=params.loci)
+        step.run_step()
+        SnakemakeUtils.dump_tool_outputs(extractor, output)
+
+
+rule combine_reports:
     """
     Rule to combine report sections into a single output report.
     """
     input:
-        report_trimming=os.path.join(config['working_dir'], OUTPUT_READ_TRIMMING_REPORT),
-        report_assembly=os.path.join(config['working_dir'], OUTPUT_ASSEMBLY_REPORT),
-        report_kraken=os.path.join(config['working_dir'], OUTPUT_CONTAMINATION_CHECK_REPORT) if 'kraken' in config['analyses'] else os.path.join(config['working_dir'], OUTPUT_CONTAMINATION_CHECK_REPORT_EMPTY),
-        report_adv_qc=os.path.join(config['working_dir'], OUTPUT_QUALITY_CHECKS_REPORT),
-        report_resfinder=get_gene_detection_report('resfinder', config),
-        report_argannot=get_gene_detection_report('argannot', config),
-        report_card=get_gene_detection_report('card', config),
-        report_ncbi_amr=get_gene_detection_report('ncbi_amr', config),
-        report_mlst=get_sequence_typing_report('mlst', config),
-        report_cgmlst=get_sequence_typing_report('cgmlst', config),
-        report_pora=get_sequence_typing_report('pora', config),
-        report_porb=get_sequence_typing_report('porb', config),
-        report_feta=get_sequence_typing_report('feta', config),
-        report_rplf=get_sequence_typing_report('rplf', config),
-        report_vaccine_targets=get_sequence_typing_report('vaccine_targets', config),
-        report_resistance_genes=os.path.join(config['working_dir'], 'typing', 'resistance_genes', 'metadata', 'report.html') if 'resistance_genes' in config['analyses'] else os.path.join(config['working_dir'], OUTPUT_TYPING_REPORT_EMPTY.format(scheme='resistance_genes')),
-        report_fhbp=get_sequence_typing_report('fhbp', config),
-        report_bast=get_sequence_typing_report('bast', config),
-        report_serogroup=os.path.join(config['working_dir'], OUTPUT_SEROGROUP_DETERMINATION_REPORT if 'serogroup' in config['analyses'] else OUTPUT_SEROGROUP_DETERMINATION_REPORT_EMPTY),
-        report_citations=os.path.join(config['working_dir'], 'report', 'html-citations.io'),
-        report_commands=os.path.join(config['working_dir'], 'report', 'html-commands.io')
+        report_trimming = trimming.get_trimming_report(config),
+        report_assembly = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_REPORT,
+        report_kraken = Path(config['working_dir']) / (contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT if 'kraken' in config['analyses'] else contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT_EMPTY),
+        report_adv_qc = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_REPORT,
+        report_resfinder = gene_detection.get_gene_detection_report('resfinder', config),
+        report_argannot = gene_detection.get_gene_detection_report('argannot', config),
+        report_card = gene_detection.get_gene_detection_report('card', config),
+        report_ncbi_amr = gene_detection.get_gene_detection_report('ncbi_amr', config),
+        report_mlst = sequence_typing.get_sequence_typing_report('mlst', config),
+        report_cgmlst = sequence_typing.get_sequence_typing_report('cgmlst', config),
+        report_pora = sequence_typing.get_sequence_typing_report('pora', config),
+        report_porb = sequence_typing.get_sequence_typing_report('porb', config),
+        report_feta = sequence_typing.get_sequence_typing_report('feta', config),
+        report_rplf = sequence_typing.get_sequence_typing_report('rplf', config),
+        report_vaccine_targets = sequence_typing.get_sequence_typing_report('vaccine_targets', config),
+        report_resistance_genes = rules.neisseria_additional_resistance_gene_metadata.output.VAL_HTML if 'resistance_genes' in config['analyses'] else Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_REPORT_EMPTY).format(scheme='resistance_genes'),
+        report_fhbp = sequence_typing.get_sequence_typing_report('fhbp', config),
+        report_bast = sequence_typing.get_sequence_typing_report('bast', config),
+        report_serogroup = Path(config['working_dir']) / (serogroup_determination.OUTPUT_SEROGROUP_DETERMINATION_REPORT if 'serogroup' in config['analyses'] else serogroup_determination.OUTPUT_SEROGROUP_DETERMINATION_REPORT_EMPTY),
+        report_citations = rules.report_pickle_citations.output.HTML,
+        report_commands = rules.report_create_command_section.output.HTML
     output:
         report = config['output_report']
     params:
@@ -102,7 +168,7 @@ rule Combine_reports:
         detection_method = config['detection_method'],
     run:
         import datetime
-        from camel.app.components.html.htmlelement import HtmlElement
+        from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         from camel.app.components.html.htmlreport import HtmlReport
         from camel.resources import CSS_STYLE
         from camel.resources.javascript import JQUERY_SRC
@@ -131,160 +197,38 @@ rule Combine_reports:
             ('Citations', 'citations', [input.report_citations]),
             ('Commands', 'commands', [input.report_commands])
         ]
-
-        report.add_module_header('Sections')
-        overview_list = HtmlElement('ul')
-        for title, key, _ in report_structure:
-            list_item = HtmlElement('li')
-            list_item.add_html_object(HtmlElement('a', title, [('href', '#{}'.format(key))]))
-            overview_list.add_html_object(list_item)
-        report.add_html_object(overview_list)
-
-        for title, key, items in report_structure:
-            report.add_module_header(title, key)
-            for pickle in items:
-                if len(pickle) == 0:
-                    continue
-                section = SnakemakeUtils.load_object(pickle)[0].value
-                report.add_html_object(section)
-                section.copy_files(params.output_dir)
-
-        report.save()
+        SnakePipelineUtils.add_report_content(report, report_structure)
 
 
-rule Pickle_citations:
-    """
-    This rule creates a pickle with a report section containing the citations.
-    """
-    output:
-        os.path.join(config['working_dir'], 'report', 'html-citations.io')
-    run:
-        from camel.scripts.neisseriapipeline import CITATIONS_HTML
-        section_citations = HtmlReportSection('Citations')
-        with open(CITATIONS_HTML) as handle:
-            section_citations.add_raw(handle.read())
-        SnakemakeUtils.dump_object([ToolIOValue(section_citations)], output[0])
-
-
-rule Combine_summary_files:
+rule combine_summary_files:
     """
     In this rule all summary files are combined into a complete summary output file.
     """
     input:
-        os.path.join(config['working_dir'], 'summary', 'summary-init.tsv'),
-        os.path.join(config['working_dir'], OUTPUT_READ_TRIMMING_SUMMARY),
-        os.path.join(config['working_dir'], OUTPUT_ASSEMBLY_SUMMARY),
-        os.path.join(config['working_dir'], OUTPUT_QUALITY_CHECKS_SUMMARY),
-        os.path.join(config['working_dir'], OUTPUT_CONTAMINATION_SUMMARY) if 'kraken' in config['analyses'] else [],
-        os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_SUMMARY.format(db='resfinder')) if 'resfinder' in config['analyses'] else [],
-        os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_SUMMARY.format(db='card')) if 'card' in config['analyses'] else [],
-        os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_SUMMARY.format(db='argannot')) if 'argannot' in config['analyses'] else [],
-        os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_SUMMARY.format(db='ncbi_amr')) if 'ncbi_amr' in config['analyses'] else [],
-        os.path.join(config['working_dir'], OUTPUT_TYPING_SUMMARY.format(scheme='mlst')) if 'mlst' in config['analyses'] else [],
-        os.path.join(config['working_dir'], OUTPUT_TYPING_SUMMARY.format(scheme='rplf')) if 'rplf' in config['analyses'] else [],
-        os.path.join(config['working_dir'], OUTPUT_TYPING_SUMMARY.format(scheme='bast')) if 'bast' in config['analyses'] else [],
-        os.path.join(config['working_dir'], OUTPUT_TYPING_SUMMARY.format(scheme='pora')) if 'pora' in config['analyses'] else [],
-        os.path.join(config['working_dir'], OUTPUT_TYPING_SUMMARY.format(scheme='porb')) if 'porb' in config['analyses'] else [],
-        os.path.join(config['working_dir'], OUTPUT_TYPING_SUMMARY.format(scheme='feta')) if 'feta' in config['analyses'] else [],
-        os.path.join(config['working_dir'], OUTPUT_TYPING_SUMMARY.format(scheme='fhbp')) if 'fhbp' in config['analyses'] else [],
-        os.path.join(config['working_dir'], OUTPUT_TYPING_SUMMARY.format(scheme='resistance_genes')) if 'resistance_genes' in config['analyses'] else [],
-        os.path.join(config['working_dir'], OUTPUT_TYPING_SUMMARY.format(scheme='vaccine_targets')) if 'vaccine_targets' in config['analyses'] else [],
-        os.path.join(config['working_dir'], OUTPUT_TYPING_SUMMARY.format(scheme='cgmlst')) if 'cgmlst' in config['analyses'] else [],
-        os.path.join(config['working_dir'], OUTPUT_SEROGROUP_DETERMINATION_SUMMARY) if 'serogroup' in config['analyses'] else []
+        Path(config['working_dir']) / 'summary' / 'summary-init.tsv',
+        trimming.get_trimming_summary(config),
+        Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_SUMMARY,
+        Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY,
+        Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_SUMMARY if 'kraken' in config['analyses'] else [],
+        Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='resfinder') if 'resfinder' in config['analyses'] else [],
+        Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='card') if 'card' in config['analyses'] else [],
+        Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='argannot') if 'argannot' in config['analyses'] else [],
+        Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='ncbi_amr') if 'ncbi_amr' in config['analyses'] else [],
+        Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='mlst') if 'mlst' in config['analyses'] else [],
+        Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='rplf') if 'rplf' in config['analyses'] else [],
+        Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='bast') if 'bast' in config['analyses'] else [],
+        Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='pora') if 'pora' in config['analyses'] else [],
+        Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='porb') if 'porb' in config['analyses'] else [],
+        Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='feta') if 'feta' in config['analyses'] else [],
+        Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='fhbp') if 'fhbp' in config['analyses'] else [],
+        Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='resistance_genes') if 'resistance_genes' in config['analyses'] else [],
+        Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='vaccine_targets') if 'vaccine_targets' in config['analyses'] else [],
+        Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='cgmlst') if 'cgmlst' in config['analyses'] else [],
+        Path(config['working_dir']) / serogroup_determination.OUTPUT_SEROGROUP_DETERMINATION_SUMMARY if 'serogroup' in config['analyses'] else []
     output:
-        config.get('output_tabular')
+        TSV = config.get('output_tabular')
     run:
-        with open(output[0], 'w') as handle_out:
+        with open(output.TSV, 'w') as handle_out:
             for summary_input in input:
                 with open(summary_input) as handle_in:
                     handle_out.write(handle_in.read())
-
-rule Report_create_commands_section:
-    input:
-        INFORMS_trimming = os.path.join(config['working_dir'], OUTPUT_READ_TRIMMING_INFORMS),
-        INFORMS_assembly = os.path.join(config['working_dir'], OUTPUT_ASSEMBLY_INFORMS),
-        INFORMS_kraken = os.path.join(config['working_dir'], 'contamination_check', 'kraken', 'informs.io') if 'kraken' in config['analyses'] else [],
-        INFORMS_mapping = os.path.join(config['working_dir'], 'quality_checks', 'read_mapping', 'informs.io'),
-        INFORMS_depth=os.path.join(config['working_dir'], 'quality_checks', 'coverage_calculation', 'informs.io'),
-        INFORMS_resfinder = os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_INFORMS.format(db='resfinder')) if 'resfinder' in config['analyses'] else [],
-        INFORMS_card = os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_INFORMS.format(db='card')) if 'card' in config['analyses'] else [],
-        INFORMS_argannot = os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_INFORMS.format(db='argannot')) if 'argannot' in config['analyses'] else [],
-        INFORMS_ncbi_amr = os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_INFORMS.format(db='ncbi_amr')) if 'ncbi_amr' in config['analyses'] else [],
-    output:
-        HTML = os.path.join(config['working_dir'], 'report', 'html-commands.io')
-    params:
-        working_dir = config['working_dir']
-    run:
-        informs = [SnakemakeUtils.load_object(io)for io in input]
-        section = SnakePipelineUtils.create_commands_section(informs, params.working_dir)
-        SnakemakeUtils.dump_object([ToolIOValue(section)], output.HTML)
-
-rule Link_assembly_gene_detection:
-    """
-    Links the output of the assembly to the input of the gene detection.
-    """
-    input:
-        os.path.join(config['working_dir'], OUTPUT_ASSEMBLY_FASTA)
-    output:
-        os.path.join(config['working_dir'], INPUT_GENE_DETECTION_FASTA)
-    shell:
-        "cp {input} {output}"
-
-rule Link_trimming_gene_detection:
-    """
-    Links the output of the assembly to the input of the gene detection.
-    """
-    input:
-        os.path.join(config['working_dir'], OUTPUT_READ_TRIMMING_READS_PE)
-    output:
-        os.path.join(config['working_dir'], INPUT_GENE_DETECTION_FASTQ)
-    shell:
-        "cp {input} {output}"
-
-rule Collect_read_mapping_input:
-    """
-    Collects the input for the read mapping.
-    """
-    input:
-        ILLUMINA_FASTQ_PE = os.path.join(config['working_dir'], OUTPUT_READ_TRIMMING_READS_PE) if config.get('read_type', 'illumina') == 'illumina' else [],
-        ILLUMINA_FASTQ_SE_FWD = os.path.join(config['working_dir'], OUTPUT_READ_TRIMMING_READS_SE_FWD) if config.get('read_type', 'illumina') == 'illumina' else [],
-        ILLUMINA_FASTQ_SE_REV = os.path.join(config['working_dir'], OUTPUT_READ_TRIMMING_READS_SE_REV) if config.get('read_type', 'illumina') == 'illumina' else []
-    output:
-        FASTQ=os.path.join(config['working_dir'], 'variant_calling', 'input-fastq.io')
-    params:
-        read_type = config.get('read_type', 'illumina')
-    run:
-        output_dict = {}
-        if params.read_type == 'illumina':
-            output_dict = {'FASTQ_PE': SnakemakeUtils.load_object(input.ILLUMINA_FASTQ_PE)}
-            se_reads = SnakemakeUtils.load_object(input.ILLUMINA_FASTQ_SE_FWD) + \
-                       SnakemakeUtils.load_object(input.ILLUMINA_FASTQ_SE_REV)
-            if len(se_reads) > 0:
-                output_dict['FASTQ_SE'] = se_reads
-        else:
-            output_dict = {'FASTQ_SE': SnakemakeUtils.load_object(input.IONTORRENT_FASTQ_SE)}
-        SnakemakeUtils.dump_object(output_dict, output[0])
-
-
-rule Parse_additional_resistance_gene_metadata:
-    """
-    This rule is used to add resistance gene metadata for penA and rpoB genes.
-    The data is parsed from the PubMLST webpage.
-    """
-    input:
-        hits=os.path.join(config['working_dir'], OUTPUT_TYPING_HITS.format(scheme='resistance_genes', locus_type='DNA', detection_method=config['detection_method'])),
-        VAL_HTML=get_sequence_typing_report('resistance_genes', config),
-        INFORMS_scheme = os.path.join(config['working_dir'], 'typing', 'resistance_genes', 'informs-locus_set.io')
-    output:
-        VAL_HTML=os.path.join(config['working_dir'], 'typing', 'resistance_genes', 'metadata', 'report.html')
-    params:
-        working_dir=os.path.join(config['working_dir'], 'typing', 'resistance_genes', 'metadata'),
-        loci='penA, rpoB'
-    run:
-        from camel.app.tools.pipelines.neisseria.resistancemetadataextractor import ResistanceMetadataExtractor
-        extractor = ResistanceMetadataExtractor(camel)
-        SnakemakeUtils.add_pickle_inputs(extractor, input)
-        step = Step(rule, extractor, camel, params.working_dir, config)
-        extractor.update_parameters(loci=params.loci)
-        step.run_step()
-        SnakemakeUtils.dump_tool_outputs(extractor, output)
