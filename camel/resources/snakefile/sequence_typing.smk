@@ -159,15 +159,15 @@ rule typing_add_allele_page_url:
     This steps add the locus url to the detected hits.
     """
     input:
-        hits_nucl = rules.typing_get_hits.output.HITS_NUCL,
-        hits_pept = rules.typing_get_hits.output.HITS_PEPT,
+        HITS_NUCL = rules.typing_get_hits.output.HITS_NUCL,
+        HITS_PEPT = rules.typing_get_hits.output.HITS_PEPT,
         INFORMS_scheme = rules.typing_extract_schema_info.output.INFORMS
     output:
         HITS_NUCL = Path(config['working_dir']) / 'typing' / '{scheme}' / 'DNA' / 'hits-url.io',
         HITS_PEPT = Path(config['working_dir']) / 'typing' / '{scheme}' / 'peptide' / 'hits-url.io'
     run:
-        for key in ('nucl', 'pept'):
-            hits = SnakemakeUtils.load_object(input.get(f'hits_{key}'))
+        for key in ('NUCL', 'PEPT'):
+            hits = SnakemakeUtils.load_object(input.get(f'HITS_{key}'))
 
             # Load the informs
             metadata_by_locus_name = SnakemakeUtils.load_object(input.INFORMS_scheme)['loci'].metadata_by_locus_name
@@ -179,7 +179,7 @@ rule typing_add_allele_page_url:
                 hit.value.set_allele_page_url_template(locus_metadata.get('allele_page_url'))
 
             # Export hits
-            SnakemakeUtils.dump_object(hits, output.get(f'hits_{key}'))
+            SnakemakeUtils.dump_object(hits, output.get(f'HITS_{key}'))
 
 rule typing_create_report:
     """
