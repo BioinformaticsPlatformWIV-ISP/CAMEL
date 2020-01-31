@@ -7,3 +7,5 @@ OUTPUT_SPECIES_REPORT_EMPTY = _dir_subspecies / 'report' / 'html-species-empty.i
 OUTPUT_SUBSPECIES_REPORT = _dir_subspecies / 'report' / 'html-subspecies.io'
 OUTPUT_SUBSPECIES_REPORT_EMPTY = _dir_subspecies / 'report' / 'html-subspecies-empty.io'
 OUTPUT_SUBSPECIES_SUMMARY = _dir_subspecies / 'summary_out.tsv'
+
+OUTPUT_SPECIES_SUBSPECIES_INFORMS = _dir_subspecies / 'subspecies' / 'informs.io'

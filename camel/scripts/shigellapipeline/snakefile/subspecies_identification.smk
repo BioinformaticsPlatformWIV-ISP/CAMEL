@@ -82,7 +82,7 @@ rule subspecies_identification_detect_subspecies:
     input:
         VAL_hits = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_ALL_HITS).format(db='subspecies_identification'),
     output:
-        INFORMS = Path(config['working_dir']) / 'subspecies_identification' / 'subspecies' / 'informs.io'
+        INFORMS = Path(config['working_dir']) / subspecies_identification.OUTPUT_SPECIES_SUBSPECIES_INFORMS
     params:
         running_dir = Path(config['working_dir']) / 'subspecies_identification' / 'subspecies'
     run:

@@ -56,7 +56,7 @@ class MainShigellaPipeline(BasePipeline):
                 export_fastq='true' if self._args.report_include_fastq else 'false',
                 export_bam='true' if self._args.report_include_bam else 'false'
             )))
-        return SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir)
+        return SnakePipelineUtils.generate_config_file(config_data, self._working_dir)
 
     def __create_fastq_input_dict(self) -> Tuple[str, List[Dict[str, Any]]]:
         """
@@ -64,7 +64,7 @@ class MainShigellaPipeline(BasePipeline):
         :return: Input key, input dictionary
         """
         fq_files = SnakePipelineUtils.symlink_input_files(
-            os.path.join(self._args.working_dir, 'input'), self._args.fastq_pe, self._args.fastq_pe_names, True)
+            self._args.working_dir / 'input', self._args.fastq_pe, self._args.fastq_pe_names, True)
         return 'fastq_pe', [{'name': name, 'path': path} for name, path in zip(
             self._args.fastq_pe_names, fq_files)]
 

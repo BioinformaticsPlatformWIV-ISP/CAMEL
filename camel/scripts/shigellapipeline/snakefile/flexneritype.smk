@@ -1,35 +1,32 @@
-from typing import List, Dict
-
-import os
+from pathlib import Path
 
 from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.resources.snakefile.gene_detection import OUTPUT_GENE_DETECTION_ALL_HITS
-from camel.scripts.shigellapipeline.snakefile.flexneritype import OUTPUT_FLEXNERI_SUMMARY, OUTPUT_FLEXNERI_REPORT, \
-    OUTPUT_FLEXNERI_REPORT_EMPTY
+from camel.resources.snakefile import gene_detection
+from camel.scripts.shigellapipeline.snakefile import flexneritype, subspecies_identification
 
-rule Flexneri_call_variants_gtr_promotor:
+
+rule flexneri_call_variants_gtr_promotor:
     """
     Performs variant calling in the gtr promotor region.
-    # TODO, add filtering?
     """
     input:
-        FASTQ = os.path.join(config['working_dir'], 'variant_calling', 'input-fastq.io')
+        IO = Path(config['working_dir']) / 'fq_dict.io'
     output:
-        VCF = os.path.join(config['working_dir'], 'flexneri_type', 'gtr_promotor', 'vcf.io'),
-        BAM = os.path.join(config['working_dir'], 'flexneri_type', 'gtr_promotor', 'bam.io')
+        VCF = Path(config['working_dir']) / 'flexneri_type' / 'gtr_promotor' / 'vcf.io',
+        BAM = Path(config['working_dir']) / 'flexneri_type' / 'gtr_promotor' / 'bam.io'
     params:
-        working_dir = os.path.join(config['working_dir'], 'flexneri_type', 'gtr_promotor'),
+        working_dir = Path(config['working_dir']) / 'flexneri_type' / 'gtr_promotor',
         promotor_fasta = config['flexneri_type']['fasta_gtr_promotor']
     threads: 2
     run:
         from camel.app.components.workflows.variantcallingwrapper import VariantCallingWrapper
         from camel.app.components.workflows.variantcallingwrapper import VariantCallingInput
-        fastq_files = SnakemakeUtils.load_object(input.FASTQ)
+        fastq_files = SnakemakeUtils.load_object(input.IO)
         workflow_input = VariantCallingInput(
-            pe_reads=fastq_files['FASTQ_PE'],
-            se_reads_fwd=fastq_files['FASTQ_SE'][0],
-            se_reads_rev=fastq_files['FASTQ_SE'][1]
+            pe_reads=fastq_files['PE'],
+            se_reads_fwd=fastq_files['SE_FWD'][0],
+            se_reads_rev=fastq_files['SE_REV'][0]
         )
         ref_info = {'path': params.promotor_fasta, 'name': 'gtr_promotor'}
         wrapper = VariantCallingWrapper(params.working_dir)
@@ -37,16 +34,16 @@ rule Flexneri_call_variants_gtr_promotor:
         SnakemakeUtils.dump_object([wrapper.output.vcf_unfiltered], output.VCF)
         SnakemakeUtils.dump_object([wrapper.output.bam_file], output.BAM)
 
-rule Flexneri_call_gtr_promotor_depth:
+rule flexneri_call_gtr_promotor_depth:
     """
     Determines the depth of the gtr promotor region.
     """
     input:
-        BAM = os.path.join(config['working_dir'], 'flexneri_type', 'gtr_promotor', 'bam.io')
+        BAM = rules.flexneri_call_variants_gtr_promotor.output.BAM
     output:
-        INFORMS = os.path.join(config['working_dir'], 'flexneri_type', 'gtr_promotor', 'informs-depth.io')
+        INFORMS = Path(config['working_dir']) / 'flexneri_type' / 'gtr_promotor' / 'informs-depth.io'
     params:
-        running_dir = os.path.join(config['working_dir'], 'flexneri_type', 'gtr_promotor')
+        running_dir = Path(config['working_dir']) / 'flexneri_type' / 'gtr_promotor'
     run:
         from camel.app.tools.samtools.samtoolsdepth import SamtoolsDepth
         samtools_depth = SamtoolsDepth(camel)
@@ -55,66 +52,69 @@ rule Flexneri_call_gtr_promotor_depth:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(samtools_depth, output)
 
-checkpoint Flexneri_type_prepare_reference_files:
+checkpoint flexneri_type_prepare_reference_files:
     """
     Creates the folder containing the reference files (FASTA, GFF) for the detected loci.
     """
     input:
-        VAL_hits = os.path.join(config['working_dir'], OUTPUT_GENE_DETECTION_ALL_HITS.format(db='flexneri_type'))
+        VAL_hits = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_ALL_HITS).format(db='flexneri_type')
     output:
-        DIR_FASTA = directory(os.path.join(config['working_dir'], 'flexneri_type', 'loci'))
+        DIR_FASTA = directory(Path(config['working_dir']) / 'flexneri_type' / 'loci')
     params:
-        FASTA_ROOT = config['flexneri_type']['fasta_separate']
+        FASTA_ROOT = Path(config['flexneri_type']['fasta_separate'])
     run:
         import logging
         from camel.app.io.tooliofile import ToolIOFile
-        os.makedirs(output.DIR_FASTA)
+        output_dir = Path(output.DIR_FASTA)
+        if not output_dir.exists():
+            output_dir.mkdir()
         loci = [io.value.locus for io in SnakemakeUtils.load_object(input.VAL_hits)]
         logging.info(f"Hits found for flexneri loci: {loci}")
         fasta_files = []
-        dir_by_locus_name = {locus: os.path.join(params.FASTA_ROOT, locus) for locus in os.listdir(params.FASTA_ROOT)}
+        dir_by_locus_name = {locus.name: params.FASTA_ROOT / locus for locus in params.FASTA_ROOT.iterdir()}
         for locus in loci:
-            output_dir = os.path.join(output.DIR_FASTA, locus)
-            if not os.path.isdir(output_dir):
-                os.makedirs(output_dir)
-            fasta_ref = ToolIOFile(os.path.join(dir_by_locus_name[locus], f'{locus}.fasta'))
-            SnakemakeUtils.dump_object([fasta_ref], os.path.join(output_dir, 'fasta.io'))
-            gff = ToolIOFile(os.path.join(dir_by_locus_name[locus], f'{locus}.gff'))
-            SnakemakeUtils.dump_object([gff], os.path.join(output_dir, 'gff.io'))
+            output_dir = output_dir / locus
+            if not output_dir.exists():
+                output_dir.mkdir()
+            fasta_ref = ToolIOFile(str(dir_by_locus_name[locus] / f'{locus}.fasta'))
+            SnakemakeUtils.dump_object([fasta_ref], str(output_dir / 'fasta.io'))
+            gff = ToolIOFile(str(dir_by_locus_name[locus] / f'{locus}.gff'))
+            SnakemakeUtils.dump_object([gff], str(output_dir / 'gff.io'))
 
-rule Flexneri_map_reads:
+rule flexneri_map_reads:
     """
     Maps the trimmed reads against the reference sequence for the locus. 
     """
     input:
-        INDEX_GENOME_PREFIX = os.path.join(config['working_dir'], 'flexneri_type', 'loci', '{flexneri_locus}', 'fasta.io'),
-        FASTQ = os.path.join(config['working_dir'], 'variant_calling', 'input-fastq.io')
+        INDEX_GENOME_PREFIX = Path(config['working_dir']) / 'flexneri_type' / 'loci' / '{flexneri_locus}' / 'fasta.io',
+        FASTQ = Path(config['working_dir']) / 'fq_dict.io'
     output:
-        SAM = os.path.join(config['working_dir'], 'flexneri_type', 'loci', '{flexneri_locus}', 'sam.io')
+        SAM = Path(config['working_dir']) / 'flexneri_type' / 'loci' / '{flexneri_locus}' / 'sam.io'
     params:
-        running_dir = os.path.join(config['working_dir'], 'flexneri_type', 'loci', '{flexneri_locus}')
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'flexneri_type' / 'loci' / wildcards.flexneri_locus
     threads: 2
     run:
+        from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         from camel.app.tools.bowtie2.bowtie2map import Bowtie2Map
         bowtie2_map = Bowtie2Map(camel)
         step = Step(rule, bowtie2_map, camel, params.running_dir, config)
         bowtie2_map.update_parameters(threads=threads, no_unal=None, very_sensitive_local=True, sensitive=False, end_to_end=False)
         fasta_as_io_value = [ToolIOValue(io.path) for io in SnakemakeUtils.load_object(input.INDEX_GENOME_PREFIX)]
         bowtie2_map.add_input_files({'INDEX_GENOME_PREFIX': fasta_as_io_value})
-        bowtie2_map.add_input_files(SnakemakeUtils.load_object(input.FASTQ))
+        bowtie2_map.add_input_files(SnakePipelineUtils.extracts_fq_input(input.FASTQ))
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(bowtie2_map, output)
 
-rule Flexneri_sam_to_indexed_bam:
+rule flexneri_sam_to_indexed_bam:
     """
     Converts the read mapping SAM file to an indexed BAM file.
     """
     input:
-        SAM = os.path.join(config['working_dir'], 'flexneri_type', 'loci', '{flexneri_locus}', 'sam.io')
+        SAM = rules.flexneri_map_reads.output.SAM
     output:
-        BAM = os.path.join(config['working_dir'], 'flexneri_type', 'loci', '{flexneri_locus}', 'bam.io')
+        BAM = Path(config['working_dir']) / 'flexneri_type' / 'loci' / '{flexneri_locus}' / 'bam.io'
     params:
-        running_dir = os.path.join(config['working_dir'], 'flexneri_type', 'loci', '{flexneri_locus}')
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'flexneri_type' / 'loci' / wildcards.flexneri_locus
     run:
         from camel.app.tools.samtools.samtoolsview import SamtoolsView
         from camel.app.tools.samtools.samtoolssort import SamtoolsSort
@@ -132,17 +132,17 @@ rule Flexneri_sam_to_indexed_bam:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(samtools_sort, output)
 
-rule Flexneri_pileup:
+rule flexneri_pileup:
     """
     Creates a pileup based on the input BAM file and reference sequence.
     """
     input:
-        FASTA = os.path.join(config['working_dir'], 'flexneri_type', 'loci', '{flexneri_locus}', 'fasta.io'),
-        BAM = os.path.join(config['working_dir'], 'flexneri_type', 'loci', '{flexneri_locus}', 'bam.io')
+        FASTA = Path(config['working_dir']) / 'flexneri_type' / 'loci' / '{flexneri_locus}' / 'fasta.io',
+        BAM = rules.flexneri_sam_to_indexed_bam.output.BAM
     output:
-        VCF_GZ = os.path.join(config['working_dir'], 'flexneri_type', 'loci', '{flexneri_locus}', 'vcf-pileup.io')
+        VCF_GZ = Path(config['working_dir']) / 'flexneri_type' / 'loci' / '{flexneri_locus}' / 'vcf-pileup.io'
     params:
-        running_dir = os.path.join(config['working_dir'], 'flexneri_type', 'loci', '{flexneri_locus}')
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'flexneri_type' / 'loci' / wildcards.flexneri_locus
     run:
         from camel.app.tools.samtools.samtoolsmpileup import SamtoolsMPileup
         pileup = SamtoolsMPileup(camel)
@@ -152,17 +152,17 @@ rule Flexneri_pileup:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(pileup, output)
 
-rule Flexneri_snp_calling:
+rule flexneri_snp_calling:
     """
     Performs SNP calling for the flexneri loci.
     # TODO: Add Z-score filter?
     """
     input:
-        VCF_GZ = os.path.join(config['working_dir'], 'flexneri_type', 'loci', '{flexneri_locus}', 'vcf-pileup.io')
+        VCF_GZ = rules.flexneri_pileup.output.VCF_GZ
     output:
-        VCF_GZ = os.path.join(config['working_dir'], 'flexneri_type', 'loci', '{flexneri_locus}', 'vcf-gz.io')
+        VCF_GZ = Path(config['working_dir']) / 'flexneri_type' / 'loci' / '{flexneri_locus}' / 'vcf-gz.io'
     params:
-        running_dir = os.path.join(config['working_dir'], 'flexneri_type', 'loci', '{flexneri_locus}')
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'flexneri_type' / 'loci' / wildcards.flexneri_locus
     run:
         from camel.app.tools.bcftools.bcftoolscall import BcftoolsCall
         variant_caller = BcftoolsCall(camel)
@@ -178,13 +178,16 @@ rule Flexneri_snp_calling:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(variant_caller, output)
 
-rule Flexneri_filter_snps:
+rule flexneri_filter_snps:
+    """
+    Filters SNPs for the flexneri type.
+    """
     input:
-        VCF_GZ = os.path.join(config['working_dir'], 'flexneri_type', 'loci', '{flexneri_locus}', 'vcf-gz.io')
+        VCF_GZ = rules.flexneri_snp_calling.output.VCF_GZ
     output:
-        VCF_GZ = os.path.join(config['working_dir'], 'flexneri_type', 'loci', '{flexneri_locus}', 'vcf-gz_filtered.io')
+        VCF_GZ = Path(config['working_dir']) / 'flexneri_type' / 'loci' / '{flexneri_locus}' / 'vcf-gz_filtered.io'
     params:
-        running_dir = os.path.join(config['working_dir'], 'flexneri_type', 'loci', '{flexneri_locus}')
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'flexneri_type' / 'loci' / wildcards.flexneri_locus
     run:
         from camel.app.tools.variantfiltering.depthfilter import DepthFilter
         depth_filter =  DepthFilter(camel)
@@ -205,19 +208,18 @@ rule Flexneri_filter_snps:
         qual_filter.run(params.running_dir)
         SnakemakeUtils.dump_tool_outputs(qual_filter, output)
 
-rule Flexneri_bcftools_csq:
+rule flexneri_bcftools_csq:
     """
     Determines the consequence of the detected variants using bcftools csq.
     """
     input:
-        VCF_GZ = os.path.join(config['working_dir'], 'flexneri_type', 'loci', '{flexneri_locus}', 'vcf-gz_filtered.io'),
-        # VCF_GZ = os.path.join(config['working_dir'], 'flexneri_type', '{flexneri_locus}', 'vcf-gz.io'),
-        FASTA = os.path.join(config['working_dir'], 'flexneri_type', 'loci', '{flexneri_locus}', 'fasta.io'),
-        GFF = os.path.join(config['working_dir'], 'flexneri_type', 'loci', '{flexneri_locus}', 'gff.io')
+        VCF_GZ = rules.flexneri_filter_snps.output.VCF_GZ,
+        FASTA = Path(config['working_dir']) / 'flexneri_type' / 'loci' / '{flexneri_locus}' / 'fasta.io',
+        GFF = Path(config['working_dir']) / 'flexneri_type' / 'loci' / '{flexneri_locus}' / 'gff.io'
     output:
-        VCF = os.path.join(config['working_dir'], 'flexneri_type', 'loci', '{flexneri_locus}', 'vcf-csq.io')
+        VCF = Path(config['working_dir']) / 'flexneri_type' / 'loci' / '{flexneri_locus}' / 'vcf-csq.io'
     params:
-        running_dir = os.path.join(config['working_dir'], 'flexneri_type', 'loci', '{flexneri_locus}')
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'flexneri_type' / 'loci' / wildcards.flexneri_locus
     run:
         from camel.app.tools.bcftools.bcftoolscsq import BcftoolsCsq
         bcftools_csq = BcftoolsCsq(camel)
@@ -227,16 +229,16 @@ rule Flexneri_bcftools_csq:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(bcftools_csq, output)
 
-rule Flexneri_parse_csq:
+rule flexneri_parse_csq:
     """
     Parses the VCF file generated by bcftools csq.
     """
     input:
-        VCF = os.path.join(config['working_dir'], 'flexneri_type', 'loci', '{flexneri_locus}', 'vcf-csq.io')
+        VCF = rules.flexneri_bcftools_csq.output.VCF
     output:
-        VAL_mut = os.path.join(config['working_dir'], 'flexneri_type', 'loci', '{flexneri_locus}', 'val-mut.io')
+        VAL_mut = Path(config['working_dir']) / 'flexneri_type' / 'loci' / '{flexneri_locus}' / 'val-mut.io'
     params:
-        running_dir = os.path.join(config['working_dir'], 'flexneri_type', 'loci', '{flexneri_locus}')
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'flexneri_type' / 'loci' / wildcards.flexneri_locus
     run:
         from camel.app.tools.bcftoolscsqparser.bcftoolscsqparser import CsqParser
         parser = CsqParser(camel)
@@ -245,39 +247,18 @@ rule Flexneri_parse_csq:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(parser, output)
 
-def aggregate_input(wildcards: Dict) -> List[str]:
+rule flexneri_combine_hits:
     """
-    Aggregates the input from the read mapping based on the detected loci.
-    :param wildcards: Wildcards
-    :return: List of input files
-    """
-    dir_fasta = checkpoints.Flexneri_type_prepare_reference_files.get(**wildcards).output.DIR_FASTA
-    loci = [l for l in os.listdir(dir_fasta) if not l.startswith('.')]
-    return expand(os.path.join(config['working_dir'], 'flexneri_type', 'loci', '{flexneri_locus}', 'val-mut.io'), flexneri_locus = loci)
-
-def aggregate_input_vcf(wildcards: Dict) -> List[str]:
-    """
-    Aggregates the input from the read mapping based on the detected loci.
-    :param wildcards: Wildcards
-    :return: List of input files
-    """
-    dir_fasta = checkpoints.Flexneri_type_prepare_reference_files.get(**wildcards).output.DIR_FASTA
-    loci = [l for l in os.listdir(dir_fasta) if not l.startswith('.')]
-    return expand(os.path.join(config['working_dir'], 'flexneri_type', 'loci', '{flexneri_locus}', 'vcf-csq.io'),
-                  flexneri_locus=loci)
-
-rule Flexneri_combine_hits:
-    """
-    
+    Combines the hits for the different loci.
     """
     input:
-        VAL_mut = aggregate_input,
-        VCF_csq = aggregate_input_vcf,
-        VCF = os.path.join(config['working_dir'], 'flexneri_type', 'gtr_promotor', 'vcf.io')
+        VAL_mut = lambda wildcards: flexneritype.aggregate_input(wildcards, checkpoints, config),
+        VCF_csq = lambda wildcards: flexneritype.aggregate_input_vcf(wildcards, checkpoints, config),
+        VCF = rules.flexneri_call_variants_gtr_promotor.output.VCF
     output:
-        INFORMS = os.path.join(config['working_dir'], 'flexneri_type', 'detection', 'informs.io')
+        INFORMS = Path(config['working_dir']) / 'flexneri_type' / 'detection' / 'informs.io'
     params:
-        running_dir = os.path.join(config['working_dir'], 'flexneri_type'),
+        running_dir = Path(config['working_dir']) / 'flexneri_type',
         dir_fasta = config['flexneri_type']['fasta_combined'],
         tsv_profiles = config['flexneri_type']['tsv_profiles']
     run:
@@ -302,23 +283,18 @@ rule Flexneri_combine_hits:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(detector, output)
 
-        # from camel.app.tools.pipelines.shigella.flexneritypereporter import FlexneriTypeReporter
-        # reporter = FlexneriTypeReporter(camel)
-        # reporter.add_input_files({f'VAL_mut_{l}': ms for l, ms in mutations_by_locus.items()})
-        # reporter.run(params.running_dir)
-
-rule Flexneri_create_report:
+rule flexneri_create_report:
     """
     Creates the report section for the flexneri type detection. 
     """
     input:
-        INFORMS_subspecies = os.path.join(config['working_dir'], 'subspecies_identification', 'subspecies', 'informs.io'),
-        INFORMS_detection = os.path.join(config['working_dir'], 'flexneri_type', 'detection', 'informs.io'),
-        INFORMS_gtr_depth = os.path.join(config['working_dir'], 'flexneri_type', 'gtr_promotor', 'informs-depth.io')
+        INFORMS_subspecies = Path(config['working_dir']) / subspecies_identification.OUTPUT_SPECIES_SUBSPECIES_INFORMS,
+        INFORMS_detection = rules.flexneri_combine_hits.output.INFORMS,
+        INFORMS_gtr_depth = rules.flexneri_call_gtr_promotor_depth.output.INFORMS
     output:
-        VAL_HTML = os.path.join(config['working_dir'], OUTPUT_FLEXNERI_REPORT)
+        VAL_HTML = Path(config['working_dir']) / flexneritype.OUTPUT_FLEXNERI_REPORT
     params:
-        running_dir = os.path.join(config['working_dir'], 'flexneri_type', 'report')
+        running_dir = Path(config['working_dir']) / 'flexneri_type' / 'report'
     run:
         from camel.app.tools.pipelines.shigella.flexneritypereporter import FlexneriTypeReporter
         reporter = FlexneriTypeReporter(camel)
@@ -327,32 +303,32 @@ rule Flexneri_create_report:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
 
-rule Flexneri_report_empty:
+rule flexneri_report_empty:
     """
     Creates an empty report when (sub)species identification is disabled.
     """
     output:
-        VAL_HTML = os.path.join(config['working_dir'], OUTPUT_FLEXNERI_REPORT_EMPTY)
+        VAL_HTML = Path(config['working_dir']) / flexneritype.OUTPUT_FLEXNERI_REPORT_EMPTY
     run:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         SnakePipelineUtils.create_empty_report_section('Flexneri type determination', output.VAL_HTML)
 
-rule Flexneri_type_dump_summary_info:
+rule flexneri_type_dump_summary_info:
     """
     Dumps the summary information for the flexneri type detection.
     """
     input:
-        INFORMS_detection = os.path.join(config['working_dir'], 'flexneri_type', 'detection', 'informs.io'),
-        INFORMS_gtr_depth = os.path.join(config['working_dir'], 'flexneri_type', 'gtr_promotor', 'informs-depth.io')
+        INFORMS_detection = rules.flexneri_combine_hits.output.INFORMS,
+        INFORMS_gtr_depth = rules.flexneri_call_gtr_promotor_depth.output.INFORMS
     output:
-        os.path.join(config['working_dir'], OUTPUT_FLEXNERI_SUMMARY)
+        TSV = Path(config['working_dir'], flexneritype.OUTPUT_FLEXNERI_SUMMARY)
     run:
         informs = SnakemakeUtils.load_object(input.INFORMS_detection)
         table_data = [
             ['flexneri_detected_type', informs['detected_type']],
             ['flexneri_loci', informs['loci']]
         ]
-        with open(output[0], 'w') as handle:
+        with open(output.TSV, 'w') as handle:
             for key, value in table_data:
                 handle.write('{}\t{}'.format(key, str(value)))
                 handle.write('\n')
