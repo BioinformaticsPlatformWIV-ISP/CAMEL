@@ -34,7 +34,7 @@ rule contamination_check_kraken_run:
         DB = rules.contamination_check_get_db.output.DB
     output:
         TSV = Path(config['working_dir']) / 'contamination_check' / 'kraken' / 'tsv.io',
-        INFORMS = Path(config['working_dir']) / 'contamination_check' / 'kraken' / 'informs.io'
+        INFORMS = Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_KRAKEN_INFORMS
     params:
         running_dir = Path(config['working_dir']) / 'contamination_check' / 'kraken'
     threads: 8
