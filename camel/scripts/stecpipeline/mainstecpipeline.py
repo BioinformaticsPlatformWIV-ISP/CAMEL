@@ -46,7 +46,7 @@ class MainSTECPipeline(BasePipeline):
         key = 'fastq_pe' if (self._args.fastq_pe is not None) else 'fastq_se'
         config_data = self.get_template_data(key, input_files)
         with open(CONFIG_DATA) as handle_in:
-            config_data.update(yaml.load(handle_in.read()))
+            config_data.update(yaml.load(handle_in.read(), Loader=yaml.SafeLoader))
         config_data['analyses'] = [key for key in MainSTECPipeline.CUSTOM_ANALYSES if vars(self._args)[key]]
         config_data['read_type'] = self._args.read_type
         config_data['quality_checks']['typing_scheme'] = 'cgmlst' if self._args.cgmlst else 'mlst_warwick'

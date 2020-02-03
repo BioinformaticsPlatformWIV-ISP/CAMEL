@@ -38,13 +38,13 @@ rule init_summary:
     Initializes the summary output file.
     """
     output:
-        summary = Path(config['working_dir']) / 'summary' / 'summary-init.tsv'
+        TSV = Path(config['working_dir']) / 'summary' / 'summary-init.tsv'
     run:
         import datetime
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         analysis_date = datetime.datetime.now().strftime(SnakePipelineUtils.DATE_FORMAT)
         input_filenames = ', '.join(entry['name'] for entry in config['fastq_pe' if 'fastq_pe' in config else 'fastq_se'])
-        with open(output.summary, 'w') as handle:
+        with open(output.TSV, 'w') as handle:
             for kv_pair in [
                 ('pipeline_name', config['pipeline']['name']),
                 ('pipeline_version', config['pipeline']['version']),

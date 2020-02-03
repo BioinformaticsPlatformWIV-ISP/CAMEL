@@ -54,7 +54,7 @@ class MainNeisseriaPipeline(BasePipeline):
                 qc_typing_scheme='cgmlst' if self._args.cgmlst else 'mlst',
                 export_fastq='true' if self._args.report_include_fastq else 'false',
                 export_bam='true' if self._args.report_include_bam else 'false'
-            )))
+            ), Loader=yaml.SafeLoader))
         return SnakePipelineUtils.generate_config_file(config_data, self._working_dir)
 
     @staticmethod
