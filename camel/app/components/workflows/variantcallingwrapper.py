@@ -62,9 +62,9 @@ class VariantCallingWrapper(object):
         """
         fq_dict = {'PE': input_files.pe_reads}
         if input_files.se_reads_fwd is not None:
-            fq_dict['SE_FWD'] = input_files.se_reads_fwd
+            fq_dict['SE_FWD'] = [input_files.se_reads_fwd]
         if input_files.se_reads_rev is not None:
-            fq_dict['SE_REV'] = input_files.se_reads_rev
+            fq_dict['SE_REV'] = [input_files.se_reads_rev]
         SnakemakeUtils.dump_object(fq_dict, self._working_dir / 'fq_dict.io')
 
     def run_workflow(self, reference_info: Dict[str, any], sample_name: str,

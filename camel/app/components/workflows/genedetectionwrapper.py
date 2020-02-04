@@ -121,7 +121,7 @@ class GeneDetectionWrapper(object):
         :return: Config data
         """
         return {
-            'working_dir': self._working_dir,
+            'working_dir': str(self._working_dir),
             'sample_name': sample_name,
             'detection_method': detection_method,
             'gene_detection': {'db': db_data}
