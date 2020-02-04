@@ -55,7 +55,7 @@ class ValidationUtils(object):
         :return: List of detected genes
         """
         try:
-            tsv_path = list(dir_gene_detection_out.glob('**/*.tsv'))[0]
+            tsv_path = list(dir_gene_detection_out.glob('**/genes-*.tsv'))[0]
         except IndexError:
             return []
         with tsv_path.open() as handle:
