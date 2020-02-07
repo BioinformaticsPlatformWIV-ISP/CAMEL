@@ -1,7 +1,7 @@
 import argparse
 import logging
 from pathlib import Path
-from typing import Optional, Any, Dict, List, Tuple
+from typing import Optional, Any, Dict, List, Tuple, Sequence
 
 import abc
 import os
@@ -21,7 +21,7 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
     This class is the base class for pipelines.
     """
 
-    def __init__(self, name: str, version: str, snakefile: str, args: Optional[argparse.Namespace] = None) -> None:
+    def __init__(self, name: str, version: str, snakefile: str, args: Optional[Sequence[str]] = None) -> None:
         """
         Initializes the pipeline.
         :param name: Pipeline name
@@ -30,15 +30,16 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         self._name = name
         self._version = version
         self._snakefile = snakefile
-        self._args = self._parse_arguments() if args is None else args
+        self._args = self._parse_arguments(args)
         self._working_dir = Path(self._args.working_dir)
         self._pipeline = Pipeline(name, Camel.get_instance(), 'pipeline' if self._args.db_logging else None)
 
     @staticmethod
     @abc.abstractmethod
-    def _parse_arguments() -> argparse.Namespace:
+    def _parse_arguments(args: Optional[Sequence[str]]) -> argparse.Namespace:
         """
         Parses the command line arguments. Should be implemented by the subclasses.
+        :param args: Arguments (optional)
         :return: None
         """
         pass

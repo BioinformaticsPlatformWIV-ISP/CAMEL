@@ -99,6 +99,7 @@ rule variant_calling_calculate_depth:
     input:
         BAM = rules.variant_calling_alignment_sorting.output.BAM
     output:
+        TSV = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_DEPTH_TSV,
         INFORMS = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_DEPTH_INFORMS
     params:
         running_dir = Path(config['working_dir']) / 'variant_calling' / 'depth'

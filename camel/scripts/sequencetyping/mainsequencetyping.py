@@ -2,7 +2,7 @@
 import argparse
 import json
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Sequence, Optional
 
 import os
 
@@ -17,19 +17,21 @@ class MainSequenceTyping(object):
     Class to run sequence typing tool, it supports both BLAST+ and SRST2 as detection methods for alleles.
     """
 
-    def __init__(self, args: argparse.Namespace = None):
+    def __init__(self, args: Optional[Sequence[str]] = None):
         """
         Initializes the main script.
+        :param args: (Optional) arguments
         """
-        self._args = args if args is not None else MainSequenceTyping._parse_arguments()
+        self._args = MainSequenceTyping._parse_arguments(args)
         self._sample_name = MainScriptHelper.determine_sample_name(self._args)
         self._helper = MainScriptHelper(self._args.working_dir, self._sample_name)
         self._report = None
 
     @staticmethod
-    def _parse_arguments() -> argparse.Namespace:
+    def _parse_arguments(args: Optional[Sequence[str]]) -> argparse.Namespace:
         """
         Parses the command line arguments.
+        :param args: (Optional) arguments
         :return: Parsed arguments
         """
         argument_parser = argparse.ArgumentParser()
@@ -39,7 +41,7 @@ class MainSequenceTyping(object):
         argument_parser.add_argument('--scheme-dir', required=True, type=str)
         argument_parser.add_argument('--detection-method', type=str, choices=['blast', 'srst2'], default='blast')
         argument_parser.add_argument('--srst2-max-unaligned-overlap', type=int, default=100)
-        return argument_parser.parse_args()
+        return argument_parser.parse_args(args)
 
     def run(self):
         """

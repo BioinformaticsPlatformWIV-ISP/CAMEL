@@ -2,7 +2,7 @@
 import argparse
 import logging
 from pathlib import Path
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional, Tuple, Sequence
 
 import yaml
 
@@ -22,7 +22,7 @@ class MainSTECPipeline(BasePipeline):
     CUSTOM_ANALYSES = ['kraken', 'resfinder', 'argannot', 'card', 'ncbi_amr', 'mlst_pasteur', 'mlst_warwick', 'cgmlst',
                        'pointfinder', 'plasmidfinder', 'serotype', 'virulencefinder']
 
-    def __init__(self, args: Optional[argparse.Namespace] = None) -> None:
+    def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """
         Initializes the main class.
         :param args: Arguments (optional)
@@ -56,7 +56,7 @@ class MainSTECPipeline(BasePipeline):
         return SnakePipelineUtils.generate_config_file(config_data, Path(self._args.working_dir))
 
     @staticmethod
-    def _parse_arguments() -> argparse.Namespace:
+    def _parse_arguments(args: Optional[Sequence[str]] = None) -> argparse.Namespace:
         """
         Parses the command line arguments.
         :return: Arguments
@@ -69,7 +69,7 @@ class MainSTECPipeline(BasePipeline):
             '--read-type', help="Type of reads.", choices=['illumina', 'iontorrent'], default='illumina')
         for analysis_key in MainSTECPipeline.CUSTOM_ANALYSES:
             parser.add_argument(f"--{analysis_key.replace('_', '-')}", action='store_true')
-        return parser.parse_args()
+        return parser.parse_args(args)
 
     def _get_fastq_input_links(self) -> List[List[Tuple[str, str]]]:
         """
