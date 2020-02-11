@@ -2,7 +2,7 @@
 import argparse
 import logging
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Sequence
 
 import os
 
@@ -21,20 +21,20 @@ class MainSpaTyping(object):
     This tool is used to run the Spa typing tool.
     """
 
-    def __init__(self, args: Optional[argparse.Namespace] = None):
+    def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """
         Initializes the main script.
         :param args: Arguments, if not set they are removed from the command line
         """
         self._camel = Camel.get_instance()
-        self._args = MainSpaTyping._parse_arguments() if args is None else args
+        self._args = MainSpaTyping._parse_arguments(args)
         self._sample_name = MainScriptHelper.determine_sample_name(self._args)
         self._helper = MainScriptHelper(self._args.working_dir, self._sample_name)
         self._report = None
         self._db_path = Path(self._args.db_path)
 
     @staticmethod
-    def _parse_arguments() -> argparse.Namespace:
+    def _parse_arguments(args: Optional[Sequence[str]] = None) -> argparse.Namespace:
         """
         Parses the command line arguments.
         :return: Arguments
@@ -44,7 +44,7 @@ class MainSpaTyping(object):
         MainScriptHelper.add_input_files_arguments(argument_parser)
         MainScriptHelper.add_assembly_arguments(argument_parser)
         argument_parser.add_argument('--db-path', help="Path to the database", default='/db/pipelines/saureus')
-        return argument_parser.parse_args()
+        return argument_parser.parse_args(args)
 
     def run(self) -> None:
         """
