@@ -44,7 +44,8 @@ class TestGeneDetection(unittest.TestCase):
             '--fasta', str(TestGeneDetection.input_fasta),
             '--database-dir', str(TestGeneDetection.input_gene_detection_db),
             '--output-html', str(path_report_out),
-            '--output-dir', str(path_report_out.parent)
+            '--output-dir', str(path_report_out.parent),
+            '--working-dir', str(self.running_dir)
         ]
         main = MainGeneDetection(args)
         main.run()
@@ -61,7 +62,8 @@ class TestGeneDetection(unittest.TestCase):
             '--fasta-name', TestGeneDetection.input_fasta.name,
             '--database-dir', str(TestGeneDetection.input_gene_detection_db),
             '--output-html', str(path_report_out),
-            '--output-dir', str(path_report_out.parent)
+            '--output-dir', str(path_report_out.parent),
+            '--working-dir', str(self.running_dir)
         ]
         main = MainGeneDetection(args)
         main.run()
@@ -78,7 +80,8 @@ class TestGeneDetection(unittest.TestCase):
             '--fasta-name', '"my reference genome.fasta"',
             '--database-dir', str(TestGeneDetection.input_gene_detection_db),
             '--output-html', str(path_report_out),
-            '--output-dir', str(path_report_out.parent)
+            '--output-dir', str(path_report_out.parent),
+            '--working-dir', str(self.running_dir)
         ]
         main = MainGeneDetection(args)
         main.run()
@@ -95,6 +98,7 @@ class TestGeneDetection(unittest.TestCase):
             '--database-dir', str(TestGeneDetection.input_gene_detection_db),
             '--output-html', str(path_report_out),
             '--output-dir', str(path_report_out.parent),
+            '--working-dir', str(self.running_dir),
             '--trim-reads'
         ]
         main = MainGeneDetection(args)
@@ -112,6 +116,7 @@ class TestGeneDetection(unittest.TestCase):
             '--database-dir', str(TestGeneDetection.input_gene_detection_db),
             '--output-html', str(path_report_out),
             '--output-dir', str(path_report_out.parent),
+            '--working-dir', str(self.running_dir)
         ]
         main = MainGeneDetection(args)
         main.run()
@@ -130,6 +135,7 @@ class TestGeneDetection(unittest.TestCase):
             '--database-dir', str(TestGeneDetection.input_gene_detection_db),
             '--output-html', str(path_report_out),
             '--output-dir', str(path_report_out.parent),
+            '--working-dir', str(self.running_dir)
         ]
         main = MainGeneDetection(args)
         main.run()
@@ -147,6 +153,7 @@ class TestGeneDetection(unittest.TestCase):
             '--database-dir', str(TestGeneDetection.input_gene_detection_db),
             '--output-html', str(path_report_out),
             '--output-dir', str(path_report_out.parent),
+            '--working-dir', str(self.running_dir)
         ]
         main = MainGeneDetection(args)
         main.run()
@@ -163,6 +170,7 @@ class TestGeneDetection(unittest.TestCase):
             '--database-dir', str(TestGeneDetection.input_gene_detection_db),
             '--output-html', str(path_report_out),
             '--output-dir', str(path_report_out.parent),
+            '--working-dir', str(self.running_dir),
             '--detection-method', 'srst2',
             '--trim-reads'
         ]
@@ -199,6 +207,7 @@ class TestGeneDetection(unittest.TestCase):
             '--database-dir', str(TestGeneDetection.input_gene_detection_db),
             '--output-html', str(path_report_out),
             '--output-dir', str(path_report_out.parent),
+            '--working-dir', str(self.running_dir),
             '--detection-method', 'srst2',
         ]
         main = MainGeneDetection(args)
@@ -216,6 +225,7 @@ class TestGeneDetection(unittest.TestCase):
             '--database-dir', str(TestGeneDetection.input_gene_detection_db),
             '--output-html', str(path_report_out),
             '--output-dir', str(path_report_out.parent),
+            '--working-dir', str(self.running_dir),
             '--detection-method', 'srst2',
             '--trim-reads'
         ]
@@ -236,6 +246,7 @@ class TestGeneDetection(unittest.TestCase):
             '--database-dir', str(TestGeneDetection.input_gene_detection_db),
             '--output-html', str(path_report_out),
             '--output-dir', str(path_report_out.parent),
+            '--working-dir', str(self.running_dir),
             '--detection-method', 'srst2',
         ]
         main = MainGeneDetection(args)
@@ -253,6 +264,7 @@ class TestGeneDetection(unittest.TestCase):
             '--database-dir', str(TestGeneDetection.input_gene_detection_db),
             '--output-html', str(path_report_out),
             '--output-dir', str(path_report_out.parent),
+            '--working-dir', str(self.running_dir),
             '--detection-method', 'kma',
             '--trim-reads'
         ]

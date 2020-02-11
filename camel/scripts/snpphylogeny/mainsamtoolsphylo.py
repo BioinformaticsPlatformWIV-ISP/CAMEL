@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import argparse
 import logging
+from pathlib import Path
 from typing import Optional, Dict, Any
 
 import os
@@ -71,7 +72,7 @@ class MainSamtoolsPhylo(BasePhylo):
         snp_matrix = SnpPhylogenyUtils.construct_snp_matrix(
             [s.name_valid for s in self._samples],
             [filtering_out_by_sample[s].vcf_filtered for s in self._samples],
-            os.path.join(self._args.working_dir, 'snp_matrix'),
+            Path(self._args.working_dir) / 'snp_matrix',
             self._args.include_ref
         )
 
@@ -139,7 +140,7 @@ class MainSamtoolsPhylo(BasePhylo):
         :param mapping_input: Mapping input by sample
         :return: Dictionary with the output for each sample
         """
-        working_dir = os.path.join(self._args.working_dir, 'calling')
+        working_dir = Path(self._args.working_dir) / 'calling'
         config_data = {
             'working_dir': working_dir,
             'samples': {s.name_valid: v.as_dict() for s, v in mapping_input.items()},
@@ -149,7 +150,7 @@ class MainSamtoolsPhylo(BasePhylo):
                         'skip_variants': 'indels'}
         }
         config_file = SnakePipelineUtils.generate_config_file(config_data, working_dir)
-        output_path = os.path.join(working_dir, OUTPUT_CALLING_ALL)
+        output_path = working_dir / OUTPUT_CALLING_ALL
         SnakePipelineUtils.run_snakemake(SNAKEFILE_SAMTOOLS_CALLING_ALL, config_file, [output_path], working_dir,
                                          self._args.threads)
         return {self.samples_by_name[name]: output for name, output in SnakemakeUtils.load_object(output_path).items()}
@@ -159,14 +160,14 @@ class MainSamtoolsPhylo(BasePhylo):
         Runs the variant filtering workflow.
         :return: Dictionary with the output for each sample
         """
-        working_dir = os.path.join(self._args.working_dir, 'filtering')
+        working_dir = Path(self._args.working_dir) / 'filtering'
         samples = {
             s.name_valid: {'VCF': o.vcf_unfiltered.path, 'BAM': o.bam_file.path} for s, o in
             calling_output_by_sample.items()
         }
         config_data = {'working_dir': working_dir, 'samples': samples, 'options': self.__get_filtering_options()}
         config_file = SnakePipelineUtils.generate_config_file(config_data, working_dir)
-        output_path = os.path.join(working_dir, OUTPUT_FILTERING_ALL)
+        output_path = working_dir / OUTPUT_FILTERING_ALL
         SnakePipelineUtils.run_snakemake(
             SNAKEFILE_SAMTOOLS_FILTERING_ALL, config_file, [output_path], working_dir, self._args.threads)
         return {self.samples_by_name[name]: output for name, output in SnakemakeUtils.load_object(output_path).items()}
@@ -237,9 +238,9 @@ class MainSamtoolsPhylo(BasePhylo):
         :return: None
         """
         output_files = {sample: [
-            calling_out_by_sample[sample].bam_file.path if self._args.report_include_bam else None,
-            calling_out_by_sample[sample].vcf_unfiltered.path,
-            filtering_out_by_sample[sample].vcf_filtered.path
+            Path(calling_out_by_sample[sample].bam_file.path) if self._args.report_include_bam else None,
+            Path(calling_out_by_sample[sample].vcf_unfiltered.path),
+            Path(filtering_out_by_sample[sample].vcf_filtered.path)
         ] for sample in self._samples}
         column_names = ['Alignment (BAM)', 'SNPs unfiltered (VCF)', 'SNPs filtered (VCF)']
         SnpPhylogenyUtils.add_output_files_section(self._report, column_names, output_files, snp_matrix)

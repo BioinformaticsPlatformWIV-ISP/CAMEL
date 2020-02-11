@@ -1,9 +1,9 @@
 import argparse
 import logging
+from pathlib import Path
 from typing import Optional, List, Dict
 
 import abc
-import os
 
 from camel.app.components.phylogeny.snpphylogenyutils import SnpPhylogenyUtils, InvalidInputError, Sample, MappingInput
 from camel.app.error.toolexecutionerror import ToolExecutionError
@@ -63,10 +63,10 @@ class BasePhylo(object, metaclass=abc.ABCMeta):
         Returns the input for the read mapping.
         :return: Mapping input per sample
         """
-        fq_by_sample = SnpPhylogenyUtils.symlink_input_files(self._samples, self._args.working_dir)
+        fq_by_sample = SnpPhylogenyUtils.symlink_input_files(self._samples, Path(self._args.working_dir))
         if self._args.trim_reads:
             trimming_output_by_sample = SnpPhylogenyUtils.trim_all_reads(
-                fq_by_sample, os.path.join(self._args.working_dir, 'trimming'))
+                fq_by_sample, Path(self._args.working_dir) / 'trimming')
             SnpPhylogenyUtils.add_trimming_section(self._report, trimming_output_by_sample)
             mapping_input_by_sample = {}
             for sample, output in trimming_output_by_sample.items():
