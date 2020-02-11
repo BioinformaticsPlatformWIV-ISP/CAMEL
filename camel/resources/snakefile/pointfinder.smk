@@ -15,12 +15,14 @@ rule pointfinder_run:
         TSV = Path(config['working_dir']) / 'pointfinder' / 'tsv.io',
         INFORMS = Path(config['working_dir']) / pointfinder.OUTPUT_POINTFINDER_INFORMS
     params:
-        running_dir = Path(config['working_dir']) / 'pointfinder'
+        running_dir = Path(config['working_dir']) / 'pointfinder',
+        db = config.get('pointfinder', {}).get('db', 'escherichia_coli')
     run:
         from camel.app.tools.pointfinder.pointfinder import PointFinder
         pointfinder_ = PointFinder(camel)
         SnakemakeUtils.add_pickle_inputs(pointfinder_, input)
         step = Step(rule, pointfinder_, camel, params.running_dir, config)
+        pointfinder_.update_parameters(database=params.db)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(pointfinder_, output)
 
