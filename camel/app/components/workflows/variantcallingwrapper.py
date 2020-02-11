@@ -80,6 +80,8 @@ class VariantCallingWrapper(object):
         :return: None
         """
         # Create input
+        if not self._working_dir.exists():
+            self._working_dir.mkdir(parents=True)
         self.__create_input(input_files)
         config_data = self.__get_config_data(sample_name, reference_info, options)
         config_file = SnakePipelineUtils.generate_config_file(config_data, self._working_dir)

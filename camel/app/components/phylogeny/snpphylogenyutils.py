@@ -5,7 +5,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Dict, Optional
 
-import os
 from Bio import SeqIO
 
 from camel.app.camel import Camel
@@ -96,15 +95,15 @@ class SnpPhylogenyUtils(object):
         :return: Initializes HTML report
         """
         report = HtmlReport(args.output_html, args.output_dir)
-        if not os.path.isdir(args.output_dir):
-            os.makedirs(args.output_dir)
+        if not Path(args.output_dir).exists():
+            Path(args.output_dir).mkdir(parents=True)
         report.initialize(f'SNP Phylogeny - {pipeline_name}', CSS_STYLE)
         report.add_pipeline_header(f'SNP Phylogeny ({pipeline_name})')
         section = HtmlReportSection('Analysis info')
         section.add_table([
             ['Analysis date:', datetime.datetime.now().strftime(SnakePipelineUtils.DATE_FORMAT)],
             ['Nb. of samples:', len(args.sample)],
-            ['Reference:', args.reference_name if args.reference_name else os.path.basename(args.reference)]],
+            ['Reference:', args.reference_name if args.reference_name else Path(args.reference).name]],
             table_attributes=[('class', 'information')]
         )
         report.add_html_object(section)
@@ -120,7 +119,7 @@ class SnpPhylogenyUtils(object):
         """
         argument_parser.add_argument('--output-dir', required=True, type=str)
         argument_parser.add_argument('--output-html', required=True, type=str)
-        argument_parser.add_argument('--working-dir', default=os.path.abspath('.'), type=str)
+        argument_parser.add_argument('--working-dir', default=str(Path('.').absolute()), type=str)
         argument_parser.add_argument('--threads', default=8, type=int)
         argument_parser.add_argument('--reference', required=True, type=str)
         argument_parser.add_argument('--reference-name', type=str)
@@ -168,7 +167,7 @@ class SnpPhylogenyUtils(object):
         return sorted(samples, key=lambda s: s.name_valid)
 
     @staticmethod
-    def symlink_input_files(samples: List[Sample], dir_working: str) -> Dict[Sample, List[ToolIOFile]]:
+    def symlink_input_files(samples: List[Sample], dir_working: Path) -> Dict[Sample, List[ToolIOFile]]:
         """
         This function creates symlinks for the raw read files that belong to the given samples.
         :param samples: Samples
@@ -176,22 +175,22 @@ class SnpPhylogenyUtils(object):
         :return: Symlink locations by sample
         """
         logging.info(f"Creating symlinks for input files for {len(samples)} samples")
-        symlink_dir = Path(dir_working) / 'input'
+        symlink_dir = dir_working / 'input'
         if not symlink_dir.exists():
-            os.makedirs(str(symlink_dir))
+            symlink_dir.mkdir(parents=True)
         fq_by_sample = {s: [] for s in samples}
         for sample in samples:
             for nb, fq_file in enumerate(sample.reads_raw, 1):
                 is_gzipped = FileSystemHelper.is_gzipped(fq_file.path)
                 path_link = symlink_dir / f"{sample.name_valid}_{nb}.fastq{'.gz' if is_gzipped else ''}"
                 if path_link.exists():
-                    os.remove(str(path_link))
-                os.symlink(fq_file.path, str(path_link))
+                    path_link.unlink()
+                path_link.symlink_to(fq_file.path)
                 fq_by_sample[sample].append(ToolIOFile(str(path_link)))
         return fq_by_sample
 
     @staticmethod
-    def trim_all_reads(fq_by_sample: Dict[Sample, List[ToolIOFile]], working_dir: str, threads: int = 8) -> Dict[
+    def trim_all_reads(fq_by_sample: Dict[Sample, List[ToolIOFile]], working_dir: Path, threads: int = 8) -> Dict[
             Sample, ReadTrimmingWrapper.ReadTrimmingOutput]:
         """
         Trims all the reads in parallel using Snakemake.
@@ -204,7 +203,7 @@ class SnpPhylogenyUtils(object):
             'working_dir': working_dir,
             'samples': {s.name_valid: [f.path for f in fq] for s, fq in fq_by_sample.items()}}
         config_file = SnakePipelineUtils.generate_config_file(config_data, working_dir)
-        output_file = os.path.join(working_dir, TRIMMING_ALL)
+        output_file = working_dir / TRIMMING_ALL
         SnakePipelineUtils.run_snakemake(
             SNAKEFILE_TRIMMING_ALL, config_file, [output_file], working_dir, threads)
         trimming_out_by_sample = SnakemakeUtils.load_object(output_file)
@@ -242,9 +241,9 @@ class SnpPhylogenyUtils(object):
 
             # Add FastQC reports
             for i, f in enumerate(trimming_output.fastq_reports_pre, start=1):
-                relative_path = os.path.join('fastqc_report', f'{sample.name_valid}_{i}.html')
-                section.add_file(f.path, relative_path)
-                row.append(HtmlTableCell('view', link=relative_path))
+                relative_path = Path('fastqc_report') / f'{sample.name_valid}_{i}.html'
+                section.add_file(f.path, str(relative_path))
+                row.append(HtmlTableCell('view', link=str(relative_path)))
             table_data.append(row)
 
         # Add table
@@ -258,7 +257,7 @@ class SnpPhylogenyUtils(object):
         report.save()
 
     @staticmethod
-    def construct_snp_matrix(sample_names: List[str], vcf_files: List[ToolIOFile], working_dir: str,
+    def construct_snp_matrix(sample_names: List[str], vcf_files: List[ToolIOFile], working_dir: Path,
                              include_ref: bool = False) -> ToolIOFile:
         """
         Constructs a SNP matrix based on the given VCF files.
@@ -268,8 +267,8 @@ class SnpPhylogenyUtils(object):
         :param include_ref: If True, the reference is included in the SNP matrix
         :return: SNP matrix ToolIOFile
         """
-        if not os.path.isdir(working_dir):
-            os.makedirs(working_dir)
+        if not working_dir.exists():
+            working_dir.mkdir(parents=True)
         snp_matrix_constructor = SnpMatrixConstructor(Camel.get_instance())
         if include_ref:
             snp_matrix_constructor.update_parameters(include_ref=None)
@@ -277,12 +276,12 @@ class SnpPhylogenyUtils(object):
             'VCF': vcf_files,
             'SAMPLE_NAME': [ToolIOValue(s) for s in sample_names],
         })
-        snp_matrix_constructor.run(working_dir)
+        snp_matrix_constructor.run(str(working_dir))
         return snp_matrix_constructor.tool_outputs['FASTA'][0]
 
     @staticmethod
     def add_output_files_section(report: HtmlReport, column_names: List[str], output_files: Dict[
-            Sample, List[Optional[str]]], snp_matrix: str) -> None:
+            Sample, List[Optional[Path]]], snp_matrix: str) -> None:
         """
         Adds the section with the output files.
         :param report: Report
@@ -310,8 +309,8 @@ class SnpPhylogenyUtils(object):
                 if file_ is None:
                     row.append('Not available')
                 else:
-                    relative_path = os.path.join(sample.name_valid, os.path.basename(file_))
-                    row.append(HtmlTableCell('Download', link=section.add_file(file_, relative_path)))
+                    relative_path = Path(sample.name_valid) / file_.name
+                    row.append(HtmlTableCell('Download', link=section.add_file(str(file_), str(relative_path))))
             table_data.append(row)
         header = ['Sample'] + column_names
         section.add_table(table_data, header, [('class', 'data')])
@@ -401,10 +400,10 @@ class SnpPhylogenyUtils(object):
         model_selection.add_input_files({'FASTA': [snp_matrix]})
         MEGAUtils.update_model_selection_parameters(
             model_selection, args.missing_data, args.branch_swap, args.site_cov_cutoff, args.threads)
-        working_dir = os.path.join(args.working_dir, 'model_selection')
-        if not os.path.isdir(working_dir):
-            os.mkdir(working_dir)
-        model_selection.run(working_dir)
+        working_dir = Path(args.working_dir) / 'model_selection'
+        if not working_dir.exists():
+            working_dir.mkdir(parents=True)
+        model_selection.run(str(working_dir))
         return model_selection
 
     @staticmethod
@@ -428,8 +427,8 @@ class SnpPhylogenyUtils(object):
             section.add_table(table_data, table_attributes=[('class', 'information')])
 
             # Render tree
-            output_path = os.path.join(report.output_dir, 'tree.png')
-            NewickUtils.render(Camel(logging_config=None), newick_path, output_path, 'clad')
+            output_path = Path(report.output_dir) / 'tree.png'
+            NewickUtils.render(Camel(logging_config=None), newick_path, str(output_path), 'clad')
             section.add_html_object(HtmlElement('img', attributes=[('src', 'tree.png'), ('border', '1')]))
 
         report.add_html_object(section)
@@ -452,8 +451,8 @@ class SnpPhylogenyUtils(object):
         MEGAUtils.update_tree_building_parameters(
             tree_building, model, rates, args.bootstraps, args.missing_data, args.site_cov_cutoff,
             args.ml_method, args.branch_swap, args.threads)
-        working_dir = os.path.join(args.working_dir, 'tree_building')
-        if not os.path.isdir(working_dir):
-            os.mkdir(working_dir)
-        tree_building.run(working_dir)
+        working_dir = Path(args.working_dir) / 'tree_building'
+        if not working_dir.exists():
+            working_dir.mkdir(parents=True)
+        tree_building.run(str(working_dir))
         return tree_building
