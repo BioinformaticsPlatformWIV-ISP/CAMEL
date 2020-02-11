@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 from pathlib import Path
 from typing import List, Tuple, Any, Dict, Optional
 
@@ -13,6 +14,8 @@ from camel.app.error.snakemakeexecutionerror import SnakemakeExecutionError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
+from camel.resources import CSS_STYLE
+from camel.resources.javascript import JQUERY_SRC
 
 
 class SnakePipelineUtils(object):
@@ -23,7 +26,18 @@ class SnakePipelineUtils(object):
     DATE_FORMAT = '%d/%m/%Y - %X'
 
     @staticmethod
-    def create_input_section(sample_name: str, date: str, pipeline_version: str, input_files: str,
+    def init_pipeline_report(output_path: str, output_dir: str, pipeline_info: Dict[str, str]) -> HtmlReport:
+        """
+        Initializes an empty pipeline report.
+        :return: Report
+        """
+        report = HtmlReport(output_path, output_dir, [JQUERY_SRC])
+        report.initialize(pipeline_info['name'], CSS_STYLE)
+        report.add_pipeline_header(f"{pipeline_info['title']} {pipeline_info['version']}")
+        return report
+
+    @staticmethod
+    def create_input_section(sample_name: str, date: datetime, pipeline_version: str, input_files: str,
                              extra_data: List[Tuple[str, str]]) -> HtmlReportSection:
         """
         Creates the input section for the HTML report.
@@ -36,7 +50,7 @@ class SnakePipelineUtils(object):
         """
         table_data = [
             ['Sample:', sample_name],
-            ['Analysis date', date],
+            ['Analysis date', date.strftime(SnakePipelineUtils.DATE_FORMAT)],
             ['Pipeline version:', pipeline_version],
             ['Input files:', input_files],
         ]

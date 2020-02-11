@@ -32,8 +32,6 @@ rule all:
         config['output_report'],
         config['output_tabular']
 
-
-
 rule select_fastq:
     """
     This rule creates an IO object with the trimmed FASTQ files.
@@ -150,7 +148,7 @@ rule report_combine_all:
         report_citations = rules.report_pickle_citations.output.IO,
         report_commands = rules.report_command_section.output.HTML
     output:
-        report = config['output_report']
+        HTML = config['output_report']
     params:
         sample_name = config['sample_name'],
         fastq_input = config['fastq_pe' if 'fastq_pe' in config else 'fastq_se'],
@@ -160,24 +158,20 @@ rule report_combine_all:
         read_type = config['read_type']
     run:
         import datetime
-        from camel.app.components.html.htmlreport import HtmlReport
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-        from camel.resources import CSS_STYLE
-        from camel.resources.javascript import JQUERY_SRC
 
         # Add header section
-        report = HtmlReport(output.report, params.output_dir, [JQUERY_SRC])
-        report.initialize(params.pipeline_info['name'], CSS_STYLE)
-        report.add_pipeline_header(f"{params.pipeline_info['name']} {params.pipeline_info['version']}")
+        report = SnakePipelineUtils.init_pipeline_report(
+            output.HTML, params.output_dir, params.pipeline_info)
         report.add_html_object(SnakePipelineUtils.create_input_section(
             params.sample_name,
-            datetime.datetime.now().strftime(SnakePipelineUtils.DATE_FORMAT),
+            datetime.datetime.now(),
             params.pipeline_info['version'],
             ', '.join(entry['name'] for entry in params.fastq_input),
             [('Detection method', params.detection_method), ('Read type', params.read_type)],
         ))
 
-        # Add output sections
+        # Add content
         report_structure = [
             ('Read trimming and basic QC', 'trim', [input.report_trimming]),
             ('Assembly', 'assem', [input.report_assembly]),

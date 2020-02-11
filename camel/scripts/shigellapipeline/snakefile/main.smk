@@ -168,17 +168,13 @@ rule combine_reports:
     run:
         import datetime
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-        from camel.app.components.html.htmlreport import HtmlReport
-        from camel.resources import CSS_STYLE
-        from camel.resources.javascript import JQUERY_SRC
 
         # Add header section
-        report = HtmlReport(output.HTML, params.output_dir, [JQUERY_SRC])
-        report.initialize(params.pipeline_info['name'], CSS_STYLE)
-        report.add_pipeline_header(f"{params.pipeline_info['name']} {params.pipeline_info['version']}")
+        report = SnakePipelineUtils.init_pipeline_report(
+            output.HTML, params.output_dir, params.pipeline_info)
         report.add_html_object(SnakePipelineUtils.create_input_section(
             params.sample_name,
-            datetime.datetime.now().strftime(SnakePipelineUtils.DATE_FORMAT),
+            datetime.datetime.now(),
             params.pipeline_info['version'],
             ', '.join(entry['name'] for entry in params.fastq_input),
             [('Detection method', params.detection_method)],
