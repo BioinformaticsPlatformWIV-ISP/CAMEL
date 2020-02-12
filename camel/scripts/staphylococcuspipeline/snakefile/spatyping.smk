@@ -6,7 +6,7 @@ from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile import assembly_spades
 from camel.scripts.staphylococcuspipeline.snakefile import spatyping as spatyping_workflow
 
-rule spatyping_blastn:
+rule spa_typing_blastn:
     """
     Runs BLASTN to align the sequences against the spa typing database.
     """
@@ -14,9 +14,9 @@ rule spatyping_blastn:
         FASTA = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA,
         DB_BLAST = config['spa_typing']['db']
     output:
-        TSV = Path(config['working_dir']) / 'spatyping' / 'blastn' / 'blast_hits.tsv'
+        TSV = Path(config['working_dir']) / 'spa_typing' / 'blastn' / 'blast_hits.tsv'
     params:
-        running_dir = Path(config['working_dir']) / 'spatyping' / 'blastn'
+        running_dir = Path(config['working_dir']) / 'spa_typing' / 'blastn'
     run:
         from camel.app.tools.blast.blastn import Blastn
         from camel.app.tools.spatyping.spatyping import SpaTyping
@@ -29,18 +29,18 @@ rule spatyping_blastn:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(blastn, output)
 
-rule spatyping_run:
+rule spa_typing_run:
     """
     Determines the spa-type based on the blastn output.
     """
     input:
-        TSV = rules.spatyping_blastn.output.TSV,
+        TSV = rules.spa_typing_blastn.output.TSV,
         CSV_profiles = config['spa_typing']['profiles']
     output:
-        VAL_hits = Path(config['working_dir']) / 'spatyping' / 'detection' / 'hits.io',
-        INFORMS = Path(config['working_dir']) / 'spatyping' / 'detection' / 'informs.io'
+        VAL_hits = Path(config['working_dir']) / 'spa_typing' / 'detection' / 'hits.io',
+        INFORMS = Path(config['working_dir']) / 'spa_typing' / 'detection' / 'informs.io'
     params:
-        running_dir = Path(config['working_dir']) / 'spatyping' / 'detection'
+        running_dir = Path(config['working_dir']) / 'spa_typing' / 'detection'
     run:
         from camel.app.tools.spatyping.spatyping import SpaTyping
         spatyping = SpaTyping(Camel.get_instance())
@@ -50,17 +50,17 @@ rule spatyping_run:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(spatyping, output)
 
-rule spatyping_report:
+rule spa_typing_report:
     """
     Creates a report for the spa-typing assay.
     """
     input:
-        VAL_hits = rules.spatyping_run.output.VAL_hits,
-        INFORMS_spa_typing = rules.spatyping_run.output.INFORMS
+        VAL_hits = rules.spa_typing_run.output.VAL_hits,
+        INFORMS_spa_typing = rules.spa_typing_run.output.INFORMS
     output:
         VAL_HTML = Path(config['working_dir']) / spatyping_workflow.OUTPUT_SPATYPING_REPORT
     params:
-        running_dir = Path(config['working_dir']) / 'spatyping' / 'report'
+        running_dir = Path(config['working_dir']) / 'spa_typing' / 'report'
     run:
         from camel.app.tools.spatyping.spatypingreporter import SpaTypingReporter
         reporter = SpaTypingReporter(Camel.get_instance())
@@ -69,7 +69,7 @@ rule spatyping_report:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
 
-rule spatyping_report_empty:
+rule spa_typing_report_empty:
     """
     Creates an empty report when spatyping is disabled.
     """
