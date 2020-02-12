@@ -91,5 +91,5 @@ rule spa_typing_summary:
         informs = SnakemakeUtils.load_object(input.INFORMS)
         with open(output.TSV, 'w') as handle:
             for key in ('spa_type', 'spa_type_repeats'):
-                handle.write('\t'.join([key, informs[key]]))
+                handle.write('\t'.join([key, informs[key] if informs[key] is not None else 'NA']))
                 handle.write('\n')

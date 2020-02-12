@@ -50,9 +50,10 @@ class SpaTypingReporter(Tool):
         Adds a table with an overview of the results.
         :return: None
         """
+        repeats = self._input_informs['spa_typing']['spa_type_repeats']
         table_data = [
             ['Detected <i>spa</i> type:', self._input_informs['spa_typing']['spa_type']],
-            ['Repeats:', '-'.join(str(x) for x in self._input_informs['spa_typing']['spa_type_repeats'])],
+            ['Repeats:', '-'.join(str(x) for x in repeats) if repeats is not None else 'NA'],
             ['Position:', self._input_informs['spa_typing'].get('genomic_coordinates', 'NA')],
             ['Strand:', self._input_informs['spa_typing'].get('strand', 'NA')]
         ]

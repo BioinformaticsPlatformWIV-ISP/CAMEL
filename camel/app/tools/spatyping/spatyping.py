@@ -144,7 +144,7 @@ class SpaTyping(Tool):
             self._informs['spa_type'] = f"ambiguous ({', '.join(sorted(all_types))})"
         else:
             self._informs['spa_type'] = 'NA'
-        self._informs['spa_type_repeats'] = profiles.get(self._informs['spa_type'], 'NA')
+        self._informs['spa_type_repeats'] = profiles.get(self._informs['spa_type'])
         self._tool_outputs['VAL_hits'] = [ToolIOValue(h) for h in spa_type_hits]
 
     @staticmethod
