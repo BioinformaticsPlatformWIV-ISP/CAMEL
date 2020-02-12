@@ -190,6 +190,7 @@ class TestGeneDetection(unittest.TestCase):
             '--database-dir', str(TestGeneDetection.input_gene_detection_db),
             '--output-html', str(path_report_out),
             '--output-dir', str(path_report_out.parent),
+            '--working-dir', str(self.running_dir),
             '--detection-method', 'srst2'
         ]
         main = MainGeneDetection(args)
