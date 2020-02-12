@@ -42,7 +42,7 @@ rule sccmec_typing_report:
         section = HtmlReportSection('SCC<i>mec</i> type', 3)
         informs = SnakemakeUtils.load_object(input.INFORMS)
         section.add_table(
-            [[f'{key}:', value] for key, value in informs.items() if not key.startswith('_')],
+            [[f"{complex_['name']}:", complex_['value']] for complex_ in informs['complexes']],
             table_attributes=[('class', 'information')])
         SnakemakeUtils.dump_object([ToolIOValue(section)], output.HTML)
 
