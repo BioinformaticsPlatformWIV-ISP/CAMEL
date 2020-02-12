@@ -215,4 +215,4 @@ class HtmlBase(object):
             attributes.append(('id', id_))
         with self.get_tag('div', attributes):
             with self.get_tag('h2'):
-                self._doc.text(text)
+                self.add_text(text)
