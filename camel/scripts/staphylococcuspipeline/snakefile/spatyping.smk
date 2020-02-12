@@ -78,3 +78,18 @@ rule spa_typing_report_empty:
     run:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         SnakePipelineUtils.create_empty_report_section('<i>spa</i> typing', output.VAL_HTML)
+
+rule spa_typing_summary:
+    """
+    Exports the summary information for the spa-typing assay
+    """
+    input:
+        INFORMS = rules.spa_typing_run.output.INFORMS
+    output:
+        TSV = Path(config['working_dir']) / spatyping_workflow.OUTPUT_SPATYPING_SUMMARY
+    run:
+        informs = SnakemakeUtils.load_object(input.INFORMS)
+        with open(output.TSV, 'w') as handle:
+            for key in ('spa_type', 'spa_type_repeats'):
+                handle.write('\t'.join([key, informs[key]]))
+                handle.write('\n')
