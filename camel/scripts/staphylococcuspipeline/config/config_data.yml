@@ -24,7 +24,7 @@ pointfinder:
   db: staphylococcus_aureus
 
 spa_typing:
-  db: /db/pipelines/saureus/sparepeats.fasta
+  db: /db/pipelines/saureus/profiles.fasta
   profiles: /db/pipelines/saureus/spatypes.csv
 
 sccmec_typing:
