@@ -97,8 +97,6 @@ class AssemblyWrapper(object):
         :return: None
         """
         fq_dict = {'PE': reads_pe, 'SE_FWD': reads_se_fwd, 'SE_REV': reads_se_rev}
-        print(self._working_dir)
-        print(self._working_dir.exists())
         SnakemakeUtils.dump_object(fq_dict, self._working_dir / 'fq_dict.io')
 
     def __set_output(self, output_files: Dict[str, str]) -> None:
