@@ -36,10 +36,10 @@ class BlastHitStatistics:
         """
         try:
             return BlastHitStatistics(
-                info['sseqid'],
+                str(info['sseqid']),
                 int(info['slen']),
                 info['sseq'],
-                info['qseqid'],
+                str(info['qseqid']),
                 int(info['qstart']),
                 int(info['qend']),
                 float(info['pident'])
