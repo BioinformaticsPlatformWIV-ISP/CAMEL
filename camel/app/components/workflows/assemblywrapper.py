@@ -15,6 +15,7 @@ class AssemblyOutput:
     fasta_contigs: ToolIOFile
     log_file: Optional[Path]
     informs: List[Dict[str, Any]]
+    qc_stats: Optional[Dict[str, Any]] = None
 
 
 class AssemblyWrapper(object):
@@ -32,7 +33,8 @@ class AssemblyWrapper(object):
 
     def run_workflow(self, sample_name: str, reads_pe: List[ToolIOFile], reads_se_fwd: List[ToolIOFile],
                      reads_se_rev: List[ToolIOFile], kmers: str = None, cov_cutoff: Union[str, int] = 'off',
-                     min_contig_length: Optional[int] = None, threads: int = 8) -> None:
+                     min_contig_length: Optional[int] = None, calculate_qc_stats: bool = False,
+                     threads: int = 8) -> None:
         """
         Runs the read trimming workflow.
         :param reads_pe: Paired end reads
@@ -42,6 +44,7 @@ class AssemblyWrapper(object):
         :param kmers: Comma separated list of Kmer sizes to use for assembly
         :param cov_cutoff: Coverage cutoff
         :param min_contig_length: Minimum contig length
+        :param calculate_qc_stats: If True, determines the QC stats
         :param threads: Number of threads
         :return: None
         """
@@ -55,6 +58,9 @@ class AssemblyWrapper(object):
             'FASTA': self._working_dir / assembly_spades.OUTPUT_ASSEMBLY_FASTA,
             'INFORMS_spades': self._working_dir / assembly_spades.OUTPUT_ASSEMBLY_INFORMS
         }
+        if calculate_qc_stats is True:
+            output_files['INFORMS_bowtie2'] = self._working_dir / assembly_spades.OUTPUT_ASSEMBLY_MAPPING_INFORMS
+            output_files['INFORMS_samtools'] = self._working_dir / assembly_spades.OUTPUT_ASSEMBLY_DEPTH_INFORMS
         if min_contig_length is not None:
             output_files['INFORMS_seqtk'] = self._working_dir / assembly_spades.OUTPUT_ASSEMBLY_FILTERING_INFORMS
         SnakePipelineUtils.run_snakemake(
@@ -109,11 +115,19 @@ class AssemblyWrapper(object):
         informs = [SnakemakeUtils.load_object(output_files['INFORMS_spades'])]
         if 'INFORMS_seqtk' in output_files:
             informs.append(SnakemakeUtils.load_object(output_files['INFORMS_seqtk']))
+        if all(key in output_files for key in ('INFORMS_bowtie2', 'INFORMS_samtools')):
+            qc_stats = {
+                'depth': SnakemakeUtils.load_object(output_files['INFORMS_samtools']),
+                'mapping': SnakemakeUtils.load_object(output_files['INFORMS_bowtie2']),
+            }
+        else:
+            qc_stats = None
         self._output = AssemblyOutput(
             report_section=SnakemakeUtils.load_object(output_files['HTML'])[0].value,
             fasta_contigs=SnakemakeUtils.load_object(output_files['FASTA'])[0],
             informs=informs,
-            log_file=log_file_path if log_file_path.exists() else None
+            log_file=log_file_path if log_file_path.exists() else None,
+            qc_stats=qc_stats
         )
 
     @property

@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from camel.app.camel import Camel
+from camel.app.io.tooliofile import ToolIOFile
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile import assembly_spades
@@ -9,12 +10,32 @@ from camel.resources.snakefile import assembly_spades
 camel = Camel.get_instance()
 
 
+rule assembly_spades_merge_se_reads:
+    input:
+        IO = Path(config['working_dir']) / 'fq_dict.io'
+    output:
+        IO = Path(config['working_dir']) / 'assembly_spades' / 'input' / 'fq-se.io'
+    params:
+        running_dir = Path(config['working_dir']) / 'assembly_spades' / 'input'
+    run:
+        import shutil
+        fq_dict = SnakemakeUtils.load_object(input.IO)
+        path_se_merged = params.running_dir / 'unpaired_reads_merged.fastq'
+        with open(path_se_merged, 'wb') as handle_out:
+            for key in ('SE_FWD', 'SE_REV'):
+                if key not in fq_dict or len(fq_dict[key]) == 0:
+                    continue
+                with open(fq_dict[key][0].path, 'rb') as handle_in:
+                    shutil.copyfileobj(handle_in, handle_out)
+        SnakemakeUtils.dump_object([ToolIOFile(path_se_merged)], output.IO)
+
 rule assembly_spades_run:
     """
     De-novo assembly using SPAdes.
     """
     input:
-        IO = Path(config['working_dir']) / 'fq_dict.io'
+        IO = Path(config['working_dir']) / 'fq_dict.io',
+        IO_SE = Path(config['working_dir']) / 'assembly_spades' / 'input' / 'fq-se.io'
     output:
         FASTA_Contig = Path(config['working_dir']) / 'assembly_spades' / 'spades' / 'fasta.io',
         INFORMS = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_INFORMS
@@ -27,7 +48,10 @@ rule assembly_spades_run:
         from camel.app.tools.spades.spades import SPAdes
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         spades = SPAdes(camel)
-        spades.add_input_files(SnakePipelineUtils.extracts_fq_input(input.IO, 'FASTQ_PE_1', 'FASTQ_SE_1'))
+        spades.add_input_files(SnakePipelineUtils.extracts_fq_input(input.IO, 'FASTQ_PE_1', drop_se=True))
+        fq_dict = SnakemakeUtils.load_object(input.IO)
+        if all([len(fq_dict.get(x, [])) > 0 for x in ('SE_FWD', 'SE_REV')]):
+            SnakemakeUtils.add_pickle_input(spades, 'FASTQ_SE_1', input.IO_SE)
         step = Step(rule, spades, camel, params.running_dir, config)
         spades.update_parameters(**params.spades_options)
         spades.update_parameters(threads=threads)

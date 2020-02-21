@@ -81,6 +81,19 @@ class TestWorkflows(unittest.TestCase):
                              kmers='55')
         self.assertGreater(wrapper.output.fasta_contigs.size, 0)
 
+    def test_assembly_workflow_stats(self) -> None:
+        """
+        Tests the assembly workflow with standard forward / reverse reads input and with stats determined.
+        :return: None
+        """
+        wrapper = AssemblyWrapper(self.running_dir)
+        wrapper.run_workflow('test_sample', TestWorkflows.input_gene_reads_raw, [], [], kmers='25,29,33', cov_cutoff=11,
+                             calculate_qc_stats=True)
+        self.assertGreater(wrapper.output.fasta_contigs.size, 0)
+        self.assertIsNotNone(wrapper.output.qc_stats)
+        self.assertIn('depth', wrapper.output.qc_stats)
+        self.assertIn('mapping', wrapper.output.qc_stats)
+
     def test_gene_detection_workflow_blast(self) -> None:
         """
         Tests the gene detection workflow using BLAST.
