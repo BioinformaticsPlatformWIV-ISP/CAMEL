@@ -16,7 +16,7 @@ class Minimap2Mapping(Tool):
         Initializes this tool
         :param camel: CAMEL instance
         """
-        super().__init__('Minimap2', '2.14', camel)
+        super().__init__('Minimap2', '2.17', camel)
 
     def _execute_tool(self) -> None:
         """
