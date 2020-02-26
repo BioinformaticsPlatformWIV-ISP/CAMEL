@@ -1,7 +1,7 @@
-import argparse
+import itertools
 import unittest
+from pathlib import Path
 
-import os
 import tempfile
 
 from camel.app.camel import Camel
@@ -16,13 +16,13 @@ class TestMlstTree(unittest.TestCase):
     running_dir = None
 
     # Input files
-    test_file_dir = os.path.join(camel.config['testing']['testfiles_dir'])
+    test_file_dir = Path(camel.config['testing']['testfiles_dir'])
     input_tabular_files = [
-        os.path.join(test_file_dir, 'mlst_tree', 'typing-cgmlst-S1.tsv'),
-        os.path.join(test_file_dir, 'mlst_tree', 'typing-cgmlst-S2.tsv'),
-        os.path.join(test_file_dir, 'mlst_tree', 'typing-cgmlst-S3.tsv'),
-        os.path.join(test_file_dir, 'mlst_tree', 'typing-cgmlst-S4.tsv'),
-        os.path.join(test_file_dir, 'mlst_tree', 'typing-cgmlst-S5.tsv')
+        test_file_dir / 'mlst_tree' / 'typing-cgmlst-S1.tsv',
+        test_file_dir / 'mlst_tree' / 'typing-cgmlst-S2.tsv',
+        test_file_dir / 'mlst_tree' / 'typing-cgmlst-S3.tsv',
+        test_file_dir / 'mlst_tree' / 'typing-cgmlst-S4.tsv',
+        test_file_dir / 'mlst_tree' / 'typing-cgmlst-S5.tsv'
     ]
 
     def setUp(self) -> None:
@@ -30,32 +30,27 @@ class TestMlstTree(unittest.TestCase):
         Sets up the resources before running the test.
         :return: None
         """
-        self.running_dir = tempfile.mkdtemp(prefix='camel_', dir=TestMlstTree.camel.config['temp_dir'])
+        self.running_dir = Path(tempfile.mkdtemp(prefix='camel_', dir=TestMlstTree.camel.config['temp_dir']))
 
     def test_tree_construction(self) -> None:
         """
         Tests the tree construction.
         :return: None
         """
-        output_file_newick = os.path.join(self.running_dir, 'my_tree.nwk')
-        output_file_tabular = os.path.join(self.running_dir, 'my_tree.tsv')
-        output_file_dist_matrix = os.path.join(self.running_dir, 'dist_matrix.txt')
-        output_file_image = os.path.join(self.running_dir, 'my_tree.png')
-        args = argparse.Namespace(
-            input_tab=[(p, os.path.basename(p)) for p in TestMlstTree.input_tabular_files],
-            input_html=None,
-            output_image=output_file_image,
-            output_tabular=output_file_tabular,
-            output_dist_matrix=output_file_dist_matrix,
-            output=output_file_newick,
-            clustering_method='upgma',
-            plot_type='clad',
-            working_dir=self.running_dir,
-            include_imperfect_hits=False
-        )
+        output_file_newick = self.running_dir / 'my_tree.nwk'
+        output_file_tabular = self.running_dir / 'my_tree.tsv'
+        output_file_dist_matrix = self.running_dir / 'dist_matrix.txt'
+        output_file_image = self.running_dir / 'my_tree.png'
+        args = [
+            '--output-image', str(output_file_image),
+            '--output-tabular', str(output_file_tabular),
+            '--output-dist-matrix', str(output_file_dist_matrix),
+            '--output', str(output_file_newick)
+        ] + list(
+            itertools.chain.from_iterable([['--input-tab', str(p), p.name] for p in TestMlstTree.input_tabular_files]))
         mlst_tree = MainMlstTree(args)
         mlst_tree.run()
-        self.assertGreater(os.path.getsize(output_file_newick), 0)
-        self.assertGreater(os.path.getsize(output_file_tabular), 0)
-        self.assertGreater(os.path.getsize(output_file_image), 0)
-        self.assertGreater(os.path.getsize(output_file_dist_matrix), 0)
+        self.assertGreater(output_file_newick.stat().st_size, 0)
+        self.assertGreater(output_file_tabular.stat().st_size, 0)
+        self.assertGreater(output_file_dist_matrix.stat().st_size, 0)
+        self.assertGreater(output_file_image.stat().st_size, 0)

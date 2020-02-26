@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import argparse
 import logging
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Sequence, Optional
 
 from Bio.Phylo.Newick import Tree
 from Bio.Phylo.TreeConstruction import DistanceMatrix
@@ -18,17 +18,18 @@ class MainMlstTree(object):
     The main class for the MLST tree tool.
     """
 
-    def __init__(self, args: argparse.Namespace = None):
+    def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """
         Initializes the main scripts.
         :param args: Command line arguments
         """
-        self._args = args if args is not None else MainMlstTree._parse_arguments()
+        self._args = MainMlstTree._parse_arguments(args)
 
     @staticmethod
-    def _parse_arguments() -> argparse.Namespace:
+    def _parse_arguments(args: Optional[Sequence[str]] = None) -> argparse.Namespace:
         """
         Parses the command line arguments.
+        :param args: (optional) arguments
         :return: Arguments
         """
         ap = argparse.ArgumentParser()
@@ -41,7 +42,7 @@ class MainMlstTree(object):
         ap.add_argument('--output-dist-matrix', type=str)
         ap.add_argument('--plot-type', default='clad', choices=['clad', 'phylo'])
         ap.add_argument('--include-imperfect-hits', action='store_true')
-        return ap.parse_args()
+        return ap.parse_args(args)
 
     def run(self) -> None:
         """
