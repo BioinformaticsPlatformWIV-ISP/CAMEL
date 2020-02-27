@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import argparse
 import logging
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Sequence
 
 import yaml
 
@@ -18,7 +18,7 @@ class MainNeisseriaPipeline(BasePipeline):
     CUSTOM_ANALYSES = ['kraken', 'resfinder', 'argannot', 'card', 'ncbi_amr', 'mlst', 'rplf', 'bast', 'pora', 'porb',
                        'feta', 'fhbp', 'resistance_genes', 'vaccine_targets', 'cgmlst', 'serogroup']
 
-    def __init__(self, args: Optional[argparse.Namespace] = None) -> None:
+    def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """
         Initializes the main class.
         :param args: Arguments (optional)
@@ -58,16 +58,17 @@ class MainNeisseriaPipeline(BasePipeline):
         return SnakePipelineUtils.generate_config_file(config_data, self._working_dir)
 
     @staticmethod
-    def _parse_arguments() -> argparse.Namespace:
+    def _parse_arguments(args: Optional[Sequence[str]] = None) -> argparse.Namespace:
         """
         Parses the command line arguments.
-        :return: Arguments
+        :param args: Command line arguments
+        :return: Parsed arguments
         """
         parser = argparse.ArgumentParser()
         BasePipeline.add_common_arguments(parser)
         for analysis_key in MainNeisseriaPipeline.CUSTOM_ANALYSES:
             parser.add_argument(f"--{analysis_key.replace('_', '-')}", action='store_true')
-        return parser.parse_args()
+        return parser.parse_args(args)
 
 
 if __name__ == '__main__':
