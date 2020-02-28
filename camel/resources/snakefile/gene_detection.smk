@@ -401,13 +401,17 @@ rule gene_detection_dump_summary_info:
         INFORMS_hits=Path(config['working_dir']) / 'gene_detection' / '{db}' / 'hit_selection' / 'selected-hits.io',
     output:
         TSV = Path(config['working_dir']) / gene_detection.OUTPUT_GENE_DETECTION_SUMMARY
-    params:
-        running_dir=os.path.join('gene_detection', '{db}', 'summary')
     run:
+        import dataclasses
         informs = SnakemakeUtils.load_object(input.INFORMS_hits)
         hit_info = []
+        blast_stats = []
         for hit in informs:
             hit_info.append(hit.value.to_table_row())
+            blast_stats.append(dataclasses.asdict(hit.value.blast_stats))
+            blast_stats[-1].pop('subject_sequence')
         with open(output[0], 'w') as handle:
             handle.write('hits_{}\t{}'.format(wildcards.db, json.dumps(hit_info)))
+            handle.write('\n')
+            handle.write('blast_stats_{}\t{}'.format(wildcards.db, json.dumps(blast_stats)))
             handle.write('\n')
