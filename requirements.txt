@@ -1,9 +1,10 @@
+wheel==0.34.2 
 beautifulsoup4==4.5.3
 biopython==1.66
 bs4==0.0.1
 Cython==0.29.5
 humanize==0.5.1
-numpy==1.13.0
+numpy==numpy 1.18.1 
 Pillow==5.4.1
 psycopg2-binary==2.7.6
 pydotplus==2.0.2
