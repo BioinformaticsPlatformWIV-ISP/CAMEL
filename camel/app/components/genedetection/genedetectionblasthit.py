@@ -43,7 +43,7 @@ class GeneDetectionBlastHit(GeneDetectionHitBase):
         Returns the names of the columns of the tabular output.
         :return: List of column names
         """
-        columns = ['Locus', '% Identity', 'HSP/Locus length', 'Contig', 'Position in contig', 'Accession']
+        columns = ['DB_cluster', 'Locus', '% Identity', 'HSP/Locus length', 'Contig', 'Position in contig', 'Accession']
         for metadata in self._metadata:
             columns.insert(-1, metadata['name'])
         return columns
@@ -54,6 +54,7 @@ class GeneDetectionBlastHit(GeneDetectionHitBase):
         :return: List of table cell values
         """
         data = [
+            self._blast_stats.subject_id.split('__')[1],
             self.locus,
             '{:.2f}'.format(self.blast_stats.percent_identity),
             f'{self.blast_stats.length_statistic}',
@@ -71,7 +72,7 @@ class GeneDetectionBlastHit(GeneDetectionHitBase):
         Returns the names of the columns of the HTML output.
         :return: List of column names
         """
-        return self.table_column_names + ['Alignment']
+        return self.table_column_names[1:] + ['Alignment']
 
     def to_html_row(self, report_section: HtmlReportSection, sub_directory: str, colored: bool = True) -> List[
             Union[str, HtmlTableCell]]:
