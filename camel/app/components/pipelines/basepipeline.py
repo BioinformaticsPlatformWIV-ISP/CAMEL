@@ -32,7 +32,7 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         self._snakefile = snakefile
         self._args = self._parse_arguments(args)
         self._working_dir = Path(self._args.working_dir)
-        self._pipeline = Pipeline(name, Camel.get_instance(), 'pipeline' if self._args.db_logging else None)
+        self._pipeline = Pipeline(name, Camel.get_instance(), self._args.log)
 
     @staticmethod
     @abc.abstractmethod
@@ -75,7 +75,7 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
             '--library', help="Adapter library that was used for the sequencing",
             choices=['nextera', 'truseq2', 'truseq3'], default='nextera')
         argument_parser.add_argument(
-            '--db-logging', action='store_true', help="If this flag is set, output is logged to database")
+            '--log', action='store_true', help="If this flag is set, config file and error logs are kept")
 
     @property
     def name(self) -> str:
@@ -157,7 +157,8 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         :param config_file: Configuration file
         :return: None
         """
-        self._pipeline.log_config_file(config_file)
+        if self._pipeline.keep_config:
+            self._pipeline.log_config_file(config_file)
         MainScriptHelper.prepare_galaxy_output(self._args.output_dir, self._args.output_html)
         try:
             SnakePipelineUtils.run_snakemake(
@@ -167,7 +168,8 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
                 shutil.copyfile(str(log_file), str(Path(self._args.output_dir) / 'camel.log'))
             logging.info("Pipeline finished successfully")
         except SnakemakeExecutionError as err:
-            self._pipeline.log_error_to_file(err)
+            if self._pipeline.keep_error_log:
+                self._pipeline.log_error_to_file(err)
 
     def get_template_data(self, input_key: str, input_data: [List[Dict[str, str]]]) -> Dict[str, Any]:
         """
@@ -191,7 +193,4 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
             'detection_method': self._args.detection_method,
             'read_trimming': {'export_fastq': self._args.report_include_fastq}
         }
-        if self._pipeline.is_logged:
-            template_data['logging_level'] = self._pipeline.logging_level
-            template_data['pipeline_job_id'] = self._pipeline.job_id
         return template_data

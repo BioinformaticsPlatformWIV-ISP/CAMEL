@@ -50,11 +50,11 @@ class MainNeisseriaPipeline(BasePipeline):
         config_data = self.get_template_data('fastq_pe', input_files)
         config_data['analyses'] = [key for key in MainNeisseriaPipeline.CUSTOM_ANALYSES if vars(self._args)[key]]
         with open(CONFIG_DATA) as handle_in:
-            config_data.update(yaml.load(handle_in.read().format(
+            config_data.update(yaml.safe_load(handle_in.read().format(
                 qc_typing_scheme='cgmlst' if self._args.cgmlst else 'mlst',
                 export_fastq='true' if self._args.report_include_fastq else 'false',
                 export_bam='true' if self._args.report_include_bam else 'false'
-            ), Loader=yaml.SafeLoader))
+            )))
         return SnakePipelineUtils.generate_config_file(config_data, self._working_dir)
 
     @staticmethod

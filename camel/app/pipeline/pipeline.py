@@ -1,15 +1,14 @@
 import gzip
 import logging
 from itertools import chain
+from pathlib import Path
 from typing import Optional
 
-import os
 import shutil
 
 from camel.app.camel import Camel
 from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.error.snakemakeexecutionerror import SnakemakeExecutionError
-from camel.app.services.pipelineservice import PipelineService
 
 
 class Pipeline(object):
@@ -17,33 +16,21 @@ class Pipeline(object):
     Class meant to handle the workflow of steps.
     """
 
-    def __init__(self, name: str, camel: Camel, logging_level: str = None, job_id: int = None) -> None:
+    def __init__(self, name: str, camel: Camel, keep_config: bool = False, keep_error_log: bool = False) -> None:
         """
         Initializes a pipeline.
+        :param name: Pipeline name
         :param camel: CAMEL instance
-        :param logging_level: Logging level ('step', 'pipeline' or None)
+        :param keep_config: If True, pipeline config is saved on disk
+        :param keep_error_log: If True, log is saved in case of error
         """
         self._camel = camel
         self._name = name
         self._initial_input = None
         self._job_id = None
-        if not self.is_valid_logging_level(logging_level):
-            raise ValueError(f"Logging level '{logging_level}' is not a valid logging level!")
-        self._logging_level = logging_level
-        if self.is_logged:
-            self._pipeline_service = PipelineService(self._name, camel.connection)
-            self._job_id = self._pipeline_service.insert_pipeline_job() if job_id is None else job_id
-        else:
-            self._pipeline_service = None
-        logging.info("Created pipeline '{}' - logging level: '{}'".format(self._name, self._logging_level))
-
-    @property
-    def job_id(self) -> Optional[int]:
-        """
-        Returns the job id of this pipeline.
-        :return: Job id
-        """
-        return self._job_id
+        self._keep_config = keep_config
+        self._keep_error_log = keep_error_log
+        logging.info(f"Initialized pipeline '{self._name}'")
 
     @property
     def name(self) -> str:
@@ -54,37 +41,20 @@ class Pipeline(object):
         return self._name
 
     @property
-    def pipeline_service(self) -> Optional[PipelineService]:
+    def keep_config(self) -> bool:
         """
-        Returns the pipeline service
-        :return: Pipeline service
+        Returns True if the config file needs to be kept, False otherwise.
+        :return: True if config is kept
         """
-        return self._pipeline_service
+        return self._keep_config
 
     @property
-    def logging_level(self) -> str:
+    def keep_error_log(self) -> bool:
         """
-        Returns the logging level of this pipeline.
-        :return: Logging level
+        Returns True if the error log needs to be kept.
+        :return: True if error log is kept
         """
-        return self._logging_level
-
-    @property
-    def is_logged(self) -> bool:
-        """
-        Returns True if the pipeline should be logged ('step' or 'pipeline' level)
-        :return: True if the pipeline is logged
-        """
-        return self._logging_level in ('pipeline', 'step')
-
-    @staticmethod
-    def is_valid_logging_level(logging_level: str) -> bool:
-        """
-        Checks whether the given logging level is valid
-        :param logging_level: Logging level to be checked
-        :return: True if the level is allowed
-        """
-        return logging_level in ('pipeline', 'step', None)
+        return self._keep_error_log
 
     def set_initial_input(self, files: dict) -> None:
         """
@@ -93,8 +63,7 @@ class Pipeline(object):
         :return: None
         """
         self._initial_input = files
-        if self.is_logged:
-            self._log_initial_input()
+        self._log_initial_input()
 
     def get_initial_input(self, key: str = None) -> list:
         """
@@ -112,11 +81,10 @@ class Pipeline(object):
         :return: None
         """
         for key, files in self._initial_input.items():
-            for i, file_ in enumerate(files):
-                if not file_.is_logged:
+            for index, io in enumerate(files):
+                if not io.is_logged:
                     continue
-                self._pipeline_service.log_initial_input(self._job_id, file_.type_name, key, i, file_.hash)
-                logging.debug('Initial input {} ({}) logged'.format(key, i))
+                logging.info(f"Pipeline input log: type={io.type_name} key={key} index={index} hash={io.hash}")
 
     def log_config_file(self, config_file: str, galaxy_job_id: Optional[str] = None) -> None:
         """
@@ -125,15 +93,11 @@ class Pipeline(object):
         :param config_file: Config file to export
         :return: None
         """
-        if self.is_logged is False:
-            logging.info("Logging disabled, config file not exported")
-            return
-        export_path = os.path.join(Camel.get_instance().config['config_dump_dir'], '{}.yml.gz'.format('_'.join([
+        export_path = Path(Camel.get_instance().config['config_dump_dir']) / '{}.yml.gz'.format('_'.join([
+            FileSystemHelper.make_valid(self.name),
             FileSystemHelper.get_timestamp_str(),
             galaxy_job_id if galaxy_job_id is not None else 'NA',
-            str(self.job_id) if self.job_id is not None else 'NA',
-            FileSystemHelper.make_valid(self.name)
-        ])))
+        ]))
         with gzip.open(export_path, 'wb') as file_out, open(config_file, 'rb') as file_in:
             shutil.copyfileobj(file_in, file_out)
         logging.info(f"Config file exported to '{export_path}'")
@@ -144,17 +108,13 @@ class Pipeline(object):
         :param error: Error raised by Snakemake
         :return: None
         """
-        if self.is_logged is False:
-            logging.info("Logging disabled, error log not exported")
-            output_logfile = 'NA (logging to file is disabled)'
-        else:
-            logging.debug("Dumping error log")
-            output_logfile = os.path.join(Camel.get_instance().config['error_log_dir'], 'error-{}-{}.txt'.format(
-                FileSystemHelper.make_valid(self.name).lower(), FileSystemHelper.get_timestamp_str()))
-            with open(output_logfile, 'w') as handle_in:
-                handle_in.write('Stdout:\n')
-                handle_in.write(error.stdout)
-                handle_in.write('-' * 10 + '\n')
-                handle_in.write('Stderr:\n')
-                handle_in.write(error.stderr)
+        logging.debug("Dumping error log")
+        output_logfile = Path(Camel.get_instance().config['error_log_dir']) / 'error-{}-{}.txt'.format(
+            FileSystemHelper.make_valid(self.name).lower(), FileSystemHelper.get_timestamp_str())
+        with open(output_logfile, 'w') as handle_in:
+            handle_in.write('Stdout:\n')
+            handle_in.write(error.stdout)
+            handle_in.write('-' * 10 + '\n')
+            handle_in.write('Stderr:\n')
+            handle_in.write(error.stderr)
         raise RuntimeError(f"Error executing Snakemake. Check log for more information: {output_logfile}")
