@@ -18,7 +18,6 @@ class YAMLToolService(BaseToolService):
         :param tool_data_path: Path with the tool data
         :return: None
         """
-        super().__init__(None)
         with open(tool_data_path) as handle:
             self._tool_data = yaml.safe_load(handle)
 

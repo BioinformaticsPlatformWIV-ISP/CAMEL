@@ -8,11 +8,7 @@ galaxy:
 config_dump_dir: /data/logging/snakemake
 error_log_dir: /data/logging/error_logs
 
-# There are two options to retrieve default tool parameters and dependencies:
-# - db (default): Retrieves tool parameters, dependencies, tool_command, tool_id, etc from the database configured in
-#                 db.yml.
-# - yaml:         Retrieves tool parameters, dependencies, tool_command from the YAML files listed in the tool_data
-#                 directory.
+# Parameters are retrieved from Yaml files with the same name as the tool (can be omitted from config).
 tool_service: yaml
 
 testing:

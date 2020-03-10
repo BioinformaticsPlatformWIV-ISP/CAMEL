@@ -7,7 +7,6 @@ import os
 
 from camel.app.camel import Camel
 from camel.app.command.command import Command
-from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.invalidparametererror import InvalidParameterError
 from camel.app.error.toolexecutionerror import ToolExecutionError
@@ -16,7 +15,6 @@ from camel.app.io.tooliodirectory import ToolIODirectory
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.services.basetoolservice import BaseToolService
-from camel.app.services.dbtoolservice import DbToolService
 from camel.app.services.yamltoolservice import YAMLToolService
 
 
@@ -37,7 +35,7 @@ class Tool(object, metaclass=abc.ABCMeta):
         self._informs = {'_name': self.name, '_version': self._version}
         self._input_informs = {}
         self._camel = camel
-        self._tool_service = self.get_tool_service(name, version)
+        self._tool_service = self.get_tool_service()
         self._tool_command = self._tool_service.get_tool_command()
         self._dependencies = self._tool_service.get_dependencies()
         self._parameters = self._tool_service.get_default_parameters()
@@ -207,11 +205,9 @@ class Tool(object, metaclass=abc.ABCMeta):
             raise ValueError("No output file with key '{}' found".format(key))
         return self._tool_outputs[key]
 
-    def get_tool_data_path(self, tool_name: str, tool_version: str) -> str:
+    def get_tool_data_path(self) -> str:
         """
         Returns the path of the tool data for the tool with the given name and version.
-        :param tool_name: Tool name
-        :param tool_version: Tool version
         :return: Path
         """
         yaml_path = inspect.getfile(self.__class__).replace('.py', '.yml')
@@ -219,7 +215,7 @@ class Tool(object, metaclass=abc.ABCMeta):
             raise FileNotFoundError(f"Tool data file for '{self.name}' not found ({yaml_path})")
         return yaml_path
 
-    def get_tool_service(self, tool_name: str, tool_version: str) -> BaseToolService:
+    def get_tool_service(self) -> BaseToolService:
         """
         Returns the tool service for the tool with the given name and version.
         :return: Tool service
@@ -227,10 +223,9 @@ class Tool(object, metaclass=abc.ABCMeta):
         source = self._camel.config.get('tool_service', 'yaml')
         logging.debug(f'Retrieving tool service. Source = {source}')
         if source == 'db':
-            logging.error("Parameter loading from database is deprecated.")
-            return DbToolService(tool_name, tool_version, self._camel.connection)
+            raise DeprecationWarning("Parameter loading from database is deprecated.")
         elif source == 'yaml':
-            tool_data_path = self.get_tool_data_path(tool_name, tool_version)
+            tool_data_path = self.get_tool_data_path()
             if not os.path.isfile(tool_data_path):
                 raise FileNotFoundError('Tool data file not found: {}'.format(os.path.basename(tool_data_path)))
             return YAMLToolService(tool_data_path)

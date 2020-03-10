@@ -2,23 +2,13 @@ from typing import Optional, List, Dict
 
 import abc
 
-from camel.app.connection.connection import Connection
 from camel.app.parameter.parameter import Parameter
-from camel.app.services.service import Service
 
 
-class BaseToolService(Service, metaclass=abc.ABCMeta):
+class BaseToolService(object, metaclass=abc.ABCMeta):
     """
     This is the base class for the tool service.
     """
-
-    def __init__(self, connection: Optional[Connection]) -> None:
-        """
-        Initializes the base tool service.
-        :param connection: Connection to the database
-        :return: None
-        """
-        super().__init__(connection)
 
     @property
     @abc.abstractmethod

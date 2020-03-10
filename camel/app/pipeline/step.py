@@ -1,13 +1,37 @@
+import json
 import logging
-from typing import Dict, List, Union
+from dataclasses import dataclass
+from typing import Dict, List, Union, Optional
 
 from snakemake.io import Wildcards
 
 from camel.app.camel import Camel
 from camel.app.io.toolio import ToolIO
 from camel.app.loggers.logmanager import LogManager
-from camel.app.services.stepservice import StepService, StepOutput
 from camel.app.tools.tool import Tool
+
+
+@dataclass(frozen=True)
+class StepOutput:
+    """
+    This class is used to keep an output of a step.
+    """
+    rule_name: str
+    type: str
+    key: str
+    index: int
+    hash: str
+    wildcards: Optional[Wildcards] = None
+
+    @property
+    def wildcards_json(self) -> Union[None, str]:
+        """
+        Returns the wildcards as a JSON string.
+        :return: Wildcards as string
+        """
+        if self.wildcards is None:
+            return None
+        return json.dumps({k: v for k, v in self.wildcards.items()})
 
 
 class Step(object):
@@ -16,8 +40,8 @@ class Step(object):
     """
 
     def __init__(self, rule_name: str, tool: Tool, camel: Camel, folder: str, config: dict,
-                 wildcards: Wildcards = None, pipeline_output: bool = False, log_step: Union[bool, None] = None,
-                 log_keys: List[str] = None) -> None:
+                 wildcards: Wildcards = None, pipeline_output: bool = False, keys_log: Optional[List[str]] = None,
+                 keys_no_log: Optional[List[str]] = None) -> None:
         """
         Initializes a step.
         :param rule_name: Name of the snakerule
@@ -27,9 +51,9 @@ class Step(object):
         :param config: Snakemake config dictionary
         :param wildcards: Wildcards object from snakemake
         :param pipeline_output: Boolean to indicate whether outputs are pipeline outputs
-        :param log_step: Boolean to indicate whether outputs for this step have to be logged (overrides logging level
-            'step' if False)
-        :param log_keys: List of keys from the output that need to be logged
+        :param keys_log: The output keys that should be logged (has preference over 'keys_no_log', by default all keys
+            are logged
+        :param keys_no_log: The output keys that should not be logged (by default all keys are logged)
         """
         self._name = rule_name
         self._tool = tool
@@ -38,13 +62,11 @@ class Step(object):
         self._camel = camel
         self._pipeline_options = {}
         self._job_options = {}
-        self._db_logging = Step.step_is_logged(config.get('logging_level'), log_step, pipeline_output)
-        self._step_service = StepService(camel.connection)
         self._folder = folder
-        self._job_id = config['pipeline_job_id'] if self._db_logging else None
         self._pipeline_output = pipeline_output
         self._wildcards = wildcards
-        self._log_keys = log_keys
+        self._keys_log = keys_log
+        self._keys_no_log = keys_no_log
 
     @property
     def name(self) -> str:
@@ -87,14 +109,6 @@ class Step(object):
         self._input_informs = dict_
         logging.info("Inform added: {}".format(dict_))
 
-    def add_job_options(self, options: dict) -> None:
-        """
-        Adds job options to the step, job options can override pipeline options.
-        :param options: Job options
-        :return: None
-        """
-        self._job_options.update(options)
-
     def _add_job_parameters(self) -> None:
         """
         Adds the job parameters.
@@ -117,8 +131,7 @@ class Step(object):
         self._tool.run(self._folder)
         logging.info('Step output: {}'.format(list(self.outputs.items())))
         logging.info('Step informs: {}'.format(list(self.informs.items())))
-        if self._db_logging:
-            self._log_outputs()
+        self._log_outputs()
         LogManager.detach_step_handlers()
 
     def _log_outputs(self) -> None:
@@ -129,43 +142,23 @@ class Step(object):
         logging.info(f"Logging output for step '{self.name}'")
         for key, io_list in self.outputs.items():
             if not self._key_is_logged(key):
+                logging.debug(f"Not logging output key: {key}")
                 continue
             for index, io_out in enumerate(io_list):
                 if not io_out.is_logged:
                     continue
-                step_output = StepOutput(
-                    self._job_id, self._name, io_out.type_name, key, index, io_out.hash, self._wildcards)
-                logging.debug('Step output data: {}'.format(step_output))
-                self._step_service.log_output(step_output)
-                logging.debug('Output {} ({}) logged'.format(key, index))
+                step_output = StepOutput(self._name, io_out.type_name, key, index, io_out.hash, self._wildcards)
+                logging.info('Output log: {}'.format(step_output))
 
-    def _key_is_logged(self, key) -> bool:
+    def _key_is_logged(self, key: str) -> bool:
         """
         Checks whether the files with the given output key need to be logged.
         :param key: Output key to check
         :return: True/False
         """
-        return True if self._log_keys is None else key in self._log_keys
-
-    @staticmethod
-    def step_is_logged(logging_level: str, log_step: Union[bool, None], pipeline_output: bool) -> bool:
-        """
-        This helper function is used to check whether a step should be logged depending on the logging level set in the
-        config and the variables passed to the step object.
-        :param logging_level: Logging level as defined in the config
-        :param log_step: Boolean to indicate if this step should be logged (None for default behaviour)
-        :param pipeline_output: True if this step is a pipeline output
-        :return: True if the step should be logged, False otherwise.
-        """
-        if logging_level == 'step':
-            if log_step is None or log_step is True:
-                return True
-            else:
-                return False
-        elif logging_level == 'pipeline':
-            if log_step is True or pipeline_output is True:
-                return True
-            else:
-                return False
+        if (self._keys_log is None) and (self._keys_no_log is None):
+            return True
+        elif self._keys_log is not None:
+            return key in self._keys_log
         else:
-            return False
+            return key not in self._keys_no_log
