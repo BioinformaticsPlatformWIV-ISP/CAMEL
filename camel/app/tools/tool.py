@@ -224,9 +224,10 @@ class Tool(object, metaclass=abc.ABCMeta):
         Returns the tool service for the tool with the given name and version.
         :return: Tool service
         """
-        source = self._camel.config.get('tool_service', 'db')
+        source = self._camel.config.get('tool_service', 'yaml')
         logging.debug(f'Retrieving tool service. Source = {source}')
         if source == 'db':
+            logging.error("Parameter loading from database is deprecated.")
             return DbToolService(tool_name, tool_version, self._camel.connection)
         elif source == 'yaml':
             tool_data_path = self.get_tool_data_path(tool_name, tool_version)

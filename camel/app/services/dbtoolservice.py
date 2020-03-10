@@ -6,6 +6,7 @@ from camel.app.parameter.parameter import Parameter
 from camel.app.services.basetoolservice import BaseToolService
 
 
+@DeprecationWarning
 class DbToolService(BaseToolService):
     """
     This class will perform operations on the DB regarding tools (retrieve tool parameters, info, etc).

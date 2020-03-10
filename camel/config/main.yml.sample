@@ -13,7 +13,7 @@ error_log_dir: /data/logging/error_logs
 #                 db.yml.
 # - yaml:         Retrieves tool parameters, dependencies, tool_command from the YAML files listed in the tool_data
 #                 directory.
-tool_service: db
+tool_service: yaml
 
 testing:
   testfiles_dir: /data/camel/testdata/
