@@ -44,6 +44,17 @@ rule select_fastq:
         "cp {input.FASTQ_PE} {output.IO_FASTQ};"
 
 
+rule select_fasta:
+    """
+    This rules links the output of the assembly workflow to the other workflows. 
+    """
+    input:
+        FASTA = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA
+    output:
+        FASTA = Path(config['working_dir']) / gene_detection.INPUT_GENE_DETECTION_FASTA
+    shell:
+        "cp {input.FASTA} {output.FASTA};"
+
 rule init_summary:
     """
     Initializes the summary output file.
