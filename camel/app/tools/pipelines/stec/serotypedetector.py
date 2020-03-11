@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import List
 
+import pandas as pd
+
 from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliovalue import ToolIOValue
@@ -47,18 +49,14 @@ class SerotypeDetectorEcoli(Tool):
         self._tool_outputs['VAL_serotype'] = [ToolIOValue('{}:{}'.format(o_type, h_type))]
 
     @staticmethod
-    def __parse_hits(path) -> List[SerotypeHit]:
+    def __parse_hits(path: str) -> List[SerotypeHit]:
         """
         Parses the hits from a tabular gene detection output file.
         :param path: Path
         :return: List of hits
         """
-        detected_genes = []
-        with open(path) as handle:
-            for line in handle.readlines()[1:]:
-                parts = line.split('\t')
-                detected_genes.append(SerotypeHit(parts[0], parts[-2]))
-        return detected_genes
+        data_hits = pd.read_table(path)
+        return [SerotypeHit(gene, type_) for gene, type_ in zip(data_hits['Locus'], data_hits['Predicted serotype'])]
 
     def __get_h_type(self) -> str:
         """
