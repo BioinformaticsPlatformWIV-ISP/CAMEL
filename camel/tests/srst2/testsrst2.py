@@ -5,8 +5,11 @@ import os
 import tempfile
 
 from camel.app.camel import Camel
+from camel.app.command.command import Command
+from camel.app.tools.srst2.srst2gene import Srst2Gene
 from camel.scripts.srst2.mainsrst2gene import MainSrst2Gene
 from camel.scripts.srst2.mainsrst2mlst import MainSrst2Mlst
+from camel.tests import longRunningTest
 
 
 class TestSRST2(unittest.TestCase):
@@ -30,6 +33,17 @@ class TestSRST2(unittest.TestCase):
         :return: None
         """
         self.running_dir = tempfile.mkdtemp(prefix='camel_', dir=TestSRST2.camel.config['temp_dir'])
+
+    def test_dependencies(self) -> None:
+        """
+        Tests if the tool dependencies are available.
+        :return: None
+        """
+        srst2 = Srst2Gene(Camel.get_instance())
+        for dependency in srst2.dependencies:
+            command = Command(f'module load {dependency};')
+            command.run_command(self.running_dir)
+            self.assertEqual(command.returncode, 0, f"Dependency '{dependency}' cannot be loaded")
 
     def test_pe_gene_detection(self) -> None:
         """
@@ -74,6 +88,7 @@ class TestSRST2(unittest.TestCase):
         srst2_gene.run()
         self.assertGreater(os.path.getsize(output_file), 0)
 
+    @longRunningTest()
     def test_se_typing(self) -> None:
         """
         Tests typing using SE input.
@@ -95,6 +110,7 @@ class TestSRST2(unittest.TestCase):
         srst2_mlst.run()
         self.assertGreater(os.path.getsize(output_file), 0)
 
+    @longRunningTest()
     def test_pe_typing(self) -> None:
         """
         Tests typing using PE input without profiles

@@ -8,6 +8,7 @@ import tempfile
 from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
 from camel.scripts.pointfinder.mainpointfinder import MainPointFinder
+from camel.tests import longRunningTest
 
 
 class TestPointFinder(unittest.TestCase):
@@ -74,6 +75,7 @@ class TestPointFinder(unittest.TestCase):
         main.run()
         self.assertGreater(os.path.getsize(output_file_report), 0)
 
+    @longRunningTest()
     def test_pointfinder_fastq_input(self) -> None:
         """
         Tests the PointFinder main script with FASTQ input.

@@ -1,5 +1,6 @@
 import argparse
 import unittest
+from pathlib import Path
 
 import os
 import tempfile
@@ -33,28 +34,22 @@ class TestSequenceTyping(unittest.TestCase):
         Sets up the resources before running the test.
         :return: None
         """
-        self.running_dir = tempfile.mkdtemp(None, 'camel_', TestSequenceTyping.camel.config['temp_dir'])
+        self.running_dir = Path(tempfile.mkdtemp(None, 'camel_', TestSequenceTyping.camel.config['temp_dir']))
 
     def test_typing_blast_nucl(self) -> None:
         """
         Tests sequence typing using BLAST with a nucleotide scheme (including ST definitions).
         :return: None
         """
-        output_file_report = os.path.join(self.running_dir, 'report', 'report.html')
-        args = argparse.Namespace(
-            sample_name=None,
-            fasta=self.input_fasta.path,
-            fasta_name=os.path.basename(self.input_fasta.path),
-            fastq_pe=None,
-            fastq_pe_names=None,
-            scheme_dir=self.input_db_nucl,
-            output_html=output_file_report,
-            output_dir=os.path.dirname(output_file_report),
-            trim_reads=True,
-            working_dir=self.running_dir,
-            detection_method='blast',
-            threads=8
-        )
+        output_file_report = Path(self.running_dir) / 'report' / 'report.html'
+        args = [
+            '--fasta', self.input_fasta.path,
+            '--scheme-dir', self.input_db_nucl,
+            '--output-html', str(output_file_report),
+            '--output-dir', str(output_file_report.parent),
+            '--working-dir', str(self.running_dir),
+            '--threads', '8'
+        ]
         main = MainSequenceTyping(args)
         main.run()
         self.assertGreater(os.path.getsize(output_file_report), 0)

@@ -9,6 +9,7 @@ from camel.app.components.workflows.genedetectionwrapper import GeneDetectionWra
 from camel.app.components.workflows.readtrimmingwrapper import ReadTrimmingWrapper
 from camel.app.components.workflows.sequencetypingwrapper import SequenceTypingWrapper, SequenceTypingInput
 from camel.app.io.tooliofile import ToolIOFile
+from camel.tests import longRunningTest
 
 
 class TestWorkflows(unittest.TestCase):
@@ -163,6 +164,7 @@ class TestWorkflows(unittest.TestCase):
         wrapper.run_workflow_blast(workflow_input, 8)
         self.assertGreater(len(wrapper.output.report_section.to_html()), 0)
 
+    @longRunningTest()
     def test_typing_workflow_blast_mixed(self) -> None:
         """
         Tests the sequence typing workflow using BLAST+ with a mixed scheme.
@@ -178,6 +180,7 @@ class TestWorkflows(unittest.TestCase):
         wrapper.run_workflow_blast(workflow_input, 8)
         self.assertGreater(len(wrapper.output.report_section.to_html()), 0)
 
+    @longRunningTest()
     def test_typing_workflow_srst2(self) -> None:
         """
         Tests the sequence typing workflow using SRST2.
@@ -192,6 +195,7 @@ class TestWorkflows(unittest.TestCase):
         wrapper.run_workflow_srst2(workflow_input, {'max_unaligned_overlap': 100}, 8)
         self.assertGreater(len(wrapper.output.report_section.to_html()), 0)
 
+    @longRunningTest()
     def test_typing_workflow_srst2_mixed(self) -> None:
         """
         Tests the sequence typing workflow using SRST2 with a mixed scheme (protein and DNA loci).
