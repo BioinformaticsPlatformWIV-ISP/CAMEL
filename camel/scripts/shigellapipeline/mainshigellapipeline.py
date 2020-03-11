@@ -53,7 +53,8 @@ class MainShigellaPipeline(BasePipeline):
             config_data.update(yaml.safe_load(handle_in.read().format(
                 qc_typing_scheme='cgmlst' if self._args.cgmlst else 'mlst_warwick',
                 export_fastq='true' if self._args.report_include_fastq else 'false',
-                export_bam='true' if self._args.report_include_bam else 'false'
+                export_bam='true' if self._args.report_include_bam else 'false',
+                variant_filtering={}
             )))
         return SnakePipelineUtils.generate_config_file(config_data, self._working_dir)
 

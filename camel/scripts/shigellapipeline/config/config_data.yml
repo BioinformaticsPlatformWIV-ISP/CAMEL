@@ -2,7 +2,7 @@
 # Tool specific options #
 #########################
 read_trimming:
-  export_fastq: '{export_fastq}'
+  export_fastq: {export_fastq}
 
 contamination_check:
   db: /db/kraken/latest/abfhpv_lite/
@@ -14,13 +14,13 @@ quality_checks:
 
 variant_calling:
   ploidy: 1
-  eport_bam: '{export_bam}'
+  eport_bam: {export_bam}
   reference:
     path: /db/refgenomes/Escherichia_coli/NC_002695.2.fasta
     name: <i>Escherichia coli</i> O157:H7 (NC_002695.2)
     url: https://www.ncbi.nlm.nih.gov/nuccore/NC_002695.2
 
-variant_filtering: {}
+variant_filtering: {variant_filtering}
 
 assembly:
   spades:
