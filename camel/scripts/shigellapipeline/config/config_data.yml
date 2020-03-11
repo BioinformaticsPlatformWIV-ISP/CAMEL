@@ -20,7 +20,7 @@ variant_calling:
     name: <i>Escherichia coli</i> O157:H7 (NC_002695.2)
     url: https://www.ncbi.nlm.nih.gov/nuccore/NC_002695.2
 
-variant_filtering: {{}}
+variant_filtering: {}
 
 assembly:
   spades:

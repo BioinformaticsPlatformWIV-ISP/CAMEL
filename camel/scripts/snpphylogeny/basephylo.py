@@ -1,7 +1,7 @@
 import argparse
 import logging
 from pathlib import Path
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Sequence
 
 import abc
 
@@ -16,14 +16,14 @@ class BasePhylo(object, metaclass=abc.ABCMeta):
     Base class for the SNP phylogeny pipelines.
     """
 
-    def __init__(self, pipeline_name: str, args: Optional[argparse.Namespace]) -> None:
+    def __init__(self, pipeline_name: str, args: Optional[Sequence[str]] = None) -> None:
         """
         Initializes the base class.
         :param pipeline_name: Pipeline name (e.g. 'Samtools')
         :param args: Command line arguments
         """
         self._pipeline_name = pipeline_name
-        self._args = args if args is not None else self._parse_arguments()
+        self._args = self._parse_arguments(args)
         self._samples = self.__extract_samples()
         self._report = SnpPhylogenyUtils.initialize_report(self._pipeline_name, self._args)
         self._informs = []
@@ -38,7 +38,7 @@ class BasePhylo(object, metaclass=abc.ABCMeta):
 
     @staticmethod
     @abc.abstractmethod
-    def _parse_arguments() -> argparse.Namespace:
+    def _parse_arguments(args: Optional[Sequence[str]] = None) -> argparse.Namespace:
         """
         Parses the command line arguments.
         :return: Parsed arguments

@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 import argparse
 import logging
-from typing import Tuple, Any, List, Dict, Optional
+from typing import Tuple, Any, List, Dict, Optional, Sequence
 
-import os
 import yaml
 
 from camel.app.components.pipelines.basepipeline import BasePipeline
@@ -19,7 +18,7 @@ class MainShigellaPipeline(BasePipeline):
     CUSTOM_ANALYSES = ['kraken', 'resfinder', 'argannot', 'card', 'ncbi_amr', 'mlst_pasteur', 'mlst_warwick', 'cgmlst',
                        'pointfinder', 'plasmidfinder', 'virulencefinder', 'identification']
 
-    def __init__(self, args: Optional[argparse.Namespace] = None) -> None:
+    def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """
         Initializes the main class.
         :param args: Arguments (optional)
@@ -69,7 +68,7 @@ class MainShigellaPipeline(BasePipeline):
             self._args.fastq_pe_names, fq_files)]
 
     @staticmethod
-    def _parse_arguments() -> argparse.Namespace:
+    def _parse_arguments(args: Optional[Sequence[str]] = None) -> argparse.Namespace:
         """
         Parses the command line arguments.
         :return: Arguments
@@ -78,7 +77,7 @@ class MainShigellaPipeline(BasePipeline):
         BasePipeline.add_common_arguments(parser)
         for analysis_key in MainShigellaPipeline.CUSTOM_ANALYSES:
             parser.add_argument(f"--{analysis_key.replace('_', '-')}", action='store_true')
-        return parser.parse_args()
+        return parser.parse_args(args)
 
 
 if __name__ == '__main__':

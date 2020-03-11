@@ -2,7 +2,7 @@
 import argparse
 import logging
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Sequence
 
 import os
 
@@ -48,7 +48,7 @@ class MainSamtoolsPhylo(BasePhylo):
             'y_multiplier': {'title': 'Y-multiplier', 'arg': lambda args: args.y_mult}}
     }
 
-    def __init__(self, args: Optional[argparse.Namespace] = None):
+    def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """
         Initializes the main script.
         :param args: Main script arguments (optional))
@@ -92,7 +92,7 @@ class MainSamtoolsPhylo(BasePhylo):
         self._report.save()
 
     @staticmethod
-    def _parse_arguments() -> argparse.Namespace:
+    def _parse_arguments(args: Optional[Sequence[str]] = None) -> argparse.Namespace:
         """
         Parses the command line arguments.
         :return: Parsed arguments
@@ -112,7 +112,7 @@ class MainSamtoolsPhylo(BasePhylo):
         argument_parser.add_argument('--y-mult', default=10, type=float)
         argument_parser.add_argument('--include-ref', action='store_true')
         argument_parser.add_argument('--report-include-bam', action='store_true')
-        return argument_parser.parse_args()
+        return argument_parser.parse_args(args)
 
     def __prepare_reference(self) -> str:
         """

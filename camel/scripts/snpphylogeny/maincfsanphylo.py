@@ -3,7 +3,7 @@ import argparse
 import itertools
 import logging
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, Sequence
 
 from camel.app.camel import Camel
 from camel.app.components.phylogeny.snpphylogenyutils import SnpPhylogenyUtils
@@ -19,7 +19,7 @@ class MainCfsanPhylo(BasePhylo):
     This class is used as the main script for the CFSAN SNP phylogeny.
     """
 
-    def __init__(self, args: Optional[argparse.Namespace] = None):
+    def __init__(self, args: Optional[Sequence[str]] = None):
         """
         Initializes the main script.
         :param args: Main script arguments (optional))
@@ -56,23 +56,26 @@ class MainCfsanPhylo(BasePhylo):
         self._report.save()
 
     @staticmethod
-    def _parse_arguments() -> argparse.Namespace:
+    def _parse_arguments(args: Optional[Sequence[str]] = None) -> argparse.Namespace:
         """
         Parses the command line arguments.
+        :param args: Arguments
         :return: Parsed arguments
         """
         argument_parser = argparse.ArgumentParser()
         SnpPhylogenyUtils.add_common_arguments(argument_parser)
         argument_parser.add_argument('--selected-matrix', choices=['preserved', 'regular'])
         argument_parser.add_argument('--report-include-bam', action='store_true')
-        return argument_parser.parse_args()
+        return argument_parser.parse_args(args)
 
     def __prepare_reference(self) -> str:
         """
         Prepares the reference genome.
         :return: Path to reference genome.
         """
-        reference_path = Path(self._args.working_dir) / self._args.reference_name
+        reference_name = self._args.reference_name if self._args.reference_name is not None else \
+            Path(self._args.reference).name
+        reference_path = Path(self._args.working_dir) / reference_name
         if not reference_path.exists():
             reference_path.symlink_to(self._args.reference)
         return reference_path
