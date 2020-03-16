@@ -1,38 +1,27 @@
 from pathlib import Path
 
 import os
-import tempfile
 import unittest
 
-from camel.app.camel import Camel
+from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.bcftools.bcftoolscsq import BcftoolsCsq
 from camel.app.tools.bcftools.bcftoolsfilter import BcftoolsFilter
 
 
-class TestBcftools(unittest.TestCase):
+class TestBcftools(CamelTestSuite):
     """
     Tests the bcftools tool suite.
     """
 
-    camel = Camel()
-    running_dir = None
+    test_file_dir = CamelTestSuite.get_test_file_dir('bcftools')
+    FILE_VCF_GZ = ToolIOFile(str(test_file_dir / 'variants.vcf.gz'))
+    FILE_BED = ToolIOFile(str(test_file_dir / 'regions.bed'))
+    FILE_FASTA = ToolIOFile(str(test_file_dir / 'reference_h37Rv.fasta'))
+    FILE_GFF = ToolIOFile(str(test_file_dir / 'annotation_h37Rv.gff'))
 
-    test_file_dir = Path(camel.config['testing']['testfiles_dir']) / 'bcftools'
-    FILE_VCF_GZ = ToolIOFile(Path(test_file_dir) / 'variants.vcf.gz')
-    FILE_BED = ToolIOFile(Path(test_file_dir) / 'regions.bed')
-    FILE_FASTA = ToolIOFile(Path(test_file_dir) / 'reference_h37Rv.fasta')
-    FILE_GFF = ToolIOFile(Path(test_file_dir) / 'annotation_h37Rv.gff')
-
-    def setUp(self):
-        """
-        Sets up the resources before running the test.
-        :return: None
-        """
-        self.running_dir = tempfile.mkdtemp(None, 'camel_', TestBcftools.camel.config['temp_dir'])
-
-    def test_bcftools_csq(self):
+    def test_bcftools_csq(self) -> None:
         """
         Tests bcftools csq.
         :return: None
