@@ -5,30 +5,21 @@ import os
 import tempfile
 
 from camel.app.camel import Camel
+from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.minimap2.minimap2mapping import Minimap2Mapping
 
 
-class TestMinimap2(unittest.TestCase):
+class TestMinimap2(CamelTestSuite):
     """
     Tests the minimap2 tool.
     """
 
-    camel = Camel()
-    running_dir = None
+    test_file_dir = CamelTestSuite.get_test_file_dir('minion')
+    FILE_REF_GENOME = ToolIOFile(str(test_file_dir / 'NC_002695.2.fasta'))
+    FILE_FASTQ = ToolIOFile(str(test_file_dir / 'fastq_minion_stec.fastq'))
 
-    test_file_dir = Path(camel.config['testing']['testfiles_dir']) / 'minion'
-    FILE_REF_GENOME = ToolIOFile(test_file_dir / 'NC_002695.2.fasta')
-    FILE_FASTQ = ToolIOFile(test_file_dir / 'fastq_minion_stec.fastq')
-
-    def setUp(self):
-        """
-        Sets up the resources before running the test.
-        :return: None
-        """
-        self.running_dir = tempfile.mkdtemp(None, 'camel_', TestMinimap2.camel.config['temp_dir'])
-
-    def test_minimap2(self):
+    def test_minimap2(self) -> None:
         """
         Tests the minimap2 tool.
         :return: None
@@ -40,9 +31,9 @@ class TestMinimap2(unittest.TestCase):
         })
         minimap2.run(self.running_dir)
         self.assertTrue('SAM' in minimap2.tool_outputs, "No VCF output generated")
-        output_file = minimap2.tool_outputs['SAM'][0].path
-        self.assertTrue(os.path.isfile(output_file))
-        self.assertGreater(os.path.getsize(output_file), 0)
+        output_file = Path(minimap2.tool_outputs['SAM'][0].path)
+        self.assertTrue(output_file.exists())
+        self.assertGreater(output_file.stat().st_size, 0)
 
 
 if __name__ == '__main__':

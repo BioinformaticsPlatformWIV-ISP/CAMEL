@@ -1,7 +1,5 @@
-from pathlib import Path
-
-import os
 import unittest
+from pathlib import Path
 
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.error.toolexecutionerror import ToolExecutionError
@@ -34,9 +32,9 @@ class TestBcftools(CamelTestSuite):
         })
         bcftools_csq.run(self.running_dir)
         self.assertTrue('VCF' in bcftools_csq.tool_outputs, "No VCF output generated")
-        output_file = bcftools_csq.tool_outputs['VCF'][0].path
-        self.assertTrue(os.path.isfile(output_file))
-        self.assertGreater(os.path.getsize(output_file), 0)
+        output_file = Path(bcftools_csq.tool_outputs['VCF'][0].path)
+        self.assertTrue(output_file.exists())
+        self.assertGreater(output_file.stat().st_size, 0)
 
     def test_bcftools_filter(self) -> None:
         """

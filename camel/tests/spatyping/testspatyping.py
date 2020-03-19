@@ -1,30 +1,16 @@
 import unittest
-from pathlib import Path
 
-import tempfile
-
-from camel.app.camel import Camel
-from camel.app.io.tooliofile import ToolIOFile
+from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.scripts.spatyping.mainspatyping import MainSpaTyping
 
 
-class TestSpaTyping(unittest.TestCase):
+class TestSpaTyping(CamelTestSuite):
     """
     Tests the spa typing tool.
     """
-    camel = Camel()
-    running_dir = None
-
     # Input files
-    test_file_dir = Path(camel.config['testing']['testfiles_dir'])
-    input_fasta_file = ToolIOFile(test_file_dir / 'spatyping' / 'saureus_ref.fasta')
-
-    def setUp(self) -> None:
-        """
-        Sets up the resources before running the test.
-        :return: None
-        """
-        self.running_dir = Path(tempfile.mkdtemp(prefix='camel_', dir=TestSpaTyping.camel.config['temp_dir']))
+    test_file_dir = CamelTestSuite.get_test_file_dir('spatyping')
+    input_fasta_file = test_file_dir / 'saureus_ref.fasta'
 
     def test_spatyping(self) -> None:
         """

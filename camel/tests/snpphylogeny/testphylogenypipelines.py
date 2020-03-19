@@ -1,32 +1,18 @@
-import unittest
 from pathlib import Path
 from typing import List
 
-import os
-import tempfile
-
-from camel.app.camel import Camel
+from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.scripts.snpphylogeny.maincfsanphylo import MainCfsanPhylo
 from camel.scripts.snpphylogeny.mainsamtoolsphylo import MainSamtoolsPhylo
 from camel.tests import longRunningTest
 
 
-class TestSnpPhylogenyPipelines(unittest.TestCase):
+class TestSnpPhylogenyPipelines(CamelTestSuite):
     """
     Tests the SNP phylogeny pipelines.
     """
-    camel = Camel.get_instance()
-    running_dir = None
-    test_file_dir = Path(camel.config['testing']['testfiles_dir']) / 'phylogeny' / 'lm_subset'
+    test_file_dir = CamelTestSuite.get_test_file_dir('phylogeny', 'lm_subset')
     reference_fasta = test_file_dir / 'reference.fasta'
-
-    def setUp(self) -> None:
-        """
-        Sets up the resources before running the test.
-        :return: None
-        """
-        self.running_dir = Path(
-            tempfile.mkdtemp(prefix='camel_', dir=TestSnpPhylogenyPipelines.camel.config['temp_dir']))
 
     @staticmethod
     def __get_samples(gzipped: bool = False) -> List[str]:
@@ -62,7 +48,7 @@ class TestSnpPhylogenyPipelines(unittest.TestCase):
         ]
         main = MainSamtoolsPhylo(args)
         main.run()
-        self.assertGreater(os.path.getsize(output_file_report), 0)
+        self.assertGreater(output_file_report.stat().st_size, 0)
 
     @longRunningTest()
     def test_cfsan_phylogeny(self) -> None:
@@ -84,7 +70,7 @@ class TestSnpPhylogenyPipelines(unittest.TestCase):
         ]
         main = MainCfsanPhylo(args)
         main.run()
-        self.assertGreater(os.path.getsize(output_file_report), 0)
+        self.assertGreater(output_file_report.stat().st_size, 0)
 
     @longRunningTest()
     def test_cfsan_phylogeny_gz_no_trim(self) -> None:
@@ -105,4 +91,4 @@ class TestSnpPhylogenyPipelines(unittest.TestCase):
         ]
         main = MainCfsanPhylo(args)
         main.run()
-        self.assertGreater(os.path.getsize(output_file_report), 0)
+        self.assertGreater(output_file_report.stat().st_size, 0)

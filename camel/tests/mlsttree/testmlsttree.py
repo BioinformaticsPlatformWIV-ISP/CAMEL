@@ -1,36 +1,23 @@
 import itertools
 import unittest
-from pathlib import Path
 
-import tempfile
-
-from camel.app.camel import Camel
+from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.scripts.mlsttree.mainmlsttree import MainMlstTree
 
 
-class TestMlstTree(unittest.TestCase):
+class TestMlstTree(CamelTestSuite):
     """
     Tests the MLST tree tool.
     """
-    camel = Camel()
-    running_dir = None
-
     # Input files
-    test_file_dir = Path(camel.config['testing']['testfiles_dir'])
+    test_file_dir = CamelTestSuite.get_test_file_dir('mlst_tree')
     input_tabular_files = [
-        test_file_dir / 'mlst_tree' / 'typing-cgmlst-S1.tsv',
-        test_file_dir / 'mlst_tree' / 'typing-cgmlst-S2.tsv',
-        test_file_dir / 'mlst_tree' / 'typing-cgmlst-S3.tsv',
-        test_file_dir / 'mlst_tree' / 'typing-cgmlst-S4.tsv',
-        test_file_dir / 'mlst_tree' / 'typing-cgmlst-S5.tsv'
+        test_file_dir / 'typing-cgmlst-S1.tsv',
+        test_file_dir / 'typing-cgmlst-S2.tsv',
+        test_file_dir / 'typing-cgmlst-S3.tsv',
+        test_file_dir / 'typing-cgmlst-S4.tsv',
+        test_file_dir / 'typing-cgmlst-S5.tsv'
     ]
-
-    def setUp(self) -> None:
-        """
-        Sets up the resources before running the test.
-        :return: None
-        """
-        self.running_dir = Path(tempfile.mkdtemp(prefix='camel_', dir=TestMlstTree.camel.config['temp_dir']))
 
     def test_tree_construction(self) -> None:
         """
@@ -54,3 +41,7 @@ class TestMlstTree(unittest.TestCase):
         self.assertGreater(output_file_tabular.stat().st_size, 0)
         self.assertGreater(output_file_dist_matrix.stat().st_size, 0)
         self.assertGreater(output_file_image.stat().st_size, 0)
+
+
+if __name__ == '__main__':
+    unittest.main()

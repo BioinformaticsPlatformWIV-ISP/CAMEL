@@ -1,23 +1,17 @@
 import unittest
-from pathlib import Path
 
-import tempfile
-
-from camel.app.camel import Camel
+from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.scripts.genedetection.maingenedetection import MainGeneDetection
 from camel.tests import longRunningTest
 
 
-class TestGeneDetection(unittest.TestCase):
+class TestGeneDetection(CamelTestSuite):
     """
     Tests the gene detection workflow.
     """
 
-    camel = Camel()
-    running_dir = None
-
     # Input files
-    test_file_dir = Path(camel.config['testing']['testfiles_dir'])
+    test_file_dir = CamelTestSuite.get_test_file_dir()
     input_fasta = test_file_dir / 'workflows' / 'NC_002695.1.fasta'
     input_fasta_galaxy = test_file_dir / 'workflows' / 'dataset_12.dat'
     input_reads_no_hit = [test_file_dir / 'workflows' / 'ecoli_1.fastq',
@@ -27,13 +21,6 @@ class TestGeneDetection(unittest.TestCase):
     input_reads_raw_galaxy = [test_file_dir / 'workflows' / 'dataset_fwd_11.dat',
                               test_file_dir / 'workflows' / 'dataset_rev_10.dat']
     input_gene_detection_db = test_file_dir / 'gene_detection' / 'db'
-
-    def setUp(self):
-        """
-        Sets up the resources before running the test.
-        :return: None
-        """
-        self.running_dir = Path(tempfile.mkdtemp(None, 'camel_', TestGeneDetection.camel.config['temp_dir']))
 
     def test_gene_detection_blast_fasta_input(self) -> None:
         """

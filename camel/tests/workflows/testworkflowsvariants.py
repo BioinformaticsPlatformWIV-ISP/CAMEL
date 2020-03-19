@@ -3,20 +3,18 @@ from pathlib import Path
 
 import tempfile
 
-from camel.app.camel import Camel
+from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.components.workflows.variantcallingwrapper import VariantCallingWrapper, VariantCallingInput
 from camel.app.components.workflows.variantfilteringwrapper import VariantFilteringWrapper
 from camel.app.io.tooliofile import ToolIOFile
 
 
-class TestWorkflowsVariants(unittest.TestCase):
+class TestWorkflowsVariants(CamelTestSuite):
     """
     Tests the Snakemake variant calling related workflows.
     """
-    camel = Camel.get_instance()
-    running_dir = None
 
-    test_file_dir = Path(camel.config['testing']['testfiles_dir'])
+    test_file_dir = CamelTestSuite.get_test_file_dir()
 
     # Variant calling
     input_fastq_pe = [
@@ -27,13 +25,6 @@ class TestWorkflowsVariants(unittest.TestCase):
     # Variant filtering
     input_vcf = test_file_dir / 'variant_calling' / 'unfiltered_variants-myco.vcf.gz'
     input_bam = test_file_dir / 'variant_calling' / 'alignment.bam'
-
-    def setUp(self) -> None:
-        """
-        Sets up the resources before running the test.
-        :return: None
-        """
-        self.running_dir = Path(tempfile.mkdtemp(prefix='camel_', dir=TestWorkflowsVariants.camel.config['temp_dir']))
 
     def test_variant_calling(self) -> None:
         """
@@ -56,7 +47,7 @@ class TestWorkflowsVariants(unittest.TestCase):
         :return: None
         """
         wrapper = VariantFilteringWrapper(self.running_dir)
-        wrapper.run_workflow(str(TestWorkflowsVariants.input_vcf), TestWorkflowsVariants.input_bam, {}, 1)
+        wrapper.run_workflow(str(TestWorkflowsVariants.input_vcf), str(TestWorkflowsVariants.input_bam), {}, 1)
         self.assertGreater(Path(wrapper.output.vcf_filtered.path).stat().st_size, 0)
 
 

@@ -1,126 +1,106 @@
-import argparse
-import unittest
-
-import os
-import tempfile
-
-from camel.app.camel import Camel
+from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.scripts.mega.mainmega import MainMega
 
 
-class TestMEGA(unittest.TestCase):
+class TestMEGA(CamelTestSuite):
     """
     Tests the MEGA tool.
     """
-    camel = Camel()
-    running_dir = None
 
     # Input files
-    test_file_dir = os.path.join(camel.config['testing']['testfiles_dir'])
-    input_snp_matrix = os.path.join(test_file_dir, 'mega', 'sample_snp_matrix.fasta')
+    test_file_dir = CamelTestSuite.get_test_file_dir('mega')
+    input_snp_matrix = test_file_dir / 'sample_snp_matrix.fasta'
     input_vcf_files = [
-        os.path.join(test_file_dir, 'mega', 'variants-s1.vcf'),
-        os.path.join(test_file_dir, 'mega', 'variants-s2.vcf'),
-        os.path.join(test_file_dir, 'mega', 'variants-s3.vcf'),
-        os.path.join(test_file_dir, 'mega', 'variants-s4.vcf')
+        test_file_dir / 'variants-s1.vcf',
+        test_file_dir / 'variants-s2.vcf',
+        test_file_dir / 'variants-s3.vcf',
+        test_file_dir / 'variants-s4.vcf'
     ]
-
-    def setUp(self) -> None:
-        """
-        Sets up the resources before running the test.
-        :return: None
-        """
-        self.running_dir = tempfile.mkdtemp(prefix='camel_', dir=TestMEGA.camel.config['temp_dir'])
 
     def test_model_selection(self) -> None:
         """
         Tests the model selection
         :return: None
         """
-        output_file = os.path.join(self.running_dir, 'output_model.tsv')
-        args = argparse.Namespace(
-            fasta=TestMEGA.input_snp_matrix,
-            working_dir=self.running_dir,
-            action='model',
-            output_model=output_file,
-            missing_data='complete_deletion',
-            site_cov_cutoff=50,
-            branch_swap='weak',
-            threads=4
-        )
+        output_file = self.running_dir / 'out' / 'output_model.tsv'
+        if not output_file.parent.exists():
+            output_file.parent.mkdir(parents=True)
+        args = [
+            '--fasta', str(TestMEGA.input_snp_matrix),
+            '--working-dir', str(self.running_dir),
+            '--action', 'model',
+            '--output-model', str(output_file),
+            '--missing-data', 'complete_deletion',
+            '--site-cov-cutoff', '50',
+            '--branch-swap', 'weak'
+        ]
         mega = MainMega(args)
         mega.run()
-        self.assertGreater(os.path.getsize(output_file), 0)
+        self.assertGreater(output_file.stat().st_size, 0)
 
     def test_tree_building(self) -> None:
         """
         Tests the tree building.
         :return: None
         """
-        output_file = os.path.join(self.running_dir, 'output_tree.nwk')
-        args = argparse.Namespace(
-            fasta=TestMEGA.input_snp_matrix,
-            working_dir=self.running_dir,
-            action='tree',
-            model='T92',
-            rates='G',
-            output_tree=output_file,
-            missing_data='use_all_sites',
-            site_cov_cutoff=50,
-            branch_swap='moderate',
-            ml_method='spr3',
-            bootstraps=10,
-            threads=4
-        )
+        output_file = self.running_dir / 'out' / 'output_tree.nwk'
+        if not output_file.parent.exists():
+            output_file.parent.mkdir(parents=True)
+        args = [
+            '--fasta', str(TestMEGA.input_snp_matrix),
+            '--working-dir', str(self.running_dir),
+            '--action', 'tree',
+            '--model', 'T92',
+            '--rates', 'G',
+            '--output-tree', str(output_file),
+            '--missing-data', 'use_all_sites',
+            '--branch-swap', 'moderate',
+            '--bootstraps', '10',
+        ]
         mega = MainMega(args)
         mega.run()
-        self.assertGreater(os.path.getsize(output_file), 0)
+        self.assertGreater(output_file.stat().st_size, 0)
 
     def test_both(self) -> None:
         """
         Tests model selection + tree building.
         :return: None
         """
-        output_file_tree = os.path.join(self.running_dir, 'output_tree.nwk')
-        output_file_model = os.path.join(self.running_dir, 'output_model.tsv')
-        args = argparse.Namespace(
-            fasta=TestMEGA.input_snp_matrix,
-            working_dir=self.running_dir,
-            action='both',
-            output_tree=output_file_tree,
-            output_model=output_file_model,
-            missing_data='partial_deletion',
-            site_cov_cutoff=50,
-            branch_swap='weak',
-            ml_method='nni',
-            bootstraps=10,
-            threads=4
-        )
+        output_file_tree = self.running_dir / 'out' / 'output_tree.nwk'
+        output_file_model = self.running_dir / 'out' / 'output_model.tsv'
+        if not output_file_model.parent.exists():
+            output_file_model.parent.mkdir(parents=True)
+        args = [
+            '--fasta', str(TestMEGA.input_snp_matrix),
+            '--working-dir', str(self.running_dir),
+            '--action', 'both',
+            '--output-tree', str(output_file_tree),
+            '--output-model', str(output_file_model),
+            '--bootstraps', '10'
+        ]
         mega = MainMega(args)
         mega.run()
-        self.assertGreater(os.path.getsize(output_file_model), 0)
-        self.assertGreater(os.path.getsize(output_file_tree), 0)
+        self.assertGreater(output_file_model.stat().st_size, 0)
+        self.assertGreater(output_file_tree.stat().st_size, 0)
 
     def test_export_snp_matrix(self) -> None:
         """
         Tests the export SNP matrix function (starting from multiple VCF input files).
         :return: None
         """
-        output_file_snp_matrix = os.path.join(self.running_dir, 'snps.fasta')
-        output_file_model = os.path.join(self.running_dir, 'output_model.tsv')
-        args = argparse.Namespace(
-            vcf=[[f, os.path.basename(f)] for f in TestMEGA.input_vcf_files],
-            fasta=None,
-            working_dir=self.running_dir,
-            action='model',
-            output_model=output_file_model,
-            output_snp_matrix=output_file_snp_matrix,
-            missing_data='use_all_sites',
-            site_cov_cutoff=50,
-            branch_swap='very_strong',
-            threads=4
-        )
+        output_file_model = self.running_dir / 'out' / 'output_model.tsv'
+        output_file_fasta = self.running_dir / 'out' / 'snp_matrix.fasta'
+        if not output_file_model.parent.exists():
+            output_file_model.parent.mkdir(parents=True)
+        args = [
+            '--output-snp-matrix', str(output_file_fasta),
+            '--output-model', str(output_file_model),
+            '--working-dir', str(self.running_dir),
+            '--action', 'model',
+        ]
+        for vcf_file in TestMEGA.input_vcf_files:
+            args.extend(['--vcf', str(vcf_file), vcf_file.name])
         mega = MainMega(args)
         mega.run()
-        self.assertGreater(os.path.getsize(output_file_model), 0)
-        self.assertGreater(os.path.getsize(output_file_snp_matrix), 0)
+        self.assertGreater(output_file_model.stat().st_size, 0)
+        self.assertGreater(output_file_fasta.stat().st_size, 0)
