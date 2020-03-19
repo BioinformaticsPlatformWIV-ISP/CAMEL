@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import argparse
-from typing import Tuple, List, Optional
+from typing import Tuple, List, Optional, Sequence
 
 import os
 import shutil
@@ -21,15 +21,15 @@ class MainMega(object):
 
     SNP_MATRIX_FILENAME = 'snp_matrix.fasta'
 
-    def __init__(self, args: Optional[argparse.Namespace] = None) -> None:
+    def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """
         Initializes the main script.
         """
-        self._args = args if args is not None else MainMega._parse_arguments()
+        self._args = MainMega._parse_arguments(args)
         self._camel = Camel()
 
     @staticmethod
-    def _parse_arguments() -> argparse.Namespace:
+    def _parse_arguments(args: Optional[Sequence[str]] = None) -> argparse.Namespace:
         """
         Parses the command line arguments.
         :return: Arguments
@@ -42,19 +42,19 @@ class MainMega(object):
         argument_parser.add_argument('--output-snp-matrix',
                                      help='If set, the SNP matrix is exported to this FASTA file')
         argument_parser.add_argument('--action', choices=['both', 'model', 'tree'], required=True)
-        argument_parser.add_argument('--missing-data', required=True,
-                                     choices=['use_all_sites', 'complete_deletion', 'partial_deletion'])
-        argument_parser.add_argument('--branch-swap', required=True, choices=['none', 'very_strong', 'strong',
-                                                                              'moderate', 'weak', 'very_weak'])
-        argument_parser.add_argument('--bootstraps', required=True, help="Number of bootstrap replications.",
-                                     type=int)
-        argument_parser.add_argument('--ml-method', required=True, choices=['nni', 'spr3', 'spr5'])
-        argument_parser.add_argument('--site-cov-cutoff', choices=range(0, 101), type=int)
-        argument_parser.add_argument('--model', choices=['JC', 'K2', 'T92', 'HKY', 'TN93', 'GTR'])
+        argument_parser.add_argument('--missing-data', choices=[
+            'use_all_sites', 'complete_deletion', 'partial_deletion'], default='use_all_sites')
+        argument_parser.add_argument('--branch-swap', choices=[
+            'none', 'very_strong', 'strong', 'moderate', 'weak', 'very_weak'], default='none')
+        argument_parser.add_argument('--bootstraps', help="Number of bootstrap replications.",
+                                     type=int, default=100)
+        argument_parser.add_argument('--ml-method', choices=['nni', 'spr3', 'spr5'], default='spr3')
+        argument_parser.add_argument('--site-cov-cutoff', choices=range(0, 101), type=int, default=50)
+        argument_parser.add_argument('--model', choices=['JC', 'K2', 'T92', 'HKY', 'TN93', 'GTR'], default='JC')
         argument_parser.add_argument('--rates', choices=['G+I', 'G', 'I', 'U'], default='U')
         argument_parser.add_argument('--working-dir', default=os.path.abspath('.'))
         argument_parser.add_argument('--threads', type=int, default=3)
-        return argument_parser.parse_args()
+        return argument_parser.parse_args(args)
 
     def run(self) -> None:
         """

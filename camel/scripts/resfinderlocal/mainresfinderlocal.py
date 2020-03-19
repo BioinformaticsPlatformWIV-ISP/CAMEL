@@ -2,7 +2,7 @@
 import argparse
 import datetime
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, Optional, Sequence
 
 import os
 
@@ -20,18 +20,18 @@ class MainResFinderLocal(object):
     This class is used to run the main ResFinder local script.
     """
 
-    def __init__(self, args: argparse.Namespace = None) -> None:
+    def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """
         Initializes the main script.
         :param args: Arguments (optional)
         """
-        self._args = args if args is not None else MainResFinderLocal.parse_arguments()
+        self._args = MainResFinderLocal.parse_arguments(args)
         self._sample_name = MainScriptHelper.determine_sample_name(self._args)
         self._helper = MainScriptHelper(self._args.working_dir, self._sample_name)
         self._report = None
 
     @staticmethod
-    def parse_arguments() -> argparse.Namespace:
+    def parse_arguments(args: Optional[Sequence[str]] = None) -> argparse.Namespace:
         """
         Parses the command line arguments.
         :return: Parsed arguments
@@ -48,7 +48,7 @@ class MainResFinderLocal(object):
         argument_parser.add_argument('--min-percent-coverage', type=int, default=60)
         argument_parser.add_argument('--resfinder-db', type=str, required=True)
         argument_parser.add_argument('--report-include-fastq', action='store_true')
-        return argument_parser.parse_args()
+        return argument_parser.parse_args(args)
 
     def run(self) -> None:
         """

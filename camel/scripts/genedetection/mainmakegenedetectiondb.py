@@ -3,7 +3,7 @@ import argparse
 import shutil
 
 import os
-from typing import Optional
+from typing import Optional, Sequence
 
 from camel.app.camel import Camel
 from camel.app.components.filesystemhelper import FileSystemHelper
@@ -19,12 +19,12 @@ class MainMakeGeneDetectionDB(object):
     This class is used to create databases for the gene detection tool.
     """
 
-    def __init__(self, args: Optional[argparse.Namespace] = None) -> None:
+    def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """
         Initializes this tool.
         :param args: (Optional) arguments
         """
-        self._args = args if args is not None else MainMakeGeneDetectionDB.parse_arguments()
+        self._args = MainMakeGeneDetectionDB.parse_arguments(args)
         self._db_name = os.path.splitext(os.path.basename(
             FileSystemHelper.make_valid(self._args.fasta_name) if self._args.fasta_name else self._args.fasta))[0]
         self._helper = DBHelper(self._db_name, self._args.working_dir)
@@ -32,7 +32,7 @@ class MainMakeGeneDetectionDB(object):
         self._new_name_by_header = None
 
     @staticmethod
-    def parse_arguments() -> argparse.Namespace:
+    def parse_arguments(args: Optional[Sequence[str]] = None) -> argparse.Namespace:
         """
         Parses the command line arguments.
         :return: Parsed arguments
@@ -44,7 +44,7 @@ class MainMakeGeneDetectionDB(object):
         argument_parser.add_argument('--output-dir', required=True)
         argument_parser.add_argument('--output-html', required=True)
         argument_parser.add_argument('--working-dir', default=os.path.abspath('.'))
-        return argument_parser.parse_args()
+        return argument_parser.parse_args(args)
 
     def run(self) -> None:
         """

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import argparse
 import logging
+from typing import Optional, Sequence
 
 from camel.app.camel import Camel
 from camel.app.components.mainscripthelper import MainScriptHelper
@@ -15,18 +16,18 @@ class MainPointFinder(object):
     This class is used to execute the PointFinder tool.
     """
 
-    def __init__(self, args: argparse.Namespace = None):
+    def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """
         Initializes the main script.
         :param args: Arguments (optional)
         """
-        self._args = args if args is not None else MainPointFinder.parse_arguments()
+        self._args = MainPointFinder.parse_arguments(args)
         self._sample_name = MainScriptHelper.determine_sample_name(self._args)
         self._helper = MainScriptHelper(self._args.working_dir, self._sample_name)
         self._report = None
 
     @staticmethod
-    def parse_arguments() -> argparse.Namespace:
+    def parse_arguments(args: Optional[Sequence[str]] = None) -> argparse.Namespace:
         """
         Parses the command line arguments.
         :return: Parsed arguments
@@ -38,7 +39,7 @@ class MainPointFinder(object):
         argument_parser.add_argument('--species', required=True, choices=[
             'campylobacter', 'enterococcus_faecalis', 'enterococcus_faecium', 'escherichia_coli', 'klebsiella',
             'mycobacterium_tuberculosis', 'neisseria_gonorrhoeae', 'plasmodium_falciparum', 'salmonella'])
-        return argument_parser.parse_args()
+        return argument_parser.parse_args(args)
 
     def run(self) -> None:
         """

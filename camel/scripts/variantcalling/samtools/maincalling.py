@@ -2,7 +2,7 @@
 import argparse
 import logging
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Sequence
 
 import shutil
 
@@ -18,16 +18,16 @@ class MainCalling(object):
     Class to run samtools variant calling using CAMEL.
     """
 
-    def __init__(self, args: Optional[argparse.Namespace] = None) -> None:
+    def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """
         Initializes the main script.
         """
-        self._args = MainCalling._parse_arguments() if args is None else args
+        self._args = MainCalling._parse_arguments(args)
         self._working_dir = Path(self._args.working_dir)
         self._camel = Camel()
 
     @staticmethod
-    def _parse_arguments() -> argparse.Namespace:
+    def _parse_arguments(args: Optional[Sequence[str]] = None) -> argparse.Namespace:
         """
         Parses the command line arguments.
         :return: Arguments
@@ -37,7 +37,7 @@ class MainCalling(object):
         group.add_argument('--bam', help="Input BAM file")
         group.add_argument('--fastq', help="Input Fastq files")
         argument_parser.add_argument('--reference', required=True)
-        argument_parser.add_argument('--reference-name', required=True)
+        argument_parser.add_argument('--reference-name')
         argument_parser.add_argument('--output', required=True)
         argument_parser.add_argument('--output-consensus',
                                      help="If specified, the consensus sequence is saved in this file.")
@@ -52,7 +52,7 @@ class MainCalling(object):
         argument_parser.add_argument('--count-orphans', action='store_true')
         argument_parser.add_argument('--disable-baq', action='store_true')
         argument_parser.add_argument('--threads', type=int, default=8)
-        return argument_parser.parse_args()
+        return argument_parser.parse_args(args)
 
     def run(self) -> None:
         """
@@ -92,8 +92,10 @@ class MainCalling(object):
         config_data = {
             'sample_name': 'Sample', 'working_dir': self._args.working_dir, 'variant_calling': {
                 'ploidy': self._args.ploidy,
-                'reference': {'fasta': self._args.reference, 'name': self._args.reference,
-                              'path': self._args.reference}
+                'reference': {
+                    'fasta': self._args.reference,
+                    'name': self._args.reference_name if self._args.reference_name else Path(self._args.reference).name,
+                    'path': self._args.reference}
             },
             'variant_filtering': {}
         }

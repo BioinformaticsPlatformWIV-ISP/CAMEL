@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import argparse
-from typing import Any, Dict
+from typing import Any, Dict, Optional, Sequence
 
 import os
 import shutil
@@ -15,15 +15,15 @@ class MainFiltering(object):
     Class to run the samtools variant filtering using CAMEL.
     """
 
-    def __init__(self, args: argparse.Namespace = None) -> None:
+    def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """
         Initializes the main script.
         """
-        self._args = args if args is not None else MainFiltering._parse_arguments()
+        self._args = MainFiltering._parse_arguments(args)
         self._camel = Camel()
 
     @staticmethod
-    def _parse_arguments() -> argparse.Namespace:
+    def _parse_arguments(args: Optional[Sequence[str]] = None) -> argparse.Namespace:
         """
         Parses the command line arguments.
         :return: Arguments
@@ -43,7 +43,7 @@ class MainFiltering(object):
         argument_parser.add_argument('--keep-best', action='store_true')
         argument_parser.add_argument('--min-zscore', default=1.96, type=float)
         argument_parser.add_argument('--y-mult', default=10, type=float)
-        return argument_parser.parse_args()
+        return argument_parser.parse_args(args)
 
     def run(self) -> None:
         """

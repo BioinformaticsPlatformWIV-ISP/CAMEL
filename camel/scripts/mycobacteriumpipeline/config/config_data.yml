@@ -1,0 +1,82 @@
+############################################################################################
+# This YAML file contains the additional configuration data for the Mycobacterium pipeline #
+# The values are added to the configuration data constructed by the BasePipeline class.    #
+############################################################################################
+read_trimming:
+  export_fastq: '{export_fastq}'
+
+contamination_check:
+  db: /db/kraken/latest/abfhpv_lite/
+  expected_species: Mycobacterium tuberculosis
+
+quality_checks:
+  typing_scheme: {qc_typing_scheme}
+  expected_gc_content: 65.6
+  coverage_mode: ref
+
+variant_calling:
+  ploidy: 1
+  eport_bam: '{export_bam}'
+  reference:
+    path: /db/refgenomes/Mycobacterium_tuberculosis/H37Rv.fasta
+    name: H37Rv
+    url: http://bacteria.ensembl.org/Mycobacterium_tuberculosis_h37rv/Info/Index
+    annotation_gff: /db/refgenomes/Mycobacterium_tuberculosis/H37Rv.gff
+    annotation_tab: /db/refgenomes/Mycobacterium_tuberculosis/H37Rv.tab.ann.gz
+
+assembly:
+  spades:
+    cov_cutoff: 10
+  min_contig_length: 1000
+
+variant_filtering:
+  region:
+    bed_file: /db/pipelines/mycobacterium/variant_filtering/excluded_regions.bed
+
+snp_lineage:
+  bed: /db/pipelines/mycobacterium/snp_lineage/lineage_snp_locations.bed
+
+amr:
+  bed_regions: /db/pipelines/mycobacterium/amr/amr_regions.bed
+  mutation_db: /db/pipelines/mycobacterium/amr/mutation_db
+
+sequence_typing:
+  mlst: /db/sequence_typing/mycobacterium/mlst
+  cgmlst: /db/sequence_typing/mycobacterium/cgmlst
+
+51snp:
+  bed: /db/pipelines/mycobacterium/51snp/51snp_locations.bed
+  profiles: /db/pipelines/mycobacterium/51snp/profiles.tsv
+
+gene_detection:
+  csb_rd:
+    path: /db/pipelines/mycobacterium/csb_rd
+    perc_identity_cutoff: 90
+    min_coverage: 60
+    force_detection_method: srst2
+
+  ncbi_16s:
+    path: /db/gene_detection/NCBI_16S
+    perc_identitiy_cutoff: 90
+    min_coverage: 90
+    filtering_method: score
+    force_detection_method: blast
+    extra_column:
+      name: Species
+      key: species
+
+  hsp65:
+    path: /db/pipelines/mycobacterium/hsp65
+    perc_identitiy_cutoff: 90
+    min_coverage: 60
+    extra_column:
+      name: Species
+      key: species_name
+
+  amr:
+    path: /db/pipelines/mycobacterium/amr/gene_detection
+    perc_identity_cutoff: 90
+    min_coverage: 90
+
+pointfinder:
+  db: mycobacterium_tuberculosis
