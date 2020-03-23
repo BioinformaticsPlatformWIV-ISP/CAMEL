@@ -69,6 +69,7 @@ class SRST2HitExtractor(Tool):
                 # Create hit object
                 seq_id = parts[header_indices['allele']]
                 hits.append(GeneDetectionSRST2Hit(
+                    parts[2],
                     mapping.get_metadata(seq_id, 'allele'),
                     mapping.get_metadata(seq_id, 'accession', '-'),
                     int(parts[header_indices['length']]),
