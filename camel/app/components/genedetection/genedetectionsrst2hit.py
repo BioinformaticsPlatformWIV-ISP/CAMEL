@@ -10,14 +10,15 @@ class GeneDetectionSRST2Hit(GeneDetectionHitBase):
     This class represents a gene detection hit detected with BLAST.
     """
 
-    def __init__(self, locus: str, accession: Optional[str], length: int, mismatches: str, uncertainty: str,
-                 coverage: float, divergence: float, depth: float) -> None:
+    def __init__(self, cluster: str, locus: str, accession: Optional[str], length: int, mismatches: str,
+                 uncertainty: str, coverage: float, divergence: float, depth: float) -> None:
         """
         Initializes this hit.
         :param locus: Locus
         :param accession: Accession number
         """
         super().__init__(locus, accession)
+        self.cluster = cluster
         self._length = length
         self._mismatches = mismatches
         self._coverage = coverage
@@ -45,7 +46,8 @@ class GeneDetectionSRST2Hit(GeneDetectionHitBase):
         Returns the names of the columns of the tabular output.
         :return: List of column names
         """
-        columns = ['Locus', 'Length', '% Covered', 'Mismatches', 'Uncertainty', 'Divergence (%)', 'Depth', 'Accession']
+        columns = ['DB_cluster', 'Locus', 'Length', '% Covered', 'Mismatches', 'Uncertainty', 'Divergence (%)', 'Depth',
+                   'Accession']
         for metadata in self._metadata:
             columns.insert(-1, metadata['name'])
         return columns
@@ -56,6 +58,7 @@ class GeneDetectionSRST2Hit(GeneDetectionHitBase):
         :return: List of table cell values
         """
         data = [
+            self.cluster,
             self.locus,
             str(self._length),
             '{:.2f}'.format(self._coverage),
@@ -75,7 +78,7 @@ class GeneDetectionSRST2Hit(GeneDetectionHitBase):
         Returns the names of the columns of the HTML output.
         :return: List of column names
         """
-        return self.table_column_names
+        return self.table_column_names[1:]
 
     def to_html_row(self, report_section: HtmlReportSection, sub_directory: str, colored: bool = True) \
             -> List[Union[str, HtmlTableCell]]:
