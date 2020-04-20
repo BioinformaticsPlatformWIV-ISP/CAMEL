@@ -224,4 +224,3 @@ class SnakePipelineUtils(object):
                     continue
                 output_dict.pop(key)
         return output_dict
-
