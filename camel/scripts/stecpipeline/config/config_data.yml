@@ -4,7 +4,7 @@
 read_trimming: {}
 
 contamination_check:
-  db: /db/kraken/latest/abfhpv_lite/
+  db: /db/kraken2/latest/abfhpv/
   expected_species: Escherichia coli
 
 quality_checks:
