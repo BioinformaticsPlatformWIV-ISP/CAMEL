@@ -186,22 +186,42 @@ class SnakePipelineUtils(object):
         return section
 
     @staticmethod
-    def extracts_fq_input(io_dict: str, key_pe: Optional[str] = 'FASTQ_PE', key_se: Optional[str] = 'FASTQ_SE',
-                          drop_se: bool = False) -> Dict[str, List[ToolIOFile]]:
+    def extracts_fq_input(io_dict: str, key_pe: Optional[str] = 'FASTQ_PE', key_se: Optional[str] = None,
+                          keys_se: Optional[List[str]] = None, drop_empty: bool = False) -> Dict[str, List[ToolIOFile]]:
         """
         Extracts a specific FASTQ input dictionary from the standardized FASTQ dictionary.
         :param io_dict: Path to input IO file
         :param key_pe: Key for paired end FASTQ files
         :param key_se: Key for single end FASTQ files
-        :param drop_se: If True, SE reads are dropped for PE input
+        :param keys_se: Separate keys for the forward and reverse SE FASTQ files
+        :param drop_empty: If True, keys with no reads are dropped from the output
         :return: Reformatted dictionary
         """
         io = SnakemakeUtils.load_object(io_dict)
+        output_dict = {}
+
+        # Add PE reads
         if 'PE' in io:
-            output_dict = {key_pe: io['PE']}
+            output_dict[key_pe] = io['PE']
+
+        # Add SE reads
+        if keys_se is not None:
+            for key_orig, key_new in zip(['SE_FWD', 'SE_REV'], keys_se):
+                try:
+                    output_dict[key_new] = io[key_orig]
+                except KeyError:
+                    logging.warning(f"No '{key_orig}' input found")
+        elif key_se is not None:
             se_reads = io.get('SE_FWD', []) + io.get('SE_REV', [])
-            if len(se_reads) > 0 and not drop_se:
-                output_dict[key_se] = se_reads
+            output_dict[key_se] = se_reads
         else:
-            output_dict = {key_se: io['SE']}
+            logging.info(f"No key(s) provided for SE reads")
+
+        # Return the reformatted dictionary
+        if drop_empty:
+            for key in list(output_dict.keys()):
+                if len(output_dict[key]) > 0:
+                    continue
+                output_dict.pop(key)
         return output_dict
+
