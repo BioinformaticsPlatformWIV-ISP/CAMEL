@@ -1,33 +1,12 @@
 from pathlib import Path
 
 from camel.app.camel import Camel
-from camel.app.io.tooliofile import ToolIOFile
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile import assembly_spades
 
-
 camel = Camel.get_instance()
 
-
-rule assembly_spades_merge_se_reads:
-    input:
-        IO = Path(config['working_dir']) / 'fq_dict.io'
-    output:
-        IO = Path(config['working_dir']) / 'assembly_spades' / 'input' / 'fq-se.io'
-    params:
-        running_dir = Path(config['working_dir']) / 'assembly_spades' / 'input'
-    run:
-        import shutil
-        fq_dict = SnakemakeUtils.load_object(input.IO)
-        path_se_merged = params.running_dir / 'unpaired_reads_merged.fastq'
-        with open(path_se_merged, 'wb') as handle_out:
-            for key in ('SE_FWD', 'SE_REV'):
-                if key not in fq_dict or len(fq_dict[key]) == 0:
-                    continue
-                with open(fq_dict[key][0].path, 'rb') as handle_in:
-                    shutil.copyfileobj(handle_in, handle_out)
-        SnakemakeUtils.dump_object([ToolIOFile(path_se_merged)], output.IO)
 
 rule assembly_spades_run:
     """
@@ -35,7 +14,6 @@ rule assembly_spades_run:
     """
     input:
         IO = Path(config['working_dir']) / 'fq_dict.io',
-        IO_SE = Path(config['working_dir']) / 'assembly_spades' / 'input' / 'fq-se.io'
     output:
         FASTA_Contig = Path(config['working_dir']) / 'assembly_spades' / 'spades' / 'fasta.io',
         INFORMS = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_INFORMS
@@ -48,10 +26,11 @@ rule assembly_spades_run:
         from camel.app.tools.spades.spades import SPAdes
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         spades = SPAdes(camel)
-        spades.add_input_files(SnakePipelineUtils.extracts_fq_input(input.IO, 'FASTQ_PE_1', drop_se=True))
-        fq_dict = SnakemakeUtils.load_object(input.IO)
-        if all([len(fq_dict.get(x, [])) > 0 for x in ('SE_FWD', 'SE_REV')]):
-            SnakemakeUtils.add_pickle_input(spades, 'FASTQ_SE_1', input.IO_SE)
+
+        # Reformat FASTQ dictionary
+        fq_dict = SnakePipelineUtils.extracts_fq_input(input.IO, key_pe='FASTQ_PE_1', keys_se=[
+            'FASTQ_SE_1', 'FASTQ_SE_2'], drop_empty=True)
+        spades.add_input_files(fq_dict)
         step = Step(rule, spades, camel, params.running_dir, config)
         spades.update_parameters(**params.spades_options)
         spades.update_parameters(threads=threads)
@@ -197,7 +176,7 @@ rule assembly_bt2_map:
         from camel.app.tools.bowtie2.bowtie2map import Bowtie2Map
         bowtie2_map = Bowtie2Map(camel)
         step = Step(rule, bowtie2_map, camel, str(params.running_dir), config)
-        bowtie2_map.add_input_files(SnakePipelineUtils.extracts_fq_input(input.IO))
+        bowtie2_map.add_input_files(SnakePipelineUtils.extracts_fq_input(input.IO, key_se='FASTQ_SE', drop_empty=True))
         SnakemakeUtils.add_pickle_input(bowtie2_map, 'INDEX_GENOME_PREFIX', input.INDEX_GENOME_PREFIX)
         step.run_step()
         bowtie2_map.informs['_tag'] = 'Coverage calculation'

@@ -31,7 +31,7 @@ rule Typing_srst2_allele_detection:
         locus_informs = scheme_informs['loci'].metadata_by_locus_name[params.locus_name]
 
         detector = SRST2AlleleDetector(camel)
-        fastq_input = SnakePipelineUtils.extracts_fq_input(input.IO)
+        fastq_input = SnakePipelineUtils.extracts_fq_input(input.IO, key_pe='FASTQ_PE')
         detector.add_input_files(fastq_input)
         detector.add_input_files({'FASTA': [ToolIOFile(os.path.join(params.scheme_dir, locus_informs['fasta_path']))]})
         detector.add_input_informs({'locus': locus_informs})
