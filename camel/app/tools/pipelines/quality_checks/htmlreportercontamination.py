@@ -1,7 +1,5 @@
-from datetime import date
-
-import os
-import re
+from pathlib import Path
+from typing import Dict, Any
 
 from camel.app.components.html.htmlelement import HtmlElement
 from camel.app.components.html.htmlreportsection import HtmlReportSection
@@ -45,12 +43,12 @@ class HtmlReporterContamination(Tool):
         :return: None
         """
         self._report_section = HtmlReportSection(
-            HtmlReporterContamination.TITLE, subtitle=self._input_informs['kraken']['_name'])
+            HtmlReporterContamination.TITLE, subtitle=self._input_informs['kraken2']['_name'])
+        self.__add_database_info(self._input_informs['kraken2'])
         self.__add_species_table()
         self.__add_detailed_table(self._tool_inputs['TSV'][0].path)
         self.__add_krona_report()
         self.__add_warnings()
-        self.__add_last_update(self._tool_inputs['DB'][0].path)
         self._tool_outputs['VAL_HTML'] = [ToolIOValue(self._report_section)]
 
     def _check_input(self):
@@ -66,21 +64,19 @@ class HtmlReporterContamination(Tool):
             raise InvalidInputSpecificationError("Kraken report input (TSV) is required")
         super()._check_input()
 
-    def __add_last_update(self, db_path):
+    def __add_database_info(self, informs: Dict[str, Any]) -> None:
         """
         Adds the date of the last update.
-        :param db_path: Database path
+        :param informs: KRAKEN2 informs
         :return: None
         """
-        m = re.match('.*kraken/(\\d{4})(\\d{2})(\\d{2})/abfhpv.*$', os.path.realpath(db_path))
-        if m:
-            d = date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
-            value = d.strftime('%d-%m-%Y')
-        else:
-            value = 'NA'
-        self._report_section.add_paragraph('Last updated: {}'.format(value))
+        db_informs = informs.get('database')
+        self._report_section.add_table([
+            ['Database:', db_informs['name'] if db_informs is not None else 'NA'],
+            ['Last update:', db_informs['last_update'] if db_informs is not None else 'NA']
+        ], None, [('class', 'information')])
 
-    def __add_species_table(self):
+    def __add_species_table(self) -> None:
         """
         Adds a table containing the detected species and corresponding percentages.
         :return: None
@@ -127,16 +123,16 @@ class HtmlReporterContamination(Tool):
         header = ['Percentage', 'Level', 'Name']
         self._report_section.add_table(table_data, header, [('class', 'data')])
 
-    def __add_krona_report(self):
+    def __add_krona_report(self) -> None:
         """
         Adds a download link to the Krona report.
         :return: None
         """
-        relative_path = os.path.join(self._subfolder, 'krona_report.html')
+        relative_path = str(Path(self._subfolder) / 'krona_report.html')
         self._report_section.add_file(self._tool_inputs['HTML_Krona'][0].path, relative_path)
         self._report_section.add_link_to_file('Krona Report', relative_path)
 
-    def __add_warnings(self):
+    def __add_warnings(self) -> None:
         """
         Adds warnings to the report when there is possible contamination.
         :return: None
@@ -151,7 +147,7 @@ class HtmlReporterContamination(Tool):
                           self._input_informs['species']['contaminants_fail'])))
 
     @staticmethod
-    def generate_empty_section():
+    def generate_empty_section() -> HtmlReportSection:
         """
         Returns a report that is used when this analysis is disabled.
         :return: Report section

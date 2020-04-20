@@ -13,72 +13,43 @@ from camel.resources.snakefile import contamination_check_kraken
 camel = Camel.get_instance()
 
 
-rule contamination_check_get_db:
+rule contamination_check_kraken2_run:
     """
-    Converts the Kraken database to a pickle IO object.
-    """
-    output:
-        DB = Path(config['working_dir']) / 'contamination_check' / 'db.io'
-    params:
-        db = config['contamination_check']['db']
-    run:
-        from camel.app.io.tooliodirectory import ToolIODirectory
-        SnakemakeUtils.dump_object([ToolIODirectory(params.db)], output.DB)
-
-rule contamination_check_kraken_run:
-    """
-    Assign taxonomic labels to reads using KRAKEN.
+    Assigns taxonomic labels to reads using KRAKEN2.
     """
     input:
         IO = Path(config['working_dir']) / 'fq_dict.io',
-        DB = rules.contamination_check_get_db.output.DB
+        DB = config['contamination_check']['db']
     output:
-        TSV = Path(config['working_dir']) / 'contamination_check' / 'kraken' / 'tsv.io',
+        TSV = Path(config['working_dir']) / 'contamination_check' / 'kraken2' / 'tsv.io',
+        TSV_report = Path(config['working_dir']) / 'contamination_check' / 'kraken2' / 'tsv-report.io',
         INFORMS = Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_KRAKEN_INFORMS
     params:
-        running_dir = Path(config['working_dir']) / 'contamination_check' / 'kraken'
+        running_dir = Path(config['working_dir']) / 'contamination_check' / 'kraken2'
     threads: 8
     priority: 1
     run:
+        from camel.app.io.tooliodirectory import ToolIODirectory
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-        from camel.app.tools.kraken.kraken import Kraken
-        kraken = Kraken(camel)
-        SnakemakeUtils.add_pickle_inputs(kraken, input, ['DB'])
-        kraken.add_input_files(SnakePipelineUtils.extracts_fq_input(input.IO, key_se='FASTQ', drop_se=True))
-        step = Step(rule, kraken, camel, params.running_dir, config)
-        kraken.update_parameters(threads=threads)
+        from camel.app.tools.kraken.kraken2 import Kraken2
+        kraken2 = Kraken2(camel)
+        kraken2.add_input_files(SnakePipelineUtils.extracts_fq_input(input.IO, key_pe='FASTQ_PE'))
+        kraken2.add_input_files({'DB': [ToolIODirectory(input.DB)]})
+        step = Step(rule, kraken2, camel, params.running_dir, config)
+        kraken2.update_parameters(threads=threads)
         step.run_step()
-        SnakemakeUtils.dump_tool_outputs(kraken, output)
-
-rule contamination_check_kraken_report:
-    """
-    Creteas a report based on the Kraken output.
-    """
-    input:
-        TSV = rules.contamination_check_kraken_run.output.TSV,
-        DB = rules.contamination_check_get_db.output.DB
-    output:
-        TSV = Path(config['working_dir']) / 'contamination_check' / 'kraken' / 'tsv-report.io'
-    params:
-        running_dir = Path(config['working_dir']) / 'contamination_check' / 'kraken'
-    run:
-        from camel.app.tools.kraken.krakenreport import KrakenReport
-        kraken_report = KrakenReport(camel)
-        SnakemakeUtils.add_pickle_inputs(kraken_report, input)
-        step = Step(rule, kraken_report, camel, params.running_dir, config)
-        step.run_step()
-        SnakemakeUtils.dump_tool_outputs(kraken_report, output)
+        SnakemakeUtils.dump_tool_outputs(kraken2, output)
 
 rule contamination_check_kraken_report_parser:
     """
     Parses the Kraken report and looks for contamination at the species level. 
     """
     input:
-        TSV = rules.contamination_check_kraken_report.output.TSV
+        TSV = rules.contamination_check_kraken2_run.output.TSV
     output:
-        INFORMS = Path(config['working_dir']) / 'contamination_check' / 'kraken' / 'informs-contamination.io'
+        INFORMS = Path(config['working_dir']) / 'contamination_check' / 'kraken2' / 'informs-contamination.io'
     params:
-        running_dir = Path(config['working_dir']) / 'contamination_check' / 'kraken',
+        running_dir = Path(config['working_dir']) / 'contamination_check' / 'kraken2',
         expected_species = config['contamination_check']['expected_species']
     run:
         from camel.app.tools.kraken.krakenreportparser import KrakenReportParser
@@ -94,7 +65,7 @@ rule contamination_check_krona:
     Creates an interactive pie chart displaying the Kraken output.
     """
     input:
-        TSV = rules.contamination_check_kraken_run.output.TSV
+        TSV = rules.contamination_check_kraken2_run.output.TSV
     output:
         HTML = Path(config['working_dir']) / 'contamination_check' / 'krona' / 'html.io'
     params:
@@ -113,10 +84,9 @@ rule contamination_check_report:
     """
     input:
         HTML_Krona = rules.contamination_check_krona.output.HTML,
-        INFORMS_species = rules.contamination_check_kraken_report_parser.output.INFORMS,
-        INFORMS_kraken = rules.contamination_check_kraken_run.output.INFORMS,
-        TSV = rules.contamination_check_kraken_report.output.TSV,
-        DB = rules.contamination_check_get_db.output.DB
+         INFORMS_species = rules.contamination_check_kraken_report_parser.output.INFORMS,
+         INFORMS_kraken2 = rules.contamination_check_kraken2_run.output.INFORMS,
+         TSV = rules.contamination_check_kraken2_run.output.TSV_report
     output:
         VAL_HTML = Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT
     params:
