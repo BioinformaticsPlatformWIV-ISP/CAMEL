@@ -58,8 +58,7 @@ class HtmlReporterAssembly(Tool):
         table_data = [
             ('Assembler:', self._tool_inputs['ASSEMBLER'][0].value),
             ('N50:', '{:,}'.format(int(quast_informs['contig']['N50']))),
-            ('Number of contigs:', '{:,}'.format(int(quast_informs['contig']['# contigs (>= 0 bp)']))),
-            ('Number of contigs (>1000 bases):', '{:,}'.format(int(quast_informs['contig']['# contigs (>= 1000 bp)']))),
+            ('Number of contigs:', '{:,}'.format(int(quast_informs['contig']['# contigs (>= 1000 bp)']))),
             ('Total length:', '{:,}'.format(int(quast_informs['genome']['Total length'])))
         ]
         self._report_section.add_table(table_data, table_attributes=[('class', 'information')])
