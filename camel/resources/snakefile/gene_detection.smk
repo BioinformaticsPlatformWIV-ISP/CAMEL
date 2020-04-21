@@ -44,16 +44,18 @@ rule gene_detection_blastn:
         DB_BLAST = rules.gene_detection_db_manager.output.FASTA_clustered
     output:
         ASN = Path(config['working_dir']) / 'gene_detection' / '{db}' / 'blastn' / 'asn.io',
-        INFORMS = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS_METHOD).format(db='{db}', method='blast')
+        INFORMS = Path(config['working_dir']) / 'gene_detection' / '{db}' / 'blastn' / 'informs.io'
     params:
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'gene_detection' / wildcards.db / 'blastn'
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'gene_detection' / wildcards.db / 'blastn',
+        task = lambda wildcards: config['gene_detection'][wildcards.db].get('params', {}).get('blastn', {}).get('task', 'megablast')
     run:
         from camel.app.tools.blast.blastn import Blastn
         blastn = Blastn(camel)
         SnakemakeUtils.add_pickle_inputs(blastn, input)
         step = Step(rule, blastn, camel, params.running_dir, config, wildcards)
-        blastn.update_parameters(threads=1)
+        blastn.update_parameters(threads=1, task=params.task)
         step.run_step()
+        blastn.informs['Task'] = params.task
         SnakemakeUtils.dump_tool_outputs(blastn, output)
 
 rule gene_detection_tsv_generation:
@@ -82,10 +84,11 @@ rule gene_detection_hit_filtering:
     """
     input:
         TSV = rules.gene_detection_tsv_generation.output.TSV,
-        INFORMS_db_info = rules.gene_detection_db_manager.output.INFORMS
+        INFORMS_db_info = rules.gene_detection_db_manager.output.INFORMS,
+        INFORMS_blastn = rules.gene_detection_blastn.output.INFORMS
     output:
         VAL_Hits = Path(config['working_dir']) / 'gene_detection' / '{db}' / 'hit_filtering' / 'blast-hits.io',
-        INFORMS = Path(config['working_dir']) / 'gene_detection' / '{db}' / 'hit_filtering' / 'informs.io',
+        INFORMS = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS_METHOD).format(db='{db}', method='blast'),
         TSV = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_TABULAR_METHOD).format(db='{db}', method='blast')
     params:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'gene_detection' / wildcards.db / 'hit_filtering',
@@ -99,17 +102,27 @@ rule gene_detection_hit_filtering:
         step = Step(rule, hit_filtering, camel, params.running_dir, config, wildcards)
 
         # Update parameters
-        hit_filtering.update_parameters(output_filename=os.path.join(params.running_dir, params.output_filename))
-        if 'blast_filtering_options' in params.db_config:
-            hit_filtering.update_parameters(**params.db_config['blast_filtering_options'])
-        if params.db_config.get('extra_column') is not None:
+        hit_filtering.update_parameters(
+            output_filename=str(Path(params.running_dir) / params.output_filename),
+            min_percent_identity=params.db_config.get('params', {}).get('blastn', {}).get('min_percent_identity', '90'),
+            min_coverage=params.db_config.get('params', {}).get('blastn', {}).get('min_coverage', '60')
+        )
+        if params.db_config.get('metadata') is not None:
             hit_filtering.update_parameters(
-                extra_column_name=params.db_config['extra_column']['name'],
-                extra_column_key=params.db_config['extra_column']['key'])
+                extra_column_name=params.db_config['metadata']['name'],
+                extra_column_key=params.db_config['metadata']['key'])
 
         # Run tool
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(hit_filtering, output)
+
+        # Add the informs from the filtering to the existing ones with the blastn command
+        informs = SnakemakeUtils.load_object(input.INFORMS_blastn)
+        for key, value in hit_filtering.informs.items():
+            if key.startswith('_'):
+                continue
+            informs[key] = value
+        SnakemakeUtils.dump_object(informs, output.INFORMS)
 
 rule gene_detection_text_alignment_generation:
     """
@@ -180,7 +193,7 @@ rule gene_detection_srst2:
             params.running_dir.mkdir(parents=True)
         srst2 = Srst2Gene(camel)
         SnakemakeUtils.add_pickle_input(srst2, 'FASTA', input.FASTA)
-        fq_input_dict = SnakePipelineUtils.extracts_fq_input(input.IO, drop_se=True)
+        fq_input_dict = SnakePipelineUtils.extracts_fq_input(input.IO, key_pe='FASTQ_PE')
         srst2.add_input_files(fq_input_dict)
         step = Step(rule, srst2, camel, params.running_dir, config, wildcards)
 
@@ -190,8 +203,7 @@ rule gene_detection_srst2:
             fwd_read_path = fq_input_dict['FASTQ_PE'][0].path
             fwd_designator, rev_designator = SequenceTypingUtils.determine_read_status(fwd_read_path)
             srst2.update_parameters(forward_designator=fwd_designator, reverse_designator=rev_designator)
-        if 'srst2_options' in params.db_config:
-            srst2.update_parameters(**params.db_config['srst2_options'])
+        srst2.update_parameters(**params.db_config.get('params', {}).get('srst2', {}))
 
         # Run tool
         step.run_step()
@@ -225,10 +237,10 @@ rule gene_detection_srst2_hit_extraction:
         extractor.update_parameters(output_filename=os.path.join(params.running_dir, params.output_filename))
 
         # Add column with additional metadata
-        if 'extra_column' in params.db_config:
+        if 'metadata' in params.db_config:
             extractor.update_parameters(
-                extra_column_name=params.db_config['extra_column']['name'],
-                extra_column_key=params.db_config['extra_column']['key'])
+                extra_column_name=params.db_config['metadata']['name'],
+                extra_column_key=params.db_config['metadata']['key'])
 
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(extractor, output)
@@ -343,8 +355,8 @@ rule gene_detection_get_column_names:
             raise ValueError(f"Invalid detection method: {params.detection_method}")
 
         # Add metadata columns
-        if 'extra_column' in params.db_config:
-            empty_hit.add_metadata(params.db_config['extra_column']['name'], '')
+        if 'metadata' in params.db_config:
+            empty_hit.add_metadata(params.db_config['metadata']['name'], '')
 
         # Save column names
         columns = empty_hit.html_column_names
@@ -357,6 +369,7 @@ rule gene_detection_report:
     input:
         VAL_Hits = rules.gene_detection_get_hits.output.VAL_hits,
         INFORMS_db_info = rules.gene_detection_db_manager.output.INFORMS,
+        INFORMS_detection = rules.gene_detection_get_hits.output.INFORMS,
         TSV = rules.gene_detection_get_hits.output.TSV
     output:
         VAL_HTML = Path(config['working_dir']) / gene_detection.OUTPUT_GENE_DETECTION_REPORT,
@@ -367,6 +380,7 @@ rule gene_detection_report:
     run:
         from camel.app.io.tooliovalue import ToolIOValue
         from camel.app.tools.pipelines.genedetection.htmlreportergenedetection import HtmlReporterGeneDetection
+        import pprint
         reporter = HtmlReporterGeneDetection(camel)
         step = Step(rule, reporter, camel, params.running_dir, config, wildcards)
         if 'force_detection_method' in params.config_data:
@@ -408,10 +422,6 @@ rule gene_detection_dump_summary_info:
         blast_stats = []
         for hit in informs:
             hit_info.append(hit.value.to_table_row())
-            blast_stats.append(dataclasses.asdict(hit.value.blast_stats))
-            blast_stats[-1].pop('subject_sequence')
         with open(output[0], 'w') as handle:
             handle.write('hits_{}\t{}'.format(wildcards.db, json.dumps(hit_info)))
-            handle.write('\n')
-            handle.write('blast_stats_{}\t{}'.format(wildcards.db, json.dumps(blast_stats)))
             handle.write('\n')

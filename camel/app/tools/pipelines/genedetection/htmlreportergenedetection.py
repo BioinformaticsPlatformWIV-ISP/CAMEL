@@ -1,7 +1,6 @@
 import logging
-from typing import List
-
-import os
+from pathlib import Path
+from typing import List, Dict
 
 from camel.app.camel import Camel
 from camel.app.components.filesystemhelper import FileSystemHelper
@@ -33,6 +32,7 @@ class HtmlReporterGeneDetection(Tool):
         :return: None
         """
         self.__initialize_report()
+        self.__add_parameter_table(self._input_informs['detection'])
         if len(self._tool_inputs['VAL_Hits']) == 0:
             self._report_section.add_paragraph('No hits found.')
         else:
@@ -69,7 +69,17 @@ class HtmlReporterGeneDetection(Tool):
         """
         db_name = self._input_informs['db_info']['name']
         self._report_section = HtmlReportSection(self._input_informs['db_info']['title'], 3)
-        self._sub_folder = os.path.join('gene_detection', FileSystemHelper.make_valid(db_name))
+        self._sub_folder = Path('gene_detection') / FileSystemHelper.make_valid(db_name)
+
+    def __add_parameter_table(self, informs_detection: Dict[str, str]) -> None:
+        """
+        Adds a tables with the parameters used for the detection.
+        :param informs_detection: Informs from the detection
+        :return: None
+        """
+        self._report_section.add_table([
+            [f'{key}:', value] for key, value in sorted(informs_detection.items()) if not key.startswith('_')
+        ], None, [('class', 'information')])
 
     def __add_output_table(self, hits: List[GeneDetectionHitBase]) -> None:
         """
@@ -77,14 +87,14 @@ class HtmlReporterGeneDetection(Tool):
         :param hits: Detected hits
         :return: None
         """
-        table_data = [hit.to_html_row(self._report_section, self._sub_folder) for hit in sorted(
+        table_data = [hit.to_html_row(self._report_section, str(self._sub_folder)) for hit in sorted(
             hits, key=lambda x: x.locus)]
         self._report_section.add_table(table_data, hits[0].html_column_names, [('class', 'data')])
-        relative_path = os.path.join(self._sub_folder, 'genes-{}-{}.tsv'.format(
+        relative_path = self._sub_folder / 'genes-{}-{}.tsv'.format(
             FileSystemHelper.make_valid(self._input_informs['db_info']['name']),
-            FileSystemHelper.make_valid(self._tool_inputs['SAMPLE_NAME'][0].value)))
-        self._report_section.add_file(self._tool_inputs['TSV'][0].path, relative_path)
-        self._report_section.add_link_to_file("Download (TSV)", relative_path)
+            FileSystemHelper.make_valid(self._tool_inputs['SAMPLE_NAME'][0].value))
+        self._report_section.add_file(self._tool_inputs['TSV'][0].path, str(relative_path))
+        self._report_section.add_link_to_file("Download (TSV)", str(relative_path))
 
     def __add_database_information(self) -> None:
         """

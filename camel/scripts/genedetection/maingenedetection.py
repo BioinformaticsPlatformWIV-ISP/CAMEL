@@ -43,6 +43,7 @@ class MainGeneDetection(object):
         # BLAST specific parameters
         argument_parser.add_argument('--blast-min-percent-identity', type=int, default=90)
         argument_parser.add_argument('--blast-min-percent-coverage', type=int, default=60)
+        argument_parser.add_argument('--blast-task', type=str, choices=['blastn', 'megablast'], default='megablast')
 
         # SRST2 specific parameters
         argument_parser.add_argument('--srst2-min-cov', type=int, default=90)
@@ -84,25 +85,8 @@ class MainGeneDetection(object):
         Adds the report section with the analysis info
         :return: None
         """
-        if self._args.detection_method == 'blast':
-            data = [
-                ['% identity threshold:', f'{self._args.blast_min_percent_identity}%'],
-                ['% query covered threshold:', f'{self._args.blast_min_percent_coverage}%']
-            ]
-        elif self._args.detection_method == 'srst2':
-            data = [
-                ['Min. % coverage threshold:', f'{self._args.srst2_min_cov}%'],
-                ['Max. % divergence threshold:', f'{self._args.srst2_max_div}%']
-            ]
-        elif self._args.detection_method == 'kma':
-            data = [
-                ['% identity threshold:', f'{self._args.kma_min_percent_identity}%'],
-                ['% query coverage threshold:', f'{self._args.kma_min_percent_coverage}%']
-            ]
-        else:
-            raise ValueError(f"Invalid detection method: {self._args.detection_method}")
         input_files_str = self._helper.determine_input_files(self._args)
-        self._helper.export_analysis_info_section(self._report, input_files_str, data)
+        self._helper.export_analysis_info_section(self._report, input_files_str)
 
     def __get_db_metadata(self) -> Dict[str, Any]:
         """
@@ -114,28 +98,29 @@ class MainGeneDetection(object):
             db_path = self._args.database_dir
         else:
             db_path = f"{'.'.join(self._args.database_html.split('.')[:-1])}_files"
-        metadata = {'path': db_path}
+        config_data = {'path': db_path}
 
         # Add specific options
         if self._args.detection_method == 'blast':
-            metadata.update({'blast_filtering_options': {
+            config_data.update({'params': {'blastn': {
                 'min_percent_identity': self._args.blast_min_percent_identity,
-                'min_coverage': self._args.blast_min_percent_coverage
-            }})
+                'min_coverage': self._args.blast_min_percent_coverage,
+                'task': self._args.blast_task
+            }}})
         elif self._args.detection_method == 'srst2':
-            metadata.update({'srst2_options': {
+            config_data.update({'params': {'srst2': {
                 'min_coverage': self._args.srst2_min_cov,
                 'max_divergence': self._args.srst2_max_div,
                 'max_unaligned_overlap': self._args.srst2_max_unaligned_overlap,
                 'max_mismatch': self._args.srst2_max_mismatch
-            }})
+            }}})
 
         # Add extra column
         with open(os.path.join(db_path, 'db_metadata.txt')) as handle:
             db_metadata = json.load(handle)
             if 'extra_column' in db_metadata:
-                metadata['extra_column'] = db_metadata['extra_column']
-        return metadata
+                config_data['metadata'] = db_metadata['extra_column']
+        return config_data
 
     def __export_output(self, output: GeneDetectionOutput) -> None:
         """

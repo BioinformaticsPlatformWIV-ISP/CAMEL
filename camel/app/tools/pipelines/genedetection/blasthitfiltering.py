@@ -52,6 +52,7 @@ class BlastHitFiltering(Tool):
         hits = self.__parse_tabular_blast_output(self._tool_inputs['TSV'][0].path)
         filtered_hits = self.__filter_hits(hits)
         self.__set_output(filtered_hits)
+        self.__set_informs()
 
     def _check_input(self) -> None:
         """
@@ -143,3 +144,11 @@ class BlastHitFiltering(Tool):
             selected_hits = BlastHitFilteringHelper.detect_best_hits(hits)
             reported_hits.extend(selected_hits)
         return reported_hits
+
+    def __set_informs(self) -> None:
+        """
+        Sets the informs.
+        :return: None
+        """
+        self._informs['Min. percent identity'] = f"{self._parameters['min_percent_identity'].value}%"
+        self._informs['Min. coverage'] = f"{self._parameters['min_coverage'].value}%"

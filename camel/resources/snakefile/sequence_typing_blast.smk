@@ -47,7 +47,7 @@ rule Typing_blast_allele_detection:
             raise ValueError(f"Invalid locus type: {wildcards.locus_type}")
         SnakemakeUtils.add_pickle_input(blast, 'FASTA', input.FASTA)
         blast.add_input_files({'DB_BLAST': [ToolIOFile(os.path.join(params.scheme_dir, locus_informs['fasta_path']))]})
-        blast.update_parameters(threads=threads)
+        blast.update_parameters(threads=threads, task='blastn')
         blast.run(params.working_dir)
 
         # TSV generation

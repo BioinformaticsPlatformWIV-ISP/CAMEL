@@ -1,10 +1,17 @@
 import logging
-
-import os
+from pathlib import Path
 
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.tool import Tool
+
+
+PARAM_FMT_BY_NAME = {
+    'max_divergence': {'title': 'Max. divergence', 'format': '{}%'},
+    'max_mismatch': {'title': 'Max. nb. mismatches'},
+    'min_coverage': {'title': 'Min. coverage', 'format': '{}%'},
+    'min_depth': {'title': 'Min. depth', 'format': '{}x'}
+}
 
 
 class Srst2Gene(Tool):
@@ -28,18 +35,20 @@ class Srst2Gene(Tool):
         self._command.command = self.__build_command()
         self._execute_command()
         self.__set_output()
+        self.__set_informs()
 
-    def __build_command(self):
+    def __build_command(self) -> str:
         """
-        Builds the command line command.
-        :return: Command line command
+        Builds the command line call.
+        :return: Command line call
         """
-        return ' '.join([self._tool_command,
-                         self.__build_input_string(),
-                         '--gene_db {}'.format(self._tool_inputs['FASTA'][0].path),
-                         ' '.join(self._build_options())])
+        return ' '.join([
+            self._tool_command,
+            self.__build_input_string(),
+            '--gene_db {}'.format(self._tool_inputs['FASTA'][0].path),
+            ' '.join(self._build_options())])
 
-    def __build_input_string(self):
+    def __build_input_string(self) -> str:
         """
         Builds a string containing the input.
         :return: Input options string
@@ -49,18 +58,28 @@ class Srst2Gene(Tool):
         else:
             return '--input_se {}'.format(self._tool_inputs['FASTQ_SE'][0].path)
 
-    def __set_output(self):
+    def __set_output(self) -> None:
         """
         Sets the output files.
         :return: None
         """
-        for file_ in os.listdir(self._folder):
-            full_path = os.path.join(self._folder, file_)
-            key = self._get_output_file_key(file_)
+        for file_ in Path(self._folder).iterdir():
+            key = self._get_output_file_key(file_.name)
             if key is not None:
-                self._tool_outputs[key] = [ToolIOFile(full_path)]
+                self._tool_outputs[key] = [ToolIOFile(str(file_))]
 
-    def _check_input(self):
+    def __set_informs(self) -> None:
+        """
+        Sets the informs for this tool.
+        :return: None
+        """
+        for param_name, param in self._parameters.items():
+            if param_name not in PARAM_FMT_BY_NAME:
+                continue
+            fmt = PARAM_FMT_BY_NAME[param_name]
+            self._informs[fmt['title']] = fmt.get('format', '{}').format(param.value)
+
+    def _check_input(self) -> None:
         """
         Checks whether the given inputs are valid.
         - FASTQ_PE or FASTQ_SE reads are required (checked by super class)
@@ -73,7 +92,7 @@ class Srst2Gene(Tool):
         if 'MLST' not in self._tool_inputs:
             logging.info("No MLST definitions found. Only performing allele detection.")
 
-    def _get_output_file_key(self, filename):
+    def _get_output_file_key(self, filename: str) -> str:
         """
         Returns the key for the given output file.
         :param filename: Filename
@@ -91,7 +110,7 @@ class Srst2Gene(Tool):
         elif filename.endswith('consensus_alleles.fasta'):
             return 'FASTA'
 
-    def _check_command_output(self):
+    def _check_command_output(self) -> None:
         """
         Checks if the command execution was successful.
         :return: None
