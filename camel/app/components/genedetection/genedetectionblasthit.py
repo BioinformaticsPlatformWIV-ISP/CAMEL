@@ -90,7 +90,7 @@ class GeneDetectionBlastHit(GeneDetectionHitBase):
             report_section.add_file(str(self.alignment_path), relative_path)
             alignment_cell = HtmlTableCell('view', self.color if colored else None, link=relative_path)
 
-        return [HtmlTableCell(v, self.color) for v in self.to_table_row()][:-1] + [self._get_accession_cell()] + \
+        return [HtmlTableCell(v, self.color) for v in self.to_table_row()][1:-1] + [self._get_accession_cell()] + \
                [alignment_cell]
 
     @property
