@@ -47,7 +47,7 @@ rule contamination_check_kraken_report_parser:
     input:
         TSV = rules.contamination_check_kraken2_run.output.TSV
     output:
-        INFORMS = Path(config['working_dir']) / 'contamination_check' / 'kraken2' / 'informs-contamination.io'
+        INFORMS = Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_INFORMS
     params:
         running_dir = Path(config['working_dir']) / 'contamination_check' / 'kraken2',
         expected_species = config['contamination_check']['expected_species']
