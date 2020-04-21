@@ -50,10 +50,7 @@ rule variant_calling_read_mapping:
         step = Step(rule, bowtie2_map, camel, params.running_dir, config)
         bowtie2_map.update_parameters(threads=threads)
         SnakemakeUtils.add_pickle_input(bowtie2_map, 'INDEX_GENOME_PREFIX', input.INDEX_GENOME_PREFIX)
-        bowtie2_map.add_input_files(SnakePipelineUtils.extracts_fq_input(
-            input.IO, key_pe='FASTQ_PE', key_se='FASTQ_SE'))
-        import pprint
-        pprint.pprint(bowtie2_map._tool_inputs)
+        bowtie2_map.add_input_files(SnakePipelineUtils.extracts_fq_input(input.IO, key_se='FASTQ_SE', drop_empty=True))
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(bowtie2_map, output)
 
