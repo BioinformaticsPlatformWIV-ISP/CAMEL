@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import List
 
 import pandas as pd
+from pandas.errors import EmptyDataError
 
 from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
@@ -55,7 +56,10 @@ class SerotypeDetectorEcoli(Tool):
         :param path: Path
         :return: List of hits
         """
-        data_hits = pd.read_table(path)
+        try:
+            data_hits = pd.read_table(path)
+        except EmptyDataError:
+            return []
         return [SerotypeHit(gene, type_) for gene, type_ in zip(data_hits['Locus'], data_hits['Predicted serotype'])]
 
     def __get_h_type(self) -> str:
@@ -65,7 +69,7 @@ class SerotypeDetectorEcoli(Tool):
         """
         detected_genes = SerotypeDetectorEcoli.__parse_hits(self._tool_inputs['TSV_H'][0].path)
         if len(detected_genes) == 0:
-            return 'H-ambiguous'
+            return 'H-unknown'
         elif len(detected_genes) == 1:
             return detected_genes[0].type_
         else:
@@ -82,7 +86,7 @@ class SerotypeDetectorEcoli(Tool):
         """
         detected_genes = SerotypeDetectorEcoli.__parse_hits(self._tool_inputs['TSV_O'][0].path)
         if len(detected_genes) == 0:
-            return 'O-ambiguous'
+            return 'O-unknown'
         elif len(detected_genes) == 1:
             return detected_genes[0].type_
         else:
