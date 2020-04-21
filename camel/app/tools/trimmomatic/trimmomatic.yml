@@ -1,4 +1,4 @@
-dependencies: [java, trimmomatic/0.36]
+dependencies: [java, trimmomatic/0.38]
 parameters:
   average_quality: {default: false, mandatory: false, option: 'AVGQUAL:', p_index: 0,
     value: '20'}

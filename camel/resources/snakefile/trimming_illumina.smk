@@ -129,8 +129,8 @@ rule trimming_illumina_dump_summary_info:
     run:
         trimmomatic_informs = SnakemakeUtils.load_object(input.INFORMS_trimming)
         summary_data = [
-            ('total_reads_pairs', trimmomatic_informs['paired_reads_in']),
-            ('total_reads_pairs_trimmed', trimmomatic_informs['paired_reads_out'].split(' ')[0]),
+            ('total_read_pairs', trimmomatic_informs['paired_reads_in']),
+            ('total_read_pairs_trimmed', trimmomatic_informs['paired_reads_out'].split(' ')[0]),
             ('forward_only_surviving', trimmomatic_informs['forward_only_reads'].split(' ')[0]),
             ('reverse_only_surviving', trimmomatic_informs['reverse_only_reads'].split(' ')[0]),
             ('dropped', trimmomatic_informs['reads_drop'].split(' ')[0])
