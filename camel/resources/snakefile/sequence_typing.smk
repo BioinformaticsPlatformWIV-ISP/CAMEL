@@ -7,14 +7,15 @@ from camel.app.components.sequencetyping.sequencetypingutils import SequenceTypi
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile import sequence_typing
+from camel.resources.snakefile.sequence_typing import OUTPUT_TYPING_INFORMS
 
 
 ##################
 #  Configuration #
 ##################
 camel = Camel.get_instance()
-SCHEMES = config['sequence_typing']
-SCHEME_METADATA = {name: SequenceTypingUtils.parse_scheme_metadata(path) for name, path in SCHEMES.items()}
+SCHEME_DATA = config['sequence_typing']
+SCHEME_METADATA = {name: SequenceTypingUtils.parse_scheme_metadata(data['path']) for name, data in SCHEME_DATA.items()}
 loci_by_scheme_by_type = {
     name: {
         'DNA': [locus['name_valid'] for locus in metadata['loci'] if locus['type'] == 'DNA'],
@@ -37,7 +38,7 @@ rule typing_extract_schema_info:
     Extracts the metadata for a scheme.
     """
     input:
-        lambda wildcards: SCHEMES[wildcards.scheme]
+        lambda wildcards: SCHEME_DATA[wildcards.scheme]['path']
     output:
         INFORMS = Path(config['working_dir']) / 'typing' / '{scheme}' /'informs-locus_set.io'
     params:
@@ -56,7 +57,7 @@ rule typing_pickle_profiles:
     Retrieves the sequence type definitions and converts them to CAMEL IO pickles.
     """
     input:
-        DIR = lambda wildcards: SCHEMES[wildcards.scheme]
+        DIR = lambda wildcards: SCHEME_DATA[wildcards.scheme]['path']
     output:
         TSV = Path(config['working_dir']) / 'typing' / '{scheme}' / 'tsv-profiles.io'
     run:
@@ -69,10 +70,14 @@ rule typing_get_hits:
     """
     input:
         HITS_NUCL = lambda wildcards: str(Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_HITS).format(
-            scheme=wildcards.scheme, locus_type='DNA', detection_method=config['detection_method'])) if (
+            scheme=wildcards.scheme,
+            locus_type='DNA',
+            detection_method=SequenceTypingUtils.get_detection_method(config, wildcards.scheme))) if (
                 len(loci_by_scheme_by_type[wildcards.scheme]['DNA']) > 0) else [],
         HITS_PEPT = lambda wildcards: str(Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_HITS).format(
-            scheme=wildcards.scheme, locus_type='peptide', detection_method='blast')) if (
+            scheme=wildcards.scheme,
+            locus_type='peptide',
+            detection_method='blast')) if (
                 len(loci_by_scheme_by_type[wildcards.scheme]['peptide']) > 0) else []
     output:
         HITS_NUCL = Path(config['working_dir']) / 'typing' / '{scheme}' / 'DNA' / 'hits.io',
@@ -85,6 +90,22 @@ rule typing_get_hits:
                 shutil.copyfile(data, output.get(key))
             else:
                 SnakemakeUtils.dump_object([], output.get(key))
+
+rule typing_dump_commands:
+    input:
+        IO = lambda wildcards: [str(Path(config['working_dir']) / 'typing' / wildcards.scheme / type_ / loci_by_scheme_by_type[wildcards.scheme][type_][0] / f'informs-{SequenceTypingUtils.get_detection_method(config, wildcards.scheme)}.io') for type_ in (
+            'DNA', 'peptide') if len(loci_by_scheme_by_type[wildcards.scheme][type_]) > 0],
+        INFORMS_scheme = Path(config['working_dir']) / 'typing' / '{scheme}' /'informs-locus_set.io'
+    output:
+        INFORMS = Path(config['working_dir']) / OUTPUT_TYPING_INFORMS
+    params:
+        scheme = lambda wildcards: wildcards.scheme
+    run:
+        informs_scheme = SnakemakeUtils.load_object(input.INFORMS_scheme)
+        informs_commands = [SnakemakeUtils.load_object(io) for io in input.IO]
+        for informs in informs_commands:
+            informs['_tag'] = f"Typing - {informs_scheme['title']}"
+        SnakemakeUtils.dump_object(informs_commands, output.INFORMS)
 
 rule typing_export_hits_tabular:
     """
@@ -187,11 +208,11 @@ rule typing_create_report:
     """
     input:
         TSV_nucl = rules.typing_export_hits_tabular.output.TSV.format(locus_type='DNA', scheme='{scheme}'),
-        TSV_pept = rules.typing_export_hits_tabular.output.TSV.format(locus_type='peptide', scheme='{scheme}'),
-        INFORMS_scheme = rules.typing_extract_schema_info.output.INFORMS,
-        INFORMS_ST = lambda wildcards: rules.typing_detect_sequence_type.output.INFORMS if SequenceTypingUtils.has_profiles(SCHEMES, wildcards.scheme) else [],
-        hits_nucl = rules.typing_get_hits.output.HITS_NUCL,
-        hits_pept = rules.typing_get_hits.output.HITS_PEPT
+         TSV_pept = rules.typing_export_hits_tabular.output.TSV.format(locus_type='peptide', scheme='{scheme}'),
+         INFORMS_scheme = rules.typing_extract_schema_info.output.INFORMS,
+         INFORMS_ST = lambda wildcards: rules.typing_detect_sequence_type.output.INFORMS if SequenceTypingUtils.has_profiles(SCHEME_DATA, wildcards.scheme) else [],
+         hits_nucl = rules.typing_get_hits.output.HITS_NUCL,
+         hits_pept = rules.typing_get_hits.output.HITS_PEPT
     output:
         VAL_HTML = Path(config['working_dir']) / sequence_typing.OUTPUT_TYPING_REPORT
     params:
@@ -231,7 +252,7 @@ rule typing_dump_summary_info:
     input:
         HITS_NUCL = rules.typing_add_allele_page_url.output.HITS_NUCL,
         HITS_PEPT = rules.typing_add_allele_page_url.output.HITS_PEPT,
-        INFORMS_ST = lambda wildcards: rules.typing_detect_sequence_type.output.INFORMS if SequenceTypingUtils.has_profiles(SCHEMES, wildcards.scheme) else []
+        INFORMS_ST = lambda wildcards: rules.typing_detect_sequence_type.output.INFORMS if SequenceTypingUtils.has_profiles(SCHEME_DATA, wildcards.scheme) else []
     output:
         TSV = Path(config['working_dir']) / sequence_typing.OUTPUT_TYPING_SUMMARY
     params:

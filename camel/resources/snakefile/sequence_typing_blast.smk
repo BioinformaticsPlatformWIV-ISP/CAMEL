@@ -1,6 +1,4 @@
-import logging
-
-import os
+from pathlib import Path
 
 from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
@@ -11,20 +9,22 @@ from camel.resources.snakefile.sequence_typing import OUTPUT_TYPING_HITS
 camel = Camel.get_instance()
 
 
-rule Typing_blast_allele_detection:
+rule typing_blast_allele_detection:
     """
     Allele detection using blastn (DNA) or blastx (peptide).
     """
     input:
-        FASTA=os.path.join(config['working_dir'], OUTPUT_ASSEMBLY_FASTA),
-        INFORMS_scheme=os.path.join(config['working_dir'], 'typing', '{scheme}', 'informs-locus_set.io')
+        FASTA = Path(config['working_dir']) / OUTPUT_ASSEMBLY_FASTA,
+        INFORMS_scheme = Path(config['working_dir']) / 'typing' / '{scheme}' / 'informs-locus_set.io'
     output:
-        VAL_Hit=os.path.join(config['working_dir'], 'typing', '{scheme}', '{locus_type}', '{locus}', 'hit-blast.io')
+        VAL_Hit = Path(config['working_dir']) / 'typing' / '{scheme}' / '{locus_type}' / '{locus}' / 'hit-blast.io',
+        INFORMS = Path(config['working_dir']) / 'typing' / '{scheme}' / '{locus_type}' / '{locus}' / 'informs-blast.io'
     params:
-        working_dir=os.path.join(config['working_dir'], 'typing', '{scheme}', '{locus_type}', '{locus}'),
-        locus_type=lambda wildcards: wildcards.locus_type,
-        locus_name=lambda wildcards: wildcards.locus,
-        scheme_dir=lambda wildcards: SCHEMES[wildcards.scheme]
+        working_dir = lambda wildcards: Path(config['working_dir']) / 'typing' / wildcards.scheme / wildcards.locus_type / wildcards.locus,
+        locus_type = lambda wildcards: wildcards.locus_type,
+        locus_name = lambda wildcards: wildcards.locus,
+        scheme_dir = lambda wildcards: Path(SCHEME_DATA[wildcards.scheme]['path']),
+        blastn_task = lambda wildcards: SCHEME_DATA[wildcards.scheme].get('blastn_task', 'megablast')
     threads: 1
     run:
         from camel.app.tools.blast.blastformatter import BlastFormatter
@@ -41,14 +41,16 @@ rule Typing_blast_allele_detection:
         # Blast alignment
         if params.locus_type == 'DNA':
             blast = Blastn(camel)
+            blast.update_parameters(task=params.blastn_task)
         elif params.locus_type == 'peptide':
             blast = Blastx(camel)
         else:
             raise ValueError(f"Invalid locus type: {wildcards.locus_type}")
         SnakemakeUtils.add_pickle_input(blast, 'FASTA', input.FASTA)
-        blast.add_input_files({'DB_BLAST': [ToolIOFile(os.path.join(params.scheme_dir, locus_informs['fasta_path']))]})
-        blast.update_parameters(threads=threads, task='blastn')
-        blast.run(params.working_dir)
+        blast.add_input_files({'DB_BLAST': [ToolIOFile(str(params.scheme_dir / locus_informs['fasta_path']))]})
+        blast.update_parameters(threads=threads)
+        blast.run(str(params.working_dir))
+        SnakemakeUtils.dump_object(blast.informs, output.INFORMS)
 
         # TSV generation
         formatter_tsv = BlastFormatter(camel)
@@ -80,45 +82,19 @@ rule Typing_blast_allele_detection:
             best_hit.alignment_path = extractor.tool_outputs['TXT'][0].path
         SnakemakeUtils.dump_object(hit_selector.tool_outputs['VAL_Hit'], output.VAL_Hit)
 
-rule Typing_blast_combine_hits:
+rule typing_blast_combine_hits:
     """
     Combines the hits for the blast based detection.
     """
     input:
-        input_nucl=lambda wildcards: expand(os.path.join(config['working_dir'], 'typing', wildcards.scheme, 'DNA', '{locus}', 'hit-blast.io'), locus=loci_by_scheme_by_type[wildcards.scheme]['DNA']),
-        cleanup_nucl=lambda wildcards: expand(os.path.join(config['working_dir'], 'typing', wildcards.scheme, 'DNA', '{locus}', '.cleanup'), locus=loci_by_scheme_by_type[wildcards.scheme]['DNA']),
-        input_pept=lambda wildcards: expand(os.path.join(config['working_dir'], 'typing', wildcards.scheme, 'peptide', '{locus}', 'hit-blast.io'), locus=loci_by_scheme_by_type[wildcards.scheme]['peptide']),
-        cleanup_pept=lambda wildcards: expand(os.path.join(config['working_dir'], 'typing', wildcards.scheme, 'peptide', '{locus}', '.cleanup'), locus=loci_by_scheme_by_type[wildcards.scheme]['peptide'])
+        input_nucl=lambda wildcards: expand(str(Path(config['working_dir']) / 'typing' / wildcards.scheme / 'DNA' / '{locus}' / 'hit-blast.io'), locus=loci_by_scheme_by_type[wildcards.scheme]['DNA']),
+        input_pept=lambda wildcards: expand(str(Path(config['working_dir']) / 'typing' / wildcards.scheme / 'peptide' / '{locus}' / 'hit-blast.io'), locus=loci_by_scheme_by_type[wildcards.scheme]['peptide']),
     output:
-        hits_nucl=os.path.join(config['working_dir'], str(OUTPUT_TYPING_HITS).format(scheme='{scheme}', detection_method='blast', locus_type='DNA')),
-        hits_pept=os.path.join(config['working_dir'], str(OUTPUT_TYPING_HITS).format(scheme='{scheme}', detection_method='blast', locus_type='peptide'))
+        hits_nucl = Path(config['working_dir']) / str(OUTPUT_TYPING_HITS).format(scheme='{scheme}', detection_method='blast', locus_type='DNA'),
+        hits_pept = Path(config['working_dir']) / str(OUTPUT_TYPING_HITS).format(scheme='{scheme}', detection_method='blast', locus_type='peptide')
     run:
         for key in 'nucl', 'pept':
             list_of_hits = []
             for pickle in input.get(f'input_{key}'):
                 list_of_hits.append(SnakemakeUtils.load_object(pickle)[0])
             SnakemakeUtils.dump_object(list_of_hits, output.get(f'hits_{key}'))
-
-rule Typing_blastn_cleanup:
-    """
-    Cleans up the directories created by the blast allele calling.
-    """
-    input:
-        VAL_Hit=os.path.join(config['working_dir'], 'typing', '{scheme}', '{locus_type}', '{locus}', 'hit-blast.io')
-    output:
-        flag=os.path.join(config['working_dir'], 'typing', '{scheme}', '{locus_type}', '{locus}', '.cleanup')
-    priority: 5
-    run:
-        import humanize
-        dir_analysis = os.path.dirname(input.VAL_Hit)
-        bytes_cleared = 0
-        removed_extensions = ['.asn', '.bam', '.pileup']
-        for f in os.listdir(dir_analysis):
-            if os.path.splitext(f)[-1] not in removed_extensions:
-                continue
-            full_path = os.path.join(dir_analysis, f)
-            bytes_cleared += os.path.getsize(full_path)
-            os.remove(full_path)
-        logging.info('{} cleaned'.format(humanize.naturalsize(bytes_cleared)))
-        with open(output.flag, 'w') as handle_out:
-            handle_out.write('done')

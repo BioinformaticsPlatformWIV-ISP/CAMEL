@@ -11,6 +11,7 @@ OUTPUT_TYPING_REPORT = _dir_typing / 'html.io'
 OUTPUT_TYPING_REPORT_EMPTY = _dir_typing / 'html-empty.io'
 OUTPUT_TYPING_HITS = _dir_typing / '{locus_type}' / '{detection_method}' / 'all-hits.io'
 OUTPUT_TYPING_SUMMARY = _dir_typing / 'summary_out.tsv'
+OUTPUT_TYPING_INFORMS = _dir_typing / 'informs.io'
 
 
 def get_sequence_typing_report(scheme_key: str, config: Dict[str, Any], analysis_name: Optional[str] = None) -> str:
