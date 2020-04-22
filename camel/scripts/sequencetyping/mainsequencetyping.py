@@ -1,12 +1,10 @@
 #!/usr/bin/env python
 import argparse
-import json
 import logging
-from typing import Any, Dict, List, Sequence, Optional
-
-import os
+from typing import List, Sequence, Optional
 
 from camel.app.components.mainscripthelper import MainScriptHelper
+from camel.app.components.sequencetyping.sequencetypingutils import SequenceTypingUtils
 from camel.app.components.workflows.sequencetypingwrapper import SequenceTypingWrapper, SequenceTypingInput, \
     SequenceTypingOutput
 from camel.app.io.tooliofile import ToolIOFile
@@ -53,7 +51,7 @@ class MainSequenceTyping(object):
             f'Sequence typing {self._args.detection_method}')
         self._helper.export_analysis_info_section(self._report, self._helper.determine_input_files(self._args))
         input_files = self._helper.symlink_input_files(self._args.fasta, self._args.fastq_pe)
-        db_data = MainSequenceTyping.__get_db_metadata(self._args.scheme_dir)
+        db_data = SequenceTypingUtils.parse_scheme_metadata(self._args.scheme_dir)
         if self._args.detection_method == 'blast':
             fasta_file = self._helper.get_blast_input(input_files, self._args, self._report)
             output = self.__run_sequence_typing_blast(fasta_file, db_data['name'], self._args.scheme_dir)
@@ -63,16 +61,6 @@ class MainSequenceTyping(object):
         else:
             raise ValueError(f"Invalid detection method: {self._args.detection_method}")
         self.__export_output(output)
-
-    @staticmethod
-    def __get_db_metadata(directory: str) -> Dict[str, Any]:
-        """
-        Returns the database metadata.
-        :param directory: Database directory
-        :return: Metadata
-        """
-        with open(os.path.join(directory, 'scheme_metadata.txt')) as handle:
-            return json.load(handle)
 
     def __run_sequence_typing_blast(self, fasta_file: ToolIOFile, db_key: str, db_path: str) -> SequenceTypingOutput:
         """
