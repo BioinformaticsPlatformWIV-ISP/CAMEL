@@ -27,7 +27,7 @@ class MainSTECPipeline(BasePipeline):
         Initializes the main class.
         :param args: Arguments (optional)
         """
-        super().__init__('STEC pipeline', '0.5', SNAKEFILE_MAIN, args)
+        super().__init__('STEC pipeline', '1.0', SNAKEFILE_MAIN, args)
 
     def run(self) -> None:
         """
@@ -79,7 +79,7 @@ class MainSTECPipeline(BasePipeline):
         links = []
         if self._args.fastq_se is not None:
             gzipped = FileSystemHelper.is_gzipped(self._args.fastq_se)
-            links.append([self._args.fastq_se, f"{self.sample_name}.fastq{'gz' if gzipped else ''}"])
+            links.append([self._args.fastq_se, f"{self.sample_name}.fastq{'.gz' if gzipped else ''}"])
         else:
             for read_nb, path in enumerate(self._args.fastq_pe, start=1):
                 gzipped = FileSystemHelper.is_gzipped(path)
