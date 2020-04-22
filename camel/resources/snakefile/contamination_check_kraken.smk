@@ -124,10 +124,10 @@ rule contamination_check_dump_summary_info:
     run:
         informs = SnakemakeUtils.load_object(input.INFORMS_species)
         summary_data = [
-            ('expected_species', informs['expected'][0]),
-            ('expected_species_occurrence', informs['expected'][1]),
-            ('contaminants_warn', str(informs['contaminants_warn'])),
-            ('contaminants_fail', str(informs['contaminants_fail']))
+            ('kraken2_expected_species', informs['expected'][0]),
+            ('kraken2_expected_species_occurrence', informs['expected'][1]),
+            ('kraken2_contaminants_warn', str(informs['contaminants_warn'])),
+            ('kraken2_contaminants_fail', str(informs['contaminants_fail']))
         ]
         with open(output[0], 'w') as handle:
             for key, value in summary_data:

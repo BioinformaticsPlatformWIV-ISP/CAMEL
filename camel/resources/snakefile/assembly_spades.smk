@@ -131,10 +131,9 @@ rule assembly_dump_summary_info:
     run:
         quast_informs = SnakemakeUtils.load_object(input.INFORMS_quast)
         summary_data = [
-            ('n50', quast_informs['contig']['N50']),
-            ('nb_contigs', quast_informs['contig']['# contigs']),
-            ('nb_contigs_lt_1000', quast_informs['contig']['# contigs (>= 1000 bp)']),
-            ('total_length', quast_informs['genome']['Total length'])
+            ('assembly_n50', quast_informs['contig']['N50']),
+            ('assembly_nb_contigs', quast_informs['contig']['# contigs']),
+            ('assembly_total_length', quast_informs['genome']['Total length'])
         ]
         with open(output[0], 'w') as handle:
             for key, value in summary_data:
