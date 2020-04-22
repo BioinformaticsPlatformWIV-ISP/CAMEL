@@ -50,11 +50,22 @@ class MainMlstTree(object):
         :return: None
         """
         allele_ids_by_sample = self.__parse_input_files()
+
+        # Create the tabular output file
         if self._args.output_tabular:
             self.__create_tabular_output(allele_ids_by_sample, self._args.output_tabular)
+
+        # Stop when only tabular output is specified
+        if self._args.output is None and self._args.output_dist_matrix is None:
+            logging.info("Not creating tree (output not set)")
+            return
+
+        # Construct distance matrix
         matrix = MlstPyhloUtils.calculate_distance_matrix(allele_ids_by_sample)
         if self._args.output_dist_matrix is not None:
             self.__export_distance_matrix(matrix)
+
+        # Create tree
         tree = MlstPyhloUtils.construct_tree(matrix, self._args.clustering_method)
         self.__export_tree(tree)
 
