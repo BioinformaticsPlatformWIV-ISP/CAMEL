@@ -5,11 +5,10 @@ read_trimming:
   export_fastq: {export_fastq}
 
 contamination_check:
-  db: /db/kraken/latest/abfhpv_lite/
+  db: /db/kraken2/latest/abfhpv/
   expected_species: Escherichia coli
 
 quality_checks:
-  typing_scheme: {qc_typing_scheme}
   expected_gc_content: 50.5
 
 variant_calling:
@@ -46,57 +45,60 @@ flexneri_type:
 gene_detection:
   argannot:
     path: /db/gene_detection/ARG-ANNOT
-    perc_identity_cutoff: 90
 
   resfinder:
     path: /db/gene_detection/ResFinder
-    perc_identity_cutoff: 90
-    extra_column:
+    metadata:
       name: Antibiotic(s)
       key: antibiotics
 
   card:
     path: /db/gene_detection/CARD
-    perc_identity_cutoff: 90
 
   ncbi_amr:
     path: /db/gene_detection/NCBI_AMR
-    perc_identity_cutoff: 90
 
   virulencefinder:
     path: /db/gene_detection/VirulenceFinder-Ecoli
-    perc_identity_cutoff: 90
-    extra_column:
+    metadata:
       name: Protein function
       key: protein_function
 
   virulencefinder_shiga:
     path: /db/gene_detection/VirulenceFinder-Shiga
-    perc_identity_cutoff: 90
-    extra_column:
+    metadata:
       name: stx variant
       key: stx_variant
 
   plasmidfinder:
     path: /db/gene_detection/PlasmidFinder-entero
-    perc_identity_cutoff: 95
-    extra_column:
+    params:
+      blastn:
+        min_identity: 95
+        min_coverage: 60
+      srst2:
+        max_divergence: 5
+        min_coverage: 60
+    metadata:
       name: Notes
       key: notes
 
   subspecies_identification:
     path: /db/pipelines/shigella/subspecies_identification/
-    perc_identity_cutoff: 90
     force_detection_method: srst2
 
   flexneri_type:
     path: /db/pipelines/shigella/flexneri_type
-    perc_identity_cutoff: 90
 
 ###################
 # Sequence typing #
 ###################
 sequence_typing:
-  mlst_pasteur: /db/sequence_typing/ecoli/mlst-pasteur
-  mlst_warwick: /db/sequence_typing/ecoli/mlst-warwick
-  cgmlst: /db/sequence_typing/ecoli/cgmlst
+  mlst_pasteur:
+    path: /db/sequence_typing/ecoli/mlst-pasteur
+  mlst_warwick:
+    path: /db/sequence_typing/ecoli/mlst-warwick
+  cgmlst:
+    path: /db/sequence_typing/ecoli/cgmlst
+    detection_method: blast
+    blast_task: blastn

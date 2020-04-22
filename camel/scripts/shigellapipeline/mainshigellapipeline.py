@@ -23,7 +23,7 @@ class MainShigellaPipeline(BasePipeline):
         Initializes the main class.
         :param args: Arguments (optional)
         """
-        super().__init__('Shigella pipeline', '0.4', SNAKEFILE_MAIN, args)
+        super().__init__('Shigella pipeline', '0.5', SNAKEFILE_MAIN, args)
 
     @property
     def title(self) -> str:
@@ -51,11 +51,11 @@ class MainShigellaPipeline(BasePipeline):
         config_data['analyses'] = [key for key in MainShigellaPipeline.CUSTOM_ANALYSES if vars(self._args)[key]]
         with open(CONFIG_DATA) as handle_in:
             config_data.update(yaml.safe_load(handle_in.read().format(
-                qc_typing_scheme='cgmlst' if self._args.cgmlst else 'mlst_warwick',
                 export_fastq='true' if self._args.report_include_fastq else "'false'",
                 export_bam='true' if self._args.report_include_bam else 'false',
                 variant_filtering={}
             )))
+        config_data['quality_checks']['typing_scheme'] = 'cgmlst' if self._args.cgmlst else 'mlst_warwick'
         return SnakePipelineUtils.generate_config_file(config_data, self._working_dir)
 
     def __create_fastq_input_dict(self) -> Tuple[str, List[Dict[str, Any]]]:

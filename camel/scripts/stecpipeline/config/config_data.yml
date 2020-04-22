@@ -58,7 +58,7 @@ gene_detection:
   plasmidfinder:
     path: /db/gene_detection/PlasmidFinder-entero
     params:
-      blast:
+      blastn:
         min_identity: 95
         min_coverage: 60
       srst2:
@@ -71,7 +71,7 @@ gene_detection:
   serotype_o:
     path: /db/gene_detection/SerotypeFinder-O_type
     params:
-      blast:
+      blastn:
         min_identity: 85
         min_coverage: 60
       srst2:
@@ -84,7 +84,7 @@ gene_detection:
   serotype_h:
     path: /db/gene_detection/SerotypeFinder-H_type
     params:
-      blast:
+      blastn:
         min_identity: 85
         min_coverage: 60
       srst2:
