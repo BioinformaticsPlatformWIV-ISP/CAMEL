@@ -40,7 +40,8 @@ rule variant_calling_read_mapping:
         SAM = Path(config['working_dir']) / 'variant_calling' / 'read_mapping' / 'sam.io',
         INFORMS = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_MAPPING_INFORMS
     params:
-        running_dir = Path(config['working_dir']) / 'variant_calling' / 'read_mapping'
+        running_dir = Path(config['working_dir']) / 'variant_calling' / 'read_mapping',
+        read_type = 'SE' if config.get('read_type') == 'iontorrent' else 'PE'
     threads: 4
     priority: 1
     run:
@@ -50,7 +51,8 @@ rule variant_calling_read_mapping:
         step = Step(rule, bowtie2_map, camel, params.running_dir, config)
         bowtie2_map.update_parameters(threads=threads)
         SnakemakeUtils.add_pickle_input(bowtie2_map, 'INDEX_GENOME_PREFIX', input.INDEX_GENOME_PREFIX)
-        bowtie2_map.add_input_files(SnakePipelineUtils.extracts_fq_input(input.IO, key_se='FASTQ_SE', drop_empty=True))
+        bowtie2_map.add_input_files(SnakePipelineUtils.extracts_fq_input(
+            input.IO, key_se='FASTQ_SE', drop_empty=True, read_type=params.read_type))
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(bowtie2_map, output)
 

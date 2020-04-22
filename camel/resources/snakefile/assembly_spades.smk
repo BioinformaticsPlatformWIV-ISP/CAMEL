@@ -19,7 +19,8 @@ rule assembly_spades_run:
         INFORMS = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_INFORMS
     params:
         running_dir = Path(config['working_dir']) / 'assembly_spades' / 'spades',
-        spades_options = config.get('assembly', {}).get('spades', {})
+        spades_options = config.get('assembly', {}).get('spades', {}),
+        read_type = 'SE' if config.get('read_type') == 'iontorrent' else 'PE'
     threads: 8
     priority: 1
     run:
@@ -29,7 +30,7 @@ rule assembly_spades_run:
 
         # Reformat FASTQ dictionary
         fq_dict = SnakePipelineUtils.extracts_fq_input(input.IO, key_pe='FASTQ_PE_1', keys_se=[
-            'FASTQ_SE_1', 'FASTQ_SE_2'], drop_empty=True)
+            'FASTQ_SE_1', 'FASTQ_SE_2'], key_se='FASTQ_SE_1', drop_empty=True, read_type=params.read_type)
         spades.add_input_files(fq_dict)
         step = Step(rule, spades, camel, params.running_dir, config)
         spades.update_parameters(**params.spades_options)
@@ -169,13 +170,15 @@ rule assembly_bt2_map:
         SAM = Path(config['working_dir']) / 'assembly_spades' / 'bowtie2' / 'sam.io',
         INFORMS = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_MAPPING_INFORMS
     params:
-        running_dir = Path(config['working_dir']) / 'assembly_spades' / 'bowtie2'
+        running_dir = Path(config['working_dir']) / 'assembly_spades' / 'bowtie2',
+        read_type = 'SE' if config.get('read_type') == 'iontorrent' else 'PE'
     run:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         from camel.app.tools.bowtie2.bowtie2map import Bowtie2Map
         bowtie2_map = Bowtie2Map(camel)
         step = Step(rule, bowtie2_map, camel, str(params.running_dir), config)
-        bowtie2_map.add_input_files(SnakePipelineUtils.extracts_fq_input(input.IO, key_se='FASTQ_SE', drop_empty=True))
+        bowtie2_map.add_input_files(SnakePipelineUtils.extracts_fq_input(
+            input.IO, key_se='FASTQ_SE', drop_empty=True, read_type=params.read_type))
         SnakemakeUtils.add_pickle_input(bowtie2_map, 'INDEX_GENOME_PREFIX', input.INDEX_GENOME_PREFIX)
         step.run_step()
         bowtie2_map.informs['_tag'] = 'Coverage calculation'
