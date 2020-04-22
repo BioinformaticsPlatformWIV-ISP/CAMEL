@@ -356,7 +356,7 @@ rule gene_detection_get_column_names:
         if params.detection_method == 'blast':
             empty_hit = GeneDetectionBlastHit('Locus', None, BlastHitStatistics('subject', 0, '', 'query', 0, 0, 0.0))
         elif params.detection_method == 'srst2':
-            empty_hit = GeneDetectionSRST2Hit('Locus', None, 0, '', '', 0.0, 0.0, 0.0)
+            empty_hit = GeneDetectionSRST2Hit('DB_cluster', 'Locus', None, 0, '', '', 0.0, 0.0, 0.0)
         else:
             raise ValueError(f"Invalid detection method: {params.detection_method}")
 
