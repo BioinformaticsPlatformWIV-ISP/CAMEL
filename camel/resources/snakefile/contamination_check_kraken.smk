@@ -25,7 +25,8 @@ rule contamination_check_kraken2_run:
         TSV_report = Path(config['working_dir']) / 'contamination_check' / 'kraken2' / 'tsv-report.io',
         INFORMS = Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_KRAKEN_INFORMS
     params:
-        running_dir = Path(config['working_dir']) / 'contamination_check' / 'kraken2'
+        running_dir = Path(config['working_dir']) / 'contamination_check' / 'kraken2',
+        read_type = 'SE' if config.get('read_type') == 'iontorrent' else 'PE'
     threads: 8
     priority: 1
     run:
@@ -33,7 +34,11 @@ rule contamination_check_kraken2_run:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         from camel.app.tools.kraken.kraken2 import Kraken2
         kraken2 = Kraken2(camel)
-        kraken2.add_input_files(SnakePipelineUtils.extracts_fq_input(input.IO, key_pe='FASTQ_PE'))
+        if params.read_type == 'PE':
+            kraken2.add_input_files(SnakePipelineUtils.extracts_fq_input(input.IO, key_pe='FASTQ_PE'))
+        else:
+            kraken2.add_input_files(SnakePipelineUtils.extracts_fq_input(
+                input.IO, key_se='FASTQ', read_type=params.read_type))
         kraken2.add_input_files({'DB': [ToolIODirectory(input.DB)]})
         step = Step(rule, kraken2, camel, params.running_dir, config)
         kraken2.update_parameters(threads=threads)
@@ -45,7 +50,7 @@ rule contamination_check_kraken_report_parser:
     Parses the Kraken report and looks for contamination at the species level. 
     """
     input:
-        TSV = rules.contamination_check_kraken2_run.output.TSV
+        TSV = rules.contamination_check_kraken2_run.output.TSV_report
     output:
         INFORMS = Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_INFORMS
     params:
