@@ -187,7 +187,8 @@ class SnakePipelineUtils(object):
 
     @staticmethod
     def extracts_fq_input(io_dict: str, key_pe: Optional[str] = 'FASTQ_PE', key_se: Optional[str] = None,
-                          keys_se: Optional[List[str]] = None, drop_empty: bool = False) -> Dict[str, List[ToolIOFile]]:
+                          keys_se: Optional[List[str]] = None, drop_empty: bool = False, read_type: str = 'PE') -> \
+            Dict[str, List[ToolIOFile]]:
         """
         Extracts a specific FASTQ input dictionary from the standardized FASTQ dictionary.
         :param io_dict: Path to input IO file
@@ -195,14 +196,19 @@ class SnakePipelineUtils(object):
         :param key_se: Key for single end FASTQ files
         :param keys_se: Separate keys for the forward and reverse SE FASTQ files
         :param drop_empty: If True, keys with no reads are dropped from the output
+        :param read_type: Type of reads ('PE' or 'SE')
         :return: Reformatted dictionary
         """
         io = SnakemakeUtils.load_object(io_dict)
         output_dict = {}
 
-        # Add PE reads
-        if 'PE' in io:
-            output_dict[key_pe] = io['PE']
+        # Single end reads (no paired / orphaned reads available)
+        if read_type == 'SE':
+            output_dict[key_se] = io['SE']
+            return output_dict
+
+        # PE reads
+        output_dict[key_pe] = io['PE']
 
         # Add SE reads
         if keys_se is not None:
@@ -215,12 +221,15 @@ class SnakePipelineUtils(object):
             se_reads = io.get('SE_FWD', []) + io.get('SE_REV', [])
             output_dict[key_se] = se_reads
         else:
-            logging.info(f"No key(s) provided for SE reads")
+            logging.debug(f"No key(s) provided for SE reads")
 
-        # Return the reformatted dictionary
+        # Remove keys that are empty
         if drop_empty:
             for key in list(output_dict.keys()):
                 if len(output_dict[key]) > 0:
                     continue
+                logging.debug(f'Removing empty input: {key}')
                 output_dict.pop(key)
+
+        # Return the reformatted dictionary
         return output_dict
