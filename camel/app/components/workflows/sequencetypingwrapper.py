@@ -100,7 +100,9 @@ class SequenceTypingWrapper(object):
             'working_dir': str(self._working_dir),
             'sample_name': sample_name,
             'detection_method': detection_method,
-            'sequence_typing': {db_key: db_path}
+            'sequence_typing': {
+                db_key: {'path': db_path}
+            }
         }
         if additional_options is not None:
             data.update(additional_options)
