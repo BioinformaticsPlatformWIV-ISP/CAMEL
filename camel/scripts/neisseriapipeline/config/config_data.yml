@@ -5,7 +5,7 @@ read_trimming:
   export_fastq: '{export_fastq}'
 
 contamination_check:
-  db: /db/kraken/latest/abfhpv_lite/
+  db: /db/kraken2/latest/abfhpv/
   expected_species: Neisseria meningitidis
 
 quality_checks:
@@ -26,44 +26,61 @@ assembly:
 gene_detection:
   argannot:
     path: /db/gene_detection/ARG-ANNOT
-    perc_identity_cutoff: 90
 
   resfinder:
     path: /db/gene_detection/ResFinder
-    perc_identity_cutoff: 90
-    extra_column:
+    metadata:
       name: Antibiotic(s)
       key: antibiotics
 
   card:
     path: /db/gene_detection/CARD
-    perc_identity_cutoff: 90
 
   ncbi_amr:
     path: /db/gene_detection/NCBI_AMR/
-    perc_identity_cutoff: 90
 
 ###################
 # Sequence typing #
 ###################
 sequence_typing:
-  pora: /db/sequence_typing/neisseria/pora
-  porb: /db/sequence_typing/neisseria/porb
-  bast: /db/sequence_typing/neisseria/bast
-  feta: /db/sequence_typing/neisseria/feta
-  fhbp: /db/sequence_typing/neisseria/fhbp
-  resistance_genes: /db/sequence_typing/neisseria/resistance_genes
-  vaccine_targets: /db/sequence_typing/neisseria/vaccine_targets
-  rplf: /db/sequence_typing/neisseria/rplf
-  mlst: /db/sequence_typing/neisseria/mlst
-  cgmlst: /db/sequence_typing/neisseria/cgmlst
-  serogroup_a: /db/sequence_typing/neisseria/capsule_region_a_serogroup_a
-  serogroup_b: /db/sequence_typing/neisseria/capsule_region_a_serogroup_b
-  serogroup_c: /db/sequence_typing/neisseria/capsule_region_a_serogroup_c
-  serogroup_e: /db/sequence_typing/neisseria/capsule_region_a_serogroup_e
-  serogroup_h: /db/sequence_typing/neisseria/capsule_region_a_serogroup_h
-  serogroup_l: /db/sequence_typing/neisseria/capsule_region_a_serogroup_l
-  serogroup_w: /db/sequence_typing/neisseria/capsule_region_a_serogroup_w
-  serogroup_x: /db/sequence_typing/neisseria/capsule_region_a_serogroup_x
-  serogroup_y: /db/sequence_typing/neisseria/capsule_region_a_serogroup_y
-  serogroup_z: /db/sequence_typing/neisseria/capsule_region_a_serogroup_z
+  pora:
+    path: /db/sequence_typing/neisseria/pora
+  porb:
+    path: /db/sequence_typing/neisseria/porb
+  bast:
+    path: /db/sequence_typing/neisseria/bast
+  feta:
+    path: /db/sequence_typing/neisseria/feta
+  fhbp:
+    path: /db/sequence_typing/neisseria/fhbp
+  resistance_genes:
+    path: /db/sequence_typing/neisseria/resistance_genes
+  vaccine_targets:
+    path: /db/sequence_typing/neisseria/vaccine_targets
+  rplf:
+    path: /db/sequence_typing/neisseria/rplf
+  mlst:
+    path: /db/sequence_typing/neisseria/mlst
+  cgmlst:
+    path: /db/sequence_typing/neisseria/cgmlst
+    detection_method: blast
+  serogroup_a:
+    path: /db/sequence_typing/neisseria/capsule_region_a_serogroup_a
+  serogroup_b:
+    path: /db/sequence_typing/neisseria/capsule_region_a_serogroup_b
+  serogroup_c:
+    path: /db/sequence_typing/neisseria/capsule_region_a_serogroup_c
+  serogroup_e:
+    path: /db/sequence_typing/neisseria/capsule_region_a_serogroup_e
+  serogroup_h:
+    path: /db/sequence_typing/neisseria/capsule_region_a_serogroup_h
+  serogroup_l:
+    path: /db/sequence_typing/neisseria/capsule_region_a_serogroup_l
+  serogroup_w:
+    path: /db/sequence_typing/neisseria/capsule_region_a_serogroup_w
+  serogroup_x:
+    path: /db/sequence_typing/neisseria/capsule_region_a_serogroup_x
+  serogroup_y:
+    path: /db/sequence_typing/neisseria/capsule_region_a_serogroup_y
+  serogroup_z:
+    path: /db/sequence_typing/neisseria/capsule_region_a_serogroup_z
