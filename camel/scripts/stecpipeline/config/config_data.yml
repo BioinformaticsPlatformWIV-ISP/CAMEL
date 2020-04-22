@@ -105,4 +105,4 @@ sequence_typing:
   cgmlst:
     path: /db/sequence_typing/ecoli/cgmlst
     detection_method: blast
-    blast_task: blastn
+    blastn_task: blastn

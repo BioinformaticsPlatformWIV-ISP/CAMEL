@@ -95,8 +95,8 @@ rule gene_detection_hit_filtering:
         output_filename = lambda wildcards: 'hits-{}-{}.tsv'.format(
             FileSystemHelper.make_valid(config['sample_name']), FileSystemHelper.make_valid(wildcards.db)),
         db_config = lambda wildcards: config['gene_detection'][wildcards.db],
-        min_percent_identity = lambda wildcards: config['gene_detection'][wildcards.db].get('params', {}).get('blast', {}).get('min_percent_identity', 90),
-        min_coverage = lambda wildcards: config['gene_detection'][wildcards.db].get('params', {}).get('blast', {}).get('min_coverage', 60),
+        min_percent_identity = lambda wildcards: config['gene_detection'][wildcards.db].get('params', {}).get('blastn', {}).get('min_percent_identity', 90),
+        min_coverage = lambda wildcards: config['gene_detection'][wildcards.db].get('params', {}).get('blastn', {}).get('min_coverage', 60),
     run:
         from camel.app.tools.pipelines.genedetection.blasthitfiltering import BlastHitFiltering
         hit_filtering = BlastHitFiltering(camel)
