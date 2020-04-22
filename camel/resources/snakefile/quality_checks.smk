@@ -279,11 +279,13 @@ rule quality_checks_export_summary_info:
 
         with open(output.TSV, 'w') as handle:
             for qc_check_data in informs:
-                handle.write('\t'.join([f"qc_{qc_check_data['key']}_status", qc_check_data['status']]))
+                if qc_check_data['ori'] is None:
+                    basename = f"qc_{qc_check_data['key']}"
+                else:
+                    basename = f"qc_{qc_check_data['key']}_{qc_check_data['ori']}"
+                handle.write('\t'.join([f"{basename}_status", qc_check_data['status']]))
                 handle.write('\n')
                 handle.write('\t'.join([
-                    f"qc_{qc_check_data['key']}_value",
-                    qc_check_data['fmt_string_value'].format(qc_check_data['value']) if
-                        qc_check_data['value'] is not None else 'NA',
-                ]))
+                    f"{basename}_value", qc_check_data['fmt_string_value'].format(qc_check_data['value']) if
+                        qc_check_data['value'] is not None else 'NA']))
                 handle.write('\n')
