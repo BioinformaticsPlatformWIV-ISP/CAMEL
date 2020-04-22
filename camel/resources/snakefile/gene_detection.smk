@@ -189,6 +189,8 @@ rule gene_detection_srst2:
         db_config = lambda wildcards: config['gene_detection'][wildcards.db],
         max_divergence = lambda wildcards: config['gene_detection'][wildcards.db].get('params', {}).get('srst2', {}).get('max_divergence', 10),
         min_coverage = lambda wildcards: config['gene_detection'][wildcards.db].get('params', {}).get('srst2', {}).get('min_coverage', 60),
+        max_unaligned_overlap = lambda wildcards: config['gene_detection'][wildcards.db].get('params', {}).get('srst2', {}).get('max_unaligned_overlap', 10),
+        max_mismatch = lambda wildcards: config['gene_detection'][wildcards.db].get('params', {}).get('srst2', {}).get('max_mismatch', 10),
         read_type = 'SE' if config.get('read_type') == 'iontorrent' else 'PE'
     threads: 4
     run:
@@ -209,7 +211,12 @@ rule gene_detection_srst2:
             fwd_read_path = fq_input_dict['FASTQ_PE'][0].path
             fwd_designator, rev_designator = SequenceTypingUtils.determine_read_status(fwd_read_path)
             srst2.update_parameters(forward_designator=fwd_designator, reverse_designator=rev_designator)
-        srst2.update_parameters(max_divergence=str(params.max_divergence), min_coverage=str(params.min_coverage))
+        srst2.update_parameters(
+            max_divergence=str(params.max_divergence),
+            min_coverage=str(params.min_coverage),
+            max_unaligned_overlap=str(params.max_unaligned_overlap),
+            max_mismatch=str(params.max_mismatch)
+        )
 
         # Run tool
         step.run_step()
