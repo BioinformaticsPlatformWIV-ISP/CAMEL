@@ -1,8 +1,8 @@
 import json
 import logging
+from pathlib import Path
 from typing import Tuple, Dict, Any, List
 
-import os
 import re
 from Bio import SeqIO
 
@@ -17,7 +17,7 @@ class LocusMetadataHolder:
         Initializes the metadata holder.
         :param locus_metadata: Locus metadata
         """
-        self.metadata_by_locus_name = {l['name_valid']: l for l in locus_metadata}
+        self.metadata_by_locus_name = {locus['name_valid']: locus for locus in locus_metadata}
 
     def __repr__(self) -> str:
         """
@@ -87,8 +87,8 @@ class SequenceTypingUtils(object):
         """
         result_dict = {x: 0 for x in ['multi', 'no_allele', 'p_ident', 'length', 'found']}
         with open(input_file) as handle:
-            for l in handle.readlines()[1:]:
-                parts = l.strip().split('\t')
+            for line in handle.readlines()[1:]:
+                parts = line.strip().split('\t')
                 if parts[1] == '?':
                     result_dict['multi'] += 1
                     continue
@@ -112,16 +112,25 @@ class SequenceTypingUtils(object):
         :param scheme_dir: Scheme directory
         :return: Metadata
         """
-        with open(os.path.join(scheme_dir, 'scheme_metadata.txt')) as handle:
+        with (Path(scheme_dir) / 'scheme_metadata.txt').open() as handle:
             return json.load(handle)
 
     @staticmethod
-    def has_profiles(all_schemes: Dict[str, str], scheme_key: str) -> bool:
+    def has_profiles(scheme_data: Dict[str, Dict[str, Any]], scheme_key: str) -> bool:
         """
         Returns True if the scheme has profiles.
-        :param all_schemes: Dictionary of all schemes
+        :param scheme_data: Dictionary of all scheme data
         :param scheme_key: Scheme
         :return: True if the scheme has profiles file
         """
-        folder = all_schemes.get(scheme_key)
-        return os.path.isfile(os.path.join(folder, 'profiles.tsv'))
+        folder = Path(scheme_data[scheme_key]['path'])
+        return (folder / 'profiles.tsv').is_file()
+
+    @staticmethod
+    def get_detection_method(config_data: Dict[str, Any], scheme_key: str) -> str:
+        """
+        Returns the detection method for the given scheme.
+        :return: Detection method
+        """
+        pipeline_setting = config_data['detection_method']
+        return config_data['sequence_typing'][scheme_key].get('detection_method', pipeline_setting)
