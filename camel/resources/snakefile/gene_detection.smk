@@ -94,7 +94,9 @@ rule gene_detection_hit_filtering:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'gene_detection' / wildcards.db / 'hit_filtering',
         output_filename = lambda wildcards: 'hits-{}-{}.tsv'.format(
             FileSystemHelper.make_valid(config['sample_name']), FileSystemHelper.make_valid(wildcards.db)),
-        db_config = lambda wildcards: config['gene_detection'][wildcards.db]
+        db_config = lambda wildcards: config['gene_detection'][wildcards.db],
+        min_percent_identity = lambda wildcards: config['gene_detection'][wildcards.db].get('params', {}).get('blast', {}).get('min_percent_identity', 90),
+        min_coverage = lambda wildcards: config['gene_detection'][wildcards.db].get('params', {}).get('blast', {}).get('min_coverage', 60),
     run:
         from camel.app.tools.pipelines.genedetection.blasthitfiltering import BlastHitFiltering
         hit_filtering = BlastHitFiltering(camel)
@@ -104,8 +106,8 @@ rule gene_detection_hit_filtering:
         # Update parameters
         hit_filtering.update_parameters(
             output_filename=str(Path(params.running_dir) / params.output_filename),
-            min_percent_identity=params.db_config.get('params', {}).get('blastn', {}).get('min_percent_identity', '90'),
-            min_coverage=params.db_config.get('params', {}).get('blastn', {}).get('min_coverage', '60')
+            min_percent_identity=str(params.min_percent_identity),
+            min_coverage=str(params.min_coverage)
         )
         if params.db_config.get('metadata') is not None:
             hit_filtering.update_parameters(
@@ -184,7 +186,10 @@ rule gene_detection_srst2:
         INFORMS = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS_METHOD).format(db='{db}', method='srst2')
     params:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'gene_detection' / wildcards.db / 'srst2',
-        db_config = lambda wildcards: config['gene_detection'][wildcards.db]
+        db_config = lambda wildcards: config['gene_detection'][wildcards.db],
+        max_divergence = lambda wildcards: config['gene_detection'][wildcards.db].get('params', {}).get('srst2', {}).get('max_divergence', 10),
+        min_coverage = lambda wildcards: config['gene_detection'][wildcards.db].get('params', {}).get('srst2', {}).get('min_coverage', 60),
+        read_type = 'SE' if config.get('read_type') == 'iontorrent' else 'PE'
     threads: 4
     run:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
@@ -193,7 +198,8 @@ rule gene_detection_srst2:
             params.running_dir.mkdir(parents=True)
         srst2 = Srst2Gene(camel)
         SnakemakeUtils.add_pickle_input(srst2, 'FASTA', input.FASTA)
-        fq_input_dict = SnakePipelineUtils.extracts_fq_input(input.IO, key_pe='FASTQ_PE')
+        fq_input_dict = SnakePipelineUtils.extracts_fq_input(
+            input.IO, key_pe='FASTQ_PE', key_se='FASTQ_SE', read_type=params.read_type)
         srst2.add_input_files(fq_input_dict)
         step = Step(rule, srst2, camel, params.running_dir, config, wildcards)
 
@@ -203,7 +209,7 @@ rule gene_detection_srst2:
             fwd_read_path = fq_input_dict['FASTQ_PE'][0].path
             fwd_designator, rev_designator = SequenceTypingUtils.determine_read_status(fwd_read_path)
             srst2.update_parameters(forward_designator=fwd_designator, reverse_designator=rev_designator)
-        srst2.update_parameters(**params.db_config.get('params', {}).get('srst2', {}))
+        srst2.update_parameters(max_divergence=str(params.max_divergence), min_coverage=str(params.min_coverage))
 
         # Run tool
         step.run_step()
@@ -380,7 +386,6 @@ rule gene_detection_report:
     run:
         from camel.app.io.tooliovalue import ToolIOValue
         from camel.app.tools.pipelines.genedetection.htmlreportergenedetection import HtmlReporterGeneDetection
-        import pprint
         reporter = HtmlReporterGeneDetection(camel)
         step = Step(rule, reporter, camel, params.running_dir, config, wildcards)
         if 'force_detection_method' in params.config_data:
