@@ -17,7 +17,18 @@ rule trimming_iontorrent_pickle_fastq_input:
         FASTQ_SE = Path(config['working_dir']) / 'trimming_iontorrent' / 'input' / 'fastq-se.io'
     run:
         from camel.app.io.tooliofile import ToolIOFile
-        SnakemakeUtils.dump_object([ToolIOFile(input.FASTQ)], output.FASTQ_SE)
+        from camel.app.components.filesystemhelper import FileSystemHelper
+        from camel.app.command.command import Command
+        from camel.app.error.pipelineexecutionerror import PipelineExecutionError
+        if FileSystemHelper.is_gzipped(input.FASTQ):
+            path_out = Path(output.FASTQ_SE).parent / Path(input.FASTQ).name.replace('.gz', '')
+            command = Command(f'gunzip -c {input.FASTQ} > {path_out}')
+            command.run_command(path_out.parent)
+            if not command.returncode == 0:
+                raise PipelineExecutionError(f"Cannot unzip input file: {command.stderr}")
+            SnakemakeUtils.dump_object([ToolIOFile(str(path_out))], output.FASTQ_SE)
+        else:
+            SnakemakeUtils.dump_object([ToolIOFile(input.FASTQ)], output.FASTQ_SE)
 
 
 rule trimming_iontorrent_fastqc_pre:
