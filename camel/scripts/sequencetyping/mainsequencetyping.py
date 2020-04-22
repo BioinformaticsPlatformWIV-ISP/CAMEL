@@ -41,7 +41,7 @@ class MainSequenceTyping(object):
         argument_parser.add_argument('--srst2-max-unaligned-overlap', type=int, default=100)
         return argument_parser.parse_args(args)
 
-    def run(self):
+    def run(self) -> None:
         """
         Runs the workflow.
         :return: None
@@ -100,6 +100,7 @@ class MainSequenceTyping(object):
         :return: None
         """
         self._helper.logs['typing'] = output.log_file
+        self._helper.informs.extend(output.informs)
         self._helper.export_output_and_commands_section(self._report, output.report_section)
 
 

@@ -28,6 +28,7 @@ class SequenceTypingOutput:
     This class contains the output of the sequence typing workflow.
     """
     report_section: HtmlReportSection
+    informs: List[Dict[str, Any]]
     log_file: Optional[str] = None
 
 
@@ -136,12 +137,20 @@ class SequenceTypingWrapper(object):
         :param threads: Number of threads to use
         :return: None
         """
-        output_path = self._working_dir / str(sequence_typing.OUTPUT_TYPING_REPORT).format(scheme=db_key)
+        output_files = {
+            'report': self._working_dir / str(sequence_typing.OUTPUT_TYPING_REPORT).format(scheme=db_key),
+            'informs': self._working_dir / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme=db_key)
+        }
+        # Run Snakemake
         SnakePipelineUtils.run_snakemake(
-            sequence_typing.SNAKEFILE_SEQUENCE_TYPING, config_path, [output_path], self._working_dir, threads)
+            sequence_typing.SNAKEFILE_SEQUENCE_TYPING, config_path, list(output_files.values()), self._working_dir,
+            threads)
+
+        # Collect output
         log_file_path = self._working_dir / 'camel.log'
         self._output = SequenceTypingOutput(
-            report_section=SnakemakeUtils.load_object(output_path)[0].value,
+            report_section=SnakemakeUtils.load_object(str(output_files['report']))[0].value,
+            informs=SnakemakeUtils.load_object(str(output_files['informs'])),
             log_file=log_file_path if log_file_path.exists() else None
         )
 
