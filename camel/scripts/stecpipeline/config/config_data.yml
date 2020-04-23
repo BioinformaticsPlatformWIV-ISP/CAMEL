@@ -59,7 +59,7 @@ gene_detection:
     path: /db/gene_detection/PlasmidFinder-entero
     params:
       blastn:
-        min_identity: 95
+        min_percent_identity: 95
         min_coverage: 60
       srst2:
         max_divergence: 5
@@ -72,7 +72,7 @@ gene_detection:
     path: /db/gene_detection/SerotypeFinder-O_type
     params:
       blastn:
-        min_identity: 85
+        min_percent_identity: 85
         min_coverage: 60
       srst2:
         max_divergence: 15
@@ -85,7 +85,7 @@ gene_detection:
     path: /db/gene_detection/SerotypeFinder-H_type
     params:
       blastn:
-        min_identity: 85
+        min_percent_identity: 85
         min_coverage: 60
       srst2:
         max_divergence: 15
