@@ -91,7 +91,6 @@ class MainTabularFiltering(object):
                 if allele_ids[i] in ('-', '?'):
                     nb_of_missing += 1
             perc_of_loci_missing = 100 * nb_of_missing / self._total_nb_alleles
-            print('\t'.join([sample, f'{perc_of_loci_missing:.2f}']))
             if 100 - perc_of_loci_missing < min_perc_loci:
                 bad_samples.append(sample)
                 logging.info(
