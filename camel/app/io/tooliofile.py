@@ -1,3 +1,6 @@
+from pathlib import Path
+from typing import Union
+
 import humanize
 import os
 
@@ -10,14 +13,17 @@ class ToolIOFile(ToolIO):
     Class that represents an input / output file of a tool.
     """
 
-    def __init__(self, path: str, logged: bool=True) -> None:
+    def __init__(self, path: Union[str, Path], logged: bool = True) -> None:
         """
         Initializes a tool input / output file.
         :param path: Path to the file
         :param logged: If True, the output can be logged
         """
         super(ToolIOFile, self).__init__(logged)
-        self._path = os.path.abspath(path)
+        if isinstance(path, Path):
+            self._path = str(path.absolute())
+        else:
+            self._path = str(Path(path).absolute())
 
     def __str__(self) -> str:
         """

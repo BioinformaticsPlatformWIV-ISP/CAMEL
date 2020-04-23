@@ -23,7 +23,7 @@ class TestKraken2(CamelTestSuite):
         """
         kraken2 = Kraken2(TestKraken2.camel)
         kraken2.add_input_files({
-            'FASTQ_PE': [ToolIOFile(str(x)) for x in self.input_pe_reads],
+            'FASTQ_PE': [ToolIOFile(x) for x in self.input_pe_reads],
             'DB': [ToolIODirectory('/db/kraken2/latest/abfhpv/')]
         })
         kraken2.run(self.running_dir)

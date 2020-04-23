@@ -66,7 +66,7 @@ class Srst2Gene(Tool):
         for file_ in Path(self._folder).iterdir():
             key = self._get_output_file_key(file_.name)
             if key is not None:
-                self._tool_outputs[key] = [ToolIOFile(str(file_))]
+                self._tool_outputs[key] = [ToolIOFile(file_)]
 
     def __set_informs(self) -> None:
         """

@@ -62,7 +62,7 @@ rule typing_pickle_profiles:
         TSV = Path(config['working_dir']) / 'typing' / '{scheme}' / 'tsv-profiles.io'
     run:
         from camel.app.io.tooliofile import ToolIOFile
-        SnakemakeUtils.dump_object([ToolIOFile(str(Path(input.DIR) / 'profiles.tsv'))], output.TSV)
+        SnakemakeUtils.dump_object([ToolIOFile(Path(input.DIR) / 'profiles.tsv')], output.TSV)
 
 rule typing_get_hits:
     """

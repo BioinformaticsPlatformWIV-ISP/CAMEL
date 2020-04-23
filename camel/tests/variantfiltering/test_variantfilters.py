@@ -27,7 +27,7 @@ class TestVariantFiltering(CamelTestSuite):
         :return: None
         """
         depth_filter = DepthFilter(self.camel)
-        depth_filter.add_input_files({'VCF_GZ': [ToolIOFile(str(TestVariantFiltering.FILE_VCF_GZ_UNFILTERED))]})
+        depth_filter.add_input_files({'VCF_GZ': [ToolIOFile(TestVariantFiltering.FILE_VCF_GZ_UNFILTERED)]})
         depth_filter.update_parameters(min_depth=20, min_forward_depth=2, min_reverse_depth=2)
         depth_filter.run(self.running_dir)
         self.assertTrue('VCF_GZ' in depth_filter.tool_outputs)
@@ -39,7 +39,7 @@ class TestVariantFiltering(CamelTestSuite):
         :return: None
         """
         mq_filter = MappingQualityFilter(self.camel)
-        mq_filter.add_input_files({'VCF_GZ': [ToolIOFile(str(TestVariantFiltering.FILE_VCF_GZ_UNFILTERED))]})
+        mq_filter.add_input_files({'VCF_GZ': [ToolIOFile(TestVariantFiltering.FILE_VCF_GZ_UNFILTERED)]})
         mq_filter.update_parameters(min_mapping_quality=25)
         mq_filter.run(self.running_dir)
         self.assertTrue('VCF_GZ' in mq_filter.tool_outputs)
@@ -51,7 +51,7 @@ class TestVariantFiltering(CamelTestSuite):
         :return: None
         """
         sq_filter = SnpQualityFilter(self.camel)
-        sq_filter.add_input_files({'VCF_GZ': [ToolIOFile(str(TestVariantFiltering.FILE_VCF_GZ_UNFILTERED))]})
+        sq_filter.add_input_files({'VCF_GZ': [ToolIOFile(TestVariantFiltering.FILE_VCF_GZ_UNFILTERED)]})
         sq_filter.update_parameters(min_snp_quality=50)
         sq_filter.run(self.running_dir)
         self.assertTrue('VCF_GZ' in sq_filter.tool_outputs)
@@ -63,7 +63,7 @@ class TestVariantFiltering(CamelTestSuite):
         :return: None
         """
         distance_filter = DistanceFilter(self.camel)
-        distance_filter.add_input_files({'VCF_GZ': [ToolIOFile(str(TestVariantFiltering.FILE_VCF_GZ_UNFILTERED))]})
+        distance_filter.add_input_files({'VCF_GZ': [ToolIOFile(TestVariantFiltering.FILE_VCF_GZ_UNFILTERED)]})
         distance_filter.update_parameters(min_distance=10, keep_best=True)
         distance_filter.run(self.running_dir)
         self.assertTrue('VCF_GZ' in distance_filter.tool_outputs)
@@ -76,8 +76,8 @@ class TestVariantFiltering(CamelTestSuite):
         """
         zscore_filter = ZScoreFilter(self.camel)
         zscore_filter.add_input_files({
-            'VCF_GZ': [ToolIOFile(str(TestVariantFiltering.FILE_VCF_GZ_UNFILTERED))],
-            'BAM': [ToolIOFile(str(TestVariantFiltering.FILE_BAM))]
+            'VCF_GZ': [ToolIOFile(TestVariantFiltering.FILE_VCF_GZ_UNFILTERED)],
+            'BAM': [ToolIOFile(TestVariantFiltering.FILE_BAM)]
         })
         zscore_filter.run(self.running_dir)
         self.assertTrue('VCF_GZ' in zscore_filter.tool_outputs)

@@ -10,7 +10,7 @@ class TestFastx(CamelTestSuite):
     """
 
     # Input files
-    input_fastq = ToolIOFile(str(CamelTestSuite.get_test_file_dir('fastx') / 'ERR2019997-iontorrent-ds.fastq'))
+    input_fastq = ToolIOFile(CamelTestSuite.get_test_file_dir('fastx') / 'ERR2019997-iontorrent-ds.fastq')
 
     def test_quality_filter(self) -> None:
         """

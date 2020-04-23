@@ -80,7 +80,7 @@ class MainSpaTyping(object):
         """
         blastn = Blastn(self._camel)
         blastn.add_input_files({
-            'DB_BLAST': [ToolIOFile(str(self._db_path / 'profiles.fasta'))],
+            'DB_BLAST': [ToolIOFile(self._db_path / 'profiles.fasta')],
             'FASTA': [fasta_file]})
         blastn.update_parameters(output_format=SpaTyping.BLASTN_OUTPUT_FORMAT)
         blastn.run(self._args.working_dir)
@@ -98,7 +98,7 @@ class MainSpaTyping(object):
         spa_typing.add_input_files({
             'TSV': [tsv_output],
             'FASTA': [fasta_file],
-            'CSV_profiles': [ToolIOFile(str(self._db_path / 'spatypes.csv'))]
+            'CSV_profiles': [ToolIOFile(self._db_path / 'spatypes.csv')]
         })
         spa_typing.run(self._args.working_dir)
         return spa_typing

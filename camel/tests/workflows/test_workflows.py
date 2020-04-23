@@ -55,7 +55,7 @@ class TestWorkflows(CamelTestSuite):
         :return: None
         """
         wrapper = AssemblyWrapper(self.running_dir)
-        reads = [ToolIOFile(str(x)) for x in TestWorkflows.input_gene_reads_raw]
+        reads = [ToolIOFile(x) for x in TestWorkflows.input_gene_reads_raw]
         wrapper.run_workflow('test_sample', reads, [], [], kmers='25,29,33', cov_cutoff=11)
         self.assertGreater(wrapper.output.fasta_contigs.size, 0)
 
@@ -67,9 +67,9 @@ class TestWorkflows(CamelTestSuite):
         wrapper = AssemblyWrapper(self.running_dir)
         wrapper.run_workflow(
             'test_sample',
-            [ToolIOFile(str(x)) for x in TestWorkflows.input_gene_reads_trim['PE']],
-            [ToolIOFile(str(TestWorkflows.input_gene_reads_trim['FWD'][0]))],
-            [ToolIOFile(str(TestWorkflows.input_gene_reads_trim['REV'][0]))],
+            [ToolIOFile(x) for x in TestWorkflows.input_gene_reads_trim['PE']],
+            [ToolIOFile(TestWorkflows.input_gene_reads_trim['FWD'][0])],
+            [ToolIOFile(TestWorkflows.input_gene_reads_trim['REV'][0])],
             kmers='55')
         self.assertGreater(wrapper.output.fasta_contigs.size, 0)
 
@@ -79,7 +79,7 @@ class TestWorkflows(CamelTestSuite):
         :return: None
         """
         wrapper = AssemblyWrapper(self.running_dir)
-        reads = [ToolIOFile(str(x)) for x in TestWorkflows.input_gene_reads_raw]
+        reads = [ToolIOFile(x) for x in TestWorkflows.input_gene_reads_raw]
         wrapper.run_workflow('test_sample', reads, [], [], kmers='25,29,33', cov_cutoff=11, calculate_qc_stats=True)
         self.assertGreater(wrapper.output.fasta_contigs.size, 0)
         self.assertIsNotNone(wrapper.output.qc_stats)
@@ -133,7 +133,7 @@ class TestWorkflows(CamelTestSuite):
         workflow_input = SequenceTypingInput(
             sample_name='test_sample',
             db_path=str(TestWorkflows.input_typing_db),
-            fasta=ToolIOFile(str(TestWorkflows.input_typing_fasta))
+            fasta=ToolIOFile(TestWorkflows.input_typing_fasta)
         )
         wrapper.run_workflow_blast(workflow_input, 8)
         self.assertGreater(len(wrapper.output.report_section.to_html()), 0)
@@ -148,7 +148,7 @@ class TestWorkflows(CamelTestSuite):
             sample_name='test_sample',
             db_key='pora',
             db_path=str(TestWorkflows.input_typing_db_protein),
-            fasta=ToolIOFile(str(TestWorkflows.input_typing_fasta))
+            fasta=ToolIOFile(TestWorkflows.input_typing_fasta)
         )
         wrapper.run_workflow_blast(workflow_input, 8)
         self.assertGreater(len(wrapper.output.report_section.to_html()), 0)
@@ -164,7 +164,7 @@ class TestWorkflows(CamelTestSuite):
             sample_name='test_sample',
             db_key='fhbp',
             db_path=str(TestWorkflows.input_typing_db_mixed),
-            fasta=ToolIOFile(str(TestWorkflows.input_typing_fasta))
+            fasta=ToolIOFile(TestWorkflows.input_typing_fasta)
         )
         wrapper.run_workflow_blast(workflow_input, 8)
         self.assertGreater(len(wrapper.output.report_section.to_html()), 0)
@@ -179,7 +179,7 @@ class TestWorkflows(CamelTestSuite):
         workflow_input = SequenceTypingInput(
             sample_name='test_sample',
             db_path=str(TestWorkflows.input_typing_db),
-            fastq_pe=[ToolIOFile(str(x)) for x in TestWorkflows.input_typing_reads]
+            fastq_pe=[ToolIOFile(x) for x in TestWorkflows.input_typing_reads]
         )
         wrapper.run_workflow_srst2(workflow_input, {'max_unaligned_overlap': 100}, 8)
         self.assertGreater(len(wrapper.output.report_section.to_html()), 0)
@@ -194,8 +194,8 @@ class TestWorkflows(CamelTestSuite):
         workflow_input = SequenceTypingInput(
             sample_name='test_sample',
             db_path=str(TestWorkflows.input_typing_db),
-            fastq_pe=[ToolIOFile(str(x)) for x in TestWorkflows.input_typing_reads],
-            fasta=ToolIOFile(str(TestWorkflows.input_typing_fasta))
+            fastq_pe=[ToolIOFile(x) for x in TestWorkflows.input_typing_reads],
+            fasta=ToolIOFile(TestWorkflows.input_typing_fasta)
         )
         wrapper.run_workflow_srst2(workflow_input, threads=8)
         self.assertGreater(len(wrapper.output.report_section.to_html()), 0)

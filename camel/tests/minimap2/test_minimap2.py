@@ -16,8 +16,8 @@ class TestMinimap2(CamelTestSuite):
     """
 
     test_file_dir = CamelTestSuite.get_test_file_dir('minion')
-    FILE_REF_GENOME = ToolIOFile(str(test_file_dir / 'NC_002695.2.fasta'))
-    FILE_FASTQ = ToolIOFile(str(test_file_dir / 'fastq_minion_stec.fastq'))
+    FILE_REF_GENOME = ToolIOFile(test_file_dir / 'NC_002695.2.fasta')
+    FILE_FASTQ = ToolIOFile(test_file_dir / 'fastq_minion_stec.fastq')
 
     def test_minimap2(self) -> None:
         """

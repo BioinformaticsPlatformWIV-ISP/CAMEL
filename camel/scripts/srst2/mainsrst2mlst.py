@@ -85,7 +85,7 @@ class MainSrst2Mlst(object):
         samtools_faidx = SamtoolsFastaIndex(self._camel)
         samtools_faidx.add_input_files({'FASTA': [ToolIOFile(db_path)]})
         samtools_faidx.run(self._args.working_dir)
-        input_dict = {'FASTA': [ToolIOFile(str(db_path))]}
+        input_dict = {'FASTA': [ToolIOFile(db_path)]}
         if self._args.profiles_tsv is not None:
             input_dict['TSV'] = [ToolIOFile(self._args.profiles_tsv)]
         return input_dict

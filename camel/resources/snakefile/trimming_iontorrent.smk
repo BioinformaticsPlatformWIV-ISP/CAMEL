@@ -26,7 +26,7 @@ rule trimming_iontorrent_pickle_fastq_input:
             command.run_command(path_out.parent)
             if not command.returncode == 0:
                 raise PipelineExecutionError(f"Cannot unzip input file: {command.stderr}")
-            SnakemakeUtils.dump_object([ToolIOFile(str(path_out))], output.FASTQ_SE)
+            SnakemakeUtils.dump_object([ToolIOFile(path_out)], output.FASTQ_SE)
         else:
             SnakemakeUtils.dump_object([ToolIOFile(input.FASTQ)], output.FASTQ_SE)
 

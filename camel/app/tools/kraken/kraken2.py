@@ -72,8 +72,8 @@ class Kraken2(Tool):
         :return: None
         """
         basename = Path(self.__get_basename())
-        self._tool_outputs['TSV'] = [ToolIOFile(str(basename.parent / f'{basename.name}.output.tsv'))]
-        self._tool_outputs['TSV_report'] = [ToolIOFile(str(basename.parent / f'{basename.name}.report.tsv'))]
+        self._tool_outputs['TSV'] = [ToolIOFile(basename.parent / f'{basename.name}.output.tsv')]
+        self._tool_outputs['TSV_report'] = [ToolIOFile(basename.parent / f'{basename.name}.report.tsv')]
 
     def __build_input_string(self) -> str:
         """

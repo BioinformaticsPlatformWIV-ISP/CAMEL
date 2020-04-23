@@ -11,7 +11,7 @@ class TestCircos(CamelTestSuite):
     """
 
     test_file_dir = CamelTestSuite.get_test_file_dir('circos')
-    FILE_CIRCOS_CONFIG = ToolIOFile(str(test_file_dir / 'hello_world.txt'))
+    FILE_CIRCOS_CONFIG = ToolIOFile(test_file_dir / 'hello_world.txt')
 
     def test_circos(self) -> None:
         """

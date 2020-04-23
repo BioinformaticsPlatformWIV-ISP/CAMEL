@@ -76,9 +76,9 @@ checkpoint flexneri_type_prepare_reference_files:
             output_dir = output_dir / locus
             if not output_dir.exists():
                 output_dir.mkdir()
-            fasta_ref = ToolIOFile(str(dir_by_locus_name[locus] / f'{locus}.fasta'))
+            fasta_ref = ToolIOFile(dir_by_locus_name[locus] / f'{locus}.fasta')
             SnakemakeUtils.dump_object([fasta_ref], str(output_dir / 'fasta.io'))
-            gff = ToolIOFile(str(dir_by_locus_name[locus] / f'{locus}.gff'))
+            gff = ToolIOFile(dir_by_locus_name[locus] / f'{locus}.gff')
             SnakemakeUtils.dump_object([gff], str(output_dir / 'gff.io'))
 
 rule flexneri_map_reads:

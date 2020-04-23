@@ -58,7 +58,7 @@ class DBHelper(object):
         """
         cdhit = CDHitEst(Camel.get_instance())
         cdhit.update_parameters(identitiy_threshold=str(clustering_cutoff / 100))
-        cdhit.add_input_files({'FASTA': [ToolIOFile(str(fasta_file))]})
+        cdhit.add_input_files({'FASTA': [ToolIOFile(fasta_file)]})
         cdhit.run(str(self.get_working_subdir('clustering')))
         self._informs.append(cdhit.informs)
         return cdhit.informs['clusters']
@@ -71,7 +71,7 @@ class DBHelper(object):
         :return: None
         """
         samtools_faindex = SamtoolsFastaIndex(Camel.get_instance())
-        samtools_faindex.add_input_files({'FASTA': [ToolIOFile(str(fasta_file))]})
+        samtools_faindex.add_input_files({'FASTA': [ToolIOFile(fasta_file)]})
         samtools_faindex.run(str(working_dir))
         self._informs.append(samtools_faindex.informs)
 

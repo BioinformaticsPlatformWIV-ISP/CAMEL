@@ -47,7 +47,7 @@ rule typing_blast_allele_detection:
         else:
             raise ValueError(f"Invalid locus type: {wildcards.locus_type}")
         SnakemakeUtils.add_pickle_input(blast, 'FASTA', input.FASTA)
-        blast.add_input_files({'DB_BLAST': [ToolIOFile(str(params.scheme_dir / locus_informs['fasta_path']))]})
+        blast.add_input_files({'DB_BLAST': [ToolIOFile(params.scheme_dir / locus_informs['fasta_path'])]})
         blast.update_parameters(threads=threads)
         blast.run(str(params.working_dir))
         SnakemakeUtils.dump_object(blast.informs, output.INFORMS)

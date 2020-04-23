@@ -38,7 +38,7 @@ rule typing_srst2_allele_detection:
         fastq_input = SnakePipelineUtils.extracts_fq_input(
             input.IO, key_pe='FASTQ_PE', key_se='FASTQ_SE', read_type=params.read_type)
         detector.add_input_files(fastq_input)
-        detector.add_input_files({'FASTA': [ToolIOFile(str(params.scheme_dir / locus_informs['fasta_path']))]})
+        detector.add_input_files({'FASTA': [ToolIOFile(params.scheme_dir / locus_informs['fasta_path'])]})
         detector.add_input_informs({'locus': locus_informs})
         if (params.srst2_options is not None) and ('max_unaligned_overlap' in params.srst2_options):
             detector.update_parameters(max_unaligned_overlap=params.srst2_options['max_unaligned_overlap'])

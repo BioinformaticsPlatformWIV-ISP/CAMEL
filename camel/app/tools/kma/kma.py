@@ -59,7 +59,7 @@ class KMA(Tool):
         for extension, key in [('aln', 'ALN'), ('fsa', 'FASTA'), ('res', 'TSV')]:
             p = output_base.parent / f'{output_base.name}.{extension}'
             if p.exists():
-                self._tool_outputs[key] = [ToolIOFile(str(p))]
+                self._tool_outputs[key] = [ToolIOFile(p)]
 
     def _check_command_output(self) -> None:
         """

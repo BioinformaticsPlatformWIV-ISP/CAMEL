@@ -186,7 +186,7 @@ class SnpPhylogenyUtils(object):
                 if path_link.exists():
                     path_link.unlink()
                 path_link.symlink_to(fq_file.path)
-                fq_by_sample[sample].append(ToolIOFile(str(path_link)))
+                fq_by_sample[sample].append(ToolIOFile(path_link))
         return fq_by_sample
 
     @staticmethod

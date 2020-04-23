@@ -14,10 +14,10 @@ class TestBcftools(CamelTestSuite):
     """
 
     test_file_dir = CamelTestSuite.get_test_file_dir('bcftools')
-    FILE_VCF_GZ = ToolIOFile(str(test_file_dir / 'variants.vcf.gz'))
-    FILE_BED = ToolIOFile(str(test_file_dir / 'regions.bed'))
-    FILE_FASTA = ToolIOFile(str(test_file_dir / 'reference_h37Rv.fasta'))
-    FILE_GFF = ToolIOFile(str(test_file_dir / 'annotation_h37Rv.gff'))
+    FILE_VCF_GZ = ToolIOFile(test_file_dir / 'variants.vcf.gz')
+    FILE_BED = ToolIOFile(test_file_dir / 'regions.bed')
+    FILE_FASTA = ToolIOFile(test_file_dir / 'reference_h37Rv.fasta')
+    FILE_GFF = ToolIOFile(test_file_dir / 'annotation_h37Rv.gff')
 
     def test_bcftools_csq(self) -> None:
         """
