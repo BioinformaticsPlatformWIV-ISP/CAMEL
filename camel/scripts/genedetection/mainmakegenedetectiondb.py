@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 import argparse
+from pathlib import Path
+
 import shutil
 
-import os
 from typing import Optional, Sequence
 
 from camel.app.camel import Camel
@@ -11,6 +12,7 @@ from camel.app.components.genedetection.dbhelper import DBHelper
 from camel.app.components.genedetection.genedetectionutils import GeneDetectionUtils
 from camel.app.components.html.htmlreport import HtmlReport
 from camel.app.components.html.htmlreportsection import HtmlReportSection
+from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.resources import CSS_STYLE
 
 
@@ -25,8 +27,8 @@ class MainMakeGeneDetectionDB(object):
         :param args: (Optional) arguments
         """
         self._args = MainMakeGeneDetectionDB.parse_arguments(args)
-        self._db_name = os.path.splitext(os.path.basename(
-            FileSystemHelper.make_valid(self._args.fasta_name) if self._args.fasta_name else self._args.fasta))[0]
+        fasta_name = self._args.fasta_name if self._args.fasta_name is not None else Path(self._args.fasta).name
+        self._db_name = FileSystemHelper.make_valid(Path(fasta_name).stem)
         self._helper = DBHelper(self._db_name, self._args.working_dir)
         self._clusters = None
         self._new_name_by_header = None
@@ -43,7 +45,7 @@ class MainMakeGeneDetectionDB(object):
         argument_parser.add_argument('--identity-cutoff', default=80, type=int)
         argument_parser.add_argument('--output-dir', required=True)
         argument_parser.add_argument('--output-html', required=True)
-        argument_parser.add_argument('--working-dir', default=os.path.abspath('.'))
+        argument_parser.add_argument('--working-dir', default=str(Path('.').absolute()))
         return argument_parser.parse_args(args)
 
     def run(self) -> None:
@@ -51,48 +53,51 @@ class MainMakeGeneDetectionDB(object):
         Runs this tool.
         :return: None
         """
-        if not os.path.isdir(self._args.output_dir):
-            os.makedirs(self._args.output_dir)
-        input_fasta = self._helper.standardize_fasta_headers(self._args.fasta)
-        self.__export_blast_db(input_fasta)
-        self.__export_srst2_db(input_fasta)
-        self._helper.export_metadata(self._db_name, self._args.output_dir)
+        output_dir = Path(self._args.output_dir)
+        if not output_dir.exists():
+            output_dir.mkdir(parents=True)
+        input_fasta = self._helper.standardize_fasta_headers(Path(self._args.fasta))
+        self.__export_blast_db(input_fasta, output_dir)
+        self.__export_srst2_db(input_fasta, output_dir)
+        self._helper.export_metadata(self._db_name, output_dir)
         self.__export_report()
 
-    def __export_blast_db(self, input_fasta: str) -> None:
+    def __export_blast_db(self, input_fasta: Path, output_dir: Path) -> None:
         """
         Creates and exports a gene detection BLAST database from the given FASTA file.
         :param input_fasta: Input FASTA file
+        :param output_dir: Output directory
         :return: None
         """
         # Create file
         dir_indexing = self._helper.get_working_subdir('index_blast')
-        new_path = os.path.join(dir_indexing, os.path.basename(input_fasta))
-        shutil.copyfile(input_fasta, new_path)
+        new_path = dir_indexing / input_fasta.name
+        shutil.copyfile(str(input_fasta), str(new_path))
 
         # Cluster
         self._helper.index_samtools_faidx(new_path, dir_indexing)
         self._helper.index_blast(new_path, dir_indexing)
 
         # Export files
-        for f in os.listdir(dir_indexing):
-            shutil.copyfile(os.path.join(dir_indexing, f), os.path.join(self._args.output_dir, f))
+        for f in dir_indexing.iterdir():
+            shutil.copyfile(str(f), str(output_dir / f.name))
 
-    def __export_srst2_db(self, input_fasta: str) -> None:
+    def __export_srst2_db(self, input_fasta: Path, output_dir: Path) -> None:
         """
         Exports a database for SRST2.
         :param input_fasta: Input FASTA file
+        :param output_dir: Output directory
         :return: None
         """
         # Cluster FASTA
         dir_clustering = self._helper.get_working_subdir('clustering')
-        fasta_seq_headers = os.path.join(dir_clustering, 'seq_headers.fasta')
+        fasta_seq_headers = dir_clustering / 'seq_headers.fasta'
         self._new_name_by_header = self._helper.convert_fasta_headers_to_seq(input_fasta, fasta_seq_headers)
         self._clusters = self._helper.get_clusters_form_fasta(fasta_seq_headers, self._args.identity_cutoff)
 
         # Create SRST2 FASTA
         dir_indexing = self._helper.get_working_subdir('index_srst2')
-        fasta_srst2 = os.path.join(dir_indexing, f'{self._db_name}-clustered_{self._args.identity_cutoff}.fasta')
+        fasta_srst2 = dir_indexing / f'{self._db_name}-clustered_{self._args.identity_cutoff}.fasta'
         self._helper.create_srst2_fasta(fasta_seq_headers, fasta_srst2, self._clusters)
 
         # Index
@@ -101,9 +106,9 @@ class MainMakeGeneDetectionDB(object):
         self._helper.index_blast(fasta_srst2, dir_indexing)
 
         # Export files
-        self._helper.export_mapping(self._new_name_by_header, self._args.output_dir)
-        for f in os.listdir(dir_indexing):
-            shutil.copyfile(os.path.join(dir_indexing, f), os.path.join(self._args.output_dir, f))
+        self._helper.export_mapping(self._new_name_by_header, output_dir)
+        for f in dir_indexing.iterdir():
+            shutil.copyfile(str(f), str(output_dir / f.name))
 
     def __export_report(self) -> None:
         """
@@ -114,6 +119,8 @@ class MainMakeGeneDetectionDB(object):
         self._report.initialize('Gene detection database', CSS_STYLE)
         self._report.add_html_object(self.__create_db_info_section())
         self._report.add_html_object(self.__create_clusters_section())
+        self._report.add_html_object(SnakePipelineUtils.create_commands_section(
+            self._helper.informs, self._args.working_dir))
         self._report.save()
 
     def __create_db_info_section(self) -> HtmlReportSection:
