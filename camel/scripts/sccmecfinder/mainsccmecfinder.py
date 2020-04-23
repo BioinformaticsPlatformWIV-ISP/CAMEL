@@ -2,7 +2,7 @@
 import argparse
 import logging
 from pathlib import Path
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Sequence
 
 import yaml
 
@@ -18,19 +18,19 @@ class MainSCCmecFinder(object):
     This tool is used to run the SCCmecFinder tool.
     """
 
-    def __init__(self, args: Optional[argparse.Namespace] = None) -> None:
+    def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """
         Initializes the main script.
         :param args: Arguments, if not set they are removed from the command line
         """
         self._camel = Camel()
-        self._args = MainSCCmecFinder._parse_arguments() if args is None else args
+        self._args = MainSCCmecFinder._parse_arguments(args)
         self._sample_name = MainScriptHelper.determine_sample_name(self._args)
         self._helper = MainScriptHelper(self._args.working_dir, self._sample_name)
         self._report = None
 
     @staticmethod
-    def _parse_arguments() -> argparse.Namespace:
+    def _parse_arguments(args: Optional[Sequence[str]] = None) -> argparse.Namespace:
         """
         Parses the command line arguments.
         :return: Arguments
@@ -41,7 +41,7 @@ class MainSCCmecFinder(object):
         MainScriptHelper.add_input_files_arguments(argument_parser)
         argument_parser.add_argument('--db-mec-genes', help="Database containing mec genes.", required=True)
         argument_parser.add_argument('--profiles-mec-genes', help="Profiles for the mec genes", required=True)
-        return argument_parser.parse_args()
+        return argument_parser.parse_args(args)
 
     @staticmethod
     def __get_matching_complex(detected_genes: List[str], genes_by_complex: Dict[str, List[str]]) -> \
@@ -67,7 +67,8 @@ class MainSCCmecFinder(object):
         input_files = self._helper.symlink_input_files(self._args.fasta, self._args.fastq_pe)
         fasta_file = self._helper.get_blast_input(input_files, self._args, self._report)
         detected_genes = self.__run_blast(fasta_file)
-        self.__add_mec_type_overview(detected_genes)
+        report_mec_type = self.__get_mec_type_overview(detected_genes)
+        self._helper.export_output_and_commands_section(self._report, report_mec_type)
 
     def __run_blast(self, fasta_file: ToolIOFile) -> List[str]:
         """
@@ -80,17 +81,18 @@ class MainSCCmecFinder(object):
           fasta_file.path, self._sample_name, {'path': self._args.db_mec_genes}, self._args.threads)
         self._report.add_html_object(wrapper.output.report_section)
         wrapper.output.report_section.copy_files(self._report.output_dir)
+        self._helper.informs.append(wrapper.output.informs)
         self._report.save()
         return [d.locus.split(':')[0] for d in wrapper.output.detected_hits]
 
-    def __add_mec_type_overview(self, detected_genes: List[str]) -> None:
+    def __get_mec_type_overview(self, detected_genes: List[str]) -> HtmlReportSection:
         """
         Determines the mec type based on the detected genes and adds it to the report.
         :param detected_genes: Detected genes
         :return: None
         """
         with open(self._args.profiles_mec_genes) as handle:
-            profiles = yaml.load(handle)
+            profiles = yaml.safe_load(handle)
         ccr_complex = MainSCCmecFinder.__get_matching_complex(detected_genes, profiles['ccr_genes_complexes'])
         mec_complex = MainSCCmecFinder.__get_matching_complex(detected_genes, profiles['mec_genes_complexes'])
         sccmec_type = MainSCCmecFinder.__get_matching_complex(detected_genes, profiles['SCC_mec_types'])
@@ -100,8 +102,7 @@ class MainSCCmecFinder(object):
             ['<i>mec</i> class:', mec_complex if mec_complex is not None else '-'],
             ['<i>ccr</i> class:', ccr_complex if ccr_complex is not None else '-']
         ], None, [('class', 'information')])
-        self._report.add_html_object(section)
-        self._report.save()
+        return section
 
 
 if __name__ == '__main__':
