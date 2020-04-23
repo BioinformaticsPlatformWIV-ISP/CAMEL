@@ -84,6 +84,7 @@ class MainSpaTyping(object):
             'FASTA': [fasta_file]})
         blastn.update_parameters(output_format=SpaTyping.BLASTN_OUTPUT_FORMAT)
         blastn.run(self._args.working_dir)
+        self._helper.informs.append(blastn.informs)
         return blastn.tool_outputs['TSV'][0]
 
     def __run_spa_tying(self, tsv_output: ToolIOFile, fasta_file: ToolIOFile) -> SpaTyping:
