@@ -60,8 +60,9 @@ class Mapping(object):
         if seq_id not in self._content:
             raise ValueError(f"No sample with id '{seq_id}' in mapping")
         metadata = json.loads(' '.join(self._content[seq_id].split(' ')[1:]))
-        if (metadata_key not in metadata) and (default is None):
-            raise ValueError(f"Key '{metadata_key}' not found in metadata")
-        elif default is not None:
-            return default
+        if metadata_key not in metadata:
+            if default is None:
+                raise ValueError(f"Key '{metadata_key}' not found in metadata")
+            else:
+                return default
         return metadata[metadata_key]
