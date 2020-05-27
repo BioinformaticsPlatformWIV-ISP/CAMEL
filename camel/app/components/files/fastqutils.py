@@ -206,7 +206,7 @@ class FastqUtils(object):
     @staticmethod
     def get_sample_name(fastq_path: str, pattern: str = PATTERN_FQ_PE) -> str:
         """
-        Returns the sample name based on the given reads. It tries to match the following formats(in this order):
+        Returns the sample name based on the given reads.
         :param fastq_path: FASTQ path
         :param pattern: Regex to determine the sample name
         :return: Sample name
