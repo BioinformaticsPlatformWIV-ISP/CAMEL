@@ -71,4 +71,7 @@ class HtmlReporterAssembly(Tool):
         relative_path = os.path.join(self.__subfolder, '{}_contigs.fasta'.format(
             FileSystemHelper.make_valid(self._tool_inputs['SAMPLE_NAME'][0].value)))
         self._report_section.add_file(self._tool_inputs['FASTA_Contig'][0].path, relative_path)
+        relative_path_raw = os.path.join(self.__subfolder, '{}_contigs_unfilt.fasta'.format(
+            FileSystemHelper.make_valid(self._tool_inputs['SAMPLE_NAME'][0].value)))
+        self._report_section.add_file(self._tool_inputs['FASTA_Raw'][0].path, relative_path_raw)
         self._report_section.add_link_to_file('Assembly (FASTA)', relative_path)

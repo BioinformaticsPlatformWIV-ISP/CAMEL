@@ -100,6 +100,7 @@ rule assembly_report:
     Creates the HTML report for the assembly.
     """
     input:
+        FASTA_Raw = rules.assembly_spades_run.output.FASTA_Contig,
         FASTA_Contig = rules.assembly_filter_contig_length.output.FASTA,
         INFORMS_spades = rules.assembly_spades_run.output.INFORMS,
         INFORMS_quast = rules.assembly_quast_extract_informs.output.INFORMS
