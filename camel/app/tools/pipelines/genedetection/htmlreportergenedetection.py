@@ -58,8 +58,6 @@ class HtmlReporterGeneDetection(Tool):
         if ('VAL_Hits' in self._tool_inputs) and (len(self._tool_inputs['VAL_Hits']) > 0) and \
                 ('TSV' not in self._tool_inputs):
             raise InvalidInputSpecificationError("TSV input is required when hits were detected.")
-        if 'SAMPLE_NAME' not in self._tool_inputs:
-            raise InvalidInputSpecificationError("Sample name input is required")
         super(HtmlReporterGeneDetection, self)._check_input()
 
     def __initialize_report(self) -> None:
@@ -90,9 +88,7 @@ class HtmlReporterGeneDetection(Tool):
         table_data = [hit.to_html_row(self._report_section, str(self._sub_folder)) for hit in sorted(
             hits, key=lambda x: x.locus)]
         self._report_section.add_table(table_data, hits[0].html_column_names, [('class', 'data')])
-        relative_path = self._sub_folder / 'genes-{}-{}.tsv'.format(
-            FileSystemHelper.make_valid(self._input_informs['db_info']['name']),
-            FileSystemHelper.make_valid(self._tool_inputs['SAMPLE_NAME'][0].value))
+        relative_path = self._sub_folder / Path(self._tool_inputs['TSV'][0].path).name
         self._report_section.add_file(self._tool_inputs['TSV'][0].path, str(relative_path))
         self._report_section.add_link_to_file("Download (TSV)", str(relative_path))
 

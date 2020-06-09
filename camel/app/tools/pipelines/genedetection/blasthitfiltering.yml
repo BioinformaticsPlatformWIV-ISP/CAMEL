@@ -1,7 +1,5 @@
 dependencies: []
 parameters:
-  extra_column_key: {default: false, mandatory: false, option: null, value: null}
-  extra_column_name: {default: false, mandatory: false, option: null, value: null}
   filtering_method: {default: true, mandatory: false, option: null, value: cluster}
   min_coverage: {default: true, mandatory: true, option: null, value: '60'}
   min_percent_identity: {default: true, mandatory: true, option: null, value: '90'}

@@ -2,6 +2,9 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 SNAKEFILE_GENE_DETECTION = f'{Path(__file__).parent / Path(__file__).stem}.smk'
+SNAKEFILE_GENE_DETECTION_BLAST = f'{Path(__file__).parent / Path(__file__).stem}_blast.smk'
+SNAKEFILE_GENE_DETECTION_KMA = f'{Path(__file__).parent / Path(__file__).stem}_kma.smk'
+SNAKEFILE_GENE_DETECTION_SRST2 = f'{Path(__file__).parent / Path(__file__).stem}_srst2.smk'
 _dir_gene_detection = Path('gene_detection') / '{db}'
 
 # Input files and database
@@ -11,7 +14,6 @@ INPUT_GENE_DETECTION_FASTA = _dir_gene_detection / 'input' / 'fasta.io'
 
 # Generic output paths with a wildcard for the detection method
 OUTPUT_GENE_DETECTION_HITS_METHOD = _dir_gene_detection / '{method}' / 'hits.io'
-OUTPUT_GENE_DETECTION_TABULAR_METHOD = _dir_gene_detection / '{method}' / 'tsv.io'
 OUTPUT_GENE_DETECTION_INFORMS_METHOD = _dir_gene_detection / '{method}' / 'informs.io'
 
 # Selected hits and informs for the given database
