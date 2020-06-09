@@ -74,7 +74,7 @@ class MainMakeGeneDetectionDB(object):
         new_path = dir_indexing / input_fasta.name
         shutil.copyfile(str(input_fasta), str(new_path))
 
-        # Cluster
+        # Index
         self._helper.index_samtools_faidx(new_path, dir_indexing)
         self._helper.index_blast(new_path, dir_indexing)
 
@@ -104,11 +104,15 @@ class MainMakeGeneDetectionDB(object):
         self._helper.index_samtools_faidx(fasta_srst2, dir_indexing)
         self._helper.index_bowtie2(fasta_srst2, dir_indexing)
         self._helper.index_blast(fasta_srst2, dir_indexing)
+        self._helper.index_kma(fasta_srst2, dir_indexing)
 
         # Export files
-        self._helper.export_mapping(self._new_name_by_header, output_dir)
+        self._helper.export_mapping(self._new_name_by_header, self._clusters, output_dir)
         for f in dir_indexing.iterdir():
-            shutil.copyfile(str(f), str(output_dir / f.name))
+            if f.is_file():
+                shutil.copyfile(str(f), str(output_dir / f.name))
+            elif f.is_dir():
+                shutil.copytree(str(f), str(output_dir / f.name))
 
     def __export_report(self) -> None:
         """

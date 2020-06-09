@@ -81,7 +81,7 @@ rule gene_detection_map_names:
         for hit in [io.value for io in hits]:
             seq_id = hit.locus
             hit.locus = informs_db['mapping'].get_metadata(seq_id, 'allele')
-            hit.accession = informs_db['mapping'].get_metadata(seq_id, 'accession')
+            hit.accession = informs_db['mapping'].get_metadata(seq_id, 'accession', '-')
             if params.db_config.get('metadata') is not None:
                 key = params.db_config['metadata']['key']
                 hit.add_metadata(params.db_config['metadata']['name'], informs_db['mapping'].get_metadata(seq_id, key))

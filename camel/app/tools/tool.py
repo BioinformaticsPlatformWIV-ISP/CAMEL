@@ -51,6 +51,14 @@ class Tool(object, metaclass=abc.ABCMeta):
         return '{} {}'.format(self._name, self._version)
 
     @property
+    def version(self) -> str:
+        """
+        Returns the tool version.
+        :return: Version
+        """
+        return self._version
+
+    @property
     def tool_id(self) -> int:
         """
         Returns the tool id.

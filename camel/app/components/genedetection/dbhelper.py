@@ -8,10 +8,12 @@ import humanize
 from Bio import SeqIO
 
 from camel.app.camel import Camel
+from camel.app.command.command import Command
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.blast.makeblastdb import MakeBlastDb
 from camel.app.tools.bowtie2.bowtie2index import Bowtie2Index
 from camel.app.tools.cdhit.cdhitest import Cluster, CDHitEst
+from camel.app.tools.kma.kma import KMA
 from camel.app.tools.samtools.samtoolsfastaindex import SamtoolsFastaIndex
 
 
@@ -98,6 +100,25 @@ class DBHelper(object):
         makeblastdb.add_input_files({'FASTA': [ToolIOFile(fasta_file)]})
         makeblastdb.run(str(working_dir))
         self._informs.append(makeblastdb.informs)
+
+    def index_kma(self, fasta_file: Path, working_dir: Path) -> None:
+        """
+        Creates a KMA index.
+        :param fasta_file: FASTA file
+        :param working_dir: Working directory
+        :return: None
+        """
+        logging.info(f'Indexing - KMA: {fasta_file}')
+        kma = KMA(Camel.get_instance())
+        path_out = fasta_file.parent / 'kma' / fasta_file.stem
+        if not path_out.parent.exists():
+            path_out.parent.mkdir(parents=True)
+        command = Command(
+            f"ml {' '.join(kma.dependencies)}; kma index -i {fasta_file} -o {path_out}")
+        command.run_command(str(working_dir))
+        if command.returncode != 0:
+            raise RuntimeError(f"Error KMA indexing: {command.stderr}")
+        self._informs.append({'_command': command.command, '_name': 'KMA', '_version': kma.version})
 
     def convert_fasta_headers_to_seq(self, input_file: Path, output_file: Path) -> Dict[str, str]:
         """
