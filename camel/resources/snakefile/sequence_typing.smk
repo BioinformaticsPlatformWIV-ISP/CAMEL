@@ -77,8 +77,7 @@ rule typing_get_hits:
         HITS_PEPT = lambda wildcards: str(Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_HITS).format(
             scheme=wildcards.scheme,
             locus_type='peptide',
-            detection_method='blast')) if (
-                len(loci_by_scheme_by_type[wildcards.scheme]['peptide']) > 0) else []
+            detection_method='blast')) if (len(loci_by_scheme_by_type[wildcards.scheme]['peptide']) > 0) else []
     output:
         HITS_NUCL = Path(config['working_dir']) / 'typing' / '{scheme}' / 'DNA' / 'hits.io',
         HITS_PEPT = Path(config['working_dir']) / 'typing' / '{scheme}' / 'peptide' / 'hits.io'
