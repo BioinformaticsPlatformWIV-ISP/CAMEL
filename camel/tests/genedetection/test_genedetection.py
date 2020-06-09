@@ -266,6 +266,24 @@ class TestGeneDetection(CamelTestSuite):
         main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)
 
+    def test_gene_detection_kma_no_trim(self) -> None:
+        """
+        Tests the gene detection main script using KMA without trimming.
+        :return: None
+        """
+        path_report_out = self.running_dir / 'report' / 'report.html'
+        args = [
+            '--fastq-pe', *[str(x) for x in TestGeneDetection.input_reads_raw],
+            '--database-dir', str(TestGeneDetection.input_gene_detection_db),
+            '--output-html', str(path_report_out),
+            '--output-dir', str(path_report_out.parent),
+            '--working-dir', str(self.running_dir),
+            '--detection-method', 'kma',
+        ]
+        main = MainGeneDetection(args)
+        main.run()
+        self.assertGreater(path_report_out.stat().st_size, 0)
+
 
 if __name__ == '__main__':
     unittest.main()

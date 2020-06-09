@@ -114,6 +114,11 @@ class MainGeneDetection(object):
                 'max_unaligned_overlap': self._args.srst2_max_unaligned_overlap,
                 'max_mismatch': self._args.srst2_max_mismatch
             }}})
+        elif self._args.detection_method == 'kma':
+            config_data.update({'params': {'kma': {
+                'min_percent_identity': self._args.kma_min_percent_identity,
+                'min_coverage': self._args.kma_min_percent_coverage,
+            }}})
 
         # Add extra column
         with open(os.path.join(db_path, 'db_metadata.txt')) as handle:
@@ -128,7 +133,7 @@ class MainGeneDetection(object):
         :param output: Output
         :return: None
         """
-        self._helper.logs['gene_detection'] = output.log_file
+        self._helper.logs['gene_detection'] = str(output.log_file)
         self._helper.informs.append(output.informs)
         self._helper.export_output_and_commands_section(self._report, output.report_section)
 
