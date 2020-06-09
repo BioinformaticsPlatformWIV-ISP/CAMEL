@@ -1,4 +1,4 @@
-dependencies: [kma/1.2.12]
+dependencies: [kma/1.2.25]
 parameters:
   output_basename: {default: true, mandatory: true, option: -o, value: kma_output}
 tool_command: kma
