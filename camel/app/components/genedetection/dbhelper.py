@@ -182,13 +182,32 @@ class DBHelper(object):
             f"Reformatted FASTA file created ({humanize.naturalsize(output_path.stat().st_size)}): {output_path}")
         return output_path
 
-    def export_mapping(self, mapping: Dict[str, str], output_directory: Path) -> None:
+    def export_mapping(self, mapping: Dict[str, str], clusters: List[Cluster], output_directory: Path) -> None:
         """
         Exports the mapping of the novel headers to the original headers.
         :param mapping: Mapping
+        :param clusters: Clusters
         :param output_directory: Output directory
         :return: None
         """
         with (output_directory / 'mapping.txt').open('w') as handle:
             json.dump(mapping, handle, indent=4, sort_keys=True)
         logging.info(f"Metadata exported: {output_directory}")
+
+        cluster_by_seq_id = {}
+        for c in clusters:
+            for seq_id in c.seq_ids:
+                cluster_by_seq_id[seq_id] = c.name
+
+        seq_metadata = {}
+        for seq_id, full_header in mapping.items():
+            parts = full_header.split(' ')
+            seq_data = json.loads(' '.join(parts[1:]))
+            seq_data['header_orig'] = parts[0]
+            try:
+                seq_data['cluster'] = cluster_by_seq_id[seq_id]
+            except KeyError:
+                continue
+            seq_metadata[seq_id] = seq_data
+        with (output_directory / 'mapping_full.json').open('w') as handle:
+            json.dump(seq_metadata, handle, indent=2)

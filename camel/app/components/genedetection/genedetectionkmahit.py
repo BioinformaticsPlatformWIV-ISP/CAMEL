@@ -10,10 +10,11 @@ class GeneDetectionKMAHit(GeneDetectionHitBase):
     Gene detection hit detected by KMA.
     """
 
-    def __init__(self, locus: str, accession: Optional[str], subject: str, score: int, length: int, p_ident: float,
-                 p_cov: float, depth: float) -> None:
+    def __init__(self, cluster: str, locus: str, accession: Optional[str], subject: str, score: int, length: int,
+                 p_ident: float, p_cov: float, depth: float) -> None:
         """
         Initializes the hit.
+        :param cluster: Cluster
         :param locus: Locus
         :param accession: Accession
         :param subject: Original sequence subject
@@ -24,14 +25,13 @@ class GeneDetectionKMAHit(GeneDetectionHitBase):
         :param depth: mean read depth across sequence
         """
         super().__init__(locus, accession)
+        self._cluster = cluster
         self._subject = subject
         self._score = score
         self._length = length
         self._p_ident = p_ident
         self._p_cov = p_cov
         self._depth = depth
-        self._extra_column_value = None
-        self._extra_column_name = None
 
     def is_perfect_hit(self) -> bool:
         """
@@ -53,7 +53,7 @@ class GeneDetectionKMAHit(GeneDetectionHitBase):
         Returns the names of the columns of the tabular output.
         :return: List of column names
         """
-        columns = ['Locus', 'Length', '% Identity', '% Covered', 'Depth', 'Accession']
+        columns = ['DB_cluster', 'Locus', 'Length', '% Identity', '% Covered', 'Depth', 'Accession']
         for metadata in self._metadata:
             columns.insert(-1, metadata['name'])
         return columns
@@ -64,6 +64,7 @@ class GeneDetectionKMAHit(GeneDetectionHitBase):
         :return: List of table cell values
         """
         data = [
+            self._cluster,
             self.locus,
             str(self._length),
             '{:.2f}'.format(self.percent_identity),
@@ -71,8 +72,8 @@ class GeneDetectionKMAHit(GeneDetectionHitBase):
             '{:.2f}'.format(self._depth),
             self._accession if self._accession is not None else '-'
         ]
-        if self._extra_column_value is not None:
-            data.insert(-1, self._extra_column_value)
+        for metadata in self._metadata:
+            data.insert(-1, metadata['value'])
         return data
 
     @property
@@ -81,7 +82,7 @@ class GeneDetectionKMAHit(GeneDetectionHitBase):
         Returns the names of the columns of the HTML output.
         :return: List of column names
         """
-        return self.table_column_names
+        return self.table_column_names[1:]
 
     def to_html_row(self, report_section: HtmlReportSection, sub_directory: str, colored: bool = True) -> List[
             Union[str, HtmlTableCell]]:
@@ -92,7 +93,7 @@ class GeneDetectionKMAHit(GeneDetectionHitBase):
         :param colored: If True, the row is colored
         :return: List of table cell values
         """
-        return [HtmlTableCell(v, self.color) for v in self.to_table_row()][:-1] + [self._get_accession_cell()]
+        return [HtmlTableCell(v, self.color) for v in self.to_table_row()][1:-1] + [self._get_accession_cell()]
 
     @property
     def subject(self) -> str:

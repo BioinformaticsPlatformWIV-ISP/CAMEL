@@ -30,6 +30,32 @@ class GeneDetectionHitBase(object, metaclass=abc.ABCMeta):
         """
         return self._locus
 
+    @locus.setter
+    def locus(self, locus: str) -> None:
+        """
+        Sets the locus for this hit.
+        :param locus: Locus
+        :return: None
+        """
+        self._locus = locus
+
+    @property
+    def accession(self) -> Optional[str]:
+        """
+        Returns the accession.
+        :return: Accession
+        """
+        return self._accession
+
+    @accession.setter
+    def accession(self, accession: str) -> None:
+        """
+        Setter for the accession.
+        :param accession: Accession number
+        :return: None
+        """
+        self._accession = accession
+
     @abc.abstractmethod
     def is_perfect_hit(self) -> bool:
         """
