@@ -32,7 +32,7 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         self._snakefile = snakefile
         self._args = self._parse_arguments(args)
         self._working_dir = Path(self._args.working_dir)
-        self._pipeline = Pipeline(name, Camel.get_instance(), self._args.log)
+        self._pipeline = Pipeline(name, Camel.get_instance(), self._args.log, self._args.log)
 
     @staticmethod
     @abc.abstractmethod
@@ -170,6 +170,7 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         except SnakemakeExecutionError as err:
             if self._pipeline.keep_error_log:
                 self._pipeline.log_error_to_file(err)
+            raise err
 
     def get_template_data(self, input_key: str, input_data: [List[Dict[str, str]]]) -> Dict[str, Any]:
         """

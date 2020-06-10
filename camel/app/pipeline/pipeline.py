@@ -108,9 +108,9 @@ class Pipeline(object):
         :param error: Error raised by Snakemake
         :return: None
         """
-        logging.debug("Dumping error log")
         output_logfile = Path(Camel.get_instance().config['error_log_dir']) / 'error-{}-{}.txt'.format(
             FileSystemHelper.make_valid(self.name).lower(), FileSystemHelper.get_timestamp_str())
+        logging.debug(f"Dumping error log: {output_logfile}")
         with open(output_logfile, 'w') as handle_in:
             handle_in.write('Stdout:\n')
             handle_in.write(error.stdout)
