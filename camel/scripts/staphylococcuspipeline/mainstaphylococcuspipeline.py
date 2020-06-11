@@ -16,7 +16,7 @@ class MainStaphylococcusPipeline(BasePipeline):
     """
 
     CUSTOM_ANALYSES = [
-        'kraken', 'resfinder', 'argannot', 'card', 'ncbi_amr', 'pointfinder', 'vfdb_core', 'virulencefinder', 'mlst',
+        'kraken', 'resfinder', 'ncbi_amr', 'pointfinder', 'vfdb_core', 'virulencefinder', 'mlst',
         'cgmlst', 'spa_typing', 'sccmec_typing']
 
     def __init__(self, args: Optional[argparse.Namespace] = None) -> None:

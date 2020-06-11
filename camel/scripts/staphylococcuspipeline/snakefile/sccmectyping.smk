@@ -42,8 +42,8 @@ rule sccmec_typing_report:
         section = HtmlReportSection('SCC<i>mec</i> type', 3)
         informs = SnakemakeUtils.load_object(input.INFORMS)
         section.add_table(
-            [[f"{complex_['name']}:", complex_['value']] for complex_ in informs['complexes']],
-            table_attributes=[('class', 'information')])
+            [[f"{complex_['name']}:", complex_['value'] if complex_['value'] is not None else '-'] for
+             complex_ in informs['complexes']], table_attributes=[('class', 'information')])
         SnakemakeUtils.dump_object([ToolIOValue(section)], output.HTML)
 
 rule sccmec_typing_report_empty:
@@ -68,5 +68,5 @@ rule sccmec_typing_summary:
         informs = SnakemakeUtils.load_object(input.INFORMS)
         with open(output.TSV, 'w') as handle:
             for complex_ in informs['complexes']:
-                handle.write('\t'.join([complex_['key'], complex_['value']]))
+                handle.write('\t'.join([complex_['key'], complex_['value'] if complex_['value'] is not None else '-']))
                 handle.write('\n')

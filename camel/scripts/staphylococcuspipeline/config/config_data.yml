@@ -5,7 +5,7 @@ read_trimming:
   export_fastq: '{export_fastq}'
 
 contamination_check:
-  db: /db/kraken/latest/abfhpv_lite/
+  db: /db/kraken2/latest/abfhpv/
   expected_species: Staphylococcus aureus
 
 quality_checks:
@@ -34,20 +34,12 @@ sccmec_typing:
 # Gene detection databases #
 ############################
 gene_detection:
-  argannot:
-    path: /db/gene_detection/ARG-ANNOT
-    perc_identity_cutoff: 90
-
   resfinder:
     path: /db/gene_detection/ResFinder
     perc_identity_cutoff: 90
-    extra_column:
+    metadata:
       name: Antibiotic(s)
       key: antibiotics
-
-  card:
-    path: /db/gene_detection/CARD
-    perc_identity_cutoff: 90
 
   ncbi_amr:
     path: /db/gene_detection/NCBI_AMR/
@@ -56,25 +48,25 @@ gene_detection:
   vfdb_core:
     path: /db/gene_detection/VFDB_core
     perc_identity_cutoff: 90
-    extra_column:
+    metadata:
       name: Gene
       key: gene
 
   vf_exoenzyme:
     path: /db/gene_detection/VirulenceFinder-Saureus-exoenzyme
-    extra_column:
+    metadata:
       name: Protein function
       key: protein_function
 
   vf_hostimm:
     path: /db/gene_detection/VirulenceFinder-Saureus-hostimm
-    extra_column:
+    metadata:
       name: Protein function
       key: protein_function
 
   vf_toxin:
     path: /db/gene_detection/VirulenceFinder-Saureus-toxin
-    extra_column:
+    metadata:
       name: Protein function
       key: protein_function
 
@@ -89,5 +81,8 @@ gene_detection:
 # Sequence typing #
 ###################
 sequence_typing:
-  mlst: /db/sequence_typing/staphylococcus/mlst
-  cgmlst: /db/sequence_typing/staphylococcus/cgmlst
+  mlst:
+    path: /db/sequence_typing/staphylococcus/mlst
+  cgmlst:
+    path: /db/sequence_typing/staphylococcus/cgmlst
+    detection_method: blast

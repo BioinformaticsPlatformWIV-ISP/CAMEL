@@ -77,8 +77,6 @@ rule report_command_section:
         INFORMS_mapping = quality_checks.get_mapping_rate_informs(config),
         INFORMS_depth = quality_checks.get_depth_informs(config),
         INFORMS_resfinder = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='resfinder') if 'resfinder' in config['analyses'] else [],
-        INFORMS_argannot = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='argannot') if 'argannot' in config['analyses'] else [],
-        INFORMS_card = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='card') if 'card' in config['analyses'] else [],
         INFORMS_ncbi_amr = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='ncbi_amr') if 'ncbi_amr' in config['analyses'] else [],
         INFORMS_vfdb_core = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='vfdb_core') if 'vfdb_core' in config['analyses'] else [],
         INFORMS_pointfinder = Path(config['working_dir']) / pointfinder.OUTPUT_POINTFINDER_INFORMS if 'pointfinder' in config['analyses'] else []
@@ -116,8 +114,6 @@ rule report_combine_all:
         report_sccmec_typing = Path(config['working_dir']) / (sccmectyping.OUTPUT_SCCMEC_TYPING_REPORT if 'sccmec_typing' in config['analyses'] else sccmectyping.OUTPUT_SCCMEC_TYPING_REPORT_EMPTY),
         # AMR detection
         report_resfinder = gene_detection.get_gene_detection_report('resfinder', config),
-        report_argannot = gene_detection.get_gene_detection_report('argannot', config),
-        report_card = gene_detection.get_gene_detection_report('card', config),
         report_ncbi_amr = gene_detection.get_gene_detection_report('ncbi_amr', config),
         report_pointfinder = Path(config['working_dir']) / (pointfinder.OUTPUT_POINTFINDER_REPORT if 'pointfinder' in config['analyses'] else pointfinder.OUTPUT_POINTFINDER_REPORT_EMPTY),
         # Virulence detection
@@ -158,9 +154,7 @@ rule report_combine_all:
             ('<i>spa</i> typing', 'spa', [input.report_spa_typing]),
             ('SCC<i>mec</i> typing', 'sccmec', [
                 input.report_sccmec_genes, input.report_sccmec_cassette, input.report_sccmec_typing]),
-            ('AMR detection', 'amr', [
-                input.report_resfinder, input.report_argannot, input.report_card, input.report_ncbi_amr,
-                input.report_pointfinder]),
+            ('AMR detection', 'amr', [input.report_resfinder, input.report_ncbi_amr, input.report_pointfinder]),
             ('Virulence detection', 'virulence', [
                 input.report_vfdb_core, input.report_vf_exoenzyme, input.report_vf_hostimm, input.report_vf_toxin]),
             ('Sequence typing', 'st', [input.report_mlst, input.report_cgmlst]),
@@ -207,8 +201,6 @@ rule summary_combine_all:
         Path(config['working_dir']) / sccmectyping.OUTPUT_SCCMEC_TYPING_SUMMARY if 'sccmec_typing' in config['analyses'] else [],
         # AMR detection
         Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='resfinder') if 'resfinder' in config['analyses'] else [],
-        Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='card') if 'card' in config['analyses'] else [],
-        Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='argannot') if 'argannot' in config['analyses'] else [],
         Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='ncbi_amr') if 'ncbi_amr' in config['analyses'] else [],
         Path(config['working_dir']) / pointfinder.OUTPUT_POINTFINDER_SUMMARY if 'pointfinder' in config['analyses'] else [],
         # Virulence detection
