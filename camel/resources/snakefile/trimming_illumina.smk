@@ -111,7 +111,7 @@ rule trimming_illumina_report:
         reporter = ReporterTrimming(camel)
         SnakemakeUtils.add_pickle_inputs(reporter, input)
         step = Step(rule, reporter, camel, params.running_dir, config)
-        reporter.update_parameters(export_fastq=params.export_fastq)
+        reporter.update_parameters(export_fastq=str(params.export_fastq))
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
 
