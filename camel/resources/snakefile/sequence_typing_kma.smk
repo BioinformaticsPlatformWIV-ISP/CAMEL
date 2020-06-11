@@ -31,9 +31,10 @@ rule typing_kma_allele_detection:
         scheme_informs = SnakemakeUtils.load_object(input.INFORMS_scheme)
         locus_informs = scheme_informs['loci'].metadata_by_locus_name[params.locus_name]
         dir_kma = (Path(str(params.scheme_dir)) / locus_informs['fasta_path']).parent / 'kma'
-        db_path = next(dir_kma.glob('*.name'))
-        if not db_path.exists():
-            raise FileNotFoundError(f"KMA database for '{params.locus_name}' not found")
+        try:
+            db_path = next(dir_kma.glob('*.name'))
+        except StopIteration:
+            raise FileNotFoundError(f"KMA database for locus '{params.locus_name}' ({params.scheme_dir}) not found")
 
         # Launch KMA
         kma = KMA(camel)
