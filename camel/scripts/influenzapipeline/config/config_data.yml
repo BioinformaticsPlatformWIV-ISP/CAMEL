@@ -1,0 +1,26 @@
+#########################################################################################
+# This YAML file contains the additional configuration data for the Influenza pipeline  #
+# The values are added to the configuration data constructed by the BasePipeline class. #
+#########################################################################################
+species:
+  name: '{viral_species}'
+  subtype: '{subtype}'
+
+read_trimming:
+  export_fastq: '{export_fastq}'
+
+quality_checks:
+  expected_gc_content: 0
+  coverage_mode: ref
+  disabled_checks: ['typing', 'kraken', 'coverage']
+
+decontamination:
+  dbs: {deconseq_dbs}
+  sequential: {deconseq_sequential}
+  dbs_retain: {deconseq_retain}
+
+gc_content:
+  influenza:
+    A: 43.66
+    B: 40.0
+    C: 41.46
