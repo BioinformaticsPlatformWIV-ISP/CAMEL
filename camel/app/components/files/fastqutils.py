@@ -1,9 +1,10 @@
-from itertools import zip_longest
-
 import os
 import re
-import screed
+from itertools import zip_longest
+from typing import Set, Iterable
 
+import screed
+from Bio import SeqIO
 
 from camel.app.command.command import Command
 from camel.app.components.filesystemhelper import FileSystemHelper
@@ -216,3 +217,52 @@ class FastqUtils(object):
         if m:
             return m.group(1)
         raise ValueError("Cannot determine sample name from: {}".format(basename))
+
+    @staticmethod
+    def get_all_read_names(fastq_path: str) -> Set[str]:
+        """
+        Retrieves all read names from the given fastq file
+        :param fastq_path: Path to the fastq file
+        :return: Set with read names
+        """
+        read_names = set()
+        for record in SeqIO.parse(fastq_path, 'fastq'):
+            read_names.add(record.id)
+        return read_names
+
+    @staticmethod
+    def process_paired_end(pe_1_files: Iterable[str], pe_2_files: Iterable[str], se_files: Iterable[str], pe_out_1: str, pe_out_2: str, se_out: str) -> None:
+        """
+        Function to extract paired end reads from multiple (filtered) paired-end input files and output all
+        other and orphaned reads to a single output file.
+        :param pe_1_files: Iterable with forward read paired end files
+        :param pe_2_files: Iterable with reverse read paired end files
+        :param se_files: Iterable with single end files
+        :param pe_out_1: File with all paired forward reads
+        :param pe_out_2: File with all paired reverse reads
+        :param se_out: File with all single end and orphaned reads
+        :return: None
+        """
+        fwd_reads = set()
+        for file in pe_1_files:
+            fwd_reads = fwd_reads | FastqUtils.get_all_read_names(file)
+        rev_reads = set()
+        for file in pe_2_files:
+            rev_reads = rev_reads | FastqUtils.get_all_read_names(file)
+        paired_reads = fwd_reads & rev_reads
+        open(se_out, 'w').close()  # Initialize SE file so that append can be used without issues
+        for infiles, outfile in [(pe_1_files, pe_out_1), (pe_2_files, pe_out_2)]:
+            with open(outfile, 'w') as pe_outhandle, open(se_out, 'a') as se_outhandle:
+                for file in infiles:
+                    for record in SeqIO.parse(file, 'fastq'):
+                        if record.id in paired_reads:
+                            SeqIO.write(record, pe_outhandle, 'fastq')
+                        else:
+                            SeqIO.write(record, se_outhandle, 'fastq')
+        with open(se_out, 'a') as outhandle:
+            for file in se_files:
+                with open(file, 'r') as inhandle:
+                    for line in inhandle:
+                        outhandle.write(line)
+
+
