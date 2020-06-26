@@ -195,7 +195,6 @@ rule summary_combine_all:
         Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_SUMMARY,
         Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY,
         Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_SUMMARY if 'kraken' in config['analyses'] else [],
-        Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='resfinder') if 'resfinder' in config['analyses'] else [],
         # spa and SCCmec typing
         Path(config['working_dir']) / spatyping.OUTPUT_SPATYPING_SUMMARY if 'spa_typing' in config['analyses'] else [],
         Path(config['working_dir']) / sccmectyping.OUTPUT_SCCMEC_TYPING_SUMMARY if 'sccmec_typing' in config['analyses'] else [],
