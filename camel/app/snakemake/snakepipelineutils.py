@@ -182,6 +182,7 @@ class SnakePipelineUtils(object):
             header = f"{informs['_name']} - {informs['_tag']}" if '_tag' in informs else informs['_name']
             section.add_header(header, 3)
             command_txt = informs['_command'].replace(working_dir, '$WORKING')
+            command_txt = command_txt.replace('\n', '<br />\n')
             section.add_html_object(HtmlElement('code', command_txt, [('class', 'command')]))
         return section
 
