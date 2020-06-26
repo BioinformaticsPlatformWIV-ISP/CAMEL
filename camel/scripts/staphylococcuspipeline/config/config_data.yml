@@ -17,8 +17,8 @@ srst2:
 
 assembly:
   spades:
-    cov_cutoff: 'off'
-  min_contig_length: 0
+    cov_cutoff: 'auto'
+  min_contig_length: 1000
 
 pointfinder:
   db: staphylococcus_aureus
