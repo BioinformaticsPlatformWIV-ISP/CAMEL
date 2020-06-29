@@ -207,16 +207,17 @@ rule typing_create_report:
     """
     input:
         TSV_nucl = rules.typing_export_hits_tabular.output.TSV.format(locus_type='DNA', scheme='{scheme}'),
-         TSV_pept = rules.typing_export_hits_tabular.output.TSV.format(locus_type='peptide', scheme='{scheme}'),
-         INFORMS_scheme = rules.typing_extract_schema_info.output.INFORMS,
-         INFORMS_ST = lambda wildcards: rules.typing_detect_sequence_type.output.INFORMS if SequenceTypingUtils.has_profiles(SCHEME_DATA, wildcards.scheme) else [],
-         hits_nucl = rules.typing_get_hits.output.HITS_NUCL,
-         hits_pept = rules.typing_get_hits.output.HITS_PEPT
+        TSV_pept = rules.typing_export_hits_tabular.output.TSV.format(locus_type='peptide', scheme='{scheme}'),
+        INFORMS_scheme = rules.typing_extract_schema_info.output.INFORMS,
+        INFORMS_ST = lambda wildcards: rules.typing_detect_sequence_type.output.INFORMS if SequenceTypingUtils.has_profiles(SCHEME_DATA, wildcards.scheme) else [],
+        hits_nucl = rules.typing_get_hits.output.HITS_NUCL,
+        hits_pept = rules.typing_get_hits.output.HITS_PEPT
     output:
         VAL_HTML = Path(config['working_dir']) / sequence_typing.OUTPUT_TYPING_REPORT
     params:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'typing' / wildcards.scheme,
-        sample_name = config['sample_name']
+        sample_name = config['sample_name'],
+        detection_method = lambda wildcards: SequenceTypingUtils.get_detection_method(config, wildcards.scheme)
     run:
         from camel.app.io.tooliovalue import ToolIOValue
         from camel.app.tools.pipelines.sequence_typing.htmlreportertyping import HtmlReporterTyping
@@ -225,6 +226,8 @@ rule typing_create_report:
            reporter.add_input_informs({'ST': SnakemakeUtils.load_object(input.INFORMS_ST)})
         SnakemakeUtils.add_pickle_inputs(reporter, input, excluded_keys=['INFORMS_ST'])
         reporter.add_input_files({'VAL_SAMPLE': [ToolIOValue(params.sample_name)]})
+        if params.detection_method != config['detection_method']:
+            reporter.update_parameters(forced_detection_method=str(params.detection_method))
         step = Step(rule, reporter, camel, params.running_dir, config, wildcards)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)

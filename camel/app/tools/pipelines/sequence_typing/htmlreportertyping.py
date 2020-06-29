@@ -54,7 +54,9 @@ class HtmlReporterTyping(Tool):
         if len(self._tool_inputs['hits_pept']) != 0:
             self.__add_output_table(self._tool_inputs['TSV_pept'][0].path, self._tool_inputs['hits_pept'],
                                     'Peptide loci' if add_subtitle else None)
-
+        if 'forced_detection_method' in self._parameters:
+            self._report_section.add_alert(
+                f"Allele detection performed with <b>{self._parameters['forced_detection_method'].value}</b>.", 'info')
         self._report_section.add_paragraph('Last updated: {}'.format(self._input_informs['scheme']['last_updated']))
         self._tool_outputs['VAL_HTML'] = [ToolIOValue(self._report_section)]
         self.__export_analysis_metadata()
