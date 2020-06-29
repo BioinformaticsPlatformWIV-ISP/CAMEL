@@ -65,7 +65,7 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         # Options
         argument_parser.add_argument(
             '--detection-method', help="Type of allele detection: local alignment (blast), read mapping (srst2)",
-            choices=['blast', 'srst2'], default='blast')
+            choices=['blast', 'kma', 'srst2'], default='blast')
         argument_parser.add_argument('--threads', default=8, type=int)
         argument_parser.add_argument(
             '--report-include-fastq', help="Include the FASTQ files in the report", action='store_true')
