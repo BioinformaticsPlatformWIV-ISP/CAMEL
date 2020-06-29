@@ -3,13 +3,13 @@ from pathlib import Path
 from camel.scripts.stecpipeline.snakefile import serotype_detection
 
 
-rule Serotype_detection:
+rule serotype_detection_run:
     """
     Retrieves the serotype based on the H and O typing. 
     """
     input:
-        TSV_O = Path(config['working_dir']) / 'gene_detection' / 'serotype_o' / 'hit_selection' / 'selected-tsv.io',
-        TSV_H = Path(config['working_dir']) / 'gene_detection' / 'serotype_h' / 'hit_selection' / 'selected-tsv.io'
+        HITS_O = Path(config['working_dir']) / 'gene_detection' / 'serotype_o' / 'metadata' / 'hits.io',
+        HITS_H = Path(config['working_dir']) / 'gene_detection' / 'serotype_h' / 'metadata' / 'hits.io',
     output:
         VAL_serotype = Path(config['working_dir']) / serotype_detection.OUTPUT_VAL_SEROTYPE
     params:
@@ -24,7 +24,7 @@ rule Serotype_detection:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(detector, output)
 
-rule Serotype_detection_report:
+rule serotype_detection_report:
     """
     Creates a simple report section for the detected serotype.
     """
@@ -44,7 +44,7 @@ rule Serotype_detection_report:
         section.add_paragraph("Detected serotype: <b>{}</b>".format(serotype))
         SnakemakeUtils.dump_object([ToolIOValue(section)], output.HTML)
 
-rule Serotype_detection_dump_summary_info:
+rule serotype_detection_dump_summary_info:
     """
     Dumps the summary information from the serotype detection.
     """
