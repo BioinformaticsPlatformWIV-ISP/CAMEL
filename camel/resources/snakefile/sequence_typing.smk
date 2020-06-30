@@ -210,8 +210,8 @@ rule typing_create_report:
         TSV_pept = rules.typing_export_hits_tabular.output.TSV.format(locus_type='peptide', scheme='{scheme}'),
         INFORMS_scheme = rules.typing_extract_schema_info.output.INFORMS,
         INFORMS_ST = lambda wildcards: rules.typing_detect_sequence_type.output.INFORMS if SequenceTypingUtils.has_profiles(SCHEME_DATA, wildcards.scheme) else [],
-        hits_nucl = rules.typing_get_hits.output.HITS_NUCL,
-        hits_pept = rules.typing_get_hits.output.HITS_PEPT
+        hits_nucl = rules.typing_add_allele_page_url.output.HITS_NUCL,
+        hits_pept = rules.typing_add_allele_page_url.output.HITS_PEPT
     output:
         VAL_HTML = Path(config['working_dir']) / sequence_typing.OUTPUT_TYPING_REPORT
     params:
