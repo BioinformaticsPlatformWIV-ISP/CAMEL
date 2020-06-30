@@ -65,8 +65,8 @@ class SerotypeDetectorEcoli(Tool):
         elif len(detected_genes) == 1:
             return detected_genes[0].get_metadata_value('Predicted serotype')
         else:
-            hits_sorted = {'xy': [h for h in detected_genes if any([g in h.gene for g in ('wzx', 'wzy')])],
-                           'mt': [h for h in detected_genes if any([g in h.gene for g in ('wzm', 'wzt')])]}
+            hits_sorted = {'xy': [h for h in detected_genes if any([g in h.locus for g in ('wzx', 'wzy')])],
+                           'mt': [h for h in detected_genes if any([g in h.locus for g in ('wzm', 'wzt')])]}
             if len(hits_sorted['xy']) > 0 and len(hits_sorted['mt']) > 0:
                 return 'O-ambiguous'
             else:

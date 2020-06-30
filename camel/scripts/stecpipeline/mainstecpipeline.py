@@ -51,8 +51,12 @@ class MainSTECPipeline(BasePipeline):
         config_data['read_type'] = self._args.read_type
         config_data['quality_checks']['typing_scheme'] = 'cgmlst' if self._args.cgmlst else 'mlst_warwick'
         config_data['read_trimming']['export_fastq'] = 'true' if self._args.report_include_fastq else 'false'
+        config_data['sequence_typing']['cgmlst']['detection_method'] = {
+            'blast': 'blast', 'srst2': 'blast', 'kma': 'kma'}.get(self._args.detection_method)
         if self._args.read_type == 'iontorrent':
             config_data['assembly']['spades']['iontorrent'] = None
+        import pprint
+        pprint.pprint(config_data)
         return SnakePipelineUtils.generate_config_file(config_data, Path(self._args.working_dir))
 
     @staticmethod
