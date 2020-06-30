@@ -17,11 +17,8 @@ srst2:
 
 assembly:
   spades:
-    cov_cutoff: 'auto'
+    cov_cutoff: 10
   min_contig_length: 1000
-
-pointfinder:
-  db: staphylococcus_aureus
 
 spa_typing:
   db: /db/pipelines/saureus/profiles.fasta
