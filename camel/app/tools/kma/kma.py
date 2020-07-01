@@ -25,8 +25,8 @@ class KMA(Tool):
         Checks if the provided input is valid.
         :return: None
         """
-        if 'FASTQ_PE' not in self._tool_inputs:
-            raise InvalidInputSpecificationError('FASTQ_PE input is required')
+        if not(any(x in self._tool_inputs for x in ['FASTQ_PE', 'FASTQ_SE'])):
+            raise InvalidInputSpecificationError('FASTQ(PE|SE) input is required')
         if 'DB' not in self._tool_inputs:
             raise InvalidInputSpecificationError('DB input is required')
         super()._check_input()
@@ -45,9 +45,13 @@ class KMA(Tool):
         Builds the command line call.
         :return: None
         """
+        if 'FASTQ_PE' in self._tool_inputs:
+            input_str = '-ipe {}'.format(' '.join(x.path for x in self._tool_inputs['FASTQ_PE']))
+        else:
+            input_str = f"-i {self._tool_inputs['FASTQ_SE'][0].path}"
         self._command.command = ' '.join([
             self._tool_command,
-            '-ipe {}'.format(' '.join(x.path for x in self._tool_inputs['FASTQ_PE'])),
+            input_str,
             '-t_db {}'.format(self._tool_inputs['DB'][0].value)
         ] + self._build_options())
 
