@@ -1,3 +1,0 @@
-# Sample YAML file to automate tool parameter export. All tools should be added as follows:
-tool_name: version
-tool_name2: version
