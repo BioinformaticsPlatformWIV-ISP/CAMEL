@@ -1,7 +1,7 @@
+from pathlib import Path
 from typing import List
 
 import math
-import os
 import vcf
 
 from camel.app.camel import Camel
@@ -37,6 +37,15 @@ class ZScoreFilter(BaseFilter):
         """
         return 'Z-score'
 
+    @property
+    def description(self) -> str:
+        """
+        Returns the description for this filter.
+        :return: Description
+        """
+        return 'Minimal Z-score of <b>{}</b> and Y-multiplier of <b>{}</b> (see citation Kaas et al.)'.format(
+            self._parameters['min_zscore'].value, self._parameters['y_multiplier'].value)
+
     def _check_input(self) -> None:
         """
         Checks the input.
@@ -65,31 +74,31 @@ class ZScoreFilter(BaseFilter):
         """
         return [pileup_line.upper().count(base) for base in ('A', 'C', 'T', 'G')]
 
-    def __create_pileup(self) -> str:
+    def __create_pileup(self) -> Path:
         """
         Creates a pileup file with every position that covers a variant.
         :return: Path to pileup file
         """
-        positions_file = os.path.join(self._folder, 'positions.txt')
+        positions_file = Path(self._folder) / 'positions.txt'
         with open(self._tool_inputs['VCF_GZ'][0].path, 'rb') as handle_in:
             with open(positions_file, 'w') as handle_out:
                 for variant in vcf.Reader(handle_in):
                     handle_out.write('{}\t{}\n'.format(variant.CHROM, variant.POS))
 
-        path = os.path.join(self._folder, 'positions.pileup')
+        path = Path(self._folder) / 'positions.pileup'
         pileup_command = Command('{}samtools mpileup --count-orphans --positions {} {} > {}'.format(
             self._build_dependencies(), positions_file, self._tool_inputs['BAM'][0].path, path))
         pileup_command.run_command(self._folder)
         return path
 
-    def __filter_positions(self, pileup_file: str) -> List[str]:
+    def __filter_positions(self, pileup_file: Path) -> List[str]:
         """
         Filters all variant positions based on the Z-score.
         :param pileup_file: Pileup file
         :return: List with the positions that are kept.
         """
         kept_positions = []
-        with open(pileup_file, 'r') as handle:
+        with pileup_file.open() as handle:
             content = handle.readlines()
             for line in content:
                 parts = line.strip().split('\t')
@@ -124,14 +133,14 @@ class ZScoreFilter(BaseFilter):
         """
         pileup_file = self.__create_pileup()
         kept_positions = self.__filter_positions(pileup_file)
-        regions_file = os.path.join(self._folder, 'regions_zscore_filter.txt')
-        with open(regions_file, 'w') as handle:
+        regions_file = Path(self._folder) / 'regions_zscore_filter.txt'
+        with regions_file.open('w') as handle:
             for position in kept_positions:
                 handle.write('{}\n'.format(position))
         self.__build_command(regions_file)
         self._execute_command()
 
-    def __build_command(self, regions_file: str) -> None:
+    def __build_command(self, regions_file: Path) -> None:
         """
         Builds the command for this tool.
         :param regions_file: File with the included regions
@@ -143,7 +152,7 @@ class ZScoreFilter(BaseFilter):
             '--output-type z',
             '--output {}'.format(self.output_path)
         ])
-        if os.path.getsize(regions_file) != 0:
+        if regions_file.stat().st_size > 0:
             self._command.command += ' --targets-file {}'.format(regions_file)
         else:
             self._command.command += ' --exclude 1'

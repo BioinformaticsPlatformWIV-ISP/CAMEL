@@ -1,7 +1,7 @@
 import logging
+from pathlib import Path
 from typing import List, Dict, Tuple
 
-import os
 import random
 import vcf
 # noinspection PyProtectedMember
@@ -35,6 +35,19 @@ class DistanceFilter(BaseFilter):
         """
         return 'Distance'
 
+    @property
+    def description(self) -> str:
+        """
+        Returns the description for this filter.
+        :return: Description
+        """
+        if 'keep_best' in self._parameters:
+            extra = 'Variant with highest SNP quality is kept'
+        else:
+            extra = 'Both variants are removed'
+        return 'Minimal distance of <b>{}</b> between variants ({})'.format(
+            self._parameters['min_distance'].value, extra)
+
     def _apply_filter(self) -> None:
         """
         Applies the filtering on the variants.
@@ -61,19 +74,19 @@ class DistanceFilter(BaseFilter):
             index[variant.POS] = variant
         return index
 
-    def __save_regions(self, variants: List[Tuple[str, int]]) -> str:
+    def __save_regions(self, variants: List[Tuple[str, int]]) -> Path:
         """
         Saves the regions in a text file.
         :return: File path
         """
-        regions_filename = os.path.join(self._folder, 'removed_regions_distance_filter.txt')
-        with open(regions_filename, 'w') as handle:
+        regions_path = Path(self._folder) / 'removed_regions_distance_filter.txt'
+        with regions_path.open('w') as handle:
             for chrom, pos in variants:
                 handle.write('{}\t{}'.format(chrom, pos))
                 handle.write('\n')
-        return regions_filename
+        return regions_path
 
-    def __get_regions_file(self) -> str:
+    def __get_regions_file(self) -> Path:
         """
         Returns the file containing the regions that are kept.
         :return: Regions file path
@@ -113,7 +126,7 @@ class DistanceFilter(BaseFilter):
 
         return self.__save_regions(kept_positions)
 
-    def __build_command(self, regions_file: str) -> None:
+    def __build_command(self, regions_file: Path) -> None:
         """
         Builds the command for this tool.
         :param regions_file: File with the included regions
@@ -125,7 +138,7 @@ class DistanceFilter(BaseFilter):
             '--output-type z',
             '--output {}'.format(self.output_path)
         ])
-        if os.path.getsize(regions_file) != 0:
+        if Path(regions_file).stat().st_size > 0:
             self._command.command += ' --targets-file {}'.format(regions_file)
         else:
             self._command.command += ' --exclude 1'
