@@ -4,6 +4,7 @@ from typing import Dict, Any
 
 import os
 
+from camel.app.camel import Camel
 from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.components.html.htmlelement import HtmlElement
 from camel.app.components.html.htmlreportsection import HtmlReportSection
@@ -20,7 +21,7 @@ class VariantCallingReporter(Tool):
 
     SUB_FOLDER = 'variant_calling'
 
-    def __init__(self, camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initializes this tool.
         :param camel: CAMEL instance
@@ -28,7 +29,7 @@ class VariantCallingReporter(Tool):
         super().__init__("Variant Calling Reporter", "0.1", camel)
         self._section = None
 
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
         Checks if the provided input is valid.
         :return: None
@@ -74,14 +75,18 @@ class VariantCallingReporter(Tool):
         filtering_table_data = []
         for filter_key in ['depth', 'snp_qual', 'mapping_qual', 'distance', 'zscore']:
             if filter_key in filtering_informs:
-                stats = '{}/{}'.format(filtering_informs[filter_key]['variants_out'],
-                                       filtering_informs[filter_key]['variants_in'])
+                stats = '{:,}/{:,}'.format(
+                    filtering_informs[filter_key]['variants_out'], filtering_informs[filter_key]['variants_in'])
             else:
                 stats = 'NA'
-            filtering_table_data.append([filtering_informs[filter_key]['full_name'], stats])
+            filtering_table_data.append([
+                filtering_informs[filter_key]['full_name'],
+                stats,
+                filtering_informs[filter_key]['description']
+            ])
         self._informs['nb_variants_filtered'] = min(
             [filtering_informs[key]['variants_out'] for key in filtering_informs])
-        self._section.add_table(filtering_table_data, ['Filter', 'Variants passed'], [('class', 'data')])
+        self._section.add_table(filtering_table_data, ['Filter', 'Variants passed', 'Description'], [('class', 'data')])
 
     def __parse_filtering_json(self, json_path: str) -> Dict[str, Dict[str, int]]:
         """
@@ -102,15 +107,16 @@ class VariantCallingReporter(Tool):
         vcf = self.__create_vcf_download_cell(self._tool_inputs['VCF'][0].path, 'all')
         vcf_filtered = self.__create_vcf_download_cell(self._tool_inputs['VCF_filt'][0].path, 'filtered')
         table_data = [
-            ['Unfiltered', filtering_informs['depth']['variants_in'], vcf],
-            ['Filtered (All positions)', filtering_informs['zscore']['variants_out'], vcf_filtered],
+            ['Unfiltered', '{:,}'.format(filtering_informs['depth']['variants_in']), vcf],
+            ['Filtered (All positions)', '{:,}'.format(filtering_informs['zscore']['variants_out']), vcf_filtered],
         ]
         if 'VCF_filt_regions' in self._tool_inputs:
             vcf = self.__create_vcf_download_cell(self._tool_inputs['VCF_filt_regions'][0].path, 'filtered-regions')
-            table_data.append(['Filtered (Regions excluded)', filtering_informs['region']['variants_out'], vcf])
+            table_data.append([
+                'Filtered (Regions excluded)', '{:,}'.format(filtering_informs['region']['variants_out']), vcf])
         self._section.add_table(table_data, ['', 'Number of variants', 'VCF file'], [('class', 'data')])
 
-    def __add_reference_link(self):
+    def __add_reference_link(self) -> None:
         """
         Adds a link to the reference genome that was used.;
         :return: None
@@ -123,7 +129,7 @@ class VariantCallingReporter(Tool):
             reference_paragraph = HtmlElement('p', f"Reference: {info['name']}")
         self._section.add_html_object(reference_paragraph)
 
-    def __add_mapping_info(self):
+    def __add_mapping_info(self) -> None:
         """
         Adds the information about the read mapping to the report.
         :return: None

@@ -252,6 +252,7 @@ rule variant_calling_report:
         VCF = rules.variant_calling_unzip_vcf.output.VCF,
         VCF_filt = Path(config['working_dir']) / variant_filtering.OUTPUT_VARIANT_FILTERING_VCF,
         VCF_filt_regions = Path(config['working_dir'], 'variant_filtering', 'regions', 'vcf.io') if variant_filtering.get_filtering_param(config, 'region', 'bed_file') is not None else [],
+        BAM = rules.variant_calling_alignment_sorting.output.BAM,
         INFORMS_reference = rules.variant_calling_prep_reference.output.INFORMS,
         INFORMS_mapping = rules.variant_calling_read_mapping.output.INFORMS,
         INFORMS_calling = rules.variant_calling_bcftools_call.output.INFORMS,
@@ -263,6 +264,7 @@ rule variant_calling_report:
     params:
         running_dir = Path(config['working_dir']) / 'variant_calling' / 'report',
         regions_bed_file = variant_filtering.get_filtering_param(config, 'region', 'bed_file'),
+        include_bam = config.get('variant_calling').get('report_include_bam', False),
         sample_name = config['sample_name']
     run:
         from camel.app.tools.pipelines.variant_calling.variantcallingreporter import VariantCallingReporter
@@ -273,6 +275,7 @@ rule variant_calling_report:
         if params.regions_bed_file is not None:
             reporter.add_input_files({'BED': [ToolIOFile(params.regions_bed_file)]})
             SnakemakeUtils.add_pickle_input(reporter, 'VCF_filt_regions', input.VCF_filt_regions)
+        reporter.update_parameters(export_bam='true' if params.include_bam else 'false')
         reporter.add_input_files({'VAL_Sample': [ToolIOValue(params.sample_name)]})
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
