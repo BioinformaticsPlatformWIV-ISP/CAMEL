@@ -48,8 +48,9 @@ class SerotypeDetectorEcoli(Tool):
         elif len(detected_genes) == 1:
             return detected_genes[0].get_metadata_value('Predicted serotype')
         else:
-            hits_sorted = {'fliC': [h for h in detected_genes if 'fliC' in h.gene],
-                           'non-fliC': [h for h in detected_genes if 'fliC' not in h.gene]}
+            hits_sorted = {
+                'fliC': [h for h in detected_genes if 'fliC' in h.locus],
+                'non-fliC': [h for h in detected_genes if 'fliC' not in h.locus]}
             if len(hits_sorted['non-fliC']) == 1:
                 return hits_sorted['non-fliC'][0].get_metadata_value('Predicted serotype')
         return 'H-ambiguous'
