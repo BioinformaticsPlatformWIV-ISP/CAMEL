@@ -150,7 +150,7 @@ rule typing_detect_sequence_type:
         sequence_type_detector = SequenceTypeDetector(camel)
         SnakemakeUtils.add_pickle_inputs(sequence_type_detector, input)
         step = Step(rule, sequence_type_detector, camel, params.running_dir, config, wildcards)
-        sequence_type_detector.update_parameters(allele_wildcard='N', allele_absent_symbol='0')
+        sequence_type_detector.update_parameters(allele_wildcards='N', allele_absent_symbol='0')
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(sequence_type_detector, output)
 
@@ -263,7 +263,12 @@ rule typing_dump_summary_info:
         if len(input.INFORMS_ST) == 0:
             st_metadata = []
         else:
-            st_metadata = SnakemakeUtils.load_object(input.INFORMS_ST)['sequence_type'].metadata
+            profile_data = SnakemakeUtils.load_object(str(input.INFORMS_ST))
+            if profile_data['percent_detected'] == 100:
+                st_metadata = profile_data['metadata']
+            else:
+                st_metadata = [(k, '-') for k, _ in profile_data['metadata']]
+            st_metadata.append(('percent_detected', profile_data['percent_detected']))
         hits = SnakemakeUtils.load_object(input.HITS_NUCL) + SnakemakeUtils.load_object(input.HITS_PEPT)
         with open(output.TSV, 'w') as handle:
             for k, v in st_metadata:
