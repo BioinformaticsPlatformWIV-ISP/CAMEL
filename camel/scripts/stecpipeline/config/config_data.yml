@@ -105,3 +105,5 @@ sequence_typing:
   cgmlst:
     path: /db/sequence_typing/ecoli/cgmlst
     blastn_task: blastn
+  innuendo_cgmlst:
+    path: /db/sequence_typing/ecoli/innuendo_cgmlst

@@ -103,7 +103,8 @@ rule report_command_section:
         INFORMS_plasmidfinder = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='plasmidfinder') if 'plasmidfinder' in config['analyses'] else [],
         INFORMS_mlst_pasteur = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='mlst_pasteur') if 'mlst_pasteur' in config['analyses'] else [],
         INFORMS_mlst_warwick = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='mlst_warwick') if 'mlst_warwick' in config['analyses'] else [],
-        INFORMS_cgmlst = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='cgmlst') if 'cgmlst' in config['analyses'] else []
+        INFORMS_cgmlst = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='cgmlst') if 'cgmlst' in config['analyses'] else [],
+        INFORMS_innuendo = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='innuendo_cgmlst') if 'innuendo_cgmlst' in config['analyses'] else []
     output:
         HTML = Path(config['working_dir']) / 'report' / 'html-commands.io'
     params:
@@ -147,6 +148,7 @@ rule report_combine_all:
         report_mlst_warwick = sequence_typing.get_sequence_typing_report('mlst_warwick', config),
         report_mlst_pasteur = sequence_typing.get_sequence_typing_report('mlst_pasteur', config),
         report_cgmlst = sequence_typing.get_sequence_typing_report('cgmlst', config),
+        report_innuendo = sequence_typing.get_sequence_typing_report('innuendo_cgmlst', config),
         # Report
         report_citations = rules.report_pickle_citations.output.IO,
         report_commands = rules.report_command_section.output.HTML
@@ -186,7 +188,8 @@ rule report_combine_all:
             ('Serotype determination', 'sero', [input.report_serotype_o_type, input.report_serotype_h_type,
                                                 input.report_serotype]),
             ('Plasmid replicon detection', 'plasmid', [input.report_plasmidfinder]),
-            ('Sequence typing', 'st', [input.report_mlst_warwick, input.report_mlst_pasteur, input.report_cgmlst]),
+            ('Sequence typing', 'st', [input.report_mlst_warwick, input.report_mlst_pasteur, input.report_cgmlst,
+                                       input.report_innuendo]),
             ('Citations', 'citations', [input.report_citations]),
             ('Commands', 'commands', [input.report_commands])
         ]
@@ -240,7 +243,8 @@ rule summary_combine_all:
         Path(config['working_dir']) / serotype_detection.OUTPUT_SEROTYPE_SUMMARY if 'serotype' in config['analyses'] else [],
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='mlst_pasteur') if 'mlst_pasteur' in config['analyses'] else [],
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='mlst_warwick') if 'mlst_warwick' in config['analyses'] else [],
-        Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='cgmlst') if 'cgmlst' in config['analyses'] else []
+        Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='cgmlst') if 'cgmlst' in config['analyses'] else [],
+        Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='innuendo_cgmlst') if 'innuendo_cgmlst' in config['analyses'] else []
     output:
         config.get('output_tabular')
     run:

@@ -20,7 +20,7 @@ class MainSTECPipeline(BasePipeline):
     """
 
     CUSTOM_ANALYSES = ['kraken', 'resfinder', 'argannot', 'card', 'ncbi_amr', 'mlst_pasteur', 'mlst_warwick', 'cgmlst',
-                       'pointfinder', 'plasmidfinder', 'serotype', 'virulencefinder']
+                       'pointfinder', 'plasmidfinder', 'serotype', 'virulencefinder', 'innuendo_cgmlst']
 
     def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """
