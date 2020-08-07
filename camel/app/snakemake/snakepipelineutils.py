@@ -50,7 +50,7 @@ class SnakePipelineUtils(object):
         """
         table_data = [
             ['Sample:', sample_name],
-            ['Analysis date', date.strftime(SnakePipelineUtils.DATE_FORMAT)],
+            ['Analysis date:', date.strftime(SnakePipelineUtils.DATE_FORMAT)],
             ['Pipeline version:', pipeline_version],
             ['Input files:', input_files],
         ]
