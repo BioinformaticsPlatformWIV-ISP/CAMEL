@@ -3,4 +3,5 @@ parameters:
   min_zscore: {default: true, mandatory: false, option: null, value: '1.96'}
   output_filename: {default: true, mandatory: true, option: null, value: variants_zscore_filtered.vcf.gz}
   y_multiplier: {default: true, mandatory: false, option: null, value: '10'}
+  soft_filter: {default: false, mandatory: false, option: '--soft-filter', value: 'true'}
 tool_command: bcftools filter

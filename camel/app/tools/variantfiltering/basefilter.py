@@ -1,5 +1,6 @@
 import logging
 from pathlib import Path
+from typing import List
 
 import abc
 
@@ -79,3 +80,14 @@ class BaseFilter(Tool, metaclass=abc.ABCMeta):
         :return: Path
         """
         return Path(self._folder) / self._parameters['output_filename'].value
+
+    def _get_soft_filter_options(self) -> List[str]:
+        """
+        Returns the parts of the command related to the soft filtering.
+        If soft filtering is not enabled an empty list is returned.
+        :return: List of options
+        """
+        if 'soft_filter' not in self._parameters:
+            return []
+        filter_name = self.full_name.replace(' ', '_').lower()
+        return [f"{self._parameters['soft_filter'].option} '{filter_name}'"]

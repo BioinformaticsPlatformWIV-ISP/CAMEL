@@ -43,6 +43,7 @@ class MainFiltering(object):
         argument_parser.add_argument('--keep-best', action='store_true')
         argument_parser.add_argument('--min-zscore', default=1.96, type=float)
         argument_parser.add_argument('--y-mult', default=10, type=float)
+        argument_parser.add_argument('--soft-filter', action='store_true')
         return argument_parser.parse_args(args)
 
     def run(self) -> None:
@@ -63,6 +64,7 @@ class MainFiltering(object):
         :return: Filtering options
         """
         return {
+            'soft_filter': self._args.soft_filter,
             'depth': {
                 'min_total_depth': self._args.min_total_depth,
                 'min_fwd_depth': self._args.min_forward_depth,

@@ -1,8 +1,12 @@
-from pathlib import Path
-from typing import List
-
 import math
+from pathlib import Path
+from typing import List, Tuple, Dict
+
 import vcf
+# noinspection PyProtectedMember
+from vcf.model import _Record as Record
+# noinspection PyProtectedMember
+from vcf.parser import _Filter as Filter
 
 from camel.app.camel import Camel
 from camel.app.command.command import Command
@@ -74,7 +78,7 @@ class ZScoreFilter(BaseFilter):
         """
         return [pileup_line.upper().count(base) for base in ('A', 'C', 'T', 'G')]
 
-    def __create_pileup(self) -> Path:
+    def __get_actg_counts_by_position(self) -> Dict[Tuple[str, int], List[int]]:
         """
         Creates a pileup file with every position that covers a variant.
         :return: Path to pileup file
@@ -89,70 +93,72 @@ class ZScoreFilter(BaseFilter):
         pileup_command = Command('{}samtools mpileup --count-orphans --positions {} {} > {}'.format(
             self._build_dependencies(), positions_file, self._tool_inputs['BAM'][0].path, path))
         pileup_command.run_command(self._folder)
-        return path
 
-    def __filter_positions(self, pileup_file: Path) -> List[str]:
+        actg_by_pos = {}
+        with path.open() as handle:
+            for line in handle.readlines():
+                parts = line.strip().split('\t')
+                actg_by_pos[(parts[0], int(parts[1]))] = ZScoreFilter.get_actg_counts(parts[4])
+        return actg_by_pos
+
+    def __get_filtered_positions(self, actg_by_pos: Dict[Tuple[str, int], List[int]],
+                                 all_variants: List[Record]) -> List[Tuple[str, int]]:
         """
         Filters all variant positions based on the Z-score.
-        :param pileup_file: Pileup file
+        :param actg_by_pos: ACTG counts by position
+        :param all_variants: List of all variants
         :return: List with the positions that are kept.
         """
-        kept_positions = []
-        with pileup_file.open() as handle:
-            content = handle.readlines()
-            for line in content:
-                parts = line.strip().split('\t')
-                chrom = parts[0]
-                pos = parts[1]
-                bases = parts[4]
-                actg_counts = ZScoreFilter.get_actg_counts(bases)
-                x = max(actg_counts)
-                actg_counts.remove(x)
-                y = sum(actg_counts)
-                zscore = float(x - y) / math.sqrt(x + y)
-                # logging.debug('Zscore at position {}:{}= {:.2f} {}'.format(chrom, pos, zscore, actg_counts + [x]))
+        filtered_positions = []
+        for variant in all_variants:
+            if variant.is_indel or (variant.FILTER is not None and len(variant.FILTER) > 0):
+                continue
+            actg_counts = actg_by_pos[(variant.CHROM, variant.POS)]
+            x = max(actg_counts)
+            actg_counts.remove(x)
+            y = sum(actg_counts)
+            z_score = float(x - y) / math.sqrt(x + y)
 
-                keep = True
-                if zscore < float(self._parameters['min_zscore'].value):
-                    # logging.info("{}:{} does not pass Z score test".format(chrom, pos))
-                    keep = False
+            if z_score < float(self._parameters['min_zscore'].value):
+                filtered_positions.append((variant.CHROM, variant.POS))
+                continue
 
-                if 'y_multiplier' in self._parameters:
-                    if x < float(self._parameters['y_multiplier'].value) * y:
-                        # logging.info("{}:{} does not pass Y multiplier test".format(chrom, pos))
-                        keep = False
+            if 'y_multiplier' in self._parameters and x < float(self._parameters['y_multiplier'].value) * y:
+                filtered_positions.append((variant.CHROM, variant.POS))
+                continue
 
-                if keep:
-                    kept_positions.append('{}\t{}'.format(chrom, pos))
-        return kept_positions
+        return filtered_positions
 
     def _apply_filter(self) -> None:
         """
         Applies the filtering on the variants.
         :return: None
         """
-        pileup_file = self.__create_pileup()
-        kept_positions = self.__filter_positions(pileup_file)
-        regions_file = Path(self._folder) / 'regions_zscore_filter.txt'
-        with regions_file.open('w') as handle:
-            for position in kept_positions:
-                handle.write('{}\n'.format(position))
-        self.__build_command(regions_file)
+        with open(self._tool_inputs['VCF_GZ'][0].path, 'rb') as handle:
+            vcf_reader = vcf.Reader(handle)
+            all_variants = list(vcf_reader)
+        actg_counts_by_position = self.__get_actg_counts_by_position()
+        filtered_positions = self.__get_filtered_positions(actg_counts_by_position, all_variants)
+        output_uncompressed = self.__create_output_file(vcf_reader, all_variants, filtered_positions)
+        self._command = Command(f'bgzip {output_uncompressed}')
         self._execute_command()
 
-    def __build_command(self, regions_file: Path) -> None:
+    def __create_output_file(self, vcf_reader: vcf.Reader, all_variants: List[Record],
+                             filtered_positions: List[Tuple[str, int]]) -> Path:
         """
-        Builds the command for this tool.
-        :param regions_file: File with the included regions
-        :return: None
+        Creates the output file.
+        :return: Output file (uncompressed VCF)
         """
-        self._command.command = ' '.join([
-            self._tool_command,
-            self._tool_inputs['VCF_GZ'][0].path,
-            '--output-type z',
-            '--output {}'.format(self.output_path)
-        ])
-        if regions_file.stat().st_size > 0:
-            self._command.command += ' --targets-file {}'.format(regions_file)
-        else:
-            self._command.command += ' --exclude 1'
+        vcf_reader.filters['z_score'] = Filter('z_score', 'Z-score as described in CSI phylogeny (custom)')
+        output_uncompressed = self.output_path.parent / self.output_path.name.replace('.gz', '')
+        with output_uncompressed.open('w') as handle:
+            writer = vcf.Writer(handle, vcf_reader)
+            for variant in all_variants:
+                if (variant.CHROM, variant.POS) in filtered_positions:
+                    if 'soft_filter' in self._parameters:
+                        variant.FILTER = 'z_score'
+                    else:
+                        continue
+                writer.write_record(variant)
+            writer.close()
+        return output_uncompressed

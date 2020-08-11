@@ -4,4 +4,5 @@ parameters:
   min_forward_depth: {default: false, mandatory: false, option: null, value: '1'}
   min_reverse_depth: {default: false, mandatory: false, option: null, value: '1'}
   output_filename: {default: true, mandatory: true, option: null, value: variants_depth_filtered.vcf.gz}
+  soft_filter: {default: false, mandatory: false, option: '--soft-filter', value: 'true'}
 tool_command: bcftools filter

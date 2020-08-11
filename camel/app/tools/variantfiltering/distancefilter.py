@@ -1,13 +1,16 @@
 import logging
 from pathlib import Path
-from typing import List, Dict, Tuple
+from typing import List, Tuple
 
 import random
 import vcf
 # noinspection PyProtectedMember
 from vcf.model import _Record as Record
+# noinspection PyProtectedMember
+from vcf.parser import _Filter as Filter
 
 from camel.app.camel import Camel
+from camel.app.command.command import Command
 from camel.app.tools.variantfiltering.basefilter import BaseFilter
 
 
@@ -53,92 +56,74 @@ class DistanceFilter(BaseFilter):
         Applies the filtering on the variants.
         :return: None
         """
-        seed = random.random()
+        self.__set_seed()
+        with open(self._tool_inputs['VCF_GZ'][0].path, 'rb') as handle:
+            vcf_reader = vcf.Reader(handle)
+            all_variants = list(vcf_reader)
+        filtered_positions = self.__get_filtered_positions(vcf_reader, all_variants)
+        output_uncompressed = self.__create_output_file(vcf_reader, all_variants, filtered_positions)
+        self._command = Command(f'bgzip {output_uncompressed}')
+        self._execute_command()
+
+    def __set_seed(self) -> None:
+        """
+        Sets a random seed.
+        :return: None
+        """
+        if 'seed' in self._parameters:
+            seed = self._parameters['seed'].value
+        else:
+            seed = random.random()
         logging.info("Seed: {}".format(seed))
         self._informs['seed'] = seed
         random.seed(seed)
-        regions_filename = self.__get_regions_file()
-        self.__build_command(regions_filename)
-        self._execute_command()
 
-    @staticmethod
-    def __generate_variant_index(variants: List[Record], chrom: str) -> Dict[int, Record]:
+    def __create_output_file(self, vcf_reader: vcf.Reader, all_variants: List[Record],
+                             filtered_positions: List[Tuple[str, int]]) -> Path:
         """
-        Generates an index for the variants.
-        :param variants: Variants
-        :param chrom: Chromosome
-        :return: Index ({Position: Variant})
+        Creates the output file.
+        :return: Output file (uncompressed VCF)
         """
-        index = {}
-        for variant in [v for v in variants if v.CHROM == chrom]:
-            index[variant.POS] = variant
-        return index
+        vcf_reader.filters['distance'] = Filter('distance', 'minimal distance between SNPs (custom)')
+        output_uncompressed = self.output_path.parent / self.output_path.name.replace('.gz', '')
+        with output_uncompressed.open('w') as handle:
+            writer = vcf.Writer(handle, vcf_reader)
+            for variant in all_variants:
+                if (variant.CHROM, variant.POS) in filtered_positions:
+                    if 'soft_filter' in self._parameters:
+                        variant.FILTER = 'distance'
+                    else:
+                        continue
+                writer.write_record(variant)
+            writer.close()
+        return output_uncompressed
 
-    def __save_regions(self, variants: List[Tuple[str, int]]) -> Path:
+    def __get_filtered_positions(self, vcf_reader: vcf.Reader, variants: List[Record]) -> List[Tuple[str, int]]:
         """
-        Saves the regions in a text file.
-        :return: File path
+        Returns a list with positions that should be filtered.
+        :param vcf_reader: VCF reader
+        :param variants: List of variants
+        :return: List of positions that are removed by the filter
         """
-        regions_path = Path(self._folder) / 'removed_regions_distance_filter.txt'
-        with regions_path.open('w') as handle:
-            for chrom, pos in variants:
-                handle.write('{}\t{}'.format(chrom, pos))
-                handle.write('\n')
-        return regions_path
-
-    def __get_regions_file(self) -> Path:
-        """
-        Returns the file containing the regions that are kept.
-        :return: Regions file path
-        """
-        with open(self._tool_inputs['VCF_GZ'][0].path, 'rb') as handle:
-            vcf_reader = vcf.Reader(handle)
-            contigs = vcf_reader.contigs
-            variants = list(vcf_reader)
-
-        kept_positions = []
+        removed_positions = []
         interval_size = int(self._parameters['min_distance'].value)
-        for contig_name, contig in contigs.items():
-            variants_by_pos = DistanceFilter.__generate_variant_index(variants, contig_name)
+        for contig_name, contig in vcf_reader.contigs.items():
+            variants_by_pos = {v.POS: v for v in variants if v.CHROM == contig_name and (
+                    v.FILTER is None) or len(v.FILTER) == 0}
+
             for i in range(0, contig.length - interval_size):
                 interval = range(i, i + interval_size)
-                snps_in_interval = [variants_by_pos[pos] for pos in interval if pos in variants_by_pos]
+                variants_in_interval = [variants_by_pos[pos] for pos in interval if pos in variants_by_pos]
 
                 # Do nothing if there is no SNP or only one
-                if 0 <= len(snps_in_interval) < 2:
+                if 0 <= len(variants_in_interval) < 2:
                     continue
 
                 # Multiple SNPs - check which ones should be removed
                 if 'keep_best' in self._parameters:
-                    best_snp = max(snps_in_interval, key=lambda x: x.QUAL)
-                    removed_snps = [s for s in snps_in_interval if s is not best_snp]
+                    best_variant = max(variants_in_interval, key=lambda x: x.QUAL)
+                    removed_variants = [v for v in variants_in_interval if v is not best_variant]
                 else:
-                    removed_snps = snps_in_interval
-
-                # Remove SNPs
-                for removed_snp in removed_snps:
-                    # logging.debug("removing SNP {}:{}".format(removed_snp.CHROM, removed_snp.POS))
-                    variants_by_pos.pop(removed_snp.POS)
-
-            # Add the kept SNPs to the regions file
-            for pos in variants_by_pos.keys():
-                kept_positions.append((contig_name, pos))
-
-        return self.__save_regions(kept_positions)
-
-    def __build_command(self, regions_file: Path) -> None:
-        """
-        Builds the command for this tool.
-        :param regions_file: File with the included regions
-        :return: None
-        """
-        self._command.command = ' '.join([
-            self._tool_command,
-            self._tool_inputs['VCF_GZ'][0].path,
-            '--output-type z',
-            '--output {}'.format(self.output_path)
-        ])
-        if Path(regions_file).stat().st_size > 0:
-            self._command.command += ' --targets-file {}'.format(regions_file)
-        else:
-            self._command.command += ' --exclude 1'
+                    removed_variants = variants_in_interval
+                removed_positions.extend([(v.CHROM, v.POS) for v in removed_variants])
+        return list(set(removed_positions))
