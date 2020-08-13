@@ -27,6 +27,9 @@ spa_typing:
 sccmec_typing:
   profiles: /db/pipelines/saureus/SCCmec_genes/profiles.yml
 
+pointfinder:
+  db: staphylococcus_aureus
+
 ############################
 # Gene detection databases #
 ############################
