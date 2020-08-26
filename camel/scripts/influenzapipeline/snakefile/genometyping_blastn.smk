@@ -6,7 +6,7 @@ from camel.app.pipeline.step import Step
 from camel.app.tools.seqtk.seqtkconvert import SeqtkConvert
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile import trimming_illumina, deconseq
-from camel.scripts.influenzapipeline.snakefile import subtyping_blastn
+from camel.scripts.influenzapipeline.snakefile import genometyping_blastn
 from camel.app.components.blasthit.influenzablastnasnparser import InfluenzaBlastnAsnParser
 
 
@@ -20,8 +20,8 @@ rule seqtk_subsample:
         FASTQ_PE = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_CLEAN_PE if 'deconseq' in config['analyses'] else [],
         IO = Path(config['working_dir']) / 'fq_dict.io' if 'deconseq' not in config['analyses'] else []
     output:
-        FASTQ = Path(config['working_dir']) / subtyping_blastn.OUTPUT_SEQTK_SUBSAMPLE_FASTQ,
-        INFORMS = Path(config['working_dir']) / subtyping_blastn.OUTPUT_SEQTK_SUBSAMPLE_INFORMS
+        FASTQ =Path(config['working_dir']) / genometyping_blastn.OUTPUT_SEQTK_SUBSAMPLE_FASTQ,
+          INFORMS =Path(config['working_dir']) / genometyping_blastn.OUTPUT_SEQTK_SUBSAMPLE_INFORMS
     params:
         running_dir = Path(config['working_dir']) / 'subtyping' / 'seqtk_subsample',
         sample_name = config['sample_name']
@@ -47,10 +47,10 @@ rule seqtk_convert:
     Runs Seqtk convert on the data
     """
     input:
-        FASTQ = Path(config['working_dir']) / subtyping_blastn.OUTPUT_SEQTK_SUBSAMPLE_FASTQ
+        FASTQ =Path(config['working_dir']) / genometyping_blastn.OUTPUT_SEQTK_SUBSAMPLE_FASTQ
     output:
-        FASTA = Path(config['working_dir']) / subtyping_blastn.OUTPUT_SEQTK_CONVERT_FASTA,
-        INFORMS = Path(config['working_dir']) / subtyping_blastn.OUTPUT_SEQTK_CONVERT_INFORMS
+        FASTA =Path(config['working_dir']) / genometyping_blastn.OUTPUT_SEQTK_CONVERT_FASTA,
+          INFORMS =Path(config['working_dir']) / genometyping_blastn.OUTPUT_SEQTK_CONVERT_INFORMS
     params:
         running_dir = Path(config['working_dir']) / 'subtyping' / 'seqtk_convert',
         sample_name = config['sample_name']
@@ -86,10 +86,10 @@ rule blastn_subtyping:
     Runs Blastn on the data
     """
     input:
-        FASTA = Path(config['working_dir']) / subtyping_blastn.OUTPUT_SEQTK_CONVERT_FASTA
+        FASTA =Path(config['working_dir']) / genometyping_blastn.OUTPUT_SEQTK_CONVERT_FASTA
     output:
-        ASN = Path(config['working_dir']) / subtyping_blastn.OUTPUT_BLASTN_ASN,
-        INFORMS = Path(config['working_dir']) / subtyping_blastn.OUTPUT_BLASTN_INFORMS
+        ASN =Path(config['working_dir']) / genometyping_blastn.OUTPUT_BLASTN_ASN,
+          INFORMS =Path(config['working_dir']) / genometyping_blastn.OUTPUT_BLASTN_INFORMS
     params:
         running_dir = Path(config['working_dir']) / 'subtyping' / 'blastn'
     run:
@@ -108,13 +108,13 @@ rule blastn_subtyping_processing:
     Processes the Blastn results
     """
     input:
-        ASN = Path(config['working_dir']) / subtyping_blastn.OUTPUT_BLASTN_ASN
+        ASN =Path(config['working_dir']) / genometyping_blastn.OUTPUT_BLASTN_ASN
     output:
-        INFORMS = Path(config['working_dir']) / subtyping_blastn.OUTPUT_BLASTN_PROCESSING_INFORMS
+        INFORMS =Path(config['working_dir']) / genometyping_blastn.OUTPUT_BLASTN_PROCESSING_INFORMS
     params:
         running_dir = Path(config['working_dir']) / 'subtyping' / 'blastn_processing'
     run:
-        from camel.app.tools.pipelines.segment_typing.segmenttyping import SegmentTyping
+        from camel.app.tools.pipelines.genome_typing.genometyping import GenomeTyping
         st = SegmentTyping(camel)
         SnakemakeUtils.add_pickle_inputs(st, input)
         st.add_input_files({'DB_BLAST': [ToolIOFile(config['subtyping_db'])]})

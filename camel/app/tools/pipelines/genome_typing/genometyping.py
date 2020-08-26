@@ -11,9 +11,10 @@ from camel.app.error.invalidparametererror import InvalidParameterError
 from camel.app.tools.tool import Tool
 
 
-class SegmentTyping(Tool):
-    """
+class GenomeTyping(Tool):
 
+    """
+    Class that performs genome typing. For Influenza, this can be on several segments
     """
 
     def __init__(self, camel):
@@ -42,7 +43,7 @@ class SegmentTyping(Tool):
         Checks whether the given parameters for the tool are correct.
         :return: None
         """
-        super(SegmentTyping, self)._check_parameters()
+        super(GenomeTyping, self)._check_parameters()
         if self._parameters['multi_segment'].value:
             if 'genome_segments' not in self._parameters:
                 raise ValueError(f'Multi segments set to True but no genome segments provided!')
@@ -53,14 +54,13 @@ class SegmentTyping(Tool):
         failed variable is set to True
         :return: None
         """
-        super(SegmentTyping, self)._check_input()
+        super(GenomeTyping, self)._check_input()
         if 'ASN' not in self._tool_inputs:
             raise InvalidInputSpecificationError(f'Required input key ASN missing from tool inputs: {self._tool_inputs}')
         if 'DB_BLAST' not in self._tool_inputs:
             raise InvalidInputSpecificationError(f'Required input key BLAST_DB missing from tool inputs: {self._tool_inputs}')
         if os.path.getsize(self._tool_inputs['ASN'][0].path) == 0:
             self._failed = True
-        print(f'FAILED is {self._failed}')
 
     def update_parameters(self, **kwargs: Union[str, int, None, bool, Dict[str, Union[str, int, None, bool]]]) -> None:
         """
@@ -68,7 +68,7 @@ class SegmentTyping(Tool):
         :param kwargs: Arguments
         :return: None
         """
-        super(SegmentTyping, self).update_parameters(**kwargs)
+        super(GenomeTyping, self).update_parameters(**kwargs)
         if self._parameters['multi_segment'].value.lower() == 'true':
             self._parameters['multi_segment'].value = True
         elif self._parameters['multi_segment'].value.lower() == 'false':

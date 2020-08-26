@@ -3,7 +3,7 @@ from pathlib import Path
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.resources.snakefile import trimming_illumina, trimming, quality_checks, deconseq
-from camel.scripts.influenzapipeline.snakefile import subtyping_blastn
+from camel.scripts.influenzapipeline.snakefile import genometyping_blastn
 from camel.app.io.tooliovalue import ToolIOValue
 
 #######################
@@ -12,7 +12,7 @@ from camel.app.io.tooliovalue import ToolIOValue
 include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
 include: quality_checks.SNAKEFILE_QUALITY_CHECKS
 include: deconseq.SNAKEFILE_DECONSEQ
-include: subtyping_blastn.SNAKEFILE_SUBTYPING
+include: genometyping_blastn.SNAKEFILE_GENOMETYPING
 
 #########
 # Rules #
@@ -23,9 +23,9 @@ rule all:
     """
     input:
         config['output_report'],
-        config['output_tabular'],
-        Path(config['working_dir']) / 'fq_dict.io',
-        Path(config['working_dir']) / subtyping_blastn.OUTPUT_BLASTN_PROCESSING_INFORMS
+         config['output_tabular'],
+         Path(config['working_dir']) / 'fq_dict.io',
+         Path(config['working_dir']) / genometyping_blastn.OUTPUT_BLASTN_PROCESSING_INFORMS
 
 
 rule select_fastq:
@@ -44,11 +44,11 @@ rule select_fastq:
 rule report_command_section:
     input:
         INFORMS_trimming = trimming.get_trimming_command_informs(config),
-        INFORMS_deconseq_pe_fwd = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_INFORMS_PE_FWD if 'deconseq' in config['analyses'] else [],
-        INFORMS_deconseq_pe_rev = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_INFORMS_PE_REV if 'deconseq' in config['analyses'] else [],
-        INFORMS_deconseq_se_fwd = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_INFORMS_SE_FWD if 'deconseq' in config['analyses'] else [],
-        INFORMS_deconseq_se_rev = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_INFORMS_SE_REV if 'deconseq' in config['analyses'] else [],
-        INFORMS_blast_subtyping = Path(config['working_dir']) / subtyping_blastn.OUTPUT_BLASTN_INFORMS if 'subtyping' in config['analyses'] else [],
+         INFORMS_deconseq_pe_fwd = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_INFORMS_PE_FWD if 'deconseq' in config['analyses'] else [],
+         INFORMS_deconseq_pe_rev = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_INFORMS_PE_REV if 'deconseq' in config['analyses'] else [],
+         INFORMS_deconseq_se_fwd = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_INFORMS_SE_FWD if 'deconseq' in config['analyses'] else [],
+         INFORMS_deconseq_se_rev = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_INFORMS_SE_REV if 'deconseq' in config['analyses'] else [],
+         INFORMS_blast_subtyping =Path(config['working_dir']) / genometyping_blastn.OUTPUT_BLASTN_INFORMS if 'genometyping' in config['analyses'] else [],
     output:
         HTML = Path(config['working_dir']) / 'report' / 'html-commands.io'
     params:
@@ -95,10 +95,12 @@ rule report_combine_all:
         # Add output sections
         report_structure = [
             ('Read trimming and basic QC', 'trim', [input.report_trimming]),
-            ('Advanced QC', 'qual', [input.quality_checks]),
-            ('Decontamination', 'deconseq', [input.report_deconseq]),
-            ('Commands', 'commands', [input.report_commands])
+            ('Advanced QC', 'qual', [input.quality_checks])
         ]
+        if 'deconseq' in config['analyses']:
+            report_structure.append(('Decontamination', 'deconseq', [input.report_deconseq]))
+
+        report_structure.append(('Commands', 'commands', [input.report_commands]))
         SnakePipelineUtils.add_report_content(report, report_structure)
 
 rule summary_init:
