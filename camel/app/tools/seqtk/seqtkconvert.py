@@ -1,5 +1,6 @@
 import os
 
+from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.seqtk.seqtk import Seqtk
 
@@ -10,26 +11,26 @@ class SeqtkConvert(Seqtk):
     Class that converts fastq into fasta file using seqtk
     """
 
-    def __init__(self, camel):
+    def __init__(self, camel: Camel) -> None:
         """
-        Initialize seqtk
+        Initialize seqtk convert
         :param camel: Camel instance
         :return: None
         """
-        super().__init__('Seqtk Convert', '1.2', camel)
+        super().__init__('Seqtk Convert', '1.3', camel)
 
         self._function_name = 'Convert'
         self._supported_inputs = ['FASTQ']
         self._specific_parameters = ['output_file']
 
-    def _set_input_string(self):
+    def _get_input_string(self) -> str:
         """
-        Set the input specification
+        Returns the input specification
         :return: input_string containing input specification
         """
         return self._tool_inputs['FASTQ'][0].path
 
-    def _set_output(self):
+    def _set_output(self) -> None:
         """
         Set the output specification
         :return: None

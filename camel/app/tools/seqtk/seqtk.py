@@ -1,7 +1,8 @@
 import abc
 
-from camel.app.tools.tool import Tool
+from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from camel.app.tools.tool import Tool
 
 
 class Seqtk(Tool, metaclass=abc.ABCMeta):
@@ -10,7 +11,7 @@ class Seqtk(Tool, metaclass=abc.ABCMeta):
     Base class for all seqtk functionality
     """
 
-    def __init__(self, tool_name, version, camel):
+    def __init__(self, tool_name: str, version: str, camel: Camel) -> None:
         """
         Initialize seqtk
         :param tool_name: Tool name
@@ -30,72 +31,72 @@ class Seqtk(Tool, metaclass=abc.ABCMeta):
         self.input_file_type = None  # 'FASTQ' or 'FASTA'
         self._output_string = ''
 
-    def _execute_tool(self):
+    def _execute_tool(self) -> None:
         """
-        Function to run BWA index
+        Function to run Seqtk
         :return: None
         """
         self._set_output()
         self._build_command()
         self._execute_command()
 
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
-        Check input requirements to run a seqtk tool
+        Check input requirements to run seqtk
         :return: None
         """
         if len(self._supported_inputs) != 0:
-            self.__get_supported_input_type()
+            self.__set_input_type_and_mode()
             self.__check_supported_input_files()
 
-    def __get_supported_input_type(self):
+    def __set_input_type_and_mode(self) -> None:
         """
-        Check the type of supported_inputs (alternatives but still required) specified in _tool_inputs and return it
-        :return: type of supported_input found
+        Check the type of supported_inputs (alternatives but still required) specified in _tool_inputs and set
+        the input_type and input_mode variables.
+        :return: None
         """
         for input_type in self._supported_inputs:
             if input_type in self._tool_inputs:
                 self.input_type = input_type
                 type_inform = input_type.split("_")
                 if len(type_inform) > 1:
-                    self.input_mode = type_inform[1]
+                    self.input_mode = type_inform[1]  # PE or SE
                 else:
                     # by default, support only one input
                     self.input_mode = 'SE'
                 self.input_file_type = type_inform[0]
                 return
 
-        raise KeyError('Seqtk function {!r} required input is missing. Followings are supported: {}.'.format(
-            self._function_name, self._supported_inputs))
+        raise KeyError(f'Seqtk function {self._function_name} required input is missing. Followings are supported: {self._supported_inputs}.')
 
-    def __check_supported_input_files(self):
+    def __check_supported_input_files(self) -> None:
         """
         Check supported input files are correct
         :return: None
         """
         if self.input_mode == 'SE' and len(self._tool_inputs[self.input_type]) != 1:
             raise InvalidInputSpecificationError(
-                "Seqtk function {} SE mode supports only one input file.".format(self._function_name))
+                f"Seqtk function {self._function_name} SE mode supports only one input file.")
         elif self.input_mode == 'PE' and len(self._tool_inputs[self.input_type]) != 2:
             raise InvalidInputSpecificationError(
-                "Seqtk function {} PE mode supports only two input files.".format(self._function_name))
+                f"Seqtk function {self._function_name} PE mode supports only two input files.")
 
     @abc.abstractmethod
-    def _set_output(self):
+    def _set_output(self) -> None:
         """
         Set the output specification
         :return: None
         """
         pass
 
-    def _set_input_string(self):
+    def _get_input_string(self) -> None:
         """
-        Set the input specification
+        Returns the input string needed for the command
         :return: input_string containing input specification
         """
         pass
 
-    def _build_command(self):
+    def _build_command(self) -> None:
         """
         Build the command to run tool
         :return: None
@@ -103,6 +104,6 @@ class Seqtk(Tool, metaclass=abc.ABCMeta):
         self._command.command = "{} {} {} > {}".format(
             self._tool_command,
             " ".join(self._build_options(excluded_parameters=self._specific_parameters)),
-            self._set_input_string(),
+            self._get_input_string(),
             self._output_string
         )

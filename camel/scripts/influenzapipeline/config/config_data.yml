@@ -19,8 +19,22 @@ decontamination:
   sequential: {deconseq_sequential}
   dbs_retain: {deconseq_retain}
 
-gc_content:
-  influenza:
-    A: 43.66
-    B: 40.0
-    C: 41.46
+species_info:
+  influenza_A:
+    gc_content: 43.66
+    type: 'virus'
+    name: 'Influenza A'
+    seqIDParser_type: 'inf_a'
+    genome_segments: 'PB2,PB1,PA,HA,NP,NA,MP,NS'
+    genome_typing_db:
+      ncbi: '/db/refgenomes/influenza.A/NCBI_Influenza_Virus_Resource/latest/cluster_fasta/influenza_a_clstr.fa'
+      ecdc: '/db/refgenomes/influenza.A/Cyril_references/cluster_fasta/HANA_dict.fa'
+      avian: '/db/refgenomes/influenza.A/Avian/Avian_refs.fasta'
+
+rule_parameters:
+  blastn_subtyping:
+#    output_format: '"6 qseqid sseqid qstart qend sstart send sstrand evalue bitscore"'
+    ungapped: ''
+    qcov_hsp_perc: 85
+    percent_identity: {blastn_subtyping_idcutoff}
+    output_filename: 'blastn_genome_typing_read_hits.tsv'

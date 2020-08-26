@@ -20,7 +20,7 @@ class SeqtkSeq(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super().__init__('Seqtk seq', '1.2', camel)
+        super().__init__('Seqtk seq', '1.3', camel)
 
     def _check_input(self) -> None:
         """

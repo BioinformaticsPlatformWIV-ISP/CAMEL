@@ -8,6 +8,7 @@ from camel.app.camel import Camel
 from camel.app.components.pipelines.basepipeline import BasePipeline
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.scripts.influenzapipeline import SNAKEFILE_MAIN, CONFIG_DATA
+import random
 
 
 class MainInfluenzaPipeline(BasePipeline):
@@ -15,7 +16,7 @@ class MainInfluenzaPipeline(BasePipeline):
     Main class to run the Mycobacterium pipeline.
     """
 
-    CUSTOM_ANALYSES = []
+    CUSTOM_ANALYSES = ['deconseq', 'subtyping']
 
     def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """
@@ -57,6 +58,12 @@ class MainInfluenzaPipeline(BasePipeline):
         parser.add_argument('--deconseq-dbs')
         parser.add_argument('--deconseq-sequential', action='store_true')
         parser.add_argument('--deconseq-retain-dbs')
+
+        # Subtyping options
+        parser.add_argument('--blastn-subtyping-idcutoff', default=97, type=int)
+        parser.add_argument('--subtyping-db', choices=['ncbi', 'avian', 'ecdc'])
+
+        parser.add_argument('--random-seed', type=int)
         return parser.parse_args(args)
 
     def construct_config_file(self, input_files: List[Dict[str, str]]) -> str:
@@ -72,12 +79,27 @@ class MainInfluenzaPipeline(BasePipeline):
             config_data.update(yaml.load(handle_in.read().format(
                 export_fastq='true' if self._args.report_include_fastq else 'false',
                 viral_species=self._args.viral_species,
-                subtype=self._args.subtype if self._args.subtype else None,
+                subtype=self._args.subtype,
                 deconseq_dbs=self._args.deconseq_dbs if self._args.deconseq_dbs else False,
                 deconseq_sequential=self._args.deconseq_sequential,
-                deconseq_retain=self._args.deconseq_retain_dbs if self._args.deconseq_retain_dbs else False
+                deconseq_retain=self._args.deconseq_retain_dbs if self._args.deconseq_retain_dbs else False,
+                blastn_subtyping_idcutoff=self._args.blastn_subtyping_idcutoff
             ), Loader=yaml.SafeLoader))
-        config_data['quality_checks']['expected_gc_content'] = config_data['gc_content'][self._args.viral_species][self._args.subtype]
+
+        virus_name = f'{self._args.viral_species}_{self._args.subtype}' if self._args.subtype != 'N/A' else self._args.viral_species
+        species_info = config_data['species_info'].pop(virus_name)
+        config_data['species_info'] = species_info
+
+        config_data['quality_checks']['expected_gc_content'] = config_data['species_info']['gc_content']
+
+        if self._args.subtyping:
+            config_data['multi_segment'] = ',' in config_data['species_info']['genome_segments']
+            config_data['subtyping_db'] = config_data['species_info']['genome_typing_db'][self._args.subtyping_db]
+        else:
+            config_data['rule_parameters'].pop('blastn_subtyping')
+
+        config_data['random_seed'] = random.randint(1, 10000000) if not self._args.random_seed else self._args.random_seed
+
         return SnakePipelineUtils.generate_config_file(config_data, self._working_dir)
 
 

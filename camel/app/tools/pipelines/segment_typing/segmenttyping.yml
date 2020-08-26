@@ -1,0 +1,8 @@
+dependencies: []
+parameters:
+  multi_segment: {default: false, mandatory: true, option: null, value: null}
+  seqIDParser_type: {default: false, mandatory: true, option: null, value: null}
+  subtyping_method: {default: false, mandatory: true, option: null, value: null}
+  genome_segments: {default: false, mandatory: false, option: null, value: null}
+  random_seed: {default: false, mandatory: false, option: null, value: null}
+tool_command: null
