@@ -345,4 +345,6 @@ class Deconseq(Tool):
         :return: None
         """
         if self._command.returncode != 0:
-            raise ToolExecutionError("Command execution failed (Exit code: {})".format(self._command.returncode))
+            raise ToolExecutionError(f"Deconseq execution failed (Exit code: {self._command.returncode})")
+        if 'does not exist in config file' in self._command.stderr:
+            raise ToolExecutionError(f"Deconseq execution failed, unknown database given: {self._db}")
