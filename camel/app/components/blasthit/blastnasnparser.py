@@ -57,12 +57,10 @@ class BlastnAsnParser(object):
         Parses the BLASTn ASN file and adds BlastnHit objects to the _hits object variable.
         :return: None
         """
-        format_columnns = ' '.join(self._columns)
-        cmd = Command(f'module load blast; blast_formatter -archive {self._blastn_file} -outfmt "6 {format_columnns}"')
+        format_columns = ' '.join(self._columns)
+        cmd = Command(f'module load blast; blast_formatter -archive {self._blastn_file} -outfmt "6 {format_columns}"')
         cmd.run_command(os.getcwd())
         stdout = cmd.stdout.split('\n')
         for line in stdout:
             if line:
                 self._hits.append(BlastnHit(**dict(zip(self._columns, line.split('\t')))))
-
-
