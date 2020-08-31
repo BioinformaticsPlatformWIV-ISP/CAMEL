@@ -68,7 +68,7 @@ class ReporterDeconseq(Tool):
                     se_counts += self._input_informs['deconseq'][read_type]['initial_reads_count']
             elif read_type.startswith('PE_'):
                 read_counts.append('-')
-        read_counts.append(str(se_counts))
+        read_counts.append(ReporterDeconseq.__reformat_inform(str(se_counts)))
         return read_counts
 
     def __get_db_removed_read_counts(self, db: str, index: int) -> List[str]:
