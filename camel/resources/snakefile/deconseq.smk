@@ -77,26 +77,26 @@ rule deconseq_run:
             SnakemakeUtils.dump_object(None, output.INFORMS_SE_REV)
 
         if config['decontamination']['dbs_retain']:
-            fwd_pe = [fwd_pe_deconseq.get_outputs('FASTQ_Clean')[0].path, fwd_pe_deconseq.get_outputs('FASTQ_Both')[0].path]
-            rev_pe = [rev_pe_deconseq.get_outputs('FASTQ_Clean')[0].path, rev_pe_deconseq.get_outputs('FASTQ_Both')[0].path]
+            fwd_pe = [fwd_pe_deconseq.tool_outputs['FASTQ_Clean'][0].path, fwd_pe_deconseq.tool_outputs['FASTQ_Both'][0].path]
+            rev_pe = [rev_pe_deconseq.tool_outputs['FASTQ_Clean'][0].path, rev_pe_deconseq.tool_outputs['FASTQ_Both'][0].path]
             if fwd_se_deconseq and rev_se_deconseq:
-                se = [fwd_se_deconseq.get_outputs('FASTQ_Clean')[0].path, rev_se_deconseq.get_outputs('FASTQ_Clean')[0].path,
-                      fwd_se_deconseq.get_outputs('FASTQ_Both')[0].path, rev_se_deconseq.get_outputs('FASTQ_Both')[0].path]
+                se = [fwd_se_deconseq.tool_outputs['FASTQ_Clean'][0].path, rev_se_deconseq.tool_outputs['FASTQ_Clean'][0].path,
+                      fwd_se_deconseq.tool_outputs['FASTQ_Both'][0].path, rev_se_deconseq.tool_outputs['FASTQ_Both'][0].path]
             elif fwd_se_deconseq:
-                se = [fwd_se_deconseq.get_outputs('FASTQ_Clean')[0].path, fwd_se_deconseq.get_outputs('FASTQ_Both')[0].path]
+                se = [fwd_se_deconseq.tool_outputs['FASTQ_Clean'][0].path, fwd_se_deconseq.tool_outputs['FASTQ_Both'][0].path]
             elif rev_se_deconseq:
-                se = [rev_se_deconseq.get_outputs('FASTQ_Clean')[0].path, rev_se_deconseq.get_outputs('FASTQ_Both')[0].path]
+                se = [rev_se_deconseq.tool_outputs['FASTQ_Clean'][0].path, rev_se_deconseq.tool_outputs['FASTQ_Both'][0].path]
             else:
                 se = []
         else:
-            fwd_pe = [fwd_pe_deconseq.get_outputs('FASTQ_Clean')[0].path]
-            rev_pe = [rev_pe_deconseq.get_outputs('FASTQ_Clean')[0].path]
+            fwd_pe = [fwd_pe_deconseq.tool_outputs['FASTQ_Clean'][0].path]
+            rev_pe = [rev_pe_deconseq.tool_outputs['FASTQ_Clean'][0].path]
             if fwd_se_deconseq and rev_se_deconseq:
-                se = [fwd_se_deconseq.get_outputs('FASTQ_Clean')[0].path, rev_se_deconseq.get_outputs('FASTQ_Clean')[0].path]
+                se = [fwd_se_deconseq.tool_outputs['FASTQ_Clean'][0].path, rev_se_deconseq.tool_outputs['FASTQ_Clean'][0].path]
             elif fwd_se_deconseq:
-                se = [fwd_se_deconseq.get_outputs('FASTQ_Clean')[0].path]
+                se = [fwd_se_deconseq.tool_outputs['FASTQ_Clean'][0].path]
             elif rev_se_deconseq:
-                se = [rev_se_deconseq.get_outputs('FASTQ_Clean')[0].path]
+                se = [rev_se_deconseq.tool_outputs['FASTQ_Clean'][0].path]
             else:
                 se = []
 

@@ -80,7 +80,7 @@ rule seqtk_convert:
         step = Step(rule, convert, camel, params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(convert, output)
-        update_seqid(convert.get_outputs('FASTA')[0].path)
+        update_seqid(convert.tool_outputs['FASTA'][0].path)
 
 rule blastn_genometyping:
     """
@@ -134,7 +134,8 @@ rule blastn_genometyping_processing:
                                 'seqIDParser_type': config['species_info']['seqIDParser_type'],
                                 'genometyping_method': 'blast',
                                 'genome_segments': config['species_info']['genome_segments'],
-                                'random_seed': config['random_seed']})
+                                'random_seed': config['random_seed'],
+                                'influenza_a': config['species_info']['name'] == 'Influenza A'})
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(gt, output)
 
@@ -191,3 +192,7 @@ rule genometyping_export_summary:
                     handle.write(f'best_refseq_{segment}\t{gt_informs["segment_informs"][segment]["refseqid"]}\n')
                     candidates = ','.join(gt_informs['segment_informs'][segment]['candidates'])
                     handle.write(f'refseq_candidates_{segment}\t{candidates}\n')
+            if 'hana_subtyping' in gt_informs:
+                handle.write(f"subtype\t{gt_informs['hana_subtyping']['subtype']}\n")
+                handle.write(f"subtype\t{gt_informs['hana_subtyping']['ha_subtype']['ha']}\n")
+                handle.write(f"subtype\t{gt_informs['hana_subtyping']['na_subtype']['na']}\n")

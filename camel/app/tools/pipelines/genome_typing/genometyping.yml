@@ -5,4 +5,5 @@ parameters:
   genometyping_method: {default: false, mandatory: true, option: null, value: null}
   genome_segments: {default: false, mandatory: false, option: null, value: null}
   random_seed: {default: false, mandatory: false, option: null, value: null}
+  influenza_a: {default: false, mandatory: false, option: null, value: null}
 tool_command: null

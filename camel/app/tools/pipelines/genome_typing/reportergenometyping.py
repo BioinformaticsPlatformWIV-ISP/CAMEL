@@ -32,6 +32,7 @@ class ReporterGenomeTyping(Tool):
         self._report_section = HtmlReportSection('De novo genome segment typing')
         self.__add_genome_typing_section()
         self.__add_file_output()
+        self.__add_subtype_section()
         self.__add_segment_sections()
         self._tool_outputs['VAL_HTML'] = [ToolIOValue(self._report_section, False)]
 
@@ -107,6 +108,22 @@ class ReporterGenomeTyping(Tool):
             self._report_section.add_line_break()
             if i + 1 < len(self._input_informs['genometyping']['expected_segments']):
                 self._report_section.add_horizontal_line()
+
+    def __add_subtype_section(self) -> None:
+        """
+        Adds a section for the Influenza A subtyping results.
+        :return: None
+        """
+        if 'hana_subtyping' in self._input_informs['genometyping']:
+            informs = self._input_informs['genometyping']['hana_subtyping']
+            if informs['failure_message']:
+                self._report_section.add_warning_message(informs['failure_message'])
+            self._report_section.add_header('Influenza A subtype detection', 2)
+            table = [['Subtype', informs['subtype']],
+                     ['Hemagglutinin (HA) subtype', informs['ha']],
+                     ['Neuraminidase (NA) subtype', informs['na']]]
+            self._report_section.add_table(table, table_attributes=[('class', 'data')])
+            self._report_section.add_horizontal_line()
 
     @staticmethod
     def __reformat_inform(input_str: str) -> str:

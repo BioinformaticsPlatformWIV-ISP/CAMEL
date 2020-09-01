@@ -10,6 +10,7 @@ from camel.app.error.invalidinputspecificationerror import InvalidInputSpecifica
 from camel.app.error.invalidparametererror import InvalidParameterError
 from camel.app.tools.tool import Tool
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.components.seqid.seqidparser import SeqIDParser
 
 
 class GenomeTyping(Tool):
@@ -39,6 +40,8 @@ class GenomeTyping(Tool):
             self._run_sequence_typing()
             self._quality_check()
             self._set_output()
+            if 'influenza_a' in self._parameters:
+                self._extract_influenza_a_subtype()
 
     def _check_parameters(self) -> None:
         """
@@ -168,5 +171,45 @@ class GenomeTyping(Tool):
         """
         return FastaUtils.read_as_dict(self._tool_inputs['DB_BLAST'][0].path)
 
-    def _set_output(self):
+    def _set_output(self) -> None:
+        """
+        Sets the tool outputs
+        :return: None
+        """
         self._tool_outputs['FASTA'] = [ToolIOFile(self._obtain_reference_genome())]
+
+    def _extract_influenza_a_subtype(self) -> None:
+        """
+        Extracts the subtype for Influenza A and sets the informs accordingly.
+        :return: None
+        """
+        parts = self._extract_segment_subtypes()
+        if parts['HA'] is None and parts['NA'] is None:
+            self._informs['hana_subtyping'] = {'failure_message': 'Influenza A HANA subtyping failed to identify both the HA and NA subtype',
+                                               'subtype': 'Unknown', 'ha': 'Unknown', 'na': 'unknown'}
+        elif parts['HA'] is None:
+            self._informs['hana_subtyping'] = {'failure_message': 'Influenza A HANA subtyping failed to identify the HA subtype',
+                                               'subtype': 'Unknown', 'ha': 'Unknown', 'na': parts['NA']}
+        elif parts['NA'] is None:
+            self._informs['hana_subtyping'] = {'failure_message': 'Influenza A HANA subtyping failed to identify the NA subtype',
+                                               'subtype': 'Unknown', 'ha': parts['HA'], 'na': 'Unknown'}
+        else:
+            subtype = f'{parts["HA"]}{parts["NA"]}'
+            self._informs['hana_subtyping'] = {'subtype': subtype, 'ha': parts['HA'], 'na': parts['NA'], 'failure_message': None}
+
+    def _extract_segment_subtypes(self) -> Dict[str, Union[str, None]]:
+        """
+        Extracts the subtype from the best reference for the HA and NA segment and returns
+        a dictionary with that information.
+        :return: Dictionary with subtypes of the HA and NA best reference
+        """
+        parts = {'HA': None, 'NA': None}
+        for segment in ['HA', 'NA']:
+            if segment in self._informs['segment_coverage']['segment_covered']:
+                subtype = SeqIDParser(self._informs['segment_informs'][segment]['refseqid'], self._parameters['seqIDParser_type'].value).subtype
+                logging.debug(f"Refseqid: {self._informs['segment_informs'][segment]['refseqid']} -- parser_type: {self._parameters['seqIDParser_type'].value}")
+                if segment == 'HA':
+                    parts['HA'] = subtype[:2]
+                elif segment == 'NA':
+                    parts['NA'] = subtype[-2:]
+        return parts
