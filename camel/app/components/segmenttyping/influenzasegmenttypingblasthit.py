@@ -35,7 +35,7 @@ class InfluenzaSegmentTypingBlasthit(object):
             return self._best_candidate_targets[0]
         else:
             random.seed(self._seed)
-            return self._best_candidate_targets[random.randint(0, len(self._best_candidate_targets))]
+            return self._best_candidate_targets[random.randint(0, len(self._best_candidate_targets)-1)]
 
     @property
     def best_candidate_targets(self) -> List[str]:
