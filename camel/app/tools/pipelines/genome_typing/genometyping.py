@@ -9,12 +9,13 @@ from camel.app.components.segmenttyping.influenzasegmenttypingblasthit import In
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.invalidparametererror import InvalidParameterError
 from camel.app.tools.tool import Tool
+from camel.app.io.tooliofile import ToolIOFile
 
 
 class GenomeTyping(Tool):
 
     """
-    Class that performs genome typing. For Influenza, this can be on several segments
+    Class that performs genome typing. For Influenza, this can be on several segments.
     """
 
     def __init__(self, camel):
@@ -23,7 +24,7 @@ class GenomeTyping(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super().__init__('Segment typing', '0.1', camel)
+        super().__init__('Genome typing', '0.1', camel)
         self._segment_informs = {}
         self._random_seed = None
         self._failed = False
@@ -37,6 +38,7 @@ class GenomeTyping(Tool):
             self._set_random_seed()
             self._run_sequence_typing()
             self._quality_check()
+            self._set_output()
 
     def _check_parameters(self) -> None:
         """
@@ -85,17 +87,28 @@ class GenomeTyping(Tool):
         :return: None
         """
         blast_parser = InfluenzaBlastnAsnParser(self._tool_inputs['ASN'][0], self._parameters['multi_segment'].value,
-                                                self._parameters['seqIDParser_type'].value, self._parameters['subtyping_method'].value)
+                                                self._parameters['seqIDParser_type'].value, self._parameters['genometyping_method'].value)
         blast_parser.group_hits_per_segment()
-        for segment in self._parameters['genome_segments'].value:
-            segment_hits = blast_parser.get_segment_hits(segment)
+        self._informs['segment_informs'] = {}
+        if self._parameters['multi_segment'].value:
+            for segment in self._parameters['genome_segments'].value:
+                segment_hits = blast_parser.get_segment_hits(segment)
+                if segment_hits:
+                    segment_typer = InfluenzaSegmentTypingBlasthit(segment, segment_hits, self._random_seed)
+                    self._informs['segment_informs'][segment] = {'refseqid': segment_typer.best_target,
+                                                                 'candidates': segment_typer.best_candidate_targets,
+                                                                 'ambiguous': segment_typer.ambiguous,
+                                                                 'counts': segment_typer.counts}
+            self._informs['expected_segments'] = self._parameters['genome_segments'].value
+        else:
+            segment_hits = blast_parser.get_segment_hits('single_segment')
             if segment_hits:
-                segment_typer = InfluenzaSegmentTypingBlasthit(segment, segment_hits, self._random_seed)
-                self._informs['segment_informs'] = {segment: {'refseqid': segment_typer.best_target,
-                                                              'candidates': segment_typer.best_candidate_targets,
-                                                              'ambiguous': segment_typer.ambiguous,
-                                                              'counts': segment_typer.counts}
-                                                    }
+                segment_typer = InfluenzaSegmentTypingBlasthit('single_segment', segment_hits, self._random_seed)
+                self._informs['segment_informs']['single_segment'] = {'refseqid': segment_typer.best_target,
+                                                                      'candidates': segment_typer.best_candidate_targets,
+                                                                      'ambiguous': segment_typer.ambiguous,
+                                                                      'counts': segment_typer.counts}
+            self._informs['expected_segments'] = ['Single segment']
 
     def _set_random_seed(self) -> None:
         """
@@ -114,9 +127,9 @@ class GenomeTyping(Tool):
         the percentage of segments that were found
         :return: None
         """
+        self._informs['segment_coverage'] = {'segment_covered': [],
+                                             'segment_missing': []}
         if self._parameters['multi_segment'].value:
-            self._informs['segment_coverage'] = {'segment_covered': [],
-                                                 'segment_missing': []}
             segments_found = self._informs['segment_informs'].keys()
             for segment in self._parameters['genome_segments'].value:
                 if segment not in segments_found:
@@ -124,6 +137,11 @@ class GenomeTyping(Tool):
                 else:
                     self._informs['segment_coverage']['segment_covered'].append(segment)
             self._informs['segment_coverage']['coverage'] = len(segments_found) * 100.0 / len(self._parameters['genome_segments'].value)
+        else:
+            if 'single_segment' in self._informs['segment_informs']:
+                self._informs['segment_coverage']['segment_covered'].append('Single segment')
+            else:
+                self._informs['segment_coverage']['segment_missing'].append('Single segment')
 
     def _set_failed_informs(self) -> None:
         """
@@ -149,3 +167,6 @@ class GenomeTyping(Tool):
         :return: None
         """
         return FastaUtils.read_as_dict(self._tool_inputs['DB_BLAST'][0].path)
+
+    def _set_output(self):
+        self._tool_outputs['FASTA'] = [ToolIOFile(self._obtain_reference_genome())]

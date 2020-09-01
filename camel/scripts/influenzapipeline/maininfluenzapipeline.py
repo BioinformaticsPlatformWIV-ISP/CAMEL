@@ -16,7 +16,7 @@ class MainInfluenzaPipeline(BasePipeline):
     Main class to run the Mycobacterium pipeline.
     """
 
-    CUSTOM_ANALYSES = ['deconseq', 'subtyping']
+    CUSTOM_ANALYSES = ['deconseq', 'genometyping']
 
     def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """
@@ -59,9 +59,9 @@ class MainInfluenzaPipeline(BasePipeline):
         parser.add_argument('--deconseq-sequential', action='store_true')
         parser.add_argument('--deconseq-retain-dbs')
 
-        # Subtyping options
-        parser.add_argument('--blastn-subtyping-idcutoff', default=97, type=int)
-        parser.add_argument('--subtyping-db', choices=['ncbi', 'avian', 'ecdc'])
+        # Genome typing options
+        parser.add_argument('--blastn-genometyping-idcutoff', default=97, type=int)
+        parser.add_argument('--genometyping-db', choices=['ncbi', 'avian', 'ecdc'])
 
         parser.add_argument('--random-seed', type=int)
         return parser.parse_args(args)
@@ -83,7 +83,7 @@ class MainInfluenzaPipeline(BasePipeline):
                 deconseq_dbs=self._args.deconseq_dbs if self._args.deconseq_dbs else False,
                 deconseq_sequential=self._args.deconseq_sequential,
                 deconseq_retain=self._args.deconseq_retain_dbs if self._args.deconseq_retain_dbs else False,
-                blastn_subtyping_idcutoff=self._args.blastn_subtyping_idcutoff
+                blastn_genometyping_idcutoff=self._args.blastn_genometyping_idcutoff
             ), Loader=yaml.SafeLoader))
 
         virus_name = f'{self._args.viral_species}_{self._args.subtype}' if self._args.subtype != 'N/A' else self._args.viral_species
@@ -92,11 +92,11 @@ class MainInfluenzaPipeline(BasePipeline):
 
         config_data['quality_checks']['expected_gc_content'] = config_data['species_info']['gc_content']
 
-        if self._args.subtyping:
+        if self._args.genometyping:
             config_data['multi_segment'] = ',' in config_data['species_info']['genome_segments']
-            config_data['subtyping_db'] = config_data['species_info']['genome_typing_db'][self._args.subtyping_db]
+            config_data['genometyping_db'] = config_data['species_info']['genome_typing_db'][self._args.genometyping_db]
         else:
-            config_data['rule_parameters'].pop('blastn_subtyping')
+            config_data['rule_parameters'].pop('blastn_genometyping')
 
         config_data['random_seed'] = random.randint(1, 10000000) if not self._args.random_seed else self._args.random_seed
 

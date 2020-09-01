@@ -32,9 +32,9 @@ species_info:
       avian: '/db/refgenomes/influenza.A/Avian/Avian_refs.fasta'
 
 rule_parameters:
-  blastn_subtyping:
+  blastn_genometyping:
 #    output_format: '"6 qseqid sseqid qstart qend sstart send sstrand evalue bitscore"'
     ungapped: ''
     qcov_hsp_perc: 85
-    percent_identity: {blastn_subtyping_idcutoff}
+    percent_identity: {blastn_genometyping_idcutoff}
     output_filename: 'blastn_genome_typing_read_hits.tsv'

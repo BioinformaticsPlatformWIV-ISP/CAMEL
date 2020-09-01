@@ -1,27 +1,28 @@
-from camel.scripts.influenzapipeline.snakefile import genometyping_blastn
-from typing import Dict, Any, Union, List
 from pathlib import Path
+from typing import Dict, Any, Union, List
+
+from camel.scripts.influenzapipeline.snakefile import genometyping_blastn
 
 
 def get_segmenttyping_report(config: Dict[str, Any]) -> Union[Path, List[Any]]:
     """
-    Returns the path to the subtyping report.
+    Returns the path to the genometyping report.
     :param config: Snakemake configuration
-    :return: Path to subtyping report
+    :return: Path to genometyping report
     """
-    if config['subtyping_method'] == 'blastn':
-        return Path(config['working_dir']) / genometyping_blastn.OUTPUT_SEGMENTTYPING_REPORT
+    if config['genometyping_method'] == 'blastn':
+        return Path(config['working_dir']) / genometyping_blastn.OUTPUT_GENOMETYPING_REPORT
     else:
         return []
 
 
-def get_subtyping_summary(config: Dict[str, Any]) -> Union[Path, List[Any]]:
+def get_genometyping_summary(config: Dict[str, Any]) -> Union[Path, List[Any]]:
     """
-    Returns the path to the subtyping summary.
+    Returns the path to the genometyping summary.
     :param config: Snakemake configuration
-    :return: Path to subtyping summary
+    :return: Path to genometyping summary
     """
-    if config['subtyping_method'] == 'blastn':
-        return Path(config['working_dir']) / genometyping_blastn.OUTPUT_SEGMENTTYPING_SUMMARY
+    if config['genometyping_method'] == 'blastn':
+        return Path(config['working_dir']) / genometyping_blastn.OUTPUT_GENOMETYPING_SUMMARY
     else:
         return []

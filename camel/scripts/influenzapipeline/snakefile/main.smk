@@ -48,7 +48,7 @@ rule report_command_section:
          INFORMS_deconseq_pe_rev = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_INFORMS_PE_REV if 'deconseq' in config['analyses'] else [],
          INFORMS_deconseq_se_fwd = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_INFORMS_SE_FWD if 'deconseq' in config['analyses'] else [],
          INFORMS_deconseq_se_rev = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_INFORMS_SE_REV if 'deconseq' in config['analyses'] else [],
-         INFORMS_blast_subtyping =Path(config['working_dir']) / genometyping_blastn.OUTPUT_BLASTN_INFORMS if 'genometyping' in config['analyses'] else [],
+         INFORMS_blast_genometyping =Path(config['working_dir']) / genometyping_blastn.OUTPUT_BLASTN_INFORMS if 'genometyping' in config['analyses'] else [],
     output:
         HTML = Path(config['working_dir']) / 'report' / 'html-commands.io'
     params:
@@ -71,6 +71,7 @@ rule report_combine_all:
         report_trimming = trimming.get_trimming_report(config),
         quality_checks = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_REPORT,
         report_deconseq = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_REPORT if 'deconseq' in config['analyses'] else [],
+        report_genometyping = Path(config['working_dir']) / genometyping_blastn.OUTPUT_GENOMETYPING_REPORT if 'genometyping' in config['analyses'] else [],
         # Report
         report_commands = rules.report_command_section.output.HTML
     output:
@@ -99,7 +100,8 @@ rule report_combine_all:
         ]
         if 'deconseq' in config['analyses']:
             report_structure.append(('Decontamination', 'deconseq', [input.report_deconseq]))
-
+        if 'genometyping' in config['analyses']:
+            report_structure.append(('Genome typing', 'genometyping', [input.report_genometyping]))
         report_structure.append(('Commands', 'commands', [input.report_commands]))
         SnakePipelineUtils.add_report_content(report, report_structure)
 
@@ -129,7 +131,9 @@ rule summary_combine_all:
     """
     input:
         rules.summary_init.output.TSV,
-        trimming.get_trimming_summary(config)
+        trimming.get_trimming_summary(config),
+        Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_SUMMARY,
+        Path(config['working_dir']) / genometyping_blastn.OUTPUT_GENOMETYPING_SUMMARY,
     output:
         TSV = config['output_tabular']
     run:

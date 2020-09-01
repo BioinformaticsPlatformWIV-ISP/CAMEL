@@ -1,13 +1,15 @@
 from pathlib import Path
 
 SNAKEFILE_GENOMETYPING = f'{Path(__file__).parent / Path(__file__).stem}.smk'
-_dir_subtyping = Path('segmenttyping')
-OUTPUT_SEGMENTTYPING_REPORT = _dir_subtyping / 'report' / 'html.io'
-OUTPUT_SEGMENTTYPING_SUMMARY = _dir_subtyping / 'summary' / 'summary_out.tsv'
-OUTPUT_SEQTK_SUBSAMPLE_FASTQ = _dir_subtyping / 'seqtk_subsample' / 'fastq.io'
-OUTPUT_SEQTK_SUBSAMPLE_INFORMS = _dir_subtyping / 'seqtk_subsample' / 'informs.io'
-OUTPUT_SEQTK_CONVERT_FASTA = _dir_subtyping / 'seqtk_convert' / 'fasta.io'
-OUTPUT_SEQTK_CONVERT_INFORMS = _dir_subtyping / 'seqtk_convert' / 'informs.io'
-OUTPUT_BLASTN_ASN = _dir_subtyping / 'blastn' / 'asn.io'
-OUTPUT_BLASTN_INFORMS = _dir_subtyping / 'blastn' / 'informs.io'
-OUTPUT_BLASTN_PROCESSING_INFORMS = _dir_subtyping / 'blastn_processing' / 'informs.io'
+_dir_genometyping = Path('genometyping')
+OUTPUT_GENOMETYPING_REPORT = _dir_genometyping / 'report' / 'html.io'
+OUTPUT_GENOMETYPING_SUMMARY = _dir_genometyping / 'summary_out.tsv'
+OUTPUT_GENOMETYPING_FASTA_REF = _dir_genometyping / 'blastn' / 'fasta.io'
+OUTPUT_SEQTK_SUBSAMPLE_FASTQ = _dir_genometyping / 'seqtk_subsample' / 'fastq.io'
+OUTPUT_SEQTK_SUBSAMPLE_INFORMS = _dir_genometyping / 'seqtk_subsample' / 'informs.io'
+OUTPUT_SEQTK_CONVERT_FASTA = _dir_genometyping / 'seqtk_convert' / 'fasta.io'
+OUTPUT_SEQTK_CONVERT_INFORMS = _dir_genometyping / 'seqtk_convert' / 'informs.io'
+OUTPUT_BLASTN_ASN = _dir_genometyping / 'blastn' / 'asn.io'
+OUTPUT_BLASTN_TSV = _dir_genometyping / 'blastn' / 'tsv.io'
+OUTPUT_BLASTN_INFORMS = _dir_genometyping / 'blastn' / 'informs.io'
+OUTPUT_BLASTN_PROCESSING_INFORMS = _dir_genometyping / 'blastn_processing' / 'informs.io'
