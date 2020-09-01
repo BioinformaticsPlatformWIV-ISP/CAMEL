@@ -48,7 +48,6 @@ class InfluenzaBlastnAsnParser(BlastnAsnParser):
         """
         if self._multi_segment:
             for hit in self._hits:
-                print(f'refseq: {getattr(hit, self._refseq_id)}, parser_type: {self._seqid_parser_type}')
                 segment = SeqIDParser(getattr(hit, self._refseq_id), self._seqid_parser_type).segment
                 if segment in self._segment_hits:
                     self._segment_hits[segment].append(hit)
