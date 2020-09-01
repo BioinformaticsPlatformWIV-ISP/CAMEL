@@ -1,4 +1,4 @@
-from typing import Tuple, List, Union
+from typing import Tuple, List, Union, Optional
 
 import abc
 import bs4
@@ -94,13 +94,14 @@ class HtmlBase(object):
                 with self.get_tag('th'):
                     self.add_text(name)
 
-    def _add_table_row(self, data: List[Union[str, int]]) -> None:
+    def _add_table_row(self, data: List[Union[str, int]], attributes: Optional[List[Tuple[str, str]]] = None) -> None:
         """
         Adds a row to a table.
         :param data: Row data
+        :param attributes: Attributes (optional)
         :return: None
         """
-        with self.get_tag('tr'):
+        with self.get_tag('tr', attributes):
             for value in data:
                 if isinstance(value, HtmlBase):
                     self._doc.asis(value.to_html())
@@ -216,3 +217,10 @@ class HtmlBase(object):
         with self.get_tag('div', attributes):
             with self.get_tag('h2'):
                 self.add_text(text)
+
+    def add_horizontal_line(self) -> None:
+        """
+        Adds a horizontal line.
+        :return: None
+        """
+        self._doc.stag('hr')

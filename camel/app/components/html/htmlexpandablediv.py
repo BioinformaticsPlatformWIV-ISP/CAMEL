@@ -54,5 +54,5 @@ class HtmlExpandableDiv(HtmlElement):
             with tag('div', id='content-{}'.format(self._id)):
                 doc.asis(self._doc.getvalue())
             with tag('script', type='text/javascript'):
-                    text(HtmlExpandableDiv.SCRIPT_TEMPLATE.format(id_=self._id))
+                text(HtmlExpandableDiv.SCRIPT_TEMPLATE.format(id_=self._id))
         return doc.getvalue()
