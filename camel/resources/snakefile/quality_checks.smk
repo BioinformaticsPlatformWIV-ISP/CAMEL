@@ -224,22 +224,22 @@ rule quality_checks_report:
     """
     input:
         INFORMS = rules.quality_checks_parse_fastqc.output.INFORMS,
-        JSON_kraken = rules.quality_checks_kraken.output.JSON,
-        JSON_cgmlst = rules.quality_checks_typing_loci.output.JSON,
-        JSON_cov_ref = rules.quality_checks_coverage.output.JSON,
-        JSON_map_rate_ref = rules.quality_checks_mapping_rate.output.JSON,
-        JSON_fqc_avg_qual_fwd = rules.quality_checks_fqc_avg_read_quality.output.JSON.format(ori='fwd'),
-        JSON_fqc_avg_qual_rev = rules.quality_checks_fqc_avg_read_quality.output.JSON.format(ori='rev') if config.get('read_type', 'illumina') == 'illumina' else [],
-        JSON_fqc_gc_fwd = rules.quality_checks_fqc_gc_content.output.JSON.format(ori='fwd'),
-        JSON_fqc_gc_rev = rules.quality_checks_fqc_gc_content.output.JSON.format(ori='rev') if config.get('read_type', 'illumina') == 'illumina' else [],
-        JSON_fqc_n_frac_fwd = rules.quality_checks_fqc_max_n_fraction.output.JSON.format(ori='fwd'),
-        JSON_fqc_n_frac_rev = rules.quality_checks_fqc_max_n_fraction.output.JSON.format(ori='rev') if config.get('read_type', 'illumina') == 'illumina' else [],
-        JSON_fqc_per_base_fwd = rules.quality_checks_fqc_per_base.output.JSON.format(ori='fwd'),
-        JSON_fqc_per_base_rev = rules.quality_checks_fqc_per_base.output.JSON.format(ori='rev') if config.get('read_type', 'illumina') == 'illumina' else [],
-        JSON_fqc_qscore_fwd = rules.quality_checks_fqc_qscore.output.JSON.format(ori='fwd'),
-        JSON_fqc_qscore_rev = rules.quality_checks_fqc_qscore.output.JSON.format(ori='rev') if config.get('read_type', 'illumina') == 'illumina' else [],
-        JSON_fqc_seq_len_fwd = rules.quality_checks_fqc_seq_len.output.JSON.format(ori='fwd'),
-        JSON_fqc_seq_len_rev = rules.quality_checks_fqc_seq_len.output.JSON.format(ori='rev') if config.get('read_type', 'illumina') == 'illumina' else []
+        JSON_kraken = rules.quality_checks_kraken.output.JSON if 'kraken' not in config['quality_checks'].get('disabled_checks', []) else [],
+        JSON_cgmlst = rules.quality_checks_typing_loci.output.JSON if 'typing' not in config['quality_checks'].get('disabled_checks', []) else [],
+        JSON_cov_ref = rules.quality_checks_coverage.output.JSON if 'coverage' not in config['quality_checks'].get('disabled_checks', []) else [],
+        JSON_map_rate_ref = rules.quality_checks_mapping_rate.output.JSON if 'coverage' not in config['quality_checks'].get('disabled_checks', []) else [],
+        JSON_fqc_avg_qual_fwd = rules.quality_checks_fqc_avg_read_quality.output.JSON.format(ori='fwd') if 'fastqc' not in config['quality_checks'].get('disabled_checks', []) else [],
+        JSON_fqc_avg_qual_rev = rules.quality_checks_fqc_avg_read_quality.output.JSON.format(ori='rev') if (config.get('read_type', 'illumina') == 'illumina' and 'fastqc' not in config['quality_checks'].get('disabled_checks', [])) else [],
+        JSON_fqc_gc_fwd = rules.quality_checks_fqc_gc_content.output.JSON.format(ori='fwd') if 'fastqc' not in config['quality_checks'].get('disabled_checks', []) else [],
+        JSON_fqc_gc_rev = rules.quality_checks_fqc_gc_content.output.JSON.format(ori='rev') if (config.get('read_type', 'illumina') == 'illumina' and 'fastqc' not in config['quality_checks'].get('disabled_checks', [])) else [],
+        JSON_fqc_n_frac_fwd = rules.quality_checks_fqc_max_n_fraction.output.JSON.format(ori='fwd') if 'fastqc' not in config['quality_checks'].get('disabled_checks', []) else [],
+        JSON_fqc_n_frac_rev = rules.quality_checks_fqc_max_n_fraction.output.JSON.format(ori='rev') if (config.get('read_type', 'illumina') == 'illumina' and 'fastqc' not in config['quality_checks'].get('disabled_checks', [])) else [],
+        JSON_fqc_per_base_fwd = rules.quality_checks_fqc_per_base.output.JSON.format(ori='fwd') if 'fastqc' not in config['quality_checks'].get('disabled_checks', []) else [],
+        JSON_fqc_per_base_rev = rules.quality_checks_fqc_per_base.output.JSON.format(ori='rev') if (config.get('read_type', 'illumina') == 'illumina' and 'fastqc' not in config['quality_checks'].get('disabled_checks', [])) else [],
+        JSON_fqc_qscore_fwd = rules.quality_checks_fqc_qscore.output.JSON.format(ori='fwd') if 'fastqc' not in config['quality_checks'].get('disabled_checks', []) else [],
+        JSON_fqc_qscore_rev = rules.quality_checks_fqc_qscore.output.JSON.format(ori='rev') if (config.get('read_type', 'illumina') == 'illumina' and 'fastqc' not in config['quality_checks'].get('disabled_checks', [])) else [],
+        JSON_fqc_seq_len_fwd = rules.quality_checks_fqc_seq_len.output.JSON.format(ori='fwd') if 'fastqc' not in config['quality_checks'].get('disabled_checks', []) else [],
+        JSON_fqc_seq_len_rev = rules.quality_checks_fqc_seq_len.output.JSON.format(ori='rev') if (config.get('read_type', 'illumina') == 'illumina' and 'fastqc' not in config['quality_checks'].get('disabled_checks', [])) else []
     output:
         VAL_HTML = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_REPORT,
         JSON = Path(config['working_dir']) / 'report' / 'informs.json'
