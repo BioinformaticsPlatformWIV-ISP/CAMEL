@@ -104,8 +104,8 @@ class ReporterGenomeTyping(Tool):
                 candidate_table.append([cnt[0], f'{self.__reformat_inform(str(cnt[1]))} ({cnt[1]/total_reads_count*100:.2f}%)'])
             self._report_section.add_html_object(HtmlExpandableTable(candidate_table, ['Segment name', 'Reads count (percentage)']))
 
+            self._report_section.add_line_break()
             if i + 1 < len(self._input_informs['genometyping']['expected_segments']):
-                self._report_section.add_line_break()
                 self._report_section.add_horizontal_line()
 
     @staticmethod
