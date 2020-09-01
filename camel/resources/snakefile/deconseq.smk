@@ -109,7 +109,8 @@ rule deconseq_run:
         SnakemakeUtils.dump_object([ToolIOFile(Path(config['working_dir']) / 'deconseq' / 'deconseq_cleaned_se.fq')], deconseq.OUTPUT_DECONSEQ_CLEAN_SE)
         deconseq_informs = deconseq.combine_deconseq_informs(fwd_pe_deconseq, rev_pe_deconseq, fwd_se_deconseq, rev_se_deconseq)
         deconseq_informs['combined'] = {'remaining_pe_reads': FastqUtils.count_reads(str(Path(config['working_dir']) / 'deconseq' / 'deconseq_cleaned_pe_fwd.fq')),
-                                        'remaining_se_reads': FastqUtils.count_reads(str(Path(config['working_dir']) / 'deconseq' / 'deconseq_cleaned_se.fq'))}
+                                        'remaining_se_reads': FastqUtils.count_reads(str(Path(config['working_dir']) / 'deconseq' / 'deconseq_cleaned_se.fq')),
+                                        'processed_dbs': deconseq.get_processed_dbs(deconseq_informs)}
         SnakemakeUtils.dump_object(deconseq_informs, deconseq.OUTPUT_DECONSEQ_INFORMS)
 
 rule deconseq_report:
@@ -125,9 +126,46 @@ rule deconseq_report:
         sample_name = config['sample_name']
     run:
         from camel.app.tools.pipelines.deconseq.reporterdeconseq import ReporterDeconseq
-        from camel.app.io.tooliovalue import ToolIOValue
+
         reporter = ReporterDeconseq(camel)
         SnakemakeUtils.add_pickle_inputs(reporter, input)
         step = Step(rule, reporter, camel, params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
+
+
+rule deconseq_export_summary:
+    """
+    Exports the summary information for deconseq.
+    """
+    input:
+        INFORMS = rules.deconseq_run.output.INFORMS
+    output:
+        TSV = Path(config['working_dir'], deconseq.OUTPUT_DECONSEQ_SUMMARY)
+    run:
+
+        def get_deconseq_summary_read_count(informs_, deconseq_db_):
+            if deconseq_db_ in informs_['deconseq_stats']:
+                return informs_['deconseq_stats'][deconseq_db_]['input_reads_count'], informs_['deconseq_stats'][deconseq_db_]['removed_reads_count']
+            else:
+                return 0, 0
+
+        deconseq_informs = SnakemakeUtils.load_object(input.INFORMS)
+        with open(output.TSV, 'w') as handle:
+            se_counts = 0
+            for read_type in ['PE_FWD', 'PE_REV', 'SE_FWD', 'SE_REV']:
+                if deconseq_informs[read_type] is not None:
+                    handle.write(f'deconseq_{read_type.lower()}_initial\t{deconseq_informs[read_type]["initial_reads_count"]}\n')
+                    handle.write(f'deconseq_{read_type.lower()}_final\t{deconseq_informs[read_type]["final_reads_count"]}\n')
+                else:
+                    handle.write(f'deconseq_{read_type.lower()}_initial\t0\n')
+                    handle.write(f'deconseq_{read_type.lower()}_final\t0\n')
+            for deconseq_db in deconseq_informs['combined']['processed_dbs']:
+                for read_type in ['PE_FWD', 'PE_REV', 'SE_FWD', 'SE_REV']:
+                    if deconseq_informs[read_type] is not None:
+                        stats = get_deconseq_summary_read_count(deconseq_informs[read_type], deconseq_db)
+                        handle.write(f'deconseq_{read_type.lower()}_{deconseq_db}_input\t{stats[0]}\n')
+                        handle.write(f'deconseq_{read_type.lower()}_{deconseq_db}_removed\t{stats[1]}\n')
+                    else:
+                        handle.write(f'deconseq_{read_type.lower()}_{deconseq_db}_input\t0\n')
+                        handle.write(f'deconseq_{read_type.lower()}_{deconseq_db}_removed\t0\n')
