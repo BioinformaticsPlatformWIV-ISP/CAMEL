@@ -1,7 +1,8 @@
 import logging
+from pathlib import Path
+from typing import List
 
 import abc
-import os
 
 from camel.app.components.vcf.vcfutils import VCFUtils
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
@@ -31,6 +32,15 @@ class BaseFilter(Tool, metaclass=abc.ABCMeta):
         """
         pass
 
+    @property
+    @abc.abstractmethod
+    def description(self) -> str:
+        """
+        Returns the description for this filter.
+        :return: Description
+        """
+        raise NotImplementedError()
+
     def _check_input(self) -> None:
         """
         Checks the input.
@@ -52,6 +62,7 @@ class BaseFilter(Tool, metaclass=abc.ABCMeta):
         self._informs['variants_in'] = nb_of_variants_pre
         self._informs['variants_out'] = nb_of_variants_post
         self._informs['full_name'] = self.full_name
+        self._informs['description'] = self.description
         self._tool_outputs['VCF_GZ'] = [ToolIOFile(self.output_path)]
 
     @abc.abstractmethod
@@ -63,9 +74,20 @@ class BaseFilter(Tool, metaclass=abc.ABCMeta):
         pass
 
     @property
-    def output_path(self) -> str:
+    def output_path(self) -> Path:
         """
         Returns the path to the output file.
         :return: Path
         """
-        return os.path.join(self._folder, self._parameters['output_filename'].value)
+        return Path(self._folder) / self._parameters['output_filename'].value
+
+    def _get_soft_filter_options(self) -> List[str]:
+        """
+        Returns the parts of the command related to the soft filtering.
+        If soft filtering is not enabled an empty list is returned.
+        :return: List of options
+        """
+        if 'soft_filter' not in self._parameters:
+            return []
+        filter_name = self.full_name.replace(' ', '_').lower()
+        return [f"{self._parameters['soft_filter'].option} '{filter_name}'"]

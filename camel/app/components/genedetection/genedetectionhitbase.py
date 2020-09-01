@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Any
 
 import abc
 
@@ -147,3 +147,14 @@ class GeneDetectionHitBase(object, metaclass=abc.ABCMeta):
             return HtmlTableCell(self._accession, self.color, link=link)
         else:
             return HtmlTableCell(self._accession, self.color)
+
+    def get_metadata_value(self, key) -> Any:
+        """
+        Returns the value for the metadata with the given key.
+        :param key: Key
+        :return: Value
+        """
+        for dict_ in self._metadata:
+            if dict_['name'] == key:
+                return dict_['value']
+        raise KeyError(key)

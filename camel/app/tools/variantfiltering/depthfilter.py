@@ -1,3 +1,4 @@
+from camel.app.camel import Camel
 from camel.app.error.invalidparametererror import InvalidParameterError
 
 from camel.app.tools.variantfiltering.basefilter import BaseFilter
@@ -8,7 +9,7 @@ class DepthFilter(BaseFilter):
     Filters variants based on absolute depth, forward depth and reverse depth.
     """
 
-    def __init__(self, camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initializes this tool.
         :param camel: CAMEL instance
@@ -23,16 +24,28 @@ class DepthFilter(BaseFilter):
         """
         return 'Depth'
 
-    def _check_parameters(self):
+    @property
+    def description(self) -> str:
+        """
+        Returns the description for this filter.
+        :return: Description
+        """
+        return 'Minimal <b>{}</b> reads mapped at variant position and <b>{}</b> forward <b>{}</b> reverse'.format(
+            self._parameters['min_depth'].value if 'min_depth' in self._parameters else 0,
+            self._parameters['min_forward_depth'].value if 'min_forward_depth' in self._parameters else 0,
+            self._parameters['min_reverse_depth'].value if 'min_reverse_depth' in self._parameters else 0
+        )
+
+    def _check_parameters(self) -> None:
         """
         Checks the command line parameters.
         :return: None
         """
-        if not any([param in self._parameters for param in ('min_depth', 'min_relative_depth', 'min_reverse_depth')]):
+        if not any([param in self._parameters for param in ('min_depth', 'min_forward_depth', 'min_reverse_depth')]):
             raise InvalidParameterError('No filtering parameter found')
         super()._check_parameters()
 
-    def _apply_filter(self):
+    def _apply_filter(self) -> None:
         """
         Applies the filtering on the variants.
         :return: None
@@ -40,7 +53,7 @@ class DepthFilter(BaseFilter):
         self.__build_command()
         self._execute_command()
 
-    def __create_exclude_string(self):
+    def __create_exclude_string(self) -> str:
         """
         Creates the exclude string.
         :return: Exclude string
@@ -54,7 +67,7 @@ class DepthFilter(BaseFilter):
             parts.append('DP4[1]+DP4[3]<{}'.format(self._parameters['min_reverse_depth'].value))
         return ' || '.join(parts)
 
-    def __build_command(self):
+    def __build_command(self) -> None:
         """
         Builds the command for this tool.
         :return: None
@@ -65,4 +78,4 @@ class DepthFilter(BaseFilter):
             self._tool_inputs['VCF_GZ'][0].path,
             '--output-type z',
             '--output {}'.format(self.output_path)
-        ])
+        ] + self._get_soft_filter_options())

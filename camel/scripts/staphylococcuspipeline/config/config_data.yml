@@ -17,11 +17,8 @@ srst2:
 
 assembly:
   spades:
-    cov_cutoff: 'off'
-  min_contig_length: 0
-
-pointfinder:
-  db: staphylococcus_aureus
+    cov_cutoff: 10
+  min_contig_length: 1000
 
 spa_typing:
   db: /db/pipelines/saureus/profiles.fasta
@@ -29,6 +26,9 @@ spa_typing:
 
 sccmec_typing:
   profiles: /db/pipelines/saureus/SCCmec_genes/profiles.yml
+
+pointfinder:
+  db: staphylococcus_aureus
 
 ############################
 # Gene detection databases #

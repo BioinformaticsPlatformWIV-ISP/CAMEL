@@ -2,9 +2,8 @@
 import argparse
 import json
 import logging
+from pathlib import Path
 from typing import Any, Dict, Optional, Sequence
-
-import os
 
 from camel.app.components.mainscripthelper import MainScriptHelper
 from camel.app.components.workflows.genedetectionwrapper import GeneDetectionWrapper, GeneDetectionOutput
@@ -95,9 +94,9 @@ class MainGeneDetection(object):
         """
         # Get database path
         if self._args.database_dir is not None:
-            db_path = self._args.database_dir
+            db_path = Path(self._args.database_dir)
         else:
-            db_path = f"{'.'.join(self._args.database_html.split('.')[:-1])}_files"
+            db_path = Path(f"{'.'.join(self._args.database_html.split('.')[:-1])}_files")
         config_data = {'path': db_path}
 
         # Add specific options
@@ -121,7 +120,7 @@ class MainGeneDetection(object):
             }}})
 
         # Add extra column
-        with open(os.path.join(db_path, 'db_metadata.txt')) as handle:
+        with (db_path / 'db_metadata.txt').open() as handle:
             db_metadata = json.load(handle)
             if 'extra_column' in db_metadata:
                 config_data['metadata'] = db_metadata['extra_column']

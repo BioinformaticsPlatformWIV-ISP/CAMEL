@@ -104,5 +104,6 @@ sequence_typing:
     path: /db/sequence_typing/ecoli/mlst-warwick
   cgmlst:
     path: /db/sequence_typing/ecoli/cgmlst
-    detection_method: blast
     blastn_task: blastn
+  innuendo_cgmlst:
+    path: /db/sequence_typing/ecoli/innuendo_cgmlst

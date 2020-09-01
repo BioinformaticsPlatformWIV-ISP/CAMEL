@@ -52,9 +52,8 @@ class FastQC(Tool):
         Checks if the command output is valid.
         :return: None
         """
-        for line in self.stderr.splitlines():
-            if not line.startswith('Started analysis'):
-                raise ToolExecutionError("Error executing FastQC: {}".format(self.stderr.strip()))
+        if not self._command.returncode == 0:
+            raise ToolExecutionError(f"Error executing {self.name}: {self._command.stderr}")
 
     @staticmethod
     def __get_output_folder(execution_folder, input_file):

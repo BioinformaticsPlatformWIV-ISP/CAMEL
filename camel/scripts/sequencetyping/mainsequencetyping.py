@@ -37,7 +37,8 @@ class MainSequenceTyping(object):
         MainScriptHelper.add_assembly_arguments(argument_parser)
         MainScriptHelper.add_input_files_arguments(argument_parser)
         argument_parser.add_argument('--scheme-dir', required=True, type=str)
-        argument_parser.add_argument('--detection-method', type=str, choices=['blast', 'srst2'], default='blast')
+        argument_parser.add_argument('--detection-method', type=str, choices=['blast', 'srst2', 'kma'], default='blast')
+        argument_parser.add_argument('--blastn-task', type=str, choices=['blastn', 'megablast'], default='megablast')
         argument_parser.add_argument('--srst2-max-unaligned-overlap', type=int, default=100)
         return argument_parser.parse_args(args)
 
@@ -58,6 +59,9 @@ class MainSequenceTyping(object):
         elif self._args.detection_method == 'srst2':
             input_pe = self._helper.get_srst2_input(input_files, self._args, self._report)
             output = self.__run_sequence_typing_srst2(input_pe, db_data['name'], self._args.scheme_dir)
+        elif self._args.detection_method == 'kma':
+            input_pe = self._helper.get_srst2_input(input_files, self._args, self._report)
+            output = self.__run_sequence_typing_kma(input_pe, db_data['name'], self._args.scheme_dir)
         else:
             raise ValueError(f"Invalid detection method: {self._args.detection_method}")
         self.__export_output(output)
@@ -73,7 +77,7 @@ class MainSequenceTyping(object):
         wrapper = SequenceTypingWrapper(self._args.working_dir)
         workflow_input = SequenceTypingInput(
             sample_name=self._sample_name, fasta=ToolIOFile(fasta_file.path), db_path=db_path, db_key=db_key)
-        wrapper.run_workflow_blast(workflow_input, self._args.threads)
+        wrapper.run_workflow_blast(workflow_input, self._args.blastn_task, self._args.threads)
         return wrapper.output
 
     def __run_sequence_typing_srst2(self, fastq_pe: List[ToolIOFile], db_key: str, db_path: str) -> \
@@ -91,6 +95,22 @@ class MainSequenceTyping(object):
             sample_name=self._sample_name, fastq_pe=fastq_pe, db_key=db_key, db_path=db_path)
         srst2_options = {'max_unaligned_overlap': self._args.srst2_max_unaligned_overlap}
         wrapper.run_workflow_srst2(workflow_input, srst2_options, self._args.threads)
+        return wrapper.output
+
+    def __run_sequence_typing_kma(self, fastq_pe: List[ToolIOFile], db_key: str, db_path: str) -> \
+            SequenceTypingOutput:
+        """
+        Runs the sequence typing workflow using KMA.
+        :param fastq_pe: Input FASTQ PE files
+        :param db_key: Database key
+        :param db_path: Database path
+        :return: None
+        """
+        wrapper = SequenceTypingWrapper(self._args.working_dir)
+        workflow_input = SequenceTypingInput(
+            fasta=ToolIOFile(self._args.fasta) if self._args.fasta else None,
+            sample_name=self._sample_name, fastq_pe=fastq_pe, db_key=db_key, db_path=db_path)
+        wrapper.run_workflow_kma(workflow_input, self._args.threads)
         return wrapper.output
 
     def __export_output(self, output: SequenceTypingOutput) -> None:

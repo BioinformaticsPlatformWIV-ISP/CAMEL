@@ -22,7 +22,8 @@ rule variant_filtering_depth:
         running_dir = Path(config['working_dir']) / 'variant_filtering' / 'depth',
         min_total_depth = variant_filtering.get_filtering_param(config, 'depth', 'min_total_depth'),
         min_fwd_depth = variant_filtering.get_filtering_param(config, 'depth', 'min_fwd_depth'),
-        min_rev_depth = variant_filtering.get_filtering_param(config, 'depth', 'min_rev_depth')
+        min_rev_depth = variant_filtering.get_filtering_param(config, 'depth', 'min_rev_depth'),
+        soft_filter = config['variant_filtering'].get('soft_filter', False)
     run:
         from camel.app.tools.variantfiltering.depthfilter import DepthFilter
         depth_filter = DepthFilter(camel)
@@ -34,6 +35,7 @@ rule variant_filtering_depth:
             depth_filter.update_parameters(min_forward_depth=params.min_fwd_depth)
         if params.min_rev_depth is not None:
             depth_filter.update_parameters(min_reverse_depth=params.min_rev_depth)
+        depth_filter.update_parameters(soft_filter=params.soft_filter)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(depth_filter, output)
 
@@ -48,7 +50,8 @@ rule variant_filtering_snp_quality:
         INFORMS = Path(config['working_dir']) / 'variant_filtering' / 'snp_quality' / 'informs.io'
     params:
         running_dir = Path(config['working_dir']) / 'variant_filtering' / 'snp_quality',
-        min_snp_quality = variant_filtering.get_filtering_param(config, 'snp_quality', 'min_snp_quality')
+        min_snp_quality = variant_filtering.get_filtering_param(config, 'snp_quality', 'min_snp_quality'),
+        soft_filter = config['variant_filtering'].get('soft_filter', False)
     run:
         from camel.app.tools.variantfiltering.snpqualityfilter import SnpQualityFilter
         snp_qual_filter = SnpQualityFilter(camel)
@@ -56,6 +59,7 @@ rule variant_filtering_snp_quality:
         step = Step(rule, snp_qual_filter, camel, params.running_dir, config)
         if params.min_snp_quality is not None:
             snp_qual_filter.update_parameters(min_snp_quality=params.min_snp_quality)
+        snp_qual_filter.update_parameters(soft_filter=params.soft_filter)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(snp_qual_filter, output)
 
@@ -70,17 +74,19 @@ rule variant_filtering_mapping_quality:
         INFORMS = Path(config['working_dir']) / 'variant_filtering'/ 'mapping_quality' /'informs.io'
     params:
         running_dir = Path(config['working_dir']) / 'variant_filtering' / 'mapping_quality',
-        min_mapping_quality = variant_filtering.get_filtering_param(config, 'mapping_quality', 'min_mapping_quality')
+        min_mapping_quality = variant_filtering.get_filtering_param(config, 'mapping_quality', 'min_mapping_quality'),
+        soft_filter = config['variant_filtering'].get('soft_filter', False)
     run:
         from camel.app.tools.variantfiltering.mappingqualityfilter import MappingQualityFilter
-        snp_qual_filter = MappingQualityFilter(camel)
-        SnakemakeUtils.add_pickle_inputs(snp_qual_filter, input)
-        step = Step(rule, snp_qual_filter, camel, params.running_dir, config)
+        mapping_quality_filter = MappingQualityFilter(camel)
+        SnakemakeUtils.add_pickle_inputs(mapping_quality_filter, input)
+        step = Step(rule, mapping_quality_filter, camel, params.running_dir, config)
         if params.min_mapping_quality is not None:
-            snp_qual_filter.update_parameters(min_mapping_quality=params.min_mapping_quality)
-        snp_qual_filter.update_parameters(output_filename="filtered_mapping_qual.vcf.gz")
+            mapping_quality_filter.update_parameters(min_mapping_quality=params.min_mapping_quality)
+        mapping_quality_filter.update_parameters(
+            output_filename="filtered_mapping_qual.vcf.gz", soft_filter=params.soft_filter)
         step.run_step()
-        SnakemakeUtils.dump_tool_outputs(snp_qual_filter, output)
+        SnakemakeUtils.dump_tool_outputs(mapping_quality_filter, output)
 
 rule variant_filtering_distance_index:
     """
@@ -112,7 +118,8 @@ rule variant_filtering_distance:
     params:
         running_dir = Path(config['working_dir']) / 'variant_filtering' / 'distance',
         min_distance = variant_filtering.get_filtering_param(config, 'distance', 'min_distance'),
-        keep_best = variant_filtering.get_filtering_param(config, 'distance', 'keep_best')
+        keep_best = variant_filtering.get_filtering_param(config, 'distance', 'keep_best'),
+        soft_filter = config['variant_filtering'].get('soft_filter', False)
     run:
         from camel.app.tools.variantfiltering.distancefilter import DistanceFilter
         distance_filter = DistanceFilter(camel)
@@ -121,6 +128,7 @@ rule variant_filtering_distance:
             distance_filter.update_parameters(min_distance=params.min_distance)
         if params.keep_best is not None:
             distance_filter.update_parameters(keep_best=params.keep_best)
+        distance_filter.update_parameters(soft_filter=params.soft_filter, seed=0)
         SnakemakeUtils.add_pickle_inputs(distance_filter, input)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(distance_filter, output)
@@ -156,7 +164,8 @@ rule variant_filtering_zscore:
     params:
         running_dir = Path(config['working_dir']) / 'variant_filtering' / 'zscore',
         min_zscore = variant_filtering.get_filtering_param(config, 'zscore', 'min_zscore'),
-        y_multiplier = variant_filtering.get_filtering_param(config, 'zscore', 'y_multiplier')
+        y_multiplier = variant_filtering.get_filtering_param(config, 'zscore', 'y_multiplier'),
+        soft_filter = config['variant_filtering'].get('soft_filter', False)
     run:
         import logging
         import shutil
@@ -167,7 +176,7 @@ rule variant_filtering_zscore:
             zscore_filter.update_parameters(min_zscore=params.min_zscore)
         if params.y_multiplier is not None:
             zscore_filter.update_parameters(y_multiplier=params.y_multiplier)
-
+        zscore_filter.update_parameters(soft_filter=params.soft_filter)
         if len(SnakemakeUtils.load_object(input.BAM)) == 0:
             logging.info("No BAM input found, skipping Z-score filter.")
             shutil.copyfile(input.VCF_GZ, output.VCF_GZ)
@@ -207,7 +216,8 @@ rule variant_filtering_region:
         INFORMS = Path(config['working_dir']) / 'variant_filtering' / 'regions' / 'informs.io'
     params:
         running_dir = Path(config['working_dir']) / 'variant_filtering' / 'regions',
-        bed_file = variant_filtering.get_filtering_param(config, 'region', 'bed_file')
+        bed_file = variant_filtering.get_filtering_param(config, 'region', 'bed_file'),
+        soft_filter = config['variant_filtering'].get('soft_filter', False)
     run:
         from camel.app.components.vcf.vcfutils import VCFUtils
         from camel.app.tools.bcftools.bcftoolsfilter import BcftoolsFilter
@@ -218,7 +228,8 @@ rule variant_filtering_region:
         if params.bed_file is not None:
             bcftools_filter.add_input_files({'BED_exclude': [ToolIOFile(params.bed_file)]})
         bcftools_filter.update_parameters(
-            output_type='v', invert_targets=True, output_filename='variants_regions_removed.vcf')
+            output_type='v', invert_targets=True, output_filename='variants_regions_removed.vcf',
+            soft_filter=False if params.soft_filter is False else 'regions')
         step = Step(rule, bcftools_filter, camel, params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_output(bcftools_filter, 'VCF', output.VCF)

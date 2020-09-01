@@ -23,12 +23,24 @@ class TestVariantFiltering(CamelTestSuite):
 
     def test_depth_filter(self) -> None:
         """
-        Tests the depth filter
+        Tests the depth filter.
         :return: None
         """
         depth_filter = DepthFilter(self.camel)
         depth_filter.add_input_files({'VCF_GZ': [ToolIOFile(TestVariantFiltering.FILE_VCF_GZ_UNFILTERED)]})
         depth_filter.update_parameters(min_depth=20, min_forward_depth=2, min_reverse_depth=2)
+        depth_filter.run(self.running_dir)
+        self.assertTrue('VCF_GZ' in depth_filter.tool_outputs)
+        self.assertGreater(depth_filter.tool_outputs['VCF_GZ'][0].size, 0, "Output file is empty")
+
+    def test_depth_filter_soft_mask(self) -> None:
+        """
+        Tests the depth filter with soft masking.
+        :return: None
+        """
+        depth_filter = DepthFilter(self.camel)
+        depth_filter.add_input_files({'VCF_GZ': [ToolIOFile(TestVariantFiltering.FILE_VCF_GZ_UNFILTERED)]})
+        depth_filter.update_parameters(min_depth=80, min_forward_depth=5, min_reverse_depth=5, soft_filter=True)
         depth_filter.run(self.running_dir)
         self.assertTrue('VCF_GZ' in depth_filter.tool_outputs)
         self.assertGreater(depth_filter.tool_outputs['VCF_GZ'][0].size, 0, "Output file is empty")
@@ -69,6 +81,18 @@ class TestVariantFiltering(CamelTestSuite):
         self.assertTrue('VCF_GZ' in distance_filter.tool_outputs)
         self.assertGreater(distance_filter.tool_outputs['VCF_GZ'][0].size, 0, "Output file is empty")
 
+    def test_distance_filter_soft_mask(self) -> None:
+        """
+        Tests the distance filter.
+        :return: None
+        """
+        distance_filter = DistanceFilter(self.camel)
+        distance_filter.add_input_files({'VCF_GZ': [ToolIOFile(TestVariantFiltering.FILE_VCF_GZ_UNFILTERED)]})
+        distance_filter.update_parameters(min_distance=10, keep_best=False, soft_filter=True)
+        distance_filter.run(self.running_dir)
+        self.assertTrue('VCF_GZ' in distance_filter.tool_outputs)
+        self.assertGreater(distance_filter.tool_outputs['VCF_GZ'][0].size, 0, "Output file is empty")
+
     def test_zscore_filter(self) -> None:
         """
         Tests the Z-score filter.
@@ -79,6 +103,21 @@ class TestVariantFiltering(CamelTestSuite):
             'VCF_GZ': [ToolIOFile(TestVariantFiltering.FILE_VCF_GZ_UNFILTERED)],
             'BAM': [ToolIOFile(TestVariantFiltering.FILE_BAM)]
         })
+        zscore_filter.run(self.running_dir)
+        self.assertTrue('VCF_GZ' in zscore_filter.tool_outputs)
+        self.assertGreater(zscore_filter.tool_outputs['VCF_GZ'][0].size, 0, "Output file is empty")
+
+    def test_zscore_filter_soft_mask(self) -> None:
+        """
+        Tests the Z-score filter.
+        :return: None
+        """
+        zscore_filter = ZScoreFilter(self.camel)
+        zscore_filter.add_input_files({
+            'VCF_GZ': [ToolIOFile(TestVariantFiltering.FILE_VCF_GZ_UNFILTERED)],
+            'BAM': [ToolIOFile(TestVariantFiltering.FILE_BAM)]
+        })
+        zscore_filter.update_parameters(soft_filter=True)
         zscore_filter.run(self.running_dir)
         self.assertTrue('VCF_GZ' in zscore_filter.tool_outputs)
         self.assertGreater(zscore_filter.tool_outputs['VCF_GZ'][0].size, 0, "Output file is empty")
@@ -97,6 +136,28 @@ class TestVariantFiltering(CamelTestSuite):
             '--working-dir', str(self.running_dir),
             '--output-vcf', str(output_file_vcf),
             '--output-stats', str(output_file_stats)
+        ]
+        main_filtering = MainFiltering(args)
+        main_filtering.run()
+        self.assertGreater(output_file_vcf.stat().st_size, 0)
+        self.assertGreater(output_file_stats.stat().st_size, 0)
+        self.assertLess(VCFUtils.count_variants(str(output_file_vcf)), number_variants_in)
+
+    def test_variant_filtering_main_soft(self) -> None:
+        """
+        Tests the main script for the variant filtering with soft masking.
+        :return: None
+        """
+        number_variants_in = VCFUtils.count_variants(str(TestVariantFiltering.FILE_VCF_GZ_UNFILTERED))
+        output_file_vcf = self.running_dir / 'filtered_variants.vcf'
+        output_file_stats = self.running_dir / 'filter_stats.txt'
+        args = [
+            '--vcf', str(TestVariantFiltering.FILE_VCF_GZ_UNFILTERED),
+            '--bam', str(TestVariantFiltering.FILE_BAM),
+            '--working-dir', str(self.running_dir),
+            '--output-vcf', str(output_file_vcf),
+            '--output-stats', str(output_file_stats),
+            '--soft-filter'
         ]
         main_filtering = MainFiltering(args)
         main_filtering.run()

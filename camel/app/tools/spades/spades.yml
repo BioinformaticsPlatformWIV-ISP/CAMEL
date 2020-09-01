@@ -8,5 +8,6 @@ parameters:
   only_error_correction: {default: false, mandatory: false, option: --only-error-correction,
     value: ''}
   output_dir: {default: true, mandatory: false, option: -o, value: assembly}
+  plasmid: {default: false, mandatory: false, option: --plasmid, value: null}
   threads: {default: true, mandatory: false, option: -t, value: '6'}
 tool_command: spades.py

@@ -1,11 +1,7 @@
-import bz2
 import logging
 import pickle
-import time
+from pathlib import Path
 from typing import Any, Optional, List
-
-import os
-from shutil import copyfileobj
 
 from camel.app.io.tooliodirectory import ToolIODirectory
 from camel.app.io.tooliofile import ToolIOFile
@@ -54,9 +50,10 @@ class SnakemakeUtils(object):
         :param value: Input value
         :return: ToolIO object
         """
-        if os.path.isfile(value):
+        path = Path(value)
+        if path.is_file():
             converted_value = ToolIOFile(value)
-        elif os.path.isdir(value):
+        elif path.isdir(value):
             converted_value = ToolIODirectory(value)
         else:
             converted_value = ToolIOValue(value)
@@ -64,7 +61,7 @@ class SnakemakeUtils(object):
         return converted_value
 
     @staticmethod
-    def add_pickle_input(tool: Tool, key: str, path: str, optional: bool=False) -> None:
+    def add_pickle_input(tool: Tool, key: str, path: str, optional: bool = False) -> None:
         """
         Adds a pickled input to a tool. For optional input whose value is empty, it is skipped.
         :param tool: Tool
@@ -97,8 +94,8 @@ class SnakemakeUtils(object):
         SnakemakeUtils.dump_object(tool.tool_outputs[key], path)
 
     @staticmethod
-    def add_pickle_inputs(tool: Tool, snake_input: Any, keys: Optional[List[str]]=None,
-                          excluded_keys: Optional[List[str]]=None, optionals: Optional[List[str]]=None) -> None:
+    def add_pickle_inputs(tool: Tool, snake_input: Any, keys: Optional[List[str]] = None,
+                          excluded_keys: Optional[List[str]] = None, optionals: Optional[List[str]] = None) -> None:
         """
         Adds pickled inputs from the snakemake input. If 'optionals' is specified, any optional input in that
         list will be skipped if its value is empty (no input file).
@@ -115,9 +112,9 @@ class SnakemakeUtils(object):
         if keys is None:
             keys = snake_input.keys()
         for key in keys:
-            logging.debug("Adding input '{}'".format(key))
+            logging.debug(f"Adding input '{key}'")
             if key not in snake_input.keys():
-                raise KeyError("Key '{}' not found in snakemake input".format(key))
+                raise KeyError(f"Key '{key}' not found in snakemake input")
             if (excluded_keys is not None) and (key in excluded_keys):
                 continue
             with open(snake_input[key], 'rb') as handle:
@@ -134,8 +131,8 @@ class SnakemakeUtils(object):
                 logging.debug("Input '{!r}' added".format(value))
 
     @staticmethod
-    def dump_tool_outputs(tool: Tool, snake_output: Any, keys: Optional[List[str]]=None,
-                          ignore_missing_output=False) -> None:
+    def dump_tool_outputs(tool: Tool, snake_output: Any, keys: Optional[List[str]] = None,
+                          ignore_missing_output: bool = False) -> None:
         """
         Dumps the tool outputs in pickles.
         :param tool: Tool
@@ -155,14 +152,14 @@ class SnakemakeUtils(object):
                 with open(snake_output[key], 'wb') as handle:
                     pickle.dump(tool.informs, handle)
             else:
-                message = "Output '{}' not generated".format(key)
+                message = f"Output '{key}' not generated"
                 if ignore_missing_output is True:
                     logging.warning(message)
                 else:
                     raise ValueError(message)
 
     @staticmethod
-    def pickle_snake_input(snake_input: Any, snake_output: Any, keys: Optional[List[str]]=None) -> None:
+    def pickle_snake_input(snake_input: Any, snake_output: Any, keys: Optional[List[str]] = None) -> None:
         """
         Converts snakemake input to CAMEL IO pickles.
         For every key, it will attempt to convert every value to an IO object (see IO object function) and store the
@@ -177,10 +174,10 @@ class SnakemakeUtils(object):
             keys = snake_input.keys()
         for key in keys:
             if key not in snake_input.keys():
-                raise KeyError("Key '{}' not found in snakemake input".format(key))
+                raise KeyError(f"Key '{key}' not found in snakemake input")
             input_list = snake_input[key]
             if key not in snake_output.keys():
-                raise ValueError("Output key '{}' not found.".format(key))
+                raise ValueError(f"Output key '{key}' not found.")
             list_io_objects = [SnakemakeUtils.get_io_object(i) for i in input_list]
             SnakemakeUtils.dump_object(list_io_objects, snake_output[key])
 
@@ -194,7 +191,7 @@ class SnakemakeUtils(object):
         :param working_dir: Working directory
         :return: None
         """
-        logging.info("Running tool: {}".format(tool.name))
+        logging.info(f"Running tool: {tool.name}")
         SnakemakeUtils.add_pickle_inputs(tool, snake_input)
         tool.run(working_dir)
         SnakemakeUtils.dump_tool_outputs(tool, snake_output)

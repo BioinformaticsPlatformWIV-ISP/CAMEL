@@ -45,10 +45,12 @@ class SequenceTypingWrapper(object):
         self._working_dir = Path(working_dir)
         self._output = None
 
-    def run_workflow_blast(self, workflow_input: SequenceTypingInput, threads: Optional[int] = 8) -> None:
+    def run_workflow_blast(self, workflow_input: SequenceTypingInput, blast_task: Optional[str] = None,
+                           threads: Optional[int] = 8) -> None:
         """
         Runs the BLAST based sequence typing workflow.
         :param workflow_input: Workflow input
+        :param blast_task: blast task
         :param threads: Number of threads to use
         :return: None
         """
@@ -57,14 +59,15 @@ class SequenceTypingWrapper(object):
         if workflow_input.fasta is None:
             raise ValueError("FASTA input is required to run the blast analysis")
         self.__create_blast_input(workflow_input.fasta.path)
+        options = {'blastn_task': blast_task} if blast_task is not None else None
         config_path = self.__create_config_file(
-            workflow_input.sample_name, 'blast', workflow_input.db_key, workflow_input.db_path)
+            workflow_input.sample_name, 'blast', workflow_input.db_key, workflow_input.db_path, options)
         self.__run_snakefile(config_path, workflow_input.db_key, threads)
 
     def run_workflow_srst2(self, workflow_input: SequenceTypingInput, srst2_options: Optional[Dict[str, Any]] = None,
                            threads: Optional[int] = 8) -> None:
         """
-        RUns the SRST2 based sequence typing workflow.
+        Runs the SRST2 based sequence typing workflow.
         :param workflow_input: Input for the workflow
         :param srst2_options: Additional options for SRST2
         :param threads: Number of threads to use
@@ -81,13 +84,35 @@ class SequenceTypingWrapper(object):
             else:
                 self.__create_blast_input(workflow_input.fasta.path)
         self.__create_srst2_input([f.path for f in workflow_input.fastq_pe])
-        additional_options = {'srst2': srst2_options} if srst2_options else None
+        additional_options = srst2_options if srst2_options else None
         config_path = self.__create_config_file(
             workflow_input.sample_name, 'srst2', workflow_input.db_key, workflow_input.db_path, additional_options)
         self.__run_snakefile(config_path, workflow_input.db_key, threads)
 
+    def run_workflow_kma(self, workflow_input: SequenceTypingInput, threads: Optional[int] = 8) -> None:
+        """
+        Runs the KMA based sequence typing workflow.
+        :param workflow_input: Input for the workflow
+        :param threads: Number of threads to use
+        :return: None
+        """
+        if not self._working_dir.exists():
+            self._working_dir.mkdir()
+        if workflow_input.fastq_pe is None:
+            raise ValueError('FASTQ input is required to run the KMA analysis')
+        scheme_metadata = SequenceTypingUtils.parse_scheme_metadata(workflow_input.db_path)
+        if len([locus for locus in scheme_metadata['loci'] if locus['type'] == 'peptide']) > 0:
+            if workflow_input.fasta is None:
+                raise ValueError('FASTA input is required when there are protein loci in the scheme')
+            else:
+                self.__create_blast_input(workflow_input.fasta.path)
+        self.__create_srst2_input([f.path for f in workflow_input.fastq_pe])
+        config_path = self.__create_config_file(
+            workflow_input.sample_name, 'kma', workflow_input.db_key, workflow_input.db_path, {})
+        self.__run_snakefile(config_path, workflow_input.db_key, threads)
+
     def __create_config_file(self, sample_name: str, detection_method: str, db_key: str, db_path: str,
-                             additional_options: Optional[Dict[str, Any]] = None) -> str:
+                             additional_options: Dict[str, Any]) -> str:
         """
         Creates the configuration file for the sequence typing workflow.
         :param sample_name: Sample name
@@ -102,11 +127,14 @@ class SequenceTypingWrapper(object):
             'sample_name': sample_name,
             'detection_method': detection_method,
             'sequence_typing': {
-                db_key: {'path': db_path}
+                db_key: {
+                    'path': db_path,
+                    **additional_options
+                }
             }
         }
-        if additional_options is not None:
-            data.update(additional_options)
+        import pprint
+        pprint.pprint(data)
         return SnakePipelineUtils.generate_config_file(data, self._working_dir)
 
     def __create_blast_input(self, fasta_path: str) -> None:

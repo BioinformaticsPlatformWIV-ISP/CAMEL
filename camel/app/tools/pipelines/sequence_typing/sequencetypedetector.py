@@ -1,16 +1,17 @@
 import logging
-from dataclasses import dataclass
-from typing import List, Dict, Union, Tuple, Optional
+from dataclasses import dataclass, field
+from typing import List, Dict, Tuple, Optional
 
+from camel.app.components.sequencetyping.sequencetypinghitbase import SequenceTypingHitBase
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.tools.tool import Tool
 
 
-@dataclass
+@dataclass(frozen=True, unsafe_hash=True)
 class STProfile:
     name: str
-    metadata: List[Tuple[str, str]]
-    alleles: Optional[Dict[str, str]] = None
+    metadata: List[Tuple[str, str]] = field(hash=False)
+    alleles: Optional[Dict[str, str]] = field(hash=False)
 
 
 class SequenceTypeDetector(Tool):
@@ -36,13 +37,26 @@ class SequenceTypeDetector(Tool):
         Executes this tool.
         :return: None
         """
-        allele_ids = {h.value.locus: h.value.allele_id for h in
-                      self._tool_inputs['hits_nucl'] + self._tool_inputs['hits_pept']}
-        profiles = self.__parse_profiles(list(allele_ids.keys()))
-        sequence_type = self.__get_sequence_type(profiles, allele_ids)
-        self._informs['sequence_type'] = sequence_type if sequence_type is not None else STProfile(
-            SequenceTypeDetector.SYMBOL_NO_ST, metadata=[(k, '-') for k, _ in self._metadata_columns])
-        logging.info("Detected sequence type: {}".format(self._informs['sequence_type'].name))
+        # Parse input data
+        hit_by_locus = {hit.locus: hit for hit in [
+            io.value for io in self._tool_inputs['hits_nucl'] + self._tool_inputs['hits_pept']]}
+        profiles = self.__parse_profiles(list(hit_by_locus.keys()))
+
+        # Determine best profile
+        nb_matches_by_profile = self.__get_nb_matches_by_profile(profiles, hit_by_locus)
+        best_profile = sorted(nb_matches_by_profile.items(), key=lambda x: -x[-1])[0][0]
+        percent_matching = 100 * nb_matches_by_profile[best_profile] / len(best_profile.alleles)
+        is_detected = percent_matching >= int(self._parameters['min_percent_detected'].value)
+
+        # Save output data
+        self._informs.update({
+            'is_detected': is_detected,
+            'nb_detected': nb_matches_by_profile[best_profile],
+            'nb_loci': len(best_profile.alleles),
+            'percent_detected': percent_matching,
+            'symbol': best_profile.name if is_detected else SequenceTypeDetector.SYMBOL_NO_ST,
+            'metadata': [(k, v if is_detected else '-') for k, v in best_profile.metadata]
+        })
 
     def _check_input(self) -> None:
         """
@@ -74,37 +88,36 @@ class SequenceTypeDetector(Tool):
                 profiles.append(STProfile(name=parts[0], alleles=alleles, metadata=metadata))
         return profiles
 
-    def __alleles_match(self, detected_allele: str, profile_allele: str) -> bool:
+    def __alleles_match(self, detected_hit: SequenceTypingHitBase, profile_allele: str) -> bool:
         """
         Checks whether two alleles match.
-        :param detected_allele: Detected allele
+        :param detected_hit: Detected allele
         :param profile_allele: Allele from the ST profile
         :return: True if the alleles match
         """
         if profile_allele == self._symbol_allele_absent:
-            return detected_allele == '-'
+            return detected_hit.allele_id == '-'
         elif profile_allele in self._wildcards:
             return True
-        return detected_allele == profile_allele
+        return (detected_hit.is_perfect_hit()) and (detected_hit.allele_id == profile_allele)
 
-    def __get_sequence_type(self, profiles: List[STProfile], gene_alleles: Dict[str, str]) -> Union[STProfile, None]:
+    def __get_nb_matches_by_profile(
+            self, profiles: List[STProfile], hit_by_locus: Dict[str, SequenceTypingHitBase]) -> Dict:
         """
-        Returns the sequence type corresponding to the given gene alleles.
+        Returns the number of matches per profile.
         :param profiles: Sequence type profiles
-        :param gene_alleles: Alleles for the genes.
-        :return: Sequence type and metadata
+        :param hit_by_locus: Alleles for the genes.
+        :return: Nb. of matches by profile
         """
         if 'allele_absent_symbol' in self._parameters:
             self._symbol_allele_absent = self._parameters['allele_absent_symbol'].value
-        self._wildcards = self._parameters['allele_wildcard'].value.split(',')
+        self._wildcards = self._parameters['allele_wildcards'].value.split(',')
         logging.debug("Wildcards: [{}]¸ Symbol allele absent: {}".format(
             ', '.join(self._wildcards), self._symbol_allele_absent))
+
+        nb_matches_by_profile = {}
         for profile in profiles:
-            matched = True
-            for gene_name, allele in gene_alleles.items():
-                if not self.__alleles_match(allele, profile.alleles[gene_name]):
-                    matched = False
-                    break
-            if matched:
-                return profile
-        return None
+            nb_matching = sum([
+                self.__alleles_match(hit, profile.alleles[gene_name]) for gene_name, hit in hit_by_locus.items()])
+            nb_matches_by_profile[profile] = nb_matching
+        return nb_matches_by_profile

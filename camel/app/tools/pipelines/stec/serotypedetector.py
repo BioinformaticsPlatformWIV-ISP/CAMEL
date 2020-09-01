@@ -1,19 +1,7 @@
-from dataclasses import dataclass
-from typing import List
-
-import pandas as pd
-from pandas.errors import EmptyDataError
-
 from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.tools.tool import Tool
-
-
-@dataclass
-class SerotypeHit(object):
-    gene: str
-    type_: str
 
 
 class SerotypeDetectorEcoli(Tool):
@@ -34,7 +22,7 @@ class SerotypeDetectorEcoli(Tool):
         :return: None
         """
         for char in ('H', 'O'):
-            if 'TSV_{}'.format(char) not in self._tool_inputs:
+            if 'HITS_{}'.format(char) not in self._tool_inputs:
                 raise InvalidInputSpecificationError("{}-type hits are required".format(char))
         super()._check_input()
 
@@ -49,34 +37,22 @@ class SerotypeDetectorEcoli(Tool):
         self._tool_outputs['VAL_O_type'] = [ToolIOValue(o_type)]
         self._tool_outputs['VAL_serotype'] = [ToolIOValue('{}:{}'.format(o_type, h_type))]
 
-    @staticmethod
-    def __parse_hits(path: str) -> List[SerotypeHit]:
-        """
-        Parses the hits from a tabular gene detection output file.
-        :param path: Path
-        :return: List of hits
-        """
-        try:
-            data_hits = pd.read_table(path)
-        except EmptyDataError:
-            return []
-        return [SerotypeHit(gene, type_) for gene, type_ in zip(data_hits['Locus'], data_hits['Predicted serotype'])]
-
     def __get_h_type(self) -> str:
         """
         Returns the H type based on the gene detection hits.
         :return: H type.
         """
-        detected_genes = SerotypeDetectorEcoli.__parse_hits(self._tool_inputs['TSV_H'][0].path)
+        detected_genes = [io.value for io in self._tool_inputs['HITS_H']]
         if len(detected_genes) == 0:
             return 'H-unknown'
         elif len(detected_genes) == 1:
-            return detected_genes[0].type_
+            return detected_genes[0].get_metadata_value('Predicted serotype')
         else:
-            hits_sorted = {'fliC': [h for h in detected_genes if 'fliC' in h.gene],
-                           'non-fliC': [h for h in detected_genes if 'fliC' not in h.gene]}
+            hits_sorted = {
+                'fliC': [h for h in detected_genes if 'fliC' in h.locus],
+                'non-fliC': [h for h in detected_genes if 'fliC' not in h.locus]}
             if len(hits_sorted['non-fliC']) == 1:
-                return hits_sorted['non-fliC'][0].type_
+                return hits_sorted['non-fliC'][0].get_metadata_value('Predicted serotype')
         return 'H-ambiguous'
 
     def __get_o_type(self) -> str:
@@ -84,20 +60,20 @@ class SerotypeDetectorEcoli(Tool):
         Returns the O type.
         :return: O type.
         """
-        detected_genes = SerotypeDetectorEcoli.__parse_hits(self._tool_inputs['TSV_O'][0].path)
+        detected_genes = [io.value for io in self._tool_inputs['HITS_O']]
         if len(detected_genes) == 0:
             return 'O-unknown'
         elif len(detected_genes) == 1:
-            return detected_genes[0].type_
+            return detected_genes[0].get_metadata_value('Predicted serotype')
         else:
-            hits_sorted = {'xy': [h for h in detected_genes if any([g in h.gene for g in ('wzx', 'wzy')])],
-                           'mt': [h for h in detected_genes if any([g in h.gene for g in ('wzm', 'wzt')])]}
+            hits_sorted = {'xy': [h for h in detected_genes if any([g in h.locus for g in ('wzx', 'wzy')])],
+                           'mt': [h for h in detected_genes if any([g in h.locus for g in ('wzm', 'wzt')])]}
             if len(hits_sorted['xy']) > 0 and len(hits_sorted['mt']) > 0:
                 return 'O-ambiguous'
             else:
                 all_hits = hits_sorted['xy'] + hits_sorted['mt']
-                o_type = all_hits[0].type_
+                o_type = all_hits[0].get_metadata_value('Predicted serotype')
                 for hit in all_hits:
-                    if hit.type_ != o_type:
+                    if hit.get_metadata_value('Predicted serotype') != o_type:
                         return "O-ambiguous"
                 return o_type

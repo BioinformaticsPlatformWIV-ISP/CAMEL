@@ -1,3 +1,4 @@
 dependencies: []
-parameters: {}
+parameters:
+  forced_detection_method: {default: false, mandatory: false, option: null, value: blast}
 tool_command: ''

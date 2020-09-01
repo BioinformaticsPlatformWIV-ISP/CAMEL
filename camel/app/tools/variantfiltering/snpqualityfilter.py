@@ -1,3 +1,4 @@
+from camel.app.camel import Camel
 from camel.app.tools.variantfiltering.basefilter import BaseFilter
 
 
@@ -6,14 +7,14 @@ class SnpQualityFilter(BaseFilter):
     Filters variants based on SNP quality.
     """
 
-    def __init__(self, camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initializes this tool.
         :param camel: CAMEL instance
         """
         super().__init__('Variant Filter: SNP Quality', '0.1', camel)
 
-    def _apply_filter(self):
+    def _apply_filter(self) -> None:
         """
         Applies the filtering on the variants.
         :return: None
@@ -29,7 +30,16 @@ class SnpQualityFilter(BaseFilter):
         """
         return 'SNP quality'
 
-    def __build_command(self):
+    @property
+    def description(self) -> str:
+        """
+        Returns the description for this filter.
+        :return: Description
+        """
+        return 'Minimal SNP quality of <b>{}</b> at variant position'.format(
+            self._parameters['min_snp_quality'].value)
+
+    def __build_command(self) -> None:
         """
         Builds the command for this tool.
         :return: None
@@ -40,4 +50,4 @@ class SnpQualityFilter(BaseFilter):
             self._tool_inputs['VCF_GZ'][0].path,
             '--output-type z',
             '--output {}'.format(self.output_path)
-        ])
+        ] + self._get_soft_filter_options())

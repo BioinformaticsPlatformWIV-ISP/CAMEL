@@ -1,3 +1,6 @@
+from pathlib import Path
+from typing import Union
+
 import vcf
 
 from camel.app.components.filesystemhelper import FileSystemHelper
@@ -31,6 +34,7 @@ class VCFUtils(object):
         return len(vcf.Reader(filename=vcf_file).samples) > 1
 
     @staticmethod
+    @DeprecationWarning
     def get_reader(vcf_file):
         """
         Function to obtain a vcf file reader
@@ -81,7 +85,7 @@ class VCFUtils(object):
         return records
 
     @staticmethod
-    def count_variants(vcf_file):
+    def count_variants(vcf_file: Union[str, Path]) -> int:
         """
         Counts the number of variants in a VCF file.
         :param vcf_file: VCF file.
@@ -93,4 +97,4 @@ class VCFUtils(object):
         with open(vcf_file, 'rb' if gzipped else 'r') as handle:
             vcf_reader = vcf.Reader(handle)
             variants = list(vcf_reader)
-        return sum(variant.ALT != [None] for variant in variants)
+        return sum(variant.ALT != [None] for variant in variants if variant.FILTER is None or len(variant.FILTER) == 0)

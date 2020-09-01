@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from pathlib import Path
 from typing import List, Optional
 
 import yaml
@@ -12,17 +13,17 @@ class YAMLToolService(BaseToolService):
     This tool loads tool related data from a YAML file.
     """
 
-    def __init__(self, tool_data_path: str) -> None:
+    def __init__(self, tool_data_path: Path) -> None:
         """
         Initializes tool service class assigning the module
         :param tool_data_path: Path with the tool data
         :return: None
         """
-        with open(tool_data_path) as handle:
+        with tool_data_path.open() as handle:
             self._tool_data = yaml.safe_load(handle)
 
     @property
-    def tool_id(self):
+    def tool_id(self) -> Optional[str]:
         """
         The tool id is set to 'None' when running with a YAML service.
         :return: None

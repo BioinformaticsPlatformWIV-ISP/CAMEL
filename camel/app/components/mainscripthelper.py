@@ -84,7 +84,7 @@ class MainScriptHelper(object):
         assembly = AssemblyWrapper(os.path.join(self._working_dir, 'assembly'))
         assembly.run_workflow(
             self._sample_name, assembly_input.pe, assembly_input.se_fwd, assembly_input.se_rev, kmers, cov_cutoff,
-            min_contig_length, threads)
+            min_contig_length, threads=threads)
         if report is not None:
             report.add_html_object(assembly.output.report_section)
             assembly.output.report_section.copy_files(report.output_dir)
@@ -268,7 +268,7 @@ class MainScriptHelper(object):
         if args.trim_reads:
             assembly_input = self.trim_reads(input_files['fastq_pe'], report, args.threads, args.report_include_fastq)
         else:
-            assembly_input = ReadInput([ToolIOFile(l) for l in input_files['fastq_pe']], [], [])
+            assembly_input = ReadInput([ToolIOFile(file_) for file_ in input_files['fastq_pe']], [], [])
 
         # Perform de-novo assembly
         if args.assembly_cov_cutoff is None:

@@ -43,6 +43,13 @@ class TestFastqUtils(unittest.TestCase):
         """
         self.assertEqual(FastqUtils.get_sample_name('/data/temp/Z4686_1.fastq.gz'), 'Z4686')
 
+    def test_get_sample_name_simple_fmt_alt(self) -> None:
+        """
+        Tests the get sample name function for the simple format.
+        :return: None
+        """
+        self.assertEqual(FastqUtils.get_sample_name('/data/temp/S18BD02705_R1.fastq.gz'), 'S18BD02705')
+
     def test_get_sample_name_invalid_fmt(self) -> None:
         """
         Tests the get sample name function for an invalid filename.
@@ -108,6 +115,14 @@ class TestFastqUtils(unittest.TestCase):
         :return: None
         """
         self.assertEqual(FastqUtils.get_sample_name('/data/temp/UI-586(SRR7648453)_1.fastq.gz'), 'UI-586SRR7648453')
+
+    def test_get_sample_name_miseq(self) -> None:
+        """
+        Tests the get sample name function that contains parentheses.
+        :return: None
+        """
+        self.assertEqual(FastqUtils.get_sample_name(
+            '/data/temp/S20BD03018_S16_L001_R1_001.fastq.gz'), 'S20BD03018')
 
 
 if __name__ == '__main__':

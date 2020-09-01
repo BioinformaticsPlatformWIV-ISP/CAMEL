@@ -1,9 +1,9 @@
 import inspect
 import logging
+from pathlib import Path
 from typing import Dict, Optional, List, Union
 
 import abc
-import os
 
 from camel.app.camel import Camel
 from camel.app.command.command import Command
@@ -203,6 +203,7 @@ class Tool(object, metaclass=abc.ABCMeta):
         self._execute_tool()
         self._check_output()
 
+    @DeprecationWarning
     def get_outputs(self, key: str) -> List[ToolIO]:
         """
         Returns the outputs with the given key.
@@ -210,16 +211,16 @@ class Tool(object, metaclass=abc.ABCMeta):
         :return: Output list
         """
         if key not in self._tool_outputs:
-            raise ValueError("No output file with key '{}' found".format(key))
+            raise ValueError(f"No output file with key '{key}' found")
         return self._tool_outputs[key]
 
-    def get_tool_data_path(self) -> str:
+    def get_tool_data_path(self) -> Path:
         """
         Returns the path of the tool data for the tool with the given name and version.
         :return: Path
         """
-        yaml_path = inspect.getfile(self.__class__).replace('.py', '.yml')
-        if not os.path.isfile(yaml_path):
+        yaml_path = Path(inspect.getfile(self.__class__).replace('.py', '.yml'))
+        if not yaml_path.is_file():
             raise FileNotFoundError(f"Tool data file for '{self.name}' not found ({yaml_path})")
         return yaml_path
 
@@ -231,14 +232,11 @@ class Tool(object, metaclass=abc.ABCMeta):
         source = self._camel.config.get('tool_service', 'yaml')
         logging.debug(f'Retrieving tool service. Source = {source}')
         if source == 'db':
-            raise DeprecationWarning("Parameter loading from database is deprecated.")
+            raise DeprecationWarning("Parameter loading from database is deprecated, use YAML instead.")
         elif source == 'yaml':
-            tool_data_path = self.get_tool_data_path()
-            if not os.path.isfile(tool_data_path):
-                raise FileNotFoundError('Tool data file not found: {}'.format(os.path.basename(tool_data_path)))
-            return YAMLToolService(tool_data_path)
+            return YAMLToolService(self.get_tool_data_path())
         else:
-            raise ValueError("Invalid 'tool_service' value: {}".format(source))
+            raise ValueError(f"Invalid 'tool_service' value: {source}")
 
     def _build_dependencies(self) -> str:
         """
@@ -293,7 +291,7 @@ class Tool(object, metaclass=abc.ABCMeta):
         Executes this tool.
         :return: None
         """
-        pass
+        raise NotImplementedError("Method should be implemented by subclass.")
 
     def _check_parameters(self) -> None:
         """

@@ -53,7 +53,7 @@ class SequenceTypingKMAHit(SequenceTypingHitBase):
         return [
             self.locus,
             self.allele_id,
-            str(self._length),
+            str(self._length) if self._length > 0 else '-',
             '{:.2f}'.format(float(self._p_ident)),
             '{:.2f}'.format(float(self._p_cov)),
             '{:.2f}'.format(float(self._depth))

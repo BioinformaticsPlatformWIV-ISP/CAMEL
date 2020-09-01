@@ -34,13 +34,16 @@ rule gene_detection_kma:
         TSV = Path(config['working_dir']) / 'gene_detection' / '{db}' / 'kma' / 'tsv-kma.io',
         INFORMS = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS_METHOD).format(method='kma', db='{db}')
     params:
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'gene_detection' / wildcards.db / 'kma'
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'gene_detection' / wildcards.db / 'kma',
+        read_type = 'SE' if config.get('read_type') == 'iontorrent' else 'PE'
     run:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         from camel.app.tools.kma.kma import KMA
         kma = KMA(camel)
         SnakemakeUtils.add_pickle_input(kma, 'DB', input.DB)
-        kma.add_input_files(SnakePipelineUtils.extracts_fq_input(input.IO))
+        fq_input_dict = SnakePipelineUtils.extracts_fq_input(
+            input.IO, key_pe='FASTQ_PE', key_se='FASTQ_SE', read_type=params.read_type)
+        kma.add_input_files(fq_input_dict)
         step = Step(rule, kma, camel, params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(kma, output)

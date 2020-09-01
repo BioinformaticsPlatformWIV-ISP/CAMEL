@@ -54,7 +54,9 @@ class HtmlReporterTyping(Tool):
         if len(self._tool_inputs['hits_pept']) != 0:
             self.__add_output_table(self._tool_inputs['TSV_pept'][0].path, self._tool_inputs['hits_pept'],
                                     'Peptide loci' if add_subtitle else None)
-
+        if 'forced_detection_method' in self._parameters:
+            self._report_section.add_alert(
+                f"Allele detection performed with <b>{self._parameters['forced_detection_method'].value}</b>.", 'info')
         self._report_section.add_paragraph('Last updated: {}'.format(self._input_informs['scheme']['last_updated']))
         self._tool_outputs['VAL_HTML'] = [ToolIOValue(self._report_section)]
         self.__export_analysis_metadata()
@@ -73,11 +75,21 @@ class HtmlReporterTyping(Tool):
         Adds the sequence type to the report.
         :return: None
         """
-        profile = self._input_informs['ST']['sequence_type']
-        header = [key for key, _ in profile.metadata]
-        table_data = [[value if value != '' else '-' for _, value in profile.metadata]]
-        st = table_data[0][0]
-        table_data[0][0] = HtmlTableCell(st, 'green' if st != '-' else 'red')
+        profile_data = self._input_informs['ST']
+        header = ['Loci matched', '% matched'] + [key for key, _ in profile_data['metadata']]
+        # Determine color for ST cell
+        if profile_data['is_detected'] and profile_data['percent_detected'] == 100:
+            color = 'green'
+        elif profile_data['is_detected']:
+            color = 'yellow'
+        else:
+            color = 'red'
+        table_data = [
+            [f"{profile_data['nb_detected']}/{profile_data['nb_loci']}",
+             f"{profile_data['percent_detected']:.2f}%",
+             HtmlTableCell(profile_data['symbol'], color)] +
+            [value if value != '' else '-' for _, value in profile_data['metadata'][1:]]]
+
         self._report_section.add_table(table_data, header, table_attributes=[('class', 'data')])
 
     def __add_output_table(self, output_tsv: str, hits_io: List[ToolIOValue], sub_header: Optional[str]) -> None:
