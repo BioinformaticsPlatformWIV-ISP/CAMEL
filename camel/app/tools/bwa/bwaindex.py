@@ -52,7 +52,9 @@ class BWAIndex(BWA):
             self._refgenome_fasta = multifasta_file
         else:
             self._refgenome_fasta = os.path.join(self._folder, self._tool_inputs['FASTA_REF'][0].basename)
-            os.symlink(self._tool_inputs['FASTA_REF'][0].path, self._refgenome_fasta)
+            if self._refgenome_fasta != self._tool_inputs['FASTA_REF'][0].path and not os.path.exists(
+                    self._refgenome_fasta):
+                os.symlink(self._tool_inputs['FASTA_REF'][0].path, self._refgenome_fasta)
 
     def __set_output(self):
         """
