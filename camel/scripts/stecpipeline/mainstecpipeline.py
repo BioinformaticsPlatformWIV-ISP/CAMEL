@@ -52,8 +52,10 @@ class MainSTECPipeline(BasePipeline):
         config_data['quality_checks']['typing_scheme'] = 'cgmlst' if self._args.cgmlst else 'mlst_warwick'
         config_data['read_trimming']['export_fastq'] = 'true' if self._args.report_include_fastq else 'false'
         config_data['variant_calling']['report_include_bam'] = 'true' if self._args.report_include_bam else 'false'
-        config_data['sequence_typing']['cgmlst']['detection_method'] = {
+        detection_method_cgmlst = {
             'blast': 'blast', 'srst2': 'blast', 'kma': 'kma'}.get(self._args.detection_method)
+        config_data['sequence_typing']['cgmlst']['detection_method'] = detection_method_cgmlst
+        config_data['sequence_typing']['innuendo_cgmlst']['detection_method'] = detection_method_cgmlst
         if self._args.read_type == 'iontorrent':
             config_data['assembly']['spades']['iontorrent'] = None
         import pprint
