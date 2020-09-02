@@ -3,12 +3,10 @@ from pathlib import Path
 from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.pipeline.step import Step
-from camel.app.tools.seqtk.seqtkconvert import SeqtkConvert
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.resources.snakefile import trimming_illumina, deconseq
+from camel.app.tools.seqtk.seqtkconvert import SeqtkConvert
+from camel.resources.snakefile import deconseq
 from camel.scripts.influenzapipeline.snakefile import genometyping_blastn
-from camel.app.components.blasthit.influenzablastnasnparser import InfluenzaBlastnAsnParser
-
 
 camel = Camel.get_instance()
 
