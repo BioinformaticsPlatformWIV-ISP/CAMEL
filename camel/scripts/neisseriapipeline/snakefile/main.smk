@@ -1,6 +1,5 @@
 from pathlib import Path
 
-from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.resources.snakefile import trimming, trimming_illumina, assembly_spades, quality_checks, \
     contamination_check_kraken, gene_detection, sequence_typing
@@ -83,15 +82,15 @@ rule report_pickle_citations:
     """
     output:
         HTML = Path(config['working_dir']) / 'report' / 'html-citations.io'
+    params:
+        citation_keys = config['citations']
     run:
-        from camel.app.components.html.htmlreportsection import HtmlReportSection
         from camel.app.io.tooliovalue import ToolIOValue
-        from camel.scripts.neisseriapipeline import CITATIONS_HTML, SNAKEFILE_SEROGROUP_DETERMINATION
-
-        section_citations = HtmlReportSection('Citations')
-        with open(CITATIONS_HTML) as handle:
-            section_citations.add_raw(handle.read())
-        SnakemakeUtils.dump_object([ToolIOValue(section_citations)], output[0])
+        from camel.app.snakemake.snakemakeutils import SnakemakeUtils
+        from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
+        section = SnakePipelineUtils.create_citations_section(
+            params.citation_keys['other'], params.citation_keys['main'])
+        SnakemakeUtils.dump_object([ToolIOValue(section)], output.HTML)
 
 
 rule report_create_command_section:
@@ -149,6 +148,7 @@ rule neisseria_additional_resistance_gene_metadata:
         working_dir = Path(config['working_dir']) / 'typing' / 'resistance_genes' / 'metadata',
         loci='penA, rpoB'
     run:
+        from camel.app.pipeline.step import Step
         from camel.app.tools.pipelines.neisseria.resistancemetadataextractor import ResistanceMetadataExtractor
         extractor = ResistanceMetadataExtractor(camel)
         SnakemakeUtils.add_pickle_inputs(extractor, input)
