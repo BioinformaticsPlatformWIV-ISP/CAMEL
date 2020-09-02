@@ -7,6 +7,7 @@ import yaml
 
 from camel.app.command.command import Command
 from camel.app.components.filesystemhelper import FileSystemHelper
+from camel.app.components.html.htmlcitation import HtmlCitation
 from camel.app.components.html.htmlelement import HtmlElement
 from camel.app.components.html.htmlreport import HtmlReport
 from camel.app.components.html.htmlreportsection import HtmlReportSection
@@ -234,3 +235,19 @@ class SnakePipelineUtils(object):
 
         # Return the reformatted dictionary
         return output_dict
+
+    @staticmethod
+    def create_citations_section(keys_other: List[str], key_main: Optional[str] = None) -> HtmlReportSection:
+        """
+        Creates the report section with the citations.
+        :param keys_other: List of key for citations for tools and databases
+        :param key_main: Key for the main citation of the workflow
+        """
+        section_citations = HtmlReportSection('Citations')
+        if key_main is not None:
+            section_citations.add_header('Pipeline', 3)
+            section_citations.add_html_object(HtmlCitation.parse_from_json(key_main))
+        section_citations.add_header('Tools and databases', 3)
+        for citation_key in keys_other:
+            section_citations.add_html_object(HtmlCitation.parse_from_json(citation_key))
+        return section_citations
