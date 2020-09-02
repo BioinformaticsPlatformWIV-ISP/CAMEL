@@ -1,4 +1,4 @@
-dependencies: [java/1.8.0, picard/2.8.3]
+dependencies: [java/1.8.0_172, picard/2.8.3]
 parameters:
   output: {default: true, mandatory: false, option: O, p_index: 0, value: sorted.bam}
   sort_order: {default: true, mandatory: false, option: SORT_ORDER, p_index: 10, value: queryname}
