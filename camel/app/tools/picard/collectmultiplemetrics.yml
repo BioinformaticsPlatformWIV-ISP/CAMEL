@@ -1,4 +1,4 @@
-dependencies: [java/1.8.0, picard/2.8.3]
+dependencies: [java/1.8.0_172, picard/2.8.3]
 parameters:
   metrics_CollectAlignmentSummaryMetrics: {default: true, mandatory: false, option: PROGRAM,
     p_index: 20, value: CollectAlignmentSummaryMetrics}

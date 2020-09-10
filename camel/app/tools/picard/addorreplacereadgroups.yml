@@ -1,4 +1,4 @@
-dependencies: [java/1.8.0, picard/2.8.3]
+dependencies: [java/1.8.0_172, picard/2.8.3]
 parameters:
   RG_id: {default: true, mandatory: false, option: RGID, p_index: 10, value: ReadGroupNA}
   RG_library: {default: true, mandatory: false, option: RGLB, p_index: 20, value: libraryNA}
