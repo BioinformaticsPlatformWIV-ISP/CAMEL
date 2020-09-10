@@ -1,0 +1,8 @@
+dependencies: [confindr/0.7.4 kma/1.2.25, mash/2.2 bbmap/38.34]
+parameters:
+  base_cutoff: {default: false, mandatory: false, option: --base_cutoff, value: 2}
+  base_fraction_cutoff: {default: false, mandatory: false, option: --base_fraction_cutoff, value: 0.05}
+  databases: {default: true, mandatory: false, option: --databases, value: /db/confindr/0.7.4/}
+  min_matching_hashes: {default: false, mandatory: false, option: --min_matching_hashes, value: 150}
+  quality_cutoff: {default: false, mandatory: false, option: --quality_cutoff, value: 20}
+tool_command: confindr.py
