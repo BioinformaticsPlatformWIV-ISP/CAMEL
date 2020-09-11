@@ -135,7 +135,7 @@ class TestWorkflows(CamelTestSuite):
             db_path=str(TestWorkflows.input_typing_db),
             fasta=ToolIOFile(TestWorkflows.input_typing_fasta)
         )
-        wrapper.run_workflow_blast(workflow_input, 8)
+        wrapper.run_workflow_blast(workflow_input, threads=8)
         self.assertGreater(len(wrapper.output.report_section.to_html()), 0)
 
     def test_typing_workflow_blast_protein(self) -> None:
@@ -150,7 +150,7 @@ class TestWorkflows(CamelTestSuite):
             db_path=str(TestWorkflows.input_typing_db_protein),
             fasta=ToolIOFile(TestWorkflows.input_typing_fasta)
         )
-        wrapper.run_workflow_blast(workflow_input, 8)
+        wrapper.run_workflow_blast(workflow_input, threads=8)
         self.assertGreater(len(wrapper.output.report_section.to_html()), 0)
 
     @longRunningTest()
@@ -166,7 +166,7 @@ class TestWorkflows(CamelTestSuite):
             db_path=str(TestWorkflows.input_typing_db_mixed),
             fasta=ToolIOFile(TestWorkflows.input_typing_fasta)
         )
-        wrapper.run_workflow_blast(workflow_input, 8)
+        wrapper.run_workflow_blast(workflow_input, threads=8)
         self.assertGreater(len(wrapper.output.report_section.to_html()), 0)
 
     @longRunningTest()
@@ -199,6 +199,8 @@ class TestWorkflows(CamelTestSuite):
         )
         wrapper.run_workflow_srst2(workflow_input, threads=8)
         self.assertGreater(len(wrapper.output.report_section.to_html()), 0)
+
+    # TODO: Add KRAKEN2 test
 
 
 if __name__ == '__main__':
