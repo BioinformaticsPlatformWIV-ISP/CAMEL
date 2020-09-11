@@ -6,6 +6,7 @@ from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.confindr.confindr import ConFindr
 from camel.app.tools.confindr.confindrreporter import ConFindrReporter
+from camel.scripts.confindr.mainconfindr import MainConFindr
 
 
 class TestConFindr(CamelTestSuite):
@@ -79,3 +80,22 @@ class TestConFindr(CamelTestSuite):
         reporter.run(self.running_dir)
         self.assertIn('HTML', reporter.tool_outputs)
         self.assertGreater(len(reporter.tool_outputs['HTML'][0].value.to_html()), 0)
+
+    def test_confindr_main_script(self) -> None:
+        """
+        Tests the ConFinder main script.
+        :return: None
+        """
+        dir_out = self.running_dir / 'out'
+        dir_out.mkdir()
+        confindr_main = MainConFindr([
+            '--fastq-se', str(TestConFindr.input_pe_reads[0]),
+            '--working-dir', str(self.running_dir),
+            '--output-html', str(dir_out / 'report.html'),
+            '--output-dir', str(dir_out),
+            '--quality-cutoff', '15',
+            '--base-cutoff', '5',
+            '--base-percentage-cutoff', '10',
+            '--min-matching-hashes', '200',
+        ])
+        confindr_main.run()

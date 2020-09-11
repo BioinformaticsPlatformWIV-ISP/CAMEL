@@ -1,7 +1,7 @@
 import logging
 import pickle
 from pathlib import Path
-from typing import Any, Optional, List
+from typing import Any, Optional, List, Union
 
 from camel.app.io.tooliodirectory import ToolIODirectory
 from camel.app.io.tooliofile import ToolIOFile
@@ -28,14 +28,14 @@ class SnakemakeUtils(object):
             pickle.dump(obj, handle)
 
     @staticmethod
-    def load_object(path: str) -> Any:
+    def load_object(path: Union[str, Path]) -> Any:
         """
         Loads the object from the given pickle.
         :param path: Path
         :return: Object
         """
         logging.debug("Loading object from file '{}'".format(path))
-        with open(path, 'rb') as handle:
+        with open(str(path), 'rb') as handle:
             obj = pickle.load(handle)
         logging.debug("'{!r}' loaded".format(obj))
         return obj
