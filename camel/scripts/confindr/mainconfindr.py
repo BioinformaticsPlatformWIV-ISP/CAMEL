@@ -17,8 +17,6 @@ class MainConFindr(object):
     This class contains the main script for the ConFindr tool.
     """
 
-    SNP_MATRIX_FILENAME = 'snp_matrix.fasta'
-
     def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """
         Initializes the main script.

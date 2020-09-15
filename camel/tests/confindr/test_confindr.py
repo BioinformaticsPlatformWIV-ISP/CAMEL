@@ -45,7 +45,6 @@ class TestConFindr(CamelTestSuite):
         self.assertIn('CSV', confindr.tool_outputs)
         self.assertGreater(Path(confindr.tool_outputs['CSV'][0].path).stat().st_size, 0)
         self.assertIn('ContamStatus', confindr.informs)
-        print(confindr.informs)
 
     def test_confindr_se(self) -> None:
         """
