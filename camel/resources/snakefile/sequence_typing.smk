@@ -23,13 +23,6 @@ loci_by_scheme_by_type = {
     } for name, metadata in SCHEME_METADATA.items()
 }
 
-
-import pprint
-pprint.pprint(SCHEME_DATA)
-pprint.pprint(SCHEME_METADATA)
-import pprint
-pprint.pprint(loci_by_scheme_by_type)
-
 ##############################
 # Allele detection workflows #
 ##############################
