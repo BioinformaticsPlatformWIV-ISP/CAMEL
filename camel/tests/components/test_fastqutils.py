@@ -109,6 +109,14 @@ class TestFastqUtils(unittest.TestCase):
         self.assertEqual(FastqUtils.get_sample_name(
             '/data/temp/my_sample.fastq.gz', FastqUtils.PATTERN_FQ_SE), 'my_sample')
 
+    def test_get_sample_name_se_gzipped_with_dashes(self) -> None:
+        """
+        Tests the get sample name function for a single end sample name.
+        :return: None
+        """
+        self.assertEqual(FastqUtils.get_sample_name(
+            '/temp/my_sample22-ds.fastq.gz', FastqUtils.PATTERN_FQ_SE), 'my_sample22-ds')
+
     def test_get_sample_name_parentheses(self) -> None:
         """
         Tests the get sample name function that contains parentheses.
