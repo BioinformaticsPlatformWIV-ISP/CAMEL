@@ -170,7 +170,7 @@ class SnakePipelineUtils(object):
             raise SnakemakeExecutionError(command.stdout, command.stderr)
 
     @staticmethod
-    def create_commands_section(tool_informs: List[Dict[str, Any]], working_dir: str) -> HtmlReportSection:
+    def create_commands_section(tool_informs: List[Dict[str, Any]], working_dir: Path) -> HtmlReportSection:
         """
         Creates a section with an overview of the commands.
         :param tool_informs: Tool informs
@@ -182,7 +182,7 @@ class SnakePipelineUtils(object):
         for informs in tool_informs:
             header = f"{informs['_name']} - {informs['_tag']}" if '_tag' in informs else informs['_name']
             section.add_header(header, 3)
-            command_txt = informs['_command'].replace(working_dir, '$WORKING')
+            command_txt = informs['_command'].replace(str(working_dir), '$WORKING')
             command_txt = command_txt.replace('\n', '<br />\n')
             section.add_html_object(HtmlElement('code', command_txt, [('class', 'command')]))
         return section
@@ -228,7 +228,7 @@ class SnakePipelineUtils(object):
         # Remove keys that are empty
         if drop_empty:
             for key in list(output_dict.keys()):
-                if len(output_dict[key]) > 0:
+                if (output_dict[key] is not None) and (len(output_dict[key]) > 0):
                     continue
                 logging.debug(f'Removing empty input: {key}')
                 output_dict.pop(key)
