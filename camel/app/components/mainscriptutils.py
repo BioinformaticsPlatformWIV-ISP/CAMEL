@@ -28,7 +28,7 @@ def add_common_arguments(argument_parser: argparse.ArgumentParser) -> None:
     argument_parser.add_argument('--sample-name', type=str)
     argument_parser.add_argument('--output-dir', required=True, type=str)
     argument_parser.add_argument('--output-html', required=True, type=str)
-    argument_parser.add_argument('--working-dir', default=str(Path('.').absolute), type=str)
+    argument_parser.add_argument('--working-dir', default=str(Path('.').absolute()), type=str)
     argument_parser.add_argument('--threads', default=8, type=int)
 
 
@@ -89,20 +89,24 @@ def determine_input_file_str(args: argparse.Namespace) -> str:
 
 
 def generate_analysis_info_section(
-        args: argparse.Namespace, additional_info: Optional[List[List[str]]] = None) -> HtmlReportSection:
+        args: argparse.Namespace, additional_info: Optional[List[List[str]]] = None,
+        input_file_str: str = None) -> HtmlReportSection:
     """
     Generates the report section with the analysis info.
     :param args: Command line arguments
     :param additional_info: Additional info to add to the report section
+    :param input_file_str: Input file string, is determined based on input files if it is not set.
     :return: Analysis info section
     """
     section = HtmlReportSection('Analysis info')
-    input_files_str = determine_input_file_str(args)
+    input_files = determine_input_file_str(args) if input_file_str is None else input_file_str
     data = [
         ('Analysis date:', datetime.datetime.now().strftime(SnakePipelineUtils.DATE_FORMAT)),
-        ('Input file(s):', input_files_str),
-        ('Read type:', args.read_type),
+        ('Input file(s):', input_files),
     ]
+    if ('read_type' in args) and (args.read_type is not None):
+        read_type = args.read_type if args.fasta is None else 'NA'
+        data.append(('Read type:', read_type))
     if additional_info is not None:
         data.extend(additional_info)
     section.add_table(data, table_attributes=[('class', 'information')])
