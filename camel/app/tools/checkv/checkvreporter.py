@@ -5,7 +5,6 @@ import pandas as pd
 from camel.app.camel import Camel
 from camel.app.components.html.htmlexpandabletable import HtmlExpandableTable
 from camel.app.components.html.htmlreportsection import HtmlReportSection
-from camel.app.components.mainscripthelper import MainScriptHelper
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.tools.tool import Tool
@@ -72,23 +71,3 @@ class CheckVReporter(Tool):
         if type(value) == float:
             return f'{value:.2f}'
         return value
-
-
-if __name__ == '__main__':
-    from camel.app.io.tooliofile import ToolIOFile
-    files_in = {
-        'TSV_complete_genomes': [ToolIOFile("/scratch/bebog/checkv/work/out/complete_genomes.tsv")],
-        'TSV_completeness': [ToolIOFile("/scratch/bebog/checkv/work/out/completeness.tsv")],
-        'TSV_contamination': [ToolIOFile("/scratch/bebog/checkv/work/out/contamination.tsv")],
-        'TSV_quality_summary': [ToolIOFile("/scratch/bebog/checkv/work/out/quality_summary.tsv")]
-    }
-    reporter = CheckVReporter(Camel.get_instance())
-    reporter.add_input_files(files_in)
-    reporter.run()
-
-
-    report = MainScriptHelper.init_report('/scratch/bebog/checkv/output/repo.html', '/scratch/bebog/checkv/output', 'CheckV', 'CheckV')
-    report.add_html_object(
-        reporter.tool_outputs['HTML'][0].value
-    )
-    report.save()

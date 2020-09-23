@@ -1,14 +1,13 @@
 #!/usr/bin/env python
 import argparse
 from pathlib import Path
-from typing import Tuple, Optional, Sequence, Dict, Any
+from typing import Optional, Sequence, Dict, Any, Tuple
 
 from camel.app.camel import Camel
-from camel.app.components.mainscripthelper import MainScriptHelper
+from camel.app.components import mainscriptutils
+from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-from camel.app.tools.checkm.checkm import CheckM
-from camel.app.tools.checkm.checkmreporter import CheckMReporter
 from camel.app.tools.checkv.checkv import CheckV
 from camel.app.tools.checkv.checkvreporter import CheckVReporter
 
@@ -32,7 +31,8 @@ class MainCheckV(object):
         :return: Arguments
         """
         argument_parser = argparse.ArgumentParser()
-        argument_parser.add_argument('--fasta', nargs=2, help='FASTA input', required=True)
+        argument_parser.add_argument('--fasta', help='FASTA input', required=True)
+        argument_parser.add_argument('--fasta-name', help='FASTA input name')
         argument_parser.add_argument('--working-dir', help='Working directory', default=str(Path('.').absolute()))
         argument_parser.add_argument('--output-html', help='Report output')
         argument_parser.add_argument('--output-dir', help='Output directory')
@@ -43,10 +43,11 @@ class MainCheckV(object):
         Runs the tool.
         :return: None
         """
-        # Create report
-        input_dict, input_files_str = self.__prepare_input()
-        report = MainScriptHelper.init_report(self._args.output_html, self._args.output_dir, 'CheckV', 'CheckV')
-        MainScriptHelper.export_analysis_info_section(report, input_files_str)
+        input_dict, fasta_name = self.__prepare_input()
+        report = mainscriptutils.init_report(
+            Path(self._args.output_html), Path(self._args.output_dir), 'CheckV', 'CheckV')
+        report.add_html_object(mainscriptutils.generate_analysis_info_section(self._args, input_file_str=fasta_name))
+        report.save()
 
         # Run CheckV
         checkv = CheckV(Camel.get_instance())
@@ -73,9 +74,9 @@ class MainCheckV(object):
         """
         dir_input = Path(self._args.working_dir) / 'input'
         dir_input.mkdir(parents=True, exist_ok=True)
-        fasta_path, fasta_name = self._args.fasta
-        path_new = dir_input / fasta_name
-        path_new.symlink_to(fasta_path)
+        fasta_name = self._args.fasta_name if self._args.fasta_name else Path(self._args.fasta).name
+        path_new = dir_input / FileSystemHelper.make_valid(fasta_name)
+        path_new.symlink_to(self._args.fasta)
         return {'FASTA': [ToolIOFile(path_new)]}, fasta_name
 
 
