@@ -66,6 +66,7 @@ class BaseReadTypeHelper(object, metaclass=abc.ABCMeta):
             new_symlink = dir_links / FileSystemHelper.make_valid(name_ if name_ is not None else file_.name)
             if new_symlink.exists():
                 new_symlink.unlink()
+            logging.debug(f"Creating link: {new_symlink.name} -> {file_.name}")
             new_symlink.symlink_to(file_)
             linked_files.append(new_symlink)
         return linked_files

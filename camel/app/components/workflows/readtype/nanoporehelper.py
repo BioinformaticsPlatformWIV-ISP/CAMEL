@@ -1,6 +1,8 @@
 import argparse
 from pathlib import Path
+from typing import Union
 
+from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.components.html.htmlreport import HtmlReport
 from camel.app.components.workflows.readtype.basereadtypehelper import BaseReadTypeHelper
 from camel.app.components.workflows.utils.fastqinput import FastqInput
@@ -11,6 +13,18 @@ class NanoporeHelper(BaseReadTypeHelper):
     """
     Helper class for Nanopore reads.
     """
+
+    def __symlink_iontorrent_reads(self, fastq_file: Union[str, None], sample_name: str) -> Path:
+        """
+        Symlinks the input files to a standardized format based on the sample name.
+        :param fastq_file: Input FASTQ file
+        :param sample_name: Sample name
+        :return: Path to renamed file
+        """
+        if fastq_file is None:
+            raise ValueError("IonTorrent data should be SE")
+        new_name = f"{sample_name}.fastq{'.gz' if FileSystemHelper.is_gzipped(fastq_file) else ''}"
+        return self.symlink_input_files([Path(fastq_file)], [new_name])[0]
 
     def trim_reads(self, fastq_input: FastqInput, report: HtmlReport, include_fastq: bool, threads: int) -> FastqInput:
         """
@@ -39,7 +53,7 @@ class NanoporeHelper(BaseReadTypeHelper):
         :param args: Command-line arguments
         :return: FASTQ input
         """
-        fq_input_se = self.symlink_input_files([Path(args.fastq_se)], [args.fastq_se_name])[0]
+        fq_input_se = self.__symlink_iontorrent_reads(args.fastq_se, self._sample_name)
         fastq_input = FastqInput(args.read_type, se=[ToolIOFile(fq_input_se)], is_pe=False)
         if args.trim_reads:
             return self.trim_reads(fastq_input, report, args.report_include_fastq, args.threads)

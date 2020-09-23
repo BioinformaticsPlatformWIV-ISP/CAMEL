@@ -4,7 +4,7 @@ from typing import Dict, Any, List, Optional
 
 from camel.app.components.genedetection.genedetectionhitbase import GeneDetectionHitBase
 from camel.app.components.html.htmlreportsection import HtmlReportSection
-from camel.app.components.mainscripthelper import FastqInput
+from camel.app.components.workflows.utils.fastqinput import FastqInput
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils

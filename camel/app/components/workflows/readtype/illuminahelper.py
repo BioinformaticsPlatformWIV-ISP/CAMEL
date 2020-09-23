@@ -1,8 +1,9 @@
+import argparse
 import logging
 from pathlib import Path
+from typing import List
 
-import argparse
-
+from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.components.html.htmlreport import HtmlReport
 from camel.app.components.workflows.readtype.basereadtypehelper import BaseReadTypeHelper
 from camel.app.components.workflows.trimmingilluminawrapper import TrimmingIlluminaWrapper
@@ -14,6 +15,20 @@ class IlluminaHelper(BaseReadTypeHelper):
     """
     Helper class for Illumina reads.
     """
+
+    def __symlink_fastq_files(self, fastq_files: List[str], sample_name: str) -> List[Path]:
+        """
+        Symlinks the input files to a standardized format based on the sample name.
+        :param fastq_files: Input FASTQ files
+        :param sample_name: Sample name
+        :return: Path to renamed files
+        """
+        new_filenames = []
+        for orientation, fastq_file in enumerate(fastq_files, 1):
+            is_gzipped = FileSystemHelper.is_gzipped(fastq_file)
+            extension = 'fastq.gz' if is_gzipped else 'fastq'
+            new_filenames.append(f"{sample_name}_{orientation}.{extension}")
+        return self.symlink_input_files([Path(x) for x in fastq_files], new_filenames)
 
     def trim_reads(self, fastq_input: FastqInput, report: HtmlReport, include_fastq: bool, threads: int) -> FastqInput:
         """
@@ -52,7 +67,7 @@ class IlluminaHelper(BaseReadTypeHelper):
         if args.fasta is not None:
             fasta_file = self.symlink_input_files([Path(args.fasta)], [args.fasta_name])[0]
             return Path(fasta_file)
-        fq_input_pe = self.symlink_input_files([Path(x) for x in args.fastq_pe], args.fastq_pe_names)
+        fq_input_pe = self.__symlink_fastq_files(args.fastq_pe, self._sample_name)
         fastq_input = FastqInput('illumina', pe=[ToolIOFile(x) for x in fq_input_pe])
         if args.trim_reads:
             assembly_input = self.trim_reads(fastq_input, report, args.report_include_fastq, args.threads)
@@ -67,7 +82,7 @@ class IlluminaHelper(BaseReadTypeHelper):
         :param args: Command-line arguments
         :return: FASTQ input
         """
-        fq_input_pe = self.symlink_input_files([Path(x) for x in args.fastq_pe], args.fastq_pe_names)
+        fq_input_pe = self.__symlink_fastq_files(args.fastq_pe, self._sample_name)
         fastq_input = FastqInput('illumina', pe=[ToolIOFile(x) for x in fq_input_pe])
         if args.trim_reads:
             return self.trim_reads(fastq_input, report, args.report_include_fastq, args.threads)

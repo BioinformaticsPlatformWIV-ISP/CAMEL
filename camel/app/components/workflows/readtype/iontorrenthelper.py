@@ -1,8 +1,9 @@
+import argparse
 import logging
 from pathlib import Path
+from typing import Union
 
-import argparse
-
+from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.components.html.htmlreport import HtmlReport
 from camel.app.components.workflows.readtype.basereadtypehelper import BaseReadTypeHelper
 from camel.app.components.workflows.trimmingiontorrentwrapper import TrimmingIonTorrentWrapper
@@ -14,6 +15,18 @@ class IonTorrentHelper(BaseReadTypeHelper):
     """
     Helper class for IonTorrent reads.
     """
+
+    def __symlink_iontorrent_reads(self, fastq_file: Union[str, None], sample_name: str) -> Path:
+        """
+        Symlinks the input files to a standardized format based on the sample name.
+        :param fastq_file: Input FASTQ file
+        :param sample_name: Sample name
+        :return: Path to renamed file
+        """
+        if fastq_file is None:
+            raise ValueError("IonTorrent data should be SE")
+        new_name = f"{sample_name}.fastq{'.gz' if FileSystemHelper.is_gzipped(fastq_file) else ''}"
+        return self.symlink_input_files([Path(fastq_file)], [new_name])[0]
 
     def trim_reads(self, fastq_input: FastqInput, report: HtmlReport, include_fastq: bool, threads: int) -> FastqInput:
         """
@@ -49,10 +62,7 @@ class IonTorrentHelper(BaseReadTypeHelper):
         :return: FASTA file
         """
         logging.info("Preparing FASTA input (IonTorrent data)")
-        if args.fastq_se is None:
-            raise ValueError("IonTorrent data should be SE")
-        fq_names = [args.fastq_se_name] if args.fastq_se_name is not None else None
-        fq_input_se = self.symlink_input_files([Path(args.fastq_se)], fq_names)[0]
+        fq_input_se = self.__symlink_iontorrent_reads(args.fastq_se, self._sample_name)
         fastq_input = FastqInput(args.read_type, se=[ToolIOFile(fq_input_se)], is_pe=False)
         if args.trim_reads:
             assembly_input = self.trim_reads(fastq_input, report, args.report_include_fastq, args.threads)
@@ -67,7 +77,7 @@ class IonTorrentHelper(BaseReadTypeHelper):
         :param args: Command-line arguments
         :return: FASTQ input
         """
-        fq_input_se = self.symlink_input_files([Path(args.fastq_se)], [args.fastq_se_name])[0]
+        fq_input_se = self.__symlink_iontorrent_reads(args.fastq_se, self._sample_name)
         fastq_input = FastqInput(args.read_type, se=[ToolIOFile(fq_input_se)], is_pe=False)
         if args.trim_reads:
             return self.trim_reads(fastq_input, report, args.report_include_fastq, args.threads)
