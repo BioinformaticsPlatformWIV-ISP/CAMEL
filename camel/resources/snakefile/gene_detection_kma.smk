@@ -35,16 +35,19 @@ rule gene_detection_kma:
         INFORMS = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS_METHOD).format(method='kma', db='{db}')
     params:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'gene_detection' / wildcards.db / 'kma',
-        read_type = 'SE' if config.get('read_type') == 'iontorrent' else 'PE'
+        read_type = config.get('read_type', 'illumina')
     run:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         from camel.app.tools.kma.kma import KMA
         kma = KMA(camel)
         SnakemakeUtils.add_pickle_input(kma, 'DB', input.DB)
+        key_reads = 'PE' if params.read_type == 'illumina' else 'SE'
         fq_input_dict = SnakePipelineUtils.extracts_fq_input(
-            input.IO, key_pe='FASTQ_PE', key_se='FASTQ_SE', read_type=params.read_type)
+            input.IO, key_pe='FASTQ_PE', key_se='FASTQ_SE', read_type=key_reads)
         kma.add_input_files(fq_input_dict)
         step = Step(rule, kma, camel, params.running_dir, config)
+        if params.read_type == 'nanopore':
+            kma.update_parameters(bc_nano=None, basecalls='0.7')
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(kma, output)
 
