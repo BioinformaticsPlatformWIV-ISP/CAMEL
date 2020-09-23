@@ -8,9 +8,9 @@ import os
 import shutil
 
 from camel.app.camel import Camel
+from camel.app.components import mainscriptutils
 from camel.app.components.files.fastqutils import FastqUtils
 from camel.app.components.filesystemhelper import FileSystemHelper
-from camel.app.components.mainscripthelper import MainScriptHelper
 from camel.app.error.snakemakeexecutionerror import SnakemakeExecutionError
 from camel.app.pipeline.pipeline import Pipeline
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
@@ -159,7 +159,7 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         """
         if self._pipeline.keep_config:
             self._pipeline.log_config_file(config_file)
-        MainScriptHelper.prepare_galaxy_output(self._args.output_dir, self._args.output_html)
+        mainscriptutils.prepare_galaxy_output(Path(self._args.output_dir), Path(self._args.output_html))
         try:
             SnakePipelineUtils.run_snakemake(
                 self._snakefile, config_file, [], self._working_dir, self._args.threads)
