@@ -1,7 +1,9 @@
 from dataclasses import dataclass
+from pathlib import Path
 from typing import List, Dict
 
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 
 
 @dataclass(frozen=True)
@@ -36,3 +38,21 @@ class FastqInput:
             return fq_dict
         else:
             return {'SE': self.se}
+
+    @staticmethod
+    def from_fq_dict(io: Path, read_type: str) -> 'FastqInput':
+        """
+        Creates a FastqInput from an IO object.
+        :param io: IO object
+        :param read_type: Read type
+        :return: FastqInput
+        """
+        fq_dict = SnakemakeUtils.load_object(io)
+        return FastqInput(
+            read_type,
+            pe=fq_dict.get('PE'),
+            se_fwd=fq_dict.get('SE_FWD'),
+            se_rev=fq_dict.get('SE_REV'),
+            se=fq_dict.get('SE'),
+            is_pe=fq_dict.get('SE') is None
+        )
