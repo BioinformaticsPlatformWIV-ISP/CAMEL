@@ -19,7 +19,7 @@ class MainStaphylococcusPipeline(BasePipeline):
         'kraken', 'resfinder', 'ncbi_amr', 'pointfinder', 'vfdb_core', 'virulencefinder', 'mlst',
         'cgmlst', 'spa_typing', 'sccmec_typing']
 
-    def __init__(self, args: Optional[argparse.Namespace] = None) -> None:
+    def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """
         Initializes the main class.
         :param args: Arguments (optional)
@@ -68,7 +68,7 @@ class MainStaphylococcusPipeline(BasePipeline):
         BasePipeline.add_common_arguments(parser)
         for analysis_key in MainStaphylococcusPipeline.CUSTOM_ANALYSES:
             parser.add_argument(f"--{analysis_key.replace('_', '-')}", action='store_true')
-        return parser.parse_args()
+        return parser.parse_args(args)
 
 
 if __name__ == '__main__':

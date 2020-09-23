@@ -54,16 +54,16 @@ rule report_pickle_citations:
     This rule creates a pickle with a report section containing the citations.
     """
     output:
-        IO = Path(config['working_dir']) / 'report' / 'html-citations.io'
+        HTML = Path(config['working_dir']) / 'report' / 'html-citations.io'
+    params:
+        citation_keys = config['citations']
     run:
         from camel.app.io.tooliovalue import ToolIOValue
-        from camel.app.components.html.htmlreportsection import HtmlReportSection
         from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-        from camel.scripts.staphylococcuspipeline import CITATIONS_HTML
-        section_citations = HtmlReportSection('Citations')
-        with open(CITATIONS_HTML) as handle:
-            section_citations.add_raw(handle.read())
-        SnakemakeUtils.dump_object([ToolIOValue(section_citations)], output.IO)
+        from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
+        section = SnakePipelineUtils.create_citations_section(
+            params.citation_keys['other'], params.citation_keys['main'])
+        SnakemakeUtils.dump_object([ToolIOValue(section)], output.HTML)
 
 rule report_command_section:
     """
@@ -125,7 +125,7 @@ rule report_combine_all:
         report_mlst = sequence_typing.get_sequence_typing_report('mlst', config),
         report_cgmlst = sequence_typing.get_sequence_typing_report('cgmlst', config),
         # Report
-        report_citations = rules.report_pickle_citations.output.IO,
+        report_citations = rules.report_pickle_citations.output.HTML,
         report_commands = rules.report_command_section.output.HTML
     output:
         HTML = config['output_report']
