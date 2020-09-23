@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 import argparse
 from pathlib import Path
-from typing import Tuple, Optional, Sequence, Dict, Any
+from typing import Optional, Sequence, Dict, Any
 
 from camel.app.camel import Camel
+from camel.app.components import mainscriptutils
 from camel.app.components.filesystemhelper import FileSystemHelper
-from camel.app.components.mainscripthelper import MainScriptHelper
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.app.tools.confindr.confindr import ConFindr
@@ -31,22 +31,10 @@ class MainConFindr(object):
         :return: Arguments
         """
         argument_parser = argparse.ArgumentParser()
-
-        # PE input
-        argument_parser.add_argument('--fastq-pe', nargs=2, help="FASTQ input files")
-        argument_parser.add_argument('--fastq-pe-names', nargs=2, help="FASTQ input file names")
-
-        # SE input
-        argument_parser.add_argument('--fastq-se', help='FASTQ input file')
-        argument_parser.add_argument('--fastq-se-name', help='FASTQ input file name')
-
-        # Directories and output files
-        argument_parser.add_argument('--working-dir', help='Working directory', default=str(Path('.').absolute()))
-        argument_parser.add_argument('--output-html', help='Report output')
-        argument_parser.add_argument('--output-dir', help='Output directory')
+        mainscriptutils.add_input_files_arguments(argument_parser, False)
+        mainscriptutils.add_common_arguments(argument_parser)
 
         # Parameters
-        argument_parser.add_argument('--data-type', type=str, default='illumina', choices=['illumina', 'nanopore'])
         argument_parser.add_argument('--quality-cutoff', type=int, default=20, help='Base quality cutoff')
         argument_parser.add_argument('--base-cutoff', type=int, default=2, help='Number of bases  cutoff')
         argument_parser.add_argument('--base-percentage-cutoff', type=int, default=5, help='Base percentage cutoff')
@@ -60,19 +48,21 @@ class MainConFindr(object):
         Runs the tool.
         :return: None
         """
-        # Create report
-        input_dict, input_files_str = self.__prepare_input()
-        report = MainScriptHelper.init_report(self._args.output_html, self._args.output_dir, 'ConFindr', 'ConFindr')
-        MainScriptHelper.export_analysis_info_section(report, input_files_str)
+        # Initialize report
+        report = mainscriptutils.init_report(
+            Path(self._args.output_html), Path(self._args.output_dir), 'ConFindr report', 'ConFindr')
+        report.add_html_object(mainscriptutils.generate_analysis_info_section(self._args))
+        report.save()
 
         # Run ConFindr
+        input_dict = self.__prepare_input()
         confindr = ConFindr(Camel.get_instance())
         confindr.update_parameters(
             quality_cutoff=self._args.quality_cutoff,
             base_cutoff=self._args.base_cutoff,
             base_fraction_cutoff=self._args.base_percentage_cutoff / 100,
             min_matching_hashes=self._args.min_matching_hashes,
-            data_type=self._args.data_type.title()
+            data_type=self._args.read_type.title()
         )
         confindr.add_input_files(input_dict)
         confindr.run(self._args.working_dir)
@@ -88,7 +78,7 @@ class MainConFindr(object):
         report.add_html_object(SnakePipelineUtils.create_citations_section(['Low_2019-confindr', 'Jolley_2012-rmlst']))
         report.save()
 
-    def __prepare_input(self) -> Tuple[Dict[str, Any], str]:
+    def __prepare_input(self) -> Dict[str, Any]:
         """
         Prepares the input for the confindr tool.
         :return: Input dictionary
@@ -96,14 +86,11 @@ class MainConFindr(object):
         if self._args.fastq_pe is not None:
             is_gzipped = FileSystemHelper.is_gzipped(self._args.fastq_pe[0])
             input_dict = {f"FASTQ{'_GZ' if is_gzipped else ''}_PE": [ToolIOFile(fq) for fq in self._args.fastq_pe]}
-            names = ', '.join([Path(x).name for x in (
-                self._args.fastq_pe_names if self._args.fastq_pe_names else self._args.fastq_pe)])
-            return input_dict, names
+            return input_dict
         else:
             is_gzipped = FileSystemHelper.is_gzipped(self._args.fastq_se)
             input_dict = {f"FASTQ{'_GZ' if is_gzipped else ''}_SE": [ToolIOFile(self._args.fastq_se)]}
-            names = self._args.fastq_se_name if self._args.fastq_se_name else Path(self._args.fastq_se).name
-            return input_dict, names
+            return input_dict
 
 
 if __name__ == '__main__':
