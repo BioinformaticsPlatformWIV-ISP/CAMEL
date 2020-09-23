@@ -4,6 +4,7 @@ from typing import Dict, Any, List, Optional
 
 from camel.app.components.genedetection.genedetectionhitbase import GeneDetectionHitBase
 from camel.app.components.html.htmlreportsection import HtmlReportSection
+from camel.app.components.mainscripthelper import FastqInput
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
@@ -49,7 +50,7 @@ class GeneDetectionWrapper(object):
             threads)
         self.__set_output(output_files)
 
-    def run_workflow_blast(self, fasta_path: str, sample_name: str, db_data: Dict[str, Any], threads: int = 8) -> None:
+    def run_workflow_blast(self, fasta_path: Path, sample_name: str, db_data: Dict[str, Any], threads: int = 8) -> None:
         """
         Runs the gene detection workflow using BLAST.
         :param fasta_path: Input FASTA file
@@ -60,38 +61,38 @@ class GeneDetectionWrapper(object):
         :return: None
         """
         self.__create_input_blast(fasta_path)
-        config_data = self.__get_config_data(sample_name, db_data, 'blast')
+        config_data = self.__get_config_data(sample_name, db_data, 'blast', 'illumina')
         self.__run_workflow(config_data, threads)
 
-    def run_workflow_srst2(self, fastq_pe_path: List[str], sample_name: str, db_data: Dict[str, Any],
+    def run_workflow_srst2(self, fastq_input: FastqInput, sample_name: str, db_data: Dict[str, Any],
                            threads: int = 8) -> None:
         """
         Runs the gene detection workflow using SRST2.
-        :param fastq_pe_path: Input PE FASTQ files
+        :param fastq_input: FASTQ input
         :param sample_name: Sample name
         :param db_data: Database configuration
         :param threads: Number of threads to use
         :return: None
         """
-        self.__create_input_srst2(fastq_pe_path)
-        config_data = self.__get_config_data(sample_name, db_data, 'srst2')
+        self.__create_input_srst2(fastq_input)
+        config_data = self.__get_config_data(sample_name, db_data, 'srst2', fastq_input.read_type)
         self.__run_workflow(config_data, threads)
 
-    def run_workflow_kma(self, fastq_pe_path: List[str], sample_name: str, db_data: Dict[str, Any],
+    def run_workflow_kma(self, fastq_input: FastqInput, sample_name: str, db_data: Dict[str, Any],
                          threads: int = 8) -> None:
         """
         Runs the gene detection workflow using KMA.
-        :param fastq_pe_path: Input PE FASTQ files
+        :param fastq_input: FASTQ input files
         :param sample_name: Sample name
         :param db_data: Database configuration
         :param threads: Number of threads to use
         :return: None
         """
-        self.__create_input_srst2(fastq_pe_path)
-        config_data = self.__get_config_data(sample_name, db_data, 'kma')
+        self.__create_input_srst2(fastq_input)
+        config_data = self.__get_config_data(sample_name, db_data, 'kma', fastq_input.read_type)
         self.__run_workflow(config_data, threads)
 
-    def __create_input_blast(self, fasta_path: str) -> None:
+    def __create_input_blast(self, fasta_path: Path) -> None:
         """
         Creates the input for the workflow in 'blast' mode.
         :param fasta_path: FASTA file path
@@ -102,17 +103,21 @@ class GeneDetectionWrapper(object):
             path.parent.mkdir(parents=True)
         SnakemakeUtils.dump_object([ToolIOFile(fasta_path)], str(path))
 
-    def __create_input_srst2(self, fastq_pe: List[str]) -> None:
+    def __create_input_srst2(self, fastq_input: FastqInput) -> None:
         """
         Creates the input for the workflow in 'srst2' mode.
-        :param fastq_pe: Pair of FASTQ PE files
+        :param fastq_input: FASTQ input
         :return: None
         """
         path = self._working_dir / 'fq_dict.io'
-        fq_dict = {'PE': [ToolIOFile(x) for x in fastq_pe]}
+        if fastq_input.is_pe:
+            fq_dict = {'PE': fastq_input.pe}
+        else:
+            fq_dict = {'SE': fastq_input.se}
         SnakemakeUtils.dump_object(fq_dict, path)
 
-    def __get_config_data(self, sample_name: str, db_data: Dict[str, Any], detection_method: str) -> Dict[str, Any]:
+    def __get_config_data(self, sample_name: str, db_data: Dict[str, Any], detection_method: str, read_type: str)\
+            -> Dict[str, Any]:
         """
         Returns the configuration data for Snakemake.
         :param sample_name: Sample name
@@ -124,7 +129,8 @@ class GeneDetectionWrapper(object):
             'working_dir': str(self._working_dir),
             'sample_name': sample_name,
             'detection_method': detection_method,
-            'gene_detection': {'db': db_data}
+            'gene_detection': {'db': db_data},
+            'read_type': read_type
         }
 
     def __set_output(self, output_files: Dict[str, str]) -> None:

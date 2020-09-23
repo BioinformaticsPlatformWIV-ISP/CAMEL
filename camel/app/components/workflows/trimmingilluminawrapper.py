@@ -9,7 +9,7 @@ from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.resources.snakefile import trimming_illumina
 
 
-class ReadTrimmingWrapper(object):
+class TrimmingIlluminaWrapper(object):
     """
     This class is used as a wrapper class around the Illumina read trimming Snakemake workflow.
     """
@@ -17,6 +17,7 @@ class ReadTrimmingWrapper(object):
     @dataclass
     class ReadTrimmingOutput:
         report_section: HtmlReportSection
+        tsv_summary: Path
         trimmed_reads_pe: List[ToolIOFile]
         trimmed_reads_se_fwd: List[ToolIOFile]
         trimmed_reads_se_rev: List[ToolIOFile]
@@ -24,7 +25,7 @@ class ReadTrimmingWrapper(object):
         fastq_reports_pre: List[ToolIOFile]
         log_file: Optional[Path] = None
 
-    def __init__(self, working_dir: str) -> None:
+    def __init__(self, working_dir: Path) -> None:
         """
         Initializes the read trimming wrapper.
         :param working_dir: Working directory
@@ -32,7 +33,7 @@ class ReadTrimmingWrapper(object):
         self._working_dir = Path(working_dir)
         self._output = None
 
-    def run_workflow(self, pe_reads: List[str], threads: int = 8, export_fastq: bool = False) -> None:
+    def run_workflow(self, pe_reads: List[Path], threads: int = 8, export_fastq: bool = False) -> None:
         """
         Runs the read trimming workflow.
         :param pe_reads: Input PE FASTQ reads
@@ -40,27 +41,31 @@ class ReadTrimmingWrapper(object):
         :param export_fastq: If True, FASTQ files are included in the report
         :return: None
         """
-        pe_reads_path = [Path(r) for r in pe_reads]
         config_data = {
             'working_dir': str(self._working_dir),
-            'fastq_pe': [{'name': p.name, 'path': str(p)} for p in pe_reads_path],
+            'fastq_pe': [{'name': p.name, 'path': str(p)} for p in pe_reads],
             'read_trimming': {'export_fastq': str(export_fastq)}
         }
         config_file = SnakePipelineUtils.generate_config_file(config_data, self._working_dir)
-        output_path = self._working_dir / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_REPORT
+        output_files = {
+            'HTML': self._working_dir / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_REPORT,
+            'TSV': self._working_dir / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_SUMMARY
+        }
         SnakePipelineUtils.run_snakemake(
-            trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA, config_file, [output_path], self._working_dir, threads)
-        self.__set_output(output_path)
+            trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA, config_file, list(output_files.values()), self._working_dir,
+            threads)
+        self.__set_output(output_files)
 
-    def __set_output(self, output_path: str) -> None:
+    def __set_output(self, output_files: Dict[str, Path]) -> None:
         """
         Sets the output of this tool.
-        :param output_path: Report output path
+        :param output_files: Output files by key.
         :return: None
         """
         log_path = self._working_dir / 'camel.log'
-        self._output = ReadTrimmingWrapper.ReadTrimmingOutput(
-            report_section=SnakemakeUtils.load_object(output_path)[0].value,
+        self._output = TrimmingIlluminaWrapper.ReadTrimmingOutput(
+            report_section=SnakemakeUtils.load_object(str(output_files['HTML']))[0].value,
+            tsv_summary=output_files['TSV'],
             trimmed_reads_pe=SnakemakeUtils.load_object(str(
                 self._working_dir / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_READS_PE)),
             trimmed_reads_se_fwd=SnakemakeUtils.load_object(str(
@@ -75,7 +80,7 @@ class ReadTrimmingWrapper(object):
         )
 
     @property
-    def output(self) -> 'ReadTrimmingWrapper.ReadTrimmingOutput':
+    def output(self) -> 'TrimmingIlluminaWrapper.ReadTrimmingOutput':
         """
         Returns the report section generated during the read trimming pipeline.
         :return: Trimming section
