@@ -5,6 +5,7 @@ from camel.app.command.command import Command
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.checkm.checkm import CheckM
+from camel.scripts.checkm.maincheckm import MainCheckM
 from camel.tests import longRunningTest
 
 
@@ -31,7 +32,7 @@ class TestCheckM(CamelTestSuite):
     @longRunningTest()
     def test_checkm(self) -> None:
         """
-        Tests the checkm tool.
+        Tests the CheckM tool.
         :return: None
         """
         checkm = CheckM(Camel.get_instance())
@@ -40,3 +41,18 @@ class TestCheckM(CamelTestSuite):
         self.assertIn('TSV', checkm.tool_outputs)
         self.assertGreater(Path(checkm.tool_outputs['TSV'][0].path).stat().st_size, 0)
         self.assertIn('results', checkm.informs)
+
+    def test_checkm_main_script(self) -> None:
+        """
+        Tests the CheckM main script.
+        :return: None
+        """
+        path_report_out = self.running_dir / 'report' / 'report.html'
+        checkv_main = MainCheckM([
+            '--fasta', str(TestCheckM.input_fasta), TestCheckM.input_fasta.name,
+            '--working-dir', str(self.running_dir),
+            '--output-html', str(path_report_out),
+            '--output-dir', str(path_report_out.parent)
+        ])
+        checkv_main.run()
+        self.assertGreater(path_report_out.stat().st_size, 0)

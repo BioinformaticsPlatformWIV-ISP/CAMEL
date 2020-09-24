@@ -39,8 +39,8 @@ class MainCalling(object):
         argument_parser.add_argument('--reference', required=True)
         argument_parser.add_argument('--reference-name')
         argument_parser.add_argument('--output', required=True)
-        argument_parser.add_argument('--output-consensus',
-                                     help="If specified, the consensus sequence is saved in this file.")
+        argument_parser.add_argument(
+            '--output-consensus', help="If specified, the consensus sequence is saved in this file.")
         argument_parser.add_argument('--working-dir', default=str(Path('.').absolute()))
         argument_parser.add_argument('--ploidy', choices=['GRCh37', 'GRCh38', 'X', 'Y', '1'], default='1')
         argument_parser.add_argument('--calling-method', choices=('consensus', 'multiallelic'))

@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 import argparse
 import json
-import logging
 from pathlib import Path
 from typing import Any, Dict, Optional, Sequence
 
-from camel.app.components.mainscripthelper import MainScriptHelper
+from camel.app.camel import Camel
+from camel.app.components import mainscriptutils
+from camel.app.components.html.htmlreport import HtmlReport
 from camel.app.components.workflows.genedetectionwrapper import GeneDetectionWrapper, GeneDetectionOutput
+from camel.app.components.workflows.readtype import helper_by_read_type
 
 
 class MainGeneDetection(object):
@@ -20,9 +22,8 @@ class MainGeneDetection(object):
         :param args: Arguments (optional)
         """
         self._args = MainGeneDetection.parse_arguments(args)
-        self._sample_name = MainScriptHelper.determine_sample_name(self._args)
-        self._helper = MainScriptHelper(self._args.working_dir, self._sample_name)
-        self._report = None
+        self._sample_name = mainscriptutils.determine_sample_name(self._args)
+        self._helper = helper_by_read_type[self._args.read_type](Path(self._args.working_dir), self._sample_name)
 
     @staticmethod
     def parse_arguments(args: Optional[Sequence[str]]) -> argparse.Namespace:
@@ -31,9 +32,9 @@ class MainGeneDetection(object):
         :return: Parsed arguments
         """
         argument_parser = argparse.ArgumentParser()
-        MainScriptHelper.add_common_arguments(argument_parser)
-        MainScriptHelper.add_assembly_arguments(argument_parser)
-        MainScriptHelper.add_input_files_arguments(argument_parser)
+        mainscriptutils.add_common_arguments(argument_parser)
+        mainscriptutils.add_assembly_arguments(argument_parser)
+        mainscriptutils.add_input_files_arguments(argument_parser)
         group_db = argument_parser.add_mutually_exclusive_group(required=True)
         group_db.add_argument('--database-dir', type=str)
         group_db.add_argument('--database-html', type=str)
@@ -60,32 +61,32 @@ class MainGeneDetection(object):
         Runs the main script.
         :return: None
         """
-        self._report = self._helper.init_report(
-            self._args.output_html, self._args.output_dir, 'Gene detection report',
+        # Initialize report
+        report = mainscriptutils.init_report(
+            Path(self._args.output_html), Path(self._args.output_dir), 'Gene detection report',
             f'Gene detection {self._args.detection_method}')
-        self.__add_analysis_info_section()
-        input_files = self._helper.symlink_input_files(self._args.fasta, self._args.fastq_pe)
+        report.add_html_object(mainscriptutils.generate_analysis_info_section(self._args))
+        report.save()
+
+        # Prepare wrapper
+        wrapper = GeneDetectionWrapper(self._args.working_dir)
         db_data = self.__get_db_metadata()
 
-        wrapper = GeneDetectionWrapper(self._args.working_dir)
+        # Run wrapper
         if self._args.detection_method == 'blast':
-            fasta_file = self._helper.get_blast_input(input_files, self._args, self._report).path
-            wrapper.run_workflow_blast(fasta_file, self._sample_name, db_data, self._args.threads)
+            fasta_input = self._helper.prepare_fasta_input(report, self._args)
+            wrapper.run_workflow_blast(
+                fasta_input, self._sample_name, db_data, self._args.threads)
+        elif self._args.detection_method == 'kma':
+            fastq_input = self._helper.prepare_fastq_input(report, self._args)
+            wrapper.run_workflow_kma(fastq_input, self._sample_name, db_data, self._args.threads)
         elif self._args.detection_method == 'srst2':
-            fq_files = [f.path for f in self._helper.get_srst2_input(input_files, self._args, self._report)]
-            wrapper.run_workflow_srst2(fq_files, self._sample_name, db_data, self._args.threads)
-        else:
-            fq_files = [f.path for f in self._helper.get_srst2_input(input_files, self._args, self._report)]
-            wrapper.run_workflow_kma(fq_files, self._sample_name, db_data, self._args.threads)
-        self.__export_output(wrapper.output)
+            fastq_input = self._helper.prepare_fastq_input(report, self._args)
+            wrapper.run_workflow_srst2(
+                fastq_input, self._sample_name, db_data, self._args.threads)
 
-    def __add_analysis_info_section(self) -> None:
-        """
-        Adds the report section with the analysis info
-        :return: None
-        """
-        input_files_str = self._helper.determine_input_files(self._args)
-        self._helper.export_analysis_info_section(self._report, input_files_str)
+        # Export all output
+        self.__export_output(report, wrapper.output)
 
     def __get_db_metadata(self) -> Dict[str, Any]:
         """
@@ -126,18 +127,19 @@ class MainGeneDetection(object):
                 config_data['metadata'] = db_metadata['extra_column']
         return config_data
 
-    def __export_output(self, output: GeneDetectionOutput) -> None:
+    def __export_output(self, report: HtmlReport, output: GeneDetectionOutput) -> None:
         """
         Exports the output of the workflow.
-        :param output: Output
+        :param report: HTML report
+        :param output: Workflow output
         :return: None
         """
         self._helper.logs['gene_detection'] = str(output.log_file)
         self._helper.informs.append(output.informs)
-        self._helper.export_output_and_commands_section(self._report, output.report_section)
+        self._helper.export_output_and_commands_section(report, output.report_section)
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
+    Camel.get_instance()
     main = MainGeneDetection()
     main.run()

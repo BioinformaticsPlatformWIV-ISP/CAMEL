@@ -7,10 +7,10 @@ from typing import Optional, List, Dict, Sequence
 import yaml
 
 from camel.app.camel import Camel
+from camel.app.components import mainscriptutils
 from camel.app.components.html.htmlreportsection import HtmlReportSection
-from camel.app.components.mainscripthelper import MainScriptHelper
 from camel.app.components.workflows.genedetectionwrapper import GeneDetectionWrapper
-from camel.app.io.tooliofile import ToolIOFile
+from camel.app.components.workflows.readtype import helper_by_read_type
 
 
 class MainSCCmecFinder(object):
@@ -25,8 +25,8 @@ class MainSCCmecFinder(object):
         """
         self._camel = Camel()
         self._args = MainSCCmecFinder._parse_arguments(args)
-        self._sample_name = MainScriptHelper.determine_sample_name(self._args)
-        self._helper = MainScriptHelper(self._args.working_dir, self._sample_name)
+        self._sample_name = mainscriptutils.determine_sample_name(self._args)
+        self._helper = helper_by_read_type[self._args.read_type](Path(self._args.working_dir), self._sample_name)
         self._report = None
 
     @staticmethod
@@ -36,9 +36,9 @@ class MainSCCmecFinder(object):
         :return: Arguments
         """
         argument_parser = argparse.ArgumentParser()
-        MainScriptHelper.add_common_arguments(argument_parser)
-        MainScriptHelper.add_assembly_arguments(argument_parser)
-        MainScriptHelper.add_input_files_arguments(argument_parser)
+        mainscriptutils.add_common_arguments(argument_parser)
+        mainscriptutils.add_input_files_arguments(argument_parser)
+        mainscriptutils.add_assembly_arguments(argument_parser)
         argument_parser.add_argument('--db-mec-genes', help="Database containing mec genes.", required=True)
         argument_parser.add_argument('--profiles-mec-genes', help="Profiles for the mec genes", required=True)
         return argument_parser.parse_args(args)
@@ -61,16 +61,21 @@ class MainSCCmecFinder(object):
         Executes this tool.
         :return: None
         """
-        self._report = self._helper.init_report(
-            self._args.output_html, self._args.output_dir, 'SCCmecFinder ouptput', 'SCCmecFinder (local)')
-        self._helper.export_analysis_info_section(self._report, self._helper.determine_input_files(self._args))
-        input_files = self._helper.symlink_input_files(self._args.fasta, self._args.fastq_pe)
-        fasta_file = self._helper.get_blast_input(input_files, self._args, self._report)
+        # Init report
+        self._report = mainscriptutils.init_report(
+            Path(self._args.output_html), Path(self._args.output_dir), 'SCCmecFinder ouptput', 'SCCmecFinder (local)')
+        self._report.add_html_object(mainscriptutils.generate_analysis_info_section(self._args))
+        self._report.save()
+
+        # Run tools
+        fasta_file = self._helper.prepare_fasta_input(self._report, self._args)
         detected_genes = self.__run_blast(fasta_file)
+
+        # Save the output
         report_mec_type = self.__get_mec_type_overview(detected_genes)
         self._helper.export_output_and_commands_section(self._report, report_mec_type)
 
-    def __run_blast(self, fasta_file: ToolIOFile) -> List[str]:
+    def __run_blast(self, fasta_file: Path) -> List[str]:
         """
         Runs BLAST on the mec genes database.
         :param fasta_file: Input FASTA file
@@ -78,7 +83,7 @@ class MainSCCmecFinder(object):
         """
         wrapper = GeneDetectionWrapper(str(Path(self._args.working_dir) / 'meca'))
         wrapper.run_workflow_blast(
-          fasta_file.path, self._sample_name, {'path': self._args.db_mec_genes}, self._args.threads)
+          fasta_file, self._sample_name, {'path': self._args.db_mec_genes}, self._args.threads)
         self._report.add_html_object(wrapper.output.report_section)
         wrapper.output.report_section.copy_files(self._report.output_dir)
         self._helper.informs.append(wrapper.output.informs)

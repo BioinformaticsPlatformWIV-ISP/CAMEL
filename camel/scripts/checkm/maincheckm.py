@@ -4,7 +4,8 @@ from pathlib import Path
 from typing import Tuple, Optional, Sequence, Dict, Any
 
 from camel.app.camel import Camel
-from camel.app.components.mainscripthelper import MainScriptHelper
+from camel.app.components import mainscriptutils
+from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.app.tools.checkm.checkm import CheckM
@@ -41,10 +42,14 @@ class MainCheckM(object):
         Runs the tool.
         :return: None
         """
-        # Create report
         input_dict, input_files_str = self.__prepare_input()
-        report = MainScriptHelper.init_report(self._args.output_html, self._args.output_dir, 'CheckM', 'CheckM')
-        MainScriptHelper.export_analysis_info_section(report, input_files_str)
+
+        # Initialize report
+        report = mainscriptutils.init_report(
+            Path(self._args.output_html), Path(self._args.output_dir), 'CheckM', 'CheckM')
+        report.add_html_object(mainscriptutils.generate_analysis_info_section(
+            self._args, input_file_str=input_files_str))
+        report.save()
 
         # Run CheckM
         checkm = CheckM(Camel.get_instance())
@@ -56,7 +61,9 @@ class MainCheckM(object):
         checkm_reporter.add_input_informs({'checkm': checkm.informs})
         checkm_reporter.add_input_files({'TSV': checkm.tool_outputs['TSV']})
         checkm_reporter.run(self._args.working_dir)
-        report.add_html_object(checkm_reporter.tool_outputs['HTML'][0].value)
+        section = checkm_reporter.tool_outputs['HTML'][0].value
+        section.copy_files(report.output_dir)
+        report.add_html_object(section)
 
         # Add citation and command
         report.add_html_object(SnakePipelineUtils.create_commands_section([checkm.informs], self._args.working_dir))
