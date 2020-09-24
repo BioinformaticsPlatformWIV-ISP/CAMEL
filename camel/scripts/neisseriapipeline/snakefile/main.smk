@@ -192,6 +192,7 @@ rule combine_reports:
         output_dir = config['output_dir'],
         pipeline_info = config['pipeline'],
         detection_method = config['detection_method'],
+        citation_keys = config['citations']
     run:
         import datetime
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
@@ -203,7 +204,7 @@ rule combine_reports:
             params.sample_name,
             datetime.datetime.now(),
             params.pipeline_info['version'], ', '.join(entry['name'] for entry in params.fastq_input),
-            [('Detection method', params.detection_method)]))
+            [('Detection method', params.detection_method)], params.citation_keys['main']))
 
         # Add output sections
         report_structure = [

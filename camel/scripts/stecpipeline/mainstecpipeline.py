@@ -58,8 +58,6 @@ class MainSTECPipeline(BasePipeline):
         config_data['sequence_typing']['innuendo_cgmlst']['detection_method'] = detection_method_cgmlst
         if self._args.read_type == 'iontorrent':
             config_data['assembly']['spades']['iontorrent'] = None
-        import pprint
-        pprint.pprint(config_data)
         return SnakePipelineUtils.generate_config_file(config_data, Path(self._args.working_dir))
 
     @staticmethod
