@@ -6,24 +6,24 @@ import yaml
 from camel.app.camel import Camel
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.io.tooliodirectory import ToolIODirectory
-from camel.scripts.shigellapipeline import CONFIG_DATA
-from camel.scripts.shigellapipeline.mainshigellapipeline import MainShigellaPipeline
+from camel.scripts.listeriapipeline import CONFIG_DATA
+from camel.scripts.listeriapipeline.mainlisteriapipeline import MainListeriaPipeline
 from camel.tests import longRunningTest
 
 
-class TestShigellaPipeline(CamelTestSuite):
+class TestListeriaPipeline(CamelTestSuite):
     """
-    Tests for the Shigella pipeline.
+    Tests for the Listeria pipeline.
     """
 
     # Input files
-    test_file_dir = CamelTestSuite.get_test_file_dir('pipelines')
+    test_file_dir = CamelTestSuite.get_test_file_dir()
     input_fastq_pe = [
-        test_file_dir / 'Shigella-S17BD07654_1.fastq.gz',
-        test_file_dir / 'Shigella-S17BD07654_2.fastq.gz'
+        test_file_dir / 'pipelines' / 'Listeria-S16BD02199_1.fastq.gz',
+        test_file_dir / 'pipelines' / 'Listeria-S16BD02199_2.fastq.gz'
     ]
 
-    def test_shigella_pipeline_typing_db(self) -> None:
+    def test_listeria_typing_db(self) -> None:
         """
         Checks if the databases for the sequence typing are available.
         :return: None
@@ -42,7 +42,7 @@ class TestShigellaPipeline(CamelTestSuite):
             manager.run(str(self.running_dir))
             self.assertGreater(len(manager.informs), 0)
 
-    def test_shigella_pipeline_gene_detection_db(self):
+    def test_listeria_gene_detection_db(self):
         """
         Checks if the databases for the gene detection are available.
         :return: None
@@ -63,61 +63,64 @@ class TestShigellaPipeline(CamelTestSuite):
             self.assertGreater(len(manager.informs), 0)
 
     @longRunningTest()
-    def test_shigella_pipeline_blast(self) -> None:
+    def test_listeria_pipeline_blast(self) -> None:
         """
-        Tests the Shigella pipeline with all assays except for cgMLST.
+        Tests the Neisseria pipeline with all assays except for cgMLST.
         :return: None
         """
         path_report_out = self.running_dir / 'out' / 'report.html'
         path_summary_out = self.running_dir / 'out' / 'summary.tsv'
         args = [
-            '--fastq-pe', str(TestShigellaPipeline.input_fastq_pe[0]), str(TestShigellaPipeline.input_fastq_pe[1]),
+            '--fastq-pe', str(TestListeriaPipeline.input_fastq_pe[0]),
+            str(TestListeriaPipeline.input_fastq_pe[1]),
             '--output-html', str(path_report_out),
             '--output-dir', str(path_report_out.parent),
             '--output-tsv', str(path_summary_out),
             '--working-dir', str(self.running_dir)
-        ] + [f"--{a.replace('_', '-')}" for a in MainShigellaPipeline.CUSTOM_ANALYSES if a != 'cgmlst']
-        main = MainShigellaPipeline(args)
+        ] + [f"--{a.replace('_', '-')}" for a in MainListeriaPipeline.CUSTOM_ANALYSES if a != 'cgmlst']
+        main = MainListeriaPipeline(args)
         main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)
 
     @longRunningTest()
-    def test_shigella_pipeline_srst2(self) -> None:
+    def test_listeria_pipeline_srst2(self) -> None:
         """
-        Tests the Shigella pipeline with all assays except for cgMLST.
+        Tests the Neisseria pipeline with all assays except for cgMLST.
         :return: None
         """
         path_report_out = self.running_dir / 'out' / 'report.html'
         path_summary_out = self.running_dir / 'out' / 'summary.tsv'
         args = [
-            '--fastq-pe', str(TestShigellaPipeline.input_fastq_pe[0]), str(TestShigellaPipeline.input_fastq_pe[1]),
+            '--fastq-pe', str(TestListeriaPipeline.input_fastq_pe[0]),
+            str(TestListeriaPipeline.input_fastq_pe[1]),
             '--output-html', str(path_report_out),
             '--output-dir', str(path_report_out.parent),
             '--output-tsv', str(path_summary_out),
             '--working-dir', str(self.running_dir),
             '--detection-method', 'srst2'
-        ] + [f"--{a.replace('_', '-')}" for a in MainShigellaPipeline.CUSTOM_ANALYSES if a != 'cgmlst']
-        main = MainShigellaPipeline(args)
+        ] + [f"--{a.replace('_', '-')}" for a in MainListeriaPipeline.CUSTOM_ANALYSES if a != 'cgmlst']
+        main = MainListeriaPipeline(args)
         main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)
 
     @longRunningTest()
-    def test_shigella_pipeline_kma(self) -> None:
+    def test_listeria_pipeline_kma(self) -> None:
         """
-        Tests the Shigella pipeline with all assays except for cgMLST.
+        Tests the Neisseria pipeline with all assays except for cgMLST.
         :return: None
         """
         path_report_out = self.running_dir / 'out' / 'report.html'
         path_summary_out = self.running_dir / 'out' / 'summary.tsv'
         args = [
-            '--fastq-pe', str(TestShigellaPipeline.input_fastq_pe[0]), str(TestShigellaPipeline.input_fastq_pe[1]),
+            '--fastq-pe', str(TestListeriaPipeline.input_fastq_pe[0]),
+            str(TestListeriaPipeline.input_fastq_pe[1]),
             '--output-html', str(path_report_out),
             '--output-dir', str(path_report_out.parent),
             '--output-tsv', str(path_summary_out),
             '--working-dir', str(self.running_dir),
             '--detection-method', 'kma'
-        ] + [f"--{a.replace('_', '-')}" for a in MainShigellaPipeline.CUSTOM_ANALYSES if a != 'cgmlst']
-        main = MainShigellaPipeline(args)
+        ] + [f"--{a.replace('_', '-')}" for a in MainListeriaPipeline.CUSTOM_ANALYSES if a != 'cgmlst']
+        main = MainListeriaPipeline(args)
         main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)
 
