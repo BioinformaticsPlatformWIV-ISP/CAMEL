@@ -2,13 +2,10 @@
 Contains helper function for main scripts with a report output.
 """
 import argparse
+import datetime
 import logging
 from pathlib import Path
-
-import datetime
 from typing import Optional, List
-
-import shutil
 
 from camel.app.components.files.fastqutils import FastqUtils
 from camel.app.components.galaxy.galaxyutils import GalaxyUtils
@@ -105,7 +102,7 @@ def generate_analysis_info_section(
         ('Input file(s):', input_files),
     ]
     if ('read_type' in args) and (args.read_type is not None):
-        read_type = args.read_type if args.fasta is None else 'NA'
+        read_type = args.read_type if ('fasta' in args) and (args.fasta is None) else 'NA'
         data.append(('Read type:', read_type))
     if additional_info is not None:
         data.extend(additional_info)
