@@ -4,16 +4,14 @@ import logging
 from pathlib import Path
 from typing import Optional, Sequence
 
-import os
-
 from camel.app.camel import Camel
+from camel.app.components import mainscriptutils
 from camel.app.components.html.htmlreport import HtmlReport
-from camel.app.components.mainscripthelper import MainScriptHelper
+from camel.app.components.workflows.readtype import helper_by_read_type
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.blast.blastn import Blastn
 from camel.app.tools.spatyping.spatyping import SpaTyping
 from camel.app.tools.spatyping.spatypingreporter import SpaTypingReporter
-from camel.resources import CSS_STYLE
 
 
 class MainSpaTyping(object):
@@ -28,9 +26,8 @@ class MainSpaTyping(object):
         """
         self._camel = Camel.get_instance()
         self._args = MainSpaTyping._parse_arguments(args)
-        self._sample_name = MainScriptHelper.determine_sample_name(self._args)
-        self._helper = MainScriptHelper(self._args.working_dir, self._sample_name)
-        self._report = None
+        self._sample_name = mainscriptutils.determine_sample_name(self._args)
+        self._helper = helper_by_read_type[self._args.read_type](Path(self._args.working_dir), self._sample_name)
         self._db_path = Path(self._args.db_path)
 
     @staticmethod
@@ -40,9 +37,9 @@ class MainSpaTyping(object):
         :return: Arguments
         """
         argument_parser = argparse.ArgumentParser()
-        MainScriptHelper.add_common_arguments(argument_parser)
-        MainScriptHelper.add_input_files_arguments(argument_parser)
-        MainScriptHelper.add_assembly_arguments(argument_parser)
+        mainscriptutils.add_common_arguments(argument_parser)
+        mainscriptutils.add_input_files_arguments(argument_parser)
+        mainscriptutils.add_assembly_arguments(argument_parser)
         argument_parser.add_argument('--db-path', help="Path to the database", default='/db/pipelines/saureus')
         return argument_parser.parse_args(args)
 
@@ -51,28 +48,19 @@ class MainSpaTyping(object):
         Executes this tool.
         :return: None
         """
-        self._report = self._helper.init_report(
-            self._args.output_html, self._args.output_dir, 'Spa typing report', f'<i>spa</i> typing')
-        self._helper.export_analysis_info_section(self._report, self._helper.determine_input_files(self._args))
-        input_files = self._helper.symlink_input_files(self._args.fasta, self._args.fastq_pe)
-        fasta_file = self._helper.get_blast_input(input_files, self._args, self._report)
+        # Initialize report
+        report = mainscriptutils.init_report(
+            Path(self._args.output_html), Path(self._args.output_dir), 'spa typing report', f'<i>spa</i> typing')
+        report.add_html_object(mainscriptutils.generate_analysis_info_section(self._args))
+        report.save()
+
+        # Run the tools
+        fasta_file = self._helper.prepare_fasta_input(report, self._args)
         blastn_tsv_output = self.__run_blastn(fasta_file)
-        spa_typing = self.__run_spa_tying(blastn_tsv_output, fasta_file)
-        self.__add_report_output(spa_typing)
+        spa_typing = self.__run_spa_tying(Path(blastn_tsv_output.path), fasta_file)
+        self.__add_report_output(spa_typing, report)
 
-    def __init_report(self) -> None:
-        """
-        Initializes the HTML report.
-        :return: None
-        """
-        self._report = HtmlReport(self._args.output_html, self._args.output_dir)
-        if not os.path.isdir(self._args.output_dir):
-            os.makedirs(self._args.output_dir)
-        self._report.initialize('Spa typing', CSS_STYLE)
-        self._report.add_pipeline_header('<i>spa</i> typing')
-        self._report.save()
-
-    def __run_blastn(self, fasta_file: ToolIOFile) -> ToolIOFile:
+    def __run_blastn(self, fasta_file: Path) -> ToolIOFile:
         """
         Runs the BLASTN alignment.
         :param fasta_file: Input FASTA file
@@ -81,13 +69,13 @@ class MainSpaTyping(object):
         blastn = Blastn(self._camel)
         blastn.add_input_files({
             'DB_BLAST': [ToolIOFile(self._db_path / 'profiles.fasta')],
-            'FASTA': [fasta_file]})
+            'FASTA': [ToolIOFile(fasta_file)]})
         blastn.update_parameters(output_format=SpaTyping.BLASTN_OUTPUT_FORMAT)
         blastn.run(self._args.working_dir)
         self._helper.informs.append(blastn.informs)
         return blastn.tool_outputs['TSV'][0]
 
-    def __run_spa_tying(self, tsv_output: ToolIOFile, fasta_file: ToolIOFile) -> SpaTyping:
+    def __run_spa_tying(self, tsv_output: Path, fasta_file: Path) -> SpaTyping:
         """
         Runs the Spa typing on the tabular blast output.
         :param tsv_output: Tabular blast output
@@ -96,25 +84,26 @@ class MainSpaTyping(object):
         """
         spa_typing = SpaTyping(self._camel)
         spa_typing.add_input_files({
-            'TSV': [tsv_output],
-            'FASTA': [fasta_file],
+            'TSV': [ToolIOFile(tsv_output)],
+            'FASTA': [ToolIOFile(fasta_file)],
             'CSV_profiles': [ToolIOFile(self._db_path / 'spatypes.csv')]
         })
         spa_typing.run(self._args.working_dir)
         return spa_typing
 
-    def __add_report_output(self, spa_typing: SpaTyping) -> None:
+    def __add_report_output(self, spa_typing: SpaTyping, report: HtmlReport) -> None:
         """
         Adds the spa typing output to the report.
         :param spa_typing: Spa typing tool instance
+        :param report: Report to append information to
         :return: None
         """
         reporter = SpaTypingReporter(self._camel)
         reporter.add_input_informs({'spa_typing': spa_typing.informs})
         reporter.add_input_files({'VAL_hits': spa_typing.tool_outputs['VAL_hits']})
         reporter.run(self._args.working_dir)
-        self._helper.export_output_and_commands_section(self._report, reporter.tool_outputs['VAL_HTML'][0].value)
-        self._report.save()
+        self._helper.export_output_and_commands_section(report, reporter.tool_outputs['VAL_HTML'][0].value)
+        report.save()
 
 
 if __name__ == '__main__':
