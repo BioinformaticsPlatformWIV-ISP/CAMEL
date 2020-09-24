@@ -44,7 +44,7 @@ rule gene_detection_get_hits:
         VAL_hits = lambda wildcards: str(Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_HITS_METHOD).format(db=wildcards.db, method=GeneDetectionUtils.get_detection_method_key(config, wildcards.db))),
         INFORMS_hits = lambda wildcards: str(Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS_METHOD).format(db=wildcards.db, method=GeneDetectionUtils.get_detection_method_key(config, wildcards.db)))
     output:
-        VAL_hits = Path(config['working_dir']) / gene_detection.OUTPUT_GENE_DETECTION_ALL_HITS,
+        VAL_hits = Path(config['working_dir']) / 'gene_detection' / '{db}' / 'hit_selection' / 'hits-standardized.io',
         INFORMS = Path(config['working_dir']) / gene_detection.OUTPUT_GENE_DETECTION_INFORMS
     run:
         import shutil
@@ -63,7 +63,7 @@ rule gene_detection_map_names:
         INFORMS_db = rules.gene_detection_db_manager.output.INFORMS,
         HITS = rules.gene_detection_get_hits.output.VAL_hits
     output:
-        HITS = Path(config['working_dir']) / 'gene_detection' / '{db}' / 'metadata' / 'hits.io',
+        HITS = Path(config['working_dir']) / gene_detection.OUTPUT_GENE_DETECTION_ALL_HITS,
         TSV = Path(config['working_dir']) / 'gene_detection' / '{db}' / 'metadata' / 'tsv.io',
     params:
         dir_working = lambda wildcards: Path(config['working_dir']) / 'gene_detection' / wildcards.db / 'metadata',

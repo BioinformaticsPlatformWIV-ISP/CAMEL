@@ -39,7 +39,7 @@ class SnakePipelineUtils(object):
 
     @staticmethod
     def create_input_section(sample_name: str, date: datetime, pipeline_version: str, input_files: str,
-                             extra_data: List[Tuple[str, str]]) -> HtmlReportSection:
+                             extra_data: List[Tuple[str, str]], key_citation: str = None) -> HtmlReportSection:
         """
         Creates the input section for the HTML report.
         :param sample_name: Sample name
@@ -47,7 +47,8 @@ class SnakePipelineUtils(object):
         :param pipeline_version: Pipeline version
         :param input_files: Input files
         :param extra_data: Extra data to include in the input section
-        :return:
+        :param key_citation: Citation for the pipeline.
+        :return: Input report section
         """
         table_data = [
             ['Sample:', sample_name],
@@ -59,6 +60,10 @@ class SnakePipelineUtils(object):
             table_data.append([f'{key}:', value])
         section = HtmlReportSection('Input')
         section.add_table(table_data, table_attributes=[('class', 'information')])
+        if key_citation is not None:
+            section.add_header('Disclaimer', 2)
+            section.add_paragraph('If you use this pipeline for your scientific work, please cite:')
+            section.add_html_object(HtmlCitation.parse_from_json(key_citation))
         return section
 
     @staticmethod
