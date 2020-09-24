@@ -82,16 +82,16 @@ rule report_pickle_citations:
     This rule creates a pickle with a report section containing the citations.
     """
     output:
-        VAL_HTML = Path(config['working_dir']) / 'report' / 'html-citations.io'
+        HTML = Path(config['working_dir']) / 'report' / 'html-citations.io'
+    params:
+        citation_keys = config['citations']
     run:
         from camel.app.io.tooliovalue import ToolIOValue
-        from camel.app.components.html.htmlreportsection import HtmlReportSection
         from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-        from camel.scripts.stecpipeline import CITATIONS_HTML
-        section_citations = HtmlReportSection('Citations')
-        with open(CITATIONS_HTML) as handle:
-            section_citations.add_raw(handle.read())
-        SnakemakeUtils.dump_object([ToolIOValue(section_citations)], output[0])
+        from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
+        section = SnakePipelineUtils.create_citations_section(
+            params.citation_keys['other'], params.citation_keys['main'])
+        SnakemakeUtils.dump_object([ToolIOValue(section)], output.HTML)
 
 rule report_command_section:
     input:
@@ -155,7 +155,7 @@ rule combine_reports:
         report_mlst_warwick = sequence_typing.get_sequence_typing_report('mlst_warwick', config),
         report_mlst_pasteur = sequence_typing.get_sequence_typing_report('mlst_pasteur', config),
         report_cgmlst = sequence_typing.get_sequence_typing_report('cgmlst', config),
-        report_citations = rules.report_pickle_citations.output.VAL_HTML,
+        report_citations = rules.report_pickle_citations.output.HTML,
         report_commands = rules.report_command_section.output.VAL_HTML
     output:
         HTML = config['output_report']
@@ -165,6 +165,7 @@ rule combine_reports:
         output_dir = config['output_dir'],
         pipeline_info = config['pipeline'],
         detection_method = config['detection_method'],
+        citation_keys = config['citations']
     run:
         import datetime
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
@@ -177,8 +178,7 @@ rule combine_reports:
             datetime.datetime.now(),
             params.pipeline_info['version'],
             ', '.join(entry['name'] for entry in params.fastq_input),
-            [('Detection method', params.detection_method)],
-        ))
+            [('Detection method', params.detection_method)],params.citation_keys['main']))
 
         # Add output sections
         report_structure = [

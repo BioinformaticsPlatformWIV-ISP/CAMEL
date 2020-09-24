@@ -17,17 +17,13 @@ rule flexneri_call_variants_gtr_promotor:
         BAM = Path(config['working_dir']) / 'flexneri_type' / 'gtr_promotor' / 'bam.io'
     params:
         working_dir = Path(config['working_dir']) / 'flexneri_type' / 'gtr_promotor',
-        promotor_fasta = config['flexneri_type']['fasta_gtr_promotor']
+        promotor_fasta = config['flexneri_type']['fasta_gtr_promotor'],
+        read_type = config.get('read_type', 'illumina')
     threads: 2
     run:
+        from camel.app.components.workflows.utils.fastqinput import FastqInput
         from camel.app.components.workflows.variantcallingwrapper import VariantCallingWrapper
-        from camel.app.components.workflows.variantcallingwrapper import VariantCallingInput
-        fastq_files = SnakemakeUtils.load_object(input.IO)
-        workflow_input = VariantCallingInput(
-            pe_reads=fastq_files['PE'],
-            se_reads_fwd=fastq_files['SE_FWD'][0],
-            se_reads_rev=fastq_files['SE_REV'][0]
-        )
+        workflow_input = FastqInput.from_fq_dict(input.IO, params.read_type)
         ref_info = {'path': params.promotor_fasta, 'name': 'gtr_promotor'}
         wrapper = VariantCallingWrapper(params.working_dir)
         wrapper.run_workflow(ref_info, 'sample', workflow_input, {'ploidy': 1}, threads)
