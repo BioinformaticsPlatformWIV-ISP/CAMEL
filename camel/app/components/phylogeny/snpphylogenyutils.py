@@ -16,7 +16,7 @@ from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.html.htmltablecell import HtmlTableCell
 from camel.app.components.phylogeny.megautils import MEGAUtils
 from camel.app.components.phylogeny.newickutils import NewickUtils
-from camel.app.components.workflows.readtrimmingwrapper import ReadTrimmingWrapper
+from camel.app.components.workflows.trimmingilluminawrapper import TrimmingIlluminaWrapper
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
@@ -191,7 +191,7 @@ class SnpPhylogenyUtils(object):
 
     @staticmethod
     def trim_all_reads(fq_by_sample: Dict[Sample, List[ToolIOFile]], working_dir: Path, threads: int = 8) -> Dict[
-            Sample, ReadTrimmingWrapper.ReadTrimmingOutput]:
+        Sample, TrimmingIlluminaWrapper.ReadTrimmingOutput]:
         """
         Trims all the reads in parallel using Snakemake.
         :param fq_by_sample: FASTQ files by sample
@@ -223,7 +223,7 @@ class SnpPhylogenyUtils(object):
 
     @staticmethod
     def add_trimming_section(report: HtmlReport, trimming_output_by_sample: Dict[
-            Sample, ReadTrimmingWrapper.ReadTrimmingOutput]) -> None:
+        Sample, TrimmingIlluminaWrapper.ReadTrimmingOutput]) -> None:
         """
         Adds the trimming section to the report.
         :param report: HTML report
