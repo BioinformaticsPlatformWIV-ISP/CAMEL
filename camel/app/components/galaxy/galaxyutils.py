@@ -23,7 +23,6 @@ class GalaxyUtils(object):
         logging.debug(f"Determining sample name from: {', '.join(fastq_names)}")
         pattern = FastqUtils.PATTERN_FQ_PE if is_pe else FastqUtils.PATTERN_FQ_SE
         try:
-            print(fastq_names[0])
             return FastqUtils.get_sample_name(fastq_names[0], pattern)
         except ValueError:
             logging.debug("Filename does not match any standard FASTQ format")
