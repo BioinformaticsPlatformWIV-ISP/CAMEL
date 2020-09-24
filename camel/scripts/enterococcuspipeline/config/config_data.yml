@@ -77,7 +77,7 @@ gene_detection:
       key: protein_function
 
   plasmidfinder:
-    path: /db/gene_detection/PlasmidFinder-entero
+    path: /db/gene_detection/PlasmidFinder-gram_positive
     params:
       blastn:
         min_percent_identity: 95
