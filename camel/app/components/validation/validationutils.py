@@ -41,7 +41,7 @@ class ValidationUtils(object):
         :return: Summary information
         """
         logging.info(f"Parsing summary info: {path_tsv}")
-        with path_tsv.open() as handle:
+        with path_tsv.open(encoding='utf-8') as handle:
             return {p[0]: p[1].strip() for p in [l.split('\t') for l in handle.readlines()]}
 
     @staticmethod
