@@ -4,8 +4,8 @@ from camel.app.camel import Camel
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-from camel.resources.snakefile import gene_detection
-from camel.scripts.enterococcuspipeline.snakefile import plasmidspades as plasmidspades_workflow
+from camel.resources.snakefile import gene_detection, plasmidspades as plasmidspades_workflow
+
 
 checkpoint plasmidspades_run:
     """
@@ -138,6 +138,20 @@ rule plasmidspades_gene_detection:
         # Export informs
         SnakemakeUtils.dump_object([hit.to_table_row() for hit in wrapper.output.detected_hits], output.INFORMS)
 
+rule plasmidspades_gene_detection_report_empty:
+    """
+    Creates an empty report for the gene detection when plasmidSPAdes assembly fails.
+    """
+    input:
+        INFORMS_DB = Path(config['working_dir']) / 'gene_detection' / '{db}' / 'db_manager' / 'informs.io'
+    output:
+        VAL_HTML = Path(config['working_dir']) / plasmidspades_workflow.OUTPUT_PLASMIDSPADES_GENE_DETECTION_REPORT_EMPTY
+    run:
+        from camel.app.snakemake.snakemakeutils import SnakemakeUtils
+        from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
+        informs_db = SnakemakeUtils.load_object(input.INFORMS_DB)
+        SnakePipelineUtils.create_empty_report_section(f"{informs_db['title']} - plasmidSPades", output.VAL_HTML)
+
 rule plasmidspades_gene_detection_select_output:
     """
     Selects the output report for the plasmid spades gene detection.
@@ -147,7 +161,7 @@ rule plasmidspades_gene_detection_select_output:
     input:
         HTML = lambda wildcards: rules.plasmidspades_gene_detection.output.HTML if plasmidspades_workflow.plasmidspades_successful(checkpoints.plasmidspades_run) else [],
         INFORMS = lambda wildcards: rules.plasmidspades_gene_detection.output.INFORMS if plasmidspades_workflow.plasmidspades_successful(checkpoints.plasmidspades_run) else [],
-        HTML_empty = lambda wildcards: str(Path(config['working_dir'] / gene_detection.OUTPUT_GENE_DETECTION_REPORT_EMPTY)) if not plasmidspades_workflow.plasmidspades_successful(checkpoints.plasmidspades_run) else [],
+        HTML_empty = lambda wildcards: rules.plasmidspades_gene_detection_report_empty.output.VAL_HTML if not plasmidspades_workflow.plasmidspades_successful(checkpoints.plasmidspades_run) else [],
     output:
         HTML = Path(config['working_dir']) / plasmidspades_workflow.OUTPUT_PLASMIDSPADES_GENE_DETECTION_REPORT,
         INFORMS = Path(config['working_dir']) / 'plasmidspades' / 'gene_detection' / '{db}' / 'informs.io',
@@ -185,3 +199,13 @@ rule plasmidspades_summary:
             for key, value in summary_data:
                 handle.write(f'{key}\t{value}')
                 handle.write('\n')
+
+rule plasmidspades_report_empty:
+    """
+    Creates an empty report when plasmidSPAdes is disabled.
+    """
+    output:
+        VAL_HTML = Path(config['working_dir']) / plasmidspades_workflow.OUTPUT_PLASMIDSPADES_REPORT_EMPTY
+    run:
+        from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
+        SnakePipelineUtils.create_empty_report_section('Assembly - plasmidSPAdes', output.VAL_HTML)

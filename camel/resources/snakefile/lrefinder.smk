@@ -3,7 +3,7 @@ from pathlib import Path
 from camel.app.camel import Camel
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.scripts.enterococcuspipeline.snakefile import lrefinder as lrefinder_workflow
+from camel.resources.snakefile import lrefinder as lrefinder_workflow
 
 rule run_lrefinder:
     """

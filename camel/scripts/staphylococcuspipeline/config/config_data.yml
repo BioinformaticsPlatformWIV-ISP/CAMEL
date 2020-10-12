@@ -101,6 +101,19 @@ gene_detection:
     path: /db/gene_detection/SCCmec_cassette
     force_detection_method: srst2
 
+  plasmidfinder:
+    path: /db/gene_detection/PlasmidFinder-gram_positive
+    params:
+      blastn:
+        min_percent_identity: 95
+        min_coverage: 60
+      srst2:
+        max_divergence: 5
+        min_coverage: 60
+    metadata:
+      name: Notes
+      key: notes
+
 ###################
 # Sequence typing #
 ###################

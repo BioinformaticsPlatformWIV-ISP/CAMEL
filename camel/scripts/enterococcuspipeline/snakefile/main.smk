@@ -1,8 +1,7 @@
 from pathlib import Path
 
 from camel.resources.snakefile import trimming_illumina, assembly_spades, gene_detection, trimming, \
-    contamination_check_kraken, quality_checks, sequence_typing, pointfinder
-from camel.scripts.enterococcuspipeline.snakefile import lrefinder, plasmidspades
+    contamination_check_kraken, quality_checks, sequence_typing, pointfinder, plasmidspades, lrefinder
 
 #######################
 # Included Snakefiles #
@@ -71,18 +70,18 @@ rule report_command_section:
     """
     input:
         INFORMS_trimming = trimming.get_trimming_command_informs(config),
-        INFORMS_assembly = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_INFORMS,
-        INFORMS_assembly_filt = Path(config['working_dir']) / 'assembly_spades' / 'filtering' / 'informs.io',
-        INFORMS_kraken = Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_KRAKEN_INFORMS if 'kraken' in config['analyses'] else [],
-        INFORMS_mapping = quality_checks.get_mapping_rate_informs(config),
-        INFORMS_depth = quality_checks.get_depth_informs(config),
-        INFORMS_resfinder = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='resfinder') if 'resfinder' in config['analyses'] else [],
-        INFORMS_ncbi_amr = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='ncbi_amr') if 'ncbi_amr' in config['analyses'] else [],
-        INFORMS_virulencefinder = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='virulencefinder') if 'virulencefinder' in config['analyses'] else [],
-        INFORMS_vfdb_core = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='vfdb_core') if 'vfdb_core' in config['analyses'] else [],
-        INFORMS_pointfinder = Path(config['working_dir']) / pointfinder.OUTPUT_POINTFINDER_INFORMS if 'pointfinder' in config['analyses'] else [],
-        INFORMS_lrefinder = Path(config['working_dir']) / lrefinder.OUTPUT_LREFINDER_INFORMS if 'pointfinder' in config['analyses'] else [],
-        INFORMS_plasmidspades = Path(config['working_dir']) / plasmidspades.OUTPUT_PLASMIDSPADES_INFORMS if 'plasmidspades' in config['analyses'] else []
+         INFORMS_assembly = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_INFORMS,
+         INFORMS_assembly_filt = Path(config['working_dir']) / 'assembly_spades' / 'filtering' / 'informs.io',
+         INFORMS_kraken = Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_KRAKEN_INFORMS if 'kraken' in config['analyses'] else [],
+         INFORMS_mapping = quality_checks.get_mapping_rate_informs(config),
+         INFORMS_depth = quality_checks.get_depth_informs(config),
+         INFORMS_resfinder = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='resfinder') if 'resfinder' in config['analyses'] else [],
+         INFORMS_ncbi_amr = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='ncbi_amr') if 'ncbi_amr' in config['analyses'] else [],
+         INFORMS_virulencefinder = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='virulencefinder') if 'virulencefinder' in config['analyses'] else [],
+         INFORMS_vfdb_core = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='vfdb_core') if 'vfdb_core' in config['analyses'] else [],
+         INFORMS_pointfinder = Path(config['working_dir']) / pointfinder.OUTPUT_POINTFINDER_INFORMS if 'pointfinder' in config['analyses'] else [],
+         INFORMS_lrefinder =Path(config['working_dir']) / lrefinder.OUTPUT_LREFINDER_INFORMS if 'lrefinder' in config['analyses'] else [],
+         INFORMS_plasmidspades =Path(config['working_dir']) / plasmidspades.OUTPUT_PLASMIDSPADES_INFORMS if 'plasmidspades' in config['analyses'] else []
     output:
         HTML = Path(config['working_dir']) / 'report' / 'html-commands.io'
     params:
@@ -106,28 +105,31 @@ rule report_combine_all:
     """
     input:
         report_trimming = trimming.get_trimming_report(config),
-        report_assembly = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_REPORT,
-        report_kraken = Path(config['working_dir']) / (contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT if 'kraken' in config['analyses'] else contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT_EMPTY),
-        report_adv_qc = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_REPORT,
-        # AMR detection
-        report_lrefinder = Path(config['working_dir']) / (lrefinder.OUTPUT_LREFINDER_REPORT if 'lrefinder' in config['analyses'] else lrefinder.OUTPUT_LREFINDER_REPORT_EMPTY),
-        report_resfinder = gene_detection.get_gene_detection_report('resfinder', config),
-        report_ncbi_amr = gene_detection.get_gene_detection_report('ncbi_amr', config),
-        report_pointfinder = Path(config['working_dir']) / (pointfinder.OUTPUT_POINTFINDER_REPORT if 'pointfinder' in config['analyses'] else pointfinder.OUTPUT_POINTFINDER_REPORT_EMPTY),
-        # Virulence gene detection
-        report_virulencefinder = gene_detection.get_gene_detection_report('virulencefinder', config),
-        report_vfdb_core = gene_detection.get_gene_detection_report('vfdb_core', config),
-        # Plasmid characterization
-        report_plasmidfinder = gene_detection.get_gene_detection_report('plasmidfinder', config),
-        report_plasmidspades = Path(config['working_dir']) / (plasmidspades.OUTPUT_PLASMIDSPADES_REPORT if 'plasmidspades' in config['analyses'] else plasmidspades.OUTPUT_PLASMIDSPADES_REPORT_EMPTY),
-        report_plasmid_resfinder = Path(config['working_dir']) / str(plasmidspades.OUTPUT_PLASMIDSPADES_GENE_DETECTION_REPORT if 'plasmidspades' in config['analyses'] else plasmidspades.OUTPUT_PLASMIDSPADES_GENE_DETECTION_REPORT_EMPTY).format(db='resfinder'),
-        report_plasmid_ndaro = Path(config['working_dir']) / str(plasmidspades.OUTPUT_PLASMIDSPADES_GENE_DETECTION_REPORT if 'plasmidspades' in config['analyses'] else plasmidspades.OUTPUT_PLASMIDSPADES_GENE_DETECTION_REPORT_EMPTY).format(db='ncbi_amr'),
-        # Typing
-        report_mlst = sequence_typing.get_sequence_typing_report('mlst', config),
-        report_cgmlst = sequence_typing.get_sequence_typing_report('cgmlst', config),
-        # Report
-        report_citations = rules.report_pickle_citations.output.HTML,
-        report_commands = rules.report_command_section.output.HTML
+         report_assembly = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_REPORT,
+         report_kraken = Path(config['working_dir']) / (contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT if 'kraken' in config['analyses'] else contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT_EMPTY),
+         report_adv_qc = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_REPORT,
+         # AMR detection
+         report_lrefinder = Path(config['working_dir']) / (lrefinder.OUTPUT_LREFINDER_REPORT if 'lrefinder' in config['analyses'] else lrefinder.OUTPUT_LREFINDER_REPORT_EMPTY),
+         report_resfinder = gene_detection.get_gene_detection_report('resfinder', config),
+         report_ncbi_amr = gene_detection.get_gene_detection_report('ncbi_amr', config),
+         report_pointfinder = Path(config['working_dir']) / (pointfinder.OUTPUT_POINTFINDER_REPORT if 'pointfinder' in config['analyses'] else pointfinder.OUTPUT_POINTFINDER_REPORT_EMPTY),
+         # Virulence gene detection
+         report_virulencefinder = gene_detection.get_gene_detection_report('virulencefinder', config),
+         report_vfdb_core = gene_detection.get_gene_detection_report('vfdb_core', config),
+         # Plasmid characterization
+         report_plasmidfinder = gene_detection.get_gene_detection_report('plasmidfinder', config),
+         report_plasmidspades = Path(config['working_dir']) / (
+             plasmidspades.OUTPUT_PLASMIDSPADES_REPORT if 'plasmidspades' in config['analyses'] else plasmidspades.OUTPUT_PLASMIDSPADES_REPORT_EMPTY),
+         report_plasmid_resfinder = Path(config['working_dir']) / str(
+             plasmidspades.OUTPUT_PLASMIDSPADES_GENE_DETECTION_REPORT if 'plasmidspades' in config['analyses'] else plasmidspades.OUTPUT_PLASMIDSPADES_GENE_DETECTION_REPORT_EMPTY).format(db='resfinder'),
+         report_plasmid_ndaro = Path(config['working_dir']) / str(
+             plasmidspades.OUTPUT_PLASMIDSPADES_GENE_DETECTION_REPORT if 'plasmidspades' in config['analyses'] else plasmidspades.OUTPUT_PLASMIDSPADES_GENE_DETECTION_REPORT_EMPTY).format(db='ncbi_amr'),
+         # Typing
+         report_mlst = sequence_typing.get_sequence_typing_report('mlst', config),
+         report_cgmlst = sequence_typing.get_sequence_typing_report('cgmlst', config),
+         # Report
+         report_citations = rules.report_pickle_citations.output.HTML,
+         report_commands = rules.report_command_section.output.HTML
     output:
         HTML = config['output_report']
     params:
@@ -208,7 +210,7 @@ rule summary_combine_all:
         # Virulence detection
         Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='virulencefinder') if 'virulencefinder' in config['analyses'] else [],
         Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='vfdb_core') if 'vfdb_core' in config['analyses'] else [],
-        # Plasmid characeterization
+        # Plasmid characterization
         Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='plasmidfinder') if 'plasmidfinder' in config['analyses'] else [],
         Path(config['working_dir']) / plasmidspades.OUTPUT_PLASMIDSPADES_SUMMARY if 'plasmidspades' in config['analyses'] else [],
         # Sequence typing

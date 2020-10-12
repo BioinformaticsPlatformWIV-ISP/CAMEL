@@ -21,7 +21,7 @@ rule gene_detection_blast_blastn:
         blastn = Blastn(camel)
         SnakemakeUtils.add_pickle_inputs(blastn, input)
         step = Step(rule, blastn, camel, params.running_dir, config, wildcards)
-        blastn.update_parameters(threads=1, task=params.task)
+        blastn.update_parameters(threads=1, task=params.task, max_target_seqs=20000)
         step.run_step()
         blastn.informs['Task'] = params.task
         SnakemakeUtils.dump_tool_outputs(blastn, output)
@@ -98,7 +98,7 @@ rule gene_detection_blast_text_alignment_generation:
         blast_formatter = BlastFormatter(camel)
         SnakemakeUtils.add_pickle_inputs(blast_formatter, input)
         step = Step(rule, blast_formatter, camel, params.running_dir, config, wildcards)
-        blast_formatter.update_parameters(output_format='0', num_alignments=1000)
+        blast_formatter.update_parameters(output_format='0', num_alignments=20000)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(blast_formatter, output)
 
