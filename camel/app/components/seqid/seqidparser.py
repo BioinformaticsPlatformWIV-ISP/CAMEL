@@ -1,6 +1,6 @@
 import logging
 import re
-from typing import Optional
+from typing import Optional, Dict, Union
 
 
 class SeqIDParser(object):
@@ -14,7 +14,7 @@ class SeqIDParser(object):
         """
         # Parser types:
         #   - single = no segment information
-        #   - default = strain and segment divided by '|'
+        #   - default = fields (e.g. strain, name, ...) divided by '|'
         #   - avian = e.g. A-DUCK-Czech_Republic-1-2011-H1N1-NA
         #   - cyril = e.g. A-Alabama-05-2010-H3N2-HA
         #   - inf_a = e.g. A-ruddy-Delaware-34-1993-H2N1(CY015141)-PB1
@@ -30,6 +30,7 @@ class SeqIDParser(object):
         self._inf_bc_regex = r'(\S*-[\w]*)(\(*[\w]*\)*)-([HNAEMPBS123]+)$'
         self._re_match = self._get_re_match()
         self._add_gbi = add_gbi
+        self._seq_parts = self._get_seq_parts()
 
     @property
     def seqid(self) -> str:
@@ -52,7 +53,7 @@ class SeqIDParser(object):
         if self._type == 'single':
             return self._seqid
         elif self._type == 'default':
-            return self._seqid.split('|')[0]
+            return self._compose_strain_name()
         elif self._type in {'avian', 'cyril', 'inf_a'}:
             return f'{self._re_match.group(1)}-{self._re_match.group(2)}'
         elif self._type in {'inf_b', 'inf_c'}:
@@ -68,7 +69,7 @@ class SeqIDParser(object):
         if self._type == 'single':
             return None
         elif self._type == 'default':
-            return self._seqid.split('|')[1]
+            return self._seq_parts.get('segment', None)
         elif self._type in {'avian', 'cyril', 'inf_a'}:
             return self._re_match.group(4)
         elif self._type in {'inf_b', 'inf_c'}:
@@ -83,6 +84,8 @@ class SeqIDParser(object):
         """
         if self._type in {'avian', 'cyril', 'inf_a'}:
             return self._re_match.group(2)
+        elif self._type == 'default':
+            return self._seq_parts.get('subtype', None)
 
     @property
     def gbi(self) -> Optional[str]:
@@ -95,6 +98,8 @@ class SeqIDParser(object):
             return self._re_match.group(3)
         elif self._type in {'inf_b', 'inf_c'}:
             return self._re_match.group(2)
+        elif self._type == 'default':
+            return self._seq_parts.get('gb', None)
 
     @property
     def composed_id(self) -> Optional[str]:
@@ -107,31 +112,54 @@ class SeqIDParser(object):
         if self._type in {'avian', 'cyril', 'inf_a', 'inf_b', 'inf_c'} and self.subtype is None:
             logging.warning(f'Composing new sequence ID: Influenza subtype information is missing from original seqid, '
                             f'assuming subtype information in strain name: {self.strain}.')
-        if self._type == 'default':
-            return f'{self.strain}|{self.segment}'
-        elif self._type in {'avian', 'cyril', 'inf_a', 'inf_b', 'inf_c'}:
+        elif self._type in {'avian', 'cyril', 'inf_a', 'inf_b', 'inf_c', 'default'}:
             if self.subtype is None:
-                return f'{self.strain}{self._get_gbi_string()}-{self.segment}'
+                return f'{self.strain}{self._get_gbi_string()}{self.segment}'
             else:
-                return f'{self.strain}-{self.subtype}{self._get_gbi_string()}-{self.segment}'
+                return f'{self.strain}|{self.subtype}{self._get_gbi_string()}{self.segment}'
 
-    def _get_gbi_string(self) -> str:
+    def _get_gbi_string(self) -> Optional[str]:
         """
         Return the string to be used for the GID when composing a new ID. Returns an empty string in case of
         avian or Cyril samples as they do not have/need this information.
-        :return: String with GBI information
+        :return: String with GBI information or None
         """
         if self._type in {'avian', 'cyril'} or not self._add_gbi:
             return ''
         elif self._add_gbi:
-            return f'{self.gbi}' if self.gbi else f'(GBIDna)'
+            return f'|{self.gbi}|' if self.gbi else f'|GBIDna|'
 
-    def _get_re_match(self) -> re.Match:
+    def _get_re_match(self) -> Optional[re.Match]:
         """
         Returns the regex match object that can be used to extract the different subparts from the sequence ID.
-        :return: Regex match object
+        :return: Regex match object or None
         """
         if self._type in {'avian', 'cyril', 'inf_a'}:
             return re.match(self._inf_a_regex, self.seqid)
         elif self._type in {'inf_b', 'inf_c'}:
             return re.match(self._inf_bc_regex, self.seqid)
+
+    def _get_seq_parts(self) -> Optional[Dict[str, str]]:
+        """
+        Returns the different parts the sequence id is composed of in a dictionary.
+        For example: 'id|A/nt/60/1968|type|A|subtype|H3N2|gb|J02138|segment|PB1' would return:
+        {'id': 'A/nt/60/1968', 'type': 'A', 'subtype': 'H3N2', 'gb': 'J02138', 'segment': 'PB1'}
+        :return: Dictionary with sequence id parts or None
+        """
+        if self._type == 'default':
+            items = self._seqid.split('|')
+            return {items[i]: items[i+1] for i in range(0, len(items), 2)}
+
+    def _compose_strain_name(self) -> str:
+        """
+        Composes the strain name from the available parts in the sequence identifier. An example
+        for Influenza A 'id|A/nt/60/1968|type|A|subtype|H3N2|gb|J02138|segment|PB1' would return
+        A/nt/60/1968_H3N2
+        :return: Strain name
+        """
+        strain_name = ''
+        if self._seq_parts.get('id', None):
+            strain_name += self._seq_parts.get('id')
+        if self._seq_parts.get('subtype', None):
+            strain_name += f'|{self.subtype}'
+        return strain_name
