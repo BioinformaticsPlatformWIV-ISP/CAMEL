@@ -1,4 +1,4 @@
-dependencies: [java/1.8.0_172, picard/2.8.3]
+dependencies: [java/1.8.0_172, picard/2.23.3]
 parameters:
   RG_name: {default: true, mandatory: false, option: READ_GROUP_NAME, p_index: 30,
     value: ReadGroupNA}
