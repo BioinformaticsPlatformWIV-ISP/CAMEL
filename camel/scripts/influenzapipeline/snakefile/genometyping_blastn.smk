@@ -137,9 +137,31 @@ rule blastn_genometyping_processing:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(gt, output)
 
+
         # inf = SnakemakeUtils.load_object(input.ASN)[0].path
         # inf_parser = InfluenzaBlastnAsnParser(inf, config['multi_segment'], config['species_info']['seqIDParser_type'], 'blast')
         # inf_parser.group_hits_per_segment()
+
+rule blastn_genometyping_reference_indexing:
+    """
+    Create indexes for the created reference genome (Bowtie2 and BWA)
+    """
+    input:
+        FASTA_REF = Path(config['working_dir']) / genometyping_blastn.OUTPUT_GENOMETYPING_FASTA_REF
+    output:
+        INDEX_GENOME_PREFIX = Path(config['working_dir']) / genometyping_blastn.OUTPUT_GENOMETYPING_INDEX_GENOME_PREFIX
+    params:
+        running_dir = Path(config['working_dir']) / 'genometyping' / 'ref_indexes'
+    run:
+        from camel.app.tools.bwa.bwaindex import BWAIndex
+        from camel.app.tools.bowtie2.bowtie2index import Bowtie2Index
+
+        for indexer_class in [BWAIndex, Bowtie2Index]:
+            indexer = indexer_class(camel)
+            SnakemakeUtils.add_pickle_inputs(indexer, input)
+            step = Step(rule, indexer, camel, params.running_dir, config)
+            step.run_step()
+            SnakemakeUtils.dump_tool_outputs(indexer, output)
 
 rule genometyping_report:
     """
@@ -192,5 +214,5 @@ rule genometyping_export_summary:
                     handle.write(f'refseq_candidates_{segment}\t{candidates}\n')
             if 'hana_subtyping' in gt_informs:
                 handle.write(f"subtype\t{gt_informs['hana_subtyping']['subtype']}\n")
-                handle.write(f"subtype\t{gt_informs['hana_subtyping']['ha_subtype']['ha']}\n")
-                handle.write(f"subtype\t{gt_informs['hana_subtyping']['na_subtype']['na']}\n")
+                handle.write(f"subtype\t{gt_informs['hana_subtyping']['ha']}\n")
+                handle.write(f"subtype\t{gt_informs['hana_subtyping']['na']}\n")
