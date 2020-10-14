@@ -1,6 +1,8 @@
 import os
 import re
+from typing import Set, List
 
+from camel.app.camel import Camel
 from camel.app.error.invalidparametererror import InvalidParameterError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.bowtie2.bowtie2 import Bowtie2
@@ -36,7 +38,7 @@ class Bowtie2Map(Bowtie2):
         'overall alignment rate': 'stats_map_rate'
     }
 
-    def __init__(self, camel):
+    def __init__(self, camel: Camel):
         """
         Initialize Bowtie2
         :param camel: Camel instance
@@ -49,7 +51,7 @@ class Bowtie2Map(Bowtie2):
         self._refgenome_str = ''
         self._readgroup_str = ''
 
-    def _execute_tool(self):
+    def _execute_tool(self) -> None:
         """
         Function to run Bowtie2 to map reads
         :return: None
@@ -60,7 +62,7 @@ class Bowtie2Map(Bowtie2):
         self._execute_command()
         self.__set_inform()
 
-    def __set_input(self):
+    def __set_input(self) -> None:
         """
         Set extra input
         :return: None
@@ -68,25 +70,25 @@ class Bowtie2Map(Bowtie2):
         # Note that Bowtie2 can map both PE and SE reads together
         if 'FASTQ_PE' in self._tool_inputs:
             self._mod = 'PE'
-            self._fastq_inputs_str += ' -1 {} -2 {}'.format(
-                self._tool_inputs['FASTQ_PE'][0].path, self._tool_inputs['FASTQ_PE'][1].path
-            )
+            self._fastq_inputs_str += f" -1 {self._tool_inputs['FASTQ_PE'][0].path} " \
+                                      f"-2 {self._tool_inputs['FASTQ_PE'][1].path}"
         if 'FASTQ_SE' in self._tool_inputs:
             if not self._mod:
                 self._mod = 'SE'
-            self._fastq_inputs_str += ' -U {}'.format(",".join(f.path for f in self._tool_inputs['FASTQ_SE']))
+            fq_input_str = ','.join(f.path for f in self._tool_inputs['FASTQ_SE'])
+            self._fastq_inputs_str += f' -U {fq_input_str}'
 
-        self._refgenome_str = "-x {}".format(self._tool_inputs['INDEX_GENOME_PREFIX'][0].value)
+        self._refgenome_str = f"-x {self._tool_inputs['INDEX_GENOME_PREFIX'][0].value}"
 
         if 'SAMPLE_NAME' in self._tool_inputs:
-            self._readgroup_str += " --rg-id {!r}".format(self._tool_inputs['SAMPLE_NAME'][0].value)
+            self._readgroup_str += f" --rg-id {self._tool_inputs['SAMPLE_NAME'][0].value}"
         elif 'read_group_id' in self._parameters:
             if self._parameters['read_group_id'].value == '':
-                self._readgroup_str += " --rg-id {!r}".format(Bowtie2Map.DEFAULT_SAMPLE_NAME)
+                self._readgroup_str += f' --rg-id {Bowtie2Map.DEFAULT_SAMPLE_NAME}'
             else:
-                self._readgroup_str += " --rg-id {!r}".format(self._parameters['read_group_id'].value)
+                self._readgroup_str += f" --rg-id {self._parameters['read_group_id'].value}"
 
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
         Check input for Bowtie2 mapping
         :return: None
@@ -102,7 +104,7 @@ class Bowtie2Map(Bowtie2):
         if 'INDEX_GENOME_PREFIX' not in self._tool_inputs:
             raise ValueError('No genome index input (INDEX_GENOME_PREFIX) found.')
 
-    def __set_output(self):
+    def __set_output(self) -> None:
         """
         Set output for Bowtie2 read mapping
         :return None
@@ -110,7 +112,7 @@ class Bowtie2Map(Bowtie2):
         self._tool_outputs['SAM'] = [ToolIOFile(os.path.join(self._folder, Bowtie2Map.OUTPUT_NAME))]
 
     @staticmethod
-    def __check_mode_exclusiveness(options):
+    def __check_mode_exclusiveness(options: Set[str]) -> None:
         """
         Alignment mode exclusiveness check
         :param options: names of commandline options set
@@ -121,7 +123,7 @@ class Bowtie2Map(Bowtie2):
             )
 
     @staticmethod
-    def __check_presets_exclusiveness(align_mode, presets, options):
+    def __check_presets_exclusiveness(align_mode: str, presets: List[str], options: Set[str]) -> None:
         """
         Check whether more than one preset is specified for a given alignment mode
         :param align_mode: current alignment mode
@@ -135,12 +137,11 @@ class Bowtie2Map(Bowtie2):
                 p_count += 1
         if p_count > 1:
             raise InvalidParameterError(
-                "Cannot set more than one preset for Bowtie2 mode {!r}, parameters set: {}".format(
-                    align_mode, ",".join(options))
+                f'Cannot set more than one preset for Bowtie2 mode {align_mode}, parameters set: {options}'
             )
 
     @staticmethod
-    def __check_wrong_preset(align_mode, options, wrong_presets):
+    def __check_wrong_preset(align_mode: str, options: Set[str], wrong_presets: List[str]) -> None:
         """
         Check whether wrong preset is specified for a given alignment mode
         :param align_mode: current alignment mode
@@ -154,13 +155,14 @@ class Bowtie2Map(Bowtie2):
             p_ = p.replace('-', '_')
             if p_ in options:
                 raise InvalidParameterError(
-                    "Bowtie2 incompatible preset: reads mapping mode {}, preset {!r}.".format(align_mode, p))
+                    f'Bowtie2 incompatible preset: reads mapping mode {align_mode}, preset {p}.')
 
     @staticmethod
-    def __check_mode_preset_conflicts(options):
+    def __check_mode_preset_conflicts(options: Set[str]) -> None:
         """
         Alignment mode and preset conflicts check
         :param options: names of set options
+        :return: None
         """
         local_preset = [
             'very-fast-local',
@@ -181,9 +183,10 @@ class Bowtie2Map(Bowtie2):
             Bowtie2Map.__check_wrong_preset('local', options, end_to_end_preset)
             Bowtie2Map.__check_presets_exclusiveness('local', local_preset, options)
 
-    def _check_parameters(self):
+    def _check_parameters(self) -> None:
         """
         Check the exclusiveness of different mods of Bowtie2 and the exclusiveness of presets for each mod and between mods
+        :return: None
         """
         super(Bowtie2Map, self)._check_parameters()
 
@@ -191,54 +194,44 @@ class Bowtie2Map(Bowtie2):
         Bowtie2Map.__check_mode_exclusiveness(options)
         Bowtie2Map.__check_mode_preset_conflicts(options)
 
-    def __build_command(self):
+    def __build_command(self) -> None:
         """
         Build command to run Bowtie2
         :return: None
         """
         if self._readgroup_str:
-            self._command.command = '{} {} {} {} {} -S {}'.format(
-                self._tool_command,
-                " ".join(self._build_options(excluded_parameters=['read_group_id'])),
-                self._readgroup_str,
-                self._refgenome_str,
-                self._fastq_inputs_str,
-                self._tool_outputs['SAM'][0].path
-            )
+            options = ' '.join(self._build_options(excluded_parameters=['read_group_id']))
+            self._command.command = f"{self._tool_command} {options} {self._readgroup_str} {self._refgenome_str} " \
+                                    f"{self._fastq_inputs_str} -S {self._tool_outputs['SAM'][0].path}"
         else:
-            self._command.command = '{} {} {} {} -S {}'.format(
-                self._tool_command,
-                " ".join(self._build_options()),
-                self._refgenome_str,
-                self._fastq_inputs_str,
-                self._tool_outputs['SAM'][0].path
-            )
+            options = ' '.join(self._build_options())
+            self._command.command = f"{self._tool_command} {options} {self._refgenome_str} " \
+                                    f"{self._fastq_inputs_str} -S {self._tool_outputs['SAM'][0].path}"
 
-    def __set_time_inform(self, line):
+    def __set_time_inform(self, line: str) -> bool:
         """
         Set running time related information
         :param line: the content of current line (from self._command.stderr)
         :return: boolean, True if a time information is found
         """
         # time format: starts with number and composed of number and ":"
-        res = re.search(': (\d[\d|:]+)', line)
+        res = re.search(r': (\d[\d|:]+)', line)
         if res:
             time = res.group().replace(": ", "")
             for pattern, key in Bowtie2Map.TIME_INFORM_MAPPING.items():
                 if line.find(pattern) >= 0:
                     self.informs[key] = time
                     return True
-
         return False
 
-    def __set_mapping_inform(self, line):
+    def __set_mapping_inform(self, line: str) -> None:
         """
         Set mapping result statistics information
         :param line: the content of current line (from self._command.stderr)
         :return: None
         """
         # search for all numbers
-        res = re.findall("([\d|.]+)", line)
+        res = re.findall(r'([\d|.]+)', line)
         if res:
             if line.find("pairs aligned 0 times concordantly or discordantly") > 0:
                 # NOTE: this one also matches "aligned 0 times", but this is more specific, hence
@@ -250,13 +243,13 @@ class Bowtie2Map(Bowtie2):
                 if line.find(pattern) > 0:
                     if len(res) > 1:
                         # two numbers found: count, percentage
-                        self.informs[key] = "{} ({}%)".format(res[0], res[1])
+                        self.informs[key] = f'{res[0]} ({res[1]}%)'
                     else:
                         # only one number found, count/percentage
-                        self.informs[key] = "{}".format(res[0])
+                        self.informs[key] = f'{res[0]}'
                     return
 
-    def __set_inform(self):
+    def __set_inform(self) -> None:
         """
         Analyse the result of Bowtie2 reads mapping, and extra result statistics into tool inform
         :return: None
@@ -265,7 +258,7 @@ class Bowtie2Map(Bowtie2):
         self.informs['mod'] = self._mod
 
         # parse output to extract information
-        for l in self.stderr.splitlines():
-            time_inform_set = self.__set_time_inform(l)
+        for line in self.stderr.splitlines():
+            time_inform_set = self.__set_time_inform(line)
             if not time_inform_set:
-                self.__set_mapping_inform(l)
+                self.__set_mapping_inform(line)
