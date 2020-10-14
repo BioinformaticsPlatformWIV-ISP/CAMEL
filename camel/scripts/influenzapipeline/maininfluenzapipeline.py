@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import argparse
+import random
 from typing import Optional, Dict, List, Sequence
 
 import yaml
@@ -8,12 +9,11 @@ from camel.app.camel import Camel
 from camel.app.components.pipelines.basepipeline import BasePipeline
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.scripts.influenzapipeline import SNAKEFILE_MAIN, CONFIG_DATA
-import random
 
 
 class MainInfluenzaPipeline(BasePipeline):
     """
-    Main class to run the Mycobacterium pipeline.
+    Main class to run the Influenza pipeline.
     """
 
     CUSTOM_ANALYSES = ['deconseq', 'genometyping']
@@ -78,7 +78,6 @@ class MainInfluenzaPipeline(BasePipeline):
         :return: Configuration file
         """
         config_data = self.get_template_data('fastq_pe', input_files)
-        print(config_data)
         config_data.pop('detection_method')
         config_data['analyses'] = [key for key in MainInfluenzaPipeline.CUSTOM_ANALYSES if vars(self._args)[key]]
         with open(CONFIG_DATA) as handle_in:
@@ -101,10 +100,13 @@ class MainInfluenzaPipeline(BasePipeline):
         if self._args.genometyping:
             config_data['multi_segment'] = ',' in config_data['species_info']['genome_segments']
             config_data['genometyping_db'] = config_data['species_info']['genome_typing_db'][self._args.genometyping_db]
+            config_data['genometyping_db_source'] = self._args.genometyping_db
         else:
             config_data['rule_parameters'].pop('blastn_genometyping')
 
         config_data['random_seed'] = random.randint(1, 10000000) if not self._args.random_seed else self._args.random_seed
+
+        config_data['aligner'] = self._args.aligner
 
         return SnakePipelineUtils.generate_config_file(config_data, self._working_dir)
 

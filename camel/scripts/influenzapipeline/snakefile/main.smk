@@ -1,9 +1,9 @@
 from pathlib import Path
-
+import re
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.resources.snakefile import trimming_illumina, trimming, quality_checks, deconseq
-from camel.scripts.influenzapipeline.snakefile import genometyping_blastn
+from camel.scripts.influenzapipeline.snakefile import genometyping_blastn, alignment
 from camel.app.io.tooliovalue import ToolIOValue
 
 #######################
@@ -13,6 +13,19 @@ include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
 include: quality_checks.SNAKEFILE_QUALITY_CHECKS
 include: deconseq.SNAKEFILE_DECONSEQ
 include: genometyping_blastn.SNAKEFILE_GENOMETYPING
+include: alignment.SNAKEFILE_MAPPING
+
+##################
+# AUXILIARY CODE #
+##################
+def get_genometyping_db_date(path_to_reference: str) -> str:
+    """
+    Retrieves the date the 'latest' symlink of the database points to
+    :param path_to_reference:
+    :return:
+    """
+    p = str(Path(path_to_reference).resolve())
+    return re.search(r'(20[1-9][0-9][01][0-9][0-3][0-9])', p).groups()[0]
 
 #########
 # Rules #
@@ -25,7 +38,8 @@ rule all:
         config['output_report'],
          config['output_tabular'],
          Path(config['working_dir']) / 'fq_dict.io',
-         Path(config['working_dir']) / genometyping_blastn.OUTPUT_BLASTN_PROCESSING_INFORMS
+         Path(config['working_dir']) / alignment.OUTPUT_ALIGNMENT_SAMTOOLS_DEPTH_ANALYZER_INFORMS,
+         Path(config['working_dir']) / alignment.OUTPUT_ALIGNMENT_ALIGNMENTSUMMARY
 
 
 rule select_fastq:
@@ -72,6 +86,7 @@ rule report_combine_all:
         quality_checks = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_REPORT,
         report_deconseq = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_REPORT if 'deconseq' in config['analyses'] else [],
         report_genometyping = Path(config['working_dir']) / genometyping_blastn.OUTPUT_GENOMETYPING_REPORT if 'genometyping' in config['analyses'] else [],
+        report_alignment = Path(config['working_dir']) / alignment.OUTPUT_ALIGNMENT_REPORT,
         # Report
         report_commands = rules.report_command_section.output.HTML
     output:
@@ -91,7 +106,8 @@ rule report_combine_all:
             params.sample_name,
             datetime.datetime.now(),
             params.pipeline_info['version'], ', '.join(entry['name'] for entry in params.fastq_input),
-            []))
+            [('Database', config['genometyping_db_source'].upper()),
+             ('Database date', get_genometyping_db_date(config['genometyping_db']))]))
 
         # Add output sections
         report_structure = [
@@ -102,6 +118,7 @@ rule report_combine_all:
             report_structure.append(('Decontamination', 'deconseq', [input.report_deconseq]))
         if 'genometyping' in config['analyses']:
             report_structure.append(('Genome typing', 'genometyping', [input.report_genometyping]))
+        report_structure.append(('Alignment', 'alignment', [input.report_alignment]))
         report_structure.append(('Commands', 'commands', [input.report_commands]))
         SnakePipelineUtils.add_report_content(report, report_structure)
 
