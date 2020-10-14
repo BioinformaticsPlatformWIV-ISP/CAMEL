@@ -70,7 +70,7 @@ rule quality_checks_typing_loci:
     """
     input:
         INFORMS = str(Path(config['working_dir']) / 'typing' / '{scheme}' / 'stats' / 'informs.io').format(
-            scheme=config['quality_checks']['typing_scheme'])
+            scheme=config['quality_checks']['typing_scheme']) if 'typing' not in config['quality_checks'].get('disabled_checks', []) else []
     output:
         JSON = Path(config['working_dir']) / 'quality_checks' / 'cgmlst.json'
     params:
