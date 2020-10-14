@@ -228,7 +228,7 @@ class ReporterAlignment(Tool):
             for segment in segments:
                 segment_order[segment] = None
                 for key in self._input_informs['samtoolsdepth']['segment_median_coverage'].keys():
-                    if key.endswith(f'-{segment}'):
+                    if key.endswith(f'-{segment}') or key.endswith(f'|{segment}'):
                         segment_order[segment] = key
             return segment_order
 
