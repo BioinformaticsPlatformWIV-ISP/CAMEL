@@ -19,7 +19,6 @@ class ReporterDeconseq(Tool):
         :return: None
         """
         super().__init__('Deconseq: reporter', '0.1', camel)
-        # self.__sub_folder = 'read_trimming'
         self._report_section = None
 
     def _execute_tool(self) -> None:
