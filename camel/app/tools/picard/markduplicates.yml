@@ -1,4 +1,4 @@
-dependencies: [java/1.8.0_172, picard/2.8.3]
+dependencies: [java/1.8.0_172, picard/2.23.3]
 parameters:
   create_index: {default: true, mandatory: false, option: CREATE_INDEX, p_index: 20,
     value: 'true'}
