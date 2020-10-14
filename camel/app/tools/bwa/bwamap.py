@@ -1,5 +1,6 @@
 import os
 
+from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.bwa.bwa import BWA
 
@@ -24,17 +25,17 @@ class BWAMap(BWA):
     OUTPUT_NAME = 'bwa_readmap.sam'
     DEFAULT_SAMPLE_NAME = 'sampleA'
 
-    def __init__(self, camel):
+    def __init__(self, camel: Camel):
         """
         Initialize BWAMap
         :param camel: Camel instance
         :return: None
         """
-        super().__init__('bwa_mem', '0.7.15', camel)
+        super().__init__('bwa_mem', '0.7.17', camel)
         self._fastq_inputs_str = None
         self._readgroup_str = ''
 
-    def _execute_tool(self):
+    def _execute_tool(self) -> None:
         """
         Function to run BWA mem to map reads
         :return: None
@@ -44,7 +45,7 @@ class BWAMap(BWA):
         self.__build_command()
         self._execute_command()
 
-    def __set_input(self):
+    def __set_input(self) -> None:
         """
         Set input
         :return: None
@@ -54,15 +55,15 @@ class BWAMap(BWA):
         elif 'FASTQ_SE' in self._tool_inputs:
             self._fastq_inputs_str = self._tool_inputs['FASTQ_SE'][0].path
         elif 'FASTQ_INT' in self._tool_inputs:
-            self._fastq_inputs_str = "-p {}".format(self._tool_inputs['FASTQ_INT'][0].path)
+            self._fastq_inputs_str = f"-p {self._tool_inputs['FASTQ_INT'][0].path}"
 
         if 'SAMPLE_NAME' in self._tool_inputs:
-            self._readgroup_str += "@RG\tID:{0}\tSM:{0}".format(self._tool_inputs['SAMPLE_NAME'][0].value)
+            self._readgroup_str += f"@RG\tID:{self._tool_inputs['SAMPLE_NAME'][0].value}\tSM:{self._tool_inputs['SAMPLE_NAME'][0].value}"
         elif 'add_read_group' in self._parameters:
             # Read Group format: '@RG\tID:foo\tSM:bar'
-            self._readgroup_str += "@RG\tID:{0}\tSM:{0}".format(BWAMap.DEFAULT_SAMPLE_NAME)
+            self._readgroup_str += f"@RG\tID:{BWAMap.DEFAULT_SAMPLE_NAME}\tSM:{BWAMap.DEFAULT_SAMPLE_NAME}"
 
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
         Check input for BWA mem.
         :return: None
@@ -84,32 +85,25 @@ class BWAMap(BWA):
         if 'INDEX_GENOME_PREFIX' not in self._tool_inputs:
             raise ValueError('No genome index input (INDEX_GENOME_PREFIX) found.')
 
-    def __set_output(self):
+    def __set_output(self) -> None:
         """
         Set proper outputs for BAW mem
         :return: None
         """
         self._tool_outputs['SAM'] = [ToolIOFile(os.path.join(self._folder, BWAMap.OUTPUT_NAME))]
 
-    def __build_command(self):
+    def __build_command(self) -> None:
         """
         Build command to run BWA mem
         :return: None
         """
         if self._readgroup_str:
-            self._command.command = '{} {} -R {!r} {} {} > {}'.format(
-                self._tool_command,
-                ' '.join(self._build_options(excluded_parameters=['add_read_group'])),
-                self._readgroup_str,
-                self._tool_inputs['INDEX_GENOME_PREFIX'][0].value,
-                self._fastq_inputs_str,
-                self._tool_outputs['SAM'][0].path
-            )
+            options = ' '.join(self._build_options(excluded_parameters=['add_read_group']))
+            self._command.command = f"{self._tool_command} {options} -R '{self._readgroup_str}' " \
+                                    f"{self._tool_inputs['INDEX_GENOME_PREFIX'][0].value} " \
+                                    f"{self._fastq_inputs_str} > {self._tool_outputs['SAM'][0].path}"
         else:
-            self._command.command = '{} {} {} {} > {}'.format(
-                self._tool_command,
-                ' '.join(self._build_options()),
-                self._tool_inputs['INDEX_GENOME_PREFIX'][0].value,
-                self._fastq_inputs_str,
-                self._tool_outputs['SAM'][0].path
-            )
+            options = ' '.join(self._build_options())
+            self._command.command = f"{self._tool_command} {options} " \
+                                    f"{self._tool_inputs['INDEX_GENOME_PREFIX'][0].value} " \
+                                    f"{self._fastq_inputs_str} > {self._tool_outputs['SAM'][0].path}"
