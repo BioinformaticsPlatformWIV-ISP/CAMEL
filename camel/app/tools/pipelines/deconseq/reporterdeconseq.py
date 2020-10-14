@@ -37,7 +37,7 @@ class ReporterDeconseq(Tool):
         """
         if 'deconseq' not in self._input_informs:
             raise InvalidInputSpecificationError("No trimming info found")
-        super()._check_input()
+        super(ReporterDeconseq, self)._check_input()
 
     def __add_deconseq_section(self) -> None:
         """
@@ -85,7 +85,7 @@ class ReporterDeconseq(Tool):
                     se_counts += self._input_informs['deconseq'][read_type]['removed_reads_counts'][index]
             elif read_type.startswith('PE_'):
                 read_counts.append('-')
-        read_counts.append(str(se_counts))
+        read_counts.append(ReporterDeconseq.__reformat_inform(str(se_counts)))
         return read_counts
 
     def __get_cleaned_read_counts(self):
@@ -103,7 +103,7 @@ class ReporterDeconseq(Tool):
                     se_counts += self._input_informs['deconseq'][read_type]['final_reads_count']
             elif read_type.startswith('PE_'):
                 read_counts.append('-')
-        read_counts.append(str(se_counts))
+        read_counts.append(ReporterDeconseq.__reformat_inform(str(se_counts)))
         return read_counts
 
     def __get_processed_read_counts(self):
