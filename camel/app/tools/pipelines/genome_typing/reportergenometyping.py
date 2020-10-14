@@ -101,8 +101,11 @@ class ReporterGenomeTyping(Tool):
             self._report_section.add_line_break()
 
             candidate_table = []
-            for cnt in self._input_informs['genometyping']['segment_informs'][segment]['counts'][:20]:
-                candidate_table.append([cnt[0], f'{self.__reformat_inform(str(cnt[1]))} ({cnt[1]/total_reads_count*100:.2f}%)'])
+            if segment in self._input_informs['genometyping']['segment_informs']:
+                for cnt in self._input_informs['genometyping']['segment_informs'][segment]['counts'][:20]:
+                    candidate_table.append([cnt[0], f'{self.__reformat_inform(str(cnt[1]))} ({cnt[1]/total_reads_count*100:.2f}%)'])
+            else:
+                candidate_table.append(['Not found', '--'])
             self._report_section.add_html_object(HtmlExpandableTable(candidate_table, ['Segment name', 'Reads count (percentage)']))
 
             self._report_section.add_line_break()
