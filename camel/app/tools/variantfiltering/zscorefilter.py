@@ -47,7 +47,7 @@ class ZScoreFilter(BaseFilter):
         Returns the description for this filter.
         :return: Description
         """
-        return 'Minimal Z-score of <b>{}</b> and Y-multiplier of <b>{}</b> (see citation Kaas et al.)'.format(
+        return 'Z-score ≥<b>{}</b> and Y-multiplier ≥<b>{}</b> at variant position (see citation Kaas et al.)'.format(
             self._parameters['min_zscore'].value, self._parameters['y_multiplier'].value)
 
     def _check_input(self) -> None:

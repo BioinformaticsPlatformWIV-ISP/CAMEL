@@ -36,7 +36,7 @@ class MappingQualityFilter(BaseFilter):
         Returns the description for this filter.
         :return: Description
         """
-        return 'Minimal mapping quality of <b>{}</b> at variant position'.format(
+        return 'Mapping quality ≥<b>{}</b> at variant position'.format(
             self._parameters['min_mapping_quality'].value)
 
     def __build_command(self) -> None:
