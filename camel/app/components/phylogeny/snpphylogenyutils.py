@@ -258,24 +258,31 @@ class SnpPhylogenyUtils(object):
 
     @staticmethod
     def construct_snp_matrix(sample_names: List[str], vcf_files: List[ToolIOFile], working_dir: Path,
-                             include_ref: bool = False) -> ToolIOFile:
+                             include_ref: bool = False, include_filtered: bool = True) -> ToolIOFile:
         """
         Constructs a SNP matrix based on the given VCF files.
         :param sample_names: Sample names
         :param vcf_files: VCF files
         :param working_dir: Working directory
         :param include_ref: If True, the reference is included in the SNP matrix
+        :param include_filtered: If True, filtered variants are included in the matrix
         :return: SNP matrix ToolIOFile
         """
         if not working_dir.exists():
             working_dir.mkdir(parents=True)
         snp_matrix_constructor = SnpMatrixConstructor(Camel.get_instance())
-        if include_ref:
+
+        # Parameters and input
+        if include_ref is True:
             snp_matrix_constructor.update_parameters(include_ref=None)
+        if include_filtered is True:
+            snp_matrix_constructor.update_parameters(include_filtered=None)
         snp_matrix_constructor.add_input_files({
             'VCF': vcf_files,
             'SAMPLE_NAME': [ToolIOValue(s) for s in sample_names],
         })
+
+        # Run tool
         snp_matrix_constructor.run(str(working_dir))
         return snp_matrix_constructor.tool_outputs['FASTA'][0]
 
