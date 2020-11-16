@@ -51,6 +51,29 @@ class TestSnpPhylogenyPipelines(CamelTestSuite):
         self.assertGreater(output_file_report.stat().st_size, 0)
 
     @longRunningTest()
+    def test_samtools_phylogeny_with_masking(self) -> None:
+        """
+        Tests the Samtools Phylogeny pipeline.
+        :return: None
+        """
+        output_file_report = Path(self.running_dir) / 'report' / 'report.html'
+        args = TestSnpPhylogenyPipelines.__get_samples() + [
+            '--reference', str(TestSnpPhylogenyPipelines.reference_fasta),
+            '--output-html', str(output_file_report),
+            '--output-dir', str(output_file_report.parent),
+            '--working-dir', str(self.running_dir),
+            '--trim-reads', '--include-ref',
+            '--min-total-depth', '1',
+            '--min-forward-depth', '0',
+            '--min-reverse-depth', '0',
+            '--min-distance', '2',
+            '--soft-filter'
+        ]
+        main = MainSamtoolsPhylo(args)
+        main.run()
+        self.assertGreater(output_file_report.stat().st_size, 0)
+
+    @longRunningTest()
     def test_cfsan_phylogeny(self) -> None:
         """
         Tests the CFSAN Phylogeny pipeline.
