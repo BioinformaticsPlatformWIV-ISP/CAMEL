@@ -11,7 +11,6 @@ from camel.scripts.enterococcuspipeline.mainenterococcuspipeline import MainEnte
 from camel.tests import longRunningTest
 
 
-@unittest.skip("Take more than 3 days to run !")
 class TestEnterococcusPipeline(CamelTestSuite):
     """
     Tests for the Enterococcus pipeline.
