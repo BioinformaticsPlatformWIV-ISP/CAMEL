@@ -28,6 +28,8 @@ from camel.resources import CSS_STYLE
 from camel.scripts.snpphylogeny import SNAKEFILE_TRIMMING_ALL
 from camel.scripts.snpphylogeny.snakefile.trimming_all import TRIMMING_ALL
 
+import pandas as pd
+
 
 class InvalidInputError(ValueError):
     pass
@@ -190,8 +192,8 @@ class SnpPhylogenyUtils(object):
         return fq_by_sample
 
     @staticmethod
-    def trim_all_reads(fq_by_sample: Dict[Sample, List[ToolIOFile]], working_dir: Path, threads: int = 8) -> Dict[
-        Sample, TrimmingIlluminaWrapper.ReadTrimmingOutput]:
+    def trim_all_reads(fq_by_sample: Dict[Sample, List[ToolIOFile]], working_dir: Path, threads: int = 8) -> \
+            Dict[Sample, TrimmingIlluminaWrapper.ReadTrimmingOutput]:
         """
         Trims all the reads in parallel using Snakemake.
         :param fq_by_sample: FASTQ files by sample
@@ -223,7 +225,7 @@ class SnpPhylogenyUtils(object):
 
     @staticmethod
     def add_trimming_section(report: HtmlReport, trimming_output_by_sample: Dict[
-        Sample, TrimmingIlluminaWrapper.ReadTrimmingOutput]) -> None:
+            Sample, TrimmingIlluminaWrapper.ReadTrimmingOutput]) -> None:
         """
         Adds the trimming section to the report.
         :param report: HTML report
@@ -335,8 +337,15 @@ class SnpPhylogenyUtils(object):
         :return: None
         """
         section = HtmlReportSection('Analysis metrics')
+
+        # Add to output
         table_data = [[sample.name_full] + sts for sample, sts in stats.items()]
         section.add_table(table_data, header, [('class', 'data')])
+
+        # Save as TSV
+        data_metrics = pd.DataFrame([{k: v for k, v in zip(header, row)} for row in table_data])
+        data_metrics.to_csv(Path(report.output_dir) / 'metrics.tsv', sep='\t', index=False)
+        section.add_link_to_file('Download (TSV)', 'metrics.tsv')
         report.add_html_object(section)
         report.save()
 
