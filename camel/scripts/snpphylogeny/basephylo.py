@@ -24,8 +24,8 @@ class BasePhylo(object, metaclass=abc.ABCMeta):
         """
         self._pipeline_name = pipeline_name
         self._args = self._parse_arguments(args)
-        self._samples = self.__extract_samples()
         self._report = SnpPhylogenyUtils.initialize_report(self._pipeline_name, self._args)
+        self._samples = self.__extract_samples()
         self._informs = []
 
     @property
