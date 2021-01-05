@@ -18,9 +18,8 @@ class TestSequenceTyping(CamelTestSuite):
     input_fasta = test_file_dir / 'neisseria_mc58.fasta'
     input_typing_reads = {
         'illumina': [test_file_dir / 'S15BD05018_S58_L001_1.fastq', test_file_dir / 'S15BD05018_S58_L001_2.fastq'],
-        'iontorrent': ['/temp/bebog/dataset_typing/reads_neisseria.fastq'],
-        'nanopore': [Path(
-            '/data/testdata/neisseria/ERR2259087.fastq.gz')]
+        'iontorrent': [test_file_dir / 'ERR1447913_ds.fastq'],
+        'nanopore': [test_file_dir / 'ERR2259087.fastq.gz']
     }
 
     def test_typing_illumina_blast_nucl(self) -> None:
