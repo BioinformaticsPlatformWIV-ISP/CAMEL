@@ -60,6 +60,7 @@ class MainPointFinder(object):
         pointfinder = self.__run_pointfinder(fasta_file)
         section = self.__run_reporter(pointfinder)
         report.add_html_object(section)
+        section.copy_files(report.output_dir)
 
         all_informs = self._helper.informs + [pointfinder.informs]
         report.add_html_object(SnakePipelineUtils.create_commands_section(all_informs, self._args.working_dir))
