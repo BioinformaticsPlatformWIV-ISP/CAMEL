@@ -1,9 +1,15 @@
 from pathlib import Path
 
+from camel.app.camel import Camel
 from camel.app.io.tooliovalue import ToolIOValue
+from camel.app.io.tooliofile import ToolIOFile
+from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile import gene_detection
 from camel.scripts.shigellapipeline.snakefile import flexneritype, subspecies_identification
+
+
+camel = Camel.get_instance()
 
 
 rule flexneri_call_variants_gtr_promotor:
@@ -60,22 +66,21 @@ checkpoint flexneri_type_prepare_reference_files:
         FASTA_ROOT = Path(config['flexneri_type']['fasta_separate'])
     run:
         import logging
-        from camel.app.io.tooliofile import ToolIOFile
         output_dir = Path(output.DIR_FASTA)
         if not output_dir.exists():
             output_dir.mkdir()
         loci = [io.value.locus for io in SnakemakeUtils.load_object(input.VAL_hits)]
         logging.info(f"Hits found for flexneri loci: {loci}")
         fasta_files = []
-        dir_by_locus_name = {locus.name: params.FASTA_ROOT / locus for locus in params.FASTA_ROOT.iterdir()}
+        dir_by_locus_name = {dir_locus.name: dir_locus for dir_locus in params.FASTA_ROOT.iterdir()}
         for locus in loci:
-            output_dir = output_dir / locus
-            if not output_dir.exists():
-                output_dir.mkdir()
-            fasta_ref = ToolIOFile(dir_by_locus_name[locus] / f'{locus}.fasta')
-            SnakemakeUtils.dump_object([fasta_ref], str(output_dir / 'fasta.io'))
-            gff = ToolIOFile(dir_by_locus_name[locus] / f'{locus}.gff')
-            SnakemakeUtils.dump_object([gff], str(output_dir / 'gff.io'))
+            output_dir_locus = output_dir / locus
+            if not output_dir_locus.exists():
+                output_dir_locus.mkdir()
+            fasta_ref = dir_by_locus_name[locus] / f'{locus}.fasta'
+            SnakemakeUtils.dump_object([ToolIOFile(fasta_ref)], str(output_dir_locus / 'fasta.io'))
+            gff = dir_by_locus_name[locus] / f'{locus}.gff'
+            SnakemakeUtils.dump_object([ToolIOFile(gff)], str(output_dir_locus / 'gff.io'))
 
 rule flexneri_map_reads:
     """
