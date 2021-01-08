@@ -11,6 +11,7 @@ class TestSCCmecFinder(CamelTestSuite):
     # Input files
     test_file_dir = CamelTestSuite.get_test_file_dir('sccmec')
     input_fasta_file = test_file_dir / 'MSSA476.fasta'
+    input_iontorrent = test_file_dir / 'iontorrent_reads_staph.fastq'
 
     def test_sccmecfinder_fasta(self) -> None:
         """
@@ -37,7 +38,7 @@ class TestSCCmecFinder(CamelTestSuite):
         """
         output_file_report = self.running_dir / 'report' / 'report.html'
         args = [
-            '--fastq-se', str('/data/camel/testdata/gene_detection/iontorrent/reads_iontorrent.fastq'),
+            '--fastq-se', str(self.input_iontorrent),
             '--output-html', str(output_file_report),
             '--output-dir', str(output_file_report.parent),
             '--working-dir', str(self.running_dir),
