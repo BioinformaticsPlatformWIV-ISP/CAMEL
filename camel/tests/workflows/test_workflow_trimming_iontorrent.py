@@ -11,7 +11,7 @@ class TestWorkflowTrimmingIonTorrent(CamelTestSuite):
 
     # Input files
     fastq_se = test_file_dir / 'trimming' / 'reads_iontorrent.fastq'
-    fastq_se_gz = test_file_dir / 'trimming' / 'reads_iontorrent.fastq.gz'
+    fastq_se_gz = test_file_dir / 'trimming' / 'reads_iontorrent.fastq'
 
     def test_trimming_workflow_iontorrent(self) -> None:
         """

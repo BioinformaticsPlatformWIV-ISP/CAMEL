@@ -22,7 +22,7 @@ class TestGeneDetection(CamelTestSuite):
     input_fastq_by_key = {
         'illumina': [test_file_dir / 'gene_detection' / 'illumina' / 'reads_illumina_1.fastq',
                      test_file_dir / 'gene_detection' / 'illumina' / 'reads_illumina_2.fastq'],
-        'iontorrent': [test_file_dir / 'gene_detection' / 'iontorrent' / 'reads_iontorrent.fastq.gz'],
+        'iontorrent': [test_file_dir / 'gene_detection' / 'iontorrent' / 'reads_iontorrent.fastq'],
         'nanopore': [test_file_dir / 'gene_detection' / 'nanopore' / 'reads_nanopore.fastq']
     }
 
