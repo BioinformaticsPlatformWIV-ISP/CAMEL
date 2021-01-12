@@ -60,6 +60,9 @@ gene_detection:
 
   ncbi_amr:
     path: /db/gene_detection/NCBI_AMR/
+    metadata:
+      name: Antibiotic(s)
+      key: antibiotic
 
 ###################
 # Sequence typing #

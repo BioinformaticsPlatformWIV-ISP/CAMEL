@@ -68,6 +68,9 @@ gene_detection:
   ncbi_amr:
     path: /db/gene_detection/NCBI_AMR/
     perc_identity_cutoff: 90
+    metadata:
+      name: Antibiotic(s)
+      key: antibiotic
 
   vfdb_core:
     path: /db/gene_detection/VFDB_core
