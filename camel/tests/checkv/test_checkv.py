@@ -4,6 +4,7 @@ from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.checkv.checkv import CheckV
 from camel.scripts.checkv.maincheckv import MainCheckV
+from camel.tests import resourceIntensiveTest, longRunningTest
 
 
 class TestCheckV(CamelTestSuite):
@@ -26,6 +27,8 @@ class TestCheckV(CamelTestSuite):
             command.run_command(self.running_dir)
             self.assertEqual(command.returncode, 0, f"Dependency '{dependency}' cannot be loaded")
 
+    @longRunningTest()
+    @resourceIntensiveTest(reason='RAM usage')
     def test_checkv_tool(self) -> None:
         """
         Tests the CheckV tool.
@@ -36,6 +39,8 @@ class TestCheckV(CamelTestSuite):
         checkv.run(self.running_dir)
         self.assertIn('TSV_quality_summary', checkv.tool_outputs)
 
+    @longRunningTest()
+    @resourceIntensiveTest(reason='RAM usage')
     def test_checkv_main_script(self) -> None:
         """
         Tests the CheckV main script.

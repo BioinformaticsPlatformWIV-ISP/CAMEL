@@ -6,7 +6,7 @@ from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.checkm.checkm import CheckM
 from camel.scripts.checkm.maincheckm import MainCheckM
-from camel.tests import longRunningTest
+from camel.tests import longRunningTest, resourceIntensiveTest
 
 
 class TestCheckM(CamelTestSuite):
@@ -30,6 +30,7 @@ class TestCheckM(CamelTestSuite):
             self.assertEqual(command.returncode, 0, f"Dependency '{dependency}' cannot be loaded")
 
     @longRunningTest()
+    @resourceIntensiveTest(reason='RAM usage')
     def test_checkm(self) -> None:
         """
         Tests the CheckM tool.
@@ -42,6 +43,8 @@ class TestCheckM(CamelTestSuite):
         self.assertGreater(Path(checkm.tool_outputs['TSV'][0].path).stat().st_size, 0)
         self.assertIn('results', checkm.informs)
 
+    @longRunningTest()
+    @resourceIntensiveTest(reason='RAM usage')
     def test_checkm_main_script(self) -> None:
         """
         Tests the CheckM main script.
