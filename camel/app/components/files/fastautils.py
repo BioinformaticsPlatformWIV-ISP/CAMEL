@@ -1,5 +1,9 @@
+import math
 import os
+from typing import List
+
 from Bio import SeqIO
+
 from camel.app.command.command import Command
 
 
@@ -10,7 +14,7 @@ class FastaUtils(object):
     """
 
     @staticmethod
-    def read_as_index_dict(fasta):
+    def read_as_index_dict(fasta: str):
         """
         Read in fasta file as an index dictionary of SeqRecord keyed by sequence id. Handle big files, as the complete
         sequence is retrieved when access a SeqRecord.
@@ -20,7 +24,7 @@ class FastaUtils(object):
         return SeqIO.index(fasta, "fasta")
 
     @staticmethod
-    def read_as_dict(fasta):
+    def read_as_dict(fasta: str) -> dict:
         """
         Read in fasta file as a dictionary keyed by sequence id. More efficient for small files.
         :param fasta: fasta file to read
@@ -29,7 +33,7 @@ class FastaUtils(object):
         return SeqIO.to_dict(SeqIO.parse(open(fasta, 'rU'), "fasta"))
 
     @staticmethod
-    def write(sequences, fasta):
+    def write(sequences: List[str], fasta: str) -> None:
         """
         Write a list of sequence records into fasta file
         :param sequences: list of sequences as SeqRecord object
@@ -40,16 +44,66 @@ class FastaUtils(object):
             SeqIO.write(sequences, output_handle, "fasta")
 
     @staticmethod
-    def count_reads(infile):
+    def count_reads(infile: str):
         """
-        Count how many reads in a fastq file
+        Count how many reads in a fasta file
         :param infile: file name of the fasta file to count
         :return: number of reads in fasta file
         """
-        cmd = "cat {!r} | paste - - | wc -l".format(infile)
+        cmd = f'grep -c "^>" {infile}'
         command = Command()
         command.command = cmd
         command.run_command(os.path.dirname(os.path.abspath(infile)))
         if command.stderr != '':
             raise RuntimeError(command.stderr, cmd)
         return int(command.stdout.rstrip())
+
+    @staticmethod
+    def batch_iterator(iterator, batch_size: int) -> List[any]:
+        """
+        Returns lists of length batch_size. This is a generator function, and it
+        returns lists of the entries from the supplied iterator.  Each list will
+        have batch_size entries, although the final list may be shorter.
+        :param iterator: Iterator to create batches from
+        :param batch_size: Size of each batch
+        :return: List from iterator with batch_size entries
+        """
+        entry = True  # Make sure we loop once
+        while entry:
+            batch = []
+            while len(batch) < batch_size:
+                try:
+                    entry = iterator.next()
+                except StopIteration:
+                    entry = None
+                if entry is None:
+                    # End of file
+                    break
+                batch.append(entry)
+            if batch:
+                yield batch
+
+    @staticmethod
+    def split_fasta(fasta: str, outdir: str, n_parts: int = None, parts_size: int = None) -> List[str]:
+        """
+        Splits a fasta file in the given number of parts or in parts of the given size.
+        :param fasta: Fasta file to split
+        :param outdir: Output directory where the split files can be placed
+        :param n_parts: Number of parts to split into
+        :param parts_size: Size of the parts that need to be created
+        :return: List with the filenames of the parts that are created
+        """
+        if n_parts and parts_size:
+            raise ValueError('Number of parts and parts size are mutually exclusive!')
+        if n_parts:
+            n_reads = FastaUtils.count_reads(fasta)
+            parts_size = math.ceil(n_reads/n_parts)
+        basename = os.path.splitext(os.path.basename(fasta))[0]
+        groups = []
+        record_iter = SeqIO.parse(open(fasta), 'fasta')
+        for i, batch in enumerate(FastaUtils.batch_iterator(record_iter, parts_size)):
+            filename = f'{os.path.join(outdir, basename)}.group{i+1}.fasta'
+            with open(filename, 'w') as outhandle:
+                SeqIO.write(batch, outhandle, 'fasta')
+            groups.append(filename)
+        return groups
