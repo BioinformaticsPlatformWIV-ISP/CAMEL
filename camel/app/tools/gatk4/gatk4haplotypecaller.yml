@@ -1,0 +1,19 @@
+dependencies: [java/1.8.0_172, gatk/4.1.9.0]
+parameters:
+  activity-profile-out: {default: false, mandatory: false, option: --activity-profile-out,
+    p_index: 99, value: HaplotypeCaller_avtiveProfile.igv}
+  bam-output: {default: false, mandatory: false, option: --bam-output, p_index: 99,
+    value: HaplotypeCaller_bamOutput.bam}
+  bam-writer-type: {default: false, mandatory: false, option: --bam-writer-type, p_index: 99,
+    value: CALLED_HAPLOTYPES}
+  emit-ref-confidence: {default: false, mandatory: false, option: -ERC, p_index: 10,
+    value: NONE}
+  graph-output: {default: false, mandatory: false, option: --graph-output, p_index: 99,
+    value: HaplotypeCaller_graphOutput.txt}
+  min-base-quality-score: {default: false, mandatory: false, option: -mbq, p_index: 99,
+    value: '10'}
+  output: {default: true, mandatory: false, option: --output, p_index: 0, value: raw.snps.indels.vcf}
+  sample-ploidy: {default: true, mandatory: false, option: --sample-ploidy, p_index: 10, value: '1'}
+  standard-min-confidence-threshold-for-calling: {default: true, mandatory: false,
+    option: --standard-min-confidence-threshold-for-calling, p_index: 20, value: '30.0'}
+tool_command: HaplotypeCaller
