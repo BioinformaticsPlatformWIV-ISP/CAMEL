@@ -94,7 +94,7 @@ class BaseReadTypeHelper(object, metaclass=abc.ABCMeta):
         # Perform the assembly
         assembly.run(
             self._sample_name, assembly_input, args.assembly_kmers, cov_cutoff, args.assembly_min_contig_length,
-            args.threads)
+            threads=args.threads)
 
         # Save output to the report
         if report is not None:
