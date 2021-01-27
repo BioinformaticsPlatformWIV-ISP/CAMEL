@@ -12,6 +12,6 @@ error_log_dir: /data/logging/error_logs
 tool_service: yaml
 
 testing:
-  testfiles_dir: /data/camel/testdata/
+  testfiles_dir: /testdata/camel/
 
 temp_dir: /scratch/temp
