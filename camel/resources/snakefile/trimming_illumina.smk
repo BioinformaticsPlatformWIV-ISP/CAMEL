@@ -57,11 +57,14 @@ rule trimming_illumina_trimmomatic:
     threads: 4
     priority: 1
     params:
-        running_dir = Path(config['working_dir']) / 'trimming_illumina' / 'trimmomatic'
+        running_dir = Path(config['working_dir']) / 'trimming_illumina' / 'trimmomatic',
+        adapter = config.get('read_trimming', '{}').get('adapter')
     run:
         from camel.app.tools.trimmomatic.trimmomatic import Trimmomatic
         trimmomatic = Trimmomatic(camel)
         SnakemakeUtils.add_pickle_inputs(trimmomatic, input)
+        if params.adapter is not None:
+            trimmomatic.update_parameters(illuminaclip_PE=f'$TRIMMOMATIC_ADAPTER_DIR/{params.adapter}-PE.fa:2:30:10')
         step = Step(rule, trimmomatic, camel, params.running_dir, config)
         trimmomatic.update_parameters(threads=threads)
         step.run_step()
