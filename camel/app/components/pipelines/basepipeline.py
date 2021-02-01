@@ -48,10 +48,11 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         pass
 
     @staticmethod
-    def add_common_arguments(argument_parser: argparse.ArgumentParser) -> None:
+    def add_common_arguments(argument_parser: argparse.ArgumentParser, extended: bool = True) -> None:
         """
         Adds the common arguments for the pipeline
         :param argument_parser: Argument parse
+        :param extended: Add additional common arguments
         :return: None
         """
         # Input
@@ -60,20 +61,10 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         argument_parser.add_argument('--fastq-pe-names', nargs=2, help="FASTQ input file names")
 
         # Output
-        argument_parser.add_argument('--output-dir', required=True, type=str)
-        argument_parser.add_argument('--output-html', required=True, type=str)
-        argument_parser.add_argument('--output-tsv', help="Output file for the summary", required=True)
         argument_parser.add_argument('--working-dir', default=os.path.abspath('.'), type=str)
 
         # Options
-        argument_parser.add_argument(
-            '--detection-method', help="Type of allele detection: local alignment (blast), read mapping (srst2)",
-            choices=['blast', 'kma', 'srst2'], default='blast')
         argument_parser.add_argument('--threads', default=8, type=int)
-        argument_parser.add_argument(
-            '--report-include-fastq', help="Include the FASTQ files in the report", action='store_true')
-        argument_parser.add_argument(
-            '--report-include-bam', help="Include the BAM file in the report", action='store_true')
         argument_parser.add_argument(
             '--library', help="Adapter library that was used for the sequencing",
             choices=['nextera', 'truseq2', 'truseq3'], default='nextera')
@@ -83,6 +74,30 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
             '--galaxy-job-id', type=int, help='Job id of the run in galaxy (used for logging')
         argument_parser.add_argument(
             '--log', action='store_true', help="If this flag is set, config file and error logs are kept")
+
+        if extended:
+            BasePipeline._add_extended_arguments(argument_parser)
+
+    @staticmethod
+    def _add_extended_arguments(argument_parser: argparse.ArgumentParser) -> None:
+        """
+        Adds arguments common to many pipelines
+        :param argument_parser: Argument parser
+        :return: None
+        """
+        # Output
+        argument_parser.add_argument('--output-dir', required=True, type=str)
+        argument_parser.add_argument('--output-html', required=True, type=str)
+        argument_parser.add_argument('--output-tsv', help="Output file for the summary", required=True)
+
+        # Options
+        argument_parser.add_argument(
+            '--detection-method', help="Type of allele detection: local alignment (blast), read mapping (srst2)",
+            choices=['blast', 'kma', 'srst2'], default='blast')
+        argument_parser.add_argument(
+            '--report-include-fastq', help="Include the FASTQ files in the report", action='store_true')
+        argument_parser.add_argument(
+            '--report-include-bam', help="Include the BAM file in the report", action='store_true')
 
     @property
     def name(self) -> str:
@@ -176,8 +191,9 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         if self._keep_logs is True:
             fileloggerutils.store_config_file(Path(config_file), self._name, self.galaxy_job_id)
 
-        # Clear existing Galaxy output files
-        mainscriptutils.prepare_galaxy_output(Path(self._args.output_dir), Path(self._args.output_html))
+        # Clear existing Galaxy output files when html output is selected
+        if 'output_html' in self._args:
+            mainscriptutils.prepare_galaxy_output(Path(self._args.output_dir), Path(self._args.output_html))
 
         # Path to the logfile
         log_file = self._working_dir / 'camel.log'
@@ -193,19 +209,20 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
             else:
                 raise err
 
-        # Copy log file to output directory
-        if log_file.exists():
+        # Copy log file to output directory if that directory is given
+        if log_file.exists() and 'output_dir' in self._args:
             shutil.copyfile(str(log_file), str(Path(self._args.output_dir) / 'camel.log'))
 
         # Store log file
         if self._keep_logs and log_file.exists():
             fileloggerutils.store_log_file(log_file, self._name, self.galaxy_job_id)
 
-    def get_template_data(self, input_key: str, input_data: [List[Dict[str, str]]]) -> Dict[str, Any]:
+    def get_template_data(self, input_key: str, input_data: [List[Dict[str, str]]], extended: bool = True) -> Dict[str, Any]:
         """
         Returns the template data that is common to all pipeline.
         :param input_key: FASTQ input key
         :param input_data: FASTQ input files
+        :param extended: Add extended template entries
         :return: Template data
         """
         template_data = {
@@ -216,11 +233,18 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
             },
             input_key: input_data,
             'sample_name': self.sample_name,
-            'output_report': self._args.output_html,
-            'output_tabular': self._args.output_tsv,
-            'output_dir': self._args.output_dir,
-            'working_dir': str(self._working_dir),
-            'detection_method': self._args.detection_method,
-            'read_trimming': {'export_fastq': self._args.report_include_fastq}
+            'working_dir': str(self._working_dir)
         }
-        return template_data
+        return {**template_data, **self._get_extended_template_data()} if extended else template_data
+
+    def _get_extended_template_data(self) -> Dict[str, Any]:
+        """
+        Returns the extended template data that is common to many pipelines
+        :return: Extended template data
+        """
+        return {'output_dir': self._args.output_dir,
+                'output_report': self._args.output_html,
+                'output_tabular': self._args.output_tsv,
+                'detection_method': self._args.detection_method,
+                'read_trimming': {'export_fastq': self._args.report_include_fastq}
+                }
