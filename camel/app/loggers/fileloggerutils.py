@@ -42,7 +42,7 @@ def store_config_file(
     return export_path
 
 
-def store_log_file(log_file: Path, basename: str, galaxy_job_id: Optional[int] = None, is_error_log: bool = False,
+def store_log_file(log_file: Path, basename: str, galaxy_job_id: Optional[str] = None, is_error_log: bool = False,
                    dir_: Optional[Path] = None) -> Path:
     """
     Stores a log file on disk.

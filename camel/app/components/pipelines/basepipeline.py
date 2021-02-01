@@ -70,7 +70,7 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
 
         # Logging
         argument_parser.add_argument(
-            '--galaxy-job-id', type=int, help='Job id of the run in galaxy (used for logging')
+            '--galaxy-job-id', type=str, help='Job id of the run in galaxy (used for logging')
         argument_parser.add_argument(
             '--log', action='store_true', help="If this flag is set, config file and error logs are kept")
 
