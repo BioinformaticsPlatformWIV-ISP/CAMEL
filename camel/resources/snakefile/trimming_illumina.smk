@@ -58,7 +58,7 @@ rule trimming_illumina_trimmomatic:
     priority: 1
     params:
         running_dir = Path(config['working_dir']) / 'trimming_illumina' / 'trimmomatic',
-        adapter = config.get('read_trimming', '{}').get('adapter')
+        adapter = config.get('read_trimming', {}).get('adapter')
     run:
         from camel.app.tools.trimmomatic.trimmomatic import Trimmomatic
         trimmomatic = Trimmomatic(camel)
