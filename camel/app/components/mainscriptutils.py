@@ -2,10 +2,11 @@
 Contains helper function for main scripts with a report output.
 """
 import argparse
+import collections
 import datetime
 import logging
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, Any, Dict
 
 from camel.app.components.files.fastqutils import FastqUtils
 from camel.app.components.galaxy.galaxyutils import GalaxyUtils
@@ -167,3 +168,20 @@ def prepare_galaxy_output(output_dir: Path, output_html: Path) -> None:
         output_dir.mkdir(parents=True)
     if output_html.exists():
         output_html.unlink()
+
+
+def dict_merge(dct: Dict[str, Any], merge_dct) -> None:
+    """
+    Recursive dict merge. Inspired by :meth:``dict.update()``, instead of updating only top-level keys,
+    dict_merge recurses down into dicts nested to an arbitrary depth, updating keys. The ``merge_dct`` is merged into
+    ``dct`` (https://gist.github.com/angstwad/bf22d1822c38a92ec0a9).
+    :param dct: dict onto which the merge is executed
+    :param merge_dct: dct merged into dct
+    :return: None
+    """
+    for k, v in merge_dct.items():
+        if (k in dct and isinstance(dct[k], dict)
+                and isinstance(merge_dct[k], collections.Mapping)):
+            dict_merge(dct[k], merge_dct[k])
+        else:
+            dct[k] = merge_dct[k]
