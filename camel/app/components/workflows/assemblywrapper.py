@@ -117,7 +117,7 @@ class AssemblyWrapper(object):
             config_data['assembly']['spades']['kmers'] = kmers
         if cov_cutoff is not None:
             config_data['assembly']['spades']['cov_cutoff'] = cov_cutoff
-        if read_type is 'iontorrent':
+        if read_type == 'iontorrent':
             config_data['assembly']['spades']['iontorrent'] = None
 
         # Length filtering
