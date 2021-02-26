@@ -5,12 +5,12 @@ from typing import Optional, List, Dict, Sequence
 import yaml
 
 from camel.app.camel import Camel
-from camel.app.components.pipelines.basepipeline import BasePipeline
+from camel.app.components.pipelines.reportpipeline import ReportPipeline
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.scripts.listeriapipeline import SNAKEFILE_MAIN, CONFIG_DATA
 
 
-class MainListeriaPipeline(BasePipeline):
+class MainListeriaPipeline(ReportPipeline):
     """
     Main class to run the Listeria pipeline.
     """
@@ -67,7 +67,7 @@ class MainListeriaPipeline(BasePipeline):
         :return: Arguments
         """
         parser = argparse.ArgumentParser()
-        BasePipeline.add_common_arguments(parser)
+        ReportPipeline.add_common_arguments(parser)
         for analysis_key in MainListeriaPipeline.CUSTOM_ANALYSES:
             parser.add_argument(f"--{analysis_key.replace('_', '-')}", action='store_true')
         return parser.parse_args(args)
