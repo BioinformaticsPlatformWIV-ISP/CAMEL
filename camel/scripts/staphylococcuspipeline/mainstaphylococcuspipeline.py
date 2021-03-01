@@ -5,21 +5,21 @@ from typing import Optional, List, Dict, Sequence
 
 import yaml
 
-from camel.app.components.pipelines.basepipeline import BasePipeline
+from camel.app.components.pipelines.reportpipeline import ReportPipeline
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.scripts.staphylococcuspipeline import SNAKEFILE_MAIN, CONFIG_DATA
 
 
-class MainStaphylococcusPipeline(BasePipeline):
+class MainStaphylococcusPipeline(ReportPipeline):
     """
     Main class to run the Staphylococcus pipeline.
     """
 
     CUSTOM_ANALYSES = [
         'kraken', 'resfinder', 'ncbi_amr', 'pointfinder', 'vfdb_core', 'virulencefinder', 'mlst',
-        'cgmlst', 'spa_typing', 'sccmec_typing']
+        'cgmlst', 'spa_typing', 'sccmec_typing', 'plasmidspades', 'plasmidfinder', 'lrefinder']
 
-    def __init__(self, args: Optional[argparse.Namespace] = None) -> None:
+    def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """
         Initializes the main class.
         :param args: Arguments (optional)
@@ -65,10 +65,10 @@ class MainStaphylococcusPipeline(BasePipeline):
         :return: Arguments
         """
         parser = argparse.ArgumentParser()
-        BasePipeline.add_common_arguments(parser)
+        ReportPipeline.add_common_arguments(parser)
         for analysis_key in MainStaphylococcusPipeline.CUSTOM_ANALYSES:
             parser.add_argument(f"--{analysis_key.replace('_', '-')}", action='store_true')
-        return parser.parse_args()
+        return parser.parse_args(args)
 
 
 if __name__ == '__main__':

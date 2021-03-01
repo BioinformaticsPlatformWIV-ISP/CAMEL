@@ -67,7 +67,15 @@ class SnpMatrixConstructor(Tool):
                 position = SNPPosition(record.CHROM, record.POS, record.REF)
                 if position not in nucl_by_position:
                     nucl_by_position[position] = {}
-                nucl_by_position[position][io_sample.value] = str(record.ALT[0])
+                if len(record.FILTER) > 0:
+                    nucl_by_position[position][io_sample.value] = 'N'
+                else:
+                    nucl_by_position[position][io_sample.value] = str(record.ALT[0])
+
+        # Remove positions with only N
+        nucl_by_position = {pos: nucl for pos, nucl in nucl_by_position.items() if not all(
+            [x == 'N' for x in nucl.values()])}
+
         logging.info("{} SNP positions found across all samples".format(len(nucl_by_position)))
         return nucl_by_position
 

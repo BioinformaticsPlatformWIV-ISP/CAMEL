@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from camel.resources.snakefile import gene_detection
 from camel.scripts.stecpipeline.snakefile import serotype_detection
 
 
@@ -8,8 +9,8 @@ rule serotype_detection_run:
     Retrieves the serotype based on the H and O typing. 
     """
     input:
-        HITS_O = Path(config['working_dir']) / 'gene_detection' / 'serotype_o' / 'metadata' / 'hits.io',
-        HITS_H = Path(config['working_dir']) / 'gene_detection' / 'serotype_h' / 'metadata' / 'hits.io',
+        HITS_O = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_ALL_HITS).format(db='serotype_o'),
+        HITS_H = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_ALL_HITS).format(db='serotype_h')
     output:
         VAL_serotype = Path(config['working_dir']) / serotype_detection.OUTPUT_VAL_SEROTYPE
     params:

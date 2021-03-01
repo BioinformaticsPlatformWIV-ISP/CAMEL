@@ -24,8 +24,8 @@ class BasePhylo(object, metaclass=abc.ABCMeta):
         """
         self._pipeline_name = pipeline_name
         self._args = self._parse_arguments(args)
-        self._samples = self.__extract_samples()
         self._report = SnpPhylogenyUtils.initialize_report(self._pipeline_name, self._args)
+        self._samples = self.__extract_samples()
         self._informs = []
 
     @property
@@ -96,6 +96,7 @@ class BasePhylo(object, metaclass=abc.ABCMeta):
         else:
             model_selection = SnpPhylogenyUtils.run_model_selection(snp_matrix, self._args)
             SnpPhylogenyUtils.add_model_selection_section(self._report, model_selection=model_selection)
+            self._informs.append(model_selection.informs)
             return model_selection
 
     def _run_tree_building(self, snp_matrix: ToolIOFile, model_selection: ModelSelection) -> None:
@@ -109,6 +110,7 @@ class BasePhylo(object, metaclass=abc.ABCMeta):
             tree_building = SnpPhylogenyUtils.run_tree_building(
                 snp_matrix, model_selection.informs['model'], model_selection.informs['rates_among_sites'], self._args)
             SnpPhylogenyUtils.add_tree_building_section(self._report, tree_building.tool_outputs['NWK'][0].path)
+            self._informs.append(tree_building.informs)
         except ToolExecutionError:
             SnpPhylogenyUtils.add_tree_building_section(
                 self._report, error_message='Error constructing tree, SNP matrix might be too small')

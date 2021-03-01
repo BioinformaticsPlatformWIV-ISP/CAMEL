@@ -1,38 +1,37 @@
-import os
+from pathlib import Path
 
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.scripts.snpphylogeny.snakefile.trimming_all import TRIMMING_ALL
 
-rule Run_trimming_workflow:
+rule run_trimming_workflow:
     """
     This rule runs the trimming workflow on a sample.
     """
     input:
-        FASTQ_PE=lambda wildcards: config['samples'][wildcards.sample]
+        FASTQ_PE = lambda wildcards: config['samples'][wildcards.sample]
     output:
-        TRIMMING_OUTPUT=os.path.join(config['working_dir'], '{sample}', 'trimming', 'trimming_out.io')
+        TRIMMING_OUTPUT = Path(config['working_dir']) / '{sample}' / 'trimming' / 'trimming_out.io'
     threads: 4
     params:
-        working_dir=os.path.join(config['working_dir'], '{sample}')
+        working_dir = lambda wildcards: Path(config['working_dir']) / wildcards.sample
     run:
-        from camel.app.components.workflows.readtrimmingwrapper import ReadTrimmingWrapper
-        trimming = ReadTrimmingWrapper(os.path.join(params.working_dir, 'trimming'))
-        trimming.run_workflow(input.FASTQ_PE, threads)
+        from camel.app.components.workflows.trimmingilluminawrapper import TrimmingIlluminaWrapper
+        trimming = TrimmingIlluminaWrapper(Path(str(params.working_dir)) / 'trimming')
+        trimming.run_workflow([Path(x) for x in input.FASTQ_PE], threads)
         SnakemakeUtils.dump_object(trimming.output, output.TRIMMING_OUTPUT)
 
-rule Collect_trimming_output:
+rule collect_trimming_output:
     """
     Combines the trimming output for all samples into a dictionary.
     """
     input:
-        TRIMMING_OUTPUT=expand(os.path.join(config['working_dir'], '{sample}', 'trimming', 'trimming_out.io'),
-                               sample=sorted(config['samples'].keys()))
+        OUT_TRIM = expand(rules.run_trimming_workflow.output.TRIMMING_OUTPUT, sample=sorted(config['samples'].keys()))
     output:
-        os.path.join(config['working_dir'], TRIMMING_ALL)
+        IO = Path(config['working_dir']) / TRIMMING_ALL
     params:
-        samples=sorted(config['samples'].keys())
+        samples = sorted(config['samples'].keys())
     run:
         output_data = {}
-        for i in range(0, len(params.samples)):
-            output_data[params.samples[i]] = SnakemakeUtils.load_object(input.TRIMMING_OUTPUT[i])
-        SnakemakeUtils.dump_object(output_data, output[0])
+        for i, out in enumerate(input.OUT_TRIM):
+            output_data[params.samples[i]] = SnakemakeUtils.load_object(out)
+        SnakemakeUtils.dump_object(output_data, output.IO)

@@ -16,12 +16,13 @@ class TestSequenceTyping(CamelTestSuite):
     input_db_protein = test_file_dir / 'scheme_pora_neisseria'
     input_db_mixed = test_file_dir / 'scheme_fhbp_neisseria'
     input_fasta = test_file_dir / 'neisseria_mc58.fasta'
-    input_typing_reads = [
-        test_file_dir / 'S15BD05018_S58_L001_1.fastq',
-        test_file_dir / 'S15BD05018_S58_L001_2.fastq'
-    ]
+    input_typing_reads = {
+        'illumina': [test_file_dir / 'S15BD05018_S58_L001_1.fastq', test_file_dir / 'S15BD05018_S58_L001_2.fastq'],
+        'iontorrent': [test_file_dir / 'ERR1447913_ds.fastq'],
+        'nanopore': [test_file_dir / 'ERR2259087.fastq.gz']
+    }
 
-    def test_typing_blast_nucl(self) -> None:
+    def test_typing_illumina_blast_nucl(self) -> None:
         """
         Tests sequence typing using BLAST with a nucleotide scheme (including ST definitions).
         :return: None
@@ -40,7 +41,7 @@ class TestSequenceTyping(CamelTestSuite):
         main.run()
         self.assertGreater(output_file_report.stat().st_size, 0)
 
-    def test_typing_blast_pept(self) -> None:
+    def test_typing_illumina_blast_peptide(self) -> None:
         """
         Tests sequence typing using BLAST with a peptide scheme.
         :return: None
@@ -59,7 +60,7 @@ class TestSequenceTyping(CamelTestSuite):
         main.run()
         self.assertGreater(output_file_report.stat().st_size, 0)
 
-    def test_typing_blast_mixed(self) -> None:
+    def test_typing_illumina_blast_mixed(self) -> None:
         """
         Tests sequence typing using BLAST with a mixed scheme (DNA & peptide loci).
         :return: None
@@ -78,14 +79,14 @@ class TestSequenceTyping(CamelTestSuite):
         main.run()
         self.assertGreater(output_file_report.stat().st_size, 0)
 
-    def test_typing_srst2_nucl(self) -> None:
+    def test_typing_illumina_srst2_nucl(self) -> None:
         """
         Tests sequence typing using SRST2 with a nucleotide scheme (including ST definitions).
         :return: None
         """
         output_file_report = Path(self.running_dir) / 'report' / 'report.html'
         args = [
-            '--fastq-pe', str(self.input_typing_reads[0]), str(self.input_typing_reads[1]),
+            '--fastq-pe', str(self.input_typing_reads['illumina'][0]), str(self.input_typing_reads['illumina'][1]),
             '--scheme-dir', str(self.input_db_nucl),
             '--output-html', str(output_file_report),
             '--output-dir', str(output_file_report.parent),
@@ -99,7 +100,7 @@ class TestSequenceTyping(CamelTestSuite):
         main.run()
         self.assertGreater(output_file_report.stat().st_size, 0)
 
-    def test_typing_srst2_mixed(self) -> None:
+    def test_typing_illumina_srst2_mixed(self) -> None:
         """
         Tests sequence typing using SRST2 with a mixed scheme (DNA and peptide loci).
         :return: None
@@ -107,12 +108,174 @@ class TestSequenceTyping(CamelTestSuite):
         output_file_report = Path(self.running_dir) / 'report' / 'report.html'
         args = [
             '--fasta', str(self.input_fasta),
-            '--fastq-pe', str(self.input_typing_reads[0]), str(self.input_typing_reads[1]),
+            '--fastq-pe', str(self.input_typing_reads['illumina'][0]), str(self.input_typing_reads['illumina'][1]),
             '--scheme-dir', str(self.input_db_mixed),
             '--output-html', str(output_file_report),
             '--output-dir', str(output_file_report.parent),
             '--working-dir', str(self.running_dir),
             '--detection-method', 'srst2',
+            '--threads', '8'
+        ]
+        main = MainSequenceTyping(args)
+        main.run()
+        self.assertGreater(output_file_report.stat().st_size, 0)
+
+    def test_typing_illumina_kma_nucl(self) -> None:
+        """
+        Tests sequence typing using KMA with a nucleotide scheme (including ST definitions).
+        :return: None
+        """
+        output_file_report = Path(self.running_dir) / 'report' / 'report.html'
+        args = [
+            '--fastq-pe', str(self.input_typing_reads['illumina'][0]), str(self.input_typing_reads['illumina'][1]),
+            '--scheme-dir', str(self.input_db_nucl),
+            '--output-html', str(output_file_report),
+            '--output-dir', str(output_file_report.parent),
+            '--working-dir', str(self.running_dir),
+            '--detection-method', 'kma',
+            '--threads', '8'
+        ]
+        main = MainSequenceTyping(args)
+        main.run()
+        self.assertGreater(output_file_report.stat().st_size, 0)
+
+    def test_typing_illumina_kma_mixed(self) -> None:
+        """
+        Tests sequence typing using KMA with a mixed scheme (including ST definitions).
+        :return: None
+        """
+        output_file_report = Path(self.running_dir) / 'report' / 'report.html'
+        args = [
+            '--fasta', str(self.input_fasta),
+            '--fastq-pe', str(self.input_typing_reads['illumina'][0]), str(self.input_typing_reads['illumina'][1]),
+            '--scheme-dir', str(self.input_db_mixed),
+            '--output-html', str(output_file_report),
+            '--output-dir', str(output_file_report.parent),
+            '--working-dir', str(self.running_dir),
+            '--detection-method', 'kma',
+            '--threads', '8'
+        ]
+        main = MainSequenceTyping(args)
+        main.run()
+        self.assertGreater(output_file_report.stat().st_size, 0)
+
+    def test_typing_iontorrent_kma_nucl(self) -> None:
+        """
+        Tests sequence typing using KMA with a nucleotide scheme (including ST definitions).
+        :return: None
+        """
+        output_file_report = Path(self.running_dir) / 'report' / 'report.html'
+        args = [
+            '--fastq-se', str(self.input_typing_reads['iontorrent'][0]),
+            '--scheme-dir', str(self.input_db_nucl),
+            '--output-html', str(output_file_report),
+            '--output-dir', str(output_file_report.parent),
+            '--working-dir', str(self.running_dir),
+            '--detection-method', 'kma',
+            '--read-type', 'iontorrent',
+            '--threads', '8'
+        ]
+        main = MainSequenceTyping(args)
+        main.run()
+        self.assertGreater(output_file_report.stat().st_size, 0)
+
+    def test_typing_nanopore_kma_nucl(self) -> None:
+        """
+        Tests sequence typing using KMA with a nucleotide scheme (including ST definitions).
+        :return: None
+        """
+        output_file_report = Path(self.running_dir) / 'report' / 'report.html'
+        args = [
+            '--fastq-se', str(self.input_typing_reads['nanopore'][0]),
+            '--scheme-dir', str(self.input_db_nucl),
+            '--output-html', str(output_file_report),
+            '--output-dir', str(output_file_report.parent),
+            '--working-dir', str(self.running_dir),
+            '--detection-method', 'kma',
+            '--read-type', 'nanopore',
+            '--threads', '8'
+        ]
+        main = MainSequenceTyping(args)
+        main.run()
+        self.assertGreater(output_file_report.stat().st_size, 0)
+
+    def test_typing_iontorrent_kma_nucl_trim(self) -> None:
+        """
+        Tests sequence typing using KMA with a nucleotide scheme (including ST definitions).
+        :return: None
+        """
+        output_file_report = Path(self.running_dir) / 'report' / 'report.html'
+        args = [
+            '--fastq-se', str(self.input_typing_reads['iontorrent'][0]),
+            '--scheme-dir', str(self.input_db_nucl),
+            '--output-html', str(output_file_report),
+            '--output-dir', str(output_file_report.parent),
+            '--working-dir', str(self.running_dir),
+            '--detection-method', 'kma',
+            '--read-type', 'iontorrent',
+            '--threads', '8',
+            '--trim-reads'
+        ]
+        main = MainSequenceTyping(args)
+        main.run()
+        self.assertGreater(output_file_report.stat().st_size, 0)
+
+    def test_typing_iontorrent_srst2_nucl(self) -> None:
+        """
+        Tests sequence typing using KMA with a nucleotide scheme (including ST definitions).
+        :return: None
+        """
+        output_file_report = Path(self.running_dir) / 'report' / 'report.html'
+        args = [
+            '--fastq-se', str(self.input_typing_reads['iontorrent'][0]),
+            '--scheme-dir', str(self.input_db_nucl),
+            '--output-html', str(output_file_report),
+            '--output-dir', str(output_file_report.parent),
+            '--working-dir', str(self.running_dir),
+            '--detection-method', 'srst2',
+            '--read-type', 'iontorrent',
+            '--threads', '8'
+        ]
+        main = MainSequenceTyping(args)
+        main.run()
+        self.assertGreater(output_file_report.stat().st_size, 0)
+
+    def test_typing_iontorrent_kma_mixed(self) -> None:
+        """
+        Tests sequence typing using KMA with a mixed scheme.
+        :return: None
+        """
+        output_file_report = Path(self.running_dir) / 'report' / 'report.html'
+        args = [
+            '--fasta', str(self.input_fasta),
+            '--fastq-se', str(self.input_typing_reads['iontorrent'][0]),
+            '--scheme-dir', str(self.input_db_mixed),
+            '--output-html', str(output_file_report),
+            '--output-dir', str(output_file_report.parent),
+            '--working-dir', str(self.running_dir),
+            '--detection-method', 'kma',
+            '--read-type', 'iontorrent',
+            '--threads', '8'
+        ]
+        main = MainSequenceTyping(args)
+        main.run()
+        self.assertGreater(output_file_report.stat().st_size, 0)
+
+    def test_typing_iontorrent_srst2_mixed(self) -> None:
+        """
+        Tests sequence typing using KMA with a mixed scheme.
+        :return: None
+        """
+        output_file_report = Path(self.running_dir) / 'report' / 'report.html'
+        args = [
+            '--fasta', str(self.input_fasta),
+            '--fastq-se', str(self.input_typing_reads['iontorrent'][0]),
+            '--scheme-dir', str(self.input_db_mixed),
+            '--output-html', str(output_file_report),
+            '--output-dir', str(output_file_report.parent),
+            '--working-dir', str(self.running_dir),
+            '--detection-method', 'srst2',
+            '--read-type', 'iontorrent',
             '--threads', '8'
         ]
         main = MainSequenceTyping(args)

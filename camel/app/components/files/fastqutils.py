@@ -201,8 +201,8 @@ class FastqUtils(object):
             FastqUtils._flush_se_reads(read1_dict, se_outf)
             FastqUtils._flush_se_reads(read2_dict, se_outf)
 
-    PATTERN_FQ_PE = r'([.\w-]+?)(_S\d+)?(_L\d{3})?[_.]R?1P?(_\d+)?.(fastq|fq)(.gz)?'
-    PATTERN_FQ_SE = r'([.\w-]+?)(_S\d+)?(_L\d{3})?(_\d+)?.(fastq|fq)(.gz)?'
+    PATTERN_FQ_PE = r'(.+?)(_S\d+)?(_L\d{3})?[_.]R?1P?(_\d+)?.(fastq|fq)(.gz)?'
+    PATTERN_FQ_SE = r'(.+?)(_S\d+)?(_L\d{3})?(_\d+)?.(fastq|fq)(.gz)?'
 
     @staticmethod
     def get_sample_name(fastq_path: str, pattern: str = PATTERN_FQ_PE) -> str:

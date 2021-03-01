@@ -1,17 +1,14 @@
 # config file for camel generalities.
-
-galaxy:
-  # directory to dump stderr/stdout or data in case of pipeline error while running from galaxy
-  # as Galaxy removes data and truncates stderr and stdout.
-  dump_dir: /scratch/temp/galaxy_dumps/
-
-config_dump_dir: /data/logging/snakemake
-error_log_dir: /data/logging/error_logs
+logging:
+  keep_logs: false
+  dir_camel_logs: /logs/camel/camel_logs
+  dir_error_logs: /logs/camel/error_logs
+  dir_snakemake_configs: /logs/camel/pipeline_configs
 
 # Parameters are retrieved from Yaml files with the same name as the tool (can be omitted from config).
 tool_service: yaml
 
 testing:
-  testfiles_dir: /data/camel/testdata/
+  testfiles_dir: /testdata/camel/
 
 temp_dir: /scratch/temp

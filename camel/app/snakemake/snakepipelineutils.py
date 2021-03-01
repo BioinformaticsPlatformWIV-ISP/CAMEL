@@ -39,7 +39,7 @@ class SnakePipelineUtils(object):
 
     @staticmethod
     def create_input_section(sample_name: str, date: datetime, pipeline_version: str, input_files: str,
-                             extra_data: List[Tuple[str, str]]) -> HtmlReportSection:
+                             extra_data: List[Tuple[str, str]], key_citation: str = None) -> HtmlReportSection:
         """
         Creates the input section for the HTML report.
         :param sample_name: Sample name
@@ -47,7 +47,8 @@ class SnakePipelineUtils(object):
         :param pipeline_version: Pipeline version
         :param input_files: Input files
         :param extra_data: Extra data to include in the input section
-        :return:
+        :param key_citation: Citation for the pipeline.
+        :return: Input report section
         """
         table_data = [
             ['Sample:', sample_name],
@@ -59,6 +60,10 @@ class SnakePipelineUtils(object):
             table_data.append([f'{key}:', value])
         section = HtmlReportSection('Input')
         section.add_table(table_data, table_attributes=[('class', 'information')])
+        if key_citation is not None:
+            section.add_header('Disclaimer', 2)
+            section.add_paragraph('If you use this pipeline for your scientific work, please cite:')
+            section.add_html_object(HtmlCitation.parse_from_json(key_citation))
         return section
 
     @staticmethod
@@ -170,7 +175,7 @@ class SnakePipelineUtils(object):
             raise SnakemakeExecutionError(command.stdout, command.stderr)
 
     @staticmethod
-    def create_commands_section(tool_informs: List[Dict[str, Any]], working_dir: str) -> HtmlReportSection:
+    def create_commands_section(tool_informs: List[Dict[str, Any]], working_dir: Path) -> HtmlReportSection:
         """
         Creates a section with an overview of the commands.
         :param tool_informs: Tool informs
@@ -182,7 +187,7 @@ class SnakePipelineUtils(object):
         for informs in tool_informs:
             header = f"{informs['_name']} - {informs['_tag']}" if '_tag' in informs else informs['_name']
             section.add_header(header, 3)
-            command_txt = informs['_command'].replace(working_dir, '$WORKING')
+            command_txt = informs['_command'].replace(str(working_dir), '$WORKING')
             command_txt = command_txt.replace('\n', '<br />\n')
             section.add_html_object(HtmlElement('code', command_txt, [('class', 'command')]))
         return section
@@ -228,7 +233,7 @@ class SnakePipelineUtils(object):
         # Remove keys that are empty
         if drop_empty:
             for key in list(output_dict.keys()):
-                if len(output_dict[key]) > 0:
+                if (output_dict[key] is not None) and (len(output_dict[key]) > 0):
                     continue
                 logging.debug(f'Removing empty input: {key}')
                 output_dict.pop(key)

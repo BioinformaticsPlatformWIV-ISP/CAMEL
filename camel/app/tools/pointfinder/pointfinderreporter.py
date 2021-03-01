@@ -26,7 +26,6 @@ class PointFinderReporter(Tool):
         :param camel: CAMEL instance
         """
         super().__init__('PointFinder Reporter', '0.1', camel)
-        self._section = HtmlReportSection(PointFinderReporter.TITLE)
 
     def _check_input(self) -> None:
         """
@@ -44,12 +43,13 @@ class PointFinderReporter(Tool):
         Executes this tool.
         :return: None
         """
+        section = HtmlReportSection(PointFinderReporter.TITLE, subtitle=self._input_informs['pointfinder']['_name'])
         header, data = self.__parse_input_file()
         data = self.__add_pubmed_links(data)
-        self._section.add_paragraph(f"Database: <i>{self._input_informs['pointfinder']['database']}</i>")
-        self.__add_output_table(header, data)
-        self._section.add_paragraph('Last update: {}'.format(self._input_informs['pointfinder']['last_update']))
-        self._tool_outputs['VAL_HTML'] = [ToolIOValue(self._section)]
+        section.add_paragraph(f"Database: <i>{self._input_informs['pointfinder']['database']}</i>")
+        self.__add_output_table(section, header, data)
+        section.add_paragraph('Last update: {}'.format(self._input_informs['pointfinder']['last_update']))
+        self._tool_outputs['VAL_HTML'] = [ToolIOValue(section)]
         self._informs['mutations'] = data
 
     def __parse_input_file(self) -> Tuple[List[str], List[List[str]]]:
@@ -71,9 +71,11 @@ class PointFinderReporter(Tool):
         else:
             return 'pointfinder.tsv'
 
-    def __add_output_table(self, header: List[str], data: List[List[Union[str, HtmlTableCell]]]) -> None:
+    def __add_output_table(
+            self, section: HtmlReportSection, header: List[str], data: List[List[Union[str, HtmlTableCell]]]) -> None:
         """
         Adds the output table.
+        :param section: Report section
         :param header: Output table header
         :param data: Output table data
         :return: None
@@ -81,12 +83,12 @@ class PointFinderReporter(Tool):
         if len(data) > 0:
             div = HtmlExpandableDiv('pointfinder_mutations', 'mutations')
             div.add_table(data, header, [('class', 'data')])
-            self._section.add_html_object(div)
+            section.add_html_object(div)
             relative_path = os.path.join('pointfinder', self.__generate_output_filename())
-            self._section.add_file(self._tool_inputs['TSV'][0].path, relative_path)
-            self._section.add_link_to_file('Download (TSV)', relative_path)
+            section.add_file(self._tool_inputs['TSV'][0].path, relative_path)
+            section.add_link_to_file('Download (TSV)', relative_path)
         else:
-            self._section.add_paragraph('No mutations found.')
+            section.add_paragraph('No mutations found.')
 
     def __add_pubmed_links(self, data: List[List[str]]) -> List[List[Union[str, HtmlTableCell]]]:
         """

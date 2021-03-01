@@ -48,7 +48,7 @@ class DistanceFilter(BaseFilter):
             extra = 'Variant with highest SNP quality is kept'
         else:
             extra = 'Both variants are removed'
-        return 'Minimal distance of <b>{}</b> between variants ({})'.format(
+        return 'Distance ≥<b>{}</b> between variants ({})'.format(
             self._parameters['min_distance'].value, extra)
 
     def _apply_filter(self) -> None:

@@ -21,7 +21,7 @@ rule typing_kma_allele_detection:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'typing' / wildcards.scheme / wildcards.locus_type / wildcards.locus,
         locus_name = lambda wildcards: wildcards.locus,
         scheme_dir = lambda wildcards: SCHEME_DATA[wildcards.scheme]['path'],
-        read_type = 'SE' if config.get('read_type') == 'iontorrent' else 'PE',
+        read_type = config.get('read_type', 'illumina')
     threads: 4
     run:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
@@ -39,11 +39,14 @@ rule typing_kma_allele_detection:
 
         # Launch KMA
         kma = KMA(camel)
+        read_key = 'PE' if params.read_type == 'illumina' else 'SE'
         fastq_input = SnakePipelineUtils.extracts_fq_input(
-            input.IO, key_pe='FASTQ_PE', key_se='FASTQ_SE', read_type=params.read_type)
+            input.IO, key_pe='FASTQ_PE', key_se='FASTQ_SE', read_type=read_key)
         kma.add_input_files(fastq_input)
         kma.add_input_files({'DB': [ToolIOValue(str(db_path.parent / db_path.stem))]})
         step = Step(rule, kma, camel, params.running_dir, config)
+        if params.read_type == 'nanopore':
+            kma.update_parameters(bc_nano=None, basecalls='0.7')
         step.run_step()
         SnakemakeUtils.dump_object(kma.informs, output.INFORMS)
 

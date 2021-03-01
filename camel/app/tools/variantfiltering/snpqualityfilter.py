@@ -36,7 +36,7 @@ class SnpQualityFilter(BaseFilter):
         Returns the description for this filter.
         :return: Description
         """
-        return 'Minimal SNP quality of <b>{}</b> at variant position'.format(
+        return 'SNP quality ≥<b>{}</b> at variant position'.format(
             self._parameters['min_snp_quality'].value)
 
     def __build_command(self) -> None:

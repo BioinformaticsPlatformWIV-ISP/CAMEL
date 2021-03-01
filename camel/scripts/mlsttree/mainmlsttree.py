@@ -42,6 +42,8 @@ class MainMlstTree(object):
         ap.add_argument('--output-dist-matrix', type=str)
         ap.add_argument('--plot-type', default='clad', choices=['clad', 'phylo'])
         ap.add_argument('--include-imperfect-hits', action='store_true')
+        ap.add_argument('--no-tree', action='store_true',
+                        help="If set, no output tree is generated. Useful when the input data is really big.")
         return ap.parse_args(args)
 
     def run(self) -> None:
@@ -66,8 +68,9 @@ class MainMlstTree(object):
             self.__export_distance_matrix(matrix)
 
         # Create tree
-        tree = MlstPyhloUtils.construct_tree(matrix, self._args.clustering_method)
-        self.__export_tree(tree)
+        if self._args.no_tree is not True:
+            tree = MlstPyhloUtils.construct_tree(matrix, self._args.clustering_method)
+            self.__export_tree(tree)
 
     def __create_tabular_output(self, allele_ids_by_sample: Dict[str, List[Tuple[str, str]]], output_path: str) -> None:
         """

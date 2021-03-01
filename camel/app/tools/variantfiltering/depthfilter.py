@@ -30,11 +30,12 @@ class DepthFilter(BaseFilter):
         Returns the description for this filter.
         :return: Description
         """
-        return 'Minimal <b>{}</b> reads mapped at variant position and <b>{}</b> forward <b>{}</b> reverse'.format(
-            self._parameters['min_depth'].value if 'min_depth' in self._parameters else 0,
-            self._parameters['min_forward_depth'].value if 'min_forward_depth' in self._parameters else 0,
-            self._parameters['min_reverse_depth'].value if 'min_reverse_depth' in self._parameters else 0
-        )
+        return 'Total number of mapped reads ≥<b>{}</b> at variant position, ' \
+               'including ≥<b>{}</b> forward and ≥<b>{}</b> reverse read(s)'.format(
+                    self._parameters['min_depth'].value if 'min_depth' in self._parameters else 0,
+                    self._parameters['min_forward_depth'].value if 'min_forward_depth' in self._parameters else 0,
+                    self._parameters['min_reverse_depth'].value if 'min_reverse_depth' in self._parameters else 0
+                )
 
     def _check_parameters(self) -> None:
         """

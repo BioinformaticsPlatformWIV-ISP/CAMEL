@@ -16,7 +16,7 @@ from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.html.htmltablecell import HtmlTableCell
 from camel.app.components.phylogeny.megautils import MEGAUtils
 from camel.app.components.phylogeny.newickutils import NewickUtils
-from camel.app.components.workflows.readtrimmingwrapper import ReadTrimmingWrapper
+from camel.app.components.workflows.trimmingilluminawrapper import TrimmingIlluminaWrapper
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
@@ -27,6 +27,8 @@ from camel.app.tools.snpmatrix.snpmatrixconstructor import SnpMatrixConstructor
 from camel.resources import CSS_STYLE
 from camel.scripts.snpphylogeny import SNAKEFILE_TRIMMING_ALL
 from camel.scripts.snpphylogeny.snakefile.trimming_all import TRIMMING_ALL
+
+import pandas as pd
 
 
 class InvalidInputError(ValueError):
@@ -190,8 +192,8 @@ class SnpPhylogenyUtils(object):
         return fq_by_sample
 
     @staticmethod
-    def trim_all_reads(fq_by_sample: Dict[Sample, List[ToolIOFile]], working_dir: Path, threads: int = 8) -> Dict[
-            Sample, ReadTrimmingWrapper.ReadTrimmingOutput]:
+    def trim_all_reads(fq_by_sample: Dict[Sample, List[ToolIOFile]], working_dir: Path, threads: int = 8) -> \
+            Dict[Sample, TrimmingIlluminaWrapper.ReadTrimmingOutput]:
         """
         Trims all the reads in parallel using Snakemake.
         :param fq_by_sample: FASTQ files by sample
@@ -223,7 +225,7 @@ class SnpPhylogenyUtils(object):
 
     @staticmethod
     def add_trimming_section(report: HtmlReport, trimming_output_by_sample: Dict[
-            Sample, ReadTrimmingWrapper.ReadTrimmingOutput]) -> None:
+            Sample, TrimmingIlluminaWrapper.ReadTrimmingOutput]) -> None:
         """
         Adds the trimming section to the report.
         :param report: HTML report
@@ -258,24 +260,31 @@ class SnpPhylogenyUtils(object):
 
     @staticmethod
     def construct_snp_matrix(sample_names: List[str], vcf_files: List[ToolIOFile], working_dir: Path,
-                             include_ref: bool = False) -> ToolIOFile:
+                             include_ref: bool = False, include_filtered: bool = True) -> ToolIOFile:
         """
         Constructs a SNP matrix based on the given VCF files.
         :param sample_names: Sample names
         :param vcf_files: VCF files
         :param working_dir: Working directory
         :param include_ref: If True, the reference is included in the SNP matrix
+        :param include_filtered: If True, filtered variants are included in the matrix
         :return: SNP matrix ToolIOFile
         """
         if not working_dir.exists():
             working_dir.mkdir(parents=True)
         snp_matrix_constructor = SnpMatrixConstructor(Camel.get_instance())
-        if include_ref:
+
+        # Parameters and input
+        if include_ref is True:
             snp_matrix_constructor.update_parameters(include_ref=None)
+        if include_filtered is True:
+            snp_matrix_constructor.update_parameters(include_filtered=None)
         snp_matrix_constructor.add_input_files({
             'VCF': vcf_files,
             'SAMPLE_NAME': [ToolIOValue(s) for s in sample_names],
         })
+
+        # Run tool
         snp_matrix_constructor.run(str(working_dir))
         return snp_matrix_constructor.tool_outputs['FASTA'][0]
 
@@ -328,8 +337,15 @@ class SnpPhylogenyUtils(object):
         :return: None
         """
         section = HtmlReportSection('Analysis metrics')
+
+        # Add to output
         table_data = [[sample.name_full] + sts for sample, sts in stats.items()]
         section.add_table(table_data, header, [('class', 'data')])
+
+        # Save as TSV
+        data_metrics = pd.DataFrame([{k: v for k, v in zip(header, row)} for row in table_data])
+        data_metrics.to_csv(Path(report.output_dir) / 'metrics.tsv', sep='\t', index=False)
+        section.add_link_to_file('Download (TSV)', 'metrics.tsv')
         report.add_html_object(section)
         report.save()
 

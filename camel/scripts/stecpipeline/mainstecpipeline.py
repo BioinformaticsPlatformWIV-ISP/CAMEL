@@ -8,13 +8,13 @@ import yaml
 
 from camel.app.components.files.fastqutils import FastqUtils
 from camel.app.components.filesystemhelper import FileSystemHelper
-from camel.app.components.pipelines.basepipeline import BasePipeline
+from camel.app.components.pipelines.reportpipeline import ReportPipeline
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.scripts.stecpipeline import CONFIG_DATA
 from camel.scripts.stecpipeline import SNAKEFILE_MAIN
 
 
-class MainSTECPipeline(BasePipeline):
+class MainSTECPipeline(ReportPipeline):
     """
     Main class to run the STEC pipeline.
     """
@@ -58,8 +58,6 @@ class MainSTECPipeline(BasePipeline):
         config_data['sequence_typing']['innuendo_cgmlst']['detection_method'] = detection_method_cgmlst
         if self._args.read_type == 'iontorrent':
             config_data['assembly']['spades']['iontorrent'] = None
-        import pprint
-        pprint.pprint(config_data)
         return SnakePipelineUtils.generate_config_file(config_data, Path(self._args.working_dir))
 
     @staticmethod
@@ -69,7 +67,7 @@ class MainSTECPipeline(BasePipeline):
         :return: Arguments
         """
         parser = argparse.ArgumentParser()
-        BasePipeline.add_common_arguments(parser)
+        ReportPipeline.add_common_arguments(parser)
         parser.add_argument('--fastq-se', help="Input SE FASTQ file")
         parser.add_argument('--fastq-se-name', help="Input SE FASTQ file name")
         parser.add_argument(

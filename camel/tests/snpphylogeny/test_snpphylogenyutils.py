@@ -11,7 +11,7 @@ class TestSnpPhylogenyUtils(unittest.TestCase):
     """
     camel = Camel()
 
-    def testValidSamples(self):
+    def test_valid_samples(self):
         """
         Tests if valid samples are correctly added.
         :return: None
@@ -26,7 +26,7 @@ class TestSnpPhylogenyUtils(unittest.TestCase):
         samples = SnpPhylogenyUtils.extract_samples(args)
         self.assertEqual(len(samples), 4)
 
-    def testValidSamplesFromReads(self):
+    def test_valid_samples_from_reads(self):
         """
         Tests if valid samples are correctly added from the read names.
         :return: None
@@ -41,7 +41,7 @@ class TestSnpPhylogenyUtils(unittest.TestCase):
         samples = SnpPhylogenyUtils.extract_samples(args)
         self.assertEqual(len(samples), 4)
 
-    def testDuplicateSamples(self):
+    def test_duplicate_samples(self):
         """
         Tests if duplicate samples raise an error.
         :return: None

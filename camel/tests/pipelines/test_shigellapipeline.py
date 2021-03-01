@@ -101,6 +101,26 @@ class TestShigellaPipeline(CamelTestSuite):
         main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)
 
+    @longRunningTest()
+    def test_shigella_pipeline_kma(self) -> None:
+        """
+        Tests the Shigella pipeline with all assays except for cgMLST.
+        :return: None
+        """
+        path_report_out = self.running_dir / 'out' / 'report.html'
+        path_summary_out = self.running_dir / 'out' / 'summary.tsv'
+        args = [
+            '--fastq-pe', str(TestShigellaPipeline.input_fastq_pe[0]), str(TestShigellaPipeline.input_fastq_pe[1]),
+            '--output-html', str(path_report_out),
+            '--output-dir', str(path_report_out.parent),
+            '--output-tsv', str(path_summary_out),
+            '--working-dir', str(self.running_dir),
+            '--detection-method', 'kma'
+        ] + [f"--{a.replace('_', '-')}" for a in MainShigellaPipeline.CUSTOM_ANALYSES if a != 'cgmlst']
+        main = MainShigellaPipeline(args)
+        main.run()
+        self.assertGreater(path_report_out.stat().st_size, 0)
+
 
 if __name__ == '__main__':
     unittest.main()

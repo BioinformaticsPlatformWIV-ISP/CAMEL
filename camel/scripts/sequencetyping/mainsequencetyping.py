@@ -1,12 +1,16 @@
 #!/usr/bin/env python
 import argparse
 import logging
-from typing import List, Sequence, Optional
+from pathlib import Path
+from typing import Sequence, Optional
 
-from camel.app.components.mainscripthelper import MainScriptHelper
+from camel.app.components import mainscriptutils
+from camel.app.components.html.htmlreport import HtmlReport
 from camel.app.components.sequencetyping.sequencetypingutils import SequenceTypingUtils
+from camel.app.components.workflows.readtype import helper_by_read_type
 from camel.app.components.workflows.sequencetypingwrapper import SequenceTypingWrapper, SequenceTypingInput, \
     SequenceTypingOutput
+from camel.app.components.workflows.utils.fastqinput import FastqInput
 from camel.app.io.tooliofile import ToolIOFile
 
 
@@ -21,9 +25,8 @@ class MainSequenceTyping(object):
         :param args: (Optional) arguments
         """
         self._args = MainSequenceTyping._parse_arguments(args)
-        self._sample_name = MainScriptHelper.determine_sample_name(self._args)
-        self._helper = MainScriptHelper(self._args.working_dir, self._sample_name)
-        self._report = None
+        self._sample_name = mainscriptutils.determine_sample_name(self._args)
+        self._helper = helper_by_read_type[self._args.read_type](Path(self._args.working_dir), self._sample_name)
 
     @staticmethod
     def _parse_arguments(args: Optional[Sequence[str]]) -> argparse.Namespace:
@@ -33,9 +36,9 @@ class MainSequenceTyping(object):
         :return: Parsed arguments
         """
         argument_parser = argparse.ArgumentParser()
-        MainScriptHelper.add_common_arguments(argument_parser)
-        MainScriptHelper.add_assembly_arguments(argument_parser)
-        MainScriptHelper.add_input_files_arguments(argument_parser)
+        mainscriptutils.add_common_arguments(argument_parser)
+        mainscriptutils.add_assembly_arguments(argument_parser)
+        mainscriptutils.add_input_files_arguments(argument_parser)
         argument_parser.add_argument('--scheme-dir', required=True, type=str)
         argument_parser.add_argument('--detection-method', type=str, choices=['blast', 'srst2', 'kma'], default='blast')
         argument_parser.add_argument('--blastn-task', type=str, choices=['blastn', 'megablast'], default='megablast')
@@ -47,26 +50,29 @@ class MainSequenceTyping(object):
         Runs the workflow.
         :return: None
         """
-        self._report = self._helper.init_report(
-            self._args.output_html, self._args.output_dir, 'Sequence typing report',
+        # Initialize report
+        report = mainscriptutils.init_report(
+            Path(self._args.output_html), Path(self._args.output_dir), 'Sequence typing report',
             f'Sequence typing {self._args.detection_method}')
-        self._helper.export_analysis_info_section(self._report, self._helper.determine_input_files(self._args))
-        input_files = self._helper.symlink_input_files(self._args.fasta, self._args.fastq_pe)
+        report.add_html_object(mainscriptutils.generate_analysis_info_section(self._args))
+        report.save()
+
+        # Run script with wrapper
         db_data = SequenceTypingUtils.parse_scheme_metadata(self._args.scheme_dir)
         if self._args.detection_method == 'blast':
-            fasta_file = self._helper.get_blast_input(input_files, self._args, self._report)
+            fasta_file = self._helper.prepare_fasta_input(report, self._args)
             output = self.__run_sequence_typing_blast(fasta_file, db_data['name'], self._args.scheme_dir)
         elif self._args.detection_method == 'srst2':
-            input_pe = self._helper.get_srst2_input(input_files, self._args, self._report)
-            output = self.__run_sequence_typing_srst2(input_pe, db_data['name'], self._args.scheme_dir)
+            fastq_input = self._helper.prepare_fastq_input(report, self._args)
+            output = self.__run_sequence_typing_srst2(fastq_input, db_data['name'], self._args.scheme_dir)
         elif self._args.detection_method == 'kma':
-            input_pe = self._helper.get_srst2_input(input_files, self._args, self._report)
-            output = self.__run_sequence_typing_kma(input_pe, db_data['name'], self._args.scheme_dir)
+            fastq_input = self._helper.prepare_fastq_input(report, self._args)
+            output = self.__run_sequence_typing_kma(fastq_input, db_data['name'], self._args.scheme_dir)
         else:
             raise ValueError(f"Invalid detection method: {self._args.detection_method}")
-        self.__export_output(output)
+        self.__export_output(output, report)
 
-    def __run_sequence_typing_blast(self, fasta_file: ToolIOFile, db_key: str, db_path: str) -> SequenceTypingOutput:
+    def __run_sequence_typing_blast(self, fasta_file: Path, db_key: str, db_path: str) -> SequenceTypingOutput:
         """
         Runs the sequence typing workflow using BLAST.
         :param fasta_file: Input FASTA file
@@ -76,15 +82,15 @@ class MainSequenceTyping(object):
         """
         wrapper = SequenceTypingWrapper(self._args.working_dir)
         workflow_input = SequenceTypingInput(
-            sample_name=self._sample_name, fasta=ToolIOFile(fasta_file.path), db_path=db_path, db_key=db_key)
+            sample_name=self._sample_name, fasta=ToolIOFile(fasta_file), db_path=db_path, db_key=db_key)
         wrapper.run_workflow_blast(workflow_input, self._args.blastn_task, self._args.threads)
         return wrapper.output
 
-    def __run_sequence_typing_srst2(self, fastq_pe: List[ToolIOFile], db_key: str, db_path: str) -> \
+    def __run_sequence_typing_srst2(self, fastq_input: FastqInput, db_key: str, db_path: str) -> \
             SequenceTypingOutput:
         """
         Runs the sequence typing workflow using SRST2.
-        :param fastq_pe: Input FASTQ PE files
+        :param fastq_input: FASTQ input
         :param db_key: Database key
         :param db_path: Database path
         :return: None
@@ -92,16 +98,16 @@ class MainSequenceTyping(object):
         wrapper = SequenceTypingWrapper(self._args.working_dir)
         workflow_input = SequenceTypingInput(
             fasta=ToolIOFile(self._args.fasta) if self._args.fasta else None,
-            sample_name=self._sample_name, fastq_pe=fastq_pe, db_key=db_key, db_path=db_path)
+            sample_name=self._sample_name, fastq=fastq_input, db_key=db_key, db_path=db_path)
         srst2_options = {'max_unaligned_overlap': self._args.srst2_max_unaligned_overlap}
         wrapper.run_workflow_srst2(workflow_input, srst2_options, self._args.threads)
         return wrapper.output
 
-    def __run_sequence_typing_kma(self, fastq_pe: List[ToolIOFile], db_key: str, db_path: str) -> \
+    def __run_sequence_typing_kma(self, fastq_input: FastqInput, db_key: str, db_path: str) -> \
             SequenceTypingOutput:
         """
         Runs the sequence typing workflow using KMA.
-        :param fastq_pe: Input FASTQ PE files
+        :param fastq_input: FASTQ input
         :param db_key: Database key
         :param db_path: Database path
         :return: None
@@ -109,11 +115,11 @@ class MainSequenceTyping(object):
         wrapper = SequenceTypingWrapper(self._args.working_dir)
         workflow_input = SequenceTypingInput(
             fasta=ToolIOFile(self._args.fasta) if self._args.fasta else None,
-            sample_name=self._sample_name, fastq_pe=fastq_pe, db_key=db_key, db_path=db_path)
+            sample_name=self._sample_name, fastq=fastq_input, db_key=db_key, db_path=db_path)
         wrapper.run_workflow_kma(workflow_input, self._args.threads)
         return wrapper.output
 
-    def __export_output(self, output: SequenceTypingOutput) -> None:
+    def __export_output(self, output: SequenceTypingOutput, report: HtmlReport) -> None:
         """
         Exports the output of the workflow.
         :param output: Output
@@ -121,7 +127,7 @@ class MainSequenceTyping(object):
         """
         self._helper.logs['typing'] = output.log_file
         self._helper.informs.extend(output.informs)
-        self._helper.export_output_and_commands_section(self._report, output.report_section)
+        self._helper.export_output_and_commands_section(report, output.report_section)
 
 
 if __name__ == '__main__':

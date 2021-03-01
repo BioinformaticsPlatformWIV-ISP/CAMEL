@@ -1,0 +1,86 @@
+#!/usr/bin/env python
+import argparse
+from pathlib import Path
+from typing import Optional, Sequence, Dict, Any, Tuple
+
+from camel.app.camel import Camel
+from camel.app.components import mainscriptutils
+from camel.app.components.filesystemhelper import FileSystemHelper
+from camel.app.io.tooliofile import ToolIOFile
+from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
+from camel.app.tools.checkv.checkv import CheckV
+from camel.app.tools.checkv.checkvreporter import CheckVReporter
+
+
+class MainCheckV(object):
+    """
+    This class contains the main script for the CheckV tool.
+    """
+
+    def __init__(self, args: Optional[Sequence[str]] = None) -> None:
+        """
+        Initializes the main script.
+        """
+        self._args = MainCheckV._parse_arguments(args)
+        self._camel = Camel()
+
+    @staticmethod
+    def _parse_arguments(args: Optional[Sequence[str]] = None) -> argparse.Namespace:
+        """
+        Parses the command line arguments.
+        :return: Arguments
+        """
+        argument_parser = argparse.ArgumentParser()
+        argument_parser.add_argument('--fasta', help='FASTA input', required=True)
+        argument_parser.add_argument('--fasta-name', help='FASTA input name')
+        argument_parser.add_argument('--working-dir', help='Working directory', default=str(Path('.').absolute()))
+        argument_parser.add_argument('--output-html', help='Report output')
+        argument_parser.add_argument('--output-dir', help='Output directory')
+        return argument_parser.parse_args(args)
+
+    def run(self) -> None:
+        """
+        Runs the tool.
+        :return: None
+        """
+        input_dict, fasta_name = self.__prepare_input()
+        report = mainscriptutils.init_report(
+            Path(self._args.output_html), Path(self._args.output_dir), 'CheckV', 'CheckV')
+        report.add_html_object(mainscriptutils.generate_analysis_info_section(self._args, input_file_str=fasta_name))
+        report.save()
+
+        # Run CheckV
+        checkv = CheckV(Camel.get_instance())
+        checkv.add_input_files(input_dict)
+        checkv.run(self._args.working_dir)
+
+        # Create output report
+        checkv_reporter = CheckVReporter(Camel.get_instance())
+        checkv_reporter.add_input_files({key: checkv.tool_outputs[key] for key in checkv.tool_outputs.keys()})
+        checkv_reporter.run(self._args.working_dir)
+        section = checkv_reporter.tool_outputs['HTML'][0].value
+        report.add_html_object(section)
+        section.copy_files(report.output_dir)
+
+        # Add citation and command
+        report.add_html_object(SnakePipelineUtils.create_commands_section([checkv.informs], self._args.working_dir))
+        # report.add_html_object(SnakePipelineUtils.create_citations_section(['Parks_2015-checkm']))
+        report.save()
+
+    def __prepare_input(self) -> Tuple[Dict[str, Any], str]:
+        """
+        Prepares the input for the CheckM tool.
+        :return: Input dictionary
+        """
+        dir_input = Path(self._args.working_dir) / 'input'
+        dir_input.mkdir(parents=True, exist_ok=True)
+        fasta_name = self._args.fasta_name if self._args.fasta_name else Path(self._args.fasta).name
+        path_new = dir_input / FileSystemHelper.make_valid(fasta_name)
+        path_new.symlink_to(self._args.fasta)
+        return {'FASTA': [ToolIOFile(path_new)]}, fasta_name
+
+
+if __name__ == '__main__':
+    Camel.get_instance()
+    main = MainCheckV()
+    main.run()

@@ -73,7 +73,8 @@ class MainSamtoolsPhylo(BasePhylo):
             [s.name_valid for s in self._samples],
             [filtering_out_by_sample[s].vcf_filtered for s in self._samples],
             Path(self._args.working_dir) / 'snp_matrix',
-            self._args.include_ref
+            self._args.include_ref,
+            self._args.soft_filter
         )
 
         # Add sections to the report
@@ -101,6 +102,7 @@ class MainSamtoolsPhylo(BasePhylo):
         SnpPhylogenyUtils.add_common_arguments(argument_parser)
         argument_parser.add_argument('--ploidy', default='haploid', choices=['haploid', 'diploid'])
         argument_parser.add_argument('--calling-method', default='consensus', choices=['consensus', 'multiallelic'])
+        argument_parser.add_argument('--soft-filter', action='store_true')
         argument_parser.add_argument('--min-total-depth', default=10, type=int)
         argument_parser.add_argument('--min-forward-depth', default=1, type=int)
         argument_parser.add_argument('--min-reverse-depth', default=1, type=int)
@@ -145,14 +147,16 @@ class MainSamtoolsPhylo(BasePhylo):
             'working_dir': working_dir,
             'samples': {s.name_valid: v.as_dict() for s, v in mapping_input.items()},
             'reference_info': {'name': self._args.reference_name, 'path': reference},
-            'options': {'ploidy': 1 if self._args.ploidy == 'haploid' else False,
-                        'calling_method': self._args.calling_method,
-                        'skip_variants': 'indels'}
+            'options': {
+                'ploidy': 1 if self._args.ploidy == 'haploid' else False,
+                'calling_method': self._args.calling_method,
+                'skip_variants': 'indels'
+            }
         }
         config_file = SnakePipelineUtils.generate_config_file(config_data, working_dir)
         output_path = working_dir / OUTPUT_CALLING_ALL
-        SnakePipelineUtils.run_snakemake(SNAKEFILE_SAMTOOLS_CALLING_ALL, config_file, [output_path], working_dir,
-                                         self._args.threads)
+        SnakePipelineUtils.run_snakemake(
+            SNAKEFILE_SAMTOOLS_CALLING_ALL, config_file, [output_path], working_dir, self._args.threads)
         return {self.samples_by_name[name]: output for name, output in SnakemakeUtils.load_object(output_path).items()}
 
     def __run_variant_filtering_workflow(self, calling_output_by_sample: CallingOutBySample) -> FilteringOutBySample:
@@ -178,6 +182,8 @@ class MainSamtoolsPhylo(BasePhylo):
         :return: Filtering options as a dictionary
         """
         options = {}
+        if self._args.soft_filter:
+            options['soft_filter'] = True
         for group, params in MainSamtoolsPhylo.PARAMETER_MAPPING.items():
             options[group] = {name: value['arg'](self._args) for name, value in params.items()}
         return options
@@ -199,6 +205,10 @@ class MainSamtoolsPhylo(BasePhylo):
         header = ['Sample', 'Depth', 'SNP quality', 'Mapping quality', 'Distance', 'Z-score']
         section.add_table(table_data, header, [('class', 'data')])
         self.__add_filtering_options_table(section)
+        if self._args.soft_filter:
+            section.add_alert(
+                "Soft filtering enabled: filtered variants are kept in the VCF file and annotated in the FILTER column",
+                'info')
         self._report.add_html_object(section)
         self._report.save()
 

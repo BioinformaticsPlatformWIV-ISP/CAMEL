@@ -92,18 +92,26 @@ rule typing_get_hits:
 
 rule typing_dump_commands:
     input:
-        IO = lambda wildcards: [str(Path(config['working_dir']) / 'typing' / wildcards.scheme / type_ / loci_by_scheme_by_type[wildcards.scheme][type_][0] / f'informs-{SequenceTypingUtils.get_detection_method(config, wildcards.scheme)}.io') for type_ in (
-            'DNA', 'peptide') if len(loci_by_scheme_by_type[wildcards.scheme][type_]) > 0],
-        INFORMS_scheme = Path(config['working_dir']) / 'typing' / '{scheme}' /'informs-locus_set.io'
+        INFORMS_NUCL = lambda wildcards: [
+            str(Path(config['working_dir']) / 'typing' / wildcards.scheme / 'DNA' / locus / f'informs-{SequenceTypingUtils.get_detection_method(config, wildcards.scheme)}.io') for
+            locus in loci_by_scheme_by_type[wildcards.scheme]['DNA']],
+        INFORMS_PEPT = lambda wildcards: [
+            str(Path(config['working_dir']) / 'typing' / wildcards.scheme / 'peptide' / locus / f'informs-blast.io') for
+            locus in loci_by_scheme_by_type[wildcards.scheme]['peptide']],
+        INFORMS_SCHEME = Path(config['working_dir']) / 'typing' / '{scheme}' /'informs-locus_set.io'
     output:
         INFORMS = Path(config['working_dir']) / OUTPUT_TYPING_INFORMS
     params:
         scheme = lambda wildcards: wildcards.scheme
     run:
-        informs_scheme = SnakemakeUtils.load_object(input.INFORMS_scheme)
-        informs_commands = [SnakemakeUtils.load_object(io) for io in input.IO]
-        for informs in informs_commands:
+        informs_scheme = SnakemakeUtils.load_object(input.INFORMS_SCHEME)
+        informs_commands = []
+        for io_informs in (input.INFORMS_NUCL, input.INFORMS_PEPT):
+            if len(io_informs) == 0:
+                continue
+            informs = SnakemakeUtils.load_object(io_informs[0])
             informs['_tag'] = f"Typing - {informs_scheme['title']}"
+            informs_commands.append(informs)
         SnakemakeUtils.dump_object(informs_commands, output.INFORMS)
 
 rule typing_export_hits_tabular:

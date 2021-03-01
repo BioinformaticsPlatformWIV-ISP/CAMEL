@@ -11,15 +11,15 @@ class TestPointFinder(CamelTestSuite):
     """
 
     # Input files
-    test_file_dir = CamelTestSuite.get_test_file_dir()
-    input_fasta_file = test_file_dir / 'pointfinder' / 'ref_ecoli.fasta'
-    input_fasta_file_salmonella = test_file_dir / 'pointfinder' / 'salmonella_lt2_ref.fasta'
-    input_fastq_raw_galaxy = [
-        test_file_dir / 'workflows' / 'dataset_fwd_11.dat',
-        test_file_dir / 'workflows' / 'dataset_rev_10.dat'
+    test_file_dir = CamelTestSuite.get_test_file_dir('pointfinder')
+    input_fasta_file = test_file_dir / 'ref_ecoli.fasta'
+    input_fasta_file_salmonella = test_file_dir / 'salmonella_lt2_ref.fasta'
+    input_fastq = [
+        test_file_dir / 'reads_illumina_1.fastq',
+        test_file_dir / 'reads_illumina_2.fastq',
     ]
 
-    def test_pointfinder(self) -> None:
+    def test_pointfinder_main(self) -> None:
         """
         Tests the PointFinder main script
         :return: None
@@ -36,7 +36,7 @@ class TestPointFinder(CamelTestSuite):
         main.run()
         self.assertGreater(output_file_report.stat().st_size, 0)
 
-    def test_pointfinder_with_pubmed_link(self) -> None:
+    def test_pointfinder_main_with_pubmed_link(self) -> None:
         """
         Tests the PointFinder main script with a link to PubMed.
         :return: None
@@ -54,19 +54,19 @@ class TestPointFinder(CamelTestSuite):
         self.assertGreater(output_file_report.stat().st_size, 0)
 
     @longRunningTest()
-    def test_pointfinder_fastq_input(self) -> None:
+    def test_pointfinder_main_fastq_input(self) -> None:
         """
         Tests the PointFinder main script with FASTQ input.
         :return: None
         """
         output_file_report = self.running_dir / 'report' / 'report.html'
         args = [
-            '--fastq-pe', str(self.input_fastq_raw_galaxy[0]), str(self.input_fastq_raw_galaxy[1]),
+            '--fastq-pe', str(self.input_fastq[0]), str(self.input_fastq[1]),
             '--output-html', str(output_file_report),
             '--output-dir', str(output_file_report.parent),
             '--working-dir', str(self.running_dir),
             '--species', 'escherichia_coli',
-            '--assembly-cov-cutoff', '5',
+            '--assembly-cov-cutoff', '2',
             '--assembly-min-contig-length', '500'
         ]
         main = MainPointFinder(args)

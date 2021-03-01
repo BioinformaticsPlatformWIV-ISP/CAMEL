@@ -1,24 +1,13 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Any
 
 from camel.app.components.vcf.vcfutils import VCFUtils
+from camel.app.components.workflows.utils.fastqinput import FastqInput
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.resources.snakefile import variant_calling
-
-
-@dataclass
-class VariantCallingInput:
-    """
-    This data class contains the input for the variant calling workflow.
-    The input can be:
-     - FASTQ where the PE reads are required and SE reads optional
-    """
-    pe_reads: Optional[List[ToolIOFile]] = None
-    se_reads_fwd: Optional[ToolIOFile] = None
-    se_reads_rev: Optional[ToolIOFile] = None
 
 
 @dataclass
@@ -38,12 +27,12 @@ class VariantCallingWrapper(object):
     This class is used as a wrapper class around the variant calling Snakemake workflow.
     """
 
-    def __init__(self, working_dir: str) -> None:
+    def __init__(self, working_dir: Path) -> None:
         """
         Initializes the variant calling wrapper.
         :param working_dir: Working directory
         """
-        self._working_dir = Path(working_dir)
+        self._working_dir = working_dir
         self._output = None
 
     @property
@@ -54,27 +43,13 @@ class VariantCallingWrapper(object):
         """
         return self._output
 
-    def __create_input(self, input_files: VariantCallingInput) -> None:
-        """
-        Creates the input files for the workflow.
-        :param input_files: Input files
-        :return: None
-        """
-        fq_dict = {'PE': input_files.pe_reads}
-        if input_files.se_reads_fwd is not None:
-            fq_dict['SE_FWD'] = [input_files.se_reads_fwd]
-        if input_files.se_reads_rev is not None:
-            fq_dict['SE_REV'] = [input_files.se_reads_rev]
-        SnakemakeUtils.dump_object(fq_dict, self._working_dir / 'fq_dict.io')
-
-    def run_workflow(self, reference_info: Dict[str, any], sample_name: str,
-                     input_files: VariantCallingInput, options: Dict[str, Any],
-                     cores: int = 8) -> None:
+    def run_workflow(self, reference_info: Dict[str, any], sample_name: str, fastq_input: FastqInput,
+                     options: Dict[str, Any], cores: int = 8) -> None:
         """
         Runs the variant calling workflow.
         :param reference_info: Reference information
         :param sample_name: Sample name
-        :param input_files: Workflow input files
+        :param fastq_input: FASTQ input files
         :param options: Variant calling options
         :param cores: Number of cores
         :return: None
@@ -82,8 +57,9 @@ class VariantCallingWrapper(object):
         # Create input
         if not self._working_dir.exists():
             self._working_dir.mkdir(parents=True)
-        self.__create_input(input_files)
+        SnakemakeUtils.dump_object(fastq_input.to_fq_dict(), str(self._working_dir / 'fq_dict.io'))
         config_data = self.__get_config_data(sample_name, reference_info, options)
+        config_data['read_type'] = fastq_input.read_type
         config_file = SnakePipelineUtils.generate_config_file(config_data, self._working_dir)
 
         # Execute Snakemake

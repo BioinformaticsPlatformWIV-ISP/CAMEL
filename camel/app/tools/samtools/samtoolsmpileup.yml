@@ -7,6 +7,7 @@ parameters:
   ignore_overlaps: {default: false, mandatory: false, option: --ignore-overlaps, value: null}
   ignore_read_groups: {default: false, mandatory: false, option: --ignore-RG, value: null}
   max_depth: {default: false, mandatory: false, option: --max-depth, value: '250'}
+  max_idepth: {default: false, mandatory: false, option: --max-idepth, value: '250'}
   min_base_quality: {default: false, mandatory: false, option: --min-bq, value: '13'}
   min_mapping_quality: {default: false, mandatory: false, option: --min-mq, value: '0'}
   output_bp: {default: false, mandatory: false, option: --output-BP, value: null}

@@ -74,7 +74,7 @@ class Trimmomatic(Tool):
         options.append(self._tool_inputs['FASTQ_SE'][0].path)
         if 'baseout' in self._parameters:
             options.append(str(self._parameters['baseout']))
-        if 'illuminaclip_PE' in self._parameters:
+        if 'illuminaclip_SE' in self._parameters:
             options.append(self._parameters['illuminaclip_SE'].option + self._parameters['illuminaclip_SE'].value)
 
         return options
