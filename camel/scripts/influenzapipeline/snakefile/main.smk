@@ -1,10 +1,11 @@
-from pathlib import Path
 import re
+from pathlib import Path
+
+from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.resources.snakefile import trimming_illumina, trimming, quality_checks, deconseq
-from camel.scripts.influenzapipeline.snakefile import genometyping_blastn, alignment
-from camel.app.io.tooliovalue import ToolIOValue
+from camel.scripts.influenzapipeline.snakefile import genometyping_blastn, alignment, sequence_extraction
 
 #######################
 # Included Snakefiles #
@@ -14,6 +15,7 @@ include: quality_checks.SNAKEFILE_QUALITY_CHECKS
 include: deconseq.SNAKEFILE_DECONSEQ
 include: genometyping_blastn.SNAKEFILE_GENOMETYPING
 include: alignment.SNAKEFILE_MAPPING
+include: sequence_extraction.SNAKEFILE_SEQ_EXTRACTION
 
 ##################
 # AUXILIARY CODE #
@@ -39,7 +41,9 @@ rule all:
          config['output_tabular'],
          Path(config['working_dir']) / 'fq_dict.io',
          Path(config['working_dir']) / alignment.OUTPUT_ALIGNMENT_SAMTOOLS_DEPTH_ANALYZER_INFORMS,
-         Path(config['working_dir']) / alignment.OUTPUT_ALIGNMENT_ALIGNMENTSUMMARY
+         Path(config['working_dir']) / alignment.OUTPUT_ALIGNMENT_ALIGNMENTSUMMARY,
+         Path(config['working_dir']) / sequence_extraction.OUTPUT_SEQ_EXTRACTION_CONSENSUS_SEQUENCE_INDEX_PREFIX,
+         Path(config['working_dir']) / sequence_extraction.OUTPUT_SEQ_EXTRACTION_CONSENSUS_SEQUENCE_ITERATIVE
 
 
 rule select_fastq:
@@ -48,7 +52,7 @@ rule select_fastq:
     Other workflows such as Kraken or Assembly rely on this dictionary to get input files (PE or SE).
     """
     input:
-        FASTQ_PE = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_DICT,
+        FASTQ_PE = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_DICT
     output:
         IO_FASTQ = Path(config['working_dir']) / 'fq_dict.io'
     shell:
@@ -63,6 +67,7 @@ rule report_command_section:
          INFORMS_deconseq_se_fwd = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_INFORMS_SE_FWD if 'deconseq' in config['analyses'] else [],
          INFORMS_deconseq_se_rev = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_INFORMS_SE_REV if 'deconseq' in config['analyses'] else [],
          INFORMS_blast_genometyping =Path(config['working_dir']) / genometyping_blastn.OUTPUT_BLASTN_INFORMS if 'genometyping' in config['analyses'] else [],
+         INFORMS_alignment =Path(config['working_dir']) / alignment.OUTPUT_ALIGNMENT_INFORMS
     output:
         HTML = Path(config['working_dir']) / 'report' / 'html-commands.io'
     params:
@@ -95,7 +100,7 @@ rule report_combine_all:
         sample_name = config['sample_name'],
         fastq_input = config['fastq_pe'],
         output_dir = config['output_dir'],
-        pipeline_info = config['pipeline'],
+        pipeline_info = config['pipeline']
     run:
         import datetime
 
@@ -150,7 +155,7 @@ rule summary_combine_all:
         rules.summary_init.output.TSV,
         trimming.get_trimming_summary(config),
         Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_SUMMARY,
-        Path(config['working_dir']) / genometyping_blastn.OUTPUT_GENOMETYPING_SUMMARY,
+        Path(config['working_dir']) / genometyping_blastn.OUTPUT_GENOMETYPING_SUMMARY
     output:
         TSV = config['output_tabular']
     run:

@@ -24,10 +24,10 @@ species_info:
     gc_content: 43.66
     type: 'virus'
     name: 'Influenza A'
-    seqIDParser_type: 'inf_a'
+    seqIDParser_type: 'default'
     genome_segments: 'PB2,PB1,PA,HA,NP,NA,MP,NS'
     genome_typing_db:
-      ncbi: '/db/refgenomes/influenza.A/NCBI_Influenza_Virus_Resource/latest/cluster_fasta/influenza_a_clstr.fa'
+      ncbi: '/db/refgenomes/influenza/ncbi/20201006/influenza_0N_2stdev_clustered_A.fa'
       ecdc: '/db/refgenomes/influenza.A/Cyril_references/cluster_fasta/HANA_dict.fa'
       avian: '/db/refgenomes/influenza.A/Avian/Avian_refs.fasta'
 
@@ -38,3 +38,7 @@ rule_parameters:
     qcov_hsp_perc: 85
     percent_identity: {blastn_genometyping_idcutoff}
     output_filename: 'blastn_genome_typing_read_hits.tsv'
+  mapping:
+    bowtie2_mode: [very_sensitive_local]
+  iterative_mapping:
+    bowtie2_mode: [sensitive, end_to_end]

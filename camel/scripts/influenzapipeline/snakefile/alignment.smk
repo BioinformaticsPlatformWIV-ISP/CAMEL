@@ -1,11 +1,11 @@
 from pathlib import Path
 
-from camel.scripts.influenzapipeline.snakefile import genometyping_blastn
-from camel.scripts.influenzapipeline.snakefile import alignment
-from camel.resources.snakefile import deconseq
 from camel.app.camel import Camel
-from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.pipeline.step import Step
+from camel.app.snakemake.snakemakeutils import SnakemakeUtils
+from camel.resources.snakefile import deconseq
+from camel.scripts.influenzapipeline.snakefile import alignment
+from camel.scripts.influenzapipeline.snakefile import genometyping_blastn
 
 
 camel = Camel.get_instance()
@@ -13,12 +13,12 @@ camel = Camel.get_instance()
 
 rule run_alignment:
     """
-    Aligns reads to a given reference genome using BWA. 
+    Aligns reads to a given reference genome using BWA or Bowtie2. 
     """
     input:
-        FASTQ_PE = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_CLEAN_PE if 'deconseq' in config['analyses'] else [],
-        IO = Path(config['working_dir']) / 'fq_dict.io' if 'deconseq' not in config['analyses'] else [],
-        INDEX_GENOME_PREFIX = Path(config['working_dir']) / genometyping_blastn.OUTPUT_GENOMETYPING_INDEX_GENOME_PREFIX
+        FASTQ_PE = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_CLEAN_PE if 'deconseq' in config.get('analyses', '') else config['FASTQ_PE'],
+        IO = Path(config['working_dir']) / 'fq_dict.io' if 'deconseq' not in config.get('analyses', '') and 'FASTQ_PE' not in config else [],
+        INDEX_GENOME_PREFIX = Path(config['working_dir']) / genometyping_blastn.OUTPUT_GENOMETYPING_INDEX_GENOME_PREFIX if 'index_genome_prefix' not in config else config['index_genome_prefix']
     output:
         SAM = Path(config['working_dir']) / alignment.OUTPUT_ALIGNMENT_SAM,
         INFORMS = Path(config['working_dir']) / alignment.OUTPUT_ALIGNMENT_INFORMS
@@ -33,15 +33,19 @@ rule run_alignment:
         mapper_class = BWAMap if config['aligner'] == 'bwa' else Bowtie2Map
         mapper = mapper_class(camel)
 
-        try:
-            fq_dict = SnakePipelineUtils.extracts_fq_input(input.IO, key_pe='FASTQ_PE', key_se='FASTQ_SE')
+        if input.IO:
+            fq_dict = SnakePipelineUtils.extracts_fq_input(str(input.IO), key_pe='FASTQ_PE', key_se='FASTQ_SE')
             input_files = fq_dict['FASTQ_PE']
             mapper.add_input_files({'FASTQ_PE': input_files})
             SnakemakeUtils.add_pickle_input(mapper, 'INDEX_GENOME_PREFIX', input.INDEX_GENOME_PREFIX)
-        except (AttributeError, TypeError):
+        else:
             SnakemakeUtils.add_pickle_inputs(mapper, input, keys=['FASTQ_PE', 'INDEX_GENOME_PREFIX'])
 
-        step = Step(rule, mapper, camel, params.running_dir, config)
+        step = Step(str(rule), mapper, camel, params.running_dir, config)
+        if config['aligner'] == 'bowtie2':
+            if 'mapping' in config['rule_parameters']:
+                mapper.update_parameters(**{'sensitive': False, 'end_to_end': False})
+                mapper.update_parameters(**{k:True for k in config['rule_parameters']['mapping']['bowtie2_mode']})
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(mapper, output)
 
@@ -58,7 +62,7 @@ rule alignment_sort_sam:
 
         sortsam = SortSam(camel)
         SnakemakeUtils.add_pickle_inputs(sortsam, input)
-        step = Step(rule, sortsam, camel, params.running_dir, config)
+        step = Step(str(rule), sortsam, camel, params.running_dir, config)
         sortsam.update_parameters(**{'create_index': 'true', 'sort_order': 'coordinate'})
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(sortsam, output)
@@ -84,7 +88,7 @@ rule alignment_collect_metrics:
 
         cmm = CollectMultipleMetrics(camel)
         SnakemakeUtils.add_pickle_inputs(cmm, input)
-        step = Step(rule, cmm, camel, params.running_dir, config)
+        step = Step(str(rule), cmm, camel, params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(cmm, output)
 
@@ -102,7 +106,7 @@ rule alignment_samtools_depth:
 
         sd = SamtoolsDepth(camel)
         SnakemakeUtils.add_pickle_inputs(sd, input)
-        step = Step(rule, sd, camel, params.running_dir, config)
+        step = Step(str(rule), sd, camel, params.running_dir, config)
         sd.update_parameters(**{'maximum_coverage_depth': 1000000})
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(sd, output)
@@ -121,7 +125,7 @@ rule alignment_samtools_depth_analyzer:
 
         sda = SamtoolsDepthStatsAnalyzer(camel)
         SnakemakeUtils.add_pickle_inputs(sda, input)
-        step = Step(rule, sda, camel, params.running_dir, config)
+        step = Step(str(rule), sda, camel, params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(sda, output)
 
@@ -144,7 +148,7 @@ rule alignment_report:
         SnakemakeUtils.add_pickle_inputs(reporter, input)
         import pickle
         pickle.dump(reporter, open('/scratch/rawinand/influenza/test.pickle', 'wb'))
-        step = Step(rule, reporter, camel, params.running_dir, config)
+        step = Step(str(rule), reporter, camel, params.running_dir, config)
         if 'genome_segments' in config['species_info']:
             reporter.update_parameters(**{'genome_segments': config['species_info']['genome_segments']})
         step.run_step()

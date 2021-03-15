@@ -29,14 +29,14 @@ rule seqtk_subsample:
 
         subsample = SeqtkSubsample(camel)
 
-        try:
-            fq_dict = SnakePipelineUtils.extracts_fq_input(input.IO, key_pe='FASTQ_PE', key_se='FASTQ_SE')
+        if input.IO:
+            fq_dict = SnakePipelineUtils.extracts_fq_input(str(input.IO), key_pe='FASTQ_PE', key_se='FASTQ_SE')
             input_files = fq_dict['FASTQ_PE']
             subsample.add_input_files({'FASTQ_PE': input_files})
-        except (AttributeError, TypeError):
+        else:
             SnakemakeUtils.add_pickle_inputs(subsample, input, keys=['FASTQ_PE'])
 
-        step = Step(rule, subsample, camel, params.running_dir, config)
+        step = Step(str(rule), subsample, camel, params.running_dir, config)
         subsample.update_parameters(combine_output=True)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(subsample, output)
@@ -75,7 +75,7 @@ rule seqtk_convert:
 
         convert = SeqtkConvert(camel)
         SnakemakeUtils.add_pickle_inputs(convert, input)
-        step = Step(rule, convert, camel, params.running_dir, config)
+        step = Step(str(rule), convert, camel, params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(convert, output)
         update_seqid(convert.tool_outputs['FASTA'][0].path)
@@ -100,7 +100,7 @@ rule blastn_genometyping:
         blastn = Blastn(camel)
         SnakemakeUtils.add_pickle_inputs(blastn, input)
         blastn.add_input_files({'DB_BLAST': [ToolIOFile(config['genometyping_db'])]})
-        step = Step(rule, blastn, camel, params.running_dir, config)
+        step = Step(str(rule), blastn, camel, params.running_dir, config)
         blastn.update_parameters(**config['rule_parameters']['blastn_genometyping'])
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(blastn, output, keys=['ASN', 'INFORMS'])
@@ -127,7 +127,7 @@ rule blastn_genometyping_processing:
         gt = GenomeTyping(camel)
         SnakemakeUtils.add_pickle_inputs(gt, input)
         gt.add_input_files({'DB_BLAST': [ToolIOFile(config['genometyping_db'])]})
-        step = Step(rule, gt, camel, params.running_dir, config)
+        step = Step(str(rule), gt, camel, params.running_dir, config)
         gt.update_parameters(**{'multi_segment': str(config['multi_segment']),
                                 'seqIDParser_type': config['species_info']['seqIDParser_type'],
                                 'genometyping_method': 'blast',
@@ -151,17 +151,23 @@ rule blastn_genometyping_reference_indexing:
     output:
         INDEX_GENOME_PREFIX = Path(config['working_dir']) / genometyping_blastn.OUTPUT_GENOMETYPING_INDEX_GENOME_PREFIX
     params:
-        running_dir = Path(config['working_dir']) / 'genometyping' / 'ref_indexes'
+        running_dir = Path(config['working_dir']) / 'genometyping' / 'blastn_processing'
     run:
         from camel.app.tools.bwa.bwaindex import BWAIndex
         from camel.app.tools.bowtie2.bowtie2index import Bowtie2Index
+        from camel.app.tools.samtools.samtoolsfastaindex import SamtoolsFastaIndex
 
         for indexer_class in [BWAIndex, Bowtie2Index]:
             indexer = indexer_class(camel)
             SnakemakeUtils.add_pickle_inputs(indexer, input)
-            step = Step(rule, indexer, camel, params.running_dir, config)
+            step = Step(str(rule), indexer, camel, params.running_dir, config)
             step.run_step()
             SnakemakeUtils.dump_tool_outputs(indexer, output)
+
+        indexer = SamtoolsFastaIndex(camel)
+        SnakemakeUtils.add_pickle_inputs(indexer, {'FASTA': input.FASTA_REF})
+        step = Step(str(rule), indexer, camel, params.running_dir, config)
+        step.run_step()
 
 rule genometyping_report:
     """
@@ -181,7 +187,7 @@ rule genometyping_report:
 
         reporter = ReporterGenomeTyping(camel)
         SnakemakeUtils.add_pickle_inputs(reporter, input)
-        step = Step(rule, reporter, camel, params.running_dir, config)
+        step = Step(str(rule), reporter, camel, params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
 
@@ -191,7 +197,7 @@ rule genometyping_export_summary:
     """
     input:
         INFORMS_genometyping = rules.blastn_genometyping_processing.output.INFORMS,
-        INFORMS_seqtksubsample = rules.seqtk_subsample.output.INFORMS,
+        INFORMS_seqtksubsample = rules.seqtk_subsample.output.INFORMS
     output:
         TSV = Path(config['working_dir'], genometyping_blastn.OUTPUT_GENOMETYPING_SUMMARY)
     run:

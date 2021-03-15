@@ -6,12 +6,12 @@ from typing import Optional, Dict, List, Sequence
 import yaml
 
 from camel.app.camel import Camel
-from camel.app.components.pipelines.basepipeline import BasePipeline
+from camel.app.components.pipelines.reportpipeline import ReportPipeline
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.scripts.influenzapipeline import SNAKEFILE_MAIN, CONFIG_DATA
 
 
-class MainInfluenzaPipeline(BasePipeline):
+class MainInfluenzaPipeline(ReportPipeline):
     """
     Main class to run the Influenza pipeline.
     """
@@ -50,7 +50,7 @@ class MainInfluenzaPipeline(BasePipeline):
         :return: Arguments
         """
         parser = argparse.ArgumentParser()
-        BasePipeline.add_common_arguments(parser)
+        ReportPipeline.add_common_arguments(parser)
         for analysis_key in MainInfluenzaPipeline.CUSTOM_ANALYSES:
             parser.add_argument(f"--{analysis_key.replace('_', '-')}", action='store_true')
         parser.add_argument('--subtype', choices=['A', 'B', 'C'], type=str.upper, default='N/A')
