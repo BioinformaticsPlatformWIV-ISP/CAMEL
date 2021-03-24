@@ -47,6 +47,8 @@ def add_input_files_arguments(argument_parser: argparse.ArgumentParser, fasta_in
     argument_parser.add_argument('--read-type', help="Read type", choices=['illumina', 'iontorrent', 'nanopore'],
                                  default='illumina')
     argument_parser.add_argument('--trim-reads', help="Perform read trimming", action='store_true')
+    argument_parser.add_argument('--adapter', help="(Illumina) Adapter that was used for sequencing, used for "
+                                                   "read-trimming", choices=['NexteraPE', 'TruSeq2', 'TruSeq3'])
     argument_parser.add_argument('--report-include-fastq', help="Include trimmed FASTQ files in the report",
                                  action='store_true')
 

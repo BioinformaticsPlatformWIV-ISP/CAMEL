@@ -50,4 +50,6 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
             'detection_method': self._args.detection_method,
             'read_trimming': {'export_fastq': self._args.report_include_fastq}
         })
+        if self._args.library is not None:
+            config_data['read_trimming']['adapter'] = self._args.library
         return config_data

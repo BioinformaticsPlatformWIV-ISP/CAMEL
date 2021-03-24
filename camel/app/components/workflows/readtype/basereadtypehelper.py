@@ -136,10 +136,11 @@ class BaseReadTypeHelper(object, metaclass=abc.ABCMeta):
         report.save()
 
     @abc.abstractmethod
-    def trim_reads(self, fastq_input: FastqInput, report: HtmlReport, include_fastq: bool, threads: int) -> FastqInput:
+    def trim_reads(self, fastq_input: FastqInput, report: HtmlReport, include_fastq: bool, threads: int, **kwargs) -> \
+            FastqInput:
         """
-        Function to check if this is a full length hit.
-        :return: True if full length, False otherwise
+        Base function for read-type specific trimming.
+        :return: Trimmed FASTQ files
         """
         raise NotImplementedError()
 
