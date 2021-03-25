@@ -52,7 +52,7 @@ class Prokka(Tool):
         Checks the command output to see if the program ran correctly.
         :return: None
         """
-        if 'Thank you, come again.' not in self.stderr.splitlines()[-1]:
+        if self._command.returncode != 0:
             raise ToolExecutionError("Error executing Prokka: {}".format(self.stderr))
 
     def __build_command(self):
@@ -72,7 +72,7 @@ class Prokka(Tool):
         :return: None
         """
         for line in self.stderr.splitlines():
-            m = re.match('^\[.*] (PROKKA_\d+/.*\.(\w{3}))', line.strip())
+            m = re.match(r'^\[.*] (PROKKA_\d+/.*\.(\w{3}))', line.strip())
             if m and m.group(2) in Prokka.OUTPUT_KEYS:
                 self._tool_outputs[Prokka.OUTPUT_KEYS[m.group(2)]] = [
                     ToolIOFile(os.path.join(self._folder, m.group(1)))]
