@@ -21,6 +21,7 @@ class GATK4BaseRecalibrator(GATK4):
     ---------------
     'VCF_KNOWN_SNPS':   ToolIOFile object. GATK high confidence SNP vcf file location.
     'VCF_KNOWN_INDELS': ToolIOFile object. GATK high confidence indels vcf file location.
+    'TXT_intervals:     ToolIOFile object. GATK-style intervals file, BED file or Picard-style intervals list
 
     Output:
     -------
@@ -58,7 +59,10 @@ class GATK4BaseRecalibrator(GATK4):
         self._input_string += f"--reference {self._tool_inputs['FASTA_REF'][0].path} "
 
         if 'VCF_KNOWN_SNPS' in self._tool_inputs:
-            self._input_string += f"--known-sites {self._tool_inputs['VCF_KNOWN_SITES'][0].path} "
+            self._input_string += f"--known-sites {self._tool_inputs['VCF_KNOWN_SNPS'][0].path} "
+
+        if 'VCF_KNOWN_INDELS' in self._tool_inputs:
+            self._input_string += f"--known-sites {self._tool_inputs['VCF_KNOWN_INDELS'][0].path} "
 
         if 'TXT_intervals' in self._tool_inputs:
             self._input_string += f"--intervals {self._tool_inputs['TXT_intervals'][0].path} "
@@ -70,4 +74,4 @@ class GATK4BaseRecalibrator(GATK4):
         :return: None
         """
         self._tool_outputs['TXT_RecalibrationTable'] = [
-            ToolIOFile(os.path.join(self._folder, self._parameters['recal_table_output'].value))]
+            ToolIOFile(os.path.join(self._folder, self._parameters['output'].value))]
