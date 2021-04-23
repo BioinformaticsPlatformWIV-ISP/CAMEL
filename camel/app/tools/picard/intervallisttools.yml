@@ -1,0 +1,9 @@
+dependencies: [java/1.8.0_172, picard/2.23.3]
+parameters:
+  output_dir: {default: true, mandatory: false, option: O, p_index: 0, value: intervallists}
+  scatter_count: {default: false, mandatory: false, option: SCATTER_COUNT, p_index: 10, value: "10"}
+  subdivision_mode: {default: false, mandatory: false, option: SUBDIVISION_MODE, p_index: 10, value: "BALANCING_WITHOUT_INTERVAL_SUBDIVISION_WITH_OVERFLOW"}
+  unique: {default: false, mandatory: false, option: UNIQUE, p_index: 10, value: "true"}
+  sort: {default: false, mandatory: false, option: SORT, p_index: 10, value: "true"}
+  break_bands_at_multiples_of: {default: false, mandatory: false, option: BRK, p_index: 10, value: "10"}
+tool_command: run_picard.sh IntervalListTools

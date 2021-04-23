@@ -34,6 +34,8 @@ class FastqToSam(Picard):
         else:
             InvalidInputSpecificationError('Picard FastqToSam requires FASTQ_SE or FASTQ_PE input.')
 
+        self._set_input()
+
     def _set_input(self) -> None:
         """
         Set input for the picard function

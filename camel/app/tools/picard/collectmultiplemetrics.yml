@@ -8,6 +8,10 @@ parameters:
     p_index: 30, value: CollectInsertSizeMetrics}
   metrics_QualityScoreDistribution: {default: true, mandatory: false, option: PROGRAM,
     p_index: 40, value: QualityScoreDistribution}
+  metrics_CollectBaseDistributionByCycle: { default: true, mandatory: false, option: PROGRAM,
+    p_index: 60, value: CollectBaseDistributionByCycle }
+  metrics_MeanQualityByCycle: { default: true, mandatory: false, option: PROGRAM,
+    p_index: 70, value: MeanQualityByCycle }
   output_prefix: {default: true, mandatory: true, option: O, p_index: 0, value: readmap_qc}
   reset matrics: {default: true, mandatory: false, option: PROGRAM, p_index: 10, value: 'null'}
 tool_command: run_picard.sh CollectMultipleMetrics
