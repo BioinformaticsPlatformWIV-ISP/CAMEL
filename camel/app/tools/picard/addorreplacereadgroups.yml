@@ -5,9 +5,10 @@ parameters:
   RG_platform: {default: true, mandatory: false, option: RGPL, p_index: 30, value: ILLUMINA}
   RG_platform_unit: {default: true, mandatory: false, option: RGPU, p_index: 40, value: PlatformUnitNA}
   RG_sample_name: {default: true, mandatory: false, option: RGSM, p_index: 60, value: sampleNA}
+  RG_center_name: {default: false, mandatory: false, option: RGCN, p_index: 70, value: centernameNA}
   create_index: {default: false, mandatory: false, option: CREATE_INDEX, p_index: 0,
     value: 'true'}
   output: {default: true, mandatory: false, option: O, p_index: 0, value: readgroup_updated.bam}
   sort_order: {default: false, mandatory: false, option: SORT_ORDER, p_index: 50,
     value: queryname}
-tool_command: run_picard.sh AddOrReplaceReadGroups
+tool_command: AddOrReplaceReadGroups

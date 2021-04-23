@@ -39,6 +39,17 @@ class Picard(Tool, metaclass=abc.ABCMeta):
         self._required_inputs = []
         self._input_string = ''
         self._output_string = ''
+        # Elements for building command
+        self._java_options = '-mx8G -XX:+UseParallelGC -XX:ParallelGCThreads=1 -Dpicard.useLegacyParser=false'
+        self._java_options_temp_dir = 'TMP_DIR=/temp/picard'
+
+    def update_java_options(self, java_options: str) -> None:
+        """
+        Returns the formatted java options of this tool.
+        :return: Name
+        """
+        logging.info(f"Java options updated: '{java_options}'")
+        self._java_options = f'{java_options}'
 
     def _execute_tool(self) -> None:
         """
@@ -110,9 +121,9 @@ class Picard(Tool, metaclass=abc.ABCMeta):
         Build the command to run tool
         :return: None
         """
-        self._command.command = ' '.join([
-            self._tool_command, self._input_string, self._output_string,
-            ' '.join(self._build_options(excluded_parameters=self._specific_parameters, delimiter='='))
+        self._command.command = " ".join([
+            "java", self._java_options, "-jar $PICARD_JAR", self._tool_command, self._java_options_temp_dir, self._input_string, self._output_string,
+            ' '.join(self._build_options(excluded_parameters=self._specific_parameters, delimiter='=')), '2>&1'
         ])
 
     def _set_informs(self) -> None:
@@ -127,13 +138,10 @@ class Picard(Tool, metaclass=abc.ABCMeta):
         Analyse the result of Picard run
         :return: None
         """
-        stdout_lines = self.stdout.splitlines()
-
-        run_status = stdout_lines[-1]
-        if not re.match('Exit status: 0', run_status):
+        if self._command.returncode != 0:
             raise ToolExecutionError(f'Picard {self._function_name,} fails to run, error msg: \n{self.stdout}')
 
         # log WARNINGs
-        for line in stdout_lines:
+        for line in self.stdout.splitlines():
             if re.match('WARNING', line):
                 logging.warning(f' Picard - {line}')

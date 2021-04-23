@@ -21,6 +21,7 @@ class MergeBamAlignment(Picard):
         self._function_name = 'MergeBamAlignment'
         self._supported_inputs = []
         self._required_inputs = ['BAM_UNMAPPED', 'BAM_ALIGNED', 'FASTA_REF']
+        self._specific_parameters = ["attributes_to_remove_multi"]
 
     def _set_input(self) -> None:
         """
@@ -31,6 +32,25 @@ class MergeBamAlignment(Picard):
 
         self._input_string += f" UNMAPPED={self._tool_inputs['BAM_UNMAPPED'][0].path} " \
                               f"ALIGNED={self._tool_inputs['BAM_ALIGNED'][0].path}"
+
+    def _build_command(self) -> None:
+        """
+        Build the command to run tool
+        :return: None
+        """
+        build_options = self._build_options(excluded_parameters=self._specific_parameters, delimiter='=')
+
+        if 'attributes_to_remove_multi' in self._parameters:
+            attributes = str(self._parameters['attributes_to_remove_multi'].value).split(",")
+            for attribute in attributes:
+                build_options.append(f"ATTRIBUTES_TO_REMOVE={attribute}")
+
+        option_string = " ".join(build_options)
+
+        self._command.command = " ".join([
+            "java", self._java_options, "-jar $PICARD_JAR", self._tool_command, self._java_options_temp_dir, self._input_string, self._output_string,
+            option_string, '2>&1'
+        ])
 
     def _set_informs(self) -> None:
         """

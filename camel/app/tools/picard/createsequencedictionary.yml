@@ -3,4 +3,4 @@ parameters:
   output_ext: {default: true, mandatory: false, option: null, p_index: 0, value: .dict}
   species: {default: false, mandatory: false, option: SPECIES, p_index: 30, value: NA}
   symlink: {default: true, mandatory: false, option: null, p_index: 0, value: ''}
-tool_command: run_picard.sh CreateSequenceDictionary
+tool_command: CreateSequenceDictionary

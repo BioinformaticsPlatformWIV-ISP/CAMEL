@@ -17,6 +17,8 @@ class CollectMultipleMetrics(Picard):
     - CollectInsertSizeMetrics
     - QualityScoreDistribution
     - CollectGcBiasMetrics
+    - CollectBaseDistributionByCycle
+    - MeanQualityByCycle
     """
     OUTPUT_FILE_SUFFIX = {
         'AlignmentSummary': '.alignment_summary_metrics',
@@ -64,7 +66,11 @@ class CollectMultipleMetrics(Picard):
                     self.__set_mapping_quality_output()
                 elif key == 'metrics_CollectGcBiasMetrics':
                     self.__set_gc_bias_output()
-                else:  # MeanQualityByCycle, CollectBaseDistributionByCycle, RnaSeqMetrics, CollectSequencingArtifactMetrics, CollectQualityYieldMetrics
+                elif key == 'metrics_CollectBaseDistributionByCycle':
+                    self.__set_base_distribution_output()
+                elif key == 'metrics_MeanQualityByCycle':
+                    self.__set_quality_by_cycle_output()
+                else:  # RnaSeqMetrics, CollectSequencingArtifactMetrics, CollectQualityYieldMetrics
                     logging.warning(
                         f'Picard CollectMultipleMetrics unsupported metrics {key}, its results will not be analyzed or returned.')
 
@@ -87,7 +93,13 @@ class CollectMultipleMetrics(Picard):
                 elif key == 'metrics_QualityScoreDistribution':
                     # No output to analyze, set to prevent going to 'else' case
                     continue
-                else:  # MeanQualityByCycle, CollectBaseDistributionByCycle, RnaSeqMetrics, CollectSequencingArtifactMetrics, CollectQualityYieldMetrics
+                elif key == 'metrics_CollectBaseDistributionByCycle':
+                    # No output to analyze, set to prevent going to 'else' case
+                    continue
+                elif key == 'metrics_MeanQualityByCycle':
+                    # No output to analyze, set to prevent going to 'else' case
+                    continue
+                else:  # RnaSeqMetrics, CollectSequencingArtifactMetrics, CollectQualityYieldMetrics
                     logging.warning(
                         f'Picard CollectMultipleMetrics unsupported metrics {key}, its results will not be analyzed or returned.')
 
@@ -219,3 +231,24 @@ class CollectMultipleMetrics(Picard):
                     self.informs['GCBias_stats']['AT_DROPOUT'] = informs[4]
                     self.informs['GCBias_stats']['GC_DROPOUT'] = informs[5]
                     break
+
+    def __set_base_distribution_output(self) -> None:
+        """
+        set the base distribution statistics output
+        :return: None
+        """
+
+        metrics_file = self.outfile_prefix + CollectMultipleMetrics.OUTPUT_FILE_SUFFIX['BaseDistributionByCycle']
+        self._tool_outputs['TXT_BaseDistributionByCycle'] = [ToolIOFile(metrics_file)]
+        summary_file = self.outfile_prefix + CollectMultipleMetrics.OUTPUT_FILE_SUFFIX['BaseDistributionByCycleFigure']
+        self._tool_outputs['PDF_BaseDistributionByCycleFigure'] = [ToolIOFile(summary_file)]
+
+    def __set_quality_by_cycle_output(self) -> None:
+        """
+        set the quality by cycle statistics output
+        :return: None
+        """
+        summary_file = self.outfile_prefix + CollectMultipleMetrics.OUTPUT_FILE_SUFFIX['QualityByCycle']
+        self._tool_outputs['TXT_QualityByCycle'] = [ToolIOFile(summary_file)]
+        figure_file = self.outfile_prefix + CollectMultipleMetrics.OUTPUT_FILE_SUFFIX['QualityByCycleFigure']
+        self._tool_outputs['PDF_QualityByCycleFigure'] = [ToolIOFile(figure_file)]
