@@ -1,15 +1,6 @@
 from pathlib import Path
-import yaml
 
-from camel.scripts.gatkbestpractices.snakefile import alignment, bam_to_cram, variant_calling, qc
-
-config = yaml.safe_load(open("../config/config_data.yml"))
-
-config.update(
-    {'working_dir' : '/data/testdir/chdevogelaere/human/testdata_3',
-    'sample' : 'GC088865',
-    'ubams': ['GC088865_subs_001', 'GC088865_subs_002'],}
-)
+from camel.scripts.broadwgs.snakefile import alignment, bam_to_cram, variant_calling, qc
 
 #######################
 # Included Snakefiles #
@@ -34,7 +25,7 @@ rule all:
 
         VCF = Path(config['working_dir']) / "variant_calling" / "merge_vcf" / (config["sample"] + ".g.vcf.gz.io"),
 
-        QC_done = Path(config['working_dir']) / 'qc' / 'qc_done.txt'
+        #QC_done = Path(config['working_dir']) / 'qc' / 'qc_done.txt'
 
 
 rule prepare_references_io:
@@ -86,6 +77,7 @@ rule run_qc:
     input:
         TXT = expand(Path(config['working_dir']) / "qc" / "ubam_quality_yield" / config["sample"] / "{ubam}.unmapped.quality_yield_metrics.io", ubam = config["ubams"]),
 
+        ## picard_unsorted_RG_quality
         base_distribution_by_cycle = expand(Path(config['working_dir']) / "qc" / "unsorted_RG_quality" / "{ubam}.unsorted_readgroup.base_distribution_by_cycle.pdf", ubam = config["ubams"]),
         base_distribution_by_cycle_metrics = expand(Path(config['working_dir']) / "qc" / "unsorted_RG_quality" / "{ubam}.unsorted_readgroup.base_distribution_by_cycle_metrics", ubam = config["ubams"]),
         insert_size_histogram_pdf = expand(Path(config['working_dir']) / "qc" / "unsorted_RG_quality" / "{ubam}.unsorted_readgroup.insert_size_histogram.pdf", ubam = config["ubams"]),
@@ -95,11 +87,13 @@ rule run_qc:
         quality_distribution_pdf = expand(Path(config['working_dir']) / "qc" / "unsorted_RG_quality" / "{ubam}.unsorted_readgroup.quality_distribution.pdf", ubam = config["ubams"]),
         quality_distribution_metrics = expand(Path(config['working_dir']) / "qc" / "unsorted_RG_quality" / "{ubam}.unsorted_readgroup.quality_distribution_metrics", ubam = config["ubams"]),
 
+        ## picard_RG_quality
         alignment_summary_metrics = Path(config['working_dir']) / "qc" / "RG_quality" / (config["sample"] + ".readgroup.alignment_summary_metrics"),
         gc_bias_detail_metrics = Path(config['working_dir']) / "qc" / "RG_quality" / (config["sample"] + ".readgroup.gc_bias.detail_metrics"),
         gc_bias_pdf = Path(config['working_dir']) / "qc" / "RG_quality" / (config["sample"] + ".readgroup.gc_bias.pdf"),
         gc_bias_summary_metrics = Path(config['working_dir']) / "qc" / "RG_quality" / (config["sample"] + ".readgroup.gc_bias.summary_metrics"),
 
+        ## picard_aggregation_metrics
         alignment_summary_metrics_agg = Path(config['working_dir']) / "qc" / "aggregation_metrics" / (config["sample"] + ".agg.alignment_summary_metrics"),
         bait_bias_detail_metrics = Path(config['working_dir']) / "qc" / "aggregation_metrics" / (config["sample"] + ".agg.bait_bias_detail_metrics"),
         bait_bias_summary_metrics = Path(config['working_dir']) / "qc" / "aggregation_metrics" / (config["sample"] + ".agg.bait_bias_summary_metrics"),

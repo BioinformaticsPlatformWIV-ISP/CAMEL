@@ -15,7 +15,7 @@ rule picard_quality_yield:
     output:
         TXT = Path(config['working_dir']) / "qc" / "ubam_quality_yield" / config["sample"] / "{ubam}.unmapped.quality_yield_metrics.io"
     params:
-        working_dir = lambda wildcards: Path(config['working_dir']) / "metrics" / wildcards.sample
+        working_dir = Path(config['working_dir']) / "qc" / "ubam_quality_yield" / config["sample"]
     run:
         from camel.app.tools.picard.collectqualityyieldmetrics import CollectQualityYieldMetrics
 
