@@ -2,7 +2,7 @@
 # Pipeline options #
 ####################
 citations:
-  main: null
+  main: Bogaerts_2021-stec_pipeline
   other:
     - Bolger_2014-trimmomatic
     - Bankevich_2012-spades
