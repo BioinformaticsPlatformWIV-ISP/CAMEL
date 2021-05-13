@@ -260,9 +260,9 @@ rule gatk4_apply_bqsr:
         FASTA_REF = Path(config['working_dir']) / "ref_input" / "fasta_reference_human_value_file.io",
         TXT_intervals = Path(config['working_dir']) / "alignment" / "interval_files" / "interval_{i}.intervals.io"
     output:
-        BAM = Path(config['working_dir']) / "alignment" / "apply_bqsr" / (config["sample"] + "{i}_sorted_bam.io")
+        BAM = Path(config['working_dir']) / "alignment" / "apply_bqsr" / (config["sample"] + "_{i}_sorted_bam.io")
     params:
-        working_dir = Path(config['working_dir']) / "alignment" / "apply_bqsr"
+        working_dir = lambda wildcards: Path(config['working_dir']) / "alignment" / "apply_bqsr" / f"interval_{wildcards.i}"
     run:
         from camel.app.tools.gatk4.gatk4applybqsr import GATK4ApplyBQSR
 
@@ -284,7 +284,7 @@ rule gatk4_apply_bqsr:
 def get_intervals(wildcards):
     dir_checkpoint = checkpoints.create_sequence_grouping_intervals.get(**wildcards).output.sequence_grouping
     intervals = glob_wildcards(os.path.join(dir_checkpoint, "interval_{i}.intervals.io")).i
-    return expand(str(Path(config['working_dir']) / "alignment" / "apply_bqsr" / (config["sample"] + "{i}_sorted_bam.io")), i = intervals)
+    return expand(str(Path(config['working_dir']) / "alignment" / "apply_bqsr" / (config["sample"] + "_{i}_sorted_bam.io")), i = intervals)
 
 rule picard_gather_sorted_bam:
     input:
@@ -303,7 +303,7 @@ rule picard_gather_sorted_bam:
 
         gather_bam = GatherBamFiles(camel)
         step = Step(rule, gather_bam, camel, params.working_dir, config)
-        gather_bam.add_input_files({"BAMs": [SnakemakeUtils.load_object(path)[0] for path in interval_files_local})
+        gather_bam.add_input_files({"BAMs": [SnakemakeUtils.load_object(path)[0] for path in interval_files_local]})
         gather_bam.update_parameters(
             create_index = "true",
             create_md5_file = "true"

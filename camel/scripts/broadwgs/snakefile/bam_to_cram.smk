@@ -26,7 +26,8 @@ rule samtools_convert_to_cram:
         SnakemakeUtils.add_pickle_input(bamtocram,"BAM",input.BAM)
         step = Step(rule, bamtocram, camel, params.working_dir, config)
         bamtocram.update_parameters(
-            cram_out = "",
+            output_filename = "samtools_view.cram",
+            cram_out = ""
         )
         step.run_step()
         SnakemakeUtils.dump_tool_output(bamtocram, 'BAM', output.CRAM)
@@ -49,7 +50,7 @@ rule samtools_index_cram:
     output:
         CRAI = Path(config['working_dir']) / "bamtocram" / "index" / (config["sample"] + ".sample.crai.io"),
     params:
-        working_dir = lambda wildcards: Path(config['working_dir']) / "bamtocram" / "index"
+        working_dir = Path(config['working_dir']) / "bamtocram" / "index"
     run:
         from camel.app.tools.samtools.samtoolsindexcram import SamtoolsIndexCram
 
