@@ -36,7 +36,7 @@ rule prepare_references_io:
         fasta_genome = config['references']['ref_fasta'],
         dict_genome = config['references']['ref_dict'],
         dbsnp = config['references']['dbsnp_vcf'],
-        #known_indels
+        known_indels = config['references']['known_indels_sites_vcfs'],
         calling_intervals = config['references']["calling_interval_list"],
         contamination_sites_ud = config['references']["contamination_sites_ud"],
         contamination_sites_bed = config['references']["contamination_sites_bed"],
@@ -48,6 +48,7 @@ rule prepare_references_io:
         FASTA_GENOME_FILE = Path(config['working_dir']) / "ref_input" / "fasta_reference_human_value_file.io",
         DICT_GENOME = Path(config['working_dir']) / "ref_input" / "dictionary_genome_human.io",
         DBSNP = Path(config['working_dir']) / "ref_input" / "dbsnp_vcf.io",
+        KNOWN_INDELS = Path(config['working']) / "ref_input" / "known_indels_vcf.io",
         CALLING_INTERVALS = Path(config['working_dir']) / "ref_input" / "calling_intervals.io",
         CONTAMINATION_SITES_UD = Path(config['working_dir']) / "ref_input" / "contamination_sites.io",
         COVERAGE_INTERVALS = Path(config['working_dir']) / "ref_input" / "coverage_interval_list.io",
@@ -58,6 +59,7 @@ rule prepare_references_io:
         io_fasta_genome_file = [ToolIOFile(input.fasta_genome)]
         io_dict_genome = [ToolIOFile(input.dict_genome)]
         io_dbSNP = [ToolIOFile(input.dbsnp)]
+        io_knownINDELs = [ToolIOFile(f) for f in input.known_indels]
         io_calling_intervals = [ToolIOFile(input.calling_intervals)]
         io_contamination = [ToolIOFile(input.contamination_sites_bed), ToolIOFile(input.contamination_sites_mu), ToolIOFile(input.contamination_sites_ud)]
         io_coverage_intervals = [ToolIOFile(input.coverage_interval_list)]
@@ -68,6 +70,7 @@ rule prepare_references_io:
         SnakemakeUtils.dump_object(io_fasta_genome_file, str(output.FASTA_GENOME_FILE))
         SnakemakeUtils.dump_object(io_dict_genome, str(output.DICT_GENOME))
         SnakemakeUtils.dump_object(io_dbSNP, str(output.DBSNP))
+        SnakemakeUtils.dump_object(io_knownINDELs, str(output.KNOWN_INDELS))
         SnakemakeUtils.dump_object(io_calling_intervals, str(output.CALLING_INTERVALS))
         SnakemakeUtils.dump_object(io_contamination, str(output.CONTAMINATION_SITES_UD))
         SnakemakeUtils.dump_object(io_coverage_intervals, str(output.COVERAGE_INTERVALS))

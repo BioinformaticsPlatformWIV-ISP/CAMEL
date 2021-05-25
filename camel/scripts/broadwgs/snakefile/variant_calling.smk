@@ -78,7 +78,9 @@ rule gatk4_var_caller:
             #new_qual = "", ##TODO deprecated
             gqb = "10,20,30,40,50,60,70,80,90",
             annotation_group = "StandardAnnotation,StandardHCAnnotation,AS_StandardAnnotation",
-            emit_ref_confidence = "GVCF"
+            emit_ref_confidence = "GVCF",
+            sample_ploidy = 2,
+            standard_min_confidence_threshold_for_calling = 10.0
         )
         step.run_step()
         SnakemakeUtils.dump_tool_output(hc, 'VCF', output.VCF)

@@ -16,7 +16,7 @@ rule bwa_mapping:
         SAM = Path(config['working_dir']) / "alignment" / "mapping" / "{input_basename}.aligned.sam.io",
     params:
         working_dir = lambda wildcards: Path(config['working_dir']) / 'alignment' / "mapping" / wildcards.input_basename,
-        threads = 5,
+    threads: 8
     run:
         from camel.app.tools.bwa.bwamap import BWAMap
 
@@ -29,7 +29,7 @@ rule bwa_mapping:
             SnakemakeUtils.add_pickle_input(bwa_mem, 'FASTQ_INT', input.FASTQ)
         SnakemakeUtils.add_pickle_input(bwa_mem, 'INDEX_GENOME_PREFIX', input.FASTA_GENOME)
         step = Step(rule, bwa_mem, camel, params.working_dir, config)
-        bwa_mem.update_parameters(threads=params.threads, verbose=3, interleaved='', deterministic_aln=100000000)
+        bwa_mem.update_parameters(threads=threads, verbose=3, interleaved='', deterministic_aln=100000000)
         step.run_step()
         SnakemakeUtils.dump_tool_output(bwa_mem, "SAM", output.SAM)
 
@@ -57,7 +57,8 @@ rule fastq_to_ubam:
             library_name = "unknown",
             platform = "illumina",
             sequencing_center = config["sequencing_center"],
-            quality_format = "Standard"
+            quality_format = "Standard",
+            sort_order = "coordinate"
         )
         step.run_step()
         SnakemakeUtils.dump_tool_output(fastq_to_ubam, "BAM", output.BAM_UNMAPPED)
@@ -211,12 +212,12 @@ rule gatk4_baserecalibrator:
         BAM = Path(config['working_dir']) / "alignment" / "sort_dupmarked" / (config["sample"] + "aligned.duplicate_marked.sorted.bam.io"),
         FASTA_REF = Path(config['working_dir']) / "ref_input" / "fasta_reference_human_value_file.io",
         VCF_KNOWN_SNPS = Path(config['working_dir']) / "ref_input" / "dbsnp_vcf.io",
+        VCF_KNOWN_INDELS = Path(config['working_dir']) / "ref_input" / "known_indels_vcf.io",
         TXT_intervals = Path(config['working_dir']) / "alignment" / "interval_files" / "interval_{i}.intervals.io"
     output:
         TXT_RecalibrationTable = Path(config['working_dir']) / "alignment" / "bqsr" / "{i}_recal.csv.io"
     params:
         working_dir = lambda wildcards: Path(config['working_dir']) / "alignment" / "bqsr" / wildcards.i
-        #known_indels_sites_vcfs = references["known_indels_sites_vcfs"], ##TO DO
     run:
         from camel.app.tools.gatk4.gatk4baserecalibrator import GATK4BaseRecalibrator
 
