@@ -3,14 +3,15 @@ import os
 import argparse
 import yaml
 import logging
-import glob
 
 from pathlib import Path
 from typing import Any, Optional, List, Dict, Sequence
 
 from camel.app.camel import Camel
+from camel.app.io.tooliofile import ToolIOFile
 from camel.app.pipeline.pipeline import Pipeline
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
+from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.scripts.broadwgs import SNAKEFILE_MAIN, CONFIG_DATA
 
 
@@ -36,22 +37,42 @@ class MainBroadWGSPipeline(object):
         Runs the pipeline.
         :return: None
         """
-        input_files = self._symlink_input()
-        config_file = self.__construct_config_file(input_files)
+        input_files = self._parse_input()
+        config_file = self.__construct_config_file()
         self._run_snakemake_main(config_file)
 
-    def _symlink_input(self) -> List[Dict[str, Any]]:
+    def _parse_input(self) -> List[Dict[str, Any]]:
         """
         Symlinks the input files.
         :return: List of FASTQ input dictionaries
         """
-        # Determine link names
-        links = glob.glob(str(self._args.ubam_prefix) + "*.unmapped.bam")
+        base_path = self._args.input
 
         # Create directory
         dir_links = self._working_dir / 'input' / self._args.sample
         if not dir_links.exists():
             dir_links.mkdir(parents=True)
+
+        # Determine link names + generate ToolIOFiles
+        links = []
+        if self._args.paired_end:
+            for file in base_path:
+                #add extension
+                r1 = file + "_R1.fastq.gz"
+                r2 = file + "_R2.fastq.gz"
+                #append to links for symlinking
+                links.append(r1)
+                links.append(r2)
+                #ToolIOFile
+                io_files = [ToolIOFile(r1), ToolIOFile(r2)]
+                SnakemakeUtils.dump_object(io_files, os.path.join(dir_links, os.path.basename(file) + ".fastq.gz.io"))
+
+        elif self._args.interleaved:
+            for file in base_path:
+                int = file + ".fastq.gz"
+                links.append(int)
+                io_files = [ToolIOFile(int)]
+                SnakemakeUtils.dump_object(io_files, os.path.join(dir_links, os.path.basename(file) + ".fastq.gz.io"))
 
         # Link files
         paths_new = []
@@ -67,19 +88,27 @@ class MainBroadWGSPipeline(object):
         # Return output dictionary
         return [{'name': os.path.basename(p), 'path': p} for p in paths_new]
 
-    def __construct_config_file(self, input_files: List[Dict[str, str]]) -> str:
+    def __construct_config_file(self) -> str:
         """
         Constructs the configuration file.
         :return: Configuration file
         """
-        config_data = self.get_template_data(input_files)
+        config_data = self.get_template_data()
+
+        # Input fastq files
+        if self._args.paired_end:
+            config_data['PE'] = True
+            config_data['INT'] = False
+        if self._args.interleaved:
+            config_data['INT'] = True
+            config_data['PE'] = False
 
         with CONFIG_DATA.open() as handle_in:
             config_data.update(yaml.load(handle_in.read(), Loader=yaml.SafeLoader))
 
         return SnakePipelineUtils.generate_config_file(config_data, self._working_dir)
 
-    def get_template_data(self, input_data: [List[Dict[str, str]]]) -> Dict[str, Any]:
+    def get_template_data(self) -> Dict[str, Any]:
         """
         Returns the template data that is common to all pipelines
         :return: Template data
@@ -89,9 +118,9 @@ class MainBroadWGSPipeline(object):
                 'name': self._name,
                 'version': f"{self._version}",
             },
-            'ubams'      : [("").join(file['name'].split(".")[:-2]) for file in input_data],
+            'sequencing_center': self._args.sequencing_center,
             'sample': self._args.sample,
-            'ubam_prefix': self._args.ubam_prefix,
+            'input_basenames': [os.path.basename(f) for f in self._args.input],
             'working_dir': str(self._working_dir),
         }
         return template_data
@@ -125,10 +154,16 @@ class MainBroadWGSPipeline(object):
         """
         parser = argparse.ArgumentParser(description='Run the GATK best practices pipeline.')
 
-        # input
+        # input data
+        parser.add_argument('--sequencing-center', dest = "sequencing_center", default = "unknown", help = "Sequencing center")
+
+        parser.add_argument('-i', dest = "input", nargs="+", help="FastQ input files")
         parser.add_argument('--working-dir', dest = "working_dir", default=os.path.abspath('.'), type=str, help='Working directory')
-        parser.add_argument('--ubam-prefix', dest = "ubam_prefix", type=str, help='Path to uBAM files')
         parser.add_argument('--sample', dest = "sample", type=str, help='Sample name')
+
+        gp = parser.add_mutually_exclusive_group()
+        gp.add_argument('-PE', '--paired-end', dest='paired_end', help='Paired-end fastq files.', action = "store_true")
+        gp.add_argument('-INT', '--interleaved', dest='interleaved', help='Interleaved fastq files.', action = "store_true")
 
         # logs
         parser.add_argument('--log', action='store_true', help="If this flag is set, config file and error logs are kept")
@@ -154,6 +189,7 @@ class MainBroadWGSPipeline(object):
         :return: Version
         """
         return self._version
+
 
 if __name__ == '__main__':
     Camel.get_instance()

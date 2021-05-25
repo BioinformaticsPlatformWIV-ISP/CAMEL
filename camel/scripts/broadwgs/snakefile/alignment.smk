@@ -8,42 +8,14 @@ from camel.app.io.tooliofile import ToolIOFile
 
 camel = Camel()
 
-rule prepare_input:
-    input:
-        uBAM = Path(config['working_dir']) / "input" / config["sample"] / "{ubam}.unmapped.bam"
-    output:
-        uBAM = Path(config['working_dir']) / "input" / config["sample"]  / "{ubam}.unmapped.bam.io"
-    run:
-        io_uBAM = [ToolIOFile(input.uBAM)]
-        SnakemakeUtils.dump_object(io_uBAM, str(output))
-
-rule picard_samtofastq:
-    input:
-        BAM = Path(config['working_dir']) / "input" / config["sample"] / "{ubam}.unmapped.bam.io"
-    output:
-        FASTQ = Path(config['working_dir']) / "alignment" / "samtofastq" / "{ubam}.fastq.io",
-    params:
-        working_dir = lambda wildcards: Path(config['working_dir']) / "alignment" / "samtofastq" / wildcards.ubam
-    run:
-        from camel.app.tools.picard.samtofastq import SamToFastq
-
-        Path(params.working_dir).mkdir(exist_ok=True)
-
-        samtofastq = SamToFastq(camel)
-        SnakemakeUtils.add_pickle_input(samtofastq,"BAM",input.BAM)
-        step = Step(rule, samtofastq, camel, params.working_dir, config)
-        samtofastq.update_parameters(interleave="true", non_pf="true")
-        step.run_step()
-        SnakemakeUtils.dump_tool_outputs(samtofastq, output)
-
 rule bwa_mapping:
     input:
-        FASTQ = Path(config['working_dir']) / "alignment" / "samtofastq" / "{ubam}.fastq.io",
+        FASTQ = Path(config['working_dir']) / 'input' / config["sample"] / "{input_basename}.fastq.gz.io",
         FASTA_GENOME=Path(config['working_dir']) / "ref_input" / "fasta_reference_human_value.io"
     output:
-        SAM = Path(config['working_dir']) / "alignment" / "mapping" / "{ubam}.aligned.sam.io",
+        SAM = Path(config['working_dir']) / "alignment" / "mapping" / "{input_basename}.aligned.sam.io",
     params:
-        working_dir = lambda wildcards: Path(config['working_dir']) / 'alignment' / "mapping" / wildcards.ubam,
+        working_dir = lambda wildcards: Path(config['working_dir']) / 'alignment' / "mapping" / wildcards.input_basename,
         threads = 5,
     run:
         from camel.app.tools.bwa.bwamap import BWAMap
@@ -51,22 +23,54 @@ rule bwa_mapping:
         Path(params.working_dir).mkdir(exist_ok=True)
 
         bwa_mem = BWAMap(camel)
-        SnakemakeUtils.add_pickle_input(bwa_mem, 'FASTQ_INT', input.FASTQ)
+        if config["PE"]:
+            SnakemakeUtils.add_pickle_input(bwa_mem, 'FASTQ_PE', input.FASTQ)
+        elif config["INT"]:
+            SnakemakeUtils.add_pickle_input(bwa_mem, 'FASTQ_INT', input.FASTQ)
         SnakemakeUtils.add_pickle_input(bwa_mem, 'INDEX_GENOME_PREFIX', input.FASTA_GENOME)
         step = Step(rule, bwa_mem, camel, params.working_dir, config)
         bwa_mem.update_parameters(threads=params.threads, verbose=3, interleaved='', deterministic_aln=100000000)
         step.run_step()
         SnakemakeUtils.dump_tool_output(bwa_mem, "SAM", output.SAM)
 
+rule fastq_to_ubam:
+    input:
+        FASTQ = Path(config['working_dir']) / 'input'/ config["sample"] / "{input_basename}.fastq.gz.io",
+    output:
+        BAM_UNMAPPED = Path(config['working_dir']) / "input" / config["sample"] / "{input_basename}.unmapped.bam.io"
+    params:
+        working_dir = Path(config['working_dir']) / "input" / config["sample"]
+    run:
+        from camel.app.tools.picard.fastqtoubam import FastqTouBam
+
+        fastq_to_ubam = FastqTouBam(camel)
+
+        if config["PE"]:
+            SnakemakeUtils.add_pickle_input(fastq_to_ubam, 'FASTQ_PE', input.FASTQ)
+        elif config["INT"]:
+            SnakemakeUtils.add_pickle_input(fastq_to_ubam, 'FASTQ_INT', input.FASTQ)
+
+        step = Step(rule, fastq_to_ubam, camel, params.working_dir, config)
+        fastq_to_ubam.update_parameters(
+            sample_name = config["sample"],
+            readgroup_name = config["sample"] + ".rg",
+            library_name = "unknown",
+            platform = "illumina",
+            sequencing_center = config["sequencing_center"],
+            quality_format = "Standard"
+        )
+        step.run_step()
+        SnakemakeUtils.dump_tool_output(fastq_to_ubam, "BAM", output.BAM_UNMAPPED)
+
 rule picard_merge_bam:
     input:
-        SAM_ALIGNED = Path(config['working_dir']) / "alignment" / "mapping" / "{ubam}.aligned.sam.io",
-        BAM_UNMAPPED = Path(config['working_dir']) / "input" / config["sample"] / "{ubam}.unmapped.bam.io",
+        SAM_ALIGNED = Path(config['working_dir']) / "alignment" / "mapping" / "{input_basename}.aligned.sam.io",
+        BAM_UNMAPPED = Path(config['working_dir']) / "input" / config["sample"] / "{input_basename}.unmapped.bam.io",
         FASTA_GENOME_FILE = Path(config['working_dir']) / "ref_input" / "fasta_reference_human_value_file.io"
     output:
-        BAM = Path(config['working_dir']) / "alignment" / "merge_bam" / "{ubam}.aligned.unsorted.io",
+        BAM = Path(config['working_dir']) / "alignment" / "merge_bam" / "{input_basename}.aligned.unsorted.io",
     params:
-        working_dir = lambda wildcards: Path(config['working_dir']) / 'alignment' / 'merge_bam' / wildcards.ubam
+        working_dir = lambda wildcards: Path(config['working_dir']) / 'alignment' / 'merge_bam' / wildcards.input_basename
     run:
         from camel.app.tools.picard.mergebamalignment import MergeBamAlignment
 
@@ -102,7 +106,7 @@ rule picard_merge_bam:
 
 rule picard_mark_duplicates:
     input:
-        BAM = expand(Path(config['working_dir']) / 'alignment' / 'merge_bam' / '{ubam}.aligned.unsorted.io', ubam = config['ubams'])
+        BAM = expand(Path(config['working_dir']) / 'alignment' / 'merge_bam' / '{input_basename}.aligned.unsorted.io', input_basename = config['input_basenames'])
     output:
         BAM_DUPMARKED = Path(config['working_dir']) / 'alignment' / 'mark_duplicates' / (config["sample"] + 'aligned.unsorted.duplicates_marked.bam.io'),
         metrics = Path(config['working_dir']) / 'alignment' / 'metrics' / "duplicate_metrics.txt.io"
