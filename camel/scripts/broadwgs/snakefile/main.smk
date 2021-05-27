@@ -48,7 +48,7 @@ rule prepare_references_io:
         FASTA_GENOME_FILE = Path(config['working_dir']) / "ref_input" / "fasta_reference_human_value_file.io",
         DICT_GENOME = Path(config['working_dir']) / "ref_input" / "dictionary_genome_human.io",
         DBSNP = Path(config['working_dir']) / "ref_input" / "dbsnp_vcf.io",
-        KNOWN_INDELS = Path(config['working']) / "ref_input" / "known_indels_vcf.io",
+        KNOWN_INDELS = Path(config['working_dir']) / "ref_input" / "known_indels_vcf.io",
         CALLING_INTERVALS = Path(config['working_dir']) / "ref_input" / "calling_intervals.io",
         CONTAMINATION_SITES_UD = Path(config['working_dir']) / "ref_input" / "contamination_sites.io",
         COVERAGE_INTERVALS = Path(config['working_dir']) / "ref_input" / "coverage_interval_list.io",

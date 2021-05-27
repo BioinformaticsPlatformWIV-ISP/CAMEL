@@ -55,24 +55,16 @@ class MainBroadWGSPipeline(object):
 
         # Determine link names + generate ToolIOFiles
         links = []
-        if self._args.paired_end:
-            for file in base_path:
-                #add extension
-                r1 = file + "_R1.fastq.gz"
-                r2 = file + "_R2.fastq.gz"
-                #append to links for symlinking
-                links.append(r1)
-                links.append(r2)
-                #ToolIOFile
-                io_files = [ToolIOFile(r1), ToolIOFile(r2)]
-                SnakemakeUtils.dump_object(io_files, os.path.join(dir_links, os.path.basename(file) + ".fastq.gz.io"))
-
-        elif self._args.interleaved:
-            for file in base_path:
-                int = file + ".fastq.gz"
-                links.append(int)
-                io_files = [ToolIOFile(int)]
-                SnakemakeUtils.dump_object(io_files, os.path.join(dir_links, os.path.basename(file) + ".fastq.gz.io"))
+        for file in base_path:
+            #add extension
+            r1 = file + "R1.fastq.gz"
+            r2 = file + "R2.fastq.gz"
+            #append to links for symlinking
+            links.append(r1)
+            links.append(r2)
+            #ToolIOFile
+            io_files = [ToolIOFile(r1), ToolIOFile(r2)]
+            SnakemakeUtils.dump_object(io_files, os.path.join(dir_links, os.path.basename(file) + ".fastq.gz.io"))
 
         # Link files
         paths_new = []
@@ -94,14 +86,6 @@ class MainBroadWGSPipeline(object):
         :return: Configuration file
         """
         config_data = self.get_template_data()
-
-        # Input fastq files
-        if self._args.paired_end:
-            config_data['PE'] = True
-            config_data['INT'] = False
-        if self._args.interleaved:
-            config_data['INT'] = True
-            config_data['PE'] = False
 
         with CONFIG_DATA.open() as handle_in:
             config_data.update(yaml.load(handle_in.read(), Loader=yaml.SafeLoader))
@@ -135,7 +119,7 @@ class MainBroadWGSPipeline(object):
         #    self._pipeline.log_config_file(config_file)
 
         try:
-            SnakePipelineUtils.run_snakemake(self._snakefile, config_file, [], self._working_dir, self._args.threads)
+            SnakePipelineUtils.run_snakemake(self._snakefile, config_file, [], self._working_dir, self._args.threads, self._args.mem)
             log_file = self._working_dir / 'camel.log'
             if log_file.exists():
                 shutil.copyfile(str(log_file), str(Path(self._args.output_dir) / 'camel.log'))
@@ -161,15 +145,12 @@ class MainBroadWGSPipeline(object):
         parser.add_argument('--working-dir', dest = "working_dir", default=os.path.abspath('.'), type=str, help='Working directory')
         parser.add_argument('--sample', dest = "sample", type=str, help='Sample name')
 
-        gp = parser.add_mutually_exclusive_group()
-        gp.add_argument('-PE', '--paired-end', dest='paired_end', help='Paired-end fastq files.', action = "store_true")
-        gp.add_argument('-INT', '--interleaved', dest='interleaved', help='Interleaved fastq files.', action = "store_true")
-
         # logs
         parser.add_argument('--log', action='store_true', help="If this flag is set, config file and error logs are kept")
 
         # other
-        parser.add_argument('--threads', dest = "threads", type=str)
+        parser.add_argument('--threads', dest = "threads", type=int)
+        parser.add_argument('--mem', dest = "mem", type=int)
 
 
         return parser.parse_args(args)

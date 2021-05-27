@@ -23,13 +23,10 @@ rule bwa_mapping:
         Path(params.working_dir).mkdir(exist_ok=True)
 
         bwa_mem = BWAMap(camel)
-        if config["PE"]:
-            SnakemakeUtils.add_pickle_input(bwa_mem, 'FASTQ_PE', input.FASTQ)
-        elif config["INT"]:
-            SnakemakeUtils.add_pickle_input(bwa_mem, 'FASTQ_INT', input.FASTQ)
+        SnakemakeUtils.add_pickle_input(bwa_mem, 'FASTQ_PE', input.FASTQ)
         SnakemakeUtils.add_pickle_input(bwa_mem, 'INDEX_GENOME_PREFIX', input.FASTA_GENOME)
         step = Step(rule, bwa_mem, camel, params.working_dir, config)
-        bwa_mem.update_parameters(threads=threads, verbose=3, interleaved='', deterministic_aln=100000000)
+        bwa_mem.update_parameters(threads=threads, verbose=3, deterministic_aln=100000000)
         step.run_step()
         SnakemakeUtils.dump_tool_output(bwa_mem, "SAM", output.SAM)
 
@@ -39,17 +36,15 @@ rule fastq_to_ubam:
     output:
         BAM_UNMAPPED = Path(config['working_dir']) / "input" / config["sample"] / "{input_basename}.unmapped.bam.io"
     params:
-        working_dir = Path(config['working_dir']) / "input" / config["sample"]
+        working_dir = lambda wildcards: Path(config['working_dir']) / "input" / config["sample"] / wildcards.input_basename,
     run:
         from camel.app.tools.picard.fastqtoubam import FastqTouBam
 
+        Path(params.working_dir).mkdir(exist_ok=True)
+
         fastq_to_ubam = FastqTouBam(camel)
 
-        if config["PE"]:
-            SnakemakeUtils.add_pickle_input(fastq_to_ubam, 'FASTQ_PE', input.FASTQ)
-        elif config["INT"]:
-            SnakemakeUtils.add_pickle_input(fastq_to_ubam, 'FASTQ_INT', input.FASTQ)
-
+        SnakemakeUtils.add_pickle_input(fastq_to_ubam, 'FASTQ_PE', input.FASTQ)
         step = Step(rule, fastq_to_ubam, camel, params.working_dir, config)
         fastq_to_ubam.update_parameters(
             sample_name = config["sample"],

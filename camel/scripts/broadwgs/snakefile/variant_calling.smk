@@ -1,5 +1,4 @@
 from pathlib import Path
-import glob
 
 from camel.app.camel import Camel
 from camel.app.pipeline.step import Step
