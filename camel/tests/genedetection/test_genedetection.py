@@ -1,9 +1,7 @@
 import unittest
-from pathlib import Path
 
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.scripts.genedetection.maingenedetection import MainGeneDetection
-from camel.tests import longRunningTest
 
 
 class TestGeneDetection(CamelTestSuite):
@@ -128,7 +126,8 @@ class TestGeneDetection(CamelTestSuite):
             '--output-dir', str(path_report_out.parent),
             '--working-dir', str(self.running_dir),
             '--trim-reads',
-            '--assembly-kmers', '33,55'
+            '--assembly-kmers', '33,55',
+            '--adapter', 'TruSeq2'
         ]
         main = MainGeneDetection(args)
         main.run()
@@ -216,6 +215,7 @@ class TestGeneDetection(CamelTestSuite):
             '--working-dir', str(self.running_dir),
             '--read-type', 'illumina',
             '--detection-method', 'kma',
+            '--adapter', 'TruSeq3',
             '--trim-reads'
         ]
         main = MainGeneDetection(args)

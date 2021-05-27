@@ -1,14 +1,7 @@
-import gzip
 import logging
 from itertools import chain
-from pathlib import Path
-from typing import Optional
-
-import shutil
 
 from camel.app.camel import Camel
-from camel.app.components.filesystemhelper import FileSystemHelper
-from camel.app.error.snakemakeexecutionerror import SnakemakeExecutionError
 
 
 class Pipeline(object):
@@ -85,36 +78,3 @@ class Pipeline(object):
                 if not io.is_logged:
                     continue
                 logging.info(f"Pipeline input log: type={io.type_name} key={key} index={index} hash={io.hash}")
-
-    def log_config_file(self, config_file: str, galaxy_job_id: Optional[str] = None) -> None:
-        """
-        Exports the config file from the pipeline.
-        :param galaxy_job_id: Galaxy job id
-        :param config_file: Config file to export
-        :return: None
-        """
-        export_path = Path(Camel.get_instance().config['config_dump_dir']) / '{}.yml.gz'.format('_'.join([
-            FileSystemHelper.make_valid(self.name),
-            FileSystemHelper.get_timestamp_str(),
-            galaxy_job_id if galaxy_job_id is not None else 'NA',
-        ]))
-        with gzip.open(export_path, 'wb') as file_out, open(config_file, 'rb') as file_in:
-            shutil.copyfileobj(file_in, file_out)
-        logging.info(f"Config file exported to '{export_path}'")
-
-    def log_error_to_file(self, error: SnakemakeExecutionError) -> None:
-        """
-        Dumps the pipeline error log.
-        :param error: Error raised by Snakemake
-        :return: None
-        """
-        output_logfile = Path(Camel.get_instance().config['error_log_dir']) / 'error-{}-{}.txt'.format(
-            FileSystemHelper.make_valid(self.name).lower(), FileSystemHelper.get_timestamp_str())
-        logging.debug(f"Dumping error log: {output_logfile}")
-        with open(output_logfile, 'w') as handle_in:
-            handle_in.write('Stdout:\n')
-            handle_in.write(error.stdout)
-            handle_in.write('-' * 10 + '\n')
-            handle_in.write('Stderr:\n')
-            handle_in.write(error.stderr)
-        raise RuntimeError(f"Error executing Snakemake. Check log for more information: {output_logfile}")

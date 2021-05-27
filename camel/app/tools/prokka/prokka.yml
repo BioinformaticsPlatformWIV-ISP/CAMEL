@@ -1,4 +1,4 @@
-dependencies: [prokka/1.11, tbl2asn/25.3]
+dependencies: [prokka/1.11]
 parameters:
   add_genes: {default: false, mandatory: false, option: --add_genes, p_index: 0, value: null}
   centre: {default: false, mandatory: false, option: --centre, p_index: 0, value: ''''''}

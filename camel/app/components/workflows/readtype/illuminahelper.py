@@ -1,7 +1,7 @@
 import argparse
 import logging
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.components.html.htmlreport import HtmlReport
@@ -30,7 +30,8 @@ class IlluminaHelper(BaseReadTypeHelper):
             new_filenames.append(f"{sample_name}_{orientation}.{extension}")
         return self.symlink_input_files([Path(x) for x in fastq_files], new_filenames)
 
-    def trim_reads(self, fastq_input: FastqInput, report: HtmlReport, include_fastq: bool, threads: int) -> FastqInput:
+    def trim_reads(self, fastq_input: FastqInput, report: HtmlReport, include_fastq: bool = False, threads: int = 4,
+                   **kwargs) -> FastqInput:
         """
         Trims Illumina reads using Trimmomatic.
         :param fastq_input: FASTQ input
@@ -45,7 +46,7 @@ class IlluminaHelper(BaseReadTypeHelper):
             raise ValueError("Illumina FASTQ input should be paired")
 
         # Run workflow
-        trimming.run_workflow([Path(x.path) for x in fastq_input.pe], threads, include_fastq)
+        trimming.run_workflow([Path(x.path) for x in fastq_input.pe], kwargs.get('adapter'), threads, include_fastq)
 
         # Save output
         report_section_trimming = trimming.output.report_section
@@ -70,7 +71,8 @@ class IlluminaHelper(BaseReadTypeHelper):
         fq_input_pe = self.__symlink_fastq_files(args.fastq_pe, self._sample_name)
         fastq_input = FastqInput('illumina', pe=[ToolIOFile(x) for x in fq_input_pe])
         if args.trim_reads:
-            assembly_input = self.trim_reads(fastq_input, report, args.report_include_fastq, args.threads)
+            assembly_input = self.trim_reads(
+                fastq_input, report, args.report_include_fastq, args.threads, adapter=args.adapter)
         else:
             assembly_input = FastqInput('illumina', pe=[ToolIOFile(in_file) for in_file in fq_input_pe])
         return self.assemble_fastq_reads(assembly_input, args, report)
@@ -85,6 +87,6 @@ class IlluminaHelper(BaseReadTypeHelper):
         fq_input_pe = self.__symlink_fastq_files(args.fastq_pe, self._sample_name)
         fastq_input = FastqInput('illumina', pe=[ToolIOFile(x) for x in fq_input_pe])
         if args.trim_reads:
-            return self.trim_reads(fastq_input, report, args.report_include_fastq, args.threads)
+            return self.trim_reads(fastq_input, report, args.report_include_fastq, args.threads, adapter=args.adapter)
         else:
             return FastqInput('illumina', pe=[ToolIOFile(in_file) for in_file in fq_input_pe])

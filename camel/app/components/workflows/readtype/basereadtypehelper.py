@@ -94,7 +94,7 @@ class BaseReadTypeHelper(object, metaclass=abc.ABCMeta):
         # Perform the assembly
         assembly.run(
             self._sample_name, assembly_input, args.assembly_kmers, cov_cutoff, args.assembly_min_contig_length,
-            args.threads)
+            threads=args.threads)
 
         # Save output to the report
         if report is not None:
@@ -136,10 +136,11 @@ class BaseReadTypeHelper(object, metaclass=abc.ABCMeta):
         report.save()
 
     @abc.abstractmethod
-    def trim_reads(self, fastq_input: FastqInput, report: HtmlReport, include_fastq: bool, threads: int) -> FastqInput:
+    def trim_reads(self, fastq_input: FastqInput, report: HtmlReport, include_fastq: bool, threads: int, **kwargs) -> \
+            FastqInput:
         """
-        Function to check if this is a full length hit.
-        :return: True if full length, False otherwise
+        Base function for read-type specific trimming.
+        :return: Trimmed FASTQ files
         """
         raise NotImplementedError()
 

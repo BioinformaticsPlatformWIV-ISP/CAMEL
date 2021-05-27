@@ -125,7 +125,8 @@ class TestNeisseriaPipeline(unittest.TestCase):
             '--output-dir', str(path_report_out.parent),
             '--output-tsv', str(path_summary_out),
             '--working-dir', str(self.running_dir),
-            '--detection-method', 'kma'
+            '--detection-method', 'kma',
+            '--library', 'TruSeq2'
         ] + [f"--{a.replace('_', '-')}" for a in MainNeisseriaPipeline.CUSTOM_ANALYSES if a != 'cgmlst']
         main = MainNeisseriaPipeline(args)
         main.run()

@@ -1,7 +1,7 @@
 import argparse
 import logging
 from pathlib import Path
-from typing import Optional, Any, Dict, List, Tuple, Sequence
+from typing import Optional, Any, Dict, List, Tuple, Sequence, Union
 
 import abc
 import os
@@ -12,6 +12,7 @@ from camel.app.components import mainscriptutils
 from camel.app.components.files.fastqutils import FastqUtils
 from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.error.snakemakeexecutionerror import SnakemakeExecutionError
+from camel.app.loggers import fileloggerutils
 from camel.app.pipeline.pipeline import Pipeline
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 
@@ -32,6 +33,8 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         self._snakefile = snakefile
         self._args = self._parse_arguments(args)
         self._working_dir = Path(self._args.working_dir)
+        self._keep_logs = True if self._args.log else Camel.get_instance().config.get('logging', {}).get(
+            'keep_logs', False)
         self._pipeline = Pipeline(name, Camel.get_instance(), self._args.log, self._args.log)
 
     @staticmethod
@@ -57,23 +60,17 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         argument_parser.add_argument('--fastq-pe-names', nargs=2, help="FASTQ input file names")
 
         # Output
-        argument_parser.add_argument('--output-dir', required=True, type=str)
-        argument_parser.add_argument('--output-html', required=True, type=str)
-        argument_parser.add_argument('--output-tsv', help="Output file for the summary", required=True)
         argument_parser.add_argument('--working-dir', default=os.path.abspath('.'), type=str)
 
         # Options
-        argument_parser.add_argument(
-            '--detection-method', help="Type of allele detection: local alignment (blast), read mapping (srst2)",
-            choices=['blast', 'kma', 'srst2'], default='blast')
         argument_parser.add_argument('--threads', default=8, type=int)
         argument_parser.add_argument(
-            '--report-include-fastq', help="Include the FASTQ files in the report", action='store_true')
-        argument_parser.add_argument(
-            '--report-include-bam', help="Include the BAM file in the report", action='store_true')
-        argument_parser.add_argument(
             '--library', help="Adapter library that was used for the sequencing",
-            choices=['nextera', 'truseq2', 'truseq3'], default='nextera')
+            choices=['NexteraPE', 'TruSeq2', 'TruSeq3'], default='NexteraPE')
+
+        # Logging
+        argument_parser.add_argument(
+            '--galaxy-job-id', type=str, help='Job id of the run in galaxy (used for logging')
         argument_parser.add_argument(
             '--log', action='store_true', help="If this flag is set, config file and error logs are kept")
 
@@ -113,6 +110,14 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
             return FastqUtils.get_sample_name(self._args.fastq_pe_names[0])
         else:
             return FastqUtils.get_sample_name(self._args.fastq_pe[0])
+
+    @property
+    def galaxy_job_id(self) -> Union[int, None]:
+        """
+        Returns the galaxy job id (if there is one).
+        :return: Galaxy job id
+        """
+        return self._args.galaxy_job_id if 'galaxy_job_id' in self._args else None
 
     def _get_fastq_input_links(self) -> List[List[Tuple[str, str]]]:
         """
@@ -157,20 +162,35 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         :param config_file: Configuration file
         :return: None
         """
-        if self._pipeline.keep_config:
-            self._pipeline.log_config_file(config_file)
-        mainscriptutils.prepare_galaxy_output(Path(self._args.output_dir), Path(self._args.output_html))
+        # Store config file
+        if self._keep_logs is True:
+            fileloggerutils.store_config_file(Path(config_file), self._name, self.galaxy_job_id)
+
+        # Clear existing Galaxy output files when html output is selected
+        if 'output_html' in self._args:
+            mainscriptutils.prepare_galaxy_output(Path(self._args.output_dir), Path(self._args.output_html))
+
+        # Path to the logfile
+        log_file = self._working_dir / 'camel.log'
         try:
+            # Run snakemake
             SnakePipelineUtils.run_snakemake(
                 self._snakefile, config_file, [], self._working_dir, self._args.threads)
-            log_file = self._working_dir / 'camel.log'
-            if log_file.exists():
-                shutil.copyfile(str(log_file), str(Path(self._args.output_dir) / 'camel.log'))
             logging.info("Pipeline finished successfully")
         except SnakemakeExecutionError as err:
-            if self._pipeline.keep_error_log:
-                self._pipeline.log_error_to_file(err)
-            raise err
+            if self._keep_logs and log_file.exists():
+                log_file = fileloggerutils.store_log_file(log_file, self._name, self.galaxy_job_id, True)
+                raise RuntimeError(f"Error executing Snakemake. Check log for more information: {log_file}")
+            else:
+                raise err
+
+        # Copy log file to output directory if that directory is given
+        if log_file.exists() and 'output_dir' in self._args:
+            shutil.copyfile(str(log_file), str(Path(self._args.output_dir) / 'camel.log'))
+
+        # Store log file
+        if self._keep_logs and log_file.exists():
+            fileloggerutils.store_log_file(log_file, self._name, self.galaxy_job_id)
 
     def get_template_data(self, input_key: str, input_data: [List[Dict[str, str]]]) -> Dict[str, Any]:
         """
@@ -187,11 +207,7 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
             },
             input_key: input_data,
             'sample_name': self.sample_name,
-            'output_report': self._args.output_html,
-            'output_tabular': self._args.output_tsv,
-            'output_dir': self._args.output_dir,
             'working_dir': str(self._working_dir),
-            'detection_method': self._args.detection_method,
-            'read_trimming': {'export_fastq': self._args.report_include_fastq}
+            'read_trimming': {'adapter': self._args.library}
         }
         return template_data

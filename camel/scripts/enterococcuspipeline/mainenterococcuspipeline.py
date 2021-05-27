@@ -5,12 +5,13 @@ from typing import Optional, List, Dict, Sequence
 
 import yaml
 
-from camel.app.components.pipelines.basepipeline import BasePipeline
+from camel.app.components import mainscriptutils
+from camel.app.components.pipelines.reportpipeline import ReportPipeline
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.scripts.enterococcuspipeline import SNAKEFILE_MAIN, CONFIG_DATA
 
 
-class MainEnterococcusPipeline(BasePipeline):
+class MainEnterococcusPipeline(ReportPipeline):
     """
     Main class to run the Enterococcus pipeline.
     """
@@ -68,7 +69,7 @@ class MainEnterococcusPipeline(BasePipeline):
         config_data = self.get_template_data('fastq_pe', input_files)
         config_data['analyses'] = [key for key in MainEnterococcusPipeline.CUSTOM_ANALYSES if vars(self._args)[key]]
         with CONFIG_DATA.open() as handle_in:
-            config_data.update(yaml.load(handle_in.read().format(
+            mainscriptutils.dict_merge(config_data, yaml.load(handle_in.read().format(
                 qc_typing_scheme='cgmlst' if self._args.cgmlst else 'mlst',
                 export_fastq='true' if self._args.report_include_fastq else 'false',
                 export_bam='true' if self._args.report_include_bam else 'false',
@@ -99,7 +100,7 @@ class MainEnterococcusPipeline(BasePipeline):
         :return: Arguments
         """
         parser = argparse.ArgumentParser()
-        BasePipeline.add_common_arguments(parser)
+        ReportPipeline.add_common_arguments(parser)
         for analysis_key in MainEnterococcusPipeline.CUSTOM_ANALYSES:
             parser.add_argument(f"--{analysis_key.replace('_', '-')}", action='store_true')
         parser.add_argument('--species', required=True, choices=['faecium', 'faecalis'])

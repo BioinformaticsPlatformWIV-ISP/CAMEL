@@ -8,13 +8,13 @@ import yaml
 
 from camel.app.components.files.fastqutils import FastqUtils
 from camel.app.components.filesystemhelper import FileSystemHelper
-from camel.app.components.pipelines.basepipeline import BasePipeline
+from camel.app.components.pipelines.reportpipeline import ReportPipeline
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.scripts.stecpipeline import CONFIG_DATA
 from camel.scripts.stecpipeline import SNAKEFILE_MAIN
 
 
-class MainSTECPipeline(BasePipeline):
+class MainSTECPipeline(ReportPipeline):
     """
     Main class to run the STEC pipeline.
     """
@@ -51,6 +51,8 @@ class MainSTECPipeline(BasePipeline):
         config_data['read_type'] = self._args.read_type
         config_data['quality_checks']['typing_scheme'] = 'cgmlst' if self._args.cgmlst else 'mlst_warwick'
         config_data['read_trimming']['export_fastq'] = 'true' if self._args.report_include_fastq else 'false'
+        if self._args.library is not None:
+            config_data['read_trimming']['adapter'] = self._args.library
         config_data['variant_calling']['report_include_bam'] = 'true' if self._args.report_include_bam else 'false'
         detection_method_cgmlst = {
             'blast': 'blast', 'srst2': 'blast', 'kma': 'kma'}.get(self._args.detection_method)
@@ -67,7 +69,7 @@ class MainSTECPipeline(BasePipeline):
         :return: Arguments
         """
         parser = argparse.ArgumentParser()
-        BasePipeline.add_common_arguments(parser)
+        ReportPipeline.add_common_arguments(parser)
         parser.add_argument('--fastq-se', help="Input SE FASTQ file")
         parser.add_argument('--fastq-se-name', help="Input SE FASTQ file name")
         parser.add_argument(

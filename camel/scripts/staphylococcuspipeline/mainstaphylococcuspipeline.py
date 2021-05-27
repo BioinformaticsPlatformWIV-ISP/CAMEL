@@ -5,12 +5,12 @@ from typing import Optional, List, Dict, Sequence
 
 import yaml
 
-from camel.app.components.pipelines.basepipeline import BasePipeline
+from camel.app.components.pipelines.reportpipeline import ReportPipeline
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.scripts.staphylococcuspipeline import SNAKEFILE_MAIN, CONFIG_DATA
 
 
-class MainStaphylococcusPipeline(BasePipeline):
+class MainStaphylococcusPipeline(ReportPipeline):
     """
     Main class to run the Staphylococcus pipeline.
     """
@@ -65,7 +65,7 @@ class MainStaphylococcusPipeline(BasePipeline):
         :return: Arguments
         """
         parser = argparse.ArgumentParser()
-        BasePipeline.add_common_arguments(parser)
+        ReportPipeline.add_common_arguments(parser)
         for analysis_key in MainStaphylococcusPipeline.CUSTOM_ANALYSES:
             parser.add_argument(f"--{analysis_key.replace('_', '-')}", action='store_true')
         return parser.parse_args(args)

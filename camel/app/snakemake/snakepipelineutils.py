@@ -154,7 +154,7 @@ class SnakePipelineUtils(object):
 
     @staticmethod
     def run_snakemake(snakefile: str, config_path: str, targets: List[Path], working_dir: Path,
-                      threads: int = 8) -> None:
+                      threads: int = 8, resources: str = None) -> None:
         """
         Helper function to run snakemake workflows.
         :param snakefile: Workflow snakefile
@@ -162,12 +162,18 @@ class SnakePipelineUtils(object):
         :param targets: Target output files
         :param working_dir: Working directory
         :param threads: Number of threads to use
+        :param resources: Amount of memory to use, in mb
         :return: None
         """
         if not working_dir.exists():
             working_dir.mkdir(parents=True)
-        command = Command('snakemake {} --snakefile {} --configfile {} --cores {}'.format(
-            ' '.join(str(x) for x in targets), snakefile, config_path, threads))
+
+        command_str = 'snakemake {} --snakefile {} --configfile {} --cores {}'.format(
+            ' '.join(str(x) for x in targets), snakefile, config_path, threads)
+        if resources is not None:
+            command_str += f' --resources mem_mb={resources}'
+
+        command = Command(command_str)
         command.run_command(str(working_dir))
         print(f'- Stdout: -\n{command.stdout}')
         print(f'- Stderr: -\n{command.stderr}')
