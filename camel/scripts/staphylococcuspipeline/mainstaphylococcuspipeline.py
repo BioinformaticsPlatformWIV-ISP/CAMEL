@@ -17,7 +17,7 @@ class MainStaphylococcusPipeline(ReportPipeline):
 
     CUSTOM_ANALYSES = [
         'kraken', 'resfinder', 'ncbi_amr', 'pointfinder', 'vfdb_core', 'virulencefinder', 'mlst',
-        'cgmlst', 'spa_typing', 'sccmec_typing', 'plasmidspades', 'plasmidfinder', 'lrefinder']
+        'cgmlst', 'spa_typing', 'sccmec_typing', 'plasmidspades', 'plasmidfinder', 'lrefinder', 'se_toxins']
 
     def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """
