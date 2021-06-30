@@ -21,8 +21,13 @@ def store_config_file(
     :return: Path to config file
     """
     # Determine output directory
-    output_dir = dir_ if dir_ is not None else Path(Camel.get_instance().config.get('logging', {}).get(
-        'dir_snakemake_configs'))
+    if dir_ is not None:
+        output_dir = dir_
+    else:
+        dir_out = Camel.get_instance().config.get('logging', {}).get('dir_snakemake_configs')
+        if dir_out is None:
+            raise RuntimeError("Logging enabled but 'dir_snakemake_configs' not set in main.yml config file")
+        output_dir = Path(dir_out)
     if not output_dir.exists():
         raise RuntimeError(f'Logging directory does not exist: {output_dir}')
 
