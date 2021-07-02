@@ -154,7 +154,7 @@ class SnakePipelineUtils(object):
 
     @staticmethod
     def run_snakemake(snakefile: str, config_path: str, targets: List[Path], working_dir: Path,
-                      threads: int = 8) -> None:
+                      threads: int = 8, resources: Optional[Dict[str, Any]] = None) -> None:
         """
         Helper function to run snakemake workflows.
         :param snakefile: Workflow snakefile
@@ -162,12 +162,29 @@ class SnakePipelineUtils(object):
         :param targets: Target output files
         :param working_dir: Working directory
         :param threads: Number of threads to use
+        :param resources: Dictionary of resources by keyword
         :return: None
         """
         if not working_dir.exists():
             working_dir.mkdir(parents=True)
-        command = Command('snakemake {} --snakefile {} --configfile {} --cores {}'.format(
-            ' '.join(str(x) for x in targets), snakefile, config_path, threads))
+
+        # Construct basic command
+        command_parts = [
+            'snakemake',
+            *[str(x) for x in targets],
+            '--snakefile', str(snakefile),
+            '--configfile', str(config_path),
+            '--cores', str(threads),
+        ]
+
+        # Add resources when they are specified
+        if resources is not None:
+            command_parts.append('--resources')
+            for key, value in resources.items():
+                command_parts.append(f'{key}={value}')
+
+        # Create and run command
+        command = Command(' '.join(command_parts))
         command.run_command(str(working_dir))
         print(f'- Stdout: -\n{command.stdout}')
         print(f'- Stderr: -\n{command.stderr}')
