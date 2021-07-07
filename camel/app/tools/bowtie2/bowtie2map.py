@@ -1,6 +1,10 @@
+from pathlib import Path
+
 import os
 import re
+from typing import Optional
 
+from camel.app.command.command import Command
 from camel.app.error.invalidparametererror import InvalidParameterError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.bowtie2.bowtie2 import Bowtie2
@@ -191,28 +195,29 @@ class Bowtie2Map(Bowtie2):
         Bowtie2Map.__check_mode_exclusiveness(options)
         Bowtie2Map.__check_mode_preset_conflicts(options)
 
-    def __build_command(self):
+    def __build_command(self, pipe_in: bool = False, pipe_out: bool =  False) -> None:
         """
         Build command to run Bowtie2
         :return: None
         """
         if self._readgroup_str:
-            self._command.command = '{} {} {} {} {} -S {}'.format(
+            command_parts = [
                 self._tool_command,
                 " ".join(self._build_options(excluded_parameters=['read_group_id'])),
                 self._readgroup_str,
                 self._refgenome_str,
-                self._fastq_inputs_str,
-                self._tool_outputs['SAM'][0].path
-            )
+                self._fastq_inputs_str
+            ]
         else:
-            self._command.command = '{} {} {} {} -S {}'.format(
+            command_parts = [
                 self._tool_command,
                 " ".join(self._build_options()),
                 self._refgenome_str,
                 self._fastq_inputs_str,
-                self._tool_outputs['SAM'][0].path
-            )
+            ]
+        if not pipe_out:
+            command_parts.append(f"-S {self._tool_outputs['SAM'][0].path}")
+        self._command = Command(' '.join(command_parts))
 
     def __set_time_inform(self, line):
         """
@@ -256,16 +261,38 @@ class Bowtie2Map(Bowtie2):
                         self.informs[key] = "{}".format(res[0])
                     return
 
-    def __set_inform(self):
+    def __set_inform(self, stderr: Optional[str] = None):
         """
-        Analyse the result of Bowtie2 reads mapping, and extra result statistics into tool inform
+        Analyse the result of Bowtie2 reads mapping, and extra result statistics into tool inform.
+        :param stderr: Command stderr (is taken from self._command when not specified)
         :return: None
         """
         self.informs['tool_name'] = 'Bowtie2'
         self.informs['mod'] = self._mod
 
         # parse output to extract information
-        for l in self.stderr.splitlines():
-            time_inform_set = self.__set_time_inform(l)
+        for line in (self.stderr if stderr is None else stderr).splitlines():
+            time_inform_set = self.__set_time_inform(line)
             if not time_inform_set:
-                self.__set_mapping_inform(l)
+                self.__set_mapping_inform(line)
+
+    def _before_pipe(self, dir_: Path, pipe_in: bool, pipe_out: bool) -> None:
+        """
+        Prepares the command that will be piped.
+        :param dir_: Running directory
+        :param pipe_in: True if tool receives piped input
+        :param pipe_out: True if tool generates piped output
+        :return: None
+        """
+        self.__set_input()
+        self.__set_output()
+        self.__build_command(pipe_in, pipe_out)
+
+    def _after_pipe(self, stderr, is_last_in_pipe: bool) -> None:
+        """
+        Performs the required steps after executing the tool as part of a pipe.
+        :param stderr: Stderr for this command in the pipe
+        :param is_last_in_pipe: Boolean to indicate if this is the last step in the pipe
+        :return: None
+        """
+        self.__set_inform(stderr)

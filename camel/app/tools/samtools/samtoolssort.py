@@ -1,5 +1,6 @@
 import os
 
+from camel.app.command.command import Command
 from camel.app.error.invalidparametererror import InvalidParameterError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
@@ -46,15 +47,26 @@ class SamtoolsSort(Samtools):
         self.__set_output()
         self._check_stderr()
 
-    def __build_command(self):
+    def __build_command(self, pipe_in: bool = False, pipe_out: bool = False) -> None:
         """
         Builds the command
         :return: None
         """
-        self._command.command = ' '.join([
+        # Create excluded parameters
+        excluded_params = ['output_filename'] if (pipe_out is True) else None
+
+        # Construct command
+        command_parts = [
             self._tool_command,
-            ' '.join(self._build_options()),
-            self._tool_inputs['BAM'][0].path])
+            ' '.join(self._build_options(excluded_parameters=excluded_params))
+        ]
+
+        # Add input file
+        if not pipe_in:
+            command_parts.append(self._tool_inputs['BAM'][0].path)
+
+        # Construct command
+        self._command = Command(' '.join(command_parts))
 
     def __set_output(self):
         """
@@ -74,3 +86,23 @@ class SamtoolsSort(Samtools):
         """
         if self._command.returncode != 0:
             raise ToolExecutionError("Command execution failed (Exit code: {})".format(self._command.returncode))
+
+    def _before_pipe(self, dir_, pipe_in: bool, pipe_out: bool) -> None:
+        """
+        Prepares the command that will be piped.
+        :param dir_: Running directory
+        :param pipe_in: True if tool receives piped input
+        :param pipe_out: True if tool generates piped output
+        :return: None
+        """
+        self.__build_command(pipe_in, pipe_out)
+
+    def _after_pipe(self, stderr: str, is_last_in_pipe: bool) -> None:
+        """
+        Performs the required steps after executing the tool as part of a pipe.
+        :param stderr: Stderr for this command in the pipe
+        :param is_last_in_pipe: Boolean to indicate if this is the last step in the pipe
+        :return: None
+        """
+        if is_last_in_pipe:
+            self.__set_output()
