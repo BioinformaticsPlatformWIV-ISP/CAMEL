@@ -18,10 +18,11 @@ class TestPipedTools(CamelTestSuite):
     """
 
     # Input files
-    input_reference = Path('/temp/bebog/camel_pipe/ref/reference.fasta')
+    test_file_dir = CamelTestSuite.get_test_file_dir('read_mapping')
+    input_reference = test_file_dir / 'reference.fasta'
     input_fq_pe = [
-        Path('/testdata/camel/phylogeny/lm_subset/lm1_1.fastq'),
-        Path('/testdata/camel/phylogeny/lm_subset/lm1_2.fastq')
+        test_file_dir / 'reads_1.fastq',
+        test_file_dir / 'reads_2.fastq'
     ]
 
     def test_pipeline_bt2_sam_to_bam(self) -> None:
