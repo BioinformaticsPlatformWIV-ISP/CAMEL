@@ -2,6 +2,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List
 
+import tempfile
+
+from camel.app.camel import Camel
 from camel.app.command.command import Command
 from camel.app.tools.toolpipeable import ToolPipeable
 
@@ -48,7 +51,8 @@ def run_as_pipe(tools: List[ToolPipeable], dir_: Path) -> List[PipedTool]:
     # Collect separate commands
     piped_tools = []
     for i, tool in enumerate(tools):
-        stderr_path = dir_ / f'log_{i}.stderr'
+        stderr_path = Path(tempfile.NamedTemporaryFile(
+            dir=Camel.get_instance().config['temp_dir'], prefix='stderr_', suffix='.txt').name)
         piped_tools.append((PipedTool(
             tool,
             f'{tool.prepare_pipe(dir_, i > 0, i != len(tools) - 1).command} 2> {stderr_path}',
