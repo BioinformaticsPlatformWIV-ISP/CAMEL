@@ -252,7 +252,7 @@ class Tool(object, metaclass=abc.ABCMeta):
         :return: Options string
         """
         options = []
-        for name, parameter in self._parameters.items():
+        for name, parameter in sorted(self._parameters.items(), key=lambda x: x[1].p_index):
             if (excluded_parameters is not None) and (name in excluded_parameters):
                 continue
             if parameter.value is not None:
