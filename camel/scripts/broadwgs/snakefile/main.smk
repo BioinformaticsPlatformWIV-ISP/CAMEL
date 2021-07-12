@@ -1,5 +1,11 @@
+import os
+import subprocess
+
 from pathlib import Path
 
+from camel.app.io.tooliofile import ToolIOFile
+from camel.app.io.tooliovalue import ToolIOValue
+from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.scripts.broadwgs.snakefile import alignment, bam_to_cram, variant_calling, qc
 
 #######################
@@ -16,21 +22,40 @@ include: qc.SNAKEFILE_QC
 
 rule all:
     input:
-        BAM = Path(config['working_dir']) / "alignment" / "gather_bqsr_sorted_bam" / (config["sample"] + ".bam.io"),
+        CRAM = Path(config['final_output_dir']) / f'{config["sample"]}.cram',
+        CRAM_checksum = Path(config['final_output_dir']) / f'{config["sample"]}.cram.md5',
+        CRAI = Path(config['final_output_dir']) / f'{config["sample"]}.crai',
+        CRAM_metrics = Path(config['final_output_dir']) / f'{config["sample"]}.cram.metrics',
 
-        CRAM = Path(config['working_dir']) / "bamtocram" / "convert" / (config["sample"] + ".cram.io"),
-        CRAM_checksum = Path(config['working_dir']) / "bamtocram" / (config["sample"] + ".cram.md5"),
-        CRAI = Path(config['working_dir']) / "bamtocram" / "index" / (config["sample"] + ".sample.crai.io"),
-        CRAM_metrics = Path(config['working_dir']) / "bamtocram" / "metrics" / (config["sample"] + "_cram_validation_report.io"),
+        VCF = Path(config['final_output_dir']) / f'{config["sample"]}.gVCF',
 
-        VCF = Path(config['working_dir']) / "variant_calling" / "merge_vcf" / (config["sample"] + ".g.vcf.gz.io"),
+        QC_done = Path(config['final_output_dir']) / 'qc' / 'qc_done.txt'
 
-        #QC_done = Path(config['working_dir']) / 'qc' / 'qc_done.txt'
+
+rule move_output:
+    input:
+        CRAM = Path(config['working_dir']) / bam_to_cram.OUTPUT_BAMTOCRAM_CRAM,
+        CRAM_checksum = Path(config['working_dir']) / bam_to_cram.OUTPUT_BAMTOCRAM_CRAM_checksum,
+        CRAI = Path(config['working_dir']) / bam_to_cram.OUTPUT_BAMTOCRAM_CRAI,
+        CRAM_metrics = Path(config['working_dir']) / bam_to_cram.OUTPUT_BAMTOCRAM_CRAM_metrics,
+        VCF = Path(config['working_dir']) / variant_calling.OUTPUT_gVCF,
+    output:
+        CRAM = Path(config['final_output_dir']) / f'{config["sample"]}.cram',
+        CRAM_checksum = Path(config['final_output_dir']) / f'{config["sample"]}.cram.md5',
+        CRAI = Path(config['final_output_dir']) / f'{config["sample"]}.crai',
+        CRAM_metrics = Path(config['final_output_dir']) / f'{config["sample"]}.cram.metrics',
+        VCF = Path(config['final_output_dir']) / f'{config["sample"]}.gVCF',
+    run:
+        os.link(SnakemakeUtils.load_object(input.CRAM)[0].path, output.CRAM)
+        os.link(SnakemakeUtils.load_object(input.CRAI)[0].path, output.CRAI)
+        os.link(input.CRAM_checksum, output.CRAM_checksum)
+        os.link(SnakemakeUtils.load_object(input.CRAM_metrics)[0].path, output.CRAM_metrics)
+        os.link(SnakemakeUtils.load_object(input.VCF)[0].path, output.VCF)
 
 
 rule prepare_references_io:
     """
-    Prepare reference genome IO files for snakemake to use: generate io files for
+    Prepare reference genome IO files
     """
     input:
         fasta_genome = config['references']['ref_fasta'],
@@ -76,48 +101,98 @@ rule prepare_references_io:
         SnakemakeUtils.dump_object(io_coverage_intervals, str(output.COVERAGE_INTERVALS))
         SnakemakeUtils.dump_object(io_evaluation_intervals, str(output.EVALUATION_INTERVALS))
 
-rule run_qc:
+rule move_qc:
     input:
-        TXT = expand(Path(config['working_dir']) / "qc" / "ubam_quality_yield" / config["sample"] / "{fastq}.unmapped.quality_yield_metrics.io", fastq = config["input_basenames"]),
+        alignment_summary_metrics = Path(config['working_dir']) / "qc" / "RG_quality" / f"{config['sample']}.readgroup.alignment_summary_metrics",
+        gc_bias_detail_metrics = Path(config['working_dir']) / "qc" / "RG_quality" / f"{config['sample']}.readgroup.gc_bias.detail_metrics",
+        gc_bias_pdf = Path(config['working_dir']) / "qc" / "RG_quality" / f"{config['sample']}.readgroup.gc_bias.pdf",
+        gc_bias_summary_metrics = Path(config['working_dir']) / "qc" / "RG_quality" / f"{config['sample']}.readgroup.gc_bias.summary_metrics",
 
-        ## picard_unsorted_RG_quality
-        base_distribution_by_cycle = expand(Path(config['working_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.base_distribution_by_cycle.pdf", fastq = config["input_basenames"]),
-        base_distribution_by_cycle_metrics = expand(Path(config['working_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.base_distribution_by_cycle_metrics", fastq = config["input_basenames"]),
-        insert_size_histogram_pdf = expand(Path(config['working_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.insert_size_histogram.pdf", fastq = config["input_basenames"]),
-        insert_size_metrics = expand(Path(config['working_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.insert_size_metrics", fastq = config["input_basenames"]),
-        quality_by_cycle_pdf = expand(Path(config['working_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.quality_by_cycle.pdf", fastq = config["input_basenames"]),
-        quality_by_cycle_metrics = expand(Path(config['working_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.quality_by_cycle_metrics", fastq = config["input_basenames"]),
-        quality_distribution_pdf = expand(Path(config['working_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.quality_distribution.pdf", fastq = config["input_basenames"]),
-        quality_distribution_metrics = expand(Path(config['working_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.quality_distribution_metrics", fastq = config["input_basenames"]),
+        alignment_summary_metrics_agg = Path(config['working_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.alignment_summary_metrics",
+        bait_bias_detail_metrics = Path(config['working_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.bait_bias_detail_metrics",
+        bait_bias_summary_metrics = Path(config['working_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.bait_bias_summary_metrics",
+        gc_bias_detail_metrics_agg = Path(config['working_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.gc_bias.detail_metrics",
+        gc_bias_pdf_agg = Path(config['working_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.gc_bias.pdf",
+        gc_bias_summary_metrics_agg = Path(config['working_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.gc_bias.summary_metrics",
+        insert_size_histogram_pdf_agg = Path(config['working_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.insert_size_histogram.pdf",
+        insert_size_metrics_agg = Path(config['working_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.insert_size_metrics",
+        pre_adapter_detail_metrics = Path(config['working_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.pre_adapter_detail_metrics",
+        pre_adapter_summary_metrics = Path(config['working_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.pre_adapter_summary_metrics",
+        quality_distribution_pdf_agg = Path(config['working_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.quality_distribution.pdf",
+        quality_distribution_metrics_agg = Path(config['working_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.quality_distribution_metrics",
+        error_summary_metrics = Path(config['working_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.error_summary_metrics",
 
-        ## picard_RG_quality
-        alignment_summary_metrics = Path(config['working_dir']) / "qc" / "RG_quality" / (config["sample"] + ".readgroup.alignment_summary_metrics"),
-        gc_bias_detail_metrics = Path(config['working_dir']) / "qc" / "RG_quality" / (config["sample"] + ".readgroup.gc_bias.detail_metrics"),
-        gc_bias_pdf = Path(config['working_dir']) / "qc" / "RG_quality" / (config["sample"] + ".readgroup.gc_bias.pdf"),
-        gc_bias_summary_metrics = Path(config['working_dir']) / "qc" / "RG_quality" / (config["sample"] + ".readgroup.gc_bias.summary_metrics"),
+        TXT_metrics_checksum = Path(config['working_dir']) / "qc" / "RG_checksum" / f"{config['sample']}.bam.read_group_md5",
 
-        ## picard_aggregation_metrics
-        alignment_summary_metrics_agg = Path(config['working_dir']) / "qc" / "aggregation_metrics" / (config["sample"] + ".agg.alignment_summary_metrics"),
-        bait_bias_detail_metrics = Path(config['working_dir']) / "qc" / "aggregation_metrics" / (config["sample"] + ".agg.bait_bias_detail_metrics"),
-        bait_bias_summary_metrics = Path(config['working_dir']) / "qc" / "aggregation_metrics" / (config["sample"] + ".agg.bait_bias_summary_metrics"),
-        gc_bias_detail_metrics_agg = Path(config['working_dir']) / "qc" / "aggregation_metrics" / (config["sample"] + ".agg.gc_bias.detail_metrics"),
-        gc_bias_pdf_agg = Path(config['working_dir']) / "qc" / "aggregation_metrics" / (config["sample"] + ".agg.gc_bias.pdf"),
-        gc_bias_summary_metrics_agg = Path(config['working_dir']) / "qc" / "aggregation_metrics" / (config["sample"] + ".agg.gc_bias.summary_metrics"),
-        insert_size_histogram_pdf_agg = Path(config['working_dir']) / "qc" / "aggregation_metrics" / (config["sample"] + ".agg.insert_size_histogram.pdf"),
-        insert_size_metrics_agg = Path(config['working_dir']) / "qc" / "aggregation_metrics" / (config["sample"] + ".agg.insert_size_metrics"),
-        pre_adapter_detail_metrics = Path(config['working_dir']) / "qc" / "aggregation_metrics" / (config["sample"] + ".agg.pre_adapter_detail_metrics"),
-        pre_adapter_summary_metrics = Path(config['working_dir']) / "qc" / "aggregation_metrics" / (config["sample"] + ".agg.pre_adapter_summary_metrics"),
-        quality_distribution_pdf_agg = Path(config['working_dir']) / "qc" / "aggregation_metrics" / (config["sample"] + ".agg.quality_distribution.pdf"),
-        quality_distribution_metrics_agg = Path(config['working_dir']) / "qc" / "aggregation_metrics" / (config["sample"] + ".agg.quality_distribution_metrics"),
-        error_summary_metrics = Path(config['working_dir']) / "qc" / "aggregation_metrics" / (config["sample"] + ".agg.error_summary_metrics"),
+        TXT_metrics_WGS = Path(config['working_dir']) / "qc" / "wgs_metrics" / f"{config['sample']}.wgs.metrics.txt",
+        TXT_metrics_rawWGS = Path(config['working_dir']) / "qc" / "wgs_metrics" / f"{config['sample']}.raw.wgs.metrics.txt",
 
-        TXT_metrics_checksum = Path(config['working_dir']) / "qc" / "RG_checksum" / (config["sample"] + ".bam.read_group_md5.io"),
-        TXT_metrics_WGS = Path(config['working_dir']) / "qc" / "wgs_metrics" / (config["sample"] + ".wgs.metrics.io"),
-        TXT_metrics_rawWGS = Path(config['working_dir']) / "qc" / "wgs_metrics" / (config["sample"] + ".raw.wgs.metrics.io"),
-        TXT_metrics_validateGVCF = Path(config['working_dir']) / "qc" / "validate_gvcf" / (config["sample"] + ".validate_vcf.io"),
-        TXT_metrics_varCalling = Path(config['working_dir']) / "qc" / "variant_calling_metrics" / (config["sample"] + ".variant_calling_metrics.io"),
+        TXT_metrics_validateGVCF = Path(config['working_dir']) / "qc" / "validate_gvcf" / f"{config['sample']}.validate_vcf.txt",
+
+        TXT_metrics_varCalling = Path(config['working_dir']) / "qc" / "variant_calling_metrics" / f"{config['sample']}.variant_calling_metrics.io",
+
+        ## TODO uBAM metrics
+        # quality_yield = expand(Path(config['working_dir']) / "qc" / "ubam_quality_yield" / "{fastq}.unmapped.quality_yield_metrics.io", fastq = config["input_basenames"]),
+        # base_distribution_by_cycle = expand(Path(config['working_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.base_distribution_by_cycle.pdf", fastq = config["input_basenames"]),
+        # base_distribution_by_cycle_metrics = expand(Path(config['working_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.base_distribution_by_cycle_metrics", fastq = config["input_basenames"]),
+        # insert_size_histogram_pdf = expand(Path(config['working_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.insert_size_histogram.pdf", fastq = config["input_basenames"]),
+        # insert_size_metrics = expand(Path(config['working_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.insert_size_metrics", fastq = config["input_basenames"]),
+        # quality_by_cycle_pdf = expand(Path(config['working_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.quality_by_cycle.pdf", fastq = config["input_basenames"]),
+        # quality_by_cycle_metrics = expand(Path(config['working_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.quality_by_cycle_metrics", fastq = config["input_basenames"]),
+        # quality_distribution_pdf = expand(Path(config['working_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.quality_distribution.pdf", fastq = config["input_basenames"]),
+        # quality_distribution_metrics = expand(Path(config['working_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.quality_distribution_metrics", fastq = config["input_basenames"]),
     output:
-        done = Path(config['working_dir']) / 'qc' / 'qc_done.txt'
-    shell:
-        "touch {output.done}"
+        alignment_summary_metrics = Path(config['final_output_dir']) / "qc" / "RG_quality" / f"{config['sample']}.readgroup.alignment_summary_metrics",
+        gc_bias_detail_metrics = Path(config['final_output_dir']) / "qc" / "RG_quality" / f"{config['sample']}.readgroup.gc_bias.detail_metrics",
+        gc_bias_pdf = Path(config['final_output_dir']) / "qc" / "RG_quality" / f"{config['sample']}.readgroup.gc_bias.pdf",
+        gc_bias_summary_metrics = Path(config['final_output_dir']) / "qc" / "RG_quality" / f"{config['sample']}.readgroup.gc_bias.summary_metrics",
 
+        alignment_summary_metrics_agg = Path(config['final_output_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.alignment_summary_metrics",
+        bait_bias_detail_metrics = Path(config['final_output_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.bait_bias_detail_metrics",
+        bait_bias_summary_metrics = Path(config['final_output_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.bait_bias_summary_metrics",
+        gc_bias_detail_metrics_agg = Path(config['final_output_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.gc_bias.detail_metrics",
+        gc_bias_pdf_agg = Path(config['final_output_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.gc_bias.pdf",
+        gc_bias_summary_metrics_agg = Path(config['final_output_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.gc_bias.summary_metrics",
+        insert_size_histogram_pdf_agg = Path(config['final_output_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.insert_size_histogram.pdf",
+        insert_size_metrics_agg = Path(config['final_output_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.insert_size_metrics",
+        pre_adapter_detail_metrics = Path(config['final_output_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.pre_adapter_detail_metrics",
+        pre_adapter_summary_metrics = Path(config['final_output_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.pre_adapter_summary_metrics",
+        quality_distribution_pdf_agg = Path(config['final_output_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.quality_distribution.pdf",
+        quality_distribution_metrics_agg = Path(config['final_output_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.quality_distribution_metrics",
+        error_summary_metrics = Path(config['final_output_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.error_summary_metrics",
+
+        TXT_metrics_checksum = Path(config['final_output_dir']) / "qc" / "RG_checksum" / f"{config['sample']}.bam.read_group_md5",
+
+        TXT_metrics_WGS = Path(config['final_output_dir']) / "qc" / "wgs_metrics" / f"{config['sample']}.wgs.metrics.txt",
+        TXT_metrics_rawWGS = Path(config['final_output_dir']) / "qc" / "wgs_metrics" / f"{config['sample']}.raw.wgs.metrics.txt",
+
+        TXT_metrics_validateGVCF = Path(config['final_output_dir']) / "qc" / "validate_gvcf" / f"{config['sample']}.validate_vcf.txt",
+
+        TXT_metrics_varCalling = Path(config['final_output_dir']) / "qc" / "variant_calling_metrics" / f"{config['sample']}.variant_calling_metrics.txt",
+
+        QC_done = Path(config['final_output_dir']) / 'qc' / 'qc_done.txt'
+    run:
+        os.link(input.alignment_summary_metrics, output.alignment_summary_metrics)
+        os.link(input.gc_bias_detail_metrics, output.gc_bias_detail_metrics)
+        os.link(input.gc_bias_pdf, output.gc_bias_pdf)
+        os.link(input.gc_bias_summary_metrics, output.gc_bias_summary_metrics)
+        os.link(input.alignment_summary_metrics_agg, output.alignment_summary_metrics_agg)
+        os.link(input.bait_bias_detail_metrics, output.bait_bias_detail_metrics)
+        os.link(input.bait_bias_summary_metrics, output.bait_bias_summary_metrics)
+        os.link(input.gc_bias_detail_metrics_agg, output.gc_bias_detail_metrics_agg )
+        os.link(input.gc_bias_pdf_agg, output.gc_bias_pdf_agg)
+        os.link(input.gc_bias_summary_metrics_agg, output.gc_bias_summary_metrics_agg)
+        os.link(input.insert_size_histogram_pdf_agg, output.insert_size_histogram_pdf_agg)
+        os.link(input.insert_size_metrics_agg, output.insert_size_metrics_agg)
+        os.link(input.pre_adapter_detail_metrics, output.pre_adapter_detail_metrics)
+        os.link(input.pre_adapter_summary_metrics, output.pre_adapter_summary_metrics)
+        os.link(input.quality_distribution_pdf_agg, output.quality_distribution_pdf_agg )
+        os.link(input.quality_distribution_metrics_agg, output.quality_distribution_metrics_agg)
+        os.link(input.error_summary_metrics, output.error_summary_metrics)
+        os.link(input.TXT_metrics_checksum, output.TXT_metrics_checksum)
+        os.link(input.TXT_metrics_WGS, output.TXT_metrics_WGS)
+        os.link(input.TXT_metrics_rawWGS, output.TXT_metrics_rawWGS)
+        os.link(input.TXT_metrics_validateGVCF, output.TXT_metrics_validateGVCF)
+        os.link(SnakemakeUtils.load_object(input.TXT_metrics_varCalling)[0].path, output.TXT_metrics_varCalling)
+
+        subprocess.run(f"touch {output.QC_done}", shell = True, executable='/bin/bash')

@@ -3,16 +3,19 @@ import os
 import argparse
 import yaml
 import logging
+import glob
+import shutil
 
 from pathlib import Path
 from typing import Any, Optional, List, Dict, Sequence
 
 from camel.app.camel import Camel
+from camel.app.error.snakemakeexecutionerror import SnakemakeExecutionError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.pipeline.pipeline import Pipeline
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.scripts.broadwgs import SNAKEFILE_MAIN, CONFIG_DATA
+from camel.scripts.broadwgs import SNAKEFILE_MAIN, CONFIG_DATA, REFERENCES, INTERVALS, TOOL_DATA
 
 
 class MainBroadWGSPipeline(object):
@@ -26,9 +29,9 @@ class MainBroadWGSPipeline(object):
         :param args: Arguments (optional)
         """
         self._name = 'Broad institute WGS GATK Best Practices'
-        self._version = '0.5'
+        self._version = '1.0'
         self._snakefile = SNAKEFILE_MAIN
-        self._args = self._parse_arguments(args)
+        self._args = MainBroadWGSPipeline._parse_arguments(args)
         self._working_dir = Path(self._args.working_dir)
         self._pipeline = Pipeline(self._name, Camel.get_instance(), self._args.log, self._args.log)
 
@@ -37,21 +40,33 @@ class MainBroadWGSPipeline(object):
         Runs the pipeline.
         :return: None
         """
-        input_files = self._parse_input()
-        config_file = self.__construct_config_file()
-        self._run_snakemake_main(config_file)
+        self._symlink_input()
 
-    def _parse_input(self) -> List[Dict[str, Any]]:
+        config_file = self.__construct_config_file()
+
+        try:
+            resources = dict([arg.split(",") for arg in self._args.resources])
+            SnakePipelineUtils.run_snakemake(self._snakefile, config_file, [], self._working_dir, self._args.threads, resources)
+            log_file = self._working_dir / 'camel.log'
+            if log_file.exists():
+                shutil.copyfile(str(log_file), str(Path(self._args.working_dir) / 'output' / 'camel.log'))
+            logging.info("Pipeline finished successfully")
+        except SnakemakeExecutionError as err:
+            if self._pipeline.keep_error_log:
+                self._pipeline.log_error_to_file(err)
+            raise err
+
+    def _symlink_input(self) -> None:
         """
         Symlinks the input files.
-        :return: List of FASTQ input dictionaries
+        :return: None
         """
         base_path = self._args.input
 
         # Create directory
-        dir_links = self._working_dir / 'input' / self._args.sample
+        dir_links = self._working_dir / 'input'
         if not dir_links.exists():
-            dir_links.mkdir(parents=True)
+            dir_links.mkdir(parents=True, exist_ok=True)
 
         # Determine link names + generate ToolIOFiles
         links = []
@@ -77,58 +92,64 @@ class MainBroadWGSPipeline(object):
             os.symlink(path_orig, path_new)
             paths_new.append(path_new)
 
-        # Return output dictionary
-        return [{'name': os.path.basename(p), 'path': p} for p in paths_new]
-
     def __construct_config_file(self) -> str:
         """
-        Constructs the configuration file.
+        Constructs the configuration file
         :return: Configuration file
         """
-        config_data = self.get_template_data()
+        # pipeline information and cmd line arguments
 
-        with CONFIG_DATA.open() as handle_in:
-            config_data.update(yaml.load(handle_in.read(), Loader=yaml.SafeLoader))
-
-        return SnakePipelineUtils.generate_config_file(config_data, self._working_dir)
-
-    def get_template_data(self) -> Dict[str, Any]:
-        """
-        Returns the template data that is common to all pipelines
-        :return: Template data
-        """
-        template_data = {
+        config_data = {
             'pipeline': {
                 'name': self._name,
                 'version': f"{self._version}",
             },
-            'sequencing_center': self._args.sequencing_center,
+            'params_smk': {
+                'threads': self._args.threads,
+                'threads_bwa': round(self._args.threads * 0.9 / len(self._args.input)),
+                'resources': self._args.resources,
+            },
             'sample': self._args.sample,
             'input_basenames': [os.path.basename(f) for f in self._args.input],
             'working_dir': str(self._working_dir),
+            'final_output_dir': str(self._working_dir / 'output')
         }
-        return template_data
 
-    def _run_snakemake_main(self, config_file: str) -> None:
-        """
-        Runs the main snakefile for the pipeline.
-        :param config_file: Configuration file
-        :return: None
-        """
-        #if self._pipeline.keep_config:
-        #    self._pipeline.log_config_file(config_file)
+        # add data from config yml
+        with CONFIG_DATA.open() as handle_in:
+            config_data.update(yaml.load(handle_in.read(), Loader=yaml.SafeLoader))
 
-        try:
-            SnakePipelineUtils.run_snakemake(self._snakefile, config_file, [], self._working_dir, self._args.threads, self._args.mem)
-            log_file = self._working_dir / 'camel.log'
-            if log_file.exists():
-                shutil.copyfile(str(log_file), str(Path(self._args.output_dir) / 'camel.log'))
-            logging.info("Pipeline finished successfully")
-        except SnakemakeExecutionError as err:
-            if self._pipeline.keep_error_log:
-                self._pipeline.log_error_to_file(err)
-            raise err
+        # add data from user specified references yml if defined
+        if self._args.references is not None:
+            reference_file = self._args.references
+        else:
+            reference_file = REFERENCES
+        with reference_file.open() as handle_in:
+            config_data.update(yaml.load(handle_in.read(), Loader=yaml.SafeLoader))
 
+        # add intervals - based on interval files
+        intervals_list = []
+        if self._args.intervals is not None:
+            intervals_location = self._args.intervals
+        else:
+            intervals_location = INTERVALS
+        interval_files = glob.glob(os.path.join(intervals_location, "interval_*.intervals"))
+        config_data.update({"intervals": list(range(len(interval_files))),
+                            "intervals_location": str(intervals_location)})
+
+        # add tool parameters from tool_data yml
+        if self._args.tool_data is not None:
+            tool_data = self._args.tool_data
+        else:
+            tool_data = TOOL_DATA
+        with tool_data.open() as handle_in:
+            config_data.update(yaml.load(handle_in.read(), Loader=yaml.SafeLoader))
+
+        # Update read length
+        config_data["rule_params"]["qc"]["picard_wgs_metrics"]["read_length"] = self._args.read_length
+        config_data["rule_params"]["qc"]["picard_raw_wgs_metrics"]["read_length"] = self._args.read_length
+
+        return SnakePipelineUtils.generate_config_file(config_data, self._working_dir)
 
     @staticmethod
     def _parse_arguments(args: Optional[Sequence[str]]) -> argparse.Namespace:
@@ -139,18 +160,20 @@ class MainBroadWGSPipeline(object):
         parser = argparse.ArgumentParser(description='Run the GATK best practices pipeline.')
 
         # input data
-        parser.add_argument('--sequencing-center', dest = "sequencing_center", default = "unknown", help = "Sequencing center")
-
         parser.add_argument('-i', dest = "input", nargs="+", help="FastQ input files")
-        parser.add_argument('--working-dir', dest = "working_dir", default=os.path.abspath('.'), type=str, help='Working directory')
-        parser.add_argument('--sample', dest = "sample", type=str, help='Sample name')
+        parser.add_argument('--working-dir', dest = "working_dir", default = str(Path('.').absolute()), type=str, help='Working directory')
+        parser.add_argument('--sample', type = str, help = 'Sample name')
+        parser.add_argument('--read-length', dest = "read_length", type = int, default = 250, help = 'Read length. Default: 250')
+        parser.add_argument('--references', type = str, help = "Path to references yml")
+        parser.add_argument('--intervals', type = str, help = 'Path to interval files directory')
+        parser.add_argument('--tool-data', dest = "tool_data", type = str, help = "Path to tool data yml")
 
         # logs
         parser.add_argument('--log', action='store_true', help="If this flag is set, config file and error logs are kept")
 
-        # other
-        parser.add_argument('--threads', dest = "threads", type=int)
-        parser.add_argument('--mem', dest = "mem", type=int)
+        # Snakemake parameters
+        parser.add_argument('--threads', type=int, help="Snakemake parameter: number of cores")
+        parser.add_argument('--resources', type=str, nargs="+", help="Snakemake parameter: resources. Key-value pair separated by a comma, e.g. mem_mb,1000. Multiple pairs allowed")
 
 
         return parser.parse_args(args)
