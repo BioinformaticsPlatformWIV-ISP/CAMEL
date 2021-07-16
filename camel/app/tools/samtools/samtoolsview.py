@@ -19,19 +19,6 @@ class SamtoolsView(Samtools):
         super().__init__('samtools view', '1.9', camel)
         self.__input_key = None
 
-    def _set_input(self) -> None:
-        """
-        Set the input specification in the input_string
-        Overrides method in parent class.
-        :return: None
-        """
-
-        super(Samtools, self)._set_input()
-
-        # if fasta ref is determined, set fasta ref
-        if 'FASTA_REF' in self._tool_inputs:
-            self._input_string += f"-T {self._tool_inputs['FASTA_REF'][0].path} "
-
     def _check_input(self):
         """
         Checks the input.
