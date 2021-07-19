@@ -1,8 +1,9 @@
 import os
 
 from camel.app.camel import Camel
-from camel.app.tools.picard.picard import Picard
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.tools.picard.picard import Picard
+
 
 class MergeVCFs(Picard):
     """

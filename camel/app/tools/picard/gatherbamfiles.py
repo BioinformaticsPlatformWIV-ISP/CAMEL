@@ -1,6 +1,5 @@
 from camel.app.camel import Camel
 from camel.app.tools.picard.picard import Picard
-from camel.app.tools.tool import Tool
 
 
 class GatherBamFiles(Picard):

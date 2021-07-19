@@ -1,11 +1,11 @@
-import shutil
 import logging
-
+import shutil
 from pathlib import Path
 
 from camel.app.camel import Camel
-from camel.app.tools.gatk4.gatk4 import GATK4
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.tools.gatk4.gatk4 import GATK4
+
 
 class GATK4ValidateVariants(GATK4):
     """
