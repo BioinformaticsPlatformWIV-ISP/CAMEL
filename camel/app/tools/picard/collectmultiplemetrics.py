@@ -12,27 +12,40 @@ class CollectMultipleMetrics(Picard):
     """
     Class for Picard CollectMultipleMetrics function to calculate various QC metrics for read mapping
 
-    Metrics calculated:
-    - CollectAlignmentSummaryMetrics
-    - CollectInsertSizeMetrics
-    - QualityScoreDistribution
-    - CollectGcBiasMetrics
-    - CollectBaseDistributionByCycle
-    - MeanQualityByCycle
+    PROGRAM
+        Default values:
+        - CollectAlignmentSummaryMetrics
+        - CollectBaseDistributionByCycle
+        - CollectInsertSizeMetrics
+        - MeanQualityByCycle
+        - QualityScoreDistribution
+
+        This option can be set to 'null' to clear the default list
+
+        Possible values:
+        - CollectAlignmentSummaryMetrics
+        - CollectInsertSizeMetrics
+        - QualityScoreDistribution
+        - MeanQualityByCycle
+        - CollectBaseDistributionByCycle
+        - CollectGcBiasMetrics
+        - RnaSeqMetrics
+        - CollectSequencingArtifactMetrics
+        - CollectQualityYieldMetrics
     """
+    # Suffices for all PROGRAM options
     OUTPUT_FILE_SUFFIX = {
-        'AlignmentSummary': '.alignment_summary_metrics',
-        'BaseDistributionByCycle': '.base_distribution_by_cycle_metrics',
-        'BaseDistributionByCycleFigure': '.base_distribution_by_cycle.pdf',
-        'GcBias': '.gc_bias.detail_metrics',
-        'GcBiasSummary': '.gc_bias.summary_metrics',
-        'GcBiasFigure': '.gc_bias.pdf',
-        'InsertSize': '.insert_size_metrics',
-        'InsertSizeFigure': '.insert_size_histogram.pdf',
-        'MapQualityDistribution': '.quality_distribution_metrics',
-        'MapQualityDistributionFigure': '.quality_distribution.pdf',
-        'QualityByCycle': '.quality_by_cycle_metrics',
-        'QualityByCycleFigure': '.quality_by_cycle.pdf'
+        'CollectAlignmentSummaryMetrics': {'AlignmentSummary': '.alignment_summary_metrics'},
+        'CollectInsertSizeMetrics': {'InsertSize': '.insert_size_metrics', 'InsertSizeFigure': '.insert_size_histogram.pdf'},
+        'QualityScoreDistribution': {'QualityDistribution': '.quality_distribution_metrics', 'QualityDistributionFigure': '.quality_distribution.pdf'},
+        'MeanQualityByCycle': {'QualityByCycle': '.quality_by_cycle_metrics', 'QualityByCycleFigure': '.quality_by_cycle.pdf'},
+        'CollectBaseDistributionByCycle': {'BaseDistributionByCycle': '.base_distribution_by_cycle_metrics', 'BaseDistributionByCycleFigure': '.base_distribution_by_cycle.pdf'},
+        'CollectGcBiasMetrics': {'GcBias': '.gc_bias.detail_metrics', 'GcBiasSummary': '.gc_bias.summary_metrics','GcBiasFigure': '.gc_bias.pdf'},
+        'RnaSeqMetrics': {'RnaSeq': '.rna_metrics'},
+        'CollectSequencingArtifactMetrics': {'SequencingArtefactDetail':'.bait_bias_detail_metrics', 'SequencingArtefactSummary':'.bait_bias_summary_metrics',
+                                             'SequencingArtefactErrorSummary': '.error_summary_metrics', 'SequencingArtefactPreAdapterDetail': '.pre_adapter_detail_metrics',
+                                             'SequencingArtefactPreAdapterSummary': '.pre_adapter_summary_metrics'},
+        'CollectQualityYieldMetrics': {'QualityYield': '.quality_yield_metrics'}
     }
 
     def __init__(self, camel: Camel):
@@ -44,6 +57,7 @@ class CollectMultipleMetrics(Picard):
         super().__init__('Picard CollectMultipleMetrics', '2.23.3', camel)
         self._function_name = 'CollectMultipleMetrics'
         self._required_inputs = ['FASTA_REF']
+        self._specific_parameters = ['metric_accumulation_level_multi']
         self._outfile_prefix = None
 
     def _set_output(self) -> None:
@@ -53,26 +67,18 @@ class CollectMultipleMetrics(Picard):
         """
         self.outfile_prefix = os.path.join(self._folder, self._parameters['output_prefix'].value)
 
-        # Known Metrics: CollectAlignmentSummaryMetrics, CollectInsertSizeMetrics, QualityScoreDistribution,
-        #   MeanQualityByCycle, CollectBaseDistributionByCycle, CollectGcBiasMetrics, RnaSeqMetrics,
-        #   CollectSequencingArtifactMetrics, CollectQualityYieldMetrics
         for key in self._parameters:
             if re.match('metrics_', key):
-                if key == 'metrics_CollectAlignmentSummaryMetrics':
-                    self.__set_alignment_summary_output()
-                elif key == 'metrics_CollectInsertSizeMetrics':
-                    self.__set_insert_size_output()
-                elif key == 'metrics_QualityScoreDistribution':
-                    self.__set_mapping_quality_output()
-                elif key == 'metrics_CollectGcBiasMetrics':
-                    self.__set_gc_bias_output()
-                elif key == 'metrics_CollectBaseDistributionByCycle':
-                    self.__set_base_distribution_output()
-                elif key == 'metrics_MeanQualityByCycle':
-                    self.__set_quality_by_cycle_output()
-                else:  # RnaSeqMetrics, CollectSequencingArtifactMetrics, CollectQualityYieldMetrics
-                    logging.warning(
-                        f'Picard CollectMultipleMetrics unsupported metrics {key}, its results will not be analyzed or returned.')
+                # strip 'metrics_' from key
+                tool = key.split("_")[1]
+
+                # loop over all possible output suffices for that specific tool
+                try:
+                    for suffix_key, suffix_value in CollectMultipleMetrics.OUTPUT_FILE_SUFFIX[tool].items():
+                        output_file = self.outfile_prefix + suffix_value
+                        self._tool_outputs['TXT_' + suffix_key] = [ToolIOFile(output_file)]
+                except KeyError:
+                    logging.warning(f'Picard CollectMultipleMetrics unsupported metrics {key}, its results will not be analyzed or returned.')
 
     def _set_informs(self) -> None:
         """
@@ -103,13 +109,24 @@ class CollectMultipleMetrics(Picard):
                     logging.warning(
                         f'Picard CollectMultipleMetrics unsupported metrics {key}, its results will not be analyzed or returned.')
 
-    def __set_alignment_summary_output(self) -> None:
+    def _build_command(self) -> None:
         """
-        set the Alignment Summary statistics output
+        Build the command to run tool
         :return: None
         """
-        alignment_summary_file = self.outfile_prefix + CollectMultipleMetrics.OUTPUT_FILE_SUFFIX['AlignmentSummary']
-        self._tool_outputs['TXT_AlignmentSummary'] = [ToolIOFile(alignment_summary_file)]
+        build_options = self._build_options(excluded_parameters=self._specific_parameters, delimiter='=')
+
+        if 'metric_accumulation_level_multi' in self._parameters:
+            attributes = str(self._parameters['metric_accumulation_level_multi'].value).split(",")
+            for attribute in attributes:
+                build_options.append(f"LEVEL={attribute}")
+
+        option_string = " ".join(build_options)
+
+        self._command.command = " ".join([
+            "java", self._java_options, "-jar $PICARD_JAR", self._tool_command, self._java_options_temp_dir,
+            self._input_string, self._output_string, option_string, '2>&1'
+        ])
 
     def __analyze_alignment_summary(self) -> None:
         """
@@ -151,17 +168,6 @@ class CollectMultipleMetrics(Picard):
 
         self.informs['AlignmentSummary_stats'] = align_stats
 
-    def __set_insert_size_output(self) -> None:
-        """
-        set the Insert Size statistics output
-        :return: None
-        """
-        metrics_file = self.outfile_prefix + CollectMultipleMetrics.OUTPUT_FILE_SUFFIX['InsertSize']
-        self._tool_outputs['TXT_InsertSize'] = [ToolIOFile(metrics_file)]
-        figure_file = self.outfile_prefix + CollectMultipleMetrics.OUTPUT_FILE_SUFFIX['InsertSizeFigure']
-        if os.path.exists(figure_file):
-            self._tool_outputs['PDF_InsertSizeFigure'] = [ToolIOFile(figure_file)]
-
     def __analyze_insert_size(self) -> None:
         """
         Analyze the Insert Size statistics
@@ -195,27 +201,6 @@ class CollectMultipleMetrics(Picard):
                         logging.warning(
                             f'Picard CollectMultipleMetrics unsupported READS ORIENTATION {informs[col_nbs["PAIR_ORIENTATION"]]} for InsertSize analysis')
 
-    def __set_mapping_quality_output(self) -> None:
-        """
-        set the Mapping Quality statistics output
-        :return: None
-        """
-        metrics_file = self.outfile_prefix + CollectMultipleMetrics.OUTPUT_FILE_SUFFIX['MapQualityDistribution']
-        self._tool_outputs['TXT_MapQualityDistribution'] = [ToolIOFile(metrics_file)]
-        figure_file = self.outfile_prefix + CollectMultipleMetrics.OUTPUT_FILE_SUFFIX['MapQualityDistributionFigure']
-        self._tool_outputs['PDF_MapQualityDistributionFigure'] = [ToolIOFile(figure_file)]
-
-    def __set_gc_bias_output(self) -> None:
-        """
-        set the GC Bias statistics output
-        :return: None
-        """
-        metrics_file = self.outfile_prefix + CollectMultipleMetrics.OUTPUT_FILE_SUFFIX['GcBias']
-        self._tool_outputs['TXT_GcBiasDetail'] = [ToolIOFile(metrics_file)]
-        summary_file = self.outfile_prefix + CollectMultipleMetrics.OUTPUT_FILE_SUFFIX['GcBiasSummary']
-        self._tool_outputs['TXT_GcBiasSummary'] = [ToolIOFile(summary_file)]
-        figure_file = self.outfile_prefix + CollectMultipleMetrics.OUTPUT_FILE_SUFFIX['GcBiasFigure']
-        self._tool_outputs['PDF_GcBiasFigure'] = [ToolIOFile(figure_file)]
 
     def __analyze_gc_bias(self) -> None:
         """
@@ -231,24 +216,3 @@ class CollectMultipleMetrics(Picard):
                     self.informs['GCBias_stats']['AT_DROPOUT'] = informs[4]
                     self.informs['GCBias_stats']['GC_DROPOUT'] = informs[5]
                     break
-
-    def __set_base_distribution_output(self) -> None:
-        """
-        set the base distribution statistics output
-        :return: None
-        """
-
-        metrics_file = self.outfile_prefix + CollectMultipleMetrics.OUTPUT_FILE_SUFFIX['BaseDistributionByCycle']
-        self._tool_outputs['TXT_BaseDistributionByCycle'] = [ToolIOFile(metrics_file)]
-        summary_file = self.outfile_prefix + CollectMultipleMetrics.OUTPUT_FILE_SUFFIX['BaseDistributionByCycleFigure']
-        self._tool_outputs['PDF_BaseDistributionByCycleFigure'] = [ToolIOFile(summary_file)]
-
-    def __set_quality_by_cycle_output(self) -> None:
-        """
-        set the quality by cycle statistics output
-        :return: None
-        """
-        summary_file = self.outfile_prefix + CollectMultipleMetrics.OUTPUT_FILE_SUFFIX['QualityByCycle']
-        self._tool_outputs['TXT_QualityByCycle'] = [ToolIOFile(summary_file)]
-        figure_file = self.outfile_prefix + CollectMultipleMetrics.OUTPUT_FILE_SUFFIX['QualityByCycleFigure']
-        self._tool_outputs['PDF_QualityByCycleFigure'] = [ToolIOFile(figure_file)]
