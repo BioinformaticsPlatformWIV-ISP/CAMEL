@@ -1,9 +1,9 @@
 from pathlib import Path
 
 from camel.app.camel import Camel
+from camel.app.components.pipelines import pipeutils
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.app.components.pipelines import pipeutils
 
 camel = Camel.get_instance()
 

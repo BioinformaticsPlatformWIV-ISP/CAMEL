@@ -1,10 +1,8 @@
 from pathlib import Path
-import subprocess
 
 from camel.app.camel import Camel
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-
 from camel.scripts.broadwgs.snakefile import alignment, variant_calling
 
 camel = Camel.get_instance()

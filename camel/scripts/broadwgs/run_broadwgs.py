@@ -1,20 +1,19 @@
 #!/usr/bin/env python
-import os
 import argparse
-import yaml
-import logging
 import glob
+import logging
+import os
 import shutil
-
+import yaml
 from pathlib import Path
-from typing import Any, Optional, List, Dict, Sequence
+from typing import Optional, Sequence
 
 from camel.app.camel import Camel
 from camel.app.error.snakemakeexecutionerror import SnakemakeExecutionError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.pipeline.pipeline import Pipeline
-from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
+from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.scripts.broadwgs import SNAKEFILE_MAIN, CONFIG_DATA, REFERENCES, INTERVALS, TOOL_DATA
 
 

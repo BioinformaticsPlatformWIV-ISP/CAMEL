@@ -1,6 +1,5 @@
 import os
 import subprocess
-
 from pathlib import Path
 
 from camel.app.io.tooliofile import ToolIOFile
@@ -79,27 +78,24 @@ rule prepare_references_io:
         COVERAGE_INTERVALS = Path(config['working_dir']) / "ref_input" / "coverage_interval_list.io",
         EVALUATION_INTERVALS = Path(config['working_dir']) / "ref_input" / "evaluation_interval_list.io",
     run:
-        # Make objects
-        io_fasta_genome = [ToolIOValue(input.fasta_genome)]
-        io_fasta_genome_file = [ToolIOFile(input.fasta_genome)]
-        io_dict_genome = [ToolIOFile(input.dict_genome)]
-        io_dbSNP = [ToolIOFile(input.dbsnp)]
-        io_knownINDELs = [ToolIOFile(f) for f in input.known_indels]
-        io_calling_intervals = [ToolIOFile(input.calling_intervals)]
-        io_contamination = [ToolIOFile(input.contamination_sites_bed), ToolIOFile(input.contamination_sites_mu), ToolIOFile(input.contamination_sites_ud)]
-        io_coverage_intervals = [ToolIOFile(input.coverage_interval_list)]
-        io_evaluation_intervals = [ToolIOFile(input.evaluation_interval_list)]
+        SnakemakeUtils.dump_object([ToolIOValue(input.fasta_genome)], str(output.FASTA_GENOME))
+        SnakemakeUtils.dump_object([ToolIOFile(input.fasta_genome)], str(output.FASTA_GENOME_FILE))
+        SnakemakeUtils.dump_object([ToolIOFile(input.dict_genome)], str(output.DICT_GENOME))
+        SnakemakeUtils.dump_object([ToolIOFile(input.dbsnp)], str(output.DBSNP))
+        SnakemakeUtils.dump_object([ToolIOFile(f) for f in input.known_indels], str(output.KNOWN_INDELS))
+        SnakemakeUtils.dump_object([ToolIOFile(input.calling_intervals)], str(output.CALLING_INTERVALS))
+        SnakemakeUtils.dump_object([ToolIOFile(input.contamination_sites_bed), ToolIOFile(input.contamination_sites_mu), ToolIOFile(input.contamination_sites_ud)], str(output.CONTAMINATION_SITES_UD))
+        SnakemakeUtils.dump_object([ToolIOFile(input.coverage_interval_list)], str(output.COVERAGE_INTERVALS))
+        SnakemakeUtils.dump_object([ToolIOFile(input.evaluation_interval_list)], str(output.EVALUATION_INTERVALS))
 
-        # Dump objects
-        SnakemakeUtils.dump_object(io_fasta_genome, str(output.FASTA_GENOME))
-        SnakemakeUtils.dump_object(io_fasta_genome_file, str(output.FASTA_GENOME_FILE))
-        SnakemakeUtils.dump_object(io_dict_genome, str(output.DICT_GENOME))
-        SnakemakeUtils.dump_object(io_dbSNP, str(output.DBSNP))
-        SnakemakeUtils.dump_object(io_knownINDELs, str(output.KNOWN_INDELS))
-        SnakemakeUtils.dump_object(io_calling_intervals, str(output.CALLING_INTERVALS))
-        SnakemakeUtils.dump_object(io_contamination, str(output.CONTAMINATION_SITES_UD))
-        SnakemakeUtils.dump_object(io_coverage_intervals, str(output.COVERAGE_INTERVALS))
-        SnakemakeUtils.dump_object(io_evaluation_intervals, str(output.EVALUATION_INTERVALS))
+rule prepare_interval_pickles:
+    input:
+        interval_files = expand(Path(config['intervals_location']) / 'interval_{i}.intervals', i = config['intervals'])
+    output:
+        pickled_interval_files = expand(Path(config['intervals_location']) / 'interval_{i}.intervals.io', i = config['intervals'])
+    run:
+        SnakemakeUtils.dump_object([ToolIOFile(input.interval_files)], output.pickled_interval_files)
+
 
 rule move_qc:
     input:
