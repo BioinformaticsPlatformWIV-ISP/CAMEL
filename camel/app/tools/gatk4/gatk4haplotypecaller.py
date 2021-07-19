@@ -59,8 +59,11 @@ class GATK4HaplotypeCaller(GATK4):
         :return: None
         """
         if 'gqb' in self._parameters:
+            gqb_list = self._parameters['gqb'].value.split(",")
+            if sorted(gqb_list) != gqb_list:
+                raise InvalidParameterError("GQ Bands list must be specified in increasing order.")
             self._option_string += ' --gvcf-gq-bands '
-            self._option_string += ' --gvcf-gq-bands '.join(self._parameters['gqb'].value.split(","))
+            self._option_string += ' --gvcf-gq-bands '.join(gqb_list)
             self._option_string += " "
 
         if 'annotation_group' in self._parameters:

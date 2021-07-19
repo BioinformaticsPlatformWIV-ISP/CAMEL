@@ -35,6 +35,7 @@ class GATK4ApplyBQSR(GATK4):
 
         self._required_inputs = ['BAM', 'FASTA_REF', 'BQSR']
         self._output_type = 'BAM'
+        self._specific_parameters = 'static_quantized_quals_multi'
 
     def _set_input(self) -> None:
         """
@@ -68,8 +69,6 @@ class GATK4ApplyBQSR(GATK4):
                 self._parameters['static_quantized_quals_multi'].value.split(","))
             self._option_string += " "
 
-        self._option_string += " ".join(self._build_options(excluded_parameters=['static_quantized_quals_multi']))
+        super(GATK4ApplyBQSR, self)._build_command()
 
-        self._command.command = " ".join([
-            'gatk', self._java_options, self._tool_command, self._input_string, self._option_string
-        ])
+

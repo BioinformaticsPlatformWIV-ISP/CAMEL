@@ -33,7 +33,15 @@ class GATK4(Tool, metaclass=abc.ABCMeta):
         self._option_string = ''
         self._output_type = ''
         self._temp_dir = tempfile.mkdtemp(prefix='gatk4_', dir='/temp')
-        self._java_options = f'--java-options "-mx8G -XX:+UseParallelGC -XX:ParallelGCThreads=1 -Djava.io.tmpdir={self._temp_dir}"'
+        self._java_options = f'"-mx8G -XX:+UseParallelGC -XX:ParallelGCThreads=1 -Djava.io.tmpdir={self._temp_dir}"'
+
+    def update_java_options(self, java_options: str) -> None:
+        """
+        Returns the formatted java options of this tool.
+        :return: Name
+        """
+        logging.info(f"Java options updated: '{java_options}'")
+        self._java_options = f'"{java_options} -Djava.io.tmpdir={self._temp_dir}"'
 
     def _execute_tool(self) -> None:
         """
@@ -96,7 +104,7 @@ class GATK4(Tool, metaclass=abc.ABCMeta):
         """
         self._option_string += " ".join(self._build_options(excluded_parameters=self._specific_parameters))
         self._command.command = " ".join([
-            'gatk', self._java_options, self._tool_command, self._input_string, self._option_string
+            'gatk --java-options', self._java_options, self._tool_command, self._input_string, self._option_string
         ])
 
     def _check_command_output(self) -> None:
@@ -115,7 +123,7 @@ class GATK4(Tool, metaclass=abc.ABCMeta):
         """
         # log WARNINGS in info.log
         for line in self.stdout.split('\n'):
-            if re.match('WARNING', line):
+            if re.match('WARN', line):
                 logging.info(f" GATK - {line}")
 
             # E.g., The Genome Analysis Toolkit (GATK) v3.4-0-g7e26428
@@ -136,3 +144,6 @@ class GATK4(Tool, metaclass=abc.ABCMeta):
             match = re.search(r'(\d+) reads \((.+%) of total\) failing (.+)', line)
             if match is not None and match.group(1) != '0':
                 self.informs[match.group(3)] = f"{match.group(1)}({match.group(2)})"
+
+
+

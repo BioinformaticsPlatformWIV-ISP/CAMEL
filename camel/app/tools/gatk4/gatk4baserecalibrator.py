@@ -59,13 +59,16 @@ class GATK4BaseRecalibrator(GATK4):
         self._input_string += f"--reference {self._tool_inputs['FASTA_REF'][0].path} "
 
         if 'VCF_KNOWN_SNPS' in self._tool_inputs:
-            self._input_string += f"--known-sites {self._tool_inputs['VCF_KNOWN_SNPS'][0].path} "
+            for file in self._tool_inputs['VCF_KNOWN_SNPS']:
+                self._input_string += f"--known-sites {file.path} "
 
         if 'VCF_KNOWN_INDELS' in self._tool_inputs:
-            self._input_string += f"--known-sites {self._tool_inputs['VCF_KNOWN_INDELS'][0].path} "
+            for file in self._tool_inputs['VCF_KNOWN_INDELS']:
+                self._input_string += f"--known-sites {file.path} "
 
         if 'TXT_intervals' in self._tool_inputs:
-            self._input_string += f"--intervals {self._tool_inputs['TXT_intervals'][0].path} "
+            for interval in self._tool_inputs['TXT_intervals']:
+                self._input_string += f"--intervals {interval.path} "
 
     def _set_output(self) -> None:
         """
