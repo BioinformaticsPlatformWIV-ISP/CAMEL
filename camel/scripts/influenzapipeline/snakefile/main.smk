@@ -42,8 +42,7 @@ rule all:
          Path(config['working_dir']) / 'fq_dict.io',
          Path(config['working_dir']) / alignment.OUTPUT_ALIGNMENT_SAMTOOLS_DEPTH_ANALYZER_INFORMS,
          Path(config['working_dir']) / alignment.OUTPUT_ALIGNMENT_ALIGNMENTSUMMARY,
-         Path(config['working_dir']) / sequence_extraction.OUTPUT_SEQ_EXTRACTION_CONSENSUS_SEQUENCE_INDEX_PREFIX,
-         Path(config['working_dir']) / sequence_extraction.OUTPUT_SEQ_EXTRACTION_CONSENSUS_SEQUENCE_ITERATIVE
+         Path(config['working_dir']) / sequence_extraction.OUTPUT_SEQ_EXTRACTION_CONSENSUS_SEQUENCE_BLASTN_STATS_INFORMS
 
 
 rule select_fastq:
@@ -62,12 +61,16 @@ rule select_fastq:
 rule report_command_section:
     input:
         INFORMS_trimming = trimming.get_trimming_command_informs(config),
-         INFORMS_deconseq_pe_fwd = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_INFORMS_PE_FWD if 'deconseq' in config['analyses'] else [],
-         INFORMS_deconseq_pe_rev = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_INFORMS_PE_REV if 'deconseq' in config['analyses'] else [],
-         INFORMS_deconseq_se_fwd = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_INFORMS_SE_FWD if 'deconseq' in config['analyses'] else [],
-         INFORMS_deconseq_se_rev = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_INFORMS_SE_REV if 'deconseq' in config['analyses'] else [],
-         INFORMS_blast_genometyping =Path(config['working_dir']) / genometyping_blastn.OUTPUT_BLASTN_INFORMS if 'genometyping' in config['analyses'] else [],
-         INFORMS_alignment =Path(config['working_dir']) / alignment.OUTPUT_ALIGNMENT_INFORMS
+        INFORMS_deconseq_pe_fwd = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_INFORMS_PE_FWD if 'deconseq' in config['analyses'] else [],
+        INFORMS_deconseq_pe_rev = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_INFORMS_PE_REV if 'deconseq' in config['analyses'] else [],
+        INFORMS_deconseq_se_fwd = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_INFORMS_SE_FWD if 'deconseq' in config['analyses'] else [],
+        INFORMS_deconseq_se_rev = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_INFORMS_SE_REV if 'deconseq' in config['analyses'] else [],
+        INFORMS_seqtk_subsample = Path(config['working_dir']) / genometyping_blastn.OUTPUT_SEQTK_SUBSAMPLE_INFORMS,
+        INFORMS_blast_genometyping = Path(config['working_dir']) / genometyping_blastn.OUTPUT_BLASTN_INFORMS if 'genometyping' in config['analyses'] else [],
+        INFORMS_alignment = Path(config['working_dir']) / alignment.OUTPUT_ALIGNMENT_INFORMS,
+        INFORMS_merge_bam = Path(config['working_dir']) / sequence_extraction.OUTPUT_SEQ_EXTRACTION_MERGE_BAM_ALIGNMENT_INFORMS,
+        INFORMS_haplotypecaller = Path(config['working_dir']) / sequence_extraction.OUTPUT_SEQ_EXTRACTION_HAPLOTYPECALLER_INFORMS,
+        INFORMS_variantfiltration = Path(config['working_dir']) / sequence_extraction.OUTPUT_SEQ_EXTRACTION_VARIANTFILTRATION_INFORMS
     output:
         HTML = Path(config['working_dir']) / 'report' / 'html-commands.io'
     params:
@@ -92,6 +95,7 @@ rule report_combine_all:
         report_deconseq = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_REPORT if 'deconseq' in config['analyses'] else [],
         report_genometyping = Path(config['working_dir']) / genometyping_blastn.OUTPUT_GENOMETYPING_REPORT if 'genometyping' in config['analyses'] else [],
         report_alignment = Path(config['working_dir']) / alignment.OUTPUT_ALIGNMENT_REPORT,
+        report_seq_extraction = Path(config['working_dir']) / sequence_extraction.OUTPUT_SEQ_EXTRACTION_REPORT,
         # Report
         report_commands = rules.report_command_section.output.HTML
     output:
@@ -124,6 +128,7 @@ rule report_combine_all:
         if 'genometyping' in config['analyses']:
             report_structure.append(('Genome typing', 'genometyping', [input.report_genometyping]))
         report_structure.append(('Alignment', 'alignment', [input.report_alignment]))
+        report_structure.append(('Sequence extraction', 'sequence_extraction', [input.report_seq_extraction]))
         report_structure.append(('Commands', 'commands', [input.report_commands]))
         SnakePipelineUtils.add_report_content(report, report_structure)
 

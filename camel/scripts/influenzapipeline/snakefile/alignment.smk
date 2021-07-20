@@ -88,7 +88,13 @@ rule alignment_collect_metrics:
 
         cmm = CollectMultipleMetrics(camel)
         SnakemakeUtils.add_pickle_inputs(cmm, input)
+        cmm_params = {'output_prefix': 'readmap_qc', 'reset_metrics': 'null',
+                      'metrics_CollectAlignmentSummaryMetrics': 'CollectAlignmentSummaryMetrics',
+                      'metrics_CollectInsertSizeMetrics': 'CollectInsertSizeMetrics',
+                      'metrics_QualityScoreDistribution': 'QualityScoreDistribution',
+                      'metrics_CollectGcBiasMetrics': 'CollectGcBiasMetrics'}
         step = Step(str(rule), cmm, camel, params.running_dir, config)
+        cmm.update_parameters(**cmm_params)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(cmm, output)
 
@@ -146,8 +152,6 @@ rule alignment_report:
 
         reporter = ReporterAlignment(camel)
         SnakemakeUtils.add_pickle_inputs(reporter, input)
-        import pickle
-        pickle.dump(reporter, open('/scratch/rawinand/influenza/test.pickle', 'wb'))
         step = Step(str(rule), reporter, camel, params.running_dir, config)
         if 'genome_segments' in config['species_info']:
             reporter.update_parameters(**{'genome_segments': config['species_info']['genome_segments']})

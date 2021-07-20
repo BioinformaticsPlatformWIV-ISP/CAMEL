@@ -18,8 +18,8 @@ rule seqtk_subsample:
         FASTQ_PE = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_CLEAN_PE if 'deconseq' in config['analyses'] else [],
         IO = Path(config['working_dir']) / 'fq_dict.io' if 'deconseq' not in config['analyses'] else []
     output:
-        FASTQ =Path(config['working_dir']) / genometyping_blastn.OUTPUT_SEQTK_SUBSAMPLE_FASTQ,
-        INFORMS =Path(config['working_dir']) / genometyping_blastn.OUTPUT_SEQTK_SUBSAMPLE_INFORMS
+        FASTQ = Path(config['working_dir']) / genometyping_blastn.OUTPUT_SEQTK_SUBSAMPLE_FASTQ,
+        INFORMS = Path(config['working_dir']) / genometyping_blastn.OUTPUT_SEQTK_SUBSAMPLE_INFORMS
     params:
         running_dir = Path(config['working_dir']) / 'genometyping' / 'seqtk_subsample',
         sample_name = config['sample_name']
@@ -46,10 +46,10 @@ rule seqtk_convert:
     Runs Seqtk convert on the data
     """
     input:
-        FASTQ =Path(config['working_dir']) / genometyping_blastn.OUTPUT_SEQTK_SUBSAMPLE_FASTQ
+        FASTQ = Path(config['working_dir']) / genometyping_blastn.OUTPUT_SEQTK_SUBSAMPLE_FASTQ
     output:
-        FASTA =Path(config['working_dir']) / genometyping_blastn.OUTPUT_SEQTK_CONVERT_FASTA,
-          INFORMS =Path(config['working_dir']) / genometyping_blastn.OUTPUT_SEQTK_CONVERT_INFORMS
+        FASTA = Path(config['working_dir']) / genometyping_blastn.OUTPUT_SEQTK_CONVERT_FASTA,
+        INFORMS = Path(config['working_dir']) / genometyping_blastn.OUTPUT_SEQTK_CONVERT_INFORMS
     params:
         running_dir = Path(config['working_dir']) / 'genometyping' / 'seqtk_convert',
         sample_name = config['sample_name']
@@ -137,10 +137,6 @@ rule blastn_genometyping_processing:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(gt, output)
 
-
-        # inf = SnakemakeUtils.load_object(input.ASN)[0].path
-        # inf_parser = InfluenzaBlastnAsnParser(inf, config['multi_segment'], config['species_info']['seqIDParser_type'], 'blast')
-        # inf_parser.group_hits_per_segment()
 
 rule blastn_genometyping_reference_indexing:
     """

@@ -39,6 +39,6 @@ rule_parameters:
     percent_identity: {blastn_genometyping_idcutoff}
     output_filename: 'blastn_genome_typing_read_hits.tsv'
   mapping:
-    bowtie2_mode: [very_sensitive_local]
-  iterative_mapping:
     bowtie2_mode: [sensitive, end_to_end]
+  iterative_mapping:
+    bowtie2_mode: [very_sensitive_local, local]

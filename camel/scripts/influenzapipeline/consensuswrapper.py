@@ -24,6 +24,7 @@ class ConsensusSequenceOutput:
     fasta_ref: Path
     vcf: Path
     vcf_diffs: Tuple[AbstractSet[str], AbstractSet[str]]
+    bam: Path
 
 
 class ConsensusSequenceWrapper(object):
@@ -46,6 +47,14 @@ class ConsensusSequenceWrapper(object):
         :return: VCF file path
         """
         return self._output
+
+    @property
+    def input_ref(self) -> Path:
+        """
+        Returns the path of the input reference that was used
+        :return: Path to input reference
+        """
+        return self._working_dir / 'fasta_ref.io'
 
     def __create_input(self, fasta_ref_io: Path, fastq_pe: List[ToolIOFile]) -> None:
         """
@@ -156,5 +165,6 @@ class ConsensusSequenceWrapper(object):
         self._output = ConsensusSequenceOutput(
             fasta_ref=self._working_dir / OUTPUT_SEQ_EXTRACTION_CONSENSUS_SEQUENCE,
             vcf=self._working_dir / OUTPUT_SEQ_EXTRACTION_SELECTVARIANTS,
-            vcf_diffs=self.__compare_vcf(previous_vcf)
+            vcf_diffs=self.__compare_vcf(previous_vcf),
+            bam=self._working_dir / OUTPUT_ALIGNMENT_BAM,
         )

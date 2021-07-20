@@ -66,8 +66,7 @@ class MainInfluenzaPipeline(ReportPipeline):
         # Consensus sequence extraction
         parser.add_argument('--analysis_type', default='assembly', choices=['assembly', 'alignment'])  # assembly / alignment
         parser.add_argument('--assembler', default='spades', choices=['spades', 'velvetoptimiser', 'megahit'])  # spades / velvetoptimiser / megahit
-        parser.add_argument('--aligner', default='bwa', choices=['bwa', 'bowtie2'])  # bwa / bowtie2
-        parser.add_argument('--variantcaller', default='unifiedgenotyper', choices=['unifiedgenotyper', 'haplotypecaller'])  # unifiedgenotyper / haplotypecaller
+        parser.add_argument('--aligner', default='bowtie2', choices=['bwa', 'bowtie2'])  # bwa / bowtie2
 
         parser.add_argument('--random-seed', type=int)
         return parser.parse_args(args)
