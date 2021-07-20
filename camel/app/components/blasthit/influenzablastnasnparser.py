@@ -12,15 +12,18 @@ class InfluenzaBlastnAsnParser(BlastnAsnParser):
     for Influenza.
     """
 
-    def __init__(self, blastn_file: str, multi_segment: bool, seqid_parser_type: str, subtyping_method: str):
+    def __init__(self, blastn_file: str, multi_segment: bool, seqid_parser_type: str, subtyping_method: str,
+                 exclude_tax_columns: bool = True, folder: str = None):
         """
         Initializes the object
         :param blastn_file: File location of the BLASTn output file
         :param multi_segment: Is it a multi-segment genome or not
         :param seqid_parser_type: Type of the SeqID parser
         :param subtyping_method: Subtyping method used (i.e. blast or asm)
+        :param exclude_tax_columns: Should columns that require a taxonomy db be excluded
+        :param folder: Optional folder to run the commands in
         """
-        super(InfluenzaBlastnAsnParser, self).__init__(blastn_file)
+        super(InfluenzaBlastnAsnParser, self).__init__(blastn_file, exclude_tax_columns=exclude_tax_columns, folder=folder)
         self._check_subtyping_method(subtyping_method)
         self._multi_segment = multi_segment
         self._seqid_parser_type = seqid_parser_type
