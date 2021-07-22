@@ -159,7 +159,7 @@ rule summary_combine_all:
     input:
         rules.summary_init.output.TSV,
         trimming.get_trimming_summary(config),
-        Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_SUMMARY,
+        Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_SUMMARY if 'deconseq' in config['analyses'] else [],
         Path(config['working_dir']) / genometyping_blastn.OUTPUT_GENOMETYPING_SUMMARY
     output:
         TSV = config['output_tabular']

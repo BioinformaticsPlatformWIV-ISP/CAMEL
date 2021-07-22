@@ -50,8 +50,15 @@ rule add_or_replace_read_groups:
         SnakemakeUtils.dump_tool_outputs(add_or_replace, output)
 
 rule fastq_to_sam:
+    """
+    Converts fastq file to a bam file
+    
+    Input is FASTQ_PE in case deconseq is requested or the rule is run during the iterative consensus
+    sequence calling. In the latter case, FASTQ_PE will be present in the config file.
+    It is IO when it is the main run of the pipeline and deconseq is not requested.
+    """
     input:
-        FASTQ_PE = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_CLEAN_PE if 'deconseq' in config.get('analyses', '') else config['FASTQ_PE'],
+        FASTQ_PE = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_CLEAN_PE if 'deconseq' in config.get('analyses', '') else config.get('FASTQ_PE', []),
         IO = Path(config['working_dir']) / 'fq_dict.io' if 'deconseq' not in config.get('analyses', '') and 'FASTQ_PE' not in config else []
     output:
         BAM = Path(config['working_dir']) / sequence_extraction.OUTPUT_SEQ_EXTRACTION_FASTQ_TO_SAM
@@ -284,10 +291,17 @@ rule consensus_sequence_index:
             SnakemakeUtils.dump_tool_outputs(indexer, output)
 
 rule iterative_consensus_generation:
+    """
+    Generates the consensus sequence in an iterative way.
+    
+    Input is FASTQ_PE in case deconseq is requested or the rule is run during the iterative consensus
+    sequence calling. In the latter case, FASTQ_PE will be present in the config file.
+    It is IO when it is the main run of the pipeline and deconseq is not requested.
+    """
     input:
         FASTA_REF = Path(config['working_dir']) / sequence_extraction.OUTPUT_SEQ_EXTRACTION_CONSENSUS_SEQUENCE,
         BAM = Path(config['working_dir']) / sequence_extraction.OUTPUT_SEQ_EXTRACTION_FASTQ_TO_SAM,
-        FASTQ_PE = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_CLEAN_PE if 'deconseq' in config.get('analyses', '') else config['FASTQ_PE'],
+        FASTQ_PE = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_CLEAN_PE if 'deconseq' in config.get('analyses', '') else config.get('FASTQ_PE', []),
         IO = Path(config['working_dir']) / 'fq_dict.io' if 'deconseq' not in config.get('analyses', '') and 'FASTQ_PE' not in config else [],
         VCF = Path(config['working_dir']) / sequence_extraction.OUTPUT_SEQ_EXTRACTION_SELECTVARIANTS
     output:
