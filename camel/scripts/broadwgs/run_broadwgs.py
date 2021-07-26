@@ -34,6 +34,22 @@ class MainBroadWGSPipeline(object):
         self._working_dir = Path(self._args.working_dir)
         self._pipeline = Pipeline(self._name, Camel.get_instance(), self._args.log, self._args.log)
 
+    @property
+    def name(self) -> str:
+        """
+        Returns the pipeline name.
+        :return: Name
+        """
+        return self._name
+
+    @property
+    def version(self) -> str:
+        """
+        Returns the pipeline version.
+        :return: Version
+        """
+        return self._version
+
     def run(self) -> None:
         """
         Runs the pipeline.
@@ -150,7 +166,6 @@ class MainBroadWGSPipeline(object):
 
         return SnakePipelineUtils.generate_config_file(config_data, self._working_dir)
 
-    @staticmethod
     def _parse_arguments(args: Optional[Sequence[str]]) -> argparse.Namespace:
         """
         Parses the command line arguments.
@@ -176,23 +191,6 @@ class MainBroadWGSPipeline(object):
 
 
         return parser.parse_args(args)
-
-    @property
-    def name(self) -> str:
-        """
-        Returns the pipeline name.
-        :return: Name
-        """
-        return self._name
-
-    @property
-    def version(self) -> str:
-        """
-        Returns the pipeline version.
-        :return: Version
-        """
-        return self._version
-
 
 if __name__ == '__main__':
     Camel.get_instance()

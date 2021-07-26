@@ -39,7 +39,7 @@ rule checksum_cram:
     input:
         CRAM = rules.samtools_convert_to_cram.output.CRAM,
     output:
-        CRAM_checksum = Path(config['working_dir']) / "bamtocram" / "checksum" / "cram.md5",
+        CRAM_checksum = Path(config['working_dir']) / "bamtocram" / "convert" / "cram.md5",
     run:
         import subprocess
 
@@ -51,10 +51,10 @@ rule samtools_index_cram:
         CRAM = rules.samtools_convert_to_cram.output.CRAM,
         FASTA_REF = Path(config['working_dir']) / "ref_input" / "fasta_reference_human_value_file.io",
     output:
-        CRAI = Path(config['working_dir']) / "bamtocram" / "index" / "crai.io",
+        CRAI = Path(config['working_dir']) / "bamtocram" / "convert" / "cram.crai.io",
     params:
-        working_dir = Path(config['working_dir']) / "bamtocram" / "index",
-        output_file = f'{config["sample"]}.crai'
+        working_dir = Path(config['working_dir']) / "bamtocram" / "convert",
+        output_file = f'{config["sample"]}.cram'
     run:
         from camel.app.tools.samtools.samtoolsindexcram import SamtoolsIndexCram
 
@@ -73,7 +73,7 @@ rule picard_validate_cram:
         CRAM = rules.samtools_convert_to_cram.output.CRAM,
         FASTA_REF = Path(config['working_dir']) / "ref_input" / "fasta_reference_human_value_file.io",
     output:
-        TXT_metrics = Path(config['working_dir']) / "bamtocram" / "metrics" / 'cram_validation_report.io',
+        TXT_metrics = Path(config['working_dir']) / "bamtocram" / "metrics" / "cram_validation_report.io",
     params:
         working_dir = Path(config['working_dir']) / "bamtocram" / "metrics",
     run:
@@ -88,5 +88,6 @@ rule picard_validate_cram:
         val_cram.update_parameters(
             **config['rule_params']['bam_to_cram'][rule]
         )
+        val_cram.update_java_options("-mx100G -XX:+UseParallelGC -XX:ParallelGCThreads=1 -Dpicard.useLegacyParser=false")
         step.run_step()
         SnakemakeUtils.dump_tool_output(val_cram, 'TXT_report', output.TXT_metrics)

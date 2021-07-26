@@ -23,7 +23,7 @@ rule all:
     input:
         CRAM = Path(config['final_output_dir']) / f'{config["sample"]}.cram',
         CRAM_checksum = Path(config['final_output_dir']) / f'{config["sample"]}.cram.md5',
-        CRAI = Path(config['final_output_dir']) / f'{config["sample"]}.crai',
+        CRAI = Path(config['final_output_dir']) / f'{config["sample"]}.cram.crai',
         CRAM_metrics = Path(config['final_output_dir']) / f'{config["sample"]}.cram.metrics',
 
         VCF = Path(config['final_output_dir']) / f'{config["sample"]}.gVCF',
@@ -41,7 +41,7 @@ rule move_output:
     output:
         CRAM = Path(config['final_output_dir']) / f'{config["sample"]}.cram',
         CRAM_checksum = Path(config['final_output_dir']) / f'{config["sample"]}.cram.md5',
-        CRAI = Path(config['final_output_dir']) / f'{config["sample"]}.crai',
+        CRAI = Path(config['final_output_dir']) / f'{config["sample"]}.cram.crai',
         CRAM_metrics = Path(config['final_output_dir']) / f'{config["sample"]}.cram.metrics',
         VCF = Path(config['final_output_dir']) / f'{config["sample"]}.gVCF',
     run:
@@ -123,7 +123,7 @@ rule move_qc:
         TXT_metrics_WGS = Path(config['working_dir']) / "qc" / "wgs_metrics" / f"{config['sample']}.wgs.metrics.txt",
         TXT_metrics_rawWGS = Path(config['working_dir']) / "qc" / "wgs_metrics" / f"{config['sample']}.raw.wgs.metrics.txt",
 
-        TXT_metrics_validateGVCF = Path(config['working_dir']) / "qc" / "validate_gvcf" / f"{config['sample']}.validate_vcf.txt",
+        #TXT_metrics_validateGVCF = Path(config['working_dir']) / "qc" / "validate_gvcf" / f"{config['sample']}.validate_vcf.txt",
 
         TXT_metrics_varCalling = Path(config['working_dir']) / "qc" / "variant_calling_metrics" / f"{config['sample']}.variant_calling_metrics.io",
 
