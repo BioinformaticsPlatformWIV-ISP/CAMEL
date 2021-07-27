@@ -7,7 +7,9 @@ SNAKEFILE_DECONSEQ = f'{Path(__file__).parent / Path(__file__).stem}.smk'
 
 _dir_deconseq = Path('deconseq')
 OUTPUT_DECONSEQ_CLEAN_PE = _dir_deconseq / 'fastq_pe_clean.io'
-OUTPUT_DECONSEQ_CLEAN_SE = _dir_deconseq / 'fastq_se_clean.io'
+OUTPUT_DECONSEQ_CLEAN_SE_FWD = _dir_deconseq / 'fastq_se_fwd_clean.io'
+OUTPUT_DECONSEQ_CLEAN_SE_REV = _dir_deconseq / 'fastq_se_rev_clean.io'
+OUTPUT_DECONSEQ_DICT = _dir_deconseq / 'fastq_all.io'
 OUTPUT_DECONSEQ_INFORMS = _dir_deconseq / 'informs.io'
 OUTPUT_DECONSEQ_INFORMS_PE_FWD = _dir_deconseq / 'informs_pe_fwd.io'
 OUTPUT_DECONSEQ_INFORMS_PE_REV = _dir_deconseq / 'informs_pe_rev.io'

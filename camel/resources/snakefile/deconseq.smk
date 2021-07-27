@@ -15,7 +15,8 @@ rule deconseq_run:
         IO = Path(config['working_dir']) / 'fq_dict.io',
     output:
         FASTQ_PE_CLEAN = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_CLEAN_PE,
-        FASTQ_SE_CLEAN = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_CLEAN_SE,
+        FASTQ_SE_FWD_CLEAN = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_CLEAN_SE_FWD,
+        FASTQ_SE_REV_CLEAN= Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_CLEAN_SE_REV,
         INFORMS = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_INFORMS,
         INFORMS_PE_FWD = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_INFORMS_PE_FWD,
         INFORMS_PE_REV = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_INFORMS_PE_REV,
@@ -79,37 +80,34 @@ rule deconseq_run:
         if config['decontamination']['dbs_retain']:
             fwd_pe = [fwd_pe_deconseq.tool_outputs['FASTQ_Clean'][0].path, fwd_pe_deconseq.tool_outputs['FASTQ_Both'][0].path]
             rev_pe = [rev_pe_deconseq.tool_outputs['FASTQ_Clean'][0].path, rev_pe_deconseq.tool_outputs['FASTQ_Both'][0].path]
-            if fwd_se_deconseq and rev_se_deconseq:
-                se = [fwd_se_deconseq.tool_outputs['FASTQ_Clean'][0].path, rev_se_deconseq.tool_outputs['FASTQ_Clean'][0].path,
-                      fwd_se_deconseq.tool_outputs['FASTQ_Both'][0].path, rev_se_deconseq.tool_outputs['FASTQ_Both'][0].path]
-            elif fwd_se_deconseq:
-                se = [fwd_se_deconseq.tool_outputs['FASTQ_Clean'][0].path, fwd_se_deconseq.tool_outputs['FASTQ_Both'][0].path]
-            elif rev_se_deconseq:
-                se = [rev_se_deconseq.tool_outputs['FASTQ_Clean'][0].path, rev_se_deconseq.tool_outputs['FASTQ_Both'][0].path]
+            if fwd_se_deconseq:
+                se_fwd = [fwd_se_deconseq.tool_outputs['FASTQ_Clean'][0].path, fwd_se_deconseq.tool_outputs['FASTQ_Both'][0].path]
             else:
-                se = []
+                se_fwd = []
+            if rev_se_deconseq:
+                se_rev = [rev_se_deconseq.tool_outputs['FASTQ_Clean'][0].path, rev_se_deconseq.tool_outputs['FASTQ_Both'][0].path]
+            else:
+                se_rev = []
         else:
             fwd_pe = [fwd_pe_deconseq.tool_outputs['FASTQ_Clean'][0].path]
             rev_pe = [rev_pe_deconseq.tool_outputs['FASTQ_Clean'][0].path]
-            if fwd_se_deconseq and rev_se_deconseq:
-                se = [fwd_se_deconseq.tool_outputs['FASTQ_Clean'][0].path, rev_se_deconseq.tool_outputs['FASTQ_Clean'][0].path]
-            elif fwd_se_deconseq:
-                se = [fwd_se_deconseq.tool_outputs['FASTQ_Clean'][0].path]
-            elif rev_se_deconseq:
-                se = [rev_se_deconseq.tool_outputs['FASTQ_Clean'][0].path]
-            else:
-                se = []
+            fwd_se = [fwd_se_deconseq.tool_outputs['FASTQ_Clean'][0].path] if fwd_se_deconseq else []
+            rev_se = [rev_se_deconseq.tool_outputs['FASTQ_Clean'][0].path] if rev_se_deconseq else []
 
-        FastqUtils.process_paired_end(fwd_pe, rev_pe, se, Path(config['working_dir']) / 'deconseq' / 'deconseq_cleaned_pe_fwd.fq',
-                                      Path(config['working_dir']) / 'deconseq' / 'deconseq_cleaned_pe_rev.fq',
-                                      Path(config['working_dir']) / 'deconseq' / 'deconseq_cleaned_se.fq')
+        deconseq_wd = Path(config['working_dir']) / 'deconseq'
 
-        SnakemakeUtils.dump_object([ToolIOFile(Path(config['working_dir']) / 'deconseq' / 'deconseq_cleaned_pe_fwd.fq'),
-                                    ToolIOFile(Path(config['working_dir']) / 'deconseq' / 'deconseq_cleaned_pe_rev.fq')], deconseq.OUTPUT_DECONSEQ_CLEAN_PE)
-        SnakemakeUtils.dump_object([ToolIOFile(Path(config['working_dir']) / 'deconseq' / 'deconseq_cleaned_se.fq')], deconseq.OUTPUT_DECONSEQ_CLEAN_SE)
+        FastqUtils.process_paired_end_se(fwd_pe, rev_pe, fwd_se, rev_se, deconseq_wd / 'deconseq_cleaned_pe_fwd.fq',
+                                         deconseq_wd / 'deconseq_cleaned_pe_rev.fq',
+                                         deconseq_wd / 'deconseq_cleaned_se_fwd.fq',
+                                         deconseq_wd / 'deconseq_cleaned_se_rev.fq')
+
+        SnakemakeUtils.dump_object([ToolIOFile(deconseq_wd / 'deconseq_cleaned_pe_fwd.fq'),
+                                    ToolIOFile(deconseq_wd / 'deconseq_cleaned_pe_rev.fq')], output.FASTQ_PE_CLEAN)
+        SnakemakeUtils.dump_object([ToolIOFile(deconseq_wd / 'deconseq_cleaned_se_fwd.fq')], output.FASTQ_SE_FWD_CLEAN)
+        SnakemakeUtils.dump_object([ToolIOFile(deconseq_wd / 'deconseq_cleaned_se_rev.fq')], output.FASTQ_SE_REV_CLEAN)
         deconseq_informs = deconseq.combine_deconseq_informs(fwd_pe_deconseq, rev_pe_deconseq, fwd_se_deconseq, rev_se_deconseq)
-        deconseq_informs['combined'] = {'remaining_pe_reads': FastqUtils.count_reads(str(Path(config['working_dir']) / 'deconseq' / 'deconseq_cleaned_pe_fwd.fq')),
-                                        'remaining_se_reads': FastqUtils.count_reads(str(Path(config['working_dir']) / 'deconseq' / 'deconseq_cleaned_se.fq')),
+        deconseq_informs['combined'] = {'remaining_pe_reads': FastqUtils.count_reads(str(deconseq_wd / 'deconseq_cleaned_pe_fwd.fq')),
+                                        'remaining_se_reads': FastqUtils.count_reads(str(deconseq_wd / 'deconseq_cleaned_se.fq')),
                                         'processed_dbs': deconseq.get_processed_dbs(deconseq_informs)}
         SnakemakeUtils.dump_object(deconseq_informs, deconseq.OUTPUT_DECONSEQ_INFORMS)
 
@@ -169,3 +167,25 @@ rule deconseq_export_summary:
                     else:
                         handle.write(f'deconseq_{read_type.lower()}_{deconseq_db}_input\t0\n')
                         handle.write(f'deconseq_{read_type.lower()}_{deconseq_db}_removed\t0\n')
+
+rule trimming_deconseq_to_dict:
+    """
+    Combines the deconseq cleand reads into a dictionary.
+    """
+    input:
+        FASTQ_PE = rules.deconseq_run.output.FASTQ_PE_CLEAN,
+        FASTQ_SE_FWD = rules.deconseq_run.output.FASTQ_SE_FWD_CLEAN,
+        FASTQ_SE_REV = rules.deconseq_run.output.FASTQ_SE_REV_CLEAN
+    output:
+        IO = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_DICT
+    run:
+        output_dict = {
+            'PE': SnakemakeUtils.load_object(input.FASTQ_PE)
+        }
+        se_fwd = SnakemakeUtils.load_object(input.FASTQ_SE_FWD)
+        if se_fwd[0].size > 0:
+            output_dict['SE_FWD'] = se_fwd
+        se_rev = SnakemakeUtils.load_object(input.FASTQ_SE_REV)
+        if se_rev[0].size > 0:
+            output_dict['SE_REV'] = se_rev
+        SnakemakeUtils.dump_object(output_dict, output.IO)
