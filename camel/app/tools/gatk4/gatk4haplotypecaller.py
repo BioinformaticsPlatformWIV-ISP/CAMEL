@@ -64,11 +64,11 @@ class GATK4HaplotypeCaller(GATK4):
                 raise InvalidParameterError("GQ Bands list must be specified in increasing order.")
             self._option_string += ' --gvcf-gq-bands '
             self._option_string += ' --gvcf-gq-bands '.join(gqb_list)
-            self._option_string += " "
 
         if 'annotation_group' in self._parameters:
             self._option_string += ' --annotation-group '
             self._option_string += ' --annotation-group '.join(self._parameters['annotation_group'].value.split(","))
-            self._option_string += " "
+
+        self._option_string += ' '
 
         super(GATK4HaplotypeCaller, self)._build_command()

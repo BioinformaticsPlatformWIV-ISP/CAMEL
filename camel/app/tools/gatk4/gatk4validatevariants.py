@@ -6,7 +6,6 @@ from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.gatk4.gatk4 import GATK4
 
-
 class GATK4ValidateVariants(GATK4):
     """
     Class for GATK4 ValidateVariants function, validate the adherence of a file to VCF format.
@@ -39,14 +38,14 @@ class GATK4ValidateVariants(GATK4):
         if 'VCF_dbsnp' in self._tool_inputs:
             self._input_string += f"--dbsnp {self._tool_inputs['VCF_dbsnp'][0].path} "
 
-    def _set_output(self):
+    def _set_output(self) -> None:
         """
         Set the output specification. Overrules method in parent class
         :return: None
         """
         self._tool_outputs['TXT_metrics'] = [ToolIOFile(Path(self._folder) / self._parameters['output'].value)]
 
-    def _print_output(self):
+    def _print_output(self) -> None:
         """
         This function does not create an output file, but outputs everything to stderr
         Print output file for snakemake's sake
@@ -73,7 +72,9 @@ class GATK4ValidateVariants(GATK4):
         self._set_output()
         self._set_specific_parameters()
         self._build_command()
-        self._execute_command()
+        try:
+            self._execute_command()
+        finally:
+            shutil.rmtree(self._temp_dir)
         self._print_output()
         self._set_informs()
-        shutil.rmtree(self._temp_dir)

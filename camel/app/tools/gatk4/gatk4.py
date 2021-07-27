@@ -52,9 +52,11 @@ class GATK4(Tool, metaclass=abc.ABCMeta):
         self._set_output()
         self._set_specific_parameters()
         self._build_command()
-        self._execute_command()
+        try:
+            self._execute_command()
+        finally:
+            shutil.rmtree(self._temp_dir)
         self._set_informs()
-        shutil.rmtree(self._temp_dir)
 
     def _check_input(self) -> None:
         """

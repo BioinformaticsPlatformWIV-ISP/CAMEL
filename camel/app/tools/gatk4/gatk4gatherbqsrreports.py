@@ -1,7 +1,6 @@
 from camel.app.camel import Camel
 from camel.app.tools.gatk4.gatk4 import GATK4
 
-
 class GATK4GatherBQSRReports(GATK4):
     """
     =============================
@@ -16,7 +15,6 @@ class GATK4GatherBQSRReports(GATK4):
     Output:
     -------
     'TXT_RecalibrationTable':   ToolIOFile object. Text file containing the gathered recalibration data.
-
     """
 
     def __init__(self, camel: Camel):
@@ -30,14 +28,12 @@ class GATK4GatherBQSRReports(GATK4):
         self._required_inputs = ['TXT_intervals']
         self._output_type = 'TXT_RecalibrationTable'
 
-
     def _set_input(self) -> None:
         """
         Set the input specification in the input_string
         Overrides method in parent class.
         :return: None
         """
-
         # set input reports
         self._input_string = ' --input '
         self._input_string += ' --input '.join(f.path for f in self._tool_inputs['TXT_intervals'])
