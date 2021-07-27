@@ -15,13 +15,12 @@ rule run_alignment:
     """
     Aligns reads to a given reference genome using BWA or Bowtie2. 
     
-    Input is FASTQ_PE in case deconseq is requested or the rule is run during the iterative consensus
-    sequence calling. In the latter case, FASTQ_PE will be present in the config file.
-    It is IO when it is the main run of the pipeline and deconseq is not requested.
+    Input is FASTQ_PE in case the rule is run during the iterative consensus sequence calling. 
+    In that case, FASTQ_PE will be present in the config file.
     """
     input:
-        FASTQ_PE = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_CLEAN_PE if 'deconseq' in config.get('analyses', '') else config.get('FASTQ_PE', []),
-        IO = Path(config['working_dir']) / 'fq_dict.io' if 'deconseq' not in config.get('analyses', '') and 'FASTQ_PE' not in config else [],
+        FASTQ_PE = config.get('FASTQ_PE', []),
+        IO = Path(config['working_dir']) / 'fq_dict.io' if 'FASTQ_PE' not in config else [],
         INDEX_GENOME_PREFIX = Path(config['working_dir']) / genometyping_blastn.OUTPUT_GENOMETYPING_INDEX_GENOME_PREFIX if 'index_genome_prefix' not in config else config['index_genome_prefix']
     output:
         SAM = Path(config['working_dir']) / alignment.OUTPUT_ALIGNMENT_SAM,

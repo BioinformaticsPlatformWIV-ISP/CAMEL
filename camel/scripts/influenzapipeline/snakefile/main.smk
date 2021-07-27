@@ -5,7 +5,7 @@ from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.resources.snakefile import trimming_illumina, trimming, quality_checks, deconseq
-from camel.scripts.influenzapipeline.snakefile import genometyping_blastn, alignment, sequence_extraction
+from camel.scripts.influenzapipeline.snakefile import genometyping_blastn, alignment, sequence_extraction, assembly
 
 #######################
 # Included Snakefiles #
@@ -16,6 +16,7 @@ include: deconseq.SNAKEFILE_DECONSEQ
 include: genometyping_blastn.SNAKEFILE_GENOMETYPING
 include: alignment.SNAKEFILE_MAPPING
 include: sequence_extraction.SNAKEFILE_SEQ_EXTRACTION
+include: assembly.SNAKEFILE_ASSEMBLY
 
 ##################
 # AUXILIARY CODE #
@@ -51,7 +52,8 @@ rule select_fastq:
     Other workflows such as Kraken or Assembly rely on this dictionary to get input files (PE or SE).
     """
     input:
-        FASTQ_PE = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_DICT
+        FASTQ_PE = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_DICT if 'deconseq' in config['analyses'] \
+            else Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_DICT
     output:
         IO_FASTQ = Path(config['working_dir']) / 'fq_dict.io'
     shell:
@@ -65,7 +67,7 @@ rule report_command_section:
         INFORMS_deconseq_pe_rev = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_INFORMS_PE_REV if 'deconseq' in config['analyses'] else [],
         INFORMS_deconseq_se_fwd = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_INFORMS_SE_FWD if 'deconseq' in config['analyses'] else [],
         INFORMS_deconseq_se_rev = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_INFORMS_SE_REV if 'deconseq' in config['analyses'] else [],
-        INFORMS_seqtk_subsample = Path(config['working_dir']) / genometyping_blastn.OUTPUT_SEQTK_SUBSAMPLE_INFORMS,
+        INFORMS_seqtk_subsample = Path(config['working_dir']) / genometyping_blastn.OUTPUT_SEQTK_SUBSAMPLE_INFORMS if config['analysis_type'] == 'alignment' else [],
         INFORMS_blast_genometyping = Path(config['working_dir']) / genometyping_blastn.OUTPUT_BLASTN_INFORMS if 'genometyping' in config['analyses'] else [],
         INFORMS_alignment = Path(config['working_dir']) / alignment.OUTPUT_ALIGNMENT_INFORMS,
         INFORMS_merge_bam = Path(config['working_dir']) / sequence_extraction.OUTPUT_SEQ_EXTRACTION_MERGE_BAM_ALIGNMENT_INFORMS,

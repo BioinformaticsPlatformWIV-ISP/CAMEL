@@ -53,13 +53,12 @@ rule fastq_to_sam:
     """
     Converts fastq file to a bam file
     
-    Input is FASTQ_PE in case deconseq is requested or the rule is run during the iterative consensus
-    sequence calling. In the latter case, FASTQ_PE will be present in the config file.
-    It is IO when it is the main run of the pipeline and deconseq is not requested.
+    Input is FASTQ_PE in case the rule is run during the iterative consensus sequence calling. 
+    In that case, FASTQ_PE will be present in the config file.
     """
     input:
-        FASTQ_PE = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_CLEAN_PE if 'deconseq' in config.get('analyses', '') else config.get('FASTQ_PE', []),
-        IO = Path(config['working_dir']) / 'fq_dict.io' if 'deconseq' not in config.get('analyses', '') and 'FASTQ_PE' not in config else []
+        FASTQ_PE = config.get('FASTQ_PE', []),
+        IO = Path(config['working_dir']) / 'fq_dict.io' if 'FASTQ_PE' not in config else []
     output:
         BAM = Path(config['working_dir']) / sequence_extraction.OUTPUT_SEQ_EXTRACTION_FASTQ_TO_SAM
     params:
@@ -98,6 +97,7 @@ rule merge_bam_alignment:
         mba = MergeBamAlignment(camel)
         SnakemakeUtils.add_pickle_inputs(mba, input)
         step = Step(str(rule), mba, camel, params.running_dir, config)
+        # TODO: Check if this parameter needs to stay
         mba.update_parameters(**{'max_gaps': '-1'})
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(mba, output)
@@ -294,15 +294,14 @@ rule iterative_consensus_generation:
     """
     Generates the consensus sequence in an iterative way.
     
-    Input is FASTQ_PE in case deconseq is requested or the rule is run during the iterative consensus
-    sequence calling. In the latter case, FASTQ_PE will be present in the config file.
-    It is IO when it is the main run of the pipeline and deconseq is not requested.
+    Input is FASTQ_PE in case the rule is run during the iterative consensus sequence calling. 
+    In that case, FASTQ_PE will be present in the config file.
     """
     input:
         FASTA_REF = Path(config['working_dir']) / sequence_extraction.OUTPUT_SEQ_EXTRACTION_CONSENSUS_SEQUENCE,
         BAM = Path(config['working_dir']) / sequence_extraction.OUTPUT_SEQ_EXTRACTION_FASTQ_TO_SAM,
-        FASTQ_PE = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_CLEAN_PE if 'deconseq' in config.get('analyses', '') else config.get('FASTQ_PE', []),
-        IO = Path(config['working_dir']) / 'fq_dict.io' if 'deconseq' not in config.get('analyses', '') and 'FASTQ_PE' not in config else [],
+        FASTQ_PE = config.get('FASTQ_PE', []),
+        IO = Path(config['working_dir']) / 'fq_dict.io' if 'FASTQ_PE' not in config else [],
         VCF = Path(config['working_dir']) / sequence_extraction.OUTPUT_SEQ_EXTRACTION_SELECTVARIANTS
     output:
         FASTA = Path(config['working_dir']) / sequence_extraction.OUTPUT_SEQ_EXTRACTION_CONSENSUS_SEQUENCE_ITERATIVE,
@@ -509,38 +508,3 @@ rule sequence_extraction_report:
         step = Step(str(rule), reporter, camel, params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
-
-
-# - id: SeqExtraction-conseq-blast
-#     tool: !!python/name:app.tools.blast.blastn.Blastn
-#     inputs:
-#       - name: FASTA
-#         from: SeqExtraction-ConsensusSequence
-#         alias: FASTA_Subject
-#       - name: FASTA_REF
-#         from: initial
-#         alias: FASTA
-#
-#   - id: SeqExtraction-conseq-stats-collector
-#     tool: !!python/name:app.tools.pipelines.sequence_extraction.blastnsequenceinformextraction.BlastnSequenceInformExtractor
-#     inputs:
-#       - name: FASTA_REF
-#         from: initial
-#       - name: TSV
-#         from: SeqExtraction-conseq-blast
-#       - name: SeqIDParser
-#         from: initial
-#
-#   - id: SeqExtraction-conseq-idrename
-#     tool: !!python/name:app.tools.pipelines.influenza_sequence_extraction.influenzaaconsensussequenceidrenamer.InfluenzaAConsensusSequenceIDRenamer
-#     inputs:
-#       - name: FASTA_concatenated
-#         from: SeqExtraction-ConsensusSequence
-#         alias: FASTA
-#       - name: SAMPLE
-#         from: initial
-#       - name: SeqIDParser
-#         from: initial
-#     informs:
-#       - from: InfluenzaASubtypeDetector
-#         alias: SubtypeDetector

@@ -6,6 +6,8 @@ species:
   name: '{viral_species}'
   subtype: '{subtype}'
 
+read_type: 'illumina'
+
 read_trimming:
   export_fastq: '{export_fastq}'
 
@@ -18,6 +20,8 @@ decontamination:
   dbs: {deconseq_dbs}
   sequential: {deconseq_sequential}
   dbs_retain: {deconseq_retain}
+
+analysis_type: {analysis_type}
 
 species_info:
   influenza_A:

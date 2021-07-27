@@ -5,6 +5,7 @@ from camel.app.io.tooliofile import ToolIOFile
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.tools.seqtk.seqtkconvert import SeqtkConvert
+from camel.scripts.influenzapipeline.snakefile import assembly
 from camel.resources.snakefile import deconseq
 from camel.scripts.influenzapipeline.snakefile import genometyping_blastn
 
@@ -15,8 +16,7 @@ rule seqtk_subsample:
     Runs the Seqtk subsampling on the data
     """
     input:
-        FASTQ_PE = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_CLEAN_PE if 'deconseq' in config['analyses'] else [],
-        IO = Path(config['working_dir']) / 'fq_dict.io' if 'deconseq' not in config['analyses'] else []
+        IO = Path(config['working_dir']) / 'fq_dict.io'
     output:
         FASTQ = Path(config['working_dir']) / genometyping_blastn.OUTPUT_SEQTK_SUBSAMPLE_FASTQ,
         INFORMS = Path(config['working_dir']) / genometyping_blastn.OUTPUT_SEQTK_SUBSAMPLE_INFORMS
@@ -29,12 +29,9 @@ rule seqtk_subsample:
 
         subsample = SeqtkSubsample(camel)
 
-        if input.IO:
-            fq_dict = SnakePipelineUtils.extracts_fq_input(str(input.IO), key_pe='FASTQ_PE', key_se='FASTQ_SE')
-            input_files = fq_dict['FASTQ_PE']
-            subsample.add_input_files({'FASTQ_PE': input_files})
-        else:
-            SnakemakeUtils.add_pickle_inputs(subsample, input, keys=['FASTQ_PE'])
+        fq_dict = SnakePipelineUtils.extracts_fq_input(str(input.IO), key_pe='FASTQ_PE', key_se='FASTQ_SE')
+        input_files = fq_dict['FASTQ_PE']
+        subsample.add_input_files({'FASTQ_PE': input_files})
 
         step = Step(str(rule), subsample, camel, params.running_dir, config)
         subsample.update_parameters(combine_output=True)
@@ -80,12 +77,24 @@ rule seqtk_convert:
         SnakemakeUtils.dump_tool_outputs(convert, output)
         update_seqid(convert.tool_outputs['FASTA'][0].path)
 
+def get_blastn_input() -> Path:
+    """
+    Returns the input that is needed for the blastn genometyping rule
+    :return: Path to the input
+    """
+    if config['analysis_type'] == 'alignment':
+        return Path(config['working_dir']) / genometyping_blastn.OUTPUT_SEQTK_CONVERT_FASTA
+    elif config['analysis_type'] == 'assembly':
+        return Path(config['working_dir']) / assembly.OUTPUT_ASSEMBLY_FASTA
+    else:
+        raise ValueError('Invalid or no analysis type given in config file!')
+
 rule blastn_genometyping:
     """
     Runs Blastn on the data
     """
     input:
-        FASTA = Path(config['working_dir']) / genometyping_blastn.OUTPUT_SEQTK_CONVERT_FASTA
+        FASTA = get_blastn_input()
     output:
         ASN = Path(config['working_dir']) / genometyping_blastn.OUTPUT_BLASTN_ASN,
         TSV = Path(config['working_dir']) / genometyping_blastn.OUTPUT_BLASTN_TSV,

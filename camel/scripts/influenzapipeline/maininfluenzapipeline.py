@@ -64,7 +64,7 @@ class MainInfluenzaPipeline(ReportPipeline):
         parser.add_argument('--genometyping-db', choices=['ncbi', 'avian', 'ecdc'])
 
         # Consensus sequence extraction
-        parser.add_argument('--analysis_type', default='assembly', choices=['assembly', 'alignment'])  # assembly / alignment
+        parser.add_argument('--analysis-type', default='assembly', choices=['assembly', 'alignment'])  # assembly / alignment
         parser.add_argument('--assembler', default='spades', choices=['spades', 'velvetoptimiser', 'megahit'])  # spades / velvetoptimiser / megahit
         parser.add_argument('--aligner', default='bowtie2', choices=['bwa', 'bowtie2'])  # bwa / bowtie2
 
@@ -87,7 +87,8 @@ class MainInfluenzaPipeline(ReportPipeline):
                 deconseq_dbs=self._args.deconseq_dbs if self._args.deconseq_dbs else False,
                 deconseq_sequential=self._args.deconseq_sequential,
                 deconseq_retain=self._args.deconseq_retain_dbs if self._args.deconseq_retain_dbs else False,
-                blastn_genometyping_idcutoff=self._args.blastn_genometyping_idcutoff
+                blastn_genometyping_idcutoff=self._args.blastn_genometyping_idcutoff,
+                analysis_type=self._args.analysis_type
             ), Loader=yaml.SafeLoader))
 
         virus_name = f'{self._args.viral_species}_{self._args.subtype}' if self._args.subtype != 'N/A' else self._args.viral_species
