@@ -19,28 +19,14 @@ class MergeVCFs(Picard):
         super().__init__('Picard MergeVCFs', '2.23.3', camel)
 
         self._function_name = 'MergeVCFs'
-
-        self._required_inputs = ['VCF']
-        self._supported_inputs = ['VCF']
+        self._main_inputs = ['VCF']
 
     def _set_input(self) -> None:
         """
-        Set the input specification in the input_string
-        Overrides method in parent class.
+        Set the input specification. This method handles on or more VCF files
         :return: None
         """
-
-        # set input reports
-        self._input_string = ' I='
-        self._input_string += ' I='.join(f.path for f in self._tool_inputs['VCF'])
-
-    def _check_input(self) -> None:
-        """
-        :return: None
-        """
-        super(Picard, self)._check_input()
-
-        self._set_input()
+        self._input_string += "".join(["I=", " I=".join([vcf.path for vcf in self._tool_inputs["VCF"]])])
 
     def _set_output(self) -> None:
         """

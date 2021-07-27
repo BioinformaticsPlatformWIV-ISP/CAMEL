@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from camel.app.camel import Camel
+from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.picard.picard import Picard
 
@@ -17,22 +18,29 @@ class CollectRawWgsMetrics(Picard):
         :return: None
         """
         super().__init__('Picard CollectRawWgsMetrics', '2.23.3', camel)
-
         self._function_name = 'CollectRawWgsMetrics'
+        self._extra_inputs = ['FASTA_REF', 'COVERAGE_INTERVALS']
 
-        # individual files of different types that is required: e.g, FASTA_REF
-        self._required_inputs = ['FASTA_REF']
+    def _check_input(self) -> None:
+        """
+        Checks input specification
+        :return: None
+        """
+        super(CollectRawWgsMetrics, self)._check_input()
+
+        if 'FASTA_REF' not in self._tool_inputs:
+            raise InvalidInputSpecificationError("Picard CollectRawWgsMetrics: input file FASTA_REF is not specified")
 
     def _set_input(self) -> None:
         """
         Set input specification
         :return: None
         """
+        super(CollectRawWgsMetrics, self)._set_input()
+        self._input_string += f" R={self._tool_inputs['FASTA_REF'][0].path}"
+
         if 'COVERAGE_INTERVALS' in self._tool_inputs:
             self._input_string += f" INTERVALS={self._tool_inputs['COVERAGE_INTERVALS'][0].path}"
-
-        if 'FASTA_REF' in self._tool_inputs:
-            self._input_string += f" R={self._tool_inputs['FASTA_REF'][0].path}"
 
     def _set_output(self) -> None:
         """

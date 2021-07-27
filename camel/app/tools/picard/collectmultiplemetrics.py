@@ -12,15 +12,13 @@ class CollectMultipleMetrics(Picard):
     """
     Class for Picard CollectMultipleMetrics function to calculate various QC metrics for read mapping
 
-    PROGRAM
+    PROGRAM: Set of metrics programs to apply during the pass through the SAM file.
         Default values:
         - CollectAlignmentSummaryMetrics
         - CollectBaseDistributionByCycle
         - CollectInsertSizeMetrics
         - MeanQualityByCycle
         - QualityScoreDistribution
-
-        This option can be set to 'null' to clear the default list
 
         Possible values:
         - CollectAlignmentSummaryMetrics
@@ -32,6 +30,28 @@ class CollectMultipleMetrics(Picard):
         - RnaSeqMetrics
         - CollectSequencingArtifactMetrics
         - CollectQualityYieldMetrics
+
+    LEVEL/METRIC_ACCUMULATION_LEVEL: The level(s) at which to accumulate metrics
+        Default value:
+        - ALL_READS
+
+        Possible values:
+        - ALL_READS
+        - SAMPLE
+        - LIBRARY
+        - READ_GROUP
+
+    The PROGRAM and LEVEL options can be set to 'null' to clear the default list
+    Usage example:
+        java -jar picard.jar CollectMultipleMetrics \
+        I=input.bam \
+        O=multiple_metrics \
+        R=reference_sequence.fasta \
+        PROGRAM=null \
+        PROGRAM=QualityScoreDistribution \
+        PROGRAM=MeanQualityByCycle \
+        LEVEL=null \
+        LEVEL=LIBRARY
     """
     # Suffices for all PROGRAM options
     OUTPUT_FILE_SUFFIX = {
@@ -40,9 +60,9 @@ class CollectMultipleMetrics(Picard):
         'QualityScoreDistribution': {'QualityDistribution': '.quality_distribution_metrics', 'QualityDistributionFigure': '.quality_distribution.pdf'},
         'MeanQualityByCycle': {'QualityByCycle': '.quality_by_cycle_metrics', 'QualityByCycleFigure': '.quality_by_cycle.pdf'},
         'CollectBaseDistributionByCycle': {'BaseDistributionByCycle': '.base_distribution_by_cycle_metrics', 'BaseDistributionByCycleFigure': '.base_distribution_by_cycle.pdf'},
-        'CollectGcBiasMetrics': {'GcBias': '.gc_bias.detail_metrics', 'GcBiasSummary': '.gc_bias.summary_metrics','GcBiasFigure': '.gc_bias.pdf'},
+        'CollectGcBiasMetrics': {'GcBias': '.gc_bias.detail_metrics', 'GcBiasSummary': '.gc_bias.summary_metrics', 'GcBiasFigure': '.gc_bias.pdf'},
         'RnaSeqMetrics': {'RnaSeq': '.rna_metrics'},
-        'CollectSequencingArtifactMetrics': {'SequencingArtefactDetail':'.bait_bias_detail_metrics', 'SequencingArtefactSummary':'.bait_bias_summary_metrics',
+        'CollectSequencingArtifactMetrics': {'SequencingArtefactDetail': '.bait_bias_detail_metrics', 'SequencingArtefactSummary': '.bait_bias_summary_metrics',
                                              'SequencingArtefactErrorSummary': '.error_summary_metrics', 'SequencingArtefactPreAdapterDetail': '.pre_adapter_detail_metrics',
                                              'SequencingArtefactPreAdapterSummary': '.pre_adapter_summary_metrics'},
         'CollectQualityYieldMetrics': {'QualityYield': '.quality_yield_metrics'}
@@ -56,9 +76,19 @@ class CollectMultipleMetrics(Picard):
         """
         super().__init__('Picard CollectMultipleMetrics', '2.23.3', camel)
         self._function_name = 'CollectMultipleMetrics'
-        self._required_inputs = ['FASTA_REF']
+        self._extra_inputs = ['FASTA_REF']
         self._specific_parameters = ['metric_accumulation_level_multi']
         self._outfile_prefix = None
+
+    def _set_input(self) -> None:
+        """
+        Set the input for CollectMultipleMetrics
+        :return: None
+        """
+        super(CollectMultipleMetrics, self)._set_input()
+
+        if 'FASTA_REF' in self._tool_inputs:
+            self._input_string += f" R={self._tool_inputs['FASTA_REF'][0].path}"
 
     def _set_output(self) -> None:
         """
@@ -133,15 +163,6 @@ class CollectMultipleMetrics(Picard):
         Analyze the Alignment Summary statistics
         :return: None
         """
-        # Example content of AlignmentSummaryMetrics
-        #
-        # ## METRICS CLASS        picard.analysis.AlignmentSummaryMetrics
-        # CATEGORY        TOTAL_READS     PF_READS        PCT_PF_READS    PF_NOISE_READS  PF_READS_ALIGNED        PCT_PF_READS_ALIGNED    PF_ALIGNED_BASES        PF_HQ_ALIGNED_READS     PF_HQ_ALIGNED_BASES     PF_HQ_ALIGNED_Q20_BASES PF_HQ_MEDIAN_MISMATCHES PF_MISMATCH_RATE        PF_HQ_ERROR_RATE        PF_INDEL_RATE   MEAN_READ_LENGTH        READS_ALIGNED_IN_PAIRS  PCT_READS_ALIGNED_IN_PAIRS      PF_READS_IMPROPER_PAIRS PCT_PF_READS_IMPROPER_PAIRS     BAD_CYCLES      STRAND_BALANCE  PCT_CHIMERAS    PCT_ADAPTER     SAMPLE  LIBRARY READ_GROUP
-        # FIRST_OF_PAIR   268167  268167  1       0       254624  0.949498        57016421        254623  57016401        56709951        2       0.009547        0.009547        0.000105        224.314263      254562  0.999757        444     0.001744        0       0.508267        0.002282        0.000004
-        # SECOND_OF_PAIR  268167  268167  1       0       254581  0.949338        50677959        254580  50677938        49922898        2       0.010415        0.010415        0.00011 199.397465      254562  0.999925        401     0.001575        0       0.492111        0.002078        0
-        # PAIR    536334  536334  1       0       509205  0.949418        107694380       509203  107694339       106632849       2       0.009955        0.009955        0.000107        211.855864      509124  0.999841        845     0.001659        0       0.50019 0.00218 0.000002
-        #
-        # NOTE: only PAIR statistics (last line) are extracted
         # Ref: http://broadinstitute.github.io/picard/picard-metric-definitions.html#AlignmentSummaryMetrics
         align_stats = {}
         with open(self._tool_outputs['TXT_AlignmentSummary'][0].path, 'r') as inf:
@@ -173,12 +194,7 @@ class CollectMultipleMetrics(Picard):
         Analyze the Insert Size statistics
         :return: None
         """
-        # Example content:
-        #
-        # METRICS CLASS        picard.analysis.InsertSizeMetrics
-        # MEDIAN_INSERT_SIZE      MODE_INSERT_SIZE        MEDIAN_ABSOLUTE_DEVIATION       MIN_INSERT_SIZE MAX_INSERT_SIZE MEAN_INSERT_SIZE        STANDARD_DEVIATION      READ_PAIRS      PAIR_ORIENTATION        WIDTH_OF_10_PERCENT     WIDTH_OF_20_PERCENT     WIDTH_OF_30_PERCENT     WIDTH_OF_40_PERCENT     WIDTH_OF_50_PERCENT     WIDTH_OF_60_PERCENT     WIDTH_OF_70_PERCENT     WIDTH_OF_80_PERCENT     WIDTH_OF_90_PERCENT     WIDTH_OF_95_PERCENT     WIDTH_OF_99_PERCENT     SAMPLE  LIBRARY READ_GROUP
-        # 357     329     105     19      2316    371.815165      166.190341      254312  FR      41      79      121     163     211     267     335     417     535     635     979                     438     22      24      4853839 431.875202      61.702551       497091  FR      9       17      27      35      45      57      69      85      111     763
-        #
+        # Ref: http://broadinstitute.github.io/picard/picard-metric-definitions.html#AlignmentSummaryMetrics
         data_row = False
         self.informs['InsertSize_stats'] = {}
         with open(self._tool_outputs['TXT_InsertSize'][0].path, 'r') as inf:

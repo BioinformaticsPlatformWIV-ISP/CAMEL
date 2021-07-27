@@ -2,6 +2,7 @@ import os
 import re
 
 from camel.app.camel import Camel
+from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.picard.picard import Picard
 
@@ -20,28 +21,40 @@ class MarkDuplicates(Picard):
         super().__init__('Picard MarkDuplicates', '2.23.3', camel)
 
         self._function_name = 'MarkDuplicates'
-        self._supported_inputs = ['BAM']
+        self._main_inputs = ['SAM', 'BAM']
+        self._main_input = []
+        self._extra_input = ['FASTA_REF']
 
     def _check_input(self) -> None:
         """
-        Check and set the input specification.
+        Check the main inputs and set _main_input
+        _main_input can be either SAM or BAM, not both
         :return: None
         """
         super(Picard, self)._check_input()
 
-        self._set_input()
+        for input_format in self._main_inputs:
+            if input_format in self._tool_inputs:
+                self._main_input.append(input_format)
+
+        if len(self._main_input) != 1:
+            raise InvalidInputSpecificationError("Picard MarkDuplicates requires one or more SAM or BAM files to be specified")
 
     def _set_input(self) -> None:
         """
         Set the input specification
         :return: None
         """
-        self._input_string = "I="
-        if len(self._tool_inputs['BAM']) > 1:
-            self._input_string += ' I='.join(f.path for f in self._tool_inputs['BAM'])
-        else:
-            self._input_string += self._tool_inputs['BAM'][0].path
+        # input format can be either SAM or BAM
+        main_input = self._main_input[0]
 
+        self._input_string = "I="
+        if len(self._tool_inputs[main_input]) > 1:
+            self._input_string += ' I='.join(f.path for f in self._tool_inputs[main_input])
+        else:
+            self._input_string += self._tool_inputs[main_input][0].path
+
+        # optional
         if 'FASTA_REF' in self._tool_inputs:
             self._input_string += f" R={self._tool_inputs['FASTA_REF'][0].path}"
 
@@ -71,4 +84,4 @@ class MarkDuplicates(Picard):
         """
         self._tool_outputs['BAM'] = [ToolIOFile(os.path.join(self._folder, self._parameters['output'].value))]
         self._tool_outputs['METRICS'] = [
-            ToolIOFile(os.path.join(self._folder, self._parameters['matrics_output'].value))]
+            ToolIOFile(os.path.join(self._folder, self._parameters['metrics_output'].value))]

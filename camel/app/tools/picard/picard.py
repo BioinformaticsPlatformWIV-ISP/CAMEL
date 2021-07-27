@@ -1,11 +1,9 @@
 import abc
 import logging
-import os
 import re
-from typing import Tuple, List
+from pathlib import Path
 
 from camel.app.camel import Camel
-from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.tool import Tool
@@ -34,9 +32,9 @@ class Picard(Tool, metaclass=abc.ABCMeta):
         # - reads mapping input: 'SAM', 'BAM'
         # - variance input: 'VCF' 'BCF'
         # ...
-        self._supported_inputs = ['SAM', 'BAM']
+        self._main_inputs = ['SAM','BAM']
         # individual files of different types that is required: e.g, FASTA_REF
-        self._required_inputs = []
+        self._extra_inputs = []
         self._input_string = ''
         self._output_string = ''
         # Elements for building command
@@ -56,65 +54,29 @@ class Picard(Tool, metaclass=abc.ABCMeta):
         Function to run Picard function
         :return: None
         """
+        self._set_input()
         self._set_output()
         self._build_command()
         self._execute_command()
         self._set_informs()
 
-    def _check_input(self) -> None:
-        """
-        Set the input specification, this default function handles only one SAM or BAM file as input
-        :return: None
-        """
-        super(Picard, self)._check_input()
-
-        self._check_required_inputs()
-
-        if len(self._supported_inputs) != 0:
-            input_type, input_files = self._check_supported_input()
-            if len(input_files) > 1:
-                raise InvalidInputSpecificationError(f'Can only specify one file of type {input_type} '
-                                                     f'as input of Picard {self._function_name}.')
-            self._input_string = f' I={input_files[0].path}'
-
-        self._set_input()
-
-    def _check_required_inputs(self) -> None:
-        """
-        Check input requirements to run Picard function
-        :return: None
-        """
-        for input_file in self._required_inputs:
-            if input_file not in self._tool_inputs:
-                raise InvalidInputSpecificationError(
-                    f'Picard {self._function_name} required input file of type {input_file} is missing!')
+    # todo: check input main vs. extra
 
     def _set_input(self) -> None:
         """
-        Function to set required and optional inputs in self._input_string
+        Function to set main and extra inputs in self._input_string
         :return: None
         """
-        if 'FASTA_REF' in self._tool_inputs:
-            self._input_string += f" R={self._tool_inputs['FASTA_REF'][0].path}"
-
-    def _check_supported_input(self) -> Tuple[str, List[ToolIOFile]]:
-        """
-        Check supported (alternatives but still required) input to run Picard function
-        :return: None
-        """
-        for input_type in self._supported_inputs:
-            if input_type in self._tool_inputs:
-                return input_type, self._tool_inputs[input_type]
-
-        raise InvalidInputSpecificationError(f'None of the supported input types {self._supported_inputs} '
-                                             f'of Picard {self._function_name} is specified!')
+        for input_file in self._tool_inputs:
+            if input_file in self._main_inputs:
+                self._input_string += f"INPUT={self._tool_inputs[input_file][0].path} "
 
     def _set_output(self) -> None:
         """
         Set the output specification, this default function handles only one BAM file as output
         :return: None
         """
-        self._tool_outputs['BAM'] = [ToolIOFile(os.path.join(self._folder, self._parameters['output'].value))]
+        self._tool_outputs['BAM'] = [ToolIOFile(Path(self._folder) / self._parameters['output'].value)]
 
     def _build_command(self) -> None:
         """
@@ -135,7 +97,7 @@ class Picard(Tool, metaclass=abc.ABCMeta):
 
     def _check_command_output(self) -> None:
         """
-        Analyse the result of Picard run
+        Verify tool execution (return code) and stdout
         :return: None
         """
         if self._command.returncode != 0:

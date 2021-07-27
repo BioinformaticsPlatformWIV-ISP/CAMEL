@@ -1,6 +1,7 @@
 import re
 
 from camel.app.camel import Camel
+from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.tools.picard.picard import Picard
 
 
@@ -19,19 +20,32 @@ class MergeBamAlignment(Picard):
         super().__init__('Picard MergeBamAlignment', '2.23.3', camel)
 
         self._function_name = 'MergeBamAlignment'
-        self._supported_inputs = []
-        self._required_inputs = ['BAM_UNMAPPED', 'BAM_ALIGNED', 'FASTA_REF']
+        self._main_inputs = []
+        self._extra_inputs = ['BAM_UNMAPPED', 'BAM_ALIGNED', 'FASTA_REF']
         self._specific_parameters = ["attributes_to_remove_multi"]
+
+    def _check_input(self) -> None:
+        """
+        Check for required input files
+        :return: None
+        """
+        if 'BAM_UNMAPPED' not in self._tool_inputs:
+            raise InvalidInputSpecificationError("Picard MergeBamAlignment: Input file BAM_UNMAPPED is not defined")
+
+        if 'FASTA_REF' not in self._tool_inputs:
+            raise InvalidInputSpecificationError("Picard MergeBamAlignment: Input file FASTA_REF is not defined")
 
     def _set_input(self) -> None:
         """
         Set required inputs specification
         :return: None
         """
-        super(MergeBamAlignment, self)._set_input()
+        self._input_string += f"UNMAPPED={self._tool_inputs['BAM_UNMAPPED'][0].path} "
 
-        self._input_string += f" UNMAPPED={self._tool_inputs['BAM_UNMAPPED'][0].path} " \
-                              f"ALIGNED={self._tool_inputs['BAM_ALIGNED'][0].path}"
+        self._input_string += f"REFERENCE_SEQUENCE={self._tool_inputs['FASTA_REF'][0].path} "
+
+        if 'BAM_ALIGNED' in self._tool_inputs:
+            self._input_string +=  f"ALIGNED={self._tool_inputs['BAM_ALIGNED'][0].path} "
 
     def _build_command(self) -> None:
         """
@@ -41,7 +55,7 @@ class MergeBamAlignment(Picard):
         build_options = self._build_options(excluded_parameters=self._specific_parameters, delimiter='=')
 
         if 'attributes_to_remove_multi' in self._parameters:
-            attributes = str(self._parameters['attributes_to_remove_multi'].value).split(",")
+            attributes = self._parameters['attributes_to_remove_multi'].value.split(",")
             for attribute in attributes:
                 build_options.append(f"ATTRIBUTES_TO_REMOVE={attribute}")
 

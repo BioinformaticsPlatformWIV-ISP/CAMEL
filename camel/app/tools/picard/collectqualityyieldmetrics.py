@@ -20,7 +20,6 @@ class CollectQualityYieldMetrics(Picard):
         super().__init__('Picard CollectQualityYieldMetrics', '2.23.3', camel)
 
         self._function_name = 'CollectQualityYieldMetrics'
-        self._supported_inputs = ['BAM']
 
     def _set_output(self) -> None:
         """
