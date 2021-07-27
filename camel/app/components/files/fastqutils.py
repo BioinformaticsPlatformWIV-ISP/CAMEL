@@ -1,7 +1,7 @@
 import os
 import re
 from itertools import zip_longest
-from typing import Set, Iterable
+from typing import Set, Iterable, AbstractSet
 
 import screed
 from Bio import SeqIO
@@ -265,4 +265,50 @@ class FastqUtils(object):
                     for line in inhandle:
                         outhandle.write(line)
 
+    @staticmethod
+    def process_paired_end_se(pe_1_files: Iterable[str], pe_2_files: Iterable[str], se_1_files: Iterable[str], se_2_files: Iterable[str],
+                              pe_out_1: str, pe_out_2: str, se_out_1: str, se_out_2: str) -> None:
+        """
+        Function to extract paired end reads from multiple (filtered) paired-end input files and output other and orphaned reads
+        to single end output files.
+        :param pe_1_files: Iterable with forward read paired end files
+        :param pe_2_files: Iterable with reverse read paired end files
+        :param se_1_files: Iterable with forward single end files
+        :param se_2_files: Iterable with forward single end files
+        :param pe_out_1: File with all paired forward reads
+        :param pe_out_2: File with all paired reverse reads
+        :param se_out_1: File with forward single end and orphaned reads
+        :param se_out_2: File with reverse single end and orphaned reads
+        :return: None
+        """
+        fwd_reads = FastqUtils._get_read_names(pe_1_files)
+        rev_reads = FastqUtils._get_read_names(pe_2_files)
+        paired_reads = fwd_reads & rev_reads
+        open(se_out_1, 'w').close()  # Initialize SE file so that append can be used without issues
+        open(se_out_2, 'w').close()
+        for infiles, outfile_pe, outfile_se in [(pe_1_files, pe_out_1, se_out_1), (pe_2_files, pe_out_2, se_out_2)]:
+            with open(outfile_pe, 'w') as pe_outhandle, open(outfile_se, 'a') as se_outhandle:
+                for file in infiles:
+                    for record in SeqIO.parse(file, 'fastq'):
+                        if record.id in paired_reads:
+                            SeqIO.write(record, pe_outhandle, 'fastq')
+                        else:
+                            SeqIO.write(record, se_outhandle, 'fastq')
+        for infile, outfile in [(se_1_files, se_out_1), (se_2_files, se_out_2)]:
+            with open(outfile, 'a') as outhandle:
+                for file in infile:
+                    with open(file, 'r') as inhandle:
+                        for line in inhandle:
+                            outhandle.write(line)
 
+    @staticmethod
+    def _get_read_names(files: Iterable[str]) -> AbstractSet[str]:
+        """
+        Returns a set with all the read names in the given files
+        :param files: Files for which the read names need to be extracted
+        :return: Set of read names
+        """
+        read_names = set()
+        for file in files:
+            read_names = read_names | FastqUtils.get_all_read_names(file)
+        return read_names
