@@ -1,5 +1,6 @@
 from camel.app.camel import Camel
 from camel.app.tools.gatk4.gatk4 import GATK4
+from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 
 
 class GATK4GenotypeGVCFs(GATK4):
@@ -18,6 +19,17 @@ class GATK4GenotypeGVCFs(GATK4):
 
         self._required_inputs = ['gVCF', 'FASTA_REF']
         self._output_type = 'VCF_MultipleSample'
+        self._specific_parameters = ['gendb']
+
+    def _check_input(self) -> None:
+        """
+        Check input for a tool and prepare command line parameters for input
+        :return: None
+        """
+        if self._parameters['gendb'] is not None:
+            self._required_inputs.remove('gVCF')
+
+        super(GATK4GenotypeGVCFs, self)._check_input()
 
     def _set_input(self) -> None:
         """
@@ -26,5 +38,9 @@ class GATK4GenotypeGVCFs(GATK4):
         """
         super(GATK4GenotypeGVCFs, self)._set_input()
 
-        for f in self._tool_inputs['gVCF']:
-            self._input_string += f"--variant {f.path} "
+        if 'gVCF' in self._tool_inputs:
+            for f in self._tool_inputs['gVCF']:
+                self._input_string += f"--variant {f.path} "
+
+        elif 'gendb' in self._parameters:
+            self._input_string += f"--variant gendb:/{self._parameters['gendb'].value}"
