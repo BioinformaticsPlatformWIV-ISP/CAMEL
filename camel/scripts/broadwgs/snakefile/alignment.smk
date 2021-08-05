@@ -121,7 +121,7 @@ rule picard_mark_duplicates:
         step = Step(rule, mark_duplicates, camel, params.working_dir, config)
         mark_duplicates.update_parameters(
             output = params.output_file,
-            matrics_output = output.metrics,
+            metrics_output = output.metrics,
             **config['rule_params']['alignment'][rule],
         )
         mark_duplicates.update_java_options("-mx100G -XX:+UseParallelGC -XX:ParallelGCThreads=1 -Dpicard.useLegacyParser=false")
