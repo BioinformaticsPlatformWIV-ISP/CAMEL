@@ -44,3 +44,16 @@ class GATK4GenotypeGVCFs(GATK4):
 
         elif 'gendb' in self._parameters:
             self._input_string += f"--variant gendb:/{self._parameters['gendb'].value}"
+
+    def _build_command(self):
+        """
+        Build the command to run tool.
+        :return: None
+        """
+        if 'annotation_group' in self._parameters:
+            self._option_string += ' --annotation-group '
+            self._option_string += ' --annotation-group '.join(self._parameters['annotation_group'].value.split(","))
+
+        self._option_string += ' '
+
+        super(GATK4HaplotypeCaller, self)._build_command()
