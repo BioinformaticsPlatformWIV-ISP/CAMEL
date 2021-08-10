@@ -4,6 +4,7 @@ import re
 from pathlib import Path
 
 from camel.app.camel import Camel
+from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.tool import Tool
@@ -28,15 +29,11 @@ class Picard(Tool, metaclass=abc.ABCMeta):
         self._function_name = None
         # parameters that should not be handled by self.build_options function
         self._specific_parameters = []
-        # alternative types of files that can be used as main input of a picard tool
-        # - reads mapping input: 'SAM', 'BAM'
-        # - variance input: 'VCF' 'BCF'
-        # ...
-        self._main_inputs = ['SAM','BAM']
-        # individual files of different types that is required: e.g, FASTA_REF
-        self._extra_inputs = []
+        self._required_inputs = ['BAM', 'SAM']
+        self._main_input = ''
         self._input_string = ''
         self._output_string = ''
+        self._output_type = 'BAM'
         # Elements for building command
         self._java_options = '-mx8G -XX:+UseParallelGC -XX:ParallelGCThreads=1 -Dpicard.useLegacyParser=false'
         self._java_options_temp_dir = 'TMP_DIR=/temp/picard'
@@ -60,23 +57,50 @@ class Picard(Tool, metaclass=abc.ABCMeta):
         self._execute_command()
         self._set_informs()
 
-    # todo: check input main vs. extra
+    def _check_input(self):
+        """
+        Check input for a tool and prepare command line parameters for input
+        :return: None
+        """
+        # BAM or SAM input required; mutually exclusive
+        if ('SAM' in self._tool_inputs) and ('BAM' in self._tool_inputs):
+            raise InvalidInputSpecificationError()
+        elif 'SAM' in self._tool_inputs:
+            self._main_input = 'SAM'
+            self._required_inputs.remove('BAM')
+        elif 'BAM' in self._tool_inputs:
+            self._main_input = 'BAM'
+            self._required_inputs.remove('SAM')
+
+        for input_file in self._required_inputs:
+            if input_file not in self._tool_inputs:
+                raise InvalidInputSpecificationError('Picard {!r} required {!r} input is missing in _tool_inputs!'.format(
+                    self._name, input_file))
+
+        super(Picard, self)._check_input()
 
     def _set_input(self) -> None:
         """
         Function to set main and extra inputs in self._input_string
         :return: None
         """
-        for input_file in self._tool_inputs:
-            if input_file in self._main_inputs:
-                self._input_string += f"INPUT={self._tool_inputs[input_file][0].path} "
+        if 'BAM' in self._tool_inputs:
+            self._input_string += f"INPUT={self._tool_inputs['BAM'][0].path} "
+
+        if 'SAM' in self._tool_inputs:
+            self._input_string += f"INPUT={self._tool_inputs['SAM'][0].path} "
+
+        if 'FASTA_REF' in self._tool_inputs:
+            self._input_string += f"R={self._tool_inputs['FASTA_REF'][0].path} "
 
     def _set_output(self) -> None:
         """
         Set the output specification, this default function handles only one BAM file as output
         :return: None
         """
-        self._tool_outputs['BAM'] = [ToolIOFile(Path(self._folder) / self._parameters['output'].value)]
+        self._tool_outputs[self._output_type] = [
+            ToolIOFile(Path(self._folder) / self._parameters['output'].value)
+        ]
 
     def _build_command(self) -> None:
         """

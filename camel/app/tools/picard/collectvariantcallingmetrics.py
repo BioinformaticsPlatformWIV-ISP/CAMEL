@@ -20,8 +20,7 @@ class CollectVariantCallingMetrics(Picard):
         super().__init__('Picard CollectVariantCallingMetrics', '2.23.3', camel)
 
         self._function_name = 'CollectVariantCallingMetrics'
-        self._main_inputs = ['VCF']
-        self._extra_inputs = ['VCF_dbsnp', 'DICT_GENOME', 'EVALUATION_INTERVALS']
+        self._required_inputs = ['VCF', 'VCF_dbsnp']
 
     def _check_input(self) -> None:
         """

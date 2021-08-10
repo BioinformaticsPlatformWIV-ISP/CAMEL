@@ -76,7 +76,6 @@ class CollectMultipleMetrics(Picard):
         """
         super().__init__('Picard CollectMultipleMetrics', '2.23.3', camel)
         self._function_name = 'CollectMultipleMetrics'
-        self._extra_inputs = ['FASTA_REF']
         self._specific_parameters = ['metric_accumulation_level_multi']
         self._outfile_prefix = None
 
@@ -147,9 +146,7 @@ class CollectMultipleMetrics(Picard):
         build_options = self._build_options(excluded_parameters=self._specific_parameters, delimiter='=')
 
         if 'metric_accumulation_level_multi' in self._parameters:
-            attributes = str(self._parameters['metric_accumulation_level_multi'].value).split(",")
-            for attribute in attributes:
-                build_options.append(f"LEVEL={attribute}")
+            build_options.append(self.__split_multi_options('metric_accumulation_level_multi'))
 
         option_string = " ".join(build_options)
 
@@ -232,3 +229,10 @@ class CollectMultipleMetrics(Picard):
                     self.informs['GCBias_stats']['AT_DROPOUT'] = informs[4]
                     self.informs['GCBias_stats']['GC_DROPOUT'] = informs[5]
                     break
+
+    def __split_multi_options(self, option) -> str:
+        """
+        Multiple values allowed for certain parameters. These are passed in a comma separated string and need to be split
+        """
+        option_list = self._parameters[option].value.split(",")
+        return "".join(f" {self._parameters[option].option} {s} " for s in option_list)

@@ -1,7 +1,4 @@
-import os
-
 from camel.app.camel import Camel
-from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.picard.picard import Picard
 
 
@@ -18,12 +15,5 @@ class CollectQualityYieldMetrics(Picard):
         :return: None
         """
         super().__init__('Picard CollectQualityYieldMetrics', '2.23.3', camel)
-
+        self._output_type = 'TXT'
         self._function_name = 'CollectQualityYieldMetrics'
-
-    def _set_output(self) -> None:
-        """
-        Set the output for Picard CollectQualityYieldMetrics function
-        :return: None
-        """
-        self._tool_outputs['TXT'] = [ToolIOFile(os.path.join(self._folder, self._parameters['output'].value))]

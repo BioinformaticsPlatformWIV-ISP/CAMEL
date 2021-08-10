@@ -4,7 +4,6 @@ from pathlib import Path
 from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.invalidparametererror import InvalidParameterError
-from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.picard.picard import Picard
 
 
@@ -23,7 +22,7 @@ class FastqToSam(Picard):
         super().__init__('Picard FastqToSam', '2.23.3', camel)
 
         self._function_name = 'FastqToSam'
-        self._main_inputs = ["FASTQ_PE", "FASTQ_SE"]
+        self._required_inputs = ["FASTQ_PE", "FASTQ_SE"]
 
     def _set_input(self) -> None:
         """
@@ -48,12 +47,12 @@ class FastqToSam(Picard):
         Set output for FastqToSam. Extension determines whether a SAM or BAM file will be made
         :return: None
         """
-        output_format = Path(self._parameters['output'].value).suffix.strip(".").upper()
+        self._output_type = Path(self._parameters['output'].value).suffix.strip(".").upper()
 
-        if output_format not in ["SAM", "BAM"]:
+        if self._output_type not in ["SAM", "BAM"]:
             raise InvalidParameterError("Picard FastqToSam: output file extension should be .bam or .sam")
 
-        self._tool_outputs[output_format] = [ToolIOFile(Path(self._folder) / self._parameters['output'].value)]
+        super(FastqToSam, self)._set_output
 
     def _set_informs(self) -> None:
         """

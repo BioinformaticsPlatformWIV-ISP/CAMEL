@@ -32,7 +32,23 @@ class IntervalListTools(Picard):
         :return: None
         """
         super().__init__('Picard IntervalListTools', '2.23.3', camel)
-        self._main_inputs = ['TXT_intervals', 'VCF']
+        self._required_inputs = ['TXT_intervals', 'VCF']
+        self._output_type = 'TXT_intervalLists'
+
+    def _check_input(self):
+        """
+        Check input for a tool and prepare command line parameters for input
+        :return: None
+        """
+        #  One or more input files possible - can be of type 'interval_list' or 'VCF'
+        if ('TXT_intervals' in self._tool_inputs) and ('VCF' in self._tool_inputs):
+            raise InvalidInputSpecificationError()
+        elif 'VCF' in self._tool_inputs:
+            self._required_inputs.remove('TXT_intervals')
+        elif 'TXT_intervals' in self._tool_inputs:
+            self._required_inputs.remove('VCF')
+
+        super(IntervalListTools, self)._check_input()
 
     def _set_input(self) -> None:
         """
@@ -40,15 +56,13 @@ class IntervalListTools(Picard):
         Overrides method in parent class.
         :return: None
         """
-        # One or more input files possible - can be of type 'interval_list' or 'VCF'
         if 'TXT_intervals' in self._tool_inputs:
             for interval_file in self._tool_inputs['TXT_intervals']:
                 self._input_string += f"INPUT={interval_file.path} "
-        elif 'VCF' in self._tool_inputs:
+
+        if 'VCF' in self._tool_inputs:
             for vcf_file in self._tool_inputs['VCF']:
                 self._input_string += f"INPUT={vcf_file.path} "
-        else:
-            raise InvalidInputSpecificationError("Picard IntervalListTools requires one or more interval lists in format TXT_intervals or VCF")
 
     def _set_output(self) -> None:
         """

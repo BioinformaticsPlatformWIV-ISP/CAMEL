@@ -3,7 +3,6 @@ import os
 
 from camel.app.camel import Camel
 from camel.app.components.files.fileutils import FileUtils
-from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.picard.picard import Picard
 
@@ -23,8 +22,7 @@ class CreateSequenceDictionary(Picard):
         super().__init__('Picard CreateSequenceDictionary', '2.23.3', camel)
 
         self._function_name = 'CreateSequenceDictionary'
-        self._extra_inputs = ['FASTA_REF']
-        self._main_inputs = []
+        self._required_inputs = ['FASTA_REF']
         self._specific_parameters = ['output_ext', 'symlink']
         self._fasta_file = None
 
@@ -42,16 +40,6 @@ class CreateSequenceDictionary(Picard):
 
         self._tool_outputs['FASTA_REF'] = [ToolIOFile(self._fasta_file)]
 
-    def _check_input(self) -> None:
-        """
-        Checks required input files in self._extra_input
-        :return: None
-        """
-        super(CreateSequenceDictionary, self)._check_input()
-
-        if 'FASTA_REF' not in self._tool_inputs:
-            raise InvalidInputSpecificationError("Picard CreateSequenceDictionary: Input file FASTA_REF not defined")
-
     def _set_input(self) -> None:
         """
         Function to set required and optional inputs in self._input_string
@@ -65,7 +53,7 @@ class CreateSequenceDictionary(Picard):
 
         logging.debug(f'symlink {self._fasta_file}')
 
-        self._input_string += f' R={self._fasta_file}'
+        self._input_string += f'R={self._fasta_file} '
 
     def __symlink_input(self) -> str:
         """

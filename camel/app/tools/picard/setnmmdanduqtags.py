@@ -1,5 +1,4 @@
 from camel.app.camel import Camel
-from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.tools.picard.picard import Picard
 
 
@@ -30,23 +29,4 @@ class SetNmMdAndUqTags(Picard):
         super().__init__('Picard SetNmMdAndUqTags ', '2.23.3', camel)
 
         self._function_name = 'SetNmMdAndUqTags '
-        self._extra_inputs = ["FASTA_REF"]
-
-    def _check_input(self) -> None:
-        """
-        Check input. Additionally, check whether required input is present
-        :return: None
-        """
-        super(SetNmMdAndUqTags, self)._check_input()
-
-        if 'FASTA_REF' not in self._tool_inputs:
-            raise InvalidInputSpecificationError("Picard SetNmMdAndUqTags: input file FASTA_REF is not defined")
-
-    def _set_input(self) -> None:
-        """
-        Set input specification
-        :return: None
-        """
-        super(SetNmMdAndUqTags, self)._set_input()
-
-        self._input_string += f'R={self._tool_inputs["FASTA_REF"][0].path} '
+        self._required_inputs = ["BAM", "SAM", "FASTA_REF"]

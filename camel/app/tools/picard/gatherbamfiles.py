@@ -18,7 +18,7 @@ class GatherBamFiles(Picard):
         """
         super().__init__('Picard GatherBamFiles', '2.23.3', camel)
         self._function_name = 'GatherBamFiles'
-        self._main_inputs = ['BAMs']
+        self._required_inputs = ['BAMs']
 
     def _set_input(self) -> None:
         """
@@ -31,5 +31,4 @@ class GatherBamFiles(Picard):
         if len(input_files) <= 1:
             raise InvalidInputSpecificationError("Picard GatherBamFiles: more than 1 input BAM file is expected")
 
-        self._input_string += " I="
-        self._input_string += " I=".join(input_files)
+        self._input_string += "".join(f"I={f} " for f in input_files)
