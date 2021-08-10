@@ -3,6 +3,7 @@ import os
 from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.gatk4.gatk4 import GATK4
+from camel.app.error.invalidparametererror import InvalidParameterError
 
 
 class GATK4HaplotypeCaller(GATK4):
@@ -53,22 +54,30 @@ class GATK4HaplotypeCaller(GATK4):
         if 'bam_output' in self._parameters:
             self._tool_outputs['BAM'] = [ToolIOFile(os.path.join(self._folder, self._parameters['bam_output'].value))]
 
-    def _build_command(self):
+    def _check_input(self) -> None:
+        if 'gqb' in self._parameters:
+            gqb_list = self._parameters['gqb'].value.split(",")
+            if sorted(gqb_list) != gqb_list:
+                raise InvalidParameterError("GQ Bands list must be specified in increasing order.")
+
+        super(GATK4HaplotypeCaller, self)._check_input()
+
+    def _build_command(self) -> None:
         """
         Build the command to run tool. Supersedes that of parent class.
         :return: None
         """
         if 'gqb' in self._parameters:
-            gqb_list = self._parameters['gqb'].value.split(",")
-            if sorted(gqb_list) != gqb_list:
-                raise InvalidParameterError("GQ Bands list must be specified in increasing order.")
-            self._option_string += ' --gvcf-gq-bands '
-            self._option_string += ' --gvcf-gq-bands '.join(gqb_list)
+            self._option_string += self.__split_multi_options('gqb')
 
         if 'annotation_group' in self._parameters:
-            self._option_string += ' --annotation-group '
-            self._option_string += ' --annotation-group '.join(self._parameters['annotation_group'].value.split(","))
-
-        self._option_string += ' '
+            self._option_string += self.__split_multi_options('annotation_group')
 
         super(GATK4HaplotypeCaller, self)._build_command()
+
+    def __split_multi_options(self, option) -> str:
+        """
+        Multiple values allowed for certain parameters. These are passed in a comma separated string and need to be split
+        """
+        option_list = self._parameters[option].value.split(",")
+        return "".join(f" {self._parameters[option].option} {s} " for s in option_list)

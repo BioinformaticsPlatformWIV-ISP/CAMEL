@@ -57,7 +57,7 @@ class GATK4ApplyBQSR(GATK4):
         if 'TXT_intervals' in self._tool_inputs:
             self._input_string += f"--intervals {self._tool_inputs['TXT_intervals'][0].path} "
 
-    def _build_command(self):
+    def _build_command(self) -> None:
         """
         Build the command to run tool.
         Overrides that of parent class.

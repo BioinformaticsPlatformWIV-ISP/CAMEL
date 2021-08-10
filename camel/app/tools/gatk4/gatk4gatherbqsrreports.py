@@ -35,5 +35,4 @@ class GATK4GatherBQSRReports(GATK4):
         :return: None
         """
         # set input reports
-        self._input_string = ' --input '
-        self._input_string += ' --input '.join(f.path for f in self._tool_inputs['TXT_intervals'])
+        self._input_string += ''.join(f" --input {f.path}" for f in self._tool_inputs['TXT_intervals'])

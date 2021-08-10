@@ -52,4 +52,5 @@ class GenomicsDBImport(GATK4):
         """
         super(GenomicsDBImport, self)._check_command_output()
 
+        # Snakemake placeholder
         Path.touch(Path(self._parameters['output'].value))
