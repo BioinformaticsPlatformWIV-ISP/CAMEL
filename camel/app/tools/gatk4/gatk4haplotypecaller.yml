@@ -16,7 +16,7 @@ parameters:
   min_base_quality_score: {default: false, mandatory: false, option: -mbq, p_index: 99,
     value: '10'}
   output: {default: true, mandatory: false, option: --output, p_index: 0, value: raw.snps.indels.vcf}
-  sample_ploidy: {default: true, mandatory: false, option: --sample-ploidy, p_index: 10, value: '1'}
+  sample_ploidy: {default: true, mandatory: false, option: --sample-ploidy, p_index: 10, value: '2'}
   standard_min_confidence_threshold_for_calling: {default: true, mandatory: false,
     option: --standard-min-confidence-threshold-for-calling, p_index: 20, value: '30.0'}
 tool_command: HaplotypeCaller
