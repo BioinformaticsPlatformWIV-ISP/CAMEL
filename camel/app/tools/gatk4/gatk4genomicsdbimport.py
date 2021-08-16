@@ -1,7 +1,8 @@
+from pathlib import Path
+
 from camel.app.camel import Camel
 from camel.app.tools.gatk4.gatk4 import GATK4
-import shutil
-from pathlib import Path
+
 
 class GenomicsDBImport(GATK4):
     """
@@ -21,7 +22,7 @@ class GenomicsDBImport(GATK4):
 
     """
 
-    def __init__(self, camel: Camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initialize the CombineGVCFs tool
         :param camel: Camel instance

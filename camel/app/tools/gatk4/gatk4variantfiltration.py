@@ -10,7 +10,7 @@ class GATK4VariantFiltration(GATK4):
     Class for GATK VariantFiltration function
     """
 
-    def __init__(self, camel: Camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initialize the GATK4VariantFiltration tool
         :param camel: Camel instance

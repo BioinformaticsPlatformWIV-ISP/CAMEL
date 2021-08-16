@@ -1,6 +1,5 @@
 from camel.app.camel import Camel
 from camel.app.tools.gatk4.gatk4 import GATK4
-from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 
 
 class GATK4GenotypeGVCFs(GATK4):
@@ -9,7 +8,7 @@ class GATK4GenotypeGVCFs(GATK4):
     Class for GATK GenotypeGVCFs function
     """
 
-    def __init__(self, camel: Camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initialize the GATK4GenotypeGVCFs tool
         :param camel: Camel instance

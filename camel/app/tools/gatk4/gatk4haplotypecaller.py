@@ -1,9 +1,9 @@
 import os
 
 from camel.app.camel import Camel
+from camel.app.error.invalidparametererror import InvalidParameterError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.gatk4.gatk4 import GATK4
-from camel.app.error.invalidparametererror import InvalidParameterError
 
 
 class GATK4HaplotypeCaller(GATK4):
@@ -22,7 +22,7 @@ class GATK4HaplotypeCaller(GATK4):
 
     """
 
-    def __init__(self, camel: Camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initialize the GATK4 HaplotypeCaller
         :param camel: Camel instance

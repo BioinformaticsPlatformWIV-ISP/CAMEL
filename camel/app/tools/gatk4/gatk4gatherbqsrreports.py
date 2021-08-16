@@ -17,7 +17,7 @@ class GATK4GatherBQSRReports(GATK4):
     'TXT_RecalibrationTable':   ToolIOFile object. Text file containing the gathered recalibration data.
     """
 
-    def __init__(self, camel: Camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initialize GATK4GatherBQSRReports tool.
         :param camel: Camel instance

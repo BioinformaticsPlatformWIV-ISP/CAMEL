@@ -6,6 +6,7 @@ from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.gatk4.gatk4 import GATK4
 
+
 class GATK4ValidateVariants(GATK4):
     """
     Class for GATK4 ValidateVariants function, validate the adherence of a file to VCF format.
@@ -17,7 +18,7 @@ class GATK4ValidateVariants(GATK4):
 
     """
 
-    def __init__(self, camel: Camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initialize the GATK4 ValidateVariants tool
         :param camel: Camel instance

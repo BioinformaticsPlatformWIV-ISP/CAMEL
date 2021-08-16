@@ -19,7 +19,7 @@ class GATK4FastaAlternateReferenceMaker(GATK4):
     Class for GATK FastaAlternateReferenceMaker function
     """
 
-    def __init__(self, camel: Camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initialize the GATK FASTA Alternate Reference Maker
         :param camel: Camel instance

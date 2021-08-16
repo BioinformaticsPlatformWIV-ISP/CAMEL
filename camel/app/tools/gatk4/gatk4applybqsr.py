@@ -25,7 +25,7 @@ class GATK4ApplyBQSR(GATK4):
 
     """
 
-    def __init__(self, camel: Camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initialize GATK4ApplyBQSR tool.
         :param camel: Camel instance

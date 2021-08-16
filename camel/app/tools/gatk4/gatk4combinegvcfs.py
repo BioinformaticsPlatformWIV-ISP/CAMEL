@@ -19,7 +19,7 @@ class CombineGVCFs(GATK4):
     'gVCF'              ToolIOFile object. A single (merged) gVCF file
     """
 
-    def __init__(self, camel: Camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initialize the CombineGVCFs tool
         :param camel: Camel instance

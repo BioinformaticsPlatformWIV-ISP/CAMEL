@@ -5,7 +5,7 @@ from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.gatk4.gatk4 import GATK4
 
 
-class GATK4BaseRecalibrator(GATK4):
+class GATK4BaseRecalibrator(GATK4) -> None:
     """
     =============================
     GATK BaseRecalibrator 4.1.9.0

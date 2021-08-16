@@ -13,7 +13,7 @@ class GATK4SelectVariants(GATK4):
     Class for GATK SelectVariants function
     """
 
-    def __init__(self, camel: Camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initialize a picard tool
         :param camel: Camel instance
