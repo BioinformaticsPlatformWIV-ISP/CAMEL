@@ -131,6 +131,14 @@ class Tool(object, metaclass=abc.ABCMeta):
         return ', '.join(["{}: '{}'".format(p, self._parameters[p].value) for p in sorted(self._parameters)]) if \
             len(self._parameters) > 0 else '/'
 
+    @property
+    def folder(self) -> Path:
+        """
+        Returns the folder the tool needs to run in.
+        :return: Path to the running folder
+        """
+        return Path(self._folder) if self._folder != '.' else Path.cwd()
+
     def add_input_files(self, input_files: Dict[str, List[ToolIO]]) -> None:
         """
         Updates the input files for a tool.
