@@ -97,7 +97,9 @@ rule prepare_interval_pickles:
     output:
         pickled_interval_files = expand(Path(config['intervals_location']) / 'interval_{i}.intervals.io', i = config['intervals'])
     run:
-        SnakemakeUtils.dump_object([ToolIOFile(input.interval_files)], output.pickled_interval_files)
+        for interval_file in input.interval_files:
+            interval_file_io = f"{interval_file}.io"
+            SnakemakeUtils.dump_object([ToolIOFile(interval_file)], interval_file_io)
 
 
 rule move_qc:
@@ -165,7 +167,7 @@ rule move_qc:
         TXT_metrics_WGS = Path(config['final_output_dir']) / "qc" / "wgs_metrics" / f"{config['sample']}.wgs.metrics.txt",
         TXT_metrics_rawWGS = Path(config['final_output_dir']) / "qc" / "wgs_metrics" / f"{config['sample']}.raw.wgs.metrics.txt",
 
-        TXT_metrics_validateGVCF = Path(config['final_output_dir']) / "qc" / "validate_gvcf" / f"{config['sample']}.validate_vcf.txt",
+        #TXT_metrics_validateGVCF = Path(config['final_output_dir']) / "qc" / "validate_gvcf" / f"{config['sample']}.validate_vcf.txt",
 
         TXT_metrics_varCalling = Path(config['final_output_dir']) / "qc" / "variant_calling_metrics" / f"{config['sample']}.variant_calling_metrics.txt",
 
@@ -191,7 +193,7 @@ rule move_qc:
         os.link(input.TXT_metrics_checksum, output.TXT_metrics_checksum)
         os.link(input.TXT_metrics_WGS, output.TXT_metrics_WGS)
         os.link(input.TXT_metrics_rawWGS, output.TXT_metrics_rawWGS)
-        os.link(input.TXT_metrics_validateGVCF, output.TXT_metrics_validateGVCF)
+        #os.link(input.TXT_metrics_validateGVCF, output.TXT_metrics_validateGVCF)
         os.link(SnakemakeUtils.load_object(input.TXT_metrics_varCalling)[0].path, output.TXT_metrics_varCalling)
 
         subprocess.run(f"touch {output.QC_done}", shell = True, executable='/bin/bash')

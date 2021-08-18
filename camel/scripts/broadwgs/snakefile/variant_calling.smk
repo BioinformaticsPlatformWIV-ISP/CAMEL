@@ -17,8 +17,6 @@ rule picard_create_interval_lists:
     run:
         from camel.app.tools.picard.intervallisttools import IntervalListTools
 
-        Path(params.working_dir).mkdir(exist_ok=True)
-
         generate_interval_list = IntervalListTools(camel)
         SnakemakeUtils.add_pickle_inputs(generate_interval_list, input)
         step = Step(rule, generate_interval_list, camel, params.working_dir, config)
@@ -65,6 +63,7 @@ rule picard_merge_vcfs:
         VCF = expand(rules.gatk4_haplotype_caller.output.VCF, scatter = ["{:04d}".format(s) for s in range(1, (config["rule_params"]["variant_calling"]["picard_create_interval_lists"]["scatter_count"] + 1))])
     output:
         VCF = Path(config['working_dir']) / "variant_calling" / "merge_vcf" / "output.g.vcf.gz.io",
+        VCF_index = Path(config['working_dir']) / "variant_calling" / "merge_vcf" / "output.vcf.idx"
     params:
         working_dir = lambda wildcards: Path(config['working_dir']) / "variant_calling" / "merge_vcf"
     run:

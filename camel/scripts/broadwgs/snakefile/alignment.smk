@@ -45,115 +45,11 @@ rule bwa_aln_to_bam:
 
         SnakemakeUtils.dump_tool_output(sam_to_bam, "BAM", output.BAM)
 
-rule picard_fastq_to_ubam:
-    input:
-        FASTQ = Path(config['working_dir']) / 'input' / "{input_basename}.fastq.gz.io",
-    output:
-        BAM_UNMAPPED = Path(config['working_dir']) / "alignment" / "fastq_to_ubam" / "{input_basename}.unmapped.bam.io"
-    params:
-        working_dir = Path(config['working_dir']) / "alignment" / "fastq_to_ubam",
-        output_file = lambda wildcards: f'{wildcards.input_basename}.unmapped.bam'
-    run:
-        from camel.app.tools.picard.fastqtoubam import FastqTouBam
-
-        Path(params.working_dir).mkdir(exist_ok=True)
-
-        fastq_to_ubam = FastqTouBam(camel)
-
-        SnakemakeUtils.add_pickle_input(fastq_to_ubam, 'FASTQ_PE', input.FASTQ)
-        step = Step(rule, fastq_to_ubam, camel, params.working_dir, config)
-        fastq_to_ubam.update_parameters(
-            sample_name = config["sample"],
-            readgroup_name = config["sample"] + ".rg",
-            output = params.output_file,
-            **config['rule_params']['alignment'][rule]
-        )
-        fastq_to_ubam.update_java_options('-mx20G -XX:+UseParallelGC -XX:ParallelGCThreads=1 -Dpicard.useLegacyParser=false')
-        step.run_step()
-        SnakemakeUtils.dump_tool_output(fastq_to_ubam, "BAM", output.BAM_UNMAPPED)
-
-rule picard_merge_bam:
-    input:
-        BAM_UNMAPPED = rules.picard_fastq_to_ubam.output.BAM_UNMAPPED,
-        SAM_ALIGNED = rules.bwa_aln_to_bam.output.BAM,
-        FASTA_REF = Path(config['working_dir']) / "ref_input" / "fasta_reference_human_value_file.io"
-    output:
-        BAM = Path(config['working_dir']) / "alignment" / "merge_bam" / "{input_basename}merged.aligned.unsorted.bam.io",
-    params:
-        working_dir = Path(config['working_dir']) / 'alignment' / 'merge_bam',
-        output_file = lambda wildcards: f'{wildcards.input_basename}§merged.aligned.unsorted.bam'
-    run:
-        from camel.app.tools.picard.mergebamalignment import MergeBamAlignment
-
-        Path(params.working_dir).mkdir(exist_ok=True)
-
-        merge_bam = MergeBamAlignment(camel)
-        SnakemakeUtils.add_pickle_input(merge_bam, 'BAM_ALIGNED', input.SAM_ALIGNED)
-        SnakemakeUtils.add_pickle_input(merge_bam, 'BAM_UNMAPPED', input.BAM_UNMAPPED)
-        SnakemakeUtils.add_pickle_input(merge_bam, 'FASTA_REF', input.FASTA_REF)
-        step = Step(rule, merge_bam, camel, params.working_dir, config)
-        merge_bam.update_parameters(
-            **config['rule_params']['alignment'][rule],
-            output = params.output_file
-        )
-        step.run_step()
-        SnakemakeUtils.dump_tool_output(merge_bam, "BAM", output.BAM)
-
-rule picard_mark_duplicates:
-    """
-    Aggregate aligned+merged flowcell BAM files and mark duplicates
-    We take advantage of the tool's ability to take multiple BAM inputs and write out a single output
-    to avoid having to spend time just merging BAM files.
-    """
-    input:
-        BAM = expand(rules.bwa_aln_to_bam.output.BAM, input_basename = config['input_basenames'])
-    output:
-        BAM_DUPMARKED = Path(config['working_dir']) / 'alignment' / 'mark_duplicates' / f'{config["sample"]}.aligned.unsorted.duplicates_marked.bam.io',
-        metrics = Path(config['working_dir']) / 'alignment' / 'mark_duplicates' / f"{config['sample']}.duplicate_metrics.txt.io"
-    params:
-        working_dir = Path(config['working_dir']) / 'alignment' / 'mark_duplicates',
-        output_file = f'{config["sample"]}.aligned.unsorted.duplicates_marked.bam'
-    run:
-        from camel.app.tools.picard.markduplicates import MarkDuplicates
-
-        mark_duplicates = MarkDuplicates(camel)
-        mark_duplicates.add_input_files({"BAM": [SnakemakeUtils.load_object(path)[0] for path in input.BAM]})
-        step = Step(rule, mark_duplicates, camel, params.working_dir, config)
-        mark_duplicates.update_parameters(
-            output = params.output_file,
-            metrics_output = output.metrics,
-            **config['rule_params']['alignment'][rule],
-        )
-        mark_duplicates.update_java_options("-mx100G -XX:+UseParallelGC -XX:ParallelGCThreads=1 -Dpicard.useLegacyParser=false")
-        step.run_step()
-        SnakemakeUtils.dump_tool_output(mark_duplicates, "BAM", output.BAM_DUPMARKED)
-        SnakemakeUtils.dump_tool_output(mark_duplicates, "METRICS", output.metrics)
-
-rule picard_sort_sam:
-    input:
-        BAM_DUPMARKED = rules.picard_mark_duplicates.output.BAM_DUPMARKED,
-    output:
-        BAM_SORTED = Path(config['working_dir']) / "alignment" / "sort_dupmarked" / "aligned.duplicate_marked.sorted.bam.io",
-    params:
-        working_dir = Path(config['working_dir']) / 'alignment' / 'sort_dupmarked'
-    run:
-        from camel.app.tools.picard.sortsam import SortSam
-
-        sort_sam = SortSam(camel)
-        SnakemakeUtils.add_pickle_input(sort_sam, 'BAM', input.BAM_DUPMARKED)
-        step = Step(rule, sort_sam, camel, params.working_dir, config)
-        sort_sam.update_parameters(
-            output = "aligned.duplicate_marked.sorted.bam",
-            **config['rule_params']['alignment'][rule],
-        )
-        step.run_step()
-        SnakemakeUtils.dump_tool_output(sort_sam, "BAM", output.BAM_SORTED)
-
 rule picard_add_readgroups:
     input:
-        BAM = rules.picard_sort_sam.output.BAM_SORTED
+        BAM = rules.bwa_aln_to_bam.output.BAM
     output:
-        BAM = Path(config['working_dir']) / 'alignment' / 'add_readgroups' / 'aligned_dupmarked_sorted_rgadded.bam.io'
+        BAM = Path(config['working_dir']) / 'alignment' / 'add_readgroups' / '{input_basename}.aligned_rgadded.bam.io'
     params:
         working_dir = Path(config['working_dir']) / 'alignment' / 'add_readgroups'
     run:
@@ -171,12 +67,52 @@ rule picard_add_readgroups:
         step.run_step()
         SnakemakeUtils.dump_tool_output(add_rg, "BAM", output.BAM)
 
+rule picard_mark_duplicates_sort:
+    """
+    Aggregate aligned+merged flowcell BAM files and mark duplicates
+    We take advantage of the tool's ability to take multiple BAM inputs and write out a single output
+    to avoid having to spend time just merging BAM files.
+    """
+    input:
+        BAM = expand(rules.picard_add_readgroups.output.BAM, input_basename = config['input_basenames'])
+    output:
+        BAM = Path(config['working_dir']) / 'alignment' / 'mark_duplicates' / f'{config["sample"]}.aligned.sorted.duplicates_marked.bam.io',
+        metrics = Path(config['working_dir']) / 'alignment' / 'mark_duplicates' / f"{config['sample']}.duplicate_metrics.txt.io"
+    params:
+        working_dir = Path(config['working_dir']) / 'alignment' / 'mark_duplicates',
+        output_file = f'{config["sample"]}.aligned.unsorted.duplicates_marked.bam',
+        metrics_output_file = Path(config['working_dir']) / 'alignment' / 'mark_duplicates' / f"{config['sample']}.duplicate_metrics.txt"
+    run:
+        from camel.app.tools.picard.markduplicates import MarkDuplicates
+        from camel.app.tools.picard.sortsam import SortSam
+
+        mark_duplicates = MarkDuplicates(camel)
+        sort_sam = SortSam(camel)
+
+        mark_duplicates.add_input_files({"BAM": [SnakemakeUtils.load_object(path)[0] for path in input.BAM]})
+
+        mark_duplicates.update_parameters(
+            output = params.output_file,
+            metrics_output = output.metrics,
+            **config['rule_params']['alignment']['picard_mark_duplicates'],
+        )
+        sort_sam.update_parameters(
+            output = "aligned.duplicate_marked.sorted.bam",
+            **config['rule_params']['alignment']['picard_sort_sam'],
+        )
+        mark_duplicates.update_java_options("-mx100G -XX:+UseParallelGC -XX:ParallelGCThreads=1 -Dpicard.useLegacyParser=false")
+
+        pipeutils.run_as_pipe([mark_duplicates, sort_sam], params.working_dir)
+
+        SnakemakeUtils.dump_tool_output(mark_duplicates, "METRICS", output.metrics)
+        SnakemakeUtils.dump_tool_output(sort_sam, "BAM", output.BAM)
+
 rule picard_set_tags:
     input:
-        BAM = rules.picard_add_readgroups.output.BAM,
+        BAM = rules.picard_mark_duplicates_sort.output.BAM,
         FASTA_REF = Path(config['working_dir']) / "ref_input" / "fasta_reference_human_value_file.io"
     output:
-        BAM = Path(config['working_dir']) / 'alignment' / 'set_tags' / 'aligned_dupmarked_sorted_rgadded_settags.bam.io'
+        BAM = Path(config['working_dir']) / 'alignment' / 'set_tags' / 'aligned_rgadded_dup-removed_settags.bam.io'
     params:
         working_dir = Path(config['working_dir']) / 'alignment' / 'set_tags',
     run:
