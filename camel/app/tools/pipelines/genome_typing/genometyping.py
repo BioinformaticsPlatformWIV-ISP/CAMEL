@@ -5,7 +5,8 @@ from typing import Union, Dict
 
 from camel.app.components.blasthit.influenzablastnasnparser import InfluenzaBlastnAsnParser
 from camel.app.components.files.fastautils import FastaUtils
-from camel.app.components.segmenttyping.influenzasegmenttypingblasthit import InfluenzaSegmentTypingBlasthit
+from camel.app.components.segmenttyping.segmenttypingreads import SegmentTypingReads
+from camel.app.components.segmenttyping.segmenttypingcontigs import SegmentTypingContigs
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.invalidparametererror import InvalidParameterError
 from camel.app.tools.tool import Tool
@@ -93,24 +94,19 @@ class GenomeTyping(Tool):
                                                 self._parameters['seqIDParser_type'].value, self._parameters['genometyping_method'].value)
         blast_parser.group_hits_per_segment()
         self._informs['segment_informs'] = {}
+        segment_typer_class = SegmentTypingReads if self._parameters['genometyping_method'].value == 'blast' else SegmentTypingContigs
         if self._parameters['multi_segment'].value:
             for segment in self._parameters['genome_segments'].value:
                 segment_hits = blast_parser.get_segment_hits(segment)
                 if segment_hits:
-                    segment_typer = InfluenzaSegmentTypingBlasthit(segment, segment_hits, self._random_seed)
-                    self._informs['segment_informs'][segment] = {'refseqid': segment_typer.best_target,
-                                                                 'candidates': segment_typer.best_candidate_targets,
-                                                                 'ambiguous': segment_typer.ambiguous,
-                                                                 'counts': segment_typer.counts}
+                    segment_typer = segment_typer_class(segment, segment_hits, self._random_seed)
+                    self._informs['segment_informs'][segment] = segment_typer.stats
             self._informs['expected_segments'] = self._parameters['genome_segments'].value
         else:
             segment_hits = blast_parser.get_segment_hits('single_segment')
             if segment_hits:
-                segment_typer = InfluenzaSegmentTypingBlasthit('single_segment', segment_hits, self._random_seed)
-                self._informs['segment_informs']['single_segment'] = {'refseqid': segment_typer.best_target,
-                                                                      'candidates': segment_typer.best_candidate_targets,
-                                                                      'ambiguous': segment_typer.ambiguous,
-                                                                      'counts': segment_typer.counts}
+                segment_typer = segment_typer_class('single_segment', segment_hits, self._random_seed)
+                self._informs['segment_informs']['single_segment'] = segment_typer.stats
             self._informs['expected_segments'] = ['Single segment']
 
     def _set_random_seed(self) -> None:
@@ -169,13 +165,14 @@ class GenomeTyping(Tool):
         Load cluster representative sequences from the genome typing database
         :return: None
         """
-        return FastaUtils.read_as_dict(self._tool_inputs['DB_BLAST'][0].path)
+        return FastaUtils.read_as_dict(self._tool_inputs['REF_FASTA'][0].path)
 
     def _set_output(self) -> None:
         """
         Sets the tool outputs
         :return: None
         """
+        print(self._informs['segment_informs'])
         self._tool_outputs['FASTA'] = [ToolIOFile(self._obtain_reference_genome())]
 
     def _extract_influenza_a_subtype(self) -> None:

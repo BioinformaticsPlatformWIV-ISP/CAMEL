@@ -6,7 +6,7 @@ from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.tools.tool import Tool
-from typing import List
+from typing import List, Union, Tuple
 
 
 class ReporterGenomeTyping(Tool):
@@ -87,7 +87,6 @@ class ReporterGenomeTyping(Tool):
         """
         self._report_section.add_header('Typing results per segment', 2)
         self._report_section.add_text('Only the top five hits are shown, click to expand to see the top twenty hits')
-        total_reads_count = self._input_informs['seqtksubsample']['reads_count']
         for i, segment in enumerate(self._input_informs['genometyping']['expected_segments']):
 
             self._report_section.add_header(f'Results on segment {segment}', 3)
@@ -100,17 +99,39 @@ class ReporterGenomeTyping(Tool):
             self._report_section.add_table(best_candidate_table, table_attributes=[('class', 'information')])
             self._report_section.add_line_break()
 
-            candidate_table = []
-            if segment in self._input_informs['genometyping']['segment_informs']:
-                for cnt in self._input_informs['genometyping']['segment_informs'][segment]['counts'][:20]:
-                    candidate_table.append([cnt[0], f'{self.__reformat_inform(str(cnt[1]))} ({cnt[1]/total_reads_count*100:.2f}%)'])
-            else:
-                candidate_table.append(['Not found', '--'])
-            self._report_section.add_html_object(HtmlExpandableTable(candidate_table, ['Segment name', 'Reads count (percentage)']))
+            candidate_table, header = self.__get_candidate_table(segment)
+            self._report_section.add_html_object(HtmlExpandableTable(candidate_table, header))
 
             self._report_section.add_line_break()
             if i + 1 < len(self._input_informs['genometyping']['expected_segments']):
                 self._report_section.add_horizontal_line()
+
+    def __get_candidate_table(self, segment: str) -> Tuple[List[List[Union[str, int, float]]], List[str]]:
+        """
+        Returns the data for the table of all refseq candidates. This table is different for assembly and mapping
+        based reference selection.
+        :param segment:
+        :return:
+        """
+        candidate_table = []
+        if segment in self._input_informs['genometyping']['segment_informs']:
+            # If top20 exists, it comes from the SegmentTypingContigs class => assembly
+            if 'top20' in self._input_informs['genometyping']['segment_informs'][segment]:
+                header = ['Segment id', '# identical bases', '# mismatches', '# gaps', '# aln length', '# ref length', 'variant rate']
+                for refseq in self._input_informs['genometyping']['segment_informs'][segment]['top20'].keys():
+                    summarized = self._input_informs['genometyping']['segment_informs'][segment]['top20'][refseq]['summarized_stats']
+                    normalized = self._input_informs['genometyping']['segment_informs'][segment]['top20'][refseq]['normalized_stats']
+                    candidate_table.append([refseq, summarized['total_identical_bases'], summarized['total_mismatch'], summarized['total_gaps'],
+                                           summarized['total_length'], summarized['qlen'], round(normalized['variant_rate'], 4)])
+            else:
+                header = ['Segment id', 'Reads count (percentage)']
+                total_reads_count = self._input_informs['seqtksubsample']['reads_count']
+                for cnt in self._input_informs['genometyping']['segment_informs'][segment]['counts'][:20]:
+                    candidate_table.append([cnt[0], f'{self.__reformat_inform(str(cnt[1]))} ({cnt[1] / total_reads_count * 100:.2f}%)'])
+        else:
+            header = ['Segment id', 'Reads count (percentage)']
+            candidate_table.append(['Not found', '--'])
+        return candidate_table, header
 
     def __add_subtype_section(self) -> None:
         """
