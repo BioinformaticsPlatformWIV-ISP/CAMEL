@@ -171,7 +171,7 @@ class ReporterAlignment(Tool):
 
         relative_path_map_qc = self.__sub_folder / 'mapping_quality_distribution.pdf'
         self._report_section.add_file(self._tool_inputs['PDF_MQC'][0].path, str(relative_path_map_qc))
-        self._report_section.add_link_to_file('Mapping qaulity distribution (PDF)', str(relative_path_map_qc))
+        self._report_section.add_link_to_file('Mapping quality distribution (PDF)', str(relative_path_map_qc))
 
     def __add_whole_genome_statistics(self) -> None:
         """
