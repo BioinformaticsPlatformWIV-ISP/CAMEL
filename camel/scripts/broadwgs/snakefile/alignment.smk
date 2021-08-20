@@ -69,7 +69,6 @@ rule picard_add_readgroups:
             RG_sample_name = config['sample'],
             **config['rule_params']['alignment'][rule],
         )
-        add_rg.update_java_options("-mx100G -XX:+UseParallelGC -XX:ParallelGCThreads=1 -Dpicard.useLegacyParser=false")
         step.run_step()
         SnakemakeUtils.dump_tool_output(add_rg, "BAM", output.BAM)
 
@@ -138,7 +137,6 @@ rule picard_set_tags:
             output = "aligned_dupmarked_sorted_rgadded_settags.bam",
             **config['rule_params']['alignment'][rule]
         )
-        set_tags.update_java_options("-mx100G -XX:+UseParallelGC -XX:ParallelGCThreads=1 -Dpicard.useLegacyParser=false")
         step.run_step()
         SnakemakeUtils.dump_tool_output(set_tags, "BAM", output.BAM)
 
