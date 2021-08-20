@@ -27,12 +27,12 @@ class InfluenzaBlastnAsnParser(BlastnAsnParser):
         self._check_subtyping_method(subtyping_method)
         self._multi_segment = multi_segment
         self._seqid_parser_type = seqid_parser_type
-        self._refseq_id = 'sseqid' if subtyping_method == 'blast' else 'qseqid'
+        self._refseq_id = 'sseqid' if subtyping_method == 'alignment' else 'qseqid'
         self._segment_hits = {}
 
     @staticmethod
     def _check_subtyping_method(subtyping_method):
-        if subtyping_method not in {'blast', 'asm'}:
+        if subtyping_method not in {'assembly', 'alignment'}:
             raise ValueError(f'Given subtyping method is invalid for InfluenzaBlastnAsnParser: {subtyping_method}')
 
     def get_segment_hits(self, segment: str) -> Union[None, List[BlastnHit]]:
