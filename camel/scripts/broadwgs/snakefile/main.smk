@@ -128,8 +128,6 @@ rule move_qc:
         TXT_metrics_WGS = Path(config['working_dir']) / "qc" / "wgs_metrics" / f"{config['sample']}.wgs.metrics.txt",
         TXT_metrics_rawWGS = Path(config['working_dir']) / "qc" / "wgs_metrics" / f"{config['sample']}.raw.wgs.metrics.txt",
 
-        #TXT_metrics_validateGVCF = Path(config['working_dir']) / "qc" / "validate_gvcf" / f"{config['sample']}.validate_vcf.txt",
-
         TXT_metrics_varCalling = Path(config['working_dir']) / "qc" / "variant_calling_metrics" / f"{config['sample']}.variant_calling_metrics.io",
 
         ## TODO uBAM metrics
@@ -167,8 +165,6 @@ rule move_qc:
         TXT_metrics_WGS = Path(config['final_output_dir']) / "qc" / "wgs_metrics" / f"{config['sample']}.wgs.metrics.txt",
         TXT_metrics_rawWGS = Path(config['final_output_dir']) / "qc" / "wgs_metrics" / f"{config['sample']}.raw.wgs.metrics.txt",
 
-        #TXT_metrics_validateGVCF = Path(config['final_output_dir']) / "qc" / "validate_gvcf" / f"{config['sample']}.validate_vcf.txt",
-
         TXT_metrics_varCalling = Path(config['final_output_dir']) / "qc" / "variant_calling_metrics" / f"{config['sample']}.variant_calling_metrics.txt",
 
         QC_done = Path(config['final_output_dir']) / 'qc' / 'qc_done.txt'
@@ -193,7 +189,6 @@ rule move_qc:
         os.link(input.TXT_metrics_checksum, output.TXT_metrics_checksum)
         os.link(input.TXT_metrics_WGS, output.TXT_metrics_WGS)
         os.link(input.TXT_metrics_rawWGS, output.TXT_metrics_rawWGS)
-        #os.link(input.TXT_metrics_validateGVCF, output.TXT_metrics_validateGVCF)
         os.link(SnakemakeUtils.load_object(input.TXT_metrics_varCalling)[0].path, output.TXT_metrics_varCalling)
 
         subprocess.run(f"touch {output.QC_done}", shell = True, executable='/bin/bash')

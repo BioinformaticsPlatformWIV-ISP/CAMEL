@@ -33,11 +33,12 @@ rule_params:
       assume_sort_order: 'queryname'
       clear_dt: 'false'
       add_pg_tag_to_reads: 'false'
+      max_records_in_ram: 10000000
     picard_sort_sam:
       sort_order: 'coordinate'
       create_index: 'true'
       create_md5_file: 'true'
-      max_records_in_ram: 300000
+      max_records_in_ram: 10000000
     picard_add_readgroups:
       RG_library: 'unknown'
       RG_platform: 'illumina'
@@ -63,7 +64,7 @@ rule_params:
       ignore: 'MISSING_TAG_NM'
       mode: 'VERBOSE'
       is_bisulfite_sequenced: 'false'
-      max_records_in_ram: 5000000
+      max_records_in_ram: 10000000
   variant_calling:
     picard_create_interval_lists:
       scatter_count: 10

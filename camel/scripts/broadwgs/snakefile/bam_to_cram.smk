@@ -16,7 +16,9 @@ rule samtools_convert_to_cram:
     params:
         working_dir = Path(config['working_dir']) / "bamtocram" / "convert",
         output_file = f'{config["sample"]}.cram'
-    threads: config['params_smk']['threads']
+    threads: config["params_smk"]["threads_cram"]
+    resources:
+        mem_mb=config["params_smk"]["memory_mb_cram"]
     run:
         from camel.app.tools.samtools.samtoolsview import SamtoolsView
 
@@ -40,6 +42,9 @@ rule checksum_cram:
         CRAM = rules.samtools_convert_to_cram.output.CRAM,
     output:
         CRAM_checksum = Path(config['working_dir']) / "bamtocram" / "convert" / "cram.md5",
+    threads: config["params_smk"]["threads_cram"]
+    resources:
+        mem_mb=config["params_smk"]["memory_mb_cram"]
     run:
         import subprocess
 
@@ -55,6 +60,9 @@ rule samtools_index_cram:
     params:
         working_dir = Path(config['working_dir']) / "bamtocram" / "convert",
         output_file = f'{config["sample"]}.cram'
+    threads: config["params_smk"]["threads_cram"]
+    resources:
+        mem_mb=config["params_smk"]["memory_mb_cram"]
     run:
         from camel.app.tools.samtools.samtoolsindexcram import SamtoolsIndexCram
 
@@ -76,6 +84,9 @@ rule picard_validate_cram:
         TXT_metrics = Path(config['working_dir']) / "bamtocram" / "metrics" / "cram_validation_report.io",
     params:
         working_dir = Path(config['working_dir']) / "bamtocram" / "metrics",
+    threads: config["params_smk"]["threads_cram"]
+    resources:
+        mem_mb=config["params_smk"]["memory_mb_cram"]
     run:
         from camel.app.tools.picard.validatesamfile import ValidateSamFile
 

@@ -18,6 +18,8 @@ rule bwa_aln_to_bam:
         working_dir = lambda wildcards: Path(config['working_dir']) / 'alignment' / "mapping" / wildcards.input_basename,
         output_file = lambda wildcards: f'{wildcards.input_basename}.aligned.unsorted.bam'
     threads: config["params_smk"]["threads_bwa"]
+    resources:
+        mem_mb=config["params_smk"]["memory_mb_bwa"]
     run:
         from camel.app.tools.bwa.bwamap import BWAMap
         from camel.app.tools.samtools.samtoolsview import SamtoolsView
@@ -52,6 +54,9 @@ rule picard_add_readgroups:
         BAM = Path(config['working_dir']) / 'alignment' / 'add_readgroups' / '{input_basename}.aligned_rgadded.bam.io'
     params:
         working_dir = Path(config['working_dir']) / 'alignment' / 'add_readgroups'
+    threads: config["params_smk"]["threads_picard"]
+    resources:
+        mem_mb=config["params_smk"]["memory_mb_picard"]
     run:
         from camel.app.tools.picard.addorreplacereadgroups import AddOrReplaceReadGroups
 
@@ -64,6 +69,7 @@ rule picard_add_readgroups:
             RG_sample_name = config['sample'],
             **config['rule_params']['alignment'][rule],
         )
+        add_rg.update_java_options("-mx100G -XX:+UseParallelGC -XX:ParallelGCThreads=1 -Dpicard.useLegacyParser=false")
         step.run_step()
         SnakemakeUtils.dump_tool_output(add_rg, "BAM", output.BAM)
 
@@ -82,6 +88,9 @@ rule picard_mark_duplicates_sort:
         working_dir = Path(config['working_dir']) / 'alignment' / 'mark_duplicates',
         output_file = f'{config["sample"]}.aligned.unsorted.duplicates_marked.bam',
         metrics_output_file = Path(config['working_dir']) / 'alignment' / 'mark_duplicates' / f"{config['sample']}.duplicate_metrics.txt"
+    threads: config["params_smk"]["threads_picard"]
+    resources:
+        mem_mb=config["params_smk"]["memory_mb_mark_duplicates_sort"]
     run:
         from camel.app.tools.picard.markduplicates import MarkDuplicates
         from camel.app.tools.picard.sortsam import SortSam
@@ -100,7 +109,8 @@ rule picard_mark_duplicates_sort:
             output = "aligned.duplicate_marked.sorted.bam",
             **config['rule_params']['alignment']['picard_sort_sam'],
         )
-        mark_duplicates.update_java_options("-mx100G -XX:+UseParallelGC -XX:ParallelGCThreads=1 -Dpicard.useLegacyParser=false")
+        mark_duplicates.update_java_options(f"-mx{resources.mem_mb}M -XX:+UseParallelGC -XX:ParallelGCThreads=1 -Dpicard.useLegacyParser=false")
+        sort_sam.update_java_options(f"-mx{resources.mem_mb}M -XX:+UseParallelGC -XX:ParallelGCThreads=1 -Dpicard.useLegacyParser=false")
 
         pipeutils.run_as_pipe([mark_duplicates, sort_sam], params.working_dir)
 
@@ -115,6 +125,9 @@ rule picard_set_tags:
         BAM = Path(config['working_dir']) / 'alignment' / 'set_tags' / 'aligned_rgadded_dup-removed_settags.bam.io'
     params:
         working_dir = Path(config['working_dir']) / 'alignment' / 'set_tags',
+    threads: config["params_smk"]["threads_picard"]
+    resources:
+        mem_mb=config["params_smk"]["memory_mb_picard"]
     run:
         from camel.app.tools.picard.setnmmdanduqtags import SetNmMdAndUqTags
 
@@ -125,6 +138,7 @@ rule picard_set_tags:
             output = "aligned_dupmarked_sorted_rgadded_settags.bam",
             **config['rule_params']['alignment'][rule]
         )
+        set_tags.update_java_options("-mx100G -XX:+UseParallelGC -XX:ParallelGCThreads=1 -Dpicard.useLegacyParser=false")
         step.run_step()
         SnakemakeUtils.dump_tool_output(set_tags, "BAM", output.BAM)
 
@@ -140,6 +154,9 @@ rule gatk4_baserecalibrator:
     params:
         working_dir = lambda wildcards: Path(config['working_dir']) / "alignment" / "bqsr",
         output_file = lambda wildcards: f'{wildcards.i}_recal_data.csv'
+    threads: config["params_smk"]["threads_bqsr"]
+    resources:
+        mem_mb=config["params_smk"]["memory_mb_bqsr"]
     run:
         from camel.app.tools.gatk4.gatk4baserecalibrator import GATK4BaseRecalibrator
 
@@ -160,6 +177,9 @@ rule gatk4_gather_bqsr_reports:
         bqsr_report_gathered = Path(config['working_dir']) / "alignment" / "gather_bqsr_reports" / "recal_data.csv.io",
     params:
         working_dir = Path(config['working_dir']) / "alignment" / "gather_bqsr_reports",
+    threads: config["params_smk"]["threads_bqsr"]
+    resources:
+        mem_mb=config["params_smk"]["memory_mb_bqsr"]
     run:
         from camel.app.tools.gatk4.gatk4gatherbqsrreports import GATK4GatherBQSRReports
 
@@ -185,6 +205,9 @@ rule gatk4_apply_bqsr:
     params:
         working_dir = lambda wildcards: Path(config['working_dir']) / "alignment" / "apply_bqsr",
         output_file = lambda wildcards: f'{wildcards.i}_sorted.bam'
+    threads: config["params_smk"]["threads_apply_bqsr"]
+    resources:
+        mem_mb=config["params_smk"]["memory_mb_bqsr"]
     run:
         from camel.app.tools.gatk4.gatk4applybqsr import GATK4ApplyBQSR
 
@@ -207,6 +230,9 @@ rule picard_gather_sorted_bam:
         BAM = Path(config['working_dir']) / "alignment" / "gather_bqsr_sorted_bam" / "bqsr_gathered_sorted.bam.io",
     params:
         working_dir = Path(config['working_dir']) / "alignment" / "gather_bqsr_sorted_bam"
+    threads: config["params_smk"]["threads_picard"]
+    resources:
+        mem_mb=config["params_smk"]["memory_mb_picard"]
     run:
         from camel.app.tools.picard.gatherbamfiles import GatherBamFiles
 

@@ -16,6 +16,9 @@ rule picard_quality_yield:
     params:
         working_dir = Path(config['working_dir']) / "qc" / "ubam_quality_yield",
         output_file = lambda wildcards: f"{wildcards.input_basename}.unmapped.quality_yield_metrics"
+    threads: config["params_smk"]["threads_picard"]
+    resources:
+        mem_mb=config["params_smk"]["memory_mb_picard"]
     run:
         from camel.app.tools.picard.collectqualityyieldmetrics import CollectQualityYieldMetrics
 
@@ -42,10 +45,12 @@ rule picard_unsorted_RG_quality:
                 ".quality_distribution.pdf",
                 ".quality_distribution_metrics"
                 )
-
     params:
         working_dir = Path(config['working_dir']) / "qc" / "unsorted_RG_quality",
         output_prefix = lambda wildcards: f"{wildcards.input_basename}.unsorted_readgroup"
+    threads: config["params_smk"]["threads_picard"]
+    resources:
+        mem_mb=config["params_smk"]["memory_mb_picard"]
     run:
         from camel.app.tools.picard.collectmultiplemetrics import CollectMultipleMetrics
 
@@ -71,6 +76,9 @@ rule picard_RG_quality:
     params:
         working_dir = Path(config['working_dir']) / "qc" / "RG_quality",
         output_prefix = f'{config["sample"]}.readgroup'
+    threads: config["params_smk"]["threads_picard"]
+    resources:
+        mem_mb=config["params_smk"]["memory_mb_picard"]
     run:
         from camel.app.tools.picard.collectmultiplemetrics import CollectMultipleMetrics
 
@@ -140,6 +148,9 @@ rule picard_aggregation_metrics:
     params:
           working_dir = Path(config['working_dir']) / "qc" / "aggregation_metrics",
           output_prefix = f'{config["sample"]}.agg',
+    threads: config["params_smk"]["threads_picard"]
+    resources:
+        mem_mb=config["params_smk"]["memory_mb_picard"]
     run:
         from camel.app.tools.picard.collectmultiplemetrics import CollectMultipleMetrics
 
@@ -161,6 +172,9 @@ rule picard_RG_checksum:
     params:
         working_dir = Path(config['working_dir']) / "qc" / "RG_checksum",
         output_file = f'{config["sample"]}.bam.read_group_md5'
+    threads: config["params_smk"]["threads_picard"]
+    resources:
+        mem_mb=config["params_smk"]["memory_mb_picard"]
     run:
         from camel.app.tools.picard.calculatereadgroupchecksum import CalculateReadGroupChecksum
 
@@ -181,6 +195,9 @@ rule picard_wgs_metrics:
     params:
         working_dir = Path(config['working_dir']) / "qc" / "wgs_metrics",
         output_file = f'{config["sample"]}.wgs.metrics.txt'
+    threads: config["params_smk"]["threads_picard"]
+    resources:
+        mem_mb=config["params_smk"]["memory_mb_picard"]
     run:
         from camel.app.tools.picard.collectwgsmetrics import CollectWgsMetrics
 
@@ -205,6 +222,9 @@ rule picard_raw_wgs_metrics:
     params:
         working_dir = Path(config['working_dir']) / "qc" / "wgs_metrics",
         output_file = f'{config["sample"]}.raw.wgs.metrics.txt'
+    threads: config["params_smk"]["threads_picard"]
+    resources:
+        mem_mb=config["params_smk"]["memory_mb_picard"]
     run:
         from camel.app.tools.picard.collectrawwgsmetrics import CollectRawWgsMetrics
 
@@ -217,32 +237,6 @@ rule picard_raw_wgs_metrics:
         )
         step.run_step()
 
-rule gatk4_validate_gvcf:
-    input:
-        VCF = Path(config['working_dir']) / variant_calling.OUTPUT_gVCF,
-        FASTA_REF = Path(config['working_dir']) / "ref_input" / "fasta_reference_human_value_file.io",
-        CALLING_INTERVALS = Path(config['working_dir']) / "ref_input" / "calling_intervals.io",
-        VCF_dbsnp = Path(config['working_dir']) / "ref_input" / "dbsnp_vcf.io",
-    output:
-        TXT_metrics = Path(config['working_dir']) / "qc" / "validate_gvcf" / f'{config["sample"]}.validate_vcf.txt'
-    params:
-        working_dir = Path(config['working_dir']) / "qc" / "validate_gvcf",
-        output_file = f'{config["sample"]}.validate_vcf.txt'
-    run:
-        from camel.app.tools.gatk4.gatk4validatevariants import GATK4ValidateVariants
-
-        Path(params.working_dir).mkdir(exist_ok=True)
-
-        validate_gvcf = GATK4ValidateVariants(camel)
-        SnakemakeUtils.add_pickle_inputs(validate_gvcf, input)
-        step = Step(rule, validate_gvcf, camel, params.working_dir, config)
-        validate_gvcf.update_parameters(
-            output = params.output_file,
-            **config['rule_params']['qc'][rule]
-        )
-        step.run_step()
-
-
 rule picard_variant_calling_metrics:
     input:
         VCF = Path(config['working_dir']) / variant_calling.OUTPUT_gVCF,
@@ -253,6 +247,9 @@ rule picard_variant_calling_metrics:
         TXT_report = Path(config['working_dir']) / "qc" / "variant_calling_metrics" / f'{config["sample"]}.variant_calling_metrics.io',
     params:
         working_dir = Path(config['working_dir']) / "qc" / "variant_calling_metrics",
+    threads: config["params_smk"]["threads_picard"]
+    resources:
+        mem_mb=config["params_smk"]["memory_mb_picard"]
     run:
         from camel.app.tools.picard.collectvariantcallingmetrics import CollectVariantCallingMetrics
 
