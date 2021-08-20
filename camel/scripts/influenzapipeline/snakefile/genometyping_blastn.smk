@@ -11,6 +11,8 @@ from camel.scripts.influenzapipeline.snakefile import genometyping_blastn
 
 camel = Camel.get_instance()
 
+
+
 rule seqtk_subsample:
     """
     Runs the Seqtk subsampling on the data
@@ -26,6 +28,23 @@ rule seqtk_subsample:
     run:
         from camel.app.tools.seqtk.seqtksubsample import SeqtkSubsample
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
+        from camel.app.components.files.fastqutils import FastqUtils
+        import logging
+
+        fq_dict = SnakePipelineUtils.extracts_fq_input(str(input.IO),key_pe='FASTQ_PE',key_se='FASTQ_SE')
+        input_files = fq_dict['FASTQ_PE']
+
+        base_count = 0
+        for input_file in input_files:
+            base_count += FastqUtils.count_bases(input_file.path)
+        avg_depth = base_count / float(config['species_info']['genome_size'])
+        target_depth = 200
+        fraction = round(target_depth / avg_depth, 4)
+        logging.info(f'Found a total of {base_count} bases in the input files. The average read depth based'
+                     f'on this number is estimated to be {avg_depth}. Subsampling to ~200x (factor {fraction})')
+        if fraction > 0.5:
+            raise ValueError('Average read depth based on number of base pairs is less than 400 '
+                             'which is not supported at this time!')
 
         subsample = SeqtkSubsample(camel)
 
@@ -34,9 +53,12 @@ rule seqtk_subsample:
         subsample.add_input_files({'FASTQ_PE': input_files})
 
         step = Step(str(rule), subsample, camel, params.running_dir, config)
-        subsample.update_parameters(combine_output=True)
+        subsample.update_parameters(combine_output=True if config['analysis_type'] != 'assembly' else False,
+            fraction=fraction)
         step.run_step()
-        SnakemakeUtils.dump_tool_outputs(subsample, output)
+        output_key = 'FASTQ' if config['analysis_type'] != 'assembly' else 'FASTQ_PE'
+        SnakemakeUtils.dump_tool_output(subsample, output_key, output.FASTQ)
+        SnakemakeUtils.dump_tool_outputs(subsample, output, ['INFORMS'])
 
 rule seqtk_convert:
     """
@@ -77,15 +99,32 @@ rule seqtk_convert:
         SnakemakeUtils.dump_tool_outputs(convert, output)
         update_seqid(convert.tool_outputs['FASTA'][0].path)
 
-def get_blastn_input() -> Path:
+def get_blastn_query_input() -> Path:
     """
-    Returns the input that is needed for the blastn genometyping rule
+    Returns the input that is needed for the blastn genometyping rule (query sequences)
     :return: Path to the input
     """
     if config['analysis_type'] == 'alignment':
         return Path(config['working_dir']) / genometyping_blastn.OUTPUT_SEQTK_CONVERT_FASTA
     elif config['analysis_type'] == 'assembly':
-        return Path(config['working_dir']) / assembly.OUTPUT_ASSEMBLY_FASTA
+        io_path = Path(config['working_dir']) / 'genometyping_db.io'
+        SnakemakeUtils.dump_object([ToolIOFile(config['genometyping_db'])], io_path)
+        return io_path
+    else:
+        raise ValueError('Invalid or no analysis type given in config file!')
+
+
+def get_blastn_subject_input() -> Path:
+    """
+    Returns the input that is needed for the blastn genometyping rule (subject sequences)
+    :return: Path to the input
+    """
+    if config['analysis_type'] == 'alignment':
+        io_path = Path(config['working_dir']) / 'genometyping_db.io'
+        SnakemakeUtils.dump_object([ToolIOFile(config['genometyping_db'])], io_path)
+        return io_path
+    elif config['analysis_type'] == 'assembly':
+        return Path(config['working_dir']) / assembly.OUTPUT_ASSEMBLY_FASTA_BLAST_DB
     else:
         raise ValueError('Invalid or no analysis type given in config file!')
 
@@ -94,7 +133,8 @@ rule blastn_genometyping:
     Runs Blastn on the data
     """
     input:
-        FASTA = get_blastn_input()
+        FASTA = get_blastn_query_input(),
+        DB_BLAST = get_blastn_subject_input()
     output:
         ASN = Path(config['working_dir']) / genometyping_blastn.OUTPUT_BLASTN_ASN,
         TSV = Path(config['working_dir']) / genometyping_blastn.OUTPUT_BLASTN_TSV,
@@ -108,7 +148,6 @@ rule blastn_genometyping:
 
         blastn = Blastn(camel)
         SnakemakeUtils.add_pickle_inputs(blastn, input)
-        blastn.add_input_files({'DB_BLAST': [ToolIOFile(config['genometyping_db'])]})
         step = Step(str(rule), blastn, camel, params.running_dir, config)
         blastn.update_parameters(**config['rule_parameters']['blastn_genometyping'])
         step.run_step()
@@ -135,11 +174,13 @@ rule blastn_genometyping_processing:
         from camel.app.tools.pipelines.genome_typing.genometyping import GenomeTyping
         gt = GenomeTyping(camel)
         SnakemakeUtils.add_pickle_inputs(gt, input)
-        gt.add_input_files({'DB_BLAST': [ToolIOFile(config['genometyping_db'])]})
+        SnakemakeUtils.add_pickle_inputs(gt, {'DB_BLAST': get_blastn_subject_input(),
+                                              'REF_FASTA': Path(config['working_dir']) / 'genometyping_db.io'})
+        # gt.add_input_files({'DB_BLAST': [ToolIOFile(config['genometyping_db'])]})
         step = Step(str(rule), gt, camel, params.running_dir, config)
         gt.update_parameters(**{'multi_segment': str(config['multi_segment']),
                                 'seqIDParser_type': config['species_info']['seqIDParser_type'],
-                                'genometyping_method': 'blast',
+                                'genometyping_method': config['analysis_type'],
                                 'genome_segments': config['species_info']['genome_segments'],
                                 'random_seed': config['random_seed'],
                                 'influenza_a': config['species_info']['name'] == 'Influenza A'})

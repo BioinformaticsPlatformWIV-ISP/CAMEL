@@ -30,6 +30,7 @@ species_info:
     name: 'Influenza A'
     seqIDParser_type: 'default'
     genome_segments: 'PB2,PB1,PA,HA,NP,NA,MP,NS'
+    genome_size: 13500
     genome_typing_db:
       ncbi: '/db/refgenomes/influenza/ncbi/20201006/influenza_0N_2stdev_clustered_A.fa'
       ecdc: '/db/refgenomes/influenza.A/Cyril_references/cluster_fasta/HANA_dict.fa'
@@ -39,9 +40,9 @@ rule_parameters:
   blastn_genometyping:
 #    output_format: '"6 qseqid sseqid qstart qend sstart send sstrand evalue bitscore"'
     ungapped: ''
-    qcov_hsp_perc: 85
+#    qcov_hsp_perc: 85
     percent_identity: {blastn_genometyping_idcutoff}
-    output_filename: 'blastn_genome_typing_read_hits.tsv'
+    output_filename: 'blastn_genome_typing_read_hits.asn'
   mapping:
     bowtie2_mode: [sensitive, end_to_end]
   iterative_mapping:
