@@ -2,15 +2,16 @@ import abc
 import logging
 import re
 from pathlib import Path
+from typing import Optional
 
 from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
-from camel.app.tools.tool import Tool
+from camel.app.tools.toolpipeable import ToolPipeable
 
 
-class Picard(Tool, metaclass=abc.ABCMeta):
+class Picard(ToolPipeable, metaclass=abc.ABCMeta):
 
     """
     Super class for Picard tools
@@ -95,24 +96,43 @@ class Picard(Tool, metaclass=abc.ABCMeta):
 
     def _set_output(self) -> None:
         """
-        Set the output specification
+        Set the output specification, this default function handles only one BAM file as output
         :return: None
         """
         self._tool_outputs[self._output_type] = [
             ToolIOFile(Path(self._folder) / self._parameters['output'].value)
         ]
 
-    def _build_command(self) -> None:
+    def _build_command(self, pipe_in: bool = False, pipe_out: bool = False) -> None:
         """
         Build the command to run tool
         :return: None
         """
-        self._command.command = " ".join([
-            "java", self._java_options, "-jar $PICARD_JAR", self._tool_command, self._java_options_temp_dir, self._input_string, self._output_string,
-            ' '.join(self._build_options(excluded_parameters=self._specific_parameters, delimiter='=')), '2>&1'
-        ])
+        #Init base command
+        command_parts = ["java", self._java_options, "-jar $PICARD_JAR", self._tool_command, self._java_options_temp_dir]
 
-    def _set_informs(self) -> None:
+        #Set input cmd line option
+        if pipe_in:
+            command_parts.append("I=/dev/stdin")
+        else:
+            command_parts.append(self._input_string)
+
+        #Set output cmd line option
+        if not pipe_out:
+            command_parts.append("O=/dev/stdout")
+            self._specific_parameters.append('output')
+        else:
+            command_parts.append(self._output_string)
+
+        #Add options
+        command_parts.append(" ".join(self._build_options(excluded_parameters=self._specific_parameters, delimiter="=")))
+
+        #Required for _set_informs?
+        command_parts.append("2>&1")
+
+        self._command.command = " ".join(command_parts)
+
+    def _set_informs(self, stderr: Optional[str] = None) -> None:
         """
         Analyse the result of picard run and update tool.informs, implement when necessary
         :return: None
@@ -131,3 +151,25 @@ class Picard(Tool, metaclass=abc.ABCMeta):
         for line in self.stdout.splitlines():
             if re.match('WARNING', line):
                 logging.warning(f' Picard - {line}')
+
+    def _before_pipe(self, dir_: Path, pipe_in: bool, pipe_out: bool) -> None:
+        """
+        Prepares the command that will be piped.
+        :param dir_: Running directory
+        :param pipe_in: True if tool receives piped input
+        :param pipe_out: True if tool generates piped output
+        :return: None
+        """
+        self._set_input()
+        self._set_output()
+        self._build_command(pipe_in, pipe_out)
+
+    def _after_pipe(self, stderr: str, is_last_in_pipe: bool) -> None:
+        """
+        Performs the required steps after executing the tool as part of a pipe.
+        :param stderr: Stderr for this command in the pipe
+        :param is_last_in_pipe: Boolean to indicate if this is the last step in the pipe
+        :return: None
+        """
+        pass
+        #TODO _set_informs

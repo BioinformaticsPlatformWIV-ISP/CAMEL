@@ -32,7 +32,7 @@ class MarkDuplicates(Picard):
         else:
             self._input_string += f'I={self._tool_inputs[self._main_input][0].path} '
 
-        del self._tool_inputs[self._main_input]
+        self._tool_inputs.remove(self._main_input)
 
         # Run parent function for other inputs, e.g. FASTA_REF (optional)
         super(MarkDuplicates, self)._set_input()
