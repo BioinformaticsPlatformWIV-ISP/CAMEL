@@ -5,7 +5,7 @@ from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.gatk4.gatk4 import GATK4
 
 
-class GATK4BaseRecalibrator(GATK4) -> None:
+class GATK4BaseRecalibrator(GATK4):
     """
     =============================
     GATK BaseRecalibrator 4.1.9.0
@@ -32,7 +32,7 @@ class GATK4BaseRecalibrator(GATK4) -> None:
     - recal_table_output       recalibration table name. Default value: 'recalibrationData.tabl'
     """
 
-    def __init__(self, camel: Camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initialize GATKBaseRecalibrator tool.
         :param camel: Camel instance
