@@ -1,55 +1,49 @@
 import logging
-import random
 from collections import Counter
-from typing import List
+from typing import List, Dict, Any
 
 from camel.app.components.blasthit.blastnhit import BlastnHit
+from camel.app.components.segmenttyping.segmenttyping import SegmentTyping
 
 
-class InfluenzaSegmentTypingBlasthit(object):
+class SegmentTypingReads(SegmentTyping):
 
     """
-    Class to analyze BLASTn hits for Influenza segment typing
+    Class for segment typing based on blasting of reads against a reference database
     """
 
     def __init__(self, segment: str, blast_hits: List[BlastnHit], seed: int = None):
-        self._segment = segment
-        self._blast_hits = blast_hits
-        self._best_candidate_targets = None
-        self._seed = seed if seed else random.randint(1, 1000000)
-        logging.info(f'No seed given for InfluenzaSubtypingBlastHit, using {self._seed}')
-        self._ambiguous = None
+        """
+        Initializes the object
+        :param segment: Segment that the hits map to (can also be single_segment)
+        :param blast_hits: List of Blast hits for the given segment
+        :param seed: Optional seed used for tie breaking
+        """
+        super().__init__(segment, blast_hits, seed)
         self._max_cnt = None
         self._counts = None
-        self.__count_target_hits()
-        self.__quality_check()
+        self._count_target_hits()
+        self._quality_check()
 
     @property
-    def best_target(self) -> str:
+    def stats(self) -> Dict[str, Any]:
         """
-        Returns the best blast hit that was found. In case of a tie, a random one is returned
-        but the seed is set to return the same one every time.
-        :return: Sseqid of the best hit
+        Return statistics about the typing.
+        :return: Dictionary with statistics
         """
-        if len(self._best_candidate_targets) == 1:
-            return self._best_candidate_targets[0]
-        else:
-            random.seed(self._seed)
-            return self._best_candidate_targets[random.randint(0, len(self._best_candidate_targets)-1)]
+        return {'refseqid': self.best_target,
+                'candidates': self.best_candidate_targets,
+                'ambiguous': self.ambiguous,
+                'counts': self.counts}
 
-    @property
-    def best_candidate_targets(self) -> List[str]:
-        return self._best_candidate_targets
-
-    @property
-    def ambiguous(self):
-        return self._ambiguous
-
-    @property
     def counts(self):
+        """
+        Returns the count of the most commonly found sseqid.
+        :return: Count of the most commonly found sseqid
+        """
         return self._counts
 
-    def __count_target_hits(self) -> None:
+    def _count_target_hits(self) -> None:
         """
         Counts the number of times each sseqid is identified in the blast hits. The most common
         ones are assigned to a variable as well as the maximum count that was observed.
@@ -60,7 +54,7 @@ class InfluenzaSegmentTypingBlasthit(object):
         self._max_cnt = max([c[1] for c in self._counts])
         self._best_candidate_targets = [c[0] for c in self._counts if c[1] == self._max_cnt]
 
-    def __quality_check(self):
+    def _quality_check(self):
         """
         Quality check the typing results, log the possible issues, and set the ambiguous variable.
         - Low top hit count
