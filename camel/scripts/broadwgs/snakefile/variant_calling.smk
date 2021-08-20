@@ -11,9 +11,12 @@ rule picard_create_interval_lists:
     input:
         TXT_intervals = Path(config['working_dir']) / "ref_input" / "calling_intervals.io"
     output:
-        TXT_intervalList = Path(config['working_dir']) / "variant_calling" / "varcalling_intervals" / f'temp_{{scatter}}_of_{config["rule_params"]["variant_calling"]["picard_create_interval_lists"]["scatter_count"]}' / "scattered.interval_list.io"
+        TXT_intervalLists = Path(config['working_dir']) / "variant_calling" / "varcalling_intervals" / "interval_lists.io"
     params:
         working_dir = Path(config['working_dir']) / "variant_calling" / "varcalling_intervals",
+    threads: config["params_smk"]["threads_picard"]
+    resources:
+        mem_mb=config["params_smk"]["memory_mb_picard"]
     run:
         from camel.app.tools.picard.intervallisttools import IntervalListTools
 
@@ -26,20 +29,33 @@ rule picard_create_interval_lists:
         )
         step.run_step()
 
-        for interval_list in step.outputs['TXT_intervalLists']:
-            intervalList_io = interval_list.path + ".io"
-            SnakemakeUtils.dump_object([interval_list], intervalList_io)
+        SnakemakeUtils.dump_tool_output(generate_interval_list, 'TXT_intervalLists', output.TXT_intervalLists)
+
+
+rule create_io_intervalLists:
+   input:
+       TXT_intervalLists = rules.picard_create_interval_lists.output.TXT_intervalLists
+   output:
+       TXT_intervalList = Path(config['working_dir']) / "variant_calling" / "varcalling_intervals" / f'temp_{{scatter}}_of_{config["rule_params"]["variant_calling"]["picard_create_interval_lists"]["scatter_count"]}' / "scattered.interval_list.io",
+   run:
+       for interval_list in SnakemakeUtils.load_object(input.TXT_intervalLists):
+           intervalList_io = interval_list.path + ".io"
+           if intervalList_io.split("/")[-2].split("_")[1] == wildcards.scatter:
+                SnakemakeUtils.dump_object([interval_list], intervalList_io)
 
 rule gatk4_haplotype_caller:
     input:
         BAM = Path(config['working_dir']) / alignment.OUTPUT_ALIGNMENT_BAM,
-        TXT_intervals = rules.picard_create_interval_lists.output.TXT_intervalList,
+        TXT_intervals = rules.create_io_intervalLists.output.TXT_intervalList,
         FASTA_REF = Path(config['working_dir']) / "ref_input" / "fasta_reference_human_value_file.io",
     output:
         VCF = Path(config['working_dir']) / "variant_calling" / "haplotype_caller" / f'temp_{{scatter}}_of_{config["rule_params"]["variant_calling"]["picard_create_interval_lists"]["scatter_count"]}.vcf.gz.io',
         bamout = Path(config['working_dir']) / "variant_calling" / "haplotype_caller" / f'temp_{{scatter}}_of_{config["rule_params"]["variant_calling"]["picard_create_interval_lists"]["scatter_count"]}.bamout.bam'
     params:
         working_dir = lambda wildcards: Path(config['working_dir']) / "variant_calling" / "haplotype_caller" / f'temp_{wildcards.scatter}_of_{config["rule_params"]["variant_calling"]["picard_create_interval_lists"]["scatter_count"]}',
+    threads: config["params_smk"]["threads_haplotype_caller"]
+    resources:
+        mem_mb=config["params_smk"]["memory_mb_haplotype_caller"]
     run:
         import subprocess
         from camel.app.tools.gatk4.gatk4haplotypecaller import GATK4HaplotypeCaller
@@ -66,6 +82,9 @@ rule picard_merge_vcfs:
         VCF_index = Path(config['working_dir']) / "variant_calling" / "merge_vcf" / "output.vcf.idx"
     params:
         working_dir = lambda wildcards: Path(config['working_dir']) / "variant_calling" / "merge_vcf"
+    threads: config["params_smk"]["threads_picard"]
+    resources:
+        mem_mb=config["params_smk"]["memory_mb_picard"]
     run:
         from camel.app.tools.picard.mergevcfs import MergeVCFs
 
