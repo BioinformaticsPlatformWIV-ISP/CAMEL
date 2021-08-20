@@ -52,7 +52,7 @@ class FastqToSam(Picard):
         if self._output_type not in ["SAM", "BAM"]:
             raise InvalidParameterError("Picard FastqToSam: output file extension should be .bam or .sam")
 
-        super(FastqToSam, self)._set_output
+        super(FastqToSam, self)._set_output()
 
     def _set_informs(self) -> None:
         """

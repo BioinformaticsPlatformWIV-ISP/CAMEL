@@ -79,16 +79,6 @@ class CollectMultipleMetrics(Picard):
         self._specific_parameters = ['metric_accumulation_level_multi']
         self._outfile_prefix = None
 
-    def _set_input(self) -> None:
-        """
-        Set the input for CollectMultipleMetrics
-        :return: None
-        """
-        super(CollectMultipleMetrics, self)._set_input()
-
-        if 'FASTA_REF' in self._tool_inputs:
-            self._input_string += f" R={self._tool_inputs['FASTA_REF'][0].path}"
-
     def _set_output(self) -> None:
         """
         Set the output for Picard CollectMultipleMetrics function
@@ -235,4 +225,4 @@ class CollectMultipleMetrics(Picard):
         Multiple values allowed for certain parameters. These are passed in a comma separated string and need to be split
         """
         option_list = self._parameters[option].value.split(",")
-        return "".join(f" {self._parameters[option].option} {s} " for s in option_list)
+        return "".join(f" {self._parameters[option].option}={s} " for s in option_list)

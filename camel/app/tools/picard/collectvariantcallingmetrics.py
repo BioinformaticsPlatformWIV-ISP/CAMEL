@@ -37,7 +37,7 @@ class CollectVariantCallingMetrics(Picard):
         Set the input specification. Overrides method in parent class.
         :return: None
         """
-        super(CollectVariantCallingMetrics, self)._set_input()
+        self._input_string += f"INPUT={self._tool_inputs['VCF'][0].path} "
 
         self._input_string += f"DBSNP={self._tool_inputs['VCF_dbsnp'][0].path} "
 

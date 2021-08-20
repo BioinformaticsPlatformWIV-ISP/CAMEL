@@ -95,7 +95,7 @@ class Picard(Tool, metaclass=abc.ABCMeta):
 
     def _set_output(self) -> None:
         """
-        Set the output specification, this default function handles only one BAM file as output
+        Set the output specification
         :return: None
         """
         self._tool_outputs[self._output_type] = [
