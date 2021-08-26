@@ -24,7 +24,10 @@ class HtmlCitation(HtmlBase):
         self._title = citation_data['primary_title']
         citation_processor = {'jour': self._process_journal_citation,
                               'book': self._process_book_citation}
-        citation_processor[citation_data['type_of_reference'].lower()]()
+        try:
+            citation_processor[citation_data['type_of_reference'].lower()]()
+        except KeyError:
+            raise KeyError(f"Citations of type {citation_data['type_of_reference']} are not supported!")
 
     def _process_journal_citation(self) -> None:
         """
