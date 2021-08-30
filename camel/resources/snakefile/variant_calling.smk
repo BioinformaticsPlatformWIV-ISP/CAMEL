@@ -140,11 +140,11 @@ rule variant_calling_mpileup:
         if params.count_orphans is not None:
             samtools_mpileup.update_parameters(count_orphans=params.count_orphans)
         if params.min_mapping_quality is not None:
-            samtools_mpileup.update_parameters(count_orphans=params.min_mapping_quality)
+            samtools_mpileup.update_parameters(min_mapping_quality=params.min_mapping_quality)
         if params.min_base_quality is not None:
-            samtools_mpileup.update_parameters(count_orphans=params.min_base_quality)
+            samtools_mpileup.update_parameters(min_base_quality=params.min_base_quality)
         if params.disable_baq is not None:
-            samtools_mpileup.update_parameters(count_orphans=params.disable_baq)
+            samtools_mpileup.update_parameters(disable_baq=params.disable_baq)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(samtools_mpileup, output)
 
