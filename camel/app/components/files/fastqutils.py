@@ -1,11 +1,12 @@
-import os
+import gzip
 import re
 from itertools import zip_longest
-from typing import Set, Iterable, AbstractSet, BinaryIO, Dict
-import gzip
+from pathlib import Path
+from typing import Set, Iterable, AbstractSet, BinaryIO, Dict, Union, Sequence
+
 import screed
 from Bio import SeqIO
-from pathlib import Path
+
 from camel.app.command.command import Command
 from camel.app.components.filesystemhelper import FileSystemHelper
 
@@ -42,8 +43,8 @@ class FastqUtils(object):
         :return: None
         """
         cat = 'zcat' if FileSystemHelper.is_gzipped(infile) else 'cat'
-        gzip = '| gzip ' if gzip_output else ''
-        cmd = f"{cat} {infile} | paste - - - - | sort -k1,1 -t \" \" | tr \"\t\" \"\n\" {gzip}> {outfile}"
+        gzip_ = '| gzip ' if gzip_output else ''
+        cmd = f"{cat} {infile} | paste - - - - | sort -k1,1 -t \" \" | tr \"\t\" \"\n\" {gzip_}> {outfile}"
         command = Command()
         command.command = cmd
         command.run(infile.resolve().parent)
@@ -64,9 +65,9 @@ class FastqUtils(object):
         """
         # (z)cat is used as 'paste - - - - <(zcat filename)' does not work
         cat = 'zcat' if FileSystemHelper.is_gzipped(pe_1_file) else 'cat'
-        gzip = '| gzip ' if gzip_output else ''
+        gzip_ = '| gzip ' if gzip_output else ''
         cmd = f"paste <({cat} {pe_1_file} | paste - - - -) <({cat} {pe_2_file} | paste - - - -) | " \
-              f"tr '\\t' '\\n' {gzip}> {interleaved_file}"
+              f"tr '\\t' '\\n' {gzip_}> {interleaved_file}"
         command = Command()
         command.command = cmd
         command.run(interleaved_file.resolve().parent)
@@ -100,9 +101,9 @@ class FastqUtils(object):
         :return: None
         """
         cat = 'zcat' if FileSystemHelper.is_gzipped(interleaved_file) else 'cat'
-        gzip = '| gzip ' if gzip_output else ''
-        cmd = f"{cat} {interleaved_file} | paste - - - - - - - - | tee >(cut -f 1-4 | tr '\t' '\n' {gzip}> {pe_1_file}) |" \
-              f" cut -f 5-8 | tr '\t' '\n' {gzip}> {pe_2_file}"
+        gzip_ = '| gzip ' if gzip_output else ''
+        cmd = f"{cat} {interleaved_file} | paste - - - - - - - - | tee >(cut -f 1-4 | tr '\t' '\n' {gzip_}> {pe_1_file}) |" \
+              f" cut -f 5-8 | tr '\t' '\n' {gzip_}> {pe_2_file}"
         command = Command()
         command.command = cmd
         command.run(pe_1_file.resolve().parent)
@@ -218,14 +219,14 @@ class FastqUtils(object):
     PATTERN_FQ_SE = r'(.+?)(_S\d+)?(_L\d{3})?(_\d+)?.(fastq|fq)(.gz)?'
 
     @staticmethod
-    def get_sample_name(fastq_path: Path, pattern: str = PATTERN_FQ_PE) -> str:
+    def get_sample_name(fastq_path: Union[Path, str], pattern: str = PATTERN_FQ_PE) -> str:
         """
         Returns the sample name based on the given reads.
         :param fastq_path: FASTQ path
         :param pattern: Regex to determine the sample name
         :return: Sample name
         """
-        basename = FileSystemHelper.make_valid(fastq_path.name)
+        basename = FileSystemHelper.make_valid(Path(fastq_path).name)
         m = re.match(pattern, basename, re.IGNORECASE)
         if m:
             return m.group(1)
@@ -246,7 +247,7 @@ class FastqUtils(object):
         return read_names
 
     @staticmethod
-    def process_paired_end(pe_1_files: Iterable[Path], pe_2_files: Iterable[Path], se_files: Iterable[Path],
+    def process_paired_end(pe_1_files: Sequence[Path], pe_2_files: Sequence[Path], se_files: Sequence[Path],
                            pe_out_1: Path, pe_out_2: Path, se_out: Path, gzip_output: bool = False) -> None:
         """
         Function to extract paired end reads from multiple (filtered) paired-end input files and output all
@@ -285,7 +286,7 @@ class FastqUtils(object):
                         outhandle.write(line)
 
     @staticmethod
-    def process_paired_end_se(pe_1_files: Iterable[Path], pe_2_files: Iterable[Path], se_1_files: Iterable[Path], se_2_files: Iterable[Path],
+    def process_paired_end_se(pe_1_files: Sequence[Path], pe_2_files: Sequence[Path], se_1_files: Sequence[Path], se_2_files: Sequence[Path],
                               pe_out_1: Path, pe_out_2: Path, se_out_1: Path, se_out_2: Path, gzip_output: bool = False) -> None:
         """
         Function to extract paired end reads from multiple (filtered) paired-end input files and output other and orphaned reads

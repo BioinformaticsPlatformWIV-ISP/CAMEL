@@ -1,11 +1,13 @@
-import unittest
 import filecmp
-from camel.app.components.files.fastqutils import FastqUtils
-from camel.app.components.testing.cameltestsuite import CamelTestSuite
-from camel.app.components.filesystemhelper import FileSystemHelper
-from pathlib import Path
 import gzip
+import unittest
+from pathlib import Path
+
 from Bio import SeqIO
+
+from camel.app.components.files.fastqutils import FastqUtils
+from camel.app.components.filesystemhelper import FileSystemHelper
+from camel.app.components.testing.cameltestsuite import CamelTestSuite
 
 
 class TestFastqUtils(CamelTestSuite):

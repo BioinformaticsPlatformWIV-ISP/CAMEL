@@ -1,6 +1,6 @@
 import logging
 import logging.config
-import os
+from pathlib import Path
 
 import yaml
 
@@ -13,7 +13,7 @@ class LogManager(object):
     _pipeline_handlers = []
 
     @staticmethod
-    def initialize(config_file):
+    def initialize(config_file: Path):
         """
         Initializes the log manager.
         :param config_file: Configuration file
@@ -29,20 +29,20 @@ class LogManager(object):
         logging.info("Log manager initialized")
 
     @staticmethod
-    def attach_step_handlers(folder):
+    def attach_step_handlers(folder: Path) -> None:
         """
         Attaches the step handlers and updates the log location.
         :param folder: Folder to store the logs
         :return: None
         """
         for step_handler in LogManager._step_handlers:
-            filename = os.path.basename(step_handler.baseFilename)
+            filename = Path(step_handler.baseFilename).name
             step_handler.close()
-            step_handler.baseFilename = os.path.join(folder, filename)
+            step_handler.baseFilename = str(folder / filename)
             logging.getLogger().addHandler(step_handler)
 
     @staticmethod
-    def detach_step_handlers():
+    def detach_step_handlers() -> None:
         """
         Detaches the step handlers.
         :return: None
@@ -52,20 +52,20 @@ class LogManager(object):
                 logging.getLogger().handlers.remove(step_handler)
 
     @staticmethod
-    def attach_pipeline_handlers(folder):
+    def attach_pipeline_handlers(folder: Path) -> None:
         """
         Attaches the pipeline handlers and updates the log location.
         :param folder: Folder to store the logs
         :return: None
         """
         for pipeline_handler in LogManager._pipeline_handlers:
-            filename = os.path.basename(pipeline_handler.baseFilename)
+            filename = Path(pipeline_handler.baseFilename).name
             pipeline_handler.close()
-            pipeline_handler.baseFilename = os.path.join(folder, filename)
+            pipeline_handler.baseFilename = str(folder / filename)
             logging.getLogger().addHandler(pipeline_handler)
 
     @staticmethod
-    def detach_pipeline_handlers():
+    def detach_pipeline_handlers() -> None:
         """
         Detaches the pipeline handlers.
         :return: None
