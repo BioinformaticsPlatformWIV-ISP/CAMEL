@@ -101,10 +101,17 @@ class AlignmentExtraction(object):
             raise ValueError('Cannot determine the last line of the alignment')
 
     @staticmethod
-    def __cleanup_query_line(line):
+    def __cleanup_query_line(line: str) -> str:
         """
         Cleans up the given query line.
         :param line: Line containing the query
         :return: Query
         """
-        return line.replace('Query= ', '').split(' ')[0].strip()[0:AlignmentExtraction.MAX_QUERY_LENGTH]
+        seq_id = line.replace('Query= ', '').split(' ')[0]
+
+        # Workaround when commas are present in sequence id
+        if ',' in seq_id:
+            seq_id = seq_id.split(',')[0] + ','
+
+        # Return key
+        return seq_id.strip()[0:AlignmentExtraction.MAX_QUERY_LENGTH]

@@ -33,10 +33,12 @@ class TrimmingIlluminaWrapper(object):
         self._working_dir = Path(working_dir)
         self._output = None
 
-    def run_workflow(self, pe_reads: List[Path], threads: int = 8, export_fastq: bool = False) -> None:
+    def run_workflow(self, pe_reads: List[Path], adapter: Optional[str] = None, threads: int = 8,
+                     export_fastq: bool = False) -> None:
         """
         Runs the read trimming workflow.
         :param pe_reads: Input PE FASTQ reads
+        :param adapter: Adapter to trim
         :param threads: Number of threads to use
         :param export_fastq: If True, FASTQ files are included in the report
         :return: None
@@ -46,6 +48,8 @@ class TrimmingIlluminaWrapper(object):
             'fastq_pe': [{'name': p.name, 'path': str(p)} for p in pe_reads],
             'read_trimming': {'export_fastq': str(export_fastq)}
         }
+        if adapter is not None:
+            config_data['read_trimming']['adapter'] = adapter
         config_file = SnakePipelineUtils.generate_config_file(config_data, self._working_dir)
         output_files = {
             'HTML': self._working_dir / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_REPORT,

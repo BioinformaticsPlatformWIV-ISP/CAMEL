@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
@@ -9,10 +9,10 @@ from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 @dataclass(frozen=True)
 class FastqInput:
     read_type: str
-    pe: List[ToolIOFile] = None
-    se: List[ToolIOFile] = None
-    se_fwd: List[ToolIOFile] = None
-    se_rev: List[ToolIOFile] = None
+    pe: Optional[List[ToolIOFile]] = None
+    se: Optional[List[ToolIOFile]] = None
+    se_fwd: Optional[List[ToolIOFile]] = None
+    se_rev: Optional[List[ToolIOFile]] = None
     is_trimmed: bool = False
     is_pe: bool = True
 

@@ -1,9 +1,8 @@
+import abc
 import inspect
 import logging
 from pathlib import Path
 from typing import Dict, Optional, List, Union
-
-import abc
 
 from camel.app.camel import Camel
 from camel.app.command.command import Command
@@ -48,7 +47,7 @@ class Tool(object, metaclass=abc.ABCMeta):
         Returns the name of this tool.
         :return: Name
         """
-        return '{} {}'.format(self._name, self._version)
+        return f'{self._name} {self._version}'
 
     @property
     def version(self) -> str:
@@ -131,6 +130,14 @@ class Tool(object, metaclass=abc.ABCMeta):
         return ', '.join(["{}: '{}'".format(p, self._parameters[p].value) for p in sorted(self._parameters)]) if \
             len(self._parameters) > 0 else '/'
 
+    @property
+    def folder(self) -> Path:
+        """
+        Returns the folder the tool needs to run in.
+        :return: Path to the running folder
+        """
+        return self._folder
+
     def add_input_files(self, input_files: Dict[str, List[ToolIO]]) -> None:
         """
         Updates the input files for a tool.
@@ -188,16 +195,16 @@ class Tool(object, metaclass=abc.ABCMeta):
         logging.info("Removing {} parameters".format(len(self._parameters)))
         self._parameters.clear()
 
-    def run(self, folder: str = '.') -> None:
+    def run(self, folder: Path = Path.cwd()) -> None:
         """
         Runs this tool.
         :param folder: Folder to run the tool in.
         :return: None
         """
         self._folder = folder
-        logging.info('Running tool {}'.format(self.name))
-        logging.info('Working directory: {}'.format(self._folder))
-        logging.info('Tool parameters: {}'.format(self.parameter_overview))
+        logging.info(f'Running tool {self.name}')
+        logging.info(f'Working directory: {self._folder}')
+        logging.info(f'Tool parameters: {self.parameter_overview}')
         self._check_parameters()
         self._check_input()
         self._execute_tool()
@@ -252,7 +259,7 @@ class Tool(object, metaclass=abc.ABCMeta):
         :return: Options string
         """
         options = []
-        for name, parameter in self._parameters.items():
+        for name, parameter in sorted(self._parameters.items(), key=lambda x: x[1].p_index):
             if (excluded_parameters is not None) and (name in excluded_parameters):
                 continue
             if parameter.value is not None:
@@ -261,7 +268,7 @@ class Tool(object, metaclass=abc.ABCMeta):
                 options.append(parameter.option)
         return options
 
-    def _execute_command(self, folder: str = None) -> None:
+    def _execute_command(self, folder: Path = None) -> None:
         """
         Executes the command.
         :return: None
@@ -272,7 +279,7 @@ class Tool(object, metaclass=abc.ABCMeta):
             raise ValueError("Command is 'None'.")
         self._command.command = self._build_dependencies() + self._command.command
         self._informs['_command'] = self._command.command
-        self._command.run_command(folder)
+        self._command.run(folder)
         self._check_command_output()
 
     def _check_command_output(self) -> None:

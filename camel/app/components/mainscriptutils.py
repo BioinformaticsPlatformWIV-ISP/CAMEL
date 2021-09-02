@@ -47,6 +47,8 @@ def add_input_files_arguments(argument_parser: argparse.ArgumentParser, fasta_in
     argument_parser.add_argument('--read-type', help="Read type", choices=['illumina', 'iontorrent', 'nanopore'],
                                  default='illumina')
     argument_parser.add_argument('--trim-reads', help="Perform read trimming", action='store_true')
+    argument_parser.add_argument('--adapter', help="(Illumina) Adapter that was used for sequencing, used for "
+                                                   "read-trimming", choices=['NexteraPE', 'TruSeq2', 'TruSeq3'])
     argument_parser.add_argument('--report-include-fastq', help="Include trimmed FASTQ files in the report",
                                  action='store_true')
 
@@ -123,7 +125,7 @@ def determine_sample_name(args: argparse.Namespace) -> str:
     elif ('fasta' in args) and (args.fasta is not None):
         return Path(args.fasta).stem
     elif args.fastq_pe is not None:
-        names = args.fastq_pe_names if args.fastq_pe_names else [Path(x).name for x in args.fastq_pe]
+        names = args.fastq_pe_names if args.fastq_pe_names else [Path(Path(x).name) for x in args.fastq_pe]
         try:
             # See if it matches a standard FASTQ format
             return FastqUtils.get_sample_name(names[0])
@@ -146,7 +148,7 @@ def init_report(output_path: Path, output_dir: Path, title: str, header: str) ->
     :param header: Report header
     :return: Report
     """
-    report = HtmlReport(str(output_path), str(output_dir), [JQUERY_SRC])
+    report = HtmlReport(output_path, output_dir, [JQUERY_SRC])
     if not output_dir.exists():
         output_dir.mkdir(parents=True)
     report.initialize(title, CSS_STYLE)

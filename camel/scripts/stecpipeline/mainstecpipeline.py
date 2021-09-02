@@ -51,6 +51,8 @@ class MainSTECPipeline(ReportPipeline):
         config_data['read_type'] = self._args.read_type
         config_data['quality_checks']['typing_scheme'] = 'cgmlst' if self._args.cgmlst else 'mlst_warwick'
         config_data['read_trimming']['export_fastq'] = 'true' if self._args.report_include_fastq else 'false'
+        if self._args.library is not None:
+            config_data['read_trimming']['adapter'] = self._args.library
         config_data['variant_calling']['report_include_bam'] = 'true' if self._args.report_include_bam else 'false'
         detection_method_cgmlst = {
             'blast': 'blast', 'srst2': 'blast', 'kma': 'kma'}.get(self._args.detection_method)

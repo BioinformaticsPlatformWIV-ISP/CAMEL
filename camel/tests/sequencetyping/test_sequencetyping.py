@@ -93,6 +93,7 @@ class TestSequenceTyping(CamelTestSuite):
             '--working-dir', str(self.running_dir),
             '--detection-method', 'srst2',
             '--trim-reads',
+            '--adapter', 'TruSeq2',
             '--srst2-max-unaligned-overlap', '123',
             '--threads', '8'
         ]
