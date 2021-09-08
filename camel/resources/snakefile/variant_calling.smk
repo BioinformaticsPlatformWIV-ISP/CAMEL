@@ -187,16 +187,36 @@ rule variant_calling_bcftools_call:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(variant_caller, output)
 
+rule variant_calling_normalize_indels:
+    """
+    Normalizes indels.
+    """
+    input:
+        VCF_GZ = rules.variant_calling_bcftools_call.output.VCF_GZ,
+        FASTA = rules.variant_calling_prep_reference.output.FASTA
+    output:
+        VCF_GZ = Path(config['working_dir']) / 'variant_calling' / 'norm' / 'vcf_gz.io',
+    params:
+        running_dir = Path(config['working_dir']) / 'variant_calling' / 'norm'
+    run:
+        from camel.app.tools.bcftools.bcftoolsnorm import BcftoolsNorm
+        bcftools_norm = BcftoolsNorm(Camel.get_instance())
+        SnakemakeUtils.add_pickle_inputs(bcftools_norm, input)
+        step = Step(rule, bcftools_norm, camel, params.running_dir, config)
+        bcftools_norm.update_parameters(output_format='z')
+        step.run_step()
+        SnakemakeUtils.dump_tool_outputs(bcftools_norm, output)
+
 rule variant_calling_index_vcf_gz:
     """
     Indexes the VCF file.
     """
     input:
-        VCF_GZ = rules.variant_calling_bcftools_call.output.VCF_GZ
+        VCF_GZ = rules.variant_calling_normalize_indels.output.VCF_GZ
     output:
         VCF_GZ = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_UNFILTERED_VCF_GZ
     params:
-        running_dir = Path(config['working_dir']) / 'variant_calling' / 'calling'
+        running_dir = Path(config['working_dir']) / 'variant_calling' / 'norm'
     run:
         from camel.app.tools.bcftools.bcftoolsindex import BcftoolsIndex
         indexer = BcftoolsIndex(camel)
@@ -210,7 +230,7 @@ rule variant_calling_unzip_vcf:
     Unzips the VCF file.
     """
     input:
-        VCF_GZ = rules.variant_calling_bcftools_call.output.VCF_GZ
+        VCF_GZ = rules.variant_calling_index_vcf_gz.output.VCF_GZ
     output:
         VCF = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_UNFILTERED_VCF
     params:
