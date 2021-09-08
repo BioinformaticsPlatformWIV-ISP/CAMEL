@@ -117,7 +117,7 @@ class ZScoreFilter(BaseFilter):
             x = max(actg_counts)
             actg_counts.remove(x)
             y = sum(actg_counts)
-            z_score = float(x - y) / math.sqrt(x + y)
+            z_score = float(x - y) / max(math.sqrt(x + y), 1)
 
             if z_score < float(self._parameters['min_zscore'].value):
                 filtered_positions.append((variant.CHROM, variant.POS))
