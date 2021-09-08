@@ -15,7 +15,6 @@ class AddOrReplaceReadGroups(Picard):
         :return: None
         """
         super().__init__('Picard AddOrReplaceReadGroups', '2.23.3', camel)
-
         self._function_name = 'AddOrReplaceReadGroups'
 
     def _set_input(self) -> None:
@@ -23,6 +22,8 @@ class AddOrReplaceReadGroups(Picard):
         Set input for the picard function
         :return: None
         """
+        super(AddOrReplaceReadGroups, self)._set_input()
+
         if 'SAMPLE_NAME' in self._tool_inputs:
             # if SAMPLE_NAME specified, it will replace the default values of parameters: RG_sample_name, RG_id in DB
             self._specific_parameters = ['RG_id', 'RG_sample_name']

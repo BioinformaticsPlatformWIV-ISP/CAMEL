@@ -32,7 +32,7 @@ class GATK4AnalyzeCovariates(GATK4):
     - plots-report-file       pdf output file name. Default value: 'recal_QC_plots.pdf'
     """
 
-    def __init__(self, camel: Camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initialize GATKAnalyzeCovariates tool.
         :param camel: Camel instance

@@ -23,7 +23,6 @@ class CreateSequenceDictionary(Picard):
 
         self._function_name = 'CreateSequenceDictionary'
         self._required_inputs = ['FASTA_REF']
-        self._supported_inputs = []
         self._specific_parameters = ['output_ext', 'symlink']
         self._fasta_file = None
 
@@ -54,7 +53,7 @@ class CreateSequenceDictionary(Picard):
 
         logging.debug(f'symlink {self._fasta_file}')
 
-        self._input_string += f' R={self._fasta_file}'
+        self._input_string += f'R={self._fasta_file} '
 
     def __symlink_input(self) -> str:
         """

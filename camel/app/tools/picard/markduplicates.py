@@ -1,11 +1,12 @@
+import os
 import re
 
 from camel.app.camel import Camel
+from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.picard.picard import Picard
 
 
 class MarkDuplicates(Picard):
-
     """
     Class for Picard MarkDuplicates function
     """
@@ -19,7 +20,22 @@ class MarkDuplicates(Picard):
         super().__init__('Picard MarkDuplicates', '2.23.3', camel)
 
         self._function_name = 'MarkDuplicates'
-        self._supported_inputs = ['BAM']
+
+    def _set_input(self) -> None:
+        """
+        Set the input specification
+        :return: None
+        """
+        # input can be one or multiple BAM or SAM files
+        if len(self._tool_inputs[self._main_input]) > 1:
+            self._input_string += ''.join(f"I={f.path} " for f in self._tool_inputs[self._main_input])
+        else:
+            self._input_string += f'I={self._tool_inputs[self._main_input][0].path} '
+
+        self._tool_inputs.remove(self._main_input)
+
+        # Run parent function for other inputs, e.g. FASTA_REF (optional)
+        super(MarkDuplicates, self)._set_input()
 
     def _set_informs(self) -> None:
         """
@@ -39,3 +55,12 @@ class MarkDuplicates(Picard):
             m = re.search(r'Found (\d+) optical duplicate clusters', line)
             if m:
                 self.informs['optical_duplicate_clusters_count'] = m.group(1)
+
+    def _set_output(self) -> None:
+        """
+        Set the output specification
+        :return: None
+        """
+        self._tool_outputs['BAM'] = [ToolIOFile(os.path.join(self._folder, self._parameters['output'].value))]
+        self._tool_outputs['METRICS'] = [
+            ToolIOFile(os.path.join(self._folder, self._parameters['metrics_output'].value))]

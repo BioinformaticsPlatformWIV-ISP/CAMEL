@@ -1,7 +1,9 @@
 import re
+from pathlib import Path
 
 from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from camel.app.error.invalidparametererror import InvalidParameterError
 from camel.app.tools.picard.picard import Picard
 
 
@@ -20,10 +22,11 @@ class FastqToSam(Picard):
         super().__init__('Picard FastqToSam', '2.23.3', camel)
 
         self._function_name = 'FastqToSam'
+        self._required_inputs = ["FASTQ_PE", "FASTQ_SE"]
 
-    def _check_input(self) -> None:
+    def _set_input(self) -> None:
         """
-        Check and set the input specification
+        Set input for the picard function
         :return: None
         """
         if 'FASTQ_PE' in self._tool_inputs:
@@ -34,15 +37,22 @@ class FastqToSam(Picard):
         else:
             InvalidInputSpecificationError('Picard FastqToSam requires FASTQ_SE or FASTQ_PE input.')
 
-    def _set_input(self) -> None:
-        """
-        Set input for the picard function
-        :return: None
-        """
         if 'SAMPLE_NAME' in self._tool_inputs:
-            # if SAMPLE_NAME specified, it will replace the default values of parameters: RG_sample_name, RG_name in DB
+            # if SAMPLE_NAME specified, it will replace the default values of parameters: RG_sample_name, RG_name
             self._specific_parameters = ['RG_sample_name', 'RG_name']
             self._input_string += f" SM={self._tool_inputs['SAMPLE_NAME'][0].value} RG={self._tool_inputs['SAMPLE_NAME'][0].value}"
+
+    def _set_output(self) -> None:
+        """
+        Set output for FastqToSam. Extension determines whether a SAM or BAM file will be made
+        :return: None
+        """
+        self._output_type = Path(self._parameters['output'].value).suffix.strip(".").upper()
+
+        if self._output_type not in ["SAM", "BAM"]:
+            raise InvalidParameterError("Picard FastqToSam: output file extension should be .bam or .sam")
+
+        super(FastqToSam, self)._set_output()
 
     def _set_informs(self) -> None:
         """
