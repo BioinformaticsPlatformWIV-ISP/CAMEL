@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
@@ -87,23 +88,47 @@ class BWAMap(BWA):
 
     def __set_output(self) -> None:
         """
-        Set proper outputs for BAW mem
+        Set proper outputs for BWA mem
         :return: None
         """
         self._tool_outputs['SAM'] = [ToolIOFile(os.path.join(self._folder, BWAMap.OUTPUT_NAME))]
 
-    def __build_command(self) -> None:
+    def __build_command(self, pipe_in: bool = False, pipe_out: bool =  False) -> None:
         """
         Build command to run BWA mem
         :return: None
         """
+        command_parts = ['{} {} {} {}'.format(
+            self._tool_command,
+            ' '.join(self._build_options(excluded_parameters=['add_read_group'])),
+            self._tool_inputs['INDEX_GENOME_PREFIX'][0].value,
+            self._fastq_inputs_str)]
+
         if self._readgroup_str:
-            options = ' '.join(self._build_options(excluded_parameters=['add_read_group']))
-            self._command.command = f"{self._tool_command} {options} -R '{self._readgroup_str}' " \
-                                    f"{self._tool_inputs['INDEX_GENOME_PREFIX'][0].value} " \
-                                    f"{self._fastq_inputs_str} > {self._tool_outputs['SAM'][0].path}"
-        else:
-            options = ' '.join(self._build_options())
-            self._command.command = f"{self._tool_command} {options} " \
-                                    f"{self._tool_inputs['INDEX_GENOME_PREFIX'][0].value} " \
-                                    f"{self._fastq_inputs_str} > {self._tool_outputs['SAM'][0].path}"
+            command_parts.append(' -R {!r} '.format(self._readgroup_str))
+
+        if not pipe_out:
+            command_parts.append(' > {} '.format(self._tool_outputs['SAM'][0].path))
+
+        self._command.command = ' '.join(command_parts)
+
+    def _before_pipe(self, dir_: Path, pipe_in: bool, pipe_out: bool) -> None:
+        """
+        Prepares the command that will be piped.
+        :param dir_: Running directory
+        :param pipe_in: True if tool receives piped input
+        :param pipe_out: True if tool generates piped output
+        :return: None
+        """
+        self.__set_input()
+        self.__set_output()
+        self.__build_command(pipe_in, pipe_out)
+
+    def _after_pipe(self, stderr: str, is_last_in_pipe: bool) -> None:
+        """
+        Performs the required steps after executing the tool as part of a pipe.
+        :param stderr: Stderr for this command in the pipe
+        :param is_last_in_pipe: Boolean to indicate if this is the last step in the pipe
+        :return: None
+        """
+        pass

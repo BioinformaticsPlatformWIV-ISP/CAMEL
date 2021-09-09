@@ -1,8 +1,8 @@
 from camel.app.error.toolexecutionerror import ToolExecutionError
-from camel.app.tools.tool import Tool
+from camel.app.tools.toolpipeable import ToolPipeable
 
 
-class Samtools(Tool):
+class Samtools(ToolPipeable):
     """
     Super class for samtools.
     """

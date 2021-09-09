@@ -1,8 +1,8 @@
-import os
+from pathlib import Path
 
+import os
 import re
 
-from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.samtools.samtools import Samtools
 
@@ -39,14 +39,25 @@ class SamtoolsFlagstat(Samtools):
         self.__set_output()
         self._check_stderr()
 
-    def __build_command(self):
+    def __build_command(self, pipe_in: bool = False, pipe_out: bool = False) -> None:
         """
         Builds the command
         :return: None
         """
-        self._command.command = ' '.join([
-            self._tool_command,
-            self._tool_inputs['BAM'][0].path])
+        command_parts = [self._tool_command]
+
+        # Pipe input
+        if not pipe_in:
+            command_parts.append(self._tool_inputs['BAM'][0].path)
+        else:
+            command_parts.append('-')
+
+        # Pipe output
+        if (pipe_out is False) and ('output_filename' in self._parameters):
+            output_filename = Path(self._folder) / self._parameters['output_filename'].value
+            command_parts.append(f' > {output_filename}')
+
+        self._command.command = ' '.join(command_parts)
 
     def __set_informs(self):
         """
@@ -72,7 +83,7 @@ class SamtoolsFlagstat(Samtools):
         :param line: Flagstat output line
         :return: Line values
         """
-        m = re.match('^(\d+) \+ (\d+).*', line)
+        m = re.match(r'^(\d+) \+ (\d+).*', line)
         if m is None:
             raise ValueError("Cannot parse: '{}'".format(line))
         return int(m.group(1)), int(m.group(2))
@@ -84,9 +95,24 @@ class SamtoolsFlagstat(Samtools):
         """
         if 'output_filename' in self._parameters:
             output_path = os.path.join(self._folder, self._parameters['output_filename'].value)
-            try:
-                with open(output_path, 'w') as handle:
-                    handle.write(self.stdout)
-                self._tool_outputs['TXT'] = [ToolIOFile(output_path)]
-            except IOError:
-                raise ToolExecutionError("Cannot create output file")
+            self._tool_outputs['TXT'] = [ToolIOFile(output_path)]
+
+    def _before_pipe(self, dir_, pipe_in: bool, pipe_out: bool) -> None:
+        """
+        Prepares the command that will be piped.
+        :param dir_: Running directory
+        :param pipe_in: True if tool receives piped input
+        :param pipe_out: True if tool generates piped output
+        :return: None
+        """
+        self.__build_command(pipe_in, pipe_out)
+
+    def _after_pipe(self, stderr, is_last_in_pipe: bool) -> None:
+        """
+        Performs the required steps after executing the tool as part of a pipe.
+        :param stderr: Stderr for this command in the pipe
+        :param is_last_in_pipe: Boolean to indicate if this is the last step in the pipe
+        :return: None
+        """
+        if is_last_in_pipe:
+            self.__set_output()

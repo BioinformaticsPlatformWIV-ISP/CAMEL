@@ -1,13 +1,11 @@
 import abc
 
 from camel.app.error.toolexecutionerror import ToolExecutionError
-from camel.app.tools.tool import Tool
+from camel.app.tools.toolpipeable import ToolPipeable
 
 
-class BWA(Tool, metaclass=abc.ABCMeta):
-    """
-    Super class for reads mapping using BWA
-    """
+class BWA(ToolPipeable, metaclass=abc.ABCMeta):
+    """Super class for reads mapping using BWA"""
 
     def _check_command_output(self) -> None:
         """
