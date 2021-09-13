@@ -118,7 +118,7 @@ class Picard(ToolPipeable, metaclass=abc.ABCMeta):
             command_parts.append(self._input_string)
 
         #Set output cmd line option
-        if not pipe_out:
+        if pipe_out:
             command_parts.append("O=/dev/stdout")
             self._specific_parameters.append('output')
         else:
