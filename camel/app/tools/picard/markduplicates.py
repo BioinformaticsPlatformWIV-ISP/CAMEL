@@ -1,5 +1,6 @@
 import os
 import re
+from typing import Optional
 
 from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
@@ -32,17 +33,17 @@ class MarkDuplicates(Picard):
         else:
             self._input_string += f'I={self._tool_inputs[self._main_input][0].path} '
 
-        self._tool_inputs.remove(self._main_input)
+        del self._tool_inputs[self._main_input]
 
         # Run parent function for other inputs, e.g. FASTA_REF (optional)
         super(MarkDuplicates, self)._set_input()
 
-    def _set_informs(self) -> None:
+    def _set_informs(self, stderr: Optional[str] = None):
         """
         Analyse the result of picard run and update tool.informs
         :return: None
         """
-        for line in self.stdout.splitlines():
+        for line in (self.stderr if stderr is None else stderr).splitlines():
             m = re.search(r'Read (\d+) records. (\d+) pairs never matched', line)
             if m:
                 self.informs['reads_total'] = m.group(1)

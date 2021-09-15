@@ -1,6 +1,7 @@
 import logging
 import os
 import re
+from typing import Optional
 
 from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
@@ -142,7 +143,7 @@ class CollectMultipleMetrics(Picard):
 
         self._command.command = " ".join([
             "java", self._java_options, "-jar $PICARD_JAR", self._tool_command, self._java_options_temp_dir,
-            self._input_string, self._output_string, option_string, '2>&1'
+            self._input_string, self._output_string, option_string
         ])
 
     def __analyze_alignment_summary(self) -> None:
