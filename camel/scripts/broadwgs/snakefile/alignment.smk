@@ -101,7 +101,7 @@ rule picard_mark_duplicates_sort:
 
         mark_duplicates.update_parameters(
             output = params.output_file,
-            metrics_output = output.metrics,
+            metrics_output = params.metrics_output_file,
             **config['rule_params']['alignment']['picard_mark_duplicates'],
         )
         sort_sam.update_parameters(
