@@ -1,4 +1,5 @@
 import re
+from typing import Optional
 
 from camel.app.camel import Camel
 from camel.app.tools.picard.picard import Picard
@@ -48,15 +49,15 @@ class MergeBamAlignment(Picard):
 
         self._command.command = " ".join([
             "java", self._java_options, "-jar $PICARD_JAR", self._tool_command, self._java_options_temp_dir, self._input_string, self._output_string,
-            option_string, '2>&1'
+            option_string
         ])
 
-    def _set_informs(self) -> None:
+    def _set_informs(self, stderr: Optional[str] = None) -> None:
         """
         Analyse the result of picard run and update tool.informs
         :return: None
         """
-        for line in self.stdout.splitlines():
+        for line in (self.stderr if stderr is None else stderr).splitlines():
             m = re.search(r'Finished reading (\d+) total records from alignment SAM/BAM.', line)
             if m:
                 self.informs['reads_total'] = m.group(1)

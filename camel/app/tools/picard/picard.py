@@ -118,7 +118,7 @@ class Picard(ToolPipeable, metaclass=abc.ABCMeta):
             command_parts.append(self._input_string)
 
         #Set output cmd line option
-        if not pipe_out:
+        if pipe_out:
             command_parts.append("O=/dev/stdout")
             self._specific_parameters.append('output')
         else:
@@ -126,9 +126,6 @@ class Picard(ToolPipeable, metaclass=abc.ABCMeta):
 
         #Add options
         command_parts.append(" ".join(self._build_options(excluded_parameters=self._specific_parameters, delimiter="=")))
-
-        #Required for _set_informs?
-        command_parts.append("2>&1")
 
         self._command.command = " ".join(command_parts)
 
@@ -171,5 +168,4 @@ class Picard(ToolPipeable, metaclass=abc.ABCMeta):
         :param is_last_in_pipe: Boolean to indicate if this is the last step in the pipe
         :return: None
         """
-        pass
-        #TODO _set_informs
+        self._set_informs(stderr)
