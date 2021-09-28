@@ -6,4 +6,6 @@ parameters:
   reseeding: {default: true, mandatory: false, option: -r, p_index: 30, value: '1.5'}
   short_split_off: {default: true, mandatory: false, option: -M, p_index: 50, value: null}
   threads: {default: true, mandatory: false, option: -t, p_index: 10, value: '6'}
+  deterministic_aln: { default: false, mandatory: false, option: -K, p_index: 0, value: '100000000' }
+  verbose: { default: false, mandatory: false, option: -v, p_index: 0, value: 3 }
 tool_command: bwa mem

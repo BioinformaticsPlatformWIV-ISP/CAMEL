@@ -51,17 +51,32 @@ class SamtoolsView(Samtools):
         self.__set_output()
         self._check_stderr()
 
-    def __build_command(self):
+    def __build_command(self, pipe_in: bool = False, pipe_out: bool = False) -> None:
         """
         Builds the command for this tool.
         :return: None
         """
-        self._command.command = ' '.join([
+        excluded_parameters = ['regions']
+
+        # Do not specify output filename when piping output
+        if pipe_out:
+            excluded_parameters.append('output_filename')
+
+        # Construct command
+        command_parts = [
             self._tool_command,
-            ' '.join(self._build_options(['regions'])),
-            self._tool_inputs[self.__input_key][0].path])
+            ' '.join(self._build_options(excluded_parameters))
+        ]
+
+        # Add input file
+        if not pipe_in:
+            command_parts.append(self._tool_inputs[self.__input_key][0].path)
+
+        # Add regions (when specified)
         if 'regions' in self._parameters:
-            self._command.command += ' "{}"'.format(self._parameters['regions'].value)
+            command_parts.append(f'"{self._parameters["regions"].value}"')
+
+        self._command.command = ' '.join(command_parts)
 
     def __set_output(self):
         """
@@ -82,3 +97,23 @@ class SamtoolsView(Samtools):
         if 'only works for indexed' in self.stderr:
             raise ToolExecutionError("Can only extract regions from indexed BAM files")
         super(SamtoolsView, self)._check_stderr()
+
+    def _before_pipe(self, dir_, pipe_in: bool, pipe_out) -> None:
+        """
+        Prepares the command that will be piped.
+        :param dir_: Running directory
+        :param pipe_in: True if tool receives piped input
+        :param pipe_out: True if tool generates piped output
+        :return: None
+        """
+        self.__build_command(pipe_in, pipe_out)
+
+    def _after_pipe(self, stderr: str, is_last_in_pipe: bool) -> None:
+        """
+        Performs the required steps after executing the tool as part of a pipe.
+        :param stderr: Stderr for this command in the pipe
+        :param is_last_in_pipe: Boolean to indicate if this is the last step in the pipe
+        :return: None
+        """
+        if is_last_in_pipe:
+            self.__set_output()
