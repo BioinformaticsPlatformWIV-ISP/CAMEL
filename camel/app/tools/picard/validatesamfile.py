@@ -2,10 +2,9 @@ from camel.app.camel import Camel
 from camel.app.tools.picard.picard import Picard
 
 
-class SortSam(Picard):
-
+class ValidateSamFile(Picard):
     """
-    Class for Picard SortSam function
+    Class for Picard ValidateSamFile function
     """
 
     def __init__(self, camel: Camel):
@@ -14,5 +13,5 @@ class SortSam(Picard):
         :param camel: Camel instance
         :return: None
         """
-        super().__init__('Picard SortSam', '2.23.3', camel)
-        self._function_name = 'SortSam'
+        super().__init__('Picard ValidateSamFile', '2.23.3', camel)
+        self._output_type = 'TXT_report'
