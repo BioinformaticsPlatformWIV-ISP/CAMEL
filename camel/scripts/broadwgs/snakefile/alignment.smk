@@ -53,31 +53,6 @@ rule picard_add_readgroups:
     output:
         BAM = Path(config['working_dir']) / 'alignment' / 'add_readgroups' / '{input_basename}.aligned_rgadded.bam.io'
     params:
-        working_dir = Path(config['working_dir']) / 'alignment' / 'add_readgroups'
-    threads: config["params_smk"]["threads_picard"]
-    resources:
-        mem_mb=config["params_smk"]["memory_mb_picard"]
-    run:
-        from camel.app.tools.picard.addorreplacereadgroups import AddOrReplaceReadGroups
-
-        add_rg = AddOrReplaceReadGroups(camel)
-        SnakemakeUtils.add_pickle_inputs(add_rg, input)
-        step = Step(rule, add_rg, camel, params.working_dir, config)
-        add_rg.update_parameters(
-            output = 'aligned_dupmarked_sorted_rgadded.bam',
-            RG_id = f'{config["sample"]}.rg',
-            RG_sample_name = config['sample'],
-            **config['rule_params']['alignment'][rule],
-        )
-        step.run_step()
-        SnakemakeUtils.dump_tool_output(add_rg, "BAM", output.BAM)
-
-rule picard_add_readgroups:
-    input:
-        BAM = rules.bwa_aln_to_bam.output.BAM
-    output:
-        BAM = Path(config['working_dir']) / 'alignment' / 'add_readgroups' / '{input_basename}.aligned_rgadded.bam.io'
-    params:
         working_dir = Path(config['working_dir']) / 'alignment' / 'add_readgroups',
         output_file = lambda wildcards: f'{wildcards.input_basename}.aligned_rgadded.bam',
         RG_id = lambda wildcards: f'{wildcards.input_basename}.rg'
