@@ -1,6 +1,7 @@
 import os
 import subprocess
 from pathlib import Path
+import logging
 
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.io.tooliovalue import ToolIOValue
@@ -36,21 +37,18 @@ rule move_output:
         CRAM = Path(config['working_dir']) / bam_to_cram.OUTPUT_BAMTOCRAM_CRAM,
         CRAM_checksum = Path(config['working_dir']) / bam_to_cram.OUTPUT_BAMTOCRAM_CRAM_checksum,
         CRAI = Path(config['working_dir']) / bam_to_cram.OUTPUT_BAMTOCRAM_CRAI,
-        CRAM_metrics = Path(config['working_dir']) / bam_to_cram.OUTPUT_BAMTOCRAM_CRAM_metrics,
         VCF = Path(config['working_dir']) / variant_calling.OUTPUT_gVCF,
         VCF_index = Path(config['working_dir']) / variant_calling.OUTPUT_gVCF_index
     output:
         CRAM = Path(config['final_output_dir']) / f'{config["sample"]}.cram',
         CRAM_checksum = Path(config['final_output_dir']) / f'{config["sample"]}.cram.md5',
         CRAI = Path(config['final_output_dir']) / f'{config["sample"]}.cram.crai',
-        CRAM_metrics = Path(config['final_output_dir']) / f'{config["sample"]}.cram.metrics',
         VCF = Path(config['final_output_dir']) / f'{config["sample"]}.gVCF',
         VCF_index = Path(config['final_output_dir']) / f'{config["sample"]}.gVCF.idx',
     run:
         os.link(SnakemakeUtils.load_object(input.CRAM)[0].path, output.CRAM)
         os.link(SnakemakeUtils.load_object(input.CRAI)[0].path, output.CRAI)
         os.link(input.CRAM_checksum, output.CRAM_checksum)
-        os.link(SnakemakeUtils.load_object(input.CRAM_metrics)[0].path, output.CRAM_metrics)
         os.link(SnakemakeUtils.load_object(input.VCF)[0].path, output.VCF)
         os.link(input.VCF_index, output.VCF_index)
 
@@ -104,6 +102,17 @@ rule prepare_interval_pickles:
 
 rule move_qc:
     input:
+        TXT = expand(Path(config['working_dir']) / "qc" / "quality_yield" / "{fastq}.unmapped.quality_yield_metrics.io", fastq = config["input_basenames"]),
+
+        base_distribution_by_cycle = expand(Path(config['working_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.base_distribution_by_cycle.pdf", fastq = config["input_basenames"]),
+        base_distribution_by_cycle_metrics = expand(Path(config['working_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.base_distribution_by_cycle_metrics", fastq = config["input_basenames"]),
+        insert_size_histogram_pdf = expand(Path(config['working_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.insert_size_histogram.pdf", fastq = config["input_basenames"]),
+        insert_size_metrics = expand(Path(config['working_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.insert_size_metrics", fastq = config["input_basenames"]),
+        quality_by_cycle_pdf = expand(Path(config['working_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.quality_by_cycle.pdf", fastq = config["input_basenames"]),
+        quality_by_cycle_metrics = expand(Path(config['working_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.quality_by_cycle_metrics", fastq = config["input_basenames"]),
+        quality_distribution_pdf = expand(Path(config['working_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.quality_distribution.pdf", fastq = config["input_basenames"]),
+        quality_distribution_metrics = expand(Path(config['working_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.quality_distribution_metrics", fastq = config["input_basenames"]),
+
         alignment_summary_metrics = Path(config['working_dir']) / "qc" / "RG_quality" / f"{config['sample']}.readgroup.alignment_summary_metrics",
         gc_bias_detail_metrics = Path(config['working_dir']) / "qc" / "RG_quality" / f"{config['sample']}.readgroup.gc_bias.detail_metrics",
         gc_bias_pdf = Path(config['working_dir']) / "qc" / "RG_quality" / f"{config['sample']}.readgroup.gc_bias.pdf",
@@ -128,9 +137,23 @@ rule move_qc:
         TXT_metrics_WGS = Path(config['working_dir']) / "qc" / "wgs_metrics" / f"{config['sample']}.wgs.metrics.txt",
         TXT_metrics_rawWGS = Path(config['working_dir']) / "qc" / "wgs_metrics" / f"{config['sample']}.raw.wgs.metrics.txt",
 
+        TXT_metrics_CRAM = Path(config['working_dir']) / "qc" / "bamtocram" / "cram_validation_report.io",
+
         TXT_metrics_varCalling = Path(config['working_dir']) / "qc" / "variant_calling_metrics" / f"{config['sample']}.variant_calling_metrics.io",
 
     output:
+        TXT = expand(Path(config['final_output_dir']) / "qc" / "quality_yield" / "{fastq}.unmapped.quality_yield_metrics", fastq = config["input_basenames"]),
+
+        ## picard_unsorted_RG_quality
+        base_distribution_by_cycle = expand(Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.base_distribution_by_cycle.pdf", fastq = config["input_basenames"]),
+        base_distribution_by_cycle_metrics = expand(Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.base_distribution_by_cycle_metrics", fastq = config["input_basenames"]),
+        insert_size_histogram_pdf = expand(Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.insert_size_histogram.pdf", fastq = config["input_basenames"]),
+        insert_size_metrics = expand(Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.insert_size_metrics", fastq = config["input_basenames"]),
+        quality_by_cycle_pdf = expand(Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.quality_by_cycle.pdf", fastq = config["input_basenames"]),
+        quality_by_cycle_metrics = expand(Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.quality_by_cycle_metrics", fastq = config["input_basenames"]),
+        quality_distribution_pdf = expand(Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.quality_distribution.pdf", fastq = config["input_basenames"]),
+        quality_distribution_metrics = expand(Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.quality_distribution_metrics", fastq = config["input_basenames"]),       
+        
         alignment_summary_metrics = Path(config['final_output_dir']) / "qc" / "RG_quality" / f"{config['sample']}.readgroup.alignment_summary_metrics",
         gc_bias_detail_metrics = Path(config['final_output_dir']) / "qc" / "RG_quality" / f"{config['sample']}.readgroup.gc_bias.detail_metrics",
         gc_bias_pdf = Path(config['final_output_dir']) / "qc" / "RG_quality" / f"{config['sample']}.readgroup.gc_bias.pdf",
@@ -154,11 +177,28 @@ rule move_qc:
 
         TXT_metrics_WGS = Path(config['final_output_dir']) / "qc" / "wgs_metrics" / f"{config['sample']}.wgs.metrics.txt",
         TXT_metrics_rawWGS = Path(config['final_output_dir']) / "qc" / "wgs_metrics" / f"{config['sample']}.raw.wgs.metrics.txt",
-
+        
+        TXT_metrics_CRAM = Path(config['final_output_dir']) / "qc" / "bamtocram" / "cram_validation_report.io",
+        
         TXT_metrics_varCalling = Path(config['final_output_dir']) / "qc" / "variant_calling_metrics" / f"{config['sample']}.variant_calling_metrics.txt",
 
         QC_done = Path(config['final_output_dir']) / 'qc' / 'qc_done.txt'
     run:
+        for quality_yield_io in input.TXT:
+            quality_yield_file = SnakemakeUtils.load_object(quality_yield_io)[0].path
+            file = Path(quality_yield_file).parts[-1]
+            out = Path(config['final_output_dir']) / "qc" / "quality_yield" / file
+            os.link(quality_yield_file, out)
+
+        [os.link(f, Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / Path(f).parts[-1]) for f in input.base_distribution_by_cycle]
+        [os.link(f, Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / Path(f).parts[-1]) for f in input.base_distribution_by_cycle_metrics]
+        [os.link(f, Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / Path(f).parts[-1]) for f in input.insert_size_histogram_pdf]
+        [os.link(f, Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / Path(f).parts[-1]) for f in input.insert_size_metrics]
+        [os.link(f, Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / Path(f).parts[-1]) for f in input.quality_by_cycle_pdf]
+        [os.link(f, Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / Path(f).parts[-1]) for f in input.quality_by_cycle_metrics]
+        [os.link(f, Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / Path(f).parts[-1]) for f in input.quality_distribution_metrics]
+        [os.link(f, Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / Path(f).parts[-1]) for f in input.quality_distribution_pdf]
+
         os.link(input.alignment_summary_metrics, output.alignment_summary_metrics)
         os.link(input.gc_bias_detail_metrics, output.gc_bias_detail_metrics)
         os.link(input.gc_bias_pdf, output.gc_bias_pdf)
@@ -179,6 +219,7 @@ rule move_qc:
         os.link(input.TXT_metrics_checksum, output.TXT_metrics_checksum)
         os.link(input.TXT_metrics_WGS, output.TXT_metrics_WGS)
         os.link(input.TXT_metrics_rawWGS, output.TXT_metrics_rawWGS)
+        os.link(SnakemakeUtils.load_object(input.TXT_metrics_CRAM)[0].path, output.TXT_metrics_CRAM)
         os.link(SnakemakeUtils.load_object(input.TXT_metrics_varCalling)[0].path, output.TXT_metrics_varCalling)
 
         subprocess.run(f"touch {output.QC_done}", shell = True, executable='/bin/bash')

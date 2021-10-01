@@ -74,31 +74,3 @@ rule samtools_index_cram:
         cram_index.update_parameters(output_filename = params.working_dir / params.output_file)
         step.run_step()
         SnakemakeUtils.dump_tool_output(cram_index, 'CRAI', output.CRAI)
-
-
-rule picard_validate_cram:
-    input:
-        CRAM = rules.samtools_convert_to_cram.output.CRAM,
-        FASTA_REF = Path(config['working_dir']) / "ref_input" / "fasta_reference_human_value_file.io",
-    output:
-        TXT_metrics = Path(config['working_dir']) / "bamtocram" / "metrics" / "cram_validation_report.io",
-    params:
-        working_dir = Path(config['working_dir']) / "bamtocram" / "metrics",
-    threads: config["params_smk"]["threads_cram"]
-    resources:
-        mem_mb=config["params_smk"]["memory_mb_cram"]
-    run:
-        from camel.app.tools.picard.validatesamfile import ValidateSamFile
-
-        Path(params.working_dir).mkdir(exist_ok=True)
-
-        val_cram = ValidateSamFile(camel)
-        SnakemakeUtils.add_pickle_input(val_cram, "BAM", input.CRAM)
-        SnakemakeUtils.add_pickle_input(val_cram, "FASTA_REF", input.FASTA_REF)
-        step = Step(rule, val_cram, camel, params.working_dir, config)
-        val_cram.update_parameters(
-            **config['rule_params']['bam_to_cram'][rule]
-        )
-        val_cram.update_java_options("-mx100G -XX:+UseParallelGC -XX:ParallelGCThreads=1 -Dpicard.useLegacyParser=false")
-        step.run_step()
-        SnakemakeUtils.dump_tool_output(val_cram, 'TXT_report', output.TXT_metrics)

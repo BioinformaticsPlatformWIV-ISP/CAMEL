@@ -3,18 +3,17 @@ from pathlib import Path
 from camel.app.camel import Camel
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.scripts.broadwgs.snakefile import alignment, variant_calling
+from camel.scripts.broadwgs.snakefile import alignment, bam_to_cram, variant_calling
 
 camel = Camel.get_instance()
 
 rule picard_quality_yield:
     input:
-        uBAM = Path(config['working_dir']) / alignment.OUTPUT_ALIGNMENT_BAM_UNMAPPED,
-        FASTA_REF = Path(config['working_dir']) / "ref_input" / "fasta_reference_human_value_file.io",
+        BAM = Path(config['working_dir']) / alignment.OUTPUT_INTERMEDIATE_BAM,
     output:
-        TXT = Path(config['working_dir']) / "qc" / "ubam_quality_yield" / "{input_basename}.unmapped.quality_yield_metrics.io"
+        TXT = Path(config['working_dir']) / "qc" / "quality_yield" / "{input_basename}.unmapped.quality_yield_metrics.io"
     params:
-        working_dir = Path(config['working_dir']) / "qc" / "ubam_quality_yield",
+        working_dir = Path(config['working_dir']) / "qc" / "quality_yield",
         output_file = lambda wildcards: f"{wildcards.input_basename}.unmapped.quality_yield_metrics"
     threads: config["params_smk"]["threads_picard"]
     resources:
@@ -23,17 +22,15 @@ rule picard_quality_yield:
         from camel.app.tools.picard.collectqualityyieldmetrics import CollectQualityYieldMetrics
 
         quality_yield = CollectQualityYieldMetrics(camel)
-        SnakemakeUtils.add_pickle_input(quality_yield, "BAM", input.uBAM)
-        SnakemakeUtils.add_pickle_input(quality_yield, "FASTA_REF", input.FASTA_REF)
+        SnakemakeUtils.add_pickle_inputs(quality_yield, input)
         step = Step(rule, quality_yield, camel, params.working_dir, config)
-        quality_yield.update_parameters(**config['rule_params']['qc'][rule])
+        quality_yield.update_parameters(**config['rule_params']['qc'][rule], output = params.output_file)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(quality_yield, output)
 
 rule picard_unsorted_RG_quality:
     input:
-        BAM = Path(config['working_dir']) / alignment.OUTPUT_ALIGNMENT_BAM_UNMAPPED,
-        FASTA_REF = Path(config['working_dir']) / "ref_input" / "fasta_reference_human_value_file.io",
+        BAM = Path(config['working_dir']) / alignment.OUTPUT_INTERMEDIATE_BAM,
     output:
         multiext(str(Path(config['working_dir']) / "qc" / "unsorted_RG_quality" / "{input_basename}.unsorted_readgroup"),
                 ".base_distribution_by_cycle.pdf",
@@ -236,6 +233,34 @@ rule picard_raw_wgs_metrics:
             **config['rule_params']['qc'][rule]
         )
         step.run_step()
+
+
+rule picard_validate_cram:
+    input:
+        CRAM = Path(config['working_dir']) / bam_to_cram.OUTPUT_BAMTOCRAM_CRAM,
+        FASTA_REF = Path(config['working_dir']) / "ref_input" / "fasta_reference_human_value_file.io",
+    output:
+        TXT_metrics = Path(config['working_dir']) / "qc" / "bamtocram" / "cram_validation_report.io",
+    params:
+        working_dir = Path(config['working_dir']) / "qc" / "bamtocram"
+    threads: config["params_smk"]["threads_cram"]
+    resources:
+        mem_mb=config["params_smk"]["memory_mb_cram"]
+    run:
+        from camel.app.tools.picard.validatesamfile import ValidateSamFile
+
+        Path(params.working_dir).mkdir(exist_ok=True)
+
+        val_cram = ValidateSamFile(camel)
+        SnakemakeUtils.add_pickle_input(val_cram, "BAM", input.CRAM)
+        SnakemakeUtils.add_pickle_input(val_cram, "FASTA_REF", input.FASTA_REF)
+        step = Step(rule, val_cram, camel, params.working_dir, config)
+        val_cram.update_parameters(
+            **config['rule_params']['bam_to_cram'][rule]
+        )
+        val_cram.update_java_options("-mx100G -XX:+UseParallelGC -XX:ParallelGCThreads=1 -Dpicard.useLegacyParser=false")
+        step.run_step()
+        SnakemakeUtils.dump_tool_output(val_cram, 'TXT_report', output.TXT_metrics)
 
 rule picard_variant_calling_metrics:
     input:
