@@ -14,7 +14,7 @@ from camel.app.io.tooliofile import ToolIOFile
 from camel.app.pipeline.pipeline import Pipeline
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-from camel.scripts.broadwgs import SNAKEFILE_MAIN, CONFIG_DATA, REFERENCES, INTERVALS, TOOL_DATA
+from camel.scripts.broadwgs import SNAKEFILE_MAIN, CONFIG_DATA, REFERENCES, SLURM_SUBMIT_FILE, INTERVALS, TOOL_DATA
 
 
 class MainBroadWGSPipeline(object):
@@ -60,11 +60,20 @@ class MainBroadWGSPipeline(object):
         config_file = self.__construct_config_file()
 
         try:
-            resources = dict([arg.split(",") for arg in self._args.resources])
-            SnakePipelineUtils.run_snakemake(self._snakefile, config_file, [], self._working_dir, self._args.threads, resources)
+            if self._args.slurm:
+                logging.info("Running pipeline with Slurm: resources and threads input parameters ignored.")
+                threads = 1
+                resources = None
+                slurm_submit = f"python {SLURM_SUBMIT_FILE} {{dependencies}}"
+            else:
+                threads = self._args.threads
+                resources = dict([arg.split(",") for arg in self._args.resources])
+                slurm_submit = None
+            SnakePipelineUtils.run_snakemake(self._snakefile, config_file, [], self._working_dir, threads,
+                                             resources, slurm_submit)
             log_file = self._working_dir / 'camel.log'
             if log_file.exists():
-                shutil.copyfile(str(log_file), str(Path(self._args.working_dir) / 'output' / 'camel.log'))
+                shutil.copyfile(str(log_file), str(Path(self._args.working_dir) / 'camel.log'))
             logging.info("Pipeline finished successfully")
         except SnakemakeExecutionError as err:
             if self._pipeline.keep_error_log:
@@ -201,9 +210,10 @@ class MainBroadWGSPipeline(object):
         parser.add_argument('--threads', type = int, help = "Snakemake parameter: number of cores")
         parser.add_argument('--resources', type = str, nargs = "+", help = "Snakemake parameter: resources. Key-value pair separated by a comma, e.g. mem_mb,1000. Multiple pairs allowed")
 
-        # output
+        # other
         parser.add_argument('--debug', dest = "debug", action='store_true')
-        parser.set_defaults(debug = False)
+        parser.add_argument('--slurm', dest="slurm", action='store_true')
+        parser.set_defaults(debug = False, slurm = False)
 
         return parser.parse_args(args)
 

@@ -29,8 +29,6 @@ rule all:
 
         VCF = Path(config['final_output_dir']) / f'{config["sample"]}.gVCF',
 
-        QC_done = Path(config['final_output_dir']) / 'qc' / 'qc_done.txt'
-
 
 rule move_output:
     input:
@@ -38,7 +36,8 @@ rule move_output:
         CRAM_checksum = Path(config['working_dir']) / bam_to_cram.OUTPUT_BAMTOCRAM_CRAM_checksum,
         CRAI = Path(config['working_dir']) / bam_to_cram.OUTPUT_BAMTOCRAM_CRAI,
         VCF = Path(config['working_dir']) / variant_calling.OUTPUT_gVCF,
-        VCF_index = Path(config['working_dir']) / variant_calling.OUTPUT_gVCF_index
+        VCF_index = Path(config['working_dir']) / variant_calling.OUTPUT_gVCF_index,
+        QC_done = Path(config['final_output_dir']) / 'qc' / 'qc_done.txt'
     output:
         CRAM = Path(config['final_output_dir']) / f'{config["sample"]}.cram',
         CRAM_checksum = Path(config['final_output_dir']) / f'{config["sample"]}.cram.md5',
@@ -56,9 +55,9 @@ rule move_output:
             shutil.rmtree(Path(config['working_dir']) / 'alignment')
             shutil.rmtree(Path(config['working_dir']) / 'bamtocram')
             shutil.rmtree(Path(config['working_dir']) / 'input')
-            shutil.rmtree(Path(config['working_dir']) / 'qc')
             shutil.rmtree(Path(config['working_dir']) / 'ref_input')
             shutil.rmtree(Path(config['working_dir']) / 'variant_calling')
+            shutil.rmtree(Path(config['working_dir']) / 'qc')
 
 rule prepare_references_io:
     """
