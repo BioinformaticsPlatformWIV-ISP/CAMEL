@@ -138,7 +138,8 @@ class MainBroadWGSPipeline(object):
             'sample': self._args.sample,
             'input_basenames': [os.path.basename(f) for f in self._args.input],
             'working_dir': str(self._working_dir),
-            'final_output_dir': str(self._working_dir / 'output')
+            'final_output_dir': str(self._working_dir / 'output'),
+            'debug': self._args.debug,
         }
 
         # add data from config yml
@@ -197,9 +198,12 @@ class MainBroadWGSPipeline(object):
         parser.add_argument('--log', action='store_true', help="If this flag is set, config file and error logs are kept")
 
         # Snakemake parameters
-        parser.add_argument('--threads', type=int, help="Snakemake parameter: number of cores")
-        parser.add_argument('--resources', type=str, nargs="+", help="Snakemake parameter: resources. Key-value pair separated by a comma, e.g. mem_mb,1000. Multiple pairs allowed")
+        parser.add_argument('--threads', type = int, help = "Snakemake parameter: number of cores")
+        parser.add_argument('--resources', type = str, nargs = "+", help = "Snakemake parameter: resources. Key-value pair separated by a comma, e.g. mem_mb,1000. Multiple pairs allowed")
 
+        # output
+        parser.add_argument('--debug', dest = "debug", action='store_true')
+        parser.set_defaults(debug = False)
 
         return parser.parse_args(args)
 

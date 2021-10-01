@@ -2,6 +2,7 @@ import os
 import subprocess
 from pathlib import Path
 import logging
+import shutil
 
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.io.tooliovalue import ToolIOValue
@@ -25,7 +26,6 @@ rule all:
         CRAM = Path(config['final_output_dir']) / f'{config["sample"]}.cram',
         CRAM_checksum = Path(config['final_output_dir']) / f'{config["sample"]}.cram.md5',
         CRAI = Path(config['final_output_dir']) / f'{config["sample"]}.cram.crai',
-        CRAM_metrics = Path(config['final_output_dir']) / f'{config["sample"]}.cram.metrics',
 
         VCF = Path(config['final_output_dir']) / f'{config["sample"]}.gVCF',
 
@@ -52,6 +52,13 @@ rule move_output:
         os.link(SnakemakeUtils.load_object(input.VCF)[0].path, output.VCF)
         os.link(input.VCF_index, output.VCF_index)
 
+        if not config['debug']:
+            shutil.rmtree(Path(config['working_dir']) / 'alignment')
+            shutil.rmtree(Path(config['working_dir']) / 'bamtocram')
+            shutil.rmtree(Path(config['working_dir']) / 'input')
+            shutil.rmtree(Path(config['working_dir']) / 'qc')
+            shutil.rmtree(Path(config['working_dir']) / 'ref_input')
+            shutil.rmtree(Path(config['working_dir']) / 'variant_calling')
 
 rule prepare_references_io:
     """
@@ -118,6 +125,8 @@ rule move_qc:
         gc_bias_pdf = Path(config['working_dir']) / "qc" / "RG_quality" / f"{config['sample']}.readgroup.gc_bias.pdf",
         gc_bias_summary_metrics = Path(config['working_dir']) / "qc" / "RG_quality" / f"{config['sample']}.readgroup.gc_bias.summary_metrics",
 
+        mark_duplicates_metrics = Path(config['working_dir']) / 'qc' / 'mark_duplicates' / f"{config['sample']}.duplicate_metrics.txt.io",
+
         alignment_summary_metrics_agg = Path(config['working_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.alignment_summary_metrics",
         bait_bias_detail_metrics = Path(config['working_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.bait_bias_detail_metrics",
         bait_bias_summary_metrics = Path(config['working_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.bait_bias_summary_metrics",
@@ -141,8 +150,9 @@ rule move_qc:
 
         TXT_metrics_varCalling = Path(config['working_dir']) / "qc" / "variant_calling_metrics" / f"{config['sample']}.variant_calling_metrics.io",
 
+
     output:
-        TXT = expand(Path(config['final_output_dir']) / "qc" / "quality_yield" / "{fastq}.unmapped.quality_yield_metrics", fastq = config["input_basenames"]),
+        TXT = expand(Path(config['final_output_dir']) / "qc" / "quality_yield" / "{fastq}.unmapped.quality_yield_metrics.txt", fastq = config["input_basenames"]),
 
         ## picard_unsorted_RG_quality
         base_distribution_by_cycle = expand(Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.base_distribution_by_cycle.pdf", fastq = config["input_basenames"]),
@@ -158,6 +168,8 @@ rule move_qc:
         gc_bias_detail_metrics = Path(config['final_output_dir']) / "qc" / "RG_quality" / f"{config['sample']}.readgroup.gc_bias.detail_metrics",
         gc_bias_pdf = Path(config['final_output_dir']) / "qc" / "RG_quality" / f"{config['sample']}.readgroup.gc_bias.pdf",
         gc_bias_summary_metrics = Path(config['final_output_dir']) / "qc" / "RG_quality" / f"{config['sample']}.readgroup.gc_bias.summary_metrics",
+
+        mark_duplicates_metrics = Path(config['final_output_dir']) / 'qc' / 'mark_duplicates' / f"{config['sample']}.duplicate_metrics.txt",
 
         alignment_summary_metrics_agg = Path(config['final_output_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.alignment_summary_metrics",
         bait_bias_detail_metrics = Path(config['final_output_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.bait_bias_detail_metrics",
@@ -178,7 +190,7 @@ rule move_qc:
         TXT_metrics_WGS = Path(config['final_output_dir']) / "qc" / "wgs_metrics" / f"{config['sample']}.wgs.metrics.txt",
         TXT_metrics_rawWGS = Path(config['final_output_dir']) / "qc" / "wgs_metrics" / f"{config['sample']}.raw.wgs.metrics.txt",
         
-        TXT_metrics_CRAM = Path(config['final_output_dir']) / "qc" / "bamtocram" / "cram_validation_report.io",
+        TXT_metrics_CRAM = Path(config['final_output_dir']) / "qc" / "bamtocram" / f"{config['sample']}.cram_validation_report.txt",
         
         TXT_metrics_varCalling = Path(config['final_output_dir']) / "qc" / "variant_calling_metrics" / f"{config['sample']}.variant_calling_metrics.txt",
 
@@ -188,7 +200,7 @@ rule move_qc:
             quality_yield_file = SnakemakeUtils.load_object(quality_yield_io)[0].path
             file = Path(quality_yield_file).parts[-1]
             out = Path(config['final_output_dir']) / "qc" / "quality_yield" / file
-            os.link(quality_yield_file, out)
+            os.link(quality_yield_file, f'{out}.txt')
 
         [os.link(f, Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / Path(f).parts[-1]) for f in input.base_distribution_by_cycle]
         [os.link(f, Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / Path(f).parts[-1]) for f in input.base_distribution_by_cycle_metrics]
@@ -206,6 +218,7 @@ rule move_qc:
         os.link(input.alignment_summary_metrics_agg, output.alignment_summary_metrics_agg)
         os.link(input.bait_bias_detail_metrics, output.bait_bias_detail_metrics)
         os.link(input.bait_bias_summary_metrics, output.bait_bias_summary_metrics)
+        os.link(SnakemakeUtils.load_object(input.mark_duplicates_metrics)[0].path, output.mark_duplicates_metrics)
         os.link(input.gc_bias_detail_metrics_agg, output.gc_bias_detail_metrics_agg )
         os.link(input.gc_bias_pdf_agg, output.gc_bias_pdf_agg)
         os.link(input.gc_bias_summary_metrics_agg, output.gc_bias_summary_metrics_agg)
