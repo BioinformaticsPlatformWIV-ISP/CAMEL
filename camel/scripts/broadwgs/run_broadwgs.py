@@ -14,7 +14,7 @@ from camel.app.io.tooliofile import ToolIOFile
 from camel.app.pipeline.pipeline import Pipeline
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-from camel.scripts.broadwgs import SNAKEFILE_MAIN, CONFIG_DATA, REFERENCES, SLURM_SUBMIT_FILE, INTERVALS, TOOL_DATA
+from camel.scripts.broadwgs import SNAKEFILE_MAIN, CONFIG_DATA, REFERENCES, SLURM_SUBMIT, INTERVALS, TOOL_DATA
 
 
 class MainBroadWGSPipeline(object):
@@ -58,19 +58,23 @@ class MainBroadWGSPipeline(object):
         self._symlink_input()
 
         config_file = self.__construct_config_file()
+        with open(config_file, 'r') as handle_in:
+            config_data = yaml.load(handle_in.read(), Loader=yaml.SafeLoader)
 
         try:
-            if self._args.slurm:
+            if self._args.slurm is not None:
                 logging.info("Running pipeline with Slurm: resources and threads input parameters ignored.")
                 threads = 1
                 resources = None
-                slurm_submit = f"python {SLURM_SUBMIT_FILE} {{dependencies}}"
+                slurm_args = [f'--cluster "{self._args.slurm}"']
+                if self._args.slurm == f'python3 {SLURM_SUBMIT} {{dependencies}}':
+                    slurm_args.extend([f"--{arg}" for arg in config_data["slurm"]["slurm_args"]])
             else:
                 threads = self._args.threads
                 resources = dict([arg.split(",") for arg in self._args.resources])
-                slurm_submit = None
+                slurm_args = self._args.slurm
             SnakePipelineUtils.run_snakemake(self._snakefile, config_file, [], self._working_dir, threads,
-                                             resources, slurm_submit)
+                                             resources, slurm_args)
             log_file = self._working_dir / 'camel.log'
             if log_file.exists():
                 shutil.copyfile(str(log_file), str(Path(self._args.working_dir) / 'output' / 'camel.log'))
@@ -211,9 +215,9 @@ class MainBroadWGSPipeline(object):
         parser.add_argument('--resources', type = str, nargs = "+", help = "Snakemake parameter: resources. Key-value pair separated by a comma, e.g. mem_mb,1000. Multiple pairs allowed")
 
         # other
-        parser.add_argument('--debug', dest = "debug", action='store_true')
-        parser.add_argument('--slurm', dest="slurm", action='store_true')
-        parser.set_defaults(debug = False, slurm = False)
+        parser.add_argument('--debug', dest = "debug", action = 'store_true')
+        parser.add_argument('--slurm', dest = "slurm", nargs = "?", const = f'python3 {SLURM_SUBMIT} {{dependencies}}', type = str)
+        parser.set_defaults(debug = False)
 
         return parser.parse_args(args)
 

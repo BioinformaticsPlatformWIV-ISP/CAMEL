@@ -1,2 +1,5 @@
-placeholder:
-  placeholder: "placeholder"
+slurm:
+  slurm_args:
+    - "is"
+    - "notemp"
+    - "jobs 1000"
