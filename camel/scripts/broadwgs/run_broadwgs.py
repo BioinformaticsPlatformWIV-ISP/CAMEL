@@ -73,7 +73,7 @@ class MainBroadWGSPipeline(object):
                                              resources, slurm_submit)
             log_file = self._working_dir / 'camel.log'
             if log_file.exists():
-                shutil.copyfile(str(log_file), str(Path(self._args.working_dir) / 'camel.log'))
+                shutil.copyfile(str(log_file), str(Path(self._args.working_dir) / 'output' / 'camel.log'))
             logging.info("Pipeline finished successfully")
         except SnakemakeExecutionError as err:
             if self._pipeline.keep_error_log:
