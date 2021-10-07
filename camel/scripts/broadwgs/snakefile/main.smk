@@ -27,7 +27,7 @@ rule all:
         CRAM_checksum = Path(config['final_output_dir']) / f'{config["sample"]}.cram.md5',
         CRAI = Path(config['final_output_dir']) / f'{config["sample"]}.cram.crai',
 
-        VCF = Path(config['final_output_dir']) / f'{config["sample"]}.gVCF',
+        VCF = Path(config['final_output_dir']) / f'{config["sample"]}.gVCF.gz',
 
 
 rule move_output:
@@ -42,8 +42,8 @@ rule move_output:
         CRAM = Path(config['final_output_dir']) / f'{config["sample"]}.cram',
         CRAM_checksum = Path(config['final_output_dir']) / f'{config["sample"]}.cram.md5',
         CRAI = Path(config['final_output_dir']) / f'{config["sample"]}.cram.crai',
-        VCF = Path(config['final_output_dir']) / f'{config["sample"]}.gVCF',
-        VCF_index = Path(config['final_output_dir']) / f'{config["sample"]}.gVCF.idx',
+        VCF = Path(config['final_output_dir']) / f'{config["sample"]}.gVCF.gz',
+        VCF_index = Path(config['final_output_dir']) / f'{config["sample"]}.gVCF.gz.tbi',
     run:
         os.link(SnakemakeUtils.load_object(input.CRAM)[0].path, output.CRAM)
         os.link(SnakemakeUtils.load_object(input.CRAI)[0].path, output.CRAI)
