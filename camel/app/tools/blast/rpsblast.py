@@ -1,5 +1,6 @@
-from camel.app.tools.blast.blast import Blast
+from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from camel.app.tools.blast.blast import Blast
 
 
 class RpsBlast(Blast):
@@ -7,7 +8,7 @@ class RpsBlast(Blast):
     Protein domain search
     """
 
-    def __init__(self, camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initialize tool
         :param camel: Camel instance
@@ -15,7 +16,7 @@ class RpsBlast(Blast):
         """
         super().__init__('rpsblast', '2.6.0', camel)
 
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
         Checks whether the required input files are specified.
         :return: None

@@ -1,6 +1,7 @@
 import logging
-import os
+from pathlib import Path
 
+from camel.app.camel import Camel
 from camel.app.error.invalidparametererror import InvalidParameterError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
@@ -12,14 +13,14 @@ class SamtoolsFastaIndex(Samtools):
     Indexes FASTA files.
     """
 
-    def __init__(self, camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initializes this tool.
         :param camel: Camel instance
         """
         super().__init__('samtools faidx', '1.9', camel)
 
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
         Checks the input.
         :return: None
@@ -30,7 +31,7 @@ class SamtoolsFastaIndex(Samtools):
             raise ValueError("Only one FASTA input file is supported.")
         super(Samtools, self)._check_input()
 
-    def _check_parameters(self):
+    def _check_parameters(self) -> None:
         """
         Checks the parameters.
         :return: None
@@ -39,19 +40,19 @@ class SamtoolsFastaIndex(Samtools):
             raise InvalidParameterError("Cannot extract regions without output filename")
         super(SamtoolsFastaIndex, self)._check_parameters()
 
-    def __symlink_input(self):
+    def __symlink_input(self) -> Path:
         """
         Creates a symlink for the input.
         :return: Path to the symlink of the input
         """
-        symlink_location = os.path.join(self._folder, self._tool_inputs['FASTA'][0].basename)
+        symlink_location = self.folder / self._tool_inputs['FASTA'][0].basename
         try:
-            os.symlink(self._tool_inputs['FASTA'][0].path, symlink_location)
+            symlink_location.symlink_to(self._tool_inputs['FASTA'][0].path)
         except OSError:
             pass
         return symlink_location
 
-    def _execute_tool(self):
+    def _execute_tool(self) -> None:
         """
         Executes this tool.
         :return: None
@@ -61,23 +62,22 @@ class SamtoolsFastaIndex(Samtools):
         self._execute_command()
         self._check_stderr()
         if 'regions' in self._parameters:
-            self._tool_outputs['FASTA'] = [ToolIOFile(os.path.join(self._folder, self._parameters['output_filename'].value))]
+            self._tool_outputs['FASTA'] = [ToolIOFile(self.folder / self._parameters['output_filename'].value)]
         else:
             self._tool_outputs['FASTA'] = [ToolIOFile(fasta_file)]
 
-    def __build_command(self, fasta_file):
+    def __build_command(self, fasta_file: Path) -> None:
         """
         Builds the command for this tool.
         :param fasta_file: FASTA file
         :return: None
         """
-        self._command.command = ' '.join([self._tool_command, fasta_file])
+        self._command.command = ' '.join([self._tool_command, str(fasta_file)])
         if 'output_filename' in self._parameters and 'regions' in self._parameters:
             logging.info("Extracting regions from FASTA file, file should already be indexed.")
-            self._command.command += ' {} > {}'.format(
-                self._parameters['regions'].value, self._parameters['output_filename'].value)
+            self._command.command += f" {self._parameters['regions'].value} > {self._parameters['output_filename'].value}"
 
-    def _check_stderr(self):
+    def _check_stderr(self) -> None:
         """
         Checks the command stderr output.
         :return: None

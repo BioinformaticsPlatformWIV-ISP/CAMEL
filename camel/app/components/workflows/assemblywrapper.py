@@ -56,7 +56,7 @@ class AssemblyWrapper(object):
                 fq_dict['SE_REV'] = fastq_input.se_rev
         else:
             fq_dict = {'SE': fastq_input.se}
-        SnakemakeUtils.dump_object(fq_dict, str(self._working_dir / 'fq_dict.io'))
+        SnakemakeUtils.dump_object(fq_dict, self._working_dir / 'fq_dict.io')
         self.__run_workflow(
             sample_name, kmers, cov_cutoff, min_contig_length, fastq_input.read_type, calc_qc_stats, threads)
 
@@ -147,7 +147,7 @@ class AssemblyWrapper(object):
         self._output = AssemblyOutput(
             report_section=SnakemakeUtils.load_object(output_files['HTML'])[0].value,
             tsv_summary=output_files['TSV'],
-            fasta_contigs=Path(SnakemakeUtils.load_object(output_files['FASTA'])[0].path),
+            fasta_contigs=SnakemakeUtils.load_object(output_files['FASTA'])[0].path,
             informs=informs,
             log_file=log_file_path if log_file_path.exists() else None,
             qc_stats=qc_stats

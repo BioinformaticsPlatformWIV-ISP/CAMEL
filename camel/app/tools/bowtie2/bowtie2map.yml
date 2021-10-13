@@ -1,4 +1,4 @@
-dependencies: [bowtie2/2.3.0]
+dependencies: [bowtie2/2.4.1]
 parameters:
   end_to_end: {default: true, mandatory: false, option: --end-to-end, value: null}
   fast: {default: false, mandatory: false, option: --fast, value: null}

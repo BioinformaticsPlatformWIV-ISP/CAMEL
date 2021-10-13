@@ -1,5 +1,6 @@
-import os
+from pathlib import Path
 
+from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
@@ -13,7 +14,7 @@ class Quast(Tool):
     assemblies, thus is suitable for comparison.
     """
 
-    def __init__(self, camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initialize tool
         :param camel: Camel instance
@@ -21,7 +22,7 @@ class Quast(Tool):
         """
         super().__init__('quast', '4.4', camel)
 
-    def _execute_tool(self):
+    def _execute_tool(self) -> None:
         """
         Runs Quast
         :return: None
@@ -30,7 +31,7 @@ class Quast(Tool):
         self._execute_command()
         self.__set_output()
 
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
         Checks whether the given inputs are valid:
         - FASTA is required
@@ -41,41 +42,41 @@ class Quast(Tool):
         super(Quast, self)._check_input()
         if 'FASTA' not in self._tool_inputs:
             raise InvalidInputSpecificationError(
-                'QUAST required FASTA input is missing: {!r}'.format(self._tool_inputs))
+                f'QUAST required FASTA input is missing: {self._tool_inputs!r}')
         for key, values in self._tool_inputs.items():
             if key not in ['FASTA', 'FASTA_Ref', 'TSV_Gene', 'TSV_Operon']:
                 raise InvalidInputSpecificationError(
-                    'Illegal input key given for QUAST: {!r}'.format(self._tool_inputs))
+                    f'Illegal input key given for QUAST: {self._tool_inputs!r}')
             if key in ['FASTA_Ref', 'TSV_Gene', 'TSV_Operon'] and len(values) > 1:
                 raise InvalidInputSpecificationError(
-                    'Too many input files given for QUAST: {!r}'.format(self._tool_inputs))
+                    f'Too many input files given for QUAST: {self._tool_inputs!r}')
 
-    def __build_command(self):
+    def __build_command(self) -> None:
         """
         Concatenates required parameters and options to build the command.
         :return: None
         """
-        options_string = ' '.join(self._build_options() + ['-o {}'.format(self._folder)])
+        options_string = ' '.join(self._build_options() + [f'-o {self._folder}'])
         input_string = self.__build_input_string()
         self._command.command = ' '.join([self._tool_command, options_string, input_string])
 
-    def __build_input_string(self):
+    def __build_input_string(self) -> str:
         """
         Creates the string with the input files
         :return: String with the input parameters
         """
         inputs = []
         if 'FASTA_Ref' in self._tool_inputs:
-            inputs.append('-R {}'.format(self._tool_inputs['FASTA_Ref'][0].path))
+            inputs.append(f"-R {self._tool_inputs['FASTA_Ref'][0].path}")
         if 'TSV_Gene' in self._tool_inputs:
-            inputs.append('-G {}'.format(self._tool_inputs['TSV_Gene'][0].path))
+            inputs.append(f"-G {self._tool_inputs['TSV_Gene'][0].path}")
         if 'TSV_Operon' in self._tool_inputs:
-            inputs.append('-O {}'.format(self._tool_inputs['TSV_Operon'][0].path))
+            inputs.append(f"-O {self._tool_inputs['TSV_Operon'][0].path}")
         for item in self._tool_inputs['FASTA']:
-            inputs.append(item.path)
+            inputs.append(str(item.path))
         return ' '.join(inputs)
 
-    def _check_command_output(self):
+    def _check_command_output(self) -> None:
         """
         Checks if the command was executed successfully.
         :return: None
@@ -83,18 +84,18 @@ class Quast(Tool):
         for line in self.stderr.splitlines():
             if 'ERROR' in line:
                 if 'ERRORs: 0' not in line:
-                    raise ToolExecutionError("Command execution failed (stderr: {}).".format(self.stderr))
+                    raise ToolExecutionError(f"Command execution failed (stderr: {self.stderr}).")
         if self._command.returncode != 0:
-            raise ToolExecutionError("Command execution failed (Exit code: {})".format(self._command.returncode))
+            raise ToolExecutionError(f"Command execution failed (Exit code: {self._command.returncode})")
 
-    def __set_output(self):
+    def __set_output(self) -> None:
         """
         Sets the name of the output files
         :return: None
         """
         output_keys = ['HTML', 'TEX', 'TSV', 'TXT']
         for key in output_keys:
-            self._tool_outputs[key] = [ToolIOFile('{}.{}'.format(os.path.join(self._folder, 'report'), key.lower()))]
+            self._tool_outputs[key] = [ToolIOFile(Path(f'{self.folder / "report"}.{key.lower()}'))]
         # for icarus browser
         icarus_output_keys = {
             'HTML_icarus': 'icarus.html',
@@ -105,4 +106,4 @@ class Quast(Tool):
             if key == 'HTML_alignment_viewer' and 'FASTA_Ref' not in self._tool_inputs:
                 # skip HTML_alignment_viewer when no reference genome is provided
                 continue
-            self._tool_outputs[key] = [ToolIOFile(os.path.join(self._folder, value))]
+            self._tool_outputs[key] = [ToolIOFile(self.folder / value)]

@@ -1,0 +1,82 @@
+from pathlib import Path
+
+from camel.app.camel import Camel
+from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from camel.app.io.tooliofile import ToolIOFile
+from camel.app.tools.picard.picard import Picard
+
+
+class IntervalListTools(Picard):
+    """
+    ===============================
+    Picard IntervalListTools 2.23.3
+    ===============================
+    This tool offers multiple interval list file manipulation capabilities, including: sorting, merging, subtracting,
+    padding, and other set-theoretic operations.
+
+    Required inputs:
+    ----------------
+    ['TXT_intervals'|'VCF'] ToolIOFile object. One or more interval lists. Supported formats are interval_list and VCF.
+                            IntervalList should be denoted with the extension .interval_list, while a VCF must have one
+                            of .vcf, .vcf.gz, .bcf
+
+    Output:
+    -------
+    'TXT_intervalListFiles' ToolIOFile object. One or more interval lists
+
+    """
+    def __init__(self, camel: Camel):
+        """
+        Initialize a picard tool
+        :param camel: Camel instance
+        :return: None
+        """
+        super().__init__('Picard IntervalListTools', '2.23.3', camel)
+        self._required_inputs = ['TXT_intervals', 'VCF']
+        self._output_type = 'TXT_intervalLists'
+
+    def _check_input(self):
+        """
+        Check input for a tool and prepare command line parameters for input
+        :return: None
+        """
+        #  One or more input files possible - can be of type 'interval_list' or 'VCF'
+        if ('TXT_intervals' in self._tool_inputs) and ('VCF' in self._tool_inputs):
+            raise InvalidInputSpecificationError()
+        elif 'VCF' in self._tool_inputs:
+            self._required_inputs.remove('TXT_intervals')
+        elif 'TXT_intervals' in self._tool_inputs:
+            self._required_inputs.remove('VCF')
+
+        super(IntervalListTools, self)._check_input()
+
+    def _set_input(self) -> None:
+        """
+        Set the input specification
+        Overrides method in parent class.
+        :return: None
+        """
+        if 'TXT_intervals' in self._tool_inputs:
+            for interval_file in self._tool_inputs['TXT_intervals']:
+                self._input_string += f"INPUT={interval_file.path} "
+
+        if 'VCF' in self._tool_inputs:
+            for vcf_file in self._tool_inputs['VCF']:
+                self._input_string += f"INPUT={vcf_file.path} "
+
+    def _set_output(self) -> None:
+        """
+        Set the output specification
+        Overrides method in parent class.
+        :return: None
+        """
+        scatter_count = int(self._parameters.get('scatter_count', 1).value)
+
+        if scatter_count == 1:
+            self._tool_outputs['TXT_intervalLists'] = [ToolIOFile(Path(self._folder) / self._parameters['output'].value)]
+        else:
+            intervallists_list = []
+            for n in range(1, scatter_count + 1):
+                intervallists_list.append(ToolIOFile(Path(self._folder) / self._parameters['output'].value / f'temp_{n:04d}_of_{scatter_count:d}' / "scattered.interval_list"))
+            self._tool_outputs['TXT_intervalLists'] = intervallists_list
+

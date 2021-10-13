@@ -1,3 +1,4 @@
+from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.tools.tool import Tool
 
@@ -41,7 +42,7 @@ class QuastInformExtractor(Tool):
             '# unaligned contigs')
     }
 
-    def __init__(self, camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initialize this tool.
         :param camel: Camel instance
@@ -49,14 +50,14 @@ class QuastInformExtractor(Tool):
         """
         super().__init__('Quast InformExtractor', '4.4', camel)
 
-    def _execute_tool(self):
+    def _execute_tool(self) -> None:
         """
         Execute this tool.
         :return: None
         """
         self.__set_informs()
 
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
         Checks whether required quast TSV input is available
         :return: None
@@ -65,14 +66,14 @@ class QuastInformExtractor(Tool):
         if 'TSV' not in self._tool_inputs:
             raise InvalidInputSpecificationError("TSV input file is required.")
 
-    def __set_informs(self):
+    def __set_informs(self) -> None:
         """
         Extract Quast QC information from input file.
         :return: None
         """
         self._informs = {k: {} for k in QuastInformExtractor.KEY_MAPPING.keys()}
-        with open(self._tool_inputs['TSV'][0].path, 'r') as handle:
-            for key, value in [l.strip().split('\t') for l in handle.readlines()]:
+        with self._tool_inputs['TSV'][0].path.open('r') as handle:
+            for key, value in [line.strip().split('\t') for line in handle.readlines()]:
                 for mapping_name, mapping_keys in QuastInformExtractor.KEY_MAPPING.items():
                     if key in mapping_keys:
                         self._informs[mapping_name][key] = value
