@@ -12,7 +12,7 @@ class GATK4MarkDuplicatesSpark(GATK4):
 
     def __init__(self, camel: Camel) -> None:
         """
-        Initialize a picard tool
+        Initialize a GATK MarkDuplicatesSpark tool
         :param camel: Camel instance
         :return: None
         """

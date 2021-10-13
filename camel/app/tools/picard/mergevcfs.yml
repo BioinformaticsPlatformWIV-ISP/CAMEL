@@ -1,4 +1,4 @@
 dependencies: [java/1.8.0_172, picard/2.23.3]
 parameters:
-  output: { default: true, mandatory: true, option: O, p_index: 0, value: output.vcf }
+  output: { default: true, mandatory: true, option: O, p_index: 0, value: output.vcf.gz }
 tool_command: MergeVcfs
