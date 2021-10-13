@@ -1,5 +1,5 @@
 import logging
-import os
+from pathlib import Path
 from typing import Dict, List, Tuple, TextIO
 
 from camel.app.camel import Camel
@@ -271,7 +271,7 @@ class AlignmentSeqExtractionRegionCalculator(Tool):
         # In summary, all gaps will be kept and overlapping indels ignored
         self.nocov_regions = self.segment_gaps
 
-    def __output_regions_file(self, outfile_name: str) -> None:
+    def __output_regions_file(self, outfile_name: Path) -> None:
         """
         Output file specifying regions to be extracted based on nocov_regions
         :param outfile_name: filename for the output file
@@ -302,7 +302,7 @@ class AlignmentSeqExtractionRegionCalculator(Tool):
         :param outf: the output file
         :return: None
         """
-        outf.write("{}:{}-{}\n".format(seqid, start, end))
+        outf.write(f"{seqid}:{start}-{end}\n")
         self._extraction_regions[seqid].append((start, end))
 
     def __output_extraction_region_with_gaps(self, seqid: str, gaps: List[Tuple[int, int]], outf: TextIO):
@@ -321,8 +321,7 @@ class AlignmentSeqExtractionRegionCalculator(Tool):
             if gap_start > region_start:
                 self.__output_extraction_region(seqid, region_start, gap_start, outf)
             if gap_region[1] == 'end':
-                logging.warning(
-                    "open-end gap {!r} found, the tail sequence in gap is skipped.".format(gap_region))
+                logging.warning(f"open-end gap {gap_region!r} found, the tail sequence in gap is skipped.")
                 gap_end = gap_region[1]
             else:
                 gap_end = int(gap_region[1])
@@ -344,7 +343,7 @@ class AlignmentSeqExtractionRegionCalculator(Tool):
         Set the output specification
         :return: None
         """
-        outfile_name = os.path.join(self._folder, self._parameters['output'].value)
+        outfile_name = self.folder / self._parameters['output'].value
         self._tool_outputs['TXT_intervals'] = [ToolIOFile(outfile_name)]
         self.__output_regions_file(outfile_name)
         self._informs['extracted_regions'] = self._extraction_regions

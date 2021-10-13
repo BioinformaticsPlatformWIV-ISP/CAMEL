@@ -3,7 +3,6 @@ from pathlib import Path
 from camel.app.camel import Camel
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.resources.snakefile import deconseq
 from camel.scripts.influenzapipeline.snakefile import alignment
 from camel.scripts.influenzapipeline.snakefile import genometyping_blastn
 
@@ -37,14 +36,14 @@ rule run_alignment:
         mapper = mapper_class(camel)
 
         if input.IO:
-            fq_dict = SnakePipelineUtils.extracts_fq_input(str(input.IO), key_pe='FASTQ_PE', key_se='FASTQ_SE')
+            fq_dict = SnakePipelineUtils.extracts_fq_input(Path(input.IO), key_pe='FASTQ_PE', key_se='FASTQ_SE')
             input_files = fq_dict['FASTQ_PE']
             mapper.add_input_files({'FASTQ_PE': input_files})
-            SnakemakeUtils.add_pickle_input(mapper, 'INDEX_GENOME_PREFIX', input.INDEX_GENOME_PREFIX)
+            SnakemakeUtils.add_pickle_input(mapper, 'INDEX_GENOME_PREFIX', Path(input.INDEX_GENOME_PREFIX))
         else:
             SnakemakeUtils.add_pickle_inputs(mapper, input, keys=['FASTQ_PE', 'INDEX_GENOME_PREFIX'])
 
-        step = Step(str(rule), mapper, camel, params.running_dir, config)
+        step = Step(str(rule), mapper, camel, params.running_dir)
         if config['aligner'] == 'bowtie2':
             if 'mapping' in config['rule_parameters']:
                 mapper.update_parameters(**{'sensitive': False, 'end_to_end': False})
@@ -65,7 +64,7 @@ rule alignment_sort_sam:
 
         sortsam = SortSam(camel)
         SnakemakeUtils.add_pickle_inputs(sortsam, input)
-        step = Step(str(rule), sortsam, camel, params.running_dir, config)
+        step = Step(str(rule), sortsam, camel, params.running_dir)
         sortsam.update_parameters(**{'create_index': 'true', 'sort_order': 'coordinate'})
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(sortsam, output)
@@ -78,11 +77,11 @@ rule alignment_collect_metrics:
         INFORMS = Path(config['working_dir']) / alignment.OUTPUT_ALIGNMENT_PICARD_METRICS,
         TXT_AlignmentSummary = Path(config['working_dir']) / alignment.OUTPUT_ALIGNMENT_ALIGNMENTSUMMARY,
         TXT_InsertSize = Path(config['working_dir']) / alignment.OUTPUT_ALIGNMENT_INSERTSIZE,
-        TXT_MapQualityDistribution = Path(config['working_dir']) / alignment.OUTPUT_ALIGNMENT_MAPQUALITYDISTRIBUTION,
-        PDF_MapQualityDistributionFigure = Path(config['working_dir']) / alignment.OUTPUT_ALIGNMENT_MAPQUALITYDISTRIBUTION_PDF,
-        TXT_GcBiasDetail = Path(config['working_dir']) / alignment.OUTPUT_ALIGNMENT_GCBIAS_DETAIL,
+        TXT_QualityDistribution = Path(config['working_dir']) / alignment.OUTPUT_ALIGNMENT_MAPQUALITYDISTRIBUTION,
+        TXT_QualityDistributionFigure = Path(config['working_dir']) / alignment.OUTPUT_ALIGNMENT_MAPQUALITYDISTRIBUTION_PDF,
+        TXT_GcBias = Path(config['working_dir']) / alignment.OUTPUT_ALIGNMENT_GCBIAS,
         TXT_GcBiasSummary = Path(config['working_dir']) / alignment.OUTPUT_ALIGNMENT_GCBIAS_SUMMARY,
-        PDF_GcBiasFigure = Path(config['working_dir']) / alignment.OUTPUT_ALIGNMENT_GCBIAS_FIGURE
+        TXT_GcBiasFigure = Path(config['working_dir']) / alignment.OUTPUT_ALIGNMENT_GCBIAS_FIGURE
     params:
         running_dir = Path(config['working_dir']) / 'alignment'
     threads: 6
@@ -96,7 +95,7 @@ rule alignment_collect_metrics:
                       'metrics_CollectInsertSizeMetrics': 'CollectInsertSizeMetrics',
                       'metrics_QualityScoreDistribution': 'QualityScoreDistribution',
                       'metrics_CollectGcBiasMetrics': 'CollectGcBiasMetrics'}
-        step = Step(str(rule), cmm, camel, params.running_dir, config)
+        step = Step(str(rule), cmm, camel, params.running_dir)
         cmm.update_parameters(**cmm_params)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(cmm, output)
@@ -115,7 +114,7 @@ rule alignment_samtools_depth:
 
         sd = SamtoolsDepth(camel)
         SnakemakeUtils.add_pickle_inputs(sd, input)
-        step = Step(str(rule), sd, camel, params.running_dir, config)
+        step = Step(str(rule), sd, camel, params.running_dir)
         sd.update_parameters(**{'maximum_coverage_depth': 1000000})
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(sd, output)
@@ -134,7 +133,7 @@ rule alignment_samtools_depth_analyzer:
 
         sda = SamtoolsDepthStatsAnalyzer(camel)
         SnakemakeUtils.add_pickle_inputs(sda, input)
-        step = Step(str(rule), sda, camel, params.running_dir, config)
+        step = Step(str(rule), sda, camel, params.running_dir)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(sda, output)
 
@@ -144,8 +143,8 @@ rule alignment_report:
         INFORMS_picardmetrics = rules.alignment_collect_metrics.output.INFORMS,
         INFORMS_samtoolsdepth = rules.alignment_samtools_depth_analyzer.output.INFORMS,
         BAM = Path(config['working_dir']) / alignment.OUTPUT_ALIGNMENT_BAM,
-        PDF_GC = rules.alignment_collect_metrics.output.PDF_GcBiasFigure,
-        PDF_MQC = rules.alignment_collect_metrics.output.PDF_MapQualityDistributionFigure
+        PDF_GC = rules.alignment_collect_metrics.output.TXT_GcBiasFigure,
+        PDF_MQC = rules.alignment_collect_metrics.output.TXT_QualityDistributionFigure
     output:
         VAL_HTML = Path(config['working_dir']) / alignment.OUTPUT_ALIGNMENT_REPORT
     params:
@@ -155,7 +154,7 @@ rule alignment_report:
 
         reporter = ReporterAlignment(camel)
         SnakemakeUtils.add_pickle_inputs(reporter, input)
-        step = Step(str(rule), reporter, camel, params.running_dir, config)
+        step = Step(str(rule), reporter, camel, params.running_dir)
         if 'genome_segments' in config['species_info']:
             reporter.update_parameters(**{'genome_segments': config['species_info']['genome_segments']})
         step.run_step()

@@ -1,5 +1,4 @@
 import logging
-import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Tuple, AbstractSet
@@ -12,7 +11,8 @@ from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.scripts.influenzapipeline import CONFIG_DATA
 from camel.scripts.influenzapipeline.snakefile.alignment import OUTPUT_ALIGNMENT_BAM, SNAKEFILE_MAPPING
-from camel.scripts.influenzapipeline.snakefile.sequence_extraction import OUTPUT_SEQ_EXTRACTION_CONSENSUS_SEQUENCE, SNAKEFILE_SEQ_EXTRACTION, OUTPUT_SEQ_EXTRACTION_SELECTVARIANTS, \
+from camel.scripts.influenzapipeline.snakefile.sequence_extraction import OUTPUT_SEQ_EXTRACTION_CONSENSUS_SEQUENCE, \
+    SNAKEFILE_SEQ_EXTRACTION, OUTPUT_SEQ_EXTRACTION_SELECTVARIANTS, \
     OUTPUT_SEQ_EXTRACTION_CONSENSUS_SEQUENCE_INDEX_PREFIX
 
 
@@ -64,9 +64,9 @@ class ConsensusSequenceWrapper(object):
         :return: None
         """
         fasta_ref = SnakemakeUtils.load_object(fasta_ref_io)[0].path
-        SnakemakeUtils.dump_object([ToolIOFile(fasta_ref)], str(self._working_dir / 'fasta_ref.io'))
-        SnakemakeUtils.dump_object([ToolIOValue(fasta_ref)], str(self._working_dir / 'index_genome_prefix.io'))
-        SnakemakeUtils.dump_object(fastq_pe, str(self._working_dir / 'fastq_pe.io'))
+        SnakemakeUtils.dump_object([ToolIOFile(fasta_ref)], self._working_dir / 'fasta_ref.io')
+        SnakemakeUtils.dump_object([ToolIOValue(fasta_ref)], self._working_dir / 'index_genome_prefix.io')
+        SnakemakeUtils.dump_object(fastq_pe, self._working_dir / 'fastq_pe.io')
 
     def __compare_vcf(self, previous_result: Path) -> Tuple[AbstractSet, AbstractSet]:
         """
@@ -75,7 +75,7 @@ class ConsensusSequenceWrapper(object):
         :param previous_result: VCF file from the previous run
         :return: None
         """
-        vcf_previous = SnakemakeUtils.load_object(str(previous_result))[0]
+        vcf_previous = SnakemakeUtils.load_object(previous_result)[0]
         prev_set = self.__get_variants(vcf_previous)
         vcf_current = SnakemakeUtils.load_object(self._working_dir / OUTPUT_SEQ_EXTRACTION_SELECTVARIANTS)[0]
         curr_set = self.__get_variants(vcf_current)
@@ -137,8 +137,8 @@ class ConsensusSequenceWrapper(object):
         :param cores: Number of cores to use for Snakemake
         :return: None
         """
-        if not os.path.isdir(self._working_dir):
-            os.makedirs(self._working_dir)
+        if not self._working_dir.is_dir():
+            self._working_dir.mkdir(parents=True)
         self.__create_input(fasta_ref, fastq_pe)
 
         # Create config

@@ -1,10 +1,10 @@
 from pathlib import Path
 
 from camel.app.camel import Camel
+from camel.app.io.tooliofile import ToolIOFile
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-from camel.resources.snakefile import deconseq
 from camel.scripts.influenzapipeline.snakefile import alignment
 from camel.scripts.influenzapipeline.snakefile import genometyping_blastn
 from camel.scripts.influenzapipeline.snakefile import sequence_extraction
@@ -24,7 +24,7 @@ rule create_sequence_dictionary:
 
         csd = CreateSequenceDictionary(camel)
         SnakemakeUtils.add_pickle_inputs(csd, input)
-        step = Step(str(rule), csd, camel, params.running_dir, config)
+        step = Step(str(rule), csd, camel, params.running_dir)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(csd, output)
 
@@ -44,7 +44,7 @@ rule add_or_replace_read_groups:
 
         add_or_replace = AddOrReplaceReadGroups(camel)
         SnakemakeUtils.add_pickle_inputs(add_or_replace, input)
-        step = Step(str(rule), add_or_replace, camel, params.running_dir, config)
+        step = Step(str(rule), add_or_replace, camel, params.running_dir)
         add_or_replace.update_parameters(**{'sort_order': 'queryname'})
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(add_or_replace, output)
@@ -70,13 +70,13 @@ rule fastq_to_sam:
         fts = FastqToSam(camel)
 
         if input.IO:
-            fq_dict = SnakePipelineUtils.extracts_fq_input(str(input.IO), key_pe='FASTQ_PE', key_se='FASTQ_SE')
+            fq_dict = SnakePipelineUtils.extracts_fq_input(Path(input.IO), key_pe='FASTQ_PE', key_se='FASTQ_SE')
             input_files = fq_dict['FASTQ_PE']
             fts.add_input_files({'FASTQ_PE': input_files})
         else:
             SnakemakeUtils.add_pickle_inputs(fts, input, keys=['FASTQ_PE'])
 
-        step = Step(str(rule), fts, camel, params.running_dir, config)
+        step = Step(str(rule), fts, camel, params.running_dir)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(fts, output)
 
@@ -96,7 +96,7 @@ rule merge_bam_alignment:
 
         mba = MergeBamAlignment(camel)
         SnakemakeUtils.add_pickle_inputs(mba, input)
-        step = Step(str(rule), mba, camel, params.running_dir, config)
+        step = Step(str(rule), mba, camel, params.running_dir)
         # TODO: Check if this parameter needs to stay
         mba.update_parameters(**{'max_gaps': '-1'})
         step.run_step()
@@ -115,7 +115,7 @@ rule mark_duplicates:
 
         md = MarkDuplicates(camel)
         SnakemakeUtils.add_pickle_inputs(md, input)
-        step = Step(str(rule), md, camel, params.running_dir, config)
+        step = Step(str(rule), md, camel, params.running_dir)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(md, output)
 
@@ -134,7 +134,7 @@ rule haplotypecaller:
 
         hc = GATK4HaplotypeCaller(camel)
         SnakemakeUtils.add_pickle_inputs(hc, input)
-        step = Step(str(rule), hc, camel, params.running_dir, config)
+        step = Step(str(rule), hc, camel, params.running_dir)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(hc, output)
 
@@ -153,7 +153,7 @@ rule variantfiltration:
 
         vf = GATK4VariantFiltration(camel)
         SnakemakeUtils.add_pickle_inputs(vf, input)
-        step = Step(str(rule), vf, camel, params.running_dir, config)
+        step = Step(str(rule), vf, camel, params.running_dir)
         vf.update_parameters(**{'filter-names': 'HardQC_filter,lowDP',
                                 'filter-expressions': 'QD<2.0||FS>60.0||MQ<40.0||ReadPosRankSum<-8.0,DP<200'})
         step.run_step()
@@ -173,7 +173,7 @@ rule selectvariants:
 
         sv = GATK4SelectVariants(camel)
         SnakemakeUtils.add_pickle_inputs(sv, input)
-        step = Step(str(rule), sv, camel, params.running_dir, config)
+        step = Step(str(rule), sv, camel, params.running_dir)
         sv.update_parameters(**{'exclude-filtered': True})
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(sv, output)
@@ -191,7 +191,8 @@ rule se_samtools_depth:
 
         sd = SamtoolsDepth(camel)
         SnakemakeUtils.add_pickle_inputs(sd, input)
-        step = Step(str(rule), sd, camel, params.running_dir, config)
+        step = Step(str(rule), sd, camel, params.running_dir)
+        sd.update_parameters(**{'maximum_coverage_depth': 1000000})
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(sd, output)
 
@@ -209,7 +210,7 @@ rule se_samtools_depth_stats:
 
         sda = SamtoolsDepthStatsAnalyzer(camel)
         SnakemakeUtils.add_pickle_inputs(sda, input)
-        step = Step(str(rule), sda, camel, params.running_dir, config)
+        step = Step(str(rule), sda, camel, params.running_dir)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(sda, output)
 
@@ -226,7 +227,7 @@ rule vcf_indel_scan:
 
         vcfis = VCFIndelScanner(camel)
         SnakemakeUtils.add_pickle_inputs(vcfis, input)
-        step = Step(str(rule), vcfis, camel, params.running_dir, config)
+        step = Step(str(rule), vcfis, camel, params.running_dir)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(vcfis, output)
 
@@ -245,7 +246,7 @@ rule region_calculator:
 
         rc = AlignmentSeqExtractionRegionCalculator(camel)
         SnakemakeUtils.add_pickle_inputs(rc, input)
-        step = Step(str(rule), rc, camel, params.running_dir, config)
+        step = Step(str(rule), rc, camel, params.running_dir)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(rc, output)
 
@@ -264,7 +265,7 @@ rule consensus_sequence:
 
         farm = GATK4FastaAlternateReferenceMaker(camel)
         SnakemakeUtils.add_pickle_inputs(farm, input)
-        step = Step(str(rule), farm, camel, params.running_dir, config)
+        step = Step(str(rule), farm, camel, params.running_dir)
         farm.update_parameters(**{'concatenate_sequence_segments': 'true'})
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(farm, output)
@@ -286,7 +287,7 @@ rule consensus_sequence_index:
         for indexer_class in [BWAIndex, Bowtie2Index]:
             indexer = indexer_class(camel)
             SnakemakeUtils.add_pickle_inputs(indexer, input)
-            step = Step(str(rule), indexer, camel, params.running_dir, config)
+            step = Step(str(rule), indexer, camel, params.running_dir)
             step.run_step()
             SnakemakeUtils.dump_tool_outputs(indexer, output)
 
@@ -305,7 +306,7 @@ rule iterative_consensus_generation:
         VCF = Path(config['working_dir']) / sequence_extraction.OUTPUT_SEQ_EXTRACTION_SELECTVARIANTS
     output:
         FASTA = Path(config['working_dir']) / sequence_extraction.OUTPUT_SEQ_EXTRACTION_CONSENSUS_SEQUENCE_ITERATIVE,
-        VCF = Path(config['working_dir']) / sequence_extraction.OUTPUT_SEQ_EXTRACTION_VARIANTS_ITERATIVE,
+        VCF = Path(config['working_dir']) / sequence_extraction.OUTPUT_SEQ_EXTRACTION_VARIANTS_ITERATIVE
         # FASTA_REF = Path(config['working_dir']) / sequence_extraction.OUTPUT_SEQ_EXTRACTION_REF_ITERATIVE
     params:
         running_dir = Path(config['working_dir']) / 'seq_extraction_iterative'
@@ -350,7 +351,7 @@ rule iterative_consensus_generation:
                 raise ValueError('After more than 15 iterations, the consensus sequence has not converged!')
             return False
 
-        def prepare_fasta_ref(fasta_ref_file: str) -> Path:
+        def prepare_fasta_ref(fasta_ref_file: Path) -> Path:
             """
             Prepares the fasta reference file that is used as it is the consensus sequence from a
             previous run. This means that the fasta identifier now looks as follows:
@@ -364,7 +365,7 @@ rule iterative_consensus_generation:
             from camel.app.io.tooliofile import ToolIOFile
 
             # fasta_ref_file = SnakemakeUtils.load_object(input.FASTA_REF)[0].path
-            output_ref_file = fasta_ref_file.replace('.fa', '_renamed.fa')
+            output_ref_file = Path(str(fasta_ref_file).replace('.fa', '_renamed.fa'))
             with open(fasta_ref_file) as inhandle, open(output_ref_file, 'w') as outhandle:
                 processed_identifiers = []
                 for line in inhandle:
@@ -396,21 +397,21 @@ rule iterative_consensus_generation:
             for ind_class in [BWAIndex, Bowtie2Index]:
                 ind = ind_class(camel)
                 SnakemakeUtils.add_pickle_inputs(ind, {'FASTA_REF': renamed_reference_io})
-                s = Step(str(rule), ind, camel, str(renamed_reference_io.parent), config)
+                s = Step(str(rule), ind, camel, renamed_reference_io.parent)
                 s.run_step()
 
             csd_ = CreateSequenceDictionary(camel)
             SnakemakeUtils.add_pickle_inputs(csd_, {'FASTA_REF': renamed_reference_io})
-            s = Step(str(rule), csd_, camel, str(renamed_reference_io.parent), config)
+            s = Step(str(rule), csd_, camel, renamed_reference_io.parent)
             s.run_step()
 
             indexer_ = SamtoolsFastaIndex(camel)
             SnakemakeUtils.add_pickle_inputs(indexer_, {'FASTA': renamed_reference_io})
-            s = Step(str(rule), indexer_, camel, str(renamed_reference_io.parent), config)
+            s = Step(str(rule), indexer_, camel, renamed_reference_io.parent)
             s.run_step()
 
         if input.IO:
-            fq_dict = SnakePipelineUtils.extracts_fq_input(str(input.IO), key_pe='FASTQ_PE', key_se='FASTQ_SE')
+            fq_dict = SnakePipelineUtils.extracts_fq_input(Path(input.IO), key_pe='FASTQ_PE', key_se='FASTQ_SE')
             input_fastq = fq_dict['FASTQ_PE']
         else:
             with open(input.FASTQ_PE, 'rb') as handle:
@@ -419,7 +420,7 @@ rule iterative_consensus_generation:
         cw_list = []
         run = 1
         cw = ConsensusSequenceWrapper(Path(f'{params.running_dir}_{run}'))
-        cw.run_workflow(prepare_fasta_ref(SnakemakeUtils.load_object(input.FASTA_REF)[0].path), input_fastq, input.VCF, config['aligner'])
+        cw.run_workflow(prepare_fasta_ref(SnakemakeUtils.load_object(Path(input.FASTA_REF))[0].path), input_fastq, Path(input.VCF), config['aligner'])
         if not reached_threshold(cw):
             cw_list.append(cw)
             while not reached_threshold(cw):
@@ -448,11 +449,10 @@ rule blastn_sequence_extraction:
     run:
         from camel.app.tools.blast.blastn import Blastn
         from camel.app.command.command import Command
-        import os
 
         blastn = Blastn(camel)
         SnakemakeUtils.add_pickle_inputs(blastn, input)
-        step = Step(str(rule), blastn, camel, params.running_dir, config)
+        step = Step(str(rule), blastn, camel, params.running_dir)
         blastn.update_parameters(**{'max_hsps': 1})
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(blastn, output, keys=['ASN', 'INFORMS'])
@@ -461,8 +461,8 @@ rule blastn_sequence_extraction:
                                    'sstart', 'send', 'evalue', 'bitscore'])
         output_file = params.running_dir / 'consensus_extraction_blast.tsv'
         cmd = Command(f'module load blast; blast_formatter -archive {blastn.tool_outputs["ASN"][0].path} -outfmt "6 {format_columns}" > {output_file}')
-        cmd.run_command(os.getcwd())
-        SnakemakeUtils.dump_object([ToolIOFile(output_file)], output.TSV)
+        cmd.run(Path.cwd())
+        SnakemakeUtils.dump_object([ToolIOFile(output_file)], Path(output.TSV))
 
 rule blastn_sequence_extraction_stats_collector:
     """
@@ -480,7 +480,7 @@ rule blastn_sequence_extraction_stats_collector:
 
         bsie = BlastnSequenceInformExtractor(camel)
         SnakemakeUtils.add_pickle_inputs(bsie, input)
-        step = Step(str(rule), bsie, camel, params.running_dir, config)
+        step = Step(str(rule), bsie, camel, params.running_dir)
         bsie.update_parameters(**{'seqIDParser_type': config['species_info']['seqIDParser_type']})
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(bsie, output)
@@ -490,12 +490,12 @@ rule sequence_extraction_report:
     Creates the HTML report for the sequence extraction.
     """
     input:
-        INFORMS_stats = rules.blastn_sequence_extraction_stats_collector.output.INFORMS,
-        INFORMS_samtools = rules.se_samtools_depth_stats.output.INFORMS,
-        VCF = rules.iterative_consensus_generation.output.VCF,
-        FASTA = rules.iterative_consensus_generation.output.FASTA,
-        BAM = rules.mark_duplicates.output.BAM,
-        TSV = rules.blastn_sequence_extraction.output.TSV
+        INFORMS_stats = Path(config['working_dir']) / sequence_extraction.OUTPUT_SEQ_EXTRACTION_CONSENSUS_SEQUENCE_BLASTN_STATS_INFORMS,
+        INFORMS_samtools = Path(config['working_dir']) / sequence_extraction.OUTPUT_SEQ_EXTRACTION_SAMTOOLS_DEPTH_STATS,
+        VCF = Path(config['working_dir']) / sequence_extraction.OUTPUT_SEQ_EXTRACTION_VARIANTS_ITERATIVE,
+        FASTA = Path(config['working_dir']) / sequence_extraction.OUTPUT_SEQ_EXTRACTION_CONSENSUS_SEQUENCE_ITERATIVE,
+        BAM = Path(config['working_dir']) / sequence_extraction.OUTPUT_SEQ_EXTRACTION_MARK_DUPLICATES,
+        TSV = Path(config['working_dir']) / sequence_extraction.OUTPUT_SEQ_EXTRACTION_CONSENSUS_SEQUENCE_BLASTN_TSV
     output:
         VAL_HTML = Path(config['working_dir']) / sequence_extraction.OUTPUT_SEQ_EXTRACTION_REPORT
     params:
@@ -505,6 +505,6 @@ rule sequence_extraction_report:
 
         reporter = ReporterConsensus(camel)
         SnakemakeUtils.add_pickle_inputs(reporter, input)
-        step = Step(str(rule), reporter, camel, params.running_dir, config)
+        step = Step(str(rule), reporter, camel, params.running_dir)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)

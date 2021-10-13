@@ -65,7 +65,7 @@ class VCFIndelScanner(Tool):
         gatk_callers = ['GATKCommandLine.HaplotypeCaller', 'GATKCommandLine.UnifiedGenotyper',
                         'GATKCommandLine.MuTect2', 'GATKCommandLine']
 
-        vcf_reader = vcf.Reader(filename=self._tool_inputs['VCF'][0].path)
+        vcf_reader = vcf.Reader(filename=str(self._tool_inputs['VCF'][0].path))
 
         logging.debug(f" VCF metadata: keys {vcf_reader.metadata.keys()} \n data {vcf_reader.metadata}")
 

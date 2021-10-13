@@ -1,12 +1,11 @@
 from pathlib import Path
+from typing import List
 
 from camel.app.camel import Camel
-from camel.app.components.html.htmlexpandabletable import HtmlExpandableTable
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.tools.tool import Tool
-from typing import List
 
 
 class ReporterConsensus(Tool):
@@ -64,7 +63,7 @@ class ReporterConsensus(Tool):
 
         bai_filename = 'bam_processed.bai'
         relative_path = self.__sub_folder / bai_filename
-        self._report_section.add_file(self._tool_inputs['BAM'][0].path.replace('.bam', '.bai'), str(relative_path))
+        self._report_section.add_file(str(self._tool_inputs['BAM'][0].path).replace('.bam', '.bai'), str(relative_path))
         self._report_section.add_link_to_file('Variant caller input BAM index file (BAI)', str(relative_path))
 
         consensus_filename = 'consensus.fasta'

@@ -1,9 +1,6 @@
 import re
 from pathlib import Path
 
-from camel.app.io.tooliovalue import ToolIOValue
-from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.resources.snakefile import trimming_illumina, trimming, quality_checks, deconseq
 from camel.scripts.influenzapipeline.snakefile import genometyping_blastn, alignment, sequence_extraction, assembly
 
@@ -60,6 +57,23 @@ rule select_fastq:
         "cp {input.FASTQ_PE} {output.IO_FASTQ};"
 
 
+rule report_pickle_citations:
+    """
+    This rule creates a pickle with a report section containing the citations.
+    """
+    output:
+        HTML = Path(config['working_dir']) / 'report' / 'html-citations.io'
+    params:
+        citation_keys = config['citations']
+    run:
+        from camel.app.io.tooliovalue import ToolIOValue
+        from camel.app.snakemake.snakemakeutils import SnakemakeUtils
+        from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
+        section = SnakePipelineUtils.create_citations_section(
+            params.citation_keys['other'])
+        SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output.HTML))
+
+
 rule report_command_section:
     input:
         INFORMS_trimming = trimming.get_trimming_command_informs(config),
@@ -67,7 +81,8 @@ rule report_command_section:
         INFORMS_deconseq_pe_rev = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_INFORMS_PE_REV if 'deconseq' in config['analyses'] else [],
         INFORMS_deconseq_se_fwd = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_INFORMS_SE_FWD if 'deconseq' in config['analyses'] else [],
         INFORMS_deconseq_se_rev = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_INFORMS_SE_REV if 'deconseq' in config['analyses'] else [],
-        INFORMS_seqtk_subsample = Path(config['working_dir']) / genometyping_blastn.OUTPUT_SEQTK_SUBSAMPLE_INFORMS if config['analysis_type'] == 'alignment' else [],
+        INFORMS_seqtk_subsample = Path(config['working_dir']) / genometyping_blastn.OUTPUT_SEQTK_SUBSAMPLE_INFORMS,
+        INFORMS_assembly = Path(config['working_dir']) / assembly.OUTPUT_ASSEMBLY_INFORMS if config['analysis_type'] == 'assembly' else [],
         INFORMS_blast_genometyping = Path(config['working_dir']) / genometyping_blastn.OUTPUT_BLASTN_INFORMS if 'genometyping' in config['analyses'] else [],
         INFORMS_alignment = Path(config['working_dir']) / alignment.OUTPUT_ALIGNMENT_INFORMS,
         INFORMS_merge_bam = Path(config['working_dir']) / sequence_extraction.OUTPUT_SEQ_EXTRACTION_MERGE_BAM_ALIGNMENT_INFORMS,
@@ -78,14 +93,15 @@ rule report_command_section:
     params:
         working_dir = config['working_dir']
     run:
+        from camel.app.io.tooliovalue import ToolIOValue
         informs = []
-        for content in [SnakemakeUtils.load_object(io) for io in input]:
+        for content in [SnakemakeUtils.load_object(Path(io)) for io in input]:
             if type(content) is dict:
                 informs.append(content)
             elif type(content) is list:
                 informs.extend(content)
         section = SnakePipelineUtils.create_commands_section(informs, params.working_dir)
-        SnakemakeUtils.dump_object([ToolIOValue(section)], output.HTML)
+        SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output.HTML))
 
 rule report_combine_all:
     """
@@ -99,6 +115,7 @@ rule report_combine_all:
         report_alignment = Path(config['working_dir']) / alignment.OUTPUT_ALIGNMENT_REPORT,
         report_seq_extraction = Path(config['working_dir']) / sequence_extraction.OUTPUT_SEQ_EXTRACTION_REPORT,
         # Report
+        report_citations = rules.report_pickle_citations.output.HTML,
         report_commands = rules.report_command_section.output.HTML
     output:
         HTML = config['output_report']
@@ -112,7 +129,7 @@ rule report_combine_all:
 
         # Add header section
         report = SnakePipelineUtils.init_pipeline_report(
-            output.HTML, params.output_dir, params.pipeline_info)
+            Path(output.HTML), Path(params.output_dir), params.pipeline_info)
         report.add_html_object(SnakePipelineUtils.create_input_section(
             params.sample_name,
             datetime.datetime.now(),
@@ -122,16 +139,17 @@ rule report_combine_all:
 
         # Add output sections
         report_structure = [
-            ('Read trimming and basic QC', 'trim', [input.report_trimming]),
-            ('Advanced QC', 'qual', [input.quality_checks])
+            ('Read trimming and basic QC', 'trim', [Path(input.report_trimming)]),
+            ('Advanced QC', 'qual', [Path(input.quality_checks)])
         ]
         if 'deconseq' in config['analyses']:
-            report_structure.append(('Decontamination', 'deconseq', [input.report_deconseq]))
+            report_structure.append(('Decontamination', 'deconseq', [Path(input.report_deconseq)]))
         if 'genometyping' in config['analyses']:
-            report_structure.append(('Genome typing', 'genometyping', [input.report_genometyping]))
-        report_structure.append(('Alignment', 'alignment', [input.report_alignment]))
-        report_structure.append(('Sequence extraction', 'sequence_extraction', [input.report_seq_extraction]))
-        report_structure.append(('Commands', 'commands', [input.report_commands]))
+            report_structure.append(('Genome typing', 'genometyping', [Path(input.report_genometyping)]))
+        report_structure.append(('Alignment', 'alignment', [Path(input.report_alignment)]))
+        report_structure.append(('Sequence extraction', 'sequence_extraction', [Path(input.report_seq_extraction)]))
+        report_structure.append(('Citations', 'citations', [Path(input.report_citations)]))
+        report_structure.append(('Commands', 'commands', [Path(input.report_commands)]))
         SnakePipelineUtils.add_report_content(report, report_structure)
 
 rule summary_init:
