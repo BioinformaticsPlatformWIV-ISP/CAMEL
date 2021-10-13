@@ -29,8 +29,8 @@ class Tool(object, metaclass=abc.ABCMeta):
         logging.debug("Initializing tool: {} {}".format(name, version))
         self._name = name
         self._version = version
-        self._tool_inputs = {}
-        self._tool_outputs = {}
+        self._tool_inputs: Dict[str, List[Union[ToolIOFile, ToolIOValue, ToolIODirectory, ToolIO]]] = {}
+        self._tool_outputs: Dict[str, List[Union[ToolIOFile, ToolIOValue, ToolIODirectory, ToolIO]]] = {}
         self._informs = {'_name': self.name, '_version': self._version}
         self._input_informs = {}
         self._camel = camel
@@ -158,7 +158,7 @@ class Tool(object, metaclass=abc.ABCMeta):
         """
         self._input_informs.update(informs)
 
-    def update_parameters(self, **kwargs: Union[str, int, None, bool, Dict[str, Union[str, int, None, bool]]]) -> None:
+    def update_parameters(self, **kwargs: Union[str, int, None, bool, float, Dict[str, Union[str, int, None, bool, float]]]) -> None:
         """
         Updates the parameters for this tool.
         :param kwargs: Parameters in key value format

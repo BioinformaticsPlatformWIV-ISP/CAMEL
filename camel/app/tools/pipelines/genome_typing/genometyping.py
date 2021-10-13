@@ -1,17 +1,18 @@
 import logging
-import os
 import random
+from pathlib import Path
 from typing import Union, Dict
 
+from camel.app.camel import Camel
 from camel.app.components.blasthit.influenzablastnasnparser import InfluenzaBlastnAsnParser
 from camel.app.components.files.fastautils import FastaUtils
-from camel.app.components.segmenttyping.segmenttypingreads import SegmentTypingReads
 from camel.app.components.segmenttyping.segmenttypingcontigs import SegmentTypingContigs
+from camel.app.components.segmenttyping.segmenttypingreads import SegmentTypingReads
+from camel.app.components.seqid.seqidparser import SeqIDParser
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.invalidparametererror import InvalidParameterError
-from camel.app.tools.tool import Tool
 from camel.app.io.tooliofile import ToolIOFile
-from camel.app.components.seqid.seqidparser import SeqIDParser
+from camel.app.tools.tool import Tool
 
 
 class GenomeTyping(Tool):
@@ -20,7 +21,7 @@ class GenomeTyping(Tool):
     Class that performs genome typing. For Influenza, this can be on several segments.
     """
 
-    def __init__(self, camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initialize tool
         :param camel: Camel instance
@@ -63,9 +64,9 @@ class GenomeTyping(Tool):
         super(GenomeTyping, self)._check_input()
         if 'ASN' not in self._tool_inputs:
             raise InvalidInputSpecificationError(f'Required input key ASN missing from tool inputs: {self._tool_inputs}')
-        if 'DB_BLAST' not in self._tool_inputs:
-            raise InvalidInputSpecificationError(f'Required input key BLAST_DB missing from tool inputs: {self._tool_inputs}')
-        if os.path.getsize(self._tool_inputs['ASN'][0].path) == 0:
+        if 'REF_FASTA' not in self._tool_inputs:
+            raise InvalidInputSpecificationError(f'Required input key REF_FASTA missing from tool inputs: {self._tool_inputs}')
+        if self._tool_inputs['ASN'][0].path.stat().st_size == 0:
             self._failed = True
 
     def update_parameters(self, **kwargs: Union[str, int, None, bool, Dict[str, Union[str, int, None, bool]]]) -> None:
@@ -90,11 +91,11 @@ class GenomeTyping(Tool):
         setting the informs for each segment.
         :return: None
         """
-        blast_parser = InfluenzaBlastnAsnParser(self._tool_inputs['ASN'][0], self._parameters['multi_segment'].value,
+        blast_parser = InfluenzaBlastnAsnParser(self._tool_inputs['ASN'][0].path, self._parameters['multi_segment'].value,
                                                 self._parameters['seqIDParser_type'].value, self._parameters['genometyping_method'].value)
         blast_parser.group_hits_per_segment()
         self._informs['segment_informs'] = {}
-        segment_typer_class = SegmentTypingReads if self._parameters['genometyping_method'].value == 'blast' else SegmentTypingContigs
+        segment_typer_class = SegmentTypingReads if self._parameters['genometyping_method'].value == 'alignment' else SegmentTypingContigs
         if self._parameters['multi_segment'].value:
             for segment in self._parameters['genome_segments'].value:
                 segment_hits = blast_parser.get_segment_hits(segment)
@@ -149,18 +150,18 @@ class GenomeTyping(Tool):
         """
         self._informs['failed'] = self._failed
 
-    def _obtain_reference_genome(self) -> str:
+    def _obtain_reference_genome(self) -> Path:
         """
         Obtain reference genomes from segment typing results.
         :return: reference genome fasta file
         """
         refseqs = self._retrieve_cluster_sequences()
         reference_segments = [refseqs[segment_inform['refseqid']] for _, segment_inform in self._informs['segment_informs'].items()]
-        reference_fasta = os.path.join(self._folder, 'genome_reference_segments.fasta')
+        reference_fasta = self.folder / 'genome_reference_segments.fasta'
         FastaUtils.write(reference_segments, reference_fasta)
         return reference_fasta
 
-    def _retrieve_cluster_sequences(self) -> str:
+    def _retrieve_cluster_sequences(self) -> dict:
         """
         Load cluster representative sequences from the genome typing database
         :return: None

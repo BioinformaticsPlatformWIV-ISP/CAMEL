@@ -1,5 +1,5 @@
 import logging
-import os
+from pathlib import Path
 
 from camel.app.camel import Camel
 from camel.app.components.files.fastqutils import FastqUtils
@@ -48,14 +48,14 @@ class SeqtkSubsample(Seqtk):
         output_suffix = self.__get_output_file_suffix()
 
         if self.input_mode == 'SE':
-            self._output_files = [os.path.join(self._folder, output_file_prefix + output_suffix)]
+            self._output_files = [self.folder / (output_file_prefix + output_suffix)]
         elif self.input_mode == 'PE':
             self._output_files = [
-                os.path.join(self._folder, output_file_prefix + "_1" + output_suffix),
-                os.path.join(self._folder, output_file_prefix + "_2" + output_suffix)
+                self.folder / (output_file_prefix + "_1" + output_suffix),
+                self.folder / (output_file_prefix + "_2" + output_suffix)
             ]
 
-    def __build_command_with_iofiles(self, input_file: str, output_file: str) -> None:
+    def __build_command_with_iofiles(self, input_file: Path, output_file: Path) -> None:
         """
         Build the command to seqtk subsample
         :param input_file:
@@ -93,8 +93,7 @@ class SeqtkSubsample(Seqtk):
         # for PE mode, final output depend on combine_output option
         if 'combine_output' in self._parameters:
             # Tag if set: combine outputs of individual PE reads into one file
-            output_file = os.path.join(self._folder,
-                                       self._parameters['output_prefix'].value + self.__get_output_file_suffix())
+            output_file = self.folder / (self._parameters['output_prefix'].value + self.__get_output_file_suffix())
             FileUtils.concatenate_files(output_file, self._output_files)
             self._tool_outputs[self.input_file_type] = [ToolIOFile(output_file)]
         else:

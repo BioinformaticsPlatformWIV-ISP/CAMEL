@@ -36,6 +36,7 @@ class SegmentTypingReads(SegmentTyping):
                 'ambiguous': self.ambiguous,
                 'counts': self.counts}
 
+    @property
     def counts(self):
         """
         Returns the count of the most commonly found sseqid.

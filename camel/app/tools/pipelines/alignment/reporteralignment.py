@@ -162,7 +162,7 @@ class ReporterAlignment(Tool):
         relative_path_bam = self.__sub_folder / 'mapped_reads.ba'
         self._report_section.add_file(self._tool_inputs['BAM'][0].path, f'{relative_path_bam}m')
         self._report_section.add_link_to_file('Alignment BAM file', f'{relative_path_bam}m')
-        self._report_section.add_file(self._tool_inputs['BAM'][0].path.replace('.bam', '.bai'), f'{relative_path_bam}i')
+        self._report_section.add_file(str(self._tool_inputs['BAM'][0].path).replace('.bam', '.bai'), f'{relative_path_bam}i')
         self._report_section.add_link_to_file('Alignment BAM index', f'{relative_path_bam}i')
 
         relative_path_pdf_gc = self.__sub_folder / 'gc_bias_curve.pdf'

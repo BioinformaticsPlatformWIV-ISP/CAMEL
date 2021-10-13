@@ -106,6 +106,8 @@ class Picard(ToolPipeable, metaclass=abc.ABCMeta):
     def _build_command(self, pipe_in: bool = False, pipe_out: bool = False) -> None:
         """
         Build the command to run tool
+        :param pipe_in: Tools receives input from pipe
+        :param pipe_out: Tool outputs to pipe
         :return: None
         """
         #Init base command

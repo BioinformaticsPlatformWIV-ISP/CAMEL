@@ -1,5 +1,4 @@
 import logging
-import os
 import re
 from typing import Optional
 
@@ -78,15 +77,12 @@ class CollectMultipleMetrics(Picard):
         super().__init__('Picard CollectMultipleMetrics', '2.23.3', camel)
         self._function_name = 'CollectMultipleMetrics'
         self._specific_parameters = ['metric_accumulation_level_multi']
-        self._outfile_prefix = None
 
     def _set_output(self) -> None:
         """
         Set the output for Picard CollectMultipleMetrics function
         :return: None
         """
-        self.outfile_prefix = os.path.join(self._folder, self._parameters['output_prefix'].value)
-
         for key in self._parameters:
             if re.match('metrics_', key):
                 # strip 'metrics_' from key
@@ -95,12 +91,12 @@ class CollectMultipleMetrics(Picard):
                 # loop over all possible output suffices for that specific tool
                 try:
                     for suffix_key, suffix_value in CollectMultipleMetrics.OUTPUT_FILE_SUFFIX[tool].items():
-                        output_file = self.outfile_prefix + suffix_value
+                        output_file = self.folder / (self._parameters['output_prefix'].value + suffix_value)
                         self._tool_outputs['TXT_' + suffix_key] = [ToolIOFile(output_file)]
                 except KeyError:
                     logging.warning(f'Picard CollectMultipleMetrics unsupported metrics {key}, its results will not be analyzed or returned.')
 
-    def _set_informs(self) -> None:
+    def _set_informs(self, stderr: Optional[str] = None) -> None:
         """
         Analyse the result of picard run and update tool.informs
         :return: None
@@ -129,7 +125,7 @@ class CollectMultipleMetrics(Picard):
                     logging.warning(
                         f'Picard CollectMultipleMetrics unsupported metrics {key}, its results will not be analyzed or returned.')
 
-    def _build_command(self) -> None:
+    def _build_command(self, pipe_in: bool = False, pipe_out: bool = False) -> None:
         """
         Build the command to run tool
         :return: None
@@ -204,7 +200,6 @@ class CollectMultipleMetrics(Picard):
                     else:
                         logging.warning(
                             f'Picard CollectMultipleMetrics unsupported READS ORIENTATION {informs[col_nbs["PAIR_ORIENTATION"]]} for InsertSize analysis')
-
 
     def __analyze_gc_bias(self) -> None:
         """

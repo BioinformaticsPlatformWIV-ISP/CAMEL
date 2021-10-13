@@ -1,9 +1,9 @@
 import errno
 import fileinput
 import hashlib
-import os
-
 import pickle
+from pathlib import Path
+from typing import List, Any
 
 
 class FileUtils(object):
@@ -13,17 +13,17 @@ class FileUtils(object):
     """
 
     @staticmethod
-    def hash_file(file_name, block_size=65536):
+    def hash_file(file_path: Path, block_size: int = 65536) -> str:
         """
         Creates a hash for the file with a default block size of 65536 and the sha256 algorithm.
-        :param file_name: File that needs to be hashed
+        :param file_path: File that needs to be hashed
         :param block_size: Block size to be used
         :return: String of the hash with alphanumeric symbols
         """
-        if not os.path.isfile(file_name):
-            raise IOError("'{}' is not a file".format(file_name))
+        if not file_path.is_file():
+            raise IOError(f"'{file_path}' is not a file")
         hasher = hashlib.sha256()
-        with open(file_name, 'rb') as file_to_hash:
+        with file_path.open('rb') as file_to_hash:
             buf = file_to_hash.read(block_size)
             while len(buf) > 0:
                 hasher.update(buf)
@@ -31,18 +31,18 @@ class FileUtils(object):
             return hasher.hexdigest()
 
     @staticmethod
-    def get_all_files(directory_path):
+    def get_all_files(directory_path: Path) -> List[Path]:
         """
         Returns all files in a directory recursively.
         """
         files_list = []
-        for root, directories, files in os.walk(directory_path):
-            for file_ in files:
-                files_list.append(os.path.join(root, file_))
+        for entry in directory_path.glob('**/*'):
+            if entry.is_file():
+                files_list.append(entry)
         return files_list
 
     @staticmethod
-    def hash_directory(path):
+    def hash_directory(path: Path) -> str:
         """
         Creates a hash for a folder with a default block size of 65536 and the sha256 algorithm.
         :param path: Directory path
@@ -54,7 +54,7 @@ class FileUtils(object):
         return hasher.hexdigest()
 
     @staticmethod
-    def hash_value(value):
+    def hash_value(value: Any) -> str:
         """
         Creates a hash for a value.
         :param value: Value
@@ -65,27 +65,27 @@ class FileUtils(object):
         return hasher.hexdigest()
 
     @staticmethod
-    def silent_remove(file_name):
+    def silent_remove(file_path: Path) -> None:
         """
         Silently remove a file, if file does not exist, capture the error
-        :param file_name: file to be removed (complete path)
+        :param file_path: file to be removed (complete path)
         """
         try:
-            os.remove(file_name)
+            file_path.unlink()
         except OSError as e:
             if e.errno != errno.ENOENT:  # errno.ENOENT = no such file or directory
                 raise  # re-raise exception if a different error occured
 
     @staticmethod
-    def concatenate_files(output_filename, input_files):
+    def concatenate_files(output_path: Path, input_files: List[Path]):
         """
         Concatenate the input files specified into one output file
         :param input_files: input files to be concatenated
-        :param output_filename: Filename of the output
+        :param output_path: Filename of the output
         :return: None
         """
         fin = fileinput.input(input_files)
-        with open(output_filename, 'w') as fout:
+        with output_path.open('w') as fout:
             for line in fin:
                 fout.write(line)
         fin.close()

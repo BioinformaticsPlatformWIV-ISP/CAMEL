@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
@@ -36,12 +36,12 @@ class SeqtkSeq(Tool):
         Executes this tool.
         :return: None
         """
-        output_path = os.path.join(self._folder, self._parameters['output_filename'].value)
+        output_path = self._folder / self._parameters['output_filename'].value
         self.__build_command(output_path)
         self._execute_command()
         self.__set_output(output_path)
 
-    def __build_command(self, output_path: str) -> None:
+    def __build_command(self, output_path: Path) -> None:
         """
         Builds the command line call.
         :param output_path: Output file path
@@ -50,16 +50,16 @@ class SeqtkSeq(Tool):
         input_key = 'FASTQ' if 'FASTQ' in self._tool_inputs else 'FASTA'
         self._command.command = ' '.join([
             self._tool_command,
-            ' '.join([f.path for f in self._tool_inputs[input_key]]),
+            ' '.join([str(f.path) for f in self._tool_inputs[input_key]]),
             ' '.join(self._build_options(['output_filename'])),
             f"> {output_path}"
         ])
 
-    def __set_output(self, output_path: str) -> None:
+    def __set_output(self, output_path: Path) -> None:
         """
         Sets the tool output.
         :param output_path: Output path
         :return: None
         """
-        output_key = 'FASTA' if output_path.lower().endswith('.fasta') else 'FASTQ'
+        output_key = 'FASTA' if output_path.name.lower().endswith('.fasta') else 'FASTQ'
         self._tool_outputs[output_key] = [ToolIOFile(output_path)]

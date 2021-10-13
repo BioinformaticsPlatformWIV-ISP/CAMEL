@@ -1,5 +1,3 @@
-import os
-
 from camel.app.camel import Camel
 from camel.app.error.invalidparametererror import InvalidParameterError
 from camel.app.io.tooliofile import ToolIOFile
@@ -52,7 +50,7 @@ class GATK4HaplotypeCaller(GATK4):
         super(GATK4HaplotypeCaller, self)._set_output()
 
         if 'bam_output' in self._parameters:
-            self._tool_outputs['BAM'] = [ToolIOFile(os.path.join(self._folder, self._parameters['bam_output'].value))]
+            self._tool_outputs['BAM'] = [ToolIOFile(self.folder / self._parameters['bam_output'].value)]
 
     def _check_input(self) -> None:
         if 'gqb' in self._parameters:

@@ -1,7 +1,6 @@
-from pathlib import Path
-
 import os
 import re
+from pathlib import Path
 
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.samtools.samtools import Samtools

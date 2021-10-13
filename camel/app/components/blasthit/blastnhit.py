@@ -1,5 +1,5 @@
-from typing import Union, Tuple
 import re
+from typing import Union, Tuple
 
 
 class BlastnHit(object):

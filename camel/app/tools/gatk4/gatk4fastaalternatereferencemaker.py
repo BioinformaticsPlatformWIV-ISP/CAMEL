@@ -1,14 +1,14 @@
 import logging
-import os
+from pathlib import Path
 from typing import Tuple, List
 
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
+from camel.app.components.sequence_extraction import MASK_NT
 
 from camel.app.camel import Camel
 from camel.app.components.files.fastautils import FastaUtils
-from camel.app.components.sequence_extraction import MASK_NT
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.gatk4.gatk4 import GATK4
 
@@ -29,7 +29,7 @@ class GATK4FastaAlternateReferenceMaker(GATK4):
         self._required_inputs = ['VCF', 'FASTA_REF']
         self._output_type = 'FASTA'
         self._specific_parameters = ['concatenate_sequence_segments']
-        self._fasta_concatenated = 'consensus_sequences_concatenated.fa'
+        self._fasta_concatenated = Path('consensus_sequences_concatenated.fa')
         self._fasta_extracted = None
         self._concatenate_sequence = False
 
@@ -88,7 +88,7 @@ class GATK4FastaAlternateReferenceMaker(GATK4):
         if self._concatenate_sequence:
             # when 'concatenate_sequence_segments' set, final FASTA output will be
             # generated from FastaAlternateReferenceMaker output
-            self._fasta_concatenated = os.path.join(self._folder, self._fasta_concatenated)
+            self._fasta_concatenated = self._folder / self._fasta_concatenated
             self._tool_outputs['FASTA_concatenated'] = [ToolIOFile(self._fasta_concatenated)]
         else:
             self._tool_outputs['FASTA_concatenated'] = []
@@ -119,7 +119,7 @@ class GATK4FastaAlternateReferenceMaker(GATK4):
             else:
                 seq_grouped_intervals[seq_id] = [interval]
 
-        refseq_ids = [x.id for x in list(SeqIO.parse(self._tool_inputs['FASTA_REF'][0], "fasta"))]
+        refseq_ids = [x.id for x in list(SeqIO.parse(self._tool_inputs['FASTA_REF'][0].path, "fasta"))]
 
         logging.debug(f"  refseq_ids: {refseq_ids}")
 
@@ -161,7 +161,7 @@ class GATK4FastaAlternateReferenceMaker(GATK4):
                 # a new sequence segament
                 if last_seq_id is not None:
                     concatenated_seqs.append(
-                        SeqRecord(Seq(concatenate_seqv), id=last_seq_id, description=last_seq_id))
+                        SeqRecord(Seq(concatenate_seq), id=last_seq_id, description=last_seq_id))
                 concatenate_seq = str(seq_record.seq)
                 last_seq_id = seq_id
             last_end_pos = pos_end

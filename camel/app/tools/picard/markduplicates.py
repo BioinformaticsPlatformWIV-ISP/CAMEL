@@ -1,4 +1,3 @@
-import os
 import re
 from typing import Optional
 
@@ -62,6 +61,6 @@ class MarkDuplicates(Picard):
         Set the output specification
         :return: None
         """
-        self._tool_outputs['BAM'] = [ToolIOFile(os.path.join(self._folder, self._parameters['output'].value))]
+        self._tool_outputs['BAM'] = [ToolIOFile(self.folder / self._parameters['output'].value)]
         self._tool_outputs['METRICS'] = [
-            ToolIOFile(os.path.join(self._folder, self._parameters['metrics_output'].value))]
+            ToolIOFile(self.folder / self._parameters['metrics_output'].value)]

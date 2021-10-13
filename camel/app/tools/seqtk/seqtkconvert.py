@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
@@ -23,7 +23,7 @@ class SeqtkConvert(Seqtk):
         self._supported_inputs = ['FASTQ']
         self._specific_parameters = ['output_file']
 
-    def _get_input_string(self) -> str:
+    def _get_input_string(self) -> Path:
         """
         Returns the input specification
         :return: input_string containing input specification
@@ -35,5 +35,5 @@ class SeqtkConvert(Seqtk):
         Set the output specification
         :return: None
         """
-        self._output_string = os.path.join(self._folder, self._parameters['output_file'].value)
+        self._output_string = self._folder / self._parameters['output_file'].value
         self._tool_outputs['FASTA'] = [ToolIOFile(self._output_string)]

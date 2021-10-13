@@ -1,8 +1,7 @@
 import logging
-from collections import Counter
-from typing import List, Dict, Any, Tuple
-import logging
 import pprint
+from typing import List, Dict, Any
+
 from camel.app.components.blasthit.blastnhit import BlastnHit
 from camel.app.components.segmenttyping.segmenttyping import SegmentTyping
 

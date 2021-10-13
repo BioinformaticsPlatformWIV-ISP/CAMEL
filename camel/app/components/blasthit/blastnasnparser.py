@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 from typing import List
 
 from camel.app.command.command import Command
@@ -11,11 +11,11 @@ class BlastnAsnParser(object):
     Class to parse blastn output from an asn file and return hits
     """
 
-    def __init__(self, blastn_file: str, columns: List[str] = None, seq_columns: bool = False, exclude_tax_columns: bool = False,
-                 folder: str = None):
+    def __init__(self, blastn_file: Path, columns: List[str] = None, seq_columns: bool = False, exclude_tax_columns: bool = False,
+                 folder: Path = None):
         """
         Initialize the object
-        :param blastn_file: Location of the BLASTn file
+        :param blastn_file: Location of the BLASTn file in asn format
         :param columns: Optional list of columns that need to be parsed
         :param seq_columns: Include sequences in the BLASTn hit objects
         :param exclude_tax_columns: Should columns that require a taxonomy db be excluded
@@ -40,7 +40,7 @@ class BlastnAsnParser(object):
         self._blastn_file = blastn_file
         self._columns = columns if columns else self._get_columns(seq_columns, exclude_tax_columns)
         self._hits = []
-        self._folder = folder if folder else os.getcwd()
+        self._folder = folder if folder else Path.cwd()
         self._parse()
 
     @property
@@ -78,8 +78,8 @@ class BlastnAsnParser(object):
         """
         format_columns = ' '.join(self._columns)
         cmd = Command(f'module load blast; blast_formatter -archive {self._blastn_file} -outfmt "6 {format_columns}" > formatted_blast_output.txt')
-        cmd.run_command(self._folder)
-        with open(os.path.join(self._folder, 'formatted_blast_output.txt')) as handle:
+        cmd.run(self._folder)
+        with (self._folder / 'formatted_blast_output.txt').open() as handle:
             for line in handle:
                 if line:
                     self._hits.append(BlastnHit(**dict(zip(self._columns, line.split('\t')))))

@@ -13,7 +13,7 @@ rule assembly_spades_run:
     De-novo assembly using SPAdes.
     """
     input:
-        IO = Path(config['working_dir']) / 'fq_dict.io',
+        IO = Path(config['working_dir']) / 'fq_dict.io'
     output:
         FASTA_Contig = Path(config['working_dir']) / 'assembly_spades' / 'spades' / 'fasta.io',
         INFORMS = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_INFORMS
@@ -29,10 +29,10 @@ rule assembly_spades_run:
         spades = SPAdes(camel)
 
         # Reformat FASTQ dictionary
-        fq_dict = SnakePipelineUtils.extracts_fq_input(input.IO, key_pe='FASTQ_PE_1', keys_se=[
+        fq_dict = SnakePipelineUtils.extracts_fq_input(Path(input.IO), key_pe='FASTQ_PE_1', keys_se=[
             'FASTQ_SE_1', 'FASTQ_SE_2'], key_se='FASTQ_SE_1', drop_empty=True, read_type=params.read_type)
         spades.add_input_files(fq_dict)
-        step = Step(rule, spades, camel, params.running_dir, config)
+        step = Step(str(rule), spades, camel, params.running_dir)
         spades.update_parameters(**params.spades_options)
         spades.update_parameters(threads=threads)
         step.run_step()
@@ -54,7 +54,7 @@ rule assembly_filter_contig_length:
         from camel.app.tools.seqtk.seqtkseq import SeqtkSeq
         seqtk = SeqtkSeq(camel)
         SnakemakeUtils.add_pickle_inputs(seqtk, input)
-        step = Step(rule, seqtk, camel, params.running_dir, config)
+        step = Step(str(rule), seqtk, camel, params.running_dir)
         seqtk.update_parameters(output_filename='assembly_filtered.fasta', min_length=params.min_contig_length)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(seqtk, output)
@@ -73,7 +73,7 @@ rule assembly_quast:
         from camel.app.tools.quast.quast import Quast
         quast = Quast(camel)
         SnakemakeUtils.add_pickle_inputs(quast, input)
-        step = Step(rule, quast, camel, params.running_dir, config)
+        step = Step(str(rule), quast, camel, params.running_dir)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(quast, output)
 
@@ -91,7 +91,7 @@ rule assembly_quast_extract_informs:
         from camel.app.tools.quast.quastinformextractor import QuastInformExtractor
         quast_inform_extractor = QuastInformExtractor(camel)
         SnakemakeUtils.add_pickle_inputs(quast_inform_extractor, input)
-        step = Step(rule, quast_inform_extractor, camel, params.running_dir, config)
+        step = Step(str(rule), quast_inform_extractor, camel, params.running_dir)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(quast_inform_extractor, output)
 
@@ -116,7 +116,7 @@ rule assembly_report:
         reporter.add_input_files({'SAMPLE_NAME': [ToolIOValue(params.sample_name)],
                                   'ASSEMBLER': [ToolIOValue('SPAdes')]})
         SnakemakeUtils.add_pickle_inputs(reporter, input)
-        step = Step(rule, reporter, camel, params.running_dir, config)
+        step = Step(str(rule), reporter, camel, params.running_dir)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
 
@@ -131,7 +131,7 @@ rule assembly_dump_summary_info:
     params:
         running_dir = Path(config['working_dir']) / 'assembly_spades' / 'summary'
     run:
-        quast_informs = SnakemakeUtils.load_object(input.INFORMS_quast)
+        quast_informs = SnakemakeUtils.load_object(Path(input.INFORMS_quast))
         summary_data = [
             ('assembly_n50', quast_informs['contig']['N50']),
             ('assembly_nb_contigs', quast_informs['contig']['# contigs']),
@@ -155,7 +155,7 @@ rule assembly_bt2_index:
     run:
         from camel.app.tools.bowtie2.bowtie2index import Bowtie2Index
         bowtie2_index = Bowtie2Index(camel)
-        step = Step(rule, bowtie2_index, camel, params.running_dir, config)
+        step = Step(str(rule), bowtie2_index, camel, params.running_dir)
         SnakemakeUtils.add_pickle_inputs(bowtie2_index, input)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(bowtie2_index, output)
@@ -177,10 +177,10 @@ rule assembly_bt2_map:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         from camel.app.tools.bowtie2.bowtie2map import Bowtie2Map
         bowtie2_map = Bowtie2Map(camel)
-        step = Step(rule, bowtie2_map, camel, str(params.running_dir), config)
+        step = Step(str(rule), bowtie2_map, camel, params.running_dir)
         bowtie2_map.add_input_files(SnakePipelineUtils.extracts_fq_input(
-            input.IO, key_se='FASTQ_SE', drop_empty=True, read_type=params.read_type))
-        SnakemakeUtils.add_pickle_input(bowtie2_map, 'INDEX_GENOME_PREFIX', input.INDEX_GENOME_PREFIX)
+            Path(input.IO), key_se='FASTQ_SE', drop_empty=True, read_type=params.read_type))
+        SnakemakeUtils.add_pickle_input(bowtie2_map, 'INDEX_GENOME_PREFIX', Path(input.INDEX_GENOME_PREFIX))
         step.run_step()
         bowtie2_map.informs['_tag'] = 'Coverage calculation'
         SnakemakeUtils.dump_tool_outputs(bowtie2_map, output)
@@ -198,7 +198,7 @@ rule assembly_bt2_sam_to_bam:
     run:
         from camel.app.tools.samtools.samtoolsview import SamtoolsView
         samtools_view = SamtoolsView(camel)
-        step = Step(rule, samtools_view, camel, params.running_dir, config)
+        step = Step(str(rule), samtools_view, camel, params.running_dir)
         SnakemakeUtils.add_pickle_inputs(samtools_view, input)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(samtools_view, output)
@@ -216,7 +216,7 @@ rule assembly_bt2_sort_bam:
     run:
         from camel.app.tools.samtools.samtoolssort import SamtoolsSort
         samtools_sort = SamtoolsSort(camel)
-        step = Step(rule, samtools_sort, camel, params.running_dir, config)
+        step = Step(str(rule), samtools_sort, camel, params.running_dir)
         SnakemakeUtils.add_pickle_inputs(samtools_sort, input)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(samtools_sort, output)
@@ -235,7 +235,7 @@ rule assembly_samtools_depth:
     run:
         from camel.app.tools.samtools.samtoolsdepth import SamtoolsDepth
         samtools_depth = SamtoolsDepth(camel)
-        step = Step(rule, samtools_depth, camel, params.running_dir, config)
+        step = Step(str(rule), samtools_depth, camel, params.running_dir)
         SnakemakeUtils.add_pickle_inputs(samtools_depth, input)
         step.run_step()
         samtools_depth.informs['_tag'] = 'Coverage calculation'

@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import List, Union
 
 from camel.app.components.blasthit.blastnasnparser import BlastnAsnParser
@@ -12,7 +13,7 @@ class InfluenzaBlastnAsnParser(BlastnAsnParser):
     for Influenza.
     """
 
-    def __init__(self, blastn_file: str, multi_segment: bool, seqid_parser_type: str, subtyping_method: str,
+    def __init__(self, blastn_file: Path, multi_segment: bool, seqid_parser_type: str, subtyping_method: str,
                  exclude_tax_columns: bool = True, folder: str = None):
         """
         Initializes the object
@@ -31,7 +32,12 @@ class InfluenzaBlastnAsnParser(BlastnAsnParser):
         self._segment_hits = {}
 
     @staticmethod
-    def _check_subtyping_method(subtyping_method):
+    def _check_subtyping_method(subtyping_method: str) -> None:
+        """
+        Checks whether the given subtyping method is valid.
+        :param subtyping_method: Method to check
+        :return: None
+        """
         if subtyping_method not in {'assembly', 'alignment'}:
             raise ValueError(f'Given subtyping method is invalid for InfluenzaBlastnAsnParser: {subtyping_method}')
 

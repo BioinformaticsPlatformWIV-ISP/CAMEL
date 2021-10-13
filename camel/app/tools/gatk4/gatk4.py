@@ -1,6 +1,5 @@
 import abc
 import logging
-import os
 import re
 import shutil
 import tempfile
@@ -89,7 +88,7 @@ class GATK4(Tool, metaclass=abc.ABCMeta):
         :return: None
         """
         self._tool_outputs[self._output_type] = [
-            ToolIOFile(os.path.join(self._folder, self._parameters['output'].value))
+            ToolIOFile(self.folder / self._parameters['output'].value)
         ]
 
     def _set_specific_parameters(self) -> None:

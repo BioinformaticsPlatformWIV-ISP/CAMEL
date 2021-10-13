@@ -1,8 +1,7 @@
+import os
 from pathlib import Path
-from typing import Union
 
 import humanize
-import os
 
 from camel.app.components.files.fileutils import FileUtils
 from camel.app.io.toolio import ToolIO
@@ -13,24 +12,21 @@ class ToolIOFile(ToolIO):
     Class that represents an input / output file of a tool.
     """
 
-    def __init__(self, path: Union[str, Path], logged: bool = True) -> None:
+    def __init__(self, path: Path, logged: bool = True) -> None:
         """
         Initializes a tool input / output file.
         :param path: Path to the file
         :param logged: If True, the output can be logged
         """
         super(ToolIOFile, self).__init__(logged)
-        if isinstance(path, Path):
-            self._path = str(path.absolute())
-        else:
-            self._path = str(Path(path).absolute())
+        self._path = path.absolute()
 
     def __str__(self) -> str:
         """
         String representation
         :return: String representation
         """
-        return self._path
+        return str(self._path)
 
     def __repr__(self) -> str:
         """
@@ -47,7 +43,7 @@ class ToolIOFile(ToolIO):
         return self.exists
 
     @property
-    def path(self) -> str:
+    def path(self) -> Path:
         """
         Returns the path to the input / output file.
         :return: Path
@@ -60,7 +56,7 @@ class ToolIOFile(ToolIO):
         Returns the basename of the input / output file.
         :return: Basename
         """
-        return os.path.basename(self.path)
+        return self.path.name
 
     @property
     def file_extension(self) -> str:
@@ -68,7 +64,7 @@ class ToolIOFile(ToolIO):
         Returns the file extension.
         :return: File extension
         """
-        return os.path.splitext(self.path)[-1]
+        return self.path.suffix
 
     @property
     def exists(self) -> bool:
@@ -84,7 +80,7 @@ class ToolIOFile(ToolIO):
         Returns the size of this file.
         :return: Size
         """
-        return os.path.getsize(self._path)
+        return self.path.stat().st_size
 
     @property
     def hash(self) -> str:

@@ -1,9 +1,7 @@
-from pathlib import Path
-
-import os
 import re
-from typing import Set, List
+from pathlib import Path
 from typing import Optional
+from typing import Set, List
 
 from camel.app.camel import Camel
 from camel.app.command.command import Command
@@ -42,7 +40,7 @@ class Bowtie2Map(Bowtie2):
         'overall alignment rate': 'stats_map_rate'
     }
 
-    def __init__(self, camel: Camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initialize Bowtie2
         :param camel: Camel instance
@@ -79,7 +77,7 @@ class Bowtie2Map(Bowtie2):
         if 'FASTQ_SE' in self._tool_inputs:
             if not self._mod:
                 self._mod = 'SE'
-            fq_input_str = ','.join(f.path for f in self._tool_inputs['FASTQ_SE'])
+            fq_input_str = ','.join(str(f.path) for f in self._tool_inputs['FASTQ_SE'])
             self._fastq_inputs_str += f' -U {fq_input_str}'
 
         self._refgenome_str = f"-x {self._tool_inputs['INDEX_GENOME_PREFIX'][0].value}"
@@ -113,7 +111,7 @@ class Bowtie2Map(Bowtie2):
         Set output for Bowtie2 read mapping
         :return None
         """
-        self._tool_outputs['SAM'] = [ToolIOFile(os.path.join(self._folder, Bowtie2Map.OUTPUT_NAME))]
+        self._tool_outputs['SAM'] = [ToolIOFile(self.folder / Bowtie2Map.OUTPUT_NAME)]
 
     @staticmethod
     def __check_mode_exclusiveness(options: Set[str]) -> None:
@@ -198,7 +196,7 @@ class Bowtie2Map(Bowtie2):
         Bowtie2Map.__check_mode_exclusiveness(options)
         Bowtie2Map.__check_mode_preset_conflicts(options)
 
-    def __build_command(self, pipe_in: bool = False, pipe_out: bool =  False) -> None:
+    def __build_command(self, pipe_in: bool = False, pipe_out: bool = False) -> None:
         """
         Build command to run Bowtie2
         :return: None

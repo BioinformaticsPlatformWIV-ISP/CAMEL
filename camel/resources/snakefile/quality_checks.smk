@@ -19,7 +19,7 @@ rule quality_checks_kraken:
         if len(input) == 0:
             data_export = params.qc_check.to_dict()
         else:
-            informs = SnakemakeUtils.load_object(input.INFORMS)
+            informs = SnakemakeUtils.load_object(Path(input.INFORMS))
             contaminants = informs['contaminants_warn'] + informs['contaminants_fail']
             max_level = max([float(x[-1]) for x in contaminants] + [0.0])
             data_export = params.qc_check.to_dict(max_level)
@@ -39,7 +39,7 @@ rule quality_checks_mapping_rate:
         qc_check = quality_checks.QC_CHECKS_BY_KEY[f'map_rate_{config["quality_checks"].get("coverage_mode", "assembly")}']
     run:
         import json
-        informs_bt2 = SnakemakeUtils.load_object(input.INFORMS)
+        informs_bt2 = SnakemakeUtils.load_object(Path(input.INFORMS))
         mapping_rate = float(informs_bt2['stats_map_rate'])
         with open(output.JSON, 'w') as handle:
             json.dump(params.qc_check.to_dict(mapping_rate), handle)
@@ -58,7 +58,7 @@ rule quality_checks_coverage:
         running_dir = Path(config['working_dir']) / 'quality_checks'
     run:
         import json
-        samtools_depth_informs = SnakemakeUtils.load_object(input.INFORMS)
+        samtools_depth_informs = SnakemakeUtils.load_object(Path(input.INFORMS))
         median_depth = samtools_depth_informs['median_depth']
         with open(output.JSON, 'w') as handle:
             json.dump(params.qc_check.to_dict(median_depth), handle)
@@ -77,7 +77,7 @@ rule quality_checks_typing_loci:
         qc_check = quality_checks.QC_CHECKS_BY_KEY['cgmlst']
     run:
         import json
-        cgmlst_stats = SnakemakeUtils.load_object(input.INFORMS)
+        cgmlst_stats = SnakemakeUtils.load_object(Path(input.INFORMS))
         fraction_detected = cgmlst_stats['hits_found'] / cgmlst_stats['nb_of_loci']
         with open(output.JSON, 'w') as handle:
             json.dump(params.qc_check.to_dict(100 * fraction_detected), handle)
@@ -97,7 +97,7 @@ rule quality_checks_parse_fastqc:
     run:
         from camel.app.tools.fastqc.fastqcdatafileparser import FastQCDataFileParser
         fastqc_checks = FastQCDataFileParser(camel)
-        step = Step(rule, fastqc_checks, camel, params.running_dir, config)
+        step = Step(rule, fastqc_checks, camel, params.running_dir)
         SnakemakeUtils.add_pickle_inputs(fastqc_checks, input)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(fastqc_checks, output)
@@ -117,7 +117,7 @@ rule quality_checks_fqc_gc_content:
         index = lambda wildcards: 0 if (wildcards.ori == 'fwd') else 1
     run:
         import json
-        informs = SnakemakeUtils.load_object(input.INFORMS)
+        informs = SnakemakeUtils.load_object(Path(input.INFORMS))
         gc_diff = abs(params.gc_content_ref - informs['by_file']['gc_content'][params.index])
         with open(output.JSON, 'w') as handle:
             json.dump(params.qc_check.to_dict(gc_diff), handle)
@@ -136,7 +136,7 @@ rule quality_checks_fqc_avg_read_quality:
         index = lambda wildcards: 0 if (wildcards.ori == 'fwd') else 1
     run:
         import json
-        informs = SnakemakeUtils.load_object(input.INFORMS)
+        informs = SnakemakeUtils.load_object(Path(input.INFORMS))
         avg_quality = informs['by_file']['avg_read_qual'][params.index]
         with open(output.JSON, 'w') as handle:
             json.dump(params.qc_check.to_dict(avg_quality), handle)
@@ -155,7 +155,7 @@ rule quality_checks_fqc_max_n_fraction:
         index = lambda wildcards: 0 if (wildcards.ori == 'fwd') else 1
     run:
         import json
-        informs = SnakemakeUtils.load_object(input.INFORMS)
+        informs = SnakemakeUtils.load_object(Path(input.INFORMS))
         max_n_fraction = informs['by_file']['max_n_frac'][params.index]
         with open(output.JSON, 'w') as handle:
             json.dump(params.qc_check.to_dict(max_n_fraction), handle)
@@ -174,7 +174,7 @@ rule quality_checks_fqc_seq_len:
         index = lambda wildcards: 0 if (wildcards.ori == 'fwd') else 1
     run:
         import json
-        informs = SnakemakeUtils.load_object(input.INFORMS)
+        informs = SnakemakeUtils.load_object(Path(input.INFORMS))
         perc = 100 * informs['by_file']['median_seq_len'][params.index] / informs['stats']['mode_read_length_raw']
         with open(output.JSON, 'w') as handle:
             json.dump(params.qc_check.to_dict(perc), handle)
@@ -193,7 +193,7 @@ rule quality_checks_fqc_per_base:
         index = lambda wildcards: 0 if (wildcards.ori == 'fwd') else 1
     run:
         import json
-        informs = SnakemakeUtils.load_object(input.INFORMS)
+        informs = SnakemakeUtils.load_object(Path(input.INFORMS))
         max_diff = informs['by_file']['max_per_base_diff'][params.index]
         with open(output.JSON, 'w') as handle:
             json.dump(params.qc_check.to_dict(max_diff), handle)
@@ -212,7 +212,7 @@ rule quality_checks_fqc_qscore:
         index = lambda wildcards: 0 if (wildcards.ori == 'fwd') else 1
     run:
         import json
-        informs = SnakemakeUtils.load_object(input.INFORMS)
+        informs = SnakemakeUtils.load_object(Path(input.INFORMS))
         qscore_drop = informs['by_file']['qscore_drop_pos'][params.index]
         with open(output.JSON, 'w') as handle:
             json.dump(params.qc_check.to_dict(qscore_drop), handle)
@@ -260,9 +260,9 @@ rule quality_checks_report:
         from camel.app.tools.pipelines.quality_checks.htmlreporterqualitychecks import HtmlReporterQualityChecks
         reporter = HtmlReporterQualityChecks(camel)
         reporter.update_parameters(gc_content_ref=params.gc_content_ref)
-        reporter.add_input_informs({'qc_checks': informs, 'fastqc_parser': SnakemakeUtils.load_object(input.INFORMS)})
-        reporter.run(str(Path(output.VAL_HTML).parent))
-        SnakemakeUtils.dump_tool_output(reporter, 'VAL_HTML', output.VAL_HTML)
+        reporter.add_input_informs({'qc_checks': informs, 'fastqc_parser': SnakemakeUtils.load_object(Path(input.INFORMS))})
+        reporter.run(Path(output.VAL_HTML).parent)
+        SnakemakeUtils.dump_tool_output(reporter, 'VAL_HTML', Path(output.VAL_HTML))
 
 
 rule quality_checks_export_summary_info:
