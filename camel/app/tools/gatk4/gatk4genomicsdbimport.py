@@ -4,7 +4,7 @@ from camel.app.camel import Camel
 from camel.app.tools.gatk4.gatk4 import GATK4
 
 
-class GenomicsDBImport(GATK4):
+class GATK4GenomicsDBImport(GATK4):
     """
     =============================
     GATK GenomicsDBImport 4.1.9.0
@@ -24,7 +24,7 @@ class GenomicsDBImport(GATK4):
 
     def __init__(self, camel: Camel) -> None:
         """
-        Initialize the CombineGVCFs tool
+        Initialize the GenomicsDBImport tool
         :param camel: Camel instance
         :return: None
         """
@@ -41,7 +41,7 @@ class GenomicsDBImport(GATK4):
         Overrides method in parent class.
         :return: None
         """
-        super(GenomicsDBImport, self)._set_input()
+        super(GATK4GenomicsDBImport, self)._set_input()
 
         for f in self._tool_inputs['gVCF']:
             self._input_string += f"--variant {f.path} "
@@ -51,7 +51,7 @@ class GenomicsDBImport(GATK4):
         Check the result of the GATK run
         :return: None
         """
-        super(GenomicsDBImport, self)._check_command_output()
+        super(GATK4GenomicsDBImport, self)._check_command_output()
 
         # Snakemake placeholder
         Path.touch(Path(self._parameters['output'].value))

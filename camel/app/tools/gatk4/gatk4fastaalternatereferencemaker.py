@@ -1,10 +1,9 @@
 import logging
 import os
-from typing import Tuple, List
-
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
+from typing import Tuple, List
 
 from camel.app.camel import Camel
 from camel.app.components.files.fastautils import FastaUtils

@@ -2,7 +2,7 @@ from camel.app.camel import Camel
 from camel.app.tools.gatk4.gatk4 import GATK4
 
 
-class CombineGVCFs(GATK4):
+class GATK4CombineGVCFs(GATK4):
     """
     =============================
     GATK CombineGVCFs 4.1.9.0
@@ -36,7 +36,7 @@ class CombineGVCFs(GATK4):
         Overrides method in parent class.
         :return: None
         """
-        super(CombineGVCFs, self)._set_input()
+        super(GATK4CombineGVCFs, self)._set_input()
 
         for f in self._tool_inputs['gVCF']:
             self._input_string += f"--variant {f.path} "

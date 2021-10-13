@@ -20,7 +20,7 @@ class GATK4ValidateVariants(GATK4):
 
     def __init__(self, camel: Camel) -> None:
         """
-        Initialize the GATK4 ValidateVariants tool
+        Initialize GATK4 ValidateVariants
         :param camel: Camel instance
         :return: None
         """
