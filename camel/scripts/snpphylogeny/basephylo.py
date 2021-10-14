@@ -66,7 +66,7 @@ class BasePhylo(object, metaclass=abc.ABCMeta):
         fq_by_sample = SnpPhylogenyUtils.symlink_input_files(self._samples, Path(self._args.working_dir))
         if self._args.trim_reads:
             trimming_output_by_sample = SnpPhylogenyUtils.trim_all_reads(
-                fq_by_sample, Path(self._args.working_dir) / 'trimming')
+                fq_by_sample, Path(self._args.working_dir) / 'trimming', self._args.adapter, self._args.threads)
             SnpPhylogenyUtils.add_trimming_section(self._report, trimming_output_by_sample)
             mapping_input_by_sample = {}
             for sample, output in trimming_output_by_sample.items():

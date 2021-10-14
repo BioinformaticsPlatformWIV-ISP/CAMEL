@@ -74,8 +74,8 @@ class AssemblyWrapper(object):
         config_file = SnakePipelineUtils.generate_config_file(config_data, self._working_dir)
         output_files = self.__get_output_files_dict(min_contig_length, calc_qc_stats)
         SnakePipelineUtils.run_snakemake(
-            assembly_spades.SNAKEFILE_ASSEMBLY_SPADES, config_file, list(output_files.values()), self._working_dir,
-            threads)
+            assembly_spades.SNAKEFILE_ASSEMBLY_SPADES, config_file, list(output_files.values()),
+            Path(self._working_dir), threads)
         self.__set_output(output_files)
 
     def __get_output_files_dict(self, min_contig_length: Union[int, None], calc_qc_stats: bool) -> Dict[str, Path]:
