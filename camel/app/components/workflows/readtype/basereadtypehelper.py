@@ -46,6 +46,14 @@ class BaseReadTypeHelper(object, metaclass=abc.ABCMeta):
         """
         return self._informs
 
+    @property
+    def working_dir(self) -> Path:
+        """
+        Returns the working directory.
+        :return: Working directory
+        """
+        return self._working_dir
+
     def symlink_input_files(self, files: List[Path], names: Optional[List[str]] = None) -> List[Path]:
         """
         Creates symbolic links for list of files to the working directory.

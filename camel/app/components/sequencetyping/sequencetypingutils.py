@@ -64,19 +64,19 @@ class SequenceTypingUtils(object):
         return m[0]
 
     @staticmethod
-    def determine_read_status(read_name: str) -> Tuple[str, str]:
+    def determine_read_status(path_fq: Path) -> Tuple[str, str]:
         """
         Attempts to determine the forward / reverse state designator of the reads based on the filename.
         This is useful for SRST2 which can have problems with uncommon read names.
         Supported formats: read_1P.fastq, read_1.fastq
-        :param read_name: Input read name
+        :param path_fq: Path to input FASTQ file
         :return: Forward designator, reverse designator
         """
-        if re.match('.*(_[12]P\\.).*', read_name) is not None:
+        if re.match('.*(_[12]P\\.).*', path_fq.name) is not None:
             return '1P', '2P'
-        elif re.match('.*(_[12]\\.).*', read_name) is not None:
+        elif re.match('.*(_[12]\\.).*', path_fq.name) is not None:
             return '_1', '_2'
-        raise ValueError(f"Cannot determine read name from: {read_name}")
+        raise ValueError(f"Cannot determine read name from: {path_fq}")
 
     @staticmethod
     def parse_summary_output(input_file: str) -> Dict[str, int]:

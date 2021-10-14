@@ -14,7 +14,7 @@ class NanoporeHelper(BaseReadTypeHelper):
     Helper class for Nanopore reads.
     """
 
-    def __symlink_iontorrent_reads(self, fastq_file: Union[str, None], sample_name: str) -> Path:
+    def __symlink_iontorrent_reads(self, fastq_file: Union[Path, None], sample_name: str) -> Path:
         """
         Symlinks the input files to a standardized format based on the sample name.
         :param fastq_file: Input FASTQ file
@@ -26,7 +26,8 @@ class NanoporeHelper(BaseReadTypeHelper):
         new_name = f"{sample_name}.fastq{'.gz' if FileSystemHelper.is_gzipped(fastq_file) else ''}"
         return self.symlink_input_files([Path(fastq_file)], [new_name])[0]
 
-    def trim_reads(self, fastq_input: FastqInput, report: HtmlReport, include_fastq: bool, threads: int) -> FastqInput:
+    def trim_reads(self, fastq_input: FastqInput, report: HtmlReport, include_fastq: bool, threads: int = 4,
+                   **kwargs) -> FastqInput:
         """
         Trims Illumina reads using Trimmomatic.
         :param fastq_input: FASTQ input
@@ -53,9 +54,9 @@ class NanoporeHelper(BaseReadTypeHelper):
         :param args: Command-line arguments
         :return: FASTQ input
         """
-        fq_input_se = self.__symlink_iontorrent_reads(args.fastq_se, self._sample_name)
-        fastq_input = FastqInput(args.read_type, se=[ToolIOFile(fq_input_se)], is_pe=False)
+        fq_input_se = self.__symlink_iontorrent_reads(Path(args.fastq_se), self._sample_name)
+        fastq_input = FastqInput(args.read_type, se=[ToolIOFile(Path(fq_input_se))], is_pe=False)
         if args.trim_reads:
             return self.trim_reads(fastq_input, report, args.report_include_fastq, args.threads)
         else:
-            return FastqInput(args.read_type, se=[ToolIOFile(fq_input_se)], is_pe=False)
+            return FastqInput(args.read_type, se=[ToolIOFile(Path(fq_input_se))], is_pe=False)

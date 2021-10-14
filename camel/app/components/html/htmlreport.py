@@ -1,7 +1,6 @@
 import logging
 from typing import Optional, List
 
-import os
 import shutil
 
 from camel.app.components.html.htmlbase import HtmlBase
@@ -52,7 +51,7 @@ class HtmlReport(HtmlBase):
             for path in self._include_js:
                 shutil.copyfile(path, self._output_dir / path.name)
 
-    def initialize(self, title: str, css_style: str = None) -> None:
+    def initialize(self, title: str, css_style: Path = None) -> None:
         """
         Initializes an HTML report.
         :param title: Report title
@@ -66,10 +65,10 @@ class HtmlReport(HtmlBase):
             self._doc.stag('meta', charset='UTF-8')
             if self._include_js:
                 for path in self._include_js:
-                    with self.get_tag('script', [('type', 'text/javascript'), ('src', os.path.basename(path))]):
+                    with self.get_tag('script', [('type', 'text/javascript'), ('src', path.name)]):
                         self._doc.text('')
             if css_style is not None:
-                with open(css_style) as css, self._doc.tag('style', type="text/css"):
+                with css_style.open() as css, self._doc.tag('style', type="text/css"):
                     self._doc.asis(css.read())
 
     def add_pipeline_header(self, pipeline_name: str) -> None:

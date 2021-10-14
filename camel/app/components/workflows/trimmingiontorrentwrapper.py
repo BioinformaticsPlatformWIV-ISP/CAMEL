@@ -66,10 +66,10 @@ class TrimmingIonTorrentWrapper(object):
         informs_seqtk = [SnakemakeUtils.load_object(
             output_files[key]) for key in ('INFORMS_seqtk_len', 'INFORMS_seqtk_qual')]
         self._output = TrimmingIonTorrentWrapper.ReadTrimmingOutput(
-            report_section=SnakemakeUtils.load_object(str(output_files['HTML']))[0].value,
+            report_section=SnakemakeUtils.load_object(output_files['HTML'])[0].value,
             tsv_summary=output_files['TSV'],
-            trimmed_reads=SnakemakeUtils.load_object(str(
-                self._working_dir / trimming_iontorrent.OUTPUT_TRIMMING_IONTORRENT_FASTQ)),
+            trimmed_reads=SnakemakeUtils.load_object(
+                self._working_dir / trimming_iontorrent.OUTPUT_TRIMMING_IONTORRENT_FASTQ),
             informs_seqtk=informs_seqtk,
             log_file=log_path if log_path.exists() else None
         )

@@ -54,7 +54,7 @@ class Srst2Gene(Tool):
         :return: Input options string
         """
         if 'FASTQ_PE' in self._tool_inputs:
-            return '--input_pe {}'.format(' '.join([f.path for f in self._tool_inputs['FASTQ_PE']]))
+            return '--input_pe {}'.format(' '.join([str(f.path) for f in self._tool_inputs['FASTQ_PE']]))
         else:
             return '--input_se {}'.format(self._tool_inputs['FASTQ_SE'][0].path)
 
