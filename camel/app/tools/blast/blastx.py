@@ -1,3 +1,4 @@
+from camel.app.camel import Camel
 from camel.app.tools.blast.blast import Blast
 
 
@@ -6,7 +7,7 @@ class Blastx(Blast):
     Nucleotide - protein BLAST.
     """
 
-    def __init__(self, camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initialize tool.
         :return: None

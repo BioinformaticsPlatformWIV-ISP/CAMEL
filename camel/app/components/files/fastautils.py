@@ -1,6 +1,6 @@
 import math
-import os
-from typing import List
+from pathlib import Path
+from typing import List, Union
 
 from Bio import SeqIO
 
@@ -14,7 +14,7 @@ class FastaUtils(object):
     """
 
     @staticmethod
-    def read_as_index_dict(fasta: str):
+    def read_as_index_dict(fasta: Path):
         """
         Read in fasta file as an index dictionary of SeqRecord keyed by sequence id. Handle big files, as the complete
         sequence is retrieved when access a SeqRecord.
@@ -24,7 +24,7 @@ class FastaUtils(object):
         return SeqIO.index(fasta, "fasta")
 
     @staticmethod
-    def read_as_dict(fasta: str) -> dict:
+    def read_as_dict(fasta: Path) -> dict:
         """
         Read in fasta file as a dictionary keyed by sequence id. More efficient for small files.
         :param fasta: fasta file to read
@@ -33,7 +33,7 @@ class FastaUtils(object):
         return SeqIO.to_dict(SeqIO.parse(open(fasta, 'rU'), "fasta"))
 
     @staticmethod
-    def write(sequences: List[str], fasta: str) -> None:
+    def write(sequences: List[Union[SeqIO.SeqRecord, str]], fasta: Path) -> None:
         """
         Write a list of sequence records into fasta file
         :param sequences: list of sequences as SeqRecord object
@@ -44,7 +44,7 @@ class FastaUtils(object):
             SeqIO.write(sequences, output_handle, "fasta")
 
     @staticmethod
-    def count_reads(infile: str):
+    def count_reads(infile: Path) -> int:
         """
         Count how many reads in a fasta file
         :param infile: file name of the fasta file to count
@@ -53,7 +53,7 @@ class FastaUtils(object):
         cmd = f'grep -c "^>" {infile}'
         command = Command()
         command.command = cmd
-        command.run_command(os.path.dirname(os.path.abspath(infile)))
+        command.run(infile.resolve().parent)
         if command.stderr != '':
             raise RuntimeError(command.stderr, cmd)
         return int(command.stdout.rstrip())
@@ -84,7 +84,7 @@ class FastaUtils(object):
                 yield batch
 
     @staticmethod
-    def split_fasta(fasta: str, outdir: str, n_parts: int = None, parts_size: int = None) -> List[str]:
+    def split_fasta(fasta: Path, outdir: Path, n_parts: int = None, parts_size: int = None) -> List[str]:
         """
         Splits a fasta file in the given number of parts or in parts of the given size.
         :param fasta: Fasta file to split
@@ -98,11 +98,11 @@ class FastaUtils(object):
         if n_parts:
             n_reads = FastaUtils.count_reads(fasta)
             parts_size = math.ceil(n_reads/n_parts)
-        basename = os.path.splitext(os.path.basename(fasta))[0]
+        basename = fasta.stem
         groups = []
         record_iter = SeqIO.parse(open(fasta), 'fasta')
         for i, batch in enumerate(FastaUtils.batch_iterator(record_iter, parts_size)):
-            filename = f'{os.path.join(outdir, basename)}.group{i+1}.fasta'
+            filename = f'{outdir / basename}.group{i+1}.fasta'
             with open(filename, 'w') as outhandle:
                 SeqIO.write(batch, outhandle, 'fasta')
             groups.append(filename)

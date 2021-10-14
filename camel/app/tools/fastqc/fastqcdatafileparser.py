@@ -1,6 +1,8 @@
 import logging
+from pathlib import Path
 from typing import Dict, List
 
+from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.tool import Tool
 
@@ -10,14 +12,14 @@ class FastQCDataFileParser(Tool):
     Class that performs various quality checks based on FastQC output.
     """
 
-    def __init__(self, camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initialize this tool.
         :param camel: Camel instance
         """
         super().__init__('FastQC additional checks', '0.1', camel)
 
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
         Checks whether all the required input files are in the inputs.
         :return: None
@@ -84,7 +86,7 @@ class FastQCDataFileParser(Tool):
         :return: Modules with the content
         """
         modules = {}
-        with open(input_file.path) as file_:
+        with input_file.path.open() as file_:
             key = None
             content = []
             for line in file_.readlines():
@@ -153,7 +155,7 @@ class FastQCDataFileParser(Tool):
         raise ValueError('GC content not found in FastQC data file')
 
     @staticmethod
-    def _get_mode_read_length(data_file: str) -> int:
+    def _get_mode_read_length(data_file: Path) -> int:
         """
         Returns the median read length as reported by FastQC.
         :param data_file: Data file
@@ -161,7 +163,7 @@ class FastQCDataFileParser(Tool):
         """
         target_lines = []
         keep = False
-        with open(data_file) as handle:
+        with data_file.open() as handle:
             for line in handle.readlines():
                 if keep is True:
                     if line.startswith('>>END_MODULE'):
@@ -225,7 +227,7 @@ class FastQCDataFileParser(Tool):
         return float('inf')
 
     @staticmethod
-    def __get_max_seq_content_diff(data, nb_of_skipped_bases, nb_of_skipped_bases_end):
+    def __get_max_seq_content_diff(data: List[str], nb_of_skipped_bases: int, nb_of_skipped_bases_end: int) -> float:
         """
         Returns the maximal difference between A-T and C-G.
         :param data: Per base sequence content data

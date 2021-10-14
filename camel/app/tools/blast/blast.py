@@ -1,5 +1,4 @@
-import os
-
+from camel.app.camel import Camel
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.tool import Tool
@@ -14,7 +13,7 @@ class Blast(Tool):
     - Subject (FASTA_Subject / DB_BLAST): Either a FASTA file or a BLAST database with the subject sequences
     """
 
-    def __init__(self, tool_name, version, camel):
+    def __init__(self, tool_name: str, version: str, camel: Camel) -> None:
         """
         Initializes this tool.
         :param tool_name: Tool name
@@ -24,7 +23,7 @@ class Blast(Tool):
         super().__init__(tool_name, version, camel)
         self.__subject_key = None
 
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
         Checks whether the required input files are specified.
         :return: None
@@ -33,7 +32,7 @@ class Blast(Tool):
             raise ValueError('No FASTA input found')
         super(Blast, self)._check_input()
 
-    def _execute_tool(self):
+    def _execute_tool(self) -> None:
         """
         Runs Blast.
         :return: None
@@ -44,7 +43,7 @@ class Blast(Tool):
         self._execute_command()
         self.__set_output()
 
-    def __get_subject_key(self):
+    def __get_subject_key(self) -> str:
         """
         Returns the key of the subject, this can be:
         - FASTA_Subject: FASTA file of the subject sequence
@@ -60,7 +59,7 @@ class Blast(Tool):
         else:
             raise ValueError("No subject (FASTA_Subject / DB_BLAST) found")
 
-    def __get_output_key(self):
+    def __get_output_key(self) -> str:
         """
         Returns the output key based on the output format.
         :return: Key
@@ -79,30 +78,30 @@ class Blast(Tool):
         else:
             return 'TXT'
 
-    def __build_command(self):
+    def __build_command(self) -> None:
         """
         Builds the command line string.
         :return: None
         """
         self._command.command = ' '.join([
             self._tool_command,
-            '-query {}'.format(self._tool_inputs['FASTA'][0].path),
+            f"-query {self._tool_inputs['FASTA'][0].path}",
             self.__get_subject_argument(),
-            '-out {}'.format(self.__get_output_filename()),
+            f'-out {self.__get_output_filename()}',
             ' '.join(self._build_options(excluded_parameters=['output_filename']))
         ])
 
-    def __get_subject_argument(self):
+    def __get_subject_argument(self) -> str:
         """
         Returns the command line argument for the subject.
         :return: Command line argument
         """
         if self.__subject_key == 'FASTA_Subject':
-            return '-subject {}'.format(self._tool_inputs['FASTA_Subject'][0].path)
+            return f"-subject {self._tool_inputs['FASTA_Subject'][0].path}"
         elif self.__subject_key == 'DB_BLAST':
-            return '-db {}'.format(self._tool_inputs['DB_BLAST'][0].path)
+            return f"-db {self._tool_inputs['DB_BLAST'][0].path}"
 
-    def __get_output_filename(self):
+    def __get_output_filename(self) -> str:
         """
         Returns the name of the output file.
         :return: Output name
@@ -112,26 +111,26 @@ class Blast(Tool):
         else:
             return self.__get_default_output_name()
 
-    def __get_default_output_name(self):
+    def __get_default_output_name(self) -> str:
         """
         Generates the default output name.
         :return: Output name
         """
-        fasta_file_basename = os.path.splitext(os.path.basename(self._tool_inputs['FASTA'][0].path))[0]
-        return '{}_{}.{}'.format(self._tool_command, fasta_file_basename, self.__get_output_key().lower())
+        fasta_file_basename = self._tool_inputs['FASTA'][0].path.stem
+        return f'{self._tool_command}_{fasta_file_basename}.{self.__get_output_key().lower()}'
 
-    def __set_output(self):
+    def __set_output(self) -> None:
         """
         Sets the output.
         :return: None
         """
-        output_filename = os.path.join(self._folder, self.__get_output_filename())
+        output_filename = self.folder / self.__get_output_filename()
         self._tool_outputs[self.__get_output_key()] = [ToolIOFile(output_filename)]
 
-    def _check_command_output(self):
+    def _check_command_output(self) -> None:
         """
         Checks the command output for errors.
         :return: None
         """
         if 'error' in self.stderr.lower() or self._command.returncode != 0:
-            raise ToolExecutionError("Error executing {}: {}".format(self.name, self._command.stderr.strip()))
+            raise ToolExecutionError(f"Error executing {self.name}: {self._command.stderr.strip()}")

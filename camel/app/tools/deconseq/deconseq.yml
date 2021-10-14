@@ -10,4 +10,5 @@ parameters:
   keep_tmp_files: {default: false, mandatory: false, option: -keep_tmp_files, p_index: 0,
     value: null}
   z_best: {default: false, mandatory: false, option: -z, p_index: 0, value: '2'}
+  sequential: {default: true, mandatory: false, option: null, p_index: 0, value: false}
 tool_command: deconseq.pl
