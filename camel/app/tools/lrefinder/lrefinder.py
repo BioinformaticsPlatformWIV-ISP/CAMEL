@@ -38,10 +38,10 @@ class LREFinder(Tool):
         Runs this tool.
         :return: None
         """
-        output_path = Path(self._folder) / 'lrefinder_out.tsv'
+        output_path = self.folder / 'lrefinder_out.tsv'
         self._command.command = ' '.join([
             self._tool_command,
-            '-ipe', *[f.path for f in self._tool_inputs['FASTQ_PE']],
+            '-ipe', *[str(f.path) for f in self._tool_inputs['FASTQ_PE']],
             '-t_db', '$LREFINDER_DB',
             '-o', str(output_path)
         ])
