@@ -20,7 +20,7 @@ class TestCircos(CamelTestSuite):
         """
         circos = Circos(self.camel)
         circos.add_input_files({'TXT': [TestCircos.FILE_CIRCOS_CONFIG]})
-        circos.run(str(self.running_dir))
+        circos.run(self.running_dir)
         self.assertTrue(len(circos.tool_outputs) > 0, "No outputs generated")
 
 
