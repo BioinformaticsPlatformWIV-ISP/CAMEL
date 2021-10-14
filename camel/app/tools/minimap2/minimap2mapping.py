@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 from camel.app.camel import Camel
 from camel.app.error.toolexecutionerror import ToolExecutionError
@@ -23,24 +23,24 @@ class Minimap2Mapping(Tool):
         Executes this tool.
         :return: None
         """
-        output_filename = os.path.join(self._folder, self._parameters['output_filename'].value)
-        self.__build_command(output_filename)
+        path_out = self.folder / self._parameters['output_filename'].value
+        self.__build_command(path_out)
         self._execute_command()
-        self.__set_output(output_filename)
+        self.__set_output(path_out)
 
-    def __build_command(self, output_filename: str) -> None:
+    def __build_command(self, path_out: Path) -> None:
         """
         Builds the command line call.
-        :param output_filename: Output filename
+        :param path_out: Output filename
         :return: None
         """
         parts = [
             self._tool_command,
             '-ax map-ont',
-            self._tool_inputs['FASTA'][0].path,
-            self._tool_inputs['FASTQ'][0].path,
+            str(self._tool_inputs['FASTA'][0].path),
+            str(self._tool_inputs['FASTQ'][0].path),
             ' '.join(self._build_options(excluded_parameters=['output_filename'])),
-            f'> {output_filename}'
+            f'> {path_out}'
         ]
         self._command.command = ' '.join(parts)
 
@@ -52,10 +52,10 @@ class Minimap2Mapping(Tool):
         if self._command.returncode != 0:
             raise ToolExecutionError(f"Error executing {self.name}:\n{self.stderr}")
 
-    def __set_output(self, output_filename: str) -> None:
+    def __set_output(self, path_out: Path) -> None:
         """
         Sets the output of this tool.
-        :param output_filename: Filename
+        :param path_out: Output filename
         :return: None
         """
-        self._tool_outputs['SAM'] = [ToolIOFile(output_filename)]
+        self._tool_outputs['SAM'] = [ToolIOFile(Path(path_out))]
