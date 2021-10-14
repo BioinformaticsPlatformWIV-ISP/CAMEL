@@ -81,7 +81,7 @@ class MainSCCmecFinder(object):
         :param fasta_file: Input FASTA file
         :return: List of detected genes
         """
-        wrapper = GeneDetectionWrapper(str(Path(self._args.working_dir) / 'meca'))
+        wrapper = GeneDetectionWrapper(Path(self._args.working_dir) / 'meca')
         wrapper.run_workflow_blast(
           fasta_file, self._sample_name, {'path': self._args.db_mec_genes}, self._args.threads)
         self._report.add_html_object(wrapper.output.report_section)

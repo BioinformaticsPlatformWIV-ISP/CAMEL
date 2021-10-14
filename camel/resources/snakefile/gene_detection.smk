@@ -30,8 +30,8 @@ rule gene_detection_db_manager:
         from camel.app.io.tooliodirectory import ToolIODirectory
         from camel.app.tools.pipelines.genedetection.dbmanager import DBManager
         db_manager = DBManager(camel)
-        db_manager.add_input_files({'DIR': [ToolIODirectory(params.db_path)]})
-        step = Step(rule, db_manager, camel, params.running_dir, config, wildcards)
+        db_manager.add_input_files({'DIR': [ToolIODirectory(Path(str(params.db_path)))]})
+        step = Step(rule, db_manager, camel, Path(str(params.running_dir)), config, wildcards)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(db_manager, output)
 
@@ -50,9 +50,9 @@ rule gene_detection_get_hits:
         import shutil
         shutil.copyfile(str(input.VAL_hits), output.VAL_hits)
         # Add a tag for the database to distinguish commands in the output
-        informs = SnakemakeUtils.load_object(str(input.INFORMS_hits))
-        informs['_tag'] = SnakemakeUtils.load_object(input.INFORMS_DB)['title']
-        SnakemakeUtils.dump_object(informs, output.INFORMS)
+        informs = SnakemakeUtils.load_object(Path(str(input.INFORMS_hits)))
+        informs['_tag'] = SnakemakeUtils.load_object(Path(str(input.INFORMS_DB)))['title']
+        SnakemakeUtils.dump_object(informs, Path(output.INFORMS))
 
 rule gene_detection_map_names:
     """
@@ -73,8 +73,8 @@ rule gene_detection_map_names:
         from camel.app.io.tooliofile import ToolIOFile
         from camel.app.io.tooliovalue import ToolIOValue
         from camel.app.components.filesystemhelper import FileSystemHelper
-        informs_db = SnakemakeUtils.load_object(input.INFORMS_db)
-        hits = SnakemakeUtils.load_object(input.HITS)
+        informs_db = SnakemakeUtils.load_object(Path(input.INFORMS_db))
+        hits = SnakemakeUtils.load_object(Path(input.HITS))
 
         # Map standardized names to original ones
         hits_updated = []
@@ -86,7 +86,7 @@ rule gene_detection_map_names:
                 key = params.db_config['metadata']['key']
                 hit.add_metadata(params.db_config['metadata']['name'], informs_db['mapping'].get_metadata(seq_id, key))
             hits_updated.append(hit)
-        SnakemakeUtils.dump_object([ToolIOValue(hit) for hit in hits_updated], output.HITS)
+        SnakemakeUtils.dump_object([ToolIOValue(hit) for hit in hits_updated], Path(output.HITS))
 
         # Save tabular output
         if len(hits_updated) >= 1:
@@ -98,9 +98,9 @@ rule gene_detection_map_names:
                 for hit in hits_updated:
                     handle.write('\t'.join(hit.to_table_row()))
                     handle.write('\n')
-            SnakemakeUtils.dump_object([ToolIOFile(output_path)], output.TSV)
+            SnakemakeUtils.dump_object([ToolIOFile(output_path)], Path(output.TSV))
         else:
-            SnakemakeUtils.dump_object([], output.TSV)
+            SnakemakeUtils.dump_object([], Path(output.TSV))
 
 rule gene_detection_get_column_names:
     """
@@ -134,7 +134,7 @@ rule gene_detection_get_column_names:
 
         # Save column names
         columns = empty_hit.html_column_names
-        SnakemakeUtils.dump_object(columns, output.INFORMS_columns)
+        SnakemakeUtils.dump_object(columns, Path(output.INFORMS_columns))
 
 
 rule gene_detection_report:
@@ -174,10 +174,10 @@ rule gene_detection_create_empty_report:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'gene_detection' / wildcards.db / 'report',
     run:
         from camel.app.components.html.htmlreportsection import HtmlReportSection
-        db_info = SnakemakeUtils.load_object(input[0])
+        db_info = SnakemakeUtils.load_object(Path(input.INFORMS_db_info))
         section = HtmlReportSection(db_info['title'], 3)
         section.add_paragraph('Analysis disabled')
-        SnakemakeUtils.dump_object([ToolIOValue(section)], output[0])
+        SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output.VAL_HTML))
 
 rule gene_detection_dump_summary_info:
     """
@@ -189,11 +189,11 @@ rule gene_detection_dump_summary_info:
         TSV = Path(config['working_dir']) / gene_detection.OUTPUT_GENE_DETECTION_SUMMARY
     run:
         import json
-        informs = SnakemakeUtils.load_object(input.INFORMS_hits)
+        informs = SnakemakeUtils.load_object(Path(input.INFORMS_hits))
         hit_info = []
         blast_stats = []
         for hit in informs:
             hit_info.append(hit.value.to_table_row())
-        with open(output[0], 'w') as handle:
+        with open(output.TSV, 'w') as handle:
             handle.write('hits_{}\t{}'.format(wildcards.db, json.dumps(hit_info)))
             handle.write('\n')

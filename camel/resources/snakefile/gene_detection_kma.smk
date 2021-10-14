@@ -14,14 +14,14 @@ rule gene_detection_kma_get_db:
     run:
         import json
         from camel.app.io.tooliovalue import ToolIOValue
-        fasta_path = Path(SnakemakeUtils.load_object(input.FASTA)[0].path)
+        fasta_path = Path(SnakemakeUtils.load_object(Path(input.FASTA))[0].path)
         with open(fasta_path.parent / 'db_metadata.txt') as handle:
             metadata = json.load(handle)
         dir_kma = fasta_path.parent / 'kma'
         if not dir_kma.exists():
             raise FileNotFoundError(f"KMA database not found: {dir_kma}")
         kma_path = fasta_path.parent / 'kma' / fasta_path.stem
-        SnakemakeUtils.dump_object([ToolIOValue(kma_path)], output.DB)
+        SnakemakeUtils.dump_object([ToolIOValue(kma_path)], Path(output.DB))
 
 rule gene_detection_kma:
     """
@@ -40,10 +40,10 @@ rule gene_detection_kma:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         from camel.app.tools.kma.kma import KMA
         kma = KMA(camel)
-        SnakemakeUtils.add_pickle_input(kma, 'DB', input.DB)
+        SnakemakeUtils.add_pickle_input(kma, 'DB', Path(input.DB))
         key_reads = 'PE' if params.read_type == 'illumina' else 'SE'
         fq_input_dict = SnakePipelineUtils.extracts_fq_input(
-            input.IO, key_pe='FASTQ_PE', key_se='FASTQ_SE', read_type=key_reads)
+            Path(input.IO), key_pe='FASTQ_PE', key_se='FASTQ_SE', read_type=key_reads)
         kma.add_input_files(fq_input_dict)
         step = Step(rule, kma, camel, params.running_dir, config)
         if params.read_type == 'nanopore':
