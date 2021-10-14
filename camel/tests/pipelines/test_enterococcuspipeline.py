@@ -42,8 +42,8 @@ class TestEnterococcusPipeline(CamelTestSuite):
 
             # Check if metadata and FASTA files can be loaded
             manager = DBManager(Camel.get_instance())
-            manager.add_input_files({'DIR': [ToolIODirectory(db_data['path'])]})
-            manager.run(str(self.running_dir))
+            manager.add_input_files({'DIR': [ToolIODirectory(Path(db_data['path']))]})
+            manager.run(self.running_dir)
             self.assertGreater(len(manager.tool_outputs), 0)
             self.assertGreater(len(manager.informs), 0)
 
