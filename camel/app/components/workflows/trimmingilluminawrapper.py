@@ -68,18 +68,18 @@ class TrimmingIlluminaWrapper(object):
         """
         log_path = self._working_dir / 'camel.log'
         self._output = TrimmingIlluminaWrapper.ReadTrimmingOutput(
-            report_section=SnakemakeUtils.load_object(str(output_files['HTML']))[0].value,
+            report_section=SnakemakeUtils.load_object(output_files['HTML'])[0].value,
             tsv_summary=output_files['TSV'],
-            trimmed_reads_pe=SnakemakeUtils.load_object(str(
-                self._working_dir / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_READS_PE)),
-            trimmed_reads_se_fwd=SnakemakeUtils.load_object(str(
-                self._working_dir / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_READS_SE_FWD)),
-            trimmed_reads_se_rev=SnakemakeUtils.load_object(str(
-                self._working_dir / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_READS_SE_REV)),
-            informs_trimmomatic=SnakemakeUtils.load_object(str(
-                self._working_dir / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_INFORMS)),
-            fastq_reports_pre=SnakemakeUtils.load_object(str(
-                self._working_dir / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_FASTQC_PRE)),
+            trimmed_reads_pe=SnakemakeUtils.load_object(
+                self._working_dir / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_READS_PE),
+            trimmed_reads_se_fwd=SnakemakeUtils.load_object(
+                self._working_dir / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_READS_SE_FWD),
+            trimmed_reads_se_rev=SnakemakeUtils.load_object(
+                self._working_dir / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_READS_SE_REV),
+            informs_trimmomatic=SnakemakeUtils.load_object(
+                self._working_dir / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_INFORMS),
+            fastq_reports_pre=SnakemakeUtils.load_object(
+                self._working_dir / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_FASTQC_PRE),
             log_file=log_path if log_path.exists() else None
         )
 

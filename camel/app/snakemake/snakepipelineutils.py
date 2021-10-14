@@ -27,7 +27,7 @@ class SnakePipelineUtils(object):
     DATE_FORMAT = '%d/%m/%Y - %X'
 
     @staticmethod
-    def init_pipeline_report(output_path: str, output_dir: str, pipeline_info: Dict[str, str]) -> HtmlReport:
+    def init_pipeline_report(output_path: Path, output_dir: Path, pipeline_info: Dict[str, str]) -> HtmlReport:
         """
         Initializes an empty pipeline report.
         :return: Report
@@ -67,7 +67,7 @@ class SnakePipelineUtils(object):
         return section
 
     @staticmethod
-    def add_report_content(report: HtmlReport, report_structure: List[Tuple[str, str, List[str]]]) -> None:
+    def add_report_content(report: HtmlReport, report_structure: List[Tuple[str, str, List[Path]]]) -> None:
         """
         Adds the content to the HTML report.
         :param report: Report
@@ -89,7 +89,7 @@ class SnakePipelineUtils(object):
         for title, key, items in report_structure:
             report.add_module_header(title, key)
             for pickle in items:
-                if len(pickle) == 0:
+                if not pickle.exists():
                     continue
                 section = SnakemakeUtils.load_object(pickle)[0].value
                 report.add_html_object(section)
@@ -97,7 +97,7 @@ class SnakePipelineUtils(object):
         report.save()
 
     @staticmethod
-    def create_empty_report_section(title: str, output_file: str, header_level: int = 3) -> None:
+    def create_empty_report_section(title: str, output_file: Path, header_level: int = 3) -> None:
         """
         Creates an empty report section.
         :param title: Section title
@@ -154,7 +154,7 @@ class SnakePipelineUtils(object):
 
     @staticmethod
     def run_snakemake(snakefile: str, config_path: str, targets: List[Path], working_dir: Path,
-                      threads: int = 8, resources: str = None) -> None:
+                      threads: int = 8, resources: Optional[Dict[str, Any]] = None) -> None:
         """
         Helper function to run snakemake workflows.
         :param snakefile: Workflow snakefile
@@ -162,19 +162,30 @@ class SnakePipelineUtils(object):
         :param targets: Target output files
         :param working_dir: Working directory
         :param threads: Number of threads to use
-        :param resources: Amount of memory to use, in mb
+        :param resources: Dictionary of resources by keyword
         :return: None
         """
         if not working_dir.exists():
             working_dir.mkdir(parents=True)
 
-        command_str = 'snakemake {} --snakefile {} --configfile {} --cores {}'.format(
-            ' '.join(str(x) for x in targets), snakefile, config_path, threads)
-        if resources is not None:
-            command_str += f' --resources mem_mb={resources}'
+        # Construct basic command
+        command_parts = [
+            'snakemake',
+            *[str(x) for x in targets],
+            '--snakefile', str(snakefile),
+            '--configfile', str(config_path),
+            '--cores', str(threads),
+        ]
 
-        command = Command(command_str)
-        command.run_command(str(working_dir))
+        # Add resources when they are specified
+        if resources is not None:
+            command_parts.append('--resources')
+            for key, value in resources.items():
+                command_parts.append(f'{key}={value}')
+
+        # Create and run command
+        command = Command(' '.join(command_parts))
+        command.run(working_dir)
         print(f'- Stdout: -\n{command.stdout}')
         print(f'- Stderr: -\n{command.stderr}')
         if command.returncode != 0:
@@ -199,7 +210,7 @@ class SnakePipelineUtils(object):
         return section
 
     @staticmethod
-    def extracts_fq_input(io_dict: str, key_pe: Optional[str] = 'FASTQ_PE', key_se: Optional[str] = None,
+    def extracts_fq_input(io_dict: Path, key_pe: Optional[str] = 'FASTQ_PE', key_se: Optional[str] = None,
                           keys_se: Optional[List[str]] = None, drop_empty: bool = False, read_type: str = 'PE') -> \
             Dict[str, List[ToolIOFile]]:
         """

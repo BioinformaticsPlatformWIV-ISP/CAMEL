@@ -18,7 +18,7 @@ class TestFileSystemHelper(CamelTestSuite):
         Tests the get sample name function for MiSEQ format.
         :return: None
         """
-        path = str(TestFileSystemHelper.test_file_dir / 'fq-file.fastq')
+        path = TestFileSystemHelper.test_file_dir / 'fq-file.fastq'
         self.assertFalse(FileSystemHelper.is_gzipped(path))
 
     def test_is_gzipped_compressed(self) -> None:
@@ -26,7 +26,7 @@ class TestFileSystemHelper(CamelTestSuite):
         Tests the get sample name function for MiSEQ format.
         :return: None
         """
-        path = str(TestFileSystemHelper.test_file_dir / 'fq-file.fastq.gz')
+        path = TestFileSystemHelper.test_file_dir / 'fq-file.fastq.gz'
         self.assertTrue(FileSystemHelper.is_gzipped(path))
 
     def test_is_gzipped_compressed_no_ext(self) -> None:
@@ -34,7 +34,7 @@ class TestFileSystemHelper(CamelTestSuite):
         Tests the get sample name function for MiSEQ format.
         :return: None
         """
-        path = str(TestFileSystemHelper.test_file_dir / 'fq-file-no-ext')
+        path = TestFileSystemHelper.test_file_dir / 'fq-file-no-ext'
         self.assertFalse(FileSystemHelper.is_gzipped(path))
 
     def test_is_gzipped_uncompressed_no_ext(self) -> None:
@@ -42,7 +42,7 @@ class TestFileSystemHelper(CamelTestSuite):
         Tests the get sample name function for MiSEQ format.
         :return: None
         """
-        path = str(TestFileSystemHelper.test_file_dir / 'fq-file-no-ext-gzipped')
+        path = TestFileSystemHelper.test_file_dir / 'fq-file-no-ext-gzipped'
         self.assertTrue(FileSystemHelper.is_gzipped(path))
 
 

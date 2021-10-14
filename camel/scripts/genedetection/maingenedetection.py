@@ -69,14 +69,13 @@ class MainGeneDetection(object):
         report.save()
 
         # Prepare wrapper
-        wrapper = GeneDetectionWrapper(self._args.working_dir)
+        wrapper = GeneDetectionWrapper(self._helper.working_dir)
         db_data = self.__get_db_metadata()
 
         # Run wrapper
         if self._args.detection_method == 'blast':
             fasta_input = self._helper.prepare_fasta_input(report, self._args)
-            wrapper.run_workflow_blast(
-                fasta_input, self._sample_name, db_data, self._args.threads)
+            wrapper.run_workflow_blast(fasta_input, self._sample_name, db_data, self._args.threads)
         elif self._args.detection_method == 'kma':
             fastq_input = self._helper.prepare_fastq_input(report, self._args)
             wrapper.run_workflow_kma(fastq_input, self._sample_name, db_data, self._args.threads)

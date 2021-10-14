@@ -1,5 +1,3 @@
-import os
-
 from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
@@ -49,19 +47,19 @@ class Circos(Tool):
         Builds the command line call.
         :return: None
         """
-        self._command.command = ' '.join([self._tool_command, '-conf', self._tool_inputs['TXT'][0].path])
+        self._command.command = ' '.join([self._tool_command, '-conf', str(self._tool_inputs['TXT'][0].path)])
 
     def __set_output(self) -> None:
         """
         Sets the tool output.
         :return: None
         """
-        png_path = os.path.join(self._folder, 'circos.png')
-        if not os.path.isfile(png_path):
+        png_path = self.folder / 'circos.png'
+        if not png_path.is_file():
             raise ToolExecutionError('No PNG output file generated')
         self._tool_outputs['PNG'] = [ToolIOFile(png_path)]
-        svg_path = os.path.join(self._folder, 'circos.svg')
-        if not os.path.isfile(svg_path):
+        svg_path = self.folder / 'circos.svg'
+        if not svg_path.is_file():
             raise ToolExecutionError('No SVG output file generated')
         self._tool_outputs['SVG'] = [ToolIOFile(svg_path)]
 

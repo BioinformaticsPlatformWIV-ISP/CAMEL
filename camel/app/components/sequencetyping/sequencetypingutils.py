@@ -1,9 +1,9 @@
 import json
 import logging
+import re
 from pathlib import Path
 from typing import Tuple, Dict, Any, List
 
-import re
 from Bio import SeqIO
 
 
@@ -33,13 +33,13 @@ class SequenceTypingUtils(object):
     """
 
     @staticmethod
-    def determine_delimiter(fasta_file: str) -> str:
+    def determine_delimiter(fasta_file: Path) -> str:
         """
         Returns the delimiter that is used in the FASTA file. Supported delimiters are '-' and '_'.
         :param fasta_file: FASTA file
         :return: None
         """
-        with open(fasta_file) as handle:
+        with fasta_file.open() as handle:
             for seq in SeqIO.parse(handle, 'fasta'):
                 m = re.match('.*([-_])\\d+$', seq.id)
                 if m is None:
@@ -64,19 +64,19 @@ class SequenceTypingUtils(object):
         return m[0]
 
     @staticmethod
-    def determine_read_status(read_name: str) -> Tuple[str, str]:
+    def determine_read_status(path_fq: Path) -> Tuple[str, str]:
         """
         Attempts to determine the forward / reverse state designator of the reads based on the filename.
         This is useful for SRST2 which can have problems with uncommon read names.
         Supported formats: read_1P.fastq, read_1.fastq
-        :param read_name: Input read name
+        :param path_fq: Path to input FASTQ file
         :return: Forward designator, reverse designator
         """
-        if re.match('.*(_[12]P\\.).*', read_name) is not None:
+        if re.match('.*(_[12]P\\.).*', path_fq.name) is not None:
             return '1P', '2P'
-        elif re.match('.*(_[12]\\.).*', read_name) is not None:
+        elif re.match('.*(_[12]\\.).*', path_fq.name) is not None:
             return '_1', '_2'
-        raise ValueError(f"Cannot determine read name from: {read_name}")
+        raise ValueError(f"Cannot determine read name from: {path_fq}")
 
     @staticmethod
     def parse_summary_output(input_file: str) -> Dict[str, int]:
@@ -106,13 +106,13 @@ class SequenceTypingUtils(object):
         return result_dict
 
     @staticmethod
-    def parse_scheme_metadata(scheme_dir: str) -> Dict[str, Any]:
+    def parse_scheme_metadata(scheme_dir: Path) -> Dict[str, Any]:
         """
         Parses the metadata associated with the given scheme.
         :param scheme_dir: Scheme directory
         :return: Metadata
         """
-        with (Path(scheme_dir) / 'scheme_metadata.txt').open() as handle:
+        with (scheme_dir / 'scheme_metadata.txt').open() as handle:
             return json.load(handle)
 
     @staticmethod

@@ -86,7 +86,7 @@ class MainResFinderLocal(object):
         :param db_data: Database information dictionary
         :return: None
         """
-        wrapper = GeneDetectionWrapper(os.path.join(self._args.working_dir, 'resfinder'))
+        wrapper = GeneDetectionWrapper(Path(self._args.working_dir, 'resfinder'))
         wrapper.run_workflow_blast(fasta_file, self._sample_name, db_data)
         report.add_html_object(wrapper.output.report_section)
         wrapper.output.report_section.copy_files(report.output_dir)

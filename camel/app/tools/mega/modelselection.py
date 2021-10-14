@@ -105,10 +105,8 @@ class ModelSelection(Tool):
         Sets the output of this tool.
         :return: None
         """
-        self._tool_outputs['CSV'] = [ToolIOFile(os.path.join(self._folder, '{}.csv'.format(
-            ModelSelection.DEFAULT_OUTPUT_NAME)))]
-        self._tool_outputs['TXT'] = [ToolIOFile(os.path.join(self._folder, '{}_summary.txt'.format(
-            ModelSelection.DEFAULT_OUTPUT_NAME)))]
+        self._tool_outputs['CSV'] = [ToolIOFile(self._folder / f'{ModelSelection.DEFAULT_OUTPUT_NAME}.csv')]
+        self._tool_outputs['TXT'] = [ToolIOFile(self._folder / f'{ModelSelection.DEFAULT_OUTPUT_NAME}_summary.txt')]
 
     def __analyze_output_file(self) -> None:
         """

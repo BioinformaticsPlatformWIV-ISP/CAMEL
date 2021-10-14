@@ -1,8 +1,7 @@
 import json
 from distutils.util import strtobool
+from pathlib import Path
 from typing import Dict, Any
-
-import os
 
 from camel.app.camel import Camel
 from camel.app.components.filesystemhelper import FileSystemHelper
@@ -88,13 +87,13 @@ class VariantCallingReporter(Tool):
             [filtering_informs[key]['variants_out'] for key in filtering_informs])
         self._section.add_table(filtering_table_data, ['Filter', 'Variants passed', 'Description'], [('class', 'data')])
 
-    def __parse_filtering_json(self, json_path: str) -> Dict[str, Dict[str, int]]:
+    def __parse_filtering_json(self, json_path: Path) -> Dict[str, Dict[str, int]]:
         """
         Parses the JSON file with the filtering statistics.
         :param json_path: JSON path
         :return: Filtering stats
         """
-        with open(json_path) as handle:
+        with json_path.open() as handle:
             return json.load(handle)
 
     def __add_output_files_table(self, filtering_informs: Dict[str, Dict[str, Any]]) -> None:
@@ -141,14 +140,14 @@ class VariantCallingReporter(Tool):
         ]
         self._section.add_table(table_data, ['Mapping rate', 'Median depth'], [('class', 'data')])
         if bool(strtobool(self._parameters['export_bam'].value)) is True:
-            relative_path = os.path.join('variant_calling', 'alignment-{}.bam'.format(
+            relative_path = Path('variant_calling', 'alignment-{}.bam'.format(
                 FileSystemHelper.make_valid(self._tool_inputs['VAL_Sample'][0].value)))
             self._section.add_file(self._tool_inputs['BAM'][0].path, relative_path)
             self._section.add_link_to_file('Alignment (Sorted BAM)', relative_path)
         else:
             self._section.add_text("BAM file not exported, change pipeline options to include it.")
 
-    def __create_vcf_download_cell(self, path: str, suffix: str) -> HtmlTableCell:
+    def __create_vcf_download_cell(self, path: Path, suffix: str) -> HtmlTableCell:
         """
         Creates a table cell that contains a download link for the VCF file.
         :param path: Path to the file
@@ -156,9 +155,9 @@ class VariantCallingReporter(Tool):
         :return: Table cell
         """
         filename = f"variants-{self._tool_inputs['VAL_Sample'][0].value}-{suffix}.vcf"
-        relative_path = os.path.join(VariantCallingReporter.SUB_FOLDER, filename)
+        relative_path = Path(VariantCallingReporter.SUB_FOLDER, filename)
         self._section.add_file(path, relative_path)
-        return HtmlTableCell('Download', link=relative_path)
+        return HtmlTableCell('Download', link=str(relative_path))
 
     def __add_regions_section(self, region_informs: Dict[str, Any]) -> None:
         """
@@ -169,6 +168,6 @@ class VariantCallingReporter(Tool):
         self._section.add_header('Regions', 4)
         self._section.add_paragraph('Number of variants removed: <b>{}</b>'.format(
             region_informs['variants_in'] - region_informs['variants_out']))
-        relative_path = os.path.join(VariantCallingReporter.SUB_FOLDER, 'regions_variant_calling.bed')
+        relative_path = Path(VariantCallingReporter.SUB_FOLDER, 'regions_variant_calling.bed')
         self._section.add_file(self._tool_inputs['BED'][0].path, relative_path)
         self._section.add_link_to_file('Excluded regions (BED)', relative_path)

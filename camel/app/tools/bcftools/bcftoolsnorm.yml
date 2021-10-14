@@ -1,0 +1,6 @@
+dependencies: [bcftools/1.9]
+parameters:
+  output_filename: { default: false, mandatory: false, option: --output, value: null }
+  output_format: { default: true, mandatory: true, option: --output-type, value: v }
+  rm_dup: { default: false, mandatory: false, option: --rm-dup, value: null }
+tool_command: bcftools norm

@@ -1,5 +1,3 @@
-import os
-
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.tool import Tool
@@ -50,8 +48,8 @@ class BcftoolsFilter(Tool):
         """
         self._build_command()
         self._execute_command()
-        self._tool_outputs[self.__get_output_key()] = [ToolIOFile(os.path.join(
-            self._folder, self._parameters['output_filename'].value))]
+        self._tool_outputs[self.__get_output_key()] = [ToolIOFile(
+            self.folder / self._parameters['output_filename'].value)]
 
     def _build_command(self):
         """
@@ -64,5 +62,5 @@ class BcftoolsFilter(Tool):
         elif 'BED_exclude' in self._tool_inputs:
             command_parts.append(f"--targets-file ^{self._tool_inputs['BED_exclude'][0].path}")
         command_parts.extend(self._build_options())
-        command_parts.append(self._tool_inputs['VCF_GZ'][0].path)
+        command_parts.append(str(self._tool_inputs['VCF_GZ'][0].path))
         self._command.command = ' '.join(command_parts)

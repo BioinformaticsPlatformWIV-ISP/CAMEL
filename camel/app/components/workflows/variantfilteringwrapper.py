@@ -3,8 +3,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Any
 
-import os
-
 from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
@@ -29,12 +27,12 @@ class VariantFilteringWrapper(object):
     This class is used as a wrapper class around the variant filtering Snakemake workflow.
     """
 
-    def __init__(self, working_dir: str) -> None:
+    def __init__(self, working_dir: Path) -> None:
         """
         Initializes the variant calling wrapper.
         :param working_dir: Working directory
         """
-        self._working_dir = Path(working_dir)
+        self._working_dir = working_dir
         self._output = None
 
     @property
@@ -45,7 +43,7 @@ class VariantFilteringWrapper(object):
         """
         return self._output
 
-    def __convert_to_vcf_gz(self, vcf_file) -> str:
+    def __convert_to_vcf_gz(self, vcf_file: Path) -> Path:
         """
         Converts an input VCF file to an indexed VCF_GZ file.
         :param vcf_file: Input VCF file
@@ -54,14 +52,14 @@ class VariantFilteringWrapper(object):
         c = Camel()
         bcftools_view = BcftoolsView(c)
         bcftools_view.add_input_files({'VCF': [ToolIOFile(vcf_file)]})
-        input_dir = os.path.join(self._working_dir, 'input')
-        if not os.path.isdir(input_dir):
-            os.makedirs(input_dir)
+        input_dir = Path(self._working_dir, 'input')
+        if not input_dir.is_dir():
+            input_dir.mkdir(parents=True)
         bcftools_view.update_parameters(compress_output=True, output_format='VCF')
         bcftools_view.run(input_dir)
         return bcftools_view.tool_outputs['VCF_GZ'][0].path
 
-    def __create_input(self, vcf_gz_file: str, bam_file: str) -> None:
+    def __create_input(self, vcf_gz_file: Path, bam_file: Path) -> None:
         """
         Creates the input files for the workflow.
         :param vcf_gz_file: Input VCF GZ file
@@ -70,13 +68,12 @@ class VariantFilteringWrapper(object):
         """
         for path, destination in [(vcf_gz_file, variant_calling.OUTPUT_VARIANT_CALLING_UNFILTERED_VCF_GZ),
                                   (bam_file, variant_calling.OUTPUT_VARIANT_CALLING_BAM)]:
-            target_dir = os.path.dirname(os.path.join(self._working_dir, destination))
-            if not os.path.isdir(target_dir):
-                os.makedirs(target_dir)
-            SnakemakeUtils.dump_object([ToolIOFile(path)] if path is not None else [],
-                                       os.path.join(self._working_dir, destination))
+            target_file = Path(self._working_dir, destination)
+            if not target_file.parent.exists():
+                target_file.parent.mkdir(parents=True)
+            SnakemakeUtils.dump_object([ToolIOFile(path)] if path is not None else [], target_file)
 
-    def run_workflow(self, vcf_file: str, bam_file: str, filtering_options: Dict, cores: int = 8) -> None:
+    def run_workflow(self, vcf_file: Path, bam_file: Path, filtering_options: Dict, cores: int = 8) -> None:
         """
         Runs the variant calling workflow.
         :param vcf_file: Input VCF file
@@ -85,14 +82,14 @@ class VariantFilteringWrapper(object):
         :param filtering_options: Dict
         :return: None
         """
-        if not os.path.isdir(self._working_dir):
-            os.makedirs(self._working_dir)
+        if not self._working_dir.exists():
+            self._working_dir.mkdir(parents=True)
         vcf_gz_file = self.__convert_to_vcf_gz(vcf_file)
         self.__create_input(vcf_gz_file, bam_file)
 
         # Create config
         config_path = SnakePipelineUtils.generate_config_file(
-            {'working_dir': self._working_dir, 'variant_filtering': filtering_options}, self._working_dir)
+            {'working_dir': str(self._working_dir), 'variant_filtering': filtering_options}, self._working_dir)
 
         # Execute Snakemake
         output_files = {
@@ -105,7 +102,7 @@ class VariantFilteringWrapper(object):
             cores)
         self.__set_output(output_files)
 
-    def __set_output(self, output_files: Dict[str, str]) -> None:
+    def __set_output(self, output_files: Dict[str, Path]) -> None:
         """
         Collects the output of the workflow.
         :param output_files: Output files

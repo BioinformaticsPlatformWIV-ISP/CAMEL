@@ -1,5 +1,6 @@
 import logging
 import subprocess
+from pathlib import Path
 
 
 class Command(object):
@@ -59,7 +60,7 @@ class Command(object):
         """
         self._command = cmd
 
-    def run_command(self, folder: str, stderr_handle=subprocess.PIPE) -> None:
+    def run(self, folder: Path, stderr_handle=subprocess.PIPE) -> None:
         """
         Runs the command given at command initialization
         :param folder: Folder where the command is executed
@@ -84,3 +85,15 @@ class Command(object):
         self._return_code = self._procedure.returncode
         logging.debug('stdout: {}'.format(self._stdout))
         logging.debug('stderr: {}'.format(self._stderr))
+
+    def run_command(self, folder: Path, stderr_handle=subprocess.PIPE) -> None:
+        """
+        Runs the command given at command initialization
+        :param folder: Folder where the command is executed
+        :param stderr_handle: Handle for the standard error (e.g. PIPE or STDOUT)
+        :return: None
+        """
+        import warnings
+        warnings.warn('The run_command method is deprecated, please use the run() method instead!',
+                      DeprecationWarning)
+        self.run(folder, stderr_handle)

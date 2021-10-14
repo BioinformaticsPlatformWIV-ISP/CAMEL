@@ -127,7 +127,7 @@ class TestVariantFiltering(CamelTestSuite):
         Tests the main script for the variant filtering.
         :return: None
         """
-        number_variants_in = VCFUtils.count_variants(str(TestVariantFiltering.FILE_VCF_GZ_UNFILTERED))
+        number_variants_in = VCFUtils.count_variants(TestVariantFiltering.FILE_VCF_GZ_UNFILTERED)
         output_file_vcf = self.running_dir / 'filtered_variants.vcf'
         output_file_stats = self.running_dir / 'filter_stats.txt'
         args = [
@@ -141,14 +141,14 @@ class TestVariantFiltering(CamelTestSuite):
         main_filtering.run()
         self.assertGreater(output_file_vcf.stat().st_size, 0)
         self.assertGreater(output_file_stats.stat().st_size, 0)
-        self.assertLess(VCFUtils.count_variants(str(output_file_vcf)), number_variants_in)
+        self.assertLess(VCFUtils.count_variants(output_file_vcf), number_variants_in)
 
     def test_variant_filtering_main_soft(self) -> None:
         """
         Tests the main script for the variant filtering with soft masking.
         :return: None
         """
-        number_variants_in = VCFUtils.count_variants(str(TestVariantFiltering.FILE_VCF_GZ_UNFILTERED))
+        number_variants_in = VCFUtils.count_variants(TestVariantFiltering.FILE_VCF_GZ_UNFILTERED)
         output_file_vcf = self.running_dir / 'filtered_variants.vcf'
         output_file_stats = self.running_dir / 'filter_stats.txt'
         args = [
@@ -163,14 +163,14 @@ class TestVariantFiltering(CamelTestSuite):
         main_filtering.run()
         self.assertGreater(output_file_vcf.stat().st_size, 0)
         self.assertGreater(output_file_stats.stat().st_size, 0)
-        self.assertLess(VCFUtils.count_variants(str(output_file_vcf)), number_variants_in)
+        self.assertLess(VCFUtils.count_variants(output_file_vcf), number_variants_in)
 
     def test_variant_filtering_main_no_bam(self) -> None:
         """
         Tests the main script for the variant filtering.
         :return: None
         """
-        number_variants_in = VCFUtils.count_variants(str(TestVariantFiltering.FILE_VCF_GZ_UNFILTERED))
+        number_variants_in = VCFUtils.count_variants(TestVariantFiltering.FILE_VCF_GZ_UNFILTERED)
         output_file_vcf = self.running_dir / 'filtered_variants.vcf'
         args = [
             '--vcf', str(TestVariantFiltering.FILE_VCF_GZ_UNFILTERED),
@@ -182,7 +182,7 @@ class TestVariantFiltering(CamelTestSuite):
         main_filtering = MainFiltering(args)
         main_filtering.run()
         self.assertGreater(output_file_vcf.stat().st_size, 0)
-        self.assertLess(VCFUtils.count_variants(str(output_file_vcf)), number_variants_in)
+        self.assertLess(VCFUtils.count_variants(output_file_vcf), number_variants_in)
 
 
 if __name__ == '__main__':

@@ -1,21 +1,23 @@
-import logging
-import os
-import re
 import abc
+import logging
+import re
+from pathlib import Path
+from typing import Optional
 
+from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
-from camel.app.tools.tool import Tool
+from camel.app.tools.toolpipeable import ToolPipeable
 
 
-class Picard(Tool, metaclass=abc.ABCMeta):
+class Picard(ToolPipeable, metaclass=abc.ABCMeta):
 
     """
     Super class for Picard tools
     """
 
-    def __init__(self, tool_name, version, camel):
+    def __init__(self, tool_name: str, version: str, camel: Camel) -> None:
         """
         Initialize a picard tool
         :param tool_name: tool name
@@ -28,21 +30,29 @@ class Picard(Tool, metaclass=abc.ABCMeta):
         self._function_name = None
         # parameters that should not be handled by self.build_options function
         self._specific_parameters = []
-        # alternative types of files that can be used as main input of a picard tool
-        # - reads mapping input: 'SAM', 'BAM'
-        # - variance input: 'VCF' 'BCF'
-        # ...
-        self._supported_inputs = ['SAM', 'BAM']
-        # individual files of different types that is required: e.g, FASTA_REF
-        self._required_inputs = []
+        self._required_inputs = ['BAM', 'SAM']
+        self._main_input = ''
         self._input_string = ''
         self._output_string = ''
+        self._output_type = 'BAM'
+        # Elements for building command
+        self._java_options = '-mx8G -XX:+UseParallelGC -XX:ParallelGCThreads=1 -Dpicard.useLegacyParser=false'
+        self._java_options_temp_dir = 'TMP_DIR=/temp/picard'
 
-    def _execute_tool(self):
+    def update_java_options(self, java_options: str) -> None:
+        """
+        Returns the formatted java options of this tool.
+        :return: Name
+        """
+        logging.info(f"Java options updated: '{java_options}'")
+        self._java_options = f'{java_options}'
+
+    def _execute_tool(self) -> None:
         """
         Function to run Picard function
         :return: None
         """
+        self._set_input()
         self._set_output()
         self._build_command()
         self._execute_command()
@@ -50,89 +60,114 @@ class Picard(Tool, metaclass=abc.ABCMeta):
 
     def _check_input(self):
         """
-        Set the input specification, this default function handles only one SAM or BAM file as input
+        Check input for a tool and prepare command line parameters for input
         :return: None
         """
-        super(Picard, self)._check_input()
+        # BAM or SAM input required; mutually exclusive
+        if ('SAM' in self._tool_inputs) and ('BAM' in self._tool_inputs):
+            raise InvalidInputSpecificationError()
+        elif 'SAM' in self._tool_inputs:
+            self._main_input = 'SAM'
+            self._required_inputs.remove('BAM')
+        elif 'BAM' in self._tool_inputs:
+            self._main_input = 'BAM'
+            self._required_inputs.remove('SAM')
 
-        self._check_required_inputs()
-
-        if len(self._supported_inputs) != 0:
-            input_type, input_files = self._check_supported_input()
-            if len(input_files) > 1:
-                raise InvalidInputSpecificationError("Can only specify one file of type {!r} as input of Picard {!r}.".format(
-                    input_type, self._function_name))
-            self._input_string = " I={}".format(input_files[0].path)
-
-        self._set_input()
-
-    def _check_required_inputs(self):
-        """
-        Check input requirements to run Picard function
-        :return: None
-        """
         for input_file in self._required_inputs:
             if input_file not in self._tool_inputs:
-                raise InvalidInputSpecificationError(
-                    'Picard {!r} required input file of type {!r} is missing!'.format(self._function_name, input_file))
+                raise InvalidInputSpecificationError('Picard {!r} required {!r} input is missing in _tool_inputs!'.format(
+                    self._name, input_file))
 
-    def _set_input(self):
+        super(Picard, self)._check_input()
+
+    def _set_input(self) -> None:
         """
-        Function to set required and optional inputs in self._input_string
+        Function to set main and extra inputs in self._input_string
         :return: None
         """
+        if 'BAM' in self._tool_inputs:
+            self._input_string += f"INPUT={self._tool_inputs['BAM'][0].path} "
+
+        if 'SAM' in self._tool_inputs:
+            self._input_string += f"INPUT={self._tool_inputs['SAM'][0].path} "
+
         if 'FASTA_REF' in self._tool_inputs:
-            self._input_string += " R={}".format(self._tool_inputs['FASTA_REF'][0].path)
+            self._input_string += f"R={self._tool_inputs['FASTA_REF'][0].path} "
 
-    def _check_supported_input(self):
-        """
-        Check supported (alternatives but still required) input to run Picard function
-        :return: None
-        """
-        for input_type in self._supported_inputs:
-            if input_type in self._tool_inputs:
-                return input_type, self._tool_inputs[input_type]
-
-        raise InvalidInputSpecificationError('None of the supported input types {!r} of Picard {!r} is specified!'.format(
-            self._supported_inputs, self._function_name))
-
-    def _set_output(self):
+    def _set_output(self) -> None:
         """
         Set the output specification, this default function handles only one BAM file as output
         :return: None
         """
-        self._tool_outputs['BAM'] = [ToolIOFile(os.path.join(self._folder, self._parameters['output'].value))]
+        self._tool_outputs[self._output_type] = [
+            ToolIOFile(Path(self._folder) / self._parameters['output'].value)
+        ]
 
-    def _build_command(self):
+    def _build_command(self, pipe_in: bool = False, pipe_out: bool = False) -> None:
         """
         Build the command to run tool
+        :param pipe_in: Tools receives input from pipe
+        :param pipe_out: Tool outputs to pipe
         :return: None
         """
-        self._command.command = " ".join([
-            self._tool_command, self._input_string, self._output_string,
-            " ".join(self._build_options(excluded_parameters=self._specific_parameters, delimiter='='))
-        ])
+        #Init base command
+        command_parts = ["java", self._java_options, "-jar $PICARD_JAR", self._tool_command, self._java_options_temp_dir]
 
-    def _set_informs(self):
+        #Set input cmd line option
+        if pipe_in:
+            command_parts.append("I=/dev/stdin")
+        else:
+            command_parts.append(self._input_string)
+
+        #Set output cmd line option
+        if pipe_out:
+            command_parts.append("O=/dev/stdout")
+            self._specific_parameters.append('output')
+        else:
+            command_parts.append(self._output_string)
+
+        #Add options
+        command_parts.append(" ".join(self._build_options(excluded_parameters=self._specific_parameters, delimiter="=")))
+
+        self._command.command = " ".join(command_parts)
+
+    def _set_informs(self, stderr: Optional[str] = None) -> None:
         """
         Analyse the result of picard run and update tool.informs, implement when necessary
         :return: None
         """
         pass
 
-    def _check_command_output(self):
+    def _check_command_output(self) -> None:
         """
-        Analyse the result of Picard run
+        Verify tool execution (return code) and stdout
         :return: None
         """
-        stdout_lines = self.stdout.splitlines()
-
-        run_status = stdout_lines[-1]
-        if not re.match('Exit status: 0', run_status):
-            raise ToolExecutionError("Picard {!r} fails to run, error msg: \n{}".format(
-                self._function_name, self.stdout))
+        if self._command.returncode != 0:
+            raise ToolExecutionError(f'Picard {self._function_name,} fails to run, error msg: \n{self.stdout}')
 
         # log WARNINGs
-        for l in stdout_lines:
-            if re.match('WARNING', l):
-                logging.warning(" Picard - {}".format(l))
+        for line in self.stdout.splitlines():
+            if re.match('WARNING', line):
+                logging.warning(f' Picard - {line}')
+
+    def _before_pipe(self, dir_: Path, pipe_in: bool, pipe_out: bool) -> None:
+        """
+        Prepares the command that will be piped.
+        :param dir_: Running directory
+        :param pipe_in: True if tool receives piped input
+        :param pipe_out: True if tool generates piped output
+        :return: None
+        """
+        self._set_input()
+        self._set_output()
+        self._build_command(pipe_in, pipe_out)
+
+    def _after_pipe(self, stderr: str, is_last_in_pipe: bool) -> None:
+        """
+        Performs the required steps after executing the tool as part of a pipe.
+        :param stderr: Stderr for this command in the pipe
+        :param is_last_in_pipe: Boolean to indicate if this is the last step in the pipe
+        :return: None
+        """
+        self._set_informs(stderr)

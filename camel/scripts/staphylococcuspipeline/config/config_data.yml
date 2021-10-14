@@ -117,6 +117,9 @@ gene_detection:
       name: Notes
       key: notes
 
+  se_toxins:
+    path: /db/gene_detection/saureus_se_toxins
+
 ###################
 # Sequence typing #
 ###################

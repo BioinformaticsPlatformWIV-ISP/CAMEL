@@ -160,7 +160,8 @@ rule report_combine_all:
         output_dir = config['output_dir'],
         pipeline_info = config['pipeline'],
         detection_method = config['detection_method'],
-        read_type = config['read_type']
+        read_type = config['read_type'],
+        citation_keys = config['citations']
     run:
         import datetime
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
@@ -174,6 +175,7 @@ rule report_combine_all:
             params.pipeline_info['version'],
             ', '.join(entry['name'] for entry in params.fastq_input),
             [('Detection method', params.detection_method), ('Read type', params.read_type)],
+            params.citation_keys['main']
         ))
 
         # Add content

@@ -71,7 +71,7 @@ class MainSpaTyping(object):
             'DB_BLAST': [ToolIOFile(self._db_path / 'profiles.fasta')],
             'FASTA': [ToolIOFile(fasta_file)]})
         blastn.update_parameters(output_format=SpaTyping.BLASTN_OUTPUT_FORMAT)
-        blastn.run(self._args.working_dir)
+        blastn.run(Path(self._args.working_dir))
         self._helper.informs.append(blastn.informs)
         return blastn.tool_outputs['TSV'][0]
 

@@ -18,7 +18,7 @@ rule trimming_illumina_pickle_input:
         FASTQ_PE = Path(config['working_dir']) / 'trimming_illumina' / 'input'/ 'fastq-pe.io'
     run:
         from camel.app.io.tooliofile import ToolIOFile
-        SnakemakeUtils.dump_object([ToolIOFile(x) for x in input.FASTQ], output.FASTQ_PE)
+        SnakemakeUtils.dump_object([ToolIOFile(Path(x)) for x in input.FASTQ], Path(output.FASTQ_PE))
 
 
 rule trimming_illumina_fastqc_pre:
@@ -37,7 +37,7 @@ rule trimming_illumina_fastqc_pre:
         from camel.app.tools.fastqc.fastqc import FastQC
         fastqc = FastQC(camel)
         SnakemakeUtils.add_pickle_inputs(fastqc, input)
-        step = Step(rule, fastqc, camel, params.running_dir, config)
+        step = Step(str(rule), fastqc, camel, params.running_dir)
         fastqc.update_parameters(threads=threads)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(fastqc, output)
@@ -65,7 +65,7 @@ rule trimming_illumina_trimmomatic:
         SnakemakeUtils.add_pickle_inputs(trimmomatic, input)
         if params.adapter is not None:
             trimmomatic.update_parameters(illuminaclip_PE=f'$TRIMMOMATIC_ADAPTER_DIR/{params.adapter}-PE.fa:2:30:10')
-        step = Step(rule, trimmomatic, camel, params.running_dir, config)
+        step = Step(str(rule), trimmomatic, camel, params.running_dir)
         trimmomatic.update_parameters(threads=threads)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(trimmomatic, output)
@@ -87,7 +87,7 @@ rule trimming_illumina_fastqc_post:
         from camel.app.tools.fastqc.fastqc import FastQC
         fastqc = FastQC(camel)
         SnakemakeUtils.add_pickle_inputs(fastqc, input)
-        step = Step(rule, fastqc, camel, params.running_dir, config)
+        step = Step(str(rule), fastqc, camel, params.running_dir)
         fastqc.update_parameters(threads=threads)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(fastqc, output)
@@ -113,7 +113,7 @@ rule trimming_illumina_report:
         from camel.app.tools.pipelines.read_trimming.reportertrimming import ReporterTrimming
         reporter = ReporterTrimming(camel)
         SnakemakeUtils.add_pickle_inputs(reporter, input)
-        step = Step(rule, reporter, camel, params.running_dir, config)
+        step = Step(str(rule), reporter, camel, params.running_dir)
         reporter.update_parameters(export_fastq=str(params.export_fastq))
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
@@ -130,7 +130,7 @@ rule trimming_illumina_dump_summary_info:
     params:
         running_dir = Path(config['working_dir']) / 'trimming_illumina' / 'summary'
     run:
-        trimmomatic_informs = SnakemakeUtils.load_object(input.INFORMS_trimming)
+        trimmomatic_informs = SnakemakeUtils.load_object(Path(input.INFORMS_trimming))
         summary_data = [
             ('trimming_pairs_in', trimmomatic_informs['paired_reads_in']),
             ('trimming_pairs_out', trimmomatic_informs['paired_reads_out'].split(' ')[0]),
@@ -156,12 +156,12 @@ rule trimming_illumina_to_dict:
         IO = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_DICT
     run:
         output_dict = {
-            'PE': SnakemakeUtils.load_object(input.FASTQ_PE)
+            'PE': SnakemakeUtils.load_object(Path(input.FASTQ_PE))
         }
-        se_fwd = SnakemakeUtils.load_object(input.FASTQ_SE_FWD)
+        se_fwd = SnakemakeUtils.load_object(Path(input.FASTQ_SE_FWD))
         if len(se_fwd) > 0:
             output_dict['SE_FWD'] = se_fwd
-        se_rev = SnakemakeUtils.load_object(input.FASTQ_SE_REV)
+        se_rev = SnakemakeUtils.load_object(Path(input.FASTQ_SE_REV))
         if len(se_rev) > 0:
             output_dict['SE_REV'] = se_rev
-        SnakemakeUtils.dump_object(output_dict, output.IO)
+        SnakemakeUtils.dump_object(output_dict, Path(output.IO))

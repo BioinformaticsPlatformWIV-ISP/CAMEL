@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.components.html.htmlreportsection import HtmlReportSection
@@ -19,10 +19,10 @@ class HtmlReporterAssembly(Tool):
         :return: None
         """
         super().__init__('HTML Reporter', '0.1', camel)
-        self.__subfolder = 'assembly'
+        self.__subfolder = Path('assembly')
         self._report_section = None
 
-    def _execute_tool(self):
+    def _execute_tool(self) -> None:
         """
         Executes this tool.
         :return: None
@@ -32,7 +32,7 @@ class HtmlReporterAssembly(Tool):
         self.__add_assembly_download_link()
         self._tool_outputs['VAL_HTML'] = [ToolIOValue(self._report_section, False)]
 
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
         Checks if the input is valid.
         :return: None
@@ -49,7 +49,7 @@ class HtmlReporterAssembly(Tool):
             raise InvalidInputSpecificationError("SPAdes informs are required ('spades')")
         super()._check_input()
 
-    def __add_assembly_info(self):
+    def __add_assembly_info(self) -> None:
         """
         Adds the assembly info.
         :return: None
@@ -63,15 +63,18 @@ class HtmlReporterAssembly(Tool):
         ]
         self._report_section.add_table(table_data, table_attributes=[('class', 'information')])
 
-    def __add_assembly_download_link(self):
+    def __add_assembly_download_link(self) -> None:
         """
         Adds a download link for the assembly.
         :return: None
         """
-        relative_path = os.path.join(self.__subfolder, '{}_contigs.fasta'.format(
-            FileSystemHelper.make_valid(self._tool_inputs['SAMPLE_NAME'][0].value)))
+        sample_name_valid = FileSystemHelper.make_valid(self._tool_inputs['SAMPLE_NAME'][0].value)
+
+        # Add filtered assembly
+        relative_path = self.__subfolder / f'{sample_name_valid}_contigs.fasta'
         self._report_section.add_file(self._tool_inputs['FASTA_Contig'][0].path, relative_path)
-        relative_path_raw = os.path.join(self.__subfolder, '{}_contigs_unfilt.fasta'.format(
-            FileSystemHelper.make_valid(self._tool_inputs['SAMPLE_NAME'][0].value)))
-        self._report_section.add_file(self._tool_inputs['FASTA_Raw'][0].path, relative_path_raw)
         self._report_section.add_link_to_file('Assembly (FASTA)', relative_path)
+
+        # Add unfiltered assembly
+        relative_path_raw = self.__subfolder / f'{sample_name_valid}_contigs_unfilt.fasta'
+        self._report_section.add_file(self._tool_inputs['FASTA_Raw'][0].path, relative_path_raw)

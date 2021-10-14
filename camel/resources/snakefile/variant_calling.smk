@@ -24,9 +24,9 @@ rule variant_calling_prep_reference:
     run:
         from camel.app.io.tooliovalue import ToolIOValue
         from camel.app.io.tooliofile import ToolIOFile
-        SnakemakeUtils.dump_object([ToolIOValue(params.reference['path'])], output.INDEX_GENOME_PREFIX)
-        SnakemakeUtils.dump_object([ToolIOFile(params.reference['path'])], output.FASTA)
-        SnakemakeUtils.dump_object(params.reference, output.INFORMS)
+        SnakemakeUtils.dump_object([ToolIOValue(params.reference['path'])], Path(output.INDEX_GENOME_PREFIX))
+        SnakemakeUtils.dump_object([ToolIOFile(Path(params.reference['path']))], Path(output.FASTA))
+        SnakemakeUtils.dump_object(params.reference, Path(output.INFORMS))
 
 
 rule variant_calling_read_mapping:
@@ -50,10 +50,10 @@ rule variant_calling_read_mapping:
         bowtie2_map = Bowtie2Map(camel)
         step = Step(rule, bowtie2_map, camel, params.running_dir, config)
         bowtie2_map.update_parameters(threads=threads)
-        SnakemakeUtils.add_pickle_input(bowtie2_map, 'INDEX_GENOME_PREFIX', input.INDEX_GENOME_PREFIX)
+        SnakemakeUtils.add_pickle_input(bowtie2_map, 'INDEX_GENOME_PREFIX', Path(input.INDEX_GENOME_PREFIX))
         key_reads = 'PE' if params.read_type == 'illumina' else 'SE'
         bowtie2_map.add_input_files(SnakePipelineUtils.extracts_fq_input(
-            input.IO, key_se='FASTQ_SE', drop_empty=True, read_type=key_reads))
+            Path(input.IO), key_se='FASTQ_SE', drop_empty=True, read_type=key_reads))
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(bowtie2_map, output)
 
@@ -140,11 +140,11 @@ rule variant_calling_mpileup:
         if params.count_orphans is not None:
             samtools_mpileup.update_parameters(count_orphans=params.count_orphans)
         if params.min_mapping_quality is not None:
-            samtools_mpileup.update_parameters(count_orphans=params.min_mapping_quality)
+            samtools_mpileup.update_parameters(min_mapping_quality=params.min_mapping_quality)
         if params.min_base_quality is not None:
-            samtools_mpileup.update_parameters(count_orphans=params.min_base_quality)
+            samtools_mpileup.update_parameters(min_base_quality=params.min_base_quality)
         if params.disable_baq is not None:
-            samtools_mpileup.update_parameters(count_orphans=params.disable_baq)
+            samtools_mpileup.update_parameters(disable_baq=params.disable_baq)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(samtools_mpileup, output)
 
@@ -187,16 +187,36 @@ rule variant_calling_bcftools_call:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(variant_caller, output)
 
+rule variant_calling_normalize_indels:
+    """
+    Normalizes indels.
+    """
+    input:
+        VCF_GZ = rules.variant_calling_bcftools_call.output.VCF_GZ,
+        FASTA = rules.variant_calling_prep_reference.output.FASTA
+    output:
+        VCF_GZ = Path(config['working_dir']) / 'variant_calling' / 'norm' / 'vcf_gz.io',
+    params:
+        running_dir = Path(config['working_dir']) / 'variant_calling' / 'norm'
+    run:
+        from camel.app.tools.bcftools.bcftoolsnorm import BcftoolsNorm
+        bcftools_norm = BcftoolsNorm(Camel.get_instance())
+        SnakemakeUtils.add_pickle_inputs(bcftools_norm, input)
+        step = Step(rule, bcftools_norm, camel, params.running_dir, config)
+        bcftools_norm.update_parameters(output_format='z')
+        step.run_step()
+        SnakemakeUtils.dump_tool_outputs(bcftools_norm, output)
+
 rule variant_calling_index_vcf_gz:
     """
     Indexes the VCF file.
     """
     input:
-        VCF_GZ = rules.variant_calling_bcftools_call.output.VCF_GZ
+        VCF_GZ = rules.variant_calling_normalize_indels.output.VCF_GZ
     output:
         VCF_GZ = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_UNFILTERED_VCF_GZ
     params:
-        running_dir = Path(config['working_dir']) / 'variant_calling' / 'calling'
+        running_dir = Path(config['working_dir']) / 'variant_calling' / 'norm'
     run:
         from camel.app.tools.bcftools.bcftoolsindex import BcftoolsIndex
         indexer = BcftoolsIndex(camel)
@@ -210,7 +230,7 @@ rule variant_calling_unzip_vcf:
     Unzips the VCF file.
     """
     input:
-        VCF_GZ = rules.variant_calling_bcftools_call.output.VCF_GZ
+        VCF_GZ = rules.variant_calling_index_vcf_gz.output.VCF_GZ
     output:
         VCF = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_UNFILTERED_VCF
     params:
@@ -315,7 +335,7 @@ rule variant_calling_collect_command_informs:
     run:
         all_informs = []
         for io_file in input:
-            informs = SnakemakeUtils.load_object(io_file)
+            informs = SnakemakeUtils.load_object(Path(io_file))
             informs['_tag'] = 'Variant calling'
             all_informs.append(informs)
-        SnakemakeUtils.dump_object(all_informs, output.INFORMS_ALL)
+        SnakemakeUtils.dump_object(all_informs, Path(output.INFORMS_ALL))

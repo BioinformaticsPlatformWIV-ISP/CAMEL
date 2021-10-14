@@ -82,6 +82,7 @@ rule report_command_section:
         INFORMS_ncbi_amr = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='ncbi_amr') if 'ncbi_amr' in config['analyses'] else [],
         INFORMS_lrefinder =Path(config['working_dir']) / lrefinder.OUTPUT_LREFINDER_INFORMS if 'lrefinder' in config['analyses'] else [],
         INFORMS_vfdb_core = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='vfdb_core') if 'vfdb_core' in config['analyses'] else [],
+        INFORMS_se_toxins = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='se_toxins') if 'se_toxins' in config['analyses'] else [],
         INFORMS_pointfinder = Path(config['working_dir']) / pointfinder.OUTPUT_POINTFINDER_INFORMS if 'pointfinder' in config['analyses'] else [],
         INFORMS_plasmidspades =Path(config['working_dir']) / plasmidspades.OUTPUT_PLASMIDSPADES_INFORMS if 'plasmidspades' in config['analyses'] else []
     output:
@@ -126,6 +127,7 @@ rule report_combine_all:
         report_vf_hostimm = gene_detection.get_gene_detection_report('vf_hostimm', config, 'virulencefinder'),
         report_vf_toxin = gene_detection.get_gene_detection_report('vf_toxin', config, 'virulencefinder'),
         report_vfdb_core = gene_detection.get_gene_detection_report('vfdb_core', config),
+        report_se_toxins = gene_detection.get_gene_detection_report('se_toxins', config),
         # Plasmid characterization
         report_plasmidfinder = gene_detection.get_gene_detection_report('plasmidfinder', config),
         report_plasmidspades = Path(config['working_dir']) / (
@@ -170,7 +172,8 @@ rule report_combine_all:
             ('AMR detection', 'amr', [
                 input.report_resfinder, input.report_ncbi_amr, input.report_pointfinder, input.report_lrefinder]),
             ('Virulence detection', 'virulence', [
-                input.report_vfdb_core, input.report_vf_exoenzyme, input.report_vf_hostimm, input.report_vf_toxin]),
+                input.report_vfdb_core, input.report_vf_exoenzyme, input.report_vf_hostimm, input.report_vf_toxin,
+                input.report_se_toxins]),
             ('Plasmid characterization', 'plasmid', [
                 input.report_plasmidfinder, input.report_plasmidspades, input.report_plasmid_resfinder,
                 input.report_plasmid_ndaro]),
@@ -213,6 +216,8 @@ rule summary_combine_all:
         Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY,
         Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_SUMMARY if 'kraken' in config['analyses'] else [],
         # spa and SCCmec typing
+        Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='sccmec_genes') if 'sccmec_typing' in config['analyses'] else [],
+        Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='sccmec_cassette') if 'sccmec_typing' in config['analyses'] else [],
         Path(config['working_dir']) / spatyping.OUTPUT_SPATYPING_SUMMARY if 'spa_typing' in config['analyses'] else [],
         Path(config['working_dir']) / sccmectyping.OUTPUT_SCCMEC_TYPING_SUMMARY if 'sccmec_typing' in config['analyses'] else [],
         # AMR detection
@@ -225,6 +230,7 @@ rule summary_combine_all:
         Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='vf_hostimm') if 'virulencefinder' in config['analyses'] else [],
         Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='vf_toxin') if 'virulencefinder' in config['analyses'] else [],
         Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='vfdb_core') if 'vfdb_core' in config['analyses'] else [],
+        Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='se_toxins') if 'se_toxins' in config['analyses'] else [],
         # Plasmid characterization
         Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='plasmidfinder') if 'plasmidfinder' in config['analyses'] else [],
         Path(config['working_dir']) / plasmidspades.OUTPUT_PLASMIDSPADES_SUMMARY if 'plasmidspades' in config['analyses'] else [],

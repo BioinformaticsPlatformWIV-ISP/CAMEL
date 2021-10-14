@@ -52,7 +52,7 @@ class YAMLToolService(BaseToolService):
         param_dict = OrderedDict()
         for p_name, p_data in sorted(self._tool_data['parameters'].items(), key=lambda x: x[1].get('p_index', 0)):
             if p_data['default'] is True:
-                param_dict[p_name] = Parameter(p_name, p_data['option'], p_data['value'], p_data.get('p_index'))
+                param_dict[p_name] = Parameter(p_name, p_data['option'], p_data['value'], p_data.get('p_index', 0))
         return param_dict
 
     def get_names_mandatory_parameter(self) -> List[str]:
@@ -70,6 +70,6 @@ class YAMLToolService(BaseToolService):
         """
         try:
             p_data = self._tool_data['parameters'][parameter_name]
-            return Parameter(parameter_name, p_data['option'], p_data['value'])
+            return Parameter(parameter_name, p_data['option'], p_data['value'], p_data.get('p_index', 0))
         except KeyError:
             return None

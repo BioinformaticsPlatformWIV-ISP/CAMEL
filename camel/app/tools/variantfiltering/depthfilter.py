@@ -76,7 +76,7 @@ class DepthFilter(BaseFilter):
         self._command.command = ' '.join([
             self._tool_command,
             "--exclude '{}'".format(self.__create_exclude_string()),
-            self._tool_inputs['VCF_GZ'][0].path,
+            str(self._tool_inputs['VCF_GZ'][0].path),
             '--output-type z',
             '--output {}'.format(self.output_path)
         ] + self._get_soft_filter_options())

@@ -6,6 +6,8 @@ from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.bcftools.bcftoolscsq import BcftoolsCsq
 from camel.app.tools.bcftools.bcftoolsfilter import BcftoolsFilter
+from camel.app.tools.bcftools.bcftoolsindex import BcftoolsIndex
+from camel.app.tools.bcftools.bcftoolsnorm import BcftoolsNorm
 
 
 class TestBcftools(CamelTestSuite):
@@ -64,6 +66,51 @@ class TestBcftools(CamelTestSuite):
         })
         with self.assertRaises(ToolExecutionError):
             bcftools_filter.run(self.running_dir)
+
+    def test_bcftools_norm(self) -> None:
+        """
+        Tests the bcftools norm command.
+        :return: None
+        """
+        bcftools_norm = BcftoolsNorm(self.camel)
+        bcftools_norm.add_input_files({
+            'VCF_GZ': [TestBcftools.FILE_VCF_GZ],
+            'FASTA': [TestBcftools.FILE_FASTA]
+        })
+        bcftools_norm.run(self.running_dir)
+        self.assertIn('VCF', bcftools_norm.tool_outputs)
+        self.assertGreater(
+            Path(bcftools_norm.tool_outputs['VCF'][0].path).stat().st_size, 0, "VCF output file is empty")
+        self.assertIn('total', bcftools_norm.informs)
+
+    def test_bcftools_norm_gz_output(self) -> None:
+        """
+        Tests the bcftools norm command with compressed output.
+        :return: None
+        """
+        bcftools_norm = BcftoolsNorm(self.camel)
+        bcftools_norm.add_input_files({
+            'VCF_GZ': [TestBcftools.FILE_VCF_GZ],
+            'FASTA': [TestBcftools.FILE_FASTA]
+        })
+        bcftools_norm.update_parameters(output_format='z', rm_dup='snps')
+        bcftools_norm.run(self.running_dir)
+        self.assertIn('VCF_GZ', bcftools_norm.tool_outputs)
+        self.assertGreater(
+            Path(bcftools_norm.tool_outputs['VCF_GZ'][0].path).stat().st_size, 0, "VCF_GZ output file is empty")
+        self.assertIn('total', bcftools_norm.informs)
+
+    def test_bcftools_index(self) -> None:
+        """
+        Tests the bcftools index function.
+        :return: None
+        """
+        bcftools_index = BcftoolsIndex(self.camel)
+        bcftools_index.add_input_files({
+            'VCF_GZ': [TestBcftools.FILE_VCF_GZ]
+        })
+        bcftools_index.run(self.running_dir)
+        self.assertTrue(self.running_dir / f'{TestBcftools.FILE_VCF_GZ.path.name}.csi', "CSI index not found")
 
 
 if __name__ == '__main__':

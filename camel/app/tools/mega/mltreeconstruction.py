@@ -148,10 +148,8 @@ class MLTreeConstruction(Tool):
         Sets the output of this tool.
         :return: None
         """
-        self._tool_outputs['NWK'] = [ToolIOFile(os.path.join(self._folder, '{}.nwk'.format(
-            MLTreeConstruction.DEFAULT_OUTPUT_NAME)))]
-        self._tool_outputs['TXT'] = [ToolIOFile(os.path.join(self._folder, '{}_summary.txt'.format(
-            MLTreeConstruction.DEFAULT_OUTPUT_NAME)))]
+        self._tool_outputs['NWK'] = [ToolIOFile(self._folder / f'{MLTreeConstruction.DEFAULT_OUTPUT_NAME}.nwk')]
+        self._tool_outputs['TXT'] = [ToolIOFile(self._folder / f'{MLTreeConstruction.DEFAULT_OUTPUT_NAME}_summary.txt')]
 
     def _check_command_output(self) -> None:
         """

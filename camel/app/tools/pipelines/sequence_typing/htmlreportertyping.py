@@ -1,8 +1,8 @@
 import json
+from pathlib import Path
 from typing import List, Optional
 
-import os
-
+from camel.app.camel import Camel
 from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.components.html.htmlexpandablediv import HtmlExpandableDiv
 from camel.app.components.html.htmlreportsection import HtmlReportSection
@@ -27,7 +27,7 @@ class HtmlReporterTyping(Tool):
 
     INFO_FILENAME = 'sequence_typing.json'
 
-    def __init__(self, camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initializes this tool.
         :param camel: CAMEL instance
@@ -67,8 +67,7 @@ class HtmlReporterTyping(Tool):
         :return: None
         """
         self._report_section = HtmlReportSection(self._input_informs['scheme']['title'], 3)
-        self._sub_folder = os.path.join(
-            'sequence_typing', FileSystemHelper.make_valid(self._input_informs['scheme']['name']))
+        self._sub_folder = Path('sequence_typing', FileSystemHelper.make_valid(self._input_informs['scheme']['name']))
 
     def __add_sequence_type(self) -> None:
         """
@@ -92,7 +91,7 @@ class HtmlReporterTyping(Tool):
 
         self._report_section.add_table(table_data, header, table_attributes=[('class', 'data')])
 
-    def __add_output_table(self, output_tsv: str, hits_io: List[ToolIOValue], sub_header: Optional[str]) -> None:
+    def __add_output_table(self, output_tsv: Path, hits_io: List[ToolIOValue], sub_header: Optional[str]) -> None:
         """
         Adds the output table with the detected alleles.
         :param output_tsv: Tabular output file
@@ -116,7 +115,7 @@ class HtmlReporterTyping(Tool):
         else:
             self._report_section.add_table(table_data, table_header, [('class', 'data')])
 
-        relative_path = os.path.join(self._sub_folder, os.path.basename(output_tsv))
+        relative_path = self._sub_folder / output_tsv.name
         self._report_section.add_file(output_tsv, relative_path)
         self._report_section.add_link_to_file("Download (TSV)", relative_path)
 
@@ -135,10 +134,10 @@ class HtmlReporterTyping(Tool):
         output (e.g. for generating MLST trees).
         :return: None
         """
-        path = os.path.join(self._folder, HtmlReporterTyping.INFO_FILENAME)
-        with open(path, 'w') as handle:
+        path = self.folder / HtmlReporterTyping.INFO_FILENAME
+        with path.open('w') as handle:
             json.dump({
                 'scheme': self._input_informs['scheme']['name'],
                 'sample': self._tool_inputs['VAL_SAMPLE'][0].value
             }, handle)
-        self._report_section.add_file(path, os.path.join(self._sub_folder, HtmlReporterTyping.INFO_FILENAME))
+        self._report_section.add_file(path, self._sub_folder / HtmlReporterTyping.INFO_FILENAME)

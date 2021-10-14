@@ -15,7 +15,8 @@ from camel.resources.snakefile.sequence_typing import OUTPUT_TYPING_INFORMS
 ##################
 camel = Camel.get_instance()
 SCHEME_DATA = config['sequence_typing']
-SCHEME_METADATA = {name: SequenceTypingUtils.parse_scheme_metadata(data['path']) for name, data in SCHEME_DATA.items()}
+SCHEME_METADATA = {name: SequenceTypingUtils.parse_scheme_metadata(Path(data['path'])) for
+                   name, data in SCHEME_DATA.items()}
 loci_by_scheme_by_type = {
     name: {
         'DNA': [locus['name_valid'] for locus in metadata['loci'] if locus['type'] == 'DNA'],
@@ -47,10 +48,10 @@ rule typing_extract_schema_info:
         from camel.app.io.tooliodirectory import ToolIODirectory
         from camel.app.tools.pipelines.sequence_typing.locussetmanager import LocusSetManager
         locus_set_manager = LocusSetManager(camel)
-        locus_set_manager.add_input_files({'DIR': [ToolIODirectory(input[0])]})
-        step = Step(rule, locus_set_manager, camel, params.running_dir, config, wildcards)
+        locus_set_manager.add_input_files({'DIR': [ToolIODirectory(Path(input[0]))]})
+        step = Step(rule, locus_set_manager, camel, Path(str(params.running_dir)), config, wildcards)
         step.run_step()
-        SnakemakeUtils.dump_object(locus_set_manager.informs, output.INFORMS)
+        SnakemakeUtils.dump_object(locus_set_manager.informs, Path(output.INFORMS))
 
 rule typing_pickle_profiles:
     """
@@ -62,7 +63,7 @@ rule typing_pickle_profiles:
         TSV = Path(config['working_dir']) / 'typing' / '{scheme}' / 'tsv-profiles.io'
     run:
         from camel.app.io.tooliofile import ToolIOFile
-        SnakemakeUtils.dump_object([ToolIOFile(Path(input.DIR) / 'profiles.tsv')], output.TSV)
+        SnakemakeUtils.dump_object([ToolIOFile(Path(str(input.DIR)) / 'profiles.tsv')], Path(output.TSV))
 
 rule typing_get_hits:
     """
@@ -88,7 +89,7 @@ rule typing_get_hits:
             if len(data) > 0:
                 shutil.copyfile(data, output.get(key))
             else:
-                SnakemakeUtils.dump_object([], output.get(key))
+                SnakemakeUtils.dump_object([], Path(output.get(key)))
 
 rule typing_dump_commands:
     input:
@@ -104,15 +105,15 @@ rule typing_dump_commands:
     params:
         scheme = lambda wildcards: wildcards.scheme
     run:
-        informs_scheme = SnakemakeUtils.load_object(input.INFORMS_SCHEME)
+        informs_scheme = SnakemakeUtils.load_object(Path(input.INFORMS_SCHEME))
         informs_commands = []
         for io_informs in (input.INFORMS_NUCL, input.INFORMS_PEPT):
             if len(io_informs) == 0:
                 continue
-            informs = SnakemakeUtils.load_object(io_informs[0])
+            informs = SnakemakeUtils.load_object(Path(io_informs[0]))
             informs['_tag'] = f"Typing - {informs_scheme['title']}"
             informs_commands.append(informs)
-        SnakemakeUtils.dump_object(informs_commands, output.INFORMS)
+        SnakemakeUtils.dump_object(informs_commands, Path(output.INFORMS))
 
 rule typing_export_hits_tabular:
     """
@@ -128,10 +129,10 @@ rule typing_export_hits_tabular:
         scheme = lambda wildcards: FileSystemHelper.make_valid(wildcards.scheme),
         locus_type = lambda wildcards: wildcards.locus_type
     run:
-        hits = SnakemakeUtils.load_object(input.hits)
+        hits = SnakemakeUtils.load_object(Path(input.hits))
         output_file = params.working_dir / f'typing-{params.scheme}-{params.locus_type}-{params.sample_name}.tsv'
         if len(hits) == 0:
-            SnakemakeUtils.dump_object([], output.TSV)
+            SnakemakeUtils.dump_object([], Path(output.TSV))
         else:
             with output_file.open('w') as handle_out:
                 handle_out.write('\t'.join(hits[0].value.table_column_names()))
@@ -139,7 +140,7 @@ rule typing_export_hits_tabular:
                 for h in hits:
                     handle_out.write('\t'.join(h.value.to_table_row()))
                     handle_out.write('\n')
-            SnakemakeUtils.dump_object([ToolIOFile(output_file)], output.TSV)
+            SnakemakeUtils.dump_object([ToolIOFile(output_file)], Path(output.TSV))
 
 rule typing_detect_sequence_type:
     """
@@ -174,7 +175,7 @@ rule typing_get_cgmlst_stats:
     params:
         scheme_name = lambda wildcards: wildcards.scheme
     run:
-        all_hits = SnakemakeUtils.load_object(input.HITS)
+        all_hits = SnakemakeUtils.load_object(Path(input.HITS))
         nb_perfect = len([v for v in all_hits if v.value.is_perfect_hit()])
         SnakemakeUtils.dump_object(
             {'hits_found': nb_perfect,
@@ -195,10 +196,11 @@ rule typing_add_allele_page_url:
         HITS_PEPT = Path(config['working_dir']) / 'typing' / '{scheme}' / 'peptide' / 'hits-url.io'
     run:
         for key in ('NUCL', 'PEPT'):
-            hits = SnakemakeUtils.load_object(input.get(f'HITS_{key}'))
+            hits = SnakemakeUtils.load_object(Path(input.get(f'HITS_{key}')))
 
             # Load the informs
-            metadata_by_locus_name = SnakemakeUtils.load_object(input.INFORMS_scheme)['loci'].metadata_by_locus_name
+            metadata_by_locus_name = SnakemakeUtils.load_object(
+                Path(input.INFORMS_scheme))['loci'].metadata_by_locus_name
 
             # Add the allele url to the hit
             for hit in hits:
@@ -207,7 +209,7 @@ rule typing_add_allele_page_url:
                 hit.value.set_allele_page_url_template(locus_metadata.get('allele_page_url'))
 
             # Export hits
-            SnakemakeUtils.dump_object(hits, output.get(f'HITS_{key}'))
+            SnakemakeUtils.dump_object(hits, Path(output.get(f'HITS_{key}')))
 
 rule typing_create_report:
     """
@@ -231,12 +233,12 @@ rule typing_create_report:
         from camel.app.tools.pipelines.sequence_typing.htmlreportertyping import HtmlReporterTyping
         reporter = HtmlReporterTyping(camel)
         if len(input.INFORMS_ST) != 0:
-           reporter.add_input_informs({'ST': SnakemakeUtils.load_object(input.INFORMS_ST)})
+           reporter.add_input_informs({'ST': SnakemakeUtils.load_object(Path(input.INFORMS_ST))})
         SnakemakeUtils.add_pickle_inputs(reporter, input, excluded_keys=['INFORMS_ST'])
         reporter.add_input_files({'VAL_SAMPLE': [ToolIOValue(params.sample_name)]})
         if params.detection_method != config['detection_method']:
             reporter.update_parameters(forced_detection_method=str(params.detection_method))
-        step = Step(rule, reporter, camel, params.running_dir, config, wildcards)
+        step = Step(rule, reporter, camel, Path(params.running_dir), config, wildcards)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
 
@@ -250,10 +252,10 @@ rule typing_create_report_empty:
         VAL_HTML = Path(config['working_dir']) / sequence_typing.OUTPUT_TYPING_REPORT_EMPTY
     run:
         from camel.app.io.tooliovalue import ToolIOValue
-        informs = SnakemakeUtils.load_object(input.INFORMS_Scheme)
+        informs = SnakemakeUtils.load_object(Path(input.INFORMS_Scheme))
         section = HtmlReportSection(informs['title'], 3)
         section.add_paragraph('Analysis disabled')
-        SnakemakeUtils.dump_object([ToolIOValue(section)], output[0])
+        SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output[0]))
 
 rule typing_dump_summary_info:
     """
@@ -271,7 +273,7 @@ rule typing_dump_summary_info:
         if len(input.INFORMS_ST) == 0:
             st_metadata = []
         else:
-            profile_data = SnakemakeUtils.load_object(str(input.INFORMS_ST))
+            profile_data = SnakemakeUtils.load_object(Path(input.INFORMS_ST))
             if profile_data['percent_detected'] == 100:
                 st_metadata = profile_data['metadata']
             else:

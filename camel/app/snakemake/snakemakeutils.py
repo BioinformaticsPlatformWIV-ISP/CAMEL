@@ -1,7 +1,7 @@
 import logging
 import pickle
 from pathlib import Path
-from typing import Any, Optional, List, Union
+from typing import Any, Optional, List
 
 from camel.app.io.tooliodirectory import ToolIODirectory
 from camel.app.io.tooliofile import ToolIOFile
@@ -16,28 +16,28 @@ class SnakemakeUtils(object):
     """
 
     @staticmethod
-    def dump_object(obj: Any, path: str) -> None:
+    def dump_object(obj: Any, path: Path) -> None:
         """
         Dumps an object in a pickle.
         :param obj: Object to dump
         :param path: Path to store the pickle
         :return: None
         """
-        logging.debug("Dumping object '{!r}' in file '{}'".format(obj, path))
-        with open(path, 'wb') as handle:
+        logging.debug(f"Dumping object '{obj!r}' in file '{path}'")
+        with path.open('wb') as handle:
             pickle.dump(obj, handle)
 
     @staticmethod
-    def load_object(path: Union[str, Path]) -> Any:
+    def load_object(path: Path) -> Any:
         """
         Loads the object from the given pickle.
         :param path: Path
         :return: Object
         """
-        logging.debug("Loading object from file '{}'".format(path))
-        with open(str(path), 'rb') as handle:
+        logging.debug(f"Loading object from file '{path}'")
+        with path.open('rb') as handle:
             obj = pickle.load(handle)
-        logging.debug("'{!r}' loaded".format(obj))
+        logging.debug(f"'{obj!r}' loaded")
         return obj
 
     @staticmethod
@@ -53,15 +53,15 @@ class SnakemakeUtils(object):
         path = Path(value)
         if path.is_file():
             converted_value = ToolIOFile(value)
-        elif path.isdir(value):
+        elif path.is_dir():
             converted_value = ToolIODirectory(value)
         else:
             converted_value = ToolIOValue(value)
-        logging.info("'{}' converted to {!r}".format(value, converted_value))
+        logging.info(f"'{value}' converted to {converted_value!r}")
         return converted_value
 
     @staticmethod
-    def add_pickle_input(tool: Tool, key: str, path: str, optional: bool = False) -> None:
+    def add_pickle_input(tool: Tool, key: str, path: Path, optional: bool = False) -> None:
         """
         Adds a pickled input to a tool. For optional input whose value is empty, it is skipped.
         :param tool: Tool
@@ -70,16 +70,15 @@ class SnakemakeUtils(object):
         :param optional: True for optional input, False otherwise
         :return: None
         """
-        logging.debug("Adding pickled input with key '{}' from file '{}' to tool '{}'".format(
-            key, path, tool.name))
+        logging.debug(f"Adding pickled input with key '{key}' from file '{path}' to tool '{tool.name}'")
         value = SnakemakeUtils.load_object(path)
         if optional and len(value) == 0:
-            logging.debug("Optional Input '{!r}' empty, skipped".format(key))
+            logging.debug(f"Optional Input '{key}' empty, skipped")
         else:
             tool.add_input_files({key: value})
 
     @staticmethod
-    def dump_tool_output(tool: Tool, key: str, path: str) -> None:
+    def dump_tool_output(tool: Tool, key: str, path: Path) -> None:
         """
         Dumps a tool output to a Camel IO pickle.
         :param tool: Tool
@@ -90,7 +89,7 @@ class SnakemakeUtils(object):
         logging.debug("Dumping output with key '{}' from tool '{}' to Camel IO pickle '{}'".format(
             key, tool.name, path))
         if key not in tool.tool_outputs:
-            raise KeyError("Tool '{}' has no output '{}'".format(tool.name, key))
+            raise KeyError(f"Tool '{tool.name}' has no output '{key}'")
         SnakemakeUtils.dump_object(tool.tool_outputs[key], path)
 
     @staticmethod
@@ -122,13 +121,13 @@ class SnakemakeUtils(object):
             if key.startswith('INFORMS'):
                 inform_key = '_'.join(key.split('_')[1:])
                 tool.add_input_informs({inform_key: value})
-                logging.debug("Informs '{!r}' added".format(value))
+                logging.debug(f"Informs '{value!r}' added")
             else:
                 if key in optionals and len(value) == 0:
-                    logging.debug("Optional Input '{!r}' empty, skipped".format(key))
+                    logging.debug(f"Optional Input '{key!r}' empty, skipped")
                     continue
                 tool.add_input_files({key: value})
-                logging.debug("Input '{!r}' added".format(value))
+                logging.debug(f"Input '{value!r}' added")
 
     @staticmethod
     def dump_tool_outputs(tool: Tool, snake_output: Any, keys: Optional[List[str]] = None,
@@ -169,7 +168,7 @@ class SnakemakeUtils(object):
         :param keys: If specified, only those keys are converted.
         :return: None
         """
-        logging.info("Converting snake input '{!r}' to pickles".format(snake_input))
+        logging.info(f"Converting snake input '{snake_input!r}' to pickles")
         if keys is None:
             keys = snake_input.keys()
         for key in keys:
@@ -182,7 +181,7 @@ class SnakemakeUtils(object):
             SnakemakeUtils.dump_object(list_io_objects, snake_output[key])
 
     @staticmethod
-    def run_tool(tool: Tool, snake_input: Any, snake_output: Any, working_dir: str) -> None:
+    def run_tool(tool: Tool, snake_input: Any, snake_output: Any, working_dir: Path) -> None:
         """
         Runs a tool and collects / converts the output and input.
         :param tool: Tool

@@ -1,6 +1,5 @@
 import logging
 import unittest
-from pathlib import Path
 
 from camel.app.components.html.htmlexpandablediv import HtmlExpandableDiv
 from camel.app.components.html.htmlreport import HtmlReport
@@ -21,7 +20,7 @@ class TestHtmlReporter(CamelTestSuite):
         """
 
         report_path = self.running_dir / 'report.html'
-        report = HtmlReport(str(report_path), str(self.running_dir))
+        report = HtmlReport(report_path, self.running_dir)
         report.initialize("Test report", CSS_STYLE)
         report.add_header("Test report", 1)
         report.add_paragraph("This  is the report content")
@@ -35,7 +34,7 @@ class TestHtmlReporter(CamelTestSuite):
         :return: None
         """
         report_path = self.running_dir / 'report.html'
-        report = HtmlReport(str(report_path), str(self.running_dir), include_js=[JQUERY_SRC])
+        report = HtmlReport(report_path, self.running_dir, include_js=[JQUERY_SRC])
         report.initialize("Test report", CSS_STYLE)
         report.add_header("Test report", 1)
         div = HtmlExpandableDiv('large-table', 'Table')
@@ -52,7 +51,7 @@ class TestHtmlReporter(CamelTestSuite):
         :return: None
         """
         report_path = self.running_dir / 'report.html'
-        report = HtmlReport(str(report_path), str(self.running_dir), include_js=[JQUERY_SRC])
+        report = HtmlReport(report_path, self.running_dir, include_js=[JQUERY_SRC])
         report.initialize("Test report", CSS_STYLE)
         report.add_pipeline_header('My <i>pipeline</i>')
         report.save()

@@ -4,8 +4,6 @@ import logging
 from pathlib import Path
 from typing import Optional, Dict, Any, Sequence
 
-import os
-
 from camel.app.camel import Camel
 from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.components.html.htmlreportsection import HtmlReportSection
@@ -116,25 +114,25 @@ class MainSamtoolsPhylo(BasePhylo):
         argument_parser.add_argument('--report-include-bam', action='store_true')
         return argument_parser.parse_args(args)
 
-    def __prepare_reference(self) -> str:
+    def __prepare_reference(self) -> Path:
         """
         Prepares the reference genome.
         :return: Indexed reference genome prefix
         """
-        dir_ref = os.path.join(self._args.working_dir, 'ref')
-        if not os.path.isdir(dir_ref):
-            os.makedirs(dir_ref)
-        link_path = os.path.join(dir_ref, FileSystemHelper.make_valid(
-            self._args.reference_name if self._args.reference_name else os.path.basename(self._args.reference)))
-        if os.path.islink(link_path):
-            os.remove(link_path)
-        os.symlink(self._args.reference, link_path)
+        dir_ref = Path(self._args.working_dir, 'ref')
+        if not dir_ref.is_dir():
+            dir_ref.mkdir(parents=True)
+        link_path = dir_ref / FileSystemHelper.make_valid(
+            self._args.reference_name if self._args.reference_name else Path(self._args.reference).name)
+        if link_path.is_symlink():
+            link_path.unlink()
+        link_path.symlink_to(Path(self._args.reference))
         bt2_index = Bowtie2Index(Camel(logging_config=None))
         bt2_index.add_input_files({'FASTA_REF': [ToolIOFile(link_path)]})
         bt2_index.run(dir_ref)
         return bt2_index.tool_outputs['INDEX_GENOME_PREFIX'][0].value
 
-    def __run_variant_calling_workflow(self, reference: str, mapping_input: Dict[Sample, MappingInput]) -> \
+    def __run_variant_calling_workflow(self, reference: Path, mapping_input: Dict[Sample, MappingInput]) -> \
             CallingOutBySample:
         """
         Runs the variant filtering workflow in parallel on all samples.
@@ -240,7 +238,7 @@ class MainSamtoolsPhylo(BasePhylo):
         header = ['Sample', 'Total reads', 'Mapping rate (%)', 'Nb. of SNPs (unfiltered)', 'Nb. of SNPs (filtered)']
         SnpPhylogenyUtils.add_metrics_section(self._report, stats, header)
 
-    def __add_output_files_section(self, snp_matrix: str, calling_out_by_sample: CallingOutBySample,
+    def __add_output_files_section(self, snp_matrix: Path, calling_out_by_sample: CallingOutBySample,
                                    filtering_out_by_sample: FilteringOutBySample) -> None:
         """
         Adds the section with the output files.

@@ -22,14 +22,14 @@ rule typing_kma_allele_detection:
         locus_name = lambda wildcards: wildcards.locus,
         scheme_dir = lambda wildcards: SCHEME_DATA[wildcards.scheme]['path'],
         read_type = config.get('read_type', 'illumina')
-    threads: 4
+    threads: 2
     run:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         from camel.app.tools.kma.kma import KMA
         from camel.app.tools.kma.kmatypinghitextractor import KMATypingHitExtractor
 
         # Get metadata
-        scheme_informs = SnakemakeUtils.load_object(input.INFORMS_scheme)
+        scheme_informs = SnakemakeUtils.load_object(Path(input.INFORMS_scheme))
         locus_informs = scheme_informs['loci'].metadata_by_locus_name[params.locus_name]
         dir_kma = (Path(str(params.scheme_dir)) / locus_informs['fasta_path']).parent / 'kma'
         try:
@@ -41,21 +41,21 @@ rule typing_kma_allele_detection:
         kma = KMA(camel)
         read_key = 'PE' if params.read_type == 'illumina' else 'SE'
         fastq_input = SnakePipelineUtils.extracts_fq_input(
-            input.IO, key_pe='FASTQ_PE', key_se='FASTQ_SE', read_type=read_key)
+            Path(input.IO), key_pe='FASTQ_PE', key_se='FASTQ_SE', read_type=read_key)
         kma.add_input_files(fastq_input)
         kma.add_input_files({'DB': [ToolIOValue(str(db_path.parent / db_path.stem))]})
         step = Step(rule, kma, camel, params.running_dir, config)
         if params.read_type == 'nanopore':
             kma.update_parameters(bc_nano=None, basecalls='0.7')
         step.run_step()
-        SnakemakeUtils.dump_object(kma.informs, output.INFORMS)
+        SnakemakeUtils.dump_object(kma.informs, Path(output.INFORMS))
 
         # Extract the best hit
         kma_extractor = KMATypingHitExtractor(camel)
         kma_extractor.add_input_files({'TSV': kma.tool_outputs['TSV']})
         kma_extractor.add_input_informs({'locus': locus_informs})
         kma_extractor.run(str(params.running_dir))
-        SnakemakeUtils.dump_tool_output(kma_extractor, 'VAL_hit', output.VAL_hit)
+        SnakemakeUtils.dump_tool_output(kma_extractor, 'VAL_hit', Path(output.VAL_hit))
 
 rule typing_kma_combine_hits:
     """
@@ -68,5 +68,5 @@ rule typing_kma_combine_hits:
     run:
         list_of_hits = []
         for pickle in input.VAL_HIT_NUCL:
-            list_of_hits += SnakemakeUtils.load_object(pickle)
-        SnakemakeUtils.dump_object(list_of_hits, output.VAL_HITS)
+            list_of_hits += SnakemakeUtils.load_object(Path(pickle))
+        SnakemakeUtils.dump_object(list_of_hits, Path(output.VAL_HITS))

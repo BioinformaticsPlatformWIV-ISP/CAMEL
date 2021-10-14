@@ -30,7 +30,7 @@ class Kraken2(Tool):
 
     def _execute_tool(self) -> None:
         """
-        Runs Prinseq
+        Runs Kraken 2.
         :return: None
         """
         self.__set_input_key()
@@ -80,14 +80,14 @@ class Kraken2(Tool):
         Creates the string with the input and output files
         :return: String with the input parameters
         """
-        command_parts = ['--db', self._tool_inputs['DB'][0].path]
+        command_parts = ['--db', str(self._tool_inputs['DB'][0].path)]
         if self._input_key == 'FASTA':
-            command_parts.append('{}'.format(self._tool_inputs['FASTA'][0]))
+            command_parts.append(str(self._tool_inputs['FASTA'][0].path))
         elif self._input_key == 'FASTQ':
-            command_parts.append(self._tool_inputs['FASTQ'][0].path)
+            command_parts.append(str(self._tool_inputs['FASTQ'][0].path))
         else:
             command_parts.extend(
-                [self._tool_inputs['FASTQ_PE'][0].path, self._tool_inputs['FASTQ_PE'][1].path, '--paired'])
+                [str(self._tool_inputs['FASTQ_PE'][0].path), str(self._tool_inputs['FASTQ_PE'][1].path), '--paired'])
         command_parts.extend([
             '--output {}'.format(self.__get_basename() + '.output.tsv'),
             '--report {}'.format(self.__get_basename() + '.report.tsv')
