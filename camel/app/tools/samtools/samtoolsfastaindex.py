@@ -45,7 +45,7 @@ class SamtoolsFastaIndex(Samtools):
         Creates a symlink for the input.
         :return: Path to the symlink of the input
         """
-        symlink_location = self.folder / self._tool_inputs['FASTA'][0].basename
+        symlink_location = self.folder / self._tool_inputs['FASTA'][0].path.name
         try:
             symlink_location.symlink_to(self._tool_inputs['FASTA'][0].path)
         except OSError:

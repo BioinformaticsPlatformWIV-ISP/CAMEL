@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import List
 
-import os
 import re
 
 from camel.app.camel import Camel
@@ -36,13 +36,13 @@ class CDHitEst(Tool):
         Executes this tool.
         :return: None
         """
-        output_path = os.path.join(os.path.join(self._folder, 'out.fasta'))
+        output_path = self.folder / 'out.fasta'
         self.__build_command(output_path)
         self._execute_command()
         self._tool_outputs['FASTA'] = [ToolIOFile(output_path)]
-        self._informs['clusters'] = CDHitEst.__parse_clusters(os.path.join(self._folder, output_path + '.clstr'))
+        self._informs['clusters'] = CDHitEst.__parse_clusters(output_path.parent / f'{output_path.name}.clstr')
 
-    def __build_command(self, output_path: str) -> None:
+    def __build_command(self, output_path: Path) -> None:
         """
         Builds the command line call.
         :param output_path: Output file path
@@ -56,20 +56,20 @@ class CDHitEst(Tool):
         )
 
     @staticmethod
-    def __parse_clusters(path: str) -> List[Cluster]:
+    def __parse_clusters(path: Path) -> List[Cluster]:
         """
         Parses a FASTA file and returns the clusters.
         :param path: Path to the clusters output file.
         :return: A list of clusters
         """
         clusters = []
-        with open(path) as handle:
-            for l in handle.readlines():
-                if l.startswith('>'):
-                    name = l.strip()[1:].replace(' ', '_')
+        with path.open() as handle:
+            for line in handle.readlines():
+                if line.startswith('>'):
+                    name = line.strip()[1:].replace(' ', '_')
                     clusters.append(Cluster(name, int(name.split('_')[-1])))
                 else:
-                    clusters[-1].seq_ids.append(CDHitEst.__parse_cluster_line(l.strip()))
+                    clusters[-1].seq_ids.append(CDHitEst.__parse_cluster_line(line.strip()))
         return clusters
 
     @staticmethod
