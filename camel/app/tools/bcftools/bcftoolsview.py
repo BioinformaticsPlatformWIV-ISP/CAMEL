@@ -76,7 +76,7 @@ class BcftoolsView(Tool):
         """
         command_parts = [
             self._tool_command,
-            self.__get_input_file_path(),
+            str(self.__get_input_file_path()),
             self.__get_output_format_option()
         ]
         command_parts += self._build_options(['output_format', 'compress_output'])

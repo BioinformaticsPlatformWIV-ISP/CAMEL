@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.invalidparametererror import InvalidParameterError
@@ -19,7 +20,7 @@ class BcftoolsCall(Tool):
         """
         super().__init__('bcftools call', '1.9', camel)
 
-    def _check_parameters(self):
+    def _check_parameters(self) -> None:
         """
         Checks the parameters.
         :return: None
@@ -30,7 +31,7 @@ class BcftoolsCall(Tool):
         if 'ploidy' not in self._parameters:
             logging.warning("Ploidy not specified will assume all sites are diploid.")
 
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
         Checks the input.
         :return: None
@@ -39,7 +40,7 @@ class BcftoolsCall(Tool):
             raise InvalidInputSpecificationError("No input file found (BCF / VCF_GZ supported)")
         super(BcftoolsCall, self)._check_input()
 
-    def _execute_tool(self):
+    def _execute_tool(self) -> None:
         """
         Executes this tool.
         :return: None
@@ -48,7 +49,7 @@ class BcftoolsCall(Tool):
         self._execute_command()
         self.__set_output()
 
-    def __get_input_file_path(self):
+    def __get_input_file_path(self) -> Path:
         """
         Returns the path to the input file.
         :return: Input file path
@@ -58,14 +59,14 @@ class BcftoolsCall(Tool):
         else:
             return self._tool_inputs['BCF'][0].path
 
-    def __build_command(self):
+    def __build_command(self) -> None:
         """
         Builds the command.
         :return: None
         """
         command_parts = [
             self._tool_command,
-            self.__get_input_file_path(),
+            str(self.__get_input_file_path()),
             self.__get_output_format_option()
         ]
         if self._parameters['calling_method'].value == 'consensus':
@@ -81,7 +82,7 @@ class BcftoolsCall(Tool):
         command_parts += self._build_options(['calling_method', 'output_format', 'compress_output'])
         self._command.command = ' '.join(command_parts)
 
-    def _check_command_output(self):
+    def _check_command_output(self) -> None:
         """
         Checks if the command executed successfully.
         :return: None
@@ -89,7 +90,7 @@ class BcftoolsCall(Tool):
         if self._command.returncode != 0:
             raise ToolExecutionError("Error executing bcftools call: {}".format(self.stderr))
 
-    def __get_output_format_option(self):
+    def __get_output_format_option(self) -> str:
         """
         Returns the output command line option.
         :return: Command line option
@@ -99,7 +100,7 @@ class BcftoolsCall(Tool):
         else:
             return '-O b' if 'compress_output' in self._parameters else '-O u'
 
-    def __get_output_key(self):
+    def __get_output_key(self) -> str:
         """
         Returns the output key.
         :return: Output key
@@ -109,7 +110,7 @@ class BcftoolsCall(Tool):
         else:
             return 'BCF'
 
-    def __set_output(self):
+    def __set_output(self) -> None:
         """
         Sets the tool output.
         :return: None

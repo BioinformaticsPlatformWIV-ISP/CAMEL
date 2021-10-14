@@ -24,9 +24,9 @@ rule variant_calling_prep_reference:
     run:
         from camel.app.io.tooliovalue import ToolIOValue
         from camel.app.io.tooliofile import ToolIOFile
-        SnakemakeUtils.dump_object([ToolIOValue(params.reference['path'])], output.INDEX_GENOME_PREFIX)
-        SnakemakeUtils.dump_object([ToolIOFile(params.reference['path'])], output.FASTA)
-        SnakemakeUtils.dump_object(params.reference, output.INFORMS)
+        SnakemakeUtils.dump_object([ToolIOValue(params.reference['path'])], Path(output.INDEX_GENOME_PREFIX))
+        SnakemakeUtils.dump_object([ToolIOFile(Path(params.reference['path']))], Path(output.FASTA))
+        SnakemakeUtils.dump_object(params.reference, Path(output.INFORMS))
 
 
 rule variant_calling_read_mapping:
@@ -50,10 +50,10 @@ rule variant_calling_read_mapping:
         bowtie2_map = Bowtie2Map(camel)
         step = Step(rule, bowtie2_map, camel, params.running_dir, config)
         bowtie2_map.update_parameters(threads=threads)
-        SnakemakeUtils.add_pickle_input(bowtie2_map, 'INDEX_GENOME_PREFIX', input.INDEX_GENOME_PREFIX)
+        SnakemakeUtils.add_pickle_input(bowtie2_map, 'INDEX_GENOME_PREFIX', Path(input.INDEX_GENOME_PREFIX))
         key_reads = 'PE' if params.read_type == 'illumina' else 'SE'
         bowtie2_map.add_input_files(SnakePipelineUtils.extracts_fq_input(
-            input.IO, key_se='FASTQ_SE', drop_empty=True, read_type=key_reads))
+            Path(input.IO), key_se='FASTQ_SE', drop_empty=True, read_type=key_reads))
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(bowtie2_map, output)
 
@@ -335,7 +335,7 @@ rule variant_calling_collect_command_informs:
     run:
         all_informs = []
         for io_file in input:
-            informs = SnakemakeUtils.load_object(io_file)
+            informs = SnakemakeUtils.load_object(Path(io_file))
             informs['_tag'] = 'Variant calling'
             all_informs.append(informs)
-        SnakemakeUtils.dump_object(all_informs, output.INFORMS_ALL)
+        SnakemakeUtils.dump_object(all_informs, Path(output.INFORMS_ALL))
