@@ -1,5 +1,5 @@
 import logging
-import os
+from pathlib import Path
 
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
@@ -45,7 +45,7 @@ class Srst2Mlst(Tool):
         :return: Input options string
         """
         if 'FASTQ_PE' in self._tool_inputs:
-            return '--input_pe {}'.format(' '.join([f.path for f in self._tool_inputs['FASTQ_PE']]))
+            return '--input_pe {}'.format(' '.join([str(f.path) for f in self._tool_inputs['FASTQ_PE']]))
         else:
             return '--input_se {}'.format(self._tool_inputs['FASTQ_SE'][0].path)
 
@@ -64,11 +64,10 @@ class Srst2Mlst(Tool):
         Sets the output files.
         :return: None
         """
-        for file_ in os.listdir(self._folder):
-            full_path = os.path.join(self._folder, file_)
+        for file_ in self.folder.iterdir():
             key = self._get_output_file_key(file_)
             if key is not None:
-                self._tool_outputs[key] = [ToolIOFile(full_path)]
+                self._tool_outputs[key] = [ToolIOFile(file_)]
         self._tool_outputs['VAL_Sequence_type'] = [
             ToolIOValue(Srst2Mlst.__get_sequence_type(self._tool_outputs['TSV'][0].path))]
 
@@ -85,40 +84,40 @@ class Srst2Mlst(Tool):
         if 'TSV' not in self._tool_inputs:
             logging.info("No MLST definitions found. Only performing allele detection.")
 
-    def _get_output_file_key(self, filename):
+    def _get_output_file_key(self, path_in: Path) -> str:
         """
         Returns the key for the given output file.
-        :param filename: Filename
+        :param path_in: Output file path
         :return: Key
         """
         output_filename = self._parameters['output_filename'].value
-        if all([x in filename for x in ['mlst', 'results']]):
+        if all([x in path_in.name for x in ['mlst', 'results']]):
             return 'TSV'
-        elif filename.endswith('.pileup') and filename.startswith(output_filename):
+        elif path_in.name.endswith('.pileup') and path_in.name.startswith(output_filename):
             return 'PILEUP'
-        elif filename.endswith('.bam'):
+        elif path_in.name.endswith('.bam'):
             return 'BAM'
-        elif filename.endswith('.scores'):
+        elif path_in.name.endswith('.scores'):
             return 'TSV_Scores'
-        elif filename.endswith('consensus_alleles.fasta'):
+        elif path_in.name.endswith('consensus_alleles.fasta'):
             return 'FASTA'
 
     @staticmethod
-    def __get_sequence_type(output_file):
+    def __get_sequence_type(output_file: Path) -> str:
         """
         Parses the output file to obtain the sequence type.
         :param output_file: Output file
         :return: Sequence type
         """
-        with open(output_file) as f:
-            content = f.readlines()
+        with output_file.open() as handle:
+            content = handle.readlines()
             if len(content) == 1:
                 return 'ND'
             elif len(content) == 2:
                 return content[1].split('\t')[1]
             raise ValueError("Invalid SRST2 output file. Content: '{}'".format(content))
 
-    def _check_command_output(self):
+    def _check_command_output(self) -> None:
         """
         Checks if the command execution was successful.
         :return: None
