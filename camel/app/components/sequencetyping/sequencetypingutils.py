@@ -1,9 +1,9 @@
 import json
 import logging
+import re
 from pathlib import Path
 from typing import Tuple, Dict, Any, List
 
-import re
 from Bio import SeqIO
 
 
@@ -33,13 +33,13 @@ class SequenceTypingUtils(object):
     """
 
     @staticmethod
-    def determine_delimiter(fasta_file: str) -> str:
+    def determine_delimiter(fasta_file: Path) -> str:
         """
         Returns the delimiter that is used in the FASTA file. Supported delimiters are '-' and '_'.
         :param fasta_file: FASTA file
         :return: None
         """
-        with open(fasta_file) as handle:
+        with fasta_file.open() as handle:
             for seq in SeqIO.parse(handle, 'fasta'):
                 m = re.match('.*([-_])\\d+$', seq.id)
                 if m is None:
@@ -106,13 +106,13 @@ class SequenceTypingUtils(object):
         return result_dict
 
     @staticmethod
-    def parse_scheme_metadata(scheme_dir: str) -> Dict[str, Any]:
+    def parse_scheme_metadata(scheme_dir: Path) -> Dict[str, Any]:
         """
         Parses the metadata associated with the given scheme.
         :param scheme_dir: Scheme directory
         :return: Metadata
         """
-        with (Path(scheme_dir) / 'scheme_metadata.txt').open() as handle:
+        with (scheme_dir / 'scheme_metadata.txt').open() as handle:
             return json.load(handle)
 
     @staticmethod
