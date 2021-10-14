@@ -1,5 +1,4 @@
 import logging
-import os
 
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.invalidparametererror import InvalidParameterError
@@ -115,5 +114,5 @@ class BcftoolsCall(Tool):
         Sets the tool output.
         :return: None
         """
-        self._tool_outputs[self.__get_output_key()] = [
-            ToolIOFile(os.path.join(self._folder, self._parameters['output_filename'].value))]
+        self._tool_outputs[self.__get_output_key()] = [ToolIOFile(
+            self.folder / self._parameters['output_filename'].value)]

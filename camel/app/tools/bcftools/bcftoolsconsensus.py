@@ -1,5 +1,3 @@
-import os
-
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
@@ -55,7 +53,7 @@ class BcftoolsConsensus(Tool):
         Sets the output of this tool.
         :return: None
         """
-        self._tool_outputs['FASTA'] = [ToolIOFile(os.path.join(self._folder, self._parameters['output_filename'].value))]
+        self._tool_outputs['FASTA'] = [ToolIOFile(self.folder / self._parameters['output_filename'].value)]
 
     def _check_command_output(self):
         """
