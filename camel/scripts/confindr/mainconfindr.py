@@ -84,12 +84,13 @@ class MainConFindr(object):
         :return: Input dictionary
         """
         if self._args.fastq_pe is not None:
-            is_gzipped = FileSystemHelper.is_gzipped(self._args.fastq_pe[0])
-            input_dict = {f"FASTQ{'_GZ' if is_gzipped else ''}_PE": [ToolIOFile(fq) for fq in self._args.fastq_pe]}
+            is_gzipped = FileSystemHelper.is_gzipped(Path(self._args.fastq_pe[0]))
+            input_dict = {f"FASTQ{'_GZ' if is_gzipped else ''}_PE": [ToolIOFile(
+                Path(fq)) for fq in self._args.fastq_pe]}
             return input_dict
         else:
-            is_gzipped = FileSystemHelper.is_gzipped(self._args.fastq_se)
-            input_dict = {f"FASTQ{'_GZ' if is_gzipped else ''}_SE": [ToolIOFile(self._args.fastq_se)]}
+            is_gzipped = FileSystemHelper.is_gzipped(Path(self._args.fastq_se))
+            input_dict = {f"FASTQ{'_GZ' if is_gzipped else ''}_SE": [ToolIOFile(Path(self._args.fastq_se))]}
             return input_dict
 
 
