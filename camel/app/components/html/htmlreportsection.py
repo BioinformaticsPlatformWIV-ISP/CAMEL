@@ -1,8 +1,7 @@
 import logging
-from pathlib import Path
-from typing import List, Union, Tuple
-
 import shutil
+from pathlib import Path
+from typing import List, Union, Tuple, Optional
 
 from camel.app.components.html.htmlbase import HtmlBase
 from camel.app.components.html.htmlelement import HtmlElement
@@ -14,7 +13,7 @@ class HtmlReportSection(HtmlElement):
     This class can be used to create a section in the HTML report.
     """
 
-    def __init__(self, title: str, level: int = 2, subtitle: str = None):
+    def __init__(self, title: Optional[str], level: int = 2, subtitle: Optional[str] = None) -> None:
         """
         Initializes a report section.
         :param title: Section title
