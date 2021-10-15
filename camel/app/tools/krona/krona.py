@@ -1,5 +1,4 @@
-import os
-
+from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
@@ -17,24 +16,24 @@ class Krona(Tool):
         HTML: Interactive HTML report with a pie chart containing the detected taxonomies.
     """
 
-    def __init__(self, camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initializes this tool.
         """
         super().__init__('Krona', '2.7', camel)
 
-    def _execute_tool(self):
+    def _execute_tool(self) -> None:
         """
         Executes this tool.
         :return: None
         """
-        output_path = os.path.join(self._folder, 'krona_out.html')
+        output_path = self.folder / 'krona_out.html'
         self._command.command = 'cut -f2,3 {} | {} {} -o {} -'.format(
-            self._tool_inputs['TSV'][0].path, self._tool_command, ' '.join(self._build_options()), output_path)
+            self._tool_inputs['TSV'][0].path, self._tool_command, ' '.join(self._build_options()), str(output_path))
         self._execute_command()
         self._tool_outputs['HTML'] = [ToolIOFile(output_path)]
 
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
         Checks if the provided input is valid.
         :return: None
@@ -45,7 +44,7 @@ class Krona(Tool):
             raise InvalidInputSpecificationError("Exactly one TSV input is required")
         super()._check_input()
 
-    def _check_command_output(self):
+    def _check_command_output(self) -> None:
         """
         Checks if the program executed correctly.
         :return: None

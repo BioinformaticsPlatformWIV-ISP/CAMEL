@@ -1,4 +1,3 @@
-import os
 import re
 from pathlib import Path
 
@@ -93,7 +92,7 @@ class SamtoolsFlagstat(Samtools):
         :return: None
         """
         if 'output_filename' in self._parameters:
-            output_path = os.path.join(self._folder, self._parameters['output_filename'].value)
+            output_path = self.folder / self._parameters['output_filename'].value
             self._tool_outputs['TXT'] = [ToolIOFile(output_path)]
 
     def _before_pipe(self, dir_, pipe_in: bool, pipe_out: bool) -> None:
