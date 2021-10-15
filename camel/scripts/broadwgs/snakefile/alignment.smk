@@ -29,9 +29,9 @@ rule bwa_aln_to_bam:
         bwa_mem = BWAMap(camel)
         sam_to_bam = SamtoolsView(camel)
 
-        SnakemakeUtils.add_pickle_input(bwa_mem, 'FASTQ_PE', input.FASTQ)
-        SnakemakeUtils.add_pickle_input(bwa_mem, 'INDEX_GENOME_PREFIX', input.FASTA_GENOME)
-        SnakemakeUtils.add_pickle_input(sam_to_bam, 'FASTA_REF', input.FASTA_REF)
+        SnakemakeUtils.add_pickle_input(bwa_mem, 'FASTQ_PE', Path(input.FASTQ))
+        SnakemakeUtils.add_pickle_input(bwa_mem, 'INDEX_GENOME_PREFIX', Path(input.FASTA_GENOME))
+        SnakemakeUtils.add_pickle_input(sam_to_bam, 'FASTA_REF', Path(input.FASTA_REF))
 
         bwa_mem.update_parameters(
             threads = threads,
@@ -45,7 +45,7 @@ rule bwa_aln_to_bam:
 
         pipeutils.run_as_pipe([bwa_mem, sam_to_bam], params.working_dir)
 
-        SnakemakeUtils.dump_tool_output(sam_to_bam, "BAM", output.BAM)
+        SnakemakeUtils.dump_tool_output(sam_to_bam, "BAM", Path(output.BAM))
 
 rule picard_add_readgroups:
     input:
@@ -72,7 +72,7 @@ rule picard_add_readgroups:
             **config['rule_params']['alignment'][rule],
         )
         step.run_step()
-        SnakemakeUtils.dump_tool_output(add_rg, "BAM", output.BAM)
+        SnakemakeUtils.dump_tool_output(add_rg, "BAM", Path(output.BAM))
 
 rule picard_mark_duplicates_sort:
     """
@@ -99,7 +99,7 @@ rule picard_mark_duplicates_sort:
         mark_duplicates = MarkDuplicates(camel)
         sort_sam = SortSam(camel)
 
-        mark_duplicates.add_input_files({"BAM": [SnakemakeUtils.load_object(path)[0] for path in input.BAM]})
+        mark_duplicates.add_input_files({"BAM": [SnakemakeUtils.load_object(Path(path))[0] for path in input.BAM]})
 
         mark_duplicates.update_parameters(
             output = params.output_file,
@@ -115,8 +115,8 @@ rule picard_mark_duplicates_sort:
 
         pipeutils.run_as_pipe([mark_duplicates, sort_sam], params.working_dir)
 
-        SnakemakeUtils.dump_tool_output(mark_duplicates, "METRICS", output.metrics)
-        SnakemakeUtils.dump_tool_output(sort_sam, "BAM", output.BAM)
+        SnakemakeUtils.dump_tool_output(mark_duplicates, "METRICS", Path(output.metrics))
+        SnakemakeUtils.dump_tool_output(sort_sam, "BAM", Path(output.BAM))
 
 rule picard_set_tags:
     input:
@@ -140,7 +140,7 @@ rule picard_set_tags:
             **config['rule_params']['alignment'][rule]
         )
         step.run_step()
-        SnakemakeUtils.dump_tool_output(set_tags, "BAM", output.BAM)
+        SnakemakeUtils.dump_tool_output(set_tags, "BAM", Path(output.BAM))
 
 rule gatk4_baserecalibrator:
     input:
@@ -148,7 +148,7 @@ rule gatk4_baserecalibrator:
         FASTA_REF = Path(config['working_dir']) / "ref_input" / "fasta_reference_human_value_file.io",
         VCF_KNOWN_SNPS = Path(config['working_dir']) / "ref_input" / "dbsnp_vcf.io",
         VCF_KNOWN_INDELS = Path(config['working_dir']) / "ref_input" / "known_indels_vcf.io",
-        TXT_intervals = Path(config['intervals_location']) / "interval_{i}.intervals.io"
+        TXT_intervals = Path(config['working_dir']) / 'input' / 'interval_files' / "interval_{i}.intervals.io"
     output:
         TXT_RecalibrationTable = Path(config['working_dir']) / "alignment" / "bqsr" / "{i}_recal_data.csv.io"
     params:
@@ -161,14 +161,19 @@ rule gatk4_baserecalibrator:
         from camel.app.tools.gatk4.gatk4baserecalibrator import GATK4BaseRecalibrator
 
         bqsr = GATK4BaseRecalibrator(camel)
-        SnakemakeUtils.add_pickle_inputs(bqsr, input)
+        SnakemakeUtils.add_pickle_input(bqsr, "BAM", Path(input.BAM))
+        SnakemakeUtils.add_pickle_input(bqsr, "FASTA_REF", Path(input.FASTA_REF))
+        SnakemakeUtils.add_pickle_input(bqsr, "VCF_KNOWN_SNPS", Path(input.VCF_KNOWN_SNPS))
+        SnakemakeUtils.add_pickle_input(bqsr, "VCF_KNOWN_INDELS", Path(input.VCF_KNOWN_INDELS))
+        SnakemakeUtils.add_pickle_input(bqsr, "TXT_intervals", Path(input.TXT_intervals))
+
         step = Step(rule, bqsr, camel, params.working_dir, config)
         bqsr.update_parameters(
             **config['rule_params']['alignment'][rule],
             output = params.output_file
         )
         step.run_step()
-        SnakemakeUtils.dump_tool_output(bqsr, "TXT_RecalibrationTable", output.TXT_RecalibrationTable)
+        SnakemakeUtils.dump_tool_output(bqsr, "TXT_RecalibrationTable", Path(output.TXT_RecalibrationTable))
 
 rule gatk4_gather_bqsr_reports:
     input:
@@ -187,19 +192,19 @@ rule gatk4_gather_bqsr_reports:
 
         gather_bqsr = GATK4GatherBQSRReports(camel)
         step = Step(rule, gather_bqsr, camel, params.working_dir, config)
-        gather_bqsr.add_input_files({"TXT_intervals": [SnakemakeUtils.load_object(path)[0] for path in input.bqsr_report_interval]})
+        gather_bqsr.add_input_files({"TXT_intervals": [SnakemakeUtils.load_object(Path(path))[0] for path in input.bqsr_report_interval]})
         gather_bqsr.update_parameters(
             output = "recal_data.csv"
         )
         step.run_step()
-        SnakemakeUtils.dump_tool_output(gather_bqsr, 'TXT_RecalibrationTable', output.bqsr_report_gathered)
+        SnakemakeUtils.dump_tool_output(gather_bqsr, 'TXT_RecalibrationTable', Path(output.bqsr_report_gathered))
 
 rule gatk4_apply_bqsr:
     input:
         BAM = rules.gatk4_baserecalibrator.input.BAM, # Ensure it gets same input as baserecalibrator
         BQSR = rules.gatk4_gather_bqsr_reports.output.bqsr_report_gathered,
         FASTA_REF = Path(config['working_dir']) / "ref_input" / "fasta_reference_human_value_file.io",
-        TXT_intervals = Path(config['intervals_location']) / "interval_{i}.intervals.io"
+        TXT_intervals = Path(config['working_dir']) / 'input' / 'interval_files' / "interval_{i}.intervals.io"
     output:
         BAM = Path(config['working_dir']) / "alignment" / "apply_bqsr" / "{i}_sorted.bam.io"
     params:
@@ -221,7 +226,7 @@ rule gatk4_apply_bqsr:
             output = params.output_file
         )
         step.run_step()
-        SnakemakeUtils.dump_tool_output(apply_bqsr, "BAM", output.BAM)
+        SnakemakeUtils.dump_tool_output(apply_bqsr, "BAM", Path(output.BAM))
 
 rule picard_gather_sorted_bam:
     input:
@@ -240,10 +245,10 @@ rule picard_gather_sorted_bam:
 
         gather_bam = GatherBamFiles(camel)
         step = Step(rule, gather_bam, camel, params.working_dir, config)
-        gather_bam.add_input_files({"BAMs": [SnakemakeUtils.load_object(path)[0] for path in input.bqsr_BAM_interval]})
+        gather_bam.add_input_files({"BAMs": [SnakemakeUtils.load_object(Path(path))[0] for path in input.bqsr_BAM_interval]})
         gather_bam.update_parameters(
             **config['rule_params']['alignment'][rule],
             output = "gathered_sorted.bam"
         )
         step.run_step()
-        SnakemakeUtils.dump_tool_output(gather_bam, 'BAM', output.BAM)
+        SnakemakeUtils.dump_tool_output(gather_bam, 'BAM', Path(output.BAM))

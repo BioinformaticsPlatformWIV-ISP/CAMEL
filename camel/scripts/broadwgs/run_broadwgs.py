@@ -100,25 +100,23 @@ class MainBroadWGSPipeline(object):
         links = []
         for file in base_path:
             #add extension
-            r1 = file + "R1.fastq.gz"
-            r2 = file + "R2.fastq.gz"
+            r1 = Path(f"{file}R1.fastq.gz")
+            r2 = Path(f"{file}R2.fastq.gz")
             #append to links for symlinking
             links.append(r1)
             links.append(r2)
             #ToolIOFile
             io_files = [ToolIOFile(r1), ToolIOFile(r2)]
-            SnakemakeUtils.dump_object(io_files, os.path.join(dir_links, os.path.basename(file) + ".fastq.gz.io"))
+            SnakemakeUtils.dump_object(io_files, dir_links / f"{Path(file).name}.fastq.gz.io")
 
         # Link files
-        paths_new = []
         for path_orig in links:
-            link_name = os.path.basename(path_orig)
-            path_new = os.path.join(dir_links, link_name)
+            link_name = path_orig.name
+            path_new = dir_links / link_name
             logging.debug(f"Symlinking input file: {link_name}")
-            if os.path.islink(path_new):
-                os.remove(path_new)
-            os.symlink(path_orig, path_new)
-            paths_new.append(path_new)
+            if path_new.is_symlink():
+                path_new.unlink()
+            path_new.symlink_to(path_orig)
 
     def __construct_config_file(self) -> str:
         """
@@ -149,7 +147,7 @@ class MainBroadWGSPipeline(object):
                 'memory_mb_cram': 60000
             },
             'sample': self._args.sample,
-            'input_basenames': [os.path.basename(f) for f in self._args.input],
+            'input_basenames': [Path(f).name for f in self._args.input],
             'working_dir': str(self._working_dir),
             'final_output_dir': str(self._working_dir / 'output'),
             'debug': self._args.debug,
@@ -173,7 +171,7 @@ class MainBroadWGSPipeline(object):
             intervals_location = self._args.intervals
         else:
             intervals_location = INTERVALS
-        interval_files = glob.glob(os.path.join(intervals_location, "interval_*.intervals"))
+        interval_files = glob.glob(str(intervals_location / "interval_*.intervals"))
         config_data.update({"intervals": list(range(len(interval_files))),
                             "intervals_location": str(intervals_location)})
 

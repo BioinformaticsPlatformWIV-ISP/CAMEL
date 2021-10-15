@@ -176,7 +176,7 @@ rule picard_RG_checksum:
         from camel.app.tools.picard.calculatereadgroupchecksum import CalculateReadGroupChecksum
 
         get_checksum = CalculateReadGroupChecksum(camel)
-        SnakemakeUtils.add_pickle_input(get_checksum, "BAM", input.BAM)
+        SnakemakeUtils.add_pickle_input(get_checksum, "BAM", Path(input.BAM))
         step = Step(rule, get_checksum, camel, params.working_dir, config)
         get_checksum.update_parameters(output = params.output_file)
         step.run_step()
@@ -252,15 +252,15 @@ rule picard_validate_cram:
         Path(params.working_dir).mkdir(exist_ok=True)
 
         val_cram = ValidateSamFile(camel)
-        SnakemakeUtils.add_pickle_input(val_cram, "BAM", input.CRAM)
-        SnakemakeUtils.add_pickle_input(val_cram, "FASTA_REF", input.FASTA_REF)
+        SnakemakeUtils.add_pickle_input(val_cram, "BAM", Path(input.CRAM))
+        SnakemakeUtils.add_pickle_input(val_cram, "FASTA_REF", Path(input.FASTA_REF))
         step = Step(rule, val_cram, camel, params.working_dir, config)
         val_cram.update_parameters(
             **config['rule_params']['bam_to_cram'][rule]
         )
         val_cram.update_java_options("-mx100G -XX:+UseParallelGC -XX:ParallelGCThreads=1 -Dpicard.useLegacyParser=false")
         step.run_step()
-        SnakemakeUtils.dump_tool_output(val_cram, 'TXT_report', output.TXT_metrics)
+        SnakemakeUtils.dump_tool_output(val_cram, 'TXT_report', Path(output.TXT_metrics))
 
 rule picard_variant_calling_metrics:
     input:

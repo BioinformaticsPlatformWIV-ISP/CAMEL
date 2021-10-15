@@ -29,7 +29,7 @@ rule picard_create_interval_lists:
         )
         step.run_step()
 
-        SnakemakeUtils.dump_tool_output(generate_interval_list, 'TXT_intervalLists', output.TXT_intervalLists)
+        SnakemakeUtils.dump_tool_output(generate_interval_list, 'TXT_intervalLists', Path(output.TXT_intervalLists))
 
 
 rule create_io_intervalLists:
@@ -38,10 +38,10 @@ rule create_io_intervalLists:
    output:
        TXT_intervalList = Path(config['working_dir']) / "variant_calling" / "varcalling_intervals" / f'temp_{{scatter}}_of_{config["rule_params"]["variant_calling"]["picard_create_interval_lists"]["scatter_count"]}' / "scattered.interval_list.io",
    run:
-       for interval_list in SnakemakeUtils.load_object(input.TXT_intervalLists):
-           intervalList_io = interval_list.path + ".io"
+       for interval_list in SnakemakeUtils.load_object(Path(input.TXT_intervalLists)):
+           intervalList_io = f'{interval_list.path}.io'
            if intervalList_io.split("/")[-2].split("_")[1] == wildcards.scatter:
-                SnakemakeUtils.dump_object([interval_list], intervalList_io)
+                SnakemakeUtils.dump_object([interval_list], Path(intervalList_io))
 
 rule gatk4_haplotype_caller:
     input:
@@ -72,7 +72,7 @@ rule gatk4_haplotype_caller:
             **config['rule_params']['variant_calling'][rule],
         )
         step.run_step()
-        SnakemakeUtils.dump_tool_output(hc, 'VCF', output.VCF)
+        SnakemakeUtils.dump_tool_output(hc, 'VCF', Path(output.VCF))
 
 rule picard_merge_vcfs:
     input:
@@ -89,7 +89,7 @@ rule picard_merge_vcfs:
         from camel.app.tools.picard.mergevcfs import MergeVCFs
 
         merge_vcf = MergeVCFs(camel)
-        merge_vcf.add_input_files({"VCF": [SnakemakeUtils.load_object(path)[0] for path in input.VCF]})
+        merge_vcf.add_input_files({"VCF": [SnakemakeUtils.load_object(Path(path))[0] for path in input.VCF]})
         step = Step(rule, merge_vcf, camel, params.working_dir, config)
         step.run_step()
-        SnakemakeUtils.dump_tool_output(merge_vcf, "VCF", output.VCF)
+        SnakemakeUtils.dump_tool_output(merge_vcf, "VCF", Path(output.VCF))

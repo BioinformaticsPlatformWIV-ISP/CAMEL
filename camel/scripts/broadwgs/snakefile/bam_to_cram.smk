@@ -25,8 +25,8 @@ rule samtools_convert_to_cram:
         Path(params.working_dir).mkdir(exist_ok=True)
 
         bam_to_cram = SamtoolsView(camel)
-        SnakemakeUtils.add_pickle_input(bam_to_cram,"BAM",input.BAM)
-        SnakemakeUtils.add_pickle_input(bam_to_cram,"FASTA_REF",input.FASTA_REF)
+        SnakemakeUtils.add_pickle_input(bam_to_cram, "BAM", Path(input.BAM))
+        SnakemakeUtils.add_pickle_input(bam_to_cram, "FASTA_REF", Path(input.FASTA_REF))
         step = Step(rule, bam_to_cram, camel, params.working_dir, config)
         bam_to_cram.update_parameters(
             output_filename = params.output_file,
@@ -35,7 +35,7 @@ rule samtools_convert_to_cram:
             **config['rule_params']['bam_to_cram'][rule]
         )
         step.run_step()
-        SnakemakeUtils.dump_tool_output(bam_to_cram, 'CRAM', output.CRAM)
+        SnakemakeUtils.dump_tool_output(bam_to_cram, 'CRAM', Path(output.CRAM))
 
 rule checksum_cram:
     input:
@@ -48,7 +48,7 @@ rule checksum_cram:
     run:
         import subprocess
 
-        cram_file = SnakemakeUtils.load_object(input.CRAM)[0]
+        cram_file = SnakemakeUtils.load_object(Path(input.CRAM))[0]
         subprocess.run(f"md5sum {cram_file} > {output.CRAM_checksum}", shell = True, executable="/bin/bash")
 
 rule samtools_index_cram:
@@ -73,4 +73,4 @@ rule samtools_index_cram:
         step = Step(rule, cram_index, camel, params.working_dir, config)
         cram_index.update_parameters(output_filename = params.working_dir / params.output_file)
         step.run_step()
-        SnakemakeUtils.dump_tool_output(cram_index, 'CRAI', output.CRAI)
+        SnakemakeUtils.dump_tool_output(cram_index, 'CRAI', Path(output.CRAI))

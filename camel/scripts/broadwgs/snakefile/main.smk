@@ -1,4 +1,3 @@
-import os
 import subprocess
 from pathlib import Path
 import logging
@@ -45,11 +44,11 @@ rule move_output:
         VCF = Path(config['final_output_dir']) / f'{config["sample"]}.gVCF.gz',
         VCF_index = Path(config['final_output_dir']) / f'{config["sample"]}.gVCF.gz.tbi',
     run:
-        os.link(SnakemakeUtils.load_object(input.CRAM)[0].path, output.CRAM)
-        os.link(SnakemakeUtils.load_object(input.CRAI)[0].path, output.CRAI)
-        os.link(input.CRAM_checksum, output.CRAM_checksum)
-        os.link(SnakemakeUtils.load_object(input.VCF)[0].path, output.VCF)
-        os.link(input.VCF_index, output.VCF_index)
+        SnakemakeUtils.load_object(Path(input.CRAM))[0].path.link_to(output.CRAM)
+        SnakemakeUtils.load_object(Path(input.CRAI))[0].path.link_to(output.CRAI)
+        Path(input.CRAM_checksum).link_to(output.CRAM_checksum)
+        SnakemakeUtils.load_object(Path(input.VCF))[0].path.link_to(output.VCF)
+        Path(input.VCF_index).link_to(output.VCF_index)
 
         if not config['debug']:
             shutil.rmtree(Path(config['working_dir']) / 'alignment')
@@ -64,16 +63,16 @@ rule prepare_references_io:
     Prepare reference genome IO files
     """
     input:
-        fasta_genome = config['references']['ref_fasta'],
-        dict_genome = config['references']['ref_dict'],
-        dbsnp = config['references']['dbsnp_vcf'],
-        known_indels = config['references']['known_indels_sites_vcfs'],
-        calling_intervals = config['references']["calling_interval_list"],
-        contamination_sites_ud = config['references']["contamination_sites_ud"],
-        contamination_sites_bed = config['references']["contamination_sites_bed"],
-        contamination_sites_mu = config['references']["contamination_sites_mu"],
-        coverage_interval_list = config['references']["coverage_interval_list"],
-        evaluation_interval_list = config['references']["evaluation_interval_list"],
+        fasta_genome = Path(config['references']['ref_fasta']),
+        dict_genome = Path(config['references']['ref_dict']),
+        dbsnp = Path(config['references']['dbsnp_vcf']),
+        known_indels = [Path(f) for f in config['references']['known_indels_sites_vcfs']],
+        calling_intervals = Path(config['references']["calling_interval_list"]),
+        contamination_sites_ud = Path(config['references']["contamination_sites_ud"]),
+        contamination_sites_bed = Path(config['references']["contamination_sites_bed"]),
+        contamination_sites_mu = Path(config['references']["contamination_sites_mu"]),
+        coverage_interval_list = Path(config['references']["coverage_interval_list"]),
+        evaluation_interval_list = Path(config['references']["evaluation_interval_list"]),
     output:
         FASTA_GENOME = Path(config['working_dir']) / "ref_input" / "fasta_reference_human_value.io",
         FASTA_GENOME_FILE = Path(config['working_dir']) / "ref_input" / "fasta_reference_human_value_file.io",
@@ -85,25 +84,26 @@ rule prepare_references_io:
         COVERAGE_INTERVALS = Path(config['working_dir']) / "ref_input" / "coverage_interval_list.io",
         EVALUATION_INTERVALS = Path(config['working_dir']) / "ref_input" / "evaluation_interval_list.io",
     run:
-        SnakemakeUtils.dump_object([ToolIOValue(input.fasta_genome)], str(output.FASTA_GENOME))
-        SnakemakeUtils.dump_object([ToolIOFile(input.fasta_genome)], str(output.FASTA_GENOME_FILE))
-        SnakemakeUtils.dump_object([ToolIOFile(input.dict_genome)], str(output.DICT_GENOME))
-        SnakemakeUtils.dump_object([ToolIOFile(input.dbsnp)], str(output.DBSNP))
-        SnakemakeUtils.dump_object([ToolIOFile(f) for f in input.known_indels], str(output.KNOWN_INDELS))
-        SnakemakeUtils.dump_object([ToolIOFile(input.calling_intervals)], str(output.CALLING_INTERVALS))
-        SnakemakeUtils.dump_object([ToolIOFile(input.contamination_sites_bed), ToolIOFile(input.contamination_sites_mu), ToolIOFile(input.contamination_sites_ud)], str(output.CONTAMINATION_SITES_UD))
-        SnakemakeUtils.dump_object([ToolIOFile(input.coverage_interval_list)], str(output.COVERAGE_INTERVALS))
-        SnakemakeUtils.dump_object([ToolIOFile(input.evaluation_interval_list)], str(output.EVALUATION_INTERVALS))
+        SnakemakeUtils.dump_object([ToolIOValue(Path(input.fasta_genome))], Path(output.FASTA_GENOME))
+        SnakemakeUtils.dump_object([ToolIOFile(Path(input.fasta_genome))], Path(output.FASTA_GENOME_FILE))
+        SnakemakeUtils.dump_object([ToolIOFile(Path(input.dict_genome))], Path(output.DICT_GENOME))
+        SnakemakeUtils.dump_object([ToolIOFile(Path(input.dbsnp))], Path(output.DBSNP))
+        SnakemakeUtils.dump_object([ToolIOFile(Path(f)) for f in input.known_indels], Path(output.KNOWN_INDELS))
+        SnakemakeUtils.dump_object([ToolIOFile(Path(input.calling_intervals))], Path(output.CALLING_INTERVALS))
+        SnakemakeUtils.dump_object([ToolIOFile(Path(input.contamination_sites_bed)), ToolIOFile(Path(input.contamination_sites_mu)), ToolIOFile(Path(input.contamination_sites_ud))], Path(output.CONTAMINATION_SITES_UD))
+        SnakemakeUtils.dump_object([ToolIOFile(Path(input.coverage_interval_list))], Path(output.COVERAGE_INTERVALS))
+        SnakemakeUtils.dump_object([ToolIOFile(Path(input.evaluation_interval_list))], Path(output.EVALUATION_INTERVALS))
 
 rule prepare_interval_pickles:
     input:
         interval_files = expand(Path(config['intervals_location']) / 'interval_{i}.intervals', i = config['intervals'])
     output:
-        pickled_interval_files = expand(Path(config['intervals_location']) / 'interval_{i}.intervals.io', i = config['intervals'])
+        pickled_interval_files = expand(Path(config['working_dir']) / 'input' / 'interval_files' / 'interval_{i}.intervals.io', i = config['intervals'])
+    params:
+        output_dir = Path(config['working_dir']) / 'input' / 'interval_files'
     run:
         for interval_file in input.interval_files:
-            interval_file_io = f"{interval_file}.io"
-            SnakemakeUtils.dump_object([ToolIOFile(interval_file)], interval_file_io)
+            SnakemakeUtils.dump_object([ToolIOFile(Path(interval_file))], Path(params.output_dir) / f"{Path(interval_file).name}.io")
 
 
 rule move_qc:
@@ -196,42 +196,42 @@ rule move_qc:
         QC_done = Path(config['final_output_dir']) / 'qc' / 'qc_done.txt'
     run:
         for quality_yield_io in input.TXT:
-            quality_yield_file = SnakemakeUtils.load_object(quality_yield_io)[0].path
+            quality_yield_file = SnakemakeUtils.load_object(Path(quality_yield_io))[0].path
             file = Path(quality_yield_file).parts[-1]
-            out = Path(config['final_output_dir']) / "qc" / "quality_yield" / file
-            os.link(quality_yield_file, f'{out}.txt')
+            out = Path(config['final_output_dir']) / "qc" / "quality_yield" / f'{file}.txt'
+            quality_yield_file.link_to(out)
 
-        [os.link(f, Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / Path(f).parts[-1]) for f in input.base_distribution_by_cycle]
-        [os.link(f, Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / Path(f).parts[-1]) for f in input.base_distribution_by_cycle_metrics]
-        [os.link(f, Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / Path(f).parts[-1]) for f in input.insert_size_histogram_pdf]
-        [os.link(f, Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / Path(f).parts[-1]) for f in input.insert_size_metrics]
-        [os.link(f, Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / Path(f).parts[-1]) for f in input.quality_by_cycle_pdf]
-        [os.link(f, Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / Path(f).parts[-1]) for f in input.quality_by_cycle_metrics]
-        [os.link(f, Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / Path(f).parts[-1]) for f in input.quality_distribution_metrics]
-        [os.link(f, Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / Path(f).parts[-1]) for f in input.quality_distribution_pdf]
+        [Path(f).link_to(Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / Path(f).name) for f in input.base_distribution_by_cycle]
+        [Path(f).link_to(Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / Path(f).name) for f in input.base_distribution_by_cycle_metrics]
+        [Path(f).link_to(Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / Path(f).name) for f in input.insert_size_histogram_pdf]
+        [Path(f).link_to(Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / Path(f).name) for f in input.insert_size_metrics]
+        [Path(f).link_to(Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / Path(f).name) for f in input.quality_by_cycle_pdf]
+        [Path(f).link_to(Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / Path(f).name) for f in input.quality_by_cycle_metrics]
+        [Path(f).link_to(Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / Path(f).name) for f in input.quality_distribution_metrics]
+        [Path(f).link_to(Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / Path(f).name) for f in input.quality_distribution_pdf]
 
-        os.link(input.alignment_summary_metrics, output.alignment_summary_metrics)
-        os.link(input.gc_bias_detail_metrics, output.gc_bias_detail_metrics)
-        os.link(input.gc_bias_pdf, output.gc_bias_pdf)
-        os.link(input.gc_bias_summary_metrics, output.gc_bias_summary_metrics)
-        os.link(input.alignment_summary_metrics_agg, output.alignment_summary_metrics_agg)
-        os.link(input.bait_bias_detail_metrics, output.bait_bias_detail_metrics)
-        os.link(input.bait_bias_summary_metrics, output.bait_bias_summary_metrics)
-        os.link(SnakemakeUtils.load_object(input.mark_duplicates_metrics)[0].path, output.mark_duplicates_metrics)
-        os.link(input.gc_bias_detail_metrics_agg, output.gc_bias_detail_metrics_agg )
-        os.link(input.gc_bias_pdf_agg, output.gc_bias_pdf_agg)
-        os.link(input.gc_bias_summary_metrics_agg, output.gc_bias_summary_metrics_agg)
-        os.link(input.insert_size_histogram_pdf_agg, output.insert_size_histogram_pdf_agg)
-        os.link(input.insert_size_metrics_agg, output.insert_size_metrics_agg)
-        os.link(input.pre_adapter_detail_metrics, output.pre_adapter_detail_metrics)
-        os.link(input.pre_adapter_summary_metrics, output.pre_adapter_summary_metrics)
-        os.link(input.quality_distribution_pdf_agg, output.quality_distribution_pdf_agg )
-        os.link(input.quality_distribution_metrics_agg, output.quality_distribution_metrics_agg)
-        os.link(input.error_summary_metrics, output.error_summary_metrics)
-        os.link(input.TXT_metrics_checksum, output.TXT_metrics_checksum)
-        os.link(input.TXT_metrics_WGS, output.TXT_metrics_WGS)
-        os.link(input.TXT_metrics_rawWGS, output.TXT_metrics_rawWGS)
-        os.link(SnakemakeUtils.load_object(input.TXT_metrics_CRAM)[0].path, output.TXT_metrics_CRAM)
-        os.link(SnakemakeUtils.load_object(input.TXT_metrics_varCalling)[0].path, output.TXT_metrics_varCalling)
+        Path(input.alignment_summary_metrics).link_to(output.alignment_summary_metrics)
+        Path(input.gc_bias_detail_metrics).link_to(output.gc_bias_detail_metrics)
+        Path(input.gc_bias_pdf).link_to(output.gc_bias_pdf)
+        Path(input.gc_bias_summary_metrics).link_to(output.gc_bias_summary_metrics)
+        Path(input.alignment_summary_metrics_agg).link_to(output.alignment_summary_metrics_agg)
+        Path(input.bait_bias_detail_metrics).link_to(output.bait_bias_detail_metrics)
+        Path(input.bait_bias_summary_metrics).link_to(output.bait_bias_summary_metrics)
+        SnakemakeUtils.load_object(Path(input.mark_duplicates_metrics))[0].path.link_to(output.mark_duplicates_metrics)
+        Path(input.gc_bias_detail_metrics_agg).link_to(output.gc_bias_detail_metrics_agg)
+        Path(input.gc_bias_pdf_agg).link_to(output.gc_bias_pdf_agg)
+        Path(input.gc_bias_summary_metrics_agg).link_to(output.gc_bias_summary_metrics_agg)
+        Path(input.insert_size_histogram_pdf_agg).link_to(output.insert_size_histogram_pdf_agg)
+        Path(input.insert_size_metrics_agg).link_to(output.insert_size_metrics_agg)
+        Path(input.pre_adapter_detail_metrics).link_to(output.pre_adapter_detail_metrics)
+        Path(input.pre_adapter_summary_metrics).link_to(output.pre_adapter_summary_metrics)
+        Path(input.quality_distribution_pdf_agg).link_to(output.quality_distribution_pdf_agg)
+        Path(input.quality_distribution_metrics_agg).link_to(output.quality_distribution_metrics_agg)
+        Path(input.error_summary_metrics).link_to(output.error_summary_metrics)
+        Path(input.TXT_metrics_checksum).link_to(output.TXT_metrics_checksum)
+        Path(input.TXT_metrics_WGS).link_to(output.TXT_metrics_WGS)
+        Path(input.TXT_metrics_rawWGS).link_to(output.TXT_metrics_rawWGS)
+        SnakemakeUtils.load_object(Path(input.TXT_metrics_CRAM))[0].path.link_to(output.TXT_metrics_CRAM)
+        SnakemakeUtils.load_object(Path(input.TXT_metrics_varCalling))[0].path.link_to(output.TXT_metrics_varCalling)
 
         subprocess.run(f"touch {output.QC_done}", shell = True, executable='/bin/bash')
