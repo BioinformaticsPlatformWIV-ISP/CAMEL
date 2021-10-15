@@ -57,8 +57,8 @@ class CheckMReporter(Tool):
 
         # Add link to TSV file
         relative_path = Path('checkm') / 'output_checkm.tsv'
-        section.add_file(self._tool_inputs['TSV'][0].path, str(relative_path))
-        section.add_link_to_file('Download all (TSV)', str(relative_path))
+        section.add_file(self._tool_inputs['TSV'][0].path, relative_path)
+        section.add_link_to_file('Download all (TSV)', relative_path)
 
         # Set the output
         self._tool_outputs['HTML'] = [ToolIOValue(section)]
