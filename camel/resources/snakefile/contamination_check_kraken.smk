@@ -116,7 +116,7 @@ rule contamination_check_report_empty:
         from camel.app.io.tooliovalue import ToolIOValue
         from camel.app.tools.pipelines.quality_checks.htmlreportercontamination import HtmlReporterContamination
         section = HtmlReporterContamination.generate_empty_section()
-        SnakemakeUtils.dump_object([ToolIOValue(section)], output.VAL_HTML)
+        SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output.VAL_HTML))
 
 rule contamination_check_dump_summary_info:
     """

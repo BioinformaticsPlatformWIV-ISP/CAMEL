@@ -59,7 +59,7 @@ rule pointfinder_report_empty:
     run:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         from camel.app.tools.pointfinder.pointfinderreporter import PointFinderReporter
-        SnakePipelineUtils.create_empty_report_section(PointFinderReporter.TITLE, output.VAL_HTML)
+        SnakePipelineUtils.create_empty_report_section(PointFinderReporter.TITLE, Path(output.VAL_HTML))
 
 rule pointfinder_dump_summary_info:
     """
@@ -72,7 +72,7 @@ rule pointfinder_dump_summary_info:
     run:
         import json
         from camel.app.components.html.htmltablecell import HtmlTableCell
-        informs = SnakemakeUtils.load_object(input.INFORMS)
+        informs = SnakemakeUtils.load_object(Path(input.INFORMS))
         mutations = []
         for row in informs['mutations']:
             mutations.append([e if not isinstance(e, HtmlTableCell) else e.text for e in row])
