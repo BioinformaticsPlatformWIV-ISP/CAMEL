@@ -35,11 +35,11 @@ rule contamination_check_kraken2_run:
         from camel.app.tools.kraken.kraken2 import Kraken2
         kraken2 = Kraken2(camel)
         if params.read_type == 'PE':
-            kraken2.add_input_files(SnakePipelineUtils.extracts_fq_input(input.IO, key_pe='FASTQ_PE'))
+            kraken2.add_input_files(SnakePipelineUtils.extracts_fq_input(Path(input.IO), key_pe='FASTQ_PE'))
         else:
             kraken2.add_input_files(SnakePipelineUtils.extracts_fq_input(
-                input.IO, key_se='FASTQ', read_type=params.read_type))
-        kraken2.add_input_files({'DB': [ToolIODirectory(input.DB)]})
+                Path(input.IO), key_se='FASTQ', read_type=params.read_type))
+        kraken2.add_input_files({'DB': [ToolIODirectory(Path(input.DB))]})
         step = Step(rule, kraken2, camel, params.running_dir, config)
         kraken2.update_parameters(threads=threads)
         step.run_step()
@@ -79,7 +79,7 @@ rule contamination_check_krona:
         from camel.app.tools.krona.krona import Krona
         krona = Krona(camel)
         SnakemakeUtils.add_pickle_inputs(krona, input)
-        step = Step(rule, krona, camel, params.running_dir, config)
+        step = Step(rule, krona, camel, Path(params.running_dir), config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(krona, output)
 
@@ -127,7 +127,7 @@ rule contamination_check_dump_summary_info:
     output:
         TSV = Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_SUMMARY
     run:
-        informs = SnakemakeUtils.load_object(input.INFORMS_species)
+        informs = SnakemakeUtils.load_object(Path(input.INFORMS_species))
         summary_data = [
             ('kraken2_expected_species', informs['expected'][0]),
             ('kraken2_expected_species_occurrence', informs['expected'][1]),

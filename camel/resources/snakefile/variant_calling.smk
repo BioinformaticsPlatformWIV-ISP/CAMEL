@@ -261,7 +261,7 @@ rule variant_calling_create_consensus:
         bcftools_consensus = BcftoolsConsensus(camel)
         SnakemakeUtils.add_pickle_inputs(bcftools_consensus, input)
         bcftools_consensus.update_parameters(output_filename = params.output_filename)
-        step = Step(rule, bcftools_consensus, camel, params.running_dir, config)
+        step = Step(rule, bcftools_consensus, camel, Path(params.running_dir), config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(bcftools_consensus, output)
 
