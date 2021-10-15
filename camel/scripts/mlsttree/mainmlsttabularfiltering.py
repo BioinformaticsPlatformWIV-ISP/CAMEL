@@ -129,11 +129,11 @@ class MainTabularFiltering(object):
         """
         filtered_loci_sorted = sorted([locus for locus in allele_ids_by_loci.keys() if locus not in bad_loci])
         with open(output_path, 'w') as handle:
-            handle.write('\t'.join(['#Name', 'ST'] + filtered_loci_sorted))
+            handle.write('\t'.join(['#Strain'] + filtered_loci_sorted))
             handle.write('\n')
             for i, sample in enumerate([sample for sample in self._header[1:] if sample not in bad_samples]):
                 handle.write(
-                    '\t'.join([sample, '-'] + [allele_ids_by_loci[locus][i] for locus in filtered_loci_sorted]))
+                    '\t'.join([sample] + [allele_ids_by_loci[locus][i] for locus in filtered_loci_sorted]))
                 handle.write('\n')
         logging.info(f"Output file generated: {output_path}")
 

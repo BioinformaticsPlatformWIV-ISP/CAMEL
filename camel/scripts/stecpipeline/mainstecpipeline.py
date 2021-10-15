@@ -85,10 +85,10 @@ class MainSTECPipeline(ReportPipeline):
         """
         links = []
         if self._args.fastq_se is not None:
-            gzipped = FileSystemHelper.is_gzipped(self._args.fastq_se)
-            links.append([self._args.fastq_se, f"{self.sample_name}.fastq{'.gz' if gzipped else ''}"])
+            gzipped = FileSystemHelper.is_gzipped(Path(self._args.fastq_se))
+            links.append([Path(self._args.fastq_se), f"{self.sample_name}.fastq{'.gz' if gzipped else ''}"])
         else:
-            for read_nb, path in enumerate(self._args.fastq_pe, start=1):
+            for read_nb, path in enumerate([Path(x) for x in self._args.fastq_pe], start=1):
                 gzipped = FileSystemHelper.is_gzipped(path)
                 links.append([path, f"{self.sample_name}_{read_nb}.fastq{'.gz' if gzipped else ''}"])
         return links
