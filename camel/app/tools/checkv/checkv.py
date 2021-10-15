@@ -33,11 +33,11 @@ class CheckV(Tool):
         Executes this tool.
         :return: None
         """
-        dir_out = Path(self._folder) / 'out'
+        dir_out = self.folder / 'out'
         self._command.command = ' '.join([
             self._tool_command,
             'end_to_end',
-            self._tool_inputs['FASTA'][0].path,
+            str(self._tool_inputs['FASTA'][0].path),
             str(dir_out),
         ] + self._build_options())
         self._execute_command()
@@ -60,13 +60,3 @@ class CheckV(Tool):
         """
         if self._command.returncode != 0:
             raise ToolExecutionError(f"Error executing {self.name}: {self._command.stderr}")
-
-
-if __name__ == '__main__':
-    dir_work = Path('/scratch/bebog/checkv')
-    checkv = CheckV(Camel.get_instance())
-    checkv.add_input_files({
-        'FASTA': [ToolIOFile('/scratch/bebog/checkv/input/msa_be.fasta')]
-    })
-    checkv.run(str(dir_work / 'work'))
-    print(checkv.tool_outputs)
