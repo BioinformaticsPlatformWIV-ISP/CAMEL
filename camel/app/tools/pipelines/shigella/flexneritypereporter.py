@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 from typing import List, Any
 
 from camel.app.camel import Camel
@@ -24,7 +24,7 @@ class FlexneriTypeReporter(Tool):
         """
         super().__init__('Shigella: flexneri type reporter', '0.1', camel)
         self._section = HtmlReportSection('Flexneri type determination')
-        self._sub_folder = 'subspecies_identification'
+        self._sub_folder = Path('subspecies_identification')
 
     def _execute_tool(self) -> None:
         """
@@ -36,9 +36,6 @@ class FlexneriTypeReporter(Tool):
         if self._input_informs['subspecies']['detected_subspecies'] != 'flexneri':
             self._section.add_warning_message('Subspecies might not be <i>flexneri</i>.')
         self.__add_profiles_table()
-        print(self._tool_inputs)
-        import pprint
-        pprint.pprint(self._input_informs)
 
         self._section.add_header('Hits', 4)
         table_data = []
@@ -48,8 +45,8 @@ class FlexneriTypeReporter(Tool):
                 HtmlTableCell('Yes', color='green') if info['detected'] is True else HtmlTableCell('No', color='red'),
                 ', '.join(info['mutations']['stop']) if len(info['mutations']['stop']) > 0 else '-',
                 ', '.join(info['mutations']['frameshift']) if len(info['mutations']['frameshift']) > 0 else '-',
-                HtmlTableCell('Download (VCF)', link=self._section.add_file(info['VCF'], os.path.join(
-                    self._sub_folder, f'variants-csq_{locus}.vcf'))) if info['detected'] is True else '-'
+                HtmlTableCell('Download (VCF)', link=str(self._section.add_file(
+                    info['VCF'], self._sub_folder / f'variants-csq_{locus}.vcf'))) if info['detected'] is True else '-'
             ])
         header = ['Locus', 'Detected', 'Stop mutations', 'Frameshift mutations', 'VCF']
         self._section.add_table(table_data, header, [('class', 'data')])

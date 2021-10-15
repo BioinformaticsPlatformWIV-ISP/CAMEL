@@ -20,7 +20,7 @@ rule subspecies_identification_speG_depth:
         from camel.app.tools.samtools.samtoolsdepth import SamtoolsDepth
         samtools_depth = SamtoolsDepth(camel)
         SnakemakeUtils.add_pickle_inputs(samtools_depth, input)
-        samtools_depth.add_input_files({'BED': [ToolIOFile(params.bed_file)]})
+        samtools_depth.add_input_files({'BED': [ToolIOFile(Path(params.bed_file))]})
         step = Step(rule, samtools_depth, camel, params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(samtools_depth, output)
@@ -73,7 +73,7 @@ rule subspecies_identification_report_species_empty:
         VAL_HTML = Path(config['working_dir']) / subspecies_identification.OUTPUT_SPECIES_REPORT_EMPTY
     run:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-        SnakePipelineUtils.create_empty_report_section('Species identification', output.VAL_HTML)
+        SnakePipelineUtils.create_empty_report_section('Species identification', Path(output.VAL_HTML))
 
 rule subspecies_identification_detect_subspecies:
     """
@@ -121,7 +121,7 @@ rule subspecies_identification_report_subspecies_empty:
         VAL_HTML = Path(config['working_dir']) / subspecies_identification.OUTPUT_SUBSPECIES_REPORT_EMPTY
     run:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-        SnakePipelineUtils.create_empty_report_section('Subspecies identification', output.VAL_HTML)
+        SnakePipelineUtils.create_empty_report_section('Subspecies identification', Path(output.VAL_HTML))
 
 rule subspecies_identification_dump_summary_info:
     """
@@ -133,8 +133,8 @@ rule subspecies_identification_dump_summary_info:
     output:
         TSV = Path(config['working_dir']) / subspecies_identification.OUTPUT_SUBSPECIES_SUMMARY
     run:
-        informs_subspecies = SnakemakeUtils.load_object(input.INFORMS_subspecies)
-        informs_species = SnakemakeUtils.load_object(input.INFORMS_species)
+        informs_subspecies = SnakemakeUtils.load_object(Path(input.INFORMS_subspecies))
+        informs_species = SnakemakeUtils.load_object(Path(input.INFORMS_species))
         output_data = [
             ['detected_species', informs_species['detected_species']],
             ['speG_present', informs_species['speG_present']],
@@ -163,15 +163,15 @@ rule subspecies_identification_export_database_info:
         from camel.app.components.html.htmlreportsection import HtmlReportSection
         section = HtmlReportSection('Database information')
         relative_path_subspecies = section.add_file(
-            SnakemakeUtils.load_object(input.FASTA_subspecies)[0].path, str(Path('subspecies') / 'subspecies.fasta'))
+            SnakemakeUtils.load_object(Path(input.FASTA_subspecies))[0].path, Path('subspecies') / 'subspecies.fasta')
         section.add_link_to_file('Subspecies sequences (FASTA)', relative_path_subspecies)
 
         relative_path_flexneri = section.add_file(
-            SnakemakeUtils.load_object(input.FASTA_subspecies)[0].path, str(Path('subspecies', 'flexneri.fasta')))
+            SnakemakeUtils.load_object(Path(input.FASTA_subspecies))[0].path, Path('subspecies', 'flexneri.fasta'))
         section.add_link_to_file('Flexneri type sequences (FASTA)', relative_path_flexneri)
 
         relative_path_gtr = section.add_file(
-            params.fasta_promotor, str(Path('subspecies', 'gtr_promotor.fasta')))
+            Path(params.fasta_promotor), Path('subspecies', 'gtr_promotor.fasta'))
         section.add_link_to_file('gtr promotor (FASTA)', relative_path_gtr)
 
-        SnakemakeUtils.dump_object([ToolIOValue(section)], output[0])
+        SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output[0]))

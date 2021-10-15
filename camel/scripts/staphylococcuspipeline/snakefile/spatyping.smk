@@ -22,8 +22,8 @@ rule spa_typing_blastn:
         from camel.app.tools.spatyping.spatyping import SpaTyping
         from camel.app.io.tooliofile import ToolIOFile
         blastn = Blastn(Camel.get_instance())
-        SnakemakeUtils.add_pickle_input(blastn, 'FASTA', input.FASTA)
-        blastn.add_input_files({'DB_BLAST': [ToolIOFile(input.DB_BLAST)]})
+        SnakemakeUtils.add_pickle_input(blastn, 'FASTA', Path(input.FASTA))
+        blastn.add_input_files({'DB_BLAST': [ToolIOFile(Path(input.DB_BLAST))]})
         blastn.update_parameters(output_format=SpaTyping.BLASTN_OUTPUT_FORMAT)
         step = Step(rule, blastn, Camel.get_instance(), params.running_dir, config)
         step.run_step()
@@ -44,8 +44,8 @@ rule spa_typing_run:
     run:
         from camel.app.tools.spatyping.spatyping import SpaTyping
         spatyping = SpaTyping(Camel.get_instance())
-        SnakemakeUtils.add_pickle_input(spatyping, 'TSV', input.TSV)
-        spatyping.add_input_files({'CSV_profiles': [ToolIOFile(input.CSV_profiles)]})
+        SnakemakeUtils.add_pickle_input(spatyping, 'TSV', Path(input.TSV))
+        spatyping.add_input_files({'CSV_profiles': [ToolIOFile(Path(input.CSV_profiles))]})
         step = Step(rule, spatyping, Camel.get_instance(), params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(spatyping, output)
@@ -77,7 +77,7 @@ rule spa_typing_report_empty:
         VAL_HTML = Path(config['working_dir']) / spatyping_workflow.OUTPUT_SPATYPING_REPORT_EMPTY
     run:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-        SnakePipelineUtils.create_empty_report_section('<i>spa</i> typing', output.VAL_HTML)
+        SnakePipelineUtils.create_empty_report_section('<i>spa</i> typing', Path(output.VAL_HTML))
 
 rule spa_typing_summary:
     """
@@ -88,7 +88,7 @@ rule spa_typing_summary:
     output:
         TSV = Path(config['working_dir']) / spatyping_workflow.OUTPUT_SPATYPING_SUMMARY
     run:
-        informs = SnakemakeUtils.load_object(input.INFORMS)
+        informs = SnakemakeUtils.load_object(Path(input.INFORMS))
         with open(output.TSV, 'w') as handle:
             for key in ('spa_type', 'spa_type_repeats'):
                 handle.write('\t'.join([key, str(informs[key]) if informs[key] is not None else 'NA']))

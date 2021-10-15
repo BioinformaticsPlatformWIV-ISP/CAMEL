@@ -65,7 +65,7 @@ rule report_pickle_citations:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         section = SnakePipelineUtils.create_citations_section(
             params.citation_keys['other'], params.citation_keys['main'])
-        SnakemakeUtils.dump_object([ToolIOValue(section)], output.HTML)
+        SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output.HTML))
 
 rule report_command_section:
     """
@@ -94,13 +94,13 @@ rule report_command_section:
         from camel.app.snakemake.snakemakeutils import SnakemakeUtils
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         informs = []
-        for content in [SnakemakeUtils.load_object(io) for io in input]:
+        for content in [SnakemakeUtils.load_object(Path(io)) for io in input]:
             if type(content) is dict:
                 informs.append(content)
             elif type(content) is list:
                 informs.extend(content)
         section = SnakePipelineUtils.create_commands_section(informs, params.working_dir)
-        SnakemakeUtils.dump_object([ToolIOValue(section)], output.HTML)
+        SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output.HTML))
 
 rule report_combine_all:
     """
@@ -156,30 +156,30 @@ rule report_combine_all:
 
         # Add header section
         report = SnakePipelineUtils.init_pipeline_report(
-            output.HTML, params.output_dir, params.pipeline_info)
+            Path(output.HTML), Path(params.output_dir), params.pipeline_info)
         report.add_html_object(SnakePipelineUtils.create_input_section(
             params.sample_name, datetime.datetime.now(), params.pipeline_info['version'],
             ', '.join(entry['name'] for entry in params.fastq_input), [('Detection method', params.detection_method)]))
 
         # Add report content
         report_structure = [
-            ('Read trimming and basic QC', 'trim', [input.report_trimming]),
-            ('Assembly', 'assem', [input.report_assembly]),
-            ('Advanced QC', 'adv_qc', [input.report_kraken, input.report_adv_qc]),
-            ('<i>spa</i> typing', 'spa', [input.report_spa_typing]),
-            ('SCC<i>mec</i> typing', 'sccmec', [
-                input.report_sccmec_genes, input.report_sccmec_cassette, input.report_sccmec_typing]),
-            ('AMR detection', 'amr', [
-                input.report_resfinder, input.report_ncbi_amr, input.report_pointfinder, input.report_lrefinder]),
-            ('Virulence detection', 'virulence', [
+            ('Read trimming and basic QC', 'trim', [Path(input.report_trimming)]),
+            ('Assembly', 'assem', [Path(input.report_assembly)]),
+            ('Advanced QC', 'adv_qc', [Path(x) for x in (input.report_kraken, input.report_adv_qc)]),
+            ('<i>spa</i> typing', 'spa', [Path(input.report_spa_typing)]),
+            ('SCC<i>mec</i> typing', 'sccmec', [Path(x) for x in (
+                input.report_sccmec_genes, input.report_sccmec_cassette, input.report_sccmec_typing)]),
+            ('AMR detection', 'amr', [Path(x) for x in (
+                input.report_resfinder, input.report_ncbi_amr, input.report_pointfinder, input.report_lrefinder)]),
+            ('Virulence detection', 'virulence', [Path(x) for x in (
                 input.report_vfdb_core, input.report_vf_exoenzyme, input.report_vf_hostimm, input.report_vf_toxin,
-                input.report_se_toxins]),
-            ('Plasmid characterization', 'plasmid', [
+                input.report_se_toxins)]),
+            ('Plasmid characterization', 'plasmid', [Path(x) for x in (
                 input.report_plasmidfinder, input.report_plasmidspades, input.report_plasmid_resfinder,
-                input.report_plasmid_ndaro]),
-            ('Sequence typing', 'st', [input.report_mlst, input.report_cgmlst]),
-            ('Citations', 'citations', [input.report_citations]),
-            ('Commands', 'commands', [input.report_commands])
+                input.report_plasmid_ndaro)]),
+            ('Sequence typing', 'st', [Path(x) for x in (input.report_mlst, input.report_cgmlst)]),
+            ('Citations', 'citations', [Path(input.report_citations)]),
+            ('Commands', 'commands', [Path(input.report_commands)])
         ]
         SnakePipelineUtils.add_report_content(report, report_structure)
 
