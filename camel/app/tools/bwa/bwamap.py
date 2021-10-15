@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 from camel.app.camel import Camel
@@ -52,7 +51,7 @@ class BWAMap(BWA):
         :return: None
         """
         if 'FASTQ_PE' in self._tool_inputs:
-            self._fastq_inputs_str = ' '.join(f.path for f in self._tool_inputs['FASTQ_PE'])
+            self._fastq_inputs_str = ' '.join(str(f.path) for f in self._tool_inputs['FASTQ_PE'])
         elif 'FASTQ_SE' in self._tool_inputs:
             self._fastq_inputs_str = self._tool_inputs['FASTQ_SE'][0].path
         elif 'FASTQ_INT' in self._tool_inputs:
@@ -91,7 +90,7 @@ class BWAMap(BWA):
         Set proper outputs for BWA mem
         :return: None
         """
-        self._tool_outputs['SAM'] = [ToolIOFile(os.path.join(self._folder, BWAMap.OUTPUT_NAME))]
+        self._tool_outputs['SAM'] = [ToolIOFile(Path(self._folder) / BWAMap.OUTPUT_NAME)]
 
     def __build_command(self, pipe_in: bool = False, pipe_out: bool =  False) -> None:
         """
