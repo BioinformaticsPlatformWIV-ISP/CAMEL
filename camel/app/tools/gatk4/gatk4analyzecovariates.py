@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
@@ -64,5 +64,5 @@ class GATK4AnalyzeCovariates(GATK4):
         Supersedes _set_output in GATK class.
         :return: None
         """
-        self._tool_outputs['PDF'] = [ToolIOFile(os.path.join(self._folder, self._parameters['pdf_output'].value))]
-        self._tool_outputs['CSV'] = [ToolIOFile(os.path.join(self._folder, self._parameters['csv_output'].value))]
+        self._tool_outputs['PDF'] = [ToolIOFile(Path(self._folder) / self._parameters['pdf_output'].value)]
+        self._tool_outputs['CSV'] = [ToolIOFile(Path(self._folder) / self._parameters['csv_output'].value)]
