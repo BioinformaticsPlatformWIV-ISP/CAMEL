@@ -1,6 +1,6 @@
 from camel.app.camel import Camel
 from camel.app.tools.gatk4.gatk4 import GATK4
-
+import logging
 
 class GATK4GenotypeGVCFs(GATK4):
 
@@ -25,7 +25,9 @@ class GATK4GenotypeGVCFs(GATK4):
         Check input for a tool and prepare command line parameters for input
         :return: None
         """
+        logging.debug(self._required_inputs)
         if self._parameters['gendb'] is not None:
+            logging.debug("test")
             self._required_inputs.remove('gVCF')
 
         super(GATK4GenotypeGVCFs, self)._check_input()
