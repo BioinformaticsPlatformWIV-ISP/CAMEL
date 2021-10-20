@@ -1,5 +1,5 @@
 import logging
-import os
+from pathlib import Path
 
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
@@ -71,7 +71,7 @@ class SamtoolsMerge(Samtools):
             self._tool_command,
             ' '.join(self._build_options(excluded_parameters=['output_filename'])),
             self._parameters['output_filename'].value,
-            ' '.join([file.path for file in self._tool_inputs[self.__input_file_type]])
+            ' '.join([str(file.path) for file in self._tool_inputs[self.__input_file_type]])
         ])
 
     def __set_output(self):
@@ -80,8 +80,8 @@ class SamtoolsMerge(Samtools):
         :return: None
         """
         output_file_type = self.__determine_output_file_type()
-        output_file_path = os.path.join(self._folder, self._parameters['output_filename'].value)
-        self._tool_outputs[output_file_type] = [ToolIOFile(output_file_path)]
+        output_file_path = self._folder / self._parameters['output_filename'].value
+        self._tool_outputs[output_file_type] = [ToolIOFile(Path(output_file_path))]
 
     def __determine_output_file_type(self):
         """
