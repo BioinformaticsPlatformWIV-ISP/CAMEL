@@ -1,3 +1,6 @@
+import abc
+from pathlib import Path
+
 from camel.app.camel import Camel
 from camel.app.error.invalidparametererror import InvalidParameterError
 from camel.app.error.toolexecutionerror import ToolExecutionError
@@ -5,9 +8,10 @@ from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.samtools.samtools import Samtools
 
 
-class SamtoolsView(Samtools):
+class SamtoolsView(Samtools, metaclass=abc.ABCMeta):
     """
     SAM <-> BAM Conversion
+    SAM/BAM <-> CRAM
     """
 
     def __init__(self, camel: Camel) -> None:
@@ -17,6 +21,7 @@ class SamtoolsView(Samtools):
         """
         super().__init__('samtools view', '1.9', camel)
         self.__input_key = None
+        self._input_string = ''
 
     def _check_input(self) -> None:
         """
@@ -27,6 +32,8 @@ class SamtoolsView(Samtools):
             self.__input_key = 'SAM'
         elif 'BAM' in self._tool_inputs:
             self.__input_key = 'BAM'
+        elif 'CRAM' in self._tool_inputs:
+            self.__input_key = 'CRAM'
         else:
             raise ValueError("No input file found")
         super(Samtools, self)._check_input()
@@ -36,7 +43,7 @@ class SamtoolsView(Samtools):
         Checks the tool parameters.
         :return: None
         """
-        if self._parameters['output_format'].value.upper() not in ('SAM', 'BAM'):
+        if self._parameters['output_format'].value.upper() not in ('SAM', 'BAM', 'CRAM'):
             raise InvalidParameterError("Invalid output format (BAM/SAM supported)")
         super(SamtoolsView, self)._check_parameters()
 
@@ -45,6 +52,7 @@ class SamtoolsView(Samtools):
         Executes this tool.
         :return: None
         """
+        self.__set_input()
         self.__build_command()
         self._execute_command()
         self.__set_output()
@@ -62,14 +70,7 @@ class SamtoolsView(Samtools):
             excluded_parameters.append('output_filename')
 
         # Construct command
-        command_parts = [
-            self._tool_command,
-            ' '.join(self._build_options(excluded_parameters))
-        ]
-
-        # Add input file
-        if not pipe_in:
-            command_parts.append(str(self._tool_inputs[self.__input_key][0].path))
+        command_parts = [self._tool_command, ' '.join(self._build_options(excluded_parameters)), self._input_string]
 
         # Add regions (when specified)
         if 'regions' in self._parameters:
@@ -77,12 +78,27 @@ class SamtoolsView(Samtools):
 
         self._command.command = ' '.join(command_parts)
 
+    def __set_input(self, pipe_in: bool = False, pipe_out: bool = False) -> None:
+        """
+        Set the input specification
+        :return: None
+        """
+        input_parts = [self._input_string]
+
+        if 'FASTA_REF' in self._tool_inputs:
+            input_parts.append(f"-T {self._tool_inputs['FASTA_REF'][0].path}")
+
+        if pipe_in is False:
+            input_parts.append(str(self._tool_inputs[self.__input_key][0].path))
+
+        self._input_string = " ".join(input_parts)
+
     def __set_output(self) -> None:
         """
         Sets the tool output.
         :return: None
         """
-        output_path = self.folder / self._parameters['output_filename'].value
+        output_path = Path(self.folder) / self._parameters['output_filename'].value
         if not output_path.is_file:
             raise ToolExecutionError(f"Expected {self._name} output not generated")
         output_key = self._parameters['output_format'].value.upper()
@@ -105,6 +121,7 @@ class SamtoolsView(Samtools):
         :param pipe_out: True if tool generates piped output
         :return: None
         """
+        self.__set_input(pipe_in, pipe_out)
         self.__build_command(pipe_in, pipe_out)
 
     def _after_pipe(self, stderr: str, is_last_in_pipe: bool) -> None:
