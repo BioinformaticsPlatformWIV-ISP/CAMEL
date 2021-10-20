@@ -25,9 +25,7 @@ class GATK4GenotypeGVCFs(GATK4):
         Check input for a tool and prepare command line parameters for input
         :return: None
         """
-        logging.debug(self._required_inputs)
         if self._parameters['gendb'] is not None:
-            logging.debug("test")
             self._required_inputs.remove('gVCF')
 
         super(GATK4GenotypeGVCFs, self)._check_input()
@@ -57,4 +55,6 @@ class GATK4GenotypeGVCFs(GATK4):
 
         self._option_string += ' '
 
-        super(GATK4HaplotypeCaller, self)._build_command()
+        self._specific_parameters.append("annotation_group")
+
+        super(GATK4GenotypeGVCFs, self)._build_command()
