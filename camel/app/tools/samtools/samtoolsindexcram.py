@@ -53,7 +53,7 @@ class SamtoolsIndexCram(Samtools):
             basename = self._parameters['output_filename'].value
         else:
             basename = self._tool_inputs['CRAM'][0].basename
-        new_path = Path(self._folder) / basename
+        new_path = Path(self.folder) / basename
         if (not new_path.is_symlink()) and (new_path != self._tool_inputs['CRAM'][0].path):
             new_path.symlink_to(self._tool_inputs['CRAM'][0].path)
         return new_path

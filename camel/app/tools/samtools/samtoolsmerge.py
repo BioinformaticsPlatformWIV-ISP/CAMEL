@@ -80,7 +80,7 @@ class SamtoolsMerge(Samtools):
         :return: None
         """
         output_file_type = self.__determine_output_file_type()
-        output_file_path = self._folder / self._parameters['output_filename'].value
+        output_file_path = self.folder / self._parameters['output_filename'].value
         self._tool_outputs[output_file_type] = [ToolIOFile(Path(output_file_path))]
 
     def __determine_output_file_type(self):

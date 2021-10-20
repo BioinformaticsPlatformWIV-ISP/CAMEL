@@ -49,7 +49,7 @@ class SamtoolsIndex(Samtools):
             basename = self._parameters['output_filename'].value
         else:
             basename = self._tool_inputs['BAM'][0].basename
-        new_path = self._folder / basename
+        new_path = self.folder / basename
         if (not new_path.is_symlink()) and (new_path != self._tool_inputs['BAM'][0].path):
             new_path.symlink_to(self._tool_inputs['BAM'][0].path)
         return new_path

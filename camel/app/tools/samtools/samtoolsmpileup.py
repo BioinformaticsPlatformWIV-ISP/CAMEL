@@ -73,9 +73,9 @@ class SamtoolsMPileup(Samtools):
         :return: None
         """
         output_files = {
-            'vcf': ('VCF_GZ', self._folder / self._parameters['output_filename'].value),
-            'bcf': ('BCF', self._folder / self._parameters['output_filename'].value),
-            'pileup': ('PILEUP', self._folder / self._parameters['output_filename'].value)
+            'vcf': ('VCF_GZ', self.folder / self._parameters['output_filename'].value),
+            'bcf': ('BCF', self.folder / self._parameters['output_filename'].value),
+            'pileup': ('PILEUP', self.folder / self._parameters['output_filename'].value)
         }
         key, path = output_files.get(self._parameters['output_format'].value)
         self._tool_outputs[key] = [ToolIOFile(path)]
