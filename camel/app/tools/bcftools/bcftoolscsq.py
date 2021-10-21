@@ -1,5 +1,3 @@
-import os
-
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
@@ -34,7 +32,7 @@ class BcftoolsCsq(Tool):
         """
         self.__build_command()
         self._execute_command()
-        self._tool_outputs['VCF'] = [ToolIOFile(os.path.join(self._folder, self._parameters['output_filename'].value))]
+        self._tool_outputs['VCF'] = [ToolIOFile(self.folder / self._parameters['output_filename'].value)]
 
     @property
     def _input_key(self):
@@ -52,11 +50,11 @@ class BcftoolsCsq(Tool):
         parts = [
             self._tool_command,
             ' '.join(self._build_options()),
-            self._tool_inputs[self._input_key][0].path]
+            str(self._tool_inputs[self._input_key][0].path)]
         if 'GFF' in self._tool_inputs:
-            parts.insert(3, '--gff-annot {}'.format(self._tool_inputs['GFF'][0].path))
+            parts.insert(3, f"--gff-annot {self._tool_inputs['GFF'][0].path}")
         if 'FASTA' in self._tool_inputs:
-            parts.insert(3, '--fasta-ref {}'.format(self._tool_inputs['FASTA'][0].path))
+            parts.insert(3, f"--fasta-ref {self._tool_inputs['FASTA'][0].path}")
         self._command.command = ' '.join(parts)
 
     def _check_command_output(self):

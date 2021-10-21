@@ -1,9 +1,10 @@
-import logging
-
 import copy
+import logging
 import os
 import shutil
 import tempfile
+from pathlib import Path
+
 from Bio.Phylo import NewickIO
 from Bio.Phylo.Newick import Tree
 
@@ -18,7 +19,7 @@ class NewickUtils(object):
     """
 
     @staticmethod
-    def render(camel: Camel, tree_path: str, output_path: str, plot_type: str, output_format: str = 'png') -> None:
+    def render(camel: Camel, tree_path: Path, output_path: Path, plot_type: str, output_format: str = 'png') -> None:
         """
         Renders the tree to image.
         :param camel: Camel instance
@@ -32,7 +33,7 @@ class NewickUtils(object):
         tree_vector = TreeVector(camel)
         tree_vector.add_input_files({'NWK': [ToolIOFile(tree_path)]})
         tree_vector.update_parameters(output_format=output_format, output_filename='tree.png', type=plot_type)
-        tree_vector.run(tempfile.mkdtemp(prefix='tree_vector', dir=camel.config['temp_dir']))
+        tree_vector.run(Path(tempfile.mkdtemp(prefix='tree_vector', dir=camel.config['temp_dir'])))
         logging.debug(f"TreeVector - stdout: {tree_vector.stdout}")
         logging.debug(f"TreeVector - stderr: {tree_vector.stderr}")
         shutil.copyfile(tree_vector.tool_outputs['PNG'][0].path, output_path)

@@ -55,7 +55,7 @@ class CheckVReporter(Tool):
                 for record in data.to_dict('records')
             ], [col.replace('_', ' ') for col in data.columns]))
             section.add_line_break()
-            relative_path = str(Path('checkv') / Path(tsv_file).name)
+            relative_path = Path('checkv') / Path(tsv_file).name
             section.add_link_to_file('Download (TSV)', relative_path)
             section.add_file(tsv_file, relative_path)
             section.add_horizontal_line()

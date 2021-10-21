@@ -1,12 +1,12 @@
 import logging
 from typing import Optional, List
 
-import os
 import shutil
 
 from camel.app.components.html.htmlbase import HtmlBase
 from camel.app.components.html.htmlelement import HtmlElement
 from camel.resources import LOGO_SCIENSANO
+from pathlib import Path
 
 
 class HtmlReport(HtmlBase):
@@ -14,7 +14,7 @@ class HtmlReport(HtmlBase):
     This class represents an HTML report.
     """
 
-    def __init__(self, filename: str, output_dir: str=None, include_js: Optional[List[str]]=None):
+    def __init__(self, filename: Path, output_dir: Path = None, include_js: Optional[List[Path]] = None):
         """
         Initializes the report.
         :param filename: Filename
@@ -27,7 +27,7 @@ class HtmlReport(HtmlBase):
         self._include_js = include_js
 
     @property
-    def output_dir(self) -> str:
+    def output_dir(self) -> Path:
         """
         Returns the output directory.
         :return: Output directory
@@ -39,19 +39,19 @@ class HtmlReport(HtmlBase):
         Saves the report.
         :return: None
         """
-        logging.info("Saving report '{}'".format(os.path.basename(self._filename)))
+        logging.info(f"Saving report '{self._filename.name}'")
         if self._filename is None:
             raise ValueError("Report with filename 'None' cannot be saved")
-        with open(self._filename, 'w', encoding='utf-8') as handle:
+        with self._filename.open('w', encoding='utf-8') as handle:
             self.add_raw('<!DOCTYPE HTML>')
             handle.write(self.to_html())
         if self._include_js:
             if self._output_dir is None:
                 raise ValueError("Cannot enable Javascript when there is no output directory")
             for path in self._include_js:
-                shutil.copyfile(path, os.path.join(self._output_dir, os.path.basename(path)))
+                shutil.copyfile(path, self._output_dir / path.name)
 
-    def initialize(self, title: str, css_style: str=None) -> None:
+    def initialize(self, title: str, css_style: Path = None) -> None:
         """
         Initializes an HTML report.
         :param title: Report title
@@ -65,10 +65,10 @@ class HtmlReport(HtmlBase):
             self._doc.stag('meta', charset='UTF-8')
             if self._include_js:
                 for path in self._include_js:
-                    with self.get_tag('script', [('type', 'text/javascript'), ('src', os.path.basename(path))]):
+                    with self.get_tag('script', [('type', 'text/javascript'), ('src', path.name)]):
                         self._doc.text('')
             if css_style is not None:
-                with open(css_style) as css, self._doc.tag('style', type="text/css"):
+                with css_style.open() as css, self._doc.tag('style', type="text/css"):
                     self._doc.asis(css.read())
 
     def add_pipeline_header(self, pipeline_name: str) -> None:
@@ -81,9 +81,9 @@ class HtmlReport(HtmlBase):
             raise ValueError("Can't add the pipeline header without an output directory")
         with self.get_tag('div', [('class', 'header')]):
             with self.get_tag('div', [('id', 'header_title')]):
-                self._doc.stag('img', src=os.path.basename(LOGO_SCIENSANO), alt='Sciensano Belgium', id='header_logo',
+                self._doc.stag('img', src=LOGO_SCIENSANO.name, alt='Sciensano Belgium', id='header_logo',
                                height=80)
-                self.add_text("{} report".format(pipeline_name))
+                self.add_text(f"{pipeline_name} report")
         shutil.copy(LOGO_SCIENSANO, self._output_dir)
 
     def to_html(self) -> str:

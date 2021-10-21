@@ -29,12 +29,12 @@ rule flexneri_call_variants_gtr_promotor:
     run:
         from camel.app.components.workflows.utils.fastqinput import FastqInput
         from camel.app.components.workflows.variantcallingwrapper import VariantCallingWrapper
-        workflow_input = FastqInput.from_fq_dict(input.IO, params.read_type)
+        workflow_input = FastqInput.from_fq_dict(Path(input.IO), params.read_type)
         ref_info = {'path': params.promotor_fasta, 'name': 'gtr_promotor'}
         wrapper = VariantCallingWrapper(params.working_dir)
         wrapper.run_workflow(ref_info, 'sample', workflow_input, {'ploidy': 1}, threads)
-        SnakemakeUtils.dump_object([wrapper.output.vcf_unfiltered], output.VCF)
-        SnakemakeUtils.dump_object([wrapper.output.bam_file], output.BAM)
+        SnakemakeUtils.dump_object([wrapper.output.vcf_unfiltered], Path(output.VCF))
+        SnakemakeUtils.dump_object([wrapper.output.bam_file], Path(output.BAM))
 
 rule flexneri_call_gtr_promotor_depth:
     """
@@ -69,7 +69,7 @@ checkpoint flexneri_type_prepare_reference_files:
         output_dir = Path(output.DIR_FASTA)
         if not output_dir.exists():
             output_dir.mkdir()
-        loci = [io.value.locus for io in SnakemakeUtils.load_object(input.VAL_hits)]
+        loci = [io.value.locus for io in SnakemakeUtils.load_object(Path(input.VAL_hits))]
         logging.info(f"Hits found for flexneri loci: {loci}")
         fasta_files = []
         dir_by_locus_name = {dir_locus.name: dir_locus for dir_locus in params.FASTA_ROOT.iterdir()}
@@ -78,9 +78,9 @@ checkpoint flexneri_type_prepare_reference_files:
             if not output_dir_locus.exists():
                 output_dir_locus.mkdir()
             fasta_ref = dir_by_locus_name[locus] / f'{locus}.fasta'
-            SnakemakeUtils.dump_object([ToolIOFile(fasta_ref)], str(output_dir_locus / 'fasta.io'))
+            SnakemakeUtils.dump_object([ToolIOFile(fasta_ref)], output_dir_locus / 'fasta.io')
             gff = dir_by_locus_name[locus] / f'{locus}.gff'
-            SnakemakeUtils.dump_object([ToolIOFile(gff)], str(output_dir_locus / 'gff.io'))
+            SnakemakeUtils.dump_object([ToolIOFile(gff)], output_dir_locus / 'gff.io')
 
 rule flexneri_map_reads:
     """
@@ -100,9 +100,9 @@ rule flexneri_map_reads:
         bowtie2_map = Bowtie2Map(camel)
         step = Step(rule, bowtie2_map, camel, params.running_dir, config)
         bowtie2_map.update_parameters(threads=threads, no_unal=None, very_sensitive_local=True, sensitive=False, end_to_end=False)
-        fasta_as_io_value = [ToolIOValue(io.path) for io in SnakemakeUtils.load_object(input.INDEX_GENOME_PREFIX)]
+        fasta_as_io_value = [ToolIOValue(io.path) for io in SnakemakeUtils.load_object(Path(input.INDEX_GENOME_PREFIX))]
         bowtie2_map.add_input_files({'INDEX_GENOME_PREFIX': fasta_as_io_value})
-        bowtie2_map.add_input_files(SnakePipelineUtils.extracts_fq_input(input.FASTQ))
+        bowtie2_map.add_input_files(SnakePipelineUtils.extracts_fq_input(Path(input.FASTQ)))
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(bowtie2_map, output)
 
@@ -266,8 +266,8 @@ rule flexneri_combine_hits:
         from camel.app.io.tooliodirectory import ToolIODirectory
         mutations_by_locus = {}
         vcf_by_locus = {}
-        for io_path_mut, io_path_csq in zip(input.VAL_mut, input.VCF_csq):
-            locus = os.path.basename(os.path.dirname(io_path_mut))
+        for io_path_mut, io_path_csq in zip([Path(x) for x in input.VAL_mut], [Path(x) for x in input.VCF_csq]):
+            locus = io_path_mut.parent.name
             mutations_by_locus[locus] = SnakemakeUtils.load_object(io_path_mut)
             vcf_by_locus[locus] = SnakemakeUtils.load_object(io_path_csq)
 
@@ -276,9 +276,9 @@ rule flexneri_combine_hits:
         detector.add_input_files({f'VAL_mut_{l}': ms for l, ms in mutations_by_locus.items()})
         detector.add_input_files({f'VCF_csq_{l}': ms for l, ms in vcf_by_locus.items()})
         detector.add_input_files({
-            'DIR_FASTA': [ToolIODirectory(params.dir_fasta)],
-            'TSV': [ToolIOFile(params.tsv_profiles)],
-            'VCF': SnakemakeUtils.load_object(input.VCF)
+            'DIR_FASTA': [ToolIODirectory(Path(params.dir_fasta))],
+            'TSV': [ToolIOFile(Path(params.tsv_profiles))],
+            'VCF': SnakemakeUtils.load_object(Path(input.VCF))
         })
         step = Step(rule, detector, camel, params.running_dir, config)
         step.run_step()
@@ -324,7 +324,7 @@ rule flexneri_type_dump_summary_info:
     output:
         TSV = Path(config['working_dir'], flexneritype.OUTPUT_FLEXNERI_SUMMARY)
     run:
-        informs = SnakemakeUtils.load_object(input.INFORMS_detection)
+        informs = SnakemakeUtils.load_object(Path(input.INFORMS_detection))
         table_data = [
             ['flexneri_detected_type', informs['detected_type']],
             ['flexneri_loci', informs['loci']]

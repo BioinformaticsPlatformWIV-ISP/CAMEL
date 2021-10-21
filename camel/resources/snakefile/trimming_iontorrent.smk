@@ -21,15 +21,15 @@ rule trimming_iontorrent_pickle_fastq_input:
         from camel.app.components.filesystemhelper import FileSystemHelper
         from camel.app.command.command import Command
         from camel.app.error.pipelineexecutionerror import PipelineExecutionError
-        if FileSystemHelper.is_gzipped(input.FASTQ):
+        if FileSystemHelper.is_gzipped(Path(input.FASTQ)):
             path_out = Path(output.FASTQ_SE).parent / Path(input.FASTQ).name.replace('.gz', '')
             command = Command(f'gunzip -c {input.FASTQ} > {path_out}')
             command.run_command(path_out.parent)
             if not command.returncode == 0:
                 raise PipelineExecutionError(f"Cannot unzip input file: {command.stderr}")
-            SnakemakeUtils.dump_object([ToolIOFile(path_out)], output.FASTQ_SE)
+            SnakemakeUtils.dump_object([ToolIOFile(path_out)], Path(output.FASTQ_SE))
         else:
-            SnakemakeUtils.dump_object([ToolIOFile(input.FASTQ)], output.FASTQ_SE)
+            SnakemakeUtils.dump_object([ToolIOFile(Path(input.FASTQ))], Path(output.FASTQ_SE))
 
 
 rule trimming_iontorrent_fastqc_pre:
@@ -145,8 +145,8 @@ rule trimming_iontorrent_dump_summary_info:
     output:
         TSV = Path(config['working_dir']) / trimming_iontorrent.OUTPUT_TRIMMING_IONTORRENT_SUMMARY
     run:
-        informs_len = SnakemakeUtils.load_object(input.INFORMS_filt_len)
-        informs_qual = SnakemakeUtils.load_object(input.INFORMS_filt_qual)
+        informs_len = SnakemakeUtils.load_object(Path(input.INFORMS_filt_len))
+        informs_qual = SnakemakeUtils.load_object(Path(input.INFORMS_filt_qual))
         with open(output[0], 'w') as handle:
             for k, v in [
                 ('filt_len_in', informs_len['input_reads']),
@@ -167,6 +167,6 @@ rule trimming_iontorrent_to_dict:
         IO = Path(config['working_dir']) / trimming_iontorrent.OUTPUT_TRIMMING_IONTORRENT_DICT
     run:
         output_dict = {
-            'SE': SnakemakeUtils.load_object(input.FASTQ)
+            'SE': SnakemakeUtils.load_object(Path(input.FASTQ))
         }
-        SnakemakeUtils.dump_object(output_dict, output.IO)
+        SnakemakeUtils.dump_object(output_dict, Path(output.IO))

@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 from camel.app.camel import Camel
 from camel.app.components.html.htmlreportsection import HtmlReportSection
@@ -17,7 +17,7 @@ class ReporterTrimmingIonTorrent(Tool):
         :param camel: CAMEL instance
         """
         super().__init__('Trimming-IonTorrent: reporter', '0.1', camel)
-        self._sub_folder = 'read_trimming'
+        self._sub_folder = Path('read_trimming')
         self._report_section = None
 
     def _execute_tool(self) -> None:
@@ -40,7 +40,7 @@ class ReporterTrimmingIonTorrent(Tool):
         :return: None
         """
         self._report_section.add_header(section_title, 3)
-        relative_path = os.path.join(self._sub_folder, f'fastqc_report-{suffix}.html')
+        relative_path = self._sub_folder / f'fastqc_report-{suffix}.html'
         self._report_section.add_file(self._tool_inputs[key][0].path, relative_path)
         self._report_section.add_link_to_file('FastQC report', relative_path)
 

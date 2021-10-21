@@ -54,19 +54,20 @@ class MainCheckM(object):
         # Run CheckM
         checkm = CheckM(Camel.get_instance())
         checkm.add_input_files(input_dict)
-        checkm.run(self._args.working_dir)
+        checkm.run(Path(self._args.working_dir))
 
         # Create output report
         checkm_reporter = CheckMReporter(Camel.get_instance())
         checkm_reporter.add_input_informs({'checkm': checkm.informs})
         checkm_reporter.add_input_files({'TSV': checkm.tool_outputs['TSV']})
-        checkm_reporter.run(self._args.working_dir)
+        checkm_reporter.run(Path(self._args.working_dir))
         section = checkm_reporter.tool_outputs['HTML'][0].value
         section.copy_files(report.output_dir)
         report.add_html_object(section)
 
         # Add citation and command
-        report.add_html_object(SnakePipelineUtils.create_commands_section([checkm.informs], self._args.working_dir))
+        report.add_html_object(SnakePipelineUtils.create_commands_section(
+            [checkm.informs], Path(self._args.working_dir)))
         report.add_html_object(SnakePipelineUtils.create_citations_section(['Parks_2015-checkm']))
         report.save()
 

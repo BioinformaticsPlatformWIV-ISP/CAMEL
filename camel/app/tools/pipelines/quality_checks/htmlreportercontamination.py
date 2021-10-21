@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Dict, Any
 
+from camel.app.camel import Camel
 from camel.app.components.html.htmlelement import HtmlElement
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.html.htmltablecell import HtmlTableCell
@@ -28,16 +29,16 @@ class HtmlReporterContamination(Tool):
 
     TITLE = 'Contamination check'
 
-    def __init__(self, camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initializes this tool.
         :param camel: CAMEL instance
         """
         super().__init__('HTML Reporter: Contamination', '0.1', camel)
-        self._subfolder = 'contamination_check'
+        self._sub_folder = Path('contamination_check')
         self._report_section = None
 
-    def _execute_tool(self):
+    def _execute_tool(self) -> None:
         """
         Executes this tool.
         :return: None
@@ -102,13 +103,13 @@ class HtmlReporterContamination(Tool):
                 HtmlTableCell(percentage, 'orange')])
         self._report_section.add_table(table_data, header, [('class', 'data')])
 
-    def __add_detailed_table(self, kraken_report_path: str) -> None:
+    def __add_detailed_table(self, kraken_report_path: Path) -> None:
         """
         Adds a table with the detailed information from the tabular KRAKEN output.
         :return: None
         """
         table_data = []
-        with open(kraken_report_path) as handle:
+        with kraken_report_path.open() as handle:
             for line in handle.readlines():
                 parts = line.strip().split('\t')
                 percentage = float(parts[0])
@@ -128,7 +129,7 @@ class HtmlReporterContamination(Tool):
         Adds a download link to the Krona report.
         :return: None
         """
-        relative_path = str(Path(self._subfolder) / 'krona_report.html')
+        relative_path = self._sub_folder / 'krona_report.html'
         self._report_section.add_file(self._tool_inputs['HTML_Krona'][0].path, relative_path)
         self._report_section.add_link_to_file('Krona Report', relative_path)
 

@@ -1,6 +1,6 @@
+from pathlib import Path
 from typing import List, Tuple, Union
 
-import os
 import re
 
 from camel.app.camel import Camel
@@ -20,7 +20,7 @@ class PointFinderReporter(Tool):
     TITLE = 'PointFinder'
     URL_PUBMED = 'https://www.ncbi.nlm.nih.gov/pubmed/{id}'
 
-    def __init__(self, camel: Camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initializes this tool.
         :param camel: CAMEL instance
@@ -84,7 +84,7 @@ class PointFinderReporter(Tool):
             div = HtmlExpandableDiv('pointfinder_mutations', 'mutations')
             div.add_table(data, header, [('class', 'data')])
             section.add_html_object(div)
-            relative_path = os.path.join('pointfinder', self.__generate_output_filename())
+            relative_path = Path('pointfinder', self.__generate_output_filename())
             section.add_file(self._tool_inputs['TSV'][0].path, relative_path)
             section.add_link_to_file('Download (TSV)', relative_path)
         else:

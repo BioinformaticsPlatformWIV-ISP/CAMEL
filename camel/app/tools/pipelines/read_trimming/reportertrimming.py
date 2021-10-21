@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 from camel.app.camel import Camel
 from camel.app.components.html.htmlreportsection import HtmlReportSection
@@ -19,7 +19,7 @@ class ReporterTrimming(Tool):
         :return: None
         """
         super().__init__('Trimming: reporter', '0.1', camel)
-        self.__sub_folder = 'read_trimming'
+        self.__sub_folder = Path('read_trimming')
         self._report_section = None
 
     def _execute_tool(self) -> None:
@@ -38,7 +38,7 @@ class ReporterTrimming(Tool):
         self.__add_fastqc_reports('Post-trimming', 'post_trimming', 'HTML_POST')
         self._tool_outputs['VAL_HTML'] = [ToolIOValue(self._report_section, False)]
 
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
         Checks if the input is valid.
         :return: None
@@ -53,27 +53,26 @@ class ReporterTrimming(Tool):
             raise InvalidInputSpecificationError("No trimming info found")
         super()._check_input()
 
-    def __add_fastqc_reports(self, header: str, sub_folder: str, key: str) -> None:
+    def __add_fastqc_reports(self, header: str, dir_name: str, key: str) -> None:
         """
         Adds FastQC reports to the report. This function supports PE and SE input.
         :param header: Section header
-        :param sub_folder: Sub-folder to store files
+        :param dir_name: Name of the directory to store files
         :param key: Input file key
         :return: None
         """
         self._report_section.add_header(header, 3)
         if len(self._tool_inputs[key]) == 1:
-            relative_path = os.path.join(self.__sub_folder, sub_folder, 'fastqc_report.html')
+            relative_path = self.__sub_folder / dir_name / 'fastqc_report.html'
             self._report_section.add_file(self._tool_inputs[key][0].path, relative_path)
             self._report_section.add_link_to_file('FastQC report', relative_path)
         else:
             for fastqc_report, orientation in zip(self._tool_inputs[key], ('forward', 'reverse')):
-                relative_path = os.path.join(self.__sub_folder, sub_folder, 'fastqc_report_{}.html'.format(
-                    orientation))
+                relative_path = self.__sub_folder / dir_name / f'fastqc_report_{orientation}.html'
                 self._report_section.add_file(fastqc_report.path, relative_path)
-                self._report_section.add_link_to_file('FastQC report ({})'.format(orientation), relative_path)
+                self._report_section.add_link_to_file(f'FastQC report ({orientation})', relative_path)
 
-    def __add_trimming_section_pe(self):
+    def __add_trimming_section_pe(self) -> None:
         """
         Adds the read trimming section for PE reads.
         :return: None
@@ -109,27 +108,27 @@ class ReporterTrimming(Tool):
             return '{:,} {}'.format(int(parts[0]), parts[1])
         raise ValueError("Cannot parse: {}".format(input_str))
 
-    def __add_trimmed_read_files(self):
+    def __add_trimmed_read_files(self) -> None:
         """
         Saves the PE trimmed reads in the output directory and adds them to the report.
         :return: None
         """
         for trimmed_reads_paired, orientation in zip(self._tool_inputs['FASTQ_PE'], ('forward', 'reverse')):
-            filename = 'trimmed_reads_paired_{}.fastq'.format(orientation)
-            relative_path = os.path.join(self.__sub_folder, 'read_trimming', filename)
+            filename = f'trimmed_reads_paired_{orientation}.fastq'
+            relative_path = self.__sub_folder / 'read_trimming' / filename
             self._report_section.add_file(trimmed_reads_paired.path, relative_path)
-            self._report_section.add_link_to_file('Trimmed reads paired ({})'.format(orientation), relative_path)
+            self._report_section.add_link_to_file(f'Trimmed reads paired ({orientation})', relative_path)
         self._report_section.add_line_break()
 
         if 'FASTQ_SE_FORWARD' in self._tool_inputs and len(self._tool_inputs['FASTQ_SE_FORWARD']) > 0:
-            relative_path = os.path.join(self.__sub_folder, 'read_trimming', 'trimmed_reads_unpaired_forward.fastq')
+            relative_path = self.__sub_folder / 'read_trimming' / 'trimmed_reads_unpaired_forward.fastq'
             self._report_section.add_file(self._tool_inputs['FASTQ_SE_FORWARD'][0].path, relative_path)
             self._report_section.add_link_to_file('Trimmed reads unpaired (forward)', relative_path)
         else:
             self._report_section.add_link_to_file('Trimmed reads unpaired (forward)', None)
 
         if 'FASTQ_SE_REVERSE' in self._tool_inputs and len(self._tool_inputs['FASTQ_SE_REVERSE']) > 0:
-            relative_path = os.path.join(self.__sub_folder, 'read_trimming', 'trimmed_reads_unpaired_reverse.fastq')
+            relative_path = self.__sub_folder / 'read_trimming' / 'trimmed_reads_unpaired_reverse.fastq'
             self._report_section.add_file(self._tool_inputs['FASTQ_SE_REVERSE'][0].path, relative_path)
             self._report_section.add_link_to_file('Trimmed reads unpaired (reverse)', relative_path)
         else:

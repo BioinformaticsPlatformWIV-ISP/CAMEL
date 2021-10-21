@@ -1,5 +1,7 @@
-import os
+from pathlib import Path
+from typing import List, Union
 
+from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.samtools.samtools import Samtools
 
@@ -10,14 +12,14 @@ class SamtoolsDepth(Samtools):
     Calculates the coverage depth of an alignment.
     """
 
-    def __init__(self, camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initializes this tool.
         :param camel: Camel instance
         """
         super().__init__('samtools depth', '1.9', camel)
 
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
         Checks the input.
         :return: None
@@ -28,7 +30,7 @@ class SamtoolsDepth(Samtools):
             raise ValueError("Exactly one BAM input file expected")
         super(Samtools, self)._check_input()
 
-    def _execute_tool(self):
+    def _execute_tool(self) -> None:
         """
         Executes this tool.
         :return: None
@@ -37,7 +39,7 @@ class SamtoolsDepth(Samtools):
         self._execute_command()
         self.__set_output()
 
-    def __build_command(self):
+    def __build_command(self) -> None:
         """
         Builds the command.
         :return: None
@@ -48,20 +50,20 @@ class SamtoolsDepth(Samtools):
             parts.extend(options)
         if 'BED' in self._tool_inputs:
             parts.append(f"-b {self._tool_inputs['BED'][0].path}")
-        parts.extend([self._tool_inputs['BAM'][0].path, ' > {}'.format(self._parameters['output_filename'].value)])
+        parts.extend([str(self._tool_inputs['BAM'][0].path), f" > {self._parameters['output_filename'].value}"])
         self._command.command = ' '.join(parts)
 
-    def __set_output(self):
+    def __set_output(self) -> None:
         """
         Sets the output of this tool.
         :return: None
         """
-        output_file_path = os.path.join(self._folder, self._parameters['output_filename'].value)
+        output_file_path = self.folder / self._parameters['output_filename'].value
         self._tool_outputs['TSV'] = [ToolIOFile(output_file_path)]
         self._informs['median_depth'] = SamtoolsDepth.calculate_median_coverage(output_file_path)
 
     @staticmethod
-    def median(input_list):
+    def median(input_list: List[int]) -> Union[float, int]:
         """
         Returns the median value of a list.
         :return:
@@ -77,14 +79,14 @@ class SamtoolsDepth(Samtools):
             return median
 
     @staticmethod
-    def calculate_median_coverage(output_path):
+    def calculate_median_coverage(output_path: Path) -> Union[float, int]:
         """
         Calculates the median coverage.
         :param output_path: Path to the output files.
         :return: None
         """
         coverage_values = []
-        with open(output_path) as output_file:
+        with output_path.open() as output_file:
             for line in output_file.readlines():
                 seq_id, pos, count = line.split('\t')
                 coverage_values.append(int(count))

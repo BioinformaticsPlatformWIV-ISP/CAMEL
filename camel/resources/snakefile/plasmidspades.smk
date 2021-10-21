@@ -23,7 +23,7 @@ checkpoint plasmidspades_run:
     run:
         from camel.app.tools.spades.spades import SPAdes
         spades = SPAdes(Camel.get_instance())
-        fq_dict = SnakePipelineUtils.extracts_fq_input(input.IO, key_pe='FASTQ_PE_1', keys_se=[
+        fq_dict = SnakePipelineUtils.extracts_fq_input(Path(input.IO), key_pe='FASTQ_PE_1', keys_se=[
             'FASTQ_SE_1', 'FASTQ_SE_2'], key_se='FASTQ_SE_1', drop_empty=True, read_type=params.read_type)
         spades.add_input_files(fq_dict)
         step = Step(rule, spades, Camel.get_instance(), params.working_dir, config)
@@ -31,11 +31,11 @@ checkpoint plasmidspades_run:
         spades.update_parameters(**params.spades_options)
         step.run_step()
         if 'FASTA_Contig' in spades.tool_outputs:
-            SnakemakeUtils.dump_tool_output(spades, 'FASTA_Contig', output.FASTA_Contig)
+            SnakemakeUtils.dump_tool_output(spades, 'FASTA_Contig', Path(output.FASTA_Contig))
         else:
-            SnakemakeUtils.dump_object([], output.FASTA_Contig)
+            SnakemakeUtils.dump_object([], Path(output.FASTA_Contig))
         spades.informs['_tag'] = 'plasmidSPAdes'
-        SnakemakeUtils.dump_object(spades.informs, output.INFORMS)
+        SnakemakeUtils.dump_object(spades.informs, Path(output.INFORMS))
 
 rule plasmidspades_quast:
     """
@@ -114,7 +114,7 @@ rule plasmidspades_gene_detection:
         from camel.app.components.workflows.genedetectionwrapper import GeneDetectionWrapper
         from camel.app.components.html.htmlreportsection import HtmlReportSection
 
-        fasta_input = SnakemakeUtils.load_object(input.FASTA)
+        fasta_input = SnakemakeUtils.load_object(Path(input.FASTA))
         wrapper = GeneDetectionWrapper(params.dir_working)
         wrapper.run_workflow_blast(fasta_input[0].path, params.sample_name, params.db_config, int(threads))
         section_updated_title = HtmlReportSection(None)
@@ -133,10 +133,10 @@ rule plasmidspades_gene_detection:
 
         # Export HTML
         section_updated_title.add_raw(soup.find('div', class_='report_section').decode_contents())
-        SnakemakeUtils.dump_object([ToolIOValue(section_updated_title)], output.HTML)
+        SnakemakeUtils.dump_object([ToolIOValue(section_updated_title)], Path(output.HTML))
 
         # Export informs
-        SnakemakeUtils.dump_object([hit.to_table_row() for hit in wrapper.output.detected_hits], output.INFORMS)
+        SnakemakeUtils.dump_object([hit.to_table_row() for hit in wrapper.output.detected_hits], Path(output.INFORMS))
 
 rule plasmidspades_gene_detection_report_empty:
     """
@@ -149,8 +149,8 @@ rule plasmidspades_gene_detection_report_empty:
     run:
         from camel.app.snakemake.snakemakeutils import SnakemakeUtils
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-        informs_db = SnakemakeUtils.load_object(input.INFORMS_DB)
-        SnakePipelineUtils.create_empty_report_section(f"{informs_db['title']} - plasmidSPades", output.VAL_HTML)
+        informs_db = SnakemakeUtils.load_object(Path(input.INFORMS_DB))
+        SnakePipelineUtils.create_empty_report_section(f"{informs_db['title']} - plasmidSPades", Path(output.VAL_HTML))
 
 rule plasmidspades_gene_detection_select_output:
     """
@@ -169,8 +169,8 @@ rule plasmidspades_gene_detection_select_output:
         import shutil
         html_file = input.HTML if len(input.HTML) > 0 else input.HTML_empty
         shutil.copyfile(str(html_file), str(output.HTML))
-        informs = SnakemakeUtils.load_object(str(input.INFORMS)) if len(input.INFORMS) > 0 else []
-        SnakemakeUtils.dump_object(informs, output.INFORMS)
+        informs = SnakemakeUtils.load_object(Path(str(input.INFORMS))) if len(input.INFORMS) > 0 else []
+        SnakemakeUtils.dump_object(informs, Path(output.INFORMS))
 
 rule plasmidspades_summary:
     """
@@ -185,7 +185,8 @@ rule plasmidspades_summary:
         running_dir = Path(config['working_dir']) / 'plasmidspades' / 'summary'
     run:
         import json
-        quast_informs = SnakemakeUtils.load_object(input.INFORMS_quast) if len(input.INFORMS_quast) > 1 else {}
+        quast_informs = SnakemakeUtils.load_object(Path(str(input.INFORMS_quast))) if len(
+            input.INFORMS_quast) > 1 else {}
         summary_data = [
             ('plasmidspades_assembly_n50', quast_informs.get('contig', {}).get('N50')),
             ('plasmidspades_assembly_nb_contigs', quast_informs.get('contig', {}).get('# contigs')),
@@ -193,7 +194,7 @@ rule plasmidspades_summary:
         ]
         for path_informs in [Path(x) for x in input.INFORMS_gene_detection]:
             summary_data.append(
-                (f'hits_{path_informs.parent.name}', json.dumps(SnakemakeUtils.load_object(str(path_informs)))))
+                (f'hits_{path_informs.parent.name}', json.dumps(SnakemakeUtils.load_object(path_informs))))
 
         with open(output.TSV, 'w') as handle:
             for key, value in summary_data:
@@ -208,4 +209,4 @@ rule plasmidspades_report_empty:
         VAL_HTML = Path(config['working_dir']) / plasmidspades_workflow.OUTPUT_PLASMIDSPADES_REPORT_EMPTY
     run:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-        SnakePipelineUtils.create_empty_report_section('Assembly - plasmidSPAdes', output.VAL_HTML)
+        SnakePipelineUtils.create_empty_report_section('Assembly - plasmidSPAdes', Path(output.VAL_HTML))

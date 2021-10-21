@@ -29,7 +29,7 @@ class MainMakeGeneDetectionDB(object):
         self._args = MainMakeGeneDetectionDB.parse_arguments(args)
         fasta_name = self._args.fasta_name if self._args.fasta_name is not None else Path(self._args.fasta).name
         self._db_name = FileSystemHelper.make_valid(Path(fasta_name).stem)
-        self._helper = DBHelper(self._db_name, self._args.working_dir)
+        self._helper = DBHelper(self._db_name, Path(self._args.working_dir))
         self._clusters = None
         self._new_name_by_header = None
 
@@ -119,12 +119,12 @@ class MainMakeGeneDetectionDB(object):
         Creates a report with some info on the database.
         :return: None
         """
-        self._report = HtmlReport(self._args.output_html)
+        self._report = HtmlReport(Path(self._args.output_html))
         self._report.initialize('Gene detection database', CSS_STYLE)
         self._report.add_html_object(self.__create_db_info_section())
         self._report.add_html_object(self.__create_clusters_section())
         self._report.add_html_object(SnakePipelineUtils.create_commands_section(
-            self._helper.informs, self._args.working_dir))
+            self._helper.informs, Path(self._args.working_dir)))
         self._report.save()
 
     def __create_db_info_section(self) -> HtmlReportSection:
@@ -147,8 +147,8 @@ class MainMakeGeneDetectionDB(object):
         :return: HTML report section
         """
         section_clusters = HtmlReportSection('Clusters')
-        allele_by_seq_id = {s: GeneDetectionUtils.parse_header(h)[1]['allele'] for s, h in
-                            self._new_name_by_header.items()}
+        allele_by_seq_id = {
+            s: GeneDetectionUtils.parse_header(h)[1]['allele'] for s, h in self._new_name_by_header.items()}
         table_data = [[
             cluster.name,
             len(cluster.seq_ids),

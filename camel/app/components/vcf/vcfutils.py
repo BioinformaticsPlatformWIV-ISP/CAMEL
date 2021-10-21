@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Union
+from typing import List
 
 import vcf
 
@@ -25,26 +25,26 @@ class VCFUtils(object):
     UNKNOWN = 'unknown'  # Variants other than indel & snp
 
     @staticmethod
-    def is_multi_sample(vcf_file):
+    def is_multi_sample(vcf_file: Path) -> bool:
         """
         Function to check whether a VCF file contains multiple sample
         :param vcf_file: the vcf file to be checked (with complete path)
         :return: True if is a multiple sample VCF file
         """
-        return len(vcf.Reader(filename=vcf_file).samples) > 1
+        return len(vcf.Reader(filename=str(vcf_file)).samples) > 1
 
     @staticmethod
     @DeprecationWarning
-    def get_reader(vcf_file):
+    def get_reader(vcf_file: Path) -> vcf.Reader:
         """
         Function to obtain a vcf file reader
         :param vcf_file: the vcf file to be checked (with complete path)
         :return: vcf_reader that can called to retrieve the record
         """
-        return vcf.Reader(filename=vcf_file)
+        return vcf.Reader(filename=str(vcf_file))
 
     @staticmethod
-    def retrieve_variants(vcf_file, types=None, excluded_types=None):
+    def retrieve_variants(vcf_file: Path, types: List[str] = None, excluded_types: List[str] = None):
         """
         Function to retrieve certain types of variants. Parameter
         'types' and 'excluded_types' is mutual exclusive. Either specify
@@ -66,7 +66,7 @@ class VCFUtils(object):
             raise InvalidParameterError("Mutually exclusive parameters 'included types' and 'excluded types' are "
                                         "specified. Only one is allowed.")
 
-        vcf_reader = vcf.Reader(filename=vcf_file)
+        vcf_reader = vcf.Reader(filename=str(vcf_file))
         records = []
         if len(types) > 0:
             # only set types
@@ -85,7 +85,7 @@ class VCFUtils(object):
         return records
 
     @staticmethod
-    def count_variants(vcf_file: Union[str, Path]) -> int:
+    def count_variants(vcf_file: Path) -> int:
         """
         Counts the number of variants in a VCF file.
         :param vcf_file: VCF file.

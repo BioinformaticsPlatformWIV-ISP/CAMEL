@@ -1,8 +1,7 @@
-import logging
-from pathlib import Path
 
-import os
+import logging
 import re
+from pathlib import Path
 
 from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
@@ -17,14 +16,14 @@ class PointFinder(Tool):
     pathogens.
     """
 
-    def __init__(self, camel: Camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initializes this tool.
         :param camel: CAMEL instance
         """
         super().__init__('PointFinder', '20190227', camel)
 
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
         Checks if the provided input is valid.
         :return: None
@@ -45,7 +44,7 @@ class PointFinder(Tool):
         self.__set_output()
         self._informs['database'] = self._parameters['database'].value
 
-    def __build_command(self, blastn_path: str) -> None:
+    def __build_command(self, blastn_path: Path) -> None:
         """
         Builds the command line call.
         :param blastn_path: Path to the blastn binary
@@ -62,7 +61,7 @@ class PointFinder(Tool):
             ' '.join(self._build_options())
             ])
 
-    def __determine_blastn_path(self) -> str:
+    def __determine_blastn_path(self) -> Path:
         """
         Determines the blastn path based on the dependencies.
         :return: blastn path
@@ -73,7 +72,7 @@ class PointFinder(Tool):
         for path in self._command.stdout.split(':'):
             m = re.match('.*/blast/.*/bin', path)
             if m:
-                return os.path.join(path, 'blastn')
+                return Path(path, 'blastn')
         raise ValueError("Cannot determine blastn path")
 
     def __get_date_last_update(self) -> str:
@@ -84,11 +83,11 @@ class PointFinder(Tool):
         logging.debug("Retrieving date of the last update.")
         self._command.command = 'echo $POINTFINDER_DB'
         self._execute_command()
-        db_path = self._command.stdout.strip()
-        last_update_file = os.path.join(db_path, '.last_update.txt')
-        if not os.path.isfile(last_update_file):
+        db_path = Path(self._command.stdout.strip())
+        last_update_file = db_path / '.last_update.txt'
+        if not last_update_file.is_file():
             raise FileNotFoundError('Cannot retrieve last update file: {}'.format(last_update_file))
-        with open(last_update_file) as handle:
+        with last_update_file.open() as handle:
             return handle.readline().strip()
 
     def __set_output(self) -> None:
@@ -98,11 +97,11 @@ class PointFinder(Tool):
         """
         output_dir = Path(self._folder)
         self._tool_outputs['TSV'] = [ToolIOFile(next(
-            str(f) for f in output_dir.iterdir() if f.name.endswith('_results.tsv')))]
+            f for f in output_dir.iterdir() if f.name.endswith('_results.tsv')))]
         self._tool_outputs['TXT'] = [ToolIOFile(next(
-            str(f) for f in output_dir.iterdir() if f.name.endswith('_HTMLtable.txt')))]
+            f for f in output_dir.iterdir() if f.name.endswith('_HTMLtable.txt')))]
 
-    def _check_command_output(self):
+    def _check_command_output(self) -> None:
         """
         Checks the command output to see if the command executed successfully.
         :return: None

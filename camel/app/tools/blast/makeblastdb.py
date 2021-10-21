@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
@@ -11,7 +11,7 @@ class MakeBlastDb(Tool):
     It indexes a FASTA file in place.
     """
 
-    def __init__(self, camel: Camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initializes this tool.
         :param camel: CAMEL instance
@@ -23,14 +23,14 @@ class MakeBlastDb(Tool):
         Executes this tool.
         :return: None
         """
-        output_file = os.path.join(self._folder, os.path.basename(self._tool_inputs['FASTA'][0].path))
-        if not os.path.exists(output_file):
-            os.symlink(self._tool_inputs['FASTA'][0].path, output_file)
+        output_file = self.folder / self._tool_inputs['FASTA'][0].basename
+        if not output_file.exists():
+            output_file.symlink_to(self._tool_inputs['FASTA'][0].path)
         self.__build_command(output_file)
         self._execute_command()
         self._tool_outputs['FASTA'] = [ToolIOFile(output_file)]
 
-    def __build_command(self, fasta_path: str) -> None:
+    def __build_command(self, fasta_path: Path) -> None:
         """
         Builds the command line call.
         :param fasta_path: FASTA path

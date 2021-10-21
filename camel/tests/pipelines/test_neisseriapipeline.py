@@ -48,8 +48,8 @@ class TestNeisseriaPipeline(unittest.TestCase):
 
             # Check if metadata can be loaded
             manager = LocusSetManager(Camel.get_instance())
-            manager.add_input_files({'DIR': [ToolIODirectory(scheme_data['path'])]})
-            manager.run(str(self.running_dir))
+            manager.add_input_files({'DIR': [ToolIODirectory(Path(scheme_data['path']))]})
+            manager.run(self.running_dir)
             self.assertGreater(len(manager.informs), 0)
 
     def test_neisseria_pipeline_gene_detection_db(self):
@@ -67,8 +67,8 @@ class TestNeisseriaPipeline(unittest.TestCase):
 
             # Check if metadata and FASTA files can be loaded
             manager = DBManager(Camel.get_instance())
-            manager.add_input_files({'DIR': [ToolIODirectory(db_data['path'])]})
-            manager.run(str(self.running_dir))
+            manager.add_input_files({'DIR': [ToolIODirectory(Path(db_data['path']))]})
+            manager.run(self.running_dir)
             self.assertGreater(len(manager.tool_outputs), 0)
             self.assertGreater(len(manager.informs), 0)
 

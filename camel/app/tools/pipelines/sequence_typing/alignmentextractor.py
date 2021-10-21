@@ -1,14 +1,13 @@
-import os
+from pathlib import Path
 
 from camel.app.camel import Camel
-from camel.app.components.sequencetyping.sequencetypingblasthit import SequenceTypingBlastHit
-from camel.app.tools.tool import Tool
-
 from camel.app.components.blast.alignmentextraction import AlignmentExtraction
 from camel.app.components.filesystemhelper import FileSystemHelper
+from camel.app.components.sequencetyping.sequencetypingblasthit import SequenceTypingBlastHit
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.tools.tool import Tool
 
 
 class AlignmentExtractor(Tool):
@@ -61,14 +60,14 @@ class AlignmentExtractor(Tool):
             raise InvalidInputSpecificationError("Can only extract one alignment")
         super(AlignmentExtractor, self)._check_input()
 
-    def __save_alignment(self, allele_name: str, alignment: str) -> str:
+    def __save_alignment(self, allele_name: str, alignment: str) -> Path:
         """
         Saves the given alignment.
         :param allele_name: Allele name
         :param alignment: Alignment
         :return: Filename of the saved alignment
         """
-        filename = os.path.join(self._folder, '{}.txt'.format(FileSystemHelper.make_valid(allele_name)))
-        with open(filename, 'w') as output_handle:
+        path_out = self._folder / f'{FileSystemHelper.make_valid(allele_name)}.txt'
+        with path_out.open('w') as output_handle:
             output_handle.write(alignment)
-        return filename
+        return path_out

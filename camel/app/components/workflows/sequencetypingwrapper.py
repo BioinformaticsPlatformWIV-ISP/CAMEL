@@ -17,7 +17,7 @@ class SequenceTypingInput:
     This class is used to construct the input for the sequence typing workflow.
     """
     sample_name: str
-    db_path: str
+    db_path: Path
     fasta: Optional[ToolIOFile] = None
     fastq: Optional[FastqInput] = None
     db_key: str = 'mlst'
@@ -114,7 +114,7 @@ class SequenceTypingWrapper(object):
             workflow_input.db_path, {})
         self.__run_snakefile(config_path, workflow_input.db_key, threads)
 
-    def __create_config_file(self, sample_name: str, detection_method: str, read_type: str, db_key: str, db_path: str,
+    def __create_config_file(self, sample_name: str, detection_method: str, read_type: str, db_key: str, db_path: Path,
                              additional_options: Dict[str, Any]) -> str:
         """
         Creates the configuration file for the sequence typing workflow.
@@ -133,7 +133,7 @@ class SequenceTypingWrapper(object):
             'read_type': read_type,
             'sequence_typing': {
                 db_key: {
-                    'path': db_path,
+                    'path': str(db_path),
                     **additional_options
                 }
             }
@@ -142,7 +142,7 @@ class SequenceTypingWrapper(object):
         pprint.pprint(data)
         return SnakePipelineUtils.generate_config_file(data, self._working_dir)
 
-    def __create_blast_input(self, fasta_path: str) -> None:
+    def __create_blast_input(self, fasta_path: Path) -> None:
         """
         Creates the input for the workflow.
         :param fasta_path: FASTA file path
@@ -151,7 +151,7 @@ class SequenceTypingWrapper(object):
         fasta_path_output = (self._working_dir / assembly_spades.OUTPUT_ASSEMBLY_FASTA)
         if not fasta_path_output.parent.exists():
             fasta_path_output.parent.mkdir(parents=True)
-        SnakemakeUtils.dump_object([ToolIOFile(fasta_path)], str(fasta_path_output))
+        SnakemakeUtils.dump_object([ToolIOFile(fasta_path)], fasta_path_output)
 
     def __run_snakefile(self, config_path: str, db_key: str, threads: int) -> None:
         """
@@ -173,8 +173,8 @@ class SequenceTypingWrapper(object):
         # Collect output
         log_file_path = self._working_dir / 'camel.log'
         self._output = SequenceTypingOutput(
-            report_section=SnakemakeUtils.load_object(str(output_files['report']))[0].value,
-            informs=SnakemakeUtils.load_object(str(output_files['informs'])),
+            report_section=SnakemakeUtils.load_object(output_files['report'])[0].value,
+            informs=SnakemakeUtils.load_object(output_files['informs']),
             log_file=log_file_path if log_file_path.exists() else None
         )
 

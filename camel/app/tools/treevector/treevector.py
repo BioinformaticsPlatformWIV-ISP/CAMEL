@@ -1,8 +1,10 @@
 import shutil
+from pathlib import Path
 from tempfile import NamedTemporaryFile
 
 import os
 
+from camel.app.camel import Camel
 from camel.app.components.images.svgconvert import SVGConvert
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.invalidparametererror import InvalidParameterError
@@ -16,14 +18,14 @@ class TreeVector(Tool):
     TreeVector is a utility to create and integrate phylogenetic trees as Scalable Vector Graphics (SVG) files.
     """
 
-    def __init__(self, camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initializes this tool.
         :param camel: CAMEL instance
         """
         super().__init__('TreeVector', '1.0', camel)
 
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
         Checks if the input is valid.
         :return: None
@@ -32,7 +34,7 @@ class TreeVector(Tool):
             raise InvalidInputSpecificationError("No Newick tree input found")
         super(TreeVector, self)._check_input()
 
-    def _check_parameters(self):
+    def _check_parameters(self) -> None:
         """
         Checks if the parameters are valid.
         :return: None
@@ -43,30 +45,31 @@ class TreeVector(Tool):
             raise InvalidParameterError("Output format must be either 'png' or 'svg'")
         super(TreeVector, self)._check_parameters()
 
-    def _execute_tool(self):
+    def _execute_tool(self) -> None:
         """
         Executes this tool.
         :return: None
         """
+        output_path = self._folder / self._parameters['output_filename'].value
         self.__build_command()
         self._execute_command()
-        self.__set_output()
+        self.__set_output(output_path)
         if self._parameters['output_format'].value == 'png':
             self.__convert_output()
 
-    def __build_command(self):
+    def __build_command(self) -> None:
         """
         Builds the command line call.
         :return: None
         """
         self._command.command = ' '.join([
             self._tool_command,
-            self._tool_inputs['NWK'][0].path,
+            str(self._tool_inputs['NWK'][0].path),
             '-{}'.format(self._parameters['type'].value),
             ' '.join(self._build_options(excluded_parameters=['type', 'output_format']))
         ])
 
-    def _check_command_output(self):
+    def _check_command_output(self) -> None:
         """
         Checks if the command ran successfully.
         :return: None
@@ -74,14 +77,14 @@ class TreeVector(Tool):
         if self._command.returncode != 0:
             raise ToolExecutionError("Error executing TreeVector: {}".format(self._command.stderr))
 
-    def __set_output(self):
+    def __set_output(self, output_path: Path) -> None:
         """
         Sets the tool output.
         :return: None
         """
-        self._tool_outputs['SVG'] = [ToolIOFile(os.path.join(self._folder, self._parameters['output_filename'].value))]
+        self._tool_outputs['SVG'] = [ToolIOFile(output_path)]
 
-    def __convert_output(self):
+    def __convert_output(self) -> None:
         """
         Converts the tool output to PNG.
         :return: None

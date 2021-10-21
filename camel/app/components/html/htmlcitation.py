@@ -43,7 +43,7 @@ class HtmlCitation(HtmlBase):
                 journal = ''.join(journal_parts)
 
                 # Citation text
-                self.add_text(f"{self._authors} ({self._pub_year}). {self._title}. In <i>{journal}</i>.")
+                self.add_text(f"{self._authors} ({self._pub_year}). {self._title}. In <i>{journal}</i>. ")
 
                 # Citation DOI / link
                 with self.get_tag('a', [('href', f"https://dx.doi.org/{self._citation_data['doi']}")]):

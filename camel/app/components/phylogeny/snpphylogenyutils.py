@@ -3,8 +3,9 @@ import datetime
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 
+import pandas as pd
 from Bio import SeqIO
 
 from camel.app.camel import Camel
@@ -27,8 +28,6 @@ from camel.app.tools.snpmatrix.snpmatrixconstructor import SnpMatrixConstructor
 from camel.resources import CSS_STYLE
 from camel.scripts.snpphylogeny import SNAKEFILE_TRIMMING_ALL
 from camel.scripts.snpphylogeny.snakefile.trimming_all import TRIMMING_ALL
-
-import pandas as pd
 
 
 class InvalidInputError(ValueError):
@@ -70,17 +69,17 @@ class MappingInput:
     se_fwd: Optional[ToolIOFile] = None
     se_rev: Optional[ToolIOFile] = None
 
-    def as_dict(self) -> Dict[str, str]:
+    def as_dict(self) -> Dict[str, Any]:
         """
         Return the mapping input as a dictionary
         :return: Mapping input in YAML format
         """
-        d = {'PE': [x.path for x in self.pe]}
+        mapping_data = {'PE': [x.path for x in self.pe]}
         if self.se_fwd is not None:
-            d['SE_FWD'] = self.se_fwd.path
+            mapping_data['SE_FWD'] = self.se_fwd.path
         if self.se_rev is not None:
-            d['SE_REV'] = self.se_rev.path
-        return d
+            mapping_data['SE_REV'] = self.se_rev.path
+        return mapping_data
 
 
 class SnpPhylogenyUtils(object):
@@ -96,9 +95,10 @@ class SnpPhylogenyUtils(object):
         :param args: Pipeline arguments
         :return: Initializes HTML report
         """
-        report = HtmlReport(args.output_html, args.output_dir)
-        if not Path(args.output_dir).exists():
-            Path(args.output_dir).mkdir(parents=True)
+        output_dir = Path(args.output_dir)
+        report = HtmlReport(Path(args.output_html), output_dir)
+        if not output_dir.exists():
+            output_dir.mkdir(parents=True)
         report.initialize(f'SNP Phylogeny - {pipeline_name}', CSS_STYLE)
         report.add_pipeline_header(f'SNP Phylogeny ({pipeline_name})')
         section = HtmlReportSection('Analysis info')
@@ -127,6 +127,9 @@ class SnpPhylogenyUtils(object):
         argument_parser.add_argument('--reference-name', type=str)
         argument_parser.add_argument('--sample', nargs=5, action='append', required=True)
         argument_parser.add_argument('--trim-reads', action='store_true')
+        argument_parser.add_argument(
+            '--adapter', help="(Illumina) Adapter that was used for sequencing, used for read-trimming",
+            choices=['NexteraPE', 'TruSeq2', 'TruSeq3'], default='NexteraPE')
         argument_parser.add_argument('--missing-data', choices=[
             'complete_deletion', 'use_all_sites', 'partial_deletion'], default='use_all_sites')
         argument_parser.add_argument('--site-cov-cutoff', choices=range(0, 101), type=int)
@@ -148,7 +151,7 @@ class SnpPhylogenyUtils(object):
                 sample_name = FastqUtils.get_sample_name(fwd_name)
             samples.append(Sample(
                 sample_name, FileSystemHelper.make_valid(sample_name),
-                [ToolIOFile(fwd_read), ToolIOFile(rev_read)],
+                [ToolIOFile(Path(fwd_read)), ToolIOFile(Path(rev_read))],
                 [fwd_name, rev_name]
             ))
 
@@ -192,18 +195,21 @@ class SnpPhylogenyUtils(object):
         return fq_by_sample
 
     @staticmethod
-    def trim_all_reads(fq_by_sample: Dict[Sample, List[ToolIOFile]], working_dir: Path, threads: int = 8) -> \
-            Dict[Sample, TrimmingIlluminaWrapper.ReadTrimmingOutput]:
+    def trim_all_reads(fq_by_sample: Dict[Sample, List[ToolIOFile]], working_dir: Path, adapter: str,
+                       threads: int = 8) -> Dict[Sample, TrimmingIlluminaWrapper.ReadTrimmingOutput]:
         """
         Trims all the reads in parallel using Snakemake.
         :param fq_by_sample: FASTQ files by sample
         :param working_dir: Working directory
+        :param adapter: Adapters to trim
         :param threads: Number of threads
         :return: None
         """
         config_data = {
             'working_dir': working_dir,
-            'samples': {s.name_valid: [f.path for f in fq] for s, fq in fq_by_sample.items()}}
+            'samples': {s.name_valid: [f.path for f in fq] for s, fq in fq_by_sample.items()},
+            'read_trimming': {'adapter': adapter}
+        }
         config_file = SnakePipelineUtils.generate_config_file(config_data, working_dir)
         output_file = working_dir / TRIMMING_ALL
         SnakePipelineUtils.run_snakemake(
@@ -244,7 +250,7 @@ class SnpPhylogenyUtils(object):
             # Add FastQC reports
             for i, f in enumerate(trimming_output.fastq_reports_pre, start=1):
                 relative_path = Path('fastqc_report') / f'{sample.name_valid}_{i}.html'
-                section.add_file(f.path, str(relative_path))
+                section.add_file(f.path, relative_path)
                 row.append(HtmlTableCell('view', link=str(relative_path)))
             table_data.append(row)
 
@@ -285,12 +291,12 @@ class SnpPhylogenyUtils(object):
         })
 
         # Run tool
-        snp_matrix_constructor.run(str(working_dir))
+        snp_matrix_constructor.run(working_dir)
         return snp_matrix_constructor.tool_outputs['FASTA'][0]
 
     @staticmethod
     def add_output_files_section(report: HtmlReport, column_names: List[str], output_files: Dict[
-            Sample, List[Optional[Path]]], snp_matrix: str) -> None:
+            Sample, List[Optional[Path]]], snp_matrix: Path) -> None:
         """
         Adds the section with the output files.
         :param report: Report
@@ -302,10 +308,10 @@ class SnpPhylogenyUtils(object):
         section = HtmlReportSection('Output files')
 
         # Add SNP matrix
-        relative_path = 'snp_matrix.fasta'
+        relative_path = Path('snp_matrix.fasta')
         section.add_file(snp_matrix, relative_path)
         table_data_snp_matrix = [
-            ['SNP matrix:', HtmlTableCell('Download (FASTA)', link=relative_path)],
+            ['SNP matrix:', HtmlTableCell('Download (FASTA)', link=str(relative_path))],
             ['Size:', SnpPhylogenyUtils.get_snp_matrix_size(snp_matrix)]
         ]
         section.add_table(table_data_snp_matrix, table_attributes=[('class', 'information')])
@@ -319,7 +325,7 @@ class SnpPhylogenyUtils(object):
                     row.append('Not available')
                 else:
                     relative_path = Path(sample.name_valid) / file_.name
-                    row.append(HtmlTableCell('Download', link=section.add_file(str(file_), str(relative_path))))
+                    row.append(HtmlTableCell('Download', link=str(section.add_file(file_, relative_path))))
             table_data.append(row)
         header = ['Sample'] + column_names
         section.add_table(table_data, header, [('class', 'data')])
@@ -345,24 +351,24 @@ class SnpPhylogenyUtils(object):
         # Save as TSV
         data_metrics = pd.DataFrame([{k: v for k, v in zip(header, row)} for row in table_data])
         data_metrics.to_csv(Path(report.output_dir) / 'metrics.tsv', sep='\t', index=False)
-        section.add_link_to_file('Download (TSV)', 'metrics.tsv')
+        section.add_link_to_file('Download (TSV)', Path('metrics.tsv'))
         report.add_html_object(section)
         report.save()
 
     @staticmethod
-    def get_snp_matrix_size(snp_matrix: str) -> int:
+    def get_snp_matrix_size(snp_matrix: Path) -> int:
         """
         Returns the length of the given SNP matrix.
         Note: this function only checks the length of the first entry.
         :param snp_matrix: SNP matrix
         :return: SNP matrix size
         """
-        with open(snp_matrix) as handle:
+        with snp_matrix.open() as handle:
             entries = list(SeqIO.parse(handle, 'fasta'))
         return len(entries[0].seq)
 
     @staticmethod
-    def check_snp_matrix_size(snp_matrix: str, size_min: int = 10, size_max: int = 25000) -> None:
+    def check_snp_matrix_size(snp_matrix: Path, size_min: int = 10, size_max: int = 25000) -> None:
         """
         Checks if the size of the SNP matrix is OK to perform model selection / tree building.
         :param snp_matrix: SNP matrix
@@ -392,12 +398,12 @@ class SnpPhylogenyUtils(object):
         if error_message is not None:
             section.add_error_message(error_message)
         else:
-            relative_path = 'model_selection_out.csv'
+            relative_path = Path('model_selection_out.csv')
             section.add_file(model_selection.tool_outputs['CSV'][0].path, relative_path)
             table_data = [
                 ['Selected model:', model_selection.informs['model_full']],
                 ['Rates among sites:', model_selection.informs['rates_among_sites_full']],
-                ['Overview:', HtmlTableCell('Download (CSV)', link=relative_path)]
+                ['Overview:', HtmlTableCell('Download (CSV)', link=str(relative_path))]
             ]
             section.add_table(table_data, table_attributes=[('class', 'information')])
         report.add_html_object(section)
@@ -419,11 +425,11 @@ class SnpPhylogenyUtils(object):
         working_dir = Path(args.working_dir) / 'model_selection'
         if not working_dir.exists():
             working_dir.mkdir(parents=True)
-        model_selection.run(str(working_dir))
+        model_selection.run(working_dir)
         return model_selection
 
     @staticmethod
-    def add_tree_building_section(report: HtmlReport, newick_path: Optional[str] = None,
+    def add_tree_building_section(report: HtmlReport, newick_path: Optional[Path] = None,
                                   error_message: Optional[str] = None) -> None:
         """
         Adds the tree building section.
@@ -437,14 +443,14 @@ class SnpPhylogenyUtils(object):
             section.add_error_message(error_message)
         else:
             # Add download link
-            relative_path = 'tree.nwk'
+            relative_path = Path('tree.nwk')
             section.add_file(newick_path, relative_path)
-            table_data = [['Tree:', HtmlTableCell('Download (Newick)', link=relative_path)]]
+            table_data = [['Tree:', HtmlTableCell('Download (Newick)', link=str(relative_path))]]
             section.add_table(table_data, table_attributes=[('class', 'information')])
 
             # Render tree
             output_path = Path(report.output_dir) / 'tree.png'
-            NewickUtils.render(Camel(logging_config=None), newick_path, str(output_path), 'clad')
+            NewickUtils.render(Camel(logging_config=None), newick_path, output_path, 'clad')
             section.add_html_object(HtmlElement('img', attributes=[('src', 'tree.png'), ('border', '1')]))
 
         report.add_html_object(section)
@@ -470,5 +476,5 @@ class SnpPhylogenyUtils(object):
         working_dir = Path(args.working_dir) / 'tree_building'
         if not working_dir.exists():
             working_dir.mkdir(parents=True)
-        tree_building.run(str(working_dir))
+        tree_building.run(working_dir)
         return tree_building

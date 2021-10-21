@@ -1,6 +1,7 @@
 import json
 import logging
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Dict, List, Union, Optional
 
 from snakemake.io import Wildcards
@@ -39,8 +40,8 @@ class Step(object):
     This class represents a step in a Snakemake pipeline. It executes a single tool.
     """
 
-    def __init__(self, rule_name: str, tool: Tool, camel: Camel, folder: str, config: dict,
-                 wildcards: Wildcards = None, pipeline_output: bool = False, keys_log: Optional[List[str]] = None,
+    def __init__(self, rule_name: str, tool: Tool, camel: Camel, folder: Path, wildcards: Wildcards = None,
+                 pipeline_output: bool = False, keys_log: Optional[List[str]] = None,
                  keys_no_log: Optional[List[str]] = None) -> None:
         """
         Initializes a step.
@@ -48,7 +49,6 @@ class Step(object):
         :param tool: Tool object of the tool that needs to be executed
         :param camel: Camel object
         :param folder: Folder in which the step is being run
-        :param config: Snakemake config dictionary
         :param wildcards: Wildcards object from snakemake
         :param pipeline_output: Boolean to indicate whether outputs are pipeline outputs
         :param keys_log: The output keys that should be logged (has preference over 'keys_no_log', by default all keys
@@ -129,8 +129,8 @@ class Step(object):
         logging.info("Default parameters loaded: {}".format(self._tool.parameter_overview))
         self._add_job_parameters()
         self._tool.run(self._folder)
-        logging.info('Step output: {}'.format(list(self.outputs.items())))
-        logging.info('Step informs: {}'.format(list(self.informs.items())))
+        logging.info(f'Step output: {list(self.outputs.items())}')
+        logging.info(f'Step informs: {list(self.informs.items())}')
         self._log_outputs()
         LogManager.detach_step_handlers()
 

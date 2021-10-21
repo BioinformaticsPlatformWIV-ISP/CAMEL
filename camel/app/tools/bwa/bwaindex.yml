@@ -1,4 +1,4 @@
-dependencies: [bwa/0.7.15]
+dependencies: [bwa/0.7.17]
 parameters:
   algorithm: {default: true, mandatory: false, option: -a, p_index: 10, value: is}
 tool_command: bwa index

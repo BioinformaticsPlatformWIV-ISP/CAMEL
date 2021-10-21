@@ -1,7 +1,7 @@
 import json
+from pathlib import Path
 
-import os
-
+from camel.app.camel import Camel
 from camel.app.components.genedetection.mapping import Mapping
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
@@ -30,7 +30,7 @@ class DBManager(Tool):
     - mapping: Mapping of converted sequence names to original headers
     """
 
-    def __init__(self, camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initialize this tool.
         :param camel: Camel instance
@@ -58,38 +58,39 @@ class DBManager(Tool):
             raise InvalidInputSpecificationError("'{}' is not a directory".format(self._tool_inputs['DIR'][0]))
         super(DBManager, self)._check_input()
 
-    def __add_informs(self, input_folder: str) -> None:
+    def __add_informs(self, input_folder: Path) -> None:
         """
         Adds the informs by parsing the JSON file containing the metadata in the database directory.
         :param input_folder: Input database directory
         :return: None
         """
-        if not os.path.isfile(os.path.join(input_folder, 'db_metadata.txt')):
-            raise FileNotFoundError("No database metadata found in: {}".format(input_folder))
-        with open(os.path.join(input_folder, 'db_metadata.txt')) as handle:
+        path_metadata = input_folder / 'db_metadata.txt'
+        if not path_metadata.is_file():
+            raise FileNotFoundError(f'Database metadata not found: {path_metadata}')
+        with path_metadata.open() as handle:
             metadata = json.load(handle)
         self._informs.update(metadata)
         self._informs['mapping'] = self.__get_mapping(input_folder)
 
     @staticmethod
-    def __get_mapping(input_folder: str) -> Mapping:
+    def __get_mapping(input_folder: Path) -> Mapping:
         """
         Returns the mapping of the standardized header to the original header.
         :param input_folder: Input folder
         :return: Header mapping
         """
         try:
-            return Mapping.parse(os.path.join(input_folder, 'mapping.txt'))
+            return Mapping.parse((input_folder / 'mapping.txt'))
         except FileNotFoundError:
-            raise ToolExecutionError("No mapping found in {}".format(input_folder))
+            raise ToolExecutionError(f'No mapping found in {input_folder}')
 
-    def __set_database_files(self, folder: str) -> None:
+    def __set_database_files(self, folder: Path) -> None:
         """
         Returns the FASTA file from the given folder.
         :return: Database file
         """
-        for f in os.listdir(folder):
-            if f.endswith('.fasta') and 'clustered' in f:
-                self._tool_outputs['FASTA_clustered'] = [ToolIOFile(os.path.join(folder, f))]
-            elif f.endswith('.fasta'):
-                self._tool_outputs['FASTA'] = [ToolIOFile(os.path.join(folder, f))]
+        for f in folder.iterdir():
+            if f.name.endswith('.fasta') and ('clustered' in f.name):
+                self._tool_outputs['FASTA_clustered'] = [ToolIOFile(f)]
+            elif f.name.endswith('.fasta'):
+                self._tool_outputs['FASTA'] = [ToolIOFile(f)]

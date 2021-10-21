@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Tuple, List, Union, Optional
 
 import abc
@@ -109,19 +110,19 @@ class HtmlBase(object):
                     with self.get_tag('td'):
                         self.add_text(value)
 
-    def add_link_to_file(self, link_text: str, file_: str) -> None:
+    def add_link_to_file(self, link_text: str, relative_path: Path) -> None:
         """
         Adds a link to a file.
         :param link_text: Text of the link
-        :param file_: Location of the file
+        :param relative_path: Relative path to the file
         :return: None
         """
-        if file_ is None:
+        if relative_path is None:
             self._doc.text(link_text)
             with self._doc.tag('em', klass='not-available'):
                 self._doc.text('Not available')
         else:
-            with self._doc.tag('a', href=file_):
+            with self._doc.tag('a', href=str(relative_path)):
                 self._doc.text(link_text)
         self.add_line_break()
 

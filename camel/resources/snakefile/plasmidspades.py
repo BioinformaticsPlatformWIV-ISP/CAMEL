@@ -21,4 +21,4 @@ def plasmidspades_successful(checkpoint: snakemake.workflow.Checkpoint) -> bool:
     :param checkpoint: Checkpoint
     :return: True if successful, False otherwise
     """
-    return len(SnakemakeUtils.load_object(checkpoint.get().output.FASTA_Contig)) > 0
+    return len(SnakemakeUtils.load_object(Path(checkpoint.get().output.FASTA_Contig))) > 0

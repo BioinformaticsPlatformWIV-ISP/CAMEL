@@ -47,7 +47,7 @@ class SnpQualityFilter(BaseFilter):
         self._command.command = ' '.join([
             self._tool_command,
             "--exclude 'QUAL<{}'".format(self._parameters['min_snp_quality'].value),
-            self._tool_inputs['VCF_GZ'][0].path,
+            str(self._tool_inputs['VCF_GZ'][0].path),
             '--output-type z',
             '--output {}'.format(self.output_path)
         ] + self._get_soft_filter_options())

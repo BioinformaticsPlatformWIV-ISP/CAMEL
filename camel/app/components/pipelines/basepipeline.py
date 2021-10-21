@@ -119,13 +119,13 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         """
         return self._args.galaxy_job_id if 'galaxy_job_id' in self._args else None
 
-    def _get_fastq_input_links(self) -> List[List[Tuple[str, str]]]:
+    def _get_fastq_input_links(self) -> List[List[Tuple[Path, str]]]:
         """
         Returns the links to the input FASTQ files.
         :return: Links
         """
         links = []
-        for read_nb, path in enumerate(self._args.fastq_pe, start=1):
+        for read_nb, path in enumerate([Path(x) for x in self._args.fastq_pe], start=1):
             gzipped = FileSystemHelper.is_gzipped(path)
             links.append([path, f"{self.sample_name}_{read_nb}.fastq{'.gz' if gzipped else ''}"])
         return links

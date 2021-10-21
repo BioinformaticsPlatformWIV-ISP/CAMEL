@@ -1,9 +1,7 @@
 import logging
-from typing import List, Union, Tuple
-
-import os
-
 import shutil
+from pathlib import Path
+from typing import List, Union, Tuple, Optional
 
 from camel.app.components.html.htmlbase import HtmlBase
 from camel.app.components.html.htmlelement import HtmlElement
@@ -15,7 +13,7 @@ class HtmlReportSection(HtmlElement):
     This class can be used to create a section in the HTML report.
     """
 
-    def __init__(self, title, level=2, subtitle: str = None):
+    def __init__(self, title: Optional[str], level: int = 2, subtitle: Optional[str] = None) -> None:
         """
         Initializes a report section.
         :param title: Section title
@@ -44,32 +42,32 @@ class HtmlReportSection(HtmlElement):
                 self.add_text('({})'.format(subtitle))
 
     @property
-    def files(self):
+    def files(self) -> List[Path]:
         """
         Returns the files that were added to this report.
         :return: Files
         """
         return self._files
 
-    def copy_files(self, output_directory):
+    def copy_files(self, output_directory: Path) -> None:
         """
         Exports the files belonging to this section to the given directory.
         :param output_directory: Output directory
         :return: None
         """
         logging.info("Exporting report section files")
-        if output_directory is None or not os.path.isdir(output_directory):
-            raise ValueError("Invalid output directory: {}".format(output_directory))
+        if output_directory is None or not output_directory.is_dir():
+            raise ValueError(f'Invalid output directory: {output_directory}')
         for file_path, relative_path in self.files:
-            logging.info("Copying file: {} - {}".format(file_path, relative_path))
-            if not os.path.isfile(file_path):
-                raise ValueError("Cannot add file (does not exist) '{}'".format(file_path))
-            relative_dir = os.path.join(output_directory, os.path.dirname(relative_path))
-            if not os.path.isdir(relative_dir):
-                os.makedirs(relative_dir)
-            shutil.copy(file_path, os.path.join(output_directory, relative_path))
+            logging.info(f'Copying file: {file_path} -> {relative_path}')
+            if not file_path.is_file():
+                raise ValueError(f"Cannot add file (does not exist) '{file_path}'")
+            relative_dir = output_directory / relative_path.parent
+            if not relative_dir.is_dir():
+                relative_dir.mkdir(parents=True)
+            shutil.copy(file_path, output_directory / relative_path)
 
-    def add_file(self, input_file: str, relative_path: str) -> str:
+    def add_file(self, input_file: Path, relative_path: Path) -> Path:
         """
         Adds the file to the report.
         Returns the relative path parameter so it is easier to use in list comprehensions.

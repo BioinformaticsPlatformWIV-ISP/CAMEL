@@ -35,7 +35,7 @@ rule typing_blast_allele_detection:
         from camel.app.components.blast.blasthitstatistics import BLASTN_OUTPUT_FORMAT
 
         # Get metadata
-        scheme_informs = SnakemakeUtils.load_object(input.INFORMS_scheme)
+        scheme_informs = SnakemakeUtils.load_object(Path(input.INFORMS_scheme))
         locus_informs = scheme_informs['loci'].metadata_by_locus_name[params.locus_name]
 
         # Blast alignment
@@ -46,41 +46,42 @@ rule typing_blast_allele_detection:
             blast = Blastx(camel)
         else:
             raise ValueError(f"Invalid locus type: {wildcards.locus_type}")
-        SnakemakeUtils.add_pickle_input(blast, 'FASTA', input.FASTA)
+        SnakemakeUtils.add_pickle_input(blast, 'FASTA', Path(input.FASTA))
         blast.add_input_files({'DB_BLAST': [ToolIOFile(params.scheme_dir / locus_informs['fasta_path'])]})
         blast.update_parameters(threads=threads)
-        blast.run(str(params.working_dir))
-        SnakemakeUtils.dump_object(blast.informs, output.INFORMS)
+        dir_working = Path(str(params.working_dir))
+        blast.run(dir_working)
+        SnakemakeUtils.dump_object(blast.informs, Path(output.INFORMS))
 
         # TSV generation
         formatter_tsv = BlastFormatter(camel)
         formatter_tsv.update_parameters(output_format=BLASTN_OUTPUT_FORMAT)
         formatter_tsv.add_input_files({'ASN': blast.tool_outputs['ASN']})
-        formatter_tsv.run(params.working_dir)
+        formatter_tsv.run(dir_working)
 
         # Best hit selection
         hit_selector = BestHitSelector(camel)
         hit_selector.add_input_files({'TSV': formatter_tsv.tool_outputs['TSV']})
         hit_selector.add_input_informs({'locus': locus_informs})
-        hit_selector.run(params.working_dir)
+        hit_selector.run(dir_working)
 
         # Text alignment generation
         formatter_text = BlastFormatter(camel)
         formatter_text.update_parameters(output_format='0', num_alignments=1000)
         formatter_text.add_input_files({'ASN': blast.tool_outputs['ASN']})
-        formatter_text.run(params.working_dir)
+        formatter_text.run(dir_working)
 
         # Alignment extraction
         extractor = AlignmentExtractor(camel)
         extractor.add_input_files({'TXT': formatter_text.tool_outputs['TXT'],
                                    'VAL_Hits': hit_selector.tool_outputs['VAL_Hit']})
-        extractor.run(params.working_dir)
+        extractor.run(dir_working)
 
         # Add the alignment to the hit object
         if len(extractor.tool_outputs['TXT']) > 0:
             best_hit = hit_selector.tool_outputs['VAL_Hit'][0].value
             best_hit.alignment_path = extractor.tool_outputs['TXT'][0].path
-        SnakemakeUtils.dump_object(hit_selector.tool_outputs['VAL_Hit'], output.VAL_Hit)
+        SnakemakeUtils.dump_object(hit_selector.tool_outputs['VAL_Hit'], Path(output.VAL_Hit))
 
 rule typing_blast_combine_hits:
     """
@@ -96,5 +97,5 @@ rule typing_blast_combine_hits:
         for key in 'nucl', 'pept':
             list_of_hits = []
             for pickle in input.get(f'input_{key}'):
-                list_of_hits.append(SnakemakeUtils.load_object(pickle)[0])
-            SnakemakeUtils.dump_object(list_of_hits, output.get(f'hits_{key}'))
+                list_of_hits.append(SnakemakeUtils.load_object(Path(pickle))[0])
+            SnakemakeUtils.dump_object(list_of_hits, Path(output.get(f'hits_{key}')))

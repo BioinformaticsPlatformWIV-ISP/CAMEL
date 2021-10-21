@@ -1,6 +1,5 @@
+from pathlib import Path
 from typing import Optional, List, Any
-
-import os
 
 from camel.app.components.blast.blasthitstatistics import BlastHitStatistics
 from camel.app.components.html.htmlreportsection import HtmlReportSection
@@ -57,7 +56,7 @@ class SequenceTypingBlastHit(SequenceTypingHitBase):
         """
         return SequenceTypingBlastHit.table_column_names() + ['Alignment']
 
-    def to_html_row(self, report_section: HtmlReportSection, sub_dir: str = None) -> List[Any]:
+    def to_html_row(self, report_section: HtmlReportSection, sub_dir: Path = None) -> List[Any]:
         """
         Returns the hit as a row in a table.
         :param report_section: Section is passed to save the alignments
@@ -67,9 +66,9 @@ class SequenceTypingBlastHit(SequenceTypingHitBase):
         if self._alignment_path is None:
             alignment_cell = '-'
         else:
-            relative_path = os.path.join(sub_dir, 'alignments', os.path.basename(self._alignment_path))
+            relative_path = sub_dir / 'alignments' / self._alignment_path.name
             report_section.add_file(self._alignment_path, relative_path)
-            alignment_cell = HtmlTableCell('view', link=relative_path)
+            alignment_cell = HtmlTableCell('view', link=str(relative_path))
         return [
             self.locus,
             HtmlTableCell(self.allele_id, self.color, link=self.allele_page_url),
@@ -108,7 +107,7 @@ class SequenceTypingBlastHit(SequenceTypingHitBase):
         return self._blast_stats
 
     @property
-    def alignment_path(self) -> str:
+    def alignment_path(self) -> Path:
         """
         Returns the path to the alignment file.
         :return: Alignment file
@@ -116,7 +115,7 @@ class SequenceTypingBlastHit(SequenceTypingHitBase):
         return self._alignment_path
 
     @alignment_path.setter
-    def alignment_path(self, alignment_path: str) -> None:
+    def alignment_path(self, alignment_path: Path) -> None:
         """
         Sets the alignment path.
         :param alignment_path: Alignment path
