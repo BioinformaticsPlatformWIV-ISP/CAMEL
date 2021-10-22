@@ -1,5 +1,6 @@
 import re
 from typing import Optional
+from pathlib import Path
 
 from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
@@ -61,6 +62,6 @@ class MarkDuplicates(Picard):
         Set the output specification
         :return: None
         """
-        self._tool_outputs['BAM'] = [ToolIOFile(self.folder / self._parameters['output'].value)]
+        self._tool_outputs['BAM'] = [ToolIOFile(Path(self.folder) / self._parameters['output'].value)]
         self._tool_outputs['METRICS'] = [
-            ToolIOFile(self.folder / self._parameters['metrics_output'].value)]
+            ToolIOFile(Path(self.folder) / self._parameters['metrics_output'].value)]
