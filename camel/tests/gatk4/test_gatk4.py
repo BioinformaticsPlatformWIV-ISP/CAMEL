@@ -10,10 +10,10 @@ from camel.app.tools.gatk4.gatk4fastaalternatereferencemaker import GATK4FastaAl
 from camel.app.tools.gatk4.gatk4gatherbqsrreports import GATK4GatherBQSRReports
 from camel.app.tools.gatk4.gatk4genotypegvcfs import GATK4GenotypeGVCFs
 from camel.app.tools.gatk4.gatk4haplotypecaller import GATK4HaplotypeCaller
-#from camel.app.tools.gatk4.gatk4markduplicatesspark import GATK4MarkDuplicatesSpark
 from camel.app.tools.gatk4.gatk4selectvariants import GATK4SelectVariants
 from camel.app.tools.gatk4.gatk4validatevariants import GATK4ValidateVariants
 from camel.app.tools.gatk4.gatk4variantfiltration import GATK4VariantFiltration
+
 
 class TestGATK4(CamelTestSuite):
     """
@@ -145,21 +145,6 @@ class TestGATK4(CamelTestSuite):
         output_file = Path(haplotypecaller.tool_outputs['VCF'][0].path)
         self.assertTrue(output_file.exists())
         self.assertGreater(output_file.stat().st_size, 0)
-
-    # def test_gatk4_markduplicatesspark(self) -> None:
-    #     """
-    #     Test GATK4MarkDuplicatesSpark
-    #     :return: None
-    #     """
-    #     markduplicatesspark = GATK4MarkDuplicatesSpark(self.camel)
-    #     markduplicatesspark.add_input_files({
-    #         'BAM': [TestGATK4.FILE_BAM],
-    #     })
-    #     markduplicatesspark.run(self.running_dir)
-    #     self.assertTrue('BAM' in markduplicatesspark.tool_outputs, "No BAM output generated")
-    #     output_file = Path(markduplicatesspark.tool_outputs['BAM'][0].path)
-    #     self.assertTrue(output_file.exists())
-    #     self.assertGreater(output_file.stat().st_size, 0)
 
     def test_gatk4_selectvariants(self) -> None:
         """
