@@ -29,11 +29,11 @@ class TestPicard(CamelTestSuite):
     test_file_dir = CamelTestSuite.get_test_file_dir('picard')
     FILE_FASTA_REF = ToolIOFile(test_file_dir / 'Homo_sapiens_assembly38_chr22.fasta')
     FILE_VCFdb = ToolIOFile(test_file_dir / 'Homo_sapiens_assembly38.dbsnp138_chr22.vcf.gz')
-    FILE_BAM = ToolIOFile(test_file_dir / 'NA12877_chr22_25p.bam')
-    FILE_VCF = ToolIOFile(test_file_dir / 'NA12877_chr22.gVCF')
-    FILE_VCF1 = ToolIOFile(test_file_dir / 'NA12877_sub1.vcf')
-    FILE_VCF2 = ToolIOFile(test_file_dir / 'NA12877_sub2.vcf')
-    FILE_VCF3 = ToolIOFile(test_file_dir / 'NA12877_sub3.vcf')
+    FILE_BAM = ToolIOFile(test_file_dir / 'NA12877_chr22_subRG.bam')
+    FILE_VCF = ToolIOFile(test_file_dir / 'NA12877_chr22.g.vcf.gz')
+    FILE_VCF1 = ToolIOFile(test_file_dir / 'NA12877_sub1.vcf.gz')
+    FILE_VCF2 = ToolIOFile(test_file_dir / 'NA12877_sub2.vcf.gz')
+    FILE_VCF3 = ToolIOFile(test_file_dir / 'NA12877_sub3.vcf.gz')
     FILE_FASTQ_R1 = ToolIOFile(test_file_dir / 'NA12877_R1.fastq')
     FILE_FASTQ_R2 = ToolIOFile(test_file_dir / 'NA12877_R2.fastq')
     FILE_BAM1 = ToolIOFile(test_file_dir / 'NA12877_chr22_25p_sub1.bam')
@@ -79,7 +79,8 @@ class TestPicard(CamelTestSuite):
         """
         picard_collectmultiplemetrics = CollectMultipleMetrics(self.camel)
         picard_collectmultiplemetrics.add_input_files({
-            'BAM': [TestPicard.FILE_BAM]
+            'BAM': [TestPicard.FILE_BAM],
+            'FASTA_REF': [TestPicard.FILE_FASTA_REF]
         })
         picard_collectmultiplemetrics.update_parameters(
             assume_sorted = 'true',
@@ -237,8 +238,8 @@ class TestPicard(CamelTestSuite):
             'FASTQ_PE': [TestPicard.FILE_FASTQ_R1, TestPicard.FILE_FASTQ_R2]
         })
         picard_fastqtosam.run(self.running_dir)
-        self.assertTrue('SAM' in picard_fastqtosam.tool_outputs, "No SAM output generated")
-        output_file = Path(picard_fastqtosam.tool_outputs['SAM'][0].path)
+        self.assertTrue('BAM' in picard_fastqtosam.tool_outputs, "No BAM output generated")
+        output_file = Path(picard_fastqtosam.tool_outputs['BAM'][0].path)
         self.assertTrue(output_file.exists())
         self.assertGreater(output_file.stat().st_size, 0)
 
@@ -249,7 +250,7 @@ class TestPicard(CamelTestSuite):
         """
         picard_gatherbamfiles = GatherBamFiles(self.camel)
         picard_gatherbamfiles.add_input_files({
-            'BAMs': [TestPicard.FILE_BAM1, ToolIOFile.FILE_BAM2, ToolIOFile.FILE_BAM3]
+            'BAMs': [TestPicard.FILE_BAM1, TestPicard.FILE_BAM2, TestPicard.FILE_BAM3]
         })
         picard_gatherbamfiles.run(self.running_dir)
         self.assertTrue('BAM' in picard_gatherbamfiles.tool_outputs, "No BAM output generated")
@@ -302,7 +303,6 @@ class TestPicard(CamelTestSuite):
         picard_mergebamalignment = MergeBamAlignment(self.camel)
         picard_mergebamalignment.add_input_files({
             'BAM_UNMAPPED': [TestPicard.FILE_uBAM],
-            'BAM_ALIGNED': [TestPicard.FILE_BAM],
             'FASTA_REF': [TestPicard.FILE_FASTA_REF]
         })
         picard_mergebamalignment.run(self.running_dir)
