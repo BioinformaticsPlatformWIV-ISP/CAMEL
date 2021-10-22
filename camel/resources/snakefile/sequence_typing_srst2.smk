@@ -31,12 +31,12 @@ rule typing_srst2_allele_detection:
         from camel.app.tools.srst2.srst2alleledetector import SRST2AlleleDetector
 
         # Get metadata
-        scheme_informs = SnakemakeUtils.load_object(input.INFORMS_scheme)
+        scheme_informs = SnakemakeUtils.load_object(Path(input.INFORMS_scheme))
         locus_informs = scheme_informs['loci'].metadata_by_locus_name[params.locus_name]
 
         detector = SRST2AlleleDetector(camel)
         fastq_input = SnakePipelineUtils.extracts_fq_input(
-            input.IO, key_pe='FASTQ_PE', key_se='FASTQ_SE', read_type=params.read_type)
+            Path(input.IO), key_pe='FASTQ_PE', key_se='FASTQ_SE', read_type=params.read_type)
         detector.add_input_files(fastq_input)
         detector.add_input_files({'FASTA': [ToolIOFile(params.scheme_dir / locus_informs['fasta_path'])]})
         detector.add_input_informs({'locus': locus_informs})
@@ -62,5 +62,5 @@ rule typing_srst2_combine_hits:
     run:
         all_hits = []
         for io in input.IO_hits:
-            all_hits.extend(SnakemakeUtils.load_object(io))
-        SnakemakeUtils.dump_object(all_hits, str(output.IO))
+            all_hits.extend(SnakemakeUtils.load_object(Path(io)))
+        SnakemakeUtils.dump_object(all_hits, Path(output.IO))

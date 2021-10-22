@@ -24,12 +24,12 @@ class GeneDetectionWrapper(object):
     This class is used as a wrapper class around the gene detection Snakemake workflow.
     """
 
-    def __init__(self, working_dir: str) -> None:
+    def __init__(self, working_dir: Path) -> None:
         """
         Initializes the read trimming helper.
         :param working_dir: Working directory
         """
-        self._working_dir = Path(working_dir)
+        self._working_dir = working_dir
         self._output = None
 
     def __run_workflow(self, config_data: Dict[str, Any], threads: int) -> None:
@@ -98,10 +98,11 @@ class GeneDetectionWrapper(object):
         :param fasta_path: FASTA file path
         :return: None
         """
+        print(self._working_dir, type(self._working_dir))
         path = self._working_dir / str(gene_detection.INPUT_GENE_DETECTION_FASTA).format(db='db')
         if not path.parent.exists():
             path.parent.mkdir(parents=True)
-        SnakemakeUtils.dump_object([ToolIOFile(fasta_path)], str(path))
+        SnakemakeUtils.dump_object([ToolIOFile(fasta_path)], path)
 
     def __create_input_srst2(self, fastq_input: FastqInput) -> None:
         """
@@ -133,7 +134,7 @@ class GeneDetectionWrapper(object):
             'read_type': read_type
         }
 
-    def __set_output(self, output_files: Dict[str, str]) -> None:
+    def __set_output(self, output_files: Dict[str, Path]) -> None:
         """
         Sets the output of the workflow.
         :param output_files: Output files dictionary

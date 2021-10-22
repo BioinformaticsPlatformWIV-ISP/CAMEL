@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 from camel.app.components.files.fileutils import FileUtils
 from camel.app.io.toolio import ToolIO
@@ -9,28 +9,28 @@ class ToolIODirectory(ToolIO):
     Class that represents an input / output directory of a tool.
     """
 
-    def __init__(self, path: str, logged: bool=True) -> None:
+    def __init__(self, path: Path, logged: bool = True) -> None:
         """
         Initializes a tool input / output directory.
         :param path: Path to the directory
         :param logged: If True, the output can be logged
         """
         super(ToolIODirectory, self).__init__(logged)
-        self._path = os.path.abspath(path)
+        self._path = path.absolute()
 
     def __str__(self) -> str:
         """
         String representation
         :return: String representation
         """
-        return self._path
+        return str(self._path)
 
     def __repr__(self) -> str:
         """
         Internal representation
         :return: Internal representation
         """
-        return 'ToolIODirectory("{}")'.format(self.path)
+        return f'ToolIODirectory("{self.path}")'
 
     def is_valid(self) -> bool:
         """
@@ -48,7 +48,7 @@ class ToolIODirectory(ToolIO):
         return FileUtils.hash_directory(self.path)
 
     @property
-    def path(self) -> str:
+    def path(self) -> Path:
         """
         Returns the path to the input / output directory.
         :return: Path
@@ -61,10 +61,7 @@ class ToolIODirectory(ToolIO):
         Returns the basename of the input / output directory.
         :return: Basename
         """
-        if self.path.endswith('/'):
-            return os.path.basename(os.path.dirname(self.path))
-        else:
-            return os.path.basename(self.path)
+        return self.path.name
 
     @property
     def exists(self) -> bool:
@@ -72,7 +69,7 @@ class ToolIODirectory(ToolIO):
         Checks whether this directory exists.
         :return: True if the directory exists, False otherwise
         """
-        return os.path.isdir(self._path)
+        return self._path.is_dir()
 
     @property
     def type_name(self) -> str:

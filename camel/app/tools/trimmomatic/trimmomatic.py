@@ -1,7 +1,8 @@
 import re
+from pathlib import Path
+from typing import List
 
-import os
-
+from camel.app.camel import Camel
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.tool import Tool
@@ -13,7 +14,7 @@ class Trimmomatic(Tool):
     A flexible read trimming tool for Illumina NGS Data.
     """
 
-    def __init__(self, camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initializes Trimmomatic.
         :param camel: Camel instance
@@ -21,7 +22,7 @@ class Trimmomatic(Tool):
         super().__init__('Trimmomatic', '0.38', camel)
         self._mode = None
 
-    def _execute_tool(self):
+    def _execute_tool(self) -> None:
         """
         Runs Trimmomatic.
         :return: None
@@ -33,7 +34,7 @@ class Trimmomatic(Tool):
         if not self._informs.get('succeed', 'False'):
             raise ToolExecutionError("Error running trimmomatic")
 
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
         Checks the input.
         :return: None
@@ -50,7 +51,7 @@ class Trimmomatic(Tool):
             raise ValueError("No FASTQ_PE of FASTQ_SE input found")
         super(Trimmomatic, self)._check_input()
 
-    def __build_command(self):
+    def __build_command(self) -> None:
         """
         Builds the command.
         :return: None
@@ -61,9 +62,10 @@ class Trimmomatic(Tool):
             options = self.__build_se_command()
         options += self._build_options(excluded_parameters=['baseout', 'threads', 'illuminaclip_PE', 'illuminaclip_SE'],
                                        delimiter='')
-        self._command.command = '{} {}'.format(self._tool_command, ' '.join(options))
+        option_string = ' '.join(options)
+        self._command.command = f'{self._tool_command} {option_string}'
 
-    def __build_se_command(self):
+    def __build_se_command(self) -> List[str]:
         """
         Builds the command to run in single end mode.
         :return: Command options
@@ -79,7 +81,7 @@ class Trimmomatic(Tool):
 
         return options
 
-    def __build_pe_command(self):
+    def __build_pe_command(self) -> List[str]:
         """
         Builds the command to run in paired end mode.
         :return: Command options
@@ -89,30 +91,30 @@ class Trimmomatic(Tool):
             options.append(str(self._parameters['baseout']))
         if 'threads' in self._parameters:
             options.append(str(self._parameters['threads']))
-        options.append(' '.join(f.path for f in self._tool_inputs['FASTQ_PE']))
+        options.append(' '.join(str(f) for f in self._tool_inputs['FASTQ_PE']))
         if 'illuminaclip_PE' in self._parameters:
             options.append(self._parameters['illuminaclip_PE'].option + self._parameters['illuminaclip_PE'].value)
 
         return options
 
-    def __set_output(self):
+    def __set_output(self) -> None:
         """
         Sets the output of this tool.
         :return: None
         """
-        basename = os.path.splitext(self._parameters['baseout'].value)[0]
+        basename = Path(self._parameters['baseout'].value).stem
         if self._mode == 'PE':
             self._tool_outputs['FASTQ_PE'] = [
-                ToolIOFile(os.path.join(self._folder, basename + '_1P.fastq')),
-                ToolIOFile(os.path.join(self._folder, basename + '_2P.fastq'))
+                ToolIOFile(self.folder / (basename + '_1P.fastq')),
+                ToolIOFile(self._folder / (basename + '_2P.fastq'))
             ]
-            self._tool_outputs['FASTQ_SE_FORWARD'] = [ToolIOFile(os.path.join(self._folder, basename + '_1U.fastq'))]
-            self._tool_outputs['FASTQ_SE_REVERSE'] = [ToolIOFile(os.path.join(self._folder, basename + '_2U.fastq'))]
+            self._tool_outputs['FASTQ_SE_FORWARD'] = [ToolIOFile(self._folder / (basename + '_1U.fastq'))]
+            self._tool_outputs['FASTQ_SE_REVERSE'] = [ToolIOFile(self._folder / (basename + '_2U.fastq'))]
         else:
-            self._tool_outputs['FASTQ'] = [ToolIOFile(os.path.join(self._folder, basename + '.fastq'))]
+            self._tool_outputs['FASTQ'] = [ToolIOFile(self._folder / (basename + '.fastq'))]
         self.__remove_empty_outputs()
 
-    def __remove_empty_outputs(self):
+    def __remove_empty_outputs(self) -> None:
         """
         Removes the empty files from the outputs.
         :return: None
@@ -122,7 +124,7 @@ class Trimmomatic(Tool):
                 if tool_output_file.size == 0:
                     self._tool_outputs[key].remove(tool_output_file)
 
-    def __set_informs(self):
+    def __set_informs(self) -> None:
         """
         Adds the trimming statistics to the informs.
         :return: None

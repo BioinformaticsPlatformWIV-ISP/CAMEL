@@ -1,5 +1,7 @@
-import os
+from pathlib import Path
+from typing import Dict, Union, List
 
+from camel.app.camel import Camel
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.tool import Tool
@@ -11,14 +13,14 @@ class FastQC(Tool):
     FastQC tool.
     """
 
-    def __init__(self, camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initializes FastQC.
         :param camel: Camel instance
         """
         super().__init__('FastQC', '0.11.5', camel)
 
-    def _execute_tool(self):
+    def _execute_tool(self) -> None:
         """
         Runs FastQC.
         :return: None
@@ -27,7 +29,7 @@ class FastQC(Tool):
         self._execute_command()
         self.__set_output()
 
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
         Checks if the input is valid.
         :return: None
@@ -43,11 +45,11 @@ class FastQC(Tool):
         """
         self._command.command = ' '.join([
             self._tool_command,
-            ' '.join(in_file.path for in_file in self._tool_inputs['FASTQ']),
+            ' '.join(str(in_file) for in_file in self._tool_inputs['FASTQ']),
             '--outdir .',
             ' '.join(self._build_options())])
 
-    def _check_command_output(self):
+    def _check_command_output(self) -> None:
         """
         Checks if the command output is valid.
         :return: None
@@ -56,33 +58,34 @@ class FastQC(Tool):
             raise ToolExecutionError(f"Error executing {self.name}: {self._command.stderr}")
 
     @staticmethod
-    def __get_output_folder(execution_folder, input_file):
+    def __get_output_folder(execution_folder: Path, input_file: ToolIOFile) -> Path:
         """
         Returns the output folder for the given input file.
         :param execution_folder: Folder where the command is executed
         :param input_file: Input file name
         :return: Output folder
         """
-        sample_base_name, ext = os.path.splitext(input_file.basename)
-        if ext != '.fastq':
+        stem = input_file.path.stem
+        suffix = input_file.path.suffix
+        if suffix != '.fastq':
             # compressed file, XXXX.fastq.gz or XXXX.fastq.bz2
-            sample_base_name, ext = os.path.splitext(sample_base_name)
-        for sub_folder in os.listdir(execution_folder):
-            if sub_folder.startswith(sample_base_name) and sub_folder.endswith('_fastqc'):
-                full_path = os.path.join(execution_folder, sub_folder)
-                if os.path.isdir(full_path):
+            stem = Path(stem).stem
+        for sub_folder in execution_folder.glob('*'):
+            if sub_folder.name.startswith(stem) and sub_folder.name.endswith('_fastqc'):
+                full_path = execution_folder / sub_folder
+                if full_path.is_dir():
                     return full_path
-        raise IOError("No output directory for FastQC input {} found.".format(input_file))
+        raise IOError(f"No output directory for FastQC input {input_file} found.")
 
     @staticmethod
-    def _analyze_summary_file(summary_file):
+    def _analyze_summary_file(summary_file: Path) -> Dict[str, Union[bool, List[str]]]:
         """
         Analyze fastqc output summary.txt (of a given input file)
         :param summary_file: FastQC summary file
         :return: Dictionary containing the summary information
         """
         summary_info = {'passed': True, 'warnings': [], 'fails': []}
-        with open(summary_file, 'r') as input_handle:
+        with summary_file.open('r') as input_handle:
             for line in input_handle.readlines():
                 status, test_name, _ = line.split('\t')
                 if status == 'WARN':
@@ -93,7 +96,7 @@ class FastQC(Tool):
             summary_info['passed'] = False
         return summary_info
 
-    def __set_output(self):
+    def __set_output(self) -> None:
         """
         Set the output of FastQC.
         :return: None
@@ -101,10 +104,10 @@ class FastQC(Tool):
         self._tool_outputs['HTML'] = []
         self._tool_outputs['TXT'] = []
         for input_file in self._tool_inputs['FASTQ']:
-            output_folder = self.__get_output_folder(self._folder, input_file)
-            self.informs[input_file.path] = FastQC._analyze_summary_file(os.path.join(output_folder, 'summary.txt'))
-            for output_file in os.listdir(output_folder):
-                if output_file == 'fastqc_report.html':
-                    self._tool_outputs['HTML'].append(ToolIOFile(os.path.join(output_folder, output_file)))
-                elif output_file == 'fastqc_data.txt':
-                    self._tool_outputs['TXT'].append(ToolIOFile(os.path.join(output_folder, output_file)))
+            output_folder = self.__get_output_folder(self.folder, input_file)
+            self.informs[str(input_file)] = FastQC._analyze_summary_file(output_folder / 'summary.txt')
+            for output_file in output_folder.glob('*'):
+                if output_file.name == 'fastqc_report.html':
+                    self._tool_outputs['HTML'].append(ToolIOFile(output_folder / output_file))
+                elif output_file.name == 'fastqc_data.txt':
+                    self._tool_outputs['TXT'].append(ToolIOFile(output_folder / output_file))

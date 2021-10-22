@@ -28,12 +28,13 @@ rule gene_detection_srst2:
         from camel.app.components.sequencetyping.sequencetypingutils import SequenceTypingUtils
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         from camel.app.tools.srst2.srst2gene import Srst2Gene
-        if not params.running_dir.exists():
-            params.running_dir.mkdir(parents=True)
+        dir_working = Path(str(params.running_dir))
+        if not dir_working.exists():
+            dir_working.mkdir(parents=True)
         srst2 = Srst2Gene(camel)
-        SnakemakeUtils.add_pickle_input(srst2, 'FASTA', input.FASTA)
+        SnakemakeUtils.add_pickle_input(srst2, 'FASTA', Path(input.FASTA))
         fq_input_dict = SnakePipelineUtils.extracts_fq_input(
-            input.IO, key_pe='FASTQ_PE', key_se='FASTQ_SE', read_type=params.read_type)
+            Path(input.IO), key_pe='FASTQ_PE', key_se='FASTQ_SE', read_type=params.read_type)
         srst2.add_input_files(fq_input_dict)
         step = Step(rule, srst2, camel, params.running_dir, config, wildcards)
 
@@ -52,11 +53,11 @@ rule gene_detection_srst2:
 
         # Run tool
         step.run_step()
-        SnakemakeUtils.dump_object(srst2.informs, output.INFORMS)
+        SnakemakeUtils.dump_object(srst2.informs, Path(output.INFORMS))
         if 'TSV' in srst2.tool_outputs:
-            SnakemakeUtils.dump_tool_output(srst2, 'TSV', output.TSV)
+            SnakemakeUtils.dump_tool_output(srst2, 'TSV', Path(output.TSV))
         else:
-            SnakemakeUtils.dump_object([], output.TSV)
+            SnakemakeUtils.dump_object([], Path(output.TSV))
 
 rule gene_detection_srst2_hit_extraction:
     """

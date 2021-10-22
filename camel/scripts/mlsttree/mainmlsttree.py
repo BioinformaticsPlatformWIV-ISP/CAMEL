@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import argparse
 import logging
+from pathlib import Path
 from typing import Dict, List, Tuple, Sequence, Optional
 
 from Bio.Phylo.Newick import Tree
@@ -145,7 +146,7 @@ class MainMlstTree(object):
         tree = NewickUtils.remove_inner_node_names(tree)
         NewickUtils.export_newick_tree(tree, self._args.output)
         if self._args.output_image:
-            NewickUtils.render(camel, self._args.output, self._args.output_image, self._args.plot_type)
+            NewickUtils.render(camel, Path(self._args.output), Path(self._args.output_image), self._args.plot_type)
 
 
 if __name__ == '__main__':

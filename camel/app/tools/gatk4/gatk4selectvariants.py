@@ -15,7 +15,7 @@ class GATK4SelectVariants(GATK4):
 
     def __init__(self, camel: Camel) -> None:
         """
-        Initialize a picard tool
+        Initialize GATK4SelectVariants
         :param camel: Camel instance
         :return: None
         """

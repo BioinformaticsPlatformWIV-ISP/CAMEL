@@ -90,7 +90,7 @@ rule report_pickle_citations:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         section = SnakePipelineUtils.create_citations_section(
             params.citation_keys['other'], params.citation_keys['main'])
-        SnakemakeUtils.dump_object([ToolIOValue(section)], output.HTML)
+        SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output.HTML))
 
 
 rule report_create_command_section:
@@ -124,13 +124,13 @@ rule report_create_command_section:
     run:
         from camel.app.io.tooliovalue import ToolIOValue
         informs = []
-        for content in [SnakemakeUtils.load_object(io) for io in input]:
+        for content in [SnakemakeUtils.load_object(Path(io)) for io in input]:
             if type(content) is dict:
                 informs.append(content)
             elif type(content) is list:
                 informs.extend(content)
         section = SnakePipelineUtils.create_commands_section(informs, params.working_dir)
-        SnakemakeUtils.dump_object([ToolIOValue(section)], output.HTML)
+        SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output.HTML))
 
 
 rule neisseria_additional_resistance_gene_metadata:
@@ -199,7 +199,7 @@ rule combine_reports:
 
         # Add header section
         report = SnakePipelineUtils.init_pipeline_report(
-            output.HTML, params.output_dir, params.pipeline_info)
+            Path(output.HTML), Path(params.output_dir), params.pipeline_info)
         report.add_html_object(SnakePipelineUtils.create_input_section(
             params.sample_name,
             datetime.datetime.now(),
@@ -208,17 +208,18 @@ rule combine_reports:
 
         # Add output sections
         report_structure = [
-            ('Read trimming and basic QC', 'trim', [input.report_trimming]),
-            ('Assembly', 'assem', [input.report_assembly]),
-            ('Advanced QC', 'adv_qc', [input.report_kraken, input.report_adv_qc]),
-            ('Resistance characterization', 'res', [input.report_resfinder, input.report_argannot, input.report_card,
-                                                    input.report_ncbi_amr]),
-            ('Sequence typing', 'st', [input.report_mlst, input.report_rplf, input.report_bast, input.report_pora,
-                                       input.report_porb, input.report_feta, input.report_resistance_genes,
-                                       input.report_vaccine_targets, input.report_fhbp, input.report_cgmlst]),
-            ('Serogroup determination', 'serogroup', [input.report_serogroup]),
-            ('Citations', 'citations', [input.report_citations]),
-            ('Commands', 'commands', [input.report_commands])
+            ('Read trimming and basic QC', 'trim', [Path(input.report_trimming)]),
+            ('Assembly', 'assem', [Path(input.report_assembly)]),
+            ('Advanced QC', 'adv_qc', [Path(x) for x in (input.report_kraken, input.report_adv_qc)]),
+            ('Resistance characterization', 'res', [Path(x) for x in (
+                input.report_resfinder, input.report_argannot, input.report_card, input.report_ncbi_amr)]),
+            ('Sequence typing', 'st', [Path(x) for x in (
+                input.report_mlst, input.report_rplf, input.report_bast, input.report_pora, input.report_porb,
+                input.report_feta, input.report_resistance_genes, input.report_vaccine_targets, input.report_fhbp,
+                input.report_cgmlst)]),
+            ('Serogroup determination', 'serogroup', [Path(input.report_serogroup)]),
+            ('Citations', 'citations', [Path(input.report_citations)]),
+            ('Commands', 'commands', [Path(input.report_commands)])
         ]
         SnakePipelineUtils.add_report_content(report, report_structure)
 

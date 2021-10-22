@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import List, Optional, Union, Any
 
 import abc
@@ -115,7 +116,7 @@ class GeneDetectionHitBase(object, metaclass=abc.ABCMeta):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def to_html_row(self, report_section: HtmlReportSection, sub_directory: str, colored: bool = True) \
+    def to_html_row(self, report_section: HtmlReportSection, sub_directory: Path, colored: bool = True) \
             -> List[Union[str, HtmlTableCell]]:
         """
         Returns the hit as a HTML table row.

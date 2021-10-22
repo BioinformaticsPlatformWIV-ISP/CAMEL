@@ -50,24 +50,24 @@ class CfsanSnpPipeline(Tool):
         Executes this tool.
         :return: None
         """
-        reads_folder = self.__create_reads_input()
+        reads_folder = self.__create_input_directory()
         self.__build_command(reads_folder)
         self._execute_command()
         self.__set_output()
         self.__analyze_metrics_file()
 
-    def __get_reference(self) -> str:
+    def __get_reference(self) -> Path:
         """
         Returns the reference FASTA file, a symbolic link is created so the pipeline can index it.
         :return: Path to reference FASTA
         """
-        link_path = os.path.join(self._folder, self._tool_inputs['FASTA'][0].basename)
+        link_path = self.folder / self._tool_inputs['FASTA'][0].path.name
         logging.info("Creating symlink for reference FASTA file: {}".format(link_path))
         if not os.path.exists(link_path):
             os.symlink(self._tool_inputs['FASTA'][0].path, link_path)
         return link_path
 
-    def __create_reads_input(self) -> str:
+    def __create_input_directory(self) -> Path:
         """
         Creates the input for the pipeline.
         :return: Reads input folder
@@ -88,22 +88,22 @@ class CfsanSnpPipeline(Tool):
                 (dir_sample / f"{sample_name_valid}_1.fastq").symlink_to(forward_reads)
                 (dir_sample / f"{sample_name_valid}_2.fastq").symlink_to(reverse_reads)
             else:
-                FileSystemHelper.gzip_extract(str(forward_reads), str(dir_sample / f"{sample_name_valid}_1.fastq"))
-                FileSystemHelper.gzip_extract(str(reverse_reads), str(dir_sample / f"{sample_name_valid}_2.fastq"))
+                FileSystemHelper.gzip_extract(forward_reads, dir_sample / f"{sample_name_valid}_1.fastq")
+                FileSystemHelper.gzip_extract(reverse_reads, dir_sample / f"{sample_name_valid}_2.fastq")
         return dir_reads
 
-    def __build_command(self, reads_folder: str) -> None:
+    def __build_command(self, input_dir: Path) -> None:
         """
         Builds the command.
-        :param reads_folder: Reads folder
+        :param input_dir: Input directory
         :return: None
         """
         command_parts = [
             'export CLASSPATH=$GATK_JAR:$PICARD_JAR:$CLASSPATH;',
             self._tool_command,
-            '-s {}'.format(reads_folder),
+            '-s {}'.format(input_dir),
             '--conf {}'.format(os.path.join(os.path.dirname(__file__), 'snppipeline.conf')),
-            self.__get_reference(),
+            str(self.__get_reference()),
             ' '.join(self._build_options())
         ]
         self._command.command = ' '.join(command_parts)
@@ -113,22 +113,22 @@ class CfsanSnpPipeline(Tool):
         Sets the output.
         :return: None
         """
-        self._tool_outputs['FASTA'] = [ToolIOFile(os.path.join(self._folder, 'snpma.fasta'))]
-        self._tool_outputs['FASTA_Preserved'] = [ToolIOFile(os.path.join(self._folder, 'snpma_preserved.fasta'))]
+        self._tool_outputs['FASTA'] = [ToolIOFile(self._folder / 'snpma.fasta')]
+        self._tool_outputs['FASTA_Preserved'] = [ToolIOFile(self._folder / 'snpma_preserved.fasta')]
 
         for key in ['VCF_Cons', 'VCF_Cons_preserved', 'VCF', 'VCF_preserved', 'BAM', 'Sample_names']:
             self._tool_outputs[key] = []
         with open(os.path.join(self._folder, 'sampleDirectories.txt')) as handle:
             for line in handle.readlines():
-                sample_directory = line.strip()
-                self._tool_outputs['VCF_Cons'].append(ToolIOFile(os.path.join(sample_directory, 'consensus.vcf')))
+                sample_directory = Path(line.strip())
+                self._tool_outputs['VCF_Cons'].append(ToolIOFile(sample_directory / 'consensus.vcf'))
                 self._tool_outputs['VCF_Cons_preserved'].append(
-                    ToolIOFile(os.path.join(sample_directory, 'consensus_preserved.vcf')))
-                self._tool_outputs['VCF'].append(ToolIOFile(os.path.join(sample_directory, 'var.flt.vcf')))
+                    ToolIOFile(sample_directory / 'consensus_preserved.vcf'))
+                self._tool_outputs['VCF'].append(ToolIOFile(sample_directory / 'var.flt.vcf'))
                 self._tool_outputs['VCF_preserved'].append(
-                    ToolIOFile(os.path.join(sample_directory, 'var.flt_preserved.vcf')))
-                self._tool_outputs['BAM'].append(ToolIOFile(os.path.join(sample_directory, 'reads.sorted.bam')))
-                self._tool_outputs['Sample_names'].append(ToolIOValue(os.path.basename(line.strip())))
+                    ToolIOFile(sample_directory / 'var.flt_preserved.vcf'))
+                self._tool_outputs['BAM'].append(ToolIOFile(sample_directory / 'reads.sorted.bam'))
+                self._tool_outputs['Sample_names'].append(ToolIOValue(sample_directory.name))
 
     def __analyze_metrics_file(self) -> None:
         """

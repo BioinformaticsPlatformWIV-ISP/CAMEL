@@ -57,7 +57,7 @@ class VariantCallingWrapper(object):
         # Create input
         if not self._working_dir.exists():
             self._working_dir.mkdir(parents=True)
-        SnakemakeUtils.dump_object(fastq_input.to_fq_dict(), str(self._working_dir / 'fq_dict.io'))
+        SnakemakeUtils.dump_object(fastq_input.to_fq_dict(), self._working_dir / 'fq_dict.io')
         config_data = self.__get_config_data(sample_name, reference_info, options)
         config_data['read_type'] = fastq_input.read_type
         config_file = SnakePipelineUtils.generate_config_file(config_data, self._working_dir)
@@ -97,7 +97,7 @@ class VariantCallingWrapper(object):
             'variant_filtering': {}
         }
 
-    def __collect_output(self, output_files: Dict[str, str]) -> None:
+    def __collect_output(self, output_files: Dict[str, Path]) -> None:
         """
         Collects the output files of the workflow.
         :param output_files: Output files dictionary by key

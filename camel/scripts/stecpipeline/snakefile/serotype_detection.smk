@@ -38,12 +38,12 @@ rule serotype_detection_report:
         from camel.app.components.html.htmlreportsection import HtmlReportSection
         from camel.app.io.tooliovalue import ToolIOValue
         try:
-            serotype = SnakemakeUtils.load_object(input.VAL_serotype)[0].value
+            serotype = SnakemakeUtils.load_object(Path(input.VAL_serotype))[0].value
         except AttributeError:
             serotype = 'NA'
         section = HtmlReportSection(None)
         section.add_paragraph("Detected serotype: <b>{}</b>".format(serotype))
-        SnakemakeUtils.dump_object([ToolIOValue(section)], output.HTML)
+        SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output.HTML))
 
 rule serotype_detection_dump_summary_info:
     """
@@ -54,7 +54,7 @@ rule serotype_detection_dump_summary_info:
     output:
         Path(config['working_dir']) / serotype_detection.OUTPUT_SEROTYPE_SUMMARY
     run:
-        serotype = SnakemakeUtils.load_object(input.VAL_serotype)[0].value
+        serotype = SnakemakeUtils.load_object(Path(input.VAL_serotype))[0].value
         with open(output[0], 'w') as handle:
             handle.write(f'serotype\t{serotype}')
             handle.write('\n')

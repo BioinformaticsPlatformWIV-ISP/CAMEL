@@ -18,7 +18,7 @@ rule run_trimming_workflow:
         from camel.app.components.workflows.trimmingilluminawrapper import TrimmingIlluminaWrapper
         trimming = TrimmingIlluminaWrapper(Path(str(params.working_dir)) / 'trimming')
         trimming.run_workflow([Path(x) for x in input.FASTQ_PE], threads)
-        SnakemakeUtils.dump_object(trimming.output, output.TRIMMING_OUTPUT)
+        SnakemakeUtils.dump_object(trimming.output, Path(output.TRIMMING_OUTPUT))
 
 rule collect_trimming_output:
     """
@@ -33,5 +33,5 @@ rule collect_trimming_output:
     run:
         output_data = {}
         for i, out in enumerate(input.OUT_TRIM):
-            output_data[params.samples[i]] = SnakemakeUtils.load_object(out)
-        SnakemakeUtils.dump_object(output_data, output.IO)
+            output_data[params.samples[i]] = SnakemakeUtils.load_object(Path(out))
+        SnakemakeUtils.dump_object(output_data, Path(output.IO))

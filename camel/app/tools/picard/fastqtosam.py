@@ -1,5 +1,6 @@
 import re
 from pathlib import Path
+from typing import Optional
 
 from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
@@ -22,6 +23,7 @@ class FastqToSam(Picard):
         super().__init__('Picard FastqToSam', '2.23.3', camel)
 
         self._function_name = 'FastqToSam'
+        self._required_inputs = []
 
     def _set_input(self) -> None:
         """
@@ -53,12 +55,12 @@ class FastqToSam(Picard):
 
         super(FastqToSam, self)._set_output()
 
-    def _set_informs(self) -> None:
+    def _set_informs(self, stderr: Optional[str] = None) -> None:
         """
         Analyse the result of picard run and update tool.informs
         :return: None
         """
-        for line in self.stdout.splitlines():
+        for line in (self.stderr if stderr is None else stderr).splitlines():
             m = re.search('Auto-detected quality format as: ([a-zA-Z]+)', line)
             if m:
                 if m.group(1) == 'Standard':

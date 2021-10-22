@@ -106,6 +106,8 @@ class Picard(ToolPipeable, metaclass=abc.ABCMeta):
     def _build_command(self, pipe_in: bool = False, pipe_out: bool = False) -> None:
         """
         Build the command to run tool
+        :param pipe_in: Tools receives input from pipe
+        :param pipe_out: Tool outputs to pipe
         :return: None
         """
         #Init base command
@@ -126,9 +128,6 @@ class Picard(ToolPipeable, metaclass=abc.ABCMeta):
 
         #Add options
         command_parts.append(" ".join(self._build_options(excluded_parameters=self._specific_parameters, delimiter="=")))
-
-        #Required for _set_informs?
-        command_parts.append("2>&1")
 
         self._command.command = " ".join(command_parts)
 
@@ -171,5 +170,4 @@ class Picard(ToolPipeable, metaclass=abc.ABCMeta):
         :param is_last_in_pipe: Boolean to indicate if this is the last step in the pipe
         :return: None
         """
-        pass
-        #TODO _set_informs
+        self._set_informs(stderr)

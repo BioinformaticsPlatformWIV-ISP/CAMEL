@@ -61,7 +61,7 @@ class TestWorkflowsVariants(CamelTestSuite):
         :return: None
         """
         wrapper = VariantFilteringWrapper(self.running_dir)
-        wrapper.run_workflow(str(TestWorkflowsVariants.input_vcf), str(TestWorkflowsVariants.input_bam), {}, 1)
+        wrapper.run_workflow(TestWorkflowsVariants.input_vcf, TestWorkflowsVariants.input_bam, {}, 1)
         self.assertGreater(Path(wrapper.output.vcf_filtered.path).stat().st_size, 0)
 
 

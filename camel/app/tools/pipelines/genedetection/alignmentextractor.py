@@ -1,6 +1,5 @@
 import logging
-
-import os
+from pathlib import Path
 
 from camel.app.camel import Camel
 from camel.app.components.blast.alignmentextraction import AlignmentExtraction
@@ -56,16 +55,16 @@ class AlignmentExtractor(Tool):
             logging.warning("No blast hits input found")
         super(AlignmentExtractor, self)._check_input()
 
-    def __save_alignment(self, hit: GeneDetectionBlastHit, alignment: str) -> str:
+    def __save_alignment(self, hit: GeneDetectionBlastHit, alignment: str) -> Path:
         """
         Saves the given alignment.
         :param hit: BLAST hit
         :param alignment: Alignment
         :return: Filename of the saved alignment
         """
-        filename = os.path.join(self._folder, '{}.txt'.format(FileSystemHelper.make_valid(hit.locus)))
+        path_out = self._folder / f'{FileSystemHelper.make_valid(hit.locus)}.txt'
         alignment = alignment.replace(hit.blast_stats.subject_id, hit.locus)
         alignment = alignment.replace('Query  ', 'Contig ').replace('Sbjct  ', 'Locus  ')
-        with open(filename, 'w') as output_handle:
+        with path_out.open('w') as output_handle:
             output_handle.write(alignment)
-        return filename
+        return path_out

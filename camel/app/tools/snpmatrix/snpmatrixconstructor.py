@@ -2,7 +2,6 @@ import logging
 from dataclasses import dataclass
 from typing import Dict, List
 
-import os
 import vcf
 from Bio import SeqIO
 from Bio.Seq import Seq
@@ -116,7 +115,7 @@ class SnpMatrixConstructor(Tool):
             for name in seq_by_sample_name.keys():
                 seq_by_sample_name[name].append(nucl_by_sample.get(name, snp_pos.reference_base))
 
-        output_path = os.path.join(self._folder, 'snp_matrix.fasta')
+        output_path = self.folder / 'snp_matrix.fasta'
         seqs = [SeqRecord(Seq(''.join(seq)), name, description='') for name, seq in seq_by_sample_name.items()]
         with open(output_path, 'w') as handle:
             SeqIO.write(seqs, handle, 'fasta')

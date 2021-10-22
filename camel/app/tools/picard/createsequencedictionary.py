@@ -1,6 +1,5 @@
 import logging
-import os
-
+from pathlib import Path
 from camel.app.camel import Camel
 from camel.app.components.files.fileutils import FileUtils
 from camel.app.io.tooliofile import ToolIOFile
@@ -32,9 +31,9 @@ class CreateSequenceDictionary(Picard):
         :return: None
         """
         # NOTE that the index file should be generated under the same directory as the FASTA_REF file
-        index_file_name = os.path.splitext(self._fasta_file)[0] + self._parameters['output_ext'].value
+        index_file_name = Path(self._fasta_file.stem + self._parameters['output_ext'].value)
         # NOTE if dictionary file exists, it should be removed otherwise Picard run will fail
-        if os.path.isfile(index_file_name):
+        if index_file_name.exists():
             FileUtils.silent_remove(index_file_name)
         self._output_string = f' O={index_file_name}'
 
@@ -55,13 +54,13 @@ class CreateSequenceDictionary(Picard):
 
         self._input_string += f'R={self._fasta_file} '
 
-    def __symlink_input(self) -> str:
+    def __symlink_input(self) -> Path:
         """
         Creates a symlink for the input.
         :return: Path to the symlink of the input
         """
-        symlink_location = os.path.join(self._folder, self._tool_inputs['FASTA_REF'][0].basename)
-        if not os.path.exists(symlink_location):
-            os.symlink(self._tool_inputs['FASTA_REF'][0].path, symlink_location)
+        symlink_location = self.folder / self._tool_inputs['FASTA_REF'][0].basename
+        if not symlink_location.exists():
+            symlink_location.symlink_to(self._tool_inputs['FASTA_REF'][0].path)
 
         return symlink_location

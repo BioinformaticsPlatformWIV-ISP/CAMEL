@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Dict, Optional
 
 import json
@@ -17,13 +18,13 @@ class Mapping(object):
         self._content = content
 
     @staticmethod
-    def parse(input_file: str) -> 'Mapping':
+    def parse(input_file: Path) -> 'Mapping':
         """
         Parses a mapping from a file.
         :param input_file: Input file
         :return: Mapping
         """
-        with open(input_file) as handle:
+        with input_file.open() as handle:
             return Mapping(json.load(handle))
 
     @property

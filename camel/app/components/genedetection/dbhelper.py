@@ -22,14 +22,14 @@ class DBHelper(object):
     This helper class is used to construct gene detection databases.
     """
 
-    def __init__(self, db_name: str, working_dir: str) -> None:
+    def __init__(self, db_name: str, working_dir: Path) -> None:
         """
         Initializes the update helper.
         :param db_name: Database name
         :param working_dir: Working directory
         """
         self._db_name = db_name
-        self._working_dir = Path(working_dir)
+        self._working_dir = working_dir
         self._informs = []
 
     @property
@@ -61,7 +61,7 @@ class DBHelper(object):
         cdhit = CDHitEst(Camel.get_instance())
         cdhit.update_parameters(identitiy_threshold=str(clustering_cutoff / 100))
         cdhit.add_input_files({'FASTA': [ToolIOFile(fasta_file)]})
-        cdhit.run(str(self.get_working_subdir('clustering')))
+        cdhit.run(self.get_working_subdir('clustering'))
         self._informs.append(cdhit.informs)
         return cdhit.informs['clusters']
 
@@ -74,7 +74,7 @@ class DBHelper(object):
         """
         samtools_faindex = SamtoolsFastaIndex(Camel.get_instance())
         samtools_faindex.add_input_files({'FASTA': [ToolIOFile(fasta_file)]})
-        samtools_faindex.run(str(working_dir))
+        samtools_faindex.run(working_dir)
         self._informs.append(samtools_faindex.informs)
 
     def index_bowtie2(self, fasta_file: Path, working_dir: Path) -> None:
@@ -86,7 +86,7 @@ class DBHelper(object):
         """
         bowtie2_index = Bowtie2Index(Camel.get_instance())
         bowtie2_index.add_input_files({'FASTA_REF': [ToolIOFile(fasta_file)]})
-        bowtie2_index.run(str(working_dir))
+        bowtie2_index.run(working_dir)
         self._informs.append(bowtie2_index.informs)
 
     def index_blast(self, fasta_file: Path, working_dir: Path) -> None:
@@ -98,7 +98,7 @@ class DBHelper(object):
         """
         makeblastdb = MakeBlastDb(Camel.get_instance())
         makeblastdb.add_input_files({'FASTA': [ToolIOFile(fasta_file)]})
-        makeblastdb.run(str(working_dir))
+        makeblastdb.run(working_dir)
         self._informs.append(makeblastdb.informs)
 
     def index_kma(self, fasta_file: Path, working_dir: Path) -> None:
@@ -115,7 +115,7 @@ class DBHelper(object):
             path_out.parent.mkdir(parents=True)
         command = Command(
             f"ml {' '.join(kma.dependencies)}; kma index -i {fasta_file} -o {path_out}")
-        command.run_command(str(working_dir))
+        command.run(working_dir)
         if command.returncode != 0:
             raise RuntimeError(f"Error KMA indexing: {command.stderr}")
         self._informs.append({'_command': command.command, '_name': 'KMA', '_version': kma.version})

@@ -22,14 +22,14 @@ rule run_variant_calling_workflow:
         from camel.app.components.workflows.variantcallingwrapper import VariantCallingWrapper
         fastq_input = FastqInput(
             'illumina',
-            pe=[ToolIOFile(x) for x in params.sample_config['PE']],
-            se_fwd=[ToolIOFile(params.sample_config['SE_FWD'])] if 'SE_FWD' in params.sample_config else None,
-            se_rev=[ToolIOFile(params.sample_config['SE_REV'])] if 'SE_REV' in params.sample_config else None
+            pe=[ToolIOFile(Path(x)) for x in params.sample_config['PE']],
+            se_fwd=[ToolIOFile(Path(params.sample_config['SE_FWD']))] if 'SE_FWD' in params.sample_config else None,
+            se_rev=[ToolIOFile(Path(params.sample_config['SE_REV']))] if 'SE_REV' in params.sample_config else None
         )
         wrapper = VariantCallingWrapper(Path(str(params.working_dir)) / 'variant_calling')
         wrapper.run_workflow(
             params.ref_info, str(params.sample_name), fastq_input, params.calling_options, int(str(threads)))
-        SnakemakeUtils.dump_object(wrapper.output, output.IO)
+        SnakemakeUtils.dump_object(wrapper.output, Path(output.IO))
 
 rule collect_variant_calling_output:
     """
@@ -44,5 +44,5 @@ rule collect_variant_calling_output:
     run:
         output_data = {}
         for i, out in enumerate(input.VC_OUT):
-            output_data[params.samples[i]] = SnakemakeUtils.load_object(out)
-        SnakemakeUtils.dump_object(output_data, output.IO)
+            output_data[params.samples[i]] = SnakemakeUtils.load_object(Path(out))
+        SnakemakeUtils.dump_object(output_data, Path(output.IO))

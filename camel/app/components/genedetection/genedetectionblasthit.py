@@ -74,7 +74,7 @@ class GeneDetectionBlastHit(GeneDetectionHitBase):
         """
         return self.table_column_names[1:] + ['Alignment']
 
-    def to_html_row(self, report_section: HtmlReportSection, sub_directory: str, colored: bool = True) -> List[
+    def to_html_row(self, report_section: HtmlReportSection, sub_directory: Path, colored: bool = True) -> List[
             Union[str, HtmlTableCell]]:
         """
         Returns the hit as a HTML table row.
@@ -86,9 +86,9 @@ class GeneDetectionBlastHit(GeneDetectionHitBase):
         if self.alignment_path is None:
             alignment_cell = '-'
         else:
-            relative_path = str(Path(sub_directory) / 'alignments' / self.alignment_path.name)
-            report_section.add_file(str(self.alignment_path), relative_path)
-            alignment_cell = HtmlTableCell('view', self.color if colored else None, link=relative_path)
+            relative_path = sub_directory / 'alignments' / self.alignment_path.name
+            report_section.add_file(self.alignment_path, relative_path)
+            alignment_cell = HtmlTableCell('view', self.color if colored else None, link=str(relative_path))
 
         return [HtmlTableCell(v, self.color) for v in self.to_table_row()][1:-1] + [self._get_accession_cell()] + \
                [alignment_cell]

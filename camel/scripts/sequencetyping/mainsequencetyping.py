@@ -58,21 +58,21 @@ class MainSequenceTyping(object):
         report.save()
 
         # Run script with wrapper
-        db_data = SequenceTypingUtils.parse_scheme_metadata(self._args.scheme_dir)
+        db_data = SequenceTypingUtils.parse_scheme_metadata(Path(self._args.scheme_dir))
         if self._args.detection_method == 'blast':
             fasta_file = self._helper.prepare_fasta_input(report, self._args)
-            output = self.__run_sequence_typing_blast(fasta_file, db_data['name'], self._args.scheme_dir)
+            output = self.__run_sequence_typing_blast(fasta_file, db_data['name'], Path(self._args.scheme_dir))
         elif self._args.detection_method == 'srst2':
             fastq_input = self._helper.prepare_fastq_input(report, self._args)
-            output = self.__run_sequence_typing_srst2(fastq_input, db_data['name'], self._args.scheme_dir)
+            output = self.__run_sequence_typing_srst2(fastq_input, db_data['name'], Path(self._args.scheme_dir))
         elif self._args.detection_method == 'kma':
             fastq_input = self._helper.prepare_fastq_input(report, self._args)
-            output = self.__run_sequence_typing_kma(fastq_input, db_data['name'], self._args.scheme_dir)
+            output = self.__run_sequence_typing_kma(fastq_input, db_data['name'], Path(self._args.scheme_dir))
         else:
             raise ValueError(f"Invalid detection method: {self._args.detection_method}")
         self.__export_output(output, report)
 
-    def __run_sequence_typing_blast(self, fasta_file: Path, db_key: str, db_path: str) -> SequenceTypingOutput:
+    def __run_sequence_typing_blast(self, fasta_file: Path, db_key: str, db_path: Path) -> SequenceTypingOutput:
         """
         Runs the sequence typing workflow using BLAST.
         :param fasta_file: Input FASTA file
@@ -86,7 +86,7 @@ class MainSequenceTyping(object):
         wrapper.run_workflow_blast(workflow_input, self._args.blastn_task, self._args.threads)
         return wrapper.output
 
-    def __run_sequence_typing_srst2(self, fastq_input: FastqInput, db_key: str, db_path: str) -> \
+    def __run_sequence_typing_srst2(self, fastq_input: FastqInput, db_key: str, db_path: Path) -> \
             SequenceTypingOutput:
         """
         Runs the sequence typing workflow using SRST2.
@@ -97,13 +97,13 @@ class MainSequenceTyping(object):
         """
         wrapper = SequenceTypingWrapper(self._args.working_dir)
         workflow_input = SequenceTypingInput(
-            fasta=ToolIOFile(self._args.fasta) if self._args.fasta else None,
+            fasta=ToolIOFile(Path(self._args.fasta)) if self._args.fasta else None,
             sample_name=self._sample_name, fastq=fastq_input, db_key=db_key, db_path=db_path)
         srst2_options = {'max_unaligned_overlap': self._args.srst2_max_unaligned_overlap}
         wrapper.run_workflow_srst2(workflow_input, srst2_options, self._args.threads)
         return wrapper.output
 
-    def __run_sequence_typing_kma(self, fastq_input: FastqInput, db_key: str, db_path: str) -> \
+    def __run_sequence_typing_kma(self, fastq_input: FastqInput, db_key: str, db_path: Path) -> \
             SequenceTypingOutput:
         """
         Runs the sequence typing workflow using KMA.
@@ -114,7 +114,7 @@ class MainSequenceTyping(object):
         """
         wrapper = SequenceTypingWrapper(self._args.working_dir)
         workflow_input = SequenceTypingInput(
-            fasta=ToolIOFile(self._args.fasta) if self._args.fasta else None,
+            fasta=ToolIOFile(Path(self._args.fasta)) if self._args.fasta else None,
             sample_name=self._sample_name, fastq=fastq_input, db_key=db_key, db_path=db_path)
         wrapper.run_workflow_kma(workflow_input, self._args.threads)
         return wrapper.output

@@ -68,7 +68,7 @@ class MainCfsanPhylo(BasePhylo):
         argument_parser.add_argument('--report-include-bam', action='store_true')
         return argument_parser.parse_args(args)
 
-    def __prepare_reference(self) -> str:
+    def __prepare_reference(self) -> Path:
         """
         Prepares the reference genome.
         :return: Path to reference genome.
@@ -80,7 +80,7 @@ class MainCfsanPhylo(BasePhylo):
             reference_path.symlink_to(self._args.reference)
         return reference_path
 
-    def __run_cfsan(self, reference: str, mapping_input: List[ToolIOFile]) -> CfsanSnpPipeline:
+    def __run_cfsan(self, reference: Path, mapping_input: List[ToolIOFile]) -> CfsanSnpPipeline:
         """
         Runs the CFSAN SNP pipeline.
         :param reference: Reference genome
@@ -94,7 +94,7 @@ class MainCfsanPhylo(BasePhylo):
         }
         cfsan = CfsanSnpPipeline(Camel.get_instance())
         cfsan.add_input_files(cfsan_input)
-        cfsan.run(self._args.working_dir)
+        cfsan.run(Path(self._args.working_dir))
         self._informs.append(cfsan.informs)
         return cfsan
 

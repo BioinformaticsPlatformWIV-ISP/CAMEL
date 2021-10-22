@@ -19,7 +19,7 @@ rule run_lrefinder:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         from camel.app.tools.lrefinder.lrefinder import LREFinder
         lrefinder = LREFinder(Camel.get_instance())
-        fq_dict = SnakePipelineUtils.extracts_fq_input(input.IO, key_pe='FASTQ_PE')
+        fq_dict = SnakePipelineUtils.extracts_fq_input(Path(input.IO), key_pe='FASTQ_PE')
         lrefinder.add_input_files(fq_dict)
         step = Step(rule, lrefinder, Camel.get_instance(), params.running_dir, config)
         step.run_step()
@@ -53,7 +53,7 @@ rule lre_finder_report_empty:
         running_dir = Path(config['working_dir']) / 'lrefinder'
     run:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-        SnakePipelineUtils.create_empty_report_section('LRE-Finder', output.HTML)
+        SnakePipelineUtils.create_empty_report_section('LRE-Finder', Path(output.HTML))
 
 rule lre_finder_summary:
     """
@@ -64,7 +64,7 @@ rule lre_finder_summary:
     output:
         TSV = Path(config['working_dir']) / lrefinder_workflow.OUTPUT_LREFINDER_SUMMARY
     run:
-        informs = SnakemakeUtils.load_object(input.INFORMS)
+        informs = SnakemakeUtils.load_object(Path(input.INFORMS))
         with open(output.TSV, 'w') as handle:
             for key in ('species', 'genes', 'mutations'):
                 handle.write('\t'.join([f'lrefinder_{key}', str(informs[key])]))

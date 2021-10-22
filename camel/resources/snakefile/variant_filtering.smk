@@ -177,10 +177,10 @@ rule variant_filtering_zscore:
         if params.y_multiplier is not None:
             zscore_filter.update_parameters(y_multiplier=params.y_multiplier)
         zscore_filter.update_parameters(soft_filter=params.soft_filter)
-        if len(SnakemakeUtils.load_object(input.BAM)) == 0:
+        if len(SnakemakeUtils.load_object(Path(input.BAM))) == 0:
             logging.info("No BAM input found, skipping Z-score filter.")
             shutil.copyfile(input.VCF_GZ, output.VCF_GZ)
-            SnakemakeUtils.dump_object({'variants_in': 'NA', 'variants_out': 'NA'}, output.INFORMS)
+            SnakemakeUtils.dump_object({'variants_in': 'NA', 'variants_out': 'NA'}, Path(output.INFORMS))
         else:
             SnakemakeUtils.add_pickle_inputs(zscore_filter, input)
             step.run_step()
@@ -223,7 +223,7 @@ rule variant_filtering_region:
         from camel.app.tools.bcftools.bcftoolsfilter import BcftoolsFilter
         from camel.app.io.tooliofile import ToolIOFile
         bcftools_filter = BcftoolsFilter(camel)
-        vcf_file = SnakemakeUtils.load_object(input.VCF_GZ)[0]
+        vcf_file = SnakemakeUtils.load_object(Path(input.VCF_GZ))[0]
         bcftools_filter.add_input_files({'VCF_GZ': [vcf_file]})
         if params.bed_file is not None:
             bcftools_filter.add_input_files({'BED_exclude': [ToolIOFile(params.bed_file)]})
@@ -232,12 +232,12 @@ rule variant_filtering_region:
             soft_filter=False if params.soft_filter is False else 'regions')
         step = Step(rule, bcftools_filter, camel, params.running_dir, config)
         step.run_step()
-        SnakemakeUtils.dump_tool_output(bcftools_filter, 'VCF', output.VCF)
+        SnakemakeUtils.dump_tool_output(bcftools_filter, 'VCF', Path(output.VCF))
         informs = {
             'variants_out': VCFUtils.count_variants(bcftools_filter.tool_outputs['VCF'][0].path),
             'variants_in': VCFUtils.count_variants(vcf_file.path)
         }
-        SnakemakeUtils.dump_object(informs, output.INFORMS)
+        SnakemakeUtils.dump_object(informs, Path(output.INFORMS))
 
 rule variant_filtering_collect_stats:
     """
@@ -262,19 +262,19 @@ rule variant_filtering_collect_stats:
         all_informs = []
         for input_key in input.keys():
             filter_name = input_key.replace('INFORMS_', '')
-            informs = SnakemakeUtils.load_object(input[input_key])
+            informs = SnakemakeUtils.load_object(Path(input[input_key]))
             filtering_data[filter_name] = informs
             if all([x in informs for x in ('_name', '_command')]):
                 all_informs.append(informs)
         output_path = params.working_dir / 'stats.json'
         with output_path.open('w') as handle:
             json.dump(filtering_data, handle)
-        SnakemakeUtils.dump_object([ToolIOFile(output_path)], output.JSON)
+        SnakemakeUtils.dump_object([ToolIOFile(output_path)], Path(output.JSON))
 
         # Add tag to distinguish commands
         for inform in all_informs:
             inform['_tag'] = 'Variant filtering'
-        SnakemakeUtils.dump_object(all_informs, output.INFORMS_ALL)
+        SnakemakeUtils.dump_object(all_informs, Path(output.INFORMS_ALL))
 
 rule variant_filtering_dump_summary_info:
     """
@@ -286,7 +286,7 @@ rule variant_filtering_dump_summary_info:
         Path(config['working_dir']) / variant_filtering.OUTPUT_VARIANT_FILTERING_SUMMARY
     run:
         import json
-        with open(SnakemakeUtils.load_object(input.JSON)[0].path) as handle:
+        with open(SnakemakeUtils.load_object(Path(input.JSON))[0].path) as handle:
             filtering_info = json.load(handle)
 
         with open(output[0], 'w') as handle:

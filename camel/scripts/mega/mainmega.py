@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 import argparse
+from pathlib import Path
 from typing import Tuple, List, Optional, Sequence
 
-import os
 import shutil
 
 from camel.app.camel import Camel
@@ -27,6 +27,7 @@ class MainMega(object):
         """
         self._args = MainMega._parse_arguments(args)
         self._camel = Camel()
+        self._dir_working = Path(self._args.working_dir)
 
     @staticmethod
     def _parse_arguments(args: Optional[Sequence[str]] = None) -> argparse.Namespace:
@@ -52,7 +53,12 @@ class MainMega(object):
         argument_parser.add_argument('--site-cov-cutoff', choices=range(0, 101), type=int, default=50)
         argument_parser.add_argument('--model', choices=['JC', 'K2', 'T92', 'HKY', 'TN93', 'GTR'], default='JC')
         argument_parser.add_argument('--rates', choices=['G+I', 'G', 'I', 'U'], default='U')
-        argument_parser.add_argument('--working-dir', default=os.path.abspath('.'))
+        argument_parser.add_argument('--working-dir', default=str(Path('.').absolute()))
+        argument_parser.add_argument(
+            '--include-ref', action='store_true', help='If set, reference is included in phylogeny')
+        argument_parser.add_argument(
+            '--include-filt-pos', action='store_true',
+            help='If True, filtered positions are retained in the SNP matrix as Ns')
         argument_parser.add_argument('--threads', type=int, default=3)
         return argument_parser.parse_args(args)
 
@@ -63,10 +69,13 @@ class MainMega(object):
         """
         # Prepare SNP matrix
         if self._args.fasta is not None:
-            fasta_path = os.path.join(self._args.working_dir, MainMega.SNP_MATRIX_FILENAME)
-            os.symlink(self._args.fasta, fasta_path)
+            fasta_path = self._dir_working / MainMega.SNP_MATRIX_FILENAME
+            fasta_path.symlink_to(Path(self._args.fasta))
         else:
-            fasta_path = self.__build_snp_matrix(self._args.vcf)
+            vcf_files = [Path(v) for v, _ in self._args.vcf]
+            sample_names = [n for _, n in self._args.vcf]
+            fasta_path = self.__build_snp_matrix(
+                vcf_files, sample_names, self._args.include_ref, self._args.include_filt_pos)
             if self._args.output_snp_matrix is not None:
                 shutil.copyfile(fasta_path, self._args.output_snp_matrix)
 
@@ -79,21 +88,25 @@ class MainMega(object):
             model, rates = self.__run_model_selection(fasta_path)
             self.__run_tree_construction(fasta_path, model, rates)
 
-    def __build_snp_matrix(self, vcf_files: List[str]) -> str:
+    def __build_snp_matrix(self, vcf_files: List[Path], sample_names: List[str], include_ref: bool = False,
+                           include_filtered_pos: bool = False) -> Path:
         """
         Builds a SNP matrix by combining all SNP positions across multiple VCF files.
         :param vcf_files: VCF files
+        :param include_ref: If true, the reference is included in the phylogeny
+        :param include_filtered_pos: If true, filtered positions are retained in the SNP matrix (as Ns)
         :return: SNP matrix path
         """
         snp_matrix_constructor = SnpMatrixConstructor(self._camel)
-        snp_matrix_constructor.update_parameters(include_ref=None)
+        snp_matrix_constructor.update_parameters(
+            include_ref=include_ref, include_filtered=None if include_filtered_pos else False)
         snp_matrix_constructor.add_input_files({
-            'VCF': [ToolIOFile(v) for v, _ in vcf_files],
-            'SAMPLE_NAME': [ToolIOValue(n) for _, n in vcf_files]})
-        snp_matrix_constructor.run(self._args.working_dir)
+            'VCF': [ToolIOFile(v) for v in vcf_files],
+            'SAMPLE_NAME': [ToolIOValue(n) for n in sample_names]})
+        snp_matrix_constructor.run(self._dir_working)
         return snp_matrix_constructor.tool_outputs['FASTA'][0].path
 
-    def __run_model_selection(self, fasta_path: str) -> Tuple[str, str]:
+    def __run_model_selection(self, fasta_path: Path) -> Tuple[str, str]:
         """
         Runs the model selection.
         :param fasta_path: FASTA input file
@@ -104,14 +117,14 @@ class MainMega(object):
             model_selection, self._args.missing_data, self._args.branch_swap, self._args.site_cov_cutoff,
             self._args.threads)
         model_selection.add_input_files({'FASTA': [ToolIOFile(fasta_path)]})
-        working_dir = os.path.join(self._args.working_dir, 'model_selection')
-        if not os.path.isdir(working_dir):
-            os.mkdir(working_dir)
-        model_selection.run(working_dir)
+        dir_model_selection = self._dir_working / 'model_selection'
+        if not dir_model_selection.is_dir():
+            dir_model_selection.mkdir()
+        model_selection.run(dir_model_selection)
         shutil.copyfile(model_selection.tool_outputs['CSV'][0].path, self._args.output_model)
         return model_selection.informs['model'], model_selection.informs['rates_among_sites']
 
-    def __run_tree_construction(self, fasta_path: str, model: str, rates: str) -> None:
+    def __run_tree_construction(self, fasta_path: Path, model: str, rates: str) -> None:
         """
         Runs the tree construction.
         :param fasta_path: FASTA input file
@@ -124,10 +137,10 @@ class MainMega(object):
         MEGAUtils.update_tree_building_parameters(
             tree_building, model, rates, self._args.bootstraps, self._args.missing_data, self._args.site_cov_cutoff,
             self._args.ml_method, self._args.branch_swap, self._args.threads)
-        working_dir = os.path.join(self._args.working_dir, 'tree_building')
-        if not os.path.isdir(working_dir):
-            os.mkdir(working_dir)
-        tree_building.run(working_dir)
+        dir_tree_building = self._dir_working / 'tree_building'
+        if not dir_tree_building.is_dir():
+            dir_tree_building.mkdir()
+        tree_building.run(dir_tree_building)
         shutil.copyfile(tree_building.tool_outputs['NWK'][0].path, self._args.output_tree)
 
 

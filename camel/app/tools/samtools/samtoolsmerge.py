@@ -1,10 +1,10 @@
+import logging
 import os
 
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.samtools.samtools import Samtools
-import logging
 
 
 class SamtoolsMerge(Samtools):

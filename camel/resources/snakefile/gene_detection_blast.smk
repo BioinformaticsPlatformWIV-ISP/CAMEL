@@ -76,12 +76,12 @@ rule gene_detection_blast_hit_filtering:
         SnakemakeUtils.dump_tool_outputs(hit_filtering, output)
 
         # Add the informs from the filtering to the existing ones with the blastn command
-        informs = SnakemakeUtils.load_object(input.INFORMS_blastn)
+        informs = SnakemakeUtils.load_object(Path(input.INFORMS_blastn))
         for key, value in hit_filtering.informs.items():
             if key.startswith('_'):
                 continue
             informs[key] = value
-        SnakemakeUtils.dump_object(informs, output.INFORMS)
+        SnakemakeUtils.dump_object(informs, Path(output.INFORMS))
 
 rule gene_detection_blast_text_alignment_generation:
     """
@@ -121,7 +121,7 @@ rule gene_detection_blast_text_alignment_extraction:
         step.run_step()
         hits_with_alignment = []
         for io_value, alignment in zip(
-                SnakemakeUtils.load_object(input.VAL_Hits), alignment_extractor.tool_outputs['TXT']):
+                SnakemakeUtils.load_object(Path(input.VAL_Hits)), alignment_extractor.tool_outputs['TXT']):
             io_value.value.alignment_path = Path(alignment.path)
             hits_with_alignment.append(io_value)
-        SnakemakeUtils.dump_object(hits_with_alignment, output.VAL_Hits)
+        SnakemakeUtils.dump_object(hits_with_alignment, Path(output.VAL_Hits))

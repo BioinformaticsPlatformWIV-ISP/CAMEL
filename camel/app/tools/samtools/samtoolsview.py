@@ -1,5 +1,4 @@
-import os
-
+from camel.app.camel import Camel
 from camel.app.error.invalidparametererror import InvalidParameterError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
@@ -11,7 +10,7 @@ class SamtoolsView(Samtools):
     SAM <-> BAM Conversion
     """
 
-    def __init__(self, camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initializes this tool.
         :param camel: Camel instance
@@ -19,7 +18,7 @@ class SamtoolsView(Samtools):
         super().__init__('samtools view', '1.9', camel)
         self.__input_key = None
 
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
         Checks the input.
         :return: None
@@ -32,7 +31,7 @@ class SamtoolsView(Samtools):
             raise ValueError("No input file found")
         super(Samtools, self)._check_input()
 
-    def _check_parameters(self):
+    def _check_parameters(self) -> None:
         """
         Checks the tool parameters.
         :return: None
@@ -41,7 +40,7 @@ class SamtoolsView(Samtools):
             raise InvalidParameterError("Invalid output format (BAM/SAM supported)")
         super(SamtoolsView, self)._check_parameters()
 
-    def _execute_tool(self):
+    def _execute_tool(self) -> None:
         """
         Executes this tool.
         :return: None
@@ -70,7 +69,7 @@ class SamtoolsView(Samtools):
 
         # Add input file
         if not pipe_in:
-            command_parts.append(self._tool_inputs[self.__input_key][0].path)
+            command_parts.append(str(self._tool_inputs[self.__input_key][0].path))
 
         # Add regions (when specified)
         if 'regions' in self._parameters:
@@ -78,18 +77,18 @@ class SamtoolsView(Samtools):
 
         self._command.command = ' '.join(command_parts)
 
-    def __set_output(self):
+    def __set_output(self) -> None:
         """
         Sets the tool output.
         :return: None
         """
-        output_path = os.path.join(self._folder, self._parameters['output_filename'].value)
-        if not os.path.isfile(output_path):
-            raise ToolExecutionError("Expected {} output not generated".format(self._name))
+        output_path = self.folder / self._parameters['output_filename'].value
+        if not output_path.is_file:
+            raise ToolExecutionError(f"Expected {self._name} output not generated")
         output_key = self._parameters['output_format'].value.upper()
         self._tool_outputs[output_key] = [ToolIOFile(output_path)]
 
-    def _check_stderr(self):
+    def _check_stderr(self) -> None:
         """
         Validates the stderr.
         :return: None

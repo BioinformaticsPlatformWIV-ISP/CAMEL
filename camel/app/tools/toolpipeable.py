@@ -36,8 +36,7 @@ class ToolPipeable(Tool, metaclass=abc.ABCMeta):
         :param pipe_out: True if tool generates piped output
         :return: Command that should be piped
         """
-        self._folder = str(dir_)
-
+        self._folder = dir_
         # Check the input at the start of the python
         if pipe_in is False:
             self._check_input()

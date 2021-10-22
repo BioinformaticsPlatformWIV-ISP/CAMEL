@@ -1,5 +1,6 @@
-import os
+from pathlib import Path
 
+from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.samtools.samtools import Samtools
@@ -10,7 +11,7 @@ class BcftoolsIndex(Samtools):
     Indexes bgzip compressed VCF files and BCF files.
     """
 
-    def __init__(self, camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initializes this tool.
         :param camel: Camel instance
@@ -18,7 +19,7 @@ class BcftoolsIndex(Samtools):
         super().__init__('bcftools index', '1.9', camel)
         self._input_key = None
 
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
         Checks the input.
         :return: None
@@ -29,7 +30,7 @@ class BcftoolsIndex(Samtools):
             raise InvalidInputSpecificationError("Only one type of input is supported (VCF_GZ or BCF)")
         super(BcftoolsIndex, self)._check_input()
 
-    def _execute_tool(self):
+    def _execute_tool(self) -> None:
         """
         Executes this tool.
         :return: None
@@ -41,18 +42,18 @@ class BcftoolsIndex(Samtools):
         self._check_stderr()
         self.__set_output(input_file_path)
 
-    def __symlink_input(self):
+    def __symlink_input(self) -> Path:
         """
         Create a symlink for the input. This avoids cluttering the directory of the input file. This can also avoid
         errors when there are no writing permissions on the directory of the input file.
         :return: Path to symlink input
         """
-        new_path = os.path.join(self._folder, self._tool_inputs[self._input_key][0].basename)
-        if not os.path.isfile(new_path):
-            os.symlink(self._tool_inputs[self._input_key][0].path, new_path)
+        new_path = self._folder / self._tool_inputs[self._input_key][0].path.name
+        if not new_path.is_file():
+            new_path.symlink_to(self._tool_inputs[self._input_key][0].path)
         return new_path
 
-    def __build_command(self, input_file_path):
+    def __build_command(self, input_file_path: Path) -> None:
         """
         Builds the command for this tool.
         :param input_file_path: Path to the input file
@@ -61,9 +62,9 @@ class BcftoolsIndex(Samtools):
         self._command.command = ' '.join([
             self._tool_command,
             ' '.join(self._build_options()),
-            input_file_path])
+            str(input_file_path)])
 
-    def __set_output(self, input_file_path):
+    def __set_output(self, input_file_path: Path) -> None:
         """
         Sets the output of this tool.
         :param input_file_path: Path to the input file symlink

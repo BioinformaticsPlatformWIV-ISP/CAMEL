@@ -85,12 +85,12 @@ class HtmlReporterGeneDetection(Tool):
         :param hits: Detected hits
         :return: None
         """
-        table_data = [hit.to_html_row(self._report_section, str(self._sub_folder)) for hit in sorted(
+        table_data = [hit.to_html_row(self._report_section, self._sub_folder) for hit in sorted(
             hits, key=lambda x: x.locus)]
         self._report_section.add_table(table_data, hits[0].html_column_names, [('class', 'data')])
         relative_path = self._sub_folder / Path(self._tool_inputs['TSV'][0].path).name
-        self._report_section.add_file(self._tool_inputs['TSV'][0].path, str(relative_path))
-        self._report_section.add_link_to_file("Download (TSV)", str(relative_path))
+        self._report_section.add_file(self._tool_inputs['TSV'][0].path, relative_path)
+        self._report_section.add_link_to_file("Download (TSV)", relative_path)
 
     def __add_database_information(self) -> None:
         """

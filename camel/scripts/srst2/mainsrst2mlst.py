@@ -35,7 +35,7 @@ class MainSrst2Mlst(object):
         srst2.add_input_files(self.__get_reads_input())
         srst2.add_input_files(self.__get_database_input())
         self._add_advanced_options(srst2)
-        srst2.run(self._args.working_dir)
+        srst2.run(Path(self._args.working_dir))
         shutil.copyfile(srst2.tool_outputs['TSV'][0].path, self._args.output_tsv)
 
     @staticmethod
@@ -84,10 +84,10 @@ class MainSrst2Mlst(object):
         db_path.symlink_to(self._args.locus_fasta)
         samtools_faidx = SamtoolsFastaIndex(self._camel)
         samtools_faidx.add_input_files({'FASTA': [ToolIOFile(db_path)]})
-        samtools_faidx.run(self._args.working_dir)
+        samtools_faidx.run(Path(self._args.working_dir))
         input_dict = {'FASTA': [ToolIOFile(db_path)]}
         if self._args.profiles_tsv is not None:
-            input_dict['TSV'] = [ToolIOFile(self._args.profiles_tsv)]
+            input_dict['TSV'] = [ToolIOFile(Path(self._args.profiles_tsv))]
         return input_dict
 
     def _add_advanced_options(self, srst2: Srst2Mlst) -> None:
