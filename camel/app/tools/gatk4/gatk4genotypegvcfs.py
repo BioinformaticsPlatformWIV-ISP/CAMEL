@@ -1,6 +1,6 @@
 from camel.app.camel import Camel
 from camel.app.tools.gatk4.gatk4 import GATK4
-
+import logging
 
 class GATK4GenotypeGVCFs(GATK4):
 
@@ -55,4 +55,6 @@ class GATK4GenotypeGVCFs(GATK4):
 
         self._option_string += ' '
 
-        super(GATK4HaplotypeCaller, self)._build_command()
+        self._specific_parameters.append("annotation_group")
+
+        super(GATK4GenotypeGVCFs, self)._build_command()

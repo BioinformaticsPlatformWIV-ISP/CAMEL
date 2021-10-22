@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
@@ -77,4 +77,4 @@ class GATK4BaseRecalibrator(GATK4):
         :return: None
         """
         self._tool_outputs['TXT_RecalibrationTable'] = [
-            ToolIOFile(os.path.join(self._folder, self._parameters['output'].value))]
+            ToolIOFile(Path(self._folder) / self._parameters['output'].value)]
