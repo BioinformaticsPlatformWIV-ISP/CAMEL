@@ -5,10 +5,10 @@ from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.picard.addorreplacereadgroups import AddOrReplaceReadGroups
 from camel.app.tools.picard.calculatereadgroupchecksum import CalculateReadGroupChecksum
-from camel.app.tools.picard.calculatereadgroupchecksum import CollectMultipleMetrics
+from camel.app.tools.picard.collectmultiplemetrics import CollectMultipleMetrics
 from camel.app.tools.picard.collectqualityyieldmetrics import CollectQualityYieldMetrics
 from camel.app.tools.picard.collectrawwgsmetrics import CollectRawWgsMetrics
-from camel.app.tools.picard.collectrawwgsmetrics import CollectWgsMetrics
+from camel.app.tools.picard.collectwgsmetrics import CollectWgsMetrics
 from camel.app.tools.picard.collectvariantcallingmetrics import CollectVariantCallingMetrics
 from camel.app.tools.picard.createsequencedictionary import CreateSequenceDictionary
 from camel.app.tools.picard.fastqtosam import FastqToSam
@@ -20,7 +20,7 @@ from camel.app.tools.picard.mergevcfs import MergeVCFs
 from camel.app.tools.picard.samtofastq import SamToFastq
 from camel.app.tools.picard.setnmmdanduqtags import SetNmMdAndUqTags
 from camel.app.tools.picard.sortsam import SortSam
-from camel.app.tools.picard.validatesamefile import ValidateSamFile
+from camel.app.tools.picard.validatesamfile import ValidateSamFile
 
 class TestPicard(CamelTestSuite):
     """
@@ -211,7 +211,7 @@ class TestPicard(CamelTestSuite):
         self.assertGreater(output_file_details.stat().st_size, 0)
 
 
-def test_picard_createsequencedictionary(self) -> None:
+    def test_picard_createsequencedictionary(self) -> None:
         """
         Test Picard CreateSequenceDictionary
         :return: None
@@ -273,7 +273,7 @@ def test_picard_createsequencedictionary(self) -> None:
         self.assertGreater(output_file.stat().st_size, 0)
 
 
-def test_picard_markduplicates(self) -> None:
+    def test_picard_markduplicates(self) -> None:
         """
         Test Picard MarkDuplicates
         :return: None
