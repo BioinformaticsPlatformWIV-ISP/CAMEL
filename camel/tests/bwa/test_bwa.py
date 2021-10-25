@@ -7,6 +7,7 @@ from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.tools.bwa.bwaindex import BWAIndex
 from camel.app.tools.bwa.bwamap import BWAMap
 
+
 class TestBWA(CamelTestSuite):
     """
     Tests the BWA tool suite.
@@ -24,21 +25,21 @@ class TestBWA(CamelTestSuite):
             'FASTA_REF': [ToolIOFile(TestBWA.test_file_dir / 'Homo_sapiens_assembly38_chr22.fasta')],
         })
         bwa_index.run(self.running_dir)
-        self.assertTrue('INDEX_GENOME_PREFIX' in bwa_index.tool_outputs, "No INDEX_GENOME_PREFIX output generated")
+        self.assertIn('INDEX_GENOME_PREFIX', bwa_index.tool_outputs)
         output_file = Path(bwa_index.tool_outputs['INDEX_GENOME_PREFIX'][0].value)
         self.assertTrue(output_file.exists())
         self.assertGreater(output_file.stat().st_size, 0)
 
     def test_bwa_map(self) -> None:
         """
-        Test BWAMap
+        Test BWAMap in PE mode
         :return: None
         """
         bwa_map = BWAMap(self.camel)
         bwa_map.add_input_files({
             'FASTQ_PE': [
-                ToolIOFile(TestBWA.test_file_dir / 'NA12877_R1.fastq'),
-                ToolIOFile(TestBWA.test_file_dir / 'NA12877_R2.fastq')
+                ToolIOFile(TestBWA.test_file_dir / 'NA12877_R1.fastq.gz'),
+                ToolIOFile(TestBWA.test_file_dir / 'NA12877_R2.fastq.gz')
             ],
             'INDEX_GENOME_PREFIX': [ToolIOValue(TestBWA.test_file_dir / 'Homo_sapiens_assembly38_chr22.fasta')],
         })
@@ -47,6 +48,25 @@ class TestBWA(CamelTestSuite):
         output_file = Path(bwa_map.tool_outputs['SAM'][0].path)
         self.assertTrue(output_file.exists())
         self.assertGreater(output_file.stat().st_size, 0)
+
+    def test_bwa_map_SE(self) -> None:
+        """
+        Test BWAMap in SE mode
+        :return: None
+        """
+        bwa_map = BWAMap(self.camel)
+        bwa_map.add_input_files({
+            'FASTQ_SE': [
+                ToolIOFile(TestBWA.test_file_dir / 'NA12877.fastq.gz')
+            ],
+            'INDEX_GENOME_PREFIX': [ToolIOValue(TestBWA.test_file_dir / 'Homo_sapiens_assembly38_chr22.fasta')],
+        })
+        bwa_map.run(self.running_dir)
+        self.assertTrue('SAM' in bwa_map.tool_outputs, "No SAM output generated")
+        output_file = Path(bwa_map.tool_outputs['SAM'][0].path)
+        self.assertTrue(output_file.exists())
+        self.assertGreater(output_file.stat().st_size, 0)
+
 
 if __name__ == '__main__':
     unittest.main()
