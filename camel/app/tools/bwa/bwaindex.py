@@ -30,12 +30,12 @@ class BWAIndex(BWA):
         self._execute_command()
         self.__set_output()
 
-    def __get_multi_fasta_genome_filename(self) -> str:
+    def __get_multi_fasta_genome_filename(self) -> Path:
         """
         Get the filename used for multi fasta file representing complete genome
         :return: name of the multi fasta file with complete path
         """
-        return Path(self._folder) / BWAIndex.MULTI_FASTA_GENOME_FILE
+        return self.folder / BWAIndex.MULTI_FASTA_GENOME_FILE
 
     def _check_input(self) -> None:
         """
@@ -52,7 +52,7 @@ class BWAIndex(BWA):
             FileUtils.concatenate_files(Path(multifasta_file), [f.path for f in self._tool_inputs['FASTA_REF']])
             self._refgenome_fasta = multifasta_file
         else:
-            self._refgenome_fasta = Path(self._folder) / self._tool_inputs['FASTA_REF'][0].basename
+            self._refgenome_fasta = self.folder / self._tool_inputs['FASTA_REF'][0].basename
             if self._refgenome_fasta != self._tool_inputs['FASTA_REF'][0].path and not self._refgenome_fasta.exists():
                 self._refgenome_fasta.symlink_to(self._tool_inputs['FASTA_REF'][0].path)
 
