@@ -30,7 +30,7 @@ class BWAIndex(BWA):
         self._execute_command()
         self.__set_output()
 
-    def __get_multi_fasta_genome_filename(self) -> str:
+    def __get_multi_fasta_genome_filename(self) -> Path:
         """
         Get the filename used for multi fasta file representing complete genome
         :return: name of the multi fasta file with complete path
