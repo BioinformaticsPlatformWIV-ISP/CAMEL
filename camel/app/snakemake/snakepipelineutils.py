@@ -154,7 +154,7 @@ class SnakePipelineUtils(object):
 
     @staticmethod
     def run_snakemake(snakefile: str, config_path: str, targets: List[Path], working_dir: Path,
-                      threads: int = 8, resources: Optional[Dict[str, Any]] = None, slurm_args: Optional[List] = None) -> None:
+                      threads: int = 8, resources: Optional[Dict[str, Any]] = None, slurm_args: Optional[List[str]] = None) -> None:
         """
         Helper function to run snakemake workflows.
         :param snakefile: Workflow snakefile
