@@ -37,7 +37,7 @@ class SamtoolsMerge(Samtools):
         """
         super().__init__('samtools merge', '1.9', camel)
 
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
         Checks the validity of input file types (SAM/BAM) and sets the file type accordingly.
         :return: None
@@ -53,7 +53,7 @@ class SamtoolsMerge(Samtools):
 
         super(Samtools, self)._check_input()
 
-    def _execute_tool(self):
+    def _execute_tool(self) -> None:
         """
         Executes this tool.
         :return: None
@@ -62,7 +62,7 @@ class SamtoolsMerge(Samtools):
         self._execute_command()
         self.__set_output()
 
-    def __build_command(self):
+    def __build_command(self) -> None:
         """
         Builds the command for this tool.
         :return: None
@@ -74,7 +74,7 @@ class SamtoolsMerge(Samtools):
             ' '.join([str(file.path) for file in self._tool_inputs[self.__input_file_type]])
         ])
 
-    def __set_output(self):
+    def __set_output(self) -> None:
         """
         Sets the output of this tool.
         :return: None
@@ -83,7 +83,7 @@ class SamtoolsMerge(Samtools):
         output_file_path = self.folder / self._parameters['output_filename'].value
         self._tool_outputs[output_file_type] = [ToolIOFile(Path(output_file_path))]
 
-    def __determine_output_file_type(self):
+    def __determine_output_file_type(self) -> str:
         """
         Determines the output file type to use based on output_filename.
         :return: filetype string ("BAM" or "SAM")
@@ -97,7 +97,7 @@ class SamtoolsMerge(Samtools):
             logging.info("Output file format not BAM or SAM. Assuming BAM and continuing.")
         return filetype
 
-    def _check_command_output(self):
+    def _check_command_output(self) -> None:
         """
         Checks the command output.
         Supersedes function in Tool class because warnings printed to stderr can cause false abort.
@@ -105,4 +105,4 @@ class SamtoolsMerge(Samtools):
         self._check_stderr()
 
         if self._command.returncode != 0:
-            raise ToolExecutionError("Command execution failed (Exit code: {})".format(self._command.returncode))
+            raise ToolExecutionError(f"Command execution failed (Exit code: {self._command.returncode})")

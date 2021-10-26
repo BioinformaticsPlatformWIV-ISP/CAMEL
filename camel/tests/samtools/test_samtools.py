@@ -1,5 +1,4 @@
 import unittest
-from pathlib import Path
 
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.io.tooliofile import ToolIOFile
@@ -13,6 +12,7 @@ from camel.app.tools.samtools.samtoolsmerge import SamtoolsMerge
 from camel.app.tools.samtools.samtoolsmpileup import SamtoolsMPileup
 from camel.app.tools.samtools.samtoolssort import SamtoolsSort
 from camel.app.tools.samtools.samtoolsview import SamtoolsView
+
 
 class TestSamtools(CamelTestSuite):
     """
@@ -35,8 +35,8 @@ class TestSamtools(CamelTestSuite):
             'BAM': [TestSamtools.FILE_BAM],
         })
         samtools_depth.run(self.running_dir)
-        self.assertTrue('TSV' in samtools_depth.tool_outputs, "No TSV output generated")
-        output_file = Path(samtools_depth.tool_outputs['TSV'][0].path)
+        self.assertIn('TSV', samtools_depth.tool_outputs, "No TSV output generated")
+        output_file = samtools_depth.tool_outputs['TSV'][0].path
         self.assertTrue(output_file.exists())
         self.assertGreater(output_file.stat().st_size, 0)
         self.assertIn('median_depth', samtools_depth.informs)
@@ -82,8 +82,8 @@ class TestSamtools(CamelTestSuite):
         })
         samtools_fastaindex.run(self.running_dir)
 
-        self.assertTrue('FASTA' in samtools_fastaindex.tool_outputs, "No FASTA output generated")
-        output_file = Path(samtools_fastaindex.tool_outputs['FASTA'][0].path)
+        self.assertIn('FASTA', samtools_fastaindex.tool_outputs, "No FASTA output generated")
+        output_file = samtools_fastaindex.tool_outputs['FASTA'][0].path
         self.assertTrue(output_file.exists())
         self.assertGreater(output_file.stat().st_size, 0)
 
@@ -99,8 +99,8 @@ class TestSamtools(CamelTestSuite):
         })
         samtools_flagstat.run(self.running_dir)
 
-        self.assertTrue('TXT' in samtools_flagstat.tool_outputs, "No TXT output generated")
-        output_file = Path(samtools_flagstat.tool_outputs['TXT'][0].path)
+        self.assertIn('TXT', samtools_flagstat.tool_outputs, "No TXT output generated")
+        output_file = samtools_flagstat.tool_outputs['TXT'][0].path
         self.assertTrue(output_file.exists())
         self.assertGreater(output_file.stat().st_size, 0)
 
@@ -125,8 +125,8 @@ class TestSamtools(CamelTestSuite):
             'BAM': [TestSamtools.FILE_BAM],
         })
         samtools_index.run(self.running_dir)
-        self.assertTrue('BAM' in samtools_index.tool_outputs, "No BAM output generated")
-        output_file = Path(samtools_index.tool_outputs['BAM'][0].path)
+        self.assertIn('BAM', samtools_index.tool_outputs, "No BAM output generated")
+        output_file = samtools_index.tool_outputs['BAM'][0].path
         self.assertTrue(output_file.exists())
         self.assertGreater(output_file.stat().st_size, 0)
 
@@ -141,8 +141,8 @@ class TestSamtools(CamelTestSuite):
             'FASTA_REF': [TestSamtools.FILE_FASTA_REF]
         })
         samtools_index_cram.run(self.running_dir)
-        self.assertTrue('CRAI' in samtools_index_cram.tool_outputs, "No CRAI output generated")
-        output_file = Path(samtools_index_cram.tool_outputs['CRAI'][0].path)
+        self.assertIn('CRAI', samtools_index_cram.tool_outputs, "No CRAI output generated")
+        output_file = samtools_index_cram.tool_outputs['CRAI'][0].path
         self.assertTrue(output_file.exists())
         self.assertGreater(output_file.stat().st_size, 0)
 
@@ -156,8 +156,8 @@ class TestSamtools(CamelTestSuite):
             'BAM': [TestSamtools.FILE_BAM, TestSamtools.FILE_BAM2],
         })
         samtools_merge.run(self.running_dir)
-        self.assertTrue('BAM' in samtools_merge.tool_outputs, "No BAM output generated")
-        output_file = Path(samtools_merge.tool_outputs['BAM'][0].path)
+        self.assertIn('BAM', samtools_merge.tool_outputs, "No BAM output generated")
+        output_file = samtools_merge.tool_outputs['BAM'][0].path
         self.assertTrue(output_file.exists())
         self.assertGreater(output_file.stat().st_size, 0)
 
@@ -172,8 +172,8 @@ class TestSamtools(CamelTestSuite):
             'FASTA': [TestSamtools.FILE_FASTA_REF]
         })
         samtools_mpileup.run(self.running_dir)
-        self.assertTrue('PILEUP' in samtools_mpileup.tool_outputs, "No PILEUP output generated")
-        output_file = Path(samtools_mpileup.tool_outputs['PILEUP'][0].path)
+        self.assertIn('PILEUP', samtools_mpileup.tool_outputs, "No PILEUP output generated")
+        output_file = samtools_mpileup.tool_outputs['PILEUP'][0].path
         self.assertTrue(output_file.exists())
         self.assertGreater(output_file.stat().st_size, 0)
 
@@ -187,8 +187,8 @@ class TestSamtools(CamelTestSuite):
             'BAM': [TestSamtools.FILE_BAM],
         })
         samtools_sort.run(self.running_dir)
-        self.assertTrue('BAM' in samtools_sort.tool_outputs, "No BAM output generated")
-        output_file = Path(samtools_sort.tool_outputs['BAM'][0].path)
+        self.assertIn('BAM', samtools_sort.tool_outputs, "No BAM output generated")
+        output_file = samtools_sort.tool_outputs['BAM'][0].path
         self.assertTrue(output_file.exists())
         self.assertGreater(output_file.stat().st_size, 0)
 
@@ -203,8 +203,8 @@ class TestSamtools(CamelTestSuite):
         })
         samtools_view.update_parameters(output_format = "SAM")
         samtools_view.run(self.running_dir)
-        self.assertTrue('SAM' in samtools_view.tool_outputs, "No SAM output generated")
-        output_file = Path(samtools_view.tool_outputs['SAM'][0].path)
+        self.assertIn('SAM', samtools_view.tool_outputs, "No SAM output generated")
+        output_file = samtools_view.tool_outputs['SAM'][0].path
         self.assertTrue(output_file.exists())
         self.assertGreater(output_file.stat().st_size, 0)
 

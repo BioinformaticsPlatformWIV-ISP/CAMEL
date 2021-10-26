@@ -57,24 +57,24 @@ class SamtoolsFlagstat(Samtools):
 
         self._command.command = ' '.join(command_parts)
 
-    def __set_informs(self, output_file: str) -> None:
+    def __set_informs(self, output_file: Path) -> None:
         """
         Sets the informs for this tool.
         :return: None
         """
-        filehandle = open(output_file, 'r')
-        lines = filehandle.readlines()
-        self._informs['total'] = SamtoolsFlagstat.__parse_output_line(lines[0])
-        self._informs['secondary'] = SamtoolsFlagstat.__parse_output_line(lines[1])
-        self._informs['supplementary'] = SamtoolsFlagstat.__parse_output_line(lines[2])
-        self._informs['duplicates'] = SamtoolsFlagstat.__parse_output_line(lines[3])
-        self._informs['mapped'] = SamtoolsFlagstat.__parse_output_line(lines[4])
-        self._informs['paired'] = SamtoolsFlagstat.__parse_output_line(lines[5])
-        self._informs['read1'] = SamtoolsFlagstat.__parse_output_line(lines[6])
-        self._informs['read2'] = SamtoolsFlagstat.__parse_output_line(lines[7])
-        self._informs['properly_paired'] = SamtoolsFlagstat.__parse_output_line(lines[8])
-        self._informs['singletons'] = SamtoolsFlagstat.__parse_output_line(lines[10])
-        filehandle.close()
+        with open(output_file) as filehandle:
+            lines = filehandle.read()
+
+            self._informs['total'] = SamtoolsFlagstat.__parse_output_line(lines[0])
+            self._informs['secondary'] = SamtoolsFlagstat.__parse_output_line(lines[1])
+            self._informs['supplementary'] = SamtoolsFlagstat.__parse_output_line(lines[2])
+            self._informs['duplicates'] = SamtoolsFlagstat.__parse_output_line(lines[3])
+            self._informs['mapped'] = SamtoolsFlagstat.__parse_output_line(lines[4])
+            self._informs['paired'] = SamtoolsFlagstat.__parse_output_line(lines[5])
+            self._informs['read1'] = SamtoolsFlagstat.__parse_output_line(lines[6])
+            self._informs['read2'] = SamtoolsFlagstat.__parse_output_line(lines[7])
+            self._informs['properly_paired'] = SamtoolsFlagstat.__parse_output_line(lines[8])
+            self._informs['singletons'] = SamtoolsFlagstat.__parse_output_line(lines[10])
 
     @staticmethod
     def __parse_output_line(line: str) -> tuple:
@@ -85,7 +85,7 @@ class SamtoolsFlagstat(Samtools):
         """
         m = re.match(r'^(\d+) \+ (\d+).*', line)
         if m is None:
-            raise ValueError("Cannot parse: '{}'".format(line))
+            raise ValueError(f"Cannot parse: '{line}'")
         return int(m.group(1)), int(m.group(2))
 
     def __set_output(self) -> None:

@@ -1,5 +1,6 @@
 from camel.app.camel import Camel
 from camel.app.error.invalidparametererror import InvalidParameterError
+from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.samtools.samtools import Samtools
 
@@ -24,7 +25,7 @@ class SamtoolsMPileup(Samtools):
         :return: None
         """
         if self._parameters['output_format'].value not in ['pileup', 'vcf', 'bcf']:
-            raise InvalidParameterError("Invalid output format: {}".format(self._parameters['output_format'].value))
+            raise InvalidParameterError(f"Invalid output format: {self._parameters['output_format'].value}")
         super(SamtoolsMPileup, self)._check_parameters()
 
     def _check_input(self) -> None:
@@ -56,11 +57,11 @@ class SamtoolsMPileup(Samtools):
         ]
         command_parts += self._build_options(['output_format'])
         if 'FASTA' in self._tool_inputs:
-            command_parts.append('--fasta-ref {}'.format(self._tool_inputs['FASTA'][0].path))
+            command_parts.append(f'--fasta-ref {self._tool_inputs["FASTA"][0].path}')
         if 'TXT_RG' in self._tool_inputs:
-            command_parts.append('--exlude-RG {}'.format(self._tool_inputs['TXT_RG'][0].path))
+            command_parts.append(f'--exlude-RG {self._tool_inputs["TXT_RG"][0].path}')
         if 'TXT_POS' in self._tool_inputs:
-            command_parts.append('--positions {}'.format(self._tool_inputs['TXT_POS'][0].path))
+            command_parts.append(f'--positions {self._tool_inputs["TXT_POS"][0].path}')
         if self._parameters['output_format'].value == 'vcf':
             command_parts.append('--VCF')
         elif self._parameters['output_format'].value == 'bcf':
@@ -82,8 +83,10 @@ class SamtoolsMPileup(Samtools):
 
     def _check_command_output(self) -> None:
         """
-        Checks if the command was executed successfully.
-        :return: None
+        Checks the command output.
+        Supersedes function in Tool class because warnings printed to stderr can cause false abort.
         """
-        if self._command.returncode == 0:
-            return
+        self._check_stderr()
+
+        if self._command.returncode != 0:
+            raise ToolExecutionError(f"Command execution failed (Exit code: {self._command.returncode})")

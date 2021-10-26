@@ -17,7 +17,7 @@ class SamtoolsIndex(Samtools):
         """
         super().__init__('samtools index', '1.9', camel)
 
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
         Checks the input.
         :return: None
@@ -28,7 +28,7 @@ class SamtoolsIndex(Samtools):
             raise ValueError("Only one BAM input file is supported")
         super(Samtools, self)._check_input()
 
-    def _execute_tool(self):
+    def _execute_tool(self) -> None:
         """
         Executes this tool.
         :return: None
@@ -39,7 +39,7 @@ class SamtoolsIndex(Samtools):
         self._check_stderr()
         self._tool_outputs['BAM'] = [ToolIOFile(Path(input_file_path))]
 
-    def __symlink_input(self):
+    def __symlink_input(self) -> Path:
         """
         Create a symlink for the input. This avoids cluttering the directory of the input file. This can also avoid
         errors when there are no writing permissions on the directory of the input file.
@@ -54,7 +54,7 @@ class SamtoolsIndex(Samtools):
             new_path.symlink_to(self._tool_inputs['BAM'][0].path)
         return new_path
 
-    def __build_command(self, input_file_path):
+    def __build_command(self, input_file_path) -> None:
         """
         Builds the command for this tool.
         :param input_file_path: Path to the input file
@@ -65,7 +65,7 @@ class SamtoolsIndex(Samtools):
             ' '.join(self._build_options(excluded_parameters=['output_filename'])),
             str(input_file_path)])
 
-    def _check_stderr(self):
+    def _check_stderr(self) -> None:
         """
         Validates the stderr.
         :return: None

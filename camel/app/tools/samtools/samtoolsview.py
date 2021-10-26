@@ -1,4 +1,3 @@
-import abc
 from pathlib import Path
 
 from camel.app.camel import Camel
@@ -8,7 +7,7 @@ from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.samtools.samtools import Samtools
 
 
-class SamtoolsView(Samtools, metaclass=abc.ABCMeta):
+class SamtoolsView(Samtools):
     """
     SAM <-> BAM Conversion
     SAM/BAM <-> CRAM
@@ -44,7 +43,7 @@ class SamtoolsView(Samtools, metaclass=abc.ABCMeta):
         :return: None
         """
         if self._parameters['output_format'].value.upper() not in ('SAM', 'BAM', 'CRAM'):
-            raise InvalidParameterError("Invalid output format (BAM/SAM supported)")
+            raise InvalidParameterError("Invalid output format (BAM/SAM/CRAM supported)")
         super(SamtoolsView, self)._check_parameters()
 
     def _execute_tool(self) -> None:
