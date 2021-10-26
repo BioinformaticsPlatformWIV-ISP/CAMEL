@@ -63,7 +63,7 @@ class SamtoolsFlagstat(Samtools):
         :return: None
         """
         with open(output_file) as filehandle:
-            lines = filehandle.read()
+            lines = filehandle.readlines()
 
             self._informs['total'] = SamtoolsFlagstat.__parse_output_line(lines[0])
             self._informs['secondary'] = SamtoolsFlagstat.__parse_output_line(lines[1])
