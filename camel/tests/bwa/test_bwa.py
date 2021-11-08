@@ -30,7 +30,7 @@ class TestBWA(CamelTestSuite):
         self.assertTrue(output_file.exists())
         self.assertGreater(output_file.stat().st_size, 0)
 
-    def test_bwa_map(self) -> None:
+    def test_bwa_map_pe(self) -> None:
         """
         Test BWAMap in PE mode
         :return: None
@@ -49,7 +49,7 @@ class TestBWA(CamelTestSuite):
         self.assertTrue(output_file.exists())
         self.assertGreater(output_file.stat().st_size, 0)
 
-    def test_bwa_map_SE(self) -> None:
+    def test_bwa_map_se(self) -> None:
         """
         Test BWAMap in SE mode
         :return: None
