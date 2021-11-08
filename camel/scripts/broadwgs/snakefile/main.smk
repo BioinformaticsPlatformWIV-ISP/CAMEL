@@ -1,7 +1,6 @@
+import shutil
 import subprocess
 from pathlib import Path
-import logging
-import shutil
 
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.io.tooliovalue import ToolIOValue

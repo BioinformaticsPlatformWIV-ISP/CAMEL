@@ -1,5 +1,7 @@
 from pathlib import Path
 
+from bidict import bidict
+
 from camel.app.camel import Camel
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
@@ -23,7 +25,7 @@ rule picard_quality_yield:
 
         quality_yield = CollectQualityYieldMetrics(camel)
         SnakemakeUtils.add_pickle_inputs(quality_yield, input)
-        step = Step(rule, quality_yield, camel, params.working_dir, config)
+        step = Step(rule, quality_yield, camel, params.working_dir)
         quality_yield.update_parameters(**config['rule_params']['qc'][rule], output = params.output_file)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(quality_yield, output)
@@ -53,7 +55,7 @@ rule picard_unsorted_RG_quality:
 
         unsorted_RG_quality = CollectMultipleMetrics(camel)
         SnakemakeUtils.add_pickle_inputs(unsorted_RG_quality, input)
-        step = Step(rule, unsorted_RG_quality, camel, params.working_dir, config)
+        step = Step(rule, unsorted_RG_quality, camel, params.working_dir)
         unsorted_RG_quality.update_parameters(
             output_prefix = params.output_prefix,
             **config['rule_params']['qc'][rule]
@@ -81,7 +83,7 @@ rule picard_RG_quality:
 
         RG_quality = CollectMultipleMetrics(camel)
         SnakemakeUtils.add_pickle_inputs(RG_quality, input)
-        step = Step(rule, RG_quality, camel, params.working_dir, config)
+        step = Step(rule, RG_quality, camel, params.working_dir)
         RG_quality.update_parameters(
             output_prefix = params.output_prefix,
             **config['rule_params']['qc'][rule]
@@ -153,7 +155,7 @@ rule picard_aggregation_metrics:
 
         agg_metrics = CollectMultipleMetrics(camel)
         SnakemakeUtils.add_pickle_inputs(agg_metrics, input)
-        step = Step(rule, agg_metrics, camel, params.working_dir, config)
+        step = Step(rule, agg_metrics, camel, params.working_dir)
         agg_metrics.update_parameters(
             output_prefix = params.output_prefix,
             **config['rule_params']['qc'][rule]
@@ -177,7 +179,7 @@ rule picard_RG_checksum:
 
         get_checksum = CalculateReadGroupChecksum(camel)
         SnakemakeUtils.add_pickle_input(get_checksum, "BAM", Path(input.BAM))
-        step = Step(rule, get_checksum, camel, params.working_dir, config)
+        step = Step(rule, get_checksum, camel, params.working_dir)
         get_checksum.update_parameters(output = params.output_file)
         step.run_step()
 
@@ -202,7 +204,7 @@ rule picard_wgs_metrics:
 
         wgs_metrics = CollectWgsMetrics(camel)
         SnakemakeUtils.add_pickle_inputs(wgs_metrics, input)
-        step = Step(rule, wgs_metrics, camel, params.working_dir, config)
+        step = Step(rule, wgs_metrics, camel, params.working_dir)
         wgs_metrics.update_parameters(
             output = params.output_file,
             **config['rule_params']['qc'][rule]
@@ -227,7 +229,7 @@ rule picard_raw_wgs_metrics:
 
         raw_wgs_metrics = CollectRawWgsMetrics(camel)
         SnakemakeUtils.add_pickle_inputs(raw_wgs_metrics, input)
-        step = Step(rule, raw_wgs_metrics, camel, params.working_dir, config)
+        step = Step(rule, raw_wgs_metrics, camel, params.working_dir)
         raw_wgs_metrics.update_parameters(
             output = params.output_file,
             **config['rule_params']['qc'][rule]
@@ -254,7 +256,7 @@ rule picard_validate_cram:
         val_cram = ValidateSamFile(camel)
         SnakemakeUtils.add_pickle_input(val_cram, "BAM", Path(input.CRAM))
         SnakemakeUtils.add_pickle_input(val_cram, "FASTA_REF", Path(input.FASTA_REF))
-        step = Step(rule, val_cram, camel, params.working_dir, config)
+        step = Step(rule, val_cram, camel, params.working_dir)
         val_cram.update_parameters(
             **config['rule_params']['bam_to_cram'][rule]
         )
@@ -282,10 +284,100 @@ rule picard_variant_calling_metrics:
 
         vcf_metrics = CollectVariantCallingMetrics(camel)
         SnakemakeUtils.add_pickle_inputs(vcf_metrics, input)
-        step = Step(rule, vcf_metrics, camel, params.working_dir, config)
+        step = Step(rule, vcf_metrics, camel, params.working_dir)
         vcf_metrics.update_parameters(
             output_prefix = config["sample"],
             **config['rule_params']['qc'][rule]
         )
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(vcf_metrics, output)
+
+rule generate_qc_summary:
+    input:
+        mark_duplicates_metrics = alignment.OUTPUT_MARK_DUPLICATES_METRICS,
+        alignment_summary_metrics = Path(config['working_dir']) / "qc" / "aggregation_metrics" / f'{config["sample"]}.agg.alignment_summary_metrics',
+        insert_size_metrics = Path(config['working_dir']) / "qc" / "aggregation_metrics" / f'{config["sample"]}.agg.insert_size_metrics',
+        wgs_metrics = rules.picard_wgs_metrics.output.TXT_metrics,
+        variant_calling_metrics = rules.picard_variant_calling_metrics.output.TXT_report
+    output:
+        QC_summary = Path(config['working_dir']) / "qc" / "QC_summary.txt"
+    run:
+        alignment_metrics = {}
+        variant_calling_metrics = {}
+
+        # Mark Duplicates metrics
+        with open(input.mark_duplicates_metrics) as handle:
+            lines = handle.readlines()
+            metrics_class_index = lines.index("## METRICS CLASS\tpicard.sam.DuplicationMetrics\n")
+
+        header = lines[metrics_class_index + 1].split("\t")
+        values = lines[metrics_class_index + 2].split("\t")
+
+        mark_duplicates = dict(zip(header, values))
+        alignment_metrics['percent_duplication'] = mark_duplicates['PERCENT_DUPLICATION']
+
+        # Alignment summary metrics
+        with open("/home/chdevogelaere/qc/aggregation_metrics/GC088815.agg.alignment_summary_metrics") as handle:
+            lines = handle.readlines()
+            metrics_class_index = lines.index("## METRICS CLASS\tpicard.analysis.AlignmentSummaryMetrics\n")
+
+        header = lines[metrics_class_index + 1].split("\t")
+        values = lines[metrics_class_index + 4].split("\t")
+
+        agg_alignment_summary = dict(zip(header, values))
+        alignment_metrics['percent_chimeras'] = agg_alignment_summary['PCT_CHIMERAS']
+
+        # Insert size metrics
+        with open("/home/chdevogelaere/qc/aggregation_metrics/GC088815.agg.insert_size_metrics") as handle:
+            lines = handle.readlines()
+            metrics_class_index = lines.index("## METRICS CLASS\tpicard.analysis.InsertSizeMetrics\n")
+
+        header = lines[metrics_class_index + 1].split("\t")
+        values = lines[metrics_class_index + 2].split("\t")
+
+        agg_insert_size = dict(zip(header, values))
+        alignment_metrics['median_insert_size'] = agg_insert_size['MEDIAN_INSERT_SIZE']
+
+        # WGS metrics
+        with open("/home/chdevogelaere/qc/wgs_metrics/GC088815.wgs.metrics.txt") as handle:
+            lines = handle.readlines()
+            metrics_class_index = lines.index("## METRICS CLASS\tpicard.analysis.WgsMetrics\n")
+            histogram_start_index = lines.index("## HISTOGRAM\tjava.lang.Integer\n")
+
+        header = lines[metrics_class_index + 1].split("\t")
+        values = lines[metrics_class_index + 2].split("\t")
+
+        wgs_metrics = dict(zip(header, values))
+        mean_coverage = float(wgs_metrics['MEAN_COVERAGE'])
+        genome_territory = int(wgs_metrics['GENOME_TERRITORY'])
+        lowest_20 = float(int(genome_territory) * 0.2)
+
+        coverage_histo = lines[histogram_start_index+3:-1]
+        coverage_histo = [l.rstrip().split("\t") for l in coverage_histo]
+
+        cov_values = [int(l[1]) for l in coverage_histo]
+        histo_cumsum = [sum(cov_values[:i+1]) for i, value in enumerate(cov_values)]
+        histo_cumsum_bidict = bidict([(i, n) for i, n in enumerate(histo_cumsum)])
+
+        tmp = histo_cumsum + [int(lowest_20)]
+        tmp.sort()
+        find_index = tmp.index(int(lowest_20))
+        val_before = histo_cumsum[find_index - 1]
+        val_after = histo_cumsum[find_index]
+
+        cov_20 = (((val_after - lowest_20) / (val_after - val_before)) + find_index - 1)
+
+        fold80 = mean_coverage / cov_20
+        alignment_metrics['evenness_coverage'] = fold80
+
+        # Variant calling metrics
+        with open("/home/chdevogelaere/qc/variant_calling_metrics/GC088815.variant_calling_metrics.txt") as handle:
+            lines = handle.readlines()
+            metrics_class_index = lines.index("## METRICS CLASS\tpicard.vcf.CollectVariantCallingMetrics$VariantCallingSummaryMetrics\n")
+
+        header = lines[metrics_class_index + 1].split("\t")
+        values = lines[metrics_class_index + 2].split("\t")
+
+        variant_calling_summary = dict(zip(header, values))
+        variant_calling_metrics["TITV_DBSNP"] = variant_calling_summary['DBSNP_TITV']
+        variant_calling_metrics["TITV_NOVEL"] = variant_calling_summary['NOVEL_TITV']

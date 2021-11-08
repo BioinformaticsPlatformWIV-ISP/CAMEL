@@ -2,11 +2,11 @@
 import argparse
 import glob
 import logging
-import os
 import shutil
-import yaml
 from pathlib import Path
 from typing import Optional, Sequence
+
+import yaml
 
 from camel.app.camel import Camel
 from camel.app.error.snakemakeexecutionerror import SnakemakeExecutionError
