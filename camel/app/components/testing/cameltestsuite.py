@@ -64,4 +64,4 @@ class CamelTestSuite(unittest.TestCase):
         for i in range(0, nb_files):
             output_file_path = tool.tool_outputs[key][0].path
             self.assertTrue(output_file_path.exists(), f"Output file '{key}' (index: {i}) does not exist")
-            self.assertGreater(output_file_path.stat().st_size, 0, f"Output file '{key}' (index: {i}) is epty")
+            self.assertGreater(output_file_path.stat().st_size, 0, f"Output file '{key}' (index: {i}) is empty")
