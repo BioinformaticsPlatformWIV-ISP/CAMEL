@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 from camel.app.camel import Camel
 from camel.app.components.files.fileutils import FileUtils
@@ -12,7 +12,7 @@ class BWAIndex(BWA):
 
     MULTI_FASTA_GENOME_FILE = 'complete_genome.fasta'
 
-    def __init__(self, camel: Camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initialize BWA index
         :param camel: Camel instance
@@ -30,12 +30,12 @@ class BWAIndex(BWA):
         self._execute_command()
         self.__set_output()
 
-    def __get_multi_fasta_genome_filename(self) -> str:
+    def __get_multi_fasta_genome_filename(self) -> Path:
         """
         Get the filename used for multi fasta file representing complete genome
         :return: name of the multi fasta file with complete path
         """
-        return os.path.join(self._folder, BWAIndex.MULTI_FASTA_GENOME_FILE)
+        return self.folder / BWAIndex.MULTI_FASTA_GENOME_FILE
 
     def _check_input(self) -> None:
         """
@@ -49,13 +49,12 @@ class BWAIndex(BWA):
             raise ValueError("Required reference genome (FASTA) input file is missing.")
         elif nb_of_inputs > 1:
             multifasta_file = self.__get_multi_fasta_genome_filename()
-            FileUtils.concatenate_files(multifasta_file, [f.path for f in self._tool_inputs['FASTA_REF']])
+            FileUtils.concatenate_files(Path(multifasta_file), [f.path for f in self._tool_inputs['FASTA_REF']])
             self._refgenome_fasta = multifasta_file
         else:
-            self._refgenome_fasta = os.path.join(self._folder, self._tool_inputs['FASTA_REF'][0].basename)
-            if self._refgenome_fasta != self._tool_inputs['FASTA_REF'][0].path and not os.path.exists(
-                    self._refgenome_fasta):
-                os.symlink(self._tool_inputs['FASTA_REF'][0].path, self._refgenome_fasta)
+            self._refgenome_fasta = self.folder / self._tool_inputs['FASTA_REF'][0].basename
+            if self._refgenome_fasta != self._tool_inputs['FASTA_REF'][0].path and not self._refgenome_fasta.exists():
+                self._refgenome_fasta.symlink_to(self._tool_inputs['FASTA_REF'][0].path)
 
     def __set_output(self) -> None:
         """
