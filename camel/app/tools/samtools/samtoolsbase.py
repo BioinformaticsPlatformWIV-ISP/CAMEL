@@ -2,10 +2,10 @@ import abc
 
 from camel.app.camel import Camel
 from camel.app.error.toolexecutionerror import ToolExecutionError
-from camel.app.tools.toolpipeable import ToolPipeable
+from camel.app.tools.tool import Tool
 
 
-class Samtools(ToolPipeable, metaclass=abc.ABCMeta):
+class SamtoolsBase(Tool, metaclass=abc.ABCMeta):
     """
     Super class for samtools.
     """
@@ -25,7 +25,7 @@ class Samtools(ToolPipeable, metaclass=abc.ABCMeta):
         Executes this tool.
         :return: None
         """
-        super(Samtools, self)._execute_tool()
+        super(SamtoolsBase, self)._execute_tool()
 
     def _check_stderr(self) -> None:
         """

@@ -5,10 +5,10 @@ from camel.app.camel import Camel
 from camel.app.error.invalidparametererror import InvalidParameterError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
-from camel.app.tools.samtools.samtools import Samtools
+from camel.app.tools.samtools.samtoolsbase import SamtoolsBase
 
 
-class SamtoolsFastaIndex(Samtools):
+class SamtoolsFastaIndex(SamtoolsBase):
     """
     Indexes FASTA files.
     """
@@ -29,7 +29,7 @@ class SamtoolsFastaIndex(Samtools):
             raise ValueError("No FASTA input file found")
         if len(self._tool_inputs['FASTA']) != 1:
             raise ValueError("Only one FASTA input file is supported.")
-        super(Samtools, self)._check_input()
+        super(SamtoolsBase, self)._check_input()
 
     def _check_parameters(self) -> None:
         """

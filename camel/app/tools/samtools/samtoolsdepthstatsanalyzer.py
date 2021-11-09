@@ -1,4 +1,5 @@
 import logging
+from typing import Dict, List, Union, Tuple, Any
 
 from camel.app.components.files.fastautils import FastaUtils
 from camel.app.components.statisticsutils import StatisticsUtils
@@ -21,14 +22,14 @@ class SamtoolsDepthStatsAnalyzer(Tool):
         """
         super().__init__('samtools depth stats analyzer', '1.9', camel)
 
-    def _execute_tool(self):
+    def _execute_tool(self) -> None:
         """
         Executes this tool
         :return: None
         """
         self.__analyze_depth_output()
 
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
         Checks the input
         :return: None
@@ -40,7 +41,7 @@ class SamtoolsDepthStatsAnalyzer(Tool):
 
         super(SamtoolsDepthStatsAnalyzer, self)._check_input()
 
-    def __analyze_depth_output(self):
+    def __analyze_depth_output(self) -> None:
         """
         Analyze the depth output to gather various statistics
         :return: None
@@ -98,7 +99,7 @@ class SamtoolsDepthStatsAnalyzer(Tool):
             self.informs['segment_base_coverage'][seq_id] = segment_base_coverage[seq_id]
 
     @staticmethod
-    def __calculate_base_coverage(segment_base_count, refseq_length):
+    def __calculate_base_coverage(segment_base_count, refseq_length) -> Tuple[int, Dict[Any, Union[float, str]]]:
         """
         Calculate the base coverage
         :param segment_base_count: base count per segment
@@ -124,7 +125,7 @@ class SamtoolsDepthStatsAnalyzer(Tool):
         return genome_base_cov, segment_base_cov
 
     @staticmethod
-    def is_gap(cur_pos, last_pos):
+    def is_gap(cur_pos, last_pos) -> bool:
         """
         Function to check whether there is a gap between current position and previous one
         :param cur_pos: current position reported
@@ -134,7 +135,7 @@ class SamtoolsDepthStatsAnalyzer(Tool):
         return cur_pos - (last_pos + 1) >= SamtoolsDepthStatsAnalyzer.MINIMAL_GAP_LEN
 
     @staticmethod
-    def collect_inform(output_path, refseq_length, cov_cutoff=0):
+    def collect_inform(output_path, refseq_length, cov_cutoff=0) -> Tuple[List[int], Dict[str, List[int]], Dict[str, list], Dict[str, int]]:
         """
         Collect coverage data from Samtools Depth output file, counting the bases covered, and discover gaps.
         :param output_path: Path to the output files
@@ -207,7 +208,7 @@ class SamtoolsDepthStatsAnalyzer(Tool):
         return coverages, segment_coverages, segment_gaps, segment_base_count
 
     @staticmethod
-    def update_tail_gaps(segment_gaps, seq_id, last_pos, refseq_length=None):
+    def update_tail_gaps(segment_gaps, seq_id, last_pos, refseq_length=None) -> None:
         """
         Update segment_gaps with the tail gaps or a open gap if length is unknown
         :param segment_gaps: dictionary contain gaps of segments

@@ -19,11 +19,12 @@ class TestSamtools(CamelTestSuite):
     Tests the Samtools tool suite.
     """
     test_file_dir = CamelTestSuite.get_test_file_dir('samtools')
-    FILE_FASTA_REF = ToolIOFile(test_file_dir / 'Homo_sapiens_assembly38_chr22.fasta')
-    FILE_BAM = ToolIOFile(test_file_dir / 'NA12877_chr22_sub.bam')
-    FILE_BAM2 = ToolIOFile(test_file_dir / 'NA12877_chr22_sub2.bam')
-    FILE_CRAM = ToolIOFile(test_file_dir / 'NA12877_chr22_sub.cram')
-    FILE_TXTdepth = ToolIOFile(test_file_dir / 'NA12877_chr22_sub_depth.txt')
+    FILE_FASTA_REF = ToolIOFile(test_file_dir / 'reference.fasta')
+    FILE_BAM = ToolIOFile(test_file_dir / 'aln.bam')
+    FILE_BAM1 = ToolIOFile(test_file_dir / 'aln1.bam')
+    FILE_BAM2 = ToolIOFile(test_file_dir / 'aln2.bam')
+    FILE_CRAM = ToolIOFile(test_file_dir / 'aln.cram')
+    FILE_TXTdepth = ToolIOFile(test_file_dir / 'aln_depth.txt')
 
     def test_samtools_depth(self) -> None:
         """
@@ -35,15 +36,15 @@ class TestSamtools(CamelTestSuite):
             'BAM': [TestSamtools.FILE_BAM],
         })
         samtools_depth.run(self.running_dir)
-        self.assertIn('TSV', samtools_depth.tool_outputs, "No TSV output generated")
+        self.assertIn('TSV', samtools_depth.tool_outputs, "No TSV output generated.")
         output_file = samtools_depth.tool_outputs['TSV'][0].path
-        self.assertTrue(output_file.exists())
+        self.assertTrue(output_file.exists(), "Output file does not exist.")
         self.assertGreater(output_file.stat().st_size, 0)
         self.assertIn('median_depth', samtools_depth.informs)
 
     def test_samtools_depthstatsanalyzer(self) -> None:
         """
-        Test SamtoolsDepthstatsanalyzer
+        Tests SamtoolsDepthstatsanalyzer.
         :return: None
         """
         samtools_depthstatsanalyzer = SamtoolsDepthStatsAnalyzer(self.camel)
@@ -54,25 +55,17 @@ class TestSamtools(CamelTestSuite):
         })
         samtools_depthstatsanalyzer.run(self.running_dir)
 
-        self.assertIn('median_coverage', samtools_depthstatsanalyzer.informs)
-        self.assertIn('coverage_iqr', samtools_depthstatsanalyzer.informs)
-        self.assertIn('coverage_cv', samtools_depthstatsanalyzer.informs)
-        self.assertIn('coverage_mad', samtools_depthstatsanalyzer.informs)
-        self.assertIn('coverage_std', samtools_depthstatsanalyzer.informs)
-        self.assertIn('base_coverage', samtools_depthstatsanalyzer.informs)
+        samtools_depthstatsanalyzer_expected_informs = ['median_coverage', 'coverage_iqr', 'coverage_cv', 'coverage_mad',
+                                                        'coverage_std', 'base_coverage', 'segment_base_count', 'segment_gaps',
+                                                        'segment_median_coverage', 'segment_coverage_mad', 'segment_coverage_cv',
+                                                        'segment_coverage_iqr', 'segment_coverage_std', 'segment_base_coverage']
 
-        self.assertIn('segment_base_count', samtools_depthstatsanalyzer.informs)
-        self.assertIn('segment_gaps', samtools_depthstatsanalyzer.informs)
-        self.assertIn('segment_median_coverage', samtools_depthstatsanalyzer.informs)
-        self.assertIn('segment_coverage_mad', samtools_depthstatsanalyzer.informs)
-        self.assertIn('segment_coverage_cv', samtools_depthstatsanalyzer.informs)
-        self.assertIn('segment_coverage_iqr', samtools_depthstatsanalyzer.informs)
-        self.assertIn('segment_coverage_std', samtools_depthstatsanalyzer.informs)
-        self.assertIn('segment_base_coverage', samtools_depthstatsanalyzer.informs)
+        for expected_inform in samtools_depthstatsanalyzer_expected_informs:
+            self.assertIn(expected_inform, samtools_depthstatsanalyzer.informs, f"{expected_inform} not found in informs.")
 
     def test_samtools_fastaindex(self) -> None:
         """
-        Test SamtoolsFastaIndex
+        Tests SamtoolsFastaIndex.
         :return: None
         """
         samtools_fastaindex = SamtoolsFastaIndex(self.camel)
@@ -82,14 +75,14 @@ class TestSamtools(CamelTestSuite):
         })
         samtools_fastaindex.run(self.running_dir)
 
-        self.assertIn('FASTA', samtools_fastaindex.tool_outputs, "No FASTA output generated")
+        self.assertIn('FASTA', samtools_fastaindex.tool_outputs, "No FASTA output generated.")
         output_file = samtools_fastaindex.tool_outputs['FASTA'][0].path
-        self.assertTrue(output_file.exists())
+        self.assertTrue(output_file.exists(), "Output file does not exist.")
         self.assertGreater(output_file.stat().st_size, 0)
 
     def test_samtools_flagstat(self) -> None:
         """
-        Test SamtoolsFlagstat
+        Tests SamtoolsFlagstat.
         :return: None
         """
         samtools_flagstat = SamtoolsFlagstat(self.camel)
@@ -99,25 +92,20 @@ class TestSamtools(CamelTestSuite):
         })
         samtools_flagstat.run(self.running_dir)
 
-        self.assertIn('TXT', samtools_flagstat.tool_outputs, "No TXT output generated")
+        self.assertIn('TXT', samtools_flagstat.tool_outputs, "No TXT output generated.")
         output_file = samtools_flagstat.tool_outputs['TXT'][0].path
-        self.assertTrue(output_file.exists())
+        self.assertTrue(output_file.exists(), "Output file does not exist.")
         self.assertGreater(output_file.stat().st_size, 0)
 
-        self.assertIn('total', samtools_flagstat.informs)
-        self.assertIn('secondary', samtools_flagstat.informs)
-        self.assertIn('supplementary', samtools_flagstat.informs)
-        self.assertIn('duplicates', samtools_flagstat.informs)
-        self.assertIn('mapped', samtools_flagstat.informs)
-        self.assertIn('paired', samtools_flagstat.informs)
-        self.assertIn('read1', samtools_flagstat.informs)
-        self.assertIn('read2', samtools_flagstat.informs)
-        self.assertIn('properly_paired', samtools_flagstat.informs)
-        self.assertIn('singletons', samtools_flagstat.informs)
+        samtools_flagstat_expected_informs = ['total', 'secondary', 'supplementary', 'duplicates', 'mapped', 'paired',
+                                              'read1', 'read2', 'properly_paired', 'singletons']
+
+        for expected_inform in samtools_flagstat_expected_informs:
+            self.assertIn(expected_inform, samtools_flagstat.informs, f"{expected_inform} not found in informs.")
 
     def test_samtools_index(self) -> None:
         """
-        Test SamtoolsIndex
+        Tests SamtoolsIndex.
         :return: None
         """
         samtools_index = SamtoolsIndex(self.camel)
@@ -125,14 +113,14 @@ class TestSamtools(CamelTestSuite):
             'BAM': [TestSamtools.FILE_BAM],
         })
         samtools_index.run(self.running_dir)
-        self.assertIn('BAM', samtools_index.tool_outputs, "No BAM output generated")
+        self.assertIn('BAM', samtools_index.tool_outputs, "No BAM output generated.")
         output_file = samtools_index.tool_outputs['BAM'][0].path
-        self.assertTrue(output_file.exists())
+        self.assertTrue(output_file.exists(), "Output file does not exist.")
         self.assertGreater(output_file.stat().st_size, 0)
 
     def test_samtools_index_cram(self) -> None:
         """
-        Test SamtoolsIndexCram
+        Tests SamtoolsIndexCram.
         :return: None
         """
         samtools_index_cram = SamtoolsIndexCram(self.camel)
@@ -141,29 +129,29 @@ class TestSamtools(CamelTestSuite):
             'FASTA_REF': [TestSamtools.FILE_FASTA_REF]
         })
         samtools_index_cram.run(self.running_dir)
-        self.assertIn('CRAI', samtools_index_cram.tool_outputs, "No CRAI output generated")
+        self.assertIn('CRAI', samtools_index_cram.tool_outputs, "No CRAI output generated.")
         output_file = samtools_index_cram.tool_outputs['CRAI'][0].path
-        self.assertTrue(output_file.exists())
+        self.assertTrue(output_file.exists(), "Output file does not exist.")
         self.assertGreater(output_file.stat().st_size, 0)
 
     def test_samtools_merge(self) -> None:
         """
-        Test SamtoolsMerge
+        Tests SamtoolsMerge.
         :return: None
         """
         samtools_merge = SamtoolsMerge(self.camel)
         samtools_merge.add_input_files({
-            'BAM': [TestSamtools.FILE_BAM, TestSamtools.FILE_BAM2],
+            'BAM': [TestSamtools.FILE_BAM1, TestSamtools.FILE_BAM2],
         })
         samtools_merge.run(self.running_dir)
-        self.assertIn('BAM', samtools_merge.tool_outputs, "No BAM output generated")
+        self.assertIn('BAM', samtools_merge.tool_outputs, "No BAM output generated.")
         output_file = samtools_merge.tool_outputs['BAM'][0].path
-        self.assertTrue(output_file.exists())
+        self.assertTrue(output_file.exists(), "Output file does not exist.")
         self.assertGreater(output_file.stat().st_size, 0)
 
     def test_samtools_mpileup(self) -> None:
         """
-        Test SamtoolsMPileup
+        Tests SamtoolsMPileup.
         :return: None
         """
         samtools_mpileup = SamtoolsMPileup(self.camel)
@@ -172,14 +160,14 @@ class TestSamtools(CamelTestSuite):
             'FASTA': [TestSamtools.FILE_FASTA_REF]
         })
         samtools_mpileup.run(self.running_dir)
-        self.assertIn('PILEUP', samtools_mpileup.tool_outputs, "No PILEUP output generated")
+        self.assertIn('PILEUP', samtools_mpileup.tool_outputs, "No PILEUP output generated.")
         output_file = samtools_mpileup.tool_outputs['PILEUP'][0].path
-        self.assertTrue(output_file.exists())
+        self.assertTrue(output_file.exists(), "Output file does not exist.")
         self.assertGreater(output_file.stat().st_size, 0)
 
     def test_samtools_sort(self) -> None:
         """
-        Test SamtoolsSort
+        Tests SamtoolsSort.
         :return: None
         """
         samtools_sort = SamtoolsSort(self.camel)
@@ -189,12 +177,12 @@ class TestSamtools(CamelTestSuite):
         samtools_sort.run(self.running_dir)
         self.assertIn('BAM', samtools_sort.tool_outputs, "No BAM output generated")
         output_file = samtools_sort.tool_outputs['BAM'][0].path
-        self.assertTrue(output_file.exists())
+        self.assertTrue(output_file.exists(), "Output file does not exist.")
         self.assertGreater(output_file.stat().st_size, 0)
 
     def test_samtools_view(self) -> None:
         """
-        Test SamtoolsView
+        Tests SamtoolsView.
         :return: None
         """
         samtools_view = SamtoolsView(self.camel)
@@ -203,9 +191,9 @@ class TestSamtools(CamelTestSuite):
         })
         samtools_view.update_parameters(output_format = "SAM")
         samtools_view.run(self.running_dir)
-        self.assertIn('SAM', samtools_view.tool_outputs, "No SAM output generated")
+        self.assertIn('SAM', samtools_view.tool_outputs, "No SAM output generated.")
         output_file = samtools_view.tool_outputs['SAM'][0].path
-        self.assertTrue(output_file.exists())
+        self.assertTrue(output_file.exists(), "Output file does not exist.")
         self.assertGreater(output_file.stat().st_size, 0)
 
 

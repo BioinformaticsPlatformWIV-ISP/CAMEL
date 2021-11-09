@@ -4,10 +4,10 @@ from camel.app.camel import Camel
 from camel.app.error.invalidparametererror import InvalidParameterError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
-from camel.app.tools.samtools.samtools import Samtools
+from camel.app.tools.samtools.samtoolsbasepipeable import SamtoolsBasePipeable
 
 
-class SamtoolsView(Samtools):
+class SamtoolsView(SamtoolsBasePipeable):
     """
     SAM <-> BAM Conversion
     SAM/BAM <-> CRAM
@@ -35,7 +35,7 @@ class SamtoolsView(Samtools):
             self.__input_key = 'CRAM'
         else:
             raise ValueError("No input file found")
-        super(Samtools, self)._check_input()
+        super(SamtoolsBasePipeable, self)._check_input()
 
     def _check_parameters(self) -> None:
         """
@@ -57,7 +57,7 @@ class SamtoolsView(Samtools):
         self.__set_output()
         self._check_stderr()
 
-    def __build_command(self, pipe_in: bool = False, pipe_out: bool = False) -> None:
+    def __build_command(self, pipe_out: bool = False) -> None:
         """
         Builds the command for this tool.
         :return: None
@@ -77,7 +77,7 @@ class SamtoolsView(Samtools):
 
         self._command.command = ' '.join(command_parts)
 
-    def __set_input(self, pipe_in: bool = False, pipe_out: bool = False) -> None:
+    def __set_input(self, pipe_in: bool = False) -> None:
         """
         Set the input specification
         :return: None
@@ -87,7 +87,7 @@ class SamtoolsView(Samtools):
         if 'FASTA_REF' in self._tool_inputs:
             input_parts.append(f"-T {self._tool_inputs['FASTA_REF'][0].path}")
 
-        if pipe_in is False:
+        if not pipe_in:
             input_parts.append(str(self._tool_inputs[self.__input_key][0].path))
 
         self._input_string = " ".join(input_parts)
@@ -112,7 +112,7 @@ class SamtoolsView(Samtools):
             raise ToolExecutionError("Can only extract regions from indexed BAM files")
         super(SamtoolsView, self)._check_stderr()
 
-    def _before_pipe(self, dir_, pipe_in: bool, pipe_out) -> None:
+    def _before_pipe(self, dir_, pipe_in: bool, pipe_out: bool) -> None:
         """
         Prepares the command that will be piped.
         :param dir_: Running directory
@@ -120,8 +120,8 @@ class SamtoolsView(Samtools):
         :param pipe_out: True if tool generates piped output
         :return: None
         """
-        self.__set_input(pipe_in, pipe_out)
-        self.__build_command(pipe_in, pipe_out)
+        self.__set_input(pipe_in)
+        self.__build_command(pipe_out)
 
     def _after_pipe(self, stderr: str, is_last_in_pipe: bool) -> None:
         """

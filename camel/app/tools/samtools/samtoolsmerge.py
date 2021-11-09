@@ -4,10 +4,10 @@ from pathlib import Path
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
-from camel.app.tools.samtools.samtools import Samtools
+from camel.app.tools.samtools.samtoolsbase import SamtoolsBase
 
 
-class SamtoolsMerge(Samtools):
+class SamtoolsMerge(SamtoolsBase):
     """
     ==============
     SamtoolsMerge 1.9.
@@ -29,7 +29,7 @@ class SamtoolsMerge(Samtools):
                     default value:  merged.bam
     """
 
-    def __init__(self, camel):
+    def __init__(self, camel) -> None:
         """
         Initializes this tool.
         :param camel: Camel instance
@@ -51,7 +51,7 @@ class SamtoolsMerge(Samtools):
         elif 'SAM' in self._tool_inputs:
             self.__input_file_type = 'SAM'
 
-        super(Samtools, self)._check_input()
+        super(SamtoolsBase, self)._check_input()
 
     def _execute_tool(self) -> None:
         """

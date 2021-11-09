@@ -2,10 +2,10 @@ from pathlib import Path
 
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
-from camel.app.tools.samtools.samtools import Samtools
+from camel.app.tools.samtools.samtoolsbase import SamtoolsBase
 
 
-class SamtoolsIndex(Samtools):
+class SamtoolsIndex(SamtoolsBase):
     """
     Indexes sorted BAM files.
     """
@@ -26,7 +26,7 @@ class SamtoolsIndex(Samtools):
             raise ValueError("No BAM input file found")
         if len(self._tool_inputs['BAM']) != 1:
             raise ValueError("Only one BAM input file is supported")
-        super(Samtools, self)._check_input()
+        super(SamtoolsBase, self)._check_input()
 
     def _execute_tool(self) -> None:
         """

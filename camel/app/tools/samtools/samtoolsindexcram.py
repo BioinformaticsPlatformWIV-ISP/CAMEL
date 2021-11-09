@@ -2,15 +2,15 @@ from pathlib import Path
 
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
-from camel.app.tools.samtools.samtools import Samtools
+from camel.app.tools.samtools.samtoolsbase import SamtoolsBase
 
 
-class SamtoolsIndexCram(Samtools):
+class SamtoolsIndexCram(SamtoolsBase):
     """
     Indexes sorted CRAM files.
     """
 
-    def __init__(self, camel):
+    def __init__(self, camel) -> None:
         """
         Initializes this tool.
         :param camel: Camel instance
@@ -30,7 +30,7 @@ class SamtoolsIndexCram(Samtools):
         if 'FASTA_REF' not in self._tool_inputs:
             raise ValueError("No FASTA_REF input file found")
 
-        super(Samtools, self)._check_input()
+        super(SamtoolsBase, self)._check_input()
 
     def _execute_tool(self) -> None:
         """
