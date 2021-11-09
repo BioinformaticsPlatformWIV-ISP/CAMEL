@@ -7,6 +7,7 @@ import shutil
 import tempfile
 
 from camel.app.camel import Camel
+from camel.app.tools.tool import Tool
 
 
 class CamelTestSuite(unittest.TestCase):
@@ -47,3 +48,20 @@ class CamelTestSuite(unittest.TestCase):
         if Path(self.running_dir).exists():
             logging.debug(f"Removing working directory: {self.running_dir}")
             shutil.rmtree(self.running_dir)
+
+    def verify_output_files(self, tool: Tool, key: str, nb_files: int = 1) -> None:
+        """
+        Verifies if the output files with the given key are created correctly.
+        :param tool: Tool
+        :param key: Output key
+        :param nb_files: Number of output files that should be generated
+        :return: None
+        """
+        self.assertIn(key, tool.tool_outputs, f"Key '{key}' missing from tool outputs")
+        self.assertEqual(
+            nb_files, len(tool.tool_outputs[key]),
+            f"Unexpected number of tools outputs: found {len(tool.tool_outputs[key])}, expected {nb_files}")
+        for i in range(0, nb_files):
+            output_file_path = tool.tool_outputs[key][0].path
+            self.assertTrue(output_file_path.exists(), f"Output file '{key}' (index: {i}) does not exist")
+            self.assertGreater(output_file_path.stat().st_size, 0, f"Output file '{key}' (index: {i}) is epty")
