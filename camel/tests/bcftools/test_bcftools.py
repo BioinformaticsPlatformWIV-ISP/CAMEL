@@ -1,5 +1,4 @@
 import unittest
-from pathlib import Path
 
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.error.toolexecutionerror import ToolExecutionError
@@ -33,10 +32,7 @@ class TestBcftools(CamelTestSuite):
             'GFF': [TestBcftools.FILE_GFF]
         })
         bcftools_csq.run(self.running_dir)
-        self.assertTrue('VCF' in bcftools_csq.tool_outputs, "No VCF output generated")
-        output_file = Path(bcftools_csq.tool_outputs['VCF'][0].path)
-        self.assertTrue(output_file.exists())
-        self.assertGreater(output_file.stat().st_size, 0)
+        self.verify_output_files(bcftools_csq, 'VCF')
 
     def test_bcftools_filter(self) -> None:
         """
@@ -49,10 +45,7 @@ class TestBcftools(CamelTestSuite):
             'BED': [TestBcftools.FILE_BED]
         })
         bcftools_filter.run(self.running_dir)
-        self.assertTrue('VCF' in bcftools_filter.tool_outputs, "No VCF output generated")
-        output_file = Path(bcftools_filter.tool_outputs['VCF'][0].path)
-        self.assertTrue(output_file.is_file(), "VCF output is not a file")
-        self.assertGreater(output_file.stat().st_size, 0, "VCF output file is empty")
+        self.verify_output_files(bcftools_filter, 'VCF')
 
     def test_bcftools_filter_invalid_input(self) -> None:
         """
@@ -78,9 +71,7 @@ class TestBcftools(CamelTestSuite):
             'FASTA': [TestBcftools.FILE_FASTA]
         })
         bcftools_norm.run(self.running_dir)
-        self.assertIn('VCF', bcftools_norm.tool_outputs)
-        self.assertGreater(
-            Path(bcftools_norm.tool_outputs['VCF'][0].path).stat().st_size, 0, "VCF output file is empty")
+        self.verify_output_files(bcftools_norm, 'VCF')
         self.assertIn('total', bcftools_norm.informs)
 
     def test_bcftools_norm_gz_output(self) -> None:
@@ -95,9 +86,7 @@ class TestBcftools(CamelTestSuite):
         })
         bcftools_norm.update_parameters(output_format='z', rm_dup='snps')
         bcftools_norm.run(self.running_dir)
-        self.assertIn('VCF_GZ', bcftools_norm.tool_outputs)
-        self.assertGreater(
-            Path(bcftools_norm.tool_outputs['VCF_GZ'][0].path).stat().st_size, 0, "VCF_GZ output file is empty")
+        self.verify_output_files(bcftools_norm, 'VCF_GZ')
         self.assertIn('total', bcftools_norm.informs)
 
     def test_bcftools_index(self) -> None:
