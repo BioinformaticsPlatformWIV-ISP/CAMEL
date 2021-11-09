@@ -56,7 +56,9 @@ class SamtoolsMPileup(SamtoolsBasePipeable):
         command_parts = [self._tool_command]
 
         # Add input
-        if not pipe_in:
+        if pipe_in:
+            command_parts.append("/dev/stdin")
+        else:
             command_parts.append(' '.join(str(f.path) for f in self._tool_inputs['BAM']))
 
         # Add optional inputs
@@ -120,4 +122,3 @@ class SamtoolsMPileup(SamtoolsBasePipeable):
         """
         if is_last_in_pipe:
             self.__set_output()
-
