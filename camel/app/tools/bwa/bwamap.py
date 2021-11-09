@@ -25,7 +25,7 @@ class BWAMap(BWA):
     OUTPUT_NAME = 'bwa_readmap.sam'
     DEFAULT_SAMPLE_NAME = 'sampleA'
 
-    def __init__(self, camel: Camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initialize BWAMap
         :param camel: Camel instance

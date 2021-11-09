@@ -12,7 +12,7 @@ class BWAIndex(BWA):
 
     MULTI_FASTA_GENOME_FILE = 'complete_genome.fasta'
 
-    def __init__(self, camel: Camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initialize BWA index
         :param camel: Camel instance
