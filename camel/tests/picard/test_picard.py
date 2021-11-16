@@ -26,20 +26,22 @@ class TestPicard(CamelTestSuite):
     """
     Tests the Picard tool suite.
     """
-    test_file_dir = CamelTestSuite.get_test_file_dir('picard')
-    FILE_FASTA_REF = ToolIOFile(test_file_dir / 'Homo_sapiens_assembly38_chr22.fasta')
+    test_file_dir = CamelTestSuite.get_test_file_dir('toy')
+    FILE_BAM = ToolIOFile(test_file_dir / 'aln_rg.bam')
+    FILE_FASTA_REF = ToolIOFile(test_file_dir / 'reference.fasta')
     FILE_VCFdb = ToolIOFile(test_file_dir / 'Homo_sapiens_assembly38.dbsnp138_chr22.vcf.gz')
-    FILE_BAM = ToolIOFile(test_file_dir / 'NA12877_chr22_subRG.bam')
-    FILE_VCF = ToolIOFile(test_file_dir / 'NA12877_chr22.g.vcf.gz')
-    FILE_VCF1 = ToolIOFile(test_file_dir / 'NA12877_sub1.vcf.gz')
-    FILE_VCF2 = ToolIOFile(test_file_dir / 'NA12877_sub2.vcf.gz')
-    FILE_VCF3 = ToolIOFile(test_file_dir / 'NA12877_sub3.vcf.gz')
-    FILE_FASTQ_R1 = ToolIOFile(test_file_dir / 'NA12877_R1.fastq')
-    FILE_FASTQ_R2 = ToolIOFile(test_file_dir / 'NA12877_R2.fastq')
-    FILE_BAM1 = ToolIOFile(test_file_dir / 'NA12877_chr22_25p_sub1.bam')
-    FILE_BAM2 = ToolIOFile(test_file_dir / 'NA12877_chr22_25p_sub2.bam')
-    FILE_BAM3 = ToolIOFile(test_file_dir / 'NA12877_chr22_25p_sub3.bam')
-    FILE_uBAM = ToolIOFile(test_file_dir / 'NA12877.unmapped.bam')
+    FILE_BAM_SORTED = ToolIOFile(test_file_dir / 'sorted.bam')
+    FILE_VCF = ToolIOFile(test_file_dir / 'unfiltered_variants-myco.vcf')
+    FILE_VCF1 = ToolIOFile(test_file_dir / 'var1.vcf')
+    FILE_VCF2 = ToolIOFile(test_file_dir / 'var2.vcf')
+    FILE_FASTQ_R1 = ToolIOFile(test_file_dir / 'r_1.fq')
+    FILE_FASTQ_R2 = ToolIOFile(test_file_dir / 'r_2.fq')
+    FILE_BAM1 = ToolIOFile(test_file_dir / 'aln1.bam')
+    FILE_BAM2 = ToolIOFile(test_file_dir / 'aln2.bam')
+    FILE_uBAM = ToolIOFile(test_file_dir / 'unmapped.bam')
+    FILE_VCF_human = ToolIOFile(test_file_dir / 'NA12877_chr22.g.vcf.gz')
+    FILE_BAM_human = ToolIOFile(test_file_dir / 'readgroup_updated.bam')
+    FILE_REF_human = ToolIOFile(test_file_dir / 'Homo_sapiens_assembly38_chr22.fasta')
 
 
     def test_picard_addorreplacereadgroups(self) -> None:
@@ -79,8 +81,8 @@ class TestPicard(CamelTestSuite):
         """
         picard_collectmultiplemetrics = CollectMultipleMetrics(self.camel)
         picard_collectmultiplemetrics.add_input_files({
-            'BAM': [TestPicard.FILE_BAM],
-            'FASTA_REF': [TestPicard.FILE_FASTA_REF]
+            'BAM': [TestPicard.FILE_BAM_human],
+            'FASTA_REF': [TestPicard.FILE_REF_human],
         })
         picard_collectmultiplemetrics.update_parameters(
             assume_sorted = 'true',
@@ -95,49 +97,20 @@ class TestPicard(CamelTestSuite):
             metrics_CollectQualityYieldMetrics = 'CollectQualityYieldMetrics'
         )
         picard_collectmultiplemetrics.run(self.running_dir)
-        self.assertTrue('TXT_CollectAlignmentSummaryMetrics' in picard_collectmultiplemetrics,
-                        "No TXT_CollectAlignmentSummaryMetrics output generated")
-        self.assertTrue('TXT_CollectInsertSizeMetrics' in picard_collectmultiplemetrics,
-                        "No TXT_CollectInsertSizeMetrics output generated")
-        self.assertTrue('TXT_QualityScoreDistribution' in picard_collectmultiplemetrics,
-                        "No TXT_QualityScoreDistribution output generated")
-        self.assertTrue('TXT_MeanQualityByCycle' in picard_collectmultiplemetrics,
-                        "No TXT_MeanQualityByCycle output generated")
-        self.assertTrue('TXT_CollectBaseDistributionByCycle' in picard_collectmultiplemetrics,
-                        "No TXT_CollectBaseDistributionByCycle output generated")
-        self.assertTrue('TXT_CollectGcBiasMetrics' in picard_collectmultiplemetrics,
-                        "No TXT_CollectGcBiasMetrics output generated")
-        self.assertTrue('TXT_CollectSequencingArtifactMetrics' in picard_collectmultiplemetrics,
-                        "No TXT_CollectSequencingArtifactMetrics output generated")
-        self.assertTrue('TXT_CollectQualityYieldMetrics' in picard_collectmultiplemetrics,
-                        "No TXT_CollectQualityYieldMetrics output generated")
 
-        output_file_CollectAlignmentSummaryMetrics = Path(picard_collectmultiplemetrics.tool_outputs['TXT_CollectAlignmentSummaryMetrics'][0].path)
-        output_file_CollectInsertSizeMetrics = Path(picard_collectmultiplemetrics.tool_outputs['TXT_CollectInsertSizeMetrics'][0].path)
-        output_file_QualityScoreDistribution = Path(picard_collectmultiplemetrics.tool_outputs['TXT_QualityScoreDistribution'][0].path)
-        output_file_MeanQualityByCycle = Path(picard_collectmultiplemetrics.tool_outputs['TXT_MeanQualityByCycle'][0].path)
-        output_file_CollectBaseDistributionByCycle = Path(picard_collectmultiplemetrics.tool_outputs['TXT_CollectBaseDistributionByCycle'][0].path)
-        output_file_CollectGcBiasMetrics = Path(picard_collectmultiplemetrics.tool_outputs['TXT_CollectGcBiasMetrics'][0].path)
-        output_file_CollectSequencingArtifactMetrics = Path(picard_collectmultiplemetrics.tool_outputs['TXT_CollectSequencingArtifactMetrics'][0].path)
-        output_file_CollectQualityYieldMetrics = Path(picard_collectmultiplemetrics.tool_outputs['TXT_CollectQualityYieldMetrics'][0].path)
+        expected_output = ['TXT_AlignmentSummary', 'TXT_GcBias', 'TXT_GcBiasSummary', 'TXT_GcBiasFigure', 'TXT_InsertSize',
+                           'TXT_InsertSizeFigure', 'TXT_QualityDistribution', 'TXT_QualityDistributionFigure', 'TXT_QualityByCycle',
+                           'TXT_QualityByCycleFigure', 'TXT_BaseDistributionByCycle', 'TXT_BaseDistributionByCycleFigure',
+                           'TXT_SequencingArtefactDetail', 'TXT_SequencingArtefactSummary', 'TXT_SequencingArtefactErrorSummary',
+                           'TXT_SequencingArtefactPreAdapterDetail', 'TXT_SequencingArtefactPreAdapterSummary', 'TXT_QualityYield']
 
-        self.assertTrue(output_file_CollectAlignmentSummaryMetrics.exists())
-        self.assertTrue(output_file_CollectInsertSizeMetrics.exists())
-        self.assertTrue(output_file_QualityScoreDistribution.exists())
-        self.assertTrue(output_file_MeanQualityByCycle.exists())
-        self.assertTrue(output_file_CollectBaseDistributionByCycle.exists())
-        self.assertTrue(output_file_CollectGcBiasMetrics.exists())
-        self.assertTrue(output_file_CollectSequencingArtifactMetrics.exists())
-        self.assertTrue(output_file_CollectQualityYieldMetrics.exists())
 
-        self.assertGreater(output_file_CollectAlignmentSummaryMetrics.stat().st_size, 0)
-        self.assertGreater(output_file_CollectInsertSizeMetrics.stat().st_size, 0)
-        self.assertGreater(output_file_QualityScoreDistribution.stat().st_size, 0)
-        self.assertGreater(output_file_MeanQualityByCycle.stat().st_size, 0)
-        self.assertGreater(output_file_CollectBaseDistributionByCycle.stat().st_size, 0)
-        self.assertGreater(output_file_CollectGcBiasMetrics.stat().st_size, 0)
-        self.assertGreater(output_file_CollectSequencingArtifactMetrics.stat().st_size, 0)
-        self.assertGreater(output_file_CollectQualityYieldMetrics.stat().st_size, 0)
+        for expected_file in expected_output:
+            self.assertTrue(expected_file in picard_collectmultiplemetrics.tool_outputs,
+                        f"No {expected_file} output generated")
+            output_file = Path(picard_collectmultiplemetrics.tool_outputs[expected_file][0].path)
+            self.assertTrue(output_file.exists())
+            self.assertGreater(output_file.stat().st_size, 0)
 
     def test_picard_collectqualityyieldmetrics(self) -> None:
         """
@@ -165,6 +138,7 @@ class TestPicard(CamelTestSuite):
             'BAM': [TestPicard.FILE_BAM],
             'FASTA_REF': [TestPicard.FILE_FASTA_REF]
         })
+        picard_collectrawwgsmetrics.update_parameters(sample_size = 10)
         picard_collectrawwgsmetrics.run(self.running_dir)
         self.assertTrue('TXT_metrics' in picard_collectrawwgsmetrics.tool_outputs,
                         "No TXT_metrics output generated")
@@ -182,6 +156,7 @@ class TestPicard(CamelTestSuite):
             'BAM': [TestPicard.FILE_BAM],
             'FASTA_REF': [TestPicard.FILE_FASTA_REF]
         })
+        picard_collectwgsmetrics.update_parameters(sample_size = 10)
         picard_collectwgsmetrics.run(self.running_dir)
         self.assertTrue('TXT_metrics' in picard_collectwgsmetrics.tool_outputs,
                         "No TXT_metrics output generated")
@@ -197,7 +172,7 @@ class TestPicard(CamelTestSuite):
         """
         picard_collectvariantcallingmetrics = CollectVariantCallingMetrics(self.camel)
         picard_collectvariantcallingmetrics.add_input_files({
-            'VCF': [TestPicard.FILE_VCF],
+            'VCF': [TestPicard.FILE_VCF_human],
             'VCF_dbsnp': [TestPicard.FILE_VCFdb]
         })
         picard_collectvariantcallingmetrics.run(self.running_dir)
@@ -250,7 +225,7 @@ class TestPicard(CamelTestSuite):
         """
         picard_gatherbamfiles = GatherBamFiles(self.camel)
         picard_gatherbamfiles.add_input_files({
-            'BAMs': [TestPicard.FILE_BAM1, TestPicard.FILE_BAM2, TestPicard.FILE_BAM3]
+            'BAMs': [TestPicard.FILE_BAM1, TestPicard.FILE_BAM2]
         })
         picard_gatherbamfiles.run(self.running_dir)
         self.assertTrue('BAM' in picard_gatherbamfiles.tool_outputs, "No BAM output generated")
@@ -267,6 +242,7 @@ class TestPicard(CamelTestSuite):
         picard_intervallisttools.add_input_files({
             'VCF': [TestPicard.FILE_VCF]
         })
+        #picard_intervallisttools.update_parameters(scatter_count = 1)
         picard_intervallisttools.run(self.running_dir)
         self.assertTrue('TXT_intervalLists' in picard_intervallisttools.tool_outputs, "No TXT_intervalLists output generated")
         output_file = Path(picard_intervallisttools.tool_outputs['TXT_intervalLists'][0].path)
@@ -281,7 +257,7 @@ class TestPicard(CamelTestSuite):
         """
         picard_markduplicates = MarkDuplicates(self.camel)
         picard_markduplicates.add_input_files({
-            'BAM': [TestPicard.FILE_BAM],
+            'BAM': [TestPicard.FILE_BAM_SORTED],
             'FASTA_REF': [TestPicard.FILE_FASTA_REF]
         })
         picard_markduplicates.run(self.running_dir)
@@ -303,6 +279,7 @@ class TestPicard(CamelTestSuite):
         picard_mergebamalignment = MergeBamAlignment(self.camel)
         picard_mergebamalignment.add_input_files({
             'BAM_UNMAPPED': [TestPicard.FILE_uBAM],
+            'BAM_ALIGNED': [TestPicard.FILE_BAM],
             'FASTA_REF': [TestPicard.FILE_FASTA_REF]
         })
         picard_mergebamalignment.run(self.running_dir)
@@ -318,7 +295,7 @@ class TestPicard(CamelTestSuite):
         """
         picard_mergevcfs = MergeVCFs(self.camel)
         picard_mergevcfs.add_input_files({
-            'VCF': [TestPicard.FILE_VCF1, TestPicard.FILE_VCF2, TestPicard.FILE_VCF3],
+            'VCF': [TestPicard.FILE_VCF1, TestPicard.FILE_VCF2],
         })
         picard_mergevcfs.run(self.running_dir)
         self.assertTrue('VCF' in picard_mergevcfs.tool_outputs, "No VCF output generated")
@@ -348,7 +325,7 @@ class TestPicard(CamelTestSuite):
         """
         picard_setnmmdanduqtags = SetNmMdAndUqTags(self.camel)
         picard_setnmmdanduqtags.add_input_files({
-            'BAM': [TestPicard.FILE_BAM],
+            'BAM': [TestPicard.FILE_BAM_SORTED],
             'FASTA_REF': [TestPicard.FILE_FASTA_REF]
         })
         picard_setnmmdanduqtags.run(self.running_dir)
@@ -381,6 +358,7 @@ class TestPicard(CamelTestSuite):
         picard_validatesamfile = ValidateSamFile(self.camel)
         picard_validatesamfile.add_input_files({
             'BAM': [TestPicard.FILE_BAM],
+            'FASTA_REF': [TestPicard.FILE_FASTA_REF]
         })
         picard_validatesamfile.run(self.running_dir)
         self.assertTrue('TXT_report' in picard_validatesamfile.tool_outputs, "No TXT_report output generated")
