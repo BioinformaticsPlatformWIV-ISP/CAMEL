@@ -26,7 +26,7 @@ class TestPicard(CamelTestSuite):
     """
     Tests the Picard tool suite.
     """
-    test_file_dir = CamelTestSuite.get_test_file_dir('toy')
+    test_file_dir = CamelTestSuite.get_test_file_dir('picard')
     FILE_BAM = ToolIOFile(test_file_dir / 'aln_rg.bam')
     FILE_FASTA_REF = ToolIOFile(test_file_dir / 'reference.fasta')
     FILE_VCFdb = ToolIOFile(test_file_dir / 'Homo_sapiens_assembly38.dbsnp138_chr22.vcf.gz')
