@@ -22,7 +22,6 @@ class FastqToSam(Picard):
         """
         super().__init__('Picard FastqToSam', '2.23.3', camel)
 
-        self._function_name = 'FastqToSam'
         self._required_inputs = []
 
     def _set_input(self) -> None:

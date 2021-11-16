@@ -17,7 +17,6 @@ class GatherBamFiles(Picard):
         :return: None
         """
         super().__init__('Picard GatherBamFiles', '2.23.3', camel)
-        self._function_name = 'GatherBamFiles'
         self._required_inputs = ['BAMs']
 
     def _set_input(self) -> None:

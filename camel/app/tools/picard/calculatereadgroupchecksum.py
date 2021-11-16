@@ -17,5 +17,4 @@ class CalculateReadGroupChecksum(Picard):
         :return: None
         """
         super().__init__('Picard CalculateReadGroupChecksum', '2.23.3', camel)
-        self._function_name = 'CalculateReadGroupChecksum'
         self._output_type = 'TXT_checksum'

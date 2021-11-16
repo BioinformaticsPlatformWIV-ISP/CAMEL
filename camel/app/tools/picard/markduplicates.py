@@ -20,8 +20,6 @@ class MarkDuplicates(Picard):
         """
         super().__init__('Picard MarkDuplicates', '2.23.3', camel)
 
-        self._function_name = 'MarkDuplicates'
-
     def _set_input(self) -> None:
         """
         Set the input specification

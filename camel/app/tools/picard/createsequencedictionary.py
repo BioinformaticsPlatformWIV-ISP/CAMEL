@@ -20,7 +20,6 @@ class CreateSequenceDictionary(Picard):
         """
         super().__init__('Picard CreateSequenceDictionary', '2.23.3', camel)
 
-        self._function_name = 'CreateSequenceDictionary'
         self._required_inputs = ['FASTA_REF']
         self._specific_parameters = ['output_ext', 'symlink']
         self._fasta_file = None

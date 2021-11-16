@@ -15,7 +15,6 @@ class CollectWgsMetrics(Picard):
         """
         super().__init__('Picard CollectWgsMetrics', '2.23.3', camel)
 
-        self._function_name = 'CollectWgsMetrics'
         self._required_inputs = ['BAM', 'SAM', 'FASTA_REF']
         self._output_type = 'TXT_metrics'
 

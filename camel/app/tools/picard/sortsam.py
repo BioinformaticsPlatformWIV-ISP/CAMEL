@@ -15,4 +15,3 @@ class SortSam(Picard):
         :return: None
         """
         super().__init__('Picard SortSam', '2.23.3', camel)
-        self._function_name = 'SortSam'

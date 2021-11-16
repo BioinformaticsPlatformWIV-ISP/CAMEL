@@ -16,4 +16,3 @@ class CollectQualityYieldMetrics(Picard):
         """
         super().__init__('Picard CollectQualityYieldMetrics', '2.23.3', camel)
         self._output_type = 'TXT'
-        self._function_name = 'CollectQualityYieldMetrics'
