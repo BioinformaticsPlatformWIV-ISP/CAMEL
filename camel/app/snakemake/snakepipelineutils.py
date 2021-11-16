@@ -154,7 +154,8 @@ class SnakePipelineUtils(object):
 
     @staticmethod
     def run_snakemake(snakefile: str, config_path: str, targets: List[Path], working_dir: Path,
-                      threads: int = 8, resources: Optional[Dict[str, Any]] = None, slurm_args: Optional[List[str]] = None) -> None:
+                      threads: int = 8, resources: Optional[Dict[str, Any]] = None,
+                      slurm_args: Optional[Dict[str, int]] = None) -> Command:
         """
         Helper function to run snakemake workflows.
         :param snakefile: Workflow snakefile
@@ -195,6 +196,7 @@ class SnakePipelineUtils(object):
         print(f'- Stderr: -\n{command.stderr}')
         if command.returncode != 0:
             raise SnakemakeExecutionError(command.stdout, command.stderr)
+        return command
 
     @staticmethod
     def create_commands_section(tool_informs: List[Dict[str, Any]], working_dir: Path) -> HtmlReportSection:
