@@ -20,14 +20,13 @@ class TestGATK4(CamelTestSuite):
     Tests the GATK4 tool suite.
     """
     test_file_dir = CamelTestSuite.get_test_file_dir('gatk4')
-    FILE_BAM = ToolIOFile(test_file_dir / 'NA12877_chr22_subRG.bam')
-    FILE_FASTA_REF = ToolIOFile(test_file_dir / 'Homo_sapiens_assembly38_chr22.fasta')
+    FILE_BAM = ToolIOFile(test_file_dir / 'aln_rg.bam')
+    FILE_FASTA_REF = ToolIOFile(test_file_dir / 'reference.fasta')
     FILE_BQSR = ToolIOFile(test_file_dir / "recal_data.table")
-    FILE_gVCF1 = ToolIOFile(test_file_dir / "NA12877_sub1.g.vcf")
-    FILE_gVCF2 = ToolIOFile(test_file_dir / "NA12877_sub2.g.vcf")
-    FILE_gVCF3 = ToolIOFile(test_file_dir / "NA12877_sub3.g.vcf")
-    FILE_VCF = ToolIOFile(test_file_dir / "NA12877_chr22.VCF.gz")
-    FILE_KNOWN_SITES = ToolIOFile(test_file_dir / "Homo_sapiens_assembly38.dbsnp138_chr22.vcf.gz")
+    FILE_gVCF1 = ToolIOFile(test_file_dir / "NA12877_sub1.g.vcf.gz")
+    FILE_gVCF2 = ToolIOFile(test_file_dir / "NA12877_sub2.g.vcf.gz")
+    FILE_VCF = ToolIOFile(test_file_dir / "var1.vcf")
+    FILE_KNOWN_SITES = ToolIOFile(test_file_dir / "known_sites.vcf.gz")
     FILE_TXT_INTERVALS = ToolIOFile(test_file_dir / "interval_file.intervals")
 
     def test_gatk4_applybqsr(self) -> None:
@@ -71,7 +70,7 @@ class TestGATK4(CamelTestSuite):
         """
         combinegvcf = GATK4CombineGVCFs(self.camel)
         combinegvcf.add_input_files({
-            'gVCF': [TestGATK4.FILE_gVCF1, TestGATK4.FILE_gVCF2, TestGATK4.FILE_gVCF3],
+            'gVCF': [TestGATK4.FILE_gVCF1, TestGATK4.FILE_gVCF2],
             'FASTA_REF': [TestGATK4.FILE_FASTA_REF],
         })
         combinegvcf.run(self.running_dir)
@@ -87,7 +86,7 @@ class TestGATK4(CamelTestSuite):
         """
         fastaalternatereferencemaker = GATK4FastaAlternateReferenceMaker(self.camel)
         fastaalternatereferencemaker.add_input_files({
-            'VCF': [TestGATK4.FILE_VCF],
+            'VCF': [TestGATK4.FILE_KNOWN_SITES],
             'FASTA_REF': [TestGATK4.FILE_FASTA_REF],
         })
         fastaalternatereferencemaker.update_parameters(**{'concatenate_sequence_segments': 'true'})
@@ -105,8 +104,7 @@ class TestGATK4(CamelTestSuite):
         gatherbqsrreports = GATK4GatherBQSRReports(self.camel)
         gatherbqsrreports.add_input_files({
             'TXT_intervals': [ToolIOFile(TestGATK4.test_file_dir / "1_recal_data.csv"),
-                              ToolIOFile(TestGATK4.test_file_dir / "2_recal_data.csv"),
-                              ToolIOFile(TestGATK4.test_file_dir / "3_recal_data.csv")],
+                              ToolIOFile(TestGATK4.test_file_dir / "2_recal_data.csv")],
         })
         gatherbqsrreports.run(self.running_dir)
         self.assertTrue('TXT_RecalibrationTable' in gatherbqsrreports.tool_outputs, "No TXT_RecalibrationTable output generated")
