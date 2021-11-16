@@ -28,5 +28,4 @@ class SetNmMdAndUqTags(Picard):
         """
         super().__init__('Picard SetNmMdAndUqTags ', '2.23.3', camel)
 
-        self._function_name = 'SetNmMdAndUqTags '
         self._required_inputs = ["BAM", "SAM", "FASTA_REF"]

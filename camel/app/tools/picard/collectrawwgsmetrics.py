@@ -14,7 +14,6 @@ class CollectRawWgsMetrics(Picard):
         :return: None
         """
         super().__init__('Picard CollectRawWgsMetrics', '2.23.3', camel)
-        self._function_name = 'CollectRawWgsMetrics'
         self._required_inputs = ['BAM', 'SAM', 'FASTA_REF']
         self._output_type = 'TXT_metrics'
 

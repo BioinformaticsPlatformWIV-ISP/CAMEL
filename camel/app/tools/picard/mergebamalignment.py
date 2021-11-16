@@ -9,6 +9,19 @@ class MergeBamAlignment(Picard):
 
     """
     Class for Picard MergeBamAlignment function
+
+    Required inputs:
+    ----------------
+    'BAM_UNMAPPED':     ToolIOFile object. Input uBAM file.
+    'FASTA_REF':        ToolIOFile object. FASTA file containing the reference genome.
+
+    Optional inputs:
+    ----------------
+    'BAM_ALIGNED'       ToolIOFile object. Input BAM file
+
+    Output:
+    -------
+    'BAM':              ToolIOFile object. Output BAM file containing recalibrated read data.
     """
 
     def __init__(self, camel: Camel):
@@ -19,7 +32,6 @@ class MergeBamAlignment(Picard):
         """
         super().__init__('Picard MergeBamAlignment', '2.23.3', camel)
 
-        self._function_name = 'MergeBamAlignment'
         self._required_inputs = ['BAM_UNMAPPED', 'FASTA_REF']
         self._specific_parameters = ["attributes_to_remove_multi"]
 

@@ -144,7 +144,7 @@ class Picard(ToolPipeable, metaclass=abc.ABCMeta):
         :return: None
         """
         if self._command.returncode != 0:
-            raise ToolExecutionError(f'Picard {self._function_name,} fails to run, error msg: \n{self.stdout}')
+            raise ToolExecutionError(f'Picard {self._name,} fails to run, error msg: \n{self.stdout}')
 
         # log WARNINGs
         for line in self.stdout.splitlines():

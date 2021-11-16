@@ -15,7 +15,6 @@ class MergeVCFs(Picard):
         """
         super().__init__('Picard MergeVCFs', '2.23.3', camel)
 
-        self._function_name = 'MergeVCFs'
         self._required_inputs = ['VCF']
         self._output_type = 'VCF'
 
