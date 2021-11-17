@@ -63,7 +63,7 @@ def run_as_pipe(tools: List[ToolPipeable], dir_: Path) -> List[PipedTool]:
     lmod_command = _combine_dependencies(tools)
     piped_command = ' | '.join([piped_tool.command for piped_tool in piped_tools])
     full_command = Command(f'set -eo pipefail; {lmod_command}; {piped_command}')
-    full_command.run_command(str(dir_))
+    full_command.run(dir_)
     if not full_command.returncode == 0:
         raise ValueError("error executing pipe")
 

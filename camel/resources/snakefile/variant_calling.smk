@@ -261,7 +261,7 @@ rule variant_calling_create_consensus:
         bcftools_consensus = BcftoolsConsensus(camel)
         SnakemakeUtils.add_pickle_inputs(bcftools_consensus, input)
         bcftools_consensus.update_parameters(output_filename = params.output_filename)
-        step = Step(rule, bcftools_consensus, camel, params.running_dir, config)
+        step = Step(rule, bcftools_consensus, camel, Path(params.running_dir), config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(bcftools_consensus, output)
 
@@ -311,8 +311,8 @@ rule variant_calling_dump_summary_info:
     output:
         Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_SUMMARY
     run:
-        informs_mapping = SnakemakeUtils.load_object(input.INFORMS_mapping)
-        informs_depth = SnakemakeUtils.load_object(input.INFORMS_depth)
+        informs_mapping = SnakemakeUtils.load_object(Path(input.INFORMS_mapping))
+        informs_depth = SnakemakeUtils.load_object(Path(input.INFORMS_depth))
         summary_data = [
             ['vc-mapping_rate', informs_mapping['stats_map_rate']],
             ['vc-median_depth', informs_depth['median_depth']]

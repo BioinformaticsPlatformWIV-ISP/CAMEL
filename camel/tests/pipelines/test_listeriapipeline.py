@@ -98,7 +98,8 @@ class TestListeriaPipeline(CamelTestSuite):
             '--output-tsv', str(path_summary_out),
             '--working-dir', str(self.running_dir),
             '--detection-method', 'srst2'
-        ] + [f"--{a.replace('_', '-')}" for a in MainListeriaPipeline.CUSTOM_ANALYSES if a != 'cgmlst']
+        ] + [f"--{a.replace('_', '-')}" for a in MainListeriaPipeline.CUSTOM_ANALYSES if a not in (
+            'cgmlst', 'typing_virulence')]
         main = MainListeriaPipeline(args)
         main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)

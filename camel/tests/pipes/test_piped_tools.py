@@ -57,7 +57,7 @@ class TestPipedTools(CamelTestSuite):
         # Initialize tools
         bowtie2 = Bowtie2Map(Camel.get_instance())
         bowtie2.add_input_files({
-            'FASTQ_PE': [ToolIOFile(x) for x in ('non_existing_file')],
+            'FASTQ_PE': [ToolIOFile(Path(x)) for x in ('non_existing_file')],
             'INDEX_GENOME_PREFIX': [ToolIOValue(TestPipedTools.input_reference)]
         })
         samtools_view = SamtoolsView(Camel.get_instance())

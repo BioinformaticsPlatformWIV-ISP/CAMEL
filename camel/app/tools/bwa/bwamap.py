@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 from camel.app.camel import Camel
@@ -26,7 +25,7 @@ class BWAMap(BWA):
     OUTPUT_NAME = 'bwa_readmap.sam'
     DEFAULT_SAMPLE_NAME = 'sampleA'
 
-    def __init__(self, camel: Camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initialize BWAMap
         :param camel: Camel instance
@@ -52,9 +51,9 @@ class BWAMap(BWA):
         :return: None
         """
         if 'FASTQ_PE' in self._tool_inputs:
-            self._fastq_inputs_str = ' '.join(f.path for f in self._tool_inputs['FASTQ_PE'])
+            self._fastq_inputs_str = ' '.join(str(f.path) for f in self._tool_inputs['FASTQ_PE'])
         elif 'FASTQ_SE' in self._tool_inputs:
-            self._fastq_inputs_str = self._tool_inputs['FASTQ_SE'][0].path
+            self._fastq_inputs_str = str(self._tool_inputs['FASTQ_SE'][0].path)
         elif 'FASTQ_INT' in self._tool_inputs:
             self._fastq_inputs_str = f"-p {self._tool_inputs['FASTQ_INT'][0].path}"
 
@@ -91,24 +90,24 @@ class BWAMap(BWA):
         Set proper outputs for BWA mem
         :return: None
         """
-        self._tool_outputs['SAM'] = [ToolIOFile(os.path.join(self._folder, BWAMap.OUTPUT_NAME))]
+        self._tool_outputs['SAM'] = [ToolIOFile(self.folder / BWAMap.OUTPUT_NAME)]
 
     def __build_command(self, pipe_in: bool = False, pipe_out: bool =  False) -> None:
         """
         Build command to run BWA mem
         :return: None
         """
-        command_parts = ['{} {} {} {}'.format(
+        command_parts = [
             self._tool_command,
             ' '.join(self._build_options(excluded_parameters=['add_read_group'])),
-            self._tool_inputs['INDEX_GENOME_PREFIX'][0].value,
-            self._fastq_inputs_str)]
+            str(self._tool_inputs['INDEX_GENOME_PREFIX'][0].value),
+            self._fastq_inputs_str]
 
         if self._readgroup_str:
-            command_parts.append(' -R {!r} '.format(self._readgroup_str))
+            command_parts.append(f' -R {self._readgroup_str!r} ')
 
         if not pipe_out:
-            command_parts.append(' > {} '.format(self._tool_outputs['SAM'][0].path))
+            command_parts.append(f' > {self._tool_outputs["SAM"][0].path} ')
 
         self._command.command = ' '.join(command_parts)
 

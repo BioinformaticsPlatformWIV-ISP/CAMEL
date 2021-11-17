@@ -1,4 +1,4 @@
-from typing import List, Any
+from typing import List, Any, Optional
 
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.html.htmltablecell import HtmlTableCell
@@ -10,7 +10,7 @@ class SequenceTypingSRST2Hit(SequenceTypingHitBase):
     Sequence tying hit detected by SRST2.
     """
 
-    def __init__(self, locus: str, allele_id: str, mismatches: str, uncertainty: str, depth: float) -> None:
+    def __init__(self, locus: str, allele_id: str, mismatches: str, uncertainty: str, depth: Optional[float]) -> None:
         """
         Initializes the hit.
         :param locus: Locus
@@ -51,7 +51,7 @@ class SequenceTypingSRST2Hit(SequenceTypingHitBase):
             self.allele_id,
             self._mismatches,
             self._uncertainty,
-            '{:.2f}'.format(float(self._depth)) if self._depth != '-' else '-'
+            '{:.2f}'.format(float(self._depth)) if self._depth is not None else '-'
         ]
 
     @staticmethod
@@ -74,7 +74,7 @@ class SequenceTypingSRST2Hit(SequenceTypingHitBase):
             HtmlTableCell(self.allele_id, self.color, link=self.allele_page_url),
             self._mismatches,
             self._uncertainty,
-            '{:.2f}'.format(float(self._depth)) if self._depth != '-' else '-'
+            f'{float(self._depth):.2f}' if self._depth is not None else '-'
         ]
 
     @property

@@ -22,8 +22,8 @@ rule sccmec_typing_run:
         from camel.app.tools.sccmectyping.sccmectyping import SCCmecTyping
         from camel.app.io.tooliofile import ToolIOFile
         sccmec_typing = SCCmecTyping(Camel.get_instance())
-        sccmec_typing.add_input_files({'YML': [ToolIOFile(input.YAML)]})
-        SnakemakeUtils.add_pickle_input(sccmec_typing, 'VAL_HITS', input.VAL_HITS)
+        sccmec_typing.add_input_files({'YML': [ToolIOFile(Path(input.YAML))]})
+        SnakemakeUtils.add_pickle_input(sccmec_typing, 'VAL_HITS', Path(input.VAL_HITS))
         step = Step(rule, sccmec_typing, Camel.get_instance(), params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(sccmec_typing, output)
@@ -40,11 +40,11 @@ rule sccmec_typing_report:
         from camel.app.io.tooliovalue import ToolIOValue
         from camel.app.components.html.htmlreportsection import HtmlReportSection
         section = HtmlReportSection('SCC<i>mec</i> type', 3)
-        informs = SnakemakeUtils.load_object(input.INFORMS)
+        informs = SnakemakeUtils.load_object(Path(input.INFORMS))
         section.add_table(
             [[f"{complex_['name']}:", complex_['value'] if complex_['value'] is not None else '-'] for
              complex_ in informs['complexes']], table_attributes=[('class', 'information')])
-        SnakemakeUtils.dump_object([ToolIOValue(section)], output.HTML)
+        SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output.HTML))
 
 rule sccmec_typing_report_empty:
     """
@@ -54,7 +54,7 @@ rule sccmec_typing_report_empty:
         VAL_HTML = Path(config['working_dir']) / sccmectyping.OUTPUT_SCCMEC_TYPING_REPORT_EMPTY
     run:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-        SnakePipelineUtils.create_empty_report_section('SCC<i>mec</i> type', output.VAL_HTML)
+        SnakePipelineUtils.create_empty_report_section('SCC<i>mec</i> type', Path(output.VAL_HTML))
 
 rule sccmec_typing_summary:
     """
@@ -65,7 +65,7 @@ rule sccmec_typing_summary:
     output:
         TSV = Path(config['working_dir']) / sccmectyping.OUTPUT_SCCMEC_TYPING_SUMMARY
     run:
-        informs = SnakemakeUtils.load_object(input.INFORMS)
+        informs = SnakemakeUtils.load_object(Path(input.INFORMS))
         with open(output.TSV, 'w') as handle:
             for complex_ in informs['complexes']:
                 handle.write('\t'.join([complex_['key'], complex_['value'] if complex_['value'] is not None else '-']))

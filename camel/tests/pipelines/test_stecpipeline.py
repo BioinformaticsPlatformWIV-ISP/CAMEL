@@ -77,7 +77,7 @@ class TestSTECPipeline(CamelTestSuite):
             '--output-dir', str(path_report_out.parent),
             '--output-tsv', str(path_summary_out),
             '--working-dir', str(self.running_dir)
-        ] + [f"--{a.replace('_', '-')}" for a in MainSTECPipeline.CUSTOM_ANALYSES if a != 'cgmlst']
+        ] + [f"--{a.replace('_', '-')}" for a in MainSTECPipeline.CUSTOM_ANALYSES if 'cgmlst' not in a]
         main = MainSTECPipeline(args)
         main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)
@@ -97,7 +97,7 @@ class TestSTECPipeline(CamelTestSuite):
             '--output-tsv', str(path_summary_out),
             '--working-dir', str(self.running_dir),
             '--detection-method', 'srst2'
-        ] + [f"--{a.replace('_', '-')}" for a in MainSTECPipeline.CUSTOM_ANALYSES if a != 'cgmlst']
+        ] + [f"--{a.replace('_', '-')}" for a in MainSTECPipeline.CUSTOM_ANALYSES if 'cgmlst' not in a]
         main = MainSTECPipeline(args)
         main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)
@@ -117,7 +117,7 @@ class TestSTECPipeline(CamelTestSuite):
             '--output-tsv', str(path_summary_out),
             '--working-dir', str(self.running_dir),
             '--read-type', 'iontorrent',
-        ] + [f"--{a.replace('_', '-')}" for a in MainSTECPipeline.CUSTOM_ANALYSES if a != 'cgmlst']
+        ] + [f"--{a.replace('_', '-')}" for a in MainSTECPipeline.CUSTOM_ANALYSES if 'cgmlst' not in a]
         main = MainSTECPipeline(args)
         main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)
@@ -138,7 +138,7 @@ class TestSTECPipeline(CamelTestSuite):
             '--working-dir', str(self.running_dir),
             '--read-type', 'iontorrent',
             '--detection-method', 'srst2'
-        ] + [f"--{a.replace('_', '-')}" for a in MainSTECPipeline.CUSTOM_ANALYSES if a != 'cgmlst']
+        ] + [f"--{a.replace('_', '-')}" for a in MainSTECPipeline.CUSTOM_ANALYSES if 'cgmlst' not in a]
         main = MainSTECPipeline(args)
         main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)
@@ -159,7 +159,7 @@ class TestSTECPipeline(CamelTestSuite):
             '--working-dir', str(self.running_dir),
             '--detection-method', 'kma',
             '--library', 'TruSeq2'
-        ] + [f"--{a.replace('_', '-')}" for a in MainSTECPipeline.CUSTOM_ANALYSES if a != 'cgmlst']
+        ] + [f"--{a.replace('_', '-')}" for a in MainSTECPipeline.CUSTOM_ANALYSES if 'cgmlst' not in a]
         main = MainSTECPipeline(args)
         main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)

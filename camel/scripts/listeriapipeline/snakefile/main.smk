@@ -60,7 +60,7 @@ rule report_pickle_citations:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         section = SnakePipelineUtils.create_citations_section(
             params.citation_keys['other'], params.citation_keys['main'])
-        SnakemakeUtils.dump_object([ToolIOValue(section)], output.HTML)
+        SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output.HTML))
 
 rule report_command_section:
     """
@@ -98,13 +98,13 @@ rule report_command_section:
         from camel.app.snakemake.snakemakeutils import SnakemakeUtils
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         informs = []
-        for content in [SnakemakeUtils.load_object(io) for io in input]:
+        for content in [SnakemakeUtils.load_object(Path(io)) for io in input]:
             if type(content) is dict:
                 informs.append(content)
             elif type(content) is list:
                 informs.extend(content)
         section = SnakePipelineUtils.create_commands_section(informs, params.working_dir)
-        SnakemakeUtils.dump_object([ToolIOValue(section)], output.HTML)
+        SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output.HTML))
 
 rule report_combine_all:
     """
@@ -150,26 +150,26 @@ rule report_combine_all:
 
         # Add header section
         report = SnakePipelineUtils.init_pipeline_report(
-            output.HTML, params.output_dir, params.pipeline_info)
+            Path(output.HTML), Path(params.output_dir), params.pipeline_info)
         report.add_html_object(SnakePipelineUtils.create_input_section(
             params.sample_name, datetime.datetime.now(), params.pipeline_info['version'],
             ', '.join(entry['name'] for entry in params.fastq_input), [('Detection method', params.detection_method)]))
 
         # Add report content
         report_structure = [
-            ('Read trimming and basic QC', 'trim', [input.report_trimming]),
-            ('Assembly', 'assem', [input.report_assembly]),
-            ('Advanced QC', 'adv_qc', [input.report_kraken, input.report_adv_qc]),
-            ('Species identification', 'species', [input.report_species, input.report_mlst]),
-            ('AMR detection', 'amr', [
-                input.report_argannot, input.report_card, input.report_ncbi_amr, input.report_resfinder]),
-            ('Virulence detection', 'virulence', [input.report_virulence, input.report_vfdb_core]),
-            ('Plasmid replicon detection', 'virulence', [input.report_plasmidfinder]),
-            ('Sequence typing', 'typing', [
+            ('Read trimming and basic QC', 'trim', [Path(input.report_trimming)]),
+            ('Assembly', 'assem', [Path(input.report_assembly)]),
+            ('Advanced QC', 'adv_qc', [Path(x) for x in (input.report_kraken, input.report_adv_qc)]),
+            ('Species identification', 'species', [Path(x) for x in (input.report_species, input.report_mlst)]),
+            ('AMR detection', 'amr', [Path(x) for x in (
+                input.report_argannot, input.report_card, input.report_ncbi_amr, input.report_resfinder)]),
+            ('Virulence detection', 'virulence', [Path(x) for x in (input.report_virulence, input.report_vfdb_core)]),
+            ('Plasmid replicon detection', 'virulence', [Path(input.report_plasmidfinder)]),
+            ('Sequence typing', 'typing', [Path(x) for x in (
                 input.report_amr_typing, input.report_cgmlst, input.report_metal_detergent,
-                input.report_pcr_serogroup, input.report_viru_typing]),
-            ('Citations', 'citations', [input.report_citations]),
-            ('Commands', 'commands', [input.report_commands])
+                input.report_pcr_serogroup, input.report_viru_typing)]),
+            ('Citations', 'citations', [Path(input.report_citations)]),
+            ('Commands', 'commands', [Path(input.report_commands)])
         ]
         SnakePipelineUtils.add_report_content(report, report_structure)
 

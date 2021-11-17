@@ -2,6 +2,7 @@ import re
 from pathlib import Path
 
 from camel.app.camel import Camel
+from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.components.sequencetyping.sequencetypingsrst2hit import SequenceTypingSRST2Hit
 from camel.app.components.sequencetyping.sequencetypingutils import SequenceTypingUtils
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
@@ -33,7 +34,7 @@ class SRST2AlleleDetector(Tool):
             input_str = '--input_pe {}'.format(' '.join([str(x.path) for x in self._tool_inputs['FASTQ_PE']]))
         else:
             input_str = '--input_se {}'.format(self._tool_inputs['FASTQ_SE'][0].path)
-        output_prefix = self._folder / f"allele_detection_{self._input_informs['locus']['name']}"
+        output_prefix = self._folder / f"_detection_{FileSystemHelper.make_valid(self._input_informs['locus']['name'])}"
         self._command.command = '{} {} --log --mlst_db {} --mlst_delimiter "{}" --output {} {}'.format(
             self._tool_command,
             input_str,
@@ -92,7 +93,7 @@ class SRST2AlleleDetector(Tool):
                 re.sub('[*?]', '', parts[self.__COLUMN_INDICES['allele_id']]),
                 self.__clean_srst2_column(parts[self.__COLUMN_INDICES['mismatches']]),
                 self.__clean_srst2_column(parts[self.__COLUMN_INDICES['uncertainty']]),
-                float(parts[self.__COLUMN_INDICES['depth']])
+                float(parts[self.__COLUMN_INDICES['depth']]) if parts[self.__COLUMN_INDICES['depth']] != '-' else None
             )
 
     @staticmethod

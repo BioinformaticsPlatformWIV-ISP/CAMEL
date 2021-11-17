@@ -181,7 +181,7 @@ rule typing_get_cgmlst_stats:
             {'hits_found': nb_perfect,
              'nb_of_loci': len(all_hits),
              'scheme_name': params.scheme_name},
-            output.INFORMS)
+            Path(output.INFORMS))
 
 rule typing_add_allele_page_url:
     """
@@ -279,7 +279,7 @@ rule typing_dump_summary_info:
             else:
                 st_metadata = [(k, '-') for k, _ in profile_data['metadata']]
             st_metadata.append(('percent_detected', profile_data['percent_detected']))
-        hits = SnakemakeUtils.load_object(input.HITS_NUCL) + SnakemakeUtils.load_object(input.HITS_PEPT)
+        hits = SnakemakeUtils.load_object(Path(input.HITS_NUCL)) + SnakemakeUtils.load_object(Path(input.HITS_PEPT))
         with open(output.TSV, 'w') as handle:
             for k, v in st_metadata:
                 handle.write(f'{params.scheme_name}-{k}\t{v}')

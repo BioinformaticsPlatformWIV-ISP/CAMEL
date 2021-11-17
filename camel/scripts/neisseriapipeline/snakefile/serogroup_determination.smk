@@ -26,7 +26,7 @@ rule serogroup_determination_analysis:
         from camel.app.snakemake.snakemakeutils import SnakemakeUtils
         detector = SerogroupDetermination(camel)
         for hits_output, serogroup in zip(input.hits, params.serogroups):
-            detector.add_input_files({f'hits_{serogroup}': SnakemakeUtils.load_object(hits_output)})
+            detector.add_input_files({f'hits_{serogroup}': SnakemakeUtils.load_object(Path(hits_output))})
         step = Step(rule, detector, camel, params.working_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(detector, output)
@@ -61,7 +61,7 @@ rule serogroup_determination_report_empty:
         working_dir = Path(config['working_dir']) / 'serogroup_determination'
     run:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-        SnakePipelineUtils.create_empty_report_section('Serogroup determination', output.VAL_HTML)
+        SnakePipelineUtils.create_empty_report_section('Serogroup determination', Path(output.VAL_HTML))
 
 
 rule serogroup_determination_summary:
@@ -73,7 +73,7 @@ rule serogroup_determination_summary:
     output:
         TSV =Path(config['working_dir']) / serogroup_determination.OUTPUT_SEROGROUP_DETERMINATION_SUMMARY
     run:
-        informs = SnakemakeUtils.load_object(input.INFORMS_analysis)
+        informs = SnakemakeUtils.load_object(Path(input.INFORMS_analysis))
         with open(output.TSV, 'w') as handle:
             for k, v in [('detected_serogroup', informs['detected_serogroup']),
                          ('serogroup_nb_hits', informs['serogroups_sorted'][0]['nb_hits']),
