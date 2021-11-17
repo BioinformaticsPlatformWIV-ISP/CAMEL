@@ -1,7 +1,4 @@
-from pathlib import Path
-
 from camel.app.camel import Camel
-from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.gatk4.gatk4 import GATK4
 
 
@@ -42,8 +39,6 @@ class GATK4BaseRecalibrator(GATK4):
 
         self._required_inputs = ['BAM', 'FASTA_REF']
         self._output_type = 'TXT_RecalibrationTable'
-        self.__snps_known_sites_path = ''
-        self.__indels_known_sites_path = ''
 
     def _set_input(self) -> None:
         """
@@ -69,12 +64,3 @@ class GATK4BaseRecalibrator(GATK4):
         if 'TXT_intervals' in self._tool_inputs:
             for interval in self._tool_inputs['TXT_intervals']:
                 self._input_string += f"--intervals {interval.path} "
-
-    def _set_output(self) -> None:
-        """
-        Set the output specification in the output_string
-        Overrides method in parent class.
-        :return: None
-        """
-        self._tool_outputs['TXT_RecalibrationTable'] = [
-            ToolIOFile(Path(self._folder) / self._parameters['output'].value)]
