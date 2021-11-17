@@ -70,7 +70,7 @@ class IntervalListTools(Picard):
         Overrides method in parent class.
         :return: None
         """
-        scatter_count = int(self._parameters['scatter_count'].value) if 'scatter_count' in self._parameters else 1
+        scatter_count = self._parameters['scatter_count'].value if 'scatter_count' in self._parameters else 1
 
         if scatter_count == 1:
             self._tool_outputs['TXT_intervalLists'] = [ToolIOFile(Path(self._folder) / self._parameters['output'].value)]
