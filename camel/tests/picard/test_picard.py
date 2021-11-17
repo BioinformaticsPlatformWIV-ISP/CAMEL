@@ -242,7 +242,7 @@ class TestPicard(CamelTestSuite):
         picard_intervallisttools.add_input_files({
             'VCF': [TestPicard.FILE_VCF]
         })
-        #picard_intervallisttools.update_parameters(scatter_count = 1)
+
         picard_intervallisttools.run(self.running_dir)
         self.assertTrue('TXT_intervalLists' in picard_intervallisttools.tool_outputs, "No TXT_intervalLists output generated")
         output_file = Path(picard_intervallisttools.tool_outputs['TXT_intervalLists'][0].path)
