@@ -76,7 +76,7 @@ class CollectMultipleMetrics(Picard):
         """
         super().__init__('Picard CollectMultipleMetrics', '2.23.3', camel)
 
-        self._required_inputs = ['BAM', 'SAM', 'FASTA_REF']
+        self._required_inputs = ['BAM', 'SAM']
         self._specific_parameters = ['metric_accumulation_level_multi']
 
     def _set_output(self) -> None:
