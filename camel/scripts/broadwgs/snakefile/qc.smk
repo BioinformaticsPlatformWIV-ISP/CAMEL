@@ -1,7 +1,5 @@
 from pathlib import Path
 
-from bidict import bidict
-
 from camel.app.camel import Camel
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
@@ -294,7 +292,7 @@ rule picard_variant_calling_metrics:
 
 rule generate_qc_summary:
     input:
-        mark_duplicates_metrics = alignment.OUTPUT_MARK_DUPLICATES_METRICS,
+        mark_duplicates_metrics = Path(config['working_dir']) / alignment.OUTPUT_MARK_DUPLICATES_METRICS,
         alignment_summary_metrics = Path(config['working_dir']) / "qc" / "aggregation_metrics" / f'{config["sample"]}.agg.alignment_summary_metrics',
         insert_size_metrics = Path(config['working_dir']) / "qc" / "aggregation_metrics" / f'{config["sample"]}.agg.insert_size_metrics',
         wgs_metrics = rules.picard_wgs_metrics.output.TXT_metrics,
@@ -302,11 +300,25 @@ rule generate_qc_summary:
     output:
         QC_summary = Path(config['working_dir']) / "qc" / "QC_summary.txt"
     run:
+        alignment_metrics_threshold = {
+            'percent_duplication' : {'val' : 0.1, 'threshold' : 'upper'},
+            'percent_chimeras' : {'val': 0.01, 'threshold' : 'upper'},
+            'median_insert_size' : {'val': 300, 'threshold': 'lower'},
+            'mean_coverage' : {'val': 30, 'threshold': 'lower'},
+            'evenness_coverage' : {'val': 1, 'threshold' : 'both'}
+        }
+
+        variant_calling_metrics_threshold = {
+            "TITV_DBSNP" : {'val': 2, 'threshold': 'both'},
+            "TITV_NOVEL" : {'val': 2, 'threshold': 'both'}
+        }
+
         alignment_metrics = {}
         variant_calling_metrics = {}
 
         # Mark Duplicates metrics
-        with open(input.mark_duplicates_metrics) as handle:
+        mark_duplicates_file = Path(SnakemakeUtils.load_object(Path(input.mark_duplicates_metrics))[0].path)
+        with open(mark_duplicates_file, 'r') as handle:
             lines = handle.readlines()
             metrics_class_index = lines.index("## METRICS CLASS\tpicard.sam.DuplicationMetrics\n")
 
@@ -317,7 +329,7 @@ rule generate_qc_summary:
         alignment_metrics['percent_duplication'] = mark_duplicates['PERCENT_DUPLICATION']
 
         # Alignment summary metrics
-        with open("/home/chdevogelaere/qc/aggregation_metrics/GC088815.agg.alignment_summary_metrics") as handle:
+        with open(input.alignment_summary_metrics, 'r') as handle:
             lines = handle.readlines()
             metrics_class_index = lines.index("## METRICS CLASS\tpicard.analysis.AlignmentSummaryMetrics\n")
 
@@ -328,7 +340,7 @@ rule generate_qc_summary:
         alignment_metrics['percent_chimeras'] = agg_alignment_summary['PCT_CHIMERAS']
 
         # Insert size metrics
-        with open("/home/chdevogelaere/qc/aggregation_metrics/GC088815.agg.insert_size_metrics") as handle:
+        with open(input.insert_size_metrics, 'r') as handle:
             lines = handle.readlines()
             metrics_class_index = lines.index("## METRICS CLASS\tpicard.analysis.InsertSizeMetrics\n")
 
@@ -339,7 +351,7 @@ rule generate_qc_summary:
         alignment_metrics['median_insert_size'] = agg_insert_size['MEDIAN_INSERT_SIZE']
 
         # WGS metrics
-        with open("/home/chdevogelaere/qc/wgs_metrics/GC088815.wgs.metrics.txt") as handle:
+        with open(input.wgs_metrics, 'r') as handle:
             lines = handle.readlines()
             metrics_class_index = lines.index("## METRICS CLASS\tpicard.analysis.WgsMetrics\n")
             histogram_start_index = lines.index("## HISTOGRAM\tjava.lang.Integer\n")
@@ -351,27 +363,28 @@ rule generate_qc_summary:
         mean_coverage = float(wgs_metrics['MEAN_COVERAGE'])
         genome_territory = int(wgs_metrics['GENOME_TERRITORY'])
         lowest_20 = float(int(genome_territory) * 0.2)
-
-        coverage_histo = lines[histogram_start_index+3:-1]
-        coverage_histo = [l.rstrip().split("\t") for l in coverage_histo]
-
-        cov_values = [int(l[1]) for l in coverage_histo]
-        histo_cumsum = [sum(cov_values[:i+1]) for i, value in enumerate(cov_values)]
-        histo_cumsum_bidict = bidict([(i, n) for i, n in enumerate(histo_cumsum)])
-
-        tmp = histo_cumsum + [int(lowest_20)]
-        tmp.sort()
-        find_index = tmp.index(int(lowest_20))
-        val_before = histo_cumsum[find_index - 1]
-        val_after = histo_cumsum[find_index]
-
-        cov_20 = (((val_after - lowest_20) / (val_after - val_before)) + find_index - 1)
-
-        fold80 = mean_coverage / cov_20
-        alignment_metrics['evenness_coverage'] = fold80
+        #
+        # coverage_histo = lines[histogram_start_index+3:-1]
+        # coverage_histo = [l.rstrip().split("\t") for l in coverage_histo]
+        #
+        # cov_values = [int(l[1]) for l in coverage_histo]
+        # histo_cumsum = [sum(cov_values[:i+1]) for i, value in enumerate(cov_values)]
+        #
+        # tmp = histo_cumsum + [int(lowest_20)]
+        # tmp.sort()
+        # find_index = tmp.index(int(lowest_20))
+        # val_before = histo_cumsum[find_index - 1]
+        # val_after = histo_cumsum[find_index]
+        #
+        # cov_20 = (((val_after - lowest_20) / (val_after - val_before)) + find_index - 1)
+        #
+        alignment_metrics['mean_coverage'] = mean_coverage
+        # fold80 = mean_coverage / cov_20
+        # alignment_metrics['evenness_coverage'] = fold80
 
         # Variant calling metrics
-        with open("/home/chdevogelaere/qc/variant_calling_metrics/GC088815.variant_calling_metrics.txt") as handle:
+        var_calling_file = Path(SnakemakeUtils.load_object(Path(input.variant_calling_metrics))[0].path)
+        with open(var_calling_file, 'r') as handle:
             lines = handle.readlines()
             metrics_class_index = lines.index("## METRICS CLASS\tpicard.vcf.CollectVariantCallingMetrics$VariantCallingSummaryMetrics\n")
 
@@ -381,3 +394,17 @@ rule generate_qc_summary:
         variant_calling_summary = dict(zip(header, values))
         variant_calling_metrics["TITV_DBSNP"] = variant_calling_summary['DBSNP_TITV']
         variant_calling_metrics["TITV_NOVEL"] = variant_calling_summary['NOVEL_TITV']
+
+        # Print all to output file
+        alignment_metrics_metrics_names = ['mean_coverage', 'percent_duplication', 'median_insert_size', 'percent_chimeras']#'evenness_coverage',
+        variant_calling_metrics_names = ['TITV_DBSNP', 'TITV_NOVEL']
+        with open(output.QC_summary, 'w') as outhandle:
+            for aln_metric in alignment_metrics_metrics_names:
+                outhandle.write("\t".join([aln_metric, str(alignment_metrics[aln_metric]),
+                                           str(alignment_metrics_threshold[aln_metric]['val']),
+                                           alignment_metrics_threshold[aln_metric]['threshold']]) + "\n")
+
+            for var_metric in variant_calling_metrics_names:
+                outhandle.write("\t".join([var_metric, str(variant_calling_metrics[var_metric]),
+                                           str(variant_calling_metrics_threshold[var_metric]['val']),
+                                           variant_calling_metrics_threshold[var_metric]['threshold']]) + "\n")

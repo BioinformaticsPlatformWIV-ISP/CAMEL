@@ -82,11 +82,11 @@ rule picard_mark_duplicates_sort:
         BAM = expand(rules.picard_add_readgroups.output.BAM, input_basename = config['input_basenames'])
     output:
         BAM = Path(config['working_dir']) / 'alignment' / 'mark_duplicates' / f'{config["sample"]}.aligned.sorted.duplicates_marked.bam.io',
-        metrics = Path(config['working_dir']) / 'qc' / 'mark_duplicates' / f"{config['sample']}.duplicate_metrics.txt.io"
+        metrics = Path(config['working_dir']) / 'qc' / 'mark_duplicates' / "duplicate_metrics.txt.io"
     params:
         working_dir = Path(config['working_dir']) / 'alignment' / 'mark_duplicates',
         output_file = f'{config["sample"]}.aligned.unsorted.duplicates_marked.bam',
-        metrics_output_file = Path(config['working_dir']) / 'qc' / 'mark_duplicates' / f"{config['sample']}.duplicate_metrics.txt"
+        metrics_output_file = Path(config['working_dir']) / 'qc' / 'mark_duplicates' / "duplicate_metrics.txt"
     threads: config["params_smk"]["threads_picard"]
     resources:
         mem_mb=config["params_smk"]["memory_mb_mark_duplicates_sort"]

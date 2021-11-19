@@ -123,7 +123,7 @@ rule move_qc:
         gc_bias_pdf = Path(config['working_dir']) / "qc" / "RG_quality" / f"{config['sample']}.readgroup.gc_bias.pdf",
         gc_bias_summary_metrics = Path(config['working_dir']) / "qc" / "RG_quality" / f"{config['sample']}.readgroup.gc_bias.summary_metrics",
 
-        mark_duplicates_metrics = Path(config['working_dir']) / 'qc' / 'mark_duplicates' / f"{config['sample']}.duplicate_metrics.txt.io",
+        mark_duplicates_metrics = Path(config['working_dir']) / 'qc' / 'mark_duplicates' / "duplicate_metrics.txt.io",
 
         alignment_summary_metrics_agg = Path(config['working_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.alignment_summary_metrics",
         bait_bias_detail_metrics = Path(config['working_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.bait_bias_detail_metrics",
@@ -148,6 +148,7 @@ rule move_qc:
 
         TXT_metrics_varCalling = Path(config['working_dir']) / "qc" / "variant_calling_metrics" / f"{config['sample']}.variant_calling_metrics.io",
 
+        QC_summary = Path(config['working_dir']) / "qc" / "QC_summary.txt"
 
     output:
         TXT = expand(Path(config['final_output_dir']) / "qc" / "quality_yield" / "{fastq}.unmapped.quality_yield_metrics.txt", fastq = config["input_basenames"]),
@@ -192,6 +193,8 @@ rule move_qc:
         
         TXT_metrics_varCalling = Path(config['final_output_dir']) / "qc" / "variant_calling_metrics" / f"{config['sample']}.variant_calling_metrics.txt",
 
+        QC_summary = Path(config['final_output_dir']) / "qc" / "QC_summary.txt",
+
         QC_done = Path(config['final_output_dir']) / 'qc' / 'qc_done.txt'
     run:
         for quality_yield_io in input.TXT:
@@ -232,5 +235,6 @@ rule move_qc:
         Path(input.TXT_metrics_rawWGS).link_to(output.TXT_metrics_rawWGS)
         SnakemakeUtils.load_object(Path(input.TXT_metrics_CRAM))[0].path.link_to(output.TXT_metrics_CRAM)
         SnakemakeUtils.load_object(Path(input.TXT_metrics_varCalling))[0].path.link_to(output.TXT_metrics_varCalling)
+        Path(input.QC_summary).link_to(output.QC_summary)
 
         subprocess.run(f"touch {output.QC_done}", shell = True, executable='/bin/bash')
