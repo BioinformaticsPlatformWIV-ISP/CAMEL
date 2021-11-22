@@ -1,5 +1,5 @@
 slurm:
   slurm_args:
-    - "is"
-    - "notemp"
-    - "jobs 1000"
+    "is": ""
+    "notemp": ""
+    "jobs": "1000"

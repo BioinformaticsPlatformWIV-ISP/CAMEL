@@ -66,15 +66,17 @@ class MainBroadWGSPipeline(object):
                 logging.info("Running pipeline with Slurm: resources and threads input parameters ignored.")
                 threads = 1
                 resources = None
-                slurm_args = [f'--cluster "{self._args.slurm}"']
+                slurm_args = {'cluster': self._args.slurm}
                 if self._args.slurm == f'python3 {SLURM_SUBMIT} {{dependencies}}':
-                    slurm_args.extend([f"--{arg}" for arg in config_data["slurm"]["slurm_args"]])
+                   slurm_args.update(config_data["slurm"]["slurm_args"])
+                logging.debug(slurm_args)
+                SnakePipelineUtils.run_snakemake(self._snakefile, config_file, [], self._working_dir, threads,
+                                                 resources, slurm_args)
             else:
                 threads = self._args.threads
                 resources = dict([arg.split(",") for arg in self._args.resources])
-                slurm_args = self._args.slurm
-            SnakePipelineUtils.run_snakemake(self._snakefile, config_file, [], self._working_dir, threads,
-                                             resources, slurm_args)
+                SnakePipelineUtils.run_snakemake(self._snakefile, config_file, [], self._working_dir, threads, resources)
+
             log_file = self._working_dir / 'camel.log'
             if log_file.exists():
                 shutil.copyfile(str(log_file), str(Path(self._args.working_dir) / 'output' / 'camel.log'))
