@@ -164,7 +164,7 @@ class SnakePipelineUtils(object):
         :param working_dir: Working directory
         :param threads: Number of threads to use
         :param resources: Dictionary of resources by keyword
-        :param slurm_args: List of slurm parameters
+        :param slurm_args: Dictionary of slurm arguments
         :return: None
         """
         if not working_dir.exists():
@@ -187,7 +187,10 @@ class SnakePipelineUtils(object):
 
         # Add slurm submit file and parameters if specified
         if slurm_args is not None:
-            command_parts.extend(slurm_args)
+            command_parts.append(f'--cluster "{slurm_args["cluster"]}"')
+            for key, value in slurm_args.items():
+                if key != 'cluster':
+                    command_parts.append(f'--{key} {value}')
 
         # Create and run command
         command = Command(' '.join(command_parts))
