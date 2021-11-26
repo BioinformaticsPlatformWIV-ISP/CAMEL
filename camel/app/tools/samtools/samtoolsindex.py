@@ -10,7 +10,7 @@ class SamtoolsIndex(SamtoolsBase):
     Indexes sorted BAM files.
     """
 
-    def __init__(self, camel):
+    def __init__(self, camel) -> None:
         """
         Initializes this tool.
         :param camel: Camel instance
