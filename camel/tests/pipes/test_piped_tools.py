@@ -8,6 +8,7 @@ from camel.app.io.tooliofile import ToolIOFile
 from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.tools.bowtie2.bowtie2map import Bowtie2Map
 from camel.app.tools.samtools.samtoolsflagstat import SamtoolsFlagstat
+from camel.app.tools.samtools.samtoolsmpileup import SamtoolsMPileup
 from camel.app.tools.samtools.samtoolssort import SamtoolsSort
 from camel.app.tools.samtools.samtoolsview import SamtoolsView
 
@@ -27,7 +28,7 @@ class TestPipedTools(CamelTestSuite):
 
     def test_pipeline_bt2_sam_to_bam(self) -> None:
         """
-        Tests the tree construction.
+        Tests the conversion of bowtie2 SAM output to BAM using camel piping.
         :return: None
         """
         # Initialize tools
@@ -66,9 +67,40 @@ class TestPipedTools(CamelTestSuite):
         with self.assertRaises(BaseException):
             pipeutils.run_as_pipe([bowtie2, samtools_view], self.running_dir)
 
+    def test_pipeline_bt2_sam_to_sorted_bam_to_mpileup(self) -> None:
+        """
+        Tests the mpileup utility after bowtie mapping using camel piping.
+
+        :return: None
+        """
+        # Initialize tools
+        bowtie2 = Bowtie2Map(Camel.get_instance())
+        bowtie2.add_input_files({
+            'FASTQ_PE': [ToolIOFile(x) for x in TestPipedTools.input_fq_pe],
+            'INDEX_GENOME_PREFIX': [ToolIOValue(TestPipedTools.input_reference)]
+        })
+        samtools_view = SamtoolsView(Camel.get_instance())
+        samtools_sort = SamtoolsSort(Camel.get_instance())
+        samtools_mpileup = SamtoolsMPileup(Camel.get_instance())
+
+        # Run as pipe
+        pipeutils.run_as_pipe([bowtie2, samtools_view, samtools_sort, samtools_mpileup], self.running_dir)
+
+        # Assert output file is generated
+        self.assertIn('PILEUP', samtools_mpileup.tool_outputs)
+        self.assertTrue(Path(samtools_mpileup.tool_outputs['PILEUP'][0].path))
+        self.assertGreater(Path(samtools_mpileup.tool_outputs['PILEUP'][0].path).stat().st_size, 0)
+
+        # Assert that intermediate step do not generate output
+        self.assertNotIn('BAM', samtools_sort.tool_outputs)
+        self.assertNotIn('BAM', samtools_view.tool_outputs)
+
+        # Assert Bowtie2 informs are parsed
+        self.assertIn('stats_map_rate', bowtie2.informs)
+
     def test_pipeline_bt2_sam_to_sorted_bam(self) -> None:
         """
-        Tests the tree construction.
+        Tests the conversion of bowtie2 SAM output to sorted BAM using camel piping.
 
         :return: None
         """

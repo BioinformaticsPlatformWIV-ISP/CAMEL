@@ -5,9 +5,9 @@ from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.samtools.samtoolsbase import SamtoolsBase
 
 
-class SamtoolsIndex(SamtoolsBase):
+class SamtoolsIndexCram(SamtoolsBase):
     """
-    Indexes sorted BAM files.
+    Indexes sorted CRAM files.
     """
 
     def __init__(self, camel) -> None:
@@ -22,10 +22,14 @@ class SamtoolsIndex(SamtoolsBase):
         Checks the input.
         :return: None
         """
-        if 'BAM' not in self._tool_inputs:
-            raise ValueError("No BAM input file found")
-        if len(self._tool_inputs['BAM']) != 1:
-            raise ValueError("Only one BAM input file is supported")
+        if 'CRAM' not in self._tool_inputs:
+            raise ValueError("No CRAM input file found")
+        if len(self._tool_inputs['CRAM']) != 1:
+            raise ValueError("Only one CRAM input file is supported")
+
+        if 'FASTA_REF' not in self._tool_inputs:
+            raise ValueError("No FASTA_REF input file found")
+
         super(SamtoolsBase, self)._check_input()
 
     def _execute_tool(self) -> None:
@@ -37,7 +41,7 @@ class SamtoolsIndex(SamtoolsBase):
         self.__build_command(input_file_path)
         self._execute_command()
         self._check_stderr()
-        self._tool_outputs['BAM'] = [ToolIOFile(Path(input_file_path))]
+        self._tool_outputs['CRAI'] = [ToolIOFile(Path(f"{input_file_path}.crai"))]
 
     def __symlink_input(self) -> Path:
         """
@@ -48,19 +52,23 @@ class SamtoolsIndex(SamtoolsBase):
         if 'output_filename' in self._parameters:
             basename = self._parameters['output_filename'].value
         else:
-            basename = self._tool_inputs['BAM'][0].basename
-        new_path = self.folder / basename
-        if (not new_path.is_symlink()) and (new_path != self._tool_inputs['BAM'][0].path):
-            new_path.symlink_to(self._tool_inputs['BAM'][0].path)
+            basename = self._tool_inputs['CRAM'][0].basename
+        new_path = Path(self.folder) / basename
+        if (not new_path.is_symlink()) and (new_path != self._tool_inputs['CRAM'][0].path):
+            new_path.symlink_to(self._tool_inputs['CRAM'][0].path)
         return new_path
 
     def __build_command(self, input_file_path) -> None:
         """
         Builds the command for this tool.
+        seq_cache_populate.pl: Create REF_CACHE. Used when indexing a CRAM
         :param input_file_path: Path to the input file
         :return: None
         """
         self._command.command = ' '.join([
+            f"seq_cache_populate.pl -root ./ref/cache {self._tool_inputs['FASTA_REF'][0].path}; ",
+            "export REF_PATH=:; ",
+            "export REF_CACHE=./ref/cache/%2s/%2s/%s; ",
             self._tool_command,
             ' '.join(self._build_options(excluded_parameters=['output_filename'])),
             str(input_file_path)])
@@ -71,5 +79,5 @@ class SamtoolsIndex(SamtoolsBase):
         :return: None
         """
         if 'unsorted positions' in self.stderr:
-            raise ToolExecutionError('BAM file is not sorted.')
-        super(SamtoolsIndex, self)._check_stderr()
+            raise ToolExecutionError('CRAM file is not sorted.')
+        super(SamtoolsIndexCram, self)._check_stderr()

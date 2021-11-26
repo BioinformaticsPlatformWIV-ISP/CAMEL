@@ -1,4 +1,5 @@
 import logging
+from typing import Dict, List, Union, Tuple, Any
 
 from camel.app.components.files.fastautils import FastaUtils
 from camel.app.components.statisticsutils import StatisticsUtils
@@ -11,24 +12,21 @@ class SamtoolsDepthStatsAnalyzer(Tool):
     """
     Customized tool to analyze samtools depth output to extract read mapping statistics
     """
-    # set a value > 0, larger to allow call gaps only with gaps of length larger then MINIMAL_GAP_LEN
-    MINIMAL_GAP_LEN = 1  # 15
-
-    def __init__(self, camel):
+    def __init__(self, camel) -> None:
         """
         Initializes this tool
         :param camel: Camel instance
         """
         super().__init__('samtools depth stats analyzer', '1.9', camel)
 
-    def _execute_tool(self):
+    def _execute_tool(self) -> None:
         """
         Executes this tool
         :return: None
         """
         self.__analyze_depth_output()
 
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
         Checks the input
         :return: None
@@ -40,12 +38,13 @@ class SamtoolsDepthStatsAnalyzer(Tool):
 
         super(SamtoolsDepthStatsAnalyzer, self)._check_input()
 
-    def __analyze_depth_output(self):
+    def __analyze_depth_output(self) -> None:
         """
         Analyze the depth output to gather various statistics
         :return: None
         """
         cov_cutoff = int(self._parameters['coverage_cutoff'].value) if ('coverage_cutoff' in self._parameters) else 0
+        minimal_gap_len = int(self._parameters['minimal_gap_len'].value) if ('minimal_gap_len' in self._parameters) else 1
 
         refseq_length = {}
         if 'FASTA_REF' in self._tool_inputs:
@@ -58,7 +57,7 @@ class SamtoolsDepthStatsAnalyzer(Tool):
                 "No FASTA_REF input, reference sequence length unknown. An end gap will be reported for each covered reference sequence, and base coverage calculation skipped.")
 
         coverages, segment_coverages, segment_gaps, segment_base_count = SamtoolsDepthStatsAnalyzer.collect_inform(
-            self._tool_inputs['TXT'][0].path, refseq_length, cov_cutoff
+            self._tool_inputs['TXT'][0].path, refseq_length, cov_cutoff, minimal_gap_len
         )
 
         if 'FASTA_REF' in self._tool_inputs:
@@ -98,7 +97,7 @@ class SamtoolsDepthStatsAnalyzer(Tool):
             self.informs['segment_base_coverage'][seq_id] = segment_base_coverage[seq_id]
 
     @staticmethod
-    def __calculate_base_coverage(segment_base_count, refseq_length):
+    def __calculate_base_coverage(segment_base_count, refseq_length) -> Tuple[int, Dict[Any, Union[float, str]]]:
         """
         Calculate the base coverage
         :param segment_base_count: base count per segment
@@ -124,22 +123,24 @@ class SamtoolsDepthStatsAnalyzer(Tool):
         return genome_base_cov, segment_base_cov
 
     @staticmethod
-    def is_gap(cur_pos, last_pos):
+    def is_gap(cur_pos, last_pos, minimal_gap_len) -> bool:
         """
         Function to check whether there is a gap between current position and previous one
         :param cur_pos: current position reported
         :param last_pos: last position reported
+        :param minimal_gap_len: minimal gap length, set a value > 0 to allow call gaps only with gaps of length larger then MINIMAL_GAP_LEN
         :return: True if a gap exist, False otherwise
         """
-        return cur_pos - (last_pos + 1) >= SamtoolsDepthStatsAnalyzer.MINIMAL_GAP_LEN
+        return cur_pos - (last_pos + 1) >= minimal_gap_len
 
     @staticmethod
-    def collect_inform(output_path, refseq_length, cov_cutoff=0):
+    def collect_inform(output_path, refseq_length, cov_cutoff=0, minimal_gap_len=1) -> Tuple[List[int], Dict[str, List[int]], Dict[str, list], Dict[str, int]]:
         """
         Collect coverage data from Samtools Depth output file, counting the bases covered, and discover gaps.
         :param output_path: Path to the output files
         :param cov_cutoff: coverage cutoff, only positions with coverage higher or equal to this cutoff are counted. Default 0.
         :param refseq_length: the dictionary contaning the length of genome segments
+        :param minimal_gap_len: minimal gap length
         :return: coverages over complete genome
         :return: segment_coverages, coverage over each genome segment
         :return: segment_gaps, no coverage regions in a genome segment
@@ -179,7 +180,7 @@ class SamtoolsDepthStatsAnalyzer(Tool):
                         # Update the statistics for current sequence (seqid) and update gap if exists
                         segment_coverages[seq_id].append(count)
                         segment_base_count[seq_id] += 1
-                        if SamtoolsDepthStatsAnalyzer.is_gap(pos, last_pos):
+                        if SamtoolsDepthStatsAnalyzer.is_gap(pos, last_pos, minimal_gap_len):
                             segment_gaps[seq_id].append((last_pos + 1, pos - 1))
 
                     else:
@@ -195,7 +196,7 @@ class SamtoolsDepthStatsAnalyzer(Tool):
                         segment_coverages[seq_id] = [count]
                         segment_base_count[seq_id] = 1
                         segment_gaps[seq_id] = []
-                        if SamtoolsDepthStatsAnalyzer.is_gap(pos, 0):
+                        if SamtoolsDepthStatsAnalyzer.is_gap(pos, 0, minimal_gap_len):
                             segment_gaps[seq_id].append((1, pos - 1))
 
                     last_seq_id = seq_id
@@ -207,13 +208,14 @@ class SamtoolsDepthStatsAnalyzer(Tool):
         return coverages, segment_coverages, segment_gaps, segment_base_count
 
     @staticmethod
-    def update_tail_gaps(segment_gaps, seq_id, last_pos, refseq_length=None):
+    def update_tail_gaps(segment_gaps, seq_id, last_pos, refseq_length=None, minimal_gap_len=1) -> None:
         """
         Update segment_gaps with the tail gaps or a open gap if length is unknown
         :param segment_gaps: dictionary contain gaps of segments
         :param seq_id: sequence id of which the gaps will be updated
         :param last_pos: the last position which is covered by reads
         :param refseq_length: the dictionary containing the length of each reference sequence segment
+        :param minimal_gap_len: minimal gap length
         :return: None
         """
         if refseq_length is None:
@@ -221,7 +223,7 @@ class SamtoolsDepthStatsAnalyzer(Tool):
         last_gap = None
         if refseq_length:
             if seq_id in refseq_length:
-                if refseq_length[seq_id] - last_pos > SamtoolsDepthStatsAnalyzer.MINIMAL_GAP_LEN:
+                if refseq_length[seq_id] - last_pos > minimal_gap_len:
                     last_gap = (last_pos + 1, refseq_length[seq_id])
 
             else:

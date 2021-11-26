@@ -3,10 +3,10 @@ from camel.app.command.command import Command
 from camel.app.error.invalidparametererror import InvalidParameterError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
-from camel.app.tools.samtools.samtools import Samtools
+from camel.app.tools.samtools.samtoolsbasepipeable import SamtoolsBasePipeable
 
 
-class SamtoolsSort(Samtools):
+class SamtoolsSort(SamtoolsBasePipeable):
     """
     Sorts alignment files.
     """
@@ -25,7 +25,7 @@ class SamtoolsSort(Samtools):
         """
         if 'BAM' not in self._tool_inputs:
             raise ValueError("No BAM input file found")
-        super(Samtools, self)._check_input()
+        super(SamtoolsBasePipeable, self)._check_input()
 
     def _check_parameters(self) -> None:
         """

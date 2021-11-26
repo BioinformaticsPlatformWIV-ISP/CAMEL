@@ -6,7 +6,7 @@ from camel.app.error.invalidinputspecificationerror import InvalidInputSpecifica
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.bcftools.bcftools import Bcftools
-from camel.app.tools.samtools.samtools import Samtools
+from camel.app.tools.samtools.samtoolsbase import SamtoolsBase
 
 
 class BcftoolsNorm(Bcftools):
