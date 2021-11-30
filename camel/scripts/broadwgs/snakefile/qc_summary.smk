@@ -81,24 +81,24 @@ rule generate_qc_summary:
         mean_coverage = float(wgs_metrics['MEAN_COVERAGE'])
         genome_territory = int(wgs_metrics['GENOME_TERRITORY'])
         lowest_20 = float(int(genome_territory) * 0.2)
-        #
-        # coverage_histo = lines[histogram_start_index+3:-1]
-        # coverage_histo = [l.rstrip().split("\t") for l in coverage_histo]
-        #
-        # cov_values = [int(l[1]) for l in coverage_histo]
-        # histo_cumsum = [sum(cov_values[:i+1]) for i, value in enumerate(cov_values)]
-        #
-        # tmp = histo_cumsum + [int(lowest_20)]
-        # tmp.sort()
-        # find_index = tmp.index(int(lowest_20))
-        # val_before = histo_cumsum[find_index - 1]
-        # val_after = histo_cumsum[find_index]
-        #
-        # cov_20 = (((val_after - lowest_20) / (val_after - val_before)) + find_index - 1)
-        #
+
+        coverage_histo = lines[histogram_start_index+3:-1]
+        coverage_histo = [l.rstrip().split("\t") for l in coverage_histo]
+
+        cov_values = [int(l[1]) for l in coverage_histo]
+        histo_cumsum = [sum(cov_values[:i+1]) for i, value in enumerate(cov_values)]
+
+        tmp = histo_cumsum + [int(lowest_20)]
+        tmp.sort()
+        find_index = tmp.index(int(lowest_20))
+        val_before = histo_cumsum[find_index - 1]
+        val_after = histo_cumsum[find_index]
+
+        cov_20 = (((val_after - lowest_20) / (val_after - val_before)) + find_index - 1)
+
         alignment_metrics['mean_coverage'] = mean_coverage
-        # fold80 = mean_coverage / cov_20
-        # alignment_metrics['evenness_coverage'] = fold80
+        fold80 = mean_coverage / cov_20
+        alignment_metrics['evenness_coverage'] = fold80
 
         # Variant calling metrics
         var_calling_file = Path(SnakemakeUtils.load_object(Path(input.variant_calling_metrics))[0].path)
