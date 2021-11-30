@@ -14,6 +14,7 @@ include: alignment.SNAKEFILE_ALIGNMENT
 include: bam_to_cram.SNAKEFILE_BAMTOCRAM
 include: variant_calling.SNAKEFILE_VARIANTCALLING
 include: qc.SNAKEFILE_QC
+include: qc.SNAKEFILE_QC_summary
 
 #########
 # Rules #
