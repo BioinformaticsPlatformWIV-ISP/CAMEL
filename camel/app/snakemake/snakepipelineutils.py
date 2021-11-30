@@ -154,7 +154,8 @@ class SnakePipelineUtils(object):
 
     @staticmethod
     def run_snakemake(snakefile: str, config_path: str, targets: List[Path], working_dir: Path,
-                      threads: int = 8, resources: Optional[Dict[str, Any]] = None) -> None:
+                      threads: int = 8, resources: Optional[Dict[str, Any]] = None,
+                      slurm_args: Optional[Dict[str, int]] = None) -> Command:
         """
         Helper function to run snakemake workflows.
         :param snakefile: Workflow snakefile
@@ -163,6 +164,7 @@ class SnakePipelineUtils(object):
         :param working_dir: Working directory
         :param threads: Number of threads to use
         :param resources: Dictionary of resources by keyword
+        :param slurm_args: Dictionary of slurm arguments
         :return: None
         """
         if not working_dir.exists():
@@ -174,14 +176,21 @@ class SnakePipelineUtils(object):
             *[str(x) for x in targets],
             '--snakefile', str(snakefile),
             '--configfile', str(config_path),
-            '--cores', str(threads),
+            '--cores', str(threads)
         ]
 
-        # Add resources when they are specified
+        # Add resources if they are specified
         if resources is not None:
             command_parts.append('--resources')
             for key, value in resources.items():
                 command_parts.append(f'{key}={value}')
+
+        # Add slurm submit file and parameters if specified
+        if slurm_args is not None:
+            command_parts.append(f'--cluster "{slurm_args["cluster"]}"')
+            for key, value in slurm_args.items():
+                if key != 'cluster':
+                    command_parts.append(f'--{key} {value}')
 
         # Create and run command
         command = Command(' '.join(command_parts))
@@ -190,6 +199,7 @@ class SnakePipelineUtils(object):
         print(f'- Stderr: -\n{command.stderr}')
         if command.returncode != 0:
             raise SnakemakeExecutionError(command.stdout, command.stderr)
+        return command
 
     @staticmethod
     def create_commands_section(tool_informs: List[Dict[str, Any]], working_dir: Path) -> HtmlReportSection:

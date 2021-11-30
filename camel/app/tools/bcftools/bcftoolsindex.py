@@ -3,10 +3,10 @@ from pathlib import Path
 from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliofile import ToolIOFile
-from camel.app.tools.samtools.samtools import Samtools
+from camel.app.tools.samtools.samtoolsbase import SamtoolsBase
 
 
-class BcftoolsIndex(Samtools):
+class BcftoolsIndex(SamtoolsBase):
     """
     Indexes bgzip compressed VCF files and BCF files.
     """
