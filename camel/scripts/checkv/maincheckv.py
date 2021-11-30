@@ -52,7 +52,7 @@ class MainCheckV(object):
         # Run CheckV
         checkv = CheckV(Camel.get_instance())
         checkv.add_input_files(input_dict)
-        checkv.run(self._args.working_dir)
+        checkv.run(Path(self._args.working_dir))
 
         # Create output report
         checkv_reporter = CheckVReporter(Camel.get_instance())
