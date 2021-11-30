@@ -3,10 +3,10 @@ from typing import List, Union
 
 from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
-from camel.app.tools.samtools.samtools import Samtools
+from camel.app.tools.samtools.samtoolsbase import SamtoolsBase
 
 
-class SamtoolsDepth(Samtools):
+class SamtoolsDepth(SamtoolsBase):
 
     """
     Calculates the coverage depth of an alignment.
@@ -28,7 +28,7 @@ class SamtoolsDepth(Samtools):
             raise ValueError("No BAM input file found")
         if len(self._tool_inputs['BAM']) != 1:
             raise ValueError("Exactly one BAM input file expected")
-        super(Samtools, self)._check_input()
+        super(SamtoolsBase, self)._check_input()
 
     def _execute_tool(self) -> None:
         """
