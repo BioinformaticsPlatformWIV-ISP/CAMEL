@@ -24,7 +24,11 @@ rule spa_typing_blastn:
         blastn = Blastn(Camel.get_instance())
         SnakemakeUtils.add_pickle_input(blastn, 'FASTA', Path(input.FASTA))
         blastn.add_input_files({'DB_BLAST': [ToolIOFile(Path(input.DB_BLAST))]})
-        blastn.update_parameters(output_format=SpaTyping.BLASTN_OUTPUT_FORMAT)
+        blastn.update_parameters(
+            output_format=SpaTyping.BLASTN_OUTPUT_FORMAT,
+            num_alignments=100_000,
+            dust='no',
+            task='blastn')
         step = Step(rule, blastn, Camel.get_instance(), params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(blastn, output)
