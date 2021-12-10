@@ -51,7 +51,7 @@ class CamelTestSuite(unittest.TestCase):
 
     def verify_output_files(self, tool: Tool, key: str, nb_files: int = 1) -> None:
         """
-        Verifies if the output files with the given key are created correctly.
+        Verifies if the output files with the specified number of files with the given key are created correctly.
         :param tool: Tool
         :param key: Output key
         :param nb_files: Number of output files that should be generated
