@@ -1,0 +1,81 @@
+from camel.app.camel import Camel
+from camel.app.tools.gatk4.gatk4 import GATK4
+
+
+class GATK4VariantRecalibrator(GATK4):
+    """
+    =============================
+    GATK VariantRecalibrator 4.1.9.0
+    =============================
+    Build a recalibration model to score variant quality for filtering purposes.
+
+    Required inputs:
+    ----------------
+    'VCF':                      ToolIOFile object. One or more VCF files containing variants
+    'FASTA_REF':                ToolIOFile object. Fasta Reference file
+    'TXT_tranches':             ToolIOFile object. The output tranches file used by ApplyRecalibration
+
+
+    Output:
+    -------
+    'TXT_RecalibrationTable':   ToolIOFile object. Text file containing recalibration data.
+
+    Mandatory parameters:
+    ---------------------
+    'use_annotation':           The names of the annotations which should be used for calculations. Multiple values allowed,
+                                comma-separated
+    'resources':                Resource datasets (VCF). Multiple values allowed, semi-colon separated
+                                Format: hapmap,known=false,training=true,truth=true,prior=15.0,hapmap_3.3.b37.vcf;omni,
+                                known=false,training=true,truth=true,prior=12.0,1000G_omni2.5.b37.vcf
+
+    """
+
+    def __init__(self, camel: Camel) -> None:
+        """
+        Initialize GATK4VariantRecalibrator tool.
+        :param camel: Camel instance
+        :return: None
+        """
+        super(GATK4VariantRecalibrator, self).__init__('gatk4 VariantRecalibrator', '4.1.9.0', camel)
+
+        self._required_inputs = ['BAM', 'FASTA_REF', 'VCF_resource', 'TXT_tranches']
+        self._output_type = 'TXT_RecalibrationTable'
+        self._specific_parameters = ['resources', 'use_annotation']
+
+    def _set_input(self) -> None:
+        """
+        Set input of GATK VariantRecalibrator tool
+        :return: None
+        """
+        # Set input of parent class sets VCF and FASTA_REF
+        super(GATK4VariantRecalibrator, self)._set_input()
+
+        if 'TXT_tranches' in self._tool_inputs:
+            self._input_string += f"--tranches-file {self._tool_inputs['TXT_tranches'][0].path} "
+
+    def _build_command(self) -> None:
+        """
+        Build the command to run tool
+        :return: None
+        """
+        super(GATK4VariantRecalibrator, self)._build_command()
+
+        resources_cmd = []
+        resources_av = self._parameters['resources'].value.split(';')
+
+        #split off file, rejoin other elements, construct command
+        #e.g. --resource:omni,known=false,training=true,truth=true,prior=12.0 1000G_omni2.5.b37.vcf
+        for resource in resources_av:
+            parts = resource.split(',')
+            info = ",".join(parts[:-1])
+            resources_cmd.append(f"{self._parameters['resources'].option}:{info} {parts[-1]}")
+
+        self._command.command += ' '.join(resources_cmd)
+
+        use_annotation_vals = ",".split(self._parameters['use_annotation'].value)
+        use_annotation_cmd = []
+        for val in use_annotation_vals:
+            use_annotation_cmd.append(f"{self._parameters['use_annotation'].option} {val}")
+
+        self._command.command += " ".join(use_annotation_cmd)
+
