@@ -193,5 +193,12 @@ class TestGATK4(CamelTestSuite):
         self.assertTrue(output_file.exists())
         self.assertGreater(output_file.stat().st_size, 0)
 
+    def test_gatk4_applyrecalibration(self) -> None:
+        """
+        Test GATK4ApplyRecalibration
+        :return: None
+        """
+
+
 if __name__ == '__main__':
     unittest.main()
