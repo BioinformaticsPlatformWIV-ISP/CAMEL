@@ -1,6 +1,7 @@
 from camel.app.camel import Camel
 from camel.app.tools.gatk4.gatk4 import GATK4
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 
 
 class GATK4IndexFeatureFile(GATK4):
@@ -28,7 +29,7 @@ class GATK4IndexFeatureFile(GATK4):
         """
         super(GATK4IndexFeatureFile, self).__init__('gatk4 GATK4IndexFeatureFile', '4.1.9.0', camel)
 
-        self._required_inputs = ['VCF', 'BED']
+        self._required_inputs = ['VCF', 'VCF_gz', 'BED']
         self._input_format = []
         self._output_type = 'IDX'
 
@@ -53,6 +54,15 @@ class GATK4IndexFeatureFile(GATK4):
         """
         self._input_string += f"-I {self._tool_inputs[self._input_format[0]][0].path} "
 
+    def _build_command(self) -> None:
+        """
+        Build the command to run tool
+        :return: None
+        """
+        super(GATK4IndexFeatureFile, self)._build_command()
+
+        if 'output' in self._parameters:
+            self._command.command += f"-o {self._parameters['output'].value}"
 
     def _set_output(self) -> None:
         """
@@ -64,7 +74,9 @@ class GATK4IndexFeatureFile(GATK4):
                 ToolIOFile(self.folder / self._parameters['output'].value)
             ]
         else:
-            self._tool_outputs[self._output_type] = [
-                ToolIOFile(self.folder / f"{self._tool_inputs[self._input_format[0]][0].path}.idx")
-            ]
-
+            if self._input_format[0] == 'VCF_gz':
+                self._tool_outputs[self._output_type] = [
+                    ToolIOFile(self.folder / f"{self._tool_inputs[self._input_format[0]][0].path}.tbi")]
+            else:
+                self._tool_outputs[self._output_type] = [
+                    ToolIOFile(self.folder / f"{self._tool_inputs[self._input_format[0]][0].path}.idx")]
