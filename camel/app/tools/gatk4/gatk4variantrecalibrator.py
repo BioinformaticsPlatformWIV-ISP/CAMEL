@@ -1,5 +1,6 @@
 from camel.app.camel import Camel
 from camel.app.tools.gatk4.gatk4 import GATK4
+from camel.app.io.tooliofile import ToolIOFile
 
 
 class GATK4VariantRecalibrator(GATK4):
@@ -13,12 +14,11 @@ class GATK4VariantRecalibrator(GATK4):
     ----------------
     'VCF':                      ToolIOFile object. One or more VCF files containing variants
     'FASTA_REF':                ToolIOFile object. Fasta Reference file
-    'TXT_tranches':             ToolIOFile object. The output tranches file used by ApplyRecalibration
-
 
     Output:
     -------
     'TXT_RecalibrationTable':   ToolIOFile object. Text file containing recalibration data.
+    'TXT_tranches':             ToolIOFile object. The output tranches file used by ApplyRecalibration
 
     Mandatory parameters:
     ---------------------
@@ -38,20 +38,20 @@ class GATK4VariantRecalibrator(GATK4):
         """
         super(GATK4VariantRecalibrator, self).__init__('gatk4 VariantRecalibrator', '4.1.9.0', camel)
 
-        self._required_inputs = ['BAM', 'FASTA_REF', 'VCF_resource', 'TXT_tranches']
+        self._required_inputs = ['VCF', 'FASTA_REF']
         self._output_type = 'TXT_RecalibrationTable'
         self._specific_parameters = ['resources', 'use_annotation']
 
-    def _set_input(self) -> None:
+    def _set_output(self) -> None:
         """
-        Set input of GATK VariantRecalibrator tool
-        :return: None
+        Set output of GATK VariantRecalibrator tool. Adds tranches file to parent class output.
+        :return:
         """
-        # Set input of parent class sets VCF and FASTA_REF
-        super(GATK4VariantRecalibrator, self)._set_input()
+        super(GATK4VariantRecalibrator, self)._set_output()
 
-        if 'TXT_tranches' in self._tool_inputs:
-            self._input_string += f"--tranches-file {self._tool_inputs['TXT_tranches'][0].path} "
+        self._tool_outputs['TXT_tranches'] = [
+            ToolIOFile(self.folder / self._parameters['tranches'].value)
+        ]
 
     def _build_command(self) -> None:
         """
@@ -68,14 +68,16 @@ class GATK4VariantRecalibrator(GATK4):
         for resource in resources_av:
             parts = resource.split(',')
             info = ",".join(parts[:-1])
-            resources_cmd.append(f"{self._parameters['resources'].option}:{info} {parts[-1]}")
+            resources_cmd.append(f" {self._parameters['resources'].option}:{info} {parts[-1]} ")
 
         self._command.command += ' '.join(resources_cmd)
 
-        use_annotation_vals = ",".split(self._parameters['use_annotation'].value)
+        #Add annotation values
+        #Multiple options possible, pass to tool in comma separated list
+        use_annotation_vals = self._parameters['use_annotation'].value.split(",")
         use_annotation_cmd = []
         for val in use_annotation_vals:
-            use_annotation_cmd.append(f"{self._parameters['use_annotation'].option} {val}")
+            use_annotation_cmd.append(f" {self._parameters['use_annotation'].option} {val} ")
 
         self._command.command += " ".join(use_annotation_cmd)
 
