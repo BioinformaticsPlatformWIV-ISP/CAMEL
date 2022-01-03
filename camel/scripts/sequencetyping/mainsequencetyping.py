@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import argparse
 import logging
+import shutil
 from pathlib import Path
 from typing import Sequence, Optional
 
@@ -41,6 +42,8 @@ class MainSequenceTyping(object):
         mainscriptutils.add_input_files_arguments(argument_parser)
         argument_parser.add_argument('--scheme-dir', required=True, type=str)
         argument_parser.add_argument('--detection-method', type=str, choices=['blast', 'srst2', 'kma'], default='blast')
+        argument_parser.add_argument(
+            '--output-fasta', type=str, help='output path for assembled contigs (only used for BLAST-based detection)')
         argument_parser.add_argument('--blastn-task', type=str, choices=['blastn', 'megablast'], default='megablast')
         argument_parser.add_argument('--srst2-max-unaligned-overlap', type=int, default=100)
         return argument_parser.parse_args(args)
@@ -61,6 +64,9 @@ class MainSequenceTyping(object):
         db_data = SequenceTypingUtils.parse_scheme_metadata(Path(self._args.scheme_dir))
         if self._args.detection_method == 'blast':
             fasta_file = self._helper.prepare_fasta_input(report, self._args)
+            # Save assembly if specified
+            if self._args.output_fasta is not None:
+                shutil.copyfile(str(fasta_file), self._args.output_fasta)
             output = self.__run_sequence_typing_blast(fasta_file, db_data['name'], Path(self._args.scheme_dir))
         elif self._args.detection_method == 'srst2':
             fastq_input = self._helper.prepare_fastq_input(report, self._args)
