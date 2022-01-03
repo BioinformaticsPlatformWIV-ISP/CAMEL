@@ -112,6 +112,28 @@ class TestGeneDetection(CamelTestSuite):
         main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)
 
+    def test_gene_detection_blast_illumina_fasta_out(self) -> None:
+        """
+        Tests the gene detection workflow with BLAST detection on Illumina data and saving of the assembly.
+        :return: None
+        """
+        path_report_out = self.running_dir / 'report' / 'report.html'
+        path_fasta_out = self.running_dir / 'report' / 'assembly.fasta'
+        args = [
+            '--fastq-pe', str(TestGeneDetection.input_fastq_by_key['illumina'][0]),
+            str(TestGeneDetection.input_fastq_by_key['illumina'][1]),
+            '--database-dir', str(TestGeneDetection.input_gene_detection_db),
+            '--output-html', str(path_report_out),
+            '--output-fasta', str(path_fasta_out),
+            '--output-dir', str(path_report_out.parent),
+            '--working-dir', str(self.running_dir),
+            '--assembly-kmers', '33,55'
+        ]
+        main = MainGeneDetection(args)
+        main.run()
+        self.assertGreater(path_report_out.stat().st_size, 0)
+        self.assertGreater(path_fasta_out.stat().st_size, 0)
+
     def test_gene_detection_blast_illumina_trim(self) -> None:
         """
         Tests the gene detection workflow with BLAST detection on Illumina data, including trimming.
