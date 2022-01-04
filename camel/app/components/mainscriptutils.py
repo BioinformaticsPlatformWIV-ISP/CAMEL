@@ -125,7 +125,7 @@ def determine_sample_name(args: argparse.Namespace) -> str:
     elif ('fasta' in args) and (args.fasta is not None):
         return Path(args.fasta).stem
     elif args.fastq_pe is not None:
-        names = args.fastq_pe_names if args.fastq_pe_names else [Path(Path(x).name) for x in args.fastq_pe]
+        names = [Path(x) for x in args.fastq_pe_names] if args.fastq_pe_names else [Path(x) for x in args.fastq_pe]
         try:
             # See if it matches a standard FASTQ format
             return FastqUtils.get_sample_name(names[0])
@@ -133,7 +133,7 @@ def determine_sample_name(args: argparse.Namespace) -> str:
             # Check if it matches a Galaxy format
             return GalaxyUtils.determine_sample_name_from_fq(names, True, 'NA')
     elif args.fastq_se is not None:
-        names = [Path(args.fastq_se_name if args.fastq_se_name else args.fastq_se).name]
+        names = [Path(args.fastq_se_name if args.fastq_se_name else args.fastq_se)]
         return GalaxyUtils.determine_sample_name_from_fq(names, False, 'NA')
     logging.warning("Cannot determine sample name from given arguments")
     return 'NA'
