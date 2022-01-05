@@ -5,6 +5,7 @@ from camel.app.components.pipelines import pipeutils
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.scripts.broadwgs import references
+from camel.scripts.broadwgs.snakefile import alignment
 
 camel = Camel.get_instance()
 
@@ -58,7 +59,7 @@ rule picard_add_readgroups:
     input:
         BAM = rules.bwa_aln_to_bam.output.BAM
     output:
-        BAM = Path(config['working_dir']) / 'alignment' / 'add_readgroups' / '{input_basename}.aligned_rgadded.bam.io'
+        BAM = Path(config['working_dir']) / alignment.OUTPUT_INTERMEDIATE_BAM
     params:
         working_dir = Path(config['working_dir']) / 'alignment' / 'add_readgroups',
         output_file = lambda wildcards: f'{wildcards.input_basename}.aligned_rgadded.bam',
@@ -91,7 +92,7 @@ rule picard_mark_duplicates_sort:
         BAM = expand(rules.picard_add_readgroups.output.BAM, input_basename = config['input_basenames'])
     output:
         BAM = Path(config['working_dir']) / 'alignment' / 'mark_duplicates' / f'{config["sample"]}.aligned.sorted.duplicates_marked.bam.io',
-        metrics = Path(config['working_dir']) / 'qc' / 'mark_duplicates' / "duplicate_metrics.txt.io"
+        metrics = Path(config['working_dir']) / alignment.OUTPUT_MARK_DUPLICATES_METRICS
     params:
         working_dir = Path(config['working_dir']) / 'alignment' / 'mark_duplicates',
         output_file = f'{config["sample"]}.aligned.unsorted.duplicates_marked.bam',
@@ -335,7 +336,7 @@ rule picard_gather_sorted_bam:
     input:
         bqsr_BAM_interval = aggregate_intervals_bam
     output:
-        BAM = Path(config['working_dir']) / "alignment" / "gather_bqsr_sorted_bam" / "bqsr_gathered_sorted.bam.io",
+        BAM = Path(config['working_dir']) / alignment.OUTPUT_ALIGNMENT_BAM,
     params:
         working_dir = Path(config['working_dir']) / "alignment" / "gather_bqsr_sorted_bam"
     threads: config["params_smk"]["threads_picard"]

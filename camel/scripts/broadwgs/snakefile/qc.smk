@@ -266,7 +266,7 @@ rule picard_validate_cram:
         CRAM = Path(config['working_dir']) / bam_to_cram.OUTPUT_BAMTOCRAM_CRAM,
         FASTA_REF = Path(config['working_dir']) / references.FASTA_GENOME_FILE
     output:
-        TXT_metrics = Path(config['working_dir']) / "qc" / "bamtocram" / "cram_validation_report.io",
+        TXT_metrics = Path(config['working_dir']) / bam_to_cram.OUTPUT_BAMTOCRAM_CRAM_metrics,
     params:
         working_dir = Path(config['working_dir']) / "qc" / "bamtocram"
     threads: config["params_smk"]["threads_cram"]

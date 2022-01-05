@@ -5,6 +5,7 @@ from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.scripts.broadwgs.snakefile import alignment
 from camel.scripts.broadwgs import references
+from camel.scripts.broadwgs.snakefile import variant_calling
 
 camel = Camel.get_instance()
 
@@ -91,8 +92,8 @@ rule picard_merge_vcfs:
     input:
         VCF = expand(rules.gatk4_haplotype_caller.output.VCF, scatter = ["{:04d}".format(s) for s in range(1, (config["rule_params"]["variant_calling"]["picard_create_interval_lists"]["scatter_count"] + 1))])
     output:
-        VCF = Path(config['working_dir']) / "variant_calling" / "merge_vcf" / "output.gVCF.gz.io",
-        VCF_index = Path(config['working_dir']) / "variant_calling" / "merge_vcf" / "output.vcf.gz.tbi"
+        VCF = Path(config['working_dir']) / variant_calling.OUTPUT_gVCF,
+        VCF_index = Path(config['working_dir']) / variant_calling.OUTPUT_gVCF_index
     params:
         working_dir = Path(config['working_dir']) / "variant_calling" / "merge_vcf"
     threads: config["params_smk"]["threads_picard"]
