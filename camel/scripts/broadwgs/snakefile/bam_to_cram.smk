@@ -6,13 +6,17 @@ from camel.app.error.snakemakeexecutionerror import SnakemakeExecutionError
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.scripts.broadwgs.snakefile import alignment
+from camel.scripts.broadwgs import references
 
 camel = Camel.get_instance()
 
 rule samtools_convert_to_cram:
+    """
+    Convert the aligned BAM to CRAM for storage.
+    """
     input:
         BAM = Path(config['working_dir']) / alignment.OUTPUT_ALIGNMENT_BAM,
-        FASTA_REF = Path(config['working_dir']) / "ref_input" / "fasta_reference_human_value_file.io",
+        FASTA_REF = Path(config['working_dir']) / references.FASTA_GENOME_FILE,
     output:
         CRAM = Path(config['working_dir']) / "bamtocram" / "convert" / "cram.io",
     params:
@@ -40,6 +44,9 @@ rule samtools_convert_to_cram:
         SnakemakeUtils.dump_tool_output(bam_to_cram, 'CRAM', Path(output.CRAM))
 
 rule checksum_cram:
+    """
+    Calculate the checksum of the CRAM file.
+    """
     input:
         CRAM = rules.samtools_convert_to_cram.output.CRAM,
     output:
@@ -58,9 +65,12 @@ rule checksum_cram:
             raise SnakemakeExecutionError(cmd_checksum.stdout, cmd_checksum.stderr)
 
 rule samtools_index_cram:
+    """
+    Index the CRAM file.
+    """
     input:
         CRAM = rules.samtools_convert_to_cram.output.CRAM,
-        FASTA_REF = Path(config['working_dir']) / "ref_input" / "fasta_reference_human_value_file.io",
+        FASTA_REF = Path(config['working_dir']) / references.FASTA_GENOME_FILE
     output:
         CRAI = Path(config['working_dir']) / "bamtocram" / "convert" / "cram.crai.io",
     params:

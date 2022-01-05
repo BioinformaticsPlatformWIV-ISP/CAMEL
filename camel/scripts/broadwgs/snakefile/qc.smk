@@ -3,11 +3,16 @@ from pathlib import Path
 from camel.app.camel import Camel
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
+from camel.scripts.broadwgs import references
 from camel.scripts.broadwgs.snakefile import alignment, bam_to_cram, variant_calling
 
 camel = Camel.get_instance()
 
+
 rule picard_quality_yield:
+    """
+    Collect metrics about reads that pass quality thresholds and Illumina-specific filters.
+    """
     input:
         BAM = Path(config['working_dir']) / alignment.OUTPUT_INTERMEDIATE_BAM,
     output:
@@ -29,6 +34,9 @@ rule picard_quality_yield:
         SnakemakeUtils.dump_tool_outputs(quality_yield, output)
 
 rule picard_unsorted_RG_quality:
+    """
+    Collect multiple QC metrics for aligned, unsorted read-groups.
+    """
     input:
         BAM = Path(config['working_dir']) / alignment.OUTPUT_INTERMEDIATE_BAM,
     output:
@@ -61,9 +69,12 @@ rule picard_unsorted_RG_quality:
         step.run_step()
 
 rule picard_RG_quality:
+    """
+    Collect multiple QC metrics for aligned, sorted read-groups.
+    """
     input:
         BAM = Path(config["working_dir"]) / alignment.OUTPUT_ALIGNMENT_BAM,
-        FASTA_REF = Path(config['working_dir']) / "ref_input" / "fasta_reference_human_value_file.io",
+        FASTA_REF = Path(config['working_dir']) / references.FASTA_GENOME_FILE,
     output:
         multiext(str(Path(config['working_dir']) / "qc" / "RG_quality" / f'{config["sample"]}.readgroup'),
         ".alignment_summary_metrics",
@@ -124,9 +135,12 @@ rule picard_RG_quality:
 
 
 rule picard_aggregation_metrics:
+    """
+    Collect aggregation metrics
+    """
     input:
         BAM = Path(config['working_dir']) / alignment.OUTPUT_ALIGNMENT_BAM,
-        FASTA_REF = Path(config['working_dir']) / "ref_input" / "fasta_reference_human_value_file.io",
+        FASTA_REF = Path(config['working_dir']) / references.FASTA_GENOME_FILE,
     output:
         multiext(str(Path(config['working_dir']) / "qc" / "aggregation_metrics" / f'{config["sample"]}.agg'),
         ".alignment_summary_metrics",
@@ -161,9 +175,12 @@ rule picard_aggregation_metrics:
         step.run_step()
 
 rule picard_RG_checksum:
+    """
+    Create a hash code based on the read groups (RG).
+    """
     input:
         BAM = Path(config['working_dir']) / alignment.OUTPUT_ALIGNMENT_BAM,
-        FASTA_REF = Path(config['working_dir']) / "ref_input" / "fasta_reference_human_value_file.io",
+        FASTA_REF = Path(config['working_dir']) / references.FASTA_GENOME_FILE,
     output:
         TXT_checksum = Path(config['working_dir']) / "qc" / "RG_checksum" / f'{config["sample"]}.bam.read_group_md5',
     params:
@@ -183,10 +200,13 @@ rule picard_RG_checksum:
 
 
 rule picard_wgs_metrics:
+    """
+    Collect metrics about coverage and performance of WGS experiments.
+    """
     input:
         BAM = Path(config['working_dir']) / alignment.OUTPUT_ALIGNMENT_BAM,
-        FASTA_REF = Path(config['working_dir']) / "ref_input" / "fasta_reference_human_value_file.io",
-        COVERAGE_INTERVALS = Path(config['working_dir']) / "ref_input" / "coverage_interval_list.io"
+        FASTA_REF = Path(config['working_dir']) / references.FASTA_GENOME_FILE,
+        COVERAGE_INTERVALS = Path(config['working_dir']) / references.COVERAGE_INTERVALS
     output:
         TXT_metrics = Path(config['working_dir']) / "qc" / "wgs_metrics" / f'{config["sample"]}.wgs.metrics.txt'
     params:
@@ -210,10 +230,13 @@ rule picard_wgs_metrics:
         step.run_step()
 
 rule picard_raw_wgs_metrics:
+    """
+    Collect whole genome sequencing-related metrics
+    """
     input:
         BAM = Path(config['working_dir']) / alignment.OUTPUT_ALIGNMENT_BAM,
-        FASTA_REF = Path(config['working_dir']) / "ref_input" / "fasta_reference_human_value_file.io",
-        COVERAGE_INTERVALS = Path(config['working_dir']) / "ref_input" / "coverage_interval_list.io"
+        FASTA_REF = Path(config['working_dir']) / references.FASTA_GENOME_FILE,
+        COVERAGE_INTERVALS = Path(config['working_dir']) / references.COVERAGE_INTERVALS
     output:
         TXT_metrics = Path(config['working_dir']) / "qc" / "wgs_metrics" / f'{config["sample"]}.raw.wgs.metrics.txt'
     params:
@@ -236,9 +259,12 @@ rule picard_raw_wgs_metrics:
 
 
 rule picard_validate_cram:
+    """
+    Validate the format of CRAM file
+    """
     input:
         CRAM = Path(config['working_dir']) / bam_to_cram.OUTPUT_BAMTOCRAM_CRAM,
-        FASTA_REF = Path(config['working_dir']) / "ref_input" / "fasta_reference_human_value_file.io",
+        FASTA_REF = Path(config['working_dir']) / references.FASTA_GENOME_FILE
     output:
         TXT_metrics = Path(config['working_dir']) / "qc" / "bamtocram" / "cram_validation_report.io",
     params:
@@ -263,11 +289,14 @@ rule picard_validate_cram:
         SnakemakeUtils.dump_tool_output(val_cram, 'TXT_report', Path(output.TXT_metrics))
 
 rule picard_variant_calling_metrics:
+    """
+    Collects per-sample and aggregate (spanning all samples) metrics from the provided VCF file.
+    """
     input:
         VCF = Path(config['working_dir']) / variant_calling.OUTPUT_gVCF,
-        VCF_dbsnp = Path(config['working_dir']) / "ref_input" / "dbsnp_vcf.io",
-        DICT_GENOME = Path(config['working_dir']) / "ref_input" / "dictionary_genome_human.io",
-        EVALUATION_INTERVALS = Path(config['working_dir']) / "ref_input" / "evaluation_interval_list.io",
+        VCF_dbsnp = Path(config['working_dir']) / references.DBSNP,
+        DICT_GENOME = Path(config['working_dir']) / references.DICT_GENOME,
+        EVALUATION_INTERVALS = Path(config['working_dir']) / references.EVALUATION_INTERVALS,
     output:
         TXT_report = Path(config['working_dir']) / "qc" / "variant_calling_metrics" / f'{config["sample"]}.variant_calling_metrics.io',
     params:

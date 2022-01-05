@@ -28,10 +28,9 @@ job_properties = read_job_properties(jobscript)
 cmdline = ["sbatch"]
 
 # setting memory. setting to 0 grants all memory on the machine, which is the exact opposite.
+mem_mb = "1"
 if 'mem_mb' in job_properties["resources"]:
     mem_mb = job_properties["resources"]["mem_mb"]
-else:
-    mem_mb = "1"
 
 threads = job_properties["threads"]
 
@@ -39,9 +38,9 @@ threads = job_properties["threads"]
 grestmpdsk  = ""
 if 'tmpdsk' in job_properties["resources"]:
     tmpdsk = job_properties["resources"]["tmpdsk"]
-    grestmpdsk = " --gres=tmpdsk:{tmpdsk}"
+    grestmpdsk = f" --gres=tmpdsk:{tmpdsk}"
 
-# adding 15s to begin time to ensure jobs don't get jumbled up before running.
+# adding 60s to begin time to ensure jobs don't get jumbled up before running.
 slurm_args = f" --mem {mem_mb}M -c {threads} --begin=now+60 {grestmpdsk} "
 cmdline.append(slurm_args)
 

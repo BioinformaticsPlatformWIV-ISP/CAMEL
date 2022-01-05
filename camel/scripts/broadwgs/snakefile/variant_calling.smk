@@ -4,12 +4,16 @@ from camel.app.camel import Camel
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.scripts.broadwgs.snakefile import alignment
+from camel.scripts.broadwgs import references
 
 camel = Camel.get_instance()
 
 rule picard_create_interval_lists:
+    """
+    Create intervallists for variant calling. Output is an ToolIOFile object containing all interval lists created
+    """
     input:
-        TXT_intervals = Path(config['working_dir']) / "ref_input" / "calling_intervals.io"
+        TXT_intervals = Path(config['working_dir']) / references.CALLING_INTERVALS
     output:
         TXT_intervalLists = Path(config['working_dir']) / "variant_calling" / "varcalling_intervals" / "interval_lists.io"
     params:
@@ -33,21 +37,27 @@ rule picard_create_interval_lists:
 
 
 rule create_io_intervalLists:
-   input:
+    """
+    Generate separate io files for the interval list files (1 ToolIOFile object = 1 interval list)
+    """
+    input:
        TXT_intervalLists = rules.picard_create_interval_lists.output.TXT_intervalLists
-   output:
+    output:
        TXT_intervalList = Path(config['working_dir']) / "variant_calling" / "varcalling_intervals" / f'temp_{{scatter}}_of_{config["rule_params"]["variant_calling"]["picard_create_interval_lists"]["scatter_count"]}' / "scattered.interval_list.io",
-   run:
+    run:
        for interval_list in SnakemakeUtils.load_object(Path(input.TXT_intervalLists)):
            intervalList_io = f'{interval_list.path}.io'
            if intervalList_io.split("/")[-2].split("_")[1] == wildcards.scatter:
                 SnakemakeUtils.dump_object([interval_list], Path(intervalList_io))
 
 rule gatk4_haplotype_caller:
+    """
+    Run Haplotype Caller on each interval
+    """
     input:
         BAM = Path(config['working_dir']) / alignment.OUTPUT_ALIGNMENT_BAM,
         TXT_intervals = rules.create_io_intervalLists.output.TXT_intervalList,
-        FASTA_REF = Path(config['working_dir']) / "ref_input" / "fasta_reference_human_value_file.io",
+        FASTA_REF = Path(config['working_dir']) / references.FASTA_GENOME_FILE,
     output:
         VCF = Path(config['working_dir']) / "variant_calling" / "haplotype_caller" / f'temp_{{scatter}}_of_{config["rule_params"]["variant_calling"]["picard_create_interval_lists"]["scatter_count"]}.vcf.gz.io',
         bamout = Path(config['working_dir']) / "variant_calling" / "haplotype_caller" / f'temp_{{scatter}}_of_{config["rule_params"]["variant_calling"]["picard_create_interval_lists"]["scatter_count"]}.bamout.bam'
@@ -75,6 +85,9 @@ rule gatk4_haplotype_caller:
         SnakemakeUtils.dump_tool_output(hc, 'VCF', Path(output.VCF))
 
 rule picard_merge_vcfs:
+    """
+    Merge VCF outputs from Haplotype caller (ran over several intevals)
+    """
     input:
         VCF = expand(rules.gatk4_haplotype_caller.output.VCF, scatter = ["{:04d}".format(s) for s in range(1, (config["rule_params"]["variant_calling"]["picard_create_interval_lists"]["scatter_count"] + 1))])
     output:

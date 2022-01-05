@@ -1,16 +1,21 @@
 from pathlib import Path
-
+import logging
 from camel.app.camel import Camel
 from camel.app.components.pipelines import pipeutils
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
+from camel.scripts.broadwgs import references
 
 camel = Camel.get_instance()
 
+
 rule bwa_aln_to_bam:
+    """
+    Align the input fastq files with BWA and pipe the output (SAM) to Samtools to create a BAM file
+    """
     input:
         FASTQ = Path(config['working_dir']) / 'input' / "{input_basename}.fastq.gz.io",
-        FASTA_GENOME = Path(config['working_dir']) / "ref_input" / "fasta_reference_human_value.io",
+        FASTA_GENOME = Path(config['working_dir']) / references.FASTA_GENOME,
     output:
         BAM = Path(config['working_dir']) / "alignment" / "mapping" / "{input_basename}.aligned.bam.io",
     params:
@@ -46,6 +51,10 @@ rule bwa_aln_to_bam:
         SnakemakeUtils.dump_tool_output(sam_to_bam, "BAM", Path(output.BAM))
 
 rule picard_add_readgroups:
+    """
+    Add readgroup information to the BAM files. In Broad's WDL pipeline, the input files are in the uBAM format and 
+    already contain this information. ReadGroup information is required for some of the downstream steps.
+    """
     input:
         BAM = rules.bwa_aln_to_bam.output.BAM
     output:
@@ -117,9 +126,12 @@ rule picard_mark_duplicates_sort:
         SnakemakeUtils.dump_tool_output(sort_sam, "BAM", Path(output.BAM))
 
 rule picard_set_tags:
+    """
+    There were discrepancies in the NM tags set by BWA, so this function recalculates them
+    """
     input:
         BAM = rules.picard_mark_duplicates_sort.output.BAM,
-        FASTA_REF = Path(config['working_dir']) / "ref_input" / "fasta_reference_human_value_file.io"
+        FASTA_REF = Path(config['working_dir']) / references.FASTA_GENOME_FILE
     output:
         BAM = Path(config['working_dir']) / 'alignment' / 'set_tags' / 'aligned_rgadded_dup-removed_settags.bam.io'
     params:
@@ -140,13 +152,76 @@ rule picard_set_tags:
         step.run_step()
         SnakemakeUtils.dump_tool_output(set_tags, "BAM", Path(output.BAM))
 
+checkpoint create_intervalfiles:
+    """
+    Generate interval files for everything BQSR-related. For efficiency, these steps will be run over several intervals 
+    in parallel and gathered afterwards. Using a checkpoint will trigger reevaluation of the DAG, allowing for an unknown 
+    number of output files. 
+    Note: The number of intervals (interval files) is not likely to change in the near future, but implementing it in this
+    way, makes it more clean and flexible if things would change
+    """
+    input:
+        DICT_GENOME = Path(config['working_dir']) / references.DICT_GENOME
+    output:
+        TXT_intervals =  directory(Path(config['working_dir']) / "alignment" / "intervals")
+    params:
+        working_dir = Path(config['working_dir']) / "alignment" / "intervals",
+        output_txt = Path(config['working_dir']) / "alignment" / "intervals" / "sequence_intervals"
+    run:
+        Path(params.working_dir).mkdir(exist_ok=True)
+
+        dict_genome = SnakemakeUtils.load_object(Path(input.DICT_GENOME))[0].path
+        with open(dict_genome, "r") as ref_dict_file:
+            sequence_tuple_list = []
+            longest_sequence = 0
+            for line in ref_dict_file:
+                if line.startswith("@SQ"):
+                    line_split = line.split("\t")
+                    #Tuple: (Sequence_Name (SN), Sequence_Length(SL))
+                    sequence_tuple_list.append((line_split[1].split("SN:")[1], int(line_split[2].split("LN:")[1])))
+            longest_sequence = sorted(sequence_tuple_list, key=lambda x: x[1], reverse=True)[0][1]
+
+        # We are adding this to the intervals because hg38 has contigs named with embedded colons and a bug in GATK strips off
+        # the last element after a :, so we add this as a sacrificial element.
+        hg38_protection_tag = ":1+"
+        # Initialize the interval with the first sequence
+        interval = [sequence_tuple_list[0][0] + hg38_protection_tag]
+        intervals = []
+
+        # Initialize sequence length
+        temp_size = sequence_tuple_list[0][1]
+        for sequence_tuple in sequence_tuple_list[1:]:
+            # Maximal size of an interval should be smaller than the longest contiguous sequence in the sequence tuple
+            # list, i.c. chr 1
+            if temp_size + sequence_tuple[1] <= longest_sequence:
+                temp_size += sequence_tuple[1]
+                interval.append(sequence_tuple[0] + hg38_protection_tag)
+            else:
+                intervals.append(interval)
+                interval = [sequence_tuple[0] + hg38_protection_tag]
+                temp_size = sequence_tuple[1]
+        # Add the unmapped sequences as a separate line (from Broad wdl pipeline)
+        interval.append("unmapped")
+        # Add the last interval (including unmapped) to the list of intervals
+        intervals.append(interval)
+
+        # Generate the interval files
+        files = []
+        for n, interval in enumerate(intervals):
+            with open(f'{params.output_txt}_{n}.list', "w") as fh:
+                fh.write("\n".join(interval))
+            SnakemakeUtils.dump_object([ToolIOFile(Path(f'{params.output_txt}_{n}.list'))], Path(f'{params.output_txt}_{n}.list.io'))
+
 rule gatk4_baserecalibrator:
+    """
+    Run baserecalibrator over the intervals created by create_intervalfiles.
+    """
     input:
         BAM = rules.picard_set_tags.output.BAM,
-        FASTA_REF = Path(config['working_dir']) / "ref_input" / "fasta_reference_human_value_file.io",
-        VCF_KNOWN_SNPS = Path(config['working_dir']) / "ref_input" / "dbsnp_vcf.io",
-        VCF_KNOWN_INDELS = Path(config['working_dir']) / "ref_input" / "known_indels_vcf.io",
-        TXT_intervals = Path(config['working_dir']) / 'input' / 'interval_files' / "interval_{i}.intervals.io"
+        FASTA_REF = Path(config['working_dir']) / references.FASTA_GENOME_FILE,
+        VCF_KNOWN_SNPS = Path(config['working_dir']) / references.DBSNP,
+        VCF_KNOWN_INDELS = Path(config['working_dir']) / references.KNOWN_INDELS,
+        TXT_intervals = Path(config['working_dir']) / "alignment" / "intervals" / "sequence_intervals_{i}.list.io"
     output:
         TXT_RecalibrationTable = Path(config['working_dir']) / "alignment" / "bqsr" / "{i}_recal_data.csv.io"
     params:
@@ -159,11 +234,7 @@ rule gatk4_baserecalibrator:
         from camel.app.tools.gatk4.gatk4baserecalibrator import GATK4BaseRecalibrator
 
         bqsr = GATK4BaseRecalibrator(camel)
-        SnakemakeUtils.add_pickle_input(bqsr, "BAM", Path(input.BAM))
-        SnakemakeUtils.add_pickle_input(bqsr, "FASTA_REF", Path(input.FASTA_REF))
-        SnakemakeUtils.add_pickle_input(bqsr, "VCF_KNOWN_SNPS", Path(input.VCF_KNOWN_SNPS))
-        SnakemakeUtils.add_pickle_input(bqsr, "VCF_KNOWN_INDELS", Path(input.VCF_KNOWN_INDELS))
-        SnakemakeUtils.add_pickle_input(bqsr, "TXT_intervals", Path(input.TXT_intervals))
+        SnakemakeUtils.add_pickle_inputs(bqsr, input)
 
         step = Step(rule, bqsr, camel, params.working_dir)
         bqsr.update_parameters(
@@ -173,9 +244,23 @@ rule gatk4_baserecalibrator:
         step.run_step()
         SnakemakeUtils.dump_tool_output(bqsr, "TXT_RecalibrationTable", Path(output.TXT_RecalibrationTable))
 
+def aggregate_intervals_reports(wildcards):
+    """
+    Input function for the rule gatk4_gather_bqsr_reports. Re-evaluated upon completion of the checkpoint.
+    """
+    # Ensure that snakemake records the checkpoint as direct dependency of the rule gatk4_gather_bqsr_reports
+    checkpoint_output = Path(checkpoints.create_intervalfiles.get(**wildcards).output[0])
+    # Retrieve values of wildcard i based on all sequence_intervals_{i}.list.io files created in the checkpoint output directory
+    # to expand output of gatk4_baserecalibrator
+    return expand(Path(rules.gatk4_baserecalibrator.output.TXT_RecalibrationTable),
+                  i = glob_wildcards(Path.joinpath(checkpoint_output, "sequence_intervals_{i}.list.io")).i)
+
 rule gatk4_gather_bqsr_reports:
+    """
+    Function to gather the BQSR reports created over several intervals.
+    """
     input:
-        bqsr_report_interval = expand(rules.gatk4_baserecalibrator.output.TXT_RecalibrationTable, i = config["intervals"])
+        bqsr_report_interval = aggregate_intervals_reports
     output:
         bqsr_report_gathered = Path(config['working_dir']) / "alignment" / "gather_bqsr_reports" / "recal_data.csv.io",
     params:
@@ -188,9 +273,11 @@ rule gatk4_gather_bqsr_reports:
 
         Path(params.working_dir).mkdir(exist_ok=True)
 
+        input_bqsr_reports = aggregate_intervals_reports(wildcards)
+
         gather_bqsr = GATK4GatherBQSRReports(camel)
         step = Step(rule, gather_bqsr, camel, params.working_dir)
-        gather_bqsr.add_input_files({"TXT_intervals": [SnakemakeUtils.load_object(Path(path))[0] for path in input.bqsr_report_interval]})
+        gather_bqsr.add_input_files({"TXT_intervals": [SnakemakeUtils.load_object(Path(path))[0] for path in input_bqsr_reports]})
         gather_bqsr.update_parameters(
             output = "recal_data.csv"
         )
@@ -198,15 +285,18 @@ rule gatk4_gather_bqsr_reports:
         SnakemakeUtils.dump_tool_output(gather_bqsr, 'TXT_RecalibrationTable', Path(output.bqsr_report_gathered))
 
 rule gatk4_apply_bqsr:
+    """
+    Recalibrate the base qualities of the input reads based on the recalibration table produced by gatk4_baserecalibrator
+    """
     input:
-        BAM = rules.gatk4_baserecalibrator.input.BAM, # Ensure it gets same input as baserecalibrator
+        BAM = rules.gatk4_baserecalibrator.input.BAM, # Same input as baserecalibrator
         BQSR = rules.gatk4_gather_bqsr_reports.output.bqsr_report_gathered,
-        FASTA_REF = Path(config['working_dir']) / "ref_input" / "fasta_reference_human_value_file.io",
-        TXT_intervals = Path(config['working_dir']) / 'input' / 'interval_files' / "interval_{i}.intervals.io"
+        FASTA_REF = Path(config['working_dir']) / references.FASTA_GENOME_FILE,
+        TXT_intervals = rules.gatk4_baserecalibrator.input.TXT_intervals
     output:
         BAM = Path(config['working_dir']) / "alignment" / "apply_bqsr" / "{i}_sorted.bam.io"
     params:
-        working_dir = lambda wildcards: Path(config['working_dir']) / "alignment" / "apply_bqsr",
+        working_dir = Path(config['working_dir']) / "alignment" / "apply_bqsr",
         output_file = lambda wildcards: f'{wildcards.i}_sorted.bam'
     threads: config["params_smk"]["threads_apply_bqsr"]
     resources:
@@ -226,9 +316,24 @@ rule gatk4_apply_bqsr:
         step.run_step()
         SnakemakeUtils.dump_tool_output(apply_bqsr, "BAM", Path(output.BAM))
 
+def aggregate_intervals_bam(wildcards):
+    """
+    Input function for the rule picard_gather_sorted_bam. Re-evaluated upon completion of the checkpoint.
+    """
+    # Ensure that snakemake records the checkpoint as direct dependency of the rule picard_gather_sorted_bam
+    checkpoint_output = Path(checkpoints.create_intervalfiles.get(**wildcards).output[0])
+    # Retrieve values of wildcard i based on all sequence_intervals_{i}.list.io files created in the checkpoint output directory
+    # to expand on the output of gatk4_apply_bqsr
+    return expand(Path(rules.gatk4_apply_bqsr.output.BAM),
+                  i = glob_wildcards(Path.joinpath(checkpoint_output, "sequence_intervals_{i}.list.io")).i)
+
 rule picard_gather_sorted_bam:
+    """
+    Gather the BAM files created over multiple intervals by gatk4_apply_bqsr.
+    This Base-score recalibrated, gathered, sorted BAM is the final output of the alignment step.
+    """
     input:
-        bqsr_BAM_interval = expand(rules.gatk4_apply_bqsr.output.BAM, i = config["intervals"])
+        bqsr_BAM_interval = aggregate_intervals_bam
     output:
         BAM = Path(config['working_dir']) / "alignment" / "gather_bqsr_sorted_bam" / "bqsr_gathered_sorted.bam.io",
     params:

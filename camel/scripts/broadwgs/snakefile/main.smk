@@ -21,6 +21,9 @@ include: qc.SNAKEFILE_QC_summary
 #########
 
 rule all:
+    """
+    Final rule to gather all output files
+    """
     input:
         CRAM = Path(config['final_output_dir']) / f'{config["sample"]}.cram',
         CRAM_checksum = Path(config['final_output_dir']) / f'{config["sample"]}.cram.md5',
@@ -28,8 +31,10 @@ rule all:
 
         VCF = Path(config['final_output_dir']) / f'{config["sample"]}.gVCF.gz',
 
-
-rule move_output:
+rule link_and_clean_output:
+    """
+    Create hard links to the final output files and, if pipeline is not run in debug mode, remove intermediary files
+    """
     input:
         CRAM = Path(config['working_dir']) / bam_to_cram.OUTPUT_BAMTOCRAM_CRAM,
         CRAM_checksum = Path(config['working_dir']) / bam_to_cram.OUTPUT_BAMTOCRAM_CRAM_checksum,
@@ -94,19 +99,10 @@ rule prepare_references_io:
         SnakemakeUtils.dump_object([ToolIOFile(Path(input.coverage_interval_list))], Path(output.COVERAGE_INTERVALS))
         SnakemakeUtils.dump_object([ToolIOFile(Path(input.evaluation_interval_list))], Path(output.EVALUATION_INTERVALS))
 
-rule prepare_interval_pickles:
-    input:
-        interval_files = expand(Path(config['intervals_location']) / 'interval_{i}.intervals', i = config['intervals'])
-    output:
-        pickled_interval_files = expand(Path(config['working_dir']) / 'input' / 'interval_files' / 'interval_{i}.intervals.io', i = config['intervals'])
-    params:
-        output_dir = Path(config['working_dir']) / 'input' / 'interval_files'
-    run:
-        for interval_file in input.interval_files:
-            SnakemakeUtils.dump_object([ToolIOFile(Path(interval_file))], Path(params.output_dir) / f"{Path(interval_file).name}.io")
-
-
 rule move_qc:
+    """
+    Move all QC output files to final output QC directory
+    """
     input:
         TXT = expand(Path(config['working_dir']) / "qc" / "quality_yield" / "{fastq}.unmapped.quality_yield_metrics.io", fastq = config["input_basenames"]),
 
