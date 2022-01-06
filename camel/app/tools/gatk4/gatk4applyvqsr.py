@@ -11,25 +11,32 @@ class GATK4ApplyVQSR(GATK4):
 
     Required inputs:
     ----------------
-    'TXT_recal':            ToolIOFile object. The input recal file used by ApplyRecalibration
-    'VCF':                  ToolIOFile object. One or more VCF files containing variants
+    'TXT_RecalibrationTable':   ToolIOFile object. The input recal file used by ApplyRecalibration
+    'VCF':                      ToolIOFile object. One or more VCF files containing variants
 
     Output:
     -------
     'VCF'       The output filtered and recalibrated VCF file in which each variant is annotated with its VQSLOD value
 
-    Mandatory parameters:
-    ---------------------
-    use_annotation:             The names of the annotations which should be used for calculations
     """
 
     def __init__(self, camel: Camel) -> None:
         """
-        Initialize GATKBaseRecalibrator tool.
+        Initialize GATKApplyVQSR tool.
         :param camel: Camel instance
         :return: None
         """
-        super(GATK4BaseRecalibrator, self).__init__('gatk4 BaseRecalibrator', '4.1.9.0', camel)
+        super(GATK4ApplyVQSR, self).__init__('gatk4 ApplyVQSR', '4.1.9.0', camel)
 
-        self._required_inputs = ['VCF', 'TXT_recal']
-        self._output_type = 'TXT_RecalibrationTable'
+        self._required_inputs = ['VCF', 'TXT_RecalibrationTable']
+        self._output_type = 'VCF'
+
+    def _set_input(self) -> None:
+        """
+        Set GATKApplyVQSR input. Adds recalibration table to parent class input
+        :return: None
+        """
+        super(GATK4ApplyVQSR, self)._set_input()
+
+        if 'TXT_RecalibrationTable' in self._tool_inputs:
+            self._input_string += f"--recal-file {self._tool_inputs['TXT_RecalibrationTable'][0].path} "

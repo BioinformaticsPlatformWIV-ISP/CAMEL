@@ -10,9 +10,12 @@ from camel.app.tools.gatk4.gatk4fastaalternatereferencemaker import GATK4FastaAl
 from camel.app.tools.gatk4.gatk4gatherbqsrreports import GATK4GatherBQSRReports
 from camel.app.tools.gatk4.gatk4genotypegvcfs import GATK4GenotypeGVCFs
 from camel.app.tools.gatk4.gatk4haplotypecaller import GATK4HaplotypeCaller
+from camel.app.tools.gatk4.gatk4indexfeaturefile import GATK4IndexFeatureFile
 from camel.app.tools.gatk4.gatk4selectvariants import GATK4SelectVariants
 from camel.app.tools.gatk4.gatk4validatevariants import GATK4ValidateVariants
 from camel.app.tools.gatk4.gatk4variantfiltration import GATK4VariantFiltration
+from camel.app.tools.gatk4.gatk4variantrecalibrator import GATK4VariantRecalibrator
+from camel.app.tools.gatk4.gatk4applyvqsr import GATK4ApplyVQSR
 
 
 class TestGATK4(CamelTestSuite):
@@ -28,6 +31,7 @@ class TestGATK4(CamelTestSuite):
     FILE_VCF = ToolIOFile(test_file_dir / "var1.vcf")
     FILE_KNOWN_SITES = ToolIOFile(test_file_dir / "known_sites.vcf.gz")
     FILE_TXT_INTERVALS = ToolIOFile(test_file_dir / "interval_file.intervals")
+    FILE_RESOURCES = ToolIOFile(test_file_dir / "resource.vcf.gz")
 
     def test_gatk4_applybqsr(self) -> None:
         """
@@ -193,12 +197,58 @@ class TestGATK4(CamelTestSuite):
         self.assertTrue(output_file.exists())
         self.assertGreater(output_file.stat().st_size, 0)
 
-    def test_gatk4_applyrecalibration(self) -> None:
+    def test_gatk4_indexfeaturefile(self) -> None:
         """
-        Test GATK4ApplyRecalibration
+        Test GATK4IndexFeatureFile
         :return: None
         """
+        indexfeaturefile = GATK4IndexFeatureFile(self.camel)
+        indexfeaturefile.add_input_files({
+            'VCF': [TestGATK4.FILE_VCF]
+        })
+        indexfeaturefile.run(self.running_dir)
+        self.assertTrue('IDX' in indexfeaturefile.tool_outputs, "No IDX output generated")
+        output_file = Path(indexfeaturefile.tool_outputs['IDX'][0].path)
+        self.assertTrue(output_file.exists())
+        self.assertGreater(output_file.stat().st_size, 0)
 
+    def test_gatk4_indexfeaturefile_gz(self) -> None:
+        indexfeaturefile_gz = GATK4IndexFeatureFile(self.camel)
+        indexfeaturefile_gz.add_input_files({
+            'VCF_gz': [TestGATK4.FILE_gVCF1]
+        })
+        indexfeaturefile_gz.run(self.running_dir)
+        self.assertTrue('IDX' in indexfeaturefile_gz.tool_outputs, "No IDX output generated")
+        output_file_gz = Path(indexfeaturefile_gz.tool_outputs['IDX'][0].path)
+        self.assertTrue(output_file_gz.exists())
+        self.assertGreater(output_file_gz.stat().st_size, 0)
+
+    def test_gatk4_variantrecalibrator(self) -> None:
+        """
+        Test GATK4VariantRecalibrator
+        :return: None
+        """
+        variantrecalibrator = GATK4VariantRecalibrator(self.camel)
+        variantrecalibrator.add_input_files({
+            'VCF': [ToolIOFile(TestGATK4.test_file_dir / "joint_gt_chr22.vcf.gz")],
+            'FASTA_REF': [ToolIOFile(TestGATK4.test_file_dir / "Homo_sapiens_assembly38_chr22.fasta")]
+        })
+        variantrecalibrator.update_parameters(
+            resources = f"test,known=false,training=true,truth=true,prior=12.0,{TestGATK4.FILE_RESOURCES}",
+            use_annotation = "MQ",
+            mode = "SNP"
+        )
+        variantrecalibrator.run(self.running_dir)
+        self.assertTrue('TXT_RecalibrationTable' in variantrecalibrator.tool_outputs, "No TXT_RecalibrationTable output generated")
+        output_file = Path(variantrecalibrator.tool_outputs['TXT_RecalibrationTable'][0].path)
+        self.assertTrue(output_file.exists())
+        self.assertGreater(output_file.stat().st_size, 0)
+
+    def test_gatk4_applyvqsr(self) -> None:
+        """
+        Test GATK4ApplyVQSR
+        :return:
+        """
 
 if __name__ == '__main__':
     unittest.main()
