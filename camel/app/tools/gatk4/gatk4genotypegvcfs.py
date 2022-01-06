@@ -1,6 +1,6 @@
 from camel.app.camel import Camel
 from camel.app.tools.gatk4.gatk4 import GATK4
-import logging
+
 
 class GATK4GenotypeGVCFs(GATK4):
 

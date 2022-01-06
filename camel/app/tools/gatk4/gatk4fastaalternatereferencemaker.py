@@ -5,10 +5,10 @@ from typing import Tuple, List
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
-from camel.app.components.sequence_extraction import MASK_NT
 
 from camel.app.camel import Camel
 from camel.app.components.files.fastautils import FastaUtils
+from camel.app.components.sequence_extraction import MASK_NT
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.gatk4.gatk4 import GATK4
 

@@ -145,6 +145,3 @@ class GATK4(Tool, metaclass=abc.ABCMeta):
             match = re.search(r'(\d+) reads \((.+%) of total\) failing (.+)', line)
             if match is not None and match.group(1) != '0':
                 self.informs[match.group(3)] = f"{match.group(1)}({match.group(2)})"
-
-
-
