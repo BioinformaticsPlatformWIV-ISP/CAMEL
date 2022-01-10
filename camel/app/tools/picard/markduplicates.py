@@ -10,6 +10,16 @@ from camel.app.tools.picard.picard import Picard
 class MarkDuplicates(Picard):
     """
     Class for Picard MarkDuplicates function
+
+    Required inputs:
+    ----------------
+    'BAM':      ToolIOFile object. Input BAM file.
+    'FASTA_REF':ToolIOFile object. FASTA file containing the reference genome.
+
+    Output:
+    -------
+    'BAM':              ToolIOFile object. Output BAM file duplicate marked data.
+    'METRICS':          ToolIOFile object. Output txt file containing metrics.
     """
 
     def __init__(self, camel: Camel):
@@ -22,15 +32,13 @@ class MarkDuplicates(Picard):
 
     def _set_input(self) -> None:
         """
-        Set the input specification
+        Set the input specification. This method overrides the method in the parent class.
         :return: None
         """
         # input can be one or multiple BAM or SAM files
-        if len(self._tool_inputs[self._main_input]) > 1:
-            self._input_string += ''.join(f"I={f.path} " for f in self._tool_inputs[self._main_input])
-        else:
-            self._input_string += f'I={self._tool_inputs[self._main_input][0].path} '
+        self._input_string += ''.join(f"I={f.path} " for f in self._tool_inputs[self._main_input])
 
+        # Remove so it's not set again by the parent class function
         del self._tool_inputs[self._main_input]
 
         # Run parent function for other inputs, e.g. FASTA_REF (optional)
@@ -39,6 +47,10 @@ class MarkDuplicates(Picard):
     def _set_informs(self, stderr: Optional[str] = None):
         """
         Analyse the result of picard run and update tool.informs
+        Total reads: Total no. or reads in the file
+        Pairs unmatched: Total no. of unmatched pairs
+        Duplicates count: Total no. or records marked as duplicates
+        Optical duplicate cluster count: Total no. of optical duplicate clusters
         :return: None
         """
         for line in (self.stderr if stderr is None else stderr).splitlines():
@@ -57,7 +69,7 @@ class MarkDuplicates(Picard):
 
     def _set_output(self) -> None:
         """
-        Set the output specification
+        Set the output specification. Overrides parent class method.
         :return: None
         """
         self._tool_outputs['BAM'] = [ToolIOFile(Path(self.folder) / self._parameters['output'].value)]

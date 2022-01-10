@@ -56,7 +56,9 @@ class FastqToSam(Picard):
 
     def _set_informs(self, stderr: Optional[str] = None) -> None:
         """
-        Analyse the result of picard run and update tool.informs
+        Analyse the result of picard run and update tool.informs.
+            - Quality encoding: Quality score format (depending on sequencing technology)
+            - Reads processed: Number of reads processed
         :return: None
         """
         for line in (self.stderr if stderr is None else stderr).splitlines():

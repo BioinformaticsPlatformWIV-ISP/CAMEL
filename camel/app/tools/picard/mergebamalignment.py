@@ -13,11 +13,11 @@ class MergeBamAlignment(Picard):
     Required inputs:
     ----------------
     'BAM_UNMAPPED':     ToolIOFile object. Input uBAM file.
-    'FASTA_REF':        ToolIOFile object. FASTA file containing the reference genome.
 
     Optional inputs:
     ----------------
     'BAM_ALIGNED'       ToolIOFile object. Input BAM file
+    'FASTA_REF':        ToolIOFile object. FASTA file containing the reference genome.
 
     Output:
     -------
@@ -32,16 +32,19 @@ class MergeBamAlignment(Picard):
         """
         super().__init__('Picard MergeBamAlignment', '2.23.3', camel)
 
-        self._required_inputs = ['BAM_UNMAPPED', 'FASTA_REF']
+        self._required_inputs = ['BAM_UNMAPPED']
         self._specific_parameters = ["attributes_to_remove_multi"]
 
     def _set_input(self) -> None:
         """
-        Set required inputs specification
+        Set required inputs specification. Adds the specific input files for this tool to the input set
+        by the parent class
         :return: None
         """
+        # Initialize input string in parent class
         super(MergeBamAlignment, self)._set_input()
 
+        # Add specific MergeBamAlignment files
         self._input_string += f"UNMAPPED={self._tool_inputs['BAM_UNMAPPED'][0].path} "
 
         if 'BAM_ALIGNED' in self._tool_inputs:
@@ -60,8 +63,8 @@ class MergeBamAlignment(Picard):
         option_string = " ".join(build_options)
 
         self._command.command = " ".join([
-            "java", self._java_options, "-jar $PICARD_JAR", self._tool_command, self._java_options_temp_dir, self._input_string, self._output_string,
-            option_string
+            "java", self._java_options, "-jar $PICARD_JAR", self._tool_command, self._java_options_temp_dir,
+            self._input_string, self._output_string, option_string
         ])
 
     def _set_informs(self, stderr: Optional[str] = None) -> None:

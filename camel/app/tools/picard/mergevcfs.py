@@ -23,4 +23,4 @@ class MergeVCFs(Picard):
         Set the input specification. This method handles on or more VCF files
         :return: None
         """
-        self._input_string += "".join(f'I={vcf.path} ' for vcf in self._tool_inputs["VCF"])
+        self._input_string = "".join(f'I={vcf.path} ' for vcf in self._tool_inputs["VCF"])
