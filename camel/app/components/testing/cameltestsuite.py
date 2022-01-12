@@ -20,7 +20,7 @@ class CamelTestSuite(unittest.TestCase):
     @staticmethod
     def get_test_file_dir(*args) -> Path:
         """
-        Retrieves thee directory with test files.
+        Retrieves the directory with test files.
         :param args: Sub-directory or directories
         :return: Test files directory
         """
@@ -28,6 +28,18 @@ class CamelTestSuite(unittest.TestCase):
         if not dir_test.exists() or not dir_test.is_dir():
             raise FileNotFoundError(f"Cannot find test file directory: {dir_test}")
         return dir_test
+
+    @staticmethod
+    def get_reference_file_dir(*args) -> Path:
+        """
+        Retrieves the directory with reference files.
+        :param args: Sub-directory or directories
+        :return: Reference files directory
+        """
+        dir_ref = Path(CamelTestSuite.camel.config['ref_dir'], *args)
+        if not dir_ref.exists() or not dir_ref.is_dir():
+            raise FileNotFoundError(f"Cannot find reference file directory: {dir_ref}")
+        return dir_ref
 
     def setUp(self):
         """

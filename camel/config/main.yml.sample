@@ -12,3 +12,5 @@ testing:
   testfiles_dir: /testdata/camel/
 
 temp_dir: /scratch/temp
+
+ref_dir: /db/refgenomes/
