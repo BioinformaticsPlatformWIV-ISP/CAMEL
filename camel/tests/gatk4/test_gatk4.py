@@ -233,7 +233,7 @@ class TestGATK4(CamelTestSuite):
         variantrecalibrator = GATK4VariantRecalibrator(self.camel)
         variantrecalibrator.add_input_files({
             'VCF': [ToolIOFile(TestGATK4.test_file_dir / "joint_gt_chr22.vcf.gz")],
-            'FASTA_REF': [ToolIOFile(TestGATK4.test_file_dir / "Homo_sapiens_assembly38_chr22.fasta")]
+            'FASTA_REF': [ToolIOFile(TestGATK4.ref_file_dir / "Homo_sapiens_assembly38.fasta")]
         })
         variantrecalibrator.update_parameters(
             resources = f"hapmap,known=false,training=true,truth=true,prior=15.0,{TestGATK4.ref_file_dir}/hapmap_3.3.hg38.vcf.gz",
