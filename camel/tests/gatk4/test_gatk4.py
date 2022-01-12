@@ -23,6 +23,7 @@ class TestGATK4(CamelTestSuite):
     Tests the GATK4 tool suite.
     """
     test_file_dir = CamelTestSuite.get_test_file_dir('gatk4')
+
     FILE_BAM = ToolIOFile(test_file_dir / 'aln_rg.bam')
     FILE_FASTA_REF = ToolIOFile(test_file_dir / 'reference.fasta')
     FILE_BQSR = ToolIOFile(test_file_dir / "recal_data.table")
@@ -31,7 +32,8 @@ class TestGATK4(CamelTestSuite):
     FILE_VCF = ToolIOFile(test_file_dir / "var1.vcf")
     FILE_KNOWN_SITES = ToolIOFile(test_file_dir / "known_sites.vcf.gz")
     FILE_TXT_INTERVALS = ToolIOFile(test_file_dir / "interval_file.intervals")
-    FILE_RESOURCES = ToolIOFile(test_file_dir / "resource.vcf.gz")
+
+    ref_file_dir = CamelTestSuite.get_reference_file_dir('Human','GATK-BroadIns','hg38','v0')
 
     def test_gatk4_applybqsr(self) -> None:
         """
@@ -234,21 +236,38 @@ class TestGATK4(CamelTestSuite):
             'FASTA_REF': [ToolIOFile(TestGATK4.test_file_dir / "Homo_sapiens_assembly38_chr22.fasta")]
         })
         variantrecalibrator.update_parameters(
-            resources = f"test,known=false,training=true,truth=true,prior=12.0,{TestGATK4.FILE_RESOURCES}",
-            use_annotation = "MQ",
-            mode = "SNP"
+            resources = f"hapmap,known=false,training=true,truth=true,prior=15.0,{TestGATK4.ref_file_dir}/hapmap_3.3.hg38.vcf.gz",
+            use_annotation = "DP",
+            mode = "BOTH"
         )
         variantrecalibrator.run(self.running_dir)
+        # Check recalibration table output
         self.assertTrue('TXT_RecalibrationTable' in variantrecalibrator.tool_outputs, "No TXT_RecalibrationTable output generated")
         output_file = Path(variantrecalibrator.tool_outputs['TXT_RecalibrationTable'][0].path)
         self.assertTrue(output_file.exists())
         self.assertGreater(output_file.stat().st_size, 0)
 
+        # Check tranches output
+        self.assertTrue('TXT_tranches' in variantrecalibrator.tool_outputs, "No TXT_tranches output generated")
+        output_trances = Path(variantrecalibrator.tool_outputs['TXT_tranches'][0].path)
+        self.assertTrue(output_trances.exists())
+        self.assertGreater(output_trances.stat().st_size, 0)
+
     def test_gatk4_applyvqsr(self) -> None:
         """
         Test GATK4ApplyVQSR
-        :return:
+        :return: None
         """
+        apply_vqsr = GATK4ApplyVQSR(self.camel)
+        apply_vqsr.add_input_files({
+            'VCF': [ToolIOFile(TestGATK4.test_file_dir / "joint_gt_chr22.vcf.gz")],
+            'TXT_RecalibrationTable': [ToolIOFile(TestGATK4.test_file_dir / "variant_recalibration.tabl")]
+        })
+        apply_vqsr.run(self.running_dir)
+        self.assertTrue('VCF' in apply_vqsr.tool_outputs, "No VCF output generated")
+        output_file = Path(apply_vqsr.tool_outputs['VCF'][0].path)
+        self.assertTrue(output_file.exists())
+        self.assertGreater(output_file.stat().st_size, 0)
 
 if __name__ == '__main__':
     unittest.main()
