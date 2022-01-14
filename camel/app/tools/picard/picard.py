@@ -37,7 +37,7 @@ class Picard(ToolPipeable, metaclass=abc.ABCMeta):
         self._output_type = 'BAM'
         # Elements for building command
         self._java_options = '-mx8G -XX:+UseParallelGC -XX:ParallelGCThreads=1 -Dpicard.useLegacyParser=false'
-        self._java_options_temp_dir = 'TMP_DIR=/temp/picard'
+        self._java_options_temp_dir = f"TMP_DIR={camel.config['temp_dir']}"
 
     def update_java_options(self, java_options: str) -> None:
         """
