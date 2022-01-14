@@ -263,6 +263,9 @@ class TestGATK4(CamelTestSuite):
             'VCF': [ToolIOFile(TestGATK4.test_file_dir / "joint_gt_chr22.vcf.gz")],
             'TXT_RecalibrationTable': [ToolIOFile(TestGATK4.test_file_dir / "variant_recalibration.tabl")]
         })
+        apply_vqsr.update_parameters(
+            mode = "BOTH"
+        )
         apply_vqsr.run(self.running_dir)
         self.assertTrue('VCF' in apply_vqsr.tool_outputs, "No VCF output generated")
         output_file = Path(apply_vqsr.tool_outputs['VCF'][0].path)
