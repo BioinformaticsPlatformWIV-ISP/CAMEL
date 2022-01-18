@@ -7,6 +7,7 @@ import shutil
 import tempfile
 
 from camel.app.camel import Camel
+from camel.app.tools.tool import Tool
 
 
 class CamelTestSuite(unittest.TestCase):
@@ -19,7 +20,7 @@ class CamelTestSuite(unittest.TestCase):
     @staticmethod
     def get_test_file_dir(*args) -> Path:
         """
-        Retrieves thee directory with test files.
+        Retrieves the directory with test files.
         :param args: Sub-directory or directories
         :return: Test files directory
         """
@@ -27,6 +28,18 @@ class CamelTestSuite(unittest.TestCase):
         if not dir_test.exists() or not dir_test.is_dir():
             raise FileNotFoundError(f"Cannot find test file directory: {dir_test}")
         return dir_test
+
+    @staticmethod
+    def get_reference_file_dir(*args) -> Path:
+        """
+        Retrieves the directory with reference files.
+        :param args: Sub-directory or directories
+        :return: Reference files directory
+        """
+        dir_ref = Path(CamelTestSuite.camel.config['ref_dir'], *args)
+        if not dir_ref.exists() or not dir_ref.is_dir():
+            raise FileNotFoundError(f"Cannot find reference file directory: {dir_ref}")
+        return dir_ref
 
     def setUp(self):
         """
@@ -47,3 +60,20 @@ class CamelTestSuite(unittest.TestCase):
         if Path(self.running_dir).exists():
             logging.debug(f"Removing working directory: {self.running_dir}")
             shutil.rmtree(self.running_dir)
+
+    def verify_output_files(self, tool: Tool, key: str, nb_files: int = 1) -> None:
+        """
+        Verifies if the specified number of output files with the given key are created correctly.
+        :param tool: Tool
+        :param key: Output key
+        :param nb_files: Number of output files that should be generated
+        :return: None
+        """
+        self.assertIn(key, tool.tool_outputs, f"Key '{key}' missing from tool outputs")
+        self.assertEqual(
+            nb_files, len(tool.tool_outputs[key]),
+            f"Unexpected number of tools outputs found: {len(tool.tool_outputs[key])}, expected {nb_files}")
+        for i in range(0, nb_files):
+            output_file_path = tool.tool_outputs[key][0].path
+            self.assertTrue(output_file_path.exists(), f"Output file '{key}' (index: {i}) does not exist")
+            self.assertGreater(output_file_path.stat().st_size, 0, f"Output file '{key}' (index: {i}) is empty")

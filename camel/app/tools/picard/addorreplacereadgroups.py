@@ -15,7 +15,6 @@ class AddOrReplaceReadGroups(Picard):
         :return: None
         """
         super().__init__('Picard AddOrReplaceReadGroups', '2.23.3', camel)
-        self._function_name = 'AddOrReplaceReadGroups'
 
     def _set_input(self) -> None:
         """

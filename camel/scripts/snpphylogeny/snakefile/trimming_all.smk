@@ -13,11 +13,12 @@ rule run_trimming_workflow:
         TRIMMING_OUTPUT = Path(config['working_dir']) / '{sample}' / 'trimming' / 'trimming_out.io'
     threads: 4
     params:
-        working_dir = lambda wildcards: Path(config['working_dir']) / wildcards.sample
+        working_dir = lambda wildcards: Path(config['working_dir']) / wildcards.sample,
+        adapter = config['read_trimming']['adapter']
     run:
         from camel.app.components.workflows.trimmingilluminawrapper import TrimmingIlluminaWrapper
         trimming = TrimmingIlluminaWrapper(Path(str(params.working_dir)) / 'trimming')
-        trimming.run_workflow([Path(x) for x in input.FASTQ_PE], threads)
+        trimming.run_workflow([Path(x) for x in input.FASTQ_PE], params.adapter, threads)
         SnakemakeUtils.dump_object(trimming.output, Path(output.TRIMMING_OUTPUT))
 
 rule collect_trimming_output:

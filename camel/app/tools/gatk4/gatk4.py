@@ -31,7 +31,7 @@ class GATK4(Tool, metaclass=abc.ABCMeta):
         self._input_string = ''
         self._option_string = ''
         self._output_type = ''
-        self._temp_dir = tempfile.mkdtemp(prefix='gatk4_', dir='/temp')
+        self._temp_dir = tempfile.mkdtemp(prefix='gatk4_', dir=camel.config['temp_dir'])
         self._java_options = f'"-mx8G -XX:+UseParallelGC -XX:ParallelGCThreads=1 -Djava.io.tmpdir={self._temp_dir}"'
 
     def update_java_options(self, java_options: str) -> None:
@@ -145,6 +145,3 @@ class GATK4(Tool, metaclass=abc.ABCMeta):
             match = re.search(r'(\d+) reads \((.+%) of total\) failing (.+)', line)
             if match is not None and match.group(1) != '0':
                 self.informs[match.group(3)] = f"{match.group(1)}({match.group(2)})"
-
-
-

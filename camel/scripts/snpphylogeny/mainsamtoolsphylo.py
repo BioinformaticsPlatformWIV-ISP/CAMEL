@@ -142,7 +142,7 @@ class MainSamtoolsPhylo(BasePhylo):
         """
         working_dir = Path(self._args.working_dir) / 'calling'
         config_data = {
-            'working_dir': working_dir,
+            'working_dir': str(working_dir),
             'samples': {s.name_valid: v.as_dict() for s, v in mapping_input.items()},
             'reference_info': {'name': self._args.reference_name, 'path': reference},
             'options': {
@@ -164,10 +164,10 @@ class MainSamtoolsPhylo(BasePhylo):
         """
         working_dir = Path(self._args.working_dir) / 'filtering'
         samples = {
-            s.name_valid: {'VCF': o.vcf_unfiltered.path, 'BAM': o.bam_file.path} for s, o in
+            s.name_valid: {'VCF': str(o.vcf_unfiltered.path), 'BAM': str(o.bam_file.path)} for s, o in
             calling_output_by_sample.items()
         }
-        config_data = {'working_dir': working_dir, 'samples': samples, 'options': self.__get_filtering_options()}
+        config_data = {'working_dir': str(working_dir), 'samples': samples, 'options': self.__get_filtering_options()}
         config_file = SnakePipelineUtils.generate_config_file(config_data, working_dir)
         output_path = working_dir / OUTPUT_FILTERING_ALL
         SnakePipelineUtils.run_snakemake(

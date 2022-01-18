@@ -206,8 +206,8 @@ class SnpPhylogenyUtils(object):
         :return: None
         """
         config_data = {
-            'working_dir': working_dir,
-            'samples': {s.name_valid: [f.path for f in fq] for s, fq in fq_by_sample.items()},
+            'working_dir': str(working_dir),
+            'samples': {s.name_valid: [str(f.path) for f in fq] for s, fq in fq_by_sample.items()},
             'read_trimming': {'adapter': adapter}
         }
         config_file = SnakePipelineUtils.generate_config_file(config_data, working_dir)
