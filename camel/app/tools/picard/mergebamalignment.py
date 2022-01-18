@@ -57,6 +57,7 @@ class MergeBamAlignment(Picard):
         """
         build_options = self._build_options(excluded_parameters=self._specific_parameters, delimiter='=')
 
+        # Attributes from the alignment record that should be removed when merging; multiple options possible
         if 'attributes_to_remove_multi' in self._parameters:
             build_options.append(self.__split_multi_options('attributes_to_remove_multi'))
 
@@ -88,4 +89,4 @@ class MergeBamAlignment(Picard):
         Multiple values allowed for certain parameters. These are passed in a comma separated string and need to be split
         """
         option_list = self._parameters[option].value.split(",")
-        return "".join(f" {self._parameters[option].option} {s} " for s in option_list)
+        return "".join(f"{self._parameters[option].option}={s} " for s in option_list)

@@ -282,6 +282,9 @@ class TestPicard(CamelTestSuite):
             'BAM_ALIGNED': [TestPicard.FILE_BAM],
             'FASTA_REF': [TestPicard.FILE_FASTA_REF]
         })
+        picard_mergebamalignment.update_parameters(
+            attributes_to_remove_multi = "NM,MD"
+        )
         picard_mergebamalignment.run(self.running_dir)
         self.assertTrue('BAM' in picard_mergebamalignment.tool_outputs,"No BAM output generated")
         output_file = Path(picard_mergebamalignment.tool_outputs['BAM'][0].path)
