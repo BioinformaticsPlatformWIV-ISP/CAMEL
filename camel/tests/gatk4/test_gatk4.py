@@ -205,8 +205,15 @@ class TestGATK4(CamelTestSuite):
         :return: None
         """
         indexfeaturefile = GATK4IndexFeatureFile(self.camel)
+
+        # Output automatically made in directory of input file
+        # Symlink to input file in running_dir
+        vcf_workingdir = Path(self.running_dir) / "test_indexFeatureFile.vcf"
+        vcf_original = TestGATK4.test_file_dir / "var1.vcf"
+        vcf_workingdir.symlink_to(vcf_original)
+
         indexfeaturefile.add_input_files({
-            'VCF': [TestGATK4.FILE_VCF]
+            'VCF': [ToolIOFile(vcf_workingdir)]
         })
         indexfeaturefile.run(self.running_dir)
         self.assertTrue('IDX' in indexfeaturefile.tool_outputs, "No IDX output generated")
@@ -216,8 +223,15 @@ class TestGATK4(CamelTestSuite):
 
     def test_gatk4_indexfeaturefile_gz(self) -> None:
         indexfeaturefile_gz = GATK4IndexFeatureFile(self.camel)
+
+        # Output automatically made in directory of input file
+        # Symlink to input file in running_dir
+        vcf_workingdir = Path(self.running_dir) / "test_indexFeatureFile.vcf.gz"
+        vcf_original = TestGATK4.test_file_dir / "NA12877_sub1.g.vcf.gz"
+        vcf_workingdir.symlink_to(vcf_original)
+
         indexfeaturefile_gz.add_input_files({
-            'VCF_gz': [TestGATK4.FILE_gVCF1]
+            'VCF_gz': [ToolIOFile(vcf_workingdir)]
         })
         indexfeaturefile_gz.run(self.running_dir)
         self.assertTrue('IDX' in indexfeaturefile_gz.tool_outputs, "No IDX output generated")
