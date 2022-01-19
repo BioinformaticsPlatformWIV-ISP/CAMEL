@@ -4,6 +4,7 @@ from pathlib import Path
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.gatk4.gatk4applybqsr import GATK4ApplyBQSR
+from camel.app.tools.gatk4.gatk4applyvqsr import GATK4ApplyVQSR
 from camel.app.tools.gatk4.gatk4baserecalibrator import GATK4BaseRecalibrator
 from camel.app.tools.gatk4.gatk4combinegvcfs import GATK4CombineGVCFs
 from camel.app.tools.gatk4.gatk4fastaalternatereferencemaker import GATK4FastaAlternateReferenceMaker
@@ -15,25 +16,31 @@ from camel.app.tools.gatk4.gatk4selectvariants import GATK4SelectVariants
 from camel.app.tools.gatk4.gatk4validatevariants import GATK4ValidateVariants
 from camel.app.tools.gatk4.gatk4variantfiltration import GATK4VariantFiltration
 from camel.app.tools.gatk4.gatk4variantrecalibrator import GATK4VariantRecalibrator
-from camel.app.tools.gatk4.gatk4applyvqsr import GATK4ApplyVQSR
 
 
 class TestGATK4(CamelTestSuite):
     """
     Tests the GATK4 tool suite.
     """
+    # Get test file and reference file directories
     test_file_dir = CamelTestSuite.get_test_file_dir('gatk4')
+    ref_file_dir = CamelTestSuite.get_reference_file_dir('Human', 'GATK-BroadIns', 'hg38', 'v0')
 
+    # Create ToolIOFile input files
     FILE_BAM = ToolIOFile(test_file_dir / 'aln_rg.bam')
     FILE_FASTA_REF = ToolIOFile(test_file_dir / 'reference.fasta')
     FILE_BQSR = ToolIOFile(test_file_dir / "recal_data.table")
-    FILE_gVCF1 = ToolIOFile(test_file_dir / "NA12877_sub1.g.vcf.gz")
-    FILE_gVCF2 = ToolIOFile(test_file_dir / "NA12877_sub2.g.vcf.gz")
-    FILE_VCF = ToolIOFile(test_file_dir / "var1.vcf")
     FILE_KNOWN_SITES = ToolIOFile(test_file_dir / "known_sites.vcf.gz")
     FILE_TXT_INTERVALS = ToolIOFile(test_file_dir / "interval_file.intervals")
+    FILE_VCF_JOINTGT = ToolIOFile(test_file_dir / "joint_gt_chr22.vcf.gz")
+    FILE_FASTA_REF_hg = ToolIOFile(ref_file_dir / "Homo_sapiens_assembly38.fasta")
+    FILE_TXT_RECAL1 = ToolIOFile(test_file_dir / "1_recal_data.csv")
+    FILE_TXT_RECAL2 = ToolIOFile(test_file_dir / "2_recal_data.csv")
 
-    ref_file_dir = CamelTestSuite.get_reference_file_dir('Human','GATK-BroadIns','hg38','v0')
+    # initialize variables
+    FILE_gVCF1 = test_file_dir / "NA12877_sub1.g.vcf.gz"
+    FILE_gVCF2 = test_file_dir / "NA12877_sub2.g.vcf.gz"
+    FILE_VCF = test_file_dir / "var1.vcf"
 
     def test_gatk4_applybqsr(self) -> None:
         """
@@ -76,7 +83,7 @@ class TestGATK4(CamelTestSuite):
         """
         combinegvcf = GATK4CombineGVCFs(self.camel)
         combinegvcf.add_input_files({
-            'gVCF': [TestGATK4.FILE_gVCF1, TestGATK4.FILE_gVCF2],
+            'gVCF': [ToolIOFile(TestGATK4.FILE_gVCF1), ToolIOFile(TestGATK4.FILE_gVCF2)],
             'FASTA_REF': [TestGATK4.FILE_FASTA_REF],
         })
         combinegvcf.run(self.running_dir)
@@ -109,8 +116,7 @@ class TestGATK4(CamelTestSuite):
         """
         gatherbqsrreports = GATK4GatherBQSRReports(self.camel)
         gatherbqsrreports.add_input_files({
-            'TXT_intervals': [ToolIOFile(TestGATK4.test_file_dir / "1_recal_data.csv"),
-                              ToolIOFile(TestGATK4.test_file_dir / "2_recal_data.csv")],
+            'TXT_intervals': [TestGATK4.FILE_TXT_RECAL1, TestGATK4.FILE_TXT_RECAL2],
         })
         gatherbqsrreports.run(self.running_dir)
         self.assertTrue('TXT_RecalibrationTable' in gatherbqsrreports.tool_outputs, "No TXT_RecalibrationTable output generated")
@@ -125,7 +131,7 @@ class TestGATK4(CamelTestSuite):
         """
         genotypegvcfs = GATK4GenotypeGVCFs(self.camel)
         genotypegvcfs.add_input_files({
-            'gVCF': [TestGATK4.FILE_gVCF1],
+            'gVCF': [ToolIOFile(TestGATK4.FILE_gVCF1)],
             'FASTA_REF': [TestGATK4.FILE_FASTA_REF],
         })
         genotypegvcfs.run(self.running_dir)
@@ -157,7 +163,7 @@ class TestGATK4(CamelTestSuite):
         """
         selectvariants = GATK4SelectVariants(self.camel)
         selectvariants.add_input_files({
-            'VCF': [TestGATK4.FILE_VCF],
+            'VCF': [ToolIOFile(TestGATK4.FILE_VCF)],
         })
         selectvariants.run(self.running_dir)
         self.assertTrue('VCF' in selectvariants.tool_outputs, "No VCF output generated")
@@ -172,7 +178,7 @@ class TestGATK4(CamelTestSuite):
         """
         validatevariants = GATK4ValidateVariants(self.camel)
         validatevariants.add_input_files({
-            'VCF': [TestGATK4.FILE_VCF],
+            'VCF': [ToolIOFile(TestGATK4.FILE_VCF)],
             'FASTA_REF': [TestGATK4.FILE_FASTA_REF],
         })
         validatevariants.run(self.running_dir)
@@ -188,7 +194,7 @@ class TestGATK4(CamelTestSuite):
         """
         variantfiltration = GATK4VariantFiltration(self.camel)
         variantfiltration.add_input_files({
-            'VCF': [TestGATK4.FILE_VCF],
+            'VCF': [ToolIOFile(TestGATK4.FILE_VCF)],
             'FASTA_REF': [TestGATK4.FILE_FASTA_REF],
         })
         variantfiltration.update_parameters(**{'filter-names': 'HardQC_filter,lowDP',
@@ -205,8 +211,15 @@ class TestGATK4(CamelTestSuite):
         :return: None
         """
         indexfeaturefile = GATK4IndexFeatureFile(self.camel)
+
+        # Output automatically made in directory of input file
+        # Symlink to input file in running_dir
+        vcf_workingdir = Path(self.running_dir) / "test_indexFeatureFile.vcf"
+        vcf_original = TestGATK4.FILE_VCF
+        vcf_workingdir.symlink_to(vcf_original)
+
         indexfeaturefile.add_input_files({
-            'VCF': [TestGATK4.FILE_VCF]
+            'VCF': [ToolIOFile(vcf_workingdir)]
         })
         indexfeaturefile.run(self.running_dir)
         self.assertTrue('IDX' in indexfeaturefile.tool_outputs, "No IDX output generated")
@@ -216,8 +229,15 @@ class TestGATK4(CamelTestSuite):
 
     def test_gatk4_indexfeaturefile_gz(self) -> None:
         indexfeaturefile_gz = GATK4IndexFeatureFile(self.camel)
+
+        # Output automatically made in directory of input file
+        # Symlink to input file in running_dir
+        vcf_workingdir = Path(self.running_dir) / "test_indexFeatureFile.vcf.gz"
+        vcf_original = TestGATK4.FILE_gVCF1
+        vcf_workingdir.symlink_to(vcf_original)
+
         indexfeaturefile_gz.add_input_files({
-            'VCF_gz': [TestGATK4.FILE_gVCF1]
+            'VCF_gz': [ToolIOFile(vcf_workingdir)]
         })
         indexfeaturefile_gz.run(self.running_dir)
         self.assertTrue('IDX' in indexfeaturefile_gz.tool_outputs, "No IDX output generated")
@@ -232,8 +252,8 @@ class TestGATK4(CamelTestSuite):
         """
         variantrecalibrator = GATK4VariantRecalibrator(self.camel)
         variantrecalibrator.add_input_files({
-            'VCF': [ToolIOFile(TestGATK4.test_file_dir / "joint_gt_chr22.vcf.gz")],
-            'FASTA_REF': [ToolIOFile(TestGATK4.ref_file_dir / "Homo_sapiens_assembly38.fasta")]
+            'VCF': [TestGATK4.FILE_VCF_JOINTGT],
+            'FASTA_REF': [TestGATK4.FILE_FASTA_REF_hg]
         })
         variantrecalibrator.update_parameters(
             resources = f"hapmap,known=false,training=true,truth=true,prior=15.0,{TestGATK4.ref_file_dir}/hapmap_3.3.hg38.vcf.gz",
