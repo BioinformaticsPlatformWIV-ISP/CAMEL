@@ -41,6 +41,29 @@ class TestSequenceTyping(CamelTestSuite):
         main.run()
         self.assertGreater(output_file_report.stat().st_size, 0)
 
+    def test_typing_illumina_blast_nucl_tsv_out(self) -> None:
+        """
+        Tests sequence typing using BLAST with a nucleotide scheme (including ST definitions) and the tabular output
+        option.
+        :return: None
+        """
+        output_file_report = Path(self.running_dir) / 'report' / 'report.html'
+        output_file_tsv = Path(self.running_dir) / 'report' / 'typing_out.tsv'
+        args = [
+            '--fasta', str(self.input_fasta),
+            '--scheme-dir', str(self.input_db_nucl),
+            '--output-html', str(output_file_report),
+            '--output-dir', str(output_file_report.parent),
+            '--output-tsv', str(output_file_tsv),
+            '--working-dir', str(self.running_dir),
+            '--detection-method', 'blast',
+            '--threads', '8'
+        ]
+        main = MainSequenceTyping(args)
+        main.run()
+        self.assertGreater(output_file_report.stat().st_size, 0)
+        self.assertGreater(output_file_tsv.stat().st_size, 0)
+
     def test_typing_illumina_blast_peptide(self) -> None:
         """
         Tests sequence typing using BLAST with a peptide scheme.
