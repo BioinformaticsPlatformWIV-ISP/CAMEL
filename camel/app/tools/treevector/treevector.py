@@ -2,8 +2,6 @@ import shutil
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
-import os
-
 from camel.app.camel import Camel
 from camel.app.components.images.svgconvert import SVGConvert
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
@@ -13,6 +11,7 @@ from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.tool import Tool
 
 
+@PendingDeprecationWarning
 class TreeVector(Tool):
     """
     TreeVector is a utility to create and integrate phylogenetic trees as Scalable Vector Graphics (SVG) files.
