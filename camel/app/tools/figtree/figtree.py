@@ -1,0 +1,62 @@
+from pathlib import Path
+
+from Bio import Phylo
+
+from camel.app.camel import Camel
+from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from camel.app.io.tooliofile import ToolIOFile
+from camel.app.tools.tool import Tool
+
+
+class FigTree(Tool):
+    """
+    FigTree is designed as a graphical viewer of phylogenetic trees.
+    """
+
+    def __init__(self, camel: Camel) -> None:
+        """
+        Initializes this tool.
+        """
+        super().__init__('FigTree', '1.4.4', camel)
+
+    def _check_input(self) -> None:
+        """
+        Checks if the provided input is valid.
+        :return: None
+        """
+        if 'NWK' not in self._tool_inputs:
+            raise InvalidInputSpecificationError('Newick input is required (NWK)')
+        super()._check_input()
+
+    def _execute_tool(self) -> None:
+        """
+        Executes this tool.
+        :return: None
+        """
+        input_file = self._tool_inputs['NWK'][0].path if 'TXT' not in self._tool_inputs else self._add_template_info(
+            self._tool_inputs['TXT'][0].path)
+        output_path = self.folder / self._parameters['output_path'].value
+        self._command.command = ' '.join([
+            self._tool_command,
+            '-graphic PNG',
+            *self._build_options(excluded_parameters=['output_path']),
+            str(input_file),
+            str(output_path)
+        ])
+        self._execute_command()
+        self.tool_outputs['PNG'] = [ToolIOFile(output_path)]
+
+    def _add_template_info(self, path_template: Path) -> Path:
+        """
+        Adds the template information.
+        :param path_template: Path to the template file
+        :return: Updated input file in Nexus format
+        """
+        path_nexus = self.folder / 'input_tree.nexus'
+        Phylo.convert(str(self._tool_inputs['NWK'][0].path), 'newick', str(path_nexus), 'nexus')
+        with path_nexus.open('a', encoding='utf-8') as handle_out:
+            # Add template content
+            with path_template.open(encoding='utf-8') as handle_in:
+                handle_out.write(handle_in.read())
+                handle_out.write('\n')
+        return path_nexus
