@@ -1,4 +1,5 @@
 import shutil
+import logging
 import subprocess
 from pathlib import Path
 
@@ -104,53 +105,54 @@ rule move_qc:
     Move all QC output files to final output QC directory
     """
     input:
-        TXT = expand(Path(config['working_dir']) / "qc" / "quality_yield" / "{fastq}.unmapped.quality_yield_metrics.io", fastq = config["input_basenames"]),
+        TXT = [] if config["no_qc"] else expand(Path(config['working_dir']) / "qc" / "quality_yield" / "{fastq}.unmapped.quality_yield_metrics.io", fastq = config["input_basenames"]),
 
-        base_distribution_by_cycle = expand(Path(config['working_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.base_distribution_by_cycle.pdf", fastq = config["input_basenames"]),
-        base_distribution_by_cycle_metrics = expand(Path(config['working_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.base_distribution_by_cycle_metrics", fastq = config["input_basenames"]),
-        insert_size_histogram_pdf = expand(Path(config['working_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.insert_size_histogram.pdf", fastq = config["input_basenames"]),
-        insert_size_metrics = expand(Path(config['working_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.insert_size_metrics", fastq = config["input_basenames"]),
-        quality_by_cycle_pdf = expand(Path(config['working_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.quality_by_cycle.pdf", fastq = config["input_basenames"]),
-        quality_by_cycle_metrics = expand(Path(config['working_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.quality_by_cycle_metrics", fastq = config["input_basenames"]),
-        quality_distribution_pdf = expand(Path(config['working_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.quality_distribution.pdf", fastq = config["input_basenames"]),
-        quality_distribution_metrics = expand(Path(config['working_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.quality_distribution_metrics", fastq = config["input_basenames"]),
+        base_distribution_by_cycle = [] if config["no_qc"] else expand(Path(config['working_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.base_distribution_by_cycle.pdf", fastq = config["input_basenames"]),
+        base_distribution_by_cycle_metrics = [] if config["no_qc"] else expand(Path(config['working_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.base_distribution_by_cycle_metrics", fastq = config["input_basenames"]),
+        insert_size_histogram_pdf = [] if config["no_qc"] else expand(Path(config['working_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.insert_size_histogram.pdf", fastq = config["input_basenames"]),
+        insert_size_metrics = [] if config["no_qc"] else expand(Path(config['working_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.insert_size_metrics", fastq = config["input_basenames"]),
+        quality_by_cycle_pdf = [] if config["no_qc"] else expand(Path(config['working_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.quality_by_cycle.pdf", fastq = config["input_basenames"]),
+        quality_by_cycle_metrics = [] if config["no_qc"] else expand(Path(config['working_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.quality_by_cycle_metrics", fastq = config["input_basenames"]),
+        quality_distribution_pdf = [] if config["no_qc"] else expand(Path(config['working_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.quality_distribution.pdf", fastq = config["input_basenames"]),
+        quality_distribution_metrics = [] if config["no_qc"] else expand(Path(config['working_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.quality_distribution_metrics", fastq = config["input_basenames"]),
 
-        alignment_summary_metrics = Path(config['working_dir']) / "qc" / "RG_quality" / f"{config['sample']}.readgroup.alignment_summary_metrics",
-        gc_bias_detail_metrics = Path(config['working_dir']) / "qc" / "RG_quality" / f"{config['sample']}.readgroup.gc_bias.detail_metrics",
-        gc_bias_pdf = Path(config['working_dir']) / "qc" / "RG_quality" / f"{config['sample']}.readgroup.gc_bias.pdf",
-        gc_bias_summary_metrics = Path(config['working_dir']) / "qc" / "RG_quality" / f"{config['sample']}.readgroup.gc_bias.summary_metrics",
+        alignment_summary_metrics = [] if config["no_qc"] else Path(config['working_dir']) / "qc" / "RG_quality" / f"{config['sample']}.readgroup.alignment_summary_metrics",
+        gc_bias_detail_metrics = [] if config["no_qc"] else Path(config['working_dir']) / "qc" / "RG_quality" / f"{config['sample']}.readgroup.gc_bias.detail_metrics",
+        gc_bias_pdf = [] if config["no_qc"] else Path(config['working_dir']) / "qc" / "RG_quality" / f"{config['sample']}.readgroup.gc_bias.pdf",
+        gc_bias_summary_metrics = [] if config["no_qc"] else Path(config['working_dir']) / "qc" / "RG_quality" / f"{config['sample']}.readgroup.gc_bias.summary_metrics",
 
-        mark_duplicates_metrics = Path(config['working_dir']) / 'qc' / 'mark_duplicates' / "duplicate_metrics.txt.io",
+        mark_duplicates_metrics = Path(config['working_dir']) / alignment.OUTPUT_MARK_DUPLICATES_METRICS,
 
-        alignment_summary_metrics_agg = Path(config['working_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.alignment_summary_metrics",
-        bait_bias_detail_metrics = Path(config['working_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.bait_bias_detail_metrics",
-        bait_bias_summary_metrics = Path(config['working_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.bait_bias_summary_metrics",
-        gc_bias_detail_metrics_agg = Path(config['working_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.gc_bias.detail_metrics",
-        gc_bias_pdf_agg = Path(config['working_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.gc_bias.pdf",
-        gc_bias_summary_metrics_agg = Path(config['working_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.gc_bias.summary_metrics",
-        insert_size_histogram_pdf_agg = Path(config['working_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.insert_size_histogram.pdf",
-        insert_size_metrics_agg = Path(config['working_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.insert_size_metrics",
-        pre_adapter_detail_metrics = Path(config['working_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.pre_adapter_detail_metrics",
-        pre_adapter_summary_metrics = Path(config['working_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.pre_adapter_summary_metrics",
-        quality_distribution_pdf_agg = Path(config['working_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.quality_distribution.pdf",
-        quality_distribution_metrics_agg = Path(config['working_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.quality_distribution_metrics",
-        error_summary_metrics = Path(config['working_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.error_summary_metrics",
+        alignment_summary_metrics_agg = [] if config["no_qc"] else Path(config['working_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.alignment_summary_metrics",
+        bait_bias_detail_metrics = [] if config["no_qc"] else Path(config['working_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.bait_bias_detail_metrics",
+        bait_bias_summary_metrics = [] if config["no_qc"] else Path(config['working_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.bait_bias_summary_metrics",
+        gc_bias_detail_metrics_agg = [] if config["no_qc"] else Path(config['working_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.gc_bias.detail_metrics",
+        gc_bias_pdf_agg = [] if config["no_qc"] else Path(config['working_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.gc_bias.pdf",
+        gc_bias_summary_metrics_agg = [] if config["no_qc"] else Path(config['working_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.gc_bias.summary_metrics",
+        insert_size_histogram_pdf_agg = [] if config["no_qc"] else Path(config['working_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.insert_size_histogram.pdf",
+        insert_size_metrics_agg = [] if config["no_qc"] else Path(config['working_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.insert_size_metrics",
+        pre_adapter_detail_metrics = [] if config["no_qc"] else Path(config['working_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.pre_adapter_detail_metrics",
+        pre_adapter_summary_metrics = [] if config["no_qc"] else Path(config['working_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.pre_adapter_summary_metrics",
+        quality_distribution_pdf_agg = [] if config["no_qc"] else Path(config['working_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.quality_distribution.pdf",
+        quality_distribution_metrics_agg = [] if config["no_qc"] else Path(config['working_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.quality_distribution_metrics",
+        error_summary_metrics = [] if config["no_qc"] else Path(config['working_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.error_summary_metrics",
 
-        TXT_metrics_checksum = Path(config['working_dir']) / "qc" / "RG_checksum" / f"{config['sample']}.bam.read_group_md5",
+        TXT_metrics_checksum = [] if config["no_qc"] else Path(config['working_dir']) / "qc" / "RG_checksum" / f"{config['sample']}.bam.read_group_md5",
 
-        TXT_metrics_WGS = Path(config['working_dir']) / "qc" / "wgs_metrics" / f"{config['sample']}.wgs.metrics.txt",
-        TXT_metrics_rawWGS = Path(config['working_dir']) / "qc" / "wgs_metrics" / f"{config['sample']}.raw.wgs.metrics.txt",
+        TXT_metrics_WGS = [] if config["no_qc"] else Path(config['working_dir']) / "qc" / "wgs_metrics" / f"{config['sample']}.wgs.metrics.txt",
+        TXT_metrics_rawWGS = [] if config["no_qc"] else Path(config['working_dir']) / "qc" / "wgs_metrics" / f"{config['sample']}.raw.wgs.metrics.txt",
 
-        TXT_metrics_CRAM = Path(config['working_dir']) / "qc" / "bamtocram" / "cram_validation_report.io",
+        TXT_metrics_CRAM = [] if config["no_qc"] else Path(config['working_dir']) / bam_to_cram.OUTPUT_BAMTOCRAM_CRAM_metrics,
 
-        TXT_metrics_varCalling = Path(config['working_dir']) / "qc" / "variant_calling_metrics" / f"{config['sample']}.variant_calling_metrics.io",
+        TXT_metrics_varCalling = [] if config["no_qc"] else Path(config['working_dir']) / "qc" / "variant_calling_metrics" / f"{config['sample']}.variant_calling_metrics.io",
 
-        QC_summary = Path(config['working_dir']) / "qc" / "QC_summary.txt"
+        QC_summary = [] if config["no_qc"] else Path(config['working_dir']) / "qc" / "QC_summary.txt"
 
     output:
+        QC_done = Path(config['final_output_dir']) / 'qc' / 'qc_done.txt'
+    params:
         TXT = expand(Path(config['final_output_dir']) / "qc" / "quality_yield" / "{fastq}.unmapped.quality_yield_metrics.txt", fastq = config["input_basenames"]),
 
-        ## picard_unsorted_RG_quality
         base_distribution_by_cycle = expand(Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.base_distribution_by_cycle.pdf", fastq = config["input_basenames"]),
         base_distribution_by_cycle_metrics = expand(Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.base_distribution_by_cycle_metrics", fastq = config["input_basenames"]),
         insert_size_histogram_pdf = expand(Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / "{fastq}.unsorted_readgroup.insert_size_histogram.pdf", fastq = config["input_basenames"]),
@@ -165,7 +167,7 @@ rule move_qc:
         gc_bias_pdf = Path(config['final_output_dir']) / "qc" / "RG_quality" / f"{config['sample']}.readgroup.gc_bias.pdf",
         gc_bias_summary_metrics = Path(config['final_output_dir']) / "qc" / "RG_quality" / f"{config['sample']}.readgroup.gc_bias.summary_metrics",
 
-        mark_duplicates_metrics = Path(config['final_output_dir']) / 'qc' / 'mark_duplicates' / f"{config['sample']}.duplicate_metrics.txt",
+        mark_duplicates_metrics = Path(config['final_output_dir']) / 'qc' / 'mark_duplicates' / f"{config['sample']}.duplicate_metrics.txt.io",
 
         alignment_summary_metrics_agg = Path(config['final_output_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.alignment_summary_metrics",
         bait_bias_detail_metrics = Path(config['final_output_dir']) / "qc" / "aggregation_metrics" / f"{config['sample']}.agg.bait_bias_detail_metrics",
@@ -190,48 +192,60 @@ rule move_qc:
         
         TXT_metrics_varCalling = Path(config['final_output_dir']) / "qc" / "variant_calling_metrics" / f"{config['sample']}.variant_calling_metrics.txt",
 
-        QC_summary = Path(config['final_output_dir']) / "qc" / "QC_summary.txt",
+        QC_summary = Path(config['final_output_dir']) / "qc" / "QC_summary.txt"
 
-        QC_done = Path(config['final_output_dir']) / 'qc' / 'qc_done.txt'
     run:
-        for quality_yield_io in input.TXT:
-            quality_yield_file = SnakemakeUtils.load_object(Path(quality_yield_io))[0].path
-            file = Path(quality_yield_file).parts[-1]
-            out = Path(config['final_output_dir']) / "qc" / "quality_yield" / f'{file}.txt'
-            quality_yield_file.link_to(out)
+        (Path(config['final_output_dir']) / "qc" / "mark_duplicates").mkdir(parents=True, exist_ok=True)
+        (Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality").mkdir(parents=True, exist_ok=True)
+        (Path(config['final_output_dir']) / "qc" / "RG_quality").mkdir(parents=True, exist_ok=True)
+        (Path(config['final_output_dir']) / "qc" / "aggregation_metrics").mkdir(parents=True, exist_ok=True)
+        (Path(config['final_output_dir']) / "qc" / "RG_checksum").mkdir(parents=True, exist_ok=True)
+        (Path(config['final_output_dir']) / "qc" / "wgs_metrics").mkdir(parents=True, exist_ok=True)
+        (Path(config['final_output_dir']) / "qc" / "bamtocram").mkdir(parents=True, exist_ok=True)
+        (Path(config['final_output_dir']) / "qc" / "variant_calling_metrics").mkdir(parents=True, exist_ok=True)
 
-        [Path(f).link_to(Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / Path(f).name) for f in input.base_distribution_by_cycle]
-        [Path(f).link_to(Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / Path(f).name) for f in input.base_distribution_by_cycle_metrics]
-        [Path(f).link_to(Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / Path(f).name) for f in input.insert_size_histogram_pdf]
-        [Path(f).link_to(Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / Path(f).name) for f in input.insert_size_metrics]
-        [Path(f).link_to(Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / Path(f).name) for f in input.quality_by_cycle_pdf]
-        [Path(f).link_to(Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / Path(f).name) for f in input.quality_by_cycle_metrics]
-        [Path(f).link_to(Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / Path(f).name) for f in input.quality_distribution_metrics]
-        [Path(f).link_to(Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / Path(f).name) for f in input.quality_distribution_pdf]
 
-        Path(input.alignment_summary_metrics).link_to(output.alignment_summary_metrics)
-        Path(input.gc_bias_detail_metrics).link_to(output.gc_bias_detail_metrics)
-        Path(input.gc_bias_pdf).link_to(output.gc_bias_pdf)
-        Path(input.gc_bias_summary_metrics).link_to(output.gc_bias_summary_metrics)
-        Path(input.alignment_summary_metrics_agg).link_to(output.alignment_summary_metrics_agg)
-        Path(input.bait_bias_detail_metrics).link_to(output.bait_bias_detail_metrics)
-        Path(input.bait_bias_summary_metrics).link_to(output.bait_bias_summary_metrics)
-        SnakemakeUtils.load_object(Path(input.mark_duplicates_metrics))[0].path.link_to(output.mark_duplicates_metrics)
-        Path(input.gc_bias_detail_metrics_agg).link_to(output.gc_bias_detail_metrics_agg)
-        Path(input.gc_bias_pdf_agg).link_to(output.gc_bias_pdf_agg)
-        Path(input.gc_bias_summary_metrics_agg).link_to(output.gc_bias_summary_metrics_agg)
-        Path(input.insert_size_histogram_pdf_agg).link_to(output.insert_size_histogram_pdf_agg)
-        Path(input.insert_size_metrics_agg).link_to(output.insert_size_metrics_agg)
-        Path(input.pre_adapter_detail_metrics).link_to(output.pre_adapter_detail_metrics)
-        Path(input.pre_adapter_summary_metrics).link_to(output.pre_adapter_summary_metrics)
-        Path(input.quality_distribution_pdf_agg).link_to(output.quality_distribution_pdf_agg)
-        Path(input.quality_distribution_metrics_agg).link_to(output.quality_distribution_metrics_agg)
-        Path(input.error_summary_metrics).link_to(output.error_summary_metrics)
-        Path(input.TXT_metrics_checksum).link_to(output.TXT_metrics_checksum)
-        Path(input.TXT_metrics_WGS).link_to(output.TXT_metrics_WGS)
-        Path(input.TXT_metrics_rawWGS).link_to(output.TXT_metrics_rawWGS)
-        SnakemakeUtils.load_object(Path(input.TXT_metrics_CRAM))[0].path.link_to(output.TXT_metrics_CRAM)
-        SnakemakeUtils.load_object(Path(input.TXT_metrics_varCalling))[0].path.link_to(output.TXT_metrics_varCalling)
-        Path(input.QC_summary).link_to(output.QC_summary)
+        if config["no_qc"]:
+            SnakemakeUtils.load_object(Path(input.mark_duplicates_metrics))[0].path.link_to(params.mark_duplicates_metrics)
+        else:
+            for quality_yield_io in input.TXT:
+                quality_yield_file = SnakemakeUtils.load_object(Path(quality_yield_io))[0].path
+                file = Path(quality_yield_file).parts[-1]
+                out = Path(config['final_output_dir']) / "qc" / "quality_yield" / f'{file}.txt'
+                quality_yield_file.link_to(out)
 
-        subprocess.run(f"touch {output.QC_done}", shell = True, executable='/bin/bash')
+            [Path(f).link_to(Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / Path(f).name) for f in input.base_distribution_by_cycle]
+            [Path(f).link_to(Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / Path(f).name) for f in input.base_distribution_by_cycle_metrics]
+            [Path(f).link_to(Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / Path(f).name) for f in input.insert_size_histogram_pdf]
+            [Path(f).link_to(Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / Path(f).name) for f in input.insert_size_metrics]
+            [Path(f).link_to(Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / Path(f).name) for f in input.quality_by_cycle_pdf]
+            [Path(f).link_to(Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / Path(f).name) for f in input.quality_by_cycle_metrics]
+            [Path(f).link_to(Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / Path(f).name) for f in input.quality_distribution_metrics]
+            [Path(f).link_to(Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality" / Path(f).name) for f in input.quality_distribution_pdf]
+
+            Path(input.alignment_summary_metrics).link_to(params.alignment_summary_metrics)
+            Path(input.gc_bias_detail_metrics).link_to(params.gc_bias_detail_metrics)
+            Path(input.gc_bias_pdf).link_to(params.gc_bias_pdf)
+            Path(input.gc_bias_summary_metrics).link_to(params.gc_bias_summary_metrics)
+            Path(input.alignment_summary_metrics_agg).link_to(params.alignment_summary_metrics_agg)
+            Path(input.bait_bias_detail_metrics).link_to(params.bait_bias_detail_metrics)
+            Path(input.bait_bias_summary_metrics).link_to(params.bait_bias_summary_metrics)
+            SnakemakeUtils.load_object(Path(input.mark_duplicates_metrics))[0].path.link_to(params.mark_duplicates_metrics)
+            Path(input.gc_bias_detail_metrics_agg).link_to(params.gc_bias_detail_metrics_agg)
+            Path(input.gc_bias_pdf_agg).link_to(params.gc_bias_pdf_agg)
+            Path(input.gc_bias_summary_metrics_agg).link_to(params.gc_bias_summary_metrics_agg)
+            Path(input.insert_size_histogram_pdf_agg).link_to(params.insert_size_histogram_pdf_agg)
+            Path(input.insert_size_metrics_agg).link_to(params.insert_size_metrics_agg)
+            Path(input.pre_adapter_detail_metrics).link_to(params.pre_adapter_detail_metrics)
+            Path(input.pre_adapter_summary_metrics).link_to(params.pre_adapter_summary_metrics)
+            Path(input.quality_distribution_pdf_agg).link_to(params.quality_distribution_pdf_agg)
+            Path(input.quality_distribution_metrics_agg).link_to(params.quality_distribution_metrics_agg)
+            Path(input.error_summary_metrics).link_to(params.error_summary_metrics)
+            Path(input.TXT_metrics_checksum).link_to(params.TXT_metrics_checksum)
+            Path(input.TXT_metrics_WGS).link_to(params.TXT_metrics_WGS)
+            Path(input.TXT_metrics_rawWGS).link_to(params.TXT_metrics_rawWGS)
+            SnakemakeUtils.load_object(Path(input.TXT_metrics_CRAM))[0].path.link_to(params.TXT_metrics_CRAM)
+            SnakemakeUtils.load_object(Path(input.TXT_metrics_varCalling))[0].path.link_to(params.TXT_metrics_varCalling)
+            Path(input.QC_summary).link_to(params.QC_summary)
+
+        Path(output.QC_done).touch()
