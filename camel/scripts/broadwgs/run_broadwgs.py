@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import argparse
-import glob
 import logging
 import shutil
 from pathlib import Path
@@ -32,6 +31,7 @@ class MainBroadWGSPipeline(object):
         self._snakefile = SNAKEFILE_MAIN
         self._args = MainBroadWGSPipeline._parse_arguments(args)
         self._working_dir = Path(self._args.working_dir)
+        self._final_output_dir = self._working_dir / "output"
         self._pipeline = Pipeline(self._name, Camel.get_instance(), self._args.log, self._args.log)
 
     @property
@@ -55,7 +55,7 @@ class MainBroadWGSPipeline(object):
         Runs the pipeline.
         :return: None
         """
-        self._symlink_input()
+        self._process_cmdline_args()
 
         config_file = self.__construct_config_file()
         with open(config_file, 'r') as handle_in:
@@ -86,9 +86,9 @@ class MainBroadWGSPipeline(object):
                 self._pipeline.log_error_to_file(err)
             raise err
 
-    def _symlink_input(self) -> None:
+    def _process_cmdline_args(self) -> None:
         """
-        Symlinks the input files.
+        Input files: prepare ToolIOFiles, symlink
         :return: None
         """
         base_path = self._args.input
@@ -132,54 +132,37 @@ class MainBroadWGSPipeline(object):
                 'name': self._name,
                 'version': f"{self._version}",
             },
-            'params_smk': {
-                'threads': self._args.threads,
-                'threads_bwa': 8,
-                'threads_picard': 2,
-                'threads_bqsr': 4,
-                'threads_apply_bqsr': 3,
-                'threads_haplotype_caller': 2,
-                'threads_cram': 2,
-                'resources': self._args.resources,
-                'memory_mb_bwa': 15000,
-                'memory_mb_picard': 50000,
-                'memory_mb_mark_duplicates_sort': 100000,
-                'memory_mb_bqsr': 50000,
-                'memory_mb_haplotype_caller': 10000,
-                'memory_mb_cram': 60000
-            },
             'sample': self._args.sample,
             'input_basenames': [Path(f).name for f in self._args.input],
             'working_dir': str(self._working_dir),
-            'final_output_dir': str(self._working_dir / 'output'),
+            'final_output_dir': str(self._final_output_dir),
             'debug': self._args.debug,
+            'no_qc': self._args.no_qc
         }
 
         # add data from config yml
-        with CONFIG_DATA.open() as handle_in:
+        if self._args.config is not None:
+            config_file = Path(self._args.config)
+        else:
+            config_file = CONFIG_DATA
+        with config_file.open() as handle_in:
             config_data.update(yaml.load(handle_in.read(), Loader=yaml.SafeLoader))
+
+        # add snakemake parameters from command line
+        config_data["params_smk"]['resources'] = self._args.resources
+        config_data["params_smk"]['threads'] = self._args.threads
 
         # add data from user specified references yml if defined
         if self._args.references is not None:
-            reference_file = self._args.references
+            reference_file = Path(self._args.references)
         else:
             reference_file = REFERENCES
         with reference_file.open() as handle_in:
             config_data.update(yaml.load(handle_in.read(), Loader=yaml.SafeLoader))
 
-        # add intervals - based on interval files
-        intervals_list = []
-        if self._args.intervals is not None:
-            intervals_location = self._args.intervals
-        else:
-            intervals_location = INTERVALS
-        interval_files = glob.glob(str(intervals_location / "interval_*.intervals"))
-        config_data.update({"intervals": list(range(len(interval_files))),
-                            "intervals_location": str(intervals_location)})
-
         # add tool parameters from tool_data yml
         if self._args.tool_data is not None:
-            tool_data = self._args.tool_data
+            tool_data = Path(self._args.tool_data)
         else:
             tool_data = TOOL_DATA
         with tool_data.open() as handle_in:
@@ -203,6 +186,9 @@ class MainBroadWGSPipeline(object):
         parser.add_argument('--working-dir', dest = "working_dir", default = str(Path('.').absolute()), type=str, help='Working directory')
         parser.add_argument('--sample', type = str, help = 'Sample name')
         parser.add_argument('--read-length', dest = "read_length", type = int, default = 250, help = 'Read length. Default: 250')
+
+        # input files
+        parser.add_argument('--config', type = str, help = "Path to config yml")
         parser.add_argument('--references', type = str, help = "Path to references yml")
         parser.add_argument('--intervals', type = str, help = 'Path to interval files directory')
         parser.add_argument('--tool-data', dest = "tool_data", type = str, help = "Path to tool data yml")
@@ -217,6 +203,7 @@ class MainBroadWGSPipeline(object):
         # other
         parser.add_argument('--debug', dest = "debug", action = 'store_true')
         parser.add_argument('--slurm', dest = "slurm", nargs = "?", const = f'python3 {SLURM_SUBMIT} {{dependencies}}', type = str)
+        parser.add_argument('--no-qc', dest = "no_qc", action = 'store_true')
         parser.set_defaults(debug = False)
 
         return parser.parse_args(args)

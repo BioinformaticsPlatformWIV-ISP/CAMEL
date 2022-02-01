@@ -1,5 +1,4 @@
 from pathlib import Path
-import logging
 from camel.app.camel import Camel
 from camel.app.components.pipelines import pipeutils
 from camel.app.pipeline.step import Step
@@ -95,6 +94,7 @@ rule picard_mark_duplicates_sort:
         metrics = Path(config['working_dir']) / alignment.OUTPUT_MARK_DUPLICATES_METRICS
     params:
         working_dir = Path(config['working_dir']) / 'alignment' / 'mark_duplicates',
+        qc_dir = Path(config['working_dir']) / 'qc' / 'mark_duplicates',
         output_file = f'{config["sample"]}.aligned.unsorted.duplicates_marked.bam',
         metrics_output_file = Path(config['working_dir']) / 'qc' / 'mark_duplicates' / "duplicate_metrics.txt"
     threads: config["params_smk"]["threads_picard"]
@@ -103,6 +103,8 @@ rule picard_mark_duplicates_sort:
     run:
         from camel.app.tools.picard.markduplicates import MarkDuplicates
         from camel.app.tools.picard.sortsam import SortSam
+
+        Path(params.qc_dir).mkdir(exist_ok=True, parents=True)
 
         mark_duplicates = MarkDuplicates(camel)
         sort_sam = SortSam(camel)
