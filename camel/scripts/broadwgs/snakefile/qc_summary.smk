@@ -64,7 +64,7 @@ rule generate_qc_summary:
                                                            "## METRICS CLASS\tpicard.analysis.WgsMetrics\n",
                                                            'GENOME_TERRITORY'))
         # 20% of the genome size
-        percentile_20 = float(genome_territory * 0.2)
+        percentile_20 = genome_territory * 0.2
 
         alignment_metrics['mean_coverage'] = mean_coverage
         alignment_metrics['evenness_coverage'] = qc_summary.get_fold_80(input.wgs_metrics, mean_coverage, percentile_20)
@@ -78,7 +78,7 @@ rule generate_qc_summary:
                                                                              "## METRICS CLASS\tpicard.vcf.CollectVariantCallingMetrics$VariantCallingSummaryMetrics\n",
                                                                              'NOVEL_TITV')
 
-        # Print all to output file
+        # Print all alignment and variant calling metrics to output file
         alignment_metrics_metrics_names = ['mean_coverage', 'percent_duplication', 'median_insert_size', 'percent_chimeras', 'evenness_coverage']
         variant_calling_metrics_names = ['TITV_DBSNP', 'TITV_NOVEL']
         with open(output.QC_summary, 'w') as outhandle:

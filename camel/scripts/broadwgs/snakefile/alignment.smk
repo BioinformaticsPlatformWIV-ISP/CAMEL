@@ -5,6 +5,8 @@ from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.scripts.broadwgs import references
 from camel.scripts.broadwgs.snakefile import alignment
+from camel.app.io.tooliofile import ToolIOFile
+from camel.app.error.pipelineexecutionerror import PipelineExecutionError
 
 camel = Camel.get_instance()
 
@@ -181,8 +183,14 @@ checkpoint create_intervalfiles:
                 if line.startswith("@SQ"):
                     line_split = line.split("\t")
                     #Tuple: (Sequence_Name (SN), Sequence_Length(SL))
-                    sequence_tuple_list.append((line_split[1].split("SN:")[1], int(line_split[2].split("LN:")[1])))
-            longest_sequence = sorted(sequence_tuple_list, key=lambda x: x[1], reverse=True)[0][1]
+                    sequence_name = line_split[1].split("SN:")[1]
+                    sequence_length = int(line_split[2].split("LN:")[1])
+                    sequence_tuple_list.append((sequence_name, sequence_length))
+                    if sequence_length > longest_sequence:
+                        longest_sequence = sequence_length
+
+        if len(sequence_tuple_list) == 0:
+            PipelineExecutionError("Sequence tuple list empty: no intervals available")
 
         # We are adding this to the intervals because hg38 has contigs named with embedded colons and a bug in GATK strips off
         # the last element after a :, so we add this as a sacrificial element.
@@ -209,7 +217,6 @@ checkpoint create_intervalfiles:
         intervals.append(interval)
 
         # Generate the interval files
-        files = []
         for n, interval in enumerate(intervals):
             with open(f'{params.output_txt}_{n}.list', "w") as fh:
                 fh.write("\n".join(interval))

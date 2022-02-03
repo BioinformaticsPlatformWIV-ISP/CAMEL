@@ -1,6 +1,4 @@
 import shutil
-import logging
-import subprocess
 from pathlib import Path
 
 from camel.app.io.tooliofile import ToolIOFile
@@ -195,6 +193,7 @@ rule move_qc:
         QC_summary = Path(config['final_output_dir']) / "qc" / "QC_summary.txt"
 
     run:
+        # create output directories - not automatically created because they're in params (?)
         (Path(config['final_output_dir']) / "qc" / "mark_duplicates").mkdir(parents=True, exist_ok=True)
         (Path(config['final_output_dir']) / "qc" / "unsorted_RG_quality").mkdir(parents=True, exist_ok=True)
         (Path(config['final_output_dir']) / "qc" / "RG_quality").mkdir(parents=True, exist_ok=True)

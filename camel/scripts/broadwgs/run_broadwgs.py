@@ -57,12 +57,15 @@ class MainBroadWGSPipeline(object):
         """
         self._process_cmdline_args()
 
-        config_file = self.__construct_config_file()
+        if self._args.config is not None:
+            config_file = self._args.config
+        else:
+            config_file = self.__construct_config_file()
         with open(config_file, 'r') as handle_in:
             config_data = yaml.load(handle_in.read(), Loader=yaml.SafeLoader)
 
         try:
-            if self._args.slurm is not None:
+            if self._args.slurm:
                 logging.info("Running pipeline with Slurm: resources and threads input parameters ignored.")
                 threads = 1
                 resources = None
@@ -73,13 +76,12 @@ class MainBroadWGSPipeline(object):
                 SnakePipelineUtils.run_snakemake(self._snakefile, config_file, [], self._working_dir, threads,
                                                  resources, slurm_args)
             else:
-                threads = self._args.threads
                 resources = dict([arg.split(",") for arg in self._args.resources])
-                SnakePipelineUtils.run_snakemake(self._snakefile, config_file, [], self._working_dir, threads, resources)
+                SnakePipelineUtils.run_snakemake(self._snakefile, config_file, [], self._working_dir, self._args.threads, resources)
 
             log_file = self._working_dir / 'camel.log'
             if log_file.exists():
-                shutil.copyfile(str(log_file), str(Path(self._args.working_dir) / 'output' / 'camel.log'))
+                shutil.copyfile(str(log_file), str(Path(self._final_output_dir) / 'camel.log'))
             logging.info("Pipeline finished successfully")
         except SnakemakeExecutionError as err:
             if self._pipeline.keep_error_log:
@@ -141,11 +143,11 @@ class MainBroadWGSPipeline(object):
         }
 
         # add data from config yml
-        if self._args.config is not None:
-            config_file = Path(self._args.config)
+        if self._args.config_data is not None:
+            config_data = Path(self._args.config_data)
         else:
-            config_file = CONFIG_DATA
-        with config_file.open() as handle_in:
+            config_data = CONFIG_DATA
+        with config_data.open() as handle_in:
             config_data.update(yaml.load(handle_in.read(), Loader=yaml.SafeLoader))
 
         # add snakemake parameters from command line
@@ -188,7 +190,8 @@ class MainBroadWGSPipeline(object):
         parser.add_argument('--read-length', dest = "read_length", type = int, default = 250, help = 'Read length. Default: 250')
 
         # input files
-        parser.add_argument('--config', type = str, help = "Path to config yml")
+        parser.add_argument('--config', type = str, help = "Path to full config yml. Used to rerun analysis using an existing config file")
+        parser.add_argument('--config-data', dest = "config_data", type=str, help="Path to config data yml")
         parser.add_argument('--references', type = str, help = "Path to references yml")
         parser.add_argument('--intervals', type = str, help = 'Path to interval files directory')
         parser.add_argument('--tool-data', dest = "tool_data", type = str, help = "Path to tool data yml")
@@ -197,8 +200,9 @@ class MainBroadWGSPipeline(object):
         parser.add_argument('--log', action='store_true', help="If this flag is set, config file and error logs are kept")
 
         # Snakemake parameters
-        parser.add_argument('--threads', type = int, help = "Snakemake parameter: number of cores")
-        parser.add_argument('--resources', type = str, nargs = "+", help = "Snakemake parameter: resources. Key-value pair separated by a comma, e.g. mem_mb,1000. Multiple pairs allowed")
+        parser.add_argument('--threads', type = int, default = 4, help = "Snakemake parameter: number of cores")
+        parser.add_argument('--resources', type = str, default = "mem_mb,5000", nargs = "+", help =
+        "Snakemake parameter: resources. Key-value pair separated by a comma, e.g. mem_mb,1000. Multiple pairs allowed")
 
         # other
         parser.add_argument('--debug', dest = "debug", action = 'store_true')
