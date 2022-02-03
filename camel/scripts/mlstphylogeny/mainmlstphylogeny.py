@@ -25,8 +25,7 @@ from camel.app.tools.grapetree.grapetree import GrapeTree
 
 class MainMLSTPhylogeny(object):
     """
-    Main class for the MLST tree tool (version 2).
-    # Check if KMA works
+    Creates phylogenies based on the sequence typing output.
     """
 
     def __init__(self, args: Optional[Sequence[str]] = None) -> None:
