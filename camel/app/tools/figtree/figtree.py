@@ -62,9 +62,8 @@ class FigTree(Tool):
         """
         path_nexus = self.folder / 'input_tree.nexus'
         Phylo.convert(str(self._tool_inputs['NWK'][0].path), 'newick', str(path_nexus), 'nexus')
-        with path_nexus.open('a', encoding='utf-8') as handle_out:
+        with path_nexus.open('a', encoding='utf-8') as handle_out, path_template.open(encoding='utf-8') as handle_in:
             # Add template content
-            with path_template.open(encoding='utf-8') as handle_in:
-                handle_out.write(handle_in.read())
-                handle_out.write('\n')
+            handle_out.write(handle_in.read())
+            handle_out.write('\n')
         return path_nexus
