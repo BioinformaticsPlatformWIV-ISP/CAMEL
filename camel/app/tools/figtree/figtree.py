@@ -33,9 +33,15 @@ class FigTree(Tool):
         Executes this tool.
         :return: None
         """
-        input_file = self._tool_inputs['NWK'][0].path if 'TXT' not in self._tool_inputs else self._add_template_info(
-            self._tool_inputs['TXT'][0].path)
+        if 'TXT' not in self._tool_inputs:
+            # Add basic Newick file when no FigTree template is provided
+            input_file = self._tool_inputs['NWK'][0].path
+        else:
+            # Add the Figtree template information to the input tree (converted to Nexus format)
+            input_file = self._add_template_info(self._tool_inputs['TXT'][0].path)
         output_path = self.folder / self._parameters['output_path'].value
+
+        # Construct and execute command
         self._command.command = ' '.join([
             self._tool_command,
             '-graphic PNG',
@@ -44,6 +50,8 @@ class FigTree(Tool):
             str(output_path)
         ])
         self._execute_command()
+
+        # Set output
         self.tool_outputs['PNG'] = [ToolIOFile(output_path)]
 
     def _add_template_info(self, path_template: Path) -> Path:
