@@ -34,8 +34,10 @@ class GrapeTree(Tool):
         output_path = self.folder / self._parameters['output_path'].value
         self._command.command = ' '.join([
             self._tool_command,
-            '--profile', str(self._tool_inputs['TSV'][0].path)
-        ] + self._build_options(excluded_parameters=['output_path']) + [f'> {output_path}'])
+            '--profile', str(self._tool_inputs['TSV'][0].path),
+            *self._build_options(excluded_parameters=['output_path']),
+            f'> {output_path}'
+        ])
         self._execute_command()
         self._tool_outputs['NWK'] = [ToolIOFile(output_path)]
 
