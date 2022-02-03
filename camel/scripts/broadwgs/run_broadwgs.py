@@ -144,10 +144,10 @@ class MainBroadWGSPipeline(object):
 
         # add data from config yml
         if self._args.config_data is not None:
-            config_data = Path(self._args.config_data)
+            config_data_file = Path(self._args.config_data)
         else:
-            config_data = CONFIG_DATA
-        with config_data.open() as handle_in:
+            config_data_file = CONFIG_DATA
+        with config_data_file.open() as handle_in:
             config_data.update(yaml.load(handle_in.read(), Loader=yaml.SafeLoader))
 
         # add snakemake parameters from command line
