@@ -46,8 +46,9 @@ class MainMLSTPhylogeny(object):
         # Parse and filter the allele matrix
         allele_data = self.__parse_input_files()
         allele_data_filtered, cutoff_loci, cutoff_datasets = self.__filter_allele_matrix(allele_data)
-        path_allele_matrix = self.__report_add_section_filtering(
-            report, allele_data, allele_data_filtered, cutoff_loci, cutoff_datasets)
+        path_allele_matrix = self.__save_allele_matrix(allele_data_filtered)
+        self.__report_add_section_filtering(
+            report, path_allele_matrix, allele_data, allele_data_filtered, cutoff_loci, cutoff_datasets)
 
         # Calculate the distance matrix
         data_dist_matrix = self.__calculate_distance_matrix(allele_data_filtered)
@@ -187,26 +188,33 @@ class MainMLSTPhylogeny(object):
         logging.info(f"{len(allele_data_filt.columns)} loci passed filtering")
         return allele_data_filt, cutoff_loci, cutoff_datasets
 
+    def __save_allele_matrix(self, allele_data_filt: pd.DataFrame) -> Path:
+        """
+        Saves the allele matrix to a file.
+        :param allele_data_filt: Filtered allele data
+        """
+        path_allele_matrix = self._dir_working / 'allele_matrix-filtered.tsv'
+        allele_data_filt.to_csv(path_allele_matrix, index_label='ID', sep='\t')
+
+        # Save the allele matrix to a separate file is specified
+        if self._args.output_allele_matrix:
+            shutil.copyfile(path_allele_matrix, self._args.output_allele_matrix)
+            logging.info(f"Filtered allele matrix saved to: {self._args.output_allele_matrix}")
+        return path_allele_matrix
+
     def __report_add_section_filtering(
-            self, report: HtmlReport, allele_data: pd.DataFrame, allele_data_filt: pd.DataFrame, cutoff_loci: int,
-            cutoff_datasets: int) -> Path:
+            self, report: HtmlReport, path_allele_matrix: Path, allele_data: pd.DataFrame,
+            allele_data_filt: pd.DataFrame, cutoff_loci: int, cutoff_datasets: int) -> Path:
         """
         Adds the filtering section to the output report.
         :param report: HTML report
+        :param path_allele_matrix: Path to the allele matrix
         :param allele_data: Original allele data
         :param allele_data_filt: Filtered allele data
         :param cutoff_loci: Nb. of loci cutoff value
         :param cutoff_datasets: Nb. of datasets cutoff value
         :return: Path to the allele matrix
         """
-        # Save filtered allele matrix if specified
-        path_allele_matrix = self._dir_working / 'allele_matrix-filtered.tsv'
-        allele_data_filt.to_csv(path_allele_matrix, index_label='ID', sep='\t')
-        if self._args.output_allele_matrix:
-            shutil.copyfile(path_allele_matrix, self._args.output_allele_matrix)
-            logging.info(f"Filtered allele matrix saved to: {self._args.output_allele_matrix}")
-
-        # Create filtering section
         section_filtering = HtmlReportSection('Allele matrix filtering')
         section_filtering.add_table([
             [f'Loci required (%):', f'{self._args.min_perc_samples}%'],
