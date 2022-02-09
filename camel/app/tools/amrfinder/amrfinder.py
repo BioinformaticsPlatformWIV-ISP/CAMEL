@@ -40,7 +40,7 @@ class AMRFinder(Tool):
             self._tool_command,
             '--nucleotide', str(self._tool_inputs['FASTA'][0].path),
             '--database', str(self._tool_inputs['DIR'][0].path),
-            f"{self._parameters['output_path'].option} {output_path}"
+            str(self._parameters['output_path'].option), str(output_path)
         ] + self._build_options(['output_path']))
         self._execute_command()
         self._tool_outputs['TSV'] = [ToolIOFile(output_path)]
