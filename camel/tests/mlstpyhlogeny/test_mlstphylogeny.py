@@ -57,8 +57,8 @@ class TestMLSTPhylogeny(CamelTestSuite):
         ]
         mlst_tree = MainMLSTPhylogeny(args)
         mlst_tree.run()
-        for file_ in [output_html, output_tsv_alleles, output_tsv_dist, output_tsv_alleles]:
-            self.assertGreater(file_.stat().st_size, 0)
+        for file in [output_html, output_tsv_alleles, output_tsv_dist, output_tsv_alleles]:
+            self.assertGreater(file.stat().st_size, 0)
 
     def test_mlst_phylogeny_small_dataset_html(self) -> None:
         """
