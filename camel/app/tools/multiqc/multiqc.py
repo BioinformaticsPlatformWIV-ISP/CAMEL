@@ -30,7 +30,7 @@ class MultiQC(Tool):
     ___________
     report_name         Report filename. Use 'stdout' to print to standard out.
     force               Overwrite existing reports
-    ignore              Ignore analysis files. Multiple files separated by semicolon
+    ignore              Ignore analysis files and directories. Multiple files separated by semicolon
     ignore_symlinks     Ignore symlinked directories and files
     output_directory    Create report in the specified output directory.
     prefix_names        Prepend directory to sample names
@@ -63,14 +63,14 @@ class MultiQC(Tool):
 
     def _set_input(self) -> None:
         """
-        Set input of multiqc funtion
+        Set input of multiqc function
         :return: None
         """
         self._input_string = " ".join([str(f.path) for f in self._tool_inputs["TXT_log"]])
 
     def _set_output(self) -> None:
         """
-        Set output of multiqc funtion
+        Set output of multiqc function
         :return: None
         """
         if 'output_directory' in self._parameters:
@@ -81,7 +81,7 @@ class MultiQC(Tool):
 
     def _build_command(self) -> None:
         """
-        Build command of multiqc funtion
+        Build command of multiqc function
         :return: None
         """
         build_options = self._build_options(excluded_parameters=self._specific_parameters)
@@ -95,7 +95,7 @@ class MultiQC(Tool):
 
     def _set_informs(self) -> None:
         """
-        Set informs of multiqc funtion
+        Set informs of multiqc function
         :return: None
         """
         for line in self.stderr.split('\n'):
