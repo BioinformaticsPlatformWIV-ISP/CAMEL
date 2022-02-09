@@ -1,6 +1,7 @@
 import unittest
 from pathlib import Path
 
+from camel.app.camel import Camel
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.io.tooliodirectory import ToolIODirectory
 from camel.app.io.tooliofile import ToolIOFile
@@ -16,7 +17,7 @@ class TestAMRFinder(CamelTestSuite):
 
     test_file_dir = CamelTestSuite.get_test_file_dir('amrfinder')
     FILE_FASTA = ToolIOFile(test_file_dir / 'test_dna.fa')
-    DIR_DB = Path('/db/amrfinder/latest')
+    DIR_DB = Path(Camel.get_instance().config['db_root']) / 'amrfinder' / 'latest'
 
     def test_amrfinder(self) -> None:
         """
