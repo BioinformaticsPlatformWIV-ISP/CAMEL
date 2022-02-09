@@ -166,7 +166,9 @@ class MainMLSTPhylogeny(object):
 
     def __filter_allele_matrix(self, allele_data: pd.DataFrame) -> Tuple[pd.DataFrame, int, int]:
         """
-        Filters the allele matrix.
+        Filters the allele matrix by removing:
+        - Datasets with less than x% of loci detected
+        - Loci present in less than x% of datasets
         :param allele_data: Allele data
         :return: Filtered allele data, loci cutoff, datasets cutoff
         """
