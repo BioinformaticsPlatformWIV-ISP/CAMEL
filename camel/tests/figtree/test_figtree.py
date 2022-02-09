@@ -27,8 +27,7 @@ class TestFigTree(CamelTestSuite):
         figtree.add_input_files({'NWK': [ToolIOFile(TestFigTree.input_nwk)]})
         figtree.update_parameters(output_path=str(path_png_out))
         figtree.run()
-        self.assertIn('PNG', figtree.tool_outputs)
-        self.assertGreater(figtree.tool_outputs['PNG'][0].size, 0)
+        self.verify_output_files(figtree, 'PNG')
 
     def test_figtree_with_template(self) -> None:
         """
@@ -41,8 +40,7 @@ class TestFigTree(CamelTestSuite):
         figtree.add_input_files({'NWK': [ToolIOFile(TestFigTree.input_nwk)], 'TXT': [ToolIOFile(path_template)]})
         figtree.update_parameters(output_path=str(path_png_out))
         figtree.run()
-        self.assertIn('PNG', figtree.tool_outputs)
-        self.assertGreater(figtree.tool_outputs['PNG'][0].size, 0)
+        self.verify_output_files(figtree, 'PNG')
 
 
 if __name__ == '__main__':
