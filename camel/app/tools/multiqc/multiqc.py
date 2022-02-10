@@ -98,7 +98,7 @@ class MultiQC(Tool):
         Set informs of multiqc function
         :return: None
         """
-        for line in self.stderr.split('\n'):
+        for line in self.stderr.splitlines():
             if line.startswith("|"):
                 empty, info, message = line.split("|")
                 if message.strip().startswith("Report"):
@@ -111,7 +111,7 @@ class MultiQC(Tool):
         Checks command output
         :return: None
         """
-        for line in self.stderr.split('\n'):
+        for line in self.stderr.splitlines():
             if line.startswith("|"):
                 empty, info, message = line.split("|")
                 if message.strip().startswith("Error"):
