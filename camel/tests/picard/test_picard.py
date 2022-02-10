@@ -54,10 +54,7 @@ class TestPicard(CamelTestSuite):
             'BAM': [TestPicard.FILE_BAM]
         })
         picard_addorreplacereadgroups.run(self.running_dir)
-        self.assertTrue('BAM' in picard_addorreplacereadgroups.tool_outputs, "No BAM output generated")
-        output_file = Path(picard_addorreplacereadgroups.tool_outputs['BAM'][0].path)
-        self.assertTrue(output_file.exists())
-        self.assertGreater(output_file.stat().st_size, 0)
+        self.verify_output_files(picard_addorreplacereadgroups, 'BAM')
 
     def test_picard_calculatereadgroupchecksum(self) -> None:
         """
@@ -69,10 +66,7 @@ class TestPicard(CamelTestSuite):
             'BAM': [TestPicard.FILE_BAM]
         })
         picard_calculatereadgroupchecksum.run(self.running_dir)
-        self.assertTrue('TXT_checksum' in picard_calculatereadgroupchecksum.tool_outputs, "No TXT_checksum output generated")
-        output_file = Path(picard_calculatereadgroupchecksum.tool_outputs['TXT_checksum'][0].path)
-        self.assertTrue(output_file.exists())
-        self.assertGreater(output_file.stat().st_size, 0)
+        self.verify_output_files(picard_calculatereadgroupchecksum, 'TXT_checksum')
 
     def test_picard_collectmultiplemetrics(self) -> None:
         """
@@ -106,11 +100,7 @@ class TestPicard(CamelTestSuite):
 
 
         for expected_file in expected_output:
-            self.assertTrue(expected_file in picard_collectmultiplemetrics.tool_outputs,
-                        f"No {expected_file} output generated")
-            output_file = Path(picard_collectmultiplemetrics.tool_outputs[expected_file][0].path)
-            self.assertTrue(output_file.exists())
-            self.assertGreater(output_file.stat().st_size, 0)
+            self.verify_output_files(picard_collectmultiplemetrics, expected_file)
 
     def test_picard_collectqualityyieldmetrics(self) -> None:
         """
@@ -122,11 +112,7 @@ class TestPicard(CamelTestSuite):
             'BAM': [TestPicard.FILE_BAM]
         })
         picard_collectqualityyieldmetrics.run(self.running_dir)
-        self.assertTrue('TXT' in picard_collectqualityyieldmetrics.tool_outputs,
-                        "No TXT output generated")
-        output_file = Path(picard_collectqualityyieldmetrics.tool_outputs['TXT'][0].path)
-        self.assertTrue(output_file.exists())
-        self.assertGreater(output_file.stat().st_size, 0)
+        self.verify_output_files(picard_collectqualityyieldmetrics, 'TXT')
 
     def test_picard_collectrawwgsmetrics(self) -> None:
         """
@@ -140,11 +126,7 @@ class TestPicard(CamelTestSuite):
         })
         picard_collectrawwgsmetrics.update_parameters(sample_size = 10)
         picard_collectrawwgsmetrics.run(self.running_dir)
-        self.assertTrue('TXT_metrics' in picard_collectrawwgsmetrics.tool_outputs,
-                        "No TXT_metrics output generated")
-        output_file = Path(picard_collectrawwgsmetrics.tool_outputs['TXT_metrics'][0].path)
-        self.assertTrue(output_file.exists())
-        self.assertGreater(output_file.stat().st_size, 0)
+        self.verify_output_files(picard_collectrawwgsmetrics, 'TXT_metrics')
 
     def test_picard_collectwgsmetrics(self) -> None:
         """
@@ -158,12 +140,7 @@ class TestPicard(CamelTestSuite):
         })
         picard_collectwgsmetrics.update_parameters(sample_size = 10)
         picard_collectwgsmetrics.run(self.running_dir)
-        self.assertTrue('TXT_metrics' in picard_collectwgsmetrics.tool_outputs,
-                        "No TXT_metrics output generated")
-        output_file = Path(picard_collectwgsmetrics.tool_outputs['TXT_metrics'][0].path)
-        self.assertTrue(output_file.exists())
-        self.assertGreater(output_file.stat().st_size, 0)
-
+        self.verify_output_files(picard_collectwgsmetrics, 'TXT_metrics')
 
     def test_picard_collectvariantcallingmetrics(self) -> None:
         """
@@ -176,16 +153,7 @@ class TestPicard(CamelTestSuite):
             'VCF_dbsnp': [TestPicard.FILE_VCFdb]
         })
         picard_collectvariantcallingmetrics.run(self.running_dir)
-        self.assertTrue('TXT_report' in picard_collectvariantcallingmetrics.tool_outputs,
-                        "No TXT_report output generated")
-        output_file_summary = Path(picard_collectvariantcallingmetrics.tool_outputs['TXT_report'][0].path)
-        self.assertTrue(output_file_summary.exists())
-        self.assertGreater(output_file_summary.stat().st_size, 0)
-
-        output_file_details = Path(picard_collectvariantcallingmetrics.tool_outputs['TXT_report'][0].path)
-        self.assertTrue(output_file_details.exists())
-        self.assertGreater(output_file_details.stat().st_size, 0)
-
+        self.verify_output_files(picard_collectvariantcallingmetrics, 'TXT_report', 2)
 
     def test_picard_createsequencedictionary(self) -> None:
         """
@@ -197,11 +165,7 @@ class TestPicard(CamelTestSuite):
             'FASTA_REF': [TestPicard.FILE_FASTA_REF]
         })
         picard_createsequencedictionary.run(self.running_dir)
-        self.assertTrue('FASTA_REF' in picard_createsequencedictionary.tool_outputs, "No FASTA_REF output generated")
-        output_file = Path(picard_createsequencedictionary.tool_outputs['FASTA_REF'][0].path)
-        self.assertTrue(output_file.exists())
-        self.assertGreater(output_file.stat().st_size, 0)
-
+        self.verify_output_files(picard_createsequencedictionary, 'FASTA_REF')
 
     def test_picard_fastqtosam(self) -> None:
         """
@@ -213,10 +177,7 @@ class TestPicard(CamelTestSuite):
             'FASTQ_PE': [TestPicard.FILE_FASTQ_R1, TestPicard.FILE_FASTQ_R2]
         })
         picard_fastqtosam.run(self.running_dir)
-        self.assertTrue('BAM' in picard_fastqtosam.tool_outputs, "No BAM output generated")
-        output_file = Path(picard_fastqtosam.tool_outputs['BAM'][0].path)
-        self.assertTrue(output_file.exists())
-        self.assertGreater(output_file.stat().st_size, 0)
+        self.verify_output_files(picard_fastqtosam, 'BAM')
 
     def test_picard_gatherbamfiles(self) -> None:
         """
@@ -228,10 +189,7 @@ class TestPicard(CamelTestSuite):
             'BAMs': [TestPicard.FILE_BAM1, TestPicard.FILE_BAM2]
         })
         picard_gatherbamfiles.run(self.running_dir)
-        self.assertTrue('BAM' in picard_gatherbamfiles.tool_outputs, "No BAM output generated")
-        output_file = Path(picard_gatherbamfiles.tool_outputs['BAM'][0].path)
-        self.assertTrue(output_file.exists())
-        self.assertGreater(output_file.stat().st_size, 0)
+        self.verify_output_files(picard_gatherbamfiles, 'BAM')
 
     def test_picard_intervallisttools(self) -> None:
         """
@@ -244,11 +202,7 @@ class TestPicard(CamelTestSuite):
         })
 
         picard_intervallisttools.run(self.running_dir)
-        self.assertTrue('TXT_intervalLists' in picard_intervallisttools.tool_outputs, "No TXT_intervalLists output generated")
-        output_file = Path(picard_intervallisttools.tool_outputs['TXT_intervalLists'][0].path)
-        self.assertTrue(output_file.exists())
-        self.assertGreater(output_file.stat().st_size, 0)
-
+        self.verify_output_files(picard_intervallisttools, 'TXT_intervalLists')
 
     def test_picard_markduplicates(self) -> None:
         """
@@ -261,15 +215,8 @@ class TestPicard(CamelTestSuite):
             'FASTA_REF': [TestPicard.FILE_FASTA_REF]
         })
         picard_markduplicates.run(self.running_dir)
-        self.assertTrue('BAM' in picard_markduplicates.tool_outputs, "No BAM output generated")
-        output_file = Path(picard_markduplicates.tool_outputs['BAM'][0].path)
-        self.assertTrue(output_file.exists())
-        self.assertGreater(output_file.stat().st_size, 0)
-
-        self.assertTrue('METRICS' in picard_markduplicates.tool_outputs, "No METRICS output generated")
-        output_file_metrics = Path(picard_markduplicates.tool_outputs['METRICS'][0].path)
-        self.assertTrue(output_file_metrics.exists())
-        self.assertGreater(output_file_metrics.stat().st_size, 0)
+        self.verify_output_files(picard_markduplicates, 'BAM')
+        self.verify_output_files(picard_markduplicates, 'METRICS')
 
     def test_picard_mergebamalignment(self) -> None:
         """
@@ -286,10 +233,7 @@ class TestPicard(CamelTestSuite):
             attributes_to_remove_multi = "NM,MD"
         )
         picard_mergebamalignment.run(self.running_dir)
-        self.assertTrue('BAM' in picard_mergebamalignment.tool_outputs,"No BAM output generated")
-        output_file = Path(picard_mergebamalignment.tool_outputs['BAM'][0].path)
-        self.assertTrue(output_file.exists())
-        self.assertGreater(output_file.stat().st_size, 0)
+        self.verify_output_files(picard_mergebamalignment, 'BAM')
 
     def test_picard_mergevcfs(self) -> None:
         """
@@ -301,10 +245,7 @@ class TestPicard(CamelTestSuite):
             'VCF': [TestPicard.FILE_VCF1, TestPicard.FILE_VCF2],
         })
         picard_mergevcfs.run(self.running_dir)
-        self.assertTrue('VCF' in picard_mergevcfs.tool_outputs, "No VCF output generated")
-        output_file = Path(picard_mergevcfs.tool_outputs['VCF'][0].path)
-        self.assertTrue(output_file.exists())
-        self.assertGreater(output_file.stat().st_size, 0)
+        self.verify_output_files(picard_mergevcfs, 'VCF')
 
     def test_picard_samtofastq(self) -> None:
         """
@@ -316,10 +257,7 @@ class TestPicard(CamelTestSuite):
             'BAM': [TestPicard.FILE_BAM],
         })
         picard_samtofastq.run(self.running_dir)
-        self.assertTrue('FASTQ' in picard_samtofastq.tool_outputs, "No FASTQ output generated")
-        output_file = Path(picard_samtofastq.tool_outputs['FASTQ'][0].path)
-        self.assertTrue(output_file.exists())
-        self.assertGreater(output_file.stat().st_size, 0)
+        self.verify_output_files(picard_samtofastq, 'FASTQ', 2)
 
     def test_picard_setnmmdanduqtags(self) -> None:
         """
@@ -332,10 +270,7 @@ class TestPicard(CamelTestSuite):
             'FASTA_REF': [TestPicard.FILE_FASTA_REF]
         })
         picard_setnmmdanduqtags.run(self.running_dir)
-        self.assertTrue('BAM' in picard_setnmmdanduqtags.tool_outputs, "No BAM output generated")
-        output_file = Path(picard_setnmmdanduqtags.tool_outputs['BAM'][0].path)
-        self.assertTrue(output_file.exists())
-        self.assertGreater(output_file.stat().st_size, 0)
+        self.verify_output_files(picard_setnmmdanduqtags, 'BAM')
 
     def test_picard_sortsam(self) -> None:
         """
@@ -348,10 +283,7 @@ class TestPicard(CamelTestSuite):
             'FASTA_REF': [TestPicard.FILE_FASTA_REF]
         })
         picard_sortsam.run(self.running_dir)
-        self.assertTrue('BAM' in picard_sortsam.tool_outputs, "No BAM output generated")
-        output_file = Path(picard_sortsam.tool_outputs['BAM'][0].path)
-        self.assertTrue(output_file.exists())
-        self.assertGreater(output_file.stat().st_size, 0)
+        self.verify_output_files(picard_sortsam, 'BAM')
 
     def test_picard_validatesamfile(self) -> None:
         """
@@ -364,11 +296,7 @@ class TestPicard(CamelTestSuite):
             'FASTA_REF': [TestPicard.FILE_FASTA_REF]
         })
         picard_validatesamfile.run(self.running_dir)
-        self.assertTrue('TXT_report' in picard_validatesamfile.tool_outputs, "No TXT_report output generated")
-        output_file = Path(picard_validatesamfile.tool_outputs['TXT_report'][0].path)
-        self.assertTrue(output_file.exists())
-        self.assertGreater(output_file.stat().st_size, 0)
-
+        self.verify_output_files(picard_validatesamfile, 'TXT_report')
 
 if __name__ == '__main__':
     unittest.main()
