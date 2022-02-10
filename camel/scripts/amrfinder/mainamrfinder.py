@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 import argparse
+import shutil
 from pathlib import Path
 from typing import Optional, Sequence
 
 from camel.app.camel import Camel
 from camel.app.components import mainscriptutils
+from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.io.tooliodirectory import ToolIODirectory
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
@@ -37,6 +39,7 @@ class MainAMRFinder(object):
         mainscriptutils.add_common_arguments(parser)
         parser.add_argument('--fasta', help='Input FASTA file', required=True)
         parser.add_argument('--fasta-name', help="Input FASTA file name (For Galaxy)", type=str)
+        parser.add_argument('--output-tsv', help="Copy the tabular file to this location", type=str)
         parser.add_argument('--db', help='Database', required=True)
         parser.add_argument('--min-cov', help='Minimum target coverage', type=int, default=50)
         parser.add_argument(
@@ -58,7 +61,9 @@ class MainAMRFinder(object):
             ['Min % identity:', self._args.min_id if self._args.min_id is not None else 'Curated (default)'],
             ['Min % coverage:', self._args.min_cov],
         ]
-        report.add_html_object(mainscriptutils.generate_analysis_info_section(self._args, additional_info))
+        input_file_str = self._args.fasta_name if self._args.fasta_name is not None else Path(self._args.fasta).name
+        report.add_html_object(mainscriptutils.generate_analysis_info_section(
+            self._args, additional_info, input_file_str))
         report.save()
 
         # Run AMRFinder
@@ -67,7 +72,10 @@ class MainAMRFinder(object):
             'FASTA': [ToolIOFile(Path(self._args.fasta))],
             'DIR': [ToolIODirectory(Path(self._args.db))]
         })
-        amrfinder.update_parameters(min_cov=self._args.min_cov / 100.0)
+        amrfinder.update_parameters(
+            min_cov=self._args.min_cov / 100.0,
+            output_path=f'amrfinder_{FileSystemHelper.make_valid(self._sample_name)}.tsv'
+        )
         if self._args.min_id is not None:
             amrfinder.update_parameters(min_ident=self._args.min_id / 100.0)
         if self._args.organism is not None:
@@ -86,6 +94,10 @@ class MainAMRFinder(object):
         report.add_html_object(SnakePipelineUtils.create_commands_section([amrfinder.informs], self._dir_working))
         report.add_html_object(SnakePipelineUtils.create_citations_section(['Feldgarden_2019-ndaro']))
         report.save()
+
+        # Copy the TSV output file when specified
+        if self._args.output_tsv is not None:
+            shutil.copyfile(amrfinder.tool_outputs['TSV'][0].path, self._args.output_tsv)
 
 
 if __name__ == '__main__':

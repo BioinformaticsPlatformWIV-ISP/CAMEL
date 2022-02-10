@@ -96,6 +96,7 @@ class TestAMRFinder(CamelTestSuite):
         path_report_out = self.running_dir / 'report' / 'report.html'
         args = [
             '--fasta', str(TestAMRFinder.FILE_FASTA),
+            '--fasta-name', str('assembly name with spaces.fasta'),
             '--db', str(TestAMRFinder.DIR_DB),
             '--output-html', str(path_report_out),
             '--output-dir', str(path_report_out.parent),
@@ -107,6 +108,26 @@ class TestAMRFinder(CamelTestSuite):
         main = MainAMRFinder(args)
         main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)
+
+    def test_amrfinder_main_tsv_out(self) -> None:
+        """
+        Tests the AMRFinder main script.
+        :return: None
+        """
+        path_report_out = self.running_dir / 'report' / 'report.html'
+        path_tsv_out = self.running_dir / 'extra_output_amrfinder.tsv'
+        args = [
+            '--fasta', str(TestAMRFinder.FILE_FASTA),
+            '--db', str(TestAMRFinder.DIR_DB),
+            '--output-html', str(path_report_out),
+            '--output-tsv', str(path_tsv_out),
+            '--output-dir', str(path_report_out.parent),
+            '--working-dir', str(self.running_dir),
+        ]
+        main = MainAMRFinder(args)
+        main.run()
+        self.assertGreater(path_report_out.stat().st_size, 0)
+        self.assertGreater(path_tsv_out.stat().st_size, 0)
 
 
 if __name__ == '__main__':
