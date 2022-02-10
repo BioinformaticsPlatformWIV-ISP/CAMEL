@@ -122,7 +122,7 @@ rule typing_export_hits_tabular:
     input:
         hits = Path(config['working_dir']) / 'typing' / '{scheme}' / '{locus_type}' / 'hits.io'
     output:
-        TSV = Path(config['working_dir']) / 'typing' / '{scheme}' / '{locus_type}' / 'tabular' / 'tsv.io'
+        TSV = Path(config['working_dir']) / sequence_typing.OUTPUT_TYPING_TSV
     params:
         working_dir = lambda wildcards: Path(config['working_dir']) / 'typing' / wildcards.scheme / wildcards.locus_type / 'tabular',
         sample_name = FileSystemHelper.make_valid(config['sample_name']),

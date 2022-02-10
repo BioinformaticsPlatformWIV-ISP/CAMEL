@@ -44,6 +44,8 @@ class MainSequenceTyping(object):
         argument_parser.add_argument('--detection-method', type=str, choices=['blast', 'srst2', 'kma'], default='blast')
         argument_parser.add_argument(
             '--output-fasta', type=str, help='output path for assembled contigs (only used for BLAST-based detection)')
+        argument_parser.add_argument(
+            '--output-tsv', help='Output path for the tabular output file (does not work with mixed schemes)')
         argument_parser.add_argument('--blastn-task', type=str, choices=['blastn', 'megablast'], default='megablast')
         argument_parser.add_argument('--srst2-max-unaligned-overlap', type=int, default=100)
         return argument_parser.parse_args(args)
@@ -86,7 +88,7 @@ class MainSequenceTyping(object):
         :param db_path: Database directory path
         :return: None
         """
-        wrapper = SequenceTypingWrapper(self._args.working_dir)
+        wrapper = SequenceTypingWrapper(Path(self._args.working_dir))
         workflow_input = SequenceTypingInput(
             sample_name=self._sample_name, fasta=ToolIOFile(fasta_file), db_path=db_path, db_key=db_key)
         wrapper.run_workflow_blast(workflow_input, self._args.blastn_task, self._args.threads)
@@ -101,7 +103,7 @@ class MainSequenceTyping(object):
         :param db_path: Database path
         :return: None
         """
-        wrapper = SequenceTypingWrapper(self._args.working_dir)
+        wrapper = SequenceTypingWrapper(Path(self._args.working_dir))
         workflow_input = SequenceTypingInput(
             fasta=ToolIOFile(Path(self._args.fasta)) if self._args.fasta else None,
             sample_name=self._sample_name, fastq=fastq_input, db_key=db_key, db_path=db_path)
@@ -118,7 +120,7 @@ class MainSequenceTyping(object):
         :param db_path: Database path
         :return: None
         """
-        wrapper = SequenceTypingWrapper(self._args.working_dir)
+        wrapper = SequenceTypingWrapper(Path(self._args.working_dir))
         workflow_input = SequenceTypingInput(
             fasta=ToolIOFile(Path(self._args.fasta)) if self._args.fasta else None,
             sample_name=self._sample_name, fastq=fastq_input, db_key=db_key, db_path=db_path)
@@ -134,6 +136,10 @@ class MainSequenceTyping(object):
         self._helper.logs['typing'] = output.log_file
         self._helper.informs.extend(output.informs)
         self._helper.export_output_and_commands_section(report, output.report_section)
+        if self._args.output_tsv is not None:
+            if output.tsv is None:
+                raise ValueError("Cannot create TSV output for mixed schemes (DNA + peptide loci)")
+            shutil.copyfile(output.tsv, self._args.output_tsv)
 
 
 if __name__ == '__main__':

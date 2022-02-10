@@ -96,11 +96,11 @@ class HtmlReporterContamination(Tool):
         for species_name, percentage in self._input_informs['species']['contaminants_fail']:
             table_data.append([
                 HtmlTableCell('<i>{}</i>'.format(species_name), 'red'),
-                HtmlTableCell(percentage, 'red')])
+                HtmlTableCell(f'{percentage:.2f}', 'red')])
         for species_name, percentage in self._input_informs['species']['contaminants_warn']:
             table_data.append([
                 HtmlTableCell('<i>{}</i>'.format(species_name), 'orange'),
-                HtmlTableCell(percentage, 'orange')])
+                HtmlTableCell(f'{percentage:.2f}', 'orange')])
         self._report_section.add_table(table_data, header, [('class', 'data')])
 
     def __add_detailed_table(self, kraken_report_path: Path) -> None:
