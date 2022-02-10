@@ -113,9 +113,8 @@ class GATK4(Tool, metaclass=abc.ABCMeta):
         Check the result of the GATK run
         :return: None
         """
-        for line in self.stderr.splitlines():
-            if 'ERROR' in line:
-                raise ToolExecutionError(f"GATK tool {self._name} failed to run, message: \n{self.stderr}")
+        if self._command.returncode != 0:
+            raise ToolExecutionError(f'GATK {self._name} fails to run, error msg: \n{self.stderr}')
 
     def _set_informs(self) -> None:
         """

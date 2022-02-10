@@ -94,7 +94,7 @@ class TestGATK4(CamelTestSuite):
         combinegvcf = GATK4CombineGVCFs(self.camel)
         combinegvcf.add_input_files({
             'gVCF': [ToolIOFile(TestGATK4.FILE_gVCF1), ToolIOFile(TestGATK4.FILE_gVCF2)],
-            'FASTA_REF': [TestGATK4.FILE_FASTA_REF],
+            'FASTA_REF': [TestGATK4.FILE_FASTA_REF_hg],
         })
         combinegvcf.run(self.running_dir)
         self.verify_output_files(combinegvcf, 'gVCF')
@@ -133,7 +133,7 @@ class TestGATK4(CamelTestSuite):
         genotypegvcfs = GATK4GenotypeGVCFs(self.camel)
         genotypegvcfs.add_input_files({
             'gVCF': [ToolIOFile(TestGATK4.FILE_gVCF1)],
-            'FASTA_REF': [TestGATK4.FILE_FASTA_REF],
+            'FASTA_REF': [TestGATK4.FILE_FASTA_REF_hg],
         })
         genotypegvcfs.run(self.running_dir)
         self.verify_output_files(genotypegvcfs, 'VCF_MultipleSample')
