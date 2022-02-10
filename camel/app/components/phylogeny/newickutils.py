@@ -10,6 +10,7 @@ from Bio.Phylo.Newick import Tree
 
 from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.tools.figtree.figtree import FigTree
 from camel.app.tools.treevector.treevector import TreeVector
 
 
@@ -19,6 +20,7 @@ class NewickUtils(object):
     """
 
     @staticmethod
+    @PendingDeprecationWarning
     def render(camel: Camel, tree_path: Path, output_path: Path, plot_type: str, output_format: str = 'png') -> None:
         """
         Renders the tree to image.
@@ -37,6 +39,49 @@ class NewickUtils(object):
         logging.debug(f"TreeVector - stdout: {tree_vector.stdout}")
         logging.debug(f"TreeVector - stderr: {tree_vector.stderr}")
         shutil.copyfile(tree_vector.tool_outputs['PNG'][0].path, output_path)
+
+    @staticmethod
+    def calculate_tree_image_height(min_height: int, nb_leaves: int) -> int:
+        """
+        Calculates the required height for the given tree.
+        :param min_height: Minimum height
+        :param nb_leaves: Nb. of leaves in the tree
+        :return: Image height
+        """
+        return min_height + 20 * nb_leaves
+
+    @staticmethod
+    def create_image_figtree(path_newick: Path, path_config: Path, path_out: Path, width: int, height: int) -> FigTree:
+        """
+        Creates an image for the given Newick tree using FigTree.
+        :param path_newick: Path to Newick file
+        :param path_config: Path to FigTree config file
+        :param path_out: Output path
+        :param width: Image width
+        :param height: Image height
+        :return: FigTree instance
+        """
+        logging.info(f"Creating image for tree: {path_newick}")
+        with tempfile.TemporaryDirectory(prefix='figtree_', dir=Camel.get_instance().config['temp_dir']) as dir_temp:
+            figtree = FigTree(Camel.get_instance())
+            output_path = Path(dir_temp, 'tree.png')
+            figtree.update_parameters(output_path=str(path_out), width=width, height=height)
+            path_template = path_config
+            figtree.add_input_files({'NWK': [ToolIOFile(path_newick)], 'TXT': [ToolIOFile(path_template)]})
+            figtree.run(Path(dir_temp))
+        logging.info(f"PNG visualization created: {output_path}")
+        return figtree
+
+    @staticmethod
+    def count_leaves(newick_in: Path) -> int:
+        """
+        Counts the number of leaves in a phylogenetic tree.
+        :param newick_in: Input Newick file
+        :return: Number of leaves
+        """
+        with open(newick_in) as handle:
+            tree = next(NewickIO.parse(handle))
+        return tree.count_terminals()
 
     @staticmethod
     def remove_inner_node_names(tree: Tree) -> Tree:

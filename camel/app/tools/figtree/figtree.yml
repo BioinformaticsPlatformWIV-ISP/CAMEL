@@ -1,0 +1,6 @@
+dependencies: [figtree/1.4.4]
+parameters:
+  width: {default: true, mandatory: false, option: -width, value: 640}
+  height: {default: true, mandatory: false, option: -height, value: 480}
+  output_path: {default: true, mandatory: false, option: null, value: figtree.png}
+tool_command: java -jar $JAR_FIGTREE

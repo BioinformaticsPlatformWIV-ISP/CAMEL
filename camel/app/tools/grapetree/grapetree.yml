@@ -1,0 +1,5 @@
+dependencies: [grapetree/2.2]
+parameters:
+  method: {default: true, mandatory: true, option: --method, value: 'MSTreeV2'}
+  output_path: {default: true, mandatory: true, option: null, value: 'grapetree.nwk'}
+tool_command: grapetree
