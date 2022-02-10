@@ -3,8 +3,8 @@ from pathlib import Path
 from camel.app.camel import Camel
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.scripts.broadwgs.snakefile import alignment
 from camel.scripts.broadwgs import references
+from camel.scripts.broadwgs.snakefile import alignment
 from camel.scripts.broadwgs.snakefile import variant_calling
 
 camel = Camel.get_instance()

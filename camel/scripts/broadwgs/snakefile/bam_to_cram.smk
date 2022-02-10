@@ -5,8 +5,8 @@ from camel.app.command.command import Command
 from camel.app.error.snakemakeexecutionerror import SnakemakeExecutionError
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.scripts.broadwgs.snakefile import alignment, bam_to_cram
 from camel.scripts.broadwgs import references
+from camel.scripts.broadwgs.snakefile import alignment, bam_to_cram
 
 camel = Camel.get_instance()
 

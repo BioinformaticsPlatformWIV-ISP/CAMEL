@@ -1,9 +1,8 @@
 from pathlib import Path
 
 from camel.app.camel import Camel
-from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.scripts.broadwgs.snakefile import alignment, bam_to_cram, variant_calling, qc_summary
+from camel.scripts.broadwgs.snakefile import qc_summary
 
 camel = Camel.get_instance()
 

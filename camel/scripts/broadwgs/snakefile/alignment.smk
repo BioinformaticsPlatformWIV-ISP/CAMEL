@@ -1,12 +1,13 @@
 from pathlib import Path
+
 from camel.app.camel import Camel
 from camel.app.components.pipelines import pipeutils
+from camel.app.error.pipelineexecutionerror import PipelineExecutionError
+from camel.app.io.tooliofile import ToolIOFile
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.scripts.broadwgs import references
 from camel.scripts.broadwgs.snakefile import alignment
-from camel.app.io.tooliofile import ToolIOFile
-from camel.app.error.pipelineexecutionerror import PipelineExecutionError
 
 camel = Camel.get_instance()
 
@@ -361,7 +362,7 @@ rule picard_gather_sorted_bam:
         gather_bam.add_input_files({"BAMs": [SnakemakeUtils.load_object(Path(path))[0] for path in input.bqsr_BAM_interval]})
         gather_bam.update_parameters(
             **config['rule_params']['alignment'][rule],
-            output = "gathered_sorted.bam"
+            output = f"{config['sample']}_gathered_sorted.bam"
         )
         step.run_step()
         SnakemakeUtils.dump_tool_output(gather_bam, 'BAM', Path(output.BAM))
