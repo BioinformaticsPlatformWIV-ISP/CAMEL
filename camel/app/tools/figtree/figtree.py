@@ -4,6 +4,7 @@ from Bio import Phylo
 
 from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.tool import Tool
 
@@ -67,3 +68,10 @@ class FigTree(Tool):
             handle_out.write(handle_in.read())
             handle_out.write('\n')
         return path_nexus
+
+    def _check_command_output(self) -> None:
+        """
+        Checks if the command executed successfully.
+        """
+        if self._command.returncode != 0:
+            raise ToolExecutionError(f"Error executing {self.name}: {self._command.stderr}")
