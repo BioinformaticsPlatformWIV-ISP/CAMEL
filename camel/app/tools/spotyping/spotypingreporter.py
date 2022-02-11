@@ -87,7 +87,7 @@ class SpoTypingReporter(Tool):
         :return: Spoligotype metadata
         """
         command = Command('{} echo $SPOTYPING_METADATA'.format(self._build_dependencies()))
-        command.run_command(self._folder)
+        command.run(self._folder)
         metadata_path = command.stdout.strip()
         if not os.path.isfile(metadata_path):
             raise FileNotFoundError("No spoligotype metadata found")

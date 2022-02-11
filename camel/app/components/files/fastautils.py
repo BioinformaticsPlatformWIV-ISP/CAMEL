@@ -30,7 +30,8 @@ class FastaUtils(object):
         :param fasta: fasta file to read
         :return: a sequence record dictionary
         """
-        return SeqIO.to_dict(SeqIO.parse(open(fasta, 'rU'), "fasta"))
+        with fasta.open() as handle:
+            return SeqIO.to_dict(SeqIO.parse(handle, "fasta"))
 
     @staticmethod
     def write(sequences: List[Union[SeqIO.SeqRecord, str]], fasta: Path) -> None:
