@@ -60,9 +60,8 @@ class GATK4ValidateVariants(GATK4):
         Check the result. Error in the VCF file should not automatically cause the pipeline to terminate.
         :return: None
         """
-        for line in self.stderr.splitlines():
-            if 'ERROR' in line:
-                logging.warning(f"GATK tool {self._name} failed to run, message: \n{self.stderr}")
+        if self._command.returncode != 0:
+            logging.warning(f"GATK tool {self._name} failed to run, message: \n{self.stderr}")
 
     def _execute_tool(self) -> None:
         """
