@@ -98,7 +98,6 @@ class GeneDetectionWrapper(object):
         :param fasta_path: FASTA file path
         :return: None
         """
-        print(self._working_dir, type(self._working_dir))
         path = self._working_dir / str(gene_detection.INPUT_GENE_DETECTION_FASTA).format(db='db')
         if not path.parent.exists():
             path.parent.mkdir(parents=True)
