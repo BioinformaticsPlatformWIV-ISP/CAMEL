@@ -3,6 +3,7 @@ import shutil
 from pathlib import Path
 
 from camel.app.camel import Camel
+from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.gatk4.gatk4 import GATK4
 
@@ -60,7 +61,9 @@ class GATK4ValidateVariants(GATK4):
         Check the result. Error in the VCF file should not automatically cause the pipeline to terminate.
         :return: None
         """
-        if self._command.returncode != 0:
+        try:
+            super(GATK4ValidateVariants, self)._check_command_output()
+        except ToolExecutionError:
             logging.warning(f"GATK tool {self._name} failed to run, message: \n{self.stderr}")
 
     def _execute_tool(self) -> None:
