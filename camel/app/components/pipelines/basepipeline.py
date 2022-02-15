@@ -56,7 +56,7 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         """
         # Input
         argument_parser.add_argument('--sample-name', type=str)
-        argument_parser.add_argument('--fastq-pe', nargs=2, help="FASTQ input files")
+        argument_parser.add_argument('--fastq-pe', nargs=2, type=Path, help="FASTQ input files")
         argument_parser.add_argument('--fastq-pe-names', nargs=2, help="FASTQ input file names")
 
         # Output
