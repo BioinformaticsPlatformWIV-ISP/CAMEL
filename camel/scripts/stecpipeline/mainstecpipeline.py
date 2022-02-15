@@ -70,7 +70,7 @@ class MainSTECPipeline(ReportPipeline):
         """
         parser = argparse.ArgumentParser()
         ReportPipeline.add_common_arguments(parser)
-        parser.add_argument('--fastq-se', help="Input SE FASTQ file")
+        parser.add_argument('--fastq-se', type=Path, help="Input SE FASTQ file")
         parser.add_argument('--fastq-se-name', help="Input SE FASTQ file name")
         parser.add_argument(
             '--read-type', help="Type of reads.", choices=['illumina', 'iontorrent'], default='illumina')

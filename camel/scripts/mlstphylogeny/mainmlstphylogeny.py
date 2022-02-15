@@ -34,7 +34,6 @@ class MainMLSTPhylogeny(object):
         :param args: Command line arguments
         """
         self._args = MainMLSTPhylogeny._parse_arguments(args)
-        self._dir_working = Path(self._args.dir_working)
 
     def run(self) -> None:
         """
@@ -58,7 +57,7 @@ class MainMLSTPhylogeny(object):
         grapetree = self.run_grapetree(path_allele_matrix)
 
         # Store the tree image in a temporary file before adding it to the report
-        with tempfile.NamedTemporaryFile(dir=str(self._dir_working), prefix='figtree_', suffix='.png') as nwk_out:
+        with tempfile.NamedTemporaryFile(dir=str(self._args.dir_working), prefix='figtree_', suffix='.png') as nwk_out:
             figtree = NewickUtils.create_image_figtree(
                 grapetree.tool_outputs['NWK'][0].path,
                 Path(pkg_resources.resource_filename('camel', 'resources/figtree/template_cgmlst_tree.txt')),
@@ -78,7 +77,7 @@ class MainMLSTPhylogeny(object):
 
         # Input files
         grp_input = ap.add_mutually_exclusive_group(required=True)
-        grp_input.add_argument('--input-html', action='append')
+        grp_input.add_argument('--input-html', type=Path, action='append')
         grp_input.add_argument('--input-tsv', nargs=2, action='append')
         ap.add_argument('--detection-method', type=str, choices=['blast', 'kma', 'srst2'], default='blast')
         ap.add_argument(
@@ -94,12 +93,12 @@ class MainMLSTPhylogeny(object):
             help='Minimum percentage of datasets where loci should be present')
 
         # Output files
-        ap.add_argument('--dir-working', type=str, help='Working directory', default=str(Path('.').absolute()))
-        ap.add_argument('--output-allele-matrix', type=str, help='Output path for allele matrix')
-        ap.add_argument('--output-dist-matrix', type=str, help='Output path for the AD matrix')
-        ap.add_argument('--output-tree', type=str, help='Output path for the Newick tree')
-        ap.add_argument('--output-html', type=str, help='Path to the HTML output report', required=True)
-        ap.add_argument('--output-dir', type=str, help='Path to the output directory', required=True)
+        ap.add_argument('--dir-working', type=Path, help='Working directory', default=Path.cwd())
+        ap.add_argument('--output-allele-matrix', type=Path, help='Output path for allele matrix')
+        ap.add_argument('--output-dist-matrix', type=Path, help='Output path for the AD matrix')
+        ap.add_argument('--output-tree', type=Path, help='Output path for the Newick tree')
+        ap.add_argument('--output-html', type=Path, help='Path to the HTML output report', required=True)
+        ap.add_argument('--output-dir', type=Path, help='Path to the output directory', required=True)
 
         # Visualization
         ap.add_argument(
@@ -131,7 +130,7 @@ class MainMLSTPhylogeny(object):
         """
         # Header
         report = mainscriptutils.init_report(
-            Path(self._args.output_html), Path(self._args.output_dir), 'MLST phylogeny report', 'MLST phylogeny')
+            self._args.output_html, self._args.output_dir, 'MLST phylogeny report', 'MLST phylogeny')
         if self._args.input_tsv is not None:
             input_file_str = ', '.join([Path(name).name for _, name in self._args.input_tsv])
         else:
@@ -153,8 +152,7 @@ class MainMLSTPhylogeny(object):
         :return: Detected alleles by dataset name
         """
         if self._args.input_html:
-            allele_data = mlstphyloutils.parse_html_typing_list([
-                Path(x) for x in self._args.input_html], self._args.detection_method)
+            allele_data = mlstphyloutils.parse_html_typing_list(self._args.input_html, self._args.detection_method)
         elif self._args.input_tsv:
             allele_data = mlstphyloutils.parse_tsv_typing_list(
                 [(Path(path), name) for path, name in self._args.input_tsv], self._args.detection_method)
@@ -193,7 +191,7 @@ class MainMLSTPhylogeny(object):
         Saves the allele matrix to a file.
         :param allele_data_filt: Filtered allele data
         """
-        path_allele_matrix = self._dir_working / 'allele_matrix-filtered.tsv'
+        path_allele_matrix = self._args.dir_working / 'allele_matrix-filtered.tsv'
         allele_data_filt.to_csv(path_allele_matrix, index_label='ID', sep='\t')
 
         # Save the allele matrix to a separate file is specified
@@ -266,7 +264,7 @@ class MainMLSTPhylogeny(object):
         :return: None
         """
         # Save distance matrix in output folder
-        path_tsv_dist = self._dir_working / 'dist_matrix.tsv'
+        path_tsv_dist = self._args.dir_working / 'dist_matrix.tsv'
         data_dist_matrix.to_csv(path_tsv_dist, sep='\t', index_label='ID')
         # Copy the distance file (if specified)
         if self._args.output_dist_matrix is not None:
@@ -295,7 +293,7 @@ class MainMLSTPhylogeny(object):
         :param allele_matrix: Input allele matrix
         :return: GrapeTree tool instance
         """
-        dir_grapetree = self._dir_working / 'grapetree'
+        dir_grapetree = self._args.dir_working / 'grapetree'
         dir_grapetree.mkdir(exist_ok=True, parents=True)
         grapetree = GrapeTree(Camel.get_instance())
         output_path = dir_grapetree / 'tree.nwk'
@@ -333,7 +331,7 @@ class MainMLSTPhylogeny(object):
 
         # Add commands and citations
         report.add_html_object(SnakePipelineUtils.create_commands_section(
-            [grapetree.informs, figtree.informs], self._dir_working))
+            [grapetree.informs, figtree.informs], self._args.dir_working))
         report.add_html_object(SnakePipelineUtils.create_citations_section(['Zhou_2018-grapetree']))
         report.save()
 

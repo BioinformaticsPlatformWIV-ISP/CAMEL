@@ -60,18 +60,18 @@ class MainCalling(object):
         """
         # Create config file
         config_data = self.__create_snakemake_config_data()
-        config_file = SnakePipelineUtils.generate_config_file(config_data, self._args.dir_working)
+        config_file = SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir)
 
         # Copy input BAM file to the right location
-        target_dir = self._args.dir_working / 'variant_calling' / 'read_mapping'
+        target_dir = self._args.working_dir / 'variant_calling' / 'read_mapping'
         if not target_dir.exists():
             target_dir.mkdir(parents=True)
         SnakemakeUtils.dump_object([ToolIOFile(self._args.bam)], target_dir / 'bam.io')
 
         # Run Snakemake to generate output file
-        output_path = self._args.dir_working / variant_calling.OUTPUT_VARIANT_CALLING_UNFILTERED_VCF
+        output_path = self._args.working_dir / variant_calling.OUTPUT_VARIANT_CALLING_UNFILTERED_VCF
         SnakePipelineUtils.run_snakemake(
-            variant_calling.SNAKEFILE_VARIANT_CALLING, config_file, [output_path], self._args.dir_working,
+            variant_calling.SNAKEFILE_VARIANT_CALLING, config_file, [output_path], self._args.working_dir,
             self._args.threads)
 
         # Generate consensus sequence
@@ -112,10 +112,10 @@ class MainCalling(object):
         :param config_data: Snakemake config data
         :return: None
         """
-        config_file = SnakePipelineUtils.generate_config_file(config_data, self._args.dir_working, 'consensus.yml')
-        output_path_consensus = self._args.dir_working / variant_calling.OUTPUT_VARIANT_CALLING_CONSENSUS
+        config_file = SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir, 'consensus.yml')
+        output_path_consensus = self._args.working_dir / variant_calling.OUTPUT_VARIANT_CALLING_CONSENSUS
         SnakePipelineUtils.run_snakemake(
-            variant_calling.SNAKEFILE_VARIANT_CALLING, config_file, [output_path_consensus],  self._args.dir_working,
+            variant_calling.SNAKEFILE_VARIANT_CALLING, config_file, [output_path_consensus],  self._args.working_dir,
             self._args.threads)
         fasta_consensus = SnakemakeUtils.load_object(output_path_consensus)[0].path
         shutil.copyfile(fasta_consensus, output_path)

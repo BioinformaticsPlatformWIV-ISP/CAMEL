@@ -50,7 +50,7 @@ class MainPointFinder(object):
         """
         # Initialize report
         report = mainscriptutils.init_report(
-            Path(self._args.output_html), Path(self._args.output_dir), 'PointFinder (local) report',
+            self._args.output_html, self._args.output_dir, 'PointFinder (local) report',
             'PointFinder (local)')
         report.add_html_object(mainscriptutils.generate_analysis_info_section(self._args))
         report.save()
