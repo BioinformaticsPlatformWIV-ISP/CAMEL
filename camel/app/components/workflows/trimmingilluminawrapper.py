@@ -23,6 +23,7 @@ class TrimmingIlluminaWrapper(object):
         trimmed_reads_se_rev: List[ToolIOFile]
         informs_trimmomatic: Dict[str, Any]
         fastq_reports_pre: List[ToolIOFile]
+        fastq_reports_post: List[ToolIOFile]
         log_file: Optional[Path] = None
 
     def __init__(self, working_dir: Path) -> None:
@@ -79,7 +80,9 @@ class TrimmingIlluminaWrapper(object):
             informs_trimmomatic=SnakemakeUtils.load_object(
                 self._working_dir / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_INFORMS),
             fastq_reports_pre=SnakemakeUtils.load_object(
-                self._working_dir / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_FASTQC_PRE),
+                self._working_dir / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_FASTQC_HTML_PRE),
+            fastq_reports_post=SnakemakeUtils.load_object(
+                self._working_dir / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_FASTQC_HTML_POST),
             log_file=log_path if log_path.exists() else None
         )
 
