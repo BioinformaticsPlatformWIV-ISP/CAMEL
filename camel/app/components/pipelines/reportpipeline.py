@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Dict, Any, List
 
 import abc
@@ -22,9 +23,9 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         BasePipeline.add_common_arguments(argument_parser)
 
         # Output
-        argument_parser.add_argument('--output-dir', required=True, type=str)
-        argument_parser.add_argument('--output-html', required=True, type=str)
-        argument_parser.add_argument('--output-tsv', help="Output file for the summary", required=True)
+        argument_parser.add_argument('--output-dir', required=True, type=Path)
+        argument_parser.add_argument('--output-html', required=True, type=Path)
+        argument_parser.add_argument('--output-tsv', help="Output file for the summary", required=True, type=Path)
 
         # Options
         argument_parser.add_argument(
@@ -44,9 +45,9 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         """
         config_data = super().get_template_data(input_key, input_data)
         mainscriptutils.dict_merge(config_data, {
-            'output_dir': self._args.output_dir,
-            'output_report': self._args.output_html,
-            'output_tabular': self._args.output_tsv,
+            'output_dir': str(self._args.output_dir),
+            'output_report': str(self._args.output_html),
+            'output_tabular': str(self._args.output_tsv),
             'detection_method': self._args.detection_method,
             'read_trimming': {'export_fastq': self._args.report_include_fastq}
         })

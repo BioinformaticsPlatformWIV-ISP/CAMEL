@@ -32,7 +32,6 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         self._version = version
         self._snakefile = snakefile
         self._args = self._parse_arguments(args)
-        self._working_dir = Path(self._args.working_dir)
         self._keep_logs = True if self._args.log else Camel.get_instance().config.get('logging', {}).get(
             'keep_logs', False)
         self._pipeline = Pipeline(name, Camel.get_instance(), self._args.log, self._args.log)
@@ -60,7 +59,7 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         argument_parser.add_argument('--fastq-pe-names', nargs=2, help="FASTQ input file names")
 
         # Output
-        argument_parser.add_argument('--working-dir', default=os.path.abspath('.'), type=str)
+        argument_parser.add_argument('--working-dir', type=Path, default=Path.cwd())
 
         # Options
         argument_parser.add_argument('--threads', default=8, type=int)
@@ -125,7 +124,7 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         :return: Links
         """
         links = []
-        for read_nb, path in enumerate([Path(x) for x in self._args.fastq_pe], start=1):
+        for read_nb, path in enumerate(self._args.fastq_pe, start=1):
             gzipped = FileSystemHelper.is_gzipped(path)
             links.append([path, f"{self.sample_name}_{read_nb}.fastq{'.gz' if gzipped else ''}"])
         return links
