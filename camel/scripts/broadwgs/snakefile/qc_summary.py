@@ -69,11 +69,11 @@ def get_fold_80(coverage_file, mean_coverage, percentile_20):
     coverage_histo = [l.rstrip().split("\t") for l in coverage_histo]
 
     # get the list of coverage values. As we do not change the order, the index is the coverage
-    # e.g. [7, 100, 500, 100] -> 7 bases 0X, 100 bases 1X, 500 bases 2X, 100 bases 1X
+    # e.g. [7, 100, 500, 100] -> 7 bases 0X, 100 bases 1X, 500 bases 2X, 100 bases 3X
     cov_values = [int(l[1]) for l in coverage_histo]
 
     # calculate cumsum for the histogram:
-    # e.g. [7, 100, 500, 100] -> [7, 107, 607, 707]: 7 bases 0X, 107 bases max. 1X, 607 bases max. 2X, 707 bases max. 2X
+    # e.g. [7, 100, 500, 100] -> [7, 107, 607, 707]: 7 bases 0X, 107 bases max. 1X, 607 bases max. 2X, 707 bases max. 3X
     histo_cumsum = [sum(cov_values[:i+1]) for i, value in enumerate(cov_values)]
 
     # add the input percentile_20 to the cumsum list and sort
@@ -84,9 +84,15 @@ def get_fold_80(coverage_file, mean_coverage, percentile_20):
     find_index = tmp.index(int(percentile_20))
     val_before = histo_cumsum[find_index - 1]
     val_after = histo_cumsum[find_index]
-    ## in our example, find_index will be 2, val_before: 107, val_after: 607
+    # in our example, find_index will be 2, val_before: 107, val_after: 607
 
-    cov_20 = (((val_after - percentile_20) / (val_after - val_before)) + find_index - 1)
+    ## Calculate the coverage for the lowest 20% of bases
+    # val_before: 107: 107/707 = 15.13% <= 1X coverage
+    # val_after: 607: 607/707 = 85.85% <= 2X coverage
+    # 20% is between 15-85%: coverage of 20th percentile is between 1X and 2X
+    # Fraction: (141-107) / (607-107+1) = 0.068
+    # This is assuming linearity on the small interval, which is expected if the coverage follows a continuous distribution
+    cov_20 = (((percentile_20 - val_before) / (val_after - val_before + 1)) + find_index - 1)
 
     # ideally, as close as possible to 1
     return mean_coverage / cov_20
