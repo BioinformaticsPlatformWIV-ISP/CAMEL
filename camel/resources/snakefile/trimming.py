@@ -78,9 +78,9 @@ def get_trimming_fastqc(key: str, config: Dict[str, Any]) -> Path:
     """
     if get_read_type(config) == 'illumina':
         if key == 'pre':
-            return Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_FASTQC_PRE
+            return Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_FASTQC_TXT_PRE
         elif key == 'post':
-            return Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_FASTQC_POST
+            return Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_FASTQC_TXT_POST
     else:
         if key == 'pre':
             return Path(config['working_dir']) / trimming_iontorrent.OUTPUT_TRIMMING_IONTORRENT_FASTQC_PRE
