@@ -195,13 +195,16 @@ rule variant_filtering_unzip_vcf_zscore:
     output:
         VCF = Path(config['working_dir']) / variant_filtering.OUTPUT_VARIANT_FILTERING_VCF
     params:
-        running_dir = Path(config['working_dir']) / 'variant_filtering' /'unzip'
+        running_dir = Path(config['working_dir']) / 'variant_filtering' /'unzip',
+        sample_name = config['sample_name']
     run:
+        from camel.app.components.filesystemhelper import FileSystemHelper
         from camel.app.tools.bcftools.bcftoolsview import BcftoolsView
         bcftools_view = BcftoolsView(camel)
         SnakemakeUtils.add_pickle_inputs(bcftools_view, input)
         step = Step(rule, bcftools_view, camel, params.running_dir, config)
-        bcftools_view.update_parameters(output_format='VCF', compress_output=False, output_filename='variants_filtered.vcf')
+        output_filename = f'variants-{FileSystemHelper.make_valid(params.sample_name)}-filtered.vcf'
+        bcftools_view.update_parameters(output_format='VCF', compress_output=False, output_filename=output_filename)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(bcftools_view, output)
 

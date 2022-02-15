@@ -54,7 +54,8 @@ class MainFiltering(object):
         """
         wrapper = VariantFilteringWrapper(Path(self._args.working_dir))
         wrapper.run_workflow(
-            Path(self._args.vcf), Path(self._args.bam), filtering_options=self.__get_filtering_options())
+            Path(self._args.vcf).stem, Path(self._args.vcf), Path(self._args.bam),
+            filtering_options=self.__get_filtering_options())
         shutil.copyfile(wrapper.output.vcf_filtered.path, self._args.output_vcf)
         if self._args.output_stats is not None:
             with open(self._args.output_stats, 'w') as handle:

@@ -73,9 +73,11 @@ class VariantFilteringWrapper(object):
                 target_file.parent.mkdir(parents=True)
             SnakemakeUtils.dump_object([ToolIOFile(path)] if path is not None else [], target_file)
 
-    def run_workflow(self, vcf_file: Path, bam_file: Path, filtering_options: Dict, cores: int = 8) -> None:
+    def run_workflow(
+            self, sample_name: str, vcf_file: Path, bam_file: Path, filtering_options: Dict, cores: int = 8) -> None:
         """
         Runs the variant calling workflow.
+        :param sample_name: Sample name
         :param vcf_file: Input VCF file
         :param bam_file: Input BAM file
         :param cores: Number of cores
@@ -88,8 +90,11 @@ class VariantFilteringWrapper(object):
         self.__create_input(vcf_gz_file, bam_file)
 
         # Create config
-        config_path = SnakePipelineUtils.generate_config_file(
-            {'working_dir': str(self._working_dir), 'variant_filtering': filtering_options}, self._working_dir)
+        config_path = SnakePipelineUtils.generate_config_file({
+            'working_dir': str(self._working_dir),
+            'variant_filtering': filtering_options,
+            'sample_name': sample_name
+        }, self._working_dir)
 
         # Execute Snakemake
         output_files = {
