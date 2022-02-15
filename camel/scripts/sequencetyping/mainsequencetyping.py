@@ -27,7 +27,7 @@ class MainSequenceTyping(object):
         """
         self._args = MainSequenceTyping._parse_arguments(args)
         self._sample_name = mainscriptutils.determine_sample_name(self._args)
-        self._helper = helper_by_read_type[self._args.read_type](Path(self._args.working_dir), self._sample_name)
+        self._helper = helper_by_read_type[self._args.read_type](self._args.working_dir, self._sample_name)
 
     @staticmethod
     def _parse_arguments(args: Optional[Sequence[str]]) -> argparse.Namespace:
@@ -40,12 +40,12 @@ class MainSequenceTyping(object):
         mainscriptutils.add_common_arguments(argument_parser)
         mainscriptutils.add_assembly_arguments(argument_parser)
         mainscriptutils.add_input_files_arguments(argument_parser)
-        argument_parser.add_argument('--scheme-dir', required=True, type=str)
+        argument_parser.add_argument('--scheme-dir', required=True, type=Path)
         argument_parser.add_argument('--detection-method', type=str, choices=['blast', 'srst2', 'kma'], default='blast')
         argument_parser.add_argument(
-            '--output-fasta', type=str, help='output path for assembled contigs (only used for BLAST-based detection)')
-        argument_parser.add_argument(
-            '--output-tsv', help='Output path for the tabular output file (does not work with mixed schemes)')
+            '--output-fasta', type=Path, help='output path for assembled contigs (only used for BLAST-based detection)')
+        argument_parser.add_argument('--output-tsv', type=Path,
+                                     help='Output path for the tabular output file (does not work with mixed schemes)')
         argument_parser.add_argument('--blastn-task', type=str, choices=['blastn', 'megablast'], default='megablast')
         argument_parser.add_argument('--srst2-max-unaligned-overlap', type=int, default=100)
         return argument_parser.parse_args(args)
@@ -56,26 +56,25 @@ class MainSequenceTyping(object):
         :return: None
         """
         # Initialize report
-        report = mainscriptutils.init_report(
-            Path(self._args.output_html), Path(self._args.output_dir), 'Sequence typing report',
-            f'Sequence typing {self._args.detection_method}')
+        report = mainscriptutils.init_report(self._args.output_html, self._args.output_dir, 'Sequence typing report',
+                                             f'Sequence typing {self._args.detection_method}')
         report.add_html_object(mainscriptutils.generate_analysis_info_section(self._args))
         report.save()
 
         # Run script with wrapper
-        db_data = SequenceTypingUtils.parse_scheme_metadata(Path(self._args.scheme_dir))
+        db_data = SequenceTypingUtils.parse_scheme_metadata(self._args.scheme_dir)
         if self._args.detection_method == 'blast':
             fasta_file = self._helper.prepare_fasta_input(report, self._args)
             # Save assembly if specified
             if self._args.output_fasta is not None:
                 shutil.copyfile(str(fasta_file), self._args.output_fasta)
-            output = self.__run_sequence_typing_blast(fasta_file, db_data['name'], Path(self._args.scheme_dir))
+            output = self.__run_sequence_typing_blast(fasta_file, db_data['name'], self._args.scheme_dir)
         elif self._args.detection_method == 'srst2':
             fastq_input = self._helper.prepare_fastq_input(report, self._args)
-            output = self.__run_sequence_typing_srst2(fastq_input, db_data['name'], Path(self._args.scheme_dir))
+            output = self.__run_sequence_typing_srst2(fastq_input, db_data['name'], self._args.scheme_dir)
         elif self._args.detection_method == 'kma':
             fastq_input = self._helper.prepare_fastq_input(report, self._args)
-            output = self.__run_sequence_typing_kma(fastq_input, db_data['name'], Path(self._args.scheme_dir))
+            output = self.__run_sequence_typing_kma(fastq_input, db_data['name'], self._args.scheme_dir)
         else:
             raise ValueError(f"Invalid detection method: {self._args.detection_method}")
         self.__export_output(output, report)
@@ -88,7 +87,7 @@ class MainSequenceTyping(object):
         :param db_path: Database directory path
         :return: None
         """
-        wrapper = SequenceTypingWrapper(Path(self._args.working_dir))
+        wrapper = SequenceTypingWrapper(self._args.working_dir)
         workflow_input = SequenceTypingInput(
             sample_name=self._sample_name, fasta=ToolIOFile(fasta_file), db_path=db_path, db_key=db_key)
         wrapper.run_workflow_blast(workflow_input, self._args.blastn_task, self._args.threads)
@@ -103,9 +102,9 @@ class MainSequenceTyping(object):
         :param db_path: Database path
         :return: None
         """
-        wrapper = SequenceTypingWrapper(Path(self._args.working_dir))
+        wrapper = SequenceTypingWrapper(self._args.working_dir)
         workflow_input = SequenceTypingInput(
-            fasta=ToolIOFile(Path(self._args.fasta)) if self._args.fasta else None,
+            fasta=ToolIOFile(self._args.fasta) if self._args.fasta else None,
             sample_name=self._sample_name, fastq=fastq_input, db_key=db_key, db_path=db_path)
         srst2_options = {'max_unaligned_overlap': self._args.srst2_max_unaligned_overlap}
         wrapper.run_workflow_srst2(workflow_input, srst2_options, self._args.threads)
@@ -120,9 +119,9 @@ class MainSequenceTyping(object):
         :param db_path: Database path
         :return: None
         """
-        wrapper = SequenceTypingWrapper(Path(self._args.working_dir))
+        wrapper = SequenceTypingWrapper(self._args.working_dir)
         workflow_input = SequenceTypingInput(
-            fasta=ToolIOFile(Path(self._args.fasta)) if self._args.fasta else None,
+            fasta=ToolIOFile(self._args.fasta) if self._args.fasta else None,
             sample_name=self._sample_name, fastq=fastq_input, db_key=db_key, db_path=db_path)
         wrapper.run_workflow_kma(workflow_input, self._args.threads)
         return wrapper.output

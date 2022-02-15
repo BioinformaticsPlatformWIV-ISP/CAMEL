@@ -119,11 +119,11 @@ class SnpPhylogenyUtils(object):
         :param argument_parser: Argument parser
         :return: None
         """
-        argument_parser.add_argument('--output-dir', required=True, type=str)
-        argument_parser.add_argument('--output-html', required=True, type=str)
-        argument_parser.add_argument('--working-dir', default=str(Path('.').absolute()), type=str)
+        argument_parser.add_argument('--output-dir', required=True, type=Path)
+        argument_parser.add_argument('--output-html', required=True, type=Path)
+        argument_parser.add_argument('--working-dir', type=Path, default=Path.cwd())
         argument_parser.add_argument('--threads', default=8, type=int)
-        argument_parser.add_argument('--reference', required=True, type=str)
+        argument_parser.add_argument('--reference', required=True, type=Path)
         argument_parser.add_argument('--reference-name', type=str)
         argument_parser.add_argument('--sample', nargs=5, action='append', required=True)
         argument_parser.add_argument('--trim-reads', action='store_true')

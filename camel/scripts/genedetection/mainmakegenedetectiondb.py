@@ -27,9 +27,9 @@ class MainMakeGeneDetectionDB(object):
         :param args: (Optional) arguments
         """
         self._args = MainMakeGeneDetectionDB.parse_arguments(args)
-        fasta_name = self._args.fasta_name if self._args.fasta_name is not None else Path(self._args.fasta).name
+        fasta_name = self._args.fasta_name if self._args.fasta_name is not None else self._args.fasta.name
         self._db_name = FileSystemHelper.make_valid(Path(fasta_name).stem)
-        self._helper = DBHelper(self._db_name, Path(self._args.working_dir))
+        self._helper = DBHelper(self._db_name, self._args.working_dir)
         self._clusters = None
         self._new_name_by_header = None
 
@@ -40,12 +40,12 @@ class MainMakeGeneDetectionDB(object):
         :return: Parsed arguments
         """
         argument_parser = argparse.ArgumentParser()
-        argument_parser.add_argument('--fasta', required=True, help="Input FASTA file.")
+        argument_parser.add_argument('--fasta', type=Path, required=True, help="Input FASTA file.")
         argument_parser.add_argument('--fasta-name', help="Name of the input FASTA file (for Galaxy input).")
         argument_parser.add_argument('--identity-cutoff', default=80, type=int)
-        argument_parser.add_argument('--output-dir', required=True)
-        argument_parser.add_argument('--output-html', required=True)
-        argument_parser.add_argument('--working-dir', default=str(Path('.').absolute()))
+        argument_parser.add_argument('--output-html', type=Path, required=True)
+        argument_parser.add_argument('--output-dir', type=Path, required=True)
+        argument_parser.add_argument('--working-dir', default=Path.cwd(), type=Path)
         return argument_parser.parse_args(args)
 
     def run(self) -> None:
@@ -53,13 +53,12 @@ class MainMakeGeneDetectionDB(object):
         Runs this tool.
         :return: None
         """
-        output_dir = Path(self._args.output_dir)
-        if not output_dir.exists():
-            output_dir.mkdir(parents=True)
-        input_fasta = self._helper.standardize_fasta_headers(Path(self._args.fasta))
-        self.__export_blast_db(input_fasta, output_dir)
-        self.__export_srst2_db(input_fasta, output_dir)
-        self._helper.export_metadata(self._db_name, output_dir)
+        if not self._args.output_dir.exists():
+            self._args.output_dir.mkdir(parents=True)
+        input_fasta = self._helper.standardize_fasta_headers(self._args.fasta)
+        self.__export_blast_db(input_fasta, self._args.output_dir)
+        self.__export_srst2_db(input_fasta, self._args.output_dir)
+        self._helper.export_metadata(self._db_name, self._args.output_dir)
         self.__export_report()
 
     def __export_blast_db(self, input_fasta: Path, output_dir: Path) -> None:
@@ -119,12 +118,12 @@ class MainMakeGeneDetectionDB(object):
         Creates a report with some info on the database.
         :return: None
         """
-        self._report = HtmlReport(Path(self._args.output_html))
+        self._report = HtmlReport(self._args.output_html, self._args.output_dir)
         self._report.initialize('Gene detection database', CSS_STYLE)
         self._report.add_html_object(self.__create_db_info_section())
         self._report.add_html_object(self.__create_clusters_section())
         self._report.add_html_object(SnakePipelineUtils.create_commands_section(
-            self._helper.informs, Path(self._args.working_dir)))
+            self._helper.informs, self._args.working_dir))
         self._report.save()
 
     def __create_db_info_section(self) -> HtmlReportSection:

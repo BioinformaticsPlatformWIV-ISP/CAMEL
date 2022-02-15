@@ -27,8 +27,7 @@ class MainSpaTyping(object):
         self._camel = Camel.get_instance()
         self._args = MainSpaTyping._parse_arguments(args)
         self._sample_name = mainscriptutils.determine_sample_name(self._args)
-        self._helper = helper_by_read_type[self._args.read_type](Path(self._args.working_dir), self._sample_name)
-        self._db_path = Path(self._args.db_path)
+        self._helper = helper_by_read_type[self._args.read_type](self._args.working_dir, self._sample_name)
 
     @staticmethod
     def _parse_arguments(args: Optional[Sequence[str]] = None) -> argparse.Namespace:
@@ -40,7 +39,8 @@ class MainSpaTyping(object):
         mainscriptutils.add_common_arguments(argument_parser)
         mainscriptutils.add_input_files_arguments(argument_parser)
         mainscriptutils.add_assembly_arguments(argument_parser)
-        argument_parser.add_argument('--db-path', help="Path to the database", default='/db/pipelines/saureus')
+        argument_parser.add_argument(
+            '--db-path', type=Path, help="Path to the database", default=Path('/db/pipelines/saureus'))
         return argument_parser.parse_args(args)
 
     def run(self) -> None:
@@ -50,14 +50,14 @@ class MainSpaTyping(object):
         """
         # Initialize report
         report = mainscriptutils.init_report(
-            Path(self._args.output_html), Path(self._args.output_dir), 'spa typing report', f'<i>spa</i> typing')
+            self._args.output_html, self._args.output_dir, 'spa typing report', f'<i>spa</i> typing')
         report.add_html_object(mainscriptutils.generate_analysis_info_section(self._args))
         report.save()
 
         # Run the tools
         fasta_file = self._helper.prepare_fasta_input(report, self._args)
         blastn_tsv_output = self.__run_blastn(fasta_file)
-        spa_typing = self.__run_spa_tying(Path(blastn_tsv_output.path), fasta_file)
+        spa_typing = self.__run_spa_tying(blastn_tsv_output.path, fasta_file)
         self.__add_report_output(spa_typing, report)
 
     def __run_blastn(self, fasta_file: Path) -> ToolIOFile:
@@ -68,7 +68,7 @@ class MainSpaTyping(object):
         """
         blastn = Blastn(self._camel)
         blastn.add_input_files({
-            'DB_BLAST': [ToolIOFile(self._db_path / 'profiles.fasta')],
+            'DB_BLAST': [ToolIOFile(self._args.db_path / 'profiles.fasta')],
             'FASTA': [ToolIOFile(fasta_file)]})
         blastn.update_parameters(
             output_format=SpaTyping.BLASTN_OUTPUT_FORMAT,
@@ -76,7 +76,7 @@ class MainSpaTyping(object):
             task='blastn',
             dust='no'
         )
-        blastn.run(Path(self._args.working_dir))
+        blastn.run(self._args.working_dir)
         self._helper.informs.append(blastn.informs)
         return blastn.tool_outputs['TSV'][0]
 
@@ -91,7 +91,7 @@ class MainSpaTyping(object):
         spa_typing.add_input_files({
             'TSV': [ToolIOFile(tsv_output)],
             'FASTA': [ToolIOFile(fasta_file)],
-            'CSV_profiles': [ToolIOFile(self._db_path / 'spatypes.csv')]
+            'CSV_profiles': [ToolIOFile(self._args.db_path / 'spatypes.csv')]
         })
         spa_typing.run(self._args.working_dir)
         return spa_typing

@@ -26,7 +26,7 @@ class MainPointFinder(object):
         """
         self._args = MainPointFinder.parse_arguments(args)
         self._sample_name = mainscriptutils.determine_sample_name(self._args)
-        self._helper = helper_by_read_type[self._args.read_type](Path(self._args.working_dir), self._sample_name)
+        self._helper = helper_by_read_type[self._args.read_type](self._args.working_dir, self._sample_name)
 
     @staticmethod
     def parse_arguments(args: Optional[Sequence[str]] = None) -> argparse.Namespace:

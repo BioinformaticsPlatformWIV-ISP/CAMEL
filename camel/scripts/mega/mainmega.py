@@ -27,7 +27,6 @@ class MainMega(object):
         """
         self._args = MainMega._parse_arguments(args)
         self._camel = Camel()
-        self._dir_working = Path(self._args.working_dir)
 
     @staticmethod
     def _parse_arguments(args: Optional[Sequence[str]] = None) -> argparse.Namespace:
@@ -36,11 +35,11 @@ class MainMega(object):
         :return: Arguments
         """
         argument_parser = argparse.ArgumentParser()
-        argument_parser.add_argument('--fasta', help="Input SNP matrix FASTA file")
+        argument_parser.add_argument('--fasta', type=Path, help="Input SNP matrix FASTA file")
         argument_parser.add_argument('--vcf', action='append', nargs=2)
-        argument_parser.add_argument('--output-tree', help="Output Newick tree file")
-        argument_parser.add_argument('--output-model', help="Output tabular model selection file")
-        argument_parser.add_argument('--output-snp-matrix',
+        argument_parser.add_argument('--output-tree', type=Path, help="Output Newick tree file")
+        argument_parser.add_argument('--output-model', type=Path, help="Output tabular model selection file")
+        argument_parser.add_argument('--output-snp-matrix', type=Path,
                                      help='If set, the SNP matrix is exported to this FASTA file')
         argument_parser.add_argument('--action', choices=['both', 'model', 'tree'], required=True)
         argument_parser.add_argument('--missing-data', choices=[
@@ -53,7 +52,7 @@ class MainMega(object):
         argument_parser.add_argument('--site-cov-cutoff', choices=range(0, 101), type=int, default=50)
         argument_parser.add_argument('--model', choices=['JC', 'K2', 'T92', 'HKY', 'TN93', 'GTR'], default='JC')
         argument_parser.add_argument('--rates', choices=['G+I', 'G', 'I', 'U'], default='U')
-        argument_parser.add_argument('--working-dir', default=str(Path('.').absolute()))
+        argument_parser.add_argument('--working-dir', type=Path, default=Path.cwd())
         argument_parser.add_argument(
             '--include-ref', action='store_true', help='If set, reference is included in phylogeny')
         argument_parser.add_argument(
@@ -69,8 +68,8 @@ class MainMega(object):
         """
         # Prepare SNP matrix
         if self._args.fasta is not None:
-            fasta_path = self._dir_working / MainMega.SNP_MATRIX_FILENAME
-            fasta_path.symlink_to(Path(self._args.fasta))
+            fasta_path = self._args.working_dir / MainMega.SNP_MATRIX_FILENAME
+            fasta_path.symlink_to(self._args.fasta)
         else:
             vcf_files = [Path(v) for v, _ in self._args.vcf]
             sample_names = [n for _, n in self._args.vcf]
@@ -103,7 +102,7 @@ class MainMega(object):
         snp_matrix_constructor.add_input_files({
             'VCF': [ToolIOFile(v) for v in vcf_files],
             'SAMPLE_NAME': [ToolIOValue(n) for n in sample_names]})
-        snp_matrix_constructor.run(self._dir_working)
+        snp_matrix_constructor.run(self._args.working_dir)
         return snp_matrix_constructor.tool_outputs['FASTA'][0].path
 
     def __run_model_selection(self, fasta_path: Path) -> Tuple[str, str]:
@@ -117,7 +116,7 @@ class MainMega(object):
             model_selection, self._args.missing_data, self._args.branch_swap, self._args.site_cov_cutoff,
             self._args.threads)
         model_selection.add_input_files({'FASTA': [ToolIOFile(fasta_path)]})
-        dir_model_selection = self._dir_working / 'model_selection'
+        dir_model_selection = self._args.working_dir / 'model_selection'
         if not dir_model_selection.is_dir():
             dir_model_selection.mkdir()
         model_selection.run(dir_model_selection)
@@ -137,7 +136,7 @@ class MainMega(object):
         MEGAUtils.update_tree_building_parameters(
             tree_building, model, rates, self._args.bootstraps, self._args.missing_data, self._args.site_cov_cutoff,
             self._args.ml_method, self._args.branch_swap, self._args.threads)
-        dir_tree_building = self._dir_working / 'tree_building'
+        dir_tree_building = self._args.working_dir / 'tree_building'
         if not dir_tree_building.is_dir():
             dir_tree_building.mkdir()
         tree_building.run(dir_tree_building)

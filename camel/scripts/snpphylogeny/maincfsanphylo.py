@@ -74,8 +74,8 @@ class MainCfsanPhylo(BasePhylo):
         :return: Path to reference genome.
         """
         reference_name = self._args.reference_name if self._args.reference_name is not None else \
-            Path(self._args.reference).name
-        reference_path = Path(self._args.working_dir) / reference_name
+            self._args.reference.name
+        reference_path = self._args.working_dir / reference_name
         if not reference_path.exists():
             reference_path.symlink_to(self._args.reference)
         return reference_path
@@ -94,7 +94,7 @@ class MainCfsanPhylo(BasePhylo):
         }
         cfsan = CfsanSnpPipeline(Camel.get_instance())
         cfsan.add_input_files(cfsan_input)
-        cfsan.run(Path(self._args.working_dir))
+        cfsan.run(self._args.working_dir)
         self._informs.append(cfsan.informs)
         return cfsan
 
@@ -123,9 +123,9 @@ class MainCfsanPhylo(BasePhylo):
         :return: None
         """
         output_files = {self._samples[i]: [
-            Path(cfsan.tool_outputs['BAM'][i].path) if self._args.report_include_bam else None,
-            Path(cfsan.tool_outputs['VCF'][i].path),
-            Path(cfsan.tool_outputs['VCF_preserved'][i].path)
+            cfsan.tool_outputs['BAM'][i].path if self._args.report_include_bam else None,
+            cfsan.tool_outputs['VCF'][i].path,
+            cfsan.tool_outputs['VCF_preserved'][i].path
         ] for i in range(0, len(cfsan.tool_outputs['Sample_names']))}
         header = ['Alignment (BAM)', 'SNPs filtered (VCF)', 'SNPs filtered preserved (VCF)']
         SnpPhylogenyUtils.add_output_files_section(self._report, header, output_files, snp_matrix.path)

@@ -24,9 +24,9 @@ def add_common_arguments(argument_parser: argparse.ArgumentParser) -> None:
     :return: None
     """
     argument_parser.add_argument('--sample-name', type=str)
-    argument_parser.add_argument('--output-dir', required=True, type=str)
-    argument_parser.add_argument('--output-html', required=True, type=str)
-    argument_parser.add_argument('--working-dir', default=str(Path('.').absolute()), type=str)
+    argument_parser.add_argument('--output-dir', required=True, type=Path)
+    argument_parser.add_argument('--working-dir', default=Path.cwd(), type=Path)
+    argument_parser.add_argument('--output-html', required=True, type=Path)
     argument_parser.add_argument('--threads', default=8, type=int)
 
 
@@ -38,19 +38,20 @@ def add_input_files_arguments(argument_parser: argparse.ArgumentParser, fasta_in
     :return: None
     """
     if fasta_input_enabled:
-        argument_parser.add_argument('--fasta', help="Input FASTA file", type=str)
+        argument_parser.add_argument('--fasta', help="Input FASTA file", type=Path)
         argument_parser.add_argument('--fasta-name', help="Input FASTA file name", type=str)
-    argument_parser.add_argument('--fastq-pe', help="Input PE FASTQ files", nargs=2)
-    argument_parser.add_argument('--fastq-pe-names', help="Input PE FASTQ file names", nargs=2)
-    argument_parser.add_argument('--fastq-se', help="Input SE FASTQ file")
+    argument_parser.add_argument('--fastq-pe', help="Input PE FASTQ files", nargs=2, type=Path)
+    argument_parser.add_argument('--fastq-pe-names', help="Input PE FASTQ file names", nargs=2, type=Path)
+    argument_parser.add_argument('--fastq-se', help="Input SE FASTQ file", type=Path)
     argument_parser.add_argument('--fastq-se-name', help="Input SE FASTQ file name")
-    argument_parser.add_argument('--read-type', help="Read type", choices=['illumina', 'iontorrent', 'nanopore'],
-                                 default='illumina')
+    argument_parser.add_argument(
+        '--read-type', help="Read type", choices=['illumina', 'iontorrent', 'nanopore'], default='illumina')
     argument_parser.add_argument('--trim-reads', help="Perform read trimming", action='store_true')
-    argument_parser.add_argument('--adapter', help="(Illumina) Adapter that was used for sequencing, used for "
-                                                   "read-trimming", choices=['NexteraPE', 'TruSeq2', 'TruSeq3'])
-    argument_parser.add_argument('--report-include-fastq', help="Include trimmed FASTQ files in the report",
-                                 action='store_true')
+    argument_parser.add_argument(
+        '--adapter', choices=['NexteraPE', 'TruSeq2', 'TruSeq3'],
+        help="(Illumina) Adapter that was used for sequencing, used for read-trimming")
+    argument_parser.add_argument(
+        '--report-include-fastq', help="Include trimmed FASTQ files in the report", action='store_true')
 
 
 def add_assembly_arguments(argument_parser: argparse.ArgumentParser) -> None:
@@ -75,15 +76,15 @@ def determine_input_file_str(args: argparse.Namespace) -> str:
     if ('fasta' in args) and (args.fasta is not None) and (args.fasta_name is not None):
         return args.fasta_name
     elif ('fasta' in args) and (args.fasta is not None):
-        return Path(args.fasta).name
+        return args.fasta.name
     elif (args.fastq_pe is not None) and (args.fastq_pe_names is not None):
-        return ', '.join(args.fastq_pe_names)
+        return ', '.join(f.name for f in args.fastq_pe_names)
     elif args.fastq_pe is not None:
-        return ', '.join([Path(f).name for f in args.fastq_pe])
+        return ', '.join(f.name for f in args.fastq_pe)
     elif args.fastq_se_name is not None:
         return args.fastq_se_name
     elif args.fastq_se is not None:
-        return Path(args.fastq_se).name
+        return args.fastq_se.name
     logging.warning("Cannot determine input files from given arguments")
     return 'NA'
 
