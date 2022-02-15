@@ -4,6 +4,8 @@ import logging
 from pathlib import Path
 from typing import Optional, Dict, Any, Sequence
 
+import shutil
+
 from camel.app.camel import Camel
 from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.components.html.htmlreportsection import HtmlReportSection
@@ -74,6 +76,8 @@ class MainSamtoolsPhylo(BasePhylo):
             self._args.include_ref,
             self._args.soft_filter
         )
+        if self._args.output_fasta is not None:
+            shutil.copyfile(snp_matrix.path, self._args.output_fasta)
 
         # Add sections to the report
         self.__add_snp_filtering_section(filtering_out_by_sample)
