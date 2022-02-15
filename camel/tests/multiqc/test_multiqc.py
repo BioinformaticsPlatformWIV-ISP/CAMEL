@@ -45,5 +45,24 @@ class TestMultiQC(CamelTestSuite):
         with self.assertRaises(ToolExecutionError):
             multiqc_error.run(self.running_dir)
 
+    def test_multiqc_ignore(self) -> None:
+        """
+        Tests MultiQC with ignore parameter
+        :return: None
+        """
+        multiqc = MultiQC(self.camel)
+        multiqc.add_input_files({
+            'TXT_log': [ToolIOFile(TestMultiQC.test_file_dir / "GC088815.agg.alignment_summary_metrics")]
+        })
+        multiqc.update_parameters(
+            output_directory=self.running_dir,
+            ignore=f"{str(TestMultiQC.test_file_dir)}/GC088816.agg.alignment_summary_metrics;{str(TestMultiQC.test_file_dir)}/GC088817.agg.alignment_summary_metrics"
+        )
+        multiqc.run(self.running_dir)
+        self.verify_output_files(multiqc, 'HTML')
+
+        self.assertIn('report_name', multiqc.informs)
+        self.assertIn('data_dir', multiqc.informs)
+
 if __name__ == '__main__':
     unittest.main()

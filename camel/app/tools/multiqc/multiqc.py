@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from camel.app.camel import Camel
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.tools.tool import Tool
 from camel.app.io.tooliofile import ToolIOFile
@@ -40,7 +41,7 @@ class MultiQC(Tool):
 
     """
 
-    def __init__(self, camel) -> None:
+    def __init__(self, camel: Camel) -> None:
         """
         Initialize tool
         :param camel: Camel instance
@@ -85,13 +86,11 @@ class MultiQC(Tool):
         :return: None
         """
         build_options = self._build_options(excluded_parameters=self._specific_parameters)
-        #ignore can contain multiple files, separated by a semicolon
+        # ignore can contain multiple files, separated by a semicolon
         if 'ignore' in self._parameters:
             build_options.extend([f'{self._parameters["ignore"].option} {f}' for f in self._parameters['ignore'].value.split(";")])
 
-        self._option_string = " ".join(build_options)
-
-        self._command.command = " ".join([self._tool_command, self._input_string, self._option_string])
+        self._command.command = " ".join([self._tool_command, self._input_string, *build_options])
 
     def _set_informs(self) -> None:
         """
