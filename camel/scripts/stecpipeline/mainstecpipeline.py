@@ -60,7 +60,7 @@ class MainSTECPipeline(ReportPipeline):
         config_data['sequence_typing']['innuendo_cgmlst']['detection_method'] = detection_method_cgmlst
         if self._args.read_type == 'iontorrent':
             config_data['assembly']['spades']['iontorrent'] = None
-        return SnakePipelineUtils.generate_config_file(config_data, Path(self._args.working_dir))
+        return SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir)
 
     @staticmethod
     def _parse_arguments(args: Optional[Sequence[str]] = None) -> argparse.Namespace:
@@ -70,7 +70,7 @@ class MainSTECPipeline(ReportPipeline):
         """
         parser = argparse.ArgumentParser()
         ReportPipeline.add_common_arguments(parser)
-        parser.add_argument('--fastq-se', help="Input SE FASTQ file")
+        parser.add_argument('--fastq-se', type=Path, help="Input SE FASTQ file")
         parser.add_argument('--fastq-se-name', help="Input SE FASTQ file name")
         parser.add_argument(
             '--read-type', help="Type of reads.", choices=['illumina', 'iontorrent'], default='illumina')
@@ -78,17 +78,17 @@ class MainSTECPipeline(ReportPipeline):
             parser.add_argument(f"--{analysis_key.replace('_', '-')}", action='store_true')
         return parser.parse_args(args)
 
-    def _get_fastq_input_links(self) -> List[List[Tuple[str, str]]]:
+    def _get_fastq_input_links(self) -> List[List[Tuple[Path, str]]]:
         """
         Returns the links to the input FASTQ files.
         :return: Links
         """
         links = []
         if self._args.fastq_se is not None:
-            gzipped = FileSystemHelper.is_gzipped(Path(self._args.fastq_se))
-            links.append([Path(self._args.fastq_se), f"{self.sample_name}.fastq{'.gz' if gzipped else ''}"])
+            gzipped = FileSystemHelper.is_gzipped(self._args.fastq_se)
+            links.append([self._args.fastq_se, f"{self.sample_name}.fastq{'.gz' if gzipped else ''}"])
         else:
-            for read_nb, path in enumerate([Path(x) for x in self._args.fastq_pe], start=1):
+            for read_nb, path in enumerate(self._args.fastq_pe, start=1):
                 gzipped = FileSystemHelper.is_gzipped(path)
                 links.append([path, f"{self.sample_name}_{read_nb}.fastq{'.gz' if gzipped else ''}"])
         return links

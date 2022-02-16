@@ -91,7 +91,7 @@ class MainEnterococcusPipeline(ReportPipeline):
             # Set the detection method for cgMLST
             config_data['sequence_typing']['cgmlst']['detection_method'] = {
                 'blast': 'blast', 'srst2': 'blast', 'kma': 'kma'}.get(self._args.detection_method)
-        return SnakePipelineUtils.generate_config_file(config_data, self._working_dir)
+        return SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir)
 
     @staticmethod
     def _parse_arguments(args: Optional[Sequence[str]]) -> argparse.Namespace:

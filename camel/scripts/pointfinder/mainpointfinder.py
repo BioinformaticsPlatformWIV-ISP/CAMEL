@@ -26,7 +26,7 @@ class MainPointFinder(object):
         """
         self._args = MainPointFinder.parse_arguments(args)
         self._sample_name = mainscriptutils.determine_sample_name(self._args)
-        self._helper = helper_by_read_type[self._args.read_type](Path(self._args.working_dir), self._sample_name)
+        self._helper = helper_by_read_type[self._args.read_type](self._args.working_dir, self._sample_name)
 
     @staticmethod
     def parse_arguments(args: Optional[Sequence[str]] = None) -> argparse.Namespace:
@@ -50,7 +50,7 @@ class MainPointFinder(object):
         """
         # Initialize report
         report = mainscriptutils.init_report(
-            Path(self._args.output_html), Path(self._args.output_dir), 'PointFinder (local) report',
+            self._args.output_html, self._args.output_dir, 'PointFinder (local) report',
             'PointFinder (local)')
         report.add_html_object(mainscriptutils.generate_analysis_info_section(self._args))
         report.save()

@@ -26,7 +26,7 @@ class MainSCCmecFinder(object):
         self._camel = Camel()
         self._args = MainSCCmecFinder._parse_arguments(args)
         self._sample_name = mainscriptutils.determine_sample_name(self._args)
-        self._helper = helper_by_read_type[self._args.read_type](Path(self._args.working_dir), self._sample_name)
+        self._helper = helper_by_read_type[self._args.read_type](self._args.working_dir, self._sample_name)
         self._report = None
 
     @staticmethod
@@ -39,7 +39,7 @@ class MainSCCmecFinder(object):
         mainscriptutils.add_common_arguments(argument_parser)
         mainscriptutils.add_input_files_arguments(argument_parser)
         mainscriptutils.add_assembly_arguments(argument_parser)
-        argument_parser.add_argument('--db-mec-genes', help="Database containing mec genes.", required=True)
+        argument_parser.add_argument('--db-mec-genes', type=Path, help="Database containing mec genes.", required=True)
         argument_parser.add_argument('--profiles-mec-genes', help="Profiles for the mec genes", required=True)
         return argument_parser.parse_args(args)
 
@@ -63,7 +63,7 @@ class MainSCCmecFinder(object):
         """
         # Init report
         self._report = mainscriptutils.init_report(
-            Path(self._args.output_html), Path(self._args.output_dir), 'SCCmecFinder ouptput', 'SCCmecFinder (local)')
+            self._args.output_html, self._args.output_dir, 'SCCmecFinder ouptput', 'SCCmecFinder (local)')
         self._report.add_html_object(mainscriptutils.generate_analysis_info_section(self._args))
         self._report.save()
 
@@ -81,7 +81,7 @@ class MainSCCmecFinder(object):
         :param fasta_file: Input FASTA file
         :return: List of detected genes
         """
-        wrapper = GeneDetectionWrapper(Path(self._args.working_dir) / 'meca')
+        wrapper = GeneDetectionWrapper(self._args.working_dir / 'meca')
         wrapper.run_workflow_blast(
           fasta_file, self._sample_name, {'path': self._args.db_mec_genes}, self._args.threads)
         self._report.add_html_object(wrapper.output.report_section)

@@ -13,4 +13,5 @@ testing:
 
 temp_dir: /scratch/temp
 
-ref_dir: /db/refgenomes/
+# Root directory for the CAMEL associated databases
+db_root: /db

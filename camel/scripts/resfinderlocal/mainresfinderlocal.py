@@ -4,8 +4,6 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, Optional, Sequence
 
-import os
-
 from camel.app.components import mainscriptutils
 from camel.app.components.html.htmlreport import HtmlReport
 from camel.app.components.workflows.genedetectionwrapper import GeneDetectionWrapper, GeneDetectionOutput
@@ -25,7 +23,7 @@ class MainResFinderLocal(object):
         """
         self._args = MainResFinderLocal.parse_arguments(args)
         self._sample_name = mainscriptutils.determine_sample_name(self._args)
-        self._helper = helper_by_read_type[self._args.read_type](Path(self._args.working_dir), self._sample_name)
+        self._helper = helper_by_read_type[self._args.read_type](self._args.working_dir, self._sample_name)
 
     @staticmethod
     def parse_arguments(args: Optional[Sequence[str]] = None) -> argparse.Namespace:
@@ -49,7 +47,7 @@ class MainResFinderLocal(object):
         """
         # Initialize report
         report = mainscriptutils.init_report(
-            Path(self._args.output_html), Path(self._args.output_dir), 'ResFinder local report', 'ResFinder local')
+            self._args.output_html, self._args.output_dir, 'ResFinder local report', 'ResFinder local')
         report.add_html_object(mainscriptutils.generate_analysis_info_section(self._args))
         report.save()
 
@@ -86,7 +84,7 @@ class MainResFinderLocal(object):
         :param db_data: Database information dictionary
         :return: None
         """
-        wrapper = GeneDetectionWrapper(Path(self._args.working_dir, 'resfinder'))
+        wrapper = GeneDetectionWrapper(self._args.working_dir / 'resfinder')
         wrapper.run_workflow_blast(fasta_file, self._sample_name, db_data)
         report.add_html_object(wrapper.output.report_section)
         wrapper.output.report_section.copy_files(report.output_dir)

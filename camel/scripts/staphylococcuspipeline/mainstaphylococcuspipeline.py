@@ -56,7 +56,7 @@ class MainStaphylococcusPipeline(ReportPipeline):
                 export_fastq='true' if self._args.report_include_fastq else 'false',
                 export_bam='true' if self._args.report_include_bam else 'false'
             ), Loader=yaml.SafeLoader))
-        return SnakePipelineUtils.generate_config_file(config_data, self._working_dir)
+        return SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir)
 
     @staticmethod
     def _parse_arguments(args: Optional[Sequence[str]]) -> argparse.Namespace:

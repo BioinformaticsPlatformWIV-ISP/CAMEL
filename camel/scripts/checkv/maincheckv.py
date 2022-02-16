@@ -31,11 +31,11 @@ class MainCheckV(object):
         :return: Arguments
         """
         argument_parser = argparse.ArgumentParser()
-        argument_parser.add_argument('--fasta', help='FASTA input', required=True)
+        argument_parser.add_argument('--fasta', help='FASTA input', type=Path, required=True)
         argument_parser.add_argument('--fasta-name', help='FASTA input name')
-        argument_parser.add_argument('--working-dir', help='Working directory', default=str(Path('.').absolute()))
-        argument_parser.add_argument('--output-html', help='Report output')
-        argument_parser.add_argument('--output-dir', help='Output directory')
+        argument_parser.add_argument('--working-dir', help='Working directory', type=Path, default=Path.cwd())
+        argument_parser.add_argument('--output-html', help='Report output', type=Path)
+        argument_parser.add_argument('--output-dir', help='Output directory', type=Path)
         return argument_parser.parse_args(args)
 
     def run(self) -> None:
@@ -44,15 +44,14 @@ class MainCheckV(object):
         :return: None
         """
         input_dict, fasta_name = self.__prepare_input()
-        report = mainscriptutils.init_report(
-            Path(self._args.output_html), Path(self._args.output_dir), 'CheckV', 'CheckV')
+        report = mainscriptutils.init_report(self._args.output_html, self._args.output_dir, 'CheckV', 'CheckV')
         report.add_html_object(mainscriptutils.generate_analysis_info_section(self._args, input_file_str=fasta_name))
         report.save()
 
         # Run CheckV
         checkv = CheckV(Camel.get_instance())
         checkv.add_input_files(input_dict)
-        checkv.run(Path(self._args.working_dir))
+        checkv.run(self._args.working_dir)
 
         # Create output report
         checkv_reporter = CheckVReporter(Camel.get_instance())
@@ -72,9 +71,9 @@ class MainCheckV(object):
         Prepares the input for the CheckM tool.
         :return: Input dictionary
         """
-        dir_input = Path(self._args.working_dir) / 'input'
+        dir_input = self._args.working_dir / 'input'
         dir_input.mkdir(parents=True, exist_ok=True)
-        fasta_name = self._args.fasta_name if self._args.fasta_name else Path(self._args.fasta).name
+        fasta_name = self._args.fasta_name if self._args.fasta_name else self._args.fasta.name
         path_new = dir_input / FileSystemHelper.make_valid(fasta_name)
         path_new.symlink_to(self._args.fasta)
         return {'FASTA': [ToolIOFile(path_new)]}, fasta_name

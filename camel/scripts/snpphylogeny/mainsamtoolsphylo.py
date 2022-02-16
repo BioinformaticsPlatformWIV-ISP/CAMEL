@@ -70,7 +70,7 @@ class MainSamtoolsPhylo(BasePhylo):
         snp_matrix = SnpPhylogenyUtils.construct_snp_matrix(
             [s.name_valid for s in self._samples],
             [filtering_out_by_sample[s].vcf_filtered for s in self._samples],
-            Path(self._args.working_dir) / 'snp_matrix',
+            self._args.working_dir / 'snp_matrix',
             self._args.include_ref,
             self._args.soft_filter
         )
@@ -119,14 +119,14 @@ class MainSamtoolsPhylo(BasePhylo):
         Prepares the reference genome.
         :return: Indexed reference genome prefix
         """
-        dir_ref = Path(self._args.working_dir, 'ref')
+        dir_ref = self._args.working_dir / 'ref'
         if not dir_ref.is_dir():
             dir_ref.mkdir(parents=True)
         link_path = dir_ref / FileSystemHelper.make_valid(
-            self._args.reference_name if self._args.reference_name else Path(self._args.reference).name)
+            self._args.reference_name if self._args.reference_name else self._args.reference.name)
         if link_path.is_symlink():
             link_path.unlink()
-        link_path.symlink_to(Path(self._args.reference))
+        link_path.symlink_to(self._args.reference)
         bt2_index = Bowtie2Index(Camel(logging_config=None))
         bt2_index.add_input_files({'FASTA_REF': [ToolIOFile(link_path)]})
         bt2_index.run(dir_ref)
@@ -140,7 +140,7 @@ class MainSamtoolsPhylo(BasePhylo):
         :param mapping_input: Mapping input by sample
         :return: Dictionary with the output for each sample
         """
-        working_dir = Path(self._args.working_dir) / 'calling'
+        working_dir = self._args.working_dir / 'calling'
         config_data = {
             'working_dir': str(working_dir),
             'samples': {s.name_valid: v.as_dict() for s, v in mapping_input.items()},
@@ -162,7 +162,7 @@ class MainSamtoolsPhylo(BasePhylo):
         Runs the variant filtering workflow.
         :return: Dictionary with the output for each sample
         """
-        working_dir = Path(self._args.working_dir) / 'filtering'
+        working_dir = self._args.working_dir / 'filtering'
         samples = {
             s.name_valid: {'VCF': str(o.vcf_unfiltered.path), 'BAM': str(o.bam_file.path)} for s, o in
             calling_output_by_sample.items()
@@ -246,9 +246,9 @@ class MainSamtoolsPhylo(BasePhylo):
         :return: None
         """
         output_files = {sample: [
-            Path(calling_out_by_sample[sample].bam_file.path) if self._args.report_include_bam else None,
-            Path(calling_out_by_sample[sample].vcf_unfiltered.path),
-            Path(filtering_out_by_sample[sample].vcf_filtered.path)
+            calling_out_by_sample[sample].bam_file.path if self._args.report_include_bam else None,
+            calling_out_by_sample[sample].vcf_unfiltered.path,
+            filtering_out_by_sample[sample].vcf_filtered.path
         ] for sample in self._samples}
         column_names = ['Alignment (BAM)', 'SNPs unfiltered (VCF)', 'SNPs filtered (VCF)']
         SnpPhylogenyUtils.add_output_files_section(self._report, column_names, output_files, snp_matrix)

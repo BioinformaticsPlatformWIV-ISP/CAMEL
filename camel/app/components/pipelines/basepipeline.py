@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import Optional, Any, Dict, List, Tuple, Sequence, Union
 
 import abc
-import os
 import shutil
 
 from camel.app.camel import Camel
@@ -32,7 +31,6 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         self._version = version
         self._snakefile = snakefile
         self._args = self._parse_arguments(args)
-        self._working_dir = Path(self._args.working_dir)
         self._keep_logs = True if self._args.log else Camel.get_instance().config.get('logging', {}).get(
             'keep_logs', False)
         self._pipeline = Pipeline(name, Camel.get_instance(), self._args.log, self._args.log)
@@ -56,11 +54,11 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         """
         # Input
         argument_parser.add_argument('--sample-name', type=str)
-        argument_parser.add_argument('--fastq-pe', nargs=2, help="FASTQ input files")
+        argument_parser.add_argument('--fastq-pe', nargs=2, type=Path, help="FASTQ input files")
         argument_parser.add_argument('--fastq-pe-names', nargs=2, help="FASTQ input file names")
 
         # Output
-        argument_parser.add_argument('--working-dir', default=os.path.abspath('.'), type=str)
+        argument_parser.add_argument('--working-dir', type=Path, default=Path.cwd())
 
         # Options
         argument_parser.add_argument('--threads', default=8, type=int)
@@ -125,7 +123,7 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         :return: Links
         """
         links = []
-        for read_nb, path in enumerate([Path(x) for x in self._args.fastq_pe], start=1):
+        for read_nb, path in enumerate(self._args.fastq_pe, start=1):
             gzipped = FileSystemHelper.is_gzipped(path)
             links.append([path, f"{self.sample_name}_{read_nb}.fastq{'.gz' if gzipped else ''}"])
         return links
@@ -139,22 +137,22 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         links = self._get_fastq_input_links()
 
         # Create directory
-        dir_links = self._working_dir / 'input'
+        dir_links = self._args.working_dir / 'input'
         if not dir_links.exists():
             dir_links.mkdir(parents=True)
 
         # Link files
         paths_new = []
         for path_orig, link_name in links:
-            path_new = os.path.join(dir_links, link_name)
+            path_new = dir_links / link_name
             logging.debug(f"Symlinking input file: {path_orig} -> {link_name}")
-            if os.path.islink(path_new):
-                os.remove(path_new)
-            os.symlink(path_orig, path_new)
+            if path_new.is_symlink():
+                path_new.unlink()
+            path_new.symlink_to(path_orig)
             paths_new.append(path_new)
 
         # Return output dictionary
-        return [{'name': os.path.basename(p), 'path': p} for p in paths_new]
+        return [{'name': p.name, 'path': p} for p in paths_new]
 
     def _run_snakemake_main(self, config_file: str) -> None:
         """
@@ -171,11 +169,11 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
             mainscriptutils.prepare_galaxy_output(Path(self._args.output_dir), Path(self._args.output_html))
 
         # Path to the logfile
-        log_file = self._working_dir / 'camel.log'
+        log_file = self._args.working_dir / 'camel.log'
         try:
             # Run snakemake
             SnakePipelineUtils.run_snakemake(
-                self._snakefile, config_file, [], self._working_dir, self._args.threads)
+                self._snakefile, config_file, [], self._args.working_dir, self._args.threads)
             logging.info("Pipeline finished successfully")
         except SnakemakeExecutionError as err:
             if self._keep_logs and log_file.exists():
@@ -207,7 +205,7 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
             },
             input_key: input_data,
             'sample_name': self.sample_name,
-            'working_dir': str(self._working_dir),
+            'working_dir': str(self._args.working_dir),
             'read_trimming': {'adapter': self._args.library}
         }
         return template_data

@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 import argparse
+import shutil
 from pathlib import Path
 from typing import Any, Dict, Optional, Sequence
 
-import os
-import shutil
 import yaml
 
 from camel.app.camel import Camel
@@ -30,11 +29,11 @@ class MainFiltering(object):
         :return: Arguments
         """
         argument_parser = argparse.ArgumentParser()
-        argument_parser.add_argument('--vcf', required=True, help="Input VCF file")
-        argument_parser.add_argument('--bam')
-        argument_parser.add_argument('--output-vcf', required=True)
-        argument_parser.add_argument('--output-stats')
-        argument_parser.add_argument('--working-dir', default=os.path.abspath('.'))
+        argument_parser.add_argument('--vcf', type=Path, required=True, help="Input VCF file")
+        argument_parser.add_argument('--bam', type=Path)
+        argument_parser.add_argument('--output-vcf', type=Path, required=True)
+        argument_parser.add_argument('--output-stats', type=Path)
+        argument_parser.add_argument('--working-dir', type=Path, default=Path.cwd())
         argument_parser.add_argument('--min-total-depth', default=10, type=int)
         argument_parser.add_argument('--min-forward-depth', default=1, type=int)
         argument_parser.add_argument('--min-reverse-depth', default=1, type=int)
@@ -52,9 +51,8 @@ class MainFiltering(object):
         Filter the input VCF file.
         :return: None
         """
-        wrapper = VariantFilteringWrapper(Path(self._args.working_dir))
-        wrapper.run_workflow(
-            Path(self._args.vcf), Path(self._args.bam), filtering_options=self.__get_filtering_options())
+        wrapper = VariantFilteringWrapper(self._args.working_dir)
+        wrapper.run_workflow(self._args.vcf, self._args.bam, filtering_options=self.__get_filtering_options())
         shutil.copyfile(wrapper.output.vcf_filtered.path, self._args.output_vcf)
         if self._args.output_stats is not None:
             with open(self._args.output_stats, 'w') as handle:

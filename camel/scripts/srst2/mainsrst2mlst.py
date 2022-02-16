@@ -23,7 +23,6 @@ class MainSrst2Mlst(object):
         :param args: (Optional) arguments, if not specified arguments are parsed from command line
         """
         self._args = MainSrst2Mlst._parse_arguments(args)
-        self._dir_working = Path(self._args.working_dir)
         self._camel = Camel()
 
     def run(self) -> None:
@@ -35,7 +34,7 @@ class MainSrst2Mlst(object):
         srst2.add_input_files(self.__get_reads_input())
         srst2.add_input_files(self.__get_database_input())
         self._add_advanced_options(srst2)
-        srst2.run(Path(self._args.working_dir))
+        srst2.run(self._args.working_dir)
         shutil.copyfile(srst2.tool_outputs['TSV'][0].path, self._args.output_tsv)
 
     @staticmethod
@@ -46,17 +45,17 @@ class MainSrst2Mlst(object):
         """
         argument_parser = argparse.ArgumentParser()
         argument_parser.add_argument('--fastq-pe', nargs=2, type=str)
-        argument_parser.add_argument('--fastq-se', type=str)
-        argument_parser.add_argument('--profiles-tsv', type=str,
+        argument_parser.add_argument('--fastq-se', type=Path)
+        argument_parser.add_argument('--profiles-tsv', type=Path,
                                      help="tabular file containing the sequence type definitions")
-        argument_parser.add_argument('--locus-fasta', type=str, help="FASTA file containing the sequence for all loci.")
+        argument_parser.add_argument('--locus-fasta', type=Path, help="FASTA file containing the sequence for all loci.")
         argument_parser.add_argument('--delimiter', type=str, default='_')
-        argument_parser.add_argument('--output-tsv', type=str)
+        argument_parser.add_argument('--output-tsv', type=Path)
         argument_parser.add_argument('--max-mismatch', type=int)
         argument_parser.add_argument('--min-depth', type=int)
         argument_parser.add_argument('--min-edge-depth', type=int)
         argument_parser.add_argument('--max-unaligned-overlap', type=int)
-        argument_parser.add_argument('--working-dir', type=str, default=str(Path('.').absolute()))
+        argument_parser.add_argument('--working-dir', type=Path, default=Path.cwd())
         return argument_parser.parse_args(args)
 
     def __get_reads_input(self) -> Dict[str, List[ToolIOFile]]:
@@ -66,12 +65,12 @@ class MainSrst2Mlst(object):
         :return: Input dictionary
         """
         if self._args.fastq_pe:
-            symlink_paths = [self._dir_working / f'reads_{ori}.fastq' for ori in (1, 2)]
+            symlink_paths = [self._args.working_dir / f'reads_{ori}.fastq' for ori in (1, 2)]
             for orig_path, symlink_path in zip(self._args.fastq_pe, symlink_paths):
                 symlink_path.symlink_to(orig_path)
             return {'FASTQ_PE': [ToolIOFile(p) for p in symlink_paths]}
         else:
-            symlink_path = self._dir_working / 'reads.fastq'
+            symlink_path = self._args.working_dir / 'reads.fastq'
             symlink_path.symlink_to(self._args.fastq_se)
             return {'FASTQ_SE': [ToolIOFile(symlink_path)]}
 
@@ -80,14 +79,14 @@ class MainSrst2Mlst(object):
         Returns a dictionary with the input files for the database.
         :return: Dictionary containing the sequences file & the profiles file
         """
-        db_path = self._dir_working / 'sequences.fasta'
+        db_path = self._args.working_dir / 'sequences.fasta'
         db_path.symlink_to(self._args.locus_fasta)
         samtools_faidx = SamtoolsFastaIndex(self._camel)
         samtools_faidx.add_input_files({'FASTA': [ToolIOFile(db_path)]})
-        samtools_faidx.run(Path(self._args.working_dir))
+        samtools_faidx.run(self._args.working_dir)
         input_dict = {'FASTA': [ToolIOFile(db_path)]}
         if self._args.profiles_tsv is not None:
-            input_dict['TSV'] = [ToolIOFile(Path(self._args.profiles_tsv))]
+            input_dict['TSV'] = [ToolIOFile(self._args.profiles_tsv)]
         return input_dict
 
     def _add_advanced_options(self, srst2: Srst2Mlst) -> None:

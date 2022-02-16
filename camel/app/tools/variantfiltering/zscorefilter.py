@@ -92,7 +92,7 @@ class ZScoreFilter(BaseFilter):
         path = Path(self._folder) / 'positions.pileup'
         pileup_command = Command('{}samtools mpileup --count-orphans --positions {} {} > {}'.format(
             self._build_dependencies(), positions_file, self._tool_inputs['BAM'][0].path, path))
-        pileup_command.run_command(self._folder)
+        pileup_command.run(self._folder)
 
         actg_by_pos = {}
         with path.open() as handle:

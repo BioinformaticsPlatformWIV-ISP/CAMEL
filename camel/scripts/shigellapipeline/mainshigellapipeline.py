@@ -57,7 +57,7 @@ class MainShigellaPipeline(ReportPipeline):
                 variant_filtering={}
             )))
         config_data['quality_checks']['typing_scheme'] = 'cgmlst' if self._args.cgmlst else 'mlst_warwick'
-        return SnakePipelineUtils.generate_config_file(config_data, self._working_dir)
+        return SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir)
 
     def __create_fastq_input_dict(self) -> Tuple[str, List[Dict[str, Any]]]:
         """

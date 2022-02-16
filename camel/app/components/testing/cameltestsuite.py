@@ -36,7 +36,7 @@ class CamelTestSuite(unittest.TestCase):
         :param args: Sub-directory or directories
         :return: Reference files directory
         """
-        dir_ref = Path(CamelTestSuite.camel.config['ref_dir'], *args)
+        dir_ref = Path(CamelTestSuite.camel.config['db_root'], 'refgenomes', *args)
         if not dir_ref.exists() or not dir_ref.is_dir():
             raise FileNotFoundError(f"Cannot find reference file directory: {dir_ref}")
         return dir_ref
