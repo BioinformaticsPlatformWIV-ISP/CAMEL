@@ -52,7 +52,9 @@ class MainFiltering(object):
         :return: None
         """
         wrapper = VariantFilteringWrapper(self._args.working_dir)
-        wrapper.run_workflow(self._args.vcf, self._args.bam, filtering_options=self.__get_filtering_options())
+        wrapper.run_workflow(
+            sample_name=self._args.vcf.stem, vcf_file=self._args.vcf, bam_file=self._args.bam,
+            filtering_options=self.__get_filtering_options())
         shutil.copyfile(wrapper.output.vcf_filtered.path, self._args.output_vcf)
         if self._args.output_stats is not None:
             with open(self._args.output_stats, 'w') as handle:
