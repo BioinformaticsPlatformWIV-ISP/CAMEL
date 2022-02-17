@@ -5,6 +5,8 @@ import logging
 from pathlib import Path
 from typing import Optional, List, Sequence
 
+import shutil
+
 from camel.app.camel import Camel
 from camel.app.components.phylogeny.snpphylogenyutils import SnpPhylogenyUtils
 from camel.app.io.tooliofile import ToolIOFile
@@ -41,6 +43,8 @@ class MainCfsanPhylo(BasePhylo):
 
         # Get SNP matrix
         snp_matrix = cfsan.tool_outputs['FASTA_Preserved' if self._args.selected_matrix == 'preserved' else 'FASTA'][0]
+        if self._args.output_fasta is not None:
+            shutil.copyfile(snp_matrix.path, self._args.output_fasta)
 
         # Add sections to the report
         self.__add_metrics_section(cfsan)

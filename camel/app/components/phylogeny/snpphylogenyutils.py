@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import List, Dict, Optional, Any
 
 import pandas as pd
+import pkg_resources
 from Bio import SeqIO
 
 from camel.app.camel import Camel
@@ -122,6 +123,10 @@ class SnpPhylogenyUtils(object):
         argument_parser.add_argument('--output-dir', required=True, type=Path)
         argument_parser.add_argument('--output-html', required=True, type=Path)
         argument_parser.add_argument('--working-dir', type=Path, default=Path.cwd())
+        argument_parser.add_argument('--output-dir', required=True, type=str)
+        argument_parser.add_argument('--output-html', required=True, type=str)
+        argument_parser.add_argument('--output-fasta', type=str, help='SNP matrix output')
+        argument_parser.add_argument('--working-dir', default=str(Path('.').absolute()), type=str)
         argument_parser.add_argument('--threads', default=8, type=int)
         argument_parser.add_argument('--reference', required=True, type=Path)
         argument_parser.add_argument('--reference-name', type=str)
@@ -248,7 +253,7 @@ class SnpPhylogenyUtils(object):
                    stats['reverse_only_reads'], stats['reads_drop']]
 
             # Add FastQC reports
-            for i, f in enumerate(trimming_output.fastq_reports_pre, start=1):
+            for i, f in enumerate(trimming_output.fastq_reports_post, start=1):
                 relative_path = Path('fastqc_report') / f'{sample.name_valid}_{i}.html'
                 section.add_file(f.path, relative_path)
                 row.append(HtmlTableCell('view', link=str(relative_path)))
@@ -450,7 +455,10 @@ class SnpPhylogenyUtils(object):
 
             # Render tree
             output_path = Path(report.output_dir) / 'tree.png'
-            NewickUtils.render(Camel(logging_config=None), newick_path, output_path, 'clad')
+            NewickUtils.create_image_figtree(
+                newick_path, Path(pkg_resources.resource_filename('camel', 'resources/figtree/template_snp_tree.txt')),
+                output_path, 480, NewickUtils.calculate_tree_image_height(256, NewickUtils.count_leaves(newick_path))
+            )
             section.add_html_object(HtmlElement('img', attributes=[('src', 'tree.png'), ('border', '1')]))
 
         report.add_html_object(section)

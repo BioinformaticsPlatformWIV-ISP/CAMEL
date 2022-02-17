@@ -234,13 +234,16 @@ rule variant_calling_unzip_vcf:
     output:
         VCF = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_UNFILTERED_VCF
     params:
-        running_dir = Path(config['working_dir']) / 'variant_calling' / 'unzip_vcf'
+        running_dir = Path(config['working_dir']) / 'variant_calling' / 'unzip_vcf',
+        sample_name = config['sample_name']
     run:
+        from camel.app.components.filesystemhelper import FileSystemHelper
         from camel.app.tools.bcftools.bcftoolsview import BcftoolsView
         bcftools_view = BcftoolsView(camel)
         SnakemakeUtils.add_pickle_inputs(bcftools_view, input)
         step = Step(rule, bcftools_view, camel, params.running_dir, config)
-        bcftools_view.update_parameters(output_format='VCF', compress_output=False, output_filename='variants.vcf')
+        output_filename = f'variants-{FileSystemHelper.make_valid(params.sample_name)}.vcf'
+        bcftools_view.update_parameters(output_format='VCF', compress_output=False, output_filename=output_filename)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(bcftools_view, output)
 
