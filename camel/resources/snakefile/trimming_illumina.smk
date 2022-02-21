@@ -28,8 +28,8 @@ rule trimming_illumina_fastqc_pre:
     input:
         FASTQ = rules.trimming_illumina_pickle_input.output.FASTQ_PE
     output:
-        HTML = Path(config['working_dir']) / 'trimming_illumina' / 'fastqc-pre' / 'html.io',
-        TXT = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_FASTQC_PRE
+        HTML = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_FASTQC_HTML_PRE,
+        TXT = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_FASTQC_TXT_PRE
     params:
         running_dir = Path(config['working_dir']) / 'trimming_illumina' / 'fastqc-pre'
     threads: 4
@@ -78,8 +78,8 @@ rule trimming_illumina_fastqc_post:
     input:
         FASTQ = rules.trimming_illumina_trimmomatic.output.FASTQ_PE
     output:
-        HTML = Path(config['working_dir']) /  'trimming_illumina' / 'fastqc-post' / 'html.io',
-        TXT = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_FASTQC_POST
+        HTML = Path(config['working_dir']) /  trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_FASTQC_HTML_POST,
+        TXT = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_FASTQC_TXT_POST
     params:
         running_dir = Path(config['working_dir']) / 'trimming_illumina' / 'fastqc-post'
     threads: 4

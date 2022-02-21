@@ -23,7 +23,8 @@ rule filter_variants:
     run:
         from camel.app.components.workflows.variantfilteringwrapper import VariantFilteringWrapper
         wrapper = VariantFilteringWrapper(Path(str(params.working_dir), 'variant_filtering'))
-        wrapper.run_workflow(Path(str(input.VCF)), Path(str(input.BAM)), params.filtering_options, threads)
+        wrapper.run_workflow(str(params.sample_name), Path(str(input.VCF)), Path(str(input.BAM)),
+            params.filtering_options, threads)
         SnakemakeUtils.dump_object(wrapper.output, Path(output.VCF))
 
 rule combine_filtering_output:
