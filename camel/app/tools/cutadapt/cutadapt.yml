@@ -6,7 +6,7 @@ parameters:
   adapter: {default: false, mandatory: false, option: -a, p_index: 0, value: 'AACCGGTT'}
   adapter_file: {default: false, mandatory: false, option: -a, p_index: 0, value: 'file:adapters.fasta'}
   interleaved: {default: false, mandatory: false, option: --interleaved, p_index: 0, value: ''}
-  minimum_length: {default: false, mandatory: false, option: -m, p_index: 0, value: 40}
+  minimum_length: {default: false, mandatory: true, option: -m, p_index: 0, value: 40}
   nextseq_trim: {default: false, mandatory: false, option: --nextseq-trim, value: 20}
   quality: {default: false, mandatory: false, option: -q, p_index: 0, value: 10}
 tool_command: cutadapt
