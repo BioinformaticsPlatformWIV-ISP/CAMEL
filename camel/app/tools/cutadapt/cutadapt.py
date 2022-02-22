@@ -1,5 +1,4 @@
 import json
-from pathlib import Path
 
 from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
@@ -33,7 +32,6 @@ class Cutadapt(Tool):
         """
         super().__init__('cutadapt', '3.5', camel)
         self._input_string = ''
-        self._output_string = ''
 
     def _execute_tool(self) -> None:
         """
@@ -41,8 +39,8 @@ class Cutadapt(Tool):
         :return: None
         """
         self._set_input()
-        self._set_output()
         self._build_command()
+        self._set_output()
         self._execute_command()
         self._set_informs()
 
@@ -74,32 +72,33 @@ class Cutadapt(Tool):
         Set output of cutadapt function
         :return: None
         """
-        # Set output string for command
         if 'FASTQ_PE' in self._tool_inputs:
-            self._output_string = f"-o {Path(self.folder) / self._parameters['output_basename'].value}_R1_trimmed.fastq.gz " \
-                            f"-p {Path(self.folder) / self._parameters['output_basename'].value}_R2_trimmed.fastq.gz "
+            self._tool_outputs['FASTQ_PE'] = [ToolIOFile(self.folder / f"{self._parameters['output_basename'].value}_R1_trimmed.fastq.gz"),
+                                           ToolIOFile(self.folder / f"{self._parameters['output_basename'].value}_R2_trimmed.fastq.gz")]
         elif 'FASTQ_SE' in self._tool_inputs:
-            self._output_string = f"-o {Path(self.folder) / self._parameters['output_basename'].value}_trimmed.fastq.gz "
-
-        # Set tool output
-        if 'FASTQ_PE' in self._tool_inputs:
-            self._tool_outputs['FASTQ'] = [ToolIOFile(Path(self.folder) / f"{self._parameters['output_basename'].value}_R1_trimmed.fastq.gz"),
-                                           ToolIOFile(Path(self.folder) / f"{self._parameters['output_basename'].value}_R2_trimmed.fastq.gz")]
-        elif 'FASTQ_SE' in self._tool_inputs:
-            self._tool_outputs['FASTQ'] = [ToolIOFile(Path(self.folder) / f"{self._parameters['output_basename'].value}_trimmed.fastq.gz")]
+            self._tool_outputs['FASTQ_SE'] = [ToolIOFile(self.folder / f"{self._parameters['output_basename'].value}_trimmed.fastq.gz")]
 
         if self._parameters['report_json']:
-            self._tool_outputs['JSON_report'] = [ToolIOFile(Path(self.folder) / self._parameters['report_json'].value)]
+            self._tool_outputs['JSON_report'] = [ToolIOFile(self.folder / self._parameters['report_json'].value)]
 
     def _build_command(self) -> None:
         """
         Build command of cutadapt function
         :return: None
         """
-        self._command.command = ' '.join([self._tool_command,
-                                          *self._build_options(excluded_parameters=['output_basename']),
-                                          self._output_string,
-                                          self._input_string])
+        output_string = ''
+        if 'FASTQ_PE' in self._tool_inputs:
+            output_string = f"-o {self.folder / self._parameters['output_basename'].value}_R1_trimmed.fastq.gz " \
+                                  f"-p {self.folder / self._parameters['output_basename'].value}_R2_trimmed.fastq.gz "
+        elif 'FASTQ_SE' in self._tool_inputs:
+            output_string = f"-o {self.folder / self._parameters['output_basename'].value}_trimmed.fastq.gz "
+
+        self._command.command = ' '.join([
+            self._tool_command,
+            *self._build_options(excluded_parameters=['output_basename']),
+            output_string,
+            self._input_string
+        ])
 
     def _set_informs(self) -> None:
         """
