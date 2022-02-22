@@ -37,9 +37,7 @@ class MainGeneDetection(object):
         mainscriptutils.add_common_arguments(argument_parser)
         mainscriptutils.add_assembly_arguments(argument_parser)
         mainscriptutils.add_input_files_arguments(argument_parser)
-        group_db = argument_parser.add_mutually_exclusive_group(required=True)
-        group_db.add_argument('--database-dir', type=Path)
-        group_db.add_argument('--database-html', type=Path)
+        argument_parser.add_argument('--database-dir', type=Path, required=True)
         argument_parser.add_argument('--detection-method', type=str, choices=['blast', 'srst2', 'kma'], default='blast')
 
         # BLAST specific parameters
@@ -65,7 +63,8 @@ class MainGeneDetection(object):
         :return: None
         """
         # Initialize report
-        report = mainscriptutils.init_report(self._args.output_html, self._args.output_dir, 'Gene detection report',
+        report = mainscriptutils.init_report(
+            self._args.output_html, self._args.output_dir, 'Gene detection report',
             f'Gene detection {self._args.detection_method}')
         report.add_html_object(mainscriptutils.generate_analysis_info_section(self._args))
         report.save()
@@ -97,12 +96,7 @@ class MainGeneDetection(object):
         Returns the database information dictionary.
         :return: Database information dictionary
         """
-        # Get database path
-        if self._args.database_dir is not None:
-            db_path = self._args.database_dir
-        else:
-            db_path = Path(f"{'.'.join(self._args.database_html.split('.')[:-1])}_files")
-        config_data = {'path': db_path}
+        config_data = {'path': self._args.database_dir}
 
         # Add specific options
         if self._args.detection_method == 'blast':
@@ -125,7 +119,7 @@ class MainGeneDetection(object):
             }}})
 
         # Add extra column
-        with (db_path / 'db_metadata.txt').open() as handle:
+        with (self._args.database_dir / 'db_metadata.txt').open() as handle:
             db_metadata = json.load(handle)
             if 'extra_column' in db_metadata:
                 config_data['metadata'] = db_metadata['extra_column']
