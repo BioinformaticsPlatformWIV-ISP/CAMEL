@@ -1,8 +1,9 @@
 import re
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 from camel.app.camel import Camel
+from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.tool import Tool
@@ -60,8 +61,8 @@ class Trimmomatic(Tool):
             options = self.__build_pe_command()
         else:
             options = self.__build_se_command()
-        options += self._build_options(excluded_parameters=['baseout', 'threads', 'illuminaclip_PE', 'illuminaclip_SE'],
-                                       delimiter='')
+        options += self._build_options(
+            excluded_parameters=['baseout', 'threads', 'illuminaclip_PE', 'illuminaclip_SE'], delimiter='')
         option_string = ' '.join(options)
         self._command.command = f'{self._tool_command} {option_string}'
 
@@ -97,21 +98,30 @@ class Trimmomatic(Tool):
 
         return options
 
+    def __get_output_path(self, suffix: Optional[str]) -> Path:
+        """
+        Returns the path for the output file with the given suffix.
+        """
+        basename = re.search(r'(.*)\.fastq(.gz)?', Path(self._parameters['baseout'].value).name).group(1)
+        print('->', basename)
+        is_gzipped = self._parameters['baseout'].value.endswith('.gz')
+        if suffix is not None:
+            return self.folder / f"{FileSystemHelper.make_valid(basename)}_{suffix}.fastq{'.gz' if is_gzipped else ''}"
+        return self.folder / f"{FileSystemHelper.make_valid(basename)}.fastq{'.gz' if is_gzipped else ''}"
+
     def __set_output(self) -> None:
         """
         Sets the output of this tool.
         :return: None
         """
-        basename = Path(self._parameters['baseout'].value).stem
+
         if self._mode == 'PE':
             self._tool_outputs['FASTQ_PE'] = [
-                ToolIOFile(self.folder / (basename + '_1P.fastq')),
-                ToolIOFile(self._folder / (basename + '_2P.fastq'))
-            ]
-            self._tool_outputs['FASTQ_SE_FORWARD'] = [ToolIOFile(self._folder / (basename + '_1U.fastq'))]
-            self._tool_outputs['FASTQ_SE_REVERSE'] = [ToolIOFile(self._folder / (basename + '_2U.fastq'))]
+                ToolIOFile(self.__get_output_path('1P')), ToolIOFile(self.__get_output_path('2P'))]
+            self._tool_outputs['FASTQ_SE_FORWARD'] = [ToolIOFile(self.__get_output_path('1U'))]
+            self._tool_outputs['FASTQ_SE_REVERSE'] = [ToolIOFile(self.__get_output_path('2U'))]
         else:
-            self._tool_outputs['FASTQ'] = [ToolIOFile(self._folder / (basename + '.fastq'))]
+            self._tool_outputs['FASTQ'] = [ToolIOFile(self.__get_output_path(None))]
         self.__remove_empty_outputs()
 
     def __remove_empty_outputs(self) -> None:

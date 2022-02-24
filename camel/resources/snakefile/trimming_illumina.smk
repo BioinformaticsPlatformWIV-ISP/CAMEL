@@ -58,11 +58,13 @@ rule trimming_illumina_trimmomatic:
     priority: 1
     params:
         running_dir = Path(config['working_dir']) / 'trimming_illumina' / 'trimmomatic',
-        adapter = config.get('read_trimming', {}).get('adapter')
+        adapter = config.get('read_trimming', {}).get('adapter'),
+        sample_name = config.get('sample_name', 'reads')
     run:
         from camel.app.tools.trimmomatic.trimmomatic import Trimmomatic
         trimmomatic = Trimmomatic(camel)
         SnakemakeUtils.add_pickle_inputs(trimmomatic, input)
+        trimmomatic.update_parameters(baseout=f'{params.sample_name}-trimmed.fastq.gz')
         if params.adapter is not None:
             trimmomatic.update_parameters(illuminaclip_PE=f'$TRIMMOMATIC_ADAPTER_DIR/{params.adapter}-PE.fa:2:30:10')
         step = Step(str(rule), trimmomatic, camel, params.running_dir)
