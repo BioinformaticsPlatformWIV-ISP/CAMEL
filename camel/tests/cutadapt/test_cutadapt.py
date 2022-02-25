@@ -43,7 +43,7 @@ class TestCutadapt(CamelTestSuite):
         cutadapt_se.update_parameters(
             minimum_length=20,
             output_basename='output_file',
-            quality = 10
+            quality=10
         )
         cutadapt_se.run(self.running_dir)
         self.verify_output_files(cutadapt_se, 'FASTQ_SE')
