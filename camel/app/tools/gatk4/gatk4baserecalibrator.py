@@ -1,5 +1,6 @@
 from camel.app.camel import Camel
 from camel.app.tools.gatk4.gatk4 import GATK4
+from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 
 
 class GATK4BaseRecalibrator(GATK4):
@@ -64,3 +65,14 @@ class GATK4BaseRecalibrator(GATK4):
         if 'TXT_intervals' in self._tool_inputs:
             for interval in self._tool_inputs['TXT_intervals']:
                 self._input_string += f"--intervals {interval.path} "
+
+    def _check_input(self) -> None:
+        """
+        Check input for a tool and prepare command line parameters for input
+        :return: None
+        """
+        if not ('VCF_KNOWN_SNPS' in self._tool_inputs and 'VCF_KNOWN_INDELS' in self._tool_inputs):
+            raise InvalidInputSpecificationError(f'GATK {self._name} required VCF_KNOWN_SNPS or VCF_KNOWN_INDELS input '
+                                                 f'is missing in _tool_inputs! (at least one should be specified)')
+
+        super(GATK4BaseRecalibrator, self)._check_input()

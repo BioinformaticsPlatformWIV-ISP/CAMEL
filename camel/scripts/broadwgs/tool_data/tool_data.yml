@@ -1,0 +1,128 @@
+rule_params:
+  alignment:
+    bwa_aln_to_bam:
+      verbose: 3
+      deterministic_aln: 100000000
+    picard_fastq_to_ubam:
+      library_name: 'unknown'
+      platform: 'illumina'
+      sequencing_center: 'unknown'
+      quality_format: 'Standard'
+      sort_order: 'coordinate'
+    picard_merge_bam:
+      validation_stringency: 'SILENT'
+      expected_orientations: 'FR'
+      attributes_to_retain: 'X0'
+      attributes_to_remove_multi: 'NM,MD'
+      paired_run: 'true'
+      sort_order: 'unsorted'
+      is_bisulfite_sequence: 'false'
+      aligned_reads_only: 'false'
+      clip_adapters: 'false'
+      max_records_in_ram: 2000000
+      add_mate_cigar: 'true'
+      max_gaps: -1
+      primary_alignment_strategy: 'MostDistant'
+      unmapped_read_strategy: 'COPY_TO_TAG'
+      aligner_paring: 'true'
+      unmap_contaminant_reads: 'true'
+      add_pg_tag_to_reads: 'false'
+    picard_mark_duplicates:
+      validation_stringency: 'SILENT'
+      optical_duplicate_pixel_distance: 2500
+      assume_sort_order: 'queryname'
+      clear_dt: 'false'
+      add_pg_tag_to_reads: 'false'
+      max_records_in_ram: 10000000
+    picard_sort_sam:
+      sort_order: 'coordinate'
+      create_index: 'true'
+      create_md5_file: 'true'
+      max_records_in_ram: 10000000
+    picard_add_readgroups:
+      RG_library: 'unknown'
+      RG_platform: 'illumina'
+      RG_center_name: 'unknown'
+      create_index: 'true'
+    picard_set_tags:
+      create_index: 'true'
+    gatk4_baserecalibrator:
+      use_original_qualities: ''
+    gatk4_apply_bqsr:
+      create_md5: ''
+      add_output_sam_PR: ''
+      use_original_qualities: ''
+      static_quantized_quals_multi: '10,20,30'
+    picard_gather_sorted_bam:
+      create_index: 'true'
+      create_md5_file: 'true'
+  bam_to_cram:
+    samtools_convert_to_cram:
+      cram_out: ''
+    picard_validate_cram:
+      max_output: '1000000000'
+      ignore: 'MISSING_TAG_NM'
+      mode: 'VERBOSE'
+      is_bisulfite_sequenced: 'false'
+      max_records_in_ram: 10000000
+  variant_calling:
+    picard_create_interval_lists:
+      scatter_count: 10
+      subdivision_mode: 'BALANCING_WITHOUT_INTERVAL_SUBDIVISION_WITH_OVERFLOW'
+      unique: 'true'
+      sort: 'true'
+      break_bands_at_multiples_of: 100000
+    gatk4_haplotype_caller:
+      contamination: 0
+      gqb: '10,20,30,40,50,60,70,80,90'
+      annotation_group: 'StandardAnnotation,StandardHCAnnotation,AS_StandardAnnotation'
+      emit_ref_confidence: 'GVCF'
+      sample_ploidy: 2
+      standard_min_confidence_threshold_for_calling: 30.0
+  qc:
+    picard_quality_yield:
+      original_qualities: 'true'
+    picard_unsorted_RG_quality:
+      assume_sorted: 'true'
+      reset_metrics: 'null'
+      metrics_CollectBaseDistributionByCycle: 'CollectBaseDistributionByCycle'
+      metrics_CollectInsertSizeMetrics: 'CollectInsertSizeMetrics'
+      metrics_MeanQualityByCycle: 'MeanQualityByCycle'
+      metrics_QualityScoreDistribution: 'QualityScoreDistribution'
+      metric_accumulation_level_reset: 'null'
+      metric_accumulation_level: 'ALL_READS'
+    picard_RG_quality:
+      assume_sorted: 'true'
+      reset_metrics: 'null'
+      metrics_CollectAlignmentSummaryMetrics: 'CollectAlignmentSummaryMetrics'
+      metrics_CollectGcBiasMetrics: 'CollectGcBiasMetrics'
+      metric_accumulation_level_reset: 'null'
+      metric_accumulation_level: 'READ_GROUP'
+    check_prevalidation:
+      max_duplication_in_reasonable_sample: 0.30
+      max_chimerism_in_reasonable_sample: 0.15
+    picard_aggregation_metrics:
+      assume_sorted: 'true'
+      reset_metrics: 'null'
+      metrics_CollectAlignmentSummaryMetrics: 'CollectAlignmentSummaryMetrics'
+      metrics_CollectInsertSizeMetrics: 'CollectInsertSizeMetrics'
+      metrics_CollectSequencingArtifactMetrics: 'CollectSequencingArtifactMetrics'
+      metrics_QualityScoreDistribution: 'QualityScoreDistribution'
+      metrics_CollectGcBiasMetrics: 'CollectGcBiasMetrics'
+      metric_accumulation_level_reset: 'null'
+      metric_accumulation_level_multi: 'SAMPLE,LIBRARY'
+    picard_wgs_metrics:
+      read_length: 250
+      validation_stringency: 'SILENT'
+      include_bq_histogram: 'true'
+      use_fast_algorithm: 'true'
+    picard_raw_wgs_metrics:
+      read_length: 250
+      validation_stringency: 'SILENT'
+      include_bq_histogram: 'true'
+      use_fast_algorithm: 'true'
+    gatk4_validate_gvcf:
+      gvcf: 'true'
+      val_type_to_exclude: 'ALLELES'
+    picard_variant_calling_metrics:
+      gvcf: 'true'
