@@ -111,3 +111,22 @@ rule downsampling_report:
         step = Step(str(rule), reporter, Camel.get_instance(), params.dir_working)
         step.run_step()
         SnakemakeUtils.dump_object(reporter.tool_outputs['HTML'], Path(output.HTML))
+
+rule downsampling_summary_out:
+    """
+    Exports the summary information for the downsampling workflow.
+    """
+    input:
+        JSON = rules.downsampling_calculate.output.JSON
+    output:
+        TSV = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_SUMMARY
+    run:
+        with open(input.JSON) as handle:
+            data_ds = json.load(handle)
+
+        with open(output.TSV, 'w') as handle:
+            for k, v in sorted(data_ds.items()):
+                handle.write('\t'.join([
+                    f'downsampling_{k}', f'{v:.2f}' if isinstance(v, float) else str(v)
+                ]))
+                handle.write('\n')
