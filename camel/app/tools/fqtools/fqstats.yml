@@ -1,0 +1,3 @@
+dependencies: [fqtools/1.1]
+parameters: {}
+tool_command: fqstats
