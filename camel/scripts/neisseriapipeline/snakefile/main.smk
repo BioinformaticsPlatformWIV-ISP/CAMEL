@@ -2,7 +2,7 @@ from pathlib import Path
 
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.resources.snakefile import trimming, trimming_illumina, assembly_spades, quality_checks, \
-    contamination_check_kraken, gene_detection, sequence_typing
+    contamination_check_kraken, gene_detection, sequence_typing, downsampling
 from  camel.scripts.neisseriapipeline.snakefile import serogroup_determination
 
 
@@ -10,6 +10,7 @@ from  camel.scripts.neisseriapipeline.snakefile import serogroup_determination
 # Included Snakefiles #
 #######################
 include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
+include: downsampling.SNAKEFILE_DOWNSAMPLING,
 include: contamination_check_kraken.SNAKEFILE_CONTAMINATION_CHECK_KRAKEN
 include: quality_checks.SNAKEFILE_QUALITY_CHECKS
 include: assembly_spades.SNAKEFILE_ASSEMBLY_SPADES
@@ -164,6 +165,7 @@ rule combine_reports:
     """
     input:
         report_trimming = trimming.get_trimming_report(config),
+        report_downsampling = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_REPORT,
         report_assembly = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_REPORT,
         report_kraken = Path(config['working_dir']) / (contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT if 'kraken' in config['analyses'] else contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT_EMPTY),
         report_adv_qc = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_REPORT,
@@ -208,7 +210,7 @@ rule combine_reports:
 
         # Add output sections
         report_structure = [
-            ('Read trimming and basic QC', 'trim', [Path(input.report_trimming)]),
+            ('Read trimming and basic QC', 'trim', [Path(input.report_downsampling), Path(input.report_trimming)]),
             ('Assembly', 'assem', [Path(input.report_assembly)]),
             ('Advanced QC', 'adv_qc', [Path(x) for x in (input.report_kraken, input.report_adv_qc)]),
             ('Resistance characterization', 'res', [Path(x) for x in (
@@ -231,6 +233,7 @@ rule combine_summary_files:
     input:
         Path(config['working_dir']) / 'summary' / 'summary-init.tsv',
         trimming.get_trimming_summary(config),
+        Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_SUMMARY,
         Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_SUMMARY,
         Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY,
         Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_SUMMARY if 'kraken' in config['analyses'] else [],

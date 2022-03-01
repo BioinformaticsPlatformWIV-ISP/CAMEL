@@ -55,7 +55,8 @@ class MainNeisseriaPipeline(ReportPipeline):
                 config_data, yaml.safe_load(handle_in.read().format(
                     qc_typing_scheme='cgmlst' if self._args.cgmlst else 'mlst',
                     export_fastq='true' if self._args.report_include_fastq else 'false',
-                    export_bam='true' if self._args.report_include_bam else 'false'
+                    export_bam='true' if self._args.report_include_bam else 'false',
+                    coverage_max=self._args.cov_max
                 )))
         return SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir)
 
