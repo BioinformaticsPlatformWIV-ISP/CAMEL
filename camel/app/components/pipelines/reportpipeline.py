@@ -36,6 +36,11 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         argument_parser.add_argument(
             '--report-include-bam', help="Include the BAM file in the report", action='store_true')
 
+        # Parameters
+        argument_parser.add_argument(
+            '--cov-max', default=100.0, type=float,
+            help='Maximum coverage (datasets with higher estimated coverage will be downsampled to the given value)')
+
     def get_template_data(self, input_key: str, input_data: [List[Dict[str, str]]]) -> Dict[str, Any]:
         """
         Returns the template data that is common to all pipeline.
