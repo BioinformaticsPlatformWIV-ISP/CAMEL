@@ -4,6 +4,7 @@ from camel.app.camel import Camel
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile import trimming_illumina
 from camel.app.pipeline.step import Step
+from camel.resources.snakefile.downsampling import OUTPUT_DOWNSAMPLING_FASTQ_PE
 
 camel = Camel.get_instance()
 
@@ -48,7 +49,8 @@ rule trimming_illumina_trimmomatic:
     Read trimming using trimmomatic.
     """
     input:
-        FASTQ_PE = rules.trimming_illumina_pickle_input.output.FASTQ_PE
+        FASTQ_PE = rules.trimming_illumina_pickle_input.output.FASTQ_PE if ('downsampling' not in config) else
+            Path(config['working_dir']) / OUTPUT_DOWNSAMPLING_FASTQ_PE
     output:
         FASTQ_PE = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_READS_PE,
         FASTQ_SE_FORWARD = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_READS_SE_FWD,
