@@ -6,3 +6,4 @@ _dir_downsampling = Path('downsampling')
 OUTPUT_DOWNSAMPLING_REPORT = _dir_downsampling / 'html.io'
 OUTPUT_DOWNSAMPLING_SUMMARY = _dir_downsampling / 'summary_downsampling.tsv'
 OUTPUT_DOWNSAMPLING_FASTQ_PE = _dir_downsampling / 'fastq-pe.io'
+OUTPUT_DOWNSAMPLING_INFORMS = _dir_downsampling / 'downsampling' / 'informs_seqtk.io'

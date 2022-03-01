@@ -37,7 +37,7 @@ rule select_fastq:
     Other workflows such as Kraken or Assembly rely on this dictionary to get input files (PE or SE).
     """
     input:
-        FASTQ_PE = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_DICT,
+        FASTQ_PE = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_DICT
     output:
         IO_FASTQ = Path(config['working_dir']) / 'fq_dict.io'
     shell:
@@ -99,6 +99,7 @@ rule report_create_command_section:
     Creates the report section containing the tool commands.
     """
     input:
+        INFORMS_downsampling = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_INFORMS,
         INFORMS_trimming = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_INFORMS,
         INFORMS_assembly = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_INFORMS,
         INFORMS_kraken = Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_KRAKEN_INFORMS if 'kraken' in config['analyses'] else [],
