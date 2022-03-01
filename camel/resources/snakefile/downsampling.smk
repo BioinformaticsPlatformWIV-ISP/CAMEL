@@ -65,7 +65,7 @@ rule downsampling_seqtk:
         JSON = rules.downsampling_calculate.output.JSON
     output:
         FASTQ_PE = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_FASTQ_PE,
-        INFORMS = Path(config['working_dir']) / 'downsampling' / 'informs_seqtk.io'
+        INFORMS = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_INFORMS
     params:
         dir_working = Path(config['working_dir']) / 'downsampling'
     run:
@@ -78,7 +78,7 @@ rule downsampling_seqtk:
         if data_ds['downsample_factor'] is None:
             logging.info("No downsampling required, skipping seqtk")
             shutil.copyfile(input.FASTQ_PE, output.FASTQ_PE)
-            SnakemakeUtils.dump_object(None, Path(output.INFORMS))
+            SnakemakeUtils.dump_object([], Path(output.INFORMS))
         else:
             seqtk = SeqtkSubsample(Camel.get_instance())
             seqtk.add_input_files({'FASTQ_PE': SnakemakeUtils.load_object(Path(input.FASTQ_PE))})
