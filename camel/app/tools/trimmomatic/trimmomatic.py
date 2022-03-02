@@ -104,7 +104,6 @@ class Trimmomatic(Tool):
         Returns the path for the output file with the given suffix.
         """
         basename = re.search(r'(.*)\.fastq(.gz)?', Path(self._parameters['baseout'].value).name).group(1)
-        print('->', basename)
         is_gzipped = self._parameters['baseout'].value.endswith('.gz')
         if suffix is not None:
             return self.folder / f"{FileSystemHelper.make_valid(basename)}_{suffix}.fastq{'.gz' if is_gzipped else ''}"
