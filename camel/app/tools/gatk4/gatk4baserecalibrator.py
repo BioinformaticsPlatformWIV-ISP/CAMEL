@@ -71,7 +71,7 @@ class GATK4BaseRecalibrator(GATK4):
         Check input for a tool and prepare command line parameters for input
         :return: None
         """
-        if not ('VCF_KNOWN_SNPS' in self._tool_inputs and 'VCF_KNOWN_INDELS' in self._tool_inputs):
+        if not ('VCF_KNOWN_SNPS' in self._tool_inputs or 'VCF_KNOWN_INDELS' in self._tool_inputs):
             raise InvalidInputSpecificationError(f'GATK {self._name} required VCF_KNOWN_SNPS or VCF_KNOWN_INDELS input '
                                                  f'is missing in _tool_inputs! (at least one should be specified)')
 
