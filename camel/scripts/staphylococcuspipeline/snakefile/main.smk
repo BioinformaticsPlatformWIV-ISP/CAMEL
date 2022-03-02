@@ -1,12 +1,13 @@
 from pathlib import Path
 
 from camel.resources.snakefile import trimming_illumina, assembly_spades, gene_detection, trimming, \
-    contamination_check_kraken, quality_checks, sequence_typing, pointfinder, plasmidspades, lrefinder
+    contamination_check_kraken, quality_checks, sequence_typing, pointfinder, plasmidspades, lrefinder, downsampling
 from camel.scripts.staphylococcuspipeline.snakefile import spatyping, sccmectyping
 
 #######################
 # Included Snakefiles #
 #######################
+include: downsampling.SNAKEFILE_DOWNSAMPLING
 include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
 include: contamination_check_kraken.SNAKEFILE_CONTAMINATION_CHECK_KRAKEN
 include: quality_checks.SNAKEFILE_QUALITY_CHECKS
@@ -34,7 +35,7 @@ rule select_fastq:
     Other workflows such as Kraken or Assembly rely on this dictionary to get input files (PE or SE).
     """
     input:
-        FASTQ_PE = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_DICT,
+        FASTQ_PE = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_DICT
     output:
         IO_FASTQ = Path(config['working_dir']) / 'fq_dict.io'
     shell:
@@ -72,6 +73,7 @@ rule report_command_section:
     Creates a report section with the commands used in the pipeline. 
     """
     input:
+        INFORMS_downsampling = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_INFORMS,
         INFORMS_trimming = trimming.get_trimming_command_informs(config),
         INFORMS_assembly = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_INFORMS,
         INFORMS_assembly_filt = Path(config['working_dir']) / 'assembly_spades' / 'filtering' / 'informs.io',
@@ -107,6 +109,7 @@ rule report_combine_all:
     Rule to combine report sections into a single output report.
     """
     input:
+        report_downsampling = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_REPORT,
         report_trimming = trimming.get_trimming_report(config),
         report_assembly = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_REPORT,
         report_kraken = Path(config['working_dir']) / (contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT if 'kraken' in config['analyses'] else contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT_EMPTY),
@@ -163,7 +166,7 @@ rule report_combine_all:
 
         # Add report content
         report_structure = [
-            ('Read trimming and basic QC', 'trim', [Path(input.report_trimming)]),
+            ('Read trimming and basic QC', 'trim', [Path(input.report_downsampling), Path(input.report_trimming)]),
             ('Assembly', 'assem', [Path(input.report_assembly)]),
             ('Advanced QC', 'adv_qc', [Path(x) for x in (input.report_kraken, input.report_adv_qc)]),
             ('<i>spa</i> typing', 'spa', [Path(input.report_spa_typing)]),
@@ -211,6 +214,7 @@ rule summary_combine_all:
     """
     input:
         rules.summary_init.output.TSV,
+        Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_SUMMARY,
         trimming.get_trimming_summary(config),
         Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_SUMMARY,
         Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY,

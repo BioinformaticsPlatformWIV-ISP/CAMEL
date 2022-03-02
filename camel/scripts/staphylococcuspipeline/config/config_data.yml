@@ -25,6 +25,10 @@ citations:
 #########################
 # Tool specific options #
 #########################
+downsampling:
+  coverage_max: {coverage_max}
+  expected_genome_size: 2_821_361
+
 read_trimming:
   export_fastq: '{export_fastq}'
 
