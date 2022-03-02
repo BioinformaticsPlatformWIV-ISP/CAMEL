@@ -56,7 +56,7 @@ class ReporterDownsampling(Tool):
         if ('seqtk' in self._input_informs) and (stats['downsample_factor'] is not None):
             section.add_header_with_subtitle('Downsampling', 3, self._input_informs['seqtk']['_name'])
             section.add_table([
-                [stats['nb_read_pairs'], self._input_informs['seqtk']['reads_count'] // 2]
+                [f"{stats['nb_read_pairs']:,}", f"{self._input_informs['seqtk']['reads_count'] // 2:,}"]
             ], ['Read pairs in', 'Read pairs out'], [('class', 'data')])
 
         self._tool_outputs['HTML'] = [ToolIOValue(section)]
