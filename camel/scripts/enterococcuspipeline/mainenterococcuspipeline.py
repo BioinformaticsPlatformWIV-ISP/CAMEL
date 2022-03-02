@@ -23,6 +23,7 @@ class MainEnterococcusPipeline(ReportPipeline):
     DATA_BY_SPECIES = {
         'faecium': {
             'gc_content': 38.1,
+            'genome_size': 2_796_178,
             'full_name': 'Enterococcus faecium',
             'mlst_db': '/db/sequence_typing/enterococcus_faecium/mlst',
             'cgmlst_db': '/db/sequence_typing/enterococcus_faecium/cgmlst',
@@ -30,6 +31,7 @@ class MainEnterococcusPipeline(ReportPipeline):
         },
         'faecalis': {
             'gc_content': 37.4,
+            'genome_size': 2_973_380,
             'full_name': 'Enterococcus faecalis',
             'mlst_db': '/db/sequence_typing/enterococcus_faecalis/mlst',
             'cgmlst_db': '/db/sequence_typing/enterococcus_faecalis/cgmlst',
@@ -78,6 +80,8 @@ class MainEnterococcusPipeline(ReportPipeline):
                 pointfinder_db=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species]['pointfinder_db'],
                 mlst_db=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species]['mlst_db'],
                 cgmlst_db=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species]['cgmlst_db'],
+                genome_size=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species]['genome_size'],
+                coverage_max=self._args.cov_max
             ), Loader=yaml.SafeLoader))
 
             # Set the species
