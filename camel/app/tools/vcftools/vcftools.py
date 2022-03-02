@@ -28,7 +28,7 @@ class VCFtools(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super().__init__('vcftools', '1.16', camel)
+        super().__init__('vcftools', '0.1.16', camel)
         self._specific_parameters = []
 
     def _execute_tool(self) -> None:
