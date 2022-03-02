@@ -2,7 +2,6 @@ from camel.app.camel import Camel
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliovalue import ToolIOValue
-from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.tools.tool import Tool
 
 
@@ -34,6 +33,7 @@ class ReporterDownsampling(Tool):
         """
         # Create report section
         section = HtmlReportSection('Coverage check')
+        reads_are_paired = 'is_paired' in self._parameters
 
         # Add parameters table
         stats = self._input_informs['stats']
@@ -45,18 +45,22 @@ class ReporterDownsampling(Tool):
         # Add statistics table
         text_downsample = 'No downsampling required' if (stats['downsample_factor'] is None) else \
             f"{stats['downsample_factor']:.2f}"
-        section.add_table(
-            [[
-                f"{int(stats['total_bases']):,}", str(int(stats['mean_read_length'])),
-                f"{stats['coverage_estimated']:.2f}", text_downsample]],
-            ['Total bases (fwd. + rev.)', 'Read length (avg.)', 'Estimated coverage', 'Downsample factor'],
+        section.add_table([
+            [f"{int(stats['total_bases']):,}", str(int(stats['mean_read_length'])),
+             f"{stats['coverage_estimated']:.2f}", text_downsample]],
+            ['Total bases (fwd. + rev.)' if reads_are_paired else 'Total bases', 'Read length (avg.)',
+             'Estimated coverage', 'Downsample factor'],
             [('class', 'data')]
         )
 
         if ('seqtk' in self._input_informs) and (stats['downsample_factor'] is not None):
+            if reads_are_paired:
+                header = ['Read pairs in', 'Read pairs out']
+                table_data = [[f"{stats['nb_read_pairs']:,}", f"{self._input_informs['seqtk']['reads_count'] // 2:,}"]]
+            else:
+                header = ['Reads in', 'Reads out']
+                table_data = [[f"{stats['nb_read_pairs']:,}", f"{self._input_informs['seqtk']['reads_count']:,}"]]
             section.add_header_with_subtitle('Downsampling', 3, self._input_informs['seqtk']['_name'])
-            section.add_table([
-                [f"{stats['nb_read_pairs']:,}", f"{self._input_informs['seqtk']['reads_count'] // 2:,}"]
-            ], ['Read pairs in', 'Read pairs out'], [('class', 'data')])
+            section.add_table(table_data, header, [('class', 'data')])
 
         self._tool_outputs['HTML'] = [ToolIOValue(section)]

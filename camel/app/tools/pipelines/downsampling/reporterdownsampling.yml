@@ -1,3 +1,4 @@
 dependencies: []
-parameters: {}
+parameters:
+  is_paired: {default: true, mandatory: true, option: null, value: 'true'}
 tool_command: null
