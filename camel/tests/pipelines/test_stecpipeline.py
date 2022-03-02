@@ -31,7 +31,7 @@ class TestSTECPipeline(CamelTestSuite):
         """
         from camel.app.tools.pipelines.sequence_typing.locussetmanager import LocusSetManager
         with open(CONFIG_DATA) as handle_in:
-            config_data = yaml.safe_load(handle_in)
+            config_data = yaml.safe_load(handle_in.read().format(coverage_max=10))
 
         for key, scheme_data in config_data['sequence_typing'].items():
             # Check if scheme exists
@@ -50,7 +50,7 @@ class TestSTECPipeline(CamelTestSuite):
         """
         from camel.app.tools.pipelines.genedetection.dbmanager import DBManager
         with open(CONFIG_DATA) as handle_in:
-            config_data = yaml.safe_load(handle_in)
+            config_data = yaml.safe_load(handle_in.read().format(coverage_max=100))
 
         for key, db_data in config_data['gene_detection'].items():
             # Check if scheme exists
@@ -160,6 +160,49 @@ class TestSTECPipeline(CamelTestSuite):
             '--detection-method', 'kma',
             '--library', 'TruSeq2'
         ] + [f"--{a.replace('_', '-')}" for a in MainSTECPipeline.CUSTOM_ANALYSES if 'cgmlst' not in a]
+        main = MainSTECPipeline(args)
+        main.run()
+        self.assertGreater(path_report_out.stat().st_size, 0)
+
+    @longRunningTest()
+    def test_stec_pipeline_blast_illumina_with_downsampling(self) -> None:
+        """
+        Tests the STEC pipeline with Illumina data and downsampling.
+        :return: None
+        """
+        path_report_out = self.running_dir / 'out' / 'report.html'
+        path_summary_out = self.running_dir / 'out' / 'summary.tsv'
+        args = [
+            '--fastq-pe', str(TestSTECPipeline.input_fastq_illumina_pe[0]), str(TestSTECPipeline.input_fastq_illumina_pe[1]),
+            '--output-html', str(path_report_out),
+            '--output-dir', str(path_report_out.parent),
+            '--output-tsv', str(path_summary_out),
+            '--working-dir', str(self.running_dir),
+            '--mlst-warwick',
+            '--cov-max', '5.0'
+        ]
+        main = MainSTECPipeline(args)
+        main.run()
+        self.assertGreater(path_report_out.stat().st_size, 0)
+
+    @longRunningTest()
+    def test_stec_pipeline_blast_iontorrent_with_downsampling(self) -> None:
+        """
+        Tests the STEC pipeline with IonTorrent data and downsampling.
+        :return: None
+        """
+        path_report_out = self.running_dir / 'out' / 'report.html'
+        path_summary_out = self.running_dir / 'out' / 'summary.tsv'
+        args = [
+            '--fastq-se', str(TestSTECPipeline.input_fastq_iontorrent),
+            '--output-html', str(path_report_out),
+            '--output-dir', str(path_report_out.parent),
+            '--output-tsv', str(path_summary_out),
+            '--working-dir', str(self.running_dir),
+            '--read-type', 'iontorrent',
+            '--mlst-warwick',
+            '--cov-max', '5.0'
+        ]
         main = MainSTECPipeline(args)
         main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)
