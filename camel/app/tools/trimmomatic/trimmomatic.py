@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import List, Optional
 
 from camel.app.camel import Camel
+from camel.app.components.files.fastqutils import FastqUtils
 from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
@@ -130,9 +131,8 @@ class Trimmomatic(Tool):
         :return: None
         """
         for key in self._tool_outputs:
-            for tool_output_file in self._tool_outputs[key]:
-                if tool_output_file.size == 0:
-                    self._tool_outputs[key].remove(tool_output_file)
+            self._tool_outputs[key] = [
+                tool_io for tool_io in self._tool_outputs[key] if FastqUtils.count_reads(tool_io.path) > 0]
 
     def __set_informs(self) -> None:
         """
