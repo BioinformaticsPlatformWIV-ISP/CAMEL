@@ -92,6 +92,26 @@ class TestNeisseriaPipeline(unittest.TestCase):
         self.assertGreater(path_report_out.stat().st_size, 0)
 
     @longRunningTest()
+    def test_neisseria_pipeline_blast_with_downsampling(self) -> None:
+        """
+        Tests the Neisseria pipeline with all assays except for cgMLST.
+        :return: None
+        """
+        path_report_out = self.running_dir / 'out' / 'report.html'
+        path_summary_out = self.running_dir / 'out' / 'summary.tsv'
+        args = [
+            '--fastq-pe', str(TestNeisseriaPipeline.input_fastq_pe[0]), str(TestNeisseriaPipeline.input_fastq_pe[1]),
+            '--output-html', str(path_report_out),
+            '--output-dir', str(path_report_out.parent),
+            '--output-tsv', str(path_summary_out),
+            '--working-dir', str(self.running_dir),
+            '--cov-max', '5.0',
+        ] + [f"--{a.replace('_', '-')}" for a in MainNeisseriaPipeline.CUSTOM_ANALYSES if a != 'cgmlst']
+        main = MainNeisseriaPipeline(args)
+        main.run()
+        self.assertGreater(path_report_out.stat().st_size, 0)
+
+    @longRunningTest()
     def test_neisseria_pipeline_srst2(self) -> None:
         """
         Tests the Neisseria pipeline with all assays except for cgMLST.

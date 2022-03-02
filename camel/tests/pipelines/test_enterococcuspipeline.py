@@ -50,7 +50,7 @@ class TestEnterococcusPipeline(CamelTestSuite):
     @longRunningTest()
     def test_enterococcus_pipeline_faecalis_blast(self) -> None:
         """
-        Tests the Neisseria pipeline with all assays except for cgMLST.
+        Tests the Enterococcus pipeline with all assays except for cgMLST.
         :return: None
         """
         path_report_out = self.running_dir / 'out' / 'report.html'
@@ -71,7 +71,7 @@ class TestEnterococcusPipeline(CamelTestSuite):
     @longRunningTest()
     def test_enterococcus_pipeline_faecalis_srst2(self) -> None:
         """
-        Tests the Neisseria pipeline with all assays except for cgMLST.
+        Tests the Enterococcus pipeline with all assays except for cgMLST.
         :return: None
         """
         path_report_out = self.running_dir / 'out' / 'report.html'
@@ -93,7 +93,7 @@ class TestEnterococcusPipeline(CamelTestSuite):
     @longRunningTest()
     def test_enterococcus_pipeline_faecalis_kma(self) -> None:
         """
-        Tests the Neisseria pipeline with all assays except for cgMLST.
+        Tests the Enterococcus pipeline with all assays except for cgMLST.
         :return: None
         """
         path_report_out = self.running_dir / 'out' / 'report.html'
@@ -115,7 +115,7 @@ class TestEnterococcusPipeline(CamelTestSuite):
     @longRunningTest()
     def test_enterococcus_pipeline_faecium_blast(self) -> None:
         """
-        Tests the Neisseria pipeline with all assays except for cgMLST.
+        Tests the Enterococcus pipeline with all assays except for cgMLST.
         :return: None
         """
         path_report_out = self.running_dir / 'out' / 'report.html'
@@ -136,7 +136,7 @@ class TestEnterococcusPipeline(CamelTestSuite):
     @longRunningTest()
     def test_enterococcus_pipeline_faecium_srst2(self) -> None:
         """
-        Tests the Neisseria pipeline with all assays except for cgMLST.
+        Tests the Enterococcus pipeline with all assays except for cgMLST.
         :return: None
         """
         path_report_out = self.running_dir / 'out' / 'report.html'
@@ -158,7 +158,7 @@ class TestEnterococcusPipeline(CamelTestSuite):
     @longRunningTest()
     def test_enterococcus_pipeline_faecium_kma(self) -> None:
         """
-        Tests the Neisseria pipeline with all assays except for cgMLST.
+        Tests the Enterococcus pipeline with all assays except for cgMLST.
         :return: None
         """
         path_report_out = self.running_dir / 'out' / 'report.html'
