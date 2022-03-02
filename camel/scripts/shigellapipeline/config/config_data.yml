@@ -2,7 +2,7 @@
 # Pipeline options #
 ####################
 citations:
-  main: Ventola_2019-shigella
+  main: Bogaerts_2021-shigella
   other:
     - Bolger_2014-trimmomatic
     - Bankevich_2012-spades
@@ -31,6 +31,10 @@ citations:
 #########################
 # Tool specific options #
 #########################
+downsampling:
+  coverage_max: {coverage_max}
+  expected_genome_size: 4_762_774
+
 read_trimming:
   export_fastq: {export_fastq}
 
