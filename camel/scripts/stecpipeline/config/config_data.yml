@@ -30,7 +30,9 @@ citations:
 #########################
 # Tool specific options #
 #########################
-read_trimming: {}
+downsampling:
+  coverage_max: {coverage_max}
+  expected_genome_size: 5_498_578
 
 contamination_check:
   db: /db/kraken2/latest/abfhpv/
@@ -46,7 +48,7 @@ variant_calling:
     name: <i>Escherichia coli</i> O157:H7 (NC_002695.2)
     url: https://www.ncbi.nlm.nih.gov/nuccore/NC_002695.2
 
-variant_filtering: {variant_filtering}
+variant_filtering: {{}}
 
 assembly:
   spades:

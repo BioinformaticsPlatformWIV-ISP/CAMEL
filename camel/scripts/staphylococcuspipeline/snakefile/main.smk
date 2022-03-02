@@ -149,7 +149,7 @@ rule report_combine_all:
         HTML = config['output_report']
     params:
         sample_name = config['sample_name'],
-        fastq_input = config['fastq_pe'],
+        fastq_input = config['input']['fastq_pe'],
         output_dir = config['output_dir'],
         pipeline_info = config['pipeline'],
         detection_method = config['detection_method']
@@ -196,7 +196,8 @@ rule summary_init:
         import datetime
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         analysis_date = datetime.datetime.now().strftime(SnakePipelineUtils.DATE_FORMAT)
-        input_filenames = ', '.join(entry['name'] for entry in config['fastq_pe' if 'fastq_pe' in config else 'fastq_se'])
+        input_filenames = ', '.join(
+            input_file['name'] for _, input_files in config['input'].items() for input_file in input_files)
         with open(output.TSV, 'w') as handle:
             for kv_pair in [
                 ('pipeline_name', config['pipeline']['name']),
