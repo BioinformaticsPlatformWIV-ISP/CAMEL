@@ -64,7 +64,8 @@ rule init_summary:
     run:
         import datetime
         analysis_date = datetime.datetime.now().strftime(SnakePipelineUtils.DATE_FORMAT)
-        input_filenames = ', '.join(entry['name'] for entry in config['fastq_pe'])
+        input_filenames = ', '.join(
+            input_file['name'] for _, input_files in config['input'].items() for input_file in input_files)
         with open(output.TSV, 'w') as handle:
             for kv_pair in [
                 ('pipeline_name', config['pipeline']['name']),
@@ -191,7 +192,7 @@ rule combine_reports:
         HTML = config['output_report']
     params:
         sample_name = config['sample_name'],
-        fastq_input = config['fastq_pe'],
+        fastq_input = config['input']['fastq_pe'],
         output_dir = config['output_dir'],
         pipeline_info = config['pipeline'],
         detection_method = config['detection_method'],
