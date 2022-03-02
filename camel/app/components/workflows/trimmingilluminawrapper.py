@@ -46,7 +46,7 @@ class TrimmingIlluminaWrapper(object):
         """
         config_data = {
             'working_dir': str(self._working_dir),
-            'fastq_pe': [{'name': p.name, 'path': str(p)} for p in pe_reads],
+            'input': {'fastq_pe': [{'name': p.name, 'path': str(p)} for p in pe_reads]},
             'read_trimming': {'export_fastq': str(export_fastq)}
         }
         if adapter is not None:
