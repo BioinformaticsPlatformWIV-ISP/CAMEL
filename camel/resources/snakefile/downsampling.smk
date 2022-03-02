@@ -1,6 +1,5 @@
 import json
 import shutil
-import statistics
 from pathlib import Path
 
 from camel.app.camel import Camel
@@ -8,12 +7,39 @@ from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile import downsampling
 
+
+rule downsampling_collect_fq_data:
+    """
+    Collects the FASTQ data for the input dataset.
+    """
+    input:
+        FASTQ_SE = [entry['path'] for entry in config['input']['fastq_se']] if config.get('read_type', 'illumina') == 'iontorrent' else [],
+        FASTQ_PE = [entry['path'] for entry in config['input']['fastq_pe']] if config.get('read_type', 'illumina') == 'illumina' else []
+    output:
+        IO = Path(config['working_dir']) / 'downsampling' / 'input' / 'fastq.io'
+    params:
+        read_type = config.get('read_type', 'illumina')
+    run:
+        from camel.app.io.tooliofile import ToolIOFile
+        if params.read_type == 'illumina':
+            if len(input.FASTQ_PE) != 2:
+                raise ValueError("Paired end input is required for Illumina data")
+            output_list = [ToolIOFile(Path(x)) for x in input.FASTQ_PE]
+        elif params.read_type == 'iontorrent':
+            if len(input.FASTQ_SE) != 1:
+                raise ValueError("A single FASTQ input file is required for IonTorrent data")
+            output_list = [ToolIOFile(Path(input.FASTQ_SE[0]))]
+        else:
+            raise ValueError(f"Unsupported read type: {params.read_type}")
+        SnakemakeUtils.dump_object(output_list, Path(output.IO))
+
+
 rule downsampling_fqstats:
     """
     Determines the number of reads and bases in the input FASTQ files.
     """
     input:
-        FASTQ = Path(config['working_dir']) / 'trimming_illumina' / 'input'/ 'fastq-pe.io'
+        FASTQ = rules.downsampling_collect_fq_data.output.IO
     output:
         IO = Path(config['working_dir']) / 'downsampling' / 'json_fqstats.io'
     params:
@@ -37,11 +63,14 @@ rule downsampling_calculate:
     params:
         running_dir = Path(config['working_dir']) / 'downsampling',
         size_ref_genome = config['downsampling']['expected_genome_size'],
-        cov_target = config['downsampling']['coverage_max']
+        cov_target = config['downsampling']['coverage_max'],
+        is_paired = config.get('read_type', 'illumina') == 'illumina'
     run:
+        import statistics
         informs_fq = SnakemakeUtils.load_object(Path(input.IO))
         coverage_est = sum(fq['nb_of_bases'] for fq in informs_fq['stats']) / params.size_ref_genome
         downsample_factor = float(f"{params.cov_target / coverage_est:.2f}")
+        key_nb_reads = 'nb_read_pairs' if params.is_paired else 'nb_reads'
         data_out = {
             'total_bases': sum([fq['nb_of_bases'] for fq in informs_fq['stats']]),
             'mean_read_length': statistics.mean([
@@ -50,7 +79,7 @@ rule downsampling_calculate:
             'coverage_target': params.cov_target,
             'downsample_factor': params.cov_target / coverage_est if downsample_factor < 1 else None,
             'size_ref_genome': params.size_ref_genome,
-            'nb_read_pairs': next(iter(informs_fq['stats']))['nb_of_sequences']
+            key_nb_reads: next(iter(informs_fq['stats']))['nb_of_sequences']
         }
         with open(output.JSON, 'w') as handle:
             json.dump(data_out, handle, indent=2)
@@ -61,13 +90,14 @@ rule downsampling_seqtk:
     Performs downsampling with seqtk (if needed).
     """
     input:
-        FASTQ_PE = Path(config['working_dir']) / 'trimming_illumina' / 'input' / 'fastq-pe.io',
+        FASTQ = rules.downsampling_collect_fq_data.output.IO,
         JSON = rules.downsampling_calculate.output.JSON
     output:
-        FASTQ_PE = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_FASTQ_PE,
+        FASTQ = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_FASTQ,
         INFORMS = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_INFORMS
     params:
-        dir_working = Path(config['working_dir']) / 'downsampling'
+        dir_working = Path(config['working_dir']) / 'downsampling',
+        read_type = config.get('read_type', 'illumina')
     run:
         import logging
         from camel.app.tools.seqtk.seqtksubsample import SeqtkSubsample
@@ -77,15 +107,15 @@ rule downsampling_seqtk:
             data_ds = json.load(handle)
         if data_ds['downsample_factor'] is None:
             logging.info("No downsampling required, skipping seqtk")
-            shutil.copyfile(input.FASTQ_PE, output.FASTQ_PE)
+            shutil.copyfile(input.FASTQ, output.FASTQ)
             SnakemakeUtils.dump_object([], Path(output.INFORMS))
         else:
             seqtk = SeqtkSubsample(Camel.get_instance())
-            seqtk.add_input_files({'FASTQ_PE': SnakemakeUtils.load_object(Path(input.FASTQ_PE))})
+            seqtk.add_input_files({'FASTQ_PE': SnakemakeUtils.load_object(Path(input.FASTQ))})
             step = Step(str(rule), seqtk, Camel.get_instance(), Path(params.dir_working))
             seqtk.update_parameters(fraction=float(f"{data_ds['downsample_factor']:.2f}"))
             step.run_step()
-            SnakemakeUtils.dump_object(seqtk.tool_outputs['FASTQ_PE'], Path(output.FASTQ_PE))
+            SnakemakeUtils.dump_object(seqtk.tool_outputs['FASTQ_PE'], Path(output.FASTQ))
             SnakemakeUtils.dump_object(seqtk.informs, Path(output.INFORMS))
 
 rule downsampling_report:
