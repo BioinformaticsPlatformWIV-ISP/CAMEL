@@ -27,7 +27,7 @@ class TestSRST2(CamelTestSuite):
         srst2 = Srst2Gene(Camel.get_instance())
         for dependency in srst2.dependencies:
             command = Command(f'module load {dependency};')
-            command.run_command(self.running_dir)
+            command.run(self.running_dir)
             self.assertEqual(command.returncode, 0, f"Dependency '{dependency}' cannot be loaded")
 
     def test_pe_gene_detection(self) -> None:

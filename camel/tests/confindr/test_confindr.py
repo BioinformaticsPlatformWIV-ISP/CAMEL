@@ -30,7 +30,7 @@ class TestConFindr(CamelTestSuite):
         confindr = ConFindr(Camel.get_instance())
         for dependency in confindr.dependencies:
             command = Command(f'module load {dependency};')
-            command.run_command(self.running_dir)
+            command.run(self.running_dir)
             self.assertEqual(command.returncode, 0, f"Dependency '{dependency}' cannot be loaded")
 
     def test_confindr_pe(self) -> None:
