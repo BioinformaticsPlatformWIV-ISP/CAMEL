@@ -1,9 +1,12 @@
 import errno
 import fileinput
+import gzip
 import hashlib
 import pickle
 from pathlib import Path
 from typing import List, Any
+
+from camel.app.components.filesystemhelper import FileSystemHelper
 
 
 class FileUtils(object):
@@ -79,13 +82,21 @@ class FileUtils(object):
     @staticmethod
     def concatenate_files(output_path: Path, input_files: List[Path]):
         """
-        Concatenate the input files specified into one output file
+        Concatenate the input files specified into one output file. If the input is gzipped,
+        the output will also be a gzipped file.
         :param input_files: input files to be concatenated
         :param output_path: Filename of the output
         :return: None
         """
-        fin = fileinput.input(input_files)
-        with output_path.open('w') as fout:
+        def get_hook(file):
+            if FileSystemHelper.is_gzipped(file):
+                return lambda file_name, mode: gzip.open(file_name, mode='rt')
+            else:
+                return open
+
+        fin = fileinput.input(input_files, openhook=get_hook(input_files[0]))
+        output_fn = gzip.open if FileSystemHelper.is_gzipped(input_files[0]) else open
+        with output_fn(output_path, 'wt') as fout:
             for line in fin:
                 fout.write(line)
         fin.close()
