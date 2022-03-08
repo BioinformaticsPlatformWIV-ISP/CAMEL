@@ -3,6 +3,7 @@ import unittest
 
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.error.toolexecutionerror import ToolExecutionError
+from camel.app.error.invalidparametererror import InvalidParameterError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.muscle.muscle import Muscle
 
@@ -104,6 +105,60 @@ class TestMuscle(CamelTestSuite):
         })
 
         with self.assertRaises(ToolExecutionError):
+            muscle.run(self.running_dir)
+
+    def test_muscle_log_output(self) -> None:
+        """
+        Tests Muscle run with log output.
+        :return: None
+        """
+        muscle = Muscle(self.camel)
+        muscle.add_input_files({
+            'FASTA': [ToolIOFile(TestMuscle.test_file_dir / "unaligned.fasta")]
+        })
+        muscle.update_parameters(log=self.running_dir / 'log.txt')
+        muscle.run(self.running_dir)
+        self.verify_output_files(muscle, 'LOG')
+
+    def test_muscle_loga_output(self) -> None:
+        """
+        Tests Muscle run with appending the log output.
+        :return: None
+        """
+        muscle = Muscle(self.camel)
+        muscle.add_input_files({
+            'FASTA': [ToolIOFile(TestMuscle.test_file_dir / "unaligned.fasta")]
+        })
+        muscle.update_parameters(loga=self.running_dir / 'log.txt')
+        muscle.run(self.running_dir)
+        self.verify_output_files(muscle, 'LOG')
+
+    def test_muscle_output_param_error(self) -> None:
+        """
+        Tests Muscle with too many output formats specified.
+        :return: None
+        """
+        muscle = Muscle(self.camel)
+        muscle.add_input_files({
+            'FASTA': [ToolIOFile(TestMuscle.test_file_dir / "unaligned.fasta")]
+        })
+        muscle.update_parameters(msf=None, html=None)
+
+        with self.assertRaises(InvalidParameterError):
+            muscle.run(self.running_dir)
+
+    def test_muscle_log_param_error(self) -> None:
+        """
+        Tests Muscle with too many log flags specified.
+        :return: None
+        """
+        muscle = Muscle(self.camel)
+        muscle.add_input_files({
+            'FASTA': [ToolIOFile(TestMuscle.test_file_dir / "unaligned.fasta")]
+        })
+        muscle.update_parameters(log=self.running_dir / 'log.txt', loga=self.running_dir / 'loga.txt')
+
+        with self.assertRaises(InvalidParameterError):
             muscle.run(self.running_dir)
 
 

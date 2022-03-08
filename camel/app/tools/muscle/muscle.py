@@ -2,6 +2,7 @@ from pathlib import Path
 
 from camel.app.camel import Camel
 from camel.app.error.toolexecutionerror import ToolExecutionError
+from camel.app.error.invalidparametererror import InvalidParameterError
 from camel.app.tools.tool import Tool
 from camel.app.io.tooliofile import ToolIOFile
 
@@ -21,7 +22,7 @@ class Muscle(Tool):
 
     Output:
     -------
-    Output can be chosen by setting the parametes
+    Output can be chosen by setting the parameters
     'FASTA' (default)   ToolIOFile object.
     'LOG' (optional)    ToolIOFile object.
     'HTML'              ToolIOFile object.
@@ -58,9 +59,9 @@ class Muscle(Tool):
         :return: None
         """
         self._set_input()
-        self._set_output()
         self._build_command()
         self._execute_command()
+        self._set_output()
 
     def _set_input(self) -> None:
         """
@@ -82,10 +83,12 @@ class Muscle(Tool):
             output_key = 'CLW'
         else:
             output_key = 'FASTA'
-        if Path(self._parameters['out'].value).is_absolute():
-            self._tool_outputs[output_key] = [ToolIOFile(Path(self._parameters['out'].value))]
-        else:
-            self._tool_outputs[output_key] = [ToolIOFile(self.folder / Path(self._parameters['out'].value))]
+        self._tool_outputs[output_key] = [ToolIOFile(self.folder / Path(self._parameters['out'].value))]
+        if 'log' in self._parameters or 'loga' in self._parameters:
+            try:
+                self._tool_outputs['LOG'] = [ToolIOFile(self.folder / Path(self._parameters['log'].value))]
+            except KeyError:
+                self._tool_outputs['LOG'] = [ToolIOFile(self.folder / Path(self._parameters['loga'].value))]
 
     def _build_command(self) -> None:
         """
@@ -102,3 +105,14 @@ class Muscle(Tool):
         """
         if self._command.returncode != 0:
             raise ToolExecutionError(f"Command execution failed (Exit code: {self._command.returncode})")
+
+    def _check_parameters(self) -> None:
+        """
+        Checks that only a single output format and log option is specified
+        :return: None
+        """
+        super()._check_parameters()
+        if len(set(self._parameters.keys()) & {'html', 'msf', 'clw', 'clwstrict'}) > 1:
+            raise InvalidParameterError('Muscle tool can only have one output format specified!')
+        if 'log' in self._parameters and 'loga' in self._parameters:
+            raise InvalidParameterError('Muscle tool options log and loga are mutually exclusive!')
