@@ -3,31 +3,10 @@ from pathlib import Path
 
 from camel.app.camel import Camel
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.resources.snakefile import trimming_illumina, downsampling
+from camel.resources.snakefile import trimming_illumina
 from camel.app.pipeline.step import Step
 
 camel = Camel.get_instance()
-
-
-rule trimming_illumina_pickle_input:
-    """
-    Creates pickled FASTQ PE input.
-    If downsampling is enabled the input is retrieved from the corresponding Snakefile. Otherwise, the input files are
-    obtained from the Snakemake config.
-    """
-    input:
-        FASTQ = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_FASTQ if ('downsampling' in config) else []
-    output:
-        FASTQ_PE = Path(config['working_dir']) / 'trimming_illumina' / 'input'/ 'fastq-pe.io'
-    params:
-        config_input = config['input']
-    run:
-        from camel.app.io.tooliofile import ToolIOFile
-        if len(input) == 0:
-            SnakemakeUtils.dump_object([
-                ToolIOFile(Path(f['path'])) for f in params.config_input['fastq_pe']], Path(output.FASTQ_PE))
-        else:
-            shutil.copyfile(input.FASTQ, Path(output.FASTQ_PE))
 
 
 rule trimming_illumina_fastqc_pre:
@@ -35,7 +14,7 @@ rule trimming_illumina_fastqc_pre:
     Creates FastQC reports for the raw reads. 
     """
     input:
-        FASTQ = rules.trimming_illumina_pickle_input.output.FASTQ_PE
+        FASTQ = Path(config['working_dir']) / trimming_illumina.INPUT_TRIMMOMATIC_FASTQ
     output:
         HTML = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_FASTQC_HTML_PRE,
         TXT = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_FASTQC_TXT_PRE
@@ -57,7 +36,7 @@ rule trimming_illumina_trimmomatic:
     Read trimming using trimmomatic.
     """
     input:
-        FASTQ_PE = rules.trimming_illumina_pickle_input.output.FASTQ_PE
+        FASTQ_PE = Path(config['working_dir']) / trimming_illumina.INPUT_TRIMMOMATIC_FASTQ
     output:
         FASTQ_PE = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_READS_PE,
         FASTQ_SE_FORWARD = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_READS_SE_FWD,

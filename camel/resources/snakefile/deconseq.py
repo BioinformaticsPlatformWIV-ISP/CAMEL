@@ -6,6 +6,7 @@ from camel.app.tools.deconseq.deconseq import Deconseq
 SNAKEFILE_DECONSEQ = f'{Path(__file__).parent / Path(__file__).stem}.smk'
 
 _dir_deconseq = Path('deconseq')
+INPUT_DECONSEQ_FASTQ = _dir_deconseq / 'input' / 'fq_dict.io'
 OUTPUT_DECONSEQ_CLEAN_PE = _dir_deconseq / 'fastq_pe_clean.io'
 OUTPUT_DECONSEQ_CLEAN_SE_FWD = _dir_deconseq / 'fastq_se_fwd_clean.io'
 OUTPUT_DECONSEQ_CLEAN_SE_REV = _dir_deconseq / 'fastq_se_rev_clean.io'
