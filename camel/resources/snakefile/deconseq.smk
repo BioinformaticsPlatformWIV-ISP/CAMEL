@@ -12,7 +12,7 @@ rule deconseq_run:
     Reads decontamination using Deconseq.
     """
     input:
-        IO = Path(config['working_dir']) / 'fq_dict.io',
+        IO = Path(config['working_dir']) / deconseq.INPUT_DECONSEQ_FASTQ
     output:
         FASTQ_PE_CLEAN = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_CLEAN_PE,
         FASTQ_SE_FWD_CLEAN = Path(config['working_dir']) / deconseq.OUTPUT_DECONSEQ_CLEAN_SE_FWD,

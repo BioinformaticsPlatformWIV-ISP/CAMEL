@@ -8,38 +8,12 @@ from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile import downsampling
 
 
-rule downsampling_collect_fq_data:
-    """
-    Collects the FASTQ data for the input dataset.
-    """
-    input:
-        FASTQ_SE = [entry['path'] for entry in config['input']['fastq_se']] if config.get('read_type', 'illumina') == 'iontorrent' else [],
-        FASTQ_PE = [entry['path'] for entry in config['input']['fastq_pe']] if config.get('read_type', 'illumina') == 'illumina' else []
-    output:
-        IO = Path(config['working_dir']) / 'downsampling' / 'input' / 'fastq.io'
-    params:
-        read_type = config.get('read_type', 'illumina')
-    run:
-        from camel.app.io.tooliofile import ToolIOFile
-        if params.read_type == 'illumina':
-            if len(input.FASTQ_PE) != 2:
-                raise ValueError("Paired end input is required for Illumina data")
-            output_list = [ToolIOFile(Path(x)) for x in input.FASTQ_PE]
-        elif params.read_type == 'iontorrent':
-            if len(input.FASTQ_SE) != 1:
-                raise ValueError("A single FASTQ input file is required for IonTorrent data")
-            output_list = [ToolIOFile(Path(input.FASTQ_SE[0]))]
-        else:
-            raise ValueError(f"Unsupported read type: {params.read_type}")
-        SnakemakeUtils.dump_object(output_list, Path(output.IO))
-
-
 rule downsampling_fqstats:
     """
     Determines the number of reads and bases in the input FASTQ files.
     """
     input:
-        FASTQ = rules.downsampling_collect_fq_data.output.IO
+        FASTQ = Path(config['working_dir']) / downsampling.INPUT_DOWNSAMPLING_FASTQ
     output:
         IO = Path(config['working_dir']) / 'downsampling' / 'json_fqstats.io'
     params:
@@ -51,6 +25,7 @@ rule downsampling_fqstats:
         step = Step(str(rule), fqstats, Camel.get_instance(), params.running_dir)
         step.run_step()
         SnakemakeUtils.dump_object(fqstats.informs, Path(output.IO))
+
 
 rule downsampling_calculate:
     """
@@ -90,7 +65,7 @@ rule downsampling_seqtk:
     Performs downsampling with seqtk (if needed).
     """
     input:
-        FASTQ = rules.downsampling_collect_fq_data.output.IO,
+        FASTQ = Path(config['working_dir']) / downsampling.INPUT_DOWNSAMPLING_FASTQ,
         JSON = rules.downsampling_calculate.output.JSON
     output:
         FASTQ = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_FASTQ,
@@ -118,6 +93,7 @@ rule downsampling_seqtk:
             SnakemakeUtils.dump_object(seqtk.tool_outputs['FASTQ_PE'], Path(output.FASTQ))
             SnakemakeUtils.dump_object(seqtk.informs, Path(output.INFORMS))
 
+
 rule downsampling_report:
     """
     Creates the downsampling report.
@@ -141,6 +117,7 @@ rule downsampling_report:
         step = Step(str(rule), reporter, Camel.get_instance(), params.dir_working)
         step.run_step()
         SnakemakeUtils.dump_object(reporter.tool_outputs['HTML'], Path(output.HTML))
+
 
 rule downsampling_summary_out:
     """
