@@ -20,6 +20,9 @@ class GATK4ApplyVQSR(GATK4):
     -------
     'VCF'       The output filtered and recalibrated VCF file in which each variant is annotated with its VQSLOD value
 
+    Mandatory parameters:
+    ---------------------
+    use_annotation:             The names of the annotations which should be used for calculations
     """
 
     def __init__(self, camel: Camel) -> None:

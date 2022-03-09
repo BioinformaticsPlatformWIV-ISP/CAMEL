@@ -1,6 +1,6 @@
 from camel.app.camel import Camel
-from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.gatk4.gatk4 import GATK4
+from camel.app.io.tooliofile import ToolIOFile
 
 
 class GATK4VariantRecalibrator(GATK4):
@@ -84,7 +84,7 @@ class GATK4VariantRecalibrator(GATK4):
         use_annotation_vals = self._parameters['use_annotation'].value.split(",")
         use_annotation_cmd = []
         for val in use_annotation_vals:
-            use_annotation_cmd.append(f" {self._parameters['use_annotation'].option} {val}")
+            use_annotation_cmd.append(f" {self._parameters['use_annotation'].option} {val} ")
 
         self._command.command += " ".join(use_annotation_cmd)
 
