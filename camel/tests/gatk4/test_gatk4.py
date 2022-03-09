@@ -2,8 +2,8 @@ import unittest
 from pathlib import Path
 
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
-from camel.app.io.tooliofile import ToolIOFile
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.gatk4.gatk4applybqsr import GATK4ApplyBQSR
 from camel.app.tools.gatk4.gatk4applyvqsr import GATK4ApplyVQSR
 from camel.app.tools.gatk4.gatk4baserecalibrator import GATK4BaseRecalibrator
