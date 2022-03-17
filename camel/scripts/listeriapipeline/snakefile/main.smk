@@ -24,6 +24,31 @@ rule all:
         HTML = config['output_report'],
         TSV = config['output_tabular']
 
+rule link_downsampling_input:
+    """
+    Creates the FASTQ input for the downsampling step. 
+    """
+    input:
+        FASTQ_PE = [entry['path'] for entry in config['input']['fastq_pe']]
+    output:
+        FASTQ = Path(config['working_dir']) / downsampling.INPUT_DOWNSAMPLING_FASTQ
+    run:
+        from camel.app.io.tooliofile import ToolIOFile
+        SnakemakeUtils.dump_object([ToolIOFile(Path(x)) for x in input.FASTQ_PE], Path(output.FASTQ))
+
+rule link_trimmomatic_input:
+    """
+    Links the downsmapling output to the input of the trimmomatic workflow.  
+    """
+    input:
+        FASTQ = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_FASTQ
+    output:
+        FASTQ = Path(config['working_dir']) / trimming_illumina.INPUT_TRIMMOMATIC_FASTQ
+    shell:
+        """
+        cp {input.FASTQ} {output.FASTQ};
+        """
+
 rule select_fastq:
     """
     This rule creates an IO object with the trimmed FASTQ files.
@@ -227,7 +252,7 @@ rule summary_combine_all:
         Path(config['working_dir']) / str(OUTPUT_TYPING_SUMMARY).format(scheme='typing_virulence') if 'typing_amr' in config['analyses'] else [],
         Path(config['working_dir']) / str(OUTPUT_TYPING_SUMMARY).format(scheme='metal_detergent') if 'metal_detergent' in config['analyses'] else [],
         Path(config['working_dir']) / str(OUTPUT_TYPING_SUMMARY).format(scheme='pcr_serogroup') if 'pcr_serogroup' in config['analyses'] else [],
-        Path(config['working_dir']) / str(OUTPUT_TYPING_SUMMARY).format(scheme='cgmlst') if 'cgmlst' in config['analyses'] else [],
+        Path(config['working_dir']) / str(OUTPUT_TYPING_SUMMARY).format(scheme='cgmlst') if 'cgmlst' in config['analyses'] else []
     output:
         TSV = config['output_tabular']
     run:
