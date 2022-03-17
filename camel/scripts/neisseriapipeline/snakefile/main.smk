@@ -1,16 +1,18 @@
 from pathlib import Path
 
+from camel.app.camel import Camel
+from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.resources.snakefile import trimming, trimming_illumina, assembly_spades, quality_checks, \
     contamination_check_kraken, gene_detection, sequence_typing, downsampling
-from  camel.scripts.neisseriapipeline.snakefile import serogroup_determination
+from camel.scripts.neisseriapipeline.snakefile import serogroup_determination
 
 
 #######################
 # Included Snakefiles #
 #######################
 include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
-include: downsampling.SNAKEFILE_DOWNSAMPLING,
+include: downsampling.SNAKEFILE_DOWNSAMPLING
 include: contamination_check_kraken.SNAKEFILE_CONTAMINATION_CHECK_KRAKEN
 include: quality_checks.SNAKEFILE_QUALITY_CHECKS
 include: assembly_spades.SNAKEFILE_ASSEMBLY_SPADES
@@ -30,6 +32,30 @@ rule all:
         config['output_report'],
         config['output_tabular']
 
+rule link_downsampling_input:
+    """
+    Creates the FASTQ input for the downsampling step. 
+    """
+    input:
+        FASTQ_PE = [entry['path'] for entry in config['input']['fastq_pe']]
+    output:
+        FASTQ = Path(config['working_dir']) / downsampling.INPUT_DOWNSAMPLING_FASTQ
+    run:
+        from camel.app.io.tooliofile import ToolIOFile
+        SnakemakeUtils.dump_object([ToolIOFile(Path(x)) for x in input.FASTQ_PE], Path(output.FASTQ))
+
+rule link_trimmomatic_input:
+    """
+    Links the downsmapling output to the input of the trimmomatic workflow.  
+    """
+    input:
+        FASTQ = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_FASTQ
+    output:
+        FASTQ = Path(config['working_dir']) / trimming_illumina.INPUT_TRIMMOMATIC_FASTQ
+    shell:
+        """
+        cp {input.FASTQ} {output.FASTQ};
+        """
 
 rule select_fastq:
     """
@@ -42,7 +68,6 @@ rule select_fastq:
         IO_FASTQ = Path(config['working_dir']) / 'fq_dict.io'
     shell:
         "cp {input.FASTQ_PE} {output.IO_FASTQ};"
-
 
 rule select_fasta:
     """
@@ -77,7 +102,6 @@ rule init_summary:
                 handle.write('\t'.join(kv_pair))
                 handle.write('\n')
 
-
 rule report_pickle_citations:
     """
     This rule creates a pickle with a report section containing the citations.
@@ -93,7 +117,6 @@ rule report_pickle_citations:
         section = SnakePipelineUtils.create_citations_section(
             params.citation_keys['other'], params.citation_keys['main'])
         SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output.HTML))
-
 
 rule report_create_command_section:
     """
@@ -135,7 +158,6 @@ rule report_create_command_section:
         section = SnakePipelineUtils.create_commands_section(informs, params.working_dir)
         SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output.HTML))
 
-
 rule neisseria_additional_resistance_gene_metadata:
     """
     This rule is used to add resistance gene metadata for penA and rpoB genes.
@@ -153,13 +175,12 @@ rule neisseria_additional_resistance_gene_metadata:
     run:
         from camel.app.pipeline.step import Step
         from camel.app.tools.pipelines.neisseria.resistancemetadataextractor import ResistanceMetadataExtractor
-        extractor = ResistanceMetadataExtractor(camel)
+        extractor = ResistanceMetadataExtractor(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(extractor, input)
-        step = Step(rule, extractor, camel, params.working_dir, config)
+        step = Step(rule, extractor, Camel.get_instance(), params.working_dir, config)
         extractor.update_parameters(loci=params.loci)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(extractor, output)
-
 
 rule combine_reports:
     """
@@ -226,7 +247,6 @@ rule combine_reports:
             ('Commands', 'commands', [Path(input.report_commands)])
         ]
         SnakePipelineUtils.add_report_content(report, report_structure)
-
 
 rule combine_summary_files:
     """
