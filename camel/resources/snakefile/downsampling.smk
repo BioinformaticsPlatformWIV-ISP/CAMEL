@@ -72,7 +72,7 @@ rule downsampling_seqtk:
         INFORMS = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_INFORMS
     params:
         dir_working = Path(config['working_dir']) / 'downsampling',
-        read_type = config.get('read_type', 'illumina')
+        is_paired = config.get('read_type','illumina') == 'illumina'
     run:
         import logging
         from camel.app.tools.seqtk.seqtksubsample import SeqtkSubsample
@@ -86,11 +86,12 @@ rule downsampling_seqtk:
             SnakemakeUtils.dump_object([], Path(output.INFORMS))
         else:
             seqtk = SeqtkSubsample(Camel.get_instance())
-            seqtk.add_input_files({'FASTQ_PE': SnakemakeUtils.load_object(Path(input.FASTQ))})
+            key_fastq = 'FASTQ_PE' if params.is_paired else 'FASTQ'
+            seqtk.add_input_files({key_fastq: SnakemakeUtils.load_object(Path(input.FASTQ))})
             step = Step(str(rule), seqtk, Camel.get_instance(), Path(params.dir_working))
             seqtk.update_parameters(fraction=float(f"{data_ds['downsample_factor']:.2f}"))
             step.run_step()
-            SnakemakeUtils.dump_object(seqtk.tool_outputs['FASTQ_PE'], Path(output.FASTQ))
+            SnakemakeUtils.dump_object(seqtk.tool_outputs[key_fastq], Path(output.FASTQ))
             SnakemakeUtils.dump_object(seqtk.informs, Path(output.INFORMS))
 
 
@@ -104,13 +105,18 @@ rule downsampling_report:
     output:
         HTML = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_REPORT
     params:
-        dir_working = Path(config['working_dir']) / 'downsampling'
+        dir_working = Path(config['working_dir']) / 'downsampling',
+        is_paired = config.get('read_type','illumina') == 'illumina'
     run:
         from camel.app.tools.pipelines.downsampling.reporterdownsampling import ReporterDownsampling
         reporter = ReporterDownsampling(Camel.get_instance())
         with open(input.JSON) as handle:
             stats = json.load(handle)
         reporter.add_input_informs({'stats': stats})
+        if params.is_paired:
+            reporter.update_parameters(is_paired=None)
+        else:
+            reporter.update_parameters(is_paired=False)
         informs_seqtk = SnakemakeUtils.load_object(Path(input.INFORMS_seqtk))
         if len(informs_seqtk) > 0:
             reporter.add_input_informs({'seqtk': informs_seqtk})
