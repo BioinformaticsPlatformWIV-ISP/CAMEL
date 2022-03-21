@@ -44,6 +44,7 @@ class TrimmingIlluminaWrapper(object):
         :param export_fastq: If True, FASTQ files are included in the report
         :return: None
         """
+        # Create config file
         config_data = {
             'working_dir': str(self._working_dir),
             'input': {'fastq_pe': [{'name': p.name, 'path': str(p)} for p in pe_reads]},
@@ -52,6 +53,13 @@ class TrimmingIlluminaWrapper(object):
         if adapter is not None:
             config_data['read_trimming']['adapter'] = adapter
         config_file = SnakePipelineUtils.generate_config_file(config_data, self._working_dir)
+
+        # Dump the input files in an IO file
+        io_pickle_in = Path(self._working_dir / trimming_illumina.INPUT_TRIMMOMATIC_FASTQ)
+        io_pickle_in.parent.mkdir(exist_ok=True, parents=True)
+        SnakemakeUtils.dump_object([ToolIOFile(x) for x in pe_reads], io_pickle_in)
+
+        # Output files
         output_files = {
             'HTML': self._working_dir / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_REPORT,
             'TSV': self._working_dir / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_SUMMARY

@@ -68,10 +68,10 @@ class ReporterDownsampling(Tool):
         """
         if reads_are_paired:
             header = ['Read pairs in', 'Read pairs out']
-            table_data = [[f"{stats['nb_read_pairs']:,}", f"{self._input_informs['seqtk']['reads_count'] // 2:,}"]]
+            table_data = [[f"{stats['nb_read_pairs_in']:,}", f"{self._input_informs['seqtk']['reads_count'] // 2:,}"]]
         else:
             header = ['Reads in', 'Reads out']
-            table_data = [[f"{stats['nb_read_pairs']:,}", f"{self._input_informs['seqtk']['reads_count']:,}"]]
+            table_data = [[f"{stats['nb_reads_in']:,}", f"{self._input_informs['seqtk']['reads_count']:,}"]]
         section.add_header_with_subtitle('Downsampling', 3, self._input_informs['seqtk']['_name'])
         section.add_table(table_data, header, [('class', 'data')])
 
