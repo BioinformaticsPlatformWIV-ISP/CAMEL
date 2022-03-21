@@ -123,6 +123,27 @@ class TestSTECPipeline(CamelTestSuite):
         self.assertGreater(path_report_out.stat().st_size, 0)
 
     @longRunningTest()
+    def test_stec_pipeline_blast_iontorrent_with_downsampling(self) -> None:
+        """
+        Tests the STEC pipeline with all assays except for cgMLST.
+        :return: None
+        """
+        path_report_out = self.running_dir / 'out' / 'report.html'
+        path_summary_out = self.running_dir / 'out' / 'summary.tsv'
+        args = [
+            '--fastq-se', str(TestSTECPipeline.input_fastq_iontorrent),
+            '--output-html', str(path_report_out),
+            '--output-dir', str(path_report_out.parent),
+            '--output-tsv', str(path_summary_out),
+            '--working-dir', str(self.running_dir),
+            '--read-type', 'iontorrent',
+            '--cov-max', '2.0'
+        ] + [f"--{a.replace('_', '-')}" for a in MainSTECPipeline.CUSTOM_ANALYSES if 'cgmlst' not in a]
+        main = MainSTECPipeline(args)
+        main.run()
+        self.assertGreater(path_report_out.stat().st_size, 0)
+
+    @longRunningTest()
     def test_stec_pipeline_srst2_iontorrent(self) -> None:
         """
         Tests the STEC pipeline with all assays except for cgMLST.
