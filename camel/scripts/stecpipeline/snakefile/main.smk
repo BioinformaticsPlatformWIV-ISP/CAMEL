@@ -33,6 +33,40 @@ rule all:
         config['output_report'],
         config['output_tabular']
 
+rule link_downsampling_input:
+    """
+    Creates the FASTQ input for the downsampling step. 
+    """
+    input:
+        FASTQ_SE = [entry['path'] for entry in config['input']['fastq_se']] if config.get('read_type','illumina') == 'iontorrent' else [],
+        FASTQ_PE = [entry['path'] for entry in config['input']['fastq_pe']] if config.get('read_type','illumina') == 'illumina' else []
+    output:
+        FASTQ = Path(config['working_dir']) / downsampling.INPUT_DOWNSAMPLING_FASTQ
+    params:
+        read_type = config.get('read_type', 'illumina')
+    run:
+        from camel.app.io.tooliofile import ToolIOFile
+        from camel.app.snakemake.snakemakeutils import SnakemakeUtils
+        if params.read_type == 'illumina':
+            SnakemakeUtils.dump_object([ToolIOFile(Path(x)) for x in input.FASTQ_PE], Path(output.FASTQ))
+        elif params.read_type == 'iontorrent':
+            SnakemakeUtils.dump_object([ToolIOFile(Path(str(input.FASTQ_SE)))], Path(output.FASTQ))
+        else:
+            raise ValueError(f"Invalid read type: {params.read_type}")
+
+rule link_trimmomatic_input:
+    """
+    Links the downsmapling output to the input of the trimmomatic workflow.  
+    """
+    input:
+        FASTQ = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_FASTQ
+    output:
+        FASTQ = Path(config['working_dir']) / trimming_illumina.INPUT_TRIMMOMATIC_FASTQ
+    shell:
+        """
+        cp {input.FASTQ} {output.FASTQ};
+        """
+
 rule select_fastq:
     """
     This rule creates an IO object with the trimmed FASTQ files.
