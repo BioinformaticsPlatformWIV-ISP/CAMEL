@@ -54,7 +54,7 @@ rule downsampling_calculate:
             'coverage_target': params.cov_target,
             'downsample_factor': params.cov_target / coverage_est if downsample_factor < 1 else None,
             'size_ref_genome': params.size_ref_genome,
-            key_nb_reads: next(iter(informs_fq['stats']))['nb_of_sequences']
+            f'{key_nb_reads}_in': next(iter(informs_fq['stats']))['nb_of_sequences']
         }
         with open(output.JSON, 'w') as handle:
             json.dump(data_out, handle, indent=2)
@@ -124,13 +124,30 @@ rule downsampling_summary_out:
     Exports the summary information for the downsampling workflow.
     """
     input:
-        JSON = rules.downsampling_calculate.output.JSON
+        JSON = rules.downsampling_calculate.output.JSON,
+        INFORMS_seqtk = rules.downsampling_seqtk.output.INFORMS
     output:
         TSV = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_SUMMARY
+    params:
+        is_paired = config.get('read_type', 'illumina') == 'illumina'
     run:
+        # Parse calculate output
         with open(input.JSON) as handle:
             data_ds = json.load(handle)
 
+        # Add the number of output reads / read pairs to the summary output
+        key_nb_reads = 'nb_read_pairs' if params.is_paired else 'nb_reads'
+        key_out = f'{key_nb_reads}_out'
+        if data_ds['downsample_factor'] is None:
+            data_ds[key_out] = data_ds[f'{key_nb_reads}_in']
+        else:
+            informs_in = SnakemakeUtils.load_object(Path(input.INFORMS_seqtk))
+            if params.is_paired:
+                data_ds[key_out] = informs_in['reads_count'] // 2
+            else:
+                data_ds[key_out] = informs_in['reads_count']
+
+        # Create output
         with open(output.TSV, 'w') as handle:
             for k, v in sorted(data_ds.items()):
                 handle.write('\t'.join([
