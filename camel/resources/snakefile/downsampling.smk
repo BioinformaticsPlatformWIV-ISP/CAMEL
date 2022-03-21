@@ -112,7 +112,7 @@ rule downsampling_report:
             stats = json.load(handle)
         reporter.add_input_informs({'stats': stats})
         informs_seqtk = SnakemakeUtils.load_object(Path(input.INFORMS_seqtk))
-        if informs_seqtk is not None:
+        if len(informs_seqtk) > 0:
             reporter.add_input_informs({'seqtk': informs_seqtk})
         step = Step(str(rule), reporter, Camel.get_instance(), params.dir_working)
         step.run_step()
