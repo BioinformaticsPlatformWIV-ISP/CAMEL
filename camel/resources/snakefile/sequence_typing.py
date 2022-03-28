@@ -2,9 +2,6 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 
 SNAKEFILE_SEQUENCE_TYPING = f'{Path(__file__).parent / Path(__file__).stem}.smk'
-SNAKEFILE_SEQUENCE_TYPING_BLAST = f'{Path(__file__).parent / Path(__file__).stem}_blast.smk'
-SNAKEFILE_SEQUENCE_TYPING_SRST2 = f'{Path(__file__).parent / Path(__file__).stem}_srst2.smk'
-SNAKEFILE_SEQUENCE_TYPING_KMA = f'{Path(__file__).parent / Path(__file__).stem}_kma.smk'
 
 _dir_typing = Path('typing', '{scheme}')
 OUTPUT_TYPING_REPORT = _dir_typing / 'html.io'
