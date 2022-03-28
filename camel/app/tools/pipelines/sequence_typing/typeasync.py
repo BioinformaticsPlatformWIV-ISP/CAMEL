@@ -1,13 +1,11 @@
+import concurrent.futures
 import json
 import logging
-import time
-from multiprocessing.pool import ThreadPool
 from typing import Dict, Any
 
 from camel.app.camel import Camel
 from camel.app.components.sequencetyping import typingasyncutils
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
-from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.app.tools.tool import Tool
 
 
@@ -69,35 +67,26 @@ class TypeAsync(Tool):
         loci_target = [
             info['name_sanitized'] for info in metadata['loci'] if info['type'] == self._parameters['locus_type'].value]
 
-        # Create jobs
-        tp = ThreadPool(int(self._parameters['threads'].value))
-        jobs = {}
-        for locus_info in metadata['loci']:
-            if locus_info['name_sanitized'] not in loci_target:
-                continue
-            locus_fasta = self._tool_inputs['DIR'][0].path / locus_info['fasta_path']
-            jobs[locus_info['name_sanitized']] = tp.apply_async(
-                typingasyncutils.detection_by_method[self._parameters['detection_method'].value], (),
-                self.get_typing_parameters(locus_info))
+        # Execute jobs in a thread pool
+        output_by_locus = {}
+        with concurrent.futures.ThreadPoolExecutor(max_workers=int(self._parameters['threads'].value)) as executor:
+            detection_func = typingasyncutils.detection_by_method[self._parameters['detection_method'].value]
+            future_to_locus = {
+                executor.submit(detection_func, **self.get_typing_parameters(locus_info)):
+                    locus_info['name_sanitized'] for locus_info in metadata['loci']}
 
-        # Type all loci
-        result_by_locus_name = {}
-        while len(jobs) > 0:
-            to_remove = []
-            for locus_name, result in jobs.items():
-                if result.ready():
-                    to_remove.append(locus_name)
-                    if not result.successful():
-                        logging.error(f'Error while typing: {locus_name}')
-                        result.get()
-            for locus_name in to_remove:
-                result_by_locus_name[locus_name] = jobs.pop(locus_name).get()
-            logging.debug(f"Job status: {len(jobs)} left (total: {len(loci_target)})")
-            time.sleep(0.5)
+            for future in concurrent.futures.as_completed(future_to_locus):
+                locus = future_to_locus[future]
+                try:
+                    data = future.result()
+                except Exception as err:
+                    logging.error(f"Locus '{locus}' generated exception: {err}")
+                else:
+                    output_by_locus[locus] = data
 
         # Set output
-        self._tool_outputs['VAL_hits'] = [result_by_locus_name[locus].hit for locus in loci_target]
+        self._tool_outputs['VAL_hits'] = [output_by_locus[locus].hit for locus in loci_target]
 
         # Collect informs (for the first locus)
-        for key, value in result_by_locus_name[loci_target[0]].informs.items():
+        for key, value in output_by_locus[loci_target[0]].informs.items():
             self._informs[key] = value
