@@ -10,8 +10,8 @@ class GATK4ApplyVQSR(GATK4):
     =============================
     Apply a score cutoff to filter variants based on a recalibration table.
 
-    Required inputs:
-    ----------------
+    Inputs:
+    -------
     'TXT_RecalibrationTable':   ToolIOFile object. The input recal file used by ApplyRecalibration
     'VCF':                      ToolIOFile object. One or more VCF files containing variants
     'TXT_tranches' (optional):  ToolIOFile object. The tranches file
@@ -20,9 +20,6 @@ class GATK4ApplyVQSR(GATK4):
     -------
     'VCF'       The output filtered and recalibrated VCF file in which each variant is annotated with its VQSLOD value
 
-    Mandatory parameters:
-    ---------------------
-    use_annotation:             The names of the annotations which should be used for calculations
     """
 
     def __init__(self, camel: Camel) -> None:

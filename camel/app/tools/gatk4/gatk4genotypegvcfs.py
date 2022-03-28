@@ -1,6 +1,5 @@
 from camel.app.camel import Camel
 from camel.app.tools.gatk4.gatk4 import GATK4
-import logging
 
 class GATK4GenotypeGVCFs(GATK4):
 
@@ -28,14 +27,14 @@ class GATK4GenotypeGVCFs(GATK4):
         if self._parameters['gendb'] is not None:
             self._required_inputs.remove('gVCF')
 
-        super(GATK4GenotypeGVCFs, self)._check_input()
+        super()._check_input()
 
     def _set_input(self) -> None:
         """
         Set the input specification
         :return: None
         """
-        super(GATK4GenotypeGVCFs, self)._set_input()
+        super()._set_input()
 
         if 'gVCF' in self._tool_inputs:
             for f in self._tool_inputs['gVCF']:
@@ -57,4 +56,4 @@ class GATK4GenotypeGVCFs(GATK4):
 
         self._specific_parameters.append("annotation_group")
 
-        super(GATK4GenotypeGVCFs, self)._build_command()
+        super()._build_command()
