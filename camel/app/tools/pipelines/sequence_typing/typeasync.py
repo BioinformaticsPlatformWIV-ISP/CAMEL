@@ -6,6 +6,7 @@ from typing import Dict, Any
 from camel.app.camel import Camel
 from camel.app.components.sequencetyping import typingasyncutils
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.tools.tool import Tool
 
 
@@ -25,15 +26,16 @@ class TypeAsync(Tool):
         """
         Checks if the provided input is valid.
         """
-        if (self._parameters['detection_method'] == 'blast') and ('FASTA' not in self._tool_inputs):
+        if (self._parameters['detection_method'].value == 'blast') and ('FASTA' not in self._tool_inputs):
             raise InvalidInputSpecificationError('FASTA input is required')
-        elif (self._parameters['detection_method'] in ('KMA', 'SRST2')) and ('FASTQ_PE' not in self._tool_inputs):
+        elif (self._parameters['detection_method'].value in ('kma', 'srst2')) and (not any(
+                k in self._tool_inputs for k in ('FASTQ_SE', 'FASTQ_PE'))):
             raise InvalidInputSpecificationError('FASTQ input is required')
         if 'DIR' not in self._tool_inputs:
             raise InvalidInputSpecificationError("Typing directory input is required ('DIR')")
         super()._check_input()
 
-    def get_typing_parameters(self, locus_info) -> Dict[str, Any]:
+    def __get_typing_parameters(self, locus_info: Dict[str, Any]) -> Dict[str, Any]:
         """
         Returns the parameters to pass to the typing jobs.
         """
@@ -72,7 +74,7 @@ class TypeAsync(Tool):
         with concurrent.futures.ThreadPoolExecutor(max_workers=int(self._parameters['threads'].value)) as executor:
             detection_func = typingasyncutils.detection_by_method[self._parameters['detection_method'].value]
             future_to_locus = {
-                executor.submit(detection_func, **self.get_typing_parameters(locus_info)):
+                executor.submit(detection_func, **self.__get_typing_parameters(locus_info)):
                     locus_info['name_sanitized'] for locus_info in metadata['loci']}
 
             for future in concurrent.futures.as_completed(future_to_locus):
@@ -81,6 +83,7 @@ class TypeAsync(Tool):
                     data = future.result()
                 except Exception as err:
                     logging.error(f"Locus '{locus}' generated exception: {err}")
+                    raise ToolExecutionError(err)
                 else:
                     output_by_locus[locus] = data
 
