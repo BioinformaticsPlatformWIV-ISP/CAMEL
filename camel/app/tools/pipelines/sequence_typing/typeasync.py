@@ -75,7 +75,8 @@ class TypeAsync(Tool):
             detection_func = typingasyncutils.detection_by_method[self._parameters['detection_method'].value]
             future_to_locus = {
                 executor.submit(detection_func, **self.__get_typing_parameters(locus_info)):
-                    locus_info['name_sanitized'] for locus_info in metadata['loci']}
+                    locus_info['name_sanitized'] for locus_info in metadata['loci'] if
+                locus_info['name_sanitized'] in loci_target}
 
             for future in concurrent.futures.as_completed(future_to_locus):
                 locus = future_to_locus[future]
