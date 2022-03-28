@@ -110,6 +110,7 @@ rule report_command_section:
     params:
         working_dir = config['working_dir']
     run:
+        from camel.app.io.tooliovalue import ToolIOValue
         from camel.app.snakemake.snakemakeutils import SnakemakeUtils
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         informs = []

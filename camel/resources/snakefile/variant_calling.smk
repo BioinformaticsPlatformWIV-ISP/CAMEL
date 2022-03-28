@@ -291,6 +291,7 @@ rule variant_calling_report:
         include_bam = config.get('variant_calling').get('report_include_bam', False),
         sample_name = config['sample_name']
     run:
+        from camel.app.io.tooliovalue import ToolIOValue
         from camel.app.tools.pipelines.variant_calling.variantcallingreporter import VariantCallingReporter
         reporter = VariantCallingReporter(camel)
         step = Step(rule, reporter, camel, params.running_dir, config)

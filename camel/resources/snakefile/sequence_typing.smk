@@ -11,15 +11,11 @@ from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.resources.snakefile import sequence_typing, assembly_spades
-from camel.resources.snakefile.sequence_typing import OUTPUT_TYPING_INFORMS
 
 
 Camel.get_instance()
 
 
-#########
-# Rules #
-#########
 def aggregate_input(wc: Dict, cp: Checkpoints, conf: Dict) -> List[str]:
     """
     Aggregates the input to obtain the required output files.
@@ -39,9 +35,11 @@ def aggregate_input(wc: Dict, cp: Checkpoints, conf: Dict) -> List[str]:
     output_files = []
     if has_dna_loci:
         method = SequenceTypingUtils.get_detection_method(conf, wc.scheme)
-        output_files.append(Path(config['working_dir']) / 'typing' / wc.scheme / 'DNA' / method / 'all-hits.io')
+        output_files.append(Path(config['working_dir']) / 'typing' / wc.scheme / 'DNA' / method / 'hits.io')
+        output_files.append(Path(config['working_dir']) / 'typing' / wc.scheme / 'DNA' / method / 'informs.io')
     if has_peptide_loci:
-        output_files.append(Path(config['working_dir']) / 'typing' / wc.scheme / 'peptide' / 'blast' / 'all-hits.io')
+        output_files.append(Path(config['working_dir']) / 'typing' / wc.scheme / 'peptide' / 'blast' / 'hits.io')
+        output_files.append(Path(config['working_dir']) / 'typing' / wc.scheme / 'peptide' / 'blast' / 'informs.io')
     return [str(x) for x in output_files]
 
 checkpoint typing_extract_schema_info:
@@ -88,7 +86,8 @@ rule typing_async:
             'kma', 'srst2') else [],
         DIR = lambda wildcards: config['sequence_typing'][wildcards.scheme]['path']
     output:
-        IO = Path(config['working_dir']) / 'typing' / '{scheme}' / '{locus_type}' / '{detection_method}' / 'all-hits.io'
+        IO = Path(config['working_dir']) / 'typing' / '{scheme}' / '{locus_type}' / '{detection_method}' / 'hits.io',
+        INFORMS = Path(config['working_dir']) / 'typing' / '{scheme}' / '{locus_type}' / '{detection_method}' / 'informs.io'
     params:
         dir_working = lambda wildcards: Path(config['working_dir']) / 'typing' / wildcards.scheme / wildcards.locus_type,
         detection_method = lambda wildcards: wildcards.detection_method,
@@ -121,44 +120,45 @@ rule typing_async:
 
         # Save the tool output
         SnakemakeUtils.dump_object(typer.tool_outputs['VAL_hits'], Path(output.IO))
+        SnakemakeUtils.dump_object(typer.informs, Path(output.INFORMS))
 
 rule typing_get_hits:
     """
     Selects the hits output based on the detection method in the config.
     """
     input:
-        HITS = lambda wildcards: aggregate_input(wildcards, checkpoints, config)
+        lambda wildcards: aggregate_input(wildcards, checkpoints, config)
     output:
         HITS_NUCL = Path(config['working_dir']) / 'typing' / '{scheme}' / 'DNA' / 'hits.io',
-        HITS_PEPT = Path(config['working_dir']) / 'typing' / '{scheme}' / 'peptide' / 'hits.io'
+        HITS_PEPT = Path(config['working_dir']) / 'typing' / '{scheme}' / 'peptide' / 'hits.io',
+        INFORMS = Path(config['working_dir']) / 'typing' / '{scheme}' / 'informs_detection.io'
     run:
+        informs = []
         hits_by_type = {'DNA': [], 'peptide': []}
-        for path_io in [Path(x) for x in input.HITS]:
+        for path_io in [Path(x) for x in input]:
             locus_type = path_io.parents[1].name
-            hits_by_type[locus_type].extend(SnakemakeUtils.load_object(path_io))
+            if path_io.stem == 'hits':
+                hits_by_type[locus_type].extend(SnakemakeUtils.load_object(path_io))
+            elif path_io.stem == 'informs':
+                informs.append(SnakemakeUtils.load_object(path_io))
+            else:
+                raise ValueError(f"Invalid input file: {path_io}")
         SnakemakeUtils.dump_object(hits_by_type['DNA'], Path(output.HITS_NUCL))
         SnakemakeUtils.dump_object(hits_by_type['peptide'], Path(output.HITS_PEPT))
+        SnakemakeUtils.dump_object(informs, Path(output.INFORMS))
 
 rule typing_dump_commands:
     input:
-        # INFORMS_NUCL = lambda wildcards: [
-        #     str(Path(config['working_dir']) / 'typing' / wildcards.scheme / 'DNA' / locus / f'informs-{SequenceTypingUtils.get_detection_method(config, wildcards.scheme)}.io') for
-        #     locus in loci_by_scheme_by_type[wildcards.scheme]['DNA']],
-        # INFORMS_PEPT = lambda wildcards: [
-        #     str(Path(config['working_dir']) / 'typing' / wildcards.scheme / 'peptide' / locus / f'informs-blast.io') for
-        #     locus in loci_by_scheme_by_type[wildcards.scheme]['peptide']],
-        INFORMS_SCHEME = Path(config['working_dir']) / 'typing' / '{scheme}' /'informs-locus_set.io'
+        INFORMS_detection = rules.typing_get_hits.output.INFORMS,
+        INFORMS_scheme = Path(config['working_dir']) / 'typing' / '{scheme}' /'informs-locus_set.io'
     output:
-        INFORMS = Path(config['working_dir']) / OUTPUT_TYPING_INFORMS
+        INFORMS = Path(config['working_dir']) / sequence_typing.OUTPUT_TYPING_INFORMS
     params:
         scheme = lambda wildcards: wildcards.scheme
     run:
-        informs_scheme = SnakemakeUtils.load_object(Path(input.INFORMS_SCHEME))
+        informs_scheme = SnakemakeUtils.load_object(Path(input.INFORMS_scheme))
         informs_commands = []
-        for io_informs in ():
-            if len(io_informs) == 0:
-                continue
-            informs = SnakemakeUtils.load_object(Path(io_informs[0]))
+        for informs in SnakemakeUtils.load_object(Path(input.INFORMS_detection)):
             informs['_tag'] = f"Typing - {informs_scheme['title']}"
             informs_commands.append(informs)
         SnakemakeUtils.dump_object(informs_commands, Path(output.INFORMS))
@@ -253,7 +253,7 @@ rule typing_add_allele_page_url:
 
             # Load the informs
             metadata_by_locus_name = SnakemakeUtils.load_object(
-                Path(input.INFORMS_scheme))['loci'].metadata_by_locus_name
+                Path(str(input.INFORMS_scheme)))['loci'].metadata_by_locus_name
 
             # Add the allele url to the hit
             for hit in hits:
@@ -312,7 +312,7 @@ rule typing_create_report_empty:
         VAL_HTML = Path(config['working_dir']) / sequence_typing.OUTPUT_TYPING_REPORT_EMPTY
     run:
         from camel.app.io.tooliovalue import ToolIOValue
-        informs = SnakemakeUtils.load_object(Path(input.INFORMS_Scheme))
+        informs = SnakemakeUtils.load_object(Path(str(input.INFORMS_Scheme)))
         section = HtmlReportSection(informs['title'], 3)
         section.add_paragraph('Analysis disabled')
         SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output[0]))
