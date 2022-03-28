@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliofile import ToolIOFile
@@ -48,7 +46,7 @@ class IntervalListTools(Picard):
         elif 'TXT_intervals' in self._tool_inputs:
             self._required_inputs.remove('VCF')
 
-        super(IntervalListTools, self)._check_input()
+        super()._check_input()
 
     def _set_input(self) -> None:
         """
@@ -68,16 +66,16 @@ class IntervalListTools(Picard):
         """
         Set the output specification. Overrides method in parent class.
         - Scatter count < 1 or not specified: ToolIOFile object containing one interval list output file
-        - Scatter count > 1: ToolIOFile object containing multiple interval list files; automated naming of interval list
+        - Scatter count > 1: A list of ToolIOFile objects, n=scatter_count; automated naming of interval list
           files and folder cfr. structure described in code
         :return: None
         """
         scatter_count = int(self._parameters['scatter_count'].value) if 'scatter_count' in self._parameters else 1
 
         if scatter_count == 1:
-            self._tool_outputs['TXT_intervalLists'] = [ToolIOFile(Path(self._folder) / self._parameters['output'].value)]
+            self._tool_outputs['TXT_intervalLists'] = [ToolIOFile(self._folder / self._parameters['output'].value)]
         else:
             intervallists_list = []
             for n in range(1, scatter_count + 1):
-                intervallists_list.append(ToolIOFile(Path(self._folder) / self._parameters['output'].value / f'temp_{n:04d}_of_{scatter_count:d}' / "scattered.interval_list"))
+                intervallists_list.append(ToolIOFile(self._folder / self._parameters['output'].value / f'temp_{n:04d}_of_{scatter_count:d}' / "scattered.interval_list"))
             self._tool_outputs['TXT_intervalLists'] = intervallists_list
