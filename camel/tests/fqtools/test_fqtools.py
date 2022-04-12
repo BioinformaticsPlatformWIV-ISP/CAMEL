@@ -26,7 +26,7 @@ class TestFqtools(CamelTestSuite):
             'FASTQ': [TestFqtools.FILE_FQ_FWD, TestFqtools.FILE_FQ_REV]})
         fqtools_stats.run(self.running_dir)
         self.assertIn('stats', fqtools_stats.informs)
-        self.assertEquals(len(fqtools_stats.informs['stats']), 2)
+        self.assertEqual(len(fqtools_stats.informs['stats']), 2)
 
     def test_fqtools_stats_gzip_input(self) -> None:
         """
@@ -38,7 +38,7 @@ class TestFqtools(CamelTestSuite):
             'FASTQ': [TestFqtools.FILE_FQ_GZ_FWD, TestFqtools.FILE_FQ_GZ_REV]})
         fqtools_stats.run(self.running_dir)
         self.assertIn('stats', fqtools_stats.informs)
-        self.assertEquals(len(fqtools_stats.informs['stats']), 2)
+        self.assertEqual(len(fqtools_stats.informs['stats']), 2)
 
 
 if __name__ == '__main__':
