@@ -9,4 +9,5 @@ parameters:
     value: null}
   output_filename: {default: true, mandatory: true, option: null, value: samtools_depth.txt}
   read_length_threshold: {default: false, mandatory: false, option: -l, value: '50'}
+  region: {default: false, mandatory: false, option: -r, value: 'CHR:FROM-TO'}
 tool_command: samtools depth

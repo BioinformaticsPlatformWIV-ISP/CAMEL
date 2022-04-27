@@ -25,7 +25,8 @@ class SamtoolsDepth(SamtoolsBase):
         :return: None
         """
         if 'BAM' not in self._tool_inputs:
-            raise ValueError("No BAM input file found")
+            if 'CRAM' not in self._tool_inputs:
+                raise ValueError("No BAM or CRAM input file found")
         if len(self._tool_inputs['BAM']) != 1:
             raise ValueError("Exactly one BAM input file expected")
         super(SamtoolsBase, self)._check_input()
@@ -50,7 +51,10 @@ class SamtoolsDepth(SamtoolsBase):
             parts.extend(options)
         if 'BED' in self._tool_inputs:
             parts.append(f"-b {self._tool_inputs['BED'][0].path}")
-        parts.extend([str(self._tool_inputs['BAM'][0].path), f" > {self._parameters['output_filename'].value}"])
+        if 'BAM' in self._tool_inputs:
+            parts.extend([str(self._tool_inputs['BAM'][0].path), f" > {self._parameters['output_filename'].value}"])
+        elif 'CRAM' in self._tool_inputs:
+            parts.extend([str(self._tool_inputs['CRAM'][0].path), f" > {self._parameters['output_filename'].value}"])
         self._command.command = ' '.join(parts)
 
     def __set_output(self) -> None:
