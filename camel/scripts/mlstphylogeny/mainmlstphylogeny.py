@@ -53,18 +53,22 @@ class MainMLSTPhylogeny(object):
         data_dist_matrix = self.__calculate_distance_matrix(allele_data_filtered)
         self.__report_add_section_distance_matrix(report, data_dist_matrix)
 
-        # Create and visualize the phylogeny
-        grapetree = self.run_grapetree(path_allele_matrix)
+        # Check the distance matrix
+        if all(max(values) == 0 for _, values in data_dist_matrix.iterrows()):
+            self.__report_add_section_phylogeny_empty(report)
+        else:
+            # Create and visualize the phylogeny
+            grapetree = self.run_grapetree(path_allele_matrix)
 
-        # Store the tree image in a temporary file before adding it to the report
-        with tempfile.NamedTemporaryFile(dir=str(self._args.dir_working), prefix='figtree_', suffix='.png') as nwk_out:
-            figtree = NewickUtils.create_image_figtree(
-                grapetree.tool_outputs['NWK'][0].path,
-                Path(pkg_resources.resource_filename('camel', 'resources/figtree/template_cgmlst_tree.txt')),
-                Path(nwk_out.name), self._args.image_width,
-                NewickUtils.calculate_tree_image_height(self._args.image_min_height, len(allele_data_filtered))
-            )
-            self.__report_add_section_phylogeny(report, grapetree, figtree)
+            # Store the tree image in a temporary file before adding it to the report
+            with tempfile.NamedTemporaryFile(dir=str(self._args.dir_working), prefix='figtree_', suffix='.png') as nwk_out:
+                figtree = NewickUtils.create_image_figtree(
+                    grapetree.tool_outputs['NWK'][0].path,
+                    Path(pkg_resources.resource_filename('camel', 'resources/figtree/template_cgmlst_tree.txt')),
+                    Path(nwk_out.name), self._args.image_width,
+                    NewickUtils.calculate_tree_image_height(self._args.image_min_height, len(allele_data_filtered))
+                )
+                self.__report_add_section_phylogeny(report, grapetree, figtree)
 
     @staticmethod
     def _parse_arguments(args: Optional[Sequence[str]] = None) -> argparse.Namespace:
@@ -227,7 +231,7 @@ class MainMLSTPhylogeny(object):
         relative_path = Path('allele_matrix-filtered.tsv')
         section_filtering.add_link_to_file('Download filtered allele matrix (TSV)', relative_path)
         section_filtering.add_file(path_allele_matrix, relative_path)
-        section_filtering.add_warning_message('Locus filtering is performed after low quality datasets are removed')
+        section_filtering.add_warning_message('Locus filtering is performed after low quality datasets are removed.')
         report.add_html_object(section_filtering)
         section_filtering.copy_files(report.output_dir)
         report.save()
@@ -282,7 +286,7 @@ class MainMLSTPhylogeny(object):
         relative_path = Path('allele_dist_matrix.tsv')
         section_distances.add_file(path_tsv_dist, relative_path)
         section_distances.add_link_to_file('Download AD matrix (TSV)', relative_path)
-        section_distances.add_warning_message('Allele distances are calculated based on the filtered allele matrix')
+        section_distances.add_warning_message('Allele distances are calculated based on the filtered allele matrix.')
         report.add_html_object(section_distances)
         section_distances.copy_files(report.output_dir)
         report.save()
@@ -333,6 +337,16 @@ class MainMLSTPhylogeny(object):
         report.add_html_object(SnakePipelineUtils.create_commands_section(
             [grapetree.informs, figtree.informs], self._args.dir_working))
         report.add_html_object(SnakePipelineUtils.create_citations_section(['Zhou_2018-grapetree']))
+        report.save()
+
+    def __report_add_section_phylogeny_empty(self, report: HtmlReport) -> None:
+        """
+        Adds the phylogeny section to the HTML report.
+        :param report: HTML report
+        """
+        section = HtmlReportSection('Phylogeny')
+        section.add_error_message('All profiles are identical, cannot generate phylogeny.')
+        report.add_html_object(section)
         report.save()
 
 
