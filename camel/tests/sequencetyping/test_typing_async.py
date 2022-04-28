@@ -4,6 +4,7 @@ from camel.app.camel import Camel
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.io.tooliodirectory import ToolIODirectory
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.tools.pipelines.sequence_typing.typeasync import TypeAsync
 
 
@@ -36,6 +37,8 @@ class TestTypingAsync(CamelTestSuite):
         typing_async.update_parameters(locus_type='DNA', detection_method='blast', blastn_task='megablast')
         typing_async.run(self.running_dir)
         self.assertGreater(len(typing_async.tool_outputs), 0)
+        for io in typing_async.tool_outputs['VAL_hits']:
+            self.assertIsInstance(io, ToolIOValue)
         self.assertIn('_command', typing_async.informs)
 
     def test_typing_async_blast_peptide(self) -> None:
@@ -51,6 +54,8 @@ class TestTypingAsync(CamelTestSuite):
         typing_async.update_parameters(locus_type='peptide', detection_method='blast', blastn_task='megablast')
         typing_async.run(self.running_dir)
         self.assertGreater(len(typing_async.tool_outputs), 0)
+        for io in typing_async.tool_outputs['VAL_hits']:
+            self.assertIsInstance(io, ToolIOValue)
         self.assertIn('_command', typing_async.informs)
 
     def test_typing_async_kma_illumina_nucl(self) -> None:
@@ -66,6 +71,8 @@ class TestTypingAsync(CamelTestSuite):
         typing_async.update_parameters(locus_type='DNA', detection_method='kma')
         typing_async.run(self.running_dir)
         self.assertGreater(len(typing_async.tool_outputs), 0)
+        for io in typing_async.tool_outputs['VAL_hits']:
+            self.assertIsInstance(io, ToolIOValue)
         self.assertIn('_command', typing_async.informs)
 
     def test_typing_async_kma_iontorrent_nucl(self) -> None:
@@ -81,6 +88,8 @@ class TestTypingAsync(CamelTestSuite):
         typing_async.update_parameters(locus_type='DNA', detection_method='kma')
         typing_async.run(self.running_dir)
         self.assertGreater(len(typing_async.tool_outputs), 0)
+        for io in typing_async.tool_outputs['VAL_hits']:
+            self.assertIsInstance(io, ToolIOValue)
         self.assertIn('_command', typing_async.informs)
 
     def test_typing_async_srst2_illumina_nucl(self) -> None:
@@ -96,6 +105,8 @@ class TestTypingAsync(CamelTestSuite):
         typing_async.update_parameters(locus_type='DNA', detection_method='srst2')
         typing_async.run(self.running_dir)
         self.assertGreater(len(typing_async.tool_outputs), 0)
+        for io in typing_async.tool_outputs['VAL_hits']:
+            self.assertIsInstance(io, ToolIOValue)
         self.assertIn('_command', typing_async.informs)
 
     def test_typing_async_srst2_iontorrent_nucl(self) -> None:
@@ -111,6 +122,8 @@ class TestTypingAsync(CamelTestSuite):
         typing_async.update_parameters(locus_type='DNA', detection_method='srst2')
         typing_async.run(self.running_dir)
         self.assertGreater(len(typing_async.tool_outputs), 0)
+        for io in typing_async.tool_outputs['VAL_hits']:
+            self.assertIsInstance(io, ToolIOValue)
         self.assertIn('_command', typing_async.informs)
 
 
