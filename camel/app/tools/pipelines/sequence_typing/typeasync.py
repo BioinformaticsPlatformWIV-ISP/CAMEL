@@ -12,7 +12,8 @@ from camel.app.tools.tool import Tool
 
 class TypeAsync(Tool):
     """
-    Performs BLAST-based sequence typing asynchronously.
+    Performs BLAST-based sequence typing asynchronously for all loci of a scheme using a ThreadPool.
+    This tool can be used to reduce the overhead in Snakemake by reducing the number of rules that need to be executed.
     """
 
     def __init__(self, camel: Camel) -> None:
