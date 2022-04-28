@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Any, List, Optional
+from typing import Dict, List, Optional
 
 from camel.app.camel import Camel
 from camel.app.components.blast.blasthitstatistics import BLASTN_OUTPUT_FORMAT
@@ -23,7 +23,7 @@ class TypingResultHolder:
     Class to store the result of a sequence typing job.
     """
     hit: ToolIOValue
-    informs: Dict[str, Any]
+    informs: Dict[str, str]
 
 
 def detect_hit_blast(
@@ -131,7 +131,6 @@ def detect_hit_srst2(
     :param threads_per_job: Threads per BLAST job
     """
     # Create working directory
-    dir_working = Path(dir_working)
     dir_working.mkdir(parents=True, exist_ok=True)
 
     # Add input files

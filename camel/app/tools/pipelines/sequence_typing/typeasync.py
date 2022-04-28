@@ -1,7 +1,7 @@
 import concurrent.futures
 import json
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, Union
 
 from camel.app.camel import Camel
 from camel.app.components.sequencetyping import typingasyncutils
@@ -36,7 +36,7 @@ class TypeAsync(Tool):
             raise InvalidInputSpecificationError("Typing directory input is required ('DIR')")
         super()._check_input()
 
-    def __get_typing_parameters(self, locus_info: Dict[str, Any]) -> Dict[str, Any]:
+    def __get_typing_parameters(self, locus_info: Dict[str, Union[str, None]]) -> Dict[str, Any]:
         """
         Returns the parameters to pass to the typing jobs.
         """
