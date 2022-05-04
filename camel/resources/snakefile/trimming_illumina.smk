@@ -1,3 +1,4 @@
+import shutil
 from pathlib import Path
 
 from camel.app.camel import Camel
@@ -8,25 +9,12 @@ from camel.app.pipeline.step import Step
 camel = Camel.get_instance()
 
 
-rule trimming_illumina_pickle_input:
-    """
-    Creates pickled FASTQ PE input.
-    """
-    input:
-        FASTQ = [x['path'] for x in config.get('fastq_pe', [])]
-    output:
-        FASTQ_PE = Path(config['working_dir']) / 'trimming_illumina' / 'input'/ 'fastq-pe.io'
-    run:
-        from camel.app.io.tooliofile import ToolIOFile
-        SnakemakeUtils.dump_object([ToolIOFile(Path(x)) for x in input.FASTQ], Path(output.FASTQ_PE))
-
-
 rule trimming_illumina_fastqc_pre:
     """
     Creates FastQC reports for the raw reads. 
     """
     input:
-        FASTQ = rules.trimming_illumina_pickle_input.output.FASTQ_PE
+        FASTQ = Path(config['working_dir']) / trimming_illumina.INPUT_TRIMMOMATIC_FASTQ
     output:
         HTML = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_FASTQC_HTML_PRE,
         TXT = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_FASTQC_TXT_PRE
@@ -48,7 +36,7 @@ rule trimming_illumina_trimmomatic:
     Read trimming using trimmomatic.
     """
     input:
-        FASTQ_PE = rules.trimming_illumina_pickle_input.output.FASTQ_PE
+        FASTQ_PE = Path(config['working_dir']) / trimming_illumina.INPUT_TRIMMOMATIC_FASTQ
     output:
         FASTQ_PE = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_READS_PE,
         FASTQ_SE_FORWARD = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_READS_SE_FWD,

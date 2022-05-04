@@ -134,6 +134,27 @@ class TestMLSTPhylogeny(CamelTestSuite):
         mlst_tree.run()
         self.assertGreater(output_html.stat().st_size, 0)
 
+    def test_mlst_phylogeny_identical_profiles(self) -> None:
+        """
+        Tests the MLST phylogeny tool with standard options and identical profiles for all datasets.
+        :return: None
+        """
+        output_html = self.running_dir / 'out' / 'report.html'
+        output_html.parent.mkdir(exist_ok=True, parents=True)
+        input_tsv = list(sorted(TestMLSTPhylogeny.dir_dataset_small_blast.iterdir()))[0]
+        args = [
+            '--input-tsv', str(input_tsv), 'dataset_1.tsv',
+            '--input-tsv', str(input_tsv), 'dataset_2.tsv',
+            '--input-tsv', str(input_tsv), 'dataset_3.tsv',
+            '--input-tsv', str(input_tsv), 'dataset_4.tsv',
+            '--output-html', str(output_html),
+            '--output-dir', str(output_html.parent),
+            '--dir-working', str(self.running_dir)
+        ]
+        mlst_tree = MainMLSTPhylogeny(args)
+        mlst_tree.run()
+        self.assertGreater(output_html.stat().st_size, 0)
+
 
 if __name__ == '__main__':
     unittest.main()

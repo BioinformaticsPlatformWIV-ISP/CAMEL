@@ -2,12 +2,13 @@ from pathlib import Path
 
 from camel.resources.snakefile import trimming, trimming_illumina, trimming_iontorrent, assembly_spades, \
     quality_checks, contamination_check_kraken, gene_detection, pointfinder, variant_calling, variant_filtering, \
-    sequence_typing
+    sequence_typing, downsampling
 from camel.scripts.stecpipeline.snakefile import serotype_detection
 
 #######################
 # Included Snakefiles #
 #######################
+include: downsampling.SNAKEFILE_DOWNSAMPLING
 include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
 include: trimming_iontorrent.SNAKEFILE_TRIMMING_IONTORRENT
 include: contamination_check_kraken.SNAKEFILE_CONTAMINATION_CHECK_KRAKEN
@@ -31,6 +32,40 @@ rule all:
     input:
         config['output_report'],
         config['output_tabular']
+
+rule link_downsampling_input:
+    """
+    Creates the FASTQ input for the downsampling step. 
+    """
+    input:
+        FASTQ_SE = [entry['path'] for entry in config['input']['fastq_se']] if config.get('read_type','illumina') == 'iontorrent' else [],
+        FASTQ_PE = [entry['path'] for entry in config['input']['fastq_pe']] if config.get('read_type','illumina') == 'illumina' else []
+    output:
+        FASTQ = Path(config['working_dir']) / downsampling.INPUT_DOWNSAMPLING_FASTQ
+    params:
+        read_type = config.get('read_type', 'illumina')
+    run:
+        from camel.app.io.tooliofile import ToolIOFile
+        from camel.app.snakemake.snakemakeutils import SnakemakeUtils
+        if params.read_type == 'illumina':
+            SnakemakeUtils.dump_object([ToolIOFile(Path(x)) for x in input.FASTQ_PE], Path(output.FASTQ))
+        elif params.read_type == 'iontorrent':
+            SnakemakeUtils.dump_object([ToolIOFile(Path(str(input.FASTQ_SE)))], Path(output.FASTQ))
+        else:
+            raise ValueError(f"Invalid read type: {params.read_type}")
+
+rule link_trimmomatic_input:
+    """
+    Links the downsmapling output to the input of the trimmomatic workflow.  
+    """
+    input:
+        FASTQ = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_FASTQ
+    output:
+        FASTQ = Path(config['working_dir']) / trimming_illumina.INPUT_TRIMMOMATIC_FASTQ
+    shell:
+        """
+        cp {input.FASTQ} {output.FASTQ};
+        """
 
 rule select_fastq:
     """
@@ -83,6 +118,7 @@ rule report_pickle_citations:
 
 rule report_command_section:
     input:
+        INFORMS_downsampling = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_INFORMS,
         INFORMS_trimming = trimming.get_trimming_command_informs(config),
         INFORMS_assembly = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_INFORMS,
         INFORMS_assembly_filt = Path(config['working_dir']) / 'assembly_spades' / 'filtering' / 'informs.io',
@@ -127,6 +163,7 @@ rule report_combine_all:
     Rule to combine report sections into a single output report.
     """
     input:
+        report_downsampling = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_REPORT,
         report_trimming = trimming.get_trimming_report(config),
         report_assembly = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_REPORT,
         report_kraken = Path(config['working_dir']) / (contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT if 'kraken' in config['analyses'] else contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT_EMPTY),
@@ -156,7 +193,7 @@ rule report_combine_all:
         HTML = config['output_report']
     params:
         sample_name = config['sample_name'],
-        fastq_input = config['fastq_pe' if 'fastq_pe' in config else 'fastq_se'],
+        config_input = config['input'],
         output_dir = config['output_dir'],
         pipeline_info = config['pipeline'],
         detection_method = config['detection_method'],
@@ -172,15 +209,15 @@ rule report_combine_all:
         report.add_html_object(SnakePipelineUtils.create_input_section(
             params.sample_name,
             datetime.datetime.now(),
-            params.pipeline_info['version'],
-            ', '.join(entry['name'] for entry in params.fastq_input),
+            params.pipeline_info['version'], ', '.join(
+                input_file['name'] for _, input_files in params.config_input.items() for input_file in input_files),
             [('Detection method', params.detection_method), ('Read type', params.read_type)],
             params.citation_keys['main']
         ))
 
         # Add content
         report_structure = [
-            ('Read trimming and basic QC', 'trim', [Path(input.report_trimming)]),
+            ('Read trimming and basic QC', 'trim', [Path(input.report_downsampling), Path(input.report_trimming)]),
             ('Assembly', 'assem', [Path(input.report_assembly)]),
             ('Advanced QC', 'adv_qc', [Path(x) for x in (input.report_kraken, input.report_adv_qc)]),
             ('Variant calling', 'variant', [Path(input.report_variant)]),
@@ -209,7 +246,8 @@ rule summary_init:
         import datetime
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         analysis_date = datetime.datetime.now().strftime(SnakePipelineUtils.DATE_FORMAT)
-        input_filenames = ', '.join(entry['name'] for entry in config['fastq_pe' if 'fastq_pe' in config else 'fastq_se'])
+        input_filenames = ', '.join(
+            input_file['name'] for _, input_files in config['input'].items() for input_file in input_files)
         with open(output.TSV, 'w') as handle:
             for kv_pair in [
                 ('pipeline_name', config['pipeline']['name']),
@@ -228,6 +266,7 @@ rule summary_combine_all:
     """
     input:
         rules.summary_init.output.TSV,
+        Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_SUMMARY,
         trimming.get_trimming_summary(config),
         Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_SUMMARY,
         Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY,

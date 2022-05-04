@@ -3,12 +3,13 @@ from pathlib import Path
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.resources.snakefile import trimming, trimming_illumina, assembly_spades, \
     quality_checks, contamination_check_kraken, gene_detection, pointfinder, variant_calling, variant_filtering, \
-    sequence_typing
+    sequence_typing, downsampling
 from camel.scripts.shigellapipeline.snakefile import subspecies_identification, flexneritype
 
 #######################
 # Included Snakefiles #
 #######################
+include: downsampling.SNAKEFILE_DOWNSAMPLING
 include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
 include: contamination_check_kraken.SNAKEFILE_CONTAMINATION_CHECK_KRAKEN
 include: quality_checks.SNAKEFILE_QUALITY_CHECKS
@@ -32,6 +33,31 @@ rule all:
         config['output_report'],
         config['output_tabular']
 
+rule link_downsampling_input:
+    """
+    Creates the FASTQ input for the downsampling step. 
+    """
+    input:
+        FASTQ_PE = [entry['path'] for entry in config['input']['fastq_pe']]
+    output:
+        FASTQ = Path(config['working_dir']) / downsampling.INPUT_DOWNSAMPLING_FASTQ
+    run:
+        from camel.app.snakemake.snakemakeutils import SnakemakeUtils
+        from camel.app.io.tooliofile import ToolIOFile
+        SnakemakeUtils.dump_object([ToolIOFile(Path(x)) for x in input.FASTQ_PE], Path(output.FASTQ))
+
+rule link_trimmomatic_input:
+    """
+    Links the downsmapling output to the input of the trimmomatic workflow.  
+    """
+    input:
+        FASTQ = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_FASTQ
+    output:
+        FASTQ = Path(config['working_dir']) / trimming_illumina.INPUT_TRIMMOMATIC_FASTQ
+    shell:
+        """
+        cp {input.FASTQ} {output.FASTQ};
+        """
 
 rule init_summary:
     """
@@ -42,7 +68,8 @@ rule init_summary:
     run:
         import datetime
         analysis_date = datetime.datetime.now().strftime(SnakePipelineUtils.DATE_FORMAT)
-        input_filenames = ', '.join(entry['name'] for entry in config['fastq_pe' if 'fastq_pe' in config else 'fastq_se'])
+        input_filenames = ', '.join(
+            input_file['name'] for _, input_files in config['input'].items() for input_file in input_files)
         with open(output.TSV, 'w') as handle:
             for kv_pair in [
                 ('pipeline_name', config['pipeline']['name']),
@@ -95,6 +122,7 @@ rule report_pickle_citations:
 
 rule report_command_section:
     input:
+        INFORMS_downsampling = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_INFORMS,
         INFORMS_trimming = trimming.get_trimming_command_informs(config),
         INFORMS_assembly = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_INFORMS,
         INFORMS_assembly_filt=Path(config['working_dir']) / 'assembly_spades' / 'filtering' / 'informs.io',
@@ -132,6 +160,7 @@ rule combine_reports:
     Rule to combine report sections into a single output report.
     """
     input:
+        report_downsampling = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_REPORT,
         report_trimming = trimming.get_trimming_report(config),
         report_assembly = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_REPORT,
         report_kraken = Path(config['working_dir']) / (contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT if 'kraken' in config['analyses'] else contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT_EMPTY),
@@ -161,7 +190,7 @@ rule combine_reports:
         HTML = config['output_report']
     params:
         sample_name = config['sample_name'],
-        fastq_input = config['fastq_pe' if 'fastq_pe' in config else 'fastq_se'],
+        fastq_input = config['input']['fastq_pe'],
         output_dir = config['output_dir'],
         pipeline_info = config['pipeline'],
         detection_method = config['detection_method'],
@@ -182,7 +211,7 @@ rule combine_reports:
 
         # Add output sections
         report_structure = [
-            ('Read trimming and basic QC', 'trim', [Path(input.report_trimming)]),
+            ('Read trimming and basic QC', 'trim', [Path(input.report_downsampling), Path(input.report_trimming)]),
             ('Assembly', 'assem', [Path(input.report_assembly)]),
             ('Advanced QC', 'adv_qc', [Path(x) for x in (input.report_kraken, input.report_adv_qc)]),
             ('Variant calling', 'variant', [Path(input.report_variant)]),
@@ -208,6 +237,7 @@ rule combine_summary_files:
     """
     input:
         rules.init_summary.output.TSV,
+        Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_SUMMARY,
         trimming.get_trimming_summary(config),
         Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_SUMMARY,
         Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY,
@@ -227,13 +257,6 @@ rule combine_summary_files:
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='mlst_pasteur') if 'mlst_pasteur' in config['analyses'] else [],
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='mlst_warwick') if 'mlst_warwick' in config['analyses'] else [],
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='cgmlst') if 'cgmlst' in config['analyses'] else []
-
-        # Flexneri typing
-        # os.path.join(config['working_dir'], OUTPUT_SUBSPECIES_SUMMARY),
-        # os.path.join(config['working_dir'], OUTPUT_FLEXNERI_SUMMARY),
-        # os.path.join(config['working_dir'], OUTPUT_TYPING_SUMMARY.format(scheme='mlst_warwick')) if 'mlst_warwick' in config['analyses'] else [],
-        # os.path.join(config['working_dir'], OUTPUT_TYPING_SUMMARY.format(scheme='mlst_pasteur')) if 'mlst_pasteur' in config['analyses'] else [],
-        # os.path.join(config['working_dir'], OUTPUT_TYPING_SUMMARY.format(scheme='cgmlst')) if 'cgmlst' in config['analyses'] else [],
     output:
         TSV = config.get('output_tabular')
     run:

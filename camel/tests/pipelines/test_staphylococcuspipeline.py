@@ -13,7 +13,7 @@ from camel.tests import longRunningTest
 
 class TestStaphylococcusPipeline(CamelTestSuite):
     """
-    Tests for the Neisseria pipeline.
+    Tests for the Staphylococcus pipeline.
     """
 
     # Input files
@@ -65,7 +65,7 @@ class TestStaphylococcusPipeline(CamelTestSuite):
     @longRunningTest()
     def test_staphylococcus_pipeline_blast(self) -> None:
         """
-        Tests the Neisseria pipeline with all assays except for cgMLST.
+        Tests the Staphylococcus pipeline with all assays except for cgMLST.
         :return: None
         """
         path_report_out = self.running_dir / 'out' / 'report.html'
@@ -85,7 +85,7 @@ class TestStaphylococcusPipeline(CamelTestSuite):
     @longRunningTest()
     def test_staphylococcus_pipeline_srst2(self) -> None:
         """
-        Tests the Neisseria pipeline with all assays except for cgMLST.
+        Tests the Staphylococcus pipeline with all assays except for cgMLST.
         :return: None
         """
         path_report_out = self.running_dir / 'out' / 'report.html'
@@ -105,7 +105,7 @@ class TestStaphylococcusPipeline(CamelTestSuite):
     @longRunningTest()
     def test_staphylococcus_pipeline_kma(self) -> None:
         """
-        Tests the Neisseria pipeline with all assays except for cgMLST.
+        Tests the Staphylococcus pipeline with all assays except for cgMLST.
         :return: None
         """
         path_report_out = self.running_dir / 'out' / 'report.html'

@@ -46,18 +46,25 @@ class MainSTECPipeline(ReportPipeline):
         key = 'fastq_pe' if (self._args.fastq_pe is not None) else 'fastq_se'
         config_data = self.get_template_data(key, input_files)
         with open(CONFIG_DATA) as handle_in:
-            config_data.update(yaml.load(handle_in.read(), Loader=yaml.SafeLoader))
+            config_data.update(yaml.safe_load(handle_in.read().format(coverage_max=self._args.cov_max)))
+
         config_data['analyses'] = [key for key in MainSTECPipeline.CUSTOM_ANALYSES if vars(self._args)[key]]
-        config_data['read_type'] = self._args.read_type
         config_data['quality_checks']['typing_scheme'] = 'cgmlst' if self._args.cgmlst else 'mlst_warwick'
+
+        # Read trimming
         config_data['read_trimming']['export_fastq'] = 'true' if self._args.report_include_fastq else 'false'
         if self._args.library is not None:
             config_data['read_trimming']['adapter'] = self._args.library
         config_data['variant_calling']['report_include_bam'] = 'true' if self._args.report_include_bam else 'false'
+
+        # cgMLST detection method
         detection_method_cgmlst = {
             'blast': 'blast', 'srst2': 'blast', 'kma': 'kma'}.get(self._args.detection_method)
         config_data['sequence_typing']['cgmlst']['detection_method'] = detection_method_cgmlst
         config_data['sequence_typing']['innuendo_cgmlst']['detection_method'] = detection_method_cgmlst
+
+        # Read type (Illumina / IonTorrent)
+        config_data['read_type'] = self._args.read_type
         if self._args.read_type == 'iontorrent':
             config_data['assembly']['spades']['iontorrent'] = None
         return SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir)

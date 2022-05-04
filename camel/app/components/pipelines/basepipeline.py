@@ -203,7 +203,7 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
                 'version': f"{self._version}",
                 'title': self.title
             },
-            input_key: input_data,
+            'input': {input_key: input_data},
             'sample_name': self.sample_name,
             'working_dir': str(self._args.working_dir),
             'read_trimming': {'adapter': self._args.library}

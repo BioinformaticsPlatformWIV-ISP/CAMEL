@@ -3,33 +3,45 @@ from pathlib import Path
 from camel.app.camel import Camel
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.resources.snakefile import trimming_iontorrent
+from camel.resources.snakefile import trimming_iontorrent, downsampling
 
 camel = Camel.get_instance()
 
 
 rule trimming_iontorrent_pickle_fastq_input:
     """
-    Creates a pickle for the fastq input files.
+    Creates a pickle for the fastq input files. 
+    If downsampling is enabled the input is retrieved from the corresponding Snakefile. Otherwise, the input files are
+    obtained from the Snakemake config.
     """
     input:
-        FASTQ = config['fastq_se'][0]['path'] if config.get('read_type', 'illumina') == 'iontorrent' else []
+        FASTQ = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_FASTQ if 'downsampling' in config else []
     output:
         FASTQ_SE = Path(config['working_dir']) / 'trimming_iontorrent' / 'input' / 'fastq-se.io'
+    params:
+        config_input = config['input']
     run:
         from camel.app.io.tooliofile import ToolIOFile
         from camel.app.components.filesystemhelper import FileSystemHelper
         from camel.app.command.command import Command
         from camel.app.error.pipelineexecutionerror import PipelineExecutionError
-        if FileSystemHelper.is_gzipped(Path(input.FASTQ)):
-            path_out = Path(output.FASTQ_SE).parent / Path(input.FASTQ).name.replace('.gz', '')
-            command = Command(f'gunzip -c {input.FASTQ} > {path_out}')
-            command.run_command(path_out.parent)
+
+        # Get the FASTQ file
+        if len(input) == 0:
+            fastq_se_in = Path(config['input']['fastq_se'][0]['path'])
+        else:
+            fastq_se_in = SnakemakeUtils.load_object(Path(input.FASTQ))[0].path
+
+        # Unzip the FASTQ file if it is compressed
+        if FileSystemHelper.is_gzipped(fastq_se_in):
+            path_out = Path(output.FASTQ_SE).parent / fastq_se_in.name.replace('.gz', '')
+            command = Command(f'gunzip -c {fastq_se_in} > {path_out}')
+            command.run(path_out.parent)
             if not command.returncode == 0:
                 raise PipelineExecutionError(f"Cannot unzip input file: {command.stderr}")
             SnakemakeUtils.dump_object([ToolIOFile(path_out)], Path(output.FASTQ_SE))
         else:
-            SnakemakeUtils.dump_object([ToolIOFile(Path(input.FASTQ))], Path(output.FASTQ_SE))
+            SnakemakeUtils.dump_object([ToolIOFile(fastq_se_in)], Path(output.FASTQ_SE))
 
 
 rule trimming_iontorrent_fastqc_pre:
@@ -47,7 +59,7 @@ rule trimming_iontorrent_fastqc_pre:
         from camel.app.tools.fastqc.fastqc import FastQC
         fastqc = FastQC(camel)
         SnakemakeUtils.add_pickle_inputs(fastqc, input)
-        step = Step(rule, fastqc, camel, params.running_dir, config)
+        step = Step(str(rule), fastqc, camel, params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(fastqc, output)
 
@@ -67,7 +79,7 @@ rule trimming_iontorrent_filter_length:
         from camel.app.tools.fastx.fastqqualitytrimmer import FastqQualityTrimmer
         trimmer = FastqQualityTrimmer(camel)
         SnakemakeUtils.add_pickle_inputs(trimmer, input)
-        step = Step(rule, trimmer, camel, params.running_dir, config)
+        step = Step(str(rule), trimmer, camel, params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(trimmer, output)
 
@@ -87,7 +99,7 @@ rule trimming_iontorrent_filter_quality:
         from camel.app.tools.fastx.fastqqualityfilter import FastqQualityFilter
         q_filter = FastqQualityFilter(camel)
         SnakemakeUtils.add_pickle_inputs(q_filter , input)
-        step = Step(rule, q_filter, camel, params.running_dir, config)
+        step = Step(str(rule), q_filter, camel, params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(q_filter, output)
 
@@ -107,7 +119,7 @@ rule trimming_iontorrent_fastqc_post:
         from camel.app.tools.fastqc.fastqc import FastQC
         fastqc = FastQC(camel)
         SnakemakeUtils.add_pickle_inputs(fastqc, input)
-        step = Step(rule, fastqc, camel, params.running_dir, config)
+        step = Step(str(rule), fastqc, camel, params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(fastqc, output)
 
@@ -130,7 +142,7 @@ rule trimming_iontorrent_report:
         from camel.app.tools.pipelines.read_trimming.reportertrimmingiontorrent import ReporterTrimmingIonTorrent
         reporter = ReporterTrimmingIonTorrent(camel)
         SnakemakeUtils.add_pickle_inputs(reporter, input)
-        step = Step(rule, reporter, camel, params.running_dir, config)
+        step = Step(str(rule), reporter, camel, params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
 

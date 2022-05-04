@@ -40,7 +40,7 @@ class TrimmingIonTorrentWrapper(object):
         """
         config_data = {
             'working_dir': str(self._working_dir),
-            'fastq_se': [{'name': se_reads.name, 'path': str(se_reads)}],
+            'input': {'fastq_se': [{'name': se_reads.name, 'path': str(se_reads)}]},
             'read_trimming': {'export_fastq': str(export_fastq)},
             'read_type': 'iontorrent'
         }

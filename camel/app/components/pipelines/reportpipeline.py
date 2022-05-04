@@ -36,6 +36,11 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         argument_parser.add_argument(
             '--report-include-bam', help="Include the BAM file in the report", action='store_true')
 
+        # Parameters
+        argument_parser.add_argument(
+            '--cov-max', default=100.0, type=float,
+            help='Maximum coverage (datasets with higher estimated coverage will be downsampled to the given value)')
+
     def get_template_data(self, input_key: str, input_data: [List[Dict[str, str]]]) -> Dict[str, Any]:
         """
         Returns the template data that is common to all pipeline.
@@ -43,7 +48,9 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         :param input_data: FASTQ input files
         :return: Template data
         """
-        config_data = super().get_template_data(input_key, input_data)
+        # Convert Path objects to string in the config file
+        config_data = super().get_template_data(input_key, [{
+            k: str(v) if isinstance(v, Path) else v for k, v in fq_entry.items()} for fq_entry in input_data])
         mainscriptutils.dict_merge(config_data, {
             'output_dir': str(self._args.output_dir),
             'output_report': str(self._args.output_html),
