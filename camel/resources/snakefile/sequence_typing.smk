@@ -80,9 +80,9 @@ rule typing_async:
     Types all loci asynchronously.
     """
     input:
-        FASTA = lambda wildcards: Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA if
+        FASTA = lambda wildcards: str(Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA) if
             wildcards.detection_method == 'blast' else [],
-        FASTQ = lambda wildcards: (Path(config['working_dir']) / 'fq_dict.io') if wildcards.detection_method in (
+        FASTQ = lambda wildcards: (str(Path(config['working_dir']) / 'fq_dict.io')) if wildcards.detection_method in (
             'kma', 'srst2') else [],
         DIR = lambda wildcards: config['sequence_typing'][wildcards.scheme]['path']
     output:
@@ -150,7 +150,7 @@ rule typing_get_hits:
 rule typing_dump_commands:
     input:
         INFORMS_detection = rules.typing_get_hits.output.INFORMS,
-        INFORMS_scheme = Path(config['working_dir']) / 'typing' / '{scheme}' /'informs-locus_set.io'
+        INFORMS_scheme = str(Path(config['working_dir']) / 'typing' / '{scheme}' /'informs-locus_set.io')
     output:
         INFORMS = Path(config['working_dir']) / sequence_typing.OUTPUT_TYPING_INFORMS
     params:
@@ -168,7 +168,7 @@ rule typing_export_hits_tabular:
     Creates a tabular output for the detected hits.
     """
     input:
-        hits = Path(config['working_dir']) / 'typing' / '{scheme}' / '{locus_type}' / 'hits.io'
+        hits = str(Path(config['working_dir']) / 'typing' / '{scheme}' / '{locus_type}' / 'hits.io')
     output:
         TSV = Path(config['working_dir']) / sequence_typing.OUTPUT_TYPING_TSV
     params:
@@ -243,7 +243,7 @@ rule typing_add_allele_page_url:
     input:
         HITS_NUCL = rules.typing_get_hits.output.HITS_NUCL,
         HITS_PEPT = rules.typing_get_hits.output.HITS_PEPT,
-        INFORMS_scheme = lambda wildcards: checkpoints.typing_extract_schema_info.get(scheme=wildcards.scheme).output.INFORMS,
+        INFORMS_scheme = lambda wildcards: checkpoints.typing_extract_schema_info.get(scheme=wildcards.scheme).output.INFORMS
     output:
         HITS_NUCL = Path(config['working_dir']) / 'typing' / '{scheme}' / 'DNA' / 'hits-url.io',
         HITS_PEPT = Path(config['working_dir']) / 'typing' / '{scheme}' / 'peptide' / 'hits-url.io'
@@ -307,7 +307,7 @@ rule typing_create_report_empty:
     Creates an empty sequence typing report when the analysis is disabled.
     """
     input:
-        INFORMS_Scheme = lambda wildcards: checkpoints.typing_extract_schema_info.get(scheme=wildcards.scheme).output.INFORMS,
+        INFORMS_Scheme = lambda wildcards: checkpoints.typing_extract_schema_info.get(scheme=wildcards.scheme).output.INFORMS
     output:
         VAL_HTML = Path(config['working_dir']) / sequence_typing.OUTPUT_TYPING_REPORT_EMPTY
     run:
