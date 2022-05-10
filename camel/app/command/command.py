@@ -69,7 +69,7 @@ class Command(object):
         :return: None
         """
         if disable_logging is False:
-            logging.info('Executing command: {}'.format(self.command))
+            logging.info(f'Executing command: {self.command}')
         if self.command is None:
             raise ValueError("Invalid command 'None'")
         self._procedure = subprocess.run(
