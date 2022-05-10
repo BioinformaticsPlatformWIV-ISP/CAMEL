@@ -16,7 +16,7 @@ class Camel(object):
     _current_instance = None
     _logger_is_initialized = False
 
-    def __init__(self, logging_config: Optional[str] = LOGGING_CONFIG, tool_parameter_loc: str = None) -> None:
+    def __init__(self, logging_config: Optional[Path] = LOGGING_CONFIG, tool_parameter_loc: str = None) -> None:
         """
         Initializes a CAMEL system.
         :param logging_config: Location of logging config file
@@ -54,10 +54,9 @@ class Camel(object):
         return Camel._current_instance
 
     @staticmethod
-    def get_commit_hash(short: bool = True) -> Union[str, None]:
+    def get_commit_hash() -> Union[str, None]:
         """
         Checks the commit hash of the CAMEL repository (if available).
-        :param short: If True the short commit hash is returned
         """
         path_version_txt = Path(__file__).parents[2] / 'VERSION'
         if not path_version_txt.exists():
