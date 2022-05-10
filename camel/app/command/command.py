@@ -60,14 +60,16 @@ class Command(object):
         """
         self._command = cmd
 
-    def run(self, folder: Path, stderr_handle=subprocess.PIPE) -> None:
+    def run(self, folder: Path, stderr_handle=subprocess.PIPE, disable_logging: bool = True) -> None:
         """
         Runs the command given at command initialization
         :param folder: Folder where the command is executed
         :param stderr_handle: Handle for the standard error (e.g. PIPE or STDOUT)
+        :param disable_logging: If True, logging is disabled
         :return: None
         """
-        logging.info('Executing command: {}'.format(self.command))
+        if disable_logging is False:
+            logging.info('Executing command: {}'.format(self.command))
         if self.command is None:
             raise ValueError("Invalid command 'None'")
         self._procedure = subprocess.run(
@@ -83,8 +85,9 @@ class Command(object):
         else:
             self._stderr = ''
         self._return_code = self._procedure.returncode
-        logging.debug('stdout: {}'.format(self._stdout))
-        logging.debug('stderr: {}'.format(self._stderr))
+        if disable_logging is False:
+            logging.debug(f'stdout: {self._stdout}')
+            logging.debug(f'stderr: {self._stderr}')
 
     def run_command(self, folder: Path, stderr_handle=subprocess.PIPE) -> None:
         """
