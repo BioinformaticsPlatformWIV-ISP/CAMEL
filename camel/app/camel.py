@@ -4,7 +4,6 @@ from typing import Optional, Union
 
 import yaml
 
-from camel.app.command.command import Command
 from camel.app.loggers.logmanager import LogManager
 from camel.config import LOGGING_CONFIG, MAIN_CONFIG
 
@@ -60,8 +59,8 @@ class Camel(object):
         Checks the commit hash of the CAMEL repository (if available).
         :param short: If True the short commit hash is returned
         """
-        command = Command(f"git rev-parse {'--short' if short else ''} HEAD")
-        command.run(Path.cwd(), disable_logging=True)
-        if not command.returncode == 0:
+        path_version_txt = Path(__file__).parents[2] / 'VERSION'
+        if not path_version_txt.exists():
             return None
-        return command.stdout.strip()
+        with path_version_txt.open() as handle:
+            return handle.readline().strip()
