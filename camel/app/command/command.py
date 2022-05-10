@@ -60,7 +60,7 @@ class Command(object):
         """
         self._command = cmd
 
-    def run(self, folder: Path, stderr_handle=subprocess.PIPE, disable_logging: bool = False) -> None:
+    def run(self, folder: Path, stderr_handle=subprocess.PIPE, disable_logging: bool = True) -> None:
         """
         Runs the command given at command initialization
         :param folder: Folder where the command is executed
