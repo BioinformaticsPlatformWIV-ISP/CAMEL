@@ -75,7 +75,7 @@ gene_detection:
     path: /db/gene_detection/NCBI_AMR
     metadata:
       name: Antibiotic(s)
-      key: antibiotic
+      key: subclass
 
   virulencefinder:
     path: /db/gene_detection/VirulenceFinder-Ecoli

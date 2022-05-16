@@ -90,10 +90,10 @@ gene_detection:
     path: /db/gene_detection/CARD
 
   ncbi_amr:
-    path: /db/gene_detection/NCBI_AMR
+    path: /db/gene_detection/subclass
     metadata:
       name: Antibiotic(s)
-      key: antibiotic
+      key: subclass
 
   virulencefinder:
     path: /db/gene_detection/VirulenceFinder-Ecoli
