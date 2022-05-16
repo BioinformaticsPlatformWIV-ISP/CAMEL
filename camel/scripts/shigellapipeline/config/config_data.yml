@@ -90,7 +90,7 @@ gene_detection:
     path: /db/gene_detection/CARD
 
   ncbi_amr:
-    path: /db/gene_detection/subclass
+    path: /db/gene_detection/NCBI_AMR
     metadata:
       name: Antibiotic(s)
       key: subclass
