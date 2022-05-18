@@ -18,8 +18,9 @@ class TestVariantFiltering(CamelTestSuite):
 
     test_file_dir = CamelTestSuite.get_test_file_dir('variant_calling')
 
-    FILE_VCF_GZ_UNFILTERED = test_file_dir / 'unfiltered_variants-myco.vcf.gz'
-    FILE_BAM = test_file_dir / 'alignment.bam'
+    PATH_VCF_GZ_UNFILTERED = test_file_dir / 'unfiltered_variants-myco.vcf.gz'
+    PATH_BAM = test_file_dir / 'alignment.bam'
+    PATH_BED = test_file_dir / 'h37Rv.bed'
 
     def test_depth_filter(self) -> None:
         """
@@ -27,7 +28,7 @@ class TestVariantFiltering(CamelTestSuite):
         :return: None
         """
         depth_filter = DepthFilter(self.camel)
-        depth_filter.add_input_files({'VCF_GZ': [ToolIOFile(TestVariantFiltering.FILE_VCF_GZ_UNFILTERED)]})
+        depth_filter.add_input_files({'VCF_GZ': [ToolIOFile(TestVariantFiltering.PATH_VCF_GZ_UNFILTERED)]})
         depth_filter.update_parameters(min_depth=20, min_forward_depth=2, min_reverse_depth=2)
         depth_filter.run(self.running_dir)
         self.assertTrue('VCF_GZ' in depth_filter.tool_outputs)
@@ -39,7 +40,7 @@ class TestVariantFiltering(CamelTestSuite):
         :return: None
         """
         depth_filter = DepthFilter(self.camel)
-        depth_filter.add_input_files({'VCF_GZ': [ToolIOFile(TestVariantFiltering.FILE_VCF_GZ_UNFILTERED)]})
+        depth_filter.add_input_files({'VCF_GZ': [ToolIOFile(TestVariantFiltering.PATH_VCF_GZ_UNFILTERED)]})
         depth_filter.update_parameters(min_depth=80, min_forward_depth=5, min_reverse_depth=5, soft_filter=True)
         depth_filter.run(self.running_dir)
         self.assertTrue('VCF_GZ' in depth_filter.tool_outputs)
@@ -51,7 +52,7 @@ class TestVariantFiltering(CamelTestSuite):
         :return: None
         """
         mq_filter = MappingQualityFilter(self.camel)
-        mq_filter.add_input_files({'VCF_GZ': [ToolIOFile(TestVariantFiltering.FILE_VCF_GZ_UNFILTERED)]})
+        mq_filter.add_input_files({'VCF_GZ': [ToolIOFile(TestVariantFiltering.PATH_VCF_GZ_UNFILTERED)]})
         mq_filter.update_parameters(min_mapping_quality=25)
         mq_filter.run(self.running_dir)
         self.assertTrue('VCF_GZ' in mq_filter.tool_outputs)
@@ -63,7 +64,7 @@ class TestVariantFiltering(CamelTestSuite):
         :return: None
         """
         sq_filter = SnpQualityFilter(self.camel)
-        sq_filter.add_input_files({'VCF_GZ': [ToolIOFile(TestVariantFiltering.FILE_VCF_GZ_UNFILTERED)]})
+        sq_filter.add_input_files({'VCF_GZ': [ToolIOFile(TestVariantFiltering.PATH_VCF_GZ_UNFILTERED)]})
         sq_filter.update_parameters(min_snp_quality=50)
         sq_filter.run(self.running_dir)
         self.assertTrue('VCF_GZ' in sq_filter.tool_outputs)
@@ -75,7 +76,7 @@ class TestVariantFiltering(CamelTestSuite):
         :return: None
         """
         distance_filter = DistanceFilter(self.camel)
-        distance_filter.add_input_files({'VCF_GZ': [ToolIOFile(TestVariantFiltering.FILE_VCF_GZ_UNFILTERED)]})
+        distance_filter.add_input_files({'VCF_GZ': [ToolIOFile(TestVariantFiltering.PATH_VCF_GZ_UNFILTERED)]})
         distance_filter.update_parameters(min_distance=10, keep_best=True)
         distance_filter.run(self.running_dir)
         self.assertTrue('VCF_GZ' in distance_filter.tool_outputs)
@@ -87,7 +88,7 @@ class TestVariantFiltering(CamelTestSuite):
         :return: None
         """
         distance_filter = DistanceFilter(self.camel)
-        distance_filter.add_input_files({'VCF_GZ': [ToolIOFile(TestVariantFiltering.FILE_VCF_GZ_UNFILTERED)]})
+        distance_filter.add_input_files({'VCF_GZ': [ToolIOFile(TestVariantFiltering.PATH_VCF_GZ_UNFILTERED)]})
         distance_filter.update_parameters(min_distance=10, keep_best=False, soft_filter=True)
         distance_filter.run(self.running_dir)
         self.assertTrue('VCF_GZ' in distance_filter.tool_outputs)
@@ -100,8 +101,8 @@ class TestVariantFiltering(CamelTestSuite):
         """
         zscore_filter = ZScoreFilter(self.camel)
         zscore_filter.add_input_files({
-            'VCF_GZ': [ToolIOFile(TestVariantFiltering.FILE_VCF_GZ_UNFILTERED)],
-            'BAM': [ToolIOFile(TestVariantFiltering.FILE_BAM)]
+            'VCF_GZ': [ToolIOFile(TestVariantFiltering.PATH_VCF_GZ_UNFILTERED)],
+            'BAM': [ToolIOFile(TestVariantFiltering.PATH_BAM)]
         })
         zscore_filter.run(self.running_dir)
         self.assertTrue('VCF_GZ' in zscore_filter.tool_outputs)
@@ -114,8 +115,8 @@ class TestVariantFiltering(CamelTestSuite):
         """
         zscore_filter = ZScoreFilter(self.camel)
         zscore_filter.add_input_files({
-            'VCF_GZ': [ToolIOFile(TestVariantFiltering.FILE_VCF_GZ_UNFILTERED)],
-            'BAM': [ToolIOFile(TestVariantFiltering.FILE_BAM)]
+            'VCF_GZ': [ToolIOFile(TestVariantFiltering.PATH_VCF_GZ_UNFILTERED)],
+            'BAM': [ToolIOFile(TestVariantFiltering.PATH_BAM)]
         })
         zscore_filter.update_parameters(soft_filter=True)
         zscore_filter.run(self.running_dir)
@@ -127,12 +128,12 @@ class TestVariantFiltering(CamelTestSuite):
         Tests the main script for the variant filtering.
         :return: None
         """
-        number_variants_in = VCFUtils.count_variants(TestVariantFiltering.FILE_VCF_GZ_UNFILTERED)
+        number_variants_in = VCFUtils.count_variants(TestVariantFiltering.PATH_VCF_GZ_UNFILTERED)
         output_file_vcf = self.running_dir / 'filtered_variants.vcf'
         output_file_stats = self.running_dir / 'filter_stats.txt'
         args = [
-            '--vcf', str(TestVariantFiltering.FILE_VCF_GZ_UNFILTERED),
-            '--bam', str(TestVariantFiltering.FILE_BAM),
+            '--vcf', str(TestVariantFiltering.PATH_VCF_GZ_UNFILTERED),
+            '--bam', str(TestVariantFiltering.PATH_BAM),
             '--working-dir', str(self.running_dir),
             '--output-vcf', str(output_file_vcf),
             '--output-stats', str(output_file_stats)
@@ -148,12 +149,12 @@ class TestVariantFiltering(CamelTestSuite):
         Tests the main script for the variant filtering with soft masking.
         :return: None
         """
-        number_variants_in = VCFUtils.count_variants(TestVariantFiltering.FILE_VCF_GZ_UNFILTERED)
+        number_variants_in = VCFUtils.count_variants(TestVariantFiltering.PATH_VCF_GZ_UNFILTERED)
         output_file_vcf = self.running_dir / 'filtered_variants.vcf'
         output_file_stats = self.running_dir / 'filter_stats.txt'
         args = [
-            '--vcf', str(TestVariantFiltering.FILE_VCF_GZ_UNFILTERED),
-            '--bam', str(TestVariantFiltering.FILE_BAM),
+            '--vcf', str(TestVariantFiltering.PATH_VCF_GZ_UNFILTERED),
+            '--bam', str(TestVariantFiltering.PATH_BAM),
             '--working-dir', str(self.running_dir),
             '--output-vcf', str(output_file_vcf),
             '--output-stats', str(output_file_stats),
@@ -170,11 +171,31 @@ class TestVariantFiltering(CamelTestSuite):
         Tests the main script for the variant filtering.
         :return: None
         """
-        number_variants_in = VCFUtils.count_variants(TestVariantFiltering.FILE_VCF_GZ_UNFILTERED)
+        number_variants_in = VCFUtils.count_variants(TestVariantFiltering.PATH_VCF_GZ_UNFILTERED)
         output_file_vcf = self.running_dir / 'filtered_variants.vcf'
         args = [
-            '--vcf', str(TestVariantFiltering.FILE_VCF_GZ_UNFILTERED),
-            '--bam', str(TestVariantFiltering.FILE_BAM),
+            '--vcf', str(TestVariantFiltering.PATH_VCF_GZ_UNFILTERED),
+            '--bam', str(TestVariantFiltering.PATH_BAM),
+            '--working-dir', str(self.running_dir),
+            '--output-vcf', str(output_file_vcf),
+            '--min-snp-quality', '30'
+        ]
+        main_filtering = MainFiltering(args)
+        main_filtering.run()
+        self.assertGreater(output_file_vcf.stat().st_size, 0)
+        self.assertLess(VCFUtils.count_variants(output_file_vcf), number_variants_in)
+
+    def test_variant_filtering_main_bed_input(self) -> None:
+        """
+        Tests the main script for the variant filtering with a BED file to filter problematic regions.
+        :return: None
+        """
+        number_variants_in = VCFUtils.count_variants(TestVariantFiltering.PATH_VCF_GZ_UNFILTERED)
+        output_file_vcf = self.running_dir / 'filtered_variants.vcf'
+        args = [
+            '--vcf', str(TestVariantFiltering.PATH_VCF_GZ_UNFILTERED),
+            '--bam', str(TestVariantFiltering.PATH_BAM),
+            '--bed', str(TestVariantFiltering.PATH_BED),
             '--working-dir', str(self.running_dir),
             '--output-vcf', str(output_file_vcf),
             '--min-snp-quality', '30'

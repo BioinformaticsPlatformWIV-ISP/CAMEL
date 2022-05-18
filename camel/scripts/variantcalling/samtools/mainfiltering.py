@@ -20,7 +20,6 @@ class MainFiltering(object):
         Initializes the main script.
         """
         self._args = MainFiltering._parse_arguments(args)
-        self._camel = Camel()
 
     @staticmethod
     def _parse_arguments(args: Optional[Sequence[str]] = None) -> argparse.Namespace:
@@ -31,6 +30,7 @@ class MainFiltering(object):
         argument_parser = argparse.ArgumentParser()
         argument_parser.add_argument('--vcf', type=Path, required=True, help="Input VCF file")
         argument_parser.add_argument('--bam', type=Path)
+        argument_parser.add_argument('--bed', type=Path, help='BED file with regions to remove')
         argument_parser.add_argument('--output-vcf', type=Path, required=True)
         argument_parser.add_argument('--output-stats', type=Path)
         argument_parser.add_argument('--working-dir', type=Path, default=Path.cwd())
@@ -65,7 +65,7 @@ class MainFiltering(object):
         Returns the dictionary with filtering options.
         :return: Filtering options
         """
-        return {
+        filtering_opts = {
             'soft_filter': self._args.soft_filter,
             'depth': {
                 'min_total_depth': self._args.min_total_depth,
@@ -80,10 +80,14 @@ class MainFiltering(object):
                 'keep_best': self._args.keep_best},
             'zscore': {
                 'min_zscore': self._args.min_zscore,
-                'y_multiplier': self._args.y_mult}
+                'y_multiplier': self._args.y_mult},
         }
+        if self._args.bed is not None:
+            filtering_opts['region'] = {'bed_file': self._args.bed}
+        return filtering_opts
 
 
 if __name__ == '__main__':
+    Camel.get_instance()
     main = MainFiltering()
     main.run()
