@@ -2,6 +2,7 @@ import unittest
 from pathlib import Path
 
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
+from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.gatk4.gatk4applybqsr import GATK4ApplyBQSR
 from camel.app.tools.gatk4.gatk4applyvqsr import GATK4ApplyVQSR
@@ -64,13 +65,33 @@ class TestGATK4(CamelTestSuite):
         apply_vqsr = GATK4ApplyVQSR(self.camel)
         apply_vqsr.add_input_files({
             'VCF': [ToolIOFile(TestGATK4.test_file_dir / "joint_gt_chr22.vcf.gz")],
-            'TXT_RecalibrationTable': [ToolIOFile(TestGATK4.test_file_dir / "variant_recalibration.tabl")]
+            'TXT_RecalibrationTable': [ToolIOFile(TestGATK4.test_file_dir / "variant_recalibration.tabl")],
+            'TXT_tranches': [ToolIOFile(TestGATK4.test_file_dir / "variant_recalibration.tranches")]
         })
         apply_vqsr.update_parameters(
-            mode = "BOTH"
+            mode="BOTH",
+            filter_level=99.9
         )
         apply_vqsr.run(self.running_dir)
         self.verify_output_files(apply_vqsr, 'VCF')
+
+    def test_gatk4_applyvqsr_err(self) -> None:
+        """
+        Test GATK4ApplyVQSR tranches error
+        :return: None
+        """
+        apply_vqsr = GATK4ApplyVQSR(self.camel)
+        apply_vqsr.add_input_files({
+            'VCF': [ToolIOFile(TestGATK4.test_file_dir / "joint_gt_chr22.vcf.gz")],
+            'TXT_RecalibrationTable': [ToolIOFile(TestGATK4.test_file_dir / "variant_recalibration.tabl")],
+        })
+        apply_vqsr.update_parameters(
+            mode="BOTH",
+            filter_level=99.9
+        )
+
+        with self.assertRaises(InvalidInputSpecificationError):
+            apply_vqsr.run(self.running_dir)
 
     def test_gatk4_baserecalibrator(self) -> None:
         """
