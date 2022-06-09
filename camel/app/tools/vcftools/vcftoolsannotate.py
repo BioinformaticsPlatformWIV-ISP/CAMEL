@@ -5,6 +5,8 @@ from camel.app.error.invalidinputspecificationerror import InvalidInputSpecifica
 
 class VCFtoolsAnnotate(VCFtools):
     """
+    Annotate VCF file, add filters or custom annotations
+    Reads an input VCF from stdin and prints output VCF to stdout
     """
 
     def __init__(self, camel: Camel) -> None:
@@ -24,10 +26,12 @@ class VCFtoolsAnnotate(VCFtools):
         build_options = self._build_options(excluded_parameters=self._specific_parameters)
 
         if 'VCF' in self._tool_inputs:
-            input_string = f'cat {self._tool_inputs["VCF"][0].path}'
+            input_command = f'cat {self._tool_inputs["VCF"][0].path}'
         elif 'VCF_GZ' in self._tool_inputs:
             input_string = f'gunzip -c {self._tool_inputs["VCF_GZ"][0].path}'
         else:
             raise InvalidInputSpecificationError("VCFtools vcf-annotate requires a VCF or VCF_GZ input file.")
 
-        self._command.command = f'{input_string} | {self._tool_command} {" ".join(build_options)} | bgzip -c > {self._parameters["output"].value}'
+        self._command.command = ("|").join([input_command,
+                                            f' {self._tool_command} {" ".join(build_options)} ',
+                                            f' bgzip -c > {self.folder / self._parameters["output"].value}'])
