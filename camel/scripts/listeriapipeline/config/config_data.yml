@@ -60,7 +60,7 @@ gene_detection:
     perc_identity_cutoff: 90
     metadata:
       name: Antibiotic(s)
-      key: antibiotic
+      key: subclass
 
   resfinder:
     path: /db/gene_detection/ResFinder

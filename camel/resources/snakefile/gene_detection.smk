@@ -174,6 +174,7 @@ rule gene_detection_create_empty_report:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'gene_detection' / wildcards.db / 'report',
     run:
         from camel.app.components.html.htmlreportsection import HtmlReportSection
+        from camel.app.io.tooliovalue import ToolIOValue
         db_info = SnakemakeUtils.load_object(Path(input.INFORMS_db_info))
         section = HtmlReportSection(db_info['title'], 3)
         section.add_paragraph('Analysis disabled')

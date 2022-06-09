@@ -46,6 +46,7 @@ rule spa_typing_run:
     params:
         running_dir = Path(config['working_dir']) / 'spa_typing' / 'detection'
     run:
+        from camel.app.io.tooliofile import ToolIOFile
         from camel.app.tools.spatyping.spatyping import SpaTyping
         spatyping = SpaTyping(Camel.get_instance())
         SnakemakeUtils.add_pickle_input(spatyping, 'TSV', Path(input.TSV))
