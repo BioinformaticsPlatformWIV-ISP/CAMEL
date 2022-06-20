@@ -28,10 +28,10 @@ class VCFtoolsAnnotate(VCFtools):
         if 'VCF' in self._tool_inputs:
             input_command = f'cat {self._tool_inputs["VCF"][0].path}'
         elif 'VCF_GZ' in self._tool_inputs:
-            input_string = f'gunzip -c {self._tool_inputs["VCF_GZ"][0].path}'
+            input_command = f'gunzip -c {self._tool_inputs["VCF_GZ"][0].path}'
         else:
             raise InvalidInputSpecificationError("VCFtools vcf-annotate requires a VCF or VCF_GZ input file.")
 
-        self._command.command = ("|").join([input_command,
+        self._command.command = '|'.join([input_command,
                                             f' {self._tool_command} {" ".join(build_options)} ',
                                             f' bgzip -c > {self.folder / self._parameters["output"].value}'])
