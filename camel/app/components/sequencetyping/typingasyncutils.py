@@ -48,6 +48,7 @@ def detect_hit_blast(
         blast.update_parameters(task=blastn_task)
     elif locus_metadata['type'] == 'peptide':
         blast = Blastx(Camel.get_instance())
+        blast.update_parameters(seg='no')
     else:
         raise ValueError(f"Invalid locus type: {locus_metadata['type']}")
 
