@@ -1,17 +1,16 @@
-bwa_mem: 0.7.15
-samtools view: 1.3.1
-samtools sort: 1.3.1
-samtools index: 1.3.1
-Picard SortSam: 2.8.3
-Picard MarkDuplicates: 2.8.3
+Mutect1: 1.1.7
 Picard AddOrReplaceReadGroups: 2.8.3
+Picard MarkDuplicates: 2.8.3
+Picard SortSam: 2.8.3
 bedtools bamtobed: 2.25.0
 bedtools merge: 2.25.0
-gatk RealignerTargetCreator: 3.7
-gatk IndelRealigner: 3.7
-gatk BaseRecalibrator: 3.7
-gatk PrintReads: 3.7
-gatk BaseRecalibrator: 3.7
+bwa_mem: 0.7.15
 gatk AnalyzeCovariates: 3.7
-Mutect1: 1.1.7
+gatk BaseRecalibrator: 3.7
+gatk IndelRealigner: 3.7
 gatk MuTect2: 3.7
+gatk PrintReads: 3.7
+gatk RealignerTargetCreator: 3.7
+samtools index: 1.3.1
+samtools sort: 1.3.1
+samtools view: 1.3.1
