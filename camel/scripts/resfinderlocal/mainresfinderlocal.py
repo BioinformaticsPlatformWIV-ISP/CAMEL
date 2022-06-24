@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 import argparse
-import logging
 from pathlib import Path
 from typing import Any, Dict, Optional, Sequence
 
+from camel.app.camel import Camel
 from camel.app.components import mainscriptutils
 from camel.app.components.html.htmlreport import HtmlReport
 from camel.app.components.workflows.genedetectionwrapper import GeneDetectionWrapper, GeneDetectionOutput
@@ -93,6 +93,6 @@ class MainResFinderLocal(object):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
+    Camel.get_instance()
     main = MainResFinderLocal()
     main.run()

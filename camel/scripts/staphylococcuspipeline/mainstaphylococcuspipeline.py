@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 import argparse
-import logging
 from typing import Optional, List, Dict, Sequence
 
 import yaml
 
+from camel.app.camel import Camel
 from camel.app.components.pipelines.reportpipeline import ReportPipeline
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.scripts.staphylococcuspipeline import SNAKEFILE_MAIN, CONFIG_DATA
@@ -73,6 +73,6 @@ class MainStaphylococcusPipeline(ReportPipeline):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
+    Camel.get_instance()
     main = MainStaphylococcusPipeline()
     main.run()

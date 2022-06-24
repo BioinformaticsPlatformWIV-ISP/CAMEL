@@ -136,6 +136,6 @@ class MainCfsanPhylo(BasePhylo):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
+    Camel.get_instance()
     main = MainCfsanPhylo()
     main.run()

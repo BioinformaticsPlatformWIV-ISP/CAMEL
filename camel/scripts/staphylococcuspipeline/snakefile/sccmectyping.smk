@@ -24,7 +24,7 @@ rule sccmec_typing_run:
         sccmec_typing = SCCmecTyping(Camel.get_instance())
         sccmec_typing.add_input_files({'YML': [ToolIOFile(Path(input.YAML))]})
         SnakemakeUtils.add_pickle_input(sccmec_typing, 'VAL_HITS', Path(input.VAL_HITS))
-        step = Step(rule, sccmec_typing, Camel.get_instance(), params.running_dir, config)
+        step = Step(str(rule), sccmec_typing, Camel.get_instance(), params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(sccmec_typing, output)
 

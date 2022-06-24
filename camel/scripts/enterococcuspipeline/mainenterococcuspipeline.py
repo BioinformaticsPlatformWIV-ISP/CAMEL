@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 import argparse
-import logging
 from typing import Optional, List, Dict, Sequence
 
 import yaml
 
+from camel.app.camel import Camel
 from camel.app.components import mainscriptutils
 from camel.app.components.pipelines.reportpipeline import ReportPipeline
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
@@ -115,6 +115,6 @@ class MainEnterococcusPipeline(ReportPipeline):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
+    Camel.get_instance()
     main = MainEnterococcusPipeline()
     main.run()

@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import argparse
-import logging
 from pathlib import Path
 from typing import Optional, Sequence
 
@@ -95,6 +94,6 @@ class MainPointFinder(object):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
-    p = MainPointFinder()
-    p.run()
+    Camel.get_instance()
+    pointfinder = MainPointFinder()
+    pointfinder.run()

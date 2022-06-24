@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 import argparse
-import logging
 import shutil
 from pathlib import Path
 from typing import Sequence, Optional
 
+from camel.app.camel import Camel
 from camel.app.components import mainscriptutils
 from camel.app.components.html.htmlreport import HtmlReport
 from camel.app.components.sequencetyping.sequencetypingutils import SequenceTypingUtils
@@ -142,6 +142,6 @@ class MainSequenceTyping(object):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
+    Camel.get_instance()
     sequence_typing = MainSequenceTyping()
     sequence_typing.run()

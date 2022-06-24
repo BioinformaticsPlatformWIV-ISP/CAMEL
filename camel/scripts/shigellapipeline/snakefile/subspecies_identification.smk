@@ -1,5 +1,7 @@
 from pathlib import Path
 
+from camel.app.camel import Camel
+from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile import variant_calling, gene_detection
 from camel.scripts.shigellapipeline.snakefile import subspecies_identification
@@ -18,10 +20,10 @@ rule subspecies_identification_speG_depth:
     run:
         from camel.app.io.tooliofile import ToolIOFile
         from camel.app.tools.samtools.samtoolsdepth import SamtoolsDepth
-        samtools_depth = SamtoolsDepth(camel)
+        samtools_depth = SamtoolsDepth(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(samtools_depth, input)
         samtools_depth.add_input_files({'BED': [ToolIOFile(Path(params.bed_file))]})
-        step = Step(rule, samtools_depth, camel, params.running_dir, config)
+        step = Step(str(rule), samtools_depth, Camel.get_instance(), params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(samtools_depth, output)
 
@@ -39,9 +41,9 @@ rule subspecies_identification_detect_species:
         running_dir = Path(config['working_dir']) / 'subspecies_identification' / 'species'
     run:
         from camel.app.tools.pipelines.shigella.speciesdetector import SpeciesDetector
-        species_detector = SpeciesDetector(camel)
+        species_detector = SpeciesDetector(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(species_detector, input)
-        step = Step(rule, species_detector, camel, params.running_dir, config)
+        step = Step(str(rule), species_detector, Camel.get_instance(), params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(species_detector, output)
 
@@ -59,9 +61,9 @@ rule subspecies_identification_report_species:
         running_dir = Path(config['working_dir']) / 'subspecies_identification' / 'report'
     run:
         from camel.app.tools.pipelines.shigella.speciesreporter import SpeciesReporter
-        reporter = SpeciesReporter(camel)
+        reporter = SpeciesReporter(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(reporter, input)
-        step = Step(rule, reporter, camel, params.running_dir, config)
+        step = Step(str(rule), reporter, Camel.get_instance(), params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
 
@@ -80,16 +82,16 @@ rule subspecies_identification_detect_subspecies:
     Detects the Shigella subspecies.
     """
     input:
-        VAL_hits = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_ALL_HITS).format(db='subspecies_identification'),
+        VAL_hits = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_ALL_HITS).format(db='subspecies_identification')
     output:
         INFORMS = Path(config['working_dir']) / subspecies_identification.OUTPUT_SPECIES_SUBSPECIES_INFORMS
     params:
         running_dir = Path(config['working_dir']) / 'subspecies_identification' / 'subspecies'
     run:
         from camel.app.tools.pipelines.shigella.subspeciesdetector import SubspeciesDetector
-        subspecies_detector = SubspeciesDetector(camel)
+        subspecies_detector = SubspeciesDetector(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(subspecies_detector, input)
-        step = Step(rule, subspecies_detector, camel, params.running_dir, config)
+        step = Step(str(rule), subspecies_detector, Camel.get_instance(), params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(subspecies_detector, output)
 
@@ -107,9 +109,9 @@ rule subspecies_identification_report_subspecies:
         running_dir = Path(config['working_dir']) / 'subspecies_identification' / 'report'
     run:
         from camel.app.tools.pipelines.shigella.subspeciesreporter import SubspeciesReporter
-        reporter = SubspeciesReporter(camel)
+        reporter = SubspeciesReporter(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(reporter, input)
-        step = Step(rule, reporter, camel, params.running_dir, config)
+        step = Step(str(rule), reporter, Camel.get_instance(), params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
 

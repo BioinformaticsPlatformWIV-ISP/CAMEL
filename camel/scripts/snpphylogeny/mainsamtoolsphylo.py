@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 import argparse
-import logging
+import shutil
 from pathlib import Path
 from typing import Optional, Dict, Any, Sequence
-
-import shutil
 
 from camel.app.camel import Camel
 from camel.app.components.filesystemhelper import FileSystemHelper
@@ -259,6 +257,6 @@ class MainSamtoolsPhylo(BasePhylo):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
+    Camel.get_instance()
     main = MainSamtoolsPhylo()
     main.run()

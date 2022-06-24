@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 import argparse
-import logging
 from typing import Tuple, Any, List, Dict, Optional, Sequence
 
 import yaml
 
-from camel.app.components.pipelines.basepipeline import BasePipeline
+from camel.app.camel import Camel
 from camel.app.components.pipelines.reportpipeline import ReportPipeline
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.scripts.shigellapipeline import SNAKEFILE_MAIN, CONFIG_DATA
@@ -84,6 +83,6 @@ class MainShigellaPipeline(ReportPipeline):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
+    Camel.get_instance()
     main = MainShigellaPipeline()
     main.run()

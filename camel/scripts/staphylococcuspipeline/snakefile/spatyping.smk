@@ -29,7 +29,7 @@ rule spa_typing_blastn:
             num_alignments=100_000,
             dust='no',
             task='blastn')
-        step = Step(rule, blastn, Camel.get_instance(), params.running_dir, config)
+        step = Step(str(rule), blastn, Camel.get_instance(), params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(blastn, output)
 
@@ -51,7 +51,7 @@ rule spa_typing_run:
         spatyping = SpaTyping(Camel.get_instance())
         SnakemakeUtils.add_pickle_input(spatyping, 'TSV', Path(input.TSV))
         spatyping.add_input_files({'CSV_profiles': [ToolIOFile(Path(input.CSV_profiles))]})
-        step = Step(rule, spatyping, Camel.get_instance(), params.running_dir, config)
+        step = Step(str(rule), spatyping, Camel.get_instance(), params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(spatyping, output)
 
@@ -70,7 +70,7 @@ rule spa_typing_report:
         from camel.app.tools.spatyping.spatypingreporter import SpaTypingReporter
         reporter = SpaTypingReporter(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(reporter, input)
-        step = Step(rule, reporter, Camel.get_instance(), params.running_dir, config)
+        step = Step(str(rule), reporter, Camel.get_instance(), params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
 
