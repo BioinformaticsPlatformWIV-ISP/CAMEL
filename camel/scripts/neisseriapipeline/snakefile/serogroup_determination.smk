@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from camel.app.camel import Camel
+from camel.app.pipeline.step import Step
 from camel.resources.snakefile import sequence_typing
 from camel.scripts.neisseriapipeline.snakefile import serogroup_determination
 
@@ -27,7 +28,7 @@ rule serogroup_determination_analysis:
         detector = SerogroupDetermination(camel)
         for hits_output, serogroup in zip(input.hits, params.serogroups):
             detector.add_input_files({f'hits_{serogroup}': SnakemakeUtils.load_object(Path(hits_output))})
-        step = Step(rule, detector, camel, params.working_dir, config)
+        step = Step(str(rule), detector, camel, params.working_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(detector, output)
 
@@ -46,7 +47,7 @@ rule serogroup_determination_report:
         from camel.app.tools.pipelines.neisseria.serogroupdeterminationreporter import SerogroupDeterminationReporter
         reporter = SerogroupDeterminationReporter(camel)
         SnakemakeUtils.add_pickle_inputs(reporter, input)
-        step = Step(rule, reporter, camel, params.working_dir, config)
+        step = Step(str(rule), reporter, camel, params.working_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
 

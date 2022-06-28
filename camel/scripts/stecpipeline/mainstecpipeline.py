@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 import argparse
-import logging
 from pathlib import Path
 from typing import List, Dict, Optional, Tuple, Sequence
 
 import yaml
 
+from camel.app.camel import Camel
 from camel.app.components.files.fastqutils import FastqUtils
 from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.components.pipelines.reportpipeline import ReportPipeline
@@ -114,6 +114,6 @@ class MainSTECPipeline(ReportPipeline):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
+    Camel.get_instance()
     main = MainSTECPipeline()
     main.run()

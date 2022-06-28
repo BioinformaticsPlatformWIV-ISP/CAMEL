@@ -1,4 +1,7 @@
 import re
+from pathlib import Path
+
+from typing import Dict, List
 
 
 class BlastFormat7Parser(object):
@@ -54,7 +57,7 @@ class BlastFormat7Parser(object):
     }
 
     @staticmethod
-    def __is_valid_blast_output(lines_blast_output):
+    def __is_valid_blast_output(lines_blast_output: List[str]) -> bool:
         """
         Checks if the output is valid Blastn / Blastx output.
         :param lines_blast_output: Lines from the Blastn / Blastx output file.
@@ -65,7 +68,7 @@ class BlastFormat7Parser(object):
         return True
 
     @staticmethod
-    def parse_output_file(output_file, use_abbreviations=True):
+    def parse_output_file(output_file: Path, use_abbreviations: bool = True) -> List[Dict]:
         """
         Parses the given output file.
         :param output_file: Output file

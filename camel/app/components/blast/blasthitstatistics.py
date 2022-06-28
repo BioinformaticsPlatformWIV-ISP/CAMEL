@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from pathlib import Path
 from typing import List, Dict, Any
 
 from camel.app.components.blast.blastformat7parser import BlastFormat7Parser
@@ -20,7 +21,7 @@ class BlastHitStatistics:
     percent_identity: float
 
     @staticmethod
-    def parse_blast_output(output_path: str) -> List['BlastHitStatistics']:
+    def parse_blast_output(output_path: Path) -> List['BlastHitStatistics']:
         """
         Parses a BLAST output file generated with the output format defined above.
         :return: List of parsed BLAST statistics

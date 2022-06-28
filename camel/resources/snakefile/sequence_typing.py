@@ -2,15 +2,12 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 
 SNAKEFILE_SEQUENCE_TYPING = f'{Path(__file__).parent / Path(__file__).stem}.smk'
-SNAKEFILE_SEQUENCE_TYPING_BLAST = f'{Path(__file__).parent / Path(__file__).stem}_blast.smk'
-SNAKEFILE_SEQUENCE_TYPING_SRST2 = f'{Path(__file__).parent / Path(__file__).stem}_srst2.smk'
-SNAKEFILE_SEQUENCE_TYPING_KMA = f'{Path(__file__).parent / Path(__file__).stem}_kma.smk'
 
 _dir_typing = Path('typing', '{scheme}')
 OUTPUT_TYPING_REPORT = _dir_typing / 'html.io'
 OUTPUT_TYPING_REPORT_EMPTY = _dir_typing / 'html-empty.io'
 OUTPUT_TYPING_TSV = _dir_typing / '{locus_type}' / 'tabular' / 'tsv.io'
-OUTPUT_TYPING_HITS = _dir_typing / '{locus_type}' / '{detection_method}' / 'all-hits.io'
+OUTPUT_TYPING_HITS = _dir_typing / '{locus_type}' / '{detection_method}' / 'hits.io'
 OUTPUT_TYPING_SUMMARY = _dir_typing / 'summary_out.tsv'
 OUTPUT_TYPING_INFORMS = _dir_typing / 'informs.io'
 

@@ -1,4 +1,6 @@
-from typing import Optional
+import logging
+from pathlib import Path
+from typing import Optional, Union
 
 import yaml
 
@@ -14,7 +16,7 @@ class Camel(object):
     _current_instance = None
     _logger_is_initialized = False
 
-    def __init__(self, logging_config: Optional[str] = LOGGING_CONFIG, tool_parameter_loc: str = None) -> None:
+    def __init__(self, logging_config: Optional[Path] = LOGGING_CONFIG, tool_parameter_loc: str = None) -> None:
         """
         Initializes a CAMEL system.
         :param logging_config: Location of logging config file
@@ -29,6 +31,9 @@ class Camel(object):
 
         if self._config.get('tool_service', 'db') == 'yaml' and 'tool_parameter_loc' not in self._config:
             self._config['tool_parameter_loc'] = tool_parameter_loc
+
+        commit_hash = Camel.get_commit_hash()
+        logging.debug(f"CAMEL commit hash: {commit_hash if commit_hash is not None else 'Not available'}")
 
     @property
     def config(self) -> dict:
@@ -47,3 +52,14 @@ class Camel(object):
         if Camel._current_instance is None:
             Camel._current_instance = Camel()
         return Camel._current_instance
+
+    @staticmethod
+    def get_commit_hash() -> Union[str, None]:
+        """
+        Checks the commit hash of the CAMEL repository (if available).
+        """
+        path_version_txt = Path(__file__).parents[2] / 'VERSION'
+        if not path_version_txt.exists():
+            return None
+        with path_version_txt.open() as handle:
+            return handle.readline().strip()

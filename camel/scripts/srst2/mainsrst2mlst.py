@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 import argparse
-import logging
+import shutil
 from pathlib import Path
 from typing import Optional, Dict, List, Sequence
-
-import shutil
 
 from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
@@ -106,6 +104,6 @@ class MainSrst2Mlst(object):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
+    Camel.get_instance()
     main_srst2 = MainSrst2Mlst()
     main_srst2.run()

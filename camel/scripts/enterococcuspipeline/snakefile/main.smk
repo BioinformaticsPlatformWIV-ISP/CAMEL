@@ -58,7 +58,7 @@ rule select_fastq:
     Other workflows such as Kraken or Assembly rely on this dictionary to get input files (PE or SE).
     """
     input:
-        FASTQ_PE = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_DICT,
+        FASTQ_PE = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_DICT
     output:
         IO_FASTQ = Path(config['working_dir']) / 'fq_dict.io'
     shell:

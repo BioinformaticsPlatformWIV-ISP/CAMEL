@@ -1,6 +1,5 @@
 import re
 from typing import Optional
-from pathlib import Path
 
 from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
@@ -42,9 +41,9 @@ class MarkDuplicates(Picard):
         del self._tool_inputs[self._main_input]
 
         # Run parent function for other inputs, e.g. FASTA_REF (optional)
-        super(MarkDuplicates, self)._set_input()
+        super()._set_input()
 
-    def _set_informs(self, stderr: Optional[str] = None):
+    def _set_informs(self, stderr: Optional[str] = None) -> None:
         """
         Analyse the result of picard run and update tool.informs
         Total reads: Total no. or reads in the file
@@ -72,6 +71,6 @@ class MarkDuplicates(Picard):
         Set the output specification. Overrides parent class method.
         :return: None
         """
-        self._tool_outputs['BAM'] = [ToolIOFile(Path(self.folder) / self._parameters['output'].value)]
+        self._tool_outputs['BAM'] = [ToolIOFile(self.folder / self._parameters['output'].value)]
         self._tool_outputs['METRICS'] = [
-            ToolIOFile(Path(self.folder) / self._parameters['metrics_output'].value)]
+            ToolIOFile(self.folder / self._parameters['metrics_output'].value)]

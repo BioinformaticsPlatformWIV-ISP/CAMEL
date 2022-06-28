@@ -106,6 +106,6 @@ class MainSrst2Gene(object):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
+    Camel.get_instance()
     srst2_Wrapper = MainSrst2Gene()
     srst2_Wrapper.run()

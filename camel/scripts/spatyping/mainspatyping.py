@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import argparse
+import json
 import logging
 from pathlib import Path
 from typing import Optional, Sequence
@@ -41,6 +42,7 @@ class MainSpaTyping(object):
         mainscriptutils.add_assembly_arguments(argument_parser)
         argument_parser.add_argument(
             '--db-path', type=Path, help="Path to the database", default=Path('/db/pipelines/saureus'))
+        argument_parser.add_argument('--output-json', type=Path, help='Export output in JSON format')
         return argument_parser.parse_args(args)
 
     def run(self) -> None:
@@ -58,6 +60,13 @@ class MainSpaTyping(object):
         fasta_file = self._helper.prepare_fasta_input(report, self._args)
         blastn_tsv_output = self.__run_blastn(fasta_file)
         spa_typing = self.__run_spa_tying(blastn_tsv_output.path, fasta_file)
+
+        # Save JSON output (if specified)
+        if self._args.output_json is not None:
+            with open(self._args.output_json, 'w') as handle:
+                json.dump(spa_typing.informs, handle, indent=2)
+            logging.info(f'spa typing informs output save to: {self._args.output_json}')
+
         self.__add_report_output(spa_typing, report)
 
     def __run_blastn(self, fasta_file: Path) -> ToolIOFile:
@@ -112,6 +121,6 @@ class MainSpaTyping(object):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
+    Camel.get_instance()
     main = MainSpaTyping()
     main.run()

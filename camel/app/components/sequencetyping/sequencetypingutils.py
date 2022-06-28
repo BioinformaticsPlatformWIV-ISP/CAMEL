@@ -60,7 +60,7 @@ class SequenceTypingUtils(object):
             regex = '\\d+$'
         m = re.findall(regex, complete_name)
         if not len(m) == 1:
-            raise ValueError("Cannot determine allele identifier for '{}' (RE: {})".format(complete_name, regex))
+            raise ValueError(f"Cannot determine allele identifier for '{complete_name}' (RE: {regex})")
         return m[0]
 
     @staticmethod

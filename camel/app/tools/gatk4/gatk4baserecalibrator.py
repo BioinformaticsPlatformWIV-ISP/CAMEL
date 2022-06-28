@@ -1,6 +1,6 @@
 from camel.app.camel import Camel
-from camel.app.tools.gatk4.gatk4 import GATK4
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from camel.app.tools.gatk4.gatk4 import GATK4
 
 
 class GATK4BaseRecalibrator(GATK4):
