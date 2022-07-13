@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 import argparse
+import json
+from pathlib import Path
 from typing import Optional, Sequence, Dict, Any
+
+import logging
 
 from camel.app.camel import Camel
 from camel.app.components import mainscriptutils
@@ -32,6 +36,8 @@ class MainConFindr(object):
         argument_parser = argparse.ArgumentParser()
         mainscriptutils.add_input_files_arguments(argument_parser, False)
         mainscriptutils.add_common_arguments(argument_parser)
+        argument_parser.add_argument(
+            '--output-json', type=Path, help='If specified, ConFindr informs are stored in this file')
 
         # Parameters
         argument_parser.add_argument('--quality-cutoff', type=int, default=20, help='Base quality cutoff')
@@ -61,10 +67,17 @@ class MainConFindr(object):
             base_cutoff=self._args.base_cutoff,
             base_fraction_cutoff=self._args.base_percentage_cutoff / 100,
             min_matching_hashes=self._args.min_matching_hashes,
-            data_type=self._args.read_type.title()
+            data_type=self._args.read_type.title(),
+            threads=self._args.threads
         )
         confindr.add_input_files(input_dict)
         confindr.run(self._args.working_dir)
+
+        # Save informs to file (if specified)
+        if self._args.output_json is not None:
+            with self._args.output_json.open('w') as handle:
+                json.dump(confindr.informs, handle, indent=2)
+                logging.info(f'ConFindr informs saved to {self._args.output_json}')
 
         # Create output report
         confindr_reporter = ConFindrReporter(Camel.get_instance())
@@ -76,6 +89,7 @@ class MainConFindr(object):
         report.add_html_object(SnakePipelineUtils.create_commands_section([confindr.informs], self._args.working_dir))
         report.add_html_object(SnakePipelineUtils.create_citations_section(['Low_2019-confindr', 'Jolley_2012-rmlst']))
         report.save()
+        logging.info(f'Report saved to: {self._args.output_html}')
 
     def __prepare_input(self) -> Dict[str, Any]:
         """

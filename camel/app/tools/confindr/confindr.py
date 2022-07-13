@@ -42,8 +42,7 @@ class ConFindr(Tool):
             self._tool_command,
             '--input_directory', str(dir_input),
             '--output_name', str(dir_out),
-            '--cross_details',
-            '--threads', '1'
+            '--cross_details'
         ] + self._build_options())
         self._execute_command()
         self.__set_output(dir_out)
