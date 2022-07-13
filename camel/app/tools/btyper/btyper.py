@@ -1,14 +1,18 @@
+import os
+from pathlib import Path
 from camel.app.camel import Camel
 from camel.app.tools.tool import Tool
+from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 
-class Btyper(Tool):
+class BTyper(Tool):
+
 
     def __init__(self, camel: Camel) -> None:
         """
         Initializes this tool.
         :param camel: CAMEL instance
         """
-        super().__init__('Btyper', '3.2.0', camel)
+        super().__init__('BTyper', '3.2.0', camel)
 
     def _check_input(self) -> None:
         """
@@ -16,8 +20,12 @@ class Btyper(Tool):
         :return: None
         """
         if 'FASTA' not in self._tool_inputs:
-            raise ValueError('No FASTA input found')
-        super(Btyper, self)._check_input()
+            raise InvalidInputSpecificationError('No FASTA input found')
+        super()._check_input()
+
+        my_path = self._folder / Path(str(self._tool_inputs['FASTA'][0])).name
+        os.symlink(str(self._tool_inputs["FASTA"][0]), str(my_path))
+        self._tool_inputs['FASTA'][0] = my_path
 
     def _build_command(self) -> None:
         """
@@ -33,6 +41,6 @@ class Btyper(Tool):
         Executes this tool.
         :return: None
         """
-        self._check_input()
         self._build_command()
         self._execute_command()
+        self._tool_outputs['TSV'] = [ToolIOFile(self._parameters['output_dir'].value / 'btyper3_final_results' / 'contigs_final_results.txt')]
