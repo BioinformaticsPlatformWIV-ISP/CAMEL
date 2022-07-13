@@ -3,6 +3,8 @@ from pathlib import Path
 from camel.app.camel import Camel
 from camel.app.tools.tool import Tool
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from camel.app.error.toolexecutionerror import ToolExecutionError
+from camel.app.io.tooliofile import ToolIOFile
 
 class BTyper(Tool):
 
@@ -36,6 +38,21 @@ class BTyper(Tool):
                                 f'--input {self._tool_inputs["FASTA"][0]} ' \
                                 f'{" ".join(self._build_options())}'
 
+    def _check_command_output(self) -> None:
+        """
+        Checks command output
+        :return: None
+        """
+        if self._command.returncode != 0:
+            raise ToolExecutionError(f"Command execution failed (Exit code: {self._command.returncode})")
+
+    def _set_output(self) -> None:
+        """
+        set the output file to check
+        """
+        output_filename = Path(f'btyper3_final_results/{self._tool_inputs["FASTA"][0].stem}_final_results.txt')
+        self._tool_outputs['TSV'] = [ToolIOFile(self._parameters['output_dir'].value / output_filename)]
+
     def _execute_tool(self) -> None:
         """
         Executes this tool.
@@ -43,4 +60,4 @@ class BTyper(Tool):
         """
         self._build_command()
         self._execute_command()
-        self._tool_outputs['TSV'] = [ToolIOFile(self._parameters['output_dir'].value / 'btyper3_final_results' / 'contigs_final_results.txt')]
+        self._set_output()
