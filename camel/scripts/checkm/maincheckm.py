@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 import argparse
+import json
 from pathlib import Path
 from typing import Tuple, Optional, Sequence, Dict, Any
+
+import logging
 
 from camel.app.camel import Camel
 from camel.app.components import mainscriptutils
@@ -34,6 +37,7 @@ class MainCheckM(object):
         argument_parser.add_argument('--working-dir', help='Working directory', type=Path, default=Path.cwd())
         argument_parser.add_argument('--output-html', type=Path, help='Report output')
         argument_parser.add_argument('--output-dir', type=Path, help='Output directory')
+        argument_parser.add_argument('--output-json', type=Path, help='Output path to store CheckM informs')
         argument_parser.add_argument('--threads', type=int, default=4, help='Number of threads to use')
         return argument_parser.parse_args(args)
 
@@ -55,6 +59,12 @@ class MainCheckM(object):
         checkm.add_input_files(input_dict)
         checkm.update_parameters(threads=self._args.threads)
         checkm.run(self._args.working_dir)
+
+        # Save informs (if specified)
+        if self._args.output_json is not None:
+            with self._args.output_json.open('w') as handle:
+                json.dump(checkm.informs, handle, indent=2)
+                logging.info(f'CheckM informs saved to {self._args.output_json}')
 
         # Create output report
         checkm_reporter = CheckMReporter(Camel.get_instance())
