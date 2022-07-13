@@ -34,6 +34,7 @@ class MainCheckM(object):
         argument_parser.add_argument('--working-dir', help='Working directory', type=Path, default=Path.cwd())
         argument_parser.add_argument('--output-html', type=Path, help='Report output')
         argument_parser.add_argument('--output-dir', type=Path, help='Output directory')
+        argument_parser.add_argument('--threads', type=int, default=4, help='Number of threads to use')
         return argument_parser.parse_args(args)
 
     def run(self) -> None:
@@ -52,6 +53,7 @@ class MainCheckM(object):
         # Run CheckM
         checkm = CheckM(Camel.get_instance())
         checkm.add_input_files(input_dict)
+        checkm.update_parameters(threads=self._args.threads)
         checkm.run(self._args.working_dir)
 
         # Create output report
