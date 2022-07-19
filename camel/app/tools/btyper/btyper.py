@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 from camel.app.camel import Camel
 from camel.app.tools.tool import Tool
@@ -25,9 +24,8 @@ class BTyper(Tool):
             raise InvalidInputSpecificationError('No FASTA input found')
         super()._check_input()
 
-        my_path = self._folder / Path(str(self._tool_inputs['FASTA'][0])).name
-        os.symlink(str(self._tool_inputs["FASTA"][0]), str(my_path))
-        self._tool_inputs['FASTA'][0] = my_path
+        self.fasta_input = self._folder / Path(str(self._tool_inputs['FASTA'][0])).name
+        self._tool_inputs["FASTA"][0].symlink_to(self.fasta_input)
 
     def _build_command(self) -> None:
         """
@@ -35,7 +33,7 @@ class BTyper(Tool):
         :return: None
         """
         self._command.command = f'{self._tool_command} ' \
-                                f'--input {self._tool_inputs["FASTA"][0]} ' \
+                                f'--input {self.fasta_input} ' \
                                 f'{" ".join(self._build_options())}'
 
     def _check_command_output(self) -> None:
@@ -50,7 +48,7 @@ class BTyper(Tool):
         """
         set the output file to check
         """
-        output_filename = Path(f'btyper3_final_results/{self._tool_inputs["FASTA"][0].stem}_final_results.txt')
+        output_filename = f'btyper3_final_results/{self._tool_inputs["FASTA"][0].path.stem}_final_results.txt'
         self._tool_outputs['TSV'] = [ToolIOFile(self._parameters['output_dir'].value / output_filename)]
 
     def _execute_tool(self) -> None:
