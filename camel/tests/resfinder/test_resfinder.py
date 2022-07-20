@@ -1,0 +1,41 @@
+import unittest
+from pathlib import Path
+
+from camel.app.components.testing.cameltestsuite import CamelTestSuite
+from camel.app.io.tooliofile import ToolIOFile
+from camel.app.tools.resfinder.resfinder import ResFinder
+
+class TestResFinder(CamelTestSuite):
+    """
+    Initializes this testing tool
+    """
+
+    test_file_dir = Path('/testdata/camel/pointfinder/')
+    FILE_FASTA_1 = ToolIOFile(test_file_dir / 'ref_ecoli.fasta')
+    FILE_FASTA_2 = ToolIOFile(test_file_dir / 'salmonella_lt2_ref.fasta')
+    FILE_FASTQ_1 = ToolIOFile(test_file_dir / 'bacillus_contigs_R1.fq.gz')
+    FILE_FASTQ_2 = ToolIOFile(test_file_dir / 'bacillus_contigs_R2.fq.gz')
+
+    def test_resfinder_fasta(self) -> None:
+        """
+        actually testing ResFinder with contigs file
+        """
+        resfinder = ResFinder(self.camel)
+        resfinder.add_input_files({'FASTA': [TestResFinder.FILE_FASTA_1]})
+        resfinder.update_parameters(output_path=self.running_dir, min_cov=0.6, threshold=0.8)
+        resfinder.run(self.running_dir)
+        self.verify_output_files(resfinder, 'TSV')
+
+    def test_resfinder_fastq(self) -> None:
+        """
+        testing resfinder with paired-end fastq reads
+        """
+        resfinder = ResFinder(self.camel)
+        resfinder.add_input_files({'FASTQ': [TestResFinder.FILE_FASTQ_1, TestResFinder.FILE_FASTQ_2]})
+        resfinder.update_parameters(output_path=self.running_dir, min_cov=0.6, threshold=0.8)
+        resfinder.run(self.running_dir)
+        self.verify_output_files(resfinder, 'TSV')
+
+
+if __name__ == '__main__':
+    unittest.main()
