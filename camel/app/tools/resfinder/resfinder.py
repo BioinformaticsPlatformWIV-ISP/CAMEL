@@ -59,7 +59,7 @@ class ResFinder(Tool):
         """
         set the output file to check, i.e., in tests
         """
-        self._tool_outputs['TSV'] = [ToolIOFile(self._parameters['output_path'].value / Path('pheno_table.txt'))]
+        self._tool_outputs['TSV'] = [ToolIOFile(self._parameters['output_path'].value / Path('ResFinder_results_tab.txt'))]
 
     def _execute_tool(self) -> None:
         """

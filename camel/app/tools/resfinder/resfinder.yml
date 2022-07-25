@@ -9,7 +9,7 @@ parameters:
   kma_path: {default: false, mandatory: false, option: --kmaPath, value: ''}
   min_cov: {default: false, mandatory: false, option: --min_cov, value: ''}
   min_cov_point: {default: false, mandatory: false, option: --min_cov_point, value: ''}
-  output_path: {default: false, mandatory: true, option: --outputPath, value: 'output_folder'}
+  output_path: {default: true, mandatory: true, option: --outputPath, value: 'output_folder'}
   point: {default: false, mandatory: false, option: --point, value: ''}
   species: {default: false, mandatory: false, option: --species, value: ''}
   specific_genes: {default: false, mandatory: false, option: -g, value: ''}
