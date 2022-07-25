@@ -24,7 +24,7 @@ class ResFinder(Tool):
         Checks whether the provided input files are valid
         :return: None
         """
-        if ('FASTA' or 'FASTQ_PE' or 'FASTQ_SE') not in self._tool_inputs:
+        if not any('FASTA' or 'FASTQ_PE' or 'FASTQ_SE' in self._tool_inputs):
             raise InvalidInputSpecificationError('FASTA or FASTQ input is required')
         super()._check_input()
 
@@ -43,8 +43,8 @@ class ResFinder(Tool):
                                         f'{" ".join(self._build_options())}'
         elif 'FASTQ_PE' in self._tool_inputs:
                 self._command.command = f'{self._tool_command} ' \
-                                        f'--inputfastq {str(self._tool_inputs["FASTQ"][0].path)} ' \
-                                        f'{str(self._tool_inputs["FASTQ"][1].path)} ' \
+                                        f'--inputfastq {str(self._tool_inputs["FASTQ_PE"][0].path)} ' \
+                                        f'{str(self._tool_inputs["FASTQ_PE"][1].path)} ' \
                                         f'{" ".join(self._build_options())}'
 
     def _check_command_output(self) -> None:
@@ -59,7 +59,7 @@ class ResFinder(Tool):
         """
         set the output file to check, i.e., in tests
         """
-        self._tool_outputs['TSV'] = [ToolIOFile(self._parameters['output_path'].value / 'pheno_table.txt')]
+        self._tool_outputs['TSV'] = [ToolIOFile(self._parameters['output_path'].value / Path('pheno_table.txt'))]
 
     def _execute_tool(self) -> None:
         """

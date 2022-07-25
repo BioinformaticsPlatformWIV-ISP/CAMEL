@@ -13,8 +13,8 @@ class TestResFinder(CamelTestSuite):
     test_file_dir = Path('/testdata/camel/pointfinder/')
     FILE_FASTA_1 = ToolIOFile(test_file_dir / 'ref_ecoli.fasta')
     FILE_FASTA_2 = ToolIOFile(test_file_dir / 'salmonella_lt2_ref.fasta')
-    FILE_FASTQ_1 = ToolIOFile(test_file_dir / 'bacillus_contigs_R1.fq.gz')
-    FILE_FASTQ_2 = ToolIOFile(test_file_dir / 'bacillus_contigs_R2.fq.gz')
+    FILE_FASTQ_1 = ToolIOFile(test_file_dir / 'reads_illumina_1.fastq')
+    FILE_FASTQ_2 = ToolIOFile(test_file_dir / 'reads_illumina_2.fastq')
 
     def test_resfinder_fasta(self) -> None:
         """
@@ -31,7 +31,7 @@ class TestResFinder(CamelTestSuite):
         testing resfinder with paired-end fastq reads
         """
         resfinder = ResFinder(self.camel)
-        resfinder.add_input_files({'FASTQ': [TestResFinder.FILE_FASTQ_1, TestResFinder.FILE_FASTQ_2]})
+        resfinder.add_input_files({'FASTQ_PE': [TestResFinder.FILE_FASTQ_1, TestResFinder.FILE_FASTQ_2]})
         resfinder.update_parameters(output_path=self.running_dir, min_cov=0.6, threshold=0.8)
         resfinder.run(self.running_dir)
         self.verify_output_files(resfinder, 'TSV')
