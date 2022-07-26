@@ -18,7 +18,7 @@ class TestBTyper(CamelTestSuite):
         actually testing BTyper
         """
         btyper = BTyper(self.camel)
-        btyper.add_input_files({'FASTA': [TestBtyper.FILE_FASTA]})
+        btyper.add_input_files({'FASTA': [TestBTyper.FILE_FASTA]})
         btyper.update_parameters(output_dir=self.running_dir)
         btyper.run(self.running_dir)
         self.verify_output_files(btyper, 'TSV')
