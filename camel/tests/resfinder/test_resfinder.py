@@ -38,6 +38,25 @@ class TestResFinder(CamelTestSuite):
         resfinder.run(self.running_dir)
         self.verify_output_files(resfinder, 'TSV')
 
+    def test_resfinder_pointfinder_fasta(self) -> None:
+        """
+        testing resfinder with pointfinder mode and fasta file
+        """
+        resfinder = ResFinder(self.camel)
+        resfinder.add_input_files({'FASTA': [TestResFinder.FILE_FASTA_1]})
+        resfinder.update_parameters(output_path=self.running_dir, min_cov=0.6, threshold=0.8, point=True, species='ecoli')
+        resfinder.run(self.running_dir)
+        self.verify_output_files(resfinder, 'TSV')
+
+    def test_resfinder_pointfinder_fastq(self) -> None:
+        """
+        testing resfinder with pointfinder mode and fastq files
+        """
+        resfinder = ResFinder(self.camel)
+        resfinder.add_input_files({'FASTQ_PE': [TestResFinder.FILE_FASTQ_1, TestResFinder.FILE_FASTQ_2]})
+        resfinder.update_parameters(output_path=self.running_dir, min_cov=0.6, threshold=0.8, point=True, species='ecoli')
+        resfinder.run(self.running_dir)
+        self.verify_output_files(resfinder, 'TSV')
 
 if __name__ == '__main__':
     unittest.main()

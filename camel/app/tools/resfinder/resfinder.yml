@@ -16,4 +16,4 @@ parameters:
   threshold: {default: false, mandatory: false, option: --threshold, value: ''}
   threshold_point: {default: false, mandatory: false, option: --threshold_point, value: ''}
   unknown_mut: {default: false, mandatory: false, option: --unknown_mut, value: false}
-tool_command: ~/Documents/ToolsDL/4.1.11/run_resfinder.py
+tool_command: run_resfinder.py
