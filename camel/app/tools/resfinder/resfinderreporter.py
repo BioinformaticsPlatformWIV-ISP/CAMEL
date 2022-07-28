@@ -1,8 +1,6 @@
 from pathlib import Path
 from typing import List, Tuple, Union
 
-import re
-
 from camel.app.camel import Camel
 from camel.app.components.html.htmlexpandablediv import HtmlExpandableDiv
 from camel.app.components.html.htmlreportsection import HtmlReportSection
@@ -10,6 +8,7 @@ from camel.app.components.html.htmltablecell import HtmlTableCell
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.tools.tool import Tool
+
 
 class ResFinderReporter(Tool):
     """
@@ -100,9 +99,8 @@ class ResFinderReporter(Tool):
         n_fields = len(data[0])
         for i in range(1, len(data)):
             row = data[i]
-            if row[n_fields-1]:
-                pmid = row[n_fields-1]
-                row[n_fields-1] = HtmlTableCell(str(pmid), link=ResFinderReporter.URL_PUBMED.format(id=pmid))
+            if row[n_fields - 1]:
+                pmid = row[n_fields - 1]
+                row[n_fields - 1] = HtmlTableCell(str(pmid), link=ResFinderReporter.URL_PUBMED.format(id=pmid))
             edited_data.append(row)
         return edited_data
-

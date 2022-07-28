@@ -38,14 +38,14 @@ class ResFinder(Tool):
                                     f'--inputfasta {str(self._tool_inputs["FASTA"][0].path)} ' \
                                     f'{" ".join(self._build_options())}'
         elif 'FASTQ_SE' in self._tool_inputs:
-                self._command.command = f'{self._tool_command} ' \
-                                        f'--inputfastq {str(self._tool_inputs["FASTQ"][0].path)} ' \
-                                        f'{" ".join(self._build_options())}'
+            self._command.command = f'{self._tool_command} ' \
+                                    f'--inputfastq {str(self._tool_inputs["FASTQ"][0].path)} ' \
+                                    f'{" ".join(self._build_options())}'
         elif 'FASTQ_PE' in self._tool_inputs:
-                self._command.command = f'{self._tool_command} ' \
-                                        f'--inputfastq {str(self._tool_inputs["FASTQ_PE"][0].path)} ' \
-                                        f'{str(self._tool_inputs["FASTQ_PE"][1].path)} ' \
-                                        f'{" ".join(self._build_options())}'
+            self._command.command = f'{self._tool_command} ' \
+                                    f'--inputfastq {str(self._tool_inputs["FASTQ_PE"][0].path)} ' \
+                                    f'{str(self._tool_inputs["FASTQ_PE"][1].path)} ' \
+                                    f'{" ".join(self._build_options())}'
 
     def _check_command_output(self) -> None:
         """
@@ -59,7 +59,8 @@ class ResFinder(Tool):
         """
         set the output file to check, i.e., in tests
         """
-        self._tool_outputs['TSV'] = [ToolIOFile(self._parameters['output_path'].value / Path('ResFinder_results_tab.txt'))]
+        self._tool_outputs['TSV'] = [
+            ToolIOFile(self._parameters['output_path'].value / Path('ResFinder_results_tab.txt'))]
 
     def _execute_tool(self) -> None:
         """
