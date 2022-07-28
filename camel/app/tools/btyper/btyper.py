@@ -5,8 +5,8 @@ from camel.app.error.invalidinputspecificationerror import InvalidInputSpecifica
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
 
-class BTyper(Tool):
 
+class BTyper(Tool):
 
     def __init__(self, camel: Camel) -> None:
         """
@@ -25,7 +25,7 @@ class BTyper(Tool):
         super()._check_input()
 
         self.fasta_input = self._folder / Path(str(self._tool_inputs['FASTA'][0])).name
-        self._tool_inputs["FASTA"][0].symlink_to(self.fasta_input)
+        self._tool_inputs["FASTA"][0].path.symlink_to(self.fasta_input)
 
     def _build_command(self) -> None:
         """
