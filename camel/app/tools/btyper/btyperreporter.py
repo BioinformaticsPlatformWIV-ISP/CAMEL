@@ -1,8 +1,6 @@
 from pathlib import Path
 from typing import List, Tuple, Union
 
-import re
-
 from camel.app.camel import Camel
 from camel.app.components.html.htmlexpandablediv import HtmlExpandableDiv
 from camel.app.components.html.htmlreportsection import HtmlReportSection
@@ -10,6 +8,7 @@ from camel.app.components.html.htmltablecell import HtmlTableCell
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.tools.tool import Tool
+
 
 class BTyperReporter(Tool):
     """
@@ -44,8 +43,8 @@ class BTyperReporter(Tool):
         """
         section = HtmlReportSection(BTyperReporter.TITLE, subtitle=self._input_informs['btyper']['_name'])
         header, data = self.__parse_input_file()
+        self.__add_output_table(section, header, data)
         self._tool_outputs['VAL_HTML'] = [ToolIOValue(section)]
-        # self._informs['genes'] = data
 
     def __parse_input_file(self) -> Tuple[List[str], List[List[str]]]:
         """
@@ -66,8 +65,6 @@ class BTyperReporter(Tool):
         else:
             return 'btyper.tsv'
 
-    # To Complete "add_output_table"
-    # To add: classification, virulence genes, subspecies, taxon name, panC group, clonal complex
     def __add_output_table(
             self, section: HtmlReportSection, header: List[str], data: List[List[Union[str, HtmlTableCell]]]) -> None:
         """
@@ -78,11 +75,11 @@ class BTyperReporter(Tool):
         :return: None
         """
         if len(data) > 0:
-            div = HtmlExpandableDiv('resfinder_genes', 'genes')
+            div = HtmlExpandableDiv('btyper_results', 'results')
             div.add_table(data, header, [('class', 'data')])
             section.add_html_object(div)
-            relative_path = Path('resfinder', self.__generate_output_filename())
+            relative_path = Path('btyper', self.__generate_output_filename())
             section.add_file(self._tool_inputs['TSV'][0].path, relative_path)
             section.add_link_to_file('Download (TSV)', relative_path)
         else:
-            section.add_paragraph('No genes found.')
+            section.add_paragraph('No results.')

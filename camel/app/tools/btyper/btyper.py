@@ -24,16 +24,13 @@ class BTyper(Tool):
             raise InvalidInputSpecificationError('No FASTA input found')
         super()._check_input()
 
-        self.fasta_input = self._folder / Path(str(self._tool_inputs['FASTA'][0])).name
-        self._tool_inputs["FASTA"][0].path.symlink_to(self.fasta_input)
-
-    def _build_command(self) -> None:
+    def _build_command(self, fasta_input: Path) -> None:
         """
         Build the command to run tool
         :return: None
         """
         self._command.command = f'{self._tool_command} ' \
-                                f'--input {self.fasta_input} ' \
+                                f'--input {fasta_input} ' \
                                 f'{" ".join(self._build_options())}'
 
     def _check_command_output(self) -> None:
@@ -49,13 +46,20 @@ class BTyper(Tool):
         set the output file to check
         """
         output_filename = f'btyper3_final_results/{self._tool_inputs["FASTA"][0].path.stem}_final_results.txt'
-        self._tool_outputs['TSV'] = [ToolIOFile(self._parameters['output_dir'].value / output_filename)]
+        self._tool_outputs['TSV'] = [ToolIOFile(Path(self._parameters['output_dir'].value) / Path(output_filename))]
 
     def _execute_tool(self) -> None:
         """
         Executes this tool.
         :return: None
         """
-        self._build_command()
+        # Symlink the input FASTA file
+        fasta_input = self._folder / Path(str(self._tool_inputs['FASTA'][0])).name
+        fasta_input.symlink_to(self._tool_inputs["FASTA"][0].path)
+
+        # Building the command
+        self._build_command(fasta_input)
         self._execute_command()
+
+        # Collect output
         self._set_output()
