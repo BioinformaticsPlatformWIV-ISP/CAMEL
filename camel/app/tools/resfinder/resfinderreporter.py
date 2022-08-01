@@ -44,9 +44,7 @@ class ResFinderReporter(Tool):
         section = HtmlReportSection(ResFinderReporter.TITLE, subtitle=self._input_informs['resfinder']['_name'])
         header, data = self.__parse_input_file()
         data = self.__add_pubmed_links(data)
-        # section.add_paragraph(f"Database: <i>{self._input_informs['resfinder']['database']}</i>")
-        # self.__add_output_table(section, header, data)
-        # section.add_paragraph('Last update: {}'.format(self._input_informs['resfinder']['last_update']))
+        self.__add_output_table(section, header, data)
         self._tool_outputs['VAL_HTML'] = [ToolIOValue(section)]
         self._informs['genes'] = data
 
@@ -94,13 +92,13 @@ class ResFinderReporter(Tool):
         :param data: Data
         :return: Data with links added
         """
-        print(data)
         edited_data = []
         n_fields = len(data[0])
-        for i in range(1, len(data)):
+        for i in range(len(data)):
             row = data[i]
-            if row[n_fields - 1]:
+            if row[n_fields - 1] is not None:
                 pmid = row[n_fields - 1]
-                row[n_fields - 1] = HtmlTableCell(str(pmid), link=ResFinderReporter.URL_PUBMED.format(id=pmid))
+                pubmed = HtmlTableCell(str(pmid), link=ResFinderReporter.URL_PUBMED.format(id=pmid))
+                row[n_fields - 1] = pubmed
             edited_data.append(row)
         return edited_data

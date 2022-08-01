@@ -34,17 +34,16 @@ class MainResFinder(object):
         :return: Parsed arguments
         """
         argument_parser = argparse.ArgumentParser()
-        group = argument_parser.add_mutually_exclusive_group(required=True)
-        group.add_argument('--inputfasta', type=Path, help="Input FASTA file")
-        group.add_argument('--inputfastq', type=Path, help="Input Fastq files")
+
+        mainscriptutils.add_common_arguments(argument_parser)
+        mainscriptutils.add_assembly_arguments(argument_parser)
+        mainscriptutils.add_input_files_arguments(argument_parser)
 
         argument_parser.add_argument('--point', action='store_true')
         argument_parser.add_argument('--acquired', action='store_true')
 
         argument_parser.add_argument('--min_cov', type=float, default=0.6)
         argument_parser.add_argument('--threshold', type=float, default=0.8)
-
-        argument_parser.add_argument('--outputPath', type=Path, help="Output folder")
 
         argument_parser.add_argument('--species', choices=[
             '"Campylobacter"', '"Campylobacter jejuni"', '"Campylobacter coli"', '"Enterococcus_faecalis"',
@@ -92,7 +91,7 @@ class MainResFinder(object):
         camel = Camel()
         resfinder = ResFinder(camel)
         resfinder.add_input_files({'FASTA': [ToolIOFile(fasta_file)]})
-        resfinder.update_parameters(output_path=self._args.working_dir, min_cov=0.6, threshold=0.8)
+        resfinder.update_parameters(output_path=self._args.working_dir)
         resfinder.run(self._args.working_dir)
         return resfinder
 
