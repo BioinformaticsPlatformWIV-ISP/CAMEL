@@ -4,6 +4,7 @@ import logging
 from pathlib import Path
 from typing import Optional, List, Dict, Sequence
 
+import json
 import yaml
 
 from camel.app.camel import Camel
@@ -28,6 +29,7 @@ class MainSCCmecFinder(object):
         self._sample_name = mainscriptutils.determine_sample_name(self._args)
         self._helper = helper_by_read_type[self._args.read_type](self._args.working_dir, self._sample_name)
         self._report = None
+        self._informs = {}
 
     @staticmethod
     def _parse_arguments(args: Optional[Sequence[str]] = None) -> argparse.Namespace:
@@ -41,6 +43,7 @@ class MainSCCmecFinder(object):
         mainscriptutils.add_assembly_arguments(argument_parser)
         argument_parser.add_argument('--db-mec-genes', type=Path, help="Database containing mec genes.", required=True)
         argument_parser.add_argument('--profiles-mec-genes', help="Profiles for the mec genes", required=True)
+        argument_parser.add_argument('--output-json', type=Path, help='Output path to store informs')
         return argument_parser.parse_args(args)
 
     @staticmethod
@@ -75,6 +78,12 @@ class MainSCCmecFinder(object):
         report_mec_type = self.__get_mec_type_overview(detected_genes)
         self._helper.export_output_and_commands_section(self._report, report_mec_type)
 
+        # Save the JSON output (if specified)
+        if self._args.output_json is not None:
+            with self._args.output_json.open('w') as handle:
+                json.dump(self._informs, handle, indent=2)
+            logging.info(f'Informs exported to: {self._args.output_json}')
+
     def __run_blast(self, fasta_file: Path) -> List[str]:
         """
         Runs BLAST on the mec genes database.
@@ -98,19 +107,22 @@ class MainSCCmecFinder(object):
         """
         with open(self._args.profiles_mec_genes) as handle:
             profiles = yaml.safe_load(handle)
-        ccr_complex = MainSCCmecFinder.__get_matching_complex(detected_genes, profiles['ccr_genes_complexes'])
-        mec_complex = MainSCCmecFinder.__get_matching_complex(detected_genes, profiles['mec_genes_complexes'])
-        sccmec_type = MainSCCmecFinder.__get_matching_complex(detected_genes, profiles['SCC_mec_types'])
+        self._informs['ccr_complex'] = MainSCCmecFinder.__get_matching_complex(
+            detected_genes, profiles['ccr_genes_complexes'])
+        self._informs['mec_complex'] = MainSCCmecFinder.__get_matching_complex(
+            detected_genes, profiles['mec_genes_complexes'])
+        self._informs['sccmec_type'] = MainSCCmecFinder.__get_matching_complex(
+            detected_genes, profiles['SCC_mec_types'])
         section = HtmlReportSection('SCCmec type', 3)
         section.add_table([
-            ['SCCmec type:', sccmec_type if sccmec_type is not None else '-'],
-            ['<i>mec</i> class:', mec_complex if mec_complex is not None else '-'],
-            ['<i>ccr</i> class:', ccr_complex if ccr_complex is not None else '-']
+            ['SCCmec type:', self._informs['sccmec_type'] if self._informs['sccmec_type'] is not None else '-'],
+            ['<i>mec</i> class:', self._informs['mec_complex'] if self._informs['mec_complex'] is not None else '-'],
+            ['<i>ccr</i> class:', self._informs['sccmec_type'] if self._informs['sccmec_type'] is not None else '-']
         ], None, [('class', 'information')])
         return section
 
 
 if __name__ == '__main__':
-    c = Camel.get_instance()
+    Camel.get_instance()
     main = MainSCCmecFinder()
     main.run()
