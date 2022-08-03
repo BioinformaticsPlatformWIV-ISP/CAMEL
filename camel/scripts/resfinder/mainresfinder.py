@@ -39,7 +39,7 @@ class MainResFinder(object):
         mainscriptutils.add_assembly_arguments(argument_parser)
         mainscriptutils.add_input_files_arguments(argument_parser)
 
-        argument_parser.add_argument('--point', action='store_true')
+        argument_parser.add_argument('--point', action='store_true', default=None)
         argument_parser.add_argument('--acquired', action='store_true')
 
         argument_parser.add_argument('--min_cov', type=float, default=0.6)
@@ -49,7 +49,7 @@ class MainResFinder(object):
             '"Campylobacter"', '"Campylobacter jejuni"', '"Campylobacter coli"', '"Enterococcus_faecalis"',
             '"Enterococcus faecium"', '"Escherichia coli"', '"Helicobacter pylori"', '"Klebsiella"',
             '"Mycobacterium tuberculosis"', '"Neisseria gonorrhoeae"', '"Plasmodium falciparum"', '"Salmonella"',
-            '"Salmonella enterica"', '"Staphylococcus aureus"'])
+            '"Salmonella enterica"', '"Staphylococcus aureus"'], required=False, default=None)
 
         return argument_parser.parse_args(args)
 
@@ -91,7 +91,13 @@ class MainResFinder(object):
         camel = Camel()
         resfinder = ResFinder(camel)
         resfinder.add_input_files({'FASTA': [ToolIOFile(fasta_file)]})
-        resfinder.update_parameters(output_path=self._args.working_dir)
+        resfinder.update_parameters(output_path=self._args.working_dir, min_cov=0.6, threshold=0.8)
+        if self._args.min_cov is not None:
+            resfinder.update_parameters(min_cov=self._args.min_cov)
+        if self._args.threshold is not None:
+            resfinder.update_parameters(threshold=self._args.threshold)
+        if self._args.point is not None:
+            resfinder.update_parameters(point=True, species=self._args.species)
         resfinder.run(self._args.working_dir)
         return resfinder
 

@@ -29,9 +29,10 @@ class TestResFinder(CamelTestSuite):
             '--output-html', str(output_file_report),
             '--output-dir', str(output_file_report.parent),
             '--working-dir', str(self.running_dir),
-            '--acquired',
+            '--point',
             '--min_cov', '0.6',
-            '--threshold', '0.8'
+            '--threshold', '0.8',
+            '--species', '"Escherichia coli"'
         ]
         main = MainResFinder(args)
         main.run()
