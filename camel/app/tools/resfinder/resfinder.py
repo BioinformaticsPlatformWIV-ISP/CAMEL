@@ -24,7 +24,7 @@ class ResFinder(Tool):
         Checks whether the provided input files are valid
         :return: None
         """
-        if not any('FASTA' or 'FASTQ_PE' or 'FASTQ_SE' in self._tool_inputs):
+        if any(key in self._tool_inputs for key in ('FASTA' or 'FASTQ_PE' or 'FASTQ_SE')):
             raise InvalidInputSpecificationError('FASTA or FASTQ input is required')
         super()._check_input()
 
@@ -34,22 +34,17 @@ class ResFinder(Tool):
         :return: None
         """
         if 'FASTA' in self._tool_inputs:
-            self._command.command = f'{self._tool_command} ' \
-                                    f'--inputfasta {str(self._tool_inputs["FASTA"][0].path)} ' \
-                                    f'{" ".join(self._build_options())}'
+            input_str = f'--inputfasta {self._tool_inputs["FASTA"][0].path}'
         elif 'FASTQ_SE' in self._tool_inputs:
-            self._command.command = f'{self._tool_command} ' \
-                                    f'--inputfastq {str(self._tool_inputs["FASTQ"][0].path)} ' \
-                                    f'{" ".join(self._build_options())}'
+            input_str = f'--inputfastq {self._tool_inputs["FASTQ"][0].path}'
         elif 'FASTQ_PE' in self._tool_inputs:
-            self._command.command = f'{self._tool_command} ' \
-                                    f'--inputfastq {str(self._tool_inputs["FASTQ_PE"][0].path)} ' \
-                                    f'{str(self._tool_inputs["FASTQ_PE"][1].path)} ' \
-                                    f'{" ".join(self._build_options())}'
+            input_str = f'--inputfastq {self._tool_inputs["FASTQ_PE"][0].path} ' \
+             f'{str(self._tool_inputs["FASTQ_PE"][1].path)}'
+        self._command.command = ' '.join([self._tool_command, input_str, ' '.join(self._build_options())])
 
     def _check_command_output(self) -> None:
         """
-        Checks command output
+        Checks command output.
         :return: None
         """
         if self._command.returncode != 0:
@@ -57,10 +52,14 @@ class ResFinder(Tool):
 
     def _set_output(self) -> None:
         """
-        set the output file to check, i.e., in tests
+        Collects the tool output.
         """
         self._tool_outputs['TSV'] = [
             ToolIOFile(self._parameters['output_path'].value / Path('ResFinder_results_tab.txt'))]
+        if self._parameters['point'] is True:
+            self._tool_outputs['TSV'].append(
+                ToolIOFile(self._parameters['output_path'].value / Path('PointFinder_results.txt'))
+            )
 
     def _execute_tool(self) -> None:
         """

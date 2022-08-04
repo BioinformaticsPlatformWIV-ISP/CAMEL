@@ -2,7 +2,6 @@ from pathlib import Path
 from typing import List, Tuple, Union
 
 from camel.app.camel import Camel
-from camel.app.components.html.htmlexpandablediv import HtmlExpandableDiv
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.html.htmltablecell import HtmlTableCell
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
@@ -16,7 +15,8 @@ class ResFinderReporter(Tool):
     """
 
     TITLE = 'ResFinder'
-    URL_PUBMED = 'https://www.ncbi.nlm.nih.gov/pubmed/{id}'
+    URL_NUCCORE = 'https://www.ncbi.nlm.nih.gov/nuccore/{id}'
+    URL_PUBMED = 'https://pubmed.ncbi.nlm.nih.gov/{id}'
 
     def __init__(self, camel: Camel) -> None:
         """
@@ -43,32 +43,36 @@ class ResFinderReporter(Tool):
         """
         section = HtmlReportSection(ResFinderReporter.TITLE, subtitle=self._input_informs['resfinder']['_name'])
         header, data = self.__parse_input_file()
-        data = self.__add_pubmed_links(data)
+        data = self.__add_links_and_format_data(data)
         self.__add_output_table(section, header, data)
         self._tool_outputs['VAL_HTML'] = [ToolIOValue(section)]
         self._informs['genes'] = data
 
-    def __parse_input_file(self) -> Tuple[List[str], List[List[str]]]:
+    def __parse_input_file(self) -> Tuple[List[List[str]], List[List[List[str]]]]:
         """
         Parses the input file.
         :return: Input file header, input file data
         """
-        with open(self._tool_inputs['TSV'][0].path) as handle:
-            header = handle.readline().strip().split('\t')
-            return header, [line.strip().split('\t') for line in handle.readlines()]
+        header, data = [], []
+        for input_file in self._tool_inputs['TSV']:
+            with open(input_file.path) as handle:
+                header.append(handle.readline().strip().split('\t'))
+                data.append([line.strip().split('\t') for line in handle.readlines()])
+        return header, data
 
-    def __generate_output_filename(self) -> str:
+    def __generate_output_filename(self, tool_name: str) -> str:
         """
         Generates the filename of the tabular output.
         :return: Output filename
         """
         if 'sample_name' in self._parameters:
-            return f"resfinder-{self._parameters['sample_name'].value}.tsv"
+            return f"{tool_name}-{self._parameters['sample_name'].value}.tsv"
         else:
-            return 'resfinder.tsv'
+            return f'{tool_name}.tsv'
 
     def __add_output_table(
-            self, section: HtmlReportSection, header: List[str], data: List[List[Union[str, HtmlTableCell]]]) -> None:
+            self, section: HtmlReportSection, header: List[List[str]],
+            data: List[List[Union[str, HtmlTableCell]]]) -> None:
         """
         Adds the output table.
         :param section: Report section
@@ -76,29 +80,41 @@ class ResFinderReporter(Tool):
         :param data: Output table data
         :return: None
         """
-        if len(data) > 0:
-            div = HtmlExpandableDiv('resfinder_genes', 'genes')
-            div.add_table(data, header, [('class', 'data')])
-            section.add_html_object(div)
-            relative_path = Path('resfinder', self.__generate_output_filename())
-            section.add_file(self._tool_inputs['TSV'][0].path, relative_path)
-            section.add_link_to_file('Download (TSV)', relative_path)
-        else:
-            section.add_paragraph('No genes found.')
+        tool_ids = ['resfinder', 'pointfinder']
+        for i in range(len(data)):
+            table = data[i]
+            if len(table) > 0:
+                relative_path = Path('resfinder', self.__generate_output_filename(tool_ids[i]))
+                section.add_header(f'{tool_ids[i].upper()} Results', 4)
+                section.add_table(table, header[i], [('class', 'data')])
+                section.add_file(self._tool_inputs['TSV'][i].path, relative_path)
+                section.add_link_to_file('Download (TSV)', relative_path)
+            else:
+                section.add_paragraph('No genes found.')
 
-    def __add_pubmed_links(self, data: List[List[str]]) -> List[List[Union[str, HtmlTableCell]]]:
+    def __add_links_and_format_data(self, data: List[List[List[str]]]) -> List[List[Union[str, HtmlTableCell]]]:
         """
         Adds PubMed links for mutations that have an associated PMID.
         :param data: Data
         :return: Data with links added
         """
-        edited_data = []
-        n_fields = len(data[0])
-        for i in range(len(data)):
-            row = data[i]
-            if row[n_fields - 1] is not None:
-                pmid = row[n_fields - 1]
-                pubmed = HtmlTableCell(str(pmid), link=ResFinderReporter.URL_PUBMED.format(id=pmid))
-                row[n_fields - 1] = pubmed
-            edited_data.append(row)
-        return edited_data
+        table_results = []
+        for table in data:
+            edited_data = []
+            n_fields = len(table[0])
+            for i in range(len(table)):
+                row = table[i]
+                if row[n_fields - 1] is not None:
+                    access = row[n_fields - 1]
+                    if table_results == []:
+                        publi = HtmlTableCell(str(access), link=ResFinderReporter.URL_NUCCORE.format(id=access))
+                    else:
+                        publi = HtmlTableCell(str(access), link=ResFinderReporter.URL_PUBMED.format(id=access))
+                    row[n_fields - 1] = publi
+                    try:
+                        row[3] = f'{eval(row[3]):.2f}'
+                    except NameError:
+                        pass
+                edited_data.append(row)
+            table_results.append(edited_data)
+        return table_results
