@@ -4,6 +4,7 @@ from typing import List, Tuple, Union, Dict
 import pandas as pd
 
 from camel.app.camel import Camel
+from camel.app.components.html.htmlelement import HtmlElement
 from camel.app.components.html.htmlexpandablediv import HtmlExpandableDiv
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.html.htmltablecell import HtmlTableCell
@@ -86,9 +87,8 @@ class ResFinderReporter(Tool):
         :param section: Report section
         :return: None
         """
-
+        div_sect = HtmlElement('div', attributes=[('class', 'border_bottom')])
         for input_key in [k for k in self._tool_inputs if 'pheno' in k]:
-
             data_pheno = pd.read_table(self._tool_inputs[input_key][0].path, comment='#', names=[
                 'Antimicrobial', 'Class', 'WGS-predicted phenotype', 'Match', 'Genetic background'])
             data_pheno = data_pheno[data_pheno['WGS-predicted phenotype'].apply(lambda x: not pd.isna(x))]
@@ -112,15 +112,14 @@ class ResFinderReporter(Tool):
                 row[index_wgs_pheno] = HtmlTableCell(row[index_wgs_pheno], color=color)
 
             if 'general' in input_key:
-                section.add_header('Predicted phenotype (general)', 3)
+                div_sect.add_header('Predicted phenotype (general)', 3)
                 div = HtmlExpandableDiv('phenotype_general', 'general')
                 div.add_table(data_table, data_pheno.columns, [('class', 'data')])
-                section.add_html_object(div)
+                div_sect.add_html_object(div)
             else:
-                section.add_header('Predicted phenotype (species-specific)', 3)
-                section.add_table(data_table, data_pheno.columns, [('class', 'data')])
-
-        section.add_warning_message(
+                div_sect.add_header('Predicted phenotype (species-specific)', 3)
+                div_sect.add_table(data_table, data_pheno.columns, [('class', 'data')])
+        div_sect.add_warning_message(
             "The phenotype 'No resistance' should be interpreted with caution, as it only means that nothing in the "
             "used database indicate resistance, but resistance could exist from 'unknown' or not yet implemented "
             "sources.")
@@ -131,7 +130,8 @@ class ResFinderReporter(Tool):
                 continue
             relative_path = Path('resfinder', self._tool_inputs[input_key][0].path.name)
             section.add_file(self._tool_inputs[input_key][0].path, relative_path)
-            section.add_link_to_file(f'Download {title} overview (TSV)', relative_path)
+            div_sect.add_link_to_file(f'Download {title} overview (TSV)', relative_path)
+        section.add_html_object(div_sect)
 
     def __add_output_table(
             self, section: HtmlReportSection, header: Dict[str, List[str]],
