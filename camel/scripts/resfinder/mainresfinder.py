@@ -6,7 +6,6 @@ from typing import Optional, Sequence
 from camel.app.camel import Camel
 from camel.app.components import mainscriptutils
 from camel.app.components.html.htmlreportsection import HtmlReportSection
-from camel.app.components.workflows.readtype import helper_by_read_type
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.app.tools.resfinder.resfinder import ResFinder
@@ -25,7 +24,6 @@ class MainResFinder(object):
         """
         self._args = MainResFinder.parse_arguments(args)
         self._sample_name = mainscriptutils.determine_sample_name(self._args)
-        self._helper = helper_by_read_type[self._args.read_type](self._args.working_dir, self._sample_name)
 
     @staticmethod
     def parse_arguments(args: Optional[Sequence[str]] = None) -> argparse.Namespace:
@@ -36,12 +34,20 @@ class MainResFinder(object):
         argument_parser = argparse.ArgumentParser()
 
         mainscriptutils.add_common_arguments(argument_parser)
-        mainscriptutils.add_input_files_arguments(argument_parser)
+
+        argument_parser.add_argument('--fasta', help="Input FASTA file", type=Path)
+        argument_parser.add_argument('--fasta-name', help="Input FASTA file name", type=str)
+
+        argument_parser.add_argument('--fastq-pe', help="Input PE FASTQ files", nargs=2, type=Path)
+        argument_parser.add_argument('--fastq-pe-names', help="Input PE FASTQ file names", nargs=2, type=Path)
+
+        argument_parser.add_argument('--fastq-se', help="Input SE FASTQ file", type=Path)
+        argument_parser.add_argument('--fastq-se-name', help="Input SE FASTQ file name")
 
         argument_parser.add_argument('--point', action='store_true', default=None)
         argument_parser.add_argument('--acquired', action='store_true')
 
-        argument_parser.add_argument('--min_cov', type=float, default=0.6)
+        argument_parser.add_argument('--min-cov', type=float, default=0.6)
         argument_parser.add_argument('--threshold', type=float, default=0.8)
 
         argument_parser.add_argument('--species', choices=[
@@ -77,7 +83,7 @@ class MainResFinder(object):
         section.copy_files(report.output_dir)
 
         # Save report
-        all_informs = self._helper.informs + [resfinder.informs]
+        all_informs = [resfinder.informs]
         report.add_html_object(SnakePipelineUtils.create_commands_section(all_informs, self._args.working_dir))
         report.add_html_object(SnakePipelineUtils.create_citations_section(['Bortolaia_2020-resfinder_4.0']))
         report.save()
@@ -87,9 +93,7 @@ class MainResFinder(object):
         Runs ResFinder.
         :return: ResFinder tool instance.
         """
-        camel = Camel()
-        resfinder = ResFinder(camel)
-        print(self._args)
+        resfinder = ResFinder(Camel.get_instance())
         if self._args.fasta is not None:
             resfinder.add_input_files({'FASTA': [ToolIOFile(self._args.fasta)]})
         elif self._args.fastq_pe is not None:
@@ -116,9 +120,11 @@ class MainResFinder(object):
         :param resfinder: ResFinder tool instance.
         :return: None.
         """
-        camel = Camel()
-        reporter = ResFinderReporter(camel)
-        reporter.add_input_files({'TSV': resfinder.tool_outputs['TSV']})
+        reporter = ResFinderReporter(Camel.get_instance())
+        reporter.add_input_files({'TSV_genes': resfinder.tool_outputs['TSV_genes'], 'TSV_pheno_general': resfinder.tool_outputs['TSV_pheno_general']})
+        if self._args.point is not None:
+            reporter.add_input_files({'TSV_point': resfinder.tool_outputs['TSV_point'],
+                                      'TSV_pheno_species': resfinder.tool_outputs['TSV_pheno_species']})
         reporter.add_input_informs({'resfinder': resfinder.informs})
         reporter.run()
         return reporter.tool_outputs['VAL_HTML'][0].value

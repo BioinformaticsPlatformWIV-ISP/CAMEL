@@ -54,12 +54,22 @@ class ResFinder(Tool):
         """
         Collects the tool output.
         """
-        self._tool_outputs['TSV'] = [
-            ToolIOFile(self._parameters['output_path'].value / Path('ResFinder_results_tab.txt'))]
-        if self._parameters['point'] is True:
-            self._tool_outputs['TSV'].append(
-                ToolIOFile(self._parameters['output_path'].value / Path('PointFinder_results.txt'))
-            )
+        dir_out = self.folder / self._parameters['output_path'].value
+
+        self._tool_outputs['TSV_genes'] = [
+            ToolIOFile(dir_out / Path('ResFinder_results_tab.txt'))
+        ]
+        self._tool_outputs['TSV_pheno_general'] = [
+            ToolIOFile(dir_out / Path('pheno_table.txt'))
+        ]
+        if 'point' in self._parameters:
+            self._tool_outputs['TSV_point'] = [
+                ToolIOFile(dir_out / Path('PointFinder_results.txt'))
+            ]
+            specific_species = '_'.join(self._parameters['species'].value.lower().split(' ')).replace('"', '')
+            self._tool_outputs['TSV_pheno_species'] = [
+                ToolIOFile(dir_out / Path(f'pheno_table_{specific_species}.txt'))
+            ]
 
     def _execute_tool(self) -> None:
         """

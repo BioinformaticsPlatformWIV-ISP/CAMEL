@@ -15,6 +15,7 @@ class TestResFinder(CamelTestSuite):
     test_file_dir = Path('/testdata/camel/resfinder/')
     FILE_FASTA_1 = ToolIOFile(test_file_dir / 'ref_ecoli.fasta')
     FILE_FASTA_2 = ToolIOFile(test_file_dir / 'salmonella_lt2_ref.fasta')
+    FILE_FASTA_3 = ToolIOFile(test_file_dir / 'assembly-VAR305.fasta')
     FILE_FASTQ_1 = ToolIOFile(test_file_dir / 'reads_illumina_1.fastq')
     FILE_FASTQ_2 = ToolIOFile(test_file_dir / 'reads_illumina_2.fastq')
 
@@ -25,14 +26,14 @@ class TestResFinder(CamelTestSuite):
         """
         output_file_report = self.running_dir / 'report' / 'report.html'
         args = [
-            '--fasta', str(self.FILE_FASTA_1),
+            '--fasta', str(self.FILE_FASTA_3),
             '--output-html', str(output_file_report),
             '--output-dir', str(output_file_report.parent),
             '--working-dir', str(self.running_dir),
             '--point',
-            '--min_cov', '0.6',
+            '--min-cov', '0.6',
             '--threshold', '0.8',
-            '--species', '"Escherichia coli"'
+            '--species', '"Staphylococcus aureus"'
         ]
         main = MainResFinder(args)
         main.run()
@@ -49,7 +50,7 @@ class TestResFinder(CamelTestSuite):
             '--output-dir', str(output_file_report.parent),
             '--working-dir', str(self.running_dir),
             '--point',
-            '--min_cov', '0.6',
+            '--min-cov', '0.6',
             '--threshold', '0.8',
             '--species', '"Escherichia coli"'
         ]
@@ -65,7 +66,8 @@ class TestResFinder(CamelTestSuite):
         resfinder.add_input_files({'FASTA': [TestResFinder.FILE_FASTA_1]})
         resfinder.update_parameters(output_path=self.running_dir, min_cov=0.6, threshold=0.8)
         resfinder.run(self.running_dir)
-        self.verify_output_files(resfinder, 'TSV')
+        self.verify_output_files(resfinder, 'TSV_genes')
+        self.verify_output_files(resfinder, 'TSV_pheno_general')
 
     def test_resfinder_fastq(self) -> None:
         """
@@ -75,7 +77,8 @@ class TestResFinder(CamelTestSuite):
         resfinder.add_input_files({'FASTQ_PE': [TestResFinder.FILE_FASTQ_1, TestResFinder.FILE_FASTQ_2]})
         resfinder.update_parameters(output_path=self.running_dir, min_cov=0.6, threshold=0.8)
         resfinder.run(self.running_dir)
-        self.verify_output_files(resfinder, 'TSV')
+        self.verify_output_files(resfinder, 'TSV_genes')
+        self.verify_output_files(resfinder, 'TSV_pheno_general')
 
     def test_resfinder_pointfinder_fasta(self) -> None:
         """
@@ -84,9 +87,11 @@ class TestResFinder(CamelTestSuite):
         resfinder = ResFinder(self.camel)
         resfinder.add_input_files({'FASTA': [TestResFinder.FILE_FASTA_1]})
         resfinder.update_parameters(output_path=self.running_dir, min_cov=0.6, threshold=0.8, point=True,
-                                    species='ecoli')
+                                    species='"escherichia coli"')
         resfinder.run(self.running_dir)
-        self.verify_output_files(resfinder, 'TSV')
+        self.verify_output_files(resfinder, 'TSV_point')
+        self.verify_output_files(resfinder, 'TSV_pheno_general')
+        self.verify_output_files(resfinder, 'TSV_pheno_species')
 
     def test_resfinder_pointfinder_fastq(self) -> None:
         """
@@ -95,9 +100,11 @@ class TestResFinder(CamelTestSuite):
         resfinder = ResFinder(self.camel)
         resfinder.add_input_files({'FASTQ_PE': [TestResFinder.FILE_FASTQ_1, TestResFinder.FILE_FASTQ_2]})
         resfinder.update_parameters(output_path=self.running_dir, min_cov=0.6, threshold=0.8, point=True,
-                                    species='ecoli')
+                                    species='"escherichia coli"')
         resfinder.run(self.running_dir)
-        self.verify_output_files(resfinder, 'TSV')
+        self.verify_output_files(resfinder, 'TSV_point')
+        self.verify_output_files(resfinder, 'TSV_pheno_general')
+        self.verify_output_files(resfinder, 'TSV_pheno_species')
 
 
 if __name__ == '__main__':
