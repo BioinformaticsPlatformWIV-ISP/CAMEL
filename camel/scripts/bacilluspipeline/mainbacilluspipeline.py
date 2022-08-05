@@ -7,27 +7,34 @@ import yaml
 
 from camel.app.camel import Camel
 from camel.app.components.files.fastqutils import FastqUtils
-from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.components.pipelines.reportpipeline import ReportPipeline
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-from camel.scripts.stecpipeline import CONFIG_DATA
-from camel.scripts.stecpipeline import SNAKEFILE_MAIN
+from camel.app.components import mainscriptutils
+from camel.scripts.bacilluspipeline import SNAKEFILE_MAIN, CONFIG_DATA
 
 
 class MainBacillusPipeline(ReportPipeline):
     """
-    Main class to run the STEC pipeline.
+    Main class to run the Bacillus pipeline.
     """
 
-    CUSTOM_ANALYSES = ['kraken', 'resfinder', 'argannot', 'card', 'ncbi_amr', 'mlst_pasteur', 'mlst_warwick', 'cgmlst',
-                       'pointfinder', 'plasmidfinder', 'serotype', 'virulencefinder', 'innuendo_cgmlst']
+    CUSTOM_ANALYSES = ['kraken', 'btyper']
+
+    # Not yet up to date!
+    DATA_BY_SPECIES = {
+        'cereus': {
+            'gc_content': 35,
+            'genome_size': 2_796_178,
+            'full_name': 'Bacillus cereus'
+        }
+    }
 
     def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """
         Initializes the main class.
         :param args: Arguments (optional)
         """
-        super().__init__('STEC pipeline', '1.0', SNAKEFILE_MAIN, args)
+        super().__init__('Bacillus pipeline', '1.0', SNAKEFILE_MAIN, args)
 
     def run(self) -> None:
         """
@@ -43,30 +50,26 @@ class MainBacillusPipeline(ReportPipeline):
         Constructs the configuration file.
         :return: Configuration file
         """
-        key = 'fastq_pe' if (self._args.fastq_pe is not None) else 'fastq_se'
-        config_data = self.get_template_data(key, input_files)
+        config_data = self.get_template_data('fastq_pe', input_files)
+        config_data['analyses'] = [key for key in MainBacillusPipeline.CUSTOM_ANALYSES if vars(self._args)[key]]
         with open(CONFIG_DATA) as handle_in:
-            config_data.update(yaml.safe_load(handle_in.read().format(coverage_max=self._args.cov_max)))
+            mainscriptutils.dict_merge(config_data, yaml.load(handle_in.read().format(
+                coverage_max=self._args.cov_max,
+                export_fastq='true' if self._args.report_include_fastq else 'false',
+                export_bam='true' if self._args.report_include_bam else 'false',
+                expected_species=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['full_name'],
+                expected_gc_content=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['gc_content'],
+                genome_size=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['genome_size']
+            ), Loader=yaml.SafeLoader))
 
-        config_data['analyses'] = [key for key in MainSTECPipeline.CUSTOM_ANALYSES if vars(self._args)[key]]
-        config_data['quality_checks']['typing_scheme'] = 'cgmlst' if self._args.cgmlst else 'mlst_warwick'
+        # Set the species
+        config_data['selected_species'] = MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['full_name']
 
         # Read trimming
         config_data['read_trimming']['export_fastq'] = 'true' if self._args.report_include_fastq else 'false'
         if self._args.library is not None:
             config_data['read_trimming']['adapter'] = self._args.library
-        config_data['variant_calling']['report_include_bam'] = 'true' if self._args.report_include_bam else 'false'
 
-        # cgMLST detection method
-        detection_method_cgmlst = {
-            'blast': 'blast', 'srst2': 'blast', 'kma': 'kma'}.get(self._args.detection_method)
-        config_data['sequence_typing']['cgmlst']['detection_method'] = detection_method_cgmlst
-        config_data['sequence_typing']['innuendo_cgmlst']['detection_method'] = detection_method_cgmlst
-
-        # Read type (Illumina / IonTorrent)
-        config_data['read_type'] = self._args.read_type
-        if self._args.read_type == 'iontorrent':
-            config_data['assembly']['spades']['iontorrent'] = None
         return SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir)
 
     @staticmethod
@@ -77,28 +80,12 @@ class MainBacillusPipeline(ReportPipeline):
         """
         parser = argparse.ArgumentParser()
         ReportPipeline.add_common_arguments(parser)
-        parser.add_argument('--fastq-se', type=Path, help="Input SE FASTQ file")
-        parser.add_argument('--fastq-se-name', help="Input SE FASTQ file name")
-        parser.add_argument(
-            '--read-type', help="Type of reads.", choices=['illumina', 'iontorrent'], default='illumina')
-        for analysis_key in MainSTECPipeline.CUSTOM_ANALYSES:
+        parser.add_argument('--fastq-pe', type=Path, help="Input SE FASTQ file")
+        parser.add_argument('--fastq-pe-name', help="Input SE FASTQ file name")
+
+        for analysis_key in MainBacillusPipeline.CUSTOM_ANALYSES:
             parser.add_argument(f"--{analysis_key.replace('_', '-')}", action='store_true')
         return parser.parse_args(args)
-
-    def _get_fastq_input_links(self) -> List[List[Tuple[Path, str]]]:
-        """
-        Returns the links to the input FASTQ files.
-        :return: Links
-        """
-        links = []
-        if self._args.fastq_se is not None:
-            gzipped = FileSystemHelper.is_gzipped(self._args.fastq_se)
-            links.append([self._args.fastq_se, f"{self.sample_name}.fastq{'.gz' if gzipped else ''}"])
-        else:
-            for read_nb, path in enumerate(self._args.fastq_pe, start=1):
-                gzipped = FileSystemHelper.is_gzipped(path)
-                links.append([path, f"{self.sample_name}_{read_nb}.fastq{'.gz' if gzipped else ''}"])
-        return links
 
     @property
     def sample_name(self) -> str:
@@ -115,5 +102,5 @@ class MainBacillusPipeline(ReportPipeline):
 
 if __name__ == '__main__':
     Camel.get_instance()
-    main = MainSTECPipeline()
+    main = MainBacillusPipeline()
     main.run()
