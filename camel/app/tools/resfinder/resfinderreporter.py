@@ -4,6 +4,7 @@ from typing import List, Tuple, Union, Dict
 import pandas as pd
 
 from camel.app.camel import Camel
+from camel.app.components.html.htmlexpandablediv import HtmlExpandableDiv
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.html.htmltablecell import HtmlTableCell
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
@@ -85,34 +86,40 @@ class ResFinderReporter(Tool):
         :param section: Report section
         :return: None
         """
-        # Check if the species-specific output is available
-        has_species_output = 'TSV_pheno_species' in self._tool_inputs
-        section.add_header('Predicted phenotype ' + ('(species-specific)' if has_species_output else '(general)'), 3)
 
-        # Parse the predicted phenotypes and only retain the top half of the file
-        input_key = 'TSV_pheno_species' if has_species_output else 'TSV_pheno_general'
-        data_pheno = pd.read_table(self._tool_inputs[input_key][0].path, comment='#', names=[
-            'Antimicrobial', 'Class', 'WGS-predicted phenotype', 'Match', 'Genetic background'])
-        data_pheno = data_pheno[data_pheno['WGS-predicted phenotype'].apply(lambda x: not pd.isna(x))]
+        for input_key in [k for k in self._tool_inputs if 'pheno' in k]:
 
-        # Replace NA by dashes
-        data_pheno.fillna('-', inplace=True)
+            data_pheno = pd.read_table(self._tool_inputs[input_key][0].path, comment='#', names=[
+                'Antimicrobial', 'Class', 'WGS-predicted phenotype', 'Match', 'Genetic background'])
+            data_pheno = data_pheno[data_pheno['WGS-predicted phenotype'].apply(lambda x: not pd.isna(x))]
 
-        # Sort by first two columns
-        data_pheno.sort_values(by=['Class', 'Antimicrobial'], inplace=True)
+            # Replace NA by dashes
+            data_pheno.fillna('-', inplace=True)
 
-        # Get the colors for the resistance column, then drop the 'Match' column
-        row_colors = data_pheno['Match'].apply(lambda x: ResFinderReporter.MATCH_COLORS[int(x)])
-        data_pheno.pop('Match')
+            # Sort by first two columns
+            data_pheno.sort_values(by=['Class', 'Antimicrobial'], inplace=True)
 
-        # Convert to list format
-        data_table = data_pheno.values.tolist()
+            # Get the colors for the resistance column, then drop the 'Match' column
+            row_colors = data_pheno['Match'].apply(lambda x: ResFinderReporter.MATCH_COLORS[int(x)])
+            data_pheno.pop('Match')
 
-        # Update the phenotype by a colored cell
-        for row, color in zip(data_table, row_colors):
-            index_wgs_pheno = data_pheno.columns.get_loc('WGS-predicted phenotype')
-            row[index_wgs_pheno] = HtmlTableCell(row[index_wgs_pheno], color=color)
-        section.add_table(data_table, data_pheno.columns, [('class', 'data')])
+            # Convert to list format
+            data_table = data_pheno.values.tolist()
+
+            # Update the phenotype by a colored cell
+            for row, color in zip(data_table, row_colors):
+                index_wgs_pheno = data_pheno.columns.get_loc('WGS-predicted phenotype')
+                row[index_wgs_pheno] = HtmlTableCell(row[index_wgs_pheno], color=color)
+
+            if 'general' in input_key:
+                section.add_header('Predicted phenotype (general)', 3)
+                div = HtmlExpandableDiv('phenotype_general', 'general')
+                div.add_table(data_table, data_pheno.columns, [('class', 'data')])
+                section.add_html_object(div)
+            else:
+                section.add_header('Predicted phenotype (species-specific)', 3)
+                section.add_table(data_table, data_pheno.columns, [('class', 'data')])
+
         section.add_warning_message(
             "The phenotype 'No resistance' should be interpreted with caution, as it only means that nothing in the "
             "used database indicate resistance, but resistance could exist from 'unknown' or not yet implemented "
@@ -153,6 +160,7 @@ class ResFinderReporter(Tool):
     def __add_links_and_format_data(self, data: Dict[str, List[List[str]]]) -> Dict[str, List[Union[str, HtmlTableCell]]]:
         """
         Adds PubMed links for mutations that have an associated PMID.
+        Also formats data for taking into account color and floating points.
         :param data: Data
         :return: Data with links added
         """
@@ -175,6 +183,16 @@ class ResFinderReporter(Tool):
                         row[3] = f'{eval(row[3]):.2f}'
                     except NameError:
                         pass
+                    if key == 'TSV_genes':
+                        if row[3] == '100.00':
+                            if row[1] == '100.00':
+                                row = [HtmlTableCell(k, color='green') for k in row]
+                            else:
+                                row = [HtmlTableCell(k, color='lightgreen') for k in row]
+                        else:
+                            row = [HtmlTableCell(k, color='grey') for k in row]
+                    else:
+                        row = [HtmlTableCell(k, color='green') for k in row]
                     edited_data.append(row)
                 table_results[key] = edited_data
         return table_results
@@ -190,6 +208,6 @@ class ResFinderReporter(Tool):
         section.add_table([
             [HtmlTableCell('', color='green'), 'Perfect match (100% over full length)'],
             [HtmlTableCell('', color='lightgreen'), 'Coverage 100%, identity <100%'],
-            [HtmlTableCell('', color='grey'), 'Coverage <100%, identity <100%'],
+            [HtmlTableCell('', color='grey'), 'Coverage <100%', 'identity <= 100%'],
             [HtmlTableCell('', color=None), 'No match found'],
         ], None, [('class', 'data')])
