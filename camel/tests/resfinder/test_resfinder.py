@@ -34,7 +34,7 @@ class TestResFinder(CamelTestSuite):
             '--point',
             '--min-cov', '60',
             '--threshold', '80',
-            '--species', '"Staphylococcus_aureus"'
+            '--species', 'Staphylococcus_aureus'
         ]
         main = MainResFinder(args)
         main.run()
@@ -53,7 +53,7 @@ class TestResFinder(CamelTestSuite):
             '--point',
             '--min-cov', '60',
             '--threshold', '80',
-            '--species', '"Escherichia coli"'
+            '--species', 'Escherichia_coli'
         ]
         main = MainResFinder(args)
         main.run()
