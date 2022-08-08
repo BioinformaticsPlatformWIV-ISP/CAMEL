@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import argparse
 from pathlib import Path
-from typing import List, Dict, Optional, Tuple, Sequence
+from typing import List, Dict, Optional, Sequence
 
 import yaml
 
@@ -35,6 +35,14 @@ class MainBacillusPipeline(ReportPipeline):
         :param args: Arguments (optional)
         """
         super().__init__('Bacillus pipeline', '1.0', SNAKEFILE_MAIN, args)
+
+    @property
+    def title(self) -> str:
+        """
+        Returns the title of the pipeline as it appears in the HTML output.
+        :return: Title
+        """
+        return '<i>Bacillus</i> pipeline'
 
     def run(self) -> None:
         """
@@ -80,8 +88,9 @@ class MainBacillusPipeline(ReportPipeline):
         """
         parser = argparse.ArgumentParser()
         ReportPipeline.add_common_arguments(parser)
-        parser.add_argument('--fastq-pe', type=Path, help="Input SE FASTQ file")
-        parser.add_argument('--fastq-pe-name', help="Input SE FASTQ file name")
+        parser.add_argument('--fastq-se', type=Path, help="Input SE FASTQ file")
+        parser.add_argument('--fastq-se-name', help="Input SE FASTQ file name")
+        parser.add_argument('--species', help="Bacillus species under study")
 
         for analysis_key in MainBacillusPipeline.CUSTOM_ANALYSES:
             parser.add_argument(f"--{analysis_key.replace('_', '-')}", action='store_true')
