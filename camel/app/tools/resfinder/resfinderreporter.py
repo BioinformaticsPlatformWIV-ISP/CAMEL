@@ -35,8 +35,8 @@ class ResFinderReporter(Tool):
         Checks whether the provided input files are valid.
         :return: None
         """
-        if 'TSV_genes' not in self._tool_inputs:
-            raise InvalidInputSpecificationError('ResFinder input (TSV_genes) is required.')
+        # if 'TSV_genes' not in self._tool_inputs:
+        #     raise InvalidInputSpecificationError('ResFinder input (TSV_genes) is required.')
         if 'TSV_pheno_general' not in self._tool_inputs:
             raise InvalidInputSpecificationError('ResFinder phenotype input (TSV_pheno_general) is required.')
         if 'resfinder' not in self._input_informs:
@@ -150,8 +150,7 @@ class ResFinderReporter(Tool):
                 relative_path = Path('resfinder', self.__generate_output_filename(key_to_info[key][0]))
                 div_sect.add_header(f'{key_to_info[key][1]}', 4)
                 div_sect.add_table(table, header[key], [('class', 'data')])
-                div_sect.add_paragraph('Database: {}_db, Last update: {}'.format(key_to_info[key][0],
-                                                                                 key_to_info[key][2]))
+                div_sect.add_paragraph('Database last update: {}'.format(key_to_info[key][2]))
                 section.add_file(self._tool_inputs[key][0].path, relative_path)
                 div_sect.add_link_to_file('Download (TSV)', relative_path)
             else:
@@ -159,7 +158,7 @@ class ResFinderReporter(Tool):
                 div_sect.add_paragraph('No genes found.')
         section.add_html_object(div_sect)
 
-    def __add_links_and_format_data(self, data: Dict[str, List[List[str]]])\
+    def __add_links_and_format_data(self, data: Dict[str, List[List[str]]]) \
             -> Dict[str, List[List[HtmlTableCell]]]:
         """
         Adds PubMed links for mutations that have an associated PMID.
@@ -169,35 +168,43 @@ class ResFinderReporter(Tool):
         """
         table_results = {}
         for key in ['TSV_genes', 'TSV_point']:
-            table = data[key]
-            edited_data = []
-            if table:
-                n_fields = len(table[0])
-                for i in range(len(table)):
-                    row = table[i]
-                    if row[n_fields - 1] is not None:
-                        access = row[n_fields - 1]
+            if key in data:
+                table = data[key]
+                edited_data = []
+                if table:
+                    n_fields = len(table[0])
+                    for i in range(len(table)):
+                        row = table[i]
+
+                        try:
+                            row[3] = f'{eval(row[3]):.2f}'  # If floating point in cov, set to 2 floating points
+                        except NameError:
+                            pass
+
+                        cell_color = 'green'    # Default cell color - depends on cov and identity
+                        access = ''             # If I have an accession number - add the link + the color
+                        if row[n_fields - 1] is not None:
+                            access = row[n_fields - 1]
+
                         if key == 'TSV_genes':
-                            publi = HtmlTableCell(str(access), link=ResFinderReporter.URL_NUCCORE.format(id=access))
-                        elif key == 'TSV_point':
-                            publi = HtmlTableCell(str(access), link=ResFinderReporter.URL_PUBMED.format(id=access))
-                        row[n_fields - 1] = publi
-                    try:
-                        row[3] = f'{eval(row[3]):.2f}'
-                    except NameError:
-                        pass
-                    if key == 'TSV_genes':
-                        if row[3] == '100.00':
-                            if row[1] == '100.00':
-                                row = [HtmlTableCell(k, color='green') for k in row]
-                            else:
-                                row = [HtmlTableCell(k, color='lightgreen') for k in row]
+                            if row[3] == '100.00' and row[1] != '100.00':
+                                cell_color = 'lightgreen'
+                            if row[3] != '100.00':
+                                cell_color = 'grey'
+                            row = [HtmlTableCell(k, color=cell_color) for k in row]
+                            if access:
+                                publi = HtmlTableCell(str(access), link=ResFinderReporter.URL_NUCCORE.format(id=access),
+                                                      color=cell_color)
+                                row[n_fields - 1] = publi
+
                         else:
-                            row = [HtmlTableCell(k, color='grey') for k in row]
-                    else:
-                        row = [HtmlTableCell(k, color='green') for k in row]
-                    edited_data.append(row)
-                table_results[key] = edited_data
+                            row = [HtmlTableCell(k, color=cell_color) for k in row]
+                            if access:
+                                publi = HtmlTableCell(str(access), link=ResFinderReporter.URL_PUBMED.format(id=access),
+                                                      color=cell_color)
+                                row[n_fields - 1] = publi
+                        edited_data.append(row)
+                    table_results[key] = edited_data
         return table_results
 
     def __add_explanation_matches(self, section: HtmlReportSection) -> None:

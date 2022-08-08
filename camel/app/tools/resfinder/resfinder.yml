@@ -1,6 +1,6 @@
 dependencies: [resfinder/4.1.11, blast/2.7.1, kma/1.3.5]
 parameters:
-  acquired: {default: true, mandatory: true, option: --acquired, value: ''}
+  acquired: {default: false, mandatory: false, option: --acquired, value: ''}
   blast_path: {default: false, mandatory: false, option: --blastPath, value: ''}
   databases: {default: false, mandatory: false, option: --databases, value: ''}
   dbpoint_path: {default: false, mandatory: false, option: --db_path_point, value: ''}

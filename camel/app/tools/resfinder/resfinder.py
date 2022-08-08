@@ -26,6 +26,8 @@ class ResFinder(Tool):
         """
         if any(key in self._tool_inputs for key in ('FASTA' or 'FASTQ_PE' or 'FASTQ_SE')):
             raise InvalidInputSpecificationError('FASTA or FASTQ input is required')
+        if not ('acquired' or 'point' in self._tool_inputs):
+            raise InvalidInputSpecificationError('Either "acquired" or "point" is required')
         super()._check_input()
 
     def _build_command(self) -> None:
@@ -56,12 +58,13 @@ class ResFinder(Tool):
         """
         dir_out = self.folder / self._parameters['output_path'].value
 
-        self._tool_outputs['TSV_genes'] = [
-            ToolIOFile(dir_out / Path('ResFinder_results_tab.txt'))
-        ]
         self._tool_outputs['TSV_pheno_general'] = [
             ToolIOFile(dir_out / Path('pheno_table.txt'))
         ]
+        if 'acquired' in self._parameters:
+            self._tool_outputs['TSV_genes'] = [
+                ToolIOFile(dir_out / Path('ResFinder_results_tab.txt'))
+            ]
         if 'point' in self._parameters:
             self._tool_outputs['TSV_point'] = [
                 ToolIOFile(dir_out / Path('PointFinder_results.txt'))

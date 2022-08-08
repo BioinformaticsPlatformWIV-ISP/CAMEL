@@ -45,10 +45,12 @@ class MainResFinder(object):
         argument_parser.add_argument('--fastq-se-name', help="Input SE FASTQ file name")
 
         argument_parser.add_argument('--point', action='store_true', default=None)
-        argument_parser.add_argument('--acquired', action='store_true')
+        argument_parser.add_argument('--acquired', action='store_true', default=None)
 
-        argument_parser.add_argument('--min-cov', type=float, default=0.6)
-        argument_parser.add_argument('--threshold', type=float, default=0.8)
+        argument_parser.add_argument('--min-cov', type=int, default=60,
+                                     help='Minimum (breadth-of) coverage of ResFinder')
+        argument_parser.add_argument('--threshold', type=int, default=80,
+                                     help='Threshold for identity of ResFinder')
 
         argument_parser.add_argument('--species', choices=[
             '"Campylobacter"', '"Campylobacter jejuni"', '"Campylobacter coli"', '"Enterococcus_faecalis"',
@@ -70,8 +72,8 @@ class MainResFinder(object):
             ['Species:', '<i>{}</i>'.format(self._args.species.replace('"', ''))
                 if self._args.species is not None else 'Not specified'],
             ['Min % identity:',
-                f'{100 * self._args.threshold:.2f}' if self._args.threshold is not None else 'Curated (default)'],
-            ['Min % coverage:', f'{100 * self._args.min_cov:.2f}'],
+                f'{self._args.threshold}' if self._args.threshold is not None else 'Curated (default)'],
+            ['Min % coverage:', f'{self._args.min_cov}'],
         ]
         report.add_html_object(mainscriptutils.generate_analysis_info_section(self._args, additional_info))
         report.save()
@@ -105,11 +107,13 @@ class MainResFinder(object):
         resfinder.update_parameters(output_path=self._args.working_dir, min_cov=0.6, threshold=0.8)
 
         if self._args.min_cov is not None:
-            resfinder.update_parameters(min_cov=self._args.min_cov)
+            resfinder.update_parameters(min_cov=self._args.min_cov / 100.0)
         if self._args.threshold is not None:
-            resfinder.update_parameters(threshold=self._args.threshold)
+            resfinder.update_parameters(threshold=self._args.threshold / 100.0)
         if self._args.point is not None:
             resfinder.update_parameters(point=True, species=self._args.species)
+        if self._args.acquired is not None:
+            resfinder.update_parameters(acquired=True)
 
         resfinder.run(self._args.working_dir)
         return resfinder
@@ -121,7 +125,9 @@ class MainResFinder(object):
         :return: None.
         """
         reporter = ResFinderReporter(Camel.get_instance())
-        reporter.add_input_files({'TSV_genes': resfinder.tool_outputs['TSV_genes'], 'TSV_pheno_general': resfinder.tool_outputs['TSV_pheno_general']})
+        reporter.add_input_files({'TSV_pheno_general': resfinder.tool_outputs['TSV_pheno_general']})
+        if self._args.acquired is not None:
+            reporter.add_input_files({'TSV_genes': resfinder.tool_outputs['TSV_genes']})
         if self._args.point is not None:
             reporter.add_input_files({'TSV_point': resfinder.tool_outputs['TSV_point'],
                                       'TSV_pheno_species': resfinder.tool_outputs['TSV_pheno_species']})
