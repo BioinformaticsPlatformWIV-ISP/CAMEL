@@ -65,7 +65,7 @@ class TestResFinder(CamelTestSuite):
         """
         resfinder = ResFinder(self.camel)
         resfinder.add_input_files({'FASTA': [TestResFinder.FILE_FASTA_1]})
-        resfinder.update_parameters(output_path=self.running_dir, min_cov=0.6, threshold=0.8)
+        resfinder.update_parameters(output_path=self.running_dir, min_cov=0.6, threshold=0.8, acquired=True)
         resfinder.run(self.running_dir)
         self.verify_output_files(resfinder, 'TSV_genes')
         self.verify_output_files(resfinder, 'TSV_pheno_general')
@@ -76,7 +76,7 @@ class TestResFinder(CamelTestSuite):
         """
         resfinder = ResFinder(self.camel)
         resfinder.add_input_files({'FASTQ_PE': [TestResFinder.FILE_FASTQ_1, TestResFinder.FILE_FASTQ_2]})
-        resfinder.update_parameters(output_path=self.running_dir, min_cov=0.6, threshold=0.8)
+        resfinder.update_parameters(output_path=self.running_dir, min_cov=0.6, threshold=0.8, acquired=True)
         resfinder.run(self.running_dir)
         self.verify_output_files(resfinder, 'TSV_genes')
         self.verify_output_files(resfinder, 'TSV_pheno_general')
