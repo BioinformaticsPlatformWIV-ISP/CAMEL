@@ -53,10 +53,10 @@ class MainResFinder(object):
                                      help='Threshold for identity of ResFinder')
 
         argument_parser.add_argument('--species', choices=[
-            '"Campylobacter"', '"Campylobacter jejuni"', '"Campylobacter coli"', '"Enterococcus_faecalis"',
-            '"Enterococcus faecium"', '"Escherichia coli"', '"Helicobacter pylori"', '"Klebsiella"',
-            '"Mycobacterium tuberculosis"', '"Neisseria gonorrhoeae"', '"Plasmodium falciparum"', '"Salmonella"',
-            '"Salmonella enterica"', '"Staphylococcus aureus"'], required=False, default=None)
+            '"Campylobacter"', '"Campylobacter_jejuni"', '"Campylobacter_coli"', '"Enterococcus_faecalis"',
+            '"Enterococcus_faecium"', '"Escherichia_coli"', '"Helicobacter_pylori"', '"Klebsiella"',
+            '"Mycobacterium_tuberculosis"', '"Neisseria_gonorrhoeae"', '"Plasmodium_falciparum"', '"Salmonella"',
+            '"Salmonella_enterica"', '"Staphylococcus_aureus"'], required=False, default=None)
 
         return argument_parser.parse_args(args)
 
@@ -111,7 +111,7 @@ class MainResFinder(object):
         if self._args.threshold is not None:
             resfinder.update_parameters(threshold=self._args.threshold / 100.0)
         if self._args.point is not None:
-            resfinder.update_parameters(point=True, species=self._args.species)
+            resfinder.update_parameters(point=True, species=self._args.species.replace('_', ' ').replace("'", '"'))
         if self._args.acquired is not None:
             resfinder.update_parameters(acquired=True)
 
