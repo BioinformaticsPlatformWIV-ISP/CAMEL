@@ -53,10 +53,10 @@ class MainResFinder(object):
                                      help='Threshold for identity of ResFinder')
 
         argument_parser.add_argument('--species', choices=[
-            '"Campylobacter"', '"Campylobacter_jejuni"', '"Campylobacter_coli"', '"Enterococcus_faecalis"',
-            '"Enterococcus_faecium"', '"Escherichia_coli"', '"Helicobacter_pylori"', '"Klebsiella"',
-            '"Mycobacterium_tuberculosis"', '"Neisseria_gonorrhoeae"', '"Plasmodium_falciparum"', '"Salmonella"',
-            '"Salmonella_enterica"', 'Staphylococcus_aureus'], required=False, default=None)
+            'Campylobacter', 'Campylobacter_jejuni', 'Campylobacter_coli', 'Enterococcus_faecalis',
+            'Enterococcus_faecium', 'Escherichia_coli', 'Helicobacter_pylori', 'Klebsiella',
+            'Mycobacterium_tuberculosis', 'Neisseria_gonorrhoeae', 'Plasmodium_falciparum', 'Salmonella',
+            'Salmonella_enterica', 'Staphylococcus_aureus'], required=False, default=None)
 
         return argument_parser.parse_args(args)
 
