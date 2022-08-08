@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, Tuple, Union, Dict
+from typing import List, Tuple, Dict
 
 import pandas as pd
 
@@ -116,26 +116,24 @@ class ResFinderReporter(Tool):
                 div = HtmlExpandableDiv('phenotype_general', 'general')
                 div.add_table(data_table, data_pheno.columns, [('class', 'data')])
                 div_sect.add_html_object(div)
+                relative_path = Path('resfinder', self._tool_inputs['TSV_pheno_general'][0].path.name)
+                section.add_file(self._tool_inputs['TSV_pheno_general'][0].path, relative_path)
+                div_sect.add_link_to_file(f'Download general overview (TSV)', relative_path)
             else:
                 div_sect.add_header('Predicted phenotype (species-specific)', 3)
                 div_sect.add_table(data_table, data_pheno.columns, [('class', 'data')])
+                relative_path = Path('resfinder', self._tool_inputs['TSV_pheno_species'][0].path.name)
+                section.add_file(self._tool_inputs['TSV_pheno_species'][0].path, relative_path)
+                div_sect.add_link_to_file(f'Download species-specific overview (TSV)', relative_path)
         div_sect.add_warning_message(
             "The phenotype 'No resistance' should be interpreted with caution, as it only means that nothing in the "
             "used database indicate resistance, but resistance could exist from 'unknown' or not yet implemented "
             "sources.")
-
-        # Add download links
-        for input_key, title in zip(['TSV_pheno_species', 'TSV_pheno_general'], ['species-specific', 'general']):
-            if input_key not in self._tool_inputs:
-                continue
-            relative_path = Path('resfinder', self._tool_inputs[input_key][0].path.name)
-            section.add_file(self._tool_inputs[input_key][0].path, relative_path)
-            div_sect.add_link_to_file(f'Download {title} overview (TSV)', relative_path)
         section.add_html_object(div_sect)
 
     def __add_output_table(
             self, section: HtmlReportSection, header: Dict[str, List[str]],
-            data: Dict[str, List[Union[str, HtmlTableCell]]]) -> None:
+            data: Dict[str, List[List[HtmlTableCell]]]) -> None:
         """
         Adds the output table.
         :param section: Report section
@@ -143,21 +141,26 @@ class ResFinderReporter(Tool):
         :param data: Output table data
         :return: None
         """
-        key_to_info = {'TSV_genes': ['resfinder', 'Detected AMR genes'],
-                       'TSV_point': ['pointfinder', 'Detected AMR-conferring mutations']}
+        key_to_info = {'TSV_genes': ['resfinder', 'Detected AMR genes', '19-07-2022'],
+                       'TSV_point': ['pointfinder', 'Detected AMR-conferring mutations', '30-06-2022']}
+        div_sect = HtmlElement('div', attributes=[('class', 'border_bottom')])
         for key in data:
             table = data[key]
             if len(table) > 0:
                 relative_path = Path('resfinder', self.__generate_output_filename(key_to_info[key][0]))
-                section.add_header(f'{key_to_info[key][1]}', 4)
-                section.add_table(table, header[key], [('class', 'data')])
+                div_sect.add_header(f'{key_to_info[key][1]}', 4)
+                div_sect.add_table(table, header[key], [('class', 'data')])
+                div_sect.add_paragraph('Database: {}_db, Last update: {}'.format(key_to_info[key][0],
+                                                                                 key_to_info[key][2]))
                 section.add_file(self._tool_inputs[key][0].path, relative_path)
-                section.add_link_to_file('Download (TSV)', relative_path)
+                div_sect.add_link_to_file('Download (TSV)', relative_path)
             else:
-                section.add_header(f'{key_to_info[key][1]}', 4)
-                section.add_paragraph('No genes found.')
+                div_sect.add_header(f'{key_to_info[key][1]}', 4)
+                div_sect.add_paragraph('No genes found.')
+        section.add_html_object(div_sect)
 
-    def __add_links_and_format_data(self, data: Dict[str, List[List[str]]]) -> Dict[str, List[Union[str, HtmlTableCell]]]:
+    def __add_links_and_format_data(self, data: Dict[str, List[List[str]]])\
+            -> Dict[str, List[List[HtmlTableCell]]]:
         """
         Adds PubMed links for mutations that have an associated PMID.
         Also formats data for taking into account color and floating points.
@@ -208,6 +211,6 @@ class ResFinderReporter(Tool):
         section.add_table([
             [HtmlTableCell('', color='green'), 'Perfect match (100% over full length)'],
             [HtmlTableCell('', color='lightgreen'), 'Coverage 100%, identity <100%'],
-            [HtmlTableCell('', color='grey'), 'Coverage <100%', 'identity <= 100%'],
+            [HtmlTableCell('', color='grey'), 'Coverage <100%, identity <= 100%'],
             [HtmlTableCell('', color=None), 'No match found'],
         ], None, [('class', 'data')])
