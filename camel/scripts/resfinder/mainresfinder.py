@@ -51,6 +51,8 @@ class MainResFinder(object):
                                      help='Minimum (breadth-of) coverage of ResFinder')
         argument_parser.add_argument('--threshold', type=int, default=80,
                                      help='Threshold for identity of ResFinder')
+        argument_parser.add_argument('--acq-overlap', type=int, default=30,
+                                     help=' Genes are allowed to overlap this number of nucleotides. Default: 30.')
 
         argument_parser.add_argument('--species', choices=[
             'Campylobacter', 'Campylobacter_jejuni', 'Campylobacter_coli', 'Enterococcus_faecalis',
@@ -106,14 +108,14 @@ class MainResFinder(object):
 
         resfinder.update_parameters(output_path=self._args.working_dir, min_cov=0.6, threshold=0.8)
 
-        if self._args.min_cov is not None:
+        if self._args.min_cov != 60:
             resfinder.update_parameters(min_cov=self._args.min_cov / 100.0)
-        if self._args.threshold is not None:
+        if self._args.threshold != 80:
             resfinder.update_parameters(threshold=self._args.threshold / 100.0)
         if self._args.point is not None:
             resfinder.update_parameters(point=True, species='"'+self._args.species.replace('_', ' ')+'"')
         if self._args.acquired is not None:
-            resfinder.update_parameters(acquired=True)
+            resfinder.update_parameters(acquired=True, acq_overlap=self._args.acq_overlap)
 
         resfinder.run(self._args.working_dir)
         return resfinder

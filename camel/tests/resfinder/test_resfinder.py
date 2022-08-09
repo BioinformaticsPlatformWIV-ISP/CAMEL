@@ -31,6 +31,7 @@ class TestResFinder(CamelTestSuite):
             '--output-dir', str(output_file_report.parent),
             '--working-dir', str(self.running_dir),
             '--acquired',
+            '--acq-overlap', '40',
             '--point',
             '--min-cov', '60',
             '--threshold', '80',
@@ -51,6 +52,8 @@ class TestResFinder(CamelTestSuite):
             '--output-dir', str(output_file_report.parent),
             '--working-dir', str(self.running_dir),
             '--point',
+            '--acquired',
+            '--acq-overlap', '45',
             '--min-cov', '60',
             '--threshold', '80',
             '--species', 'Escherichia_coli'
