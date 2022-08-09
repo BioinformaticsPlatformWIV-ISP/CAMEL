@@ -20,7 +20,7 @@ rule btyper_run:
         from camel.app.pipeline.step import Step
         from camel.app.tools.btyper.btyper import BTyper
         btyper = BTyper(camel)
-        btyper.add_input_files({'FASTA': [ToolIOFile(Path(input.FASTA))]})
+        # btyper.add_input_files({'FASTA': [ToolIOFile(Path(input.FASTA))]})
         SnakemakeUtils.add_pickle_inputs(btyper,input)
         step = Step(rule,btyper,camel,params.running_dir,config)
         step.run_step()
