@@ -10,6 +10,7 @@ from camel.app.io.tooliofile import ToolIOFile
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.app.tools.resfinder.resfinder import ResFinder
 from camel.app.tools.resfinder.resfinderreporter import ResFinderReporter
+from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 
 
 class MainResFinder(object):
@@ -113,7 +114,10 @@ class MainResFinder(object):
         if self._args.threshold != 80:
             resfinder.update_parameters(threshold=self._args.threshold / 100.0)
         if self._args.point is not None:
-            resfinder.update_parameters(point=True, species='"'+self._args.species.replace('_', ' ')+'"')
+            try:
+                resfinder.update_parameters(point=True, species='"'+self._args.species.replace('_', ' ')+'"')
+            except AttributeError:
+                raise InvalidInputSpecificationError('--point requires a --species argument')
         if self._args.acquired is not None:
             resfinder.update_parameters(acquired=True, acq_overlap=self._args.acq_overlap)
 

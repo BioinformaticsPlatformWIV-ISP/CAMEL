@@ -141,8 +141,10 @@ class ResFinderReporter(Tool):
         :param data: Output table data
         :return: None
         """
-        key_to_info = {'TSV_genes': ['resfinder', 'Detected AMR genes', '19-07-2022'],
-                       'TSV_point': ['pointfinder', 'Detected AMR-conferring mutations', '30-06-2022']}
+        key_to_info = {'TSV_genes': ['resfinder', 'Detected AMR genes', '19-07-2022',
+                                     'No genes found.'],
+                       'TSV_point': ['pointfinder', 'Detected AMR-conferring mutations', '30-06-2022',
+                                     'No mutations found.']}
         div_sect = HtmlElement('div', attributes=[('class', 'border_bottom')])
         for key in data:
             table = data[key]
@@ -154,8 +156,10 @@ class ResFinderReporter(Tool):
                 section.add_file(self._tool_inputs[key][0].path, relative_path)
                 div_sect.add_link_to_file('Download (TSV)', relative_path)
             else:
-                div_sect.add_header(f'{key_to_info[key][1]}', 4)
-                div_sect.add_paragraph('No genes found.')
+                section.add_header(f'{key_to_info[key][1]}', 4)
+                section.add_paragraph(f'{key_to_info[key][3]}')
+                # div_sect.add_header(f'{key_to_info[key][1]}', 4)
+                # div_sect.add_paragraph('No genes found.')
         section.add_html_object(div_sect)
 
     def __add_links_and_format_data(self, data: Dict[str, List[List[str]]]) \
@@ -205,6 +209,8 @@ class ResFinderReporter(Tool):
                                 row[n_fields - 1] = publi
                         edited_data.append(row)
                     table_results[key] = edited_data
+                else:
+                    table_results[key] = []
         return table_results
 
     def __add_explanation_matches(self, section: HtmlReportSection) -> None:
