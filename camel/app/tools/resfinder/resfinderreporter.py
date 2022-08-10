@@ -150,16 +150,14 @@ class ResFinderReporter(Tool):
             table = data[key]
             if len(table) > 0:
                 relative_path = Path('resfinder', self.__generate_output_filename(key_to_info[key][0]))
-                div_sect.add_header(f'{key_to_info[key][1]}', 4)
+                div_sect.add_header(f'{key_to_info[key][1]}', 3)
                 div_sect.add_table(table, header[key], [('class', 'data')])
                 div_sect.add_paragraph('Database last update: {}'.format(key_to_info[key][2]))
                 section.add_file(self._tool_inputs[key][0].path, relative_path)
                 div_sect.add_link_to_file('Download (TSV)', relative_path)
             else:
-                section.add_header(f'{key_to_info[key][1]}', 4)
-                section.add_paragraph(f'{key_to_info[key][3]}')
-                # div_sect.add_header(f'{key_to_info[key][1]}', 4)
-                # div_sect.add_paragraph('No genes found.')
+                div_sect.add_header(f'{key_to_info[key][1]}', 3)
+                div_sect.add_paragraph(f'{key_to_info[key][3]}')
         section.add_html_object(div_sect)
 
     def __add_links_and_format_data(self, data: Dict[str, List[List[str]]]) \
