@@ -2,7 +2,6 @@ from pathlib import Path
 from typing import List, Tuple, Union
 
 from camel.app.camel import Camel
-from camel.app.components.html.htmlexpandablediv import HtmlExpandableDiv
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.html.htmltablecell import HtmlTableCell
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
@@ -43,6 +42,7 @@ class BTyperReporter(Tool):
         """
         section = HtmlReportSection(BTyperReporter.TITLE, subtitle=self._input_informs['btyper']['_name'])
         header, data = self.__parse_input_file()
+        data = self.__format_output_table(data)
         self.__add_output_table(section, header, data)
         self._tool_outputs['VAL_HTML'] = [ToolIOValue(section)]
 
@@ -65,6 +65,11 @@ class BTyperReporter(Tool):
         else:
             return 'btyper.tsv'
 
+    def __format_output_table(self,
+                              data: List[List[Union[str, HtmlTableCell]]]) -> List[List[Union[str, HtmlTableCell]]]:
+        edited_data = [row for row in data if not row[0] == '#filename']
+        return edited_data
+
     def __add_output_table(
             self, section: HtmlReportSection, header: List[str], data: List[List[Union[str, HtmlTableCell]]]) -> None:
         """
@@ -75,9 +80,7 @@ class BTyperReporter(Tool):
         :return: None
         """
         if len(data) > 0:
-            div = HtmlExpandableDiv('btyper_results', 'results')
-            div.add_table(data, header, [('class', 'data')])
-            section.add_html_object(div)
+            section.add_table(data, header, [('class', 'data')])
             relative_path = Path('btyper', self.__generate_output_filename())
             section.add_file(self._tool_inputs['TSV'][0].path, relative_path)
             section.add_link_to_file('Download (TSV)', relative_path)

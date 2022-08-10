@@ -55,7 +55,10 @@ class BTyper(Tool):
         """
         # Symlink the input FASTA file
         fasta_input = self._folder / Path(str(self._tool_inputs['FASTA'][0])).name
-        fasta_input.symlink_to(self._tool_inputs["FASTA"][0].path)
+        try:
+            fasta_input.symlink_to(self._tool_inputs["FASTA"][0].path)
+        except FileExistsError:
+            pass
 
         # Building the command
         self._build_command(fasta_input)
