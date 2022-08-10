@@ -59,6 +59,8 @@ class MainBacillusPipeline(ReportPipeline):
         :return: Configuration file
         """
         config_data = self.get_template_data('fastq_pe', input_files)
+        print(vars(self._args))
+        # exit()
         config_data['analyses'] = [key for key in MainBacillusPipeline.CUSTOM_ANALYSES if vars(self._args)[key]]
         with open(CONFIG_DATA) as handle_in:
             mainscriptutils.dict_merge(config_data, yaml.load(handle_in.read().format(

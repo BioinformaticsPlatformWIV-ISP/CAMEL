@@ -7,11 +7,11 @@ from camel.scripts.bacilluspipeline.snakefile import btyper
 #######################
 # Included Snakefiles #
 #######################
-include: downsampling.SNAKEFILE_DOWNSAMPLING
-include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
-include: contamination_check_kraken.SNAKEFILE_CONTAMINATION_CHECK_KRAKEN
+# include: downsampling.SNAKEFILE_DOWNSAMPLING
+# include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
+# include: contamination_check_kraken.SNAKEFILE_CONTAMINATION_CHECK_KRAKEN
 # include: quality_checks.SNAKEFILE_QUALITY_CHECKS
-include: assembly_spades.SNAKEFILE_ASSEMBLY_SPADES
+# include: assembly_spades.SNAKEFILE_ASSEMBLY_SPADES
 include: btyper.SNAKEFILE_BTYPER
 
 #########
@@ -64,16 +64,16 @@ rule select_fastq:
         "cp {input.FASTQ_PE} {output.IO_FASTQ};"
 
 
-# rule select_fasta:
-#     """
-#     This rules links the output of the assembly workflow to the other workflows.
-#     """
-#     input:
-#         FASTA = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA
-#     output:
-#         FASTA = Path(config['working_dir']) / gene_detection.INPUT_GENE_DETECTION_FASTA
-#     shell:
-#         "cp {input.FASTA} {output.FASTA};"
+rule select_fasta:
+    """
+    This rules links the output of the assembly workflow to the other workflows.
+    """
+    input:
+        FASTA = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA
+    output:
+        FASTA = Path(config['working_dir']) / btyper.INPUT_BTYPER_FASTA
+    shell:
+        "cp {input.FASTA} {output.FASTA};"
 
 
 rule report_pickle_citations:
@@ -156,7 +156,7 @@ rule report_combine_all:
             datetime.datetime.now(),
             params.pipeline_info['version'], ', '.join(
                 input_file['name'] for _, input_files in params.config_input.items() for input_file in input_files),
-            [('Detection method', params.detection_method), ('Read type', params.read_type)],
+            [('Detection method', params.detection_method)],
             params.citation_keys['main']
         ))
 
@@ -164,7 +164,6 @@ rule report_combine_all:
         report_structure = [
             ('Read trimming and basic QC', 'trim', [Path(input.report_downsampling), Path(input.report_trimming)]),
             ('Assembly', 'assem', [Path(input.report_assembly)]),
-            ('Advanced QC', 'adv_qc', [Path(x) for x in (input.report_kraken, input.report_adv_qc)]),
             ('BTyper results', 'btyper', [Path(input.report_btyper)]),
             ('Citations', 'citations', [Path(input.report_citations)]),
             ('Commands', 'commands', [Path(input.report_commands)])

@@ -1,26 +1,23 @@
 from pathlib import Path
 
-from camel.app.io.tooliofile import ToolIOFile
+from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.scripts.bacilluspipeline.snakefile import btyper as bt
-from camel.resources.snakefile import assembly_spades
 
 rule btyper_run:
     """
     Runs btyper on assembled contigs.
     """
     input:
-        FASTA = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA
+        FASTA = Path(config['working_dir']) / bt.INPUT_BTYPER_FASTA
     output:
-        VAL_btyper = Path(config['working_dir']) / bt.OUTPUT_VAL_BTYPER,
+        TSV = Path(config['working_dir']) / bt.OUTPUT_VAL_BTYPER,
         INFORMS = Path(config['working_dir']) / bt.OUTPUT_INFORMS_BTYPER
     params:
         running_dir = Path(config['working_dir']) / 'btyper'
     run:
-        from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-        from camel.app.pipeline.step import Step
         from camel.app.tools.btyper.btyper import BTyper
         btyper = BTyper(camel)
-        # btyper.add_input_files({'FASTA': [ToolIOFile(Path(input.FASTA))]})
+        btyper.update_parameters(output_dir=params.running_dir)
         SnakemakeUtils.add_pickle_inputs(btyper,input)
         step = Step(rule,btyper,camel,params.running_dir,config)
         step.run_step()
@@ -31,9 +28,10 @@ rule btyper_report:
     Creates the report section for btyper.
     """
     input:
-        INFORMS = rules.btyper_run.output.INFORMS
+        TSV = rules.btyper_run.output.TSV,
+        INFORMS_btyper = rules.btyper_run.output.INFORMS
     output:
-        HTML = Path(config['working_dir']) / bt.OUTPUT_BTYPER_REPORT
+        VAL_HTML = Path(config['working_dir']) / bt.OUTPUT_BTYPER_REPORT
     params:
         running_dir = Path(config['working_dir']) / 'btyper',
         sample_name= config['sample_name']
@@ -69,10 +67,7 @@ rule btyper_dump_summary_info:
         TSV = Path(config['working_dir']) / bt.OUTPUT_BTYPER_SUMMARY
     run:
         import json
-        from camel.app.components.html.htmltablecell import HtmlTableCell
         informs = SnakemakeUtils.load_object(Path(input.INFORMS))
         data = []
-        for row in informs['data']:
-            data.append([e if not isinstance(e, HtmlTableCell) else e.text for e in row])
         with open(output.TSV, 'w') as handle:
             handle.write('{}\t{}\n'.format('btyper_typing_results', json.dumps(data)))
