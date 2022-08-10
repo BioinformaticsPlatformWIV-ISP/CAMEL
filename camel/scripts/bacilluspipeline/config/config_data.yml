@@ -9,23 +9,7 @@ citations:
     - Gurevich_2013-quast
     - Wood_2019-kraken2
     - Langmead_2012-bowtie2
-    - Li_2009-samtools
-    - Li_2011-bcftools
-    - Kaas_2014-csi_phylogeny
     - Camacho_2009-blast
-    - Clausen_2018-kma
-    - Inouye_2014-srst2
-    - Gupta_2014-argannot
-    - McArthur_2013-card
-    - Zankari_2012-resfinder
-    - Feldgarden_2019-ndaro
-    - Zankari_2017-pointfinder
-    - Joensen_2014-virulencefinder
-    - Joensen_2015-serotypefinder
-    - Carattoli_2020-plasmidfinder
-    - Jaureguy_2008-pasteur
-    - Zhou_2020-enterobase
-    - Jolley_2010-bigsdb
 
 #########################
 # Tool specific options #
@@ -40,9 +24,17 @@ contamination_check:
   expected_species: {expected_species}
 
 quality_checks:
+  typing_scheme: {qc_typing_scheme}
   expected_gc_content: {expected_gc_content}
 
 assembly:
   spades:
     cov_cutoff: 10
   min_contig_length: 1000
+
+sequence_typing:
+  mlst:
+    path: {mlst_db}
+  cgmlst:
+    path: {cgmlst_db}
+    detection_method: blast

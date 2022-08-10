@@ -18,14 +18,16 @@ class MainBacillusPipeline(ReportPipeline):
     Main class to run the Bacillus pipeline.
     """
 
-    CUSTOM_ANALYSES = ['kraken', 'btyper']
+    CUSTOM_ANALYSES = ['kraken', 'btyper', 'mlst', 'cgmlst']
 
     # Not yet up to date!
     DATA_BY_SPECIES = {
         'cereus': {
             'gc_content': 35,
             'genome_size': 2_796_178,
-            'full_name': 'Bacillus cereus'
+            'full_name': 'Bacillus cereus',
+            'mlst_db': '/db/sequence_typing/bacillus_cereus/mlst',
+            'cgmlst_db': '/db/sequence_typing/bacillus_cereus/cgmlst'
         }
     }
 
@@ -59,17 +61,18 @@ class MainBacillusPipeline(ReportPipeline):
         :return: Configuration file
         """
         config_data = self.get_template_data('fastq_pe', input_files)
-        print(vars(self._args))
-        # exit()
         config_data['analyses'] = [key for key in MainBacillusPipeline.CUSTOM_ANALYSES if vars(self._args)[key]]
         with open(CONFIG_DATA) as handle_in:
             mainscriptutils.dict_merge(config_data, yaml.load(handle_in.read().format(
+                qc_typing_scheme='cgmlst' if self._args.cgmlst else 'mlst',
                 coverage_max=self._args.cov_max,
                 export_fastq='true' if self._args.report_include_fastq else 'false',
                 export_bam='true' if self._args.report_include_bam else 'false',
                 expected_species=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['full_name'],
                 expected_gc_content=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['gc_content'],
-                genome_size=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['genome_size']
+                genome_size=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['genome_size'],
+                mlst_db=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['mlst_db'],
+                cgmlst_db=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['cgmlst_db']
             ), Loader=yaml.SafeLoader))
 
         # Set the species

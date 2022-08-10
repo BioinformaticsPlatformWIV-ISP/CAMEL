@@ -1,17 +1,18 @@
 from pathlib import Path
 
 from camel.resources.snakefile import trimming, trimming_illumina, assembly_spades, \
-    quality_checks, contamination_check_kraken, downsampling
+    quality_checks, contamination_check_kraken, sequence_typing, downsampling
 from camel.scripts.bacilluspipeline.snakefile import btyper
 
 #######################
 # Included Snakefiles #
 #######################
-# include: downsampling.SNAKEFILE_DOWNSAMPLING
-# include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
-# include: contamination_check_kraken.SNAKEFILE_CONTAMINATION_CHECK_KRAKEN
-# include: quality_checks.SNAKEFILE_QUALITY_CHECKS
-# include: assembly_spades.SNAKEFILE_ASSEMBLY_SPADES
+include: downsampling.SNAKEFILE_DOWNSAMPLING
+include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
+include: contamination_check_kraken.SNAKEFILE_CONTAMINATION_CHECK_KRAKEN
+include: quality_checks.SNAKEFILE_QUALITY_CHECKS
+include: assembly_spades.SNAKEFILE_ASSEMBLY_SPADES
+include: sequence_typing.SNAKEFILE_SEQUENCE_TYPING
 include: btyper.SNAKEFILE_BTYPER
 
 #########
@@ -130,7 +131,9 @@ rule report_combine_all:
         report_trimming = trimming.get_trimming_report(config),
         report_assembly = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_REPORT,
         report_kraken = Path(config['working_dir']) / (contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT if 'kraken' in config['analyses'] else contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT_EMPTY),
-        # report_adv_qc = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_REPORT,
+        report_adv_qc = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_REPORT,
+        report_mlst=sequence_typing.get_sequence_typing_report('mlst',config),
+        report_cgmlst=sequence_typing.get_sequence_typing_report('cgmlst',config),
         report_btyper = Path(config['working_dir']) / btyper.OUTPUT_BTYPER_REPORT,
         report_citations = rules.report_pickle_citations.output.HTML,
         report_commands = rules.report_command_section.output.HTML
@@ -142,7 +145,6 @@ rule report_combine_all:
         output_dir = config['output_dir'],
         pipeline_info = config['pipeline'],
         detection_method = config['detection_method'],
-        # read_type = config['read_type'],
         citation_keys = config['citations']
     run:
         import datetime
@@ -164,6 +166,8 @@ rule report_combine_all:
         report_structure = [
             ('Read trimming and basic QC', 'trim', [Path(input.report_downsampling), Path(input.report_trimming)]),
             ('Assembly', 'assem', [Path(input.report_assembly)]),
+            ('Advanced QC', 'adv_qc', [Path(x) for x in (input.report_kraken, input.report_adv_qc)]),
+            ('Sequence typing', 'st', [Path(x) for x in (input.report_mlst, input.report_cgmlst)]),
             ('BTyper results', 'btyper', [Path(input.report_btyper)]),
             ('Citations', 'citations', [Path(input.report_citations)]),
             ('Commands', 'commands', [Path(input.report_commands)])
@@ -190,7 +194,6 @@ rule summary_init:
                 ('input_files', input_filenames),
                 ('analysis_date', analysis_date),
                 ('detection_method', config['detection_method'])]:
-                # ('read_type', config['read_type'])]:
                 handle.write('\t'.join(kv_pair))
                 handle.write('\n')
 
@@ -203,8 +206,10 @@ rule summary_combine_all:
         Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_SUMMARY,
         trimming.get_trimming_summary(config),
         Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_SUMMARY,
-        # Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY,
+        Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY,
         Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_SUMMARY if 'kraken' in config['analyses'] else [],
+        Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='mlst') if 'mlst' in config['analyses'] else [],
+        Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='cgmlst') if 'cgmlst' in config['analyses'] else [],
         Path(config['working_dir']) / btyper.OUTPUT_BTYPER_SUMMARY if 'btyper' in config['analyses'] else []
     output:
         config.get('output_tabular')

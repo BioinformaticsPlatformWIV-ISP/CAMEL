@@ -17,7 +17,7 @@ rule btyper_run:
     run:
         from camel.app.tools.btyper.btyper import BTyper
         btyper = BTyper(camel)
-        btyper.update_parameters(output_dir=params.running_dir)
+        btyper.update_parameters(output_dir = str(params.running_dir))
         SnakemakeUtils.add_pickle_inputs(btyper,input)
         step = Step(rule,btyper,camel,params.running_dir,config)
         step.run_step()
