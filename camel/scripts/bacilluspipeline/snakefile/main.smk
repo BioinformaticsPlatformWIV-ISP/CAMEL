@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from camel.resources.snakefile import trimming, trimming_illumina, assembly_spades, \
-    quality_checks, contamination_check_kraken, sequence_typing, downsampling
+    quality_checks, contamination_check_kraken, sequence_typing, downsampling, resfinder
 from camel.scripts.bacilluspipeline.snakefile import btyper
 
 #######################
@@ -14,6 +14,7 @@ include: quality_checks.SNAKEFILE_QUALITY_CHECKS
 include: assembly_spades.SNAKEFILE_ASSEMBLY_SPADES
 include: sequence_typing.SNAKEFILE_SEQUENCE_TYPING
 include: btyper.SNAKEFILE_BTYPER
+include: resfinder.SNAKEFILE_RESFINDER
 
 #########
 # Rules #
@@ -76,6 +77,16 @@ rule select_fasta:
     shell:
         "cp {input.FASTA} {output.FASTA};"
 
+rule select_fasta_resfinder:
+    """
+    This rules links the output of the assembly workflow to the other workflows.
+    """
+    input:
+        FASTA = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA
+    output:
+        FASTA = Path(config['working_dir']) / resfinder.INPUT_RESFINDER_FASTA
+    shell:
+        "cp {input.FASTA} {output.FASTA};"
 
 rule report_pickle_citations:
     """
@@ -103,7 +114,8 @@ rule report_command_section:
         INFORMS_kraken = Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_KRAKEN_INFORMS if 'kraken' in config['analyses'] else [],
         INFORMS_mapping = quality_checks.get_mapping_rate_informs(config),
         INFORMS_depth = quality_checks.get_depth_informs(config),
-        INFORMS_btyper= Path(config['working_dir']) / str(btyper.OUTPUT_INFORMS_BTYPER).format(scheme='btyper_typing') if 'btyper' in config['analyses'] else[]
+        INFORMS_btyper = Path(config['working_dir']) / str(btyper.OUTPUT_INFORMS_BTYPER).format(scheme='btyper_typing') if 'btyper' in config['analyses'] else[],
+        INFORMS_resfinder = Path(config['working_dir']) / str(resfinder.OUTPUT_RESFINDER_INFORMS).format(scheme='resfinder') if 'resfinder' in config['analyses'] else[]
     output:
         HTML = Path(config['working_dir']) / 'report' / 'html-commands.io'
     params:
@@ -135,6 +147,7 @@ rule report_combine_all:
         report_mlst=sequence_typing.get_sequence_typing_report('mlst',config),
         report_cgmlst=sequence_typing.get_sequence_typing_report('cgmlst',config),
         report_btyper = Path(config['working_dir']) / btyper.OUTPUT_BTYPER_REPORT,
+        report_resfinder = Path(config['working_dir']) / resfinder.OUTPUT_RESFINDER_REPORT,
         report_citations = rules.report_pickle_citations.output.HTML,
         report_commands = rules.report_command_section.output.HTML
     output:
@@ -169,6 +182,7 @@ rule report_combine_all:
             ('Advanced QC', 'adv_qc', [Path(x) for x in (input.report_kraken, input.report_adv_qc)]),
             ('Sequence typing', 'st', [Path(x) for x in (input.report_mlst, input.report_cgmlst)]),
             ('BTyper results', 'btyper', [Path(input.report_btyper)]),
+            ('ResFinder results', 'resfinder', [Path(input.report_resfinder)]),
             ('Citations', 'citations', [Path(input.report_citations)]),
             ('Commands', 'commands', [Path(input.report_commands)])
         ]
@@ -210,7 +224,8 @@ rule summary_combine_all:
         Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_SUMMARY if 'kraken' in config['analyses'] else [],
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='mlst') if 'mlst' in config['analyses'] else [],
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='cgmlst') if 'cgmlst' in config['analyses'] else [],
-        Path(config['working_dir']) / btyper.OUTPUT_BTYPER_SUMMARY if 'btyper' in config['analyses'] else []
+        Path(config['working_dir']) / btyper.OUTPUT_BTYPER_SUMMARY if 'btyper' in config['analyses'] else [],
+        Path(config['working_dir']) / resfinder.OUTPUT_RESFINDER_SUMMARY if 'resfinder' in config['analyses'] else []
     output:
         config.get('output_tabular')
     run:

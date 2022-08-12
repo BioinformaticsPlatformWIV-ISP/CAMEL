@@ -38,3 +38,8 @@ sequence_typing:
   cgmlst:
     path: {cgmlst_db}
     detection_method: blast
+
+resfinder:
+  acq_overlap: {which_acqoverlap}
+  min_cov: {which_mincov}
+  threshold: {which_threshold}

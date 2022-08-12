@@ -18,7 +18,7 @@ class MainBacillusPipeline(ReportPipeline):
     Main class to run the Bacillus pipeline.
     """
 
-    CUSTOM_ANALYSES = ['kraken', 'btyper', 'mlst', 'cgmlst']
+    CUSTOM_ANALYSES = ['kraken', 'btyper', 'mlst', 'cgmlst', 'resfinder']
 
     # Not yet up to date!
     DATA_BY_SPECIES = {
@@ -72,7 +72,10 @@ class MainBacillusPipeline(ReportPipeline):
                 expected_gc_content=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['gc_content'],
                 genome_size=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['genome_size'],
                 mlst_db=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['mlst_db'],
-                cgmlst_db=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['cgmlst_db']
+                cgmlst_db=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['cgmlst_db'],
+                which_acqoverlap=self._args.resfinder_acqoverlap,
+                which_mincov=self._args.resfinder_mincov/100,
+                which_threshold=self._args.resfinder_threshold/100
             ), Loader=yaml.SafeLoader))
 
         # Set the species
@@ -96,6 +99,12 @@ class MainBacillusPipeline(ReportPipeline):
         parser.add_argument('--fastq-se', type=Path, help="Input SE FASTQ file")
         parser.add_argument('--fastq-se-name', help="Input SE FASTQ file name")
         parser.add_argument('--species', help="Bacillus species under study")
+        parser.add_argument('--resfinder-acqoverlap', help="Maximum overlap between genes found",
+                            type=int, choices=range(0, 10000), default=30)
+        parser.add_argument('--resfinder-mincov', help="Minimum breadth of coverage (%)",
+                            type=int, choices=range(0, 100), default=80)
+        parser.add_argument('--resfinder-threshold', help="Minimum sequence identity (%)",
+                            type=int, choices=range(0, 100), default=60)
 
         for analysis_key in MainBacillusPipeline.CUSTOM_ANALYSES:
             parser.add_argument(f"--{analysis_key.replace('_', '-')}", action='store_true')
