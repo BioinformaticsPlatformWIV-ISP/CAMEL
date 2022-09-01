@@ -11,6 +11,7 @@ from camel.app.io.tooliofile import ToolIOFile
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.resources.snakefile import variant_calling
+from camel.app.tools.clair3.clair3 import Clair3
 
 
 class MainCalling(object):
@@ -40,11 +41,13 @@ class MainCalling(object):
         argument_parser.add_argument('--platform', type=str, default='ilmn', required=True)
         argument_parser.add_argument('--model-path', type=Path,
                                      default='/usr/local/bin/lmod/clair3/0.1.12/bin/models/ilmn', required=True)
+        argument_parser.add_argument(
+            '--output-consensus', help="If specified, the consensus sequence is saved in this file.")
         argument_parser.add_argument('--threads', type=int, default=8)
-        argument_parser.add_argument('--haploid-precise', type="store_true", default=False)
-        argument_parser.add_argument('--no-phasing', type="store_true", default=False)
-        argument_parser.add_argument('--include-ctgs', type="store_true", default=False)
-        argument_parser.add_argument('--long-indel', type="store_true", default=False)
+        argument_parser.add_argument('--haploid-precise', action="store_true", default=False)
+        argument_parser.add_argument('--no-phasing', action="store_true", default=False)
+        argument_parser.add_argument('--include-ctgs', action="store_true", default=False)
+        argument_parser.add_argument('--long-indel', action="store_true", default=False)
 
         return argument_parser.parse_args(args)
 
@@ -53,10 +56,22 @@ class MainCalling(object):
         Runs the variant calling Snakefile to call the variants.
         :return: None
         """
+
+        clair3 = Clair3(Camel.get_instance())
+        clair3.add_input_files({'FASTA': [ToolIOFile(self._args.reference)], 'BAM': [ToolIOFile(self._args.bam)]})
+        clair3.update_parameters(platform=self._args.platform, model_path=str(self._args.model_path),
+                                 threads=self._args.threads, output_path=str(self._args.output))
+        for k in ['haploid_precise', 'no_phasing', 'include_ctgs', 'long_indel']:
+            print(k)
+            if (k in self._args) and (vars(self._args)[k] is not False):
+                print("here")
+                clair3.update_parameters(k='')
+
+        clair3.run(self._args.working_dir)
+        exit()
+
         # Create config file
         config_data = self.__create_snakemake_config_data()
-        print(config_data)
-        exit()
         config_file = SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir)
 
         # Copy input BAM file to the right location
@@ -86,16 +101,16 @@ class MainCalling(object):
         :return: Config file data
         """
         config_data = {
-            'sample_name': 'Sample', 'working_dir': self._args.working_dir, 'variant_calling': {
+            'sample_name': 'Sample', 'working_dir': str(self._args.working_dir), 'variant_calling': {
                 'platform': self._args.platform,
                 'reference': {
                     'name': self._args.reference_name if self._args.reference_name else self._args.reference.name,
                     'path': str(self._args.reference)}
             },
-            'model_path': self._args.model_path
+            'model_path': str(self._args.model_path)
         }
         for k in ['haploid_precise', 'no_phasing', 'include_ctgs', 'long_indel']:
-            if (k in self._args) and (vars(self._args)[k] is not None):
+            if (k in self._args) and (vars(self._args)[k] is not False):
                 config_data['variant_calling'][k] = vars(self._args)[k]
         return config_data
 
@@ -109,7 +124,7 @@ class MainCalling(object):
         config_file = SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir, 'consensus.yml')
         output_path_consensus = self._args.working_dir / variant_calling.OUTPUT_VARIANT_CALLING_CONSENSUS
         SnakePipelineUtils.run_snakemake(
-            variant_calling.SNAKEFILE_VARIANT_CALLING, config_file, [output_path_consensus],  self._args.working_dir,
+            variant_calling.SNAKEFILE_VARIANT_CALLING, config_file, [output_path_consensus], self._args.working_dir,
             self._args.threads)
         fasta_consensus = SnakemakeUtils.load_object(output_path_consensus)[0].path
         shutil.copyfile(fasta_consensus, output_path)
