@@ -1,0 +1,11 @@
+dependencies: [clair3/0.1.12]
+parameters:
+  model_path: {default: true, mandatory: true, option: --model_path, value: '/usr/local/bin/lmod/clair3/0.1.12/bin/models/ilmn'}
+  platform: {default: true, mandatory: true, option: --platform, value: 'ilmn'}
+  threads: {default: true, mandatory: true, option: --threads, value: '8'}
+  output_path: {default: true, mandatory: true, option: --output, value: 'clair3_output'}
+  haploid_precise: {default: true, mandatory: false, option: --haploid_precise, value: false}
+  no_phasing: {default: true, mandatory: false, option: --no_phasing_for_fa, value: false}
+  include_ctgs: {default: true, mandatory: false, option: --include_all_ctgs, value: false}
+  long_indel: { default: false, mandatory: false, option: --enable_long_indel, value: false }
+tool_command: run_clair3.sh
