@@ -10,7 +10,7 @@ from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-from camel.resources.snakefile import variant_calling
+from camel.resources.snakefile import variant_calling_clair3
 from camel.app.tools.clair3.clair3 import Clair3
 
 
@@ -71,68 +71,68 @@ class MainCalling(object):
         if self._args.long_indel:
             clair3.update_parameters(long_indel='')
 
-        clair3.run(self._args.working_dir)
+        # clair3.run(self._args.working_dir)
     #     exit()
     #
-        # # Create config file
-        # config_data = self.__create_snakemake_config_data()
-        # config_file = SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir)
-        #
-        # # Copy input BAM file to the right location
-        # target_dir = self._args.working_dir / 'variant_calling' / 'read_mapping'
-        # if not target_dir.exists():
-        #     target_dir.mkdir(parents=True)
-        # SnakemakeUtils.dump_object([ToolIOFile(self._args.bam)], target_dir / 'bam.io')
-        #
-        # # Run Snakemake to generate output file
-        # output_path = self._args.working_dir / variant_calling.OUTPUT_VARIANT_CALLING_UNFILTERED_VCF
-        # SnakePipelineUtils.run_snakemake(
-        #     variant_calling.SNAKEFILE_VARIANT_CALLING, config_file, [output_path], self._args.working_dir,
-        #     self._args.threads)
-    #
-    #     # Generate consensus sequence
-    #     if self._args.output_consensus:
-    #         self.__generate_consensus_sequence(self._args.output_consensus, config_data)
-    #
-    #     # Copy output
-    #     logging.info("Collecting Snakemake output file")
-    #     output_vcf_path = SnakemakeUtils.load_object(output_path)[0].path
-    #     shutil.copyfile(output_vcf_path, self._args.output)
-    #
-    # def __create_snakemake_config_data(self) -> Dict:
-    #     """
-    #     Creates a Snakemake configuration file.
-    #     :return: Config file data
-    #     """
-    #     config_data = {
-    #         'sample_name': 'Sample', 'working_dir': str(self._args.working_dir), 'variant_calling': {
-    #             'platform': self._args.platform,
-    #             'reference': {
-    #                 'name': self._args.reference_name if self._args.reference_name else self._args.reference.name,
-    #                 'path': str(self._args.reference)}
-    #         },
-    #         'model_path': str(self._args.model_path)
-    #     }
-    #     for k in ['haploid_precise', 'no_phasing', 'include_ctgs', 'long_indel']:
-    #         if (k in self._args) and (vars(self._args)[k] is not False):
-    #             config_data['variant_calling'][k] = vars(self._args)[k]
-    #     return config_data
-    #
-    # def __generate_consensus_sequence(self, output_path: Path, config_data: Dict[str, Any]) -> None:
-    #     """
-    #     Generates the consensus sequence by applying the detected variants to the reference sequence.
-    #     :param output_path: Output path to save the consensus sequence
-    #     :param config_data: Snakemake config data
-    #     :return: None
-    #     """
-    #     config_file = SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir, 'consensus.yml')
-    #     output_path_consensus = self._args.working_dir / variant_calling.OUTPUT_VARIANT_CALLING_CONSENSUS
-    #     SnakePipelineUtils.run_snakemake(
-    #         variant_calling.SNAKEFILE_VARIANT_CALLING, config_file, [output_path_consensus], self._args.working_dir,
-    #         self._args.threads)
-    #     fasta_consensus = SnakemakeUtils.load_object(output_path_consensus)[0].path
-    #     shutil.copyfile(fasta_consensus, output_path)
-    #
+        # Create config file
+        config_data = self.__create_snakemake_config_data()
+        config_file = SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir)
+
+        # Copy input BAM file to the right location
+        target_dir = self._args.working_dir / 'variant_calling' / 'read_mapping'
+        if not target_dir.exists():
+            target_dir.mkdir(parents=True)
+        SnakemakeUtils.dump_object([ToolIOFile(self._args.bam)], target_dir / 'bam.io')
+
+        # Run Snakemake to generate output file
+        output_path = self._args.working_dir / variant_calling_clair3.OUTPUT_VARIANT_CALLING_UNFILTERED_VCF
+        SnakePipelineUtils.run_snakemake(
+            variant_calling_clair3.SNAKEFILE_VARIANT_CALLING, config_file, [output_path], self._args.working_dir,
+            self._args.threads)
+
+        # # Generate consensus sequence
+        # if self._args.output_consensus:
+        #     self.__generate_consensus_sequence(self._args.output_consensus, config_data)
+
+        # Copy output
+        logging.info("Collecting Snakemake output file")
+        output_vcf_path = SnakemakeUtils.load_object(output_path)[0].path
+        shutil.copyfile(output_vcf_path, self._args.output)
+
+    def __create_snakemake_config_data(self) -> Dict:
+        """
+        Creates a Snakemake configuration file.
+        :return: Config file data
+        """
+        config_data = {
+            'sample_name': 'Sample', 'working_dir': str(self._args.working_dir), 'variant_calling': {
+                'platform': self._args.platform,
+                'reference': {
+                    'name': self._args.reference_name if self._args.reference_name else self._args.reference.name,
+                    'path': str(self._args.reference)}
+            },
+            'model_path': str(self._args.model_path)
+        }
+        for k in ['haploid_precise', 'no_phasing', 'include_ctgs', 'long_indel']:
+            if (k in self._args) and (vars(self._args)[k] is not False):
+                config_data['variant_calling'][k] = vars(self._args)[k]
+        return config_data
+
+    def __generate_consensus_sequence(self, output_path: Path, config_data: Dict[str, Any]) -> None:
+        """
+        Generates the consensus sequence by applying the detected variants to the reference sequence.
+        :param output_path: Output path to save the consensus sequence
+        :param config_data: Snakemake config data
+        :return: None
+        """
+        config_file = SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir, 'consensus.yml')
+        output_path_consensus = self._args.working_dir / variant_calling.OUTPUT_VARIANT_CALLING_CONSENSUS
+        SnakePipelineUtils.run_snakemake(
+            variant_calling.SNAKEFILE_VARIANT_CALLING, config_file, [output_path_consensus], self._args.working_dir,
+            self._args.threads)
+        fasta_consensus = SnakemakeUtils.load_object(output_path_consensus)[0].path
+        shutil.copyfile(fasta_consensus, output_path)
+
 
 
 if __name__ == '__main__':
