@@ -35,7 +35,7 @@ class Clair3(Tool):
         Builds the command to run resfinder.
         :return: None
         """
-        self._command_command = ' '.join([self._tool_command,
+        self._command.command = ' '.join([self._tool_command,
                                           f'--bam_fn {bam_input}',
                                           f'--ref_fn {fasta_input}',
                                           ' '.join(self._build_options())])
