@@ -119,7 +119,7 @@ rule variant_calling_index_fasta:
     output:
         FASTA = Path(config['working_dir']) / variant_calling_clair3.OUTPUT_VARIANT_CALLING_FASTA_INDEX
     params:
-        running_dir = Path(config['working_dir']) / 'variant_calling' / 'reference'
+        running_dir = Path(config['working_dir']) / Path(config['variant_calling']['reference']['path']).parent
     run:
         from camel.app.tools.samtools.samtoolsfastaindex import SamtoolsFastaIndex
         samtools_fastaindex = SamtoolsFastaIndex(camel)
