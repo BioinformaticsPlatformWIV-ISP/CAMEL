@@ -71,9 +71,6 @@ class MainCalling(object):
         if self._args.long_indel:
             clair3.update_parameters(long_indel='')
 
-        # clair3.run(self._args.working_dir)
-        #     exit()
-        #
         # Create config file
         config_data = self.__create_snakemake_config_data()
         config_file = SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir)
@@ -90,9 +87,9 @@ class MainCalling(object):
             variant_calling_clair3.SNAKEFILE_VARIANT_CALLING, config_file, [output_path], self._args.working_dir,
             self._args.threads)
 
-        # # Generate consensus sequence
-        # if self._args.output_consensus:
-        #     self.__generate_consensus_sequence(self._args.output_consensus, config_data)
+        # Generate consensus sequence
+        if self._args.output_consensus:
+            self.__generate_consensus_sequence(self._args.output_consensus, config_data)
 
         # Copy output
         logging.info("Collecting Snakemake output file")
