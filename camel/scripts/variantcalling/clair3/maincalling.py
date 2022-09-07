@@ -37,7 +37,7 @@ class MainCalling(object):
         argument_parser.add_argument('--reference', type=Path, required=True)
         argument_parser.add_argument('--reference-name')
         argument_parser.add_argument('--output', required=True)
-        argument_parser.add_argument('--working-dir', type=Path, default=Path.cwd(), required=True)
+        argument_parser.add_argument('--working-dir', type=Path, default=Path.cwd())
         argument_parser.add_argument('--platform', type=str, default='ilmn', required=True)
         argument_parser.add_argument('--model-path', type=Path,
                                      default='/usr/local/bin/lmod/clair3/0.1.12/bin/models/ilmn', required=True)
