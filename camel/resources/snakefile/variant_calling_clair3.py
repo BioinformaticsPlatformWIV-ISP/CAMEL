@@ -7,6 +7,7 @@ _dir_variant_calling = Path('variant_calling')
 OUTPUT_VARIANT_CALLING_REPORT = _dir_variant_calling / 'report' / 'html.io'
 OUTPUT_VARIANT_CALLING_SUMMARY = _dir_variant_calling / 'summary' / 'summary_out.tsv'
 OUTPUT_VARIANT_CALLING_BAM = _dir_variant_calling / 'alignment_sorting' / 'bam-sorted.io'
+OUTPUT_VARIANT_CALLING_BAM_INDEX = _dir_variant_calling / 'alignment_sorting' / 'bam-index.io'
 OUTPUT_VARIANT_CALLING_DEPTH_INFORMS = _dir_variant_calling / 'depth' / 'informs.io'
 OUTPUT_VARIANT_CALLING_DEPTH_TSV = _dir_variant_calling / 'depth' / 'tsv.io'
 OUTPUT_VARIANT_CALLING_UNFILTERED_VCF = _dir_variant_calling / 'unzip_vcf' / 'vcf.io'

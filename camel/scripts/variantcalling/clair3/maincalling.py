@@ -72,8 +72,8 @@ class MainCalling(object):
             clair3.update_parameters(long_indel='')
 
         # clair3.run(self._args.working_dir)
-    #     exit()
-    #
+        #     exit()
+        #
         # Create config file
         config_data = self.__create_snakemake_config_data()
         config_file = SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir)
@@ -114,8 +114,8 @@ class MainCalling(object):
             'model_path': str(self._args.model_path)
         }
         for k in ['haploid_precise', 'no_phasing', 'include_ctgs', 'long_indel']:
-            if (k in self._args) and (vars(self._args)[k] is not False):
-                config_data['variant_calling'][k] = vars(self._args)[k]
+            # if (k in self._args) and (vars(self._args)[k] is not False):
+            config_data['variant_calling'][k] = vars(self._args)[k]
         return config_data
 
     def __generate_consensus_sequence(self, output_path: Path, config_data: Dict[str, Any]) -> None:
@@ -132,7 +132,6 @@ class MainCalling(object):
             self._args.threads)
         fasta_consensus = SnakemakeUtils.load_object(output_path_consensus)[0].path
         shutil.copyfile(fasta_consensus, output_path)
-
 
 
 if __name__ == '__main__':
