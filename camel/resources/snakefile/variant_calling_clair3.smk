@@ -55,7 +55,6 @@ rule variant_calling_read_mapping:
             Path(input.IO), key_se='FASTQ', drop_empty=True, read_type='SE'))
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(minimap2, output)
-        exit()
 
 rule variant_calling_sam_to_bam:
     """
