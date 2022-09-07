@@ -111,6 +111,24 @@ rule variant_calling_index_bam:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(samtools_index, output)
 
+rule variant_calling_index_fasta:
+    """
+    Index the bam file.
+    """
+    input:
+        FASTA = rules.variant_calling_prep_reference.output.FASTA
+    output:
+        FASTA = Path(config['working_dir']) / variant_calling_clair3.OUTPUT_VARIANT_CALLING_FASTA_INDEX
+    params:
+        running_dir = Path(config['working_dir']) / 'variant_calling' / 'reference'
+    run:
+        from camel.app.tools.samtools.samtoolsfastaindex import SamtoolsFastaIndex
+        samtools_fastaindex = SamtoolsFastaIndex(camel)
+        step = Step(rule, samtools_fastaindex, camel, params.running_dir, config)
+        SnakemakeUtils.add_pickle_inputs(samtools_fastaindex, input)
+        step.run_step()
+        SnakemakeUtils.dump_tool_outputs(samtools_fastaindex, output)
+
 rule variant_calling_calculate_depth:
     """
     Calculates the median depth of the alignment.
@@ -138,7 +156,8 @@ rule clair3_variant_calling:
     input:
         FASTA = rules.variant_calling_prep_reference.output.FASTA,
         BAM = rules.variant_calling_alignment_sorting.output.BAM,
-        INDEX = rules.variant_calling_index_bam.output.BAM
+        BAM_INDEX = rules.variant_calling_index_bam.output.BAM,
+        FASTA_INDEX = rules.variant_calling_index_fasta.output.FASTA
     output:
         VCF = Path(config['working_dir']) / 'variant_calling' / 'calling' / 'vcf_gz.io',
         INFORMS = Path(config['working_dir']) / 'variant_calling' / 'calling' / 'informs.io'
