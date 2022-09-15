@@ -11,6 +11,7 @@ from camel.resources.snakefile.variant_calling import OUTPUT_VARIANT_CALLING_MAP
 SNAKEFILE_QUALITY_CHECKS = f'{Path(__file__).parent / Path(__file__).stem}.smk'
 OUTPUT_QUALITY_CHECKS_REPORT = Path('quality_checks') / 'report' / 'html.io'
 OUTPUT_QUALITY_CHECKS_SUMMARY = Path('quality_checks') / 'summary' / 'summary_out.tsv'
+OUTPUT_QUALITY_CHECKS_REPORT_JSON = Path('quality_checks') / 'report' / 'informs.json'
 
 
 def get_mapping_rate_informs(config) -> Path:
