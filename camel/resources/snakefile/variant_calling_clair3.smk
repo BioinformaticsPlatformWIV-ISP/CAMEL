@@ -18,9 +18,9 @@ rule variant_calling_prep_reference:
     output:
         INDEX_GENOME_PREFIX = Path(config['working_dir']) / 'variant_calling' / 'reference' / 'genome_prefix.io',
         FASTA = Path(config['working_dir']) / 'variant_calling' / 'reference' / 'fasta.io',
-        INFORMS = Path(config['working_dir']) / 'variant_calling' / 'reference' / 'informs.io'
+        INFORMS = Path(config['working_dir']) / 'variant_calling' / 'reference' / 'informs.io',
     params:
-        reference = config['variant_calling'].get('reference')
+        reference = config['variant_calling'].get('reference'),
     run:
         from camel.app.io.tooliovalue import ToolIOValue
         from camel.app.io.tooliofile import ToolIOFile
@@ -28,58 +28,57 @@ rule variant_calling_prep_reference:
         SnakemakeUtils.dump_object([ToolIOFile(Path(params.reference['path']))], Path(output.FASTA))
         SnakemakeUtils.dump_object(params.reference, Path(output.INFORMS))
 
-
-rule variant_calling_read_mapping:
-    """
-    Maps the trimmed reads to the assembly.
-    """
-    input:
-        IO = Path(config['working_dir']) / 'fq_dict.io',
-        FASTA = rules.variant_calling_prep_reference.output.FASTA
-    output:
-        SAM = Path(config['working_dir']) / 'variant_calling' / 'read_mapping' / 'sam.io',
-        INFORMS = Path(config['working_dir']) / variant_calling_clair3.OUTPUT_VARIANT_CALLING_MAPPING_INFORMS
-    params:
-        running_dir = Path(config['working_dir']) / 'variant_calling' / 'read_mapping',
-        read_type = config.get('read_type', 'illumina')
-    threads: 4
-    priority: 1
-    run:
-        from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-        from camel.app.tools.minimap2.minimap2mapping import Minimap2Mapping
-        minimap2 = Minimap2Mapping(camel)
-        step = Step(rule, minimap2, camel, params.running_dir, config)
-        minimap2.update_parameters(threads=threads)
-        SnakemakeUtils.add_pickle_input(minimap2, 'FASTA', Path(input.FASTA))
-        minimap2.add_input_files(SnakePipelineUtils.extracts_fq_input(
-            Path(input.IO), key_se='FASTQ', drop_empty=True, read_type='SE'))
-        step.run_step()
-        SnakemakeUtils.dump_tool_outputs(minimap2, output)
-
-rule variant_calling_sam_to_bam:
-    """
-    Converts the mapped reads SAM file to BAM format.
-    """
-    input:
-        SAM = rules.variant_calling_read_mapping.output.SAM
-    output:
-        BAM = Path(config['working_dir']) / 'variant_calling' / 'read_mapping' / 'bam.io'
-    params:
-        running_dir = Path(config['working_dir']) / 'variant_calling' / 'read_mapping'
-    run:
-        from camel.app.tools.samtools.samtoolsview import SamtoolsView
-        samtools_view = SamtoolsView(camel)
-        step = Step(rule, samtools_view, camel, params.running_dir, config)
-        SnakemakeUtils.add_pickle_inputs(samtools_view, input)
-        step.run_step()
-        SnakemakeUtils.dump_tool_outputs(samtools_view, output)
+# rule variant_calling_read_mapping:
+#     """
+#     Maps the trimmed reads to the assembly.
+#     """
+#     input:
+#         IO = Path(config['working_dir']) / 'fq_dict.io',
+#         FASTA = rules.variant_calling_prep_reference.output.FASTA
+#     output:
+#         SAM = Path(config['working_dir']) / 'variant_calling' / 'read_mapping' / 'sam.io',
+#         INFORMS = Path(config['working_dir']) / variant_calling_clair3.OUTPUT_VARIANT_CALLING_MAPPING_INFORMS
+#     params:
+#         running_dir = Path(config['working_dir']) / 'variant_calling' / 'read_mapping',
+#         read_type = config.get('read_type', 'illumina')
+#     threads: 4
+#     priority: 1
+#     run:
+#         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
+#         from camel.app.tools.minimap2.minimap2mapping import Minimap2Mapping
+#         minimap2 = Minimap2Mapping(camel)
+#         step = Step(rule, minimap2, camel, params.running_dir, config)
+#         minimap2.update_parameters(threads=threads)
+#         SnakemakeUtils.add_pickle_input(minimap2, 'FASTA', Path(input.FASTA))
+#         minimap2.add_input_files(SnakePipelineUtils.extracts_fq_input(
+#             Path(input.IO), key_se='FASTQ', drop_empty=True, read_type='SE'))
+#         step.run_step()
+#         SnakemakeUtils.dump_tool_outputs(minimap2, output)
+#
+# rule variant_calling_sam_to_bam:
+#     """
+#     Converts the mapped reads SAM file to BAM format.
+#     """
+#     input:
+#         SAM = rules.variant_calling_read_mapping.output.SAM
+#     output:
+#         BAM = Path(config['working_dir']) / 'variant_calling' / 'read_mapping' / 'bam.io'
+#     params:
+#         running_dir = Path(config['working_dir']) / 'variant_calling' / 'read_mapping'
+#     run:
+#         from camel.app.tools.samtools.samtoolsview import SamtoolsView
+#         samtools_view = SamtoolsView(camel)
+#         step = Step(rule, samtools_view, camel, params.running_dir, config)
+#         SnakemakeUtils.add_pickle_inputs(samtools_view, input)
+#         step.run_step()
+#         SnakemakeUtils.dump_tool_outputs(samtools_view, output)
 
 rule variant_calling_alignment_sorting:
     """
     Sorts the alignment.
     """
     input:
-        BAM = rules.variant_calling_sam_to_bam.output.BAM
+        BAM = Path(config['working_dir']) / variant_calling_clair3.INPUT_VARIANT_CALLING_BAM
     output:
         BAM = Path(config['working_dir']) / variant_calling_clair3.OUTPUT_VARIANT_CALLING_BAM
     params:
@@ -247,23 +246,23 @@ rule variant_calling_unzip_vcf:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(bcftools_view, output)
 
-rule variant_calling_create_consensus:
-    """
-    Creates the consensus sequence by applying the detected variants to the reference genome.
-    """
-    input:
-        VCF_GZ = rules.variant_calling_index_vcf_gz.output.VCF_GZ,
-        FASTA = rules.variant_calling_prep_reference.output.FASTA
-    output:
-        FASTA = Path(config['working_dir']) / variant_calling_clair3.OUTPUT_VARIANT_CALLING_CONSENSUS
-    params:
-        running_dir = Path(config['working_dir']) / 'variant_calling' / 'consensus',
-        output_filename='bcftools_consensus.fasta'
-    run:
-        from camel.app.tools.bcftools.bcftoolsconsensus import BcftoolsConsensus
-        bcftools_consensus = BcftoolsConsensus(camel)
-        SnakemakeUtils.add_pickle_inputs(bcftools_consensus, input)
-        bcftools_consensus.update_parameters(output_filename = params.output_filename)
-        step = Step(rule, bcftools_consensus, camel, Path(params.running_dir), config)
-        step.run_step()
-        SnakemakeUtils.dump_tool_outputs(bcftools_consensus, output)
+# rule variant_calling_create_consensus:
+#     """
+#     Creates the consensus sequence by applying the detected variants to the reference genome.
+#     """
+#     input:
+#         VCF_GZ = rules.variant_calling_index_vcf_gz.output.VCF_GZ,
+#         FASTA = rules.variant_calling_prep_reference.output.FASTA
+#     output:
+#         FASTA = Path(config['working_dir']) / variant_calling_clair3.OUTPUT_VARIANT_CALLING_CONSENSUS
+#     params:
+#         running_dir = Path(config['working_dir']) / 'variant_calling' / 'consensus',
+#         output_filename='bcftools_consensus.fasta'
+#     run:
+#         from camel.app.tools.bcftools.bcftoolsconsensus import BcftoolsConsensus
+#         bcftools_consensus = BcftoolsConsensus(camel)
+#         SnakemakeUtils.add_pickle_inputs(bcftools_consensus, input)
+#         bcftools_consensus.update_parameters(output_filename = params.output_filename)
+#         step = Step(rule, bcftools_consensus, camel, Path(params.running_dir), config)
+#         step.run_step()
+#         SnakemakeUtils.dump_tool_outputs(bcftools_consensus, output)

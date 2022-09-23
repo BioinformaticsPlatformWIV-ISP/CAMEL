@@ -1,22 +1,21 @@
 #!/usr/bin/env python
 import argparse
 import logging
+import shutil
 from pathlib import Path
 from typing import Dict, Any, Optional, Sequence
-
-import shutil
 
 from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-from camel.resources.snakefile import variant_calling_clair3
 from camel.app.tools.clair3.clair3 import Clair3
+from camel.resources.snakefile import variant_calling_clair3
 
 
 class MainCalling(object):
     """
-    Class to run samtools variant calling using CAMEL.
+    Class to run clair3 variant calling using CAMEL.
     """
 
     def __init__(self, args: Optional[Sequence[str]] = None) -> None:
@@ -38,11 +37,14 @@ class MainCalling(object):
         argument_parser.add_argument('--reference-name')
         argument_parser.add_argument('--output', required=True)
         argument_parser.add_argument('--working-dir', type=Path, default=Path.cwd())
-        argument_parser.add_argument('--platform', type=str, default='ilmn', required=True)
-        argument_parser.add_argument('--model-path', type=Path,
-                                     default='/usr/local/bin/lmod/clair3/0.1.12/bin/models/ilmn', required=True)
+        argument_parser.add_argument('--platform', type=str, default='ilmn', required=True,
+                                     choices=['ont', 'hifi', 'ilmn'])
+        argument_parser.add_argument('--model-path', type=str,
+                                     default='ilmn', required=True,
+                                     choices=['hifi', 'ilmn', 'ont', 'ont_guppy5',
+                                              'r941_prom_hac_g360+g422', 'r941_prom_sup_g5014'])
         argument_parser.add_argument(
-            '--output-consensus', help="If specified, the consensus sequence is saved in this file.")
+            '--output-consensus', help="If specified, the consensus sequence is saved in this file.", type=Path)
         argument_parser.add_argument('--threads', type=int, default=8)
         argument_parser.add_argument('--haploid-precise', action="store_true", default=False)
         argument_parser.add_argument('--no-phasing', action="store_true", default=False)
@@ -56,21 +58,6 @@ class MainCalling(object):
         Runs the variant calling Snakefile to call the variants.
         :return: None
         """
-
-        clair3 = Clair3(Camel.get_instance())
-        clair3.add_input_files({'FASTA': [ToolIOFile(self._args.reference)], 'BAM': [ToolIOFile(self._args.bam)]})
-        clair3.update_parameters(platform=self._args.platform, model_path=str(self._args.model_path),
-                                 threads=self._args.threads, output_path=str(self._args.output))
-
-        if self._args.haploid_precise:
-            clair3.update_parameters(haploid_precise='')
-        if self._args.no_phasing:
-            clair3.update_parameters(no_phasing='')
-        if self._args.include_ctgs:
-            clair3.update_parameters(include_ctgs='')
-        if self._args.long_indel:
-            clair3.update_parameters(long_indel='')
-
         # Create config file
         config_data = self.__create_snakemake_config_data()
         config_file = SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir)
@@ -82,9 +69,9 @@ class MainCalling(object):
         SnakemakeUtils.dump_object([ToolIOFile(self._args.bam)], target_dir / 'bam.io')
 
         # Run Snakemake to generate output file
-        output_path = self._args.working_dir / variant_calling_clair3.OUTPUT_VARIANT_CALLING_UNFILTERED_VCF
+        path_vcf = self._args.working_dir / variant_calling_clair3.OUTPUT_VARIANT_CALLING_UNFILTERED_VCF
         SnakePipelineUtils.run_snakemake(
-            variant_calling_clair3.SNAKEFILE_VARIANT_CALLING, config_file, [output_path], self._args.working_dir,
+            variant_calling_clair3.SNAKEFILE_VARIANT_CALLING, config_file, [path_vcf], self._args.working_dir,
             self._args.threads)
 
         # Generate consensus sequence
@@ -93,7 +80,7 @@ class MainCalling(object):
 
         # Copy output
         logging.info("Collecting Snakemake output file")
-        output_vcf_path = SnakemakeUtils.load_object(output_path)[0].path
+        output_vcf_path = SnakemakeUtils.load_object(path_vcf)[0].path
         shutil.copyfile(output_vcf_path, self._args.output)
 
     def __create_snakemake_config_data(self) -> Dict:
@@ -102,16 +89,16 @@ class MainCalling(object):
         :return: Config file data
         """
         config_data = {
-            'sample_name': 'Sample', 'working_dir': str(self._args.working_dir), 'variant_calling': {
+            'sample_name': Path(self._args.bam).stem, 'working_dir': str(self._args.working_dir), 'variant_calling': {
                 'platform': self._args.platform,
                 'reference': {
                     'name': self._args.reference_name if self._args.reference_name else self._args.reference.name,
-                    'path': str(self._args.reference)}
+                    'path': str(self._args.reference)},
+                'bam': self._args.bam
             },
-            'model_path': str(self._args.model_path)
+            'model_path': f'/usr/local/bin/lmod/clair3/0.1.12/bin/models/{str(self._args.model_path)}'
         }
         for k in ['haploid_precise', 'no_phasing', 'include_ctgs', 'long_indel']:
-            # if (k in self._args) and (vars(self._args)[k] is not False):
             config_data['variant_calling'][k] = vars(self._args)[k]
         return config_data
 

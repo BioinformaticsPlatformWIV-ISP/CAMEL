@@ -38,7 +38,7 @@ class Clair3(Tool):
         self._command.command = ' '.join([self._tool_command,
                                           f'--bam_fn {bam_input}',
                                           f'--ref_fn {fasta_input}',
-                                          ' '.join(self._build_options())])
+                                          *self._build_options()])
 
     def _check_command_output(self) -> None:
         """
