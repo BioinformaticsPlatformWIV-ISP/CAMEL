@@ -9,7 +9,6 @@ from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-from camel.app.tools.clair3.clair3 import Clair3
 from camel.resources.snakefile import variant_calling_clair3
 
 
