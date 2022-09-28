@@ -28,6 +28,12 @@ class Clair3(Tool):
             raise InvalidInputSpecificationError('FASTA reference is required')
         if 'BAM' not in self._tool_inputs:
             raise InvalidInputSpecificationError('BAM alignment file is required')
+
+        input_folder = self._tool_inputs['FASTA'][0].path.parent
+        base_fasta_name = self._tool_inputs['FASTA'][0].path.name
+        fasta_index_file = [f for f in input_folder.glob(f'{base_fasta_name}.fai')]
+        if not (len(fasta_index_file) > 0):
+            raise InvalidInputSpecificationError('FASTA reference needs to be indexed')
         super()._check_input()
 
     def _build_command(self, fasta_input: Path, bam_input: Path) -> None:
