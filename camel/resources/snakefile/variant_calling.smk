@@ -35,7 +35,7 @@ rule variant_calling_read_mapping:
     """
     input:
         IO = Path(config['working_dir']) / 'fq_dict.io',
-        INDEX_GENOME_PREFIX = rules.variant_calling_prep_reference.output.INDEX_GENOME_PREFIX
+        INDEX_GENOME_PREFIX = rules.clair3_variant_calling_prep_reference.output.INDEX_GENOME_PREFIX
     output:
         SAM = Path(config['working_dir']) / 'variant_calling' / 'read_mapping' / 'sam.io',
         INFORMS = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_MAPPING_INFORMS
@@ -98,7 +98,7 @@ rule variant_calling_calculate_depth:
     Calculates the median depth of the alignment.
     """
     input:
-        BAM = rules.variant_calling_alignment_sorting.output.BAM
+        BAM = rules.clair3_variant_calling_alignment_sorting.output.BAM
     output:
         TSV = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_DEPTH_TSV,
         INFORMS = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_DEPTH_INFORMS
@@ -118,8 +118,8 @@ rule variant_calling_mpileup:
     This step creates a multi-way pileup using samtools.
     """
     input:
-        FASTA = rules.variant_calling_prep_reference.output.FASTA,
-        BAM = rules.variant_calling_alignment_sorting.output.BAM
+        FASTA = rules.clair3_variant_calling_prep_reference.output.FASTA,
+        BAM = rules.clair3_variant_calling_alignment_sorting.output.BAM
     output:
         VCF_GZ = Path(config['working_dir']) / 'variant_calling' / 'mpileup' / 'vcf_gz.io',
         INFORMS = Path(config['working_dir']) / 'variant_calling' / 'mpileup' / 'informs.io'
@@ -193,7 +193,7 @@ rule variant_calling_normalize_indels:
     """
     input:
         VCF_GZ = rules.variant_calling_bcftools_call.output.VCF_GZ,
-        FASTA = rules.variant_calling_prep_reference.output.FASTA
+        FASTA = rules.clair3_variant_calling_prep_reference.output.FASTA
     output:
         VCF_GZ = Path(config['working_dir']) / 'variant_calling' / 'norm' / 'vcf_gz.io',
     params:
@@ -212,7 +212,7 @@ rule variant_calling_index_vcf_gz:
     Indexes the VCF file.
     """
     input:
-        VCF_GZ = rules.variant_calling_normalize_indels.output.VCF_GZ
+        VCF_GZ = rules.clair3_variant_calling_normalize_indels.output.VCF_GZ
     output:
         VCF_GZ = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_UNFILTERED_VCF_GZ
     params:
@@ -230,7 +230,7 @@ rule variant_calling_unzip_vcf:
     Unzips the VCF file.
     """
     input:
-        VCF_GZ = rules.variant_calling_index_vcf_gz.output.VCF_GZ
+        VCF_GZ = rules.clair3_variant_calling_index_vcf_gz.output.VCF_GZ
     output:
         VCF = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_UNFILTERED_VCF
     params:
@@ -252,8 +252,8 @@ rule variant_calling_create_consensus:
     Creates the consensus sequence by applying the detected variants to the reference genome.
     """
     input:
-        VCF_GZ = rules.variant_calling_index_vcf_gz.output.VCF_GZ,
-        FASTA = rules.variant_calling_prep_reference.output.FASTA
+        VCF_GZ = rules.clair3_variant_calling_index_vcf_gz.output.VCF_GZ,
+        FASTA = rules.clair3_variant_calling_prep_reference.output.FASTA
     output:
         FASTA = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_CONSENSUS
     params:
@@ -273,11 +273,11 @@ rule variant_calling_report:
     Creates a report for the variant calling.
     """
     input:
-        VCF = rules.variant_calling_unzip_vcf.output.VCF,
+        VCF = rules.clair3_variant_calling_unzip_vcf.output.VCF,
         VCF_filt = Path(config['working_dir']) / variant_filtering.OUTPUT_VARIANT_FILTERING_VCF,
         VCF_filt_regions = Path(config['working_dir'], 'variant_filtering', 'regions', 'vcf.io') if variant_filtering.get_filtering_param(config, 'region', 'bed_file') is not None else [],
-        BAM = rules.variant_calling_alignment_sorting.output.BAM,
-        INFORMS_reference = rules.variant_calling_prep_reference.output.INFORMS,
+        BAM = rules.clair3_variant_calling_alignment_sorting.output.BAM,
+        INFORMS_reference = rules.clair3_variant_calling_prep_reference.output.INFORMS,
         INFORMS_mapping = rules.variant_calling_read_mapping.output.INFORMS,
         INFORMS_calling = rules.variant_calling_bcftools_call.output.INFORMS,
         INFORMS_depth = rules.variant_calling_calculate_depth.output.INFORMS,
