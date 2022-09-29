@@ -13,7 +13,7 @@ class TestClair3(CamelTestSuite):
     Initializes this testing tool
     """
 
-    test_file_dir = Path('/testdata/camel/clair3/')
+    test_file_dir = CamelTestSuite.get_test_file_dir('clair3')
     FILE_FASTA = ToolIOFile(test_file_dir / 'bsubtilis.fa')
     FILE_BAM_ILLUMINA = ToolIOFile(test_file_dir / 'bsubtilis_illumina.bam')
     FILE_BAM_ONT = ToolIOFile(test_file_dir / 'bsubtilis_ont.bam')
@@ -22,7 +22,6 @@ class TestClair3(CamelTestSuite):
         """
         actually testing Clair3 on illumina sequencing data
         """
-        output_file_vcf = self.running_dir / 'merge_output.vcf.gz'
         clair3 = Clair3(self.camel)
         clair3.add_input_files({'FASTA': [TestClair3.FILE_FASTA], 'BAM': [TestClair3.FILE_BAM_ILLUMINA]})
         clair3.update_parameters(output_path=self.running_dir, haploid_precise=True, no_phasing=True, include_ctgs=True)
@@ -34,7 +33,6 @@ class TestClair3(CamelTestSuite):
         """
         actually testing Clair3 on ONT sequencing data
         """
-        output_file_vcf = self.running_dir / 'merge_output.vcf.gz'
         clair3 = Clair3(self.camel)
         clair3.add_input_files({'FASTA': [TestClair3.FILE_FASTA], 'BAM': [TestClair3.FILE_BAM_ONT]})
         clair3.update_parameters(output_path=self.running_dir, platform='ont', haploid_precise=True, no_phasing=True,

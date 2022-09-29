@@ -42,8 +42,6 @@ class MainCalling(object):
                                      default='ilmn', required=True,
                                      choices=['hifi', 'ilmn', 'ont', 'ont_guppy5',
                                               'r941_prom_hac_g360+g422', 'r941_prom_sup_g5014'])
-        argument_parser.add_argument(
-            '--output-consensus', help="If specified, the consensus sequence is saved in this file.", type=Path)
         argument_parser.add_argument('--threads', type=int, default=8)
         argument_parser.add_argument('--haploid-precise', action="store_true", default=False)
         argument_parser.add_argument('--no-phasing', action="store_true", default=False)
@@ -73,10 +71,6 @@ class MainCalling(object):
             variant_calling_clair3.SNAKEFILE_VARIANT_CALLING, config_file, [path_vcf], self._args.working_dir,
             self._args.threads)
 
-        # Generate consensus sequence
-        if self._args.output_consensus:
-            self.__generate_consensus_sequence(self._args.output_consensus, config_data)
-
         # Copy output
         logging.info("Collecting Snakemake output file")
         output_vcf_path = SnakemakeUtils.load_object(path_vcf)[0].path
@@ -95,26 +89,11 @@ class MainCalling(object):
                     'path': str(self._args.reference)},
                 'bam': self._args.bam
             },
-            'model_path': f'/usr/local/bin/lmod/clair3/0.1.12/bin/models/{str(self._args.model_path)}'
+            'model_path': str(Path('/usr/local/bin/lmod/clair3/0.1.12/bin/models/') / self._args.model_path)
         }
         for k in ['haploid_precise', 'no_phasing', 'include_ctgs', 'long_indel']:
             config_data['variant_calling'][k] = vars(self._args)[k]
         return config_data
-
-    def __generate_consensus_sequence(self, output_path: Path, config_data: Dict[str, Any]) -> None:
-        """
-        Generates the consensus sequence by applying the detected variants to the reference sequence.
-        :param output_path: Output path to save the consensus sequence
-        :param config_data: Snakemake config data
-        :return: None
-        """
-        config_file = SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir, 'consensus.yml')
-        output_path_consensus = self._args.working_dir / variant_calling.OUTPUT_VARIANT_CALLING_CONSENSUS
-        SnakePipelineUtils.run_snakemake(
-            variant_calling.SNAKEFILE_VARIANT_CALLING, config_file, [output_path_consensus], self._args.working_dir,
-            self._args.threads)
-        fasta_consensus = SnakemakeUtils.load_object(output_path_consensus)[0].path
-        shutil.copyfile(fasta_consensus, output_path)
 
 
 if __name__ == '__main__':
