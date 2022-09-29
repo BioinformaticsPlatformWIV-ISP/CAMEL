@@ -3,7 +3,7 @@ import argparse
 import logging
 import shutil
 from pathlib import Path
-from typing import Dict, Any, Optional, Sequence
+from typing import Dict, Optional, Sequence
 
 from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile

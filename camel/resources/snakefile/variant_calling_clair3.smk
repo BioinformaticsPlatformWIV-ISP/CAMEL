@@ -19,7 +19,7 @@ rule clair3_variant_calling_prep_reference:
         FASTA = Path(config['working_dir']) / variant_calling_clair3.OUTPUT_VARIANT_CALLING_FASTA,
         INFORMS = Path(config['working_dir']) / 'variant_calling' / 'reference' / 'informs.io'
     params:
-        reference = config['variant_calling'].get('reference'),
+        reference = config['variant_calling'].get('reference')
     run:
         from camel.app.io.tooliofile import ToolIOFile
         SnakemakeUtils.dump_object([ToolIOFile(Path(params.reference['path']))], Path(output.FASTA))
@@ -86,7 +86,7 @@ rule clair3_variant_calling:
     input:
         FASTA = rules.clair3_variant_calling_index_fasta.output.FASTA,
         BAM = rules.clair3_variant_calling_alignment_sorting.output.BAM,
-        BAM_INDEX = rules.clair3_variant_calling_index_bam.output.BAM,
+        BAM_INDEX = rules.clair3_variant_calling_index_bam.output.BAM
     output:
         VCF = Path(config['working_dir']) / 'variant_calling' / 'calling' / 'vcf_gz.io',
         INFORMS = Path(config['working_dir']) / 'variant_calling' / 'calling' / 'informs.io'
@@ -125,7 +125,7 @@ rule clair3_variant_calling_normalize_indels:
         VCF_GZ = rules.clair3_variant_calling.output.VCF,
         FASTA = rules.clair3_variant_calling_prep_reference.output.FASTA
     output:
-        VCF_GZ = Path(config['working_dir']) / 'variant_calling' / 'norm' / 'vcf_gz.io',
+        VCF_GZ = Path(config['working_dir']) / 'variant_calling' / 'norm' / 'vcf_gz.io'
     params:
         running_dir = Path(config['working_dir']) / 'variant_calling' / 'norm'
     run:
@@ -171,7 +171,7 @@ rule clair3_variant_calling_unzip_vcf:
         from camel.app.tools.bcftools.bcftoolsview import BcftoolsView
         bcftools_view = BcftoolsView(camel)
         SnakemakeUtils.add_pickle_inputs(bcftools_view, input)
-        step = Step(rule, bcftools_view, camel, params.running_dir, config)
+        step = Step(str(rule), bcftools_view, camel, params.running_dir, config)
         output_filename = f'variants-{FileSystemHelper.make_valid(params.sample_name)}.vcf'
         bcftools_view.update_parameters(output_format='VCF', compress_output=False, output_filename=output_filename)
         step.run_step()
