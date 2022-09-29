@@ -4,7 +4,7 @@ from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.components.vcf.vcfutils import VCFUtils
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.clair3.clair3 import Clair3
-from camel.scripts.variantcalling.clair3.maincalling import MainCalling
+from camel.scripts.variantcalling.clair3.maincallingclair3 import MainCalling
 
 
 class TestClair3(CamelTestSuite):
