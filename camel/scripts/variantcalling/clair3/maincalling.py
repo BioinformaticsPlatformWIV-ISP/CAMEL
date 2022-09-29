@@ -39,9 +39,7 @@ class MainCalling(object):
         argument_parser.add_argument('--platform', type=str, default='ilmn', required=True,
                                      choices=['ont', 'hifi', 'ilmn'])
         argument_parser.add_argument('--model-path', type=str,
-                                     default='ilmn', required=True,
-                                     choices=['hifi', 'ilmn', 'ont', 'ont_guppy5',
-                                              'r941_prom_hac_g360+g422', 'r941_prom_sup_g5014'])
+                                     default='/usr/local/bin/lmod/clair3/0.1.12/bin/models/ilmn', required=True)
         argument_parser.add_argument('--threads', type=int, default=8)
         argument_parser.add_argument('--haploid-precise', action="store_true", default=False)
         argument_parser.add_argument('--no-phasing', action="store_true", default=False)
@@ -89,7 +87,7 @@ class MainCalling(object):
                     'path': str(self._args.reference)},
                 'bam': self._args.bam
             },
-            'model_path': str(Path('/usr/local/bin/lmod/clair3/0.1.12/bin/models/') / self._args.model_path)
+            'model_path': str(self._args.model_path)
         }
         for k in ['haploid_precise', 'no_phasing', 'include_ctgs', 'long_indel']:
             config_data['variant_calling'][k] = vars(self._args)[k]
