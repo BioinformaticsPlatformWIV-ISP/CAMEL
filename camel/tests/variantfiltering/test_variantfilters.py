@@ -8,7 +8,7 @@ from camel.app.tools.variantfiltering.distancefilter import DistanceFilter
 from camel.app.tools.variantfiltering.mappingqualityfilter import MappingQualityFilter
 from camel.app.tools.variantfiltering.snpqualityfilter import SnpQualityFilter
 from camel.app.tools.variantfiltering.zscorefilter import ZScoreFilter
-from camel.scripts.variantcalling.samtools.mainfiltering import MainFiltering
+from camel.scripts.variantcalling.samtools.mainfilteringsamtools import MainFiltering
 
 
 class TestVariantFiltering(CamelTestSuite):
