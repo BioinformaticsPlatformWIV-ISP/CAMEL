@@ -28,6 +28,13 @@ class MainBacillusPipeline(ReportPipeline):
             'full_name': 'Bacillus cereus',
             'mlst_db': '/db/sequence_typing/bacillus_cereus/mlst',
             'cgmlst_db': '/db/sequence_typing/bacillus_cereus/cgmlst'
+        },
+        'subtilis': {
+            'gc_content': 43,
+            'genome_size': 4_134_800,
+            'full_name': 'Bacillus subtilis',
+            'mlst_db': '/db/sequence_typing/bacillus_subtilis/mlst',
+            'cgmlst_db': '/db/sequence_typing/bacillus_subtilis/cgmlst'
         }
     }
 
