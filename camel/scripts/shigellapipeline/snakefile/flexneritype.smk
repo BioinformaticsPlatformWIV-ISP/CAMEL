@@ -50,7 +50,7 @@ rule flexneri_call_gtr_promotor_depth:
         from camel.app.tools.samtools.samtoolsdepth import SamtoolsDepth
         samtools_depth = SamtoolsDepth(camel)
         SnakemakeUtils.add_pickle_inputs(samtools_depth, input)
-        step = Step(rule, samtools_depth, camel, params.running_dir, config)
+        step = Step(str(rule), samtools_depth, camel, params.running_dir)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(samtools_depth, output)
 
@@ -98,7 +98,7 @@ rule flexneri_map_reads:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         from camel.app.tools.bowtie2.bowtie2map import Bowtie2Map
         bowtie2_map = Bowtie2Map(camel)
-        step = Step(rule, bowtie2_map, camel, params.running_dir, config)
+        step = Step(str(rule), bowtie2_map, camel, Path(str(params.running_dir)))
         bowtie2_map.update_parameters(threads=threads, no_unal=None, very_sensitive_local=True, sensitive=False, end_to_end=False)
         fasta_as_io_value = [ToolIOValue(io.path) for io in SnakemakeUtils.load_object(Path(input.INDEX_GENOME_PREFIX))]
         bowtie2_map.add_input_files({'INDEX_GENOME_PREFIX': fasta_as_io_value})
@@ -121,14 +121,14 @@ rule flexneri_sam_to_indexed_bam:
         from camel.app.tools.samtools.samtoolssort import SamtoolsSort
         # Convert to BAM
         samtools_view = SamtoolsView(camel)
-        step = Step(rule, samtools_view, camel, params.running_dir, config)
+        step = Step(str(rule), samtools_view, camel, Path(str(params.running_dir)))
         SnakemakeUtils.add_pickle_inputs(samtools_view, input)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(samtools_view, output)
 
         # Sort BAM
         samtools_sort = SamtoolsSort(camel)
-        step = Step(rule, samtools_sort, camel, params.running_dir, config)
+        step = Step(str(rule), samtools_sort, camel, Path(str(params.running_dir)))
         samtools_sort.add_input_files({'BAM': samtools_view.tool_outputs['BAM']})
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(samtools_sort, output)
@@ -148,7 +148,7 @@ rule flexneri_pileup:
         from camel.app.tools.samtools.samtoolsmpileup import SamtoolsMPileup
         pileup = SamtoolsMPileup(camel)
         SnakemakeUtils.add_pickle_inputs(pileup, input)
-        step = Step(rule, pileup, camel, params.running_dir, config)
+        step = Step(str(rule), pileup, camel, Path(str(params.running_dir)))
         pileup.update_parameters(output_format='vcf', count_orphans=True)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(pileup, output)
@@ -168,7 +168,7 @@ rule flexneri_snp_calling:
         from camel.app.tools.bcftools.bcftoolscall import BcftoolsCall
         variant_caller = BcftoolsCall(camel)
         SnakemakeUtils.add_pickle_inputs(variant_caller, input)
-        step = Step(rule, variant_caller, camel, params.running_dir, config)
+        step = Step(str(rule), variant_caller, camel, Path(str(params.running_dir)))
         variant_caller.update_parameters(
             output_format='VCF',
             output_filename='variants.vcf.gz',
@@ -194,19 +194,19 @@ rule flexneri_filter_snps:
         depth_filter =  DepthFilter(camel)
         SnakemakeUtils.add_pickle_inputs(depth_filter, input)
         depth_filter.update_parameters(min_depth=10, min_forward_depth=1, min_reverse_depth=1)
-        step = Step(rule, depth_filter, camel, params.running_dir, config)
+        step = Step(str(rule), depth_filter, camel, Path(str(params.running_dir)))
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(depth_filter, output)
 
         from camel.app.tools.variantfiltering.mappingqualityfilter import MappingQualityFilter
         mapping_filter = MappingQualityFilter(camel)
         mapping_filter.add_input_files({'VCF_GZ': depth_filter.tool_outputs['VCF_GZ']})
-        mapping_filter.run(params.running_dir)
+        mapping_filter.run(Path(str(params.running_dir)))
 
         from camel.app.tools.variantfiltering.snpqualityfilter import SnpQualityFilter
         qual_filter = SnpQualityFilter(camel)
         qual_filter.add_input_files({'VCF_GZ': mapping_filter.tool_outputs['VCF_GZ']})
-        qual_filter.run(params.running_dir)
+        qual_filter.run(Path(str(params.running_dir)))
         SnakemakeUtils.dump_tool_outputs(qual_filter, output)
 
 rule flexneri_bcftools_csq:
@@ -226,7 +226,7 @@ rule flexneri_bcftools_csq:
         bcftools_csq = BcftoolsCsq(camel)
         bcftools_csq.update_parameters(local_csq=None)
         SnakemakeUtils.add_pickle_inputs(bcftools_csq, input)
-        step = Step(rule, bcftools_csq, camel, params.running_dir, config)
+        step = Step(str(rule), bcftools_csq, camel, Path(str(params.running_dir)))
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(bcftools_csq, output)
 
@@ -244,7 +244,7 @@ rule flexneri_parse_csq:
         from camel.app.tools.bcftoolscsqparser.bcftoolscsqparser import CsqParser
         parser = CsqParser(camel)
         SnakemakeUtils.add_pickle_inputs(parser, input)
-        step = Step(rule, parser, camel, params.running_dir, config)
+        step = Step(str(rule), parser, camel, Path(str(params.running_dir)))
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(parser, output)
 
@@ -280,7 +280,7 @@ rule flexneri_combine_hits:
             'TSV': [ToolIOFile(Path(params.tsv_profiles))],
             'VCF': SnakemakeUtils.load_object(Path(input.VCF))
         })
-        step = Step(rule, detector, camel, params.running_dir, config)
+        step = Step(str(rule), detector, camel, Path(str(params.running_dir)))
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(detector, output)
 
@@ -300,7 +300,7 @@ rule flexneri_create_report:
         from camel.app.tools.pipelines.shigella.flexneritypereporter import FlexneriTypeReporter
         reporter = FlexneriTypeReporter(camel)
         SnakemakeUtils.add_pickle_inputs(reporter, input)
-        step = Step(rule, reporter, camel, params.running_dir, config)
+        step = Step(str(rule), reporter, camel, Path(str(params.running_dir)))
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
 
@@ -312,7 +312,7 @@ rule flexneri_report_empty:
         VAL_HTML = Path(config['working_dir']) / flexneritype.OUTPUT_FLEXNERI_REPORT_EMPTY
     run:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-        SnakePipelineUtils.create_empty_report_section('Flexneri type determination', output.VAL_HTML)
+        SnakePipelineUtils.create_empty_report_section('Flexneri type determination', Path(output.VAL_HTML))
 
 rule flexneri_type_dump_summary_info:
     """

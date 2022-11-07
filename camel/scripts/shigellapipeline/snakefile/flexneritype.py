@@ -16,7 +16,7 @@ def aggregate_input(wildcards: Dict, checkpoints: Checkpoints, config: Dict) -> 
     """
     Aggregates the input from the read mapping based on the detected loci.
     :param wildcards: Wildcards
-    :param checkpoints Checkpoints
+    :param checkpoints: Checkpoints
     :param config: Snakemake configuration
     :return: List of input files
     """
