@@ -22,8 +22,6 @@ rule trimming_ont_pickle_fastq_input:
             shutil.copyfile(trimming_ont.INPUT_ONT_FASTQ, Path(output.FASTQ_SE))
         else:
             fastq_se_in = Path([params.config_input[fastq_key][0]['path'] for fastq_key in ['fastq_se', 'fastq'] if fastq_key in params.config_input][0])
-            print(fastq_se_in)
-            # fastq_se_in = Path(params.config_input['fastq_se'][0]['path'])
             SnakemakeUtils.dump_object([ToolIOFile(fastq_se_in)], Path(output.FASTQ_SE))
 
 

@@ -51,4 +51,3 @@ class NanoPlot(Tool):
         data_summary = pd.read_table(self._tool_outputs['TSV'][0].path)
         for row in data_summary.to_dict('records'):
             self._informs[row['Metrics']] = row['dataset']
-
