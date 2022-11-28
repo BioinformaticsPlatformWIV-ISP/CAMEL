@@ -2,9 +2,12 @@ import argparse
 from pathlib import Path
 from typing import Union
 
+import logging
+
 from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.components.html.htmlreport import HtmlReport
 from camel.app.components.workflows.readtype.basereadtypehelper import BaseReadTypeHelper
+from camel.app.components.workflows.trimmingontwrapper import TrimmingONTWrapper
 from camel.app.components.workflows.utils.fastqinput import FastqInput
 from camel.app.io.tooliofile import ToolIOFile
 
@@ -14,7 +17,7 @@ class NanoporeHelper(BaseReadTypeHelper):
     Helper class for Nanopore reads.
     """
 
-    def __symlink_iontorrent_reads(self, fastq_file: Union[Path, None], sample_name: str) -> Path:
+    def __symlink_nanopore_reads(self, fastq_file: Union[Path, None], sample_name: str) -> Path:
         """
         Symlinks the input files to a standardized format based on the sample name.
         :param fastq_file: Input FASTQ file
@@ -29,14 +32,26 @@ class NanoporeHelper(BaseReadTypeHelper):
     def trim_reads(self, fastq_input: FastqInput, report: HtmlReport, include_fastq: bool, threads: int = 4,
                    **kwargs) -> FastqInput:
         """
-        Trims Illumina reads using Trimmomatic.
+        Trims Nanopore reads using filtlong.
         :param fastq_input: FASTQ input
         :param report: HTML report
         :param include_fastq: Boolean to indicate if FASTQ files should be included in the report
         :param threads: Nb. of threads
         :return: FastqInput object with trimmed reads
         """
-        raise NotImplementedError("Trimming for Nanopore data is currently not supported")
+        logging.info("Trimming reads (Nanopore data)")
+        if fastq_input.is_pe or fastq_input.se is None:
+            raise ValueError("Nanopore input should be SE")
+        # Run workflow
+        trimming = TrimmingONTWrapper(self._working_dir / 'trimming')
+        trimming.run_workflow(Path(fastq_input.se[0].path), include_fastq, threads)
+
+        # Save output
+        report_section_trimming = trimming.output.report_section
+        report.add_html_object(report_section_trimming)
+        report_section_trimming.copy_files(report.output_dir)
+        self._log_files['trimming'] = trimming.output.log_file
+        return FastqInput('nanopore', se=trimming.output.trimmed_reads, is_pe=False)
 
     def prepare_fasta_input(self, report: HtmlReport, args: argparse.Namespace) -> Path:
         """
@@ -54,7 +69,7 @@ class NanoporeHelper(BaseReadTypeHelper):
         :param args: Command-line arguments
         :return: FASTQ input
         """
-        fq_input_se = self.__symlink_iontorrent_reads(Path(args.fastq_se), self._sample_name)
+        fq_input_se = self.__symlink_nanopore_reads(Path(args.fastq_se), self._sample_name)
         fastq_input = FastqInput(args.read_type, se=[ToolIOFile(Path(fq_input_se))], is_pe=False)
         if args.trim_reads:
             return self.trim_reads(fastq_input, report, args.report_include_fastq, args.threads)

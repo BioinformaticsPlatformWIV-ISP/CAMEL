@@ -42,7 +42,7 @@ class ReporterTrimmingONT(Tool):
         self._report_section.add_header(section_title, 3)
         relative_path = self._sub_folder / f'ont_report-{suffix}.html'
         self._report_section.add_file(self._tool_inputs[key][0].path, relative_path)
-        self._report_section.add_link_to_file('ONT report', relative_path)
+        self._report_section.add_link_to_file('NanoPlot report', relative_path)
 
     def __add_statistics_section(self) -> None:
         """
