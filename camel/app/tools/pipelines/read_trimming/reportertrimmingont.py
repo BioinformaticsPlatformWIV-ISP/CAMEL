@@ -63,5 +63,5 @@ class ReporterTrimmingONT(Tool):
             [row['title'], *[row['format'].format(row['type'](self._input_informs[step][row['key']])) for step in (
                 'nanoplot_pre', 'nanoplot_post')]] for row in report_structure
         ]
-        self._report_section.add_table(report_data,
-                                       ['Metric', 'Before trimming', 'After trimming'], [('class', 'data')])
+        self._report_section.add_table(
+            report_data, ['Metric', 'Before trimming', 'After trimming'], [('class', 'data')])

@@ -1,4 +1,4 @@
-dependencies: [filtlong/0.2.0]
+dependencies: [ filtlong/0.2.0 ]
 parameters:
   min_length: { default: true, mandatory: false, option: --min_length, value: 1000 }
   min_mean_q: { default: true, mandatory: false, option: --min_mean_q, value: 10 }

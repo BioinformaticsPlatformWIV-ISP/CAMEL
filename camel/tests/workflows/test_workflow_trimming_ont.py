@@ -33,6 +33,7 @@ class TestWorkflowTrimmingONT(CamelTestSuite):
         wrapper = TrimmingONTWrapper(self.running_dir)
         wrapper.run_workflow(TestWorkflowTrimmingONT.fastq_se_gz)
         self.assertGreater(wrapper.output.trimmed_reads[0].size, 0)
+        self.assertGreater(len(wrapper.output.report_section.to_html()), 0)
 
 
 if __name__ == '__main__':
