@@ -223,6 +223,27 @@ class TestSequenceTyping(CamelTestSuite):
         main.run()
         self.assertGreater(output_file_report.stat().st_size, 0)
 
+    def test_typing_nanopore_kma_nucl_trim(self) -> None:
+        """
+        Tests sequence typing using KMA with a nucleotide scheme (including ST definitions).
+        :return: None
+        """
+        output_file_report = Path(self.running_dir) / 'report' / 'report.html'
+        args = [
+            '--fastq-se', str(self.input_typing_reads['nanopore'][0]),
+            '--scheme-dir', str(self.input_db_nucl),
+            '--output-html', str(output_file_report),
+            '--output-dir', str(output_file_report.parent),
+            '--working-dir', str(self.running_dir),
+            '--detection-method', 'kma',
+            '--read-type', 'nanopore',
+            '--threads', '8',
+            '--trim-reads'
+        ]
+        main = MainSequenceTyping(args)
+        main.run()
+        self.assertGreater(output_file_report.stat().st_size, 0)
+
     def test_typing_iontorrent_kma_nucl_trim(self) -> None:
         """
         Tests sequence typing using KMA with a nucleotide scheme (including ST definitions).
