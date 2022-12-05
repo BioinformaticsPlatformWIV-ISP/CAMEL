@@ -48,7 +48,7 @@ class MainFiltering(object):
 
     def run(self) -> None:
         """
-        Filter the input VCF file.
+        Filters the input VCF file.
         :return: None
         """
         wrapper = VariantFilteringWrapper(self._args.working_dir)

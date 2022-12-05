@@ -53,7 +53,7 @@ class MainCalling(object):
         Runs the variant calling Snakefile to call the variants.
         :return: None
         """
-        # Create config file
+        # Create configuration file
         config_data = self.__create_snakemake_config_data()
         config_file = SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir)
 
