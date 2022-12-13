@@ -12,7 +12,7 @@ class TestBTyper(CamelTestSuite):
     Initializes this testing tool
     """
 
-    test_file_dir = Path('/testdata/camel/btyper/')
+    test_file_dir = CamelTestSuite.get_test_file_dir('btyper')
     FILE_FASTA = ToolIOFile(test_file_dir / 'bacillus_contigs.fasta')
 
     def test_btyper(self) -> None:
