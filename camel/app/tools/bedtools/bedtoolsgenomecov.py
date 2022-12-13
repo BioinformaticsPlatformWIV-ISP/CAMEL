@@ -1,5 +1,6 @@
-import os
+from pathlib import Path
 
+from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.invalidparametererror import InvalidParameterError
 from camel.app.io.tooliofile import ToolIOFile
@@ -9,13 +10,15 @@ from camel.app.tools.bedtools.bedtools import Bedtools
 class BedtoolsGenomecov(Bedtools):
 
     """
-    Bedtools Genomecov func class
+    Bedtools genomecov computes histograms (default), per-base reports (-d) and BEDGRAPH (-bg) summaries of feature
+    coverage (e.g., aligned sequences) for a given genome.
     """
     OUTPUT_FILE_BASENAME = 'bedtools_genomecov'
-    # OUTPUT_FORMAT_OPTIONS are mutually exclusive, only ONE can be specified.
+
+    # Mutually exclusive, only ONE can be specified.
     OUTPUT_FORMAT_OPTIONS = ['BedGraphWithZeroCoverage', 'BedGraph', 'DepthWithZeroCoverage', 'Depth']
 
-    def __init__(self, camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initialize a samtools tool.
         :param camel: Camel instance
@@ -25,47 +28,47 @@ class BedtoolsGenomecov(Bedtools):
         self._output_filename = None
         self._required_inputs = ['BAM']
 
-    def _execute_tool(self):
+    def _check_input(self) -> None:
+        """
+        Checks the input.
+        :return: None
+        """
+        self._check_required_inputs()
+        if len(self._tool_inputs['BAM']) != 1:
+            raise InvalidInputSpecificationError("Exactly one BAM input file expected.")
+        super()._check_input()
+
+    def _execute_tool(self) -> None:
         """
         Executes this tool.
         :return: None
         """
-        self.__set_output()
-        self.__build_command()
+        params_fmt_out = next(param for param in self._parameters if param in BedtoolsGenomecov.OUTPUT_FORMAT_OPTIONS)
+        extension = 'bed' if params_fmt_out.startswith('Bed') else 'tsv'
+        path_out = self.folder / f"{BedtoolsGenomecov.OUTPUT_FILE_BASENAME}.{extension}"
+        self.__build_command(path_out)
         self._execute_command()
+        self._tool_outputs[extension.upper()] = [ToolIOFile(path_out)]
 
-    def __build_command(self):
+    def __build_command(self, path_out: Path) -> None:
         """
-        Builds the command.
+        Builds the command line call.
+        :param path_out: Path to output file
         :return: None
         """
         self._command.command = ' '.join([
             self._tool_command,
-            ' '.join(self._build_options()),
-            ' -ibam {}'.format(self._tool_inputs['BAM'][0].path),
-            ' > {}'.format(self._output_filename)
+            *self._build_options(),
+            f" -ibam {self._tool_inputs['BAM'][0].path}",
+            f' > {path_out}'
         ])
 
-    def __set_output(self):
-        """
-        Sets the output of this tool.
-        :return: None
-        """
-        if any(param in self._parameters.keys() for param in BedtoolsGenomecov.OUTPUT_FORMAT_OPTIONS[:2]):
-            self._output_filename = BedtoolsGenomecov.OUTPUT_FILE_BASENAME + ".bed"
-            self._tool_outputs['TXT_BED'] = [ToolIOFile(os.path.join(self._folder, self._output_filename))]
-
-        if any(param in self._parameters.keys() for param in BedtoolsGenomecov.OUTPUT_FORMAT_OPTIONS[2:]):
-            self._output_filename = BedtoolsGenomecov.OUTPUT_FILE_BASENAME + ".tsv"
-            self._tool_outputs['TSV'] = [ToolIOFile(os.path.join(self._folder, self._output_filename))]
-
-    def _check_parameters(self):
+    def _check_parameters(self) -> None:
         """
         Check the parameters
         :return: None
         """
-        super(BedtoolsGenomecov, self)._check_parameters()
-
+        super()._check_parameters()
         params_excluded = []
         params_excluded += BedtoolsGenomecov.OUTPUT_FORMAT_OPTIONS
         output_opt_found = False
@@ -77,15 +80,3 @@ class BedtoolsGenomecov(Bedtools):
                     output_opt_found = True
                 else:
                     raise InvalidParameterError("Only one output option should be specified.")
-
-    def _check_input(self):
-        """
-        Checks the input.
-        :return: None
-        """
-        self._check_required_inputs()
-
-        if len(self._tool_inputs['BAM']) != 1:
-            raise InvalidInputSpecificationError("Exactly one BAM input file expected.")
-
-        super(BedtoolsGenomecov, self)._check_input()
