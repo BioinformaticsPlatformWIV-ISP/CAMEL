@@ -31,7 +31,7 @@ read_trimming:
   export_fastq: '{export_fastq}'
 
 contamination_check:
-  db: /db/kraken2/latest/abfhpv/
+  db: /db/kraken2_full/latest/full
   expected_species: Neisseria meningitidis
 
 quality_checks:
