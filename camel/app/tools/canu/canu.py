@@ -16,7 +16,7 @@ class Canu(Tool):
         Initializes this tool.
         :param camel: CAMEL instance
         """
-        super().__init__('Canu', '1.8', camel)
+        super().__init__('Canu', '2.2', camel)
 
     def _check_input(self) -> None:
         """
