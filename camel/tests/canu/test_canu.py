@@ -17,7 +17,7 @@ class TestCanu(CamelTestSuite):
     @longRunningTest()
     def test_canu(self) -> None:
         """
-        Tests Canu 2.2 with Nanopore input.
+        Tests Canu 2.2 with ONT data as input.
         """
         canu = Canu(self.camel)
         canu.add_input_files({'FASTQ': [TestCanu.FILE_FQ]})
