@@ -55,13 +55,14 @@ rule contamination_check_kraken_report_parser:
         INFORMS = Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_INFORMS
     params:
         running_dir = Path(config['working_dir']) / 'contamination_check' / 'kraken2',
-        expected_species = config['contamination_check']['expected_species']
+        expected_species = config['contamination_check']['expected_species'],
+        level_of_depth = config['contamination_check']['level_of_depth']
     run:
         from camel.app.tools.kraken.krakenreportparser import KrakenReportParser
         report_parser = KrakenReportParser(camel)
         SnakemakeUtils.add_pickle_inputs(report_parser, input)
         step = Step(rule, report_parser, camel, params.running_dir, config)
-        report_parser.update_parameters(expected_species=params.expected_species)
+        report_parser.update_parameters(expected_species=params.expected_species, level_of_depth=params.level_of_depth)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(report_parser, output)
 
@@ -89,9 +90,9 @@ rule contamination_check_report:
     """
     input:
         HTML_Krona = rules.contamination_check_krona.output.HTML,
-         INFORMS_species = rules.contamination_check_kraken_report_parser.output.INFORMS,
-         INFORMS_kraken2 = rules.contamination_check_kraken2_run.output.INFORMS,
-         TSV = rules.contamination_check_kraken2_run.output.TSV_report
+        INFORMS_species = rules.contamination_check_kraken_report_parser.output.INFORMS,
+        INFORMS_kraken2 = rules.contamination_check_kraken2_run.output.INFORMS,
+        TSV = rules.contamination_check_kraken2_run.output.TSV_report
     output:
         VAL_HTML = Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT
     params:

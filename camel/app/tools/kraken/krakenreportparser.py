@@ -21,12 +21,15 @@ class KrakenReportParser(Tool):
         Executes this tool.
         :return: None
         """
+        if self._parameters['level_of_depth'] not in ['S', 'G']:
+            logging.error('Please choose either "G" or "S" for parameter level_of_depth')
         self._informs['contaminants_warn'] = []
         self._informs['contaminants_fail'] = []
         with open(self._tool_inputs['TSV'][0].path) as handle:
             for line in handle.readlines():
                 parts = line.split('\t')
-                if parts[3] != 'S':
+                # if parts[3] != 'S':
+                if parts[3] != self._parameters['level_of_depth']:
                     continue
                 percentage = float(parts[0])
                 if percentage < float(self._parameters['threshold_warn'].value):
