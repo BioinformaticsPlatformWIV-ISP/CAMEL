@@ -40,6 +40,7 @@ class Kraken2Wrapper(object):
         :param sample_name: Sample name
         :param expected_species: Expected species
         :param db: Database
+        :param level_of_depth: Species ('S') or Genus ('G') level of contamination check
         :param threads: Number of threads
         :return: None
         """

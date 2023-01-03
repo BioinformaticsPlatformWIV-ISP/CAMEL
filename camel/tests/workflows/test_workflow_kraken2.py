@@ -66,3 +66,15 @@ class TestWorkflowAssembly(CamelTestSuite):
         self.assertGreater(len(wrapper.output.report_section.to_html()), 0)
         self.assertGreater(wrapper.output.tsv_summary.stat().st_size, 0)
         self.assertGreater(len(wrapper.output.informs['contaminants_warn']), 0)
+
+    def test_kraken2_illumina_paired_end_genus(self) -> None:
+        """
+        Tests the KRAKEN2 workflow on Illumina PE data.
+        :return: None
+        """
+        wrapper = Kraken2Wrapper(self.running_dir)
+        fastq_input = FastqInput('illumina', pe=[ToolIOFile(x) for x in TestWorkflowAssembly.fastq_pe])
+        expected_species = 'Escherichia'
+        wrapper.run_workflow('test_sample', fastq_input, expected_species, level_of_depth='G')
+        self.assertGreater(len(wrapper.output.report_section.to_html()), 0)
+        self.assertGreater(wrapper.output.tsv_summary.stat().st_size, 0)
