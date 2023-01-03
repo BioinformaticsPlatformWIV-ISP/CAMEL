@@ -7,6 +7,9 @@ from camel.app.io.tooliofile import ToolIOFile
 
 
 class BTyper(Tool):
+    """
+    In silico taxonomic classification of Bacillus cereus group isolates using assembled genomes.
+    """
 
     def __init__(self, camel: Camel) -> None:
         """
@@ -29,9 +32,7 @@ class BTyper(Tool):
         Build the command to run tool
         :return: None
         """
-        self._command.command = f'{self._tool_command} ' \
-                                f'--input {fasta_input} ' \
-                                f'{" ".join(self._build_options())}'
+        self._command.command = ' '.join([self._tool_command, f'--input {fasta_input}', *self._build_options()])
 
     def _check_command_output(self) -> None:
         """
