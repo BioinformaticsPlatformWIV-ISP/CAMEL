@@ -63,8 +63,6 @@ class BTyperReporter(Tool):
         :input_list: split line from the raw output table
         :return: List
         """
-        import pprint
-        pprint.pprint(input_list)
         for k in range(len(input_list)):
             if 'not performed' in input_list[k]:
                 input_list[k] = 'Analysis not performed'

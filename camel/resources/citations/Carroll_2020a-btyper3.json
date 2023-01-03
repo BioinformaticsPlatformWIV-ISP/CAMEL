@@ -1,0 +1,17 @@
+{
+  "type_of_reference": "JOUR",
+  "primary_title": "Proposal of a Taxonomic Nomenclature for the Bacillus cereus Group Which Reconciles Genomic Definitions of Bacterial Species with Clinical and Industrial Phenotypes",
+  "first_authors": [
+    "Carroll, Laura M.",
+    "Wiedmann, Martin",
+    "Kovac, Jasna"
+  ],
+  "publication_year": "2020///",
+  "alternate_title3": "mBio",
+  "volume": "11",
+  "number": "1",
+  "start_page": "1",
+  "end_page": "15",
+  "doi": "10.1128/mBio.00034-20",
+  "abstract": "The Bacillus cereus group comprises numerous closely related species, including bioterrorism agent B. anthracis, foodborne pathogen B. cereus, and biopesticide B. thuringiensis. Differentiating organisms capable of causing illness or death from those used in industry is essential for risk assessment and outbreak preparedness. However, current species definitions facilitate species-phenotype incongruences, particularly when horizontally acquired genes are responsible for a phenotype. Using all publicly available B. cereus group genomes (n=2,231), we show that current species definitions lead to overlapping genomospecies clusters, in which 66.2% of genomes belong to multiple genomospecies at a conventional 95 average nucleotide identity (ANI) genomospecies threshold. A genomospecies threshold of ~92.5 ANI is shown to reflect a natural gap in genome similarity for the B. cereus group, and medoid genomes identified at this threshold are shown to yield resolvable genomospecies clusters with minimal overlap (six of 2,231 genomes assigned to multiple genomospecies; 0.269%). We thus propose a nomenclatural framework for the B. cereus group which accounts for (i) genomospecies using resolvable genomospecies clusters obtained at ≈92.5 ANI, (ii) established lineages of medical importance using a formal collection of subspecies names, and (iii) heterogeneity of clinically and industrially important phenotypes using a formalized and extended collection of biovar terms. We anticipate that the proposed nomenclature will remain interpretable to clinicians, without sacrificing genomic species definitions, which can in turn aid in pathogen surveillance; early detection of emerging, high-risk genotypes; and outbreak preparedness."
+}
