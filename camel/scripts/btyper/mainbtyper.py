@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import argparse
+import shutil
 from pathlib import Path
 from typing import Optional, Sequence
 
@@ -32,7 +33,6 @@ class MainBTyper(object):
         :return: Parsed arguments
         """
         argument_parser = argparse.ArgumentParser()
-
         mainscriptutils.add_common_arguments(argument_parser)
         argument_parser.add_argument('--fasta', help='Input FASTA file', type=Path, required=True)
         argument_parser.add_argument('--fasta-name', help='Input FASTA file name', type=str)
@@ -42,7 +42,7 @@ class MainBTyper(object):
         argument_parser.add_argument('--mlst', help='assign genome to a sequence type', action='store_true')
         argument_parser.add_argument('--panc', help='assign genome to a phylogenetic group using an adjusted, '
                                                     'eight-group panC group assignment scheme', action='store_true')
-
+        argument_parser.add_argument('--output-tsv', help='Copy the output tabular file to this location', type=Path)
         return argument_parser.parse_args(args)
 
     def run(self) -> None:
@@ -74,6 +74,10 @@ class MainBTyper(object):
         report.add_html_object(SnakePipelineUtils.create_citations_section([
             'Carroll_2020a-btyper3', 'Carroll_2020b-btyper3']))
         report.save()
+
+        # Copy the TSV output file when specified
+        if self._args.output_tsv is not None:
+            shutil.copyfile(btyper.tool_outputs['TSV'][0].path, self._args.output_tsv)
 
     def __run_btyper(self) -> BTyper:
         """

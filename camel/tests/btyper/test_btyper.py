@@ -51,18 +51,21 @@ class TestBTyper(CamelTestSuite):
         Tests the BTyper main script.
         :return: None
         """
-        path_out = self.running_dir / 'out' / 'report.html'
-        path_out.parent.mkdir()
+        path_out_html = self.running_dir / 'out' / 'report.html'
+        path_out_html.parent.mkdir()
+        path_out_tsv = self.running_dir / 'out' / 'tabular.tsv'
         btyper_main = MainBTyper([
             '--fasta', str(TestBTyper.FILE_FASTA),
-            '--output-html', str(path_out),
-            '--output-dir', str(path_out.parent),
+            '--output-html', str(path_out_html),
+            '--output-dir', str(path_out_html.parent),
+            '--output-tsv', str(path_out_tsv),
             '--working-dir', str(self.running_dir),
             '--mlst', '--panc', '--bt', '--virulence',
             '--threads', '4'
         ])
         btyper_main.run()
-        self.assertTrue(path_out.exists())
+        self.assertTrue(path_out_html.exists())
+        self.assertTrue(path_out_tsv.exists())
 
 
 if __name__ == '__main__':
