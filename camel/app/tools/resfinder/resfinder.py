@@ -28,6 +28,8 @@ class ResFinder(Tool):
             raise InvalidInputSpecificationError('FASTA or FASTQ input is required')
         if not ('acquired' or 'point' in self._tool_inputs):
             raise InvalidInputSpecificationError('Either "acquired" or "point" is required')
+        if 'DIR' not in self._tool_inputs:
+            raise InvalidInputSpecificationError("Database input is required (DIR)")
         super()._check_input()
 
     def _build_command(self) -> None:
@@ -42,7 +44,10 @@ class ResFinder(Tool):
         elif 'FASTQ_PE' in self._tool_inputs:
             input_str = f'--inputfastq {self._tool_inputs["FASTQ_PE"][0].path} ' \
              f'{str(self._tool_inputs["FASTQ_PE"][1].path)}'
-        self._command.command = ' '.join([self._tool_command, input_str, ' '.join(self._build_options())])
+        self._command.command = ' '.join([self._tool_command, input_str,
+                                          '-db_point', str(Path(str(self._tool_inputs['DIR'][0].path)) / 'pointfinder'),
+                                          '-db_res', str(Path(str(self._tool_inputs['DIR'][0].path)) / 'resfinder'),
+                                          ' '.join(self._build_options())])
 
     def _check_command_output(self) -> None:
         """

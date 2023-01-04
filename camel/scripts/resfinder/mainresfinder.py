@@ -6,6 +6,7 @@ from typing import Optional, Sequence
 from camel.app.camel import Camel
 from camel.app.components import mainscriptutils
 from camel.app.components.html.htmlreportsection import HtmlReportSection
+from camel.app.io.tooliodirectory import ToolIODirectory
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.app.tools.resfinder.resfinder import ResFinder
@@ -45,6 +46,9 @@ class MainResFinder(object):
         argument_parser.add_argument('--fastq-se', help="Input SE FASTQ file", type=Path)
         argument_parser.add_argument('--fastq-se-name', help="Input SE FASTQ file name")
 
+        argument_parser.add_argument('--db-directory', help="Path containing the resfinder and pointfinder dbs",
+                                     type=Path, required=True)
+
         argument_parser.add_argument('--point', action='store_true', default=None)
         argument_parser.add_argument('--acquired', action='store_true', default=None)
 
@@ -73,9 +77,9 @@ class MainResFinder(object):
             self._args.output_html, self._args.output_dir, 'ResFinder report', 'ResFinder')
         additional_info = [
             ['Species:', '<i>{}</i>'.format(self._args.species.replace('"', ''))
-                if self._args.species is not None else 'Not specified'],
+            if self._args.species is not None else 'Not specified'],
             ['Min % identity:',
-                f'{self._args.threshold}' if self._args.threshold is not None else 'Curated (default)'],
+             f'{self._args.threshold}' if self._args.threshold is not None else 'Curated (default)'],
             ['Min % coverage:', f'{self._args.min_cov}'],
         ]
         report.add_html_object(mainscriptutils.generate_analysis_info_section(self._args, additional_info))
@@ -99,6 +103,7 @@ class MainResFinder(object):
         :return: ResFinder tool instance.
         """
         resfinder = ResFinder(Camel.get_instance())
+        resfinder.add_input_files({'DIR': [ToolIODirectory(self._args.db_directory)]})
         if self._args.fasta is not None:
             resfinder.add_input_files({'FASTA': [ToolIOFile(self._args.fasta)]})
         elif self._args.fastq_pe is not None:
@@ -115,7 +120,7 @@ class MainResFinder(object):
             resfinder.update_parameters(threshold=self._args.threshold / 100.0)
         if self._args.point is not None:
             try:
-                resfinder.update_parameters(point=True, species='"'+self._args.species.replace('_', ' ')+'"')
+                resfinder.update_parameters(point=True, species='"' + self._args.species.replace('_', ' ') + '"')
             except AttributeError:
                 raise InvalidInputSpecificationError('--point requires a --species argument')
         if self._args.acquired is not None:
