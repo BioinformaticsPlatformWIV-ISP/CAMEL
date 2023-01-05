@@ -28,8 +28,7 @@ class KrakenReportParser(Tool):
         with open(self._tool_inputs['TSV'][0].path) as handle:
             for line in handle.readlines():
                 parts = line.split('\t')
-                # if parts[3] != 'S':
-                if parts[3] != self._parameters['level_of_depth']:
+                if parts[3] != self._parameters['level_of_depth'].value:
                     continue
                 percentage = float(parts[0])
                 if percentage < float(self._parameters['threshold_warn'].value):
