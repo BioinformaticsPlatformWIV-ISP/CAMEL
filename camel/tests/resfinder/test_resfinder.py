@@ -13,13 +13,13 @@ class TestResFinder(CamelTestSuite):
     Initializes this testing tool
     """
 
-    test_file_dir = Path('/testdata/camel/resfinder/')
+    test_file_dir = CamelTestSuite.get_test_file_dir('resfinder')
     FILE_FASTA_1 = ToolIOFile(test_file_dir / 'ref_ecoli.fasta')
     FILE_FASTA_2 = ToolIOFile(test_file_dir / 'salmonella_lt2_ref.fasta')
     FILE_FASTA_3 = ToolIOFile(test_file_dir / 'assembly-VAR305.fasta')
     FILE_FASTQ_1 = ToolIOFile(test_file_dir / 'reads_illumina_1.fastq')
     FILE_FASTQ_2 = ToolIOFile(test_file_dir / 'reads_illumina_2.fastq')
-    DB_RESFINDER = Path('/db/resfinder4/')
+    DB_RESFINDER = Path(CamelTestSuite.camel.config['db_root'], 'resfinder4')
 
     def test_resfinder_main_fasta(self) -> None:
         """

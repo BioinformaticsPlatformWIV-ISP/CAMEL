@@ -76,8 +76,8 @@ class MainResFinder(object):
         report = mainscriptutils.init_report(
             self._args.output_html, self._args.output_dir, 'ResFinder report', 'ResFinder')
         additional_info = [
-            ['Species:', '<i>{}</i>'.format(self._args.species.replace('"', ''))
-            if self._args.species is not None else 'Not specified'],
+            ['Species:', '<i>{}</i>'.format(self._args.species.replace('"', '')) if
+                self._args.species is not None else 'Not specified'],
             ['Min % identity:',
              f'{self._args.threshold}' if self._args.threshold is not None else 'Curated (default)'],
             ['Min % coverage:', f'{self._args.min_cov}'],
@@ -149,5 +149,5 @@ class MainResFinder(object):
 
 if __name__ == '__main__':
     Camel.get_instance()
-    resfinder = MainResFinder()
-    resfinder.run()
+    resfinder_main = MainResFinder()
+    resfinder_main.run()
