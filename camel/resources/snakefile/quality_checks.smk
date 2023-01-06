@@ -242,7 +242,7 @@ rule quality_checks_report:
         JSON_fqc_seq_len_rev = rules.quality_checks_fqc_seq_len.output.JSON.format(ori='rev') if (config.get('read_type', 'illumina') == 'illumina' and 'fastqc' not in config['quality_checks'].get('disabled_checks', [])) else []
     output:
         VAL_HTML = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_REPORT,
-        JSON = Path(config['working_dir']) / 'report' / 'informs.json'
+        JSON = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_REPORT_JSON
     params:
         gc_content_ref = config['quality_checks']['expected_gc_content']
     run:

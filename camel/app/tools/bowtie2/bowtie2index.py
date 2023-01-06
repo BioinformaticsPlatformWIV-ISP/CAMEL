@@ -1,84 +1,81 @@
-import os
+import logging
+from pathlib import Path
 
 from camel.app.camel import Camel
 from camel.app.components.files.fileutils import FileUtils
+from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliovalue import ToolIOValue
-from camel.app.tools.bowtie2.bowtie2 import Bowtie2
+from camel.app.tools.tool import Tool
 
 
-class Bowtie2Index(Bowtie2):
+class Bowtie2Index(Tool):
 
     """
     Index genome using 'bowtie2-build' cmd of Bowtie2
     """
 
-    MULTI_FASTA_GENOME_FILE = 'complete_genome.fasta'
+    MULTI_FASTA_GENOME_FILE = 'concatenated.fasta'
 
-    def __init__(self, camel: Camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initialize bowtie2 index
         :param camel: Camel instance
         :return: None
         """
-        super(Bowtie2Index, self).__init__('bowtie2 index', '2.4.1', camel)
-        self._refgenome_fasta = None
+        super().__init__('bowtie2 index', '2.4.1', camel)
 
     def _execute_tool(self) -> None:
         """
         Function to run BWA index
         :return: None
         """
-        self.__set_input()
-        self.__build_command()
+        path_fasta = self.__collect_fasta_input()
+        self._command.command = ' '.join([
+            self._tool_command,
+            *self._build_options(),
+            str(path_fasta),
+            str(path_fasta)])
         self._execute_command()
-        self.__set_output()
+        self._tool_outputs['INDEX_GENOME_PREFIX'] = [ToolIOValue(path_fasta)]
 
-    def __get_multi_fasta_genome_filename(self) -> str:
+    def __get_multi_fasta_genome_filename(self) -> Path:
         """
         Get the filename used for multi fasta file representing complete genome
         :return: name of the multi fasta file with complete path
         """
-        return os.path.join(self._folder, Bowtie2Index.MULTI_FASTA_GENOME_FILE)
+        return self._folder / Bowtie2Index.MULTI_FASTA_GENOME_FILE
 
     def _check_input(self) -> None:
         """
         Check FASTA_REF input and concatenate them if multiple fasta input files
         :return: None
         """
-        super(Bowtie2Index, self)._check_input()
+        if 'FASTA_REF' not in self._tool_inputs or len(self._tool_inputs['FASTA_REF']) == 0:
+            raise InvalidInputSpecificationError("FASTA_REF input is required")
+        super()._check_input()
 
-        if len(self._tool_inputs['FASTA_REF']) == 0:
-            raise ValueError("Required reference genome (FASTA) input file is missing.")
-
-    def __set_input(self) -> None:
+    def __collect_fasta_input(self) -> Path:
         """
-        Set the input
-        :return: None
+        Collects the FASTA input
+        :return: Path to FASTA file that will be indexed.
         """
         nb_of_inputs = len(self._tool_inputs['FASTA_REF'])
-
         if nb_of_inputs > 1:
-            multifasta_file = self.__get_multi_fasta_genome_filename()
-            FileUtils.concatenate_files(multifasta_file, [f.path for f in self._tool_inputs['FASTA_REF']])
-            self._refgenome_fasta = multifasta_file
+            logging.info(f'Creating concatenated FASTA file ({nb_of_inputs} files)')
+            path_multi_fasta = self.folder / Bowtie2Index.MULTI_FASTA_GENOME_FILE
+            FileUtils.concatenate_files(path_multi_fasta, [f.path for f in self._tool_inputs['FASTA_REF']])
+            return path_multi_fasta
         else:
-            self._refgenome_fasta = os.path.join(self._folder, self._tool_inputs['FASTA_REF'][0].basename)
-            if self._refgenome_fasta != self._tool_inputs['FASTA_REF'][0].path and not os.path.exists(
-                    self._refgenome_fasta):
-                os.symlink(self._tool_inputs['FASTA_REF'][0].path, self._refgenome_fasta)
+            path_fasta = self._folder / self._tool_inputs['FASTA_REF'][0].path.name
+            if not path_fasta.exists():
+                logging.info(f'Creating symlink for input FASTA file: {path_fasta}')
+                path_fasta.symlink_to(self._tool_inputs['FASTA_REF'][0].path)
+            return path_fasta
 
-    def __set_output(self) -> None:
+    def _check_command_output(self) -> None:
         """
-        Set output for bowtie2 index
-        :return: None
+        Checks if the command executed successfully.
         """
-        self._tool_outputs['INDEX_GENOME_PREFIX'] = [ToolIOValue(self._refgenome_fasta)]
-
-    def __build_command(self) -> None:
-        """
-        Build the command to run bowtie2 index
-        :return: None
-        """
-        # Note the refgenome fasta name is used as index base
-        options = ' '.join(self._build_options())
-        self._command.command = f'{self._tool_command} {options} {self._refgenome_fasta} {self._refgenome_fasta}'
+        if not self._command.returncode == 0:
+            raise ToolExecutionError(f'Error executing {self.name}: {self._command.stderr}')

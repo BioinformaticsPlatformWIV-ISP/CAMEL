@@ -5,7 +5,9 @@ from camel.app.tools.toolpipeable import ToolPipeable
 
 
 class Bowtie2(ToolPipeable, metaclass=abc.ABCMeta):
-    """Super class for read mapping using Bowtie2"""
+    """
+    Super class for read mapping using Bowtie2.
+    """
 
     def _check_command_output(self) -> None:
         """

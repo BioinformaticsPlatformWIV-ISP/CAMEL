@@ -2,7 +2,7 @@
 Contains helper function for main scripts with a report output.
 """
 import argparse
-import collections
+from collections.abc import Mapping
 import datetime
 import logging
 from pathlib import Path
@@ -183,8 +183,7 @@ def dict_merge(dct: Dict[str, Any], merge_dct) -> None:
     :return: None
     """
     for k, v in merge_dct.items():
-        if (k in dct and isinstance(dct[k], dict)
-                and isinstance(merge_dct[k], collections.Mapping)):
+        if k in dct and isinstance(dct[k], dict) and isinstance(merge_dct[k], Mapping):
             dict_merge(dct[k], merge_dct[k])
         else:
             dct[k] = merge_dct[k]

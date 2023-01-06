@@ -1,5 +1,3 @@
-import os
-
 from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
@@ -18,7 +16,7 @@ class Canu(Tool):
         Initializes this tool.
         :param camel: CAMEL instance
         """
-        super().__init__('Canu', '1.8', camel)
+        super().__init__('Canu', '2.2 commit 7fb66bbff', camel)
 
     def _check_input(self) -> None:
         """
@@ -36,9 +34,9 @@ class Canu(Tool):
         """
         self._command.command = ' '.join([
             self._tool_command,
-            '-nanopore-raw {}'.format(self._tool_inputs['FASTQ'][0].path),
-            ' '.join(self._build_options(['genome_size', 'threads'])),
-            ' '.join(self._build_options(['output_directory', 'output_prefix'], '=')),
+            f"-nanopore-raw {self._tool_inputs['FASTQ'][0].path}",
+            *self._build_options(['genome_size', 'threads']),
+            *self._build_options(['output_directory', 'output_prefix'], '='),
             'useGrid=False'
         ])
         self._execute_command()
@@ -50,13 +48,13 @@ class Canu(Tool):
         :return: None
         """
         if self._command.returncode != 0:
-            raise ToolExecutionError("Error executing '{}': {}".format(self.name, self.stdout))
+            raise ToolExecutionError(f"Error executing '{self.name}': {self.stdout}")
 
     def __set_output(self) -> None:
         """
         Sets the output of the tool.
         :return: None
         """
-        output_directory = os.path.join(self._folder, self._parameters['output_directory'].value)
-        self._tool_outputs['FASTA'] = [ToolIOFile(os.path.join(output_directory, '{}.contigs.fasta'.format(
-            self._parameters['output_prefix'].value)))]
+        dir_out = self.folder / self._parameters['output_directory'].value
+        self._tool_outputs['FASTA'] = [
+            ToolIOFile(dir_out / f"{self._parameters['output_prefix'].value}.contigs.fasta")]

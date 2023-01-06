@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from camel.app.camel import Camel
 from camel.resources.snakefile import gene_detection
 from camel.scripts.stecpipeline.snakefile import serotype_detection
 
@@ -19,9 +20,9 @@ rule serotype_detection_run:
         from camel.app.snakemake.snakemakeutils import SnakemakeUtils
         from camel.app.tools.pipelines.stec.serotypedetector import SerotypeDetectorEcoli
         from camel.app.pipeline.step import Step
-        detector = SerotypeDetectorEcoli(camel)
+        detector = SerotypeDetectorEcoli(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(detector, input)
-        step = Step(rule, detector, camel, params.running_dir, config)
+        step = Step(str(rule), detector, Camel.get_instance(), params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(detector, output)
 
@@ -37,7 +38,7 @@ rule serotype_detection_report:
         from camel.app.snakemake.snakemakeutils import SnakemakeUtils
         from camel.app.components.html.htmlreportsection import HtmlReportSection
         from camel.app.io.tooliovalue import ToolIOValue
-        if len(input.VAL_serotype) > 0:
+        if ('VAL_serotype' in input) and len(input['VAL_serotype']) > 0:
             serotype = SnakemakeUtils.load_object(Path(input.VAL_serotype))[0].value
         else:
             serotype = 'NA'

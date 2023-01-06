@@ -1,5 +1,4 @@
 from camel.app.camel import Camel
-from camel.app.command.command import Command
 from camel.app.error.invalidparametererror import InvalidParameterError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
@@ -78,7 +77,7 @@ class SamtoolsMPileup(SamtoolsBasePipeable):
                 command_parts.append('--BCF')
 
         # Construct command
-        self._command = Command(' '.join(command_parts))
+        self._command.command = ' '.join(command_parts)
 
     def __set_output(self) -> None:
         """

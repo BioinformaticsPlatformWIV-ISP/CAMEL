@@ -1,5 +1,7 @@
 from pathlib import Path
 
+from camel.app.camel import Camel
+from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile import gene_detection
 
@@ -18,10 +20,10 @@ rule gene_detection_blast_blastn:
         task = lambda wildcards: config['gene_detection'][wildcards.db].get('params', {}).get('blastn', {}).get('task', 'megablast')
     run:
         from camel.app.tools.blast.blastn import Blastn
-        blastn = Blastn(camel)
+        blastn = Blastn(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(blastn, input)
-        step = Step(rule, blastn, camel, params.running_dir, config, wildcards)
-        blastn.update_parameters(threads=1, task=params.task, max_target_seqs=20000)
+        step = Step(str(rule), blastn, Camel.get_instance(), Path(str(params.running_dir)), wildcards)
+        blastn.update_parameters(threads=1, task=str(params.task), max_target_seqs=20000)
         step.run_step()
         blastn.informs['Task'] = params.task
         SnakemakeUtils.dump_tool_outputs(blastn, output)
@@ -38,9 +40,9 @@ rule gene_detection_blast_tsv_generation:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'gene_detection' / wildcards.db / 'tsv_generation'
     run:
         from camel.app.tools.blast.blastformatter import BlastFormatter
-        blast_formatter = BlastFormatter(camel)
+        blast_formatter = BlastFormatter(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(blast_formatter, input)
-        step = Step(rule, blast_formatter, camel, params.running_dir, config, wildcards)
+        step = Step(str(rule), blast_formatter, Camel.get_instance(), Path(str(params.running_dir)), wildcards)
         blast_formatter.update_parameters(output_format='"7 pident sseqid sseq slen qseqid qstart qend score"')
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(blast_formatter, output)
@@ -55,16 +57,16 @@ rule gene_detection_blast_hit_filtering:
         INFORMS_blastn = rules.gene_detection_blast_blastn.output.INFORMS
     output:
         VAL_Hits = Path(config['working_dir']) / 'gene_detection' / '{db}' / 'hit_filtering' / 'blast-hits.io',
-        INFORMS = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS_METHOD).format(db='{db}', method='blast'),
+        INFORMS = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS_METHOD).format(db='{db}', method='blast')
     params:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'gene_detection' / wildcards.db / 'hit_filtering',
         min_percent_identity = lambda wildcards: config['gene_detection'][wildcards.db].get('params', {}).get('blastn', {}).get('min_percent_identity', 90),
-        min_coverage = lambda wildcards: config['gene_detection'][wildcards.db].get('params', {}).get('blastn', {}).get('min_coverage', 60),
+        min_coverage = lambda wildcards: config['gene_detection'][wildcards.db].get('params', {}).get('blastn', {}).get('min_coverage', 60)
     run:
         from camel.app.tools.pipelines.genedetection.blasthitfiltering import BlastHitFiltering
-        hit_filtering = BlastHitFiltering(camel)
+        hit_filtering = BlastHitFiltering(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(hit_filtering, input)
-        step = Step(rule, hit_filtering, camel, params.running_dir, config, wildcards)
+        step = Step(str(rule), hit_filtering, Camel.get_instance(), Path(str(params.running_dir)), wildcards)
 
         # Update parameters
         hit_filtering.update_parameters(
@@ -95,9 +97,9 @@ rule gene_detection_blast_text_alignment_generation:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'gene_detection' / wildcards.db / 'alignment_generation'
     run:
         from camel.app.tools.blast.blastformatter import BlastFormatter
-        blast_formatter = BlastFormatter(camel)
+        blast_formatter = BlastFormatter(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(blast_formatter, input)
-        step = Step(rule, blast_formatter, camel, params.running_dir, config, wildcards)
+        step = Step(str(rule), blast_formatter, Camel.get_instance(), Path(str(params.running_dir)), wildcards)
         blast_formatter.update_parameters(output_format='0', num_alignments=20000)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(blast_formatter, output)
@@ -115,9 +117,9 @@ rule gene_detection_blast_text_alignment_extraction:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'gene_detection' / wildcards.db / 'alignment_generation'
     run:
         from camel.app.tools.pipelines.genedetection.alignmentextractor import AlignmentExtractor
-        alignment_extractor = AlignmentExtractor(camel)
+        alignment_extractor = AlignmentExtractor(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(alignment_extractor, input)
-        step = Step(rule, alignment_extractor, camel, params.running_dir, config, wildcards)
+        step = Step(str(rule), alignment_extractor, Camel.get_instance(), Path(str(params.running_dir)), wildcards)
         step.run_step()
         hits_with_alignment = []
         for io_value, alignment in zip(

@@ -5,7 +5,7 @@ import os
 
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.components.vcf.vcfutils import VCFUtils
-from camel.scripts.variantcalling.samtools.maincalling import MainCalling
+from camel.scripts.variantcalling.samtools.maincallingsamtools import MainCalling
 
 
 class TestVariantCalling(CamelTestSuite):

@@ -28,6 +28,8 @@ class ResFinder(Tool):
             raise InvalidInputSpecificationError('FASTA or FASTQ input is required')
         if not ('acquired' or 'point' in self._tool_inputs):
             raise InvalidInputSpecificationError('Either "acquired" or "point" is required')
+        if 'DIR' not in self._tool_inputs:
+            raise InvalidInputSpecificationError("Database input is required (DIR)")
         super()._check_input()
 
     def _build_command(self) -> None:
@@ -42,7 +44,11 @@ class ResFinder(Tool):
         elif 'FASTQ_PE' in self._tool_inputs:
             input_str = f'--inputfastq {self._tool_inputs["FASTQ_PE"][0].path} ' \
              f'{str(self._tool_inputs["FASTQ_PE"][1].path)}'
-        self._command.command = ' '.join([self._tool_command, input_str, ' '.join(self._build_options())])
+        else:
+            raise ValueError('Invalid tool input')
+        self._command.command = ' '.join([
+            self._tool_command, input_str, '-db_point', str(self._tool_inputs['DIR'][0].path / 'pointfinder'),
+            '-db_res', str(self._tool_inputs['DIR'][0].path / 'resfinder'), *self._build_options()])
 
     def _check_command_output(self) -> None:
         """
@@ -57,18 +63,12 @@ class ResFinder(Tool):
         Collects the tool output.
         """
         dir_out = self.folder / self._parameters['output_path'].value
+        self._tool_outputs['TSV_pheno_general'] = [ToolIOFile(dir_out / Path('pheno_table.txt'))]
 
-        self._tool_outputs['TSV_pheno_general'] = [
-            ToolIOFile(dir_out / Path('pheno_table.txt'))
-        ]
         if 'acquired' in self._parameters:
-            self._tool_outputs['TSV_genes'] = [
-                ToolIOFile(dir_out / Path('ResFinder_results_tab.txt'))
-            ]
+            self._tool_outputs['TSV_genes'] = [ToolIOFile(dir_out / Path('ResFinder_results_tab.txt'))]
         if 'point' in self._parameters:
-            self._tool_outputs['TSV_point'] = [
-                ToolIOFile(dir_out / Path('PointFinder_results.txt'))
-            ]
+            self._tool_outputs['TSV_point'] = [ToolIOFile(dir_out / Path('PointFinder_results.txt'))]
             specific_species = '_'.join(self._parameters['species'].value.lower().split(' ')).replace('"', '')
             self._tool_outputs['TSV_pheno_species'] = [
                 ToolIOFile(dir_out / Path(f'pheno_table_{specific_species}.txt'))

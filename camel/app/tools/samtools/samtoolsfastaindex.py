@@ -57,7 +57,10 @@ class SamtoolsFastaIndex(SamtoolsBase):
         Executes this tool.
         :return: None
         """
-        fasta_file = self.__symlink_input()
+        if 'symlink_input' in self._parameters:
+            fasta_file = self.__symlink_input()
+        else:
+            fasta_file = self._tool_inputs['FASTA'][0].path
         self.__build_command(fasta_file)
         self._execute_command()
         self._check_stderr()

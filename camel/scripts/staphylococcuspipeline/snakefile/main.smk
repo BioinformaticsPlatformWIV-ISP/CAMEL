@@ -44,7 +44,7 @@ rule link_downsampling_input:
 
 rule link_trimmomatic_input:
     """
-    Links the downsmapling output to the input of the trimmomatic workflow.  
+    Links the downsampling output to the input of the trimmomatic workflow.  
     """
     input:
         FASTQ = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_FASTQ

@@ -219,7 +219,7 @@ class MainMLSTPhylogeny(object):
         """
         section_filtering = HtmlReportSection('Allele matrix filtering')
         section_filtering.add_table([
-            [f'Loci required (%):', f'{self._args.min_perc_samples}%'],
+            [f'Loci required (%):', f'{self._args.min_perc_loci}%'],
             [f'Loci required:', str(cutoff_loci)],
             [f'Present in datasets (%):', f'{self._args.min_perc_samples}%'],
             [f'Present in datasets', str(cutoff_datasets)]

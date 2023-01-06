@@ -35,7 +35,7 @@ downsampling:
   expected_genome_size: 5_498_578
 
 contamination_check:
-  db: /db/kraken2/latest/abfhpv/
+  db: /db/kraken2_full/latest/full
   expected_species: Escherichia coli
 
 quality_checks:

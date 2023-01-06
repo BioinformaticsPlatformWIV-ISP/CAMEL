@@ -1,7 +1,7 @@
-import os
-import re
-
 import logging
+import re
+from pathlib import Path
+from typing import Dict, Tuple
 
 
 class AlignmentExtraction(object):
@@ -13,7 +13,7 @@ class AlignmentExtraction(object):
     MAX_QUERY_LENGTH = 65
 
     @staticmethod
-    def get_alignments(alignment_file):
+    def get_alignments(alignment_file: Path) -> Dict[Tuple[str, str], str]:
         """
         Returns the individual alignments from the input file.
         :param alignment_file: file containing the alignments
@@ -37,11 +37,11 @@ class AlignmentExtraction(object):
             new_query = AlignmentExtraction.__get_query(text_part)
             if new_query is not None:
                 last_query = new_query
-        logging.info("{} alignments found in '{}'".format(len(alignments), os.path.basename(alignment_file)))
+        logging.info(f"{len(alignments)} alignments extracted from '{alignment_file.name}'")
         return alignments
 
     @staticmethod
-    def get_key(subject, query):
+    def get_key(subject: str, query: str) -> Tuple[str, str]:
         """
         Generates the key for the given query.
         :param subject: Subject
@@ -51,7 +51,7 @@ class AlignmentExtraction(object):
         return subject, AlignmentExtraction.__cleanup_query_line(query)
 
     @staticmethod
-    def __get_query(text_part):
+    def __get_query(text_part: str) -> str:
         """
         Returns the last query from the given text part.
         :param text_part: Text part
@@ -62,7 +62,7 @@ class AlignmentExtraction(object):
                 return AlignmentExtraction.__cleanup_query_line(line)
 
     @staticmethod
-    def __is_alignment(text):
+    def __is_alignment(text: str) -> bool:
         """
         Checks if the given text block is an alignment.
         :param text: Text part
@@ -77,7 +77,7 @@ class AlignmentExtraction(object):
         return True
 
     @staticmethod
-    def __clean_alignment(alignment):
+    def __clean_alignment(alignment: str) -> str:
         """
         Cleans the given alignment. Trailing information is removed.
         :param alignment: Input alignment
@@ -86,7 +86,7 @@ class AlignmentExtraction(object):
         return '\n'.join(alignment.split('\n')[0:AlignmentExtraction.__get_alignment_end_line_number(alignment) + 1])
 
     @staticmethod
-    def __get_alignment_end_line_number(alignment):
+    def __get_alignment_end_line_number(alignment: str) -> int:
         """
         Returns the line number of the last line of the alignment.
         :param alignment: Alignment in BLAST output format 0, if the provided input is no alignment an error is raised.

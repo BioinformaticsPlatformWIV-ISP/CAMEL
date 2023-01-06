@@ -1,0 +1,122 @@
+#!/usr/bin/env python
+import argparse
+import shutil
+from pathlib import Path
+from typing import Optional, Sequence
+
+from camel.app.camel import Camel
+from camel.app.components import mainscriptutils
+from camel.app.components.html.htmlreportsection import HtmlReportSection
+from camel.app.io.tooliofile import ToolIOFile
+from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
+from camel.app.tools.btyper.btyper import BTyper
+from camel.app.tools.btyper.btyperreporter import BTyperReporter
+
+
+class MainBTyper(object):
+    """
+    This class is used to run the main ResFinder local script.
+    """
+
+    def __init__(self, args: Optional[Sequence[str]] = None) -> None:
+        """
+        Initializes the main script.
+        :param args: Arguments (optional)
+        """
+        self._args = MainBTyper.parse_arguments(args)
+        self._sample_name = mainscriptutils.determine_sample_name(self._args)
+
+    @staticmethod
+    def parse_arguments(args: Optional[Sequence[str]] = None) -> argparse.Namespace:
+        """
+        Parses the command line arguments.
+        :return: Parsed arguments
+        """
+        argument_parser = argparse.ArgumentParser()
+        mainscriptutils.add_common_arguments(argument_parser)
+        argument_parser.add_argument('--fasta', help='Input FASTA file', type=Path, required=True)
+        argument_parser.add_argument('--fasta-name', help='Input FASTA file name', type=str)
+        argument_parser.add_argument('--virulence', help='perform virulence gene detection', action='store_true')
+        argument_parser.add_argument('--bt', help='perform Bt toxin gene detection for cry, cyt, and vip genes',
+                                     action='store_true')
+        argument_parser.add_argument('--mlst', help='assign genome to a sequence type', action='store_true')
+        argument_parser.add_argument('--panc', help='assign genome to a phylogenetic group using an adjusted, '
+                                                    'eight-group panC group assignment scheme', action='store_true')
+        argument_parser.add_argument('--output-tsv', help='Copy the output tabular file to this location', type=Path)
+        return argument_parser.parse_args(args)
+
+    def run(self) -> None:
+        """
+        Runs the main script.
+        :return: None
+        """
+        # Initialize report
+        report = mainscriptutils.init_report(
+            self._args.output_html, self._args.output_dir, 'BTyper3 report', 'BTyper3')
+        additional_info = [
+            ['Virulence:', '{}'.format('True' if self._args.virulence else 'False')],
+            ['MLST:', '{}'.format('True' if self._args.mlst else 'False')],
+            ['PanC:', '{}'.format('True' if self._args.panc else 'False')],
+            ['BT:', '{}'.format('True' if self._args.bt else 'False')],
+        ]
+        report.add_html_object(mainscriptutils.generate_analysis_info_section(self._args, additional_info))
+        report.save()
+
+        # Run tools
+        btyper = self.__run_btyper()
+        section = self.__run_reporter(btyper)
+        report.add_html_object(section)
+        section.copy_files(report.output_dir)
+
+        # Save report
+        all_informs = [btyper.informs]
+        report.add_html_object(SnakePipelineUtils.create_commands_section(all_informs, self._args.working_dir))
+        report.add_html_object(SnakePipelineUtils.create_citations_section([
+            'Carroll_2020a-btyper3', 'Carroll_2020b-btyper3']))
+        report.save()
+
+        # Copy the TSV output file when specified
+        if self._args.output_tsv is not None:
+            shutil.copyfile(btyper.tool_outputs['TSV'][0].path, self._args.output_tsv)
+
+    def __run_btyper(self) -> BTyper:
+        """
+        Runs BTyper.
+        :return: BTyper tool instance.
+        """
+        btyper = BTyper(Camel.get_instance())
+
+        # Update parameters
+        if self._args.fasta is not None:
+            btyper.add_input_files({'FASTA': [ToolIOFile(self._args.fasta)]})
+        if not self._args.virulence:
+            btyper.update_parameters(virulence='False')
+        if not self._args.bt:
+            btyper.update_parameters(bt='False')
+        if not self._args.panc:
+            btyper.update_parameters(panc='False')
+        if not self._args.mlst:
+            btyper.update_parameters(mlst='False')
+        btyper.update_parameters(output_dir=self._args.output_dir)
+
+        # Run the tool
+        btyper.run(self._args.working_dir)
+        return btyper
+
+    def __run_reporter(self, btyper: BTyper) -> HtmlReportSection:
+        """
+        Runs the BTyper reporter.
+        :param btyper: BTyper tool instance.
+        :return: None.
+        """
+        reporter = BTyperReporter(Camel.get_instance())
+        reporter.add_input_files({'TSV': btyper.tool_outputs['TSV']})
+        reporter.add_input_informs({'btyper': btyper.informs})
+        reporter.run()
+        return reporter.tool_outputs['VAL_HTML'][0].value
+
+
+if __name__ == '__main__':
+    Camel.get_instance()
+    btyper_main = MainBTyper()
+    btyper_main.run()
