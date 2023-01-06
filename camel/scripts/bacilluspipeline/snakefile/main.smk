@@ -1,7 +1,8 @@
+import shutil
 from pathlib import Path
 
-from camel.resources.snakefile import trimming, trimming_illumina, assembly_spades, \
-    quality_checks, contamination_check_kraken, sequence_typing, downsampling, resfinder
+from camel.resources.snakefile import trimming, trimming_illumina, assembly_spades, assembly_canu, \
+    quality_checks, contamination_check_kraken, sequence_typing, downsampling, resfinder, trimming_ont
 from camel.scripts.bacilluspipeline.snakefile import btyper
 
 #######################
@@ -24,25 +25,35 @@ rule all:
     This rules ensures that the required output files are generated.
     """
     input:
-        config['output_report'],
-        config['output_tabular']
+        HTML = config['output_report'],
+        TSV = config['output_tabular'],
+        IO_FASTQ= Path(config['working_dir']) / 'fq_dict.io'
 
 rule link_downsampling_input:
     """
     Creates the FASTQ input for the downsampling step. 
     """
-    input:
-        FASTQ_PE = [entry['path'] for entry in config['input']['fastq_pe']]
     output:
         FASTQ = Path(config['working_dir']) / downsampling.INPUT_DOWNSAMPLING_FASTQ
+    params:
+        config_input=config['input'],
+        read_type=trimming.get_read_type(config)
     run:
-        from camel.app.snakemake.snakemakeutils import SnakemakeUtils
         from camel.app.io.tooliofile import ToolIOFile
-        SnakemakeUtils.dump_object([ToolIOFile(Path(x)) for x in input.FASTQ_PE], Path(output.FASTQ))
+        from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 
-rule link_trimmomatic_input:
+        if params.read_type == 'illumina':
+            SnakemakeUtils.dump_object([ToolIOFile(Path(x['path'])) for x in config['input']['fastq_pe']],
+                Path(output.FASTQ))
+        elif params.read_type == 'nanopore':
+            SnakemakeUtils.dump_object([ToolIOFile(Path(x['path'])) for x in config['input']['fastq_se']],
+                Path(output.FASTQ))
+        else:
+            raise ValueError(f'Unsupported read type: {params.read_type}')
+
+rule link_downsampling_to_trimming_illumina:
     """
-    Links the downsmapling output to the input of the trimmomatic workflow.  
+    Links the downsampling output to the input of the Illumina trimming workflow.  
     """
     input:
         FASTQ = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_FASTQ
@@ -53,18 +64,60 @@ rule link_trimmomatic_input:
         cp {input.FASTQ} {output.FASTQ};
         """
 
-rule select_fastq:
+rule link_downsampling_to_trimming_ont:
     """
-    This rule creates an IO object with the trimmed FASTQ files.
-    Other workflows such as Kraken or Assembly rely on this dictionary to get input files (PE or SE).
+    Links the downsampling output to the input of the ONT trimming workflow.  
     """
     input:
-        FASTQ_PE = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_DICT
+        FASTQ = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_FASTQ
+    output:
+        FASTQ = Path(config['working_dir']) / trimming_ont.INPUT_ONT_FASTQ
+    shell:
+        """
+        cp {input.FASTQ} {output.FASTQ};
+        """
+
+rule select_fastq:
+    """
+    Creates an IO object with the trimmed FASTQ files.
+    Other workflows such as Kraken or de novo assembly rely on this dictionary to get input files (PE or SE).
+    """
+    input:
+        FASTQ_ilmn = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_DICT if config['read_type'] == 'illumina' else [],
+        FASTQ_ont = Path(config['working_dir']) / trimming_ont.OUTPUT_TRIMMING_ONT_DICT if config['read_type'] == 'nanopore' else []
     output:
         IO_FASTQ = Path(config['working_dir']) / 'fq_dict.io'
-    shell:
-        "cp {input.FASTQ_PE} {output.IO_FASTQ};"
+    params:
+        read_type = config['read_type']
+    run:
+        if params.read_type == 'illumina':
+            shutil.copyfile(Path(input.FASTQ_ilmn), Path(output.IO_FASTQ))
+        elif params.read_type == 'nanopore':
+            shutil.copyfile(Path(input.FASTQ_ont), Path(output.IO_FASTQ))
+        else:
+            raise ValueError(f'Unsupported read type: {params.read_type}')
 
+rule select_fasta_to_tools:
+    """
+    This rules links the output of the assembly workflow to the other workflows.
+    """
+    input:
+        FASTA_spades = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'illumina' else [],
+        FASTA_canu = Path(config['working_dir']) / canu.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else []
+    output:
+        FASTA_btyper = Path(config['working_dir']) / btyper.INPUT_BTYPER_FASTA,
+        FASTA_resfinder = Path(config['working_dir']) / resfinder.INPUT_RESFINDER_FASTA
+    params:
+        read_type=config['read_type']
+    run:
+        if params.read_type == 'nanopore':
+            shutil.copyfile(Path(input.FASTA_canu), Path(output.FASTA_btyper))
+            shutil.copyfile(Path(input.FASTA_canu), Path(output.FASTA_resfinder))
+        elif params.read_type == 'illumina':
+            shutil.copyfile(Path(input.FASTA_spades),Path(output.FASTA_btyper))
+            shutil.copyfile(Path(input.FASTA_spades),Path(output.FASTA_resfinder))
+        else:
+            raise ValueError(f'Unsupported read type: {params.read_type}')
 
 rule select_fasta:
     """

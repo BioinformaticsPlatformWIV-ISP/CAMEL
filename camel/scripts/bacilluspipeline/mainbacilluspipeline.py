@@ -44,6 +44,7 @@ class MainBacillusPipeline(ReportPipeline):
         :param args: Arguments (optional)
         """
         super().__init__('Bacillus pipeline', '1.0', SNAKEFILE_MAIN, args)
+        self._args = MainBacillusPipeline._parse_arguments(args)
 
     @property
     def title(self) -> str:
@@ -67,7 +68,8 @@ class MainBacillusPipeline(ReportPipeline):
         Constructs the configuration file.
         :return: Configuration file
         """
-        config_data = self.get_template_data('fastq_pe', input_files)
+        key_fq_in = 'fastq_pe' if (self._args.fastq_pe is not None) else 'fastq_se'
+        config_data = self.get_template_data(key_fq_in, input_files)
         config_data['analyses'] = [key for key in MainBacillusPipeline.CUSTOM_ANALYSES if vars(self._args)[key]]
         with open(CONFIG_DATA) as handle_in:
             mainscriptutils.dict_merge(config_data, yaml.load(handle_in.read().format(
@@ -85,11 +87,17 @@ class MainBacillusPipeline(ReportPipeline):
                 which_threshold=self._args.resfinder_threshold/100
             ), Loader=yaml.SafeLoader))
 
-        # Set the species
-        config_data['selected_species'] = MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['full_name']
+        # Set studies-specific parameters
+        config_data['contamination_check']['level_of_depth'] = 'G'
+        config_data['read_type'] = self._args.read_type
+
+        # Nanopore settings
+        if self._args.read_type == 'nanopore':
+            config_data['assembly']['canu'] = {
+                'genome_size': self._args.genome_size, **config_data['assembly'].get('canu', {})}
+        config_data['fasta_ref'] = str(self._args.fasta_ref) if self._args.fasta_ref is not None else None
 
         # Read trimming
-        config_data['read_trimming']['export_fastq'] = 'true' if self._args.report_include_fastq else 'false'
         if self._args.library is not None:
             config_data['read_trimming']['adapter'] = self._args.library
 
@@ -102,16 +110,22 @@ class MainBacillusPipeline(ReportPipeline):
         :return: Arguments
         """
         parser = argparse.ArgumentParser()
-        ReportPipeline.add_common_arguments(parser)
-        parser.add_argument('--fastq-se', type=Path, help="Input SE FASTQ file")
-        parser.add_argument('--fastq-se-name', help="Input SE FASTQ file name")
-        parser.add_argument('--species', help="Bacillus species under study")
-        parser.add_argument('--resfinder-acqoverlap', help="Maximum overlap between genes found",
-                            type=int, choices=range(0, 10000), default=30)
-        parser.add_argument('--resfinder-mincov', help="Minimum breadth of coverage (%)",
-                            type=int, choices=range(0, 100), default=80)
-        parser.add_argument('--resfinder-threshold', help="Minimum sequence identity (%)",
-                            type=int, choices=range(0, 100), default=60)
+        # ReportPipeline.add_common_arguments(parser)
+        mainscriptutils.add_input_files_arguments(parser)
+        mainscriptutils.add_common_arguments(parser)
+        # parser.add_argument('--fastq-se', type=Path, help='Input SE FASTQ file')
+        # parser.add_argument('--fastq-se-name', help='Input SE FASTQ file name')
+        parser.add_argument('--output-tsv', help="Output file for the summary", required=True, type=Path)
+        parser.add_argument(
+            '--detection-method', help="Type of allele detection: local alignment (blast), read mapping (srst2)",
+            choices=['blast', 'kma', 'srst2'], default='blast')
+        parser.add_argument('--species', help='Bacillus species under study', choices=['cereus', 'subtilis'])
+        parser.add_argument('--resfinder-acqoverlap', help='Maximum overlap between genes found',
+                            type=int, choices=range(0, 10000), default=30, metavar='[0-10,000]')
+        parser.add_argument('--resfinder-mincov', help='Minimum breadth of coverage (percent)',
+                            type=int, choices=range(0, 100), default=80, metavar='[0-100]')
+        parser.add_argument('--resfinder-threshold', help='Minimum sequence identity (percent)',
+                            type=int, choices=range(0, 100), default=60, metavar='[0-100]')
 
         for analysis_key in MainBacillusPipeline.CUSTOM_ANALYSES:
             parser.add_argument(f"--{analysis_key.replace('_', '-')}", action='store_true')

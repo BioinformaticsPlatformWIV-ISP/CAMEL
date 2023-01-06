@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from camel.app.io.tooliodirectory import ToolIODirectory
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile import resfinder as rf
 
@@ -8,7 +9,7 @@ rule resfinder_run:
     Runs resfinder on assembled contigs.
     """
     input:
-        FASTA = Path(config['working_dir']) / rf.INPUT_RESFINDER_FASTA
+        FASTA = Path(config['working_dir']) / rf.INPUT_RESFINDER_FASTA,
     output:
         TSV_pheno_general = Path(config['working_dir']) / rf.OUTPUT_RESFINDER_PHENO,
         TSV_genes = Path(config['working_dir']) / rf.OUTPUT_RESFINDER_GENE,
@@ -17,13 +18,15 @@ rule resfinder_run:
         running_dir = Path(config['working_dir']) / 'resfinder',
         min_cov = config['resfinder']['min_cov'],
         threshold = config['resfinder']['threshold'],
-        acq_overlap = config['resfinder']['acq_overlap']
+        acq_overlap = config['resfinder']['acq_overlap'],
+        db = '/db/resfinder4'
     run:
         from camel.app.tools.resfinder.resfinder import ResFinder
         resfinder = ResFinder(camel)
         resfinder.update_parameters(output_path=str(params.running_dir), acquired=True,
             min_cov=params.min_cov, threshold=params.threshold, acq_overlap=params.acq_overlap)
         SnakemakeUtils.add_pickle_inputs(resfinder,input)
+        resfinder.add_input_files({'DIR': [ToolIODirectory(Path(params.db))]})
         step = Step(rule,resfinder,camel,params.running_dir,config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(resfinder,output)
