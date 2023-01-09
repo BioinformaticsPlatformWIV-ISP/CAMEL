@@ -83,8 +83,8 @@ class MainBacillusPipeline(ReportPipeline):
                 mlst_db=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['mlst_db'],
                 cgmlst_db=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['cgmlst_db'],
                 which_acqoverlap=self._args.resfinder_acqoverlap,
-                which_mincov=self._args.resfinder_mincov/100,
-                which_threshold=self._args.resfinder_threshold/100
+                which_mincov=self._args.resfinder_mincov / 100,
+                which_threshold=self._args.resfinder_threshold / 100
             ), Loader=yaml.SafeLoader))
 
         # Set studies-specific parameters
@@ -95,7 +95,7 @@ class MainBacillusPipeline(ReportPipeline):
         if self._args.read_type == 'nanopore':
             config_data['assembly']['canu'] = {
                 'genome_size': self._args.genome_size, **config_data['assembly'].get('canu', {})}
-        config_data['fasta_ref'] = str(self._args.fasta_ref) if self._args.fasta_ref is not None else None
+        # config_data['fasta_ref'] = str(self._args.fasta_ref) if self._args.fasta_ref is not None else None
 
         # Read trimming
         if self._args.library is not None:
@@ -115,10 +115,23 @@ class MainBacillusPipeline(ReportPipeline):
         mainscriptutils.add_common_arguments(parser)
         # parser.add_argument('--fastq-se', type=Path, help='Input SE FASTQ file')
         # parser.add_argument('--fastq-se-name', help='Input SE FASTQ file name')
+        # Logging
+        parser.add_argument(
+            '--galaxy-job-id', type=str, help='Job id of the run in galaxy (used for logging')
+        parser.add_argument(
+            '--log', action='store_true', help="If this flag is set, config file and error logs are kept")
+        parser.add_argument(
+            '--library', help="Adapter library that was used for the sequencing",
+            choices=['NexteraPE', 'TruSeq2', 'TruSeq3'], default='NexteraPE')
         parser.add_argument('--output-tsv', help="Output file for the summary", required=True, type=Path)
+        parser.add_argument(
+            '--report-include-bam', help="Include the BAM file in the report", action='store_true')
         parser.add_argument(
             '--detection-method', help="Type of allele detection: local alignment (blast), read mapping (srst2)",
             choices=['blast', 'kma', 'srst2'], default='blast')
+        parser.add_argument(
+            '--cov-max', default=100.0, type=float,
+            help='Maximum coverage (datasets with higher estimated coverage will be downsampled to the given value)')
         parser.add_argument('--species', help='Bacillus species under study', choices=['cereus', 'subtilis'])
         parser.add_argument('--resfinder-acqoverlap', help='Maximum overlap between genes found',
                             type=int, choices=range(0, 10000), default=30, metavar='[0-10,000]')

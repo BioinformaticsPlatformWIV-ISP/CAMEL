@@ -119,27 +119,27 @@ rule select_fasta_to_tools:
         else:
             raise ValueError(f'Unsupported read type: {params.read_type}')
 
-rule select_fasta:
-    """
-    This rules links the output of the assembly workflow to the other workflows.
-    """
-    input:
-        FASTA = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA
-    output:
-        FASTA = Path(config['working_dir']) / btyper.INPUT_BTYPER_FASTA
-    shell:
-        "cp {input.FASTA} {output.FASTA};"
-
-rule select_fasta_resfinder:
-    """
-    This rules links the output of the assembly workflow to the other workflows.
-    """
-    input:
-        FASTA = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA
-    output:
-        FASTA = Path(config['working_dir']) / resfinder.INPUT_RESFINDER_FASTA
-    shell:
-        "cp {input.FASTA} {output.FASTA};"
+# rule select_fasta:
+#     """
+#     This rules links the output of the assembly workflow to the other workflows.
+#     """
+#     input:
+#         FASTA = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA
+#     output:
+#         FASTA = Path(config['working_dir']) / btyper.INPUT_BTYPER_FASTA
+#     shell:
+#         "cp {input.FASTA} {output.FASTA};"
+#
+# rule select_fasta_resfinder:
+#     """
+#     This rules links the output of the assembly workflow to the other workflows.
+#     """
+#     input:
+#         FASTA = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA
+#     output:
+#         FASTA = Path(config['working_dir']) / resfinder.INPUT_RESFINDER_FASTA
+#     shell:
+#         "cp {input.FASTA} {output.FASTA};"
 
 rule report_pickle_citations:
     """
@@ -162,8 +162,8 @@ rule report_command_section:
     input:
         INFORMS_downsampling = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_INFORMS,
         INFORMS_trimming = trimming.get_trimming_command_informs(config),
-        INFORMS_assembly = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_INFORMS,
-        INFORMS_assembly_filt = Path(config['working_dir']) / 'assembly_spades' / 'filtering' / 'informs.io',
+        INFORMS_assembly = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_INFORMS if config['read_type'] == 'illumina' else Path(config['working_dir']) / assembly_canu.OUTPUT_ASSEMBLY_INFORMS,
+        INFORMS_assembly_filt = Path(config['working_dir']) / 'assembly_spades' / 'filtering' / 'informs.io' if config['read_type'] == 'illumina' else [],
         INFORMS_kraken = Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_KRAKEN_INFORMS if 'kraken' in config['analyses'] else [],
         INFORMS_mapping = quality_checks.get_mapping_rate_informs(config),
         INFORMS_depth = quality_checks.get_depth_informs(config),
