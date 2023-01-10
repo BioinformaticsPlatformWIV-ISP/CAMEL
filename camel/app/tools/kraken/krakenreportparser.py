@@ -21,7 +21,7 @@ class KrakenReportParser(Tool):
         Executes this tool.
         :return: None
         """
-        if self._parameters['level_of_depth'] not in ['S', 'G']:
+        if self._parameters['level_of_depth'].value not in ['S', 'G']:
             logging.error('Please choose either "G" or "S" for parameter level_of_depth')
         self._informs['contaminants_warn'] = []
         self._informs['contaminants_fail'] = []
@@ -47,6 +47,9 @@ class KrakenReportParser(Tool):
 
         self._informs['contaminants_warn'].sort(key=lambda x: -x[1])
         self._informs['contaminants_fail'].sort(key=lambda x: -x[1])
+        self._informs['level_of_depth'] = self._parameters['level_of_depth']
+        self._informs['threshold_fail'] = self._parameters['threshold_fail']
+        self._informs['threshold_warn'] = self._parameters['threshold_warn']
 
     def _check_input(self):
         """
