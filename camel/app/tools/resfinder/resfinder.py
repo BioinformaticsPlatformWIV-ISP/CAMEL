@@ -75,11 +75,19 @@ class ResFinder(Tool):
                 ToolIOFile(dir_out / Path(f'pheno_table_{specific_species}.txt'))
             ]
 
-    def __set_db_version(self) -> None:
-        db_version_json_resfinder = json.load(open(self._tool_inputs['DIR'][0].path /
-                                                   'resfinder' / 'db_update_info.json'))
-        db_version_json_pointfinder = json.load(open(self._tool_inputs['DIR'][0].path /
-                                                     'pointfinder' / 'db_update_info.json'))
+    def __collect_db_version(self) -> None:
+        """
+        Collect the db version from the dbupdate json output file.
+        :return: None
+        """
+        with open(self._tool_inputs['DIR'][0].path / 'resfinder' / 'db_update_info.json') as handle:
+            db_version_json_resfinder = json.load(handle)
+        with open(self._tool_inputs['DIR'][0].path / 'pointfinder' / 'db_update_info.json') as handle:
+            db_version_json_pointfinder = json.load(handle)
+        # db_version_json_resfinder = json.load(open(self._tool_inputs['DIR'][0].path /
+        #                                            'resfinder' / 'db_update_info.json'))
+        # db_version_json_pointfinder = json.load(open(self._tool_inputs['DIR'][0].path /
+        #                                              'pointfinder' / 'db_update_info.json'))
         self._informs['db_version_resfinder'] = db_version_json_resfinder['last_update_date']
         self._informs['db_version_pointfinder'] = db_version_json_pointfinder['last_update_date']
 
@@ -91,4 +99,4 @@ class ResFinder(Tool):
         self._build_command()
         self._execute_command()
         self._set_output()
-        self.__set_db_version()
+        self.__collect_db_version()
