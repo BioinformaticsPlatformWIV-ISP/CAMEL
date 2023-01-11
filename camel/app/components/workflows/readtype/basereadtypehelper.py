@@ -89,20 +89,25 @@ class BaseReadTypeHelper(object, metaclass=abc.ABCMeta):
         :return: ToolIOFile FASTA object with the assembled contigs
         """
         logging.info("Starting de-novo assembly")
-        assembly = AssemblyWrapper(self._working_dir / 'assembly')
+        assembly = AssemblyWrapper(self._working_dir / 'assembly', assembly_input.read_type)
 
         # Cov-cutoff parameter
+        assembly_opts = {}
         if args.assembly_cov_cutoff is None:
             cov_cutoff = 'off'
         elif args.assembly_cov_cutoff == 0:
             cov_cutoff = 'auto'
         else:
             cov_cutoff = str(args.assembly_cov_cutoff)
+        assembly_opts['cov_cutoff'] = cov_cutoff
+
+        # K-mers
+        if args.assembly_kmers is not None:
+            assembly_opts['kmers'] = args.assembly_kmers
 
         # Perform the assembly
         assembly.run(
-            self._sample_name, assembly_input, args.assembly_kmers, cov_cutoff, args.assembly_min_contig_length,
-            threads=args.threads)
+            self._sample_name, assembly_input, args.assembly_min_contig_length, assembly_opts, threads=args.threads)
 
         # Save output to the report
         if report is not None:

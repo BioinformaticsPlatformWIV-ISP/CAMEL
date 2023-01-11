@@ -24,7 +24,7 @@ class AssemblyWrapper(object):
     This class is used as a wrapper class around the assembly Snakemake workflow.
     """
 
-    def __init__(self, working_dir: Path, read_type: str) -> None:
+    def __init__(self, working_dir: Path, read_type: str = 'illumina') -> None:
         """
         Initializes the read trimming helper.
         :param working_dir: Working directory
@@ -88,8 +88,6 @@ class AssemblyWrapper(object):
 
         # Collect output files
         output_files = self.__get_output_files_dict(min_ctg_len, calc_qc_stats)
-        import pprint
-        pprint.pprint(output_files)
         path_workflow = assembly_spades.SNAKEFILE_ASSEMBLY_SPADES if self._read_type != 'nanopore' else \
             assembly_canu.SNAKEFILE_ASSEMBLY_CANU
         SnakePipelineUtils.run_snakemake(
@@ -163,15 +161,10 @@ class AssemblyWrapper(object):
         :param output_files: Output files dictionary
         :return: None
         """
-        import pprint
-        pprint.pprint(output_files)
         log_file_path = self._working_dir / 'camel.log'
         informs = [SnakemakeUtils.load_object(output_files[f'INFORMS_{self.assembler_key}'])]
         if 'INFORMS_seqtk' in output_files:
             informs.append(SnakemakeUtils.load_object(output_files['INFORMS_seqtk']))
-        import pprint
-        pprint.pprint(output_files)
-        print('<><')
         if all(key in output_files for key in ('INFORMS_bowtie2', 'INFORMS_samtools')):
             qc_stats = {
                 'depth': SnakemakeUtils.load_object(output_files['INFORMS_samtools']),
