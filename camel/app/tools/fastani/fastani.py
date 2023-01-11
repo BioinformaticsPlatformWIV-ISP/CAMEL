@@ -42,9 +42,9 @@ class FastANI(Tool):
         :return: None
         """
         fetching_query = [key for key in self._tool_inputs if '_Q' in key][0]
-        query_condition = [True if 'LIST' in fetching_query else False][0]
+        query_condition = [True if 'TSV' in fetching_query else False][0]
         fetching_reference = [key for key in self._tool_inputs if '_R' in key][0]
-        reference_condition = [True if 'LIST' in fetching_reference else False][0]
+        reference_condition = [True if 'TSV' in fetching_reference else False][0]
         if not (fetching_query and fetching_reference):
             raise InvalidInputSpecificationError(
                 f'Incorrect input found: Query={fetching_query}, Ref={fetching_reference}')
