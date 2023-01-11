@@ -32,7 +32,8 @@ class FastANI(Tool):
             raise InvalidInputSpecificationError('Please input at most one reference (file or sequence)')
 
         if len([key for key in self._tool_inputs if key in authorized_keys]) != 2:
-            raise InvalidInputSpecificationError('Please check your input files')
+            raise InvalidInputSpecificationError('Please check your input files - '
+                                                 'maximum one query and one reference is allowed')
 
         super()._check_input()
 

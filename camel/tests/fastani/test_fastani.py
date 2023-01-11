@@ -48,7 +48,7 @@ class TestFastANI(CamelTestSuite):
 
     def test_fastani_reporter_lists(self) -> None:
         """
-        Tests the FastANI reporter class.
+        Tests the FastANI reporter class with lists as input.
         :return: None
         """
         # Run FastANI
