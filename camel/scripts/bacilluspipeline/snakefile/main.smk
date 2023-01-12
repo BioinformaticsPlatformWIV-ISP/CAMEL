@@ -138,8 +138,8 @@ rule report_command_section:
         INFORMS_assembly = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_INFORMS if config['read_type'] == 'illumina' else Path(config['working_dir']) / assembly_canu.OUTPUT_ASSEMBLY_INFORMS,
         INFORMS_assembly_filt = Path(config['working_dir']) / 'assembly_spades' / 'filtering' / 'informs.io' if config['read_type'] == 'illumina' else [],
         INFORMS_kraken = Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_KRAKEN_INFORMS if 'kraken' in config['analyses'] else [],
-        INFORMS_mapping = quality_checks.get_mapping_rate_informs(config),
-        INFORMS_depth = quality_checks.get_depth_informs(config),
+        INFORMS_mapping = quality_checks.get_mapping_rate_informs(config) if config['read_type'] == 'illumina' else [],
+        INFORMS_depth = quality_checks.get_depth_informs(config) if config['read_type'] == 'illumina' else [],
         INFORMS_btyper = Path(config['working_dir']) / str(btyper.OUTPUT_INFORMS_BTYPER).format(scheme='btyper_typing') if 'btyper' in config['analyses'] else [],
         INFORMS_resfinder = Path(config['working_dir']) / str(resfinder.OUTPUT_RESFINDER_INFORMS).format(scheme='resfinder') if 'resfinder' in config['analyses'] else []
     output:
@@ -169,7 +169,7 @@ rule report_combine_all:
         report_trimming = trimming.get_trimming_report(config),
         report_assembly = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_REPORT if config['read_type'] == 'illumina' else Path(config['working_dir']) / assembly_canu.OUTPUT_ASSEMBLY_REPORT,
         report_kraken = Path(config['working_dir']) / (contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT if 'kraken' in config['analyses'] else contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT_EMPTY),
-        report_adv_qc = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_REPORT,
+        report_adv_qc = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_REPORT if config['read_type'] == 'illumina' else [],
         report_mlst=sequence_typing.get_sequence_typing_report('mlst',config),
         report_cgmlst=sequence_typing.get_sequence_typing_report('cgmlst',config),
         report_btyper = Path(config['working_dir']) / btyper.OUTPUT_BTYPER_REPORT,
@@ -205,7 +205,7 @@ rule report_combine_all:
         report_structure = [
             ('Read trimming and basic QC', 'trim', [Path(input.report_downsampling), Path(input.report_trimming)]),
             ('Assembly', 'assem', [Path(input.report_assembly)]),
-            ('Advanced QC', 'adv_qc', [Path(x) for x in (input.report_kraken, input.report_adv_qc)]),
+            ('Advanced QC', 'adv_qc', [Path(x) for x in (input.report_kraken, input.report_adv_qc)] if config['read_type'] == 'illumina' else [Path(input.report_kraken)]),
             ('Sequence typing', 'st', [Path(x) for x in (input.report_mlst, input.report_cgmlst)]),
             ('BTyper results', 'btyper', [Path(input.report_btyper)]),
             ('ResFinder results', 'resfinder', [Path(input.report_resfinder)]),
@@ -246,7 +246,7 @@ rule summary_combine_all:
         Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_SUMMARY,
         trimming.get_trimming_summary(config),
         Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_SUMMARY if config['read_type'] == 'illumina' else Path(config['working_dir']) / assembly_canu.OUTPUT_ASSEMBLY_SUMMARY,
-        Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY,
+        Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY if config['read_type'] == 'illumina' else [],
         Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_SUMMARY if 'kraken' in config['analyses'] else [],
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='mlst') if 'mlst' in config['analyses'] else [],
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='cgmlst') if 'cgmlst' in config['analyses'] else [],
