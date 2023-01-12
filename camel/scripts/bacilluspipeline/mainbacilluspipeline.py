@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 import argparse
 from pathlib import Path
-from typing import List, Dict, Optional, Sequence
+from typing import List, Dict, Optional, Sequence, Tuple
 
 import yaml
 
 from camel.app.camel import Camel
 from camel.app.components.files.fastqutils import FastqUtils
+from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.components.pipelines.reportpipeline import ReportPipeline
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.app.components import mainscriptutils
@@ -63,6 +64,21 @@ class MainBacillusPipeline(ReportPipeline):
         config_file = self.__construct_config_file(input_files)
         self._run_snakemake_main(config_file)
 
+    def _get_fastq_input_links(self) -> List[List[Tuple[Path, str]]]:
+        """
+        Returns the links to the input FASTQ files.
+        :return: Links
+        """
+        links = []
+        if self._args.fastq_pe is not None:
+            for read_nb, path in enumerate(self._args.fastq_pe, start=1):
+                gzipped = FileSystemHelper.is_gzipped(path)
+                links.append([path, f"{self.sample_name}_{read_nb}.fastq{'.gz' if gzipped else ''}"])
+        else:
+            gzipped = FileSystemHelper.is_gzipped(self._args.fastq_se)
+            links.append([self._args.fastq_se, f"{self.sample_name}_1.fastq{'.gz' if gzipped else ''}"])
+        return links
+
     def __construct_config_file(self, input_files: List[Dict[str, str]]) -> str:
         """
         Constructs the configuration file.
@@ -94,8 +110,8 @@ class MainBacillusPipeline(ReportPipeline):
         # Nanopore settings
         if self._args.read_type == 'nanopore':
             config_data['assembly']['canu'] = {
-                'genome_size': self._args.genome_size, **config_data['assembly'].get('canu', {})}
-        # config_data['fasta_ref'] = str(self._args.fasta_ref) if self._args.fasta_ref is not None else None
+                'genome_size': MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['genome_size'],
+                **config_data['assembly'].get('canu', {})}
 
         # Read trimming
         if self._args.library is not None:
@@ -110,11 +126,8 @@ class MainBacillusPipeline(ReportPipeline):
         :return: Arguments
         """
         parser = argparse.ArgumentParser()
-        # ReportPipeline.add_common_arguments(parser)
         mainscriptutils.add_input_files_arguments(parser)
         mainscriptutils.add_common_arguments(parser)
-        # parser.add_argument('--fastq-se', type=Path, help='Input SE FASTQ file')
-        # parser.add_argument('--fastq-se-name', help='Input SE FASTQ file name')
         # Logging
         parser.add_argument(
             '--galaxy-job-id', type=str, help='Job id of the run in galaxy (used for logging')

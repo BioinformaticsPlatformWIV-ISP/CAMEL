@@ -10,9 +10,11 @@ from camel.scripts.bacilluspipeline.snakefile import btyper
 #######################
 include: downsampling.SNAKEFILE_DOWNSAMPLING
 include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
+include: trimming_ont.SNAKEFILE_TRIMMING_ONT
 include: contamination_check_kraken.SNAKEFILE_CONTAMINATION_CHECK_KRAKEN
 include: quality_checks.SNAKEFILE_QUALITY_CHECKS
 include: assembly_spades.SNAKEFILE_ASSEMBLY_SPADES
+include: assembly_canu.SNAKEFILE_ASSEMBLY_CANU
 include: sequence_typing.SNAKEFILE_SEQUENCE_TYPING
 include: btyper.SNAKEFILE_BTYPER
 include: resfinder.SNAKEFILE_RESFINDER
@@ -37,7 +39,7 @@ rule link_downsampling_input:
         FASTQ = Path(config['working_dir']) / downsampling.INPUT_DOWNSAMPLING_FASTQ
     params:
         config_input=config['input'],
-        read_type=trimming.get_read_type(config)
+        read_type=config['read_type']
     run:
         from camel.app.io.tooliofile import ToolIOFile
         from camel.app.snakemake.snakemakeutils import SnakemakeUtils
@@ -51,33 +53,26 @@ rule link_downsampling_input:
         else:
             raise ValueError(f'Unsupported read type: {params.read_type}')
 
-rule link_downsampling_to_trimming_illumina:
-    """
-    Links the downsampling output to the input of the Illumina trimming workflow.  
-    """
-    input:
-        FASTQ = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_FASTQ
-    output:
-        FASTQ = Path(config['working_dir']) / trimming_illumina.INPUT_TRIMMOMATIC_FASTQ
-    shell:
-        """
-        cp {input.FASTQ} {output.FASTQ};
-        """
-
-rule link_downsampling_to_trimming_ont:
+rule link_downsampling_to_trimming_workflows:
     """
     Links the downsampling output to the input of the ONT trimming workflow.  
     """
     input:
         FASTQ = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_FASTQ
     output:
-        FASTQ = Path(config['working_dir']) / trimming_ont.INPUT_ONT_FASTQ
-    shell:
-        """
-        cp {input.FASTQ} {output.FASTQ};
-        """
+        FASTQ_ilmn = Path(config['working_dir']) / trimming_illumina.INPUT_TRIMMOMATIC_FASTQ if config['read_type'] == 'illumina' else [],
+        FASTQ_ont = Path(config['working_dir']) / trimming_ont.INPUT_ONT_FASTQ if config['read_type'] == 'nanopore' else []
+    params:
+        read_type=config['read_type']
+    run:
+        if params.read_type == 'nanopore':
+            shutil.copyfile(Path(input.FASTQ),Path(output.FASTQ_ont))
+        elif params.read_type == 'illumina':
+            shutil.copyfile(Path(input.FASTQ),Path(output.FASTQ_ilmn))
+        else:
+            raise ValueError(f'Unsupported read type: {params.read_type}')
 
-rule select_fastq:
+rule select_fastq_to_io:
     """
     Creates an IO object with the trimmed FASTQ files.
     Other workflows such as Kraken or de novo assembly rely on this dictionary to get input files (PE or SE).
@@ -103,7 +98,7 @@ rule select_fasta_to_tools:
     """
     input:
         FASTA_spades = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'illumina' else [],
-        FASTA_canu = Path(config['working_dir']) / canu.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else []
+        FASTA_canu = Path(config['working_dir']) / assembly_canu.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else []
     output:
         FASTA_btyper = Path(config['working_dir']) / btyper.INPUT_BTYPER_FASTA,
         FASTA_resfinder = Path(config['working_dir']) / resfinder.INPUT_RESFINDER_FASTA
@@ -118,28 +113,6 @@ rule select_fasta_to_tools:
             shutil.copyfile(Path(input.FASTA_spades),Path(output.FASTA_resfinder))
         else:
             raise ValueError(f'Unsupported read type: {params.read_type}')
-
-# rule select_fasta:
-#     """
-#     This rules links the output of the assembly workflow to the other workflows.
-#     """
-#     input:
-#         FASTA = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA
-#     output:
-#         FASTA = Path(config['working_dir']) / btyper.INPUT_BTYPER_FASTA
-#     shell:
-#         "cp {input.FASTA} {output.FASTA};"
-#
-# rule select_fasta_resfinder:
-#     """
-#     This rules links the output of the assembly workflow to the other workflows.
-#     """
-#     input:
-#         FASTA = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA
-#     output:
-#         FASTA = Path(config['working_dir']) / resfinder.INPUT_RESFINDER_FASTA
-#     shell:
-#         "cp {input.FASTA} {output.FASTA};"
 
 rule report_pickle_citations:
     """
@@ -167,8 +140,8 @@ rule report_command_section:
         INFORMS_kraken = Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_KRAKEN_INFORMS if 'kraken' in config['analyses'] else [],
         INFORMS_mapping = quality_checks.get_mapping_rate_informs(config),
         INFORMS_depth = quality_checks.get_depth_informs(config),
-        INFORMS_btyper = Path(config['working_dir']) / str(btyper.OUTPUT_INFORMS_BTYPER).format(scheme='btyper_typing') if 'btyper' in config['analyses'] else[],
-        INFORMS_resfinder = Path(config['working_dir']) / str(resfinder.OUTPUT_RESFINDER_INFORMS).format(scheme='resfinder') if 'resfinder' in config['analyses'] else[]
+        INFORMS_btyper = Path(config['working_dir']) / str(btyper.OUTPUT_INFORMS_BTYPER).format(scheme='btyper_typing') if 'btyper' in config['analyses'] else [],
+        INFORMS_resfinder = Path(config['working_dir']) / str(resfinder.OUTPUT_RESFINDER_INFORMS).format(scheme='resfinder') if 'resfinder' in config['analyses'] else []
     output:
         HTML = Path(config['working_dir']) / 'report' / 'html-commands.io'
     params:
@@ -194,7 +167,7 @@ rule report_combine_all:
     input:
         report_downsampling = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_REPORT,
         report_trimming = trimming.get_trimming_report(config),
-        report_assembly = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_REPORT,
+        report_assembly = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_REPORT if config['read_type'] == 'illumina' else Path(config['working_dir']) / assembly_canu.OUTPUT_ASSEMBLY_REPORT,
         report_kraken = Path(config['working_dir']) / (contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT if 'kraken' in config['analyses'] else contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT_EMPTY),
         report_adv_qc = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_REPORT,
         report_mlst=sequence_typing.get_sequence_typing_report('mlst',config),
@@ -272,7 +245,7 @@ rule summary_combine_all:
         rules.summary_init.output.TSV,
         Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_SUMMARY,
         trimming.get_trimming_summary(config),
-        Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_SUMMARY,
+        Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_SUMMARY if config['read_type'] == 'illumina' else Path(config['working_dir']) / assembly_canu.OUTPUT_ASSEMBLY_SUMMARY,
         Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY,
         Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_SUMMARY if 'kraken' in config['analyses'] else [],
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='mlst') if 'mlst' in config['analyses'] else [],
