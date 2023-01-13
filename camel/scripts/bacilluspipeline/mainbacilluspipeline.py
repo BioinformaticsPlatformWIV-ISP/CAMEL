@@ -19,9 +19,8 @@ class MainBacillusPipeline(ReportPipeline):
     Main class to run the Bacillus pipeline.
     """
 
-    CUSTOM_ANALYSES = ['kraken', 'btyper', 'mlst', 'cgmlst', 'resfinder']
+    CUSTOM_ANALYSES = ['kraken', 'btyper', 'mlst', 'cgmlst', 'resfinder', 'gmo']
 
-    # Not yet up to date!
     DATA_BY_SPECIES = {
         'cereus': {
             'gc_content': 35,
