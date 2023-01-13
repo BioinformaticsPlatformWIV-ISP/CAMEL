@@ -47,3 +47,5 @@ resfinder:
 gene_detection:
   gmo:
     path: /scratch/magodfroid/BacillusPipeline/PipelineData/
+  plasmid:
+    path: /db/plsdb/20210623/
