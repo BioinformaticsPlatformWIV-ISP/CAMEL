@@ -1,4 +1,5 @@
 from pathlib import Path
+import json
 
 from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
@@ -43,7 +44,7 @@ class ResFinder(Tool):
             input_str = f'--inputfastq {self._tool_inputs["FASTQ"][0].path}'
         elif 'FASTQ_PE' in self._tool_inputs:
             input_str = f'--inputfastq {self._tool_inputs["FASTQ_PE"][0].path} ' \
-             f'{str(self._tool_inputs["FASTQ_PE"][1].path)}'
+                        f'{str(self._tool_inputs["FASTQ_PE"][1].path)}'
         else:
             raise ValueError('Invalid tool input')
         self._command.command = ' '.join([
@@ -74,6 +75,18 @@ class ResFinder(Tool):
                 ToolIOFile(dir_out / Path(f'pheno_table_{specific_species}.txt'))
             ]
 
+    def __collect_db_version(self) -> None:
+        """
+        Collect the db version from the dbupdate json output file.
+        :return: None
+        """
+        with open(self._tool_inputs['DIR'][0].path / 'resfinder' / 'db_update_info.json') as handle:
+            db_version_json_resfinder = json.load(handle)
+        with open(self._tool_inputs['DIR'][0].path / 'pointfinder' / 'db_update_info.json') as handle:
+            db_version_json_pointfinder = json.load(handle)
+        self._informs['db_version_resfinder'] = db_version_json_resfinder['last_update_date']
+        self._informs['db_version_pointfinder'] = db_version_json_pointfinder['last_update_date']
+
     def _execute_tool(self) -> None:
         """
         Executes this tool.
@@ -82,3 +95,4 @@ class ResFinder(Tool):
         self._build_command()
         self._execute_command()
         self._set_output()
+        self.__collect_db_version()

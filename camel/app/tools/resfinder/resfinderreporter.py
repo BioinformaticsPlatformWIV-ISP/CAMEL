@@ -141,10 +141,11 @@ class ResFinderReporter(Tool):
         :param data: Output table data
         :return: None
         """
-        key_to_info = {'TSV_genes': ['resfinder', 'Detected AMR genes', '19-07-2022',
-                                     'No genes found.'],
-                       'TSV_point': ['pointfinder', 'Detected AMR-conferring mutations', '30-06-2022',
-                                     'No mutations found.']}
+        print(self._input_informs)
+        key_to_info = {'TSV_genes': ['resfinder', 'Detected AMR genes',
+                                     self._input_informs['resfinder']['db_version_resfinder'], 'No genes found.'],
+                       'TSV_point': ['pointfinder', 'Detected AMR-conferring mutations',
+                                     self._input_informs['resfinder']['db_version_pointfinder'], 'No mutations found.']}
         div_sect = HtmlElement('div', attributes=[('class', 'border_bottom')])
         for key in data:
             table = data[key]
@@ -158,6 +159,7 @@ class ResFinderReporter(Tool):
             else:
                 div_sect.add_header(f'{key_to_info[key][1]}', 3)
                 div_sect.add_paragraph(f'{key_to_info[key][3]}')
+                div_sect.add_paragraph('Database last update: {}'.format(key_to_info[key][2]))
         section.add_html_object(div_sect)
 
     def __add_links_and_format_data(self, data: Dict[str, List[List[str]]]) \
