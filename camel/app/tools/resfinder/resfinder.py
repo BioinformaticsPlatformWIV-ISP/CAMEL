@@ -84,10 +84,6 @@ class ResFinder(Tool):
             db_version_json_resfinder = json.load(handle)
         with open(self._tool_inputs['DIR'][0].path / 'pointfinder' / 'db_update_info.json') as handle:
             db_version_json_pointfinder = json.load(handle)
-        # db_version_json_resfinder = json.load(open(self._tool_inputs['DIR'][0].path /
-        #                                            'resfinder' / 'db_update_info.json'))
-        # db_version_json_pointfinder = json.load(open(self._tool_inputs['DIR'][0].path /
-        #                                              'pointfinder' / 'db_update_info.json'))
         self._informs['db_version_resfinder'] = db_version_json_resfinder['last_update_date']
         self._informs['db_version_pointfinder'] = db_version_json_pointfinder['last_update_date']
 
