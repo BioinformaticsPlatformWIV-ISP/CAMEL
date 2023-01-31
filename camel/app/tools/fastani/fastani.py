@@ -8,7 +8,7 @@ from camel.app.io.tooliofile import ToolIOFile
 
 class FastANI(Tool):
     """
-    In silico taxonomic classification of Bacillus cereus group isolates using assembled genomes.
+    FastANI is developed for fast alignment-free computation of whole-genome Average Nucleotide Identity (ANI).
     """
 
     def __init__(self, camel: Camel) -> None:
@@ -32,8 +32,8 @@ class FastANI(Tool):
             raise InvalidInputSpecificationError('Please input at most one reference (file or sequence)')
 
         if len([key for key in self._tool_inputs if key in authorized_keys]) != 2:
-            raise InvalidInputSpecificationError('Please check your input files - '
-                                                 'maximum one query and one reference is allowed')
+            raise InvalidInputSpecificationError(
+                'Please check your input files - maximum one query and one reference is allowed')
 
         super()._check_input()
 
@@ -42,21 +42,21 @@ class FastANI(Tool):
         Build the command to run tool
         :return: None
         """
-        fetching_query = [key for key in self._tool_inputs if '_Q' in key][0]
-        query_condition = [True if 'TSV' in fetching_query else False][0]
-        fetching_reference = [key for key in self._tool_inputs if '_R' in key][0]
-        reference_condition = [True if 'TSV' in fetching_reference else False][0]
+        fetching_query = next(key for key in self._tool_inputs if '_Q' in key)
+        query_condition = 'TSV' in fetching_query
+        fetching_reference = next(key for key in self._tool_inputs if '_R' in key)
+        reference_condition = 'TSV' in fetching_reference
         if not (fetching_query and fetching_reference):
             raise InvalidInputSpecificationError(
                 f'Incorrect input found: Query={fetching_query}, Ref={fetching_reference}')
 
-        self._input_str_query = '--{} {}'.format('queryList' if query_condition else 'query',
-                                                 self._tool_inputs[fetching_query][0].path)
-        self._input_str_reference = '--{} {}'.format('refList' if reference_condition else 'ref',
-                                                     self._tool_inputs[fetching_reference][0].path)
+        input_str_query = '--{} {}'.format('queryList' if query_condition else 'query',
+                                           self._tool_inputs[fetching_query][0].path)
+        input_str_reference = '--{} {}'.format('refList' if reference_condition else 'ref',
+                                               self._tool_inputs[fetching_reference][0].path)
 
-        self._command.command = ' '.join([self._tool_command, self._input_str_reference,
-                                          self._input_str_query, *self._build_options()])
+        self._command.command = ' '.join([self._tool_command, input_str_reference,
+                                          input_str_query, *self._build_options()])
 
     def _check_command_output(self) -> None:
         """

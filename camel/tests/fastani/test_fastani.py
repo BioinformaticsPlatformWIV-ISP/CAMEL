@@ -12,10 +12,10 @@ class TestFastANI(CamelTestSuite):
     """
 
     test_file_dir = CamelTestSuite.get_test_file_dir('fastani')
-    FILE_FASTA_R = ToolIOFile(test_file_dir / 'escherichia.fasta')
-    FILE_FASTA_Q = ToolIOFile(test_file_dir / 'shigella.fasta')
-    FILE_FASTA_Q_LIST = ToolIOFile(test_file_dir / 'query_list.list')
-    FILE_FASTA_R_LIST = ToolIOFile(test_file_dir / 'reference_list.list')
+    FILE_FASTA_REF = ToolIOFile(test_file_dir / 'escherichia.fasta')
+    FILE_FASTA_QUERY = ToolIOFile(test_file_dir / 'shigella.fasta')
+    FILE_FASTA_QUERY_LIST = ToolIOFile(test_file_dir / 'query_list.list')
+    FILE_FASTA_REF_LIST = ToolIOFile(test_file_dir / 'reference_list.list')
 
     def test_fastani(self) -> None:
         """
@@ -23,7 +23,7 @@ class TestFastANI(CamelTestSuite):
         :return: None
         """
         fastani = FastANI(self.camel)
-        fastani.add_input_files({'FASTA_Q': [TestFastANI.FILE_FASTA_Q], 'FASTA_R': [TestFastANI.FILE_FASTA_R]})
+        fastani.add_input_files({'FASTA_Q': [TestFastANI.FILE_FASTA_QUERY], 'FASTA_R': [TestFastANI.FILE_FASTA_REF]})
         fastani.run(self.running_dir)
         self.verify_output_files(fastani, 'TSV')
 
@@ -34,7 +34,7 @@ class TestFastANI(CamelTestSuite):
         """
         # Run FastANI
         fastani = FastANI(self.camel)
-        fastani.add_input_files({'FASTA_Q': [TestFastANI.FILE_FASTA_Q], 'FASTA_R': [TestFastANI.FILE_FASTA_R]})
+        fastani.add_input_files({'FASTA_Q': [TestFastANI.FILE_FASTA_QUERY], 'FASTA_R': [TestFastANI.FILE_FASTA_REF]})
         fastani.run(self.running_dir)
         self.verify_output_files(fastani, 'TSV')
 
@@ -53,8 +53,8 @@ class TestFastANI(CamelTestSuite):
         """
         # Run FastANI
         fastani = FastANI(self.camel)
-        fastani.add_input_files({'TSV_FASTA_Q': [TestFastANI.FILE_FASTA_Q_LIST],
-                                 'TSV_FASTA_R': [TestFastANI.FILE_FASTA_R_LIST]})
+        fastani.add_input_files({'TSV_FASTA_Q': [TestFastANI.FILE_FASTA_QUERY_LIST],
+                                 'TSV_FASTA_R': [TestFastANI.FILE_FASTA_REF_LIST]})
         fastani.run(self.running_dir)
         self.verify_output_files(fastani, 'TSV')
 

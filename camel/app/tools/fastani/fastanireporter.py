@@ -11,7 +11,7 @@ from camel.app.tools.tool import Tool
 
 class FastANIReporter(Tool):
     """
-    This tool is used to generate HTML report sections based on the BTyper output.
+    This tool is used to generate HTML report sections based on the FastANI output.
     """
 
     TITLE = 'FastANI'
@@ -37,7 +37,7 @@ class FastANIReporter(Tool):
 
     def _execute_tool(self) -> None:
         """
-        Executes the BTyper reporter tool
+        Executes the FastANI reporter tool
         :return: None
         """
         section = HtmlReportSection(FastANIReporter.TITLE, subtitle=self._input_informs['fastani']['_name'])
@@ -56,15 +56,26 @@ class FastANIReporter(Tool):
 
     def __parse_input_file(self) -> Tuple[List[str], List[List[str]]]:
         """
-        Parses the input file.
+        Parses the FastANI input file.
         :return: Input file header, input file data
         """
         with open(self._tool_inputs['TSV'][0].path) as handle:
             header = ['Reference', 'Query', 'ANI', 'Orthologous matches', 'Total seq fragments']
             output_table = []
             for line in handle.readlines():
-                output_table.append(line.strip().split('\t'))
+                output_table.append(self.__format_output_table_line(line.strip().split()))
             return header, output_table
+
+    def __format_output_table_line(self, table_line: List[str]) -> List[str]:
+        """
+        Formats a line in the output table to have only filenames and 2 significant digits on ANI.
+        :table_line: input split line from the FastANI output table.
+        :return: formatted split line
+        """
+        table_line[0] = table_line[0].split('/')[-1]
+        table_line[1] = table_line[1].split('/')[-1]
+        table_line[2] = '{:.2f}'.format(float(table_line[2]))
+        return table_line
 
     def __generate_output_filename(self) -> str:
         """
