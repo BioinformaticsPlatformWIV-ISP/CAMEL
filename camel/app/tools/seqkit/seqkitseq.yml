@@ -1,8 +1,8 @@
 dependencies: [seqkit/2.10]
 parameters:
   output_filename: {default: true, mandatory: true, option: '-o', value: 'sequences.fastq'}
-  min_length: {default: false, mandatory: false, option: '-m', value: '100'}
-  max_length: {default: false, mandatory: false, option: '-M', value: '-1'}
-  max_qual: {default: false, mandatory: false, option: '-R', value: '-1'}
-  min_qual: {default: false, mandatory: false, option: '-Q', value: '-1'}
+  min_length: {default: false, mandatory: false, option: '--min-len', value: '100'}
+  max_length: {default: false, mandatory: false, option: '--max-len', value: '-1'}
+  min_qual: { default: false, mandatory: false, option: '--min-qual', value: '-1' }
+  max_qual: {default: false, mandatory: false, option: '--max-qual', value: '-1'}
 tool_command: seqkit seq
