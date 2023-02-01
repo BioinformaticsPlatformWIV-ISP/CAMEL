@@ -1,6 +1,6 @@
 dependencies: [seqkit/2.10]
 parameters:
-  output_filename: {default: true, mandatory: true, option: '-o', value: 'sequences.fastq'}
+  output_filename: {default: true, mandatory: true, option: '--out-file', value: 'sequences.fastq'}
   min_length: {default: false, mandatory: false, option: '--min-len', value: '100'}
   max_length: {default: false, mandatory: false, option: '--max-len', value: '-1'}
   min_qual: { default: false, mandatory: false, option: '--min-qual', value: '-1' }
