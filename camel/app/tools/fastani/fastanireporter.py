@@ -72,8 +72,12 @@ class FastANIReporter(Tool):
         :table_line: input split line from the FastANI output table.
         :return: formatted split line
         """
-        table_line[0] = table_line[0].split('/')[-1]
-        table_line[1] = table_line[1].split('/')[-1]
+
+        # Remove directories from filenames
+        Path(table_line[0]).name = Path(table_line[0]).name.split('/')[-1]
+        Path(table_line[1]).name = Path(table_line[1]).name.split('/')[-1]
+
+        # Format ANI percentage to two significant digits
         table_line[2] = '{:.2f}'.format(float(table_line[2]))
         return table_line
 
