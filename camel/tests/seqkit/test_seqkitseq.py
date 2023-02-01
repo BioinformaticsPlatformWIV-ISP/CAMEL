@@ -30,7 +30,7 @@ class TestSeqkitSeq(CamelTestSuite):
         """
         seqkit_seq = SeqkitSeq(self.camel)
         seqkit_seq.add_input_files({'FASTQ': [TestSeqkitSeq.FILE_FASTQ]})
-        seqkit_seq.update_parameters(max_length=150)
+        seqkit_seq.update_parameters(max_length=150, min_qual=7)
         seqkit_seq.run(self.running_dir)
         self.verify_output_files(seqkit_seq, 'FASTQ')
 
