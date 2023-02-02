@@ -26,7 +26,7 @@ rule contamination_check_kraken2_run:
         INFORMS = Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_KRAKEN_INFORMS
     params:
         running_dir = Path(config['working_dir']) / 'contamination_check' / 'kraken2',
-        read_type = 'SE' if config.get('read_type') == 'iontorrent' else 'PE'
+        read_type = 'SE' if config.get('read_type') in ['iontorrent', 'nanopore'] else 'PE'
     threads: 8
     priority: 1
     run:
