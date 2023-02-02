@@ -74,8 +74,8 @@ class FastANIReporter(Tool):
         """
 
         # Remove directories from filenames
-        Path(table_line[0]).name = Path(table_line[0]).name.split('/')[-1]
-        Path(table_line[1]).name = Path(table_line[1]).name.split('/')[-1]
+        table_line[0] = Path(table_line[0]).name
+        table_line[1] = Path(table_line[1]).name
 
         # Format ANI percentage to two significant digits
         table_line[2] = '{:.2f}'.format(float(table_line[2]))
