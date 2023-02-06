@@ -77,6 +77,8 @@ class MainBTyper(object):
 
         # Copy the TSV output file when specified
         if self._args.output_tsv is not None:
+            if self._args.fasta_name:
+                self.__add_fasta_name_to_TSV(btyper.tool_outputs['TSV'][0].path, self._args.fasta_name)
             shutil.copyfile(btyper.tool_outputs['TSV'][0].path, self._args.output_tsv)
 
     def __run_btyper(self) -> BTyper:
@@ -114,6 +116,15 @@ class MainBTyper(object):
         reporter.add_input_informs({'btyper': btyper.informs})
         reporter.run()
         return reporter.tool_outputs['VAL_HTML'][0].value
+
+    def __add_fasta_name_to_TSV(self, input_file: Path, filename: str) -> None:
+        my_file = open(input_file, 'r')
+        input_lines = my_file.readlines()
+        my_file.close()
+        with open(input_file, 'w') as handle:
+            handle.write(input_lines[0])
+            for line in input_lines[1:]:
+                handle.write('{}\n'.format('\t'.join([Path(filename).name, *line.strip().split('\t')[1:]])))
 
 
 if __name__ == '__main__':
