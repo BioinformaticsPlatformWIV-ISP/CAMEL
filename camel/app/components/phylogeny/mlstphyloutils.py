@@ -75,10 +75,32 @@ def parse_tsv_typing_list(tsv_in: List[Tuple[Path, str]], detection_method: Opti
     return pd.DataFrame(allele_data, index=sample_names, dtype=str)
 
 
-def parse_html_typing_list(dirs_in: List[Path], detection_method: Optional[str] = 'blast') -> pd.DataFrame:
+def __get_typing_output_dir(dir_report: Path, html_key: str) -> Path:
+    """
+    Gets the typing output directory.
+    :param dir_report: Report directory
+    :param html_key: HTML key
+    :return: Path to typing output directory
+    """
+    dirs_typing = [d for d in (dir_report / 'sequence_typing').iterdir() if d.is_dir()]
+
+    # Return the directory if there is only one
+    if len(dirs_typing) == 1:
+        return dirs_typing[0]
+
+    # Return the directory that matches the input key
+    try:
+        return next(d for d in iter(dirs_typing) if d.name.lower() == html_key.lower())
+    except KeyError:
+        raise FileNotFoundError(f"Sequence typing output '{html_key}' not found in: {dir_report}")
+
+
+def parse_html_typing_list(dirs_in: List[Path], html_key: str, detection_method: Optional[str] = 'blast') -> \
+        pd.DataFrame:
     """
     Parses a list of HTML output directories.
     :param dirs_in: List of input directories
+    :param html_key: Key of the typing scheme
     :param detection_method: Detection method for sequence typing
     :return: Dictionary of detected alleles by sample name
     """
@@ -86,16 +108,12 @@ def parse_html_typing_list(dirs_in: List[Path], detection_method: Optional[str] 
     allele_data = []
     for dir_typing in dirs_in:
         # Retrieve metadata from JSON file
-        json_typing_metadata = list((dir_typing / 'sequence_typing').glob('**/sequence_typing.json'))
-        if len(json_typing_metadata) == 0:
-            raise FileNotFoundError("Cannot find typing metadata")
-        elif len(json_typing_metadata) != 1:
-            raise FileNotFoundError("Multiple typing outputs found")
-        with json_typing_metadata[0].open() as handle:
+        path_json_meta = __get_typing_output_dir(dir_typing, html_key) / 'sequence_typing.json'
+        with path_json_meta.open() as handle:
             typing_metadata = json.load(handle)
 
         # Add sample data to allele data
         sample_names.append(typing_metadata['sample'])
-        tsv_typing = next(json_typing_metadata[0].parent.glob('typing-*.tsv'))
+        tsv_typing = next(path_json_meta.parent.glob('typing-*.tsv'))
         allele_data.append(parse_tsv_typing(tsv_typing, detection_method))
     return pd.DataFrame(allele_data, index=sample_names, dtype=str)

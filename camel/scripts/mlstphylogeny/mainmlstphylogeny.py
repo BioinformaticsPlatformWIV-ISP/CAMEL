@@ -84,6 +84,7 @@ class MainMLSTPhylogeny(object):
         grp_input = ap.add_mutually_exclusive_group(required=True)
         grp_input.add_argument('--input-html', type=Path, action='append')
         grp_input.add_argument('--input-tsv', nargs=2, action='append')
+        ap.add_argument('--html-key', help='Key for the scheme to use for the HTML input', default='cgmlst')
         ap.add_argument('--detection-method', type=str, choices=['blast', 'kma', 'srst2'], default='blast')
         ap.add_argument(
             '--tree-method', type=str, choices=['MSTreeV2', 'MSTree', 'NJ', 'RapidNJ', 'ninja', 'distance'],
@@ -160,7 +161,8 @@ class MainMLSTPhylogeny(object):
         :return: Detected alleles by dataset name
         """
         if self._args.input_html:
-            allele_data = mlstphyloutils.parse_html_typing_list(self._args.input_html, self._args.detection_method)
+            allele_data = mlstphyloutils.parse_html_typing_list(
+                self._args.input_html, self._args.html_key, self._args.detection_method)
         elif self._args.input_tsv:
             allele_data = mlstphyloutils.parse_tsv_typing_list(
                 [(Path(path), name) for path, name in self._args.input_tsv], self._args.detection_method)
