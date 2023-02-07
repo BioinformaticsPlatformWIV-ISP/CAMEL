@@ -61,7 +61,8 @@ class MainMLSTPhylogeny(object):
             grapetree = self.run_grapetree(path_allele_matrix)
 
             # Store the tree image in a temporary file before adding it to the report
-            with tempfile.NamedTemporaryFile(dir=str(self._args.dir_working), prefix='figtree_', suffix='.png') as nwk_out:
+            with tempfile.NamedTemporaryFile(dir=str(self._args.dir_working), prefix='figtree_', suffix='.png') as \
+                    nwk_out:
                 figtree = NewickUtils.create_image_figtree(
                     grapetree.tool_outputs['NWK'][0].path,
                     Path(pkg_resources.resource_filename('camel', 'resources/figtree/template_cgmlst_tree.txt')),
@@ -95,6 +96,9 @@ class MainMLSTPhylogeny(object):
         ap.add_argument(
             '--min-perc-samples', type=int, default=90,
             help='Minimum percentage of datasets where loci should be present')
+        ap.add_argument(
+            '--keep-all-loci', action='store_true',
+            help='If true, all loci are retained in the allele matrix output (including loci absent in all datasets')
 
         # Output files
         ap.add_argument('--dir-working', type=Path, help='Working directory', default=Path.cwd())
@@ -185,8 +189,9 @@ class MainMLSTPhylogeny(object):
         # Filter allele matrix (loci detected in nb. of datasets)
         locus_present_in_datasets = allele_data_filt.apply(lambda x: len(x) - list(x).count('-'))
         cutoff_datasets = int(self._args.min_perc_samples * len(allele_data_filt) / 100)
-        logging.info(f"Removing loci detected < {cutoff_datasets} ({self._args.min_perc_samples}%) datasets")
-        allele_data_filt = allele_data_filt.iloc[:, list(locus_present_in_datasets > cutoff_datasets)]
+        if not self._args.keep_all_loci:
+            logging.info(f"Removing loci detected < {cutoff_datasets} ({self._args.min_perc_samples}%) datasets")
+            allele_data_filt = allele_data_filt.iloc[:, list(locus_present_in_datasets > cutoff_datasets)]
         logging.info(f"{len(allele_data_filt.columns)} loci passed filtering")
         return allele_data_filt, cutoff_loci, cutoff_datasets
 
