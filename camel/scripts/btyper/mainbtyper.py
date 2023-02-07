@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import argparse
 import shutil
+import pandas as pd
 from pathlib import Path
 from typing import Optional, Sequence
 
@@ -78,7 +79,7 @@ class MainBTyper(object):
         # Copy the TSV output file when specified
         if self._args.output_tsv is not None:
             if self._args.fasta_name:
-                self.__add_fasta_name_to_TSV(btyper.tool_outputs['TSV'][0].path, self._args.fasta_name)
+                self.__add_fasta_name_to_tsv(btyper.tool_outputs['TSV'][0].path)
             shutil.copyfile(btyper.tool_outputs['TSV'][0].path, self._args.output_tsv)
 
     def __run_btyper(self) -> BTyper:
@@ -87,10 +88,9 @@ class MainBTyper(object):
         :return: BTyper tool instance.
         """
         btyper = BTyper(Camel.get_instance())
+        btyper.add_input_files({'FASTA': [ToolIOFile(self._args.fasta)]})
 
         # Update parameters
-        if self._args.fasta is not None:
-            btyper.add_input_files({'FASTA': [ToolIOFile(self._args.fasta)]})
         if not self._args.virulence:
             btyper.update_parameters(virulence='False')
         if not self._args.bt:
@@ -117,14 +117,15 @@ class MainBTyper(object):
         reporter.run()
         return reporter.tool_outputs['VAL_HTML'][0].value
 
-    def __add_fasta_name_to_TSV(self, input_file: Path, filename: str) -> None:
-        my_file = open(input_file, 'r')
-        input_lines = my_file.readlines()
-        my_file.close()
-        with open(input_file, 'w') as handle:
-            handle.write(input_lines[0])
-            for line in input_lines[1:]:
-                handle.write('{}\n'.format('\t'.join([Path(filename).name, *line.strip().split('\t')[1:]])))
+    def __add_fasta_name_to_tsv(self, input_file: Path) -> None:
+        """
+        Modify the filename entry by the fasta file name. Important for Galaxy.
+        :param input_file: TSV output of BTyper
+        :return: None.
+        """
+        data_in = pd.read_table(input_file)
+        data_in['#filename'] = f'{self._args.fasta_name}.fasta'
+        data_in.to_csv(input_file, sep='\t', header=True)
 
 
 if __name__ == '__main__':
