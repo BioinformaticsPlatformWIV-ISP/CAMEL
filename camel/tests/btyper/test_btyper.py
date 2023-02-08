@@ -56,6 +56,7 @@ class TestBTyper(CamelTestSuite):
         path_out_tsv = self.running_dir / 'out' / 'tabular.tsv'
         btyper_main = MainBTyper([
             '--fasta', str(TestBTyper.FILE_FASTA),
+            '--fasta-name', str(TestBTyper.FILE_FASTA),
             '--output-html', str(path_out_html),
             '--output-dir', str(path_out_html.parent),
             '--output-tsv', str(path_out_tsv),
