@@ -124,7 +124,7 @@ class MainBTyper(object):
         :return: None.
         """
         data_in = pd.read_table(input_file)
-        data_in['#filename'] = f'{self._args.fasta_name}.fasta'
+        data_in['#filename'] = f'{self._args.fasta_name}'
         data_in.to_csv(input_file, sep='\t', header=True)
 
 
