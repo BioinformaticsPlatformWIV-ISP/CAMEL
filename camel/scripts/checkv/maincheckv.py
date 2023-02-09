@@ -36,6 +36,7 @@ class MainCheckV(object):
         argument_parser.add_argument('--working-dir', help='Working directory', type=Path, default=Path.cwd())
         argument_parser.add_argument('--output-html', help='Report output', type=Path)
         argument_parser.add_argument('--output-dir', help='Output directory', type=Path)
+        argument_parser.add_argument('--threads', type=int, default=4, help='Number of threads to use')
         return argument_parser.parse_args(args)
 
     def run(self) -> None:
@@ -51,6 +52,7 @@ class MainCheckV(object):
         # Run CheckV
         checkv = CheckV(Camel.get_instance())
         checkv.add_input_files(input_dict)
+        checkv.update_parameters(threads=self._args.threads)
         checkv.run(self._args.working_dir)
 
         # Create output report
