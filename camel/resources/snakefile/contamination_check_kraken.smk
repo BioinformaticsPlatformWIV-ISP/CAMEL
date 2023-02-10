@@ -26,7 +26,7 @@ rule contamination_check_kraken2_run:
         INFORMS = Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_KRAKEN_INFORMS
     params:
         running_dir = Path(config['working_dir']) / 'contamination_check' / 'kraken2',
-        read_type = 'PE' if config.get('read_type') == 'illumina' else 'SE'
+        read_type = 'PE' if config.get('read_type', 'illumina') == 'illumina' else 'SE'
     threads: 8
     priority: 1
     run:
@@ -40,7 +40,7 @@ rule contamination_check_kraken2_run:
             kraken2.add_input_files(SnakePipelineUtils.extracts_fq_input(
                 Path(input.IO), key_se='FASTQ', read_type=params.read_type))
         kraken2.add_input_files({'DB': [ToolIODirectory(Path(input.DB))]})
-        step = Step(rule, kraken2, camel, params.running_dir, config)
+        step = Step(str(rule), kraken2, camel, params.running_dir, config)
         kraken2.update_parameters(threads=threads)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(kraken2, output)
@@ -56,13 +56,15 @@ rule contamination_check_kraken_report_parser:
     params:
         running_dir = Path(config['working_dir']) / 'contamination_check' / 'kraken2',
         expected_species = config['contamination_check']['expected_species'],
-        level_of_depth = config['contamination_check']['level_of_depth']
+        level_of_depth = config['contamination_check'].get('level_of_depth')
     run:
         from camel.app.tools.kraken.krakenreportparser import KrakenReportParser
         report_parser = KrakenReportParser(camel)
         SnakemakeUtils.add_pickle_inputs(report_parser, input)
-        step = Step(rule, report_parser, camel, params.running_dir, config)
-        report_parser.update_parameters(expected_species=params.expected_species, level_of_depth=params.level_of_depth)
+        step = Step(str(rule), report_parser, camel, params.running_dir, config)
+        report_parser.update_parameters(expected_species=params.expected_species)
+        if params.level_of_depth is not None:
+            report_parser.update_parameters(level_of_depth=params.level_of_depth)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(report_parser, output)
 
@@ -80,7 +82,7 @@ rule contamination_check_krona:
         from camel.app.tools.krona.krona import Krona
         krona = Krona(camel)
         SnakemakeUtils.add_pickle_inputs(krona, input)
-        step = Step(rule, krona, camel, Path(params.running_dir), config)
+        step = Step(str(rule), krona, camel, Path(params.running_dir), config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(krona, output)
 
@@ -101,7 +103,7 @@ rule contamination_check_report:
         from camel.app.tools.pipelines.quality_checks.htmlreportercontamination import HtmlReporterContamination
         reporter = HtmlReporterContamination(camel)
         SnakemakeUtils.add_pickle_inputs(reporter, input)
-        step = Step(rule, reporter, camel, params.running_dir, config)
+        step = Step(str(rule), reporter, camel, params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
 
