@@ -56,7 +56,7 @@ rule contamination_check_kraken_report_parser:
     params:
         running_dir = Path(config['working_dir']) / 'contamination_check' / 'kraken2',
         expected_species = config['contamination_check']['expected_species'],
-        level_of_depth = config['contamination_check'].get('level_of_depth')
+        level_of_depth = config['contamination_check'].get('level_of_depth', 'S')
     run:
         from camel.app.tools.kraken.krakenreportparser import KrakenReportParser
         report_parser = KrakenReportParser(camel)
