@@ -86,7 +86,7 @@ class HtmlReporterContamination(Tool):
         """
         self._report_section.add_table([
             ['Warning threshold:', f"{informs['threshold_warn'].value}%"],
-            ['Failing threshold:', f"{informs['threshold_fail'].value}%"],
+            ['Fail threshold:', f"{informs['threshold_fail'].value}%"],
             ['Level:', '{}'.format('Species' if 'S' in informs['level_of_depth'].value else 'Genus')]
         ], None, [('class', 'information')])
 
