@@ -46,6 +46,7 @@ class HtmlReporterContamination(Tool):
         self._report_section = HtmlReportSection(
             HtmlReporterContamination.TITLE, subtitle=self._input_informs['kraken2']['_name'])
         self.__add_database_info(self._input_informs['kraken2'])
+        self.__add_filtering_info(self._input_informs['species'])
         self.__add_species_table()
         self.__add_detailed_table(self._tool_inputs['TSV'][0].path)
         self.__add_krona_report()
@@ -77,12 +78,25 @@ class HtmlReporterContamination(Tool):
             ['Last update:', db_informs['last_update'] if db_informs is not None else 'NA']
         ], None, [('class', 'information')])
 
+    def __add_filtering_info(self, informs: Dict[str, Any]) -> None:
+        """
+        Adds the filtering parameters.
+        :param informs: species informs
+        :return: None
+        """
+        self._report_section.add_table([
+            ['Warning threshold:', f"{informs['threshold_warn'].value}%"],
+            ['Fail threshold:', f"{informs['threshold_fail'].value}%"],
+            ['Level:', '{}'.format('Species' if 'S' in informs['level_of_depth'].value else 'Genus')]
+        ], None, [('class', 'information')])
+
     def __add_species_table(self) -> None:
         """
         Adds a table containing the detected species and corresponding percentages.
         :return: None
         """
-        header = ['Species', 'Percentage']
+        header = ['{}'.format('Species' if 'S' in self._input_informs['species']['level_of_depth'].value else 'Genus'),
+                  'Percentage']
         expected_name, expected_perc = self._input_informs['species']['expected']
         expected_perc = '{:.2f}'.format(float(expected_perc))
         table_data = [
