@@ -53,7 +53,7 @@ class MainPipelineCombine(object):
 
         # Re-order columns
         data_out_filt = data_out_filt.reindex(sorted(
-            data_out_filt.columns, key=lambda x: '_Cluster' in x or '_genes' in x), axis=1)
+            data_out_filt.columns, key=lambda x: MainPipelineCombine._get_sorting_key(x)), axis=1)
 
         # Save output file
         data_out_filt.to_csv(self._args.output, sep='\t', index=False)
@@ -148,6 +148,21 @@ class MainPipelineCombine(object):
                 return True
 
         return False
+
+    @staticmethod
+    def _get_sorting_key(column_name: str) -> str:
+        """
+        Returns the sorting key for the given column.
+        :param column_name: Column name
+        :return: sorting key
+        """
+        m = re.match(r'(.*)_Cluster_\d+', column_name)
+        if m:
+            return m.group(1)
+        m = re.match(r'(.*)_genes-.*', column_name)
+        if m:
+            return m.group(1)
+        return ''
 
     @staticmethod
     def _format_gene_detection_hits(db_key: str, value: str, format_str: str) -> List[Tuple[str, str]]:

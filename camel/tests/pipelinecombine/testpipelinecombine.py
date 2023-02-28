@@ -77,7 +77,7 @@ class TestPipelineCombine(CamelTestSuite):
         pipe_combine = MainPipelineCombine([
             *[str(x) for x in TestPipelineCombine.test_file_dir.glob('pipe_staphylococcus_*')],
             '--output', str(path_tsv_out),
-            '--include', 'sample,mlst-ST,spa_type,lrefinder_genes*',
+            '--include', 'sample,mlst-ST,spa_type,lrefinder_genes*,hits_ncbi_amr',
             '--gene-format', 'simple'
         ])
         pipe_combine.run()
