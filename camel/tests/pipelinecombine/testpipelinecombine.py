@@ -18,8 +18,7 @@ class TestPipelineCombine(CamelTestSuite):
         path_tsv_out = self.running_dir / 'summary_combined.tsv'
         pipe_combine = MainPipelineCombine([
             *[str(x) for x in TestPipelineCombine.test_file_dir.glob('pipe_staphylococcus_*')],
-            '--output', str(path_tsv_out),
-            '--exclude', 'cgmlst-*,qc-*,input_files',
+            '--output', str(path_tsv_out)
         ])
         pipe_combine.run()
         self.assertGreater(path_tsv_out.stat().st_size, 0)
@@ -39,7 +38,7 @@ class TestPipelineCombine(CamelTestSuite):
         pipe_combine.run()
         self.assertGreater(path_tsv_out.stat().st_size, 0)
 
-    def test_pipeline_combine_staphylococcus_include_exclude(self) -> None:
+    def test_pipeline_combine_staphylococcus_exclude(self) -> None:
         """
         Tests the pipeline combine main script.
         :return: None
@@ -49,8 +48,22 @@ class TestPipelineCombine(CamelTestSuite):
             *[str(x) for x in TestPipelineCombine.test_file_dir.glob('pipe_staphylococcus_*')],
             '--output', str(path_tsv_out),
             '--exclude', 'mlst-*,cgmlst-*,qc*,input_files,downsampling*,assembly*,vfdb*,trimming*',
-            '--include', 'mlst-ST,cgmlst-SAUR0001',
             '--gene-format', 'locus_with_id'
+        ])
+        pipe_combine.run()
+        self.assertGreater(path_tsv_out.stat().st_size, 0)
+
+    def test_pipeline_combine_staphylococcus_include(self) -> None:
+        """
+        Tests the pipeline combine main script.
+        :return: None
+        """
+        path_tsv_out = self.running_dir / 'summary_combined.tsv'
+        pipe_combine = MainPipelineCombine([
+            *[str(x) for x in TestPipelineCombine.test_file_dir.glob('pipe_staphylococcus_*')],
+            '--output', str(path_tsv_out),
+            '--include', 'sample,mlst-ST,spa_type,ncbi_amr*',
+            '--gene-format', 'simple'
         ])
         pipe_combine.run()
         self.assertGreater(path_tsv_out.stat().st_size, 0)
