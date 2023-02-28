@@ -17,6 +17,12 @@ class MainPipelineCombine(object):
     Main script for the pipeline combine tool.
     """
 
+    GENE_FORMATS = {
+        'simple':  '{hit[1]}',
+        'locus_with_id': '{hit[1]} ({hit[2]}%)',
+        'locus_with_id_len': '{hit[1]} (id={hit[2]}%, len={hit[3]})'
+    }
+
     def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """
         Initializes the main script.
@@ -68,7 +74,7 @@ class MainPipelineCombine(object):
                 m = re.match(r'hits_(.*)', key)
                 if m and (self._args.gene_format is not None):
                     for key, value in MainPipelineCombine._format_gene_detection_hits(
-                            m.group(1), value, self._args.gene_format):
+                            m.group(1), value, MainPipelineCombine.GENE_FORMATS[self._args.gene_format]):
                         isolate_data[key] = value
                 else:
                     isolate_data[key] = value
@@ -128,7 +134,8 @@ class MainPipelineCombine(object):
         parser.add_argument('--output', type=Path, help='Output path')
         parser.add_argument('--exclude', type=str, help='Comma separated list of keys to exclude')
         parser.add_argument('--include', type=str, help='Comma separated list of keys to include')
-        parser.add_argument('--gene-format', type=str, help='Format for genes')
+        parser.add_argument(
+            '--gene-format', type=str, choices=MainPipelineCombine.GENE_FORMATS.keys(), help='Format for genes')
         return parser.parse_args(args)
 
 

@@ -34,7 +34,7 @@ class TestPipelineCombine(CamelTestSuite):
             *[str(x) for x in TestPipelineCombine.test_file_dir.glob('pipe_staphylococcus_*')],
             '--output', str(path_tsv_out),
             '--exclude', 'cgmlst-*,qc*,input_files,downsampling*,assembly*',
-            '--gene-format', '{hit[1]} ({hit[2]}%)'
+            '--gene-format', 'simple'
         ])
         pipe_combine.run()
         self.assertGreater(path_tsv_out.stat().st_size, 0)
@@ -49,7 +49,8 @@ class TestPipelineCombine(CamelTestSuite):
             *[str(x) for x in TestPipelineCombine.test_file_dir.glob('pipe_staphylococcus_*')],
             '--output', str(path_tsv_out),
             '--exclude', 'mlst-*,cgmlst-*,qc*,input_files,downsampling*,assembly*,vfdb*,trimming*',
-            '--include', 'mlst-ST,cgmlst-SAUR0001'
+            '--include', 'mlst-ST,cgmlst-SAUR0001',
+            '--gene-format', 'locus_with_id'
         ])
         pipe_combine.run()
         self.assertGreater(path_tsv_out.stat().st_size, 0)
