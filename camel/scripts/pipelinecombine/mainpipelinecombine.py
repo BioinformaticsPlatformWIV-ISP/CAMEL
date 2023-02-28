@@ -4,7 +4,7 @@ import ast
 import logging
 import re
 from pathlib import Path
-from typing import Sequence, Optional, List, Dict, Any
+from typing import Sequence, Optional, List, Dict, Any, Tuple
 
 import humanize
 import pandas as pd
@@ -30,7 +30,7 @@ class MainPipelineCombine(object):
         # Parse input data
         records_out = []
         for path_input in self._args.input:
-            isolate_data = MainPipelineCombine._parse_pipe_out(path_input)
+            isolate_data = self._parse_pipe_out(path_input)
             records_out.append(isolate_data)
         data_out = pd.DataFrame(records_out)
         logging.info(f'Summaries parsed for {len(data_out)} datasets')
@@ -41,7 +41,8 @@ class MainPipelineCombine(object):
 
         # Filter columns
         cols_to_keep = data_out.apply(lambda x: MainPipelineCombine._filter_columns(
-            x, self._args.skip.split(',')), axis=0)
+            x, self._args.exclude.split(','),
+            self._args.include.split(',') if self._args.include is not None else []), axis=0)
         data_out_filt = data_out.loc[:, cols_to_keep]
         logging.info(f'Keeping {len(data_out_filt.columns)}/{len(data_out.columns)} columns')
 
@@ -50,8 +51,7 @@ class MainPipelineCombine(object):
         logging.info(
             f'Output file created: {self._args.output} ({humanize.naturalsize(self._args.output.stat().st_size)})')
 
-    @staticmethod
-    def _parse_pipe_out(path_in: Path) -> Dict[str, Any]:
+    def _parse_pipe_out(self, path_in: Path) -> Dict[str, Any]:
         """
         Parses a pipeline summary output file.
         :param path_in: Input path
@@ -66,25 +66,26 @@ class MainPipelineCombine(object):
 
                 # Gene detection hits
                 m = re.match(r'hits_(.*)', key)
-                print(key, m)
-                if m:
-                    hits = ast.literal_eval(value)
-                    if len(hits) == 0:
-                        continue
-                    for hit in hits:
-                        isolate_data[f'{m.group(1)}_{hit[0]}'] = f'{hit[1]} (%id={hit[2]}, len={hit[3]})'
+                if m and (self._args.gene_format is not None):
+                    for key, value in MainPipelineCombine._format_gene_detection_hits(
+                            m.group(1), value, self._args.gene_format):
+                        isolate_data[key] = value
                 else:
                     isolate_data[key] = value
         return isolate_data
 
     @staticmethod
-    def _filter_columns(column: pd.Index, keys_to_skip: List[str]) -> bool:
+    def _filter_columns(column: pd.Index, keys_exclude: List[str], keys_include: Optional[List[str]]) -> bool:
         """
         Function to check if the target row should be filtered.
         :param column: Columns to check
-        :param keys_to_skip: True if key should be retained, False otherwise
+        :param keys_exclude: List of keys that are filtered out (with wildcard matching)
+        :param keys_include: List of keys that are included (no wildcard matching)
+        :return: True if column should be kept, False otherwise
         """
-        for key in keys_to_skip:
+        if column.name in keys_include:
+            return True
+        for key in keys_exclude:
             # Regular match
             if '*' not in key:
                 if column.name == key:
@@ -99,6 +100,24 @@ class MainPipelineCombine(object):
         return True
 
     @staticmethod
+    def _format_gene_detection_hits(db_key: str, value: str, format_str: str) -> List[Tuple[str, str]]:
+        """
+        Formats a gene entry.
+        :param db_key: Database key
+        :param value: Value
+        :param format_str: Format string
+        :return: Key, formatted hit
+        """
+        hits = ast.literal_eval(value)
+        if len(hits) == 0:
+            return []
+        output_rows = []
+        for hit in hits:
+            key = f'{db_key}_{hit[0]}'
+            output_rows.append((key, format_str.format(hit=hit)))
+        return output_rows
+
+    @staticmethod
     def _parse_arguments(args: Optional[Sequence[str]] = None) -> argparse.Namespace:
         """
         Parses the command line arguments.
@@ -107,7 +126,9 @@ class MainPipelineCombine(object):
         parser = argparse.ArgumentParser()
         parser.add_argument('input', metavar='N', type=Path, nargs='+', help='Input files')
         parser.add_argument('--output', type=Path, help='Output path')
-        parser.add_argument('--skip', type=str, help='Comma separated list of keys to skip')
+        parser.add_argument('--exclude', type=str, help='Comma separated list of keys to exclude')
+        parser.add_argument('--include', type=str, help='Comma separated list of keys to include')
+        parser.add_argument('--gene-format', type=str, help='Format for genes')
         return parser.parse_args(args)
 
 
