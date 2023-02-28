@@ -67,3 +67,18 @@ class TestPipelineCombine(CamelTestSuite):
         ])
         pipe_combine.run()
         self.assertGreater(path_tsv_out.stat().st_size, 0)
+
+    def test_pipeline_combine_staphylococcus_lre_finder(self) -> None:
+        """
+        Tests the pipeline combine main script.
+        :return: None
+        """
+        path_tsv_out = self.running_dir / 'summary_combined.tsv'
+        pipe_combine = MainPipelineCombine([
+            *[str(x) for x in TestPipelineCombine.test_file_dir.glob('pipe_staphylococcus_*')],
+            '--output', str(path_tsv_out),
+            '--include', 'sample,mlst-ST,spa_type,lrefinder_genes*',
+            '--gene-format', 'simple'
+        ])
+        pipe_combine.run()
+        self.assertGreater(path_tsv_out.stat().st_size, 0)

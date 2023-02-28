@@ -52,7 +52,8 @@ class MainPipelineCombine(object):
         logging.info(f'Keeping {len(data_out_filt.columns)}/{len(data_out.columns)} columns')
 
         # Re-order columns
-        data_out_filt = data_out_filt.reindex(sorted(data_out_filt.columns, key=lambda x: '_Cluster' in x), axis=1)
+        data_out_filt = data_out_filt.reindex(sorted(
+            data_out_filt.columns, key=lambda x: '_Cluster' in x or '_genes' in x), axis=1)
 
         # Save output file
         data_out_filt.to_csv(self._args.output, sep='\t', index=False)
@@ -78,6 +79,11 @@ class MainPipelineCombine(object):
                     for key, value in MainPipelineCombine._format_gene_detection_hits(
                             m.group(1), value, MainPipelineCombine.GENE_FORMATS[self._args.gene_format]):
                         isolate_data[key] = value
+                # LREFinder genes
+                if key == 'lrefinder_genes':
+                    hits = ast.literal_eval(value)
+                    for h in hits:
+                        isolate_data[f"lrefinder_genes-{h['Gene']}"] = f"{h['Gene']} ({h['Template identity']})"
                 else:
                     isolate_data[key] = value
         return isolate_data
