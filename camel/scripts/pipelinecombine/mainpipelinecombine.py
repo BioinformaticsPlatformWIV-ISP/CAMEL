@@ -47,7 +47,7 @@ class MainPipelineCombine(object):
 
         # Filter columns
         cols_to_keep = data_out.apply(lambda x: MainPipelineCombine._filter_columns(
-            x, self._args.exclude, self._args.include), axis=0)
+            x, self._args.exclude, self._args.include, self._args.gene_format is not None), axis=0)
         data_out_filt = data_out.loc[:, cols_to_keep]
         logging.info(f'Keeping {len(data_out_filt.columns)}/{len(data_out.columns)} columns')
 
@@ -83,17 +83,22 @@ class MainPipelineCombine(object):
         return isolate_data
 
     @staticmethod
-    def _filter_columns(column: pd.Index, keys_exclude: Union[str, None], keys_include: Union[str, None]) -> bool:
+    def _filter_columns(column: pd.Index, keys_exclude: Union[str, None], keys_include: Union[str, None],
+                        genes_formatted: bool) -> bool:
         """
         Function to check if the target row should be filtered.
         :param column: Columns to check
         :param keys_exclude: Keys that are filtered out (with wildcard matching)
         :param keys_include: Keys that are included (no wildcard matching)
+        :param genes_formatted: Boolean to indicate if genes are formatted
         :return: True if column should be kept, False otherwise
         """
         # Remove excluded columns
         if keys_exclude is not None:
             for key in keys_exclude.split(','):
+                # Expand gene detection hits
+                if genes_formatted and key.startswith('hits_'):
+                    key = f"{key.replace('hits_', '')}*"
                 if MainPipelineCombine.key_matches(key, str(column.name)):
                     return False
             return True
@@ -101,6 +106,9 @@ class MainPipelineCombine(object):
         # Retain included columns
         elif keys_include is not None:
             for key in keys_include.split(','):
+                # Expand gene detection hits
+                if genes_formatted and key.startswith('hits_'):
+                    key = f"{key.replace('hits_', '')}*"
                 if MainPipelineCombine.key_matches(key, str(column.name)):
                     return True
             return False
@@ -127,6 +135,12 @@ class MainPipelineCombine(object):
             m = re.match(pattern, key)
             if m:
                 return True
+
+        # Gene detection match
+        if 'hits_' in pattern:
+            if key == pattern.replace('hits_', ''):
+                return True
+
         return False
 
     @staticmethod
