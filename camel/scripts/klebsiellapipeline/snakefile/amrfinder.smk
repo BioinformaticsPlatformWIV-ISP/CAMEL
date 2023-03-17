@@ -45,3 +45,13 @@ rule amrfinder_reporter:
         step = Step(str(rule), reporter, Camel.get_instance(), params.dir_)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
+
+rule amrfinder_report_empty:
+    """
+    Creates an empty report when this analysis is disabled.
+    """
+    output:
+        VAL_HTML = Path(config['working_dir']) / 'amrfinder' / 'html-empty.io'
+    run:
+        from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
+        SnakePipelineUtils.create_empty_report_section('AMRFinder', Path(output.VAL_HTML))
