@@ -21,7 +21,7 @@ class TestKleborate(CamelTestSuite):
         kleborate = Kleborate(self.camel)
         kleborate.add_input_files({'FASTA': [ToolIOFile(TestKleborate.input_fasta)]})
         kleborate.run(self.running_dir)
-        self.verify_output_files(kleborate, 'TXT')
+        self.verify_output_files(kleborate, 'TSV')
 
     def test_kleborate_different_confidence(self) -> None:
         """
@@ -32,7 +32,7 @@ class TestKleborate(CamelTestSuite):
         kleborate.add_input_files({'FASTA': [ToolIOFile(TestKleborate.input_fasta)]})
         kleborate.update_parameters(min_kaptive_confidence='Low')
         kleborate.run(self.running_dir)
-        self.verify_output_files(kleborate, 'TXT')
+        self.verify_output_files(kleborate, 'TSV')
 
     def test_kleborate_resistance(self) -> None:
         """
@@ -43,7 +43,7 @@ class TestKleborate(CamelTestSuite):
         kleborate.add_input_files({'FASTA': [ToolIOFile(TestKleborate.input_fasta)]})
         kleborate.update_parameters(resistance=True)
         kleborate.run(self.running_dir)
-        self.verify_output_files(kleborate, 'TXT')
+        self.verify_output_files(kleborate, 'TSV')
 
     def test_kleborate_all(self) -> None:
         """
@@ -54,7 +54,7 @@ class TestKleborate(CamelTestSuite):
         kleborate.add_input_files({'FASTA': [ToolIOFile(TestKleborate.input_fasta)]})
         kleborate.update_parameters(all=True)
         kleborate.run(self.running_dir)
-        self.verify_output_files(kleborate, 'TXT')
+        self.verify_output_files(kleborate, 'TSV')
 
 
 if __name__ == '__main__':

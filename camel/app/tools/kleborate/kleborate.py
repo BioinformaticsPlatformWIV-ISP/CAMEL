@@ -49,7 +49,7 @@ class Kleborate(Tool):
         ])
         self._execute_command()
         self._parse_output_file(path_out)
-        self._tool_outputs['TXT'] = [ToolIOFile(path_out)]
+        self._tool_outputs['TSV'] = [ToolIOFile(path_out)]
 
     def _parse_output_file(self, path_out: Path) -> None:
         """
