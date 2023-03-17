@@ -3,6 +3,7 @@ import unittest
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.kleborate.kleborate import Kleborate
+from camel.app.tools.kleborate.kleboratereporter import KleborateReporter
 
 
 class TestKleborate(CamelTestSuite):
@@ -55,6 +56,26 @@ class TestKleborate(CamelTestSuite):
         kleborate.update_parameters(all=True)
         kleborate.run(self.running_dir)
         self.verify_output_files(kleborate, 'TSV')
+
+    def test_kleborate_reporter(self) -> None:
+        """
+        Tests the reporter class for Kleborate.
+        :return: None
+        """
+        # Run Kleborate
+        kleborate = Kleborate(self.camel)
+        kleborate.add_input_files({'FASTA': [ToolIOFile(TestKleborate.input_fasta)]})
+        kleborate.run(self.running_dir)
+
+        # Create output report
+        reporter = KleborateReporter(self.camel)
+        reporter.add_input_files({'TSV': kleborate.tool_outputs['TSV']})
+        reporter.add_input_informs({'kleborate': kleborate.informs})
+        reporter.run(self.running_dir)
+
+        # Check the output
+        output_section = reporter.tool_outputs['HTML'][0].value
+        self.assertGreater(len(output_section.to_html()), 0)
 
 
 if __name__ == '__main__':

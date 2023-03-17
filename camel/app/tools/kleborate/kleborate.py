@@ -58,9 +58,10 @@ class Kleborate(Tool):
         :return: None
         """
         with path_out.open() as handle:
-            for line in handle.readlines():
-                parts = line.strip().split('\t')
-                self._informs[parts[0]] = '\t'.join(parts[1:]).strip()
+            header = handle.readline().split('\t')
+            values = handle.readline().split('\t')
+            for k, v in zip(header, values):
+                self._informs[k] = v
 
     def _check_command_output(self) -> None:
         """
