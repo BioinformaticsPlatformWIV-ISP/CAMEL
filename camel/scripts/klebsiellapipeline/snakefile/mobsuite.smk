@@ -16,15 +16,18 @@ rule mobsuite_mob_recon:
         DB = config['mob_suite']['db']
     output:
         TSV = Path(config['working_dir']) / 'mob_suite' / 'tsv.io',
+        TSV_contigs = Path(config['working_dir']) / 'mob_suite' / 'tsv-contigs.io',
         FASTA = Path(config['working_dir']) / 'mob_suite' / 'fasta.io',
         INFORMS = Path(config['working_dir']) / 'mob_suite' / 'informs.io'
     params:
         dir_ = Path(config['working_dir']) / 'mob_suite'
+    threads: 4
     run:
         from camel.app.tools.mobsuite.mobrecon import MOBRecon
         mob_recon = MOBRecon(Camel.get_instance())
         SnakemakeUtils.add_pickle_input(mob_recon, 'FASTA', Path(input.FASTA))
         mob_recon.add_input_files({'DB': [ToolIODirectory(Path(input.DB))]})
+        mob_recon.update_parameters(num_threads=threads)
         step = Step(str(rule), mob_recon, Camel.get_instance(), params.dir_)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(mob_recon, output)
@@ -35,6 +38,7 @@ rule mobsuite_mob_recon_reporter:
     """
     input:
         TSV = rules.mobsuite_mob_recon.output.TSV,
+        TSV_contigs = rules.mobsuite_mob_recon.output.TSV_contigs,
         FASTA = rules.mobsuite_mob_recon.output.FASTA,
         INFORMS_mob_recon = rules.mobsuite_mob_recon.output.INFORMS
     output:

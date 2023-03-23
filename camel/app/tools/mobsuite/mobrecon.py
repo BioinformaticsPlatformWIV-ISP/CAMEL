@@ -30,12 +30,12 @@ class MOBRecon(Tool):
             raise InvalidInputSpecificationError("Database input (DB) is required")
         super()._check_input()
 
-    def _execute_tool(self) -> None:
+    def _build_command(self, dir_out: Path) -> None:
         """
-        Executes this tool.
+        Builds the command line call.
+        :param dir_out: Output directory
         :return: None
         """
-        dir_out = self.folder / 'out'
         self._command.command = ' '.join([
             self._tool_command,
             f"-i {self._tool_inputs['FASTA'][0].path}",
@@ -43,15 +43,31 @@ class MOBRecon(Tool):
             f'-o {dir_out}',
             *self._build_options()
         ])
-        self._execute_command()
-        self._parse_output_file(dir_out / 'mobtyper_results.txt')
-        self._tool_outputs['TSV'] = [ToolIOFile(dir_out / 'mobtyper_results.txt')]
 
+    def _collect_tool_output(self, dir_out: Path) -> None:
+        """
+        Collects the tool output.
+        :param dir_out: Output directory
+        :return: None
+        """
+        self._tool_outputs['TSV'] = [ToolIOFile(dir_out / 'mobtyper_results.txt')]
+        self._tool_outputs['TSV_contigs'] = [ToolIOFile(dir_out / 'contig_report.txt')]
         self._tool_outputs['FASTA'] = []
         for path_fasta in sorted(dir_out.glob('plasmid*.fasta')):
             self._tool_outputs['FASTA'].append(ToolIOFile(path_fasta))
         if len(self._tool_outputs['FASTA']) == 0:
             self._tool_outputs.pop('FASTA')
+
+    def _execute_tool(self) -> None:
+        """
+        Executes this tool.
+        :return: None
+        """
+        dir_out = self.folder / 'out'
+        self._build_command(dir_out)
+        self._execute_command()
+        self._parse_output_file(dir_out / 'mobtyper_results.txt')
+        self._collect_tool_output(dir_out)
 
     def _parse_output_file(self, path_out: Path) -> None:
         """

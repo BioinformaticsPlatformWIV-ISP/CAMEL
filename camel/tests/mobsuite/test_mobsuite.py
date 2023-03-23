@@ -64,7 +64,10 @@ class TestMOBSuite(CamelTestSuite):
 
         # Run the reporter
         reporter = MOBReconReporter(self.camel)
-        reporter.add_input_files({'TSV': mob_recon.tool_outputs['TSV'], 'FASTA': mob_recon.tool_outputs['FASTA']})
+        reporter.add_input_files({
+            'TSV': mob_recon.tool_outputs['TSV'],
+            'TSV_contigs': mob_recon.tool_outputs['TSV_contigs'],
+            'FASTA': mob_recon.tool_outputs['FASTA']})
         reporter.add_input_informs({'mob_recon': mob_recon.informs})
         reporter.run(self.running_dir)
 

@@ -20,7 +20,7 @@ class MOBReconReporter(Tool):
         'id': {'title': 'ID'},
         'num_contigs': {'title': 'Nb. of contigs'},
         'size': {'title': 'Size', 'fmt': lambda x: f'{x:,}'},
-        'gc': {'title': '% GC-content', 'fmt': lambda x: f'{x*100:.2f}%'},
+        'gc': {'title': '% GC-content', 'fmt': lambda x: f'{x*100:.2f}'},
         'rep_type(s)':  {'title': 'Rep. types', 'fmt': lambda x: x.replace(',', ', ')},
         'relaxase_type(s)':  {'title': 'Relaxase types', 'fmt': lambda x: x.replace(',', ', ')}
     }
@@ -39,19 +39,20 @@ class MOBReconReporter(Tool):
         """
         if 'TSV' not in self._tool_inputs:
             raise InvalidInputSpecificationError('TSV input is required')
+        if 'TSV_contigs' not in self._tool_inputs:
+            raise InvalidInputSpecificationError('TSV contigs input is required')
         if 'FASTA' not in self._tool_inputs:
             raise InvalidInputSpecificationError('FASTA input is required')
         if 'mob_recon' not in self._input_informs:
             raise InvalidInputSpecificationError("MOB-recon informs input is required")
         super()._check_input()
 
-    def _execute_tool(self) -> None:
+    def _add_overview_table(self, section: HtmlReportSection) -> None:
         """
-        Executes this tool.
+        Adds an overview table to the report.
+        :param section: Report section
         :return: None
         """
-        section = HtmlReportSection('MOB-recon', subtitle=self._input_informs['mob_recon']['_name'])
-
         # Overview table
         data_overview = pd.read_table(self._tool_inputs['TSV'][0].path)
         data_overview['id'] = data_overview['sample_id'].apply(lambda x: re.search('.*:(.*)', x).group(1))
@@ -69,14 +70,28 @@ class MOBReconReporter(Tool):
             section.add_file(path_fasta, relative_path)
             row.append(HtmlTableCell('Download (FASTA)', link=str(relative_path)))
 
+        # Add table
         section.add_table(
             table_data, [c['title'] for c in MOBReconReporter.COLUMN_MAPPING.values()] + ['Sequence'],
             [('class', 'data')])
 
-        # Download link
+    def _execute_tool(self) -> None:
+        """
+        Executes this tool.
+        :return: None
+        """
+        section = HtmlReportSection('MOB-recon', subtitle=self._input_informs['mob_recon']['_name'])
+        self._add_overview_table(section)
+
+        # Download overview
         relative_path = Path('mob-suite', 'mob_recon.tsv')
         section.add_file(self._tool_inputs['TSV'][0].path, relative_path)
-        section.add_link_to_file('Download (TSV)', relative_path)
+        section.add_link_to_file('Download complete output (TSV)', relative_path)
+
+        # Download contig report
+        relative_path = Path('mob-suite', 'contig_report.tsv')
+        section.add_file(self._tool_inputs['TSV_contigs'][0].path, relative_path)
+        section.add_link_to_file('Download contig report (TSV)', relative_path)
 
         # Tool output
         self._tool_outputs['HTML'] = [ToolIOValue(section)]
