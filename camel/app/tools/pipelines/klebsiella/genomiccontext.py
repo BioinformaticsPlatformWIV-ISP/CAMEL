@@ -62,6 +62,9 @@ class GenomicContext(Tool):
 
         # Create the output report
         section = HtmlReportSection('Genomic context')
+        section.add_warning_message(
+            'Predicting genomic context based solely on short-read data is error-prone and should only be considered '
+            'as an indication.')
 
         # Create rows
         table_data = []
