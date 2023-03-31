@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pandas as pd
+
 from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
@@ -67,6 +69,7 @@ class MOBRecon(Tool):
         self._build_command(dir_out)
         self._execute_command()
         self._parse_output_file(dir_out / 'mobtyper_results.txt')
+        self._parse_contig_report(dir_out / 'contig_report.txt')
         self._collect_tool_output(dir_out)
 
     def _parse_output_file(self, path_out: Path) -> None:
@@ -80,6 +83,17 @@ class MOBRecon(Tool):
             values = handle.readline().split('\t')
             for k, v in zip(header, values):
                 self._informs[k] = v
+
+    def _parse_contig_report(self, path_out: Path) -> None:
+        """
+        Parses the contig report and stores the results in the informs.
+        :param path_out: Output file path
+        :return: None
+        """
+        data_in = pd.read_table(path_out)
+        self._informs['contig_report'] = {
+            ctg: cluster_id if cluster_id is not '-' else None for
+            ctg, cluster_id in zip(data_in['contig_id'], data_in['primary_cluster_id'])}
 
     def _check_command_output(self) -> None:
         """
