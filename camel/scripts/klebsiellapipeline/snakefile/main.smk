@@ -2,7 +2,7 @@ from pathlib import Path
 
 from camel.resources.snakefile import trimming_illumina, assembly_spades, gene_detection, trimming, \
     contamination_check_kraken, quality_checks, sequence_typing, downsampling
-from camel.scripts.klebsiellapipeline.snakefile import kleborate, amrfinder
+from camel.scripts.klebsiellapipeline.snakefile import kleborate, amrfinder, mobsuite, bacmet, resfinder4
 
 #######################
 # Included Snakefiles #
@@ -15,7 +15,10 @@ include: assembly_spades.SNAKEFILE_ASSEMBLY_SPADES
 include: gene_detection.SNAKEFILE_GENE_DETECTION
 include: sequence_typing.SNAKEFILE_SEQUENCE_TYPING
 include: amrfinder.SNAKEFILE_AMRFINDER
+include: resfinder4.SNAKEFILE_RESFINDER4
 include: kleborate.SNAKEFILE_KLEBORATE
+include: mobsuite.SNAKEFILE_MOB_SUITE
+include: bacmet.SNAKEFILE_BACMET
 
 
 rule all:
@@ -24,7 +27,8 @@ rule all:
     """
     input:
         HTML = config['output_report'],
-        TSV = config['output_tabular']
+        TSV = config['output_tabular'],
+        TSV_2 = Path(config['working_dir']) / 'bacmet' / 'blastp' / 'tsv.io'
 
 rule link_downsampling_input:
     """
@@ -101,11 +105,13 @@ rule report_command_section:
         INFORMS_assembly = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_INFORMS,
         INFORMS_assembly_filt = Path(config['working_dir']) / 'assembly_spades' / 'filtering' / 'informs.io',
         INFORMS_kraken = Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_KRAKEN_INFORMS if 'kraken' in config['analyses'] else [],
-        INFORMS_mapping= quality_checks.get_mapping_rate_informs(config),
-        INFORMS_depth=quality_checks.get_depth_informs(config),
-        INFORMS_amrfnder=Path(config['working_dir']) / amrfinder.OUTPUT_AMRFINDER_INFORMS,
-        INFORMS_kleborate=Path(config['working_dir']) / kleborate.OUTPUT_KLEBORATE_INFORMS,
-        INFORMS_vfdb_core = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='vfdb_core') if 'vfdb_core' in config['analyses'] else [],
+        INFORMS_mapping = quality_checks.get_mapping_rate_informs(config),
+        INFORMS_depth = quality_checks.get_depth_informs(config),
+        INFORMS_amrfnder = Path(config['working_dir']) / amrfinder.OUTPUT_AMRFINDER_INFORMS if 'amrfinder' in config['analyses'] else [],
+        INFORMS_resfinder4 = Path(config['working_dir']) / resfinder4.OUTPUT_RESFINDER4_INFORMS if 'resfinder4' in config['analyses'] else [],
+        INFORMS_mob_suite = Path(config['working_dir']) / mobsuite.OUTPUT_MOB_SUITE_INFORMS  if 'mob_suite' in config['analyses'] else [],
+        INFORMS_kleborate = Path(config['working_dir']) / kleborate.OUTPUT_KLEBORATE_INFORMS if 'kleborate' in config['analyses'] else [],
+        INFORMS_vfdb_core = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='vfdb_core') if 'vfdb_core' in config['analyses'] else []
     output:
         HTML = Path(config['working_dir']) / 'report' / 'html-commands.io'
     params:
@@ -134,13 +140,19 @@ rule report_combine_all:
         report_kraken = Path(config['working_dir']) / (contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT if 'kraken' in config['analyses'] else contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT_EMPTY),
         report_adv_qc = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_REPORT,
         # AMR detection
-        report_amrfinder = Path(config['working_dir']) / amrfinder.OUTPUT_AMRFINDER_REPORT,
+        report_amrfinder = Path(config['working_dir']) / (amrfinder.OUTPUT_AMRFINDER_REPORT if config['analyses'] else amrfinder.OUTPUT_AMRFINDER_REPORT_EMPTY),
+        report_resfinder4 = Path(config['working_dir']) / (resfinder4.OUTPUT_RESFINDER4_REPORT if config['analyses'] else resfinder4.OUTPUT_RESFINDER4_REPORT_EMPTY),
         # Virulence gene detection
         report_vfdb_core = gene_detection.get_gene_detection_report('vfdb_core', config),
         # Plasmid characterization
         report_plasmidfinder = gene_detection.get_gene_detection_report('plasmidfinder', config),
+        report_mob_suite = Path(config['working_dir']) / (mobsuite.OUTPUT_MOB_SUITE_REPORT if 'kleborate' in config['analyses'] else mobsuite.OUTPUT_MOB_SUITE_REPORT_EMPTY),
+        report_genomic_context = Path(config['working_dir']) / 'mob_suite' / 'genomic_context' / 'html.io',
         # Kleborate
-        report_kleborate = Path(config['working_dir']) / kleborate.OUTPUT_KLEBORATE_REPORT,
+        report_kleborate = Path(config['working_dir']) / (kleborate.OUTPUT_KLEBORATE_REPORT if 'kleborate' in config['analyses'] else kleborate.OUTPUT_KLEBORATE_REPORT_EMPTY),
+        # BacMet
+        report_prodigal = Path(config['working_dir']) / (bacmet.OUTPUT_PRODIGAL_REPORT if 'bacmet' in config['analyses'] else bacmet.OUTPUT_PRODIGAL_REPORT_EMPTY),
+        report_bacmet = Path(config['working_dir']) / (bacmet.OUTPUT_BACMET_REPORT if 'bacmet' in config['analyses'] else bacmet.OUTPUT_BACMET_REPORT_EMPTY),
         # Typing
         report_mlst = sequence_typing.get_sequence_typing_report('mlst', config),
         report_scgmlst = sequence_typing.get_sequence_typing_report('scgmlst', config),
@@ -173,10 +185,12 @@ rule report_combine_all:
             ('Read trimming and basic QC', 'trim', [Path(input.report_downsampling), Path(input.report_trimming)]),
             ('Assembly', 'assem', [Path(input.report_assembly)]),
             ('Advanced QC', 'adv_qc', [Path(x) for x in (input.report_kraken, input.report_adv_qc)]),
-            ('AMR detection', 'amr', [Path(input.report_amrfinder)]),
+            ('AMR detection', 'amr', [Path(input.report_amrfinder), Path(input.report_resfinder4)]),
             ('Virulence detection', 'virulence', [Path(x) for x in (input.report_vfdb_core,)]),
             ('Kleborate', 'kleborate', [Path(input.report_kleborate)]),
-            ('Plasmid characterization', 'plasmid', [Path(x) for x in (input.report_plasmidfinder,)]),
+            ('Plasmid characterization', 'plasmid', [Path(x) for x in (
+                input.report_plasmidfinder, input.report_mob_suite, input.report_genomic_context)]),
+            ('Biocide and metal resistance', 'bacmet', [Path(input.report_prodigal), Path(input.report_bacmet)]),
             ('Sequence typing', 'st', [Path(x) for x in (
                 input.report_mlst, input.report_scgmlst, input.report_cgmlst)]),
             ('Citations', 'citations', [Path(input.report_citations)]),
@@ -220,9 +234,16 @@ rule summary_combine_all:
         Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY,
         Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_SUMMARY if 'kraken' in config['analyses'] else [],
         # AMR detection
+        Path(config['working_dir']) / resfinder4.OUTPUT_RESFINDER4_SUMMARY if 'resfinder4' in config['analyses'] else [],
         # Virulence detection
+        Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='vfdb_core') if 'vfdb_core' in config['analyses'] else [],
+        # Kleborate
+        Path(config['working_dir']) / kleborate.OUTPUT_KLEBORATE_SUMMARY if 'kleborate' in config['analyses'] else [],
         # Plasmid characterization
         Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='plasmidfinder') if 'plasmidfinder' in config['analyses'] else [],
+        Path(config['working_dir']) / mobsuite.OUTPUT_MOB_SUITE_SUMMARY if 'mob_suite' in config['analyses'] else [],
+        # BacMet
+        Path(config['working_dir']) / bacmet.OUTPUT_BACMET_SUMMARY if 'bacmet' in config['analyses'] else [],
         # Sequence typing
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='mlst') if 'mlst' in config['analyses'] else [],
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='scgmlst') if 'scgmlst' in config['analyses'] else [],
