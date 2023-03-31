@@ -44,7 +44,7 @@ class KleborateReporter(Tool):
         Executes this tool.
         :return: None
         """
-        section = HtmlReportSection('Kleborate')
+        section = HtmlReportSection('Kleborate', subtitle=self._input_informs['kleborate']['_name'])
 
         # Overview table
         for sub_section, columns in KleborateReporter.COLUMN_MAPPING.items():

@@ -19,6 +19,7 @@ rule kleborate_run:
     run:
         from camel.app.tools.kleborate.kleborate import Kleborate
         kleborate = Kleborate(Camel.get_instance())
+        kleborate.update_parameters(all=True)
         SnakemakeUtils.add_pickle_inputs(kleborate, input)
         step = Step(str(rule), kleborate, Camel.get_instance(), params.dir_)
         step.run_step()
@@ -52,3 +53,22 @@ rule kleborate_report_empty:
     run:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         SnakePipelineUtils.create_empty_report_section('Kleborate', Path(output.VAL_HTML))
+
+rule kleborate_create_summary:
+    """
+    Creates a tabular summary output for Kleborate.
+    """
+    input:
+        INFORMS = rules.kleborate_run.output.INFORMS
+    output:
+        TSV = Path(config['working_dir']) / 'kleborate' / 'summary_kleborate.tsv'
+    params:
+        keys_kept = ['ST', 'Yersiniabactin', 'YbST', 'wzi', 'K_locus', 'virulence_score']
+    run:
+        informs_in = SnakemakeUtils.load_object(Path(input.INFORMS))
+        with open(output.TSV, 'w') as handle:
+            for key in params.keys_kept:
+                handle.write('\t'.join([
+                    f'kleborate_{key}', informs_in[key]
+                ]))
+                handle.write('\n')
