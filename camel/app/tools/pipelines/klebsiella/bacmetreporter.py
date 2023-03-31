@@ -43,6 +43,8 @@ class BacMetReporter(Tool):
             raise InvalidInputSpecificationError('TSV input is required')
         if 'blastp' not in self._input_informs:
             raise InvalidInputSpecificationError("blastp informs input is required")
+        if 'filtering' not in self._input_informs:
+            raise InvalidInputSpecificationError("filtering informs input is required")
         super()._check_input()
 
     @staticmethod
@@ -67,8 +69,8 @@ class BacMetReporter(Tool):
 
         # Parameters
         section.add_table([
-            ['Min % identity (AA):', 'XX.XX%'],
-            ['Min % covered (AA):', 'XX.XX%'],
+            ['Min % identity (AA):', f"{self._input_informs['filtering']['params']['min_id']:.2f}%"],
+            ['Min % covered (AA):', f"{self._input_informs['filtering']['params']['min_cov']:.2f}%"],
         ], None, [('class', 'information')])
 
         # Results table

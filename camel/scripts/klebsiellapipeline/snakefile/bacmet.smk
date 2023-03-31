@@ -116,7 +116,8 @@ rule bacmet_filter_blastp:
         TSV = rules.bacmet_blastp.output.TSV,
         DB = rules.bacmet_pickle_db.output.DB
     output:
-        TSV = Path(config['working_dir']) / 'bacmet' / 'hit_filtering' / 'tsv.io'
+        TSV = Path(config['working_dir']) / 'bacmet' / 'hit_filtering' / 'tsv.io',
+        INFORMS = Path(config['working_dir']) / 'bacmet' / 'hit_filtering' / 'informs.io'
     params:
         dir_ = Path(config['working_dir']) / 'bacmet' / 'hit_filtering',
         min_cov = 90,
@@ -126,8 +127,8 @@ rule bacmet_filter_blastp:
         tsv_in = SnakemakeUtils.load_object(Path(input.TSV))[0].path
         data_in = pd.read_table(tsv_in, names=params.cols.split(' '))
         data_in['perc_covered'] = data_in.apply(lambda x: 100.0 * float(len(x['sseq'])) / x['slen'], axis=1)
-        data_in_filt = data_in[data_in['pident'] > params.min_id]
-        data_in_filt = data_in[data_in['pident'] > params.min_cov].copy()
+        data_in_filt = data_in[data_in['pident'] > params.min_id].copy()
+        data_in_filt = data_in_filt[data_in_filt['pident'] > params.min_cov].copy()
         data_in_filt['BacMet_ID'] = data_in_filt['sseqid'].apply(lambda x: x.split('|')[0])
 
         # Parse metadata
@@ -138,6 +139,8 @@ rule bacmet_filter_blastp:
         path_out = Path(params.dir_, 'bacmet.tsv')
         data_out.to_csv(path_out, sep='\t', index=False)
         SnakemakeUtils.dump_object([ToolIOFile(path_out)], Path(output.TSV))
+        SnakemakeUtils.dump_object(
+            {'params': {'min_cov': params.min_cov, 'min_id': params.min_id}}, Path(output.INFORMS))
 
 rule bacmet_report:
     """
@@ -146,6 +149,7 @@ rule bacmet_report:
     input:
         TSV = rules.bacmet_filter_blastp.output.TSV,
         INFORMS_blastp = rules.bacmet_blastp.output.INFORMS,
+        INFORMS_filtering = rules.bacmet_filter_blastp.output.INFORMS,
         DB = rules.bacmet_pickle_db.output.DB
     output:
         HTML = Path(config['working_dir']) / 'bacmet' / 'report' / 'html.io'
@@ -168,3 +172,18 @@ rule bacmet_report_empty:
     run:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         SnakePipelineUtils.create_empty_report_section('BacMet', Path(output.VAL_HTML))
+
+rule bacmet_create_summary:
+    """
+    Creates a tabular summary output file for the BacMet assay.
+    """
+    input:
+        TSV = rules.bacmet_filter_blastp.output.TSV
+    output:
+        TSV = Path(config['working_dir']) / 'bacmet' / 'summary_bacmet.tsv'
+    run:
+        path_tsv = SnakemakeUtils.load_object(Path(input.TSV))[0].path
+        data_in = pd.read_table(path_tsv)
+        with open(output.TSV, 'w') as handle:
+            handle.write('\t'.join(['bacmet_genes', ', '.join(sorted(list(data_in['Gene_name'])))]))
+            handle.write('\n')
