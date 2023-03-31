@@ -1,0 +1,97 @@
+#####################
+# Pipeline settings #
+#####################
+citations:
+  main: null
+  other:
+    - Bolger_2014-trimmomatic
+    - Bankevich_2012-spades
+    - Gurevich_2013-quast
+    - Wood_2019-kraken2
+    - Langmead_2012-bowtie2
+    - Li_2009-samtools
+    - Camacho_2009-blast
+    - Clausen_2018-kma
+    - Inouye_2014-srst2
+    - Bortolaia_2020-resfinder_4.0
+    - Chen_2016-vfdb
+    - Carattoli_2020-plasmidfinder
+    - Jolley_2010-bigsdb
+    - Lam_2021-kleborate
+    - Wyres_2016-kaptive
+    - Robertson_2018-mob_suite
+
+#########################
+# Tool specific options #
+#########################
+downsampling:
+  coverage_max: {coverage_max}
+  expected_genome_size: 5_330_000
+
+read_trimming:
+  export_fastq: '{export_fastq}'
+
+contamination_check:
+  db: /db/kraken2_full/latest/full
+  expected_species: Klebsiella pneumoniae
+
+quality_checks:
+  typing_scheme: {qc_typing_scheme}
+  expected_gc_content: 57.5
+
+srst2:
+  max_unaligned_overlap: 141
+
+assembly:
+  spades:
+    cov_cutoff: 10
+  min_contig_length: 1000
+
+amrfinder:
+  db: /db/amrfinder/latest
+
+resfinder4:
+  db: /db/resfinder4
+  species: Klebsiella
+
+bacmet:
+  db: /temp/bebog/bacmet/
+
+mob_suite:
+  db: /db/mob_suite/latest
+
+############################
+# Gene detection databases #
+############################
+gene_detection:
+  vfdb_core:
+    path: /db/gene_detection/VFDB_core
+    perc_identity_cutoff: 90
+    metadata:
+      name: Gene
+      key: gene
+
+  plasmidfinder:
+    path: /db/gene_detection/PlasmidFinder-entero
+    params:
+      blastn:
+        min_percent_identity: 95
+        min_coverage: 60
+      srst2:
+        max_divergence: 5
+        min_coverage: 60
+    metadata:
+      name: Notes
+      key: notes
+
+###################
+# Sequence typing #
+###################
+sequence_typing:
+  mlst:
+    path: /db/sequence_typing/klebsiella/mlst/
+  scgmlst:
+    path: /db/sequence_typing/klebsiella/scgmlst629_s/
+  cgmlst:
+    path: /db/sequence_typing/klebsiella/cgmlst/
+    detection_method: blast
