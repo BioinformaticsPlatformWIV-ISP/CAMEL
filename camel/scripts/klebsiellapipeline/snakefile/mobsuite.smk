@@ -62,3 +62,59 @@ rule mobsuite_mob_recon_report_empty:
     run:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         SnakePipelineUtils.create_empty_report_section('MOB-recon', Path(output.VAL_HTML))
+
+rule mobsuite_create_summary:
+    """
+    Creates a tabular summary output for MOB-suite.
+    """
+    input:
+        TSV = rules.mobsuite_mob_recon.output.TSV,
+        INFORMS = rules.mobsuite_mob_recon.output.INFORMS
+    output:
+        TSV = Path(config['working_dir']) / 'mob_suite' / 'summary_mob_suite.tsv'
+    run:
+        import pandas as pd
+        path_tsv = SnakemakeUtils.load_object(Path(input.TSV))[0].path
+        data_mobsuite = pd.read_table(path_tsv)
+
+        informs_in = SnakemakeUtils.load_object(Path(input.INFORMS))
+        with open(output.TSV, 'w') as handle:
+            # Primary cluster id
+            handle.write('\t'.join([
+                'mob_suite_primary_cluster_ids', ', '.join(list(data_mobsuite['primary_cluster_id']))]))
+            handle.write('\n')
+
+            # Contigs classified as plasmids
+            handle.write('\t'.join([
+                'mob_suite_predicted_plasmid_contigs',
+                ', '.join(ctg for ctg, status in informs_in['contig_report'].items() if status is not None)
+            ]))
+            handle.write('\n')
+
+rule mobsuite_report_genomic_context:
+    """
+    Reports the genomic context for detected genes.
+    """
+    input:
+        TSV_amrfinder = Path(config['working_dir']) / 'amrfinder' / 'tsv.io',
+        TSV_bacmet = Path(config['working_dir']) / 'bacmet' / 'hit_filtering' / 'tsv.io',
+        TSV_vfdb = Path(config['working_dir']) / 'gene_detection' / 'vfdb_core' / 'metadata' / 'tsv.io',
+        INFORMS_mob_recon = rules.mobsuite_mob_recon.output.INFORMS
+    output:
+        HTML = Path(config['working_dir']) / 'mob_suite' / 'genomic_context' / 'html.io'
+    params:
+        dir_ = Path(config['working_dir']) / 'mob_suite' / 'genomic_context'
+    run:
+        from camel.app.tools.pipelines.klebsiella.genomiccontext import GenomicContext
+        genomic_context = GenomicContext(Camel.get_instance())
+        genomic_context.add_input_informs({
+            'dbs': [
+                {'key': 'amrfinder', 'title': 'AMRFinder', 'contig': 'Contig id', 'gene': 'Gene symbol'},
+                {'key': 'bacmet', 'title': 'BacMet', 'contig': 'qseqid', 'gene': 'Gene_name'},
+                {'key': 'vfdb', 'title': 'VFDB core', 'contig': 'Contig', 'gene': 'Gene'}
+            ]
+        })
+        SnakemakeUtils.add_pickle_inputs(genomic_context, input)
+        step = Step(str(rule), genomic_context, Camel.get_instance(), params.dir_)
+        step.run_step()
+        SnakemakeUtils.dump_tool_outputs(genomic_context, output)
