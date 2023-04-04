@@ -55,7 +55,7 @@ resfinder4:
   species: Klebsiella
 
 bacmet:
-  db: /temp/bebog/bacmet/
+  db: /db/bacmet/latest
 
 mob_suite:
   db: /db/mob_suite/latest
