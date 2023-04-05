@@ -23,9 +23,16 @@ class GmatsAlgorithm(Tool):
         self._command.command = ' '.join([
             self._tool_command,
             ' '.join(str(io.path) for io in self._tool_inputs['TSV']),
-            '> /scratch/nagoeders/PyCharmProjects/RD_NG/camel_3.0/output_file.txt'
+            f"> {self._parameters['output_filename'].value}"
         ])
         self._execute_command()
+        self._tool_outputs['TXT'] = [ToolIOFile(self.folder / self._parameters['output_filename'].value)]
+
+    def _set_informs(self) -> None:
+        """
+        Collects the informs for this tool.
+        """
+        self._informs['nb_files'] = len(self._tool_inputs['TXT'])
 
 
 if __name__ == '__main__':
@@ -38,4 +45,7 @@ if __name__ == '__main__':
         ToolIOFile(Path('/testdata/camel/pipelines/gMATS/typing-bast-peptide-S18BD04144.tsv')),
         ToolIOFile(Path('/testdata/camel/pipelines/gMATS/typing-bast-peptide-S18BD07986.tsv'))]
     })
+    logging.info('test2')
     gmats.run()
+    logging.info('test3')
+    print(gmats.tool_outputs)
