@@ -1,3 +1,4 @@
 dependencies: []
-parameters: {}
+parameters:
+  output_directory: {default: true, mandatory: true, option: null, value: /scratch/nagoeders/PyCharmProjects/RD_NG/camel_3.0/}
 tool_command: cat
