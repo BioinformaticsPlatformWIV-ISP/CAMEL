@@ -1,4 +1,6 @@
 import logging
+import os
+
 from pathlib import Path
 
 from camel.app.camel import Camel
@@ -20,19 +22,83 @@ class GmatsAlgorithm(Tool):
         Executes this tool.
         :return: concatenated tsv files
         """
-        self._command.command = ' '.join([
-            self._tool_command,
-            ' '.join(str(io.path) for io in self._tool_inputs['TSV']),
-            f"> {self._parameters['output_filename'].value}"
-        ])
-        self._execute_command()
-        self._tool_outputs['TXT'] = [ToolIOFile(self.folder / self._parameters['output_filename'].value)]
 
-    def _set_informs(self) -> None:
-        """
-        Collects the informs for this tool.
-        """
-        self._informs['nb_files'] = len(self._tool_inputs['TXT'])
+        output_dir = self._parameters['output_directory'].value
+
+        for key in self._tool_inputs['TSV']:
+            print(key)
+            f = open(key.path, "r")
+
+            sample_ID = os.path.basename(key.path).replace('.tsv', '').replace('typing-bast-peptide-', '')
+            print('Sample_ID : ', sample_ID)
+
+            output_file = Path(output_dir + '/' + sample_ID + '_gMATS.tsv')
+            print('Output file : ', output_file)
+
+            with open(output_file, mode = 'w') as o:
+                o.write('Locus' + '\t' +
+                        'Allele' + '\t' +
+                        '% Identity' + '\t' +
+                        'HSP/Locus length' + '\t' +
+                        'Allele status' + '\t' +
+                        'gMATS status' + '\n')
+                f.close()
+
+            locus = ['fHbp', 'NHBA', 'NadA', 'PorA_VR2']
+            allele = []
+            id_pct = []
+            coverage = []
+            allele_status = []
+            gmats_status = ['-', '-', '-', '-']
+
+            with open(key.path) as f:
+                for line in f:
+                    l = line.split('\t')
+                    print(l)
+                    if l[0] == 'fHbp_peptide':
+                        allele.append(l[1])
+                        id_pct.append(l[2])
+                        coverage.append(l[3])
+                        allele_status.append('')
+                    elif l[0] == 'NHBA_peptide':
+                        allele.append(l[1])
+                        id_pct.append(l[2])
+                        coverage.append(l[3])
+                        allele_status.append('')
+                    elif l[0] == 'NadA_peptide':
+                        allele.append(l[1])
+                        id_pct.append(l[2])
+                        coverage.append(l[3])
+                        allele_status.append('Not covered')
+                    elif l[0] == 'PorA_VR2':
+                        allele.append(l[1])
+                        id_pct.append(l[2])
+                        coverage.append(l[3])
+                        if l[1] == '4':
+                            allele_status.append('Covered')
+                        else:
+                            allele_status.append('Not covered')
+
+            print('Loci :' + str(locus))
+            print('Alleles :' + str(allele))
+            print('ID_pct :' + str(id_pct))
+            print('Coverage :' + str(coverage))
+            print('Allele status' + str(allele_status))
+            print('gMATS status' + str(gmats_status))
+
+            with open(output_file, mode = 'a') as o:
+                for i in range(len(locus)):
+                    print(i)
+                    o.write(locus[i] + '\t' +
+                            allele[i] + '\t' +
+                            id_pct[i] + '\t' +
+                            coverage[i] + '\t' +
+                            allele_status[i] + '\t' +
+                            gmats_status[i] + '\n')
+                    f.close()
+
+#TODO : infer allele status -> best way to proceed?
+#TODO : infer sample gMATS status
 
 
 if __name__ == '__main__':
