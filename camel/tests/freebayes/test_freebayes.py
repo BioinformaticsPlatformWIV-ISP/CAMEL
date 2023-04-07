@@ -4,6 +4,7 @@ from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.components.vcf.vcfutils import VCFUtils
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.freebayes.freebayes import Freebayes
+from camel.scripts.freebayes.mainfreebayes import MainFreebayesCalling
 
 
 class TestFreebayes(CamelTestSuite):
@@ -24,6 +25,23 @@ class TestFreebayes(CamelTestSuite):
         freebayes.run(self.running_dir)
         self.verify_output_files(freebayes, 'VCF')
         self.assertGreater(VCFUtils.count_variants(freebayes.tool_outputs['VCF'][0].path), 0)
+
+    def test_freebayes_maincalling(self) -> None:
+        """
+        Testing the maincalling freebayes script
+        """
+        output_file_vcf = self.running_dir / 'variants.vcf'
+        args = [
+            '--bam', str(self.FILE_BAM_ILLUMINA),
+            '--reference', str(self.FILE_FASTA),
+            '--working-dir', str(self.running_dir),
+            '--output', str(output_file_vcf),
+            '--ploidy', '1',
+            '--standard-filters'
+        ]
+        main = MainFreebayesCalling(args)
+        main.run()
+        self.assertGreater(VCFUtils.count_variants(output_file_vcf), 0)
 
 
 if __name__ == '__main__':
