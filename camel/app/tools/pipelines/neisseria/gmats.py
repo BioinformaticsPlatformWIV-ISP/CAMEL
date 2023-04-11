@@ -8,7 +8,6 @@ from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.tool import Tool
 
-
 class GmatsAlgorithm(Tool):
 
     def __init__(self, camel: Camel) -> None:
@@ -78,7 +77,7 @@ class GmatsAlgorithm(Tool):
 
     def __parse_input_file(self, file_path):
         """
-        Parses the input file
+        Parses the input file.
         :param file_path: Path to input text file
         :return: dictionary with 'Locus', 'Allele', '% identity' for each of the 4 antigens
         """
@@ -92,11 +91,11 @@ class GmatsAlgorithm(Tool):
 
     def __derive_allele_gMATS(self, locus, allele, gmats_db):
         """
-        Derive gMATS prediction for locus/allele
+        Derive gMATS prediction for locus/allele.
         :param locus: Locus to be assessed
-        :param allele: Allele of given locus
-        :param gmats_db: Pandas table with the vaccine coverage for the fHbp and NHBA loci
-        :return: the gMATS prediction as string
+        :param allele: Specific allele to be assessed
+        :param gmats_db: Pandas table containing the vaccine coverage for the fHbp and NHBA loci
+        :return: the gMATS prediction
         """
 
         fhbp_db = gmats_db.loc[gmats_db['Locus'] == 'fHbp']
@@ -119,7 +118,6 @@ class GmatsAlgorithm(Tool):
         elif locus == 'PorA_VR2':
             allele_gmats = 'covered' if allele == '4' else 'not_covered'
         return allele_gmats
-
 
 #TODO : check peptide integrity via camel
 #TODO : Add flag for 'Not covered' alleles with a high identity or coverage length with 'Covered' alleles
