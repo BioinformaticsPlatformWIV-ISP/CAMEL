@@ -26,8 +26,6 @@ class GmatsAlgorithm(Tool):
 
         output_dir = self._parameters['output_directory'].value
         gmats_db = pd.read_csv('/var/lib/.bioit_database/pipelines/neisseria/gMATS_DB.txt', sep='\t')
-        fhbp_db = gmats_db.loc[gmats_db['Locus'] == 'fHbp']
-        nhba_db = gmats_db.loc[gmats_db['Locus'] == 'NHBA']
 
         for key in self._tool_inputs['TSV']:
             print('Input file : ', key)
@@ -49,77 +47,78 @@ class GmatsAlgorithm(Tool):
                         'gMATS status' + '\n')
                 f.close()
 
-            # Prepare lists to collect output
-            locus = ['fHbp', 'NHBA', 'NadA', 'PorA_VR2']
-            allele = []
-            id_pct = []
-            coverage = []
-            allele_status = []
+            # Parse input file
+            antigen_info = self.__parse_input_file(key.path)
 
-            # Derive output from input file and gMATS database
-            with open(key.path) as f:
-                for line in f:
-                    l = line.split('\t')
-                    print(l)
-                    if l[0] == 'fHbp_peptide':
-                        allele.append(l[1])
-                        id_pct.append(l[2])
-                        coverage.append(l[3])
-                        if l[1] in ['-', '?']:
-                            allele_status.append('unpredictable')
-                        elif float(l[1]) in fhbp_db.Allele:
-                            allele_status.append(fhbp_db.Status.loc[fhbp_db['Allele'] == float(l[1])].iloc[0])
-                        else:
-                            allele_status.append('unpredictable')
-                    elif l[0] == 'NHBA_peptide':
-                        allele.append(l[1])
-                        id_pct.append(l[2])
-                        coverage.append(l[3])
-                        if l[1] in ['-', '?']:
-                            allele_status.append('unpredictable')
-                        elif float(l[1]) in nhba_db.Allele:
-                            print(float(l[1]))
-                            print(nhba_db.Status.loc[nhba_db['Allele'] == float(l[1])])
-                            allele_status.append(nhba_db.Status.loc[nhba_db['Allele'] == float(l[1])].iloc[0])
-                        else:
-                            allele_status.append('unpredictable')
-                    elif l[0] == 'NadA_peptide':
-                        allele.append(l[1])
-                        id_pct.append(l[2])
-                        coverage.append(l[3])
-                        if l[1] in ['-', '?']:
-                            allele_status.append('unpredictable')
-                        else:
-                            allele_status.append('not_covered')
-                    elif l[0] == 'PorA_VR2':
-                        allele.append(l[1])
-                        id_pct.append(l[2])
-                        coverage.append(l[3])
-                        if l[1] == '4':
-                            allele_status.append('covered')
-                        elif l[1] in ['-', '?']:
-                            allele_status.append('unpredictable')
-                        else:
-                            allele_status.append('not_covered')
+            # Derive gMATS status for each antigen
+            allele_status = []
+            for key in antigen_info:
+                allele_gmats = self.__derive_allele_gMATS(key, antigen_info[key][1], gmats_db)
+                antigen_info[key] += [str(allele_gmats )]
+                allele_status.append(allele_gmats)
 
             # Derive gMATS status of sample
             if 'covered' in allele_status:
-                gmats_status = ['covered'] * 4
+                gmats_status = 'covered'
             elif 'not_covered' in allele_status:
-                gmats_status = ['not_covered'] * 4
+                gmats_status = 'not_covered'
             else:
-                gmats_status = ['unpredictable'] * 4
+                gmats_status = 'unpredictable'
 
             # Write output text file
             with open(output_file, mode='a') as o:
-                for i in range(len(locus)):
-                    o.write(locus[i] + '\t' +
-                            allele[i] + '\t' +
-                            id_pct[i] + '\t' +
-                            coverage[i] + '\t' +
-                            allele_status[i] + '\t' +
-                            gmats_status[i] + '\n')
+                for key in antigen_info:
+                    o.write(antigen_info[key][0] + '\t' +
+                            antigen_info[key][1] + '\t' +
+                            antigen_info[key][2] + '\t' +
+                            antigen_info[key][3] + '\t' +
+                            antigen_info[key][4] + '\t' +
+                            gmats_status + '\n')
                     f.close()
+
+    def __parse_input_file(self, file_path):
+        """
+        Parses the input file
+        :param file_path: Path to input text file
+        :return: dictionary with 'Locus', 'Allele', '% identity' for each of the 4 antigens
+        """
+        allele_info = {}
+        with file_path.open() as f:
+            for line in f:
+                l = line.split('\t')
+                if l[0] in ['fHbp_peptide', 'NHBA_peptide', 'NadA_peptide', 'PorA_VR2']:
+                    allele_info[l[0]] = l[0:4]
+        return allele_info
+
+    def __derive_allele_gMATS(self, locus, allele, gmats_db):
+        """
+        Derive gMATS prediction for locus/allele
+        :param locus: Locus to be assessed
+        :param allele: Allele of given locus
+        :param gmats_db: Pandas table with the vaccine coverage for the fHbp and NHBA loci
+        :return: the gMATS prediction as string
+        """
+
+        fhbp_db = gmats_db.loc[gmats_db['Locus'] == 'fHbp']
+        nhba_db = gmats_db.loc[gmats_db['Locus'] == 'NHBA']
+
+        if allele in ['-', '?']:
+            allele_gmats = 'unpredictable'
+        elif locus == 'fHbp_peptide':
+            if float(allele) in fhbp_db.Allele:
+                allele_gmats = fhbp_db.Status.loc[fhbp_db['Allele'] == float(allele)].iloc[0]
+            else:
+                allele_gmats = 'unpredictable'
+        elif locus == 'NHBA_peptide':
+            if float(allele) in nhba_db.Allele:
+                allele_gmats = nhba_db.Status.loc[nhba_db['Allele'] == float(allele)].iloc[0]
+            else:
+                allele_gmats = 'unpredictable'
+        elif locus == 'NadA_peptide':
+            allele_gmats = 'not_covered'
+        elif locus == 'PorA_VR2':
+            allele_gmats = 'covered' if allele == '4' else 'not_covered'
+        return allele_gmats
 
 
 #TODO : check peptide integrity via camel
@@ -127,7 +126,6 @@ class GmatsAlgorithm(Tool):
 
 if __name__ == '__main__':
     gmats = GmatsAlgorithm(Camel.get_instance())
-    logging.info('test')
     gmats.add_input_files({'TSV': [
         ToolIOFile(Path('/testdata/camel/pipelines/gMATS/typing-bast-peptide-RRS16BD04259.tsv')),
         ToolIOFile(Path('/testdata/camel/pipelines/gMATS/typing-bast-peptide-S17BD02954.tsv')),
@@ -135,12 +133,10 @@ if __name__ == '__main__':
         ToolIOFile(Path('/testdata/camel/pipelines/gMATS/typing-bast-peptide-S18BD04144.tsv')),
         ToolIOFile(Path('/testdata/camel/pipelines/gMATS/typing-bast-peptide-S18BD07986.tsv'))]
     })
-    logging.info('test2')
     gmats.run()
-    logging.info('test3')
-    print(gmats.tool_outputs)
+    logging.info('Done')
 
-#TODO : automatic list of input files
+#TODO : automatically list input files
 
 
 
