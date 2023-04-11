@@ -7,8 +7,7 @@ from camel.app.tools.tool import Tool
 
 class Flye(Tool):
     """
-    Flye is a de novo assembler for single-molecule sequencing reads,
-    such as those produced by PacBio and Oxford Nanopore Technologies.
+    Flye is a de novo assembler for single-molecule sequencing reads, such as those produced by PacBio and ONT.
     """
 
     def __init__(self, camel: Camel) -> None:
@@ -36,7 +35,7 @@ class Flye(Tool):
             self._tool_command,
             *self._build_options(['genome_size', 'output_directory', 'threads', 'meta', 'read_error', 'min_overlap',
                                   'keep_haplotypes', 'no_alt_contigs']),
-            f"{self._tool_inputs['FASTQ'][0].path}",
+            str(self._tool_inputs['FASTQ'][0].path),
             *self._build_options(['nano_corr', 'nano_hq', 'nano_raw'])
         ])
         self._execute_command()
@@ -56,5 +55,4 @@ class Flye(Tool):
         :return: None
         """
         dir_out = self.folder / self._parameters['output_directory'].value
-        self._tool_outputs['FASTA'] = [
-            ToolIOFile(dir_out / "assembly.fasta")]
+        self._tool_outputs['FASTA'] = [ToolIOFile(dir_out / "assembly.fasta")]
