@@ -12,7 +12,7 @@ class Polypolish(Tool):
     """
     Polishing assembly with short reads using polypolish.
 
-    INPUTs:
+    INPUT:
     - FASTA file of assembly
     - SAM file containing read mapping information
 
@@ -34,8 +34,8 @@ class Polypolish(Tool):
         Executes this tool.
         :return: None
         """
-        fasta_input = Path(str(self._tool_inputs['FASTA'][0]))
-        bam_input = Path(str(self._tool_inputs['SAM'][0]))
+        fasta_input = self._tool_inputs['FASTA'][0].path
+        bam_input = self._tool_inputs['SAM'][0].path
         fasta_output = Path(Polypolish.OUTPUT_NAME)
         self._build_command(fasta_input, bam_input, fasta_output)
         self._execute_command()
@@ -53,8 +53,9 @@ class Polypolish(Tool):
 
         input_folder = self._tool_inputs['FASTA'][0].path.parent
         base_fasta_name = self._tool_inputs['FASTA'][0].path.name
-        fasta_index_file = [f for f in input_folder.glob(f'{base_fasta_name}.fai')]
-        if not (len(fasta_index_file) > 0):
+        try:
+            next(input_folder.glob(f'{base_fasta_name}.fai'))
+        except StopIteration:
             raise InvalidInputSpecificationError('FASTA reference needs to be indexed')
         super()._check_input()
 
@@ -65,8 +66,8 @@ class Polypolish(Tool):
         """
         self._command.command = ' '.join([self._tool_command,
                                           *self._build_options(),
-                                          f'{fasta_input}',
-                                          f'{sam_input}',
+                                          str(fasta_input),
+                                          str(sam_input),
                                           f'> {fasta_output}'])
 
     def _check_command_output(self) -> None:

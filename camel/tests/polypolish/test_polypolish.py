@@ -1,3 +1,5 @@
+import unittest
+
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.polypolish.polypolish import Polypolish
@@ -25,3 +27,7 @@ class TestPolypolish(CamelTestSuite):
             'FASTA': [TestPolypolish.FILE_FASTA_REF]})
         polypolish.run(self.running_dir)
         self.verify_output_files(polypolish, 'FASTA')
+
+
+if __name__ == '__main__':
+    unittest.main()
