@@ -1,15 +1,18 @@
+from camel.app.camel import Camel
 from camel.app.tools.medaka.medaka import Medaka
 
 
 class MedakaConsensus(Medaka):
 
     """
-    Class for Medaka consensus function
+    Class for Medaka consensus function.
+
+    Runs the medaka consensus algorithm and outputs a HDF file in preparation for building a consensus sequence.
     """
 
-    def __init__(self, camel):
+    def __init__(self, camel: Camel):
         """
-        Initialize Medaka
+        Initializes Medaka consensus.
         :param camel: Camel instance
         :return: None
         """
@@ -20,10 +23,9 @@ class MedakaConsensus(Medaka):
 
     def _set_input(self):
         """
-        Set the input specification
+        Sets the input specifications and the input string.
         :return: None
         """
-        super(MedakaConsensus, self)._set_input()
+        super()._set_input()
 
-        bam_file = self._tool_inputs['BAM'][0].path
-        self._input_string = "{} ".format(bam_file)
+        self._input_string = str(self._tool_inputs['BAM'][0].path)

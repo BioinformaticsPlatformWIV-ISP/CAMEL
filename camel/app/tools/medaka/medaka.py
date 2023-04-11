@@ -1,6 +1,7 @@
 import abc
 from pathlib import Path
 
+from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
@@ -10,12 +11,12 @@ from camel.app.tools.tool import Tool
 class Medaka(Tool, metaclass=abc.ABCMeta):
 
     """
-    Super class for Medaka tools
+    Base class for Medaka tools.
     """
 
-    def __init__(self, tool_name, version, camel):
+    def __init__(self, tool_name: str, version: str, camel: Camel):
         """
-        Initialize a Medaka tool
+        Initializes a Medaka tool
         :param tool_name: Tool name
         :param version: Tool version
         :param camel: Camel instance
@@ -51,7 +52,7 @@ class Medaka(Tool, metaclass=abc.ABCMeta):
                 raise InvalidInputSpecificationError(
                     'Medaka {!r} required {!r} input is missing in _tool_inputs!'.format(self._name, input_file))
 
-        super(Medaka, self)._check_input()
+        super()._check_input()
 
     def _set_input(self):
         """
@@ -65,7 +66,7 @@ class Medaka(Tool, metaclass=abc.ABCMeta):
         Set the output specification
         :return: None
         """
-        self._output_string = "{}".format(self._parameters['output'])
+        self._output_string = str(self._parameters['output'])
         self._tool_outputs[self._output_type] = [ToolIOFile(Path(self._folder / self._parameters['output'].value))]
 
     def _set_specific_parameters(self):
@@ -77,7 +78,7 @@ class Medaka(Tool, metaclass=abc.ABCMeta):
 
     def _build_command(self):
         """
-        Build the command to run tool
+        Build the command to run the tool.
         :return: None
         """
         self._option_string += " ".join(self._build_options(excluded_parameters=['output']))
@@ -95,7 +96,7 @@ class Medaka(Tool, metaclass=abc.ABCMeta):
 
     def _set_informs(self):
         """
-        Set informs by analyze the output
+        Sets the informs by analyzing the output.
         :return: None
         """
         pass

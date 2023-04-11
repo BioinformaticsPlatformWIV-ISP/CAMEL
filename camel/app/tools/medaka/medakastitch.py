@@ -1,15 +1,18 @@
+from camel.app.camel import Camel
 from camel.app.tools.medaka.medaka import Medaka
 
 
 class MedakaStitch(Medaka):
 
     """
-    Class for Medaka stitch function
+    Class for Medaka stitch function.
+
+    Medaka stitch reads the output of Medaka consensus and outputs a consensus fasta sequence.
     """
 
-    def __init__(self, camel):
+    def __init__(self, camel: Camel):
         """
-        Initialize Medaka
+        Initializes Medaka stitch.
         :param camel: Camel instance
         :return: None
         """
@@ -23,7 +26,7 @@ class MedakaStitch(Medaka):
         Set the input specification
         :return: None
         """
-        super(MedakaStitch, self)._set_input()
+        super()._set_input()
 
         hdf_file = self._tool_inputs['HDF'][0].path
         fasta_file = self._tool_inputs['FASTA'][0].path

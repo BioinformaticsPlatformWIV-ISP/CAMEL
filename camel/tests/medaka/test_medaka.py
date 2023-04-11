@@ -1,3 +1,5 @@
+import unittest
+
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.medaka.medakaconsensus import MedakaConsensus
@@ -18,18 +20,17 @@ class TestMedaka(CamelTestSuite):
 
     def test_medaka_consensus(self) -> None:
         """
-        Test MedakaConsensus
+        Tests MedakaConsensus.
         :return: None
         """
         consensus = MedakaConsensus(self.camel)
-        consensus.add_input_files({
-            'BAM': [TestMedaka.FILE_BAM]})
+        consensus.add_input_files({'BAM': [TestMedaka.FILE_BAM]})
         consensus.run(self.running_dir)
         self.verify_output_files(consensus, 'HDF')
 
     def test_medaka_stitch(self) -> None:
         """
-        Test MedakaStitch
+        Tests MedakaStitch.
         :return: None
         """
         stitch = MedakaStitch(self.camel)
@@ -39,3 +40,7 @@ class TestMedaka(CamelTestSuite):
         })
         stitch.run(self.running_dir)
         self.verify_output_files(stitch, 'FASTA')
+
+
+if __name__ == '__main__':
+    unittest.main()
