@@ -8,7 +8,7 @@ from camel.app.tools.ale.ale2wiggle import ALE2Wiggle
 
 class TestALE(CamelTestSuite):
     """
-    Initializes this testing tool
+    Initializes the ALE testing tool.
     """
 
     test_file_dir = CamelTestSuite.get_test_file_dir('ale')

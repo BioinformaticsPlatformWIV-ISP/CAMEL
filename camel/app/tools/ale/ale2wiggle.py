@@ -12,11 +12,13 @@ class ALE2Wiggle(Tool):
     """
     ALE is the Assembly Likelihood Evaluation framework that systematically evaluates the accuracy of an assembly
     in a reference-independent manner using rigorous statistical methods.
+
+    Ale2Wiggle converts the ALE output file to a set of wiggle files, which can be read by IGV.
     """
 
     def __init__(self, camel: Camel) -> None:
         """
-        Initialize ALE2Wigglw
+        Initialize the ALE2Wiggle tool.
         :param camel: Camel instance
         :return: None
         """
@@ -27,10 +29,10 @@ class ALE2Wiggle(Tool):
         Executes this tool.
         :return: None
         """
-        ale_input = self._folder / Path(str(self._tool_inputs['ALE'][0])).name
-        ale_input.symlink_to(self._tool_inputs['ALE'][0].path)
+        path_symlink = self._folder / Path(str(self._tool_inputs['ALE'][0])).name
+        path_symlink.symlink_to(self._tool_inputs['ALE'][0].path)
 
-        self._build_command(ale_input)
+        self._build_command(path_symlink)
         self._execute_command()
         self._set_output()
 
@@ -43,13 +45,13 @@ class ALE2Wiggle(Tool):
             raise InvalidInputSpecificationError('ALE file is required')
         super()._check_input()
 
-    def _build_command(self, ale_input) -> None:
+    def _build_command(self, ale_output: Path) -> None:
         """
         Builds the command to run ALE2Wiggle.
+        :ale_output: Path to the file output by ALE
         :return: None
         """
-        self._command.command = ' '.join([self._tool_command,
-                                          f'{ale_input}'])
+        self._command.command = ' '.join([self._tool_command, str(ale_output)])
 
     def _check_command_output(self) -> None:
         """
