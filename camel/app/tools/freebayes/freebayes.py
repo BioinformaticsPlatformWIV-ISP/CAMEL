@@ -17,7 +17,7 @@ class Freebayes(Tool):
 
     def __init__(self, camel: Camel) -> None:
         """
-        Initializes this tool
+        Initializes this tool.
         :param camel: CAMEL instance
         """
         super().__init__('Freebayes', '1.3.6', camel)
@@ -41,10 +41,8 @@ class Freebayes(Tool):
         Builds the command to run freebayes.
         :return: None
         """
-        self._command.command = ' '.join([self._tool_command,
-                                          f'--bam {bam_input}',
-                                          f'--fasta-reference {fasta_input}',
-                                          *self._build_options()])
+        self._command.command = ' '.join([
+            self._tool_command, f'--bam {bam_input}', f'--fasta-reference {fasta_input}', *self._build_options()])
 
     def _check_command_output(self) -> None:
         """
