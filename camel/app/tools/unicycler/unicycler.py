@@ -16,7 +16,7 @@ class Unicycler(Tool):
 
     def __init__(self, camel: Camel) -> None:
         """
-        Initializes this tool
+        Initializes the Unicycler tool.
         :param camel: CAMEL instance
         """
         super().__init__('Unicycler', '0.5.0', camel)
@@ -24,16 +24,16 @@ class Unicycler(Tool):
 
     def _check_input(self) -> None:
         """
-        Checks whether the provided input files are valid
+        Checks whether the provided input files are valid.
         :return: None
         """
-        if any(key in self._tool_inputs for key in ('FASTA' or 'FASTQ_PE' or 'FASTQ_SE')):
+        if any(key not in self._tool_inputs for key in ('FASTA' or 'FASTQ_PE' or 'FASTQ_SE')):
             raise InvalidInputSpecificationError('FASTA or FASTQ_SE or FASTQ_PE input is required')
         super()._check_input()
 
     def _build_command(self) -> None:
         """
-        Builds the command to run unicycler.
+        Builds the command to run Unicycler.
         :return: None
         """
         if 'FASTQ_PE' in self._tool_inputs:
@@ -42,7 +42,7 @@ class Unicycler(Tool):
         if 'FASTQ_SE' in self._tool_inputs:
             self._input_string += f'--long {self._tool_inputs["FASTQ_SE"][0].path} '
         else:
-            raise ValueError('Invalid tool input')
+            raise InvalidInputSpecificationError('FASTQ_SE input is required')
         self._command.command = ' '.join([
             self._tool_command, self._input_string, *self._build_options()])
 
