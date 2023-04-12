@@ -1,3 +1,5 @@
+import unittest
+
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.polca.polca import Polca
@@ -5,7 +7,7 @@ from camel.app.tools.polca.polca import Polca
 
 class TestPolca(CamelTestSuite):
     """
-    Tests the Polca tool.
+    Class to test the polca tool.
     """
     # Get test file and reference file directories
     test_file_dir = CamelTestSuite.get_test_file_dir('polca')
@@ -17,7 +19,7 @@ class TestPolca(CamelTestSuite):
 
     def test_polca(self) -> None:
         """
-        Tests polca
+        Tests Polca.
         :return: None
         """
         polca = Polca(self.camel)
@@ -26,3 +28,7 @@ class TestPolca(CamelTestSuite):
             'FASTA': [TestPolca.FILE_FASTA_REF]})
         polca.run(self.running_dir)
         self.verify_output_files(polca, 'FASTA')
+
+
+if __name__ == '__main__':
+    unittest.main()

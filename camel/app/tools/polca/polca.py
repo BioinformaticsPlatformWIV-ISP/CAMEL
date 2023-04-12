@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from camel.app.camel import Camel
+from camel.app.components.files.fastautils import FastaUtils
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
@@ -15,7 +16,7 @@ class Polca(Tool):
 
     def __init__(self, camel: Camel) -> None:
         """
-        Initialize Polca
+        Initializes Polca.
         :param camel: Camel instance
         :return: None
         """
@@ -41,11 +42,7 @@ class Polca(Tool):
         if 'FASTQ_PE' not in self._tool_inputs:
             raise InvalidInputSpecificationError('FASTQ_PE files are required')
 
-        fasta_input = Path(str(self._tool_inputs['FASTA'][0]))
-        input_folder = fasta_input.parent
-        self._base_fasta_name = self._tool_inputs['FASTA'][0].path.name
-        fasta_index_file = [f for f in input_folder.glob(f'{self._base_fasta_name}.fai')]
-        if not (len(fasta_index_file) > 0):
+        if not FastaUtils.is_indexed(self._tool_inputs['FASTA'][0].path):
             raise InvalidInputSpecificationError('FASTA reference needs to be indexed')
         super()._check_input()
 
