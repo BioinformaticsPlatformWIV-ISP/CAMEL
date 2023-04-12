@@ -52,7 +52,7 @@ class Polypolish(Tool):
         if 'SAM' not in self._tool_inputs:
             raise InvalidInputSpecificationError('SAM alignment file is required')
 
-        if not FastaUtils.is_indexed(self._tool_inputs['FASTA'][0].path, self._tool_inputs['FASTA'][0].path.parent):
+        if not FastaUtils.is_indexed(self._tool_inputs['FASTA'][0].path):
             raise InvalidInputSpecificationError('FASTA reference needs to be indexed')
         super()._check_input()
 
