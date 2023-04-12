@@ -7,7 +7,7 @@ from camel.app.tools.polypolish.polypolish import Polypolish
 
 class TestPolypolish(CamelTestSuite):
     """
-    Tests the Polypolish tool.
+    Initializes the Polypolish testing tool.
     """
     # Get test file and reference file directories
     test_file_dir = CamelTestSuite.get_test_file_dir('polypolish')
@@ -18,7 +18,7 @@ class TestPolypolish(CamelTestSuite):
 
     def test_polypolish(self) -> None:
         """
-        Tests polypolish
+        Tests Polypolish.
         :return: None
         """
         polypolish = Polypolish(self.camel)
