@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from camel.app.camel import Camel
 from camel.app.components.files.fastautils import FastaUtils
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
