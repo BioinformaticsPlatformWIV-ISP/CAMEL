@@ -23,11 +23,11 @@ class MedakaStitch(Medaka):
 
     def _set_input(self):
         """
-        Set the input specification
+        Sets the input specification and the input string.
         :return: None
         """
         super()._set_input()
 
         hdf_file = self._tool_inputs['HDF'][0].path
         fasta_file = self._tool_inputs['FASTA'][0].path
-        self._input_string = "{} {} ".format(hdf_file, fasta_file)
+        self._input_string = str(hdf_file) + " " + str(fasta_file) + " "

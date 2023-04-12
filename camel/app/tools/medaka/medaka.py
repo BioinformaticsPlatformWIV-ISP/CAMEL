@@ -14,7 +14,7 @@ class Medaka(Tool, metaclass=abc.ABCMeta):
     Base class for Medaka tools.
     """
 
-    def __init__(self, tool_name: str, version: str, camel: Camel):
+    def __init__(self, tool_name: str, version: str, camel: Camel) -> None:
         """
         Initializes a Medaka tool
         :param tool_name: Tool name
@@ -30,7 +30,7 @@ class Medaka(Tool, metaclass=abc.ABCMeta):
         self._option_string = ''
         self._output_type = ''
 
-    def _execute_tool(self):
+    def _execute_tool(self) -> None:
         """
         Run a Medaka function
         :return: None
@@ -42,7 +42,7 @@ class Medaka(Tool, metaclass=abc.ABCMeta):
         self._execute_command()
         self._set_informs()
 
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
         Check input for a tool and prepare command line parameters for input
         :return: None
@@ -54,14 +54,14 @@ class Medaka(Tool, metaclass=abc.ABCMeta):
 
         super()._check_input()
 
-    def _set_input(self):
+    def _set_input(self) -> None:
         """
         Set the input specification
         :return: None
         """
         pass
 
-    def _set_output(self):
+    def _set_output(self) -> None:
         """
         Set the output specification
         :return: None
@@ -69,14 +69,14 @@ class Medaka(Tool, metaclass=abc.ABCMeta):
         self._output_string = str(self._parameters['output'])
         self._tool_outputs[self._output_type] = [ToolIOFile(Path(self._folder / self._parameters['output'].value))]
 
-    def _set_specific_parameters(self):
+    def _set_specific_parameters(self) -> None:
         """
         Set specific parameters that need special handling when required
         :return: None
         """
         pass
 
-    def _build_command(self):
+    def _build_command(self) -> None:
         """
         Build the command to run the tool.
         :return: None
@@ -94,7 +94,7 @@ class Medaka(Tool, metaclass=abc.ABCMeta):
         if self._command.returncode != 0:
             raise ToolExecutionError(f"Command execution failed (Exit code: {self._command.returncode})")
 
-    def _set_informs(self):
+    def _set_informs(self) -> None:
         """
         Sets the informs by analyzing the output.
         :return: None
