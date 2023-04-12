@@ -16,7 +16,7 @@ class Medaka(Tool, metaclass=abc.ABCMeta):
 
     def __init__(self, tool_name: str, version: str, camel: Camel) -> None:
         """
-        Initializes a Medaka tool
+        Initializes a Medaka tool.
         :param tool_name: Tool name
         :param version: Tool version
         :param camel: Camel instance
@@ -32,7 +32,7 @@ class Medaka(Tool, metaclass=abc.ABCMeta):
 
     def _execute_tool(self) -> None:
         """
-        Run a Medaka function
+        Runs the tool.
         :return: None
         """
         self._set_input()
@@ -44,26 +44,24 @@ class Medaka(Tool, metaclass=abc.ABCMeta):
 
     def _check_input(self) -> None:
         """
-        Check input for a tool and prepare command line parameters for input
+        Checks if the provided input files are valid.
         :return: None
         """
-        for input_file in self._required_inputs:
-            if input_file not in self._tool_inputs:
-                raise InvalidInputSpecificationError(
-                    'Medaka {!r} required {!r} input is missing in _tool_inputs!'.format(self._name, input_file))
-
+        for key in self._required_inputs:
+            if key not in self._tool_inputs:
+                raise InvalidInputSpecificationError(f"Input '{key}' is required")
         super()._check_input()
 
     def _set_input(self) -> None:
         """
-        Set the input specification
+        Sets the input specification.
         :return: None
         """
         pass
 
     def _set_output(self) -> None:
         """
-        Set the output specification
+        Sets the output specification.
         :return: None
         """
         self._output_string = str(self._parameters['output'])
@@ -71,7 +69,7 @@ class Medaka(Tool, metaclass=abc.ABCMeta):
 
     def _set_specific_parameters(self) -> None:
         """
-        Set specific parameters that need special handling when required
+        Handles parameters that need specific handling for constructing the command line call.
         :return: None
         """
         pass
