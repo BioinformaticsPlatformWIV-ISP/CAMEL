@@ -110,9 +110,14 @@ class FastaUtils(object):
         return groups
 
     @staticmethod
-    def is_indexed(fasta: Path, inputdir: Path):
+    def is_indexed(fasta: Path) -> bool:
+        """
+        Checks if the input fasta file is indexed with the FAI index.
+        :param fasta: Fasta file to check for associated index
+        :return: True or False depending on the presence of the index file
+        """
         try:
-            next(inputdir.glob(f'{fasta.name}.fai'))
+            next(fasta.parent.glob(f'{fasta.name}.fai'))
         except StopIteration:
             return False
         return True
