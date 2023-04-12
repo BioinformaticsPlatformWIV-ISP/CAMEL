@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from camel.app.camel import Camel
+from camel.app.components.files.fastautils import FastaUtils
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
@@ -18,7 +19,7 @@ class ALE(Tool):
 
     def __init__(self, camel: Camel) -> None:
         """
-        Initialize Polypolish
+        Initializes ALE.
         :param camel: Camel instance
         :return: None
         """
@@ -29,8 +30,8 @@ class ALE(Tool):
         Executes this tool.
         :return: None
         """
-        fasta_input = Path(str(self._tool_inputs['FASTA'][0]))
-        bam_input = Path(str(self._tool_inputs['SAM'][0]))
+        fasta_input = self._tool_inputs['FASTA'][0].path
+        bam_input = self._tool_inputs['SAM'][0].path
         ale_output = Path(ALE.ALE_OUTPUT)
         self._build_command(fasta_input, bam_input, ale_output)
         self._execute_command()
@@ -46,10 +47,7 @@ class ALE(Tool):
         if 'SAM' not in self._tool_inputs:
             raise InvalidInputSpecificationError('SAM alignment file is required')
 
-        input_folder = self._tool_inputs['FASTA'][0].path.parent
-        base_fasta_name = self._tool_inputs['FASTA'][0].path.name
-        fasta_index_file = [f for f in input_folder.glob(f'{base_fasta_name}.fai')]
-        if not (len(fasta_index_file) > 0):
+        if not FastaUtils.is_indexed(self._tool_inputs['FASTA'][0].path):
             raise InvalidInputSpecificationError('FASTA reference needs to be indexed')
         super()._check_input()
 
@@ -60,9 +58,9 @@ class ALE(Tool):
         """
         self._command.command = ' '.join([self._tool_command,
                                           *self._build_options(),
-                                          f'{sam_input}',
-                                          f'{fasta_input}',
-                                          f'{ale_output}'])
+                                          str(sam_input),
+                                          str(fasta_input),
+                                          str(ale_output)])
 
     def _check_command_output(self) -> None:
         """
@@ -75,5 +73,6 @@ class ALE(Tool):
     def _set_output(self, ale_output: Path) -> None:
         """
         Collects the tool output.
+        :return: None
         """
         self._tool_outputs['ALE'] = [ToolIOFile(self.folder / f'{ale_output}')]
