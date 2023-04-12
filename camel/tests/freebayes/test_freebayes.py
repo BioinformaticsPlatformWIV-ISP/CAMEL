@@ -18,7 +18,8 @@ class TestFreebayes(CamelTestSuite):
 
     def test_freebayes(self) -> None:
         """
-        actually testing Freebayes on illumina sequencing data
+        Actually testing Freebayes on illumina sequencing data.
+        :return: None
         """
         freebayes = Freebayes(self.camel)
         freebayes.add_input_files({'FASTA': [TestFreebayes.FILE_FASTA], 'BAM': [TestFreebayes.FILE_BAM_ILLUMINA]})
@@ -28,7 +29,8 @@ class TestFreebayes(CamelTestSuite):
 
     def test_freebayes_maincalling(self) -> None:
         """
-        Testing the maincalling freebayes script
+        Testing the freebayes main script.
+        :return: None
         """
         output_file_vcf = self.running_dir / 'variants.vcf'
         args = [

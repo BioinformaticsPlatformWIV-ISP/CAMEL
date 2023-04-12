@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from camel.app.camel import Camel
+from camel.app.components.files.fastautils import FastaUtils
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
@@ -9,7 +10,7 @@ from camel.app.tools.tool import Tool
 
 class Freebayes(Tool):
     """
-    freebayes is a Bayesian genetic variant detector designed to find small polymorphisms,
+    Freebayes is a Bayesian genetic variant detector designed to find small polymorphisms,
     specifically SNPs, indels, MNPs (multi-nucleotide polymorphisms), and complex events
     (composite insertion and substitution events) smaller than the length of a short-read sequencing alignment.
     """
@@ -23,7 +24,7 @@ class Freebayes(Tool):
 
     def _check_input(self) -> None:
         """
-        Checks whether the provided input files are valid
+        Checks whether the provided input files are valid.
         :return: None
         """
         if 'FASTA' not in self._tool_inputs:
@@ -31,10 +32,7 @@ class Freebayes(Tool):
         if 'BAM' not in self._tool_inputs:
             raise InvalidInputSpecificationError('BAM alignment file is required')
 
-        input_folder = self._tool_inputs['FASTA'][0].path.parent
-        base_fasta_name = self._tool_inputs['FASTA'][0].path.name
-        fasta_index_file = [f for f in input_folder.glob(f'{base_fasta_name}.fai')]
-        if not (len(fasta_index_file) > 0):
+        if not FastaUtils.is_indexed(self._tool_inputs['FASTA'][0].path):
             raise InvalidInputSpecificationError('FASTA reference needs to be indexed')
         super()._check_input()
 
@@ -59,6 +57,7 @@ class Freebayes(Tool):
     def _set_output(self) -> None:
         """
         Collects the tool output.
+        :return: None
         """
         self._tool_outputs['VCF'] = [ToolIOFile(Path(self._folder / self._parameters['vcf'].value))]
 
