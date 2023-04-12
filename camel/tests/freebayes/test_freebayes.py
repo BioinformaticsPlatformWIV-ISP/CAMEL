@@ -9,7 +9,7 @@ from camel.scripts.freebayes.mainfreebayes import MainFreebayesCalling
 
 class TestFreebayes(CamelTestSuite):
     """
-    Tests freebayes.
+    Tests for the freebayes tool.
     """
     # Input files
     test_file_dir = CamelTestSuite.get_test_file_dir('clair3')
@@ -18,7 +18,7 @@ class TestFreebayes(CamelTestSuite):
 
     def test_freebayes(self) -> None:
         """
-        Actually testing Freebayes on illumina sequencing data.
+        Tests Freebayes on illumina sequencing data.
         :return: None
         """
         freebayes = Freebayes(self.camel)
