@@ -19,7 +19,7 @@ class TestPolca(CamelTestSuite):
 
     def test_polca(self) -> None:
         """
-        Tests Polca.
+        Tests the Polca tool.
         :return: None
         """
         polca = Polca(self.camel)

@@ -21,7 +21,6 @@ class Polca(Tool):
         :return: None
         """
         super().__init__('Polca', '4.1.0', camel)
-        self._base_fasta_name = ''
 
     def _execute_tool(self) -> None:
         """
@@ -69,5 +68,5 @@ class Polca(Tool):
         """
         Collects the tool output.
         """
-        fasta_output = f'{self._base_fasta_name}.PolcaCorrected.fa'
+        fasta_output = f'{self._tool_inputs["FASTA"][0].path.name}.PolcaCorrected.fa'
         self._tool_outputs['FASTA'] = [ToolIOFile(self.folder / f'{fasta_output}')]
