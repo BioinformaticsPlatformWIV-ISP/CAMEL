@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from camel.app.camel import Camel
+from camel.app.components.files.fastautils import FastaUtils
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
@@ -23,7 +24,7 @@ class Polypolish(Tool):
 
     def __init__(self, camel: Camel) -> None:
         """
-        Initialize Polypolish
+        Initializes Polypolish.
         :param camel: Camel instance
         :return: None
         """
@@ -43,7 +44,7 @@ class Polypolish(Tool):
 
     def _check_input(self) -> None:
         """
-        Checks whether the provided input files are valid
+        Checks whether the provided input files are valid.
         :return: None
         """
         if 'FASTA' not in self._tool_inputs:
@@ -51,11 +52,7 @@ class Polypolish(Tool):
         if 'SAM' not in self._tool_inputs:
             raise InvalidInputSpecificationError('SAM alignment file is required')
 
-        input_folder = self._tool_inputs['FASTA'][0].path.parent
-        base_fasta_name = self._tool_inputs['FASTA'][0].path.name
-        try:
-            next(input_folder.glob(f'{base_fasta_name}.fai'))
-        except StopIteration:
+        if not FastaUtils.is_indexed(self._tool_inputs['FASTA'][0].path, self._tool_inputs['FASTA'][0].path.parent):
             raise InvalidInputSpecificationError('FASTA reference needs to be indexed')
         super()._check_input()
 

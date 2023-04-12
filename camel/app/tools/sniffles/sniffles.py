@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from camel.app.camel import Camel
+from camel.app.components.files.fastautils import FastaUtils
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
@@ -9,14 +10,15 @@ from camel.app.tools.tool import Tool
 
 class Sniffles(Tool):
     """
-    Sniffles is a fast structural variant caller for long-read sequencing, it accurately detect SVs on germline,
+    Sniffles is a fast structural variant caller for long-read sequencing, it accurately detects SVs on germline,
     somatic and population-level for PacBio and Oxford Nanopore read data.
     """
 
     def __init__(self, camel: Camel) -> None:
         """
-        Initializes this tool
+        Initializes Sniffles 2.0.7.
         :param camel: CAMEL instance
+        :return: None
         """
         super().__init__('Sniffles', '2.0.7', camel)
 
@@ -30,10 +32,7 @@ class Sniffles(Tool):
         if 'BAM' not in self._tool_inputs:
             raise InvalidInputSpecificationError('BAM alignment file is required')
 
-        input_folder = self._tool_inputs['FASTA'][0].path.parent
-        base_fasta_name = self._tool_inputs['FASTA'][0].path.name
-        fasta_index_file = [f for f in input_folder.glob(f'{base_fasta_name}.fai')]
-        if not (len(fasta_index_file) > 0):
+        if not FastaUtils.is_indexed(self._tool_inputs['FASTA'][0].path, self._tool_inputs['FASTA'][0].path.parent):
             raise InvalidInputSpecificationError('FASTA reference needs to be indexed')
         super()._check_input()
 

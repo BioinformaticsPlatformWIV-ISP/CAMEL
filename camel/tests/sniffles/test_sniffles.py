@@ -8,7 +8,7 @@ from camel.app.tools.sniffles.sniffles import Sniffles
 
 class TestSniffles(CamelTestSuite):
     """
-    Initializes this testing tool
+    Initializes the Sniffles testing tool.
     """
 
     test_file_dir = CamelTestSuite.get_test_file_dir('clair3')
@@ -17,7 +17,7 @@ class TestSniffles(CamelTestSuite):
 
     def test_sniffles(self) -> None:
         """
-        Actually testing Sniffles on ONT sequencing data
+        Actually testing Sniffles on ONT sequencing data.
         """
         sniffles = Sniffles(self.camel)
         sniffles.add_input_files({'BAM': [TestSniffles.FILE_BAM_ONT], 'FASTA': [TestSniffles.FILE_FASTA]})

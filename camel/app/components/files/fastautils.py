@@ -108,3 +108,11 @@ class FastaUtils(object):
                 SeqIO.write(batch, outhandle, 'fasta')
             groups.append(filename)
         return groups
+
+    @staticmethod
+    def is_indexed(fasta: Path, inputdir: Path):
+        try:
+            next(inputdir.glob(f'{fasta.name}.fai'))
+        except StopIteration:
+            return False
+        return True
