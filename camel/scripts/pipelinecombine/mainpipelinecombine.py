@@ -28,6 +28,7 @@ class MainPipelineCombine(object):
         Initializes the main script.
         """
         self._args = MainPipelineCombine._parse_arguments(args)
+        self._gene_detection_cols = []
 
     def run(self) -> None:
         """
@@ -53,7 +54,8 @@ class MainPipelineCombine(object):
 
         # Re-order columns
         data_out_filt = data_out_filt.reindex(sorted(
-            data_out_filt.columns, key=lambda x: MainPipelineCombine._get_sorting_key(x)), axis=1)
+            data_out_filt.columns, key=lambda x: MainPipelineCombine._get_sorting_key(x, self._gene_detection_cols)),
+            axis=1)
 
         # Save output file
         data_out_filt.to_csv(self._args.output, sep='\t', index=False)
@@ -76,9 +78,15 @@ class MainPipelineCombine(object):
                 # Gene detection hits
                 m = re.match(r'hits_(.*)', key)
                 if m and (self._args.gene_format is not None):
+                    # Keep track of gene detection columns for sorting
+                    self._gene_detection_cols.append(m.group(1))
+
+                    # Add detected genes
                     for key, value in MainPipelineCombine._format_gene_detection_hits(
-                            m.group(1), value, MainPipelineCombine.GENE_FORMATS[self._args.gene_format]):
+                            m.group(1), value, MainPipelineCombine.GENE_FORMATS[self._args.gene_format],
+                            self._args.group_genes):
                         isolate_data[key] = value
+
                 # LREFinder genes
                 if key == 'lrefinder_genes':
                     hits = ast.literal_eval(value)
@@ -150,27 +158,28 @@ class MainPipelineCombine(object):
         return False
 
     @staticmethod
-    def _get_sorting_key(column_name: str) -> str:
+    def _get_sorting_key(col_name: str, gene_detection_cols: List[str]) -> str:
         """
         Returns the sorting key for the given column.
-        :param column_name: Column name
+        :param col_name: Column name
+        :param gene_detection_cols: Gene detection columns
         :return: sorting key
         """
-        m = re.match(r'(.*)_Cluster_\d+', column_name)
-        if m:
-            return m.group(1)
-        m = re.match(r'(.*)_genes-.*', column_name)
-        if m:
-            return m.group(1)
-        return ''
+        try:
+            next(c for c in gene_detection_cols if col_name.startswith(c))
+            return col_name
+        except StopIteration:
+            # Not a gene detection column -> don't change order
+            return ''
 
     @staticmethod
-    def _format_gene_detection_hits(db_key: str, value: str, format_str: str) -> List[Tuple[str, str]]:
+    def _format_gene_detection_hits(db_key: str, value: str, format_str: str, grouping: str) -> List[Tuple[str, str]]:
         """
         Formats a gene entry.
         :param db_key: Database key
         :param value: Value
         :param format_str: Format string
+        :param grouping: Option for determining the key for grouping detected genes
         :return: Key, formatted hit
         """
         hits = ast.literal_eval(value)
@@ -178,7 +187,13 @@ class MainPipelineCombine(object):
             return []
         output_rows = []
         for hit in hits:
-            key = f'{db_key}_{hit[0]}'
+            if grouping == 'cluster':
+                key = f'{db_key}_{hit[0]}'
+            elif grouping == 'gene':
+                gene_name = re.sub(r'_\d+$', '', hit[1])
+                key = f'{db_key}_{gene_name}'
+            else:
+                key = f'{db_key}_{hit[1]}'
             output_rows.append((key, format_str.format(hit=hit)))
         return output_rows
 
@@ -195,6 +210,9 @@ class MainPipelineCombine(object):
         parser.add_argument('--include', type=str, help='Comma separated list of keys to include')
         parser.add_argument(
             '--gene-format', type=str, choices=MainPipelineCombine.GENE_FORMATS.keys(), help='Format for genes')
+        parser.add_argument(
+            '--group-genes', type=str, choices=['cluster', 'gene', 'allele'], default='cluster',
+            help='Grouping for the detected genes in the output')
         return parser.parse_args(args)
 
 
