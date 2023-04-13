@@ -1,5 +1,4 @@
 dependencies: []
 parameters:
-  output_directory: {default: true, mandatory: true, option: null, value: /scratch/nagoeders/PyCharmProjects/RD_NG/camel_3.0/}
-  gmats_db: {default: true, mandatory: true, option: null, value: /var/lib/.bioit_database/pipelines/neisseria/gMATS_DB.txt}
-tool_command: cat
+  output_directory: {default: false, mandatory: false, option: null, value: ''}
+tool_command: null

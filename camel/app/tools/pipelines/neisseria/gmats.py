@@ -1,12 +1,12 @@
 import logging
-import pandas as pd
-
 from pathlib import Path
 
+import pandas as pd
+
 from camel.app.camel import Camel
+from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.tool import Tool
-from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 
 
 class GMats(Tool):
@@ -27,9 +27,7 @@ class GMats(Tool):
         Checks if the provided input is valid.
         :return: None
         """
-        if 'output_directory' not in self._parameters:
-            raise InvalidInputSpecificationError("Output directory is required.")
-        if 'gmats_db' not in self._parameters:
+        if 'DB' not in self._tool_inputs:
             raise InvalidInputSpecificationError("gMATS database is required")
         if 'TSV' not in self._tool_inputs:
             raise InvalidInputSpecificationError("List of input files (TSV) is required")
@@ -40,71 +38,53 @@ class GMats(Tool):
         Executes the tool.
         :return: 'None'
         """
+        gmats_db = pd.read_table(self._tool_inputs['DB'][0].path)
 
-        output_dir = Path(self._parameters["output_directory"].value)
-        gmats_db = pd.read_csv(self._parameters['gmats_db'].value, sep='\t')
+        # antigen_info = self._parse_input_file()
+        # self._determine_gmats_alelle(antigen_info, db)
+        # self._determine_gmats_status(antigen_info, db)
+        # self._create_output_file(antigen_info)
 
-        for path_io in self._tool_inputs['TSV']:
-            logging.info(f'Processing input file: {path_io}')
+        # Parse input file
+        tsv_in = self._tool_inputs['TSV'][0].path
+        sample_id = tsv_in.stem.replace('typing-bast-peptide-', '')
+        logging.info(f'Sample ID: {sample_id}')
+        antigen_info = self.__parse_input_file(tsv_in)
 
-            sample_id = path_io.path.stem.replace('typing-bast-peptide-', '')
-            logging.info(f'Sample ID: {sample_id}')
+        # Determine gMATS allele
+        antigen_info['gmats_allele'] = antigen_info.apply(
+            lambda x: self.__derive_allele_gmats(x['Locus'], x['Allele'], gmats_db), axis=1)
 
-            output_file = output_dir / f'{sample_id}_gMATS.tsv'
-            logging.info(f'Output file: {output_file}')
+        # Derive gMATS status of sample
+        if 'covered' in list(antigen_info['gmats_allele']):
+            antigen_info['gMATS status'] = 'covered'
+        elif 'not_covered' in list(antigen_info['gmats_allele']):
+            antigen_info['gMATS status'] = 'not_covered'
+        else:
+            antigen_info['gMATS status'] = 'unpredictable'
 
-            # Write output backbone
-            with open(output_file, mode='w') as handle:
-                handle.write('\t'.join(['Locus', 'Allele', '% Identity', 'HSP/Locus length', 'Allele status', 'gMATS status', '\n']))
+        # Get the output directory
+        if 'output_directory' in self._parameters:
+            output_dir = Path(self._parameters["output_directory"].value)
+        else:
+            output_dir = self.folder
 
-            # Parse input file
-            antigen_info = self.__parse_input_file(path_io.path)
+        # Create output file
+        output_file = output_dir / f'{sample_id}_gMATS.tsv'
+        antigen_info.drop(['Type'], axis=1, inplace=True)
+        antigen_info.to_csv(output_file, sep='\t', index=False)
+        logging.info(f'Output file created: {output_file}')
+        self._tool_outputs['TSV'] = [ToolIOFile(output_file)]
 
-            # Derive gMATS status for each antigen
-            allele_status = []
-            for locus in antigen_info:
-                allele_gmats = self.__derive_allele_gmats(locus, antigen_info[locus][1], gmats_db)
-                antigen_info[locus] += [str(allele_gmats)]
-                allele_status.append(allele_gmats)
-
-            # Derive gMATS status of sample
-            if 'covered' in allele_status:
-                gmats_status = 'covered'
-            elif 'not_covered' in allele_status:
-                gmats_status = 'not_covered'
-            else:
-                gmats_status = 'unpredictable'
-
-            # Write output text file
-            with open(output_file, mode='a') as handle:
-                for locus in antigen_info:
-                    handle.write('\t'.join([antigen_info[locus][0],
-                                            str(antigen_info[locus][1]),
-                                            str(antigen_info[locus][2]),
-                                            str(antigen_info[locus][3]),
-                                            antigen_info[locus][4],
-                                            gmats_status,
-                                            '\n']))
-                handle.close()
-
-    def __parse_input_file(self, file_path: Path) -> dict[str, list[str]]:
+    def __parse_input_file(self, file_path: Path) -> pd.DataFrame:
         """
         Parses the input file.
         :param file_path: Path to input text file
-        :return: dictionary with 'Locus', 'Allele', '% identity' for each of the 4 antigens
+        :return: DataFrame with allele info
         """
-        input_file = pd.read_table(file_path)
-
-        allele_info = {'fHbp_peptide': input_file.loc[input_file['Locus'] == 'fHbp_peptide'].iloc[0,
-                                       0:4].values.flatten().tolist(),
-                       'NHBA_peptide': input_file.loc[input_file['Locus'] == 'NHBA_peptide'].iloc[0,
-                                       0:4].values.flatten().tolist(),
-                       'NadA_peptide': input_file.loc[input_file['Locus'] == 'NadA_peptide'].iloc[0,
-                                       0:4].values.flatten().tolist(),
-                       'PorA_VR2': input_file.loc[input_file['Locus'] == 'PorA_VR2'].iloc[0,
-                                   0:4].values.flatten().tolist()}
-
-        return allele_info
+        input_file = pd.read_table(file_path, dtype=str)
+        input_file = input_file[input_file['Locus'] != 'PorA_VR1']
+        return input_file
 
     def __derive_allele_gmats(self, locus: str, allele: str, gmats_db: pd.DataFrame) -> str:
         """
@@ -114,42 +94,34 @@ class GMats(Tool):
         :param gmats_db: Pandas table containing the vaccine coverage for the fHbp and NHBA loci
         :return: the gMATS prediction
         """
-
         fhbp_db = gmats_db.loc[gmats_db['Locus'] == 'fHbp']
         nhba_db = gmats_db.loc[gmats_db['Locus'] == 'NHBA']
 
         if allele in ['-', '?']:
-            allele_gmats = 'unpredictable'
-        elif locus == 'fHbp_peptide':
+            return 'unpredictable'
+
+        # fHbp
+        if locus == 'fHbp_peptide':
             if float(allele) in fhbp_db.Allele:
-                allele_gmats = fhbp_db.Status.loc[fhbp_db['Allele'] == float(allele)].iloc[0]
+                return fhbp_db.Status.loc[fhbp_db['Allele'] == float(allele)].iloc[0]
             else:
-                allele_gmats = 'unpredictable'
-        elif locus == 'NHBA_peptide':
+                return 'unpredictable'
+
+        # NHBA
+        if locus == 'NHBA_peptide':
             if float(allele) in nhba_db.Allele:
-                allele_gmats = nhba_db.Status.loc[nhba_db['Allele'] == float(allele)].iloc[0]
+                return nhba_db.Status.loc[nhba_db['Allele'] == float(allele)].iloc[0]
             else:
-                allele_gmats = 'unpredictable'
-        elif locus == 'NadA_peptide':
-            allele_gmats = 'not_covered'
-        elif locus == 'PorA_VR2':
-            allele_gmats = 'covered' if allele == '4' else 'not_covered'
-        return allele_gmats
+                return 'unpredictable'
 
-#TODO : check peptide integrity via camel
-#TODO : Add flag for 'Not covered' alleles with a high identity or coverage length with 'Covered' alleles
+        # PorA_VR2
+        if locus == 'PorA_VR2':
+            return 'covered' if allele == '4' else 'not_covered'
 
+        # Other loci
+        if locus in ('NadA_peptide', 'PorA_VR1'):
+            return 'not_covered'
+        raise ValueError(f'Cannot determine gmats allele (locus={locus}, allele={allele})')
 
-if __name__ == '__main__':
-    gmats = GMats(Camel.get_instance())
-    gmats.add_input_files({'TSV': [
-        ToolIOFile(Path('/testdata/camel/pipelines/gMATS/typing-bast-peptide-RRS16BD04259.tsv')),
-        ToolIOFile(Path('/testdata/camel/pipelines/gMATS/typing-bast-peptide-S17BD02954.tsv')),
-        ToolIOFile(Path('/testdata/camel/pipelines/gMATS/typing-bast-peptide-S17BD08805.tsv')),
-        ToolIOFile(Path('/testdata/camel/pipelines/gMATS/typing-bast-peptide-S18BD04144.tsv')),
-        ToolIOFile(Path('/testdata/camel/pipelines/gMATS/typing-bast-peptide-S18BD07986.tsv'))]
-    })
-    gmats.run()
-    logging.info('Done')
-
-#TODO : automatically list input files
+        # TODO: check peptide integrity via camel
+        # TODO: Add flag for 'Not covered' alleles with a high identity or coverage length with 'Covered' alleles
