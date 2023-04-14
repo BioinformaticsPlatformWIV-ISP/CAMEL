@@ -1,0 +1,86 @@
+#!/usr/bin/env python
+import argparse
+from typing import Optional, Sequence
+from pathlib import Path
+
+import pkg_resources
+
+from camel.app.camel import Camel
+from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
+
+
+class MainHybridAssemblyPipeline:
+    """
+    Main class to run the Hybrid assembly pipeline.
+    """
+
+    def __init__(self) -> None:
+        self._args = MainHybridAssemblyPipeline._parse_arguments()
+
+    @staticmethod
+    def _parse_arguments(args: Optional[Sequence[str]] = None) -> argparse.Namespace:
+        """
+        Parses the command line arguments.
+        :return: Arguments
+        """
+        argument_parser = argparse.ArgumentParser()
+        argument_parser.add_argument('--fastq-pe', type=Path, help="Input Fastq PE file", nargs='+')
+        argument_parser.add_argument('--fastq-se', type=Path, help="Input Fastq SE files")
+        argument_parser.add_argument('--working-dir', type=Path, default=Path.cwd())
+        argument_parser.add_argument('--ploidy', choices=['GRCh37', 'GRCh38', 'X', 'Y', '1'], default='1')
+        argument_parser.add_argument('--ont-qual', type=str, required=True,
+                                     choices=['nano-corr', 'nano-hq', 'nano-raw'], default='nano-corr')
+        argument_parser.add_argument('--expected-species', type=str, required=True)
+        argument_parser.add_argument('--expected-gc-content', type=str, required=True)
+        argument_parser.add_argument('--expected-genome-size', type=str, required=True)
+        argument_parser.add_argument('--filtlong-keep-percent', type=int)
+        argument_parser.add_argument('--threads', type=int, default=8)
+        return argument_parser.parse_args(args)
+
+    def run(self) -> None:
+        path_config = self.__create_snakemake_config_data()
+        path_snakefile = pkg_resources.resource_filename('camel', 'scripts/hybridassemblypipeline/snakefile/main.smk')
+        SnakePipelineUtils.run_snakemake(
+            path_snakefile, path_config, [], self._args.working_dir, threads=self._args.threads)
+
+    def __create_snakemake_config_data(self) -> str:
+        """
+        Creates a Snakemake configuration file.
+        :return: Config file data
+        """
+        config = SnakePipelineUtils.generate_config_file({
+            'sample_name': 'Sample', 'working_dir': self._args.working_dir,
+            'freebayes': {
+                'ploidy': self._args.ploidy
+            },
+            'name': 'test_sample',
+            'filtlong': {
+                'keep_percent': self._args.filtlong_keep_percent if self._args.filtlong_keep_percent is not None else 95
+            },
+            'assembly': {
+                'flye': {
+                    'genome_size': self._args.expected_genome_size,
+                    self._args.ont_qual.replace('-', '_'): True},
+                'min_contig_length': 1000
+            },
+            'input': {
+                'illumina': self._args.fastq_pe,
+                'ont': self._args.fastq_se,
+            },
+            'polishing': {
+                'medaka': {},
+                'polca': {},
+                'polypolish': {}
+            },
+            'read_mapping': {
+                'bwa': {},
+                'minimap2': {}
+            }
+        }, self._args.working_dir)
+        return config
+
+
+if __name__ == '__main__':
+    Camel.get_instance()
+    main = MainHybridAssemblyPipeline()
+    main.run()
