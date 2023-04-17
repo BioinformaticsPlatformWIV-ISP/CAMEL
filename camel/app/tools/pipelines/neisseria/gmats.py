@@ -8,7 +8,7 @@ from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.tool import Tool
 
 
-class GdMats(Tool):
+class GMats(Tool):
     """
     gMATS is the genetic Meningococcal Antigen Typing System (gMATS) for Neisseria meningitidis
     used to predict the Bexsero vaccine effectiveness.
