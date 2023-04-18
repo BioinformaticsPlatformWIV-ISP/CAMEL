@@ -50,7 +50,9 @@ class GMats(Tool):
             lambda x: self.__determine_gmats_alelle(x['Locus'], x['Allele'], gmats_db), axis=1)
 
         # Determine global gMATS status
-        antigen_info['gMATS status'] = self.__determine_gmats_status(antigen_info['Allele status'])
+        status = self.__determine_gmats_status(antigen_info['Allele status'])
+        antigen_info['gMATS status'] = status
+        self._informs['gMATS_status'] = status
 
         # Get the output directory
         self.__create_output_file(antigen_info, sample_id)
