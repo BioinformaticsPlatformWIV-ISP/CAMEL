@@ -136,7 +136,7 @@ class GMats(Tool):
         """
         if 'covered' in list(allele_status):
             return 'covered'
-        elif 'not_covered' in list(allele_status):
+        elif all(status == 'not_covered' for status in list(allele_status)):
             return 'not_covered'
         else:
             return 'unpredictable'
