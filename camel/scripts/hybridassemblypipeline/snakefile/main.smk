@@ -5,13 +5,14 @@ from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.scripts.hybridassemblypipeline.snakefile import assembly_flye, short_read_polishing, medaka_snakemake
+from camel.scripts.hybridassemblypipeline.snakefile import assembly_flye, short_read_polishing, medaka_snakemake, quality_checks
 
 camel = Camel.get_instance()
 
 include: assembly_flye.SNAKEFILE_FLYE
 include: medaka_snakemake.SNAKEFILE_POLISHING
 include: short_read_polishing.SNAKEFILE_POLISHING
+include: quality_checks.SNAKEFILE_QC
 
 #########
 # Rules #
@@ -22,7 +23,11 @@ rule all:
     This rules ensures that the required output files are generated.
     """
     input:
-        Path(config['working_dir']) / 'polishing' / 'polypolish' / 'polished.fasta'
+        Path(config['working_dir']) / 'polishing' / 'polypolish' / 'polished.fasta',
+        Path(config['working_dir']) / 'qc' / 'freebayes' / 'variants.vcf',
+        Path(config['working_dir']) / 'qc' / 'sniffles' / 'variants.vcf',
+        Path(config['working_dir']) / 'qc' / 'clair3_output' / 'merge_output.vcf.gz',
+        Path(config['working_dir']) / 'qc' / 'ale_illumina' / 'ALE.ale-place.wig'
 
 rule trim_illumina:
     input:

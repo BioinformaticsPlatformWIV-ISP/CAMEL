@@ -49,11 +49,11 @@ class MainHybridAssemblyPipeline:
         :return: Config file data
         """
         config = SnakePipelineUtils.generate_config_file({
-            'sample_name': 'Sample', 'working_dir': self._args.working_dir,
-            'freebayes': {
-                'ploidy': self._args.ploidy
+            'sample_name': 'Sample', 'working_dir': self._args.working_dir, 'name': 'test_sample',
+            'input': {
+                'illumina': self._args.fastq_pe,
+                'ont': self._args.fastq_se,
             },
-            'name': 'test_sample',
             'filtlong': {
                 'keep_percent': self._args.filtlong_keep_percent if self._args.filtlong_keep_percent is not None else 95
             },
@@ -63,10 +63,6 @@ class MainHybridAssemblyPipeline:
                     self._args.ont_qual.replace('-', '_'): True},
                 'min_contig_length': 1000
             },
-            'input': {
-                'illumina': self._args.fastq_pe,
-                'ont': self._args.fastq_se,
-            },
             'polishing': {
                 'medaka': {},
                 'polca': {},
@@ -75,6 +71,9 @@ class MainHybridAssemblyPipeline:
             'read_mapping': {
                 'bwa': {},
                 'minimap2': {}
+            },
+            'freebayes': {
+                'ploidy': self._args.ploidy
             }
         }, self._args.working_dir)
         return config
