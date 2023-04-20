@@ -52,6 +52,7 @@ class GMatsReporter(Tool):
             row[idx_status] = HtmlTableCell(row[idx_status], GMatsReporter.__get_color(row[idx_status]))
             table_data.append(row)
         section.add_table(table_data, list(data_hits.columns), [('class', 'data')])
+        section.add_paragraph('<b>Note:<b> Imperfect matches are marked with an asterisk(*) and are not used for determining the gMATS status.')
 
     def _execute_tool(self) -> None:
         """
