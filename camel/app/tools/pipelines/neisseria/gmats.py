@@ -2,6 +2,7 @@ import logging
 import pandas as pd
 
 from pathlib import Path
+from fractions import Fraction
 from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliofile import ToolIOFile
@@ -45,6 +46,10 @@ class GMats(Tool):
         logging.info(f'Sample ID: {sample_id}')
         antigen_info = self.__parse_input_file(tsv_in)
 
+        # Check allele integrity
+        antigen_info['Allele'] = antigen_info.apply(
+            lambda x: self.__verify_integrity(x['Allele'], x['% Identity'], x['HSP/Locus length']), axis=1)
+
         # Determine gMATS allele
         antigen_info['Allele status'] = antigen_info.apply(
             lambda x: self.__determine_gmats_alelle(x['Locus'], x['Allele'], gmats_db), axis=1)
@@ -66,6 +71,25 @@ class GMats(Tool):
         input_file = pd.read_table(file_path, dtype=str)
         input_file = input_file[input_file['Locus'] != 'PorA_VR1']
         return input_file
+
+    def __verify_integrity(self, allele: str, identity: str, coverage: str) -> str:
+        """
+        Verifies that the allele is a perfect hit i.e. that shows 100% identity and 100% coverage.
+        :param allele: Allele
+        :param identity: Allele identity %
+        :param coverage: Allele coverage length
+        :return: Allele or allele marked with an asterisk(*) in case of imperfect match
+        """
+
+        # Skip undetermined alleles
+        if allele in ['-', '?']:
+            return allele
+
+        # Verify assigned alleles
+        if identity == '100.00' and int(Fraction(coverage)) == 1:
+            return allele
+        else:
+            return allele + '*'
 
     def __determine_gmats_alelle(self, locus: str, allele: str, gmats_db: pd.DataFrame) -> str:
         """
