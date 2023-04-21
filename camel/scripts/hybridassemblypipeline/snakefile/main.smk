@@ -23,8 +23,6 @@ rule all:
     This rules ensures that the required output files are generated.
     """
     input:
-        Path(config['working_dir']) / 'polishing' / 'polypolish' / 'polished.fasta',
-        Path(config['working_dir']) / 'unicycler' / 'assembly.fasta',
         Path(config['working_dir'] / 'ok.txt')
 
 rule trim_illumina:

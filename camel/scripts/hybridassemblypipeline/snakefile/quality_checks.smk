@@ -269,13 +269,15 @@ rule freebayes_qc:
     output:
         VCF =  Path(config['working_dir']) / 'qc' / '{name}' / 'freebayes' / 'variants.vcf'
     params:
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'freebayes'
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'freebayes',
+        freebayes_options = config.get('freebayes',{})
     run:
         from camel.app.tools.freebayes.freebayes import Freebayes
         dir_working = Path(str(params.running_dir)).absolute()
         freebayes = Freebayes(camel)
         freebayes.add_input_files({'BAM':[ToolIOFile(Path(input.BAM))], 'FASTA':[ToolIOFile(Path(input.FASTA))]})
-        step = Step(rule, freebayes, camel, dir_working, config)
+        freebayes.update_parameters(**params.freebayes_options)
+        step = Step(str(rule), freebayes, camel, dir_working, config)
         step.run_step()
 
 rule sniffles_qc:

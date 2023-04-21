@@ -27,13 +27,15 @@ class MainHybridAssemblyPipeline:
         argument_parser.add_argument('--fastq-pe', type=Path, help="Input Fastq PE file", nargs='+')
         argument_parser.add_argument('--fastq-se', type=Path, help="Input Fastq SE files")
         argument_parser.add_argument('--working-dir', type=Path, default=Path.cwd())
-        argument_parser.add_argument('--ploidy', choices=['GRCh37', 'GRCh38', 'X', 'Y', '1'], default='1')
         argument_parser.add_argument('--ont-qual', type=str, required=True,
                                      choices=['nano-corr', 'nano-hq', 'nano-raw'], default='nano-corr')
         argument_parser.add_argument('--expected-species', type=str, required=True)
         argument_parser.add_argument('--expected-gc-content', type=str, required=True)
         argument_parser.add_argument('--expected-genome-size', type=str, required=True)
         argument_parser.add_argument('--filtlong-keep-percent', type=int)
+        argument_parser.add_argument('--freebayes-ploidy', choices=['GRCh37', 'GRCh38', 'X', 'Y', '1'], default='1')
+        argument_parser.add_argument('--freebayes-min-alternate-fraction', type=float, default=0.5)
+        argument_parser.add_argument('--freebayes-min-alternate-count', type=int, default=10)
         argument_parser.add_argument('--threads', type=int, default=8)
         return argument_parser.parse_args(args)
 
@@ -73,7 +75,9 @@ class MainHybridAssemblyPipeline:
                 'minimap2': {}
             },
             'freebayes': {
-                'ploidy': self._args.ploidy
+                'ploidy': self._args.freebayes_ploidy,
+                'min_alternate_fraction': self._args.freebayes_min_alternate_fraction,
+                'min_alternate_count': self._args.freebayes_min_alternate_count
             }
         }, self._args.working_dir)
         return config
