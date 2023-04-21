@@ -71,6 +71,7 @@ class BacMetReporter(Tool):
         section.add_table([
             ['Min % identity (AA):', f"{self._input_informs['filtering']['params']['min_id']:.2f}%"],
             ['Min % covered (AA):', f"{self._input_informs['filtering']['params']['min_cov']:.2f}%"],
+            ['Database:', 'Experimentally confirmed genes']
         ], None, [('class', 'information')])
 
         # Results table
