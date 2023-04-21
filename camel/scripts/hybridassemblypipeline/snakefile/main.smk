@@ -24,10 +24,8 @@ rule all:
     """
     input:
         Path(config['working_dir']) / 'polishing' / 'polypolish' / 'polished.fasta',
-        Path(config['working_dir']) / 'qc' / 'freebayes' / 'variants.vcf',
-        Path(config['working_dir']) / 'qc' / 'sniffles' / 'variants.vcf',
-        Path(config['working_dir']) / 'qc' / 'clair3_output' / 'merge_output.vcf.gz',
-        Path(config['working_dir']) / 'qc' / 'ale_illumina' / 'ALE.ale-place.wig'
+        Path(config['working_dir']) / 'unicycler' / 'assembly.fasta',
+        Path(config['working_dir'] / 'ok.txt')
 
 rule trim_illumina:
     input:
@@ -83,3 +81,22 @@ rule set_trimming_ont_output:
         input_fastq = open(SnakemakeUtils.load_object(Path(input.FASTQ))[0].path, 'rb').read()
         with gzip.open(output.FASTQ, 'wb') as handle:
             handle.write(input_fastq)
+
+rule unicycler:
+    input:
+        FQ_1P = Path(config['working_dir']) / 'trimming' / 'illumina' / f"{config['name']}_1P.fastq.gz",
+        FQ_2P = Path(config['working_dir']) / 'trimming' / 'illumina' / f"{config['name']}_2P.fastq.gz",
+        FQ_SE = Path(config['working_dir']) / 'trimming' / 'ont' / '{}_SE.fastq.gz'.format(config['name'])
+    output:
+        FASTA = Path(config['working_dir']) / 'unicycler' / 'assembly.fasta'
+    params:
+        dir_ = Path(config['working_dir'])
+    threads: 4
+    run:
+        from camel.app.tools.unicycler.unicycler import Unicycler
+        unicycler_assembly = Unicycler(camel)
+        unicycler_assembly.add_input_files({'FASTQ_PE':[ToolIOFile(Path(input.FQ_1P)), ToolIOFile(Path(input.FQ_2P))],
+                                            'FASTQ_SE':[ToolIOFile(Path(input.FQ_SE))]})
+        unicycler_assembly.update_parameters(output_dir = 'unicycler', threads=threads)
+        step = Step(str(rule), unicycler_assembly, camel, params.dir_, config)
+        step.run_step()
