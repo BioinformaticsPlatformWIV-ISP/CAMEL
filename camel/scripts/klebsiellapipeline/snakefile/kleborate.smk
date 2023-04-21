@@ -17,7 +17,7 @@ rule kleborate_run:
     params:
         dir_ = Path(config['working_dir']) / 'kleborate'
     run:
-        from camel.app.tools.kleborate.kleborate import Kleborate
+        from camel.app.tools.pipelines.klebsiella.kleborate import Kleborate
         kleborate = Kleborate(Camel.get_instance())
         kleborate.update_parameters(all=True)
         SnakemakeUtils.add_pickle_inputs(kleborate, input)
@@ -37,7 +37,7 @@ rule kleborate_reporter:
     params:
         dir_ = Path(config['working_dir']) / 'kleborate'
     run:
-        from camel.app.tools.kleborate.kleboratereporter import KleborateReporter
+        from camel.app.tools.pipelines.klebsiella.kleboratereporter import KleborateReporter
         reporter = KleborateReporter(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(reporter, input)
         step = Step(str(rule), reporter, Camel.get_instance(), params.dir_)
@@ -63,7 +63,9 @@ rule kleborate_create_summary:
     output:
         TSV = Path(config['working_dir']) / 'kleborate' / 'summary_kleborate.tsv'
     params:
-        keys_kept = ['ST', 'Yersiniabactin', 'YbST', 'wzi', 'K_locus', 'virulence_score']
+        keys_kept = [
+            'ST', 'Yersiniabactin', 'YbST', 'wzi', 'K_locus', 'K_locus_identity', 'virulence_score',
+            'resistance_score', 'O_locus', 'O_locus_identity']
     run:
         informs_in = SnakemakeUtils.load_object(Path(input.INFORMS))
         with open(output.TSV, 'w') as handle:

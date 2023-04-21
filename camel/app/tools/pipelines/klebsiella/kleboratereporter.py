@@ -14,11 +14,11 @@ class KleborateReporter(Tool):
 
     COLUMN_MAPPING = {
         'Typing': ['ST', 'Yersiniabactin', 'YbST'],
-        'Serogroup': ['wzi', 'K_locus'],
+        'Serogroup': ['wzi', 'K_locus', 'K_locus_identity', 'O_locus', 'O_locus_identity'],
         'Virulence (overview)': [
             'virulence_score', 'Colibactin', 'CbST', 'Aerobactin', 'AbST', 'Salmochelin', 'SmST', 'RmpADC', 'RmST',
-            'rmpA2']
-
+            'rmpA2'],
+        'Resistance': ['resistance_score']
     }
 
     def __init__(self, camel: Camel) -> None:
@@ -50,7 +50,8 @@ class KleborateReporter(Tool):
         for sub_section, columns in KleborateReporter.COLUMN_MAPPING.items():
             section.add_header(sub_section, 3)
             section.add_table([[
-                self._input_informs['kleborate'][col] for col in columns]], columns, [('class', 'data')])
+                self._input_informs['kleborate'][col] for col in columns]],
+                [c.replace('_', ' ') for c in columns], [('class', 'data')])
 
         # Download link
         relative_path = Path('kleborate', 'kleborate.tsv')

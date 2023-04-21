@@ -2,8 +2,8 @@ import unittest
 
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.io.tooliofile import ToolIOFile
-from camel.app.tools.kleborate.kleborate import Kleborate
-from camel.app.tools.kleborate.kleboratereporter import KleborateReporter
+from camel.app.tools.pipelines.klebsiella.kleborate import Kleborate
+from camel.app.tools.pipelines.klebsiella.kleboratereporter import KleborateReporter
 
 
 class TestKleborate(CamelTestSuite):
@@ -65,6 +65,7 @@ class TestKleborate(CamelTestSuite):
         # Run Kleborate
         kleborate = Kleborate(self.camel)
         kleborate.add_input_files({'FASTA': [ToolIOFile(TestKleborate.input_fasta)]})
+        kleborate.update_parameters(all=True)
         kleborate.run(self.running_dir)
 
         # Create output report
