@@ -29,10 +29,13 @@ class ALE2Wiggle(Tool):
         Executes this tool.
         :return: None
         """
-        path_symlink = self._folder / Path(str(self._tool_inputs['ALE'][0])).name
-        path_symlink.symlink_to(self._tool_inputs['ALE'][0].path)
+        try:
+            path_symlink = self._folder / Path(str(self._tool_inputs['ALE'][0])).name
+            path_symlink.symlink_to(self._tool_inputs['ALE'][0].path)
+            self._build_command(path_symlink)
+        except FileExistsError:
+            self._build_command(self._tool_inputs['ALE'][0].path)
 
-        self._build_command(path_symlink)
         self._execute_command()
         self._set_output()
 

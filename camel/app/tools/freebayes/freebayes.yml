@@ -1,5 +1,9 @@
 dependencies: [ freebayes/1.3.6 ]
 parameters:
+  min_alternate_fraction: { default: false, mandatory: false, option: --min-alternate-fraction, value: '0.05'}
+  min_alternate_count: { default: false, mandatory: false, option: --min-alternate-count, value: '2' }
+  min_alternate_qsum: { default: false, mandatory: false, option: --min-alternate-qsum, value: '0' }
+  min_alternate_total: { default: false, mandatory: false, option: --min-alternate-total, value: '1' }
   min_base_quality: { default: false, mandatory: false, option: --min-base-quality, value: '0' }
   min_coverage: { default: true, mandatory: true, option: --min-coverage, value: '0' }
   min_mapping_quality: { default: false, mandatory: false, option: --min-mapping-quality, value: '1' }
