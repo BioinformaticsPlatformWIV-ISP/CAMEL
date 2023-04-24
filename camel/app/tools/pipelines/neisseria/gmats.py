@@ -38,7 +38,7 @@ class GMats(Tool):
         Executes the tool.
         :return: 'None'
         """
-        gmats_db = pd.read_table(self._tool_inputs['DB'][0].path)
+        gmats_db = pd.read_table(self._tool_inputs['DB'][0].path, dtype=str)
 
         # Parse input file
         tsv_in = self._tool_inputs['TSV'][0].path
@@ -74,7 +74,7 @@ class GMats(Tool):
 
     def __verify_integrity(self, allele: str, identity: str, coverage: str) -> str:
         """
-        Verifies that the allele is a perfect hit i.e. that shows 100% identity and 100% coverage.
+        Verifies that the allele is a perfect hit i.e. that it shows 100% identity and 100% coverage.
         :param allele: Allele
         :param identity: Allele identity %
         :param coverage: Allele coverage length
@@ -107,15 +107,15 @@ class GMats(Tool):
 
         # fHbp
         if locus == 'fHbp_peptide':
-            if float(allele) in fhbp_db.Allele:
-                return fhbp_db.Status.loc[fhbp_db['Allele'] == float(allele)].iloc[0]
+            if (fhbp_db.Allele == allele).any():
+                return fhbp_db.Status.loc[fhbp_db['Allele'] == allele].iloc[0]
             else:
                 return 'unpredictable'
 
         # NHBA
         if locus == 'NHBA_peptide':
-            if float(allele) in nhba_db.Allele:
-                return nhba_db.Status.loc[nhba_db['Allele'] == float(allele)].iloc[0]
+            if (nhba_db.Allele == allele).any():
+                return nhba_db.Status.loc[nhba_db['Allele'] == allele].iloc[0]
             else:
                 return 'unpredictable'
 
