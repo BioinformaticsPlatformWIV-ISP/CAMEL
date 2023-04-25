@@ -27,8 +27,8 @@ class Unicycler(Tool):
         Checks whether the provided input files are valid.
         :return: None
         """
-        if any(key not in self._tool_inputs for key in ('FASTA' or 'FASTQ_PE' or 'FASTQ_SE')):
-            raise InvalidInputSpecificationError('FASTA or FASTQ_SE or FASTQ_PE input is required')
+        if any(key not in ('FASTA', 'FASTQ_PE', 'FASTQ_SE') for key in self._tool_inputs):
+            raise InvalidInputSpecificationError('FASTQ_SE or FASTQ_PE input is required')
         super()._check_input()
 
     def _build_command(self) -> None:
