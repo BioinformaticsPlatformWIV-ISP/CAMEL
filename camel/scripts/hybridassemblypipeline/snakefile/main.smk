@@ -24,7 +24,7 @@ rule all:
     This rules ensures that the required output files are generated.
     """
     input:
-        Path(config['working_dir']) / 'report.html',
+        Path(config['working_dir']) / config['output_html'],
         Path(config['working_dir'] / config['output'])
 
 rule trim_illumina:
@@ -198,7 +198,7 @@ rule report_combine_all:
         informs_vc = rules.report_short_variant_calling.output.INFORMS,
         informs_sniffles = rules.report_long_variant_calling.output.INFORMS
     output:
-        HTML = Path(config['working_dir']) / 'report.html'
+        HTML = Path(config['working_dir']) / config['output_html']
     params:
         sample_name = config['sample_name'],
         fastq_input = config['input']['illumina'],

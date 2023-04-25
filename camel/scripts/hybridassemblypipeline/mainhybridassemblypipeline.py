@@ -24,10 +24,11 @@ class MainHybridAssemblyPipeline:
         :return: Arguments
         """
         argument_parser = argparse.ArgumentParser()
-        argument_parser.add_argument('--fastq-pe', type=Path, help="Input Fastq PE file", nargs='+')
-        argument_parser.add_argument('--fastq-se', type=Path, help="Input Fastq SE files")
+        argument_parser.add_argument('--fastq-pe', type=Path, help='Input Fastq PE file', nargs='+')
+        argument_parser.add_argument('--fastq-se', type=Path, help='Input Fastq SE files')
         argument_parser.add_argument('--working-dir', type=Path, default=Path.cwd())
-        argument_parser.add_argument('--output', type=Path, default="output.tsv")
+        argument_parser.add_argument('--output', type=Path, default='output.tsv')
+        argument_parser.add_argument('--output-html', type=Path, default='output.html')
         argument_parser.add_argument('--ont-qual', type=str, required=True,
                                      choices=['nano-corr', 'nano-hq', 'nano-raw'], default='nano-corr')
         argument_parser.add_argument('--expected-species', type=str, required=True)
@@ -67,6 +68,7 @@ class MainHybridAssemblyPipeline:
                 'ont': self._args.fastq_se,
             },
             'output': self._args.output,
+            'output_html': self._args.output_html,
             'filtlong': {
                 'keep_percent': self._args.filtlong_keep_percent if self._args.filtlong_keep_percent is not None else 95
             },
