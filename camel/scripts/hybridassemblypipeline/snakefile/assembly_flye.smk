@@ -1,4 +1,3 @@
-import shutil
 from pathlib import Path
 
 from camel.app.camel import Camel
@@ -15,7 +14,7 @@ rule assembly_flye_run:
     input:
         FASTQ = Path(config['working_dir']) / 'trimming' / 'ont' / '{}_SE.fastq.gz'.format(config['name'])
     output:
-        FASTA = Path(config['working_dir']) / 'assembly_flye' / 'flye' / 'assembly.fasta',
+        FASTA = Path(config['working_dir']) / 'assembly_flye' / 'flye' / 'assembly.fasta'
     params:
         running_dir = Path(config['working_dir']) / 'assembly_flye' / 'flye',
         flye_options = config.get('assembly', {}).get('flye', {}),
@@ -37,7 +36,7 @@ rule assembly_flye_filter_contig_length:
     input:
         FASTA = rules.assembly_flye_run.output.FASTA
     output:
-        FASTA = Path(config['working_dir']) / 'assembly_flye' / 'filtering' / 'assembly_filtered.fasta',
+        FASTA = Path(config['working_dir']) / 'assembly_flye' / 'filtering' / 'assembly_filtered.fasta'
     params:
         running_dir = Path(config['working_dir']) / 'assembly_flye' / 'filtering',
         min_contig_length = config['assembly'].get('min_contig_length', 0) if 'assembly' in config else 0

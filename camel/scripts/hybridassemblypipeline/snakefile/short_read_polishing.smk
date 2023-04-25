@@ -87,7 +87,7 @@ rule polypolish_polishing:
         FASTA = Path(config['working_dir']) / 'polishing' / 'polypolish' / 'polished.fasta'
     params:
         running_dir = Path(config['working_dir']) / 'polishing' / 'polypolish',
-        polypolish_options = config.get('polishing', {}).get('polypolish', {}),
+        polypolish_options = config.get('polishing', {}).get('polypolish', {})
     threads: 8
     priority: 1
     run:

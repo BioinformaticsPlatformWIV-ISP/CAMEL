@@ -1,3 +1,4 @@
+import pickle
 from pathlib import Path
 
 from camel.app.camel import Camel
@@ -17,10 +18,9 @@ rule check_qc:
     Checks that the qc files are generated for each step of the assembly.
     """
     input:
-        FASTA = [Path(config['working_dir']) / 'qc' / f'{name}' / 'consensus.fasta' for name in dictionary_references.keys()],
-        TSV = [Path(config['working_dir']) / 'qc' / f'{name}' / 'finished.txt' for name in dictionary_references.keys()]
+        FASTA = [Path(config['working_dir']) / 'qc' / f'{name}' / 'ale_illumina' / 'ALE.ale-depth.wig' for name in dictionary_references.keys()]
     output:
-        Path(config['working_dir'] / 'ok.txt')
+        Path(config['working_dir'] / config['output'])
     shell:
         """
         touch {output}
@@ -56,6 +56,25 @@ rule quast_final:
         quast.add_input_files({'FASTA': [ToolIOFile(Path(str(input.FASTA)))]})
         step = Step(str(rule), quast, camel, dir_working)
         step.run_step()
+
+rule parse_quast_output:
+    """
+    Parses the quast output into a json file.
+    """
+    input:
+        TSV = rules.quast_final.output.TSV
+    output:
+        INFORMS = Path(config['working_dir']) / 'qc' / '{name}' / 'quast' / 'informs.io'
+    params:
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'quast'
+    run:
+        from camel.app.tools.quast.quastinformextractor import QuastInformExtractor
+        dir_working = Path(str(params.running_dir)).absolute()
+        quast_inform_extractor = QuastInformExtractor(camel)
+        quast_inform_extractor.add_input_files({'TSV': [ToolIOFile(Path(input.TSV))]})
+        step = Step(str(rule), quast_inform_extractor, camel, dir_working, config)
+        step.run_step()
+        SnakemakeUtils.dump_tool_outputs(quast_inform_extractor, output)
 
 rule samtools_index_short_qc:
     """
@@ -159,7 +178,7 @@ rule sam_to_bam_qc:
         samtools_view = SamtoolsView(camel)
         samtools_view.add_input_files({'SAM': [ToolIOFile(Path(input.SAM))]})
         samtools_view.update_parameters(output_filename='bwa_readmap.bam')
-        step = Step(rule, samtools_view, camel, dir_working, config)
+        step = Step(str(rule), samtools_view, camel, dir_working, config)
         step.run_step()
 
 rule bam_sorting_qc:
@@ -178,7 +197,7 @@ rule bam_sorting_qc:
         samtools_sort = SamtoolsSort(camel)
         samtools_sort.add_input_files({'BAM': [ToolIOFile(Path(input.BAM))]})
         samtools_sort.update_parameters(output_filename='bwa_readmap.sorted.bam')
-        step = Step(rule, samtools_sort, camel, dir_working, config)
+        step = Step(str(rule), samtools_sort, camel, dir_working, config)
         step.run_step()
 
 rule bam_indexing_qc:
@@ -216,7 +235,7 @@ rule sam_to_bam_qc_longreads:
         samtools_view = SamtoolsView(camel)
         samtools_view.add_input_files({'SAM': [ToolIOFile(Path(input.SAM))]})
         samtools_view.update_parameters(output_filename='minimap2_readmap.bam')
-        step = Step(rule, samtools_view, camel, dir_working, config)
+        step = Step(str(rule), samtools_view, camel, dir_working, config)
         step.run_step()
 
 rule bam_sorting_qc_longreads:
@@ -235,7 +254,7 @@ rule bam_sorting_qc_longreads:
         samtools_sort = SamtoolsSort(camel)
         samtools_sort.add_input_files({'BAM': [ToolIOFile(Path(input.BAM))]})
         samtools_sort.update_parameters(output_filename='minimap2_readmap.sorted.bam')
-        step = Step(rule, samtools_sort, camel, dir_working, config)
+        step = Step(str(rule), samtools_sort, camel, dir_working, config)
         step.run_step()
 
 rule bam_indexing_qc_longreads:
@@ -280,6 +299,23 @@ rule freebayes_qc:
         step = Step(str(rule), freebayes, camel, dir_working, config)
         step.run_step()
 
+rule parse_freebayes_vcf:
+    """
+    Counts the number of variants in the freebayes vcf.
+    """
+    input:
+        VCF = rules.freebayes_qc.output.VCF
+    output:
+        TSV = Path(config['working_dir']) / 'qc' / '{name}' / 'freebayes' / 'informs.io'
+    params:
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'freebayes'
+    run:
+        from camel.app.components.vcf.vcfutils import VCFUtils
+        summary_json = {'number_of_variants': VCFUtils.count_variants(Path(input.VCF)),
+                        'type_of_variants': VCFUtils.retrieve_variants(Path(input.VCF))}
+        with open(output.TSV,'wb') as handle:
+            pickle.dump(summary_json,handle)
+
 rule sniffles_qc:
     """
     Checks for structural variants in the final polished assembly using long reads.
@@ -298,7 +334,7 @@ rule sniffles_qc:
         dir_working = Path(str(params.running_dir)).absolute()
         sniffles = Sniffles(camel)
         sniffles.add_input_files({'BAM':[ToolIOFile(Path(input.BAM))], 'FASTA':[ToolIOFile(Path(input.FASTA))]})
-        step = Step(rule, sniffles, camel, dir_working, config)
+        step = Step(str(rule), sniffles, camel, dir_working, config)
         step.run_step()
 
 rule clair3_qc:
@@ -313,14 +349,50 @@ rule clair3_qc:
     output:
         VCF = Path(config['working_dir']) / 'qc' / '{name}' / 'clair3_output' / 'merge_output.vcf.gz'
     params:
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}'
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}',
+        clair3_options= config.get('clair3',{})
     run:
         from camel.app.tools.clair3.clair3 import Clair3
         dir_working = Path(str(params.running_dir)).absolute()
         clair3 = Clair3(camel)
         clair3.add_input_files({'BAM':[ToolIOFile(Path(input.BAM))], 'FASTA':[ToolIOFile(Path(input.FASTA))]})
-        step = Step(rule, clair3, camel, dir_working, config)
+        clair3.update_parameters(**params.clair3_options)
+        step = Step(str(rule), clair3, camel, dir_working, config)
         step.run_step()
+
+rule parse_clair3_vcf:
+    """
+    Counts the number of variants in the clair3 vcf.
+    """
+    input:
+        VCF = rules.clair3_qc.output.VCF
+    output:
+        TSV = Path(config['working_dir']) / 'qc' / '{name}' / 'clair3_output' / 'informs.io'
+    params:
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'clair3_output'
+    run:
+        from camel.app.components.vcf.vcfutils import VCFUtils
+        summary_json = {'number_of_variants': VCFUtils.count_variants(Path(input.VCF)),
+                        'type_of_variants': VCFUtils.retrieve_variants(Path(input.VCF))}
+        with open(output.TSV,'wb') as handle:
+            pickle.dump(summary_json,handle)
+
+rule parse_sniffles_vcf:
+    """
+    Counts the number of variants in the sniffles vcf.
+    """
+    input:
+        VCF = rules.sniffles_qc.output.VCF
+    output:
+        TSV = Path(config['working_dir']) / 'qc' / '{name}' / 'sniffles' / 'informs.io'
+    params:
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'sniffles'
+    run:
+        from camel.app.components.vcf.vcfutils import VCFUtils
+        summary_json = {'number_of_variants': VCFUtils.count_variants(Path(input.VCF)),
+                        'type_of_variants': VCFUtils.retrieve_variants(Path(input.VCF))}
+        with open(output.TSV,'wb') as handle:
+            pickle.dump(summary_json,handle)
 
 rule ale:
     """
@@ -339,7 +411,7 @@ rule ale:
         dir_working = Path(str(params.running_dir)).absolute()
         ale_report = ALE(camel)
         ale_report.add_input_files({'SAM':[ToolIOFile(Path(input.SAM))], 'FASTA':[ToolIOFile(Path(input.FASTA))]})
-        step = Step(rule, ale_report, camel, dir_working, config)
+        step = Step(str(rule), ale_report, camel, dir_working, config)
         step.run_step()
 
 rule ale2wiggle:
@@ -358,21 +430,7 @@ rule ale2wiggle:
     run:
         from camel.app.tools.ale.ale2wiggle import ALE2Wiggle
         dir_working = Path(str(params.running_dir)).absolute()
-        ale2wiggle = ALE2Wiggle(camel)
-        ale2wiggle.add_input_files({'ALE':[ToolIOFile(Path(input.ALE))]})
-        step = Step(rule, ale2wiggle, camel, dir_working, config)
+        ale2wiggle_report = ALE2Wiggle(camel)
+        ale2wiggle_report.add_input_files({'ALE':[ToolIOFile(Path(input.ALE))]})
+        step = Step(str(rule), ale2wiggle_report, camel, dir_working, config)
         step.run_step()
-
-rule combine_outputs:
-    input:
-        TSV_1 = Path(config['working_dir']) / 'qc' / '{name}' / 'ale_illumina' / 'ALE.ale-depth.wig',
-        VCF_clair3 = Path(config['working_dir']) / 'qc' / '{name}' / 'clair3_output' / 'merge_output.vcf.gz',
-        VCF_sniffles = Path(config['working_dir']) / 'qc' / '{name}' / 'sniffles' / 'variants.vcf',
-        VCF_freebayes = Path(config['working_dir']) / 'qc' / '{name}' / 'freebayes' / 'variants.vcf',
-        TSV = Path(config['working_dir']) / 'qc' / '{name}' / 'quast' / 'report.tsv'
-    output:
-        TSV = Path(config['working_dir']) / 'qc' / '{name}' / 'finished.txt'
-    shell:
-        """
-        touch {output.TSV}
-        """
