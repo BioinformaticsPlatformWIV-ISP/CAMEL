@@ -1,3 +1,4 @@
+import pickle
 from pathlib import Path
 
 from camel.app.camel import Camel
@@ -14,7 +15,8 @@ rule assembly_flye_run:
     input:
         FASTQ = Path(config['working_dir']) / 'trimming' / 'ont' / '{}_SE.fastq.gz'.format(config['name'])
     output:
-        FASTA = Path(config['working_dir']) / 'assembly_flye' / 'flye' / 'assembly.fasta'
+        FASTA = Path(config['working_dir']) / 'assembly_flye' / 'flye' / 'assembly.fasta',
+        INFORMS = Path(config['working_dir']) / 'assembly_flye' / 'flye' / 'commands.io'
     params:
         running_dir = Path(config['working_dir']) / 'assembly_flye' / 'flye',
         flye_options = config.get('assembly', {}).get('flye', {}),
@@ -28,6 +30,8 @@ rule assembly_flye_run:
         flye.update_parameters(threads=threads, output_directory=str(params.running_dir))
         step = Step(str(rule), flye, camel, params.running_dir)
         step.run_step()
+        with open(output.INFORMS, 'wb') as handle:
+            pickle.dump(flye.informs, handle)
 
 rule assembly_flye_filter_contig_length:
     """

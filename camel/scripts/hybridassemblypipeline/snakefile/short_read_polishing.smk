@@ -1,3 +1,4 @@
+import pickle
 from pathlib import Path
 
 from camel.app.camel import Camel
@@ -84,7 +85,8 @@ rule polypolish_polishing:
         SAM = rules.read_mapping.output.SAM,
         FASTA = Path(config['working_dir']) / 'medaka' / 'consensus.fasta'
     output:
-        FASTA = Path(config['working_dir']) / 'polishing' / 'polypolish' / 'polished.fasta'
+        FASTA = Path(config['working_dir']) / 'polishing' / 'polypolish' / 'polished.fasta',
+        INFORMS = Path(config['working_dir']) / 'polishing' / 'polypolish'  / 'polypolish.io'
     params:
         running_dir = Path(config['working_dir']) / 'polishing' / 'polypolish',
         polypolish_options = config.get('polishing', {}).get('polypolish', {})
@@ -97,6 +99,8 @@ rule polypolish_polishing:
         polypolish.update_parameters(**params.polypolish_options)
         step = Step(str(rule), polypolish, camel, params.running_dir)
         step.run_step()
+        with open(output.INFORMS, 'wb') as handle:
+            pickle.dump(polypolish.informs, handle)
 
 rule copy_fasta_polca:
     input:
@@ -135,7 +139,8 @@ rule polca_polishing:
         FASTA = rules.copy_fasta_polca.output.FASTA,
         INDEX = rules.samtools_index_polca.output.INDEX_GENOME_PREFIX
     output:
-        FASTA = Path(config['working_dir']) / 'polishing' / 'polca' / 'consensus.fasta.PolcaCorrected.fa'
+        FASTA = Path(config['working_dir']) / 'polishing' / 'polca' / 'consensus.fasta.PolcaCorrected.fa',
+        INFORMS = Path(config['working_dir']) / 'polishing' / 'polca' / 'polca.io'
     params:
         running_dir = Path(config['working_dir']) / 'polishing' / 'polca',
         polca_options = config.get('polishing', {}).get('polca', {})
@@ -149,6 +154,8 @@ rule polca_polishing:
         polca.update_parameters(**params.polca_options)
         step = Step(str(rule), polca, camel, params.running_dir, config)
         step.run_step()
+        with open(output.INFORMS, 'wb') as handle:
+            pickle.dump(polca.informs, handle)
 
 rule samtools_index_short:
     """

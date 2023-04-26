@@ -1,3 +1,4 @@
+import pickle
 from pathlib import Path
 
 from camel.app.camel import Camel
@@ -79,7 +80,8 @@ rule medaka_consensus:
         BAM = rules.sort_bam.output.BAM,
         BAI = rules.index_bam.output.BAI
     output:
-        HDF = Path(config['working_dir']) / 'medaka' / 'raw.hdf'
+        HDF = Path(config['working_dir']) / 'medaka' / 'raw.hdf',
+        INFORMS = Path(config['working_dir']) / 'medaka' / 'commands-consensus.io'
     params:
         working_dir= Path(config['working_dir']) / 'medaka'
     run:
@@ -88,6 +90,8 @@ rule medaka_consensus:
         medaka.add_input_files({'BAM': [ToolIOFile(Path(input.BAM))]})
         step = Step(str(rule), medaka, camel, params.working_dir, config)
         step.run_step()
+        with open(output.INFORMS, 'wb') as handle:
+            pickle.dump(medaka.informs, handle)
 
 rule medaka_stitch:
     """
@@ -97,7 +101,8 @@ rule medaka_stitch:
         HDF = rules.medaka_consensus.output.HDF,
         FASTA = Path(config['working_dir']) / 'assembly_flye' / 'filtering' / 'assembly_filtered.fasta'
     output:
-        FASTA = Path(config['working_dir']) / 'medaka' / 'consensus.fasta'
+        FASTA = Path(config['working_dir']) / 'medaka' / 'consensus.fasta',
+        INFORMS = Path(config['working_dir']) / 'medaka' / 'commands-stitch.io'
     params:
         working_dir= Path(config['working_dir']) / 'medaka'
     run:
@@ -106,3 +111,5 @@ rule medaka_stitch:
         medaka.add_input_files({'FASTA': [ToolIOFile(Path(input.FASTA))], 'HDF': [ToolIOFile(Path(input.HDF))]})
         step = Step(str(rule), medaka, camel, params.working_dir, config)
         step.run_step()
+        with open(output.INFORMS, 'wb') as handle:
+            pickle.dump(medaka.informs, handle)

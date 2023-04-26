@@ -46,7 +46,8 @@ rule quast_final:
     input:
         FASTA = rules.copy_fasta_file.output.FASTA
     output:
-        TSV = Path(config['working_dir']) / 'qc' / '{name}' / 'quast' / 'report.tsv'
+        TSV = Path(config['working_dir']) / 'qc' / '{name}' / 'quast' / 'report.tsv',
+        INFORMS = Path(config['working_dir']) / 'qc' / '{name}' / 'quast' / 'commands.io'
     params:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'quast'
     run:
@@ -56,6 +57,8 @@ rule quast_final:
         quast.add_input_files({'FASTA': [ToolIOFile(Path(str(input.FASTA)))]})
         step = Step(str(rule), quast, camel, dir_working)
         step.run_step()
+        with open(output.INFORMS, 'wb') as handle:
+            pickle.dump(quast.informs, handle)
 
 rule parse_quast_output:
     """
@@ -125,7 +128,8 @@ rule read_mapping_qc:
         FASTA = rules.copy_fasta_file.output.FASTA,
         INDEX_GENOME_PREFIX = rules.bwa_index_qc.output.INDEX_GENOME_PREFIX
     output:
-        SAM =  Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'bwa_readmap.sam'
+        SAM =  Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'bwa_readmap.sam',
+        INFORMS = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'commands.io'
     params:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'read_mapping'
     threads: 4
@@ -137,6 +141,8 @@ rule read_mapping_qc:
         SnakemakeUtils.add_pickle_input(bwa_map, 'INDEX_GENOME_PREFIX', Path(input.INDEX_GENOME_PREFIX))
         step = Step(str(rule), bwa_map, camel, dir_working)
         step.run_step()
+        with open(output.INFORMS, 'wb') as handle:
+            pickle.dump(bwa_map.informs, handle)
 
 rule read_mapping_qc_longreads:
     """
@@ -219,6 +225,44 @@ rule bam_indexing_qc:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(samtools_index, output)
 
+rule mapping_stats:
+    input:
+        BAM = rules.bam_sorting_qc.output.BAM,
+        INDEX = rules.bam_indexing_qc.output.BAM
+    output:
+        INFORMS = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'flagstat.io'
+    params:
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'read_mapping'
+    run:
+        from camel.app.tools.samtools.samtoolsflagstat import SamtoolsFlagstat
+        dir_working = Path(str(params.running_dir)).absolute()
+        samtools_flagstat = SamtoolsFlagstat(camel)
+        samtools_flagstat.add_input_files({'BAM': [ToolIOFile(Path(input.BAM))]})
+        step = Step(str(rule), samtools_flagstat, camel, dir_working, config)
+        step.run_step()
+        SnakemakeUtils.dump_tool_outputs(samtools_flagstat, output)
+
+rule samtools_depth_sr:
+    """
+    Runs samtools depth on the BAM file of the short reads mappings.
+    """
+    input:
+        BAM = rules.bam_sorting_qc.output.BAM,
+        INDEX = rules.bam_indexing_qc.output.BAM
+    output:
+        TSV = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'tsv.io',
+        INFORMS = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'samtools-depth.io'
+    params:
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'read_mapping'
+    run:
+        from camel.app.tools.samtools.samtoolsdepth import SamtoolsDepth
+        samtools_depth = SamtoolsDepth(camel)
+        samtools_depth.add_input_files({'BAM':[ToolIOFile(Path(input.BAM))]})
+        step = Step(str(rule), samtools_depth, camel, params.running_dir)
+        step.run_step()
+        samtools_depth.informs['_tag'] = 'Coverage calculation'
+        SnakemakeUtils.dump_tool_outputs(samtools_depth, output)
+
 rule sam_to_bam_qc_longreads:
     """
     Converts SAM to BAM.
@@ -276,6 +320,44 @@ rule bam_indexing_qc_longreads:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(samtools_index, output)
 
+rule mapping_stats_longreads:
+    input:
+        BAM = rules.bam_sorting_qc_longreads.output.BAM,
+        INDEX = rules.bam_indexing_qc_longreads.output.BAM
+    output:
+        INFORMS = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'flagstat-longreads.io'
+    params:
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'read_mapping'
+    run:
+        from camel.app.tools.samtools.samtoolsflagstat import SamtoolsFlagstat
+        dir_working = Path(str(params.running_dir)).absolute()
+        samtools_flagstat = SamtoolsFlagstat(camel)
+        samtools_flagstat.add_input_files({'BAM': [ToolIOFile(Path(input.BAM))]})
+        step = Step(str(rule), samtools_flagstat, camel, dir_working, config)
+        step.run_step()
+        SnakemakeUtils.dump_tool_outputs(samtools_flagstat, output)
+
+rule samtools_depth_lr:
+    """
+    Runs samtools depth on the BAM file of the short reads mappings.
+    """
+    input:
+        BAM = rules.bam_sorting_qc_longreads.output.BAM,
+        INDEX = rules.bam_indexing_qc_longreads.output.BAM
+    output:
+        TSV = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'tsv-long.io',
+        INFORMS = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'samtools-depth-long.io'
+    params:
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'read_mapping'
+    run:
+        from camel.app.tools.samtools.samtoolsdepth import SamtoolsDepth
+        samtools_depth = SamtoolsDepth(camel)
+        samtools_depth.add_input_files({'BAM':[ToolIOFile(Path(input.BAM))]})
+        step = Step(str(rule), samtools_depth, camel, params.running_dir)
+        step.run_step()
+        samtools_depth.informs['_tag'] = 'Coverage calculation'
+        SnakemakeUtils.dump_tool_outputs(samtools_depth, output)
+
 rule freebayes_qc:
     """
     Checks for small variants in the final polished assembly.
@@ -286,7 +368,8 @@ rule freebayes_qc:
         FASTA = rules.copy_fasta_file.output.FASTA,
         FASTA_INDEX = rules.samtools_index_short_qc.output.INDEX_GENOME_PREFIX
     output:
-        VCF =  Path(config['working_dir']) / 'qc' / '{name}' / 'freebayes' / 'variants.vcf'
+        VCF =  Path(config['working_dir']) / 'qc' / '{name}' / 'freebayes' / 'variants.vcf',
+        INFORMS = Path(config['working_dir']) / 'qc' / '{name}' / 'freebayes' / 'commands.io'
     params:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'freebayes',
         freebayes_options = config.get('freebayes',{})
@@ -298,6 +381,8 @@ rule freebayes_qc:
         freebayes.update_parameters(**params.freebayes_options)
         step = Step(str(rule), freebayes, camel, dir_working, config)
         step.run_step()
+        with open(output.INFORMS, 'wb') as handle:
+            pickle.dump(freebayes.informs, handle)
 
 rule parse_freebayes_vcf:
     """
@@ -326,7 +411,8 @@ rule sniffles_qc:
         FASTA= rules.copy_fasta_file.output.FASTA,
         FASTA_INDEX= rules.samtools_index_short_qc.output.INDEX_GENOME_PREFIX
     output:
-        VCF = Path(config['working_dir']) / 'qc' / '{name}' / 'sniffles' / 'variants.vcf'
+        VCF = Path(config['working_dir']) / 'qc' / '{name}' / 'sniffles' / 'variants.vcf',
+        INFORMS = Path(config['working_dir']) / 'qc' / '{name}' / 'sniffles' / 'commands.io'
     params:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'sniffles'
     run:
@@ -336,6 +422,8 @@ rule sniffles_qc:
         sniffles.add_input_files({'BAM':[ToolIOFile(Path(input.BAM))], 'FASTA':[ToolIOFile(Path(input.FASTA))]})
         step = Step(str(rule), sniffles, camel, dir_working, config)
         step.run_step()
+        with open(output.INFORMS,'wb') as handle:
+            pickle.dump(sniffles.informs,handle)
 
 rule clair3_qc:
     """
@@ -347,7 +435,8 @@ rule clair3_qc:
         FASTA = rules.copy_fasta_file.output.FASTA,
         FASTA_INDEX = rules.samtools_index_short_qc.output.INDEX_GENOME_PREFIX
     output:
-        VCF = Path(config['working_dir']) / 'qc' / '{name}' / 'clair3_output' / 'merge_output.vcf.gz'
+        VCF = Path(config['working_dir']) / 'qc' / '{name}' / 'clair3_output' / 'merge_output.vcf.gz',
+        INFORMS = Path(config['working_dir']) / 'qc' / '{name}' / 'clair3_output' / 'commands.io'
     params:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}',
         clair3_options= config.get('clair3',{})
@@ -359,6 +448,8 @@ rule clair3_qc:
         clair3.update_parameters(**params.clair3_options)
         step = Step(str(rule), clair3, camel, dir_working, config)
         step.run_step()
+        with open(output.INFORMS,'wb') as handle:
+            pickle.dump(clair3.informs,handle)
 
 rule parse_clair3_vcf:
     """
@@ -403,7 +494,8 @@ rule ale:
         FASTA = rules.copy_fasta_file.output.FASTA,
         FASTA_INDEX = rules.samtools_index_short_qc.output.INDEX_GENOME_PREFIX
     output:
-        ALE = Path(config['working_dir']) / 'qc' / '{name}' / 'ale_illumina' / 'ALE.ale'
+        ALE = Path(config['working_dir']) / 'qc' / '{name}' / 'ale_illumina' / 'ALE.ale',
+        INFORMS = Path(config['working_dir']) / 'qc' / '{name}' / 'ale_illumina' / 'commands-report.io'
     params:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'ale_illumina'
     run:
@@ -413,6 +505,8 @@ rule ale:
         ale_report.add_input_files({'SAM':[ToolIOFile(Path(input.SAM))], 'FASTA':[ToolIOFile(Path(input.FASTA))]})
         step = Step(str(rule), ale_report, camel, dir_working, config)
         step.run_step()
+        with open(output.INFORMS,'wb') as handle:
+            pickle.dump(ale_report.informs,handle)
 
 rule ale2wiggle:
     """
@@ -424,7 +518,8 @@ rule ale2wiggle:
         TSV_1 = Path(config['working_dir']) / 'qc' / '{name}' / 'ale_illumina' / 'ALE.ale-depth.wig',
         TSV_2 = Path(config['working_dir']) / 'qc' / '{name}' / 'ale_illumina' / 'ALE.ale-kmer.wig',
         TSV_3 = Path(config['working_dir']) / 'qc' / '{name}' / 'ale_illumina' / 'ALE.ale-insert.wig',
-        TSV_4 = Path(config['working_dir']) / 'qc' / '{name}' / 'ale_illumina' / 'ALE.ale-place.wig'
+        TSV_4 = Path(config['working_dir']) / 'qc' / '{name}' / 'ale_illumina' / 'ALE.ale-place.wig',
+        INFORMS = Path(config['working_dir']) / 'qc' / '{name}' / 'ale_illumina' / 'commands-wiggle.io'
     params:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'ale_illumina'
     run:
@@ -434,3 +529,5 @@ rule ale2wiggle:
         ale2wiggle_report.add_input_files({'ALE':[ToolIOFile(Path(input.ALE))]})
         step = Step(str(rule), ale2wiggle_report, camel, dir_working, config)
         step.run_step()
+        with open(output.INFORMS,'wb') as handle:
+            pickle.dump(ale2wiggle_report.informs,handle)
