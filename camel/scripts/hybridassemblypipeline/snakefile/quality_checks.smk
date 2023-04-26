@@ -132,12 +132,13 @@ rule read_mapping_qc:
         INFORMS = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'commands.io'
     params:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'read_mapping'
-    threads: 4
+    threads: 8
     run:
         from camel.app.tools.bwa.bwamap import BWAMap
         dir_working = Path(str(params.running_dir)).absolute()
         bwa_map = BWAMap(camel)
         bwa_map.add_input_files({'FASTQ_PE': [ToolIOFile(Path(input.FQ_1P)), ToolIOFile(Path(input.FQ_2P))]})
+        bwa_map.update_parameters(threads=threads)
         SnakemakeUtils.add_pickle_input(bwa_map, 'INDEX_GENOME_PREFIX', Path(input.INDEX_GENOME_PREFIX))
         step = Step(str(rule), bwa_map, camel, dir_working)
         step.run_step()
@@ -158,13 +159,13 @@ rule read_mapping_qc_longreads:
         SAM = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'minimap2_readmap.sam'
     params:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'read_mapping'
-    threads: 4
+    threads: 8
     run:
         from camel.app.tools.minimap2.minimap2mapping import Minimap2Mapping
         dir_working = Path(str(params.running_dir)).absolute()
         minimap2 = Minimap2Mapping(camel)
         minimap2.add_input_files({'FASTQ': [ToolIOFile(Path(input.FQ))], 'FASTA':[ToolIOFile(Path(input.FASTA))]})
-        minimap2.update_parameters(output_filename='minimap2_readmap.sam')
+        minimap2.update_parameters(output_filename='minimap2_readmap.sam', threads=threads)
         step = Step(str(rule), minimap2, camel, dir_working, config)
         step.run_step()
 
@@ -256,9 +257,10 @@ rule samtools_depth_sr:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'read_mapping'
     run:
         from camel.app.tools.samtools.samtoolsdepth import SamtoolsDepth
+        dir_working = Path(str(params.running_dir)).absolute()
         samtools_depth = SamtoolsDepth(camel)
         samtools_depth.add_input_files({'BAM':[ToolIOFile(Path(input.BAM))]})
-        step = Step(str(rule), samtools_depth, camel, params.running_dir)
+        step = Step(str(rule), samtools_depth, camel, dir_working, config)
         step.run_step()
         samtools_depth.informs['_tag'] = 'Coverage calculation'
         SnakemakeUtils.dump_tool_outputs(samtools_depth, output)
@@ -351,9 +353,10 @@ rule samtools_depth_lr:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'read_mapping'
     run:
         from camel.app.tools.samtools.samtoolsdepth import SamtoolsDepth
+        dir_working = Path(str(params.running_dir)).absolute()
         samtools_depth = SamtoolsDepth(camel)
         samtools_depth.add_input_files({'BAM':[ToolIOFile(Path(input.BAM))]})
-        step = Step(str(rule), samtools_depth, camel, params.running_dir)
+        step = Step(str(rule), samtools_depth, camel, dir_working, config)
         step.run_step()
         samtools_depth.informs['_tag'] = 'Coverage calculation'
         SnakemakeUtils.dump_tool_outputs(samtools_depth, output)
@@ -415,11 +418,13 @@ rule sniffles_qc:
         INFORMS = Path(config['working_dir']) / 'qc' / '{name}' / 'sniffles' / 'commands.io'
     params:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'sniffles'
+    threads: 4
     run:
         from camel.app.tools.sniffles.sniffles import Sniffles
         dir_working = Path(str(params.running_dir)).absolute()
         sniffles = Sniffles(camel)
         sniffles.add_input_files({'BAM':[ToolIOFile(Path(input.BAM))], 'FASTA':[ToolIOFile(Path(input.FASTA))]})
+        sniffles.update_parameters(threads=threads)
         step = Step(str(rule), sniffles, camel, dir_working, config)
         step.run_step()
         with open(output.INFORMS,'wb') as handle:
@@ -440,12 +445,14 @@ rule clair3_qc:
     params:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}',
         clair3_options= config.get('clair3',{})
+    threads: 8
     run:
         from camel.app.tools.clair3.clair3 import Clair3
         dir_working = Path(str(params.running_dir)).absolute()
         clair3 = Clair3(camel)
         clair3.add_input_files({'BAM':[ToolIOFile(Path(input.BAM))], 'FASTA':[ToolIOFile(Path(input.FASTA))]})
         clair3.update_parameters(**params.clair3_options)
+        clair3.update_parameters(threads=threads)
         step = Step(str(rule), clair3, camel, dir_working, config)
         step.run_step()
         with open(output.INFORMS,'wb') as handle:

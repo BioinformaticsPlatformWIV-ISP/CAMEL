@@ -42,6 +42,9 @@ class MainHybridAssemblyPipeline:
         argument_parser.add_argument('--clair3-no-phasing', action='store_true', default=None)
         argument_parser.add_argument('--clair3-include-ctgs', action='store_true', default=None)
         argument_parser.add_argument('--clair3-long-indel', action='store_true', default=None)
+        argument_parser.add_argument('--sniffles-min-svlen', type=int)
+        argument_parser.add_argument('--sniffles-mapq', type=int)
+        argument_parser.add_argument('--sniffles-min-support', type=int)
         argument_parser.add_argument('--threads', type=int, default=8)
         return argument_parser.parse_args(args)
 
@@ -79,7 +82,10 @@ class MainHybridAssemblyPipeline:
                 'min_contig_length': 1000
             },
             'polishing': {
-                'medaka': {},
+                'medaka': {
+                    'consensus': {},
+                    'stitch': {}
+                },
                 'polca': {},
                 'polypolish': {}
             },
@@ -97,6 +103,11 @@ class MainHybridAssemblyPipeline:
                 'no_phasing': True if self._args.clair3_no_phasing is not None else False,
                 'include_ctgs': True if self._args.clair3_include_ctgs is not None else False,
                 'long_indel': True if self._args.clair3_long_indel is not None else False
+            },
+            'sniffles':{
+                'mapq': self._args.sniffles_mapq if self._args.sniffles_mapq is not None else 25,
+                'min_support': self._args.sniffles_min_support if self._args.sniffles_min_support is not None else 'auto',
+                'min_svlen': self._args.sniffles_min_svlen if self._args.sniffles_min_svlen is not None else 35
             }
         }, self._args.working_dir)
         return config

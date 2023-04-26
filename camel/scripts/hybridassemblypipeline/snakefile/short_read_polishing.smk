@@ -68,11 +68,12 @@ rule read_mapping:
         SAM = Path(config['working_dir']) / 'polishing' / 'read_mapping' / 'bwa_readmap.sam'
     params:
         running_dir = Path(config['working_dir']) / 'polishing' / 'read_mapping'
-    threads: 4
+    threads: 8
     run:
         from camel.app.tools.bwa.bwamap import BWAMap
         bwa_map = BWAMap(camel)
         bwa_map.add_input_files({'FASTQ_PE': [ToolIOFile(Path(input.FQ_1P)), ToolIOFile(Path(input.FQ_2P))]})
+        bwa_map.update_parameters(threads=threads)
         SnakemakeUtils.add_pickle_input(bwa_map, 'INDEX_GENOME_PREFIX', Path(input.INDEX_GENOME_PREFIX))
         step = Step(str(rule), bwa_map, camel, params.running_dir)
         step.run_step()
@@ -145,13 +146,13 @@ rule polca_polishing:
         running_dir = Path(config['working_dir']) / 'polishing' / 'polca',
         polca_options = config.get('polishing', {}).get('polca', {})
     threads: 8
-    priority: 1
     run:
         from camel.app.tools.polca.polca import Polca
         polca = Polca(camel)
         polca.add_input_files({'FASTQ_PE': [ToolIOFile(Path(input.FQ_1P)), ToolIOFile(Path(input.FQ_2P))],
                                'FASTA': [ToolIOFile(Path(input.FASTA))]})
         polca.update_parameters(**params.polca_options)
+        polca.update_parameters(threads=threads)
         step = Step(str(rule), polca, camel, params.running_dir, config)
         step.run_step()
         with open(output.INFORMS, 'wb') as handle:

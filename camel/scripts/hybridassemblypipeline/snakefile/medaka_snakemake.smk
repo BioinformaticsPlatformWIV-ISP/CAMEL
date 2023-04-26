@@ -83,11 +83,15 @@ rule medaka_consensus:
         HDF = Path(config['working_dir']) / 'medaka' / 'raw.hdf',
         INFORMS = Path(config['working_dir']) / 'medaka' / 'commands-consensus.io'
     params:
-        working_dir= Path(config['working_dir']) / 'medaka'
+        working_dir= Path(config['working_dir']) / 'medaka',
+        medaka_options = config.get('polishing', {}).get('medaka', {}).get('consensus', {})
+    threads: 8
     run:
         from camel.app.tools.medaka.medakaconsensus import MedakaConsensus
         medaka = MedakaConsensus(camel)
         medaka.add_input_files({'BAM': [ToolIOFile(Path(input.BAM))]})
+        medaka.update_parameters(**params.medaka_options)
+        medaka.update_parameters(threads=threads)
         step = Step(str(rule), medaka, camel, params.working_dir, config)
         step.run_step()
         with open(output.INFORMS, 'wb') as handle:
@@ -104,11 +108,15 @@ rule medaka_stitch:
         FASTA = Path(config['working_dir']) / 'medaka' / 'consensus.fasta',
         INFORMS = Path(config['working_dir']) / 'medaka' / 'commands-stitch.io'
     params:
-        working_dir= Path(config['working_dir']) / 'medaka'
+        working_dir= Path(config['working_dir']) / 'medaka',
+        medaka_options = config.get('polishing',{}).get('medaka',{}).get('stitch',{})
+    threads: 8
     run:
         from camel.app.tools.medaka.medakastitch import MedakaStitch
         medaka = MedakaStitch(camel)
         medaka.add_input_files({'FASTA': [ToolIOFile(Path(input.FASTA))], 'HDF': [ToolIOFile(Path(input.HDF))]})
+        medaka.update_parameters(**params.medaka_options)
+        medaka.update_parameters(threads=threads)
         step = Step(str(rule), medaka, camel, params.working_dir, config)
         step.run_step()
         with open(output.INFORMS, 'wb') as handle:
