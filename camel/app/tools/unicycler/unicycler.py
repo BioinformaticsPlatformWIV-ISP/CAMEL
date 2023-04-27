@@ -28,7 +28,7 @@ class Unicycler(Tool):
         :return: None
         """
         if any(key not in ('FASTA', 'FASTQ_PE', 'FASTQ_SE') for key in self._tool_inputs):
-            raise InvalidInputSpecificationError('FASTQ_SE or FASTQ_PE input is required')
+            raise InvalidInputSpecificationError('FASTA or FASTQ_SE or FASTQ_PE input is required')
         super()._check_input()
 
     def _build_command(self) -> None:

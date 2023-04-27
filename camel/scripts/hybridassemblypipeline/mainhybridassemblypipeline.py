@@ -9,12 +9,17 @@ from camel.app.camel import Camel
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 
 
-class MainHybridAssemblyPipeline:
+class MainHybridAssemblyPipeline(object):
     """
-    Main class to run the Hybrid assembly pipeline.
+    Main class to run the hybrid assembly pipeline.
     """
 
     def __init__(self, args: Optional[Sequence[str]] = None) -> None:
+        """
+        Initializes the hybrid assembly pipeline class.
+        :param args: arguments to be parsed
+        :return: None
+        """
         self._args = MainHybridAssemblyPipeline._parse_arguments(args)
 
     @staticmethod
@@ -29,6 +34,7 @@ class MainHybridAssemblyPipeline:
         argument_parser.add_argument('--working-dir', type=Path, default=Path.cwd())
         argument_parser.add_argument('--output', type=Path, default='output.tsv')
         argument_parser.add_argument('--output-html', type=Path, default='output.html')
+        argument_parser.add_argument('--sample-name', type=str, default='test_sample')
         argument_parser.add_argument('--ont-qual', type=str, required=True,
                                      choices=['nano-corr', 'nano-hq', 'nano-raw'], default='nano-corr')
         argument_parser.add_argument('--expected-species', type=str, required=True)
@@ -49,6 +55,10 @@ class MainHybridAssemblyPipeline:
         return argument_parser.parse_args(args)
 
     def run(self) -> None:
+        """
+        Runs the hybrid assembly pipeline.
+        :return: None
+        """
         path_config = self.__create_snakemake_config_data()
         path_snakefile = pkg_resources.resource_filename('camel', 'scripts/hybridassemblypipeline/snakefile/main.smk')
         SnakePipelineUtils.run_snakemake(
@@ -60,7 +70,7 @@ class MainHybridAssemblyPipeline:
         :return: Config file data
         """
         config = SnakePipelineUtils.generate_config_file({
-            'sample_name': 'Sample', 'working_dir': self._args.working_dir, 'name': 'test_sample',
+            'sample_name': 'Sample', 'working_dir': self._args.working_dir, 'name': self._args.sample_name,
             'pipeline': {
                 'name': 'hybrid assembly pipeline',
                 'version': '0.1',
@@ -104,7 +114,7 @@ class MainHybridAssemblyPipeline:
                 'include_ctgs': True if self._args.clair3_include_ctgs is not None else False,
                 'long_indel': True if self._args.clair3_long_indel is not None else False
             },
-            'sniffles':{
+            'sniffles': {
                 'mapq': self._args.sniffles_mapq if self._args.sniffles_mapq is not None else 25,
                 'min_support': self._args.sniffles_min_support if self._args.sniffles_min_support is not None else 'auto',
                 'min_svlen': self._args.sniffles_min_svlen if self._args.sniffles_min_svlen is not None else 35

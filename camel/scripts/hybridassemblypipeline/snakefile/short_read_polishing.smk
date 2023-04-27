@@ -9,10 +9,13 @@ from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 camel = Camel.get_instance()
 
 rule copy_fasta:
+    """
+    Copies the medaka output FASTA file into the polypolish input folder.
+    """
     input:
         FASTA = Path(config['working_dir']) / 'medaka' / 'consensus.fasta'
     output:
-        FASTA = Path(config['working_dir']) / 'polishing' / 'polypolish' / 'consensus.fasta'
+        FASTA = Path(config['working_dir']) / 'polishing' / 'polypolish' / 'input_genome.fasta'
     shell:
         """
         cp {input.FASTA} {output.FASTA}
@@ -23,11 +26,11 @@ rule samtools_index_polypolish:
     Creates a samtools index for the assembly.
     """
     input:
-        FASTA_REF = Path(config['working_dir']) / 'medaka' / 'consensus.fasta'
+        FASTA_REF = rules.copy_fasta.output.FASTA
     output:
-        INDEX_GENOME_PREFIX = Path(config['working_dir']) / 'medaka' / 'consensus.fasta.fai'
+        INDEX_GENOME_PREFIX = Path(config['working_dir']) / 'polishing' / 'polypolish' / 'input_genome.fasta.fai'
     params:
-        running_dir = Path(config['working_dir']) / 'medaka'
+        running_dir = Path(config['working_dir']) / 'polishing' / 'polypolish'
     run:
         from camel.app.tools.samtools.samtoolsfastaindex import SamtoolsFastaIndex
         samtools = SamtoolsFastaIndex(camel)
@@ -40,11 +43,11 @@ rule bwa_index:
     Creates a bwa index for the assembly.
     """
     input:
-        FASTA_REF = Path(config['working_dir']) / 'medaka' / 'consensus.fasta'
+        FASTA_REF = rules.copy_fasta.output.FASTA
     output:
-        INDEX_GENOME_PREFIX = Path(config['working_dir']) / 'medaka' / 'genome_prefix.io'
+        INDEX_GENOME_PREFIX = Path(config['working_dir']) / 'polishing' / 'polypolish' / 'genome_prefix.io'
     params:
-        running_dir = Path(config['working_dir']) / 'medaka'
+        running_dir = Path(config['working_dir']) / 'polishing' / 'polypolish'
     run:
         from camel.app.tools.bwa.bwaindex import BWAIndex
         bwa = BWAIndex(camel)
@@ -58,11 +61,11 @@ rule read_mapping:
     Maps the reads against the assembly.
     """
     input:
-        FQ_1P=Path(config['working_dir']) / 'trimming' / 'illumina' / f"{config['name']}_1P.fastq.gz",
-        FQ_2P=Path(config['working_dir']) / 'trimming' / 'illumina' / f"{config['name']}_2P.fastq.gz",
-        INDEX_GENOME_PREFIX_BWA=rules.bwa_index.output.INDEX_GENOME_PREFIX,
-        INDEX_GENOME_PREFIX_SAMTOOLS=rules.samtools_index_polypolish.output.INDEX_GENOME_PREFIX,
-        FASTA=Path(config['working_dir']) / 'medaka' / 'consensus.fasta',
+        FQ_1P = Path(config['working_dir']) / 'trimming' / 'illumina' / f"{config['name']}_1P.fastq.gz",
+        FQ_2P = Path(config['working_dir']) / 'trimming' / 'illumina' / f"{config['name']}_2P.fastq.gz",
+        INDEX_GENOME_PREFIX_BWA = rules.bwa_index.output.INDEX_GENOME_PREFIX,
+        INDEX_GENOME_PREFIX_SAMTOOLS = rules.samtools_index_polypolish.output.INDEX_GENOME_PREFIX,
+        FASTA = rules.copy_fasta.output.FASTA,
         INDEX_GENOME_PREFIX = rules.bwa_index.output.INDEX_GENOME_PREFIX
     output:
         SAM = Path(config['working_dir']) / 'polishing' / 'read_mapping' / 'bwa_readmap.sam'
@@ -84,15 +87,13 @@ rule polypolish_polishing:
     """
     input:
         SAM = rules.read_mapping.output.SAM,
-        FASTA = Path(config['working_dir']) / 'medaka' / 'consensus.fasta'
+        FASTA = rules.copy_fasta.output.FASTA
     output:
         FASTA = Path(config['working_dir']) / 'polishing' / 'polypolish' / 'polished.fasta',
         INFORMS = Path(config['working_dir']) / 'polishing' / 'polypolish'  / 'polypolish.io'
     params:
         running_dir = Path(config['working_dir']) / 'polishing' / 'polypolish',
         polypolish_options = config.get('polishing', {}).get('polypolish', {})
-    threads: 8
-    priority: 1
     run:
         from camel.app.tools.polypolish.polypolish import Polypolish
         polypolish = Polypolish(camel)
@@ -100,14 +101,13 @@ rule polypolish_polishing:
         polypolish.update_parameters(**params.polypolish_options)
         step = Step(str(rule), polypolish, camel, params.running_dir)
         step.run_step()
-        with open(output.INFORMS, 'wb') as handle:
-            pickle.dump(polypolish.informs, handle)
+        SnakemakeUtils.dump_object(polypolish.informs, Path(output.INFORMS))
 
 rule copy_fasta_polca:
     input:
         FASTA = Path(config['working_dir']) / 'polishing' / 'polypolish' / 'polished.fasta'
     output:
-        FASTA = Path(config['working_dir']) / 'polishing' / 'polca' / 'consensus.fasta'
+        FASTA = Path(config['working_dir']) / 'polishing' / 'polca' / 'input_genome.fasta'
     shell:
         """
         cp {input.FASTA} {output.FASTA}
@@ -120,7 +120,7 @@ rule samtools_index_polca:
     input:
         FASTA_REF = rules.copy_fasta_polca.output.FASTA
     output:
-        INDEX_GENOME_PREFIX = Path(config['working_dir']) / 'polishing' / 'polca' / 'consensus.fasta.fai'
+        INDEX_GENOME_PREFIX = Path(config['working_dir']) / 'polishing' / 'polca' / 'input_genome.fasta.fai'
     params:
         running_dir = Path(config['working_dir']) / 'polishing' / 'polca'
     run:
@@ -140,7 +140,7 @@ rule polca_polishing:
         FASTA = rules.copy_fasta_polca.output.FASTA,
         INDEX = rules.samtools_index_polca.output.INDEX_GENOME_PREFIX
     output:
-        FASTA = Path(config['working_dir']) / 'polishing' / 'polca' / 'consensus.fasta.PolcaCorrected.fa',
+        FASTA = Path(config['working_dir']) / 'polishing' / 'polca' / 'input_genome.fasta.PolcaCorrected.fa',
         INFORMS = Path(config['working_dir']) / 'polishing' / 'polca' / 'polca.io'
     params:
         running_dir = Path(config['working_dir']) / 'polishing' / 'polca',
@@ -155,22 +155,17 @@ rule polca_polishing:
         polca.update_parameters(threads=threads)
         step = Step(str(rule), polca, camel, params.running_dir, config)
         step.run_step()
-        with open(output.INFORMS, 'wb') as handle:
-            pickle.dump(polca.informs, handle)
+        SnakemakeUtils.dump_object(polca.informs, Path(output.INFORMS))
 
-rule samtools_index_short:
+rule rename_polca_output:
     """
-    Creates a samtools index for the assembly.
+    Renames the fasta file generated by polca.
     """
     input:
-        FASTA_REF = rules.polca_polishing.output.FASTA
+        FASTA = rules.polca_polishing.output.FASTA
     output:
-        INDEX_GENOME_PREFIX = Path(config['working_dir']) / 'polishing' / 'polca' / 'consensus.fasta.PolcaCorrected.fa.fai'
-    params:
-        running_dir = Path(config['working_dir']) / 'polishing' / 'polca'
-    run:
-        from camel.app.tools.samtools.samtoolsfastaindex import SamtoolsFastaIndex
-        samtools = SamtoolsFastaIndex(camel)
-        samtools.add_input_files({'FASTA': [ToolIOFile(Path(input.FASTA_REF))]})
-        step = Step(str(rule),samtools,camel,params.running_dir,config)
-        step.run_step()
+         FASTA = Path(config['working_dir']) / 'polishing' / 'polca' / 'polished.fasta'
+    shell:
+        """
+        mv {input.FASTA} {output.FASTA}
+        """

@@ -1,9 +1,9 @@
-import pickle
 from pathlib import Path
 
 from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.pipeline.step import Step
+from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 
 camel = Camel.get_instance()
 
@@ -19,8 +19,7 @@ rule assembly_flye_run:
         INFORMS = Path(config['working_dir']) / 'assembly_flye' / 'flye' / 'commands.io'
     params:
         running_dir = Path(config['working_dir']) / 'assembly_flye' / 'flye',
-        flye_options = config.get('assembly', {}).get('flye', {}),
-        read_type = 'SE'
+        flye_options = config.get('assembly', {}).get('flye', {})
     threads: 8
     run:
         from camel.app.tools.flye.flye import Flye
@@ -30,8 +29,7 @@ rule assembly_flye_run:
         flye.update_parameters(threads=threads, output_directory=str(params.running_dir))
         step = Step(str(rule), flye, camel, params.running_dir)
         step.run_step()
-        with open(output.INFORMS, 'wb') as handle:
-            pickle.dump(flye.informs, handle)
+        SnakemakeUtils.dump_object(flye.informs, Path(output.INFORMS))
 
 rule assembly_flye_filter_contig_length:
     """
@@ -50,21 +48,4 @@ rule assembly_flye_filter_contig_length:
         seqtk.add_input_files({'FASTA': [ToolIOFile(Path(input.FASTA))]})
         seqtk.update_parameters(output_filename='assembly_filtered.fasta', min_length=params.min_contig_length)
         step = Step(str(rule), seqtk, camel, params.running_dir)
-        step.run_step()
-
-rule assembly_flye_quast:
-    """
-    Generates assembly statistics using QUAST.
-    """
-    input:
-        FASTA = rules.assembly_flye_filter_contig_length.output.FASTA
-    output:
-        TSV = Path(config['working_dir']) / 'assembly_flye' / 'quast' / 'report.tsv'
-    params:
-        running_dir = Path(config['working_dir']) / 'assembly_flye' / 'quast'
-    run:
-        from camel.app.tools.quast.quast import Quast
-        quast = Quast(camel)
-        quast.add_input_files({'FASTA': [ToolIOFile(Path(input.FASTA))]})
-        step = Step(str(rule), quast, camel, params.running_dir)
         step.run_step()

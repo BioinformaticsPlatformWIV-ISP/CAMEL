@@ -9,7 +9,7 @@ class TestHybridAssemblyPipeline(CamelTestSuite):
     """
     Class to test the hybrid assembly pipeline.
     """
-    test_file_dir = CamelTestSuite.get_test_file_dir('hybrid_assembly')
+    test_file_dir = CamelTestSuite.get_test_file_dir('hybridassembly')
     FASTQ_1 = test_file_dir / 'pilsner_1.fq.gz'
     FASTQ_2 = test_file_dir / 'pilsner_2.fq.gz'
     FASTQ_SE = test_file_dir / 'pilsner_ont.fq.gz'

@@ -25,8 +25,7 @@ rule all:
     """
     input:
         Path(config['working_dir']) / config['output_html'],
-        Path(config['working_dir'] / config['output']),
-        Path(config['working_dir']) / 'report' / 'commands.txt'
+        Path(config['working_dir'] / config['output'])
 
 rule trim_illumina:
     """
@@ -65,7 +64,7 @@ rule trim_ont:
     output:
         FASTQ = Path(config['working_dir']) / 'trimming' / 'ont' / 'fastq.io'
     params:
-        dir_ = Path(config['working_dir']) / 'trimming' / 'ont',
+        working_directory = Path(config['working_dir']) / 'trimming' / 'ont',
         filtlong_options= config.get('filtlong',{})
     threads: 4
     run:
@@ -73,9 +72,9 @@ rule trim_ont:
         filtlong = Filtlong(camel)
         filtlong.add_input_files({'FASTQ': [ToolIOFile(Path(input.FASTQ))]})
         filtlong.update_parameters(**params.filtlong_options)
-        step = Step(str(rule), filtlong, camel, params.dir_)
+        step = Step(str(rule), filtlong, camel, params.working_directory, config)
         step.run_step()
-        SnakemakeUtils.dump_tool_outputs(filtlong,output)
+        SnakemakeUtils.dump_tool_outputs(filtlong, output)
 
 rule set_trimming_ont_output:
     """
@@ -104,29 +103,28 @@ rule unicycler:
         FASTA = Path(config['working_dir']) / 'unicycler' / 'assembly.fasta',
         INFORMS = Path(config['working_dir']) / 'unicycler' / 'commands.io'
     params:
-        dir_ = Path(config['working_dir'])
+        working_dir = Path(config['working_dir'])
     threads: 12
     run:
         from camel.app.tools.unicycler.unicycler import Unicycler
         unicycler_assembly = Unicycler(camel)
-        unicycler_assembly.add_input_files({'FASTQ_PE':[ToolIOFile(Path(input.FQ_1P)), ToolIOFile(Path(input.FQ_2P))],
-                                            'FASTQ_SE':[ToolIOFile(Path(input.FQ_SE))]})
-        unicycler_assembly.update_parameters(output_dir = 'unicycler', threads=threads)
-        step = Step(str(rule), unicycler_assembly, camel, params.dir_, config)
+        unicycler_assembly.add_input_files({'FASTQ_PE': [ToolIOFile(Path(input.FQ_1P)), ToolIOFile(Path(input.FQ_2P))],
+                                            'FASTQ_SE': [ToolIOFile(Path(input.FQ_SE))]})
+        unicycler_assembly.update_parameters(output_dir='unicycler', threads=threads)
+        step = Step(str(rule), unicycler_assembly, camel, params.working_dir, config)
         step.run_step()
-        with open(output.INFORMS, 'wb') as handle:
-            pickle.dump(unicycler_assembly.informs, handle)
+        SnakemakeUtils.dump_object(unicycler_assembly.informs, Path(output.INFORMS))
 
 rule report_quast:
     """
     Rule to generate the QUAST report table.
     """
     input:
-        report_quast = [Path(config['working_dir']) / 'qc' / f'{name}' / 'quast' / 'informs.io' for name in ['medaka', 'polca', 'polypolish', 'unicycler']]
+        report_quast = [Path(config['working_dir']) / 'qc' / f'{name}' / 'quast' / 'informs.io' for name in ['flye', 'medaka', 'polca', 'polypolish', 'unicycler']]
     output:
         INFORMS = Path(config['working_dir'] / 'report' / 'quast.io')
     run:
-        names = ['medaka', 'polca', 'polypolish', 'unicycler']
+        names = ['flye', 'medaka', 'polca', 'polypolish', 'unicycler']
         quast_table = []
         for i in range(len(input.report_quast)):
             quast_informs = SnakemakeUtils.load_object(Path(input.report_quast[i]))
@@ -135,20 +133,19 @@ rule report_quast:
                  '{:,}'.format(int(quast_informs['contig']['# contigs (>= 1000 bp)'])),
                  '{:,}'.format(int(quast_informs['genome']['Total length']))),
             ])
-        with open(output.INFORMS,'wb') as handle:
-            pickle.dump(quast_table,handle)
+        SnakemakeUtils.dump_object(quast_table, Path(output.INFORMS))
 
 rule report_short_variant_calling:
     """
     Rule to generate the report table for freebayes/clair3.
     """
     input:
-        report_freebayes = [Path(config['working_dir']) / 'qc' / f'{name}' / 'freebayes' / 'informs.io' for name in ['medaka', 'polca', 'polypolish', 'unicycler']],
-        report_clair3 = [Path(config['working_dir']) / 'qc' / f'{name}' / 'clair3_output' / 'informs.io' for name in ['medaka', 'polca', 'polypolish', 'unicycler']]
+        report_freebayes = [Path(config['working_dir']) / 'qc' / f'{name}' / 'freebayes' / 'informs.io' for name in ['flye', 'medaka', 'polca', 'polypolish', 'unicycler']],
+        report_clair3 = [Path(config['working_dir']) / 'qc' / f'{name}' / 'clair3_output' / 'informs.io' for name in ['flye', 'medaka', 'polca', 'polypolish', 'unicycler']]
     output:
         INFORMS = Path(config['working_dir'] / 'report' / 'variant_calling.io')
     run:
-        names = ['medaka', 'polca', 'polypolish', 'unicycler']
+        names = ['flye', 'medaka', 'polca', 'polypolish', 'unicycler']
         vc_table = []
         for i in range(len(names)):
             freebayes_informs = SnakemakeUtils.load_object(Path(input.report_freebayes[i]))
@@ -166,19 +163,18 @@ rule report_short_variant_calling:
                                         clair3_informs['type_of_variants'] != [] and t.var_type == 'snp'])))
                  )
             ])
-        with open(output.INFORMS,'wb') as handle:
-            pickle.dump(vc_table,handle)
+        SnakemakeUtils.dump_object(vc_table, Path(output.INFORMS))
 
 rule report_long_variant_calling:
     """
     Rule to generate the report table for sniffles.
     """
     input:
-        report_sniffles = [Path(config['working_dir']) / 'qc' / f'{name}' / 'sniffles' / 'informs.io' for name in ['medaka', 'polca', 'polypolish', 'unicycler']]
+        report_sniffles = [Path(config['working_dir']) / 'qc' / f'{name}' / 'sniffles' / 'informs.io' for name in ['flye', 'medaka', 'polca', 'polypolish', 'unicycler']]
     output:
         INFORMS = Path(config['working_dir'] / 'report' / 'sniffles.io')
     run:
-        names = ['medaka', 'polca', 'polypolish', 'unicycler']
+        names = ['flye', 'medaka', 'polca', 'polypolish', 'unicycler']
         sniffles_table = []
         for i in range(len(input.report_sniffles)):
             sniffles_informs = SnakemakeUtils.load_object(Path(input.report_sniffles[i]))
@@ -190,19 +186,18 @@ rule report_long_variant_calling:
                                         sniffles_informs['type_of_variants'] != [] and t.var_type == 'snp'])))
                  )
             ])
-        with open(output.INFORMS,'wb') as handle:
-            pickle.dump(sniffles_table,handle)
+        SnakemakeUtils.dump_object(sniffles_table, Path(output.INFORMS))
 
 rule report_mappingstats:
     input:
-        report_longreads = [Path(config['working_dir']) / 'qc' / f'{name}' / 'read_mapping' / 'flagstat-longreads.io'  for name in ['medaka', 'polca', 'polypolish', 'unicycler']],
-        report_shortreads = [Path(config['working_dir']) / 'qc' / f'{name}' / 'read_mapping' / 'flagstat.io' for name in ['medaka', 'polca', 'polypolish', 'unicycler']],
-        report_depth_shortreads = [Path(config['working_dir']) / 'qc' / f'{name}' / 'read_mapping' / 'samtools-depth.io' for name in ['medaka', 'polca', 'polypolish', 'unicycler']],
-        report_depth_longreads = [Path(config['working_dir']) / 'qc' / f'{name}' / 'read_mapping' / 'samtools-depth-long.io' for name in ['medaka', 'polca', 'polypolish', 'unicycler']]
+        report_longreads = [Path(config['working_dir']) / 'qc' / f'{name}' / 'read_mapping' / 'flagstat-longreads.io'  for name in ['flye', 'medaka', 'polca', 'polypolish', 'unicycler']],
+        report_shortreads = [Path(config['working_dir']) / 'qc' / f'{name}' / 'read_mapping' / 'flagstat.io' for name in ['flye', 'medaka', 'polca', 'polypolish', 'unicycler']],
+        report_depth_shortreads = [Path(config['working_dir']) / 'qc' / f'{name}' / 'read_mapping' / 'samtools-depth.io' for name in ['flye', 'medaka', 'polca', 'polypolish', 'unicycler']],
+        report_depth_longreads = [Path(config['working_dir']) / 'qc' / f'{name}' / 'read_mapping' / 'samtools-depth-long.io' for name in ['flye', 'medaka', 'polca', 'polypolish', 'unicycler']]
     output:
         INFORMS = Path(config['working_dir'] / 'report' / 'mapping.io')
     run:
-        names = ['medaka', 'polca', 'polypolish', 'unicycler']
+        names = ['flye', 'medaka', 'polca', 'polypolish', 'unicycler']
         mapping_table = []
         for i in range(len(input.report_longreads)):
             SR_informs = SnakemakeUtils.load_object(Path(input.report_shortreads[i]))
@@ -218,8 +213,7 @@ rule report_mappingstats:
                  '{:.2f}'.format(mapping_rate_LR), '{:,}'.format(median_depth_LR)
                  )
             ])
-            with open(output.INFORMS, 'wb') as handle:
-                pickle.dump(mapping_table, handle)
+        SnakemakeUtils.dump_object(mapping_table,Path(output.INFORMS))
 
 rule report_command_section:
     """
@@ -233,19 +227,19 @@ rule report_command_section:
         polypolish_commands = Path(config['working_dir']) / 'polishing' / 'polypolish'  / 'polypolish.io',
         polca_commands = Path(config['working_dir']) / 'polishing' / 'polca' / 'polca.io',
         quast_commands = [Path(config['working_dir']) / 'qc' / f'{name}' / 'quast' / 'commands.io' for name in
-                        ['medaka', 'polca', 'polypolish', 'unicycler']],
+                        ['flye', 'medaka', 'polca', 'polypolish', 'unicycler']],
         bwa_commands = [Path(config['working_dir']) / 'qc' / f'{name}' / 'read_mapping' / 'commands.io' for name in
-                      ['medaka', 'polca', 'polypolish', 'unicycler']],
+                      ['flye', 'medaka', 'polca', 'polypolish', 'unicycler']],
         freebayes_commands = [Path(config['working_dir']) / 'qc' / f'{name}' / 'freebayes' / 'commands.io' for name in
-                      ['medaka', 'polca', 'polypolish', 'unicycler']],
+                      ['flye', 'medaka', 'polca', 'polypolish', 'unicycler']],
         sniffles_commands = [Path(config['working_dir']) / 'qc' / f'{name}' / 'sniffles' / 'commands.io' for name in
-                      ['medaka', 'polca', 'polypolish', 'unicycler']],
+                      ['flye', 'medaka', 'polca', 'polypolish', 'unicycler']],
         clair3_commands = [Path(config['working_dir']) / 'qc' / f'{name}' / 'clair3_output' / 'commands.io' for name in
-                      ['medaka', 'polca', 'polypolish', 'unicycler']],
+                      ['flye', 'medaka', 'polca', 'polypolish', 'unicycler']],
         ale_report_commands = [Path(config['working_dir']) / 'qc' / f'{name}' / 'ale_illumina' / 'commands-report.io' for name in
-                      ['medaka', 'polca', 'polypolish', 'unicycler']],
+                      ['flye', 'medaka', 'polca', 'polypolish', 'unicycler']],
         ale_wiggle_commands = [Path(config['working_dir']) / 'qc' / f'{name}' / 'ale_illumina' / 'commands-wiggle.io' for name in
-                      ['medaka', 'polca', 'polypolish', 'unicycler']]
+                      ['flye', 'medaka', 'polca', 'polypolish', 'unicycler']]
     output:
         HTML = Path(config['working_dir']) / 'report' / 'html-commands.io'
     params:
