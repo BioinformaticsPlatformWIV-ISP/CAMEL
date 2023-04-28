@@ -204,12 +204,12 @@ rule report_mappingstats:
             LR_informs = SnakemakeUtils.load_object(Path(input.report_longreads[i]))
             SR_depth = SnakemakeUtils.load_object(Path(input.report_depth_shortreads[i]))
             LR_depth = SnakemakeUtils.load_object(Path(input.report_depth_longreads[i]))
-            mapping_rate_SR = SR_informs['mapped'][0] / SR_informs['total'][0]
-            mapping_rate_LR = LR_informs['mapped'][0] / LR_informs['total'][0]
+            mapping_rate_SR = SR_informs['mapped'][0] / SR_informs['total'][0] * 100
+            mapping_rate_LR = LR_informs['mapped'][0] / LR_informs['total'][0] * 100
             median_depth_SR = SR_depth['median_depth']
             median_depth_LR = LR_depth['median_depth']
             mapping_table.extend([
-                (names[i], '{:.2f}'.format(mapping_rate_SR), '{:,}'.format(median_depth_SR),
+                (names[i], '{:.2f}%'.format(mapping_rate_SR), '{:,}%'.format(median_depth_SR),
                  '{:.2f}'.format(mapping_rate_LR), '{:,}'.format(median_depth_LR)
                  )
             ])
@@ -291,7 +291,7 @@ rule report_combine_all:
 
         report.add_header('Variant calling statistics', 2)
         vc_table = pickle.load(open(input.informs_vc, 'rb'))
-        report.add_table(vc_table, column_names=['Assembly step', 'Number of variants', 'Number of indels', 'Number of SNPs', 'Clair3 total variant', 'Clair3 indels', 'Clair3 SNPs'], table_attributes=[('class', 'information')])
+        report.add_table(vc_table, column_names=['Assembly step', 'Freebayes total variants', 'Freebayes indels', 'Freebayes SNPs', 'Clair3 total variant', 'Clair3 indels', 'Clair3 SNPs'], table_attributes=[('class', 'information')])
 
         report.add_header('Sniffles statistics', 2)
         sniffles_table = pickle.load(open(input.informs_sniffles, 'rb'))
@@ -299,7 +299,7 @@ rule report_combine_all:
 
         report.add_header('Mapping statistics', 2)
         mapping_table = pickle.load(open(input.informs_mapping, 'rb'))
-        report.add_table(mapping_table, column_names=['Assembly step', 'mapping rate (short reads)', 'median depth (short reads)', 'mapping rate (long reads)', 'median depth (long reads)'], table_attributes=[('class', 'information')])
+        report.add_table(mapping_table, column_names=['Assembly step', 'Mapping rate (short reads)', 'Median depth (short reads)', 'Mapping rate (long reads)', 'Median depth (long reads)'], table_attributes=[('class', 'information')])
 
         report.add_header('Commands', 2)
         commands_content = [('Commands', 'commands', [Path(input.report_commands)])]

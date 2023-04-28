@@ -37,8 +37,6 @@ class MainHybridAssemblyPipeline(object):
         argument_parser.add_argument('--sample-name', type=str, default='test_sample')
         argument_parser.add_argument('--ont-qual', type=str, required=True,
                                      choices=['nano-corr', 'nano-hq', 'nano-raw'], default='nano-corr')
-        argument_parser.add_argument('--expected-species', type=str, required=True)
-        argument_parser.add_argument('--expected-gc-content', type=str, required=True)
         argument_parser.add_argument('--expected-genome-size', type=str, required=True)
         argument_parser.add_argument('--filtlong-keep-percent', type=int)
         argument_parser.add_argument('--freebayes-ploidy', choices=['GRCh37', 'GRCh38', 'X', 'Y', '1'], default='1')
@@ -74,7 +72,7 @@ class MainHybridAssemblyPipeline(object):
             'pipeline': {
                 'name': 'hybrid assembly pipeline',
                 'version': '0.1',
-                'title': 'Hybrid Assembly Pipeline'
+                'title': 'Hybrid assembly pipeline'
             },
             'input': {
                 'illumina': self._args.fastq_pe,
