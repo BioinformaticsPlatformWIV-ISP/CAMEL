@@ -53,9 +53,9 @@ class TestKlebsiellaPipeline(unittest.TestCase):
             self.assertGreater(len(manager.informs), 0)
 
     @longRunningTest()
-    def test_klebsiella_pipeline(self):
+    def test_klebsiella_pipeline_blast(self) -> None:
         """
-        Tests the Klebsiella pipeline.
+        Tests the Klebsiella pipeline with blast based detection.
         :return: None
         """
         path_report_out = self.running_dir / 'out' / 'report.html'
@@ -66,6 +66,30 @@ class TestKlebsiellaPipeline(unittest.TestCase):
             '--output-dir', str(path_report_out.parent),
             '--output-tsv', str(path_summary_out),
             '--working-dir', str(self.running_dir),
+            '--detection-method', 'blast',
+            '--threads', '8'
+        ] + [
+            f"--{a.replace('_', '-')}" for a in MainKlebsiellaPipeline.CUSTOM_ANALYSES if a not in (
+                'cgmlst', 'scgmlst')]
+        main = MainKlebsiellaPipeline(args)
+        main.run()
+        self.assertGreater(path_report_out.stat().st_size, 0)
+
+    @longRunningTest()
+    def test_klebsiella_pipeline_kma(self) -> None:
+        """
+        Tests the Klebsiella pipeline with KMA-based detection.
+        :return: None
+        """
+        path_report_out = self.running_dir / 'out' / 'report.html'
+        path_summary_out = self.running_dir / 'out' / 'summary.tsv'
+        args = [
+            '--fastq-pe', str(TestKlebsiellaPipeline.input_fastq_pe[0]), str(TestKlebsiellaPipeline.input_fastq_pe[1]),
+            '--output-html', str(path_report_out),
+            '--output-dir', str(path_report_out.parent),
+            '--output-tsv', str(path_summary_out),
+            '--working-dir', str(self.running_dir),
+            '--detection-method', 'kma',
             '--threads', '8'
         ] + [
             f"--{a.replace('_', '-')}" for a in MainKlebsiellaPipeline.CUSTOM_ANALYSES if a not in (

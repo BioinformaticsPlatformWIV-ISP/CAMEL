@@ -1,3 +1,4 @@
+import logging
 from typing import List
 
 import pandas as pd
@@ -29,8 +30,6 @@ class GenomicContext(Tool):
         Checks if the provided input files are valid.
         :return: None
         """
-        import pprint
-        pprint.pprint(self._input_informs)
         if 'dbs' not in self._input_informs:
             raise InvalidInputSpecificationError('Database informs input is required')
         for data_db in self._input_informs['dbs']:
@@ -62,24 +61,30 @@ class GenomicContext(Tool):
 
         # Create the output report
         section = HtmlReportSection('Genomic context')
-        section.add_warning_message(
-            'Predicting genomic context based solely on short-read data is error-prone and should only be considered '
-            'as an indication.')
 
-        # Create rows
-        table_data = []
-        for db in self._input_informs['dbs']:
-            section.add_header(db['title'], 3)
-            data_db = pd.read_table(self._tool_inputs[f"TSV_{db['key']}"][0].path)
-            if len(data_db) > 10:
-                div = HtmlExpandableDiv(f"genomic_context-{db['key']}", f'{len(data_db)} rows.')
-            else:
-                div = HtmlElement('div')
-            div.add_table([
-                [f"<i>{row[db['gene']]}</i>",
-                *self._get_plasmid_status(row[db['contig']], plasmids)] for row in data_db.to_dict('records')
-            ], ['Key', 'Chromosome', *plasmids], [('class', 'data')])
-            section.add_html_object(div)
+        # Check if the detection method is BLAST
+        if self._parameters['detection_method'] != 'blast':
+            logging.warning('Genomic context can only be predicted with blast as detection method')
+            section.add_paragraph('Predicting genomic context is only performed when the detection method is blast.')
+        else:
+            section.add_warning_message(
+                'Predicting genomic context based solely on short-read data is error-prone and should only be '
+                'considered as an indication.')
+
+            # Create rows
+            table_data = []
+            for db in self._input_informs['dbs']:
+                section.add_header(db['title'], 3)
+                data_db = pd.read_table(self._tool_inputs[f"TSV_{db['key']}"][0].path)
+                if len(data_db) > 10:
+                    div = HtmlExpandableDiv(f"genomic_context-{db['key']}", f'{len(data_db)} rows.')
+                else:
+                    div = HtmlElement('div')
+                div.add_table([
+                    [f"<i>{row[db['gene']]}</i>",
+                    *self._get_plasmid_status(row[db['contig']], plasmids)] for row in data_db.to_dict('records')
+                ], ['Key', 'Chromosome', *plasmids], [('class', 'data')])
+                section.add_html_object(div)
 
         # Tool output
         self._tool_outputs['HTML'] = [ToolIOValue(section)]

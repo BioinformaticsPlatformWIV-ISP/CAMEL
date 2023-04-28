@@ -103,7 +103,8 @@ rule mobsuite_report_genomic_context:
     output:
         HTML = Path(config['working_dir']) / 'mob_suite' / 'genomic_context' / 'html.io'
     params:
-        dir_ = Path(config['working_dir']) / 'mob_suite' / 'genomic_context'
+        dir_ = Path(config['working_dir']) / 'mob_suite' / 'genomic_context',
+        detection_method = config['detection_method']
     run:
         from camel.app.tools.pipelines.klebsiella.genomiccontext import GenomicContext
         genomic_context = GenomicContext(Camel.get_instance())
@@ -114,6 +115,7 @@ rule mobsuite_report_genomic_context:
                 {'key': 'vfdb', 'title': 'VFDB core', 'contig': 'Contig', 'gene': 'Gene'}
             ]
         })
+        genomic_context.update_parameters(detection_method=str(params.detection_method))
         SnakemakeUtils.add_pickle_inputs(genomic_context, input)
         step = Step(str(rule), genomic_context, Camel.get_instance(), params.dir_)
         step.run_step()
