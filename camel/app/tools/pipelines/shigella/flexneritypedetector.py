@@ -34,10 +34,6 @@ class FlexneriTypeDetector(Tool):
         :return: None
         """
         locus_by_allele = self.__parse_fasta_input()
-        import pprint
-        pprint.pprint(locus_by_allele)
-        pprint.pprint(self._tool_inputs)
-
         self._informs['mutations'] = {}
         self._informs['loci'] = {}
         for allele, locus in locus_by_allele.items():
