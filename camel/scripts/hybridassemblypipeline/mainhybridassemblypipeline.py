@@ -29,8 +29,10 @@ class MainHybridAssemblyPipeline(object):
         :return: Arguments
         """
         argument_parser = argparse.ArgumentParser()
-        argument_parser.add_argument('--fastq-pe', type=Path, help='Input Fastq PE file', nargs='+')
+        argument_parser.add_argument('--fastq-pe', type=Path, help='Input Fastq PE file', nargs=2)
+        argument_parser.add_argument('--fastq-pe-names', help='Input Fastq PE file', nargs=2)
         argument_parser.add_argument('--fastq-se', type=Path, help='Input Fastq SE files')
+        argument_parser.add_argument('--fastq-se-name', help='Input Fastq SE file names')
         argument_parser.add_argument('--working-dir', type=Path, default=Path.cwd())
         argument_parser.add_argument('--output', type=Path, default='output.tsv')
         argument_parser.add_argument('--output-html', type=Path, default='output.html')
@@ -77,6 +79,10 @@ class MainHybridAssemblyPipeline(object):
             'input': {
                 'illumina': self._args.fastq_pe,
                 'ont': self._args.fastq_se,
+                'illumina_name': [i for i in self._args.fastq_pe_names] if self._args.fastq_pe_names is not None else
+                [i.name for i in self._args.fastq_pe],
+                'ont_name': self._args.fastq_se_name if self._args.fastq_se_name is not None else
+                self._args.fastq_se.name,
             },
             'output': self._args.output,
             'output_html': self._args.output_html,

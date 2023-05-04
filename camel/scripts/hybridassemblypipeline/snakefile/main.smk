@@ -1,5 +1,4 @@
 import gzip
-import pickle
 from pathlib import Path
 
 from camel.app.camel import Camel
@@ -14,6 +13,8 @@ include: assembly_flye.SNAKEFILE_FLYE
 include: medaka_snakemake.SNAKEFILE_POLISHING
 include: short_read_polishing.SNAKEFILE_POLISHING
 include: quality_checks.SNAKEFILE_QC
+
+assembly_steps = ['Flye', 'Medaka', 'POLCA', 'Polypolish', 'Unicycler']
 
 #########
 # Rules #
@@ -40,7 +41,7 @@ rule trim_illumina:
         FQ_1S = Path(config['working_dir']) / 'trimming' / 'illumina' / f"{config['name']}_1U.fastq.gz",
         FQ_2S = Path(config['working_dir']) / 'trimming' / 'illumina' / f"{config['name']}_2U.fastq.gz",
         TSV = Path(config['working_dir']) / 'trimming' / 'illumina' / 'trimming_illumina.tsv',
-        HTML = Path(config['working_dir']) / 'trimming' / 'illumina' / 'fastqc_pre.html'
+        HTML = Path(config['working_dir']) / 'trimming' / 'illumina' / 'html.io'
     params:
         dir_ = Path(config['working_dir']) / 'trimming' / 'illumina'
     threads: 4
@@ -53,7 +54,7 @@ rule trim_illumina:
         wrapper.output.trimmed_reads_se_fwd[0].path.rename(Path(output.FQ_1S))
         wrapper.output.trimmed_reads_se_rev[0].path.rename(Path(output.FQ_2S))
         wrapper.output.tsv_summary.rename(Path(output.TSV))
-        wrapper.output.fastq_reports_pre[0].path.rename(Path(output.HTML))
+        SnakemakeUtils.dump_object(wrapper.output.report_section, Path(output.HTML))
 
 rule trim_ont:
     """
@@ -120,16 +121,16 @@ rule report_quast:
     Rule to generate the QUAST report table.
     """
     input:
-        report_quast = [Path(config['working_dir']) / 'qc' / f'{name}' / 'quast' / 'informs.io' for name in ['flye', 'medaka', 'polca', 'polypolish', 'unicycler']]
+        report_quast = [Path(config['working_dir']) / 'qc' / f'{name}' / 'quast' / 'informs.io' for name in assembly_steps]
+        # report_quast_combined = Path(config['working_dir']) / 'qc' / 'quast_combined' / 'informs.io'
     output:
         INFORMS = Path(config['working_dir'] / 'report' / 'quast.io')
     run:
-        names = ['flye', 'medaka', 'polca', 'polypolish', 'unicycler']
         quast_table = []
         for i in range(len(input.report_quast)):
             quast_informs = SnakemakeUtils.load_object(Path(input.report_quast[i]))
             quast_table.extend([
-                (names[i], '{:,}'.format(int(quast_informs['contig']['N50'])),
+                (assembly_steps[i], '{:,}'.format(int(quast_informs['contig']['N50'])),
                  '{:,}'.format(int(quast_informs['contig']['# contigs (>= 1000 bp)'])),
                  '{:,}'.format(int(quast_informs['genome']['Total length']))),
             ])
@@ -140,18 +141,17 @@ rule report_short_variant_calling:
     Rule to generate the report table for freebayes/clair3.
     """
     input:
-        report_freebayes = [Path(config['working_dir']) / 'qc' / f'{name}' / 'freebayes' / 'informs.io' for name in ['flye', 'medaka', 'polca', 'polypolish', 'unicycler']],
-        report_clair3 = [Path(config['working_dir']) / 'qc' / f'{name}' / 'clair3_output' / 'informs.io' for name in ['flye', 'medaka', 'polca', 'polypolish', 'unicycler']]
+        report_freebayes = [Path(config['working_dir']) / 'qc' / f'{name}' / 'freebayes' / 'informs.io' for name in assembly_steps],
+        report_clair3 = [Path(config['working_dir']) / 'qc' / f'{name}' / 'clair3_output' / 'informs.io' for name in assembly_steps]
     output:
         INFORMS = Path(config['working_dir'] / 'report' / 'variant_calling.io')
     run:
-        names = ['flye', 'medaka', 'polca', 'polypolish', 'unicycler']
         vc_table = []
-        for i in range(len(names)):
+        for i in range(len(input.report_freebayes)):
             freebayes_informs = SnakemakeUtils.load_object(Path(input.report_freebayes[i]))
             clair3_informs = SnakemakeUtils.load_object(Path(input.report_clair3[i]))
             vc_table.extend([
-                (names[i], '{:,}'.format(int(freebayes_informs['number_of_variants'])),
+                (assembly_steps[i], '{:,}'.format(int(freebayes_informs['number_of_variants'])),
                  '{:,}'.format(int(len([t for t in freebayes_informs['type_of_variants'] if
                                         freebayes_informs['type_of_variants'] != [] and t.var_type == 'indel']))),
                  '{:,}'.format(int(len([t for t in freebayes_informs['type_of_variants'] if
@@ -170,16 +170,15 @@ rule report_long_variant_calling:
     Rule to generate the report table for sniffles.
     """
     input:
-        report_sniffles = [Path(config['working_dir']) / 'qc' / f'{name}' / 'sniffles' / 'informs.io' for name in ['flye', 'medaka', 'polca', 'polypolish', 'unicycler']]
+        report_sniffles = [Path(config['working_dir']) / 'qc' / f'{name}' / 'sniffles' / 'informs.io' for name in assembly_steps]
     output:
         INFORMS = Path(config['working_dir'] / 'report' / 'sniffles.io')
     run:
-        names = ['flye', 'medaka', 'polca', 'polypolish', 'unicycler']
         sniffles_table = []
         for i in range(len(input.report_sniffles)):
             sniffles_informs = SnakemakeUtils.load_object(Path(input.report_sniffles[i]))
             sniffles_table.extend([
-                (names[i], '{:,}'.format(int(sniffles_informs['number_of_variants'])),
+                (assembly_steps[i], '{:,}'.format(int(sniffles_informs['number_of_variants'])),
                  '{:,}'.format(int(len([t for t in sniffles_informs['type_of_variants'] if
                                         sniffles_informs['type_of_variants'] != [] and t.var_type == 'indel']))),
                  '{:,}'.format(int(len([t for t in sniffles_informs['type_of_variants'] if
@@ -190,14 +189,13 @@ rule report_long_variant_calling:
 
 rule report_mappingstats:
     input:
-        report_longreads = [Path(config['working_dir']) / 'qc' / f'{name}' / 'read_mapping' / 'flagstat-longreads.io'  for name in ['flye', 'medaka', 'polca', 'polypolish', 'unicycler']],
-        report_shortreads = [Path(config['working_dir']) / 'qc' / f'{name}' / 'read_mapping' / 'flagstat.io' for name in ['flye', 'medaka', 'polca', 'polypolish', 'unicycler']],
-        report_depth_shortreads = [Path(config['working_dir']) / 'qc' / f'{name}' / 'read_mapping' / 'samtools-depth.io' for name in ['flye', 'medaka', 'polca', 'polypolish', 'unicycler']],
-        report_depth_longreads = [Path(config['working_dir']) / 'qc' / f'{name}' / 'read_mapping' / 'samtools-depth-long.io' for name in ['flye', 'medaka', 'polca', 'polypolish', 'unicycler']]
+        report_longreads = [Path(config['working_dir']) / 'qc' / f'{name}' / 'read_mapping' / 'flagstat-longreads.io'  for name in assembly_steps],
+        report_shortreads = [Path(config['working_dir']) / 'qc' / f'{name}' / 'read_mapping' / 'flagstat.io' for name in assembly_steps],
+        report_depth_shortreads = [Path(config['working_dir']) / 'qc' / f'{name}' / 'read_mapping' / 'samtools-depth.io' for name in assembly_steps],
+        report_depth_longreads = [Path(config['working_dir']) / 'qc' / f'{name}' / 'read_mapping' / 'samtools-depth-long.io' for name in assembly_steps]
     output:
         INFORMS = Path(config['working_dir'] / 'report' / 'mapping.io')
     run:
-        names = ['flye', 'medaka', 'polca', 'polypolish', 'unicycler']
         mapping_table = []
         for i in range(len(input.report_longreads)):
             SR_informs = SnakemakeUtils.load_object(Path(input.report_shortreads[i]))
@@ -206,11 +204,12 @@ rule report_mappingstats:
             LR_depth = SnakemakeUtils.load_object(Path(input.report_depth_longreads[i]))
             mapping_rate_SR = SR_informs['mapped'][0] / SR_informs['total'][0] * 100
             mapping_rate_LR = LR_informs['mapped'][0] / LR_informs['total'][0] * 100
-            median_depth_SR = SR_depth['median_depth']
-            median_depth_LR = LR_depth['median_depth']
+            median_depth_SR = int(SR_depth['median_depth'])
+            median_depth_LR = int(LR_depth['median_depth'])
+            print([mapping_rate_SR, mapping_rate_LR, median_depth_SR, median_depth_LR])
             mapping_table.extend([
-                (names[i], '{:.2f}%'.format(mapping_rate_SR), '{:,}%'.format(median_depth_SR),
-                 '{:.2f}'.format(mapping_rate_LR), '{:,}'.format(median_depth_LR)
+                (assembly_steps[i], '{:.2f}%'.format(mapping_rate_SR), '{:,}'.format(median_depth_SR),
+                 '{:.2f}%'.format(mapping_rate_LR), '{:,}'.format(median_depth_LR)
                  )
             ])
         SnakemakeUtils.dump_object(mapping_table,Path(output.INFORMS))
@@ -226,20 +225,14 @@ rule report_command_section:
         medaka_stitch_commands = Path(config['working_dir']) / 'medaka' / 'commands-stitch.io',
         polypolish_commands = Path(config['working_dir']) / 'polishing' / 'polypolish'  / 'polypolish.io',
         polca_commands = Path(config['working_dir']) / 'polishing' / 'polca' / 'polca.io',
-        quast_commands = [Path(config['working_dir']) / 'qc' / f'{name}' / 'quast' / 'commands.io' for name in
-                        ['flye', 'medaka', 'polca', 'polypolish', 'unicycler']],
-        bwa_commands = [Path(config['working_dir']) / 'qc' / f'{name}' / 'read_mapping' / 'commands.io' for name in
-                      ['flye', 'medaka', 'polca', 'polypolish', 'unicycler']],
-        freebayes_commands = [Path(config['working_dir']) / 'qc' / f'{name}' / 'freebayes' / 'commands.io' for name in
-                      ['flye', 'medaka', 'polca', 'polypolish', 'unicycler']],
-        sniffles_commands = [Path(config['working_dir']) / 'qc' / f'{name}' / 'sniffles' / 'commands.io' for name in
-                      ['flye', 'medaka', 'polca', 'polypolish', 'unicycler']],
-        clair3_commands = [Path(config['working_dir']) / 'qc' / f'{name}' / 'clair3_output' / 'commands.io' for name in
-                      ['flye', 'medaka', 'polca', 'polypolish', 'unicycler']],
-        ale_report_commands = [Path(config['working_dir']) / 'qc' / f'{name}' / 'ale_illumina' / 'commands-report.io' for name in
-                      ['flye', 'medaka', 'polca', 'polypolish', 'unicycler']],
-        ale_wiggle_commands = [Path(config['working_dir']) / 'qc' / f'{name}' / 'ale_illumina' / 'commands-wiggle.io' for name in
-                      ['flye', 'medaka', 'polca', 'polypolish', 'unicycler']]
+        quast_commands = [Path(config['working_dir']) / 'qc' / f'{name}' / 'quast' / 'commands.io' for name in assembly_steps],
+        # quast_combined_commands = Path(config['working_dir']) / 'qc' / 'quast_combined' / 'commands.io',
+        bwa_commands = [Path(config['working_dir']) / 'qc' / f'{name}' / 'read_mapping' / 'commands.io' for name in assembly_steps],
+        freebayes_commands = [Path(config['working_dir']) / 'qc' / f'{name}' / 'freebayes' / 'commands.io' for name in assembly_steps],
+        sniffles_commands = [Path(config['working_dir']) / 'qc' / f'{name}' / 'sniffles' / 'commands.io' for name in assembly_steps],
+        clair3_commands = [Path(config['working_dir']) / 'qc' / f'{name}' / 'clair3_output' / 'commands.io' for name in assembly_steps],
+        ale_report_commands = [Path(config['working_dir']) / 'qc' / f'{name}' / 'ale_illumina' / 'commands-report.io' for name in assembly_steps],
+        ale_wiggle_commands = [Path(config['working_dir']) / 'qc' / f'{name}' / 'ale_illumina' / 'commands-wiggle.io' for name in assembly_steps]
     output:
         HTML = Path(config['working_dir']) / 'report' / 'html-commands.io'
     params:
@@ -256,7 +249,7 @@ rule report_command_section:
         section = SnakePipelineUtils.create_commands_section(informs, params.working_dir)
         SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output.HTML))
 
-rule report_combine_all:
+rule report_create_sections:
     """
     Rule to combine report sections into a single output report.
     """
@@ -265,44 +258,29 @@ rule report_combine_all:
         informs_vc = rules.report_short_variant_calling.output.INFORMS,
         informs_sniffles = rules.report_long_variant_calling.output.INFORMS,
         informs_mapping = rules.report_mappingstats.output.INFORMS,
-        report_commands = rules.report_command_section.output.HTML
+        report_commands = rules.report_command_section.output.HTML,
+        informs_trimming_illumina = rules.trim_illumina.output.HTML
     output:
-        HTML = Path(config['working_dir']) / config['output_html']
+        HTML = Path(config['working_dir']) / Path(config['output_html'])
     params:
         sample_name = config['sample_name'],
-        fastq_input = config['input']['illumina'],
-        fastq_se_input = config['input']['ont'],
-        output_dir = config['working_dir'],
-        pipeline = config['pipeline']
+        fastq_input = config['input']['illumina_name'],
+        fastq_se_input = config['input']['ont_name'],
+        pipeline = config['pipeline'],
+        working_dir = Path(config['working_dir'])
     run:
-        import datetime
-        from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-
-        # Add header section
-        report = SnakePipelineUtils.init_pipeline_report(
-            Path(output.HTML), Path(params.output_dir), params.pipeline)
-        report.add_html_object(SnakePipelineUtils.create_input_section(
-            params.sample_name, datetime.datetime.now(), '0.1',
-            ', '.join([str(params.fastq_se_input)]+[str(entry) for entry in params.fastq_input]), []))
-
-        report.add_header('QUAST statistics', 2)
-        quast_table = pickle.load(open(input.informs_quast, 'rb'))
-        report.add_table(quast_table, column_names=['Assembly step', 'N50', 'No of contigs', 'Total length'], table_attributes=[('class', 'information')])
-
-        report.add_header('Variant calling statistics', 2)
-        vc_table = pickle.load(open(input.informs_vc, 'rb'))
-        report.add_table(vc_table, column_names=['Assembly step', 'Freebayes total variants', 'Freebayes indels', 'Freebayes SNPs', 'Clair3 total variant', 'Clair3 indels', 'Clair3 SNPs'], table_attributes=[('class', 'information')])
-
-        report.add_header('Sniffles statistics', 2)
-        sniffles_table = pickle.load(open(input.informs_sniffles, 'rb'))
-        report.add_table(sniffles_table, column_names=['Assembly step', 'Number of variants', 'Number of indels', 'Number of SNPs'], table_attributes=[('class', 'information')])
-
-        report.add_header('Mapping statistics', 2)
-        mapping_table = pickle.load(open(input.informs_mapping, 'rb'))
-        report.add_table(mapping_table, column_names=['Assembly step', 'Mapping rate (short reads)', 'Median depth (short reads)', 'Mapping rate (long reads)', 'Median depth (long reads)'], table_attributes=[('class', 'information')])
-
-        report.add_header('Commands', 2)
-        commands_content = [('Commands', 'commands', [Path(input.report_commands)])]
-        SnakePipelineUtils.add_report_content(report, commands_content)
-
-        report.save()
+        from camel.scripts.hybridassemblypipeline.reporter.hybridassemblyreporter import HybridAssemblyReporter
+        hybridassembly_reporter = HybridAssemblyReporter(camel, params.working_dir)
+        hybridassembly_reporter.add_input_informs({'quast': SnakemakeUtils.load_object(Path(input.informs_quast)),
+                                                   'vc': SnakemakeUtils.load_object(Path(input.informs_vc)),
+                                                   'sniffles': SnakemakeUtils.load_object(Path(input.informs_sniffles)),
+                                                   'mapping': SnakemakeUtils.load_object(Path(input.informs_mapping)),
+                                                   'commands': SnakemakeUtils.load_object(Path(input.report_commands)),
+                                                   'trimming_illumina': SnakemakeUtils.load_object(Path(input.informs_trimming_illumina)),
+                                                   'sample_name': params.sample_name,
+                                                   'fastq_input': params.fastq_input,
+                                                   'fastq_se_input': params.fastq_se_input,
+                                                   'pipeline': params.pipeline
+                                                 })
+        step = Step(str(rule), hybridassembly_reporter, camel, params.working_dir, config)
+        step.run_step()

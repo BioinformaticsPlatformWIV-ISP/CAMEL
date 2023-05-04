@@ -1,4 +1,3 @@
-import pickle
 from pathlib import Path
 
 from camel.app.camel import Camel
@@ -9,11 +8,11 @@ from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 camel = Camel.get_instance()
 
 consensus_by_tool = {
-    'flye': [Path(config['working_dir']) / 'assembly_flye' / 'filtering' / 'assembly_filtered.fasta'],
-    'medaka': [Path(config['working_dir']) / 'medaka' / 'consensus.fasta'],
-    'polca': [Path(config['working_dir']) / 'polishing' / 'polca' / 'polished.fasta'],
-    'polypolish': [Path(config['working_dir']) / 'polishing' / 'polypolish' / 'polished.fasta'],
-    'unicycler': [Path(config['working_dir']) / 'unicycler' / 'assembly.fasta']
+    'Flye': [Path(config['working_dir']) / 'assembly_flye' / 'filtering' / 'assembly_filtered.fasta'],
+    'Medaka': [Path(config['working_dir']) / 'medaka' / 'consensus.fasta'],
+    'POLCA': [Path(config['working_dir']) / 'polishing' / 'polca' / 'polished.fasta'],
+    'Polypolish': [Path(config['working_dir']) / 'polishing' / 'polypolish' / 'polished.fasta'],
+    'Unicycler': [Path(config['working_dir']) / 'unicycler' / 'assembly.fasta']
 }
 
 rule check_qc:
@@ -60,6 +59,7 @@ rule quast_final:
         quast.add_input_files({'FASTA': [ToolIOFile(Path(str(input.FASTA)))]})
         step = Step(str(rule), quast, camel, dir_working, config)
         step.run_step()
+        quast.informs['_tag'] = f'{wildcards.name}'
         SnakemakeUtils.dump_object(quast.informs, Path(output.INFORMS))
 
 rule parse_quast_output:
@@ -80,6 +80,26 @@ rule parse_quast_output:
         step = Step(str(rule), quast_inform_extractor, camel, dir_working, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(quast_inform_extractor, output)
+
+# rule quast_final_all_assemblies:
+#     """
+#     Generates assembly statistics using QUAST.
+#     """
+#     input:
+#         FASTA = [Path(config['working_dir']) / 'qc' / f'{name}' / 'consensus.fasta' for name in consensus_by_tool.keys()]
+#     output:
+#         TSV = Path(config['working_dir']) / 'qc' / 'quast_combined' / 'report.tsv',
+#         INFORMS = Path(config['working_dir']) / 'qc' / 'quast_combined' / 'commands.io'
+#     params:
+#         running_dir = Path(config['working_dir']) / 'qc'  / 'quast_combined'
+#     run:
+#         from camel.app.tools.quast.quast import Quast
+#         dir_working = Path(str(params.running_dir)).absolute()
+#         quast = Quast(camel)
+#         quast.add_input_files({'FASTA': [ToolIOFile(Path(str(i))) for i in input.FASTA]})
+#         step = Step(str(rule), quast, camel, dir_working, config)
+#         step.run_step()
+#         SnakemakeUtils.dump_object(quast.informs, Path(output.INFORMS))
 
 rule samtools_index_short_qc:
     """
@@ -144,6 +164,7 @@ rule read_mapping_qc:
         SnakemakeUtils.add_pickle_input(bwa_map, 'INDEX_GENOME_PREFIX', Path(input.INDEX_GENOME_PREFIX))
         step = Step(str(rule), bwa_map, camel, dir_working, config)
         step.run_step()
+        bwa_map.informs['_tag'] = f'{wildcards.name}'
         SnakemakeUtils.dump_object(bwa_map.informs, Path(output.INFORMS))
 
 rule read_mapping_qc_longreads:
@@ -391,6 +412,7 @@ rule freebayes_qc:
         freebayes.update_parameters(**params.freebayes_options)
         step = Step(str(rule), freebayes, camel, dir_working, config)
         step.run_step()
+        freebayes.informs['_tag'] = f'{wildcards.name}'
         SnakemakeUtils.dump_object(freebayes.informs, Path(output.INFORMS))
 
 rule parse_freebayes_vcf:
@@ -432,6 +454,7 @@ rule sniffles_qc:
         sniffles.update_parameters(threads=threads)
         step = Step(str(rule), sniffles, camel, dir_working, config)
         step.run_step()
+        sniffles.informs['_tag'] = f'{wildcards.name}'
         SnakemakeUtils.dump_object(sniffles.informs, Path(output.INFORMS))
 
 rule parse_sniffles_vcf:
@@ -475,6 +498,7 @@ rule clair3_qc:
         clair3.update_parameters(threads=threads)
         step = Step(str(rule), clair3, camel, dir_working, config)
         step.run_step()
+        clair3.informs['_tag'] = f'{wildcards.name}'
         SnakemakeUtils.dump_object(clair3.informs, Path(output.INFORMS))
 
 rule parse_clair3_vcf:
@@ -513,6 +537,7 @@ rule ale:
         ale_report.add_input_files({'SAM': [ToolIOFile(Path(input.SAM))], 'FASTA': [ToolIOFile(Path(input.FASTA))]})
         step = Step(str(rule), ale_report, camel, dir_working, config)
         step.run_step()
+        ale_report.informs['_tag'] = f'{wildcards.name}'
         SnakemakeUtils.dump_object(ale_report.informs, Path(output.INFORMS))
 
 rule ale2wiggle:
@@ -536,4 +561,5 @@ rule ale2wiggle:
         ale2wiggle_report.add_input_files({'ALE': [ToolIOFile(Path(input.ALE))]})
         step = Step(str(rule), ale2wiggle_report, camel, dir_working, config)
         step.run_step()
+        ale2wiggle_report.informs['_tag'] = f'{wildcards.name}'
         SnakemakeUtils.dump_object(ale2wiggle_report.informs, Path(output.INFORMS))
