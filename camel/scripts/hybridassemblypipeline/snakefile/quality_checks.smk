@@ -150,10 +150,10 @@ rule read_mapping_qc:
         FASTA = rules.copy_fasta_file.output.FASTA,
         INDEX_GENOME_PREFIX = rules.bwa_index_qc.output.INDEX_GENOME_PREFIX
     output:
-        SAM =  Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'bwa_readmap.sam',
-        INFORMS = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'commands.io'
+        SAM =  Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'illumina' / 'bwa_readmap.sam',
+        INFORMS = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'illumina' / 'commands.io'
     params:
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'read_mapping'
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'read_mapping' / 'illumina'
     threads: 8
     run:
         from camel.app.tools.bwa.bwamap import BWAMap
@@ -178,9 +178,9 @@ rule read_mapping_qc_longreads:
         FASTA = rules.copy_fasta_file.output.FASTA,
         INDEX_GENOME_PREFIX = rules.bwa_index_qc.output.INDEX_GENOME_PREFIX
     output:
-        SAM = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'minimap2_readmap.sam'
+        SAM = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'ont' / 'minimap2_readmap.sam'
     params:
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'read_mapping'
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'read_mapping' / 'ont'
     threads: 8
     run:
         from camel.app.tools.minimap2.minimap2mapping import Minimap2Mapping
@@ -198,9 +198,9 @@ rule sam_to_bam_qc:
     input:
         SAM = rules.read_mapping_qc.output.SAM
     output:
-        BAM =  Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'bwa_readmap.bam'
+        BAM =  Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'illumina' / 'bwa_readmap.bam'
     params:
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'read_mapping'
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'read_mapping' / 'illumina'
     run:
         from camel.app.tools.samtools.samtoolsview import SamtoolsView
         dir_working = Path(str(params.running_dir)).absolute()
@@ -217,9 +217,9 @@ rule bam_sorting_qc:
     input:
         BAM = rules.sam_to_bam_qc.output.BAM
     output:
-        BAM = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'bwa_readmap.sorted.bam'
+        BAM = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'illumina' / 'bwa_readmap.sorted.bam'
     params:
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'read_mapping'
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'read_mapping' / 'illumina'
     run:
         from camel.app.tools.samtools.samtoolssort import SamtoolsSort
         dir_working = Path(str(params.running_dir)).absolute()
@@ -236,9 +236,9 @@ rule bam_indexing_qc:
     input:
         BAM = rules.bam_sorting_qc.output.BAM
     output:
-        BAM = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'bwa-index.io'
+        BAM = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'illumina' / 'bwa-index.io'
     params:
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'read_mapping'
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'read_mapping' / 'illumina'
     run:
         from camel.app.tools.samtools.samtoolsindex import SamtoolsIndex
         dir_working = Path(str(params.running_dir)).absolute()
@@ -256,9 +256,9 @@ rule mapping_stats:
         BAM = rules.bam_sorting_qc.output.BAM,
         INDEX = rules.bam_indexing_qc.output.BAM
     output:
-        INFORMS = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'flagstat.io'
+        INFORMS = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'illumina' / 'flagstat.io'
     params:
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'read_mapping'
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'read_mapping' / 'illumina'
     run:
         from camel.app.tools.samtools.samtoolsflagstat import SamtoolsFlagstat
         dir_working = Path(str(params.running_dir)).absolute()
@@ -276,10 +276,10 @@ rule samtools_depth_sr:
         BAM = rules.bam_sorting_qc.output.BAM,
         INDEX = rules.bam_indexing_qc.output.BAM
     output:
-        TSV = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'tsv.io',
-        INFORMS = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'samtools-depth.io'
+        TSV = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'illumina' / 'tsv.io',
+        INFORMS = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'illumina' / 'samtools-depth.io'
     params:
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'read_mapping'
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'read_mapping' / 'illumina'
     run:
         from camel.app.tools.samtools.samtoolsdepth import SamtoolsDepth
         dir_working = Path(str(params.running_dir)).absolute()
@@ -297,9 +297,9 @@ rule sam_to_bam_qc_longreads:
     input:
         SAM = rules.read_mapping_qc_longreads.output.SAM
     output:
-        BAM = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'minimap2_readmap.bam'
+        BAM = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'ont' / 'minimap2_readmap.bam'
     params:
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'read_mapping'
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'read_mapping' / 'ont'
     run:
         from camel.app.tools.samtools.samtoolsview import SamtoolsView
         dir_working = Path(str(params.running_dir)).absolute()
@@ -316,9 +316,9 @@ rule bam_sorting_qc_longreads:
     input:
         BAM = rules.sam_to_bam_qc.output.BAM
     output:
-        BAM = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'minimap2_readmap.sorted.bam'
+        BAM = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'ont' / 'minimap2_readmap.sorted.bam'
     params:
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'read_mapping'
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'read_mapping' / 'ont'
     run:
         from camel.app.tools.samtools.samtoolssort import SamtoolsSort
         dir_working = Path(str(params.running_dir)).absolute()
@@ -335,9 +335,9 @@ rule bam_indexing_qc_longreads:
     input:
         BAM = rules.bam_sorting_qc_longreads.output.BAM
     output:
-        BAM = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'bwa-index-longreads.io'
+        BAM = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'ont' / 'bwa-index-longreads.io'
     params:
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'read_mapping'
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'read_mapping' / 'ont'
     run:
         from camel.app.tools.samtools.samtoolsindex import SamtoolsIndex
         dir_working = Path(str(params.running_dir)).absolute()
@@ -355,9 +355,9 @@ rule mapping_stats_longreads:
         BAM = rules.bam_sorting_qc_longreads.output.BAM,
         INDEX = rules.bam_indexing_qc_longreads.output.BAM
     output:
-        INFORMS = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'flagstat-longreads.io'
+        INFORMS = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'ont' / 'flagstat-longreads.io'
     params:
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'read_mapping'
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'read_mapping' / 'ont'
     run:
         from camel.app.tools.samtools.samtoolsflagstat import SamtoolsFlagstat
         dir_working = Path(str(params.running_dir)).absolute()
@@ -375,10 +375,10 @@ rule samtools_depth_lr:
         BAM = rules.bam_sorting_qc_longreads.output.BAM,
         INDEX = rules.bam_indexing_qc_longreads.output.BAM
     output:
-        TSV = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'tsv-long.io',
-        INFORMS = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'samtools-depth-long.io'
+        TSV = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'ont' / 'tsv-long.io',
+        INFORMS = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'ont' / 'samtools-depth-long.io'
     params:
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'read_mapping'
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'read_mapping' / 'ont'
     run:
         from camel.app.tools.samtools.samtoolsdepth import SamtoolsDepth
         dir_working = Path(str(params.running_dir)).absolute()

@@ -50,7 +50,9 @@ class HybridAssemblyReporter(Tool):
 
         self.__add_report_header()
 
+        self.__add_assemblies_to_download()
         self.report.add_html_object(self._input_informs['trimming_illumina'])
+        self.report.add_html_object(self._input_informs['trimming_ont'])
         self.__add_quast_table()
         self.__add_vc_table()
         self.__add_sniffles_table()
@@ -60,6 +62,9 @@ class HybridAssemblyReporter(Tool):
         self.report.save()
 
     def __add_input_section(self):
+        """
+        Adds the information about the input data.
+        """
         table_data = [
             ['Sample:', self._input_informs['sample_name']],
             ['Analysis date:', datetime.datetime.now()],
@@ -71,7 +76,23 @@ class HybridAssemblyReporter(Tool):
         section.add_table(table_data, table_attributes=[('class', 'information')])
         self.report.add_html_object(section)
 
+    def __add_assemblies_to_download(self):
+        """
+        Adds a new section which allows to download the generated assemblies at different stages of the pipeline.
+        """
+        fasta_level = ['Flye', 'Medaka', 'POLCA', 'Polypolish', 'Unicycler']
+        section = HtmlReportSection('Downloadable assemblies')
+        for FASTA in fasta_level:
+            fasta_file = Path(self._output_dir) / 'qc' / f'{FASTA}' / 'consensus.fasta'
+            relative_path = Path(f'qc/{FASTA}', fasta_file.name)
+            section.add_file(fasta_file, relative_path)
+            section.add_link_to_file(f'Download {FASTA} assembly (FASTA)', relative_path)
+        self.report.add_html_object(section)
+
     def __add_report_header(self):
+        """
+        Adds the report header.
+        """
         self.report.add_module_header('Sections')
         section = HtmlReportSection(None)
 
@@ -84,7 +105,10 @@ class HybridAssemblyReporter(Tool):
         self.report.add_html_object(section)
 
     def __add_quast_table(self):
-        section = HtmlReportSection('Quast statistics', subtitle='0.1')
+        """
+        Adds the summary QUAST table to the report.
+        """
+        section = HtmlReportSection('Quast statistics', subtitle='v4.4')
         div_sect = HtmlElement('div', attributes=[('class', 'border_bottom')])
         div = HtmlExpandableDiv('quast_statistics', 'quast')
         div.add_table(self._input_informs['quast'],
@@ -95,7 +119,10 @@ class HybridAssemblyReporter(Tool):
         self.report.add_html_object(section)
 
     def __add_vc_table(self):
-        section = HtmlReportSection('Variant calling statistics', subtitle='0.1')
+        """
+        Adds the variant calling section to the report.
+        """
+        section = HtmlReportSection('Variant calling statistics', subtitle='Freebayes v1.3.6, Clair3 v1.0.0')
         div_sect = HtmlElement('div', attributes=[('class', 'border_bottom')])
         div = HtmlExpandableDiv('variant_calling_statistics', 'vc')
         div.add_table(self._input_informs['vc'],
@@ -107,7 +134,10 @@ class HybridAssemblyReporter(Tool):
         self.report.add_html_object(section)
 
     def __add_sniffles_table(self):
-        section = HtmlReportSection('Sniffles statistics', subtitle='0.1')
+        """
+        Adds the Sniffles table to the report.
+        """
+        section = HtmlReportSection('Sniffles statistics', subtitle='v2.0.7')
         div_sect = HtmlElement('div', attributes=[('class', 'border_bottom')])
         div = HtmlExpandableDiv('sniffles_statistics', 'sniffles')
         div.add_table(self._input_informs['sniffles'],
@@ -118,7 +148,10 @@ class HybridAssemblyReporter(Tool):
         self.report.add_html_object(section)
 
     def __add_mapping_table(self):
-        section = HtmlReportSection('Mapping statistics', subtitle='0.1')
+        """
+        Adds the mapping statistics to the report.
+        """
+        section = HtmlReportSection('Mapping statistics', subtitle='BWA v0.7.17, Minimap2 v2.17')
         div_sect = HtmlElement('div', attributes=[('class', 'border_bottom')])
         div = HtmlExpandableDiv('mapping_statistics', 'mapping')
         div.add_table(self._input_informs['mapping'],

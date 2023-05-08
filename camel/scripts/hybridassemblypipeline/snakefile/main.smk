@@ -56,39 +56,58 @@ rule trim_illumina:
         wrapper.output.tsv_summary.rename(Path(output.TSV))
         SnakemakeUtils.dump_object(wrapper.output.report_section, Path(output.HTML))
 
-rule trim_ont:
+rule trim_ont_workflow:
     """
-    This rule trims the ONT reads using filtlong.
+    This rule trims the ONT reads using the trimmingont wrapper.
     """
     input:
         FASTQ = config['input']['ont']
     output:
-        FASTQ = Path(config['working_dir']) / 'trimming' / 'ont' / 'fastq.io'
+        FASTQ = Path(config['working_dir']) / 'trimming' / 'ont' / 'fastq.io',
+        HTML = Path(config['working_dir']) / 'trimming' / 'ont' / 'html.io'
     params:
-        working_directory = Path(config['working_dir']) / 'trimming' / 'ont',
-        filtlong_options= config.get('filtlong',{})
+        dir_ = Path(config['working_dir']) / 'trimming' / 'ont'
     threads: 4
     run:
-        from camel.app.tools.filtlong.filtlong import Filtlong
-        filtlong = Filtlong(camel)
-        filtlong.add_input_files({'FASTQ': [ToolIOFile(Path(input.FASTQ))]})
-        filtlong.update_parameters(**params.filtlong_options)
-        step = Step(str(rule), filtlong, camel, params.working_directory, config)
-        step.run_step()
-        SnakemakeUtils.dump_tool_outputs(filtlong, output)
+        from camel.app.components.workflows.trimmingontwrapper import TrimmingONTWrapper
+        wrapper = TrimmingONTWrapper(Path(params.dir_).absolute())
+        wrapper.run_workflow(Path(input.FASTQ), threads=threads, )
+        wrapper.output.trimmed_reads[0].path.rename(Path(output.FASTQ))
+        SnakemakeUtils.dump_object(wrapper.output.report_section, Path(output.HTML))
+
+# rule trim_ont:
+#     """
+#     This rule trims the ONT reads using filtlong.
+#     """
+#     input:
+#         FASTQ = config['input']['ont']
+#     output:
+#         FASTQ = Path(config['working_dir']) / 'trimming' / 'ont' / 'fastq.io'
+#     params:
+#         working_directory = Path(config['working_dir']) / 'trimming' / 'ont',
+#         filtlong_options= config.get('filtlong',{})
+#     threads: 4
+#     run:
+#         from camel.app.tools.filtlong.filtlong import Filtlong
+#         filtlong = Filtlong(camel)
+#         filtlong.add_input_files({'FASTQ': [ToolIOFile(Path(input.FASTQ))]})
+#         filtlong.update_parameters(**params.filtlong_options)
+#         step = Step(str(rule), filtlong, camel, params.working_directory, config)
+#         step.run_step()
+#         SnakemakeUtils.dump_tool_outputs(filtlong, output)
 
 rule set_trimming_ont_output:
     """
     This rule gzip the filtlong output reads into the correct location.
     """
     input:
-        FASTQ = rules.trim_ont.output.FASTQ
+        FASTQ = rules.trim_ont_workflow.output.FASTQ
     output:
         FASTQ = Path(config['working_dir']) / 'trimming' / 'ont' / '{}_SE.fastq.gz'.format(config['name'])
     params:
         dir_ = Path(config['working_dir']) / 'trimming' / 'ont'
     run:
-        input_fastq = open(SnakemakeUtils.load_object(Path(input.FASTQ))[0].path, 'rb').read()
+        input_fastq = open(input.FASTQ, 'rb').read()
         with gzip.open(output.FASTQ, 'wb') as handle:
             handle.write(input_fastq)
 
@@ -188,11 +207,14 @@ rule report_long_variant_calling:
         SnakemakeUtils.dump_object(sniffles_table, Path(output.INFORMS))
 
 rule report_mappingstats:
+    """
+    Rule to generate the report table for the mapping statistics.
+    """
     input:
-        report_longreads = [Path(config['working_dir']) / 'qc' / f'{name}' / 'read_mapping' / 'flagstat-longreads.io'  for name in assembly_steps],
-        report_shortreads = [Path(config['working_dir']) / 'qc' / f'{name}' / 'read_mapping' / 'flagstat.io' for name in assembly_steps],
-        report_depth_shortreads = [Path(config['working_dir']) / 'qc' / f'{name}' / 'read_mapping' / 'samtools-depth.io' for name in assembly_steps],
-        report_depth_longreads = [Path(config['working_dir']) / 'qc' / f'{name}' / 'read_mapping' / 'samtools-depth-long.io' for name in assembly_steps]
+        report_longreads = [Path(config['working_dir']) / 'qc' / f'{name}' / 'read_mapping' / 'ont' / 'flagstat-longreads.io'  for name in assembly_steps],
+        report_shortreads = [Path(config['working_dir']) / 'qc' / f'{name}' / 'read_mapping' / 'illumina' / 'flagstat.io' for name in assembly_steps],
+        report_depth_shortreads = [Path(config['working_dir']) / 'qc' / f'{name}' / 'read_mapping' / 'illumina' / 'samtools-depth.io' for name in assembly_steps],
+        report_depth_longreads = [Path(config['working_dir']) / 'qc' / f'{name}' / 'read_mapping' / 'ont' / 'samtools-depth-long.io' for name in assembly_steps]
     output:
         INFORMS = Path(config['working_dir'] / 'report' / 'mapping.io')
     run:
@@ -227,7 +249,7 @@ rule report_command_section:
         polca_commands = Path(config['working_dir']) / 'polishing' / 'polca' / 'polca.io',
         quast_commands = [Path(config['working_dir']) / 'qc' / f'{name}' / 'quast' / 'commands.io' for name in assembly_steps],
         # quast_combined_commands = Path(config['working_dir']) / 'qc' / 'quast_combined' / 'commands.io',
-        bwa_commands = [Path(config['working_dir']) / 'qc' / f'{name}' / 'read_mapping' / 'commands.io' for name in assembly_steps],
+        bwa_commands = [Path(config['working_dir']) / 'qc' / f'{name}' / 'read_mapping' / 'illumina' / 'commands.io' for name in assembly_steps],
         freebayes_commands = [Path(config['working_dir']) / 'qc' / f'{name}' / 'freebayes' / 'commands.io' for name in assembly_steps],
         sniffles_commands = [Path(config['working_dir']) / 'qc' / f'{name}' / 'sniffles' / 'commands.io' for name in assembly_steps],
         clair3_commands = [Path(config['working_dir']) / 'qc' / f'{name}' / 'clair3_output' / 'commands.io' for name in assembly_steps],
@@ -259,7 +281,8 @@ rule report_create_sections:
         informs_sniffles = rules.report_long_variant_calling.output.INFORMS,
         informs_mapping = rules.report_mappingstats.output.INFORMS,
         report_commands = rules.report_command_section.output.HTML,
-        informs_trimming_illumina = rules.trim_illumina.output.HTML
+        informs_trimming_illumina = rules.trim_illumina.output.HTML,
+        informs_trimming_ont = rules.trim_ont_workflow.output.HTML
     output:
         HTML = Path(config['working_dir']) / Path(config['output_html'])
     params:
@@ -277,6 +300,7 @@ rule report_create_sections:
                                                    'mapping': SnakemakeUtils.load_object(Path(input.informs_mapping)),
                                                    'commands': SnakemakeUtils.load_object(Path(input.report_commands)),
                                                    'trimming_illumina': SnakemakeUtils.load_object(Path(input.informs_trimming_illumina)),
+                                                   'trimming_ont': SnakemakeUtils.load_object(Path(input.informs_trimming_ont)),
                                                    'sample_name': params.sample_name,
                                                    'fastq_input': params.fastq_input,
                                                    'fastq_se_input': params.fastq_se_input,
