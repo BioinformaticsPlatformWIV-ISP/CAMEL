@@ -1,12 +1,18 @@
 import datetime
 from pathlib import Path
+from typing import Any, Dict
+
+import pandas as pd
 
 from camel.app.camel import Camel
 from camel.app.components.html.htmlelement import HtmlElement
 from camel.app.components.html.htmlexpandablediv import HtmlExpandableDiv
 from camel.app.components.html.htmlreport import HtmlReport
 from camel.app.components.html.htmlreportsection import HtmlReportSection
+from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.tools.tool import Tool
+from camel.resources import CSS_STYLE
+from camel.resources.javascript import JQUERY_SRC
 
 
 class HybridAssemblyReporter(Tool):
@@ -16,9 +22,13 @@ class HybridAssemblyReporter(Tool):
 
     TITLE = 'Hybrid assembly pipeline'
     MATCH_COLORS = {0: None, 1: 'grey', 2: 'lightgreen', 3: 'green'}
-    REPORT_STRUCTURE = [['Read trimming and basic QC', 'trim'], ['Quast analysis', 'quast'],
-                        ['Variant calling analysis', 'vc'], ['Sniffles analysis', 'sniffles'],
-                        ['Mapping analysis', 'mapping']]
+    REPORT_STRUCTURE = [
+        ['Read trimming and basic QC', 'trim'],
+        ['Quast analysis', 'quast'],
+        ['Variant calling analysis', 'vc'],
+        ['Sniffles analysis', 'sniffles'],
+        ['Mapping analysis', 'mapping']
+    ]
 
     def __init__(self, camel: Camel, output_directory: Path) -> None:
         """
@@ -34,6 +44,16 @@ class HybridAssemblyReporter(Tool):
         Checks whether the provided input files are valid.
         :return: None
         """
+        if 'TSV_quast' not in self._tool_inputs:
+            raise InvalidInputSpecificationError("Combined QUAST input is required ('TSV_quast')")
+        if 'quast' not in self._input_informs:
+            raise InvalidInputSpecificationError("QUAST informs are required ('quast')")
+        if 'TSV_vc' not in self._tool_inputs:
+            raise InvalidInputSpecificationError("Combined variant calling input is required ('TSV_vc')")
+        if 'freebayes' not in self._input_informs:
+            raise InvalidInputSpecificationError("freebayes informs are required ('freebayes')")
+        if 'clair3' not in self._input_informs:
+            raise InvalidInputSpecificationError("Clair3 informs are required ('clair3')")
         super()._check_input()
 
     def _execute_tool(self) -> None:
@@ -41,20 +61,23 @@ class HybridAssemblyReporter(Tool):
         Executes this tool.
         :return: None
         """
-        self.report = HtmlReport(self._output_html, self._output_dir)
-
-        self._check_input()
-
+        # Initialize report
+        self.report = HtmlReport(self._output_html, self._output_dir, [JQUERY_SRC])
+        self.report.initialize('Hybrid assembly pipeline', CSS_STYLE)
         self.report.add_pipeline_header(HybridAssemblyReporter.TITLE)
+
+        # Input section
         self.__add_input_section()
-
-        self.__add_report_header()
-
+        self.__add_overview_links()
+        self.report.add_module_header('Overview')
         self.__add_assemblies_to_download()
+        self.report.add_module_header('Read trimming')
         self.report.add_html_object(self._input_informs['trimming_illumina'])
         self.report.add_html_object(self._input_informs['trimming_ont'])
-        self.__add_quast_table()
-        self.__add_vc_table()
+        self.report.add_module_header('Assembly statistics')
+        self.__add_quast_section(self._tool_inputs['TSV_quast'][0].path, self._input_informs['quast'])
+        self.report.add_module_header('Variant calling')
+        self.__add_vc_table(self._tool_inputs['TSV_vc'][0].path)
         self.__add_sniffles_table()
         self.__add_mapping_table()
 
@@ -83,13 +106,14 @@ class HybridAssemblyReporter(Tool):
         fasta_level = ['Flye', 'Medaka', 'POLCA', 'Polypolish', 'Unicycler']
         section = HtmlReportSection('Downloadable assemblies')
         for FASTA in fasta_level:
+            # TO CHECK ABSOLUTE PATH IN REPORT?
             fasta_file = Path(self._output_dir) / 'qc' / f'{FASTA}' / 'consensus.fasta'
             relative_path = Path(f'qc/{FASTA}', fasta_file.name)
             section.add_file(fasta_file, relative_path)
             section.add_link_to_file(f'Download {FASTA} assembly (FASTA)', relative_path)
         self.report.add_html_object(section)
 
-    def __add_report_header(self):
+    def __add_overview_links(self):
         """
         Adds the report header.
         """
@@ -104,33 +128,34 @@ class HybridAssemblyReporter(Tool):
         section.add_html_object(overview_list)
         self.report.add_html_object(section)
 
-    def __add_quast_table(self):
+    def __add_quast_section(self, path_tsv: Path, quast_informs: Dict[str, Any]) -> None:
         """
         Adds the summary QUAST table to the report.
+        :param path_tsv: Path to the combined QUAST TSV file
+        :param quast_informs: QUAST informs
+        :return: None
         """
-        section = HtmlReportSection('Quast statistics', subtitle='v4.4')
-        div_sect = HtmlElement('div', attributes=[('class', 'border_bottom')])
-        div = HtmlExpandableDiv('quast_statistics', 'quast')
-        div.add_table(self._input_informs['quast'],
-                      column_names=['Assembly step', 'N50', 'No of contigs', 'Total length'],
-                      table_attributes=[('class', 'data')])
-        div_sect.add_html_object(div)
-        section.add_html_object(div_sect)
+        section = HtmlReportSection('QUAST statistics', subtitle=quast_informs['_name'])
+        data_quast = pd.read_table(path_tsv)
+        # noinspection PyTypeChecker
+        section.add_table(
+            list(data_quast.itertuples(index=False, name=None)),
+            column_names=data_quast.columns,
+            table_attributes=[('class', 'data')])
         self.report.add_html_object(section)
 
-    def __add_vc_table(self):
+    def __add_vc_table(self, path_tsv: Path) -> None:
         """
         Adds the variant calling section to the report.
         """
-        section = HtmlReportSection('Variant calling statistics', subtitle='Freebayes v1.3.6, Clair3 v1.0.0')
-        div_sect = HtmlElement('div', attributes=[('class', 'border_bottom')])
-        div = HtmlExpandableDiv('variant_calling_statistics', 'vc')
-        div.add_table(self._input_informs['vc'],
-                      column_names=['Assembly step', 'Freebayes total variants' 'Freebayes indels', 'Freebayes SNPs',
-                                    'Clair3 total variant', 'Clair3 indels', 'Clair3 SNPs'],
-                      table_attributes=[('class', 'data')])
-        div_sect.add_html_object(div)
-        section.add_html_object(div_sect)
+        subtitle = ', '.join([self._input_informs[x]['_name'] for x in ('freebayes', 'clair3')])
+        section = HtmlReportSection('Variant calling (short reads)', subtitle=subtitle)
+        data_vc = pd.read_table(path_tsv)
+        # noinspection PyTypeChecker
+        section.add_table(
+            list(data_vc.itertuples(index=False, name=None)),
+            column_names=data_vc.columns,
+            table_attributes=[('class', 'data')])
         self.report.add_html_object(section)
 
     def __add_sniffles_table(self):

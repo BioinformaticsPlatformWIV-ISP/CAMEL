@@ -1,6 +1,8 @@
 import gzip
 from pathlib import Path
 
+import pandas as pd
+
 from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.pipeline.step import Step
@@ -135,54 +137,51 @@ rule unicycler:
         step.run_step()
         SnakemakeUtils.dump_object(unicycler_assembly.informs, Path(output.INFORMS))
 
-rule report_quast:
+rule combine_informs_quast:
     """
-    Rule to generate the QUAST report table.
+    Combines the QUAST informs into a single table
     """
     input:
-        report_quast = [Path(config['working_dir']) / 'qc' / f'{name}' / 'quast' / 'informs.io' for name in assembly_steps]
-        # report_quast_combined = Path(config['working_dir']) / 'qc' / 'quast_combined' / 'informs.io'
+        INFORMS_quast = [Path(config['working_dir']) / 'qc' / name / 'quast' / 'informs.io' for name in assembly_steps]
     output:
-        INFORMS = Path(config['working_dir'] / 'report' / 'quast.io')
+        TSV = Path(config['working_dir'] / 'report' / 'quast_stats-all.tsv')
     run:
-        quast_table = []
-        for i in range(len(input.report_quast)):
-            quast_informs = SnakemakeUtils.load_object(Path(input.report_quast[i]))
-            quast_table.extend([
-                (assembly_steps[i], '{:,}'.format(int(quast_informs['contig']['N50'])),
-                 '{:,}'.format(int(quast_informs['contig']['# contigs (>= 1000 bp)'])),
-                 '{:,}'.format(int(quast_informs['genome']['Total length']))),
-            ])
-        SnakemakeUtils.dump_object(quast_table, Path(output.INFORMS))
+        records_out = []
+        for path_informs in [Path(x) for x in input.INFORMS_quast]:
+            quast_informs = SnakemakeUtils.load_object(path_informs)
+            assembly_key = path_informs.parent.parent.name
+            records_out.append({
+                'Assembly step': assembly_key,
+                'N50': '{:,}'.format(int(quast_informs['contig']['N50'])),
+                'Nb. of contigs': '{:,}'.format(int(quast_informs['contig']['# contigs (>= 1000 bp)'])),
+                'Total length': '{:,}'.format(int(quast_informs['genome']['Total length']))
+            })
+        pd.DataFrame(records_out).to_csv(output.TSV, sep='\t', index=False)
 
-rule report_short_variant_calling:
+rule combine_informs_variant_calling_short_reads:
     """
-    Rule to generate the report table for freebayes/clair3.
+    Combines the informs from the variant calling with short reads.
     """
     input:
-        report_freebayes = [Path(config['working_dir']) / 'qc' / f'{name}' / 'freebayes' / 'informs.io' for name in assembly_steps],
-        report_clair3 = [Path(config['working_dir']) / 'qc' / f'{name}' / 'clair3_output' / 'informs.io' for name in assembly_steps]
+        INFORMS_freebayes = [Path(config['working_dir']) / 'qc' / name / 'freebayes' / 'informs.io' for name in assembly_steps],
+        INFORMS_clair3 = [Path(config['working_dir']) / 'qc' / name / 'clair3_output' / 'informs.io' for name in assembly_steps]
     output:
-        INFORMS = Path(config['working_dir'] / 'report' / 'variant_calling.io')
+        TSV = Path(config['working_dir'] / 'report' / 'variant_calling_all-short.tsv')
     run:
-        vc_table = []
-        for i in range(len(input.report_freebayes)):
-            freebayes_informs = SnakemakeUtils.load_object(Path(input.report_freebayes[i]))
-            clair3_informs = SnakemakeUtils.load_object(Path(input.report_clair3[i]))
-            vc_table.extend([
-                (assembly_steps[i], '{:,}'.format(int(freebayes_informs['number_of_variants'])),
-                 '{:,}'.format(int(len([t for t in freebayes_informs['type_of_variants'] if
-                                        freebayes_informs['type_of_variants'] != [] and t.var_type == 'indel']))),
-                 '{:,}'.format(int(len([t for t in freebayes_informs['type_of_variants'] if
-                                        freebayes_informs['type_of_variants'] != [] and t.var_type == 'snp']))),
-                 '{:,}'.format(int(clair3_informs['number_of_variants'])),
-                 '{:,}'.format(int(len([t for t in clair3_informs['type_of_variants'] if
-                                        clair3_informs['type_of_variants'] != [] and t.var_type == 'indel']))),
-                 '{:,}'.format(int(len([t for t in clair3_informs['type_of_variants'] if
-                                        clair3_informs['type_of_variants'] != [] and t.var_type == 'snp'])))
-                 )
-            ])
-        SnakemakeUtils.dump_object(vc_table, Path(output.INFORMS))
+        records_out = []
+        for path_freebayes, path_clair3 in zip(
+                [Path(x) for x in input.INFORMS_freebayes], [Path(x) for x in input.INFORMS_clair3]):
+            informs_freebayes = SnakemakeUtils.load_object(path_freebayes)
+            informs_clair3 = SnakemakeUtils.load_object(path_clair3)
+            assembly_key = path_freebayes.parent.parent.name
+            records_out.append({
+                'Assembly step': assembly_key,
+                'Nb. of SNPs (FreeBayes)': '{:,}'.format(int(informs_freebayes['nb_of_snps'])),
+                'Nb. of Indels (FreeBayes)': '{:,}'.format(int(informs_freebayes['nb_of_indels'])),
+                'Nb. of SNPs (Clair3)': '{:,}'.format(int(informs_freebayes['nb_of_variants'])),
+                'Nb. of Indels (Clair3)': '{:,}'.format(int(informs_freebayes['nb_of_variants']))
+            })
+        pd.DataFrame(records_out).to_csv(output.TSV, sep='\t', index=False)
 
 rule report_long_variant_calling:
     """
@@ -194,16 +193,16 @@ rule report_long_variant_calling:
         INFORMS = Path(config['working_dir'] / 'report' / 'sniffles.io')
     run:
         sniffles_table = []
-        for i in range(len(input.report_sniffles)):
-            sniffles_informs = SnakemakeUtils.load_object(Path(input.report_sniffles[i]))
-            sniffles_table.extend([
-                (assembly_steps[i], '{:,}'.format(int(sniffles_informs['number_of_variants'])),
-                 '{:,}'.format(int(len([t for t in sniffles_informs['type_of_variants'] if
-                                        sniffles_informs['type_of_variants'] != [] and t.var_type == 'indel']))),
-                 '{:,}'.format(int(len([t for t in sniffles_informs['type_of_variants'] if
-                                        sniffles_informs['type_of_variants'] != [] and t.var_type == 'snp'])))
-                 )
-            ])
+        # for i in range(len(input.report_sniffles)):
+        #     sniffles_informs = SnakemakeUtils.load_object(Path(input.report_sniffles[i]))
+        #     sniffles_table.extend([
+        #         (assembly_steps[i], '{:,}'.format(int(sniffles_informs['nb_of_variants'])),
+        #          '{:,}'.format(int(len([t for t in sniffles_informs['nb_of_variants'] if
+        #                                 sniffles_informs['nb_of_variants'] != [] and t.var_type == 'indel']))),
+        #          '{:,}'.format(int(len([t for t in sniffles_informs['type_of_variants'] if
+        #                                 sniffles_informs['nb_of_variants'] != [] and t.var_type == 'snp'])))
+        #          )
+        #     ])
         SnakemakeUtils.dump_object(sniffles_table, Path(output.INFORMS))
 
 rule report_mappingstats:
@@ -276,8 +275,11 @@ rule report_create_sections:
     Rule to combine report sections into a single output report.
     """
     input:
-        informs_quast = rules.report_quast.output.INFORMS,
-        informs_vc = rules.report_short_variant_calling.output.INFORMS,
+        TSV_quast = rules.combine_informs_quast.output.TSV,
+        TSV_vc = rules.combine_informs_variant_calling_short_reads.output.TSV,
+        INFORMS_quast = Path(config['working_dir']) / 'qc' / assembly_steps[0] / 'quast' / 'commands.io',
+        INFORMS_freebayes = Path(config['working_dir']) / 'qc' / assembly_steps[0] / 'freebayes' / 'commands.io',
+        INFORMS_clair3 = Path(config['working_dir']) / 'qc' / assembly_steps[0] / 'clair3_output' / 'commands.io',
         informs_sniffles = rules.report_long_variant_calling.output.INFORMS,
         informs_mapping = rules.report_mappingstats.output.INFORMS,
         report_commands = rules.report_command_section.output.HTML,
@@ -293,18 +295,24 @@ rule report_create_sections:
         working_dir = Path(config['working_dir'])
     run:
         from camel.scripts.hybridassemblypipeline.reporter.hybridassemblyreporter import HybridAssemblyReporter
-        hybridassembly_reporter = HybridAssemblyReporter(camel, params.working_dir)
-        hybridassembly_reporter.add_input_informs({'quast': SnakemakeUtils.load_object(Path(input.informs_quast)),
-                                                   'vc': SnakemakeUtils.load_object(Path(input.informs_vc)),
-                                                   'sniffles': SnakemakeUtils.load_object(Path(input.informs_sniffles)),
-                                                   'mapping': SnakemakeUtils.load_object(Path(input.informs_mapping)),
-                                                   'commands': SnakemakeUtils.load_object(Path(input.report_commands)),
-                                                   'trimming_illumina': SnakemakeUtils.load_object(Path(input.informs_trimming_illumina)),
-                                                   'trimming_ont': SnakemakeUtils.load_object(Path(input.informs_trimming_ont)),
-                                                   'sample_name': params.sample_name,
-                                                   'fastq_input': params.fastq_input,
-                                                   'fastq_se_input': params.fastq_se_input,
-                                                   'pipeline': params.pipeline
-                                                 })
-        step = Step(str(rule), hybridassembly_reporter, camel, params.working_dir, config)
+        reporter = HybridAssemblyReporter(camel, params.working_dir)
+        reporter.add_input_files({
+            'TSV_quast': [ToolIOFile(Path(input.TSV_quast))],
+            'TSV_vc': [ToolIOFile(Path(input.TSV_vc))],
+        })
+        reporter.add_input_informs({
+            'quast': SnakemakeUtils.load_object(Path(input.INFORMS_quast)),
+            'freebayes': SnakemakeUtils.load_object(Path(input.INFORMS_freebayes)),
+            'clair3': SnakemakeUtils.load_object(Path(input.INFORMS_clair3)),
+            'sniffles': SnakemakeUtils.load_object(Path(input.informs_sniffles)),
+            'mapping': SnakemakeUtils.load_object(Path(input.informs_mapping)),
+            'commands': SnakemakeUtils.load_object(Path(input.report_commands)),
+            'trimming_illumina': SnakemakeUtils.load_object(Path(input.informs_trimming_illumina)),
+            'trimming_ont': SnakemakeUtils.load_object(Path(input.informs_trimming_ont)),
+            'sample_name': params.sample_name,
+            'fastq_input': params.fastq_input,
+            'fastq_se_input': params.fastq_se_input,
+            'pipeline': params.pipeline
+        })
+        step = Step(str(rule), reporter, camel, params.working_dir, config)
         step.run_step()

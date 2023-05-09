@@ -415,22 +415,6 @@ rule freebayes_qc:
         freebayes.informs['_tag'] = f'{wildcards.name}'
         SnakemakeUtils.dump_object(freebayes.informs, Path(output.INFORMS))
 
-rule parse_freebayes_vcf:
-    """
-    Counts the number of variants in the freebayes vcf.
-    """
-    input:
-        VCF = rules.freebayes_qc.output.VCF
-    output:
-        TSV = Path(config['working_dir']) / 'qc' / '{name}' / 'freebayes' / 'informs.io'
-    params:
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'freebayes'
-    run:
-        from camel.app.components.vcf.vcfutils import VCFUtils
-        summary_json = {'number_of_variants': VCFUtils.count_variants(Path(input.VCF)),
-                        'type_of_variants': VCFUtils.retrieve_variants(Path(input.VCF))}
-        SnakemakeUtils.dump_object(summary_json, Path(output.TSV))
-
 rule sniffles_qc:
     """
     Checks for structural variants in the assembly using long reads.
@@ -456,22 +440,6 @@ rule sniffles_qc:
         step.run_step()
         sniffles.informs['_tag'] = f'{wildcards.name}'
         SnakemakeUtils.dump_object(sniffles.informs, Path(output.INFORMS))
-
-rule parse_sniffles_vcf:
-    """
-    Counts the number of variants in the sniffles vcf.
-    """
-    input:
-        VCF = rules.sniffles_qc.output.VCF
-    output:
-        TSV = Path(config['working_dir']) / 'qc' / '{name}' / 'sniffles' / 'informs.io'
-    params:
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'sniffles'
-    run:
-        from camel.app.components.vcf.vcfutils import VCFUtils
-        summary_json = {'number_of_variants': VCFUtils.count_variants(Path(input.VCF)),
-                        'type_of_variants': VCFUtils.retrieve_variants(Path(input.VCF))}
-        SnakemakeUtils.dump_object(summary_json, Path(output.TSV))
 
 rule clair3_qc:
     """
@@ -501,21 +469,25 @@ rule clair3_qc:
         clair3.informs['_tag'] = f'{wildcards.name}'
         SnakemakeUtils.dump_object(clair3.informs, Path(output.INFORMS))
 
-rule parse_clair3_vcf:
+rule qc_add_vcf_info_to_informs:
     """
-    Counts the number of variants in the clair3 vcf.
+    Parses the VCF file and adds the statistics to the informs.
     """
     input:
-        VCF = rules.clair3_qc.output.VCF
+        INFORMS = Path(config['working_dir']) / 'qc' / '{name}' / '{method}' / 'commands.io',
+        VCF = Path(config['working_dir']) / 'qc' / '{name}' / '{method}' / 'variants.vcf'
     output:
-        TSV = Path(config['working_dir']) / 'qc' / '{name}' / 'clair3_output' / 'informs.io'
+        INFORMS = Path(config['working_dir']) / 'qc' / '{name}' / '{method}' / 'informs.io'
     params:
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'clair3_output'
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / wildcards.name / wildcards.method
     run:
         from camel.app.components.vcf.vcfutils import VCFUtils
-        summary_json = {'number_of_variants': VCFUtils.count_variants(Path(input.VCF)),
-                        'type_of_variants': VCFUtils.retrieve_variants(Path(input.VCF))}
-        SnakemakeUtils.dump_object(summary_json, Path(output.TSV))
+        informs = SnakemakeUtils.load_object(Path(input.INFORMS))
+        variants = VCFUtils.retrieve_variants(Path(input.VCF))
+        informs['nb_of_variants'] = len(variants)
+        informs['nb_of_snps'] = sum(v.is_snp for v in variants)
+        informs['nb_of_indels'] = sum(v.is_indel for v in variants)
+        SnakemakeUtils.dump_object(informs, Path(output.INFORMS))
 
 rule ale:
     """
