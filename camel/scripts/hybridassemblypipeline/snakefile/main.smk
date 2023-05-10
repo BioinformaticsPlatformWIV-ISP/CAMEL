@@ -38,10 +38,10 @@ rule trim_illumina:
         FQ_fwd = config['input']['illumina'][0],
         FQ_rev = config['input']['illumina'][1]
     output:
-        FQ_1P = Path(config['working_dir']) / 'trimming' / 'illumina' / f"{config['name']}_1P.fastq.gz",
-        FQ_2P = Path(config['working_dir']) / 'trimming' / 'illumina' / f"{config['name']}_2P.fastq.gz",
-        FQ_1S = Path(config['working_dir']) / 'trimming' / 'illumina' / f"{config['name']}_1U.fastq.gz",
-        FQ_2S = Path(config['working_dir']) / 'trimming' / 'illumina' / f"{config['name']}_2U.fastq.gz",
+        FQ_1P = Path(config['working_dir']) / 'trimming' / 'illumina' / 'trimmed_1P.fastq.gz',
+        FQ_2P = Path(config['working_dir']) / 'trimming' / 'illumina' / 'trimmed_2P.fastq.gz',
+        FQ_1S = Path(config['working_dir']) / 'trimming' / 'illumina' / 'trimmed_1U.fastq.gz',
+        FQ_2S = Path(config['working_dir']) / 'trimming' / 'illumina' / 'trimmed_2U.fastq.gz',
         TSV = Path(config['working_dir']) / 'trimming' / 'illumina' / 'trimming_illumina.tsv',
         HTML = Path(config['working_dir']) / 'trimming' / 'illumina' / 'html.io'
     params:
@@ -105,7 +105,7 @@ rule set_trimming_ont_output:
     input:
         FASTQ = rules.trim_ont_workflow.output.FASTQ
     output:
-        FASTQ = Path(config['working_dir']) / 'trimming' / 'ont' / '{}_SE.fastq.gz'.format(config['name'])
+        FASTQ = Path(config['working_dir']) / 'trimming' / 'ont' / 'trimmed.fastq.gz'
     params:
         dir_ = Path(config['working_dir']) / 'trimming' / 'ont'
     run:
@@ -118,9 +118,9 @@ rule unicycler:
     Runs unicycler, which is a short-read first approach to assemble reads.
     """
     input:
-        FQ_1P = Path(config['working_dir']) / 'trimming' / 'illumina' / f"{config['name']}_1P.fastq.gz",
-        FQ_2P = Path(config['working_dir']) / 'trimming' / 'illumina' / f"{config['name']}_2P.fastq.gz",
-        FQ_SE = Path(config['working_dir']) / 'trimming' / 'ont' / '{}_SE.fastq.gz'.format(config['name'])
+        FQ_1P = rules.trim_illumina.output.FQ_1P,
+        FQ_2P = rules.trim_illumina.output.FQ_2P,
+        FQ_SE = rules.trim_ont_workflow.output.FASTQ
     output:
         FASTA = Path(config['working_dir']) / 'unicycler' / 'assembly.fasta',
         INFORMS = Path(config['working_dir']) / 'unicycler' / 'commands.io'
@@ -188,52 +188,50 @@ rule report_long_variant_calling:
     Rule to generate the report table for sniffles.
     """
     input:
-        report_sniffles = [Path(config['working_dir']) / 'qc' / f'{name}' / 'sniffles' / 'informs.io' for name in assembly_steps]
+        INFORMS_sniffles = [Path(config['working_dir']) / 'qc' / f'{name}' / 'sniffles' / 'informs.io' for name in assembly_steps]
     output:
-        INFORMS = Path(config['working_dir'] / 'report' / 'sniffles.io')
+        TSV = Path(config['working_dir'] / 'report' / 'variant_calling-sniffles.tsv')
     run:
         sniffles_table = []
-        # for i in range(len(input.report_sniffles)):
-        #     sniffles_informs = SnakemakeUtils.load_object(Path(input.report_sniffles[i]))
-        #     sniffles_table.extend([
-        #         (assembly_steps[i], '{:,}'.format(int(sniffles_informs['nb_of_variants'])),
-        #          '{:,}'.format(int(len([t for t in sniffles_informs['nb_of_variants'] if
-        #                                 sniffles_informs['nb_of_variants'] != [] and t.var_type == 'indel']))),
-        #          '{:,}'.format(int(len([t for t in sniffles_informs['type_of_variants'] if
-        #                                 sniffles_informs['nb_of_variants'] != [] and t.var_type == 'snp'])))
-        #          )
-        #     ])
-        SnakemakeUtils.dump_object(sniffles_table, Path(output.INFORMS))
+        for path_informs in [Path(x) for x in input.INFORMS_sniffles]:
+            informs_sniffles = SnakemakeUtils.load_object(path_informs)
+            assembly_key = path_informs.parent.parent.name
+            sniffles_table.append({
+                'Assembly step': assembly_key,
+                'Nb. of SNPs': '{:,}'.format(int(informs_sniffles['nb_of_snps'])),
+                'Nb. of Indels': '{:,}'.format(int(informs_sniffles['nb_of_indels'])),
+            })
+        pd.DataFrame(sniffles_table).to_csv(output.TSV, sep='\t', index=False)
 
 rule report_mappingstats:
     """
     Rule to generate the report table for the mapping statistics.
     """
     input:
-        report_longreads = [Path(config['working_dir']) / 'qc' / f'{name}' / 'read_mapping' / 'ont' / 'flagstat-longreads.io'  for name in assembly_steps],
-        report_shortreads = [Path(config['working_dir']) / 'qc' / f'{name}' / 'read_mapping' / 'illumina' / 'flagstat.io' for name in assembly_steps],
-        report_depth_shortreads = [Path(config['working_dir']) / 'qc' / f'{name}' / 'read_mapping' / 'illumina' / 'samtools-depth.io' for name in assembly_steps],
-        report_depth_longreads = [Path(config['working_dir']) / 'qc' / f'{name}' / 'read_mapping' / 'ont' / 'samtools-depth-long.io' for name in assembly_steps]
+        INFORMS_mapping_illumina = [Path(config['working_dir']) / 'qc' / name / 'read_mapping' / 'illumina' / 'flagstat.io' for name in assembly_steps],
+        INFORMS_mapping_ont = [Path(config['working_dir']) / 'qc' / name / 'read_mapping' / 'ont' / 'flagstat-longreads.io'  for name in assembly_steps],
+        INFORMS_depth_illumina = [Path(config['working_dir']) / 'qc' / name / 'read_mapping' / 'illumina' / 'samtools-depth.io' for name in assembly_steps],
+        INFORMS_depth_ont = [Path(config['working_dir']) / 'qc' / name / 'read_mapping' / 'ont' / 'samtools-depth-long.io' for name in assembly_steps]
     output:
-        INFORMS = Path(config['working_dir'] / 'report' / 'mapping.io')
+        TSV = Path(config['working_dir'] / 'report' / 'mapping_statistics.tsv')
     run:
-        mapping_table = []
-        for i in range(len(input.report_longreads)):
-            SR_informs = SnakemakeUtils.load_object(Path(input.report_shortreads[i]))
-            LR_informs = SnakemakeUtils.load_object(Path(input.report_longreads[i]))
-            SR_depth = SnakemakeUtils.load_object(Path(input.report_depth_shortreads[i]))
-            LR_depth = SnakemakeUtils.load_object(Path(input.report_depth_longreads[i]))
-            mapping_rate_SR = SR_informs['mapped'][0] / SR_informs['total'][0] * 100
-            mapping_rate_LR = LR_informs['mapped'][0] / LR_informs['total'][0] * 100
-            median_depth_SR = int(SR_depth['median_depth'])
-            median_depth_LR = int(LR_depth['median_depth'])
-            print([mapping_rate_SR, mapping_rate_LR, median_depth_SR, median_depth_LR])
-            mapping_table.extend([
-                (assembly_steps[i], '{:.2f}%'.format(mapping_rate_SR), '{:,}'.format(median_depth_SR),
-                 '{:.2f}%'.format(mapping_rate_LR), '{:,}'.format(median_depth_LR)
-                 )
-            ])
-        SnakemakeUtils.dump_object(mapping_table,Path(output.INFORMS))
+        records_out = []
+        for path_map_illumina, path_map_ont, path_depth_illumina, path_depth_ont in zip(
+                [Path(x) for x in input.INFORMS_mapping_illumina], [Path(x) for x in input.INFORMS_mapping_ont],
+                [Path(x) for x in input.INFORMS_depth_illumina], [Path(x) for x in input.INFORMS_depth_ont]):
+            assembly_key = path_map_illumina.parent.parent.name
+            illumina_mapping_informs = SnakemakeUtils.load_object(path_map_illumina)
+            ont_mapping_informs = SnakemakeUtils.load_object(path_map_ont)
+            illumina_depth_informs = SnakemakeUtils.load_object(path_depth_illumina)
+            ont_depth_informs = SnakemakeUtils.load_object(path_depth_ont)
+            records_out.append({
+                'Assembly step': assembly_key,
+                'Mapping rate (Illumina)': '{:.2f}'.format(illumina_mapping_informs['mapped'][0] / illumina_mapping_informs['total'][0] * 100),
+                'Mapping rate (ONT)': '{:.2f}'.format(ont_mapping_informs['mapped'][0] / ont_mapping_informs['total'][0] * 100),
+                'Median depth (Illumina)': int(illumina_depth_informs['median_depth']),
+                'Median depth (ONT)': int(ont_depth_informs['median_depth'])
+            })
+        pd.DataFrame(records_out).to_csv(output.TSV,sep='\t',index=False)
 
 rule report_command_section:
     """
@@ -263,9 +261,9 @@ rule report_command_section:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         informs = []
         for content in [SnakemakeUtils.load_object(Path(io)) for io in input]:
-            if type(content) is dict:
+            if isinstance(content, dict):
                 informs.append(content)
-            elif type(content) is list:
+            elif isinstance(content, list):
                 informs.extend(content)
         section = SnakePipelineUtils.create_commands_section(informs, params.working_dir)
         SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output.HTML))
@@ -277,11 +275,13 @@ rule report_create_sections:
     input:
         TSV_quast = rules.combine_informs_quast.output.TSV,
         TSV_vc = rules.combine_informs_variant_calling_short_reads.output.TSV,
+        TSV_mapping = rules.report_mappingstats.output.TSV,
+        TSV_sniffles = rules.report_long_variant_calling.output.TSV,
         INFORMS_quast = Path(config['working_dir']) / 'qc' / assembly_steps[0] / 'quast' / 'commands.io',
         INFORMS_freebayes = Path(config['working_dir']) / 'qc' / assembly_steps[0] / 'freebayes' / 'commands.io',
         INFORMS_clair3 = Path(config['working_dir']) / 'qc' / assembly_steps[0] / 'clair3_output' / 'commands.io',
-        informs_sniffles = rules.report_long_variant_calling.output.INFORMS,
-        informs_mapping = rules.report_mappingstats.output.INFORMS,
+        informs_sniffles = Path(config['working_dir']) / 'qc' / assembly_steps[0] / 'sniffles' / 'commands.io',
+        informs_mapping = Path(config['working_dir']) / 'qc' / assembly_steps[0] / 'read_mapping' / 'illumina' / 'commands.io',
         report_commands = rules.report_command_section.output.HTML,
         informs_trimming_illumina = rules.trim_illumina.output.HTML,
         informs_trimming_ont = rules.trim_ont_workflow.output.HTML
@@ -289,16 +289,17 @@ rule report_create_sections:
         HTML = Path(config['working_dir']) / Path(config['output_html'])
     params:
         sample_name = config['sample_name'],
-        fastq_input = config['input']['illumina_name'],
-        fastq_se_input = config['input']['ont_name'],
+        input = config['input'],
         pipeline = config['pipeline'],
         working_dir = Path(config['working_dir'])
     run:
         from camel.scripts.hybridassemblypipeline.reporter.hybridassemblyreporter import HybridAssemblyReporter
-        reporter = HybridAssemblyReporter(camel, params.working_dir)
+        reporter = HybridAssemblyReporter(camel)
         reporter.add_input_files({
             'TSV_quast': [ToolIOFile(Path(input.TSV_quast))],
             'TSV_vc': [ToolIOFile(Path(input.TSV_vc))],
+            'TSV_sniffles': [ToolIOFile(Path(input.TSV_sniffles))],
+            'TSV_mapping': [ToolIOFile(Path(input.TSV_mapping))]
         })
         reporter.add_input_informs({
             'quast': SnakemakeUtils.load_object(Path(input.INFORMS_quast)),
@@ -310,9 +311,9 @@ rule report_create_sections:
             'trimming_illumina': SnakemakeUtils.load_object(Path(input.informs_trimming_illumina)),
             'trimming_ont': SnakemakeUtils.load_object(Path(input.informs_trimming_ont)),
             'sample_name': params.sample_name,
-            'fastq_input': params.fastq_input,
-            'fastq_se_input': params.fastq_se_input,
-            'pipeline': params.pipeline
+            'pipeline': params.pipeline,
+            'input': params.input
         })
+        reporter.update_parameters(output_dir=str(params.working_dir))
         step = Step(str(rule), reporter, camel, params.working_dir, config)
         step.run_step()

@@ -13,7 +13,7 @@ rule assembly_flye_run:
     De-novo assembly using Flye.
     """
     input:
-        FASTQ = Path(config['working_dir']) / 'trimming' / 'ont' / '{}_SE.fastq.gz'.format(config['name'])
+        FASTQ = Path(config['working_dir']) / 'trimming' / 'ont' / 'trimmed.fastq.gz'
     output:
         FASTA = Path(config['working_dir']) / 'assembly_flye' / 'flye' / 'assembly.fasta',
         INFORMS = Path(config['working_dir']) / 'assembly_flye' / 'flye' / 'commands.io'
@@ -25,8 +25,7 @@ rule assembly_flye_run:
         from camel.app.tools.flye.flye import Flye
         flye = Flye(camel)
         flye.add_input_files({'FASTQ': [ToolIOFile(Path(input.FASTQ))]})
-        flye.update_parameters(**params.flye_options)
-        flye.update_parameters(threads=threads, output_directory=str(params.running_dir))
+        flye.update_parameters(**params.flye_options, threads=threads, output_directory=str(params.running_dir))
         step = Step(str(rule), flye, camel, params.running_dir)
         step.run_step()
         SnakemakeUtils.dump_object(flye.informs, Path(output.INFORMS))

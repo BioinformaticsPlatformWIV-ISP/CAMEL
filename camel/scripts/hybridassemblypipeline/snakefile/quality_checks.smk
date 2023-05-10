@@ -15,12 +15,12 @@ consensus_by_tool = {
     'Unicycler': [Path(config['working_dir']) / 'unicycler' / 'assembly.fasta']
 }
 
-rule check_qc:
+rule qc_check_ale:
     """
     Checks that the ALE QC files are generated for consensus by tool.
     """
     input:
-        FASTA = [Path(config['working_dir']) / 'qc' / f'{name}' / 'ale_illumina' / 'ALE.ale-depth.wig' for name in consensus_by_tool.keys()]
+        FASTA = [Path(config['working_dir']) / 'qc' / name / 'ale_illumina' / 'ALE.ale-depth.wig' for name in consensus_by_tool.keys()]
     output:
         Path(config['working_dir'] / config['output'])
     shell:
@@ -28,7 +28,7 @@ rule check_qc:
         touch {output}
         """
 
-rule copy_fasta_file:
+rule qc_copy_fasta_file:
     """
     Moves the fasta file to the qc location.
     """
@@ -41,12 +41,12 @@ rule copy_fasta_file:
         cp {input.FASTA} {output.FASTA}
         """
 
-rule quast_final:
+rule qc_quast:
     """
     Generates assembly statistics using QUAST.
     """
     input:
-        FASTA = rules.copy_fasta_file.output.FASTA
+        FASTA = rules.qc_copy_fasta_file.output.FASTA
     output:
         TSV = Path(config['working_dir']) / 'qc' / '{name}' / 'quast' / 'report.tsv',
         INFORMS = Path(config['working_dir']) / 'qc' / '{name}' / 'quast' / 'commands.io'
@@ -59,15 +59,15 @@ rule quast_final:
         quast.add_input_files({'FASTA': [ToolIOFile(Path(str(input.FASTA)))]})
         step = Step(str(rule), quast, camel, dir_working, config)
         step.run_step()
-        quast.informs['_tag'] = f'{wildcards.name}'
+        quast.informs['_tag'] = wildcards.name
         SnakemakeUtils.dump_object(quast.informs, Path(output.INFORMS))
 
-rule parse_quast_output:
+rule qc_parse_quast_output:
     """
     Parses the quast output into a pickle.
     """
     input:
-        TSV = rules.quast_final.output.TSV
+        TSV = rules.qc_quast.output.TSV
     output:
         INFORMS = Path(config['working_dir']) / 'qc' / '{name}' / 'quast' / 'informs.io'
     params:
@@ -101,12 +101,12 @@ rule parse_quast_output:
 #         step.run_step()
 #         SnakemakeUtils.dump_object(quast.informs, Path(output.INFORMS))
 
-rule samtools_index_short_qc:
+rule qc_samtools_index:
     """
     Creates a samtools index for the assembly.
     """
     input:
-        FASTA_REF = rules.copy_fasta_file.output.FASTA
+        FASTA_REF = rules.qc_copy_fasta_file.output.FASTA
     output:
         INDEX_GENOME_PREFIX = Path(config['working_dir']) / 'qc' / '{name}' / 'consensus.fasta.fai'
     params:
@@ -119,12 +119,12 @@ rule samtools_index_short_qc:
         step = Step(str(rule), samtools, camel, dir_working, config)
         step.run_step()
 
-rule bwa_index_qc:
+rule qc_bwa_index:
     """
     Creates a bwa index for the assembly.
     """
     input:
-        FASTA_REF = rules.copy_fasta_file.output.FASTA
+        FASTA_REF = rules.qc_copy_fasta_file.output.FASTA
     output:
         INDEX_GENOME_PREFIX = Path(config['working_dir']) / 'qc' / '{name}' /  'genome_prefix.io'
     params:
@@ -138,19 +138,19 @@ rule bwa_index_qc:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(bwa, output)
 
-rule read_mapping_qc:
+rule qc_read_mapping_illumina:
     """
     Maps the short reads against the assembly.
     """
     input:
-        FQ_1P = Path(config['working_dir']) / 'trimming' / 'illumina' / f"{config['name']}_1P.fastq.gz",
-        FQ_2P = Path(config['working_dir']) / 'trimming' / 'illumina' / f"{config['name']}_2P.fastq.gz",
-        INDEX_GENOME_PREFIX_BWA = rules.bwa_index_qc.output.INDEX_GENOME_PREFIX,
-        INDEX_GENOME_PREFIX_SAMTOOLS = rules.samtools_index_short_qc.output.INDEX_GENOME_PREFIX,
-        FASTA = rules.copy_fasta_file.output.FASTA,
-        INDEX_GENOME_PREFIX = rules.bwa_index_qc.output.INDEX_GENOME_PREFIX
+        FQ_1P = Path(config['working_dir']) / 'trimming' / 'illumina' / 'trimmed_1P.fastq.gz',
+        FQ_2P = Path(config['working_dir']) / 'trimming' / 'illumina' / 'trimmed_2P.fastq.gz',
+        INDEX_GENOME_PREFIX_BWA = rules.qc_bwa_index.output.INDEX_GENOME_PREFIX,
+        INDEX_GENOME_PREFIX_SAMTOOLS = rules.qc_samtools_index.output.INDEX_GENOME_PREFIX,
+        FASTA = rules.qc_copy_fasta_file.output.FASTA,
+        INDEX_GENOME_PREFIX = rules.qc_bwa_index.output.INDEX_GENOME_PREFIX
     output:
-        SAM =  Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'illumina' / 'bwa_readmap.sam',
+        SAM = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'illumina' / 'bwa_readmap.sam',
         INFORMS = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'illumina' / 'commands.io'
     params:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'read_mapping' / 'illumina'
@@ -164,19 +164,19 @@ rule read_mapping_qc:
         SnakemakeUtils.add_pickle_input(bwa_map, 'INDEX_GENOME_PREFIX', Path(input.INDEX_GENOME_PREFIX))
         step = Step(str(rule), bwa_map, camel, dir_working, config)
         step.run_step()
-        bwa_map.informs['_tag'] = f'{wildcards.name}'
+        bwa_map.informs['_tag'] = wildcards.name
         SnakemakeUtils.dump_object(bwa_map.informs, Path(output.INFORMS))
 
-rule read_mapping_qc_longreads:
+rule qc_read_mapping_ont:
     """
     Maps the long reads against the assembly.
     """
     input:
-        FQ = Path(config['working_dir']) / 'trimming' / 'ont' / '{}_SE.fastq.gz'.format(config['name']),
-        INDEX_GENOME_PREFIX_BWA = rules.bwa_index_qc.output.INDEX_GENOME_PREFIX,
-        INDEX_GENOME_PREFIX_SAMTOOLS = rules.samtools_index_short_qc.output.INDEX_GENOME_PREFIX,
-        FASTA = rules.copy_fasta_file.output.FASTA,
-        INDEX_GENOME_PREFIX = rules.bwa_index_qc.output.INDEX_GENOME_PREFIX
+        FQ = Path(config['working_dir']) / 'trimming' / 'ont' / 'trimmed.fastq.gz',
+        INDEX_GENOME_PREFIX_BWA = rules.qc_bwa_index.output.INDEX_GENOME_PREFIX,
+        INDEX_GENOME_PREFIX_SAMTOOLS = rules.qc_samtools_index.output.INDEX_GENOME_PREFIX,
+        FASTA = rules.qc_copy_fasta_file.output.FASTA,
+        INDEX_GENOME_PREFIX = rules.qc_bwa_index.output.INDEX_GENOME_PREFIX
     output:
         SAM = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'ont' / 'minimap2_readmap.sam'
     params:
@@ -191,12 +191,12 @@ rule read_mapping_qc_longreads:
         step = Step(str(rule), minimap2, camel, dir_working, config)
         step.run_step()
 
-rule sam_to_bam_qc:
+rule qc_sam_to_bam_illumina:
     """
     Converts SAM to BAM from the short reads mapping.
     """
     input:
-        SAM = rules.read_mapping_qc.output.SAM
+        SAM = rules.qc_read_mapping_illumina.output.SAM
     output:
         BAM =  Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'illumina' / 'bwa_readmap.bam'
     params:
@@ -210,12 +210,12 @@ rule sam_to_bam_qc:
         step = Step(str(rule), samtools_view, camel, dir_working, config)
         step.run_step()
 
-rule bam_sorting_qc:
+rule qc_bam_sorting_illumina:
     """
     Sorts the BAM alignment from the short reads mapping.
     """
     input:
-        BAM = rules.sam_to_bam_qc.output.BAM
+        BAM = rules.qc_sam_to_bam_illumina.output.BAM
     output:
         BAM = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'illumina' / 'bwa_readmap.sorted.bam'
     params:
@@ -229,12 +229,12 @@ rule bam_sorting_qc:
         step = Step(str(rule), samtools_sort, camel, dir_working, config)
         step.run_step()
 
-rule bam_indexing_qc:
+rule qc_bam_indexing_illumina:
     """
     Indexes the BAM file from the short reads mapping.
     """
     input:
-        BAM = rules.bam_sorting_qc.output.BAM
+        BAM = rules.qc_bam_sorting_illumina.output.BAM
     output:
         BAM = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'illumina' / 'bwa-index.io'
     params:
@@ -248,13 +248,13 @@ rule bam_indexing_qc:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(samtools_index, output)
 
-rule mapping_stats:
+rule qc_mapping_stats_illumina:
     """
     Retrieves mapping stats from the short read mappings.
     """
     input:
-        BAM = rules.bam_sorting_qc.output.BAM,
-        INDEX = rules.bam_indexing_qc.output.BAM
+        BAM = rules.qc_bam_sorting_illumina.output.BAM,
+        INDEX = rules.qc_bam_indexing_illumina.output.BAM
     output:
         INFORMS = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'illumina' / 'flagstat.io'
     params:
@@ -268,13 +268,13 @@ rule mapping_stats:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(samtools_flagstat, output)
 
-rule samtools_depth_sr:
+rule qc_samtools_depth_illumina:
     """
     Runs samtools depth on the BAM file from the short reads mapping.
     """
     input:
-        BAM = rules.bam_sorting_qc.output.BAM,
-        INDEX = rules.bam_indexing_qc.output.BAM
+        BAM = rules.qc_bam_sorting_illumina.output.BAM,
+        INDEX = rules.qc_bam_indexing_illumina.output.BAM
     output:
         TSV = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'illumina' / 'tsv.io',
         INFORMS = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'illumina' / 'samtools-depth.io'
@@ -284,18 +284,18 @@ rule samtools_depth_sr:
         from camel.app.tools.samtools.samtoolsdepth import SamtoolsDepth
         dir_working = Path(str(params.running_dir)).absolute()
         samtools_depth = SamtoolsDepth(camel)
-        samtools_depth.add_input_files({'BAM':[ToolIOFile(Path(input.BAM))]})
+        samtools_depth.add_input_files({'BAM': [ToolIOFile(Path(input.BAM))]})
         step = Step(str(rule), samtools_depth, camel, dir_working, config)
         step.run_step()
         samtools_depth.informs['_tag'] = 'Coverage calculation'
         SnakemakeUtils.dump_tool_outputs(samtools_depth, output)
 
-rule sam_to_bam_qc_longreads:
+rule qc_sam_to_bam_ont:
     """
     Converts SAM to BAM from the long reads mapping.
     """
     input:
-        SAM = rules.read_mapping_qc_longreads.output.SAM
+        SAM = rules.qc_read_mapping_ont.output.SAM
     output:
         BAM = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'ont' / 'minimap2_readmap.bam'
     params:
@@ -309,12 +309,12 @@ rule sam_to_bam_qc_longreads:
         step = Step(str(rule), samtools_view, camel, dir_working, config)
         step.run_step()
 
-rule bam_sorting_qc_longreads:
+rule qc_bam_sorting_ont:
     """
     Sorts the BAM alignment from the long reads mapping.
     """
     input:
-        BAM = rules.sam_to_bam_qc.output.BAM
+        BAM = rules.qc_sam_to_bam_ont.output.BAM
     output:
         BAM = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'ont' / 'minimap2_readmap.sorted.bam'
     params:
@@ -328,12 +328,12 @@ rule bam_sorting_qc_longreads:
         step = Step(str(rule), samtools_sort, camel, dir_working, config)
         step.run_step()
 
-rule bam_indexing_qc_longreads:
+rule qc_bam_indexing_ont:
     """
     Indexes the BAM file from the long reads mapping.
     """
     input:
-        BAM = rules.bam_sorting_qc_longreads.output.BAM
+        BAM = rules.qc_bam_sorting_ont.output.BAM
     output:
         BAM = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'ont' / 'bwa-index-longreads.io'
     params:
@@ -347,13 +347,13 @@ rule bam_indexing_qc_longreads:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(samtools_index, output)
 
-rule mapping_stats_longreads:
+rule qc_mapping_stats_ont:
     """
     Retrieves mapping stats from the long read mapping.
     """
     input:
-        BAM = rules.bam_sorting_qc_longreads.output.BAM,
-        INDEX = rules.bam_indexing_qc_longreads.output.BAM
+        BAM = rules.qc_bam_sorting_ont.output.BAM,
+        INDEX = rules.qc_bam_indexing_ont.output.BAM
     output:
         INFORMS = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'ont' / 'flagstat-longreads.io'
     params:
@@ -367,13 +367,13 @@ rule mapping_stats_longreads:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(samtools_flagstat, output)
 
-rule samtools_depth_lr:
+rule qc_samtools_depth_ont:
     """
     Runs samtools depth on the BAM file of the long reads mapping.
     """
     input:
-        BAM = rules.bam_sorting_qc_longreads.output.BAM,
-        INDEX = rules.bam_indexing_qc_longreads.output.BAM
+        BAM = rules.qc_bam_sorting_ont.output.BAM,
+        INDEX = rules.qc_bam_indexing_ont.output.BAM
     output:
         TSV = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'ont' / 'tsv-long.io',
         INFORMS = Path(config['working_dir']) / 'qc' / '{name}' / 'read_mapping' / 'ont' / 'samtools-depth-long.io'
@@ -389,15 +389,15 @@ rule samtools_depth_lr:
         samtools_depth.informs['_tag'] = 'Coverage calculation'
         SnakemakeUtils.dump_tool_outputs(samtools_depth, output)
 
-rule freebayes_qc:
+rule qc_freebayes:
     """
     Checks for small variants in the assembly.
     """
     input:
-        BAM = rules.bam_sorting_qc.output.BAM,
-        BAM_INDEX = rules.bam_indexing_qc.output.BAM,
-        FASTA = rules.copy_fasta_file.output.FASTA,
-        FASTA_INDEX = rules.samtools_index_short_qc.output.INDEX_GENOME_PREFIX
+        BAM = rules.qc_bam_sorting_illumina.output.BAM,
+        BAM_INDEX = rules.qc_bam_indexing_illumina.output.BAM,
+        FASTA = rules.qc_copy_fasta_file.output.FASTA,
+        FASTA_INDEX = rules.qc_samtools_index.output.INDEX_GENOME_PREFIX
     output:
         VCF =  Path(config['working_dir']) / 'qc' / '{name}' / 'freebayes' / 'variants.vcf',
         INFORMS = Path(config['working_dir']) / 'qc' / '{name}' / 'freebayes' / 'commands.io'
@@ -412,18 +412,18 @@ rule freebayes_qc:
         freebayes.update_parameters(**params.freebayes_options)
         step = Step(str(rule), freebayes, camel, dir_working, config)
         step.run_step()
-        freebayes.informs['_tag'] = f'{wildcards.name}'
+        freebayes.informs['_tag'] = wildcards.name
         SnakemakeUtils.dump_object(freebayes.informs, Path(output.INFORMS))
 
-rule sniffles_qc:
+rule qc_sniffles:
     """
     Checks for structural variants in the assembly using long reads.
     """
     input:
-        BAM = rules.bam_sorting_qc_longreads.output.BAM,
-        BAM_INDEX = rules.bam_indexing_qc_longreads.output.BAM,
-        FASTA= rules.copy_fasta_file.output.FASTA,
-        FASTA_INDEX= rules.samtools_index_short_qc.output.INDEX_GENOME_PREFIX
+        BAM = rules.qc_bam_sorting_ont.output.BAM,
+        BAM_INDEX = rules.qc_bam_indexing_ont.output.BAM,
+        FASTA = rules.qc_copy_fasta_file.output.FASTA,
+        FASTA_INDEX= rules.qc_samtools_index.output.INDEX_GENOME_PREFIX
     output:
         VCF = Path(config['working_dir']) / 'qc' / '{name}' / 'sniffles' / 'variants.vcf',
         INFORMS = Path(config['working_dir']) / 'qc' / '{name}' / 'sniffles' / 'commands.io'
@@ -438,20 +438,20 @@ rule sniffles_qc:
         sniffles.update_parameters(threads=threads)
         step = Step(str(rule), sniffles, camel, dir_working, config)
         step.run_step()
-        sniffles.informs['_tag'] = f'{wildcards.name}'
+        sniffles.informs['_tag'] = wildcards.name
         SnakemakeUtils.dump_object(sniffles.informs, Path(output.INFORMS))
 
-rule clair3_qc:
+rule qc_clair3:
     """
     Checks for small variants in the assembly using long reads.
     """
     input:
-        BAM = rules.bam_sorting_qc_longreads.output.BAM,
-        BAM_INDEX = rules.bam_indexing_qc_longreads.output.BAM,
-        FASTA = rules.copy_fasta_file.output.FASTA,
-        FASTA_INDEX = rules.samtools_index_short_qc.output.INDEX_GENOME_PREFIX
+        BAM = rules.qc_bam_sorting_ont.output.BAM,
+        BAM_INDEX = rules.qc_bam_indexing_ont.output.BAM,
+        FASTA= rules.qc_copy_fasta_file.output.FASTA,
+        FASTA_INDEX= rules.qc_samtools_index.output.INDEX_GENOME_PREFIX
     output:
-        VCF = Path(config['working_dir']) / 'qc' / '{name}' / 'clair3_output' / 'merge_output.vcf.gz',
+        VCF_GZ = Path(config['working_dir']) / 'qc' / '{name}' / 'clair3_output' / 'merge_output.vcf.gz',
         INFORMS = Path(config['working_dir']) / 'qc' / '{name}' / 'clair3_output' / 'commands.io'
     params:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}',
@@ -462,12 +462,31 @@ rule clair3_qc:
         dir_working = Path(str(params.running_dir)).absolute()
         clair3 = Clair3(camel)
         clair3.add_input_files({'BAM': [ToolIOFile(Path(input.BAM))], 'FASTA': [ToolIOFile(Path(input.FASTA))]})
-        clair3.update_parameters(**params.clair3_options)
-        clair3.update_parameters(threads=threads)
+        clair3.update_parameters(**params.clair3_options, threads=threads)
         step = Step(str(rule), clair3, camel, dir_working, config)
         step.run_step()
-        clair3.informs['_tag'] = f'{wildcards.name}'
+        clair3.informs['_tag'] = wildcards.name
         SnakemakeUtils.dump_object(clair3.informs, Path(output.INFORMS))
+
+rule qc_unzip_clair3_vcf:
+    """
+    Unzips the output from clair3 to be compatible with the qc_add_vcf_info_to_informs rule.
+    """
+    input:
+        VCF_GZ = rules.qc_clair3.output.VCF_GZ
+    output:
+        VCF = Path(config['working_dir']) / 'qc' / '{name}' / 'clair3_output' / 'variants.vcf'
+    params:
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'clair3_output'
+    run:
+        from camel.app.tools.bcftools.bcftoolsview import BcftoolsView
+        dir_working = Path(str(params.running_dir)).absolute()
+        bcftools_view = BcftoolsView(camel)
+        bcftools_view.add_input_files({'VCF_GZ': [ToolIOFile(Path(input.VCF_GZ))]})
+        bcftools_view.update_parameters(output_format='VCF', compress_output=False, output_filename='variants.vcf')
+        step = Step(str(rule), bcftools_view, camel, dir_working, config)
+        step.run_step()
+        # SnakemakeUtils.dump_tool_outputs(bcftools_view, output)
 
 rule qc_add_vcf_info_to_informs:
     """
@@ -483,20 +502,25 @@ rule qc_add_vcf_info_to_informs:
     run:
         from camel.app.components.vcf.vcfutils import VCFUtils
         informs = SnakemakeUtils.load_object(Path(input.INFORMS))
-        variants = VCFUtils.retrieve_variants(Path(input.VCF))
-        informs['nb_of_variants'] = len(variants)
-        informs['nb_of_snps'] = sum(v.is_snp for v in variants)
-        informs['nb_of_indels'] = sum(v.is_indel for v in variants)
+        if wildcards.method == 'sniffles':
+            informs['nb_of_variants'] = 0
+            informs['nb_of_snps'] = 0
+            informs['nb_of_indels'] = 0
+        else:
+            variants = VCFUtils.retrieve_variants(Path(input.VCF))
+            informs['nb_of_variants'] = len(variants)
+            informs['nb_of_snps'] = sum(v.is_snp for v in variants)
+            informs['nb_of_indels'] = sum(v.is_indel for v in variants)
         SnakemakeUtils.dump_object(informs, Path(output.INFORMS))
 
-rule ale:
+rule qc_ale:
     """
     Generates ALE QC report for the final assembly.
     """
     input:
-        SAM = rules.read_mapping_qc.output.SAM,
-        FASTA = rules.copy_fasta_file.output.FASTA,
-        FASTA_INDEX = rules.samtools_index_short_qc.output.INDEX_GENOME_PREFIX
+        SAM = rules.qc_read_mapping_illumina.output.SAM,
+        FASTA = rules.qc_copy_fasta_file.output.FASTA,
+        FASTA_INDEX = rules.qc_samtools_index.output.INDEX_GENOME_PREFIX
     output:
         ALE = Path(config['working_dir']) / 'qc' / '{name}' / 'ale_illumina' / 'ALE.ale',
         INFORMS = Path(config['working_dir']) / 'qc' / '{name}' / 'ale_illumina' / 'commands-report.io'
@@ -512,12 +536,12 @@ rule ale:
         ale_report.informs['_tag'] = f'{wildcards.name}'
         SnakemakeUtils.dump_object(ale_report.informs, Path(output.INFORMS))
 
-rule ale2wiggle:
+rule qc_ale2wiggle:
     """
     Generates wiggle files from ALE for IGV visualization.
     """
     input:
-        ALE = rules.ale.output.ALE
+        ALE = rules.qc_ale.output.ALE
     output:
         TSV_1 = Path(config['working_dir']) / 'qc' / '{name}' / 'ale_illumina' / 'ALE.ale-depth.wig',
         TSV_2 = Path(config['working_dir']) / 'qc' / '{name}' / 'ale_illumina' / 'ALE.ale-kmer.wig',

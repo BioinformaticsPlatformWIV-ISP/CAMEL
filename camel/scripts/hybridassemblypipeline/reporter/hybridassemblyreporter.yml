@@ -1,4 +1,5 @@
 dependencies: []
 parameters:
   sample_name: {default: false, mandatory: false, option: null, value: null}
+  output_dir: {default: false, mandatory: false, option: null, value: null}
 tool_command: null

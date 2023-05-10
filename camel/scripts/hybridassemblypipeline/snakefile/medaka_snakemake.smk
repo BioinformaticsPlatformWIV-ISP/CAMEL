@@ -7,12 +7,12 @@ from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 
 camel = Camel.get_instance()
 
-rule map_reads_to_assembly:
+rule medaka_map_reads_to_assembly:
     """
     Map ONT reads to the Flye assembly.
     """
     input:
-        FASTQ = Path(config['working_dir']) / 'trimming' / 'ont' / '{}_SE.fastq.gz'.format(config['name']),
+        FASTQ = Path(config['working_dir']) / 'trimming' / 'ont' / 'trimmed.fastq.gz',
         FASTA = Path(config['working_dir']) / 'assembly_flye' / 'filtering' / 'assembly_filtered.fasta'
     output:
         SAM =  Path(config['working_dir']) / 'mapping' / 'reads_to_flye_assembly.sam'
@@ -27,12 +27,12 @@ rule map_reads_to_assembly:
         step = Step(str(rule), minimap, camel, params.working_dir, config)
         step.run_step()
 
-rule sam_to_bam:
+rule medaka_sam_to_bam:
     """
     Converts the SAM file into a BAM file.
     """
     input:
-        SAM = rules.map_reads_to_assembly.output.SAM
+        SAM = rules.medaka_map_reads_to_assembly.output.SAM
     output:
         BAM = Path(config['working_dir']) / 'mapping' / 'reads_to_flye_assembly.bam'
     params:
@@ -45,12 +45,12 @@ rule sam_to_bam:
         step = Step(str(rule), samtools, camel, params.working_dir, config)
         step.run_step()
 
-rule sort_bam:
+rule medaka_sort_bam:
     """
     Sorts the BAM file.
     """
     input:
-        BAM = rules.sam_to_bam.output.BAM
+        BAM = rules.medaka_sam_to_bam.output.BAM
     output:
         BAM = Path(config['working_dir']) / 'mapping' / 'reads_to_flye_assembly.sorted.bam'
     params:
@@ -63,12 +63,12 @@ rule sort_bam:
         step = Step(str(rule), samtools, camel, params.working_dir, config)
         step.run_step()
 
-rule index_bam:
+rule medaka_index_bam:
     """
     Indexes the BAM file.
     """
     input:
-        BAM = rules.sort_bam.output.BAM
+        BAM = rules.medaka_sort_bam.output.BAM
     output:
         BAI = Path(config['working_dir']) / 'mapping' / 'reads_to_flye_assembly.sorted.bam.bai'
     params:
@@ -86,8 +86,8 @@ rule medaka_consensus:
     Runs the medaka consensus algorithm.
     """
     input:
-        BAM = rules.sort_bam.output.BAM,
-        BAI = rules.index_bam.output.BAI
+        BAM = rules.medaka_sort_bam.output.BAM,
+        BAI = rules.medaka_index_bam.output.BAI
     output:
         HDF = Path(config['working_dir']) / 'medaka' / 'raw.hdf',
         INFORMS = Path(config['working_dir']) / 'medaka' / 'commands-consensus.io'
@@ -123,8 +123,7 @@ rule medaka_stitch:
         from camel.app.tools.medaka.medakastitch import MedakaStitch
         medaka = MedakaStitch(camel)
         medaka.add_input_files({'FASTA': [ToolIOFile(Path(input.FASTA))], 'HDF': [ToolIOFile(Path(input.HDF))]})
-        medaka.update_parameters(**params.medaka_options)
-        medaka.update_parameters(threads=threads)
+        medaka.update_parameters(**params.medaka_options, threads=threads)
         step = Step(str(rule), medaka, camel, params.working_dir, config)
         step.run_step()
         SnakemakeUtils.dump_object(medaka.informs, Path(output.INFORMS))

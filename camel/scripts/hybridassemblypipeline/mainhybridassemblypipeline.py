@@ -37,7 +37,7 @@ class MainHybridAssemblyPipeline(object):
         :return: Arguments
         """
         argument_parser = argparse.ArgumentParser()
-        argument_parser.add_argument('--fastq-pe', type=Path, help='Input Fastq PE file', nargs=2) # REQUIRED?
+        argument_parser.add_argument('--fastq-pe', type=Path, help='Input Fastq PE file', nargs=2, required=True)
         argument_parser.add_argument('--fastq-pe-names', help='Input Fastq PE file', nargs=2)
         argument_parser.add_argument('--fastq-se', type=Path, help='Input Fastq SE files')
         argument_parser.add_argument('--fastq-se-name', help='Input Fastq SE file names')

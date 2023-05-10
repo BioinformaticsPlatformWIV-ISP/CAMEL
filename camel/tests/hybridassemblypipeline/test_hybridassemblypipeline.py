@@ -26,8 +26,6 @@ class TestHybridAssemblyPipeline(CamelTestSuite):
             '--fastq-se', str(TestHybridAssemblyPipeline.FASTQ_SE),
             '--working-dir', str(self.running_dir),
             '--threads', '16',
-            '--expected-species', 'bacillus_velezensis',
-            '--expected-gc-content', '45',
             '--expected-genome-size', '4.5m',
             '--ont-qual', 'nano-corr'
         ]
