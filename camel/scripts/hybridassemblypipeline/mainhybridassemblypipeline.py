@@ -6,6 +6,7 @@ from pathlib import Path
 import pkg_resources
 
 from camel.app.camel import Camel
+from camel.app.components.galaxy.galaxyutils import GalaxyUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 
 
@@ -21,6 +22,13 @@ class MainHybridAssemblyPipeline(object):
         :return: None
         """
         self._args = MainHybridAssemblyPipeline._parse_arguments(args)
+        self._sample_name = MainHybridAssemblyPipeline._determine_sample_name(self._args)
+
+    @staticmethod
+    def _determine_sample_name(args: argparse.Namespace) -> str:
+        if args.sample_name is not None:
+            return args.sample_name
+        return GalaxyUtils.determine_sample_name_from_fq([fq.name for fq in args.fastq_pe])
 
     @staticmethod
     def _parse_arguments(args: Optional[Sequence[str]] = None) -> argparse.Namespace:
@@ -29,7 +37,7 @@ class MainHybridAssemblyPipeline(object):
         :return: Arguments
         """
         argument_parser = argparse.ArgumentParser()
-        argument_parser.add_argument('--fastq-pe', type=Path, help='Input Fastq PE file', nargs=2)
+        argument_parser.add_argument('--fastq-pe', type=Path, help='Input Fastq PE file', nargs=2) # REQUIRED?
         argument_parser.add_argument('--fastq-pe-names', help='Input Fastq PE file', nargs=2)
         argument_parser.add_argument('--fastq-se', type=Path, help='Input Fastq SE files')
         argument_parser.add_argument('--fastq-se-name', help='Input Fastq SE file names')
@@ -70,7 +78,7 @@ class MainHybridAssemblyPipeline(object):
         :return: Config file data
         """
         config = SnakePipelineUtils.generate_config_file({
-            'sample_name': 'Sample', 'working_dir': self._args.working_dir, 'name': self._args.sample_name,
+            'sample_name': self._sample_name, 'working_dir': self._args.working_dir,
             'pipeline': {
                 'name': 'hybrid assembly pipeline',
                 'version': '0.1',
@@ -78,11 +86,7 @@ class MainHybridAssemblyPipeline(object):
             },
             'input': {
                 'illumina': self._args.fastq_pe,
-                'ont': self._args.fastq_se,
-                'illumina_name': [i for i in self._args.fastq_pe_names] if self._args.fastq_pe_names is not None else
-                [i.name for i in self._args.fastq_pe],
-                'ont_name': self._args.fastq_se_name if self._args.fastq_se_name is not None else
-                self._args.fastq_se.name,
+                'ont': self._args.fastq_se
             },
             'output': self._args.output,
             'output_html': self._args.output_html,
