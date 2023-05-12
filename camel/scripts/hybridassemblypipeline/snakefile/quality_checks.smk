@@ -81,25 +81,26 @@ rule qc_parse_quast_output:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(quast_inform_extractor, output)
 
-# rule quast_final_all_assemblies:
-#     """
-#     Generates assembly statistics using QUAST.
-#     """
-#     input:
-#         FASTA = [Path(config['working_dir']) / 'qc' / f'{name}' / 'consensus.fasta' for name in consensus_by_tool.keys()]
-#     output:
-#         TSV = Path(config['working_dir']) / 'qc' / 'quast_combined' / 'report.tsv',
-#         INFORMS = Path(config['working_dir']) / 'qc' / 'quast_combined' / 'commands.io'
-#     params:
-#         running_dir = Path(config['working_dir']) / 'qc'  / 'quast_combined'
-#     run:
-#         from camel.app.tools.quast.quast import Quast
-#         dir_working = Path(str(params.running_dir)).absolute()
-#         quast = Quast(camel)
-#         quast.add_input_files({'FASTA': [ToolIOFile(Path(str(i))) for i in input.FASTA]})
-#         step = Step(str(rule), quast, camel, dir_working, config)
-#         step.run_step()
-#         SnakemakeUtils.dump_object(quast.informs, Path(output.INFORMS))
+rule qc_quast_all_assemblies:
+    """
+    Generates assembly statistics using QUAST.
+    """
+    input:
+        FASTA = [Path(config['working_dir']) / 'qc' / f'{name}' / 'consensus.fasta' for name in consensus_by_tool.keys()]
+    output:
+        TSV = Path(config['working_dir']) / 'qc' / 'quast_combined' / 'report.tsv',
+        HTML = Path(config['working_dir']) / 'qc' / 'quast_combined' / 'report.html',
+        INFORMS = Path(config['working_dir']) / 'qc' / 'quast_combined' / 'commands.io'
+    params:
+        running_dir = Path(config['working_dir']) / 'qc'  / 'quast_combined'
+    run:
+        from camel.app.tools.quast.quast import Quast
+        dir_working = Path(str(params.running_dir)).absolute()
+        quast = Quast(camel)
+        quast.add_input_files({'FASTA': [ToolIOFile(Path(str(i))) for i in input.FASTA]})
+        step = Step(str(rule), quast, camel, dir_working, config)
+        step.run_step()
+        SnakemakeUtils.dump_object(quast.informs, Path(output.INFORMS))
 
 rule qc_samtools_index:
     """
@@ -486,7 +487,6 @@ rule qc_unzip_clair3_vcf:
         bcftools_view.update_parameters(output_format='VCF', compress_output=False, output_filename='variants.vcf')
         step = Step(str(rule), bcftools_view, camel, dir_working, config)
         step.run_step()
-        # SnakemakeUtils.dump_tool_outputs(bcftools_view, output)
 
 rule qc_add_vcf_info_to_informs:
     """
@@ -503,14 +503,16 @@ rule qc_add_vcf_info_to_informs:
         from camel.app.components.vcf.vcfutils import VCFUtils
         informs = SnakemakeUtils.load_object(Path(input.INFORMS))
         if wildcards.method == 'sniffles':
-            informs['nb_of_variants'] = 0
+            informs['nb_of_variants'] = sum(informs['variants'].values())
             informs['nb_of_snps'] = 0
-            informs['nb_of_indels'] = 0
+            informs['nb_of_indels'] = informs['variants']['DEL'] + informs['variants']['INS']
+            informs['nb_of_svs'] = informs['variants']['BND'] + informs['variants']['DUP'] + informs['variants']['INV']
         else:
             variants = VCFUtils.retrieve_variants(Path(input.VCF))
             informs['nb_of_variants'] = len(variants)
             informs['nb_of_snps'] = sum(v.is_snp for v in variants)
             informs['nb_of_indels'] = sum(v.is_indel for v in variants)
+            informs['nb_of_svs'] = 0
         SnakemakeUtils.dump_object(informs, Path(output.INFORMS))
 
 rule qc_ale:
@@ -523,7 +525,7 @@ rule qc_ale:
         FASTA_INDEX = rules.qc_samtools_index.output.INDEX_GENOME_PREFIX
     output:
         ALE = Path(config['working_dir']) / 'qc' / '{name}' / 'ale_illumina' / 'ALE.ale',
-        INFORMS = Path(config['working_dir']) / 'qc' / '{name}' / 'ale_illumina' / 'commands-report.io'
+        INFORMS = Path(config['working_dir']) / 'qc' / '{name}' / 'ale_illumina' / 'informs-report.io'
     params:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'ale_illumina'
     run:

@@ -77,27 +77,6 @@ rule trim_ont_workflow:
         wrapper.output.trimmed_reads[0].path.rename(Path(output.FASTQ))
         SnakemakeUtils.dump_object(wrapper.output.report_section, Path(output.HTML))
 
-# rule trim_ont:
-#     """
-#     This rule trims the ONT reads using filtlong.
-#     """
-#     input:
-#         FASTQ = config['input']['ont']
-#     output:
-#         FASTQ = Path(config['working_dir']) / 'trimming' / 'ont' / 'fastq.io'
-#     params:
-#         working_directory = Path(config['working_dir']) / 'trimming' / 'ont',
-#         filtlong_options= config.get('filtlong',{})
-#     threads: 4
-#     run:
-#         from camel.app.tools.filtlong.filtlong import Filtlong
-#         filtlong = Filtlong(camel)
-#         filtlong.add_input_files({'FASTQ': [ToolIOFile(Path(input.FASTQ))]})
-#         filtlong.update_parameters(**params.filtlong_options)
-#         step = Step(str(rule), filtlong, camel, params.working_directory, config)
-#         step.run_step()
-#         SnakemakeUtils.dump_tool_outputs(filtlong, output)
-
 rule set_trimming_ont_output:
     """
     This rule gzip the filtlong output reads into the correct location.
@@ -126,7 +105,7 @@ rule unicycler:
         INFORMS = Path(config['working_dir']) / 'unicycler' / 'commands.io'
     params:
         working_dir = Path(config['working_dir'])
-    threads: 12
+    threads: 24
     run:
         from camel.app.tools.unicycler.unicycler import Unicycler
         unicycler_assembly = Unicycler(camel)
@@ -198,8 +177,8 @@ rule report_long_variant_calling:
             assembly_key = path_informs.parent.parent.name
             sniffles_table.append({
                 'Assembly step': assembly_key,
-                'Nb. of SNPs': '{:,}'.format(int(informs_sniffles['nb_of_snps'])),
                 'Nb. of Indels': '{:,}'.format(int(informs_sniffles['nb_of_indels'])),
+                'Nb. of SVs': '{:,}'.format(int(informs_sniffles['nb_of_svs'])),
             })
         pd.DataFrame(sniffles_table).to_csv(output.TSV, sep='\t', index=False)
 
@@ -245,12 +224,12 @@ rule report_command_section:
         polypolish_commands = Path(config['working_dir']) / 'polishing' / 'polypolish'  / 'polypolish.io',
         polca_commands = Path(config['working_dir']) / 'polishing' / 'polca' / 'polca.io',
         quast_commands = [Path(config['working_dir']) / 'qc' / f'{name}' / 'quast' / 'commands.io' for name in assembly_steps],
-        # quast_combined_commands = Path(config['working_dir']) / 'qc' / 'quast_combined' / 'commands.io',
+        quast_combined_commands = Path(config['working_dir']) / 'qc' / 'quast_combined' / 'commands.io',
         bwa_commands = [Path(config['working_dir']) / 'qc' / f'{name}' / 'read_mapping' / 'illumina' / 'commands.io' for name in assembly_steps],
         freebayes_commands = [Path(config['working_dir']) / 'qc' / f'{name}' / 'freebayes' / 'commands.io' for name in assembly_steps],
         sniffles_commands = [Path(config['working_dir']) / 'qc' / f'{name}' / 'sniffles' / 'commands.io' for name in assembly_steps],
         clair3_commands = [Path(config['working_dir']) / 'qc' / f'{name}' / 'clair3_output' / 'commands.io' for name in assembly_steps],
-        ale_report_commands = [Path(config['working_dir']) / 'qc' / f'{name}' / 'ale_illumina' / 'commands-report.io' for name in assembly_steps],
+        ale_report_commands = [Path(config['working_dir']) / 'qc' / f'{name}' / 'ale_illumina' / 'informs-report.io' for name in assembly_steps],
         ale_wiggle_commands = [Path(config['working_dir']) / 'qc' / f'{name}' / 'ale_illumina' / 'commands-wiggle.io' for name in assembly_steps]
     output:
         HTML = Path(config['working_dir']) / 'report' / 'html-commands.io'
@@ -280,11 +259,12 @@ rule report_create_sections:
         INFORMS_quast = Path(config['working_dir']) / 'qc' / assembly_steps[0] / 'quast' / 'commands.io',
         INFORMS_freebayes = Path(config['working_dir']) / 'qc' / assembly_steps[0] / 'freebayes' / 'commands.io',
         INFORMS_clair3 = Path(config['working_dir']) / 'qc' / assembly_steps[0] / 'clair3_output' / 'commands.io',
-        informs_sniffles = Path(config['working_dir']) / 'qc' / assembly_steps[0] / 'sniffles' / 'commands.io',
-        informs_mapping = Path(config['working_dir']) / 'qc' / assembly_steps[0] / 'read_mapping' / 'illumina' / 'commands.io',
+        INFORMS_sniffles = [Path(config['working_dir']) / 'qc' / f'{steps}' / 'sniffles' / 'informs.io' for steps in assembly_steps],
+        INFORMS_mapping = Path(config['working_dir']) / 'qc' / assembly_steps[0] / 'read_mapping' / 'illumina' / 'commands.io',
+        INFORMS_ale = [Path(config['working_dir']) / 'qc' / f'{steps}' / 'ale_illumina' / 'informs-report.io' for steps in assembly_steps],
         report_commands = rules.report_command_section.output.HTML,
-        informs_trimming_illumina = rules.trim_illumina.output.HTML,
-        informs_trimming_ont = rules.trim_ont_workflow.output.HTML
+        INFORMS_trimming_illumina = rules.trim_illumina.output.HTML,
+        INFORMS_trimming_ont = rules.trim_ont_workflow.output.HTML
     output:
         HTML = Path(config['working_dir']) / Path(config['output_html'])
     params:
@@ -305,11 +285,12 @@ rule report_create_sections:
             'quast': SnakemakeUtils.load_object(Path(input.INFORMS_quast)),
             'freebayes': SnakemakeUtils.load_object(Path(input.INFORMS_freebayes)),
             'clair3': SnakemakeUtils.load_object(Path(input.INFORMS_clair3)),
-            'sniffles': SnakemakeUtils.load_object(Path(input.informs_sniffles)),
-            'mapping': SnakemakeUtils.load_object(Path(input.informs_mapping)),
+            'sniffles': [SnakemakeUtils.load_object(Path(f)) for f in input.INFORMS_sniffles],
+            'mapping': SnakemakeUtils.load_object(Path(input.INFORMS_mapping)),
             'commands': SnakemakeUtils.load_object(Path(input.report_commands)),
-            'trimming_illumina': SnakemakeUtils.load_object(Path(input.informs_trimming_illumina)),
-            'trimming_ont': SnakemakeUtils.load_object(Path(input.informs_trimming_ont)),
+            'ale': [SnakemakeUtils.load_object(Path(f)) for f in input.INFORMS_ale],
+            'trimming_illumina': SnakemakeUtils.load_object(Path(input.INFORMS_trimming_illumina)),
+            'trimming_ont': SnakemakeUtils.load_object(Path(input.INFORMS_trimming_ont)),
             'sample_name': params.sample_name,
             'pipeline': params.pipeline,
             'input': params.input

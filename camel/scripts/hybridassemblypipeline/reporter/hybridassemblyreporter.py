@@ -1,6 +1,6 @@
 import datetime
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import pandas as pd
 
@@ -60,6 +60,8 @@ class HybridAssemblyReporter(Tool):
             raise InvalidInputSpecificationError("Sniffles TSV is required ('TSV_sniffles')")
         if 'sniffles' not in self._input_informs:
             raise InvalidInputSpecificationError("Sniffles informs are required ('sniffles')")
+        if 'ale' not in self._input_informs:
+            raise InvalidInputSpecificationError("ALE informs are required ('ale')")
         if 'sample_name' not in self._input_informs:
             raise InvalidInputSpecificationError("Sample name is required ('sample_name')")
         if 'pipeline' not in self._input_informs:
@@ -94,6 +96,7 @@ class HybridAssemblyReporter(Tool):
         self.__add_vc_table(self._tool_inputs['TSV_vc'][0].path)
         self.__add_sniffles_table(self._tool_inputs['TSV_sniffles'][0].path)
         self.__add_mapping_table(self._tool_inputs['TSV_mapping'][0].path)
+        self.__add_ale_score_table()
 
         self.report.add_html_object(self._input_informs['commands'][0].value)
         self.report.save()
@@ -137,10 +140,10 @@ class HybridAssemblyReporter(Tool):
             column_names=df.columns,
             table_attributes=[('class', 'data')]
         )
-        section.add_paragraph('The long-read-first assembly consists of four main steps: \n'
-                              '1) Quality control and pre-processing of the long and short reads\n'
-                              '2) Assembling the long reads using Flye and polishing with Medaka\n'
-                              '3) Polishing using short reads with POLCA, then Polypolish\n'
+        section.add_paragraph('The long-read-first assembly consists of four main steps: \n\n'
+                              '1) Quality control and pre-processing of the long and short reads\n\n'
+                              '2) Assembling the long reads using Flye and polishing with Medaka\n\n'
+                              '3) Polishing using short reads with POLCA, then Polypolish\n\n'
                               '4) Quality assessment using QUAST and variant callers\n\n'
                               'The short-read-first assembly consists of running Unicycler using the same input'
                               ' as the long-read-first approach.')
@@ -176,6 +179,11 @@ class HybridAssemblyReporter(Tool):
             list(data_quast.itertuples(index=False, name=None)),
             column_names=data_quast.columns,
             table_attributes=[('class', 'data')])
+        quast_combined_file = Path(self._output_dir) / 'qc' / 'quast_combined' / 'report.html'
+        relative_path = Path(f'qc/quast_combined', quast_combined_file.name)
+        section.add_paragraph('The combined QUAST report is also available herafter, which contains a combined report '
+                              'for all generated assemblies.')
+        section.add_link_to_file('Combined QUAST report', relative_path)
         self.report.add_html_object(section)
 
     def __add_vc_table(self, path_tsv: Path) -> None:
@@ -200,7 +208,7 @@ class HybridAssemblyReporter(Tool):
         :path: Path to the tsv containing variant calling from sniffles
         :return: None
         """
-        section = HtmlReportSection('Sniffles statistics', subtitle=self._input_informs['sniffles']['_name'])
+        section = HtmlReportSection('Sniffles statistics', subtitle=self._input_informs['sniffles'][0]['_name'])
         data_sniffles = pd.read_table(path_tsv)
         section.add_table(
             list(data_sniffles.itertuples(index=False, name=None)),
@@ -221,4 +229,35 @@ class HybridAssemblyReporter(Tool):
             column_names=data_mapping.columns,
             table_attributes=[('class', 'data')]
         )
+        self.report.add_html_object(section)
+
+    def __add_ale_score_table(self) -> None:
+        """
+        Adds the ALE score table, as well as downloadable Wiggle files to the report.
+        :return: None
+        """
+        fasta_level = ['Flye', 'Medaka', 'POLCA', 'Polypolish', 'Unicycler']
+        section = HtmlReportSection('ALE scores', subtitle=self._input_informs['ale'][0]['_name'])
+        ale_output = []
+        for fasta_key in fasta_level:
+            wiggles_files = [Path(self._output_dir) / 'qc' / f'{fasta_key}' / 'ale_illumina' / f'ALE.ale-{metric}.wig'
+                             for metric in ['depth', 'insert', 'kmer', 'place']]
+            relative_paths = [Path(f'qc/{fasta_key}/ale_illumina/{wigglefile.name}') for wigglefile in wiggles_files]
+            inform_fasta_key = [f for f in self._input_informs['ale'] if f['_tag'] == fasta_key][0]
+            ale_output.append({
+                'Assembly step': fasta_key,
+                'ALE score': inform_fasta_key['ale_score'],
+                'Download depth': HtmlTableCell('Download (WIGGLE)', link=str(relative_paths[0])),
+                'Download insert': HtmlTableCell('Download (WIGGLE)', link=str(relative_paths[1])),
+                'Download kmer': HtmlTableCell('Download (WIGGLE)', link=str(relative_paths[2])),
+                'Download place': HtmlTableCell('Download (WIGGLE)', link=str(relative_paths[3])),
+            })
+        df = pd.DataFrame(ale_output)
+        # noinspection PyTypeChecker
+        section.add_table(
+            list(df.itertuples(index=False, name=None)),
+            column_names=df.columns,
+            table_attributes=[('class', 'data')]
+        )
+        section.add_paragraph('ALE wiggle files can be loaded into IGV to visualize issues with the assembly.')
         self.report.add_html_object(section)

@@ -60,6 +60,18 @@ class Sniffles(Tool):
         """
         self._tool_outputs['VCF'] = [ToolIOFile(self.folder / Path('variants.vcf'))]
 
+    def _parse_output(self, path_vcf: Path) -> None:
+        """
+        Parses the output vcf of sniffles and store the variants found in the informs.
+        :path_vcf: Path to the output VCF file
+        :return: None
+        """
+        self._informs['variants'] = {'BND': 0, 'INS': 0, 'DEL': 0, 'DUP': 0, 'INV': 0}
+        with open(path_vcf) as handle:
+            for line in handle.readlines():
+                if not line.startswith('#'):
+                    self._informs['variants'][line.split('\t')[2].split('.')[1]] += 1
+
     def _execute_tool(self) -> None:
         """
         Executes this tool.
@@ -70,3 +82,4 @@ class Sniffles(Tool):
         self._build_command(fasta_input, bam_input)
         self._execute_command()
         self._set_output()
+        self._parse_output(self.folder / Path('variants.vcf'))
