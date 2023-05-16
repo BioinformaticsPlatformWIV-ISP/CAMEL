@@ -47,9 +47,9 @@ class KrakenReportParser(Tool):
 
         self._informs['contaminants_warn'].sort(key=lambda x: -x[1])
         self._informs['contaminants_fail'].sort(key=lambda x: -x[1])
-        self._informs['level_of_depth'] = self._parameters['level_of_depth']
-        self._informs['threshold_fail'] = self._parameters['threshold_fail']
-        self._informs['threshold_warn'] = self._parameters['threshold_warn']
+        self._informs['level_of_depth'] = self._parameters['level_of_depth'].value
+        self._informs['threshold_fail'] = self._parameters['threshold_fail'].value
+        self._informs['threshold_warn'] = self._parameters['threshold_warn'].value
 
     def _check_input(self):
         """
