@@ -85,9 +85,9 @@ class HtmlReporterContamination(Tool):
         :return: None
         """
         self._report_section.add_table([
-            ['Warning threshold:', f"{informs['threshold_warn'].value}%"],
-            ['Fail threshold:', f"{informs['threshold_fail'].value}%"],
-            ['Level:', '{}'.format('Species' if 'S' in informs['level_of_depth'].value else 'Genus')]
+            ['Warning threshold:', f"{informs['threshold_warn']}%"],
+            ['Fail threshold:', f"{informs['threshold_fail']}%"],
+            ['Level:', '{}'.format('Species' if 'S' in informs['level_of_depth'] else 'Genus')]
         ], None, [('class', 'information')])
 
     def __add_species_table(self) -> None:
@@ -95,7 +95,7 @@ class HtmlReporterContamination(Tool):
         Adds a table containing the detected species and corresponding percentages.
         :return: None
         """
-        header = ['{}'.format('Species' if 'S' in self._input_informs['species']['level_of_depth'].value else 'Genus'),
+        header = ['{}'.format('Species' if 'S' in self._input_informs['species']['level_of_depth'] else 'Genus'),
                   'Percentage']
         expected_name, expected_perc = self._input_informs['species']['expected']
         expected_perc = '{:.2f}'.format(float(expected_perc))
