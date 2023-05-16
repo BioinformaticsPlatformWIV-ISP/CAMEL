@@ -1,0 +1,16 @@
+{
+  "type_of_reference": "COMP",
+  "title": "Medaka",
+  "abstract": "Sequence correction provided by ONT Research",
+  "date": "2023/05/16/T10:41:46Z",
+  "year": "2023",
+  "database_provider": "GitHub",
+  "language": "Python",
+  "publisher": "Oxford Nanopore Technologies",
+  "url": "https://github.com/nanoporetech/medaka",
+  "access_date": "2023/05/16/12:58:11",
+  "keywords": [
+    "unread",
+    "polishing"
+  ]
+}

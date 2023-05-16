@@ -4,10 +4,13 @@ from typing import Optional, Sequence
 from pathlib import Path
 
 import pkg_resources
+import yaml
 
 from camel.app.camel import Camel
+from camel.app.components import mainscriptutils
 from camel.app.components.galaxy.galaxyutils import GalaxyUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
+from camel.scripts.hybridassemblypipeline import CONFIG_DATA
 
 
 class MainHybridAssemblyPipeline(object):
@@ -77,7 +80,7 @@ class MainHybridAssemblyPipeline(object):
         Creates a Snakemake configuration file.
         :return: Config file data
         """
-        config = SnakePipelineUtils.generate_config_file({
+        config_data = {
             'sample_name': self._sample_name, 'working_dir': self._args.working_dir,
             'pipeline': {
                 'name': 'hybrid assembly pipeline',
@@ -127,8 +130,11 @@ class MainHybridAssemblyPipeline(object):
                 'min_support': self._args.sniffles_min_support if self._args.sniffles_min_support is not None else 'auto',
                 'min_svlen': self._args.sniffles_min_svlen if self._args.sniffles_min_svlen is not None else 35
             }
-        }, self._args.working_dir)
-        return config
+        }
+        with open(CONFIG_DATA) as handle_in:
+            mainscriptutils.dict_merge(
+                config_data, yaml.safe_load(handle_in.read()))
+        return SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir)
 
 
 if __name__ == '__main__':

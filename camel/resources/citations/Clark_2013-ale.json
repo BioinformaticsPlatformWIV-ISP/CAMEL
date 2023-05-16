@@ -1,0 +1,31 @@
+{
+  "type_of_reference": "JOUR",
+  "title": "ALE: a generic assembly likelihood evaluation framework for assessing the accuracy of genome and metagenome assemblies",
+  "authors": [
+    "Clark, Scott C.",
+    "Egan, Rob",
+    "Frazier, Peter I.",
+    "Wang, Zhong"
+  ],
+  "secondary_title": "Bioinformatics",
+  "abstract": "Motivation: Researchers need general purpose methods for objectively evaluating the accuracy of single and metagenome assemblies and for automatically detecting any errors they may contain. Current methods do not fully meet this need because they require a reference, only consider one of the many aspects of assembly quality or lack statistical justification, and none are designed to evaluate metagenome assemblies.Results: In this article, we present an Assembly Likelihood Evaluation (ALE) framework that overcomes these limitations, systematically evaluating the accuracy of an assembly in a reference-independent manner using rigorous statistical methods. This framework is comprehensive, and integrates read quality, mate pair orientation and insert length (for paired-end reads), sequencing coverage, read alignment and k-mer frequency. ALE pinpoints synthetic errors in both single and metagenomic assemblies, including single-base errors, insertions/deletions, genome rearrangements and chimeric assemblies presented in metagenomes. At the genome level with real-world data, ALE identifies three large misassemblies from the Spirochaeta smaragdinae finished genome, which were all independently validated by Pacific Biosciences sequencing. At the single-base level with Illumina data, ALE recovers 215 of 222 (97%) single nucleotide variants in a training set from a GC-rich Rhodobacter sphaeroides genome. Using real Pacific Biosciences data, ALE identifies 12 of 12 synthetic errors in a Lambda Phage genome, surpassing even Pacific Biosciences\u2019 own variant caller, EviCons. In summary, the ALE framework provides a comprehensive, reference-independent and statistically rigorous measure of single genome and metagenome assembly accuracy, which can be used to identify misassemblies or to optimize the assembly process.Availability: ALE is released as open source software under the UoI/NCSA license at http://www.alescore.org. It is implemented in C and Python.Contact: \u00a0pf98@cornell.edu or ZhongWang@lbl.govSupplementary information: \u00a0Supplementary data are available at Bioinformatics online.",
+  "date": "2013/02/15/",
+  "year": "2013",
+  "doi": "10.1093/bioinformatics/bts723",
+  "database_provider": "Silverchair",
+  "volume": "29",
+  "number": "4",
+  "start_page": "435",
+  "end_page": "443",
+  "alternate_title1": "Bioinformatics",
+  "issn": "1367-4803",
+  "short_title": "ALE",
+  "url": "https://doi.org/10.1093/bioinformatics/bts723",
+  "access_date": "2023/04/07/07:15:08",
+  "file_attachments1": "https://academic.oup.com/bioinformatics/article-pdf/29/4/435/48899943/bioinformatics_29_4_435.pdf",
+  "file_attachments2": "https://academic.oup.com/bioinformatics/article/29/4/435/199222",
+  "keywords": [
+    "unread",
+    "assembly"
+  ]
+}

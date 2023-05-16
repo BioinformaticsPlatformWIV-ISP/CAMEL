@@ -1,0 +1,27 @@
+{
+  "type_of_reference": "JOUR",
+  "title": "The genome polishing tool POLCA makes fast and accurate corrections in genome assemblies",
+  "authors": [
+    "Zimin, Aleksey V.",
+    "Salzberg, Steven L."
+  ],
+  "secondary_title": "PLOS Computational Biology",
+  "abstract": "The introduction of third-generation DNA sequencing technologies in recent years has allowed scientists to generate dramatically longer sequence reads, which when used in whole-genome sequencing projects have yielded better repeat resolution and far more contiguous genome assemblies. While the promise of better contiguity has held true, the relatively high error rate of long reads, averaging 8\u201315%, has made it challenging to generate a highly accurate final sequence. Current long-read sequencing technologies display a tendency toward systematic errors, in particular in homopolymer regions, which present additional challenges. A cost-effective strategy to generate highly contiguous assemblies with a very low overall error rate is to combine long reads with low-cost short-read data, which currently have an error rate below 0.5%. This hybrid strategy can be pursued either by incorporating the short-read data into the early phase of assembly, during the read correction step, or by using short reads to \u201cpolish\u201d the consensus built from long reads. In this report, we present the assembly polishing tool POLCA (POLishing by Calling Alternatives) and compare its performance with two other popular polishing programs, Pilon and Racon. We show that on simulated data POLCA is more accurate than Pilon, and comparable in accuracy to Racon. On real data, all three programs show similar performance, but POLCA is consistently much faster than either of the other polishing programs.",
+  "date": "2020/06/26/",
+  "year": "2020",
+  "doi": "10.1371/journal.pcbi.1007981",
+  "database_provider": "PLoS Journals",
+  "volume": "16",
+  "number": "6",
+  "start_page": "e1007981",
+  "alternate_title1": "PLOS Computational Biology",
+  "language": "en",
+  "issn": "1553-7358",
+  "url": "https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1007981",
+  "access_date": "2023/05/16/12:59:33",
+  "file_attachments1": "https://journals.plos.org/ploscompbiol/article/file?id=10.1371/journal.pcbi.1007981&type=printable",
+  "keywords": [
+    "unread",
+    "polishing"
+  ]
+}

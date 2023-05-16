@@ -1,0 +1,30 @@
+{
+  "type_of_reference": "JOUR",
+  "title": "Assembly of long, error-prone reads using repeat graphs",
+  "authors": [
+    "Kolmogorov, Mikhail",
+    "Yuan, Jeffrey",
+    "Lin, Yu",
+    "Pevzner, Pavel A."
+  ],
+  "secondary_title": "Nature Biotechnology",
+  "abstract": "Accurate genome assembly is hampered by repetitive regions. Although long single molecule sequencing reads are better able to resolve genomic repeats than short-read data, most long-read assembly algorithms do not provide the repeat characterization necessary for producing optimal assemblies. Here, we present Flye, a long-read assembly algorithm that generates arbitrary paths in an unknown repeat graph, called disjointigs, and constructs an accurate repeat graph from these error-riddled disjointigs. We benchmark Flye against five state-of-the-art assemblers and show that it generates better or comparable assemblies, while being an order of magnitude faster. Flye nearly doubled the contiguity of the human genome assembly (as measured by the NGA50 assembly quality metric) compared with existing assemblers.",
+  "date": "2019/05//",
+  "year": "2019",
+  "doi": "10.1038/s41587-019-0072-8",
+  "database_provider": "www.nature.com",
+  "volume": "37",
+  "number": "5",
+  "start_page": "540",
+  "end_page": "546",
+  "alternate_title1": "Nat Biotechnol",
+  "language": "en",
+  "issn": "1546-1696",
+  "url": "https://www.nature.com/articles/s41587-019-0072-8",
+  "access_date": "2023/04/04/13:52:08",
+  "file_attachments1": "https://www.nature.com/articles/s41587-019-0072-8.pdf",
+  "keywords": [
+    "unread",
+    "flye"
+  ]
+}

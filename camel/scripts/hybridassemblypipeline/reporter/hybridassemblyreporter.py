@@ -27,7 +27,8 @@ class HybridAssemblyReporter(Tool):
         ['Quast analysis', 'quast'],
         ['Variant calling analysis', 'vc'],
         ['Sniffles analysis', 'sniffles'],
-        ['Mapping analysis', 'mapping']
+        ['Mapping analysis', 'mapping'],
+        ['Commands', 'commands']
     ]
 
     def __init__(self, camel: Camel) -> None:
@@ -79,7 +80,7 @@ class HybridAssemblyReporter(Tool):
         output_html = self._output_dir / 'output.html'
         # Initialize report
         self.report = HtmlReport(output_html, self._output_dir, [JQUERY_SRC])
-        self.report.initialize('Hybrid assembly pipeline', CSS_STYLE)
+        self.report.initialize('Hybrid assembly pipeline - 0.1', CSS_STYLE)
         self.report.add_pipeline_header(HybridAssemblyReporter.TITLE)
 
         # Input section
@@ -98,6 +99,7 @@ class HybridAssemblyReporter(Tool):
         self.__add_mapping_table(self._tool_inputs['TSV_mapping'][0].path)
         self.__add_ale_score_table()
 
+        self.report.add_module_header('Commands')
         self.report.add_html_object(self._input_informs['commands'][0].value)
         self.report.save()
 
@@ -208,12 +210,22 @@ class HybridAssemblyReporter(Tool):
         :path: Path to the tsv containing variant calling from sniffles
         :return: None
         """
+        fasta_level = ['Flye', 'Medaka', 'POLCA', 'Polypolish', 'Unicycler']
         section = HtmlReportSection('Sniffles statistics', subtitle=self._input_informs['sniffles'][0]['_name'])
         data_sniffles = pd.read_table(path_tsv)
+        vcf_files = []
+        for fasta_key in fasta_level:
+            # TO CHECK ABSOLUTE PATH IN REPORT?
+            vcf_file = Path(self._output_dir) / 'qc' / f'{fasta_key}' / 'sniffles' / 'variants.vcf'
+            relative_path = Path(f'qc/{fasta_key}', vcf_file.name)
+            vcf_files.append(HtmlTableCell('Download (VCF)', link=str(relative_path)))
+        data_sniffles['Download (VCF)'] = vcf_files
         section.add_table(
             list(data_sniffles.itertuples(index=False, name=None)),
             column_names=data_sniffles.columns,
             table_attributes=[('class', 'data')])
+        section.add_paragraph('Sniffles output long insertions and long deletions (Indels column in the report)'
+                              'and structural variants (inversions, duplications, breakpoints).')
         self.report.add_html_object(section)
 
     def __add_mapping_table(self, path_tsv: Path) -> None:
@@ -259,5 +271,12 @@ class HybridAssemblyReporter(Tool):
             column_names=df.columns,
             table_attributes=[('class', 'data')]
         )
-        section.add_paragraph('ALE wiggle files can be loaded into IGV to visualize issues with the assembly.')
+        section.add_paragraph('Larger ALE scores are better, and since ALE scores are negative, "larger" means '
+                              'scores with a smaller magnitude and are closer to zero.')
+        section.add_paragraph('ALE wiggle files can be loaded into IGV to visualize issues with the assembly. '
+                              'File descriptions are as follows:'
+                              '1) "depth" = describes how well the depth at each location agrees with the depth that we would expect, given the GC content at that location.'
+                              '2) "insert" = describes how well the mate pairs’ insert lengths match those we would expect'
+                              '3) "kmer" = describes the likelihood of the assembly forumla, in the absence of any read information.'
+                              '4) "place" = quantifies how well the sequence of the reads agrees with the assembly. ')
         self.report.add_html_object(section)
