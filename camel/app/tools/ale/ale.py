@@ -60,11 +60,8 @@ class ALE(Tool):
         :ale_output: Path to the ALE output file
         :return: None
         """
-        self._command.command = ' '.join([self._tool_command,
-                                          *self._build_options(),
-                                          str(sam_input),
-                                          str(fasta_input),
-                                          str(ale_output)])
+        self._command.command = ' '.join([
+            self._tool_command, *self._build_options(), str(sam_input), str(fasta_input), str(ale_output)])
 
     def _check_command_output(self) -> None:
         """

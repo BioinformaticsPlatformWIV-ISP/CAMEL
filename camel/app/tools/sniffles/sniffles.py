@@ -1,7 +1,12 @@
+import shutil
 from pathlib import Path
+
+import vcf
 
 from camel.app.camel import Camel
 from camel.app.components.files.fastautils import FastaUtils
+from camel.app.components.vcf import vcfutils
+from camel.app.components.vcf.vcfutils import VCFUtils
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
@@ -41,10 +46,8 @@ class Sniffles(Tool):
         Builds the command to run sniffles.
         :return: None
         """
-        self._command.command = ' '.join([self._tool_command,
-                                          f'--input {bam_input}',
-                                          f'--reference {fasta_input}',
-                                          *self._build_options()])
+        self._command.command = ' '.join([
+            self._tool_command, f'--input {bam_input}', f'--reference {fasta_input}', *self._build_options()])
 
     def _check_command_output(self) -> None:
         """
@@ -63,6 +66,7 @@ class Sniffles(Tool):
     def _parse_output(self, path_vcf: Path) -> None:
         """
         Parses the output vcf of sniffles and store the variants found in the informs.
+        Note: this method uses manual parsing because the VCF file is not compatible with PyVCF
         :path_vcf: Path to the output VCF file
         :return: None
         """
