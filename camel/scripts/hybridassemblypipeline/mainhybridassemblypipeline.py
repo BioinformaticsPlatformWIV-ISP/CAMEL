@@ -91,6 +91,10 @@ class MainHybridAssemblyPipeline(object):
         Runs the hybrid assembly pipeline.
         :return: None
         """
+        # Clear existing Galaxy output files when html output is selected
+        if 'output_html' in self._args:
+            mainscriptutils.prepare_galaxy_output(Path(self._args.output_dir), Path(self._args.output_html))
+
         path_config = self.__create_snakemake_config_data()
         path_snakefile = pkg_resources.resource_filename('camel', 'scripts/hybridassemblypipeline/snakefile/main.smk')
         SnakePipelineUtils.run_snakemake(
