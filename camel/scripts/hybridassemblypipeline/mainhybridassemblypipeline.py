@@ -60,6 +60,18 @@ class MainHybridAssemblyPipeline(object):
         argument_parser.add_argument('--ont-qual', type=str, required=True,
                                      choices=['nano-corr', 'nano-hq', 'nano-raw'], default='nano-corr')
         argument_parser.add_argument('--expected-genome-size', type=str, required=True)
+        argument_parser.add_argument('--ont-basecalling-model', type=str, choices=['r1041_e82_260bps_fast_g632',
+                                                                                   'r1041_e82_260bps_hac_g632',
+                                                                                   'r1041_e82_260bps_sup_g632',
+                                                                                   'r1041_e82_400bps_fast_g615',
+                                                                                   'r1041_e82_400bps_fast_g632',
+                                                                                   'r1041_e82_400bps_hac_g615',
+                                                                                   'r1041_e82_400bps_hac_g632',
+                                                                                   'r1041_e82_400bps_sup_g615',
+                                                                                   'r104_e81_hac_g5015',
+                                                                                   'r104_e81_sup_g5015',
+                                                                                   'r941_prom_hac_g360+g422',
+                                                                                   'r941_prom_sup_g5014'])
         argument_parser.add_argument('--filtlong-keep-percent', type=int)
         argument_parser.add_argument('--freebayes-ploidy', choices=['GRCh37', 'GRCh38', 'X', 'Y', '1'], default='1')
         argument_parser.add_argument('--freebayes-min-alternate-fraction', type=float, default=0.5)
@@ -119,7 +131,10 @@ class MainHybridAssemblyPipeline(object):
             },
             'polishing': {
                 'medaka': {
-                    'consensus': {},
+                    'consensus': {
+                        'model': self._args.ont_basecalling_model if self._args.ont_basecalling_model is not None
+                        else 'r941_min_hac_g507'
+                    },
                     'stitch': {}
                 },
                 'polca': {},
@@ -138,7 +153,9 @@ class MainHybridAssemblyPipeline(object):
                 'haploid_precise': True if self._args.clair3_haploid_precise is not None else False,
                 'no_phasing': True if self._args.clair3_no_phasing is not None else False,
                 'include_ctgs': True if self._args.clair3_include_ctgs is not None else False,
-                'long_indel': True if self._args.clair3_long_indel is not None else False
+                'long_indel': True if self._args.clair3_long_indel is not None else False,
+                'model_path': '/db/clair3/models/{}'.format(self._args.ont_basecalling_model
+                                                            if self._args.ont_basecalling_model is not None else 'ont')
             },
             'sniffles': {
                 'mapq': self._args.sniffles_mapq if self._args.sniffles_mapq is not None else 25,

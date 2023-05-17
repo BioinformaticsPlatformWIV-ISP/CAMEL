@@ -104,7 +104,7 @@ rule unicycler:
         INFORMS = Path(config['working_dir']) / 'unicycler' / 'commands.io'
     params:
         working_dir = Path(config['working_dir'])
-    threads: 24
+    threads: 96
     run:
         from camel.app.tools.unicycler.unicycler import Unicycler
         unicycler_assembly = Unicycler(camel)
