@@ -5,19 +5,13 @@
     "Garrison, Erik",
     "Marth, Gabor"
   ],
-  "abstract": "The direct detection of haplotypes from short-read DNA sequencing data requires changes to existing small-variant detection methods. Here, we develop a Bayesian statistical framework which is capable of modeling multiallelic loci in sets of individuals with non-uniform copy number. We then describe our implementation of this framework in a haplotype-based variant detector, FreeBayes.",
-  "date": "2012/07/20/",
-  "publication_year": "2012",
+  "publication_year": "2012///",
+  "alternate_title3": "arXiv",
+  "volume": "n/a",
   "doi": "10.48550/arXiv.1207.3907",
-  "database_provider": "arXiv.org",
-  "publisher": "arXiv",
+  "start_page": "1",
+  "end_page": "9",
   "url": "http://arxiv.org/abs/1207.3907",
-  "access_date": "2023/04/07/12:44:08",
-  "file_attachments1": "https://arxiv.org/pdf/1207.3907.pdf",
-  "file_attachments2": "https://arxiv.org/abs/1207.3907",
-  "keywords": [
-    "read",
-    "Quantitative Biology - Genomics",
-    "Quantitative Biology - Quantitative Methods"
-  ]
+  "file_attachments1": "file:///D:/articles/Garrison, Marth_2012_Haplotype-based variant detection from short-read sequencing.pdf",
+  "abstract": "The direct detection of haplotypes from short-read DNA sequencing data requires changes to existing small-variant detection methods. Here, we develop a Bayesian statistical framework which is capable of modeling multiallelic loci in sets of individuals with non-uniform copy number. We then describe our implementation of this framework in a haplotype-based variant detector, FreeBayes."
 }

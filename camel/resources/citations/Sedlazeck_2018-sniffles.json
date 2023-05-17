@@ -7,27 +7,18 @@
     "Smolka, Moritz",
     "Fang, Han",
     "Nattestad, Maria",
-    "von Haeseler, Arndt",
+    "Von Haeseler, Arndt",
     "Schatz, Michael C."
   ],
-  "secondary_title": "Nature Methods",
-  "abstract": "Structural variations are the greatest source of genetic variation, but they remain poorly understood because of technological limitations. Single-molecule long-read sequencing has the potential to dramatically advance the field, although high error rates are a challenge with existing methods. Addressing this need, we introduce open-source methods for long-read alignment (NGMLR; https://github.com/philres/ngmlr) and structural variant identification (Sniffles; https://github.com/fritzsedlazeck/Sniffles) that provide unprecedented sensitivity and precision for variant detection, even in repeat-rich regions and for complex nested events that can have substantial effects on human health. In several long-read datasets, including healthy and cancerous human genomes, we discovered thousands of novel variants and categorized systematic errors in short-read approaches. NGMLR and Sniffles can automatically filter false events and operate on low-coverage data, thereby reducing the high costs that have hindered the application of long reads in clinical and research settings.",
-  "date": "2018/06//",
-  "publication_year": "2018",
-  "doi": "10.1038/s41592-018-0001-7",
-  "database_provider": "www.nature.com",
+  "publication_year": "2018///",
+  "publisher": "Springer US",
+  "alternate_title3": "Nature Methods",
   "volume": "15",
   "number": "6",
   "start_page": "461",
   "end_page": "468",
-  "alternate_title1": "Nat Methods",
-  "language": "en",
-  "issn": "1548-7105",
-  "url": "https://www.nature.com/articles/s41592-018-0001-7",
-  "access_date": "2023/05/16/13:01:40",
-  "file_attachments1": "https://europepmc.org/articles/pmc5990442?pdf=render",
-  "keywords": [
-    "unread",
-    "sniffles"
-  ]
+  "doi": "10.1038/s41592-018-0001-7",
+  "url": "http://dx.doi.org/10.1038/s41592-018-0001-7",
+  "file_attachments1": "file:///D:/articles/Sedlazeck et al._2018_variations using single-molecule sequencing.pdf",
+  "abstract": "Structural variations are the greatest source of genetic variation, but they remain poorly understood because of technological limitations. Single-molecule long-read sequencing has the potential to dramatically advance the field, although high error rates are a challenge with existing methods. Addressing this need, we introduce open-source methods for long-read alignment (NGMLR; https://github.com/philres/ngmlr) and structural variant identification (Sniffles; https://github.com/fritzsedlazeck/Sniffles) that provide unprecedented sensitivity and precision for variant detection, even in repeat-rich regions and for complex nested events that can have substantial effects on human health. In several long-read datasets, including healthy and cancerous human genomes, we discovered thousands of novel variants and categorized systematic errors in short-read approaches. NGMLR and Sniffles can automatically filter false events and operate on low-coverage data, thereby reducing the high costs that have hindered the application of long reads in clinical and research settings."
 }
