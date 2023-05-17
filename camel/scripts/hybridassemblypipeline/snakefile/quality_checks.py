@@ -8,3 +8,5 @@ consensus_by_tool = {
     'Polypolish': Path('polishing', 'polypolish', 'polished.fasta'),
     'Unicycler': Path('unicycler', 'assembly.fasta')
 }
+
+ALE_KEYS = ['depth', 'kmer', 'insert', 'place']

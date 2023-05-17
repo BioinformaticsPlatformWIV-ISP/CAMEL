@@ -20,8 +20,9 @@ class TestHybridAssemblyPipeline(CamelTestSuite):
         Tests the hybrid assembly pipeline.
         :return: None
         """
-        path_report_out = self.running_dir / 'output.tsv'
+        path_report_out = self.running_dir / 'out' / 'output.html'
         args = [
+            '--output-html', str(path_report_out),
             '--fastq-pe', str(TestHybridAssemblyPipeline.FASTQ_1), str(TestHybridAssemblyPipeline.FASTQ_2),
             '--fastq-se', str(TestHybridAssemblyPipeline.FASTQ_SE),
             '--working-dir', str(self.running_dir),

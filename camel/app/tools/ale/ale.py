@@ -87,4 +87,4 @@ class ALE(Tool):
         """
         with open(self.folder / ale_output) as handle:
             score = handle.readline().split(':')[1]
-            self._informs['ale_score'] = score
+            self._informs['ale_score'] = float(score.strip())

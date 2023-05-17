@@ -280,16 +280,21 @@ rule report_create_sections:
         INFORMS_mapping = Path(config['working_dir']) / 'qc' / assembly_steps[0] / 'read_mapping' / 'illumina' / 'commands.io',
         INFORMS_ale = [Path(config['working_dir']) / 'qc' / f'{steps}' / 'ale_illumina' / 'informs-report.io' for steps in assembly_steps],
         report_commands = rules.report_command_section.output.HTML,
-        INFORMS_trimming_illumina = rules.trim_illumina.output.HTML,
-        INFORMS_trimming_ont = rules.trim_ont_workflow.output.HTML
+        HTML_trim_illumina = rules.trim_illumina.output.HTML,
+        HTML_trim_ont = rules.trim_ont_workflow.output.HTML,
+        HTML_quast = Path(config['working_dir']) / 'qc' / 'quast_combined' / 'report.html',
+        VCF_sniffles = [Path(config['working_dir']) / 'qc' / key / 'sniffles' / 'variants.vcf' for key in quality_checks.consensus_by_tool.keys()],
+        WIGGLE_ale = [Path(config['working_dir']) / 'qc' / key / 'ale_illumina' / f'ALE.ale-{ale_key}.wig' for key in quality_checks.consensus_by_tool.keys() for ale_key in quality_checks.ALE_KEYS]
     output:
-        HTML = Path(config['working_dir']) / Path(config['output_html'])
+        HTML = Path(config['working_dir']) / Path(config['output_html']),
+        DIR = directory(Path(config['working_dir']) / Path(config['output_dir']))
     params:
         sample_name = config['sample_name'],
         input = config['input'],
         pipeline = config['pipeline'],
         working_dir = Path(config['working_dir'])
     run:
+        from camel.app.io.tooliovalue import ToolIOValue
         from camel.scripts.hybridassemblypipeline.reporter.hybridassemblyreporter import HybridAssemblyReporter
         reporter = HybridAssemblyReporter(camel)
         reporter.add_input_files({
@@ -297,7 +302,12 @@ rule report_create_sections:
             'TSV_quast': [ToolIOFile(Path(input.TSV_quast))],
             'TSV_vc': [ToolIOFile(Path(input.TSV_vc))],
             'TSV_sniffles': [ToolIOFile(Path(input.TSV_sniffles))],
+            'VCF_sniffles': [ToolIOFile(Path(x)) for x in input.VCF_sniffles],
             'TSV_mapping': [ToolIOFile(Path(input.TSV_mapping))],
+            'HTML_trim_illumina': [ToolIOValue(SnakemakeUtils.load_object(Path(input.HTML_trim_illumina)))],
+            'HTML_trim_ont': [ToolIOValue(SnakemakeUtils.load_object(Path(input.HTML_trim_ont)))],
+            'HTML_quast': [ToolIOFile(Path(input.HTML_quast))],
+            'WIGGLE_ale': [ToolIOFile(Path(x)) for x in input.WIGGLE_ale]
         })
         reporter.add_input_informs({
             'quast': SnakemakeUtils.load_object(Path(input.INFORMS_quast)),
@@ -308,12 +318,10 @@ rule report_create_sections:
             'commands': SnakemakeUtils.load_object(Path(input.report_commands)),
             'citations': SnakemakeUtils.load_object(Path(input.report_citations)),
             'ale': [SnakemakeUtils.load_object(Path(f)) for f in input.INFORMS_ale],
-            'trimming_illumina': SnakemakeUtils.load_object(Path(input.INFORMS_trimming_illumina)),
-            'trimming_ont': SnakemakeUtils.load_object(Path(input.INFORMS_trimming_ont)),
             'sample_name': params.sample_name,
             'pipeline': params.pipeline,
             'input': params.input
         })
-        reporter.update_parameters(output_filename=str(output.HTML))
+        reporter.update_parameters(output_filename=str(output.HTML), output_dir=str(output.DIR))
         step = Step(str(rule), reporter, camel, params.working_dir, config)
         step.run_step()

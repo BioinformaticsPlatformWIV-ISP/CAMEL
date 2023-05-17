@@ -45,7 +45,9 @@ class HybridAssemblyReporter(Tool):
         :return: None
         """
         # Check tool input files
-        required_inputs = ['FASTA', 'TSV_quast', 'TSV_vc', 'TSV_mapping', 'TSV_sniffles']
+        required_inputs = [
+            'FASTA', 'TSV_quast', 'TSV_vc', 'TSV_mapping', 'TSV_sniffles', 'VCF_sniffles', 'HTML_trim_illumina',
+            'HTML_trim_ont', 'HTML_quast', 'WIGGLE_ale']
         for key in required_inputs:
             if key not in self._tool_inputs:
                 raise InvalidInputSpecificationError(f"Required tool input '{key}' is missing")
@@ -65,7 +67,7 @@ class HybridAssemblyReporter(Tool):
         :return: None
         """
         path_out = Path(self._parameters['output_filename'].value)
-        self._output_dir = path_out.parent
+        self._output_dir = Path(self._parameters['output_dir'].value)
 
         # Initialize report
         self.report = HtmlReport(path_out, self._output_dir, [JQUERY_SRC])
@@ -78,8 +80,10 @@ class HybridAssemblyReporter(Tool):
         self.report.add_module_header('Overview')
         self.__add_overview_section()
         self.report.add_module_header('Read trimming')
-        self.report.add_html_object(self._input_informs['trimming_illumina'])
-        self.report.add_html_object(self._input_informs['trimming_ont'])
+        self.report.add_html_object(self._tool_inputs['HTML_trim_illumina'][0].value)
+        self._tool_inputs['HTML_trim_illumina'][0].value.copy_files(self.report.output_dir)
+        self.report.add_html_object(self._tool_inputs['HTML_trim_ont'][0].value)
+        self._tool_inputs['HTML_trim_ont'][0].value.copy_files(self.report.output_dir)
         self.report.add_module_header('Assembly statistics')
         self.__add_quast_section(self._tool_inputs['TSV_quast'][0].path, self._input_informs['quast'])
         self.report.add_module_header('Variant calling')
@@ -134,8 +138,8 @@ class HybridAssemblyReporter(Tool):
         )
         section.add_paragraph("""
             The hybrid assembly pipeline performs long-read first <i>de novo</i> assembly, according to the following 
-            steps: (1) Quality control and pre-processing of the long and short reads. (2) Long-reads assembly using 
-            Flye. (3) polishing using Medaka (long-reads), followed by POLCA and Polypolish (short-reads); (4) Quality
+            steps: (1) Quality control and pre-processing of the long and short reads; (2) Long-reads assembly using 
+            Flye; (3) polishing using Medaka (long-reads), followed by POLCA and Polypolish (short-reads); (4) Quality
             assessment using QUAST and several variant callers. An additional short-read first assembly is created 
             using Unicycler.
             """
@@ -172,12 +176,11 @@ class HybridAssemblyReporter(Tool):
             list(data_quast.itertuples(index=False, name=None)),
             column_names=data_quast.columns,
             table_attributes=[('class', 'data')])
-        quast_combined_file = Path(self._output_dir) / 'qc' / 'quast_combined' / 'report.html'
-        relative_path = Path(f'qc/quast_combined', quast_combined_file.name)
-        section.add_paragraph('The combined QUAST report is also available herafter, which contains a combined report '
-                              'for all generated assemblies.')
-        section.add_link_to_file('Combined QUAST report', relative_path)
+        relative_path = Path('quast', 'quast_all.html')
+        section.add_file(self._tool_inputs['HTML_quast'][0].path, relative_path)
+        section.add_link_to_file('Combined QUAST report (HTML)', relative_path)
         self.report.add_html_object(section)
+        section.copy_files(self.report.output_dir)
 
     def __add_vc_table(self, path_tsv: Path) -> None:
         """
@@ -200,23 +203,25 @@ class HybridAssemblyReporter(Tool):
         :path: Path to the tsv containing variant calling from sniffles
         :return: None
         """
-        fasta_level = ['Flye', 'Medaka', 'POLCA', 'Polypolish', 'Unicycler']
         section = HtmlReportSection('Sniffles statistics', subtitle=self._input_informs['sniffles'][0]['_name'])
         data_sniffles = pd.read_table(path_tsv)
         vcf_files = []
-        for fasta_key in fasta_level:
-            # TO CHECK ABSOLUTE PATH IN REPORT?
-            vcf_file = Path(self._output_dir) / 'qc' / f'{fasta_key}' / 'sniffles' / 'variants.vcf'
-            relative_path = Path(f'qc/{fasta_key}/sniffles', vcf_file.name)
+        for io_vcf in self._tool_inputs['VCF_sniffles']:
+            vcf_key = io_vcf.path.parents[1].name
+            relative_path = Path('sniffles', vcf_key, f'sniffles_{vcf_key}.vcf')
             vcf_files.append(HtmlTableCell('Download (VCF)', link=str(relative_path)))
+            section.add_file(io_vcf.path, relative_path)
         data_sniffles['Download (VCF)'] = vcf_files
         section.add_table(
             list(data_sniffles.itertuples(index=False, name=None)),
             column_names=data_sniffles.columns,
             table_attributes=[('class', 'data')])
-        section.add_paragraph('Sniffles output long insertions and long deletions (Indels column in the report)'
-                              'and structural variants (inversions, duplications, breakpoints).')
+        section.add_paragraph("""
+            Sniffles detect structural variation by mapping the long reads to the consensus sequence. Long deletions are 
+            listed in the indels column, and all other variants (inversions, duplications, breakpoints) are listed in 
+            the structural variation column (SV).""")
         self.report.add_html_object(section)
+        section.copy_files(self.report.output_dir)
 
     def __add_mapping_table(self, path_tsv: Path) -> None:
         """
@@ -238,34 +243,50 @@ class HybridAssemblyReporter(Tool):
         Adds the ALE score table, as well as downloadable Wiggle files to the report.
         :return: None
         """
-        fasta_level = ['Flye', 'Medaka', 'POLCA', 'Polypolish', 'Unicycler']
         section = HtmlReportSection('ALE scores', subtitle=self._input_informs['ale'][0]['_name'])
-        ale_output = []
-        for fasta_key in fasta_level:
-            wiggles_files = [Path(self._output_dir) / 'qc' / f'{fasta_key}' / 'ale_illumina' / f'ALE.ale-{metric}.wig'
-                             for metric in ['depth', 'insert', 'kmer', 'place']]
-            relative_paths = [Path(f'qc/{fasta_key}/ale_illumina/{wigglefile.name}') for wigglefile in wiggles_files]
-            inform_fasta_key = [f for f in self._input_informs['ale'] if f['_tag'] == fasta_key][0]
-            ale_output.append({
-                'Assembly step': fasta_key,
-                'ALE score': inform_fasta_key['ale_score'],
-                'Download depth': HtmlTableCell('Download (WIGGLE)', link=str(relative_paths[0])),
-                'Download insert': HtmlTableCell('Download (WIGGLE)', link=str(relative_paths[1])),
-                'Download kmer': HtmlTableCell('Download (WIGGLE)', link=str(relative_paths[2])),
-                'Download place': HtmlTableCell('Download (WIGGLE)', link=str(relative_paths[3])),
-            })
-        df = pd.DataFrame(ale_output)
+        output_rows = []
+
+        # Group input files
+        wiggle_by_ale_key_by_assembly_key = {}
+        for io_wiggle in self._tool_inputs['WIGGLE_ale']:
+            ale_key = io_wiggle.path.stem.split('-')[-1]
+            assembly_key = io_wiggle.path.parents[1].name
+            if assembly_key not in wiggle_by_ale_key_by_assembly_key:
+                wiggle_by_ale_key_by_assembly_key[assembly_key] = {}
+            relative_path = Path('ale', f'{assembly_key}_{ale_key}.wig')
+            wiggle_by_ale_key_by_assembly_key[assembly_key][ale_key] = relative_path
+            section.add_file(io_wiggle.path, relative_path)
+
+        # Collect scores
+        score_by_assembly_key = {}
+        for inform in self._input_informs['ale']:
+            score_by_assembly_key[inform['_tag']] = inform['ale_score']
+
+        # Create output table
+        for assembly_key, wiggle_by_ale in wiggle_by_ale_key_by_assembly_key.items():
+            output_rows.append([
+                assembly_key,
+                f'{int(score_by_assembly_key[assembly_key]):,}',
+                *[HtmlTableCell('Download (WIG)', link=str(wiggle)) for ale_key, wiggle in wiggle_by_ale.items()]
+            ])
         section.add_table(
-            list(df.itertuples(index=False, name=None)),
-            column_names=df.columns,
+            output_rows,
+            column_names=[
+                'Assembly step', 'Ale score', 'Download depth', 'Download insert', 'Download K-mer', 'Download place'],
             table_attributes=[('class', 'data')]
         )
-        section.add_paragraph('Larger ALE scores are better, and since ALE scores are negative, "larger" means '
-                              'scores with a smaller magnitude and are closer to zero.')
-        section.add_paragraph('ALE wiggle files can be loaded into IGV to visualize issues with the assembly. '
-                              'File descriptions are as follows:'
-                              '1) "depth" = describes how well the depth at each location agrees with the depth that we would expect, given the GC content at that location.'
-                              '2) "insert" = describes how well the mate pairs’ insert lengths match those we would expect'
-                              '3) "kmer" = describes the likelihood of the assembly forumla, in the absence of any read information.'
-                              '4) "place" = quantifies how well the sequence of the reads agrees with the assembly. ')
+        section.add_paragraph("""
+            <b>Note:</b> The ALE score provides an indication of the overall quality of an assembly. Larger ALE scores 
+            are better (ALE scores are always negative, which means that values closer to 0 are better)""")
+        section.add_header('WIGGLE files', 4)
+        section.add_table([
+            ['depth', 'Agreement between the observed and expected depth, considering the %GC-content'],
+            ['insert', 'Agreement between the observed and expected read pairing'],
+            ['kmer', 'Likelihood of the assembly forumla, in the absence of any read information'],
+            ['place', 'Agreement between the sequences of reads and the assembly'],
+        ], ['File', 'Explanation'], [('class', 'data')])
+        section.add_paragraph(
+            "WIGGLE files can be loaded into genome browser such as IGV to visualize issues with the assembly. More "
+            "information is provided in the ALE manuscript, which is listed below.")
         self.report.add_html_object(section)
+        section.copy_files(self.report.output_dir)

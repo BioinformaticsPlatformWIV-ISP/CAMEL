@@ -26,6 +26,8 @@ class MainHybridAssemblyPipeline(object):
         :return: None
         """
         self._args = MainHybridAssemblyPipeline._parse_arguments(args)
+        if self._args.output_dir is None:
+            self._args.output_dir = self._args.output_html.parent
         self._sample_name = MainHybridAssemblyPipeline._determine_sample_name(self._args)
 
     @staticmethod
@@ -52,8 +54,8 @@ class MainHybridAssemblyPipeline(object):
         argument_parser.add_argument('--fastq-se', type=Path, help='Input Fastq SE files')
         argument_parser.add_argument('--fastq-se-name', help='Input Fastq SE file names')
         argument_parser.add_argument('--working-dir', type=Path, default=Path.cwd())
-        argument_parser.add_argument('--output', type=Path, default='output.tsv')
-        argument_parser.add_argument('--output-html', type=Path, default='output.html')
+        argument_parser.add_argument('--output-html', type=Path, required=True)
+        argument_parser.add_argument('--output-dir', type=Path)
         argument_parser.add_argument('--sample-name', type=str, default='test_sample')
         argument_parser.add_argument('--ont-qual', type=str, required=True,
                                      choices=['nano-corr', 'nano-hq', 'nano-raw'], default='nano-corr')
@@ -101,8 +103,8 @@ class MainHybridAssemblyPipeline(object):
                 'ont': self._args.fastq_se
             },
             # Output
-            'output': self._args.output,
-            'output_html': self._args.output_html,
+            'output_html': str(self._args.output_html.absolute()),
+            'output_dir': str(self._args.output_dir.absolute()),
             # Parameters
             'filtlong': {
                 'keep_percent': self._args.filtlong_keep_percent if self._args.filtlong_keep_percent is not None else 95
