@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Tuple, List, Union, Optional
+from typing import Tuple, List, Union, Optional, Sequence
 
 import abc
 import bs4
@@ -68,7 +68,7 @@ class HtmlBase(object):
         """
         return self._doc.getvalue()
 
-    def add_table(self, data: List[List[Union[str, int, 'HtmlBase']]], column_names: List[str] = None,
+    def add_table(self, data: List[Sequence[Union[str, int, 'HtmlBase']]], column_names: List[str] = None,
                   table_attributes: List[Tuple[str, str]] = None) -> None:
         """
         Adds a table.
@@ -95,7 +95,8 @@ class HtmlBase(object):
                 with self.get_tag('th'):
                     self.add_text(name)
 
-    def _add_table_row(self, data: List[Union[str, int]], attributes: Optional[List[Tuple[str, str]]] = None) -> None:
+    def _add_table_row(self, data: Sequence[Union[str, int]], attributes: Optional[List[Tuple[str, str]]] = None) -> \
+            None:
         """
         Adds a row to a table.
         :param data: Row data
@@ -191,7 +192,7 @@ class HtmlBase(object):
 
     def add_text(self, text: str) -> None:
         """
-        Adds text to the this HTML tag.
+        Adds text to this HTML tag.
         :return: None
         """
         if text is None:
@@ -203,7 +204,7 @@ class HtmlBase(object):
                 self._doc.text(part.text)
                 self._doc.asis(f'</{part.name}>')
             else:
-                self._doc.text(part)
+                self._doc.text(str(part))
 
     def add_module_header(self, text: str, id_: str = None) -> None:
         """

@@ -1,7 +1,7 @@
 import logging
 import shutil
 from pathlib import Path
-from typing import List, Union, Tuple, Optional
+from typing import List, Union, Tuple, Optional, Sequence
 
 from camel.app.components.html.htmlbase import HtmlBase
 from camel.app.components.html.htmlelement import HtmlElement
@@ -79,7 +79,7 @@ class HtmlReportSection(HtmlElement):
         self._files.append((input_file, relative_path,))
         return relative_path
 
-    def add_table(self, data: List[List[Union[str, int, 'HtmlBase']]], column_names: List[str] = None,
+    def add_table(self, data: List[Sequence[Union[str, int, 'HtmlBase']]], column_names: List[str] = None,
                   table_attributes: List[Tuple[str, str]] = None, msg_if_empty: str = 'None found') -> None:
         """
         Adds a table to the report section.
