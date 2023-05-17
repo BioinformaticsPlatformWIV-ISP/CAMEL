@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 import argparse
-from typing import Optional, Sequence
+import logging
 from pathlib import Path
+from typing import Optional, Sequence
 
 import pkg_resources
 import yaml
@@ -29,8 +30,14 @@ class MainHybridAssemblyPipeline(object):
 
     @staticmethod
     def _determine_sample_name(args: argparse.Namespace) -> str:
+        """
+        Determines the sample name from the provided arguments.
+        :param args: Command line arguments
+        :return: Parse sample name
+        """
         if args.sample_name is not None:
             return args.sample_name
+        logging.debug('Sample name not provided, determining name from short-reads')
         return GalaxyUtils.determine_sample_name_from_fq([fq.name for fq in args.fastq_pe])
 
     @staticmethod
@@ -81,18 +88,22 @@ class MainHybridAssemblyPipeline(object):
         :return: Config file data
         """
         config_data = {
-            'sample_name': self._sample_name, 'working_dir': self._args.working_dir,
+            # Pipeline
             'pipeline': {
                 'name': 'hybrid assembly pipeline',
                 'version': '0.1',
                 'title': 'Hybrid assembly pipeline'
             },
+            # Input
+            'sample_name': self._sample_name, 'working_dir': self._args.working_dir,
             'input': {
                 'illumina': self._args.fastq_pe,
                 'ont': self._args.fastq_se
             },
+            # Output
             'output': self._args.output,
             'output_html': self._args.output_html,
+            # Parameters
             'filtlong': {
                 'keep_percent': self._args.filtlong_keep_percent if self._args.filtlong_keep_percent is not None else 95
             },
@@ -102,7 +113,6 @@ class MainHybridAssemblyPipeline(object):
                     'nano_corr': True if self._args.ont_qual == 'nano-corr' else False,
                     'nano_hq': True if self._args.ont_qual == 'nano-hq' else False,
                     'nano_raw': True if self._args.ont_qual == 'nano-raw' else False},
-                # self._args.ont_qual.replace('-', '_'): True},
                 'min_contig_length': 1000
             },
             'polishing': {
@@ -130,7 +140,8 @@ class MainHybridAssemblyPipeline(object):
             },
             'sniffles': {
                 'mapq': self._args.sniffles_mapq if self._args.sniffles_mapq is not None else 25,
-                'min_support': self._args.sniffles_min_support if self._args.sniffles_min_support is not None else 'auto',
+                'min_support':
+                    self._args.sniffles_min_support if self._args.sniffles_min_support is not None else 'auto',
                 'min_svlen': self._args.sniffles_min_svlen if self._args.sniffles_min_svlen is not None else 35
             }
         }

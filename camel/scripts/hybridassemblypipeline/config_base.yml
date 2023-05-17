@@ -1,5 +1,5 @@
 ################################################################################################
-# This YAML file contains the additional configuration data for the Hybrid assembly pipeline.  #
+# This YAML file contains the additional configuration data for the hybrid assembly pipeline.  #
 # The values are added to the configuration data constructed by the BasePipeline class.        #
 ################################################################################################
 citations:
@@ -12,10 +12,8 @@ citations:
     - Clark_2013-ale
     - Garrison_2012-freebayes
     - Kolmogorov_2019-flye
-    - oxford_2023-medaka
     - Sedlazeck_2018-sniffles
     - Smolka_2022-sniffles
     - Wick_2017-unicycler
     - Wick_2022-polypolish
     - Zimin_2020-polca
-
