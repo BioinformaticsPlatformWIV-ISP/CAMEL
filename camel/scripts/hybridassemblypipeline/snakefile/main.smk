@@ -212,6 +212,22 @@ rule report_mappingstats:
             })
         pd.DataFrame(records_out).to_csv(output.TSV,sep='\t',index=False)
 
+rule report_pickle_citations:
+    """
+    This rule creates a pickle with a report section containing the citations.
+    """
+    output:
+        HTML = Path(config['working_dir']) / 'report' / 'html-citations.io'
+    params:
+        citation_keys = config['citations']
+    run:
+        from camel.app.io.tooliovalue import ToolIOValue
+        from camel.app.snakemake.snakemakeutils import SnakemakeUtils
+        from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
+        section = SnakePipelineUtils.create_citations_section(
+            params.citation_keys['other'], params.citation_keys['main'])
+        SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output.HTML))
+
 rule report_command_section:
     """
     Creates a report section with the commands used in the pipeline. 
@@ -256,6 +272,7 @@ rule report_create_sections:
         TSV_vc = rules.combine_informs_variant_calling_short_reads.output.TSV,
         TSV_mapping = rules.report_mappingstats.output.TSV,
         TSV_sniffles = rules.report_long_variant_calling.output.TSV,
+        report_citations = rules.report_pickle_citations.output.HTML,
         INFORMS_quast = Path(config['working_dir']) / 'qc' / assembly_steps[0] / 'quast' / 'commands.io',
         INFORMS_freebayes = Path(config['working_dir']) / 'qc' / assembly_steps[0] / 'freebayes' / 'commands.io',
         INFORMS_clair3 = Path(config['working_dir']) / 'qc' / assembly_steps[0] / 'clair3_output' / 'commands.io',
@@ -279,7 +296,7 @@ rule report_create_sections:
             'TSV_quast': [ToolIOFile(Path(input.TSV_quast))],
             'TSV_vc': [ToolIOFile(Path(input.TSV_vc))],
             'TSV_sniffles': [ToolIOFile(Path(input.TSV_sniffles))],
-            'TSV_mapping': [ToolIOFile(Path(input.TSV_mapping))]
+            'TSV_mapping': [ToolIOFile(Path(input.TSV_mapping))],
         })
         reporter.add_input_informs({
             'quast': SnakemakeUtils.load_object(Path(input.INFORMS_quast)),
@@ -288,6 +305,7 @@ rule report_create_sections:
             'sniffles': [SnakemakeUtils.load_object(Path(f)) for f in input.INFORMS_sniffles],
             'mapping': SnakemakeUtils.load_object(Path(input.INFORMS_mapping)),
             'commands': SnakemakeUtils.load_object(Path(input.report_commands)),
+            'citations': SnakemakeUtils.load_object(Path(input.report_citations)),
             'ale': [SnakemakeUtils.load_object(Path(f)) for f in input.INFORMS_ale],
             'trimming_illumina': SnakemakeUtils.load_object(Path(input.INFORMS_trimming_illumina)),
             'trimming_ont': SnakemakeUtils.load_object(Path(input.INFORMS_trimming_ont)),

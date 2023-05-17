@@ -1,14 +1,14 @@
 {
   "type_of_reference": "JOUR",
-  "title": "Polypolish: Short-read polishing of long-read bacterial genome assemblies",
-  "authors": [
+  "primary_title": "Polypolish: Short-read polishing of long-read bacterial genome assemblies",
+  "first_authors": [
     "Wick, Ryan R.",
     "Holt, Kathryn E."
   ],
   "secondary_title": "PLOS Computational Biology",
   "abstract": "Long-read-only bacterial genome assemblies usually contain residual errors, most commonly homopolymer-length errors. Short-read polishing tools can use short reads to fix these errors, but most rely on short-read alignment which is unreliable in repeat regions. Errors in such regions are therefore challenging to fix and often remain after short-read polishing. Here we introduce Polypolish, a new short-read polisher which uses all-per-read alignments to repair errors in repeat sequences that other polishers cannot. Polypolish performed well in benchmarking tests using both simulated and real reads, and it almost never introduced errors during polishing. The best results were achieved by using Polypolish in combination with other short-read polishers.",
   "date": "2022/01/24/",
-  "year": "2022",
+  "publication_year": "2022",
   "doi": "10.1371/journal.pcbi.1009802",
   "database_provider": "PLoS Journals",
   "volume": "18",

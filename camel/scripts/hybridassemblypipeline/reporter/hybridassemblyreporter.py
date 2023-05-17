@@ -28,7 +28,8 @@ class HybridAssemblyReporter(Tool):
         ['Variant calling analysis', 'vc'],
         ['Sniffles analysis', 'sniffles'],
         ['Mapping analysis', 'mapping'],
-        ['Commands', 'commands']
+        ['Commands', 'commands'],
+        ['Citations', 'citations']
     ]
 
     def __init__(self, camel: Camel) -> None:
@@ -69,6 +70,8 @@ class HybridAssemblyReporter(Tool):
             raise InvalidInputSpecificationError("Pipeline informs are required ('pipeline')")
         if 'input' not in self._input_informs:
             raise InvalidInputSpecificationError("Input samples are required ('input')")
+        if 'citations' not in self._input_informs:
+            raise InvalidInputSpecificationError("Citations are required ('citations')")
         super()._check_input()
 
     def _execute_tool(self) -> None:
@@ -101,6 +104,8 @@ class HybridAssemblyReporter(Tool):
 
         self.report.add_module_header('Commands')
         self.report.add_html_object(self._input_informs['commands'][0].value)
+        self.report.add_module_header('Citations')
+        self.report.add_html_object(self._input_informs['citations'][0].value)
         self.report.save()
 
     def __add_input_section(self) -> None:
@@ -217,7 +222,7 @@ class HybridAssemblyReporter(Tool):
         for fasta_key in fasta_level:
             # TO CHECK ABSOLUTE PATH IN REPORT?
             vcf_file = Path(self._output_dir) / 'qc' / f'{fasta_key}' / 'sniffles' / 'variants.vcf'
-            relative_path = Path(f'qc/{fasta_key}', vcf_file.name)
+            relative_path = Path(f'qc/{fasta_key}/sniffles', vcf_file.name)
             vcf_files.append(HtmlTableCell('Download (VCF)', link=str(relative_path)))
         data_sniffles['Download (VCF)'] = vcf_files
         section.add_table(
