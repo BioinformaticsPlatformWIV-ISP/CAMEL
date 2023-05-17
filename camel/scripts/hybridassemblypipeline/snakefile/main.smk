@@ -27,8 +27,7 @@ rule all:
     This rules ensures that the required output files are generated.
     """
     input:
-        Path(config['working_dir']) / config['output_html'],
-        Path(config['working_dir'] / config['output'])
+        Path(config['working_dir']) / config['output_html']
 
 rule trim_illumina:
     """
@@ -268,6 +267,7 @@ rule report_create_sections:
     Rule to combine report sections into a single output report.
     """
     input:
+        FASTA = [Path(config['working_dir']) / 'qc' / key / 'consensus.fasta' for key in quality_checks.consensus_by_tool.keys()],
         TSV_quast = rules.combine_informs_quast.output.TSV,
         TSV_vc = rules.combine_informs_variant_calling_short_reads.output.TSV,
         TSV_mapping = rules.report_mappingstats.output.TSV,
@@ -293,6 +293,7 @@ rule report_create_sections:
         from camel.scripts.hybridassemblypipeline.reporter.hybridassemblyreporter import HybridAssemblyReporter
         reporter = HybridAssemblyReporter(camel)
         reporter.add_input_files({
+            'FASTA': [ToolIOFile(Path(p)) for p in input.FASTA],
             'TSV_quast': [ToolIOFile(Path(input.TSV_quast))],
             'TSV_vc': [ToolIOFile(Path(input.TSV_vc))],
             'TSV_sniffles': [ToolIOFile(Path(input.TSV_sniffles))],
@@ -313,6 +314,6 @@ rule report_create_sections:
             'pipeline': params.pipeline,
             'input': params.input
         })
-        reporter.update_parameters(output_dir=str(params.working_dir))
+        reporter.update_parameters(output_filename=str(output.HTML))
         step = Step(str(rule), reporter, camel, params.working_dir, config)
         step.run_step()

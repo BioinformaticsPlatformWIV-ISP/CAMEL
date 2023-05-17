@@ -4,36 +4,29 @@ from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
+from camel.scripts.hybridassemblypipeline.snakefile import quality_checks
 
 camel = Camel.get_instance()
 
-consensus_by_tool = {
-    'Flye': [Path(config['working_dir']) / 'assembly_flye' / 'filtering' / 'assembly_filtered.fasta'],
-    'Medaka': [Path(config['working_dir']) / 'medaka' / 'consensus.fasta'],
-    'POLCA': [Path(config['working_dir']) / 'polishing' / 'polca' / 'polished.fasta'],
-    'Polypolish': [Path(config['working_dir']) / 'polishing' / 'polypolish' / 'polished.fasta'],
-    'Unicycler': [Path(config['working_dir']) / 'unicycler' / 'assembly.fasta']
-}
-
-rule qc_check_ale:
-    """
-    Checks that the ALE QC files are generated for consensus by tool.
-    """
-    input:
-        FASTA = [Path(config['working_dir']) / 'qc' / name / 'ale_illumina' / 'ALE.ale-depth.wig' for name in consensus_by_tool.keys()]
-    output:
-        Path(config['working_dir'] / config['output'])
-    shell:
-        """
-        touch {output}
-        """
+# rule qc_check_ale:
+#     """
+#     Checks that the ALE QC files are generated for consensus by tool.
+#     """
+#     input:
+#         FASTA = [Path(config['working_dir']) / 'qc' / name / 'ale_illumina' / 'ALE.ale-depth.wig' for name in consensus_by_tool.keys()]
+#     output:
+#         Path(config['working_dir'] / 'ale.txt'
+#     shell:
+#         """
+#         touch {output}
+#         """
 
 rule qc_copy_fasta_file:
     """
     Moves the fasta file to the qc location.
     """
     input:
-        FASTA = lambda wildcards: consensus_by_tool[wildcards.name]
+        FASTA = lambda wildcards: Path(config['working_dir']) / quality_checks.consensus_by_tool[wildcards.name]
     output:
         FASTA = Path(config['working_dir']) / 'qc' / '{name}' / 'consensus.fasta'
     shell:
@@ -86,7 +79,7 @@ rule qc_quast_all_assemblies:
     Generates assembly statistics using QUAST.
     """
     input:
-        FASTA = [Path(config['working_dir']) / 'qc' / f'{name}' / 'consensus.fasta' for name in consensus_by_tool.keys()]
+        FASTA = [Path(config['working_dir']) / 'qc' / f'{name}' / 'consensus.fasta' for name in quality_checks.consensus_by_tool.keys()]
     output:
         TSV = Path(config['working_dir']) / 'qc' / 'quast_combined' / 'report.tsv',
         HTML = Path(config['working_dir']) / 'qc' / 'quast_combined' / 'report.html',
@@ -463,7 +456,7 @@ rule qc_clair3:
         dir_working = Path(str(params.running_dir)).absolute()
         clair3 = Clair3(camel)
         clair3.add_input_files({'BAM': [ToolIOFile(Path(input.BAM))], 'FASTA': [ToolIOFile(Path(input.FASTA))]})
-        clair3.update_parameters(**params.clair3_options, threads=threads)
+        clair3.update_parameters(**params.clair3_options, chunk_size=100_000, threads=threads)
         step = Step(str(rule), clair3, camel, dir_working, config)
         step.run_step()
         clair3.informs['_tag'] = wildcards.name

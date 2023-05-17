@@ -1,6 +1,6 @@
 import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 import pandas as pd
 
@@ -44,34 +44,19 @@ class HybridAssemblyReporter(Tool):
         Checks whether the provided input files are valid.
         :return: None
         """
-        if 'TSV_quast' not in self._tool_inputs:
-            raise InvalidInputSpecificationError("Combined QUAST input is required ('TSV_quast')")
-        if 'quast' not in self._input_informs:
-            raise InvalidInputSpecificationError("QUAST informs are required ('quast')")
-        if 'TSV_vc' not in self._tool_inputs:
-            raise InvalidInputSpecificationError("Combined variant calling input is required ('TSV_vc')")
-        if 'freebayes' not in self._input_informs:
-            raise InvalidInputSpecificationError("freebayes informs are required ('freebayes')")
-        if 'clair3' not in self._input_informs:
-            raise InvalidInputSpecificationError("Clair3 informs are required ('clair3')")
-        if 'TSV_mapping' not in self._tool_inputs:
-            raise InvalidInputSpecificationError("Mapping TSV is required ('TSV_mapping')")
-        if 'mapping' not in self._input_informs:
-            raise InvalidInputSpecificationError("Mapping informs are required ('mapping')")
-        if 'TSV_sniffles' not in self._tool_inputs:
-            raise InvalidInputSpecificationError("Sniffles TSV is required ('TSV_sniffles')")
-        if 'sniffles' not in self._input_informs:
-            raise InvalidInputSpecificationError("Sniffles informs are required ('sniffles')")
-        if 'ale' not in self._input_informs:
-            raise InvalidInputSpecificationError("ALE informs are required ('ale')")
-        if 'sample_name' not in self._input_informs:
-            raise InvalidInputSpecificationError("Sample name is required ('sample_name')")
-        if 'pipeline' not in self._input_informs:
-            raise InvalidInputSpecificationError("Pipeline informs are required ('pipeline')")
-        if 'input' not in self._input_informs:
-            raise InvalidInputSpecificationError("Input samples are required ('input')")
-        if 'citations' not in self._input_informs:
-            raise InvalidInputSpecificationError("Citations are required ('citations')")
+        # Check tool input files
+        required_inputs = ['FASTA', 'TSV_quast', 'TSV_vc', 'TSV_mapping', 'TSV_sniffles']
+        for key in required_inputs:
+            if key not in self._tool_inputs:
+                raise InvalidInputSpecificationError(f"Required tool input '{key}' is missing")
+
+        # Check informs
+        required_informs = [
+            'quast', 'freebayes', 'clair3', 'mapping', 'sniffles', 'ale', 'sample_name', 'pipeline', 'input',
+            'citations']
+        for key in required_informs:
+            if key not in self._input_informs:
+                raise InvalidInputSpecificationError(f"Required inform '{key}' is missing")
         super()._check_input()
 
     def _execute_tool(self) -> None:
@@ -79,14 +64,15 @@ class HybridAssemblyReporter(Tool):
         Executes this tool.
         :return: None
         """
-        self._output_dir = Path(self._parameters['output_dir'].value)
-        output_html = self._output_dir / 'output.html'
+        path_out = Path(self._parameters['output_filename'].value)
+        self._output_dir = path_out.parent
+
         # Initialize report
-        self.report = HtmlReport(output_html, self._output_dir, [JQUERY_SRC])
+        self.report = HtmlReport(path_out, self._output_dir, [JQUERY_SRC])
         self.report.initialize('Hybrid assembly pipeline - 0.1', CSS_STYLE)
         self.report.add_pipeline_header(HybridAssemblyReporter.TITLE)
 
-        # Input section
+        # Add content sections
         self.__add_input_section()
         self.__add_overview_links()
         self.report.add_module_header('Overview')
@@ -102,6 +88,7 @@ class HybridAssemblyReporter(Tool):
         self.__add_mapping_table(self._tool_inputs['TSV_mapping'][0].path)
         self.__add_ale_score_table()
 
+        # Commands & citations
         self.report.add_module_header('Commands')
         self.report.add_html_object(self._input_informs['commands'][0].value)
         self.report.add_module_header('Citations')
@@ -130,30 +117,30 @@ class HybridAssemblyReporter(Tool):
         Adds a new section which allows to download the generated assemblies at different stages of the pipeline.
         :return: None
         """
-        fasta_level = ['Flye', 'Medaka', 'POLCA', 'Polypolish', 'Unicycler']
         section = HtmlReportSection('Overview section')
         assemblies = []
-        for fasta_key in fasta_level:
-            # TO CHECK ABSOLUTE PATH IN REPORT?
-            fasta_file = Path(self._output_dir) / 'qc' / f'{fasta_key}' / 'consensus.fasta'
-            relative_path = Path(f'qc/{fasta_key}', fasta_file.name)
+        for io_fasta in self._tool_inputs['FASTA']:
+            fasta_key = io_fasta.path.parent.name
+            relative_path = Path('assemblies', fasta_key, io_fasta.path.name)
+            section.add_file(io_fasta.path, relative_path)
             assemblies.append({
                 'Assembly step': fasta_key,
                 'Download': HtmlTableCell('Download (FASTA)', link=str(relative_path))})
         df = pd.DataFrame(assemblies)
-        # noinspection PyTypeChecker
         section.add_table(
             list(df.itertuples(index=False, name=None)),
             column_names=df.columns,
             table_attributes=[('class', 'data')]
         )
-        section.add_paragraph('The long-read-first assembly consists of four main steps: \n\n'
-                              '1) Quality control and pre-processing of the long and short reads\n\n'
-                              '2) Assembling the long reads using Flye and polishing with Medaka\n\n'
-                              '3) Polishing using short reads with POLCA, then Polypolish\n\n'
-                              '4) Quality assessment using QUAST and variant callers\n\n'
-                              'The short-read-first assembly consists of running Unicycler using the same input'
-                              ' as the long-read-first approach.')
+        section.add_paragraph("""
+            The hybrid assembly pipeline performs long-read first <i>de novo</i> assembly, according to the following 
+            steps: (1) Quality control and pre-processing of the long and short reads. (2) Long-reads assembly using 
+            Flye. (3) polishing using Medaka (long-reads), followed by POLCA and Polypolish (short-reads); (4) Quality
+            assessment using QUAST and several variant callers. An additional short-read first assembly is created 
+            using Unicycler.
+            """
+        )
+        section.copy_files(self.report.output_dir)
         self.report.add_html_object(section)
 
     def __add_overview_links(self) -> None:
@@ -181,7 +168,6 @@ class HybridAssemblyReporter(Tool):
         """
         section = HtmlReportSection('QUAST statistics', subtitle=quast_informs['_name'])
         data_quast = pd.read_table(path_tsv)
-        # noinspection PyTypeChecker
         section.add_table(
             list(data_quast.itertuples(index=False, name=None)),
             column_names=data_quast.columns,
@@ -202,7 +188,6 @@ class HybridAssemblyReporter(Tool):
         subtitle = ', '.join([self._input_informs[x]['_name'] for x in ('freebayes', 'clair3')])
         section = HtmlReportSection('Variant calling (short reads)', subtitle=subtitle)
         data_vc = pd.read_table(path_tsv)
-        # noinspection PyTypeChecker
         section.add_table(
             list(data_vc.itertuples(index=False, name=None)),
             column_names=data_vc.columns,
@@ -270,7 +255,6 @@ class HybridAssemblyReporter(Tool):
                 'Download place': HtmlTableCell('Download (WIGGLE)', link=str(relative_paths[3])),
             })
         df = pd.DataFrame(ale_output)
-        # noinspection PyTypeChecker
         section.add_table(
             list(df.itertuples(index=False, name=None)),
             column_names=df.columns,
