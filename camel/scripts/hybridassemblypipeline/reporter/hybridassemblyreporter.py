@@ -20,7 +20,7 @@ class HybridAssemblyReporter(Tool):
     This tool is used to generate HTML report sections based on the hybrid assembly pipeline output.
     """
 
-    TITLE = 'Hybrid assembly pipeline'
+    TITLE = 'Hybrid assembly pipeline - v0.1'
     MATCH_COLORS = {0: None, 1: 'grey', 2: 'lightgreen', 3: 'green'}
     REPORT_STRUCTURE = [
         ['Read trimming and basic QC', 'trim'],

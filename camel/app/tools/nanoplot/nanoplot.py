@@ -53,7 +53,7 @@ class NanoPlot(Tool):
         for line in self.stderr.splitlines():
             if 'skipping' in line:
                 print(f"WARNING: {line}")
-                return
+                self._command.returncode = 0
         if self._command.returncode != 0:
             raise ToolExecutionError(f"Command execution failed (Exit code: {self._command.returncode})")
 
