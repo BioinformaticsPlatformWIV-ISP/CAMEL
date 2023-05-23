@@ -2,20 +2,20 @@
 import argparse
 import logging
 from pathlib import Path
-from typing import Optional, Sequence, List, Tuple, Dict, Any
+from typing import Optional, Sequence
 
 import pkg_resources
 import yaml
 
 from camel.app.camel import Camel
 from camel.app.components import mainscriptutils
-from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.components.galaxy.galaxyutils import GalaxyUtils
+from camel.app.components.pipelines.basepipeline import BasePipeline
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.scripts.hybridassemblypipeline import CONFIG_DATA
 
 
-class MainHybridAssemblyPipeline(object):
+class MainHybridAssemblyPipeline(BasePipeline):
     """
     Main class to run the hybrid assembly pipeline.
     """
@@ -27,6 +27,9 @@ class MainHybridAssemblyPipeline(object):
         :return: None
         """
         self._args = MainHybridAssemblyPipeline._parse_arguments(args)
+        _path_snakefile = pkg_resources.resource_filename('camel', 'scripts/hybridassemblypipeline/snakefile/main.smk')
+        super().__init__(
+            'Hybrid assembly pipeline', '0.1', _path_snakefile, args)
         if self._args.output_dir is None:
             self._args.output_dir = self._args.output_html.parent
         self._sample_name = MainHybridAssemblyPipeline._determine_sample_name(self._args)
@@ -50,30 +53,31 @@ class MainHybridAssemblyPipeline(object):
         :return: Arguments
         """
         argument_parser = argparse.ArgumentParser()
+
+        # Input
+        argument_parser.add_argument('--sample-name', type=str, default='test_sample')
         argument_parser.add_argument('--fastq-pe', type=Path, help='Input Fastq PE file', nargs=2, required=True)
         argument_parser.add_argument('--fastq-pe-names', help='Input Fastq PE file', nargs=2)
         argument_parser.add_argument('--fastq-se', type=Path, help='Input Fastq SE files')
         argument_parser.add_argument('--fastq-se-name', help='Input Fastq SE file names')
+
+        # Output
         argument_parser.add_argument('--working-dir', type=Path, default=Path.cwd())
         argument_parser.add_argument('--output-html', type=Path, required=True)
         argument_parser.add_argument('--output-dir', type=Path)
-        argument_parser.add_argument('--sample-name', type=str, default='test_sample')
+
+        # Parameters
         argument_parser.add_argument('--ont-qual', type=str, required=True,
                                      choices=['nano-corr', 'nano-hq', 'nano-raw'], default='nano-corr')
         argument_parser.add_argument('--expected-genome-size', type=str, required=True)
-        argument_parser.add_argument('--ont-basecalling-model', type=str, choices=['r1041_e82_260bps_fast_g632',
-                                                                                   'r1041_e82_260bps_hac_g632',
-                                                                                   'r1041_e82_260bps_sup_g632',
-                                                                                   'r1041_e82_400bps_fast_g615',
-                                                                                   'r1041_e82_400bps_fast_g632',
-                                                                                   'r1041_e82_400bps_hac_g615',
-                                                                                   'r1041_e82_400bps_hac_g632',
-                                                                                   'r1041_e82_400bps_sup_g615',
-                                                                                   'r104_e81_hac_g5015',
-                                                                                   'r104_e81_sup_g5015',
-                                                                                   'r941_prom_hac_g360+g422',
-                                                                                   'r941_prom_sup_g5014'])
+        argument_parser.add_argument('--ont-basecalling-model', type=str, choices=[
+            'r1041_e82_260bps_fast_g632', 'r1041_e82_260bps_hac_g632', 'r1041_e82_260bps_sup_g632',
+            'r1041_e82_400bps_fast_g615', 'r1041_e82_400bps_fast_g632', 'r1041_e82_400bps_hac_g615',
+            'r1041_e82_400bps_hac_g632', 'r1041_e82_400bps_sup_g615', 'r104_e81_hac_g5015',
+            'r104_e81_sup_g5015', 'r941_prom_hac_g360+g422', 'r941_prom_sup_g5014'])
         argument_parser.add_argument('--filtlong-keep-percent', type=int)
+
+        # Variant calling
         argument_parser.add_argument('--freebayes-ploidy', choices=['GRCh37', 'GRCh38', 'X', 'Y', '1'], default='1')
         argument_parser.add_argument('--freebayes-min-alternate-fraction', type=float, default=0.5)
         argument_parser.add_argument('--freebayes-min-alternate-count', type=int, default=10)
@@ -84,6 +88,12 @@ class MainHybridAssemblyPipeline(object):
         argument_parser.add_argument('--sniffles-min-svlen', type=int)
         argument_parser.add_argument('--sniffles-mapq', type=int)
         argument_parser.add_argument('--sniffles-min-support', type=int)
+
+        # Logging & resources
+        argument_parser.add_argument(
+            '--galaxy-job-id', type=str, help='Job id of the run in galaxy (used for logging')
+        argument_parser.add_argument(
+            '--log', action='store_true', help="If this flag is set, config file and error logs are kept")
         argument_parser.add_argument('--threads', type=int, default=8)
         return argument_parser.parse_args(args)
 
@@ -92,58 +102,10 @@ class MainHybridAssemblyPipeline(object):
         Runs the hybrid assembly pipeline.
         :return: None
         """
-        # Clear existing Galaxy output files when html output is selected
-        if 'output_html' in self._args:
-            mainscriptutils.prepare_galaxy_output(Path(self._args.output_dir), Path(self._args.output_html))
+        path_config = self.__create_snakemake_config_data()
+        self._run_snakemake_main(path_config)
 
-        input_files = self._symlink_input()
-        path_config = self.__create_snakemake_config_data(input_files)
-        path_snakefile = pkg_resources.resource_filename('camel', 'scripts/hybridassemblypipeline/snakefile/main.smk')
-        SnakePipelineUtils.run_snakemake(
-            path_snakefile, path_config, [], self._args.working_dir, threads=self._args.threads)
-
-    def _get_fastq_input_links(self) -> List[List[Tuple[Path, str]]]:
-        """
-        Returns the links to the input FASTQ files.
-        :return: Links
-        """
-        links = []
-        input_fastq = self._args.fastq_pe
-        input_fastq.extend([self._args.fastq_se])
-        for read_nb, path in enumerate(input_fastq, start=1):
-            gzipped = FileSystemHelper.is_gzipped(path)
-            if read_nb > 2:
-                read_nb = 'ont'
-            links.append([path, f"{self._sample_name}_{read_nb}.fastq{'.gz' if gzipped else ''}"])
-        return links
-
-    def _symlink_input(self) -> List[Dict[str, Any]]:
-        """
-        Symlinks the input files.
-        :return: List of FASTQ input dictionaries
-        """
-        # Determine link names
-        links = self._get_fastq_input_links()
-
-        # Create directory
-        dir_links = self._args.working_dir / 'input'
-        if not dir_links.exists():
-            dir_links.mkdir(parents=True)
-
-        # Link files
-        paths_new = []
-        for path_orig, link_name in links:
-            path_new = dir_links / link_name
-            logging.debug(f"Symlinking input file: {path_orig} -> {link_name}")
-            if path_new.is_symlink():
-                path_new.unlink()
-            path_new.symlink_to(path_orig)
-            paths_new.append(path_new)
-
-        # Return output dictionary
-        return [{'name': p.name, 'path': p} for p in paths_new]
-
-    def __create_snakemake_config_data(self, input_fastq: List[Dict[str, Any]]) -> str:
+    def __create_snakemake_config_data(self) -> str:
         """
         Creates a Snakemake configuration file.
         :return: Config file data
@@ -151,15 +113,15 @@ class MainHybridAssemblyPipeline(object):
         config_data = {
             # Pipeline
             'pipeline': {
-                'name': 'hybrid assembly pipeline',
-                'version': '0.1',
+                'name': self.name,
+                'version': self.version,
                 'title': 'Hybrid assembly pipeline'
             },
             # Input
             'sample_name': self._sample_name, 'working_dir': self._args.working_dir,
             'input': {
-                'illumina': [str(input_fastq[0]['path'].absolute()), str(input_fastq[1]['path'].absolute())],
-                'ont': str(input_fastq[2]['path'].absolute())
+                'illumina': self._args.fastq_pe,
+                'ont': self._args.fastq_se
             },
             # Output
             'output_html': str(self._args.output_html.absolute()),
