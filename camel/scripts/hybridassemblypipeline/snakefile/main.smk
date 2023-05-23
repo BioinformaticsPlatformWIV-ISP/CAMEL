@@ -166,7 +166,7 @@ rule report_long_variant_calling:
     Rule to generate the report table for sniffles.
     """
     input:
-        INFORMS_sniffles = [Path(config['working_dir']) / 'qc' / f'{name}' / 'sniffles' / 'informs.io' for name in assembly_steps]
+        INFORMS_sniffles = [Path(config['working_dir']) / 'qc' / name / 'sniffles' / 'informs.io' for name in assembly_steps]
     output:
         TSV = Path(config['working_dir'] / 'report' / 'variant_calling-sniffles.tsv')
     run:
@@ -197,7 +197,7 @@ rule report_mappingstats:
         for path_map_illumina, path_map_ont, path_depth_illumina, path_depth_ont in zip(
                 [Path(x) for x in input.INFORMS_mapping_illumina], [Path(x) for x in input.INFORMS_mapping_ont],
                 [Path(x) for x in input.INFORMS_depth_illumina], [Path(x) for x in input.INFORMS_depth_ont]):
-            assembly_key = path_map_illumina.parent.parent.name
+            assembly_key = path_map_illumina.parent.parent.parent.name
             illumina_mapping_informs = SnakemakeUtils.load_object(path_map_illumina)
             ont_mapping_informs = SnakemakeUtils.load_object(path_map_ont)
             illumina_depth_informs = SnakemakeUtils.load_object(path_depth_illumina)
@@ -238,14 +238,14 @@ rule report_command_section:
         medaka_stitch_commands = Path(config['working_dir']) / 'medaka' / 'commands-stitch.io',
         polypolish_commands = Path(config['working_dir']) / 'polishing' / 'polypolish'  / 'polypolish.io',
         polca_commands = Path(config['working_dir']) / 'polishing' / 'polca' / 'polca.io',
-        quast_commands = [Path(config['working_dir']) / 'qc' / f'{name}' / 'quast' / 'commands.io' for name in assembly_steps],
+        quast_commands = [Path(config['working_dir']) / 'qc' / name / 'quast' / 'commands.io' for name in assembly_steps],
         quast_combined_commands = Path(config['working_dir']) / 'qc' / 'quast_combined' / 'commands.io',
-        bwa_commands = [Path(config['working_dir']) / 'qc' / f'{name}' / 'read_mapping' / 'illumina' / 'commands.io' for name in assembly_steps],
-        freebayes_commands = [Path(config['working_dir']) / 'qc' / f'{name}' / 'freebayes' / 'commands.io' for name in assembly_steps],
-        sniffles_commands = [Path(config['working_dir']) / 'qc' / f'{name}' / 'sniffles' / 'commands.io' for name in assembly_steps],
-        clair3_commands = [Path(config['working_dir']) / 'qc' / f'{name}' / 'clair3_output' / 'commands.io' for name in assembly_steps],
-        ale_report_commands = [Path(config['working_dir']) / 'qc' / f'{name}' / 'ale_illumina' / 'informs-report.io' for name in assembly_steps],
-        ale_wiggle_commands = [Path(config['working_dir']) / 'qc' / f'{name}' / 'ale_illumina' / 'commands-wiggle.io' for name in assembly_steps]
+        bwa_commands = [Path(config['working_dir']) / 'qc' / name / 'read_mapping' / 'illumina' / 'commands.io' for name in assembly_steps],
+        freebayes_commands = [Path(config['working_dir']) / 'qc' / name / 'freebayes' / 'commands.io' for name in assembly_steps],
+        sniffles_commands = [Path(config['working_dir']) / 'qc' / name / 'sniffles' / 'commands.io' for name in assembly_steps],
+        clair3_commands = [Path(config['working_dir']) / 'qc' / name / 'clair3_output' / 'commands.io' for name in assembly_steps],
+        ale_report_commands = [Path(config['working_dir']) / 'qc' / name / 'ale_illumina' / 'informs-report.io' for name in assembly_steps],
+        ale_wiggle_commands = [Path(config['working_dir']) / 'qc' / name / 'ale_illumina' / 'commands-wiggle.io' for name in assembly_steps]
     output:
         HTML = Path(config['working_dir']) / 'report' / 'html-commands.io'
     params:
@@ -276,9 +276,9 @@ rule report_create_sections:
         INFORMS_quast = Path(config['working_dir']) / 'qc' / assembly_steps[0] / 'quast' / 'commands.io',
         INFORMS_freebayes = Path(config['working_dir']) / 'qc' / assembly_steps[0] / 'freebayes' / 'commands.io',
         INFORMS_clair3 = Path(config['working_dir']) / 'qc' / assembly_steps[0] / 'clair3_output' / 'commands.io',
-        INFORMS_sniffles = [Path(config['working_dir']) / 'qc' / f'{steps}' / 'sniffles' / 'informs.io' for steps in assembly_steps],
+        INFORMS_sniffles = [Path(config['working_dir']) / 'qc' / steps / 'sniffles' / 'informs.io' for steps in assembly_steps],
         INFORMS_mapping = Path(config['working_dir']) / 'qc' / assembly_steps[0] / 'read_mapping' / 'illumina' / 'commands.io',
-        INFORMS_ale = [Path(config['working_dir']) / 'qc' / f'{steps}' / 'ale_illumina' / 'informs-report.io' for steps in assembly_steps],
+        INFORMS_ale = [Path(config['working_dir']) / 'qc' / steps / 'ale_illumina' / 'informs-report.io' for steps in assembly_steps],
         report_commands = rules.report_command_section.output.HTML,
         HTML_trim_illumina = rules.trim_illumina.output.HTML,
         HTML_trim_ont = rules.trim_ont_workflow.output.HTML,

@@ -104,8 +104,8 @@ class HybridAssemblyReporter(Tool):
         Adds the information about the input data.
         :return: None
         """
-        input_files = ', '.join([fastq.name for fastq in self._input_informs['input']['illumina']] +
-                                [self._input_informs['input']['ont'].name])
+        input_files = ', '.join([Path(fastq).name for fastq in self._input_informs['input']['illumina']] +
+                                [Path(self._input_informs['input']['ont']).name])
         table_data = [
             ['Sample:', self._input_informs['sample_name']],
             ['Analysis date:', datetime.datetime.now()],
