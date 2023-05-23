@@ -8,19 +8,6 @@ from camel.scripts.hybridassemblypipeline.snakefile import quality_checks
 
 camel = Camel.get_instance()
 
-# rule qc_check_ale:
-#     """
-#     Checks that the ALE QC files are generated for consensus by tool.
-#     """
-#     input:
-#         FASTA = [Path(config['working_dir']) / 'qc' / name / 'ale_illumina' / 'ALE.ale-depth.wig' for name in consensus_by_tool.keys()]
-#     output:
-#         Path(config['working_dir'] / 'ale.txt'
-#     shell:
-#         """
-#         touch {output}
-#         """
-
 rule qc_copy_fasta_file:
     """
     Moves the fasta file to the qc location.
