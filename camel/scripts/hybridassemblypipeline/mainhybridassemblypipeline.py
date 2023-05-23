@@ -2,13 +2,14 @@
 import argparse
 import logging
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import Optional, Sequence, List, Tuple, Dict, Any
 
 import pkg_resources
 import yaml
 
 from camel.app.camel import Camel
 from camel.app.components import mainscriptutils
+from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.components.galaxy.galaxyutils import GalaxyUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.scripts.hybridassemblypipeline import CONFIG_DATA
@@ -95,12 +96,54 @@ class MainHybridAssemblyPipeline(object):
         if 'output_html' in self._args:
             mainscriptutils.prepare_galaxy_output(Path(self._args.output_dir), Path(self._args.output_html))
 
-        path_config = self.__create_snakemake_config_data()
+        input_files = self._symlink_input()
+        path_config = self.__create_snakemake_config_data(input_files)
         path_snakefile = pkg_resources.resource_filename('camel', 'scripts/hybridassemblypipeline/snakefile/main.smk')
         SnakePipelineUtils.run_snakemake(
             path_snakefile, path_config, [], self._args.working_dir, threads=self._args.threads)
 
-    def __create_snakemake_config_data(self) -> str:
+    def _get_fastq_input_links(self) -> List[List[Tuple[Path, str]]]:
+        """
+        Returns the links to the input FASTQ files.
+        :return: Links
+        """
+        links = []
+        input_fastq = self._args.fastq_pe
+        input_fastq.extend([self._args.fastq_se])
+        for read_nb, path in enumerate(input_fastq, start=1):
+            gzipped = FileSystemHelper.is_gzipped(path)
+            if read_nb > 2:
+                read_nb = 'ont'
+            links.append([path, f"{self._sample_name}_{read_nb}.fastq{'.gz' if gzipped else ''}"])
+        return links
+
+    def _symlink_input(self) -> List[Dict[str, Any]]:
+        """
+        Symlinks the input files.
+        :return: List of FASTQ input dictionaries
+        """
+        # Determine link names
+        links = self._get_fastq_input_links()
+
+        # Create directory
+        dir_links = self._args.working_dir / 'input'
+        if not dir_links.exists():
+            dir_links.mkdir(parents=True)
+
+        # Link files
+        paths_new = []
+        for path_orig, link_name in links:
+            path_new = dir_links / link_name
+            logging.debug(f"Symlinking input file: {path_orig} -> {link_name}")
+            if path_new.is_symlink():
+                path_new.unlink()
+            path_new.symlink_to(path_orig)
+            paths_new.append(path_new)
+
+        # Return output dictionary
+        return [{'name': p.name, 'path': p} for p in paths_new]
+
+    def __create_snakemake_config_data(self, input_fastq: List[Dict[str, Any]]) -> str:
         """
         Creates a Snakemake configuration file.
         :return: Config file data
@@ -115,8 +158,8 @@ class MainHybridAssemblyPipeline(object):
             # Input
             'sample_name': self._sample_name, 'working_dir': self._args.working_dir,
             'input': {
-                'illumina': self._args.fastq_pe,
-                'ont': self._args.fastq_se
+                'illumina': [str(input_fastq[0]['path'].absolute()), str(input_fastq[1]['path'].absolute())],
+                'ont': str(input_fastq[2]['path'].absolute())
             },
             # Output
             'output_html': str(self._args.output_html.absolute()),
