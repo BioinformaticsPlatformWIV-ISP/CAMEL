@@ -1,12 +1,7 @@
-import shutil
 from pathlib import Path
-
-import vcf
 
 from camel.app.camel import Camel
 from camel.app.components.files.fastautils import FastaUtils
-from camel.app.components.vcf import vcfutils
-from camel.app.components.vcf.vcfutils import VCFUtils
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
