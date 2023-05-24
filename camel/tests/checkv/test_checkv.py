@@ -36,6 +36,7 @@ class TestCheckV(CamelTestSuite):
         """
         checkv = CheckV(Camel.get_instance())
         checkv.add_input_files({'FASTA': [ToolIOFile(TestCheckV.input_fasta)]})
+        checkv.update_parameters(threads=4)
         checkv.run(self.running_dir)
         self.assertIn('TSV_quality_summary', checkv.tool_outputs)
 
@@ -51,7 +52,8 @@ class TestCheckV(CamelTestSuite):
             '--fasta', str(TestCheckV.input_fasta),
             '--working-dir', str(self.running_dir),
             '--output-html', str(path_report_out),
-            '--output-dir', str(path_report_out.parent)
+            '--output-dir', str(path_report_out.parent),
+            '--threads', '4'
         ])
         checkv_main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)

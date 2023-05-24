@@ -1,4 +1,3 @@
-import json
 import shutil
 from pathlib import Path
 
@@ -8,57 +7,48 @@ from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile import downsampling
 
 
-rule downsampling_fqstats:
+rule downsampling_fastq_stats:
     """
     Determines the number of reads and bases in the input FASTQ files.
     """
     input:
         FASTQ = Path(config['working_dir']) / downsampling.INPUT_DOWNSAMPLING_FASTQ
     output:
-        IO = Path(config['working_dir']) / 'downsampling' / 'json_fqstats.io'
+        INFORMS = Path(config['working_dir']) / 'downsampling' / 'informs-fqstats.io'
     params:
         running_dir = Path(config['working_dir']) / 'downsampling'
     run:
-        from camel.app.tools.fqtools.fqstats import FqStats
-        fqstats = FqStats(Camel.get_instance())
-        SnakemakeUtils.add_pickle_inputs(fqstats, input)
-        step = Step(str(rule), fqstats, Camel.get_instance(), params.running_dir)
+        from camel.app.tools.pipelines.downsampling.fastqstats import FastqStats
+        fastq_stats = FastqStats(Camel.get_instance())
+        SnakemakeUtils.add_pickle_inputs(fastq_stats, input)
+        step = Step(str(rule), fastq_stats, Camel.get_instance(), params.running_dir)
         step.run_step()
-        SnakemakeUtils.dump_object(fqstats.informs, Path(output.IO))
-
+        SnakemakeUtils.dump_object(fastq_stats.informs, Path(output.INFORMS))
 
 rule downsampling_calculate:
     """
     Calculates the downsampling statistics.
     """
     input:
-        IO = rules.downsampling_fqstats.output.IO
+        INFORMS_stats = rules.downsampling_fastq_stats.output.INFORMS
     output:
-        JSON = Path(config['working_dir']) / 'downsampling' / 'stats.json'
+        JSON = Path(config['working_dir']) / 'downsampling' / 'calculate_stats' / 'json.io',
+        INFORMS = Path(config['working_dir']) / 'downsampling' / 'calculate_stats' / 'informs.io'
     params:
-        running_dir = Path(config['working_dir']) / 'downsampling',
+        running_dir = Path(config['working_dir']) / 'downsampling' / 'calculate_stats',
         size_ref_genome = config['downsampling']['expected_genome_size'],
         cov_target = config['downsampling']['coverage_max'],
         is_paired = config.get('read_type', 'illumina') == 'illumina'
     run:
-        import statistics
-        informs_fq = SnakemakeUtils.load_object(Path(input.IO))
-        coverage_est = sum(fq['nb_of_bases'] for fq in informs_fq['stats']) / params.size_ref_genome
-        downsample_factor = float(f"{params.cov_target / coverage_est:.2f}")
-        key_nb_reads = 'nb_read_pairs' if params.is_paired else 'nb_reads'
-        data_out = {
-            'total_bases': sum([fq['nb_of_bases'] for fq in informs_fq['stats']]),
-            'mean_read_length': statistics.mean([
-                fq['nb_of_bases'] / fq['nb_of_sequences'] for fq in informs_fq['stats']]),
-            'coverage_estimated': coverage_est,
-            'coverage_target': params.cov_target,
-            'downsample_factor': params.cov_target / coverage_est if downsample_factor < 1 else None,
-            'size_ref_genome': params.size_ref_genome,
-            f'{key_nb_reads}_in': next(iter(informs_fq['stats']))['nb_of_sequences']
-        }
-        with open(output.JSON, 'w') as handle:
-            json.dump(data_out, handle, indent=2)
-
+        from camel.app.tools.pipelines.downsampling.downsamplecalculation import DownsampleCalculation
+        ds_calc = DownsampleCalculation(Camel.get_instance())
+        step = Step(str(rule), ds_calc, Camel.get_instance(), params.running_dir)
+        SnakemakeUtils.add_pickle_inputs(ds_calc, input)
+        ds_calc.update_parameters(size_ref_genome=params.size_ref_genome, cov_target=params.cov_target)
+        if params.is_paired is True:
+            ds_calc.update_parameters(is_paired=None)
+        step.run_step()
+        SnakemakeUtils.dump_tool_outputs(ds_calc, output)
 
 rule downsampling_seqtk:
     """
@@ -66,7 +56,7 @@ rule downsampling_seqtk:
     """
     input:
         FASTQ = Path(config['working_dir']) / downsampling.INPUT_DOWNSAMPLING_FASTQ,
-        JSON = rules.downsampling_calculate.output.JSON
+        INFORMS = rules.downsampling_calculate.output.INFORMS
     output:
         FASTQ = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_FASTQ,
         INFORMS = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_INFORMS
@@ -78,8 +68,7 @@ rule downsampling_seqtk:
         from camel.app.tools.seqtk.seqtksubsample import SeqtkSubsample
 
         # Parse statistics
-        with open(input.JSON) as handle:
-            data_ds = json.load(handle)
+        data_ds = SnakemakeUtils.load_object(Path(input.INFORMS))['stats']
         if data_ds['downsample_factor'] is None:
             logging.info("No downsampling required, skipping seqtk")
             shutil.copyfile(input.FASTQ, output.FASTQ)
@@ -89,18 +78,17 @@ rule downsampling_seqtk:
             key_fastq = 'FASTQ_PE' if params.is_paired else 'FASTQ'
             seqtk.add_input_files({key_fastq: SnakemakeUtils.load_object(Path(input.FASTQ))})
             step = Step(str(rule), seqtk, Camel.get_instance(), Path(params.dir_working))
-            seqtk.update_parameters(fraction=float(f"{data_ds['downsample_factor']:.2f}"))
+            seqtk.update_parameters(fraction=float(f"{data_ds['downsample_factor']:.6f}"))
             step.run_step()
             SnakemakeUtils.dump_object(seqtk.tool_outputs[key_fastq], Path(output.FASTQ))
             SnakemakeUtils.dump_object(seqtk.informs, Path(output.INFORMS))
-
 
 rule downsampling_report:
     """
     Creates the downsampling report.
     """
     input:
-        JSON = rules.downsampling_calculate.output.JSON,
+        INFORMS_stats = rules.downsampling_calculate.output.INFORMS,
         INFORMS_seqtk = rules.downsampling_seqtk.output.INFORMS
     output:
         HTML = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_REPORT
@@ -110,9 +98,7 @@ rule downsampling_report:
     run:
         from camel.app.tools.pipelines.downsampling.reporterdownsampling import ReporterDownsampling
         reporter = ReporterDownsampling(Camel.get_instance())
-        with open(input.JSON) as handle:
-            stats = json.load(handle)
-        reporter.add_input_informs({'stats': stats})
+        reporter.add_input_informs({'stats': SnakemakeUtils.load_object(Path(input.INFORMS_stats))})
         if params.is_paired:
             reporter.update_parameters(is_paired=None)
         else:
@@ -124,13 +110,12 @@ rule downsampling_report:
         step.run_step()
         SnakemakeUtils.dump_object(reporter.tool_outputs['HTML'], Path(output.HTML))
 
-
 rule downsampling_summary_out:
     """
     Exports the summary information for the downsampling workflow.
     """
     input:
-        JSON = rules.downsampling_calculate.output.JSON,
+        INFORMS_stats = rules.downsampling_calculate.output.INFORMS,
         INFORMS_seqtk = rules.downsampling_seqtk.output.INFORMS
     output:
         TSV = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_SUMMARY
@@ -138,8 +123,7 @@ rule downsampling_summary_out:
         is_paired = config.get('read_type', 'illumina') == 'illumina'
     run:
         # Parse calculate output
-        with open(input.JSON) as handle:
-            data_ds = json.load(handle)
+        data_ds = SnakemakeUtils.load_object(Path(input.INFORMS_stats))['stats']
 
         # Add the number of output reads / read pairs to the summary output
         key_nb_reads = 'nb_read_pairs' if params.is_paired else 'nb_reads'

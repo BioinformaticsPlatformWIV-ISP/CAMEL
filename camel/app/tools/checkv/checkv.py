@@ -39,7 +39,8 @@ class CheckV(Tool):
             'end_to_end',
             str(self._tool_inputs['FASTA'][0].path),
             str(dir_out),
-        ] + self._build_options())
+            *self._build_options()
+        ])
         self._execute_command()
         self.__set_output(dir_out)
 

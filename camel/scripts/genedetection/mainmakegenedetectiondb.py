@@ -46,6 +46,7 @@ class MainMakeGeneDetectionDB(object):
         argument_parser.add_argument('--output-html', type=Path, required=True)
         argument_parser.add_argument('--output-dir', type=Path, required=True)
         argument_parser.add_argument('--working-dir', default=Path.cwd(), type=Path)
+        argument_parser.add_argument('--threads', type=int, default=4, help='Number of threads to use')
         return argument_parser.parse_args(args)
 
     def run(self) -> None:
@@ -92,7 +93,8 @@ class MainMakeGeneDetectionDB(object):
         dir_clustering = self._helper.get_working_subdir('clustering')
         fasta_seq_headers = dir_clustering / 'seq_headers.fasta'
         self._new_name_by_header = self._helper.convert_fasta_headers_to_seq(input_fasta, fasta_seq_headers)
-        self._clusters = self._helper.get_clusters_form_fasta(fasta_seq_headers, self._args.identity_cutoff)
+        self._clusters = self._helper.get_clusters_form_fasta(
+            fasta_seq_headers, self._args.identity_cutoff, self._args.threads)
 
         # Create SRST2 FASTA
         dir_indexing = self._helper.get_working_subdir('index_srst2')

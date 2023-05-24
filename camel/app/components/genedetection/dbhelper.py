@@ -51,16 +51,18 @@ class DBHelper(object):
         path.mkdir(parents=True, exist_ok=True)
         return path
 
-    def get_clusters_form_fasta(self, fasta_file: Path, clustering_cutoff: float) -> List[Cluster]:
+    def get_clusters_form_fasta(self, fasta_file: Path, clustering_cutoff: float, threads: int) -> List[Cluster]:
         """
         Returns the clusters of similar sequences from the given FASTA file.
         :param fasta_file: Input FASTA file
         :param clustering_cutoff: Clustering cutoff (0.0 - 1.0)
+        :param threads: Threads
         :return: List of clusters
         """
         cdhit = CDHitEst(Camel.get_instance())
         cdhit.update_parameters(identitiy_threshold=str(clustering_cutoff / 100))
         cdhit.add_input_files({'FASTA': [ToolIOFile(fasta_file)]})
+        cdhit.update_parameters(threads=threads)
         cdhit.run(self.get_working_subdir('clustering'))
         self._informs.append(cdhit.informs)
         return cdhit.informs['clusters']

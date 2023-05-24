@@ -66,9 +66,6 @@ class ReporterDownsampling(Tool):
         :param reads_are_paired: True if reads are paired, False otherwise
         :return: None
         """
-        import pprint
-        pprint.pprint(stats)
-        print(reads_are_paired)
         if reads_are_paired:
             header = ['Read pairs in', 'Read pairs out']
             table_data = [[f"{stats['nb_read_pairs_in']:,}", f"{self._input_informs['seqtk']['reads_count'] // 2:,}"]]
@@ -86,7 +83,7 @@ class ReporterDownsampling(Tool):
         # Create report section
         section = HtmlReportSection('Coverage check')
         reads_are_paired = 'is_paired' in self._parameters
-        stats = self._input_informs['stats']
+        stats = self._input_informs['stats']['stats']
 
         # Add overview tables
         self.__add_table_params(section, stats)

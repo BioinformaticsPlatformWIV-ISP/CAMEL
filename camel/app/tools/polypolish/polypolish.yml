@@ -1,0 +1,7 @@
+dependencies: [polypolish/0.5.0]
+parameters:
+  min_depth: {default: true, mandatory: false, option: --min_depth, value: '5'}
+  fraction_invalid: {default: false, mandatory: false, option: --fraction_invalid, value: '0.2'}
+  max_errors: {default: false, mandatory: false, option: --max_errors, value: '10'}
+  fraction_valid: {default: false, mandatory: false, option: --fraction_valid, value: '0.5'}
+tool_command: polypolish

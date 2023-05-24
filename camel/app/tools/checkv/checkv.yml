@@ -1,4 +1,5 @@
 dependencies: [CheckV/0.7.0 hmmer/3.2.1 prodigal/2.6.3 diamond/2.0.4]
 parameters:
   checkvdb: {default: true, mandatory: true, option: -d, value: /db/checkv/0.6/}
+  threads: {default: true, mandatory: false, option: -t, value: 4}
 tool_command: checkv

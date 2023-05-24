@@ -1,0 +1,80 @@
+import unittest
+from pathlib import Path
+
+from camel.app.camel import Camel
+from camel.app.components.testing.cameltestsuite import CamelTestSuite
+from camel.app.io.tooliodirectory import ToolIODirectory
+from camel.app.io.tooliofile import ToolIOFile
+from camel.app.tools.mobsuite.mobrecon import MOBRecon
+from camel.app.tools.mobsuite.mobreconreporter import MOBReconReporter
+
+
+class TestMOBSuite(CamelTestSuite):
+    """
+    Tests the MOB-suite tool.
+    """
+    # Get test file and reference file directories
+    test_file_dir = CamelTestSuite.get_test_file_dir('mob_suite')
+    input_fasta_plasmid = test_file_dir / 'AB011548.fasta'
+    input_fasta_contigs = test_file_dir / 'ecoli_contigs.fasta'
+
+    def test_mob_recon(self) -> None:
+        """
+        Tests the MOB-recon tool.
+        :return: None
+        """
+        mob_recon = MOBRecon(self.camel)
+        mob_recon.add_input_files({
+            'FASTA': [ToolIOFile(TestMOBSuite.input_fasta_plasmid)],
+            'DB': [ToolIODirectory(Path(Camel.get_instance().config['db_root']) / 'mob_suite' / 'latest')]
+        })
+        mob_recon.update_parameters(num_threads=8)
+        mob_recon.run(self.running_dir)
+        self.verify_output_files(mob_recon, 'TSV')
+        self.verify_output_files(mob_recon, 'FASTA')
+
+    def test_mob_recon_assembly(self) -> None:
+        """
+        Tests the MOB-recon tool on assembled contigs.
+        :return: None
+        """
+        mob_recon = MOBRecon(self.camel)
+        mob_recon.add_input_files({
+            'FASTA': [ToolIOFile(TestMOBSuite.input_fasta_contigs)],
+            'DB': [ToolIODirectory(Path(Camel.get_instance().config['db_root']) / 'mob_suite' / 'latest')]
+        })
+        mob_recon.update_parameters(num_threads=8)
+        mob_recon.run(self.running_dir)
+        self.verify_output_files(mob_recon, 'TSV')
+        self.verify_output_files(mob_recon, 'FASTA', nb_files=2)
+
+    def test_mob_recon_reporter(self) -> None:
+        """
+        Tests the reporter for the MOB-recon tool.
+        :return: None
+        """
+        # Run MOB-recon
+        mob_recon = MOBRecon(self.camel)
+        mob_recon.add_input_files({
+            'FASTA': [ToolIOFile(TestMOBSuite.input_fasta_plasmid)],
+            'DB': [ToolIODirectory(Path(Camel.get_instance().config['db_root']) / 'mob_suite' / 'latest')]
+        })
+        mob_recon.update_parameters(num_threads=8)
+        mob_recon.run(self.running_dir)
+
+        # Run the reporter
+        reporter = MOBReconReporter(self.camel)
+        reporter.add_input_files({
+            'TSV': mob_recon.tool_outputs['TSV'],
+            'TSV_contigs': mob_recon.tool_outputs['TSV_contigs'],
+            'FASTA': mob_recon.tool_outputs['FASTA']})
+        reporter.add_input_informs({'mob_recon': mob_recon.informs})
+        reporter.run(self.running_dir)
+
+        # Check the output
+        output_section = reporter.tool_outputs['HTML'][0].value
+        self.assertGreater(len(output_section.to_html()), 0)
+
+
+if __name__ == '__main__':
+    unittest.main()

@@ -16,7 +16,7 @@ class BTyper(Tool):
         Initializes this tool.
         :param camel: CAMEL instance
         """
-        super().__init__('BTyper', '3.2.0', camel)
+        super().__init__('BTyper', '3.3.4', camel)
 
     def _check_input(self) -> None:
         """

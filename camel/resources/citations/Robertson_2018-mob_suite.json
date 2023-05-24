@@ -1,0 +1,21 @@
+{
+  "type_of_reference": "JOUR",
+  "primary_title": "MOB-suite: software tools for clustering, reconstruction and typing of plasmids from draft assemblies",
+  "first_authors": [
+    "Robertson, James",
+    "Nash, John H.E."
+  ],
+  "publication_year": "2018///",
+  "keywords": [
+    "bacterial genomes",
+    "mobile genetic elements",
+    "plasmid transmissibility",
+    "plasmids",
+    "relaxase typing",
+    "replicon benchmarking"
+  ],
+  "alternate_title3": "Microbial genomics",
+  "volume": "4",
+  "number": "8",
+  "doi": "10.1099/mgen.0.000206"
+}

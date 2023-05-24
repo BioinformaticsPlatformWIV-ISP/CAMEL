@@ -1,4 +1,4 @@
-dependencies: [btyper/3.2.0, blast/2.7.1, fastani/1.33]
+dependencies: [btyper/3.3.4, blast/2.7.1, fastani/1.33]
 parameters:
   ani_geneflow: {default: false, mandatory: false, option: --ani_geneflow, value: false}
   ani_species: { default: true, mandatory: false, option: --ani_species, value: true }

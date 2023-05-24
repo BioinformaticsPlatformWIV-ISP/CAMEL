@@ -1,0 +1,103 @@
+from pathlib import Path
+
+import pandas as pd
+
+from camel.app.camel import Camel
+from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from camel.app.error.toolexecutionerror import ToolExecutionError
+from camel.app.io.tooliofile import ToolIOFile
+from camel.app.tools.tool import Tool
+
+
+class MOBRecon(Tool):
+    """
+    MOB-suite: Software tools for clustering, reconstruction and typing of plasmids from draft assemblies.
+    """
+
+    def __init__(self, camel: Camel) -> None:
+        """
+        Initializes this tool.
+        :param camel: CAMEL instance
+        """
+        super().__init__('MOB-recon', '3.1.4', camel)
+
+    def _check_input(self) -> None:
+        """
+        Checks if the provided input files are valid.
+        :return: None
+        """
+        if 'FASTA' not in self._tool_inputs:
+            raise InvalidInputSpecificationError("FASTA input is required")
+        if 'DB' not in self._tool_inputs:
+            raise InvalidInputSpecificationError("Database input (DB) is required")
+        super()._check_input()
+
+    def _build_command(self, dir_out: Path) -> None:
+        """
+        Builds the command line call.
+        :param dir_out: Output directory
+        :return: None
+        """
+        self._command.command = ' '.join([
+            self._tool_command,
+            f"-i {self._tool_inputs['FASTA'][0].path}",
+            f'--database_directory', str(self._tool_inputs['DB'][0].path),
+            f'-o {dir_out}',
+            *self._build_options()
+        ])
+
+    def _collect_tool_output(self, dir_out: Path) -> None:
+        """
+        Collects the tool output.
+        :param dir_out: Output directory
+        :return: None
+        """
+        self._tool_outputs['TSV'] = [ToolIOFile(dir_out / 'mobtyper_results.txt')]
+        self._tool_outputs['TSV_contigs'] = [ToolIOFile(dir_out / 'contig_report.txt')]
+        self._tool_outputs['FASTA'] = []
+        for path_fasta in sorted(dir_out.glob('plasmid*.fasta')):
+            self._tool_outputs['FASTA'].append(ToolIOFile(path_fasta))
+        if len(self._tool_outputs['FASTA']) == 0:
+            self._tool_outputs.pop('FASTA')
+
+    def _execute_tool(self) -> None:
+        """
+        Executes this tool.
+        :return: None
+        """
+        dir_out = self.folder / 'out'
+        self._build_command(dir_out)
+        self._execute_command()
+        self._parse_output_file(dir_out / 'mobtyper_results.txt')
+        self._parse_contig_report(dir_out / 'contig_report.txt')
+        self._collect_tool_output(dir_out)
+
+    def _parse_output_file(self, path_out: Path) -> None:
+        """
+        Parses the output file and stores the results in the informs.
+        :param path_out: Output file path
+        :return: None
+        """
+        with path_out.open() as handle:
+            header = handle.readline().split('\t')
+            values = handle.readline().split('\t')
+            for k, v in zip(header, values):
+                self._informs[k] = v
+
+    def _parse_contig_report(self, path_out: Path) -> None:
+        """
+        Parses the contig report and stores the results in the informs.
+        :param path_out: Output file path
+        :return: None
+        """
+        data_in = pd.read_table(path_out)
+        self._informs['contig_report'] = {
+            ctg: cluster_id if cluster_id is not '-' else None for
+            ctg, cluster_id in zip(data_in['contig_id'], data_in['primary_cluster_id'])}
+
+    def _check_command_output(self) -> None:
+        """
+        Checks if the command executed successfully.
+        """
+        if self._command.returncode != 0:
+            raise ToolExecutionError(f'Error executing {self.name}: {self._command.stderr}')

@@ -40,7 +40,8 @@ class TestMakeGeneDetectionDB(CamelTestSuite):
             '--output-dir', str(output_file_report.parent),
             '--fasta', str(TestMakeGeneDetectionDB.input_fasta),
             '--fasta-name', '"spaces in name.fasta"',
-            '--working-dir', str(self.running_dir)
+            '--working-dir', str(self.running_dir),
+            '--threads', '4'
         ]
         main = MainMakeGeneDetectionDB(args)
         main.run()

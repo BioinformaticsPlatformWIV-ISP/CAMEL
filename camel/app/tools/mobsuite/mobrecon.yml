@@ -1,0 +1,4 @@
+dependencies: [mob_suite/3.1.4, blast/2.7.1, mash/2.2]
+parameters:
+  num_threads: {default: false, mandatory: false, option: --num_threads, p_index: 0, value: 4}
+tool_command: mob_recon

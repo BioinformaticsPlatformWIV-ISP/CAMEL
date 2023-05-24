@@ -1,6 +1,8 @@
 import itertools
 import unittest
 
+import pandas as pd
+
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.scripts.mlstphylogeny.mainmlstphylogeny import MainMLSTPhylogeny
 
@@ -154,6 +156,32 @@ class TestMLSTPhylogeny(CamelTestSuite):
         mlst_tree = MainMLSTPhylogeny(args)
         mlst_tree.run()
         self.assertGreater(output_html.stat().st_size, 0)
+
+    def test_mlst_phylogeny_all_loci(self) -> None:
+        """
+        Tests the MLST phylogeny tool with standard options and a large dataset while keeping all loci.
+        :return: None
+        """
+        output_html = self.running_dir / 'out' / 'report.html'
+        output_html.parent.mkdir(exist_ok=True, parents=True)
+        output_tsv_alleles = self.running_dir / 'out' / 'allele_matrix.tsv'
+        input_tsv = list(itertools.chain.from_iterable(
+            [['--input-tsv', str(tsv), tsv.name] for tsv in TestMLSTPhylogeny.dir_dataset_large_blast.iterdir()]))
+        args = input_tsv + [
+            '--output-html', str(output_html),
+            '--output-dir', str(output_html.parent),
+            '--output-allele-matrix', str(output_tsv_alleles),
+            '--dir-working', str(self.running_dir),
+            '--keep-all-loci'
+        ]
+        mlst_tree = MainMLSTPhylogeny(args)
+        mlst_tree.run()
+        self.assertGreater(output_html.stat().st_size, 0)
+
+        # Check if all loci are retained
+        nb_loci_in = len(pd.read_table(next(iter(TestMLSTPhylogeny.dir_dataset_large_blast.iterdir()))).index)
+        nb_loci_out = len(pd.read_table(output_tsv_alleles).columns) - 1
+        self.assertEqual(nb_loci_in, nb_loci_out)
 
 
 if __name__ == '__main__':

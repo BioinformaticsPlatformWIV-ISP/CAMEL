@@ -1,4 +1,5 @@
 import re
+import warnings
 from pathlib import Path
 
 from camel.app.camel import Camel
@@ -17,6 +18,9 @@ class FqStats(Tool):
         Initializes this tool.
         :param camel: Camel instance
         """
+        warnings.warn(
+            "This class will be depracated because it cannot handle really long reads, use FastqStats instead.",
+            DeprecationWarning)
         super().__init__('fqstats', '1.1',  camel)
 
     def _check_input(self) -> None:
