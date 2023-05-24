@@ -1,5 +1,6 @@
 import unittest
 
+from camel.app.camel import Camel
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.scripts.hybridassemblypipeline.mainhybridassemblypipeline import MainHybridAssemblyPipeline
 from camel.tests import longRunningTest
@@ -33,6 +34,26 @@ class TestHybridAssemblyPipeline(CamelTestSuite):
         main = MainHybridAssemblyPipeline(args)
         main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)
+
+    def test_sample_name(self) -> None:
+        """
+        Tests if the hybrid assembly pipeline extracts the sample name correctly.
+        :return: None
+        """
+        Camel.get_instance()
+        path_report_out = self.running_dir / 'out' / 'output.html'
+        args = [
+            '--output-html', str(path_report_out),
+            '--fastq-pe', str(TestHybridAssemblyPipeline.FASTQ_1), str(TestHybridAssemblyPipeline.FASTQ_2),
+            '--fastq-pe-names', 'illumina_1.fastq.gz', 'illumina_2.fastq.gz',
+            '--fastq-se', str(TestHybridAssemblyPipeline.FASTQ_SE),
+            '--fastq-se-name', 'ont.fastq.gz',
+            '--working-dir', str(self.running_dir),
+            '--expected-genome-size', '4.5m',
+            '--ont-qual', 'nano-corr'
+        ]
+        main = MainHybridAssemblyPipeline(args)
+        self.assertEqual(main._sample_name, 'illumina')
 
 
 if __name__ == '__main__':

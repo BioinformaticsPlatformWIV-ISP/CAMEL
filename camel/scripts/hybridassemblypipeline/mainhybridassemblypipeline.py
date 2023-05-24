@@ -45,7 +45,9 @@ class MainHybridAssemblyPipeline(BasePipeline):
         if args.sample_name is not None:
             return args.sample_name
         logging.debug('Sample name not provided, determining name from short-reads')
-        return GalaxyUtils.determine_sample_name_from_fq([fq.name for fq in args.fastq_pe])
+        if args.fastq_pe_names is not None:
+            return GalaxyUtils.determine_sample_name_from_fq([Path(fq) for fq in args.fastq_pe_names])
+        return GalaxyUtils.determine_sample_name_from_fq([Path(fq) for fq in args.fastq_pe])
 
     @staticmethod
     def _parse_arguments(args: Optional[Sequence[str]] = None) -> argparse.Namespace:
@@ -56,7 +58,7 @@ class MainHybridAssemblyPipeline(BasePipeline):
         argument_parser = argparse.ArgumentParser()
 
         # Input
-        argument_parser.add_argument('--sample-name', type=str, default='test_sample')
+        argument_parser.add_argument('--sample-name', type=str)
         argument_parser.add_argument('--fastq-pe', type=Path, help='Input Fastq PE file', nargs=2, required=True)
         argument_parser.add_argument('--fastq-pe-names', help='Input Fastq PE file', nargs=2)
         argument_parser.add_argument('--fastq-se', type=Path, help='Input Fastq SE files')
@@ -76,7 +78,7 @@ class MainHybridAssemblyPipeline(BasePipeline):
             'r1041_e82_260bps_fast_g632', 'r1041_e82_260bps_hac_g632', 'r1041_e82_260bps_sup_g632',
             'r1041_e82_400bps_fast_g615', 'r1041_e82_400bps_fast_g632', 'r1041_e82_400bps_hac_g615',
             'r1041_e82_400bps_hac_g632', 'r1041_e82_400bps_sup_g615', 'r104_e81_hac_g5015',
-            'r104_e81_sup_g5015', 'r941_prom_hac_g360+g422', 'r941_prom_sup_g5014'], default='r941_min_hac_g507')
+            'r104_e81_sup_g5015', 'r941_prom_hac_g360+g422', 'r941_prom_sup_g507'], default='r941_prom_sup_g507')
         argument_parser.add_argument('--filtlong-keep-percent', type=int)
 
         # Variant calling
