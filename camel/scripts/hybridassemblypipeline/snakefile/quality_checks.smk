@@ -124,8 +124,7 @@ rule qc_read_mapping_illumina:
     Maps the short reads against the assembly.
     """
     input:
-        FQ_1P = Path(config['working_dir']) / 'trimming' / 'illumina' / 'trimmed_1P.fastq.gz',
-        FQ_2P = Path(config['working_dir']) / 'trimming' / 'illumina' / 'trimmed_2P.fastq.gz',
+        FQ_dict = Path(config['working_dir']) / 'trimming' / 'illumina' / 'fq_dict.io',
         INDEX_GENOME_PREFIX_BWA = rules.qc_bwa_index.output.INDEX_GENOME_PREFIX,
         INDEX_GENOME_PREFIX_SAMTOOLS = rules.qc_samtools_index.output.INDEX_GENOME_PREFIX,
         FASTA = rules.qc_copy_fasta_file.output.FASTA,
@@ -137,10 +136,12 @@ rule qc_read_mapping_illumina:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}' / 'read_mapping' / 'illumina'
     threads: 8
     run:
+        from camel.app.components.workflows.utils.fastqinput import FastqInput
         from camel.app.tools.bwa.bwamap import BWAMap
         dir_working = Path(str(params.running_dir)).absolute()
         bwa_map = BWAMap(camel)
-        bwa_map.add_input_files({'FASTQ_PE': [ToolIOFile(Path(input.FQ_1P)), ToolIOFile(Path(input.FQ_2P))]})
+        fq_in = FastqInput.from_fq_dict(Path(input.FQ_dict), 'illumina')
+        bwa_map.add_input_files({'FASTQ_PE': fq_in.pe})
         bwa_map.update_parameters(threads=threads)
         SnakemakeUtils.add_pickle_input(bwa_map, 'INDEX_GENOME_PREFIX', Path(input.INDEX_GENOME_PREFIX))
         step = Step(str(rule), bwa_map, camel, dir_working, config)
@@ -404,7 +405,7 @@ rule qc_sniffles:
         BAM = rules.qc_bam_sorting_ont.output.BAM,
         BAM_INDEX = rules.qc_bam_indexing_ont.output.BAM,
         FASTA = rules.qc_copy_fasta_file.output.FASTA,
-        FASTA_INDEX= rules.qc_samtools_index.output.INDEX_GENOME_PREFIX
+        FASTA_INDEX = rules.qc_samtools_index.output.INDEX_GENOME_PREFIX
     output:
         VCF = Path(config['working_dir']) / 'qc' / '{name}' / 'sniffles' / 'variants.vcf',
         INFORMS = Path(config['working_dir']) / 'qc' / '{name}' / 'sniffles' / 'commands.io'
@@ -429,21 +430,22 @@ rule qc_clair3:
     input:
         BAM = rules.qc_bam_sorting_ont.output.BAM,
         BAM_INDEX = rules.qc_bam_indexing_ont.output.BAM,
-        FASTA= rules.qc_copy_fasta_file.output.FASTA,
-        FASTA_INDEX= rules.qc_samtools_index.output.INDEX_GENOME_PREFIX
+        FASTA = rules.qc_copy_fasta_file.output.FASTA,
+        FASTA_INDEX = rules.qc_samtools_index.output.INDEX_GENOME_PREFIX
     output:
         VCF_GZ = Path(config['working_dir']) / 'qc' / '{name}' / 'clair3_output' / 'merge_output.vcf.gz',
         INFORMS = Path(config['working_dir']) / 'qc' / '{name}' / 'clair3_output' / 'commands.io'
     params:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'qc' / f'{wildcards.name}',
-        clair3_options= config.get('clair3',{})
+        clair3_options = config.get('clair3', {})
     threads: 8
     run:
         from camel.app.tools.clair3.clair3 import Clair3
         dir_working = Path(str(params.running_dir)).absolute()
         clair3 = Clair3(camel)
         clair3.add_input_files({'BAM': [ToolIOFile(Path(input.BAM))], 'FASTA': [ToolIOFile(Path(input.FASTA))]})
-        clair3.update_parameters(**params.clair3_options, chunk_size=100_000, threads=threads)
+        clair3.update_parameters(
+            **params.clair3_options, chunk_size=100_000, platform='ont', include_ctgs=True, threads=threads)
         step = Step(str(rule), clair3, camel, dir_working, config)
         step.run_step()
         clair3.informs['_tag'] = wildcards.name

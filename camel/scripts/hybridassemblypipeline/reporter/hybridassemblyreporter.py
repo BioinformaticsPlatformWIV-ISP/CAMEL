@@ -20,7 +20,7 @@ class HybridAssemblyReporter(Tool):
     This tool is used to generate HTML report sections based on the hybrid assembly pipeline output.
     """
 
-    TITLE = 'Hybrid assembly pipeline - v0.1'
+    TITLE = 'Hybrid assembly pipeline 0.1'
     MATCH_COLORS = {0: None, 1: 'grey', 2: 'lightgreen', 3: 'green'}
     REPORT_STRUCTURE = [
         ['Read trimming and basic QC', 'trim'],
@@ -104,8 +104,9 @@ class HybridAssemblyReporter(Tool):
         Adds the information about the input data.
         :return: None
         """
-        input_files = ', '.join([Path(fastq).name for fastq in self._input_informs['input']['illumina']] +
-                                [Path(self._input_informs['input']['ont']).name])
+        input_files = ', '.join(
+            [Path(fastq).name for fastq in self._input_informs['input']['illumina']] +
+            [Path(self._input_informs['input']['ont']).name])
         table_data = [
             ['Sample:', self._input_informs['sample_name']],
             ['Analysis date:', datetime.datetime.now()],
@@ -189,12 +190,14 @@ class HybridAssemblyReporter(Tool):
         :return: None
         """
         subtitle = ', '.join([self._input_informs[x]['_name'] for x in ('freebayes', 'clair3')])
-        section = HtmlReportSection('Variant calling (short reads)', subtitle=subtitle)
+        section = HtmlReportSection('Variant calling', subtitle=subtitle)
         data_vc = pd.read_table(path_tsv)
         section.add_table(
             list(data_vc.itertuples(index=False, name=None)),
             column_names=data_vc.columns,
             table_attributes=[('class', 'data')])
+        section.add_paragraph(
+            'Freebayes and Clair3 call SNPs and (small) indels on the short- and long-reads, respectively.')
         self.report.add_html_object(section)
 
     def __add_sniffles_table(self, path_tsv: Path) -> None:

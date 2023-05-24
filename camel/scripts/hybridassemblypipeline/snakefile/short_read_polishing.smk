@@ -60,8 +60,7 @@ rule polishing_read_mapping:
     Maps the reads against the assembly.
     """
     input:
-        FQ_1P = Path(config['working_dir']) / 'trimming' / 'illumina' / 'trimmed_1P.fastq.gz',
-        FQ_2P = Path(config['working_dir']) / 'trimming' / 'illumina' / 'trimmed_2P.fastq.gz',
+        FQ_dict = Path(config['working_dir']) / 'trimming' / 'illumina' / 'fq_dict.io',
         INDEX_GENOME_PREFIX_BWA = rules.polishing_bwa_index.output.INDEX_GENOME_PREFIX,
         INDEX_GENOME_PREFIX_SAMTOOLS = rules.polishing_samtools_index_polypolish.output.INDEX_GENOME_PREFIX,
         FASTA = rules.polishing_copy_fasta.output.FASTA,
@@ -72,9 +71,11 @@ rule polishing_read_mapping:
         running_dir = Path(config['working_dir']) / 'polishing' / 'read_mapping'
     threads: 8
     run:
+        from camel.app.components.workflows.utils.fastqinput import FastqInput
         from camel.app.tools.bwa.bwamap import BWAMap
         bwa_map = BWAMap(camel)
-        bwa_map.add_input_files({'FASTQ_PE': [ToolIOFile(Path(input.FQ_1P)), ToolIOFile(Path(input.FQ_2P))]})
+        fq_in = FastqInput.from_fq_dict(Path(input.FQ_dict), 'illumina')
+        bwa_map.add_input_files({'FASTQ_PE': fq_in.pe})
         bwa_map.update_parameters(threads=threads)
         SnakemakeUtils.add_pickle_input(bwa_map, 'INDEX_GENOME_PREFIX', Path(input.INDEX_GENOME_PREFIX))
         step = Step(str(rule), bwa_map, camel, params.running_dir)
@@ -134,8 +135,7 @@ rule polishing_polca:
     Then polishing with Polca.
     """
     input:
-        FQ_1P = Path(config['working_dir']) / 'trimming' / 'illumina' / 'trimmed_1P.fastq.gz',
-        FQ_2P = Path(config['working_dir']) / 'trimming' / 'illumina' / 'trimmed_2P.fastq.gz',
+        FQ_dict = Path(config['working_dir']) / 'trimming' / 'illumina' / 'fq_dict.io',
         FASTA = rules.polishing_copy_fasta_polca.output.FASTA,
         INDEX = rules.polishing_samtools_index_polca.output.INDEX_GENOME_PREFIX
     output:
@@ -148,8 +148,9 @@ rule polishing_polca:
     run:
         from camel.app.tools.polca.polca import Polca
         polca = Polca(camel)
-        polca.add_input_files({'FASTQ_PE': [ToolIOFile(Path(input.FQ_1P)), ToolIOFile(Path(input.FQ_2P))],
-                               'FASTA': [ToolIOFile(Path(input.FASTA))]})
+        from camel.app.components.workflows.utils.fastqinput import FastqInput
+        fq_in = FastqInput.from_fq_dict(Path(input.FQ_dict),'illumina')
+        polca.add_input_files({'FASTQ_PE': fq_in.pe, 'FASTA': [ToolIOFile(Path(input.FASTA))]})
         polca.update_parameters(**params.polca_options, threads=threads)
         step = Step(str(rule), polca, camel, params.running_dir, config)
         step.run_step()

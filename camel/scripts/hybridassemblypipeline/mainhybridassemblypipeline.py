@@ -204,10 +204,9 @@ class MainHybridAssemblyPipeline(BasePipeline):
             'clair3': {
                 'haploid_precise': True if self._args.clair3_haploid_precise is not None else False,
                 'no_phasing': True if self._args.clair3_no_phasing is not None else False,
-                'include_ctgs': True if self._args.clair3_include_ctgs is not None else False,
                 'long_indel': True if self._args.clair3_long_indel is not None else False,
-                'model_path': '/db/clair3/models/{}'.format(self._args.ont_basecalling_model
-                                                            if self._args.ont_basecalling_model is not None else 'ont')
+                'model_path': '/db/clair3/models/{}'.format(
+                    self._args.ont_basecalling_model if self._args.ont_basecalling_model is not None else 'ont')
             },
             'sniffles': {
                 'mapq': self._args.sniffles_mapq if self._args.sniffles_mapq is not None else 25,

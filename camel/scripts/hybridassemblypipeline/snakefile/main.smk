@@ -21,7 +21,6 @@ assembly_steps = ['Flye', 'Medaka', 'POLCA', 'Polypolish', 'Unicycler']
 #########
 # Rules #
 #########
-
 rule all:
     """
     This rules ensures that the required output files are generated.
@@ -31,35 +30,37 @@ rule all:
 
 rule trim_illumina:
     """
-    This rule trims the illumina reads using trimmomatic.
+    Trims the Illumina reads.
     """
     input:
         FQ_fwd = config['input']['illumina'][0],
         FQ_rev = config['input']['illumina'][1]
     output:
-        FQ_1P = Path(config['working_dir']) / 'trimming' / 'illumina' / 'trimmed_1P.fastq.gz',
-        FQ_2P = Path(config['working_dir']) / 'trimming' / 'illumina' / 'trimmed_2P.fastq.gz',
-        FQ_1S = Path(config['working_dir']) / 'trimming' / 'illumina' / 'trimmed_1U.fastq.gz',
-        FQ_2S = Path(config['working_dir']) / 'trimming' / 'illumina' / 'trimmed_2U.fastq.gz',
+        FQ_dict = Path(config['working_dir']) / 'trimming' / 'illumina' / 'fq_dict.io',
         TSV = Path(config['working_dir']) / 'trimming' / 'illumina' / 'trimming_illumina.tsv',
         HTML = Path(config['working_dir']) / 'trimming' / 'illumina' / 'html.io'
     params:
         dir_ = Path(config['working_dir']) / 'trimming' / 'illumina'
     threads: 4
     run:
+        from camel.app.components.workflows.utils.fastqinput import FastqInput
         from camel.app.components.workflows.trimmingilluminawrapper import TrimmingIlluminaWrapper
-        wrapper = TrimmingIlluminaWrapper(Path(params.dir_).absolute())
+        wrapper = TrimmingIlluminaWrapper(Path(params.dir_))
         wrapper.run_workflow([Path(input.FQ_fwd), Path(input.FQ_rev)], threads=threads)
-        wrapper.output.trimmed_reads_pe[0].path.rename(Path(output.FQ_1P))
-        wrapper.output.trimmed_reads_pe[1].path.rename(Path(output.FQ_2P))
-        wrapper.output.trimmed_reads_se_fwd[0].path.rename(Path(output.FQ_1S))
-        wrapper.output.trimmed_reads_se_rev[0].path.rename(Path(output.FQ_2S))
         wrapper.output.tsv_summary.rename(Path(output.TSV))
         SnakemakeUtils.dump_object(wrapper.output.report_section, Path(output.HTML))
+        fq_out = FastqInput(
+            read_type='illumina',
+            pe=wrapper.output.trimmed_reads_pe,
+            se_fwd=wrapper.output.trimmed_reads_se_fwd,
+            se_rev=wrapper.output.trimmed_reads_se_rev,
+            is_trimmed=True,
+            is_pe=True)
+        SnakemakeUtils.dump_object(fq_out.to_fq_dict(), Path(output.FQ_dict))
 
 rule trim_ont_workflow:
     """
-    This rule trims the ONT reads using the trimmingont wrapper.
+    Trims the ONT reads.
     """
     input:
         FASTQ = config['input']['ont']
@@ -72,7 +73,7 @@ rule trim_ont_workflow:
     run:
         from camel.app.components.workflows.trimmingontwrapper import TrimmingONTWrapper
         wrapper = TrimmingONTWrapper(Path(params.dir_).absolute())
-        wrapper.run_workflow(Path(input.FASTQ), threads=threads, )
+        wrapper.run_workflow(Path(input.FASTQ), threads=threads)
         wrapper.output.trimmed_reads[0].path.rename(Path(output.FASTQ))
         SnakemakeUtils.dump_object(wrapper.output.report_section, Path(output.HTML))
 
@@ -96,20 +97,22 @@ rule unicycler:
     Runs unicycler, which is a short-read first approach to assemble reads.
     """
     input:
-        FQ_1P = rules.trim_illumina.output.FQ_1P,
-        FQ_2P = rules.trim_illumina.output.FQ_2P,
+        FQ_dict = rules.trim_illumina.output.FQ_dict,
         FQ_SE = rules.trim_ont_workflow.output.FASTQ
     output:
         FASTA = Path(config['working_dir']) / 'unicycler' / 'assembly.fasta',
         INFORMS = Path(config['working_dir']) / 'unicycler' / 'commands.io'
     params:
         working_dir = Path(config['working_dir'])
-    threads: 96
+    threads: 16
     run:
+        from camel.app.components.workflows.utils.fastqinput import FastqInput
         from camel.app.tools.unicycler.unicycler import Unicycler
         unicycler_assembly = Unicycler(camel)
-        unicycler_assembly.add_input_files({'FASTQ_PE': [ToolIOFile(Path(input.FQ_1P)), ToolIOFile(Path(input.FQ_2P))],
-                                            'FASTQ_SE': [ToolIOFile(Path(input.FQ_SE))]})
+        fq_illumina = FastqInput.from_fq_dict(Path(input.FQ_dict), 'illumina')
+        unicycler_assembly.add_input_files({
+            'FASTQ_PE': fq_illumina.pe,
+            'FASTQ_SE': [ToolIOFile(Path(input.FQ_SE))]})
         unicycler_assembly.update_parameters(output_dir='unicycler', threads=threads)
         step = Step(str(rule), unicycler_assembly, camel, params.working_dir, config)
         step.run_step()
@@ -181,7 +184,7 @@ rule report_long_variant_calling:
             })
         pd.DataFrame(sniffles_table).to_csv(output.TSV, sep='\t', index=False)
 
-rule report_mappingstats:
+rule report_mapping_stats:
     """
     Rule to generate the report table for the mapping statistics.
     """
@@ -270,7 +273,7 @@ rule report_create_sections:
         FASTA = [Path(config['working_dir']) / 'qc' / key / 'consensus.fasta' for key in quality_checks.consensus_by_tool.keys()],
         TSV_quast = rules.combine_informs_quast.output.TSV,
         TSV_vc = rules.combine_informs_variant_calling_short_reads.output.TSV,
-        TSV_mapping = rules.report_mappingstats.output.TSV,
+        TSV_mapping = rules.report_mapping_stats.output.TSV,
         TSV_sniffles = rules.report_long_variant_calling.output.TSV,
         report_citations = rules.report_pickle_citations.output.HTML,
         INFORMS_quast = Path(config['working_dir']) / 'qc' / assembly_steps[0] / 'quast' / 'commands.io',
