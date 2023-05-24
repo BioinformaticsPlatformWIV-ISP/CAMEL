@@ -25,7 +25,6 @@ class MainBacillusPipeline(ReportPipeline):
         'cereus': {
             'gc_content': 35,
             'genome_size': 2_796_178,
-            # 'genome_size': 100_000,
             'full_name': 'Bacillus cereus',
             'mlst_db': '/db/sequence_typing/bacillus_cereus/mlst',
             'cgmlst_db': '/db/sequence_typing/bacillus_cereus/cgmlst'
