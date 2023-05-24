@@ -68,7 +68,7 @@ class MainHybridAssemblyPipeline(BasePipeline):
         argument_parser.add_argument('--output-dir', type=Path)
 
         # Parameters
-        argument_parser.add_argument('--ploidy', type=int, choices=[1, 2], required=True, default=1)
+        argument_parser.add_argument('--ploidy', type=int, choices=[1, 2], default=1)
         argument_parser.add_argument('--ont-qual', type=str, required=True,
                                      choices=['nano-corr', 'nano-hq', 'nano-raw'], default='nano-corr')
         argument_parser.add_argument('--expected-genome-size', type=str, required=True)
@@ -76,7 +76,7 @@ class MainHybridAssemblyPipeline(BasePipeline):
             'r1041_e82_260bps_fast_g632', 'r1041_e82_260bps_hac_g632', 'r1041_e82_260bps_sup_g632',
             'r1041_e82_400bps_fast_g615', 'r1041_e82_400bps_fast_g632', 'r1041_e82_400bps_hac_g615',
             'r1041_e82_400bps_hac_g632', 'r1041_e82_400bps_sup_g615', 'r104_e81_hac_g5015',
-            'r104_e81_sup_g5015', 'r941_prom_hac_g360+g422', 'r941_prom_sup_g5014'])
+            'r104_e81_sup_g5015', 'r941_prom_hac_g360+g422', 'r941_prom_sup_g5014'], default='r941_min_hac_g507')
         argument_parser.add_argument('--filtlong-keep-percent', type=int)
 
         # Variant calling
@@ -183,10 +183,7 @@ class MainHybridAssemblyPipeline(BasePipeline):
             },
             'polishing': {
                 'medaka': {
-                    'consensus': {
-                        'model': self._args.ont_basecalling_model if self._args.ont_basecalling_model is not None
-                        else 'r941_min_hac_g507'
-                    },
+                    'consensus': {'model': self._args.ont_basecalling_model},
                     'stitch': {}
                 },
                 'polca': {},
