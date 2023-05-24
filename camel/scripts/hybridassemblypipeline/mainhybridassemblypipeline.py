@@ -68,6 +68,7 @@ class MainHybridAssemblyPipeline(BasePipeline):
         argument_parser.add_argument('--output-dir', type=Path)
 
         # Parameters
+        argument_parser.add_argument('--ploidy', type=int, choices=[1, 2], required=True, default=1)
         argument_parser.add_argument('--ont-qual', type=str, required=True,
                                      choices=['nano-corr', 'nano-hq', 'nano-raw'], default='nano-corr')
         argument_parser.add_argument('--expected-genome-size', type=str, required=True)
@@ -79,7 +80,6 @@ class MainHybridAssemblyPipeline(BasePipeline):
         argument_parser.add_argument('--filtlong-keep-percent', type=int)
 
         # Variant calling
-        argument_parser.add_argument('--freebayes-ploidy', choices=['GRCh37', 'GRCh38', 'X', 'Y', '1'], default='1')
         argument_parser.add_argument('--freebayes-min-alternate-fraction', type=float, default=0.5)
         argument_parser.add_argument('--freebayes-min-alternate-count', type=int, default=10)
         argument_parser.add_argument('--clair3-haploid-precise', action='store_true', default=None)
@@ -197,13 +197,12 @@ class MainHybridAssemblyPipeline(BasePipeline):
                 'minimap2': {}
             },
             'freebayes': {
-                'ploidy': self._args.freebayes_ploidy,
+                'ploidy': self._args.ploidy,
                 'min_alternate_fraction': self._args.freebayes_min_alternate_fraction,
                 'min_alternate_count': self._args.freebayes_min_alternate_count
             },
             'clair3': {
-                'haploid_precise': True if self._args.clair3_haploid_precise is not None else False,
-                'no_phasing': True if self._args.clair3_no_phasing is not None else False,
+                'haploid_precise': True if self._args.ploidy == 1 else False,
                 'long_indel': True if self._args.clair3_long_indel is not None else False,
                 'model_path': '/db/clair3/models/{}'.format(
                     self._args.ont_basecalling_model if self._args.ont_basecalling_model is not None else 'ont')
