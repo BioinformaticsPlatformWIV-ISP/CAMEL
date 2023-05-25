@@ -4,6 +4,7 @@ import logging
 from pathlib import Path
 from typing import Optional, Sequence, List, Dict, Any, Tuple
 
+import pandas as pd
 import pkg_resources
 import yaml
 
@@ -27,6 +28,8 @@ class MainHybridAssemblyPipeline(BasePipeline):
         :param args: arguments to be parsed
         :return: None
         """
+        self._data_models = pd.read_table(pkg_resources.resource_filename(
+            'camel', 'scripts/hybridassemblypipeline/basecalling_models.tsv'))
         self._args = MainHybridAssemblyPipeline._parse_arguments(args)
         _path_snakefile = pkg_resources.resource_filename('camel', 'scripts/hybridassemblypipeline/snakefile/main.smk')
         super().__init__(
@@ -77,8 +80,9 @@ class MainHybridAssemblyPipeline(BasePipeline):
         argument_parser.add_argument('--ont-basecalling-model', type=str, choices=[
             'r1041_e82_260bps_fast_g632', 'r1041_e82_260bps_hac_g632', 'r1041_e82_260bps_sup_g632',
             'r1041_e82_400bps_fast_g615', 'r1041_e82_400bps_fast_g632', 'r1041_e82_400bps_hac_g615',
-            'r1041_e82_400bps_hac_g632', 'r1041_e82_400bps_sup_g615', 'r104_e81_hac_g5015',
-            'r104_e81_sup_g5015', 'r941_prom_hac_g360+g422', 'r941_prom_sup_g507'], default='r941_prom_sup_g507')
+            'r1041_e82_400bps_hac_g632',  'r1041_e82_400bps_sup_g615', 'r104_e81_hac_g5015', 'r104_e81_sup_g5015',
+            'r104_e81_sup_g610', 'r941_min_hac_g507', 'r941_min_high_g360', 'r941_min_sup_g507', 'r941_prom_hac_g507',
+            'r941_prom_high_g360', 'r941_prom_sup_g507'], default='r941_prom_sup_g507')
         argument_parser.add_argument('--filtlong-keep-percent', type=int)
 
         # Variant calling
@@ -202,8 +206,7 @@ class MainHybridAssemblyPipeline(BasePipeline):
             'clair3': {
                 'haploid_precise': True if self._args.ploidy == 1 else False,
                 'long_indel': True if self._args.clair3_long_indel is not None else False,
-                'model_path': '/db/clair3/models/{}'.format(
-                    self._args.ont_basecalling_model if self._args.ont_basecalling_model is not None else 'ont')
+                'model_path': self._get_clair3_model(self._args.ont_basecalling_model)
             },
             'sniffles': {
                 'mapq': self._args.sniffles_mapq if self._args.sniffles_mapq is not None else 25,
@@ -216,6 +219,19 @@ class MainHybridAssemblyPipeline(BasePipeline):
             mainscriptutils.dict_merge(
                 config_data, yaml.safe_load(handle_in.read()))
         return SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir)
+
+    def _get_clair3_model(self, medaka_model: str) -> str:
+        """
+        Gets the most suitable clair3 model for the given medaka model.
+        From documentation: the medaka model with the highest version equal to or less than the guppy version should
+        be selected.
+        :param medaka_model: Medaka basecalling model
+        :return: Select clair3 model
+        """
+        clair3_model = next(
+            r['clair3_model'] for r in self._data_models.to_dict('records') if r['medaka_model'] == medaka_model)
+        logging.info(f"Best matching Clair3 model for medaka model '{medaka_model}': {clair3_model}")
+        return clair3_model
 
 
 if __name__ == '__main__':

@@ -1,0 +1,47 @@
+medaka_model	chemistry	subtype	caller	guppy	clair3_model
+r103_fast_g507	r103		fast	g507
+r103_hac_g507	r103		hac	g507
+r103_min_high_g345	r103		min	g345
+r103_min_high_g360	r103		min	g360
+r103_prom_high_g360	r103		prom	g360
+r103_sup_g507	r103		sup	g507
+r1041_e82_260bps_fast_g632	r1041	e82_260bps	fast	g632	r1041_e82_260bps_fast_g632
+r1041_e82_260bps_hac_g632	r1041	e82_260bps	hac	g632	r1041_e82_260bps_hac_g632
+r1041_e82_260bps_hac_v4.0.0	r1041	e82_260bps	hac	v4.0.0
+r1041_e82_260bps_sup_g632	r1041	e82_260bps	sup	g632	r1041_e82_260bps_sup_g632
+r1041_e82_260bps_sup_v4.0.0	r1041	e82_260bps	sup	v4.0.0
+r1041_e82_400bps_fast_g615	r1041	e82_400bps	fast	g615	r1041_e82_400bps_fast_g615
+r1041_e82_400bps_fast_g632	r1041	e82_400bps	fast	g632	r1041_e82_400bps_fast_g632
+r1041_e82_400bps_hac_g615	r1041	e82_400bps	hac	g615	r1041_e82_400bps_hac_g615
+r1041_e82_400bps_hac_g632	r1041	e82_400bps	hac	g632	r1041_e82_400bps_hac_g632
+r1041_e82_400bps_hac_v4.0.0	r1041	e82_400bps	hac	v4.0.0
+r1041_e82_400bps_sup_g615	r1041	e82_400bps	sup	g615	r1041_e82_400bps_sup_g615
+r1041_e82_400bps_sup_v4.0.0	r1041	e82_400bps	sup	v4.0.0
+r104_e81_fast_g5015	r104	e81	fast	g5015
+r104_e81_hac_g5015	r104	e81	hac	g5015	r104_e81_hac_g5015
+r104_e81_sup_g5015	r104	e81	sup	g5015	r104_e81_sup_g5015
+r104_e81_sup_g610	r104	e81	sup	g610	r104_e81_sup_g5015
+r10_min_high_g303	r10	min	high	g303
+r10_min_high_g340	r10	min	high	g340
+r941_e81_fast_g514	r941	e81	fast	g514
+r941_e81_hac_g514	r941	e81	hac	g514
+r941_e81_sup_g514	r941	e81	sup	g514
+r941_min_fast_g303	r941	min	fast	g303
+r941_min_fast_g507	r941	min	fast	g507
+r941_min_hac_g507	r941	min	hac	g507	r941_prom_hac_g360+g422
+r941_min_high_g303	r941	min	high	g303
+r941_min_high_g330	r941	min	high	g330
+r941_min_high_g340_rle	r941	min	high	g340
+r941_min_high_g344	r941	min	high	g344
+r941_min_high_g351	r941	min	high	g351
+r941_min_high_g360	r941	min	high	g360	r941_prom_hac_g360+g422
+r941_min_sup_g507	r941	min	sup	g507	r941_prom_sup_g5014
+r941_prom_fast_g303	r941	prom	fast	g303
+r941_prom_fast_g507	r941	prom	fast	g507
+r941_prom_hac_g507	r941	prom	hac	g507	r941_prom_hac_g360+g422
+r941_prom_high_g303	r941	prom	high	g303
+r941_prom_high_g330	r941	prom	high	g330
+r941_prom_high_g344	r941	prom	high	g344
+r941_prom_high_g360	r941	prom	high	g360	r941_prom_hac_g360+g422
+r941_prom_high_g4011	r941	prom	high	g4011
+r941_prom_sup_g507	r941	prom	sup	g507	r941_prom_sup_g5014
