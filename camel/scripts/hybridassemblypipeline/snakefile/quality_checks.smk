@@ -445,7 +445,8 @@ rule qc_clair3:
         clair3 = Clair3(camel)
         clair3.add_input_files({'BAM': [ToolIOFile(Path(input.BAM))], 'FASTA': [ToolIOFile(Path(input.FASTA))]})
         clair3.update_parameters(
-            **params.clair3_options, chunk_size=100_000, platform='ont', include_ctgs=True, threads=threads)
+            **params.clair3_options, chunk_size=100_000, platform='ont', no_phasing=True, include_ctgs=True,
+            threads=threads)
         step = Step(str(rule), clair3, camel, dir_working, config)
         step.run_step()
         clair3.informs['_tag'] = wildcards.name
