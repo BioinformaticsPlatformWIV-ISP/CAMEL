@@ -204,7 +204,7 @@ class MainHybridAssemblyPipeline(BasePipeline):
             'clair3': {
                 'haploid_precise': True if self._args.ploidy == 1 else False,
                 'long_indel': True if self._args.clair3_long_indel is not None else False,
-                'model_path': self._get_clair3_model(self._args.ont_basecalling_model)
+                'model_path': str(self._get_clair3_model(self._args.ont_basecalling_model))
             },
             'sniffles': {
                 'mapq': self._args.sniffles_mapq if self._args.sniffles_mapq is not None else 25,
@@ -218,18 +218,21 @@ class MainHybridAssemblyPipeline(BasePipeline):
                 config_data, yaml.safe_load(handle_in.read()))
         return SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir)
 
-    def _get_clair3_model(self, medaka_model: str) -> str:
+    def _get_clair3_model(self, medaka_model: str) -> Path:
         """
         Gets the most suitable clair3 model for the given medaka model.
         From documentation: the medaka model with the highest version equal to or less than the guppy version should
         be selected.
         :param medaka_model: Medaka basecalling model
-        :return: Select clair3 model
+        :return: Path to clair3 model
         """
         clair3_model = next(
             r['clair3_model'] for r in self._data_models.to_dict('records') if r['medaka_model'] == medaka_model)
         logging.info(f"Best matching Clair3 model for medaka model '{medaka_model}': {clair3_model}")
-        return clair3_model
+        path_model = Path(Camel.get_instance().config['db_root'], 'clair3', 'models', clair3_model)
+        if not path_model.exists():
+            raise ValueError(f'Clair3 model not found: {path_model}')
+        return path_model
 
 
 if __name__ == '__main__':
