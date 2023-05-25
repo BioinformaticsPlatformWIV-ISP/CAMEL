@@ -88,8 +88,6 @@ class MainHybridAssemblyPipeline(BasePipeline):
         # Variant calling
         argument_parser.add_argument('--freebayes-min-alternate-fraction', type=float, default=0.5)
         argument_parser.add_argument('--freebayes-min-alternate-count', type=int, default=10)
-        argument_parser.add_argument('--clair3-haploid-precise', action='store_true', default=None)
-        argument_parser.add_argument('--clair3-no-phasing', action='store_true', default=None)
         argument_parser.add_argument('--clair3-long-indel', action='store_true', default=None)
         argument_parser.add_argument('--sniffles-min-svlen', type=int)
         argument_parser.add_argument('--sniffles-mapq', type=int)
