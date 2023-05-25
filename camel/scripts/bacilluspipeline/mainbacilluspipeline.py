@@ -97,9 +97,6 @@ class MainBacillusPipeline(ReportPipeline):
                 genome_size=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['genome_size'],
                 mlst_db=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['mlst_db'],
                 cgmlst_db=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['cgmlst_db'],
-                which_acqoverlap=self._args.resfinder_acqoverlap,
-                which_mincov=self._args.resfinder_mincov / 100,
-                which_threshold=self._args.resfinder_threshold / 100
             ), Loader=yaml.SafeLoader))
 
         # Set studies-specific parameters
@@ -146,12 +143,6 @@ class MainBacillusPipeline(ReportPipeline):
             '--cov-max', default=100.0, type=float,
             help='Maximum coverage (datasets with higher estimated coverage will be downsampled to the given value)')
         parser.add_argument('--species', help='Bacillus species under study', choices=['cereus', 'subtilis'])
-        parser.add_argument('--resfinder-acqoverlap', help='Maximum overlap between genes found',
-                            type=int, choices=range(0, 10000), default=30, metavar='[0-10,000]')
-        parser.add_argument('--resfinder-mincov', help='Minimum breadth of coverage (percent)',
-                            type=int, choices=range(0, 100), default=80, metavar='[0-100]')
-        parser.add_argument('--resfinder-threshold', help='Minimum sequence identity (percent)',
-                            type=int, choices=range(0, 100), default=60, metavar='[0-100]')
 
         for analysis_key in MainBacillusPipeline.CUSTOM_ANALYSES:
             parser.add_argument(f"--{analysis_key.replace('_', '-')}", action='store_true')
