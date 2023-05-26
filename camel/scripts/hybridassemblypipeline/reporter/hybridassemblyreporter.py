@@ -24,10 +24,8 @@ class HybridAssemblyReporter(Tool):
     MATCH_COLORS = {0: None, 1: 'grey', 2: 'lightgreen', 3: 'green'}
     REPORT_STRUCTURE = [
         ['Read trimming and basic QC', 'trim'],
-        ['Quast analysis', 'quast'],
+        ['Assembly statistics', 'assembly'],
         ['Variant calling analysis', 'vc'],
-        ['Sniffles analysis', 'sniffles'],
-        ['Mapping analysis', 'mapping'],
         ['Commands', 'commands'],
         ['Citations', 'citations']
     ]
@@ -79,23 +77,27 @@ class HybridAssemblyReporter(Tool):
         self.__add_overview_links()
         self.report.add_module_header('Overview')
         self.__add_overview_section()
-        self.report.add_module_header('Read trimming')
+
+        # Trimming section
+        self.report.add_module_header('Read trimming', id_='trim')
         self.report.add_html_object(self._tool_inputs['HTML_trim_illumina'][0].value)
         self._tool_inputs['HTML_trim_illumina'][0].value.copy_files(self.report.output_dir)
         self.report.add_html_object(self._tool_inputs['HTML_trim_ont'][0].value)
         self._tool_inputs['HTML_trim_ont'][0].value.copy_files(self.report.output_dir)
-        self.report.add_module_header('Assembly statistics')
+
+        # Other section
+        self.report.add_module_header('Assembly statistics', id_='assembly')
         self.__add_quast_section(self._tool_inputs['TSV_quast'][0].path, self._input_informs['quast'])
-        self.report.add_module_header('Variant calling')
+        self.report.add_module_header('Variant calling', id_='vc')
         self.__add_vc_table(self._tool_inputs['TSV_vc'][0].path)
         self.__add_sniffles_table(self._tool_inputs['TSV_sniffles'][0].path)
         self.__add_mapping_table(self._tool_inputs['TSV_mapping'][0].path)
         self.__add_ale_score_table()
 
         # Commands & citations
-        self.report.add_module_header('Commands')
+        self.report.add_module_header('Commands', id_='commands')
         self.report.add_html_object(self._input_informs['commands'][0].value)
-        self.report.add_module_header('Citations')
+        self.report.add_module_header('Citations', id_='citations')
         self.report.add_html_object(self._input_informs['citations'][0].value)
         self.report.save()
 
@@ -126,7 +128,7 @@ class HybridAssemblyReporter(Tool):
         assemblies = []
         for io_fasta in self._tool_inputs['FASTA']:
             fasta_key = io_fasta.path.parent.name
-            relative_path = Path('assemblies', fasta_key, io_fasta.path.name)
+            relative_path = Path('assemblies', f'consensus_{fasta_key}.fasta')
             section.add_file(io_fasta.path, relative_path)
             assemblies.append({
                 'Assembly step': fasta_key,
@@ -143,8 +145,7 @@ class HybridAssemblyReporter(Tool):
             Flye; (3) polishing using Medaka (long-reads), followed by POLCA and Polypolish (short-reads); (4) Quality
             assessment using QUAST and several variant callers. An additional short-read first assembly is created 
             using Unicycler.
-            """
-        )
+            """)
         section.copy_files(self.report.output_dir)
         self.report.add_html_object(section)
 
