@@ -40,10 +40,29 @@ sequence_typing:
     detection_method: blast
 
 amrfinder:
-  db: /db/amrfinder/
+  db: /db/amrfinder/latest
+
+mob_suite:
+  db: /db/mob_suite/latest
 
 gene_detection:
   gmo:
-    path: /scratch/magodfroid/BacillusPipeline/PipelineData/
-  plasmid:
-    path: /db/plsdb/20210623/
+    path: /scratch/magodfroid/BacillusPipeline/PipelineData
+  vfdb_core:
+      path: /db/gene_detection/VFDB_core
+      perc_identity_cutoff: 90
+      metadata:
+        name: Gene
+        key: gene
+  plasmidfinder:
+    path: /db/gene_detection/PlasmidFinder-entero
+    params:
+      blastn:
+        min_percent_identity: 95
+        min_coverage: 60
+      srst2:
+        max_divergence: 5
+        min_coverage: 60
+    metadata:
+      name: Notes
+      key: notes

@@ -32,7 +32,7 @@ rule quality_checks_mapping_rate:
     Checks the mapping rate against the reference genome / assembled contigs.
     """
     input:
-        INFORMS = quality_checks.get_mapping_rate_informs(config) if config['read_type'] == 'illumina' else []
+        INFORMS = quality_checks.get_mapping_rate_informs(config)
     output:
         JSON = Path(config['working_dir']) / 'quality_checks' / 'mapping_ref.json'
     params:
@@ -50,7 +50,7 @@ rule quality_checks_coverage:
     Checks the coverage against the reference genome / assembled contigs.
     """
     input:
-        INFORMS = quality_checks.get_depth_informs(config) if config['read_type'] == 'illumina' else []
+        INFORMS = quality_checks.get_depth_informs(config)
     output:
         JSON = Path(config['working_dir']) / 'quality_checks' / 'cov_ref.json'
     params:

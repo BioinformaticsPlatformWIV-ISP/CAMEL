@@ -4,7 +4,7 @@ DIR_AMRFINDER = Path('amrfinder')
 SNAKEFILE_AMRFINDER = f'{Path(__file__).parent / Path(__file__).stem}.smk'
 
 # Input
-INPUT_RESFINDER_FASTA = DIR_AMRFINDER / 'fasta.io'
+INPUT_AMRFINDER_FASTA = DIR_AMRFINDER / 'fasta.io'
 
 # Report and summary
 OUTPUT_AMRFINDER_INFORMS = DIR_AMRFINDER / 'informs.io'

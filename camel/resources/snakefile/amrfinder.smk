@@ -11,7 +11,7 @@ rule amrfinder_run:
     Runs the AMRFinder tool.
     """
     input:
-        FASTA = Path(config['working_dir']) / amrfinder.INPUT_RESFINDER_FASTA,
+        FASTA = Path(config['working_dir']) / amrfinder.INPUT_AMRFINDER_FASTA,
         DIR = config['amrfinder']['db']
     output:
         TSV = Path(config['working_dir']) / 'amrfinder' / 'tsv.io',
@@ -55,3 +55,18 @@ rule amrfinder_report_empty:
     run:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         SnakePipelineUtils.create_empty_report_section('AMRFinder', Path(output.VAL_HTML))
+
+rule amrfinder_dump_summary_info:
+    """
+    Dumps the summary information for the ResFinder workflow in tabular format.
+    """
+    input:
+        INFORMS = Path(config['working_dir']) / rules.amrfinder_run.output.INFORMS
+    output:
+        TSV = Path(config['working_dir']) / 'amrfinder' / 'summary_amrfinder.tsv'
+    run:
+        import json
+        informs = SnakemakeUtils.load_object(Path(input.INFORMS))
+        data = []
+        with open(output.TSV, 'w') as handle:
+            handle.write('{}\t{}\n'.format('amrfinder_typing_results', json.dumps(data)))

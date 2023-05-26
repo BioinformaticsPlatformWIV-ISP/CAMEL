@@ -2,7 +2,8 @@ import shutil
 from pathlib import Path
 
 from camel.resources.snakefile import trimming, trimming_illumina, assembly_spades, assembly_canu, \
-    quality_checks, contamination_check_kraken, sequence_typing, downsampling, amrfinder, trimming_ont, gene_detection
+    quality_checks, contamination_check_kraken, sequence_typing, downsampling, amrfinder, trimming_ont, gene_detection, \
+    mobsuite
 from camel.scripts.bacilluspipeline.snakefile import btyper
 
 #######################
@@ -19,6 +20,7 @@ include: sequence_typing.SNAKEFILE_SEQUENCE_TYPING
 include: btyper.SNAKEFILE_BTYPER
 include: amrfinder.SNAKEFILE_AMRFINDER
 include: gene_detection.SNAKEFILE_GENE_DETECTION
+include: mobsuite.SNAKEFILE_MOB_SUITE
 
 #########
 # Rules #
@@ -96,7 +98,7 @@ rule select_fastq_to_io:
 # For some reason, I cannot include the lines in the rule select_fasta_to_tools
 rule select_fasta_to_genedetection:
     """
-        This rules links the output of the assembly workflow to the other workflows.
+    This rules links the output of the assembly workflow to the other workflows.
     """
     input:
         FASTA_spades = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'illumina' else [],
@@ -122,16 +124,19 @@ rule select_fasta_to_tools:
         FASTA_canu = Path(config['working_dir']) / assembly_canu.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else []
     output:
         FASTA_btyper = Path(config['working_dir']) / btyper.INPUT_BTYPER_FASTA,
-        FASTA_amrfinder = Path(config['working_dir']) / amrfinder.INPUT_RESFINDER_FASTA,
+        FASTA_amrfinder = Path(config['working_dir']) / amrfinder.INPUT_AMRFINDER_FASTA,
+        FASTA_mobsuite = Path(config['working_dir']) / mobsuite.INPUT_MOBSUITE_FASTA
     params:
         read_type=config['read_type']
     run:
         if params.read_type == 'nanopore':
             shutil.copyfile(Path(input.FASTA_canu), Path(output.FASTA_btyper))
             shutil.copyfile(Path(input.FASTA_canu), Path(output.FASTA_amrfinder))
+            shutil.copyfile(Path(input.FASTA_canu), Path(output.FASTA_mobsuite))
         elif params.read_type == 'illumina':
             shutil.copyfile(Path(input.FASTA_spades),Path(output.FASTA_btyper))
             shutil.copyfile(Path(input.FASTA_spades),Path(output.FASTA_amrfinder))
+            shutil.copyfile(Path(input.FASTA_spades),Path(output.FASTA_mobsuite))
         else:
             raise ValueError(f'Unsupported read type: {params.read_type}')
 
@@ -159,8 +164,9 @@ rule report_command_section:
         INFORMS_assembly = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_INFORMS if config['read_type'] == 'illumina' else Path(config['working_dir']) / assembly_canu.OUTPUT_ASSEMBLY_INFORMS,
         INFORMS_assembly_filt = Path(config['working_dir']) / 'assembly_spades' / 'filtering' / 'informs.io' if config['read_type'] == 'illumina' else [],
         INFORMS_kraken = Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_KRAKEN_INFORMS if 'kraken' in config['analyses'] else [],
-        INFORMS_gmo = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='gmo') if 'gmo' in config['analyses'] else[],
-        INFORMS_plasmid = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='plasmid') if 'plasmid' in config['analyses'] else[],
+        INFORMS_gmo = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='gmo') if 'gmo' in config['analyses'] else [],
+        INFORMS_vfdb_core = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='vfdb_core') if 'vfdb_core' in config['analyses'] else [],
+        INFORMS_mob_suite = Path(config['working_dir']) / mobsuite.OUTPUT_MOB_SUITE_INFORMS  if 'mob_suite' in config['analyses'] else [],
         INFORMS_mapping = quality_checks.get_mapping_rate_informs(config) if config['read_type'] == 'illumina' else [],
         INFORMS_depth = quality_checks.get_depth_informs(config) if config['read_type'] == 'illumina' else [],
         INFORMS_btyper = Path(config['working_dir']) / str(btyper.OUTPUT_INFORMS_BTYPER).format(scheme='btyper_typing') if 'btyper' in config['analyses'] else [],
@@ -193,8 +199,10 @@ rule report_combine_all:
         report_assembly = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_REPORT if config['read_type'] == 'illumina' else Path(config['working_dir']) / assembly_canu.OUTPUT_ASSEMBLY_REPORT,
         report_kraken = Path(config['working_dir']) / (contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT if 'kraken' in config['analyses'] else contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT_EMPTY),
         report_adv_qc = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_REPORT if config['read_type'] == 'illumina' else [],
-        report_gmo = gene_detection.get_gene_detection_report('gmo',config),
-        report_plasmid = gene_detection.get_gene_detection_report('plasmid',config),
+        report_gmo = gene_detection.get_gene_detection_report('gmo', config),
+        report_vfdb_core = gene_detection.get_gene_detection_report('vfdb_core', config),
+        report_plasmidfinder = gene_detection.get_gene_detection_report('plasmidfinder', config),
+        report_mob_suite = Path(config['working_dir']) / (mobsuite.OUTPUT_MOB_SUITE_REPORT if 'kleborate' in config['analyses'] else mobsuite.OUTPUT_MOB_SUITE_REPORT_EMPTY),
         report_mlst=sequence_typing.get_sequence_typing_report('mlst',config),
         report_cgmlst=sequence_typing.get_sequence_typing_report('cgmlst',config),
         report_btyper = Path(config['working_dir']) / btyper.OUTPUT_BTYPER_REPORT,
@@ -232,7 +240,9 @@ rule report_combine_all:
             ('Assembly', 'assem', [Path(input.report_assembly)]),
             ('Advanced QC', 'adv_qc', [Path(x) for x in (input.report_kraken, input.report_adv_qc)] if config['read_type'] == 'illumina' else [Path(input.report_kraken)]),
             ('GMO detection', 'gmo', [Path(input.report_gmo)]),
-            ('Plasmid detection', 'plasmid', [Path(input.report_plasmid)]),
+            ('Virulence detection', 'virulence', [Path(x) for x in (input.report_vfdb_core,)]),
+            ('Plasmid characterization', 'plasmid', [Path(x) for x in (
+                input.report_plasmidfinder, input.report_mob_suite)]),
             ('Sequence typing', 'st', [Path(x) for x in (input.report_mlst, input.report_cgmlst)]),
             ('BTyper results', 'btyper', [Path(input.report_btyper)]),
             ('AMRFinder results', 'amrfinder', [Path(input.report_amrfinder)]),
@@ -275,7 +285,9 @@ rule summary_combine_all:
         Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_SUMMARY if config['read_type'] == 'illumina' else Path(config['working_dir']) / assembly_canu.OUTPUT_ASSEMBLY_SUMMARY,
         Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY if config['read_type'] == 'illumina' else [],
         Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='gmo') if 'gmo' in config['analyses'] else [],
-        Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='plasmid') if 'plasmid' in config['analyses'] else [],
+        Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='vfdb_core') if 'vfdb_core' in config['analyses'] else [],
+        Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='plasmidfinder') if 'plasmidfinder' in config['analyses'] else [],
+        Path(config['working_dir']) / mobsuite.OUTPUT_MOB_SUITE_SUMMARY if 'mob_suite' in config['analyses'] else [],
         Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_SUMMARY if 'kraken' in config['analyses'] else [],
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='mlst') if 'mlst' in config['analyses'] else [],
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='cgmlst') if 'cgmlst' in config['analyses'] else [],
