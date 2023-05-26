@@ -289,13 +289,13 @@ rule report_create_sections:
         VCF_sniffles = [Path(config['working_dir']) / 'qc' / key / 'sniffles' / 'variants.vcf' for key in quality_checks.consensus_by_tool.keys()],
         WIGGLE_ale = [Path(config['working_dir']) / 'qc' / key / 'ale_illumina' / f'ALE.ale-{ale_key}.wig' for key in quality_checks.consensus_by_tool.keys() for ale_key in quality_checks.ALE_KEYS]
     output:
-        HTML = Path(config['working_dir']) / Path(config['output_html']),
-        DIR = directory(Path(config['working_dir']) / Path(config['output_dir']))
+        HTML = Path(config['working_dir']) / Path(config['output_html'])
     params:
         sample_name = config['sample_name'],
         input = config['input'],
         pipeline = config['pipeline'],
-        working_dir = Path(config['working_dir'])
+        working_dir = Path(config['working_dir']),
+        output_dir = config['output_dir']
     run:
         from camel.app.io.tooliovalue import ToolIOValue
         from camel.scripts.hybridassemblypipeline.reporter.hybridassemblyreporter import HybridAssemblyReporter
@@ -325,6 +325,6 @@ rule report_create_sections:
             'pipeline': params.pipeline,
             'input': params.input
         })
-        reporter.update_parameters(output_filename=str(output.HTML), output_dir=str(output.DIR))
+        reporter.update_parameters(output_filename=str(output.HTML), output_dir=str(params.output_dir))
         step = Step(str(rule), reporter, camel, params.working_dir, config)
         step.run_step()
