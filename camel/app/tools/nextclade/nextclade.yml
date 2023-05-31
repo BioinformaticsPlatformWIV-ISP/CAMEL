@@ -1,0 +1,4 @@
+dependencies: [ nextclade/2.14.0 ]
+parameters:
+  min_length: { default: false, mandatory: false, option: --min-length, value: 100 }
+tool_command: nextclade
