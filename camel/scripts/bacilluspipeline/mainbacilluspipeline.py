@@ -19,7 +19,7 @@ class MainBacillusPipeline(ReportPipeline):
     Main class to run the Bacillus pipeline.
     """
 
-    CUSTOM_ANALYSES = ['kraken', 'btyper', 'mlst', 'cgmlst', 'amrfinder', 'gmo', 'vfdb_core']
+    CUSTOM_ANALYSES = ['kraken', 'btyper', 'mlst', 'cgmlst', 'amrfinder', 'gmo', 'vfdb_core', 'plasmidfinder', 'mobsuite']
     # CUSTOM_ANALYSES = ['kraken', 'btyper', 'mlst', 'cgmlst', 'amrfinder']
 
     DATA_BY_SPECIES = {

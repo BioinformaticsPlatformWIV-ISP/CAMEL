@@ -63,7 +63,7 @@ class GenomicContext(Tool):
         section = HtmlReportSection('Genomic context')
 
         # Check if the detection method is BLAST
-        if self._parameters['detection_method'] != 'blast':
+        if self._parameters['detection_method'].value != 'blast':
             logging.warning('Genomic context can only be predicted with blast as detection method')
             section.add_paragraph('Predicting genomic context is only performed when the detection method is blast.')
         else:

@@ -57,8 +57,8 @@ class MOBRecon(Tool):
         self._tool_outputs['FASTA'] = []
         for path_fasta in sorted(dir_out.glob('plasmid*.fasta')):
             self._tool_outputs['FASTA'].append(ToolIOFile(path_fasta))
-        if len(self._tool_outputs['FASTA']) == 0:
-            self._tool_outputs.pop('FASTA')
+        # if len(self._tool_outputs['FASTA']) == 0:
+        #     self._tool_outputs.pop('FASTA')
 
     def _execute_tool(self) -> None:
         """
@@ -78,11 +78,15 @@ class MOBRecon(Tool):
         :param path_out: Output file path
         :return: None
         """
-        with path_out.open() as handle:
-            header = handle.readline().split('\t')
-            values = handle.readline().split('\t')
-            for k, v in zip(header, values):
-                self._informs[k] = v
+        if path_out.exists():
+            with path_out.open() as handle:
+                header = handle.readline().split('\t')
+                values = handle.readline().split('\t')
+                for k, v in zip(header, values):
+                    self._informs[k] = v
+        else:
+            with open(path_out, 'w') as handle:
+                handle.write('No plasmids found by MOB-Suite.\n')
 
     def _parse_contig_report(self, path_out: Path) -> None:
         """
