@@ -4,7 +4,7 @@ from pathlib import Path
 from camel.resources.snakefile import trimming, trimming_illumina, assembly_spades, assembly_canu, \
     quality_checks, contamination_check_kraken, sequence_typing, downsampling, amrfinder, trimming_ont, gene_detection, \
     mobsuite
-from camel.scripts.bacilluspipeline.snakefile import btyper
+from camel.scripts.bacilluspipeline.snakefile import btyper, ani
 
 #######################
 # Included Snakefiles #
@@ -21,6 +21,7 @@ include: btyper.SNAKEFILE_BTYPER
 include: amrfinder.SNAKEFILE_AMRFINDER
 include: gene_detection.SNAKEFILE_GENE_DETECTION
 include: mobsuite.SNAKEFILE_MOB_SUITE
+include: ani.SNAKEFILE_ANI
 
 #########
 # Rules #
@@ -95,11 +96,11 @@ rule select_fastq_to_io:
         else:
             raise ValueError(f'Unsupported read type: {params.read_type}')
 
-rule determine_bacillus_species:
+checkpoint determine_bacillus_species:
     input:
         TSV_report = Path(config['working_dir']) / 'contamination_check' / 'kraken2' / 'tsv-report.io'
     output:
-        TSV_summary = Path(config['working_dir'] / 'contamination_check' / 'species_check.tsv')
+        TSV_summary = Path(config['working_dir']) / 'contamination_check' / 'species_check.tsv'
     run:
         DATA_BY_SPECIES = {
             'cereus': {
@@ -114,12 +115,13 @@ rule determine_bacillus_species:
                 'genome_size': 4_134_800,
                 'full_name': 'Bacillus subtilis',
                 'mlst_db': '/db/sequence_typing/bacillus_subtilis/mlst',
-                'cgmlst_db': '/db/sequence_typing/bacillus_subtilis/cgmlst'
+                'cgmlst_db': '/db/sequence_typing/bacillus_subtilis/cgmlst',
+                'fastani_db': '/db/fastani/subtilis.txt'
             }
         }
-        TSV_report = SnakemakeUtils.load_object(input.TSV_report)
+        TSV_report = SnakemakeUtils.load_object(Path(input.TSV_report))
         all_species = []
-        with open(TSV_report, 'r') as handle:
+        with open(TSV_report[0].path, 'r') as handle:
             for line in handle:
                 split_line = line.split()
                 taxonomy_level = split_line[3]
@@ -127,33 +129,34 @@ rule determine_bacillus_species:
                     species_name = ' '.join(split_line[5:]).rstrip()
                     percentage = float(split_line[0])
                     all_species.append([species_name, percentage])
-        sorted_all_species = sorted(all_species, key=lambda x:x[1])
-        with open(output.TSV_summary, 'w') as handle:
-            handle.write('Species\tPercentage\n')
-            for entry in sorted_all_species:
-                handle.write('{}\t{}\n'.format(entry[0], entry[1]))
+        sorted_all_species = sorted(all_species, key=lambda x:x[1], reverse=True)
         most_represented = sorted_all_species[0][0].split()[1].strip().lower()
+        if most_represented == 'subtilis':
+            config['fastani']['path'] = DATA_BY_SPECIES[most_represented]['fastani_db']
         config['expected_species'] = DATA_BY_SPECIES[most_represented]['full_name']
         config['expected_gc_content'] = DATA_BY_SPECIES[most_represented]['gc_content']
         config['genome_size'] = DATA_BY_SPECIES[most_represented]['genome_size']
         config['mlst_db'] = DATA_BY_SPECIES[most_represented]['mlst_db']
         config['cgmlst_db'] = DATA_BY_SPECIES[most_represented]['cgmlst_db']
+        with open(output.TSV_summary, 'w') as handle:
+            for entry in sorted_all_species:
+                if entry[0] in ['cereus', 'subtilis']:
+                    handle.write(entry[0])
 
-rule select_fasta_to_genedetection:
+rule select_fasta_to_gene_detection:
     """
-    This rules links the output of the assembly workflow to the other workflows.
+    This rule links the output of the assembly workflows to the gene detection workflow.
     """
     input:
         FASTA_spades = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'illumina' else [],
-        FASTA_canu = Path(config['working_dir']) / assembly_canu.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else [],
-        species_check = rules.determine_bacillus_species.output.TSV_summary
+        FASTA_canu = Path(config['working_dir']) / assembly_canu.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else []
     output:
-        FASTA_genedetection = Path(config['working_dir']) / gene_detection.INPUT_GENE_DETECTION_FASTA
+        FASTA_genedetection = Path(config['working_dir']) / gene_detection.INPUT_GENE_DETECTION_FASTA,
     params:
         read_type=config['read_type']
     run:
         if params.read_type == 'nanopore':
-            shutil.copyfile(Path(input.FASTA_canu), Path(output.FASTA_genedetection))
+            shutil.copyfile(Path(input.FASTA_canu),Path(output.FASTA_genedetection))
         elif params.read_type == 'illumina':
             shutil.copyfile(Path(input.FASTA_spades),Path(output.FASTA_genedetection))
         else:
@@ -165,24 +168,73 @@ rule select_fasta_to_tools:
     """
     input:
         FASTA_spades = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'illumina' else [],
-        FASTA_canu = Path(config['working_dir']) / assembly_canu.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else []
+        FASTA_canu = Path(config['working_dir']) / assembly_canu.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else [],
+        species_check = rules.determine_bacillus_species.output.TSV_summary
+    output:
+        FASTA_amrfinder = Path(config['working_dir']) / amrfinder.INPUT_AMRFINDER_FASTA,
+        FASTA_mobsuite = Path(config['working_dir']) / mobsuite.INPUT_MOBSUITE_FASTA,
+    params:
+        read_type=config['read_type']
+    run:
+        if params.read_type == 'nanopore':
+            shutil.copyfile(Path(input.FASTA_canu),Path(output.FASTA_amrfinder))
+            shutil.copyfile(Path(input.FASTA_canu),Path(output.FASTA_mobsuite))
+        elif params.read_type == 'illumina':
+            shutil.copyfile(Path(input.FASTA_spades),Path(output.FASTA_amrfinder))
+            shutil.copyfile(Path(input.FASTA_spades),Path(output.FASTA_mobsuite))
+        else:
+            raise ValueError(f'Unsupported read type: {params.read_type}')
+
+rule select_fasta_to_tools_subtilis:
+    """
+    This rules links the output of the assembly workflow to the other workflows.
+    """
+    input:
+        FASTA_spades = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'illumina' else [],
+        FASTA_canu = Path(config['working_dir']) / assembly_canu.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else [],
+        species_check = rules.determine_bacillus_species.output.TSV_summary
+    output:
+        FASTA_ani = Path(config['working_dir']) / ani.INPUT_FASTA_ANI
+    params:
+        read_type=config['read_type']
+    run:
+        if params.read_type == 'nanopore':
+            shutil.copyfile(Path(input.FASTA_canu), Path(output.FASTA_ani))
+        elif params.read_type == 'illumina':
+            shutil.copyfile(Path(input.FASTA_spades),Path(output.FASTA_ani))
+        else:
+            raise ValueError(f'Unsupported read type: {params.read_type}')
+
+rule select_fasta_to_tools_cereus:
+    """
+    This rules links the output of the assembly workflow to the other workflows.
+    """
+    input:
+        FASTA_spades = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'illumina' else [],
+        FASTA_canu = Path(config['working_dir']) / assembly_canu.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else [],
+        species_check = rules.determine_bacillus_species.output.TSV_summary
     output:
         FASTA_btyper = Path(config['working_dir']) / btyper.INPUT_BTYPER_FASTA,
-        FASTA_amrfinder = Path(config['working_dir']) / amrfinder.INPUT_AMRFINDER_FASTA,
-        FASTA_mobsuite = Path(config['working_dir']) / mobsuite.INPUT_MOBSUITE_FASTA
     params:
         read_type=config['read_type']
     run:
         if params.read_type == 'nanopore':
             shutil.copyfile(Path(input.FASTA_canu), Path(output.FASTA_btyper))
-            shutil.copyfile(Path(input.FASTA_canu), Path(output.FASTA_amrfinder))
-            shutil.copyfile(Path(input.FASTA_canu), Path(output.FASTA_mobsuite))
         elif params.read_type == 'illumina':
             shutil.copyfile(Path(input.FASTA_spades),Path(output.FASTA_btyper))
-            shutil.copyfile(Path(input.FASTA_spades),Path(output.FASTA_amrfinder))
-            shutil.copyfile(Path(input.FASTA_spades),Path(output.FASTA_mobsuite))
         else:
             raise ValueError(f'Unsupported read type: {params.read_type}')
+
+def aggregate_rules(wildcards):
+    with open(checkpoints.determine_bacillus_species.get(**wildcards).output.TSV_summary) as handle:
+        if handle.read().strip() == 'subtilis':
+            return {'species': [Path(config['working_dir']) / ani.OUTPUT_INFORMS_ANI,
+                    Path(config['working_dir']) / ani.OUTPUT_ANI_SUMMARY,
+                    Path(config['working_dir']) / ani.OUTPUT_ANI_REPORT]}
+        else:
+            return {'species': [Path(config['working_dir']) / btyper.OUTPUT_INFORMS_BTYPER,
+                    Path(config['working_dir']) / btyper.OUTPUT_BTYPER_SUMMARY,
+                    Path(config['working_dir']) / btyper.OUTPUT_BTYPER_REPORT]}
 
 rule report_pickle_citations:
     """
@@ -200,7 +252,6 @@ rule report_pickle_citations:
             params.citation_keys['other'], params.citation_keys['main'])
         SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output.HTML))
 
-
 rule report_command_section:
     input:
         INFORMS_downsampling = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_INFORMS,
@@ -212,7 +263,9 @@ rule report_command_section:
         INFORMS_vfdb_core = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='vfdb_core') if 'vfdb_core' in config['analyses'] else [],
         INFORMS_mapping = quality_checks.get_mapping_rate_informs(config) if config['read_type'] == 'illumina' else [],
         INFORMS_depth = quality_checks.get_depth_informs(config) if config['read_type'] == 'illumina' else [],
-        INFORMS_btyper = Path(config['working_dir']) / str(btyper.OUTPUT_INFORMS_BTYPER).format(scheme='btyper_typing') if 'btyper' in config['analyses'] else [],
+        INFORMS_species = lambda wildcards: aggregate_rules(wildcards)['species'][0],
+        # INFORMS_btyper = Path(config['working_dir']) / str(btyper.OUTPUT_INFORMS_BTYPER).format(scheme='btyper_typing') if 'btyper' in config['analyses'] else [],
+        # INFORMS_ani = Path(config['working_dir']) / str(ani.OUTPUT_INFORMS_ANI) if open(rules.determine_bacillus_species.output.TSV_summary).read().strip() == 'subtilis' else [],
         INFORMS_amrfinder = Path(config['working_dir']) / str(amrfinder.OUTPUT_AMRFINDER_INFORMS) if 'amrfinder' in config['analyses'] else [],
         INFORMS_mob_suite= Path(config['working_dir']) / mobsuite.OUTPUT_MOB_SUITE_INFORMS if 'mob_suite' in config['analyses'] else[]
     output:
@@ -248,9 +301,10 @@ rule report_combine_all:
         report_plasmidfinder = gene_detection.get_gene_detection_report('plasmidfinder', config),
         report_mob_suite = Path(config['working_dir']) / (mobsuite.OUTPUT_MOB_SUITE_REPORT if 'mobsuite' in config['analyses'] else mobsuite.OUTPUT_MOB_SUITE_REPORT_EMPTY),
         report_genomic_context = Path(config['working_dir']) / 'mob_suite' / 'genomic_context' / 'html.io',
-        report_mlst=sequence_typing.get_sequence_typing_report('mlst',config),
-        report_cgmlst=sequence_typing.get_sequence_typing_report('cgmlst',config),
-        report_btyper = Path(config['working_dir']) / btyper.OUTPUT_BTYPER_REPORT,
+        report_mlst = sequence_typing.get_sequence_typing_report('mlst',config),
+        report_cgmlst = sequence_typing.get_sequence_typing_report('cgmlst',config),
+        report_species = lambda wildcards: aggregate_rules(wildcards)['species'][2],
+        # report_btyper = Path(config['working_dir']) / btyper.OUTPUT_BTYPER_REPORT,
         report_amrfinder = Path(config['working_dir']) / amrfinder.OUTPUT_AMRFINDER_REPORT,
         report_citations = rules.report_pickle_citations.output.HTML,
         report_commands = rules.report_command_section.output.HTML
@@ -288,7 +342,8 @@ rule report_combine_all:
             ('Virulence detection', 'virulence', [Path(x) for x in (input.report_vfdb_core,)]),
 
             ('Sequence typing', 'st', [Path(x) for x in (input.report_mlst, input.report_cgmlst)]),
-            ('BTyper results', 'btyper', [Path(input.report_btyper)]),
+            ('Species identification', 'species', [Path(input.report_species)]),
+            # ('BTyper results', 'btyper', [Path(input.report_btyper)]),
             ('AMRFinder results', 'amrfinder', [Path(input.report_amrfinder)]),
             ('Plasmid characterization', 'plasmid', [Path(x) for x in (
                 input.report_plasmidfinder, input.report_mob_suite, input.report_genomic_context)]),
@@ -336,7 +391,8 @@ rule summary_combine_all:
         Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_SUMMARY if 'kraken' in config['analyses'] else [],
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='mlst') if 'mlst' in config['analyses'] else [],
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='cgmlst') if 'cgmlst' in config['analyses'] else [],
-        Path(config['working_dir']) / btyper.OUTPUT_BTYPER_SUMMARY if 'btyper' in config['analyses'] else [],
+        lambda wildcards: aggregate_rules(wildcards)['species'][1],
+        # Path(config['working_dir']) / btyper.OUTPUT_BTYPER_SUMMARY if 'btyper' in config['analyses'] else [],
         Path(config['working_dir']) / amrfinder.OUTPUT_AMRFINDER_SUMMARY if 'amrfinder' in config['analyses'] else [],
         Path(config['working_dir']) / mobsuite.OUTPUT_MOB_SUITE_SUMMARY if 'mob_suite' in config['analyses'] else []
     output:

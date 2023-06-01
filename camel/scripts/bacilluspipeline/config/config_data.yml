@@ -48,6 +48,9 @@ amrfinder:
 mob_suite:
   db: /db/mob_suite/latest
 
+fastani:
+  path: null
+
 gene_detection:
   gmo:
     path: /scratch/magodfroid/BacillusPipeline/PipelineData
