@@ -95,14 +95,58 @@ rule select_fastq_to_io:
         else:
             raise ValueError(f'Unsupported read type: {params.read_type}')
 
-# For some reason, I cannot include the lines in the rule select_fasta_to_tools
+rule determine_bacillus_species:
+    input:
+        TSV_report = Path(config['working_dir']) / 'contamination_check' / 'kraken2' / 'tsv-report.io'
+    output:
+        TSV_summary = Path(config['working_dir'] / 'contamination_check' / 'species_check.tsv')
+    run:
+        DATA_BY_SPECIES = {
+            'cereus': {
+                'gc_content': 35,
+                'genome_size': 2_796_178,
+                'full_name': 'Bacillus cereus',
+                'mlst_db': '/db/sequence_typing/bacillus_cereus/mlst',
+                'cgmlst_db': '/db/sequence_typing/bacillus_cereus/cgmlst'
+            },
+            'subtilis': {
+                'gc_content': 43,
+                'genome_size': 4_134_800,
+                'full_name': 'Bacillus subtilis',
+                'mlst_db': '/db/sequence_typing/bacillus_subtilis/mlst',
+                'cgmlst_db': '/db/sequence_typing/bacillus_subtilis/cgmlst'
+            }
+        }
+        TSV_report = SnakemakeUtils.load_object(input.TSV_report)
+        all_species = []
+        with open(TSV_report, 'r') as handle:
+            for line in handle:
+                split_line = line.split()
+                taxonomy_level = split_line[3]
+                if taxonomy_level == 'S':
+                    species_name = ' '.join(split_line[5:]).rstrip()
+                    percentage = float(split_line[0])
+                    all_species.append([species_name, percentage])
+        sorted_all_species = sorted(all_species, key=lambda x:x[1])
+        with open(output.TSV_summary, 'w') as handle:
+            handle.write('Species\tPercentage\n')
+            for entry in sorted_all_species:
+                handle.write('{}\t{}\n'.format(entry[0], entry[1]))
+        most_represented = sorted_all_species[0][0].split()[1].strip().lower()
+        config['expected_species'] = DATA_BY_SPECIES[most_represented]['full_name']
+        config['expected_gc_content'] = DATA_BY_SPECIES[most_represented]['gc_content']
+        config['genome_size'] = DATA_BY_SPECIES[most_represented]['genome_size']
+        config['mlst_db'] = DATA_BY_SPECIES[most_represented]['mlst_db']
+        config['cgmlst_db'] = DATA_BY_SPECIES[most_represented]['cgmlst_db']
+
 rule select_fasta_to_genedetection:
     """
     This rules links the output of the assembly workflow to the other workflows.
     """
     input:
         FASTA_spades = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'illumina' else [],
-        FASTA_canu = Path(config['working_dir']) / assembly_canu.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else []
+        FASTA_canu = Path(config['working_dir']) / assembly_canu.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else [],
+        species_check = rules.determine_bacillus_species.output.TSV_summary
     output:
         FASTA_genedetection = Path(config['working_dir']) / gene_detection.INPUT_GENE_DETECTION_FASTA
     params:
