@@ -102,23 +102,6 @@ checkpoint determine_bacillus_species:
     output:
         TSV_summary = Path(config['working_dir']) / 'contamination_check' / 'species_check.tsv'
     run:
-        DATA_BY_SPECIES = {
-            'cereus': {
-                'gc_content': 35,
-                'genome_size': 2_796_178,
-                'full_name': 'Bacillus cereus',
-                'mlst_db': '/db/sequence_typing/bacillus_cereus/mlst',
-                'cgmlst_db': '/db/sequence_typing/bacillus_cereus/cgmlst'
-            },
-            'subtilis': {
-                'gc_content': 43,
-                'genome_size': 4_134_800,
-                'full_name': 'Bacillus subtilis',
-                'mlst_db': '/db/sequence_typing/bacillus_subtilis/mlst',
-                'cgmlst_db': '/db/sequence_typing/bacillus_subtilis/cgmlst',
-                'fastani_db': '/db/fastani/subtilis.txt'
-            }
-        }
         TSV_report = SnakemakeUtils.load_object(Path(input.TSV_report))
         all_species = []
         with open(TSV_report[0].path, 'r') as handle:
@@ -126,11 +109,19 @@ checkpoint determine_bacillus_species:
                 split_line = line.split()
                 taxonomy_level = split_line[3]
                 if taxonomy_level == 'S':
+                    print("HERE!!!")
+                    print(split_line[5])
                     species_name = ' '.join(split_line[5:]).rstrip()
+                    print(species_name)
                     percentage = float(split_line[0])
-                    all_species.append([species_name, percentage])
+                    print(percentage)
+                    all_species.append([species_name.split()[1].strip().lower(), percentage])
         sorted_all_species = sorted(all_species, key=lambda x:x[1], reverse=True)
-        most_represented = sorted_all_species[0][0].split()[1].strip().lower()
+        with open(output.TSV_summary, 'w') as handle:
+            for entry in sorted_all_species:
+                if entry[0] in ['cereus', 'subtilis']:
+                    handle.write(entry[0])
+                    most_represented = entry[0]
         if most_represented == 'subtilis':
             config['fastani']['path'] = DATA_BY_SPECIES[most_represented]['fastani_db']
         config['expected_species'] = DATA_BY_SPECIES[most_represented]['full_name']
@@ -138,10 +129,6 @@ checkpoint determine_bacillus_species:
         config['genome_size'] = DATA_BY_SPECIES[most_represented]['genome_size']
         config['mlst_db'] = DATA_BY_SPECIES[most_represented]['mlst_db']
         config['cgmlst_db'] = DATA_BY_SPECIES[most_represented]['cgmlst_db']
-        with open(output.TSV_summary, 'w') as handle:
-            for entry in sorted_all_species:
-                if entry[0] in ['cereus', 'subtilis']:
-                    handle.write(entry[0])
 
 rule select_fasta_to_gene_detection:
     """
@@ -151,7 +138,7 @@ rule select_fasta_to_gene_detection:
         FASTA_spades = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'illumina' else [],
         FASTA_canu = Path(config['working_dir']) / assembly_canu.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else []
     output:
-        FASTA_genedetection = Path(config['working_dir']) / gene_detection.INPUT_GENE_DETECTION_FASTA,
+        FASTA_genedetection = Path(config['working_dir']) / gene_detection.INPUT_GENE_DETECTION_FASTA
     params:
         read_type=config['read_type']
     run:
@@ -172,7 +159,7 @@ rule select_fasta_to_tools:
         species_check = rules.determine_bacillus_species.output.TSV_summary
     output:
         FASTA_amrfinder = Path(config['working_dir']) / amrfinder.INPUT_AMRFINDER_FASTA,
-        FASTA_mobsuite = Path(config['working_dir']) / mobsuite.INPUT_MOBSUITE_FASTA,
+        FASTA_mobsuite = Path(config['working_dir']) / mobsuite.INPUT_MOBSUITE_FASTA
     params:
         read_type=config['read_type']
     run:
@@ -214,7 +201,7 @@ rule select_fasta_to_tools_cereus:
         FASTA_canu = Path(config['working_dir']) / assembly_canu.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else [],
         species_check = rules.determine_bacillus_species.output.TSV_summary
     output:
-        FASTA_btyper = Path(config['working_dir']) / btyper.INPUT_BTYPER_FASTA,
+        FASTA_btyper = Path(config['working_dir']) / btyper.INPUT_BTYPER_FASTA
     params:
         read_type=config['read_type']
     run:

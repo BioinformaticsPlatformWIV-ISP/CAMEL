@@ -30,6 +30,9 @@ class GenomicContext(Tool):
         Checks if the provided input files are valid.
         :return: None
         """
+        print("HERE!!!")
+        print(self._input_informs)
+        print(self._tool_inputs)
         if 'dbs' not in self._input_informs:
             raise InvalidInputSpecificationError('Database informs input is required')
         for data_db in self._input_informs['dbs']:
@@ -74,15 +77,19 @@ class GenomicContext(Tool):
             # Create rows
             table_data = []
             for db in self._input_informs['dbs']:
+                try:
+                    data_db = pd.read_table(self._tool_inputs[f"TSV_{db['key']}"][0].path)
+                except IndexError:
+                    logging.warning(f"No hits found for database {db['key']}")
+                    continue
                 section.add_header(db['title'], 3)
-                data_db = pd.read_table(self._tool_inputs[f"TSV_{db['key']}"][0].path)
                 if len(data_db) > 10:
                     div = HtmlExpandableDiv(f"genomic_context-{db['key']}", f'{len(data_db)} rows.')
                 else:
                     div = HtmlElement('div')
                 div.add_table([
                     [f"<i>{row[db['gene']]}</i>",
-                    *self._get_plasmid_status(row[db['contig']], plasmids)] for row in data_db.to_dict('records')
+                     *self._get_plasmid_status(row[db['contig']], plasmids)] for row in data_db.to_dict('records')
                 ], ['Key', 'Chromosome', *plasmids], [('class', 'data')])
                 section.add_html_object(div)
 
