@@ -23,8 +23,9 @@ downsampling:
   expected_genome_size: {genome_size}
 
 contamination_check:
-  db: /db/kraken2/latest/abfhpv/
+  db: /db/kraken2_full/latest/full
   expected_species: {expected_species}
+  level_of_depth: G
 
 quality_checks:
   typing_scheme: {qc_typing_scheme}
@@ -49,7 +50,7 @@ mob_suite:
   db: /db/mob_suite/latest
 
 fastani:
-  path: null
+  path: /mnt/thor_scratch/bacilluspipeline_v2/subtilis/ref_list.txt
 
 gene_detection:
   gmo:

@@ -18,9 +18,8 @@ rule fastani_run:
     run:
         from camel.app.tools.fastani.fastani import FastANI
         fastani = FastANI(camel)
-        fastani.update_parameters(output_dir = str(params.running_dir))
-        SnakemakeUtils.add_pickle_inputs(fastani,input)
-        fastani.add_input_files({'TSV_FASTA_R': [ToolIOFile(config['fastani']['path'])]})
+        SnakemakeUtils.add_pickle_inputs(fastani, input)
+        fastani.add_input_files({'TSV_FASTA_R': [ToolIOFile(Path(config['fastani']['path']))]})
         step = Step(rule,fastani,camel,params.running_dir,config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(fastani,output)
@@ -33,7 +32,7 @@ rule fastani_report:
         TSV = rules.fastani_run.output.TSV,
         INFORMS_fastani = rules.fastani_run.output.INFORMS
     output:
-        VAL_HTML = Path(config['working_dir']) / ani.OUTPUT_ANI_REPORT
+        HTML = Path(config['working_dir']) / ani.OUTPUT_ANI_REPORT
     params:
         running_dir = Path(config['working_dir']) / 'ani',
         sample_name= config['sample_name']
@@ -51,13 +50,13 @@ rule fastani_report_empty:
     Creates an empty HTML report for the FastANI analysis.
     """
     output:
-        VAL_HTML = Path(config['working_dir']) / ani.OUTPUT_ANI_REPORT_EMPTY
+        HTML = Path(config['working_dir']) / ani.OUTPUT_ANI_REPORT_EMPTY
     params:
         running_dir = Path(config['working_dir']) / 'ani'
     run:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         from camel.app.tools.fastani.fastanireporter import FastANIReporter
-        SnakePipelineUtils.create_empty_report_section(FastANIReporter.TITLE,Path(output.VAL_HTML))
+        SnakePipelineUtils.create_empty_report_section(FastANIReporter.TITLE,Path(output.HTML))
 
 rule fastani_dump_summary_info:
     """

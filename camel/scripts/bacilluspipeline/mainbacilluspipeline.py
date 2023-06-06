@@ -35,7 +35,7 @@ class MainBacillusPipeline(ReportPipeline):
             'genome_size': 4_134_800,
             'full_name': 'Bacillus subtilis',
             'mlst_db': '/db/sequence_typing/bacillus_subtilis/mlst',
-            'cgmlst_db': '/db/sequence_typing/bacillus_subtilis/cgmlst'
+            'cgmlst_db': '/db/sequence_typing/bacillus_subtilis/mlst'
         }
     }
 
@@ -101,7 +101,7 @@ class MainBacillusPipeline(ReportPipeline):
             ), Loader=yaml.SafeLoader))
 
         # Set studies-specific parameters
-        config_data['contamination_check']['level_of_depth'] = 'G'
+        # config_data['contamination_check']['level_of_depth'] = 'G'
         config_data['read_type'] = self._args.read_type
 
         # Nanopore settings
