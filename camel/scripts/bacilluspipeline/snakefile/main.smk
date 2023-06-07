@@ -1,6 +1,8 @@
 import shutil
 from pathlib import Path
 
+import pandas as pd
+
 from camel.resources.snakefile import trimming, trimming_illumina, assembly_spades, assembly_canu, \
     quality_checks, contamination_check_kraken, sequence_typing, downsampling, amrfinder, trimming_ont, gene_detection, \
     mobsuite
@@ -221,71 +223,130 @@ rule report_command_section:
         section = SnakePipelineUtils.create_commands_section(informs, params.working_dir)
         SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output.HTML))
 
-
-rule report_combine_all:
+##########
+# Report #
+##########
+rule report_init:
     """
-    Rule to combine report sections into a single output report.
+    Creates the header section of the report.
     """
-    input:
-        report_downsampling = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_REPORT,
-        report_trimming = trimming.get_trimming_report(config),
-        report_assembly = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_REPORT if config['read_type'] == 'illumina' else Path(config['working_dir']) / assembly_canu.OUTPUT_ASSEMBLY_REPORT,
-        report_kraken = Path(config['working_dir']) / (contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT if 'kraken' in config['analyses'] else contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT_EMPTY),
-        report_adv_qc = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_REPORT if config['read_type'] == 'illumina' else [],
-        report_gmo = gene_detection.get_gene_detection_report('gmo', config),
-        report_vfdb_core = gene_detection.get_gene_detection_report('vfdb_core', config),
-        report_plasmidfinder = gene_detection.get_gene_detection_report('plasmidfinder', config),
-        report_mob_suite = Path(config['working_dir']) / (mobsuite.OUTPUT_MOB_SUITE_REPORT if 'mobsuite' in config['analyses'] else mobsuite.OUTPUT_MOB_SUITE_REPORT_EMPTY),
-        report_genomic_context = Path(config['working_dir']) / 'mob_suite' / 'genomic_context' / 'html.io',
-        report_mlst = sequence_typing.get_sequence_typing_report('mlst',config),
-        report_cgmlst = sequence_typing.get_sequence_typing_report('cgmlst',config),
-        report_btyper = Path(config['working_dir']) / (btyper.OUTPUT_BTYPER_REPORT if config['contamination_check']['expected_species'] == 'Bacillus cereus' else btyper.OUTPUT_BTYPER_REPORT_EMPTY),
-        report_fastani = Path(config['working_dir']) / (ani.OUTPUT_ANI_REPORT if config['contamination_check']['expected_species'] == 'Bacillus subtilis' else ani.OUTPUT_ANI_REPORT_EMPTY),
-        report_amrfinder = Path(config['working_dir']) / amrfinder.OUTPUT_AMRFINDER_REPORT,
-        report_citations = rules.report_pickle_citations.output.HTML,
-        report_commands = rules.report_command_section.output.HTML
     output:
-        HTML = config['output_report']
+        HTML = Path(config['working_dir']) / 'report' / 'html-init.io'
     params:
         sample_name = config['sample_name'],
         config_input = config['input'],
-        output_dir = config['output_dir'],
         pipeline_info = config['pipeline'],
         detection_method = config['detection_method'],
         citation_keys = config['citations']
     run:
         import datetime
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
+        from camel.app.io.tooliovalue import ToolIOValue
 
-        # Add header section
-        report = SnakePipelineUtils.init_pipeline_report(
-            Path(output.HTML), Path(params.output_dir), params.pipeline_info)
-        report.add_html_object(SnakePipelineUtils.create_input_section(
+        # Create header section
+        section = SnakePipelineUtils.create_input_section(
             params.sample_name,
             datetime.datetime.now(),
             params.pipeline_info['version'], ', '.join(
                 input_file['name'] for _, input_files in params.config_input.items() for input_file in input_files),
             [('Detection method', params.detection_method)],
             params.citation_keys['main']
-        ))
+        )
+        SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output.HTML))
 
-        # Add content
+checkpoint determine_species:
+    input:
+        TSV = Path(config['working_dir']) / 'contamination_check' / 'kraken2' / 'tsv-report.io'
+    output:
+        TXT = Path(config['working_dir']) / 'detected_species.txt'
+    run:
+        path_tsv = SnakemakeUtils.load_object(Path(input.TSV))[0].path
+        data_k2 = pd.read_table(path_tsv, usecols=[0, 3, 5], names=['perc', 'level', 'name'])
+        species = data_k2[data_k2['level'] == 'S'].sort_values(by='perc', ascending=False).iloc[0]['name'].strip()
+        with open(output.TXT, 'w') as handle:
+            handle.write(species)
+            handle.write('\n')
+
+rule report_content_cereus:
+    """
+    Creates the main content of the report when the detected species is Bacillus cereus. 
+    """
+    input:
+        report_init = rules.report_init.output.HTML,
+        report_downsampling = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_REPORT,
+        report_trimming = trimming.get_trimming_report(config),
+        report_btyper=Path(config['working_dir']) / (btyper.OUTPUT_BTYPER_REPORT if 'btyper' in config['analyses'] else btyper.OUTPUT_BTYPER_REPORT_EMPTY),
+        report_vfdb_core=gene_detection.get_gene_detection_report('vfdb_core', config)
+    output:
+        HTML = Path(config['working_dir']) / 'report' / 'report_cereus.html'
+    params:
+        output_dir = config['output_dir'],
+        pipeline_info = config['pipeline']
+    run:
+        report = SnakePipelineUtils.init_pipeline_report(
+            Path(output.HTML), Path(params.output_dir), params.pipeline_info)
+        report.add_html_object(SnakemakeUtils.load_object(Path(input.report_init))[0].value)
         report_structure = [
             ('Read trimming and basic QC', 'trim', [Path(input.report_downsampling), Path(input.report_trimming)]),
-            ('Assembly', 'assem', [Path(input.report_assembly)]),
-            ('Advanced QC', 'adv_qc', [Path(x) for x in (input.report_kraken, input.report_adv_qc)] if config['read_type'] == 'illumina' else [Path(input.report_kraken)]),
             ('BTyper results', 'btyper', [Path(input.report_btyper)]),
-            ('FastANI results', 'fastani', [Path(input.report_fastani)]),
-            ('Sequence typing', 'st', [Path(x) for x in (input.report_mlst, input.report_cgmlst)]),
-            ('GMO detection', 'gmo', [Path(input.report_gmo)]),
-            ('Virulence detection', 'virulence', [Path(x) for x in (input.report_vfdb_core,)]),
-            ('AMRFinder results', 'amrfinder', [Path(input.report_amrfinder)]),
-            ('Plasmid characterization', 'plasmid', [Path(x) for x in (
-                input.report_plasmidfinder, input.report_mob_suite, input.report_genomic_context)]),
-            ('Citations', 'citations', [Path(input.report_citations)]),
-            ('Commands', 'commands', [Path(input.report_commands)])
+            ('Virulence detection', 'virulence', [Path(x) for x in (input.report_vfdb_core,)])
         ]
         SnakePipelineUtils.add_report_content(report, report_structure)
+        report.save()
+
+rule report_content_subtilis:
+    """
+    Creates the main content of the report when the detected species is Bacillus subtilis. 
+    """
+    input:
+        report_init = rules.report_init.output.HTML,
+        report_downsampling = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_REPORT,
+        report_trimming = trimming.get_trimming_report(config),
+        report_amrfinder= Path(config['working_dir']) / amrfinder.OUTPUT_AMRFINDER_REPORT,
+        report_vfdb_core= gene_detection.get_gene_detection_report('vfdb_core', config)
+
+    output:
+        HTML = Path(config['working_dir']) / 'report' / 'report_subtilis.html'
+    params:
+        output_dir = config['output_dir'],
+        pipeline_info = config['pipeline']
+    run:
+        report = SnakePipelineUtils.init_pipeline_report(
+            Path(output.HTML), Path(params.output_dir), params.pipeline_info)
+        report.add_html_object(SnakemakeUtils.load_object(Path(input.report_init))[0].value)
+        report_structure = [
+            ('Read trimming and basic QC', 'trim', [Path(input.report_downsampling), Path(input.report_trimming)]),
+            ('Antimicrobial resistance detection', 'amr', [Path(input.report_amrfinder)]),
+            ('Virulence detection', 'virulence', [Path(x) for x in (input.report_vfdb_core,)])
+        ]
+        SnakePipelineUtils.add_report_content(report,report_structure)
+        report.save()
+
+def select_report_input(wildcards) -> Path:
+    with open(checkpoints.determine_species.get().output.TXT) as h:
+        species_k2 = h.readline().strip()
+    if species_k2 == 'Bacillus subtilis':
+        return Path(config['working_dir']) / 'report' / 'report_subtilis.html'
+    elif species_k2 == 'Bacillus cereus':
+        return Path(config['working_dir']) / 'report' / 'report_cereus.html'
+    else:
+        raise ValueError(f'Unsupported species: {species_k2}')
+
+rule report_select_by_species:
+    """
+    Selects the report content based on the detected species.
+    """
+    input:
+        HTML = select_report_input
+    output:
+        HTML = config['output_report']
+    params:
+        output_dir = config['output_dir']
+    shell:
+        """
+        cp {input.HTML} {output.HTML};
+        """
+
 
 rule summary_init:
     """
