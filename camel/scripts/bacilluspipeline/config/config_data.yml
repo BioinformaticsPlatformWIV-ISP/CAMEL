@@ -50,11 +50,11 @@ mob_suite:
   db: /db/mob_suite/latest
 
 fastani:
-  path: /mnt/thor_scratch/bacilluspipeline_v2/subtilis/ref_list.txt
+  path: /db/pipelines/bacillus/ref_list.txt
 
 gene_detection:
   gmo:
-    path: /scratch/magodfroid/BacillusPipeline/PipelineData
+    path: /db/pipelines/bacillus/databaseGMM
   vfdb_core:
       path: /db/gene_detection/VFDB_core
       perc_identity_cutoff: 90
