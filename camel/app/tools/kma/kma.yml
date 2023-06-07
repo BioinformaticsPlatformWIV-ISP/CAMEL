@@ -1,4 +1,4 @@
-dependencies: [kma/1.2.25]
+dependencies: [kma/1.4.12a]
 parameters:
   output_basename: {default: true, mandatory: true, option: -o, value: kma_output}
   bc_nano: {default: false, mandatory: false, option: -bcNano, value: null}
