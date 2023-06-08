@@ -1,8 +1,14 @@
 from pathlib import Path
 
+import pandas as pd
+
+from camel.app.camel import Camel
 from camel.app.io.tooliodirectory import ToolIODirectory
+from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile import resfinder as rf
+
+camel = Camel.get_instance()
 
 rule resfinder_run:
     """
@@ -27,7 +33,7 @@ rule resfinder_run:
             min_cov=params.min_cov, threshold=params.threshold, acq_overlap=params.acq_overlap)
         SnakemakeUtils.add_pickle_inputs(resfinder,input)
         resfinder.add_input_files({'DIR': [ToolIODirectory(Path(params.db))]})
-        step = Step(rule,resfinder,camel,params.running_dir,config)
+        step = Step(str(rule),resfinder,camel,params.running_dir,config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(resfinder,output)
 
@@ -49,7 +55,7 @@ rule resfinder_report:
         resfinder_reporter = ResFinderReporter(camel)
         SnakemakeUtils.add_pickle_inputs(resfinder_reporter,input)
         resfinder_reporter.update_parameters(sample_name=params.sample_name)
-        step = Step(rule,resfinder_reporter,camel,params.running_dir,config)
+        step = Step(str(rule), resfinder_reporter, camel, params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(resfinder_reporter,output)
 
@@ -71,12 +77,12 @@ rule resfinder_dump_summary_info:
     Dumps the summary information for the ResFinder workflow in tabular format.
     """
     input:
-        INFORMS = Path(config['working_dir']) / rules.resfinder_run.output.INFORMS
+        TSV_genes = rules.resfinder_run.output.TSV_genes
     output:
         TSV = Path(config['working_dir']) / rf.OUTPUT_RESFINDER_SUMMARY
     run:
-        import json
-        informs = SnakemakeUtils.load_object(Path(input.INFORMS))
-        data = []
+        tsv_genes = SnakemakeUtils.load_object(Path(input.TSV_genes))[0].path
         with open(output.TSV, 'w') as handle:
-            handle.write('{}\t{}\n'.format('resfinder_typing_results', json.dumps(data)))
+            data_genes = pd.read_table(tsv_genes)
+            handle.write(f"resfinder4_genes\t{', '.join(list(data_genes['Resistance gene']))}")
+            handle.write('\n')

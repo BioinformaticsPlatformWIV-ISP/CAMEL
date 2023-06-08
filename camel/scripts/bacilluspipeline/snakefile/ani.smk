@@ -61,3 +61,16 @@ rule fastani_report_empty:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         from camel.app.tools.fastani.fastanireporter import FastANIReporter
         SnakePipelineUtils.create_empty_report_section(FastANIReporter.TITLE, Path(output.HTML))
+
+rule fastani_dump_summary_info:
+    """
+    Dumps the summary information for the FastANI workflow in tabular format.
+    """
+    input:
+        TSV = rules.fastani_run.output.TSV
+    output:
+        TSV = Path(config['working_dir']) / ani.OUTPUT_ANI_SUMMARY
+    run:
+        tsv_fastani = SnakemakeUtils.load_object(Path(input.TSV))[0].path
+        with open(output.TSV, 'w') as handle:
+            handle.write('fastani - placeholder\n')

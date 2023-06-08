@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pandas as pd
+
 from camel.app.camel import Camel
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
@@ -60,3 +62,16 @@ rule btyper_report_empty:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         from camel.app.tools.btyper.btyperreporter import BTyperReporter
         SnakePipelineUtils.create_empty_report_section(BTyperReporter.TITLE, Path(output.VAL_HTML))
+
+rule btyper_dump_summary_info:
+    """
+    Dumps the summary information for the BTyper workflow in tabular format.
+    """
+    input:
+        TSV = rules.btyper_run.output.TSV,
+    output:
+        TSV = Path(config['working_dir']) / bt.OUTPUT_BTYPER_SUMMARY
+    run:
+        tsv_btyper = SnakemakeUtils.load_object(Path(input.TSV))[0].path
+        with open(output.TSV, 'w') as handle:
+            handle.write('btyper - placeholder\n')

@@ -331,6 +331,8 @@ rule summary_combine_all:
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='mlst') if 'mlst' in config['analyses'] else [],
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='cgmlst') if 'cgmlst' in config['analyses'] else [],
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='rmlst') if 'rmlst' in config['analyses'] else [],
+        Path(config['working_dir']) / btyper.OUTPUT_BTYPER_SUMMARY if config['contamination_check']['expected_species'] == 'Bacillus cereus' else [],
+        Path(config['working_dir']) / ani.OUTPUT_ANI_SUMMARY if config['contamination_check']['expected_species'] == 'Bacillus subtilis' else [],
         Path(config['working_dir']) / amrfinder.OUTPUT_AMRFINDER_SUMMARY if 'amrfinder' in config['analyses'] else [],
         Path(config['working_dir']) / mobsuite.OUTPUT_MOB_SUITE_SUMMARY if 'mob_suite' in config['analyses'] else []
     output:
