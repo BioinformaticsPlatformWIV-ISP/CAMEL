@@ -1,8 +1,12 @@
 from pathlib import Path
 
+from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.scripts.bacilluspipeline.snakefile import ani
+
+camel = Camel.get_instance()
 
 rule fastani_run:
     """
@@ -20,9 +24,9 @@ rule fastani_run:
         fastani = FastANI(camel)
         SnakemakeUtils.add_pickle_inputs(fastani, input)
         fastani.add_input_files({'TSV_FASTA_R': [ToolIOFile(Path(config['fastani']['path']))]})
-        step = Step(rule,fastani,camel,params.running_dir,config)
+        step = Step(str(rule), fastani, camel, params.running_dir, config)
         step.run_step()
-        SnakemakeUtils.dump_tool_outputs(fastani,output)
+        SnakemakeUtils.dump_tool_outputs(fastani, output)
 
 rule fastani_report:
     """
@@ -35,15 +39,15 @@ rule fastani_report:
         HTML = Path(config['working_dir']) / ani.OUTPUT_ANI_REPORT
     params:
         running_dir = Path(config['working_dir']) / 'ani',
-        sample_name= config['sample_name']
+        sample_name = config['sample_name']
     run:
         from camel.app.tools.fastani.fastanireporter import FastANIReporter
         ani_report = FastANIReporter(camel)
-        SnakemakeUtils.add_pickle_inputs(ani_report,input)
+        SnakemakeUtils.add_pickle_inputs(ani_report, input)
         ani_report.update_parameters(sample_name=params.sample_name)
-        step = Step(rule,ani_report,camel,params.running_dir,config)
+        step = Step(str(rule), ani_report, camel, params.running_dir, config)
         step.run_step()
-        SnakemakeUtils.dump_tool_outputs(ani_report,output)
+        SnakemakeUtils.dump_tool_outputs(ani_report, output)
 
 rule fastani_report_empty:
     """
@@ -56,19 +60,4 @@ rule fastani_report_empty:
     run:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         from camel.app.tools.fastani.fastanireporter import FastANIReporter
-        SnakePipelineUtils.create_empty_report_section(FastANIReporter.TITLE,Path(output.HTML))
-
-rule fastani_dump_summary_info:
-    """
-    Dumps the summary information for the FastANI workflow in tabular format.
-    """
-    input:
-        INFORMS = Path(config['working_dir']) / rules.fastani_run.output.INFORMS
-    output:
-        TSV = Path(config['working_dir']) / ani.OUTPUT_ANI_SUMMARY
-    run:
-        import json
-        informs = SnakemakeUtils.load_object(Path(input.INFORMS))
-        data = []
-        with open(output.TSV, 'w') as handle:
-            handle.write('{}\t{}\n'.format('fastani_typing_results', json.dumps(data)))
+        SnakePipelineUtils.create_empty_report_section(FastANIReporter.TITLE, Path(output.HTML))

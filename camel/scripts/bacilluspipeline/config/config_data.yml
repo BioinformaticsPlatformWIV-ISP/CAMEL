@@ -42,6 +42,8 @@ sequence_typing:
   cgmlst:
     path: {cgmlst_db}
     detection_method: blast
+  rmlst:
+    path: /db/sequence_typing/various/rmlst
 
 amrfinder:
   db: /db/amrfinder/latest

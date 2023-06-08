@@ -57,8 +57,6 @@ class MOBRecon(Tool):
         self._tool_outputs['FASTA'] = []
         for path_fasta in sorted(dir_out.glob('plasmid*.fasta')):
             self._tool_outputs['FASTA'].append(ToolIOFile(path_fasta))
-        # if len(self._tool_outputs['FASTA']) == 0:
-        #     self._tool_outputs.pop('FASTA')
 
     def _execute_tool(self) -> None:
         """

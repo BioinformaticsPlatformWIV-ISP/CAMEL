@@ -28,7 +28,7 @@ include: ani.SNAKEFILE_ANI
 #########
 rule all:
     """
-    This rules ensures that the required output files are generated.
+    This rule ensures that the required output files are generated.
     """
     input:
         HTML = config['output_report'],
@@ -41,8 +41,8 @@ rule link_downsampling_input:
     output:
         FASTQ = Path(config['working_dir']) / downsampling.INPUT_DOWNSAMPLING_FASTQ
     params:
-        config_input=config['input'],
-        read_type=config['read_type']
+        config_input = config['input'],
+        read_type = config['read_type']
     run:
         from camel.app.io.tooliofile import ToolIOFile
         from camel.app.snakemake.snakemakeutils import SnakemakeUtils
@@ -65,12 +65,12 @@ rule link_downsampling_to_trimming_workflows:
         FASTQ_ilmn = Path(config['working_dir']) / trimming_illumina.INPUT_TRIMMOMATIC_FASTQ if config['read_type'] == 'illumina' else [],
         FASTQ_ont = Path(config['working_dir']) / trimming_ont.INPUT_ONT_FASTQ if config['read_type'] == 'nanopore' else []
     params:
-        read_type=config['read_type']
+        read_type = config['read_type']
     run:
         if params.read_type == 'nanopore':
-            shutil.copyfile(Path(input.FASTQ),Path(output.FASTQ_ont))
+            shutil.copyfile(Path(input.FASTQ), Path(output.FASTQ_ont))
         elif params.read_type == 'illumina':
-            shutil.copyfile(Path(input.FASTQ),Path(output.FASTQ_ilmn))
+            shutil.copyfile(Path(input.FASTQ), Path(output.FASTQ_ilmn))
         else:
             raise ValueError(f'Unsupported read type: {params.read_type}')
 
@@ -104,18 +104,18 @@ rule select_fasta_to_gene_detection:
     output:
         FASTA_genedetection = Path(config['working_dir']) / gene_detection.INPUT_GENE_DETECTION_FASTA
     params:
-        read_type=config['read_type']
+        read_type = config['read_type']
     run:
         if params.read_type == 'nanopore':
-            shutil.copyfile(Path(input.FASTA_canu),Path(output.FASTA_genedetection))
+            shutil.copyfile(Path(input.FASTA_canu), Path(output.FASTA_genedetection))
         elif params.read_type == 'illumina':
-            shutil.copyfile(Path(input.FASTA_spades),Path(output.FASTA_genedetection))
+            shutil.copyfile(Path(input.FASTA_spades), Path(output.FASTA_genedetection))
         else:
             raise ValueError(f'Unsupported read type: {params.read_type}')
 
 rule select_fasta_to_tools:
     """
-    This rules links the output of the assembly workflow to the other workflows.
+    This rule links the output of the assembly workflow to the amrfinder and mobsuite workflows.
     """
     input:
         FASTA_spades = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'illumina' else [],
@@ -127,17 +127,17 @@ rule select_fasta_to_tools:
         read_type=config['read_type']
     run:
         if params.read_type == 'nanopore':
-            shutil.copyfile(Path(input.FASTA_canu),Path(output.FASTA_amrfinder))
-            shutil.copyfile(Path(input.FASTA_canu),Path(output.FASTA_mobsuite))
+            shutil.copyfile(Path(input.FASTA_canu), Path(output.FASTA_amrfinder))
+            shutil.copyfile(Path(input.FASTA_canu), Path(output.FASTA_mobsuite))
         elif params.read_type == 'illumina':
-            shutil.copyfile(Path(input.FASTA_spades),Path(output.FASTA_amrfinder))
-            shutil.copyfile(Path(input.FASTA_spades),Path(output.FASTA_mobsuite))
+            shutil.copyfile(Path(input.FASTA_spades), Path(output.FASTA_amrfinder))
+            shutil.copyfile(Path(input.FASTA_spades), Path(output.FASTA_mobsuite))
         else:
             raise ValueError(f'Unsupported read type: {params.read_type}')
 
 rule select_fasta_to_tools_subtilis:
     """
-    This rules links the output of the assembly workflow to the other workflows.
+    This rule links the output of the assembly workflow to the fastANI workflow if the species is B. subtilis.
     """
     input:
         FASTA_spades = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'illumina' else [],
@@ -145,18 +145,18 @@ rule select_fasta_to_tools_subtilis:
     output:
         FASTA_ani = Path(config['working_dir']) / ani.INPUT_FASTA_ANI
     params:
-        read_type=config['read_type']
+        read_type = config['read_type']
     run:
         if params.read_type == 'nanopore':
             shutil.copyfile(Path(input.FASTA_canu), Path(output.FASTA_ani))
         elif params.read_type == 'illumina':
-            shutil.copyfile(Path(input.FASTA_spades),Path(output.FASTA_ani))
+            shutil.copyfile(Path(input.FASTA_spades), Path(output.FASTA_ani))
         else:
             raise ValueError(f'Unsupported read type: {params.read_type}')
 
 rule select_fasta_to_tools_cereus:
     """
-    This rules links the output of the assembly workflow to the other workflows.
+    This rule links the output of the assembly workflow to the BTyper workflow if the species is B. cereus.
     """
     input:
         FASTA_spades = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'illumina' else [],
@@ -164,7 +164,7 @@ rule select_fasta_to_tools_cereus:
     output:
         FASTA_btyper = Path(config['working_dir']) / btyper.INPUT_BTYPER_FASTA
     params:
-        read_type=config['read_type']
+        read_type = config['read_type']
     run:
         if params.read_type == 'nanopore':
             shutil.copyfile(Path(input.FASTA_canu), Path(output.FASTA_btyper))
@@ -190,6 +190,9 @@ rule report_pickle_citations:
         SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output.HTML))
 
 rule report_command_section:
+    """
+    This rule retrieves the commands for the final report.
+    """
     input:
         INFORMS_downsampling = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_INFORMS,
         INFORMS_trimming = trimming.get_trimming_command_informs(config),
@@ -203,7 +206,7 @@ rule report_command_section:
         INFORMS_btyper = Path(config['working_dir']) / btyper.OUTPUT_INFORMS_BTYPER if config['contamination_check']['expected_species'] == 'Bacillus cereus' else [],
         INFORMS_ani = Path(config['working_dir']) / str(ani.OUTPUT_INFORMS_ANI) if config['contamination_check']['expected_species'] == 'Bacillus subtilis' else [],
         INFORMS_amrfinder = Path(config['working_dir']) / str(amrfinder.OUTPUT_AMRFINDER_INFORMS) if 'amrfinder' in config['analyses'] else [],
-        INFORMS_mob_suite= Path(config['working_dir']) / mobsuite.OUTPUT_MOB_SUITE_INFORMS if 'mob_suite' in config['analyses'] else[]
+        INFORMS_mob_suite = Path(config['working_dir']) / mobsuite.OUTPUT_MOB_SUITE_INFORMS if 'mob_suite' in config['analyses'] else []
     output:
         HTML = Path(config['working_dir']) / 'report' / 'html-commands.io'
     params:
@@ -224,7 +227,7 @@ rule report_command_section:
 
 rule report_combine_all:
     """
-    Rule to combine report sections into a single output report.
+    This rule combines the report sections into a single output report.
     """
     input:
         report_downsampling = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_REPORT,
@@ -239,6 +242,7 @@ rule report_combine_all:
         report_genomic_context = Path(config['working_dir']) / 'mob_suite' / 'genomic_context' / 'html.io',
         report_mlst = sequence_typing.get_sequence_typing_report('mlst',config),
         report_cgmlst = sequence_typing.get_sequence_typing_report('cgmlst',config),
+        report_rmlst = sequence_typing.get_sequence_typing_report('rmlst',config),
         report_btyper = Path(config['working_dir']) / (btyper.OUTPUT_BTYPER_REPORT if config['contamination_check']['expected_species'] == 'Bacillus cereus' else btyper.OUTPUT_BTYPER_REPORT_EMPTY),
         report_fastani = Path(config['working_dir']) / (ani.OUTPUT_ANI_REPORT if config['contamination_check']['expected_species'] == 'Bacillus subtilis' else ani.OUTPUT_ANI_REPORT_EMPTY),
         report_amrfinder = Path(config['working_dir']) / amrfinder.OUTPUT_AMRFINDER_REPORT,
@@ -276,7 +280,7 @@ rule report_combine_all:
             ('Advanced QC', 'adv_qc', [Path(x) for x in (input.report_kraken, input.report_adv_qc)] if config['read_type'] == 'illumina' else [Path(input.report_kraken)]),
             ('BTyper results', 'btyper', [Path(input.report_btyper)]),
             ('FastANI results', 'fastani', [Path(input.report_fastani)]),
-            ('Sequence typing', 'st', [Path(x) for x in (input.report_mlst, input.report_cgmlst)]),
+            ('Sequence typing', 'st', [Path(x) for x in (input.report_mlst, input.report_cgmlst, input.report_rmlst)]),
             ('GMO detection', 'gmo', [Path(input.report_gmo)]),
             ('Virulence detection', 'virulence', [Path(x) for x in (input.report_vfdb_core,)]),
             ('AMRFinder results', 'amrfinder', [Path(input.report_amrfinder)]),
@@ -326,8 +330,7 @@ rule summary_combine_all:
         Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_SUMMARY if 'kraken' in config['analyses'] else [],
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='mlst') if 'mlst' in config['analyses'] else [],
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='cgmlst') if 'cgmlst' in config['analyses'] else [],
-        Path(config['working_dir']) / btyper.OUTPUT_BTYPER_SUMMARY if config['contamination_check']['expected_species'] == 'Bacillus cereus' else [],
-        Path(config['working_dir']) / ani.OUTPUT_ANI_SUMMARY if config['contamination_check']['expected_species'] == 'Bacillus subtilis' else [],
+        Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='rmlst') if 'rmlst' in config['analyses'] else [],
         Path(config['working_dir']) / amrfinder.OUTPUT_AMRFINDER_SUMMARY if 'amrfinder' in config['analyses'] else [],
         Path(config['working_dir']) / mobsuite.OUTPUT_MOB_SUITE_SUMMARY if 'mob_suite' in config['analyses'] else []
     output:
