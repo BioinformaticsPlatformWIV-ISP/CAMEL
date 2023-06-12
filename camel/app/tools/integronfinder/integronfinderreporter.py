@@ -65,16 +65,17 @@ class IntegronFinderReporter(Tool):
         section = HtmlReportSection('IntegronFinder', subtitle=self._input_informs['integron_finder']['_name'])
 
         # Parse input data
-        data_integrons = pd.read_table(self._tool_inputs['TSV'][0].path, comment='#')
-        data_integrons.fillna('-')
-        data_integrons['strand'] = data_integrons['strand'].apply(lambda x: '-' if x == -1 else '+')
-
-        # Add output table
-        section.add_table([
-            [row[col['key']] for col in IntegronFinderReporter.COLUMNS] for
-            row in data_integrons.to_dict('records')],
-            [c['title'] for c in IntegronFinderReporter.COLUMNS],
-            [('class', 'data')])
+        try:
+            data_integrons = pd.read_table(self._tool_inputs['TSV'][0].path, comment='#')
+            data_integrons.fillna('-')
+            data_integrons['strand'] = data_integrons['strand'].apply(lambda x: '-' if x == -1 else '+')
+            section.add_table([
+                [row[col['key']] for col in IntegronFinderReporter.COLUMNS] for
+                row in data_integrons.to_dict('records')],
+                [c['title'] for c in IntegronFinderReporter.COLUMNS],
+                [('class', 'data')])
+        except pd.errors.EmptyDataError:
+            section.add_paragraph('No integrons detected.')
 
         # Add download link
         relative_path = Path('integron_finder', f"integrons_{self._parameters['name'].value}.tsv")

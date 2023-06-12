@@ -42,9 +42,12 @@ class IntegronFinder(Tool):
         self._execute_command()
         dir_out = next(d for d in self.folder.glob('Results_*') if d.is_dir())
         path_tsv_out = next(dir_out.glob('*.integrons'))
-        data_out = pd.read_table(path_tsv_out, comment='#')
+        try:
+            data_out = pd.read_table(path_tsv_out, comment='#')
+            self._informs['nb_detected'] = len(data_out)
+        except pd.errors.EmptyDataError as err:
+            self._informs['nb_detected'] = 0
         self._tool_outputs['TSV'] = [ToolIOFile(path_tsv_out)]
-        self._informs['nb_detected'] = len(data_out)
 
     def _check_command_output(self) -> None:
         """
