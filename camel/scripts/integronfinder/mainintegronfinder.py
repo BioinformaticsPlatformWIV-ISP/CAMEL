@@ -81,3 +81,9 @@ class MainIntegronFinder(object):
         # Copy the TSV output file when specified
         if self._args.output_tsv is not None:
             shutil.copyfile(integron_finder.tool_outputs['TSV'][0].path, self._args.output_tsv)
+
+
+if __name__ == '__main__':
+    Camel.get_instance()
+    main = MainIntegronFinder()
+    main.run()
