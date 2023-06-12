@@ -18,6 +18,5 @@
   "number": "9",
   "start_page": "1395",
   "end_page": "1404",
-  "doi": "10.1101/gr.232397.117",
-  "abstract": "Current methods struggle to reconstruct and visualize the genomic relationships of large numbers of bacterial genomes. GrapeTree facilitates the analyses of large numbers of allelic profiles by a static \u201cGrapeTree Layout\u201d algorithm that supports interactive visualizations of large trees within a web browser window. GrapeTree also implements a novel minimum spanning tree algorithm (MSTree V2) to reconstruct genetic relationships despite high levels of missing data. GrapeTree is a stand-alone package for investigating phylogenetic trees plus associated metadata and is also integrated into EnteroBase to facilitate cutting edge navigation of genomic relationships among bacterial pathogens."
+  "doi": "10.1101/gr.232397.117"
 }
