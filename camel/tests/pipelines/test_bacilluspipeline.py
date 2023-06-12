@@ -16,12 +16,12 @@ class TestBacillusPipeline(CamelTestSuite):
     # Input files
     test_file_dir = CamelTestSuite.get_test_file_dir()
     input_fastq_pe_subtilis = [
-        test_file_dir / 'pipelines' / 'Bsubtilis-SRR2001835-ds_1.fastq.gz',
-        test_file_dir / 'pipelines' / 'Bsubtilis-SRR2001835-ds_2.fastq.gz'
+        test_file_dir / 'pipelines' / 'Bsubtilis-SRR10568181_1.fastq.gz',
+        test_file_dir / 'pipelines' / 'Bsubtilis-SRR10568181_2.fastq.gz'
     ]
     input_fastq_pe_cereus = [
-        test_file_dir / 'pipelines' / 'Bcereus-2020-09_S29-ds_1.fastq.gz',
-        test_file_dir / 'pipelines' / 'Bcereus-2020-09_S29-ds_2.fastq.gz'
+        test_file_dir / 'pipelines' / 'Bcereus-SRR7067969-ds_1.fastq.gz',
+        test_file_dir / 'pipelines' / 'Bcereus-SRR7067969-ds_2.fastq.gz'
     ]
 
     def test_bacillus_pipeline_typing_db(self) -> None:

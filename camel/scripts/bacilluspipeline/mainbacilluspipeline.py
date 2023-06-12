@@ -19,7 +19,7 @@ class MainBacillusPipeline(ReportPipeline):
     Main class to run the Bacillus pipeline.
     """
 
-    CUSTOM_ANALYSES = ['kraken', 'btyper', 'mlst', 'cgmlst', 'amrfinder', 'gmo',
+    CUSTOM_ANALYSES = ['kraken', 'btyper', 'mlst', 'cgmlst', 'rmlst', 'amrfinder', 'gmo',
                        'vfdb_core', 'plasmidfinder', 'mobsuite']
 
     DATA_BY_SPECIES = {
@@ -44,7 +44,7 @@ class MainBacillusPipeline(ReportPipeline):
         Initializes the main class.
         :param args: Arguments (optional)
         """
-        super().__init__('Bacillus pipeline', '1.0', SNAKEFILE_MAIN, args)
+        super().__init__('Bacillus pipeline', '0.1', SNAKEFILE_MAIN, args)
         self._args = MainBacillusPipeline._parse_arguments(args)
 
     @property

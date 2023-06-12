@@ -30,9 +30,6 @@ class GenomicContext(Tool):
         Checks if the provided input files are valid.
         :return: None
         """
-        print("HERE!!!")
-        print(self._input_informs)
-        print(self._tool_inputs)
         if 'dbs' not in self._input_informs:
             raise InvalidInputSpecificationError('Database informs input is required')
         for data_db in self._input_informs['dbs']:
@@ -75,7 +72,6 @@ class GenomicContext(Tool):
                 'considered as an indication.')
 
             # Create rows
-            table_data = []
             for db in self._input_informs['dbs']:
                 try:
                     data_db = pd.read_table(self._tool_inputs[f"TSV_{db['key']}"][0].path)
