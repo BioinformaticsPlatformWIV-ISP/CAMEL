@@ -1,0 +1,4 @@
+dependencies: [characterize_neisseria_capsule/a75009, blast/2.7.1]
+parameters:
+  output_directory: {default: false, mandatory: false, option: null, value: ''}
+tool_command: python3 characterize_neisseria_capsule_py
