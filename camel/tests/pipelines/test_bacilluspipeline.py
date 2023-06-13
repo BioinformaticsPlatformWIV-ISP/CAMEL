@@ -14,15 +14,17 @@ class TestBacillusPipeline(CamelTestSuite):
     Tests for the Bacillus pipeline.
     """
     # Input files
-    test_file_dir = CamelTestSuite.get_test_file_dir()
-    input_fastq_pe_subtilis = [
-        test_file_dir / 'pipelines' / 'Bsubtilis-SRR10568181_1.fastq.gz',
-        test_file_dir / 'pipelines' / 'Bsubtilis-SRR10568181_2.fastq.gz'
-    ]
+    test_file_dir = CamelTestSuite.get_test_file_dir('pipelines')
     input_fastq_pe_cereus = [
-        test_file_dir / 'pipelines' / 'Bcereus-SRR7067969-ds_1.fastq.gz',
-        test_file_dir / 'pipelines' / 'Bcereus-SRR7067969-ds_2.fastq.gz'
+        test_file_dir / 'Bcereus-SRR7067969-ds_1.fastq.gz',
+        test_file_dir / 'Bcereus-SRR7067969-ds_2.fastq.gz'
     ]
+    input_fastq_pe_subtilis = [
+        test_file_dir / 'Bsubtilis-SRR10568181_1.fastq.gz',
+        test_file_dir / 'Bsubtilis-SRR10568181_2.fastq.gz'
+    ]
+    input_fastq_se_cereus = test_file_dir / 'Bcereus-DRR206405-ds.fastq.gz'
+    input_fastq_se_subtilis = test_file_dir / 'Bsubtilis-SRR23725160.fastq.gz'
 
     def test_bacillus_pipeline_typing_db(self) -> None:
         """
@@ -65,7 +67,7 @@ class TestBacillusPipeline(CamelTestSuite):
         self.assertGreater(path_report_out.stat().st_size, 0)
 
     @longRunningTest()
-    def test_bacillus_cereus_pipeline_blast(self) -> None:
+    def test_bacillus_cereus_pipeline_blast_illumina(self) -> None:
         """
         Tests the Bacillus pipeline with blast based detection.
         :return: None
@@ -82,6 +84,52 @@ class TestBacillusPipeline(CamelTestSuite):
                    '--detection-method', 'blast',
                    '--threads', '8',
                    '--species', 'cereus'
+               ] + [f"--{a.replace('_', '-')}" for a in MainBacillusPipeline.CUSTOM_ANALYSES if 'cgmlst' not in a]
+        main = MainBacillusPipeline(args)
+        main.run()
+        self.assertGreater(path_report_out.stat().st_size, 0)
+
+    @longRunningTest()
+    def test_bacillus_cereus_pipeline_blast_ont(self) -> None:
+        """
+        Tests the Bacillus pipeline with blast based detection and ONT data.
+        :return: None
+        """
+        path_report_out = Path(self.running_dir) / 'out' / 'report.html'
+        path_summary_out = Path(self.running_dir) / 'out' / 'summary.tsv'
+        args = [
+                   '--fastq-se', str(TestBacillusPipeline.input_fastq_se_cereus),
+                   '--read-type', 'nanopore',
+                   '--output-html', str(path_report_out),
+                   '--output-dir', str(path_report_out.parent),
+                   '--output-tsv', str(path_summary_out),
+                   '--working-dir', str(self.running_dir),
+                   '--detection-method', 'blast',
+                   '--threads', '8',
+                   '--species', 'cereus'
+               ] + [f"--{a.replace('_', '-')}" for a in MainBacillusPipeline.CUSTOM_ANALYSES if 'cgmlst' not in a]
+        main = MainBacillusPipeline(args)
+        main.run()
+        self.assertGreater(path_report_out.stat().st_size, 0)
+
+    @longRunningTest()
+    def test_bacillus_subtilis_pipeline_blast_ont(self) -> None:
+        """
+        Tests the Bacillus pipeline with blast based detection and ONT data.
+        :return: None
+        """
+        path_report_out = Path(self.running_dir) / 'out' / 'report.html'
+        path_summary_out = Path(self.running_dir) / 'out' / 'summary.tsv'
+        args = [
+                   '--fastq-se', str(TestBacillusPipeline.input_fastq_se_subtilis),
+                   '--read-type', 'nanopore',
+                   '--output-html', str(path_report_out),
+                   '--output-dir', str(path_report_out.parent),
+                   '--output-tsv', str(path_summary_out),
+                   '--working-dir', str(self.running_dir),
+                   '--detection-method', 'blast',
+                   '--threads', '8',
+                   '--species', 'subtilis'
                ] + [f"--{a.replace('_', '-')}" for a in MainBacillusPipeline.CUSTOM_ANALYSES if 'cgmlst' not in a]
         main = MainBacillusPipeline(args)
         main.run()
