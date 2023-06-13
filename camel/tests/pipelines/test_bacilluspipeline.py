@@ -51,6 +51,8 @@ class TestBacillusPipeline(CamelTestSuite):
         """
         path_report_out = Path(self.running_dir) / 'out' / 'report.html'
         path_summary_out = Path(self.running_dir) / 'out' / 'summary.tsv'
+        tested_analyses = \
+            MainBacillusPipeline.CUSTOM_ANALYSES['common'] + MainBacillusPipeline.CUSTOM_ANALYSES['subtilis']
         args = [
                    '--fastq-pe', str(TestBacillusPipeline.input_fastq_pe_subtilis[0]),
                    str(TestBacillusPipeline.input_fastq_pe_subtilis[1]),
@@ -61,7 +63,7 @@ class TestBacillusPipeline(CamelTestSuite):
                    '--detection-method', 'blast',
                    '--threads', '8',
                    '--species', 'subtilis'
-               ] + [f"--{a.replace('_', '-')}" for a in MainBacillusPipeline.CUSTOM_ANALYSES if 'cgmlst' not in a]
+               ] + [f"--{a.replace('_', '-')}" for a in tested_analyses if 'cgmlst' not in a]
         main = MainBacillusPipeline(args)
         main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)
@@ -74,6 +76,8 @@ class TestBacillusPipeline(CamelTestSuite):
         """
         path_report_out = Path(self.running_dir) / 'out' / 'report.html'
         path_summary_out = Path(self.running_dir) / 'out' / 'summary.tsv'
+        tested_analyses = \
+            MainBacillusPipeline.CUSTOM_ANALYSES['common'] + MainBacillusPipeline.CUSTOM_ANALYSES['cereus']
         args = [
                    '--fastq-pe', str(TestBacillusPipeline.input_fastq_pe_cereus[0]),
                    str(TestBacillusPipeline.input_fastq_pe_cereus[1]),
@@ -84,7 +88,7 @@ class TestBacillusPipeline(CamelTestSuite):
                    '--detection-method', 'blast',
                    '--threads', '8',
                    '--species', 'cereus'
-               ] + [f"--{a.replace('_', '-')}" for a in MainBacillusPipeline.CUSTOM_ANALYSES if 'cgmlst' not in a]
+               ] + [f"--{a.replace('_', '-')}" for a in tested_analyses if 'cgmlst' not in a]
         main = MainBacillusPipeline(args)
         main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)
@@ -97,6 +101,8 @@ class TestBacillusPipeline(CamelTestSuite):
         """
         path_report_out = Path(self.running_dir) / 'out' / 'report.html'
         path_summary_out = Path(self.running_dir) / 'out' / 'summary.tsv'
+        tested_analyses = \
+            MainBacillusPipeline.CUSTOM_ANALYSES['common'] + MainBacillusPipeline.CUSTOM_ANALYSES['cereus']
         args = [
                    '--fastq-se', str(TestBacillusPipeline.input_fastq_se_cereus),
                    '--read-type', 'nanopore',
@@ -107,7 +113,7 @@ class TestBacillusPipeline(CamelTestSuite):
                    '--detection-method', 'blast',
                    '--threads', '8',
                    '--species', 'cereus'
-               ] + [f"--{a.replace('_', '-')}" for a in MainBacillusPipeline.CUSTOM_ANALYSES if 'cgmlst' not in a]
+               ] + [f"--{a.replace('_', '-')}" for a in tested_analyses if 'cgmlst' not in a]
         main = MainBacillusPipeline(args)
         main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)
@@ -120,6 +126,8 @@ class TestBacillusPipeline(CamelTestSuite):
         """
         path_report_out = Path(self.running_dir) / 'out' / 'report.html'
         path_summary_out = Path(self.running_dir) / 'out' / 'summary.tsv'
+        tested_analyses = \
+            MainBacillusPipeline.CUSTOM_ANALYSES['common'] + MainBacillusPipeline.CUSTOM_ANALYSES['subtilis']
         args = [
                    '--fastq-se', str(TestBacillusPipeline.input_fastq_se_subtilis),
                    '--read-type', 'nanopore',
@@ -130,7 +138,7 @@ class TestBacillusPipeline(CamelTestSuite):
                    '--detection-method', 'blast',
                    '--threads', '8',
                    '--species', 'subtilis'
-               ] + [f"--{a.replace('_', '-')}" for a in MainBacillusPipeline.CUSTOM_ANALYSES if 'cgmlst' not in a]
+               ] + [f"--{a.replace('_', '-')}" for a in tested_analyses if 'cgmlst' not in a]
         main = MainBacillusPipeline(args)
         main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)
