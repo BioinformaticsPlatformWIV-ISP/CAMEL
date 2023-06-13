@@ -3,7 +3,7 @@ from camel.app.error.invalidinputspecificationerror import InvalidInputSpecifica
 from camel.app.tools.tool import Tool
 
 
-class characterize_neisseria_capsule(Tool):
+class CharacterizeNeisseriaCapsule(Tool):
     """
     characterize_neisseria_capsule is a tool implementing a WGS-based method for N. meningitidis
     serogroup prediction. it identifies capsule genes and genetic variations that might impact their expression.
