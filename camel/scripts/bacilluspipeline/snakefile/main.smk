@@ -1,8 +1,6 @@
 import shutil
 from pathlib import Path
 
-import pandas as pd
-
 from camel.resources.snakefile import trimming, trimming_illumina, assembly_spades, assembly_canu, \
     quality_checks, contamination_check_kraken, sequence_typing, downsampling, amrfinder, trimming_ont, gene_detection, \
     mobsuite
@@ -118,6 +116,25 @@ rule link_fasta_to_gene_detection:
         else:
             raise ValueError(f'Unsupported read type: {params.read_type}')
 
+rule link_fasta_to_typing:
+    """
+    This rule links the output of the assembly workflows to the sequence typing workflow.
+    """
+    input:
+        FASTA_spades = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'illumina' else [],
+        FASTA_canu = Path(config['working_dir']) / assembly_canu.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else []
+    output:
+        FASTA_typing = Path(config['working_dir']) / sequence_typing.INPUT_FASTA
+    params:
+        read_type = config['read_type']
+    run:
+        if params.read_type == 'nanopore':
+            shutil.copyfile(Path(input.FASTA_canu), Path(output.FASTA_typing))
+        elif params.read_type == 'illumina':
+            shutil.copyfile(Path(input.FASTA_spades), Path(output.FASTA_typing))
+        else:
+            raise ValueError(f'Unsupported read type: {params.read_type}')
+
 rule link_fasta_to_tools_all:
     """
     This rule links the output of the assembly workflow to the amrfinder and mobsuite workflows.
@@ -178,6 +195,31 @@ rule link_fasta_to_tools_cereus:
         else:
             raise ValueError(f'Unsupported read type: {params.read_type}')
 
+#############
+# Read type #
+#############
+rule select_assembly_output:
+    """
+    Selects the assembly output based on the read type.
+    """
+    input:
+        HTML = Path(config['working_dir']) / (assembly_spades.OUTPUT_ASSEMBLY_REPORT if config['read_type'] == 'illumina' else assembly_canu.OUTPUT_ASSEMBLY_REPORT),
+        TSV = Path(config['working_dir']) / (assembly_spades.OUTPUT_ASSEMBLY_SUMMARY if config['read_type'] == 'illumina' else assembly_canu.OUTPUT_ASSEMBLY_SUMMARY),
+        INFORMS = Path(config['working_dir']) / (assembly_spades.OUTPUT_ASSEMBLY_INFORMS if config['read_type'] == 'illumina' else assembly_canu.OUTPUT_ASSEMBLY_INFORMS),
+        INFORMS_filt = Path(config['working_dir']) / (assembly_spades.OUTPUT_ASSEMBLY_FILTERING_INFORMS if config['read_type'] == 'illumina' else assembly_canu.OUTPUT_ASSEMBLY_FILTERING_INFORMS)
+    output:
+        HTML = Path(config['working_dir']) / 'read_type' / 'assembly' / 'html.io',
+        TSV = Path(config['working_dir']) / 'read_type' / 'assembly' / 'summary.tsv',
+        INFORMS = Path(config['working_dir']) / 'read_type' / 'assembly' / 'informs.io',
+        INFORMS_filt = Path(config['working_dir']) / 'read_type' / 'assembly' / 'informs-filt.io'
+    shell:
+        """
+        cp {input.HTML} {output.HTML};
+        cp {input.TSV} {output.TSV};
+        cp {input.INFORMS} {output.INFORMS};
+        cp {input.INFORMS_filt} {output.INFORMS_filt};
+        """
+
 ##########
 # Report #
 ##########
@@ -191,6 +233,7 @@ rule report_init:
         sample_name = config['sample_name'],
         config_input = config['input'],
         species = config['species'],
+        read_type = config['read_type'],
         pipeline_info = config['pipeline'],
         detection_method = config['detection_method'],
         citation_keys = config['citations']
@@ -205,7 +248,9 @@ rule report_init:
             datetime.datetime.now(),
             params.pipeline_info['version'], ', '.join(
                 input_file['name'] for _, input_files in params.config_input.items() for input_file in input_files),
-            [('Detection method', params.detection_method), ('Species', f'<i>{params.species}</i>')],
+            [('Detection method', params.detection_method),
+             ('Read type', str(params.read_type)),
+             ('Species', f'<i>{params.species}</i>')],
             params.citation_keys['main']
         )
         SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output.HTML))
@@ -227,24 +272,26 @@ rule report_pickle_citations:
             params.citation_keys['other'], params.citation_keys['main'])
         SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output.HTML))
 
-rule report_commands_cereus:
+rule report_create_commands_section:
     """
-    Collects the citations when the species is Bacillus cereus. 
+    Creates the section with the commands.
     """
     input:
         INFORMS_downsampling = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_INFORMS,
         INFORMS_trimming = trimming.get_trimming_command_informs(config),
-        INFORMS_assembly = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_INFORMS,
-        INFORMS_assembly_filt = Path(config['working_dir']) / 'assembly_spades' / 'filtering' / 'informs.io',
+        INFORMS_assembly = rules.select_assembly_output.output.INFORMS,
+        INFORMS_assembly_filt = rules.select_assembly_output.output.INFORMS_filt,
         INFORMS_kraken = Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_KRAKEN_INFORMS,
-        INFORMS_mapping = quality_checks.get_mapping_rate_informs(config) if config['read_type'] == 'illumina' else [],
-        INFORMS_depth = quality_checks.get_depth_informs(config) if config['read_type'] == 'illumina' else [],
+        INFORMS_mapping = quality_checks.get_mapping_rate_informs(config),
+        INFORMS_depth = quality_checks.get_depth_informs(config),
         INFORMS_btyper = Path(config['working_dir']) / btyper.OUTPUT_INFORMS_BTYPER if 'btyper' in config['analyses'] else [],
+        INFORMS_fastani = Path(config['working_dir']) / ani.OUTPUT_INFORMS_ANI if 'fastani' in config['analyses'] else [],
         INFORMS_amrfinder = Path(config['working_dir']) / str(amrfinder.OUTPUT_AMRFINDER_INFORMS) if 'amrfinder' in config['analyses'] else [],
         INFORMS_vfdb_core = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='vfdb_core') if 'vfdb_core' in config['analyses'] else [],
         INFORMS_plasmidfinder= Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='plasmidfinder') if 'plasmidfinder' in config['analyses'] else [],
         INFORMS_mob_suite = Path(config['working_dir']) / mobsuite.OUTPUT_MOB_SUITE_INFORMS if 'mob_suite' in config['analyses'] else [],
-        INFORMS_mlst = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='mlst_cereus')
+        INFORMS_mlst_cereus = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='mlst_cereus') if 'mlst_cereus' in config['analyses'] else [],
+        INFORMS_mlst_subtilis = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='mlst_subtilis') if 'mlst_subtilis' in config['analyses'] else []
     output:
         HTML = Path(config['working_dir']) / 'report' / 'html-commands-cereus.io'
     params:
@@ -270,9 +317,9 @@ rule report_content_cereus:
         report_init = rules.report_init.output.HTML,
         report_downsampling = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_REPORT,
         report_trimming = trimming.get_trimming_report(config),
-        report_assembly = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_REPORT,
+        report_assembly = rules.select_assembly_output.output.HTML,
         report_kraken = Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT,
-        report_adv_qc = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_REPORT if config['read_type'] == 'illumina' else [],
+        report_adv_qc = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_REPORT,
         report_btyper = Path(config['working_dir']) / (btyper.OUTPUT_BTYPER_REPORT if 'btyper' in config['analyses'] else btyper.OUTPUT_BTYPER_REPORT_EMPTY),
         report_amrfinder = Path(config['working_dir']) / (amrfinder.OUTPUT_AMRFINDER_REPORT if 'amrfinder' in config['analyses'] else amrfinder.OUTPUT_AMRFINDER_REPORT_EMPTY),
         report_vfdb_core = gene_detection.get_gene_detection_report('vfdb_core', config),
@@ -282,7 +329,7 @@ rule report_content_cereus:
         report_rmlst = sequence_typing.get_sequence_typing_report('rmlst', config),
         report_mlst = sequence_typing.get_sequence_typing_report('mlst_cereus', config),
         report_cgmlst = sequence_typing.get_sequence_typing_report('cgmlst_cereus', config),
-        report_commands = rules.report_commands_cereus.output.HTML,
+        report_commands = rules.report_create_commands_section.output.HTML,
         report_citations = rules.report_pickle_citations.output.HTML
     output:
         HTML = Path(config['working_dir']) / 'report' / 'report_cereus.html'
@@ -318,9 +365,9 @@ rule report_content_subtilis:
         report_init = rules.report_init.output.HTML,
         report_downsampling = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_REPORT,
         report_trimming = trimming.get_trimming_report(config),
-        report_assembly = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_REPORT,
+        report_assembly = rules.select_assembly_output.output.HTML,
         report_kraken = Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT,
-        report_adv_qc = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_REPORT if config['read_type'] == 'illumina' else [],
+        report_adv_qc = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_REPORT,
         report_fastani = Path(config['working_dir']) / (ani.OUTPUT_ANI_REPORT if 'fastani' in config['analyses'] else ani.OUTPUT_ANI_REPORT_EMPTY),
         report_amrfinder = Path(config['working_dir']) / (amrfinder.OUTPUT_AMRFINDER_REPORT if 'amrfinder' in config['analyses'] else amrfinder.OUTPUT_AMRFINDER_REPORT_EMPTY),
         report_gmo = gene_detection.get_gene_detection_report('gmo', config),
@@ -331,7 +378,7 @@ rule report_content_subtilis:
         report_rmlst = sequence_typing.get_sequence_typing_report('rmlst', config),
         report_mlst = sequence_typing.get_sequence_typing_report('mlst_subtilis', config),
         report_citations = rules.report_pickle_citations.output.HTML,
-        report_commands = rules.report_commands_cereus.output.HTML
+        report_commands = rules.report_create_commands_section.output.HTML
     output:
         HTML = Path(config['working_dir']) / 'report' / 'report_subtilis.html'
     params:
@@ -404,18 +451,21 @@ rule summary_combine_all:
         rules.summary_init.output.TSV,
         Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_SUMMARY,
         trimming.get_trimming_summary(config),
-        # Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_SUMMARY if config['read_type'] == 'illumina' else Path(config['working_dir']) / assembly_canu.OUTPUT_ASSEMBLY_SUMMARY,
-        # Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY if config['read_type'] == 'illumina' else [],
-        # Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='gmo') if 'gmo' in config['analyses'] else [],
-        # Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='vfdb_core') if 'vfdb_core' in config['analyses'] else [],
-        # Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='plasmidfinder') if 'plasmidfinder' in config['analyses'] else [],
-        # Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_SUMMARY if 'kraken' in config['analyses'] else [],
-        # Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='mlst_cereus') if 'mlst' in config['analyses'] else [],
-        # Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='cgmlst') if 'cgmlst' in config['analyses'] else [],
-        # Path(config['working_dir']) / btyper.OUTPUT_BTYPER_SUMMARY if config['contamination_check']['expected_species'] == 'Bacillus cereus' else [],
-        # Path(config['working_dir']) / ani.OUTPUT_ANI_SUMMARY if config['contamination_check']['expected_species'] == 'Bacillus subtilis' else [],
-        # Path(config['working_dir']) / amrfinder.OUTPUT_AMRFINDER_SUMMARY if 'amrfinder' in config['analyses'] else [],
-        # Path(config['working_dir']) / mobsuite.OUTPUT_MOB_SUITE_SUMMARY if 'mob_suite' in config['analyses'] else []
+        Path(config['working_dir']) / rules.select_assembly_output.output.TSV,
+        Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_SUMMARY if 'kraken' in config['analyses'] else [],
+        Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY,
+        Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_SUMMARY,
+        Path(config['working_dir']) / btyper.OUTPUT_BTYPER_SUMMARY if 'btyper' in config['analyses'] else [],
+        Path(config['working_dir']) / amrfinder.OUTPUT_AMRFINDER_SUMMARY if 'amrfinder' in config['analyses'] else [],
+        Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='vfdb_core') if 'vfdb_core' in config['analyses'] else [],
+        Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='gmo') if 'gmo' in config['analyses'] else [],
+        Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='plasmidfinder') if 'plasmidfinder' in config['analyses'] else [],
+        Path(config['working_dir']) / ani.OUTPUT_ANI_SUMMARY if 'fastani' in config['analyses'] else [],
+        Path(config['working_dir']) / mobsuite.OUTPUT_MOB_SUITE_SUMMARY if 'mobsuite' in config['analyses'] else [],
+        Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='rmlst') if 'rmlst' in config['analyses'] else [],
+        Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='mlst_cereus') if 'mlst_cereus' in config['analyses'] else [],
+        Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='mlst_subtilis') if 'mlst_subtilis' in config['analyses'] else [],
+        Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='cgmlst_cereus') if 'cgmlst_cereus' in config['analyses'] else []
     output:
         config.get('output_tabular')
     run:

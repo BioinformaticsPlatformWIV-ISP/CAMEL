@@ -37,7 +37,8 @@ class Canu(Tool):
             f"-nanopore-raw {self._tool_inputs['FASTQ'][0].path}",
             *self._build_options(['genome_size', 'threads']),
             *self._build_options(['output_directory', 'output_prefix'], '='),
-            'useGrid=False'
+            'useGrid=False',
+            'stopOnLowCoverage=1'
         ])
         self._execute_command()
         self.__set_output()

@@ -3,6 +3,7 @@ from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Optional, Dict, Any
 
+from camel.resources.snakefile import assembly_canu
 from camel.resources.snakefile.assembly_spades import OUTPUT_ASSEMBLY_MAPPING_INFORMS, OUTPUT_ASSEMBLY_DEPTH_INFORMS
 from camel.resources.snakefile.variant_calling import OUTPUT_VARIANT_CALLING_MAPPING_INFORMS, \
     OUTPUT_VARIANT_CALLING_DEPTH_INFORMS
@@ -20,7 +21,9 @@ def get_mapping_rate_informs(config) -> Path:
     :return: Mapping rate informs
     """
     mode = config['quality_checks'].get('coverage_mode', 'assembly')
-    if mode == 'assembly':
+    if config['read_type'] == 'nanopore':
+        return Path(config['working_dir']) / assembly_canu.OUTPUT_ASSEMBLY_MAPPING_RATE_INFORMS
+    elif mode == 'assembly':
         return Path(config['working_dir']) / OUTPUT_ASSEMBLY_MAPPING_INFORMS
     elif mode == 'ref':
         return Path(config['working_dir']) / OUTPUT_VARIANT_CALLING_MAPPING_INFORMS
@@ -34,7 +37,9 @@ def get_depth_informs(config) -> Path:
     :return: Depth informs
     """
     mode = config['quality_checks'].get('coverage_mode', 'assembly')
-    if mode == 'assembly':
+    if config['read_type'] == 'nanopore':
+        return Path(config['working_dir']) / assembly_canu.OUTPUT_ASSEMBLY_DEPTH_INFORMS
+    elif mode == 'assembly':
         return Path(config['working_dir']) / OUTPUT_ASSEMBLY_DEPTH_INFORMS
     elif mode == 'ref':
         return Path(config['working_dir']) / OUTPUT_VARIANT_CALLING_DEPTH_INFORMS
@@ -100,9 +105,9 @@ QC_CHECKS_BY_KEY = {qc.key: qc for qc in [
                         'mode length of the raw input reads (<b>{}</b>).'),
 
     # Nanopore
-    QCCheck('nanoplot_len', 'NanoPlot: Median read length', 500, 250, '{:.0f}'),
+    QCCheck('nanoplot_len', 'NanoPlot: Median read length', 500, 250, '{:,}'),
     QCCheck('nanoplot_qual', 'NanoPlot: Median read quality', 10, 8, '{:.2f}%'),
-    QCCheck('seqkit_gc', 'seqkit: GC-content deviation', 10, 8, '{:.2f}%',
+    QCCheck('seqkit_gc', 'seqkit: GC-content deviation', 2.0, 4.0, '{:.2f}%', False,
             explanation='checks if the detected GC content is close enough to the expected GC content for this organism'
                         ' (<b>{:.2f}%</b>).')
 ]}

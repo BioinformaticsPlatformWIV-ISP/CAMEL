@@ -37,11 +37,12 @@ rule quality_checks_mapping_rate:
     output:
         JSON = Path(config['working_dir']) / 'quality_checks' / 'mapping_ref.json'
     params:
-        qc_check = quality_checks.QC_CHECKS_BY_KEY[f'map_rate_{config["quality_checks"].get("coverage_mode", "assembly")}']
+        qc_check = quality_checks.QC_CHECKS_BY_KEY[f'map_rate_{config["quality_checks"].get("coverage_mode", "assembly")}'],
+        key = 'stats_map_rate' if config['read_type'] == 'illumina' else 'mapping_perc'
     run:
         import json
-        informs_bt2 = SnakemakeUtils.load_object(Path(input.INFORMS))
-        mapping_rate = float(informs_bt2['stats_map_rate'])
+        informs_mapping = SnakemakeUtils.load_object(Path(input.INFORMS))
+        mapping_rate = float(informs_mapping[params.key])
         with open(output.JSON, 'w') as handle:
             json.dump(params.qc_check.to_dict(mapping_rate), handle, indent=2)
 
@@ -271,7 +272,7 @@ rule quality_checks_nanoplot_len:
         import json
         informs = SnakemakeUtils.load_object(Path(input.INFORMS))
         with open(output.JSON, 'w') as handle:
-            json.dump(params.qc_check.to_dict(float(informs['median_read_length'])), handle, indent=2)
+            json.dump(params.qc_check.to_dict(int(float(informs['median_read_length']))), handle, indent=2)
 
 rule quality_checks_seqkit_gc:
     """
@@ -367,7 +368,6 @@ rule quality_checks_report:
         JSON = Path(config['working_dir']) / 'quality_checks' / f"{config['read_type']}.json"
     output:
         VAL_HTML = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_REPORT
-        # JSON = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_REPORT_JSON
     run:
         from camel.app.tools.pipelines.quality_checks.htmlreporterqualitychecks import HtmlReporterQualityChecks
         reporter = HtmlReporterQualityChecks(Camel.get_instance())
@@ -377,27 +377,27 @@ rule quality_checks_report:
         reporter.run(Path(output.VAL_HTML).parent)
         SnakemakeUtils.dump_tool_output(reporter, 'VAL_HTML', Path(output.VAL_HTML))
 
-# rule quality_checks_export_summary_info:
-#     """
-#     Exports the summary information for the quality checks workflow.
-#     """
-#     input:
-#         JSON = rules.quality_checks_report.output.JSON
-#     output:
-#         TSV = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY
-#     run:
-#         with open(input.JSON) as handle:
-#             informs = json.load(handle)
-#
-#         with open(output.TSV, 'w') as handle:
-#             for qc_check_data in informs:
-#                 if qc_check_data['ori'] is None:
-#                     basename = f"qc_{qc_check_data['key']}"
-#                 else:
-#                     basename = f"qc_{qc_check_data['key']}_{qc_check_data['ori']}"
-#                 handle.write('\t'.join([f"{basename}_status", qc_check_data['status']]))
-#                 handle.write('\n')
-#                 handle.write('\t'.join([
-#                     f"{basename}_value", qc_check_data['fmt_string_value'].format(qc_check_data['value']) if
-#                         qc_check_data['value'] is not None else 'NA']))
-#                 handle.write('\n')
+rule quality_checks_export_summary_info:
+    """
+    Exports the summary information for the quality checks workflow.
+    """
+    input:
+        JSON = Path(config['working_dir']) / 'quality_checks' / f"{config['read_type']}.json"
+    output:
+        TSV = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY
+    run:
+        with open(input.JSON) as handle:
+            informs = json.load(handle)
+
+        with open(output.TSV, 'w') as handle:
+            for qc_check_data in informs:
+                if qc_check_data.get('ori') is None:
+                    basename = f"qc_{qc_check_data['key']}"
+                else:
+                    basename = f"qc_{qc_check_data['key']}_{qc_check_data['ori']}"
+                handle.write('\t'.join([f"{basename}_status", qc_check_data['status']]))
+                handle.write('\n')
+                handle.write('\t'.join([
+                    f"{basename}_value", qc_check_data['fmt_string_value'].format(qc_check_data['value']) if
+                        qc_check_data['value'] is not None else 'NA']))
+                handle.write('\n')

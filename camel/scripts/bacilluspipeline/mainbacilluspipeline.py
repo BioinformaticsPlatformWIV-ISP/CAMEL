@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import argparse
+import logging
 from pathlib import Path
 from typing import List, Dict, Optional, Sequence, Tuple
 
@@ -19,15 +20,11 @@ class MainBacillusPipeline(ReportPipeline):
     Main class to run the Bacillus pipeline.
     """
 
-    CUSTOM_ANALYSES = [
-        # General
-        'rmlst', 'plasmidfinder', 'mobsuite', 'vfdb_core', 'amrfinder',
-
-        # B. cereus
-        'btyper', 'mlst_cereus', 'cgmlst_cereus',
-
-        # B. subtilis
-        'fastani', 'mlst_subtilis', 'gmo']
+    CUSTOM_ANALYSES = {
+        'common': ['rmlst', 'plasmidfinder', 'mobsuite', 'vfdb_core', 'amrfinder'],
+        'cereus': ['btyper', 'mlst_cereus', 'cgmlst_cereus'],
+        'subtilis': ['fastani', 'mlst_subtilis', 'gmo']
+    }
 
     DATA_BY_SPECIES = {
         'cereus': {
@@ -98,8 +95,19 @@ class MainBacillusPipeline(ReportPipeline):
         """
         key_fq_in = 'fastq_pe' if (self._args.fastq_pe is not None) else 'fastq_se'
         config_data = self.get_template_data(key_fq_in, input_files)
-        config_data['analyses'] = [
-            'kraken2', *(key for key in MainBacillusPipeline.CUSTOM_ANALYSES if vars(self._args)[key])]
+        config_data['read_type'] = self._args.read_type
+
+        # Analyses to perform
+        config_data['analyses'] = ['kraken2']
+        for group, keys in MainBacillusPipeline.CUSTOM_ANALYSES.items():
+            for key in keys:
+                if not vars(self._args)[key]:
+                    continue
+                if group != 'common' and group != self._args.species:
+                    logging.warning(f"Analysis '{key}' not supported for species '{self._args.species}'")
+                config_data['analyses'].append(key)
+
+        # Parse template
         with open(CONFIG_DATA) as handle_in:
             mainscriptutils.dict_merge(config_data, yaml.load(handle_in.read().format(
                 species=self._args.species,
@@ -111,17 +119,13 @@ class MainBacillusPipeline(ReportPipeline):
                 genome_size=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['genome_size'],
             ), Loader=yaml.SafeLoader))
 
-        # Set studies-specific parameters
-        config_data['read_type'] = self._args.read_type
-
         # Nanopore settings
         if self._args.read_type == 'nanopore':
             config_data['assembly']['canu'] = {
                 'genome_size': MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['genome_size'],
                 **config_data['assembly'].get('canu', {})}
-            config_data['quality_checks']['disabled_checks'] = ['coverage', 'fastqc']
 
-        # Read trimming
+        # Illumina settings
         if self._args.library is not None:
             config_data['read_trimming']['adapter'] = self._args.library
 
@@ -153,8 +157,9 @@ class MainBacillusPipeline(ReportPipeline):
         parser.add_argument(
             '--cov-max', default=100.0, type=float,
             help='Maximum coverage (datasets with higher estimated coverage will be downsampled to the given value)')
-        for analysis_key in MainBacillusPipeline.CUSTOM_ANALYSES:
-            parser.add_argument(f"--{analysis_key.replace('_', '-')}", action='store_true')
+        for _, keys in MainBacillusPipeline.CUSTOM_ANALYSES.items():
+            for analysis_key in keys:
+                parser.add_argument(f"--{analysis_key.replace('_', '-')}", action='store_true')
         return parser.parse_args(args)
 
     @property
