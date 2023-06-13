@@ -30,7 +30,7 @@ class BTyper(Tool):
 
     def _build_command(self, fasta_input: Path) -> None:
         """
-        Build the command to run tool.
+        Build the command to run this tool.
         :return: None
         """
         self._command.command = ' '.join([self._tool_command, f'--input {fasta_input}', *self._build_options()])
@@ -45,7 +45,7 @@ class BTyper(Tool):
 
     def _set_output(self) -> None:
         """
-        set the output file to check.
+        Collects the tool output.
         """
         output_filename = f'btyper3_final_results/{self._tool_inputs["FASTA"][0].path.stem}_final_results.txt'
         self._tool_outputs['TSV'] = [ToolIOFile(Path(self._parameters['output_dir'].value) / Path(output_filename))]
