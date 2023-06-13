@@ -50,17 +50,16 @@ class TestBacillusPipeline(CamelTestSuite):
         path_report_out = Path(self.running_dir) / 'out' / 'report.html'
         path_summary_out = Path(self.running_dir) / 'out' / 'summary.tsv'
         args = [
-               '--fastq-pe', str(TestBacillusPipeline.input_fastq_pe_subtilis[0]),
-               str(TestBacillusPipeline.input_fastq_pe_subtilis[1]),
-               '--output-html', str(path_report_out),
-               '--output-dir', str(path_report_out.parent),
-               '--output-tsv', str(path_summary_out),
-               '--working-dir', str(self.running_dir),
-               '--detection-method', 'blast',
-               '--threads', '8',
-               '--species', 'subtilis'
-               ] + [
-                   f"--{a.replace('_', '-')}" for a in MainBacillusPipeline.CUSTOM_ANALYSES if a != 'cgmlst']
+                   '--fastq-pe', str(TestBacillusPipeline.input_fastq_pe_subtilis[0]),
+                   str(TestBacillusPipeline.input_fastq_pe_subtilis[1]),
+                   '--output-html', str(path_report_out),
+                   '--output-dir', str(path_report_out.parent),
+                   '--output-tsv', str(path_summary_out),
+                   '--working-dir', str(self.running_dir),
+                   '--detection-method', 'blast',
+                   '--threads', '8',
+                   '--species', 'subtilis'
+               ] + [f"--{a.replace('_', '-')}" for a in MainBacillusPipeline.CUSTOM_ANALYSES if 'cgmlst' not in a]
         main = MainBacillusPipeline(args)
         main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)
@@ -74,17 +73,16 @@ class TestBacillusPipeline(CamelTestSuite):
         path_report_out = Path(self.running_dir) / 'out' / 'report.html'
         path_summary_out = Path(self.running_dir) / 'out' / 'summary.tsv'
         args = [
-               '--fastq-pe', str(TestBacillusPipeline.input_fastq_pe_cereus[0]),
-               str(TestBacillusPipeline.input_fastq_pe_cereus[1]),
-               '--output-html', str(path_report_out),
-               '--output-dir', str(path_report_out.parent),
-               '--output-tsv', str(path_summary_out),
-               '--working-dir', str(self.running_dir),
-               '--detection-method', 'blast',
-               '--threads', '8',
-               '--species', 'cereus'
-               ] + [
-                   f"--{a.replace('_', '-')}" for a in MainBacillusPipeline.CUSTOM_ANALYSES if a != 'cgmlst']
+                   '--fastq-pe', str(TestBacillusPipeline.input_fastq_pe_cereus[0]),
+                   str(TestBacillusPipeline.input_fastq_pe_cereus[1]),
+                   '--output-html', str(path_report_out),
+                   '--output-dir', str(path_report_out.parent),
+                   '--output-tsv', str(path_summary_out),
+                   '--working-dir', str(self.running_dir),
+                   '--detection-method', 'blast',
+                   '--threads', '8',
+                   '--species', 'cereus'
+               ] + [f"--{a.replace('_', '-')}" for a in MainBacillusPipeline.CUSTOM_ANALYSES if 'cgmlst' not in a]
         main = MainBacillusPipeline(args)
         main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)

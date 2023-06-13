@@ -19,23 +19,26 @@ class MainBacillusPipeline(ReportPipeline):
     Main class to run the Bacillus pipeline.
     """
 
-    CUSTOM_ANALYSES = ['kraken', 'btyper', 'mlst', 'cgmlst', 'rmlst', 'amrfinder', 'gmo',
-                       'vfdb_core', 'plasmidfinder', 'mobsuite']
+    CUSTOM_ANALYSES = [
+        # General
+        'rmlst', 'plasmidfinder', 'mobsuite', 'vfdb_core', 'amrfinder',
+
+        # B. cereus
+        'btyper', 'mlst_cereus', 'cgmlst_cereus',
+
+        # B. subtilis
+        'fastani', 'mlst_subtilis', 'gmo']
 
     DATA_BY_SPECIES = {
         'cereus': {
             'gc_content': 35,
-            'genome_size': 2_796_178,
+            'genome_size': 5_800_000,
             'full_name': 'Bacillus cereus',
-            'mlst_db': '/db/sequence_typing/bacillus_cereus/mlst',
-            'cgmlst_db': '/db/sequence_typing/bacillus_cereus/cgmlst'
         },
         'subtilis': {
             'gc_content': 43,
-            'genome_size': 4_134_800,
+            'genome_size': 4_200_000,
             'full_name': 'Bacillus subtilis',
-            'mlst_db': '/db/sequence_typing/bacillus_subtilis/mlst',
-            'cgmlst_db': '/db/sequence_typing/bacillus_subtilis/mlst'
         }
     }
 
@@ -79,6 +82,15 @@ class MainBacillusPipeline(ReportPipeline):
             links.append([self._args.fastq_se, f"{self.sample_name}_1.fastq{'.gz' if gzipped else ''}"])
         return links
 
+    def __get_qc_typing_scheme(self) -> str:
+        """
+        Returns the typing scheme used for QC.
+        """
+        if self._args.species == 'cereus':
+            return 'cgmlst_cereus' if self._args.cgmlst_cereus is True else 'mlst_cereus'
+        else:
+            return 'mlst_subtilis'
+
     def __construct_config_file(self, input_files: List[Dict[str, str]]) -> str:
         """
         Constructs the configuration file.
@@ -86,22 +98,20 @@ class MainBacillusPipeline(ReportPipeline):
         """
         key_fq_in = 'fastq_pe' if (self._args.fastq_pe is not None) else 'fastq_se'
         config_data = self.get_template_data(key_fq_in, input_files)
-        config_data['analyses'] = [key for key in MainBacillusPipeline.CUSTOM_ANALYSES if vars(self._args)[key]]
+        config_data['analyses'] = [
+            'kraken2', *(key for key in MainBacillusPipeline.CUSTOM_ANALYSES if vars(self._args)[key])]
         with open(CONFIG_DATA) as handle_in:
             mainscriptutils.dict_merge(config_data, yaml.load(handle_in.read().format(
-                qc_typing_scheme='cgmlst' if self._args.cgmlst else 'mlst',
+                species=self._args.species,
+                qc_typing_scheme=self.__get_qc_typing_scheme(),
                 coverage_max=self._args.cov_max,
                 export_fastq='true' if self._args.report_include_fastq else 'false',
                 export_bam='true' if self._args.report_include_bam else 'false',
-                expected_species=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['full_name'],
                 expected_gc_content=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['gc_content'],
                 genome_size=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['genome_size'],
-                mlst_db=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['mlst_db'],
-                cgmlst_db=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['cgmlst_db'],
             ), Loader=yaml.SafeLoader))
 
         # Set studies-specific parameters
-        # config_data['contamination_check']['level_of_depth'] = 'G'
         config_data['read_type'] = self._args.read_type
 
         # Nanopore settings
@@ -126,7 +136,7 @@ class MainBacillusPipeline(ReportPipeline):
         parser = argparse.ArgumentParser()
         mainscriptutils.add_input_files_arguments(parser)
         mainscriptutils.add_common_arguments(parser)
-        # Logging
+        parser.add_argument('--species', type=str, choices=['cereus', 'subtilis'], required=True)
         parser.add_argument(
             '--galaxy-job-id', type=str, help='Job id of the run in galaxy (used for logging')
         parser.add_argument(
@@ -143,8 +153,6 @@ class MainBacillusPipeline(ReportPipeline):
         parser.add_argument(
             '--cov-max', default=100.0, type=float,
             help='Maximum coverage (datasets with higher estimated coverage will be downsampled to the given value)')
-        parser.add_argument('--species', help='Bacillus species under study', choices=['cereus', 'subtilis'])
-
         for analysis_key in MainBacillusPipeline.CUSTOM_ANALYSES:
             parser.add_argument(f"--{analysis_key.replace('_', '-')}", action='store_true')
         return parser.parse_args(args)

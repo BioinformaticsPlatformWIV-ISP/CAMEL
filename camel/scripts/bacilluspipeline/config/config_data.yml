@@ -13,18 +13,21 @@ citations:
     - Chen_2016-vfdb
     - Carattoli_2020-plasmidfinder
     - Robertson_2018-mob_suite
+    - Carroll_2020a-btyper3
+    - Carroll_2020b-btyper3
+
+species: {species}
 
 #########################
 # Tool specific options #
 #########################
-
 downsampling:
   coverage_max: {coverage_max}
   expected_genome_size: {genome_size}
 
 contamination_check:
   db: /db/kraken2_full/latest/full
-  expected_species: {expected_species}
+  expected_species: Bacillus
   level_of_depth: G
 
 quality_checks:
@@ -37,10 +40,12 @@ assembly:
   min_contig_length: 1000
 
 sequence_typing:
-  mlst:
-    path: {mlst_db}
-  cgmlst:
-    path: {cgmlst_db}
+  mlst_cereus:
+    path: /db/sequence_typing/bacillus_cereus/mlst
+  mlst_subtilis:
+    path: /db/sequence_typing/bacillus_subtilis/mlst
+  cgmlst_cereus:
+    path: /db/sequence_typing/bacillus_cereus/cgmlst
     detection_method: blast
   rmlst:
     path: /db/sequence_typing/various/rmlst
