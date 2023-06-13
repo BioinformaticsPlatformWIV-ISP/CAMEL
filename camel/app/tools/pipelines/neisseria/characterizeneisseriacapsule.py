@@ -1,18 +1,12 @@
-from pathlib import Path
-
-import pandas as pd
-
 from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
-from camel.app.error.toolexecutionerror import ToolExecutionError
-from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.tool import Tool
 
 
-class CharacterizeNeisseriaCapsule(Tool):
+class characterize_neisseria_capsule(Tool):
     """
     characterize_neisseria_capsule is a tool implementing a WGS-based method for N. meningitidis
-    serogroup predictions by identifying capsule genes and genetic variations that might impact their expression.
+    serogroup prediction. it identifies capsule genes and genetic variations that might impact their expression.
     """
 
     def __init__(self, camel: Camel) -> None:
@@ -24,65 +18,47 @@ class CharacterizeNeisseriaCapsule(Tool):
 
     def _check_input(self) -> None:
         """
-        Checks whether the provided inputs is valid:
-        - FASTA is the only required input
+        Checks whether the given inputs are valid:
+        - FASTA_dir is the only required input
         :return: None
         """
-        if 'FASTA' not in self._tool_inputs:
-            raise InvalidInputSpecificationError('FASTA input is required')
-        if len(self._tool_inputs['FASTA']) != 1:
-            raise InvalidInputSpecificationError('Only a single FASTA file can be analyzed at a time')
+        if 'FASTA_dir' not in self._tool_inputs:
+            raise InvalidInputSpecificationError(
+                f'Required input directory containing the fasta files is missing')
+        if 'OUTPUT_dir' not in self._tool_inputs:
+            raise InvalidInputSpecificationError(
+                f'Required output directory path is missing')
+        if 'THREADS' not in self._tool_inputs:
+            raise InvalidInputSpecificationError(
+                f'Number of threads to use is missing')
         super()._check_input()
 
-    def __build_command(self, dir_path: Path, dir_out: Path) -> None:
+    def __build_input_string(self) -> str:
+        """
+        Creates the string with the input files
+        :return: String with the input parameters
+        """
+        inputs = []
+        if 'FASTA_dir' in self._tool_inputs:
+            inputs.append(f"-d {self._tool_inputs['FASTA_dir'][0].path}")
+        if 'OUTPUT_dir' in self._tool_inputs:
+            inputs.append(f"-o {self._tool_inputs['OUTPUT_dir'][0].path}")
+        if 'THREADS' in self._tool_inputs:
+            inputs.append(f"-t {self._tool_inputs['THREADS'][0].path}")
+        return ' '.join(inputs)
+
+    def __build_command(self) -> None:
         """
         Concatenates required parameters and options to build the command.
         :return: None
         """
-        self._command.command = ' '.join([
-            self._tool_command,
-            f'--out {dir_out}',
-            f'--indir {dir_path}',
-            *self._build_options()
-        ])
-
-    def _check_command_output(self) -> None:
-        """
-        Checks if the command executed successfully.
-        :return: None
-        """
-        if not self._command.returncode == 0:
-            raise ToolExecutionError(f'Error executing {self.name}: {self.stderr}')
+        input_string = self.__build_input_string()
+        self._command.command = ' '.join([self._tool_command, input_string])
 
     def _execute_tool(self) -> None:
         """
         Executes this tool.
         :return: None
         """
-        # Symlink the input FASTA file
-        dir_fasta_in = self.folder / 'fasta_in'
-        dir_fasta_in.mkdir()
-        (dir_fasta_in / self._tool_inputs['FASTA'][0].path.name).symlink_to(self._tool_inputs['FASTA'][0].path)
-
-        # Run the command
-        dir_out = self.folder / 'out'
-        self.__build_command(dir_fasta_in, dir_out)
+        self.__build_command()
         self._execute_command()
-
-        # Collect the output
-        try:
-            self._tool_outputs['TSV'] = [ToolIOFile(next((dir_out / 'serogroup').glob('serogroup_predictions_*.tab')))]
-        except StopIteration:
-            raise ToolExecutionError(f"TSV file not found in output folder: {dir_out / 'serogroup'}")
-        self._tool_outputs['JSON'] = [ToolIOFile(dir_out / 'serogroup' / 'serogroup_results.json')]
-        self._parse_tsv(self._tool_outputs['TSV'][0].path)
-
-    def _parse_tsv(self, path_tsv: Path) -> None:
-        """
-        Parses the output TSV file and stores the results in the informs.
-        :return: None
-        """
-        data_sero = pd.read_table(path_tsv)
-        output_dict = data_sero.to_dict('records')[0]
-        self._informs['detected_serogroup'] = output_dict['SG']
-        self._informs['genes_present'] = output_dict['Genes_Present']
