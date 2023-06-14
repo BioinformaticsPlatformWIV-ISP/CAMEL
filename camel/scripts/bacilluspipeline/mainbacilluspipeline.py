@@ -17,7 +17,7 @@ from camel.scripts.bacilluspipeline import SNAKEFILE_MAIN, CONFIG_DATA
 
 class MainBacillusPipeline(ReportPipeline):
     """
-    Main class to run the Bacillus pipeline.
+    Main class to run the Bacillus pipeline
     """
 
     CUSTOM_ANALYSES = {
