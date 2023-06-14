@@ -21,7 +21,7 @@ class MainBacillusPipeline(ReportPipeline):
     """
 
     CUSTOM_ANALYSES = {
-        'common': ['rmlst', 'plasmidfinder', 'mobsuite', 'vfdb_core', 'amrfinder', 'kraken2'],
+        'common': ['rmlst', 'plasmidfinder', 'mobsuite', 'vfdb_core', 'amrfinder', 'kraken'],
         'cereus': ['btyper', 'mlst_cereus', 'cgmlst_cereus'],
         'subtilis': ['fastani', 'mlst_subtilis', 'gmo']
     }

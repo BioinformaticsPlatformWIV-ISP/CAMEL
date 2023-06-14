@@ -455,7 +455,7 @@ rule summary_combine_all:
         Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_SUMMARY,
         trimming.get_trimming_summary(config),
         Path(config['working_dir']) / rules.select_assembly_output.output.TSV,
-        Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_SUMMARY if 'kraken2' in config['analyses'] else [],
+        Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_SUMMARY if 'kraken' in config['analyses'] else [],
         Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY,
         Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_SUMMARY,
         Path(config['working_dir']) / btyper.OUTPUT_BTYPER_SUMMARY if 'btyper' in config['analyses'] else [],
