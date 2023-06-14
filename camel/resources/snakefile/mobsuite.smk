@@ -80,16 +80,20 @@ rule mobsuite_create_summary:
         informs_in = SnakemakeUtils.load_object(Path(input.INFORMS))
         with open(output.TSV, 'w') as handle:
             # Primary cluster id
-            handle.write('\t'.join([
-                'mob_suite_primary_cluster_ids', ', '.join(list(data_mobsuite['primary_cluster_id']))]))
-            handle.write('\n')
+            try:
+                handle.write('\t'.join([
+                    'mob_suite_primary_cluster_ids', ', '.join(list(data_mobsuite['primary_cluster_id']))]))
+                handle.write('\n')
 
-            # Contigs classified as plasmids
-            handle.write('\t'.join([
-                'mob_suite_predicted_plasmid_contigs',
-                ', '.join(ctg for ctg, status in informs_in['contig_report'].items() if status is not None)
-            ]))
-            handle.write('\n')
+                # Contigs classified as plasmids
+                handle.write('\t'.join([
+                    'mob_suite_predicted_plasmid_contigs',
+                    ', '.join(ctg for ctg, status in informs_in['contig_report'].items() if status is not None)
+                ]))
+                handle.write('\n')
+            except KeyError:
+                handle.write('No plasmids found.')
+                handle.write('\n')
 
 rule mobsuite_report_genomic_context:
     """
