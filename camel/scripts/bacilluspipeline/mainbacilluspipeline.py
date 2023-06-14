@@ -21,7 +21,7 @@ class MainBacillusPipeline(ReportPipeline):
     """
 
     CUSTOM_ANALYSES = {
-        'common': ['rmlst', 'plasmidfinder', 'mobsuite', 'vfdb_core', 'amrfinder'],
+        'common': ['rmlst', 'plasmidfinder', 'mobsuite', 'vfdb_core', 'amrfinder', 'kraken2'],
         'cereus': ['btyper', 'mlst_cereus', 'cgmlst_cereus'],
         'subtilis': ['fastani', 'mlst_subtilis', 'gmo']
     }
@@ -98,7 +98,7 @@ class MainBacillusPipeline(ReportPipeline):
         config_data['read_type'] = self._args.read_type
 
         # Analyses to perform
-        config_data['analyses'] = ['kraken2']
+        config_data['analyses'] = []
         for group, keys in MainBacillusPipeline.CUSTOM_ANALYSES.items():
             for key in keys:
                 if not vars(self._args)[key]:
