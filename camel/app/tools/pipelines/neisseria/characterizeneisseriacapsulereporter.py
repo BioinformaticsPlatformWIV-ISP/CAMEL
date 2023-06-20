@@ -1,28 +1,17 @@
-import json
-
 import pandas as pd
 
 from camel.app.camel import Camel
+from camel.app.tools.tool import Tool
+from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.html.htmltablecell import HtmlTableCell
-from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliovalue import ToolIOValue
-from camel.app.tools.tool import Tool
 
 
 class CharacterizeNeisseriaCapsuleReporter(Tool):
     """
     Creates an HTML output report for the characterize_neisseria_capsule tool.
     """
-
-    COLS_GENES = [
-        {'key': 'allele_name', 'name': 'Gene'},
-        {'key': 'identity', 'name': '% identity', 'fmt': lambda x: f'{x:.2f}'},
-        {'key': 'cov', 'name': '% covered', 'fmt': lambda x: f'{x*100:.2f}'},
-        {'key': 'contig', 'name': 'Contig'},
-        {'key': 'qstart', 'name': 'Start'},
-        {'key': 'qend', 'name': 'End'}
-    ]
 
     def __init__(self, camel: Camel) -> None:
         """
@@ -37,13 +26,26 @@ class CharacterizeNeisseriaCapsuleReporter(Tool):
         """
         if 'TSV' not in self._tool_inputs:
             raise InvalidInputSpecificationError("Serogrouping tool tabular output is required ('TSV')")
-        if 'JSON' not in self._tool_inputs:
-            raise InvalidInputSpecificationError("Serogrouping tool JSON output is required ('JSON')")
-        if 'detector' not in self._input_informs:
-            raise InvalidInputSpecificationError("Detector informs are required")
         super()._check_input()
 
-    def __add_overview_table(self, section: HtmlReportSection) -> None:
+    def __add_serogroup_prediction(self, section: HtmlReportSection) -> None:
+        """
+        Adds the detected serogroup to the output report section.
+        :param section: Report output section
+        :return: None
+        """
+        # Parse the input file
+        table_data = pd.read_table(self._tool_inputs['TSV'][0].path)
+
+        # Extract serogroup
+        assigned_SG = table_data['SG'].iloc[0]
+
+        # Create table data
+        section.add_table(
+            [[HtmlTableCell(assigned_SG, CharacterizeNeisseriaCapsuleReporter.__get_color(assigned_SG))]],
+            ['Predicted serogroup'], [('class', 'data')])
+
+    def __add_serogroup_table(self, section: HtmlReportSection) -> None:
         """
         Adds a table with the detected serogroup to the output report section.
         :param section: Report output section
@@ -52,12 +54,27 @@ class CharacterizeNeisseriaCapsuleReporter(Tool):
         # Parse the input file
         data = pd.read_table(self._tool_inputs['TSV'][0].path)
 
+        # Remove the first column (contains sample ID)
+        data.pop('Query')
+
+        # Extract note to display it under the table
+        note_txt = data['Notes'].iloc[0]
+        data.pop('Notes')
+
         # Rename columns
-        header = {'SG': 'Predicted serogroup', 'Notes': 'Notes'}
+        header = ['Predicted serogroup', 'Identified capsule genes']
 
         # Create table data
-        table_data = [[r['SG'], r['Notes']] for r in data.to_dict('records')]
-        section.add_table(table_data, list(header.values()), [('class', 'data')])
+        table_data = []
+        for values in data.itertuples(index=False, name=None):
+            row = list(values)
+
+            # Color the cell with the predicted serogroup
+            row[0] = HtmlTableCell(row[0], CharacterizeNeisseriaCapsuleReporter.__get_color(row[0]))
+            table_data.append(row)
+        section.add_table(table_data, header, [('class', 'data')])
+        section.add_paragraph(f'<b>Note:</b> {note_txt}.')
+
 
     def _execute_tool(self) -> None:
         """
@@ -65,41 +82,23 @@ class CharacterizeNeisseriaCapsuleReporter(Tool):
         :return: None
         """
         # Create overview table with status
-        section = HtmlReportSection('Capsule characterization', subtitle=self._input_informs['detector']['_name'])
+        section = HtmlReportSection('Characterize Neisseria Capsule tool')
+        self.__add_serogroup_prediction(section)
 
-        # Add overview table
-        section.add_header('Overview', 3)
-        self.__add_overview_table(section)
-
-        # Parse detected genes
-        section.add_header('Detected genes', 3)
-        with open(self._tool_inputs['JSON'][0].path) as handle:
-            json_info = json.load(handle)
-        data_genes = pd.DataFrame(json_info['Serogroup'][0]['genes'])
-        data_genes['color'] = data_genes.apply(
-            lambda x: CharacterizeNeisseriaCapsuleReporter.__get_row_color(x), axis=1)
-        data_genes.sort_values(by='allele_name', inplace=True)
-
-        # Add table with overview of the detected genes
-        table_data = [
-            [HtmlTableCell(col.get('fmt', str)(row[col['key']]), color=row['color']) for col in
-             CharacterizeNeisseriaCapsuleReporter.COLS_GENES] for row in data_genes.to_dict('records')
-        ]
-        section.add_table(
-            table_data, [c['name'] for c in CharacterizeNeisseriaCapsuleReporter.COLS_GENES], [('class', 'data')])
+        # Create table with hits
+        section.add_header('Serogroup information', 3)
+        self.__add_serogroup_table(section)
 
         # Store the output
         self._tool_outputs['HTML'] = [ToolIOValue(section)]
 
     @staticmethod
-    def __get_row_color(row: pd.Series) -> str:
+    def __get_color(serogroup: str) -> str:
         """
-        Returns the row color for a detected gene.
-        :param row: Input row
-        :return: Color
+        Returns the color for the assigned serogroup.
+        :param serogroup: tool predicted serogroup
+        :return: Serogroup cell
         """
-        if row['cov'] == 1.0 and row['identity'] == 100.0:
-            return 'green'
-        elif row['cov'] == 1.0:
-            return 'lightgreen'
-        return 'grey'
+        if serogroup == 'NG':
+            return 'yellow'
+        return 'green'
