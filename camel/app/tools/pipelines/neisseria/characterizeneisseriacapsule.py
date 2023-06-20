@@ -1,11 +1,9 @@
-import logging
 from pathlib import Path
 
 from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.tool import Tool
-
 
 
 class CharacterizeNeisseriaCapsule(Tool):
@@ -28,8 +26,7 @@ class CharacterizeNeisseriaCapsule(Tool):
         :return: None
         """
         if 'FASTA_dir' not in self._tool_inputs:
-            raise InvalidInputSpecificationError(
-                f'Required input directory containing the fasta files is missing')
+            raise InvalidInputSpecificationError('Required input directory containing the fasta files is missing')
         super()._check_input()
 
     def __build_input_string(self) -> str:
@@ -37,9 +34,7 @@ class CharacterizeNeisseriaCapsule(Tool):
         Creates the string with the input files
         :return: String with the input parameters
         """
-        inputs = []
-        inputs.append(f"-o {self._parameters['output_directory'].value}")
-        inputs.append(f"-t {self._parameters['threads'].value}")
+        inputs = [f"-o {self._parameters['output_directory'].value}", f"-t {self._parameters['threads'].value}"]
         if 'FASTA_dir' in self._tool_inputs:
             inputs.append(f"-d {self._tool_inputs['FASTA_dir'][0].path}")
         return ' '.join(inputs)
@@ -59,4 +54,8 @@ class CharacterizeNeisseriaCapsule(Tool):
         """
         self.__build_command()
         self._execute_command()
-        self._tool_outputs['TSV'] = [ToolIOFile(Path(''.join([f"{self._parameters['output_directory'].value}", '/serogroup/serogroup_predictions_.*.tab'])))]
+        dir_out = self.folder / Path(self._parameters['output_directory'].value)
+        try:
+            self._tool_outputs['TSV'] = [ToolIOFile(next((dir_out / 'serogroup').glob('serogroup_predictions_*.tab')))]
+        except StopIteration:
+            raise ToolExecutionError(f"TSV file not found in output folder: {dir_out / 'serogroup'}")
