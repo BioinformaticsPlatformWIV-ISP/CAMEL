@@ -1,15 +1,17 @@
+import logging
+from pathlib import Path
+
 from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.tool import Tool
-from pathlib import Path
-from camel.app.io.tooliodirectory import ToolIODirectory
 
 
 
 class CharacterizeNeisseriaCapsule(Tool):
     """
     characterize_neisseria_capsule is a tool implementing a WGS-based method for N. meningitidis
-    serogroup prediction. it identifies capsule genes and genetic variations that might impact their expression.
+    serogroup predictions by identifying capsule genes and genetic variations that might impact their expression.
     """
 
     def __init__(self, camel: Camel) -> None:
@@ -57,7 +59,4 @@ class CharacterizeNeisseriaCapsule(Tool):
         """
         self.__build_command()
         self._execute_command()
-        #self._tool_outputs['TAB'] = [ToolIOFile(''.join([Path(''),
-        #                                                'serogroup_predictions_''.tab'])]
-        print(f'{self.name} is running!')
-        print(f'Command : {self._execute_command}')
+        self._tool_outputs['TSV'] = [ToolIOFile(Path(''.join([f"{self._parameters['output_directory'].value}", '/serogroup/serogroup_predictions_.*.tab'])))]
