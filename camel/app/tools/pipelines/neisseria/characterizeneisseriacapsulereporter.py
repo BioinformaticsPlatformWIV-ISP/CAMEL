@@ -75,7 +75,6 @@ class CharacterizeNeisseriaCapsuleReporter(Tool):
         section.add_table(table_data, header, [('class', 'data')])
         section.add_paragraph(f'<b>Note:</b> {note_txt}.')
 
-
     def _execute_tool(self) -> None:
         """
         Executes this tool.
