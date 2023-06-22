@@ -7,6 +7,7 @@ from camel.resources.snakefile import assembly_canu
 from camel.resources.snakefile.assembly_spades import OUTPUT_ASSEMBLY_MAPPING_INFORMS, OUTPUT_ASSEMBLY_DEPTH_INFORMS
 from camel.resources.snakefile.variant_calling import OUTPUT_VARIANT_CALLING_MAPPING_INFORMS, \
     OUTPUT_VARIANT_CALLING_DEPTH_INFORMS
+from camel.scripts.bacilluspipeline.snakefile import assembly_flye
 
 SNAKEFILE_QUALITY_CHECKS = f'{Path(__file__).parent / Path(__file__).stem}.smk'
 OUTPUT_QUALITY_CHECKS_REPORT = Path('quality_checks') / 'report' / 'html.io'
@@ -22,7 +23,8 @@ def get_mapping_rate_informs(config) -> Path:
     """
     mode = config['quality_checks'].get('coverage_mode', 'assembly')
     if config['read_type'] == 'nanopore':
-        return Path(config['working_dir']) / assembly_canu.OUTPUT_ASSEMBLY_MAPPING_RATE_INFORMS
+        # return Path(config['working_dir']) / assembly_canu.OUTPUT_ASSEMBLY_MAPPING_RATE_INFORMS
+        return Path(config['working_dir']) / assembly_flye.OUTPUT_ASSEMBLY_MAPPING_RATE_INFORMS
     elif mode == 'assembly':
         return Path(config['working_dir']) / OUTPUT_ASSEMBLY_MAPPING_INFORMS
     elif mode == 'ref':
@@ -38,7 +40,8 @@ def get_depth_informs(config) -> Path:
     """
     mode = config['quality_checks'].get('coverage_mode', 'assembly')
     if config['read_type'] == 'nanopore':
-        return Path(config['working_dir']) / assembly_canu.OUTPUT_ASSEMBLY_DEPTH_INFORMS
+        # return Path(config['working_dir']) / assembly_canu.OUTPUT_ASSEMBLY_DEPTH_INFORMS
+        return Path(config['working_dir']) / assembly_flye.OUTPUT_ASSEMBLY_DEPTH_INFORMS
     elif mode == 'assembly':
         return Path(config['working_dir']) / OUTPUT_ASSEMBLY_DEPTH_INFORMS
     elif mode == 'ref':

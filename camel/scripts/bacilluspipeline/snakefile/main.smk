@@ -1,10 +1,10 @@
 import shutil
 from pathlib import Path
 
-from camel.resources.snakefile import trimming, trimming_illumina, assembly_spades, assembly_canu, \
+from camel.resources.snakefile import trimming, trimming_illumina, assembly_spades, \
     quality_checks, contamination_check_kraken, sequence_typing, downsampling, amrfinder, trimming_ont, gene_detection, \
     mobsuite
-from camel.scripts.bacilluspipeline.snakefile import btyper, ani
+from camel.scripts.bacilluspipeline.snakefile import btyper, ani, assembly_flye
 
 #######################
 # Included Snakefiles #
@@ -15,7 +15,8 @@ include: trimming_ont.SNAKEFILE_TRIMMING_ONT
 include: contamination_check_kraken.SNAKEFILE_CONTAMINATION_CHECK_KRAKEN
 include: quality_checks.SNAKEFILE_QUALITY_CHECKS
 include: assembly_spades.SNAKEFILE_ASSEMBLY_SPADES
-include: assembly_canu.SNAKEFILE_ASSEMBLY_CANU
+# include: assembly_canu.SNAKEFILE_ASSEMBLY_CANU
+include: assembly_flye.SNAKEFILE_ASSEMBLY_FLYE
 include: sequence_typing.SNAKEFILE_SEQUENCE_TYPING
 include: btyper.SNAKEFILE_BTYPER
 include: amrfinder.SNAKEFILE_AMRFINDER
@@ -104,14 +105,15 @@ rule link_fasta_to_gene_detection:
     """
     input:
         FASTA_spades = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'illumina' else [],
-        FASTA_canu = Path(config['working_dir']) / assembly_canu.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else []
+        # FASTA_canu = Path(config['working_dir']) / assembly_canu.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else []
+        FASTA_flye = Path(config['working_dir']) / assembly_flye.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else []
     output:
         FASTA_genedetection = Path(config['working_dir']) / gene_detection.INPUT_GENE_DETECTION_FASTA
     params:
         read_type = config['read_type']
     run:
         if params.read_type == 'nanopore':
-            shutil.copyfile(Path(input.FASTA_canu), Path(output.FASTA_genedetection))
+            shutil.copyfile(Path(input.FASTA_flye), Path(output.FASTA_genedetection))
         elif params.read_type == 'illumina':
             shutil.copyfile(Path(input.FASTA_spades), Path(output.FASTA_genedetection))
         else:
@@ -123,14 +125,14 @@ rule link_fasta_to_typing:
     """
     input:
         FASTA_spades = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'illumina' else [],
-        FASTA_canu = Path(config['working_dir']) / assembly_canu.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else []
+        FASTA_flye = Path(config['working_dir']) / assembly_flye.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else []
     output:
         FASTA_typing = Path(config['working_dir']) / sequence_typing.INPUT_FASTA
     params:
         read_type = config['read_type']
     run:
         if params.read_type == 'nanopore':
-            shutil.copyfile(Path(input.FASTA_canu), Path(output.FASTA_typing))
+            shutil.copyfile(Path(input.FASTA_flye), Path(output.FASTA_typing))
         elif params.read_type == 'illumina':
             shutil.copyfile(Path(input.FASTA_spades), Path(output.FASTA_typing))
         else:
@@ -142,7 +144,7 @@ rule link_fasta_to_tools_all:
     """
     input:
         FASTA_spades = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'illumina' else [],
-        FASTA_canu = Path(config['working_dir']) / assembly_canu.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else []
+        FASTA_flye = Path(config['working_dir']) / assembly_flye.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else []
     output:
         FASTA_amrfinder = Path(config['working_dir']) / amrfinder.INPUT_AMRFINDER_FASTA,
         FASTA_mobsuite = Path(config['working_dir']) / mobsuite.INPUT_MOBSUITE_FASTA
@@ -150,8 +152,8 @@ rule link_fasta_to_tools_all:
         read_type = config['read_type']
     run:
         if params.read_type == 'nanopore':
-            shutil.copyfile(Path(input.FASTA_canu), Path(output.FASTA_amrfinder))
-            shutil.copyfile(Path(input.FASTA_canu), Path(output.FASTA_mobsuite))
+            shutil.copyfile(Path(input.FASTA_flye), Path(output.FASTA_amrfinder))
+            shutil.copyfile(Path(input.FASTA_flye), Path(output.FASTA_mobsuite))
         elif params.read_type == 'illumina':
             shutil.copyfile(Path(input.FASTA_spades), Path(output.FASTA_amrfinder))
             shutil.copyfile(Path(input.FASTA_spades), Path(output.FASTA_mobsuite))
@@ -164,14 +166,14 @@ rule link_fasta_to_tools_subtilis:
     """
     input:
         FASTA_spades = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'illumina' else [],
-        FASTA_canu = Path(config['working_dir']) / assembly_canu.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else []
+        FASTA_flye = Path(config['working_dir']) / assembly_flye.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else []
     output:
         FASTA_ani = Path(config['working_dir']) / ani.INPUT_FASTA_ANI
     params:
         read_type = config['read_type']
     run:
         if params.read_type == 'nanopore':
-            shutil.copyfile(Path(input.FASTA_canu), Path(output.FASTA_ani))
+            shutil.copyfile(Path(input.FASTA_flye), Path(output.FASTA_ani))
         elif params.read_type == 'illumina':
             shutil.copyfile(Path(input.FASTA_spades), Path(output.FASTA_ani))
         else:
@@ -183,14 +185,14 @@ rule link_fasta_to_tools_cereus:
     """
     input:
         FASTA_spades = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'illumina' else [],
-        FASTA_canu = Path(config['working_dir']) / assembly_canu.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else []
+        FASTA_flye = Path(config['working_dir']) / assembly_flye.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else []
     output:
         FASTA_btyper = Path(config['working_dir']) / btyper.INPUT_BTYPER_FASTA
     params:
         read_type = config['read_type']
     run:
         if params.read_type == 'nanopore':
-            shutil.copyfile(Path(input.FASTA_canu), Path(output.FASTA_btyper))
+            shutil.copyfile(Path(input.FASTA_flye), Path(output.FASTA_btyper))
         elif params.read_type == 'illumina':
             shutil.copyfile(Path(input.FASTA_spades),Path(output.FASTA_btyper))
         else:
@@ -205,10 +207,10 @@ rule select_assembly_output:
     Selects the assembly output based on the read type.
     """
     input:
-        HTML = Path(config['working_dir']) / (assembly_spades.OUTPUT_ASSEMBLY_REPORT if config['read_type'] == 'illumina' else assembly_canu.OUTPUT_ASSEMBLY_REPORT),
-        TSV = Path(config['working_dir']) / (assembly_spades.OUTPUT_ASSEMBLY_SUMMARY if config['read_type'] == 'illumina' else assembly_canu.OUTPUT_ASSEMBLY_SUMMARY),
-        INFORMS = Path(config['working_dir']) / (assembly_spades.OUTPUT_ASSEMBLY_INFORMS if config['read_type'] == 'illumina' else assembly_canu.OUTPUT_ASSEMBLY_INFORMS),
-        INFORMS_filt = Path(config['working_dir']) / (assembly_spades.OUTPUT_ASSEMBLY_FILTERING_INFORMS if config['read_type'] == 'illumina' else assembly_canu.OUTPUT_ASSEMBLY_FILTERING_INFORMS)
+        HTML = Path(config['working_dir']) / (assembly_spades.OUTPUT_ASSEMBLY_REPORT if config['read_type'] == 'illumina' else assembly_flye.OUTPUT_ASSEMBLY_REPORT),
+        TSV = Path(config['working_dir']) / (assembly_spades.OUTPUT_ASSEMBLY_SUMMARY if config['read_type'] == 'illumina' else assembly_flye.OUTPUT_ASSEMBLY_SUMMARY),
+        INFORMS = Path(config['working_dir']) / (assembly_spades.OUTPUT_ASSEMBLY_INFORMS if config['read_type'] == 'illumina' else assembly_flye.OUTPUT_ASSEMBLY_INFORMS),
+        INFORMS_filt = Path(config['working_dir']) / (assembly_spades.OUTPUT_ASSEMBLY_FILTERING_INFORMS if config['read_type'] == 'illumina' else assembly_flye.OUTPUT_ASSEMBLY_FILTERING_INFORMS)
     output:
         HTML = Path(config['working_dir']) / 'read_type' / 'assembly' / 'html.io',
         TSV = Path(config['working_dir']) / 'read_type' / 'assembly' / 'summary.tsv',

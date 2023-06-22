@@ -124,6 +124,9 @@ class MainBacillusPipeline(ReportPipeline):
             config_data['assembly']['canu'] = {
                 'genome_size': MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['genome_size'],
                 **config_data['assembly'].get('canu', {})}
+            config_data['assembly']['flye'] = {
+                'genome_size': MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['genome_size'],
+                **config_data['assembly'].get('flye', {})}
 
         # Illumina settings
         if self._args.library is not None:
