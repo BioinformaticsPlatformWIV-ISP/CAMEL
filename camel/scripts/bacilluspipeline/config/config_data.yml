@@ -38,6 +38,8 @@ assembly:
   spades:
     cov_cutoff: 10
   min_contig_length: 1000
+  canu:
+    minimum_input_coverage: 0
 
 sequence_typing:
   mlst_cereus:

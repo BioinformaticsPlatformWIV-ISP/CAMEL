@@ -73,5 +73,16 @@ rule btyper_dump_summary_info:
         TSV = Path(config['working_dir']) / bt.OUTPUT_BTYPER_SUMMARY
     run:
         tsv_btyper = SnakemakeUtils.load_object(Path(input.TSV))[0].path
+        btyper_table = pd.read_table(tsv_btyper)
         with open(output.TSV, 'w') as handle:
-            handle.write('btyper - placeholder\n')
+            handle.write('btyper_closest_species(ANI)\t{}'.format([btyper_table["species(ANI)"][0]]))
+            handle.write('\n')
+            handle.write('btyper_panc_typing\t{}'.format([btyper_table["Adjusted_panC_Group(predicted_species)"][0]]))
+            handle.write('\n')
+            subtable_virulence = btyper_table.iloc[:,6:12]
+            handle.write('btyper_virulence_genes\t{}'.format([[a, subtable_virulence[a][0]] for a in subtable_virulence.columns]))
+            handle.write('\n')
+            subtable_capsule = btyper_table.iloc[:,12:15]
+            handle.write('btyper_capsule_genes\t{}'.format([[a, subtable_capsule[a][0]] for a in subtable_capsule.columns]))
+            handle.write('\n')
+            handle.write('btyper_bt_genes\t{}'.format([btyper_table["Bt(genes)"][0]]))

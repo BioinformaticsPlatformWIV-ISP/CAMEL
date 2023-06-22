@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pandas as pd
+
 from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.pipeline.step import Step
@@ -72,5 +74,8 @@ rule fastani_dump_summary_info:
         TSV = Path(config['working_dir']) / ani.OUTPUT_ANI_SUMMARY
     run:
         tsv_fastani = SnakemakeUtils.load_object(Path(input.TSV))[0].path
+        fastani_table = pd.read_table(tsv_fastani, header=None)
+        pd.set_option('display.max_columns',None)
         with open(output.TSV, 'w') as handle:
-            handle.write('fastani - placeholder\n')
+            handle.write('fastani_closest_species\t{}'.format([Path(fastani_table[1][0]).stem, str(fastani_table[2][0])+'%']))
+            handle.write('\n')
