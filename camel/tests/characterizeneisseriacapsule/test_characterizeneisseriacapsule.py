@@ -16,7 +16,7 @@ class TestCharacterizeNeisseriaCapsule(CamelTestSuite):
     Tests the CharacterizeNeisseriaCapsule tool.
     """
 
-    test_file_dir = CamelTestSuite.get_test_file_dir('characterizeneisseriacapsule')
+    test_file_dir = CamelTestSuite.get_test_file_dir('characterize_neisseria_capsule')
 
     def test_characterizeneisseriacapsule(self) -> None:
         """
