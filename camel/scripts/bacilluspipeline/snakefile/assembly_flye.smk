@@ -189,7 +189,6 @@ rule assembly_flye_medaka_consensus:
     run:
         from camel.app.tools.medaka.medakaconsensus import MedakaConsensus
         medaka = MedakaConsensus(camel)
-        # SnakemakeUtils.add_pickle_inputs(medaka, input)
         SnakemakeUtils.add_pickle_input(medaka, 'BAM', Path(input.BAM))
         medaka.update_parameters(**params.medaka_options)
         medaka.update_parameters(threads=threads)
