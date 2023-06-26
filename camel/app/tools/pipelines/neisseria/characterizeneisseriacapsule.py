@@ -47,6 +47,14 @@ class CharacterizeNeisseriaCapsule(Tool):
         input_string = self.__build_input_string()
         self._command.command = ' '.join([self._tool_command, input_string])
 
+    def _check_command_output(self) -> None:
+        """
+        Checks if the command executed successfully.
+        :return: None
+        """
+        if not self._command.returncode == 0:
+            raise ToolExecutionError(f'Error executing {self.name}: {self.stderr}')
+
     def _execute_tool(self) -> None:
         """
         Executes this tool.
