@@ -18,7 +18,7 @@ class TestCharacterizeNeisseriaCapsule(CamelTestSuite):
 
     test_file_dir = CamelTestSuite.get_test_file_dir('characterize_neisseria_capsule')
 
-    def test_characterizeneisseriacapsule(self) -> None:
+    def test_characterize_neisseria_capsule(self) -> None:
         """
         Tests the CharacterizeNeisseriaCapsule tool.
         :return: None
@@ -29,28 +29,17 @@ class TestCharacterizeNeisseriaCapsule(CamelTestSuite):
                     'FASTA_dir': [ToolIODirectory(TestCharacterizeNeisseriaCapsule.test_file_dir)]})
         serogroup_tool.update_parameters(output_directory=f'{self.running_dir}')
         serogroup_tool.run(self.running_dir)
-        ## TODO : method stops currently here due to warnings -> solve this
         logging.info(f'Successfully processed: {TestCharacterizeNeisseriaCapsule.test_file_dir}')
 
-    def test_characterizeneisseriacapsulereporter(self) -> None:
+    def test_characterize_neisseria_capsule_reporter(self) -> None:
         """
         Tests the CharacterizeNeisseriaCapsuleReporter tool.
         :return: None
         """
-        # Run CharacterizeNeisseriaCapsule
-        serogroup_tool = CharacterizeNeisseriaCapsule(self.camel)
-        serogroup_tool.add_input_files({
-                    'FASTA_dir': [ToolIODirectory(TestCharacterizeNeisseriaCapsule.test_file_dir)]})
-        serogroup_tool.update_parameters(output_directory=f'{self.running_dir}')
-        serogroup_tool.run(self.running_dir)
-        logging.info(f'Successfully processed: {TestCharacterizeNeisseriaCapsule.test_file_dir}')
-
         # Run the reporter
         logging.info('Moved to reporter')
         reporter = CharacterizeNeisseriaCapsuleReporter(self.camel)
-        ## TODO : update input files
-        #reporter.add_input_files({'TSV': characterizeneisseriacapsule.tool_outputs['TSV']})
-        reporter.add_input_files({'TSV': [ToolIOFile(Path('/scratch/temp/camel_12o24_we/serogroup/serogroup_predictions_1687254004.4534914.tab'))]})
+        reporter.add_input_files({'TSV': [ToolIOFile(Path(f'{TestCharacterizeNeisseriaCapsule.test_file_dir}/serogroup_predictions.tab'))]})
         reporter.run(self.running_dir)
 
         # Save the report
