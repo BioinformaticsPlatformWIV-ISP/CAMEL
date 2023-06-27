@@ -55,6 +55,58 @@ rule polishing_bwa_index:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(bwa, output)
 
+# rule polishing_read_mapping_1:
+#     """
+#     Maps the forward reads against the assembly.
+#     """
+#     input:
+#         FQ_dict = Path(config['working_dir']) / 'trimming' / 'illumina' / 'fq_dict.io',
+#         INDEX_GENOME_PREFIX_BWA = rules.polishing_bwa_index.output.INDEX_GENOME_PREFIX,
+#         INDEX_GENOME_PREFIX_SAMTOOLS = rules.polishing_samtools_index_polypolish.output.INDEX_GENOME_PREFIX,
+#         FASTA = rules.polishing_copy_fasta.output.FASTA,
+#         INDEX_GENOME_PREFIX = rules.polishing_bwa_index.output.INDEX_GENOME_PREFIX
+#     output:
+#         SAM = Path(config['working_dir']) / 'polishing' / 'read_mapping' / 'bwa_readmap_1.sam'
+#     params:
+#         running_dir = Path(config['working_dir']) / 'polishing' / 'read_mapping'
+#     threads: 8
+#     run:
+#         from camel.app.components.workflows.utils.fastqinput import FastqInput
+#         from camel.app.tools.bwa.bwamap import BWAMap
+#         bwa_map = BWAMap(camel)
+#         fq_in = FastqInput.from_fq_dict(Path(input.FQ_dict), 'illumina')
+#         bwa_map.add_input_files({'FASTQ_SE': [fq_in.pe[0]]})
+#         bwa_map.update_parameters(threads=threads)
+#         SnakemakeUtils.add_pickle_input(bwa_map, 'INDEX_GENOME_PREFIX', Path(input.INDEX_GENOME_PREFIX))
+#         step = Step(str(rule), bwa_map, camel, params.running_dir)
+#         step.run_step()
+#
+# rule polishing_read_mapping_2:
+#     """
+#     Maps the forward reads against the assembly.
+#     """
+#     input:
+#         FQ_dict = Path(config['working_dir']) / 'trimming' / 'illumina' / 'fq_dict.io',
+#         INDEX_GENOME_PREFIX_BWA = rules.polishing_bwa_index.output.INDEX_GENOME_PREFIX,
+#         INDEX_GENOME_PREFIX_SAMTOOLS = rules.polishing_samtools_index_polypolish.output.INDEX_GENOME_PREFIX,
+#         FASTA = rules.polishing_copy_fasta.output.FASTA,
+#         INDEX_GENOME_PREFIX = rules.polishing_bwa_index.output.INDEX_GENOME_PREFIX
+#     output:
+#         SAM = Path(config['working_dir']) / 'polishing' / 'read_mapping' / 'bwa_readmap_2.sam'
+#     params:
+#         running_dir = Path(config['working_dir']) / 'polishing' / 'read_mapping'
+#     threads: 8
+#     run:
+#         from camel.app.components.workflows.utils.fastqinput import FastqInput
+#         from camel.app.tools.bwa.bwamap import BWAMap
+#         bwa_map = BWAMap(camel)
+#         fq_in = FastqInput.from_fq_dict(Path(input.FQ_dict), 'illumina')
+#         bwa_map.add_input_files({'FASTQ_SE': [fq_in.pe[1]]})
+#         bwa_map.update_parameters(threads=threads)
+#         SnakemakeUtils.add_pickle_input(bwa_map, 'INDEX_GENOME_PREFIX', Path(input.INDEX_GENOME_PREFIX))
+#         step = Step(str(rule), bwa_map, camel, params.running_dir)
+#         step.run_step()
+
 rule polishing_read_mapping:
     """
     Maps the reads against the assembly.
