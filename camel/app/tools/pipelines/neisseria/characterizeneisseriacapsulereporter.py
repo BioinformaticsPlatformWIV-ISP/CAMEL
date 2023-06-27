@@ -38,7 +38,7 @@ class CharacterizeNeisseriaCapsuleReporter(Tool):
         table_data = pd.read_table(self._tool_inputs['TSV'][0].path)
 
         # Extract serogroup
-        assigned_SG = table_data['SG'].iloc[0]
+        assigned_sg = table_data['SG'].iloc[0]
 
         # Create table data
         section.add_table(
