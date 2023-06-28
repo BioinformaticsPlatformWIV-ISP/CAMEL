@@ -67,9 +67,10 @@ class GenomicContext(Tool):
             logging.warning('Genomic context can only be predicted with blast as detection method')
             section.add_paragraph('Predicting genomic context is only performed when the detection method is blast.')
         else:
-            section.add_warning_message(
-                'Predicting genomic context based solely on short-read data is error-prone and should only be '
-                'considered as an indication.')
+            if self._parameters['read_type'] == 'illumina':
+                section.add_warning_message(
+                    'Predicting genomic context based solely on short-read data is error-prone and should only be '
+                    'considered as an indication.')
 
             # Create rows
             for db in self._input_informs['dbs']:

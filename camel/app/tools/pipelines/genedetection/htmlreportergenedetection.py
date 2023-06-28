@@ -68,6 +68,10 @@ class HtmlReporterGeneDetection(Tool):
         db_name = self._input_informs['db_info']['name']
         self._report_section = HtmlReportSection(self._input_informs['db_info']['title'], 3)
         self._sub_folder = Path('gene_detection') / FileSystemHelper.make_valid(db_name)
+        if 'PlasmidFinder' in db_name:
+            self._report_section.add_warning_message(
+                'The presence of a replicon does not always mean the presence of a plasmid in the analyzed sample. '
+                'Further analyses are required to confirm the bioinformatics results.')
 
     def __add_parameter_table(self, informs_detection: Dict[str, str]) -> None:
         """

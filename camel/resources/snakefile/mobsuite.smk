@@ -108,7 +108,8 @@ rule mobsuite_report_genomic_context:
         HTML = Path(config['working_dir']) / 'mob_suite' / 'genomic_context' / 'html.io'
     params:
         dir_ = Path(config['working_dir']) / 'mob_suite' / 'genomic_context',
-        detection_method = config['detection_method']
+        detection_method = config['detection_method'],
+        read_type = config.get('read_type', 'illumina')
     run:
         from camel.app.tools.pipelines.klebsiella.genomiccontext import GenomicContext
         genomic_context = GenomicContext(Camel.get_instance())
@@ -124,7 +125,7 @@ rule mobsuite_report_genomic_context:
                     SnakemakeUtils.add_pickle_input(genomic_context, k, Path(v))
         genomic_context.add_input_informs({'mob_recon': SnakemakeUtils.load_object(Path(input.INFORMS_mob_recon)),
                                            'dbs': db_informs_to_add})
-        genomic_context.update_parameters(detection_method=str(params.detection_method))
+        genomic_context.update_parameters(detection_method=str(params.detection_method), read_type=str(params.read_type))
         step = Step(str(rule), genomic_context, Camel.get_instance(), params.dir_)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(genomic_context, output)
