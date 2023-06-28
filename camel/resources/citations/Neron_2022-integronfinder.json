@@ -1,0 +1,23 @@
+{
+  "type_of_reference": "JOUR",
+  "primary_title": "IntegronFinder 2.0: Identification and Analysis of Integrons across Bacteria, with a Focus on Antibiotic Resistance in Klebsiella",
+  "first_authors": [
+    "Néron, Bertrand",
+    "Littner, Eloi",
+    "Haudiquet, Matthieu",
+    "Perrin, Amandine",
+    "Cury, Jean",
+    "Rocha, Eduardo P.C."
+  ],
+  "publication_year": "2022///",
+  "keywords": [
+    "Antibiotic resistance",
+    "Bioinformatics",
+    "Genomics",
+    "Integron"
+  ],
+  "alternate_title3": "Microorganisms",
+  "volume": "10",
+  "number": "4",
+  "doi": "10.3390/microorganisms10040700"
+}

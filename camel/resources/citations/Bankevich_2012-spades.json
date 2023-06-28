@@ -34,7 +34,5 @@
   "end_page": "477",
   "issn": "1066-5277",
   "doi": "10.1089/cmb.2012.0021",
-  "url": "http://online.liebertpub.com/doi/abs/10.1089/cmb.2012.0021",
-  "file_attachments1": "file:///D:/articles/cmb.2012.0021.pdf",
-  "abstract": "The lion's share of bacteria in various environments cannot be cloned in the laboratory and thus cannot be sequenced using existing technologies. A major goal of single-cell genomics is to complement gene-centric metagenomic data with whole-genome assemblies of uncultivated organisms. Assembly of single-cell data is challenging because of highly non-uniform read coverage as well as elevated levels of sequencing errors and chimeric reads. We describe SPAdes, a new assembler for both single-cell and standard (multicell) assembly, and demonstrate that it improves on the recently released E+V-SC assembler (specialized for single-cell data) and on popular assemblers Velvet and SoapDeNovo (for multicell data). SPAdes generates single-cell assemblies, providing information about genomes of uncultivatable bacteria that vastly exceeds what may be obtained via traditional metagenomics studies. SPAdes is available online ( http://bioinf.spbau.ru/spades ). It is distributed as open source software."
+  "url": "http://online.liebertpub.com/doi/abs/10.1089/cmb.2012.0021"
 }

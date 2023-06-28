@@ -80,9 +80,6 @@ gene_detection:
       srst2:
         max_divergence: 5
         min_coverage: 60
-    metadata:
-      name: Notes
-      key: notes
 
 ###################
 # Sequence typing #

@@ -27,8 +27,7 @@ rule all:
     """
     input:
         HTML = config['output_report'],
-        TSV = config['output_tabular'],
-        TSV_2 = Path(config['working_dir']) / 'bacmet' / 'blastp' / 'tsv.io'
+        TSV = config['output_tabular']
 
 rule link_downsampling_input:
     """
