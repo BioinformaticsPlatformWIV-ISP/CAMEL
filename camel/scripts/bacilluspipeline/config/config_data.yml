@@ -67,6 +67,7 @@ gene_detection:
   vfdb_core:
       path: /db/gene_detection/VFDB_core
       perc_identity_cutoff: 90
+      min_coverage: 90
       metadata:
         name: Gene
         key: gene

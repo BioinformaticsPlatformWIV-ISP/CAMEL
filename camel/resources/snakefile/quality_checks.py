@@ -109,7 +109,7 @@ QC_CHECKS_BY_KEY = {qc.key: qc for qc in [
 
     # Nanopore
     QCCheck('nanoplot_len', 'NanoPlot: Median read length', 500, 250, '{:,}'),
-    QCCheck('nanoplot_qual', 'NanoPlot: Median read quality', 10, 8, '{:.2f}%'),
+    QCCheck('nanoplot_qual', 'NanoPlot: Median read quality', 10, 8, '{:.2f}'),
     QCCheck('seqkit_gc', 'seqkit: GC-content deviation', 2.0, 4.0, '{:.2f}%', False,
             explanation='checks if the detected GC content is close enough to the expected GC content for this organism'
                         ' (<b>{:.2f}%</b>).')
