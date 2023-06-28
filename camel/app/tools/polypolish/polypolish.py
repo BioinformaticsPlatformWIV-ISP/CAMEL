@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import List
 
 from camel.app.camel import Camel
 from camel.app.components.files.fastautils import FastaUtils
@@ -36,9 +37,9 @@ class Polypolish(Tool):
         :return: None
         """
         fasta_input = self._tool_inputs['FASTA'][0].path
-        bam_input = self._tool_inputs['SAM'][0].path
+        sam_input = [sam.path for sam in self._tool_inputs['SAM']]
         fasta_output = Path(Polypolish.OUTPUT_NAME)
-        self._build_command(fasta_input, bam_input, fasta_output)
+        self._build_command(fasta_input, sam_input, fasta_output)
         self._execute_command()
         self._set_output(fasta_output)
 
@@ -52,19 +53,24 @@ class Polypolish(Tool):
         if 'SAM' not in self._tool_inputs:
             raise InvalidInputSpecificationError('SAM alignment file is required')
 
+        if len(self._tool_inputs['SAM']) > 2:
+            raise InvalidInputSpecificationError('Please input at most two SAM alignment files')
         if not FastaUtils.is_indexed(self._tool_inputs['FASTA'][0].path):
             raise InvalidInputSpecificationError('FASTA reference needs to be indexed')
         super()._check_input()
 
-    def _build_command(self, fasta_input: Path, sam_input: Path, fasta_output: Path) -> None:
+    def _build_command(self, fasta_input: Path, sam_input: List[Path], fasta_output: Path) -> None:
         """
-        Builds the command to run polypolish.
+        Builds the command to run Polypolish.
+        :param fasta_input: Assembly to polish
+        :param sam_input: list of SAM alignment files
+        :param fasta_output: Polished assembly
         :return: None
         """
         self._command.command = ' '.join([self._tool_command,
                                           *self._build_options(),
                                           str(fasta_input),
-                                          str(sam_input),
+                                          ' '.join(str(sam_file) for sam_file in sam_input),
                                           f'> {fasta_output}'])
 
     def _check_command_output(self) -> None:
@@ -78,5 +84,7 @@ class Polypolish(Tool):
     def _set_output(self, fasta_output: Path) -> None:
         """
         Collects the tool output.
+        :param fasta_output: Path of the output fasta file
+        :return: None
         """
         self._tool_outputs['FASTA'] = [ToolIOFile(self.folder / f'{fasta_output}')]

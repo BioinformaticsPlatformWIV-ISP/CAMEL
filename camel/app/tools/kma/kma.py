@@ -18,7 +18,7 @@ class KMA(Tool):
         Initializes this tool.
         :param camel: CAMEL instance
         """
-        super().__init__('KMA', '1.2.25', camel)
+        super().__init__('KMA', '1.4.12a', camel)
 
     def _check_input(self) -> None:
         """

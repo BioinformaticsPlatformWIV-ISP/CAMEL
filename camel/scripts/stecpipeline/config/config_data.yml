@@ -98,9 +98,6 @@ gene_detection:
       srst2:
         max_divergence: 5
         min_coverage: 60
-    metadata:
-      name: Notes
-      key: notes
 
   serotype_o:
     path: /db/gene_detection/SerotypeFinder-O_type
