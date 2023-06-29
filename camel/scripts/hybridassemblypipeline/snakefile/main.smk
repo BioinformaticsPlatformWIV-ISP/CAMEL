@@ -16,7 +16,7 @@ include: medaka_snakemake.SNAKEFILE_POLISHING
 include: short_read_polishing.SNAKEFILE_POLISHING
 include: quality_checks.SNAKEFILE_QC
 
-assembly_steps = ['Flye', 'Medaka', 'POLCA', 'Polypolish', 'Unicycler']
+assembly_steps = ['Flye', 'Medaka', 'Polypolish', 'POLCA', 'Unicycler']
 
 #########
 # Rules #

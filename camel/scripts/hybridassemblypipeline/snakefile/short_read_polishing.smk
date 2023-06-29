@@ -66,9 +66,9 @@ rule polishing_read_mapping_1:
         FASTA = rules.polishing_copy_fasta.output.FASTA,
         INDEX_GENOME_PREFIX = rules.polishing_bwa_index.output.INDEX_GENOME_PREFIX
     output:
-        SAM = Path(config['working_dir']) / 'polishing' / 'read_mapping' / 'bwa_readmap_1.sam'
+        SAM = Path(config['working_dir']) / 'polishing' / 'read_mapping' / 'forward' / 'bwa_readmap.sam'
     params:
-        running_dir = Path(config['working_dir']) / 'polishing' / 'read_mapping'
+        running_dir = Path(config['working_dir']) / 'polishing' / 'read_mapping' / 'forward'
     threads: 8
     run:
         from camel.app.components.workflows.utils.fastqinput import FastqInput
@@ -92,9 +92,9 @@ rule polishing_read_mapping_2:
         FASTA = rules.polishing_copy_fasta.output.FASTA,
         INDEX_GENOME_PREFIX = rules.polishing_bwa_index.output.INDEX_GENOME_PREFIX
     output:
-        SAM = Path(config['working_dir']) / 'polishing' / 'read_mapping' / 'bwa_readmap_2.sam'
+        SAM = Path(config['working_dir']) / 'polishing' / 'read_mapping' / 'reverse' / 'bwa_readmap.sam'
     params:
-        running_dir = Path(config['working_dir']) / 'polishing' / 'read_mapping'
+        running_dir = Path(config['working_dir']) / 'polishing' / 'read_mapping' / 'reverse'
     threads: 8
     run:
         from camel.app.components.workflows.utils.fastqinput import FastqInput
@@ -120,7 +120,7 @@ rule polishing_polypolish_insert_filter:
     run:
         from camel.app.tools.polypolish.polypolishinsertfilter import PolypolishInsertFilter
         insert_filter = PolypolishInsertFilter(camel)
-        insert_filter.add_input_files({'SAM': [ToolIOFile(input.SAM_1), ToolIOFile(input.SAM_2)]})
+        insert_filter.add_input_files({'SAM': [ToolIOFile(Path(input.SAM_1)), ToolIOFile(Path(input.SAM_2))]})
         step = Step(str(rule), insert_filter, camel, params.running_dir)
         step.run_step()
 
@@ -147,54 +147,6 @@ rule polishing_polypolish:
         step = Step(str(rule), polypolish, camel, params.running_dir)
         step.run_step()
         SnakemakeUtils.dump_object(polypolish.informs, Path(output.INFORMS))
-
-# rule polishing_read_mapping:
-#     """
-#     Maps the reads against the assembly.
-#     """
-#     input:
-#         FQ_dict = Path(config['working_dir']) / 'trimming' / 'illumina' / 'fq_dict.io',
-#         INDEX_GENOME_PREFIX_BWA = rules.polishing_bwa_index.output.INDEX_GENOME_PREFIX,
-#         INDEX_GENOME_PREFIX_SAMTOOLS = rules.polishing_samtools_index_polypolish.output.INDEX_GENOME_PREFIX,
-#         FASTA = rules.polishing_copy_fasta.output.FASTA,
-#         INDEX_GENOME_PREFIX = rules.polishing_bwa_index.output.INDEX_GENOME_PREFIX
-#     output:
-#         SAM = Path(config['working_dir']) / 'polishing' / 'read_mapping' / 'bwa_readmap.sam'
-#     params:
-#         running_dir = Path(config['working_dir']) / 'polishing' / 'read_mapping'
-#     threads: 8
-#     run:
-#         from camel.app.components.workflows.utils.fastqinput import FastqInput
-#         from camel.app.tools.bwa.bwamap import BWAMap
-#         bwa_map = BWAMap(camel)
-#         fq_in = FastqInput.from_fq_dict(Path(input.FQ_dict), 'illumina')
-#         bwa_map.add_input_files({'FASTQ_PE': fq_in.pe})
-#         bwa_map.update_parameters(threads=threads)
-#         SnakemakeUtils.add_pickle_input(bwa_map, 'INDEX_GENOME_PREFIX', Path(input.INDEX_GENOME_PREFIX))
-#         step = Step(str(rule), bwa_map, camel, params.running_dir)
-#         step.run_step()
-#
-# rule polishing_polypolish:
-#     """
-#     First polishing with polypolish.
-#     """
-#     input:
-#         SAM = rules.polishing_read_mapping.output.SAM,
-#         FASTA = rules.polishing_copy_fasta.output.FASTA
-#     output:
-#         FASTA = Path(config['working_dir']) / 'polishing' / 'polypolish' / 'polished.fasta',
-#         INFORMS = Path(config['working_dir']) / 'polishing' / 'polypolish'  / 'polypolish.io'
-#     params:
-#         running_dir = Path(config['working_dir']) / 'polishing' / 'polypolish',
-#         polypolish_options = config.get('polishing', {}).get('polypolish', {})
-#     run:
-#         from camel.app.tools.polypolish.polypolish import Polypolish
-#         polypolish = Polypolish(camel)
-#         polypolish.add_input_files({'SAM': [ToolIOFile(Path(input.SAM))], 'FASTA':[ToolIOFile(Path(input.FASTA))]})
-#         polypolish.update_parameters(**params.polypolish_options)
-#         step = Step(str(rule), polypolish, camel, params.running_dir)
-#         step.run_step()
-#         SnakemakeUtils.dump_object(polypolish.informs, Path(output.INFORMS))
 
 rule polishing_copy_fasta_polca:
     input:
