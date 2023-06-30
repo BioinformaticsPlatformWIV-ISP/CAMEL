@@ -209,7 +209,7 @@ class MainHybridAssemblyPipeline(BasePipeline):
                 'model_path': str(self._get_clair3_model(self._args.ont_basecalling_model))
             },
             'sniffles': {
-                'mapq': self._args.sniffles_mapq if self._args.sniffles_mapq is not None else 25,
+                'mapq': self._args.sniffles_mapq if self._args.sniffles_mapq is not None else 40,
                 'min_support':
                     self._args.sniffles_min_support if self._args.sniffles_min_support is not None else 'auto',
                 'min_svlen': self._args.sniffles_min_svlen if self._args.sniffles_min_svlen is not None else 35

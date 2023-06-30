@@ -159,8 +159,8 @@ rule combine_informs_variant_calling_short_reads:
                 'Assembly step': assembly_key,
                 'Nb. of SNPs (FreeBayes)': '{:,}'.format(int(informs_freebayes['nb_of_snps'])),
                 'Nb. of Indels (FreeBayes)': '{:,}'.format(int(informs_freebayes['nb_of_indels'])),
-                'Nb. of SNPs (Clair3)': '{:,}'.format(int(informs_freebayes['nb_of_variants'])),
-                'Nb. of Indels (Clair3)': '{:,}'.format(int(informs_freebayes['nb_of_variants']))
+                'Nb. of SNPs (Clair3)': '{:,}'.format(int(informs_clair3['nb_of_snps'])),
+                'Nb. of Indels (Clair3)': '{:,}'.format(int(informs_clair3['nb_of_indels']))
             })
         pd.DataFrame(records_out).to_csv(output.TSV, sep='\t', index=False)
 
