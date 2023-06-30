@@ -184,7 +184,8 @@ class MainHybridAssemblyPipeline(BasePipeline):
                     'nano_corr': True if self._args.ont_qual == 'nano-corr' else False,
                     'nano_hq': True if self._args.ont_qual == 'nano-hq' else False,
                     'nano_raw': True if self._args.ont_qual == 'nano-raw' else False},
-                'min_contig_length': 1000
+                'min_contig_length': 1000,
+                'no_alt_contigs': True
             },
             'polishing': {
                 'medaka': {
