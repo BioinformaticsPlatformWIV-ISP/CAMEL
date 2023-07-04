@@ -76,7 +76,8 @@ class MainHybridAssemblyPipeline(BasePipeline):
         argument_parser.add_argument('--ploidy', type=int, choices=[1, 2], default=1)
         argument_parser.add_argument('--ont-qual', type=str, required=True,
                                      choices=['nano-corr', 'nano-hq', 'nano-raw'], default='nano-corr')
-        argument_parser.add_argument('--meta', action='store_true', default=None)
+        argument_parser.add_argument('--flye-meta', action='store_true', default=None,
+                                     help='enables the --meta option for the Flye assembly')
         argument_parser.add_argument('--expected-genome-size', type=str, required=True)
         argument_parser.add_argument('--ont-basecalling-model', type=str, choices=[
             'r1041_e82_260bps_fast_g632', 'r1041_e82_260bps_hac_g632', 'r1041_e82_260bps_sup_g632',
@@ -180,7 +181,7 @@ class MainHybridAssemblyPipeline(BasePipeline):
             'assembly': {
                 'flye': {
                     'genome_size': self._args.expected_genome_size,
-                    'meta': True if self._args.meta else False,
+                    'meta': True if self._args.meta_flye else False,
                     'nano_corr': True if self._args.ont_qual == 'nano-corr' else False,
                     'nano_hq': True if self._args.ont_qual == 'nano-hq' else False,
                     'nano_raw': True if self._args.ont_qual == 'nano-raw' else False},
