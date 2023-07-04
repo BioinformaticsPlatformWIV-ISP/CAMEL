@@ -2,6 +2,7 @@ import pandas as pd
 
 from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.tool import Tool
 
@@ -43,6 +44,18 @@ class NanoPlot(Tool):
         """
         self._tool_outputs['TSV'] = [ToolIOFile(self.folder / 'NanoStats.txt')]
         self._tool_outputs['HTML'] = [ToolIOFile(self.folder / 'NanoPlot-report.html')]
+
+    def _check_command_output(self) -> None:
+        """
+        Checks command output.
+        :return: None
+        """
+        for line in self.stderr.splitlines():
+            if 'skipping' in line:
+                print(f"WARNING: {line}")
+                self._command.returncode = 0
+        if self._command.returncode != 0:
+            raise ToolExecutionError(f"Command execution failed (Exit code: {self._command.returncode})")
 
     def __set_informs(self) -> None:
         """

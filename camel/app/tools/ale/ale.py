@@ -36,6 +36,7 @@ class ALE(Tool):
         self._build_command(fasta_input, bam_input, ale_output)
         self._execute_command()
         self._set_output(ale_output)
+        self._parse_output(ale_output)
 
     def _check_input(self) -> None:
         """
@@ -54,13 +55,13 @@ class ALE(Tool):
     def _build_command(self, fasta_input: Path, sam_input: Path, ale_output: Path) -> None:
         """
         Builds the command to run ALE.
+        :fasta_input: Path to the assembly FASTA file
+        :sam_input: Path to the SAM file of short reads mapped against the assembly
+        :ale_output: Path to the ALE output file
         :return: None
         """
-        self._command.command = ' '.join([self._tool_command,
-                                          *self._build_options(),
-                                          str(sam_input),
-                                          str(fasta_input),
-                                          str(ale_output)])
+        self._command.command = ' '.join([
+            self._tool_command, *self._build_options(), str(sam_input), str(fasta_input), str(ale_output)])
 
     def _check_command_output(self) -> None:
         """
@@ -73,6 +74,17 @@ class ALE(Tool):
     def _set_output(self, ale_output: Path) -> None:
         """
         Collects the tool output.
+        :ale_output: Path to the ALE output path
         :return: None
         """
-        self._tool_outputs['ALE'] = [ToolIOFile(self.folder / f'{ale_output}')]
+        self._tool_outputs['ALE'] = [ToolIOFile(self.folder / ale_output)]
+
+    def _parse_output(self, ale_output: Path) -> None:
+        """
+        Collects the ALE score and stores it in the informs.
+        :ale_output: Path to the ALE output file
+        :return: None
+        """
+        with open(self.folder / ale_output) as handle:
+            score = handle.readline().split(':')[1]
+            self._informs['ale_score'] = float(score.strip())
