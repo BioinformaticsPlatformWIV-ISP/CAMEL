@@ -13,7 +13,7 @@ rule qc_copy_fasta_file:
     Moves the fasta file to the qc location.
     """
     input:
-        FASTA = lambda wildcards: Path(config['working_dir']) / quality_checks.consensus_by_tool[wildcards.name]
+        FASTA = lambda wildcards: str(Path(config['working_dir']) / quality_checks.consensus_by_tool[wildcards.name])
     output:
         FASTA = Path(config['working_dir']) / 'qc' / '{name}' / 'consensus.fasta'
     shell:
