@@ -181,7 +181,7 @@ class MainHybridAssemblyPipeline(BasePipeline):
             'assembly': {
                 'flye': {
                     'genome_size': self._args.expected_genome_size,
-                    'meta': True if self._args.meta_flye else False,
+                    'meta': True if self._args.flye_meta else False,
                     'nano_corr': True if self._args.ont_qual == 'nano-corr' else False,
                     'nano_hq': True if self._args.ont_qual == 'nano-hq' else False,
                     'nano_raw': True if self._args.ont_qual == 'nano-raw' else False},
