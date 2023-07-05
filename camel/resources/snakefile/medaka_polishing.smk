@@ -14,7 +14,7 @@ rule assembly_flye_map_reads:
     """
     input:
         FQ = Path(config['working_dir']) / 'fq_dict.io',
-        FASTA = medaka_polishing.INPUT_ASSEMBLY_FASTA
+        FASTA = Path(config['working_dir']) / medaka_polishing.INPUT_ASSEMBLY_FASTA
     output:
         SAM = Path(config['working_dir']) / 'medaka' / 'minimap2' / 'sam.io'
     params:

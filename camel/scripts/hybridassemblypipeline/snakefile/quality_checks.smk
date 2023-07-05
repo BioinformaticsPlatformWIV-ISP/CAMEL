@@ -1,3 +1,5 @@
+import _pickle
+import shutil
 from pathlib import Path
 
 from camel.app.camel import Camel
@@ -16,10 +18,13 @@ rule qc_copy_fasta_file:
         FASTA = lambda wildcards: str(Path(config['working_dir']) / quality_checks.consensus_by_tool[wildcards.name])
     output:
         FASTA = Path(config['working_dir']) / 'qc' / '{name}' / 'consensus.fasta'
-    shell:
-        """
-        cp {input.FASTA} {output.FASTA}
-        """
+    run:
+        try:
+            fasta = SnakemakeUtils.load_object(Path(str(input.FASTA)))
+            fasta_file = fasta[0].path
+            shutil.copyfile(fasta_file, output.FASTA)
+        except _pickle.UnpicklingError:
+            shutil.copyfile(str(input.FASTA), output.FASTA)
 
 rule qc_quast:
     """
