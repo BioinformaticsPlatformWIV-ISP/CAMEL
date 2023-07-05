@@ -3,8 +3,8 @@ from pathlib import Path
 
 from camel.resources.snakefile import trimming, trimming_illumina, assembly_spades, \
     quality_checks, contamination_check_kraken, sequence_typing, downsampling, amrfinder, trimming_ont, gene_detection, \
-    mobsuite
-from camel.scripts.bacilluspipeline.snakefile import btyper, ani, assembly_flye
+    mobsuite, assembly_flye, medaka_polishing
+from camel.scripts.bacilluspipeline.snakefile import btyper, ani
 
 #######################
 # Included Snakefiles #
@@ -16,6 +16,7 @@ include: contamination_check_kraken.SNAKEFILE_CONTAMINATION_CHECK_KRAKEN
 include: quality_checks.SNAKEFILE_QUALITY_CHECKS
 include: assembly_spades.SNAKEFILE_ASSEMBLY_SPADES
 include: assembly_flye.SNAKEFILE_ASSEMBLY_FLYE
+include: medaka_polishing.SNAKEFILE_MEDAKA_POLISHING
 include: sequence_typing.SNAKEFILE_SEQUENCE_TYPING
 include: btyper.SNAKEFILE_BTYPER
 include: amrfinder.SNAKEFILE_AMRFINDER
@@ -104,7 +105,7 @@ rule link_fasta_to_gene_detection:
     """
     input:
         FASTA_spades = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'illumina' else [],
-        FASTA_flye = Path(config['working_dir']) / assembly_flye.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else []
+        FASTA_flye = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else []
     output:
         FASTA_genedetection = Path(config['working_dir']) / gene_detection.INPUT_GENE_DETECTION_FASTA
     params:
@@ -123,7 +124,7 @@ rule link_fasta_to_typing:
     """
     input:
         FASTA_spades = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'illumina' else [],
-        FASTA_flye = Path(config['working_dir']) / assembly_flye.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else []
+        FASTA_flye = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else []
     output:
         FASTA_typing = Path(config['working_dir']) / sequence_typing.INPUT_FASTA
     params:
@@ -142,7 +143,7 @@ rule link_fasta_to_tools_all:
     """
     input:
         FASTA_spades = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'illumina' else [],
-        FASTA_flye = Path(config['working_dir']) / assembly_flye.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else []
+        FASTA_flye = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else []
     output:
         FASTA_amrfinder = Path(config['working_dir']) / amrfinder.INPUT_AMRFINDER_FASTA,
         FASTA_mobsuite = Path(config['working_dir']) / mobsuite.INPUT_MOBSUITE_FASTA
@@ -164,7 +165,7 @@ rule link_fasta_to_tools_subtilis:
     """
     input:
         FASTA_spades = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'illumina' else [],
-        FASTA_flye = Path(config['working_dir']) / assembly_flye.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else []
+        FASTA_flye = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else []
     output:
         FASTA_ani = Path(config['working_dir']) / ani.INPUT_FASTA_ANI
     params:
@@ -183,7 +184,7 @@ rule link_fasta_to_tools_cereus:
     """
     input:
         FASTA_spades = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'illumina' else [],
-        FASTA_flye = Path(config['working_dir']) / assembly_flye.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else []
+        FASTA_flye = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else []
     output:
         FASTA_btyper = Path(config['working_dir']) / btyper.INPUT_BTYPER_FASTA
     params:
