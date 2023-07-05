@@ -38,12 +38,15 @@ class Clair3(Tool):
 
     def _build_command(self, fasta_input: Path, bam_input: Path) -> None:
         """
-        Builds the command to run resfinder.
+        Builds the command to run clair3.
         :return: None
         """
         self._command.command = ' '.join([
             self._tool_command, f'--bam_fn {bam_input}', f'--ref_fn {fasta_input}',
-            *self._build_options(delimiter='=')])
+            *self._build_options(delimiter='=',
+                                 excluded_parameters=['haploid_precise', 'no_phasing', 'include_ctgs', 'long_indel']),
+            *self._build_options(excluded_parameters=['chunk_size', 'model_path', 'platform', 'threads', 'output_path'])
+        ])
 
     def _check_command_output(self) -> None:
         """
