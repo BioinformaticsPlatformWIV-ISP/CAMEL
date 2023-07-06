@@ -1,3 +1,7 @@
+from io import StringIO
+
+import pandas as pd
+
 from camel.app.camel import Camel
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
@@ -54,19 +58,13 @@ class Snpit(Tool):
         %s\n%16s %16s %16s %.1f %%
         :return: None
         """
-        lines = self._command.stdout.splitlines()
-        if 'none identified' in lines[1]:
-            for key in ('species', 'lineage', 'sublineage'):
-                self._informs[key] = 'NA'
-            self._informs['percent_matched'] = 0.0
-            return
-        try:
-            self._informs['species'] = lines[1][0:16].strip()
-            self._informs['lineage'] = lines[1][17:33].strip()
-            self._informs['sublineage'] = lines[1][34:50].strip()
-            self._informs['percent_matched'] = float(lines[1][51:-1])
-        except IndexError:
-            raise ToolExecutionError(f"Error executing {self.name}, cannot parse output: {lines}")
+        # noinspection PyTypeChecker
+        data_all = pd.read_table(StringIO(self._command.stdout))
+        data_output = data_all.to_dict('records')[0]
+        self._informs['species'] = data_output['Species'] if not pd.isna(data_output['Species']) else 'NA'
+        self._informs['lineage'] = data_output['Lineage'] if not pd.isna(data_output['Lineage']) else 'NA'
+        self._informs['sublineage'] = data_output['Sublineage'] if not pd.isna(data_output['Sublineage']) else 'NA'
+        self._informs['percent_matched'] = data_output['Percentage'] if not pd.isna(data_output['Percentage']) else 0.0
 
     def __generate_report_section(self) -> HtmlReportSection:
         """
