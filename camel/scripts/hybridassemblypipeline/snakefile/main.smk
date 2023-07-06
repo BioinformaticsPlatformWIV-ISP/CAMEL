@@ -1,4 +1,5 @@
 import gzip
+import shutil
 from pathlib import Path
 
 import pandas as pd
@@ -7,8 +8,8 @@ from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.resources.snakefile import assembly_flye, medaka_polishing
-from camel.scripts.hybridassemblypipeline.snakefile import short_read_polishing, quality_checks
+from camel.resources.snakefile import assembly_flye, medaka_polishing, short_read_polishing
+from camel.scripts.hybridassemblypipeline.snakefile import quality_checks
 
 camel = Camel.get_instance()
 
@@ -120,6 +121,17 @@ rule unicycler:
         step = Step(str(rule), unicycler_assembly, camel, params.working_dir, config)
         step.run_step()
         SnakemakeUtils.dump_object(unicycler_assembly.informs, Path(output.INFORMS))
+
+rule copy_medaka_to_short_read_polishing:
+    input:
+        FASTA = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_FASTA,
+        FASTQ = rules.trim_illumina.output.FQ_dict
+    output:
+        FASTA = Path(config['working_dir']) / short_read_polishing.INPUT_ASSEMBLY_FASTA,
+        FASTQ = Path(config['working_dir']) / short_read_polishing.INPUT_READS_FASTQ
+    run:
+        shutil.copyfile(input.FASTA, output.FASTA)
+        shutil.copyfile(input.FASTQ, output.FASTQ)
 
 rule combine_informs_quast:
     """

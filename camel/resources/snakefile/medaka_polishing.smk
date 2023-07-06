@@ -210,9 +210,9 @@ rule polishing_medaka_report:
     Creates the HTML report for the assembly.
     """
     input:
-        FASTA_Raw = medaka_polishing.INPUT_ASSEMBLY_FASTA,
+        FASTA_Raw = Path(config['working_dir']) / medaka_polishing.INPUT_ASSEMBLY_FASTA,
         FASTA_Contig = rules.polishing_medaka_stitch.output.FASTA,
-        INFORMS_spades = rules.assembly_flye_run.output.INFORMS,
+        INFORMS_spades = rules.polishing_medaka_stitch.output.INFORMS,
         INFORMS_quast = rules.polishing_medaka_quast_extract_informs.output.INFORMS
     output:
         VAL_HTML = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_REPORT
@@ -224,7 +224,7 @@ rule polishing_medaka_report:
         from camel.app.io.tooliovalue import ToolIOValue
         reporter = HtmlReporterAssembly(camel)
         reporter.add_input_files({'SAMPLE_NAME': [ToolIOValue(params.sample_name)],
-                                  'ASSEMBLER': [ToolIOValue('Flye')]})
+                                  'ASSEMBLER': [ToolIOValue('Medaka')]})
         SnakemakeUtils.add_pickle_inputs(reporter, input)
         step = Step(str(rule), reporter, camel, params.running_dir)
         step.run_step()
@@ -251,3 +251,14 @@ rule polishing_medaka_dump_summary_info:
             for key, value in summary_data:
                 handle.write(f'{key}\t{value}')
                 handle.write('\n')
+
+rule polishing_medaka_empty_report:
+    """
+    Creates an empty report for the gene detection when plasmidSPAdes assembly fails.
+    """
+    output:
+        VAL_HTML = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_REPORT_EMPTY
+    run:
+        from camel.app.snakemake.snakemakeutils import SnakemakeUtils
+        from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
+        SnakePipelineUtils.create_empty_report_section("Medaka polishing", Path(output.VAL_HTML))

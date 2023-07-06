@@ -99,6 +99,37 @@ rule link_fastq_to_fq_dict:
         else:
             raise ValueError(f'Unsupported read type: {params.read_type}')
 
+rule short_read_polishing:
+    """
+    This rule runs the short read polishing wrapper if necessary.
+    """
+    input:
+        FASTQ_ilmn = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_DICT,
+        FASTA = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_FASTA
+    output:
+        FASTA = Path(config['working_dir']) / 'polishing' / 'polca' / 'polished.fasta'
+    params:
+        dir_ = Path(config['working_dir']) / 'trimming' / 'illumina'
+    threads: 4
+    run:
+        from camel.app.components.workflows.illuminapolishingwrapper import ShortReadPolishingWrapper
+        wrapper = ShortReadPolishingWrapper(Path(params.dir_))
+        wrapper.run_workflow(Path(input.FASTQ_ilmn), reference=Path(input.FASTA), threads=threads)
+
+rule select_fasta_file:
+    """
+    This rule selects the fasta file to send to other workflows.
+    """
+    input:
+        FASTA_spade = 'something',
+        FASTA_flye = 'something',
+        FASTA_medaka = 'something',
+        FASTA_polishied = 'something'
+    output:
+        FASTA = Path(config['working_dir']) / 'fasta.io'
+    run:
+        pass
+
 rule link_fasta_to_gene_detection:
     """
     This rule links the output of the assembly workflows to the gene detection workflow.
@@ -285,6 +316,7 @@ rule report_create_commands_section:
         INFORMS_trimming = trimming.get_trimming_command_informs(config),
         INFORMS_assembly = rules.select_assembly_output.output.INFORMS,
         INFORMS_assembly_filt = rules.select_assembly_output.output.INFORMS_filt,
+        INFORMS_medaka = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_MAPPING_RATE_INFORMS if config['read_type'] == 'nanopore' else [],
         INFORMS_kraken = Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_KRAKEN_INFORMS,
         INFORMS_mapping = quality_checks.get_mapping_rate_informs(config),
         INFORMS_depth = quality_checks.get_depth_informs(config),
@@ -322,6 +354,7 @@ rule report_content_cereus:
         report_downsampling = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_REPORT,
         report_trimming = trimming.get_trimming_report(config),
         report_assembly = rules.select_assembly_output.output.HTML,
+        report_medaka = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_REPORT if config['read_type'] == 'nanopore' else Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_REPORT_EMPTY,
         report_kraken = Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT,
         report_adv_qc = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_REPORT,
         report_btyper = Path(config['working_dir']) / (btyper.OUTPUT_BTYPER_REPORT if 'btyper' in config['analyses'] else btyper.OUTPUT_BTYPER_REPORT_EMPTY),
@@ -347,7 +380,7 @@ rule report_content_cereus:
         report.add_html_object(SnakemakeUtils.load_object(Path(input.report_init))[0].value)
         report_structure = [
             ('Read trimming and basic QC', 'trim', [Path(input.report_downsampling), Path(input.report_trimming)]),
-            ('Assembly', 'assembly', [Path(input.report_assembly)]),
+            ('Assembly', 'assembly', [Path(input.report_assembly), Path(input.report_medaka)]),
             ('Advanced QC', 'adv_qc', [Path(x) for x in (input.report_adv_qc, input.report_kraken)]),
             ('BTyper3', 'btyper3', [Path(input.report_btyper)]),
             ('Virulence detection', 'virulence', [Path(x) for x in (input.report_vfdb_core,)]),
@@ -370,6 +403,7 @@ rule report_content_subtilis:
         report_downsampling = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_REPORT,
         report_trimming = trimming.get_trimming_report(config),
         report_assembly = rules.select_assembly_output.output.HTML,
+        report_medaka = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_REPORT if config['read_type'] == 'nanopore' else Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_REPORT_EMPTY,
         report_kraken = Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT,
         report_adv_qc = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_REPORT,
         report_fastani = Path(config['working_dir']) / (ani.OUTPUT_ANI_REPORT if 'fastani' in config['analyses'] else ani.OUTPUT_ANI_REPORT_EMPTY),
@@ -394,7 +428,7 @@ rule report_content_subtilis:
         report.add_html_object(SnakemakeUtils.load_object(Path(input.report_init))[0].value)
         report_structure = [
             ('Read trimming and basic QC', 'trim', [Path(input.report_downsampling), Path(input.report_trimming)]),
-            ('Assembly', 'assembly', [Path(input.report_assembly)]),
+            ('Assembly', 'assembly', [Path(input.report_assembly), Path(input.report_medaka)]),
             ('Advanced QC', 'adv_qc', [Path(x) for x in (input.report_adv_qc, input.report_kraken)]),
             ('FastANI', 'fastani', [Path(input.report_fastani)]),
             ('GMO detection', 'gmo', [Path(input.report_gmo)]),
@@ -456,6 +490,7 @@ rule summary_combine_all:
         Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_SUMMARY,
         trimming.get_trimming_summary(config),
         Path(config['working_dir']) / rules.select_assembly_output.output.TSV,
+        Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_SUMMARY if config['read_type'] == 'nanopore' else [],
         Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_SUMMARY if 'kraken' in config['analyses'] else [],
         Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY,
         Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_SUMMARY,
