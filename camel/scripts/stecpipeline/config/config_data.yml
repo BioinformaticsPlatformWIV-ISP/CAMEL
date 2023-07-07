@@ -130,9 +130,9 @@ gene_detection:
 ###################
 sequence_typing:
   mlst_pasteur:
-    path: /db/sequence_typing/ecoli/mlst-pasteur
+    path: /db/sequence_typing/ecoli/mlst_pasteur
   mlst_warwick:
-    path: /db/sequence_typing/ecoli/mlst-warwick
+    path: /db/sequence_typing/ecoli/mlst_warwick
   cgmlst:
     path: /db/sequence_typing/ecoli/cgmlst
     blastn_task: blastn
