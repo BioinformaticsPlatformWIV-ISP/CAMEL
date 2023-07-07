@@ -32,8 +32,8 @@ class Kraken2Wrapper(object):
         self._output = None
 
     def run_workflow(
-            self, sample_name: str, fastq_input: FastqInput, expected_species: str,
-            db: str = '/db/kraken2/latest/abfhpv', level_of_depth: str = 'S', threads: int = 8) -> None:
+            self, sample_name: str, fastq_input: FastqInput, expected_species: str, db: Path, level_of_depth: str = 'S',
+            threads: int = 8) -> None:
         """
         Runs the read trimming workflow.
         :param fastq_input: FASTQ input
@@ -48,7 +48,10 @@ class Kraken2Wrapper(object):
             self._working_dir.mkdir(parents=True)
         SnakemakeUtils.dump_object(fastq_input.to_fq_dict(), self._working_dir / 'fq_dict.io')
         config_data = {
-            'contamination_check': {'db': db, 'expected_species': expected_species, 'level_of_depth': level_of_depth},
+            'contamination_check': {
+                'db': str(db),
+                'expected_species': expected_species,
+                'level_of_depth': level_of_depth},
             'sample_name': sample_name,
             'working_dir': str(self._working_dir),
             'read_type': fastq_input.read_type,
