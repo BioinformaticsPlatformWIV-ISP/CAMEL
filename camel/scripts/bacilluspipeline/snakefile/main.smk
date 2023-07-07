@@ -107,7 +107,7 @@ rule short_read_polishing:
         FASTQ_ilmn = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_DICT,
         FASTA = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_FASTA
     output:
-        FASTA = Path(config['working_dir']) / 'polishing' / 'polca' / 'polished.fasta'
+        FASTA = Path(config['working_dir']) / 'polished.fasta'
     params:
         dir_ = Path(config['working_dir']) / 'trimming' / 'illumina'
     threads: 4
@@ -115,118 +115,139 @@ rule short_read_polishing:
         from camel.app.components.workflows.illuminapolishingwrapper import ShortReadPolishingWrapper
         wrapper = ShortReadPolishingWrapper(Path(params.dir_))
         wrapper.run_workflow(Path(input.FASTQ_ilmn), reference=Path(input.FASTA), threads=threads)
+        wrapper.output.fasta_contigs[0].path.rename(Path(output.FASTA))
 
 rule select_fasta_file:
     """
     This rule selects the fasta file to send to other workflows.
     """
     input:
-        FASTA_spade = 'something',
-        FASTA_flye = 'something',
-        FASTA_medaka = 'something',
-        FASTA_polishied = 'something'
+        FASTA_spades = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'illumina' else [],
+        # FASTA_flye = Path(config['working_dir']) / assembly_flye.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else [],
+        FASTA_medaka = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else [],
+        FASTA_polished = Path(config['working_dir']) / 'polished.fasta' if config['read_type'] == 'hybrid' else []
     output:
         FASTA = Path(config['working_dir']) / 'fasta.io'
+    params:
+        read_type=config['read_type']
     run:
-        pass
+        if params.read_type == 'illumina':
+            SnakemakeUtils.dump_object(Path(input.FASTA_spades), output.FASTA)
+        elif params.read_type == 'nanopore':
+            SnakemakeUtils.dump_object(Path(input.FASTA_medaka), output.FASTA)
+        elif params.read_type == 'hybrid':
+            SnakemakeUtils.dump_object(Path(input.FASTA_polished), output.FASTA)
+        else:
+            raise ValueError(f'Unsupported read type: {params.read_type}')
 
 rule link_fasta_to_gene_detection:
     """
     This rule links the output of the assembly workflows to the gene detection workflow.
     """
     input:
-        FASTA_spades = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'illumina' else [],
-        FASTA_flye = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else []
+        FASTA = rules.select_fasta_file.output.FASTA
+        # FASTA_spades = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'illumina' else [],
+        # FASTA_flye = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else []
     output:
         FASTA_genedetection = Path(config['working_dir']) / gene_detection.INPUT_GENE_DETECTION_FASTA
     params:
         read_type = config['read_type']
     run:
-        if params.read_type == 'nanopore':
-            shutil.copyfile(Path(input.FASTA_flye), Path(output.FASTA_genedetection))
-        elif params.read_type == 'illumina':
-            shutil.copyfile(Path(input.FASTA_spades), Path(output.FASTA_genedetection))
-        else:
-            raise ValueError(f'Unsupported read type: {params.read_type}')
+        shutil.copyfile(Path(input.FASTA), Path(output.FASTA_genedetection))
+        # if params.read_type == 'nanopore':
+        #     shutil.copyfile(Path(input.FASTA_flye), Path(output.FASTA_genedetection))
+        # elif params.read_type == 'illumina':
+        #     shutil.copyfile(Path(input.FASTA_spades), Path(output.FASTA_genedetection))
+        # else:
+        #     raise ValueError(f'Unsupported read type: {params.read_type}')
 
 rule link_fasta_to_typing:
     """
     This rule links the output of the assembly workflows to the sequence typing workflow.
     """
     input:
-        FASTA_spades = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'illumina' else [],
-        FASTA_flye = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else []
+        FASTA = rules.select_fasta_file.output.FASTA
+        # FASTA_spades = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'illumina' else [],
+        # FASTA_flye = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else []
     output:
         FASTA_typing = Path(config['working_dir']) / sequence_typing.INPUT_FASTA
     params:
         read_type = config['read_type']
     run:
-        if params.read_type == 'nanopore':
-            shutil.copyfile(Path(input.FASTA_flye), Path(output.FASTA_typing))
-        elif params.read_type == 'illumina':
-            shutil.copyfile(Path(input.FASTA_spades), Path(output.FASTA_typing))
-        else:
-            raise ValueError(f'Unsupported read type: {params.read_type}')
+        shutil.copyfile(Path(input.FASTA), output.FASTA_typing)
+        # if params.read_type == 'nanopore':
+        #     shutil.copyfile(Path(input.FASTA_flye), Path(output.FASTA_typing))
+        # elif params.read_type == 'illumina':
+        #     shutil.copyfile(Path(input.FASTA_spades), Path(output.FASTA_typing))
+        # else:
+        #     raise ValueError(f'Unsupported read type: {params.read_type}')
 
 rule link_fasta_to_tools_all:
     """
     This rule links the output of the assembly workflow to the amrfinder and mobsuite workflows.
     """
     input:
-        FASTA_spades = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'illumina' else [],
-        FASTA_flye = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else []
+        FASTA = rules.select_fasta_file.output.FASTA
+        # FASTA_spades = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'illumina' else [],
+        # FASTA_flye = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else []
     output:
         FASTA_amrfinder = Path(config['working_dir']) / amrfinder.INPUT_AMRFINDER_FASTA,
         FASTA_mobsuite = Path(config['working_dir']) / mobsuite.INPUT_MOBSUITE_FASTA
     params:
         read_type = config['read_type']
     run:
-        if params.read_type == 'nanopore':
-            shutil.copyfile(Path(input.FASTA_flye), Path(output.FASTA_amrfinder))
-            shutil.copyfile(Path(input.FASTA_flye), Path(output.FASTA_mobsuite))
-        elif params.read_type == 'illumina':
-            shutil.copyfile(Path(input.FASTA_spades), Path(output.FASTA_amrfinder))
-            shutil.copyfile(Path(input.FASTA_spades), Path(output.FASTA_mobsuite))
-        else:
-            raise ValueError(f'Unsupported read type: {params.read_type}')
+        shutil.copyfile(Path(input.FASTA),Path(output.FASTA_amrfinder))
+        shutil.copyfile(Path(input.FASTA),Path(output.FASTA_mobsuite))
+        # if params.read_type == 'nanopore':
+        #     shutil.copyfile(Path(input.FASTA_flye), Path(output.FASTA_amrfinder))
+        #     shutil.copyfile(Path(input.FASTA_flye), Path(output.FASTA_mobsuite))
+        # elif params.read_type == 'illumina':
+        #     shutil.copyfile(Path(input.FASTA_spades), Path(output.FASTA_amrfinder))
+        #     shutil.copyfile(Path(input.FASTA_spades), Path(output.FASTA_mobsuite))
+        # else:
+        #     raise ValueError(f'Unsupported read type: {params.read_type}')
 
 rule link_fasta_to_tools_subtilis:
     """
     This rule links the output of the assembly workflow to the fastANI workflow if the species is B. subtilis.
     """
     input:
-        FASTA_spades = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'illumina' else [],
-        FASTA_flye = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else []
+        FASTA = rules.select_fasta_file.output.FASTA
+        # FASTA_spades = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'illumina' else [],
+        # FASTA_flye = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else []
     output:
         FASTA_ani = Path(config['working_dir']) / ani.INPUT_FASTA_ANI
     params:
         read_type = config['read_type']
     run:
-        if params.read_type == 'nanopore':
-            shutil.copyfile(Path(input.FASTA_flye), Path(output.FASTA_ani))
-        elif params.read_type == 'illumina':
-            shutil.copyfile(Path(input.FASTA_spades), Path(output.FASTA_ani))
-        else:
-            raise ValueError(f'Unsupported read type: {params.read_type}')
+        shutil.copyfile(Path(input.FASTA),Path(output.FASTA_ani))
+        # if params.read_type == 'nanopore':
+        #     shutil.copyfile(Path(input.FASTA_flye), Path(output.FASTA_ani))
+        # elif params.read_type == 'illumina':
+        #     shutil.copyfile(Path(input.FASTA_spades), Path(output.FASTA_ani))
+        # else:
+        #     raise ValueError(f'Unsupported read type: {params.read_type}')
 
 rule link_fasta_to_tools_cereus:
     """
     This rule links the output of the assembly workflow to the BTyper workflow if the species is B. cereus.
     """
     input:
-        FASTA_spades = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'illumina' else [],
-        FASTA_flye = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else []
+        FASTA = rules.select_fasta_file.output.FASTA
+        # FASTA_spades = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'illumina' else [],
+        # FASTA_flye = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else []
     output:
         FASTA_btyper = Path(config['working_dir']) / btyper.INPUT_BTYPER_FASTA
     params:
         read_type = config['read_type']
     run:
-        if params.read_type == 'nanopore':
-            shutil.copyfile(Path(input.FASTA_flye), Path(output.FASTA_btyper))
-        elif params.read_type == 'illumina':
-            shutil.copyfile(Path(input.FASTA_spades),Path(output.FASTA_btyper))
-        else:
-            raise ValueError(f'Unsupported read type: {params.read_type}')
+        shutil.copyfile(Path(input.FASTA),Path(output.FASTA_btyper))
+        # if params.read_type == 'nanopore':
+        #     shutil.copyfile(Path(input.FASTA_flye), Path(output.FASTA_btyper))
+        # elif params.read_type == 'illumina':
+        #     shutil.copyfile(Path(input.FASTA_spades),Path(output.FASTA_btyper))
+        # else:
+        #     raise ValueError(f'Unsupported read type: {params.read_type}')
 
 #############
 # Read type #
