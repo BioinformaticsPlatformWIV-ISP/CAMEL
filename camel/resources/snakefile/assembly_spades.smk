@@ -34,7 +34,7 @@ rule assembly_spades_run:
         spades.add_input_files(fq_dict)
         step = Step(str(rule), spades, camel, params.running_dir)
         spades.update_parameters(**params.spades_options)
-        spades.update_parameters(threads=threads)
+        spades.update_parameters(isolate=True, careful=False, threads=threads)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(spades, output)
 
