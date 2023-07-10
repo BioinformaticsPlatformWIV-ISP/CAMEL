@@ -1,4 +1,4 @@
-dependencies: [blast/2.6.0]
+dependencies: [blast/2.13.0]
 parameters:
   culling_limit: {default: false, mandatory: false, option: -culling_limit, value: '1'}
   dust: {default: false, mandatory: false, option: -dust, value: 'no'}
