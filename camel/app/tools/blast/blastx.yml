@@ -1,4 +1,4 @@
-dependencies: [blast/2.6.0]
+dependencies: [blast/2.13.0]
 parameters:
   evalue: {default: false, mandatory: false, option: -evalue, value: '10'}
   gapextend: {default: false, mandatory: false, option: -gapextend, value: '5'}

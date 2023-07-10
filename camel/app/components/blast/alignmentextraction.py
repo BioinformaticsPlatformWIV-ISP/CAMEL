@@ -21,7 +21,7 @@ class AlignmentExtraction(object):
         """
         with open(alignment_file) as handle:
             full_text = handle.read()
-            text_parts = full_text.split('> ')
+            text_parts = full_text.split('>')
 
         alignments = {}
 
