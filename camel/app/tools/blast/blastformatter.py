@@ -15,7 +15,7 @@ class BlastFormatter(Tool):
         Initializes this tool.
         :param camel: CAMEL instance
         """
-        super().__init__('blast_formatter', '2.6.0', camel)
+        super().__init__('blast_formatter', '2.13.0', camel)
 
     def _check_input(self) -> None:
         """
