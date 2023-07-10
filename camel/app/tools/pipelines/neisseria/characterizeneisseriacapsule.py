@@ -2,6 +2,7 @@ from pathlib import Path
 
 from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.tool import Tool
 
