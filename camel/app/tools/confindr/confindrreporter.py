@@ -34,7 +34,7 @@ class ConFindrReporter(Tool):
         Executes this tool.
         :return: None
         """
-        section = HtmlReportSection('ConFindr')
+        section = HtmlReportSection('ConFindr', subtitle=self._input_informs['confindr']['_name'])
 
         # Main table
         cell = HtmlTableCell('No', 'green') if \
@@ -47,12 +47,9 @@ class ConFindrReporter(Tool):
                 [cell,
                  f"<i>{self._input_informs['confindr']['Genus']}</i>",
                  self._input_informs['confindr']['NumContamSNVs'],
-                 self._input_informs['confindr']['BasesExamined'],
-                 self._input_informs['confindr']['PercentContam'],
-                 self._input_informs['confindr']['PercentContamStandardDeviation']
+                 f"{self._input_informs['confindr']['BasesExamined']:,}"
                  ]],
-                ['Contaminated', 'Genus', 'Contaminated SNPs', 'Bases examined', 'Percent contaminated (%)',
-                 'Std. deviation (%)'],
+                ['Contaminated', 'Genus', 'Contaminated SNPs', 'Bases examined'],
                 table_attributes=[('class', 'data')]
             )
 
