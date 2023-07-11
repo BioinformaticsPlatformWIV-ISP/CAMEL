@@ -88,8 +88,7 @@ rule confindr_create_summary:
         rows_out = [
             ('genus', informs['Genus']),
             ('nb_contam_SNVs', informs['NumContamSNVs']),
-            ('contam_status', informs['ContamStatus']),
-            ('tool_version', informs['_name'])
+            ('contam_status', informs['ContamStatus'])
         ]
 
         # Create TSV output

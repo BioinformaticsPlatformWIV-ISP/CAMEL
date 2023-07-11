@@ -4,8 +4,8 @@ from camel.app.camel import Camel
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.resources.snakefile import trimming, trimming_illumina, assembly_spades, quality_checks, \
-    contamination_check_kraken, gene_detection, sequence_typing, downsampling, confindr, quast
-from camel.scripts.neisseriapipeline.snakefile import serogroup_determination, gmats
+    contamination_check_kraken, gene_detection, sequence_typing, downsampling, confindr
+from camel.scripts.neisseriapipeline.snakefile import serogroup_determination
 
 
 #######################
@@ -17,10 +17,8 @@ include: confindr.SNAKEFILE_CONFINDR
 include: contamination_check_kraken.SNAKEFILE_CONTAMINATION_CHECK_KRAKEN
 include: quality_checks.SNAKEFILE_QUALITY_CHECKS
 include: assembly_spades.SNAKEFILE_ASSEMBLY_SPADES
-include: quast.SNAKEFILE_QUAST
 include: gene_detection.SNAKEFILE_GENE_DETECTION
 include: sequence_typing.SNAKEFILE_SEQUENCE_TYPING
-include: gmats.SNAKEFILE_GMATS
 include: serogroup_determination.SNAKEFILE_SEROGROUP_DETERMINATION
 
 
@@ -81,24 +79,7 @@ rule select_fasta:
     output:
         FASTA = Path(config['working_dir']) / gene_detection.INPUT_GENE_DETECTION_FASTA
     shell:
-        """
-        cp {input.FASTA} {output.FASTA};
-        """
-
-rule link_fasta_to_typing:
-    """
-    This rule links the output of the assembly workflows to the sequence typing workflow.
-    """
-    input:
-        FASTA = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA
-    output:
-        FASTA_typing = Path(config['working_dir']) / sequence_typing.INPUT_FASTA
-    params:
-        read_type = config['read_type']
-    shell:
-        """
-        cp {input.FASTA} {output.FASTA_typing};
-        """
+        "cp {input.FASTA} {output.FASTA};"
 
 rule init_summary:
     """
@@ -146,8 +127,6 @@ rule report_create_command_section:
         INFORMS_downsampling = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_INFORMS,
         INFORMS_trimming = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_INFORMS,
         INFORMS_assembly = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_INFORMS,
-        INFORMS_assembly_filt = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FILTERING_INFORMS,
-        INFORMS_quast = Path(config['working_dir']) / quast.OUTPUT_QUAST_INFORMS,
         INFORMS_kraken = Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_KRAKEN_INFORMS if 'kraken' in config['analyses'] else [],
         INFORMS_confindr = Path(config['working_dir']) / confindr.OUTPUT_CONFINDR_INFORMS if 'confindr' in config['analyses'] else [],
         INFORMS_mapping = quality_checks.get_mapping_rate_informs(config),
@@ -165,8 +144,7 @@ rule report_create_command_section:
         INFORMS_amr = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='resistance_genes') if 'resistance_genes' in config['analyses'] else [],
         INFORMS_vaccine = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='vaccine_targets') if 'vaccine_targets' in config['analyses'] else [],
         INFORMS_fhbp = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='fhbp') if 'fhbp' in config['analyses'] else [],
-        INFORMS_cgmlst = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='cgmlst') if 'cgmlst' in config['analyses'] else [],
-        INFORMS_serogroup = Path(config['working_dir']) / serogroup_determination.OUTPUT_SEROGROUP_DETERMINATION_INFORMS if 'serogroup' in config['analyses'] else []
+        INFORMS_cgmlst = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='cgmlst') if 'cgmlst' in config['analyses'] else []
     output:
         HTML = Path(config['working_dir']) / 'report' / 'html-commands.io'
     params:
@@ -201,7 +179,7 @@ rule neisseria_additional_resistance_gene_metadata:
         from camel.app.tools.pipelines.neisseria.resistancemetadataextractor import ResistanceMetadataExtractor
         extractor = ResistanceMetadataExtractor(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(extractor, input)
-        step = Step(str(rule), extractor, Camel.get_instance(), params.working_dir, config)
+        step = Step(rule, extractor, Camel.get_instance(), params.working_dir, config)
         extractor.update_parameters(loci=params.loci)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(extractor, output)
@@ -213,7 +191,7 @@ rule combine_reports:
     input:
         report_downsampling = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_REPORT,
         report_trimming = trimming.get_trimming_report(config),
-        report_quast= Path(config['working_dir']) / quast.OUTPUT_QUAST_REPORT,
+        report_assembly = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_REPORT,
         report_kraken = Path(config['working_dir']) / (contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT if 'kraken' in config['analyses'] else contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT_EMPTY),
         report_confindr = Path(config['working_dir']) / (confindr.OUTPUT_CONFINDR_REPORT if 'confindr' in config['analyses'] else confindr.OUTPUT_CONFINDR_REPORT_EMPTY),
         report_adv_qc = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_REPORT,
@@ -231,9 +209,7 @@ rule combine_reports:
         report_resistance_genes = rules.neisseria_additional_resistance_gene_metadata.output.VAL_HTML if 'resistance_genes' in config['analyses'] else Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_REPORT_EMPTY).format(scheme='resistance_genes'),
         report_fhbp = sequence_typing.get_sequence_typing_report('fhbp', config),
         report_bast = sequence_typing.get_sequence_typing_report('bast', config),
-        report_gmats = Path(config['working_dir']) / (gmats.OUTPUT_GMATS_REPORT if 'gmats' in config['analyses'] else gmats.OUTPUT_GMATS_REPORT_EMPTY),
         report_serogroup = Path(config['working_dir']) / (serogroup_determination.OUTPUT_SEROGROUP_DETERMINATION_REPORT if 'serogroup' in config['analyses'] else serogroup_determination.OUTPUT_SEROGROUP_DETERMINATION_REPORT_EMPTY),
-        report_serogroup_legacy = Path(config['working_dir']) / (serogroup_determination.OUTPUT_SEROGROUP_DETERMINATION_LEGACY_REPORT if 'serogroup' in config['analyses'] else serogroup_determination.OUTPUT_SEROGROUP_DETERMINATION_LEGACY_REPORT_EMPTY),
         report_citations = rules.report_pickle_citations.output.HTML,
         report_commands = rules.report_create_command_section.output.HTML
     output:
@@ -261,17 +237,16 @@ rule combine_reports:
         # Add output sections
         report_structure = [
             ('Read trimming and basic QC', 'trim', [Path(input.report_downsampling), Path(input.report_trimming)]),
-            ('Assembly', 'assem', [Path(input.report_quast)]),
+            ('Assembly', 'assem', [Path(input.report_assembly)]),
             ('Advanced QC', 'adv_qc', [Path(x) for x in (
                 input.report_kraken, input.report_confindr, input.report_adv_qc)]),
             ('Resistance characterization', 'res', [Path(x) for x in (
                 input.report_resfinder, input.report_argannot, input.report_card, input.report_ncbi_amr)]),
             ('Sequence typing', 'st', [Path(x) for x in (
-                input.report_mlst, input.report_rplf, input.report_pora, input.report_porb, input.report_feta,
-                input.report_resistance_genes, input.report_vaccine_targets, input.report_fhbp, input.report_cgmlst)]),
-            ('Antigen typing', 'at', [Path(x) for x in (input.report_bast, input.report_gmats)]),
-            ('Serogroup determination', 'serogroup', [Path(
-                input.report_serogroup), Path(input.report_serogroup_legacy)]),
+                input.report_mlst, input.report_rplf, input.report_bast, input.report_pora, input.report_porb,
+                input.report_feta, input.report_resistance_genes, input.report_vaccine_targets, input.report_fhbp,
+                input.report_cgmlst)]),
+            ('Serogroup determination', 'serogroup', [Path(input.report_serogroup)]),
             ('Citations', 'citations', [Path(input.report_citations)]),
             ('Commands', 'commands', [Path(input.report_commands)])
         ]
@@ -285,7 +260,7 @@ rule combine_summary_files:
         Path(config['working_dir']) / 'summary' / 'summary-init.tsv',
         Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_SUMMARY,
         trimming.get_trimming_summary(config),
-        Path(config['working_dir']) / quast.OUTPUT_QUAST_SUMMARY,
+        Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_SUMMARY,
         Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY,
         Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_SUMMARY if 'kraken' in config['analyses'] else [],
         Path(config['working_dir']) / confindr.OUTPUT_CONFINDR_SUMMARY if 'confindr' in config['analyses'] else [],
@@ -303,7 +278,6 @@ rule combine_summary_files:
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='resistance_genes') if 'resistance_genes' in config['analyses'] else [],
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='vaccine_targets') if 'vaccine_targets' in config['analyses'] else [],
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='cgmlst') if 'cgmlst' in config['analyses'] else [],
-        Path(config['working_dir']) / gmats.OUTPUT_GMATS_SUMMARY if 'gmats' in config['analyses'] else [],
         Path(config['working_dir']) / serogroup_determination.OUTPUT_SEROGROUP_DETERMINATION_SUMMARY if 'serogroup' in config['analyses'] else []
     output:
         TSV = config.get('output_tabular')
