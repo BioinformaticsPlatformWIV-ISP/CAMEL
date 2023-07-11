@@ -1,3 +1,4 @@
+import unittest
 from pathlib import Path
 
 from camel.app.camel import Camel
@@ -20,7 +21,8 @@ class TestConFindr(CamelTestSuite):
         test_file_dir / 'illumina_enterococcus_1.fastq.gz',
         test_file_dir / 'illumina_enterococcus_2.fastq.gz'
     ]
-    input_se_reads = test_file_dir / 'minion_reads-ecoli.fastq'
+    input_se_reads = Path('/data/project/bebog/filtered-TIAC1153.fastq.gz')
+    db = Path(Camel.get_instance().config['db_root']) / 'confindr' / '0.8.1'
 
     def test_dependencies(self) -> None:
         """
@@ -40,41 +42,15 @@ class TestConFindr(CamelTestSuite):
         """
         confindr = ConFindr(Camel.get_instance())
         confindr.add_input_files({
-            'FASTQ_GZ_PE': [ToolIOFile(x) for x in TestConFindr.input_pe_reads]
+            'FASTQ_PE': [ToolIOFile(x) for x in TestConFindr.input_pe_reads]
         })
+        confindr.update_parameters(rmlst=True, databases=str(TestConFindr.db))
         confindr.run(self.running_dir)
         self.assertIn('CSV', confindr.tool_outputs)
         self.assertGreater(Path(confindr.tool_outputs['CSV'][0].path).stat().st_size, 0)
         self.assertIn('ContamStatus', confindr.informs)
 
-    def test_confindr_se(self) -> None:
-        """
-        Tests confindr with PE input.
-        :return: None
-        """
-        confindr = ConFindr(Camel.get_instance())
-        confindr.add_input_files({
-            'FASTQ_GZ_SE': [ToolIOFile(TestConFindr.input_pe_reads[0])]
-        })
-        confindr.run(self.running_dir)
-        self.assertIn('CSV', confindr.tool_outputs)
-        self.assertGreater(Path(confindr.tool_outputs['CSV'][0].path).stat().st_size, 0)
-        self.assertIn('ContamStatus', confindr.informs)
-
-    def test_confindr_se_with_report(self) -> None:
-        """
-        Tests confindr with PE input.
-        :return: None
-        """
-        confindr = ConFindr(Camel.get_instance())
-        confindr.add_input_files({
-            'FASTQ_GZ_SE': [ToolIOFile(TestConFindr.input_pe_reads[0])]
-        })
-        confindr.run(self.running_dir)
-        self.assertIn('CSV', confindr.tool_outputs)
-        self.assertGreater(Path(confindr.tool_outputs['CSV'][0].path).stat().st_size, 0)
-        self.assertIn('ContamStatus', confindr.informs)
-
+        # Run the reporter
         reporter = ConFindrReporter(Camel.get_instance())
         reporter.add_input_informs({'confindr': confindr.informs})
         reporter.run(self.running_dir)
@@ -84,13 +60,14 @@ class TestConFindr(CamelTestSuite):
     def test_confindr_nanopore(self) -> None:
         """
         Tests confindr with Nanopore data.
+        # TODO: Investigate issue with quality Phred scores causing the tool to fail
         :return: None
         """
         confindr = ConFindr(Camel.get_instance())
+        confindr.update_parameters(rmlst=True, databases=str(TestConFindr.db), data_type='Nanopore', quality_cutoff=12)
         confindr.add_input_files({
-            'FASTQ_GZ_SE': [ToolIOFile(TestConFindr.input_se_reads)]
+            'FASTQ_SE': [ToolIOFile(TestConFindr.input_se_reads)]
         })
-        confindr.update_parameters(data_type='Nanopore')
         confindr.run(self.running_dir)
         self.assertIn('CSV', confindr.tool_outputs)
         self.assertGreater(Path(confindr.tool_outputs['CSV'][0].path).stat().st_size, 0)
@@ -105,6 +82,7 @@ class TestConFindr(CamelTestSuite):
         dir_out.mkdir()
         confindr_main = MainConFindr([
             '--fastq-se', str(TestConFindr.input_pe_reads[0]),
+            '--db', str(TestConFindr.db),
             '--working-dir', str(self.running_dir),
             '--output-html', str(dir_out / 'report.html'),
             '--output-dir', str(dir_out),
@@ -112,7 +90,8 @@ class TestConFindr(CamelTestSuite):
             '--base-cutoff', '5',
             '--base-percentage-cutoff', '10',
             '--min-matching-hashes', '200',
-            '--read-type', 'nanopore'
+            '--read-type', 'nanopore',
+            '--rmlst'
         ])
         confindr_main.run()
 
@@ -126,6 +105,7 @@ class TestConFindr(CamelTestSuite):
         confindr_main = MainConFindr([
             '--fastq-pe', str(TestConFindr.input_pe_reads[0]), str(TestConFindr.input_pe_reads[1]),
             '--fastq-pe-names', TestConFindr.input_pe_reads[0].name, TestConFindr.input_pe_reads[1].name,
+            '--db', str(TestConFindr.db),
             '--working-dir', str(self.running_dir),
             '--output-html', str(dir_out / 'report.html'),
             '--output-dir', str(dir_out),
@@ -133,6 +113,11 @@ class TestConFindr(CamelTestSuite):
             '--base-cutoff', '5',
             '--base-percentage-cutoff', '10',
             '--min-matching-hashes', '200',
-            '--read-type', 'illumina'
+            '--read-type', 'illumina',
+            '--rmlst'
         ])
         confindr_main.run()
+
+
+if __name__ == '__main__':
+    unittest.main()
