@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pandas as pd
+
 from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
@@ -73,3 +75,14 @@ class CharacterizeNeisseriaCapsule(Tool):
         except StopIteration:
             raise ToolExecutionError(f"TSV file not found in output folder: {dir_out / 'serogroup'}")
         self._tool_outputs['JSON'] = [ToolIOFile(dir_out / 'serogroup' / 'serogroup_results.json')]
+        self._parse_tsv(self._tool_outputs['TSV'][0].path)
+
+    def _parse_tsv(self, path_tsv: Path) -> None:
+        """
+        Parses the output TSV file and stores the results in the informs.
+        :return: None
+        """
+        data_sero = pd.read_table(path_tsv)
+        output_dict = data_sero.to_dict('records')[0]
+        self._informs['detected_serogroup'] = output_dict['SG']
+        self._informs['genes_present'] = output_dict['Genes_Present']
