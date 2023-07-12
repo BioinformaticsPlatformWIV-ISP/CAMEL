@@ -72,5 +72,6 @@ def run_as_pipe(tools: List[ToolPipeable], dir_: Path) -> List[PipedTool]:
         with piped_tool.stderr_path.open() as handle:
             stderr = handle.read()
         piped_tool.tool.process_pipe(stderr, i == len(tools) - 1)
+        piped_tool.tool.informs['_command'] = full_command.command
 
     return piped_tools

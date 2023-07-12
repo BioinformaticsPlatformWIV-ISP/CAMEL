@@ -18,7 +18,7 @@ class SamtoolsView(SamtoolsBasePipeable):
         Initializes this tool.
         :param camel: Camel instance
         """
-        super().__init__('samtools view', '1.9', camel)
+        super().__init__('samtools view', '1.17', camel)
         self.__input_key = None
         self._input_string = ''
 
