@@ -1,4 +1,4 @@
-dependencies: [samtools/1.9]
+dependencies: [samtools/1.17]
 parameters:
   base_quality_threshold: {default: false, mandatory: false, option: -q, value: '20'}
   coverage_cutoff: {default: false, mandatory: false, option: null, value: '0'}
