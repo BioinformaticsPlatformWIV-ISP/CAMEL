@@ -1,0 +1,3 @@
+dependencies: [seqtk/1.4]
+parameters: {}
+tool_command: seqtk size
