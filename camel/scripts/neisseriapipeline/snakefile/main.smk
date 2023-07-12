@@ -145,7 +145,8 @@ rule report_create_command_section:
         INFORMS_amr = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='resistance_genes') if 'resistance_genes' in config['analyses'] else [],
         INFORMS_vaccine = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='vaccine_targets') if 'vaccine_targets' in config['analyses'] else [],
         INFORMS_fhbp = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='fhbp') if 'fhbp' in config['analyses'] else [],
-        INFORMS_cgmlst = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='cgmlst') if 'cgmlst' in config['analyses'] else []
+        INFORMS_cgmlst = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='cgmlst') if 'cgmlst' in config['analyses'] else [],
+        INFORMS_serogroup = Path(config['working_dir']) / serogroup_determination.OUTPUT_SEROGROUP_DETERMINATION_INFORMS if 'serogroup' in config['analyses'] else []
     output:
         HTML = Path(config['working_dir']) / 'report' / 'html-commands.io'
     params:
@@ -212,6 +213,7 @@ rule combine_reports:
         report_bast = sequence_typing.get_sequence_typing_report('bast', config),
         report_gmats = Path(config['working_dir']) / (gmats.OUTPUT_GMATS_REPORT if 'gmats' in config['analyses'] else gmats.OUTPUT_GMATS_REPORT_EMPTY),
         report_serogroup = Path(config['working_dir']) / (serogroup_determination.OUTPUT_SEROGROUP_DETERMINATION_REPORT if 'serogroup' in config['analyses'] else serogroup_determination.OUTPUT_SEROGROUP_DETERMINATION_REPORT_EMPTY),
+        report_serogroup_legacy = Path(config['working_dir']) / (serogroup_determination.OUTPUT_SEROGROUP_DETERMINATION_LEGACY_REPORT if 'serogroup' in config['analyses'] else serogroup_determination.OUTPUT_SEROGROUP_DETERMINATION_LEGACY_REPORT_EMPTY),
         report_citations = rules.report_pickle_citations.output.HTML,
         report_commands = rules.report_create_command_section.output.HTML
     output:
@@ -248,7 +250,8 @@ rule combine_reports:
                 input.report_mlst, input.report_rplf, input.report_pora, input.report_porb, input.report_feta,
                 input.report_resistance_genes, input.report_vaccine_targets, input.report_fhbp, input.report_cgmlst)]),
             ('Antigen typing', 'at', [Path(x) for x in (input.report_bast, input.report_gmats)]),
-            ('Serogroup determination', 'serogroup', [Path(input.report_serogroup)]),
+            ('Serogroup determination', 'serogroup', [Path(
+                input.report_serogroup), Path(input.report_serogroup_legacy)]),
             ('Citations', 'citations', [Path(input.report_citations)]),
             ('Commands', 'commands', [Path(input.report_commands)])
         ]
