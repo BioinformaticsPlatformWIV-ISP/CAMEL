@@ -20,7 +20,7 @@ class SeqtkSubsample(Seqtk):
         :param camel: Camel instance
         :return: None
         """
-        super().__init__('Seqtk Subsample', '1.3', camel)
+        super().__init__('Seqtk Subsample', '1.4', camel)
         self._supported_inputs = ['FASTA', 'FASTQ', 'FASTA_PE', 'FASTQ_PE']
         self._function_name = 'Subsample'
         self._specific_parameters = ['combine_output', 'output_prefix', 'fraction']

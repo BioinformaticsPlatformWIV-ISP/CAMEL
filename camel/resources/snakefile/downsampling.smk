@@ -7,7 +7,7 @@ from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile import downsampling
 
 
-rule downsampling_fastq_stats:
+rule downsampling_read_stats:
     """
     Determines the number of reads and bases in the input FASTQ files.
     """
@@ -18,19 +18,19 @@ rule downsampling_fastq_stats:
     params:
         running_dir = Path(config['working_dir']) / 'downsampling'
     run:
-        from camel.app.tools.pipelines.downsampling.fastqstats import FastqStats
-        fastq_stats = FastqStats(Camel.get_instance())
-        SnakemakeUtils.add_pickle_inputs(fastq_stats, input)
-        step = Step(str(rule), fastq_stats, Camel.get_instance(), params.running_dir)
+        from camel.app.tools.seqtk.seqtksize import SeqtkSize
+        seqtk_size = SeqtkSize(Camel.get_instance())
+        SnakemakeUtils.add_pickle_inputs(seqtk_size, input)
+        step = Step(str(rule), seqtk_size, Camel.get_instance(), params.running_dir)
         step.run_step()
-        SnakemakeUtils.dump_object(fastq_stats.informs, Path(output.INFORMS))
+        SnakemakeUtils.dump_object(seqtk_size.informs, Path(output.INFORMS))
 
 rule downsampling_calculate:
     """
     Calculates the downsampling statistics.
     """
     input:
-        INFORMS_stats = rules.downsampling_fastq_stats.output.INFORMS
+        INFORMS_stats = rules.downsampling_read_stats.output.INFORMS
     output:
         JSON = Path(config['working_dir']) / 'downsampling' / 'calculate_stats' / 'json.io',
         INFORMS = Path(config['working_dir']) / 'downsampling' / 'calculate_stats' / 'informs.io'
@@ -94,7 +94,7 @@ rule downsampling_report:
         HTML = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_REPORT
     params:
         dir_working = Path(config['working_dir']) / 'downsampling',
-        is_paired = config.get('read_type','illumina') == 'illumina'
+        is_paired = config.get('read_type', 'illumina') == 'illumina'
     run:
         from camel.app.tools.pipelines.downsampling.reporterdownsampling import ReporterDownsampling
         reporter = ReporterDownsampling(Camel.get_instance())
