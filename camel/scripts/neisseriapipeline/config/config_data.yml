@@ -19,6 +19,7 @@ citations:
     - Zankari_2012-resfinder
     - Feldgarden_2019-ndaro
     - Jolley_2010-bigsdb
+    - Muzzi_2019-gmats
     - Bratcher_2014-neisseria_cgmlst
 
 #########################
@@ -46,6 +47,12 @@ assembly:
   spades:
     cov_cutoff: 'off'
   min_contig_length: 0
+
+confindr:
+  db: /db/confindr/0.8.1
+
+gmats:
+  db: /db/pipelines/neisseria/gMATS_DB.txt
 
 ############################
 # Gene detection databases #
