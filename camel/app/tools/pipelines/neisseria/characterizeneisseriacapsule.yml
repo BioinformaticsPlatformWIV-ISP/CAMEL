@@ -1,0 +1,4 @@
+dependencies: [characterize_neisseria_capsule/a75a009, blast/2.7.1]
+parameters:
+  threads: {default: true, mandatory: true, option: --threads, value: 8}
+tool_command: characterize_neisseria_capsule.py

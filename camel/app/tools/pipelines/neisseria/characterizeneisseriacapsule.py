@@ -1,0 +1,75 @@
+from pathlib import Path
+
+from camel.app.camel import Camel
+from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from camel.app.error.toolexecutionerror import ToolExecutionError
+from camel.app.io.tooliofile import ToolIOFile
+from camel.app.tools.tool import Tool
+
+
+class CharacterizeNeisseriaCapsule(Tool):
+    """
+    characterize_neisseria_capsule is a tool implementing a WGS-based method for N. meningitidis
+    serogroup predictions by identifying capsule genes and genetic variations that might impact their expression.
+    """
+
+    def __init__(self, camel: Camel) -> None:
+        """
+        Initializes the characterize_neisseria_capsule tool.
+        :param camel: CAMEL instance
+        """
+        super().__init__('characterize_neisseria_capsule', 'a75a009', camel)
+
+    def _check_input(self) -> None:
+        """
+        Checks whether the provided inputs is valid:
+        - FASTA is the only required input
+        :return: None
+        """
+        if 'FASTA' not in self._tool_inputs:
+            raise InvalidInputSpecificationError('FASTA input is required')
+        if len(self._tool_inputs['FASTA']) != 1:
+            raise InvalidInputSpecificationError('Only a single FASTA file can be analyzed at a time')
+        super()._check_input()
+
+    def __build_command(self, dir_path: Path, dir_out: Path) -> None:
+        """
+        Concatenates required parameters and options to build the command.
+        :return: None
+        """
+        self._command.command = ' '.join([
+            self._tool_command,
+            f'--out {dir_out}',
+            f'--indir {dir_path}',
+            *self._build_options()
+        ])
+
+    def _check_command_output(self) -> None:
+        """
+        Checks if the command executed successfully.
+        :return: None
+        """
+        if not self._command.returncode == 0:
+            raise ToolExecutionError(f'Error executing {self.name}: {self.stderr}')
+
+    def _execute_tool(self) -> None:
+        """
+        Executes this tool.
+        :return: None
+        """
+        # Symlink the input FASTA file
+        dir_fasta_in = self.folder / 'fasta_in'
+        dir_fasta_in.mkdir()
+        (dir_fasta_in / self._tool_inputs['FASTA'][0].path.name).symlink_to(self._tool_inputs['FASTA'][0].path)
+
+        # Run the command
+        dir_out = self.folder / 'out'
+        self.__build_command(dir_fasta_in, dir_out)
+        self._execute_command()
+
+        # Collect the output
+        try:
+            self._tool_outputs['TSV'] = [ToolIOFile(next((dir_out / 'serogroup').glob('serogroup_predictions_*.tab')))]
+        except StopIteration:
+            raise ToolExecutionError(f"TSV file not found in output folder: {dir_out / 'serogroup'}")
+        self._tool_outputs['JSON'] = [ToolIOFile(dir_out / 'serogroup' / 'serogroup_results.json')]
