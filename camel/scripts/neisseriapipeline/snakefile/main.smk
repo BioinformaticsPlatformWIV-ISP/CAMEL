@@ -5,7 +5,7 @@ from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.resources.snakefile import trimming, trimming_illumina, assembly_spades, quality_checks, \
     contamination_check_kraken, gene_detection, sequence_typing, downsampling, confindr
-from camel.scripts.neisseriapipeline.snakefile import serogroup_determination
+from camel.scripts.neisseriapipeline.snakefile import serogroup_determination, gmats
 
 
 #######################
@@ -19,6 +19,7 @@ include: quality_checks.SNAKEFILE_QUALITY_CHECKS
 include: assembly_spades.SNAKEFILE_ASSEMBLY_SPADES
 include: gene_detection.SNAKEFILE_GENE_DETECTION
 include: sequence_typing.SNAKEFILE_SEQUENCE_TYPING
+include: gmats.SNAKEFILE_GMATS
 include: serogroup_determination.SNAKEFILE_SEROGROUP_DETERMINATION
 
 
@@ -179,7 +180,7 @@ rule neisseria_additional_resistance_gene_metadata:
         from camel.app.tools.pipelines.neisseria.resistancemetadataextractor import ResistanceMetadataExtractor
         extractor = ResistanceMetadataExtractor(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(extractor, input)
-        step = Step(rule, extractor, Camel.get_instance(), params.working_dir, config)
+        step = Step(str(rule), extractor, Camel.get_instance(), params.working_dir, config)
         extractor.update_parameters(loci=params.loci)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(extractor, output)
@@ -209,6 +210,7 @@ rule combine_reports:
         report_resistance_genes = rules.neisseria_additional_resistance_gene_metadata.output.VAL_HTML if 'resistance_genes' in config['analyses'] else Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_REPORT_EMPTY).format(scheme='resistance_genes'),
         report_fhbp = sequence_typing.get_sequence_typing_report('fhbp', config),
         report_bast = sequence_typing.get_sequence_typing_report('bast', config),
+        report_gmats = Path(config['working_dir']) / (gmats.OUTPUT_GMATS_REPORT if 'gmats' in config['analyses'] else gmats.OUTPUT_GMATS_REPORT_EMPTY),
         report_serogroup = Path(config['working_dir']) / (serogroup_determination.OUTPUT_SEROGROUP_DETERMINATION_REPORT if 'serogroup' in config['analyses'] else serogroup_determination.OUTPUT_SEROGROUP_DETERMINATION_REPORT_EMPTY),
         report_citations = rules.report_pickle_citations.output.HTML,
         report_commands = rules.report_create_command_section.output.HTML
@@ -243,9 +245,9 @@ rule combine_reports:
             ('Resistance characterization', 'res', [Path(x) for x in (
                 input.report_resfinder, input.report_argannot, input.report_card, input.report_ncbi_amr)]),
             ('Sequence typing', 'st', [Path(x) for x in (
-                input.report_mlst, input.report_rplf, input.report_bast, input.report_pora, input.report_porb,
-                input.report_feta, input.report_resistance_genes, input.report_vaccine_targets, input.report_fhbp,
-                input.report_cgmlst)]),
+                input.report_mlst, input.report_rplf, input.report_pora, input.report_porb, input.report_feta,
+                input.report_resistance_genes, input.report_vaccine_targets, input.report_fhbp, input.report_cgmlst)]),
+            ('Antigen typing', 'at', [Path(x) for x in (input.report_bast, input.report_gmats)]),
             ('Serogroup determination', 'serogroup', [Path(input.report_serogroup)]),
             ('Citations', 'citations', [Path(input.report_citations)]),
             ('Commands', 'commands', [Path(input.report_commands)])
@@ -278,6 +280,7 @@ rule combine_summary_files:
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='resistance_genes') if 'resistance_genes' in config['analyses'] else [],
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='vaccine_targets') if 'vaccine_targets' in config['analyses'] else [],
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='cgmlst') if 'cgmlst' in config['analyses'] else [],
+        Path(config['working_dir']) / gmats.OUTPUT_GMATS_SUMMARY if 'gmats' in config['analyses'] else [],
         Path(config['working_dir']) / serogroup_determination.OUTPUT_SEROGROUP_DETERMINATION_SUMMARY if 'serogroup' in config['analyses'] else []
     output:
         TSV = config.get('output_tabular')

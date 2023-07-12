@@ -10,7 +10,7 @@ citations:
     - Wood_2019-kraken2
     - Low_2019-confindr
     - Langmead_2012-bowtie2
-    - Danecek_2021-samtools
+    - Li_2009-samtools
     - Camacho_2009-blast
     - Clausen_2018-kma
     - Inouye_2014-srst2
@@ -20,7 +20,6 @@ citations:
     - Feldgarden_2019-ndaro
     - Jolley_2010-bigsdb
     - Muzzi_2019-gmats
-    - Marjuki_2019-neisseria_serogroup
     - Bratcher_2014-neisseria_cgmlst
 
 #########################
@@ -40,11 +39,6 @@ contamination_check:
 quality_checks:
   typing_scheme: {qc_typing_scheme}
   expected_gc_content: 51.5
-
-quast:
-  ref:
-    fasta: /db/refgenomes/Neisseria_meningitidis/NZ_CP021520.1.fasta
-    gff3: /db/refgenomes/Neisseria_meningitidis/NZ_CP021520.1.gff3
 
 srst2:
   max_unaligned_overlap: 141
