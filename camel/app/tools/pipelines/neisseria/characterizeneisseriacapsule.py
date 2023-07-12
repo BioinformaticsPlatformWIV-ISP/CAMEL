@@ -1,6 +1,3 @@
-import os
-import shutil
-import tempfile
 from pathlib import Path
 
 from camel.app.camel import Camel
@@ -25,31 +22,27 @@ class CharacterizeNeisseriaCapsule(Tool):
 
     def _check_input(self) -> None:
         """
-        Checks whether the given inputs are valid:
-        - FASTA_dir is the only required input
+        Checks whether the provided inputs is valid:
+        - FASTA is the only required input
         :return: None
         """
-        if 'FASTA_dir' not in self._tool_inputs:
-            raise InvalidInputSpecificationError('Required input directory containing the fasta files is missing')
+        if 'FASTA' not in self._tool_inputs:
+            raise InvalidInputSpecificationError('FASTA input is required')
+        if len(self._tool_inputs['FASTA']) != 1:
+            raise InvalidInputSpecificationError('Only a single FASTA file can be analyzed at a time')
         super()._check_input()
-
-    def __build_input_string(self, dir_path: Path, dir_out: Path) -> str:
-        """
-        Creates the string with the input files
-        :return: String with the input parameters
-        """
-        inputs = [f"-o {dir_out}",
-                  f"-t {self._parameters['threads'].value}",
-                  f"-d {dir_path}"]
-        return ' '.join(inputs)
 
     def __build_command(self, dir_path: Path, dir_out: Path) -> None:
         """
         Concatenates required parameters and options to build the command.
         :return: None
         """
-        input_string = self.__build_input_string(dir_path, dir_out)
-        self._command.command = ' '.join([self._tool_command, input_string])
+        self._command.command = ' '.join([
+            self._tool_command,
+            f'--out {dir_out}',
+            f'--indir {dir_path}',
+            *self._build_options()
+        ])
 
     def _check_command_output(self) -> None:
         """
@@ -64,26 +57,19 @@ class CharacterizeNeisseriaCapsule(Tool):
         Executes this tool.
         :return: None
         """
-        temp_input_dir = tempfile.TemporaryDirectory()
+        # Symlink the input FASTA file
+        dir_fasta_in = self.folder / 'fasta_in'
+        dir_fasta_in.mkdir()
+        (dir_fasta_in / self._tool_inputs['FASTA'][0].path.name).symlink_to(self._tool_inputs['FASTA'][0].path)
+
+        # Run the command
+        dir_out = self.folder / 'out'
+        self.__build_command(dir_fasta_in, dir_out)
+        self._execute_command()
+
+        # Collect the output
         try:
-            for filename in os.scandir(self._tool_inputs['FASTA_dir'][0].path):
-                if os.path.splitext(filename)[-1] == '.fasta':
-                    # Temporary copy to use a single FASTA file as input
-                    shutil.copy(filename.path, Path(temp_input_dir.name))
-
-                    # Execute the tool
-                    sample_name = os.path.splitext(os.path.split(filename)[-1])[0]
-                    dir_out = Path(f"{self._parameters['output_directory'].value}/{sample_name}")
-                    self.__build_command(temp_input_dir.name, dir_out)
-                    self._execute_command()
-
-                    # Remove temporary fasta file
-                    filepath = os.path.join(temp_input_dir.name, os.path.basename(filename))
-                    os.remove(filepath)
-                try:
-                    self._tool_outputs['TSV'] = [ToolIOFile(next((dir_out / 'serogroup').glob('serogroup_predictions_'
-                                                                                              '*.tab')))]
-                except StopIteration:
-                    raise ToolExecutionError(f"TSV file not found in output folder: {dir_out / 'serogroup'}")
-        finally:
-            temp_input_dir.cleanup()
+            self._tool_outputs['TSV'] = [ToolIOFile(next((dir_out / 'serogroup').glob('serogroup_predictions_*.tab')))]
+        except StopIteration:
+            raise ToolExecutionError(f"TSV file not found in output folder: {dir_out / 'serogroup'}")
+        self._tool_outputs['JSON'] = [ToolIOFile(dir_out / 'serogroup' / 'serogroup_results.json')]
