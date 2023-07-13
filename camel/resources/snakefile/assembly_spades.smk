@@ -49,7 +49,7 @@ rule assembly_filter_contig_length:
         INFORMS = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FILTERING_INFORMS
     params:
         running_dir = Path(config['working_dir']) / 'assembly_spades' / 'filtering',
-        min_contig_length = config['assembly'].get('min_contig_length', 0) if 'assembly' in config else 0
+        min_contig_length = config.get('assembly', {}).get('min_contig_length', 0)
     run:
         from camel.app.tools.seqtk.seqtkseq import SeqtkSeq
         seqtk = SeqtkSeq(camel)
@@ -127,7 +127,7 @@ rule assembly_dump_summary_info:
     input:
         INFORMS_quast = rules.assembly_quast_extract_informs.output.INFORMS
     output:
-        Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_SUMMARY
+        TSV = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_SUMMARY
     params:
         running_dir = Path(config['working_dir']) / 'assembly_spades' / 'summary'
     run:
@@ -137,7 +137,7 @@ rule assembly_dump_summary_info:
             ('assembly_nb_contigs', quast_informs['contig']['# contigs']),
             ('assembly_total_length', quast_informs['genome']['Total length'])
         ]
-        with open(output[0], 'w') as handle:
+        with open(output.TSV, 'w') as handle:
             for key, value in summary_data:
                 handle.write(f'{key}\t{value}')
                 handle.write('\n')
