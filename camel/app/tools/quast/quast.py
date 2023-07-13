@@ -20,7 +20,7 @@ class Quast(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super().__init__('quast', '4.4', camel)
+        super().__init__('quast', '5.2.0', camel)
 
     def _execute_tool(self) -> None:
         """
@@ -44,7 +44,7 @@ class Quast(Tool):
             raise InvalidInputSpecificationError(
                 f'QUAST required FASTA input is missing: {self._tool_inputs!r}')
         for key, values in self._tool_inputs.items():
-            if key not in ['FASTA', 'FASTA_Ref', 'TSV_Gene', 'TSV_Operon']:
+            if key not in ['FASTA', 'FASTA_Ref', 'TSV_Gene', 'TSV_Operon', 'BAM', 'BAM_Ref', 'FASTQ_PE', 'GFF3_Ref']:
                 raise InvalidInputSpecificationError(
                     f'Illegal input key given for QUAST: {self._tool_inputs!r}')
             if key in ['FASTA_Ref', 'TSV_Gene', 'TSV_Operon'] and len(values) > 1:
@@ -67,11 +67,20 @@ class Quast(Tool):
         """
         inputs = []
         if 'FASTA_Ref' in self._tool_inputs:
-            inputs.append(f"-R {self._tool_inputs['FASTA_Ref'][0].path}")
+            inputs.append(f"-r {self._tool_inputs['FASTA_Ref'][0].path}")
+        if 'GFF3_Ref' in self._tool_inputs:
+            inputs.append(f"--features {self._tool_inputs['GFF3_Ref'][0].path}")
         if 'TSV_Gene' in self._tool_inputs:
             inputs.append(f"-G {self._tool_inputs['TSV_Gene'][0].path}")
         if 'TSV_Operon' in self._tool_inputs:
             inputs.append(f"-O {self._tool_inputs['TSV_Operon'][0].path}")
+        if 'BAM' in self._tool_inputs:
+            inputs.append(f"--bam {self._tool_inputs['BAM'][0].path}")
+        if 'BAM_Ref' in self._tool_inputs:
+            inputs.append(f"--ref-bam {self._tool_inputs['BAM_Ref'][0].path}")
+        if 'FASTQ_PE' in self._tool_inputs:
+            inputs.extend([
+                f"--pe1 {self._tool_inputs['FASTQ_PE'][0].path}", f"--pe2 {self._tool_inputs['FASTQ_PE'][1].path}"])
         for item in self._tool_inputs['FASTA']:
             inputs.append(str(item.path))
         return ' '.join(inputs)
@@ -96,6 +105,7 @@ class Quast(Tool):
         output_keys = ['HTML', 'TEX', 'TSV', 'TXT']
         for key in output_keys:
             self._tool_outputs[key] = [ToolIOFile(Path(f'{self.folder / "report"}.{key.lower()}'))]
+
         # for icarus browser
         icarus_output_keys = {
             'HTML_icarus': 'icarus.html',
@@ -107,3 +117,14 @@ class Quast(Tool):
                 # skip HTML_alignment_viewer when no reference genome is provided
                 continue
             self._tool_outputs[key] = [ToolIOFile(self.folder / value)]
+
+        # Optional analyses
+        if 'glimmer' in self._parameters:
+            self._tool_outputs['GFF'] = [ToolIOFile(next((self.folder / 'predicted_genes').glob('*.gff')))]
+        if 'conserved_genes_finding' in self._parameters:
+            self._tool_outputs['TXT_busco'] = [ToolIOFile((next((self.folder / 'busco_stats').glob(
+                'short_summary_*.txt'))))]
+
+        # Reference genome
+        if 'FASTA_Ref' in self._tool_inputs:
+            self._informs['ref'] = self._tool_inputs['FASTA_Ref'][0].path.name

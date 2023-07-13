@@ -41,6 +41,11 @@ quality_checks:
   typing_scheme: {qc_typing_scheme}
   expected_gc_content: 51.5
 
+quast:
+  ref:
+    fasta: /db/refgenomes/Neisseria_meningitidis/NZ_CP021520.1.fasta
+    gff3: /db/refgenomes/Neisseria_meningitidis/NZ_CP021520.1.gff3
+
 srst2:
   max_unaligned_overlap: 141
 

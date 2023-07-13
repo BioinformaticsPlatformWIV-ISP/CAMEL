@@ -1,5 +1,7 @@
 from pathlib import Path
 
+from camel.app.camel import Camel
+from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile import quality_checks, trimming, contamination_check_kraken
 
@@ -16,6 +18,8 @@ rule quality_checks_kraken:
         qc_check = quality_checks.QC_CHECKS_BY_KEY['kraken']
     run:
         import json
+
+        # noinspection PyTypeChecker
         if len(input) == 0:
             data_export = params.qc_check.to_dict()
         else:
@@ -25,7 +29,6 @@ rule quality_checks_kraken:
             data_export = params.qc_check.to_dict(max_level)
         with open(output.JSON, 'w') as handle:
             json.dump(data_export, handle)
-
 
 rule quality_checks_mapping_rate:
     """
@@ -43,7 +46,6 @@ rule quality_checks_mapping_rate:
         mapping_rate = float(informs_bt2['stats_map_rate'])
         with open(output.JSON, 'w') as handle:
             json.dump(params.qc_check.to_dict(mapping_rate), handle)
-
 
 rule quality_checks_coverage:
     """
@@ -63,7 +65,6 @@ rule quality_checks_coverage:
         with open(output.JSON, 'w') as handle:
             json.dump(params.qc_check.to_dict(median_depth), handle)
 
-
 rule quality_checks_typing_loci:
     """
     Checks the fraction of detected typing loci.
@@ -82,7 +83,6 @@ rule quality_checks_typing_loci:
         with open(output.JSON, 'w') as handle:
             json.dump(params.qc_check.to_dict(100 * fraction_detected), handle)
 
-
 rule quality_checks_parse_fastqc:
     """
     Tests additional quality metrics based on the FastQC data file output.
@@ -96,12 +96,11 @@ rule quality_checks_parse_fastqc:
         running_dir = Path(config['working_dir']) / 'quality_checks' / 'parse_fastqc'
     run:
         from camel.app.tools.fastqc.fastqcdatafileparser import FastQCDataFileParser
-        fastqc_checks = FastQCDataFileParser(camel)
-        step = Step(rule, fastqc_checks, camel, params.running_dir)
+        fastqc_checks = FastQCDataFileParser(Camel.get_instance())
+        step = Step(str(rule), fastqc_checks, Camel.get_instance(), params.running_dir)
         SnakemakeUtils.add_pickle_inputs(fastqc_checks, input)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(fastqc_checks, output)
-
 
 rule quality_checks_fqc_gc_content:
     """
@@ -122,7 +121,6 @@ rule quality_checks_fqc_gc_content:
         with open(output.JSON, 'w') as handle:
             json.dump(params.qc_check.to_dict(gc_diff), handle)
 
-
 rule quality_checks_fqc_avg_read_quality:
     """
     Checks the additional QC checks based on the FastQC output.
@@ -140,7 +138,6 @@ rule quality_checks_fqc_avg_read_quality:
         avg_quality = informs['by_file']['avg_read_qual'][params.index]
         with open(output.JSON, 'w') as handle:
             json.dump(params.qc_check.to_dict(avg_quality), handle)
-
 
 rule quality_checks_fqc_max_n_fraction:
     """
@@ -160,7 +157,6 @@ rule quality_checks_fqc_max_n_fraction:
         with open(output.JSON, 'w') as handle:
             json.dump(params.qc_check.to_dict(max_n_fraction), handle)
 
-
 rule quality_checks_fqc_seq_len:
     """
     Checks the sequence length distribution based on the FastQC output.
@@ -178,7 +174,6 @@ rule quality_checks_fqc_seq_len:
         perc = 100 * informs['by_file']['median_seq_len'][params.index] / informs['stats']['mode_read_length_raw']
         with open(output.JSON, 'w') as handle:
             json.dump(params.qc_check.to_dict(perc), handle)
-
 
 rule quality_checks_fqc_per_base:
     """
@@ -198,7 +193,6 @@ rule quality_checks_fqc_per_base:
         with open(output.JSON, 'w') as handle:
             json.dump(params.qc_check.to_dict(max_diff), handle)
 
-
 rule quality_checks_fqc_qscore:
     """
     Checks the Q-score drop based on the FastQC output.
@@ -217,7 +211,6 @@ rule quality_checks_fqc_qscore:
         with open(output.JSON, 'w') as handle:
             json.dump(params.qc_check.to_dict(qscore_drop), handle)
 
-
 rule quality_checks_report:
     """
     Creates the report for the quality checks workflow.
@@ -228,24 +221,26 @@ rule quality_checks_report:
         JSON_cgmlst = rules.quality_checks_typing_loci.output.JSON if 'typing' not in config['quality_checks'].get('disabled_checks', []) else [],
         JSON_cov_ref = rules.quality_checks_coverage.output.JSON if 'coverage' not in config['quality_checks'].get('disabled_checks', []) else [],
         JSON_map_rate_ref = rules.quality_checks_mapping_rate.output.JSON if 'coverage' not in config['quality_checks'].get('disabled_checks', []) else [],
-        JSON_fqc_avg_qual_fwd = rules.quality_checks_fqc_avg_read_quality.output.JSON.format(ori='fwd') if 'fastqc' not in config['quality_checks'].get('disabled_checks', []) else [],
-        JSON_fqc_avg_qual_rev = rules.quality_checks_fqc_avg_read_quality.output.JSON.format(ori='rev') if (config.get('read_type', 'illumina') == 'illumina' and 'fastqc' not in config['quality_checks'].get('disabled_checks', [])) else [],
-        JSON_fqc_gc_fwd = rules.quality_checks_fqc_gc_content.output.JSON.format(ori='fwd') if 'fastqc' not in config['quality_checks'].get('disabled_checks', []) else [],
-        JSON_fqc_gc_rev = rules.quality_checks_fqc_gc_content.output.JSON.format(ori='rev') if (config.get('read_type', 'illumina') == 'illumina' and 'fastqc' not in config['quality_checks'].get('disabled_checks', [])) else [],
-        JSON_fqc_n_frac_fwd = rules.quality_checks_fqc_max_n_fraction.output.JSON.format(ori='fwd') if 'fastqc' not in config['quality_checks'].get('disabled_checks', []) else [],
-        JSON_fqc_n_frac_rev = rules.quality_checks_fqc_max_n_fraction.output.JSON.format(ori='rev') if (config.get('read_type', 'illumina') == 'illumina' and 'fastqc' not in config['quality_checks'].get('disabled_checks', [])) else [],
-        JSON_fqc_per_base_fwd = rules.quality_checks_fqc_per_base.output.JSON.format(ori='fwd') if 'fastqc' not in config['quality_checks'].get('disabled_checks', []) else [],
-        JSON_fqc_per_base_rev = rules.quality_checks_fqc_per_base.output.JSON.format(ori='rev') if (config.get('read_type', 'illumina') == 'illumina' and 'fastqc' not in config['quality_checks'].get('disabled_checks', [])) else [],
-        JSON_fqc_qscore_fwd = rules.quality_checks_fqc_qscore.output.JSON.format(ori='fwd') if 'fastqc' not in config['quality_checks'].get('disabled_checks', []) else [],
-        JSON_fqc_qscore_rev = rules.quality_checks_fqc_qscore.output.JSON.format(ori='rev') if (config.get('read_type', 'illumina') == 'illumina' and 'fastqc' not in config['quality_checks'].get('disabled_checks', [])) else [],
-        JSON_fqc_seq_len_fwd = rules.quality_checks_fqc_seq_len.output.JSON.format(ori='fwd') if 'fastqc' not in config['quality_checks'].get('disabled_checks', []) else [],
-        JSON_fqc_seq_len_rev = rules.quality_checks_fqc_seq_len.output.JSON.format(ori='rev') if (config.get('read_type', 'illumina') == 'illumina' and 'fastqc' not in config['quality_checks'].get('disabled_checks', [])) else []
+        JSON_fqc_avg_qual_fwd = str(rules.quality_checks_fqc_avg_read_quality.output.JSON).format(ori='fwd') if 'fastqc' not in config['quality_checks'].get('disabled_checks', []) else [],
+        JSON_fqc_avg_qual_rev = str(rules.quality_checks_fqc_avg_read_quality.output.JSON).format(ori='rev') if (config.get('read_type', 'illumina') == 'illumina' and 'fastqc' not in config['quality_checks'].get('disabled_checks', [])) else [],
+        JSON_fqc_gc_fwd = str(rules.quality_checks_fqc_gc_content.output.JSON).format(ori='fwd') if 'fastqc' not in config['quality_checks'].get('disabled_checks', []) else [],
+        JSON_fqc_gc_rev = str(rules.quality_checks_fqc_gc_content.output.JSON).format(ori='rev') if (config.get('read_type', 'illumina') == 'illumina' and 'fastqc' not in config['quality_checks'].get('disabled_checks', [])) else [],
+        JSON_fqc_n_frac_fwd = str(rules.quality_checks_fqc_max_n_fraction.output.JSON).format(ori='fwd') if 'fastqc' not in config['quality_checks'].get('disabled_checks', []) else [],
+        JSON_fqc_n_frac_rev = str(rules.quality_checks_fqc_max_n_fraction.output.JSON).format(ori='rev') if (config.get('read_type', 'illumina') == 'illumina' and 'fastqc' not in config['quality_checks'].get('disabled_checks', [])) else [],
+        JSON_fqc_per_base_fwd = str(rules.quality_checks_fqc_per_base.output.JSON).format(ori='fwd') if 'fastqc' not in config['quality_checks'].get('disabled_checks', []) else [],
+        JSON_fqc_per_base_rev = str(rules.quality_checks_fqc_per_base.output.JSON).format(ori='rev') if (config.get('read_type', 'illumina') == 'illumina' and 'fastqc' not in config['quality_checks'].get('disabled_checks', [])) else [],
+        JSON_fqc_qscore_fwd = str(rules.quality_checks_fqc_qscore.output.JSON).format(ori='fwd') if 'fastqc' not in config['quality_checks'].get('disabled_checks', []) else [],
+        JSON_fqc_qscore_rev = str(rules.quality_checks_fqc_qscore.output.JSON).format(ori='rev') if (config.get('read_type', 'illumina') == 'illumina' and 'fastqc' not in config['quality_checks'].get('disabled_checks', [])) else [],
+        JSON_fqc_seq_len_fwd = str(rules.quality_checks_fqc_seq_len.output.JSON).format(ori='fwd') if 'fastqc' not in config['quality_checks'].get('disabled_checks', []) else [],
+        JSON_fqc_seq_len_rev = str(rules.quality_checks_fqc_seq_len.output.JSON).format(ori='rev') if (config.get('read_type', 'illumina') == 'illumina' and 'fastqc' not in config['quality_checks'].get('disabled_checks', [])) else []
     output:
         VAL_HTML = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_REPORT,
         JSON = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_REPORT_JSON
     params:
         gc_content_ref = config['quality_checks']['expected_gc_content']
     run:
+        import json
+
         # Combine the informs
         informs = []
         for json_file in input[1:]:
@@ -258,12 +253,11 @@ rule quality_checks_report:
 
         # Create the report
         from camel.app.tools.pipelines.quality_checks.htmlreporterqualitychecks import HtmlReporterQualityChecks
-        reporter = HtmlReporterQualityChecks(camel)
+        reporter = HtmlReporterQualityChecks(Camel.get_instance())
         reporter.update_parameters(gc_content_ref=params.gc_content_ref)
         reporter.add_input_informs({'qc_checks': informs, 'fastqc_parser': SnakemakeUtils.load_object(Path(input.INFORMS))})
         reporter.run(Path(output.VAL_HTML).parent)
         SnakemakeUtils.dump_tool_output(reporter, 'VAL_HTML', Path(output.VAL_HTML))
-
 
 rule quality_checks_export_summary_info:
     """
@@ -274,6 +268,8 @@ rule quality_checks_export_summary_info:
     output:
         TSV = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY
     run:
+        import json
+
         with open(input.JSON) as handle:
             informs = json.load(handle)
 
