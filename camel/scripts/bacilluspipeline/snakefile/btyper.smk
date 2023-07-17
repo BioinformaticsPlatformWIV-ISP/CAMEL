@@ -68,7 +68,7 @@ rule btyper_dump_summary_info:
     Dumps the summary information for the BTyper workflow in tabular format.
     """
     input:
-        TSV = rules.btyper_run.output.TSV,
+        TSV = rules.btyper_run.output.TSV
     output:
         TSV = Path(config['working_dir']) / bt.OUTPUT_BTYPER_SUMMARY
     run:

@@ -9,22 +9,10 @@ from camel.resources.snakefile import short_read_polishing
 
 camel = Camel.get_instance()
 
-# rule polishing_copy_fasta:
-#     """
-#     Copies the medaka output FASTA file into the polypolish input folder.
-#     """
-#     input:
-#         FASTA = Path(config['working_dir']) / 'medaka' / 'fasta.io'
-#     output:
-#         FASTA = Path(config['working_dir']) / 'polishing' / 'polypolish' / 'input_genome.fasta'
-#     run:
-#         fasta = SnakemakeUtils.load_object(Path(str(input.FASTA)))
-#         fasta_file = fasta[0].path
-#         shutil.copyfile(fasta_file, output.FASTA)
 
 rule polishing_copy_fasta:
     """
-    Copies the medaka output FASTA file into the polypolish input folder.
+    Copies the input FASTA file into the polypolish input folder.
     """
     input:
         FASTA = Path(config['working_dir']) / short_read_polishing.INPUT_ASSEMBLY_FASTA
@@ -75,7 +63,6 @@ rule polishing_read_mapping_1:
     Maps the forward reads against the assembly.
     """
     input:
-        # FQ_dict = Path(config['working_dir']) / 'trimming' / 'illumina' / 'fq_dict.io',
         FQ_dict = Path(config['working_dir']) / short_read_polishing.INPUT_READS_FASTQ,
         INDEX_GENOME_PREFIX_BWA = rules.polishing_bwa_index.output.INDEX_GENOME_PREFIX,
         INDEX_GENOME_PREFIX_SAMTOOLS = rules.polishing_samtools_index_polypolish.output.INDEX_GENOME_PREFIX,
@@ -102,7 +89,6 @@ rule polishing_read_mapping_2:
     Maps the forward reads against the assembly.
     """
     input:
-        # FQ_dict = Path(config['working_dir']) / 'trimming' / 'illumina' / 'fq_dict.io',
         FQ_dict = Path(config['working_dir']) / short_read_polishing.INPUT_READS_FASTQ,
         INDEX_GENOME_PREFIX_BWA = rules.polishing_bwa_index.output.INDEX_GENOME_PREFIX,
         INDEX_GENOME_PREFIX_SAMTOOLS = rules.polishing_samtools_index_polypolish.output.INDEX_GENOME_PREFIX,
@@ -225,7 +211,7 @@ rule polishing_rename_polca_output:
     input:
         FASTA = rules.polishing_polca.output.FASTA
     output:
-         FASTA = Path(config['working_dir']) / 'polishing' / 'polca' / 'polished.fasta'
+        FASTA = Path(config['working_dir']) / 'polishing' / 'polca' / 'polished.fasta'
     shell:
         """
         mv {input.FASTA} {output.FASTA}

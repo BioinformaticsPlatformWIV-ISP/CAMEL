@@ -17,7 +17,7 @@ from camel.scripts.bacilluspipeline import SNAKEFILE_MAIN, CONFIG_DATA
 
 class MainBacillusPipeline(ReportPipeline):
     """
-    Main class to run the Bacillus pipeline
+    Main class to run the Bacillus pipeline.
     """
 
     CUSTOM_ANALYSES = {
@@ -82,6 +82,7 @@ class MainBacillusPipeline(ReportPipeline):
     def __get_qc_typing_scheme(self) -> str:
         """
         Returns the typing scheme used for QC.
+        :return: Typing scheme
         """
         if self._args.species == 'cereus':
             return 'cgmlst_cereus' if self._args.cgmlst_cereus is True else 'mlst_cereus'
@@ -121,9 +122,6 @@ class MainBacillusPipeline(ReportPipeline):
 
         # Nanopore settings
         if self._args.read_type == 'nanopore':
-            config_data['assembly']['canu'] = {
-                'genome_size': MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['genome_size'],
-                **config_data['assembly'].get('canu', {})}
             config_data['assembly']['flye'] = {
                 'genome_size': MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['genome_size'],
                 **config_data['assembly'].get('flye', {})}
