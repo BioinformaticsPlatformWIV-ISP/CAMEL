@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 import pandas as pd
@@ -76,15 +77,15 @@ class MOBRecon(Tool):
         :param path_out: Output file path
         :return: None
         """
+        self._informs['detected_plasmids'] = []
         if path_out.exists():
-            with path_out.open() as handle:
-                header = handle.readline().split('\t')
-                values = handle.readline().split('\t')
-                for k, v in zip(header, values):
-                    self._informs[k] = v
+            data_plasmids = pd.read_table(path_out)
+            logging.info(f'{len(data_plasmids)} plasmids detected')
+            for record in data_plasmids.to_dict('records'):
+                self._informs['detected_plasmids'].append(record)
         else:
-            with open(path_out, 'w') as handle:
-                handle.write('No plasmids found by MOB-Suite.\n')
+            logging.info('No plasmids detected, creating empty output file')
+            path_out.touch()
 
     def _parse_contig_report(self, path_out: Path) -> None:
         """

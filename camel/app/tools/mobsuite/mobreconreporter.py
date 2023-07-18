@@ -53,10 +53,10 @@ class MOBReconReporter(Tool):
         :param section: Report section
         :return: None
         """
-        data_overview = pd.read_table(self._tool_inputs['TSV'][0].path)
-
-        if data_overview.empty:
-            section.add_paragraph(open(self._tool_inputs['TSV'][0].path).readlines()[0])
+        if len(self._input_informs['mob_recon']['detected_plasmids']) > 0:
+            data_overview = pd.read_table(self._tool_inputs['TSV'][0].path)
+        else:
+            section.add_paragraph('No plasmids detected')
             return
 
         data_overview['id'] = data_overview['sample_id'].apply(lambda x: re.search('.*:(.*)', x).group(1))

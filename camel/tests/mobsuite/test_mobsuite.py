@@ -33,6 +33,7 @@ class TestMOBSuite(CamelTestSuite):
         mob_recon.run(self.running_dir)
         self.verify_output_files(mob_recon, 'TSV')
         self.verify_output_files(mob_recon, 'FASTA')
+        self.assertIn('detected_plasmids', mob_recon.informs)
 
     def test_mob_recon_assembly(self) -> None:
         """
@@ -48,6 +49,7 @@ class TestMOBSuite(CamelTestSuite):
         mob_recon.run(self.running_dir)
         self.verify_output_files(mob_recon, 'TSV')
         self.verify_output_files(mob_recon, 'FASTA', nb_files=2)
+        self.assertIn('detected_plasmids', mob_recon.informs)
 
     def test_mob_recon_reporter(self) -> None:
         """
@@ -88,7 +90,8 @@ class TestMOBSuite(CamelTestSuite):
         })
         mob_recon.update_parameters(num_threads=8)
         mob_recon.run(self.running_dir)
-        self.verify_output_files(mob_recon, 'TSV')
+        # Empty file -> verify_output_files cannot be used
+        self.assertTrue(mob_recon.tool_outputs['TSV'][0].path.exists())
         self.verify_output_files(mob_recon, 'FASTA', nb_files=0)
 
     def test_mob_recon_reporter_no_plasmid(self) -> None:
