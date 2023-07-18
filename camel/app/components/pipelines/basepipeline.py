@@ -56,6 +56,8 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         argument_parser.add_argument('--sample-name', type=str)
         argument_parser.add_argument('--fastq-pe', nargs=2, type=Path, help="FASTQ input files")
         argument_parser.add_argument('--fastq-pe-names', nargs=2, help="FASTQ input file names")
+        argument_parser.add_argument(
+            '--read-type', help='Read type', choices=['illumina', 'iontorrent', 'nanopore'], default='illumina')
 
         # Output
         argument_parser.add_argument('--working-dir', type=Path, default=Path.cwd())
