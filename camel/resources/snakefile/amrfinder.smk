@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pandas as pd
+
 from camel.app.camel import Camel
 from camel.app.io.tooliodirectory import ToolIODirectory
 from camel.app.pipeline.step import Step
@@ -61,12 +63,22 @@ rule amrfinder_dump_summary_info:
     Dumps the summary information for the ResFinder workflow in tabular format.
     """
     input:
-        INFORMS = Path(config['working_dir']) / rules.amrfinder_run.output.INFORMS
+        TSV = rules.amrfinder_run.output.TSV
     output:
         TSV = Path(config['working_dir']) / 'amrfinder' / 'summary_amrfinder.tsv'
     run:
-        import json
-        informs = SnakemakeUtils.load_object(Path(input.INFORMS))
-        data = []
+        path_tsv = SnakemakeUtils.load_object(Path(input.TSV))[0].path
+        data_amr = pd.read_table(path_tsv)
+
+        # Parse perfect & other hits
+        data_amr['is_perfect'] = data_amr.apply(lambda x:
+            x['% Coverage of reference sequence'] == 100.0 and x['% Identity to reference sequence'] == 100.0, axis=1)
+        hits_perfect = list(data_amr[data_amr['is_perfect']]['Gene symbol'])
+        hits_other = list(data_amr[~data_amr['is_perfect']]['Gene symbol'])
+
+        # Write to output file
         with open(output.TSV, 'w') as handle:
-            handle.write('{}\t{}\n'.format('amrfinder_typing_results', json.dumps(data)))
+            handle.write('amrfinder_perfect\t{}'.format(', '.join(hits_perfect) if len(hits_perfect) > 0 else '-'))
+            handle.write('\n')
+            handle.write('amrfinder_other\t{}'.format(', '.join(hits_other) if len(hits_other) > 0 else '-'))
+            handle.write('\n')
