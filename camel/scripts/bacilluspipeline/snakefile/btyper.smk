@@ -86,3 +86,4 @@ rule btyper_dump_summary_info:
             handle.write('btyper_capsule_genes\t{}'.format([[a, subtable_capsule[a][0]] for a in subtable_capsule.columns]))
             handle.write('\n')
             handle.write('btyper_bt_genes\t{}'.format([btyper_table["Bt(genes)"][0]]))
+            handle.write('\n')
