@@ -119,7 +119,7 @@ rule assembly_flye_index_bam:
         samtools_index = SamtoolsIndex(camel)
         SnakemakeUtils.add_pickle_inputs(samtools_index, input)
         samtools_index.update_parameters(generate_bai_index=True)
-        step = Step(str(rule), samtools_index, camel, params.running_dir, config)
+        step = Step(str(rule), samtools_index, camel, params.running_dir)
         step.run_step()
 
 rule assembly_flye_medaka_consensus:
@@ -142,7 +142,7 @@ rule assembly_flye_medaka_consensus:
         SnakemakeUtils.add_pickle_input(medaka, 'BAM', Path(input.BAM))
         medaka.update_parameters(**params.medaka_options)
         medaka.update_parameters(threads=threads)
-        step = Step(str(rule), medaka, camel, params.running_dir, config)
+        step = Step(str(rule), medaka, camel, params.running_dir)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(medaka, output)
 
@@ -165,7 +165,7 @@ rule polishing_medaka_stitch:
         medaka = MedakaStitch(camel)
         SnakemakeUtils.add_pickle_inputs(medaka, input)
         medaka.update_parameters(**params.medaka_options, threads=threads)
-        step = Step(str(rule), medaka, camel, params.working_dir, config)
+        step = Step(str(rule), medaka, camel, params.working_dir)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(medaka, output)
 
@@ -237,7 +237,7 @@ rule polishing_medaka_dump_summary_info:
     input:
         INFORMS_quast = rules.assembly_flye_quast_extract_informs.output.INFORMS
     output:
-        Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_SUMMARY
+        TSV = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_SUMMARY
     params:
         running_dir = Path(config['working_dir']) / 'medaka' / 'summary'
     run:
@@ -247,7 +247,7 @@ rule polishing_medaka_dump_summary_info:
             ('assembly_nb_contigs', quast_informs['contig']['# contigs']),
             ('assembly_total_length', quast_informs['genome']['Total length'])
         ]
-        with open(output[0], 'w') as handle:
+        with open(output.TSV, 'w') as handle:
             for key, value in summary_data:
                 handle.write(f'{key}\t{value}')
                 handle.write('\n')

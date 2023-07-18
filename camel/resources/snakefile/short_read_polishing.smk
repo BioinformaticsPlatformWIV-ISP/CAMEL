@@ -37,7 +37,7 @@ rule polishing_samtools_index_polypolish:
         from camel.app.tools.samtools.samtoolsfastaindex import SamtoolsFastaIndex
         samtools = SamtoolsFastaIndex(camel)
         samtools.add_input_files({'FASTA': [ToolIOFile(Path(input.FASTA_REF))]})
-        step = Step(str(rule), samtools, camel, params.running_dir, config)
+        step = Step(str(rule), samtools, camel, params.running_dir)
         step.run_step()
 
 rule polishing_bwa_index:
@@ -54,7 +54,7 @@ rule polishing_bwa_index:
         from camel.app.tools.bwa.bwaindex import BWAIndex
         bwa = BWAIndex(camel)
         bwa.add_input_files({'FASTA_REF': [ToolIOFile(Path(input.FASTA_REF))]})
-        step = Step(str(rule), bwa, camel, params.running_dir, config)
+        step = Step(str(rule), bwa, camel, params.running_dir)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(bwa, output)
 
@@ -176,7 +176,7 @@ rule polishing_samtools_index_polca:
         from camel.app.tools.samtools.samtoolsfastaindex import SamtoolsFastaIndex
         samtools = SamtoolsFastaIndex(camel)
         samtools.add_input_files({'FASTA': [ToolIOFile(Path(input.FASTA_REF))]})
-        step = Step(str(rule), samtools, camel, params.running_dir, config)
+        step = Step(str(rule), samtools, camel, params.running_dir)
         step.run_step()
 
 rule polishing_polca:
@@ -201,7 +201,7 @@ rule polishing_polca:
         fq_in = FastqInput.from_fq_dict(Path(input.FQ_dict),'illumina')
         polca.add_input_files({'FASTQ_PE': fq_in.pe, 'FASTA': [ToolIOFile(Path(input.FASTA))]})
         polca.update_parameters(**params.polca_options, threads=threads)
-        step = Step(str(rule), polca, camel, params.running_dir, config)
+        step = Step(str(rule), polca, camel, params.running_dir)
         step.run_step()
         SnakemakeUtils.dump_object(polca.informs, Path(output.INFORMS))
 
