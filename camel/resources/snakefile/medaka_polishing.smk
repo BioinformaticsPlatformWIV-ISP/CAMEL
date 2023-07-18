@@ -259,6 +259,5 @@ rule polishing_medaka_empty_report:
     output:
         VAL_HTML = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_REPORT_EMPTY
     run:
-        from camel.app.snakemake.snakemakeutils import SnakemakeUtils
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-        SnakePipelineUtils.create_empty_report_section("Medaka polishing", Path(output.VAL_HTML))
+        SnakePipelineUtils.create_empty_report_section('Medaka polishing', Path(output.VAL_HTML))

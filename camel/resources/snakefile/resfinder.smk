@@ -1,7 +1,5 @@
 from pathlib import Path
 
-import pandas as pd
-
 from camel.app.camel import Camel
 from camel.app.io.tooliodirectory import ToolIODirectory
 from camel.app.pipeline.step import Step
@@ -15,7 +13,7 @@ rule resfinder_run:
     Runs resfinder on assembled contigs.
     """
     input:
-        FASTA = Path(config['working_dir']) / rf.INPUT_RESFINDER_FASTA,
+        FASTA = Path(config['working_dir']) / rf.INPUT_RESFINDER_FASTA
     output:
         TSV_pheno_general = Path(config['working_dir']) / rf.OUTPUT_RESFINDER_PHENO,
         TSV_genes = Path(config['working_dir']) / rf.OUTPUT_RESFINDER_GENE,
@@ -70,7 +68,7 @@ rule resfinder_report_empty:
     run:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         from camel.app.tools.resfinder.resfinderreporter import ResFinderReporter
-        SnakePipelineUtils.create_empty_report_section(ResFinderReporter.TITLE,Path(output.VAL_HTML))
+        SnakePipelineUtils.create_empty_report_section(ResFinderReporter.TITLE, Path(output.VAL_HTML))
 
 rule resfinder_dump_summary_info:
     """
@@ -81,6 +79,7 @@ rule resfinder_dump_summary_info:
     output:
         TSV = Path(config['working_dir']) / rf.OUTPUT_RESFINDER_SUMMARY
     run:
+        import pandas as pd
         tsv_genes = SnakemakeUtils.load_object(Path(input.TSV_genes))[0].path
         with open(output.TSV, 'w') as handle:
             data_genes = pd.read_table(tsv_genes)

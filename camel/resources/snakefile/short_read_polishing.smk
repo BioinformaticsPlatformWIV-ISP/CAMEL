@@ -37,7 +37,7 @@ rule polishing_samtools_index_polypolish:
         from camel.app.tools.samtools.samtoolsfastaindex import SamtoolsFastaIndex
         samtools = SamtoolsFastaIndex(camel)
         samtools.add_input_files({'FASTA': [ToolIOFile(Path(input.FASTA_REF))]})
-        step = Step(str(rule),samtools,camel,params.running_dir,config)
+        step = Step(str(rule), samtools, camel, params.running_dir, config)
         step.run_step()
 
 rule polishing_bwa_index:
@@ -144,8 +144,9 @@ rule polishing_polypolish:
     run:
         from camel.app.tools.polypolish.polypolish import Polypolish
         polypolish = Polypolish(camel)
-        polypolish.add_input_files({'SAM': [ToolIOFile(Path(input.SAM_1)), ToolIOFile(Path(input.SAM_2))],
-                                    'FASTA':[ToolIOFile(Path(input.FASTA))]})
+        polypolish.add_input_files({
+            'SAM': [ToolIOFile(Path(input.SAM_1)), ToolIOFile(Path(input.SAM_2))],
+            'FASTA':[ToolIOFile(Path(input.FASTA))]})
         polypolish.update_parameters(**params.polypolish_options)
         step = Step(str(rule), polypolish, camel, params.running_dir)
         step.run_step()
@@ -175,7 +176,7 @@ rule polishing_samtools_index_polca:
         from camel.app.tools.samtools.samtoolsfastaindex import SamtoolsFastaIndex
         samtools = SamtoolsFastaIndex(camel)
         samtools.add_input_files({'FASTA': [ToolIOFile(Path(input.FASTA_REF))]})
-        step = Step(str(rule),samtools,camel,params.running_dir,config)
+        step = Step(str(rule), samtools, camel, params.running_dir, config)
         step.run_step()
 
 rule polishing_polca:
