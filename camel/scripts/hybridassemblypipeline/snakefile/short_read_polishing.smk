@@ -1,3 +1,4 @@
+import shutil
 from pathlib import Path
 
 from camel.app.camel import Camel
@@ -12,13 +13,13 @@ rule polishing_copy_fasta:
     Copies the medaka output FASTA file into the polypolish input folder.
     """
     input:
-        FASTA = Path(config['working_dir']) / 'medaka' / 'consensus.fasta'
+        FASTA = Path(config['working_dir']) / 'medaka' / 'fasta.io'
     output:
         FASTA = Path(config['working_dir']) / 'polishing' / 'polypolish' / 'input_genome.fasta'
-    shell:
-        """
-        cp {input.FASTA} {output.FASTA}
-        """
+    run:
+        fasta = SnakemakeUtils.load_object(Path(str(input.FASTA)))
+        fasta_file = fasta[0].path
+        shutil.copyfile(fasta_file, output.FASTA)
 
 rule polishing_samtools_index_polypolish:
     """

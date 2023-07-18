@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 import pandas as pd
@@ -57,8 +58,6 @@ class MOBRecon(Tool):
         self._tool_outputs['FASTA'] = []
         for path_fasta in sorted(dir_out.glob('plasmid*.fasta')):
             self._tool_outputs['FASTA'].append(ToolIOFile(path_fasta))
-        if len(self._tool_outputs['FASTA']) == 0:
-            self._tool_outputs.pop('FASTA')
 
     def _execute_tool(self) -> None:
         """
@@ -78,11 +77,15 @@ class MOBRecon(Tool):
         :param path_out: Output file path
         :return: None
         """
-        with path_out.open() as handle:
-            header = handle.readline().split('\t')
-            values = handle.readline().split('\t')
-            for k, v in zip(header, values):
-                self._informs[k] = v
+        self._informs['detected_plasmids'] = []
+        if path_out.exists():
+            data_plasmids = pd.read_table(path_out)
+            logging.info(f'{len(data_plasmids)} plasmids detected')
+            for record in data_plasmids.to_dict('records'):
+                self._informs['detected_plasmids'].append(record)
+        else:
+            logging.info('No plasmids detected, creating empty output file')
+            path_out.touch()
 
     def _parse_contig_report(self, path_out: Path) -> None:
         """

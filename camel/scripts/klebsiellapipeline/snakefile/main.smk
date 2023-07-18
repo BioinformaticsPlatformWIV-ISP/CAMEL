@@ -1,8 +1,8 @@
 from pathlib import Path
 
 from camel.resources.snakefile import trimming_illumina, assembly_spades, gene_detection, trimming, \
-    contamination_check_kraken, quality_checks, sequence_typing, downsampling
-from camel.scripts.klebsiellapipeline.snakefile import kleborate, amrfinder, mobsuite, bacmet, resfinder4
+    contamination_check_kraken, quality_checks, sequence_typing, downsampling, amrfinder, mobsuite
+from camel.scripts.klebsiellapipeline.snakefile import kleborate, bacmet, resfinder4
 
 #######################
 # Included Snakefiles #
@@ -77,6 +77,33 @@ rule select_fasta:
         FASTA = Path(config['working_dir']) / gene_detection.INPUT_GENE_DETECTION_FASTA
     shell:
         "cp {input.FASTA} {output.FASTA};"
+
+rule link_fasta_to_typing:
+    """
+    This rule links the output of the assembly workflows to the sequence typing workflow.
+    """
+    input:
+        FASTA = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA
+    output:
+        FASTA_typing = Path(config['working_dir']) / sequence_typing.INPUT_FASTA
+    params:
+        read_type = config['read_type']
+    shell:
+        """
+        cp {input.FASTA} {output.FASTA_typing};
+        """
+
+rule select_fasta_to_tools:
+    """
+    This rules links the output of the assembly workflow to the other workflows.
+    """
+    input:
+        FASTA_spades = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA
+    output:
+        FASTA_mobsuite = Path(config['working_dir']) / mobsuite.INPUT_MOBSUITE_FASTA,
+        FASTA_amrfinder = Path(config['working_dir']) / amrfinder.INPUT_AMRFINDER_FASTA
+    shell:
+        "cp {input.FASTA_spades} {output.FASTA_amrfinder} && cp {input.FASTA_spades} {output.FASTA_mobsuite}"
 
 rule report_pickle_citations:
     """

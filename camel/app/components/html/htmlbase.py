@@ -156,7 +156,8 @@ class HtmlBase(object):
                 self._doc.text(f'{type_}: ')
             self.add_text(message)
 
-    def add_labeled_list(self, rows: List[List[str]], ordered=False, attributes: List[Tuple[str, str]] = None) -> None:
+    def add_labeled_list(self, rows: List[Sequence[str]], ordered=False,
+                         attributes: List[Tuple[str, str]] = None) -> None:
         """
         Adds a labeled list.
         :param rows: List of label-text pairs

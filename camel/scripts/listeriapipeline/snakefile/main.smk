@@ -73,6 +73,21 @@ rule select_fasta:
     shell:
         "cp {input.FASTA} {output.FASTA};"
 
+rule link_fasta_to_typing:
+    """
+    This rule links the output of the assembly workflows to the sequence typing workflow.
+    """
+    input:
+        FASTA = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA
+    output:
+        FASTA_typing = Path(config['working_dir']) / sequence_typing.INPUT_FASTA
+    params:
+        read_type = config['read_type']
+    shell:
+        """
+        cp {input.FASTA} {output.FASTA_typing};
+        """
+
 rule report_pickle_citations:
     """
     This rule creates a pickle with a report section containing the citations.
@@ -257,7 +272,7 @@ rule summary_combine_all:
     output:
         TSV = config['output_tabular']
     run:
-        with open(output[0], 'w') as handle_out:
+        with open(output.TSV, 'w') as handle_out:
             for summary_input in input:
                 with open(summary_input) as handle_in:
                     handle_out.write(handle_in.read())

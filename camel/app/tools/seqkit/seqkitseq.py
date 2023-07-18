@@ -21,7 +21,7 @@ class SeqkitSeq(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super().__init__('Seqkit seq', '2.10', camel)
+        super().__init__('Seqkit seq', '2.3.1', camel)
 
     def _check_input(self) -> None:
         """

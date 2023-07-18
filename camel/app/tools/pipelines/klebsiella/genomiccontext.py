@@ -60,29 +60,33 @@ class GenomicContext(Tool):
             self._input_informs['mob_recon']['contig_report'].values()) if x is not None))
 
         # Create the output report
-        section = HtmlReportSection('Genomic context')
+        section = HtmlReportSection('Genomic context', level=3)
 
         # Check if the detection method is BLAST
-        if self._parameters['detection_method'] != 'blast':
+        if self._parameters['detection_method'].value != 'blast':
             logging.warning('Genomic context can only be predicted with blast as detection method')
             section.add_paragraph('Predicting genomic context is only performed when the detection method is blast.')
         else:
-            section.add_warning_message(
-                'Predicting genomic context based solely on short-read data is error-prone and should only be '
-                'considered as an indication.')
+            if self._parameters['read_type'] == 'illumina':
+                section.add_warning_message(
+                    'Predicting genomic context based solely on short-read data is error-prone and should only be '
+                    'considered as an indication.')
 
             # Create rows
-            table_data = []
             for db in self._input_informs['dbs']:
+                try:
+                    data_db = pd.read_table(self._tool_inputs[f"TSV_{db['key']}"][0].path)
+                except IndexError:
+                    logging.warning(f"No hits found for database {db['key']}")
+                    continue
                 section.add_header(db['title'], 3)
-                data_db = pd.read_table(self._tool_inputs[f"TSV_{db['key']}"][0].path)
                 if len(data_db) > 10:
                     div = HtmlExpandableDiv(f"genomic_context-{db['key']}", f'{len(data_db)} rows.')
                 else:
                     div = HtmlElement('div')
                 div.add_table([
                     [f"<i>{row[db['gene']]}</i>",
-                    *self._get_plasmid_status(row[db['contig']], plasmids)] for row in data_db.to_dict('records')
+                     *self._get_plasmid_status(row[db['contig']], plasmids)] for row in data_db.to_dict('records')
                 ], ['Key', 'Chromosome', *plasmids], [('class', 'data')])
                 section.add_html_object(div)
 

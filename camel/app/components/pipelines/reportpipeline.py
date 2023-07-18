@@ -55,6 +55,7 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
             'output_dir': str(self._args.output_dir),
             'output_report': str(self._args.output_html),
             'output_tabular': str(self._args.output_tsv),
+            'read_type': self._args.read_type,
             'detection_method': self._args.detection_method,
             'read_trimming': {'export_fastq': self._args.report_include_fastq}
         })

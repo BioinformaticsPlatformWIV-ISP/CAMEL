@@ -2,7 +2,7 @@
 from pathlib import Path
 from typing import Dict, Any, List
 
-from camel.resources.snakefile import trimming_illumina, trimming_iontorrent
+from camel.resources.snakefile import trimming_illumina, trimming_iontorrent, trimming_ont
 
 
 def get_read_type(config: Dict[str, Any]) -> str:
@@ -11,7 +11,7 @@ def get_read_type(config: Dict[str, Any]) -> str:
     """
     if 'read_type' not in config:
         return 'illumina'
-    elif config['read_type'] in ('illumina', 'iontorrent'):
+    elif config['read_type'] in ('illumina', 'iontorrent', 'nanopore'):
         return config['read_type']
     raise ValueError(f"Invalid read type in config: {config['read_type']}")
 
@@ -24,8 +24,10 @@ def get_trimming_report(config: Dict[str, Any]) -> Path:
     """
     if get_read_type(config) == 'illumina':
         relative_path = trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_REPORT
-    else:
+    elif get_read_type(config) == 'iontorrent':
         relative_path = trimming_iontorrent.OUTPUT_TRIMMING_IONTORRENT_REPORT
+    else:
+        relative_path = trimming_ont.OUTPUT_TRIMMING_ONT_REPORT
     return Path(config['working_dir']) / relative_path
 
 
@@ -37,8 +39,10 @@ def get_trimming_summary(config: Dict[str, Any]) -> Path:
     """
     if get_read_type(config) == 'illumina':
         relative_path = trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_SUMMARY
-    else:
+    elif get_read_type(config) == 'iontorrent':
         relative_path = trimming_iontorrent.OUTPUT_TRIMMING_IONTORRENT_SUMMARY
+    else:
+        relative_path = trimming_ont.OUTPUT_TRIMMING_ONT_SUMMARY
     return Path(config['working_dir']) / relative_path
 
 
@@ -49,10 +53,12 @@ def get_trimming_command_informs(config: Dict[str, Any]) -> List[Path]:
     """
     if get_read_type(config) == 'illumina':
         io_paths = [trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_INFORMS]
-    else:
+    elif get_read_type(config) == 'iontorrent':
         io_paths = [
             trimming_iontorrent.OUTPUT_TRIMMING_IONTORRENT_INFORMS_FILT_LEN,
             trimming_iontorrent.OUTPUT_TRIMMING_IONTORRENT_INFORMS_FILT_QUAL]
+    else:
+        io_paths = [trimming_ont.OUTPUT_TRIMMING_ONT_INFORMS]
     return [Path(config['working_dir']) / io for io in io_paths]
 
 
@@ -64,8 +70,10 @@ def get_trimming_dir(config: Dict[str, Any]) -> Path:
     """
     if get_read_type(config) == 'illumina':
         dir_ = trimming_illumina.FOLDER_TRIMMING_ILLUMINA
-    else:
+    elif get_read_type(config) == 'iontorrent':
         dir_ = trimming_iontorrent.FOLDER_TRIMMING_IONTORRENT
+    else:
+        dir_ = trimming_ont.DIRECTORY_TRIMMING_ONT
     return Path(config['working_dir']) / dir_
 
 
@@ -81,9 +89,14 @@ def get_trimming_fastqc(key: str, config: Dict[str, Any]) -> Path:
             return Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_FASTQC_TXT_PRE
         elif key == 'post':
             return Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_FASTQC_TXT_POST
-    else:
+    elif get_read_type(config) == 'iontorrent':
         if key == 'pre':
             return Path(config['working_dir']) / trimming_iontorrent.OUTPUT_TRIMMING_IONTORRENT_FASTQC_PRE
         elif key == 'post':
             return Path(config['working_dir']) / trimming_iontorrent.OUTPUT_TRIMMING_IONTORRENT_FASTQC_POST
+    else:
+        if key == 'pre':
+            return Path(config['working_dir']) / trimming_ont.OUTPUT_TRIMMING_ONT_NANOPLOT_TXT_PRE
+        elif key == 'post':
+            return Path(config['working_dir']) / trimming_ont.OUTPUT_TRIMMING_ONT_NANOPLOT_TXT_POST
     raise ValueError("Cannot find FastQC file for given key")

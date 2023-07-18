@@ -86,7 +86,6 @@ rule select_fastq:
                 continue
             shutil.copyfile(fq, output.IO_FASTQ)
 
-
 rule select_fasta:
     """
     This rules links the output of the assembly workflow to the other workflows. 
@@ -98,6 +97,20 @@ rule select_fasta:
     shell:
         "cp {input.FASTA} {output.FASTA};"
 
+rule link_fasta_to_typing:
+    """
+    This rule links the output of the assembly workflows to the sequence typing workflow.
+    """
+    input:
+        FASTA = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA
+    output:
+        FASTA_typing = Path(config['working_dir']) / sequence_typing.INPUT_FASTA
+    params:
+        read_type = config['read_type']
+    shell:
+        """
+        cp {input.FASTA} {output.FASTA_typing};
+        """
 
 rule report_pickle_citations:
     """
@@ -114,7 +127,6 @@ rule report_pickle_citations:
         section = SnakePipelineUtils.create_citations_section(
             params.citation_keys['other'], params.citation_keys['main'])
         SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output.HTML))
-
 
 rule report_command_section:
     input:
@@ -157,7 +169,6 @@ rule report_command_section:
                 informs.extend(content)
         section = SnakePipelineUtils.create_commands_section(informs, params.working_dir)
         SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output.HTML))
-
 
 rule report_combine_all:
     """

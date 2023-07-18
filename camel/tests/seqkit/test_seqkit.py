@@ -3,11 +3,12 @@ import unittest
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.seqkit.seqkitseq import SeqkitSeq
+from camel.app.tools.seqkit.seqkitstats import SeqkitStats
 
 
-class TestSeqkitSeq(CamelTestSuite):
+class TestSeqkit(CamelTestSuite):
     """
-    Initializes the SeqKit seq testing tool
+    Tests for the seqkit module.
     """
 
     test_file_dir = CamelTestSuite.get_test_file_dir('seqkit')
@@ -19,7 +20,7 @@ class TestSeqkitSeq(CamelTestSuite):
         Testing SeqKit seq with contigs file.
         """
         seqkit_seq = SeqkitSeq(self.camel)
-        seqkit_seq.add_input_files({'FASTA': [TestSeqkitSeq.FILE_FASTA]})
+        seqkit_seq.add_input_files({'FASTA': [TestSeqkit.FILE_FASTA]})
         seqkit_seq.update_parameters(output_filename='sequences.fasta', max_length=100000)
         seqkit_seq.run(self.running_dir)
         self.verify_output_files(seqkit_seq, 'FASTA')
@@ -29,10 +30,19 @@ class TestSeqkitSeq(CamelTestSuite):
         Testing SeqKit seq with paired-end fastq reads.
         """
         seqkit_seq = SeqkitSeq(self.camel)
-        seqkit_seq.add_input_files({'FASTQ': [TestSeqkitSeq.FILE_FASTQ]})
+        seqkit_seq.add_input_files({'FASTQ': [TestSeqkit.FILE_FASTQ]})
         seqkit_seq.update_parameters(max_length=150, min_qual=7)
         seqkit_seq.run(self.running_dir)
         self.verify_output_files(seqkit_seq, 'FASTQ')
+
+    def test_seqkit_stats_fastq(self) -> None:
+        """
+        Testing SeqKit stats with single-end fastq reads.
+        """
+        seqkit_stats = SeqkitStats(self.camel)
+        seqkit_stats.add_input_files({'FASTQ': [TestSeqkit.FILE_FASTQ]})
+        seqkit_stats.run(self.running_dir)
+        self.verify_output_files(seqkit_stats, 'TSV')
 
 
 if __name__ == '__main__':

@@ -10,7 +10,7 @@ from camel.app.components.sequencetyping.sequencetypingutils import SequenceTypi
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-from camel.resources.snakefile import sequence_typing, assembly_spades
+from camel.resources.snakefile import sequence_typing
 
 
 Camel.get_instance()
@@ -80,10 +80,8 @@ rule typing_async:
     Types all loci asynchronously.
     """
     input:
-        FASTA = lambda wildcards: str(Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA) if
-            wildcards.detection_method == 'blast' else [],
-        FASTQ = lambda wildcards: (str(Path(config['working_dir']) / 'fq_dict.io')) if wildcards.detection_method in (
-            'kma', 'srst2') else [],
+        FASTA = lambda wildcards: str(Path(config['working_dir']) / sequence_typing.INPUT_FASTA) if wildcards.detection_method == 'blast' else [],
+        FASTQ = lambda wildcards: (str(Path(config['working_dir']) / 'fq_dict.io')) if wildcards.detection_method in ('kma', 'srst2') else [],
         DIR = lambda wildcards: config['sequence_typing'][wildcards.scheme]['path']
     output:
         IO = Path(config['working_dir']) / 'typing' / '{scheme}' / '{locus_type}' / '{detection_method}' / 'hits.io',

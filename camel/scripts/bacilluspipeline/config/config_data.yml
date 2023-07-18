@@ -1,0 +1,85 @@
+####################
+# Pipeline options #
+####################
+citations:
+  main: null
+  other:
+    - Bolger_2014-trimmomatic
+    - Bankevich_2012-spades
+    - Gurevich_2013-quast
+    - Wood_2019-kraken2
+    - Langmead_2012-bowtie2
+    - Camacho_2009-blast
+    - Chen_2016-vfdb
+    - Carattoli_2020-plasmidfinder
+    - Robertson_2018-mob_suite
+    - Carroll_2020a-btyper3
+    - Carroll_2020b-btyper3
+
+species: {species}
+
+#########################
+# Tool specific options #
+#########################
+downsampling:
+  coverage_max: {coverage_max}
+  expected_genome_size: {genome_size}
+
+contamination_check:
+  db: /db/kraken2_full/latest/full
+  expected_species: Bacillus
+  level_of_depth: G
+
+quality_checks:
+  typing_scheme: {qc_typing_scheme}
+  expected_gc_content: {expected_gc_content}
+
+assembly:
+  spades:
+    cov_cutoff: 10
+  min_contig_length: 1000
+  canu:
+    minimum_input_coverage: 0
+
+sequence_typing:
+  mlst_cereus:
+    path: /db/sequence_typing/bacillus_cereus/mlst
+  mlst_subtilis:
+    path: /db/sequence_typing/bacillus_subtilis/mlst
+  cgmlst_cereus:
+    path: /db/sequence_typing/bacillus_cereus/cgmlst
+    detection_method: blast
+  rmlst:
+    path: /db/sequence_typing/various/rmlst
+
+amrfinder:
+  db: /db/amrfinder/latest
+
+mob_suite:
+  db: /db/mob_suite/latest
+
+fastani:
+  path: /db/pipelines/bacillus/ref_list.txt
+
+gene_detection:
+  gmo:
+    path: /db/pipelines/bacillus/databaseGMM
+  vfdb_core:
+      path: /db/gene_detection/VFDB_core
+      perc_identity_cutoff: 90
+      min_coverage: 90
+      metadata:
+        name: Gene
+        key: gene
+  plasmidfinder:
+    path: /db/gene_detection/PlasmidFinder-entero
+    params:
+      blastn:
+        min_percent_identity: 95
+        min_coverage: 60
+      srst2:
+        max_divergence: 5
+        min_coverage: 60
+    metadata:
+      name: Notes
+      key: notes

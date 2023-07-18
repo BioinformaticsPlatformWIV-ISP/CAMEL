@@ -20,9 +20,9 @@ class MOBReconReporter(Tool):
         'id': {'title': 'ID'},
         'num_contigs': {'title': 'Nb. of contigs'},
         'size': {'title': 'Size', 'fmt': lambda x: f'{x:,}'},
-        'gc': {'title': '% GC-content', 'fmt': lambda x: f'{x*100:.2f}'},
-        'rep_type(s)':  {'title': 'Rep. types', 'fmt': lambda x: x.replace(',', ', ')},
-        'relaxase_type(s)':  {'title': 'Relaxase types', 'fmt': lambda x: x.replace(',', ', ')}
+        'gc': {'title': '% GC-content', 'fmt': lambda x: f'{x * 100:.2f}'},
+        'rep_type(s)': {'title': 'Rep. types', 'fmt': lambda x: x.replace(',', ', ')},
+        'relaxase_type(s)': {'title': 'Relaxase types', 'fmt': lambda x: x.replace(',', ', ')}
     }
 
     def __init__(self, camel: Camel) -> None:
@@ -53,8 +53,12 @@ class MOBReconReporter(Tool):
         :param section: Report section
         :return: None
         """
-        # Overview table
-        data_overview = pd.read_table(self._tool_inputs['TSV'][0].path)
+        if len(self._input_informs['mob_recon']['detected_plasmids']) > 0:
+            data_overview = pd.read_table(self._tool_inputs['TSV'][0].path)
+        else:
+            section.add_paragraph('No plasmids detected')
+            return
+
         data_overview['id'] = data_overview['sample_id'].apply(lambda x: re.search('.*:(.*)', x).group(1))
         section.add_header('Overview', 3)
         table_data = [

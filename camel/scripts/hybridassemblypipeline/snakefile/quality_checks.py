@@ -1,9 +1,10 @@
 from pathlib import Path
 
 SNAKEFILE_QC = f'{Path(__file__).parent / Path(__file__).stem}.smk'
+
 consensus_by_tool = {
-    'Flye': Path('assembly_flye', 'filtering', 'assembly_filtered.fasta'),
-    'Medaka': Path('medaka', 'consensus.fasta'),
+    'Flye': Path('assembly_flye', 'filtering', 'fasta.io'),
+    'Medaka': Path('medaka', 'fasta.io'),
     'Polypolish': Path('polishing', 'polypolish', 'polished.fasta'),
     'POLCA': Path('polishing', 'polca', 'polished.fasta'),
     'Unicycler': Path('unicycler', 'assembly.fasta')

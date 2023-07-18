@@ -1,4 +1,5 @@
 import json
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, List, Any, Dict
@@ -9,7 +10,7 @@ from camel.app.components.workflows.utils.fastqinput import FastqInput
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-from camel.resources.snakefile import sequence_typing, assembly_spades
+from camel.resources.snakefile import sequence_typing
 
 
 @dataclass
@@ -62,7 +63,7 @@ class SequenceTypingWrapper(object):
             self._working_dir.mkdir(parents=True)
         if workflow_input.fasta is None:
             raise ValueError("FASTA input is required to run the blast analysis")
-        self.__create_blast_input(workflow_input.fasta.path)
+        self.__create_blast_input(workflow_input.fasta.path, workflow_input.db_key)
         options = {'blastn_task': blast_task} if blast_task is not None else None
         config_path = self.__create_config_file(
             workflow_input.sample_name, 'blast', 'illumina', workflow_input.db_key, workflow_input.db_path, options)
@@ -87,7 +88,7 @@ class SequenceTypingWrapper(object):
             if workflow_input.fasta is None:
                 raise ValueError('FASTA input is required when there are protein loci in the scheme')
             else:
-                self.__create_blast_input(workflow_input.fasta.path)
+                self.__create_blast_input(workflow_input.fasta.path, workflow_input.db_key)
         SnakemakeUtils.dump_object(workflow_input.fastq.to_fq_dict(), self._working_dir / 'fq_dict.io')
         additional_options = srst2_options if srst2_options else None
         config_path = self.__create_config_file(
@@ -111,7 +112,7 @@ class SequenceTypingWrapper(object):
             if workflow_input.fasta is None:
                 raise ValueError('FASTA input is required when there are protein loci in the scheme')
             else:
-                self.__create_blast_input(workflow_input.fasta.path)
+                self.__create_blast_input(workflow_input.fasta.path, workflow_input.db_key)
         SnakemakeUtils.dump_object(workflow_input.fastq.to_fq_dict(), self._working_dir / 'fq_dict.io')
         config_path = self.__create_config_file(
             workflow_input.sample_name, 'kma', workflow_input.fastq.read_type, workflow_input.db_key,
@@ -145,16 +146,18 @@ class SequenceTypingWrapper(object):
         }
         return SnakePipelineUtils.generate_config_file(data, self._working_dir)
 
-    def __create_blast_input(self, fasta_path: Path) -> None:
+    def __create_blast_input(self, fasta_path: Path, scheme_key: str) -> None:
         """
         Creates the input for the workflow.
+        :param scheme_key: Scheme key
         :param fasta_path: FASTA file path
         :return: None
         """
-        fasta_path_output = (self._working_dir / assembly_spades.OUTPUT_ASSEMBLY_FASTA)
-        if not fasta_path_output.parent.exists():
-            fasta_path_output.parent.mkdir(parents=True)
-        SnakemakeUtils.dump_object([ToolIOFile(fasta_path)], fasta_path_output)
+        fasta_in = self._working_dir / str(sequence_typing.INPUT_FASTA).format(scheme=scheme_key)
+        if not fasta_in.parent.exists():
+            fasta_in.parent.mkdir(parents=True)
+        logging.debug(f'Creating FASTA input: {fasta_in}')
+        SnakemakeUtils.dump_object([ToolIOFile(fasta_path)], fasta_in)
 
     def __run_snakefile(self, config_path: str, workflow_input: SequenceTypingInput, threads: int) -> None:
         """

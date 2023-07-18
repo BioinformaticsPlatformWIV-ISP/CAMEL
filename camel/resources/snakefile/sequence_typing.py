@@ -4,6 +4,7 @@ from typing import Dict, Any, Optional
 SNAKEFILE_SEQUENCE_TYPING = f'{Path(__file__).parent / Path(__file__).stem}.smk'
 
 _dir_typing = Path('typing', '{scheme}')
+INPUT_FASTA = _dir_typing / 'input' / 'fasta.io'
 OUTPUT_TYPING_REPORT = _dir_typing / 'html.io'
 OUTPUT_TYPING_REPORT_EMPTY = _dir_typing / 'html-empty.io'
 OUTPUT_TYPING_TSV = _dir_typing / '{locus_type}' / 'tabular' / 'tsv.io'

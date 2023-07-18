@@ -60,10 +60,10 @@ class FastANIReporter(Tool):
         :return: Input file header, input file data
         """
         with open(self._tool_inputs['TSV'][0].path) as handle:
-            header = ['Reference', 'Query', 'ANI', 'Orthologous matches', 'Total seq fragments']
+            header = ['Query', 'ANI', 'Orthologous matches', 'Total seq fragments']
             output_table = []
             for line in handle.readlines():
-                output_table.append(self.__format_output_table_line(line.strip().split()))
+                output_table.append(self.__format_output_table_line(line.strip().split()[1:]))
             return header, output_table
 
     def __format_output_table_line(self, table_line: List[str]) -> List[str]:
@@ -72,13 +72,11 @@ class FastANIReporter(Tool):
         :table_line: input split line from the FastANI output table.
         :return: formatted split line
         """
-
         # Remove directories from filenames
         table_line[0] = Path(table_line[0]).name
-        table_line[1] = Path(table_line[1]).name
 
         # Format ANI percentage to two significant digits
-        table_line[2] = '{:.2f}'.format(float(table_line[2]))
+        table_line[1] = '{:.2f}'.format(float(table_line[1]))
         return table_line
 
     def __generate_output_filename(self) -> str:

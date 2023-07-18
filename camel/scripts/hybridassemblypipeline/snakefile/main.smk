@@ -1,4 +1,5 @@
 import gzip
+import shutil
 from pathlib import Path
 
 import pandas as pd
@@ -7,12 +8,13 @@ from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.scripts.hybridassemblypipeline.snakefile import assembly_flye, short_read_polishing, medaka_snakemake, quality_checks
+from camel.resources.snakefile import assembly_flye, medaka_polishing, short_read_polishing
+from camel.scripts.hybridassemblypipeline.snakefile import quality_checks
 
 camel = Camel.get_instance()
 
-include: assembly_flye.SNAKEFILE_FLYE
-include: medaka_snakemake.SNAKEFILE_POLISHING
+include: assembly_flye.SNAKEFILE_ASSEMBLY_FLYE
+include: medaka_polishing.SNAKEFILE_MEDAKA_POLISHING
 include: short_read_polishing.SNAKEFILE_POLISHING
 include: quality_checks.SNAKEFILE_QC
 
@@ -84,13 +86,15 @@ rule set_trimming_ont_output:
     input:
         FASTQ = rules.trim_ont_workflow.output.FASTQ
     output:
-        FASTQ = Path(config['working_dir']) / 'trimming' / 'ont' / 'trimmed.fastq.gz'
+        FASTQ = Path(config['working_dir']) / 'trimming' / 'ont' / 'trimmed.fastq.gz',
+        FASTQ_IO = Path(config['working_dir']) / 'fq_dict.io'
     params:
         dir_ = Path(config['working_dir']) / 'trimming' / 'ont'
     run:
         input_fastq = open(input.FASTQ, 'rb').read()
         with gzip.open(output.FASTQ, 'wb') as handle:
             handle.write(input_fastq)
+        SnakemakeUtils.dump_object({'SE': [ToolIOFile(Path(output.FASTQ))]}, Path(output.FASTQ_IO))
 
 rule unicycler:
     """
@@ -117,6 +121,17 @@ rule unicycler:
         step = Step(str(rule), unicycler_assembly, camel, params.working_dir, config)
         step.run_step()
         SnakemakeUtils.dump_object(unicycler_assembly.informs, Path(output.INFORMS))
+
+rule copy_medaka_to_short_read_polishing:
+    input:
+        FASTA = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_FASTA,
+        FASTQ = rules.trim_illumina.output.FQ_dict
+    output:
+        FASTA = Path(config['working_dir']) / short_read_polishing.INPUT_ASSEMBLY_FASTA,
+        FASTQ = Path(config['working_dir']) / short_read_polishing.INPUT_READS_FASTQ
+    run:
+        shutil.copyfile(input.FASTA, output.FASTA)
+        shutil.copyfile(input.FASTQ, output.FASTQ)
 
 rule combine_informs_quast:
     """
@@ -236,7 +251,7 @@ rule report_command_section:
     """
     input:
         unicycler_commands = Path(config['working_dir']) / 'unicycler' / 'commands.io',
-        flye_commands = Path(config['working_dir']) / 'assembly_flye' / 'flye' / 'commands.io',
+        flye_commands = Path(config['working_dir']) / 'assembly_flye' / 'flye' / 'informs.io',
         medaka_consensus_commands = Path(config['working_dir']) / 'medaka' / 'commands-consensus.io',
         medaka_stitch_commands = Path(config['working_dir']) / 'medaka' / 'commands-stitch.io',
         polypolish_commands = Path(config['working_dir']) / 'polishing' / 'polypolish'  / 'polypolish.io',
