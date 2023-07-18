@@ -11,3 +11,6 @@ OUTPUT_MOB_SUITE_INFORMS = DIR_MOB_SUITE / 'informs.io'
 OUTPUT_MOB_SUITE_REPORT = DIR_MOB_SUITE / 'html.io'
 OUTPUT_MOB_SUITE_REPORT_EMPTY = DIR_MOB_SUITE / 'html-empty.io'
 OUTPUT_MOB_SUITE_SUMMARY = DIR_MOB_SUITE / 'summary_mob_suite.tsv'
+
+OUTPUT_MOB_SUITE_CONTEXT_REPORT = DIR_MOB_SUITE / 'genomic_context' / 'html.io'
+OUTPUT_MOB_SUITE_CONTEXT_REPORT_EMPTY = DIR_MOB_SUITE / 'genomic_context' / 'html-empty.io'

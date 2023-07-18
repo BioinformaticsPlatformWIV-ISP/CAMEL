@@ -113,19 +113,33 @@ rule mobsuite_report_genomic_context:
     run:
         from camel.app.tools.pipelines.klebsiella.genomiccontext import GenomicContext
         genomic_context = GenomicContext(Camel.get_instance())
-
-        informs = {'TSV_amrfinder': {'key': 'amrfinder', 'title': 'AMRFinder', 'contig': 'Contig id', 'gene': 'Gene symbol'},
-                   'TSV_bacmet': {'key': 'bacmet', 'title': 'BacMet', 'contig': 'qseqid', 'gene': 'Gene_name'},
-                   'TSV_vfdb': {'key': 'vfdb', 'title': 'VFDB core', 'contig': 'Contig', 'gene': 'Gene'}}
+        informs = {
+            'TSV_amrfinder': {'key': 'amrfinder', 'title': 'AMRFinder', 'contig': 'Contig id', 'gene': 'Gene symbol'},
+            'TSV_bacmet': {'key': 'bacmet', 'title': 'BacMet', 'contig': 'qseqid', 'gene': 'Gene_name'},
+            'TSV_vfdb': {'key': 'vfdb', 'title': 'VFDB core', 'contig': 'Contig', 'gene': 'Gene'}
+        }
         db_informs_to_add = []
         for k, v in input.items():
-            if v:
-                if 'TSV' in k:
-                    db_informs_to_add.append(informs[k])
-                    SnakemakeUtils.add_pickle_input(genomic_context, k, Path(v))
-        genomic_context.add_input_informs({'mob_recon': SnakemakeUtils.load_object(Path(input.INFORMS_mob_recon)),
-                                           'dbs': db_informs_to_add})
-        genomic_context.update_parameters(detection_method=str(params.detection_method), read_type=str(params.read_type))
+            if not v:
+                continue
+            if 'TSV' in k:
+                db_informs_to_add.append(informs[k])
+                SnakemakeUtils.add_pickle_input(genomic_context, k, Path(v))
+        genomic_context.add_input_informs({
+            'mob_recon': SnakemakeUtils.load_object(Path(input.INFORMS_mob_recon)),
+            'dbs': db_informs_to_add})
+        genomic_context.update_parameters(
+            detection_method=str(params.detection_method), read_type=str(params.read_type))
         step = Step(str(rule), genomic_context, Camel.get_instance(), params.dir_)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(genomic_context, output)
+
+rule mobsuite_report_genomic_context_empty:
+    """
+    Creates an empty report when this analysis is disabled.
+    """
+    output:
+        VAL_HTML = Path(config['working_dir']) / 'mob_suite' / 'genomic_context' / 'html-empty.io'
+    run:
+        from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
+        SnakePipelineUtils.create_empty_report_section('Genomic context', Path(output.VAL_HTML), 3)

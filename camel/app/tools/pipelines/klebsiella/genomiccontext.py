@@ -60,7 +60,7 @@ class GenomicContext(Tool):
             self._input_informs['mob_recon']['contig_report'].values()) if x is not None))
 
         # Create the output report
-        section = HtmlReportSection('Genomic context')
+        section = HtmlReportSection('Genomic context', level=3)
 
         # Check if the detection method is BLAST
         if self._parameters['detection_method'].value != 'blast':
