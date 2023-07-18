@@ -50,13 +50,13 @@ class FastANI(Tool):
             raise InvalidInputSpecificationError(
                 f'Incorrect input found: Query={fetching_query}, Ref={fetching_reference}')
 
-        input_str_query = '--{} {}'.format('queryList' if query_condition else 'query',
-                                           self._tool_inputs[fetching_query][0].path)
-        input_str_reference = '--{} {}'.format('refList' if reference_condition else 'ref',
-                                               self._tool_inputs[fetching_reference][0].path)
+        input_str_query = '--{} {}'.format(
+            'queryList' if query_condition else 'query', self._tool_inputs[fetching_query][0].path)
+        input_str_reference = '--{} {}'.format(
+            'refList' if reference_condition else 'ref', self._tool_inputs[fetching_reference][0].path)
 
-        self._command.command = ' '.join([self._tool_command, input_str_reference,
-                                          input_str_query, *self._build_options()])
+        self._command.command = ' '.join([
+            self._tool_command, input_str_reference, input_str_query, *self._build_options()])
 
     def _check_command_output(self) -> None:
         """
@@ -78,10 +78,6 @@ class FastANI(Tool):
         Executes this tool.
         :return: None
         """
-
-        # Building the command
         self._build_command()
         self._execute_command()
-
-        # Collect output
         self._set_output()

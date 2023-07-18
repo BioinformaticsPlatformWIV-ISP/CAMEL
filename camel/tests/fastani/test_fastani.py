@@ -53,8 +53,9 @@ class TestFastANI(CamelTestSuite):
         """
         # Run FastANI
         fastani = FastANI(self.camel)
-        fastani.add_input_files({'TSV_FASTA_Q': [TestFastANI.FILE_FASTA_QUERY_LIST],
-                                 'TSV_FASTA_R': [TestFastANI.FILE_FASTA_REF_LIST]})
+        fastani.add_input_files({
+            'TSV_FASTA_Q': [TestFastANI.FILE_FASTA_QUERY_LIST],
+            'TSV_FASTA_R': [TestFastANI.FILE_FASTA_REF_LIST]})
         fastani.run(self.running_dir)
         self.verify_output_files(fastani, 'TSV')
 
