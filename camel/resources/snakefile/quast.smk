@@ -97,6 +97,7 @@ rule quast_create_summary_out:
         keys_kept = [
             {'key': '# contigs', 'name': 'nb_contigs'},
             {'key': 'Total length', 'name': 'total_length'},
+            {'key': 'Reference length', 'name': 'total_length_ref'},
             {'key': 'N50', 'name': 'n50'},
             {'key': 'Complete BUSCO (%)', 'name': 'busco_complete'},
             {'key': 'Partial BUSCO (%)', 'name': 'busco_partial'},
