@@ -2,7 +2,7 @@
 import argparse
 import logging
 from pathlib import Path
-from typing import List, Dict, Optional, Sequence, Tuple
+from typing import List, Dict, Optional, Sequence, Tuple, Any
 
 import yaml
 
@@ -74,10 +74,38 @@ class MainBacillusPipeline(ReportPipeline):
             for read_nb, path in enumerate(self._args.fastq_pe, start=1):
                 gzipped = FileSystemHelper.is_gzipped(path)
                 links.append([path, f"{self.sample_name}_{read_nb}.fastq{'.gz' if gzipped else ''}"])
-        else:
+        if self._args.fastq_se is not None:
             gzipped = FileSystemHelper.is_gzipped(self._args.fastq_se)
-            links.append([self._args.fastq_se, f"{self.sample_name}_1.fastq{'.gz' if gzipped else ''}"])
+            links.append([self._args.fastq_se, f"{self.sample_name}_ont.fastq{'.gz' if gzipped else ''}"])
         return links
+
+    def _symlink_input(self) -> List[Dict[str, Any]]:
+        """
+        Symlinks the input files.
+        :return: List of FASTQ input dictionaries
+        """
+        # Determine link names
+        links = self._get_fastq_input_links()
+        if len(links) == 3:
+            self._args.read_type = 'hybrid'
+
+        # Create directory
+        dir_links = self._args.working_dir / 'input'
+        if not dir_links.exists():
+            dir_links.mkdir(parents=True)
+
+        # Link files
+        paths_new = []
+        for path_orig, link_name in links:
+            path_new = dir_links / link_name
+            logging.debug(f"Symlinking input file: {path_orig} -> {link_name}")
+            if path_new.is_symlink():
+                path_new.unlink()
+            path_new.symlink_to(path_orig)
+            paths_new.append(path_new)
+
+        # Return output dictionary
+        return [{'name': p.name, 'path': p} for p in paths_new]
 
     def __get_qc_typing_scheme(self) -> str:
         """
@@ -97,6 +125,10 @@ class MainBacillusPipeline(ReportPipeline):
         key_fq_in = 'fastq_pe' if (self._args.fastq_pe is not None) else 'fastq_se'
         config_data = self.get_template_data(key_fq_in, input_files)
         config_data['read_type'] = self._args.read_type
+
+        if self._args.read_type == 'hybrid':
+            config_data['input']['fastq_pe'] = input_files[:2]
+            config_data['input']['fastq_se'] = [input_files[2]]
 
         # Analyses to perform
         config_data['analyses'] = []
@@ -121,7 +153,7 @@ class MainBacillusPipeline(ReportPipeline):
             ), Loader=yaml.SafeLoader))
 
         # Nanopore settings
-        if self._args.read_type == 'nanopore':
+        if self._args.read_type in ['nanopore', 'hybrid']:
             config_data['assembly']['flye'] = {
                 'genome_size': MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['genome_size'],
                 **config_data['assembly'].get('flye', {})}
