@@ -57,7 +57,8 @@ class HtmlReporterTyping(Tool):
         if 'forced_detection_method' in self._parameters:
             self._report_section.add_alert(
                 f"Allele detection performed with <b>{self._parameters['forced_detection_method'].value}</b>.", 'info')
-        self._report_section.add_paragraph('Last updated: {}'.format(self._input_informs['scheme']['last_updated']))
+        # self._report_section.add_paragraph('Last updated: {}'.format(self._input_informs['scheme']['last_updated']))
+        self.add_scheme_info_section(self._report_section)
         self._tool_outputs['VAL_HTML'] = [ToolIOValue(self._report_section)]
         self.__export_analysis_metadata()
 
@@ -141,3 +142,11 @@ class HtmlReporterTyping(Tool):
                 'sample': self._tool_inputs['VAL_SAMPLE'][0].value
             }, handle)
         self._report_section.add_file(path, self._sub_folder / HtmlReporterTyping.INFO_FILENAME)
+
+    def add_scheme_info_section(self, section) -> None:
+        section.add_header('Scheme info', level=4)
+        section.add_table([
+            ('Last scheme update', self._input_informs['scheme']['last_updated']),
+            ('Last scheme change', self._input_informs['scheme'].get('last_change', 'n/a')),
+            ('Origin', self._input_informs['scheme'].get('origin', 'n/a')),
+        ], ['Field', 'Value'], [('class', 'data')])
