@@ -70,28 +70,39 @@ def detect_hit_blast(
     hit_selector.add_input_informs({'locus': locus_metadata})
     hit_selector.run(dir_working)
 
-    # Text alignment generation
-    formatter_text = BlastFormatter(Camel.get_instance())
-    formatter_text.update_parameters(output_format='0', num_alignments=1000)
-    formatter_text.add_input_files({'ASN': blast.tool_outputs['ASN']})
-    formatter_text.run(dir_working)
+    if not hit_selector.tool_outputs['VAL_Hit'][0].value.is_perfect_hit():
+        # Text alignment generation
+        formatter_text = BlastFormatter(Camel.get_instance())
+        formatter_text.update_parameters(output_format='0', num_alignments=1000)
+        formatter_text.add_input_files({'ASN': blast.tool_outputs['ASN']})
+        formatter_text.run(dir_working)
 
-    # Alignment extraction
-    extractor = AlignmentExtractor(Camel.get_instance())
-    extractor.add_input_files({
-        'TXT': formatter_text.tool_outputs['TXT'], 'VAL_Hits': hit_selector.tool_outputs['VAL_Hit']})
-    extractor.run(dir_working)
+        # Alignment extraction
+        extractor = AlignmentExtractor(Camel.get_instance())
+        extractor.add_input_files({
+            'TXT': formatter_text.tool_outputs['TXT'], 'VAL_Hits': hit_selector.tool_outputs['VAL_Hit']})
+        extractor.run(dir_working)
 
-    # Add the alignment to the hit object
-    if len(extractor.tool_outputs['TXT']) > 0:
-        best_hit = hit_selector.tool_outputs['VAL_Hit'][0].value
-        best_hit.alignment_path = extractor.tool_outputs['TXT'][0].path
+        # Add the alignment to the hit object
+        if len(extractor.tool_outputs['TXT']) > 0:
+            best_hit = hit_selector.tool_outputs['VAL_Hit'][0].value
+            best_hit.alignment_path = extractor.tool_outputs['TXT'][0].path
     return TypingResultHolder(hit=hit_selector.tool_outputs['VAL_Hit'][0], informs=blast.informs)
 
 
+# noinspection PyUnusedLocal
 def detect_hit_kma(dir_working: Path, fastq_in: Dict[str, List[ToolIOFile]], dir_scheme: Path, locus_metadata: Dict,
                    read_type: str = 'illumina', threads_per_job: int = 1) -> TypingResultHolder:
-
+    """
+    Performs hit detection with KMA.
+    :param fastq_in: Input FASTQ files
+    :param dir_scheme: Base directory for the typing scheme
+    :param locus_metadata: Metadata for the locus
+    :param dir_working: Working directory
+    :param threads_per_job: Threads per BLAST job
+    :param read_type: Read type
+    :return: Typing result
+    """
     # Create working directory
     dir_working = Path(dir_working)
     dir_working.mkdir(parents=True, exist_ok=True)
