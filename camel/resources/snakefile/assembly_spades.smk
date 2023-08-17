@@ -125,17 +125,20 @@ rule assembly_dump_summary_info:
     Dumps the summary information from the assembly pipeline.
     """
     input:
+        INFORMS_spades = rules.assembly_spades_run.output.INFORMS,
         INFORMS_quast = rules.assembly_quast_extract_informs.output.INFORMS
     output:
         TSV = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_SUMMARY
     params:
         running_dir = Path(config['working_dir']) / 'assembly_spades' / 'summary'
     run:
+        spades_informs = SnakemakeUtils.load_object(Path(input.INFORMS_spades))
         quast_informs = SnakemakeUtils.load_object(Path(input.INFORMS_quast))
         summary_data = [
             ('assembly_n50', quast_informs['contig']['N50']),
             ('assembly_nb_contigs', quast_informs['contig']['# contigs']),
-            ('assembly_total_length', quast_informs['genome']['Total length'])
+            ('assembly_total_length', quast_informs['genome']['Total length']),
+            ('assembly_tool_version', spades_informs['_name'])
         ]
         with open(output.TSV, 'w') as handle:
             for key, value in summary_data:

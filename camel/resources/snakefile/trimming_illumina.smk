@@ -126,7 +126,8 @@ rule trimming_illumina_dump_summary_info:
             ('trimming_pairs_out', trimmomatic_informs['paired_reads_out'].split(' ')[0]),
             ('trimming_fwd_only_surviving', trimmomatic_informs['forward_only_reads'].split(' ')[0]),
             ('trimming_rev_only_surviving', trimmomatic_informs['reverse_only_reads'].split(' ')[0]),
-            ('trimming_pairs_both_dropped', trimmomatic_informs['reads_drop'].split(' ')[0])
+            ('trimming_pairs_both_dropped', trimmomatic_informs['reads_drop'].split(' ')[0]),
+            ('trimming_tool_version', trimmomatic_informs['_name'])
         ]
         with open(output[0], 'w') as handle:
             for key, value in summary_data:
