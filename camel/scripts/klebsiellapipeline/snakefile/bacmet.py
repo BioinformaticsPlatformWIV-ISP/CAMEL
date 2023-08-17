@@ -10,5 +10,6 @@ OUTPUT_BACMET_REPORT_EMPTY = DIR_BACMET / 'report' / 'html-empty.io'
 OUTPUT_BACMET_SUMMARY = DIR_BACMET / 'summary_bacmet.tsv'
 
 # Prodigal
+OUTPUT_PRODIGAL_INFORMS = DIR_BACMET / 'prodigal' / 'informs.io'
 OUTPUT_PRODIGAL_REPORT = DIR_BACMET / 'prodigal' / 'report' / 'html.io'
 OUTPUT_PRODIGAL_REPORT_EMPTY = DIR_BACMET / 'prodigal' / 'report' / 'html-empty.io'
