@@ -1,8 +1,7 @@
-from pathlib import Path
+import re
 from typing import Dict, Any, List
 
 import bs4
-import re
 
 from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
@@ -48,6 +47,7 @@ class LREFinder(Tool):
         self._execute_command()
         self._informs.update(self.__parse_html_output(self._command.stdout))
 
+    # noinspection PyTypeChecker
     def __parse_html_output(self, html_code: str) -> Dict[str, Any]:
         """
         Parses the HTML output reported by the tool.
@@ -69,9 +69,10 @@ class LREFinder(Tool):
         :param html_table: HTML table
         :return: Parsed information
         """
+        # noinspection PyUnresolvedReferences
         rows = html_table.findAll('tr')
         header = [th.text.replace('_', ' ') for th in rows[0].findAll('th')]
-        header = [re.sub(r'\[(.*)\]', r'(\g<1>)', value) for value in header]
+        header = [re.sub(r'\[(.*)]', r'(\g<1>)', value) for value in header]
         table_data = [{
             col: td.text for col, td in zip(header, row.findAll('td'))} for row in rows[1:] if
             len(row.findAll('td')) > 0]

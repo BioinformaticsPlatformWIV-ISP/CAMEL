@@ -6,9 +6,10 @@ from typing import Dict, List, Union, Optional
 
 from snakemake.io import Wildcards
 
+from camel.app import loggers
 from camel.app.camel import Camel
 from camel.app.io.toolio import ToolIO
-from camel.app.loggers.logmanager import LogManager
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -107,7 +108,7 @@ class Step(object):
         :return: None
         """
         self._input_informs = dict_
-        logging.info("Inform added: {}".format(dict_))
+        logger.info("Inform added: {}".format(dict_))
 
     def _add_job_parameters(self) -> None:
         """
@@ -115,7 +116,7 @@ class Step(object):
         :return: None
         """
         if len(self._job_options) > 0:
-            logging.info("Adding job parameters")
+            logger.info("Adding job parameters")
             self._tool.update_parameters(**self._job_options)
 
     def run_step(self) -> None:
@@ -123,32 +124,34 @@ class Step(object):
         Runs the current step.
         :return: None
         """
-        LogManager.attach_step_handlers(self._folder)
+        loggers.attach_step_handler(self._folder, logging.INFO)
+        loggers.attach_step_handler(self._folder, logging.DEBUG)
+        logger.info(f'Running step: {self.name}')
         self._tool.add_input_files(self._step_inputs)
         self._tool.add_input_informs(self._input_informs)
-        logging.info("Default parameters loaded: {}".format(self._tool.parameter_overview))
+        logger.info("Default parameters loaded: {}".format(self._tool.parameter_overview))
         self._add_job_parameters()
         self._tool.run(self._folder)
-        logging.info(f'Step output: {list(self.outputs.items())}')
-        logging.info(f'Step informs: {list(self.informs.items())}')
+        logger.info(f'Step output: {list(self.outputs.items())}')
+        logger.info(f'Step informs: {list(self.informs.items())}')
         self._log_outputs()
-        LogManager.detach_step_handlers()
+        loggers.detach_step_handlers()
 
     def _log_outputs(self) -> None:
         """
         Logs the outputs in the database.
         :return: None
         """
-        logging.info(f"Logging output for step '{self.name}'")
+        logger.info(f"Logging output for step '{self.name}'")
         for key, io_list in self.outputs.items():
             if not self._key_is_logged(key):
-                logging.debug(f"Not logging output key: {key}")
+                logger.debug(f"Not logging output key: {key}")
                 continue
             for index, io_out in enumerate(io_list):
                 if not io_out.is_logged:
                     continue
                 step_output = StepOutput(self._name, io_out.type_name, key, index, io_out.hash, self._wildcards)
-                logging.info('Output log: {}'.format(step_output))
+                logger.info('Output log: {}'.format(step_output))
 
     def _key_is_logged(self, key: str) -> bool:
         """

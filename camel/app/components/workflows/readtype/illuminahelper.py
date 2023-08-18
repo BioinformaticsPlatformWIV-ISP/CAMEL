@@ -1,5 +1,4 @@
 import argparse
-import logging
 from pathlib import Path
 from typing import List
 
@@ -9,6 +8,7 @@ from camel.app.components.workflows.readtype.basereadtypehelper import BaseReadT
 from camel.app.components.workflows.trimmingilluminawrapper import TrimmingIlluminaWrapper
 from camel.app.components.workflows.utils.fastqinput import FastqInput
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 
 
 class IlluminaHelper(BaseReadTypeHelper):
@@ -40,7 +40,7 @@ class IlluminaHelper(BaseReadTypeHelper):
         :param threads: Nb. of threads
         :return: FastqInput object with trimmed reads
         """
-        logging.info("Trimming reads (Illumina data)")
+        logger.info("Trimming reads (Illumina data)")
         trimming = TrimmingIlluminaWrapper(self._working_dir / 'trimming')
         if (not fastq_input.is_pe) or (fastq_input.pe is None):
             raise ValueError("Illumina FASTQ input should be paired")
@@ -64,7 +64,7 @@ class IlluminaHelper(BaseReadTypeHelper):
         :param args: Command-line arguments
         :return: FASTA file
         """
-        logging.info("Preparing FASTA input (Illumina data)")
+        logger.info("Preparing FASTA input (Illumina data)")
         if args.fasta is not None:
             fasta_file = self.symlink_input_files([Path(args.fasta)], [args.fasta_name])[0]
             return Path(fasta_file)

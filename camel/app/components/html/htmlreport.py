@@ -1,10 +1,10 @@
-import logging
 from typing import Optional, List
 
 import shutil
 
 from camel.app.components.html.htmlbase import HtmlBase
 from camel.app.components.html.htmlelement import HtmlElement
+from camel.app.loggers import logger
 from camel.resources import LOGO_SCIENSANO
 from pathlib import Path
 
@@ -39,7 +39,7 @@ class HtmlReport(HtmlBase):
         Saves the report.
         :return: None
         """
-        logging.info(f"Saving report '{self._filename.name}'")
+        logger.info(f"Saving report '{self._filename.name}'")
         if self._filename is None:
             raise ValueError("Report with filename 'None' cannot be saved")
         with self._filename.open('w', encoding='utf-8') as handle:
@@ -58,7 +58,7 @@ class HtmlReport(HtmlBase):
         :param css_style: CSS style
         :return: None
         """
-        logging.info("Initializing report")
+        logger.info("Initializing report")
         with self._doc.tag('head'):
             with self._doc.tag('title'):
                 self._doc.text(title)

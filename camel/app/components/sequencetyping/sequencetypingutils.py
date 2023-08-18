@@ -1,10 +1,11 @@
 import json
-import logging
 import re
 from pathlib import Path
 from typing import Tuple, Dict, Any, List
 
 from Bio import SeqIO
+
+from camel.app.loggers import logger
 
 
 class LocusMetadataHolder:
@@ -45,7 +46,7 @@ class SequenceTypingUtils(object):
                 if m is None:
                     raise ValueError("Cannot determine allele delimiter")
                 delimiter = m.group(1)
-                logging.info("Detected delimited: '{}'".format(delimiter))
+                logger.info("Detected delimited: '{}'".format(delimiter))
                 return delimiter
 
     @staticmethod

@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import argparse
-import logging
 from pathlib import Path
 from typing import Optional, Sequence, List, Dict, Any, Tuple
 
@@ -13,6 +12,7 @@ from camel.app.components import mainscriptutils
 from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.components.galaxy.galaxyutils import GalaxyUtils
 from camel.app.components.pipelines.basepipeline import BasePipeline
+from camel.app.loggers import logger
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.scripts.hybridassemblypipeline import CONFIG_DATA
 
@@ -47,7 +47,7 @@ class MainHybridAssemblyPipeline(BasePipeline):
         """
         if args.sample_name is not None:
             return args.sample_name
-        logging.debug('Sample name not provided, determining name from short-reads')
+        logger.debug('Sample name not provided, determining name from short-reads')
         if args.fastq_pe_names is not None:
             return GalaxyUtils.determine_sample_name_from_fq([Path(fq) for fq in args.fastq_pe_names])
         return GalaxyUtils.determine_sample_name_from_fq([Path(fq) for fq in args.fastq_pe])
@@ -144,7 +144,7 @@ class MainHybridAssemblyPipeline(BasePipeline):
         paths_new = []
         for path_orig, link_name in links:
             path_new = dir_links / link_name
-            logging.debug(f"Symlinking input file: {path_orig} -> {link_name}")
+            logger.debug(f"Symlinking input file: {path_orig} -> {link_name}")
             if path_new.is_symlink():
                 path_new.unlink()
             path_new.symlink_to(path_orig)
@@ -232,7 +232,7 @@ class MainHybridAssemblyPipeline(BasePipeline):
         """
         clair3_model = next(
             r['clair3_model'] for r in self._data_models.to_dict('records') if r['medaka_model'] == medaka_model)
-        logging.info(f"Best matching Clair3 model for medaka model '{medaka_model}': {clair3_model}")
+        logger.info(f"Best matching Clair3 model for medaka model '{medaka_model}': {clair3_model}")
         path_model = Path(Camel.get_instance().config['db_root'], 'clair3', 'models', clair3_model)
         if not path_model.exists():
             raise ValueError(f'Clair3 model not found: {path_model}')

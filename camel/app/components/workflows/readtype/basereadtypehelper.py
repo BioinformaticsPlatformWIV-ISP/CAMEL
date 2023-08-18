@@ -1,16 +1,15 @@
+import abc
 import argparse
-import logging
+import shutil
 from pathlib import Path
 from typing import List, Optional, Dict
-
-import abc
-import shutil
 
 from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.components.html.htmlreport import HtmlReport
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.workflows.assemblywrapper import AssemblyWrapper
 from camel.app.components.workflows.utils.fastqinput import FastqInput
+from camel.app.loggers import logger
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 
 
@@ -61,7 +60,7 @@ class BaseReadTypeHelper(object, metaclass=abc.ABCMeta):
         :param names: Target file names
         :return: List of symlink locations
         """
-        logging.info(f"Symlinking input files: {', '.join([f.name for f in files])}")
+        logger.info(f"Symlinking input files: {', '.join([f.name for f in files])}")
         dir_links = self._working_dir / 'input'
         dir_links.mkdir(exist_ok=True, parents=True)
 
@@ -74,7 +73,7 @@ class BaseReadTypeHelper(object, metaclass=abc.ABCMeta):
             new_symlink = dir_links / FileSystemHelper.make_valid(name_ if name_ is not None else file_.name)
             if new_symlink.exists():
                 new_symlink.unlink()
-            logging.debug(f"Creating link: {new_symlink.name} -> {file_.name}")
+            logger.debug(f"Creating link: {new_symlink.name} -> {file_.name}")
             new_symlink.symlink_to(file_)
             linked_files.append(new_symlink)
         return linked_files
@@ -88,7 +87,7 @@ class BaseReadTypeHelper(object, metaclass=abc.ABCMeta):
         :param args: Command line arguments
         :return: ToolIOFile FASTA object with the assembled contigs
         """
-        logging.info("Starting de-novo assembly")
+        logger.info("Starting de-novo assembly")
         assembly = AssemblyWrapper(self._working_dir / 'assembly', assembly_input.read_type)
 
         # Cov-cutoff parameter

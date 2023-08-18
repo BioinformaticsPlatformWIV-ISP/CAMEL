@@ -4,7 +4,6 @@ Contains helper function for main scripts with a report output.
 import argparse
 from collections.abc import Mapping
 import datetime
-import logging
 from pathlib import Path
 from typing import Optional, List, Any, Dict
 
@@ -12,6 +11,7 @@ from camel.app.components.files.fastqutils import FastqUtils
 from camel.app.components.galaxy.galaxyutils import GalaxyUtils
 from camel.app.components.html.htmlreport import HtmlReport
 from camel.app.components.html.htmlreportsection import HtmlReportSection
+from camel.app.loggers import logger
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.resources import CSS_STYLE
 from camel.resources.javascript import JQUERY_SRC
@@ -85,7 +85,7 @@ def determine_input_file_str(args: argparse.Namespace) -> str:
         return args.fastq_se_name
     elif args.fastq_se is not None:
         return args.fastq_se.name
-    logging.warning("Cannot determine input files from given arguments")
+    logger.warning("Cannot determine input files from given arguments")
     return 'NA'
 
 
@@ -136,7 +136,7 @@ def determine_sample_name(args: argparse.Namespace) -> str:
     elif args.fastq_se is not None:
         names = [Path(args.fastq_se_name if args.fastq_se_name else args.fastq_se)]
         return GalaxyUtils.determine_sample_name_from_fq(names, False, 'NA')
-    logging.warning("Cannot determine sample name from given arguments")
+    logger.warning("Cannot determine sample name from given arguments")
     return 'NA'
 
 

@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import argparse
 import itertools
-import logging
 import shutil
 import tempfile
 from pathlib import Path
@@ -18,6 +17,7 @@ from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.phylogeny import mlstphyloutils
 from camel.app.components.phylogeny.newickutils import NewickUtils
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.app.tools.figtree.figtree import FigTree
 from camel.app.tools.grapetree.grapetree import GrapeTree
@@ -170,7 +170,7 @@ class MainMLSTPhylogeny(object):
             raise ValueError("No input files specified")
         if len(allele_data) < 3:
             raise ValueError("At least 3 datasets are required")
-        logging.info(f"Alleles parsed for {len(allele_data)} input files ({len(allele_data.columns)} loci)")
+        logger.info(f"Alleles parsed for {len(allele_data)} input files ({len(allele_data.columns)} loci)")
         return allele_data
 
     def __filter_allele_matrix(self, allele_data: pd.DataFrame) -> Tuple[pd.DataFrame, int, int]:
@@ -184,17 +184,17 @@ class MainMLSTPhylogeny(object):
         # Filter allele matrix (nb. of loci detected per dataset)
         nb_loci_detected = allele_data.apply(lambda x: len(x) - list(x).count('-'), axis=1)
         cutoff_loci = int(self._args.min_perc_loci * len(allele_data.columns) / 100)
-        logging.info(f"Removing datasets with < {cutoff_loci} ({self._args.min_perc_loci}%) loci detected")
+        logger.info(f"Removing datasets with < {cutoff_loci} ({self._args.min_perc_loci}%) loci detected")
         allele_data_filt = allele_data[nb_loci_detected > cutoff_loci]
-        logging.info(f"{len(allele_data_filt)} datasets passed filtering")
+        logger.info(f"{len(allele_data_filt)} datasets passed filtering")
 
         # Filter allele matrix (loci detected in nb. of datasets)
         locus_present_in_datasets = allele_data_filt.apply(lambda x: len(x) - list(x).count('-'))
         cutoff_datasets = int(self._args.min_perc_samples * len(allele_data_filt) / 100)
         if not self._args.keep_all_loci:
-            logging.info(f"Removing loci detected < {cutoff_datasets} ({self._args.min_perc_samples}%) datasets")
+            logger.info(f"Removing loci detected < {cutoff_datasets} ({self._args.min_perc_samples}%) datasets")
             allele_data_filt = allele_data_filt.iloc[:, list(locus_present_in_datasets > cutoff_datasets)]
-        logging.info(f"{len(allele_data_filt.columns)} loci passed filtering")
+        logger.info(f"{len(allele_data_filt.columns)} loci passed filtering")
         return allele_data_filt, cutoff_loci, cutoff_datasets
 
     def __save_allele_matrix(self, allele_data_filt: pd.DataFrame) -> Path:
@@ -208,7 +208,7 @@ class MainMLSTPhylogeny(object):
         # Save the allele matrix to a separate file is specified
         if self._args.output_allele_matrix:
             shutil.copyfile(path_allele_matrix, self._args.output_allele_matrix)
-            logging.info(f"Filtered allele matrix saved to: {self._args.output_allele_matrix}")
+            logger.info(f"Filtered allele matrix saved to: {self._args.output_allele_matrix}")
         return path_allele_matrix
 
     def __report_add_section_filtering(
@@ -280,7 +280,7 @@ class MainMLSTPhylogeny(object):
         # Copy the distance file (if specified)
         if self._args.output_dist_matrix is not None:
             shutil.copyfile(path_tsv_dist, self._args.output_dist_matrix)
-            logging.info(f"Distance matrix saved to: {self._args.output_dist_matrix}")
+            logger.info(f"Distance matrix saved to: {self._args.output_dist_matrix}")
 
         # Section with pair-wise distances
         section_distances = HtmlReportSection('Allele distances (AD)')
@@ -311,13 +311,13 @@ class MainMLSTPhylogeny(object):
         grapetree.update_parameters(output_path=str(output_path))
         grapetree.add_input_files({'TSV': [ToolIOFile(allele_matrix)]})
         grapetree.run(dir_grapetree)
-        logging.info(f"Phylogeny created: {output_path}")
+        logger.info(f"Phylogeny created: {output_path}")
 
         # Copy the Newick file (if specified)
         path_newick = grapetree.tool_outputs['NWK'][0].path
         if self._args.output_tree is not None:
             shutil.copyfile(path_newick, self._args.output_tree)
-            logging.info(f"Newick saved to: {self._args.output_tree}")
+            logger.info(f"Newick saved to: {self._args.output_tree}")
         return grapetree
 
     def __report_add_section_phylogeny(self, report: HtmlReport, grapetree: GrapeTree, figtree: FigTree) -> None:

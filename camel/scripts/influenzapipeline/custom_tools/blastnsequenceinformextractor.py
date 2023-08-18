@@ -61,9 +61,9 @@ class BlastnSequenceInformExtractor(Tool):
 
         if 'seqIDParser_type' in self._parameters:
             self._check_offtarget_hit = True
-            logging.info("Input SeqIDParser specified, off target hits detection on.")
+            logger.info("Input SeqIDParser specified, off target hits detection on.")
         else:
-            logging.info("No SeqIDParser input specified, off target hits detection off.")
+            logger.info("No SeqIDParser input specified, off target hits detection off.")
 
         super()._check_input()
 
@@ -77,13 +77,13 @@ class BlastnSequenceInformExtractor(Tool):
         blastn_hits = self.__retrieve_blastn_hits()
 
         for qseqid, hits in blastn_hits.items():
-            logging.debug(f'Process query {qseqid} --------- ')
+            logger.debug(f'Process query {qseqid} --------- ')
 
             # clean off-target hits if possible
             if self._check_offtarget_hit:
                 hits = self.__filter_offtarget_hits(hits)
                 if len(hits) == 0:
-                    logging.debug(f'  No hits remain after filtering off-target hits for query {qseqid}.')
+                    logger.debug(f'  No hits remain after filtering off-target hits for query {qseqid}.')
                     continue
 
             hit_informs = []
@@ -91,8 +91,8 @@ class BlastnSequenceInformExtractor(Tool):
             if len(hits) > 1:
                 # NOTE: this can happen when there are no-coverage section in the sequences (which is represented as
                 #       continuous 'N's). Then Blast will break it into different HSPs (local alignment!)
-                logging.info(f'   WARNING: more than one hit for query {qseqid}.')
-            logging.debug(f'  query hits: \n{pprint.pformat(hits, indent=2)}\n')
+                logger.info(f'   WARNING: more than one hit for query {qseqid}.')
+            logger.debug(f'  query hits: \n{pprint.pformat(hits, indent=2)}\n')
             for hit in hits:
                 hit_informs.append(BlastnSequenceInformExtractor.__extract_hit_statistics(hit, len(query_rcd.seq)))
             if len(hits) > 0:
@@ -141,9 +141,9 @@ class BlastnSequenceInformExtractor(Tool):
                 cleaned_hits.append(hit)
 
         if len(filtered_hits) > 0:
-            logging.debug(f'  Off-target query hits (filtered): \n{pprint.pformat(filtered_hits, indent=2)}\n')
+            logger.debug(f'  Off-target query hits (filtered): \n{pprint.pformat(filtered_hits, indent=2)}\n')
         else:
-            logging.debug('  No off-target query hit found.')
+            logger.debug('  No off-target query hit found.')
 
         return cleaned_hits
 

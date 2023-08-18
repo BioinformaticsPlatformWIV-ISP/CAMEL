@@ -1,9 +1,9 @@
-import logging
 import random
 from abc import ABC, abstractmethod
 from typing import List, Dict, Any
 
 from camel.app.components.blasthit.blastnhit import BlastnHit
+from camel.app.loggers import logger
 
 
 class SegmentTyping(ABC):
@@ -23,7 +23,7 @@ class SegmentTyping(ABC):
         self._blast_hits = blast_hits
         self._best_candidate_targets = []
         self._seed = seed if seed else random.randint(1, 1000000)
-        logging.info(f'No seed given for SegmentTyping, using {self._seed}')
+        logger.info(f'No seed given for SegmentTyping, using {self._seed}')
         self._ambiguous = None
 
     @property

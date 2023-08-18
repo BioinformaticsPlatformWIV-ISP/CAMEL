@@ -2,14 +2,13 @@ import argparse
 from pathlib import Path
 from typing import Union
 
-import logging
-
 from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.components.html.htmlreport import HtmlReport
 from camel.app.components.workflows.readtype.basereadtypehelper import BaseReadTypeHelper
 from camel.app.components.workflows.trimmingontwrapper import TrimmingONTWrapper
 from camel.app.components.workflows.utils.fastqinput import FastqInput
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 
 
 class NanoporeHelper(BaseReadTypeHelper):
@@ -39,7 +38,7 @@ class NanoporeHelper(BaseReadTypeHelper):
         :param threads: Nb. of threads
         :return: FastqInput object with trimmed reads
         """
-        logging.info("Trimming reads (Nanopore data)")
+        logger.info("Trimming reads (Nanopore data)")
         if fastq_input.is_pe or fastq_input.se is None:
             raise ValueError("Nanopore input should be SE")
         # Run workflow

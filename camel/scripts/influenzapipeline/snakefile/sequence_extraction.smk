@@ -324,7 +324,7 @@ rule iterative_consensus_generation:
             :return: True/False
             """
             if len(cw_current.output.vcf_diffs[0]) == 0 and len(cw_current.output.vcf_diffs[1]) == 0:
-                logging.info('Finished iteration because there is no difference anymore between the last'
+                logger.info('Finished iteration because there is no difference anymore between the last'
                              'two iterations')
                 return True
             if run == 1:  # For the first run, no other runs to compare to are available
@@ -336,7 +336,7 @@ rule iterative_consensus_generation:
             # run2 vs run3: variants at pos 8 in run 2 and at pos 1, 5, 6 in run3
             if cw_list[run-2].output.vcf_diffs[0] == cw_list[run-1].output.vcf_diffs[1] and \
                 cw_list[run-2].output.vcf_diffs[1] == cw_list[run-1].output.vcf_diffs[0]:
-                logging.info('Finished iteration because same variant differences were found'
+                logger.info('Finished iteration because same variant differences were found'
                              'in the previous run')
                 return True
             if len(cw_list) > 2:
@@ -344,7 +344,7 @@ rule iterative_consensus_generation:
                 for i in range(1, len(cw_list)):
                     if cw_list[i-1].output.vcf_diffs[0] == cw_list[-1].output.vcf_diffs[0] and \
                         cw_list[i-1].output.vcf_diffs[1] == cw_list[-1].output.vcf_diffs[1]:
-                        logging.info('Finished iteration because same variant differences were'
+                        logger.info('Finished iteration because same variant differences were'
                                       'found as in a previous run')
                         return True
             if len(cw_list) > 15:

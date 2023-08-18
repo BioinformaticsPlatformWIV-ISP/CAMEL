@@ -1,5 +1,4 @@
 import json
-import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, List, Any, Dict
@@ -8,6 +7,7 @@ from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.sequencetyping.sequencetypingutils import SequenceTypingUtils
 from camel.app.components.workflows.utils.fastqinput import FastqInput
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.resources.snakefile import sequence_typing
@@ -156,7 +156,7 @@ class SequenceTypingWrapper(object):
         fasta_in = self._working_dir / str(sequence_typing.INPUT_FASTA).format(scheme=scheme_key)
         if not fasta_in.parent.exists():
             fasta_in.parent.mkdir(parents=True)
-        logging.debug(f'Creating FASTA input: {fasta_in}')
+        logger.debug(f'Creating FASTA input: {fasta_in}')
         SnakemakeUtils.dump_object([ToolIOFile(fasta_path)], fasta_in)
 
     def __run_snakefile(self, config_path: str, workflow_input: SequenceTypingInput, threads: int) -> None:

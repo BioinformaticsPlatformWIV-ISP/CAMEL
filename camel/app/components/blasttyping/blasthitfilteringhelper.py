@@ -1,8 +1,8 @@
-import logging
 from typing import List, Union
 
 from camel.app.components.genedetection.genedetectionblasthit import GeneDetectionBlastHit
 from camel.app.components.sequencetyping.sequencetypingblasthit import SequenceTypingBlastHit
+from camel.app.loggers import logger
 
 
 class BlastHitFilteringHelper(object):
@@ -24,18 +24,18 @@ class BlastHitFilteringHelper(object):
         :param hits: Hits
         :return: Best hit(s)
         """
-        logging.debug("Detecting best from list of {} hit(s)".format(len(hits)))
+        logger.debug("Detecting best from list of {} hit(s)".format(len(hits)))
         if len(hits) == 0:
             raise ValueError("Input list is empty")
         perfect_hits = [h for h in hits if h.blast_stats.is_perfect_hit()]
         if len(perfect_hits) >= 1:
-            logging.debug('{} perfect hit(s) found: {}'.format(
+            logger.debug('{} perfect hit(s) found: {}'.format(
                 len(perfect_hits), ', '.join([h.locus for h in perfect_hits])))
             max_length = max([h.blast_stats.subject_length for h in perfect_hits])
             return [h for h in perfect_hits if h.blast_stats.subject_length == max_length]
         else:
             best_hits = BlastHitFilteringHelper.__get_best_imperfect_hits(hits)
-            logging.debug('No perfect hits found, {} equivalent imperfect hits found: {}'.format(
+            logger.debug('No perfect hits found, {} equivalent imperfect hits found: {}'.format(
                 len(best_hits), ', '.join([h.locus for h in best_hits])))
             return best_hits
 
@@ -84,7 +84,7 @@ class BlastHitFilteringHelper(object):
         :return: Filtered hits
         """
         filtered_hits = [hit for hit in hits if hit.blast_stats.percent_identity >= min_percent_identity]
-        logging.info('{}/{} hits passed percent identity filtering ({} %)'.format(
+        logger.info('{}/{} hits passed percent identity filtering ({} %)'.format(
             len(filtered_hits), len(hits), min_percent_identity))
         return filtered_hits
 
@@ -97,6 +97,6 @@ class BlastHitFilteringHelper(object):
         :return: Filtered hits
         """
         filtered_hits = [hit for hit in hits if hit.blast_stats.subject_coverage >= min_coverage]
-        logging.info('{}/{} hits passed length coverage filtering ({} %)'.format(
+        logger.info('{}/{} hits passed length coverage filtering ({} %)'.format(
             len(filtered_hits), len(hits), min_coverage))
         return filtered_hits
