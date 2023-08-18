@@ -1,4 +1,3 @@
-import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Tuple, AbstractSet
@@ -7,6 +6,7 @@ import yaml
 
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.io.tooliovalue import ToolIOValue
+from camel.app.loggers import logger
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.scripts.influenzapipeline import CONFIG_DATA
@@ -154,7 +154,7 @@ class ConsensusSequenceWrapper(object):
         SnakePipelineUtils.run_snakemake(SNAKEFILE_SEQ_EXTRACTION, config_path, [index_output], self._working_dir, cores)
 
         self.__set_output(previous_vcf)
-        logging.debug(self._output)
+        logger.debug(self._output)
 
     def __set_output(self, previous_vcf: Path) -> None:
         """

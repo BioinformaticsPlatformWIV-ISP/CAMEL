@@ -1,4 +1,3 @@
-import logging
 import shutil
 from pathlib import Path
 from typing import List, Union, Tuple, Optional, Sequence
@@ -6,6 +5,7 @@ from typing import List, Union, Tuple, Optional, Sequence
 from camel.app.components.html.htmlbase import HtmlBase
 from camel.app.components.html.htmlelement import HtmlElement
 from camel.app.components.html.htmltablecell import HtmlTableCell
+from camel.app.loggers import logger
 
 
 class HtmlReportSection(HtmlElement):
@@ -55,11 +55,11 @@ class HtmlReportSection(HtmlElement):
         :param output_directory: Output directory
         :return: None
         """
-        logging.info("Exporting report section files")
+        logger.info("Exporting report section files")
         if output_directory is None or not output_directory.is_dir():
             raise ValueError(f'Invalid output directory: {output_directory}')
         for file_path, relative_path in self.files:
-            logging.info(f'Copying file: {file_path} -> {relative_path}')
+            logger.info(f'Copying file: {file_path} -> {relative_path}')
             if not file_path.is_file():
                 raise ValueError(f"Cannot add file (does not exist) '{file_path}'")
             relative_dir = output_directory / relative_path.parent
@@ -75,7 +75,7 @@ class HtmlReportSection(HtmlElement):
         :param relative_path: path where the file will be saved relative to the report output directory
         :return: Relative path
         """
-        logging.info("Adding file to report section: {}".format(relative_path))
+        logger.info(f'Adding file to report section: {relative_path}')
         self._files.append((input_file, relative_path,))
         return relative_path
 

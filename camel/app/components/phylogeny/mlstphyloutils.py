@@ -1,9 +1,10 @@
 import json
-import logging
 from pathlib import Path
 from typing import List, Dict, Tuple, Optional
 
 import pandas as pd
+
+from camel.app.loggers import logger
 
 
 def is_perfect(record: pd.Series, detection_method: str) -> bool:
@@ -68,10 +69,10 @@ def parse_tsv_typing_list(tsv_in: List[Tuple[Path, str]], detection_method: Opti
     sample_names = []
     allele_data = []
     for tabular_file, file_name in tsv_in:
-        logging.debug(f'Parsing file: {tabular_file}')
+        logger.debug(f'Parsing file: {tabular_file}')
         try:
             isolate_name = Path(file_name).stem
-            logging.debug(f'Sample name: {isolate_name}')
+            logger.debug(f'Sample name: {isolate_name}')
         except IndexError:
             raise ValueError(f'Cannot determine sample name from: {file_name}')
         allele_data.append(parse_tsv_typing(tabular_file, detection_method))

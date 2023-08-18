@@ -1,6 +1,5 @@
-import logging
-
 from camel.app.components.blasttyping.cluster import Cluster
+from camel.app.loggers import logger
 
 
 class BlastHitClustering(object):
@@ -28,7 +27,7 @@ class BlastHitClustering(object):
                 hits.remove(hit)
             clusters.append(new_cluster)
         BlastHitClustering.__log_clusters(clusters)
-        logging.info('{} clusters of overlapping hits found'.format(len(clusters)))
+        logger.info(f'{len(clusters)} clusters of overlapping hits found')
         return clusters
 
     @staticmethod
@@ -39,6 +38,6 @@ class BlastHitClustering(object):
         :return: None
         """
         for cluster in clusters:
-            logging.debug('Cluster {}:'.format(clusters.index(cluster) + 1))
+            logger.debug(f'Cluster {clusters.index(cluster) + 1}')
             for hit in cluster.hits:
-                logging.debug(str(hit))
+                logger.debug(str(hit))

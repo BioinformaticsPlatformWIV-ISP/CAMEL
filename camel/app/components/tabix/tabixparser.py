@@ -1,5 +1,6 @@
-import logging
 from typing import Dict
+
+from camel.app.loggers import logger
 
 TABIX_ANNOTATION_INDICES = {
     'position': 1,
@@ -15,7 +16,7 @@ def parse_tabix_annotation(annotation_file: str) -> Dict[int, Dict[str, str]]:
     :param annotation_file: Annotation file
     :return: Annotations (position: annotation)
     """
-    logging.info("Parsing annotation file: {}".format(annotation_file))
+    logger.info("Parsing annotation file: {}".format(annotation_file))
     annotations = {}
     with open(annotation_file) as handle:
         for line in handle.readlines():

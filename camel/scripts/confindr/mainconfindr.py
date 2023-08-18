@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 import argparse
 import json
-import logging
 from pathlib import Path
 from typing import Optional, Sequence, Dict, Any
 
 from camel.app.camel import Camel
 from camel.app.components import mainscriptutils
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.app.tools.confindr.confindr import ConFindr
 from camel.app.tools.confindr.confindrreporter import ConFindrReporter
@@ -85,7 +85,7 @@ class MainConFindr(object):
         if self._args.output_json is not None:
             with self._args.output_json.open('w') as handle:
                 json.dump(confindr.informs, handle, indent=2)
-                logging.info(f'ConFindr informs saved to {self._args.output_json}')
+                logger.info(f'ConFindr informs saved to {self._args.output_json}')
 
         # Create output report
         confindr_reporter = ConFindrReporter(Camel.get_instance())
@@ -97,7 +97,7 @@ class MainConFindr(object):
         report.add_html_object(SnakePipelineUtils.create_commands_section([confindr.informs], self._args.working_dir))
         report.add_html_object(SnakePipelineUtils.create_citations_section(['Low_2019-confindr', 'Jolley_2012-rmlst']))
         report.save()
-        logging.info(f'Report saved to: {self._args.output_html}')
+        logger.info(f'Report saved to: {self._args.output_html}')
 
     def __prepare_input(self) -> Dict[str, Any]:
         """

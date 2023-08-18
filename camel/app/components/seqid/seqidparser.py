@@ -1,6 +1,7 @@
-import logging
 import re
 from typing import Optional, Dict
+
+from camel.app.loggers import logger
 
 
 class SeqIDParser(object):
@@ -110,7 +111,7 @@ class SeqIDParser(object):
         :return: Newly composed ID
         """
         if self._type in {'avian', 'cyril', 'inf_a', 'inf_b', 'inf_c'} and self.subtype is None:
-            logging.warning(f'Composing new sequence ID: Influenza subtype information is missing from original seqid, '
+            logger.warning(f'Composing new sequence ID: Influenza subtype information is missing from original seqid, '
                             f'assuming subtype information in strain name: {self.strain}.')
         elif self._type in {'avian', 'cyril', 'inf_a', 'inf_b', 'inf_c', 'default'}:
             if self.subtype is None:

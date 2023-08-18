@@ -56,7 +56,7 @@ class AlignmentSeqExtractionRegionCalculator(Tool):
         self._retrieve_informs()
         # incorporate HC bamout information (local de novo assembly) if available
         if self._has_hc_bam:
-            logging.info("HaplotypeCaller generated BAM file provided, re-assembled regions will be considered.")
+            logger.info("HaplotypeCaller generated BAM file provided, re-assembled regions will be considered.")
             self.__add_hc_haplotype_regions()
         self._identify_nocoverage_regions()
         self._set_output()
@@ -94,10 +94,10 @@ class AlignmentSeqExtractionRegionCalculator(Tool):
         with those regions
         :return: None
         """
-        logging.info("Adapt segment gaps based on HaplotypeCaller re-assembled regions (from HCBamout).")
+        logger.info("Adapt segment gaps based on HaplotypeCaller re-assembled regions (from HCBamout).")
         haplotype_cov_regions = self.__calculate_cov_regions_from_gaps(self._input_informs['HCBamout']['segment_gaps'])
-        logging.info(f"de novo Haplotypes covered regions: {haplotype_cov_regions}")
-        logging.info(f"origin segment_gaps: {self.segment_gaps}")
+        logger.info(f"de novo Haplotypes covered regions: {haplotype_cov_regions}")
+        logger.info(f"origin segment_gaps: {self.segment_gaps}")
 
         for segment, gaps in self.segment_gaps.items():
             if len(gaps) == 0:
@@ -105,7 +105,7 @@ class AlignmentSeqExtractionRegionCalculator(Tool):
                 continue
 
             if segment in haplotype_cov_regions:
-                logging.debug(f"Processing segment {segment} ------------- ")
+                logger.debug(f"Processing segment {segment} ------------- ")
                 segment_gaps_padded = []
                 for gap in gaps:
                     has_overlap = False
@@ -119,14 +119,14 @@ class AlignmentSeqExtractionRegionCalculator(Tool):
                     if not has_overlap:
                         segment_gaps_padded.append(gap)
                     else:
-                        logging.debug(f'  gap: {gap}, overlap Haplotype regions {overlap_cov_regions}')
+                        logger.debug(f'  gap: {gap}, overlap Haplotype regions {overlap_cov_regions}')
                         new_gaps = self.__adapt_gap_with_cov_regions(overlap_cov_regions, gap)
-                        logging.debug(f'  adapted gaps: {new_gaps}')
+                        logger.debug(f'  adapted gaps: {new_gaps}')
                         segment_gaps_padded += new_gaps
 
                 self.segment_gaps[segment] = segment_gaps_padded
 
-        logging.info(f"updated segment_gaps: {self.segment_gaps}")
+        logger.info(f"updated segment_gaps: {self.segment_gaps}")
 
     def __calculate_cov_regions_from_gaps(self, gaps: dict) -> Dict[str, List[Tuple[int, int]]]:
         """
@@ -145,7 +145,7 @@ class AlignmentSeqExtractionRegionCalculator(Tool):
                     cov_regions[segment].append((gap_end_pos + 1, gap[0] - 1))
                     gap_end_pos = gap[1]
                 else:
-                    logging.warning(
+                    logger.warning(
                         f"gap {gap} start before the current start pos {gap_end_pos} of cov region.")
 
             # last gap
@@ -226,7 +226,7 @@ class AlignmentSeqExtractionRegionCalculator(Tool):
         # Definition & Coordinates:
         #   gap: (start, end) closed definition, start and end inclusive. 1-based position coordinate (1st base start at 1)
         # indel: (type, pos_of_proceeding_base, length) 1-based
-        logging.info("  -- \t start searching overlapping gaps and indels ---------------")
+        logger.info("  -- \t start searching overlapping gaps and indels ---------------")
         for segment, gaps in self.segment_gaps.items():
             if segment in self.indels:
                 for gap in gaps:
@@ -235,9 +235,9 @@ class AlignmentSeqExtractionRegionCalculator(Tool):
                     for ind in self.indels[segment]:
                         if ind.overlap(Indel('-', gap_start - 1, gap_length)):
                             if ind.type == '+':
-                                logging.info("WARNNING segment gap overlap with insertion")
-                            logging.info(f" segment {segment} overlap: gap {gap}, indel {ind}")
-        logging.info("  -- \t finish searching overlapping gaps and indels ---------------")
+                                logger.info("WARNNING segment gap overlap with insertion")
+                            logger.info(f" segment {segment} overlap: gap {gap}, indel {ind}")
+        logger.info("  -- \t finish searching overlapping gaps and indels ---------------")
 
         # Generally three categories of overlapping between gap and indel:
         #
@@ -321,7 +321,7 @@ class AlignmentSeqExtractionRegionCalculator(Tool):
             if gap_start > region_start:
                 self.__output_extraction_region(seqid, region_start, gap_start, outf)
             if gap_region[1] == 'end':
-                logging.warning(f"open-end gap {gap_region!r} found, the tail sequence in gap is skipped.")
+                logger.warning(f"open-end gap {gap_region!r} found, the tail sequence in gap is skipped.")
                 gap_end = gap_region[1]
             else:
                 gap_end = int(gap_region[1])
@@ -335,7 +335,7 @@ class AlignmentSeqExtractionRegionCalculator(Tool):
             if gap_end + 1 <= refseq_end:
                 self.__output_extraction_region(seqid, gap_end + 1, refseq_end, outf)
             elif gap_end > refseq_end:
-                logging.warning(
+                logger.warning(
                     "gap ends further than the end of the sequences: gap_end {}, refseq_end {}".format(gap_end, refseq_end))
 
     def _set_output(self) -> None:

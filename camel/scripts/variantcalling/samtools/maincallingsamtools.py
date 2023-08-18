@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 import argparse
-import logging
+import shutil
 from pathlib import Path
 from typing import Dict, Any, Optional, Sequence
 
-import shutil
-
 from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.resources.snakefile import variant_calling
@@ -79,7 +78,7 @@ class MainCalling(object):
             self.__generate_consensus_sequence(self._args.output_consensus, config_data)
 
         # Copy output
-        logging.info("Collecting Snakemake output file")
+        logger.info("Collecting Snakemake output file")
         output_vcf_path = SnakemakeUtils.load_object(output_path)[0].path
         shutil.copyfile(output_vcf_path, self._args.output)
 

@@ -1,11 +1,11 @@
 import argparse
-import logging
 from typing import Optional, Sequence
 
 import pandas as pd
 from Bio import SeqIO
 
 from camel.app.camel import Camel
+from camel.app.loggers import logger
 
 
 class MainSnpDistances(object):
@@ -66,7 +66,7 @@ class MainSnpDistances(object):
 
         # Save output
         data_distance.to_csv(self._args.output, sep='\t', index=False)
-        logging.info(f"Output file created: {self._args.output}")
+        logger.info(f"Output file created: {self._args.output}")
 
 
 if __name__ == '__main__':

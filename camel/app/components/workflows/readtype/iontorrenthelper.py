@@ -1,5 +1,4 @@
 import argparse
-import logging
 from pathlib import Path
 from typing import Union
 
@@ -9,6 +8,7 @@ from camel.app.components.workflows.readtype.basereadtypehelper import BaseReadT
 from camel.app.components.workflows.trimmingiontorrentwrapper import TrimmingIonTorrentWrapper
 from camel.app.components.workflows.utils.fastqinput import FastqInput
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 
 
 class IonTorrentHelper(BaseReadTypeHelper):
@@ -38,7 +38,7 @@ class IonTorrentHelper(BaseReadTypeHelper):
         :param threads: Nb. of threads
         :return: FastqInput object with trimmed reads
         """
-        logging.info("Trimming reads (IonTorrent data)")
+        logger.info("Trimming reads (IonTorrent data)")
         if fastq_input.is_pe or fastq_input.se is None:
             raise ValueError("IonTorrent input should be SE")
         # Run workflow
@@ -62,7 +62,7 @@ class IonTorrentHelper(BaseReadTypeHelper):
         :param args: Command-line arguments
         :return: FASTA file
         """
-        logging.info("Preparing FASTA input (IonTorrent data)")
+        logger.info("Preparing FASTA input (IonTorrent data)")
         fq_input_se = self.__symlink_iontorrent_reads(Path(args.fastq_se), self._sample_name)
         fastq_input = FastqInput(args.read_type, se=[ToolIOFile(fq_input_se)], is_pe=False)
         if args.trim_reads:

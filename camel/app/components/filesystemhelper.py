@@ -1,11 +1,11 @@
 import binascii
 import datetime
-import logging
 import re
 from pathlib import Path
 from typing import List
 
 from camel.app.command.command import Command
+from camel.app.loggers import logger
 
 
 class FileSystemHelper(object):
@@ -78,7 +78,7 @@ class FileSystemHelper(object):
         :param output_gz_file: Output path
         :return: None
         """
-        logging.info(f"Extracting: {input_gz_file}")
+        logger.info(f"Extracting: {input_gz_file}")
         command = Command(f'gunzip -k -c {input_gz_file} > {output_gz_file}')
         command.run(Path.cwd())
         if not command.returncode == 0:

@@ -1,6 +1,4 @@
 import copy
-import logging
-import os
 import shutil
 import tempfile
 from pathlib import Path
@@ -10,6 +8,7 @@ from Bio.Phylo.Newick import Tree
 
 from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.tools.figtree.figtree import FigTree
 from camel.app.tools.treevector.treevector import TreeVector
 
@@ -31,13 +30,13 @@ class NewickUtils(object):
         :param output_format: Image output format
         :return: None
         """
-        logging.info(f"Rendering tree: {tree_path}")
+        logger.info(f"Rendering tree: {tree_path}")
         tree_vector = TreeVector(camel)
         tree_vector.add_input_files({'NWK': [ToolIOFile(tree_path)]})
         tree_vector.update_parameters(output_format=output_format, output_filename='tree.png', type=plot_type)
         tree_vector.run(Path(tempfile.mkdtemp(prefix='tree_vector', dir=camel.config['temp_dir'])))
-        logging.debug(f"TreeVector - stdout: {tree_vector.stdout}")
-        logging.debug(f"TreeVector - stderr: {tree_vector.stderr}")
+        logger.debug(f"TreeVector - stdout: {tree_vector.stdout}")
+        logger.debug(f"TreeVector - stderr: {tree_vector.stderr}")
         shutil.copyfile(tree_vector.tool_outputs['PNG'][0].path, output_path)
 
     @staticmethod
@@ -61,7 +60,7 @@ class NewickUtils(object):
         :param height: Image height
         :return: FigTree instance
         """
-        logging.info(f"Creating image for tree: {path_newick}")
+        logger.info(f"Creating image for tree: {path_newick}")
         with tempfile.TemporaryDirectory(prefix='figtree_', dir=Camel.get_instance().config['temp_dir']) as dir_temp:
             figtree = FigTree(Camel.get_instance())
             output_path = Path(dir_temp, 'tree.png')
@@ -69,7 +68,7 @@ class NewickUtils(object):
             path_template = path_config
             figtree.add_input_files({'NWK': [ToolIOFile(path_newick)], 'TXT': [ToolIOFile(path_template)]})
             figtree.run(Path(dir_temp))
-        logging.info(f"PNG visualization created: {output_path}")
+        logger.info(f"PNG visualization created: {output_path}")
         return figtree
 
     @staticmethod
@@ -86,11 +85,11 @@ class NewickUtils(object):
     @staticmethod
     def remove_inner_node_names(tree: Tree) -> Tree:
         """
-        Removes inner node names from a tree
-        :param tree: Tree
-        :return:
+        Removes inner node names from a tree.
+        :param tree: Tree object
+        :return: Updated tree
         """
-        logging.info("Removing inner node names")
+        logger.info("Removing inner node names")
         new_tree = copy.copy(tree)
         for clade in new_tree.find_clades():
             if 'Inner' in clade.name:
@@ -98,13 +97,13 @@ class NewickUtils(object):
         return new_tree
 
     @staticmethod
-    def export_newick_tree(input_tree: Tree, filename: str) -> None:
+    def export_newick_tree(input_tree: Tree, path_out: Path) -> None:
         """
         Saves a tree to a file in Newick format.
         :param input_tree: Input tree
-        :param filename: Filename
+        :param path_out: Output path
         :return: None
         """
-        logging.info(f"Saving tree to file: {os.path.basename(filename)}")
-        with open(filename, 'w') as handle:
+        logger.info(f"Saving tree to file: {path_out.name}")
+        with path_out.open('w') as handle:
             NewickIO.write([input_tree], handle)

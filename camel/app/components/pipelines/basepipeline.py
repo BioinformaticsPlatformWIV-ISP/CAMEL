@@ -1,10 +1,8 @@
+import abc
 import argparse
-import logging
+import shutil
 from pathlib import Path
 from typing import Optional, Any, Dict, List, Tuple, Sequence, Union
-
-import abc
-import shutil
 
 from camel.app.camel import Camel
 from camel.app.components import mainscriptutils
@@ -12,6 +10,7 @@ from camel.app.components.files.fastqutils import FastqUtils
 from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.error.snakemakeexecutionerror import SnakemakeExecutionError
 from camel.app.loggers import fileloggerutils
+from camel.app.loggers import logger
 from camel.app.pipeline.pipeline import Pipeline
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 
@@ -147,7 +146,7 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         paths_new = []
         for path_orig, link_name in links:
             path_new = dir_links / link_name
-            logging.debug(f"Symlinking input file: {path_orig} -> {link_name}")
+            logger.debug(f"Symlinking input file: {path_orig} -> {link_name}")
             if path_new.is_symlink():
                 path_new.unlink()
             path_new.symlink_to(path_orig)
@@ -176,7 +175,7 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
             # Run snakemake
             SnakePipelineUtils.run_snakemake(
                 self._snakefile, config_file, [], self._args.working_dir, self._args.threads)
-            logging.info("Pipeline finished successfully")
+            logger.info("Pipeline finished successfully")
         except SnakemakeExecutionError as err:
             if self._keep_logs and log_file.exists():
                 log_file = fileloggerutils.store_log_file(log_file, self._name, self.galaxy_job_id, True)
