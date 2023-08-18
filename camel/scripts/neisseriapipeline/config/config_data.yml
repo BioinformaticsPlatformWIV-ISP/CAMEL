@@ -64,17 +64,11 @@ gmats:
 # Gene detection databases #
 ############################
 gene_detection:
-  argannot:
-    path: /db/gene_detection/ARG-ANNOT
-
   resfinder:
     path: /db/gene_detection/ResFinder
     metadata:
       name: Antibiotic(s)
       key: antibiotics
-
-  card:
-    path: /db/gene_detection/CARD
 
   ncbi_amr:
     path: /db/gene_detection/NCBI_AMR/
