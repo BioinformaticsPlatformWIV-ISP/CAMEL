@@ -6,7 +6,7 @@ from camel.app.camel import Camel
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile import quality_checks, trimming, contamination_check_kraken, trimming_ont, \
-    assembly_spades, quast
+    quast, confindr
 
 
 rule quality_checks_kraken:
@@ -229,6 +229,39 @@ rule quality_checks_fqc_qscore:
         with open(output.JSON, 'w') as handle:
             json.dump(params.qc_check.to_dict(qscore_drop), handle, indent=2)
 
+rule quality_checks_confindr:
+    """
+    Extracts the quality checks from the ConFindr output.
+    """
+    input:
+        INFORMS = Path(config['working_dir']) / confindr.OUTPUT_CONFINDR_INFORMS
+    output:
+        JSON = Path(config['working_dir']) / 'quality_checks' / 'confindr.json'
+    params:
+        qc_check = quality_checks.QC_CHECKS_BY_KEY['confindr']
+    run:
+        import json
+        informs = SnakemakeUtils.load_object(Path(input.INFORMS))
+        nb_contam_snps = informs['NumContamSNVs']
+        with open(output.JSON, 'w') as handle:
+            json.dump(params.qc_check.to_dict(nb_contam_snps), handle, indent=2)
+
+rule quality_checks_busco:
+    """
+    Extracts the BUSCO metric from the QUAST output.
+    """
+    input:
+        TSV = Path(config['working_dir']) / quast.OUTPUT_QUAST_SUMMARY
+    output:
+        JSON = Path(config['working_dir']) / 'quality_checks' / 'quast_busco.json'
+    params:
+        qc_check = quality_checks.QC_CHECKS_BY_KEY['busco']
+    run:
+        data_in = pd.read_table(input.TSV, names=['key', 'value'])
+        value = data_in[data_in['key'] == 'assembly_busco_complete'].iloc[0]['value']
+        with open(output.JSON, 'w') as handle:
+            json.dump(params.qc_check.to_dict(value), handle, indent=2)
+
 rule quality_checks_seqkit_stats:
     """
     Runs seqkit stats to extract statistics for Nanopore data.
@@ -335,6 +368,8 @@ rule quality_checks_combine_illumina:
         JSON_cov_ref = rules.quality_checks_coverage.output.JSON if 'coverage' not in config['quality_checks'].get('disabled_checks', []) else [],
         JSON_map_rate_ref = rules.quality_checks_mapping_rate.output.JSON if 'coverage' not in config['quality_checks'].get('disabled_checks', []) else [],
         JSON_assembly_total_len = rules.quality_checks_assembly_total_len.output.JSON if 'assembly' not in config['quality_checks'].get('disabled_checks', []) else [],
+        JSON_confindr = rules.quality_checks_confindr.output.JSON if 'confindr' in config['analyses'] else [],
+        JSON_busco = rules.quality_checks_busco.output.JSON if 'quast' in config else [],
         JSON_fqc_avg_qual_fwd = str(rules.quality_checks_fqc_avg_read_quality.output.JSON).format(ori='fwd') if 'fastqc' not in config['quality_checks'].get('disabled_checks', []) else[],
         JSON_fqc_avg_qual_rev = str(rules.quality_checks_fqc_avg_read_quality.output.JSON).format(ori='rev') if 'fastqc' not in config['quality_checks'].get('disabled_checks', []) else [],
         JSON_fqc_gc_fwd = str(rules.quality_checks_fqc_gc_content.output.JSON).format(ori='fwd') if 'fastqc' not in config['quality_checks'].get('disabled_checks', []) else [],
