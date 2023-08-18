@@ -88,9 +88,12 @@ QC_CHECKS_BY_KEY = {qc.key: qc for qc in [
     QCCheck('cov_ref', 'Coverage against reference genome', 20, 10, '{:.2f}x'),
     QCCheck('map_rate_assembly', 'Reads mapping to the assembled contigs', 95.0, 90.0, '{:.2f}%'),
     QCCheck('cov_assembly', 'Coverage against the assembled contigs', 20, 10, '{:.2f}x'),
-    QCCheck('assembly_total_len', 'Total assembly length deviation', 5, 10, '{:.2f}%', value_should_exceed=False,
+    QCCheck('assembly_total_len', 'Total assembly length deviation', 10, 20, '{:.2f}%', value_should_exceed=False,
             explanation='Percent deviation from the expected genome size.'),
-
+    QCCheck('confindr', 'ConFindr: number of contaminating SNPs', 10, 20, '{:,}', value_should_exceed=False),
+    QCCheck('busco', 'QUAST: Percentage of complete BUSCO genes', 90.0, 80.0, '{:.2f}',
+            explanation='BUSCO Benchmarking Universal Single-Copy Orthologs) can be used to estimate the completeness '
+                        'of an assembly.'),
     # Illumina
     QCCheck('fqc_gc', 'FastQC: GC-content deviation', 2.0, 4.0, '{:.2f}%', False,
             explanation='checks if the detected GC content is close enough to the expected GC content for this organism'
