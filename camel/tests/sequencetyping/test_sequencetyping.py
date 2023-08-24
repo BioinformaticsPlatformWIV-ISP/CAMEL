@@ -16,6 +16,7 @@ class TestSequenceTyping(CamelTestSuite):
     input_db_protein = test_file_dir / 'scheme_pora_neisseria'
     input_db_mixed = test_file_dir / 'scheme_fhbp_neisseria'
     input_fasta = test_file_dir / 'neisseria_mc58.fasta'
+    input_fasta_new_allele = test_file_dir / 'neisseria_mc58_new_allele.fasta'
     input_typing_reads = {
         'illumina': [test_file_dir / 'S15BD05018_S58_L001_1.fastq', test_file_dir / 'S15BD05018_S58_L001_2.fastq'],
         'iontorrent': [test_file_dir / 'ERR1447913_ds.fastq'],
@@ -63,6 +64,29 @@ class TestSequenceTyping(CamelTestSuite):
         main.run()
         self.assertGreater(output_file_report.stat().st_size, 0)
         self.assertGreater(output_file_tsv.stat().st_size, 0)
+
+    def test_typing_illumina_blast_nucl_new_allele(self) -> None:
+        """
+        Tests sequence typing using BLAST with a nucleotide scheme (including ST definitions).
+        The input file was modified to include:
+        - A novel allele with a single SNP
+        - A novel allele that is also a multi-hit
+        - A missing locus from the MLST scheme
+        :return: None
+        """
+        output_file_report = Path(self.running_dir) / 'report' / 'report.html'
+        args = [
+            '--fasta', str(self.input_fasta_new_allele),
+            '--scheme-dir', str(self.input_db_nucl),
+            '--output-html', str(output_file_report),
+            '--output-dir', str(output_file_report.parent),
+            '--working-dir', str(self.running_dir),
+            '--detection-method', 'blast',
+            '--threads', '8'
+        ]
+        main = MainSequenceTyping(args)
+        main.run()
+        self.assertGreater(output_file_report.stat().st_size, 0)
 
     def test_typing_illumina_blast_peptide(self) -> None:
         """

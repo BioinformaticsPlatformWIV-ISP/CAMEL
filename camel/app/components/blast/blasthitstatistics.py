@@ -2,9 +2,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Dict, Any
 
+from Bio.Seq import Seq
+
 from camel.app.components.blast.blastformat7parser import BlastFormat7Parser
 
-BLASTN_OUTPUT_FORMAT = '"7 pident sseqid sseq slen qseqid qstart qend"'
+BLASTN_OUTPUT_FORMAT = '"7 pident sseqid sseq slen qseqid qstart qend qseq sstrand"'
 
 
 @dataclass
@@ -18,7 +20,9 @@ class BlastHitStatistics:
     query_id: str
     query_start: int
     query_end: int
+    query_sequence: str
     percent_identity: float
+    strand: str
 
     @staticmethod
     def parse_blast_output(output_path: Path) -> List['BlastHitStatistics']:
@@ -43,7 +47,9 @@ class BlastHitStatistics:
                 str(info['qseqid']),
                 int(info['qstart']),
                 int(info['qend']),
-                float(info['pident'])
+                str(info['qseq']),
+                float(info['pident']),
+                str(info['sstrand'])
             )
         except KeyError as err:
             raise ValueError(f"Key '{err}' missing from blast output")
@@ -77,6 +83,30 @@ class BlastHitStatistics:
         :return: True if perfect, False otherwise
         """
         return self.is_full_length() and (self.percent_identity == 100.0)
+
+    def is_new_allele(self, min_id: float = 99.0, min_cov: float = 100.0) -> bool:
+        """
+        Checks if this hit is potentially a novel allele of the locus in the database.
+        :param min_id: Min % identity
+        :param min_cov: Min % coverage
+        :return: True if the allele is new, False otherwise
+        """
+        if self.is_perfect_hit():
+            return False
+        if min_cov == 100.0:
+            return self.percent_identity >= min_id and self.is_full_length()
+        else:
+            raise NotImplementedError('Screening for novel alleles with <100% coverage is not implemented')
+
+    def novel_allele_seq(self) -> Seq:
+        """
+        Returns the sequence of the novel allele.
+        :return: Novel allele sequence (if available)
+        """
+        if not self.is_new_allele():
+            raise ValueError('BLAST hit is not a novel allele')
+        seq_query = Seq(self.query_sequence)
+        return seq_query if self.strand == 'plus' else seq_query.reverse_complement()
 
     @property
     def gaps(self) -> int:
