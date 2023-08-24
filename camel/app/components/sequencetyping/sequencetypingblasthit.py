@@ -20,9 +20,11 @@ class SequenceTypingBlastHit(SequenceTypingHitBase):
         :param locus: Locus
         :param allele_id: Allele id
         :param type_: Locus type ('DNA', 'peptide')
-        :param blast_stats: Blast hit statistics
+        :param blast_stats: Blast hit statistics (optional)
         """
-        super().__init__(locus, allele_id)
+        novel_allele_seq = blast_stats.novel_allele_seq() if (
+                blast_stats is not None and blast_stats.is_new_allele()) else None
+        super().__init__(locus, allele_id, novel_allele_seq)
         self._type = type_
         self._blast_stats = blast_stats
         self._alignment_path = None
@@ -42,7 +44,7 @@ class SequenceTypingBlastHit(SequenceTypingHitBase):
         """
         return [
             self.locus,
-            self.allele_id,
+            self.allele_id + ('*' if self.is_new_allele() else ''),
             '{:.2f}'.format(self._blast_stats.percent_identity) if self.blast_stats else '-',
             self.blast_stats.length_statistic if self.blast_stats else '-',
             self._type
@@ -71,7 +73,8 @@ class SequenceTypingBlastHit(SequenceTypingHitBase):
             alignment_cell = HtmlTableCell('view', link=str(relative_path))
         return [
             self.locus,
-            HtmlTableCell(self.allele_id, self.color, link=self.allele_page_url),
+            HtmlTableCell(
+                self.allele_id + ('*' if self.is_new_allele() else ''), self.color, link=self.allele_page_url),
             '{:.2f}'.format(self.blast_stats.percent_identity) if self.blast_stats else '-',
             self.blast_stats.length_statistic if self.blast_stats else '-',
             self._type,
@@ -89,14 +92,15 @@ class SequenceTypingBlastHit(SequenceTypingHitBase):
         return SequenceTypingBlastHit(locus, SequenceTypingHitBase.SYMBOL_NO_HIT, type_, None)
 
     @staticmethod
-    def create_multi_hit(locus: str, type_: str) -> 'SequenceTypingBlastHit':
+    def create_multi_hit(locus: str, type_: str, blast_stats: BlastHitStatistics) -> 'SequenceTypingBlastHit':
         """
         Returns a multi hit.
         :param locus: Locus
         :param type_: Locus type
+        :param blast_stats: BLAST hit statistics
         :return: None
         """
-        return SequenceTypingBlastHit(locus, SequenceTypingBlastHit.SYMBOL_MULTI_HIT, type_, None)
+        return SequenceTypingBlastHit(locus, SequenceTypingBlastHit.SYMBOL_MULTI_HIT, type_, blast_stats)
 
     @property
     def blast_stats(self) -> BlastHitStatistics:

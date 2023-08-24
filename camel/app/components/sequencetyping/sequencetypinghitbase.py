@@ -1,6 +1,8 @@
 import abc
 from typing import Optional, List, Any
 
+from Bio.Seq import Seq
+
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 
 
@@ -13,15 +15,17 @@ class SequenceTypingHitBase(metaclass=abc.ABCMeta):
 
     SYMBOL_NO_HIT = '-'
 
-    def __init__(self, locus: str, allele_id: str) -> None:
+    def __init__(self, locus: str, allele_id: str, new_allele_sequence: Optional[Seq] = None) -> None:
         """
         Initializes the typing hit.
         :param locus: Locus
         :param allele_id: Allele id of the hit
+        :param new_allele_sequence: Sequence of the new allele
         """
         self._locus = locus
         self._allele_id = allele_id
         self._allele_page_url_template = None
+        self._new_allele_sequence = new_allele_sequence
 
     @property
     def locus(self) -> str:
@@ -38,6 +42,22 @@ class SequenceTypingHitBase(metaclass=abc.ABCMeta):
         :return: Allele id
         """
         return self._allele_id
+
+    def is_new_allele(self) -> bool:
+        """
+        Returns true if the allele is new.
+        :return: True if new allele, False otherwise
+        """
+        return self._new_allele_sequence is not None
+
+    @property
+    def new_allele_sequence(self) -> Seq:
+        """
+        Returns the sequence of the novel allele sequence.
+        """
+        if not self.is_new_allele():
+            raise ValueError('This hit is not a novel allele')
+        return self._new_allele_sequence
 
     def set_allele_page_url_template(self, url_template: str) -> None:
         """
