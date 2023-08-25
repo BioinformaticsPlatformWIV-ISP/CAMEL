@@ -27,8 +27,6 @@ class HtmlReporterContamination(Tool):
         'S': 'Species'
     }
 
-    TITLE = 'Contamination check'
-
     def __init__(self, camel: Camel) -> None:
         """
         Initializes this tool.
@@ -43,8 +41,9 @@ class HtmlReporterContamination(Tool):
         Executes this tool.
         :return: None
         """
+        reporter_title = f'Contamination check - {self._input_informs["read_type"].capitalize()} reads'
         self._report_section = HtmlReportSection(
-            HtmlReporterContamination.TITLE, subtitle=self._input_informs['kraken2']['_name'])
+            reporter_title, subtitle=self._input_informs['kraken2']['_name'])
         self.__add_database_info(self._input_informs['kraken2'])
         self.__add_filtering_info(self._input_informs['species'])
         self.__add_species_table()

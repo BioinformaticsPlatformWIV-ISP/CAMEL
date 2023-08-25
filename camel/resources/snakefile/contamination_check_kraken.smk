@@ -98,11 +98,13 @@ rule contamination_check_report:
     output:
         VAL_HTML = Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT
     params:
-        running_dir = Path(config['working_dir']) / 'contamination_check' / 'report'
+        running_dir = Path(config['working_dir']) / 'contamination_check' / 'report',
+        read_type = config['read_type']
     run:
         from camel.app.tools.pipelines.quality_checks.htmlreportercontamination import HtmlReporterContamination
         reporter = HtmlReporterContamination(camel)
         SnakemakeUtils.add_pickle_inputs(reporter, input)
+        reporter.add_input_informs({'read_type': params.read_type})
         step = Step(str(rule), reporter, camel, params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
