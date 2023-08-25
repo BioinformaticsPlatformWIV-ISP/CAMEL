@@ -1,9 +1,8 @@
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Dict, Optional
+from typing import Dict, Optional
 
-from camel.app.io.tooliofile import ToolIOFile
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.resources.snakefile import short_read_polishing
@@ -16,7 +15,7 @@ class ShortReadPolishingWrapper(object):
 
     @dataclass
     class PolishingOutput:
-        fasta_contigs: List[ToolIOFile]
+        fasta_contigs: Path
         log_file: Optional[Path] = None
 
     def __init__(self, working_dir: Path) -> None:
