@@ -1,5 +1,7 @@
 from pathlib import Path
 
+from pandas.errors import EmptyDataError
+
 from camel.app.camel import Camel
 from camel.app.io.tooliodirectory import ToolIODirectory
 from camel.app.pipeline.step import Step
@@ -75,23 +77,27 @@ rule mobsuite_create_summary:
     run:
         import pandas as pd
         path_tsv = SnakemakeUtils.load_object(Path(input.TSV))[0].path
-        data_mobsuite = pd.read_table(path_tsv)
+        try:
+            data_mobsuite = pd.read_table(path_tsv)
+            informs_in = SnakemakeUtils.load_object(Path(input.INFORMS))
+            with open(output.TSV,'w') as handle:
+                # Primary cluster id
+                try:
+                    handle.write('\t'.join([
+                        'mob_suite_primary_cluster_ids', ', '.join(list(data_mobsuite['primary_cluster_id']))]))
+                    handle.write('\n')
 
-        informs_in = SnakemakeUtils.load_object(Path(input.INFORMS))
-        with open(output.TSV, 'w') as handle:
-            # Primary cluster id
-            try:
-                handle.write('\t'.join([
-                    'mob_suite_primary_cluster_ids', ', '.join(list(data_mobsuite['primary_cluster_id']))]))
-                handle.write('\n')
-
-                # Contigs classified as plasmids
-                handle.write('\t'.join([
-                    'mob_suite_predicted_plasmid_contigs',
-                    ', '.join(ctg for ctg, status in informs_in['contig_report'].items() if status is not None)
-                ]))
-                handle.write('\n')
-            except KeyError:
+                    # Contigs classified as plasmids
+                    handle.write('\t'.join([
+                        'mob_suite_predicted_plasmid_contigs',
+                        ', '.join(ctg for ctg, status in informs_in['contig_report'].items() if status is not None)
+                    ]))
+                    handle.write('\n')
+                except KeyError:
+                    handle.write('No plasmids found.')
+                    handle.write('\n')
+        except EmptyDataError:
+            with open(output.TSV,'w') as handle:
                 handle.write('No plasmids found.')
                 handle.write('\n')
 
