@@ -368,12 +368,14 @@ rule quality_checks_report:
         JSON = Path(config['working_dir']) / 'quality_checks' / f"{config['read_type']}.json"
     output:
         VAL_HTML = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_REPORT
+    params:
+        read_type = config['read_type']
     run:
         from camel.app.tools.pipelines.quality_checks.htmlreporterqualitychecks import HtmlReporterQualityChecks
         reporter = HtmlReporterQualityChecks(Camel.get_instance())
         with open(input.JSON) as handle:
             informs = json.load(handle)
-        reporter.add_input_informs({'qc_checks': informs})
+        reporter.add_input_informs({'qc_checks': informs, 'read_type': params.read_type})
         reporter.run(Path(output.VAL_HTML).parent)
         SnakemakeUtils.dump_tool_output(reporter, 'VAL_HTML', Path(output.VAL_HTML))
 

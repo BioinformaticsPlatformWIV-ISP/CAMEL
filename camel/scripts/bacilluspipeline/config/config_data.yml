@@ -63,7 +63,12 @@ fastani:
 
 gene_detection:
   gmo:
-    path: /db/pipelines/bacillus/databaseGMM
+#    path: /db/pipelines/bacillus/databaseGMM
+#    path: /mnt/thor_scratch/dbupdate_tests/temp/test_output_3/export/
+    path: /scratch/magodfroid/dbupdate_tests/temp/test_output_3/export/
+    metadata:
+      name: Additional data
+      key: additional
   vfdb_core:
       path: /db/gene_detection/VFDB_core
       perc_identity_cutoff: 90

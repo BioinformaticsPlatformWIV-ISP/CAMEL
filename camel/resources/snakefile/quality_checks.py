@@ -3,9 +3,7 @@ from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Optional, Dict, Any
 
-from camel.resources.snakefile import assembly_canu
 from camel.resources.snakefile import medaka_polishing
-from camel.scripts.bacilluspipeline.snakefile import assembly_flye
 from camel.resources.snakefile.assembly_spades import OUTPUT_ASSEMBLY_MAPPING_INFORMS, OUTPUT_ASSEMBLY_DEPTH_INFORMS
 from camel.resources.snakefile.variant_calling import OUTPUT_VARIANT_CALLING_MAPPING_INFORMS, \
     OUTPUT_VARIANT_CALLING_DEPTH_INFORMS

@@ -3,9 +3,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List
 
-from camel.app.components.html.htmlreport import HtmlReport
 from camel.app.components.html.htmlreportsection import HtmlReportSection
-from camel.app.io.tooliofile import ToolIOFile
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.resources.snakefile import quality_checks, contamination_check_kraken, medaka_polishing, assembly_spades, \
@@ -14,7 +12,7 @@ from camel.resources.snakefile import quality_checks, contamination_check_kraken
 
 @dataclass
 class QCOutput:
-    report_section: HtmlReport
+    report_section: HtmlReportSection
     tsv_summary: Path
     # informs: Path
 
@@ -50,19 +48,10 @@ class QCWrapper(object):
         :param threads: Number of threads
         :return: None
         """
-        if kraken_input is None:
-            kraken_input = []
-        if typing_informs is None:
-            typing_informs = []
-        if depth_informs is None:
-            depth_informs = []
-        if mapping_rate_input is None:
-            mapping_rate_input = []
-        if nanopore_specific is None:
-            nanopore_specific = []
-        output_directory = self._working_dir / 'qc_{}'.format(read_type)
+        if not self._working_dir.exists():
+            self._working_dir.mkdir(parents=True)
         config_data = {
-            'working_dir': str(output_directory),
+            'working_dir': str(self._working_dir),
             'read_type': read_type,
             'analyses': config_parameters['analyses'],
             'quality_checks': {'coverage_mode': config_parameters.get('coverage_mode', 'assembly'),
@@ -72,31 +61,27 @@ class QCWrapper(object):
         }
 
         # for debug - needs to think about it
-        config_data['quality_checks']['disabled_checks'].append('typing')
+        # config_data['quality_checks']['disabled_checks'].append('typing')
 
-        config_file = SnakePipelineUtils.generate_config_file(config_data, output_directory)
+        kraken_pickle = Path(self._working_dir) / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_INFORMS
 
-        kraken_pickle = Path(output_directory) / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_INFORMS
-
-        mapping_rate_informs_nanopore = Path(output_directory) / medaka_polishing.OUTPUT_ASSEMBLY_MAPPING_RATE_INFORMS
-        mapping_rate_informs_illumina = Path(output_directory) / assembly_spades.OUTPUT_ASSEMBLY_MAPPING_INFORMS
+        mapping_rate_informs_nanopore = Path(self._working_dir) / medaka_polishing.OUTPUT_ASSEMBLY_MAPPING_RATE_INFORMS
+        mapping_rate_informs_illumina = Path(self._working_dir) / assembly_spades.OUTPUT_ASSEMBLY_MAPPING_INFORMS
         mapping_rate_informs_illumina_variant = Path(
-            output_directory) / variant_calling.OUTPUT_VARIANT_CALLING_MAPPING_INFORMS
+            self._working_dir) / variant_calling.OUTPUT_VARIANT_CALLING_MAPPING_INFORMS
 
-        depth_informs_nanopore = Path(output_directory) / medaka_polishing.OUTPUT_ASSEMBLY_DEPTH_INFORMS
-        depth_informs_illumina = Path(output_directory) / assembly_spades.OUTPUT_ASSEMBLY_DEPTH_INFORMS
-        depth_informs_illumina_variant = Path(output_directory) / variant_calling.OUTPUT_VARIANT_CALLING_DEPTH_INFORMS
+        depth_informs_nanopore = Path(self._working_dir) / medaka_polishing.OUTPUT_ASSEMBLY_DEPTH_INFORMS
+        depth_informs_illumina = Path(self._working_dir) / assembly_spades.OUTPUT_ASSEMBLY_DEPTH_INFORMS
+        depth_informs_illumina_variant = Path(self._working_dir) / variant_calling.OUTPUT_VARIANT_CALLING_DEPTH_INFORMS
 
-        typing_informs_path = Path(output_directory) / 'typing' / '{typing_wildcard}' / 'stats' / 'informs.io'
+        trimming_illumina_pre = Path(self._working_dir) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_FASTQC_TXT_PRE
+        trimming_illumina_post = Path(self._working_dir) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_FASTQC_TXT_POST
 
-        trimming_illumina_pre = Path(output_directory) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_FASTQC_TXT_PRE
-        trimming_illumina_post = Path(output_directory) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_FASTQC_TXT_POST
+        trimming_nanopore_pre = Path(self._working_dir) / trimming_ont.OUTPUT_TRIMMING_ONT_NANOPLOT_TXT_PRE
+        trimming_nanopore_post = Path(self._working_dir) / trimming_ont.OUTPUT_TRIMMING_ONT_NANOPLOT_TXT_POST
 
-        trimming_nanopore_pre = Path(output_directory) / trimming_ont.OUTPUT_TRIMMING_ONT_NANOPLOT_TXT_PRE
-        trimming_nanopore_post = Path(output_directory) / trimming_ont.OUTPUT_TRIMMING_ONT_NANOPLOT_TXT_POST
-
-        nanopore_reads = Path(output_directory) / trimming_ont.OUTPUT_TRIMMING_ONT_READS
-        nanopore_nanoplot_informs = Path(output_directory) / trimming_ont.OUTPUT_TRIMMING_ONT_NANOPLOT_INFORMS_POST
+        nanopore_reads = Path(self._working_dir) / trimming_ont.OUTPUT_TRIMMING_ONT_READS
+        nanopore_nanoplot_informs = Path(self._working_dir) / trimming_ont.OUTPUT_TRIMMING_ONT_NANOPLOT_INFORMS_POST
 
         if read_type == 'illumina':
             mode = config_data['quality_checks']['coverage_mode']
@@ -131,19 +116,24 @@ class QCWrapper(object):
             kraken_pickle.parent.mkdir(exist_ok=True, parents=True)
             shutil.copyfile(kraken_input, kraken_pickle)
 
-        # for mlst_key in [key for key in config_data['analyses'] if 'mlst' in key]:
-        #     typing_under_study = typing_informs_path.format(typing_wildcard=mlst_key)
-        #     typing_under_study.parent.mkdir(exist_ok=True, parents=True)
-        #     shutil.copyfile(typing_informs[mlst_key], typing_under_study)
+        if 'cgmlst' in config_data['quality_checks']['typing_scheme'] and typing_informs is not None:
+            typing_informs_path = str(Path(self._working_dir) / 'typing' / '{typing_wildcard}' / 'stats' /
+                                      'informs.io').format(typing_wildcard=config_data['quality_checks']['typing_scheme'])
+            Path(typing_informs_path).parent.mkdir(exist_ok=True, parents=True)
+            shutil.copyfile(typing_informs, typing_informs_path)
+        else:
+            config_data['quality_checks']['disabled_checks'] = 'typing'
+
+        config_file = SnakePipelineUtils.generate_config_file(config_data, self._working_dir)
 
         output_files = {
-            'HTML': output_directory / quality_checks.OUTPUT_QUALITY_CHECKS_REPORT,
-            'TSV': output_directory / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY,
+            'HTML': self._working_dir / quality_checks.OUTPUT_QUALITY_CHECKS_REPORT,
+            'TSV': self._working_dir / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY,
             # 'INFORMS': self._working_dir / quality_checks.OUTPUT_QUALITY_CHECKS_REPORT_JSON,
         }
         SnakePipelineUtils.run_snakemake(
             quality_checks.SNAKEFILE_QUALITY_CHECKS, config_file, list(output_files.values()),
-            output_directory, threads)
+            self._working_dir, threads)
         self.__set_output(output_files)
 
     def __set_output(self, output_files: Dict[str, Path]) -> None:
