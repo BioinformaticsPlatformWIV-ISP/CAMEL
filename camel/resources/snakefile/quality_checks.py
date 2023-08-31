@@ -9,19 +9,23 @@ from camel.resources.snakefile.variant_calling import OUTPUT_VARIANT_CALLING_MAP
     OUTPUT_VARIANT_CALLING_DEPTH_INFORMS
 
 SNAKEFILE_QUALITY_CHECKS = f'{Path(__file__).parent / Path(__file__).stem}.smk'
-OUTPUT_QUALITY_CHECKS_REPORT = Path('quality_checks') / 'report' / 'html.io'
-OUTPUT_QUALITY_CHECKS_SUMMARY = Path('quality_checks') / 'summary' / 'summary_out.tsv'
-OUTPUT_QUALITY_CHECKS_REPORT_JSON = Path('quality_checks') / 'report' / 'informs.json'
+_dir_qc = Path('quality_checks', '{read_type}')
+OUTPUT_QUALITY_CHECKS_REPORT = _dir_qc / 'report' / 'html.io'
+OUTPUT_QUALITY_CHECKS_SUMMARY = _dir_qc / 'summary' / 'summary_out.tsv'
+OUTPUT_QUALITY_CHECKS_REPORT_JSON = _dir_qc / 'report' / 'informs.json'
 
 
-def get_mapping_rate_informs(config) -> Path:
+def get_mapping_rate_informs(config: Dict, read_type: str = None) -> Path:
     """
     Returns the input for the mapping rate.
+    :param read_type: read type
     :param config: Snakemake config
     :return: Mapping rate informs
     """
+    if read_type is None:
+        read_type = config['read_type']
     mode = config['quality_checks'].get('coverage_mode', 'assembly')
-    if config['read_type'] == 'nanopore':
+    if read_type == 'nanopore':
         # return Path(config['working_dir']) / assembly_canu.OUTPUT_ASSEMBLY_MAPPING_RATE_INFORMS
         return Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_MAPPING_RATE_INFORMS
         # return Path(config['working_dir']) / assembly_flye.OUTPUT_ASSEMBLY_MAPPING_RATE_INFORMS
@@ -32,14 +36,17 @@ def get_mapping_rate_informs(config) -> Path:
     raise ValueError(f"Invalid coverage mode: '{mode}'")
 
 
-def get_depth_informs(config) -> Path:
+def get_depth_informs(config, read_type: str = None) -> Path:
     """
     Returns the input for the depth.
+    :param read_type: read type
     :param config: Snakemake config
     :return: Depth informs
     """
+    if read_type is None:
+        read_type = config['read_type']
     mode = config['quality_checks'].get('coverage_mode', 'assembly')
-    if config['read_type'] == 'nanopore':
+    if read_type == 'nanopore':
         # return Path(config['working_dir']) / assembly_canu.OUTPUT_ASSEMBLY_DEPTH_INFORMS
         # return Path(config['working_dir']) / assembly_flye.OUTPUT_ASSEMBLY_DEPTH_INFORMS
         return Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_DEPTH_INFORMS
@@ -48,6 +55,20 @@ def get_depth_informs(config) -> Path:
     elif mode == 'ref':
         return Path(config['working_dir']) / OUTPUT_VARIANT_CALLING_DEPTH_INFORMS
     raise ValueError(f"Invalid coverage mode: '{mode}'")
+
+
+def get_qc_report(config: Dict, read_type: str = None) -> Path:
+    """
+    Returns the QC report.
+    :param config: configuration dictionary
+    :param read_type: read type
+    :return: Path to the report
+    """
+    if read_type is None:
+        read_type = config['read_type']
+    if read_type not in ['illumina', 'nanopore']:
+        raise ValueError(f'Invalid read type: {read_type}')
+    return Path(config['working_dir']) / str(OUTPUT_QUALITY_CHECKS_REPORT).format(read_type=read_type)
 
 
 @dataclass

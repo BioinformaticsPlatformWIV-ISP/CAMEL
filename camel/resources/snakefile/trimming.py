@@ -5,55 +5,77 @@ from typing import Dict, Any, List
 from camel.resources.snakefile import trimming_illumina, trimming_iontorrent, trimming_ont
 
 
-def get_read_type(config: Dict[str, Any]) -> str:
+def get_read_type(config: Dict[str, Any], wildcards: Dict = None) -> str:
     """
     Returns the read type from the Snakemake configuration
     """
-    if 'read_type' not in config:
-        return 'illumina'
-    elif config['read_type'] in ('illumina', 'iontorrent', 'nanopore'):
-        return config['read_type']
-    raise ValueError(f"Invalid read type in config: {config['read_type']}")
+    if wildcards:
+        read_type = str(wildcards.read_type)
+        if read_type not in ['illumina', 'iontorrent', 'nanopore']:
+            raise ValueError(f"Invalid read type in config: {wc.read_type}")
+        return read_type
+    else:
+        if 'read_type' not in config:
+            return 'illumina'
+        elif config['read_type'] in ('illumina', 'iontorrent', 'nanopore'):
+            return config['read_type']
+        raise ValueError(f"Invalid read type in config: {config['read_type']}")
 
 
-def get_trimming_report(config: Dict[str, Any]) -> Path:
+def get_read_type_wildcards(wc: Dict) -> str:
+    """
+    Returns the read type from the wildcards.
+    :param wc: wildcards
+    :return: read type
+    """
+    read_type = str(wc.read_type)
+    if read_type not in ['illumina', 'iontorrent', 'nanopore']:
+        raise ValueError(f"Invalid read type in config: {wc.read_type}")
+    return read_type
+
+
+def get_trimming_report(config: Dict[str, Any], read_type: str = None) -> Path:
     """
     Returns the path to the read trimming report.
+    :param read_type: read type
     :param config: Snakemake configuration
     :return: Path to read trimming report
     """
-    if get_read_type(config) == 'illumina':
+    if read_type is None:
+        read_type = config['read_type']
+    if read_type == 'illumina':
         relative_path = trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_REPORT
-    elif get_read_type(config) == 'iontorrent':
+    elif read_type == 'iontorrent':
         relative_path = trimming_iontorrent.OUTPUT_TRIMMING_IONTORRENT_REPORT
     else:
         relative_path = trimming_ont.OUTPUT_TRIMMING_ONT_REPORT
     return Path(config['working_dir']) / relative_path
 
 
-def get_trimming_summary(config: Dict[str, Any]) -> Path:
+def get_trimming_summary(config: Dict[str, Any], wildcards: Dict = None) -> Path:
     """
     Returns the path to the read trimming summary file.
+    :param wildcards: wildcards
     :param config: Snakemake configuration
     :return: Path to read trimming summary file
     """
-    if get_read_type(config) == 'illumina':
+    if get_read_type(config, wildcards) == 'illumina':
         relative_path = trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_SUMMARY
-    elif get_read_type(config) == 'iontorrent':
+    elif get_read_type(config, wildcards) == 'iontorrent':
         relative_path = trimming_iontorrent.OUTPUT_TRIMMING_IONTORRENT_SUMMARY
     else:
         relative_path = trimming_ont.OUTPUT_TRIMMING_ONT_SUMMARY
     return Path(config['working_dir']) / relative_path
 
 
-def get_trimming_command_informs(config: Dict[str, Any]) -> List[Path]:
+def get_trimming_command_informs(config: Dict[str, Any], wildcards: Dict = None) -> List[Path]:
     """
     Returns a list of informs IO files for the read trimming steps.
     :return: List of informs IO files
     """
-    if get_read_type(config) == 'illumina':
+    if get_read_type(config, wildcards) == 'illumina':
         io_paths = [trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_INFORMS]
-    elif get_read_type(config) == 'iontorrent':
+    elif get_read_type(config, wildcards) == 'iontorrent':
         io_paths = [
             trimming_iontorrent.OUTPUT_TRIMMING_IONTORRENT_INFORMS_FILT_LEN,
             trimming_iontorrent.OUTPUT_TRIMMING_IONTORRENT_INFORMS_FILT_QUAL]
@@ -62,34 +84,36 @@ def get_trimming_command_informs(config: Dict[str, Any]) -> List[Path]:
     return [Path(config['working_dir']) / io for io in io_paths]
 
 
-def get_trimming_dir(config: Dict[str, Any]) -> Path:
+def get_trimming_dir(config: Dict[str, Any], wildcards: Dict = None) -> Path:
     """
     Returns the read trimming directory.
+    :param wildcards: wildcards
     :param config: Snakemake configuration
     :return: Path to read trimming folder
     """
-    if get_read_type(config) == 'illumina':
+    if get_read_type(config, wildcards) == 'illumina':
         dir_ = trimming_illumina.FOLDER_TRIMMING_ILLUMINA
-    elif get_read_type(config) == 'iontorrent':
+    elif get_read_type(config, wildcards) == 'iontorrent':
         dir_ = trimming_iontorrent.FOLDER_TRIMMING_IONTORRENT
     else:
         dir_ = trimming_ont.DIRECTORY_TRIMMING_ONT
     return Path(config['working_dir']) / dir_
 
 
-def get_trimming_fastqc(key: str, config: Dict[str, Any]) -> Path:
+def get_trimming_fastqc(key: str, config: Dict[str, Any], wildcards: Dict = None) -> Path:
     """
     Returns the data file generated by FastQC.
+    :param wildcards: wildcards
     :param key: Key for the step ('pre' or 'post' trimming)
     :param config: Snakemake config
     :return: Path to FastQC file
     """
-    if get_read_type(config) == 'illumina':
+    if get_read_type(config, wildcards) == 'illumina':
         if key == 'pre':
             return Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_FASTQC_TXT_PRE
         elif key == 'post':
             return Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_FASTQC_TXT_POST
-    elif get_read_type(config) == 'iontorrent':
+    elif get_read_type(config, wildcards) == 'iontorrent':
         if key == 'pre':
             return Path(config['working_dir']) / trimming_iontorrent.OUTPUT_TRIMMING_IONTORRENT_FASTQC_PRE
         elif key == 'post':
