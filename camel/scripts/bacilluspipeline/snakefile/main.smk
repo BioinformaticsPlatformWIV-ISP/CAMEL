@@ -13,7 +13,7 @@ from camel.scripts.bacilluspipeline.snakefile import btyper, ani
 include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
 include: trimming_ont.SNAKEFILE_TRIMMING_ONT
 include: contamination_check_kraken.SNAKEFILE_CONTAMINATION_CHECK_KRAKEN
-# include: quality_checks.SNAKEFILE_QUALITY_CHECKS
+include: quality_checks.SNAKEFILE_QUALITY_CHECKS
 include: assembly_spades.SNAKEFILE_ASSEMBLY_SPADES
 include: assembly_flye.SNAKEFILE_ASSEMBLY_FLYE
 include: medaka_polishing.SNAKEFILE_MEDAKA_POLISHING
@@ -157,98 +157,6 @@ rule link_fastq_to_fq_dict:
             SnakemakeUtils.dump_object(nanopore_reads, Path(output.IO_FASTQ))
         else:
             raise ValueError(f'Unsupported read type: {params.read_type}')
-
-rule contamination_check_illumina:
-    input:
-        FASTQ = Path(config['working_dir']) / 'fq_dict.io'
-    output:
-        HTML = Path(config['working_dir']) / 'contamination_check_illumina' / 'kraken_report.io',
-        TSV = Path(config['working_dir']) / 'contamination_check_illumina' / 'kraken_report.tsv',
-        INFORMS = Path(config['working_dir']) / 'contamination_check_illumina' / 'kraken_informs.io'
-    params:
-        dir_ = Path(config['working_dir']) / 'contamination_check_illumina',
-        sample_name = config['sample_name']
-    threads: 4
-    run:
-        from camel.app.components.workflows.kraken2wrapper import Kraken2Wrapper
-        from camel.app.components.workflows.utils.fastqinput import FastqInput
-        from camel.app.io.tooliovalue import ToolIOValue
-        wrapper = Kraken2Wrapper(str(params.dir_))
-        fastq_input_to_wrapper = FastqInput(read_type='illumina', pe=SnakemakeUtils.load_object(Path(input.FASTQ))['PE'], is_trimmed=True, is_pe=True)
-        wrapper.run_workflow(sample_name=params.sample_name, fastq_input=fastq_input_to_wrapper,
-            expected_species='Bacillus', db='/db/kraken2_full/latest/full', level_of_depth='G', threads=threads)
-        SnakemakeUtils.dump_object([ToolIOValue(wrapper.output.report_section)], Path(output.HTML))
-        wrapper.output.tsv_summary.rename(Path(output.TSV))
-        SnakemakeUtils.dump_object(wrapper.output.informs, Path(output.INFORMS))
-
-rule contamination_check_nanopore:
-    input:
-        FASTQ = Path(config['working_dir']) / 'fq_dict.io'
-    output:
-        HTML = Path(config['working_dir']) / 'contamination_check_nanopore' / 'kraken_report.io',
-        TSV = Path(config['working_dir']) / 'contamination_check_nanopore' / 'kraken_report.tsv',
-        INFORMS = Path(config['working_dir']) / 'contamination_check_nanopore' / 'kraken_informs.io'
-    params:
-        dir_ = Path(config['working_dir']) / 'contamination_check_nanopore',
-        sample_name = config['sample_name']
-    threads: 4
-    run:
-        from camel.app.components.workflows.kraken2wrapper import Kraken2Wrapper
-        from camel.app.components.workflows.utils.fastqinput import FastqInput
-        from camel.app.io.tooliovalue import ToolIOValue
-        wrapper = Kraken2Wrapper(str(params.dir_))
-        fastq_input_to_wrapper = FastqInput(read_type='nanopore', se=SnakemakeUtils.load_object(Path(input.FASTQ))['SE'], is_trimmed=True, is_pe=False)
-        wrapper.run_workflow(sample_name=params.sample_name, fastq_input=fastq_input_to_wrapper,
-            expected_species='Bacillus', db='/db/kraken2_full/latest/full', level_of_depth='G', threads=threads)
-        SnakemakeUtils.dump_object([ToolIOValue(wrapper.output.report_section)], Path(output.HTML))
-        wrapper.output.tsv_summary.rename(Path(output.TSV))
-        SnakemakeUtils.dump_object(wrapper.output.informs, Path(output.INFORMS))
-
-rule quality_check_illumina:
-    input:
-        FASTQ = [Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_FASTQC_TXT_PRE, Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_FASTQC_TXT_POST],
-        KRAKEN = Path(config['working_dir']) / 'contamination_check_illumina' / 'kraken_informs.io' if 'kraken' in config['analyses'] else [],
-        MAPPING = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_MAPPING_INFORMS,
-        DEPTH = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_DEPTH_INFORMS,
-        TYPING_CGMLST = str(Path(config['working_dir']) / 'typing' / '{scheme}' / 'stats' / 'informs.io').format(scheme='cgmlst_cereus') if 'cgmlst_cereus' in config['analyses'] else []
-    output:
-        HTML = Path(config['working_dir']) / 'qc_illumina' / 'report.io',
-        TSV = Path(config['working_dir']) / 'qc_illumina' / 'qc_illumina.tsv'
-    params:
-        dir_ = Path(config['working_dir']) / 'qc_illumina'
-    threads: 4
-    run:
-        from camel.app.components.workflows.qualitycheckswrapper import QCWrapper
-        from camel.app.io.tooliovalue import ToolIOValue
-        wrapper = QCWrapper(Path(params.dir_))
-        wrapper.run_workflow(kraken_input=input.KRAKEN, mapping_rate_input=input.MAPPING, depth_informs=input.DEPTH,
-            trimming_input=input.FASTQ, typing_informs=input.TYPING_CGMLST, read_type='illumina', config_parameters=config, threads=threads)
-        wrapper.output.tsv_summary.rename(Path(output.TSV))
-        SnakemakeUtils.dump_object([ToolIOValue(wrapper.output.report_section)], Path(output.HTML))
-
-rule quality_check_nanopore:
-    input:
-        FASTQ = [Path(config['working_dir']) / trimming_ont.OUTPUT_TRIMMING_ONT_NANOPLOT_TXT_PRE, Path(config['working_dir']) / trimming_ont.OUTPUT_TRIMMING_ONT_NANOPLOT_TXT_POST],
-        KRAKEN = Path(config['working_dir']) / 'contamination_check_nanopore' / 'kraken_informs.io' if 'kraken' in config['analyses'] else [],
-        MAPPING = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_MAPPING_RATE_INFORMS,
-        DEPTH = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_DEPTH_INFORMS,
-        ONT_TRIMMED = Path(config['working_dir']) / trimming_ont.OUTPUT_TRIMMING_ONT_READS,
-        NANOPLOT_INFORMS = Path(config['working_dir']) / trimming_ont.OUTPUT_TRIMMING_ONT_NANOPLOT_INFORMS_POST,
-        TYPING_CGMLST = str(Path(config['working_dir']) / 'typing' / '{scheme}' / 'stats' / 'informs.io').format(scheme='cgmlst_cereus') if 'cgmlst_cereus' in config['analyses'] else []
-    output:
-        HTML = Path(config['working_dir']) / 'qc_nanopore' / 'report.io',
-        TSV = Path(config['working_dir']) / 'qc_nanopore' / 'qc_nanopore.tsv'
-    params:
-        dir_ = Path(config['working_dir']) / 'qc_nanopore'
-    threads: 4
-    run:
-        from camel.app.components.workflows.qualitycheckswrapper import QCWrapper
-        from camel.app.io.tooliovalue import ToolIOValue
-        wrapper = QCWrapper(Path(params.dir_))
-        wrapper.run_workflow(kraken_input=input.KRAKEN, mapping_rate_input=input.MAPPING, depth_informs=input.DEPTH,
-            trimming_input=input.FASTQ, typing_informs=input.TYPING_CGMLST, nanopore_specific= [input.ONT_TRIMMED, input.NANOPLOT_INFORMS], read_type='nanopore', config_parameters=config, threads=threads)
-        wrapper.output.tsv_summary.rename(Path(output.TSV))
-        SnakemakeUtils.dump_object([ToolIOValue(wrapper.output.report_section)], Path(output.HTML))
 
 rule copy_fasta_to_polishing:
     """
@@ -446,9 +354,11 @@ rule report_create_commands_section:
         # INFORMS_trimming = trimming.get_trimming_command_informs(config),
         INFORMS_assembly = rules.select_assembly_output.output.INFORMS,
         INFORMS_assembly_filt = rules.select_assembly_output.output.INFORMS_filt,
-        # INFORMS_medaka = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_MAPPING_RATE_INFORMS if config['read_type'] == 'nanopore' else [],
-        # INFORMS_kraken = Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_KRAKEN_INFORMS,
+        INFORMS_kraken_illumina = contamination_check_kraken.get_contamination_check_kraken_informs(config, 'illumina') if config['read_type'] in ['illumina', 'hybrid'] else [],
+        INFORMS_kraken_nanopore = contamination_check_kraken.get_contamination_check_kraken_informs(config, 'nanopore') if config['read_type'] in ['nanopore', 'hybrid'] else [],
         # INFORMS_mapping = quality_checks.get_mapping_rate_informs(config),
+        INFORMS_mapping_illumina = quality_checks.get_mapping_rate_informs(config, 'illumina') if config['read_type'] in ['illumina', 'hybrid'] else [],
+        INFORMS_mapping_nanopore = quality_checks.get_mapping_rate_informs(config, 'nanopore') if config['read_type'] in ['nanopore', 'hybrid'] else [],
         # INFORMS_depth = quality_checks.get_depth_informs(config),
         INFORMS_btyper = Path(config['working_dir']) / btyper.OUTPUT_INFORMS_BTYPER if 'btyper' in config['analyses'] else [],
         INFORMS_fastani = Path(config['working_dir']) / ani.OUTPUT_INFORMS_ANI if 'fastani' in config['analyses'] else [],
@@ -482,15 +392,13 @@ rule report_content_cereus:
     input:
         report_init = rules.report_init.output.HTML,
         # report_downsampling = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_REPORT,
-        # report_trimming = trimming.get_trimming_report(config),
+        report_trimming_illumina = trimming.get_trimming_report(config, 'illumina') if config['read_type'] in ['illumina', 'hybrid'] else [],
+        report_trimming_nanopore = trimming.get_trimming_report(config,'nanopore') if config['read_type'] in ['nanopore', 'hybrid'] else [],
         report_assembly = rules.select_assembly_output.output.HTML,
-        # report_medaka = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_REPORT if config['read_type'] == 'nanopore' else Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_REPORT_EMPTY,
-        # report_kraken = Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT,
-        # report_adv_qc = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_REPORT,
-        report_kraken_illumina = Path(config['working_dir']) / 'contamination_check_illumina' / 'kraken_report.io' if config['read_type'] in ['illumina', 'hybrid'] else [],
-        report_kraken_nanopore = Path(config['working_dir']) / 'contamination_check_nanopore' / 'kraken_report.io' if config['read_type'] in ['nanopore', 'hybrid'] else [],
-        report_adv_qc_illumina = Path(config['working_dir']) / 'qc_illumina' / 'report.io' if config['read_type'] in ['illumina', 'hybrid'] else [],
-        report_adv_qc_nanopore = Path(config['working_dir']) / 'qc_nanopore' / 'report.io' if config['read_type'] in ['nanopore', 'hybrid'] else [],
+        report_kraken_illumina = contamination_check_kraken.get_contamination_check_report(config, 'illumina') if config['read_type'] in ['illumina', 'hybrid'] else [],
+        report_kraken_nanopore = contamination_check_kraken.get_contamination_check_report(config, 'nanopore') if config['read_type'] in ['nanopore', 'hybrid'] else [],
+        report_adv_qc_illumina = quality_checks.get_qc_report(config, 'illumina') if config['read_type'] in ['illumina','hybrid'] else [],
+        report_adv_qc_nanopore = quality_checks.get_qc_report(config, 'nanopore') if config['read_type'] in ['nanopore','hybrid'] else [],
         report_btyper = Path(config['working_dir']) / (btyper.OUTPUT_BTYPER_REPORT if 'btyper' in config['analyses'] else btyper.OUTPUT_BTYPER_REPORT_EMPTY),
         report_amrfinder = Path(config['working_dir']) / (amrfinder.OUTPUT_AMRFINDER_REPORT if 'amrfinder' in config['analyses'] else amrfinder.OUTPUT_AMRFINDER_REPORT_EMPTY),
         report_vfdb_core = gene_detection.get_gene_detection_report('vfdb_core', config),
@@ -513,10 +421,8 @@ rule report_content_cereus:
         Path(params.output_dir).mkdir(exist_ok=True)
         report.add_html_object(SnakemakeUtils.load_object(Path(input.report_init))[0].value)
         report_structure = [
-            # ('Read trimming and basic QC', 'trim', [Path(input.report_downsampling), Path(input.report_trimming)]),
-            # ('Assembly', 'assembly', [Path(input.report_assembly), Path(input.report_medaka)]),
+            ('Read trimming and basic QC', 'trim', [Path(x) for x in (input.report_trimming_illumina, input.report_trimming_nanopore) if x != []]),
             ('Assembly', 'assembly', [Path(input.report_assembly)]),
-            # ('Advanced QC', 'adv_qc', [Path(x) for x in (input.report_adv_qc, input.report_kraken)]),
             ('Advanced QC', 'adv_qc', [Path(x) for x in (input.report_adv_qc_illumina, input.report_adv_qc_nanopore, input.report_kraken_illumina, input.report_kraken_nanopore) if x != []]),
             ('BTyper3', 'btyper3', [Path(input.report_btyper)]),
             ('Virulence detection', 'virulence', [Path(x) for x in (input.report_vfdb_core,)]),
@@ -538,15 +444,14 @@ rule report_content_subtilis:
         report_init = rules.report_init.output.HTML,
         # report_downsampling = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_REPORT,
         # report_trimming = trimming.get_trimming_report(config),
+        report_trimming_illumina = trimming.get_trimming_report(config,'illumina') if config['read_type'] in['illumina','hybrid'] else [],
+        report_trimming_nanopore = trimming.get_trimming_report(config,'nanopore') if config['read_type'] in['nanopore','hybrid'] else [],
         report_assembly = rules.select_assembly_output.output.HTML,
-        # report_medaka = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_REPORT if config['read_type'] == 'nanopore' else Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_REPORT_EMPTY,
-        report_medaka = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_REPORT if config['read_type'] == 'nanopore' else [],
-        # report_kraken = Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT,
-        # report_adv_qc = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_REPORT,
-        report_kraken_illumina= Path(config['working_dir']) / 'contamination_check_illumina' / 'kraken_report.io' if config['read_type'] in['illumina','hybrid'] else[],
-        report_kraken_nanopore= Path(config['working_dir']) / 'contamination_check_nanopore' / 'kraken_report.io' if config['read_type'] in['nanopore','hybrid'] else[],
-        report_adv_qc_illumina = Path(config['working_dir']) / 'qc_illumina' / 'report.io' if config['read_type'] in ['illumina', 'hybrid'] else [],
-        report_adv_qc_nanopore = Path(config['working_dir']) / 'qc_nanopore' / 'report.io' if config['read_type'] in ['nanopore', 'hybrid'] else [],
+        # report_medaka = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_REPORT if config['read_type'] == 'nanopore' else [],
+        report_kraken_illumina = contamination_check_kraken.get_contamination_check_report(config, 'illumina') if (config['read_type'] in ['illumina', 'hybrid'] and 'kraken' in config['analyses']) else [],
+        report_kraken_nanopore = contamination_check_kraken.get_contamination_check_report(config, 'nanopore') if (config['read_type'] in ['nanopore', 'hybrid'] and 'kraken' in config['analyses']) else [],
+        report_adv_qc_illumina = quality_checks.get_qc_report(config, 'illumina') if config['read_type'] in ['illumina', 'hybrid'] else [],
+        report_adv_qc_nanopore = quality_checks.get_qc_report(config, 'nanopore') if config['read_type'] in ['nanopore', 'hybrid'] else [],
         report_fastani = Path(config['working_dir']) / (ani.OUTPUT_ANI_REPORT if 'fastani' in config['analyses'] else ani.OUTPUT_ANI_REPORT_EMPTY),
         report_amrfinder = Path(config['working_dir']) / (amrfinder.OUTPUT_AMRFINDER_REPORT if 'amrfinder' in config['analyses'] else amrfinder.OUTPUT_AMRFINDER_REPORT_EMPTY),
         report_gmo = gene_detection.get_gene_detection_report('gmo', config),
@@ -569,9 +474,8 @@ rule report_content_subtilis:
         report.add_html_object(SnakemakeUtils.load_object(Path(input.report_init))[0].value)
         report_structure = [
             # ('Read trimming and basic QC', 'trim', [Path(input.report_downsampling), Path(input.report_trimming)]),
-            # ('Assembly', 'assembly', [Path(input.report_assembly), Path(input.report_medaka)]),
-            ('Assembly', 'assembly', [Path(x) for x in (input.report_assembly, input.report_medaka) if x != []]),
-            # ('Advanced QC', 'adv_qc', [Path(x) for x in (input.report_adv_qc, input.report_kraken)]),
+            ('Read trimming and basic QC', 'trim', [Path(x) for x in (input.report_trimming_illumina, input.report_trimming_nanopore) if x != []]),
+            ('Assembly', 'assembly', [Path(input.report_assembly)]),
             ('Advanced QC', 'adv_qc', [Path(x) for x in (input.report_adv_qc_illumina, input.report_adv_qc_nanopore, input.report_kraken_illumina, input.report_kraken_nanopore) if x != []]),
             ('FastANI', 'fastani', [Path(input.report_fastani)]),
             ('GMO detection', 'gmo', [Path(input.report_gmo)]),
@@ -634,11 +538,10 @@ rule summary_combine_all:
         # trimming.get_trimming_summary(config),
         Path(config['working_dir']) / rules.select_assembly_output.output.TSV,
         Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_SUMMARY if config['read_type'] == 'nanopore' else [],
-        # Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_SUMMARY if 'kraken' in config['analyses'] else [],
-        # Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY,
-        rules.quality_check_illumina.output.TSV if config['read_type'] in ['illumina', 'hybrid'] else [],
-        rules.quality_check_nanopore.output.TSV if config['read_type'] in ['nanopore', 'hybrid'] else [],
-        Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_SUMMARY,
+        Path(config['working_dir']) / str(quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY).format(read_type='illumina') if config['read_type'] in ['illumina', 'hybrid'] else [],
+        Path(config['working_dir']) / str(quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY).format(read_type='nanopore') if config['read_type'] in ['nanopore', 'hybrid'] else [],
+        Path(config['working_dir']) / str(contamination_check_kraken.OUTPUT_CONTAMINATION_SUMMARY).format(read_type='illumina') if (config['read_type'] in ['illumina', 'hybrid'] and 'kraken' in config['analyses']) else [],
+        Path(config['working_dir']) / str(contamination_check_kraken.OUTPUT_CONTAMINATION_SUMMARY).format(read_type='nanopore') if (config['read_type'] in ['nanopore', 'hybrid'] and 'kraken' in config['analyses']) else [],
         Path(config['working_dir']) / btyper.OUTPUT_BTYPER_SUMMARY if 'btyper' in config['analyses'] else [],
         Path(config['working_dir']) / amrfinder.OUTPUT_AMRFINDER_SUMMARY if 'amrfinder' in config['analyses'] else [],
         Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='vfdb_core') if 'vfdb_core' in config['analyses'] else [],
