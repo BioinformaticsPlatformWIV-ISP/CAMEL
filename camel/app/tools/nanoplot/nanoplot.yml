@@ -1,4 +1,4 @@
-dependencies: [ nanoplot/1.36.2 ]
+dependencies: [ nanoplot/1.41.6 ]
 parameters:
   tsv_stats: { default: true, mandatory: false, option: --tsv_stats, value: null }
 tool_command: NanoPlot

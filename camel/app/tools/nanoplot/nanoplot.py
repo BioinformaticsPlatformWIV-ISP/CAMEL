@@ -17,7 +17,7 @@ class NanoPlot(Tool):
         Initializes this tool.
         :param camel: CAMEL instance
         """
-        super().__init__('NanoPlot', '1.36.2', camel)
+        super().__init__('NanoPlot', '1.41.6', camel)
 
     def _check_input(self) -> None:
         """
