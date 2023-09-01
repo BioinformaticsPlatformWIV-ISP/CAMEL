@@ -1,8 +1,8 @@
 import json
 import logging
+from typing import Tuple, Any, Dict
 
-import os
-
+from camel.app.camel import Camel
 from camel.app.command.command import Command
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
@@ -23,14 +23,14 @@ class SpoTyping(Tool):
         - VAL_type_octal: Octal spoligotype
     """
 
-    def __init__(self, camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initializes this tool.
         :param camel: CAMEL instance
         """
         super().__init__('SpoTyping', '2.1', camel)
 
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
         Checks if the provided input is valid.
         :return: None
@@ -41,31 +41,30 @@ class SpoTyping(Tool):
             raise InvalidInputSpecificationError("Only 1 (SE) or 2 (PE) FASTQ inputs are supported")
         super()._check_input()
 
-    def _execute_tool(self):
+    def _execute_tool(self) -> None:
         """
         Executes this tool.
         :return: None
         """
         self._command.command = ' '.join([
             self._tool_command,
-            ' '.join([f.path for f in self._tool_inputs['FASTQ']]),
+            ' '.join([str(f.path) for f in self._tool_inputs['FASTQ']]),
             ' '.join(self._build_options())
         ])
         self._execute_command()
         type_binary, type_octal = self._parse_output_file()
         self._tool_outputs['VAL_type_binary'] = [ToolIOValue(type_binary)]
         self._tool_outputs['VAL_type_octal'] = [ToolIOValue(type_octal)]
-        self._tool_outputs['LOG'] = [ToolIOFile(os.path.join(self._folder, '{}.log'.format(
-            self._parameters['output_basename'].value)))]
+        self._tool_outputs['LOG'] = [ToolIOFile(self._folder / f"{self._parameters['output_basename'].value}.log")]
 
-    def _parse_output_file(self):
+    def _parse_output_file(self) -> Tuple[str, str]:
         """
         Parses the output file.
         :return: Spoligotype (Binary), Spoligotype (Octal)
         """
-        output_file_path = os.path.join(self._folder, self._parameters['output_basename'].value)
-        if not os.path.isfile(output_file_path):
-            raise ToolExecutionError("Output file not found")
+        output_file_path = self._folder / self._parameters['output_basename'].value
+        if not output_file_path.exists():
+            raise ToolExecutionError(f'Output file not found: {output_file_path}')
         with open(output_file_path, 'r') as handle:
             try:
                 _, type_binary, type_octal = handle.readlines()[-1].strip().split('\t')
@@ -73,7 +72,7 @@ class SpoTyping(Tool):
             except IndexError:
                 raise ToolExecutionError("Output file has an invalid format")
 
-    def _check_command_output(self):
+    def _check_command_output(self) -> None:
         """
         Checks the command output to checks if the tool executed successfully.
         :return: None
@@ -85,13 +84,13 @@ class SpoTyping(Tool):
             else:
                 raise ToolExecutionError(last_line)
 
-    def _extract_metadata(self, type_octal):
+    def _extract_metadata(self, type_octal: str) -> Dict[str, Any]:
         """
         Extracts the metadata for the detected Spoligotype.
         :return: Spoligotype metadata
         """
-        command = Command('{} echo $SPOTYPING_METADATA'.format(self._build_dependencies()))
-        command.run_command(self._folder)
+        command = Command(f'{self._build_dependencies()} echo $SPOTYPING_METADATA')
+        command.run(self._folder)
         metadata_path = command.stdout.strip()
         with open(metadata_path) as handle:
             metadata = json.load(handle)
