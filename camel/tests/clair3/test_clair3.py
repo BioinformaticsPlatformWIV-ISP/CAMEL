@@ -36,7 +36,7 @@ class TestClair3(CamelTestSuite):
         clair3.add_input_files({'FASTA': [TestClair3.FILE_FASTA], 'BAM': [TestClair3.FILE_BAM_ONT]})
         clair3.update_parameters(output_path=self.running_dir, platform='ont', haploid_precise=True, no_phasing=True,
                                  include_ctgs=True,
-                                 model_path='/usr/local/bin/lmod/clair3/0.1.12/bin/models/ont/')
+                                 model_path='/db/clair3/models/ont/')
         clair3.run(self.running_dir)
         self.verify_output_files(clair3, 'VCF')
         self.assertGreater(VCFUtils.count_variants(clair3.tool_outputs['VCF'][0].path), 0)
@@ -52,7 +52,7 @@ class TestClair3(CamelTestSuite):
             '--reference', str(TestClair3.FILE_FASTA),
             '--working-dir', str(self.running_dir),
             '--output', str(output_file_vcf),
-            '--model-path', '/usr/local/bin/lmod/clair3/0.1.12/bin/models/ont/',
+            '--model-path', '/db/clair3/models/ont/',
             '--haploid-precise',
             '--no-phasing',
             '--include-ctgs',
@@ -74,7 +74,7 @@ class TestClair3(CamelTestSuite):
             '--reference', str(TestClair3.FILE_FASTA),
             '--working-dir', str(self.running_dir),
             '--output', str(output_file_vcf),
-            '--model-path', '/usr/local/bin/lmod/clair3/0.1.12/bin/models/ilmn/',
+            '--model-path', '/db/clair3/models/ilmn/',
             '--haploid-precise',
             '--no-phasing',
             '--include-ctgs',
