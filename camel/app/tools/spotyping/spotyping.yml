@@ -1,4 +1,4 @@
-dependencies: [blast/2.6.0, SpoTyping/2.1]
+dependencies: [blast/2.14.0, SpoTyping/2.1_python3]
 parameters:
   min_relaxed: {default: false, mandatory: false, option: --rmin, p_index: 0, value: '1'}
   min_strict: {default: false, mandatory: false, option: --min, p_index: 0, value: '1'}

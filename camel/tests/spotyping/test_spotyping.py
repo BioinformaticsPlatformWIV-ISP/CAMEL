@@ -1,5 +1,4 @@
 import unittest
-from pathlib import Path
 
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.io.tooliofile import ToolIOFile
@@ -21,7 +20,7 @@ class TestSpoTyping(CamelTestSuite):
 
     def test_spotyping(self) -> None:
         """
-        Tests spotyping.
+        Tests the SpoTyping tool.
         :return: None
         """
         spotyping = SpoTyping(self.camel)
@@ -34,6 +33,7 @@ class TestSpoTyping(CamelTestSuite):
             })]
         })
         spotyping.run(self.running_dir)
+        self.assertIn('VAL_type_binary', spotyping.tool_outputs)
         self.verify_output_files(spotyping, 'LOG')
 
 
