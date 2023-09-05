@@ -14,7 +14,7 @@ class RpsBlast(Blast):
         :param camel: Camel instance
         :return: None
         """
-        super().__init__('rpsblast', '2.13.0', camel)
+        super().__init__('rpsblast', '2.14.0', camel)
 
     def _check_input(self) -> None:
         """

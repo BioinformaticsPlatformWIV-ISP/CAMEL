@@ -1,4 +1,4 @@
-dependencies: [blast/2.13.0]
+dependencies: [blast/2.14.0]
 parameters:
   create_html: {default: false, mandatory: false, option: -html, value: null}
   num_alignments: {default: false, mandatory: false, option: -num_alignments, value: '500'}
