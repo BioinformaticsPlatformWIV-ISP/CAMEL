@@ -1,4 +1,4 @@
-dependencies: [blast/2.13.0]
+dependencies: [blast/2.14.0]
 parameters:
   dbtype: {default: true, mandatory: true, option: -dbtype, value: 'nucl'}
 tool_command: makeblastdb
