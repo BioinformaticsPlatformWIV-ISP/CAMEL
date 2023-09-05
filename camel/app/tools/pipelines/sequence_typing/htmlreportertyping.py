@@ -63,7 +63,6 @@ class HtmlReporterTyping(Tool):
         if 'forced_detection_method' in self._parameters:
             self._report_section.add_alert(
                 f"Allele detection performed with <b>{self._parameters['forced_detection_method'].value}</b>.", 'info')
-        self._report_section.add_paragraph('Last updated: {}'.format(self._input_informs['scheme']['last_updated']))
         self._add_novel_alleles_section()
         self.add_scheme_info_section()
         self._tool_outputs['VAL_HTML'] = [ToolIOValue(self._report_section)]

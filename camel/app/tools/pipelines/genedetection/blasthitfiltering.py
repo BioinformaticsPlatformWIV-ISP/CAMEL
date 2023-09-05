@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 from typing import List
 
 from camel.app.camel import Camel
@@ -56,7 +57,7 @@ class BlastHitFiltering(Tool):
             raise InvalidInputSpecificationError("No 'TSV' input found.")
         super(BlastHitFiltering, self)._check_input()
 
-    def __parse_tabular_blast_output(self, tsv_file: str) -> List[GeneDetectionBlastHit]:
+    def __parse_tabular_blast_output(self, tsv_file: Path) -> List[GeneDetectionBlastHit]:
         """
         Parses the tabular input file.
         :param tsv_file: TSV input file

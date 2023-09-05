@@ -44,6 +44,13 @@ class HtmlReporterGeneDetection(Tool):
             self._report_section.add_alert(
                 f"Detection for this DB is always done using '{self._parameters['forced_detection_method'].value}', "
                 f"regardless of pipeline setting.", 'info')
+
+        # Add a custom message (if specified in the parameters)
+        if 'message' in self._parameters:
+            self._report_section.add_alert(
+                self._parameters['message'].value, self._parameters['message_category'].value)
+
+        # Create output
         self._tool_outputs['VAL_HTML'] = [ToolIOValue(self._report_section)]
 
     def _check_input(self) -> None:
