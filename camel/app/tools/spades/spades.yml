@@ -1,4 +1,4 @@
-dependencies: [SPAdes/3.15.5]
+dependencies: [SPAdes/3.15.5_sourcebuilt]
 parameters:
   careful: {default: true, mandatory: false, option: --careful, value: null}
   cov_cutoff: {default: true, mandatory: false, option: --cov-cutoff, value: 'off'}

@@ -56,7 +56,7 @@ class Quast(Tool):
         Concatenates required parameters and options to build the command.
         :return: None
         """
-        options_string = ' '.join(self._build_options() + [f'-o {self._folder}'])
+        options_string = ' '.join(self._build_options() + [f'-o {self._folder}', '--debug'])
         input_string = self.__build_input_string()
         self._command.command = ' '.join([self._tool_command, options_string, input_string])
 
