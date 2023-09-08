@@ -1,7 +1,5 @@
 from pathlib import Path
 
-import pandas as pd
-
 from camel.app.camel import Camel
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
@@ -257,6 +255,7 @@ rule quality_checks_busco:
     params:
         qc_check = quality_checks.QC_CHECKS_BY_KEY['busco']
     run:
+        import json
         data_in = SnakemakeUtils.load_object(Path(input.INFORMS))
         value = data_in['results']['results']['Complete']
         with open(output.JSON, 'w') as handle:
@@ -347,6 +346,7 @@ rule quality_checks_assembly_total_len:
     params:
         qc_check = quality_checks.QC_CHECKS_BY_KEY['assembly_total_len']
     run:
+        import json
         import pandas as pd
 
         # Calc the percentage deviation from the reference genome length
@@ -385,6 +385,8 @@ rule quality_checks_combine_illumina:
     output:
         JSON = Path(config['working_dir']) / 'quality_checks' / 'illumina.json'
     run:
+        import json
+
         # Combine QC check informs
         informs_out = []
         for path_json in [Path(x) for x in input]:
@@ -432,6 +434,8 @@ rule quality_checks_report:
     output:
         VAL_HTML = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_REPORT
     run:
+        import json
+
         from camel.app.tools.pipelines.quality_checks.htmlreporterqualitychecks import HtmlReporterQualityChecks
         reporter = HtmlReporterQualityChecks(Camel.get_instance())
         with open(input.JSON) as handle:
@@ -449,6 +453,8 @@ rule quality_checks_export_summary_info:
     output:
         TSV = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY
     run:
+        import json
+
         with open(input.JSON) as handle:
             informs = json.load(handle)
 
