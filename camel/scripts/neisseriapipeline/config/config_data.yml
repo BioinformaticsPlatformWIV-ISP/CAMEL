@@ -34,7 +34,7 @@ read_trimming:
   export_fastq: '{export_fastq}'
 
 contamination_check:
-  db: /db/kraken2_full/latest/full
+  db: /db/kraken2_microbial/latest
   expected_species: Neisseria meningitidis
 
 quality_checks:

@@ -104,5 +104,9 @@ class HtmlReporterGeneDetection(Tool):
         Adds the database information to the report.
         :return: None
         """
-        self._report_section.add_paragraph('Last updated: {}'.format(self._input_informs['db_info'].get(
-            'last_updated', '{LAST_UPDATED}')))
+        import pprint
+        self._report_section.add_header('Database info', level=4)
+        self._report_section.add_table([
+            ('Last database update', self._input_informs['db_info']['last_updated']),
+            ('Last database change', self._input_informs['db_info'].get('last_change', 'n/a'))
+        ], ['Field', 'Value'], [('class', 'data')])
