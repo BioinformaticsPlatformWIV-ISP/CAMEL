@@ -251,14 +251,14 @@ rule quality_checks_busco:
     Extracts the BUSCO metric from the QUAST output.
     """
     input:
-        TSV = Path(config['working_dir']) / quast.OUTPUT_QUAST_SUMMARY
+        INFORMS = Path(config['working_dir']) / quast.OUTPUT_BUSCO_INFORMS
     output:
         JSON = Path(config['working_dir']) / 'quality_checks' / 'quast_busco.json'
     params:
         qc_check = quality_checks.QC_CHECKS_BY_KEY['busco']
     run:
-        data_in = pd.read_table(input.TSV, names=['key', 'value'])
-        value = data_in[data_in['key'] == 'assembly_busco_complete'].iloc[0]['value']
+        data_in = SnakemakeUtils.load_object(Path(input.INFORMS))
+        value = data_in['results']['results']['Complete']
         with open(output.JSON, 'w') as handle:
             json.dump(params.qc_check.to_dict(value), handle, indent=2)
 

@@ -52,13 +52,36 @@ rule quast_quast:
         SnakemakeUtils.add_pickle_inputs(quast_, input, excluded_keys=['IO'])
         key_reads = 'PE' if params.read_type == 'illumina' else 'SE'
         quast_.add_input_files(SnakePipelineUtils.extracts_fq_input(Path(input.IO), read_type=key_reads))
-        quast_.update_parameters(conserved_genes_finding=True)
+        quast_.update_parameters(conserved_genes_finding=False)
         step = Step(str(rule), quast_, Camel.get_instance(), dir_out)
         step.run_step()
 
         # Collect output
         SnakemakeUtils.dump_tool_outputs(quast_, output, ignore_missing_output=True)
         SnakemakeUtils.dump_object([ToolIODirectory(dir_out)], Path(output.DIR))
+
+rule quast_busco:
+    """
+    Runs BUSCO on the assembly to check completeness.
+    BUSCO is ran outside of QUAST because of dependency issues with the BUSCO installation bundles with QUAST.
+    """
+    input:
+        FASTA = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA
+    output:
+        TXT = Path(config['working_dir']) / 'quast' / 'busco' / 'txt.io',
+        INFORMS = Path(config['working_dir']) / 'quast' / 'busco' / 'informs.io'
+    params:
+        dir_ = Path(config['working_dir']) / 'quast' / 'busco',
+        lineage_dataset = 'bacteria_odb10'
+    threads: 8
+    run:
+        from camel.app.tools.busco.busco import Busco
+        busco = Busco(Camel.get_instance())
+        SnakemakeUtils.add_pickle_inputs(busco, input)
+        step = Step(str(rule), busco, Camel.get_instance(), params.dir_)
+        busco.update_parameters(lineage_dataset=params.lineage_dataset, threads=str(threads))
+        step.run_step()
+        SnakemakeUtils.dump_tool_outputs(busco, output)
 
 rule quast_report:
     """
@@ -70,7 +93,8 @@ rule quast_report:
         FASTA =  Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA,
         DIR = rules.quast_quast.output.DIR,
         INFORMS_quast = rules.quast_quast.output.INFORMS,
-        INFORMS_assembler = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_INFORMS
+        INFORMS_assembler = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_INFORMS,
+        INFORMS_busco = rules.quast_busco.output.INFORMS
     output:
         HTML = Path(config['working_dir']) / 'quast' / 'report' / 'html.io'
     params:
@@ -97,9 +121,8 @@ rule quast_create_summary_out:
         keys_kept = [
             {'key': '# contigs', 'name': 'nb_contigs'},
             {'key': 'Total length', 'name': 'total_length'},
+            {'key': 'Reference length', 'name': 'total_length_ref'},
             {'key': 'N50', 'name': 'n50'},
-            {'key': 'Complete BUSCO (%)', 'name': 'busco_complete'},
-            {'key': 'Partial BUSCO (%)', 'name': 'busco_partial'},
             {'key': 'Genome fraction (%)', 'name': 'genome_fraction'},
             {'key': 'Duplication ratio', 'name': 'dupl_ratio'},
         ]
@@ -109,6 +132,7 @@ rule quast_create_summary_out:
         data_quast = {}
         with path_tsv.open() as handle:
             for line in handle.readlines():
+                print(line.strip())
                 key, value = line.strip().split('\t')
                 data_quast[key] = value
 

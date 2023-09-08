@@ -79,9 +79,24 @@ rule select_fasta:
     input:
         FASTA = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA
     output:
-        FASTA = Path(config['working_dir']) / gene_detection.INPUT_GENE_DETECTION_FASTA
+        FASTA = Path(config['working_dir']) / gene_detection.INPUT_GENE_DETECTION_FASTA,
     shell:
         "cp {input.FASTA} {output.FASTA};"
+
+rule link_fasta_to_typing:
+    """
+    This rule links the output of the assembly workflows to the sequence typing workflow.
+    """
+    input:
+        FASTA = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA
+    output:
+        FASTA_typing = Path(config['working_dir']) / sequence_typing.INPUT_FASTA
+    params:
+        read_type = config['read_type']
+    shell:
+        """
+        cp {input.FASTA} {output.FASTA_typing};
+        """
 
 rule init_summary:
     """
@@ -131,6 +146,7 @@ rule report_create_command_section:
         INFORMS_assembly = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_INFORMS,
         INFORMS_assembly_filt = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FILTERING_INFORMS,
         INFORMS_quast = Path(config['working_dir']) / quast.OUTPUT_QUAST_INFORMS,
+        INFORMS_busco = Path(config['working_dir']) / quast.OUTPUT_BUSCO_INFORMS,
         INFORMS_kraken = Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_KRAKEN_INFORMS if 'kraken' in config['analyses'] else [],
         INFORMS_confindr = Path(config['working_dir']) / confindr.OUTPUT_CONFINDR_INFORMS if 'confindr' in config['analyses'] else [],
         INFORMS_mapping = quality_checks.get_mapping_rate_informs(config),

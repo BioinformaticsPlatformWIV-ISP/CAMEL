@@ -47,7 +47,8 @@ class QuastReporter(Tool):
         Execute this tool.
         :return: None
         """
-        section = HtmlReportSection('Assembly quality', subtitle=self._input_informs['quast']['_name'])
+        subtitle = ', '.join([self._input_informs['quast']['_name'], self._input_informs['busco']['_name']])
+        section = HtmlReportSection('Assembly quality', subtitle=subtitle)
 
         # Parse QUAST input file
         with self._tool_inputs['TSV'][0].path.open() as handle:
@@ -96,13 +97,14 @@ class QuastReporter(Tool):
         :param data_quast: QUAST data
         :return: None
         """
+        busco_stats = self._input_informs['busco']['results']['results'] if 'busco' in self._input_informs else None
         section.add_header('Completeness', 3)
         section.add_table([
             ['Reference length:', f"{int(data_quast['Reference length']):,}"],
             ['Genome fraction:', f"{float(data_quast['Genome fraction (%)']):.2f}%"],
             ['Duplication ratio:', f"{float(data_quast['Duplication ratio']):.2f}"],
-            ['Complete BUSCO:', f"{float(data_quast['Complete BUSCO (%)']):.2f}%"],
-            ['Partial BUSCO:', f"{float(data_quast['Partial BUSCO (%)']):.2f}%"],
+            ['Complete BUSCO:', f"{busco_stats.get('Complete'):.2f}%" if busco_stats else 'n/a'],
+            ['Partial BUSCO:', f"{busco_stats.get('Fragmented'):.2f}%" if busco_stats else 'n/a'],
         ], None, [('class', 'information')])
 
     def __add_section_coverage(self, section: HtmlReportSection, data_quast: Dict[str, Any]) -> None:
