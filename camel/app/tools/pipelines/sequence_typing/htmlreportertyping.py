@@ -122,9 +122,17 @@ class HtmlReporterTyping(Tool):
         else:
             self._report_section.add_table(table_data, table_header, [('class', 'data')])
 
+        # Add regular TSV file
         relative_path = self._sub_folder / output_tsv.name
         self._report_section.add_file(output_tsv, relative_path)
         self._report_section.add_link_to_file("Download (TSV)", relative_path)
+
+        # Add TSV with hashes (if it exists)
+        output_tsv_hashes = output_tsv.parent / output_tsv.name.replace('.tsv', '-hashes.tsv')
+        if not output_tsv_hashes.exists():
+            return
+        relative_path_hashes = self._sub_folder / output_tsv_hashes.name
+        self._report_section.add_file(output_tsv_hashes, relative_path_hashes)
 
     def _check_input(self) -> None:
         """

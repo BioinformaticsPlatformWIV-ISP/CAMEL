@@ -170,24 +170,35 @@ rule typing_export_hits_tabular:
     output:
         TSV = Path(config['working_dir']) / sequence_typing.OUTPUT_TYPING_TSV
     params:
-        working_dir = lambda wildcards: Path(config['working_dir']) / 'typing' / wildcards.scheme / wildcards.locus_type / 'tabular',
+        dir_ = lambda wildcards: Path(config['working_dir']) / 'typing' / wildcards.scheme / wildcards.locus_type / 'tabular',
         sample_name = FileSystemHelper.make_valid(config['sample_name']),
         scheme = lambda wildcards: FileSystemHelper.make_valid(wildcards.scheme),
         locus_type = lambda wildcards: wildcards.locus_type
     run:
+        import sys
         from camel.app.io.tooliofile import ToolIOFile
-        hits = SnakemakeUtils.load_object(Path(input.hits))
-        output_file = params.working_dir / f'typing-{params.scheme}-{params.locus_type}-{params.sample_name}.tsv'
+        import pandas as pd
+
+        hits = [h.value for h in SnakemakeUtils.load_object(Path(input.hits))]
+
+        # No hits detected -> no TSV file is generated
         if len(hits) == 0:
             SnakemakeUtils.dump_object([], Path(output.TSV))
-        else:
-            with output_file.open('w') as handle_out:
-                handle_out.write('\t'.join(hits[0].value.table_column_names()))
-                handle_out.write('\n')
-                for h in hits:
-                    handle_out.write('\t'.join(h.value.to_table_row()))
-                    handle_out.write('\n')
-            SnakemakeUtils.dump_object([ToolIOFile(output_file)], Path(output.TSV))
+            return
+
+        # Export TSV file
+        path_out = Path(str(params.dir_), f'typing-{params.scheme}-{params.locus_type}-{params.sample_name}.tsv')
+        data_hits = pd.DataFrame(data=[h.to_table_row() for h in hits], columns=hits[0].table_column_names())
+        data_hits.to_csv(path_out, sep='\t', index=False)
+        SnakemakeUtils.dump_object([ToolIOFile(path_out)], Path(output.TSV))
+
+        # Export hashed TSV file if there are any novel alleles
+        if not any([h.is_new_allele() for h in hits]):
+            return
+        path_out_hash = Path(str(params.dir_), f'typing-{params.scheme}-{params.locus_type}-{params.sample_name}-hashes.tsv')
+        data_hits = pd.DataFrame(
+            data=[h.to_table_row(hash_allele_ids=True) for h in hits], columns=hits[0].table_column_names())
+        data_hits.to_csv(path_out_hash, sep='\t', index=False)
 
 rule typing_detect_sequence_type:
     """

@@ -37,14 +37,24 @@ class SequenceTypingBlastHit(SequenceTypingHitBase):
         """
         return ['Locus', 'Allele', '% Identity', 'HSP/Locus length', 'Type']
 
-    def to_table_row(self) -> List[str]:
+    def to_table_row(self, hash_allele_ids: bool = False) -> List[str]:
         """
         Returns the hit as a row in a table.
+        :param hash_allele_ids: If True, hashes for new allele ids are included
         :return: Table row
         """
+        # Determine the allele id
+        if not self.is_new_allele():
+            allele_id = self.allele_id
+        elif hash_allele_ids:
+            allele_id = self.new_allele_hash
+        else:
+            allele_id = f'{self.allele_id}*'
+
+        # Return the output data
         return [
             self.locus,
-            self.allele_id + ('*' if self.is_new_allele() else ''),
+            allele_id,
             '{:.2f}'.format(self._blast_stats.percent_identity) if self.blast_stats else '-',
             self.blast_stats.length_statistic if self.blast_stats else '-',
             self._type

@@ -1,5 +1,6 @@
 import abc
-from typing import Optional, List, Any
+import hashlib
+from typing import Optional, List, Any, Union
 
 from Bio.Seq import Seq
 
@@ -42,6 +43,16 @@ class SequenceTypingHitBase(metaclass=abc.ABCMeta):
         :return: Allele id
         """
         return self._allele_id
+
+    @property
+    def new_allele_hash(self) -> Union[str, None]:
+        """
+        Returns the hash of the novel allele (if available).
+        :return: Hash (if available)
+        """
+        if not self.is_new_allele():
+            return
+        return hashlib.md5(str(self._new_allele_sequence).encode('ascii')).hexdigest()[:6]
 
     def is_new_allele(self) -> bool:
         """
@@ -89,9 +100,10 @@ class SequenceTypingHitBase(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def to_table_row(self) -> List[str]:
+    def to_table_row(self, hash_allele_ids: bool = False) -> List[str]:
         """
         Returns the hit as a row in a table.
+        :param hash_allele_ids: If True, hashes for new allele ids are included
         :return: Table row
         """
         pass
