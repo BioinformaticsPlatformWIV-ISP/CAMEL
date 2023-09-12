@@ -3,7 +3,6 @@ from pathlib import Path
 import pandas as pd
 
 from camel.app.camel import Camel
-from camel.app.io.tooliofile import ToolIOFile
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile import assembly_spades
@@ -85,28 +84,20 @@ rule bacmet_blastp:
         fmt = '6 pident sseqid sseq slen qseqid qstart qend'
     threads: 4
     run:
-        from camel.app.command.command import Command
-        from camel.app.error.toolexecutionerror import ToolExecutionError
+        from camel.app.io.tooliofile import ToolIOFile
+        from camel.app.tools.blast.blastp import Blastp
 
-        # Load input file
-        path_fasta = SnakemakeUtils.load_object(Path(str(input.FASTA)))[0].path
-
-        # Load database
+        # Create & run tool
+        blastp = Blastp(Camel.get_instance())
+        blastp.update_parameters(output_format=f'"{params.fmt}"', threads=threads)
+        SnakemakeUtils.add_pickle_input(blastp, 'FASTA', Path(input.FASTA))
         path_db = next(SnakemakeUtils.load_object(Path(input.DB))[0].path.glob('*.fasta'))
+        blastp.add_input_files({'DB_BLAST': [ToolIOFile(path_db)]})
+        step = Step(str(rule), blastp, Camel.get_instance(), params.dir_)
+        step.run_step()
 
-        # Run command
-        path_out = Path(str(params.dir_), 'blastp.tsv')
-        command = Command(' '.join([
-            'module load blast/2.7.1;',
-            f'blastp -query {path_fasta} -db {path_db} -out {path_out} -num_threads {threads} -outfmt "{params.fmt}";'
-        ]))
-        command.run(Path(str(params.dir_)))
-        if not command.returncode == 0:
-            raise ToolExecutionError(f'Error executing blastp: {command.stderr}')
-        SnakemakeUtils.dump_object([ToolIOFile(path_out)], Path(output.TSV))
-
-        # Informs
-        SnakemakeUtils.dump_object({'_name': 'blastp/2.7.1', '_command': command.command}, Path(output.INFORMS))
+        # Dump output
+        SnakemakeUtils.dump_tool_outputs(blastp, output)
 
 rule bacmet_filter_blastp:
     """
@@ -124,6 +115,7 @@ rule bacmet_filter_blastp:
         min_id = 75,
         cols = 'pident sseqid sseq slen qseqid qstart qend'
     run:
+        from camel.app.io.tooliofile import ToolIOFile
         tsv_in = SnakemakeUtils.load_object(Path(input.TSV))[0].path
         data_in = pd.read_table(tsv_in, names=params.cols.split(' '))
         data_in['perc_covered'] = data_in.apply(lambda x: 100.0 * float(len(x['sseq'])) / x['slen'], axis=1)

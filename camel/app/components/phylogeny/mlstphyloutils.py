@@ -16,7 +16,11 @@ def is_perfect(record: pd.Series, detection_method: str) -> bool:
     if detection_method == 'blast':
         if str(record['Allele']) in ('-', '?'):
             return False
-        if float(record['% Identity']) != 100.0:
+        try:
+            identity = float(record['% Identity'])
+        except ValueError:
+            return False
+        if identity != 100.0:
             return False
         len_hsp, len_locus = record['HSP/Locus length'].split('/')
         if not len_hsp == len_locus:

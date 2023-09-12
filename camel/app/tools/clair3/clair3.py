@@ -17,7 +17,7 @@ class Clair3(Tool):
         Initializes this tool
         :param camel: CAMEL instance
         """
-        super().__init__('Clair3', '0.1.12', camel)
+        super().__init__('Clair3', '1.0.4', camel)
 
     def _check_input(self) -> None:
         """

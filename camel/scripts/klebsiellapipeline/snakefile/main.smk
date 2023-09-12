@@ -137,7 +137,9 @@ rule report_command_section:
         INFORMS_resfinder4 = Path(config['working_dir']) / resfinder4.OUTPUT_RESFINDER4_INFORMS if 'resfinder4' in config['analyses'] else [],
         INFORMS_mob_suite = Path(config['working_dir']) / mobsuite.OUTPUT_MOB_SUITE_INFORMS  if 'mob_suite' in config['analyses'] else [],
         INFORMS_kleborate = Path(config['working_dir']) / kleborate.OUTPUT_KLEBORATE_INFORMS if 'kleborate' in config['analyses'] else [],
-        INFORMS_vfdb_core = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='vfdb_core') if 'vfdb_core' in config['analyses'] else []
+        INFORMS_vfdb_core = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='vfdb_core') if 'vfdb_core' in config['analyses'] else [],
+        IFNORMS_bacmet = Path(config['working_dir']) / bacmet.OUTPUT_BACMET_INFORMS if 'bacmet' in config['analyses'] else [],
+        IFNORMS_prodigal = Path(config['working_dir']) / bacmet.OUTPUT_PRODIGAL_INFORMS if 'bacmet' in config['analyses'] else []
     output:
         HTML = Path(config['working_dir']) / 'report' / 'html-commands.io'
     params:

@@ -15,7 +15,7 @@ class Flye(Tool):
         Initializes this tool.
         :param camel: CAMEL instance
         """
-        super().__init__('Flye', '2.9.1', camel)
+        super().__init__('Flye', '2.9.2', camel)
 
     def _check_input(self) -> None:
         """

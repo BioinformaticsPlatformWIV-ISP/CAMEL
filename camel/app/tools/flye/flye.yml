@@ -1,4 +1,4 @@
-dependencies: [flye/2.9.1]
+dependencies: [flye/2.9.2]
 parameters:
   nano_corr: {default: true, mandatory: false, option: --nano-corr, value: ''}
   nano_hq: {default: false, mandatory: false, option: --nano-hq, value: ''}
