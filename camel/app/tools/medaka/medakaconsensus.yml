@@ -1,4 +1,4 @@
-dependencies: [medaka/1.7.3, bcftools/1.15.1, samtools/1.15.1, htslib/1.13, minimap2/2.22]
+dependencies: [medaka/1.7.3, bcftools/1.15.1, samtools/1.15.1, htslib/1.13, minimap2/2.26]
 parameters:
   batch_size: {default: false, mandatory: false, option: --batch_size, value: '100'}
   chunk_len: {default: false, mandatory: false, option: --chunk_len, value: '10000'}
