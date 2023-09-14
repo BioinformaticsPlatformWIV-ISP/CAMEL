@@ -18,7 +18,7 @@ include: medaka_polishing.SNAKEFILE_MEDAKA_POLISHING
 include: short_read_polishing.SNAKEFILE_POLISHING
 include: quality_checks.SNAKEFILE_QC
 
-assembly_steps = ['Flye', 'Medaka', 'Polypolish', 'POLCA', 'Unicycler']
+assembly_steps = ['Flye', 'Medaka', 'Polypolish', 'POLCA', 'Unicycler', 'Medaka-Unicycler', 'Polypolish-Unicycler', 'POLCA-Unicycler']
 
 #########
 # Rules #
@@ -122,15 +122,29 @@ rule unicycler:
         step.run_step()
         SnakemakeUtils.dump_object(unicycler_assembly.informs, Path(output.INFORMS))
 
+rule copy_assemblies_to_medaka_input:
+    input:
+        FASTA_unicycler = Path(config['working_dir']) / 'unicycler' / 'assembly.fasta',
+        FASTA_flye = Path(config['working_dir']) / 'assembly_flye' / 'filtering' / 'fasta.io'
+    output:
+        FASTA_medaka_unicycler = str(Path(config['working_dir']) / medaka_polishing.INPUT_ASSEMBLY_FASTA).format(assembly_type='unicycler'),
+        FASTA_medaka_flye = str(Path(config['working_dir']) / medaka_polishing.INPUT_ASSEMBLY_FASTA).format(assembly_type='flye')
+    run:
+        shutil.copyfile(input.FASTA_flye, output.FASTA_medaka_flye)
+        SnakemakeUtils.dump_object([ToolIOFile(Path(input.FASTA_unicycler))], Path(output.FASTA_medaka_unicycler))
+
 rule copy_medaka_to_short_read_polishing:
     input:
-        FASTA = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_FASTA,
+        FASTA_flye = str(Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_FASTA).format(assembly_type='flye'),
+        FASTA_unicycler = str(Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_FASTA).format(assembly_type='unicycler'),
         FASTQ = rules.trim_illumina.output.FQ_dict
     output:
-        FASTA = Path(config['working_dir']) / short_read_polishing.INPUT_ASSEMBLY_FASTA,
+        FASTA_flye = str(Path(config['working_dir']) / short_read_polishing.INPUT_ASSEMBLY_FASTA).format(assembly_type='flye'),
+        FASTA_unicycler = str(Path(config['working_dir']) / short_read_polishing.INPUT_ASSEMBLY_FASTA).format(assembly_type='unicycler'),
         FASTQ = Path(config['working_dir']) / short_read_polishing.INPUT_READS_FASTQ
     run:
-        shutil.copyfile(input.FASTA, output.FASTA)
+        shutil.copyfile(input.FASTA_flye, output.FASTA_flye)
+        shutil.copyfile(input.FASTA_unicycler, output.FASTA_unicycler)
         shutil.copyfile(input.FASTQ, output.FASTQ)
 
 rule combine_informs_quast:
@@ -252,10 +266,10 @@ rule report_command_section:
     input:
         unicycler_commands = Path(config['working_dir']) / 'unicycler' / 'commands.io',
         flye_commands = Path(config['working_dir']) / 'assembly_flye' / 'flye' / 'informs.io',
-        medaka_consensus_commands = Path(config['working_dir']) / 'medaka' / 'commands-consensus.io',
-        medaka_stitch_commands = Path(config['working_dir']) / 'medaka' / 'commands-stitch.io',
-        polypolish_commands = Path(config['working_dir']) / 'polishing' / 'polypolish'  / 'polypolish.io',
-        polca_commands = Path(config['working_dir']) / 'polishing' / 'polca' / 'polca.io',
+        medaka_consensus_commands = [Path(config['working_dir']) / 'medaka' / name / 'commands-consensus.io' for name in {'unicycler', 'flye'}],
+        medaka_stitch_commands = [Path(config['working_dir']) / 'medaka' / name / 'commands-stitch.io' for name in {'unicycler', 'flye'}],
+        polypolish_commands = [Path(config['working_dir']) / 'polishing' / name / 'polypolish'  / 'polypolish.io' for name in {'unicycler', 'flye'}],
+        polca_commands = [Path(config['working_dir']) / 'polishing' / name / 'polca' / 'polca.io' for name in {'unicycler', 'flye'}],
         quast_commands = [Path(config['working_dir']) / 'qc' / name / 'quast' / 'commands.io' for name in assembly_steps],
         quast_combined_commands = Path(config['working_dir']) / 'qc' / 'quast_combined' / 'commands.io',
         bwa_commands = [Path(config['working_dir']) / 'qc' / name / 'read_mapping' / 'illumina' / 'commands.io' for name in assembly_steps],

@@ -14,18 +14,18 @@ rule assembly_flye_map_reads:
     """
     input:
         FQ = Path(config['working_dir']) / 'fq_dict.io',
-        FASTA = Path(config['working_dir']) / medaka_polishing.INPUT_ASSEMBLY_FASTA
+        FASTA = lambda wildcards: Path(config['working_dir']) / str(medaka_polishing.INPUT_ASSEMBLY_FASTA).format(assembly_type = wildcards.assembly_type)
     output:
-        SAM = Path(config['working_dir']) / 'medaka' / 'minimap2' / 'sam.io'
+        SAM = Path(config['working_dir']) / 'medaka' / '{assembly_type}' / 'minimap2' / 'sam.io'
     params:
-        dir_ = Path(config['working_dir']) / 'medaka' / 'minimap2'
+        dir_ = lambda wildcards: Path(config['working_dir']) / 'medaka' / wildcards.assembly_type / 'minimap2'
     run:
         from camel.app.tools.minimap2.minimap2mapping import Minimap2Mapping
         minimap2 = Minimap2Mapping(Camel.get_instance())
-        SnakemakeUtils.add_pickle_input(minimap2, 'FASTA', Path(input.FASTA))
+        SnakemakeUtils.add_pickle_input(minimap2, 'FASTA', Path(str(input.FASTA)))
         minimap2.add_input_files(SnakePipelineUtils.extracts_fq_input(
             Path(input.FQ), key_se='FASTQ', read_type='SE'))
-        step = Step(str(rule), minimap2, Camel.get_instance(), params.dir_)
+        step = Step(str(rule), minimap2, Camel.get_instance(), Path(str(params.dir_)))
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(minimap2, output)
 
@@ -36,13 +36,13 @@ rule assembly_flye_sam_to_bam:
     input:
         SAM = rules.assembly_flye_map_reads.output.SAM
     output:
-        BAM = Path(config['working_dir']) / 'medaka' / 'minimap2' / 'bam.io'
+        BAM = Path(config['working_dir']) / 'medaka' / '{assembly_type}' / 'minimap2' / 'bam.io'
     params:
-        running_dir = Path(config['working_dir']) / 'medaka' / 'minimap2'
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'medaka' / wildcards.assembly_type / 'minimap2'
     run:
         from camel.app.tools.samtools.samtoolsview import SamtoolsView
         samtools_view = SamtoolsView(camel)
-        step = Step(str(rule), samtools_view, camel, params.running_dir)
+        step = Step(str(rule), samtools_view, camel, Path(str(params.running_dir)))
         SnakemakeUtils.add_pickle_inputs(samtools_view, input)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(samtools_view, output)
@@ -54,13 +54,13 @@ rule assembly_flye_sort_bam:
     input:
         BAM = rules.assembly_flye_sam_to_bam.output.BAM
     output:
-        BAM = Path(config['working_dir']) / 'medaka' / 'minimap2' / 'bam_sorted.io'
+        BAM = Path(config['working_dir']) / 'medaka' / '{assembly_type}' / 'minimap2' / 'bam_sorted.io'
     params:
-        running_dir = Path(config['working_dir']) / 'medaka' / 'minimap2'
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'medaka' / wildcards.assembly_type / 'minimap2'
     run:
         from camel.app.tools.samtools.samtoolssort import SamtoolsSort
         samtools_sort = SamtoolsSort(camel)
-        step = Step(str(rule), samtools_sort, camel, params.running_dir)
+        step = Step(str(rule), samtools_sort, camel, Path(str(params.running_dir)))
         SnakemakeUtils.add_pickle_inputs(samtools_sort, input)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(samtools_sort, output)
@@ -74,12 +74,12 @@ rule assembly_flye_samtools_flagstat:
     output:
         INFORMS = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_MAPPING_RATE_INFORMS
     params:
-        dir_ = Path(config['working_dir']) / 'medaka' / 'samtools_flagstat'
+        dir_ = lambda wildcards: Path(config['working_dir']) / 'medaka' / wildcards.assembly_type / 'samtools_flagstat'
     run:
         from camel.app.tools.samtools.samtoolsflagstat import SamtoolsFlagstat
         flagstat = SamtoolsFlagstat(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(flagstat, input)
-        flagstat.run(Path(params.dir_).absolute())
+        flagstat.run(Path(str(params.dir_)).absolute())
         # Calculate mapping rate
         flagstat.informs['mapping_perc'] = 100 * flagstat.informs['mapped'][0] / flagstat.informs['total'][0]
         SnakemakeUtils.dump_tool_outputs(flagstat, output)
@@ -91,14 +91,14 @@ rule assembly_flye_samtools_depth:
     input:
         BAM = rules.assembly_flye_sort_bam.output.BAM
     output:
-        TSV = Path(config['working_dir']) / 'medaka' / 'samtools_depth' / 'tsv.io',
+        TSV = Path(config['working_dir']) / 'medaka' / '{assembly_type}' / 'samtools_depth' / 'tsv.io',
         INFORMS = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_DEPTH_INFORMS
     params:
-        running_dir = Path(config['working_dir']) / 'medaka' / 'samtools_depth'
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'medaka' / wildcards.assembly_type / 'samtools_depth'
     run:
         from camel.app.tools.samtools.samtoolsdepth import SamtoolsDepth
         samtools_depth = SamtoolsDepth(camel)
-        step = Step(str(rule), samtools_depth, camel, params.running_dir)
+        step = Step(str(rule), samtools_depth, camel, Path(str(params.running_dir)))
         SnakemakeUtils.add_pickle_inputs(samtools_depth, input)
         step.run_step()
         samtools_depth.informs['_tag'] = 'Coverage calculation'
@@ -111,15 +111,15 @@ rule assembly_flye_index_bam:
     input:
         BAM = rules.assembly_flye_sort_bam.output.BAM
     output:
-        BAI = Path(config['working_dir']) / 'medaka' / 'minimap2' / 'samtools_sort.bam.bai'
+        BAI = Path(config['working_dir']) / 'medaka' / '{assembly_type}' / 'minimap2' / 'samtools_sort.bam.bai'
     params:
-        running_dir = Path(config['working_dir']) / 'medaka' / 'minimap2'
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'medaka' / wildcards.assembly_type / 'minimap2'
     run:
         from camel.app.tools.samtools.samtoolsindex import SamtoolsIndex
         samtools_index = SamtoolsIndex(camel)
         SnakemakeUtils.add_pickle_inputs(samtools_index, input)
         samtools_index.update_parameters(generate_bai_index=True)
-        step = Step(str(rule), samtools_index, camel, params.running_dir)
+        step = Step(str(rule), samtools_index, camel, Path(str(params.running_dir)))
         step.run_step()
 
 rule assembly_flye_medaka_consensus:
@@ -130,10 +130,10 @@ rule assembly_flye_medaka_consensus:
         BAM = rules.assembly_flye_sort_bam.output.BAM,
         BAI = rules.assembly_flye_index_bam.output.BAI
     output:
-        HDF = Path(config['working_dir']) / 'medaka' / 'raw_hdf.io',
-        INFORMS = Path(config['working_dir']) / 'medaka' / 'commands-consensus.io'
+        HDF = Path(config['working_dir']) / 'medaka' / '{assembly_type}' / 'raw_hdf.io',
+        INFORMS = Path(config['working_dir']) / 'medaka' / '{assembly_type}' / 'commands-consensus.io'
     params:
-        running_dir = Path(config['working_dir']) / 'medaka',
+        running_dir =  lambda wildcards: Path(config['working_dir']) / 'medaka' / wildcards.assembly_type,
         medaka_options = config.get('polishing', {}).get('medaka', {}).get('consensus', {})
     threads: 8
     run:
@@ -142,7 +142,7 @@ rule assembly_flye_medaka_consensus:
         SnakemakeUtils.add_pickle_input(medaka, 'BAM', Path(input.BAM))
         medaka.update_parameters(**params.medaka_options)
         medaka.update_parameters(threads=threads)
-        step = Step(str(rule), medaka, camel, params.running_dir)
+        step = Step(str(rule), medaka, camel, Path(str(params.running_dir)))
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(medaka, output)
 
@@ -154,10 +154,10 @@ rule polishing_medaka_stitch:
         HDF = rules.assembly_flye_medaka_consensus.output.HDF,
         FASTA = rules.assembly_flye_filter_contig_length.output.FASTA
     output:
-        FASTA = Path(config['working_dir']) / 'medaka' / 'fasta.io',
-        INFORMS = Path(config['working_dir']) / 'medaka' / 'commands-stitch.io'
+        FASTA = Path(config['working_dir']) / 'medaka' / '{assembly_type}' / 'fasta.io',
+        INFORMS = Path(config['working_dir']) /  'medaka' / '{assembly_type}' / 'commands-stitch.io'
     params:
-        working_dir = Path(config['working_dir']) / 'medaka',
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'medaka' / wildcards.assembly_type,
         medaka_options = config.get('polishing',{}).get('medaka',{}).get('stitch',{})
     threads: 8
     run:
@@ -165,7 +165,7 @@ rule polishing_medaka_stitch:
         medaka = MedakaStitch(camel)
         SnakemakeUtils.add_pickle_inputs(medaka, input)
         medaka.update_parameters(**params.medaka_options, threads=threads)
-        step = Step(str(rule), medaka, camel, params.working_dir)
+        step = Step(str(rule), medaka, camel, Path(str(params.running_dir)))
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(medaka, output)
 
@@ -176,14 +176,14 @@ rule polishing_medaka_quast:
     input:
         FASTA = rules.polishing_medaka_stitch.output.FASTA
     output:
-        TSV = Path(config['working_dir']) / 'medaka' / 'quast' / 'tsv.io'
+        TSV = Path(config['working_dir']) / 'medaka' / '{assembly_type}' / 'quast' / 'tsv.io'
     params:
-        running_dir = Path(config['working_dir']) / 'medaka' / 'quast'
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'medaka' / wildcards.assembly_type / 'quast'
     run:
         from camel.app.tools.quast.quast import Quast
         quast = Quast(camel)
         SnakemakeUtils.add_pickle_inputs(quast, input)
-        step = Step(str(rule), quast, camel, params.running_dir)
+        step = Step(str(rule), quast, camel, Path(str(params.running_dir)))
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(quast, output)
 
@@ -194,14 +194,14 @@ rule polishing_medaka_quast_extract_informs:
     input:
         TSV = rules.polishing_medaka_quast.output.TSV
     output:
-        INFORMS = Path(config['working_dir']) / 'medaka' / 'quast' / 'informs.io'
+        INFORMS = Path(config['working_dir']) / 'medaka' / '{assembly_type}' / 'quast' / 'informs.io'
     params:
-        running_dir = Path(config['working_dir']) / 'medaka' / 'quast'
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'medaka' / wildcards.assembly_type / 'quast'
     run:
         from camel.app.tools.quast.quastinformextractor import QuastInformExtractor
         quast_inform_extractor = QuastInformExtractor(camel)
         SnakemakeUtils.add_pickle_inputs(quast_inform_extractor, input)
-        step = Step(str(rule), quast_inform_extractor, camel, params.running_dir)
+        step = Step(str(rule), quast_inform_extractor, camel, Path(str(params.running_dir)))
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(quast_inform_extractor, output)
 
@@ -217,7 +217,7 @@ rule polishing_medaka_report:
     output:
         VAL_HTML = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_REPORT
     params:
-        running_dir = Path(config['working_dir']) / 'medaka' / 'report',
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'medaka' / wildcards.assembly_type / 'report',
         sample_name = config['sample_name']
     run:
         from camel.app.tools.pipelines.assembly.htmlreporterassembly import HtmlReporterAssembly
@@ -226,7 +226,7 @@ rule polishing_medaka_report:
         reporter.add_input_files({'SAMPLE_NAME': [ToolIOValue(params.sample_name)],
                                   'ASSEMBLER': [ToolIOValue('Medaka')]})
         SnakemakeUtils.add_pickle_inputs(reporter, input)
-        step = Step(str(rule), reporter, camel, params.running_dir)
+        step = Step(str(rule), reporter, camel, Path(str(params.running_dir)))
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
 
@@ -239,7 +239,7 @@ rule polishing_medaka_dump_summary_info:
     output:
         TSV = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_SUMMARY
     params:
-        running_dir = Path(config['working_dir']) / 'medaka' / 'summary'
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'medaka' / wildcards.assembly_type / 'summary'
     run:
         quast_informs = SnakemakeUtils.load_object(Path(input.INFORMS_quast))
         summary_data = [

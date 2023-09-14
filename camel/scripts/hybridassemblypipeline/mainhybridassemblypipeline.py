@@ -16,7 +16,7 @@ from camel.app.components.pipelines.basepipeline import BasePipeline
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.scripts.hybridassemblypipeline import CONFIG_DATA
 
-# Note: INCLUDE THE POLISHING FOR UNICYCLER
+
 class MainHybridAssemblyPipeline(BasePipeline):
     """
     Main class to run the hybrid assembly pipeline.
