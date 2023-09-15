@@ -15,6 +15,7 @@ OUTPUT_QUALITY_CHECKS_SUMMARY = _dir_qc / 'summary' / 'summary_out.tsv'
 OUTPUT_QUALITY_CHECKS_REPORT_JSON = _dir_qc / 'report' / 'informs.json'
 
 
+# def get_mapping_rate_informs(config: Dict, read_type: str = None) -> Path:
 def get_mapping_rate_informs(config: Dict, read_type: str = None) -> Path:
     """
     Returns the input for the mapping rate.
@@ -24,10 +25,12 @@ def get_mapping_rate_informs(config: Dict, read_type: str = None) -> Path:
     """
     if read_type is None:
         read_type = config['read_type']
+    assembly_type_variable = config.get('wildcards_assembly', 'long_read_assembly')
     mode = config['quality_checks'].get('coverage_mode', 'assembly')
     if read_type == 'nanopore':
         # return Path(config['working_dir']) / assembly_canu.OUTPUT_ASSEMBLY_MAPPING_RATE_INFORMS
-        return Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_MAPPING_RATE_INFORMS
+        return Path(config['working_dir']) / \
+               str(medaka_polishing.OUTPUT_ASSEMBLY_MAPPING_RATE_INFORMS).format(assembly_type=assembly_type_variable)
         # return Path(config['working_dir']) / assembly_flye.OUTPUT_ASSEMBLY_MAPPING_RATE_INFORMS
     elif mode == 'assembly':
         return Path(config['working_dir']) / OUTPUT_ASSEMBLY_MAPPING_INFORMS
@@ -36,7 +39,7 @@ def get_mapping_rate_informs(config: Dict, read_type: str = None) -> Path:
     raise ValueError(f"Invalid coverage mode: '{mode}'")
 
 
-def get_depth_informs(config, read_type: str = None) -> Path:
+def get_depth_informs(config: Dict, read_type: str = None) -> Path:
     """
     Returns the input for the depth.
     :param read_type: read type
@@ -45,11 +48,13 @@ def get_depth_informs(config, read_type: str = None) -> Path:
     """
     if read_type is None:
         read_type = config['read_type']
+    assembly_type_variable = config.get('wildcards_assembly', 'long_read_assembly')
     mode = config['quality_checks'].get('coverage_mode', 'assembly')
     if read_type == 'nanopore':
         # return Path(config['working_dir']) / assembly_canu.OUTPUT_ASSEMBLY_DEPTH_INFORMS
         # return Path(config['working_dir']) / assembly_flye.OUTPUT_ASSEMBLY_DEPTH_INFORMS
-        return Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_DEPTH_INFORMS
+        return Path(config['working_dir']) / \
+               str(medaka_polishing.OUTPUT_ASSEMBLY_DEPTH_INFORMS).format(assembly_type=assembly_type_variable)
     elif mode == 'assembly':
         return Path(config['working_dir']) / OUTPUT_ASSEMBLY_DEPTH_INFORMS
     elif mode == 'ref':

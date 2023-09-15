@@ -150,6 +150,7 @@ class MainBacillusPipeline(ReportPipeline):
                 export_bam='true' if self._args.report_include_bam else 'false',
                 expected_gc_content=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['gc_content'],
                 genome_size=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['genome_size'],
+                wildcards_assembly='long_read_assembly'
             ), Loader=yaml.SafeLoader))
 
         # Nanopore settings

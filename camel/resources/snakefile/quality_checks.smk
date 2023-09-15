@@ -60,7 +60,7 @@ rule quality_checks_coverage:
         running_dir = lambda wildcards: Path(config['working_dir']) / wildcards.read_type / 'quality_checks'
     run:
         import json
-        samtools_depth_informs = SnakemakeUtils.load_object(Path(input.INFORMS))
+        samtools_depth_informs = SnakemakeUtils.load_object(Path(str(input.INFORMS)))
         median_depth = samtools_depth_informs['median_depth']
         with open(output.JSON, 'w') as handle:
             json.dump(params.qc_check.to_dict(median_depth), handle, indent=2)

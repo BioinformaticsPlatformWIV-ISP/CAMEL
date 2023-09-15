@@ -4,7 +4,7 @@ SNAKEFILE_MEDAKA_POLISHING = f'{Path(__file__).parent / Path(__file__).stem}.smk
 
 _dir_medaka = Path('medaka', '{assembly_type}')
 INPUT_ASSEMBLY_FASTA = _dir_medaka / 'input' / 'fasta.io'
-OUTPUT_ASSEMBLY_FASTA = _dir_medaka / 'fasta.io'
+OUTPUT_ASSEMBLY_FASTA = _dir_medaka / 'stitch' / 'fasta.io'
 OUTPUT_ASSEMBLY_MAPPING_INFORMS = _dir_medaka / 'minimap2' / 'informs.io'
 OUTPUT_ASSEMBLY_MAPPING_RATE_INFORMS = _dir_medaka / 'samtools_flagstat' / 'informs.io'
 OUTPUT_ASSEMBLY_DEPTH_INFORMS = _dir_medaka / 'samtools_depth' / 'informs.io'

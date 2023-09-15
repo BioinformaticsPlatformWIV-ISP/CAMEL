@@ -158,18 +158,30 @@ rule link_fastq_to_fq_dict:
         else:
             raise ValueError(f'Unsupported read type: {params.read_type}')
 
+rule copy_flye_to_medaka:
+    """
+    This rule copies necessary files to the short read polishing snakemake.
+    """
+    input:
+        FASTA = Path(config['working_dir']) / assembly_flye.OUTPUT_ASSEMBLY_FASTA
+    output:
+        FASTA = Path(config['working_dir']) / str(medaka_polishing.INPUT_ASSEMBLY_FASTA).format(assembly_type=config.get('assembly_type', 'long_read_assembly'))
+        # FASTA = Path(config['working_dir']) / 'medaka' / 'long_read_assembly' / 'input' / 'fasta.io'
+    run:
+        shutil.copyfile(input.FASTA, output.FASTA)
+
 rule copy_fasta_to_polishing:
     """
     This rule copies necessary files to the short read polishing snakemake.
     """
     input:
-        FASTA = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_FASTA
+        FASTA = Path(config['working_dir']) / str(medaka_polishing.OUTPUT_ASSEMBLY_FASTA).format(assembly_type=config.get('assembly_type', 'long_read_assembly')),
+        # FASTA = Path(config['working_dir']) / 'medaka' / 'long_read_assembly' / 'stitch' / 'fasta.io'
     output:
-        FASTA = Path(config['working_dir']) / short_read_polishing.INPUT_ASSEMBLY_FASTA
-    shell:
-        """
-        cp {input.FASTA} {output.FASTA}
-        """
+        FASTA = Path(config['working_dir']) / str(short_read_polishing.INPUT_ASSEMBLY_FASTA).format(assembly_type=config.get('assembly_type', 'long_read_assembly'))
+        # FASTA = Path(config['working_dir']) / 'polishing' / 'long_read_assembly' / 'input' / 'fasta.io'
+    run:
+        shutil.copyfile(input.FASTA,output.FASTA)
 
 rule select_fasta_file:
     """
@@ -177,8 +189,8 @@ rule select_fasta_file:
     """
     input:
         FASTA_spades = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'illumina' else [],
-        FASTA_medaka = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else [],
-        FASTA_polished = Path(config['working_dir']) / short_read_polishing.OUTPUT_POLISHING_FASTA if config['read_type'] == 'hybrid' else []
+        FASTA_medaka = Path(config['working_dir']) / str(medaka_polishing.OUTPUT_ASSEMBLY_FASTA).format(assembly_type=config.get('assembly_type', 'long_read_assembly')) if config['read_type'] == 'nanopore' else [],
+        FASTA_polished = Path(config['working_dir']) / str(short_read_polishing.OUTPUT_POLISHING_FASTA).format(assembly_type=config.get('assembly_type', 'long_read_assembly')) if config['read_type'] == 'hybrid' else []
     output:
         FASTA = Path(config['working_dir']) / 'fasta.io'
     params:
@@ -271,16 +283,16 @@ rule select_assembly_output:
     input:
         HTML = [Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_REPORT if config['read_type'] == 'illumina' else [],
                 Path(config['working_dir']) / assembly_flye.OUTPUT_ASSEMBLY_REPORT if config['read_type'] == 'nanopore' else [],
-                Path(config['working_dir']) / short_read_polishing.OUTPUT_ASSEMBLY_REPORT if config['read_type'] == 'hybrid' else []],
+                Path(config['working_dir']) / str(short_read_polishing.OUTPUT_ASSEMBLY_REPORT).format(assembly_type=config.get('assembly_type', 'long_read_assembly')) if config['read_type'] == 'hybrid' else []],
         TSV = [Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_SUMMARY if config['read_type'] == 'illumina' else [],
                Path(config['working_dir']) / assembly_flye.OUTPUT_ASSEMBLY_SUMMARY if config['read_type'] == 'nanopore' else [],
-               Path(config['working_dir']) / short_read_polishing.OUTPUT_ASSEMBLY_SUMMARY if config['read_type'] == 'hybrid' else []],
+               Path(config['working_dir']) / str(short_read_polishing.OUTPUT_ASSEMBLY_SUMMARY).format(assembly_type=config.get('assembly_type', 'long_read_assembly')) if config['read_type'] == 'hybrid' else []],
         INFORMS = [Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_INFORMS if config['read_type'] == 'illumina' else [],
                    Path(config['working_dir']) / assembly_flye.OUTPUT_ASSEMBLY_INFORMS if config['read_type'] == 'nanopore' else [],
-                   Path(config['working_dir']) / short_read_polishing.OUTPUT_ASSEMBLY_INFORMS if config['read_type'] == 'hybrid' else []],
+                   Path(config['working_dir']) / str(short_read_polishing.OUTPUT_ASSEMBLY_INFORMS).format(assembly_type=config.get('assembly_type', 'long_read_assembly')) if config['read_type'] == 'hybrid' else []],
         INFORMS_filt = [Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FILTERING_INFORMS if config['read_type'] == 'illumina' else [],
                         Path(config['working_dir']) / assembly_flye.OUTPUT_ASSEMBLY_FILTERING_INFORMS if config['read_type'] == 'nanopore' else [],
-                        Path(config['working_dir']) / short_read_polishing.OUTPUT_ASSEMBLY_FILTERING_INFORMS if config['read_type'] == 'hybrid' else []]
+                        Path(config['working_dir']) / str(short_read_polishing.OUTPUT_ASSEMBLY_FILTERING_INFORMS).format(assembly_type=config.get('assembly_type', 'long_read_assembly')) if config['read_type'] == 'hybrid' else []]
     output:
         HTML = Path(config['working_dir']) / 'read_type' / 'assembly' / 'html.io',
         TSV = Path(config['working_dir']) / 'read_type' / 'assembly' / 'summary.tsv',

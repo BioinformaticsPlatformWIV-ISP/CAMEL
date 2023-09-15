@@ -44,7 +44,8 @@ rule assembly_flye_filter_contig_length:
     input:
         FASTA = rules.assembly_flye_run.output.FASTA
     output:
-        FASTA = Path(config['working_dir']) / 'assembly_flye' / 'filtering' / 'fasta.io',
+        # FASTA = Path(config['working_dir']) / 'assembly_flye' / 'filtering' / 'fasta.io',
+        FASTA = Path(config['working_dir']) / assembly_flye.OUTPUT_ASSEMBLY_FASTA,
         INFORMS = Path(config['working_dir']) / assembly_flye.OUTPUT_ASSEMBLY_FILTERING_INFORMS
     params:
         running_dir = Path(config['working_dir']) / 'assembly_flye' / 'filtering',

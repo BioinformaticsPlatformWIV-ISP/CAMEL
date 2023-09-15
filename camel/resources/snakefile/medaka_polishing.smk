@@ -130,10 +130,10 @@ rule medaka_polishing_medaka_consensus:
         BAM = rules.medaka_polishing_sort_bam.output.BAM,
         BAI = rules.medaka_polishing_index_bam.output.BAI
     output:
-        HDF = Path(config['working_dir']) / 'medaka' / '{assembly_type}' / 'raw_hdf.io',
-        INFORMS = Path(config['working_dir']) / 'medaka' / '{assembly_type}' / 'commands-consensus.io'
+        HDF = Path(config['working_dir']) / 'medaka' / '{assembly_type}' / 'consensus' / 'raw_hdf.io',
+        INFORMS = Path(config['working_dir']) / 'medaka' / '{assembly_type}' / 'consensus' / 'commands-consensus.io'
     params:
-        running_dir =  lambda wildcards: Path(config['working_dir']) / 'medaka' / wildcards.assembly_type,
+        running_dir =  lambda wildcards: Path(config['working_dir']) / 'medaka' / wildcards.assembly_type / 'consensus',
         medaka_options = config.get('polishing', {}).get('medaka', {}).get('consensus', {})
     threads: 8
     run:
@@ -154,10 +154,10 @@ rule medaka_polishing_medaka_stitch:
         HDF = rules.medaka_polishing_medaka_consensus.output.HDF,
         FASTA = Path(config['working_dir']) / medaka_polishing.INPUT_ASSEMBLY_FASTA
     output:
-        FASTA = Path(config['working_dir']) / 'medaka' / '{assembly_type}' / 'fasta.io',
-        INFORMS = Path(config['working_dir']) /  'medaka' / '{assembly_type}' / 'commands-stitch.io'
+        FASTA = Path(config['working_dir']) / 'medaka' / '{assembly_type}' / 'stitch' / 'fasta.io',
+        INFORMS = Path(config['working_dir']) /  'medaka' / '{assembly_type}' / 'stitch' / 'commands-stitch.io'
     params:
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'medaka' / wildcards.assembly_type,
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'medaka' / wildcards.assembly_type / 'stitch',
         medaka_options = config.get('polishing',{}).get('medaka',{}).get('stitch',{})
     threads: 8
     run:
