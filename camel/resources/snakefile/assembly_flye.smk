@@ -3,7 +3,7 @@ from pathlib import Path
 from camel.app.camel import Camel
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.scripts.bacilluspipeline.snakefile import assembly_flye
+from camel.resources.snakefile import assembly_flye
 
 camel = Camel.get_instance()
 

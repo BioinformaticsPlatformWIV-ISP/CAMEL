@@ -137,15 +137,15 @@ rule copy_medaka_to_short_read_polishing:
     input:
         FASTA_flye = str(Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_FASTA).format(assembly_type='flye'),
         FASTA_unicycler = str(Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_FASTA).format(assembly_type='unicycler'),
-        FASTQ = rules.trim_illumina.output.FQ_dict
+        # FASTQ = rules.trim_illumina.output.FQ_dict
     output:
         FASTA_flye = str(Path(config['working_dir']) / short_read_polishing.INPUT_ASSEMBLY_FASTA).format(assembly_type='flye'),
         FASTA_unicycler = str(Path(config['working_dir']) / short_read_polishing.INPUT_ASSEMBLY_FASTA).format(assembly_type='unicycler'),
-        FASTQ = Path(config['working_dir']) / short_read_polishing.INPUT_READS_FASTQ
+        # FASTQ = Path(config['working_dir']) / short_read_polishing.INPUT_READS_FASTQ
     run:
         shutil.copyfile(input.FASTA_flye, output.FASTA_flye)
         shutil.copyfile(input.FASTA_unicycler, output.FASTA_unicycler)
-        shutil.copyfile(input.FASTQ, output.FASTQ)
+        # shutil.copyfile(input.FASTQ, output.FASTQ)
 
 rule combine_informs_quast:
     """
@@ -265,11 +265,11 @@ rule report_command_section:
     """
     input:
         unicycler_commands = Path(config['working_dir']) / 'unicycler' / 'commands.io',
-        flye_commands = Path(config['working_dir']) / 'assembly_flye' / 'flye' / 'informs.io',
-        medaka_consensus_commands = [Path(config['working_dir']) / 'medaka' / name / 'commands-consensus.io' for name in {'unicycler', 'flye'}],
-        medaka_stitch_commands = [Path(config['working_dir']) / 'medaka' / name / 'commands-stitch.io' for name in {'unicycler', 'flye'}],
+        flye_commands = Path(config['working_dir']) / 'assembly_flye' / 'informs.io',
+        medaka_consensus_commands = [Path(config['working_dir']) / 'medaka' / name / 'consensus' / 'commands-consensus.io' for name in {'unicycler', 'flye'}],
+        medaka_stitch_commands = [Path(config['working_dir']) / 'medaka' / name / 'stitch' / 'commands-stitch.io' for name in {'unicycler', 'flye'}],
         polypolish_commands = [Path(config['working_dir']) / 'polishing' / name / 'polypolish'  / 'polypolish.io' for name in {'unicycler', 'flye'}],
-        polca_commands = [Path(config['working_dir']) / 'polishing' / name / 'polca' / 'polca.io' for name in {'unicycler', 'flye'}],
+        polca_commands = [Path(config['working_dir']) / 'polishing' / name / 'polca' / 'informs.io' for name in {'unicycler', 'flye'}],
         quast_commands = [Path(config['working_dir']) / 'qc' / name / 'quast' / 'commands.io' for name in assembly_steps],
         quast_combined_commands = Path(config['working_dir']) / 'qc' / 'quast_combined' / 'commands.io',
         bwa_commands = [Path(config['working_dir']) / 'qc' / name / 'read_mapping' / 'illumina' / 'commands.io' for name in assembly_steps],

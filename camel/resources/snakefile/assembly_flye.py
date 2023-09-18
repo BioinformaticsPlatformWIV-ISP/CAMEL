@@ -3,8 +3,8 @@ from pathlib import Path
 SNAKEFILE_ASSEMBLY_FLYE = f'{Path(__file__).parent / Path(__file__).stem}.smk'
 
 _dir_flye = Path('assembly_flye')
-OUTPUT_ASSEMBLY_FASTA = _dir_flye / 'flye' / 'filtering' / 'fasta.io'
-OUTPUT_ASSEMBLY_INFORMS = _dir_flye / 'flye' / 'informs.io'
+OUTPUT_ASSEMBLY_FASTA = _dir_flye / 'filtering' / 'fasta.io'
+OUTPUT_ASSEMBLY_INFORMS = _dir_flye / 'informs.io'
 OUTPUT_ASSEMBLY_FILTERING_INFORMS = _dir_flye / 'filtering' / 'informs.io'
 OUTPUT_ASSEMBLY_REPORT = _dir_flye / 'report' / 'html.io'
 OUTPUT_ASSEMBLY_SUMMARY = _dir_flye / 'summary' / 'summary_out.tsv'
