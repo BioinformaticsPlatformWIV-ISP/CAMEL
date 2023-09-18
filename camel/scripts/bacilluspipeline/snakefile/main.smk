@@ -166,7 +166,6 @@ rule copy_flye_to_medaka:
         FASTA = Path(config['working_dir']) / assembly_flye.OUTPUT_ASSEMBLY_FASTA
     output:
         FASTA = Path(config['working_dir']) / str(medaka_polishing.INPUT_ASSEMBLY_FASTA).format(assembly_type=config.get('assembly_type', 'long_read_assembly'))
-        # FASTA = Path(config['working_dir']) / 'medaka' / 'long_read_assembly' / 'input' / 'fasta.io'
     run:
         shutil.copyfile(input.FASTA, output.FASTA)
 
@@ -175,11 +174,9 @@ rule copy_fasta_to_polishing:
     This rule copies necessary files to the short read polishing snakemake.
     """
     input:
-        FASTA = Path(config['working_dir']) / str(medaka_polishing.OUTPUT_ASSEMBLY_FASTA).format(assembly_type=config.get('assembly_type', 'long_read_assembly')),
-        # FASTA = Path(config['working_dir']) / 'medaka' / 'long_read_assembly' / 'stitch' / 'fasta.io'
+        FASTA = Path(config['working_dir']) / str(medaka_polishing.OUTPUT_ASSEMBLY_FASTA).format(assembly_type=config.get('assembly_type', 'long_read_assembly'))
     output:
         FASTA = Path(config['working_dir']) / str(short_read_polishing.INPUT_ASSEMBLY_FASTA).format(assembly_type=config.get('assembly_type', 'long_read_assembly'))
-        # FASTA = Path(config['working_dir']) / 'polishing' / 'long_read_assembly' / 'input' / 'fasta.io'
     run:
         shutil.copyfile(input.FASTA,output.FASTA)
 
@@ -213,8 +210,6 @@ rule link_fasta_to_gene_detection:
         FASTA = rules.select_fasta_file.output.FASTA
     output:
         FASTA_genedetection = Path(config['working_dir']) / gene_detection.INPUT_GENE_DETECTION_FASTA
-    params:
-        read_type = config['read_type']
     run:
         shutil.copyfile(Path(input.FASTA), Path(output.FASTA_genedetection))
 
@@ -226,8 +221,6 @@ rule link_fasta_to_typing:
         FASTA = rules.select_fasta_file.output.FASTA
     output:
         FASTA_typing = Path(config['working_dir']) / sequence_typing.INPUT_FASTA
-    params:
-        read_type = config['read_type']
     run:
         shutil.copyfile(Path(input.FASTA), output.FASTA_typing)
 
@@ -240,8 +233,6 @@ rule link_fasta_to_tools_all:
     output:
         FASTA_amrfinder = Path(config['working_dir']) / amrfinder.INPUT_AMRFINDER_FASTA,
         FASTA_mobsuite = Path(config['working_dir']) / mobsuite.INPUT_MOBSUITE_FASTA
-    params:
-        read_type = config['read_type']
     run:
         shutil.copyfile(Path(input.FASTA),Path(output.FASTA_amrfinder))
         shutil.copyfile(Path(input.FASTA),Path(output.FASTA_mobsuite))
@@ -254,8 +245,6 @@ rule link_fasta_to_tools_subtilis:
         FASTA = rules.select_fasta_file.output.FASTA
     output:
         FASTA_ani = Path(config['working_dir']) / ani.INPUT_FASTA_ANI
-    params:
-        read_type = config['read_type']
     run:
         shutil.copyfile(Path(input.FASTA),Path(output.FASTA_ani))
 
@@ -267,8 +256,6 @@ rule link_fasta_to_tools_cereus:
         FASTA = rules.select_fasta_file.output.FASTA
     output:
         FASTA_btyper = Path(config['working_dir']) / btyper.INPUT_BTYPER_FASTA
-    params:
-        read_type = config['read_type']
     run:
         shutil.copyfile(Path(input.FASTA),Path(output.FASTA_btyper))
 
@@ -363,15 +350,16 @@ rule report_create_commands_section:
     """
     input:
         # INFORMS_downsampling = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_INFORMS,
-        # INFORMS_trimming = trimming.get_trimming_command_informs(config),
+        INFORMS_trimming_illumina = trimming.get_trimming_command_informs(config, 'illumina') if config['read_type'] in ['illumina', 'hybrid'] else [],
+        INFORMS_trimming_nanopore = trimming.get_trimming_command_informs(config, 'nanopore') if config['read_type'] in ['nanopore', 'hybrid'] else [],
         INFORMS_assembly = rules.select_assembly_output.output.INFORMS,
         INFORMS_assembly_filt = rules.select_assembly_output.output.INFORMS_filt,
         INFORMS_kraken_illumina = contamination_check_kraken.get_contamination_check_kraken_informs(config, 'illumina') if config['read_type'] in ['illumina', 'hybrid'] else [],
         INFORMS_kraken_nanopore = contamination_check_kraken.get_contamination_check_kraken_informs(config, 'nanopore') if config['read_type'] in ['nanopore', 'hybrid'] else [],
-        # INFORMS_mapping = quality_checks.get_mapping_rate_informs(config),
         INFORMS_mapping_illumina = quality_checks.get_mapping_rate_informs(config, 'illumina') if config['read_type'] in ['illumina', 'hybrid'] else [],
         INFORMS_mapping_nanopore = quality_checks.get_mapping_rate_informs(config, 'nanopore') if config['read_type'] in ['nanopore', 'hybrid'] else [],
-        # INFORMS_depth = quality_checks.get_depth_informs(config),
+        INFORMS_depth_illumina = quality_checks.get_depth_informs(config, 'illumina') if config['read_type'] in ['illumina', 'hybrid'] else [],
+        INFORMS_depth_nanopore = quality_checks.get_depth_informs(config, 'nanopore') if config['read_type'] in ['nanopore', 'hybrid'] else [],
         INFORMS_btyper = Path(config['working_dir']) / btyper.OUTPUT_INFORMS_BTYPER if 'btyper' in config['analyses'] else [],
         INFORMS_fastani = Path(config['working_dir']) / ani.OUTPUT_INFORMS_ANI if 'fastani' in config['analyses'] else [],
         INFORMS_amrfinder = Path(config['working_dir']) / str(amrfinder.OUTPUT_AMRFINDER_INFORMS) if 'amrfinder' in config['analyses'] else [],
@@ -455,11 +443,9 @@ rule report_content_subtilis:
     input:
         report_init = rules.report_init.output.HTML,
         # report_downsampling = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_REPORT,
-        # report_trimming = trimming.get_trimming_report(config),
         report_trimming_illumina = trimming.get_trimming_report(config,'illumina') if config['read_type'] in['illumina','hybrid'] else [],
         report_trimming_nanopore = trimming.get_trimming_report(config,'nanopore') if config['read_type'] in['nanopore','hybrid'] else [],
         report_assembly = rules.select_assembly_output.output.HTML,
-        # report_medaka = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_REPORT if config['read_type'] == 'nanopore' else [],
         report_kraken_illumina = contamination_check_kraken.get_contamination_check_report(config, 'illumina') if (config['read_type'] in ['illumina', 'hybrid'] and 'kraken' in config['analyses']) else [],
         report_kraken_nanopore = contamination_check_kraken.get_contamination_check_report(config, 'nanopore') if (config['read_type'] in ['nanopore', 'hybrid'] and 'kraken' in config['analyses']) else [],
         report_adv_qc_illumina = quality_checks.get_qc_report(config, 'illumina') if config['read_type'] in ['illumina', 'hybrid'] else [],
@@ -547,7 +533,8 @@ rule summary_combine_all:
     input:
         rules.summary_init.output.TSV,
         # Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_SUMMARY,
-        # trimming.get_trimming_summary(config),
+        trimming.get_trimming_summary(config, 'illumina') if config['read_type'] in ['illumina', 'hybrid'] else [],
+        trimming.get_trimming_summary(config, 'nanopore') if config['read_type'] in ['nanopore', 'hybrid'] else [],
         Path(config['working_dir']) / rules.select_assembly_output.output.TSV,
         Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_SUMMARY if config['read_type'] == 'nanopore' else [],
         Path(config['working_dir']) / str(quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY).format(read_type='illumina') if config['read_type'] in ['illumina', 'hybrid'] else [],

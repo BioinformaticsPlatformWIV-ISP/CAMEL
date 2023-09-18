@@ -38,7 +38,6 @@ rule quality_checks_mapping_rate:
         JSON = Path(config['working_dir']) / 'quality_checks' / '{read_type}' / 'mapping_ref.json'
     params:
         qc_check = quality_checks.QC_CHECKS_BY_KEY[f'map_rate_{config["quality_checks"].get("coverage_mode", "assembly")}'],
-        # key = 'stats_map_rate' if config['read_type'] == 'illumina' else 'mapping_perc'
         key = lambda wildcards: 'stats_map_rate' if wildcards.read_type == 'illumina' else 'mapping_perc'
     run:
         import json
@@ -88,10 +87,8 @@ rule quality_checks_parse_fastqc:
     Tests additional quality metrics based on the FastQC data file output.
     """
     input:
-        # TXT = trimming.get_trimming_fastqc('post', config),
-        # TXT_RAW = trimming.get_trimming_fastqc('pre', config)
-        TXT = lambda wildcards: trimming.get_trimming_fastqc('post', config, wildcards),
-        TXT_RAW = lambda wildcards: trimming.get_trimming_fastqc('pre', config, wildcards)
+        TXT = lambda wildcards: trimming.get_trimming_fastqc('post', config, wildcards.read_type),
+        TXT_RAW = lambda wildcards: trimming.get_trimming_fastqc('pre', config, wildcards.read_type)
     output:
         INFORMS = Path(config['working_dir']) / 'quality_checks' / '{read_type}' / 'parse_fastqc' / 'informs.io'
     params:
@@ -353,17 +350,10 @@ rule quality_checks_combine_nanopore:
     Collects the quality checks for read type 'nanopore'.
     """
     input:
-        # JSON_kraken = rules.quality_checks_kraken.output.JSON if 'kraken' not in config['quality_checks'].get('disabled_checks', []) else [],
-        # JSON_cgmlst = rules.quality_checks_typing_loci.output.JSON if 'typing' not in config['quality_checks'].get('disabled_checks', []) else [],
-        # JSON_cov_ref = rules.quality_checks_coverage.output.JSON if 'coverage' not in config['quality_checks'].get('disabled_checks', []) else [],
-        # JSON_map_rate_ref = rules.quality_checks_mapping_rate.output.JSON if 'coverage' not in config['quality_checks'].get('disabled_checks', []) else [],
         JSON_kraken = Path(str(rules.quality_checks_kraken.output.JSON).format(read_type='nanopore')) if 'kraken' not in config['quality_checks'].get('disabled_checks', []) else [],
         JSON_cgmlst = Path(str(rules.quality_checks_typing_loci.output.JSON).format(read_type='nanopore')) if 'typing' not in config['quality_checks'].get('disabled_checks', []) else [],
         JSON_cov_ref = Path(str(rules.quality_checks_coverage.output.JSON).format(read_type='nanopore')) if 'coverage' not in config['quality_checks'].get('disabled_checks', []) else [],
         JSON_map_rate_ref = Path(str(rules.quality_checks_mapping_rate.output.JSON).format(read_type='nanopore')) if 'coverage' not in config['quality_checks'].get('disabled_checks', []) else [],
-        # JSON_nanoplot_len = rules.quality_checks_nanoplot_len.output.JSON if 'length' not in config['quality_checks'].get('disabled_checks', []) else [],
-        # JSON_nanoplot_qual = rules.quality_checks_nanoplot_qual.output.JSON if 'quality' not in config['quality_checks'].get('disabled_checks', []) else [],
-        # JSON_nanoplot_gc = rules.quality_checks_seqkit_gc.output.JSON if 'gc' not in config['quality_checks'].get('disabled_checks', []) else []
         JSON_nanoplot_len = Path(str(rules.quality_checks_nanoplot_len.output.JSON).format(read_type='nanopore')) if 'length' not in config['quality_checks'].get('disabled_checks', []) else [],
         JSON_nanoplot_qual = Path(str(rules.quality_checks_nanoplot_qual.output.JSON).format(read_type='nanopore')) if 'quality' not in config['quality_checks'].get('disabled_checks', []) else [],
         JSON_nanoplot_gc = Path(str(rules.quality_checks_seqkit_gc.output.JSON).format(read_type='nanopore')) if 'gc' not in config['quality_checks'].get('disabled_checks', []) else []
