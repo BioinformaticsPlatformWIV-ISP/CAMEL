@@ -84,7 +84,8 @@ rule set_trimming_ont_output:
     This rule gzip the filtlong output reads into the correct location.
     """
     input:
-        FASTQ = rules.trim_ont_workflow.output.FASTQ
+        FASTQ = rules.trim_ont_workflow.output.FASTQ,
+        FASTQ_PE = rules.trim_illumina.output.FQ_dict
     output:
         FASTQ = Path(config['working_dir']) / 'trimming' / 'ont' / 'trimmed.fastq.gz',
         FASTQ_IO = Path(config['working_dir']) / 'fq_dict.io'
@@ -94,7 +95,10 @@ rule set_trimming_ont_output:
         input_fastq = open(input.FASTQ, 'rb').read()
         with gzip.open(output.FASTQ, 'wb') as handle:
             handle.write(input_fastq)
-        SnakemakeUtils.dump_object({'SE': [ToolIOFile(Path(output.FASTQ))]}, Path(output.FASTQ_IO))
+        nanopore_reads = {'SE': [ToolIOFile(Path(output.FASTQ))]}
+        illumina_reads = SnakemakeUtils.load_object(Path(input.FASTQ_PE))
+        nanopore_reads.update(illumina_reads)
+        SnakemakeUtils.dump_object(nanopore_reads, Path(output.FASTQ_IO))
 
 rule unicycler:
     """
@@ -137,15 +141,12 @@ rule copy_medaka_to_short_read_polishing:
     input:
         FASTA_flye = str(Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_FASTA).format(assembly_type='flye'),
         FASTA_unicycler = str(Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_FASTA).format(assembly_type='unicycler'),
-        # FASTQ = rules.trim_illumina.output.FQ_dict
     output:
         FASTA_flye = str(Path(config['working_dir']) / short_read_polishing.INPUT_ASSEMBLY_FASTA).format(assembly_type='flye'),
         FASTA_unicycler = str(Path(config['working_dir']) / short_read_polishing.INPUT_ASSEMBLY_FASTA).format(assembly_type='unicycler'),
-        # FASTQ = Path(config['working_dir']) / short_read_polishing.INPUT_READS_FASTQ
     run:
         shutil.copyfile(input.FASTA_flye, output.FASTA_flye)
         shutil.copyfile(input.FASTA_unicycler, output.FASTA_unicycler)
-        # shutil.copyfile(input.FASTQ, output.FASTQ)
 
 rule combine_informs_quast:
     """
