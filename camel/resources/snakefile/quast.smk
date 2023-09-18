@@ -114,6 +114,7 @@ rule quast_create_summary_out:
     Creates the tabular summary output for QUAST.
     """
     input:
+        INFORMS_spades = rules.assembly_spades_run.output.INFORMS,
         TSV = rules.quast_quast.output.TSV
     output:
         TSV = Path(config['working_dir']) / quast.OUTPUT_QUAST_SUMMARY
@@ -125,6 +126,7 @@ rule quast_create_summary_out:
             {'key': 'N50', 'name': 'n50'},
             {'key': 'Genome fraction (%)', 'name': 'genome_fraction'},
             {'key': 'Duplication ratio', 'name': 'dupl_ratio'},
+            {'key': 'tool_version', 'name': 'tool_version'},
         ]
 
         # Parse QUAST report
@@ -132,9 +134,12 @@ rule quast_create_summary_out:
         data_quast = {}
         with path_tsv.open() as handle:
             for line in handle.readlines():
-                print(line.strip())
                 key, value = line.strip().split('\t')
                 data_quast[key] = value
+
+        # Add assembler version
+        spades_informs = SnakemakeUtils.load_object(Path(input.INFORMS_spades))
+        data_quast['tool_version'] = spades_informs['_name']
 
         # Create TSV output
         with open(output.TSV, 'w') as handle:

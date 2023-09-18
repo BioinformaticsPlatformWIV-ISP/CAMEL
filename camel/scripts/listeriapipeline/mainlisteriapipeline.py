@@ -16,7 +16,7 @@ class MainListeriaPipeline(ReportPipeline):
     """
 
     CUSTOM_ANALYSES = [
-        'kraken', 'mlst', 'cgmlst', 'species_confirmation', 'resfinder', 'argannot', 'card', 'ncbi_amr',
+        'kraken', 'confindr', 'mlst', 'cgmlst', 'species_confirmation', 'resfinder', 'argannot', 'card', 'ncbi_amr',
         'virulencefinder', 'vfdb_core', 'plasmidfinder', 'typing_amr', 'typing_virulence', 'metal_detergent',
         'pcr_serogroup'
     ]
@@ -26,7 +26,7 @@ class MainListeriaPipeline(ReportPipeline):
         Initializes the main class.
         :param args: Arguments (optional)
         """
-        super().__init__('Listeria pipeline', '1.2', SNAKEFILE_MAIN, args)
+        super().__init__('Listeria pipeline', '1.3', SNAKEFILE_MAIN, args)
 
     @property
     def title(self) -> str:

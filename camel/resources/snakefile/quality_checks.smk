@@ -351,8 +351,8 @@ rule quality_checks_assembly_total_len:
 
         # Calc the percentage deviation from the reference genome length
         data_quast = pd.read_table(input.TSV, names=['key', 'value'])
-        total_length = data_quast[data_quast['key'] == 'assembly_total_length'].iloc[0]['value']
-        total_length_ref = data_quast[data_quast['key'] == 'assembly_total_length_ref'].iloc[0]['value']
+        total_length = int(data_quast[data_quast['key'] == 'assembly_total_length'].iloc[0]['value'])
+        total_length_ref = int(data_quast[data_quast['key'] == 'assembly_total_length_ref'].iloc[0]['value'])
         perc_deviation = abs(100 * ((total_length / total_length_ref) - 1))
 
         with open(output.JSON, 'w') as handle:
