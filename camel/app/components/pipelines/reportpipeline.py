@@ -5,7 +5,11 @@ import abc
 import argparse
 
 from camel.app.components import mainscriptutils
+from camel.app.components.files.fastqutils import FastqUtils
+from camel.app.components.files.fileutils import FileUtils
+from camel.app.components.phylogeny.snpphylogenyutils import InvalidInputError
 from camel.app.components.pipelines.basepipeline import BasePipeline
+from camel.app.loggers import logger
 
 
 class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
@@ -62,3 +66,22 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         if self._args.library is not None:
             config_data['read_trimming']['adapter'] = self._args.library
         return config_data
+
+    def _validate_fastq_input(self) -> None:
+        """
+        Checks if the provided FASTQ input is valid.
+        :return: None
+        """
+        logger.info(f'Checking FASTQ input')
+        if self._args.read_type == 'illumina':
+            nb_reads_fwd = FastqUtils.count_reads(self._args.fastq_pe[0])
+            nb_reads_rev = FastqUtils.count_reads(self._args.fastq_pe[1])
+            if not nb_reads_fwd == nb_reads_rev:
+                raise InvalidInputError(
+                    f'The number of forward ({nb_reads_fwd:,}) and reverse ({nb_reads_rev:,}) reads should be equal, '
+                    'check that the input files provided are complete and correctly paired.')
+            logger.info(f'FASTQ input is valid')
+            logger.info(f'PE forward FASTQ hash: {FileUtils.hash_file(self._args.fastq_pe[0])}')
+            logger.info(f'PE reverse FASTQ hash: {FileUtils.hash_file(self._args.fastq_pe[1])}')
+        else:
+            logger.debug('FASTQ checking not implemented yet')
