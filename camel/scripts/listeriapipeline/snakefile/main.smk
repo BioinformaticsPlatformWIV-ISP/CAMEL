@@ -209,7 +209,7 @@ rule report_combine_all:
             ('Species identification', 'species', [Path(x) for x in (input.report_species, input.report_mlst)]),
             ('AMR detection', 'amr', [Path(x) for x in (input.report_ncbi_amr, input.report_resfinder)]),
             ('Virulence detection', 'virulence', [Path(x) for x in (input.report_virulence, input.report_vfdb_core)]),
-            ('Plasmid replicon detection', 'virulence', [Path(input.report_plasmidfinder)]),
+            ('Plasmid replicon detection', 'plasmid', [Path(input.report_plasmidfinder)]),
             ('Sequence typing', 'typing', [Path(x) for x in (
                 input.report_amr_typing, input.report_cgmlst, input.report_metal_detergent,
                 input.report_pcr_serogroup, input.report_viru_typing)]),
