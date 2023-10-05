@@ -1,16 +1,12 @@
 #!/usr/bin/env python
 import argparse
-import shutil
 from typing import Optional, List, Dict, Sequence
 
 import yaml
 
 from camel.app.camel import Camel
 from camel.app.components.pipelines.reportpipeline import ReportPipeline
-from camel.app.loggers import logger
-from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-from camel.resources.snakefile import assembly_spades
 from camel.scripts.listeriapipeline import SNAKEFILE_MAIN, CONFIG_DATA
 
 
@@ -20,8 +16,8 @@ class MainListeriaPipeline(ReportPipeline):
     """
 
     CUSTOM_ANALYSES = [
-        'kraken', 'confindr', 'mlst', 'cgmlst', 'species_confirmation', 'resfinder', 'argannot', 'card', 'ncbi_amr',
-        'virulencefinder', 'vfdb_core', 'plasmidfinder', 'typing_amr', 'typing_virulence', 'pcr_serogroup']
+        'kraken', 'confindr', 'mlst', 'cgmlst', 'species_confirmation', 'amrfinder', 'resfinder', 'virulencefinder',
+        'vfdb_core', 'plasmidfinder', 'typing_amr', 'typing_virulence', 'pcr_serogroup']
 
     def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """
@@ -47,13 +43,7 @@ class MainListeriaPipeline(ReportPipeline):
         self._validate_fastq_input()
         config_file = self.__construct_config_file(input_files)
         self._run_snakemake_main(config_file)
-
-        # TODO: move to base class
-        if self._args.output_fasta is not None:
-            path_io = self._args.working_dir / assembly_spades.OUTPUT_ASSEMBLY_FASTA
-            path_fasta = SnakemakeUtils.load_object(path_io)[0].path
-            shutil.copyfile(path_fasta, self._args.output_fasta)
-            logger.info(f'Output FASTA file copied to: {self._args.output_fasta}')
+        self._export_assembly()
 
     def __construct_config_file(self, input_files: List[Dict[str, str]]) -> str:
         """

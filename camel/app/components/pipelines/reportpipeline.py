@@ -1,3 +1,4 @@
+import shutil
 from pathlib import Path
 from typing import Dict, Any, List
 
@@ -10,6 +11,8 @@ from camel.app.components.files.fileutils import FileUtils
 from camel.app.components.phylogeny.snpphylogenyutils import InvalidInputError
 from camel.app.components.pipelines.basepipeline import BasePipeline
 from camel.app.loggers import logger
+from camel.app.snakemake.snakemakeutils import SnakemakeUtils
+from camel.resources.snakefile import assembly_spades
 
 
 class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
@@ -86,3 +89,16 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
             logger.info(f'PE reverse FASTQ hash: {FileUtils.hash_file(self._args.fastq_pe[1])}')
         else:
             logger.debug('FASTQ checking not implemented yet')
+
+    def _export_assembly(self) -> None:
+        """
+        Exports the assembly to the specified output location (optional).
+        :return: None
+        """
+        if self._args.output_fasta is None:
+            logger.debug(f'Not exporting assembly')
+            return
+        path_io = self._args.working_dir / assembly_spades.OUTPUT_ASSEMBLY_FASTA
+        path_fasta = SnakemakeUtils.load_object(path_io)[0].path
+        shutil.copyfile(path_fasta, self._args.output_fasta)
+        logger.info(f'Output FASTA file copied to: {self._args.output_fasta}')

@@ -44,6 +44,7 @@ class MainNeisseriaPipeline(ReportPipeline):
         self._validate_fastq_input()
         config_file = self.__construct_config_file(input_files)
         self._run_snakemake_main(config_file)
+        self._export_assembly()
 
     def __construct_config_file(self, input_files: List[Dict[str, str]]) -> str:
         """

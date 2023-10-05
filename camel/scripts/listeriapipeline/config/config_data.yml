@@ -52,6 +52,9 @@ quast:
     fasta: /db/refgenomes/Listeria_monocytogenes/NC_003210.1.fasta
     gff3: /db/refgenomes/Listeria_monocytogenes/NC_003210.1.gff3
 
+amrfinder:
+  db: /db/amrfinder/latest
+
 ############################
 # Gene detection databases #
 ############################
