@@ -19,7 +19,7 @@ class BcftoolsNorm(Bcftools):
         Initializes this tool.
         :param camel: Camel instance
         """
-        super().__init__('bcftools norm', '1.9', camel)
+        super().__init__('bcftools norm', '1.17', camel)
         self._input_key = None
 
     def _check_input(self) -> None:

@@ -30,6 +30,7 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         argument_parser.add_argument('--output-dir', required=True, type=Path)
         argument_parser.add_argument('--output-html', required=True, type=Path)
         argument_parser.add_argument('--output-tsv', help="Output file for the summary", required=True, type=Path)
+        argument_parser.add_argument('--output-fasta', type=Path, help='output path for assembled contigs')
 
         # Options
         argument_parser.add_argument(

@@ -133,7 +133,6 @@ rule report_command_section:
         INFORMS_cgmlst = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='cgmlst') if 'cgmlst' in config['analyses'] else [],
         INFORMS_typing_amr = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='typing_amr') if 'typing_amr' in config['analyses'] else [],
         INFORMS_virulence = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='typing_virulence') if 'typing_virulence' in config['analyses'] else [],
-        INFORMS_metal = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='metal_detergent') if 'metal_detergent' in config['analyses'] else [],
         INFORMS_pcr_sero = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='pcr_serogroup') if 'pcr_serogroup' in config['analyses'] else []
     output:
         HTML = Path(config['working_dir']) / 'report' / 'html-commands.io'
@@ -176,7 +175,6 @@ rule report_combine_all:
         report_species = get_sequence_typing_report('species_confirmation', config),
         report_amr_typing = get_sequence_typing_report('typing_amr', config),
         report_cgmlst = get_sequence_typing_report('cgmlst', config),
-        report_metal_detergent = get_sequence_typing_report('metal_detergent', config),
         report_pcr_serogroup = get_sequence_typing_report('pcr_serogroup', config),
         report_viru_typing = get_sequence_typing_report('typing_virulence', config),
         # Report
@@ -211,8 +209,7 @@ rule report_combine_all:
             ('Virulence detection', 'virulence', [Path(x) for x in (input.report_virulence, input.report_vfdb_core)]),
             ('Plasmid replicon detection', 'plasmid', [Path(input.report_plasmidfinder)]),
             ('Sequence typing', 'typing', [Path(x) for x in (
-                input.report_amr_typing, input.report_cgmlst, input.report_metal_detergent,
-                input.report_pcr_serogroup, input.report_viru_typing)]),
+                input.report_amr_typing, input.report_cgmlst, input.report_pcr_serogroup, input.report_viru_typing)]),
             ('Citations', 'citations', [Path(input.report_citations)]),
             ('Commands', 'commands', [Path(input.report_commands)])
         ]
@@ -266,7 +263,6 @@ rule summary_combine_all:
         Path(config['working_dir']) / str(OUTPUT_TYPING_SUMMARY).format(scheme='species_confirmation') if 'species_confirmation' in config['analyses'] else [],
         Path(config['working_dir']) / str(OUTPUT_TYPING_SUMMARY).format(scheme='typing_amr') if 'typing_amr' in config['analyses'] else [],
         Path(config['working_dir']) / str(OUTPUT_TYPING_SUMMARY).format(scheme='typing_virulence') if 'typing_amr' in config['analyses'] else [],
-        Path(config['working_dir']) / str(OUTPUT_TYPING_SUMMARY).format(scheme='metal_detergent') if 'metal_detergent' in config['analyses'] else [],
         Path(config['working_dir']) / str(OUTPUT_TYPING_SUMMARY).format(scheme='pcr_serogroup') if 'pcr_serogroup' in config['analyses'] else [],
         Path(config['working_dir']) / str(OUTPUT_TYPING_SUMMARY).format(scheme='cgmlst') if 'cgmlst' in config['analyses'] else []
     output:

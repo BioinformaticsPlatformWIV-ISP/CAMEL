@@ -1,4 +1,4 @@
-dependencies: [bcftools/1.9]
+dependencies: [bcftools/1.17]
 parameters:
   csi_min_interval: {default: false, mandatory: false, option: --min-shift, value: '14'}
   force: {default: true, mandatory: false, option: --force, value: null}

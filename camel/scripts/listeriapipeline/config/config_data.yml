@@ -118,7 +118,5 @@ sequence_typing:
     path: /db/sequence_typing/listeria/antibiotic_resistance
   typing_virulence:
     path: /db/sequence_typing/listeria/virulence
-  metal_detergent:
-    path: /db/sequence_typing/listeria/metal_detergent_resistance
   pcr_serogroup:
     path: /db/sequence_typing/listeria/serogroup
