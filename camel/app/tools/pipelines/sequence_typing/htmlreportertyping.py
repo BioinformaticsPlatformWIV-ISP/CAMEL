@@ -65,6 +65,12 @@ class HtmlReporterTyping(Tool):
                 f"Allele detection performed with <b>{self._parameters['forced_detection_method'].value}</b>.", 'info')
         self._add_novel_alleles_section()
         self.add_scheme_info_section()
+
+        # Add a custom message (if specified in the parameters)
+        if 'message' in self._parameters:
+            self._report_section.add_alert(
+                self._parameters['message'].value, self._parameters['message_category'].value)
+        
         self._tool_outputs['VAL_HTML'] = [ToolIOValue(self._report_section)]
         self.__export_analysis_metadata()
 

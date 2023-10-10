@@ -120,7 +120,7 @@ rule gene_detection_get_column_names:
 
         # Create empty hit
         if params.detection_method == 'blast':
-            empty_hit = GeneDetectionBlastHit('Locus', None, BlastHitStatistics('subject', 0, '', 'query', 0, 0, 0.0))
+            empty_hit = GeneDetectionBlastHit('Locus', None, BlastHitStatistics('subject', 0, '', 'query', 0, 0, '', 0.0, '+'))
         elif params.detection_method == 'srst2':
             empty_hit = GeneDetectionSRST2Hit('DB_cluster', 'Locus', None, 0, '', '', 0.0, 0.0, 0.0)
         elif params.detection_method == 'kma':
@@ -147,7 +147,7 @@ rule gene_detection_report:
         INFORMS_db_info = rules.gene_detection_db_manager.output.INFORMS,
         INFORMS_detection = rules.gene_detection_get_hits.output.INFORMS
     output:
-        VAL_HTML = Path(config['working_dir']) / gene_detection.OUTPUT_GENE_DETECTION_REPORT,
+        VAL_HTML = Path(config['working_dir']) / gene_detection.OUTPUT_GENE_DETECTION_REPORT
     params:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'gene_detection' / wildcards.db / 'report',
         config_data = lambda wildcards: config['gene_detection'][wildcards.db]
@@ -196,7 +196,7 @@ rule gene_detection_dump_summary_info:
     Dumps the summary information from the gene detection in tabular format.
     """
     input:
-        INFORMS_hits = Path(config['working_dir']) / 'gene_detection' / '{db}' / 'hit_selection' / 'selected-hits.io',
+        INFORMS_hits = Path(config['working_dir']) / 'gene_detection' / '{db}' / 'hit_selection' / 'selected-hits.io'
     output:
         TSV = Path(config['working_dir']) / gene_detection.OUTPUT_GENE_DETECTION_SUMMARY
     run:

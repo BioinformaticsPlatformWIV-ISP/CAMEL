@@ -289,7 +289,8 @@ rule typing_create_report:
     params:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'typing' / wildcards.scheme,
         sample_name = config['sample_name'],
-        detection_method = lambda wildcards: SequenceTypingUtils.get_detection_method(config, wildcards.scheme)
+        detection_method = lambda wildcards: SequenceTypingUtils.get_detection_method(config, wildcards.scheme),
+        config_data = lambda wildcards: config['sequence_typing'][wildcards.scheme]
     run:
         from camel.app.io.tooliovalue import ToolIOValue
         from camel.app.tools.pipelines.sequence_typing.htmlreportertyping import HtmlReporterTyping
@@ -305,6 +306,12 @@ rule typing_create_report:
         reporter.add_input_files({'VAL_SAMPLE': [ToolIOValue(params.sample_name)]})
         if params.detection_method != config['detection_method']:
             reporter.update_parameters(forced_detection_method=str(params.detection_method))
+
+        # Optional message
+        if 'message' in params.config_data:
+            reporter.update_parameters(message=params.config_data['message']['content'])
+        if ('message' in params.config_data) and ('category' in params.config_data['message']):
+            reporter.update_parameters(message_category=params.config_data['message']['category'])
 
         # Run the reporter
         step = Step(str(rule), reporter, Camel.get_instance(), Path(str(params.running_dir)), wildcards)
