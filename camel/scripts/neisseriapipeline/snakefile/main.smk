@@ -79,7 +79,7 @@ rule select_fasta:
     input:
         FASTA = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA
     output:
-        FASTA = Path(config['working_dir']) / gene_detection.INPUT_GENE_DETECTION_FASTA,
+        FASTA = Path(config['working_dir']) / gene_detection.INPUT_GENE_DETECTION_FASTA
     shell:
         "cp {input.FASTA} {output.FASTA};"
 
@@ -153,6 +153,7 @@ rule report_create_command_section:
         INFORMS_depth = quality_checks.get_depth_informs(config),
         INFORMS_resfinder = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='resfinder') if 'resfinder' in config['analyses'] else [],
         INFORMS_ncbi_amr = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='ncbi_amr') if 'ncbi_amr' in config['analyses'] else [],
+        INFORMS_rmlst = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='rmlst') if 'rmlst' in config['analyses'] else [],
         INFORMS_mlst = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='mlst') if 'mlst' in config['analyses'] else [],
         INFORMS_rplf = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='rplf') if 'rplf' in config['analyses'] else [],
         INFORMS_bast = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='bast') if 'bast' in config['analyses'] else [],
@@ -216,6 +217,7 @@ rule combine_reports:
         report_adv_qc = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_REPORT,
         report_resfinder = gene_detection.get_gene_detection_report('resfinder', config),
         report_ncbi_amr = gene_detection.get_gene_detection_report('ncbi_amr', config),
+        report_rmlst = sequence_typing.get_sequence_typing_report('rmlst', config),
         report_mlst = sequence_typing.get_sequence_typing_report('mlst', config),
         report_cgmlst = sequence_typing.get_sequence_typing_report('cgmlst', config),
         report_pora = sequence_typing.get_sequence_typing_report('pora', config),
@@ -261,8 +263,9 @@ rule combine_reports:
                 input.report_kraken, input.report_confindr, input.report_adv_qc)]),
             ('Resistance characterization', 'res', [Path(x) for x in (input.report_resfinder, input.report_ncbi_amr)]),
             ('Sequence typing', 'st', [Path(x) for x in (
-                input.report_mlst, input.report_rplf, input.report_pora, input.report_porb, input.report_feta,
-                input.report_resistance_genes, input.report_vaccine_targets, input.report_fhbp, input.report_cgmlst)]),
+                input.report_rmlst, input.report_mlst, input.report_rplf, input.report_pora, input.report_porb,
+                input.report_feta, input.report_resistance_genes, input.report_vaccine_targets, input.report_fhbp,
+                input.report_cgmlst)]),
             ('Antigen typing', 'at', [Path(x) for x in (input.report_bast, input.report_gmats)]),
             ('Serogroup determination', 'serogroup', [Path(
                 input.report_serogroup), Path(input.report_serogroup_legacy)]),
@@ -285,6 +288,7 @@ rule combine_summary_files:
         Path(config['working_dir']) / confindr.OUTPUT_CONFINDR_SUMMARY if 'confindr' in config['analyses'] else [],
         Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='resfinder') if 'resfinder' in config['analyses'] else [],
         Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='ncbi_amr') if 'ncbi_amr' in config['analyses'] else [],
+        Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='rmlst') if 'rmlst' in config['analyses'] else [],
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='mlst') if 'mlst' in config['analyses'] else [],
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='rplf') if 'rplf' in config['analyses'] else [],
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='bast') if 'bast' in config['analyses'] else [],

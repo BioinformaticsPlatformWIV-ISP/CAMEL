@@ -17,7 +17,7 @@ class MainNeisseriaPipeline(ReportPipeline):
     """
 
     CUSTOM_ANALYSES = [
-        'kraken', 'confindr', 'resfinder', 'ncbi_amr', 'mlst', 'rplf', 'bast', 'pora', 'porb', 'feta', 'fhbp',
+        'kraken', 'confindr', 'resfinder', 'ncbi_amr', 'rmlst', 'mlst', 'rplf', 'bast', 'pora', 'porb', 'feta', 'fhbp',
         'resistance_genes', 'vaccine_targets', 'cgmlst', 'gmats', 'serogroup']
 
     def __init__(self, args: Optional[Sequence[str]] = None) -> None:

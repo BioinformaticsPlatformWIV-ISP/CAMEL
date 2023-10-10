@@ -143,6 +143,7 @@ rule report_command_section:
         INFORMS_vfdb_core = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='vfdb_core') if 'vfdb_core' in config['analyses'] else [],
         INFORMS_plasmidfinder = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='plasmidfinder') if 'plasmidfinder' in config['analyses'] else [],
         # Sequence typing
+        INFORMS_rmlst = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='rmlst') if 'rmlst' in config['analyses'] else [],
         INFORMS_mlst = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='mlst') if 'mlst' in config['analyses'] else [],
         INFORMS_species = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='species_confirmation') if 'species_confirmation' in config['analyses'] else [],
         INFORMS_cgmlst = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='cgmlst') if 'cgmlst' in config['analyses'] else [],
@@ -186,6 +187,7 @@ rule report_combine_all:
         # Plasmid replicon detection
         report_plasmidfinder = gene_detection.get_gene_detection_report('plasmidfinder', config),
         # Typing
+        report_rmlst = get_sequence_typing_report('rmlst', config),
         report_mlst = get_sequence_typing_report('mlst', config),
         report_species = get_sequence_typing_report('species_confirmation', config),
         report_amr_typing = get_sequence_typing_report('typing_amr', config),
@@ -219,7 +221,8 @@ rule report_combine_all:
             ('Read trimming and basic QC', 'trim', [Path(input.report_downsampling), Path(input.report_trimming)]),
             ('Assembly', 'assem', [Path(input.report_quast)]),
             ('Advanced QC', 'adv_qc', [Path(x) for x in (input.report_kraken, input.report_confindr, input.report_adv_qc)]),
-            ('Species identification', 'species', [Path(x) for x in (input.report_species, input.report_mlst)]),
+            ('Species identification', 'species', [Path(x) for x in (
+                input.report_rmlst, input.report_species, input.report_mlst)]),
             ('AMR detection', 'amr', [Path(x) for x in (input.report_amrfinder, input.report_resfinder)]),
             ('Virulence detection', 'virulence', [Path(x) for x in (input.report_virulence, input.report_vfdb_core)]),
             ('Plasmid replicon detection', 'plasmid', [Path(input.report_plasmidfinder)]),
@@ -274,6 +277,7 @@ rule summary_combine_all:
         # Plasmid replicon detection
         Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='plasmidfinder') if 'plasmidfinder' in config['analyses'] else [],
         # Sequence typing
+        Path(config['working_dir']) / str(OUTPUT_TYPING_SUMMARY).format(scheme='rmlst') if 'rmlst' in config['analyses'] else [],
         Path(config['working_dir']) / str(OUTPUT_TYPING_SUMMARY).format(scheme='mlst') if 'mlst' in config['analyses'] else [],
         Path(config['working_dir']) / str(OUTPUT_TYPING_SUMMARY).format(scheme='species_confirmation') if 'species_confirmation' in config['analyses'] else [],
         Path(config['working_dir']) / str(OUTPUT_TYPING_SUMMARY).format(scheme='typing_amr') if 'typing_amr' in config['analyses'] else [],

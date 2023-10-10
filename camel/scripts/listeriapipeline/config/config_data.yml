@@ -110,16 +110,21 @@ gene_detection:
 # Sequence typing #
 ###################
 sequence_typing:
-  mlst:
-    path: /db/sequence_typing/listeria/mlst
   cgmlst:
     path: /db/sequence_typing/listeria/cgmlst
     detection_method: blast
+  mlst:
+    path: /db/sequence_typing/listeria/mlst
+  pcr_serogroup:
+    path: /db/sequence_typing/listeria/serogroup
+  rmlst:
+    path: /db/sequence_typing/various/rmlst
+    message:
+      content: rMLST is only available for noncommercial use, see <a href="https://pubmlst.org/species-id">PubMLST</a> for more info.
+      category: info
   species_confirmation:
     path: /db/sequence_typing/listeria/species_confirmation
   typing_amr:
     path: /db/sequence_typing/listeria/antibiotic_resistance
   typing_virulence:
     path: /db/sequence_typing/listeria/virulence
-  pcr_serogroup:
-    path: /db/sequence_typing/listeria/serogroup
