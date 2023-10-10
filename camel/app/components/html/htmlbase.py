@@ -201,9 +201,9 @@ class HtmlBase(object):
         html = BeautifulSoup(str(text), 'html.parser')
         for part in html.contents:
             if isinstance(part, bs4.element.Tag):
-                self._doc.asis(f'<{part.name}>')
-                self._doc.text(part.text)
-                self._doc.asis(f'</{part.name}>')
+                # Strip all attributes except for href (for security)
+                part.attrs = {k: v for k, v in part.attrs.items() if k == 'href'}
+                self._doc.asis(str(part))
             else:
                 self._doc.text(str(part))
 
