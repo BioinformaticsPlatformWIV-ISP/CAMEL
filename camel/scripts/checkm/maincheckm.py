@@ -39,6 +39,7 @@ class MainCheckM(object):
         argument_parser.add_argument('--output-dir', type=Path, help='Output directory')
         argument_parser.add_argument('--output-json', type=Path, help='Output path to store CheckM informs')
         argument_parser.add_argument('--threads', type=int, default=4, help='Number of threads to use')
+        argument_parser.add_argument('--reduced_tree', action='store_true', default=None)
         return argument_parser.parse_args(args)
 
     def run(self) -> None:
@@ -58,6 +59,8 @@ class MainCheckM(object):
         checkm = CheckM(Camel.get_instance())
         checkm.add_input_files(input_dict)
         checkm.update_parameters(threads=self._args.threads)
+        if self._args.reduced_tree is not None:
+            checkm.update_parameters(reduced_tree=True)
         checkm.run(self._args.working_dir)
 
         # Save informs (if specified)
