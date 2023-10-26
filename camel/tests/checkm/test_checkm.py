@@ -1,3 +1,4 @@
+import unittest
 from pathlib import Path
 
 from camel.app.camel import Camel
@@ -61,6 +62,7 @@ class TestCheckM(CamelTestSuite):
         ])
         checkm_main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)
+
 
 if __name__ == '__main__':
     unittest.main()

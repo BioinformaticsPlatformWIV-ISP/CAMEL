@@ -59,8 +59,7 @@ class MainCheckM(object):
         checkm = CheckM(Camel.get_instance())
         checkm.add_input_files(input_dict)
         checkm.update_parameters(threads=self._args.threads)
-        if self._args.reduced_tree is not None:
-            checkm.update_parameters(reduced_tree=True)
+        checkm.update_parameters(reduced_tree=self._args.reduced_tree)
         checkm.run(self._args.working_dir)
 
         # Save informs (if specified)
