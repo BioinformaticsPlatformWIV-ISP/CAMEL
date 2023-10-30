@@ -1,4 +1,3 @@
-import shutil
 from pathlib import Path
 
 from camel.resources.snakefile import human_read_scrubbing
@@ -21,18 +20,19 @@ rule link_scrubbing_input:
     """
     Creates the FASTQ input for the human read scrubbing step.
     """
-    input:
-        FASTQ_PE = []
     output:
-        FASTQ = Path(config['working_dir']) / human_read_scrubbing.INPUT_SCRUBBING_FASTQ
+        FASTQ = Path(config['working_dir']) / human_read_scrubbing.INPUT_SCRUBBING_FASTQ if not 'fasta' in config['input'] else [],
+        FASTA = Path(config['working_dir']) / human_read_scrubbing.INPUT_SCRUBBING_FASTA if 'fasta' in config['input'] else []
     params:
         read_type = config.get('read_type', 'illumina')
     run:
         from camel.app.snakemake.snakemakeutils import SnakemakeUtils
         from camel.app.io.tooliofile import ToolIOFile
-        if params.read_type == 'illumina':
+        if 'fasta' in config['input']:
+            SnakemakeUtils.dump_object([ToolIOFile(Path(config['input']['fasta'][0]['path']))], Path(output.FASTA))
+        elif params.read_type == 'illumina':
             SnakemakeUtils.dump_object([ToolIOFile(Path(f['path'])) for f in config['input']['fastq_pe']], Path(output.FASTQ))
-        elif params.read_type == 'iontorrent':
+        elif params.read_type == 'iontorrent' or params.read_type == 'nanopore':
             SnakemakeUtils.dump_object([ToolIOFile(Path(f['path'])) for f in config['input']['fastq_se']], Path(output.FASTQ))
 
 

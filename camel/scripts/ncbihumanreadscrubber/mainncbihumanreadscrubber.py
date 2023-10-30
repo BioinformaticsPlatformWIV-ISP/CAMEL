@@ -1,22 +1,23 @@
 #!/usr/bin/env python
 import argparse
 import logging
+import os
 from pathlib import Path
 from typing import List, Dict, Optional, Tuple, Sequence, Any
+
 import yaml
+from camel.app.camel import Camel
 from camel.app.components.files.fastqutils import FastqUtils
 from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.components.pipelines.reportpipeline import ReportPipeline
+from camel.app.io.tooliofile import ToolIOFile
+from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.scripts.ncbihumanreadscrubber import CONFIG_DATA
 from camel.scripts.ncbihumanreadscrubber import SNAKEFILE_MAIN
-from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.app.io.tooliofile import ToolIOFile
-from camel.app.camel import Camel
-import os
 
 
-class MainNCBIHumanReadSrubber(ReportPipeline):
+class MainNcbiHumanReadScrubber(ReportPipeline):
     """
     Main class to run the Ncbi human read scrubber tool.
     """
@@ -112,8 +113,6 @@ class MainNCBIHumanReadSrubber(ReportPipeline):
         argument_parser.add_argument('--fastq-se-name', help="Input SE FASTQ file name")
         argument_parser.add_argument('--fasta', help="Input FASTA file", type=Path)
         argument_parser.add_argument('--fasta-name', help="Name of the input FASTA file", type=str)
-        argument_parser.add_argument(
-            '--read-type', help="Type of reads.", choices=['illumina', 'iontorrent'], default='illumina')
         return argument_parser.parse_args(args)
 
     def _symlink_input(self) -> List[Dict[str, Any]]:
@@ -145,19 +144,11 @@ class MainNCBIHumanReadSrubber(ReportPipeline):
             if self._args.fasta:
                 SnakemakeUtils.dump_object([ToolIOFile(path_new)],
                                            self._args.working_dir / 'input' / f"{self.sample_name}.io")
-                # resources/snakefile/sequence_typing.smk uses the spades output as input.
-                # In order to not change this as it will have consequences for other tools/pipelines,
-                # the input fasta is copied to the spades output
-                os.makedirs(os.path.dirname(self._args.working_dir / 'human_read_scrubbing' / 'input' / 'fasta.io'),
-                            exist_ok=True)
-                SnakemakeUtils.dump_object([ToolIOFile(path_new)],
-                                           self._args.working_dir / 'human_read_scrubbing' / 'input' / 'fasta.io')
-
         # Return output dictionary
         return [{'name': p.name, 'path': str(p)} for p in paths_new]
 
 
 if __name__ == '__main__':
     Camel.get_instance()  # logging.basicConfig(level=logging.DEBUG)
-    main = MainNCBIHumanReadSrubber()
+    main = MainNcbiHumanReadScrubber()
     main.run()

@@ -17,164 +17,144 @@ from camel.resources.snakefile import human_read_scrubbing
 camel = Camel.get_instance()
 
 
-if 'fasta' in config['input']:
-    rule scrubbing_fasta_fa2fq:
-        """
-        Convert the input fasta to fastq to be able to be used by the scrubber
-        """
-        input:
-            FASTA = Path(config['working_dir']) / 'human_read_scrubbing' / 'input' / 'fasta.io'
-        output:
-            FASTATOFASTQ = Path(config['working_dir']) / 'human_read_scrubbing' / 'input' / 'fasta2fastq.io'
-        params:
-            running_dir = Path(config['working_dir']) / 'human_read_scrubbing' / 'input'
-        run:
-            path_in = (SnakemakeUtils.load_object(Path(input.FASTA)))[0].path
-            path_out = params.running_dir / f"{path_in.stem}.fastq"
+rule scrubbing_fasta_fa2fq:
+    """
+    Convert the input fasta to fastq to be able to be used by the scrubber, it only accepts fastq
+    """
+    input:
+        FASTA = Path(config['working_dir']) / 'human_read_scrubbing' / 'input' / 'fasta.io'
+    output:
+        FASTATOFASTQ = Path(config['working_dir']) / 'human_read_scrubbing' / 'input' / 'fasta2fastq.io'
+    params:
+        running_dir = Path(config['working_dir']) / 'human_read_scrubbing' / 'input'
+    run:
+        path_in = (SnakemakeUtils.load_object(Path(input.FASTA)))[0].path
+        path_out = params.running_dir / f"{path_in.stem}.fastq"
 
-            with path_in.open('r') as fasta_file, path_out.open('w') as fastq_file:
-                for record in SeqIO.parse(fasta_file, 'fasta'):
-                    # Create a fake quality score string of the same length as the sequence
-                    fake_quality = [40] * len(record.seq)
+        with path_in.open('r') as fasta_file, path_out.open('w') as fastq_file:
+            for record in SeqIO.parse(fasta_file, 'fasta'):
+                # Create a fake quality score string of the same length as the sequence
+                fake_quality = [40] * len(record.seq)
 
-                    # Create a SeqRecord with the same sequence and a fake quality string
-                    fake_record = SeqRecord(record.seq, id=record.id, description=record.description, letter_annotations={
-                        "phred_quality": fake_quality})
-                    # Write the SeqRecord in FASTQ format
-                    SeqIO.write(fake_record, fastq_file, 'fastq')
-            SnakemakeUtils.dump_object([ToolIOFile(path_out)], Path(output.FASTATOFASTQ))
-
-
-    rule scrubbing_fasta_run_scrubber:
-        """
-        Runs the ncbi read scrubber on the input fasta
-        """
-        input:
-            FASTQ_INTERLEAVED_GUNZIPPED = rules.scrubbing_fasta_fa2fq.output.FASTATOFASTQ
-        output:
-            FASTQ_SCRUBBED = Path(config['working_dir']) / 'human_read_scrubbing' / 'scrubbing' / 'fastq_scrubbed.io',
-            INFORMS = Path(config['working_dir']) / human_read_scrubbing.OUTPUT_SCRUBBING_INFORMS,
-            DEBUG_LOG = Path(config['working_dir']) / 'human_read_scrubbing' / 'scrubbing' / 'debug.log'
-        params:
-            running_dir = Path(config['working_dir']) / 'human_read_scrubbing' / 'scrubbing'
-        run:
-            from camel.app.tools.ncbihumanreadscrubber.ncbihumanreadscrubber import NcbiHumanReadScrubber
-
-            scrubber = NcbiHumanReadScrubber(camel)
-            step = Step(str(rule), scrubber, camel, params.running_dir)
-            scrubber.update_parameters(interleaved='false', outputfile=str(params.running_dir / (SnakemakeUtils.load_object(Path(input.FASTQ_INTERLEAVED_GUNZIPPED)))[0].path.name))
-            SnakemakeUtils.add_pickle_inputs(scrubber, input)
-            step.run_step()
-            SnakemakeUtils.dump_tool_outputs(scrubber, output, keys=['FASTQ_SCRUBBED', 'INFORMS'])
+                # Create a SeqRecord with the same sequence and a fake quality string
+                fake_record = SeqRecord(record.seq, id=record.id, description=record.description, letter_annotations={
+                    "phred_quality": fake_quality})
+                # Write the SeqRecord in FASTQ format
+                SeqIO.write(fake_record, fastq_file, 'fastq')
+        SnakemakeUtils.dump_object([ToolIOFile(path_out)], Path(output.FASTATOFASTQ))
 
 
-    rule scrubbing_fasta_fq2fa:
-        """
-        Convert the fastq back to the fasta in order for the rest of the pipeline to be able to use it
-        """
-        input:
-            FASTQ_SCRUBBED = rules.scrubbing_fasta_run_scrubber.output.FASTQ_SCRUBBED
-        output:
-            FASTA = Path(config['working_dir']) / human_read_scrubbing.OUTPUT_SCRUBBING_FASTA
-        params:
-            running_dir = Path(config['working_dir']) / 'human_read_scrubbing' / 'output'
-        run:
-            path_in = (SnakemakeUtils.load_object(Path(input.FASTQ_SCRUBBED)))[0].path
-            path_out = params.running_dir / f"{path_in.stem}.fasta"
+rule scrubbing_fastq_interleave_and_gunzip:
+    """
+    Gunzips input fastq files if they are gzipped, and interleaves the input if there are two files, because the tool only accepts a single input fastq file
+    """
+    input:
+        FASTQ = Path(config['working_dir']) / human_read_scrubbing.INPUT_SCRUBBING_FASTQ
+    output:
+        FASTQ_SINGLE_GUNZIP = Path(config['working_dir']) / 'human_read_scrubbing' / 'input' / 'fastq_gunzip_interleaved.io'
+    params:
+        running_dir = Path(config['working_dir']) / 'human_read_scrubbing' / 'input'
+    run:
+        # Get the FASTQ file(s)
+        fastq_in = SnakemakeUtils.load_object(Path(input.FASTQ))
+        fqfile_number = len(fastq_in)
 
-            with path_in.open('r') as fastq_file, path_out.open('w') as fasta_file:
-                for record in SeqIO.parse(fastq_file, 'fastq'):
-                    # Write the SeqRecord in FASTA format
-                    fasta_file.write(f">{record.id}\n{record.seq}\n")
-            SnakemakeUtils.dump_object([ToolIOFile(path_out)], Path(output.FASTA))
-
-else:
-    rule scrubbing_fastq_interleave_and_gunzip:
-        """
-        Gunzips input fastq files if they are gzipped, and interleaves the input if there are two files
-        """
-        input:
-            FASTQ = Path(config['working_dir']) / human_read_scrubbing.INPUT_SCRUBBING_FASTQ,
-        output:
-            FASTQ_INTERLEAVED_GUNZIPPED = Path(config['working_dir']) / 'human_read_scrubbing' / 'input' / 'fastq_gunzip_interleaved.io'
-        params:
-            running_dir = Path(config['working_dir']) / 'human_read_scrubbing' / 'input'
-        run:
-            # Get the FASTQ file(s)
-            fastq_in = SnakemakeUtils.load_object(Path(input.FASTQ))
-            fqfile_number = len(fastq_in)
-
-            if fqfile_number == 1:
-                path_in = fastq_in[0].path
-                path_out = params.running_dir / path_in.name.replace('.gz', '')
-                command = Command(f'gunzip -c {path_in} > {path_out}')
-                command.run(path_out.parent)
-                if not command.returncode == 0:
-                    raise PipelineExecutionError(f"Cannot unzip input file: {command.stderr}")
-                SnakemakeUtils.dump_object([ToolIOFile(path_out)], Path(output.FASTQ_INTERLEAVED_GUNZIPPED))
-            else:
-                fastqutils = FastqUtils
-                interleaved_out = params.running_dir / f"{fastq_in[0].path.stem}_interleaved.fastq"
-                FastqUtils.convert_fastqs_to_interleaved_fastq(fastq_in[0].path, fastq_in[1].path, params.running_dir / f"{fastq_in[0].path.stem}_interleaved.fastq")
-                SnakemakeUtils.dump_object([ToolIOFile(interleaved_out)], Path(output.FASTQ_INTERLEAVED_GUNZIPPED))
+        if fqfile_number == 1:
+            path_in = fastq_in[0].path
+            path_out = params.running_dir / path_in.name.replace('.gz', '')
+            command = Command(f'gunzip -c {path_in} > {path_out}')
+            command.run(path_out.parent)
+            if not command.returncode == 0:
+                raise PipelineExecutionError(f"Cannot unzip input file: {command.stderr}")
+            SnakemakeUtils.dump_object([ToolIOFile(path_out)], Path(output.FASTQ_SINGLE_GUNZIP))
+        else:
+            fastqutils = FastqUtils
+            interleaved_out = params.running_dir / f"{fastq_in[0].path.stem}_interleaved.fastq"
+            FastqUtils.convert_fastqs_to_interleaved_fastq(fastq_in[0].path, fastq_in[1].path, params.running_dir / f"{fastq_in[0].path.stem}_interleaved.fastq")
+            SnakemakeUtils.dump_object([ToolIOFile(interleaved_out)], Path(output.FASTQ_SINGLE_GUNZIP))
 
 
-    rule scrubbing_fastq_run_scrubber:
-        """
-        Runs the ncbi read scrubber on the input fastq, only accepts gunzipped files
-        """
-        input:
-            FASTQ = Path(config['working_dir']) / human_read_scrubbing.INPUT_SCRUBBING_FASTQ, 
-            FASTQ_INTERLEAVED_GUNZIPPED = rules.scrubbing_fastq_interleave_and_gunzip.output.FASTQ_INTERLEAVED_GUNZIPPED
-        output:
-            FASTQ_SCRUBBED = Path(config['working_dir']) / 'human_read_scrubbing' / 'scrubbing' / 'fastq_scrubbed.io', 
-            INFORMS = Path(config['working_dir']) / human_read_scrubbing.OUTPUT_SCRUBBING_INFORMS, 
-            DEBUG_LOG = Path(config['working_dir']) / 'human_read_scrubbing' / 'scrubbing' / 'debug.log'
-        params:
-            running_dir = Path(config['working_dir']) / 'human_read_scrubbing' / 'scrubbing'
-        run:
-            from camel.app.tools.ncbihumanreadscrubber.ncbihumanreadscrubber import NcbiHumanReadScrubber
+rule scrubbing_run_scrubber:
+    """
+    Runs the NCBI human read scrubber on the input fastq, only accepts single gunzipped fastq files
+    """
+    input:
+        FASTQ = Path(config['working_dir']) / human_read_scrubbing.INPUT_SCRUBBING_FASTQ if not 'fasta' in config['input'] else [],
+        FASTQ_SINGLE_GUNZIP = rules.scrubbing_fastq_interleave_and_gunzip.output.FASTQ_SINGLE_GUNZIP if not 'fasta' in config['input'] else rules.scrubbing_fasta_fa2fq.output.FASTATOFASTQ
+    output:
+        FASTQ_SCRUBBED = Path(config['working_dir']) / 'human_read_scrubbing' / 'scrubbing' / 'fastq_scrubbed.io',
+        INFORMS = Path(config['working_dir']) / human_read_scrubbing.OUTPUT_SCRUBBING_INFORMS,
+        DEBUG_LOG = Path(config['working_dir']) / 'human_read_scrubbing' / 'scrubbing' / 'debug.log'
+    params:
+        running_dir = Path(config['working_dir']) / 'human_read_scrubbing' / 'scrubbing'
+    run:
+        from camel.app.tools.ncbihumanreadscrubber.ncbihumanreadscrubber import NcbiHumanReadScrubber
+        if not 'fasta' in config['input']:
             # Get the FASTQ file(s)
             fastq_in = SnakemakeUtils.load_object(Path(input.FASTQ))
             fqfile_number = len(fastq_in)
             interleaved = 'true' if fqfile_number == 2 else 'false'
-            scrubber = NcbiHumanReadScrubber(camel)
-            step = Step(str(rule), scrubber, camel, params.running_dir)
-            scrubber.update_parameters(interleaved=interleaved, outputfile=str(Path(output.FASTQ_SCRUBBED).with_suffix('.fastq')))
-            SnakemakeUtils.add_pickle_inputs(scrubber, input, excluded_keys=['FASTQ'])
-            step.run_step()
-            SnakemakeUtils.dump_tool_outputs(scrubber, output, keys=['FASTQ_SCRUBBED', 'INFORMS'])
+        else:
+            interleaved = 'false'
+        scrubber = NcbiHumanReadScrubber(camel)
+        step = Step(str(rule), scrubber, camel, params.running_dir)
+        scrubber.update_parameters(interleaved=interleaved, outputfile=(str(Path(output.FASTQ_SCRUBBED).with_suffix('.fastq')) if not 'fasta' in config['input'] else
+                                                                        str(params.running_dir / (SnakemakeUtils.load_object(Path(input.FASTQ_SINGLE_GUNZIP)))[0].path.name)))
+        SnakemakeUtils.add_pickle_inputs(scrubber, input, excluded_keys=['FASTQ'])
+        step.run_step()
+        SnakemakeUtils.dump_tool_outputs(scrubber, output, keys=['FASTQ_SCRUBBED', 'INFORMS'])
 
 
-    rule scrubbing_fastq_deinterleave_and_gzip:
-        """
-        If the input is a paired-end interleaved file, deinterleaves. Gzips in all cases.
-        """
-        input:
-            FASTQ = Path(config['working_dir']) / human_read_scrubbing.INPUT_SCRUBBING_FASTQ, 
-            FASTQ_SCRUBBED = rules.scrubbing_fastq_run_scrubber.output.FASTQ_SCRUBBED
-        output:
-            FASTQ_DEINTERLEAVED_GZIPPED = Path(config['working_dir']) / human_read_scrubbing.OUTPUT_SCRUBBING_FASTQ
-        params:
-            running_dir = Path(config['working_dir']) / 'human_read_scrubbing' / 'output'
-        run:
-            # Get the FASTQ file(s)
-            fastq_in = SnakemakeUtils.load_object(Path(input.FASTQ))
-            fqfile_number = len(fastq_in)
-            if fqfile_number == 1:
-                output.FASTQ_INTERLEAVED_GUNZIPPED = input.FASTQ_SCRUBBED
-                path_in = (SnakemakeUtils.load_object(Path(input.FASTQ_SCRUBBED)))[0].path
-                path_out = params.running_dir / f"{fastq_in[0].path.stem.split('.fastq')[0].split('.fq')[0]}.fastq.gz"
-                command = Command(f'gzip -c {path_in} > {path_out}')
-                command.run(path_out.parent)
-                if not command.returncode == 0:
-                    raise PipelineExecutionError(f"Cannot unzip input file: {command.stderr}")
-                SnakemakeUtils.dump_object([ToolIOFile(path_out)], Path(output.FASTQ_DEINTERLEAVED_GZIPPED))
-            else:
-                params.running_dir.mkdir(parents=True, exist_ok=True)
-                fastqutils = FastqUtils
-                FastqUtils.split_interleaved_fastq((SnakemakeUtils.load_object(Path(input.FASTQ_SCRUBBED)))[0].path, params.running_dir / f"{fastq_in[0].path.stem.split('.fastq')[0].split('.fq')[0]}.fastq.gz",  params.running_dir / f"{fastq_in[1].path.stem.split('.fastq')[0].split('.fq')[0]}.fastq.gz", gzip_output=True)
-                SnakemakeUtils.dump_object([ToolIOFile(params.running_dir / f"{fastq_in[0].path.stem.split('.fastq')[0].split('.fq')[0]}.fastq.gz"), ToolIOFile(params.running_dir / f"{fastq_in[1].path.stem.split('.fastq')[0].split('.fq')[0]}.fastq.gz")], Path(output.FASTQ_DEINTERLEAVED_GZIPPED))
+rule scrubbing_fasta_fq2fa:
+    """
+    Convert the fastq back to the fasta in order for the rest of the pipeline to be able to use it as output or as input in bacterial pipelines
+    """
+    input:
+        FASTQ_SCRUBBED = rules.scrubbing_run_scrubber.output.FASTQ_SCRUBBED
+    output:
+        FASTA = Path(config['working_dir']) / human_read_scrubbing.OUTPUT_SCRUBBING_FASTA
+    params:
+        running_dir = Path(config['working_dir']) / 'human_read_scrubbing' / 'output'
+    run:
+        path_in = (SnakemakeUtils.load_object(Path(input.FASTQ_SCRUBBED)))[0].path
+        path_out = params.running_dir / f"{path_in.stem}.fasta"
+
+        with path_in.open('r') as fastq_file, path_out.open('w') as fasta_file:
+            for record in SeqIO.parse(fastq_file, 'fastq'):
+                # Write the SeqRecord in FASTA format
+                fasta_file.write(f">{record.id}\n{record.seq}\n")
+        SnakemakeUtils.dump_object([ToolIOFile(path_out)], Path(output.FASTA))
+
+
+rule scrubbing_fastq_deinterleave_and_gzip:
+    """
+    If the input is a paired-end interleaved file, deinterleaves. Gzips in all cases.
+    """
+    input:
+        FASTQ = Path(config['working_dir']) / human_read_scrubbing.INPUT_SCRUBBING_FASTQ,
+        FASTQ_SCRUBBED = rules.scrubbing_run_scrubber.output.FASTQ_SCRUBBED
+    output:
+        FASTQ_DEINTERLEAVED_GZIPPED = Path(config['working_dir']) / human_read_scrubbing.OUTPUT_SCRUBBING_FASTQ
+    params:
+        running_dir = Path(config['working_dir']) / 'human_read_scrubbing' / 'output'
+    run:
+        # Get the FASTQ file(s)
+        fastq_in = SnakemakeUtils.load_object(Path(input.FASTQ))
+        fqfile_number = len(fastq_in)
+        if fqfile_number == 1:
+            output.FASTQ_SINGLE_GUNZIP = input.FASTQ_SCRUBBED
+            path_in = (SnakemakeUtils.load_object(Path(input.FASTQ_SCRUBBED)))[0].path
+            path_out = params.running_dir / f"{fastq_in[0].path.stem.split('.fastq')[0].split('.fq')[0]}.fastq.gz"
+            command = Command(f'gzip -c {path_in} > {path_out}')
+            command.run(path_out.parent)
+            if not command.returncode == 0:
+                raise PipelineExecutionError(f"Cannot unzip input file: {command.stderr}")
+            SnakemakeUtils.dump_object([ToolIOFile(path_out)], Path(output.FASTQ_DEINTERLEAVED_GZIPPED))
+        else:
+            params.running_dir.mkdir(parents=True, exist_ok=True)
+            fastqutils = FastqUtils
+            FastqUtils.split_interleaved_fastq((SnakemakeUtils.load_object(Path(input.FASTQ_SCRUBBED)))[0].path, params.running_dir / f"{fastq_in[0].path.stem.split('.fastq')[0].split('.fq')[0]}.fastq.gz",  params.running_dir / f"{fastq_in[1].path.stem.split('.fastq')[0].split('.fq')[0]}.fastq.gz", gzip_output=True)
+            SnakemakeUtils.dump_object([ToolIOFile(params.running_dir / f"{fastq_in[0].path.stem.split('.fastq')[0].split('.fq')[0]}.fastq.gz"), ToolIOFile(params.running_dir / f"{fastq_in[1].path.stem.split('.fastq')[0].split('.fq')[0]}.fastq.gz")], Path(output.FASTQ_DEINTERLEAVED_GZIPPED))
 
 
 rule scrubbing_report:
