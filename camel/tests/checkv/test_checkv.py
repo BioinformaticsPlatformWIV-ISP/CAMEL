@@ -1,3 +1,5 @@
+import unittest
+
 from camel.app.camel import Camel
 from camel.app.command.command import Command
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
@@ -57,3 +59,7 @@ class TestCheckV(CamelTestSuite):
         ])
         checkv_main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)
+
+
+if __name__ == '__main__':
+    unittest.main()
