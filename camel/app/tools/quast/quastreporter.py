@@ -100,9 +100,9 @@ class QuastReporter(Tool):
         busco_stats = self._input_informs['busco']['results']['results'] if 'busco' in self._input_informs else None
         section.add_header('Completeness', 3)
         section.add_table([
-            ['Reference length:', f"{int(data_quast['Reference length']):,}"],
-            ['Genome fraction:', f"{float(data_quast['Genome fraction (%)']):.2f}%"],
-            ['Duplication ratio:', f"{float(data_quast['Duplication ratio']):.2f}"],
+            ['Reference length:', f"{int(data_quast['Reference length']):,}" if 'Reference length' in data_quast else '-'],
+            ['Genome fraction:', f"{float(data_quast['Genome fraction (%)']):.2f}%" if 'Genome fraction' in data_quast else '-'],
+            ['Duplication ratio:', f"{float(data_quast['Duplication ratio']):.2f}" if 'Duplication ration' in data_quast else '-'],
             ['Complete BUSCO:', f"{busco_stats.get('Complete'):.2f}%" if busco_stats else 'n/a'],
             ['Partial BUSCO:', f"{busco_stats.get('Fragmented'):.2f}%" if busco_stats else 'n/a'],
         ], None, [('class', 'information')])
@@ -115,12 +115,12 @@ class QuastReporter(Tool):
         :return: None
         """
         section.add_header('Coverage', 3)
-        ref_genome = self._input_informs['quast']['ref'].replace('.fasta', '')
+        ref_genome = self._input_informs['quast']['ref'].replace('.fasta', '') if 'ref' in self._input_informs['quast'] else 'n/a'
         section.add_paragraph(f"Reference genome (RefSeq accession): {ref_genome}")
         section.add_table([
             ['Assembly', data_quast['Avg. coverage depth'], f"{float(data_quast['Coverage >= 1x (%)']):.2f}%"],
-            ['Reference', data_quast['Reference avg. coverage depth'],
-             f"{float(data_quast['Reference coverage >= 1x (%)']):.2f}%"]
+            ['Reference', data_quast.get('Reference avg. coverage depth', '-'),
+             f"{float(data_quast['Reference coverage >= 1x (%)']):.2f}%" if 'Reference coverage >= 1x (%)' in data_quast else '-']
         ], ['Category', 'Avg. coverage', 'Positions covered >1x'], [('class', 'data')])
 
     def __add_section_downloads(self, section: HtmlReportSection) -> None:

@@ -8,29 +8,12 @@ from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.resources.snakefile import assembly_spades, quast
 
 
-rule quast_pickle_genome:
-    """
-    Creates an IO pickle for the reference genome.
-    """
-    input:
-        FASTA = config.get('quast', {}).get('ref', {}).get('fasta'),
-        GFF3 = config.get('quast', {}).get('ref', {}).get('gff3')
-    output:
-        FASTA = Path(config['working_dir']) / 'quast' / 'ref_genome' / 'fasta.io',
-        GFF3 = Path(config['working_dir']) / 'quast' / 'ref_genome' / 'gff3.io'
-    run:
-        from camel.app.io.tooliofile import ToolIOFile
-        SnakemakeUtils.dump_object([ToolIOFile(Path(input.FASTA))], Path(output.FASTA))
-        SnakemakeUtils.dump_object([ToolIOFile(Path(input.GFF3))], Path(output.GFF3))
-
 rule quast_quast:
     """
     Runs quast on the assembly.
     """
     input:
         FASTA = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA,
-        FASTA_Ref = Path(config['working_dir']) / rules.quast_pickle_genome.output.FASTA,
-        GFF3_Ref = Path(config['working_dir']) / rules.quast_pickle_genome.output.GFF3,
         IO = Path(config['working_dir']) / 'fq_dict.io'
     output:
         TSV = Path(config['working_dir']) / 'quast' / 'output' / 'tsv.io',
@@ -39,19 +22,35 @@ rule quast_quast:
         INFORMS = Path(config['working_dir']) / 'quast' / 'output' / 'informs.io'
     params:
         running_dir = Path(config['working_dir']) / 'quast' / 'output',
-        read_type = config.get('read_type','illumina')
+        read_type = config.get('read_type', 'illumina'),
+        fasta = config.get('quast', {}).get('ref', {}).get('fasta'),
+        gff = config.get('quast', {}).get('ref', {}).get('gff3')
     run:
+        from camel.app.io.tooliofile import ToolIOFile
         from camel.app.tools.quast.quast import Quast
 
         # Create output directory
         dir_out = Path(params.running_dir) / 'quast_out'
         dir_out.mkdir(exist_ok=True, parents=True)
 
-        # Run tool
+        # Create tool
         quast_ = Quast(Camel.get_instance())
+
+        # Add input
         SnakemakeUtils.add_pickle_inputs(quast_, input, excluded_keys=['IO'])
         key_reads = 'PE' if params.read_type == 'illumina' else 'SE'
         quast_.add_input_files(SnakePipelineUtils.extracts_fq_input(Path(input.IO), read_type=key_reads))
+
+        # Add reference genome files (if available)
+        if (params.fasta is not None) and (params.gff is not None):
+            quast_.add_input_files({
+                'FASTA_ref': [ToolIOFile(params.fasta)],
+                'GFF_ref': [ToolIOFile(params.gff)],
+            })
+        else:
+            logger.warning(f'No reference genome provided, skipping analysis for QUAST')
+
+        # Run tool
         quast_.update_parameters(conserved_genes_finding=False)
         step = Step(str(rule), quast_, Camel.get_instance(), dir_out)
         step.run_step()
@@ -144,5 +143,5 @@ rule quast_create_summary_out:
         # Create TSV output
         with open(output.TSV, 'w') as handle:
             for row in keys_kept:
-                handle.write(f"assembly_{row['name']}\t{data_quast[row['key']]}")
+                handle.write(f"assembly_{row['name']}\t{data_quast.get(row['key'], '-')}")
                 handle.write('\n')
