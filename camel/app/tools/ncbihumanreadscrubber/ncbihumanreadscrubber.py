@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 from camel.app.camel import Camel
@@ -27,12 +28,14 @@ class NcbiHumanReadScrubber(Tool):
         self.__build_command()
         self._execute_command()
         self.__set_output()
+        self._parse_stderr()
 
     def _check_input(self) -> None:
         """
         Checks if the input is valid.
         :return: None
         """
+        super()._check_input()
         if 'FASTQ_SINGLE_GUNZIP' not in self._tool_inputs or len(self._tool_inputs['FASTQ_SINGLE_GUNZIP']) == 0:
             raise ValueError("Required FASTQ input file is missing for human read scrubber.")
 
@@ -43,7 +46,7 @@ class NcbiHumanReadScrubber(Tool):
         """
         self._command.command = ' '.join([
             self._tool_command,
-            ' '.join(self._build_options(excluded_parameters=['interleaved'])),
+            *self._build_options(excluded_parameters=['interleaved']),
             self._parameters['interleaved'].option if self._parameters['interleaved'].value == 'true' else '',
             '-i', str(self._tool_inputs['FASTQ_SINGLE_GUNZIP'][0].path)])
 
@@ -60,4 +63,28 @@ class NcbiHumanReadScrubber(Tool):
         Set the output of HRRT.
         :return: None
         """
-        self._tool_outputs['FASTQ_SCRUBBED'] = [ToolIOFile(Path(self._parameters['outputfile'].value))]
+        path_out = self.folder / self._parameters['outputfile'].value
+        self._tool_outputs['FASTQ_SCRUBBED'] = [ToolIOFile(path_out)]
+
+    def _parse_stderr(self) -> None:
+        """
+        Parses the command's stderr to retrieve the statistics about how many reads/contigs were removed.
+        :return: None
+        """
+        count_removed = None
+        count_total = None
+        for line in self._command.stderr.split('\n'):
+            # Define the regular expression pattern
+            pattern_reads_removed = r'^(\d+)\s+spot\(s\) masked or removed\.$'
+            pattern_reads_total = r'total spot count: (\d+)'
+
+            # Try to match the pattern in the current line
+            if count_removed is None and re.match(pattern_reads_removed, line):
+                # Extract the matched integer
+                count_removed = int((re.match(pattern_reads_removed, line)).group(1))
+            elif count_total is None and re.search(pattern_reads_total, line):
+                # Extract the matched integer
+                count_total = int((re.search(pattern_reads_total, line)).group(1))
+            elif count_removed is not None and count_total is not None:
+                break
+        self._informs['statistics'] = {'count_removed': count_removed, 'count_total': count_total}

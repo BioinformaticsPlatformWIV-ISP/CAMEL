@@ -37,6 +37,9 @@ rule link_scrubbing_input:
 
 
 rule report_command_section:
+    """
+    Creates the report section containing the tool commands.
+    """
     input:
         INFORMS_scrubbing = Path(config['working_dir']) / human_read_scrubbing.OUTPUT_SCRUBBING_INFORMS
     output:
@@ -95,5 +98,5 @@ rule report_combine_all:
             ('Human read scrubbing', 'scrub', [Path(input.report_scrubbing)]),
             # ('Citations', 'citations', [Path(input.report_citations)]),
             ('Commands', 'commands', [Path(input.report_commands)])
-                            ]
+        ]
         SnakePipelineUtils.add_report_content(report, report_structure)

@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import argparse
 import logging
-import os
 from pathlib import Path
 from typing import List, Dict, Optional, Tuple, Sequence, Any
 
@@ -51,7 +50,6 @@ class MainNcbiHumanReadScrubber(ReportPipeline):
         Constructs the configuration file.
         :return: Configuration file
         """
-
         if self._args.fastq_pe is not None:
             key = 'fastq_pe'
         elif self._args.fastq_se is not None:
@@ -93,13 +91,13 @@ class MainNcbiHumanReadScrubber(ReportPipeline):
             return FastqUtils.get_sample_name(name, FastqUtils.PATTERN_FQ_SE)
         else:
             # three options for fasta: fasta name, sample name or nothing
-            PATTERN_FA = r'(.+?)(_S\d+)?(_L\d{3})?(_\d+)?.(fasta|fa)(.gz)?'
+            pattern_fasta = r'(.+?)(_S\d+)?(_L\d{3})?(_\d+)?.(fasta|fa)(.gz)?'
             if self._args.sample_name is not None:
                 return FileSystemHelper.make_valid(self._args.sample_name)
             elif self._args.fasta_name is not None:
-                return FastqUtils.get_sample_name(self._args.fasta_name, PATTERN_FA)
+                return FastqUtils.get_sample_name(self._args.fasta_name, pattern_fasta)
             else:
-                return FastqUtils.get_sample_name(self._args.fasta, PATTERN_FA)
+                return FastqUtils.get_sample_name(self._args.fasta, pattern_fasta)
 
     @staticmethod
     def _parse_arguments(args: Optional[Sequence[str]] = None) -> argparse.Namespace:
@@ -142,8 +140,8 @@ class MainNcbiHumanReadScrubber(ReportPipeline):
             paths_new.append(path_new)
             # ToolIO fasta file if fasta
             if self._args.fasta:
-                SnakemakeUtils.dump_object([ToolIOFile(path_new)],
-                                           self._args.working_dir / 'input' / f"{self.sample_name}.io")
+                SnakemakeUtils.dump_object(
+                    [ToolIOFile(path_new)], self._args.working_dir / 'input' / f"{self.sample_name}.io")
         # Return output dictionary
         return [{'name': p.name, 'path': str(p)} for p in paths_new]
 
