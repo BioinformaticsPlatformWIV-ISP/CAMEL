@@ -1,5 +1,5 @@
 # Overview
-The *Neisseria* pipeline performs complete characterization of *Neisseria meningitidis* isolates.
+The *Listeria* pipeline performs complete characterization of *Listeria monocytogenes* isolates.
 
 Version: **1.3**
 
@@ -7,8 +7,8 @@ Version: **1.3**
 
 ## 1. Coverage check
 The workflow starts by checking the coverage of the input FASTQ datasets. 
-Coverage is estimated by dividing the total number of bases by the size of the `NZ_CP021520.1` *N. meningitidis* 
-11-7 reference genome. The total number of bases in the FASTQ files is determined using the `size` function of 
+Coverage is estimated by dividing the total number of bases by the size of the `NC_003210.1` *L. monocytogenes* 
+EGD-e reference genome. The total number of bases in the FASTQ files is determined using the `size` function of 
 `seqtk 1.4`.
 
 Datasets with an estimated coverage >=100x are downsampled to ~100x using the `subsample` function of `seqtk 1.4`.
@@ -69,7 +69,7 @@ the pipeline execution.
 
 | **metric**                             | **warning threshold**  | **fail threshold**   | **description**                                                                                                                                                                                                                 |
 |----------------------------------------|------------------------|----------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Kraken: contaminants                   | 1.00%                  | 5.00%                | Percentage of reads assigned to species other than *N. meningitidis*                                                                                                                                                            |
+| Kraken: contaminants                   | 1.00%                  | 5.00%                | Percentage of reads assigned to species other than *L. monocytogenes*                                                                                                                                                           |
 | Typing loci detected (%)               | 90%                    | 95%                  | Percentage of cgMLST loci detected (or MLST loci when cgMLST is disabled)                                                                                                                                                       |
 | Coverage against assembled contigs     | 20x                    | 10x                  | Coverage of the reads mapped to the assembly (determined by QUAST)                                                                                                                                                              |
 | Reads mapping to the assembled contigs | 95%                    | 90%                  | Percentage of reads mapping back to the assembly (determined by QUAST)                                                                                                                                                          |
@@ -93,10 +93,13 @@ Alternative detection using `kma 1.4.12a` or `srst2 0.2.0` is available by chang
 
 The following databases are available: 
 
-| **name**  | **origin**                                                               |
-|-----------|--------------------------------------------------------------------------|
-| ResFinder | Antimicrobial resistance genes from the ResFinder tool maintained by DTU |
-| NDARO     | Antimicrobial resistance genes from the NCBI NDARO database              |
+| **name**       | **origin**                                                               |
+|----------------|--------------------------------------------------------------------------|
+| NDARO          | Antimicrobial resistance genes from the NCBI NDARO database              |
+| PlasmidFinder  | Plasmid replicons from the PlasmidFinder tool maintained by DTU          |
+| ResFinder      | Antimicrobial resistance genes from the ResFinder tool maintained by DTU |
+| VFDB core      | Databases from the VirulenceFactor Core database                         | 
+| VirulenceFiner | Virulence genes from the VirulenceFinder tool maintained by DTU          |
 
 ## 6. Sequence typing
 
@@ -106,33 +109,12 @@ Alternative detection using `kma 1.4.12a` or `srst2 0.2.0` is available by chang
 
 The following typing schemes are available:
 
-| **name**                 | **origin** |
-|--------------------------|------------|
-| rMLST                    | PubMLST    |
-| Classic MLST             | PubMLST    |
-| rplF                     | PubMLST    |
-| PorA                     | PubMLST    |
-| PorB                     | PubMLST    |
-| FetA                     | PubMLST    |
-| Antibiotic resistance    | PubMLST    |
-| Vaccine targets          | PubMLST    |
-| Factor-H binding protein | PubMLST    |
-| cgMLST                   | PubMLST    |
-
-## 7. Antigen typing
-
-
-### Bexsero antigen sequence typing (BAST)
-
-Antigen typing is based on typing using the BAST scheme from PubMLST, using the method described in the 
-*Sequence typing* section.
-
-### gMATS
-
-gMATS is used to predict the efficacy of the Bexsero vaccine. It works by matching the alleles of the BAST typing 
-scheme to a database collected from [literature](https://doi.org/10.1016/j.vaccine.2018.12.061).
-
-## 8. Serotype determination
-
-Serotype is determined using the [characterize_neisseria_capsule](https://github.com/ntopaz/characterize_neisseria_capsule) 
-script (commit `a75a009`).
+| **name**             | **origin**                |
+|----------------------|---------------------------|
+| rMLST                | BIGSdb (Institut Pasteur) |
+| Classic MLST         | BIGSdb (Institut Pasteur) |
+| cgMLST               | BIGSdb (Institut Pasteur) |
+| PCR-serogroup        | BIGSdb (Institut Pasteur) |
+| Species confirmation | BIGSdb (Institut Pasteur) |
+| AMR typing           | BIGSdb (Institut Pasteur) |
+| Virulence typing     | BIGSdb (Institut Pasteur) |
