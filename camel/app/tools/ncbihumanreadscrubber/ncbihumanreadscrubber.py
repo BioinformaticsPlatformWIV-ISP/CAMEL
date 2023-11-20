@@ -1,5 +1,4 @@
 import re
-from pathlib import Path
 
 from camel.app.camel import Camel
 from camel.app.error.toolexecutionerror import ToolExecutionError
