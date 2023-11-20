@@ -26,7 +26,7 @@ class SpeciesDetector(Tool):
 
     PROFILES = {
         'header': ['Species', '<i>ipaH</i>', '<i>speG</i> TG missing'],
-        'data': [['<i>E. Coli</i>', '-', '-'], ['<i>Shigella</i>', '+', '+']]
+        'data': [['<i>E. coli</i>', '-', '-'], ['<i>Shigella</i>', '+', '+']]
     }
 
     def __init__(self, camel: Camel) -> None:

@@ -17,25 +17,29 @@ class MainEnterococcusPipeline(ReportPipeline):
     """
 
     CUSTOM_ANALYSES = [
-        'kraken', 'resfinder', 'ncbi_amr', 'pointfinder', 'vfdb_core', 'virulencefinder', 'mlst',
+        'kraken', 'confindr', 'resfinder', 'ncbi_amr', 'pointfinder', 'vfdb_core', 'virulencefinder', 'mlst',
         'cgmlst', 'lrefinder', 'plasmidfinder', 'plasmidspades']
 
     DATA_BY_SPECIES = {
         'faecium': {
+            'cgmlst_db': '/db/sequence_typing/enterococcus_faecium/cgmlst',
+            'full_name': 'Enterococcus faecium',
             'gc_content': 38.1,
             'genome_size': 2_796_178,
-            'full_name': 'Enterococcus faecium',
             'mlst_db': '/db/sequence_typing/enterococcus_faecium/mlst',
-            'cgmlst_db': '/db/sequence_typing/enterococcus_faecium/cgmlst',
-            'pointfinder_db': 'enterococcus_faecium'
+            'pointfinder_db': 'enterococcus_faecium',
+            'quast_fasta': '/db/refgenomes/Enterococcus_faecalis/GCA_000393015.1.fasta',
+            'quast_gff': '/db/refgenomes/Enterococcus_faecalis/GCA_000393015.1.gff'
         },
         'faecalis': {
+            'cgmlst_db': '/db/sequence_typing/enterococcus_faecalis/cgmlst',
+            'full_name': 'Enterococcus faecalis',
             'gc_content': 37.4,
             'genome_size': 2_973_380,
-            'full_name': 'Enterococcus faecalis',
             'mlst_db': '/db/sequence_typing/enterococcus_faecalis/mlst',
-            'cgmlst_db': '/db/sequence_typing/enterococcus_faecalis/cgmlst',
-            'pointfinder_db': 'enterococcus_faecalis'
+            'pointfinder_db': 'enterococcus_faecalis',
+            'quast_fasta': '/db/refgenomes/Enterococcus_faecium/GCA_009734005.2.fasta',
+            'quast_gff': '/db/refgenomes/Enterococcus_faecium/GCA_009734005.2.gff'
         }
     }
 
@@ -44,7 +48,7 @@ class MainEnterococcusPipeline(ReportPipeline):
         Initializes the main class.
         :param args: Arguments (optional)
         """
-        super().__init__('Enterococcus pipeline', '0.1', SNAKEFILE_MAIN, args)
+        super().__init__('Enterococcus pipeline', '0.2', SNAKEFILE_MAIN, args)
 
     @property
     def title(self) -> str:
@@ -72,16 +76,18 @@ class MainEnterococcusPipeline(ReportPipeline):
         config_data['analyses'] = [key for key in MainEnterococcusPipeline.CUSTOM_ANALYSES if vars(self._args)[key]]
         with CONFIG_DATA.open() as handle_in:
             mainscriptutils.dict_merge(config_data, yaml.load(handle_in.read().format(
-                qc_typing_scheme='cgmlst' if self._args.cgmlst else 'mlst',
-                export_fastq='true' if self._args.report_include_fastq else 'false',
-                export_bam='true' if self._args.report_include_bam else 'false',
-                expected_species=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species]['full_name'],
-                gc_content=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species]['gc_content'],
-                pointfinder_db=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species]['pointfinder_db'],
-                mlst_db=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species]['mlst_db'],
                 cgmlst_db=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species]['cgmlst_db'],
+                coverage_max=self._args.cov_max,
+                expected_species=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species]['full_name'],
+                export_bam='true' if self._args.report_include_bam else 'false',
+                export_fastq='true' if self._args.report_include_fastq else 'false',
+                gc_content=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species]['gc_content'],
                 genome_size=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species]['genome_size'],
-                coverage_max=self._args.cov_max
+                mlst_db=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species]['mlst_db'],
+                pointfinder_db=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species]['pointfinder_db'],
+                qc_typing_scheme='cgmlst' if self._args.cgmlst else 'mlst',
+                quast_fasta=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species]['quast_fasta'],
+                quast_gff=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species]['quast_gff']
             ), Loader=yaml.SafeLoader))
 
             # Set the species

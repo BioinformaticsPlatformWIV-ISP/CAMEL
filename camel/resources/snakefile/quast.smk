@@ -44,8 +44,8 @@ rule quast_quast:
         # Add reference genome files (if available)
         if (params.fasta is not None) and (params.gff is not None):
             quast_.add_input_files({
-                'FASTA_ref': [ToolIOFile(params.fasta)],
-                'GFF_ref': [ToolIOFile(params.gff)],
+                'FASTA_Ref': [ToolIOFile(Path(params.fasta))],
+                'GFF3_Ref': [ToolIOFile(Path(params.gff))],
             })
         else:
             logger.warning(f'No reference genome provided, skipping analysis for QUAST')

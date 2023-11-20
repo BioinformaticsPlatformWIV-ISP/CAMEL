@@ -19,15 +19,16 @@ class MainSTECPipeline(ReportPipeline):
     Main class to run the STEC pipeline.
     """
 
-    CUSTOM_ANALYSES = ['kraken', 'resfinder', 'argannot', 'card', 'ncbi_amr', 'mlst_pasteur', 'mlst_warwick', 'cgmlst',
-                       'pointfinder', 'plasmidfinder', 'serotype', 'virulencefinder', 'innuendo_cgmlst']
+    CUSTOM_ANALYSES = [
+        'kraken', 'confindr', 'resfinder', 'argannot', 'card', 'ncbi_amr', 'mlst_pasteur', 'mlst_warwick', 'cgmlst',
+        'pointfinder', 'plasmidfinder', 'serotype', 'virulencefinder', 'innuendo_cgmlst']
 
     def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """
         Initializes the main class.
         :param args: Arguments (optional)
         """
-        super().__init__('STEC pipeline', '1.0', SNAKEFILE_MAIN, args)
+        super().__init__('STEC pipeline', '1.1', SNAKEFILE_MAIN, args)
 
     def run(self) -> None:
         """
