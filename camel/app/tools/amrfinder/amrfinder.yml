@@ -1,4 +1,4 @@
-dependencies: [amrfinder/3.10.18 blast/2.14.0, hmmer/3.2.1]
+dependencies: [amrfinder/3.11.26 blast/2.14.0, hmmer/3.2.1]
 parameters:
   min_cov: {default: false, mandatory: false, option: --coverage_min, value: 0.5}
   min_ident: {default: false, mandatory: false, option: --ident_min, value: -1}
