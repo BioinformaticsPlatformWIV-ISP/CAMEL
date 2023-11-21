@@ -25,7 +25,7 @@ class MainKlebsiellaPipeline(ReportPipeline):
         Initializes the main class.
         :param args: Arguments (optional)
         """
-        super().__init__('Klebsiella pipeline', '0.2', SNAKEFILE_MAIN, args)
+        super().__init__('Klebsiella pipeline', '1.0', SNAKEFILE_MAIN, args)
 
     @property
     def title(self) -> str:
