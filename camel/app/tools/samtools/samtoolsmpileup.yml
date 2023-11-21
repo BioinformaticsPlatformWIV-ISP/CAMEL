@@ -1,4 +1,4 @@
-dependencies: [samtools/1.9]
+dependencies: [samtools/1.17]
 parameters:
   adjust_mapping_quality: {default: false, mandatory: false, option: --adjust-MQ,
     value: '50'}
