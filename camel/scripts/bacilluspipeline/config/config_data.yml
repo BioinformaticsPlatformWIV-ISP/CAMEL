@@ -53,7 +53,7 @@ sequence_typing:
     path: /db/sequence_typing/various/rmlst
 
 amrfinder:
-  db: /db/amrfinder/latest
+  db: /db/amrfinder/by_version/latest
 
 mob_suite:
   db: /db/mob_suite/latest
@@ -63,9 +63,8 @@ fastani:
 
 gene_detection:
   gmo:
-#    path: /db/pipelines/bacillus/databaseGMM
-#    path: /mnt/thor_scratch/dbupdate_tests/temp/test_output_3/export/
-    path: /scratch/magodfroid/dbupdate_tests/temp/test_output_3/export/
+    path: /db/pipelines/bacillus/databaseGMMV2
+    force_detection_method: kma
     metadata:
       name: Additional data
       key: additional
@@ -88,3 +87,6 @@ gene_detection:
     metadata:
       name: Notes
       key: notes
+    message:
+      content: Additional experimental validation should be required to confirm the presence of plasmids.
+      category: warning

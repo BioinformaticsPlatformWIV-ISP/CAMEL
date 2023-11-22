@@ -2,14 +2,13 @@ import shutil
 from pathlib import Path
 
 from camel.resources.snakefile import trimming, trimming_illumina, assembly_spades, \
-    quality_checks, contamination_check_kraken, sequence_typing, downsampling, amrfinder, trimming_ont, gene_detection, \
+    quality_checks, contamination_check_kraken, sequence_typing, amrfinder, trimming_ont, gene_detection, \
     mobsuite, assembly_flye, medaka_polishing, short_read_polishing
 from camel.scripts.bacilluspipeline.snakefile import btyper, ani
 
 #######################
 # Included Snakefiles #
 #######################
-# include: downsampling.SNAKEFILE_DOWNSAMPLING
 include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
 include: trimming_ont.SNAKEFILE_TRIMMING_ONT
 include: contamination_check_kraken.SNAKEFILE_CONTAMINATION_CHECK_KRAKEN
@@ -45,8 +44,8 @@ rule prepare_fastq_inputs:
     Prepares the fastq inputs
     """
     output:
-        FASTQ_PE = Path(config['working_dir']) / 'illumina' / 'fastq.io' if config['read_type'] in ['illumina', 'hybrid'] else [],
-        FASTQ_SE = Path(config['working_dir']) / 'nanopore' / 'fastq.io' if config['read_type'] in ['nanopore', 'hybrid'] else []
+        FASTQ_PE = Path(config['working_dir']) / trimming_illumina.INPUT_TRIMMOMATIC_FASTQ if config['read_type'] in ['illumina', 'hybrid'] else [],
+        FASTQ_SE = Path(config['working_dir']) / trimming_ont.INPUT_ONT_FASTQ if config['read_type'] in ['nanopore', 'hybrid'] else []
     params:
         config_input = config['input'],
         read_type = config['read_type']
@@ -64,72 +63,6 @@ rule prepare_fastq_inputs:
         elif params.read_type == 'nanopore':
             SnakemakeUtils.dump_object([ToolIOFile(Path(x['path'])) for x in config['input']['fastq_se']],
                 Path(output.FASTQ_SE))
-        else:
-            raise ValueError(f'Unsupported read type: {params.read_type}')
-
-# rule link_downsampling_input_illumina:
-#     """
-#     Creates the FASTQ input for the downsampling step.
-#     """
-#     input:
-#         Path(config['working_dir']) / 'input' / 'fastq_pe.io' if config['read_type'] in ['hybrid', 'illumina'] else []
-#     output:
-#         FASTQ = Path(config['working_dir']) / downsampling.INPUT_DOWNSAMPLING_FASTQ
-#     params:
-#         config_input = config['input'],
-#         read_type = config['read_type']
-#     run:
-#
-#         from camel.app.io.tooliofile import ToolIOFile
-#         from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-#         if params.read_type in ['illumina', 'hybrid']:
-#             SnakemakeUtils.dump_object([ToolIOFile(Path(x['path'])) for x in config['input']['fastq_pe']],
-#                 Path(output.FASTQ))
-#         elif params.read_type == 'nanopore':
-#             SnakemakeUtils.dump_object([ToolIOFile(Path(x['path'])) for x in config['input']['fastq_se']],
-#                 Path(output.FASTQ))
-#         else:
-#             raise ValueError(f'Unsupported read type: {params.read_type}')
-#
-# rule link_downsampling_input_nanopore:
-#     """
-#     Creates the FASTQ input for the downsampling step.
-#     """
-#     output:
-#         FASTQ = Path(config['working_dir']) / downsampling.INPUT_DOWNSAMPLING_FASTQ
-#     params:
-#         config_input = config['input'],
-#         read_type = config['read_type']
-#     run:
-#         from camel.app.io.tooliofile import ToolIOFile
-#         from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-#         if params.read_type in ['illumina', 'hybrid']:
-#             SnakemakeUtils.dump_object([ToolIOFile(Path(x['path'])) for x in config['input']['fastq_pe']],
-#                 Path(output.FASTQ))
-#         elif params.read_type in ['nanopore', 'hybrid']:
-#             SnakemakeUtils.dump_object([ToolIOFile(Path(x['path'])) for x in config['input']['fastq_se']],
-#                 Path(output.FASTQ))
-#         else:
-#             raise ValueError(f'Unsupported read type: {params.read_type}')
-#
-rule link_downsampling_to_trimming_workflows:
-    """
-    Links the downsampling output to the input of the trimming workflows.  
-    """
-    input:
-        FASTQ_PE = rules.prepare_fastq_inputs.output.FASTQ_PE if config['read_type'] in ['illumina', 'hybrid'] else [],
-        FASTQ_SE = rules.prepare_fastq_inputs.output.FASTQ_SE if config['read_type'] in ['nanopore', 'hybrid'] else []
-        # FASTQ = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_FASTQ
-    output:
-        FASTQ_ilmn = Path(config['working_dir']) / trimming_illumina.INPUT_TRIMMOMATIC_FASTQ if config['read_type'] in ['illumina', 'hybrid'] else [],
-        FASTQ_ont = Path(config['working_dir']) / trimming_ont.INPUT_ONT_FASTQ if config['read_type'] in ['nanopore', 'hybrid'] else []
-    params:
-        read_type = config['read_type']
-    run:
-        if params.read_type in ['nanopore', 'hybrid']:
-            shutil.copyfile(Path(input.FASTQ_SE),Path(output.FASTQ_ont))
-        if params.read_type in ['illumina', 'hybrid']:
-            shutil.copyfile(Path(input.FASTQ_PE),Path(output.FASTQ_ilmn))
         else:
             raise ValueError(f'Unsupported read type: {params.read_type}')
 
@@ -349,7 +282,6 @@ rule report_create_commands_section:
     Creates the section with the commands.
     """
     input:
-        # INFORMS_downsampling = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_INFORMS,
         INFORMS_trimming_illumina = trimming.get_trimming_command_informs(config, 'illumina') if config['read_type'] in ['illumina', 'hybrid'] else [],
         INFORMS_trimming_nanopore = trimming.get_trimming_command_informs(config, 'nanopore') if config['read_type'] in ['nanopore', 'hybrid'] else [],
         INFORMS_assembly = rules.select_assembly_output.output.INFORMS,
@@ -391,7 +323,6 @@ rule report_content_cereus:
     """
     input:
         report_init = rules.report_init.output.HTML,
-        # report_downsampling = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_REPORT,
         report_trimming_illumina = trimming.get_trimming_report(config, 'illumina') if config['read_type'] in ['illumina', 'hybrid'] else [],
         report_trimming_nanopore = trimming.get_trimming_report(config,'nanopore') if config['read_type'] in ['nanopore', 'hybrid'] else [],
         report_assembly = rules.select_assembly_output.output.HTML,
@@ -442,7 +373,6 @@ rule report_content_subtilis:
     """
     input:
         report_init = rules.report_init.output.HTML,
-        # report_downsampling = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_REPORT,
         report_trimming_illumina = trimming.get_trimming_report(config,'illumina') if config['read_type'] in['illumina','hybrid'] else [],
         report_trimming_nanopore = trimming.get_trimming_report(config,'nanopore') if config['read_type'] in['nanopore','hybrid'] else [],
         report_assembly = rules.select_assembly_output.output.HTML,
@@ -471,7 +401,6 @@ rule report_content_subtilis:
             Path(output.HTML), Path(params.output_dir), params.pipeline_info)
         report.add_html_object(SnakemakeUtils.load_object(Path(input.report_init))[0].value)
         report_structure = [
-            # ('Read trimming and basic QC', 'trim', [Path(input.report_downsampling), Path(input.report_trimming)]),
             ('Read trimming and basic QC', 'trim', [Path(x) for x in (input.report_trimming_illumina, input.report_trimming_nanopore) if x != []]),
             ('Assembly', 'assembly', [Path(input.report_assembly)]),
             ('Advanced QC', 'adv_qc', [Path(x) for x in (input.report_adv_qc_illumina, input.report_adv_qc_nanopore, input.report_kraken_illumina, input.report_kraken_nanopore) if x != []]),
@@ -532,11 +461,9 @@ rule summary_combine_all:
     """
     input:
         rules.summary_init.output.TSV,
-        # Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_SUMMARY,
         trimming.get_trimming_summary(config, 'illumina') if config['read_type'] in ['illumina', 'hybrid'] else [],
         trimming.get_trimming_summary(config, 'nanopore') if config['read_type'] in ['nanopore', 'hybrid'] else [],
         Path(config['working_dir']) / rules.select_assembly_output.output.TSV,
-        Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_SUMMARY if config['read_type'] == 'nanopore' else [],
         Path(config['working_dir']) / str(quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY).format(read_type='illumina') if config['read_type'] in ['illumina', 'hybrid'] else [],
         Path(config['working_dir']) / str(quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY).format(read_type='nanopore') if config['read_type'] in ['nanopore', 'hybrid'] else [],
         Path(config['working_dir']) / str(contamination_check_kraken.OUTPUT_CONTAMINATION_SUMMARY).format(read_type='illumina') if (config['read_type'] in ['illumina', 'hybrid'] and 'kraken' in config['analyses']) else [],

@@ -10,10 +10,8 @@ def get_read_type(config: Dict[str, Any], read_type: str = None) -> str:
     Returns the read type from the Snakemake configuration
     """
     if read_type:
-        print("HERE!!!")
-        print(read_type)
         if read_type not in ['illumina', 'iontorrent', 'nanopore']:
-            raise ValueError(f"Invalid read type in config: {read_type}")
+            raise ValueError(f"Invalid read type in argument: {read_type}")
         return read_type
     else:
         if 'read_type' not in config:

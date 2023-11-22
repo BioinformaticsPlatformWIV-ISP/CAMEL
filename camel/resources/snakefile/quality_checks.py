@@ -76,6 +76,20 @@ def get_qc_report(config: Dict, read_type: str = None) -> Path:
     return Path(config['working_dir']) / str(OUTPUT_QUALITY_CHECKS_REPORT).format(read_type=read_type)
 
 
+def get_qc_summary(config: Dict, read_type: str = None) -> Path:
+    """
+    Returns the QC report.
+    :param config: configuration dictionary
+    :param read_type: read type
+    :return: Path to the report
+    """
+    if read_type is None:
+        read_type = config['read_type']
+    if read_type not in ['illumina', 'nanopore']:
+        raise ValueError(f'Invalid read type: {read_type}')
+    return Path(config['working_dir']) / str(OUTPUT_QUALITY_CHECKS_SUMMARY).format(read_type=read_type)
+
+
 @dataclass
 class QCCheck:
     key: str
