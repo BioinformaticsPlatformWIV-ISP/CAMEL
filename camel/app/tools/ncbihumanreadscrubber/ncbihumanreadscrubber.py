@@ -34,9 +34,9 @@ class NcbiHumanReadScrubber(Tool):
         Checks if the input is valid.
         :return: None
         """
-        super()._check_input()
         if 'FASTQ_SINGLE_GUNZIP' not in self._tool_inputs or len(self._tool_inputs['FASTQ_SINGLE_GUNZIP']) == 0:
             raise ValueError("Required FASTQ input file is missing for human read scrubber.")
+        super()._check_input()
 
     def __build_command(self) -> None:
         """

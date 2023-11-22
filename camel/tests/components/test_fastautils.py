@@ -10,7 +10,6 @@ class TestFastaUtils(CamelTestSuite):
     """
     test_file_dir = CamelTestSuite.get_test_file_dir('components')
 
-
     def test_convert_fasta_to_fastq(self) -> None:
         """
         Test the function to convert a FASTA file to a FASTQ file

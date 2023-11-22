@@ -70,7 +70,7 @@ rule scrubbing_run_scrubber:
         FASTQ_SINGLE_GUNZIP = rules.scrubbing_fastq_interleave_and_gunzip.output.FASTQ_SINGLE_GUNZIP if not 'fasta' in config['input'] else rules.scrubbing_fasta_fa2fq.output.FASTQ_from_fasta
     output:
         FASTQ_SCRUBBED = Path(config['working_dir']) / 'human_read_scrubbing' / 'scrubbing' / 'fastq_scrubbed.io',
-        INFORMS = Path(config['working_dir']) / human_read_scrubbing.OUTPUT_SCRUBBING_INFORMS,
+        INFORMS = Path(config['working_dir']) / human_read_scrubbing.OUTPUT_SCRUBBING_INFORMS
     params:
         running_dir = Path(config['working_dir']) / 'human_read_scrubbing' / 'scrubbing'
     run:
@@ -103,6 +103,7 @@ rule scrubbing_fasta_fq2fa:
     params:
         running_dir = Path(config['working_dir']) / 'human_read_scrubbing' / 'output'
     run:
+        from Bio import SeqIO
         path_in = (SnakemakeUtils.load_object(Path(input.FASTQ_SCRUBBED)))[0].path
         path_out = params.running_dir / f"{path_in.stem}.fasta"
 
@@ -132,10 +133,7 @@ rule scrubbing_fastq_deinterleave_and_gzip:
             output.FASTQ_SINGLE_GUNZIP = input.FASTQ_SCRUBBED
             path_in = (SnakemakeUtils.load_object(Path(input.FASTQ_SCRUBBED)))[0].path
             path_out = params.running_dir / f"{fastq_in[0].path.stem.split('.fastq')[0].split('.fq')[0]}.fastq.gz"
-            command = Command(f'gzip -c {path_in} > {path_out}')
-            command.run(path_out.parent)
-            if not command.returncode == 0:
-                raise PipelineExecutionError(f"Cannot unzip input file: {command.stderr}")
+            FileSystemHelper.gzip_file(path_in, path_out)
             SnakemakeUtils.dump_object([ToolIOFile(path_out)], Path(output.FASTQ_DEINTERLEAVED_GZIPPED))
         else:
             params.running_dir.mkdir(parents=True, exist_ok=True)
