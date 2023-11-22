@@ -1,3 +1,4 @@
+import unittest
 from pathlib import Path
 
 from camel.app.camel import Camel
@@ -38,6 +39,7 @@ class TestCheckM(CamelTestSuite):
         """
         checkm = CheckM(Camel.get_instance())
         checkm.add_input_files({'FASTA': [ToolIOFile(TestCheckM.input_fasta)]})
+        checkm.update_parameters(reduced_tree=True)
         checkm.run(self.running_dir)
         self.assertIn('TSV', checkm.tool_outputs)
         self.assertGreater(Path(checkm.tool_outputs['TSV'][0].path).stat().st_size, 0)
@@ -51,11 +53,16 @@ class TestCheckM(CamelTestSuite):
         :return: None
         """
         path_report_out = self.running_dir / 'report' / 'report.html'
-        checkv_main = MainCheckM([
+        checkm_main = MainCheckM([
             '--fasta', str(TestCheckM.input_fasta), TestCheckM.input_fasta.name,
             '--working-dir', str(self.running_dir),
             '--output-html', str(path_report_out),
-            '--output-dir', str(path_report_out.parent)
+            '--output-dir', str(path_report_out.parent),
+            '--reduced_tree'
         ])
-        checkv_main.run()
+        checkm_main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)
+
+
+if __name__ == '__main__':
+    unittest.main()

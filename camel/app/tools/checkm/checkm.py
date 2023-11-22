@@ -25,7 +25,7 @@ class CheckM(Tool):
         Initializes this tool.
         :param camel: CAMEL instance
         """
-        super().__init__('CheckM', '1.1.19', camel)
+        super().__init__('CheckM', '1.2.2', camel)
 
     def _check_input(self) -> None:
         """
