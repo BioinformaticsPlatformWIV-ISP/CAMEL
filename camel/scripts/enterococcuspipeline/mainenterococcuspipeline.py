@@ -21,16 +21,6 @@ class MainEnterococcusPipeline(ReportPipeline):
         'cgmlst', 'lrefinder', 'plasmidfinder', 'plasmidspades']
 
     DATA_BY_SPECIES = {
-        'faecium': {
-            'cgmlst_db': '/db/sequence_typing/enterococcus_faecium/cgmlst',
-            'full_name': 'Enterococcus faecium',
-            'gc_content': 38.1,
-            'genome_size': 2_796_178,
-            'mlst_db': '/db/sequence_typing/enterococcus_faecium/mlst',
-            'pointfinder_db': 'enterococcus_faecium',
-            'quast_fasta': '/db/refgenomes/Enterococcus_faecalis/GCA_000393015.1.fasta',
-            'quast_gff': '/db/refgenomes/Enterococcus_faecalis/GCA_000393015.1.gff'
-        },
         'faecalis': {
             'cgmlst_db': '/db/sequence_typing/enterococcus_faecalis/cgmlst',
             'full_name': 'Enterococcus faecalis',
@@ -38,8 +28,18 @@ class MainEnterococcusPipeline(ReportPipeline):
             'genome_size': 2_973_380,
             'mlst_db': '/db/sequence_typing/enterococcus_faecalis/mlst',
             'pointfinder_db': 'enterococcus_faecalis',
-            'quast_fasta': '/db/refgenomes/Enterococcus_faecium/GCA_009734005.2.fasta',
-            'quast_gff': '/db/refgenomes/Enterococcus_faecium/GCA_009734005.2.gff'
+            'quast_fasta': '/db/refgenomes/Enterococcus_faecalis/KB944666.1.fasta',
+            'quast_gff': '/db/refgenomes/Enterococcus_faecalis/KB944666.1.gff3'
+        },
+        'faecium': {
+            'cgmlst_db': '/db/sequence_typing/enterococcus_faecium/cgmlst',
+            'full_name': 'Enterococcus faecium',
+            'gc_content': 38.1,
+            'genome_size': 2_796_178,
+            'mlst_db': '/db/sequence_typing/enterococcus_faecium/mlst',
+            'pointfinder_db': 'enterococcus_faecium',
+            'quast_fasta': '/db/refgenomes/Enterococcus_faecium/CP038996.1.fasta',
+            'quast_gff': '/db/refgenomes/Enterococcus_faecium/CP038996.1.gff3'
         }
     }
 

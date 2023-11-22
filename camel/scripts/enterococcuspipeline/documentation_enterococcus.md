@@ -17,7 +17,7 @@ Datasets with an estimated coverage >=100x are downsampled to ~100x using the `s
 | **Species**   | **Ref. genome accession** | **% GC-content** | 
 |---------------|---------------------------|------------------|
 | *E. faecalis* | KB944666.1                | 37.4             |
-| *E. faecium*  | NZ_CP038996.1             | 38.1             |
+| *E. faecium*  | CP038996. 1               | 38.1             |
 
 ## 2. Read trimming
 
