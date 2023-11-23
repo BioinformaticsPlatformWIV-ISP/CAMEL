@@ -27,6 +27,7 @@ include: ani.SNAKEFILE_ANI
 #########
 # Rules #
 #########
+
 rule all:
     """
     This rules ensures that the required output files are generated.
@@ -35,9 +36,9 @@ rule all:
         HTML = config['output_report'],
         TSV = config['output_tabular']
 
-####################################
-# Linking workflow inputs & output #
-####################################
+#####################################
+# Linking workflow inputs & outputs #
+#####################################
 
 rule prepare_fastq_inputs:
     """
