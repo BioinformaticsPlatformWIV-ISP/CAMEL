@@ -1,6 +1,7 @@
 import math
+import re
 from pathlib import Path
-from typing import List, Union
+from typing import List, Union, Optional
 
 from Bio import SeqIO
 
@@ -121,3 +122,58 @@ class FastaUtils(object):
         except StopIteration:
             return False
         return True
+
+    @staticmethod
+    def rename_sequences_regex(
+            fasta_in: Path, fasta_out: Path, regex: str, repl: str, search_in_description: bool = False,
+            sort_output: bool = True, description: Optional[str] = None) -> None:
+        """
+        Renames the sequences in the input FASTA file using a regex.
+        :param fasta_in: Input FASTA file
+        :param fasta_out: Output FASTA file
+        :param regex: Regex
+        :param repl: Replacement
+        :param search_in_description: If True, the regex matches the full sequence description
+        :param sort_output: If true, output records are sorted by sequence id
+        :param description: Updated sequence description (optional)
+        :return: None
+        """
+        with fasta_in.open() as handle:
+            seqs = list(SeqIO.parse(handle, 'fasta'))
+        for seq_record in seqs:
+            seq_record.id = re.sub(regex, repl, seq_record.description if search_in_description else seq_record.id)
+            if description is not None:
+                seq_record.description = description
+        if sort_output:
+            seqs.sort(key=lambda x: x.id)
+        with fasta_out.open('w') as handle:
+            SeqIO.write(seqs, handle, 'fasta')
+
+    @staticmethod
+    def rename_sequences_with_fasta_file(fasta_in: Path, fasta_ref: Path, fasta_out: Path) -> None:
+        """
+        Changes the names of the sequences in the input FASTA file to the sequences in the reference FASTA file (in the
+        same order)
+        :param fasta_in: Input FASTA file
+        :param fasta_ref: Reference FASTA file
+        :param fasta_out: Output FASTA file
+        :return: None
+        """
+        # Parse reference FASTA file
+        with fasta_ref.open() as handle:
+            seq_ids_ref = [s.id for s in SeqIO.parse(handle, 'fasta')]
+
+        # Parse input FASTA file
+        with fasta_in.open() as handle:
+            seqs_in = list(SeqIO.parse(handle, 'fasta'))
+
+        # Update seq ids
+        if len(seqs_in) != len(seq_ids_ref):
+            raise ValueError(
+                f'Nb. of seqs in input file ({len(seqs_in)}) does not match reference file ({len(seq_ids_ref)}')
+        for seq_in, ref_id in zip(seqs_in, seq_ids_ref):
+            seq_in.id = ref_id
+
+        # Create the output file
+        with fasta_out.open('w') as handle:
+            SeqIO.write(seqs_in, handle, 'fasta')
