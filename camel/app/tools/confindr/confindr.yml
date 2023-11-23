@@ -1,4 +1,4 @@
-dependencies: [confindr/0.8.1, kma/1.4.12a, mash/2.2, bbmap/38.34, minimap2/2.22, samtools/1.17]
+dependencies: [confindr/0.8.1, kma/1.4.12a, mash/2.2, bbmap/38.44, minimap2/2.26, samtools/1.17]
 parameters:
   base_cutoff: {default: false, mandatory: false, option: --base_cutoff, value: 2}
   base_fraction_cutoff: {default: false, mandatory: false, option: --base_fraction_cutoff, value: 0.05}

@@ -100,9 +100,12 @@ class QuastReporter(Tool):
         busco_stats = self._input_informs['busco']['results']['results'] if 'busco' in self._input_informs else None
         section.add_header('Completeness', 3)
         section.add_table([
-            ['Reference length:', f"{int(data_quast['Reference length']):,}" if 'Reference length' in data_quast else '-'],
-            ['Genome fraction:', f"{float(data_quast['Genome fraction (%)']):.2f}%" if 'Genome fraction' in data_quast else '-'],
-            ['Duplication ratio:', f"{float(data_quast['Duplication ratio']):.2f}" if 'Duplication ration' in data_quast else '-'],
+            ['Reference length:', f"{int(data_quast['Reference length']):,}" if
+                'Reference length' in data_quast else 'n/a'],
+            ['Genome fraction:', f"{float(data_quast['Genome fraction (%)']):.2f}%" if
+                'Genome fraction (%)' in data_quast else 'n/a'],
+            ['Duplication ratio:', f"{float(data_quast['Duplication ratio']):.2f}" if
+                'Duplication ratio' in data_quast else 'n/a'],
             ['Complete BUSCO:', f"{busco_stats.get('Complete'):.2f}%" if busco_stats else 'n/a'],
             ['Partial BUSCO:', f"{busco_stats.get('Fragmented'):.2f}%" if busco_stats else 'n/a'],
         ], None, [('class', 'information')])
