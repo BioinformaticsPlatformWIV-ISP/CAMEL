@@ -1,0 +1,4 @@
+dependencies: [ AmpliGone/1.2.1 ]
+parameters:
+  primer_mismatch_rate: { default: false, mandatory: true, option: --primer-mismatch-rate, value: '0.1' }
+tool_command: python -m AmpliGone.fasta2bed
