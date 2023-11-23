@@ -1,5 +1,3 @@
-import pandas as pd
-
 from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
@@ -9,7 +7,7 @@ from camel.app.tools.tool import Tool
 
 class MashScreen(Tool):
     """
-     Determine whether query sequences are within a larger mixture of sequences.
+    Mash screen determines whether query sequences are within a larger mixture of sequences.
     """
 
     def __init__(self, camel: Camel) -> None:
