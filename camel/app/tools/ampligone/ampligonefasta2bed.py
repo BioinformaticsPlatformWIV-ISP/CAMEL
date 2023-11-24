@@ -22,7 +22,7 @@ class AmpliGoneFasta2Bed(Tool):
         Initializes this tool.
         :param camel: CAMEL instance
         """
-        super().__init__('AmpliGone fasta2bed', '1.2.1', camel)
+        super().__init__('AmpliGone fasta2bed', '1.3.0', camel)
 
     def _check_input(self) -> None:
         """
