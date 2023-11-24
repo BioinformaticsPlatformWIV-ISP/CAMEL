@@ -114,9 +114,12 @@ class TestWorkflows(CamelTestSuite):
         Runs the variant calling workflow with ONT data using bcftools.
         :return: None
         """
-        dir_test = CamelTestSuite.get_test_file_dir('clair3')
+        dir_test = CamelTestSuite.get_test_file_dir('variant_calling')
         workflow = CallVariants(self.running_dir)
-        output = workflow.run(dir_test / 'bsubtilis_ont.bam', dir_test / 'bsubtilis.fa', 'nanopore', 'bcftools', {})
+        output = workflow.run(
+            dir_test / 'sars_cov_2-ont.bam',
+            dir_test / 'sars_cov_2-wuhan.fasta',
+            'nanopore', 'bcftools', {})
         self.assertTrue(output.path_vcf.exists())
         self.assertGreater(VCFUtils.count_variants(output.path_vcf), 0)
         logging.info(f'Stats: {output.stats}')
@@ -126,10 +129,12 @@ class TestWorkflows(CamelTestSuite):
         Runs the variant calling workflow with ONT data using bcftools.
         :return: None
         """
-        dir_test = CamelTestSuite.get_test_file_dir('clair3')
+        dir_test = CamelTestSuite.get_test_file_dir('variant_calling')
         workflow = CallVariants(self.running_dir)
         output = workflow.run(
-            dir_test / 'bsubtilis_illumina.bam', dir_test / 'bsubtilis.fa', 'illumina', 'bcftools', {})
+            dir_test / 'sars_cov_2-illumina.bam',
+            dir_test / 'sars_cov_2-wuhan.fasta',
+            'illumina', 'bcftools', {})
         self.assertTrue(output.path_vcf.exists())
         self.assertGreater(VCFUtils.count_variants(output.path_vcf), 0)
         self.assertGreater(len(output.informs), 0)
@@ -140,12 +145,13 @@ class TestWorkflows(CamelTestSuite):
         Runs the variant calling workflow with ONT data using bcftools.
         :return: None
         """
-        dir_test = CamelTestSuite.get_test_file_dir('clair3')
+        dir_test = CamelTestSuite.get_test_file_dir('variant_calling')
         model = Path(self.camel.config['db_root']) / 'clair3' / 'models' / 'ont'
         workflow = CallVariants(self.running_dir)
         output = workflow.run(
-            dir_test / 'bsubtilis_ont.bam', dir_test / 'bsubtilis.fa', 'nanopore', 'clair3', {'model': model},
-            threads=8)
+            dir_test / 'sars_cov_2-ont.bam',
+            dir_test / 'sars_cov_2-wuhan.fasta',
+            'nanopore', 'clair3', {'model': model}, threads=4)
         self.assertTrue(output.path_vcf.exists())
         self.assertGreater(VCFUtils.count_variants(output.path_vcf), 0)
         self.assertGreater(len(output.informs), 0)
@@ -156,11 +162,13 @@ class TestWorkflows(CamelTestSuite):
         Runs the variant calling workflow with ONT data using bcftools.
         :return: None
         """
-        dir_test = CamelTestSuite.get_test_file_dir('clair3')
+        dir_test = CamelTestSuite.get_test_file_dir('variant_calling')
         model = Path(self.camel.config['db_root']) / 'clair3' / 'models' / 'ilmn'
         workflow = CallVariants(self.running_dir)
         output = workflow.run(
-            dir_test / 'bsubtilis_illumina.bam', dir_test / 'bsubtilis.fa', 'illumina', 'clair3', {'model': model},
+            dir_test / 'sars_cov_2-illumina.bam',
+            dir_test / 'sars_cov_2-wuhan.fasta',
+            'illumina', 'clair3', {'model': model},
             threads=4)
         self.assertTrue(output.path_vcf.exists())
         self.assertGreater(VCFUtils.count_variants(output.path_vcf), 0)

@@ -36,7 +36,7 @@ class BcftoolsBase(Tool, metaclass=abc.ABCMeta):
         :return: Output filename
         """
         if 'output_filename' in self._parameters:
-            return self.folder / FileSystemHelper.make_valid(self._parameters['output_filename'].value)
+            return self.folder / str(self._parameters['output_filename'].value)
         logging.info("Output filename not set, reverting to default.")
         return self.folder / f"bcftools_out.{self._get_output_key().lower().replace('_', '.')}"
 

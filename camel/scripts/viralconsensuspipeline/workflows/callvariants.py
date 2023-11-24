@@ -92,7 +92,7 @@ class CallVariants(object):
         # Call variants
         path_vcf_out = self._dir / 'variants.vcf'
         bcftools_call = BcftoolsCall(Camel.get_instance())
-        bcftools_call.add_input_files({'VCF_GZ': [ToolIOFile(path_pileup_out)]})
+        bcftools_call.add_input_files({'VCF_GZ': bcftools_mpileup.tool_outputs['VCF_GZ']})
         bcftools_call.update_parameters(
             output_type='v', output_filename=str(path_vcf_out), ploidy='1', calling_method='consensus',
             variants_only=True, threads=threads)

@@ -133,7 +133,7 @@ rule clair3_variant_calling_normalize_indels:
         bcftools_norm = BcftoolsNorm(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(bcftools_norm, input)
         step = Step(str(rule), bcftools_norm, camel, params.running_dir, config)
-        bcftools_norm.update_parameters(output_format='z')
+        bcftools_norm.update_parameters(output_type='z')
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(bcftools_norm, output)
 
@@ -173,6 +173,6 @@ rule clair3_variant_calling_unzip_vcf:
         SnakemakeUtils.add_pickle_inputs(bcftools_view, input)
         step = Step(str(rule), bcftools_view, camel, params.running_dir, config)
         output_filename = f'variants-{FileSystemHelper.make_valid(params.sample_name)}.vcf'
-        bcftools_view.update_parameters(output_format='VCF', compress_output=False, output_filename=output_filename)
+        bcftools_view.update_parameters(output_type='v', output_filename=output_filename)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(bcftools_view, output)

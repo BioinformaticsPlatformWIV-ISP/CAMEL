@@ -44,7 +44,7 @@ class BcftoolsFilter(BcftoolsBase):
             command_parts.append(f"--targets-file {self._tool_inputs['BED_include'][0].path}")
         elif 'BED_exclude' in self._tool_inputs:
             command_parts.append(f"--targets-file ^{self._tool_inputs['BED_exclude'][0].path}")
-        command_parts.extend(self._build_options())
+        command_parts.extend(self._build_options(excluded_parameters=['invert_targets']))
         command_parts.append(str(next(
-            self._tool_inputs[k][0].path for k in ('VCF', 'VCF_GZ') if k in self._tool_inputs)))
+            self._tool_inputs[k][0].path for k in ('VCF', 'VCF_GZ') if k in self._tool_inputs.keys())))
         self._command.command = ' '.join(command_parts)
