@@ -1,13 +1,12 @@
 from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
-from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
-from camel.app.tools.tool import Tool
+from camel.app.tools.bcftools.bcftoolsbase import BcftoolsBase
 
 
-class BcftoolsConsensus(Tool):
+class BcftoolsConsensus(BcftoolsBase):
     """
-    Create consensus sequence by applying VCF variants to a reference fasta file.
+    Create consensus sequences by applying VCF variants to a reference fasta file.
     """
 
     def __init__(self, camel: Camel) -> None:
@@ -15,15 +14,15 @@ class BcftoolsConsensus(Tool):
         Initializes this tool.
         :param camel: CAMEL instance
         """
-        super().__init__('bcftools consensus', '1.9', camel)
+        super().__init__('bcftools consensus', '1.17', camel)
 
     def _check_input(self) -> None:
         """
         Checks if the input is valid.
         :return: None
         """
-        if 'VCF_GZ' not in self._tool_inputs:
-            raise InvalidInputSpecificationError("No variants input found.")
+        if not any(x in self._tool_inputs for x in ('VCF', 'VCF_GZ')):
+            raise InvalidInputSpecificationError("No variants input found (VCF/VCF_GZ).")
         if 'FASTA' not in self._tool_inputs:
             raise InvalidInputSpecificationError("No reference FASTA input found.")
         super(BcftoolsConsensus, self)._check_input()
@@ -44,8 +43,8 @@ class BcftoolsConsensus(Tool):
         """
         self._command.command = ' '.join([
             self._tool_command,
-            '--fasta-ref {}'.format(self._tool_inputs['FASTA'][0].path),
-            str(self._tool_inputs['VCF_GZ'][0].path),
+            f'--fasta-ref {self._tool_inputs["FASTA"][0].path}',
+            str(next(self._tool_inputs[k][0].path for k in ('VCF', 'VCF_GZ') if k in self._tool_inputs)),
             ' '.join(self._build_options())
         ])
 
@@ -54,12 +53,4 @@ class BcftoolsConsensus(Tool):
         Sets the output of this tool.
         :return: None
         """
-        self._tool_outputs['FASTA'] = [ToolIOFile(self.folder / self._parameters['output_filename'].value)]
-
-    def _check_command_output(self) -> None:
-        """
-        Checks if the command executed successfully.
-        :return: None
-        """
-        if self._command.returncode != 0:
-            raise ToolExecutionError("Tool did not run successfully")
+        self._tool_outputs['FASTA'] = [ToolIOFile(self._get_output_path())]

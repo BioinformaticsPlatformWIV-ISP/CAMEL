@@ -1,20 +1,20 @@
+from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
-from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
-from camel.app.tools.tool import Tool
+from camel.app.tools.bcftools.bcftoolsbase import BcftoolsBase
 
 
-class BcftoolsCsq(Tool):
+class BcftoolsCsq(BcftoolsBase):
     """
     Bcftools csq is a Haplotype-aware consequence caller.
     """
 
-    def __init__(self, camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initializes this tool.
         :param camel: CAMEL
         """
-        super().__init__('bcftools csq', '1.9', camel)
+        super().__init__('bcftools csq', '1.17', camel)
 
     def _check_input(self):
         """
@@ -22,27 +22,19 @@ class BcftoolsCsq(Tool):
         :return: None
         """
         if not any(key in self._tool_inputs for key in ('VCF', 'VCF_GZ')):
-            raise InvalidInputSpecificationError("VCF(_GZ) input is required.")
+            raise InvalidInputSpecificationError("VCF/VCF_GZ input is required.")
         super()._check_input()
 
-    def _execute_tool(self):
+    def _execute_tool(self) -> None:
         """
         Executes this tool.
         :return: None
         """
         self.__build_command()
         self._execute_command()
-        self._tool_outputs['VCF'] = [ToolIOFile(self.folder / self._parameters['output_filename'].value)]
+        self._tool_outputs['VCF'] = [ToolIOFile(self._get_output_path())]
 
-    @property
-    def _input_key(self):
-        """
-        Returns the input key.
-        :return: None
-        """
-        return 'VCF' if 'VCF' in self._tool_inputs else 'VCF_GZ'
-
-    def __build_command(self):
+    def __build_command(self) -> None:
         """
         Builds the command line command.
         :return: None
@@ -50,17 +42,10 @@ class BcftoolsCsq(Tool):
         parts = [
             self._tool_command,
             ' '.join(self._build_options()),
-            str(self._tool_inputs[self._input_key][0].path)]
+            str(next(self._tool_inputs[k][0].path for k in ('VCF', 'VCF_GZ') if k in self._tool_inputs)),
+        ]
         if 'GFF' in self._tool_inputs:
             parts.insert(3, f"--gff-annot {self._tool_inputs['GFF'][0].path}")
         if 'FASTA' in self._tool_inputs:
             parts.insert(3, f"--fasta-ref {self._tool_inputs['FASTA'][0].path}")
         self._command.command = ' '.join(parts)
-
-    def _check_command_output(self):
-        """
-        Checks if the command executed successfully.
-        :return: None
-        """
-        if self._command.returncode != 0:
-            raise ToolExecutionError("Error executing {}:\n{}".format(self._name, self._command.stderr))

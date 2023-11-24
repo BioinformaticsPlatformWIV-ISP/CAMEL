@@ -5,11 +5,10 @@ from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
-from camel.app.tools.bcftools.bcftools import Bcftools
-from camel.app.tools.samtools.samtoolsbase import SamtoolsBase
+from camel.app.tools.bcftools.bcftoolsbase import BcftoolsBase
 
 
-class BcftoolsNorm(Bcftools):
+class BcftoolsNorm(BcftoolsBase):
     """
     Indexes bgzip compressed VCF files and BCF files.
     """
@@ -19,7 +18,7 @@ class BcftoolsNorm(Bcftools):
         Initializes this tool.
         :param camel: Camel instance
         """
-        super().__init__('bcftools norm', '1.9', camel)
+        super().__init__('bcftools norm', '1.17', camel)
         self._input_key = None
 
     def _check_input(self) -> None:
@@ -38,10 +37,9 @@ class BcftoolsNorm(Bcftools):
         Executes this tool.
         :return: None
         """
-        output_path = self._get_output_path()
-        self.__build_command(output_path)
+        self.__build_command(self._get_output_path())
         self._execute_command()
-        self.__set_output(output_path)
+        self.__set_output(self._get_output_path())
         self.__set_informs()
 
     def __build_command(self, output_path: Path) -> None:
@@ -53,7 +51,7 @@ class BcftoolsNorm(Bcftools):
         input_key = next(key for key in ('VCF', 'VCF_GZ') if key in self._tool_inputs)
         self._command.command = ' '.join([
             self._tool_command,
-            ' '.join(self._build_options()),
+            *self._build_options(),
             f"-f {self._tool_inputs['FASTA'][0].path}",
             str(self._tool_inputs[input_key][0].path),
             f' > {output_path}'
@@ -67,14 +65,6 @@ class BcftoolsNorm(Bcftools):
         """
         output_key = self._get_output_key()
         self._tool_outputs[output_key] = [ToolIOFile(output_path)]
-
-    def _check_command_output(self) -> None:
-        """
-        Checks if the tool was executed successfully.
-        :return: None
-        """
-        if not self._command.returncode == 0:
-            raise ToolExecutionError(self._command.stderr)
 
     def __set_informs(self) -> None:
         """

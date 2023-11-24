@@ -1,7 +1,8 @@
-dependencies: [bcftools/1.9]
+dependencies: [ bcftools/1.17 ]
 parameters:
-  invert_targets: {default: false, mandatory: false, option: '', value: null}
-  output_filename: {default: true, mandatory: true, option: --output, value: variants_filtered.vcf}
-  output_type: {default: false, mandatory: false, option: --output-type, value: v}
-  soft_filter: {default: false, mandatory: false, option: --soft-filter, value: 'name'}
+  exclude: { default: false, mandatory: false, option: --exclude, value: null }
+  invert_targets: { default: false, mandatory: false, option: null, value: null }
+  output_filename: { default: true, mandatory: true, option: --output, value: variants_filtered.vcf }
+  output_type: { default: true, mandatory: true, option: --output-type, value: v }
+  soft_filter: { default: false, mandatory: false, option: --soft-filter, value: 'name' }
 tool_command: bcftools filter
