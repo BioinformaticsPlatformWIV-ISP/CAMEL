@@ -1,3 +1,5 @@
+import logging
+
 from camel.app.camel import Camel
 from camel.app.error.invalidparametererror import InvalidParameterError
 from camel.app.error.toolexecutionerror import ToolExecutionError
@@ -17,6 +19,7 @@ class SamtoolsMPileup(SamtoolsBasePipeable):
         Initializes this tool.
         :param camel: Camel instance
         """
+        logging.warning(f'samtools mpileup will become deprecated, use bcftools mpileup instead')
         super().__init__('samtools mpileup', '1.9', camel)
 
     def _check_parameters(self) -> None:

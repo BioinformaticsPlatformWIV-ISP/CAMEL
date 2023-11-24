@@ -11,7 +11,6 @@ from camel.app.tools.samtools.samtoolsflagstat import SamtoolsFlagstat
 from camel.app.tools.samtools.samtoolsindex import SamtoolsIndex
 from camel.app.tools.samtools.samtoolsindexcram import SamtoolsIndexCram
 from camel.app.tools.samtools.samtoolsmerge import SamtoolsMerge
-from camel.app.tools.samtools.samtoolsmpileup import SamtoolsMPileup
 from camel.app.tools.samtools.samtoolssort import SamtoolsSort
 from camel.app.tools.samtools.samtoolsview import SamtoolsView
 
@@ -130,16 +129,6 @@ class TestSamtools(CamelTestSuite):
         samtools_merge.add_input_files({'BAM': [TestSamtools.FILE_BAM1, TestSamtools.FILE_BAM2]})
         samtools_merge.run(self.running_dir)
         self.verify_output_files(samtools_merge, 'BAM')
-
-    def test_samtools_mpileup(self) -> None:
-        """
-        Tests SamtoolsMPileup.
-        :return: None
-        """
-        samtools_mpileup = SamtoolsMPileup(self.camel)
-        samtools_mpileup.add_input_files({'BAM': [TestSamtools.FILE_BAM], 'FASTA': [TestSamtools.FILE_FASTA_REF]})
-        samtools_mpileup.run(self.running_dir)
-        self.verify_output_files(samtools_mpileup, 'PILEUP')
 
     def test_samtools_sort(self) -> None:
         """

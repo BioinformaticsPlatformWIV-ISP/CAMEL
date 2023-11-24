@@ -6,9 +6,9 @@ from camel.app.components.pipelines import pipeutils
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.io.tooliovalue import ToolIOValue
+from camel.app.tools.bcftools.bcftoolsmpileup import BcftoolsMpileup
 from camel.app.tools.bowtie2.bowtie2map import Bowtie2Map
 from camel.app.tools.samtools.samtoolsflagstat import SamtoolsFlagstat
-from camel.app.tools.samtools.samtoolsmpileup import SamtoolsMPileup
 from camel.app.tools.samtools.samtoolssort import SamtoolsSort
 from camel.app.tools.samtools.samtoolsview import SamtoolsView
 
@@ -69,8 +69,7 @@ class TestPipedTools(CamelTestSuite):
 
     def test_pipeline_bt2_sam_to_sorted_bam_to_mpileup(self) -> None:
         """
-        Tests the mpileup utility after bowtie mapping using camel piping.
-
+        Tests the mpileup utility after bowtie mapping using CAMEL piping.
         :return: None
         """
         # Initialize tools
@@ -81,21 +80,22 @@ class TestPipedTools(CamelTestSuite):
         })
         samtools_view = SamtoolsView(Camel.get_instance())
         samtools_sort = SamtoolsSort(Camel.get_instance())
-        samtools_mpileup = SamtoolsMPileup(Camel.get_instance())
+        bcftools_mpileup = BcftoolsMpileup(Camel.get_instance())
+        bcftools_mpileup.add_input_files({'FASTA': [ToolIOFile(TestPipedTools.input_reference)]})
+        bcftools_mpileup.update_parameters(output_filename='pipe_out.vcf', output_type='v')
 
         # Run as pipe
-        pipeutils.run_as_pipe([bowtie2, samtools_view, samtools_sort, samtools_mpileup], self.running_dir)
+        pipeutils.run_as_pipe([bowtie2, samtools_view, samtools_sort, bcftools_mpileup], self.running_dir)
 
-        # Assert output file is generated
-        self.assertIn('PILEUP', samtools_mpileup.tool_outputs)
-        self.assertTrue(Path(samtools_mpileup.tool_outputs['PILEUP'][0].path))
-        self.assertGreater(Path(samtools_mpileup.tool_outputs['PILEUP'][0].path).stat().st_size, 0)
+        # Check if the output file was generated
+        self.assertIn('VCF', bcftools_mpileup.tool_outputs)
+        self.verify_output_files(bcftools_mpileup, 'VCF')
 
-        # Assert that intermediate step do not generate output
+        # Check that the intermediate steps did not generate output
         self.assertNotIn('BAM', samtools_sort.tool_outputs)
         self.assertNotIn('BAM', samtools_view.tool_outputs)
 
-        # Assert Bowtie2 informs are parsed
+        # Check that the Bowtie2 informs were parsed
         self.assertIn('stats_map_rate', bowtie2.informs)
 
     def test_pipeline_bt2_sam_to_sorted_bam(self) -> None:
