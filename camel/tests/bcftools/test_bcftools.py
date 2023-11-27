@@ -6,6 +6,7 @@ from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.bcftools.bcftoolscsq import BcftoolsCsq
 from camel.app.tools.bcftools.bcftoolsfilter import BcftoolsFilter
 from camel.app.tools.bcftools.bcftoolsindex import BcftoolsIndex
+from camel.app.tools.bcftools.bcftoolsmpileup import BcftoolsMpileup
 from camel.app.tools.bcftools.bcftoolsnorm import BcftoolsNorm
 
 
@@ -19,6 +20,9 @@ class TestBcftools(CamelTestSuite):
     FILE_BED = ToolIOFile(test_file_dir / 'regions.bed')
     FILE_FASTA = ToolIOFile(test_file_dir / 'reference_h37Rv.fasta')
     FILE_GFF = ToolIOFile(test_file_dir / 'annotation_h37Rv.gff')
+
+    FILE_FASTA_TOY = ToolIOFile(test_file_dir / 'toy.fasta')
+    FILE_BAM_TOY = ToolIOFile(test_file_dir / 'toy.bam')
 
     def test_bcftools_csq(self) -> None:
         """
@@ -100,6 +104,16 @@ class TestBcftools(CamelTestSuite):
         })
         bcftools_index.run(self.running_dir)
         self.assertTrue(self.running_dir / f'{TestBcftools.FILE_VCF_GZ.path.name}.csi', "CSI index not found")
+
+    def test_bcftools_mpileup(self) -> None:
+        """
+        Tests the mpileup function of bcftools.
+        :return: None
+        """
+        samtools_mpileup = BcftoolsMpileup(self.camel)
+        samtools_mpileup.add_input_files({'BAM': [TestBcftools.FILE_BAM_TOY], 'FASTA': [TestBcftools.FILE_FASTA_TOY]})
+        samtools_mpileup.run(self.running_dir)
+        self.verify_output_files(samtools_mpileup, 'VCF')
 
 
 if __name__ == '__main__':

@@ -14,7 +14,7 @@ class BcftoolsCsq(Tool):
         Initializes this tool.
         :param camel: CAMEL
         """
-        super().__init__('bcftools csq', '1.9', camel)
+        super().__init__('bcftools csq', '1.17', camel)
 
     def _check_input(self):
         """

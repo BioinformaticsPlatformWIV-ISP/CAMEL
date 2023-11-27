@@ -39,7 +39,7 @@ rule seqtk_subsample:
         avg_depth = base_count / float(config['species_info']['genome_size'])
         target_depth = 200
         fraction = round(target_depth / avg_depth, 4)
-        logging.info(f'Found a total of {base_count} bases in the input files. The average read depth based'
+        logger.info(f'Found a total of {base_count} bases in the input files. The average read depth based'
                      f'on this number is estimated to be {avg_depth}. Subsampling to ~200x (factor {fraction})')
         if fraction > 0.5:
             raise ValueError('Average read depth based on number of base pairs is less than 400 '

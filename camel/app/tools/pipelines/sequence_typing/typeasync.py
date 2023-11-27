@@ -1,12 +1,12 @@
 import concurrent.futures
 import json
-import logging
 from typing import Dict, Any, Union
 
 from camel.app.camel import Camel
 from camel.app.components.sequencetyping import typingasyncutils
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -64,7 +64,7 @@ class TypeAsync(Tool):
         # Parse scheme metadata
         with (self._tool_inputs['DIR'][0].path / 'scheme_metadata.txt').open() as handle:
             metadata = json.load(handle)
-        logging.info(f"{len(metadata['loci'])} loci found")
+        logger.info(f"{len(metadata['loci'])} loci found")
 
         # Determine which loci need to be typed
         loci_target = [
@@ -84,7 +84,7 @@ class TypeAsync(Tool):
                 try:
                     data = future.result()
                 except Exception as err:
-                    logging.error(f"Locus '{locus}' generated exception: {err}")
+                    logger.error(f"Locus '{locus}' generated exception: {err}")
                     raise ToolExecutionError(err)
                 else:
                     output_by_locus[locus] = data

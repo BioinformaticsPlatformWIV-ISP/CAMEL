@@ -18,6 +18,7 @@ class TestMLSTPhylogeny(CamelTestSuite):
     dir_dataset_large_srst2 = test_file_dir / 'dataset_large_srst2'
     dir_dataset_small_blast = test_file_dir / 'dataset_small_blast'
     dir_dataset_small_blast_html = test_file_dir / 'dataset_html_small_blast'
+    dir_dataset_small_blast_novel_alleles = test_file_dir / 'dataset_small_blast-novel_alleles'
 
     def test_mlst_phylogeny_small_dataset(self) -> None:
         """
@@ -182,6 +183,26 @@ class TestMLSTPhylogeny(CamelTestSuite):
         nb_loci_in = len(pd.read_table(next(iter(TestMLSTPhylogeny.dir_dataset_large_blast.iterdir()))).index)
         nb_loci_out = len(pd.read_table(output_tsv_alleles).columns) - 1
         self.assertEqual(nb_loci_in, nb_loci_out)
+
+    def test_mlst_phylogeny_novel_alleles(self) -> None:
+        """
+        Tests the MLST phylogeny tool with novel alleles.
+        :return: None
+        """
+        output_html = self.running_dir / 'out' / 'report.html'
+        output_html.parent.mkdir(exist_ok=True, parents=True)
+        input_tsv = list(itertools.chain.from_iterable(
+            [['--input-tsv', str(tsv), tsv.name] for
+             tsv in TestMLSTPhylogeny.dir_dataset_small_blast_novel_alleles.iterdir()]))
+        args = input_tsv + [
+            '--output-html', str(output_html),
+            '--output-dir', str(output_html.parent),
+            '--dir-working', str(self.running_dir),
+            '--min-perc-loci', '75'
+        ]
+        mlst_tree = MainMLSTPhylogeny(args)
+        mlst_tree.run()
+        self.assertGreater(output_html.stat().st_size, 0)
 
 
 if __name__ == '__main__':

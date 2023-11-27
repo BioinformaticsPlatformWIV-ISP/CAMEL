@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from camel.resources.snakefile import trimming_illumina, assembly_spades, gene_detection, trimming, \
-    contamination_check_kraken, quality_checks, sequence_typing, downsampling
+    contamination_check_kraken, quality_checks, sequence_typing, downsampling, confindr, quast, amrfinder
 from camel.resources.snakefile.sequence_typing import get_sequence_typing_report, OUTPUT_TYPING_SUMMARY
 
 #######################
@@ -9,9 +9,12 @@ from camel.resources.snakefile.sequence_typing import get_sequence_typing_report
 #######################
 include: downsampling.SNAKEFILE_DOWNSAMPLING
 include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
+include: confindr.SNAKEFILE_CONFINDR
 include: contamination_check_kraken.SNAKEFILE_CONTAMINATION_CHECK_KRAKEN
 include: quality_checks.SNAKEFILE_QUALITY_CHECKS
 include: assembly_spades.SNAKEFILE_ASSEMBLY_SPADES
+include: quast.SNAKEFILE_QUAST
+include: amrfinder.SNAKEFILE_AMRFINDER
 include: gene_detection.SNAKEFILE_GENE_DETECTION
 include: sequence_typing.SNAKEFILE_SEQUENCE_TYPING
 
@@ -88,6 +91,19 @@ rule link_fasta_to_typing:
         cp {input.FASTA} {output.FASTA_typing};
         """
 
+rule select_fasta_to_amrfinder:
+    """
+    This rules links the output of the assembly workflow to the other workflows.
+    """
+    input:
+        FASTA_spades = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA
+    output:
+        FASTA_amrfinder = Path(config['working_dir']) / amrfinder.INPUT_AMRFINDER_FASTA
+    shell:
+        """
+        cp {input.FASTA_spades} {output.FASTA_amrfinder};
+        """
+
 rule report_pickle_citations:
     """
     This rule creates a pickle with a report section containing the citations.
@@ -113,24 +129,26 @@ rule report_command_section:
         INFORMS_trimming = trimming.get_trimming_command_informs(config),
         INFORMS_assembly = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_INFORMS,
         INFORMS_assembly_filt = Path(config['working_dir']) / 'assembly_spades' / 'filtering' / 'informs.io',
+        INFORMS_quast = Path(config['working_dir']) /quast.OUTPUT_QUAST_INFORMS,
+        INFORMS_busco = Path(config['working_dir']) /quast.OUTPUT_BUSCO_INFORMS,
         INFORMS_kraken = Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_KRAKEN_INFORMS if 'kraken' in config['analyses'] else [],
+        INFORMS_confindr = Path(config['working_dir']) /confindr.OUTPUT_CONFINDR_INFORMS if 'confindr' in config['analyses'] else [],
         INFORMS_mapping = quality_checks.get_mapping_rate_informs(config),
         INFORMS_depth = quality_checks.get_depth_informs(config),
+        # AMRFinder
+        INFORMS_amrfnder = Path(config['working_dir']) / amrfinder.OUTPUT_AMRFINDER_INFORMS if 'amrfinder' in config['analyses'] else [],
         # Gene detection
-        INFORMS_argannot = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='argannot') if 'argannot' in config['analyses'] else [],
-        INFORMS_card = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='card') if 'card' in config['analyses'] else [],
-        INFORMS_ncbi_amr = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='ncbi_amr') if 'ncbi_amr' in config['analyses'] else [],
         INFORMS_resfinder = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='resfinder') if 'resfinder' in config['analyses'] else [],
         INFORMS_virulencefinder = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='virulencefinder') if 'virulencefinder' in config['analyses'] else [],
         INFORMS_vfdb_core = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='vfdb_core') if 'vfdb_core' in config['analyses'] else [],
         INFORMS_plasmidfinder = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='plasmidfinder') if 'plasmidfinder' in config['analyses'] else [],
         # Sequence typing
+        INFORMS_rmlst = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='rmlst') if 'rmlst' in config['analyses'] else [],
         INFORMS_mlst = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='mlst') if 'mlst' in config['analyses'] else [],
         INFORMS_species = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='species_confirmation') if 'species_confirmation' in config['analyses'] else [],
         INFORMS_cgmlst = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='cgmlst') if 'cgmlst' in config['analyses'] else [],
         INFORMS_typing_amr = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='typing_amr') if 'typing_amr' in config['analyses'] else [],
         INFORMS_virulence = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='typing_virulence') if 'typing_virulence' in config['analyses'] else [],
-        INFORMS_metal = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='metal_detergent') if 'metal_detergent' in config['analyses'] else [],
         INFORMS_pcr_sero = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='pcr_serogroup') if 'pcr_serogroup' in config['analyses'] else []
     output:
         HTML = Path(config['working_dir']) / 'report' / 'html-commands.io'
@@ -156,13 +174,12 @@ rule report_combine_all:
     input:
         report_downsampling = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_REPORT,
         report_trimming = trimming.get_trimming_report(config),
-        report_assembly = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_REPORT,
         report_kraken = Path(config['working_dir']) / (contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT if 'kraken' in config['analyses'] else contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT_EMPTY),
-        report_adv_qc = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_REPORT,
+        report_quast = Path(config['working_dir']) /quast.OUTPUT_QUAST_REPORT,
+        report_confindr = Path(config['working_dir']) / (confindr.OUTPUT_CONFINDR_REPORT if 'confindr' in config['analyses'] else confindr.OUTPUT_CONFINDR_REPORT_EMPTY),
+        report_adv_qc = Path(config['working_dir']) /quality_checks.OUTPUT_QUALITY_CHECKS_REPORT,
         # AMR detection
-        report_argannot = gene_detection.get_gene_detection_report('argannot', config),
-        report_card = gene_detection.get_gene_detection_report('card', config),
-        report_ncbi_amr = gene_detection.get_gene_detection_report('ncbi_amr', config),
+        report_amrfinder = Path(config['working_dir']) / (amrfinder.OUTPUT_AMRFINDER_REPORT if config['analyses'] else amrfinder.OUTPUT_AMRFINDER_REPORT_EMPTY),
         report_resfinder = gene_detection.get_gene_detection_report('resfinder', config),
         # Virulence detection
         report_virulence = gene_detection.get_gene_detection_report('virulencefinder', config),
@@ -170,11 +187,11 @@ rule report_combine_all:
         # Plasmid replicon detection
         report_plasmidfinder = gene_detection.get_gene_detection_report('plasmidfinder', config),
         # Typing
+        report_rmlst = get_sequence_typing_report('rmlst', config),
         report_mlst = get_sequence_typing_report('mlst', config),
         report_species = get_sequence_typing_report('species_confirmation', config),
         report_amr_typing = get_sequence_typing_report('typing_amr', config),
         report_cgmlst = get_sequence_typing_report('cgmlst', config),
-        report_metal_detergent = get_sequence_typing_report('metal_detergent', config),
         report_pcr_serogroup = get_sequence_typing_report('pcr_serogroup', config),
         report_viru_typing = get_sequence_typing_report('typing_virulence', config),
         # Report
@@ -202,16 +219,15 @@ rule report_combine_all:
         # Add report content
         report_structure = [
             ('Read trimming and basic QC', 'trim', [Path(input.report_downsampling), Path(input.report_trimming)]),
-            ('Assembly', 'assem', [Path(input.report_assembly)]),
-            ('Advanced QC', 'adv_qc', [Path(x) for x in (input.report_kraken, input.report_adv_qc)]),
-            ('Species identification', 'species', [Path(x) for x in (input.report_species, input.report_mlst)]),
-            ('AMR detection', 'amr', [Path(x) for x in (
-                input.report_argannot, input.report_card, input.report_ncbi_amr, input.report_resfinder)]),
+            ('Assembly', 'assem', [Path(input.report_quast)]),
+            ('Advanced QC', 'adv_qc', [Path(x) for x in (input.report_kraken, input.report_confindr, input.report_adv_qc)]),
+            ('Species identification', 'species', [Path(x) for x in (
+                input.report_rmlst, input.report_species, input.report_mlst)]),
+            ('AMR detection', 'amr', [Path(x) for x in (input.report_amrfinder, input.report_resfinder)]),
             ('Virulence detection', 'virulence', [Path(x) for x in (input.report_virulence, input.report_vfdb_core)]),
-            ('Plasmid replicon detection', 'virulence', [Path(input.report_plasmidfinder)]),
+            ('Plasmid replicon detection', 'plasmid', [Path(input.report_plasmidfinder)]),
             ('Sequence typing', 'typing', [Path(x) for x in (
-                input.report_amr_typing, input.report_cgmlst, input.report_metal_detergent,
-                input.report_pcr_serogroup, input.report_viru_typing)]),
+                input.report_amr_typing, input.report_cgmlst, input.report_pcr_serogroup, input.report_viru_typing)]),
             ('Citations', 'citations', [Path(input.report_citations)]),
             ('Commands', 'commands', [Path(input.report_commands)])
         ]
@@ -248,13 +264,12 @@ rule summary_combine_all:
         rules.summary_init.output.TSV,
         Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_SUMMARY,
         trimming.get_trimming_summary(config),
-        Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_SUMMARY,
+        Path(config['working_dir']) / quast.OUTPUT_QUAST_SUMMARY,
         Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY,
         Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_SUMMARY if 'kraken' in config['analyses'] else [],
+        Path(config['working_dir']) / confindr.OUTPUT_CONFINDR_SUMMARY if 'confindr' in config['analyses'] else [],
         # AMR detection
-        Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='argannot') if 'argannot' in config['analyses'] else [],
-        Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='card') if 'card' in config['analyses'] else [],
-        Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='ncbi_amr') if 'ncbi_amr' in config['analyses'] else [],
+        Path(config['working_dir']) / amrfinder.OUTPUT_AMRFINDER_SUMMARY if 'amrfinder' in config['analyses'] else [],
         Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='resfinder') if 'resfinder' in config['analyses'] else [],
         # Virulence detection
         Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='virulencefinder') if 'virulencefinder' in config['analyses'] else [],
@@ -262,11 +277,11 @@ rule summary_combine_all:
         # Plasmid replicon detection
         Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='plasmidfinder') if 'plasmidfinder' in config['analyses'] else [],
         # Sequence typing
+        Path(config['working_dir']) / str(OUTPUT_TYPING_SUMMARY).format(scheme='rmlst') if 'rmlst' in config['analyses'] else [],
         Path(config['working_dir']) / str(OUTPUT_TYPING_SUMMARY).format(scheme='mlst') if 'mlst' in config['analyses'] else [],
         Path(config['working_dir']) / str(OUTPUT_TYPING_SUMMARY).format(scheme='species_confirmation') if 'species_confirmation' in config['analyses'] else [],
         Path(config['working_dir']) / str(OUTPUT_TYPING_SUMMARY).format(scheme='typing_amr') if 'typing_amr' in config['analyses'] else [],
         Path(config['working_dir']) / str(OUTPUT_TYPING_SUMMARY).format(scheme='typing_virulence') if 'typing_amr' in config['analyses'] else [],
-        Path(config['working_dir']) / str(OUTPUT_TYPING_SUMMARY).format(scheme='metal_detergent') if 'metal_detergent' in config['analyses'] else [],
         Path(config['working_dir']) / str(OUTPUT_TYPING_SUMMARY).format(scheme='pcr_serogroup') if 'pcr_serogroup' in config['analyses'] else [],
         Path(config['working_dir']) / str(OUTPUT_TYPING_SUMMARY).format(scheme='cgmlst') if 'cgmlst' in config['analyses'] else []
     output:

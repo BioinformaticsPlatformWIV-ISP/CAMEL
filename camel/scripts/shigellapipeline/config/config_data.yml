@@ -8,6 +8,8 @@ citations:
     - Bankevich_2012-spades
     - Gurevich_2013-quast
     - Wood_2019-kraken2
+    - Low_2019-confindr
+    - Manni_2021-busco
     - Langmead_2012-bowtie2
     - Li_2009-samtools
     - Li_2011-bcftools
@@ -39,8 +41,9 @@ read_trimming:
   export_fastq: {export_fastq}
 
 contamination_check:
-  db: /db/kraken2_full/latest/full
-  expected_species: Escherichia coli
+  db: /db/kraken2_microbial/latest
+  expected_species: Shigella
+  level_of_depth: G
 
 quality_checks:
   expected_gc_content: 50.5
@@ -52,6 +55,9 @@ variant_calling:
     path: /db/refgenomes/Escherichia_coli/NC_002695.2.fasta
     name: <i>Escherichia coli</i> O157:H7 (NC_002695.2)
     url: https://www.ncbi.nlm.nih.gov/nuccore/NC_002695.2
+
+confindr:
+  db: /db/confindr/0.8.1
 
 variant_filtering: {variant_filtering}
 
@@ -116,6 +122,9 @@ gene_detection:
       srst2:
         max_divergence: 5
         min_coverage: 60
+    message:
+      content: The presence of a replicon does not mean that the corresponding plasmid is present.
+      category: warning
 
   subspecies_identification:
     path: /db/pipelines/shigella/subspecies_identification/

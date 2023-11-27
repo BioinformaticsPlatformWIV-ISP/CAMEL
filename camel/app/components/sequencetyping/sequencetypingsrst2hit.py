@@ -41,9 +41,10 @@ class SequenceTypingSRST2Hit(SequenceTypingHitBase):
         """
         return ['Locus', 'Allele', 'Mismatches', 'Uncertainty', 'Depth']
 
-    def to_table_row(self) -> List[str]:
+    def to_table_row(self, hash_allele_ids: bool = False) -> List[str]:
         """
         Returns the hit as a row in a table.
+        :param hash_allele_ids: If True, hashes for new allele ids are included
         :return: Table row
         """
         return [

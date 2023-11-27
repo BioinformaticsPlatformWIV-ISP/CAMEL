@@ -3,7 +3,8 @@ from pathlib import Path
 from camel.app.camel import Camel
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.resources.snakefile import quality_checks, trimming, contamination_check_kraken, trimming_ont
+from camel.resources.snakefile import quality_checks, trimming, contamination_check_kraken, trimming_ont, \
+    quast, confindr
 
 
 rule quality_checks_kraken:
@@ -11,13 +12,15 @@ rule quality_checks_kraken:
     Checks the kraken output for contaminants.
     """
     input:
-        INFORMS = lambda wildcards: (Path(config['working_dir']) / str(contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_INFORMS).format(read_type = wildcards.read_type)) if 'kraken' in config['analyses'] else []
+        INFORMS = (Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_INFORMS) if 'kraken' in config['analyses'] else []
     output:
-        JSON = Path(config['working_dir']) / 'quality_checks' / '{read_type}' / 'kraken.json'
+        JSON = Path(config['working_dir']) / 'quality_checks' / 'kraken.json'
     params:
         qc_check = quality_checks.QC_CHECKS_BY_KEY['kraken']
     run:
         import json
+
+        # noinspection PyTypeChecker
         if len(input) == 0:
             data_export = params.qc_check.to_dict()
         else:
@@ -33,12 +36,12 @@ rule quality_checks_mapping_rate:
     Checks the mapping rate against the reference genome / assembled contigs.
     """
     input:
-        INFORMS = lambda wildcards: quality_checks.get_mapping_rate_informs(config, wildcards.read_type)
+        INFORMS = quality_checks.get_mapping_rate_informs(config)
     output:
-        JSON = Path(config['working_dir']) / 'quality_checks' / '{read_type}' / 'mapping_ref.json'
+        JSON = Path(config['working_dir']) / 'quality_checks' / 'mapping_ref.json'
     params:
         qc_check = quality_checks.QC_CHECKS_BY_KEY[f'map_rate_{config["quality_checks"].get("coverage_mode", "assembly")}'],
-        key = lambda wildcards: 'stats_map_rate' if wildcards.read_type == 'illumina' else 'mapping_perc'
+        key = 'stats_map_rate' if config['read_type'] == 'illumina' else 'mapping_perc'
     run:
         import json
         informs_mapping = SnakemakeUtils.load_object(Path(input.INFORMS))
@@ -51,15 +54,15 @@ rule quality_checks_coverage:
     Checks the coverage against the reference genome / assembled contigs.
     """
     input:
-        INFORMS = lambda wildcards: quality_checks.get_depth_informs(config, wildcards.read_type)
+        INFORMS = quality_checks.get_depth_informs(config)
     output:
-        JSON = Path(config['working_dir']) / 'quality_checks' / '{read_type}' / 'cov_ref.json'
+        JSON = Path(config['working_dir']) / 'quality_checks' / 'cov_ref.json'
     params:
         qc_check = quality_checks.QC_CHECKS_BY_KEY[f'cov_{config["quality_checks"].get("coverage_mode", "assembly")}'],
-        running_dir = lambda wildcards: Path(config['working_dir']) / wildcards.read_type / 'quality_checks'
+        running_dir = Path(config['working_dir']) / 'quality_checks'
     run:
         import json
-        samtools_depth_informs = SnakemakeUtils.load_object(Path(str(input.INFORMS)))
+        samtools_depth_informs = SnakemakeUtils.load_object(Path(input.INFORMS))
         median_depth = samtools_depth_informs['median_depth']
         with open(output.JSON, 'w') as handle:
             json.dump(params.qc_check.to_dict(median_depth), handle, indent=2)
@@ -87,16 +90,16 @@ rule quality_checks_parse_fastqc:
     Tests additional quality metrics based on the FastQC data file output.
     """
     input:
-        TXT = lambda wildcards: trimming.get_trimming_fastqc('post', config, wildcards.read_type),
-        TXT_RAW = lambda wildcards: trimming.get_trimming_fastqc('pre', config, wildcards.read_type)
+        TXT = trimming.get_trimming_fastqc('post', config),
+        TXT_RAW = trimming.get_trimming_fastqc('pre', config)
     output:
-        INFORMS = Path(config['working_dir']) / 'quality_checks' / '{read_type}' / 'parse_fastqc' / 'informs.io'
+        INFORMS = Path(config['working_dir']) / 'quality_checks' / 'parse_fastqc' / 'informs.io'
     params:
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'quality_checks' / wildcards.read_type / 'parse_fastqc'
+        running_dir = Path(config['working_dir']) / 'quality_checks' / 'parse_fastqc'
     run:
         from camel.app.tools.fastqc.fastqcdatafileparser import FastQCDataFileParser
         fastqc_checks = FastQCDataFileParser(Camel.get_instance())
-        step = Step(str(rule), fastqc_checks, Camel.get_instance(), Path(str(params.running_dir)))
+        step = Step(str(rule), fastqc_checks, Camel.get_instance(), params.running_dir)
         SnakemakeUtils.add_pickle_inputs(fastqc_checks, input)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(fastqc_checks, output)
@@ -108,12 +111,11 @@ rule quality_checks_fqc_gc_content:
     input:
         INFORMS = rules.quality_checks_parse_fastqc.output.INFORMS
     output:
-        JSON = Path(config['working_dir']) / 'quality_checks' / '{read_type}' / 'fastqc_gc_{ori}.json'
+        JSON = Path(config['working_dir']) / 'quality_checks' / 'fastqc_gc_{ori}.json'
     params:
         qc_check = quality_checks.QC_CHECKS_BY_KEY['fqc_gc'],
         gc_content_ref = config['quality_checks']['expected_gc_content'],
-        index = lambda wildcards: 0 if (wildcards.ori == 'fwd') else 1,
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'quality_checks' / wildcards.read_type
+        index = lambda wildcards: 0 if (wildcards.ori == 'fwd') else 1
     run:
         import json
         import dataclasses
@@ -134,11 +136,10 @@ rule quality_checks_fqc_avg_read_quality:
     input:
         INFORMS = rules.quality_checks_parse_fastqc.output.INFORMS
     output:
-        JSON = Path(config['working_dir']) / 'quality_checks' / '{read_type}' / 'fastqc_avg_qual_{ori}.json'
+        JSON = Path(config['working_dir']) / 'quality_checks' / 'fastqc_avg_qual_{ori}.json'
     params:
         qc_check = quality_checks.QC_CHECKS_BY_KEY['fqc_avg_qual'],
-        index = lambda wildcards: 0 if (wildcards.ori == 'fwd') else 1,
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'quality_checks' / wildcards.read_type
+        index = lambda wildcards: 0 if (wildcards.ori == 'fwd') else 1
     run:
         import json
         informs = SnakemakeUtils.load_object(Path(input.INFORMS))
@@ -153,11 +154,10 @@ rule quality_checks_fqc_max_n_fraction:
     input:
         INFORMS = rules.quality_checks_parse_fastqc.output.INFORMS
     output:
-        JSON = Path(config['working_dir']) / 'quality_checks' / '{read_type}' / 'fastqc_n_fraction_{ori}.json'
+        JSON = Path(config['working_dir']) / 'quality_checks' / 'fastqc_n_fraction_{ori}.json'
     params:
         qc_check = quality_checks.QC_CHECKS_BY_KEY['fqc_n_fraction'],
-        index = lambda wildcards: 0 if (wildcards.ori == 'fwd') else 1,
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'quality_checks' / wildcards.read_type
+        index = lambda wildcards: 0 if (wildcards.ori == 'fwd') else 1
     run:
         import json
         informs = SnakemakeUtils.load_object(Path(input.INFORMS))
@@ -172,11 +172,10 @@ rule quality_checks_fqc_seq_len:
     input:
         INFORMS = rules.quality_checks_parse_fastqc.output.INFORMS
     output:
-        JSON = Path(config['working_dir']) / 'quality_checks' / '{read_type}' / 'fastqc_seq_len_{ori}.json'
+        JSON = Path(config['working_dir']) / 'quality_checks' / 'fastqc_seq_len_{ori}.json'
     params:
         qc_check = quality_checks.QC_CHECKS_BY_KEY['fqc_seq_len'],
-        index = lambda wildcards: 0 if (wildcards.ori == 'fwd') else 1,
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'quality_checks' / wildcards.read_type
+        index = lambda wildcards: 0 if (wildcards.ori == 'fwd') else 1
     run:
         import json
         import dataclasses
@@ -199,11 +198,10 @@ rule quality_checks_fqc_per_base:
     input:
         INFORMS = rules.quality_checks_parse_fastqc.output.INFORMS
     output:
-        JSON = Path(config['working_dir']) / 'quality_checks' / '{read_type}' / 'fastqc_per_base_{ori}.json'
+        JSON = Path(config['working_dir']) / 'quality_checks' / 'fastqc_per_base_{ori}.json'
     params:
         qc_check = quality_checks.QC_CHECKS_BY_KEY['fqc_per_base'],
-        index = lambda wildcards: 0 if (wildcards.ori == 'fwd') else 1,
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'quality_checks' / wildcards.read_type
+        index = lambda wildcards: 0 if (wildcards.ori == 'fwd') else 1
     run:
         import json
         informs = SnakemakeUtils.load_object(Path(input.INFORMS))
@@ -218,17 +216,50 @@ rule quality_checks_fqc_qscore:
     input:
         INFORMS = rules.quality_checks_parse_fastqc.output.INFORMS
     output:
-        JSON = Path(config['working_dir']) / 'quality_checks' / '{read_type}' / 'fastqc_qscore_{ori}.json'
+        JSON = Path(config['working_dir']) / 'quality_checks' / 'fastqc_qscore_{ori}.json'
     params:
         qc_check = quality_checks.QC_CHECKS_BY_KEY['fqc_qscore'],
-        index = lambda wildcards: 0 if (wildcards.ori == 'fwd') else 1,
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'quality_checks' / wildcards.read_type
+        index = lambda wildcards: 0 if (wildcards.ori == 'fwd') else 1
     run:
         import json
         informs = SnakemakeUtils.load_object(Path(input.INFORMS))
         qscore_drop = informs['by_file']['qscore_drop_pos'][params.index]
         with open(output.JSON, 'w') as handle:
             json.dump(params.qc_check.to_dict(qscore_drop), handle, indent=2)
+
+rule quality_checks_confindr:
+    """
+    Extracts the quality checks from the ConFindr output.
+    """
+    input:
+        INFORMS = Path(config['working_dir']) / confindr.OUTPUT_CONFINDR_INFORMS
+    output:
+        JSON = Path(config['working_dir']) / 'quality_checks' / 'confindr.json'
+    params:
+        qc_check = quality_checks.QC_CHECKS_BY_KEY['confindr']
+    run:
+        import json
+        informs = SnakemakeUtils.load_object(Path(input.INFORMS))
+        nb_contam_snps = informs['NumContamSNVs']
+        with open(output.JSON, 'w') as handle:
+            json.dump(params.qc_check.to_dict(nb_contam_snps), handle, indent=2)
+
+rule quality_checks_busco:
+    """
+    Extracts the BUSCO metric from the QUAST output.
+    """
+    input:
+        INFORMS = Path(config['working_dir']) / quast.OUTPUT_BUSCO_INFORMS
+    output:
+        JSON = Path(config['working_dir']) / 'quality_checks' / 'quast_busco.json'
+    params:
+        qc_check = quality_checks.QC_CHECKS_BY_KEY['busco']
+    run:
+        import json
+        data_in = SnakemakeUtils.load_object(Path(input.INFORMS))
+        value = data_in['results']['results']['Complete']
+        with open(output.JSON, 'w') as handle:
+            json.dump(params.qc_check.to_dict(value), handle, indent=2)
 
 rule quality_checks_seqkit_stats:
     """
@@ -237,50 +268,16 @@ rule quality_checks_seqkit_stats:
     input:
         FASTQ = Path(config['working_dir']) / trimming_ont.OUTPUT_TRIMMING_ONT_READS
     output:
-        INFORMS = Path(config['working_dir']) / 'quality_checks' / '{read_type}' / 'seqkit' / 'informs.io'
+        INFORMS = Path(config['working_dir']) / 'quality_checks' / 'seqkit' / 'informs.io'
     params:
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'quality_checks' / wildcards.read_type / 'seqkit'
+        running_dir = Path(config['working_dir']) / 'quality_checks' / 'seqkit'
     run:
         from camel.app.tools.seqkit.seqkitstats import SeqkitStats
         seqkit_stats = SeqkitStats(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(seqkit_stats, input)
-        step = Step(str(rule), seqkit_stats, Camel.get_instance(), Path(str(params.running_dir)))
+        step = Step(str(rule), seqkit_stats, Camel.get_instance(), params.running_dir)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(seqkit_stats, output)
-
-rule quality_checks_nanoplot_qual:
-    """
-    Checks the read quality based on the NanoPlot output.
-    """
-    input:
-        INFORMS = Path(config['working_dir']) / trimming_ont.OUTPUT_TRIMMING_ONT_NANOPLOT_INFORMS_POST
-    output:
-        JSON = Path(config['working_dir']) / 'quality_checks' / '{read_type}' / 'nanoplot_qual.json'
-    params:
-        qc_check = quality_checks.QC_CHECKS_BY_KEY['nanoplot_qual'],
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'quality_checks' / wildcards.read_type
-    run:
-        import json
-        informs = SnakemakeUtils.load_object(Path(input.INFORMS))
-        with open(output.JSON, 'w') as handle:
-            json.dump(params.qc_check.to_dict(float(informs['median_qual'])), handle, indent=2)
-
-rule quality_checks_nanoplot_len:
-    """
-    Checks the read length based on the NanoPlot output.
-    """
-    input:
-        INFORMS = Path(config['working_dir']) / trimming_ont.OUTPUT_TRIMMING_ONT_NANOPLOT_INFORMS_POST
-    output:
-        JSON = Path(config['working_dir']) / 'quality_checks' / '{read_type}' / 'nanoplot_len.json'
-    params:
-        qc_check = quality_checks.QC_CHECKS_BY_KEY['nanoplot_len'],
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'quality_checks' / wildcards.read_type
-    run:
-        import json
-        informs = SnakemakeUtils.load_object(Path(input.INFORMS))
-        with open(output.JSON, 'w') as handle:
-            json.dump(params.qc_check.to_dict(int(float(informs['median_read_length']))), handle, indent=2)
 
 rule quality_checks_seqkit_gc:
     """
@@ -289,11 +286,10 @@ rule quality_checks_seqkit_gc:
     input:
         INFORMS = rules.quality_checks_seqkit_stats.output.INFORMS
     output:
-        JSON = Path(config['working_dir']) / 'quality_checks' / '{read_type}' / 'nanoplot_gc.json'
+        JSON = Path(config['working_dir']) / 'quality_checks' / 'nanoplot_gc.json'
     params:
         qc_check = quality_checks.QC_CHECKS_BY_KEY['seqkit_gc'],
-        gc_content_ref = config['quality_checks']['expected_gc_content'],
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'quality_checks' / wildcards.read_type
+        gc_content_ref = config['quality_checks']['expected_gc_content']
     run:
         import json
         import dataclasses
@@ -307,32 +303,93 @@ rule quality_checks_seqkit_gc:
         with open(output.JSON, 'w') as handle:
             json.dump(qc_check.to_dict(gc_diff), handle, indent=2)
 
+rule quality_checks_nanoplot_qual:
+    """
+    Checks the read quality based on the NanoPlot output.
+    """
+    input:
+        INFORMS = Path(config['working_dir']) / trimming_ont.OUTPUT_TRIMMING_ONT_NANOPLOT_INFORMS_POST
+    output:
+        JSON = Path(config['working_dir']) / 'quality_checks' / 'nanoplot_qual.json'
+    params:
+        qc_check = quality_checks.QC_CHECKS_BY_KEY['nanoplot_qual']
+    run:
+        import json
+        informs = SnakemakeUtils.load_object(Path(input.INFORMS))
+        with open(output.JSON, 'w') as handle:
+            json.dump(params.qc_check.to_dict(float(informs['median_qual'])), handle, indent=2)
+
+rule quality_checks_nanoplot_len:
+    """
+    Checks the read length based on the NanoPlot output.
+    """
+    input:
+        INFORMS = Path(config['working_dir']) / trimming_ont.OUTPUT_TRIMMING_ONT_NANOPLOT_INFORMS_POST
+    output:
+        JSON = Path(config['working_dir']) / 'quality_checks' / 'nanoplot_len.json'
+    params:
+        qc_check = quality_checks.QC_CHECKS_BY_KEY['nanoplot_len']
+    run:
+        import json
+        informs = SnakemakeUtils.load_object(Path(input.INFORMS))
+        with open(output.JSON, 'w') as handle:
+            json.dump(params.qc_check.to_dict(int(float(informs['median_read_length']))), handle, indent=2)
+
+rule quality_checks_assembly_total_len:
+    """
+    Checks if the total assembly length is within the expected range.
+    """
+    input:
+        TSV = Path(config['working_dir']) / quast.OUTPUT_QUAST_SUMMARY
+    output:
+        JSON = Path(config['working_dir']) / 'quality_checks' / 'assembly_total_len.json'
+    params:
+        qc_check = quality_checks.QC_CHECKS_BY_KEY['assembly_total_len']
+    run:
+        import json
+        import pandas as pd
+
+        data_quast = pd.read_table(input.TSV, names=['key', 'value'])
+        if data_quast[data_quast['key'] == 'assembly_total_length_ref'].iloc[0]['value'] != '-':
+            # Calc the percentage deviation from the reference genome length
+            total_length = int(data_quast[data_quast['key'] == 'assembly_total_length'].iloc[0]['value'])
+            total_length_ref = int(data_quast[data_quast['key'] == 'assembly_total_length_ref'].iloc[0]['value'])
+            perc_deviation = abs(100 * ((total_length / total_length_ref) - 1))
+        else:
+            # Skip test if reference genome is not available
+            perc_deviation = None
+        with open(output.JSON, 'w') as handle:
+            json.dump(params.qc_check.to_dict(perc_deviation), handle, indent=2)
+
 rule quality_checks_combine_illumina:
     """
     Collects the quality checks for read type 'illumina'.
     """
     input:
-        JSON_kraken = Path(str(rules.quality_checks_kraken.output.JSON).format(read_type='illumina')) if 'kraken' not in config['quality_checks'].get('disabled_checks', []) else [],
-        JSON_cgmlst = Path(str(rules.quality_checks_typing_loci.output.JSON).format(read_type='illumina')) if 'typing' not in config['quality_checks'].get('disabled_checks', []) else [],
-        JSON_cov_ref = Path(str(rules.quality_checks_coverage.output.JSON).format(read_type='illumina')) if 'coverage' not in config['quality_checks'].get('disabled_checks', []) else [],
-        JSON_map_rate_ref = Path(str(rules.quality_checks_mapping_rate.output.JSON).format(read_type='illumina')) if 'coverage' not in config['quality_checks'].get('disabled_checks', []) else [],
-        JSON_fqc_avg_qual_fwd = str(rules.quality_checks_fqc_avg_read_quality.output.JSON).format(ori='fwd', read_type='illumina') if 'fastqc' not in config['quality_checks'].get('disabled_checks', []) else[],
-        JSON_fqc_avg_qual_rev = str(rules.quality_checks_fqc_avg_read_quality.output.JSON).format(ori='rev', read_type='illumina') if 'fastqc' not in config['quality_checks'].get('disabled_checks', []) else [],
-        JSON_fqc_gc_fwd = str(rules.quality_checks_fqc_gc_content.output.JSON).format(ori='fwd', read_type='illumina') if 'fastqc' not in config['quality_checks'].get('disabled_checks', []) else [],
-        JSON_fqc_gc_rev = str(rules.quality_checks_fqc_gc_content.output.JSON).format(ori='rev', read_type='illumina') if 'fastqc' not in config['quality_checks'].get('disabled_checks', []) else [],
-        JSON_fqc_n_frac_fwd = str(rules.quality_checks_fqc_max_n_fraction.output.JSON).format(ori='fwd', read_type='illumina') if 'fastqc' not in config['quality_checks'].get('disabled_checks', []) else [],
-        JSON_fqc_n_frac_rev = str(rules.quality_checks_fqc_max_n_fraction.output.JSON).format(ori='rev', read_type='illumina') if 'fastqc' not in config['quality_checks'].get('disabled_checks', []) else [],
-        JSON_fqc_per_base_fwd = str(rules.quality_checks_fqc_per_base.output.JSON).format(ori='fwd', read_type='illumina') if 'fastqc' not in config['quality_checks'].get('disabled_checks', []) else [],
-        JSON_fqc_per_base_rev = str(rules.quality_checks_fqc_per_base.output.JSON).format(ori='rev', read_type='illumina') if 'fastqc' not in config['quality_checks'].get('disabled_checks', []) else [],
-        JSON_fqc_qscore_fwd = str(rules.quality_checks_fqc_qscore.output.JSON).format(ori='fwd', read_type='illumina') if 'fastqc' not in config['quality_checks'].get('disabled_checks', []) else [],
-        JSON_fqc_qscore_rev = str(rules.quality_checks_fqc_qscore.output.JSON).format(ori='rev', read_type='illumina') if 'fastqc' not in config['quality_checks'].get('disabled_checks', []) else [],
-        JSON_fqc_seq_len_fwd = str(rules.quality_checks_fqc_seq_len.output.JSON).format(ori='fwd', read_type='illumina') if 'fastqc' not in config['quality_checks'].get('disabled_checks', []) else [],
-        JSON_fqc_seq_len_rev = str(rules.quality_checks_fqc_seq_len.output.JSON).format(ori='rev', read_type='illumina') if 'fastqc' not in config['quality_checks'].get('disabled_checks', []) else []
+        JSON_kraken = rules.quality_checks_kraken.output.JSON if 'kraken' not in config['quality_checks'].get('disabled_checks', []) else [],
+        JSON_cgmlst = rules.quality_checks_typing_loci.output.JSON if 'typing' not in config['quality_checks'].get('disabled_checks', []) else [],
+        JSON_cov_ref = rules.quality_checks_coverage.output.JSON if 'coverage' not in config['quality_checks'].get('disabled_checks', []) else [],
+        JSON_map_rate_ref = rules.quality_checks_mapping_rate.output.JSON if 'coverage' not in config['quality_checks'].get('disabled_checks', []) else [],
+        JSON_assembly_total_len = rules.quality_checks_assembly_total_len.output.JSON if 'assembly' not in config['quality_checks'].get('disabled_checks', []) else [],
+        JSON_confindr = rules.quality_checks_confindr.output.JSON if 'confindr' in config['analyses'] else [],
+        JSON_busco = rules.quality_checks_busco.output.JSON if 'quast' in config else [],
+        JSON_fqc_avg_qual_fwd = str(rules.quality_checks_fqc_avg_read_quality.output.JSON).format(ori='fwd') if 'fastqc' not in config['quality_checks'].get('disabled_checks', []) else[],
+        JSON_fqc_avg_qual_rev = str(rules.quality_checks_fqc_avg_read_quality.output.JSON).format(ori='rev') if 'fastqc' not in config['quality_checks'].get('disabled_checks', []) else [],
+        JSON_fqc_gc_fwd = str(rules.quality_checks_fqc_gc_content.output.JSON).format(ori='fwd') if 'fastqc' not in config['quality_checks'].get('disabled_checks', []) else [],
+        JSON_fqc_gc_rev = str(rules.quality_checks_fqc_gc_content.output.JSON).format(ori='rev') if 'fastqc' not in config['quality_checks'].get('disabled_checks', []) else [],
+        JSON_fqc_n_frac_fwd = str(rules.quality_checks_fqc_max_n_fraction.output.JSON).format(ori='fwd') if 'fastqc' not in config['quality_checks'].get('disabled_checks', []) else [],
+        JSON_fqc_n_frac_rev = str(rules.quality_checks_fqc_max_n_fraction.output.JSON).format(ori='rev') if 'fastqc' not in config['quality_checks'].get('disabled_checks', []) else [],
+        JSON_fqc_per_base_fwd = str(rules.quality_checks_fqc_per_base.output.JSON).format(ori='fwd') if 'fastqc' not in config['quality_checks'].get('disabled_checks', []) else [],
+        JSON_fqc_per_base_rev = str(rules.quality_checks_fqc_per_base.output.JSON).format(ori='rev') if 'fastqc' not in config['quality_checks'].get('disabled_checks', []) else [],
+        JSON_fqc_qscore_fwd = str(rules.quality_checks_fqc_qscore.output.JSON).format(ori='fwd') if 'fastqc' not in config['quality_checks'].get('disabled_checks', []) else [],
+        JSON_fqc_qscore_rev = str(rules.quality_checks_fqc_qscore.output.JSON).format(ori='rev') if 'fastqc' not in config['quality_checks'].get('disabled_checks', []) else [],
+        JSON_fqc_seq_len_fwd = str(rules.quality_checks_fqc_seq_len.output.JSON).format(ori='fwd') if 'fastqc' not in config['quality_checks'].get('disabled_checks', []) else [],
+        JSON_fqc_seq_len_rev = str(rules.quality_checks_fqc_seq_len.output.JSON).format(ori='rev') if 'fastqc' not in config['quality_checks'].get('disabled_checks', []) else []
     output:
-        JSON = Path(config['working_dir']) / 'quality_checks' / 'illumina' / 'report.json'
-    params:
-        running_dir = Path(config['working_dir']) / 'quality_checks' / 'illumina'
+        JSON = Path(config['working_dir']) / 'quality_checks' / 'illumina.json'
     run:
+        import json
+
         # Combine QC check informs
         informs_out = []
         for path_json in [Path(x) for x in input]:
@@ -350,17 +407,15 @@ rule quality_checks_combine_nanopore:
     Collects the quality checks for read type 'nanopore'.
     """
     input:
-        JSON_kraken = Path(str(rules.quality_checks_kraken.output.JSON).format(read_type='nanopore')) if 'kraken' not in config['quality_checks'].get('disabled_checks', []) else [],
-        JSON_cgmlst = Path(str(rules.quality_checks_typing_loci.output.JSON).format(read_type='nanopore')) if 'typing' not in config['quality_checks'].get('disabled_checks', []) else [],
-        JSON_cov_ref = Path(str(rules.quality_checks_coverage.output.JSON).format(read_type='nanopore')) if 'coverage' not in config['quality_checks'].get('disabled_checks', []) else [],
-        JSON_map_rate_ref = Path(str(rules.quality_checks_mapping_rate.output.JSON).format(read_type='nanopore')) if 'coverage' not in config['quality_checks'].get('disabled_checks', []) else [],
-        JSON_nanoplot_len = Path(str(rules.quality_checks_nanoplot_len.output.JSON).format(read_type='nanopore')) if 'length' not in config['quality_checks'].get('disabled_checks', []) else [],
-        JSON_nanoplot_qual = Path(str(rules.quality_checks_nanoplot_qual.output.JSON).format(read_type='nanopore')) if 'quality' not in config['quality_checks'].get('disabled_checks', []) else [],
-        JSON_nanoplot_gc = Path(str(rules.quality_checks_seqkit_gc.output.JSON).format(read_type='nanopore')) if 'gc' not in config['quality_checks'].get('disabled_checks', []) else []
+        JSON_kraken = rules.quality_checks_kraken.output.JSON if 'kraken' not in config['quality_checks'].get('disabled_checks', []) else [],
+        JSON_cgmlst = rules.quality_checks_typing_loci.output.JSON if 'typing' not in config['quality_checks'].get('disabled_checks', []) else [],
+        JSON_cov_ref = rules.quality_checks_coverage.output.JSON if 'coverage' not in config['quality_checks'].get('disabled_checks', []) else [],
+        JSON_map_rate_ref = rules.quality_checks_mapping_rate.output.JSON if 'coverage' not in config['quality_checks'].get('disabled_checks', []) else [],
+        JSON_nanoplot_len = rules.quality_checks_nanoplot_len.output.JSON if 'length' not in config['quality_checks'].get('disabled_checks', []) else [],
+        JSON_nanoplot_qual = rules.quality_checks_nanoplot_qual.output.JSON if 'quality' not in config['quality_checks'].get('disabled_checks', []) else [],
+        JSON_nanoplot_gc = rules.quality_checks_seqkit_gc.output.JSON if 'gc' not in config['quality_checks'].get('disabled_checks', []) else []
     output:
-        JSON = Path(config['working_dir']) / 'quality_checks' / 'nanopore' / 'report.json'
-    params:
-        running_dir = Path(config['working_dir']) / 'quality_checks' / 'nanopore'
+        JSON = Path(config['working_dir']) / 'quality_checks' / 'nanopore.json'
     run:
         # Combine QC check informs
         informs_out = []
@@ -378,18 +433,17 @@ rule quality_checks_report:
     Creates the report for the quality checks workflow.
     """
     input:
-        JSON = str(Path(config['working_dir']) / 'quality_checks' / '{read_type}' / 'report.json')
+        JSON = Path(config['working_dir']) / 'quality_checks' / f"{config['read_type']}.json"
     output:
         VAL_HTML = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_REPORT
-    params:
-        read_type = lambda wildcards: wildcards.read_type,
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'quality_checks' / wildcards.read_type
     run:
+        import json
+
         from camel.app.tools.pipelines.quality_checks.htmlreporterqualitychecks import HtmlReporterQualityChecks
         reporter = HtmlReporterQualityChecks(Camel.get_instance())
         with open(input.JSON) as handle:
             informs = json.load(handle)
-        reporter.add_input_informs({'qc_checks': informs, 'read_type': params.read_type})
+        reporter.add_input_informs({'qc_checks': informs})
         reporter.run(Path(output.VAL_HTML).parent)
         SnakemakeUtils.dump_tool_output(reporter, 'VAL_HTML', Path(output.VAL_HTML))
 
@@ -398,12 +452,12 @@ rule quality_checks_export_summary_info:
     Exports the summary information for the quality checks workflow.
     """
     input:
-        JSON = str(Path(config['working_dir']) / 'quality_checks' / '{read_type}' / 'report.json')
+        JSON = Path(config['working_dir']) / 'quality_checks' / f"{config['read_type']}.json"
     output:
         TSV = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY
-    params:
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'quality_checks' / wildcards.read_type
     run:
+        import json
+
         with open(input.JSON) as handle:
             informs = json.load(handle)
 

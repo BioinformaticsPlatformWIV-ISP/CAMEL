@@ -16,7 +16,7 @@ class SerogroupDeterminationReporter(Tool):
         :param camel: CAMEL instance
         """
         super().__init__('Neisseria: serogroup determination reporter', '0.1', camel)
-        self._section = HtmlReportSection('Serogroup determination')
+        self._section = HtmlReportSection('Serogroup determination (Legacy)')
 
     def _execute_tool(self) -> None:
         """

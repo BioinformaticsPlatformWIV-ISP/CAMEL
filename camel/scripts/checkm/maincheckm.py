@@ -4,11 +4,10 @@ import json
 from pathlib import Path
 from typing import Tuple, Optional, Sequence, Dict, Any
 
-import logging
-
 from camel.app.camel import Camel
 from camel.app.components import mainscriptutils
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.app.tools.checkm.checkm import CheckM
 from camel.app.tools.checkm.checkmreporter import CheckMReporter
@@ -66,7 +65,7 @@ class MainCheckM(object):
         if self._args.output_json is not None:
             with self._args.output_json.open('w') as handle:
                 json.dump(checkm.informs, handle, indent=2)
-                logging.info(f'CheckM informs saved to {self._args.output_json}')
+                logger.info(f'CheckM informs saved to {self._args.output_json}')
 
         # Create output report
         checkm_reporter = CheckMReporter(Camel.get_instance())

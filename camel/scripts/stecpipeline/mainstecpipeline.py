@@ -19,15 +19,16 @@ class MainSTECPipeline(ReportPipeline):
     Main class to run the STEC pipeline.
     """
 
-    CUSTOM_ANALYSES = ['kraken', 'resfinder', 'argannot', 'card', 'ncbi_amr', 'mlst_pasteur', 'mlst_warwick', 'cgmlst',
-                       'pointfinder', 'plasmidfinder', 'serotype', 'virulencefinder', 'innuendo_cgmlst']
+    CUSTOM_ANALYSES = [
+        'kraken', 'confindr', 'resfinder', 'argannot', 'card', 'ncbi_amr', 'mlst_pasteur', 'mlst_warwick', 'cgmlst',
+        'pointfinder', 'plasmidfinder', 'serotype', 'virulencefinder', 'innuendo_cgmlst']
 
     def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """
         Initializes the main class.
         :param args: Arguments (optional)
         """
-        super().__init__('STEC pipeline', '1.0', SNAKEFILE_MAIN, args)
+        super().__init__('STEC pipeline', '1.1', SNAKEFILE_MAIN, args)
 
     def run(self) -> None:
         """
@@ -79,8 +80,6 @@ class MainSTECPipeline(ReportPipeline):
         ReportPipeline.add_common_arguments(parser)
         parser.add_argument('--fastq-se', type=Path, help="Input SE FASTQ file")
         parser.add_argument('--fastq-se-name', help="Input SE FASTQ file name")
-        parser.add_argument(
-            '--read-type', help="Type of reads.", choices=['illumina', 'iontorrent'], default='illumina')
         for analysis_key in MainSTECPipeline.CUSTOM_ANALYSES:
             parser.add_argument(f"--{analysis_key.replace('_', '-')}", action='store_true')
         return parser.parse_args(args)

@@ -1,17 +1,17 @@
 #!/usr/bin/env python
 import argparse
-import logging
 from pathlib import Path
 from typing import List, Dict, Optional, Sequence, Tuple, Any
 
 import yaml
 
 from camel.app.camel import Camel
+from camel.app.components import mainscriptutils
 from camel.app.components.files.fastqutils import FastqUtils
 from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.components.pipelines.reportpipeline import ReportPipeline
+from camel.app.loggers import logger
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-from camel.app.components import mainscriptutils
 from camel.scripts.bacilluspipeline import SNAKEFILE_MAIN, CONFIG_DATA
 
 
@@ -137,7 +137,7 @@ class MainBacillusPipeline(ReportPipeline):
                 if not vars(self._args)[key]:
                     continue
                 if group != 'common' and group != self._args.species:
-                    logging.warning(f"Analysis '{key}' not supported for species '{self._args.species}'")
+                    logger.warning(f"Analysis '{key}' not supported for species '{self._args.species}'")
                 config_data['analyses'].append(key)
 
         # Parse template

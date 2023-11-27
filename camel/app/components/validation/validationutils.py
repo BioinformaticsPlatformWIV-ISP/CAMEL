@@ -1,10 +1,10 @@
 import json
-import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Any
 
 from camel.app.components.genedetection.genedetectionutils import GeneDetectionUtils
+from camel.app.loggers import logger
 
 
 @dataclass
@@ -40,7 +40,7 @@ class ValidationUtils(object):
         :param path_tsv: Path to summary file
         :return: Summary information
         """
-        logging.info(f"Parsing summary info: {path_tsv}")
+        logger.info(f"Parsing summary info: {path_tsv}")
         with path_tsv.open(encoding='utf-8') as handle:
             return {p[0]: p[1].strip() for p in [l.split('\t') for l in handle.readlines()]}
 

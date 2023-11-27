@@ -94,8 +94,7 @@ class HtmlReporterContamination(Tool):
         Adds a table containing the detected species and corresponding percentages.
         :return: None
         """
-        header = ['{}'.format('Species' if 'S' in self._input_informs['species']['level_of_depth'] else 'Genus'),
-                  'Percentage']
+        header = ['Species' if 'S' in self._input_informs['species']['level_of_depth'] else 'Genus', 'Percentage']
         expected_name, expected_perc = self._input_informs['species']['expected']
         expected_perc = '{:.2f}'.format(float(expected_perc))
         table_data = [
@@ -145,6 +144,7 @@ class HtmlReporterContamination(Tool):
         relative_path = self._sub_folder / 'krona_report.html'
         self._report_section.add_file(self._tool_inputs['HTML_Krona'][0].path, relative_path)
         self._report_section.add_link_to_file('Krona Report', relative_path)
+        self._report_section.add_file(self._tool_inputs['TSV'][0].path, self._sub_folder / 'kraken2_report.tsv')
 
     def __add_warnings(self) -> None:
         """

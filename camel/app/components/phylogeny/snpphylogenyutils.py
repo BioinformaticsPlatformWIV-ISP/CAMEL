@@ -1,6 +1,5 @@
 import argparse
 import datetime
-import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Dict, Optional, Any
@@ -21,6 +20,7 @@ from camel.app.components.phylogeny.newickutils import NewickUtils
 from camel.app.components.workflows.trimmingilluminawrapper import TrimmingIlluminaWrapper
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.io.tooliovalue import ToolIOValue
+from camel.app.loggers import logger
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.app.tools.mega.mltreeconstruction import MLTreeConstruction
@@ -181,7 +181,7 @@ class SnpPhylogenyUtils(object):
         :param dir_working: Working directory
         :return: Symlink locations by sample
         """
-        logging.info(f"Creating symlinks for input files for {len(samples)} samples")
+        logger.info(f"Creating symlinks for input files for {len(samples)} samples")
         symlink_dir = dir_working / 'input'
         if not symlink_dir.exists():
             symlink_dir.mkdir(parents=True)
@@ -473,7 +473,7 @@ class SnpPhylogenyUtils(object):
         :param args: Command line arguments
         :return: Tree building tool instance
         """
-        tree_building = MLTreeConstruction(Camel(logging_config=None))
+        tree_building = MLTreeConstruction(Camel.get_instance())
         tree_building.add_input_files({'FASTA': [snp_matrix]})
         MEGAUtils.update_tree_building_parameters(
             tree_building, model, rates, args.bootstraps, args.missing_data, args.site_cov_cutoff,

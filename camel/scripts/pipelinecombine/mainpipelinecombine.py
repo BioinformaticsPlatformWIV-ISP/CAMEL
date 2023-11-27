@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import argparse
 import ast
-import logging
 import re
 from pathlib import Path
 from typing import Sequence, Optional, List, Dict, Any, Tuple, Union
@@ -10,6 +9,7 @@ import humanize
 import pandas as pd
 
 from camel.app.camel import Camel
+from camel.app.loggers import logger
 
 
 class MainPipelineCombine(object):
@@ -40,17 +40,17 @@ class MainPipelineCombine(object):
             isolate_data = self._parse_pipe_out(path_input)
             records_out.append(isolate_data)
         data_out = pd.DataFrame(records_out)
-        logging.info(f'Summaries parsed for {len(data_out)} datasets')
+        logger.info(f'Summaries parsed for {len(data_out)} datasets')
 
         # Check if the pipelines are the same
         if len(data_out['pipeline_name'].unique()) > 1:
-            logging.warning('Combining output of multiple pipelines (not recommended!)')
+            logger.warning('Combining output of multiple pipelines (not recommended!)')
 
         # Filter columns
         cols_to_keep = data_out.apply(lambda x: MainPipelineCombine._filter_columns(
             x, self._args.exclude, self._args.include, self._args.gene_format is not None), axis=0)
         data_out_filt = data_out.loc[:, cols_to_keep]
-        logging.info(f'Keeping {len(data_out_filt.columns)}/{len(data_out.columns)} columns')
+        logger.info(f'Keeping {len(data_out_filt.columns)}/{len(data_out.columns)} columns')
 
         # Re-order columns
         data_out_filt = data_out_filt.reindex(sorted(
@@ -59,7 +59,7 @@ class MainPipelineCombine(object):
 
         # Save output file
         data_out_filt.to_csv(self._args.output, sep='\t', index=False)
-        logging.info(
+        logger.info(
             f'Output file created: {self._args.output} ({humanize.naturalsize(self._args.output.stat().st_size)})')
 
     def _parse_pipe_out(self, path_in: Path) -> Dict[str, Any]:

@@ -1,3 +1,4 @@
+import shutil
 from pathlib import Path
 from typing import Dict, Any, List
 
@@ -5,7 +6,13 @@ import abc
 import argparse
 
 from camel.app.components import mainscriptutils
+from camel.app.components.files.fastqutils import FastqUtils
+from camel.app.components.files.fileutils import FileUtils
+from camel.app.components.phylogeny.snpphylogenyutils import InvalidInputError
 from camel.app.components.pipelines.basepipeline import BasePipeline
+from camel.app.loggers import logger
+from camel.app.snakemake.snakemakeutils import SnakemakeUtils
+from camel.resources.snakefile import assembly_spades
 
 
 class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
@@ -26,6 +33,7 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         argument_parser.add_argument('--output-dir', required=True, type=Path)
         argument_parser.add_argument('--output-html', required=True, type=Path)
         argument_parser.add_argument('--output-tsv', help="Output file for the summary", required=True, type=Path)
+        argument_parser.add_argument('--output-fasta', type=Path, help='output path for assembled contigs')
 
         # Options
         argument_parser.add_argument(
@@ -62,3 +70,35 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         if self._args.library is not None:
             config_data['read_trimming']['adapter'] = self._args.library
         return config_data
+
+    def _validate_fastq_input(self) -> None:
+        """
+        Checks if the provided FASTQ input is valid.
+        :return: None
+        """
+        logger.info(f'Checking FASTQ input')
+        if self._args.read_type == 'illumina':
+            nb_reads_fwd = FastqUtils.count_reads(self._args.fastq_pe[0])
+            nb_reads_rev = FastqUtils.count_reads(self._args.fastq_pe[1])
+            if not nb_reads_fwd == nb_reads_rev:
+                raise InvalidInputError(
+                    f'The number of forward ({nb_reads_fwd:,}) and reverse ({nb_reads_rev:,}) reads should be equal, '
+                    'check that the input files provided are complete and correctly paired.')
+            logger.info(f'FASTQ input is valid')
+            logger.info(f'PE forward FASTQ hash: {FileUtils.hash_file(self._args.fastq_pe[0])}')
+            logger.info(f'PE reverse FASTQ hash: {FileUtils.hash_file(self._args.fastq_pe[1])}')
+        else:
+            logger.debug('FASTQ checking not implemented yet')
+
+    def _export_assembly(self) -> None:
+        """
+        Exports the assembly to the specified output location (optional).
+        :return: None
+        """
+        if self._args.output_fasta is None:
+            logger.debug(f'Not exporting assembly')
+            return
+        path_io = self._args.working_dir / assembly_spades.OUTPUT_ASSEMBLY_FASTA
+        path_fasta = SnakemakeUtils.load_object(path_io)[0].path
+        shutil.copyfile(path_fasta, self._args.output_fasta)
+        logger.info(f'Output FASTA file copied to: {self._args.output_fasta}')

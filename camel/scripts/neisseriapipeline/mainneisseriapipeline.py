@@ -16,15 +16,16 @@ class MainNeisseriaPipeline(ReportPipeline):
     Main class to run the Neisseria pipeline.
     """
 
-    CUSTOM_ANALYSES = ['kraken', 'resfinder', 'argannot', 'card', 'ncbi_amr', 'mlst', 'rplf', 'bast', 'pora', 'porb',
-                       'feta', 'fhbp', 'resistance_genes', 'vaccine_targets', 'cgmlst', 'serogroup']
+    CUSTOM_ANALYSES = [
+        'kraken', 'confindr', 'resfinder', 'ncbi_amr', 'rmlst', 'mlst', 'rplf', 'bast', 'pora', 'porb', 'feta', 'fhbp',
+        'resistance_genes', 'vaccine_targets', 'cgmlst', 'gmats', 'serogroup']
 
     def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """
         Initializes the main class.
         :param args: Arguments (optional)
         """
-        super().__init__('Neisseria pipeline', '1.2', SNAKEFILE_MAIN, args)
+        super().__init__('Neisseria pipeline', '1.3', SNAKEFILE_MAIN, args)
 
     @property
     def title(self) -> str:
@@ -40,8 +41,10 @@ class MainNeisseriaPipeline(ReportPipeline):
         :return: None
         """
         input_files = self._symlink_input()
+        self._validate_fastq_input()
         config_file = self.__construct_config_file(input_files)
         self._run_snakemake_main(config_file)
+        self._export_assembly()
 
     def __construct_config_file(self, input_files: List[Dict[str, str]]) -> str:
         """

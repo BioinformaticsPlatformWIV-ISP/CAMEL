@@ -1,9 +1,10 @@
 import json
-import logging
 from pathlib import Path
 from typing import List, Dict, Tuple, Optional
 
 import pandas as pd
+
+from camel.app.loggers import logger
 
 
 def is_perfect(record: pd.Series, detection_method: str) -> bool:
@@ -55,6 +56,10 @@ def parse_tsv_typing(tsv_path: Path, detection_method: str) -> Dict[str, str]:
     """
     allele_data = pd.read_table(tsv_path)
     allele_data['is_perfect_hit'] = allele_data.apply(lambda x: is_perfect(x, detection_method), axis=1)
+    # When the hashed TSV file is provided -> check for allele id length
+    if tsv_path.name.endswith('-hashes.tsv'):
+        allele_data['is_perfect_hit'] = allele_data.apply(
+            lambda x: x['is_perfect_hit'] or len(x['Allele']) == 6, axis=1)
     return {r['Locus']: r['Allele'] if r['is_perfect_hit'] else '-' for _, r in allele_data.iterrows()}
 
 
@@ -68,10 +73,10 @@ def parse_tsv_typing_list(tsv_in: List[Tuple[Path, str]], detection_method: Opti
     sample_names = []
     allele_data = []
     for tabular_file, file_name in tsv_in:
-        logging.debug(f'Parsing file: {tabular_file}')
+        logger.debug(f'Parsing file: {tabular_file}')
         try:
             isolate_name = Path(file_name).stem
-            logging.debug(f'Sample name: {isolate_name}')
+            logger.debug(f'Sample name: {isolate_name}')
         except IndexError:
             raise ValueError(f'Cannot determine sample name from: {file_name}')
         allele_data.append(parse_tsv_typing(tabular_file, detection_method))
@@ -118,6 +123,10 @@ def parse_html_typing_list(dirs_in: List[Path], html_key: str, detection_method:
 
         # Add sample data to allele data
         sample_names.append(typing_metadata['sample'])
-        tsv_typing = next(path_json_meta.parent.glob('typing-*.tsv'))
+        try:
+            tsv_typing = next(path_json_meta.parent.glob('typing-*-hashes.tsv'))
+            logging.debug(f'TSV file with hashes found: {tsv_typing.name}')
+        except StopIteration:
+            tsv_typing = next(path_json_meta.parent.glob('typing-*.tsv'))
         allele_data.append(parse_tsv_typing(tsv_typing, detection_method))
     return pd.DataFrame(allele_data, index=sample_names, dtype=str)

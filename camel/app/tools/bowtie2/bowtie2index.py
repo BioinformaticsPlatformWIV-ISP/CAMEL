@@ -23,7 +23,7 @@ class Bowtie2Index(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super().__init__('bowtie2 index', '2.4.1', camel)
+        super().__init__('bowtie2 index', '2.5.1', camel)
 
     def _execute_tool(self) -> None:
         """

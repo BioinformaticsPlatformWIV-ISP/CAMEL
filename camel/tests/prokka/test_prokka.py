@@ -2,8 +2,6 @@ from pathlib import Path
 
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.io.tooliofile import ToolIOFile
-from camel.app.tools.fastx.fastqqualityfilter import FastqQualityFilter
-from camel.app.tools.fastx.fastqqualitytrimmer import FastqQualityTrimmer
 from camel.app.tools.prokka.prokka import Prokka
 
 

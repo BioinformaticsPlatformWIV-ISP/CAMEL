@@ -1,8 +1,9 @@
-dependencies: [SPAdes/3.13.0]
+dependencies: [SPAdes/3.15.5_sourcebuilt]
 parameters:
   careful: {default: true, mandatory: false, option: --careful, value: null}
   cov_cutoff: {default: true, mandatory: false, option: --cov-cutoff, value: 'off'}
   iontorrent: {default: false, mandatory: false, option: --iontorrent, value: ''}
+  isolate: {default: false, mandatory: false, option: --isolate, value: null}
   kmers: {default: false, mandatory: false, option: -k, value: null}
   only_assembly: {default: false, mandatory: false, option: --only-assembler, value: ''}
   only_error_correction: {default: false, mandatory: false, option: --only-error-correction,

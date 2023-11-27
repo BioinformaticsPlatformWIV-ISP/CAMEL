@@ -2,4 +2,6 @@ dependencies: []
 parameters:
   forced_detection_method: {default: false, mandatory: false, option: null, value: blast}
   output_filename: {default: false, mandatory: false, option: null, value: report.html}
+  message: {default: false, mandatory: false, option: null, value: null}
+  message_category: {default: true, mandatory: true, option: null, value: info}
 tool_command: null

@@ -1,4 +1,4 @@
-dependencies: [samtools/1.9]
+dependencies: [samtools/1.17]
 parameters:
   output_filename: {default: true, mandatory: false, option: -o, value: samtools_sort.bam}
   output_format: {default: true, mandatory: false, option: --output-fmt, value: bam}

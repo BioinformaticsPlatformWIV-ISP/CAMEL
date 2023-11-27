@@ -17,7 +17,7 @@ class BcftoolsView(Tool):
         Initializes this tool.
         :param camel: CAMEL instance
         """
-        super().__init__('bcftools view', '1.9', camel)
+        super().__init__('bcftools view', '1.17', camel)
 
     def _check_input(self) -> None:
         """

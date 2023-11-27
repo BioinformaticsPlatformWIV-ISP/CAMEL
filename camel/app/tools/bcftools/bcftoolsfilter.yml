@@ -1,4 +1,4 @@
-dependencies: [bcftools/1.9]
+dependencies: [bcftools/1.17]
 parameters:
   invert_targets: {default: false, mandatory: false, option: '', value: null}
   output_filename: {default: true, mandatory: true, option: --output, value: variants_filtered.vcf}

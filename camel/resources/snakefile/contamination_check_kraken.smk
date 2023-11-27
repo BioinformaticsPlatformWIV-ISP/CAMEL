@@ -129,18 +129,21 @@ rule contamination_check_dump_summary_info:
     Dumps the summary information for the contamination check in tabular format.
     """
     input:
+        INFORMS_kraken = rules.contamination_check_kraken2_run.output.INFORMS,
         INFORMS_species = rules.contamination_check_kraken_report_parser.output.INFORMS
     output:
         TSV = Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_SUMMARY
     params:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'contamination_check' / wildcards.read_type / 'summary'
     run:
+        informs_kraken2 = SnakemakeUtils.load_object(Path(input.INFORMS_kraken))
         informs = SnakemakeUtils.load_object(Path(input.INFORMS_species))
         summary_data = [
             ('kraken2_expected_species', informs['expected'][0]),
             ('kraken2_expected_species_occurrence', informs['expected'][1]),
             ('kraken2_contaminants_warn', str(informs['contaminants_warn'])),
-            ('kraken2_contaminants_fail', str(informs['contaminants_fail']))
+            ('kraken2_contaminants_fail', str(informs['contaminants_fail'])),
+            ('kraken2_tool_version', informs_kraken2['_name'])
         ]
         with open(output[0], 'w') as handle:
             for key, value in summary_data:

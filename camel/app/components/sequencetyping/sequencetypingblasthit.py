@@ -20,9 +20,11 @@ class SequenceTypingBlastHit(SequenceTypingHitBase):
         :param locus: Locus
         :param allele_id: Allele id
         :param type_: Locus type ('DNA', 'peptide')
-        :param blast_stats: Blast hit statistics
+        :param blast_stats: Blast hit statistics (optional)
         """
-        super().__init__(locus, allele_id)
+        novel_allele_seq = blast_stats.novel_allele_seq() if (
+                blast_stats is not None and blast_stats.is_new_allele()) else None
+        super().__init__(locus, allele_id, novel_allele_seq)
         self._type = type_
         self._blast_stats = blast_stats
         self._alignment_path = None
@@ -35,14 +37,24 @@ class SequenceTypingBlastHit(SequenceTypingHitBase):
         """
         return ['Locus', 'Allele', '% Identity', 'HSP/Locus length', 'Type']
 
-    def to_table_row(self) -> List[str]:
+    def to_table_row(self, hash_allele_ids: bool = False) -> List[str]:
         """
         Returns the hit as a row in a table.
+        :param hash_allele_ids: If True, hashes for new allele ids are included
         :return: Table row
         """
+        # Determine the allele id
+        if not self.is_new_allele():
+            allele_id = self.allele_id
+        elif hash_allele_ids:
+            allele_id = self.new_allele_hash
+        else:
+            allele_id = f'{self.allele_id}*'
+
+        # Return the output data
         return [
             self.locus,
-            self.allele_id,
+            allele_id,
             '{:.2f}'.format(self._blast_stats.percent_identity) if self.blast_stats else '-',
             self.blast_stats.length_statistic if self.blast_stats else '-',
             self._type
@@ -71,7 +83,8 @@ class SequenceTypingBlastHit(SequenceTypingHitBase):
             alignment_cell = HtmlTableCell('view', link=str(relative_path))
         return [
             self.locus,
-            HtmlTableCell(self.allele_id, self.color, link=self.allele_page_url),
+            HtmlTableCell(
+                self.allele_id + ('*' if self.is_new_allele() else ''), self.color, link=self.allele_page_url),
             '{:.2f}'.format(self.blast_stats.percent_identity) if self.blast_stats else '-',
             self.blast_stats.length_statistic if self.blast_stats else '-',
             self._type,
@@ -89,14 +102,15 @@ class SequenceTypingBlastHit(SequenceTypingHitBase):
         return SequenceTypingBlastHit(locus, SequenceTypingHitBase.SYMBOL_NO_HIT, type_, None)
 
     @staticmethod
-    def create_multi_hit(locus: str, type_: str) -> 'SequenceTypingBlastHit':
+    def create_multi_hit(locus: str, type_: str, blast_stats: BlastHitStatistics) -> 'SequenceTypingBlastHit':
         """
         Returns a multi hit.
         :param locus: Locus
         :param type_: Locus type
+        :param blast_stats: BLAST hit statistics
         :return: None
         """
-        return SequenceTypingBlastHit(locus, SequenceTypingBlastHit.SYMBOL_MULTI_HIT, type_, None)
+        return SequenceTypingBlastHit(locus, SequenceTypingBlastHit.SYMBOL_MULTI_HIT, type_, blast_stats)
 
     @property
     def blast_stats(self) -> BlastHitStatistics:

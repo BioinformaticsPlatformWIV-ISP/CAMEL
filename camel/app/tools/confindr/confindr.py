@@ -3,6 +3,7 @@ from pathlib import Path
 import pandas as pd
 
 from camel.app.camel import Camel
+from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
@@ -20,15 +21,15 @@ class ConFindr(Tool):
         Initializes this tool.
         :param camel: CAMEL instance
         """
-        super().__init__('ConFindr', '0.7.4', camel)
+        super().__init__('ConFindr', '0.8.1', camel)
 
     def _check_input(self) -> None:
         """
         Checks if the provided input is valid.
         :return: None
         """
-        if not any(x in self._tool_inputs for x in ('FASTQ_SE', 'FASTQ_PE', 'FASTQ_GZ_SE', 'FASTQ_GZ_PE')):
-            raise InvalidInputSpecificationError('FASTQ[_GZ]_(SE/PE) input is required')
+        if not any(x in self._tool_inputs for x in ('FASTQ_SE', 'FASTQ_PE')):
+            raise InvalidInputSpecificationError('FASTQ_(SE/PE) input is required')
         super()._check_input()
 
     def _execute_tool(self) -> None:
@@ -41,8 +42,7 @@ class ConFindr(Tool):
         self._command.command = ' '.join([
             self._tool_command,
             '--input_directory', str(dir_input),
-            '--output_name', str(dir_out),
-            '--cross_details'
+            '--output_name', str(dir_out)
         ] + self._build_options())
         self._execute_command()
         self.__set_output(dir_out)
@@ -54,15 +54,14 @@ class ConFindr(Tool):
         """
         dir_working = Path(self._folder)
         if 'FASTQ_SE' in self._tool_inputs:
-            (dir_working / 'sample_R1.fastq').symlink_to(self._tool_inputs['FASTQ_SE'][0].path)
-        elif 'FASTQ_GZ_SE' in self._tool_inputs:
-            (dir_working / 'sample_R1.fastq.gz').symlink_to(self._tool_inputs['FASTQ_GZ_SE'][0].path)
+            is_gzipped = FileSystemHelper.is_gzipped(self._tool_inputs['FASTQ_SE'][0].path)
+            extension = 'fastq' if not is_gzipped else 'fastq.gz'
+            (dir_working / f'sample_R1.{extension}').symlink_to(self._tool_inputs['FASTQ_SE'][0].path)
         elif 'FASTQ_PE' in self._tool_inputs:
-            (dir_working / 'sample_R1.fastq').symlink_to(self._tool_inputs['FASTQ_PE'][0].path)
-            (dir_working / 'sample_R2.fastq').symlink_to(self._tool_inputs['FASTQ_PE'][1].path)
-        else:
-            (dir_working / 'sample_R1.fastq.gz').symlink_to(self._tool_inputs['FASTQ_GZ_PE'][0].path)
-            (dir_working / 'sample_R2.fastq.gz').symlink_to(self._tool_inputs['FASTQ_GZ_PE'][1].path)
+            is_gzipped = FileSystemHelper.is_gzipped(self._tool_inputs['FASTQ_PE'][0].path)
+            extension = 'fastq' if not is_gzipped else 'fastq.gz'
+            (dir_working / f'sample_R1.{extension}').symlink_to(self._tool_inputs['FASTQ_PE'][0].path)
+            (dir_working / f'sample_R2.{extension}').symlink_to(self._tool_inputs['FASTQ_PE'][1].path)
         return dir_working
 
     def __set_output(self, dir_out: Path) -> None:

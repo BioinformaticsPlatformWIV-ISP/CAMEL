@@ -1,4 +1,4 @@
-dependencies: [blast/2.6.0, PointFinder/20190227]
+dependencies: [blast/2.14.0, PointFinder/20190227]
 parameters:
   database: {default: true, mandatory: true, option: --species, value: '''escherichia_coli'''}
   min_cov: {default: false, mandatory: false, option: --min_cov, value: '60'}

@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 import argparse
-import logging
 import shutil
 from pathlib import Path
 from typing import Dict, Optional, Sequence
 
 from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.resources.snakefile import variant_calling_clair3
@@ -70,7 +70,7 @@ class MainCalling(object):
             self._args.threads)
 
         # Copy output
-        logging.info("Collecting Snakemake output file")
+        logger.info("Collecting Snakemake output file")
         output_vcf_path = SnakemakeUtils.load_object(path_vcf)[0].path
         shutil.copyfile(output_vcf_path, self._args.output)
 

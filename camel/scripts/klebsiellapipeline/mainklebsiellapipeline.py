@@ -17,15 +17,15 @@ class MainKlebsiellaPipeline(ReportPipeline):
     """
 
     CUSTOM_ANALYSES = [
-        'kraken', 'amrfinder', 'resfinder4', 'vfdb_core', 'kleborate', 'plasmidfinder', 'mob_suite', 'bacmet', 'cgmlst',
-        'mlst', 'scgmlst']
+        'kraken', 'confindr', 'amrfinder', 'resfinder4', 'vfdb_core', 'kleborate', 'plasmidfinder', 'mob_suite',
+        'bacmet', 'cgmlst', 'mlst', 'scgmlst']
 
     def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """
         Initializes the main class.
         :param args: Arguments (optional)
         """
-        super().__init__('Klebsiella pipeline', '0.1', SNAKEFILE_MAIN, args)
+        super().__init__('Klebsiella pipeline', '1.0', SNAKEFILE_MAIN, args)
 
     @property
     def title(self) -> str:
@@ -53,11 +53,11 @@ class MainKlebsiellaPipeline(ReportPipeline):
         config_data['analyses'] = [key for key in MainKlebsiellaPipeline.CUSTOM_ANALYSES if vars(self._args)[key]]
         with CONFIG_DATA.open() as handle_in:
             mainscriptutils.dict_merge(config_data, yaml.load(handle_in.read().format(
-                qc_typing_scheme='cgmlst' if self._args.cgmlst else 'mlst',
-                export_fastq='true' if self._args.report_include_fastq else 'false',
+                coverage_max=self._args.cov_max,
                 export_bam='true' if self._args.report_include_bam else 'false',
+                export_fastq='true' if self._args.report_include_fastq else 'false',
                 gc_content=57.5,
-                coverage_max=self._args.cov_max
+                qc_typing_scheme='cgmlst' if self._args.cgmlst else 'mlst'
             ), Loader=yaml.SafeLoader))
 
             # Set the detection method for cgMLST

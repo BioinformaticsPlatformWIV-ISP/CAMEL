@@ -37,7 +37,6 @@ class FlexneriTypeDetector(Tool):
         self._informs['mutations'] = {}
         self._informs['loci'] = {}
         for allele, locus in locus_by_allele.items():
-            print(locus)
             if locus not in self._informs['loci']:
                 self._informs['loci'][locus] = {'detected': False, 'mutations': {'stop': [], 'frameshift': []}}
             key = f'VAL_mut_{allele}'

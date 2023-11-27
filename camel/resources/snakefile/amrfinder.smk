@@ -63,12 +63,16 @@ rule amrfinder_dump_summary_info:
     Dumps the summary information for the ResFinder workflow in tabular format.
     """
     input:
-        TSV = rules.amrfinder_run.output.TSV
+        TSV = rules.amrfinder_run.output.TSV,
+        INFORMS = rules.amrfinder_run.output.INFORMS
     output:
         TSV = Path(config['working_dir']) / 'amrfinder' / 'summary_amrfinder.tsv'
     run:
         path_tsv = SnakemakeUtils.load_object(Path(input.TSV))[0].path
         data_amr = pd.read_table(path_tsv)
+
+        # Extract tool version
+        informs = SnakemakeUtils.load_object(Path(input.INFORMS))
 
         # Parse perfect & other hits
         data_amr['is_perfect'] = data_amr.apply(lambda x:
@@ -78,7 +82,9 @@ rule amrfinder_dump_summary_info:
 
         # Write to output file
         with open(output.TSV, 'w') as handle:
-            handle.write('amrfinder_perfect\t{}'.format(', '.join(hits_perfect) if len(hits_perfect) > 0 else '-'))
+            handle.write(f"amrfinder_tool_version\t{informs['_name']}")
             handle.write('\n')
-            handle.write('amrfinder_other\t{}'.format(', '.join(hits_other) if len(hits_other) > 0 else '-'))
+            handle.write('amrfinder_hits_perfect\t{}'.format(', '.join(hits_perfect) if len(hits_perfect) > 0 else '-'))
+            handle.write('\n')
+            handle.write('amrfinder_hits_other\t{}'.format(', '.join(hits_other) if len(hits_other) > 0 else '-'))
             handle.write('\n')

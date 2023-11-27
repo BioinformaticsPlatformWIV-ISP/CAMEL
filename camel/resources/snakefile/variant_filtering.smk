@@ -13,10 +13,10 @@ rule variant_filtering_depth:
     input:
         VCF_GZ = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_UNFILTERED_VCF_GZ
     output:
-        VCF_GZ = Path(config['working_dir']) / 'variant_filtering' / 'depth' / 'vcf_gz.io',
-        INFORMS = Path(config['working_dir']) / 'variant_filtering' / 'depth'/ 'informs.io'
+        VCF_GZ = Path(config['working_dir']) / 'variant_filtering' / '01-depth' / 'vcf_gz.io',
+        INFORMS = Path(config['working_dir']) / 'variant_filtering' / '01-depth'/ 'informs.io'
     params:
-        running_dir = Path(config['working_dir']) / 'variant_filtering' / 'depth',
+        running_dir = Path(config['working_dir']) / 'variant_filtering' / '01-depth',
         min_total_depth = variant_filtering.get_filtering_param(config, 'depth', 'min_total_depth'),
         min_fwd_depth = variant_filtering.get_filtering_param(config, 'depth', 'min_fwd_depth'),
         min_rev_depth = variant_filtering.get_filtering_param(config, 'depth', 'min_rev_depth'),
@@ -43,10 +43,10 @@ rule variant_filtering_snp_quality:
     input:
         VCF_GZ = rules.variant_filtering_depth.output.VCF_GZ
     output:
-        VCF_GZ = Path(config['working_dir']) / 'variant_filtering' / 'snp_quality' / 'vcf_gz.io',
-        INFORMS = Path(config['working_dir']) / 'variant_filtering' / 'snp_quality' / 'informs.io'
+        VCF_GZ = Path(config['working_dir']) / 'variant_filtering' / '02-snp_qual' / 'vcf_gz.io',
+        INFORMS = Path(config['working_dir']) / 'variant_filtering' / '02-snp_qual' / 'informs.io'
     params:
-        running_dir = Path(config['working_dir']) / 'variant_filtering' / 'snp_quality',
+        running_dir = Path(config['working_dir']) / 'variant_filtering' / '02-snp_qual',
         min_snp_quality = variant_filtering.get_filtering_param(config, 'snp_quality', 'min_snp_quality'),
         soft_filter = config['variant_filtering'].get('soft_filter', False)
     run:
@@ -67,10 +67,10 @@ rule variant_filtering_mapping_quality:
     input:
         VCF_GZ = rules.variant_filtering_snp_quality.output.VCF_GZ
     output:
-        VCF_GZ = Path(config['working_dir']) / 'variant_filtering' / 'mapping_quality' / 'vcf_gz.io',
-        INFORMS = Path(config['working_dir']) / 'variant_filtering'/ 'mapping_quality' /'informs.io'
+        VCF_GZ = Path(config['working_dir']) / 'variant_filtering' / '03-mapping_qual' / 'vcf_gz.io',
+        INFORMS = Path(config['working_dir']) / 'variant_filtering'/ '03-mapping_qual' /'informs.io'
     params:
-        running_dir = Path(config['working_dir']) / 'variant_filtering' / 'mapping_quality',
+        running_dir = Path(config['working_dir']) / 'variant_filtering' / '03-mapping_qual',
         min_mapping_quality = variant_filtering.get_filtering_param(config, 'mapping_quality', 'min_mapping_quality'),
         soft_filter = config['variant_filtering'].get('soft_filter', False)
     run:
@@ -92,9 +92,9 @@ rule variant_filtering_distance_index:
     input:
         VCF_GZ = rules.variant_filtering_mapping_quality.output.VCF_GZ
     output:
-        VCF_GZ = Path(config['working_dir']) / 'variant_filtering' / 'distance' / 'vcf_gz-indexed.io'
+        VCF_GZ = Path(config['working_dir']) / 'variant_filtering' / '04-dist' / 'vcf_gz-indexed.io'
     params:
-        running_dir = Path(config['working_dir']) / 'variant_filtering' / 'distance' / 'input'
+        running_dir = Path(config['working_dir']) / 'variant_filtering' / '04-dist' / 'input'
     run:
         from camel.app.tools.bcftools.bcftoolsindex import BcftoolsIndex
 
@@ -103,7 +103,7 @@ rule variant_filtering_distance_index:
         dir_working.mkdir(parents=True, exist_ok=True)
 
         # Run tool
-        bcftools_index  = BcftoolsIndex(Camel.get_instance())
+        bcftools_index = BcftoolsIndex(Camel.get_instance())
         step = Step(str(rule), bcftools_index, Camel.get_instance(), dir_working, config)
         SnakemakeUtils.add_pickle_inputs(bcftools_index, input)
         step.run_step()
@@ -116,10 +116,10 @@ rule variant_filtering_distance:
     input:
         VCF_GZ = rules.variant_filtering_distance_index.output.VCF_GZ
     output:
-        VCF_GZ = Path(config['working_dir']) / 'variant_filtering' / 'distance' / 'vcf_gz.io',
-        INFORMS = Path(config['working_dir']) / 'variant_filtering' / 'distance' / 'informs.io'
+        VCF_GZ = Path(config['working_dir']) / 'variant_filtering' / '04-dist' / 'vcf_gz.io',
+        INFORMS = Path(config['working_dir']) / 'variant_filtering' / '04-dist' / 'informs.io'
     params:
-        running_dir = Path(config['working_dir']) / 'variant_filtering' / 'distance',
+        running_dir = Path(config['working_dir']) / 'variant_filtering' / '04-dist',
         min_distance = variant_filtering.get_filtering_param(config, 'distance', 'min_distance'),
         keep_best = variant_filtering.get_filtering_param(config, 'distance', 'keep_best'),
         soft_filter = config['variant_filtering'].get('soft_filter', False)
@@ -143,9 +143,9 @@ rule variant_filtering_zscore_index:
     input:
         VCF_GZ = rules.variant_filtering_distance.output.VCF_GZ
     output:
-        VCF_GZ = Path(config['working_dir']) / 'variant_filtering' / 'zscore' / 'vcf_gz-indexed.io'
+        VCF_GZ = Path(config['working_dir']) / 'variant_filtering' / '05-zscore' / 'vcf_gz-indexed.io'
     params:
-        running_dir = Path(config['working_dir']) / 'variant_filtering' / 'zscore'
+        running_dir = Path(config['working_dir']) / 'variant_filtering' / '05-zscore'
     run:
         from camel.app.tools.bcftools.bcftoolsindex import BcftoolsIndex
         bcftools_index  = BcftoolsIndex(Camel.get_instance())
@@ -162,10 +162,10 @@ rule variant_filtering_zscore:
         VCF_GZ = rules.variant_filtering_zscore_index.output.VCF_GZ,
         BAM = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_BAM
     output:
-        VCF_GZ = Path(config['working_dir']) / 'variant_filtering' / 'zscore' / 'vcf_gz.io',
-        INFORMS = Path(config['working_dir']) / 'variant_filtering' / 'zscore' / 'informs.io'
+        VCF_GZ = Path(config['working_dir']) / 'variant_filtering' / '05-zscore' / 'vcf_gz.io',
+        INFORMS = Path(config['working_dir']) / 'variant_filtering' / '05-zscore' / 'informs.io'
     params:
-        running_dir = Path(config['working_dir']) / 'variant_filtering' / 'zscore',
+        running_dir = Path(config['working_dir']) / 'variant_filtering' / '05-zscore',
         min_zscore = variant_filtering.get_filtering_param(config, 'zscore', 'min_zscore'),
         y_multiplier = variant_filtering.get_filtering_param(config, 'zscore', 'y_multiplier'),
         soft_filter = config['variant_filtering'].get('soft_filter', False)
@@ -196,10 +196,10 @@ rule variant_filtering_region:
     input:
         VCF_GZ = rules.variant_filtering_zscore.output.VCF_GZ
     output:
-        VCF = Path(config['working_dir']) / 'variant_filtering' / 'regions' / 'vcf.io',
-        INFORMS = Path(config['working_dir']) / 'variant_filtering' / 'regions' / 'informs.io'
+        VCF = Path(config['working_dir']) / 'variant_filtering' / '06-regions' / 'vcf.io',
+        INFORMS = Path(config['working_dir']) / 'variant_filtering' / '06-regions' / 'informs.io'
     params:
-        running_dir = Path(config['working_dir']) / 'variant_filtering' / 'regions',
+        running_dir = Path(config['working_dir']) / 'variant_filtering' / '06-regions',
         bed_file = variant_filtering.get_filtering_param(config, 'region', 'bed_file'),
         soft_filter = config['variant_filtering'].get('soft_filter', False)
     run:
@@ -251,6 +251,7 @@ rule variant_filtering_collect_stats:
     run:
         from camel.app.io.tooliofile import ToolIOFile
         import json
+
         filtering_data = {}
         all_informs = []
         for input_key in input.keys():
@@ -276,13 +277,13 @@ rule variant_filtering_dump_summary_info:
     input:
         JSON = rules.variant_filtering_collect_stats.output.JSON
     output:
-        Path(config['working_dir']) / variant_filtering.OUTPUT_VARIANT_FILTERING_SUMMARY
+        TSV = Path(config['working_dir']) / variant_filtering.OUTPUT_VARIANT_FILTERING_SUMMARY
     run:
         import json
         with open(SnakemakeUtils.load_object(Path(input.JSON))[0].path) as handle:
             filtering_info = json.load(handle)
 
-        with open(output[0], 'w') as handle:
+        with open(output.TSV, 'w') as handle:
             for key, data in sorted(filtering_info.items()):
                 handle.write('\t'.join([f'filt-{key}-in', str(data['variants_in'])]))
                 handle.write('\n')

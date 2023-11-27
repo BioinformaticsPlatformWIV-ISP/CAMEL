@@ -2,12 +2,14 @@
 # Pipeline settings #
 #####################
 citations:
-  main: null
+  main: Timmermans_2021-enterococcus
   other:
     - Bolger_2014-trimmomatic
     - Bankevich_2012-spades
     - Gurevich_2013-quast
     - Wood_2019-kraken2
+    - Low_2019-confindr
+    - Manni_2021-busco
     - Langmead_2012-bowtie2
     - Li_2009-samtools
     - Camacho_2009-blast
@@ -33,12 +35,20 @@ read_trimming:
   export_fastq: '{export_fastq}'
 
 contamination_check:
-  db: /db/kraken2_full/latest/full
+  db: /db/kraken2_microbial/latest
   expected_species: Staphylococcus aureus
 
 quality_checks:
   typing_scheme: {qc_typing_scheme}
   expected_gc_content: 32.7
+
+quast:
+  ref:
+    fasta: /db/refgenomes/Staphylococcus_aureus/NC_007795.1.fasta
+    gff3: /db/refgenomes/Staphylococcus_aureus/NC_007795.1.gff3
+
+confindr:
+  db: /db/confindr/0.8.1
 
 srst2:
   max_unaligned_overlap: 141
@@ -120,6 +130,9 @@ gene_detection:
     metadata:
       name: Notes
       key: notes
+    message:
+      content: The presence of a replicon does not mean that the corresponding plasmid is present.
+      category: warning
 
   se_toxins:
     path: /db/gene_detection/saureus_se_toxins

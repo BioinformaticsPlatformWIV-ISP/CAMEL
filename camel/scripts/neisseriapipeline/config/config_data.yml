@@ -8,16 +8,18 @@ citations:
     - Bankevich_2012-spades
     - Gurevich_2013-quast
     - Wood_2019-kraken2
+    - Low_2019-confindr
+    - Manni_2021-busco
     - Langmead_2012-bowtie2
-    - Li_2009-samtools
+    - Danecek_2021-samtools
     - Camacho_2009-blast
     - Clausen_2018-kma
     - Inouye_2014-srst2
-    - Gupta_2014-argannot
-    - McArthur_2013-card
     - Zankari_2012-resfinder
     - Feldgarden_2019-ndaro
     - Jolley_2010-bigsdb
+    - Muzzi_2019-gmats
+    - Marjuki_2019-neisseria_serogroup
     - Bratcher_2014-neisseria_cgmlst
 
 #########################
@@ -31,12 +33,17 @@ read_trimming:
   export_fastq: '{export_fastq}'
 
 contamination_check:
-  db: /db/kraken2_full/latest/full
+  db: /db/kraken2_microbial/latest
   expected_species: Neisseria meningitidis
 
 quality_checks:
   typing_scheme: {qc_typing_scheme}
   expected_gc_content: 51.5
+
+quast:
+  ref:
+    fasta: /db/refgenomes/Neisseria_meningitidis/NZ_CP021520.1.fasta
+    gff3: /db/refgenomes/Neisseria_meningitidis/NZ_CP021520.1.gff3
 
 srst2:
   max_unaligned_overlap: 141
@@ -46,21 +53,21 @@ assembly:
     cov_cutoff: 'off'
   min_contig_length: 0
 
+confindr:
+  db: /db/confindr/0.8.1
+
+gmats:
+  db: /db/pipelines/neisseria/gMATS_DB.txt
+
 ############################
 # Gene detection databases #
 ############################
 gene_detection:
-  argannot:
-    path: /db/gene_detection/ARG-ANNOT
-
   resfinder:
     path: /db/gene_detection/ResFinder
     metadata:
       name: Antibiotic(s)
       key: antibiotics
-
-  card:
-    path: /db/gene_detection/CARD
 
   ncbi_amr:
     path: /db/gene_detection/NCBI_AMR/
@@ -72,27 +79,30 @@ gene_detection:
 # Sequence typing #
 ###################
 sequence_typing:
-  pora:
-    path: /db/sequence_typing/neisseria/pora
-  porb:
-    path: /db/sequence_typing/neisseria/porb
   bast:
     path: /db/sequence_typing/neisseria/bast
+  cgmlst:
+    path: /db/sequence_typing/neisseria/cgmlst
+    detection_method: blast
   feta:
     path: /db/sequence_typing/neisseria/feta
   fhbp:
     path: /db/sequence_typing/neisseria/fhbp
-  resistance_genes:
-    path: /db/sequence_typing/neisseria/resistance_genes
-  vaccine_targets:
-    path: /db/sequence_typing/neisseria/vaccine_targets
-  rplf:
-    path: /db/sequence_typing/neisseria/rplf
   mlst:
     path: /db/sequence_typing/neisseria/mlst
-  cgmlst:
-    path: /db/sequence_typing/neisseria/cgmlst
-    detection_method: blast
+  pora:
+    path: /db/sequence_typing/neisseria/pora
+  porb:
+    path: /db/sequence_typing/neisseria/porb
+  resistance_genes:
+    path: /db/sequence_typing/neisseria/resistance_genes
+  rmlst:
+    path: /db/sequence_typing/various/rmlst
+    message:
+      content: rMLST is only available for noncommercial use, see <a href="https://pubmlst.org/species-id">PubMLST</a> for more info.
+      category: info
+  rplf:
+    path: /db/sequence_typing/neisseria/rplf
   serogroup_a:
     path: /db/sequence_typing/neisseria/capsule_region_a_serogroup_a
   serogroup_b:
@@ -113,3 +123,5 @@ sequence_typing:
     path: /db/sequence_typing/neisseria/capsule_region_a_serogroup_y
   serogroup_z:
     path: /db/sequence_typing/neisseria/capsule_region_a_serogroup_z
+  vaccine_targets:
+    path: /db/sequence_typing/neisseria/vaccine_targets

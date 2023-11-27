@@ -16,17 +16,15 @@ class MainListeriaPipeline(ReportPipeline):
     """
 
     CUSTOM_ANALYSES = [
-        'kraken', 'mlst', 'cgmlst', 'species_confirmation', 'resfinder', 'argannot', 'card', 'ncbi_amr',
-        'virulencefinder', 'vfdb_core', 'plasmidfinder', 'typing_amr', 'typing_virulence', 'metal_detergent',
-        'pcr_serogroup'
-    ]
+        'kraken', 'confindr', 'rmlst', 'mlst', 'cgmlst', 'species_confirmation', 'amrfinder', 'resfinder',
+        'virulencefinder', 'vfdb_core', 'plasmidfinder', 'typing_amr', 'typing_virulence', 'pcr_serogroup']
 
     def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """
         Initializes the main class.
         :param args: Arguments (optional)
         """
-        super().__init__('Listeria pipeline', '1.2', SNAKEFILE_MAIN, args)
+        super().__init__('Listeria pipeline', '1.3', SNAKEFILE_MAIN, args)
 
     @property
     def title(self) -> str:
@@ -42,8 +40,10 @@ class MainListeriaPipeline(ReportPipeline):
         :return: None
         """
         input_files = self._symlink_input()
+        self._validate_fastq_input()
         config_file = self.__construct_config_file(input_files)
         self._run_snakemake_main(config_file)
+        self._export_assembly()
 
     def __construct_config_file(self, input_files: List[Dict[str, str]]) -> str:
         """

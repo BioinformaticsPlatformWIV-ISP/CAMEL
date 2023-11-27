@@ -1,6 +1,7 @@
 import logging
 from pathlib import Path
 
+from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
@@ -9,33 +10,25 @@ from camel.app.tools.samtools.samtoolsbase import SamtoolsBase
 
 class SamtoolsMerge(SamtoolsBase):
     """
-    ==============
-    SamtoolsMerge 1.9.
-    ==============
-    Merges bam/sam files into one.
+    Merges BAM/SAM files.
 
-    required inputs:
+    Required inputs:
     ----------------
-    "BAM" / "SAM":  At least one bam or sam file. All files should be of same type.
+    BAM / SAM: At least one bam or sam file. All files should be of the same type.
 
     Output:
     -------
-    "BAM" / "SAM":  one bam or sam file. Output filetype depends on output file extension; bam assumed if no valid
-                    extension is found.
-
-    Mandatory parameters:
-    ---------------------
-    - output_filename
-                    default value:  merged.bam
+    BAM / SAM: one bam or sam file. Output filetype depends on an output file extension; bam assumed if no valid
+    extension is found.
     """
 
-    def __init__(self, camel) -> None:
+    def __init__(self, camel: Camel) -> None:
         """
         Initializes this tool.
         :param camel: Camel instance
         :return: None
         """
-        super().__init__('samtools merge', '1.9', camel)
+        super().__init__('samtools merge', '1.17', camel)
 
     def _check_input(self) -> None:
         """

@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import argparse
 import json
-import logging
 from pathlib import Path
 from typing import Optional, Sequence
 
@@ -10,6 +9,7 @@ from camel.app.components import mainscriptutils
 from camel.app.components.html.htmlreport import HtmlReport
 from camel.app.components.workflows.readtype import helper_by_read_type
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.tools.blast.blastn import Blastn
 from camel.app.tools.spatyping.spatyping import SpaTyping
 from camel.app.tools.spatyping.spatypingreporter import SpaTypingReporter
@@ -65,7 +65,7 @@ class MainSpaTyping(object):
         if self._args.output_json is not None:
             with open(self._args.output_json, 'w') as handle:
                 json.dump(spa_typing.informs, handle, indent=2)
-            logging.info(f'spa typing informs output save to: {self._args.output_json}')
+            logger.info(f'spa typing informs output save to: {self._args.output_json}')
 
         self.__add_report_output(spa_typing, report)
 

@@ -3,7 +3,7 @@ from pathlib import Path
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.resources.snakefile import trimming, trimming_illumina, assembly_spades, \
     quality_checks, contamination_check_kraken, gene_detection, pointfinder, variant_calling, variant_filtering, \
-    sequence_typing, downsampling
+    sequence_typing, downsampling, confindr, quast
 from camel.scripts.shigellapipeline.snakefile import subspecies_identification, flexneritype
 
 #######################
@@ -13,7 +13,9 @@ include: downsampling.SNAKEFILE_DOWNSAMPLING
 include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
 include: contamination_check_kraken.SNAKEFILE_CONTAMINATION_CHECK_KRAKEN
 include: quality_checks.SNAKEFILE_QUALITY_CHECKS
+include: confindr.SNAKEFILE_CONFINDR
 include: assembly_spades.SNAKEFILE_ASSEMBLY_SPADES
+include: quast.SNAKEFILE_QUAST
 include: variant_calling.SNAKEFILE_VARIANT_CALLING
 include: variant_filtering.SNAKEFILE_VARIANT_FILTERING
 include: gene_detection.SNAKEFILE_GENE_DETECTION
@@ -140,8 +142,11 @@ rule report_command_section:
         INFORMS_downsampling = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_INFORMS,
         INFORMS_trimming = trimming.get_trimming_command_informs(config),
         INFORMS_assembly = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_INFORMS,
-        INFORMS_assembly_filt=Path(config['working_dir']) / 'assembly_spades' / 'filtering' / 'informs.io',
+        INFORMS_assembly_filt =Path(config['working_dir']) / 'assembly_spades' / 'filtering' / 'informs.io',
+        INFORMS_quast = Path(config['working_dir']) /quast.OUTPUT_QUAST_INFORMS,
+        INFORMS_busco = Path(config['working_dir']) /quast.OUTPUT_BUSCO_INFORMS,
         INFORMS_kraken = Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_KRAKEN_INFORMS if 'kraken' in config['analyses'] else [],
+        INFORMS_confindr = Path(config['working_dir']) /confindr.OUTPUT_CONFINDR_INFORMS if 'confindr' in config['analyses'] else[],
         INFORMS_mapping = quality_checks.get_mapping_rate_informs(config),
         INFORMS_depth = quality_checks.get_depth_informs(config),
         INFORMS_variant_calling_all = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_INFORMS_ALL,
@@ -177,8 +182,9 @@ rule combine_reports:
     input:
         report_downsampling = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_REPORT,
         report_trimming = trimming.get_trimming_report(config),
-        report_assembly = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_REPORT,
+        report_quast = Path(config['working_dir']) /quast.OUTPUT_QUAST_REPORT,
         report_kraken = Path(config['working_dir']) / (contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT if 'kraken' in config['analyses'] else contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT_EMPTY),
+        report_confindr = Path(config['working_dir']) / (confindr.OUTPUT_CONFINDR_REPORT if 'confindr' in config['analyses'] else confindr.OUTPUT_CONFINDR_REPORT_EMPTY),
         report_adv_qc = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_REPORT,
         report_variant = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_REPORT,
         report_pointfinder = Path(config['working_dir']) / (pointfinder.OUTPUT_POINTFINDER_REPORT if 'pointfinder' in config['analyses'] else pointfinder.OUTPUT_POINTFINDER_REPORT_EMPTY),
@@ -227,8 +233,9 @@ rule combine_reports:
         # Add output sections
         report_structure = [
             ('Read trimming and basic QC', 'trim', [Path(input.report_downsampling), Path(input.report_trimming)]),
-            ('Assembly', 'assem', [Path(input.report_assembly)]),
-            ('Advanced QC', 'adv_qc', [Path(x) for x in (input.report_kraken, input.report_adv_qc)]),
+            ('Assembly', 'assem', [Path(input.report_quast)]),
+            ('Advanced QC', 'adv_qc', [Path(x) for x in (
+                input.report_kraken, input.report_confindr, input.report_adv_qc)]),
             ('Variant calling', 'variant', [Path(input.report_variant)]),
             ('Resistance characterization', 'res', [Path(x) for x in (
                 input.report_resfinder, input.report_argannot, input.report_card, input.report_ncbi_amr,
@@ -254,9 +261,10 @@ rule combine_summary_files:
         rules.init_summary.output.TSV,
         Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_SUMMARY,
         trimming.get_trimming_summary(config),
-        Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_SUMMARY,
+        Path(config['working_dir']) / quast.OUTPUT_QUAST_SUMMARY,
         Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY,
         Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_SUMMARY if 'kraken' in config['analyses'] else [],
+        Path(config['working_dir']) / confindr.OUTPUT_CONFINDR_SUMMARY if 'confindr' in config['analyses'] else [],
         Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_SUMMARY,
         Path(config['working_dir']) / variant_filtering.OUTPUT_VARIANT_FILTERING_SUMMARY,
         # Gene detection

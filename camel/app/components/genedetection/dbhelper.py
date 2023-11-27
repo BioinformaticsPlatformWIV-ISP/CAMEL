@@ -1,6 +1,5 @@
 import datetime
 import json
-import logging
 from pathlib import Path
 from typing import List, Dict, Any
 
@@ -10,6 +9,7 @@ from Bio import SeqIO
 from camel.app.camel import Camel
 from camel.app.command.command import Command
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.tools.blast.makeblastdb import MakeBlastDb
 from camel.app.tools.bowtie2.bowtie2index import Bowtie2Index
 from camel.app.tools.cdhit.cdhitest import Cluster, CDHitEst
@@ -110,7 +110,7 @@ class DBHelper(object):
         :param working_dir: Working directory
         :return: None
         """
-        logging.info(f'Indexing - KMA: {fasta_file}')
+        logger.info(f'Indexing - KMA: {fasta_file}')
         kma = KMA(Camel.get_instance())
         path_out = fasta_file.parent / 'kma' / fasta_file.stem
         if not path_out.parent.exists():
@@ -178,11 +178,11 @@ class DBHelper(object):
         :return: None
         """
         metadata_file = dir_output / 'db_metadata.txt'
-        logging.info(f'Exporting metadata: {metadata_file}')
+        logger.info(f'Exporting metadata: {metadata_file}')
         metadata = {'name': name.lower(), 'title': name, 'last_updated': datetime.date.today().strftime("%d-%m-%Y")}
         with metadata_file.open('w') as handle:
             json.dump(metadata, handle, indent=4, sort_keys=True)
-        logging.info(f"Metadata exported: {metadata_file}")
+        logger.info(f"Metadata exported: {metadata_file}")
 
     def standardize_fasta_headers(self, input_fasta: Path) -> Path:
         """
@@ -201,7 +201,7 @@ class DBHelper(object):
             s.description = json.dumps(data)
         with output_path.open('w') as handle:
             SeqIO.write(seqs, handle, 'fasta')
-        logging.info(
+        logger.info(
             f"Reformatted FASTA file created ({humanize.naturalsize(output_path.stat().st_size)}): {output_path}")
         return output_path
 
@@ -215,7 +215,7 @@ class DBHelper(object):
         """
         with (output_directory / 'mapping.txt').open('w') as handle:
             json.dump(mapping, handle, indent=4, sort_keys=True)
-        logging.info(f"Metadata exported: {output_directory}")
+        logger.info(f"Metadata exported: {output_directory}")
 
         cluster_by_seq_id = {}
         for c in clusters:

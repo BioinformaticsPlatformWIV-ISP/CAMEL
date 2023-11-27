@@ -1,4 +1,4 @@
-dependencies: [kleborate/2.3.2, blast/2.7.1, mash/2.2]
+dependencies: [kleborate/2.3.2, blast/2.14.0, mash/2.2]
 parameters:
   all: {default: false, mandatory: false, option: --all, p_index: 0, value: null}
   min_kaptive_confidence: {default: false, mandatory: false, option: --min_kaptive_confidence, p_index: 0, value: Good}

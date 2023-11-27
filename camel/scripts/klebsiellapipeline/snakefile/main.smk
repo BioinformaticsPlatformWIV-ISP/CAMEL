@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from camel.resources.snakefile import trimming_illumina, assembly_spades, gene_detection, trimming, \
-    contamination_check_kraken, quality_checks, sequence_typing, downsampling, amrfinder, mobsuite
+    contamination_check_kraken, quality_checks, sequence_typing, downsampling, amrfinder, mobsuite, quast, confindr
 from camel.scripts.klebsiellapipeline.snakefile import kleborate, bacmet, resfinder4
 
 #######################
@@ -11,7 +11,9 @@ include: downsampling.SNAKEFILE_DOWNSAMPLING
 include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
 include: contamination_check_kraken.SNAKEFILE_CONTAMINATION_CHECK_KRAKEN
 include: quality_checks.SNAKEFILE_QUALITY_CHECKS
+include: confindr.SNAKEFILE_CONFINDR
 include: assembly_spades.SNAKEFILE_ASSEMBLY_SPADES
+include: quast.SNAKEFILE_QUAST
 include: gene_detection.SNAKEFILE_GENE_DETECTION
 include: sequence_typing.SNAKEFILE_SEQUENCE_TYPING
 include: amrfinder.SNAKEFILE_AMRFINDER
@@ -130,7 +132,10 @@ rule report_command_section:
         INFORMS_trimming = trimming.get_trimming_command_informs(config),
         INFORMS_assembly = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_INFORMS,
         INFORMS_assembly_filt = Path(config['working_dir']) / 'assembly_spades' / 'filtering' / 'informs.io',
+        INFORMS_quast = Path(config['working_dir']) /quast.OUTPUT_QUAST_INFORMS,
+        INFORMS_busco = Path(config['working_dir']) / quast.OUTPUT_BUSCO_INFORMS,
         INFORMS_kraken = Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_KRAKEN_INFORMS if 'kraken' in config['analyses'] else [],
+        INFORMS_confindr = Path(config['working_dir']) /confindr.OUTPUT_CONFINDR_INFORMS if 'confindr' in config['analyses'] else [],
         INFORMS_mapping = quality_checks.get_mapping_rate_informs(config),
         INFORMS_depth = quality_checks.get_depth_informs(config),
         INFORMS_amrfnder = Path(config['working_dir']) / amrfinder.OUTPUT_AMRFINDER_INFORMS if 'amrfinder' in config['analyses'] else [],
@@ -164,8 +169,9 @@ rule report_combine_all:
     input:
         report_downsampling = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_REPORT,
         report_trimming = trimming.get_trimming_report(config),
-        report_assembly = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_REPORT,
+        report_quast = Path(config['working_dir']) / quast.OUTPUT_QUAST_REPORT,
         report_kraken = Path(config['working_dir']) / (contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT if 'kraken' in config['analyses'] else contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT_EMPTY),
+        report_confindr = Path(config['working_dir']) / (confindr.OUTPUT_CONFINDR_REPORT if 'confindr' in config['analyses'] else confindr.OUTPUT_CONFINDR_REPORT_EMPTY),
         report_adv_qc = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_REPORT,
         # AMR detection
         report_amrfinder = Path(config['working_dir']) / (amrfinder.OUTPUT_AMRFINDER_REPORT if config['analyses'] else amrfinder.OUTPUT_AMRFINDER_REPORT_EMPTY),
@@ -211,8 +217,9 @@ rule report_combine_all:
         # Add report content
         report_structure = [
             ('Read trimming and basic QC', 'trim', [Path(input.report_downsampling), Path(input.report_trimming)]),
-            ('Assembly', 'assem', [Path(input.report_assembly)]),
-            ('Advanced QC', 'adv_qc', [Path(x) for x in (input.report_kraken, input.report_adv_qc)]),
+            ('Assembly', 'assem', [Path(input.report_quast)]),
+            ('Advanced QC', 'adv_qc', [Path(x) for x in (
+                input.report_kraken, input.report_confindr, input.report_adv_qc)]),
             ('AMR detection', 'amr', [Path(input.report_amrfinder), Path(input.report_resfinder4)]),
             ('Virulence detection', 'virulence', [Path(x) for x in (input.report_vfdb_core,)]),
             ('Kleborate', 'kleborate', [Path(input.report_kleborate)]),
@@ -258,9 +265,10 @@ rule summary_combine_all:
         rules.summary_init.output.TSV,
         Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_SUMMARY,
         trimming.get_trimming_summary(config),
-        Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_SUMMARY,
+        Path(config['working_dir']) / quast.OUTPUT_QUAST_SUMMARY,
         Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY,
         Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_SUMMARY if 'kraken' in config['analyses'] else [],
+        Path(config['working_dir']) / confindr.OUTPUT_CONFINDR_SUMMARY if 'confindr' in config['analyses'] else [],
         # AMR detection
         Path(config['working_dir']) / resfinder4.OUTPUT_RESFINDER4_SUMMARY if 'resfinder4' in config['analyses'] else [],
         # Virulence detection

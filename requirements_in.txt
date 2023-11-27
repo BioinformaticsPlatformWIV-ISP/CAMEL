@@ -1,0 +1,8 @@
+PyVCF
+biopython
+bs4
+humanize
+pandas
+screed
+snakemake
+yattag

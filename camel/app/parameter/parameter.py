@@ -1,17 +1,20 @@
 from distutils.util import strtobool
+from typing import Any
 
 
 class Parameter(object):
     """
     Represents a tool parameter.
-
-    TODO:
-    Add parameter source ('Tool default (D)', 'Pipeline parameter (P), 'Job parameter (J)')
     """
 
-    def __init__(self, name, option, value, p_index: int = 0):
+    def __init__(self, name: str, option: str, value: Any, p_index: int = 0) -> None:
         """
         Initializes a parameter.
+        :param name: Parameter name
+        :param option: Parameter option (e.g., --option)
+        :param value: Parameter value
+        :param p_index: Used for sorting the parameter
+        :return: None
         """
         self._name = name
         self._option = option
@@ -59,13 +62,13 @@ class Parameter(object):
         """
         return self._p_index
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
-        Retruns the parameter in string form.
+        Returns the parameter in string format.
         :return: Parameter string
         """
         if self._value is not None:
-            return '{} {}'.format(self._option, self._value)
+            return f'{self._option} {self._value}'
         else:
             return self._option
 
