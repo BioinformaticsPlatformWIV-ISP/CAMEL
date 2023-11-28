@@ -1,7 +1,6 @@
 from pathlib import Path
 
 from camel.app.camel import Camel
-from camel.app.command.command import Command
 from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.components.files.fastqutils import FastqUtils
 from camel.app.error.pipelineexecutionerror import PipelineExecutionError
@@ -48,9 +47,9 @@ rule scrubbing_fastq_interleave_and_gunzip:
     run:
         # Get the FASTQ file(s)
         fastq_in = SnakemakeUtils.load_object(Path(input.FASTQ))
-        fqfile_number = len(fastq_in)
+        nb_of_fq_files = len(fastq_in)
 
-        if fqfile_number == 1:
+        if nb_of_fq_files == 1:
             path_in = fastq_in[0].path
             path_out = params.running_dir / path_in.name.replace('.gz', '')
             FileSystemHelper.gzip_extract(path_in, path_out)
@@ -75,7 +74,7 @@ rule scrubbing_run_scrubber:
         running_dir = Path(config['working_dir']) / 'human_read_scrubbing' / 'scrubbing'
     run:
         from camel.app.tools.ncbihumanreadscrubber.ncbihumanreadscrubber import NcbiHumanReadScrubber
-        if not 'fasta' in config['input']:
+        if 'fasta' not in config['input']:
             # Get the FASTQ file(s)
             fastq_in = SnakemakeUtils.load_object(Path(input.FASTQ))
             fqfile_number = len(fastq_in)
@@ -84,8 +83,9 @@ rule scrubbing_run_scrubber:
             interleaved = 'false'
         scrubber = NcbiHumanReadScrubber(camel)
         step = Step(str(rule), scrubber, camel, params.running_dir)
-        scrubber.update_parameters(interleaved=interleaved, outputfile=(str(Path(output.FASTQ_SCRUBBED).with_suffix('.fastq')) if not 'fasta' in config['input'] else
-                                                                        str(params.running_dir / (SnakemakeUtils.load_object(Path(input.FASTQ_SINGLE_GUNZIP)))[0].path.name)))
+        outputfile_scrubbing = str(Path(output.FASTQ_SCRUBBED).with_suffix('.fastq')) if not 'fasta' in config['input'] \
+            else str(params.running_dir / (SnakemakeUtils.load_object(Path(input.FASTQ_SINGLE_GUNZIP)))[0].path.name)
+        scrubber.update_parameters(interleaved=interleaved, outputfile=outputfile_scrubbing)
         SnakemakeUtils.add_pickle_inputs(scrubber, input, excluded_keys=['FASTQ'])
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(scrubber, output, keys=['FASTQ_SCRUBBED', 'INFORMS'])
@@ -108,9 +108,9 @@ rule scrubbing_fasta_fq2fa:
         path_out = params.running_dir / f"{path_in.stem}.fasta"
 
         with path_in.open('r') as fastq_file, path_out.open('w') as fasta_file:
-            for record in SeqIO.parse(fastq_file, 'fastq'):
-                # Write the SeqRecord in FASTA format
-                fasta_file.write(f">{record.id}\n{record.seq}\n")
+            # Write the FASTQ SeqRecords in FASTA format, not using SeqIO.write directly because it writes multine fasta's
+            fasta_out = SeqIO.FastaIO.FastaWriter(fasta_file, wrap=None)
+            fasta_out.write_file(SeqIO.parse(fastq_file, 'fastq'))
         SnakemakeUtils.dump_object([ToolIOFile(path_out)], Path(output.FASTA))
 
 
