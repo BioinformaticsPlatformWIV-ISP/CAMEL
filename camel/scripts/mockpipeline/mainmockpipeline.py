@@ -16,6 +16,8 @@ class MainMockPipeline(ReportPipeline):
     Base-class for the mock pipeline.
     """
 
+    CUSTOM_ANALYSES = ['kraken2', 'confindr', 'ncbi_amr']
+
     def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """
         Initializes the main class.
@@ -32,6 +34,8 @@ class MainMockPipeline(ReportPipeline):
         """
         parser = argparse.ArgumentParser()
         ReportPipeline.add_common_arguments(parser)
+        for analysis_key in MainMockPipeline.CUSTOM_ANALYSES:
+            parser.add_argument(f"--{analysis_key.replace('_', '-')}", action='store_true')
         return parser.parse_args(args)
 
     @property
@@ -53,16 +57,14 @@ class MainMockPipeline(ReportPipeline):
         self._run_snakemake_main(str(config_file))
         self._export_assembly()
 
-    def __construct_config_file(self, input_files: List[Dict[str, str]]) -> Path:
+    def __construct_config_file(self, input_files: Dict[str, List[Dict[str, str]]]) -> Path:
         """
-        Constructs the configuration file.
+        Constructs the configuration file
+        :param input_files: Dictionary with the input files (keys can be FASTQ_PE, FASTQ_SE).
         :return: Configuration file
         """
-        config_data = self.get_template_data('fastq_pe', input_files)
-        config_data['analyses'] = []
-        import pprint
-        pprint.pprint(config_data)
-        exit(0)
+        config_data = self.get_template_data(input_files)
+        config_data['analyses'] = [key for key in MainMockPipeline.CUSTOM_ANALYSES if vars(self._args)[key]]
         with open(CONFIG_DATA) as handle_in:
             mainscriptutils.dict_merge(
                 config_data, yaml.safe_load(handle_in.read().format(
