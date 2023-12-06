@@ -17,7 +17,7 @@ rule confindr_run:
     params:
         dir_ = Path(config['working_dir']) / 'confindr',
         db = config.get('confindr', {}).get('db'),
-        read_type = config.get('read_type', 'illumina')
+        input_type = config['input_type']
     threads: 4
     run:
         from camel.app.components.workflows.utils.fastqinput import FastqInput
@@ -35,11 +35,10 @@ rule confindr_run:
         confindr_.update_parameters(rmlst=True, databases=str(path_db))
 
         # Add input files
-        fq_in = FastqInput.from_fq_dict(Path(input.IO_FASTQ), params.read_type)
-        if params.read_type == 'illumina':
-            confindr_.add_input_files({'FASTQ_PE': fq_in.pe})
-        else:
-            raise RuntimeError(f'Unsupported read type: {params.read_type}')
+        if params.input_type not in ('hybrid', 'illumina'):
+            raise ValueError('ConFindr currently only support Illumina input')
+        fq_in = FastqInput.from_fq_dict(Path(input.IO_FASTQ), 'illumina')
+        confindr_.add_input_files({'FASTQ_PE': fq_in.pe})
 
         # Run the tool
         step = Step(str(rule), confindr_, Camel.get_instance(), params.dir_)
@@ -87,7 +86,7 @@ rule confindr_create_summary:
         informs = SnakemakeUtils.load_object(Path(input.INFORMS_confindr))
         rows_out = [
             ('genus', informs['Genus']),
-            ('nb_contam_SNVs', informs['NumContamSNVs']),
+            ('nb_contam_snvs', informs['NumContamSNVs']),
             ('contam_status', informs['ContamStatus'])
         ]
 
