@@ -4,8 +4,7 @@ from camel.app.camel import Camel
 from camel.app.io.tooliodirectory import ToolIODirectory
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-from camel.resources.snakefile import assembly_spades, quast
+from camel.resources.snakefile import quast, assembly
 
 
 rule quast_quast:
@@ -13,7 +12,7 @@ rule quast_quast:
     Runs quast on the assembly.
     """
     input:
-        FASTA = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA,
+        FASTA = Path(config['working_dir']) / assembly.get_fasta(config),
         IO = Path(config['working_dir']) / 'fq_dict.io'
     output:
         TSV = Path(config['working_dir']) / 'quast' / 'output' / 'tsv.io',
@@ -22,7 +21,7 @@ rule quast_quast:
         INFORMS = Path(config['working_dir']) / 'quast' / 'output' / 'informs.io'
     params:
         running_dir = Path(config['working_dir']) / 'quast' / 'output',
-        read_type = config.get('read_type', 'illumina'),
+        input_type = config['input_type'],
         fasta = config.get('quast', {}).get('ref', {}).get('fasta'),
         gff = config.get('quast', {}).get('ref', {}).get('gff3')
     run:
@@ -38,8 +37,11 @@ rule quast_quast:
 
         # Add input
         SnakemakeUtils.add_pickle_inputs(quast_, input, excluded_keys=['IO'])
-        key_reads = 'PE' if params.read_type == 'illumina' else 'SE'
-        quast_.add_input_files(SnakePipelineUtils.extracts_fq_input(Path(input.IO), read_type=key_reads))
+        fq_dict = SnakemakeUtils.load_object(Path(input.IO))
+        if params.input_type in ('illumina', 'hybrid'):
+            quast_.add_input_files({'FASTQ_PE': fq_dict['PE']})
+        if params.input_type in ('ont', 'hybrid'):
+            quast_.add_input_files({'FASTQ_nanopore': fq_dict['SE']})
 
         # Add reference genome files (if available)
         if (params.fasta is not None) and (params.gff is not None):
@@ -65,7 +67,7 @@ rule quast_busco:
     BUSCO is ran outside of QUAST because of dependency issues with the BUSCO installation bundles with QUAST.
     """
     input:
-        FASTA = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA
+        FASTA = Path(config['working_dir']) / assembly.get_fasta(config)
     output:
         TXT = Path(config['working_dir']) / 'quast' / 'busco' / 'txt.io',
         INFORMS = Path(config['working_dir']) / 'quast' / 'busco' / 'informs.io'
@@ -89,10 +91,10 @@ rule quast_report:
     input:
         TSV = rules.quast_quast.output.TSV,
         HTML = rules.quast_quast.output.HTML,
-        FASTA =  Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA,
+        FASTA =  Path(config['working_dir']) / assembly.get_fasta(config),
         DIR = rules.quast_quast.output.DIR,
         INFORMS_quast = rules.quast_quast.output.INFORMS,
-        INFORMS_assembler = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_INFORMS,
+        INFORMS_assembler = Path(config['working_dir']) / assembly.get_command_informs(config),
         INFORMS_busco = rules.quast_busco.output.INFORMS
     output:
         HTML = Path(config['working_dir']) / 'quast' / 'report' / 'html.io'
@@ -113,7 +115,7 @@ rule quast_create_summary_out:
     Creates the tabular summary output for QUAST.
     """
     input:
-        INFORMS_spades = rules.assembly_spades_run.output.INFORMS,
+        INFORMS = Path(config['working_dir'], assembly.get_command_informs(config)),
         TSV = rules.quast_quast.output.TSV
     output:
         TSV = Path(config['working_dir']) / quast.OUTPUT_QUAST_SUMMARY
@@ -137,7 +139,7 @@ rule quast_create_summary_out:
                 data_quast[key] = value
 
         # Add assembler version
-        spades_informs = SnakemakeUtils.load_object(Path(input.INFORMS_spades))
+        spades_informs = SnakemakeUtils.load_object(Path(input.INFORMS))
         data_quast['tool_version'] = spades_informs['_name']
 
         # Create TSV output
