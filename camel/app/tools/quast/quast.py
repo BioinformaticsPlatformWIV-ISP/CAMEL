@@ -44,7 +44,8 @@ class Quast(Tool):
             raise InvalidInputSpecificationError(
                 f'QUAST required FASTA input is missing: {self._tool_inputs!r}')
         for key, values in self._tool_inputs.items():
-            if key not in ['FASTA', 'FASTA_Ref', 'TSV_Gene', 'TSV_Operon', 'BAM', 'BAM_Ref', 'FASTQ_PE', 'GFF3_Ref']:
+            if key not in ['FASTA', 'FASTA_Ref', 'TSV_Gene', 'TSV_Operon', 'BAM', 'BAM_Ref', 'FASTQ_PE',
+                           'FASTQ_nanopore', 'GFF3_Ref']:
                 raise InvalidInputSpecificationError(
                     f'Illegal input key given for QUAST: {self._tool_inputs!r}')
             if key in ['FASTA_Ref', 'TSV_Gene', 'TSV_Operon'] and len(values) > 1:
@@ -81,6 +82,8 @@ class Quast(Tool):
         if 'FASTQ_PE' in self._tool_inputs:
             inputs.extend([
                 f"--pe1 {self._tool_inputs['FASTQ_PE'][0].path}", f"--pe2 {self._tool_inputs['FASTQ_PE'][1].path}"])
+        if 'FASTQ_nanopore' in self._tool_inputs:
+            inputs.append(f"--nanopore {self._tool_inputs['FASTQ_nanopore'][0].path}")
         for item in self._tool_inputs['FASTA']:
             inputs.append(str(item.path))
         return ' '.join(inputs)
