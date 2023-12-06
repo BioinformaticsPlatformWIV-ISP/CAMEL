@@ -1,5 +1,8 @@
 from pathlib import Path
 
+##############################################
+# NOTE: IonTorrent data is no longer support #
+##############################################
 FOLDER_TRIMMING_IONTORRENT = Path('trimming_iontorrent')
 SNAKEFILE_TRIMMING_IONTORRENT = f'{Path(__file__).parent / Path(__file__).stem}.smk'
 

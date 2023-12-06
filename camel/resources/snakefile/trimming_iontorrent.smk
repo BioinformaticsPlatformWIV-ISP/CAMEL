@@ -6,6 +6,7 @@ from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile import trimming_iontorrent, downsampling
 
 camel = Camel.get_instance()
+logger.warning(f'IonTorrent data is nog longer supported')
 
 
 rule trimming_iontorrent_pickle_fastq_input:
