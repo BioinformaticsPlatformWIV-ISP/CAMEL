@@ -69,11 +69,11 @@ rule assembly_flye_map_reads:
     params:
         dir_ = Path(config['working_dir']) / 'assembly_flye' / 'minimap2'
     run:
+        from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         from camel.app.tools.minimap2.minimap2mapping import Minimap2Mapping
         minimap2 = Minimap2Mapping(Camel.get_instance())
         SnakemakeUtils.add_pickle_input(minimap2, 'FASTA', Path(input.FASTA))
-        minimap2.add_input_files(SnakePipelineUtils.extracts_fq_input(
-            Path(input.FQ), key_se='FASTQ', read_type='SE'))
+        minimap2.add_input_files(SnakePipelineUtils.extracts_fq_input(Path(input.FQ), key_se='FASTQ', read_type='SE'))
         step = Step(str(rule), minimap2, Camel.get_instance(), params.dir_)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(minimap2, output)
