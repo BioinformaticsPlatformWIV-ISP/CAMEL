@@ -1,9 +1,8 @@
-import shutil
-from pathlib import Path
-from typing import Dict, Any, List
-
 import abc
 import argparse
+import shutil
+from pathlib import Path
+from typing import Dict, Any
 
 from camel.app.components import mainscriptutils
 from camel.app.components.files.fastqutils import FastqUtils
@@ -49,26 +48,28 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
             '--cov-max', default=100.0, type=float,
             help='Maximum coverage (datasets with higher estimated coverage will be downsampled to the given value)')
 
-    def get_template_data(self, input_key: str, input_data: [List[Dict[str, str]]]) -> Dict[str, Any]:
+    def get_template_data(self, dict_input: Dict) -> Dict[str, Any]:
         """
         Returns the template data that is common to all pipeline.
-        :param input_key: FASTQ input key
-        :param input_data: FASTQ input files
+        :param dict_input: Dictionary with pipeline input files
         :return: Template data
         """
-        # Convert Path objects to string in the config file
-        config_data = super().get_template_data(input_key, [{
-            k: str(v) if isinstance(v, Path) else v for k, v in fq_entry.items()} for fq_entry in input_data])
+        # Add common entries
+        config_data = super().get_template_data(dict_input)
+
+        # Add report specific entries
         mainscriptutils.dict_merge(config_data, {
             'output_dir': str(self._args.output_dir),
             'output_report': str(self._args.output_html),
             'output_tabular': str(self._args.output_tsv),
-            'read_type': self._args.read_type,
             'detection_method': self._args.detection_method,
             'read_trimming': {'export_fastq': self._args.report_include_fastq}
         })
-        if self._args.library is not None:
+
+        # Technology-specific options
+        if (self._args.input_type == 'illumina') and (self._args.library is not None):
             config_data['read_trimming']['adapter'] = self._args.library
+
         return config_data
 
     def _validate_fastq_input(self) -> None:
@@ -77,7 +78,7 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         :return: None
         """
         logger.info(f'Checking FASTQ input')
-        if self._args.read_type == 'illumina':
+        if self._args.input_type == 'illumina':
             nb_reads_fwd = FastqUtils.count_reads(self._args.fastq_pe[0])
             nb_reads_rev = FastqUtils.count_reads(self._args.fastq_pe[1])
             if not nb_reads_fwd == nb_reads_rev:

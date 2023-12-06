@@ -33,6 +33,7 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         self._keep_logs = True if self._args.log else Camel.get_instance().config.get('logging', {}).get(
             'keep_logs', False)
         self._pipeline = Pipeline(name, Camel.get_instance(), self._args.log, self._args.log)
+        self._sample_name = BasePipeline.determine_sample_name(self._args)
 
     @staticmethod
     @abc.abstractmethod
@@ -53,11 +54,15 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         """
         # Input
         argument_parser.add_argument('--sample-name', type=str)
-        argument_parser.add_argument('--fastq-pe', nargs=2, type=Path, help="FASTQ input files")
-        argument_parser.add_argument('--fastq-pe-names', nargs=2, help="FASTQ input file names")
+        argument_parser.add_argument('--fastq-pe', nargs=2, type=Path, help="Input PE FASTQ files")
+        argument_parser.add_argument(
+            '--fastq-pe-names', nargs=2, help="Input PE FASTQ filenames (for Galaxy)")
+        argument_parser.add_argument('--fastq-se', type=Path, help="Input SE FASTQ file")
+        argument_parser.add_argument(
+            '--fastq-se-name', type=Path, help="Input SE FASTQ filename (for Galaxy)")
         argument_parser.add_argument(
             '--input-type', help='Input type',
-            choices=['illumina', 'iontorrent', 'nanopore', 'hybrid', 'fasta'], default='illumina')
+            choices=['illumina', 'iontorrent', 'ont', 'hybrid', 'fasta'], default='illumina')
 
         # Output
         argument_parser.add_argument('--working-dir', type=Path, default=Path.cwd())
@@ -73,6 +78,26 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
             '--galaxy-job-id', type=str, help='Job id of the run in galaxy (used for logging')
         argument_parser.add_argument(
             '--log', action='store_true', help="If this flag is set, config file and error logs are kept")
+
+    @staticmethod
+    def determine_sample_name(args: argparse.Namespace) -> str:
+        """
+        Determines the sample name from the provided arguments
+        :return: Sample name
+        """
+        if args.sample_name is not None:
+            return FileSystemHelper.make_valid(args.sample_name)
+        # PE reads (illumina / hybrid)
+        elif args.input_type in ('illumina', 'hybrid'):
+            if args.fastq_pe_names is not None:
+                return FastqUtils.get_sample_name(args.fastq_pe_names[0], FastqUtils.PATTERN_FQ_PE)
+            return FastqUtils.get_sample_name(args.fastq_pe[0], FastqUtils.PATTERN_FQ_PE)
+        # SE reads (ont / iontorrent)
+        elif args.input_type in ('ont', 'iontorrent'):
+            if args.fastq_se_name is not None:
+                return FastqUtils.get_sample_name(args.fastq_se_name, FastqUtils.PATTERN_FQ_SE)
+            return FastqUtils.get_sample_name(args.fastq_se, FastqUtils.PATTERN_FQ_SE)
+        raise ValueError(f'Cannot determine sample name')
 
     @property
     def name(self) -> str:
@@ -104,12 +129,7 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         Returns the sample name.
         :return: Sample name
         """
-        if self._args.sample_name is not None:
-            return FileSystemHelper.make_valid(self._args.sample_name)
-        elif self._args.fastq_pe_names is not None:
-            return FastqUtils.get_sample_name(self._args.fastq_pe_names[0])
-        else:
-            return FastqUtils.get_sample_name(self._args.fastq_pe[0])
+        return self._sample_name
 
     @property
     def galaxy_job_id(self) -> Union[int, None]:
@@ -119,18 +139,30 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         """
         return self._args.galaxy_job_id if 'galaxy_job_id' in self._args else None
 
-    def _get_fastq_input_links(self) -> List[List[Tuple[Path, str]]]:
+    def _get_fastq_input_links(self) -> List[List[Tuple[str, Path, str]]]:
         """
         Returns the links to the input FASTQ files.
-        :return: Links
+        :return: Links (key, path, name)
         """
         links = []
-        for read_nb, path in enumerate(self._args.fastq_pe, start=1):
-            gzipped = FileSystemHelper.is_gzipped(path)
-            links.append([path, f"{self.sample_name}_{read_nb}.fastq{'.gz' if gzipped else ''}"])
+
+        # PE reads
+        if self._args.input_type in ('illumina', 'hybrid'):
+            for read_nb, path in enumerate(self._args.fastq_pe, start=1):
+                gzipped = FileSystemHelper.is_gzipped(path)
+                links.append(['fastq_pe', path, f"{self.sample_name}_{read_nb}.fastq{'.gz' if gzipped else ''}"])
+
+        # SE reads
+        if self._args.input_type in ('hybrid', 'ont'):
+            gzipped = FileSystemHelper.is_gzipped(self._args.fastq_se)
+            links.append(['fastq_se', self._args.fastq_se, f"{self.sample_name}.fastq{'.gz' if gzipped else ''}"])
+
+        # Check if links were created
+        if len(links) == 0:
+            raise ValueError(f'Invalid input files for input type: {self._args.input_type}')
         return links
 
-    def _symlink_input(self) -> List[Dict[str, Any]]:
+    def _symlink_input(self) -> Dict[str, List[Dict[str, Any]]]:
         """
         Symlinks the input files.
         :return: List of FASTQ input dictionaries
@@ -144,17 +176,24 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
             dir_links.mkdir(parents=True)
 
         # Link files
-        paths_new = []
-        for path_orig, link_name in links:
+        dict_input = {}
+        for key, path_orig, link_name in links:
+            # Add key if missing
+            if key not in dict_input:
+                dict_input[key] = []
+
+            # Create the symlink
             path_new = dir_links / link_name
             logger.debug(f"Symlinking input file: {path_orig} -> {link_name}")
             if path_new.is_symlink():
                 path_new.unlink()
             path_new.symlink_to(path_orig)
-            paths_new.append(path_new)
+
+            # Store the link
+            dict_input[key].append({'name': link_name, 'path': str(path_new)})
 
         # Return output dictionary
-        return [{'name': p.name, 'path': p} for p in paths_new]
+        return dict_input
 
     def _run_snakemake_main(self, config_file: str) -> None:
         """
@@ -192,11 +231,10 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         if self._keep_logs and log_file.exists():
             fileloggerutils.store_log_file(log_file, self._name, self.galaxy_job_id)
 
-    def get_template_data(self, input_key: str, input_data: [List[Dict[str, str]]]) -> Dict[str, Any]:
+    def get_template_data(self, input_dict: Dict[str, List[Dict[str, str]]]) -> Dict[str, Any]:
         """
-        Returns the template data that is common to all pipeline.
-        :param input_key: FASTQ input key
-        :param input_data: FASTQ input files
+        Returns the template data that is common to all pipelines.
+        :param input_dict: Dictionary with pipeline input files
         :return: Template data
         """
         template_data = {
@@ -205,7 +243,8 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
                 'version': f"{self._version}",
                 'title': self.title
             },
-            'input': {input_key: input_data},
+            'input': input_dict,
+            'input_type': self._args.input_type,
             'sample_name': self.sample_name,
             'working_dir': str(self._args.working_dir),
             'read_trimming': {'adapter': self._args.library}
