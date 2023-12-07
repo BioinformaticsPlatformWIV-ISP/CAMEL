@@ -17,7 +17,7 @@ class MainNeisseriaPipeline(ReportPipeline):
     """
 
     CUSTOM_ANALYSES = [
-        'kraken', 'confindr', 'resfinder', 'ncbi_amr', 'rmlst', 'mlst', 'rplf', 'bast', 'pora', 'porb', 'feta', 'fhbp',
+        'kraken2', 'confindr', 'resfinder', 'ncbi_amr', 'rmlst', 'mlst', 'rplf', 'bast', 'pora', 'porb', 'feta', 'fhbp',
         'resistance_genes', 'vaccine_targets', 'cgmlst', 'gmats', 'serogroup']
 
     def __init__(self, args: Optional[Sequence[str]] = None) -> None:
@@ -46,12 +46,13 @@ class MainNeisseriaPipeline(ReportPipeline):
         self._run_snakemake_main(config_file)
         self._export_assembly()
 
-    def __construct_config_file(self, input_files: List[Dict[str, str]]) -> str:
+    def __construct_config_file(self, input_files: Dict[str, List[Dict[str, str]]]) -> str:
         """
         Constructs the configuration file.
+        :param input_files: Dictionary with the input files (keys can be FASTQ_PE, FASTQ_SE).
         :return: Configuration file
         """
-        config_data = self.get_template_data('fastq_pe', input_files)
+        config_data = self.get_template_data(input_files)
         config_data['analyses'] = [key for key in MainNeisseriaPipeline.CUSTOM_ANALYSES if vars(self._args)[key]]
         with open(CONFIG_DATA) as handle_in:
             mainscriptutils.dict_merge(

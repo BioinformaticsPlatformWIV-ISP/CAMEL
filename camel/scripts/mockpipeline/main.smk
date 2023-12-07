@@ -106,7 +106,7 @@ rule summary_combine:
     In this rule all summary files are combined into a complete summary output file.
     """
     input:
-        Path(config['working_dir'], core.TSV_SUMMARY_INIT),
+        Path(config['working_dir'], core.OUTPUT_TSV_SUMMARY_INIT),
         downsampling.get_summaries(config),
         trimming.get_summaries(config),
         Path(config['working_dir'], quast.OUTPUT_QUAST_SUMMARY),
