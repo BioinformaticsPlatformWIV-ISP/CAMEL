@@ -158,7 +158,9 @@ rule contamination_check_dump_summary_info:
             (f'kraken2{suffix}_expected_species_occurrence', informs['expected'][1]),
             (f'kraken2{suffix}_contaminants_warn', str(informs['contaminants_warn'])),
             (f'kraken2{suffix}_contaminants_fail', str(informs['contaminants_fail'])),
-            (f'kraken2{suffix}_tool_version', informs_kraken2['_name'])
+            (f'kraken2{suffix}_tool_version', informs_kraken2['_name']),
+            (f'kraken2{suffix}_db',informs_kraken2['database']['name']),
+            (f'kraken2{suffix}_last_update',informs_kraken2['database']['last_update'])
         ]
         with open(output.TSV, 'w') as handle:
             for key, value in summary_data:
