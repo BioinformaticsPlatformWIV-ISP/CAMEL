@@ -39,14 +39,16 @@ class SnakePipelineUtils(object):
         return report
 
     @staticmethod
-    def create_input_section(sample_name: str, date: datetime, pipeline_version: str, input_files: str,
-                             extra_data: List[Tuple[str, str]], key_citation: str = None) -> HtmlReportSection:
+    def create_input_section(
+            sample_name: str, date: datetime, pipeline_version: str, input_files: str, input_type: str,
+            extra_data: Optional[List[Tuple[str, str]]] = None, key_citation: str = None) -> HtmlReportSection:
         """
         Creates the input section for the HTML report.
         :param sample_name: Sample name
         :param date: Analysis date
         :param pipeline_version: Pipeline version
         :param input_files: Input files
+        :param input_type: Input type
         :param extra_data: Extra data to include in the input section
         :param key_citation: Citation for the pipeline.
         :return: Input report section
@@ -56,9 +58,11 @@ class SnakePipelineUtils(object):
             ['Analysis date:', date.strftime(SnakePipelineUtils.DATE_FORMAT)],
             ['Pipeline version:', pipeline_version],
             ['Input files:', input_files],
+            ['Input type:', input_type]
         ]
-        for key, value in extra_data:
-            table_data.append([f'{key}:', value])
+        if extra_data is not None:
+            for key, value in extra_data:
+                table_data.append([f'{key}:', value])
         section = HtmlReportSection('Input')
         section.add_table(table_data, table_attributes=[('class', 'information')])
         if key_citation is not None:
