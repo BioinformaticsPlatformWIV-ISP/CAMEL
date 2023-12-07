@@ -64,7 +64,7 @@ class HtmlReporterContamination(Tool):
         """
         self._report_section = HtmlReportSection(
             self._title, subtitle=self._input_informs['kraken2']['_name'])
-        self.__add_database_info(self._input_informs['kraken2'])
+        self.__add_database_info()
         self.__add_filtering_info(self._input_informs['species'])
         self.__add_species_table()
         self.__add_detailed_table(self._tool_inputs['TSV'][0].path)
@@ -85,13 +85,12 @@ class HtmlReporterContamination(Tool):
             raise InvalidInputSpecificationError("Kraken report input (TSV) is required")
         super()._check_input()
 
-    def __add_database_info(self, informs: Dict[str, Any]) -> None:
+    def __add_database_info(self) -> None:
         """
-        Adds the date of the last update.
-        :param informs: KRAKEN2 informs
+        Adds the database information to the report.
         :return: None
         """
-        db_informs = informs.get('database')
+        db_informs = self._input_informs['kraken2'].get('database')
         self._report_section.add_table([
             ['Database:', db_informs['name'] if db_informs is not None else 'NA'],
             ['Last update:', db_informs['last_update'] if db_informs is not None else 'NA']
