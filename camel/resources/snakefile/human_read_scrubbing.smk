@@ -161,7 +161,7 @@ rule scrubbing_report:
         count_removed = hrrt_informs['statistics']['count_removed']
         count_total = hrrt_informs['statistics']['count_total']
         if count_removed == count_total:
-            raise PipelineExecutionError('All reads/contigs were removed from the input file(s) during scrubbing. If this is not expected, try disabling the human read scrubbing step.')
+            raise PipelineExecutionError('ERROR: All reads/contigs were removed from the input file(s) during scrubbing. If this is not expected, try disabling the human read scrubbing step.')
         section = HtmlReportSection('Human Read Removal', subtitle=hrrt_informs['_name'])
         section.add_paragraph(f'Removed {count_removed:,} out of {count_total:,} reads/contigs.')
         SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output.VAL_HTML))
