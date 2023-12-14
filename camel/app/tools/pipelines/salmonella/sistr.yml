@@ -1,0 +1,4 @@
+dependencies: [blast/2.14.0, sistr/1.1.1]
+parameters:
+  threads: {default: true, mandatory: false, option: --threads, value: '1'}
+tool_command: sistr
