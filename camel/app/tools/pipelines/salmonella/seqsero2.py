@@ -39,17 +39,17 @@ class SeqSero2(Tool):
         :return: None
         """
         super(SeqSero2, self)._check_input()
-        if not self._tool_inputs.get('MODE') \
-                or self._tool_inputs['MODE'][0].value not in ('Kmer', 'Allele', 'Kmerread'):
+        if not self._parameters.get('mode') \
+                or self._parameters['mode'].value not in ('Kmer', 'Allele', 'Kmerread'):
             raise InvalidInputSpecificationError("A Seqsero2 processing mode must be passed to the tool, "
                                                  "choose from Kmer, Allele, or Kmerread")
-        if self._tool_inputs['MODE'][0].value == 'Kmer':
+        if self._parameters['mode'].value == 'Kmer':
             if 'FASTA' not in self._tool_inputs:
                 raise InvalidInputSpecificationError("FASTA input is required in Kmer mode")
         else:
             if sum(x in self._tool_inputs for x in ('FASTQ', 'FASTQ_PE')) != 1:  # not exactly one
                 raise InvalidInputSpecificationError(f"Exactly one FASTQ input is required in "
-                                                     f"{self._tool_inputs['MODE'][0].value} mode")
+                                                     f"{self._parameters['mode'].value} mode")
 
     def __set_output(self) -> None:
         """
