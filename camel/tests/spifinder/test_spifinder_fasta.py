@@ -10,14 +10,13 @@ class TestSPIFinderFasta(CamelTestSuite):
     """
     Tests the SPIFinder tool for fasta input
     """
-
     # Input files
     test_file_dir = CamelTestSuite.get_test_file_dir('salmonella')
     input_fasta_file = test_file_dir / 'assembly_filtered.fasta'
 
     def test_spifinder_fasta(self) -> None:
         """
-        Tests basic spifinder run.
+        Tests basic spifinder run on fasta input data.
         :return: None
         """
         spifinder = SPIFinder(self.camel)

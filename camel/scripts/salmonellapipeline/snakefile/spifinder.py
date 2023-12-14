@@ -2,8 +2,8 @@ from pathlib import Path
 
 SNAKEFILE_SPIFINDER= f'{Path(__file__).parent / Path(__file__).stem}.smk'
 _dir_spifinder = Path('spifinder')
-OUTPUT_SPIFINDER_FASTQ = _dir_spifinder / 'spifinder_fastq'  / 'spifinder_output.io'
-OUTPUT_SPIFINDER_FASTA = _dir_spifinder / 'spifinder_fasta' / 'spifinder_output.io'
+OUTPUT_JSON_SPIFINDER_FASTQ = _dir_spifinder / 'spifinder_fastq' / 'spifinder_output.io'
+OUTPUT_JSON_SPIFINDER_FASTA = _dir_spifinder / 'spifinder_fasta' / 'spifinder_output.io'
 OUTPUT_SPIFINDER_REPORT = _dir_spifinder / 'html.io'
 OUTPUT_SPIFINDER_FASTQ_INFORMS = _dir_spifinder / 'spifinder_fastq' / 'informs.io'
 OUTPUT_SPIFINDER_FASTA_INFORMS = _dir_spifinder / 'spifinder_fasta' / 'informs.io'

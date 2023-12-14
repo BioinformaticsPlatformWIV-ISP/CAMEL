@@ -17,10 +17,9 @@ class TestSPIFinderFastq(CamelTestSuite):
 
     def test_spifinder_fastq(self) -> None:
         """
-        Tests basic spifinder run.
+        Tests basic spifinder run on fastq input data.
         :return: None
         """
-
         spifinder = SPIFinder(self.camel)
         spifinder.add_input_files({
             'FASTQ_PE': [ToolIOFile(x) for x in self.input_pe_reads],

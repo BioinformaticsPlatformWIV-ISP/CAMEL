@@ -30,8 +30,8 @@ class SPIFinder(Tool):
         self.__set_output()
         self.__build_command()
         self._execute_command()
-        input_folder = self._tool_inputs['DIR'][0].path
-        self.__add_informs(input_folder)
+        db_dir = self._tool_inputs['DIR'][0].path
+        self.__add_informs(db_dir)
 
     def _check_input(self) -> None:
         """
@@ -39,10 +39,14 @@ class SPIFinder(Tool):
         :return: None
         """
         super(SPIFinder, self)._check_input()
-        if not any(key in self._tool_inputs for key in ('FASTQ', 'FASTQ_PE', 'FASTA')):
-            raise InvalidInputSpecificationError("FASTQ, FASTQ_PE or FASTA input is required")
-        elif 'DIR' not in self._tool_inputs:
-            raise InvalidInputSpecificationError("Missing database!")
+        # check if exactly one of the three possible inputs is provided
+        input_keys = [key for key in ('FASTQ', 'FASTQ_PE', 'FASTA') if key in self._tool_inputs]
+        if len([key for key in ('FASTQ', 'FASTQ_PE', 'FASTA') if key in self._tool_inputs]) != 1:
+            raise InvalidInputSpecificationError("Exactly one of FASTQ, FASTQ_PE or FASTA input is required.")
+        else:
+            self._input_key = input_keys[0]
+        if 'DIR' not in self._tool_inputs:
+            raise InvalidInputSpecificationError("Database input is required (DIR).")
 
     def __set_output(self) -> None:
         """
@@ -57,46 +61,37 @@ class SPIFinder(Tool):
         Concatenates required parameters and options to build the command
         :return: None
         """
-
-        if 'FASTA' in self._tool_inputs:
-            self._informs['_tag'] = 'FASTA'
-            self._command.command = ' '.join([
-                self._tool_command, '-i',
-                str(self._tool_inputs['FASTA'][0]), "-p ", str(self._tool_inputs['DIR'][0].path)
-            ])
-        elif 'FASTQ' in self._tool_inputs:
-            self._informs['_tag'] = 'FASTQ'
-            self._command.command = ' '.join([
-                self._tool_command, '-i',
-                str(self._tool_inputs['FASTQ'][0].path), "-p ", str(self._tool_inputs['DIR'][0].path)
+        self._informs['_tag'] = 'FASTQ' if self._input_key != 'FASTA' else 'FASTA'
+        if self._input_key == 'FASTQ_PE':
+            inputs_str = ' '.join([
+                str(self._tool_inputs[self._input_key][0].path),
+                str(self._tool_inputs[self._input_key][1].path)
             ])
         else:
-            self._informs['_tag'] = 'FASTQ'
-            self._command.command = ' '.join([
-                self._tool_command, '-i',
-                str(self._tool_inputs['FASTQ_PE'][0].path), str(self._tool_inputs['FASTQ_PE'][1].path),
-                "-p ", str(self._tool_inputs['DIR'][0].path)
-            ])
+            inputs_str = str(self._tool_inputs[self._input_key][0])
+
+        self._command.command = ' '.join([
+            self._tool_command, '-i', inputs_str, "-p", str(self._tool_inputs['DIR'][0].path)
+        ])
 
     def _check_command_output(self) -> None:
         """
         Checks if the command was executed successfully.
         :return: None
         """
-        if 'error' in self.stderr.lower():
-            raise ToolExecutionError(f"Command execution failed (stderr: {self.stderr}).")
-        if self._command.returncode != 0:
-            raise ToolExecutionError(f"Command execution failed (Exit code: {self._command.returncode})")
+        if 'error' in self.stderr.lower() or self._command.returncode != 0:
+            raise ToolExecutionError(f"Error executing {self.name}: {self._command.stderr.strip()}")
 
-    def __add_informs(self, input_folder: Path) -> None:
+    def __add_informs(self, db_dir: Path) -> None:
         """
         Adds the informs by parsing the JSON file containing the metadata in the database directory.
-        :param input_folder: Input database directory
+        :param db_dir: Input database directory
         :return: None
         """
-        path_metadata = input_folder / 'db_update_info.json'
-        if not path_metadata.is_file():
-            raise FileNotFoundError(f'Database metadata not found: {path_metadata}')
-        with path_metadata.open() as handle:
+        self._informs['_tag'] = 'FASTQ' if not 'FASTA' in self._tool_inputs else 'FASTA'
+        db_metadata_file = db_dir / 'db_update_info.json'
+        if not db_metadata_file.is_file():
+            raise FileNotFoundError(f'Database metadata file not found: {db_metadata_file}')
+        with db_metadata_file.open('r') as handle:
             metadata = json.load(handle)
         self._informs.update(metadata)
