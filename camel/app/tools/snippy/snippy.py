@@ -8,6 +8,9 @@ from camel.app.tools.tool import Tool
 
 
 class Snippy(Tool):
+    """
+    Creation of pseudoreads from a FASTA file and alignment of these reads to the reference genome.
+    """
 
     def __init__(self, camel: Camel) -> None:
         """
@@ -21,11 +24,11 @@ class Snippy(Tool):
         Checks if the provided input is valid.
         :return: None
         """
+        super()._check_input()
         if 'FASTA_REF' not in self._tool_inputs:
             raise InvalidInputSpecificationError('Reference genome input is required.')
-        if 'FASTA_CTGS' not in self._tool_inputs:
+        if 'FASTA' not in self._tool_inputs:
             raise InvalidInputSpecificationError('Fasta input is required')
-        super()._check_input()
 
     def __build_command(self) -> None:
         """
@@ -35,7 +38,7 @@ class Snippy(Tool):
         self._command.command = ' '.join([
             self._tool_command,
             f"--reference {self._tool_inputs['FASTA_REF'][0].path}",
-            f"--ctgs {self._tool_inputs['FASTA_CTGS'][0].path}",
+            f"--ctgs {self._tool_inputs['FASTA'][0].path}",
             *self._build_options()]
         )
 
