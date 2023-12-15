@@ -1,0 +1,5 @@
+dependencies: [bedtools/2.25.0]
+parameters:
+  gap_depth_cutoff: {default: true, mandatory: true, option: null, value: 10}
+  gap_len_cutoff: {default: true, mandatory: true, option: null, value: 5}
+tool_command: null

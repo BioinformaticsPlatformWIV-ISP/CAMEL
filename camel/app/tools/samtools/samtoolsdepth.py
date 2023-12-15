@@ -17,7 +17,7 @@ class SamtoolsDepth(SamtoolsBase):
         Initializes this tool.
         :param camel: Camel instance
         """
-        super().__init__('samtools depth', '1.9', camel)
+        super().__init__('samtools depth', '1.17', camel)
 
     def _check_input(self) -> None:
         """
@@ -29,7 +29,7 @@ class SamtoolsDepth(SamtoolsBase):
                 raise ValueError("No BAM or CRAM input file found")
         if len(self._tool_inputs['BAM']) != 1:
             raise ValueError("Exactly one BAM input file expected")
-        super(SamtoolsBase, self)._check_input()
+        super()._check_input()
 
     def _execute_tool(self) -> None:
         """

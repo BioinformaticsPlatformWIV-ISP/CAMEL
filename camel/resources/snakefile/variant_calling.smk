@@ -132,21 +132,21 @@ rule variant_calling_mpileup:
         disable_baq = config['variant_calling'].get('disable_baq')
     threads: 1
     run:
-        from camel.app.tools.samtools.samtoolsmpileup import SamtoolsMPileup
-        samtools_mpileup = SamtoolsMPileup(camel)
-        SnakemakeUtils.add_pickle_inputs(samtools_mpileup, input)
-        step = Step(rule, samtools_mpileup, camel, params.running_dir, config)
-        samtools_mpileup.update_parameters(output_format='vcf')
+        from camel.app.tools.bcftools.bcftoolsmpileup import BcftoolsMpileup
+        bcftools_mpileup = BcftoolsMpileup(camel)
+        SnakemakeUtils.add_pickle_inputs(bcftools_mpileup, input)
+        step = Step(rule, bcftools_mpileup, camel, params.running_dir, config)
+        bcftools_mpileup.update_parameters(output_type='z')
         if params.count_orphans is not None:
-            samtools_mpileup.update_parameters(count_orphans=params.count_orphans)
+            bcftools_mpileup.update_parameters(count_orphans=params.count_orphans)
         if params.min_mapping_quality is not None:
-            samtools_mpileup.update_parameters(min_mapping_quality=params.min_mapping_quality)
+            bcftools_mpileup.update_parameters(min_mapping_quality=params.min_mapping_quality)
         if params.min_base_quality is not None:
-            samtools_mpileup.update_parameters(min_base_quality=params.min_base_quality)
+            bcftools_mpileup.update_parameters(min_base_quality=params.min_base_quality)
         if params.disable_baq is not None:
-            samtools_mpileup.update_parameters(disable_baq=params.disable_baq)
+            bcftools_mpileup.update_parameters(disable_baq=params.disable_baq)
         step.run_step()
-        SnakemakeUtils.dump_tool_outputs(samtools_mpileup, output)
+        SnakemakeUtils.dump_tool_outputs(bcftools_mpileup, output)
 
 rule variant_calling_bcftools_call:
     """
@@ -170,10 +170,9 @@ rule variant_calling_bcftools_call:
         SnakemakeUtils.add_pickle_inputs(variant_caller, input)
         step = Step(rule, variant_caller, camel, params.running_dir, config)
         variant_caller.update_parameters(
-            output_format='VCF',
+            output_type='z',
             output_filename='variants.vcf.gz',
             variants_only=True,
-            compress_output=True,
             ploidy=params.ploidy
         )
         if params.calling_method is not None:
@@ -203,7 +202,7 @@ rule variant_calling_normalize_indels:
         bcftools_norm = BcftoolsNorm(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(bcftools_norm, input)
         step = Step(rule, bcftools_norm, camel, params.running_dir, config)
-        bcftools_norm.update_parameters(output_format='z')
+        bcftools_norm.update_parameters(output_type='z', output_filename='variants_norm.vcf.gz')
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(bcftools_norm, output)
 
@@ -243,7 +242,7 @@ rule variant_calling_unzip_vcf:
         SnakemakeUtils.add_pickle_inputs(bcftools_view, input)
         step = Step(rule, bcftools_view, camel, params.running_dir, config)
         output_filename = f'variants-{FileSystemHelper.make_valid(params.sample_name)}.vcf'
-        bcftools_view.update_parameters(output_format='VCF', compress_output=False, output_filename=output_filename)
+        bcftools_view.update_parameters(output_type='v', output_filename=output_filename)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(bcftools_view, output)
 

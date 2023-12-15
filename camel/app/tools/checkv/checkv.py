@@ -17,7 +17,7 @@ class CheckV(Tool):
         Initializes this tool.
         :param camel: CAMEL instance
         """
-        super().__init__('CheckV', '0.7.0', camel)
+        super().__init__('CheckV', '1.0.1', camel)
 
     def _check_input(self) -> None:
         """

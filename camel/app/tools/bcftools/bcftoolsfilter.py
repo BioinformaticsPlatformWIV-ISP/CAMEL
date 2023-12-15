@@ -1,57 +1,40 @@
+from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliofile import ToolIOFile
-from camel.app.tools.tool import Tool
+from camel.app.tools.bcftools.bcftoolsbase import BcftoolsBase
 
 
-class BcftoolsFilter(Tool):
+class BcftoolsFilter(BcftoolsBase):
     """
     Filtering of VCF/BCF files using fixed thresholds.
     """
 
-    def __init__(self, camel):
+    def __init__(self, camel: Camel) -> None:
         """
         Initializes this tool.
         :param camel: CAMEL instance
         """
-        super().__init__('bcftools filter', '1.9', camel)
+        super().__init__('bcftools filter', '1.17', camel)
 
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
         Checks if the provided input is valid.
         :return: None
         """
-        if 'VCF_GZ' not in self._tool_inputs:
-            raise InvalidInputSpecificationError("VCF_GZ input is required")
+        if not any(x in self._tool_inputs for x in ('VCF', 'VCF_GZ')):
+            raise InvalidInputSpecificationError("VCF/VCF_GZ input is required")
         super()._check_input()
 
-    def __get_output_key(self):
-        """
-        Returns the output key.
-        :return: Output key
-        """
-        if 'output_type' not in self._parameters:
-            return 'VCF'
-        output_type = self._parameters['output_type'].value
-        if output_type == 'b':
-            return 'BCF_GZ'
-        elif output_type == 'u':
-            return 'BCF'
-        elif output_type == 'z':
-            return 'VCF_GZ'
-        else:
-            return 'VCF'
-
-    def _execute_tool(self):
+    def _execute_tool(self) -> None:
         """
         Executes this tool.
         :return: None
         """
         self._build_command()
         self._execute_command()
-        self._tool_outputs[self.__get_output_key()] = [ToolIOFile(
-            self.folder / self._parameters['output_filename'].value)]
+        self._tool_outputs[self._get_output_key()] = [ToolIOFile(self._get_output_path())]
 
-    def _build_command(self):
+    def _build_command(self) -> None:
         """
         Builds the command that is called.
         :return: None
@@ -61,6 +44,7 @@ class BcftoolsFilter(Tool):
             command_parts.append(f"--targets-file {self._tool_inputs['BED_include'][0].path}")
         elif 'BED_exclude' in self._tool_inputs:
             command_parts.append(f"--targets-file ^{self._tool_inputs['BED_exclude'][0].path}")
-        command_parts.extend(self._build_options())
-        command_parts.append(str(self._tool_inputs['VCF_GZ'][0].path))
+        command_parts.extend(self._build_options(excluded_parameters=['invert_targets']))
+        command_parts.append(str(next(
+            self._tool_inputs[k][0].path for k in ('VCF', 'VCF_GZ') if k in self._tool_inputs.keys())))
         self._command.command = ' '.join(command_parts)

@@ -55,7 +55,7 @@ class VariantFilteringWrapper(object):
         input_dir = Path(self._working_dir, 'input')
         if not input_dir.is_dir():
             input_dir.mkdir(parents=True)
-        bcftools_view.update_parameters(compress_output=True, output_format='VCF')
+        bcftools_view.update_parameters(output_type='z')
         bcftools_view.run(input_dir)
         return bcftools_view.tool_outputs['VCF_GZ'][0].path
 
