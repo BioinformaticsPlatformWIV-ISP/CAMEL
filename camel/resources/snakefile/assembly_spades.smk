@@ -135,3 +135,86 @@ rule assembly_spades_samtools_depth:
         step.run_step()
         samtools_depth.informs['_tag'] = 'Coverage calculation'
         SnakemakeUtils.dump_tool_outputs(samtools_depth, output)
+
+rule assembly_spades_quast:
+    """
+    Generates assembly statistics using QUAST.
+    """
+    input:
+        FASTA = rules.assembly_spades_filter_contig_length.output.FASTA
+    output:
+        TSV = Path(config['working_dir']) / 'assembly_spades' / 'quast' / 'tsv.io'
+    params:
+        running_dir = Path(config['working_dir']) / 'assembly_spades' / 'quast'
+    run:
+        from camel.app.tools.quast.quast import Quast
+        quast = Quast(camel)
+        SnakemakeUtils.add_pickle_inputs(quast, input)
+        step = Step(str(rule), quast, camel, params.running_dir)
+        step.run_step()
+        SnakemakeUtils.dump_tool_outputs(quast, output)
+
+rule assembly_spades_quast_extract_informs:
+    """
+    Extracts the information from the QUAST output file.
+    """
+    input:
+        TSV = rules.assembly_spades_quast.output.TSV
+    output:
+        INFORMS = Path(config['working_dir']) / 'assembly_spades' / 'quast' / 'informs.io'
+    params:
+        running_dir = Path(config['working_dir']) / 'assembly_spades' / 'quast'
+    run:
+        from camel.app.tools.quast.quastinformextractor import QuastInformExtractor
+        quast_inform_extractor = QuastInformExtractor(camel)
+        SnakemakeUtils.add_pickle_inputs(quast_inform_extractor, input)
+        step = Step(str(rule), quast_inform_extractor, camel, params.running_dir)
+        step.run_step()
+        SnakemakeUtils.dump_tool_outputs(quast_inform_extractor, output)
+
+rule assembly_spades_report:
+    """
+    Creates the HTML report for the assembly.
+    """
+    input:
+        FASTA_Raw = rules.assembly_spades_run.output.FASTA_Contig,
+        FASTA_Contig = rules.assembly_spades_filter_contig_length.output.FASTA,
+        INFORMS_spades = rules.assembly_spades_run.output.INFORMS,
+        INFORMS_quast = rules.assembly_spades_quast_extract_informs.output.INFORMS
+    output:
+        VAL_HTML = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_REPORT
+    params:
+        running_dir = Path(config['working_dir']) / 'assembly_spades' / 'report',
+        sample_name = config['sample_name']
+    run:
+        from camel.app.tools.pipelines.assembly.htmlreporterassembly import HtmlReporterAssembly
+        from camel.app.io.tooliovalue import ToolIOValue
+        reporter = HtmlReporterAssembly(camel)
+        reporter.add_input_files({'SAMPLE_NAME': [ToolIOValue(params.sample_name)],
+                                  'ASSEMBLER': [ToolIOValue('SPAdes')]})
+        SnakemakeUtils.add_pickle_inputs(reporter, input)
+        step = Step(str(rule), reporter, camel, params.running_dir)
+        step.run_step()
+        SnakemakeUtils.dump_tool_outputs(reporter, output)
+
+rule assembly_spades_dump_summary_info:
+    """
+    Dumps the summary information from the assembly pipeline.
+    """
+    input:
+        INFORMS_quast = rules.assembly_spades_quast_extract_informs.output.INFORMS
+    output:
+        Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_SUMMARY
+    params:
+        running_dir = Path(config['working_dir']) / 'assembly_spades' / 'summary'
+    run:
+        quast_informs = SnakemakeUtils.load_object(Path(input.INFORMS_quast))
+        summary_data = [
+            ('assembly_n50', quast_informs['contig']['N50']),
+            ('assembly_nb_contigs', quast_informs['contig']['# contigs']),
+            ('assembly_total_length', quast_informs['genome']['Total length'])
+        ]
+        with open(output[0], 'w') as handle:
+            for key, value in summary_data:
+                handle.write(f'{key}\t{value}')
+                handle.write('\n')
