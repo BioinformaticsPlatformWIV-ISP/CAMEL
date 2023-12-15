@@ -1,7 +1,8 @@
 from pathlib import Path
 
 from camel.resources.snakefile import trimming_illumina, downsampling, trimming_ont, trimming, assembly_spades, \
-    assembly_flye, quast, contamination_check_kraken, quality_checks, confindr, gene_detection, assembly, core
+    assembly_flye, quast, contamination_check_kraken, quality_checks, confindr, gene_detection, assembly, core, \
+    short_read_polishing
 
 #######################
 # Included snakefiles #
@@ -12,6 +13,7 @@ include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
 include: trimming_ont.SNAKEFILE_TRIMMING_ONT
 include: assembly_spades.SNAKEFILE_ASSEMBLY_SPADES
 include: assembly_flye.SNAKEFILE_ASSEMBLY_FLYE
+include: short_read_polishing.SNAKEFILE_POLISHING
 include: quast.SNAKEFILE_QUAST
 include: contamination_check_kraken.SNAKEFILE_CONTAMINATION_CHECK_KRAKEN
 include: confindr.SNAKEFILE_CONFINDR

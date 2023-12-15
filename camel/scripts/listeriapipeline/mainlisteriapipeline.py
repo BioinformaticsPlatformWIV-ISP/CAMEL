@@ -16,7 +16,7 @@ class MainListeriaPipeline(ReportPipeline):
     """
 
     CUSTOM_ANALYSES = [
-        'kraken', 'confindr', 'rmlst', 'mlst', 'cgmlst', 'species_confirmation', 'amrfinder', 'resfinder',
+        'kraken2', 'confindr', 'rmlst', 'mlst', 'cgmlst', 'species_confirmation', 'amrfinder', 'resfinder',
         'virulencefinder', 'vfdb_core', 'plasmidfinder', 'typing_amr', 'typing_virulence', 'pcr_serogroup']
 
     def __init__(self, args: Optional[Sequence[str]] = None) -> None:
@@ -45,12 +45,13 @@ class MainListeriaPipeline(ReportPipeline):
         self._run_snakemake_main(config_file)
         self._export_assembly()
 
-    def __construct_config_file(self, input_files: List[Dict[str, str]]) -> str:
+    def __construct_config_file(self, input_files: Dict[str, List[Dict[str, str]]]) -> str:
         """
         Constructs the configuration file.
+        :param input_files: Dictionary with the input files (keys can be FASTQ_PE, FASTQ_SE).
         :return: Configuration file
         """
-        config_data = self.get_template_data('fastq_pe', input_files)
+        config_data = self.get_template_data(input_files)
         config_data['analyses'] = [key for key in MainListeriaPipeline.CUSTOM_ANALYSES if vars(self._args)[key]]
         with CONFIG_DATA.open() as handle_in:
             config_data.update(yaml.load(handle_in.read().format(

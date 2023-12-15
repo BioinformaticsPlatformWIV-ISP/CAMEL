@@ -2,7 +2,7 @@ from pathlib import Path
 
 from camel.app.camel import Camel
 from camel.app.pipeline.step import Step
-from camel.resources.snakefile import sequence_typing, assembly_spades
+from camel.resources.snakefile import sequence_typing, assembly_spades, assembly
 from camel.scripts.neisseriapipeline.snakefile import serogroup_determination
 
 
@@ -65,7 +65,7 @@ rule serogroup_capsule_tool:
     Runs the serogroup capsule tool.
     """
     input:
-        FASTA = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA
+        FASTA = Path(config['working_dir']) / assembly.get_fasta(config)
     output:
         TSV = Path(config['working_dir']) / 'serogroup_determination' / 'capsule' / 'tsv.io',
         JSON = Path(config['working_dir']) / 'serogroup_determination' / 'capsule' / 'json.io',
