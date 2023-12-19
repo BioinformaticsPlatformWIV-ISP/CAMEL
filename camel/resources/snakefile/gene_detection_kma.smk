@@ -37,7 +37,8 @@ rule gene_detection_kma:
         INFORMS = Path(config['working_dir']) / 'gene_detection' / '{db}' / 'kma' / 'informs_pre.io'
     params:
         dir_ = lambda wildcards: Path(config['working_dir']) / 'gene_detection' / wildcards.db / 'kma',
-        read_type = config.get('read_type', 'illumina')
+        read_type = config.get('read_type', 'illumina'),
+        ont = lambda wildcards: config['gene_detection'][wildcards.db].get('params', {}).get('kma',{}).get('ont'),
     run:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         from camel.app.tools.kma.kma import KMA
@@ -50,6 +51,8 @@ rule gene_detection_kma:
         step = Step(str(rule), kma, Camel.get_instance(), Path(str(params.dir_)))
         if params.read_type == 'nanopore':
             kma.update_parameters(bc_nano=None, basecalls='0.7')
+        if params.ont:
+            kma.update_parameters(ont=None)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(kma, output)
 

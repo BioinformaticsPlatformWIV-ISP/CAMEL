@@ -3,4 +3,5 @@ parameters:
   output_basename: {default: true, mandatory: true, option: -o, value: kma_output}
   bc_nano: {default: false, mandatory: false, option: -bcNano, value: null}
   basecalls: {default: false, mandatory: false, option: -bc, value: 0.9}
+  ont: {default: false, mandatory: false, option: -ont, value: null}
 tool_command: kma
