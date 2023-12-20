@@ -102,7 +102,10 @@ class GMats(Tool):
         fhbp_db = gmats_db.loc[gmats_db['Locus'] == 'fHbp']
         nhba_db = gmats_db.loc[gmats_db['Locus'] == 'NHBA']
 
-        if allele in ['-', '?']:
+        if allele == '-':
+            return 'not_covered'
+
+        if allele == '?':
             return 'unpredictable'
 
         # fHbp
