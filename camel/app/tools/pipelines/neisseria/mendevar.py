@@ -89,7 +89,6 @@ class Mendevar(Tool):
         :param coverage: Allele coverage length
         :return: Allele or allele marked with an asterisk(*) in case of imperfect match
         """
-
         # Skip undetermined alleles
         if allele in ['-', '?']:
             return allele
