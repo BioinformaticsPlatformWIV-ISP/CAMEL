@@ -105,7 +105,7 @@ class GMats(Tool):
         if allele == '-':
             return 'not_covered'
 
-        if allele == '?':
+        if allele == '?' and locus != 'PorA_VR2':
             return 'unpredictable'
 
         # fHbp
