@@ -151,7 +151,8 @@ rule scrubbing_report:
         INFORMS_tools = Path(config['working_dir']) / human_read_scrubbing.OUTPUT_SCRUBBING_INFORMS
     output:
         # JSON = Path(config['working_dir']) / human_read_scrubbing.OUTPUT_SCRUBBING_SUMMARY_JSON, # todo json output for hera
-        VAL_HTML = Path(config['working_dir']) / human_read_scrubbing.OUTPUT_SCRUBBING_REPORT
+        VAL_HTML = Path(config['working_dir']) / human_read_scrubbing.OUTPUT_SCRUBBING_REPORT,
+        VAL_TSV = Path(config['working_dir']) / human_read_scrubbing.OUTPUT_SCRUBBING_SUMMARY
     params:
         running_dir = Path(config['working_dir']) / 'human_read_scrubbing' / 'output'
     run:
@@ -163,5 +164,9 @@ rule scrubbing_report:
         if count_removed == count_total:
             raise PipelineExecutionError('ERROR: All reads/contigs were removed from the input file(s) during scrubbing. If this is not expected, try disabling the human read scrubbing step.')
         section = HtmlReportSection('Human Read Removal', subtitle=hrrt_informs['_name'])
-        section.add_paragraph(f'Removed {count_removed:,} out of {count_total:,} reads/contigs.')
+        subject = 'reads' if not 'fasta' in config['input'] or 'fasta_wo_vcf' in config['input'] else 'contigs'
+        section.add_paragraph(f"Removed {count_removed:,} out of {count_total:,} {subject}.")
         SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output.VAL_HTML))
+        with output.VAL_TSV.open('w') as handle:
+            handle.write(f'scrubbing_{subject}_in\t{count_total}\n'
+                         f'scrubbing_{subject}_out\t{count_removed}')

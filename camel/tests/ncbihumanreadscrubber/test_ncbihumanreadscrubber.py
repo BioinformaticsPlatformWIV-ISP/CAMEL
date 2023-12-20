@@ -10,7 +10,7 @@ class TestNcbiHumanReadScrubber(CamelTestSuite):
     """
     Tests the HRRT tool.
     """
-    test_file_dir = CamelTestSuite.get_test_file_dir('ncbihumanreadscrubber')
+    test_file_dir = CamelTestSuite.get_test_file_dir('ncbi_human_read_scrubber')
 
     def test_scrubber(self) -> None:
         """
