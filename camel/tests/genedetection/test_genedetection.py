@@ -322,7 +322,7 @@ class TestGeneDetection(CamelTestSuite):
         main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)
 
-    def test_gene_detection_kma_nanopore_ont(self) -> None:
+    def test_gene_detection_kma_ont(self) -> None:
         """
         Tests the gene detection workflow with KMA-based detection on Nanopore data, with ont preset.
         :return: None
@@ -336,11 +336,33 @@ class TestGeneDetection(CamelTestSuite):
             '--working-dir', str(self.running_dir),
             '--read-type', 'nanopore',
             '--detection-method', 'kma',
-            '--ont'
+            '--kma-ont'
         ]
         main = MainGeneDetection(args)
         main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)
+
+    def test_gene_detection_kma_apm(self) -> None:
+        """
+        Tests the gene detection workflow with KMA-based detection on Illumina data, with apm preset.
+        :return: None
+        """
+        path_report_out = self.running_dir / 'report' / 'report.html'
+        args = [
+            '--fastq-pe', str(TestGeneDetection.input_fastq_by_key['illumina'][0]),
+            str(TestGeneDetection.input_fastq_by_key['illumina'][1]),
+            '--database-dir', str(TestGeneDetection.input_gene_detection_db),
+            '--output-html', str(path_report_out),
+            '--output-dir', str(path_report_out.parent),
+            '--working-dir', str(self.running_dir),
+            '--read-type', 'illumina',
+            '--detection-method', 'kma',
+            '--kma-apm', 'p'
+        ]
+        main = MainGeneDetection(args)
+        main.run()
+        self.assertGreater(path_report_out.stat().st_size, 0)
+
 
     # SRST2
     def test_gene_detection_srst2_illumina(self) -> None:

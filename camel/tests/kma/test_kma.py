@@ -69,9 +69,9 @@ class TestKMA(CamelTestSuite):
         self.assertTrue(output_file.exists())
         self.assertGreater(output_file.stat().st_size, 0)
 
-    def test_kma_se_nanopore_ont_preset(self) -> None:
+    def test_kma_ont_preset(self) -> None:
         """
-        Tests KMA with single-end nanopore input and ont preset.
+        Tests KMA with preset.
         :return: None
         """
         kma = KMA(self.camel)
@@ -81,11 +81,21 @@ class TestKMA(CamelTestSuite):
         })
         kma.update_parameters(bc_nano=None, basecalls='0.7', ont=None)
         kma.run(self.running_dir)
-        self.assertTrue('TSV' in kma.tool_outputs, "No TSV output generated")
-        output_file = Path(kma.tool_outputs['TSV'][0].path)
-        self.assertTrue(output_file.exists())
-        self.assertGreater(output_file.stat().st_size, 0)
+        self.verify_output_files(kma, 'TSV')
 
+    def test_kma_apm_preset(self) -> None:
+        """
+        Tests KMA with paired-end input.
+        :return: None
+        """
+        kma = KMA(self.camel)
+        kma.add_input_files({
+            'FASTQ_PE': [ToolIOFile(file_) for file_ in TestKMA.input_reads['illumina']],
+            'DB': [ToolIOValue(str(TestKMA.input_gene_detection_db))]
+        })
+        kma.update_parameters(apm='p')
+        kma.run(self.running_dir)
+        self.verify_output_files(kma, 'TSV')
 
 if __name__ == '__main__':
     unittest.main()

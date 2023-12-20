@@ -39,6 +39,8 @@ rule gene_detection_kma:
         dir_ = lambda wildcards: Path(config['working_dir']) / 'gene_detection' / wildcards.db / 'kma',
         read_type = config.get('read_type', 'illumina'),
         ont = lambda wildcards: config['gene_detection'][wildcards.db].get('params', {}).get('kma',{}).get('ont'),
+        apm = lambda wildcards: config['gene_detection'][wildcards.db].get('params',{}).get('kma',{}).get('apm'),
+        cge = lambda wildcards: config['gene_detection'][wildcards.db].get('params',{}).get('kma',{}).get('cge'),
     run:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         from camel.app.tools.kma.kma import KMA
@@ -53,6 +55,10 @@ rule gene_detection_kma:
             kma.update_parameters(bc_nano=None, basecalls='0.7')
         if params.ont:
             kma.update_parameters(ont=None)
+        if params.cge:
+            kma.update_parameters(cge=None)
+        if params.apm != None:
+            kma.update_parameters(apm=params.apm)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(kma, output)
 
