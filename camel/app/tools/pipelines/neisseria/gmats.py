@@ -102,6 +102,11 @@ class GMats(Tool):
         fhbp_db = gmats_db.loc[gmats_db['Locus'] == 'fHbp']
         nhba_db = gmats_db.loc[gmats_db['Locus'] == 'NHBA']
 
+        # NadA
+        if locus == 'NadA_peptide':
+            return 'not_covered'
+
+        # fHbp, NHBA and PorA
         if allele == '-':
             return 'not_covered'
 
@@ -127,7 +132,7 @@ class GMats(Tool):
             return 'covered' if allele == '4' else 'not_covered'
 
         # Other loci
-        if locus in ('NadA_peptide', 'PorA_VR1'):
+        if locus == 'PorA_VR1':
             return 'not_covered'
         raise ValueError(f'Cannot determine gmats allele (locus={locus}, allele={allele})')
 
