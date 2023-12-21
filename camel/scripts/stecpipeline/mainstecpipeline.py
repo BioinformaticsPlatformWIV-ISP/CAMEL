@@ -79,8 +79,6 @@ class MainSTECPipeline(ReportPipeline):
         ReportPipeline.add_common_arguments(parser)
         parser.add_argument('--fastq-se', type=Path, help="Input SE FASTQ file")
         parser.add_argument('--fastq-se-name', help="Input SE FASTQ file name")
-        parser.add_argument(
-            '--read-type', help="Type of reads.", choices=['illumina', 'iontorrent'], default='illumina')
         for analysis_key in MainSTECPipeline.CUSTOM_ANALYSES:
             parser.add_argument(f"--{analysis_key.replace('_', '-')}", action='store_true')
         return parser.parse_args(args)
