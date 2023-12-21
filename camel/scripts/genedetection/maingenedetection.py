@@ -55,6 +55,9 @@ class MainGeneDetection(object):
         # KMA specific parameters
         argument_parser.add_argument('--kma-min-percent-identity', type=int, default=90)
         argument_parser.add_argument('--kma-min-percent-coverage', type=int, default=60)
+        argument_parser.add_argument('--kma-ont', action='store_true', default=None)
+        argument_parser.add_argument('--kma-cge', action='store_true', default=None)
+        argument_parser.add_argument('--kma-apm', type=str, choices=['u', 'p', 'f'], default=None)
         return argument_parser.parse_args(args)
 
     def run(self) -> None:
@@ -116,6 +119,9 @@ class MainGeneDetection(object):
             config_data.update({'params': {'kma': {
                 'min_percent_identity': self._args.kma_min_percent_identity,
                 'min_coverage': self._args.kma_min_percent_coverage,
+                'ont': self._args.kma_ont,
+                'cge': self._args.kma_cge,
+                'apm': self._args.kma_apm
             }}})
 
         # Add extra column
