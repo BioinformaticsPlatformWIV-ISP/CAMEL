@@ -17,7 +17,7 @@ class TestSnippy(CamelTestSuite):
 
     def test_snippy(self) -> None:
         """
-        Tests the snippy tool
+        Tests the snippy tool.
         :return: None
         """
         snippy = Snippy(self.camel)

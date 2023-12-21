@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
@@ -9,13 +7,14 @@ from camel.app.tools.tool import Tool
 
 class Snippy(Tool):
     """
-    Creation of pseudoreads from a FASTA file and alignment of these reads to the reference genome.
+    Creation of pseudo-reads from a FASTA file and alignment of these reads to a given reference genome.
     """
 
     def __init__(self, camel: Camel) -> None:
         """
         Initializes this tool.
         :param camel: CAMEL instance
+        :return: None
         """
         super().__init__('snippy', '4.6.0', camel)
 
@@ -47,9 +46,9 @@ class Snippy(Tool):
         Executes this tool.
         :return: None
         """
-        self.__set_output()
         self.__build_command()
         self._execute_command()
+        self.__set_output()
 
     def __set_output(self) -> None:
         """
