@@ -17,8 +17,8 @@ class MainEnterococcusPipeline(ReportPipeline):
     """
 
     CUSTOM_ANALYSES = [
-        'kraken', 'confindr', 'resfinder', 'ncbi_amr', 'pointfinder', 'vfdb_core', 'virulencefinder', 'mlst',
-        'cgmlst', 'lrefinder', 'plasmidfinder', 'plasmidspades']
+        'kraken2', 'confindr', 'rmlst', 'resfinder', 'ncbi_amr', 'vfdb_core', 'virulencefinder', 'mlst',
+        'cgmlst', 'lrefinder', 'plasmidfinder', 'mobsuite', 'bacmet']
 
     DATA_BY_SPECIES = {
         'faecalis': {
@@ -26,7 +26,8 @@ class MainEnterococcusPipeline(ReportPipeline):
             'full_name': 'Enterococcus faecalis',
             'gc_content': 37.4,
             'genome_size': 2_973_380,
-            'mlst_db': '/db/sequence_typing/enterococcus_faecalis/mlst',
+            'mlst_dbs': ['/db/sequence_typing/enterococcus_faecalis/mlst']
+            ,
             'pointfinder_db': 'enterococcus_faecalis',
             'quast_fasta': '/db/refgenomes/Enterococcus_faecalis/KB944666.1.fasta',
             'quast_gff': '/db/refgenomes/Enterococcus_faecalis/KB944666.1.gff3'
@@ -36,7 +37,10 @@ class MainEnterococcusPipeline(ReportPipeline):
             'full_name': 'Enterococcus faecium',
             'gc_content': 38.1,
             'genome_size': 2_796_178,
-            'mlst_db': '/db/sequence_typing/enterococcus_faecium/mlst',
+            'mlst_dbs': [
+                '/db/sequence_typing/enterococcus_faecium/mlst',
+                '/db/sequence_typing/enterococcus_faecium/mlst_bezdicek'
+            ],
             'pointfinder_db': 'enterococcus_faecium',
             'quast_fasta': '/db/refgenomes/Enterococcus_faecium/CP038996.1.fasta',
             'quast_gff': '/db/refgenomes/Enterococcus_faecium/CP038996.1.gff3'
