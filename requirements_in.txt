@@ -1,4 +1,4 @@
-PyVCF
+PyVCF3
 biopython
 bs4
 humanize
