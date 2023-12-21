@@ -57,7 +57,7 @@ rule gene_detection_kma:
             kma.update_parameters(ont=None)
         if params.cge:
             kma.update_parameters(cge=None)
-        if params.apm != None:
+        if params.apm is not None:
             kma.update_parameters(apm=params.apm)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(kma, output)
