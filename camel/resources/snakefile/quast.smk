@@ -12,7 +12,7 @@ rule quast_quast:
     Runs quast on the assembly.
     """
     input:
-        FASTA = Path(config['working_dir']) / assembly.get_fasta(config),
+        FASTA = Path(config['working_dir']) / assembly.OUTPUT_ASSEMBLY_FASTA,
         IO = Path(config['working_dir']) / 'fq_dict.io'
     output:
         TSV = Path(config['working_dir']) / 'quast' / 'output' / 'tsv.io',
@@ -67,7 +67,7 @@ rule quast_busco:
     BUSCO is ran outside of QUAST because of dependency issues with the BUSCO installation bundles with QUAST.
     """
     input:
-        FASTA = Path(config['working_dir']) / assembly.get_fasta(config)
+        FASTA = Path(config['working_dir']) / assembly.OUTPUT_ASSEMBLY_FASTA
     output:
         TXT = Path(config['working_dir']) / 'quast' / 'busco' / 'txt.io',
         INFORMS = Path(config['working_dir']) / 'quast' / 'busco' / 'informs.io'
@@ -91,7 +91,7 @@ rule quast_report:
     input:
         TSV = rules.quast_quast.output.TSV,
         HTML = rules.quast_quast.output.HTML,
-        FASTA =  Path(config['working_dir']) / assembly.get_fasta(config),
+        FASTA =  Path(config['working_dir']) / assembly.OUTPUT_ASSEMBLY_FASTA,
         DIR = rules.quast_quast.output.DIR,
         INFORMS_quast = rules.quast_quast.output.INFORMS,
         INFORMS_assembler = Path(config['working_dir']) / assembly.get_command_informs(config),

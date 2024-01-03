@@ -118,12 +118,20 @@ class QuastReporter(Tool):
         :return: None
         """
         section.add_header('Coverage', 3)
-        ref_genome = self._input_informs['quast']['ref'].replace('.fasta', '') if 'ref' in self._input_informs['quast'] else 'n/a'
+        ref_genome = self._input_informs['quast']['ref'].replace('.fasta', '') if (
+                'ref' in self._input_informs['quast']) else 'n/a'
         section.add_paragraph(f"Reference genome (RefSeq accession): {ref_genome}")
         section.add_table([
-            ['Assembly', data_quast['Avg. coverage depth'], f"{float(data_quast['Coverage >= 1x (%)']):.2f}%"],
-            ['Reference', data_quast.get('Reference avg. coverage depth', '-'),
-             f"{float(data_quast['Reference coverage >= 1x (%)']):.2f}%" if 'Reference coverage >= 1x (%)' in data_quast else '-']
+            [
+                'Assembly',
+                data_quast.get('Avg. coverage depth', 'n/a'),
+                f"{float(data_quast['Coverage >= 1x (%)']):.2f}%" if 'Coverage >= 1x (%)' in data_quast else 'n/a'
+            ], [
+                'Reference',
+                data_quast.get('Reference avg. coverage depth', 'n/a'),
+                f"{float(data_quast['Reference coverage >= 1x (%)']):.2f}%" if
+                'Reference coverage >= 1x (%)' in data_quast else 'n/a'
+            ]
         ], ['Category', 'Avg. coverage', 'Positions covered >1x'], [('class', 'data')])
 
     def __add_section_downloads(self, section: HtmlReportSection) -> None:

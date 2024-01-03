@@ -4,6 +4,7 @@ from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -118,6 +119,10 @@ class Quast(Tool):
         for key, value in icarus_output_keys.items():
             if key == 'HTML_alignment_viewer' and 'FASTA_Ref' not in self._tool_inputs:
                 # skip HTML_alignment_viewer when no reference genome is provided
+                continue
+            path_out = self.folder / value
+            if not path_out.exists():
+                logger.warning(f'HTML output not found: {path_out}')
                 continue
             self._tool_outputs[key] = [ToolIOFile(self.folder / value)]
 
