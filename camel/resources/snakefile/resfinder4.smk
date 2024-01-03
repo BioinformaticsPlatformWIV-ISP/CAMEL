@@ -32,7 +32,7 @@ rule resfinder4_run:
         resfinder.add_input_files({'DIR': [ToolIODirectory(Path(input.DIR))]})
         resfinder.update_parameters(min_cov=0.9, acquired=True, point=True)
         if params.species is not None:
-            resfinder.update_parameters(species=params.species)
+            resfinder.update_parameters(species=f'"{params.species}"')
         step = Step(str(rule), resfinder, Camel.get_instance(), params.dir_)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(resfinder, output)
