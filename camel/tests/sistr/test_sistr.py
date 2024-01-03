@@ -10,7 +10,6 @@ class TestSistr(CamelTestSuite):
     """
     Tests the Sistr tool.
     """
-
     # Input files
     test_file_dir = CamelTestSuite.get_test_file_dir('salmonella')
     input_fasta_file = test_file_dir / 'assembly_filtered.fasta'
@@ -26,7 +25,7 @@ class TestSistr(CamelTestSuite):
             'DIR': [ToolIODirectory(Path('/db/SISTR/1.1.1/data'))]
         })
         sistrtool.run(self.running_dir)
-        self.verify_output_files(sistrtool, 'TSV')
+        self.verify_output_files(sistrtool, 'JSON')
 
 
 if __name__ == '__main__':

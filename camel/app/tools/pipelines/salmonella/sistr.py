@@ -9,12 +9,10 @@ from camel.app.tools.tool import Tool
 
 
 class Sistr(Tool):
-
     """
     Serovar predictions from whole-genome sequence assemblies by determination of antigen
     gene and cgMLST gene alleles using BLAST.
     """
-
     def __init__(self, camel: Camel) -> None:
         """
         Initialize tool.
@@ -27,8 +25,8 @@ class Sistr(Tool):
         self.__set_output()
         self.__build_command()
         self._execute_command()
-        input_folder = self._tool_inputs['DIR'][0].path
-        self.__add_informs(input_folder)
+        db_dir = self._tool_inputs['DIR'][0].path
+        self.__add_informs(db_dir)
 
     def _check_input(self) -> None:
         """
@@ -38,14 +36,15 @@ class Sistr(Tool):
         super(Sistr, self)._check_input()
         if 'FASTA' not in self._tool_inputs:
             raise InvalidInputSpecificationError("FASTA input is required")
+        if 'DIR' not in self._tool_inputs:
+            raise InvalidInputSpecificationError("Database input is required (DIR).")
 
     def __set_output(self) -> None:
         """
         Sets the name of the output files
         :return: None
         """
-
-        self._tool_outputs['TSV'] = [ToolIOFile(self.folder / 'sistr_output.json')]
+        self._tool_outputs['JSON'] = [ToolIOFile(self.folder / 'sistr_output.json')]
 
     def __build_command(self) -> None:
         """
@@ -60,22 +59,23 @@ class Sistr(Tool):
     def _check_command_output(self) -> None:
         """
         Checks if the command was executed successfully.
-        Here doesn't check for errors as some small warnings are displayed by the tool as error so not meaningful.
+        We don't check "if 'error' in self.stderr.lower()" here because some small warnings are wrongfully displayed by
+        the tool as errors.
         :return: None
         """
         if self._command.returncode != 0:
             raise ToolExecutionError(f"Command execution failed (Exit code: {self._command.returncode})")
 
-    def __add_informs(self, input_folder: Path) -> None:
+    def __add_informs(self, db_dir: Path) -> None:
         """
         Adds the informs by parsing the JSON file containing the metadata in the database directory.
-        :param input_folder: Input database directory
+        :param db_dir: Input database directory
         :return: None
         """
-        path_metadata = input_folder / 'db_update_info.json'
-        if not path_metadata.is_file():
-            raise FileNotFoundError(f'Database metadata not found: {path_metadata}')
-        with path_metadata.open() as handle:
+        db_metadata_file = db_dir / 'db_update_info.json'
+        if not db_metadata_file.is_file():
+            raise FileNotFoundError(f'Database metadata not found: {db_metadata_file}')
+        with db_metadata_file.open() as handle:
             metadata = json.load(handle)
         self._informs.update(metadata)
-        self._informs['db_path'] = input_folder
+        self._informs['db_path'] = db_dir

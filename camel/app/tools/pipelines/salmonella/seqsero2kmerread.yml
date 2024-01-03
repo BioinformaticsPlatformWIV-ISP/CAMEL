@@ -1,4 +1,0 @@
-dependencies: [samtools/1.9, bedtools/2.25.0, bwa/0.7.17, SPAdes/3.13.0, blast/2.14.0, seqsero2/1.2.1]
-parameters:
-  threads: {default: true, mandatory: false, option: -p, value: '1'}
-tool_command: SeqSero2_package.py

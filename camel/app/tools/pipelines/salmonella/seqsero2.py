@@ -38,8 +38,17 @@ class SeqSero2(Tool):
         :return: None
         """
         super(SeqSero2, self)._check_input()
-        if not any(key in self._tool_inputs for key in ('FASTQ', 'FASTQ_PE', 'FASTA')):
-            raise InvalidInputSpecificationError("FASTQ, FASTQ_PE or FASTA input is required")
+        if not self._tool_inputs.get('MODE') \
+                or self._tool_inputs['MODE'][0].value not in ('Kmer', 'Allele', 'Kmerread'):
+            raise InvalidInputSpecificationError("A Seqsero2 processing mode must be passed to the tool, "
+                                                 "choose from Kmer, Allele, or Kmerread")
+        if self._tool_inputs['MODE'][0].value == 'Kmer':
+            if 'FASTA' not in self._tool_inputs:
+                raise InvalidInputSpecificationError("FASTA input is required in Kmer mode")
+        else:
+            if ('FASTQ' in self._tool_inputs) == ('FASTQ_PE' in self._tool_inputs):  # not exactly one
+                raise InvalidInputSpecificationError(f"Exactly one FASTQ input is required in "
+                                                     f"{self._tool_inputs['MODE'][0].value} mode")
 
     def __set_output(self) -> None:
         """
@@ -54,17 +63,21 @@ class SeqSero2(Tool):
         :return: None
         """
         command_parts = [self._tool_command, '-d', str(self.folder), " ".join(self._build_options())]
-        if 'FASTA' in self._tool_inputs:
-            self._informs['_tag'] = 'Kmer'
+        self._informs['_tag'] = self._tool_inputs['MODE'][0].value
+        if self._tool_inputs['MODE'][0].value == 'Kmer':
             command_parts.extend(['-t 4 -m k', '-i', str(self._tool_inputs['FASTA'][0])])
-        elif 'FASTQ' in self._tool_inputs:
-            self._informs['_tag'] = 'Allele'
-            command_parts.extend(['-t 3 -m a', '-i', str(self._tool_inputs['FASTQ'][0].path)])
         else:
-            self._informs['_tag'] = 'Allele'
-            command_parts.extend(['-t 2 -m a', '-i',
-                                  str(self._tool_inputs['FASTQ_PE'][0].path),
-                                  str(self._tool_inputs['FASTQ_PE'][1].path)])
+            if self._tool_inputs['MODE'][0].value == 'Allele':
+                command_parts.append('-m a')
+            else:  # if self._tool_inputs['MODE'][0].value == 'Kmerread':
+                command_parts.append('-m k')
+
+            if 'FASTQ' in self._tool_inputs:
+                command_parts.extend(['-t 3', '-i', str(self._tool_inputs['FASTQ'][0].path)])
+            else:  # if 'FASTQ_PE' in self._tool_inputs:
+                command_parts.extend(['-t 2', '-i',
+                                      str(self._tool_inputs['FASTQ_PE'][0].path),
+                                      str(self._tool_inputs['FASTQ_PE'][1].path)])
         self._command.command = ' '.join(command_parts)
 
     def _check_command_output(self) -> None:
