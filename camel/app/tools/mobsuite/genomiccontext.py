@@ -60,7 +60,7 @@ class GenomicContext(Tool):
             self._input_informs['mob_recon']['contig_report'].values()) if x is not None))
 
         # Create the output report
-        section = HtmlReportSection('Genomic context', level=3)
+        section = HtmlReportSection('Genomic context', level=2)
 
         # Check if the detection method is BLAST
         if self._parameters['detection_method'].value != 'blast':
@@ -76,6 +76,8 @@ class GenomicContext(Tool):
             for db in self._input_informs['dbs']:
                 try:
                     data_db = pd.read_table(self._tool_inputs[f"TSV_{db['key']}"][0].path)
+                    if len(data_db) == 0:
+                        raise IndexError()
                 except IndexError:
                     logging.warning(f"No hits found for database {db['key']}")
                     continue

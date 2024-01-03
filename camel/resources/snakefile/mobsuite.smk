@@ -117,7 +117,7 @@ rule mobsuite_report_genomic_context:
         detection_method = config['detection_method'],
         read_type = config.get('read_type', 'illumina')
     run:
-        from camel.app.tools.pipelines.klebsiella.genomiccontext import GenomicContext
+        from camel.app.tools.mobsuite.genomiccontext import GenomicContext
         genomic_context = GenomicContext(Camel.get_instance())
         informs = {
             'TSV_amrfinder': {'key': 'amrfinder', 'title': 'AMRFinder', 'contig': 'Contig id', 'gene': 'Gene symbol'},
@@ -125,6 +125,7 @@ rule mobsuite_report_genomic_context:
             'TSV_vfdb': {'key': 'vfdb', 'title': 'VFDB core', 'contig': 'Contig', 'gene': 'Gene'}
         }
         db_informs_to_add = []
+        # noinspection PyUnresolvedReferences
         for k, v in input.items():
             if not v:
                 continue
@@ -148,4 +149,4 @@ rule mobsuite_report_genomic_context_empty:
         VAL_HTML = Path(config['working_dir']) / 'mob_suite' / 'genomic_context' / 'html-empty.io'
     run:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-        SnakePipelineUtils.create_empty_report_section('Genomic context', Path(output.VAL_HTML), 3)
+        SnakePipelineUtils.create_empty_report_section('Genomic context', Path(output.VAL_HTML), 2)
