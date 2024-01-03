@@ -19,12 +19,15 @@ rule amrfinder_run:
         TSV = Path(config['working_dir']) / 'amrfinder' / 'tsv.io',
         INFORMS = Path(config['working_dir']) / 'amrfinder' / 'informs.io'
     params:
-        dir_ = Path(config['working_dir']) / 'amrfinder'
+        dir_ = Path(config['working_dir']) / 'amrfinder',
+        organism = config['amrfinder'].get('species')
     run:
         from camel.app.tools.amrfinder.amrfinder import AMRFinder
         amrfinder = AMRFinder(Camel.get_instance())
         SnakemakeUtils.add_pickle_input(amrfinder, 'FASTA', Path(input.FASTA))
         amrfinder.add_input_files({'DIR': [ToolIODirectory(Path(input.DIR))]})
+        if params.organism is not None:
+            amrfinder.update_parameters(organism=params.organism)
         step = Step(str(rule), amrfinder, Camel.get_instance(), params.dir_)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(amrfinder, output)
