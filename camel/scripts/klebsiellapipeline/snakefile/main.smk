@@ -98,7 +98,7 @@ rule report_combine_all:
         report_vfdb_core = gene_detection.get_gene_detection_report('vfdb_core', config),
         # Plasmid characterization
         report_plasmidfinder = gene_detection.get_gene_detection_report('plasmidfinder', config),
-        report_mob_suite = Path(config['working_dir']) / (mobsuite.OUTPUT_MOB_SUITE_REPORT if 'kleborate' in config['analyses'] else mobsuite.OUTPUT_MOB_SUITE_REPORT_EMPTY),
+        report_mob_suite = Path(config['working_dir']) / (mobsuite.OUTPUT_MOB_SUITE_REPORT if 'mob_suite' in config['analyses'] else mobsuite.OUTPUT_MOB_SUITE_REPORT_EMPTY),
         report_genomic_context = Path(config['working_dir']) / 'mob_suite' / 'genomic_context' / 'html.io',
         # Kleborate
         report_kleborate = Path(config['working_dir']) / (kleborate.OUTPUT_KLEBORATE_REPORT if 'kleborate' in config['analyses'] else kleborate.OUTPUT_KLEBORATE_REPORT_EMPTY),

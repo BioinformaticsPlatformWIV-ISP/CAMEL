@@ -3,7 +3,7 @@ from pathlib import Path
 from camel.resources.snakefile import trimming_illumina, assembly_spades, gene_detection, trimming, \
     contamination_check_kraken, quality_checks, sequence_typing, downsampling, confindr, quast, amrfinder, core, \
     trimming_ont, assembly_flye, assembly
-from camel.resources.snakefile.sequence_typing import get_sequence_typing_report, OUTPUT_TYPING_SUMMARY
+from camel.resources.snakefile.sequence_typing import OUTPUT_TYPING_SUMMARY
 
 #######################
 # Included Snakefiles #
@@ -102,15 +102,15 @@ rule report_combine_all:
         # Plasmid replicon detection
         report_plasmidfinder = gene_detection.get_gene_detection_report('plasmidfinder', config),
         # Typing
-        report_rmlst = get_sequence_typing_report('rmlst', config),
-        report_mlst = get_sequence_typing_report('mlst', config),
-        report_species = get_sequence_typing_report('species_confirmation', config),
-        report_amr_typing = get_sequence_typing_report('typing_amr', config),
-        report_cgmlst = get_sequence_typing_report('cgmlst', config),
-        report_pcr_serogroup = get_sequence_typing_report('pcr_serogroup', config),
-        report_viru_typing = get_sequence_typing_report('typing_virulence', config),
+        report_rmlst = sequence_typing.get_sequence_typing_report('rmlst', config),
+        report_mlst = sequence_typing.get_sequence_typing_report('mlst', config),
+        report_species = sequence_typing.get_sequence_typing_report('species_confirmation', config),
+        report_amr_typing = sequence_typing.get_sequence_typing_report('typing_amr', config),
+        report_cgmlst = sequence_typing.get_sequence_typing_report('cgmlst', config),
+        report_pcr_serogroup = sequence_typing.get_sequence_typing_report('pcr_serogroup', config),
+        report_viru_typing = sequence_typing.get_sequence_typing_report('typing_virulence', config),
         # Report
-        report_citations = Path(config['working_dir'],core.OUTPUT_HTML_CITATIONS),
+        report_citations = Path(config['working_dir'], core.OUTPUT_HTML_CITATIONS),
         report_commands = rules.report_command_section.output.HTML
     output:
         HTML = config['output_report']

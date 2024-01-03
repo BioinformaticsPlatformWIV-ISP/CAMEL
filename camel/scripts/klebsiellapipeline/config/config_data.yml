@@ -16,12 +16,15 @@ citations:
     - Clausen_2018-kma
     - Inouye_2014-srst2
     - Bortolaia_2020-resfinder_4.0
+    - Feldgarden_2019-ndaro
     - Chen_2016-vfdb
     - Carattoli_2020-plasmidfinder
     - Jolley_2010-bigsdb
     - Lam_2021-kleborate
     - Wyres_2016-kaptive
     - Robertson_2018-mob_suite
+    - Hyatt_2010-prodigal
+    - Pal_2014-bacmet
 
 #########################
 # Tool specific options #
