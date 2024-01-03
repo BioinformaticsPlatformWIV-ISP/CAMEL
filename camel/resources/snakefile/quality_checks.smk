@@ -5,7 +5,7 @@ from camel.app.camel import Camel
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile import quality_checks, contamination_check_kraken, trimming_ont, \
-    quast, confindr, trimming_illumina
+    quast, confindr, trimming_illumina, assembly
 
 
 def _get_kraken2_informs(config, tech) -> Union[Path, List]:
@@ -85,7 +85,7 @@ rule quality_checks_mapping_rate_se:
     Checks the mapping rate against the reference genome / assembled contigs for the SE reads (if available).
     """
     input:
-        INFORMS = quality_checks.get_mapping_rate_informs(config, 'fastq_se')
+        INFORMS = Path(config['working_dir'], assembly.get_mapping_inform('fastq_se'))
     output:
         JSON = Path(config['working_dir']) / 'quality_checks' / 'map_rate_{mode}_ont.json'
     params:
@@ -104,7 +104,7 @@ rule quality_checks_mapping_rate_pe:
     Checks the mapping rate against the reference genome / assembled contigs for the PE reads (if available).
     """
     input:
-        INFORMS = quality_checks.get_mapping_rate_informs(config, 'fastq_pe')
+        INFORMS = Path(config['working_dir'], assembly.get_mapping_inform('fastq_pe'))
     output:
         JSON = Path(config['working_dir']) / 'quality_checks' / 'map_rate_{mode}_illumina.json'
     params:
@@ -123,7 +123,7 @@ rule quality_checks_depth_se:
     Checks the coverage against the assembled contigs.
     """
     input:
-        INFORMS = lambda wildcards: quality_checks.get_depth_informs(config, 'fastq_se')
+        INFORMS = lambda wildcards: Path(config['working_dir'], assembly.get_depth_inform('fastq_se'))
     output:
         JSON = Path(config['working_dir']) / 'quality_checks' / 'cov_{mode}_ont.json'
     params:
@@ -144,7 +144,7 @@ rule quality_checks_depth_pe:
     Checks the coverage against the assembled contigs.
     """
     input:
-        INFORMS = lambda wildcards: quality_checks.get_depth_informs(config, 'fastq_pe')
+        INFORMS = lambda wildcards: Path(config['working_dir'], assembly.get_depth_inform('fastq_pe'))
     output:
         JSON = Path(config['working_dir']) / 'quality_checks' / 'cov_{mode}_illumina.json'
     params:
@@ -155,8 +155,6 @@ rule quality_checks_depth_pe:
 
         # noinspection PyTypeChecker
         samtools_depth_informs = SnakemakeUtils.load_object(Path(input.INFORMS))
-        import pprint
-        pprint.pprint(samtools_depth_informs)
         median_depth = samtools_depth_informs['median_depth']
         with open(output.JSON, 'w') as handle:
             # noinspection PyUnresolvedReferences

@@ -4,46 +4,11 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Optional, Dict, Any, List
 
-from camel.resources.snakefile import assembly_spades, assembly_flye
-
-
 SNAKEFILE_QUALITY_CHECKS = f'{Path(__file__).parent / Path(__file__).stem}.smk'
 _dir_qc = Path('quality_checks')
 OUTPUT_QUALITY_CHECKS_REPORT = _dir_qc / 'report' / 'html.io'
 OUTPUT_QUALITY_CHECKS_SUMMARY = _dir_qc / 'summary' / 'summary_out.tsv'
 OUTPUT_QUALITY_CHECKS_REPORT_JSON = _dir_qc / 'report' / 'informs.json'
-
-
-def get_mapping_rate_informs(config: Dict, read_key: str) -> Path:
-    """
-    Returns the input for the mapping rate.
-    :param config: Snakemake config
-    :param read_key: Read key ('fastq_se' or 'fastq_pe')
-    :return: Mapping rate informs
-    """
-    mode = config['quality_checks'].get('coverage_mode', 'assembly')
-    if mode == 'assembly':
-        if read_key == 'fastq_pe':
-            return Path(config['working_dir'], assembly_spades.OUTPUT_ASSEMBLY_MAPPING_INFORMS)
-        elif read_key == 'fastq_se':
-            return Path(config['working_dir'], assembly_flye.OUTPUT_ASSEMBLY_MAPPING_RATE_INFORMS)
-    raise ValueError(f'Cannot determine mapping informs')
-
-
-def get_depth_informs(config: Dict, read_key: str = None) -> Path:
-    """
-    Returns the input for the depth.
-    :param config: Snakemake config
-    :param read_key: Read key ('fastq_se' or 'fastq_pe')
-    :return: Depth informs
-    """
-    mode = config['quality_checks'].get('coverage_mode', 'assembly')
-    if mode == 'assembly':
-        if read_key == 'fastq_pe':
-            return Path(config['working_dir'], assembly_spades.OUTPUT_ASSEMBLY_DEPTH_INFORMS)
-        elif read_key == 'fastq_se':
-            return Path(config['working_dir'], assembly_flye.OUTPUT_ASSEMBLY_DEPTH_INFORMS)
-    raise ValueError(f"Cannot determine depth informs: '{mode}'")
 
 
 @dataclasses.dataclass

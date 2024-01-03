@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 from camel.resources.snakefile import assembly_spades, assembly_flye
 
@@ -61,3 +61,20 @@ def get_depth_inform(read_key: str) -> Path:
         return Path(str(OUTPUT_ASSEMBLY_DEPTH_INFORMS).format(mapper='minimap2'))
     else:
         raise ValueError(f'Invalid read key: {read_key}')
+
+
+def get_qc_informs(config: Dict[str, Any], input_type: str) -> List[Path]:
+    """
+    Returns the QC informs based on the input type.
+    :param config: Snakemake configuration
+    :param input_type: Input type
+    :return: List of paths to QC informs
+    """
+    informs = []
+    if input_type in ('hybrid', 'illumina'):
+        informs.append(get_mapping_inform('fastq_pe'))
+        informs.append(get_depth_inform('fastq_pe'))
+    if input_type in ('hybrid', 'ont'):
+        informs.append(get_mapping_inform('fastq_se'))
+        informs.append(get_depth_inform('fastq_se'))
+    return [Path(config['working_dir'], p) for p in informs]

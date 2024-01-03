@@ -3,7 +3,7 @@ from pathlib import Path
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.resources.snakefile import trimming_illumina, trimming_ont, assembly, gene_detection, downsampling, core, \
-    sequence_typing
+    sequence_typing, amrfinder, mobsuite
 
 rule core_link_downsampling_input:
     """
@@ -60,7 +60,7 @@ rule core_select_fasta:
     This rules links the output of the assembly workflow to the other workflows. 
     """
     input:
-        FASTA = Path(config['working_dir'], assembly.get_fasta(config))
+        FASTA = Path(config['working_dir'], assembly.OUTPUT_ASSEMBLY_FASTA)
     output:
         FASTA = Path(config['working_dir']) / gene_detection.INPUT_GENE_DETECTION_FASTA
     shell:
@@ -71,12 +71,38 @@ rule core_link_fasta_to_typing:
     This rule core_links the output of the assembly workflows to the sequence typing workflow.
     """
     input:
-        FASTA = Path(config['working_dir'], assembly.get_fasta(config))
+        FASTA = Path(config['working_dir'], assembly.OUTPUT_ASSEMBLY_FASTA)
     output:
         FASTA_typing = Path(config['working_dir']) / sequence_typing.INPUT_FASTA
     shell:
         """
         cp {input.FASTA} {output.FASTA_typing};
+        """
+
+rule core_link_fasta_to_amrfinder:
+    """
+    This rule core_links the output of the assembly workflows to the AMRFinder workflow.
+    """
+    input:
+        FASTA = Path(config['working_dir'], assembly.OUTPUT_ASSEMBLY_FASTA)
+    output:
+        FASTA = Path(config['working_dir']) / amrfinder.INPUT_AMRFINDER_FASTA
+    shell:
+        """
+        cp {input.FASTA} {output.FASTA};
+        """
+
+rule core_link_fasta_to_mob_suite:
+    """
+    This rule core_links the output of the assembly workflows to the MOB-suite workflow.
+    """
+    input:
+        FASTA = Path(config['working_dir'], assembly.OUTPUT_ASSEMBLY_FASTA)
+    output:
+        FASTA = Path(config['working_dir']) / mobsuite.INPUT_MOBSUITE_FASTA
+    shell:
+        """
+        cp {input.FASTA} {output.FASTA};
         """
 
 rule core_collect_trimmed_fastq_data:
