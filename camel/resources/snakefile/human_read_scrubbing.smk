@@ -167,6 +167,6 @@ rule scrubbing_report:
         subject = 'reads' if not 'fasta' in config['input'] or 'fasta_wo_vcf' in config['input'] else 'contigs'
         section.add_paragraph(f"Removed {count_removed:,} out of {count_total:,} {subject}.")
         SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output.VAL_HTML))
-        with output.VAL_TSV.open('w') as handle:
+        with Path(output.VAL_TSV).open('w') as handle:
             handle.write(f'scrubbing_{subject}_in\t{count_total}\n'
                          f'scrubbing_{subject}_out\t{count_removed}')
