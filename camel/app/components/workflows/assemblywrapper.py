@@ -6,7 +6,7 @@ from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.workflows.utils.fastqinput import FastqInput
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-from camel.resources.snakefile import assembly_spades, assembly_canu
+from camel.resources.snakefile import assembly
 
 
 @dataclass
@@ -24,17 +24,17 @@ class AssemblyWrapper(object):
     This class is used as a wrapper class around the assembly Snakemake workflow.
     """
 
-    def __init__(self, working_dir: Path, read_type: str = 'illumina') -> None:
+    def __init__(self, working_dir: Path, input_type: str = 'illumina') -> None:
         """
         Initializes the read trimming helper.
         :param working_dir: Working directory
-        :param read_type: Read type
+        :param input_type: Input type
         :return: None
         """
         self._working_dir = working_dir
         self._working_dir.mkdir(parents=True, exist_ok=True)
         self._output = None
-        self._read_type = read_type
+        self._input_type = input_type
 
     @property
     def assembler_key(self) -> str:
@@ -42,11 +42,11 @@ class AssemblyWrapper(object):
         Returns the key for the assembler.
         :return: Assembler key
         """
-        if self._read_type in ('illumina', 'iontorrent'):
+        if self._input_type == 'illumina':
             return 'spades'
-        elif self._read_type == 'nanopore':
-            return 'canu'
-        raise ValueError(f'Invalid read type: {self._read_type}')
+        elif self._input_type == 'ont':
+            return 'flye'
+        raise ValueError(f'Invalid read type: {self._input_type}')
 
     def run(self, name: str, fastq_in: FastqInput, min_ctg_len: Optional[int] = None,
             assembler_opts: Optional[Dict] = None, calc_qc_stats: bool = False, threads: int = 8) -> None:
@@ -87,45 +87,32 @@ class AssemblyWrapper(object):
         config_file = SnakePipelineUtils.generate_config_file(config_data, self._working_dir)
 
         # Collect output files
-        output_files = self.__get_output_files_dict(min_ctg_len, calc_qc_stats)
-        path_workflow = assembly_spades.SNAKEFILE_ASSEMBLY_SPADES if self._read_type != 'nanopore' else \
-            assembly_canu.SNAKEFILE_ASSEMBLY_CANU
+        output_files = self.__get_output_files_dict(config_data, min_ctg_len, calc_qc_stats)
         SnakePipelineUtils.run_snakemake(
-            path_workflow, config_file, list(output_files.values()), Path(self._working_dir), threads)
+            assembly.SNAKEFILE_ASSEMBLY, config_file, list(output_files.values()), Path(self._working_dir), threads)
         self.__set_output(output_files)
 
-    def __get_output_files_dict(self, min_ctg_len: Union[int, None], calc_qc_stats: bool) -> Dict[str, Path]:
+    def __get_output_files_dict(
+            self, config_data: Dict[str, Any], min_ctg_len: Union[int, None], calc_qc_stats: bool) -> Dict[str, Path]:
         """
         Returns the dictionary with output files.
+        :param config_data: Configuration data
         :param min_ctg_len: Minimum contig length
         :param calc_qc_stats: If True, QC stats are calculated
         :return: Dictionary with output files.
         """
-        # SPAdes
-        if self._read_type in ('illumina', 'iontorrent'):
-            output_files = {
-                'HTML': self._working_dir / assembly_spades.OUTPUT_ASSEMBLY_REPORT,
-                'TSV': self._working_dir / assembly_spades.OUTPUT_ASSEMBLY_SUMMARY,
-                'FASTA': self._working_dir / assembly_spades.OUTPUT_ASSEMBLY_FASTA,
-                'INFORMS_spades': self._working_dir / assembly_spades.OUTPUT_ASSEMBLY_INFORMS
-            }
-            if min_ctg_len is not None:
-                output_files['INFORMS_seqtk'] = self._working_dir / assembly_spades.OUTPUT_ASSEMBLY_FILTERING_INFORMS
-            if calc_qc_stats is True:
-                output_files['INFORMS_bowtie2'] = self._working_dir / assembly_spades.OUTPUT_ASSEMBLY_MAPPING_INFORMS
-                output_files['INFORMS_samtools'] = self._working_dir / assembly_spades.OUTPUT_ASSEMBLY_DEPTH_INFORMS
-        # CANU
-        else:
-            output_files = {
-                'HTML': self._working_dir / assembly_canu.OUTPUT_ASSEMBLY_REPORT,
-                'TSV': self._working_dir / assembly_canu.OUTPUT_ASSEMBLY_SUMMARY,
-                'FASTA': self._working_dir / assembly_canu.OUTPUT_ASSEMBLY_FASTA,
-                'INFORMS_canu': self._working_dir / assembly_canu.OUTPUT_ASSEMBLY_INFORMS
-            }
-            if min_ctg_len is not None:
-                output_files['INFORMS_seqtk'] = self._working_dir / assembly_canu.OUTPUT_ASSEMBLY_FILTERING_INFORMS
-            if calc_qc_stats is True:
-                raise NotImplementedError('Statistics for ONT assembly are currently not implemented')
+        output_files = {
+            'HTML': self._working_dir / assembly.OUTPUT_ASSEMBLY_REPORT,
+            'TSV': self._working_dir / assembly.OUTPUT_ASSEMBLY_SUMMARY,
+            'FASTA': self._working_dir / assembly.OUTPUT_ASSEMBLY_FASTA,
+            'INFORMS_assembler': assembly.get_command_informs(config_data)
+        }
+        if min_ctg_len is not None:
+            output_files['INFORMS_seqtk'] = self._working_dir / assembly.OUTPUT_ASSEMBLY_FILTERING_INFORMS
+        if calc_qc_stats is True:
+            key_fq = 'fastq_pe' if self._input_type == 'illumina' else 'fastq_se'
+            output_files['INFORMS_mapper'] = self._working_dir / assembly.get_mapping_inform(key_fq)
+            output_files['INFORMS_depth'] = self._working_dir / assembly.get_depth_inform(key_fq)
         return output_files
 
     def __get_config_data(self, name: str, min_ctg_len: Union[int, None], assembler_opts: Optional[Dict] = None) -> \
@@ -141,17 +128,14 @@ class AssemblyWrapper(object):
             'sample_name': name,
             'working_dir': str(self._working_dir),
             'assembly': {self.assembler_key: {}},
-            'read_type': self._read_type
+            'input_type': self._input_type
         }
 
         # Assembler options
         config_data['assembly'][self.assembler_key] = assembler_opts if assembler_opts is not None else {}
-        if self._read_type == 'iontorrent':
-            config_data['assembly']['spades']['iontorrent'] = None
 
         # Length filtering
         if min_ctg_len is not None:
-            # noinspection PyTypeChecker
             config_data['assembly']['min_contig_length'] = min_ctg_len
         return config_data
 
@@ -162,13 +146,13 @@ class AssemblyWrapper(object):
         :return: None
         """
         log_file_path = self._working_dir / 'camel.log'
-        informs = [SnakemakeUtils.load_object(output_files[f'INFORMS_{self.assembler_key}'])]
+        informs = [SnakemakeUtils.load_object(output_files[f'INFORMS_assembler'])]
         if 'INFORMS_seqtk' in output_files:
             informs.append(SnakemakeUtils.load_object(output_files['INFORMS_seqtk']))
-        if all(key in output_files for key in ('INFORMS_bowtie2', 'INFORMS_samtools')):
+        if all(key in output_files for key in ('INFORMS_mapper', 'INFORMS_depth')):
             qc_stats = {
-                'depth': SnakemakeUtils.load_object(output_files['INFORMS_samtools']),
-                'mapping': SnakemakeUtils.load_object(output_files['INFORMS_bowtie2']),
+                'depth': SnakemakeUtils.load_object(output_files['INFORMS_depth']),
+                'mapping': SnakemakeUtils.load_object(output_files['INFORMS_mapper']),
             }
         else:
             qc_stats = None

@@ -1,3 +1,5 @@
+import unittest
+
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.components.workflows.assemblywrapper import AssemblyWrapper
 from camel.app.components.workflows.utils.fastqinput import FastqInput
@@ -41,36 +43,12 @@ class TestWorkflowAssembly(CamelTestSuite):
         self.assertIn('depth', wrapper.output.qc_stats)
         self.assertIn('mapping', wrapper.output.qc_stats)
 
-    def test_assembly_iontorrent(self) -> None:
-        """
-        Tests the assembly workflow.
-        :return: None
-        """
-        wrapper = AssemblyWrapper(self.running_dir, 'iontorrent')
-        fastq_input = FastqInput('iontorrent', se=[ToolIOFile(TestWorkflowAssembly.fastq_se_iontorrent)], is_pe=False)
-        wrapper.run('test_sample', fastq_input, min_ctg_len=500, assembler_opts={'kmers': '25,33', 'cov_cutoff': 5})
-        self.assertGreater(wrapper.output.fasta_contigs.stat().st_size, 0)
-
-    def test_assembly_iontorrent_stats(self) -> None:
-        """
-        Tests the assembly workflow with stats generation.
-        :return: None
-        """
-        wrapper = AssemblyWrapper(self.running_dir, 'iontorrent')
-        fastq_input = FastqInput('iontorrent', se=[ToolIOFile(TestWorkflowAssembly.fastq_se_iontorrent)], is_pe=False)
-        wrapper.run('test_sample', fastq_input, min_ctg_len=500, assembler_opts={
-            'kmers': '25,33', 'cov_cutoff': 'auto'}, calc_qc_stats=True)
-        self.assertGreater(wrapper.output.fasta_contigs.stat().st_size, 0)
-        self.assertIsNotNone(wrapper.output.qc_stats)
-        self.assertIn('depth', wrapper.output.qc_stats)
-        self.assertIn('mapping', wrapper.output.qc_stats)
-
     def test_assembly_ont(self) -> None:
         """
         Tests the assembly workflow with ONT data.
         :return: None
         """
-        wrapper = AssemblyWrapper(self.running_dir, 'nanopore')
+        wrapper = AssemblyWrapper(self.running_dir, 'ont')
         fastq_input = FastqInput('nanopore', se=[ToolIOFile(TestWorkflowAssembly.fastq_se_ont)], is_pe=False)
         wrapper.run('test_sample', fastq_input, min_ctg_len=500, assembler_opts={'genome_size': '15k'})
         self.assertGreater(wrapper.output.fasta_contigs.stat().st_size, 0)
@@ -80,7 +58,14 @@ class TestWorkflowAssembly(CamelTestSuite):
         Tests the assembly workflow with ONT data and stats generation.
         :return: None
         """
-        wrapper = AssemblyWrapper(self.running_dir, 'nanopore')
+        wrapper = AssemblyWrapper(self.running_dir, 'ont')
         fastq_input = FastqInput('nanopore', se=[ToolIOFile(TestWorkflowAssembly.fastq_se_ont)], is_pe=False)
-        with self.assertRaises(NotImplementedError):
-            wrapper.run('test_sample', fastq_input, min_ctg_len=500, calc_qc_stats=True)
+        wrapper.run('test_sample', fastq_input, min_ctg_len=500, calc_qc_stats=True)
+        self.assertGreater(wrapper.output.fasta_contigs.stat().st_size, 0)
+        self.assertIsNotNone(wrapper.output.qc_stats)
+        self.assertIn('depth', wrapper.output.qc_stats)
+        self.assertIn('mapping', wrapper.output.qc_stats)
+
+
+if __name__ == '__main__':
+    unittest.main()
