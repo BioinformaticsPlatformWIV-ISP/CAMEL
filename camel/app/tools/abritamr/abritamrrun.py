@@ -32,7 +32,7 @@ class AbriTAMRRun(Tool):
         self.__build_command()
         self._execute_command()
         amrfinder_db_folder = self._tool_inputs['DIR_AMRF'][0].path
-        self.__add_informs(amrfinder_db_folder)
+        self.__add_database_information(amrfinder_db_folder)
 
     def _check_input(self) -> None:
         """
@@ -52,7 +52,6 @@ class AbriTAMRRun(Tool):
         Collects the output files of interest.
         :return: None
         """
-
         self._tool_outputs['TXT_MATCHES'] = [ToolIOFile(self.folder / 'summary_matches.txt')]
         self._tool_outputs['TXT_PARTIALS'] = [ToolIOFile(self.folder / 'summary_partials.txt')]
 
@@ -79,15 +78,15 @@ class AbriTAMRRun(Tool):
         if self._command.returncode != 0:
             raise ToolExecutionError(f"Command execution failed (Exit code: {self._command.returncode})")
 
-    def __add_informs(self, amrfinder_folder: Path) -> None:
+    def __add_database_information(self, amrfinder_folder: Path) -> None:
         """
         add the update of the two database in the informs of the tool for further reporting
-        amrfinder_folder: the path to the folder of amrfinder plus to be used with the tool abritAMR
+        amrfinder_folder: the path to the folder of amrfinderplus database used in this tool.
         return: None
         """
-        amrfinder_db_metadata = amrfinder_folder / 'db_update_info.json'
-        if not amrfinder_db_metadata.is_file():
-            raise FileNotFoundError(f'Database metadata not found: {amrfinder_db_metadata}')
-        with amrfinder_db_metadata.open() as handle:
+        db_metadata_file = amrfinder_folder / 'db_update_info.json'
+        if not db_metadata_file.is_file():
+            raise FileNotFoundError(f'Database metadata not found: {db_metadata_file}')
+        with db_metadata_file .open() as handle:
             metadata = json.load(handle)
             self._informs.update(metadata)
