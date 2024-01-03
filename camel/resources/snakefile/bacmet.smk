@@ -5,7 +5,7 @@ import pandas as pd
 from camel.app.camel import Camel
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.resources.snakefile import assembly_spades
+from camel.resources.snakefile import assembly
 
 rule bacmet_pickle_db:
     """
@@ -24,7 +24,7 @@ rule bacmet_prodigal:
     Runs Prodigal to predict CDS.
     """
     input:
-        FASTA = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA
+        FASTA = Path(config['working_dir']) / assembly.OUTPUT_ASSEMBLY_FASTA
     output:
         FASTA = Path(config['working_dir']) / 'bacmet' / 'prodigal' / 'fasta.io',
         INFORMS = Path(config['working_dir']) / 'bacmet' / 'prodigal' / 'informs.io'
