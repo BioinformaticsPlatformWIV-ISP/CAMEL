@@ -1,0 +1,4 @@
+dependencies: [abritamr/1.0.13]
+parameters:
+   jobs: {default: true, mandatory: false, option: -jobs, value: '1'}
+tool_command: abritamr run
