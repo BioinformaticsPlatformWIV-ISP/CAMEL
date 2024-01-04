@@ -111,10 +111,10 @@ rule create_output_summary_abritamr:
                 json_dict[key] = value
         meta_json_dict = {'abritamr': {'results': json_dict,
                                               'informs_tools': {
-                              informs_abritamr_report['_tool']: {'_name': informs_abritamr_report['_name'],
+                              informs_abritamr_report.get('_tool', informs_abritamr_report['_name']): {'_name': informs_abritamr_report['_name'],
                                                               '_version': informs_abritamr_report['_version'],
                                                               '_command': informs_abritamr_report['_command']},
-                              informs_abritamr_run['_tool']: {'_name': informs_abritamr_run['_name'],
+                              informs_abritamr_run.get('_tool', informs_abritamr_run['_name']): {'_name': informs_abritamr_run['_name'],
                                                               '_version': informs_abritamr_run['_version'],
                                                               '_command': informs_abritamr_run['_command']}
                                                                 },
