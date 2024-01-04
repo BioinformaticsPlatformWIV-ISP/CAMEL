@@ -2,7 +2,7 @@ from pathlib import Path
 
 from camel.app.camel import Camel
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.resources.snakefile import trimming, trimming_illumina, assembly_spades, quality_checks, \
+from camel.resources.snakefile import trimming, trimming_illumina, quality_checks, \
     contamination_check_kraken, gene_detection, sequence_typing, downsampling, confindr, quast, core, trimming_ont, \
     assembly_flye, assembly
 from camel.scripts.neisseriapipeline.snakefile import serogroup_determination, gmats
@@ -15,8 +15,7 @@ include: core.SNAKEFILE_CORE
 include: downsampling.SNAKEFILE_DOWNSAMPLING
 include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
 include: trimming_ont.SNAKEFILE_TRIMMING_ONT
-include: assembly_spades.SNAKEFILE_ASSEMBLY_SPADES
-include: assembly_flye.SNAKEFILE_ASSEMBLY_FLYE
+include: assembly.SNAKEFILE_ASSEMBLY
 include: quast.SNAKEFILE_QUAST
 include: contamination_check_kraken.SNAKEFILE_CONTAMINATION_CHECK_KRAKEN
 include: confindr.SNAKEFILE_CONFINDR
@@ -49,8 +48,7 @@ rule report_create_command_section:
         INFORMS_busco = Path(config['working_dir']) / quast.OUTPUT_BUSCO_INFORMS,
         INFORMS_contamination = contamination_check_kraken.get_command_informs(config),
         INFORMS_confindr = confindr.get_command_informs(config),
-        # INFORMS_mapping = quality_checks.get_mapping_rate_informs(config, ),
-        # INFORMS_depth = quality_checks.get_depth_informs(config),
+        INFORMS_assembly_map = assembly.get_qc_informs(config, config['input_type']),
         INFORMS_resfinder = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='resfinder') if 'resfinder' in config['analyses'] else [],
         INFORMS_ncbi_amr = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='ncbi_amr') if 'ncbi_amr' in config['analyses'] else [],
         INFORMS_rmlst = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='rmlst') if 'rmlst' in config['analyses'] else [],

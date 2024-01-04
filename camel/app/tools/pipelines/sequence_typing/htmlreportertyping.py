@@ -152,7 +152,7 @@ class HtmlReporterTyping(Tool):
     def __export_analysis_metadata(self) -> None:
         """
         Exports the analysis metadata file. The information can be used for further processing of the sequence typing
-        output (e.g. for generating MLST trees).
+        output (e.g., for generating MLST trees).
         :return: None
         """
         path = self.folder / HtmlReporterTyping.INFO_FILENAME
@@ -169,11 +169,16 @@ class HtmlReporterTyping(Tool):
         :return: None
         """
         self._report_section.add_header('Scheme info', level=4)
-        self._report_section.add_table([
+        table_data = [
             ('Last scheme update', self._input_informs['scheme']['last_updated']),
-            ('Last scheme change', self._input_informs['scheme'].get('last_change', 'n/a')),
-            ('Origin', self._input_informs['scheme'].get('origin', 'n/a')),
-        ], ['Field', 'Value'], [('class', 'data')])
+            ('Last scheme change', self._input_informs['scheme'].get('last_change')),
+            ('Origin', self._input_informs['scheme'].get('origin')),
+        ]
+        for i in range(0, len(table_data)):
+            if table_data[i][-1] is not None:
+                continue
+            table_data[i] = (table_data[i][0], 'n/a')
+        self._report_section.add_table(table_data, ['Field', 'Value'], [('class', 'data')])
 
     def __generate_novel_allele_fasta(self, hits_novel: List[SequenceTypingHitBase]) -> Path:
         """

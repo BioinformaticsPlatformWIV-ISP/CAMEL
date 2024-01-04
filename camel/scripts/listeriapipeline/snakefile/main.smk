@@ -1,9 +1,7 @@
 from pathlib import Path
 
-from camel.resources.snakefile import trimming_illumina, assembly_spades, gene_detection, trimming, \
-    contamination_check_kraken, quality_checks, sequence_typing, downsampling, confindr, quast, amrfinder, core, \
-    trimming_ont, assembly_flye, assembly
-from camel.resources.snakefile.sequence_typing import OUTPUT_TYPING_SUMMARY
+from camel.resources.snakefile import trimming_illumina, gene_detection, trimming, contamination_check_kraken, \
+    quality_checks, sequence_typing, downsampling, confindr, quast, amrfinder, core, trimming_ont, assembly
 
 #######################
 # Included Snakefiles #
@@ -12,8 +10,7 @@ include: core.SNAKEFILE_CORE
 include: downsampling.SNAKEFILE_DOWNSAMPLING
 include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
 include: trimming_ont.SNAKEFILE_TRIMMING_ONT
-include: assembly_spades.SNAKEFILE_ASSEMBLY_SPADES
-include: assembly_flye.SNAKEFILE_ASSEMBLY_FLYE
+include: assembly.SNAKEFILE_ASSEMBLY
 include: quast.SNAKEFILE_QUAST
 include: contamination_check_kraken.SNAKEFILE_CONTAMINATION_CHECK_KRAKEN
 include: confindr.SNAKEFILE_CONFINDR
@@ -33,17 +30,6 @@ rule all:
         HTML = config['output_report'],
         TSV = config['output_tabular']
 
-rule select_fasta_to_tools:
-    """
-    This rules links the output of the assembly workflow to the other workflows.
-    """
-    input:
-        FASTA_spades = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA
-    output:
-        FASTA_amrfinder = Path(config['working_dir']) / amrfinder.INPUT_AMRFINDER_FASTA
-    shell:
-        "cp {input.FASTA_spades} {output.FASTA_amrfinder}"
-
 rule report_command_section:
     """
     Creates a report section with the commands used in the pipeline. 
@@ -56,8 +42,7 @@ rule report_command_section:
         INFORMS_busco = Path(config['working_dir']) / quast.OUTPUT_BUSCO_INFORMS,
         INFORMS_contamination = contamination_check_kraken.get_command_informs(config),
         INFORMS_confindr = confindr.get_command_informs(config),
-        # INFORMS_mapping = quality_checks.get_mapping_rate_informs(config),
-        # INFORMS_depth = quality_checks.get_depth_informs(config),
+        INFORMS_assembly_map = assembly.get_qc_informs(config, config['input_type']),
         # AMRFinder
         INFORMS_amrfnder = Path(config['working_dir']) / amrfinder.OUTPUT_AMRFINDER_INFORMS if 'amrfinder' in config['analyses'] else [],
         # Gene detection
@@ -178,13 +163,13 @@ rule summary_combine_all:
         # Plasmid replicon detection
         Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='plasmidfinder') if 'plasmidfinder' in config['analyses'] else [],
         # Sequence typing
-        Path(config['working_dir']) / str(OUTPUT_TYPING_SUMMARY).format(scheme='rmlst') if 'rmlst' in config['analyses'] else [],
-        Path(config['working_dir']) / str(OUTPUT_TYPING_SUMMARY).format(scheme='mlst') if 'mlst' in config['analyses'] else [],
-        Path(config['working_dir']) / str(OUTPUT_TYPING_SUMMARY).format(scheme='species_confirmation') if 'species_confirmation' in config['analyses'] else [],
-        Path(config['working_dir']) / str(OUTPUT_TYPING_SUMMARY).format(scheme='typing_amr') if 'typing_amr' in config['analyses'] else [],
-        Path(config['working_dir']) / str(OUTPUT_TYPING_SUMMARY).format(scheme='typing_virulence') if 'typing_amr' in config['analyses'] else [],
-        Path(config['working_dir']) / str(OUTPUT_TYPING_SUMMARY).format(scheme='pcr_serogroup') if 'pcr_serogroup' in config['analyses'] else [],
-        Path(config['working_dir']) / str(OUTPUT_TYPING_SUMMARY).format(scheme='cgmlst') if 'cgmlst' in config['analyses'] else []
+        Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='rmlst') if 'rmlst' in config['analyses'] else [],
+        Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='mlst') if 'mlst' in config['analyses'] else [],
+        Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='species_confirmation') if 'species_confirmation' in config['analyses'] else [],
+        Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='typing_amr') if 'typing_amr' in config['analyses'] else [],
+        Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='typing_virulence') if 'typing_amr' in config['analyses'] else [],
+        Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='pcr_serogroup') if 'pcr_serogroup' in config['analyses'] else [],
+        Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='cgmlst') if 'cgmlst' in config['analyses'] else []
     output:
         TSV = config['output_tabular']
     run:
