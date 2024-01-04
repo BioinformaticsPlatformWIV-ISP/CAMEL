@@ -10,11 +10,11 @@ from camel.resources.snakefile import trimming_illumina, gene_detection, trimmin
 include: core.SNAKEFILE_CORE
 include: downsampling.SNAKEFILE_DOWNSAMPLING
 include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
-include: contamination_check_kraken.SNAKEFILE_CONTAMINATION_CHECK_KRAKEN
-include: quality_checks.SNAKEFILE_QUALITY_CHECKS
-include: confindr.SNAKEFILE_CONFINDR
 include: assembly.SNAKEFILE_ASSEMBLY
 include: quast.SNAKEFILE_QUAST
+include: contamination_check_kraken.SNAKEFILE_CONTAMINATION_CHECK_KRAKEN
+include: confindr.SNAKEFILE_CONFINDR
+include: quality_checks.SNAKEFILE_QUALITY_CHECKS
 include: lrefinder.SNAKEFILE_LREFINDER
 include: amrfinder.SNAKEFILE_AMRFINDER
 include: resfinder4.SNAKEFILE_RESFINDER4
@@ -57,19 +57,10 @@ rule report_command_section:
     output:
         HTML = Path(config['working_dir']) / 'report' / 'html-commands.io'
     params:
-        working_dir = config['working_dir']
+        dir_ = config['working_dir']
     run:
-        from camel.app.io.tooliovalue import ToolIOValue
-        from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-        from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-        informs = []
-        for content in [SnakemakeUtils.load_object(Path(io)) for io in input]:
-            if type(content) is dict:
-                informs.append(content)
-            elif type(content) is list:
-                informs.extend(content)
-        section = SnakePipelineUtils.create_commands_section(informs, params.working_dir)
-        SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output.HTML))
+        from camel.app.components.pipelines.reportpipeline import ReportPipeline
+        ReportPipeline.export_command_section(input, Path(output.HTML), Path(params.dir_))
 
 rule report_combine_all:
     """
@@ -92,7 +83,7 @@ rule report_combine_all:
         # Plasmid characterization
         report_plasmidfinder = gene_detection.get_gene_detection_report('plasmidfinder', config),
         report_mob_suite = Path(config['working_dir']) / (mobsuite.OUTPUT_MOB_SUITE_REPORT if 'mob_suite' in config['analyses'] else mobsuite.OUTPUT_MOB_SUITE_REPORT_EMPTY),
-        report_genomic_context = Path(config['working_dir']) / 'mob_suite' / 'genomic_context' / 'html.io',
+        report_genomic_context = Path(config['working_dir']) / (mobsuite.OUTPUT_MOB_SUITE_CONTEXT_REPORT if 'mob_suite' in config['analyses'] else mobsuite.OUTPUT_MOB_SUITE_CONTEXT_REPORT_EMPTY),
         # BacMet
         report_prodigal=Path(config['working_dir']) / (bacmet.OUTPUT_PRODIGAL_REPORT if 'bacmet' in config['analyses'] else bacmet.OUTPUT_PRODIGAL_REPORT_EMPTY),
         report_bacmet=Path(config['working_dir']) / (bacmet.OUTPUT_BACMET_REPORT if 'bacmet' in config['analyses'] else bacmet.OUTPUT_BACMET_REPORT_EMPTY),
@@ -142,7 +133,7 @@ rule report_combine_all:
         report_structure.append(('Advanced QC', 'adv_qc', [Path(input.report_adv_qc)]))
 
         # Typing (additional MLST scheme for E. faecium)
-        if params.species == 'faecalis':
+        if params.species == 'Enterococcus faecalis':
             reports_typing = (input.report_rmlst, input.report_mlst, input.report_cgmlst)
         else:
             reports_typing = (input.report_rmlst, input.report_mlst, input.report_mlst_bezdicek, input.report_cgmlst)

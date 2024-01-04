@@ -86,7 +86,6 @@ class MainEnterococcusPipeline(ReportPipeline):
                 cgmlst_db=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species]['cgmlst_db'],
                 coverage_max=self._args.cov_max,
                 expected_species=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species]['full_name'],
-                export_bam='true' if self._args.report_include_bam else 'false',
                 export_fastq='true' if self._args.report_include_fastq else 'false',
                 gc_content=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species]['gc_content'],
                 genome_size=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species]['genome_size'],
