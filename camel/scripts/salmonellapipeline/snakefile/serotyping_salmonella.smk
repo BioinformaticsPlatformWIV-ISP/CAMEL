@@ -120,7 +120,7 @@ rule serotyping_dump_summary_info:
             with output.VAL_TSV.open('w') as handle:
                 handle.writelines('\t'.join([f"sistr_{k}", v]) + '\n' for k, v in hits_dict_tsv.items())
             informs_sistr = SnakemakeUtils.load_object(Path(input.INFORMS_sistr))
-            meta_json_dict.update({'sistr' : {**hits_dict_json, 'informs_tools' : { informs_sistr['_tool']: {'_name': informs_sistr['_name'], '_version': informs_sistr['_version'], '_command': informs_sistr['_command']}}, 'informs_dbs' : {'last_updated': informs_sistr['last_update_date'], 'name': informs_sistr['key'], 'title': informs_sistr['key']} }})
+            meta_json_dict.update({'sistr' : {**hits_dict_json, 'informs_tools' : { informs_sistr.get('_tool', informs_sistr['_name']): {'_name': informs_sistr['_name'], '_version': informs_sistr['_version'], '_command': informs_sistr['_command']}}, 'informs_dbs' : {'last_updated': informs_sistr['last_update_date'], 'name': informs_sistr['key'], 'title': informs_sistr['key']} }})
 
         # parse obligate seqsero2 output
         inter_json_dict, tsv_results = serotyping_salmonella.seqsero2_output_parser(SnakemakeUtils.load_object(Path(input.TXT_seqsero2_kmer))[0].path, 'seqsero2_kmer', SnakemakeUtils.load_object(Path(input.INFORMS_seqsero2_kmer)))

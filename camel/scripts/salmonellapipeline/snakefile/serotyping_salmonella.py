@@ -68,7 +68,7 @@ def seqsero2_output_parser(seqsero_file: Path, seqsero2_mode: str, informs_dict:
         for res in tsv_results:
             json_dict[res.split('\t')[0]] = res.split('\t')[1]
     inter_json_dict = {seqsero2_mode: {**json_dict, 'informs_tools': {
-        informs_dict['_tool']: {'_name': informs_dict['_name'], '_version': informs_dict['_version'],
+        informs_dict.get('_tool', informs_dict['_name']): {'_name': informs_dict['_name'], '_version': informs_dict['_version'],
                                 '_command': informs_dict['_command'], '_tag': informs_dict['_tag']}},
                                        'informs_dbs': {'last_updated': informs_dict['last_update_date'],
                                                        'name': informs_dict['key'], 'title': informs_dict['key']}}}
