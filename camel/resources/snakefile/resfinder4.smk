@@ -74,6 +74,7 @@ rule resfinder4_create_summary:
     Creates a tabular summary output for ResFinder4.
     """
     input:
+        INFORMS = rules.resfinder4_run.output.INFORMS,
         TSV_genes = rules.resfinder4_run.output.TSV_genes,
         TSV_point = rules.resfinder4_run.output.TSV_point
     output:
@@ -81,10 +82,15 @@ rule resfinder4_create_summary:
     run:
         tsv_genes = SnakemakeUtils.load_object(Path(input.TSV_genes))[0].path
         tsv_point = SnakemakeUtils.load_object(Path(input.TSV_point))[0].path
+        informs = SnakemakeUtils.load_object(Path(input.INFORMS))
         with open(output.TSV, 'w') as handle:
             data_genes = pd.read_table(tsv_genes)
             handle.write(f"resfinder4_genes\t{', '.join(list(data_genes['Resistance gene']))}")
             handle.write('\n')
             data_mutations = pd.read_table(tsv_point)
             handle.write(f"resfinder4_mutations\t{', '.join(list(data_mutations['Mutation']))}")
+            handle.write('\n')
+            handle.write(f"resfinder4_tool_version\t{informs['_name']}")
+            handle.write('\n')
+            handle.write(f"resfinder4_db_version\t{informs['db_version_resfinder']}")
             handle.write('\n')

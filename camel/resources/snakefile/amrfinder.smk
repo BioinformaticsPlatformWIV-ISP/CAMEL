@@ -74,7 +74,7 @@ rule amrfinder_dump_summary_info:
         path_tsv = SnakemakeUtils.load_object(Path(input.TSV))[0].path
         data_amr = pd.read_table(path_tsv)
 
-        # Extract tool version
+        # Extract the informs
         informs = SnakemakeUtils.load_object(Path(input.INFORMS))
 
         # Parse perfect & other hits
@@ -85,9 +85,11 @@ rule amrfinder_dump_summary_info:
 
         # Write to output file
         with open(output.TSV, 'w') as handle:
-            handle.write(f"amrfinder_tool_version\t{informs['_name']}")
-            handle.write('\n')
             handle.write('amrfinder_hits_perfect\t{}'.format(', '.join(hits_perfect) if len(hits_perfect) > 0 else '-'))
             handle.write('\n')
             handle.write('amrfinder_hits_other\t{}'.format(', '.join(hits_other) if len(hits_other) > 0 else '-'))
+            handle.write('\n')
+            handle.write(f"amrfinder_tool_version\t{informs['_name']}")
+            handle.write('\n')
+            handle.write(f"amrfinder_db_version\t{informs['db_version']}")
             handle.write('\n')

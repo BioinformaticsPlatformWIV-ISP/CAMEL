@@ -63,7 +63,7 @@ sccmec_typing:
   profiles: /db/pipelines/saureus/SCCmec_genes/profiles.yml
 
 amrfinder:
-  db: /db/amrfinder/latest
+  db: /db/amrfinder/by_version/latest
   species: Staphylococcus_aureus
 
 resfinder4:

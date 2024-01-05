@@ -76,30 +76,38 @@ rule mobsuite_create_summary:
         TSV = Path(config['working_dir']) / 'mob_suite' / 'summary_mob_suite.tsv'
     run:
         import pandas as pd
+
+        # Parse TSV output
         path_tsv = SnakemakeUtils.load_object(Path(input.TSV))[0].path
         try:
             data_mobsuite = pd.read_table(path_tsv)
-            informs_in = SnakemakeUtils.load_object(Path(input.INFORMS))
-            with open(output.TSV,'w') as handle:
-                # Primary cluster id
-                try:
-                    handle.write('\t'.join([
-                        'mob_suite_primary_cluster_ids', ', '.join(list(data_mobsuite['primary_cluster_id']))]))
-                    handle.write('\n')
-
-                    # Contigs classified as plasmids
-                    handle.write('\t'.join([
-                        'mob_suite_predicted_plasmid_contigs',
-                        ', '.join(ctg for ctg, status in informs_in['contig_report'].items() if status is not None)
-                    ]))
-                    handle.write('\n')
-                except KeyError:
-                    handle.write('No plasmids found.')
-                    handle.write('\n')
+            if 'primary_cluster_id' not in data_mobsuite.columns:
+                raise EmptyDataError
+            primary_cluster_ids = list(data_mobsuite['primary_cluster_id'])
         except EmptyDataError:
-            with open(output.TSV,'w') as handle:
-                handle.write('No plasmids found.')
-                handle.write('\n')
+            logger.info(f'No plasmids detected by MOB-suite')
+            primary_cluster_ids = []
+
+        # Parse informs
+        informs_in = SnakemakeUtils.load_object(Path(input.INFORMS))
+
+        # Create summary output
+        with open(output.TSV, 'w') as handle:
+            # Cluster IDs
+            handle.write('\t'.join([
+                'mob_suite_primary_cluster_ids',
+                ', '.join(primary_cluster_ids) if len(primary_cluster_ids) > 0 else '-']))
+            handle.write('\n')
+
+            # Contigs classified as plasmids
+            handle.write('\t'.join([
+                'mob_suite_predicted_plasmid_contigs',
+                ', '.join(ctg for ctg, status in informs_in['contig_report'].items() if status is not None)]))
+            handle.write('\n')
+
+            # Tool info
+            handle.write('\t'.join(['mob_suite_tool_version', informs_in['_name']]))
+            handle.write('\n')
 
 rule mobsuite_report_genomic_context:
     """
