@@ -147,6 +147,6 @@ class MainNcbiHumanReadScrubber(ReportPipeline):
 
 
 if __name__ == '__main__':
-    Camel.get_instance()  # logging.basicConfig(level=logging.DEBUG)
+    Camel.get_instance()
     main = MainNcbiHumanReadScrubber()
     main.run()

@@ -1,8 +1,6 @@
 from pathlib import Path
 
 from camel.app.camel import Camel
-from camel.app.components.filesystemhelper import FileSystemHelper
-from camel.app.components.files.fastqutils import FastqUtils
 from camel.app.error.pipelineexecutionerror import PipelineExecutionError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.io.tooliovalue import ToolIOValue
@@ -32,7 +30,6 @@ rule scrubbing_fasta_fa2fq:
         FastaUtils.convert_fasta_to_fastq(fasta_path_in, fastq_path_out)
         SnakemakeUtils.dump_object([ToolIOFile(fastq_path_out)], Path(output.FASTQ_from_fasta))
 
-
 rule scrubbing_fastq_interleave_and_gunzip:
     """
     Gunzips input FASTQ files if they are gzipped, and interleaves the input if there are two files, 
@@ -45,6 +42,9 @@ rule scrubbing_fastq_interleave_and_gunzip:
     params:
         running_dir = Path(config['working_dir']) / 'human_read_scrubbing' / 'input'
     run:
+        from camel.app.components.filesystemhelper import FileSystemHelper
+        from camel.app.components.files.fastqutils import FastqUtils
+
         # Get the FASTQ file(s)
         fastq_in = SnakemakeUtils.load_object(Path(input.FASTQ))
         nb_of_fq_files = len(fastq_in)
@@ -58,7 +58,6 @@ rule scrubbing_fastq_interleave_and_gunzip:
             interleaved_out = params.running_dir / f"{fastq_in[0].path.stem}_interleaved.fastq"
             FastqUtils.convert_fastqs_to_interleaved_fastq(fastq_in[0].path, fastq_in[1].path, params.running_dir / f"{fastq_in[0].path.stem}_interleaved.fastq")
             SnakemakeUtils.dump_object([ToolIOFile(interleaved_out)], Path(output.FASTQ_SINGLE_GUNZIP))
-
 
 rule scrubbing_run_scrubber:
     """
@@ -90,7 +89,6 @@ rule scrubbing_run_scrubber:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(scrubber, output, keys=['FASTQ_SCRUBBED', 'INFORMS'])
 
-
 rule scrubbing_fasta_fq2fa:
     """
     Convert the FASTQ back to FASTA in order for the rest of the pipeline to be able 
@@ -113,7 +111,6 @@ rule scrubbing_fasta_fq2fa:
             fasta_out.write_file(SeqIO.parse(fastq_file, 'fastq'))
         SnakemakeUtils.dump_object([ToolIOFile(path_out)], Path(output.FASTA))
 
-
 rule scrubbing_fastq_deinterleave_and_gzip:
     """
     If the input is a paired-end interleaved file, deinterleaves. Gzips in all cases.
@@ -126,6 +123,9 @@ rule scrubbing_fastq_deinterleave_and_gzip:
     params:
         running_dir = Path(config['working_dir']) / 'human_read_scrubbing' / 'output'
     run:
+        from camel.app.components.filesystemhelper import FileSystemHelper
+        from camel.app.components.files.fastqutils import FastqUtils
+
         # Get the FASTQ file(s)
         fastq_in = SnakemakeUtils.load_object(Path(input.FASTQ))
         fqfile_number = len(fastq_in)
@@ -142,7 +142,6 @@ rule scrubbing_fastq_deinterleave_and_gzip:
             FastqUtils.split_interleaved_fastq((SnakemakeUtils.load_object(Path(input.FASTQ_SCRUBBED)))[0].path, fastq_1,  fastq_2, gzip_output=True)
             SnakemakeUtils.dump_object([ToolIOFile(fastq_1), ToolIOFile(fastq_2)], Path(output.FASTQ_DEINTERLEAVED_GZIPPED))
 
-
 rule scrubbing_report:
     """
     Generates a tiny html report containing the tool name/version and a single phrase about how many reads were removed.
@@ -152,21 +151,30 @@ rule scrubbing_report:
     output:
         # JSON = Path(config['working_dir']) / human_read_scrubbing.OUTPUT_SCRUBBING_SUMMARY_JSON, # todo json output for hera
         VAL_HTML = Path(config['working_dir']) / human_read_scrubbing.OUTPUT_SCRUBBING_REPORT,
-        VAL_TSV = Path(config['working_dir']) / human_read_scrubbing.OUTPUT_SCRUBBING_SUMMARY
+        TSV = Path(config['working_dir']) / human_read_scrubbing.OUTPUT_SCRUBBING_SUMMARY
     params:
         running_dir = Path(config['working_dir']) / 'human_read_scrubbing' / 'output'
     run:
         from camel.app.components.html.htmlreportsection import HtmlReportSection
 
+        # Parse informs
         hrrt_informs = SnakemakeUtils.load_object(Path(input.INFORMS_tools))
-        count_removed = hrrt_informs['statistics']['count_removed']
-        count_total = hrrt_informs['statistics']['count_total']
-        if count_removed == count_total:
-            raise PipelineExecutionError('ERROR: All reads/contigs were removed from the input file(s) during scrubbing. If this is not expected, try disabling the human read scrubbing step.')
+        count_out = hrrt_informs['statistics']['count_removed']
+        count_in = hrrt_informs['statistics']['count_total']
+        if hrrt_informs['statistics']['count_removed'] == hrrt_informs['statistics']['count_total']:
+            raise PipelineExecutionError(
+                'All reads/contigs were removed from the input file(s) during scrubbing. If this is not expected, '
+                'try disabling the human read scrubbing step.')
+
+        # Create the report section
         section = HtmlReportSection('Human Read Removal', subtitle=hrrt_informs['_name'])
-        subject = 'reads' if not 'fasta' in config['input'] or 'fasta_wo_vcf' in config['input'] else 'contigs'
-        section.add_paragraph(f"Removed {count_removed:,} out of {count_total:,} {subject}.")
+        subject = 'reads' if 'fasta' not in config['input'] or 'fasta_wo_vcf' in config['input'] else 'contigs'
+        section.add_paragraph(f"Removed {count_out:,} out of {count_in:,} {subject}.")
         SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output.VAL_HTML))
-        with Path(output.VAL_TSV).open('w') as handle:
-            handle.write(f'scrubbing_{subject}_in\t{count_total}\n'
-                         f'scrubbing_{subject}_out\t{count_removed}')
+
+        # Create the summary output
+        data_summary = {'scrubbing_{subject}_in': count_in, 'scrubbing_{subject}_out': count_out}
+        with Path(output.TSV).open('w') as handle:
+            for k, v in data_summary.items():
+                handle.write('\t'.join([k, str(v)]))
+                handle.write('\n')
