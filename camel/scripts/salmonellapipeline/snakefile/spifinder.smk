@@ -32,16 +32,16 @@ rule spifinder_fastq_run :
         read_type = 'SE' if config.get('read_type') == 'iontorrent' else 'PE',
         db_path = config['spifinder']['path']
     run:
-        spifinder_tool = SPIFinder(camel)
-        spifinder_tool.add_input_files({'DIR': [ToolIODirectory(Path(str(params.db_path)))]})
+        spifindertool = SPIFinder(camel)
+        spifindertool.add_input_files({'DIR': [ToolIODirectory(Path(str(params.db_path)))]})
         if params.read_type == 'PE':
-            spifinder_tool.add_input_files(SnakePipelineUtils.extracts_fq_input(Path(input.IO), key_pe='FASTQ_PE'))
+            spifindertool.add_input_files(SnakePipelineUtils.extracts_fq_input(Path(input.IO), key_pe='FASTQ_PE'))
         else:
-            spifinder_tool.add_input_files(SnakePipelineUtils.extracts_fq_input(
+            spifindertool.add_input_files(SnakePipelineUtils.extracts_fq_input(
                 Path(input.IO), key_se='FASTQ', read_type=params.read_type))
-        step = Step(str(rule), spifinder_tool, camel, params.running_dir, config)
+        step = Step(str(rule), spifindertool, camel, params.running_dir, config)
         step.run_step()
-        SnakemakeUtils.dump_tool_outputs(spifinder_tool, output)
+        SnakemakeUtils.dump_tool_outputs(spifindertool, output)
 
 
 rule spifinder_fasta_run:
@@ -57,12 +57,12 @@ rule spifinder_fasta_run:
         running_dir = Path(config['working_dir']) / 'spifinder' / 'spifinder_fasta' ,
         db_path = config['spifinder']['path']
     run:
-        spifinder_tool = SPIFinder(camel)
-        spifinder_tool.add_input_files({'DIR': [ToolIODirectory(Path(str(params.db_path)))]})
-        SnakemakeUtils.add_pickle_input(spifinder_tool, 'FASTA', Path(input.FASTA))
-        step = Step(str(rule), spifinder_tool, camel, params.running_dir, config)
+        spifindertool = SPIFinder(camel)
+        spifindertool.add_input_files({'DIR': [ToolIODirectory(Path(str(params.db_path)))]})
+        SnakemakeUtils.add_pickle_input(spifindertool, 'FASTA', Path(input.FASTA))
+        step = Step(str(rule), spifindertool, camel, params.running_dir, config)
         step.run_step()
-        SnakemakeUtils.dump_tool_outputs(spifinder_tool, output)
+        SnakemakeUtils.dump_tool_outputs(spifindertool, output)
 
 
 rule create_output_summary_spifinder:
@@ -77,7 +77,7 @@ rule create_output_summary_spifinder:
         INFORMS_spifinder_fasta = rules.spifinder_fasta_run.output.INFORMS
     output:
         VAL_TSV = Path(config['working_dir']) / spifinder.OUTPUT_SPIFINDER_SUMMARY,
-        DOC_TSV = Path(config['working_dir']) / spifinder.OUTPUT_SPIFINDER_DOC,
+        TSV_documentation = Path(config['working_dir']) / spifinder.OUTPUT_SPIFINDER_DOC,
         JSON = Path(config['working_dir']) / spifinder.OUTPUT_SPIFINDER_SUMMARY_JSON
     params:
         running_dir = Path(config['working_dir']) / 'spifinder'
@@ -115,27 +115,27 @@ rule create_output_summary_spifinder:
                     hit_dictionary_list.append(json_dict)
                 inter_json_dict = { f"spifinder_{mode}" : { 'results' : hit_dictionary_list } }
 
-            inter_json_dict[f"spifinder_{mode}"]['informs_tools'] = { tool_informs['_tool'] : {'_name': tool_informs['_name'], '_version': tool_informs['_version'], '_command': tool_informs['_command'], '_tag': tool_informs['_tag']} }
+            inter_json_dict[f"spifinder_{mode}"]['informs_tools'] = { tool_informs.get('_tool', tool_informs['_name']) : {'_name': tool_informs['_name'], '_version': tool_informs['_version'], '_command': tool_informs['_command'], '_tag': tool_informs['_tag']} }
             inter_json_dict[f"spifinder_{mode}"]['informs_dbs'] = {'last_updated': tool_informs['last_update_date'], 'name': tool_informs['key'], 'title': tool_informs['key']}
             return results, inter_json_dict
 
-        with open(output.VAL_TSV, 'w') as handle:
+        with Path(output.VAL_TSV).open('w') as handle:
             meta_json_dict = {}
             if 'fasta' not in config['input']:
-                resultsFASTQ, resultsFASTQ_JSON = spifinder_json_parser(SnakemakeUtils.load_object(Path(input.JSON_FASTQ))[0].path,
+                results_fastq_tsv, results_fastq_json = spifinder_json_parser(SnakemakeUtils.load_object(Path(input.JSON_FASTQ))[0].path,
                     SnakemakeUtils.load_object(Path(input[input.INFORMS_spifinder_fastq])), 'fastq')
-                meta_json_dict.update(resultsFASTQ_JSON)
-                handle.write(f"spifinder_fastq\t{resultsFASTQ}\n")
-            resultsFASTA, resultsFASTA_JSON = spifinder_json_parser(SnakemakeUtils.load_object(Path(input.JSON_FASTA))[0].path,
+                meta_json_dict.update(results_fastq_json)
+                handle.write(f"spifinder_fastq\t{results_fastq_tsv}\n")
+            results_fasta, results_fasta_json = spifinder_json_parser(SnakemakeUtils.load_object(Path(input.JSON_FASTA))[0].path,
                 SnakemakeUtils.load_object(Path(input[input.INFORMS_spifinder_fasta])), 'fasta')
-            meta_json_dict.update(resultsFASTA_JSON)
-            handle.write(f"spifinder_fasta\t{resultsFASTA}\n")
-            with open(output.JSON, 'w') as handle2:
+            meta_json_dict.update(results_fasta_json)
+            handle.write(f"spifinder_fasta\t{results_fasta}\n")
+            with Path(output.JSON).open('w') as handle2:
                 handle2.write(json.dumps(meta_json_dict))
 
         # Generate a tsv which documents the meaning of the function categories in the fasta results
         file = pd.read_csv(config['spifinder']['metadata'], delimiter=';')
-        file.to_csv(output.DOC_TSV, sep='\t')
+        file.to_csv(output.TSV_documentation, sep='\t')
 
 rule create_output_report_spifinder:
     """
@@ -144,8 +144,8 @@ rule create_output_report_spifinder:
     input:
         JSON_FASTQ = rules.spifinder_fastq_run.output.JSON if 'fasta' not in config['input'] else [],
         JSON_FASTA = rules.spifinder_fasta_run.output.JSON,
-        TSV_output = rules.create_output_summary_spifinder.output.VAL_TSV,
-        TSV_documentation = rules.create_output_summary_spifinder.output.DOC_TSV,
+        VAL_TSV = rules.create_output_summary_spifinder.output.VAL_TSV,
+        TSV_documentation = rules.create_output_summary_spifinder.output.TSV_documentation,
         INFORMS_spifinder_fastq = rules.spifinder_fastq_run.output.INFORMS if 'fasta' not in config['input'] else [],
         INFORMS_spifinder_fasta = rules.spifinder_fasta_run.output.INFORMS
     output:
@@ -154,17 +154,17 @@ rule create_output_report_spifinder:
         running_dir = Path(config['working_dir']) / 'spifinder'
     threads: 8
     run:
-        reportertool = SPIFinderReporter(camel)
-        SnakemakeUtils.add_pickle_inputs(reportertool, input, excluded_keys=['TSV_output', 'TSV_doc', 'JSON_FASTQ', 'INFORMS_spifinder_fastq'])
-        reportertool.add_input_files({'TSV_output': [ToolIOFile(Path(input.TSV_output))],
+        spifinder_reporter = SPIFinderReporter(camel)
+        SnakemakeUtils.add_pickle_inputs(spifinder_reporter, input, excluded_keys=['VAL_TSV', 'TSV_documentation', 'JSON_FASTQ', 'INFORMS_spifinder_fastq'])
+        spifinder_reporter.add_input_files({'TSV_output': [ToolIOFile(Path(input.VAL_TSV))],
                                       'TSV_documentation': [ToolIOFile(Path(input.TSV_documentation))]})
         if input.JSON_FASTQ:
-            SnakemakeUtils.add_pickle_input(reportertool, 'JSON_FASTQ', Path(input.JSON_FASTQ))
+            SnakemakeUtils.add_pickle_input(spifinder_reporter, 'JSON_FASTQ', Path(input.JSON_FASTQ))
         if input.INFORMS_spifinder_fastq:
-            SnakemakeUtils.add_pickle_inputs(reportertool, input, excluded_keys=['TSV_output','TSV_doc', 'JSON_FASTQ', 'JSON_FASTA', 'INFORMS_spifinder_fasta'])
-        step = Step(str(rule), reportertool, camel, params.running_dir, config)
+            SnakemakeUtils.add_pickle_inputs(spifinder_reporter, input, excluded_keys=['VAL_TSV','TSV_documentation', 'JSON_FASTQ', 'JSON_FASTA', 'INFORMS_spifinder_fasta'])
+        step = Step(str(rule), spifinder_reporter, camel, params.running_dir, config)
         step.run_step()
-        SnakemakeUtils.dump_tool_outputs(reportertool,output)
+        SnakemakeUtils.dump_tool_outputs(spifinder_reporter, output)
 
 
 rule spifinder_report_empty:
