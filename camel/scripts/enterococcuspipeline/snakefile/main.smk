@@ -85,8 +85,8 @@ rule report_combine_all:
         report_mob_suite = Path(config['working_dir']) / (mobsuite.OUTPUT_MOB_SUITE_REPORT if 'mob_suite' in config['analyses'] else mobsuite.OUTPUT_MOB_SUITE_REPORT_EMPTY),
         report_genomic_context = Path(config['working_dir']) / (mobsuite.OUTPUT_MOB_SUITE_CONTEXT_REPORT if 'mob_suite' in config['analyses'] else mobsuite.OUTPUT_MOB_SUITE_CONTEXT_REPORT_EMPTY),
         # BacMet
-        report_prodigal=Path(config['working_dir']) / (bacmet.OUTPUT_PRODIGAL_REPORT if 'bacmet' in config['analyses'] else bacmet.OUTPUT_PRODIGAL_REPORT_EMPTY),
-        report_bacmet=Path(config['working_dir']) / (bacmet.OUTPUT_BACMET_REPORT if 'bacmet' in config['analyses'] else bacmet.OUTPUT_BACMET_REPORT_EMPTY),
+        report_prodigal = Path(config['working_dir']) / (bacmet.OUTPUT_PRODIGAL_REPORT if 'bacmet' in config['analyses'] else bacmet.OUTPUT_PRODIGAL_REPORT_EMPTY),
+        report_bacmet = Path(config['working_dir']) / (bacmet.OUTPUT_BACMET_REPORT if 'bacmet' in config['analyses'] else bacmet.OUTPUT_BACMET_REPORT_EMPTY),
         # Typing
         report_rmlst = sequence_typing.get_sequence_typing_report('rmlst',config),
         report_mlst = sequence_typing.get_sequence_typing_report('mlst', config),
@@ -187,3 +187,23 @@ rule summary_combine_all:
             for summary_input in input:
                 with open(summary_input) as handle_in:
                     handle_out.write(handle_in.read())
+
+rule link_genomic_context:
+    """
+    Links the input databases to the genomic context assay.
+    """
+    input:
+        # AMR
+        TSV_amrfinder = Path(config['working_dir']) / 'amrfinder' / 'tsv.io' if 'amrfinder' in config['analyses'] else [],
+        # Virulence
+        TSV_gd_vfdb = Path(config['working_dir']) / 'gene_detection' / 'vfdb_core' / 'metadata' / 'tsv.io' if 'vfdb_core' in config['analyses'] else [],
+        INFORMS_gd_vfdb = Path(config['working_dir']) / 'gene_detection' / 'vfdb_core' / 'db_manager' / 'informs.io' if 'vfdb_core' in config['analyses'] else [],
+        TSV_gd_virulencefinder = Path(config['working_dir']) / 'gene_detection' / 'virulencefinder' / 'metadata' / 'tsv.io' if 'virulencefinder' in config['analyses'] else [],
+        INFORMS_gd_virulencefinder = Path(config['working_dir']) / 'gene_detection' / 'virulencefinder' / 'db_manager' / 'informs.io' if 'virulencefinder' in config['analyses'] else [],
+        # BacMet
+        TSV_bacmet = Path(config['working_dir']) / 'bacmet' / 'hit_filtering' / 'tsv.io' if 'bacmet' in config['analyses'] else []
+    output:
+        TSV = Path(config['working_dir']) / 'mob_suite' / 'genomic_context' / 'input' / 'tsv.io',
+        INFORMS = Path(config['working_dir']) / 'mob_suite' / 'genomic_context' / 'input' / 'informs.io'
+    run:
+        mobsuite.collect_genomic_context_input(input,Path(output.TSV),Path(output.INFORMS))

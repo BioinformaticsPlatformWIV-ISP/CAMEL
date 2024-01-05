@@ -114,9 +114,8 @@ rule mobsuite_report_genomic_context:
     Reports the genomic context for detected genes.
     """
     input:
-        TSV_amrfinder = Path(config['working_dir']) / 'amrfinder' / 'tsv.io' if 'amrfinder' in config['analyses'] else [],
-        TSV_bacmet = Path(config['working_dir']) / 'bacmet' / 'hit_filtering' / 'tsv.io' if 'bacmet' in config['analyses'] else [],
-        TSV_vfdb = Path(config['working_dir']) / 'gene_detection' / 'vfdb_core' / 'metadata' / 'tsv.io' if 'vfdb_core' in config['analyses'] else [],
+        TSV = Path(config['working_dir']) / 'mob_suite' / 'genomic_context' / 'input' / 'tsv.io',
+        INFORMS = Path(config['working_dir']) / 'mob_suite' / 'genomic_context' / 'input' / 'informs.io',
         INFORMS_mob_recon = rules.mobsuite_mob_recon.output.INFORMS
     output:
         HTML = Path(config['working_dir']) / 'mob_suite' / 'genomic_context' / 'html.io'
@@ -126,23 +125,13 @@ rule mobsuite_report_genomic_context:
         read_type = config.get('read_type', 'illumina')
     run:
         from camel.app.tools.mobsuite.genomiccontext import GenomicContext
+
         genomic_context = GenomicContext(Camel.get_instance())
-        informs = {
-            'TSV_amrfinder': {'key': 'amrfinder', 'title': 'AMRFinder', 'contig': 'Contig id', 'gene': 'Gene symbol'},
-            'TSV_bacmet': {'key': 'bacmet', 'title': 'BacMet', 'contig': 'qseqid', 'gene': 'Gene_name'},
-            'TSV_vfdb': {'key': 'vfdb', 'title': 'VFDB core', 'contig': 'Contig', 'gene': 'Gene'}
-        }
-        db_informs_to_add = []
-        # noinspection PyUnresolvedReferences
-        for k, v in input.items():
-            if not v:
-                continue
-            if 'TSV' in k:
-                db_informs_to_add.append(informs[k])
-                SnakemakeUtils.add_pickle_input(genomic_context, k, Path(v))
+        genomic_context.add_input_files({'TSV': SnakemakeUtils.load_object(Path(input.TSV))})
         genomic_context.add_input_informs({
             'mob_recon': SnakemakeUtils.load_object(Path(input.INFORMS_mob_recon)),
-            'dbs': db_informs_to_add})
+            'dbs': SnakemakeUtils.load_object(Path(input.INFORMS))
+        })
         genomic_context.update_parameters(
             detection_method=str(params.detection_method), read_type=str(params.read_type))
         step = Step(str(rule), genomic_context, Camel.get_instance(), params.dir_)

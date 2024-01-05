@@ -32,9 +32,6 @@ class GenomicContext(Tool):
         """
         if 'dbs' not in self._input_informs:
             raise InvalidInputSpecificationError('Database informs input is required')
-        for data_db in self._input_informs['dbs']:
-            if f"TSV_{data_db['key']}" not in self._tool_inputs:
-                raise InvalidInputSpecificationError(f"TSV file for '{data_db['key']}' is required")
         super()._check_input()
 
     def _get_plasmid_status(self, contig_name: str, plasmids: List[str]) -> List[HtmlTableCell]:
@@ -66,6 +63,8 @@ class GenomicContext(Tool):
         if self._parameters['detection_method'].value != 'blast':
             logging.warning('Genomic context can only be predicted with blast as detection method')
             section.add_paragraph('Predicting genomic context is only performed when the detection method is blast.')
+        elif len(self._input_informs['dbs']) == 0:
+            section.add_paragraph('No compatible databases selected.')
         else:
             if self._parameters['read_type'] == 'illumina':
                 section.add_warning_message(
@@ -74,21 +73,27 @@ class GenomicContext(Tool):
 
             # Create rows
             for db in self._input_informs['dbs']:
-                try:
-                    data_db = pd.read_table(self._tool_inputs[f"TSV_{db['key']}"][0].path)
-                    if len(data_db) == 0:
-                        raise IndexError()
-                except IndexError:
-                    logging.warning(f"No hits found for database {db['key']}")
-                    continue
                 section.add_header(db['title'], 3)
-                if len(data_db) > 10:
-                    div = HtmlExpandableDiv(f"genomic_context-{db['key']}", f'{len(data_db)} rows.')
+
+                # No hits found
+                if db['idx'] is None:
+                    section.add_paragraph('No hits found.')
+                    continue
+
+                # Parse hits
+                data_hits = pd.read_table(self._tool_inputs['TSV'][db['idx']].path)
+                if len(data_hits) == 0:
+                    section.add_paragraph('No hits found.')
+                    continue
+
+                # Add table with hits
+                if len(data_hits) > 10:
+                    div = HtmlExpandableDiv(f"genomic_context-{db['key']}", f'{len(data_hits)} rows.')
                 else:
                     div = HtmlElement('div')
                 div.add_table([
                     [f"<i>{row[db['gene']]}</i>",
-                     *self._get_plasmid_status(row[db['contig']], plasmids)] for row in data_db.to_dict('records')
+                     *self._get_plasmid_status(row[db['contig']], plasmids)] for row in data_hits.to_dict('records')
                 ], ['Key', 'Chromosome', *plasmids], [('class', 'data')])
                 section.add_html_object(div)
 
