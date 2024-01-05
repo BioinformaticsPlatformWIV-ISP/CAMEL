@@ -43,7 +43,7 @@ class AbriTAMRRun(Tool):
         if 'FASTA' not in self._tool_inputs:
             raise InvalidInputSpecificationError("FASTA input is required")
         elif 'DIR_AMRF' not in self._tool_inputs:
-            raise InvalidInputSpecificationError("databases path need to be specified")
+            raise InvalidInputSpecificationError("Database path needs to be specified (DIR_AMRF)")
         elif 'VAL_SPECIES' not in self._tool_inputs:
             raise InvalidInputSpecificationError(f"A species must be provided to run {self.name}")
 
