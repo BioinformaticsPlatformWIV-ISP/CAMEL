@@ -45,6 +45,8 @@ class MainGeneDetection(object):
         argument_parser.add_argument('--blast-min-percent-identity', type=int, default=90)
         argument_parser.add_argument('--blast-min-percent-coverage', type=int, default=60)
         argument_parser.add_argument('--blast-task', type=str, choices=['blastn', 'megablast'], default='megablast')
+        argument_parser.add_argument('--blast-filtering-method', type=str, choices=['cluster', 'score'], default='cluster')
+        argument_parser.add_argument('--blast-score-nb-of-hits', type=int, default=5)
 
         # SRST2 specific parameters
         argument_parser.add_argument('--srst2-min-cov', type=int, default=90)
@@ -103,7 +105,9 @@ class MainGeneDetection(object):
             config_data.update({'params': {'blastn': {
                 'min_percent_identity': self._args.blast_min_percent_identity,
                 'min_coverage': self._args.blast_min_percent_coverage,
-                'task': self._args.blast_task
+                'task': self._args.blast_task,
+                'filtering_method': self._args.blast_filtering_method,
+                'score_nb_of_hits': self._args.blast_score_nb_of_hits
             }}})
         elif self._args.detection_method == 'srst2':
             config_data.update({'params': {'srst2': {
