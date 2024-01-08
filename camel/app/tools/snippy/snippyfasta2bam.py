@@ -5,7 +5,7 @@ from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.tool import Tool
 
 
-class Snippy(Tool):
+class SnippyFasta2BAM(Tool):
     """
     Creation of pseudo-reads from a FASTA file and alignment of these reads to a given reference genome.
     """
@@ -16,7 +16,7 @@ class Snippy(Tool):
         :param camel: CAMEL instance
         :return: None
         """
-        super().__init__('snippy', '4.6.0', camel)
+        super().__init__('snippy Fasta2BAM', '4.6.0', camel)
 
     def _check_input(self) -> None:
         """
@@ -62,6 +62,5 @@ class Snippy(Tool):
         Checks if the command was executed successfully.
         :return: None
         """
-        # snippy logs to the stderr instead of the stdout
         if self._command.returncode != 0:
             raise ToolExecutionError("Command execution failed (Exit code: {})".format(self._command.returncode))
