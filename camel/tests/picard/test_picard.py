@@ -26,23 +26,22 @@ class TestPicard(CamelTestSuite):
     """
     Tests the Picard tool suite.
     """
-    test_file_dir = CamelTestSuite.get_test_file_dir('picard')
-    FILE_BAM = ToolIOFile(test_file_dir / 'aln_rg.bam')
-    FILE_FASTA_REF = ToolIOFile(test_file_dir / 'reference.fasta')
-    FILE_VCFdb = ToolIOFile(test_file_dir / 'Homo_sapiens_assembly38.dbsnp138_chr22.vcf.gz')
-    FILE_BAM_SORTED = ToolIOFile(test_file_dir / 'sorted.bam')
-    FILE_VCF = ToolIOFile(test_file_dir / 'unfiltered_variants-myco.vcf')
-    FILE_VCF1 = ToolIOFile(test_file_dir / 'var1.vcf')
-    FILE_VCF2 = ToolIOFile(test_file_dir / 'var2.vcf')
-    FILE_FASTQ_R1 = ToolIOFile(test_file_dir / 'r_1.fq')
-    FILE_FASTQ_R2 = ToolIOFile(test_file_dir / 'r_2.fq')
-    FILE_BAM1 = ToolIOFile(test_file_dir / 'aln1.bam')
-    FILE_BAM2 = ToolIOFile(test_file_dir / 'aln2.bam')
-    FILE_uBAM = ToolIOFile(test_file_dir / 'unmapped.bam')
-    FILE_VCF_human = ToolIOFile(test_file_dir / 'NA12877_chr22.g.vcf.gz')
-    FILE_BAM_human = ToolIOFile(test_file_dir / 'readgroup_updated.bam')
-    FILE_REF_human = ToolIOFile(test_file_dir / 'Homo_sapiens_assembly38_chr22.fasta')
-
+    test_file_dir=CamelTestSuite.get_test_file_dir('picard')
+    FILE_BAM=ToolIOFile(test_file_dir / 'aln_rg.bam')
+    FILE_FASTA_REF=ToolIOFile(test_file_dir / 'reference.fasta')
+    FILE_VCFdb=ToolIOFile(test_file_dir / 'Homo_sapiens_assembly38.dbsnp138_chr22.vcf.gz')
+    FILE_BAM_SORTED=ToolIOFile(test_file_dir / 'sorted.bam')
+    FILE_VCF=ToolIOFile(test_file_dir / 'unfiltered_variants-myco.vcf')
+    FILE_VCF1=ToolIOFile(test_file_dir / 'var1.vcf')
+    FILE_VCF2=ToolIOFile(test_file_dir / 'var2.vcf')
+    FILE_FASTQ_R1=ToolIOFile(test_file_dir / 'r_1.fq')
+    FILE_FASTQ_R2=ToolIOFile(test_file_dir / 'r_2.fq')
+    FILE_BAM1=ToolIOFile(test_file_dir / 'aln1.bam')
+    FILE_BAM2=ToolIOFile(test_file_dir / 'aln2.bam')
+    FILE_uBAM=ToolIOFile(test_file_dir / 'unmapped.bam')
+    FILE_VCF_human=ToolIOFile(test_file_dir / 'NA12877_chr22.g.vcf.gz')
+    FILE_BAM_human=ToolIOFile(test_file_dir / 'readgroup_updated.bam')
+    FILE_REF_human=ToolIOFile(test_file_dir / 'Homo_sapiens_assembly38_chr22.fasta')
 
     def test_picard_addorreplacereadgroups(self) -> None:
         """
@@ -79,16 +78,16 @@ class TestPicard(CamelTestSuite):
             'FASTA_REF': [TestPicard.FILE_REF_human],
         })
         picard_collectmultiplemetrics.update_parameters(
-            assume_sorted = 'true',
-            reset_metrics = 'null',
-            metrics_CollectAlignmentSummaryMetrics = 'CollectAlignmentSummaryMetrics',
-            metrics_CollectGcBiasMetrics = 'CollectGcBiasMetrics',
-            metrics_CollectInsertSizeMetrics = 'CollectInsertSizeMetrics',
-            metrics_QualityScoreDistribution  = 'QualityScoreDistribution ',
-            metrics_MeanQualityByCycle = 'MeanQualityByCycle',
-            metrics_CollectBaseDistributionByCycle = 'CollectBaseDistributionByCycle',
-            metrics_CollectSequencingArtifactMetrics = 'CollectSequencingArtifactMetrics',
-            metrics_CollectQualityYieldMetrics = 'CollectQualityYieldMetrics'
+            assume_sorted='true',
+            reset_metrics='null',
+            metrics_CollectAlignmentSummaryMetrics='CollectAlignmentSummaryMetrics',
+            metrics_CollectGcBiasMetrics='CollectGcBiasMetrics',
+            metrics_CollectInsertSizeMetrics='CollectInsertSizeMetrics',
+            metrics_QualityScoreDistribution ='QualityScoreDistribution ',
+            metrics_MeanQualityByCycle='MeanQualityByCycle',
+            metrics_CollectBaseDistributionByCycle='CollectBaseDistributionByCycle',
+            metrics_CollectSequencingArtifactMetrics='CollectSequencingArtifactMetrics',
+            metrics_CollectQualityYieldMetrics='CollectQualityYieldMetrics'
         )
         picard_collectmultiplemetrics.run(self.running_dir)
 
@@ -97,7 +96,6 @@ class TestPicard(CamelTestSuite):
                            'TXT_QualityByCycleFigure', 'TXT_BaseDistributionByCycle', 'TXT_BaseDistributionByCycleFigure',
                            'TXT_SequencingArtefactDetail', 'TXT_SequencingArtefactSummary', 'TXT_SequencingArtefactErrorSummary',
                            'TXT_SequencingArtefactPreAdapterDetail', 'TXT_SequencingArtefactPreAdapterSummary', 'TXT_QualityYield']
-
 
         for expected_file in expected_output:
             self.verify_output_files(picard_collectmultiplemetrics, expected_file)
@@ -124,7 +122,7 @@ class TestPicard(CamelTestSuite):
             'BAM': [TestPicard.FILE_BAM],
             'FASTA_REF': [TestPicard.FILE_FASTA_REF]
         })
-        picard_collectrawwgsmetrics.update_parameters(sample_size = 10)
+        picard_collectrawwgsmetrics.update_parameters(sample_size=10)
         picard_collectrawwgsmetrics.run(self.running_dir)
         self.verify_output_files(picard_collectrawwgsmetrics, 'TXT_metrics')
 
@@ -138,7 +136,7 @@ class TestPicard(CamelTestSuite):
             'BAM': [TestPicard.FILE_BAM],
             'FASTA_REF': [TestPicard.FILE_FASTA_REF]
         })
-        picard_collectwgsmetrics.update_parameters(sample_size = 10)
+        picard_collectwgsmetrics.update_parameters(sample_size=10)
         picard_collectwgsmetrics.run(self.running_dir)
         self.verify_output_files(picard_collectwgsmetrics, 'TXT_metrics')
 
@@ -230,7 +228,7 @@ class TestPicard(CamelTestSuite):
             'FASTA_REF': [TestPicard.FILE_FASTA_REF]
         })
         picard_mergebamalignment.update_parameters(
-            attributes_to_remove_multi = "NM,MD"
+            attributes_to_remove_multi="NM,MD"
         )
         picard_mergebamalignment.run(self.running_dir)
         self.verify_output_files(picard_mergebamalignment, 'BAM')
@@ -297,6 +295,7 @@ class TestPicard(CamelTestSuite):
         })
         picard_validatesamfile.run(self.running_dir)
         self.verify_output_files(picard_validatesamfile, 'TXT_report')
+
 
 if __name__ == '__main__':
     unittest.main()
