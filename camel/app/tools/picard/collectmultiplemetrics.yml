@@ -1,4 +1,4 @@
-dependencies: [java/1.8.0_172, picard/2.23.3, R/3.6.3]
+dependencies: [java/1.8.0_172, picard/2.23.3, R/4.3.1]
 parameters:
   reset_metrics: {default: false, mandatory: false, option: PROGRAM, p_index: 10, value: 'null'}
   metrics_CollectAlignmentSummaryMetrics: {default: false, mandatory: false, option: PROGRAM,
