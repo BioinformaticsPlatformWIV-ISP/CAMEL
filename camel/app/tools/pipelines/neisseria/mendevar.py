@@ -9,7 +9,7 @@ from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.tool import Tool
 
 
-class Mendevar(Tool):
+class MenDeVAR(Tool):
     """
     The MenDeVAR (Meningococcal Deduced Vaccine Antigen Reactivity) reactivity index estimates
     coverage for the Bexsero and Trumenba vaccines.
