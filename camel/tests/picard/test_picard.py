@@ -253,7 +253,7 @@ class TestPicard(CamelTestSuite):
         Test Picard SamToFastq
         :return: None
         """
-        picard_samtofastq=SamToFastq(self.camel)
+        picard_samtofastq = SamToFastq(self.camel)
         picard_samtofastq.add_input_files({
             'BAM': [TestPicard.FILE_BAM],
         })
