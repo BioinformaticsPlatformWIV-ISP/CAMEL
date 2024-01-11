@@ -19,8 +19,7 @@ class TestResFinder(CamelTestSuite):
     FILE_FASTA_3 = ToolIOFile(test_file_dir / 'assembly-VAR305.fasta')
     FILE_FASTQ_1 = ToolIOFile(test_file_dir / 'reads_illumina_1.fastq')
     FILE_FASTQ_2 = ToolIOFile(test_file_dir / 'reads_illumina_2.fastq')
-    FILE_FASTQ_ENTERO_1 = ToolIOFile(test_file_dir / 'reads_entero_1.fastq.gz')
-    FILE_FASTQ_ENTERO_2 = ToolIOFile(test_file_dir / 'reads_entero_2.fastq.gz')
+    FILE_FASTA_ENTERO = ToolIOFile(test_file_dir / 'assembly_entero.fasta')
     DB_RESFINDER = Path(CamelTestSuite.camel.config['db_root'], 'resfinder4')
 
     def test_resfinder_main_fasta(self) -> None:
@@ -129,12 +128,26 @@ class TestResFinder(CamelTestSuite):
         :return: None
         """
         resfinder = ResFinder(self.camel)
-        resfinder.add_input_files({'FASTQ_PE': [TestResFinder.FILE_FASTQ_ENTERO_1, TestResFinder.FILE_FASTQ_ENTERO_2]})
-        resfinder.update_parameters(output_path=self.running_dir, min_cov=0.9, threshold=0.8, point=True,
+        resfinder.add_input_files({'FASTA': [TestResFinder.FILE_FASTA_ENTERO],
+                                   'DIR': [ToolIODirectory(self.DB_RESFINDER)]})
+        resfinder.update_parameters(output_path=self.running_dir, min_cov=0.9, threshold=0.8, point=True, acquired=True,
                                     species='"enterococcus faecalis"')
+        resfinder.run(self.running_dir)
         self.verify_output_files(resfinder, 'TSV_point')
+        self.verify_output_files(resfinder, 'TSV_genes')
         self.verify_output_files(resfinder, 'TSV_pheno_general')
         self.verify_output_files(resfinder, 'TSV_pheno_species')
+
+        from camel.app.tools.resfinder.resfinderreporter import ResFinderReporter
+        reporter = ResFinderReporter(self.camel)
+        reporter.add_input_files({'TSV_point': resfinder.tool_outputs['TSV_point'],
+                                  'TSV_pheno_general': resfinder.tool_outputs['TSV_pheno_general'],
+                                  'TSV_pheno_species': resfinder.tool_outputs['TSV_pheno_species'],
+                                  'TSV_genes': resfinder.tool_outputs['TSV_genes']})
+        reporter.add_input_informs({'resfinder': resfinder.informs})
+        reporter.run(self.running_dir)
+        output_section = reporter.tool_outputs['VAL_HTML'][0].value
+        self.assertGreater(len(output_section.to_html()), 0)
 
 
 if __name__ == '__main__':

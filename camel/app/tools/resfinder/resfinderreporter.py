@@ -159,7 +159,8 @@ class ResFinderReporter(Tool):
                 div_sect.add_paragraph('Database last update: {}'.format(key_to_info[key][2]))
         section.add_html_object(div_sect)
 
-    def __add_links_and_format_data(self, data: Dict[str, List[List[str]]]) \
+    @staticmethod
+    def __add_links_and_format_data(data: Dict[str, List[List[str]]]) \
             -> Dict[str, List[List[HtmlTableCell]]]:
         """
         Adds PubMed links for mutations that have an associated PMID.
@@ -206,7 +207,8 @@ class ResFinderReporter(Tool):
                     table_results[key] = []
         return table_results
 
-    def __add_explanation_matches(self, section: HtmlReportSection) -> None:
+    @staticmethod
+    def __add_explanation_matches(section: HtmlReportSection) -> None:
         """
         Adds information about the different type of matches to the bottom of the report.
         :param section: Report section
