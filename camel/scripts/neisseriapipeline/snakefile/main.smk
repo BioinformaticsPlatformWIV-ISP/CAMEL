@@ -4,7 +4,7 @@ from camel.app.camel import Camel
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile import trimming, trimming_illumina, quality_checks, \
     contamination_check_kraken, gene_detection, sequence_typing, downsampling, confindr, quast, core, trimming_ont, \
-    assembly_flye, assembly
+    assembly
 from camel.scripts.neisseriapipeline.snakefile import serogroup_determination, gmats
 
 
