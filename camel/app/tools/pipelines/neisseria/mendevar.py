@@ -42,7 +42,11 @@ class MenDeVAR(Tool):
 
         # Parse input file
         tsv_in = self._tool_inputs['TSV'][0].path
-        sample_id = tsv_in.stem.replace('typing-bast-peptide-', '')
+      if 'typing-bast-peptide' not in tsv_in.stem:
+          logging.warning('Cannot determine sample name from TSV input, using default sample id')
+          sample_id = 'sample'
+      else:
+      	  sample_id = tsv_in.stem.replace('typing-bast-peptide-', '')
         logging.info(f'Sample ID: {sample_id}')
         antigen_info = self.__parse_input_file(tsv_in)
 
