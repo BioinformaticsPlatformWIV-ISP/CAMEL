@@ -30,7 +30,7 @@ class MenDeVAR(Tool):
         if 'DB' not in self._tool_inputs:
             raise InvalidInputSpecificationError("MenDeVAR database is required")
         if 'TSV' not in self._tool_inputs:
-            raise InvalidInputSpecificationError("List of input files (TSV) is required")
+            raise InvalidInputSpecificationError("TSV input is required")
         super()._check_input()
 
     def _execute_tool(self) -> None:
