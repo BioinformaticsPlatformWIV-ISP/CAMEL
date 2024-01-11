@@ -6,6 +6,7 @@ from camel.app.error.invalidparametererror import InvalidParameterError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.tools.bedtools.bedtoolsgetfasta import BedtoolsGetFasta
+from camel.app.components.blasthit.blastnfmt6tsvparser import BlastnFmt6TSVParser
 
 
 class BedtoolsGetBlastFasta(BedtoolsGetFasta):

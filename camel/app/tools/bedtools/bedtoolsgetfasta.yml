@@ -1,4 +1,4 @@
-dependencies: [bedtools/2.25.0]
+dependencies: [bedtools/2.31.0]
 parameters:
   Name: {default: false, mandatory: false, option: -name, p_index: 0, value: null}
   outputfile_name: {default: true, mandatory: false, option: -fo, p_index: 0, value: extracted_sequences.fa}
