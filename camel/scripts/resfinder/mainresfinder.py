@@ -6,12 +6,12 @@ from typing import Optional, Sequence
 from camel.app.camel import Camel
 from camel.app.components import mainscriptutils
 from camel.app.components.html.htmlreportsection import HtmlReportSection
+from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliodirectory import ToolIODirectory
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.app.tools.resfinder.resfinder import ResFinder
 from camel.app.tools.resfinder.resfinderreporter import ResFinderReporter
-from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 
 
 class MainResFinder(object):

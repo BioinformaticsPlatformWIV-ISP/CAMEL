@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, Tuple, Dict
+from typing import Dict, List, Tuple
 
 import pandas as pd
 
@@ -35,8 +35,6 @@ class ResFinderReporter(Tool):
         Checks whether the provided input files are valid.
         :return: None
         """
-        # if 'TSV_genes' not in self._tool_inputs:
-        #     raise InvalidInputSpecificationError('ResFinder input (TSV_genes) is required.')
         if 'TSV_pheno_general' not in self._tool_inputs:
             raise InvalidInputSpecificationError('ResFinder phenotype input (TSV_pheno_general) is required.')
         if 'resfinder' not in self._input_informs:
@@ -141,7 +139,6 @@ class ResFinderReporter(Tool):
         :param data: Output table data
         :return: None
         """
-        print(self._input_informs)
         key_to_info = {'TSV_genes': ['resfinder', 'Detected AMR genes',
                                      self._input_informs['resfinder']['db_version_resfinder'], 'No genes found.'],
                        'TSV_point': ['pointfinder', 'Detected AMR-conferring mutations',
@@ -180,17 +177,13 @@ class ResFinderReporter(Tool):
                     for i in range(len(table)):
                         row = table[i]
 
-                        try:
-                            row[3] = f'{eval(row[3]):.2f}'  # If floating point in cov, set to 2 floating points
-                        except NameError:
-                            pass
-
-                        cell_color = 'green'    # Default cell color - depends on cov and identity
-                        access = ''             # If I have an accession number - add the link + the color
+                        cell_color = 'green'  # Default cell color - depends on cov and identity
+                        access = ''  # If I have an accession number - add the link + the color
                         if row[n_fields - 1] is not None:
                             access = row[n_fields - 1]
 
                         if key == 'TSV_genes':
+                            row[3] = f'{float(row[3]):.2f}'
                             if row[3] == '100.00' and row[1] != '100.00':
                                 cell_color = 'lightgreen'
                             if row[3] != '100.00':

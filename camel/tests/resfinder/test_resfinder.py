@@ -10,7 +10,7 @@ from camel.scripts.resfinder.mainresfinder import MainResFinder
 
 class TestResFinder(CamelTestSuite):
     """
-    Initializes this testing tool
+    Initializes this testing tool.
     """
 
     test_file_dir = CamelTestSuite.get_test_file_dir('resfinder')
@@ -19,6 +19,8 @@ class TestResFinder(CamelTestSuite):
     FILE_FASTA_3 = ToolIOFile(test_file_dir / 'assembly-VAR305.fasta')
     FILE_FASTQ_1 = ToolIOFile(test_file_dir / 'reads_illumina_1.fastq')
     FILE_FASTQ_2 = ToolIOFile(test_file_dir / 'reads_illumina_2.fastq')
+    FILE_FASTQ_ENTERO_1 = ToolIOFile(test_file_dir / 'reads_entero_1.fastq.gz')
+    FILE_FASTQ_ENTERO_2 = ToolIOFile(test_file_dir / 'reads_entero_2.fastq.gz')
     DB_RESFINDER = Path(CamelTestSuite.camel.config['db_root'], 'resfinder4')
 
     def test_resfinder_main_fasta(self) -> None:
@@ -46,7 +48,8 @@ class TestResFinder(CamelTestSuite):
 
     def test_resfinder_main_fastq(self) -> None:
         """
-        Tests the ResFinder main script with FASTQ files
+        Tests the ResFinder main script with FASTQ files.
+        :return: None
         """
         output_file_report = self.running_dir / 'report' / 'report.html'
         args = [
@@ -68,7 +71,8 @@ class TestResFinder(CamelTestSuite):
 
     def test_resfinder_fasta(self) -> None:
         """
-        actually testing ResFinder with contigs file.
+        Actually testing ResFinder with contigs file.
+        :return: None
         """
         resfinder = ResFinder(self.camel)
         resfinder.add_input_files({'FASTA': [TestResFinder.FILE_FASTA_1], 'DIR': [ToolIODirectory(self.DB_RESFINDER)]})
@@ -79,7 +83,8 @@ class TestResFinder(CamelTestSuite):
 
     def test_resfinder_fastq(self) -> None:
         """
-        testing resfinder with paired-end fastq reads.
+        Testing resfinder with paired-end fastq reads.
+        :return: None
         """
         resfinder = ResFinder(self.camel)
         resfinder.add_input_files({'FASTQ_PE': [TestResFinder.FILE_FASTQ_1, TestResFinder.FILE_FASTQ_2],
@@ -91,7 +96,8 @@ class TestResFinder(CamelTestSuite):
 
     def test_resfinder_pointfinder_fasta(self) -> None:
         """
-        testing resfinder with pointfinder mode and fasta file.
+        Testing resfinder with pointfinder mode and fasta file.
+        :return: None
         """
         resfinder = ResFinder(self.camel)
         resfinder.add_input_files({'FASTA': [TestResFinder.FILE_FASTA_1], 'DIR': [ToolIODirectory(self.DB_RESFINDER)]})
@@ -104,7 +110,8 @@ class TestResFinder(CamelTestSuite):
 
     def test_resfinder_pointfinder_fastq(self) -> None:
         """
-        testing resfinder with pointfinder mode and fastq files.
+        Testing resfinder with pointfinder mode and fastq files.
+        :return: None
         """
         resfinder = ResFinder(self.camel)
         resfinder.add_input_files({'FASTQ_PE': [TestResFinder.FILE_FASTQ_1, TestResFinder.FILE_FASTQ_2],
@@ -112,6 +119,19 @@ class TestResFinder(CamelTestSuite):
         resfinder.update_parameters(output_path=self.running_dir, min_cov=0.6, threshold=0.8, point=True,
                                     species='"escherichia coli"')
         resfinder.run(self.running_dir)
+        self.verify_output_files(resfinder, 'TSV_point')
+        self.verify_output_files(resfinder, 'TSV_pheno_general')
+        self.verify_output_files(resfinder, 'TSV_pheno_species')
+
+    def test_resfinder_fastq_enterococcus(self) -> None:
+        """
+        Testing resfinder with enterococcus test fastq files.
+        :return: None
+        """
+        resfinder = ResFinder(self.camel)
+        resfinder.add_input_files({'FASTQ_PE': [TestResFinder.FILE_FASTQ_ENTERO_1, TestResFinder.FILE_FASTQ_ENTERO_2]})
+        resfinder.update_parameters(output_path=self.running_dir, min_cov=0.9, threshold=0.8, point=True,
+                                    species='"enterococcus faecalis"')
         self.verify_output_files(resfinder, 'TSV_point')
         self.verify_output_files(resfinder, 'TSV_pheno_general')
         self.verify_output_files(resfinder, 'TSV_pheno_species')

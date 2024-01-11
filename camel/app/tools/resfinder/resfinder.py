@@ -1,5 +1,5 @@
-from pathlib import Path
 import json
+from pathlib import Path
 
 from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
@@ -18,7 +18,7 @@ class ResFinder(Tool):
         Initializes this tool
         :param camel: CAMEL instance
         """
-        super().__init__('ResFinder', '4.1.11', camel)
+        super().__init__('ResFinder', '4.4.2', camel)
 
     def _check_input(self) -> None:
         """
