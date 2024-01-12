@@ -69,7 +69,8 @@ class MenDeVAR(Tool):
 
         # Determine Trumenba reactivity index
         trumenba_status = self.__determine_mendevar_index(antigen_info['Trumenba allele status'])
-        antigen_info['Trumenba status'] = trumenba_status
+        antigen_info['Trumenba status'] = '-'
+        antigen_info.loc[antigen_info['Locus'] == 'fHbp_peptide', 'Trumenba status'] = trumenba_status
         self._informs['trumenba_status'] = trumenba_status
 
         # Get the output directory
