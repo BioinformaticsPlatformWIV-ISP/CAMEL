@@ -163,16 +163,17 @@ class MenDeVAR(Tool):
         """
         fhbp_db = mendevar_db.loc[mendevar_db['Locus'] == 'fHbp']
 
-        # Missing allele
-        if allele == '-':
-            return 'none'
-
-        # New allele
-        if allele == '?':
-            return 'insufficient data'
-
         # fHbp
         if locus == 'fHbp_peptide':
+            # Missing allele
+            if allele == '-':
+                return 'none'
+
+            # New allele
+            if allele == '?':
+                return 'insufficient data'
+
+            # Known allele
             if (fhbp_db.Allele == allele).any():
                 return fhbp_db.Trumenba_status.loc[fhbp_db['Allele'] == allele].iloc[0]
             else:

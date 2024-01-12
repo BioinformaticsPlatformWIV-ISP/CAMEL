@@ -59,6 +59,9 @@ confindr:
 gmats:
   db: /db/pipelines/neisseria/gMATS_DB.txt
 
+mendevar:
+  db: /db/pipelines/neisseria/mendevar_DB.txt
+
 ############################
 # Gene detection databases #
 ############################

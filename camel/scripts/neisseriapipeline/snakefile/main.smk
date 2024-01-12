@@ -5,7 +5,7 @@ from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile import trimming, trimming_illumina, quality_checks, \
     contamination_check_kraken, gene_detection, sequence_typing, downsampling, confindr, quast, core, trimming_ont, \
     assembly
-from camel.scripts.neisseriapipeline.snakefile import serogroup_determination, gmats
+from camel.scripts.neisseriapipeline.snakefile import serogroup_determination, gmats, mendevar
 
 
 #######################
@@ -23,6 +23,7 @@ include: quality_checks.SNAKEFILE_QUALITY_CHECKS
 include: gene_detection.SNAKEFILE_GENE_DETECTION
 include: sequence_typing.SNAKEFILE_SEQUENCE_TYPING
 include: gmats.SNAKEFILE_GMATS
+include: mendevar.SNAKEFILE_MENDEVAR
 include: serogroup_determination.SNAKEFILE_SEROGROUP_DETERMINATION
 
 #########
@@ -121,6 +122,7 @@ rule combine_reports:
         report_fhbp = sequence_typing.get_sequence_typing_report('fhbp', config),
         report_bast = sequence_typing.get_sequence_typing_report('bast', config),
         report_gmats = Path(config['working_dir']) / (gmats.OUTPUT_GMATS_REPORT if 'gmats' in config['analyses'] else gmats.OUTPUT_GMATS_REPORT_EMPTY),
+        report_mendevar = Path(config['working_dir']) / (mendevar.OUTPUT_MENDEVAR_REPORT if 'mendevar' in config['analyses'] else mendevar.OUTPUT_MENDEVAR_REPORT_EMPTY),
         report_serogroup = Path(config['working_dir']) / (serogroup_determination.OUTPUT_SEROGROUP_DETERMINATION_REPORT if 'serogroup' in config['analyses'] else serogroup_determination.OUTPUT_SEROGROUP_DETERMINATION_REPORT_EMPTY),
         report_serogroup_legacy = Path(config['working_dir']) / (serogroup_determination.OUTPUT_SEROGROUP_DETERMINATION_LEGACY_REPORT if 'serogroup' in config['analyses'] else serogroup_determination.OUTPUT_SEROGROUP_DETERMINATION_LEGACY_REPORT_EMPTY),
         report_citations = Path(config['working_dir'], core.OUTPUT_HTML_CITATIONS),
@@ -165,7 +167,7 @@ rule combine_reports:
                 input.report_rmlst, input.report_mlst, input.report_rplf, input.report_pora, input.report_porb,
                 input.report_feta, input.report_resistance_genes, input.report_vaccine_targets, input.report_fhbp,
                 input.report_cgmlst)]),
-            ('Antigen typing', 'at', [Path(x) for x in (input.report_bast, input.report_gmats)]),
+            ('Antigen typing', 'at', [Path(x) for x in (input.report_bast, input.report_gmats, input.report_mendevar)]),
             ('Serogroup determination', 'serogroup', [Path(
                 input.report_serogroup), Path(input.report_serogroup_legacy)]),
             ('Citations', 'citations', [Path(input.report_citations)]),
