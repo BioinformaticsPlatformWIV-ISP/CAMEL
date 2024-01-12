@@ -1,10 +1,10 @@
+import logging
 from pathlib import Path
 from typing import Dict, List, Tuple
 
 import pandas as pd
 
 from camel.app.camel import Camel
-from camel.app.components.html.htmlelement import HtmlElement
 from camel.app.components.html.htmlexpandablediv import HtmlExpandableDiv
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.html.htmltablecell import HtmlTableCell
@@ -41,17 +41,141 @@ class ResFinderReporter(Tool):
             raise InvalidInputSpecificationError('ResFinder informs are required.')
         super()._check_input()
 
+    def __add_phenotype_table(self, section: HtmlReportSection, key: str) -> None:
+        """
+        Adds the table with the phenotype overview.
+        :param section: Report section
+        :param key: Key (species, general)
+        :return: None
+        """
+        # Parse input
+        data_pheno = pd.read_table(
+            self._tool_inputs[f'TSV_pheno_{key}'][0].path,
+            names=['Antimicrobial', 'Class', 'WGS-predicted phenotype', 'Match', 'Genetic background'],
+            comment='#'
+        )
+        data_pheno.sort_values(by=['Class', 'Antimicrobial'], inplace=True)
+
+        # Add table to report
+        overview_type = 'species-specific' if key == 'species' else 'general'
+        header = ['Class', 'Antimicrobial', 'WGS-predicted phenotype', 'Genetic background']
+        section.add_header(f'Predicted phenotype ({overview_type})', 3)
+        div = HtmlExpandableDiv(f'pheno_{key}', 'overview')
+        div.add_table([(
+            row['Class'],
+            row['Antimicrobial'],
+            HtmlTableCell(row['WGS-predicted phenotype'], color=ResFinderReporter.MATCH_COLORS[row['Match']]),
+            row['Genetic background'] if not pd.isna(row['Genetic background']) else '-'
+        ) for row in data_pheno.to_dict('records')], header, [('class', 'data')])
+        section.add_html_object(div)
+
+        # Add download link
+        relative_path = Path('resfinder', self._tool_inputs[f'TSV_pheno_{key}'][0].path.name)
+        section.add_file(self._tool_inputs[f'TSV_pheno_{key}'][0].path, relative_path)
+        section.add_link_to_file(f'Download {overview_type} overview (TSV)', relative_path)
+
+    @staticmethod
+    def __get_row_color(row: pd.Series) -> str:
+        """
+        Returns the color for the gene detection row.
+        :param row: Input row
+        :return: Color
+        """
+        if row['perc_cov'] == 100.0 and row['Identity'] == 100.0:
+            return 'green'
+        elif row['perc_cov'] == 100.0:
+            return 'lightgreen'
+        return 'grey'
+
+    @staticmethod
+    def __get_accession_cell(accession: str, color: str, is_pmid: bool = False) -> HtmlTableCell:
+        """
+        Returns a table cell with a link to the accession.
+        :param accession: Accession numbers
+        :param color: Cell color
+        :param is_pmid: If true, the accession is a PubMed accession
+        :return: Formatted table cell
+        """
+        if len(accession.strip()) == 0:
+            return HtmlTableCell('-', color=color)
+        url = (ResFinderReporter.URL_NUCCORE if not is_pmid else ResFinderReporter.URL_PUBMED).format(id=accession)
+        return HtmlTableCell(str(accession), link=url, color=color)
+
+    def __add_genes_table(self, section: HtmlReportSection) -> None:
+        """
+        Adds the table wit the detected AMR genes.
+        :param section: Report section
+        :return: None
+        """
+        # Parse input
+        data_genes = pd.read_table(self._tool_inputs['TSV_genes'][0].path, na_values=['NA..NA'])
+        logging.info(f'{len(data_genes)} genes parsed')
+        cols_original = list(data_genes.columns)
+        data_genes['perc_cov'] = data_genes['Alignment Length/Gene Length'].apply(
+            lambda x: 100 * int(x.split('/')[0]) / int(x.split('/')[1]))
+        data_genes['color'] = data_genes.apply(lambda row: ResFinderReporter.__get_row_color(row), axis=1)
+
+        # Add table
+        section.add_header('Detected AMR genes', 3)
+        section.add_table([[
+            *[HtmlTableCell(
+                f'{row[col]:.2f}' if isinstance(row[col], float) else row[col],
+                color=row['color']
+            ) for col in cols_original if col != 'Accession no.'],
+            ResFinderReporter.__get_accession_cell(row['Accession no.'], row['color'])
+        ] for row in data_genes.fillna('-').to_dict('records')], cols_original, [('class', 'data')])
+
+        # Add download link
+        if len(data_genes) > 0:
+            relative_path = Path('resfinder4', self._tool_inputs['TSV_genes'][0].path.name)
+            section.add_file(self._tool_inputs['TSV_genes'][0].path, relative_path)
+            section.add_link_to_file('Download (TSV)', relative_path)
+
+    def __add_mutations_table(self, section: HtmlReportSection) -> None:
+        """
+        Adds the table wit the detected AMR mutations.
+        :param section: Report section
+        :return: None
+        """
+        data_mutations = pd.read_table(self._tool_inputs['TSV_point'][0].path)
+        logging.info(f'{len(data_mutations)} mutations parsed')
+        section.add_header('Detected AMR mutations', 3)
+        section.add_table([[
+            *[HtmlTableCell(f'{row[col]:.2f}' if isinstance(row[col], float) else row[col], color='green')
+              for col in data_mutations.columns if col != 'PMID'],
+            ResFinderReporter.__get_accession_cell(str(row['PMID']), 'green', is_pmid=True)
+        ] for row in data_mutations.fillna('-').to_dict('records')], list(data_mutations.columns), [('class', 'data')])
+
+        # Download link
+        if len(data_mutations) > 0:
+            relative_path = Path('resfinder4', self._tool_inputs['TSV_point'][0].path.name)
+            section.add_file(self._tool_inputs['TSV_point'][0].path, relative_path)
+            section.add_link_to_file('Download (TSV)', relative_path)
+
     def _execute_tool(self) -> None:
         """
         Executes this tool.
         :return: None
         """
         section = HtmlReportSection(ResFinderReporter.TITLE, subtitle=self._input_informs['resfinder']['_name'])
-        header, data = self.__parse_input_file()
-        data = self.__add_links_and_format_data(data)
-        self.__add_pheno_table(section)
-        self.__add_output_table(section, header, data)
+
+        # Phenotype overviews
+        for key in ('species', 'general'):
+            self.__add_phenotype_table(section, key)
+        section.add_warning_message(
+            "The phenotype 'no resistance' should be interpreted with caution, as genes or mutations may be missing " 
+            "from the database. In addition, these are WGS-based predictions that may not be reflected in the" 
+            "phenotype.")
+        section.add_horizontal_line()
+
+        # Genes & mutations
+        self.__add_genes_table(section)
+        self.__add_mutations_table(section)
+        section.add_horizontal_line()
+
+        # Extra information
         self.__add_explanation_matches(section)
+        section.add_paragraph(f"Database version: {self._input_informs['resfinder']['db_version_resfinder']}")
         self._tool_outputs['VAL_HTML'] = [ToolIOValue(section)]
 
     def __parse_input_file(self) -> Tuple[Dict[str, List[str]], Dict[str, List[List[str]]]]:
@@ -68,143 +192,6 @@ class ResFinderReporter(Tool):
                 header[key] = handle.readline().strip().split('\t')
                 data[key] = [line.strip().split('\t') for line in handle.readlines()]
         return header, data
-
-    def __generate_output_filename(self, tool_name: str) -> str:
-        """
-        Generates the filename of the tabular output.
-        :return: Output filename
-        """
-        if 'sample_name' in self._parameters:
-            return f"{tool_name}-{self._parameters['sample_name'].value}.tsv"
-        else:
-            return f'{tool_name}.tsv'
-
-    def __add_pheno_table(self, section: HtmlReportSection) -> None:
-        """
-        Adds the table with the phenotype information.
-        :param section: Report section
-        :return: None
-        """
-        div_sect = HtmlElement('div', attributes=[('class', 'border_bottom')])
-        for input_key in [k for k in self._tool_inputs if 'pheno' in k]:
-            data_pheno = pd.read_table(self._tool_inputs[input_key][0].path, comment='#', names=[
-                'Antimicrobial', 'Class', 'WGS-predicted phenotype', 'Match', 'Genetic background'])
-            data_pheno = data_pheno[data_pheno['WGS-predicted phenotype'].apply(lambda x: not pd.isna(x))]
-
-            # Replace NA by dashes
-            data_pheno.fillna('-', inplace=True)
-
-            # Sort by first two columns
-            data_pheno.sort_values(by=['Class', 'Antimicrobial'], inplace=True)
-
-            # Get the colors for the resistance column, then drop the 'Match' column
-            row_colors = data_pheno['Match'].apply(lambda x: ResFinderReporter.MATCH_COLORS[int(x)])
-            data_pheno.pop('Match')
-
-            # Convert to list format
-            data_table = data_pheno.values.tolist()
-
-            # Update the phenotype by a colored cell
-            for row, color in zip(data_table, row_colors):
-                index_wgs_pheno = data_pheno.columns.get_loc('WGS-predicted phenotype')
-                row[index_wgs_pheno] = HtmlTableCell(row[index_wgs_pheno], color=color)
-
-            if 'general' in input_key:
-                div_sect.add_header('Predicted phenotype (general)', 3)
-                div = HtmlExpandableDiv('phenotype_general', 'general')
-                div.add_table(data_table, data_pheno.columns, [('class', 'data')])
-                div_sect.add_html_object(div)
-                relative_path = Path('resfinder', self._tool_inputs['TSV_pheno_general'][0].path.name)
-                section.add_file(self._tool_inputs['TSV_pheno_general'][0].path, relative_path)
-                div_sect.add_link_to_file(f'Download general overview (TSV)', relative_path)
-            else:
-                div_sect.add_header('Predicted phenotype (species-specific)', 3)
-                div_sect.add_table(data_table, data_pheno.columns, [('class', 'data')])
-                relative_path = Path('resfinder', self._tool_inputs['TSV_pheno_species'][0].path.name)
-                section.add_file(self._tool_inputs['TSV_pheno_species'][0].path, relative_path)
-                div_sect.add_link_to_file(f'Download species-specific overview (TSV)', relative_path)
-        div_sect.add_warning_message(
-            "The phenotype 'No resistance' should be interpreted with caution, as it only means that nothing in the "
-            "used database indicate resistance, but resistance could exist from 'unknown' or not yet implemented "
-            "sources.")
-        section.add_html_object(div_sect)
-
-    def __add_output_table(
-            self, section: HtmlReportSection, header: Dict[str, List[str]],
-            data: Dict[str, List[List[HtmlTableCell]]]) -> None:
-        """
-        Adds the output table.
-        :param section: Report section
-        :param header: Output table header
-        :param data: Output table data
-        :return: None
-        """
-        key_to_info = {'TSV_genes': ['resfinder', 'Detected AMR genes',
-                                     self._input_informs['resfinder']['db_version_resfinder'], 'No genes found.'],
-                       'TSV_point': ['pointfinder', 'Detected AMR-conferring mutations',
-                                     self._input_informs['resfinder']['db_version_pointfinder'], 'No mutations found.']}
-        div_sect = HtmlElement('div', attributes=[('class', 'border_bottom')])
-        for key in data:
-            table = data[key]
-            if len(table) > 0:
-                relative_path = Path('resfinder', self.__generate_output_filename(key_to_info[key][0]))
-                div_sect.add_header(f'{key_to_info[key][1]}', 3)
-                div_sect.add_table(table, header[key], [('class', 'data')])
-                div_sect.add_paragraph('Database last update: {}'.format(key_to_info[key][2]))
-                section.add_file(self._tool_inputs[key][0].path, relative_path)
-                div_sect.add_link_to_file('Download (TSV)', relative_path)
-            else:
-                div_sect.add_header(f'{key_to_info[key][1]}', 3)
-                div_sect.add_paragraph(f'{key_to_info[key][3]}')
-                div_sect.add_paragraph('Database last update: {}'.format(key_to_info[key][2]))
-        section.add_html_object(div_sect)
-
-    def __add_links_and_format_data(self, data: Dict[str, List[List[str]]]) \
-            -> Dict[str, List[List[HtmlTableCell]]]:
-        """
-        Adds PubMed links for mutations that have an associated PMID.
-        Also formats data for taking into account color and floating points.
-        :param data: Data
-        :return: Data with links added
-        """
-        table_results = {}
-        for key in ['TSV_genes', 'TSV_point']:
-            if key in data:
-                table = data[key]
-                edited_data = []
-                if table:
-                    n_fields = len(table[0])
-                    for i in range(len(table)):
-                        row = table[i]
-
-                        cell_color = 'green'  # Default cell color - depends on cov and identity
-                        access = ''  # If I have an accession number - add the link + the color
-                        if row[n_fields - 1] is not None:
-                            access = row[n_fields - 1]
-
-                        if key == 'TSV_genes':
-                            row[3] = f'{float(row[3]):.2f}'
-                            if row[3] == '100.00' and row[1] != '100.00':
-                                cell_color = 'lightgreen'
-                            if row[3] != '100.00':
-                                cell_color = 'grey'
-                            row = [HtmlTableCell(k, color=cell_color) for k in row]
-                            if access:
-                                publi = HtmlTableCell(str(access), link=ResFinderReporter.URL_NUCCORE.format(id=access),
-                                                      color=cell_color)
-                                row[n_fields - 1] = publi
-
-                        else:
-                            row = [HtmlTableCell(k, color=cell_color) for k in row]
-                            if access:
-                                publi = HtmlTableCell(str(access), link=ResFinderReporter.URL_PUBMED.format(id=access),
-                                                      color=cell_color)
-                                row[n_fields - 1] = publi
-                        edited_data.append(row)
-                    table_results[key] = edited_data
-                else:
-                    table_results[key] = []
-        return table_results
 
     def __add_explanation_matches(self, section: HtmlReportSection) -> None:
         """
