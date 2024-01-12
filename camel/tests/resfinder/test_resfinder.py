@@ -5,6 +5,7 @@ from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.io.tooliodirectory import ToolIODirectory
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.resfinder.resfinder import ResFinder
+from camel.app.tools.resfinder.resfinderreporter import ResFinderReporter
 from camel.scripts.resfinder.mainresfinder import MainResFinder
 
 
@@ -86,8 +87,9 @@ class TestResFinder(CamelTestSuite):
         :return: None
         """
         resfinder = ResFinder(self.camel)
-        resfinder.add_input_files({'FASTQ_PE': [TestResFinder.FILE_FASTQ_1, TestResFinder.FILE_FASTQ_2],
-                                   'DIR': [ToolIODirectory(self.DB_RESFINDER)]})
+        resfinder.add_input_files({
+            'FASTQ_PE': [TestResFinder.FILE_FASTQ_1, TestResFinder.FILE_FASTQ_2],
+            'DIR': [ToolIODirectory(self.DB_RESFINDER)]})
         resfinder.update_parameters(output_path=self.running_dir, min_cov=0.6, threshold=0.8, acquired=True)
         resfinder.run(self.running_dir)
         self.verify_output_files(resfinder, 'TSV_genes')
@@ -99,9 +101,11 @@ class TestResFinder(CamelTestSuite):
         :return: None
         """
         resfinder = ResFinder(self.camel)
-        resfinder.add_input_files({'FASTA': [TestResFinder.FILE_FASTA_1], 'DIR': [ToolIODirectory(self.DB_RESFINDER)]})
-        resfinder.update_parameters(output_path=self.running_dir, min_cov=0.6, threshold=0.8, point=True,
-                                    species='"escherichia coli"')
+        resfinder.add_input_files({
+            'FASTA': [TestResFinder.FILE_FASTA_1],
+            'DIR': [ToolIODirectory(self.DB_RESFINDER)]})
+        resfinder.update_parameters(
+            output_path=self.running_dir, min_cov=0.6, threshold=0.8, point=True, species='"escherichia coli"')
         resfinder.run(self.running_dir)
         self.verify_output_files(resfinder, 'TSV_point')
         self.verify_output_files(resfinder, 'TSV_pheno_general')
@@ -113,41 +117,93 @@ class TestResFinder(CamelTestSuite):
         :return: None
         """
         resfinder = ResFinder(self.camel)
-        resfinder.add_input_files({'FASTQ_PE': [TestResFinder.FILE_FASTQ_1, TestResFinder.FILE_FASTQ_2],
-                                   'DIR': [ToolIODirectory(self.DB_RESFINDER)]})
-        resfinder.update_parameters(output_path=self.running_dir, min_cov=0.6, threshold=0.8, point=True,
-                                    species='"escherichia coli"')
+        resfinder.add_input_files({
+            'FASTQ_PE': [TestResFinder.FILE_FASTQ_1, TestResFinder.FILE_FASTQ_2],
+            'DIR': [ToolIODirectory(self.DB_RESFINDER)]})
+        resfinder.update_parameters(
+            output_path=self.running_dir, min_cov=0.6, threshold=0.8, point=True, species='"escherichia coli"')
         resfinder.run(self.running_dir)
         self.verify_output_files(resfinder, 'TSV_point')
         self.verify_output_files(resfinder, 'TSV_pheno_general')
         self.verify_output_files(resfinder, 'TSV_pheno_species')
 
-    def test_resfinder_fastq_enterococcus(self) -> None:
+    def test_resfinder_fasta_enterococcus(self) -> None:
         """
-        Testing resfinder with enterococcus test fastq files.
+        Testing resfinder with an Enterococcus input FASTA file.
         :return: None
         """
         resfinder = ResFinder(self.camel)
-        resfinder.add_input_files({'FASTA': [TestResFinder.FILE_FASTA_ENTERO],
-                                   'DIR': [ToolIODirectory(self.DB_RESFINDER)]})
-        resfinder.update_parameters(output_path=self.running_dir, min_cov=0.9, threshold=0.8, point=True, acquired=True,
-                                    species='"enterococcus faecalis"')
+        resfinder.add_input_files({
+            'FASTA': [TestResFinder.FILE_FASTA_ENTERO],
+            'DIR': [ToolIODirectory(self.DB_RESFINDER)]
+        })
+        resfinder.update_parameters(
+            output_path=self.running_dir, min_cov=0.9, threshold=0.8, point=True, acquired=True,
+            species='"enterococcus faecalis"')
         resfinder.run(self.running_dir)
         self.verify_output_files(resfinder, 'TSV_point')
         self.verify_output_files(resfinder, 'TSV_genes')
         self.verify_output_files(resfinder, 'TSV_pheno_general')
         self.verify_output_files(resfinder, 'TSV_pheno_species')
 
-        from camel.app.tools.resfinder.resfinderreporter import ResFinderReporter
         reporter = ResFinderReporter(self.camel)
-        reporter.add_input_files({'TSV_point': resfinder.tool_outputs['TSV_point'],
-                                  'TSV_pheno_general': resfinder.tool_outputs['TSV_pheno_general'],
-                                  'TSV_pheno_species': resfinder.tool_outputs['TSV_pheno_species'],
-                                  'TSV_genes': resfinder.tool_outputs['TSV_genes']})
+        reporter.add_input_files({
+            'TSV_point': resfinder.tool_outputs['TSV_point'],
+            'TSV_pheno_general': resfinder.tool_outputs['TSV_pheno_general'],
+            'TSV_pheno_species': resfinder.tool_outputs['TSV_pheno_species'],
+            'TSV_genes': resfinder.tool_outputs['TSV_genes']})
         reporter.add_input_informs({'resfinder': resfinder.informs})
         reporter.run(self.running_dir)
         output_section = reporter.tool_outputs['VAL_HTML'][0].value
         self.assertGreater(len(output_section.to_html()), 0)
+
+    def test_resfinder_fasta_enterococcus_no_species(self) -> None:
+        """
+        Testing resfinder with an Enterococcus input FASTA file.
+        :return: None
+        """
+        # Run ResFinder
+        resfinder = ResFinder(self.camel)
+        resfinder.add_input_files({
+            'FASTA': [TestResFinder.FILE_FASTA_ENTERO],
+            'DIR': [ToolIODirectory(self.DB_RESFINDER)]
+        })
+        resfinder.update_parameters(
+            output_path=self.running_dir, min_cov=0.9, threshold=0.8, point=False, acquired=True)
+        resfinder.run(self.running_dir)
+        self.verify_output_files(resfinder, 'TSV_genes')
+        self.verify_output_files(resfinder, 'TSV_pheno_general')
+
+        # Run the reporter
+        reporter = ResFinderReporter(self.camel)
+        reporter.add_input_files({
+            'TSV_pheno_general': resfinder.tool_outputs['TSV_pheno_general'],
+            'TSV_genes': resfinder.tool_outputs['TSV_genes']})
+        reporter.add_input_informs({'resfinder': resfinder.informs})
+        reporter.run(self.running_dir)
+        output_section = reporter.tool_outputs['VAL_HTML'][0].value
+        self.assertGreater(len(output_section.to_html()), 0)
+
+    def test_resfinder_main_fasta_enterococcus_no_species(self) -> None:
+        """
+        Tests the ResFinder main script with the Enterococcus input data.
+        :return: None
+        """
+        output_file_report = self.running_dir / 'report' / 'report.html'
+        args = [
+            '--fasta', str(self.FILE_FASTA_ENTERO),
+            '--output-html', str(output_file_report),
+            '--output-dir', str(output_file_report.parent),
+            '--working-dir', str(self.running_dir),
+            '--db-directory', str(self.DB_RESFINDER),
+            '--acquired',
+            '--acq-overlap', '40',
+            '--min-cov', '60',
+            '--threshold', '80',
+        ]
+        main = MainResFinder(args)
+        main.run()
+        self.assertGreater(output_file_report.stat().st_size, 0)
 
 
 if __name__ == '__main__':
