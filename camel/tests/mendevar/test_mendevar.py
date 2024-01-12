@@ -2,10 +2,12 @@ import logging
 import unittest
 from pathlib import Path
 
+from camel.app.components.html.htmlreport import HtmlReport
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.io.tooliofile import ToolIOFile
-from camel.app.tools.pipelines.neisseria.mendevarreporter import MendevarReporter
+from camel.app.tools.pipelines.neisseria.mendevarreporter import MenDeVARReporter
 from camel.app.tools.pipelines.neisseria.mendevar import MenDeVAR
+from camel.resources import CSS_STYLE
 
 
 class TestMendevar(CamelTestSuite):
@@ -61,7 +63,7 @@ class TestMendevar(CamelTestSuite):
             logging.info(f'Successfully processed: {tsv_path}')
 
             # Run the reporter
-            reporter = MendevarReporter(self.camel)
+            reporter = MenDeVARReporter(self.camel)
             reporter.add_input_files({'TSV': mendevar.tool_outputs['TSV']})
             reporter.add_input_informs({'mendevar': mendevar.informs})
             reporter.run(self.running_dir)
@@ -69,8 +71,10 @@ class TestMendevar(CamelTestSuite):
 
             # Save the report
             html_out = output_dir / 'report.html'
-            with html_out.open('w') as handle:
-                handle.write(reporter.tool_outputs['HTML'][0].value.to_html())
+            report = HtmlReport(html_out)
+            report.initialize('MenDeVar', CSS_STYLE)
+            report.add_html_object(reporter.tool_outputs['HTML'][0].value)
+            report.save()
             logging.info(f'Output report created: {html_out}')
 
 
