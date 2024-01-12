@@ -5,7 +5,7 @@ from pathlib import Path
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.pipelines.neisseria.mendevarreporter import MendevarReporter
-from camel.app.tools.pipelines.neisseria.mendevar import Mendevar
+from camel.app.tools.pipelines.neisseria.mendevar import MenDeVAR
 
 
 class TestMendevar(CamelTestSuite):
@@ -28,7 +28,7 @@ class TestMendevar(CamelTestSuite):
             logging.info(f'Saving output in: {output_dir}')
 
             # Run MenDeVAR
-            mendevar = Mendevar(self.camel)
+            mendevar = MenDeVAR(self.camel)
             mendevar.add_input_files({
                 'TSV': [ToolIOFile(tsv_path)],
                 'DB': [ToolIOFile(TestMendevar.DB)]
@@ -50,7 +50,7 @@ class TestMendevar(CamelTestSuite):
             logging.info(f'Saving output in: {output_dir}')
 
             # Run MenDeVAR
-            mendevar = Mendevar(self.camel)
+            mendevar = MenDeVAR(self.camel)
             mendevar.add_input_files({
                 'TSV': [ToolIOFile(tsv_path)],
                 'DB': [ToolIOFile(TestMendevar.DB)]
