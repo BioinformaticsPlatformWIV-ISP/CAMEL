@@ -1,0 +1,4 @@
+dependencies: []
+parameters:
+  detection_method: {default: true, mandatory: true, option: null, value: blast}
+tool_command: null
