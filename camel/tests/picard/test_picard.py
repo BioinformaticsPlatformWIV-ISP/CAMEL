@@ -20,6 +20,7 @@ from camel.app.tools.picard.samtofastq import SamToFastq
 from camel.app.tools.picard.setnmmdanduqtags import SetNmMdAndUqTags
 from camel.app.tools.picard.sortsam import SortSam
 from camel.app.tools.picard.validatesamfile import ValidateSamFile
+from camel.tests import minOSVersion
 
 
 class TestPicard(CamelTestSuite):
