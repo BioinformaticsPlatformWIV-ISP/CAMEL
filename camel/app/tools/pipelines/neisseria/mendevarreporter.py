@@ -52,7 +52,7 @@ class MenDeVARReporter(Tool):
             row[bexsero_status] = HtmlTableCell(row[bexsero_status], MenDeVARReporter.__get_color(row[bexsero_status]))
             table_data.append(row[:-1])
 
-        section.add_table(table_data, list(bexsero_data.columns), [('class', 'data')])
+        section.add_table(table_data, list(bexsero_data.columns)[:-1], [('class', 'data')])
         section.add_paragraph(
             '<b>Note:</b> Imperfect matches are marked with an asterisk (*) and are not used for determining the '
             'MenDeVAR index.')
@@ -80,7 +80,7 @@ class MenDeVARReporter(Tool):
                 row[trumenba_status], MenDeVARReporter.__get_color(row[trumenba_status]))
             table_data.append(row[:-1])
 
-        section.add_table(table_data, list(trumenba_data.columns), [('class', 'data')])
+        section.add_table(table_data, list(trumenba_data.columns)[:-1], [('class', 'data')])
         section.add_paragraph(
             '<b>Note:</b> Imperfect matches are marked with an asterisk (*) and are not used for determining the '
             'MenDeVAR index.')
