@@ -49,7 +49,8 @@ class AbriTAMRReport(Tool):
         Sets the name of the output files.
         :return: None
         """
-        self._tool_outputs['REPORT_ABRITAMR'] = [ToolIOFile(self.folder / 'report_abritamr_.xlsx')]
+        self._tool_outputs['REPORT_ABRITAMR'] = [ToolIOFile(self.folder /
+                                                            f"{self._parameters['output_filename'].value}_.xlsx")]
 
     def __build_command(self) -> None:
         """
@@ -63,7 +64,8 @@ class AbriTAMRReport(Tool):
             '--matches', str(self._tool_inputs['TXT_MATCHES'][0]),
             '--partials', str(self._tool_inputs['TXT_PARTIALS'][0]),
             '--qc', str(self._tool_inputs['TXT_MDU_QC'][0]),
-            '--r report_abritamr', f'--sop {sop}'])
+            f'--sop {sop}',
+            *self._build_options()])
 
     def _check_command_output(self) -> None:
         """

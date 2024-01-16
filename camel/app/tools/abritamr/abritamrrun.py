@@ -1,16 +1,16 @@
 import json
 from pathlib import Path
 
-from camel.app.error.toolexecutionerror import ToolExecutionError
-from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.camel import Camel
-from camel.app.tools.tool import Tool
+from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.tools.tool import Tool
 
 
 class AbriTAMRRun(Tool):
     """
-    AbritAMR: abriTAMR is an AMR gene detection pipeline that runs AMRFinderPlus on a single (or list ) of given
+    AbritAMR: AbriTAMR is an AMR gene detection pipeline that runs AMRFinderPlus on a single (or list ) of given
     isolates and collates the results into a table, separating genes identified into functionally relevant groups.
     This is the first part of the AbriTAMR pipeline (run).
     """
@@ -44,8 +44,6 @@ class AbriTAMRRun(Tool):
             raise InvalidInputSpecificationError("FASTA input is required")
         elif 'DIR_AMRF' not in self._tool_inputs:
             raise InvalidInputSpecificationError("Database path needs to be specified (DIR_AMRF)")
-        elif 'VAL_SPECIES' not in self._tool_inputs:
-            raise InvalidInputSpecificationError(f"A species must be provided to run {self.name}")
 
     def __set_output(self) -> None:
         """
@@ -62,10 +60,11 @@ class AbriTAMRRun(Tool):
         """
         self._informs['_tag'] = 'RUN'
         self._command.command = ' '.join([
-            self._tool_command, '--contigs',
-            str(self._tool_inputs['FASTA'][0]), '--prefix', str(self.folder), '--species',
-            str(self._tool_inputs['VAL_SPECIES'][0]),
-            '--amrfinder_db', str(self._tool_inputs['DIR_AMRF'][0].path)
+            self._tool_command,
+            '--contigs', str(self._tool_inputs['FASTA'][0]),
+            '--prefix', str(self.folder),
+            '--amrfinder_db', str(self._tool_inputs['DIR_AMRF'][0].path),
+            *self._build_options()
         ])
 
     def _check_command_output(self) -> None:
@@ -80,7 +79,7 @@ class AbriTAMRRun(Tool):
 
     def __add_database_information(self, amrfinder_folder: Path) -> None:
         """
-        add the update of the two database in the informs of the tool for further reporting
+        Add the update info of the two databases in the informs of the tool for further reporting.
         amrfinder_folder: the path to the folder of amrfinderplus database used in this tool.
         return: None
         """

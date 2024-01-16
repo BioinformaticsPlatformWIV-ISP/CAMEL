@@ -1,8 +1,9 @@
 import re
 from pathlib import Path
 
-import pandas as pd
 import numpy as np
+import pandas as pd
+
 from camel.app.camel import Camel
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
@@ -10,7 +11,7 @@ from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.tools.tool import Tool
 
 
-class AbritamrReporter(Tool):
+class AbriTAMRReporter(Tool):
     """
     Parses abriTAMR report output and generates an HTML output report.
     """
@@ -30,18 +31,18 @@ class AbritamrReporter(Tool):
         Checks if the provided input is valid.
         :return: None
         """
-        super(AbritamrReporter, self)._check_input()
+        super(AbriTAMRReporter, self)._check_input()
         if 'VAL_SPECIES' not in self._tool_inputs:
             raise InvalidInputSpecificationError("VAL_SPECIES is required")
-        elif not any(key in self._tool_inputs for key in ('TXT_MATCHES', 'TXT_PARTIALS')):
-            raise InvalidInputSpecificationError("AbriTAMR run outputs files must be provided")
+        elif not all(key in self._tool_inputs for key in ('TXT_MATCHES', 'TXT_PARTIALS')):
+            raise InvalidInputSpecificationError("AbriTAMR run output files must be provided")
 
     def _execute_tool(self) -> None:
         """
         Executes the reporter.
         :rtype: None
         """
-        self._section = HtmlReportSection(AbritamrReporter.TITLE,
+        self._section = HtmlReportSection(AbriTAMRReporter.TITLE,
                                           subtitle=self._input_informs['ABRITAMR_RUN']['_name'])
         self.__add_summaries_tables()
         if self._tool_inputs['VAL_SPECIES'][0] == 'Salmonella':
@@ -61,23 +62,25 @@ class AbritamrReporter(Tool):
         self._section.add_header('Matches: >90% coverage & >90% identity', 3)
         self.___add_summary_file_table(self._tool_inputs['TXT_MATCHES'][0].path)
         self._section.add_paragraph('Genes annotated with * indicate >90% coverage '
-                                    'and > identity threshold < 100% identity.')
+                                    'and identity between 90% and 100%.')
         self._section.add_header('Partial matches: 50-90% coverage & >90% identity', 3)
         self.___add_summary_file_table(self._tool_inputs['TXT_PARTIALS'][0].path)
         self._section.add_horizontal_line()
 
     def ___add_summary_file_table(self, summary_file: Path) -> None:
         """
-        Parses an abritamr output summary file ( TXT_PARTIALS or TXT_MATCHES ) and
+        Parses an AbriTAMR output summary file ( TXT_PARTIALS or TXT_MATCHES ) and
+        adds the table to the section
         :param summary_file: TXT_PARTIALS or TXT_MATCHES
-        :return:None
+        :return: None
         """
         header = ['Functional drug class', 'Genes']
         data = []
         with summary_file.open('r') as handle:
             lines = handle.readlines()
-            if len(lines[0].strip().split('\t')) > 1:
-                line1 = lines[0].strip().split('\t')[1:]
+            file_header = lines[0].strip().split('\t')
+            if len(file_header) > 1:
+                line1 = file_header[1:]
                 line2 = lines[1].strip().split('\t')[1:]
                 for index, functional_drug_class in enumerate(line1):
                     data.append([functional_drug_class, line2[index]])

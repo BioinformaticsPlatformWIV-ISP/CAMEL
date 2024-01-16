@@ -1,17 +1,17 @@
 from pathlib import Path
 
+import numpy as np
+
 from camel.app.camel import Camel
-from camel.app.tools.abritamr.abritamrrun import AbriTAMRRun
-from camel.app.tools.abritamr.abritamrreport import AbriTAMRReport
-from camel.app.tools.abritamr.abritamrreporter import AbritamrReporter
-from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.app.pipeline.step import Step
 from camel.app.io.tooliodirectory import ToolIODirectory
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.io.tooliovalue import ToolIOValue
-
+from camel.app.pipeline.step import Step
+from camel.app.snakemake.snakemakeutils import SnakemakeUtils
+from camel.app.tools.abritamr.abritamrreport import AbriTAMRReport
+from camel.app.tools.abritamr.abritamrreporter import AbriTAMRReporter
+from camel.app.tools.abritamr.abritamrrun import AbriTAMRRun
 from camel.resources.snakefile import abritamr
-import numpy as np
 
 
 camel = Camel.get_instance()
@@ -29,16 +29,15 @@ rule abritamr_run:
         INFORMS = Path(config['working_dir']) / abritamr.OUTPUT_ABRITAMR_RUN_INFORMS
     params:
         running_dir = Path(config['working_dir']) / 'abritamr' ,
-        db_path_amrf= config['abritamr']['amrfinderplus']['path'],
+        db_path_amrf = config['abritamr']['amrfinderplus']['path'],
         species = config['abritamr']['species'],
         jobs = 4
     run:
         abritamrruntool = AbriTAMRRun(camel)
-        abritamrruntool.add_input_files({'DIR_AMRF': [ToolIODirectory(Path(str(params.db_path_amrf)))],
-                                         'VAL_SPECIES': [ToolIOValue(params.species)] })
+        abritamrruntool.add_input_files({'DIR_AMRF': [ToolIODirectory(Path(str(params.db_path_amrf)))]})
         SnakemakeUtils.add_pickle_input(abritamrruntool, 'FASTA', Path(input.FASTA))
         step = Step(str(rule), abritamrruntool, camel, params.running_dir, config)
-        abritamrruntool.update_parameters(jobs=params.jobs)
+        abritamrruntool.update_parameters(jobs=params.jobs, species=params.species)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(abritamrruntool, output)
 
@@ -51,7 +50,7 @@ rule generate_dummy_mdu_qc_file:
         TXT_MDU_QC = Path(config['working_dir']) /  abritamr.OUTPUT_QC_ABRITAMR
     params:
         species = config['abritamr']['species'],
-        running_dir=Path(config['working_dir']) / 'abritamr'
+        running_dir = Path(config['working_dir']) / 'abritamr'
     run:
         species = params.species if not params.species == 'Salmonella' else 'Salmonella enterica'
         with Path(output.TXT_MDU_QC).open('w') as handle:
@@ -95,7 +94,7 @@ rule create_output_summary_abritamr:
     params:
         species = config['abritamr']['species']
     run:
-        import pandas, openpyxl, json
+        import pandas, json
 
         json_dict = {}
         informs_abritamr_run = SnakemakeUtils.load_object(Path(input.INFORMS_ABRITAMR_RUN))
@@ -104,23 +103,25 @@ rule create_output_summary_abritamr:
         #replace all nan by dashes
         df_abritamr.replace(np.nan, '-', inplace=True)
         with Path(output.VAL_TSV).open('w') as file_tsv:
-            for c in range(2, len(df_abritamr.columns)):
-                key = f'abritamr_{df_abritamr.columns[c].replace(" - ","_")}'
-                value = df_abritamr.iloc[0, c]
+            for column in range(2, len(df_abritamr.columns)):
+                key = f'abritamr_{df_abritamr.columns[column].replace(" - ","_")}'
+                value = df_abritamr.iloc[0, column]
                 file_tsv.write(f"{key}\t{value}\n")
                 json_dict[key] = value
         meta_json_dict = {'abritamr': {'results': json_dict,
-                                              'informs_tools': {
-                              informs_abritamr_report.get('_tool', informs_abritamr_report['_name']): {'_name': informs_abritamr_report['_name'],
-                                                              '_version': informs_abritamr_report['_version'],
-                                                              '_command': informs_abritamr_report['_command']},
-                              informs_abritamr_run.get('_tool', informs_abritamr_run['_name']): {'_name': informs_abritamr_run['_name'],
-                                                              '_version': informs_abritamr_run['_version'],
-                                                              '_command': informs_abritamr_run['_command']}
-                                                                },
-                                              'informs_dbs': {'last_updated': informs_abritamr_run['last_update_date'],
-                                                              'name': informs_abritamr_run['key'],
-                                                              'title': informs_abritamr_run['key']}
+                                       'informs_tools': {
+                                            informs_abritamr_report.get('_tool', informs_abritamr_report['_name']): {
+                                                '_name': informs_abritamr_report['_name'],
+                                                '_version': informs_abritamr_report['_version'],
+                                                '_command': informs_abritamr_report['_command']},
+                                            informs_abritamr_run.get('_tool', informs_abritamr_run['_name']): {
+                                                '_name': informs_abritamr_run['_name'],
+                                                '_version': informs_abritamr_run['_version'],
+                                                '_command': informs_abritamr_run['_command']}
+                                                        },
+                                       'informs_dbs': {'last_updated': informs_abritamr_run['last_update_date'],
+                                                       'name': informs_abritamr_run['key'],
+                                                       'title': informs_abritamr_run['key']}
                                        }
                           }
         with Path(output.JSON).open('w') as handle:
@@ -141,7 +142,7 @@ rule create_output_report_abritamr:
         species = config['abritamr']['species'],
         running_dir = Path(config['working_dir']) / 'abritamr'
     run:
-        reportertool = AbritamrReporter(camel)
+        reportertool = AbriTAMRReporter(camel)
         SnakemakeUtils.add_pickle_inputs(reportertool, input, excluded_keys=['VAL_TSV'])
         reportertool.add_input_files({'TSV_output': [ToolIOFile(Path(input.VAL_TSV))], 'VAL_SPECIES': [ToolIOValue(params.species)]})
         step = Step(str(rule), reportertool, camel, params.running_dir, config)
@@ -158,5 +159,5 @@ rule abritamr_report_empty:
         running_dir = Path(config['working_dir']) / 'abritamr'
     run:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-        SnakePipelineUtils.create_empty_report_section(AbritamrReporter.TITLE, Path(output.VAL_HTML))
+        SnakePipelineUtils.create_empty_report_section(AbriTAMRReporter.TITLE, Path(output.VAL_HTML))
 

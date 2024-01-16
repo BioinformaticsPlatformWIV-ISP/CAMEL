@@ -6,15 +6,14 @@ from camel.app.io.tooliodirectory import ToolIODirectory
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.tools.abritamr.abritamrreport import AbriTAMRReport
-from camel.app.tools.abritamr.abritamrreporter import AbritamrReporter
+from camel.app.tools.abritamr.abritamrreporter import AbriTAMRReporter
 from camel.app.tools.abritamr.abritamrrun import AbriTAMRRun
 
 
-class TestAbritamr(CamelTestSuite):
+class TestAbriTAMR(CamelTestSuite):
     """
-    Tests the Abritamr report function for the salmonella case
+    Tests the three AbriTAMR components; the tool called run, the tool called report, and the reporter.
     """
-
     # Input files
     test_file_dir = CamelTestSuite.get_test_file_dir('salmonella')
     qc_file = test_file_dir / 'qc_file.txt'
@@ -25,25 +24,24 @@ class TestAbritamr(CamelTestSuite):
 
     def test_abritamr_run(self) -> None:
         """
-        Tests basic abritamr run.
+        Tests basic AbriTAMR run.
         :return: None
         """
         abritamr = AbriTAMRRun(self.camel)
         abritamr.add_input_files({
             'FASTA': [ToolIOFile(Path(self.input_fasta_file))],
-            'DIR_AMRF': [ToolIODirectory(Path('/db/abritamr/amrfinderplus_data'))],
-            'VAL_SPECIES': [ToolIOValue('Salmonella')]
+            'DIR_AMRF': [ToolIODirectory(Path('/db/abritamr/amrfinderplus_data'))]
         })
+        abritamr.update_parameters(species='Salmonella')
         abritamr.run(self.running_dir)
         self.verify_output_files(abritamr, 'TXT_MATCHES')
         self.verify_output_files(abritamr, 'TXT_PARTIALS')
 
     def test_abritamr_report(self) -> None:
         """
-        Tests basic Abritamr report, abritamr report is a commandline tool and therefore not the camel reporter
+        Tests basic AbriTAMR report, abritamr report is a commandline tool and therefore not the camel reporter.
         :return: None
         """
-
         abritamr = AbriTAMRReport(self.camel)
         abritamr.add_input_files({
             'TXT_MDU_QC': [ToolIOFile(self.qc_file)],
@@ -56,11 +54,10 @@ class TestAbritamr(CamelTestSuite):
 
     def test_abritamr_reporter(self) -> None:
         """
-        Tests Abritamr reporter including antibiogram
+        Tests AbriTAMR reporter including the antibiogram.
         :return: None
         """
-
-        abritamrreporter = AbritamrReporter(self.camel)
+        abritamrreporter = AbriTAMRReporter(self.camel)
         abritamrreporter.add_input_files({
             'TSV_output': [ToolIOFile(self.summary_out)],
             'TXT_MATCHES': [ToolIOFile(self.summary_matches)],

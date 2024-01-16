@@ -1,3 +1,4 @@
 dependencies: [abritamr/1.0.13]
-parameters: {}
+parameters:
+  output_filename: {default: true, mandatory: true, option: -r, value: report_abritamr}
 tool_command: abritamr report
