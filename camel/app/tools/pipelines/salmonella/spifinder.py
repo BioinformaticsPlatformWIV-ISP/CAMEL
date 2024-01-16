@@ -1,15 +1,14 @@
 import json
 from pathlib import Path
 
-from camel.app.error.toolexecutionerror import ToolExecutionError
-from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.camel import Camel
-from camel.app.tools.tool import Tool
+from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.tools.tool import Tool
 
 
 class SPIFinder(Tool):
-
     """
     BLAST-based methodology tool for detection of SPI (Salmonella Pathogenicity Islands).
     """
@@ -41,8 +40,10 @@ class SPIFinder(Tool):
         super(SPIFinder, self)._check_input()
         # check if exactly one of the three possible inputs is provided
         input_keys = [key for key in ('FASTQ', 'FASTQ_PE', 'FASTA') if key in self._tool_inputs]
-        if len([key for key in ('FASTQ', 'FASTQ_PE', 'FASTA') if key in self._tool_inputs]) != 1:
-            raise InvalidInputSpecificationError("Exactly one of FASTQ, FASTQ_PE or FASTA input is required.")
+        if len(input_keys) > 1:
+            raise InvalidInputSpecificationError("Too many inputs: Exactly one of FASTQ, FASTQ_PE or FASTA input is required.")
+        elif len(input_keys) == 0:
+            raise InvalidInputSpecificationError("No inputs: exactly one of FASTQ, FASTQ_PE or FASTA input is required.")
         else:
             self._input_key = input_keys[0]
         if 'DIR' not in self._tool_inputs:
@@ -50,10 +51,10 @@ class SPIFinder(Tool):
 
     def __set_output(self) -> None:
         """
-        Sets the name of the output files
+        Sets the name of the output files.
+        The JSON output file is always data.json, therefore this needs to be hardcoded here.
         :return: None
         """
-
         self._tool_outputs['JSON'] = [ToolIOFile(self.folder / 'data.json')]
 
     def __build_command(self) -> None:
@@ -61,17 +62,19 @@ class SPIFinder(Tool):
         Concatenates required parameters and options to build the command
         :return: None
         """
-        self._informs['_tag'] = 'FASTQ' if self._input_key != 'FASTA' else 'FASTA'
+        self._informs['_tag'] = 'FASTA' if self._input_key == 'FASTA' else 'FASTQ'
         if self._input_key == 'FASTQ_PE':
             inputs_str = ' '.join([
                 str(self._tool_inputs[self._input_key][0].path),
                 str(self._tool_inputs[self._input_key][1].path)
             ])
         else:
-            inputs_str = str(self._tool_inputs[self._input_key][0])
+            inputs_str = str(self._tool_inputs[self._input_key][0].path)
 
         self._command.command = ' '.join([
-            self._tool_command, '-i', inputs_str, "-p", str(self._tool_inputs['DIR'][0].path)
+            self._tool_command,
+            f'-i {inputs_str}',
+            f"-p, {str(self._tool_inputs['DIR'][0].path)}"
         ])
 
     def _check_command_output(self) -> None:
@@ -88,7 +91,7 @@ class SPIFinder(Tool):
         :param db_dir: Input database directory
         :return: None
         """
-        self._informs['_tag'] = 'FASTQ' if not 'FASTA' in self._tool_inputs else 'FASTA'
+        self._informs['_tag'] = 'FASTQ' if 'FASTA' not in self._tool_inputs else 'FASTA'
         db_metadata_file = db_dir / 'db_update_info.json'
         if not db_metadata_file.is_file():
             raise FileNotFoundError(f'Database metadata file not found: {db_metadata_file}')

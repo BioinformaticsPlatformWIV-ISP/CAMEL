@@ -23,28 +23,6 @@ class SPIFinderReporter(Tool):
         super().__init__('SPIFinder Reporter', '0.1', camel)
         self._section = None
 
-    def _execute_tool(self) -> None:
-        """
-        Executes this tool.
-        :return: None
-        """
-        self._section = HtmlReportSection(SPIFinderReporter.TITLE, subtitle=self._input_informs[
-            'spifinder_fasta']['_name'])
-        # Add Fastq results 'section'
-        self._section.add_header('HITS - KMA on raw reads (FASTQ)', 3)
-        if self._fastq_results_present:
-            self.__add_hits_results(self._tool_inputs['JSON_FASTQ'][0].path, 'fastq')
-        else:
-            self._section.add_paragraph('SPIFinder raw reads results not available in FASTA-input mode')
-        self._section.add_horizontal_line()
-        # Add Fasta results 'section'
-        self._section.add_header('HITS - BLAST on the assembly (FASTA)', 3)
-        self.__add_hits_results(self._tool_inputs['JSON_FASTA'][0].path, 'fasta')
-
-        self.__add_file_output()
-
-        self._tool_outputs['VAL_HTML'] = [ToolIOValue(self._section)]
-
     def _check_input(self) -> None:
         """
         Checks if the provided input is valid.
@@ -53,23 +31,47 @@ class SPIFinderReporter(Tool):
         super(SPIFinderReporter, self)._check_input()
         self._fastq_results_present = True if 'spifinder_fastq' in self._input_informs else False
         if self._fastq_results_present and 'JSON_FASTQ' not in self._tool_inputs:
-            raise InvalidInputSpecificationError("Fastq analysis results were found in the input infroms; JSON_FASTQ is required as input for this tool.")
+            raise InvalidInputSpecificationError("Fastq analysis results were found in the input infroms; "
+                                                 "JSON_FASTQ is required as input for this tool.")
         if 'JSON_FASTA' not in self._tool_inputs:
             raise InvalidInputSpecificationError("JSON_FASTA is missing but always required as input for this tool.")
         if 'TSV_output' not in self._tool_inputs:
             raise InvalidInputSpecificationError("TSV_output is missing but always required as input for this tool.")
         if 'TSV_documentation' not in self._tool_inputs:
-            raise InvalidInputSpecificationError("TSV_documentation is missing but always required as input for this tool.")
+            raise InvalidInputSpecificationError("TSV_documentation is missing but always required as input for "
+                                                 "this tool.")
+
+    def _execute_tool(self) -> None:
+        """
+        Executes this tool.
+        :return: None
+        """
+        self._section = HtmlReportSection(SPIFinderReporter.TITLE,
+                                          subtitle=self._input_informs['spifinder_fasta']['_name'])
+        # Add Fastq results 'section'
+        self._section.add_header('HITS - KMA on raw reads (FASTQ)', 3)
+        if self._fastq_results_present:
+            self.__add_hits_results(self._tool_inputs['JSON_FASTQ'][0].path, 'fastq')
+        else:
+            self._section.add_paragraph('SPIFinder raw reads results not available in FASTA-input mode')
+        self._section.add_horizontal_line()
+        # Add mandatory Fasta results 'section'
+        self._section.add_header('HITS - BLAST on the assembly (FASTA)', 3)
+        self.__add_hits_results(self._tool_inputs['JSON_FASTA'][0].path, 'fasta')
+
+        self.__add_file_output()
+
+        self._tool_outputs['VAL_HTML'] = [ToolIOValue(self._section)]
 
     def __add_hits_results(self, res_file_path: Path, mode: str) -> None:
         """
-        Adds the table with the antibiotic sensitivity
+        Adds the table with the antibiotic sensitivity.
         :param res_file_path: path to the results file
         :param mode: either fasta or fastq
         :return: None
         """
-        table_header = ['SPI', 'identity', 'HSP/locus length', 'Contig', 'Positions in contig', 'Accession', 'Insertion site',
-                  'Category function']
+        table_header = ['SPI', 'identity', 'HSP/locus length', 'Contig', 'Positions in contig', 'Accession',
+                        'Insertion site', 'Category function']
         data = []
 
         # Fasta gives more meaningful output fields than Fastq; the not meaningful ones are filtered out
@@ -98,7 +100,7 @@ class SPIFinderReporter(Tool):
                 input_cols = [spi[hit]['SPI'], f"{spi[hit]['identity']:.2f}",
                               f"{spi[hit]['HSP_length']}/{spi[hit]['template_length']}" if spi[hit].get('HSP_length') else spi[hit]['coverage'],
                               spi[hit].get('contig_name', ''),
-                              spi[hit].get('contig_name', ''),
+                              spi[hit].get('positions_in_contig', ''),
                               spi[hit]['accession'], spi[hit]['insertion_site'], spi[hit]['category_function']]
                 input_cols = [input_cols[index] for index in column_to_keep]
                 for i in range(len(input_cols)):
