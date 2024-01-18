@@ -43,7 +43,7 @@ class GeneDetectionBlastHit(GeneDetectionHitBase):
         Returns the names of the columns of the tabular output.
         :return: List of column names
         """
-        columns = ['DB_cluster', 'Locus', '% Identity', 'HSP/Locus length', 'Contig', 'Position in contig', 'Accession']
+        columns = ['DB_cluster', 'Locus', '% Identity', 'HSP/Locus length', 'Sequence (read or contig)', 'Position in sequence', 'Accession']
         for metadata in self._metadata:
             columns.insert(-1, metadata['name'])
         return columns
