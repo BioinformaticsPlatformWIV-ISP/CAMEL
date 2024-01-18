@@ -30,12 +30,10 @@ class TestSeqtk(CamelTestSuite):
         Testing Seqtk seq -a with fastq file.
         """
         seqtk_convert = SeqtkConvert(self.camel)
-        seqtk_convert.add_input_files({'FASTQ': [TestSeqtk.FILE_FASTQ_A]})
+        seqtk_convert.add_input_files({'FASTQ': [TestSeqtk.FILE_FASTQ]})
         seqtk_convert.update_parameters(output_file='sequences.fasta')
         seqtk_convert.run(self.running_dir)
-        #self.verify_output_files(seqtk_convert, 'FASTA')
-        self.assertIn('stats', seqtk_convert.informs)
-        self.assertEqual(len(seqtk_convert.informs['stats']), 2)
+        self.verify_output_files(seqtk_convert, 'FASTA')
 
 if __name__ == '__main__':
     unittest.main()

@@ -204,6 +204,35 @@ class TestGeneDetection(CamelTestSuite):
         main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)
 
+    def test_gene_detection_blast_nanopore(self) -> None:
+        """
+        Tests the gene detection workflow with BLAST detection on Nanopore data, including trimming.
+        :return: None
+        """
+        pass
+
+    def test_gene_detection_blast_nanopore_reads(self) -> None:
+        """
+        Tests the gene detection workflow with BLAST detection on Nanopore reads (without assembling step).
+        :return: None
+        """
+        path_report_out = self.running_dir / 'report' / 'report.html'
+        args = [
+            '--fastq-se', str(TestGeneDetection.input_fastq_by_key['nanopore'][0]),
+            '--database-dir', str(TestGeneDetection.input_gene_detection_db),
+            '--output-html', str(path_report_out),
+            '--output-dir', str(path_report_out.parent),
+            '--working-dir', str(self.running_dir),
+            '--read-type', 'nanopore',
+            '--trim-reads',
+            '--blast-reads',
+            '--blast-filtering-method', 'score',
+            '--blast-score-nb-of-hits', '10'
+        ]
+        main = MainGeneDetection(args)
+        main.run()
+        self.assertGreater(path_report_out.stat().st_size, 0)
+
     # KMA
     def test_gene_detection_kma_illumina(self) -> None:
         """

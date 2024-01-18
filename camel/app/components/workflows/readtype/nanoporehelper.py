@@ -1,12 +1,16 @@
 import argparse
 from pathlib import Path
-from typing import Union
+from typing import Union, List, Dict
+
+import logging
 
 from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.components.html.htmlreport import HtmlReport
 from camel.app.components.workflows.readtype.basereadtypehelper import BaseReadTypeHelper
 from camel.app.components.workflows.trimmingontwrapper import TrimmingONTWrapper
 from camel.app.components.workflows.utils.fastqinput import FastqInput
+from camel.app.io.toolio import ToolIO
+from camel.app.io.tooliodirectory import ToolIODirectory
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.loggers import logger
 from camel.app.tools.seqtk.seqtkconvert import SeqtkConvert
