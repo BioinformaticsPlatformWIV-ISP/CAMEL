@@ -28,7 +28,7 @@ def sistr_output_parser(prediction: Dict[str, Any], locus: str, antigen: str, hi
     :param header_locus: the header for both the tsv and json dictionary values
     :return: None
     """
-    is_missing = str(prediction['is_missing']) == 'False'
+    is_missing = str(prediction['is_missing'])
     hit_properties = [
         locus,
         prediction[antigen if antigen != 'o' else 'serogroup'].replace(',', ';'),
@@ -49,27 +49,31 @@ def sistr_output_parser(prediction: Dict[str, Any], locus: str, antigen: str, hi
     hits_dict_json[f'hits_serotype_{antigen}_{locus}'] = json_dict
 
 
-def seqsero2_output_parser(seqsero_file: Path, seqsero2_mode: str, informs_dict: Dict[str, str]) -> \
+def seqsero2_output_parser(seqsero2_file: Path, seqsero2_mode: str, informs_dict: Dict[str, str]) -> \
         Tuple[Dict[str, Any], List[str]]:
     """
     Parses the output file of a SeqSero2 run, uniform over all three modes.
-    :param seqsero_file: path of the output file
+    :param seqsero2_file: path of the output file
     :param seqsero2_mode: mode of the SeqSero2 run, either seqsero2_kmer, seqsero2_allele, or seqsero2_kmerread
-    :param informs_dict: corresponding informs dictionary of the given seqsero_file and mode
+    :param informs_dict: corresponding informs dictionary of the given seqsero2_file and mode
     :return: tuple of 1. intermediate dictionary to be combined and then written to json file and
     2. List of result string to be written to tsv file
     """
     json_dict = {}
-    with seqsero_file.open('r') as handle:
+    with seqsero2_file.open('r') as handle:
         tsv_results = handle.readlines()[2:8]
-        tsv_results = [re.sub(r'([^ ]) ([^ ])', r'\1_\2', res).strip("\n") for res in tsv_results]
-        tsv_results = [res.replace(':\t', '\t') for res in tsv_results]
-        tsv_results = [seqsero2_mode + "_" + x for x in tsv_results]
-        for res in tsv_results:
-            json_dict[res.split('\t')[0]] = res.split('\t')[1]
-    inter_json_dict = {seqsero2_mode: {**json_dict, 'informs_tools': {
-        informs_dict.get('_tool', informs_dict['_name']): {'_name': informs_dict['_name'], '_version': informs_dict['_version'],
-                                '_command': informs_dict['_command'], '_tag': informs_dict['_tag']}},
-                                       'informs_dbs': {'last_updated': informs_dict['last_update_date'],
-                                                       'name': informs_dict['key'], 'title': informs_dict['key']}}}
+    tsv_results = [re.sub(r'([^ ]) ([^ ])', r'\1_\2', res).strip("\n") for res in tsv_results]
+    tsv_results = [res.replace(':\t', '\t') for res in tsv_results]
+    tsv_results = [seqsero2_mode + "_" + x for x in tsv_results]
+    for res in tsv_results:
+        json_dict[res.split('\t')[0]] = res.split('\t')[1]
+    inter_json_dict = {
+        seqsero2_mode: {
+            **json_dict,
+            'informs_tools': {informs_dict.get('_tool', informs_dict['_name']): {
+                '_name': informs_dict['_name'], '_version': informs_dict['_version'],
+                '_command': informs_dict['_command'], '_tag': informs_dict['_tag']}},
+            'informs_dbs': {
+                'last_updated': informs_dict['last_update_date'], 'name': informs_dict['key'],
+                'title': informs_dict['key']}}}
     return inter_json_dict, tsv_results

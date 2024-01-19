@@ -45,8 +45,8 @@ rule serotyping_seqsero2_wildcards:
         FASTA = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA,  # todo change io to fasta input from anywhere (e.g. human read scrubbing) using link fasta in main.smk
         IO = Path(config['working_dir']) / 'fq_dict.io' if 'fasta' not in config['input'] else []  # todo change io to fastq input from anywhere (e.g. human read scrubbing) using link fastq in main.smk
     output:
-        TXT = Path(config['working_dir']) / 'serotyping' / '_'.join(['serotyping_seqsero2', '{mode}']) / 'SeqSero2_result.io',
-        INFORMS = Path(config['working_dir']) / 'serotyping' / '_'.join(['serotyping_seqsero2', '{mode}']) / 'informs.io'
+        TXT = Path(config['working_dir']) / 'serotyping' / f'serotyping_seqsero2_{"{mode}"}' / 'SeqSero2_result.io',
+        INFORMS = Path(config['working_dir']) / 'serotyping' / f'serotyping_seqsero2_{"{mode}"}' / 'informs.io'
     params:
         seqsero2_mode = lambda wildcards: wildcards.mode,
         running_dir = lambda wildcards: Path(config['working_dir']) / 'serotyping' / f'serotyping_seqsero2_{wildcards.mode}',
@@ -118,9 +118,19 @@ rule serotyping_dump_summary_info:
                 hits_dict_json[variable] = {item: '-' for item in header_locus}
 
             with output.VAL_TSV.open('w') as handle:
-                handle.writelines('\t'.join([f"sistr_{k}", v]) + '\n' for k, v in hits_dict_tsv.items())
+                for k, v in hits_dict_tsv.items():
+                    line = f"sistr_{k}\t{v}\n"
+                    handle.write(line)
             informs_sistr = SnakemakeUtils.load_object(Path(input.INFORMS_sistr))
-            meta_json_dict.update({'sistr' : {**hits_dict_json, 'informs_tools' : { informs_sistr.get('_tool', informs_sistr['_name']): {'_name': informs_sistr['_name'], '_version': informs_sistr['_version'], '_command': informs_sistr['_command']}}, 'informs_dbs' : {'last_updated': informs_sistr['last_update_date'], 'name': informs_sistr['key'], 'title': informs_sistr['key']} }})
+            meta_json_dict.update({
+                'sistr' : {
+                    **hits_dict_json,
+                    'informs_tools' : { informs_sistr.get('_tool', informs_sistr['_name']): {
+                        '_name': informs_sistr['_name'], '_version': informs_sistr['_version'],
+                        '_command': informs_sistr['_command']}},
+                    'informs_dbs' : {
+                        'last_updated': informs_sistr['last_update_date'], 'name': informs_sistr['key'],
+                        'title': informs_sistr['key']} }})
 
         # parse obligate seqsero2 output
         inter_json_dict, tsv_results = serotyping_salmonella.seqsero2_output_parser(SnakemakeUtils.load_object(Path(input.TXT_seqsero2_kmer))[0].path, 'seqsero2_kmer', SnakemakeUtils.load_object(Path(input.INFORMS_seqsero2_kmer)))
@@ -136,7 +146,8 @@ rule serotyping_dump_summary_info:
                 inter_json_dict, tsv_results = serotyping_salmonella.seqsero2_output_parser(args_tuple[0], args_tuple[1], args_tuple[2])
                 meta_json_dict.update(inter_json_dict)
                 with output.VAL_TSV.open('a') as handle:
-                    handle.writelines(item + '\n' for item in tsv_results)
+                    for item in tsv_results:
+                        handle.write(item + '\n')
 
         with output.JSON.open('w') as handle:
             handle.write(json.dumps(meta_json_dict))

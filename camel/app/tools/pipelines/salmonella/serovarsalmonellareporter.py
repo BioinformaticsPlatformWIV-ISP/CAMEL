@@ -1,11 +1,12 @@
 import json
 from pathlib import Path
+
+from camel.app.camel import Camel
 from camel.app.components.html.htmlelement import HtmlElement
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.html.htmltablecell import HtmlTableCell
 from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.tools.tool import Tool
-from camel.app.camel import Camel
 
 
 class SerovarSalmonellaReporter(Tool):
@@ -70,10 +71,10 @@ class SerovarSalmonellaReporter(Tool):
         :param: antigen, the salmonella antigen in lowercase, either o, h1, or h2
         :return: None
         """
+        table_data = []
+        header = ['Locus', '% Identity', 'HSP/Locus length', 'Contig', 'Position in contig', 'Predicted serotype']
         with self._tool_inputs['JSON_SISTR'][0].path.open('r') as json_file:
             handle = json.load(json_file)[0]
-            table_data = []
-            header = ['Locus', '% Identity', 'HSP/Locus length', 'Contig', 'Position in contig', 'Predicted serotype']
         if antigen == 'h1':
             best_hits_per_locus = [handle['h1_flic_prediction']]
             locus_full = ['fliC']
@@ -82,15 +83,20 @@ class SerovarSalmonellaReporter(Tool):
             best_hits_per_locus = [handle['h2_fljb_prediction']]
             locus_full = ['fljB']
             locus_short = ['h2']
-        else:  # antigen == 'o':
+        elif antigen == 'o':
             best_hits_per_locus = [handle['serogroup_prediction']['wzx_prediction'],
                                    handle['serogroup_prediction']['wzy_prediction']]
             locus_full = ['wzx', 'wzy']
             locus_short = ['serogroup']
-        not_any_best_hits = True
+        else:
+            raise ValueError('antigen needs to be either h1, h2, or o !')
+
+        any_best_hits_found = False
+        # loop over best hits per locus; h1 and h2 will both only have one best hit each,
+        # o has two loci, and therefore two best hits
         for index, best_hit in enumerate(best_hits_per_locus):
             if str(best_hit['is_missing']) == 'False':
-                not_any_best_hits = False
+                any_best_hits_found = True
                 if best_hit['top_result']['pident'] == 100.0 and \
                         best_hit['top_result']['length'] == best_hit['top_result']['qlen']:
                     color = 'green'
@@ -115,14 +121,13 @@ class SerovarSalmonellaReporter(Tool):
                     row = [HtmlTableCell(locus_full[index], 'red'),
                            HtmlElement('td', 'No match found', attributes=[('colspan', 5), ('class', 'red')])]
                     table_data.append(row)
-                    
-        any_best_hits_found = not not_any_best_hits
+
         if any_best_hits_found:
             self._section.add_table(table_data, header, [('class', 'data')])
             if antigen == 'o':
                 self._section.add_paragraph(' '.join(['Predicted O antigen based on H antigens and serogroup:',
                                                       handle['o_antigen']]))
-        else:  # if not_any_best_hits:
+        else:  # if not any_best_hits_found:
             if antigen == 'h1' or antigen == 'h2':
                 self._section.add_paragraph(f'{locus_full[0]}: No match found')
             else:
@@ -172,21 +177,22 @@ class SerovarSalmonellaReporter(Tool):
     def ___add_table_serotype_seqsero(self, input_file_path: Path) -> None:
         """
         Generates and adds the table for seqsero2 tool.
+        :param input_file_path: the text file containing the results for a seqsero2 run in any mode.
         :return: None
         """
-        with input_file_path.open('r') as txt_file:
-            lines = txt_file.readlines()
-            resultsdict = {}
-            for line in lines:
-                parts = line.split('\t')
-                resultsdict[parts[0]] = parts[1]
-            table_data = []
-            header = ['O-antigen', 'H1-antigen (fliC)', 'H2-antigen (fljB)', 'Antigenic formula', 'Serotype']
-            row = [resultsdict['O antigen prediction:'], resultsdict['H1 antigen prediction(fliC):'],
-                   resultsdict['H2 antigen prediction(fljB):'], resultsdict['Predicted antigenic profile:'],
-                   resultsdict['Predicted serotype:']]
-            table_data.append(row)
-            self._section.add_table(table_data, header, [('class', 'data')])
+        with input_file_path.open('r') as handle:
+            lines = handle.readlines()
+        resultsdict = {}
+        for line in lines:
+            parts = line.split('\t')
+            resultsdict[parts[0]] = parts[1]
+        table_data = []
+        header = ['O-antigen', 'H1-antigen (fliC)', 'H2-antigen (fljB)', 'Antigenic formula', 'Serotype']
+        row = [resultsdict['O antigen prediction:'], resultsdict['H1 antigen prediction(fliC):'],
+               resultsdict['H2 antigen prediction(fljB):'], resultsdict['Predicted antigenic profile:'],
+               resultsdict['Predicted serotype:']]
+        table_data.append(row)
+        self._section.add_table(table_data, header, [('class', 'data')])
 
     def __add_file_output(self) -> None:
         """

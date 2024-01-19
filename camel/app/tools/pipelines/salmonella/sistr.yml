@@ -1,4 +1,5 @@
 dependencies: [blast/2.6.0, sistr/1.1.1]
 parameters:
   threads: {default: true, mandatory: false, option: --threads, value: '1'}
+  output_filename: {default: true, mandatory: true, option: -o, value: sistr_output.json}
 tool_command: sistr

@@ -1,9 +1,9 @@
-from pathlib import Path
 import json
+from pathlib import Path
 
 from camel.app.camel import Camel
-from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.tool import Tool
 
@@ -44,7 +44,7 @@ class Sistr(Tool):
         Sets the name of the output files
         :return: None
         """
-        self._tool_outputs['JSON'] = [ToolIOFile(self.folder / 'sistr_output.json')]
+        self._tool_outputs['JSON'] = [ToolIOFile(self.folder / self._parameters['output_filename'].value)]
 
     def __build_command(self) -> None:
         """
@@ -52,8 +52,13 @@ class Sistr(Tool):
         :return: None
         """
         self._command.command = ' '.join([
-            self._tool_command, '-f json --use-full-cgmlst-db --qc -v -o', str(self.folder / 'sistr_output.json'),
-            str(self._tool_inputs['FASTA'][0].path), ' '.join(self._build_options())
+            self._tool_command,
+            '-f json',
+            '--use-full-cgmlst-db',
+            '--qc',
+            '-v',
+            *self._build_options(),
+            str(self._tool_inputs['FASTA'][0].path)
             ])
 
     def _check_command_output(self) -> None:

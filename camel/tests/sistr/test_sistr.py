@@ -1,9 +1,10 @@
 import unittest
 from pathlib import Path
+
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
-from camel.app.tools.pipelines.salmonella.sistr import Sistr
 from camel.app.io.tooliodirectory import ToolIODirectory
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.tools.pipelines.salmonella.sistr import Sistr
 
 
 class TestSistr(CamelTestSuite):

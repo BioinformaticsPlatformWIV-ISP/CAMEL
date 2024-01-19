@@ -54,7 +54,7 @@ class TestSeqsero2(CamelTestSuite):
         seqserotool = SeqSero2(self.camel)
         seqserotool.add_input_files({
             'FASTQ_PE': [ToolIOFile(x) for x in self.input_pe_reads],
-            'DIR': [ToolIODirectory(Path('/db/pipelines/salmon  ella/seqsero2/1.2.1/seqsero2_db'))],
+            'DIR': [ToolIODirectory(Path('/db/pipelines/salmonella/seqsero2/1.2.1/seqsero2_db'))],
             'MODE': [ToolIOValue('Kmerread')]
         })
         seqserotool.run(self.running_dir)
