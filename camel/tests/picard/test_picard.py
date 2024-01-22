@@ -20,6 +20,7 @@ from camel.app.tools.picard.samtofastq import SamToFastq
 from camel.app.tools.picard.setnmmdanduqtags import SetNmMdAndUqTags
 from camel.app.tools.picard.sortsam import SortSam
 from camel.app.tools.picard.validatesamfile import ValidateSamFile
+from camel.tests import minOSVersion
 
 
 class TestPicard(CamelTestSuite):
@@ -67,6 +68,7 @@ class TestPicard(CamelTestSuite):
         picard_calculatereadgroupchecksum.run(self.running_dir)
         self.verify_output_files(picard_calculatereadgroupchecksum, 'TXT_checksum')
 
+    @minOSVersion('jammy')
     def test_picard_collectmultiplemetrics(self) -> None:
         """
         Test Picard CollectMultipleMetrics
