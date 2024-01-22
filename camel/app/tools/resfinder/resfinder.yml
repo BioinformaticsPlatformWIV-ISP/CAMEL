@@ -1,4 +1,4 @@
-dependencies: [resfinder/4.1.11, blast/2.14.0, kma/1.4.12a]
+dependencies: [resfinder/4.4.2, blast/2.14.0, kma/1.4.12a]
 parameters:
   acquired: {default: false, mandatory: false, option: --acquired, value: ''}
   blast_path: {default: false, mandatory: false, option: --blastPath, value: ''}
@@ -17,4 +17,4 @@ parameters:
   threshold_point: {default: false, mandatory: false, option: --threshold_point, value: ''}
   unknown_mut: {default: false, mandatory: false, option: --unknown_mut, value: false}
   acq_overlap: {default: false, mandatory: false, option: --acq_overlap, value: ''}
-tool_command: run_resfinder.py
+tool_command: python -m resfinder
