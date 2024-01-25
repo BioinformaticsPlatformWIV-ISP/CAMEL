@@ -7,7 +7,6 @@ from camel.app.tools.tool import Tool
 
 
 class Polca(Tool):
-
     """
     Polishing assembly with short reads using polca.
     """
@@ -18,7 +17,7 @@ class Polca(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super().__init__('Polca', '4.1.0', camel)
+        super().__init__('POLCA', '4.1.0', camel)
 
     def _execute_tool(self) -> None:
         """
@@ -48,17 +47,20 @@ class Polca(Tool):
         Builds the command to run polca.
         :return: None
         """
-        self._command.command = ' '.join([self._tool_command,
-                                          f"-a {self._tool_inputs['FASTA'][0]} "
-                                          f"-r {self._tool_inputs['FASTQ_PE'][0]} ",
-                                          f"-r {self._tool_inputs['FASTQ_PE'][1]} ",
-                                          *self._build_options()])
+        self._command.command = ' '.join([
+            self._tool_command,
+            f"-a {self._tool_inputs['FASTA'][0]}",
+            f"-r {self._tool_inputs['FASTQ_PE'][0]}",
+            f"-r {self._tool_inputs['FASTQ_PE'][1]}",
+            *self._build_options()])
 
     def _check_command_output(self) -> None:
         """
         Checks command output.
-        :return: None
+        :return: False or None
         """
+        if 'fasta.vcf: No such file or directory' in self._command.stderr:
+            raise FileNotFoundError('No VCF output generated')
         if self._command.returncode != 0:
             raise ToolExecutionError(f"Command execution failed (Exit code: {self._command.returncode})")
 
@@ -66,5 +68,9 @@ class Polca(Tool):
         """
         Collects the tool output.
         """
-        fasta_output = f'{self._tool_inputs["FASTA"][0].path.name}.PolcaCorrected.fa'
-        self._tool_outputs['FASTA'] = [ToolIOFile(self.folder / f'{fasta_output}')]
+        fasta_output = self.folder / f'{self._tool_inputs["FASTA"][0].path.name}.PolcaCorrected.fa'
+        try:
+            self._check_command_output() is False
+        except FileNotFoundError:
+            fasta_output.symlink_to(self._tool_inputs['FASTA'][0].path)
+        self._tool_outputs['FASTA'] = [ToolIOFile(fasta_output)]

@@ -8,7 +8,6 @@ from camel.app.tools.tool import Tool
 
 
 class PolypolishInsertFilter(Tool):
-
     """
     Insert size filtering aims to use read pairing to remove spurious alignments, i.e.,
     alignments of a read to the wrong instance of a repeat.
@@ -27,7 +26,7 @@ class PolypolishInsertFilter(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super().__init__('PolypolishInsertFilter', '0.5.0', camel)
+        super().__init__('PolypolishInsertFilter', '0.6.0', camel)
 
     def _execute_tool(self) -> None:
         """
@@ -59,12 +58,13 @@ class PolypolishInsertFilter(Tool):
         """
         output_sam_1 = self.folder / f'{prefix}_filtered_1.sam'
         output_sam_2 = self.folder / f'{prefix}_filtered_2.sam'
-        self._command.command = ' '.join([self._tool_command,
-                                          *self._build_options(),
-                                          f'--in1 {sam_input[0]}',
-                                          f'--in2 {sam_input[1]}',
-                                          f'--out1 {output_sam_1}',
-                                          f'--out2 {output_sam_2}'])
+        self._command.command = ' '.join([
+            self._tool_command,
+            *self._build_options(),
+            f'--in1 {sam_input[0]}',
+            f'--in2 {sam_input[1]}',
+            f'--out1 {output_sam_1}',
+            f'--out2 {output_sam_2}'])
 
     def _check_command_output(self) -> None:
         """
