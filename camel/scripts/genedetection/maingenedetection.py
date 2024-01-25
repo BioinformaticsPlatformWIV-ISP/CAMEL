@@ -114,6 +114,7 @@ class MainGeneDetection(object):
                 'min_percent_identity': self._args.blast_min_percent_identity,
                 'min_coverage': self._args.blast_min_percent_coverage,
                 'task': self._args.blast_task,
+                'blast_reads': True if self._args.blast_reads else False,
                 'filtering_method': self._args.blast_filtering_method,
                 'score_nb_of_hits': self._args.blast_score_nb_of_hits
             }}})
