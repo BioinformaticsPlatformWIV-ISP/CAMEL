@@ -29,7 +29,7 @@ class AnalysisStats:
 
 class ValidationUtils(object):
     """
-    This class contains utility function to help with the validation of tools / pipelines.
+    This class contains utility functions to help with the validation of tools / pipelines.
     """
 
     @staticmethod

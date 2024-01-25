@@ -14,7 +14,7 @@ from camel.app.components.filesystemhelper import FileSystemHelper
 class FastqUtils(object):
 
     """
-    This class contains utility function to work with FASTQ files.
+    This class contains utility functions to work with FASTQ files.
     """
 
     @staticmethod

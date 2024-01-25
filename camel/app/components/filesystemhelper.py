@@ -10,7 +10,7 @@ from camel.app.loggers import logger
 
 class FileSystemHelper(object):
     """
-    This class contains utility function to work with the file system.
+    This class contains utility functions to work with the file system.
     """
 
     TIMESTAMP_FILENAME = "%Y%m%d-%H%M%S"
