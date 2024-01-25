@@ -19,6 +19,7 @@ class TestSPIFinder(CamelTestSuite):
     input_fasta_file = test_file_dir / 'assembly_filtered.fasta'
     output_file_spifinder_fastq = test_file_dir / 'output_spifinder_fastq.json'
     output_file_spifinder_fasta = test_file_dir / 'output_spifinder_fasta.json'
+    db_path = Path('/db/pipelines/salmonella/spifinder/genomicepidemiology-spifinder_db-db102668b704')
 
     def test_spifinder_fastq(self) -> None:
         """
@@ -28,8 +29,7 @@ class TestSPIFinder(CamelTestSuite):
         spifinder = SPIFinder(self.camel)
         spifinder.add_input_files({
             'FASTQ_PE': [ToolIOFile(x) for x in self.input_pe_reads],
-            'DIR': [ToolIODirectory(Path('/db/pipelines/salmonella/spifinder/genomicepidemiology-'
-                                         'spifinder_db-db102668b704'))]
+            'DIR': [ToolIODirectory(self.db_path)]
         })
         spifinder.run(self.running_dir)
         self.verify_output_files(spifinder, 'JSON')
@@ -42,8 +42,7 @@ class TestSPIFinder(CamelTestSuite):
         spifinder = SPIFinder(self.camel)
         spifinder.add_input_files({
             'FASTA': [ToolIOFile(Path(TestSPIFinder.input_fasta_file))],
-            'DIR': [ToolIODirectory(Path('/db/pipelines/salmonella/spifinder/genomicepidemiology-'
-                                         'spifinder_db-db102668b704'))]
+            'DIR': [ToolIODirectory(self.db_path)]
         })
         spifinder.run(self.running_dir)
         self.verify_output_files(spifinder, 'JSON')

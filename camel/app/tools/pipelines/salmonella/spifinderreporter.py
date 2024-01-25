@@ -31,7 +31,7 @@ class SPIFinderReporter(Tool):
         super(SPIFinderReporter, self)._check_input()
         self._fastq_results_present = True if 'spifinder_fastq' in self._input_informs else False
         if self._fastq_results_present and 'JSON_FASTQ' not in self._tool_inputs:
-            raise InvalidInputSpecificationError("Fastq analysis results were found in the input infroms; "
+            raise InvalidInputSpecificationError("Fastq analysis results were found in the input informs; "
                                                  "JSON_FASTQ is required as input for this tool.")
         if 'JSON_FASTA' not in self._tool_inputs:
             raise InvalidInputSpecificationError("JSON_FASTA is missing but always required as input for this tool.")
@@ -78,10 +78,12 @@ class SPIFinderReporter(Tool):
         if mode == 'fasta':
             column_to_keep = list(range(len(table_header)))
             col_ncbi = table_header.index('Accession')
-        else:  # mode == 'fastq':
+        elif mode == 'fastq':
             column_to_keep = [0, 1, 2, 5, 6, 7]
             table_header_subset = [table_header[index] for index in column_to_keep]
             col_ncbi = table_header_subset.index('Accession')
+        else:
+            raise ValueError(f"This function's parameter 'mode' must be either fastq or fasta, current value is {mode}")
 
         with open(res_file_path) as handle:
             json_file = json.load(handle)
@@ -90,27 +92,45 @@ class SPIFinderReporter(Tool):
             self._section.add_paragraph('No hits found.')
         else:
             for hit in spi.keys():
-                if spi[hit]['identity'] == 100:
-                    color = 'green'
-                elif spi[hit]['identity'] >= 95:
-                    color = 'lightgreen'
-                else:
-                    color = 'yellow'
+                color = self.___assign_hit_color(spi[hit]['identity'])
                 row = []
-                input_cols = [spi[hit]['SPI'], f"{spi[hit]['identity']:.2f}",
-                              f"{spi[hit]['HSP_length']}/{spi[hit]['template_length']}" if spi[hit].get('HSP_length') else spi[hit]['coverage'],
-                              spi[hit].get('contig_name', ''),
-                              spi[hit].get('positions_in_contig', ''),
-                              spi[hit]['accession'], spi[hit]['insertion_site'], spi[hit]['category_function']]
+                input_cols = [spi[hit]['SPI'],  # SPI
+                              f"{spi[hit]['identity']:.2f}",  # identity
+                              f"{spi[hit]['HSP_length']}/{spi[hit]['template_length']}" if spi[hit].get('HSP_length')
+                              else spi[hit]['coverage'],  # coverage
+                              spi[hit].get('contig_name', ''),  # contig
+                              spi[hit].get('positions_in_contig', ''),  # positions in contig
+                              spi[hit]['accession'],  # accession
+                              spi[hit]['insertion_site'],  # insertion site
+                              spi[hit]['category_function']]  # category function
+
+                # Keep columns based on input mode
                 input_cols = [input_cols[index] for index in column_to_keep]
-                for i in range(len(input_cols)):
-                    if i == col_ncbi:  # if it's the accession number then add link
-                        link = f'https://www.ncbi.nlm.nih.gov/nuccore/{input_cols[i]}'
-                        row.append(HtmlTableCell(input_cols[i], color, link=link))
-                    else:
-                        row.append(HtmlTableCell(input_cols[i], color))
+
+                # Add all values to the row
+                row.append(HtmlTableCell(input_cols[i], color) for i in range(len(input_cols)))
+
+                # Add a href (blue clickable url redirect) to the ncbi accession column by overwriting it
+                row[col_ncbi] = HtmlTableCell(input_cols[col_ncbi], color,
+                                              link=f'https://www.ncbi.nlm.nih.gov/nuccore/{input_cols[col_ncbi]}')
+
                 data.append(row)
+
             self._section.add_table(data, [table_header[index] for index in column_to_keep], [('class', 'data')])
+
+    def ___assign_hit_color(self, percentage_identity: int) -> str:
+        """
+        Assigns a color according to percentage thresholds.
+        :param percentage_identity: percentage identity for a hit.
+        :return: color as str
+        """
+        if percentage_identity == 100:
+            color = 'green'
+        elif percentage_identity >= 95:
+            color = 'lightgreen'
+        else:
+            color = 'yellow'
+        return color
 
     def __add_database_information(self) -> None:
         """

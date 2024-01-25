@@ -29,29 +29,39 @@ def spifinder_json_parser(json_file_path: Path, tool_informs: Dict[str, Any], mo
     """
     with json_file_path.open('r') as file_handle:
         json_file = json.load(file_handle)
-    results = []
+
+    # define header for TSV:
+    header_part1 = ['SPI', 'identity', 'coverage']
+    if mode == 'fasta':
+        header_part2 = ['contig_name', 'positions_in_contig', 'accession', 'insertion_site',
+                        'category_function']
+    elif mode == 'fastq':
+        header_part2 = ['accession', 'insertion_site', 'category_function']
+    else:
+        raise ValueError(f"This function's parameter 'mode' must be either fastq or fasta, current value is {mode}")
+
+    results_tsv = []
     spi = json_file['spifinder']["results"]['Salmonella Pathogenicity Islands']['SPI']
     if spi == "No hit found":
-        inter_json_dict = {f"spifinder_{mode}": {'results': results}}
+        inter_json_dict = {f"spifinder_{mode}": {'results': results_tsv}}
     else:
         hit_dictionary_list = []
-        for hits in spi.keys():
+        for hit in spi.keys():
             json_dict = {}
-            header_part1 = ['SPI', 'identity']
-            if mode == 'fasta':
-                header_part2 = ['contig_name', 'positions_in_contig', 'accession', 'insertion_site',
-                                'category_function']
-            else:  # mode == 'fastq':
-                header_part2 = ['accession', 'insertion_site', 'category_function']
-            results.append([spi[hits][hit_property] for hit_property in header_part1] +
-                           [f"{spi[hits]['HSP_length']}/{spi[hits]['template_length']}"] +
-                           [spi[hits][hit_property] for hit_property in header_part2])
+
+            # Add coverage to spi hit dictionary because it doesn't exist
+            spi[hit]['coverage'] = f"{spi[hit]['HSP_length']}/{spi[hit]['template_length']}"
+
             for hit_property in header_part1 + header_part2:
-                json_dict[hit_property] = spi[hits][hit_property]
-            json_dict['coverage'] = f"{spi[hits]['HSP_length']}/{spi[hits]['template_length']}"
+                # add to tsv
+                results_tsv.append(spi[hit][hit_property])
+                # add to json
+                json_dict[hit_property] = spi[hit][hit_property]
+
             hit_dictionary_list.append(json_dict)
         inter_json_dict = {f"spifinder_{mode}": {'results': hit_dictionary_list}}
 
+    # Add tool and db metadata to json dictionary
     inter_json_dict[f"spifinder_{mode}"]['informs_tools'] = {
         tool_informs.get('_tool', tool_informs['_name']): {'_name': tool_informs['_name'],
                                                            '_version': tool_informs['_version'],
@@ -59,4 +69,4 @@ def spifinder_json_parser(json_file_path: Path, tool_informs: Dict[str, Any], mo
                                                            '_tag': tool_informs['_tag']}}
     inter_json_dict[f"spifinder_{mode}"]['informs_dbs'] = {'last_updated': tool_informs['last_update_date'],
                                                            'name': tool_informs['key'], 'title': tool_informs['key']}
-    return results, inter_json_dict
+    return results_tsv, inter_json_dict
