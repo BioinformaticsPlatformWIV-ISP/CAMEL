@@ -88,7 +88,7 @@ rule report_combine_all:
         report_prodigal = Path(config['working_dir']) / (bacmet.OUTPUT_PRODIGAL_REPORT if 'bacmet' in config['analyses'] else bacmet.OUTPUT_PRODIGAL_REPORT_EMPTY),
         report_bacmet = Path(config['working_dir']) / (bacmet.OUTPUT_BACMET_REPORT if 'bacmet' in config['analyses'] else bacmet.OUTPUT_BACMET_REPORT_EMPTY),
         # Typing
-        report_rmlst = sequence_typing.get_sequence_typing_report('rmlst',config),
+        report_rmlst = sequence_typing.get_sequence_typing_report('rmlst', config),
         report_mlst = sequence_typing.get_sequence_typing_report('mlst', config),
         report_mlst_bezdicek = sequence_typing.get_sequence_typing_report('mlst_bezdicek', config),
         report_cgmlst = sequence_typing.get_sequence_typing_report('cgmlst', config),
@@ -126,10 +126,10 @@ rule report_combine_all:
         # Add report content
         report_structure = []
         ReportPipeline.add_content_trim_basic_qc(
-            report_structure,params.input_type,input.reports_downsampling,input.reports_trimming)
+            report_structure, params.input_type,input.reports_downsampling,input.reports_trimming)
         report_structure.append(('Assembly', 'assembly', [Path(input.report_quast)]))
         ReportPipeline.add_content_contamination_check(
-            report_structure,params.input_type,input.reports_contamination,input.report_confindr)
+            report_structure, params.input_type,input.reports_contamination,input.report_confindr)
         report_structure.append(('Advanced QC', 'adv_qc', [Path(input.report_adv_qc)]))
 
         # Typing (additional MLST scheme for E. faecium)
@@ -206,4 +206,4 @@ rule link_genomic_context:
         TSV = Path(config['working_dir']) / 'mob_suite' / 'genomic_context' / 'input' / 'tsv.io',
         INFORMS = Path(config['working_dir']) / 'mob_suite' / 'genomic_context' / 'input' / 'informs.io'
     run:
-        mobsuite.collect_genomic_context_input(input,Path(output.TSV),Path(output.INFORMS))
+        mobsuite.collect_genomic_context_input(input, Path(output.TSV), Path(output.INFORMS))
