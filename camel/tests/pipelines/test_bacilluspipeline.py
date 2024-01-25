@@ -105,7 +105,7 @@ class TestBacillusPipeline(CamelTestSuite):
             MainBacillusPipeline.CUSTOM_ANALYSES['common'] + MainBacillusPipeline.CUSTOM_ANALYSES['cereus']
         args = [
                    '--fastq-se', str(TestBacillusPipeline.input_fastq_se_cereus),
-                   '--read-type', 'nanopore',
+                   '--input-type', 'ont',
                    '--output-html', str(path_report_out),
                    '--output-dir', str(path_report_out.parent),
                    '--output-tsv', str(path_summary_out),
@@ -130,7 +130,7 @@ class TestBacillusPipeline(CamelTestSuite):
             MainBacillusPipeline.CUSTOM_ANALYSES['common'] + MainBacillusPipeline.CUSTOM_ANALYSES['subtilis']
         args = [
                    '--fastq-se', str(TestBacillusPipeline.input_fastq_se_subtilis),
-                   '--read-type', 'nanopore',
+                   '--input-type', 'ont',
                    '--output-html', str(path_report_out),
                    '--output-dir', str(path_report_out.parent),
                    '--output-tsv', str(path_summary_out),

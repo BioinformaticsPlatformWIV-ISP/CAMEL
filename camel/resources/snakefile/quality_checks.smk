@@ -85,7 +85,7 @@ rule quality_checks_mapping_rate_se:
     Checks the mapping rate against the reference genome / assembled contigs for the SE reads (if available).
     """
     input:
-        INFORMS = Path(config['working_dir'], assembly.get_mapping_inform('fastq_se'))
+        INFORMS = Path(config['working_dir'], assembly.get_mapping_rate_inform('fastq_se'))
     output:
         JSON = Path(config['working_dir']) / 'quality_checks' / 'map_rate_{mode}_ont.json'
     params:
@@ -94,6 +94,8 @@ rule quality_checks_mapping_rate_se:
     run:
         import json
         informs_mapping = SnakemakeUtils.load_object(Path(input.INFORMS))
+        import pprint
+        pprint.pprint(informs_mapping)
         mapping_rate = float(informs_mapping[params.key])
         with open(output.JSON, 'w') as handle:
             # noinspection PyUnresolvedReferences

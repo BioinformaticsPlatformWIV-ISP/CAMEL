@@ -10,6 +10,7 @@ OUTPUT_ASSEMBLY_REPORT = Path('assembly', 'report', 'html.io')
 OUTPUT_ASSEMBLY_SUMMARY = Path('assembly', 'summary', 'summary_out.tsv')
 OUTPUT_ASSEMBLY_MAPPING_INFORMS = Path('assembly', '{mapper}', 'informs.io')
 OUTPUT_ASSEMBLY_DEPTH_INFORMS = Path('assembly', 'samtools_depth', '{mapper}', 'informs.io')
+OUTPUT_ASSEMBLY_MAPPING_RATE_INFORMS = Path('assembly', 'samtools_flagstat', '{mapper}', 'informs.io')
 
 
 def get_fasta_raw(config: Dict[str, Any]) -> Path:
@@ -59,6 +60,20 @@ def get_depth_inform(read_key: str) -> Path:
         return Path(str(OUTPUT_ASSEMBLY_DEPTH_INFORMS).format(mapper='bowtie2'))
     elif read_key == 'fastq_se':
         return Path(str(OUTPUT_ASSEMBLY_DEPTH_INFORMS).format(mapper='minimap2'))
+    else:
+        raise ValueError(f'Invalid read key: {read_key}')
+
+
+def get_mapping_rate_inform(read_key: str) -> Path:
+    """
+    Returns the mapping rate informs.
+    :param read_key: Read key
+    :return: Path to depth informs
+    """
+    if read_key == 'fastq_pe':
+        return Path(str(OUTPUT_ASSEMBLY_MAPPING_RATE_INFORMS).format(mapper='bowtie2'))
+    elif read_key == 'fastq_se':
+        return Path(str(OUTPUT_ASSEMBLY_MAPPING_RATE_INFORMS).format(mapper='minimap2'))
     else:
         raise ValueError(f'Invalid read key: {read_key}')
 

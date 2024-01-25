@@ -146,6 +146,25 @@ rule assembly_samtools_depth:
         samtools_depth.informs['_tag'] = 'Coverage calculation'
         SnakemakeUtils.dump_tool_outputs(samtools_depth, output)
 
+rule assembly_samtools_flagstat:
+    """
+    Runs samtools flagstat to determine the mapping rate.
+    """
+    input:
+        BAM = Path(config['working_dir']) / 'assembly' / '{mapper}' / 'bam.io'
+    output:
+        INFORMS = Path(config['working_dir']) / 'assembly' / 'samtools_flagstat' / '{mapper}' / 'informs.io'
+    params:
+        dir_ = Path(config['working_dir']) / 'assembly' / 'samtools_flagstat'
+    run:
+        from camel.app.tools.samtools.samtoolsflagstat import SamtoolsFlagstat
+        flagstat = SamtoolsFlagstat(Camel.get_instance())
+        SnakemakeUtils.add_pickle_inputs(flagstat, input)
+        flagstat.run(Path(params.dir_).absolute())
+        # Calculate mapping rate
+        flagstat.informs['mapping_perc'] = 100 * flagstat.informs['mapped'][0] / flagstat.informs['total'][0]
+        SnakemakeUtils.dump_tool_outputs(flagstat, output)
+
 #################################################################
 # The rules below generate a basic QUAST report / summary file. #
 # For a more in-depth QUAST report use the quast.smk snakefile  #
