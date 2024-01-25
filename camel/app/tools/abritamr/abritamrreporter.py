@@ -70,7 +70,7 @@ class AbriTAMRReporter(Tool):
     def ___add_summary_file_table(self, summary_file: Path) -> None:
         """
         Parses an AbriTAMR output summary file ( TXT_PARTIALS or TXT_MATCHES ) and
-        adds the table to the section
+        adds the table to the section.
         :param summary_file: TXT_PARTIALS or TXT_MATCHES
         :return: None
         """
@@ -88,7 +88,7 @@ class AbriTAMRReporter(Tool):
 
     def __add_antibiogram(self) -> None:
         """
-        Add the antibiogram to the report for Salmonella
+        Add the antibiogram to the report for Salmonella.
         :return: None
         """
         header = ['Antibiotic', 'Resistance mechanisms detected', 'Interpretation']

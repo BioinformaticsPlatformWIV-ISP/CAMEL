@@ -25,14 +25,14 @@ class AbriTAMRRun(Tool):
 
     def _execute_tool(self) -> None:
         """
-        Executes the tool
+        Executes the tool.
         :return: None
         """
-        self.__set_output()
         self.__build_command()
         self._execute_command()
         amrfinder_db_folder = self._tool_inputs['DIR_AMRF'][0].path
         self.__add_database_information(amrfinder_db_folder)
+        self.__set_output()
 
     def _check_input(self) -> None:
         """
@@ -42,7 +42,7 @@ class AbriTAMRRun(Tool):
         super(AbriTAMRRun, self)._check_input()
         if 'FASTA' not in self._tool_inputs:
             raise InvalidInputSpecificationError("FASTA input is required")
-        elif 'DIR_AMRF' not in self._tool_inputs:
+        if 'DIR_AMRF' not in self._tool_inputs:
             raise InvalidInputSpecificationError("Database path needs to be specified (DIR_AMRF)")
 
     def __set_output(self) -> None:
@@ -55,7 +55,7 @@ class AbriTAMRRun(Tool):
 
     def __build_command(self) -> None:
         """
-        Concatenates required parameters and options to build the command
+        Concatenates required parameters and options to build the command.
         :return: None
         """
         self._informs['_tag'] = 'RUN'
