@@ -46,7 +46,7 @@ class SeqSero2(Tool):
             if 'FASTA' not in self._tool_inputs:
                 raise InvalidInputSpecificationError("FASTA input is required in Kmer mode")
         else:
-            if ('FASTQ' in self._tool_inputs) == ('FASTQ_PE' in self._tool_inputs):  # not exactly one
+            if sum(x in self._tool_inputs for x in ('FASTQ', 'FASTQ_PE')) != 1:  # not exactly one
                 raise InvalidInputSpecificationError(f"Exactly one FASTQ input is required in "
                                                      f"{self._tool_inputs['MODE'][0].value} mode")
 

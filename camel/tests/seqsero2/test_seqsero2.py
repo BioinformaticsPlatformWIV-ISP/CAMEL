@@ -17,6 +17,7 @@ class TestSeqsero2(CamelTestSuite):
     test_file_dir = CamelTestSuite.get_test_file_dir('salmonella')
     input_pe_reads = [test_file_dir / "SRR493330_1.fastq.gz", test_file_dir / "SRR493330_2.fastq.gz"]
     input_fasta_file = test_file_dir / 'assembly_filtered.fasta'
+    db_path = Path('/db/pipelines/salmonella/seqsero2/1.2.1/seqsero2_db')
 
     def test_seqsero2_kmer(self) -> None:
         """
@@ -26,7 +27,7 @@ class TestSeqsero2(CamelTestSuite):
         seqserotool = SeqSero2(self.camel)
         seqserotool.add_input_files({
             'FASTA': [ToolIOFile(Path(self.input_fasta_file))],
-            'DIR': [ToolIODirectory(Path('/db/pipelines/salmonella/seqsero2/1.2.1/seqsero2_db'))],
+            'DIR': [ToolIODirectory(self.db_path)],
             'MODE': [ToolIOValue('Kmer')]
         })
         seqserotool.run(self.running_dir)
@@ -40,7 +41,7 @@ class TestSeqsero2(CamelTestSuite):
         seqserotool = SeqSero2(self.camel)
         seqserotool.add_input_files({
             'FASTQ_PE': [ToolIOFile(x) for x in self.input_pe_reads],
-            'DIR': [ToolIODirectory(Path('/db/pipelines/salmonella/seqsero2/1.2.1/seqsero2_db'))],
+            'DIR': [ToolIODirectory(self.db_path)],
             'MODE': [ToolIOValue('Allele')]
         })
         seqserotool.run(self.running_dir)
@@ -54,7 +55,7 @@ class TestSeqsero2(CamelTestSuite):
         seqserotool = SeqSero2(self.camel)
         seqserotool.add_input_files({
             'FASTQ_PE': [ToolIOFile(x) for x in self.input_pe_reads],
-            'DIR': [ToolIODirectory(Path('/db/pipelines/salmonella/seqsero2/1.2.1/seqsero2_db'))],
+            'DIR': [ToolIODirectory(self.db_path)],
             'MODE': [ToolIOValue('Kmerread')]
         })
         seqserotool.run(self.running_dir)

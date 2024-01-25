@@ -45,8 +45,8 @@ rule serotyping_seqsero2_wildcards:
         FASTA = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA,  # todo change io to fasta input from anywhere (e.g. human read scrubbing) using link fasta in main.smk
         IO = Path(config['working_dir']) / 'fq_dict.io' if 'fasta' not in config['input'] else []  # todo change io to fastq input from anywhere (e.g. human read scrubbing) using link fastq in main.smk
     output:
-        TXT = Path(config['working_dir']) / 'serotyping' / f'serotyping_seqsero2_{"{mode}"}' / 'SeqSero2_result.io',
-        INFORMS = Path(config['working_dir']) / 'serotyping' / f'serotyping_seqsero2_{"{mode}"}' / 'informs.io'
+        TXT = Path(config['working_dir']) / 'serotyping' / 'serotyping_seqsero2_{mode}' / 'SeqSero2_result.io',
+        INFORMS = Path(config['working_dir']) / 'serotyping' / 'serotyping_seqsero2_{mode}' / 'informs.io'
     params:
         seqsero2_mode = lambda wildcards: wildcards.mode,
         running_dir = lambda wildcards: Path(config['working_dir']) / 'serotyping' / f'serotyping_seqsero2_{wildcards.mode}',
@@ -72,12 +72,12 @@ rule serotyping_dump_summary_info:
     input:
         JSON_sistr = rules.serotyping_sistr.output.JSON,
         INFORMS_sistr = Path(config['working_dir']) / serotyping_salmonella.OUTPUT_SEROTYPE_SISTR_INFORMS,
-        TXT_seqsero2_kmer = expand(rules.serotyping_seqsero2_wildcards.output.TXT, mode='Kmer'),
-        INFORMS_seqsero2_kmer = expand(rules.serotyping_seqsero2_wildcards.output.INFORMS, mode='Kmer'),
-        TXT_seqsero2_allele = expand(rules.serotyping_seqsero2_wildcards.output.TXT, mode='Allele') if 'fasta' not in config['input'] else [],
-        INFORMS_seqsero2_allele = expand(rules.serotyping_seqsero2_wildcards.output.INFORMS, mode='Allele') if 'fasta' not in config['input'] else [],
-        TXT_seqsero2_kmerread = expand(rules.serotyping_seqsero2_wildcards.output.TXT, mode='Kmerread') if 'fasta' not in config['input'] else [],
-        INFORMS_seqsero2_kmerread = expand(rules.serotyping_seqsero2_wildcards.output.INFORMS, mode='Kmerread') if 'fasta' not in config['input'] else []
+        TXT_seqsero2_kmer = str(rules.serotyping_seqsero2_wildcards.output.TXT).format(mode='Kmer'),
+        INFORMS_seqsero2_kmer = str(rules.serotyping_seqsero2_wildcards.output.INFORMS).format(mode='Kmer'),
+        TXT_seqsero2_allele =str(rules.serotyping_seqsero2_wildcards.output.TXT).format(mode='Allele') if 'fasta' not in config['input'] else [],
+        INFORMS_seqsero2_allele = str(rules.serotyping_seqsero2_wildcards.output.INFORMS).format(mode='Allele') if 'fasta' not in config['input'] else [],
+        TXT_seqsero2_kmerread = str(rules.serotyping_seqsero2_wildcards.output.TXT).format(mode='Kmerread') if 'fasta' not in config['input'] else [],
+        INFORMS_seqsero2_kmerread = str(rules.serotyping_seqsero2_wildcards.output.INFORMS).format(mode='Kmerread') if 'fasta' not in config['input'] else []
     output:
         VAL_TSV = Path(config['working_dir']) / serotyping_salmonella.OUTPUT_SEROTYPE_SUMMARY,
         JSON = Path(config['working_dir']) / serotyping_salmonella.OUTPUT_SEROTYPE_SUMMARY_JSON
@@ -157,13 +157,13 @@ rule create_output_report_serotyping:
     This rule creates a simple output report, combining both serotyping tools
     """
     input:
-        TXT_seqsero2_kmer = expand(rules.serotyping_seqsero2_wildcards.output.TXT, mode='Kmer'),
-        TXT_seqsero2_allele = expand(rules.serotyping_seqsero2_wildcards.output.TXT, mode='Allele') if 'fasta' not in config['input'] else [],
-        TXT_seqsero2_kmerread = expand(rules.serotyping_seqsero2_wildcards.output.TXT, mode='Kmerread') if 'fasta' not in config['input'] else [],
+        TXT_seqsero2_kmer = str(rules.serotyping_seqsero2_wildcards.output.TXT).format(mode='Kmer'),
+        TXT_seqsero2_allele = str(rules.serotyping_seqsero2_wildcards.output.TXT).format(mode='Allele') if 'fasta' not in config['input'] else [],
+        TXT_seqsero2_kmerread = str(rules.serotyping_seqsero2_wildcards.output.TXT).format(mode='Kmerread') if 'fasta' not in config['input'] else [],
         JSON_sistr = rules.serotyping_sistr.output.JSON,
         VAL_TSV = rules.serotyping_dump_summary_info.output.VAL_TSV,
         INFORMS_serotyping_sistr = rules.serotyping_sistr.output.INFORMS,
-        INFORMS_serotyping_seqsero2 = expand(rules.serotyping_seqsero2_wildcards.output.INFORMS, mode='Kmer')
+        INFORMS_serotyping_seqsero2 = str(rules.serotyping_seqsero2_wildcards.output.INFORMS).format(mode='Kmer')
     output:
         VAL_HTML = Path(config['working_dir']) / serotyping_salmonella.OUTPUT_SEROTYPE_REPORT
     params:
@@ -176,9 +176,9 @@ rule create_output_report_serotyping:
         reportertool.add_input_files({'DIR_seqsero2': [ToolIODirectory(Path(str(params.db_path_seqsero2)))]})
         SnakemakeUtils.add_pickle_inputs(reportertool, input, excluded_keys=['VAL_TSV', 'TXT_seqsero2_allele', 'TXT_seqsero2_kmerread'])
         reportertool.add_input_files({'VAL_TSV': [ToolIOFile(Path(input.VAL_TSV))]})
-        if input.TXT_seqsero2_allele != []:
+        if input.TXT_seqsero2_allele:
             SnakemakeUtils.add_pickle_input(reportertool, 'TXT_seqsero2_allele', Path(input.TXT_seqsero2_allele))
-        if input.TXT_seqsero2_kmerread != []:
+        if input.TXT_seqsero2_kmerread:
             SnakemakeUtils.add_pickle_input(reportertool, 'TXT_seqsero2_kmerread', Path(input.TXT_seqsero2_kmerread))
         step = Step(str(rule), reportertool, camel, params.running_dir, config)
         step.run_step()

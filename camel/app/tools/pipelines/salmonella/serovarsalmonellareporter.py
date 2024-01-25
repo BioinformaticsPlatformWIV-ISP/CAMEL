@@ -154,11 +154,11 @@ class SerovarSalmonellaReporter(Tool):
         """
         self._section.add_header(self._input_informs['serotyping_seqsero2']['_name'], 2)
         
-        # Not optional seqsero assay (from FASTA)
+        # Mandatory seqsero assay (from FASTA)
         self._section.add_header('SeqSero2 serotyping - assembly kmer mode', 4)
         self.___add_table_serotype_seqsero(self._tool_inputs['TXT_seqsero2_kmer'][0].path)
         
-        # optional seqsero assays (from FASTQ)
+        # Optional seqsero assays (from FASTQ)
         self._section.add_header('SeqSero2 serotyping - raw read allele mode', 4)
         if 'TXT_seqsero2_allele' in self._tool_inputs:
             self.___add_table_serotype_seqsero(self._tool_inputs['TXT_seqsero2_allele'][0].path)
@@ -180,12 +180,11 @@ class SerovarSalmonellaReporter(Tool):
         :param input_file_path: the text file containing the results for a seqsero2 run in any mode.
         :return: None
         """
-        with input_file_path.open('r') as handle:
-            lines = handle.readlines()
         resultsdict = {}
-        for line in lines:
-            parts = line.split('\t')
-            resultsdict[parts[0]] = parts[1]
+        with input_file_path.open('r') as handle:
+            for line in handle:
+                parts = line.rstrip().split('\t')
+                resultsdict[parts[0]] = parts[1]
         table_data = []
         header = ['O-antigen', 'H1-antigen (fliC)', 'H2-antigen (fljB)', 'Antigenic formula', 'Serotype']
         row = [resultsdict['O antigen prediction:'], resultsdict['H1 antigen prediction(fliC):'],

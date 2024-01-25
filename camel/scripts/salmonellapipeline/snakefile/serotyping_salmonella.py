@@ -18,7 +18,7 @@ OUTPUT_SEROTYPE_SUMMARY_JSON = _dir_serotype / 'summary_out.json'
 def sistr_output_parser(prediction: Dict[str, Any], locus: str, antigen: str, hits_dict_tsv: Dict[str, str], 
                         hits_dict_json: Dict[str, Any], header_locus: List[str]) -> None:
     """
-    Parses the Sistr output for a specific locus (the o antigen has 2 loci, and the h antigens each have one locus.
+    Parses the Sistr output for a specific locus (the o antigen has 2 loci, and the h antigens each have one locus).
     Updates the hits dictionaries in place without returning any output.
     :param prediction: the dictionary of the results of the specific locus
     :param locus: locus name, either fliC, fljB, wzx, or wzy
