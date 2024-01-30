@@ -137,8 +137,8 @@ rule scrubbing_fastq_deinterleave_and_gzip:
             SnakemakeUtils.dump_object([ToolIOFile(path_out)], Path(output.FASTQ_DEINTERLEAVED_GZIPPED))
         else:
             params.running_dir.mkdir(parents=True, exist_ok=True)
-            fastq_1 = params.running_dir / f"{FastqUtils.get_sample_name(fastq_in[0].path, pattern=FastqUtils.PATTERN_FQ_SE)}.fastq.gz"
-            fastq_2 = params.running_dir / f"{FastqUtils.get_sample_name(fastq_in[1].path, pattern=FastqUtils.PATTERN_FQ_SE)}.fastq.gz"
+            fastq_1 = params.running_dir / f"{FastqUtils.get_sample_name(fastq_in[0].path, pattern=FastqUtils.PATTERN_FQ_SE)}_1.fastq.gz"
+            fastq_2 = params.running_dir / f"{FastqUtils.get_sample_name(fastq_in[1].path, pattern=FastqUtils.PATTERN_FQ_SE)}_2.fastq.gz"
             FastqUtils.split_interleaved_fastq((SnakemakeUtils.load_object(Path(input.FASTQ_SCRUBBED)))[0].path, fastq_1,  fastq_2, gzip_output=True)
             SnakemakeUtils.dump_object([ToolIOFile(fastq_1), ToolIOFile(fastq_2)], Path(output.FASTQ_DEINTERLEAVED_GZIPPED))
 
