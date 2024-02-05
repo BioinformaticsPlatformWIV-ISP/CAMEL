@@ -1,0 +1,121 @@
+import logging
+import pandas as pd
+
+from pathlib import Path
+
+from camel.app.camel import Camel
+from camel.app.tools.tool import Tool
+from camel.app.io.tooliofile import ToolIOFile
+from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from camel.app.error.toolexecutionerror import ToolExecutionError
+
+
+class ShigEiFinder(Tool):
+    """
+    ShigEiFinder differentiates between Shigella/EIEC using cluster-specific genes and
+    identifies the serotype using O-antigen/H-antigen genes.
+    """
+
+    def __init__(self, camel: Camel) -> None:
+        """
+        Initializes the ShigEiFinder tool.
+        :param camel: CAMEL instance
+        """
+        super().__init__('ShigEiFinder', '1.3.5', camel)
+
+    def _check_input(self) -> None:
+        """
+        Checks whether the provided inputs is valid:
+        - FASTA is the only required input
+        :return: None
+        """
+        if 'FASTA' not in self._tool_inputs:
+            raise InvalidInputSpecificationError('FASTA input is required')
+        if len(self._tool_inputs['FASTA']) != 1:
+            raise InvalidInputSpecificationError('Only a single FASTA file can be analyzed at a time')
+        super()._check_input()
+
+    def __build_command(self, input_fasta: Path, output_tsv: Path) -> None:
+        """
+        Concatenates required parameters and options to build the command.
+        :param input_fasta: Path to assembly file
+        :param output_tsv: Path of output file
+        :return: None
+        """
+        self._command.command = ' '.join([
+            self._tool_command,
+            f'-i {input_fasta}',
+            f'--output {output_tsv}',
+            *self._build_options()
+        ])
+
+    def _check_command_output(self) -> None:
+        """
+        Checks if the command executed successfully.
+        :return: None
+        """
+        if not self._command.returncode == 0:
+            raise ToolExecutionError(f'Error executing {self.name}: {self.stderr}')
+
+    def _execute_tool(self) -> None:
+        """
+        Executes this tool.
+        :return: None
+        """
+        # Symlink the input FASTA file
+        dir_fasta_in = self.folder / 'fasta_in'
+        dir_fasta_in.mkdir()
+        (dir_fasta_in / self._tool_inputs['FASTA'][0].path.name).symlink_to(self._tool_inputs['FASTA'][0].path)
+
+        sample_id = self._tool_inputs['FASTA'][0].path.name.replace('.fasta', '')
+        logging.info(f'Sample ID: {sample_id}')
+
+        # Prepare output
+        dir_out = self.folder / 'serotype'
+        dir_out.mkdir()
+        tsv_out = dir_out / f'{sample_id}_shigeifinder.tsv'
+
+        # Run the command
+        self.__build_command(dir_fasta_in/'*.fasta', tsv_out)
+        self._execute_command()
+
+        # Collect the output
+        try:
+            self._tool_outputs['TSV'] = [ToolIOFile((dir_out / f'{sample_id}_shigeifinder.tsv'))]
+        except StopIteration:
+            raise ToolExecutionError(f"TSV file not found in output folder: {dir_out}")
+        self._parse_tsv(self._tool_outputs['TSV'][0].path)
+
+    def __extract_species(self, serotype_abbrev: str) -> str:
+        """
+        Parse the output and extracts the isolate species.
+        :param serotype_abbrev: Serotype abbreviation output by ShigEiFinder
+        :return: Shigella species or E. coli serotype
+        """
+        if serotype_abbrev.startswith('SB'):
+            return 'Shigella boydii'
+
+        if serotype_abbrev.startswith('SD'):
+            return 'Shigella dysenteriae'
+
+        if serotype_abbrev.startswith('SF'):
+            return 'Shigella flexneri'
+
+        if serotype_abbrev.startswith('SS'):
+            return 'Shigella sonnei'
+
+        if serotype_abbrev.startswith('EIEC'):
+            coli_serotype = serotype_abbrev.split()[1]
+            return f'Enteroinvasive Escherichia coli {coli_serotype}'
+
+        raise ValueError(f'Cannot determine isolate species (serotype={serotype_abbrev })')
+
+    def _parse_tsv(self, path_tsv: Path) -> None:
+        """
+        Parses the output TSV file and stores the results in the informs.
+        :param path_tsv: Path to output file
+        :return: None
+        """
+        data_serotype = pd.read_table(path_tsv)
+        output_dict = data_serotype.to_dict('records')[0]
+        self._informs['species'] = self.__extract_species(output_dict['SEROTYPE'])
