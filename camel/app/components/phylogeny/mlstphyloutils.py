@@ -125,7 +125,7 @@ def parse_html_typing_list(dirs_in: List[Path], html_key: str, detection_method:
         sample_names.append(typing_metadata['sample'])
         try:
             tsv_typing = next(path_json_meta.parent.glob('typing-*-hashes.tsv'))
-            logging.debug(f'TSV file with hashes found: {tsv_typing.name}')
+            logger.debug(f'TSV file with hashes found: {tsv_typing.name}')
         except StopIteration:
             tsv_typing = next(path_json_meta.parent.glob('typing-*.tsv'))
         allele_data.append(parse_tsv_typing(tsv_typing, detection_method))
