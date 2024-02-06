@@ -3,7 +3,7 @@ from pathlib import Path
 from camel.app.camel import Camel
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.resources.snakefile import short_read_polishing
+from camel.resources.snakefile import polish_assembly_short
 
 
 rule polishing_samtools_index_polypolish:
@@ -11,11 +11,11 @@ rule polishing_samtools_index_polypolish:
     Creates a samtools index for the assembly.
     """
     input:
-        FASTA = lambda wildcards: Path(config['working_dir']) / str(short_read_polishing.INPUT_ASSEMBLY_FASTA).format(assembly_type=wildcards.assembly_type)
+        FASTA = lambda wildcards: Path(config['working_dir']) / str(polish_assembly_short.INPUT_ASSEMBLY_FASTA).format(assembly_type=wildcards.assembly_type)
     output:
-        FASTA = Path(config['working_dir']) / short_read_polishing.OUTPUT_POLISHING_FASTA_INDEX_POLYPOLISH
+        FASTA = Path(config['working_dir']) / polish_assembly_short.OUTPUT_POLISHING_FASTA_INDEX_POLYPOLISH
     params:
-        dir_ = lambda wildcards: Path(config['working_dir']) / 'polishing' / wildcards.assembly_type / 'polypolish'
+        dir_ = lambda wildcards: Path(config['working_dir']) / 'polish' / 'short_reads' / wildcards.assembly_type / 'polypolish'
     run:
         from camel.app.tools.samtools.samtoolsfastaindex import SamtoolsFastaIndex
         samtools = SamtoolsFastaIndex(Camel.get_instance())
@@ -31,9 +31,9 @@ rule polishing_bwa_index:
     input:
         FASTA_REF = rules.polishing_samtools_index_polypolish.output.FASTA
     output:
-        INDEX_GENOME_PREFIX = Path(config['working_dir']) / 'polishing' / '{assembly_type}' / 'polypolish' / 'genome_prefix.io'
+        INDEX_GENOME_PREFIX = Path(config['working_dir']) / 'polish' / 'short_reads' / '{assembly_type}' / 'polypolish' / 'genome_prefix.io'
     params:
-        dir_ = lambda wildcards: Path(config['working_dir']) / 'polishing' / wildcards.assembly_type / 'polypolish'
+        dir_ = lambda wildcards: Path(config['working_dir']) / 'polish' / 'short_reads' / wildcards.assembly_type / 'polypolish'
     run:
         from camel.app.tools.bwa.bwaindex import BWAIndex
         bwa = BWAIndex(Camel.get_instance())
@@ -52,10 +52,10 @@ rule polishing_read_mapping_1:
         INDEX_GENOME_PREFIX_SAMTOOLS = rules.polishing_samtools_index_polypolish.output.FASTA,
         INDEX_GENOME_PREFIX = rules.polishing_bwa_index.output.INDEX_GENOME_PREFIX
     output:
-        SAM = Path(config['working_dir']) / 'polishing' / '{assembly_type}' / 'read_mapping' / 'forward' / 'bwa_readmap.io',
-        INFORMS = Path(config['working_dir']) / 'polishing' / '{assembly_type}' / 'read_mapping' / 'forward' / 'commands.io'
+        SAM = Path(config['working_dir']) / 'polish' / 'short_reads' / '{assembly_type}' / 'read_mapping' / 'forward' / 'bwa_readmap.io',
+        INFORMS = Path(config['working_dir']) / 'polish' / 'short_reads' / '{assembly_type}' / 'read_mapping' / 'forward' / 'commands.io'
     params:
-        dir_ = lambda wildcards: Path(config['working_dir']) / 'polishing' / wildcards.assembly_type / 'read_mapping' / 'forward'
+        dir_ = lambda wildcards: Path(config['working_dir']) / 'polish' / 'short_reads' / wildcards.assembly_type / 'read_mapping' / 'forward'
     threads: 8
     run:
         from camel.app.components.workflows.utils.fastqinput import FastqInput
@@ -78,10 +78,10 @@ rule polishing_read_mapping_2:
         FASTA = rules.polishing_samtools_index_polypolish.output.FASTA,
         INDEX_GENOME_PREFIX = rules.polishing_bwa_index.output.INDEX_GENOME_PREFIX
     output:
-        SAM = Path(config['working_dir']) / 'polishing' / '{assembly_type}' / 'read_mapping' / 'reverse' / 'bwa_readmap.io',
-        INFORMS = Path(config['working_dir']) / 'polishing' / '{assembly_type}' / 'read_mapping' / 'reverse' / 'commands.io'
+        SAM = Path(config['working_dir']) / 'polish' / 'short_reads' / '{assembly_type}' / 'read_mapping' / 'reverse' / 'bwa_readmap.io',
+        INFORMS = Path(config['working_dir']) / 'polish' / 'short_reads' / '{assembly_type}' / 'read_mapping' / 'reverse' / 'commands.io'
     params:
-        dir_ = lambda wildcards: Path(config['working_dir']) / 'polishing' / wildcards.assembly_type / 'read_mapping' / 'reverse'
+        dir_ = lambda wildcards: Path(config['working_dir']) / 'polish' / 'short_reads' / wildcards.assembly_type / 'read_mapping' / 'reverse'
     threads: 8
     run:
         from camel.app.components.workflows.utils.fastqinput import FastqInput
@@ -103,9 +103,9 @@ rule polishing_polypolish_insert_filter:
         SAM_1 = rules.polishing_read_mapping_1.output.SAM,
         SAM_2 = rules.polishing_read_mapping_2.output.SAM
     output:
-        SAM = Path(config['working_dir']) / 'polishing' / '{assembly_type}' / 'read_mapping' / 'alignment_filtered_sam.io'
+        SAM = Path(config['working_dir']) / 'polish' / 'short_reads' / '{assembly_type}' / 'read_mapping' / 'alignment_filtered_sam.io'
     params:
-        dir_ = lambda wildcards: Path(config['working_dir']) / 'polishing' / wildcards.assembly_type / 'read_mapping'
+        dir_ = lambda wildcards: Path(config['working_dir']) / 'polish' / 'short_reads' / wildcards.assembly_type / 'read_mapping'
     threads: 8
     run:
         from camel.app.tools.polypolish.polypolishinsertfilter import PolypolishInsertFilter
@@ -125,10 +125,10 @@ rule polishing_polypolish:
         SAM = rules.polishing_polypolish_insert_filter.output.SAM,
         FASTA = rules.polishing_samtools_index_polypolish.output.FASTA
     output:
-        FASTA = Path(config['working_dir']) / short_read_polishing.OUTPUT_POLYPOLISH_FASTA,
-        INFORMS = Path(config['working_dir']) / short_read_polishing.OUTPUT_POLYPOLISH_INFORMS
+        FASTA = Path(config['working_dir']) / polish_assembly_short.OUTPUT_POLYPOLISH_FASTA,
+        INFORMS = Path(config['working_dir']) / polish_assembly_short.OUTPUT_POLYPOLISH_INFORMS
     params:
-        dir_ = lambda wildcards: Path(config['working_dir']) / 'polishing' / wildcards.assembly_type / 'polypolish',
+        dir_ = lambda wildcards: Path(config['working_dir']) / 'polish' / 'short_reads' / wildcards.assembly_type / 'polypolish',
         polypolish_options = config.get('polishing', {}).get('polypolish', {})
     run:
         from camel.app.tools.polypolish.polypolish import Polypolish
@@ -146,9 +146,9 @@ rule polishing_samtools_index_polca:
     input:
         FASTA = rules.polishing_polypolish.output.FASTA
     output:
-        FASTA = Path(config['working_dir']) / short_read_polishing.OUTPUT_POLISHING_FASTA_INDEX_POLCA
+        FASTA = Path(config['working_dir']) / polish_assembly_short.OUTPUT_POLISHING_FASTA_INDEX_POLCA
     params:
-        dir_ = lambda wildcards: Path(config['working_dir']) / 'polishing' / wildcards.assembly_type / 'polca'
+        dir_ = lambda wildcards: Path(config['working_dir']) / 'polish' / 'short_reads' / wildcards.assembly_type / 'polca'
     run:
         from camel.app.tools.samtools.samtoolsfastaindex import SamtoolsFastaIndex
         samtools = SamtoolsFastaIndex(Camel.get_instance())
@@ -165,10 +165,10 @@ rule polishing_polca:
         FQ_dict = Path(config['working_dir']) / 'fq_dict.io',
         FASTA = rules.polishing_samtools_index_polca.output.FASTA
     output:
-        FASTA = Path(config['working_dir']) / 'polishing' / '{assembly_type}' / 'polca' / 'fasta.io',
-        INFORMS = Path(config['working_dir']) / 'polishing' / '{assembly_type}' / 'polca' / 'informs.io'
+        FASTA = Path(config['working_dir']) / 'polish' / 'short_reads' / '{assembly_type}' / 'polca' / 'fasta.io',
+        INFORMS = Path(config['working_dir']) / 'polish' / 'short_reads' / '{assembly_type}' / 'polca' / 'informs.io'
     params:
-        dir_ = lambda wildcards: Path(config['working_dir']) / 'polishing' / wildcards.assembly_type / 'polca',
+        dir_ = lambda wildcards: Path(config['working_dir']) / 'polish' / 'short_reads' / wildcards.assembly_type / 'polca',
         polca_options = config.get('polishing', {}).get('polca', {})
     threads: 8
     run:

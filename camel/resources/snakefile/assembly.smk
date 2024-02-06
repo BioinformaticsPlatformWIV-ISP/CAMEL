@@ -3,11 +3,13 @@ from pathlib import Path
 from camel.app.camel import Camel
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.resources.snakefile import assembly, assembly_spades, assembly_flye
+from camel.resources.snakefile import assembly, assembly_spades, assembly_flye, polish_assembly_short, polish_assembly_long
 
 
 include: assembly_spades.SNAKEFILE_ASSEMBLY_SPADES
 include: assembly_flye.SNAKEFILE_ASSEMBLY_FLYE
+include: polish_assembly_long.SNAKEFILE_POLISH_ASSEMBLY_LONG
+include: polish_assembly_short.SNAKEFILE_POLISH_ASSEMBLY_SHORT
 
 
 rule assembly_filter_contig_length:

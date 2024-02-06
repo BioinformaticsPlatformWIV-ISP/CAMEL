@@ -3,7 +3,7 @@ from pathlib import Path
 from camel.app.camel import Camel
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.resources.snakefile import medaka_polishing
+from camel.resources.snakefile import polish_assembly_long
 
 
 rule medaka_polishing_map_ont_reads:
@@ -12,11 +12,11 @@ rule medaka_polishing_map_ont_reads:
     """
     input:
         FQ = Path(config['working_dir']) / 'fq_dict.io',
-        FASTA = lambda wildcards: Path(config['working_dir']) / str(medaka_polishing.INPUT_ASSEMBLY_FASTA).format(assembly_type=wildcards.assembly_type)
+        FASTA = lambda wildcards: Path(config['working_dir']) / str(polish_assembly_long.INPUT_ASSEMBLY_FASTA).format(assembly_type=wildcards.assembly_type)
     output:
-        BAM = Path(config['working_dir']) / 'medaka' / '{assembly_type}' / 'minimap2' / 'bam.io'
+        BAM = Path(config['working_dir']) / 'polish' / 'long_reads' / '{assembly_type}' / 'minimap2' / 'bam.io'
     params:
-        dir_ = lambda wildcards: Path(config['working_dir']) / 'medaka' / wildcards.assembly_type / 'minimap2'
+        dir_ = lambda wildcards: Path(config['working_dir']) / 'polish' / 'long_reads' / wildcards.assembly_type / 'minimap2'
     threads: 8
     run:
         from camel.app.components.pipelines import pipeutils
@@ -53,10 +53,10 @@ rule medaka_polishing_medaka_consensus:
     input:
         BAM = rules.medaka_polishing_map_ont_reads.output.BAM
     output:
-        HDF = Path(config['working_dir']) / 'medaka' / '{assembly_type}' / 'consensus' / 'raw_hdf.io',
-        INFORMS = Path(config['working_dir']) / 'medaka' / '{assembly_type}' / 'consensus' / 'commands-consensus.io'
+        HDF = Path(config['working_dir']) / 'polish' / 'long_reads' / '{assembly_type}' / 'consensus' / 'raw_hdf.io',
+        INFORMS = Path(config['working_dir']) / 'polish' / 'long_reads' / '{assembly_type}' / 'consensus' / 'commands-consensus.io'
     params:
-        dir_ =  lambda wildcards: Path(config['working_dir']) / 'medaka' / wildcards.assembly_type / 'consensus',
+        dir_ =  lambda wildcards: Path(config['working_dir']) / 'polish' / 'long_reads' / wildcards.assembly_type / 'consensus',
         medaka_options = config.get('polishing', {}).get('medaka', {}).get('consensus', {})
     threads: 8
     run:
@@ -75,12 +75,12 @@ rule medaka_polishing_medaka_stitch:
     """
     input:
         HDF = rules.medaka_polishing_medaka_consensus.output.HDF,
-        FASTA = Path(config['working_dir']) / medaka_polishing.INPUT_ASSEMBLY_FASTA
+        FASTA = Path(config['working_dir']) / polish_assembly_long.INPUT_ASSEMBLY_FASTA
     output:
-        FASTA = Path(config['working_dir']) / 'medaka' / '{assembly_type}' / 'stitch' / 'fasta.io',
-        INFORMS = Path(config['working_dir']) / 'medaka' / '{assembly_type}' / 'stitch' / 'commands-stitch.io'
+        FASTA = Path(config['working_dir']) / 'polish' / 'long_reads' / '{assembly_type}' / 'stitch' / 'fasta.io',
+        INFORMS = Path(config['working_dir']) / 'polish' / 'long_reads' / '{assembly_type}' / 'stitch' / 'commands-stitch.io'
     params:
-        dir_ = lambda wildcards: Path(config['working_dir']) / 'medaka' / wildcards.assembly_type / 'stitch',
+        dir_ = lambda wildcards: Path(config['working_dir']) / 'polish' / 'long_reads' / wildcards.assembly_type / 'stitch',
         medaka_options = config.get('polishing', {}).get('medaka', {}).get('stitch', {})
     threads: 8
     run:
@@ -97,7 +97,7 @@ rule medaka_polishing_empty_report:
     Creates an empty report for the gene detection when plasmidSPAdes assembly fails.
     """
     output:
-        VAL_HTML = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_REPORT_EMPTY
+        VAL_HTML = Path(config['working_dir']) / polish_assembly_long.OUTPUT_ASSEMBLY_REPORT_EMPTY
     run:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         SnakePipelineUtils.create_empty_report_section('Medaka polishing', Path(output.VAL_HTML))

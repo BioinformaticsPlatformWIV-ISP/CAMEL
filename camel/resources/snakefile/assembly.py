@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Dict, Any, List
 
-from camel.resources.snakefile import assembly_spades, assembly_flye
+from camel.resources.snakefile import assembly_spades, assembly_flye, polish_assembly_short, polish_assembly_long
 
 SNAKEFILE_ASSEMBLY = f'{Path(__file__).parent / Path(__file__).stem}.smk'
 OUTPUT_ASSEMBLY_FASTA = Path('assembly', 'filtering', 'fasta.io')
@@ -19,20 +19,29 @@ def get_fasta_raw(config: Dict[str, Any]) -> Path:
     """
     if config['input_type'] == 'illumina':
         return assembly_spades.OUTPUT_ASSEMBLY_FASTA
-    if config['input_type'] in ('ont', 'hybrid'):
+    if config['input_type'] == 'ont':
         return assembly_flye.OUTPUT_ASSEMBLY_FASTA
+    if config['input_type'] == 'hybrid':
+        return Path(str(polish_assembly_short.OUTPUT_POLISHING_FASTA).format(assembly_type='flye'))
     raise ValueError(f"Invalid input type: {config['input_type']}")
 
 
-def get_command_informs(config: Dict[str, Any]) -> Path:
+def get_command_informs(config: Dict[str, Any]) -> List[Path]:
     """
-    Returns the assembly informs output IO object path.
+    Returns the assembly informs output IO object paths.
     :return: Assembly informs path
     """
     if config['input_type'] == 'illumina':
-        return Path(config['working_dir'], assembly_spades.OUTPUT_ASSEMBLY_INFORMS)
-    if config['input_type'] in ('ont', 'hybrid'):
-        return Path(config['working_dir'], assembly_flye.OUTPUT_ASSEMBLY_INFORMS)
+        return [Path(config['working_dir'], assembly_spades.OUTPUT_ASSEMBLY_INFORMS)]
+    if config['input_type'] == 'ont':
+        return [Path(config['working_dir'], assembly_flye.OUTPUT_ASSEMBLY_INFORMS)]
+    if config['input_type'] == 'hybrid':
+        return [
+            Path(config['working_dir'], assembly_flye.OUTPUT_ASSEMBLY_INFORMS),
+            Path(config['working_dir'], str(polish_assembly_long.OUTPUT_POLISH_MEDAKA_INFORMS).format(assembly_type='flye')),
+            Path(config['working_dir'], str(polish_assembly_short.OUTPUT_POLYPOLISH_INFORMS).format(assembly_type='flye')),
+            Path(config['working_dir'], str(polish_assembly_short.OUTPUT_POLCA_INFORMS).format(assembly_type='flye'))
+        ]
     raise ValueError(f"Invalid input type: {config['input_type']}")
 
 
