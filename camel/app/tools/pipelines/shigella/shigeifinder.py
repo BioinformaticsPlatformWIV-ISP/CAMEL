@@ -63,27 +63,20 @@ class ShigEiFinder(Tool):
         :return: None
         """
         # Symlink the input FASTA file
-        dir_fasta_in = self.folder / 'fasta_in'
-        dir_fasta_in.mkdir()
-        (dir_fasta_in / self._tool_inputs['FASTA'][0].path.name).symlink_to(self._tool_inputs['FASTA'][0].path)
-
-        sample_id = self._tool_inputs['FASTA'][0].path.name.replace('.fasta', '')
-        logging.info(f'Sample ID: {sample_id}')
+        fasta_in = self._tool_inputs['FASTA'][0].path
 
         # Prepare output
-        dir_out = self.folder / 'serotype'
-        dir_out.mkdir()
-        tsv_out = dir_out / f'{sample_id}_shigeifinder.tsv'
+        tsv_out = self.folder / 'shigeifinder_out.tsv'
 
         # Run the command
-        self.__build_command(dir_fasta_in/'*.fasta', tsv_out)
+        self.__build_command(fasta_in, tsv_out)
         self._execute_command()
 
         # Collect the output
         try:
-            self._tool_outputs['TSV'] = [ToolIOFile((dir_out / f'{sample_id}_shigeifinder.tsv'))]
+            self._tool_outputs['TSV'] = [ToolIOFile((self.folder / 'shigeifinder_out.tsv'))]
         except StopIteration:
-            raise ToolExecutionError(f"TSV file not found in output folder: {dir_out}")
+            raise ToolExecutionError(f"TSV file not found in output folder: {self.folder}")
         self._parse_tsv(self._tool_outputs['TSV'][0].path)
 
     def __extract_species(self, serotype_abbrev: str) -> str:
