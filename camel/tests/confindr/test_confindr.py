@@ -21,7 +21,7 @@ class TestConFindr(CamelTestSuite):
         test_file_dir / 'illumina_enterococcus_1.fastq.gz',
         test_file_dir / 'illumina_enterococcus_2.fastq.gz'
     ]
-    input_se_reads = Path('/data/project/bebog/filtered-TIAC1153.fastq.gz')
+    input_se_reads = test_file_dir / 'minion_reads-ecoli.fastq'
     db = Path(Camel.get_instance().config['db_root']) / 'confindr' / '0.8.1'
 
     def test_dependencies(self) -> None:

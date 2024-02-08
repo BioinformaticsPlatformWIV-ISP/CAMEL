@@ -85,7 +85,7 @@ class MainCalling(object):
                 'reference': {
                     'name': self._args.reference_name if self._args.reference_name else self._args.reference.name,
                     'path': str(self._args.reference)},
-                'bam': self._args.bam
+                'bam': str(self._args.bam)
             },
             'model_path': str(self._args.model_path)
         }

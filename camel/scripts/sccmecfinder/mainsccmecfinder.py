@@ -92,7 +92,7 @@ class MainSCCmecFinder(object):
         """
         wrapper = GeneDetectionWrapper(self._args.working_dir / 'meca')
         wrapper.run_workflow_blast(
-          fasta_file, self._sample_name, {'path': self._args.db_mec_genes}, self._args.threads)
+          fasta_file, self._sample_name, {'path': str(self._args.db_mec_genes)}, self._args.threads)
         self._report.add_html_object(wrapper.output.report_section)
         wrapper.output.report_section.copy_files(self._report.output_dir)
         self._helper.informs.append(wrapper.output.informs)

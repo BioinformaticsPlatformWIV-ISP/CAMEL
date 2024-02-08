@@ -96,7 +96,7 @@ class MainGeneDetection(object):
         Returns the database information dictionary.
         :return: Database information dictionary
         """
-        config_data = {'path': self._args.database_dir}
+        config_data = {'path': str(self._args.database_dir)}
 
         # Add specific options
         if self._args.detection_method == 'blast':

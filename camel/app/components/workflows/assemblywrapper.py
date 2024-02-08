@@ -105,7 +105,8 @@ class AssemblyWrapper(object):
             'HTML': self._working_dir / assembly.OUTPUT_ASSEMBLY_REPORT,
             'TSV': self._working_dir / assembly.OUTPUT_ASSEMBLY_SUMMARY,
             'FASTA': self._working_dir / assembly.OUTPUT_ASSEMBLY_FASTA,
-            'INFORMS_assembler': assembly.get_command_informs(config_data)
+            **{f'INFORMS_assembler_{idx}': self._working_dir / p for idx, p in enumerate(
+                assembly.get_command_informs(config_data))}
         }
         if min_ctg_len is not None:
             output_files['INFORMS_seqtk'] = self._working_dir / assembly.OUTPUT_ASSEMBLY_FILTERING_INFORMS
@@ -146,7 +147,9 @@ class AssemblyWrapper(object):
         :return: None
         """
         log_file_path = self._working_dir / 'camel.log'
-        informs = [SnakemakeUtils.load_object(output_files[f'INFORMS_assembler'])]
+        informs = [
+            SnakemakeUtils.load_object(p) for key, p in output_files.items() if key.startswith('INFORMS_assembler_')
+        ]
         if 'INFORMS_seqtk' in output_files:
             informs.append(SnakemakeUtils.load_object(output_files['INFORMS_seqtk']))
         if all(key in output_files for key in ('INFORMS_mapper', 'INFORMS_depth')):
