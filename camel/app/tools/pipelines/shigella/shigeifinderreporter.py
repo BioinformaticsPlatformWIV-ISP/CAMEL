@@ -59,7 +59,7 @@ class ShigEiFinderReporter(Tool):
         :return: None
         """
         # Create overview table with status
-        section = HtmlReportSection('Serotyping')
+        section = HtmlReportSection('ShigEiFinder', subtitle=self._input_informs['shigeifinder']['_name'])
         species = self._input_informs['shigeifinder']['species']
         section.add_table(
             [[HtmlTableCell(species)]], ['Serotyping'], [('class', 'data')])
