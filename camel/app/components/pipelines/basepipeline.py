@@ -53,13 +53,15 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         :return: None
         """
         # Input
+        argument_parser.add_argument('--fasta', type=Path, help="Input FASTA file")
+        argument_parser.add_argument('--fasta-name', type=str, help="Input FASTA file name (for Galaxy)")
         argument_parser.add_argument('--sample-name', type=str)
         argument_parser.add_argument('--fastq-pe', nargs=2, type=Path, help="Input PE FASTQ files")
         argument_parser.add_argument(
             '--fastq-pe-names', nargs=2, help="Input PE FASTQ filenames (for Galaxy)")
         argument_parser.add_argument('--fastq-se', type=Path, help="Input SE FASTQ file")
         argument_parser.add_argument(
-            '--fastq-se-name', type=Path, help="Input SE FASTQ filename (for Galaxy)")
+            '--fastq-se-name', help="Input SE FASTQ filename (for Galaxy)")
         argument_parser.add_argument(
             '--input-type', help='Input type',
             choices=['illumina', 'iontorrent', 'ont', 'hybrid', 'fasta'], default='illumina')
@@ -87,6 +89,11 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         """
         if args.sample_name is not None:
             return FileSystemHelper.make_valid(args.sample_name)
+        # FASTA input
+        elif args.input_type == 'fasta':
+            if args.fasta_name is not None:
+                return FileSystemHelper.make_valid(Path(args.fasta_name).stem)
+            return FileSystemHelper.make_valid(Path(args.fasta).stem)
         # PE reads (illumina / hybrid)
         elif args.input_type in ('illumina', 'hybrid'):
             if args.fastq_pe_names is not None:
@@ -139,12 +146,16 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         """
         return self._args.galaxy_job_id if 'galaxy_job_id' in self._args else None
 
-    def _get_fastq_input_links(self) -> List[List[Tuple[str, Path, str]]]:
+    def _get_input_links(self) -> List[List[Tuple[str, Path, str]]]:
         """
         Returns the links to the input FASTQ files.
         :return: Links (key, path, name)
         """
         links = []
+
+        # FASTA input
+        if self._args.input_type == 'fasta':
+            links.append(['fasta', self._args.fasta, f'{self.sample_name}.fasta'])
 
         # PE reads
         if self._args.input_type in ('illumina', 'hybrid'):
@@ -168,7 +179,7 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         :return: List of FASTQ input dictionaries
         """
         # Determine link names
-        links = self._get_fastq_input_links()
+        links = self._get_input_links()
 
         # Create directory
         dir_links = self._args.working_dir / 'input'

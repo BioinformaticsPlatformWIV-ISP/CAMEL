@@ -52,7 +52,7 @@ class MainMockPipeline(ReportPipeline):
         :return: None
         """
         input_files = self._symlink_input()
-        self._validate_fastq_input()
+        self._validate_input_files()
         config_file = self.__construct_config_file(input_files)
         self._run_snakemake_main(str(config_file))
         self._export_assembly()

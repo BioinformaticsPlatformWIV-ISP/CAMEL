@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Dict, Any, List
 
-from camel.resources.snakefile import assembly_spades, assembly_flye, polish_assembly_short, polish_assembly_long
+from camel.resources.snakefile import assembly_spades, assembly_flye, polish_assembly_short, polish_assembly_long, core
 
 SNAKEFILE_ASSEMBLY = f'{Path(__file__).parent / Path(__file__).stem}.smk'
 OUTPUT_ASSEMBLY_FASTA = Path('assembly', 'filtering', 'fasta.io')
@@ -17,6 +17,8 @@ def get_fasta_raw(config: Dict[str, Any]) -> Path:
     """
     Returns the assembly FASTA output IO object path (before filtering).
     """
+    if config['input_type'] == 'fasta':
+        return core.INPUT_FASTA_IO
     if config['input_type'] == 'illumina':
         return assembly_spades.OUTPUT_ASSEMBLY_FASTA
     if config['input_type'] == 'ont':
@@ -31,6 +33,8 @@ def get_command_informs(config: Dict[str, Any]) -> List[Path]:
     Returns the assembly informs output IO object paths.
     :return: Assembly informs path
     """
+    if config['input_type'] == 'fasta':
+        return []
     if config['input_type'] == 'illumina':
         return [Path(config['working_dir'], assembly_spades.OUTPUT_ASSEMBLY_INFORMS)]
     if config['input_type'] == 'ont':

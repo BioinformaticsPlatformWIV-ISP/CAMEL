@@ -4,6 +4,8 @@ import shutil
 from pathlib import Path
 from typing import Dict, Any, List, Tuple, Union
 
+from Bio import SeqIO
+
 from camel.app.components import mainscriptutils
 from camel.app.components.files.fastqutils import FastqUtils
 from camel.app.components.files.fileutils import FileUtils
@@ -53,7 +55,7 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
 
     def get_template_data(self, dict_input: Dict) -> Dict[str, Any]:
         """
-        Returns the template data that is common to all pipeline.
+        Returns the template data that is common to all pipelines.
         :param dict_input: Dictionary with pipeline input files
         :return: Template data
         """
@@ -75,13 +77,24 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
 
         return config_data
 
-    def _validate_fastq_input(self) -> None:
+    def _validate_input_files(self) -> None:
         """
-        Checks if the provided FASTQ input is valid.
+        Checks if the provided input files are valid.
         :return: None
         """
-        logger.info(f'Checking FASTQ input')
-        if self._args.input_type == 'illumina':
+        logger.info(f'Checking input files')
+
+        # FASTA input
+        if self._args.input_type == 'fasta':
+            with open(self._args.fasta) as handle:
+                try:
+                    seqs = list(SeqIO.parse(handle, 'fasta'))
+                    logger.info(f'Valid FASTA file ({len(seqs):,} sequences)')
+                except BaseException as err:
+                    raise InvalidInputError(f'Invalid FASTA input: {err}')
+
+        # FASTQ PE inputs
+        elif self._args.input_type in ('illumina', 'hybrid'):
             nb_reads_fwd = FastqUtils.count_reads(self._args.fastq_pe[0])
             nb_reads_rev = FastqUtils.count_reads(self._args.fastq_pe[1])
             if not nb_reads_fwd == nb_reads_rev:
@@ -92,7 +105,7 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
             logger.info(f'PE forward FASTQ hash: {FileUtils.hash_file(self._args.fastq_pe[0])}')
             logger.info(f'PE reverse FASTQ hash: {FileUtils.hash_file(self._args.fastq_pe[1])}')
         else:
-            logger.debug('FASTQ checking not implemented yet')
+            logger.debug(f"FASTQ checking not implemented yet for input type '{self._args.input_type}'")
 
     def _export_assembly(self) -> None:
         """
@@ -125,8 +138,12 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         :param path_out: Path to store dictionary
         :return: None
         """
+        # FASTA input
+        if input_type == 'fasta':
+            SnakemakeUtils.dump_object(None, path_out)
+
         # PE reads (illumina)
-        if input_type == 'illumina':
+        elif input_type == 'illumina':
             shutil.copyfile(snake_in.FASTQ_PE, path_out)
 
         # SE reads (iontorrent, ont)
@@ -183,7 +200,9 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
             p_html.parent.name: p_html for p_html in [Path(x) for x in reports_ds]}
 
         # Add the report content
-        if input_type == 'illumina':
+        if input_type == 'fasta':
+            pass
+        elif input_type == 'illumina':
             structure.append(('Read trimming and basic QC', 'trim', [
                 report_ds_by_read_key['fastq_pe'], report_trim_by_tech['illumina']]))
         elif input_type == 'ont':
@@ -212,7 +231,10 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
             p_html.parents[1].name: p_html for p_html in [Path(x) for x in reports_contamination]}
 
         # Add the report content
-        if input_type == 'illumina':
+        if input_type == 'fasta':
+            # TODO: To execute Kraken2 on the input FASTA file
+            pass
+        elif input_type == 'illumina':
             structure.append(
                 ('Contamination check', 'contamination', [
                     report_k2_by_read_key['fastq_pe'], Path(report_confindr)]))
