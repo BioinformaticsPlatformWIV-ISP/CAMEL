@@ -65,27 +65,24 @@ class ShigaTyper(Tool):
         :return: None
         """
         # Symlink the input FASTQ files
-        dir_fasta_in = self.folder
-        (dir_fasta_in / self._tool_inputs['FASTQ_FWD'][0].path.name).symlink_to(self._tool_inputs['FASTQ_FWD'][0].path)
-        (dir_fasta_in / self._tool_inputs['FASTQ_REV'][0].path.name).symlink_to(self._tool_inputs['FASTQ_REV'][0].path)
-
-        sample_id = self._tool_inputs['FASTQ_FWD'][0].path.name.replace('_1.fastq.gz', '')
-        logging.info(f'Sample ID: {sample_id}')
+        FWD_READS = self._tool_inputs['FASTQ_FWD'][0].path
+        REV_READS = self._tool_inputs['FASTQ_REV'][0].path
 
         # Run the command
-        self.__build_command(self.folder/'*_1.fastq.gz', self.folder/'*_2.fastq.gz', f'{sample_id}_shigatyper')
+        self.__build_command(FWD_READS, REV_READS, 'shigatyper_out')
         self._execute_command()
 
         # Collect the output
         dir_out = self.folder / 'serotype'
         dir_out.mkdir()
+
         try:
             # Main output
-            self._tool_outputs['TSV'] = [ToolIOFile((dir_out / f'{sample_id}_shigatyper.tsv'))]
-            shutil.copy(f'{self.folder}/{sample_id}_shigatyper.tsv', dir_out)
+            self._tool_outputs['TSV'] = [ToolIOFile((dir_out / 'shigatyper_out.tsv'))]
+            shutil.copy(f'{self.folder}/shigatyper_out.tsv', dir_out)
             # List of hits
-            self._tool_outputs['TSV_HITS'] = [ToolIOFile((dir_out / f'{sample_id}_shigatyper-hits.tsv'))]
-            shutil.copy(f'{self.folder}/{sample_id}_shigatyper-hits.tsv', dir_out)
+            self._tool_outputs['TSV_HITS'] = [ToolIOFile((dir_out / 'shigatyper_out-hits.tsv'))]
+            shutil.copy(f'{self.folder}/shigatyper_out-hits.tsv', dir_out)
         except StopIteration:
             raise ToolExecutionError(f"TSV file not found in output folder: {dir_out}")
         self._parse_tsv(self._tool_outputs['TSV'][0].path)
