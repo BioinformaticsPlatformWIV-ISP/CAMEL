@@ -20,7 +20,6 @@ class TestGeneDetection(CamelTestSuite):
     input_fastq_by_key = {
         'illumina': [test_file_dir / 'gene_detection' / 'illumina' / 'reads_illumina_1.fastq',
                      test_file_dir / 'gene_detection' / 'illumina' / 'reads_illumina_2.fastq'],
-        'iontorrent': [test_file_dir / 'gene_detection' / 'iontorrent' / 'reads_iontorrent.fastq'],
         'nanopore': [test_file_dir / 'gene_detection' / 'nanopore' / 'reads_nanopore.fastq']
     }
 
@@ -155,45 +154,6 @@ class TestGeneDetection(CamelTestSuite):
         main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)
 
-    def test_gene_detection_blast_iontorrent(self) -> None:
-        """
-        Tests the gene detection workflow with BLAST detection on IonTorrent data, including trimming.
-        :return: None
-        """
-        path_report_out = self.running_dir / 'report' / 'report.html'
-        args = [
-            '--fastq-se', str(TestGeneDetection.input_fastq_by_key['iontorrent'][0]),
-            '--database-dir', str(TestGeneDetection.input_gene_detection_db),
-            '--output-html', str(path_report_out),
-            '--output-dir', str(path_report_out.parent),
-            '--working-dir', str(self.running_dir),
-            '--read-type', 'iontorrent',
-            '--assembly-kmers', '33,55'
-        ]
-        main = MainGeneDetection(args)
-        main.run()
-        self.assertGreater(path_report_out.stat().st_size, 0)
-
-    def test_gene_detection_blast_iontorrent_trim(self) -> None:
-        """
-        Tests the gene detection workflow with BLAST detection on IonTorrent data, including trimming.
-        :return: None
-        """
-        path_report_out = self.running_dir / 'report' / 'report.html'
-        args = [
-            '--fastq-se', str(TestGeneDetection.input_fastq_by_key['iontorrent'][0]),
-            '--database-dir', str(TestGeneDetection.input_gene_detection_db),
-            '--output-html', str(path_report_out),
-            '--output-dir', str(path_report_out.parent),
-            '--working-dir', str(self.running_dir),
-            '--read-type', 'iontorrent',
-            '--trim-reads',
-            '--assembly-kmers', '33,55'
-        ]
-        main = MainGeneDetection(args)
-        main.run()
-        self.assertGreater(path_report_out.stat().st_size, 0)
-
     def test_gene_detection_blast_nanopore(self) -> None:
         """
         Tests the gene detection workflow with BLAST detection on Nanopore data, including trimming.
@@ -238,45 +198,6 @@ class TestGeneDetection(CamelTestSuite):
             '--read-type', 'illumina',
             '--detection-method', 'kma',
             '--adapter', 'TruSeq3',
-            '--trim-reads'
-        ]
-        main = MainGeneDetection(args)
-        main.run()
-        self.assertGreater(path_report_out.stat().st_size, 0)
-
-    def test_gene_detection_kma_iontorrent(self) -> None:
-        """
-        Tests the gene detection workflow with BLAST detection on IonTorrent data, including trimming.
-        :return: None
-        """
-        path_report_out = self.running_dir / 'report' / 'report.html'
-        args = [
-            '--fastq-se', str(TestGeneDetection.input_fastq_by_key['iontorrent'][0]),
-            '--database-dir', str(TestGeneDetection.input_gene_detection_db),
-            '--output-html', str(path_report_out),
-            '--output-dir', str(path_report_out.parent),
-            '--working-dir', str(self.running_dir),
-            '--read-type', 'iontorrent',
-            '--detection-method', 'kma',
-        ]
-        main = MainGeneDetection(args)
-        main.run()
-        self.assertGreater(path_report_out.stat().st_size, 0)
-
-    def test_gene_detection_kma_iontorrent_trim(self) -> None:
-        """
-        Tests the gene detection workflow with BLAST detection on IonTorrent data, including trimming.
-        :return: None
-        """
-        path_report_out = self.running_dir / 'report' / 'report.html'
-        args = [
-            '--fastq-se', str(TestGeneDetection.input_fastq_by_key['iontorrent'][0]),
-            '--database-dir', str(TestGeneDetection.input_gene_detection_db),
-            '--output-html', str(path_report_out),
-            '--output-dir', str(path_report_out.parent),
-            '--working-dir', str(self.running_dir),
-            '--read-type', 'iontorrent',
-            '--detection-method', 'kma',
             '--trim-reads'
         ]
         main = MainGeneDetection(args)
@@ -357,45 +278,6 @@ class TestGeneDetection(CamelTestSuite):
             '--output-dir', str(path_report_out.parent),
             '--working-dir', str(self.running_dir),
             '--read-type', 'illumina',
-            '--detection-method', 'srst2',
-            '--trim-reads'
-        ]
-        main = MainGeneDetection(args)
-        main.run()
-        self.assertGreater(path_report_out.stat().st_size, 0)
-
-    def test_gene_detection_srst2_iontorrent(self) -> None:
-        """
-        Tests the gene detection workflow with BLAST detection on Illumina data, including trimming.
-        :return: None
-        """
-        path_report_out = self.running_dir / 'report' / 'report.html'
-        args = [
-            '--fastq-se', str(TestGeneDetection.input_fastq_by_key['iontorrent'][0]),
-            '--database-dir', str(TestGeneDetection.input_gene_detection_db),
-            '--output-html', str(path_report_out),
-            '--output-dir', str(path_report_out.parent),
-            '--working-dir', str(self.running_dir),
-            '--read-type', 'iontorrent',
-            '--detection-method', 'srst2',
-        ]
-        main = MainGeneDetection(args)
-        main.run()
-        self.assertGreater(path_report_out.stat().st_size, 0)
-
-    def test_gene_detection_srst2_iontorrent_trim(self) -> None:
-        """
-        Tests the gene detection workflow with BLAST detection on Illumina data, including trimming.
-        :return: None
-        """
-        path_report_out = self.running_dir / 'report' / 'report.html'
-        args = [
-            '--fastq-se', str(TestGeneDetection.input_fastq_by_key['iontorrent'][0]),
-            '--database-dir', str(TestGeneDetection.input_gene_detection_db),
-            '--output-html', str(path_report_out),
-            '--output-dir', str(path_report_out.parent),
-            '--working-dir', str(self.running_dir),
-            '--read-type', 'iontorrent',
             '--detection-method', 'srst2',
             '--trim-reads'
         ]

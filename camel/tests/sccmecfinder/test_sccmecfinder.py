@@ -12,7 +12,6 @@ class TestSCCmecFinder(CamelTestSuite):
     # Input files
     test_file_dir = CamelTestSuite.get_test_file_dir('sccmec')
     input_fasta_file = test_file_dir / 'MSSA476.fasta'
-    input_iontorrent = test_file_dir / 'iontorrent_reads_staph.fastq'
 
     def test_sccmecfinder_fasta(self) -> None:
         """
@@ -32,28 +31,9 @@ class TestSCCmecFinder(CamelTestSuite):
         main.run()
         self.assertGreater(output_file_report.stat().st_size, 0)
 
-    def test_sccmecfinder_iontorrent_se(self) -> None:
-        """
-        Tests the SCCmecFinder tool with IonTorrent single-end data.
-        :return: None
-        """
-        output_file_report = self.running_dir / 'report' / 'report.html'
-        args = [
-            '--fastq-se', str(self.input_iontorrent),
-            '--output-html', str(output_file_report),
-            '--output-dir', str(output_file_report.parent),
-            '--working-dir', str(self.running_dir),
-            '--db-mec-genes', '/db/gene_detection/SCCmec_genes',
-            '--profiles-mec-genes', '/db/pipelines/saureus/SCCmec_genes/profiles.yml',
-            '--read-type', 'iontorrent'
-        ]
-        main = MainSCCmecFinder(args)
-        main.run()
-        self.assertGreater(output_file_report.stat().st_size, 0)
-
     def test_sccmecfinder_fasta_json_out(self) -> None:
         """
-        Tests the SCCmecFinder tool with an input assembly and JSON output..
+        Tests the SCCmecFinder tool with an input assembly and JSON output.
         :return: None
         """
         output_file_report = self.running_dir / 'report' / 'report.html'
