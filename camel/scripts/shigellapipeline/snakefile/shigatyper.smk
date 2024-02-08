@@ -46,6 +46,7 @@ rule shigatyper_report:
     """
     input:
         TSV = rules.shigatyper_run.output.TSV,
+        TSV_HITS = rules.shigatyper_run.output.TSV_HITS,
         INFORMS_shigatyper = rules.shigatyper_run.output.INFORMS
     output:
         HTML = Path(config['working_dir']) / shigatyper.OUTPUT_SHIGATYPER_REPORT

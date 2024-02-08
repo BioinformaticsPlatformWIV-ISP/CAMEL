@@ -83,7 +83,7 @@ class ShigaTyperReporter(Tool):
         :return: None
         """
         # Create overview table with status
-        section = HtmlReportSection('Serotyping')
+        section = HtmlReportSection('ShigaTyper', subtitle=self._input_informs['shigatyper']['_name'])
         species = self._input_informs['shigatyper']['species']
         section.add_table(
             [[HtmlTableCell(species)]], ['Serotyping'], [('class', 'data')])
