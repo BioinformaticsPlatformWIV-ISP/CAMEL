@@ -5,8 +5,6 @@ from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.scripts.shigellapipeline.snakefile import shigatyper
 
-import pprint
-
 rule shigatyper_run:
     """
     Runs the ShigaTyper assay.
