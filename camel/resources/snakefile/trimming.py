@@ -12,6 +12,12 @@ def get_reports(config: Dict[str, Any]) -> List[Path]:
     """
     paths = []
     input_type = config['input_type']
+
+    # FASTA input
+    if config['input_type'] == 'fasta':
+        return []
+
+    # FASTQ input
     if input_type in ('illumina', 'hybrid'):
         paths.append(trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_REPORT)
     if input_type in ('ont', 'hybrid'):
@@ -30,8 +36,14 @@ def get_summaries(config: Dict[str, Any]) -> List[Path]:
     :param config: Snakemake configuration
     :return: Path to read trimming summary file
     """
-    paths = []
     input_type = config['input_type']
+
+    # FASTA input
+    if config['input_type'] == 'fasta':
+        return []
+
+    # FASTQ input
+    paths = []
     if input_type in ('illumina', 'hybrid'):
         paths.append(trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_SUMMARY)
     if input_type in ('ont', 'hybrid'):
