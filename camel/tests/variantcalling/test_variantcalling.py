@@ -1,7 +1,4 @@
-import argparse
 import unittest
-
-import os
 
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.components.vcf.vcfutils import VCFUtils
@@ -14,8 +11,8 @@ class TestVariantCalling(CamelTestSuite):
     """
     # Input files
     test_file_dir = CamelTestSuite.get_test_file_dir('variant_calling')
-    input_bam_file = test_file_dir / 'toy' / 'toy.bam'
-    input_fasta_ref_file = test_file_dir / 'toy' / 'toy.fasta'
+    input_bam_file = test_file_dir / 'sars_cov_2-illumina.bam'
+    input_fasta_ref_file = test_file_dir / 'sars_cov_2-wuhan.fasta'
 
     def test_variant_calling(self) -> None:
         """

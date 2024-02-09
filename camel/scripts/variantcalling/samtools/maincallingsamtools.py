@@ -33,7 +33,6 @@ class MainCalling(object):
         argument_parser = argparse.ArgumentParser()
         group = argument_parser.add_mutually_exclusive_group(required=True)
         group.add_argument('--bam', type=Path, help="Input BAM file")
-        group.add_argument('--fastq', type=Path, help="Input Fastq files")
         argument_parser.add_argument('--reference', type=Path, required=True)
         argument_parser.add_argument('--reference-name')
         argument_parser.add_argument('--output', required=True)
@@ -88,13 +87,16 @@ class MainCalling(object):
         :return: Config file data
         """
         config_data = {
-            'sample_name': 'Sample', 'working_dir': self._args.working_dir, 'variant_calling': {
+            'sample_name': 'Sample',
+            'working_dir': str(self._args.working_dir),
+            'variant_calling': {
                 'ploidy': self._args.ploidy,
                 'reference': {
                     'name': self._args.reference_name if self._args.reference_name else self._args.reference.name,
                     'path': str(self._args.reference)}
             },
-            'variant_filtering': {}
+            'variant_filtering': {},
+            'input_type': 'illumina'
         }
         for k in ['calling_method', 'skip_variants', 'mutation_rate', 'minimal_bq', 'minimal_mq', 'count_orphans',
                   'disable_baq']:
