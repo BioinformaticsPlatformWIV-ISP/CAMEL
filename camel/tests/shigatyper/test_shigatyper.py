@@ -23,8 +23,8 @@ class TestShigaTyper(CamelTestSuite):
         :return: None
         """
         shigatyper = ShigaTyper(self.camel)
-        shigatyper.add_input_files({'FASTQ_FWD': [ToolIOFile(Path(TestShigaTyper.fastq_fwd))],
-                                    'FASTQ_REV': [ToolIOFile(Path(TestShigaTyper.fastq_rev))]})
+        shigatyper.add_input_files({'FASTQ_PE': [ToolIOFile(Path(TestShigaTyper.fastq_fwd)),
+                                                 ToolIOFile(Path(TestShigaTyper.fastq_rev))]})
         shigatyper.run(self.running_dir)
         self.verify_output_files(shigatyper, 'TSV')
         self.verify_output_files(shigatyper, 'TSV_HITS')
@@ -36,8 +36,8 @@ class TestShigaTyper(CamelTestSuite):
         """
         # Run the tool
         shigatyper = ShigaTyper(self.camel)
-        shigatyper.add_input_files({'FASTQ_FWD': [ToolIOFile(Path(TestShigaTyper.fastq_fwd))],
-                                    'FASTQ_REV': [ToolIOFile(Path(TestShigaTyper.fastq_rev))]})
+        shigatyper.add_input_files({'FASTQ_PE': [ToolIOFile(Path(TestShigaTyper.fastq_fwd)),
+                                                 ToolIOFile(Path(TestShigaTyper.fastq_rev))]})
         shigatyper.run(self.running_dir)
 
         # Run the reporter
