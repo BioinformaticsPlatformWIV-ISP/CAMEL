@@ -25,7 +25,7 @@ class ShigaTyper(Tool):
 
     def _check_input(self) -> None:
         """
-        Checks whether the provided inputs is valid:
+        Checks whether the provided input is valid:
         - Illumina paired-end reads are the only required input
         :return: None
         """
