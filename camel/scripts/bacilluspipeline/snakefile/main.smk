@@ -5,7 +5,7 @@ from camel.app.components.pipelines.reportpipeline import ReportPipeline
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile import core, assembly, downsampling, quast, confindr, trimming, trimming_illumina, \
     quality_checks, contamination_check_kraken, sequence_typing, amrfinder, trimming_ont, gene_detection, \
-    mobsuite, medaka_polishing, short_read_polishing
+    mobsuite, polish_assembly_long, polish_assembly_short
 from camel.scripts.bacilluspipeline.snakefile import btyper, ani
 
 #######################

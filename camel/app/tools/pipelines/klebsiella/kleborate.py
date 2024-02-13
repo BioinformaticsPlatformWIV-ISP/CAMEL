@@ -24,7 +24,7 @@ class Kleborate(Tool):
         Initializes this tool.
         :param camel: CAMEL instance
         """
-        super().__init__('Kleborate', '2.3.2', camel)
+        super().__init__('Kleborate', '2.4.1', camel)
 
     def _check_input(self) -> None:
         """

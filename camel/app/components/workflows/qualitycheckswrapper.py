@@ -6,7 +6,7 @@ from typing import Dict, List
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-from camel.resources.snakefile import quality_checks, contamination_check_kraken, medaka_polishing, assembly_spades, \
+from camel.resources.snakefile import quality_checks, contamination_check_kraken, polish_assembly_long, assembly_spades, \
     variant_calling, trimming_illumina, trimming_ont
 
 

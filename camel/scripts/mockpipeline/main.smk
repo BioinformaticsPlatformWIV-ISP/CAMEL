@@ -1,8 +1,9 @@
+import shutil
 from pathlib import Path
 
-from camel.resources.snakefile import trimming_illumina, downsampling, trimming_ont, trimming, assembly_spades, \
-    assembly_flye, quast, contamination_check_kraken, quality_checks, confindr, gene_detection, assembly, core, \
-    short_read_polishing
+from camel.resources.snakefile import trimming_illumina, downsampling, trimming_ont, trimming, quast, \
+    contamination_check_kraken, quality_checks, confindr, gene_detection, assembly, core, assembly_flye, \
+    polish_assembly_long
 
 #######################
 # Included snakefiles #
@@ -11,16 +12,14 @@ include: core.SNAKEFILE_CORE
 include: downsampling.SNAKEFILE_DOWNSAMPLING
 include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
 include: trimming_ont.SNAKEFILE_TRIMMING_ONT
-include: assembly_spades.SNAKEFILE_ASSEMBLY_SPADES
-include: assembly_flye.SNAKEFILE_ASSEMBLY_FLYE
-include: short_read_polishing.SNAKEFILE_POLISHING
+include: assembly.SNAKEFILE_ASSEMBLY
 include: quast.SNAKEFILE_QUAST
 include: contamination_check_kraken.SNAKEFILE_CONTAMINATION_CHECK_KRAKEN
 include: confindr.SNAKEFILE_CONFINDR
 include: quality_checks.SNAKEFILE_QUALITY_CHECKS
 include: gene_detection.SNAKEFILE_GENE_DETECTION
 
-#########
+#########s
 # Rules #
 #########
 rule all:
@@ -30,6 +29,14 @@ rule all:
     input:
         config['output_report'],
         config['output_tabular']
+
+rule copy_assemblies_to_medaka_input:
+    input:
+        FASTA_flye = Path(config['working_dir']) / assembly_flye.OUTPUT_ASSEMBLY_FASTA
+    output:
+        FASTA_medaka_flye = str(Path(config['working_dir']) / polish_assembly_long.INPUT_ASSEMBLY_FASTA).format(assembly_type='flye')
+    run:
+        shutil.copyfile(input.FASTA_flye, output.FASTA_medaka_flye)
 
 rule report_create_command_section:
     """
@@ -42,7 +49,8 @@ rule report_create_command_section:
         INFORMS_quast = Path(config['working_dir'], quast.OUTPUT_QUAST_INFORMS),
         INFORMS_busco = Path(config['working_dir'], quast.OUTPUT_BUSCO_INFORMS),
         INFORMS_contamination = contamination_check_kraken.get_command_informs(config),
-        INFORMS_confindr = confindr.get_command_informs(config)
+        INFORMS_confindr = confindr.get_command_informs(config),
+        INFORMS_ncbi_amr = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='ncbi_amr') if 'ncbi_amr' in config['analyses'] else []
     output:
         HTML = Path(config['working_dir']) / 'report' / 'html-commands.io'
     params:

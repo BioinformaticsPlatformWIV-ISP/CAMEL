@@ -94,7 +94,7 @@ rule quast_report:
         FASTA =  Path(config['working_dir']) / assembly.OUTPUT_ASSEMBLY_FASTA,
         DIR = rules.quast_quast.output.DIR,
         INFORMS_quast = rules.quast_quast.output.INFORMS,
-        INFORMS_assembler = Path(config['working_dir']) / assembly.get_command_informs(config),
+        INFORMS_assembler = [Path(config['working_dir'], p) for p in assembly.get_command_informs(config)],
         INFORMS_busco = rules.quast_busco.output.INFORMS
     output:
         HTML = Path(config['working_dir']) / 'quast' / 'report' / 'html.io'
@@ -105,7 +105,10 @@ rule quast_report:
         from camel.app.tools.quast.quastreporter import QuastReporter
         reporter = QuastReporter(Camel.get_instance())
         reporter.update_parameters(name=params.name)
-        SnakemakeUtils.add_pickle_inputs(reporter, input)
+        SnakemakeUtils.add_pickle_inputs(reporter, input, excluded_keys=['INFORMS_assembler'])
+        reporter.add_input_informs({
+            'assembler': ', '.join(SnakemakeUtils.load_object(Path(x))['_name'] for x in input.INFORMS_assembler)
+        })
         step = Step(str(rule), reporter, Camel.get_instance(), params.running_dir)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
@@ -115,7 +118,7 @@ rule quast_create_summary_out:
     Creates the tabular summary output for QUAST.
     """
     input:
-        INFORMS = Path(config['working_dir'], assembly.get_command_informs(config)),
+        INFORMS = [Path(config['working_dir'], p) for p in assembly.get_command_informs(config)],
         TSV = rules.quast_quast.output.TSV
     output:
         TSV = Path(config['working_dir']) / quast.OUTPUT_QUAST_SUMMARY
@@ -139,8 +142,8 @@ rule quast_create_summary_out:
                 data_quast[key] = value
 
         # Add assembler version
-        spades_informs = SnakemakeUtils.load_object(Path(input.INFORMS))
-        data_quast['tool_version'] = spades_informs['_name']
+        tool_names = [SnakemakeUtils.load_object(Path(x))['_name'] for x in input.INFORMS]
+        data_quast['tool_version'] = ', '.join(tool_names)
 
         # Create TSV output
         with open(output.TSV, 'w') as handle:

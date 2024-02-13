@@ -82,7 +82,7 @@ class QuastReporter(Tool):
         """
         section.add_header('Basic statistics', 3)
         section.add_table([
-            ['Assembler:', self._input_informs['assembler']['_name']],
+            ['Assembler:', self._input_informs['assembler']],
             ['Nb. of contigs:', f"{int(data_quast['# contigs']):,}"],
             ['Total length:', f"{int(data_quast['Total length']):,}"],
             ['N50:', f"{int(data_quast['N50']):,}"]

@@ -251,6 +251,8 @@ class SnakePipelineUtils(object):
         :return: Reformatted dictionary
         """
         io = SnakemakeUtils.load_object(io_dict)
+        import pprint
+        pprint.pprint(io)
         output_dict = {}
 
         # Single end reads (no paired / orphaned reads available)

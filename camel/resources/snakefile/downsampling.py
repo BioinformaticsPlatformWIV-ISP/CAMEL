@@ -20,6 +20,12 @@ def get_reports(config: Dict[str, Any], input_type: str = None) -> List[Path]:
     """
     if input_type is None:
         input_type = config['input_type']
+
+    # FASTA input
+    if config['input_type'] == 'fasta':
+        return []
+
+    # FASTQ input
     paths = []
     if input_type in ('illumina', 'hybrid'):
         paths.append(str(OUTPUT_DOWNSAMPLING_REPORT).format(read_key='fastq_pe'))
@@ -40,9 +46,15 @@ def get_command_informs(config: Dict[str, Any], input_type: str = None) -> List[
     :param input_type: Input type
     :return: List of informs IO files
     """
-    paths = []
     if input_type is None:
         input_type = config['input_type']
+
+    # FASTA input
+    if config['input_type'] == 'fasta':
+        return []
+
+    # FASTQ input
+    paths = []
     if input_type in ('hybrid', 'illumina'):
         paths.append(str(OUTPUT_DOWNSAMPLING_INFORMS).format(read_key='fastq_pe'))
     if input_type in ('iontorrent', 'hybrid', 'ont'):
@@ -65,6 +77,11 @@ def get_summaries(config: Dict[str, Any], input_type: str = None) -> List[Path]:
     if input_type is None:
         input_type = config['input_type']
 
+    # FASTA input
+    if config['input_type'] == 'fasta':
+        return []
+
+    # FASTQ input
     paths = []
     if input_type in ('hybrid', 'illumina'):
         paths.append(str(OUTPUT_DOWNSAMPLING_SUMMARY).format(read_key='fastq_pe'))

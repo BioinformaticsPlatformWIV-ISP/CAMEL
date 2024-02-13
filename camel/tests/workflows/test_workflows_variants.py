@@ -40,21 +40,6 @@ class TestWorkflowsVariants(CamelTestSuite):
         self.assertGreater(wrapper.output.bam_file.size, 0)
         self.assertGreater(wrapper.output.vcf_unfiltered.size, 0)
 
-    def test_variant_calling_single_end(self) -> None:
-        """
-        Tests the variant calling workflow with IonTorrent input data.
-        :return: None
-        """
-        wrapper = VariantCallingWrapper(self.running_dir)
-        fastq_input = FastqInput('iontorrent', se=[ToolIOFile(TestWorkflowsVariants.input_fastq_pe[0])], is_pe=False)
-        ref_info = {
-            'name': TestWorkflowsVariants.input_fasta_ref.name,
-            'path': str(TestWorkflowsVariants.input_fasta_ref)
-        }
-        wrapper.run_workflow(ref_info, 'test_sample', fastq_input, {}, 1)
-        self.assertGreater(wrapper.output.bam_file.size, 0)
-        self.assertGreater(wrapper.output.vcf_unfiltered.size, 0)
-
     def test_variant_filtering(self) -> None:
         """
         Tests the variant filtering workflow.

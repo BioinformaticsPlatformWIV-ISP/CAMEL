@@ -5,7 +5,7 @@ from typing import Dict, Optional
 
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-from camel.resources.snakefile import short_read_polishing
+from camel.resources.snakefile import polish_assembly_short
 
 
 class ShortReadPolishingWrapper(object):

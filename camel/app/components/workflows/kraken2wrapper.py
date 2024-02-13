@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Union
 
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.workflows.utils.fastqinput import FastqInput
@@ -23,10 +23,11 @@ class Kraken2Wrapper(object):
     This class is used as a wrapper class around the Kraken2 contamination check workflow.
     """
 
-    def __init__(self, working_dir: str) -> None:
+    def __init__(self, working_dir: Union[str, Path]) -> None:
         """
         Initializes the read trimming helper.
         :param working_dir: Working directory
+        :return: None
         """
         self._working_dir = Path(working_dir)
         self._output = None
@@ -47,6 +48,8 @@ class Kraken2Wrapper(object):
         if not self._working_dir.exists():
             self._working_dir.mkdir(parents=True)
         SnakemakeUtils.dump_object(fastq_input.to_fq_dict(), self._working_dir / 'fq_dict.io')
+
+        # Config file
         config_data = {
             'contamination_check': {
                 'db': str(db),
@@ -54,15 +57,24 @@ class Kraken2Wrapper(object):
                 'level_of_depth': level_of_depth},
             'sample_name': sample_name,
             'working_dir': str(self._working_dir),
-            'read_type': fastq_input.read_type,
+            'input_type': fastq_input.read_type,
         }
         config_file = SnakePipelineUtils.generate_config_file(config_data, self._working_dir)
+
+        # Output files
         output_files = {
             'HTML': self._working_dir / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT,
             'TSV': self._working_dir / contamination_check_kraken.OUTPUT_CONTAMINATION_SUMMARY,
             'INFORMS': self._working_dir / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_INFORMS,
             'INFORMS_KRAKEN': self._working_dir / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_KRAKEN_INFORMS,
         }
+        read_key = 'fastq_pe' if fastq_input.read_type == 'illumina' else 'fastq_se'
+        for k, p in output_files.items():
+            if '{read_key}' not in str(p):
+                continue
+            output_files[k] = Path(str(p).format(read_key=read_key))
+
+        # Run Snakemake
         SnakePipelineUtils.run_snakemake(
             contamination_check_kraken.SNAKEFILE_CONTAMINATION_CHECK_KRAKEN, config_file, list(output_files.values()),
             self._working_dir, threads)

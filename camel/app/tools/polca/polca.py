@@ -54,13 +54,20 @@ class Polca(Tool):
             f"-r {self._tool_inputs['FASTQ_PE'][1]}",
             *self._build_options()])
 
+    def _output_is_empty(self) -> bool:
+        """
+        Function to check if the VCF output is empty (no variants detected).
+        :return: True if output is empty
+        """
+        return 'fasta.vcf: No such file or directory' in self._command.stderr
+
     def _check_command_output(self) -> None:
         """
         Checks command output.
         :return: False or None
         """
-        if 'fasta.vcf: No such file or directory' in self._command.stderr:
-            raise FileNotFoundError('No VCF output generated')
+        if self._output_is_empty():
+            return
         if self._command.returncode != 0:
             raise ToolExecutionError(f"Command execution failed (Exit code: {self._command.returncode})")
 
@@ -69,8 +76,6 @@ class Polca(Tool):
         Collects the tool output.
         """
         fasta_output = self.folder / f'{self._tool_inputs["FASTA"][0].path.name}.PolcaCorrected.fa'
-        try:
-            self._check_command_output() is False
-        except FileNotFoundError:
+        if self._output_is_empty():
             fasta_output.symlink_to(self._tool_inputs['FASTA'][0].path)
         self._tool_outputs['FASTA'] = [ToolIOFile(fasta_output)]

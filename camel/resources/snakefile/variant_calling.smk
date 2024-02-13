@@ -63,7 +63,7 @@ rule variant_calling_map_reads:
 
         # Save output
         SnakemakeUtils.dump_tool_output(samtools_sort,'BAM', Path(output.BAM))
-        SnakemakeUtils.dump_tool_output(samtools_sort, 'INFORMS', Path(output.INFORMS))
+        SnakemakeUtils.dump_object(bowtie2_map.informs, Path(output.INFORMS))
 
 rule variant_calling_calculate_depth:
     """

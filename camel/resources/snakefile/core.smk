@@ -3,7 +3,7 @@ from pathlib import Path
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.resources.snakefile import trimming_illumina, trimming_ont, assembly, gene_detection, downsampling, core, \
-    sequence_typing, amrfinder, mobsuite
+    sequence_typing, amrfinder, mobsuite, assembly_flye, polish_assembly_short
 
 rule core_link_downsampling_input:
     """
@@ -54,6 +54,19 @@ rule core_link_ont_input:
         """
         cp {input.FASTQ} {output.FASTQ};
         """
+
+rule core_pickle_fasta_input:
+    """
+    Creates a pickle with the FASTA input.
+    """
+    params:
+        fasta_in = config.get('input', {}).get('fasta')
+    output:
+        FASTA = Path(config['working_dir']) / core.INPUT_FASTA_IO
+    run:
+        from camel.app.io.tooliofile import ToolIOFile
+        path_fasta_in = Path(params.fasta_in[0]['path'])
+        SnakemakeUtils.dump_object([ToolIOFile(path_fasta_in)], Path(output.FASTA))
 
 rule core_select_fasta:
     """
@@ -160,3 +173,16 @@ rule core_report_pickle_citations:
         section = SnakePipelineUtils.create_citations_section(
             params.citation_keys['other'], params.citation_keys['main'])
         SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output.HTML))
+
+rule core_link_fasta_to_polishing:
+    """
+    Links the Flye output to the short read polishing workflow (for hybrid assembly).
+    """
+    input:
+        FASTA = Path(config['working_dir'], assembly_flye.OUTPUT_ASSEMBLY_FASTA)
+    output:
+        FASTA = Path(config['working_dir'], str(polish_assembly_short.INPUT_ASSEMBLY_FASTA).format(assembly_type='flye'))
+    shell:
+        """
+        cp {input.FASTA} {output.FASTA};
+        """
