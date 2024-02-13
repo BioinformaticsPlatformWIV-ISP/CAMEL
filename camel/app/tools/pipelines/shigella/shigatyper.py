@@ -1,5 +1,3 @@
-import logging
-import shutil
 import pandas as pd
 
 from pathlib import Path
@@ -27,11 +25,10 @@ class ShigaTyper(Tool):
         """
         Checks whether the provided input is valid:
         - Illumina paired-end reads are the only required input
+        :param: fastq_pe : List of forward and reverse fastq files
         :return: None
         """
-        if 'FASTQ_FWD' not in self._tool_inputs:
-            raise InvalidInputSpecificationError('Paired-end reads are required')
-        if 'FASTQ_REV' not in self._tool_inputs:
+        if 'FASTQ_PE' not in self._tool_inputs:
             raise InvalidInputSpecificationError('Paired-end reads are required')
         super()._check_input()
 
@@ -65,26 +62,21 @@ class ShigaTyper(Tool):
         :return: None
         """
         # Symlink the input FASTQ files
-        FWD_READS = self._tool_inputs['FASTQ_FWD'][0].path
-        REV_READS = self._tool_inputs['FASTQ_REV'][0].path
+        fwd_reads = self._tool_inputs['FASTQ_PE'][0].path
+        rev_reads = self._tool_inputs['FASTQ_PE'][1].path
 
         # Run the command
-        self.__build_command(FWD_READS, REV_READS, 'shigatyper_out')
+        self.__build_command(fwd_reads, rev_reads, 'shigatyper_out')
         self._execute_command()
 
         # Collect the output
-        dir_out = self.folder / 'serotype'
-        dir_out.mkdir()
+        for key, basename in zip(('TSV', 'TSV_HITS'), ('shigatyper_out.tsv', 'shigatyper_out-hits.tsv')):
+            path_out = self.folder / basename
+            if not path_out.exists():
+                raise ToolExecutionError(f'{path_out} not generated ({key})')
+            self._tool_outputs[key] = [ToolIOFile(path_out)]
 
-        try:
-            # Main output
-            self._tool_outputs['TSV'] = [ToolIOFile((dir_out / 'shigatyper_out.tsv'))]
-            shutil.copy(f'{self.folder}/shigatyper_out.tsv', dir_out)
-            # List of hits
-            self._tool_outputs['TSV_HITS'] = [ToolIOFile((dir_out / 'shigatyper_out-hits.tsv'))]
-            shutil.copy(f'{self.folder}/shigatyper_out-hits.tsv', dir_out)
-        except StopIteration:
-            raise ToolExecutionError(f"TSV file not found in output folder: {dir_out}")
+        # Parse TSV output file
         self._parse_tsv(self._tool_outputs['TSV'][0].path)
 
     def _parse_tsv(self, path_tsv: Path) -> None:
