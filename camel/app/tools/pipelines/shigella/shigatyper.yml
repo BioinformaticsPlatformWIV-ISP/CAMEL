@@ -1,0 +1,3 @@
+dependencies: [shigatyper/2.0.5]
+parameters: {}
+tool_command: shigatyper
