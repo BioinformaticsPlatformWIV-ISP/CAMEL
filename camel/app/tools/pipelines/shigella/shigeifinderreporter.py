@@ -44,7 +44,7 @@ class ShigEiFinderReporter(Tool):
 
         # Create table data
         table_data = []
-        for values in data_hits.itertuples(index=False, name=None):
+        for values in data_hits.fillna('n/a').itertuples(index=False, name=None):
             row = list(values)
             table_data.append(row)
 
@@ -62,7 +62,7 @@ class ShigEiFinderReporter(Tool):
         section = HtmlReportSection('ShigEiFinder', subtitle=self._input_informs['shigeifinder']['_name'])
         species = self._input_informs['shigeifinder']['species']
         section.add_table(
-            [[HtmlTableCell(species)]], ['Serotyping'], [('class', 'data')])
+            [[HtmlTableCell(f'<i>{species}</i>')]], ['Serotyping'], [('class', 'data')])
 
         # Create table with hits
         section.add_header('Overview', 3)
