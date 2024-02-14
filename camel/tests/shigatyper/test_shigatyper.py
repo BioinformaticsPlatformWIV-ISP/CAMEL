@@ -7,6 +7,7 @@ from camel.app.io.tooliofile import ToolIOFile
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.tools.pipelines.shigella.shigatyper import ShigaTyper
 from camel.app.tools.pipelines.shigella.shigatyperreporter import ShigaTyperReporter
+from camel.tests import minOSVersion
 
 
 class TestShigaTyper(CamelTestSuite):
@@ -17,6 +18,7 @@ class TestShigaTyper(CamelTestSuite):
     fastq_fwd = test_file_dir / 'Shigella-S17BD07654_1.fastq.gz'
     fastq_rev = test_file_dir / 'Shigella-S17BD07654_2.fastq.gz'
 
+    @minOSVersion('jammy')
     def test_shigatyper(self) -> None:
         """
         Tests the ShigaTyper tool.
@@ -29,6 +31,7 @@ class TestShigaTyper(CamelTestSuite):
         self.verify_output_files(shigatyper, 'TSV')
         self.verify_output_files(shigatyper, 'TSV_HITS')
 
+    @minOSVersion('jammy')
     def test_shigatyper_reporter(self) -> None:
         """
         Tests the ShigaTyperReporter tool.

@@ -1,3 +1,5 @@
+from typing import Dict, Any
+
 import pandas as pd
 
 from camel.app.camel import Camel
@@ -12,6 +14,16 @@ class ShigaTyperReporter(Tool):
     """
     Creates an HTML output report for the ShigaTyper tool.
     """
+
+    COLS = [
+        {'key': 'Hit'},
+        {'key': 'Number of reads', 'fmt': lambda x: f'{x:,}'},
+        {'key': 'Length Covered', 'fmt': lambda x: f'{x:,}'},
+        {'key': 'reference length', 'fmt': lambda x: f'{x:,}'},
+        {'key': '% covered', 'fmt': lambda x: f'{x:.2f}'},
+        {'key': 'Number of variants', 'fmt': lambda x: f'{int(x):,}'},
+        {'key': '% accuracy', 'fmt': lambda x: f'{x:.2f}'},
+    ]
 
     def __init__(self, camel: Camel) -> None:
         """
@@ -53,6 +65,18 @@ class ShigaTyperReporter(Tool):
 
         section.add_table(main_table, header, [('class', 'data')])
 
+    @staticmethod
+    def __format_cell(value: Any, col: Dict) -> HtmlTableCell:
+        """
+        Formats the corresponding table cell.
+        :param value: Input value
+        :param col: Column metadata
+        :return: HTML table cell
+        """
+        if 'fmt' not in col:
+            return HtmlTableCell(str(value))
+        return HtmlTableCell(col['fmt'](value))
+
     def __add_shigatyper_hits(self, section: HtmlReportSection) -> None:
         """
         Adds a table with the ShigaTyper hits details to the report section.
@@ -67,14 +91,12 @@ class ShigaTyperReporter(Tool):
 
         # Create table data
         hits_table = []
-        for values in gene_hits.itertuples(index=False, name=None):
-            row = list(values)
-            hits_table.append(row)
+        for row in gene_hits.to_dict('records'):
+            hits_table.append([ShigaTyperReporter.__format_cell(
+                row[col['key']], col) for col in ShigaTyperReporter.COLS])
 
         # Rename columns
-        header = ['Hit', 'Number of reads', 'Length Covered', 'Reference length', '% covered',
-                  'Number of variants', '% accuracy']
-
+        header = [c['key'].title() for c in ShigaTyperReporter.COLS]
         section.add_table(hits_table, header, [('class', 'data')])
 
     def _execute_tool(self) -> None:
