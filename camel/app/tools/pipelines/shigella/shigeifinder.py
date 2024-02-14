@@ -1,4 +1,3 @@
-import logging
 import pandas as pd
 
 from pathlib import Path
@@ -25,7 +24,7 @@ class ShigEiFinder(Tool):
 
     def _check_input(self) -> None:
         """
-        Checks whether the provided inputs is valid:
+        Checks whether the provided input is valid:
         - FASTA is the only required input
         :return: None
         """
@@ -54,7 +53,7 @@ class ShigEiFinder(Tool):
         Checks if the command executed successfully.
         :return: None
         """
-        if not self._command.returncode == 0:
+        if self._command.returncode != 0:
             raise ToolExecutionError(f'Error executing {self.name}: {self.stderr}')
 
     def _execute_tool(self) -> None:
@@ -73,10 +72,11 @@ class ShigEiFinder(Tool):
         self._execute_command()
 
         # Collect the output
-        try:
-            self._tool_outputs['TSV'] = [ToolIOFile((self.folder / 'shigeifinder_out.tsv'))]
-        except StopIteration:
-            raise ToolExecutionError(f"TSV file not found in output folder: {self.folder}")
+        if not tsv_out.exists():
+            raise ToolExecutionError(f'{tsv_out} not generated (TSV)')
+        self._tool_outputs['TSV'] = [ToolIOFile(tsv_out)]
+
+        # Parse TSV output file
         self._parse_tsv(self._tool_outputs['TSV'][0].path)
 
     def __extract_species(self, serotype_abbrev: str) -> str:
