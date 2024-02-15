@@ -1,0 +1,33 @@
+####################
+# Pipeline options #
+####################
+
+citations:
+  other:
+    - Bolger_2014-trimmomatic
+    #TODO
+
+#########################
+# Tool specific options #
+#########################
+
+downsampling:
+  coverage_max: {coverage_max}
+  expected_genome_size: 4_615_899 #TODO: correct size? yersinia enterocolitica from KEGG: https://www.genome.jp/kegg-bin/show_organism?org=yen
+
+#TODO: read trimming, ..., assembly
+
+############################
+# Gene detection databases #
+############################
+
+#TODO
+
+###################
+# Sequence typing #
+###################
+
+sequence_typing:
+  cgmlst:
+    path: /db/sequence_typing/yersinia/cgmlst #TODO: add yersinia to this db
+    detection_method: blast
