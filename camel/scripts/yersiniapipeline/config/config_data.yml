@@ -13,7 +13,7 @@ citations:
 
 downsampling:
   coverage_max: {coverage_max}
-  expected_genome_size: 4_615_899 #TODO: correct size? yersinia enterocolitica from KEGG: https://www.genome.jp/kegg-bin/show_organism?org=yen
+  expected_genome_size: 4_762_259
 
 #TODO: read trimming, ..., assembly
 
@@ -29,5 +29,6 @@ downsampling:
 
 sequence_typing:
   cgmlst:
-    path: /db/sequence_typing/yersinia/cgmlst #TODO: add yersinia to this db
+    #TODO: add yersinia to this db
+    path: /db/sequence_typing/yersinia/cgmlst
     detection_method: blast

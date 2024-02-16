@@ -2,16 +2,20 @@ from pathlib import Path
 
 from camel.app.camel import Camel
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-from camel.resources.snakefile import trimming, trimming_illumina, assembly_spades, quality_checks, \
-    contamination_check_kraken, gene_detection, sequence_typing, downsampling
-from camel.scripts.neisseriapipeline.snakefile import serogroup_determination
+from camel.resources.snakefile import trimming, trimming_illumina, quality_checks, \
+    contamination_check_kraken, gene_detection, sequence_typing, downsampling, confindr, quast, core, trimming_ont, \
+    assembly
+from camel.scripts.neisseriapipeline.snakefile import serogroup_determination, gmats, mendevar
 
 #######################
 # Included Snakefiles #
 #######################
 
+include: core.SNAKEFILE_CORE
 include: downsampling.SNAKEFILE_DOWNSAMPLING
+include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
+include: trimming_ont.SNAKEFILE_TRIMMING_ONT
+#TODO: assembly, ..., serogroup
 
 #########
 # Rules #
@@ -25,79 +29,21 @@ rule all:
         config['output_report'],
         config['output_tabular']
 
-rule link_downsampling_input:
-    """
-    Creates the FASTQ input for the downsampling step.
-    """
-    input:
-        FASTQ_PE = [entry['path'] for entry in config['input']['fastq_pe']]
-    output:
-        FASTQ = Path(config['working_dir']) / downsampling.INPUT_DOWNSAMPLING_FASTQ
-    run:
-        from camel.app.io.tooliofile import ToolIOFile
-        SnakemakeUtils.dump_object([ToolIOFile(Path(x)) for x in input.FASTQ_PE], Path(output.FASTQ))
-
-#TODO: link_trimmomatic_input to link_fasta_to_typing
-
-rule init_summary:
-    """
-    Initializes the summary output file.
-    """
-    output:
-        TSV = Path(config['working_dir']) / 'summary' / 'summary-init.tsv'
-    run:
-        import datetime
-        analysis_date = datetime.datetime.now().strftime(SnakePipelineUtils.DATE_FORMAT)
-        input_filenames = ', '.join(
-            input_file['name'] for _, input_files in config['input'].items() for input_file in input_files)
-        with open(output.TSV, 'w') as handle:
-            for kv_pair in[
-                ('pipeline_name', config['pipeline']['name']),
-                ('pipeline_version', config['pipeline']['version']),
-                ('sample', config['sample_name']),
-                ('input_files', input_filenames),
-                ('analysis_date', analysis_date),
-                ('detection_method', config['detection_method'])]:
-                handle.write('\t'.join(kv_pair))
-                handle.write('\n')
-
-rule report_pickle_citations:
-    """
-    This rule creates a pickle with a report section containing the citations
-    """
-    output:
-        HTML = Path(config['working_dir']) / 'report' / 'html-citations.io'
-    params:
-        citation_keys = config['citations']
-    run:
-        from camel.app.io.tooliovalue import ToolIOValue
-        from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-        from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-        section = SnakePipelineUtils.create_citations_section(
-            params.citation_keys['other'], params.citation_keys['main'])
-        SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output.HTML))
-
 rule report_create_command_section:
     """
-    Creates the report section containing the tool commands
+    Creates the report section containing the tool commands.
     """
     input:
-        INFORMS_downsampling = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_INFORMS
-        #TODO: trimming,...,cgmlst
+        INFORMS_downsampling = downsampling.get_command_informs(config),
+        INFORMS_trimming= trimming.get_command_informs(config)
+        #TODO: assembly, ..., serogroup
     output:
         HTML = Path(config['working_dir']) / 'report' / 'html-commands.io'
     params:
-        working_dir = config['working_dir']
+        dir_ = config['working_dir']
     run:
-        from camel.app.io.tooliovalue import ToolIOValue
-        informs = []
-        for content in [SnakemakeUtils.load_object(Path(io)) for io in input]:
-            if type(content) is dict:
-                informs.append(content)
-            elif type(content) is list:
-                informs.extend(content)
-        section = SnakePipelineUtils.create_commands_section(informs, params.working_dir)
-        SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output.HTML))
+        from camel.app.components.pipelines.reportpipeline import ReportPipeline
+        ReportPipeline.export_command_section(input, Path(output.HTML), Path(params.dir_))
 
 #TODO: rule yersinia_additional_resistance_gene_metadata:
 
@@ -106,48 +52,64 @@ rule combine_reports:
     Rule to combine report sections into a single output report
     """
     input:
-        report_downsampling = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_REPORT,
-        #TODO: trimming,...,serogroup
-        report_citations = rules.report_pickle_citations.output.HTML,
+        reports_downsampling = downsampling.get_reports(config),
+        reports_trimming= trimming.get_reports(config),
+        #TODO: quast,...,serogroup
+        report_citations = Path(config['working_dir'], core.OUTPUT_HTML_CITATIONS),
         report_commands = rules.report_create_command_section.output.HTML
     output:
         HTML = config['output_report']
     params:
         sample_name = config['sample_name'],
-        fastq_input = config['input']['fastq_pe'],
         output_dir = config['output_dir'],
         pipeline_info = config['pipeline'],
-        detection_method = config['detection_method'],
+        input_dict = config['input'],
+        input_type = config['input_type'],
         citation_keys = config['citations']
     run:
         import datetime
+        from camel.app.components.pipelines.reportpipeline import ReportPipeline
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 
-        # Add header section
+        # Add the header section
         report = SnakePipelineUtils.init_pipeline_report(
             Path(output.HTML), Path(params.output_dir), params.pipeline_info)
         report.add_html_object(SnakePipelineUtils.create_input_section(
-            params.sample_name,
-            datetime.datetime.now(),
-            params.pipeline_info['version'], ', '.join(entry['name'] for entry in params.fastq_input),
-            [('Detection method', params.detection_method)], params.citation_keys['main']))
+            sample_name=params.sample_name,
+            date=datetime.datetime.now(),
+            pipeline_version=params.pipeline_info['version'],
+            input_files=ReportPipeline.format_input_string(params.input_dict),
+            input_type=params.input_type,
+            key_citation=params.citation_keys['main']
+        ))
 
         #Add output sections
-        report_structure = [
-            #TODO: read trimming, ..., serogroup
+        report_structure = []
+        ReportPipeline.add_content_trim_basic_qc(
+            report_structure, params.input_type, input.reports_downsampling, input.reports_trimming)
+        #TODO: assembly
+        #TODO: contamination
+        #TODO: advanced QC
+        report_structure.extend([
+            #TODO: resistance
+            #TODO: sequence typing
+            #TODO: antigen typing
+            #TODO: serogroup
             ('Citations', 'citations', [Path(input.report_citations)]),
             ('Commands', 'commands', [Path(input.report_commands)])
-        ]
+        ])
         SnakePipelineUtils.add_report_content(report, report_structure)
+
 
 rule combine_summary_files:
     """
     In this rule all summary files are combined into a complete summary output file
     """
     input:
-        Path(config['working_dir']) / 'summary' / 'summary-init.tsv',
-        Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_SUMMARY
-        #TODO: trimming, ..., serogroup
+        Path(config['working_dir'], core.OUTPUT_TSV_SUMMARY_INIT),
+        downsampling.get_summaries(config),
+        trimming.get_summaries(config),
+        #TODO: quast, ..., serogroup
     output:
         TSV = config.get('output_tabular')
     run:
