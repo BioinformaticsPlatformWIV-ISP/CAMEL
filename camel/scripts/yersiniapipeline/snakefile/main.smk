@@ -5,7 +5,6 @@ from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile import trimming, trimming_illumina, quality_checks, \
     contamination_check_kraken, gene_detection, sequence_typing, downsampling, confindr, quast, core, trimming_ont, \
     assembly
-from camel.scripts.neisseriapipeline.snakefile import serogroup_determination, gmats, mendevar
 
 #######################
 # Included Snakefiles #
@@ -15,7 +14,12 @@ include: core.SNAKEFILE_CORE
 include: downsampling.SNAKEFILE_DOWNSAMPLING
 include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
 include: trimming_ont.SNAKEFILE_TRIMMING_ONT
-#TODO: assembly, ..., serogroup
+include: assembly.SNAKEFILE_ASSEMBLY
+include: quast.SNAKEFILE_QUAST
+include: contamination_check_kraken.SNAKEFILE_CONTAMINATION_CHECK_KRAKEN
+include: confindr.SNAKEFILE_CONFINDR
+include: quality_checks.SNAKEFILE_QUALITY_CHECKS
+#TODO: gene_detection, ..., serogroup
 
 #########
 # Rules #
@@ -35,8 +39,14 @@ rule report_create_command_section:
     """
     input:
         INFORMS_downsampling = downsampling.get_command_informs(config),
-        INFORMS_trimming= trimming.get_command_informs(config)
-        #TODO: assembly, ..., serogroup
+        INFORMS_trimming= trimming.get_command_informs(config),
+        INFORMS_assembly= assembly.get_command_informs(config),
+        INFORMS_quast= Path(config['working_dir']) / quast.OUTPUT_QUAST_INFORMS,
+        INFORMS_busco= Path(config['working_dir']) / quast.OUTPUT_BUSCO_INFORMS,
+        INFORMS_contamination= contamination_check_kraken.get_command_informs(config),
+        INFORMS_confindr= confindr.get_command_informs(config),
+        INFORMS_assembly_map= assembly.get_qc_informs(config,config['input_type'])
+        #TODO: resfinder, ..., serogroup
     output:
         HTML = Path(config['working_dir']) / 'report' / 'html-commands.io'
     params:
@@ -54,7 +64,12 @@ rule combine_reports:
     input:
         reports_downsampling = downsampling.get_reports(config),
         reports_trimming= trimming.get_reports(config),
-        #TODO: quast,...,serogroup
+        report_quast= Path(config['working_dir']) / quast.OUTPUT_QUAST_REPORT,
+        reports_contamination= contamination_check_kraken.get_reports(config),
+        report_confindr= confindr.get_report(config),
+        report_adv_qc=Path(config['working_dir']) / str(quality_checks.OUTPUT_QUALITY_CHECKS_REPORT).format(
+            input_type=config['input_type']),
+        #TODO: resfinder,...,serogroup
         report_citations = Path(config['working_dir'], core.OUTPUT_HTML_CITATIONS),
         report_commands = rules.report_create_command_section.output.HTML
     output:
@@ -83,13 +98,14 @@ rule combine_reports:
             key_citation=params.citation_keys['main']
         ))
 
-        #Add output sections
+        #Set up the report content structure
         report_structure = []
         ReportPipeline.add_content_trim_basic_qc(
             report_structure, params.input_type, input.reports_downsampling, input.reports_trimming)
-        #TODO: assembly
-        #TODO: contamination
-        #TODO: advanced QC
+        report_structure.append(('Assembly', 'assembly', [Path(input.report_quast)]))
+        ReportPipeline.add_content_contamination_check(
+            report_structure, params.input_type, input.reports_contamination, input.report_confindr)
+        report_structure.append(('Advanced QC', 'adv_qc', [Path(input.report_adv_qc)]))
         report_structure.extend([
             #TODO: resistance
             #TODO: sequence typing
@@ -109,7 +125,11 @@ rule combine_summary_files:
         Path(config['working_dir'], core.OUTPUT_TSV_SUMMARY_INIT),
         downsampling.get_summaries(config),
         trimming.get_summaries(config),
-        #TODO: quast, ..., serogroup
+        Path(config['working_dir']) / quast.OUTPUT_QUAST_SUMMARY,
+        Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY,
+        contamination_check_kraken.get_summaries(config),
+        confindr.get_summary(config),
+        #TODO: gene detection, ..., serogroup
     output:
         TSV = config.get('output_tabular')
     run:
