@@ -94,8 +94,6 @@ rule quality_checks_mapping_rate_se:
     run:
         import json
         informs_mapping = SnakemakeUtils.load_object(Path(input.INFORMS))
-        import pprint
-        pprint.pprint(informs_mapping)
         mapping_rate = float(informs_mapping[params.key])
         with open(output.JSON, 'w') as handle:
             # noinspection PyUnresolvedReferences

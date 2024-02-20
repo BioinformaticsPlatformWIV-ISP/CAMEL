@@ -20,8 +20,6 @@ include: quality_checks.SNAKEFILE_QUALITY_CHECKS
 include: assembly.SNAKEFILE_ASSEMBLY
 include: quast.SNAKEFILE_QUAST
 include: confindr.SNAKEFILE_CONFINDR
-include: medaka_polishing.SNAKEFILE_MEDAKA_POLISHING
-include: short_read_polishing.SNAKEFILE_POLISHING
 include: sequence_typing.SNAKEFILE_SEQUENCE_TYPING
 include: btyper.SNAKEFILE_BTYPER
 include: amrfinder.SNAKEFILE_AMRFINDER
