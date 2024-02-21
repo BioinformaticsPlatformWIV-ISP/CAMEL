@@ -2,7 +2,6 @@
 # Pipeline options #
 ####################
 
-#TODO: uncomment used ones
 citations:
   main: null
   other:
@@ -15,14 +14,11 @@ citations:
     - Langmead_2012-bowtie2
     - Danecek_2021-samtools
     - Camacho_2009-blast
-#    - Clausen_2018-kma
-#    - Inouye_2014-srst2
-#    - Zankari_2012-resfinder
-#    - Feldgarden_2019-ndaro
-#    - Jolley_2010-bigsdb
-#    - Muzzi_2019-gmats
-#    - Marjuki_2019-neisseria_serogroup
-#    - Bratcher_2014-neisseria_cgmlst
+    - Clausen_2018-kma
+    - Inouye_2014-srst2
+    - Bortolaia_2020-resfinder_4.0
+    - Feldgarden_2019-ndaro
+    - Jolley_2010-bigsdb
 
 #########################
 # Tool specific options #
@@ -48,25 +44,43 @@ quast:
     fasta: {quast_fasta}
     gff3: {quast_gff}
 
-#TODO: srst2:
+srst2:
+  max_unaligned_overlap: 141
 
 assembly:
   spades:
     cov_cutoff: 'off'
   min_contig_length: 0
 
+amrfinder:
+  db: /db/amrfinder/by_version/latest
+
+resfinder4:
+  db: /db/resfinder4
+  species: Other
+
+mob_suite:
+  db: /db/mob_suite/latest
+
 confindr:
   db: /db/confindr/0.8.1
-
-#TODO: qmats:
-
-#TODO: mendevar:
 
 ############################
 # Gene detection databases #
 ############################
+gene_detection:
+  resfinder:
+    path: /db/gene_detection/ResFinder
+    metadata:
+      name: Antibiotic(s)
+      key: antibiotics
 
-#TODO
+  vfdb_core:
+    path: /db/gene_detection/VFDB_core
+    perc_identity_cutoff: 90
+    metadata:
+      name: Gene
+      key: gene
 
 ###################
 # Sequence typing #
@@ -74,9 +88,15 @@ confindr:
 
 sequence_typing:
   cgmlst:
-    #TODO: add yersinia to db
-    path: {cgmlst_db}
+    path: '/db/sequence_typing/yersinia/cgmlst_yersinia_spp'
     detection_method: blast
   mlst:
-    #TODO: add yersinia to db
-    path: {mlst_db}
+    path: '/db/sequence_typing/yersinia/mlst_achtman'
+  mlst_mcnally:
+    path: '/db/sequence_typing/yersinia/mlst_mcnally'
+  cgmlst_ye:
+    path: '/db/sequence_typing/yersinia/cgmlst_yersinia_enterocolitica'
+  cgmlst_yp:
+    path: '/db/sequence_typing/yersinia/cgmlst_yersinia_pseudotuberculosis'
+  cgmlst_yersinia:
+    path: '/db/sequence_typing/yersinia/cgmlst_enterobase'

@@ -16,36 +16,22 @@ class MainYersiniaPipeline(ReportPipeline):
     Main class to run the Yersinia pipeline
     """
 
-    CUSTOM_ANALYSES = ['kraken2', 'confindr', 'cgmlst', 'mlst'] #TODO: the others
+    CUSTOM_ANALYSES = ['kraken2', 'confindr', 'amrfinder', 'resfinder4', 'vfdb_core', 'cgmlst', 'mlst', 'mlst_mcnally', 'cgmlst_ye', 'cgmlst_yp', 'cgmlst_yersinia']
 
     DATA_BY_SPECIES = {
-        #used this as ref genome: https://www.genome.jp/kegg-bin/show_organism?org=yen
         'enterocolitica': {
-            'amrfinder_species': 'Yersinia enterocolitica',
-            'cgmlst_db': 'TODO',
             'full_name': 'Yersinia enterocolitica',
             'gc_content': 47,
-            'genome_size': 4_683_620, #TODO: change if different refseq
-            'mlst_db': 'TODO',
-            'pointfinder_db': 'TODO',
-            #TODO: add to db
-            'quast_fasta': '/db/refgenomes/Yersinia_enterocolitica/TODO.fasta',
-            'quast_gff': '/db/refgenomes/Yersinia_enterocolitica/TODO.gff3',
-            'resfinder4_species': 'Other'
+            'genome_size': 4_548_822,
+            'quast_fasta': '/db/refgenomes/Yersinia_enterocolitica/NC_GCA_02575835.1.fasta',
+            'quast_gff': '/db/refgenomes/Yersinia_enterocolitica/NC_GCA_02575835.1.gff3',
         },
-        #used this as ref genome: https://www.genome.jp/kegg-bin/show_organism?org=yps
         'pseudotuberculosis': {
-            'amrfinder_species': 'TODO', #not in list curated organisms
-            'cgmlst_db': 'TODO',
             'full_name': 'Yersinia pseudotuberculosis',
             'gc_content': 47.5,
-            'genome_size': 4_840_898, #TODO: change if different refseq
-            'mlst_db': 'TODO',
-            'pointfinder_db': 'TODO',
-            #TODO: add to db
-            'quast_fasta': '/db/refgenomes/Yersinia_pseudotuberculosis/TODO.fasta',
-            'quast_gff': '/db/refgenomes/Yersinia_pseudotuberculosis/TODO.gff3',
-            'resfinder4_species': 'Other'
+            'genome_size': 4_839_430,
+            'quast_fasta': '/db/refgenomes/Yersinia_pseudotuberculosis/NC_GCA_000834295.1.fasta',
+            'quast_gff': '/db/refgenomes/Yersinia_pseudotuberculosis/NC_GCA_000834295.1.gff3',
         }
     }
 
@@ -86,28 +72,18 @@ class MainYersiniaPipeline(ReportPipeline):
         with open(CONFIG_DATA) as handle_in:
             mainscriptutils.dict_merge(
                 config_data, yaml.safe_load(handle_in.read().format(
-                    amrfinder_species=MainYersiniaPipeline.DATA_BY_SPECIES[self._args.species]['amrfinder_species'],
-                    cgmlst_db=MainYersiniaPipeline.DATA_BY_SPECIES[self._args.species]['cgmlst_db'],
                     coverage_max=self._args.cov_max,
                     expected_species=MainYersiniaPipeline.DATA_BY_SPECIES[self._args.species]['full_name'],
                     export_fastq='true' if self._args.report_include_fastq else 'false',
                     gc_content=MainYersiniaPipeline.DATA_BY_SPECIES[self._args.species]['gc_content'],
                     genome_size=MainYersiniaPipeline.DATA_BY_SPECIES[self._args.species]['genome_size'],
-                    mlst_db=MainYersiniaPipeline.DATA_BY_SPECIES[self._args.species]['mlst_db'],
-                    pointfinder_db=MainYersiniaPipeline.DATA_BY_SPECIES[self._args.species]['pointfinder_db'],
-                    #TODO: add the others
                     qc_typing_scheme='cgmlst' if self._args.cgmlst else 'mlst',
                     quast_fasta=MainYersiniaPipeline.DATA_BY_SPECIES[self._args.species]['quast_fasta'],
                     quast_gff=MainYersiniaPipeline.DATA_BY_SPECIES[self._args.species]['quast_gff'],
-                    resfinder4_species=MainYersiniaPipeline.DATA_BY_SPECIES[self._args.species][
-                        'resfinder4_species'],
                 )))
-            #TODO: additional MLST schemes
 
             #set the species
             config_data['selected_species'] = MainYersiniaPipeline.DATA_BY_SPECIES[self._args.species]['full_name']
-
-            #TODO: set the detection method for cgMLST
 
         return SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir)
 
