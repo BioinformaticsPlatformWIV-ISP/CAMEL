@@ -3,7 +3,7 @@ from pathlib import Path
 from camel.app.camel import Camel
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile import trimming, trimming_illumina, quality_checks, \
-    contamination_check_kraken, gene_detection, sequence_typing, downsampling, confindr, quast, core, trimming_ont, \
+    contamination_check_kraken, gene_detection, sequence_typing, downsampling, confindr, quast, core, trimming_ont, mobsuite, resfinder4, amrfinder, \
     assembly
 
 #######################
@@ -19,7 +19,11 @@ include: quast.SNAKEFILE_QUAST
 include: contamination_check_kraken.SNAKEFILE_CONTAMINATION_CHECK_KRAKEN
 include: confindr.SNAKEFILE_CONFINDR
 include: quality_checks.SNAKEFILE_QUALITY_CHECKS
-#TODO: gene_detection, ..., serogroup
+include: amrfinder.SNAKEFILE_AMRFINDER
+include: resfinder4.SNAKEFILE_RESFINDER4
+include: gene_detection.SNAKEFILE_GENE_DETECTION
+include: mobsuite.SNAKEFILE_MOB_SUITE #TODO: has amr and virulence?
+include: sequence_typing.SNAKEFILE_SEQUENCE_TYPING
 
 #########
 # Rules #
@@ -45,8 +49,18 @@ rule report_create_command_section:
         INFORMS_busco= Path(config['working_dir']) / quast.OUTPUT_BUSCO_INFORMS,
         INFORMS_contamination= contamination_check_kraken.get_command_informs(config),
         INFORMS_confindr= confindr.get_command_informs(config),
-        INFORMS_assembly_map= assembly.get_qc_informs(config,config['input_type'])
-        #TODO: resfinder, ..., serogroup
+        INFORMS_assembly_map= assembly.get_qc_informs(config,config['input_type']),
+        INFORMS_amrfinder= Path(config['working_dir']) / amrfinder.OUTPUT_AMRFINDER_INFORMS if 'amrfinder' in config['analyses'] else[],
+        INFORMS_resfinder4 = Path(config['working_dir']) / resfinder4.OUTPUT_RESFINDER4_INFORMS if 'resfinder4' in config['analyses'] else [],
+        INFORMS_mob_suite= Path(config['working_dir']) / mobsuite.OUTPUT_MOB_SUITE_INFORMS if 'mob_suite' in config['analyses'] else[],
+        INFORMS_vfdb_core= Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='vfdb_core') if 'vfdb_core' in config['analyses'] else[],
+        INFORMS_mlst= Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='mlst') if 'mlst' in config['analyses'] else[],
+        INFORMS_mlst_mcnally= Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='mlst_mcnally') if 'mlst_mcnally' in config['analyses'] else[],
+        INFORMS_amr= Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='resistance_genes') if 'resistance_genes' in config['analyses'] else[],
+        INFORMS_cgmlst= Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='cgmlst') if 'cgmlst' in config['analyses'] else[],
+        INFORMS_cgmlst_ye= Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='cgmlst_ye') if 'cgmlst_ye' in config['analyses'] else[],
+        INFORMS_cgmlst_yp= Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='cgmlst_yp') if 'cgmlst_yp' in config['analyses'] else[],
+        INFORMS_cgmlst_yersinia= Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='cgmlst_yersinia') if 'cgmlst_yersinia' in config['analyses'] else[],
     output:
         HTML = Path(config['working_dir']) / 'report' / 'html-commands.io'
     params:
@@ -54,8 +68,6 @@ rule report_create_command_section:
     run:
         from camel.app.components.pipelines.reportpipeline import ReportPipeline
         ReportPipeline.export_command_section(input, Path(output.HTML), Path(params.dir_))
-
-#TODO: rule yersinia_additional_resistance_gene_metadata:
 
 rule combine_reports:
     """
@@ -69,7 +81,22 @@ rule combine_reports:
         report_confindr= confindr.get_report(config),
         report_adv_qc=Path(config['working_dir']) / str(quality_checks.OUTPUT_QUALITY_CHECKS_REPORT).format(
             input_type=config['input_type']),
-        #TODO: resfinder,...,serogroup
+        # AMR detection
+        report_amrfinder = Path(config['working_dir']) / (amrfinder.OUTPUT_AMRFINDER_REPORT if config['analyses'] else amrfinder.OUTPUT_AMRFINDER_REPORT_EMPTY),
+        report_resfinder4 = Path(config['working_dir']) / (resfinder4.OUTPUT_RESFINDER4_REPORT if config['analyses'] else resfinder4.OUTPUT_RESFINDER4_REPORT_EMPTY),
+        # Virulence gene detection
+        report_vfdb_core= gene_detection.get_gene_detection_report('vfdb_core',config),
+        # Genomic context investigation
+        report_mob_suite= Path(config['working_dir']) / (mobsuite.OUTPUT_MOB_SUITE_REPORT if 'mob_suite' in config['analyses'] else mobsuite.OUTPUT_MOB_SUITE_REPORT_EMPTY),
+        report_genomic_context= Path(config['working_dir']) / (mobsuite.OUTPUT_MOB_SUITE_CONTEXT_REPORT if 'mob_suite' in config['analyses'] else mobsuite.OUTPUT_MOB_SUITE_CONTEXT_REPORT_EMPTY),
+        # Sequence typing
+        report_mlst= sequence_typing.get_sequence_typing_report('mlst',config),
+        report_ml_mcnally= sequence_typing.get_sequence_typing_report('mlst_mcnally',config),
+        report_cgmlst= sequence_typing.get_sequence_typing_report('cgmlst',config),
+        report_cgmlst_ye= sequence_typing.get_sequence_typing_report('cgmlst_ye',config),
+        report_cgmlst_yp= sequence_typing.get_sequence_typing_report('cgmlst_yp',config),
+        report_cgmlst_yersinia= sequence_typing.get_sequence_typing_report('cgmlst_yersinia',config),
+        # Report
         report_citations = Path(config['working_dir'], core.OUTPUT_HTML_CITATIONS),
         report_commands = rules.report_create_command_section.output.HTML
     output:
@@ -107,10 +134,13 @@ rule combine_reports:
             report_structure, params.input_type, input.reports_contamination, input.report_confindr)
         report_structure.append(('Advanced QC', 'adv_qc', [Path(input.report_adv_qc)]))
         report_structure.extend([
-            #TODO: resistance
-            #TODO: sequence typing
-            #TODO: antigen typing
-            #TODO: serogroup
+            ('AMR detection', 'amr', [Path(x) for x in (
+                input.report_amrfinder, input.report_resfinder4)]),
+            ('Virulence detection', 'virulence', Path(input.report_vfdb_core)),
+            ('Genomic context', 'mob_suite', [Path(x) for x in(
+                input.report_mob_suite, input.report_genomic_context)]),
+            ('Sequence typing', 'st', [Path(x) for x in (
+                input.report_mlst, input.report_ml_mcnally, input.report_cgmlst, input.report_cgmlst_ye, input.report_cgmlst_yp, input.report_cgmlst_yersinia)]),
             ('Citations', 'citations', [Path(input.report_citations)]),
             ('Commands', 'commands', [Path(input.report_commands)])
         ])
@@ -129,7 +159,18 @@ rule combine_summary_files:
         Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY,
         contamination_check_kraken.get_summaries(config),
         confindr.get_summary(config),
-        #TODO: gene detection, ..., serogroup
+        Path(config['working_dir']) / amrfinder.OUTPUT_AMRFINDER_SUMMARY if 'amrfinder' in config['analyses'] else [],
+        Path(config['working_dir']) / resfinder4.OUTPUT_RESFINDER4_SUMMARY if 'resfinder4' in config['analyses'] else [],
+        Path(config['working_dir']) / mobsuite.OUTPUT_MOB_SUITE_SUMMARY if 'mob_suite' in config['analyses'] else [],
+        # Virulence detection
+        Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='vfdb_core') if 'vfdb_core' in config['analyses'] else [],
+        # Sequence typing
+        Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='mlst') if 'mlst' in config['analyses'] else [],
+        Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='mlst_mcnally') if 'mlst_mcnally' in config['analyses'] else [],
+        Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='cgmlst') if 'cgmlst' in config['analyses'] else [],
+        Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='cgmlst_ye') if 'cgmlst_ye' in config['analyses'] else [],
+        Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='cgmlst_yp') if 'cgmlst_yp' in config['analyses'] else [],
+        Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='cgmlst_yersinia') if 'cgmlst_yersinia' in config['analyses'] else [],
     output:
         TSV = config.get('output_tabular')
     run:

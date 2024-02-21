@@ -76,4 +76,32 @@ An overview of the quality checks is provided below. Warnings are included for q
 **Note:** FastQC metrics are evaluated separately for the forward and reverse reads.
 
 ## 5. Gene detection
-TODO
+Gene detection is performed as described in [Bogaerts *et al.*](https://pubmed.ncbi.nlm.nih.gov/30894839/) using an 
+updated version of blast (`blast 2.14.0`).
+Alternative detection using `kma 1.4.12a` or `srst2 0.2.0` is available by changing the `--detection-method` parameter.
+
+The following databases are available: 
+
+| **name**        | **origin**                                                               |
+|-----------------|--------------------------------------------------------------------------|
+| ResFinder       | Antimicrobial resistance genes from the ResFinder tool maintained by DTU |
+| VFDB core       | Databases from the VirulenceFactor Core database                         | 
+
+
+## 6. Sequence typing
+Sequence typing is performed as described in [Bogaerts *et al.*](https://pubmed.ncbi.nlm.nih.gov/30894839/) with an 
+updated version of blast (`blast 2.14.0`). 
+Alternative detection using `kma 1.4.12a` or `srst2 0.2.0` is available by changing the `--detection-method` parameter.
+
+The following typing schemes are available:
+
+| **name**        | **origin** |
+|-----------------|------------|
+| MLST (Achtman)  | Enterobase |
+| MLST (McNally)  | Enterobase |
+| cgMLST          | BigSDB     |
+| cgMLST-YE       | BigSDB     |
+| cgMLST-YP       | BigSDB     |
+| cgMLST-Yersinia | Enterobase |
+
+
