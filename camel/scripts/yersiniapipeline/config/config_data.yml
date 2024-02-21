@@ -16,7 +16,7 @@ citations:
     - Camacho_2009-blast
     - Clausen_2018-kma
     - Inouye_2014-srst2
-    - Bortolaia_2020-resfinder_4.0
+    - Zankari_2012-resfinder
     - Feldgarden_2019-ndaro
     - Jolley_2010-bigsdb
 
@@ -55,15 +55,18 @@ assembly:
 amrfinder:
   db: /db/amrfinder/by_version/latest
 
-resfinder4:
-  db: /db/resfinder4
-  species: Other
-
 mob_suite:
   db: /db/mob_suite/latest
 
 confindr:
   db: /db/confindr/0.8.1
+
+#TODO: why does it throw an error without these configs, but other pipelines don't have these?
+resfinder:
+  min_cov: 0.9
+  threshold: 0.6
+  acq_overlap: 0
+
 
 ############################
 # Gene detection databases #
