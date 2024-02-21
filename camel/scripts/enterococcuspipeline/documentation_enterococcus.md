@@ -99,13 +99,13 @@ Alternative detection using `kma 1.4.12a` or `srst2 0.2.0` is available by chang
 
 The following databases are available: 
 
-| **name**       | **origin**                                                               |
-|----------------|--------------------------------------------------------------------------|
-| ResFinder      | Antimicrobial resistance genes from the ResFinder tool maintained by DTU |
-| NDARO          | Antimicrobial resistance genes from the NCBI NDARO database              |
-| PlasmidFinder  | Plasmid replicons from the PlasmidFinder tool maintained by DTU          |
-| VFDB core      | Databases from the VirulenceFactor Core database                         | 
-| VirulenceFiner | Virulence genes from the VirulenceFinder tool maintained by DTU          |
+| **name**        | **origin**                                                               |
+|-----------------|--------------------------------------------------------------------------|
+| ResFinder       | Antimicrobial resistance genes from the ResFinder tool maintained by DTU |
+| NDARO           | Antimicrobial resistance genes from the NCBI NDARO database              |
+| PlasmidFinder   | Plasmid replicons from the PlasmidFinder tool maintained by DTU          |
+| VFDB core       | Databases from the VirulenceFactor Core database                         | 
+| VirulenceFinder | Virulence genes from the VirulenceFinder tool maintained by DTU          |
 
 ## 6. Sequence typing
 
