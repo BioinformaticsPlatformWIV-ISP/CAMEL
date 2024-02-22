@@ -40,7 +40,7 @@ class MainYersiniaPipeline(ReportPipeline):
         Initializes the main class
         :param args: Arguments (optional)
         """
-        super().__init__('Yersinia Pipeline', '0.1', SNAKEFILE_MAIN, args)
+        super().__init__('Yersinia Pipeline', '1.0', SNAKEFILE_MAIN, args)
 
     @property
     def title(self) -> str:
