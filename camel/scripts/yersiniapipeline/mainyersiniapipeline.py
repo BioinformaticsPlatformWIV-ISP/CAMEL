@@ -16,7 +16,7 @@ class MainYersiniaPipeline(ReportPipeline):
     Main class to run the Yersinia pipeline
     """
 
-    CUSTOM_ANALYSES = ['kraken2', 'confindr', 'amrfinder', 'resfinder', 'vfdb_core', 'cgmlst', 'mlst', 'mlst_mcnally', 'cgmlst_ye', 'cgmlst_yp', 'cgmlst_yersinia']
+    CUSTOM_ANALYSES = ['kraken2', 'confindr', 'amrfinder', 'resfinder', 'vfdb_core', 'cgmlst', 'mlst', 'mlst_mcnally', 'cgmlst_ye', 'cgmlst_yp', 'cgmlst_yersinia', 'mob_suite']
 
     DATA_BY_SPECIES = {
         'enterocolitica': {
