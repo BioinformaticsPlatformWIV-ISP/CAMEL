@@ -1,8 +1,3 @@
-import json
-
-import os
-
-from camel.app.command.command import Command
 from camel.app.components.html.htmlexpandablediv import HtmlExpandableDiv
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.html.htmltablecell import HtmlTableCell
@@ -36,7 +31,7 @@ class SpoTypingReporter(Tool):
             raise InvalidInputSpecificationError("Binary spoligotype input (VAL_type_binary) is required")
         if 'VAL_type_octal' not in self._tool_inputs:
             raise InvalidInputSpecificationError("Octal spoligotype input (VAL_type_octal) is required")
-        if 'metadata' not in self._input_informs:
+        if 'spotyping' not in self._input_informs:
             raise InvalidInputSpecificationError("Spoligotype metadata is required")
         super()._check_input()
 
@@ -45,8 +40,8 @@ class SpoTypingReporter(Tool):
         Executes this tool.
         :return: None
         """
-        self._section = HtmlReportSection(SpoTypingReporter.TITLE, subtitle=self._input_informs['metadata']['_name'])
-        metadata = self.__extract_metadata(self._tool_inputs['VAL_type_octal'][0].value)
+        self._section = HtmlReportSection(SpoTypingReporter.TITLE, subtitle=self._input_informs['spotyping']['_name'])
+        metadata = self._input_informs['spotyping']['metadata']
         table_data = [
             ['Binary:', self._tool_inputs['VAL_type_binary'][0].value],
             ['Octal:', self._tool_inputs['VAL_type_octal'][0].value],
@@ -81,28 +76,10 @@ class SpoTypingReporter(Tool):
         div.add_table(table_data, header, [('class', 'data')])
         self._section.add_html_object(div)
 
-    def __extract_metadata(self, type_octal):
-        """
-        Extracts the metadata for the detected Spoligotype.
-        :return: Spoligotype metadata
-        """
-        command = Command('{} echo $SPOTYPING_METADATA'.format(self._build_dependencies()))
-        command.run(self._folder)
-        metadata_path = command.stdout.strip()
-        if not os.path.isfile(metadata_path):
-            raise FileNotFoundError("No spoligotype metadata found")
-        with open(metadata_path) as handle:
-            metadata = json.load(handle)
-        keys = ('SIT', 'geo', 'label', 'total')
-        if type_octal in metadata:
-            return {k: metadata[type_octal][k] for k in keys}
-        else:
-            return {k: 'NA' for k in keys}
-
     @staticmethod
     def generate_empty_section() -> HtmlReportSection:
         """
-        Returns a report that is used when this analysis is disabled.
+        Returns a report used when this analysis is disabled.
         :return: Report section
         """
         section = HtmlReportSection(SpoTypingReporter.TITLE)
