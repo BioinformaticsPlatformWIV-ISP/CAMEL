@@ -1,0 +1,214 @@
+import json
+from pathlib import Path
+from typing import Dict, List, Union
+
+import pandas as pd
+import vcf
+
+from camel.app.camel import Camel
+from camel.app.components.mycobacterium.amrutils import ConfidenceLevel
+from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
+from camel.app.tools.tool import Tool
+
+
+class AMRScreen(Tool):
+    """
+    Screens the mutations from a VCF file against a database with mutations.
+    """
+
+    def __init__(self, camel: Camel) -> None:
+        """
+        Initializes this tool.
+        :param camel: Camel instance
+        """
+        super().__init__('AMR mutation screen', '0.1', camel)
+        self._variant_by_key = None
+        self._data_regions = None
+        self._ab_short_by_name = None
+
+    def _check_input(self) -> None:
+        """
+        Checks if the provided input is valid.
+        :return: None
+        """
+        if 'VCF' not in self._tool_inputs:
+            raise InvalidInputSpecificationError("Mutation input is required (VCF)")
+        if 'VCF_filt' not in self._tool_inputs:
+            raise InvalidInputSpecificationError("Filtered mutation input is required (VCF_filt)")
+        if 'DB' not in self._tool_inputs:
+            raise InvalidInputSpecificationError("Database input is required (DB)")
+        if 'BED' not in self._tool_inputs:
+            raise InvalidInputSpecificationError("AMR region input is required (BED)")
+        super()._check_input()
+
+    @staticmethod
+    def __parse_confidence(str_in: str) -> ConfidenceLevel:
+        """
+        Parses the confidence of a mutation.
+        :param str_in: Input string
+        :return: Confidence level
+        """
+        try:
+            return {
+            '1) Assoc w R': ConfidenceLevel.ASSOC_R,
+            '2) Assoc w R - Interim': ConfidenceLevel.ASSOC_R_int,
+            '3) Uncertain significance': ConfidenceLevel.UNKNOWN,
+            '4) Not assoc w R - Interim': ConfidenceLevel.ASSOC_S_int,
+            '5) Not assoc w R': ConfidenceLevel.ASSOC_S}[str_in]
+        except KeyError as err:
+            logger.error(f"Cannot parse confidence string: {str_in}")
+            raise err
+
+    @staticmethod
+    def __get_matching_region(position: int, regions: pd.DataFrame) -> Union[Dict, None]:
+        """
+        Returns the region matching that covers the input position (if available).
+        :param position: Genome position
+        :param regions: Extracted genomic regions
+        :return: The matching region (if available), None otherwise
+        """
+        for row in regions.to_dict('records'):
+            if row['start'] <= position <= row['end']:
+                return row
+        raise ValueError(f"Position '{position}' does not fall in AMR regions")
+
+    @staticmethod
+    def __extracts_mutation_name(row: Dict) -> str:
+        """
+        Extracts the mutation name.
+        :param row: Input row
+        :return: Mutation name
+        """
+        if len(row['associations']) == 0:
+            return f'unknown'
+        unique_muts = set([x['mutation'] for x in row['associations']])
+        return ';'.join(unique_muts) + ('*' if row['passes_filt'] is False else '')
+
+    @staticmethod
+    def __is_synonymous(row: Dict) -> Union[bool, None]:
+        """
+        Determines if the mutation is synonymous.
+        :apram row: Input row
+        :return: True if synonymous, False otherwise (None if not info is available)
+        """
+        if len(row['associations']) == 0:
+            return None
+        return all(a['effect'] == 'synonymous_variant' for a in row['associations'])
+
+    def __parse_db_files(self, path_to_db: Path) -> None:
+        """
+        Parses the TSV files of the database.
+        :param path_to_db: Path to database
+        :return: None
+        """
+        # Parse the database with locations
+        data_mut_locations = pd.read_table(path_to_db / 'mutation_locations.tsv')
+        self._variant_by_key = {
+            (r['position'], r['reference_nucleotide'], r['alternative_nucleotide']): r['variant']
+            for r in data_mut_locations.to_dict('records')}
+        logger.info(f'{len(data_mut_locations):,} mutations parsed')
+
+        # Parse the database with AMR associations
+        data_amr_association = pd.read_table(path_to_db / 'amr_associations.tsv')
+        self._association_by_variant = {}
+        for r in data_amr_association.to_dict('records'):
+            if r['variant'] not in self._association_by_variant:
+                self._association_by_variant[r['variant']] = []
+            self._association_by_variant[r['variant']].append(r)
+        logger.info(f'{len(data_amr_association):,} AMR associations parsed')
+
+        # Parse antibiotics
+        self._data_antibiotics = pd.read_table(path_to_db / 'antibiotics.tsv')
+        self._ab_short_by_name = {r['AB']: r['Abbreviation'] for r in self._data_antibiotics.to_dict('records')}
+
+        # Parse AMR regions
+        self._data_regions = pd.read_table(self._tool_inputs['BED'][0].path, names=[
+            'chr', 'start', 'end', 'locus', 'type', 'abs'])
+        self._data_regions['abs_short'] = self._data_regions['abs'].apply(lambda x: ', '.join([
+            self._ab_short_by_name[ab] for ab in x.split(', ')]))
+        logger.info(f'{len(self._data_regions)} AMR regions parsed')
+
+        # Parse DB version
+        try:
+            with open(path_to_db / 'VERSION') as handle:
+                self._informs['version'] = handle.readline().strip()
+        except FileNotFoundError:
+            self._informs['version'] = 'n/a'
+
+    def __cross_check_muts_to_db(self) -> List[Dict]:
+        """
+        Cross-checks the detected mutations to the database.
+        :return: List of detected AMR associations
+        """
+        mutations_out = []
+        with self._tool_inputs['VCF'][0].path.open() as handle:
+            variants = list(vcf.Reader(handle))
+            logger.info(f"{len(variants):,} variants parsed from '{self._tool_inputs['VCF'][0].path.name}'")
+
+            for vcf_record in variants:
+                record = {
+                    'alt': ';'.join(str(x) for x in vcf_record.ALT),
+                    'associations': [],
+                    'position': vcf_record.POS,
+                    'ref': vcf_record.REF,
+                    'region': AMRScreen.__get_matching_region(vcf_record.POS, self._data_regions),
+                    'variant_type': vcf_record.var_type
+                }
+                for alt in vcf_record.ALT:
+                    key = (vcf_record.POS, str(vcf_record.REF), str(alt))
+                    if key not in self._variant_by_key:
+                        continue
+                    variant = self._variant_by_key[key]
+                    for association in self._association_by_variant[variant]:
+                        record['associations'].append({
+                            'antibiotic': association['drug'],
+                            'antibiotic_short': self._ab_short_by_name[association['drug']],
+                            'confidence': AMRScreen.__parse_confidence(association['FINAL CONFIDENCE GRADING']).value,
+                            'effect': association['effect'],
+                            'locus': association['gene'],
+                            'mutation': association['mutation'],
+                        })
+                mutations_out.append(record)
+        return mutations_out
+
+    def _execute_tool(self) -> None:
+        """
+        Executes this tool.
+        :return: None
+        """
+        # Parse DB
+        self.__parse_db_files(self._tool_inputs['DB'][0].path)
+
+        # Cross-check variants in VCF with DB
+        mutations_out = self.__cross_check_muts_to_db()
+        logger.info(f"{sum(len(m['associations']) for m in mutations_out):,} AMR associations found")
+
+        # Check if mutations passed filtering and if they were synonymous
+        with open(self._tool_inputs['VCF_filt'][0].path) as handle:
+            positions_passing_filt = [record.POS for record in vcf.Reader(handle)]
+        mutations_out = [{
+            **mut,
+            'passes_filt': mut['position'] in positions_passing_filt,
+            'is_synonymous': AMRScreen.__is_synonymous(mut)
+        } for mut in mutations_out]
+        logger.info(f"{sum(m['passes_filt'] for m in mutations_out):,}/{len(mutations_out):,} passed filtering")
+
+        # Extract mutation name
+        mutations_out = [{**row, 'name': AMRScreen.__extracts_mutation_name(row)} for row in mutations_out]
+
+        # Create text file with mutation positions
+        path_bed_out = self.folder / 'mutation_positions.tsv'
+        with path_bed_out.open('w') as handle:
+            for pos in sorted(set(m['position'] for m in mutations_out)):
+                handle.write('\t'.join(['Chromosome', str(pos)]))
+                handle.write('\n')
+        self._tool_outputs['TSV'] = [ToolIOFile(path_bed_out)]
+
+        # Create JSON output file
+        path_json = self.folder / 'amr_screen.json'
+        with path_json.open('w') as handle:
+            json.dump(mutations_out, handle, indent=2)
+        logger.info(f'AMR results stored in: {path_json}')
+        self._tool_outputs['JSON'] = [ToolIOFile(path_json)]
