@@ -10,13 +10,13 @@ from camel.app.tools.tool import Tool
 
 class SPIFinder(Tool):
     """
-    BLAST-based methodology tool for detection of SPI (Salmonella Pathogenicity Islands).
+    BLAST-based detection tool for SPI's (Salmonella Pathogenicity Islands).
     """
 
     def __init__(self, camel: Camel) -> None:
         """
         Initialize tool.
-        :param camel: Camel instance
+        :param camel: CAMEL instance
         :return: None
         """
         super().__init__('SPIFinder', '0.1', camel)
@@ -74,7 +74,7 @@ class SPIFinder(Tool):
         self._command.command = ' '.join([
             self._tool_command,
             f'-i {inputs_str}',
-            f"-p, {str(self._tool_inputs['DIR'][0].path)}"
+            f"-p {str(self._tool_inputs['DIR'][0].path)}"
         ])
 
     def _check_command_output(self) -> None:

@@ -17,10 +17,10 @@ OUTPUT_SPIFINDER_SUMMARY_IO = _dir_spifinder / 'summary_out.io'
 
 
 def spifinder_json_parser(json_file_path: Path, tool_informs: Dict[str, Any], mode: str) -> \
-        Tuple[List[List[Union[str, int, float], ...]], Dict[Any]]:
+        Tuple[List[Union[str, int, float], ...], Dict[Any]]:
     """
     This function is able to parse the output json files of the spifinder tool and returns more favorable outputs
-    for the Tsv and the camel Json for Hera.
+    for the TSV and the camel JSON for HERA.
     :param json_file_path: Path of the json file to be parsed
     :param tool_informs: tool informs corresponding to the run of which json_file_path was the output
     :param mode: fasta or fastq
