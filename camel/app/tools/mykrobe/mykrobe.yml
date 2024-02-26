@@ -1,0 +1,5 @@
+dependencies: [mykrobe/0.10.0]
+parameters:
+   threads: {default: true, mandatory: false, option: -t, value: '1'}
+   output_filename: {default: true, mandatory: true, option: --out, value: genotyphi.csv}
+tool_command: mykrobe
