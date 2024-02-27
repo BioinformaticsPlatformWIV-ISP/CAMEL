@@ -80,8 +80,9 @@ rule amrfinder_dump_summary_info:
         # Parse perfect & other hits
         data_amr['is_perfect'] = data_amr.apply(lambda x:
             x['% Coverage of reference sequence'] == 100.0 and x['% Identity to reference sequence'] == 100.0, axis=1)
-        hits_perfect = list(data_amr[data_amr['is_perfect']]['Gene symbol'])
-        hits_other = list(data_amr[~data_amr['is_perfect']]['Gene symbol'])
+
+        hits_perfect = list(data_amr[data_amr['is_perfect']]['Gene symbol']) if sum(data_amr['is_perfect']) > 0 else []
+        hits_other = list(data_amr[~data_amr['is_perfect']]['Gene symbol']) if sum(~data_amr['is_perfect']) > 0 else []
 
         # Write to output file
         with open(output.TSV, 'w') as handle:
