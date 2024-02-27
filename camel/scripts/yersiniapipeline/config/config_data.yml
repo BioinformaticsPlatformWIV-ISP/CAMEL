@@ -61,11 +61,9 @@ mob_suite:
 confindr:
   db: /db/confindr/0.8.1
 
-#TODO: why does it throw an error without these configs, but other pipelines don't have these?
-resfinder:
-  min_cov: 0.9
-  threshold: 0.6
-  acq_overlap: 0
+resfinder4:
+  point: False
+  db: /db/gene_detection/Resfinder
 
 
 ############################

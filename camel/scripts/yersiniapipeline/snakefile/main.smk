@@ -3,7 +3,7 @@ from pathlib import Path
 from camel.app.camel import Camel
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile import trimming, trimming_illumina, quality_checks, \
-    contamination_check_kraken, gene_detection, sequence_typing, downsampling, confindr, quast, core, trimming_ont, mobsuite, resfinder, amrfinder, \
+    contamination_check_kraken, gene_detection, sequence_typing, downsampling, confindr, quast, core, trimming_ont, mobsuite, resfinder4, amrfinder, \
     assembly
 
 #######################
@@ -20,9 +20,9 @@ include: contamination_check_kraken.SNAKEFILE_CONTAMINATION_CHECK_KRAKEN
 include: confindr.SNAKEFILE_CONFINDR
 include: quality_checks.SNAKEFILE_QUALITY_CHECKS
 include: amrfinder.SNAKEFILE_AMRFINDER
-include: resfinder.SNAKEFILE_RESFINDER
+include: resfinder4.SNAKEFILE_RESFINDER4
 include: gene_detection.SNAKEFILE_GENE_DETECTION
-include: mobsuite.SNAKEFILE_MOB_SUITE #TODO: has amr and virulence?
+include: mobsuite.SNAKEFILE_MOB_SUITE
 include: sequence_typing.SNAKEFILE_SEQUENCE_TYPING
 
 #########
