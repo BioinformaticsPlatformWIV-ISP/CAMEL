@@ -24,13 +24,14 @@ rule resfinder4_run:
         INFORMS = Path(config['working_dir']) / 'resfinder4' / 'informs.io'
     params:
         dir_ = Path(config['working_dir']) / 'resfinder4',
-        species = config['resfinder4'].get('species')
+        species = config['resfinder4'].get('species'),
+        point = config['resfinder4'].get('point', True)
     run:
         from camel.app.tools.resfinder.resfinder import ResFinder
         resfinder = ResFinder(Camel.get_instance())
         SnakemakeUtils.add_pickle_input(resfinder, 'FASTA', Path(input.FASTA))
         resfinder.add_input_files({'DIR': [ToolIODirectory(Path(input.DIR))]})
-        resfinder.update_parameters(min_cov=0.9, acquired=True, point=True)
+        resfinder.update_parameters(min_cov=0.9, acquired=True, point=params.point)
         if params.species is not None:
             resfinder.update_parameters(species=f'"{params.species}"')
         step = Step(str(rule), resfinder, Camel.get_instance(), params.dir_)

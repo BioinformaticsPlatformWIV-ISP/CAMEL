@@ -82,13 +82,17 @@ Alternative detection using `kma 1.4.12a` or `srst2 0.2.0` is available by chang
 
 The following databases are available: 
 
-| **name**        | **origin**                                                               |
-|-----------------|--------------------------------------------------------------------------|
-| ResFinder       | Antimicrobial resistance genes from the ResFinder tool maintained by DTU |
-| VFDB core       | Databases from the VirulenceFactor Core database                         | 
+| **name**      | **origin**                                                                         |
+|---------------|------------------------------------------------------------------------------------|
+| AMRFinderPlus | Antimicrobial resistance genes  from the AMRFinderPlus tool maintained by the NCBI |
+| ResFinder     | Antimicrobial resistance genes from the ResFinder tool maintained by DTU           |
+| VFDB core     | Databases from the VirulenceFactor Core database                                   | 
 
+## 6. Genomic context investigation
+The `MOB-recon` function of `MOB-suite 3.1.4` is used to reconstruct putative plasmids. The contigs assigned to putative
+plasmids are cross-checked against the gene detection results for the virulence genes and AMR genes.
 
-## 6. Sequence typing
+## 7. Sequence typing
 Sequence typing is performed as described in [Bogaerts *et al.*](https://pubmed.ncbi.nlm.nih.gov/30894839/) with an 
 updated version of blast (`blast 2.14.0`). 
 Alternative detection using `kma 1.4.12a` or `srst2 0.2.0` is available by changing the `--detection-method` parameter.
