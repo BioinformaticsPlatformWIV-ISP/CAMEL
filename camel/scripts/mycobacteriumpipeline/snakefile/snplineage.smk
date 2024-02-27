@@ -25,7 +25,7 @@ rule snp_lineage_detection:
         detector = SNPLineageDetector(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(detector, input)
         detector.add_input_files({'BED': [ToolIOFile(Path(params.lineage_snp_positions))]})
-        step = Step(str(rule), detector, Camel.get_instance(), Path(params.dir_), config)
+        step = Step(str(rule), detector, Camel.get_instance(), Path(params.dir_))
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(detector, output)
 

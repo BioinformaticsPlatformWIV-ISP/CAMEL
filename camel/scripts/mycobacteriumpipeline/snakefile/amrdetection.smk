@@ -19,14 +19,14 @@ rule amr_extract_variant_positions:
     output:
         VCF = Path(config['working_dir']) / 'amr' / 'filtering' / 'vcf.io'
     params:
-        running_dir = Path(config['working_dir']) / 'amr' / 'filtering',
+        dir_ = Path(config['working_dir']) / 'amr' / 'filtering',
         bed_regions = config['amr']['bed_regions']
     run:
         from camel.app.tools.bcftools.bcftoolsfilter import BcftoolsFilter
         bcf_filter = BcftoolsFilter(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(bcf_filter, input)
         bcf_filter.add_input_files({'BED_include': [ToolIOFile(Path(params.bed_regions))]})
-        step = Step(str(rule), bcf_filter, Camel.get_instance(), Path(params.running_dir), config)
+        step = Step(str(rule), bcf_filter, Camel.get_instance(), Path(params.dir_))
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(bcf_filter, output)
 
@@ -69,11 +69,11 @@ rule amr_export_positions:
     output:
         TXT = Path(config['working_dir']) / 'amr' / 'filtering' / 'txt.io'
     params:
-        running_dir = Path(config['working_dir']) / 'amr' / 'filtering'
+        dir_ = Path(config['working_dir']) / 'amr' / 'filtering'
     run:
         import vcf
         input_vcf = SnakemakeUtils.load_object(Path(input.VCF))[0].path
-        output_path = Path(params.running_dir, 'amr_positions.txt')
+        output_path = Path(params.dir_, 'amr_positions.txt')
         with open(output_path, 'w') as handle_out, open(input_vcf) as handle_in:
             for variant in vcf.VCFReader(handle_in):
                 handle_out.write('\t'.join([variant.CHROM, str(variant.POS)]))
@@ -91,9 +91,9 @@ rule amr_pileup_variant_positions:
     output:
         PILEUP = Path(config['working_dir']) / 'amr' / 'pileup' / 'pileup.io'
     params:
-        running_dir = Path(config['working_dir']) / 'amr' / 'pileup'
+        dir_ = Path(config['working_dir']) / 'amr' / 'pileup'
     run:
-        path_out = Path(params.running_dir, 'out.pileup')
+        path_out = Path(params.dir_, 'out.pileup')
         command = Command(' '.join([
             'module load samtools/1.17;',
             'samtools mpileup',
@@ -103,7 +103,7 @@ rule amr_pileup_variant_positions:
             '--positions', str(SnakemakeUtils.load_object(Path(input.TXT_regions))[0].path),
             '--output', str(path_out)
         ]))
-        command.run(params.running_dir)
+        command.run(params.dir_)
         if not command.returncode == 0:
             raise RuntimeError(f'Error: {command.stderr}')
         SnakemakeUtils.dump_object([ToolIOFile(path_out)], Path(output.PILEUP))
@@ -135,7 +135,7 @@ rule amr_predict_phenotype:
     output:
         JSON = Path(config['working_dir']) / 'amr' / 'phenotype_prediction' / 'json_muts_by_ab.io'
     params:
-        running_dir = Path(config['working_dir']) / 'amr' / 'phenotype_prediction',
+        dir_ = Path(config['working_dir']) / 'amr' / 'phenotype_prediction',
         dir_amr_db = config['amr']['mutation_db']
     run:
         from camel.app.io.tooliodirectory import ToolIODirectory
@@ -143,7 +143,7 @@ rule amr_predict_phenotype:
         type_determination = AMRPhenotypePredictor(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(type_determination, input)
         type_determination.add_input_files({'DIR_DB': [ToolIODirectory(Path(params.dir_amr_db))]})
-        step = Step(str(rule), type_determination, Camel.get_instance(), Path(params.running_dir))
+        step = Step(str(rule), type_determination, Camel.get_instance(), Path(params.dir_))
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(type_determination, output)
 
@@ -156,12 +156,12 @@ rule amr_determine_resistance_type:
     output:
         JSON = Path(config['working_dir']) / 'amr' / 'resistance_type' / 'json_amr_type.io'
     params:
-        running_dir = Path(config['working_dir']) / 'amr' / 'resistance_type'
+        dir_ = Path(config['working_dir']) / 'amr' / 'resistance_type'
     run:
         from camel.app.tools.pipelines.mycobacterium.amr.amrtypedetermination import AMRTypeDetermination
         determination = AMRTypeDetermination(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(determination, input)
-        step = Step(str(rule), determination, Camel.get_instance(), Path(params.running_dir))
+        step = Step(str(rule), determination, Camel.get_instance(), Path(params.dir_))
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(determination, output)
 
@@ -175,7 +175,7 @@ rule amr_visualization_create_template:
     output:
         TXT = Path(config['working_dir']) / 'amr' / 'visualization' / 'txt.io'
     params:
-        running_dir = Path(config['working_dir']) / 'amr' / 'visualization',
+        dir_ = Path(config['working_dir']) / 'amr' / 'visualization',
         resistance_bed = config['amr']['bed_regions']
     run:
         from camel.app.tools.pipelines.mycobacterium.amr.amrcircostemplategeneration import AMRCircosTemplateGeneration
@@ -183,7 +183,7 @@ rule amr_visualization_create_template:
         templater.update_parameters(spacing=500)
         templater.add_input_files({'BED': [ToolIOFile(Path(params.resistance_bed))]})
         SnakemakeUtils.add_pickle_inputs(templater, input)
-        step = Step(str(rule), templater, Camel.get_instance(), Path(params.running_dir))
+        step = Step(str(rule), templater, Camel.get_instance(), Path(params.dir_))
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(templater, output)
 
@@ -196,12 +196,12 @@ rule amr_visualization_circos:
     output:
         PNG = Path(config['working_dir']) / 'amr' / 'visualization' / 'png.io'
     params:
-        running_dir = Path(config['working_dir']) / 'amr' / 'visualization'
+        dir_ = Path(config['working_dir']) / 'amr' / 'visualization'
     run:
         from camel.app.tools.circos.circos import Circos
         circos = Circos(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(circos, input)
-        step = Step(str(rule), circos, Camel.get_instance(), params.running_dir)
+        step = Step(str(rule), circos, Camel.get_instance(), params.dir_)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(circos, output)
 
@@ -216,7 +216,7 @@ rule amr_visualization_add_text:
     output:
         PNG = Path(config['working_dir']) / 'amr' / 'visualization' / 'png-text.io'
     params:
-        running_dir = Path(config['working_dir']) / 'amr' / 'visualization',
+        dir_ = Path(config['working_dir']) / 'amr' / 'visualization',
         sample_name = config['sample_name']
     run:
         from camel.app.io.tooliovalue import ToolIOValue
@@ -224,7 +224,7 @@ rule amr_visualization_add_text:
         text_adder = AMRAddText(Camel.get_instance())
         text_adder.add_input_files({'VAL_sample': [ToolIOValue(params.sample_name)]})
         SnakemakeUtils.add_pickle_inputs(text_adder, input)
-        text_adder.run(Path(params.running_dir))
+        text_adder.run(Path(params.dir_))
         SnakemakeUtils.dump_tool_outputs(text_adder, output)
 
 rule amr_create_report:
@@ -241,7 +241,7 @@ rule amr_create_report:
     output:
         VAL_HTML = Path(config['working_dir']) / amrdetection.OUTPUT_AMR_REPORT
     params:
-        running_dir = Path(config['working_dir']) / 'amr' / 'report',
+        dir_ = Path(config['working_dir']) / 'amr' / 'report',
         sample_name = config['sample_name'],
         bed_regions = config['amr']['bed_regions']
     run:
@@ -249,7 +249,7 @@ rule amr_create_report:
         reporter = AMRReporter(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(reporter, input)
         reporter.add_input_files({'BED': [ToolIOFile(Path(params.bed_regions))]})
-        step = Step(str(rule), reporter, Camel.get_instance(), Path(params.running_dir))
+        step = Step(str(rule), reporter, Camel.get_instance(), Path(params.dir_))
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
 
@@ -258,7 +258,7 @@ rule amr_create_report_empty:
     Creates an empty report section for the AMR workflow when it is disabled.
     """
     output:
-        HTML =Path(config['working_dir']) / amrdetection.OUTPUT_AMR_REPORT_EMPTY
+        HTML = Path(config['working_dir']) / amrdetection.OUTPUT_AMR_REPORT_EMPTY
     run:
         from camel.app.tools.pipelines.mycobacterium.amr.amrreporter import AMRReporter
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
@@ -270,6 +270,7 @@ rule amr_dump_summary_info:
     # TODO: Add DB version!
     """
     input:
+        INFORMS_screening = rules.amr_screen_mutations.output.INFORMS,
         INFORMS_type = rules.amr_determine_resistance_type.output.JSON,
         INFORMS_pheno = rules.amr_predict_phenotype.output.JSON
     output:
@@ -280,6 +281,10 @@ rule amr_dump_summary_info:
         from camel.app.components.mycobacterium import amrutils
 
         output_data = []
+
+        # DB version
+        informs = SnakemakeUtils.load_object(Path(input.INFORMS_screening))
+        output_data.append(['amr_db_version', informs['version']])
 
         # AMR type
         with open(SnakemakeUtils.load_object(Path(input.INFORMS_type))[0].path) as handle:
