@@ -72,8 +72,10 @@ platformdirs==4.2.0
     # via jupyter-core
 psutil==5.9.8
     # via snakemake
-pulp==2.8.0
-    # via snakemake
+pulp==2.7.0
+    # via
+    #   -r requirements_in.txt
+    #   snakemake
 pydotplus==2.0.2
     # via -r requirements_in.txt
 pyparsing==3.1.1
