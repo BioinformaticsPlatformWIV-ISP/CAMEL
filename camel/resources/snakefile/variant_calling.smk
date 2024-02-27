@@ -235,7 +235,7 @@ rule variant_calling_create_consensus:
         from camel.app.tools.bcftools.bcftoolsconsensus import BcftoolsConsensus
         bcftools_consensus = BcftoolsConsensus(camel)
         SnakemakeUtils.add_pickle_inputs(bcftools_consensus, input)
-        bcftools_consensus.update_parameters(output_filename = params.output_filename)
+        bcftools_consensus.update_parameters(output_filename=params.output_filename)
         step = Step(str(rule), bcftools_consensus, camel, Path(params.dir_))
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(bcftools_consensus, output)
@@ -247,7 +247,7 @@ rule variant_calling_report:
     input:
         VCF = rules.variant_calling_unzip_vcf.output.VCF,
         VCF_filt = Path(config['working_dir']) / variant_filtering.OUTPUT_VARIANT_FILTERING_VCF,
-        VCF_filt_regions = Path(config['working_dir'], 'variant_filtering', 'regions', 'vcf.io') if variant_filtering.get_filtering_param(config, 'region', 'bed_file') is not None else [],
+        VCF_filt_regions = Path(config['working_dir'], 'variant_filtering', '06-regions', 'vcf.io') if variant_filtering.get_filtering_param(config, 'region', 'bed_file') is not None else [],
         BAM = rules.variant_calling_map_reads.output.BAM,
         INFORMS_reference = rules.variant_calling_prep_reference.output.INFORMS,
         INFORMS_mapping = rules.variant_calling_map_reads.output.INFORMS,
@@ -271,8 +271,8 @@ rule variant_calling_report:
         keys = [k for k in input.keys() if k != 'VCF_filt_regions']
         SnakemakeUtils.add_pickle_inputs(reporter, input, keys=keys)
         if params.regions_bed_file is not None:
-            reporter.add_input_files({'BED': [ToolIOFile(params.regions_bed_file)]})
-            SnakemakeUtils.add_pickle_input(reporter, 'VCF_filt_regions', input.VCF_filt_regions)
+            reporter.add_input_files({'BED': [ToolIOFile(Path(params.regions_bed_file))]})
+            SnakemakeUtils.add_pickle_input(reporter, 'VCF_filt_regions', Path(input.VCF_filt_regions))
         reporter.update_parameters(export_bam='true' if params.include_bam else 'false')
         reporter.add_input_files({'VAL_Sample': [ToolIOValue(params.sample_name)]})
         step.run_step()

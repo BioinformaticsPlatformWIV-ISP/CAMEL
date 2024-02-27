@@ -214,7 +214,7 @@ rule variant_filtering_region:
         vcf_file = SnakemakeUtils.load_object(Path(input.VCF_GZ))[0]
         bcftools_filter.add_input_files({'VCF_GZ': [vcf_file]})
         if params.bed_file is not None:
-            bcftools_filter.add_input_files({'BED_exclude': [ToolIOFile(params.bed_file)]})
+            bcftools_filter.add_input_files({'BED_exclude': [ToolIOFile(Path(params.bed_file))]})
 
         # Update parameters and run tool
         bcftools_filter.update_parameters(
