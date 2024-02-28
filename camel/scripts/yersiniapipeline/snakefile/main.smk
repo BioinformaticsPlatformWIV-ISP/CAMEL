@@ -105,6 +105,7 @@ rule combine_reports:
         sample_name = config['sample_name'],
         output_dir = config['output_dir'],
         pipeline_info = config['pipeline'],
+        species = config['selected_species'],
         input_dict = config['input'],
         input_type = config['input_type'],
         citation_keys = config['citations']
@@ -122,6 +123,7 @@ rule combine_reports:
             pipeline_version=params.pipeline_info['version'],
             input_files=ReportPipeline.format_input_string(params.input_dict),
             input_type=params.input_type,
+            extra_data=[('Selected species', f'<i>{params.species}</i>')],
             key_citation=params.citation_keys['main']
         ))
 
