@@ -2,7 +2,6 @@ import json
 from pathlib import Path
 
 from camel.app.camel import Camel
-from camel.app.command.command import Command
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
@@ -87,26 +86,19 @@ rule amr_pileup_variant_positions:
     input:
         FASTA = Path(config['working_dir']) / 'variant_calling' / 'reference' / 'fasta.io',
         BAM = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_BAM,
-        TXT_regions = rules.amr_export_positions.output.TXT
+        TXT_POS = rules.amr_export_positions.output.TXT
     output:
         PILEUP = Path(config['working_dir']) / 'amr' / 'pileup' / 'pileup.io'
     params:
         dir_ = Path(config['working_dir']) / 'amr' / 'pileup'
     run:
-        path_out = Path(params.dir_, 'out.pileup')
-        command = Command(' '.join([
-            'module load samtools/1.17;',
-            'samtools mpileup',
-            '--count-orphans',
-            str(SnakemakeUtils.load_object(Path(input.BAM))[0].path),
-            '--fasta-ref', str(SnakemakeUtils.load_object(Path(input.FASTA))[0].path),
-            '--positions', str(SnakemakeUtils.load_object(Path(input.TXT_regions))[0].path),
-            '--output', str(path_out)
-        ]))
-        command.run(params.dir_)
-        if not command.returncode == 0:
-            raise RuntimeError(f'Error: {command.stderr}')
-        SnakemakeUtils.dump_object([ToolIOFile(path_out)], Path(output.PILEUP))
+        from camel.app.tools.samtools.samtoolsmpileup import SamtoolsMPileup
+        samtools_mpileup = SamtoolsMPileup(Camel.get_instance())
+        SnakemakeUtils.add_pickle_inputs(samtools_mpileup, input)
+        samtools_mpileup.update_parameters(count_orphans=True)
+        step = Step(str(rule), samtools_mpileup, Camel.get_instance(), params.dir_)
+        step.run_step()
+        SnakemakeUtils.dump_tool_outputs(samtools_mpileup, output)
 
 rule amr_parse_actg_counts:
     """

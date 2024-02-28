@@ -1,5 +1,7 @@
+from pathlib import Path
+
 from camel.app.camel import Camel
-from camel.app.error.invalidparametererror import InvalidParameterError
+from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.samtools.samtoolsbasepipeable import SamtoolsBasePipeable
@@ -7,26 +9,17 @@ from camel.app.tools.samtools.samtoolsbasepipeable import SamtoolsBasePipeable
 
 class SamtoolsMPileup(SamtoolsBasePipeable):
     """
-    Multi-way pileup.
-    Notes:
-    - VCF outputs are always bgzipped.
+    Produces "pileup" textual format from an alignment.
+    Note: VCF output for samtools mpileup is deprecated, for VCF output, use bcftools mpileup instead.
     """
 
     def __init__(self, camel: Camel) -> None:
         """
         Initializes this tool.
         :param camel: Camel instance
-        """
-        super().__init__('samtools mpileup', '1.17', camel)
-
-    def _check_parameters(self) -> None:
-        """
-        Checks the parameters.
         :return: None
         """
-        if self._parameters['output_format'].value not in ['pileup', 'vcf', 'bcf']:
-            raise InvalidParameterError(f"Invalid output format: {self._parameters['output_format'].value}")
-        super(SamtoolsMPileup, self)._check_parameters()
+        super().__init__('samtools mpileup', '1.17', camel)
 
     def _check_input(self) -> None:
         """
@@ -34,21 +27,23 @@ class SamtoolsMPileup(SamtoolsBasePipeable):
         :return: None
         """
         if 'BAM' not in self._tool_inputs:
-            raise ValueError("No BAM input file found")
-        super(SamtoolsBasePipeable, self)._check_input()
+            raise InvalidInputSpecificationError("BAM input is required")
+        super()._check_input()
 
     def _execute_tool(self) -> None:
         """
         Executes this tool.
         :return: None
         """
-        self.__build_command()
+        path_out = self.folder / self._parameters['output_filename'].value
+        self.__build_command(path_out)
         self._execute_command()
-        self.__set_output()
+        self._tool_outputs['PILEUP'] = [ToolIOFile(path_out)]
 
-    def __build_command(self, pipe_in: bool = False, pipe_out: bool = False) -> None:
+    def __build_command(self, path_out: Path, pipe_in: bool = False, pipe_out: bool = False) -> None:
         """
         Builds the command.
+        :param path_out: Output path
         :return: None
         """
         # Initialize command
@@ -68,29 +63,12 @@ class SamtoolsMPileup(SamtoolsBasePipeable):
         if 'TXT_POS' in self._tool_inputs:
             command_parts.append(f'--positions {self._tool_inputs["TXT_POS"][0].path}')
 
-        # Add output format
+        # Add output
         if not pipe_out:
-            command_parts.extend(self._build_options(['output_format']))
-            if self._parameters['output_format'].value == 'vcf':
-                command_parts.append('--VCF')
-            elif self._parameters['output_format'].value == 'bcf':
-                command_parts.append('--BCF')
+            command_parts.append(f'--output {path_out}')
 
         # Construct command
         self._command.command = ' '.join(command_parts)
-
-    def __set_output(self) -> None:
-        """
-        Sets the output of this tool.
-        :return: None
-        """
-        output_files = {
-            'vcf': ('VCF_GZ', self.folder / self._parameters['output_filename'].value),
-            'bcf': ('BCF', self.folder / self._parameters['output_filename'].value),
-            'pileup': ('PILEUP', self.folder / self._parameters['output_filename'].value)
-        }
-        key, path = output_files.get(self._parameters['output_format'].value)
-        self._tool_outputs[key] = [ToolIOFile(path)]
 
     def _check_command_output(self) -> None:
         """
@@ -98,9 +76,8 @@ class SamtoolsMPileup(SamtoolsBasePipeable):
         Supersedes function in Tool class because warnings printed to stderr can cause false abort.
         """
         self._check_stderr()
-
         if self._command.returncode != 0:
-            raise ToolExecutionError(f"Command execution failed (Exit code: {self._command.returncode})")
+            raise ToolExecutionError(f"Error executing {self.name}: {self._command.stderr}")
 
     def _before_pipe(self, dir_, pipe_in: bool, pipe_out: bool) -> None:
         """
@@ -110,7 +87,7 @@ class SamtoolsMPileup(SamtoolsBasePipeable):
         :param pipe_out: True if tool generates piped output
         :return: None
         """
-        self.__build_command(pipe_in, pipe_out)
+        self.__build_command(self.folder / self._parameters['output_filename'].value, pipe_in, pipe_out)
 
     def _after_pipe(self, stderr: str, is_last_in_pipe: bool) -> None:
         """
@@ -120,4 +97,4 @@ class SamtoolsMPileup(SamtoolsBasePipeable):
         :return: None
         """
         if is_last_in_pipe:
-            self.__set_output()
+            self._tool_outputs['PILEUP'] = [ToolIOFile(self.folder / self._parameters['output_filename'].value)]
