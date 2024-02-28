@@ -44,24 +44,6 @@ class AMRScreen(Tool):
         super()._check_input()
 
     @staticmethod
-    def __parse_confidence(str_in: str) -> ConfidenceLevel:
-        """
-        Parses the confidence of a mutation.
-        :param str_in: Input string
-        :return: Confidence level
-        """
-        try:
-            return {
-            '1) Assoc w R': ConfidenceLevel.ASSOC_R,
-            '2) Assoc w R - Interim': ConfidenceLevel.ASSOC_R_int,
-            '3) Uncertain significance': ConfidenceLevel.UNKNOWN,
-            '4) Not assoc w R - Interim': ConfidenceLevel.ASSOC_S_int,
-            '5) Not assoc w R': ConfidenceLevel.ASSOC_S}[str_in]
-        except KeyError as err:
-            logger.error(f"Cannot parse confidence string: {str_in}")
-            raise err
-
-    @staticmethod
     def __get_matching_region(position: int, regions: pd.DataFrame) -> Union[Dict, None]:
         """
         Returns the region matching that covers the input position (if available).
@@ -111,7 +93,7 @@ class AMRScreen(Tool):
         logger.info(f'{len(data_mut_locations):,} mutations parsed')
 
         # Parse the database with AMR associations
-        data_amr_association = pd.read_table(path_to_db / 'amr_associations.tsv')
+        data_amr_association = pd.read_table(path_to_db / 'amr_associations_all.tsv')
         self._association_by_variant = {}
         for r in data_amr_association.to_dict('records'):
             if r['variant'] not in self._association_by_variant:
@@ -165,7 +147,7 @@ class AMRScreen(Tool):
                         record['associations'].append({
                             'antibiotic': association['drug'],
                             'antibiotic_short': self._ab_short_by_name[association['drug']],
-                            'confidence': AMRScreen.__parse_confidence(association['FINAL CONFIDENCE GRADING']).value,
+                            'confidence': association['confidence'],
                             'effect': association['effect'],
                             'locus': association['gene'],
                             'mutation': association['mutation'],

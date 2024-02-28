@@ -200,7 +200,7 @@ class UpdateAMRDB(object):
         self._data_amr_inhouse['source'] = 'NRC'
 
         # Return concatenated dataframe
-        target_columns = ['drug', 'gene', 'mutation', 'confidence', 'source']
+        target_columns = ['drug', 'gene', 'mutation', 'effect', 'confidence', 'source']
         data_concat = pd.concat([self._data_amr_catalogue[target_columns], self._data_amr_inhouse[target_columns]])
         data_concat['variant'] = data_concat.apply(lambda row: f"{row['gene']}_{row['mutation']}", axis=1)
         return data_concat
@@ -216,54 +216,62 @@ class UpdateAMRDB(object):
 
         records_out = []
         for row in self._data_amr_inhouse.to_dict('records'):
-            if row['type'] != 'AA':
-                continue
+            if row['type'] == 'PROM':
+                records_out.append({
+                    'gene': row['gene'],
+                    'position': int(row['position']),
+                    'mutation': row['mutation'],
+                    'reference_nucleotide': row['reference_nucleotide'],
+                    'alternative_nucleotide': row['alternative_nucleotide']
+                })
+            elif row['type'] == 'AA':
+                # Retrieve annotation
+                gene_data = self.__get_locus_annotation(row['gene'])
 
-            # Retrieve annotation
-            gene_data = self.__get_locus_annotation(row['gene'])
+                # Parse the mutation
+                m = re.match('c.(\d+)([A-Z]+)>([A-Z]+)', row['mutation'])
+                position = int(m.group(1))
+                aa_alt = m.group(3)
 
-            # Parse the mutation
-            m = re.match('c.(\d+)([A-Z]+)>([A-Z]+)', row['mutation'])
-            position = int(m.group(1))
-            aa_alt = m.group(3)
+                # Forward orientation
+                if gene_data['strand'] == '+':
+                    gene_start = gene_data['start']
+                    codon_start = gene_start + ((position - 1) * 3)
+                    ref_codon = self._seq_ref[codon_start-1:codon_start+2]
+                    codons_target = [str(codon) for codon, aa in codon_table.forward_table.items() if aa == aa_alt]
+                    for n_ref, pos_rel, n_alt in UpdateAMRDB.get_mutations(str(ref_codon.seq), codons_target):
+                        records_out.append({
+                            'gene': row['gene'],
+                            'strand': gene_data['strand'],
+                            'ref_codon': str(ref_codon.seq),
+                            'ref_aa': codon_table.forward_table.get(str(ref_codon.seq), '-'),
+                            'mutation': row['mutation'],
+                            'position': codon_start + pos_rel,
+                            'reference_nucleotide': n_ref,
+                            'alternative_nucleotide': n_alt
+                        })
 
-            # Forward orientation
-            if gene_data['strand'] == '+':
-                gene_start = gene_data['start']
-                codon_start = gene_start + ((position - 1) * 3)
-                ref_codon = self._seq_ref[codon_start-1:codon_start+2]
-                codons_target = [str(codon) for codon, aa in codon_table.forward_table.items() if aa == aa_alt]
-                for n_ref, pos_rel, n_alt in UpdateAMRDB.get_mutations(str(ref_codon.seq), codons_target):
-                    records_out.append({
-                        'gene': row['gene'],
-                        'strand': gene_data['strand'],
-                        'ref_codon': str(ref_codon.seq),
-                        'ref_aa': codon_table.forward_table.get(str(ref_codon.seq), '-'),
-                        'mutation': row['mutation'],
-                        'position': codon_start + pos_rel,
-                        'reference_nucleotide': n_ref,
-                        'alternative_nucleotide': n_alt
-                    })
-
-            # Reverse orientation
+                # Reverse orientation
+                else:
+                    gene_start = gene_data['end']
+                    codon_start = gene_start - ((position - 1) * 3)
+                    ref_codon = self._seq_ref[codon_start-3:codon_start]
+                    ref_codon_rc = ref_codon.reverse_complement()
+                    codons_target = [str(codon) for codon, aa in codon_table.forward_table.items() if aa == aa_alt]
+                    for n_ref, pos_rel, n_alt in UpdateAMRDB.get_mutations(str(ref_codon_rc.seq), codons_target):
+                        records_out.append({
+                            'gene': row['gene'],
+                            'strand': gene_data['strand'],
+                            'ref_codon': str(ref_codon.seq),
+                            'ref_codon_rc': str(ref_codon_rc.seq),
+                            'ref_aa': codon_table.forward_table.get(str(ref_codon_rc.seq), '-'),
+                            'mutation': row['mutation'],
+                            'position': codon_start - (pos_rel + len(n_alt) - 1),
+                            'reference_nucleotide': str(Seq(n_ref).reverse_complement()),
+                            'alternative_nucleotide': str(Seq(n_alt).reverse_complement())
+                        })
             else:
-                gene_start = gene_data['end']
-                codon_start = gene_start - ((position - 1) * 3)
-                ref_codon = self._seq_ref[codon_start-3:codon_start]
-                ref_codon_rc = ref_codon.reverse_complement()
-                codons_target = [str(codon) for codon, aa in codon_table.forward_table.items() if aa == aa_alt]
-                for n_ref, pos_rel, n_alt in UpdateAMRDB.get_mutations(str(ref_codon_rc.seq), codons_target):
-                    records_out.append({
-                        'gene': row['gene'],
-                        'strand': gene_data['strand'],
-                        'ref_codon': str(ref_codon.seq),
-                        'ref_codon_rc': str(ref_codon_rc.seq),
-                        'ref_aa': codon_table.forward_table.get(str(ref_codon_rc.seq), '-'),
-                        'mutation': row['mutation'],
-                        'position': codon_start - (pos_rel + len(n_alt) - 1),
-                        'reference_nucleotide': str(Seq(n_ref).reverse_complement()),
-                        'alternative_nucleotide': str(Seq(n_alt).reverse_complement())
-                    })
+                logger.warning(f"Unsupported mutation type: {row['type']}")
         data_out = pd.DataFrame(records_out)
         data_out['variant'] = data_out.apply(lambda x: f"{x['gene']}_{x['mutation']}", axis=1)
         data_out['chromosome'] = self._seq_ref.id
