@@ -58,8 +58,7 @@ rule report_create_command_section:
         INFORMS_mlst_mcnally= Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='mlst_mcnally') if 'mlst_mcnally' in config['analyses'] else[],
         INFORMS_amr= Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='resistance_genes') if 'resistance_genes' in config['analyses'] else[],
         INFORMS_cgmlst= Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='cgmlst') if 'cgmlst' in config['analyses'] else[],
-        INFORMS_cgmlst_ye= Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='cgmlst_ye') if 'cgmlst_ye' in config['analyses'] else[],
-        INFORMS_cgmlst_yp= Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='cgmlst_yp') if 'cgmlst_yp' in config['analyses'] else[],
+        INFORMS_cgmlst_species= Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='cgmlst_species') if 'cgmlst_species' in config['analyses'] else[],
         INFORMS_cgmlst_yersinia= Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='cgmlst_yersinia') if 'cgmlst_yersinia' in config['analyses'] else[],
     output:
         HTML = Path(config['working_dir']) / 'report' / 'html-commands.io'
@@ -93,8 +92,7 @@ rule combine_reports:
         report_mlst= sequence_typing.get_sequence_typing_report('mlst',config),
         report_ml_mcnally= sequence_typing.get_sequence_typing_report('mlst_mcnally',config),
         report_cgmlst= sequence_typing.get_sequence_typing_report('cgmlst',config),
-        report_cgmlst_ye= sequence_typing.get_sequence_typing_report('cgmlst_ye',config),
-        report_cgmlst_yp= sequence_typing.get_sequence_typing_report('cgmlst_yp',config),
+        report_cgmlst_species= sequence_typing.get_sequence_typing_report('cgmlst_species',config),
         report_cgmlst_yersinia= sequence_typing.get_sequence_typing_report('cgmlst_yersinia',config),
         # Report
         report_citations = Path(config['working_dir'], core.OUTPUT_HTML_CITATIONS),
@@ -142,7 +140,7 @@ rule combine_reports:
             ('Genomic context', 'mob_suite', [Path(x) for x in(
                 input.report_mob_suite, input.report_genomic_context)]),
             ('Sequence typing', 'st', [Path(x) for x in (
-                input.report_mlst, input.report_ml_mcnally, input.report_cgmlst, input.report_cgmlst_ye, input.report_cgmlst_yp, input.report_cgmlst_yersinia)]),
+                input.report_mlst, input.report_ml_mcnally, input.report_cgmlst, input.report_cgmlst_species, input.report_cgmlst_yersinia)]),
             ('Citations', 'citations', [Path(input.report_citations)]),
             ('Commands', 'commands', [Path(input.report_commands)])
         ])
@@ -170,8 +168,7 @@ rule combine_summary_files:
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='mlst') if 'mlst' in config['analyses'] else [],
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='mlst_mcnally') if 'mlst_mcnally' in config['analyses'] else [],
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='cgmlst') if 'cgmlst' in config['analyses'] else [],
-        Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='cgmlst_ye') if 'cgmlst_ye' in config['analyses'] else [],
-        Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='cgmlst_yp') if 'cgmlst_yp' in config['analyses'] else [],
+        Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='cgmlst_species') if 'cgmlst_species' in config['analyses'] else [],
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='cgmlst_yersinia') if 'cgmlst_yersinia' in config['analyses'] else [],
     output:
         TSV = config.get('output_tabular')

@@ -16,7 +16,7 @@ class MainYersiniaPipeline(ReportPipeline):
     Main class to run the Yersinia pipeline
     """
 
-    CUSTOM_ANALYSES = ['kraken2', 'confindr', 'amrfinder', 'resfinder', 'vfdb_core', 'cgmlst', 'mlst', 'mlst_mcnally', 'cgmlst_ye', 'cgmlst_yp', 'cgmlst_yersinia', 'mob_suite']
+    CUSTOM_ANALYSES = ['kraken2', 'confindr', 'amrfinder', 'resfinder', 'vfdb_core', 'cgmlst', 'mlst', 'mlst_mcnally', 'cgmlst_species', 'cgmlst_yersinia', 'mob_suite']
 
     DATA_BY_SPECIES = {
         'enterocolitica': {
@@ -25,6 +25,7 @@ class MainYersiniaPipeline(ReportPipeline):
             'genome_size': 4_548_822,
             'quast_fasta': '/db/refgenomes/Yersinia_enterocolitica/NC_GCA_02575835.1.fasta',
             'quast_gff': '/db/refgenomes/Yersinia_enterocolitica/NC_GCA_02575835.1.gff3',
+            'cgmlst_species': '/db/sequence_typing/yersinia/cgmlst_yersinia_enterocolitica'
         },
         'pseudotuberculosis': {
             'full_name': 'Yersinia pseudotuberculosis',
@@ -32,6 +33,7 @@ class MainYersiniaPipeline(ReportPipeline):
             'genome_size': 4_839_430,
             'quast_fasta': '/db/refgenomes/Yersinia_pseudotuberculosis/NC_GCA_000834295.1.fasta',
             'quast_gff': '/db/refgenomes/Yersinia_pseudotuberculosis/NC_GCA_000834295.1.gff3',
+            'cgmlst_species': '/db/sequence_typing/yersinia/cgmlst_yersinia_enterocolitica'
         }
     }
 
@@ -80,6 +82,7 @@ class MainYersiniaPipeline(ReportPipeline):
                     qc_typing_scheme='cgmlst' if self._args.cgmlst else 'mlst',
                     quast_fasta=MainYersiniaPipeline.DATA_BY_SPECIES[self._args.species]['quast_fasta'],
                     quast_gff=MainYersiniaPipeline.DATA_BY_SPECIES[self._args.species]['quast_gff'],
+                    cgmlst_species=MainYersiniaPipeline.DATA_BY_SPECIES[self._args.species]['cgmlst_species']
                 )))
 
             #set the species
