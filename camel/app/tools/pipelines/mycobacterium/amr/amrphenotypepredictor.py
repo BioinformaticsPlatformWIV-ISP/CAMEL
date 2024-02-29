@@ -53,7 +53,7 @@ class AMRPhenotypePredictor(Tool):
                 if association['antibiotic'] not in mutations_by_ab:
                     mutations_by_ab[association['antibiotic']] = {}
                 confidence = ConfidenceLevel(association['confidence'])
-                if confidence not in mutations_by_ab[association['antibiotic']]:
+                if confidence.value not in mutations_by_ab[association['antibiotic']]:
                     mutations_by_ab[association['antibiotic']][confidence.value] = []
                 mutations_by_ab[association['antibiotic']][confidence.value].append(mutation)
         return mutations_by_ab
@@ -101,7 +101,7 @@ class AMRPhenotypePredictor(Tool):
 
         # Predict phenotype
         for row in data_out:
-            row['phenotype'] = AMRPhenotypePredictor.__predict_phenotype(mutations_by_ab.get(row['abbreviation']))
+            row['phenotype'] = AMRPhenotypePredictor.__predict_phenotype(row['mutations'])
 
         # Save output file
         output_path = self.folder / 'mutations_by_ab.json'

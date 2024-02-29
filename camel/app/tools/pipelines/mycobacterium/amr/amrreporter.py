@@ -103,6 +103,9 @@ class AMRReporter(Tool):
         # Set tool output
         self._tool_outputs['VAL_HTML'] = [ToolIOValue(self._section)]
 
+        # Save JSON file in output directory
+        self._section.add_file(self._tool_inputs['JSON'][0].path, Path(self._sub_folder, 'mutations.json'))
+
     def __add_antibiotics_table(self) -> None:
         """
         Adds an overview table with all antibiotics.
@@ -139,8 +142,8 @@ class AMRReporter(Tool):
                         *[ab_data['mutations'].get(level.value, []) for level in
                           confidence_group['confidence_levels']]))
                     row.append(', '.join([
-                        f"{AMRReporter.__format_locus_name(m['region']['locus'])} ({m['name']})" for m in mutations]) if
-                               len(mutations) > 0 else '-')
+                        f"{AMRReporter.__format_locus_name(m['region']['locus'])} ({m['name']})" for m in mutations])
+                               if len(mutations) > 0 else '-')
                 table_data.append(row)
         div.add_table(table_data, None, [('class', 'data')])
 
@@ -168,7 +171,7 @@ class AMRReporter(Tool):
         for row in mutations:
 
             # Skip synonymous mutations
-            if row['is_synonymous'] is True:
+            if row['effect'] == 'synonymous':
                 logging.info(f"Skipping synonymous mutation: {row}")
                 continue
 

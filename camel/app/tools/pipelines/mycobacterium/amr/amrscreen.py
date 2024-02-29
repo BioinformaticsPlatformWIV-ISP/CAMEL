@@ -6,12 +6,12 @@ import pandas as pd
 import vcf
 
 from camel.app.camel import Camel
-from camel.app.components.mycobacterium.amrutils import ConfidenceLevel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
-
+# noinspection PyProtectedMember
+from vcf.model import _Record as VcfRecord
 
 class AMRScreen(Tool):
     """
@@ -57,27 +57,20 @@ class AMRScreen(Tool):
         raise ValueError(f"Position '{position}' does not fall in AMR regions")
 
     @staticmethod
-    def __extracts_mutation_name(row: Dict) -> str:
+    def __extracts_mutation_name(row: Dict, full: bool = False) -> str:
         """
         Extracts the mutation name.
         :param row: Input row
+        :param full: Full name (including region name)
         :return: Mutation name
         """
         if len(row['associations']) == 0:
             return f'unknown'
         unique_muts = set([x['mutation'] for x in row['associations']])
-        return ';'.join(unique_muts) + ('*' if row['passes_filt'] is False else '')
-
-    @staticmethod
-    def __is_synonymous(row: Dict) -> Union[bool, None]:
-        """
-        Determines if the mutation is synonymous.
-        :apram row: Input row
-        :return: True if synonymous, False otherwise (None if not info is available)
-        """
-        if len(row['associations']) == 0:
-            return None
-        return all(a['effect'] == 'synonymous_variant' for a in row['associations'])
+        if not full:
+            return ';'.join(unique_muts) + ('*' if row['passes_filt'] is False else '')
+        region_name = row['region']['locus']
+        return ';'.join([f'{region_name}_{m}' + ('*' if row['passes_filt'] is False else '') for m in unique_muts])
 
     def __parse_db_files(self, path_to_db: Path) -> None:
         """
@@ -119,6 +112,25 @@ class AMRScreen(Tool):
         except FileNotFoundError:
             self._informs['version'] = 'n/a'
 
+    @staticmethod
+    def __parse_effect(vcf_record: VcfRecord) -> Union[str, None]:
+        """
+        Parses the mutation effect from the CSQ annotation.
+        Note: only extracts it for protein coding regions
+        :param vcf_record: Input record
+        :return: Mutation effect
+        """
+        # Check if BCSQ annotation is present
+        if 'BCSQ' not in vcf_record.INFO:
+            logger.warning(f'BCSQ info missing for: {vcf_record.CHROM}:{vcf_record.POS}')
+            return
+
+        # Parse annotation
+        parts = vcf_record.INFO['BCSQ'][0].split('|')
+        if parts[0].startswith('&'):
+            return
+        return parts[0]
+
     def __cross_check_muts_to_db(self) -> List[Dict]:
         """
         Cross-checks the detected mutations to the database.
@@ -130,19 +142,28 @@ class AMRScreen(Tool):
             logger.info(f"{len(variants):,} variants parsed from '{self._tool_inputs['VCF'][0].path.name}'")
 
             for vcf_record in variants:
+                effect = AMRScreen.__parse_effect(vcf_record)
+                region = AMRScreen.__get_matching_region(vcf_record.POS, self._data_regions)
                 record = {
                     'alt': ';'.join(str(x) for x in vcf_record.ALT),
+                    'effect': effect,
                     'associations': [],
                     'position': vcf_record.POS,
                     'ref': vcf_record.REF,
-                    'region': AMRScreen.__get_matching_region(vcf_record.POS, self._data_regions),
+                    'region': region,
                     'variant_type': vcf_record.var_type
                 }
                 for alt in vcf_record.ALT:
+                    # Query the database
                     key = (vcf_record.POS, str(vcf_record.REF), str(alt))
-                    if key not in self._variant_by_key:
+                    if (key not in self._variant_by_key) and effect == 'frameshift':
+                        key = f'{region}_LoF'
+                        Path(f"/home/bebogaerts/{self._tool_inputs['VCF'][0].path.parents[2].name}_{vcf_record.POS}").touch()
+                    variant = self._variant_by_key.get(key)
+                    if variant is None:
                         continue
-                    variant = self._variant_by_key[key]
+
+                    # Add associations
                     for association in self._association_by_variant[variant]:
                         record['associations'].append({
                             'antibiotic': association['drug'],
@@ -173,12 +194,15 @@ class AMRScreen(Tool):
         mutations_out = [{
             **mut,
             'passes_filt': mut['position'] in positions_passing_filt,
-            'is_synonymous': AMRScreen.__is_synonymous(mut)
         } for mut in mutations_out]
         logger.info(f"{sum(m['passes_filt'] for m in mutations_out):,}/{len(mutations_out):,} passed filtering")
 
         # Extract mutation name
-        mutations_out = [{**row, 'name': AMRScreen.__extracts_mutation_name(row)} for row in mutations_out]
+        mutations_out = [{
+            **row,
+            'name': AMRScreen.__extracts_mutation_name(row),
+            'name_full': AMRScreen.__extracts_mutation_name(row, full=True),
+        } for row in mutations_out]
 
         # Create text file with mutation positions
         path_bed_out = self.folder / 'mutation_positions.tsv'

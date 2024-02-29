@@ -67,6 +67,9 @@ class SamtoolsMPileup(SamtoolsBasePipeable):
         if not pipe_out:
             command_parts.append(f'--output {path_out}')
 
+        # Add custom options
+        command_parts.extend(self._build_options())
+
         # Construct command
         self._command.command = ' '.join(command_parts)
 

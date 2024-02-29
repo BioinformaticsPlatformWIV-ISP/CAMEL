@@ -29,12 +29,34 @@ rule amr_extract_variant_positions:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(bcf_filter, output)
 
+rule amr_annotate_variants_csq:
+    """
+    Determines the consequence of the mutation using bcftools csq.
+    """
+    input:
+        VCF = rules.amr_extract_variant_positions.output.VCF,
+        FASTA = Path(config['working_dir']) / 'variant_calling' / 'reference' / 'fasta.io'
+    output:
+        VCF = Path(config['working_dir'])  / 'amr' / 'csq' / 'vcf.io',
+        INFORMS =Path(config['working_dir']) / amrdetection.OUTPUT_INFORMS_CSQ
+    params:
+        dir_ = Path(config['working_dir']) / 'amr' / 'csq',
+        gff = config['variant_calling']['reference']['annotation_gff']
+    run:
+        from camel.app.tools.bcftools.bcftoolscsq import BcftoolsCsq
+        csq = BcftoolsCsq(Camel.get_instance())
+        SnakemakeUtils.add_pickle_inputs(csq, input)
+        csq.add_input_files({'GFF': [ToolIOFile(Path(params.gff))]})
+        step = Step(str(rule), csq, Camel.get_instance(), Path(params.dir_))
+        step.run_step()
+        SnakemakeUtils.dump_tool_outputs(csq, output)
+
 rule amr_screen_mutations:
     """
     Screens the mutations detected in the AMR regions against the DB. 
     """
     input:
-        VCF = rules.amr_extract_variant_positions.output.VCF,
+        VCF = rules.amr_annotate_variants_csq.output.VCF,
         VCF_filt = Path(config['working_dir']) / variant_filtering.OUTPUT_VARIANT_FILTERING_VCF
     output:
         JSON = Path(config['working_dir']) / 'amr' / 'screen' / 'json.io',
@@ -295,7 +317,7 @@ rule amr_dump_summary_info:
                 mutations = row['mutations'].get(level.value, [])
                 output_data.append([
                     f"amr_mutations_{row['abbreviation']}_{level.value.replace(' ', '_')}",
-                    ', '.join([f"{m['name']}" for m in mutations]) if len(mutations) > 0 else '-']
+                    ', '.join([f"{m['name_full']}" for m in mutations]) if len(mutations) > 0 else '-']
                 )
 
         # Save output

@@ -325,7 +325,7 @@ class UpdateAMRDB(object):
                 'start': p_start,
                 'end': p_end,
                 'gene': f'{gene}_prom',
-                'type': 'promotor',
+                'type': 'intergenic',
                 'abs': ', '.join(sorted(data_mutations['drug'].unique()))
             })
         return pd.DataFrame(records_out)
