@@ -98,10 +98,9 @@ sequence_typing:
     path: '/db/sequence_typing/yersinia/mlst_achtman'
   mlst_mcnally:
     path: '/db/sequence_typing/yersinia/mlst_mcnally'
-  #TODO: hier ook blast?
-  cgmlst_ye:
-    path: '/db/sequence_typing/yersinia/cgmlst_yersinia_enterocolitica'
-  cgmlst_yp:
-    path: '/db/sequence_typing/yersinia/cgmlst_yersinia_pseudotuberculosis'
+  cgmlst_species:
+    path: {cgmlst_species}
+    detection_method: blast
   cgmlst_yersinia:
     path: '/db/sequence_typing/yersinia/cgmlst_enterobase'
+    detection_method: blast
