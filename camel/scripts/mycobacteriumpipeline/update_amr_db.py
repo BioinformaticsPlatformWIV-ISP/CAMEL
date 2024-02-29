@@ -7,7 +7,7 @@ from typing import Optional, Sequence, Union, List, Dict, Any
 
 import pandas as pd
 from Bio import SeqIO
-from Bio.Data import CodonTable
+from Bio.Data import CodonTable, IUPACData
 from Bio.Seq import Seq
 
 from camel.app.camel import Camel
@@ -211,8 +211,11 @@ class UpdateAMRDB(object):
         Note that the GFF file is 1-based and the sequence is 0-based.
         :return: None
         """
-        # Load the codon table
+        # Load the codon table and existing positions
         codon_table = CodonTable.unambiguous_dna_by_id[11]
+        var_by_key = {
+            (pos, ref, alt): list(d['variant']) for (pos, ref, alt), d in self._data_mut_locations.groupby(
+                by=['position', 'reference_nucleotide', 'alternative_nucleotide'])}
 
         records_out = []
         for row in self._data_amr_inhouse.to_dict('records'):
@@ -229,17 +232,27 @@ class UpdateAMRDB(object):
                 gene_data = self.__get_locus_annotation(row['gene'])
 
                 # Parse the mutation
-                m = re.match('c.(\d+)([A-Z]+)>([A-Z]+)', row['mutation'])
-                position = int(m.group(1))
+                m = re.match('p.([A-z]+)(\d+)([A-z*]+)', row['mutation'])
+                position = int(m.group(2))
                 aa_alt = m.group(3)
+                aa_alt_short = IUPACData.protein_letters_3to1.get(aa_alt)
 
                 # Forward orientation
                 if gene_data['strand'] == '+':
                     gene_start = gene_data['start']
                     codon_start = gene_start + ((position - 1) * 3)
                     ref_codon = self._seq_ref[codon_start-1:codon_start+2]
-                    codons_target = [str(codon) for codon, aa in codon_table.forward_table.items() if aa == aa_alt]
+                    codons_target = [
+                        str(codon) for codon, aa in codon_table.forward_table.items() if aa == aa_alt_short]
                     for n_ref, pos_rel, n_alt in UpdateAMRDB.get_mutations(str(ref_codon.seq), codons_target):
+                        key_pos = (codon_start + pos_rel, n_ref, n_alt)
+                        if key_pos in var_by_key:
+                            if (len(var_by_key[key_pos]) > 1 or var_by_key[key_pos][0] !=
+                                    f"{row['gene']}_{row['mutation']}"):
+                                raise ValueError(f'Mutations at position {key_pos} do not match')
+                            logger.info(f'Skipping duplicate {key_pos}')
+                            continue
+
                         records_out.append({
                             'gene': row['gene'],
                             'strand': gene_data['strand'],
