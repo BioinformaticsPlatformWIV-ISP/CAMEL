@@ -33,7 +33,7 @@ class MainYersiniaPipeline(ReportPipeline):
             'genome_size': 4_839_430,
             'quast_fasta': '/db/refgenomes/Yersinia_pseudotuberculosis/NC_GCA_000834295.1.fasta',
             'quast_gff': '/db/refgenomes/Yersinia_pseudotuberculosis/NC_GCA_000834295.1.gff3',
-            'cgmlst_species': '/db/sequence_typing/yersinia/cgmlst_yersinia_enterocolitica'
+            'cgmlst_species': '/db/sequence_typing/yersinia/cgmlst_yersinia_pseudotuberculosis'
         }
     }
 
