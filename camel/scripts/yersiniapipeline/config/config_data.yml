@@ -19,7 +19,6 @@ citations:
     - Bortolaia_2020-resfinder_4.0
     - Feldgarden_2019-ndaro
     - Jolley_2010-bigsdb
-    - Bortolaia_2020-resfinder_4.0
     - Chen_2016-vfdb
 
 
@@ -53,7 +52,7 @@ srst2:
 assembly:
   spades:
     cov_cutoff: 'off'
-  min_contig_length: 0
+  min_contig_length: 1000
 
 amrfinder:
   db: /db/amrfinder/by_version/latest
