@@ -103,7 +103,7 @@ class MainYersiniaPipeline(ReportPipeline):
         for analysis_key in MainYersiniaPipeline.CUSTOM_ANALYSES:
             parser.add_argument(f"--{analysis_key.replace('_','-')}", action='store_true')
         parser.add_argument('--species', required=True, choices=['enterocolitica', 'pseudotuberculosis'])
-        return parser.parse_args()
+        return parser.parse_args(args)
 
 if __name__ == '__main__':
     Camel.get_instance()
