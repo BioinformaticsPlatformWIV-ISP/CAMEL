@@ -1,4 +1,7 @@
 import json
+import re
+import pandas as pd
+
 from pathlib import Path
 
 from camel.app.camel import Camel
@@ -8,15 +11,12 @@ from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.tool import Tool
 
 
-class Genotyphi(Tool):
+class Mykrobe(Tool):
     """
-    Genotyphi scheme wrapped in a tool called Mykrobe (therefore the name of this class is poorly chosen, but
-    renaming it would have too many implications in the bigsdb code & mongodb)
-    The GenoTyphi genotyping scheme divides the Salmonella Typhi population into 4 major lineages, and >75 different
-    clades and subclades.
-    In addition, the tool also looks for mutations in some regions that confer resistance to
-    several antibiotics families.
+    Mykrobe performs antibiotic resistance prediction and genotyping for Mycobacterium tuberculosis,
+    Staphylococcus aureus, Shigella sonnei and Salmonella typhi.
     """
+
     def __init__(self, camel: Camel) -> None:
         """
         Initializes Mykrobe.
@@ -26,7 +26,7 @@ class Genotyphi(Tool):
 
     def _execute_tool(self) -> None:
         """
-        Runs Mykrobe with the Genotyphi scheme.
+        Runs Mykrobe.
         :return: None
         """
         self.__build_command()
@@ -34,29 +34,50 @@ class Genotyphi(Tool):
         self.__set_output()
         input_folder = self._tool_inputs['DIR'][0].path
         self.__add_informs(input_folder)
+        self._parse_csv(self._tool_outputs['CSV'][0].path)
 
     def _check_input(self) -> None:
         """
         Checks if the provided input is valid.
         :return: None
         """
-        super(Genotyphi, self)._check_input()
+        input_types = {'FASTQ_PE', 'FASTA', 'ONT'}
+
+        super(Mykrobe, self)._check_input()
+        if 'SPECIES' not in self._tool_inputs:
+            raise InvalidInputSpecificationError("Species (i.e. 'sonnei', 'staph', 'tb' or 'typhi') needs "
+                                                 "to be specified")
         if 'DIR' not in self._tool_inputs:
             raise InvalidInputSpecificationError("Database path needs to be specified")
-        if ('FASTQ' in self._tool_inputs) == ('FASTQ_PE' in self._tool_inputs):  # not exactly one:
-            raise InvalidInputSpecificationError("FASTQ or FASTQ_PE input is required")
+        if len(input_types.intersection(set(self._tool_inputs))) == 0:
+            raise InvalidInputSpecificationError("'FASTQ_PE', 'FASTA' or 'ONT' input is required")
+
+    @staticmethod
+    def __prepare_input_str(input_type: dict) -> str:
+        """
+        Builds input based on format (i.e. 'FASTQ_PE', 'FASTA' or 'ONT').
+        :return: None
+        """
+        if 'FASTQ_PE' in input_type:
+            return f"{str(input_type['FASTQ_PE'][0].path)} {str(input_type['FASTQ_PE'][1].path)}"
+        elif 'FASTA' in input_type:
+            return str(input_type['FASTA'][0].path)
+        elif 'ONT' in input_type:
+            return str(input_type["ONT"][0].path) + ' --ont'
 
     def __build_command(self) -> None:
         """
-        Builds the command line call to execute Mykrobe with the Genotyphi scheme.
+        Builds the command line call to execute Mykrobe.
         :return: None
         """
-        input_str = str(self._tool_inputs['FASTQ'][0].path) if 'FASTQ' in self._tool_inputs else \
-            f"{str(self._tool_inputs['FASTQ_PE'][0].path)} {str(self._tool_inputs['FASTQ_PE'][1].path)}"
+        input_str = self.__prepare_input_str(self._tool_inputs)
+        species_flag = self._tool_inputs['SPECIES'][0]
+        sample_id = re.sub('_[1-2]', '', Path(input_str).stem.replace('.fastq', ''))
+
         self._command.command = ' '.join([
             self._tool_command, 'predict',
-            '--sample Sample',
-            '--species typhi',
+            f'--sample {sample_id}',
+            f'--species {species_flag}',
             '--format csv',
             f'--seq {input_str}',
             *self._build_options()
@@ -89,4 +110,12 @@ class Genotyphi(Tool):
         with path_metadata.open('r') as handle:
             metadata = json.load(handle)
         self._informs.update(metadata)
-        
+
+    def _parse_csv(self, path_csv: Path) -> None:
+        """
+        Parses the output CSV file and stores the results in the informs.
+        :param path_csv: Path to output file
+        :return: None
+        """
+        data = pd.read_csv(path_csv)
+        self._informs['phylo_group'] = data['phylo_group'][0].replace('_', ' ')
