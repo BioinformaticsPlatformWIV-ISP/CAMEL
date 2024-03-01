@@ -158,7 +158,6 @@ class AMRScreen(Tool):
                     key = (vcf_record.POS, str(vcf_record.REF), str(alt))
                     if (key not in self._variant_by_key) and effect == 'frameshift':
                         key = f'{region}_LoF'
-                        Path(f"/home/bebogaerts/{self._tool_inputs['VCF'][0].path.parents[2].name}_{vcf_record.POS}").touch()
                     variant = self._variant_by_key.get(key)
                     if variant is None:
                         continue

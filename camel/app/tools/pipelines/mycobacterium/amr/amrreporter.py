@@ -250,9 +250,10 @@ class AMRReporter(Tool):
         """
         self._section.add_header('Database information', 4)
         self._section.add_paragraph(
-            "Mutations are queried against the catalogue of mutations in <i>Mycobacterium tuberculosis</i> provided by "
-            f"the WHO (version: <b>{self._input_informs['screen']['version']}</b>). The following BED file contains "
-            f"all regions that are screened for resistance.")
+            "Mutations are queried against the WHO catalogue of mutations associated with drug resistance in "
+            f"<i>Mycobacterium tuberculosis</i> (version <b>{self._input_informs['screen']['version']}</b>), "
+            "supplemented by a selection of mutations provided by the NRC. The following BED file contains the regions "
+            "that are screened for resistance.")
         relative_path = self._section.add_file(self._tool_inputs['BED'][0].path, Path(
             self._sub_folder, 'regions_resistance.bed'))
         self._section.add_link_to_file('Resistance regions (BED)', relative_path)
