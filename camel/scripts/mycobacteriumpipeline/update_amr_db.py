@@ -230,6 +230,7 @@ class UpdateAMRDB(object):
             elif row['type'] == 'AA':
                 # Retrieve annotation
                 gene_data = self.__get_locus_annotation(row['gene'])
+                logger.info(f"Processing '{row['gene']} {row['mutation']}' ({gene_data['strand']})")
 
                 # Parse the mutation
                 m = re.match('p.([A-z]+)(\d+)([A-z*]+)', row['mutation'])
@@ -250,7 +251,7 @@ class UpdateAMRDB(object):
                             if (len(var_by_key[key_pos]) > 1 or var_by_key[key_pos][0] !=
                                     f"{row['gene']}_{row['mutation']}"):
                                 raise ValueError(f'Mutations at position {key_pos} do not match')
-                            logger.info(f'Skipping duplicate {key_pos}')
+                            logger.debug(f'Skipping duplicate {key_pos}')
                             continue
 
                         records_out.append({
@@ -270,7 +271,8 @@ class UpdateAMRDB(object):
                     codon_start = gene_start - ((position - 1) * 3)
                     ref_codon = self._seq_ref[codon_start-3:codon_start]
                     ref_codon_rc = ref_codon.reverse_complement()
-                    codons_target = [str(codon) for codon, aa in codon_table.forward_table.items() if aa == aa_alt]
+                    codons_target = [
+                        str(codon) for codon, aa in codon_table.forward_table.items() if aa == aa_alt_short]
                     for n_ref, pos_rel, n_alt in UpdateAMRDB.get_mutations(str(ref_codon_rc.seq), codons_target):
                         records_out.append({
                             'gene': row['gene'],
