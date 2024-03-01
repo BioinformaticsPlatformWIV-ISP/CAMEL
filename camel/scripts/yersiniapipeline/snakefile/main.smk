@@ -31,7 +31,7 @@ include: sequence_typing.SNAKEFILE_SEQUENCE_TYPING
 
 rule all:
     """
-    This rule ensures that the required output files are generated
+    This rule ensures that the required output files are generated.
     """
     input:
         config['output_report'],
@@ -70,7 +70,7 @@ rule report_create_command_section:
 
 rule combine_reports:
     """
-    Rule to combine report sections into a single output report
+    Rule to combine report sections into a single output report.
     """
     input:
         reports_downsampling = downsampling.get_reports(config),
@@ -125,7 +125,7 @@ rule combine_reports:
             key_citation=params.citation_keys['main']
         ))
 
-        #Set up the report content structure
+        # Set up the report content structure
         report_structure = []
         ReportPipeline.add_content_trim_basic_qc(
             report_structure, params.input_type, input.reports_downsampling, input.reports_trimming)
@@ -149,7 +149,7 @@ rule combine_reports:
 
 rule combine_summary_files:
     """
-    In this rule all summary files are combined into a complete summary output file
+    In this rule all summary files are combined into a complete summary output file.
     """
     input:
         Path(config['working_dir'], core.OUTPUT_TSV_SUMMARY_INIT),
@@ -192,4 +192,4 @@ rule link_genomic_context:
         TSV=Path(config['working_dir']) / 'mob_suite' / 'genomic_context' / 'input' / 'tsv.io',
         INFORMS=Path(config['working_dir']) / 'mob_suite' / 'genomic_context' / 'input' / 'informs.io'
     run:
-        mobsuite.collect_genomic_context_input(input,Path(output.TSV),Path(output.INFORMS))
+        mobsuite.collect_genomic_context_input(input, Path(output.TSV),Path(output.INFORMS))

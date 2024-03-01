@@ -13,10 +13,11 @@ from camel.scripts.yersiniapipeline import SNAKEFILE_MAIN, CONFIG_DATA
 
 class MainYersiniaPipeline(ReportPipeline):
     """
-    Main class to run the Yersinia pipeline
+    Main class to run the Yersinia pipeline.
     """
 
-    CUSTOM_ANALYSES = ['kraken2', 'confindr', 'amrfinder', 'resfinder', 'vfdb_core', 'cgmlst', 'mlst', 'mlst_mcnally', 'cgmlst_species', 'cgmlst_yersinia', 'mob_suite']
+    CUSTOM_ANALYSES = ['kraken2', 'confindr', 'amrfinder', 'resfinder', 'vfdb_core', 'cgmlst',
+                       'mlst', 'mlst_mcnally', 'cgmlst_species', 'cgmlst_yersinia', 'mob_suite']
 
     DATA_BY_SPECIES = {
         'enterocolitica': {
@@ -39,7 +40,7 @@ class MainYersiniaPipeline(ReportPipeline):
 
     def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """
-        Initializes the main class
+        Initializes the main class.
         :param args: Arguments (optional)
         """
         super().__init__('Yersinia Pipeline', '1.0', SNAKEFILE_MAIN, args)
@@ -47,14 +48,14 @@ class MainYersiniaPipeline(ReportPipeline):
     @property
     def title(self) -> str:
         """
-        Returns the title of the pipeline as it appears in the HTML output
+        Returns the title of the pipeline as it appears in the HTML output.
         :return: Title
         """
         return '<i>Yersinia</i> pipeline'
 
     def run(self) -> None:
         """
-        Runs the pipeline
+        Runs the pipeline.
         :return: None
         """
         input_files = self._symlink_input()
@@ -63,7 +64,7 @@ class MainYersiniaPipeline(ReportPipeline):
         self._run_snakemake_main(config_file)
         self._export_assembly()
 
-    def __construct_config_file(self, input_files: List[Dict[str, str]]) -> str:
+    def __construct_config_file(self, input_files: Dict[str, List[Dict[str, str]]]) -> str:
         """
         Constructs the configuration file.
         :param input_files: Dictionary with the input files (keys can be FASTQ_PE, FASTQ_SE).
@@ -93,7 +94,7 @@ class MainYersiniaPipeline(ReportPipeline):
     @staticmethod
     def _parse_arguments(args: Optional[Sequence[str]] = None) -> argparse.Namespace:
         """
-        Parses the command line arguments
+        Parses the command line arguments.
         :param args: Command line arguments
         :return: Parsed arguments
         """
@@ -103,7 +104,6 @@ class MainYersiniaPipeline(ReportPipeline):
             parser.add_argument(f"--{analysis_key.replace('_','-')}", action='store_true')
         parser.add_argument('--species', required=True, choices=['enterocolitica', 'pseudotuberculosis'])
         return parser.parse_args()
-
 
 if __name__ == '__main__':
     Camel.get_instance()
