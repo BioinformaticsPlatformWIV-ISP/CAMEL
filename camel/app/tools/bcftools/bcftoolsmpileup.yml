@@ -3,6 +3,7 @@ parameters:
   adjust_mapping_quality: {default: false, mandatory: false, option: --adjust-MQ,
     value: '50'}
   count_orphans: {default: false, mandatory: false, option: --count-orphans, value: null}
+  config: {default: false, mandatory: false, option: --config, value: 'illumina'}
   disable_baq: {default: false, mandatory: false, option: --no-BAQ, value: null}
   ignore_overlaps: {default: false, mandatory: false, option: --ignore-overlaps, value: null}
   ignore_read_groups: {default: false, mandatory: false, option: --ignore-RG, value: null}

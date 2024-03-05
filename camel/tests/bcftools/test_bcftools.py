@@ -76,9 +76,6 @@ class TestBcftools(CamelTestSuite):
         bcftools_consensus.run(self.running_dir)
         self.verify_output_files(bcftools_consensus, 'FASTA')
 
-    FILE_FASTA_TOY = ToolIOFile(test_file_dir / 'toy.fasta')
-    FILE_BAM_TOY = ToolIOFile(test_file_dir / 'toy.bam')
-
     def test_bcftools_csq(self) -> None:
         """
         Tests bcftools csq.

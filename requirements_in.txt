@@ -9,3 +9,4 @@ pydotplus
 screed
 snakemake
 yattag
+scipy
