@@ -1,4 +1,3 @@
-import shutil
 from pathlib import Path
 
 from camel.app.camel import Camel
@@ -7,42 +6,42 @@ from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile import downsampling
 
 
-rule downsampling_fastq_stats:
+rule downsampling_read_stats:
     """
     Determines the number of reads and bases in the input FASTQ files.
     """
     input:
         FASTQ = Path(config['working_dir']) / downsampling.INPUT_DOWNSAMPLING_FASTQ
     output:
-        INFORMS = Path(config['working_dir']) / 'downsampling' / 'informs-fqstats.io'
+        INFORMS = Path(config['working_dir']) / 'downsampling' / '{read_key}' / 'informs-fqstats.io'
     params:
-        running_dir = Path(config['working_dir']) / 'downsampling'
+        dir_ = lambda wildcards: Path(config['working_dir']) / 'downsampling' / wildcards.read_key
     run:
-        from camel.app.tools.pipelines.downsampling.fastqstats import FastqStats
-        fastq_stats = FastqStats(Camel.get_instance())
-        SnakemakeUtils.add_pickle_inputs(fastq_stats, input)
-        step = Step(str(rule), fastq_stats, Camel.get_instance(), params.running_dir)
+        from camel.app.tools.seqtk.seqtksize import SeqtkSize
+        seqtk_size = SeqtkSize(Camel.get_instance())
+        SnakemakeUtils.add_pickle_inputs(seqtk_size, input)
+        step = Step(str(rule), seqtk_size, Camel.get_instance(), Path(str(params.dir_)))
         step.run_step()
-        SnakemakeUtils.dump_object(fastq_stats.informs, Path(output.INFORMS))
+        SnakemakeUtils.dump_object(seqtk_size.informs, Path(output.INFORMS))
 
 rule downsampling_calculate:
     """
-    Calculates the downsampling statistics.
+    Calculates if downsampling is required and associated statistics.
     """
     input:
-        INFORMS_stats = rules.downsampling_fastq_stats.output.INFORMS
+        INFORMS_stats = rules.downsampling_read_stats.output.INFORMS
     output:
-        JSON = Path(config['working_dir']) / 'downsampling' / 'calculate_stats' / 'json.io',
-        INFORMS = Path(config['working_dir']) / 'downsampling' / 'calculate_stats' / 'informs.io'
+        JSON = Path(config['working_dir']) / 'downsampling' / '{read_key}' / 'calculate_stats' / 'json.io',
+        INFORMS = Path(config['working_dir']) / 'downsampling' / '{read_key}' / 'calculate_stats' / 'informs.io'
     params:
-        running_dir = Path(config['working_dir']) / 'downsampling' / 'calculate_stats',
+        dir_ = lambda wildcards: Path(config['working_dir']) / 'downsampling' / wildcards.read_key / 'calculate_stats',
         size_ref_genome = config['downsampling']['expected_genome_size'],
         cov_target = config['downsampling']['coverage_max'],
-        is_paired = config.get('read_type', 'illumina') == 'illumina'
+        is_paired = lambda wildcards: wildcards.read_key == 'fastq_pe'
     run:
         from camel.app.tools.pipelines.downsampling.downsamplecalculation import DownsampleCalculation
         ds_calc = DownsampleCalculation(Camel.get_instance())
-        step = Step(str(rule), ds_calc, Camel.get_instance(), params.running_dir)
+        step = Step(str(rule), ds_calc, Camel.get_instance(), Path(str(params.dir_)))
         SnakemakeUtils.add_pickle_inputs(ds_calc, input)
         ds_calc.update_parameters(size_ref_genome=params.size_ref_genome, cov_target=params.cov_target)
         if params.is_paired is True:
@@ -58,26 +57,33 @@ rule downsampling_seqtk:
         FASTQ = Path(config['working_dir']) / downsampling.INPUT_DOWNSAMPLING_FASTQ,
         INFORMS = rules.downsampling_calculate.output.INFORMS
     output:
-        FASTQ = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_FASTQ,
-        INFORMS = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_INFORMS
+        FASTQ = Path(config['working_dir']) / 'downsampling' / '{read_key}' / 'seqtk' / 'fastq.io',
+        INFORMS = Path(config['working_dir']) / 'downsampling' / '{read_key}' / 'seqtk' / 'informs.io'
     params:
-        dir_working = Path(config['working_dir']) / 'downsampling',
-        is_paired = config.get('read_type','illumina') == 'illumina'
+        dir_ = lambda wildcards: Path(config['working_dir']) / 'downsampling' / wildcards.read_key / 'seqtk',
+        is_paired = lambda wildcards: wildcards.read_key == 'fastq_pe'
     run:
         import logging
+        import shutil
         from camel.app.tools.seqtk.seqtksubsample import SeqtkSubsample
+
+        # Create working directory
+        dir_ = Path(str(params.dir_)).absolute()
+        dir_.mkdir(exist_ok=True, parents=True)
 
         # Parse statistics
         data_ds = SnakemakeUtils.load_object(Path(input.INFORMS))['stats']
         if data_ds['downsample_factor'] is None:
+            # No downsampling -> create empty output files
             logging.info("No downsampling required, skipping seqtk")
             shutil.copyfile(input.FASTQ, output.FASTQ)
             SnakemakeUtils.dump_object([], Path(output.INFORMS))
         else:
+            # Downsampling -> run seqtk
             seqtk = SeqtkSubsample(Camel.get_instance())
             key_fastq = 'FASTQ_PE' if params.is_paired else 'FASTQ'
             seqtk.add_input_files({key_fastq: SnakemakeUtils.load_object(Path(input.FASTQ))})
-            step = Step(str(rule), seqtk, Camel.get_instance(), Path(params.dir_working))
+            step = Step(str(rule), seqtk, Camel.get_instance(), dir_)
             seqtk.update_parameters(fraction=float(f"{data_ds['downsample_factor']:.6f}"))
             step.run_step()
             SnakemakeUtils.dump_object(seqtk.tool_outputs[key_fastq], Path(output.FASTQ))
@@ -91,10 +97,10 @@ rule downsampling_report:
         INFORMS_stats = rules.downsampling_calculate.output.INFORMS,
         INFORMS_seqtk = rules.downsampling_seqtk.output.INFORMS
     output:
-        HTML = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_REPORT
+        HTML = Path(config['working_dir']) / 'downsampling' / '{read_key}' / 'html.io'
     params:
-        dir_working = Path(config['working_dir']) / 'downsampling',
-        is_paired = config.get('read_type','illumina') == 'illumina'
+        dir_ = lambda wildcards: Path(config['working_dir']) / 'downsampling' / wildcards.read_key,
+        is_paired = lambda wildcards: wildcards.read_key == 'fastq_pe'
     run:
         from camel.app.tools.pipelines.downsampling.reporterdownsampling import ReporterDownsampling
         reporter = ReporterDownsampling(Camel.get_instance())
@@ -106,7 +112,7 @@ rule downsampling_report:
         informs_seqtk = SnakemakeUtils.load_object(Path(input.INFORMS_seqtk))
         if len(informs_seqtk) > 0:
             reporter.add_input_informs({'seqtk': informs_seqtk})
-        step = Step(str(rule), reporter, Camel.get_instance(), params.dir_working)
+        step = Step(str(rule), reporter, Camel.get_instance(), Path(str(params.dir_)))
         step.run_step()
         SnakemakeUtils.dump_object(reporter.tool_outputs['HTML'], Path(output.HTML))
 
@@ -118,11 +124,13 @@ rule downsampling_summary_out:
         INFORMS_stats = rules.downsampling_calculate.output.INFORMS,
         INFORMS_seqtk = rules.downsampling_seqtk.output.INFORMS
     output:
-        TSV = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_SUMMARY
+        TSV = Path(config['working_dir']) / 'downsampling' / '{read_key}' / 'summary_downsampling.tsv'
     params:
-        is_paired = config.get('read_type', 'illumina') == 'illumina'
+        is_paired = lambda wildcards: wildcards.read_key == 'fastq_pe',
+        read_key = lambda wildcards: wildcards.read_key,
+        add_read_key_prefix = config['input_type'] == 'hybrid'
     run:
-        # Parse calculate output
+        # Parse calculation output
         data_ds = SnakemakeUtils.load_object(Path(input.INFORMS_stats))['stats']
 
         # Add the number of output reads / read pairs to the summary output
@@ -130,6 +138,7 @@ rule downsampling_summary_out:
         key_out = f'{key_nb_reads}_out'
         if data_ds['downsample_factor'] is None:
             data_ds[key_out] = data_ds[f'{key_nb_reads}_in']
+            data_ds['downsample_factor'] = '-'
         else:
             informs_in = SnakemakeUtils.load_object(Path(input.INFORMS_seqtk))
             if params.is_paired:
@@ -140,7 +149,7 @@ rule downsampling_summary_out:
         # Create output
         with open(output.TSV, 'w') as handle:
             for k, v in sorted(data_ds.items()):
-                handle.write('\t'.join([
-                    f'downsampling_{k}', f'{v:.2f}' if isinstance(v, float) else str(v)
-                ]))
+                # Add read key information when multiple FASTQ datasets were processed
+                key = f'downsampling_{k}' if not params.add_read_key_prefix else f'downsampling_{params.read_key}_{k}'
+                handle.write('\t'.join([key, f'{v:.2f}' if isinstance(v, float) else str(v)]))
                 handle.write('\n')

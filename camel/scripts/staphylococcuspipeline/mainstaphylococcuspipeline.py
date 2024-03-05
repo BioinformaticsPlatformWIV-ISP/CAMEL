@@ -16,15 +16,15 @@ class MainStaphylococcusPipeline(ReportPipeline):
     """
 
     CUSTOM_ANALYSES = [
-        'kraken', 'resfinder', 'ncbi_amr', 'pointfinder', 'vfdb_core', 'virulencefinder', 'mlst',
-        'cgmlst', 'spa_typing', 'sccmec_typing', 'plasmidspades', 'plasmidfinder', 'lrefinder', 'se_toxins']
+        'kraken2', 'confindr', 'rmlst', 'lrefinder', 'amrfinder', 'resfinder4', 'vfdb_core', 'virulencefinder', 'mlst',
+        'cgmlst', 'spa_typing', 'sccmec_typing', 'plasmidfinder', 'mob_suite', 'se_toxins', 'bacmet']
 
     def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """
         Initializes the main class.
         :param args: Arguments (optional)
         """
-        super().__init__('Staphylococcus pipeline', '0.1', SNAKEFILE_MAIN, args)
+        super().__init__('Staphylococcus pipeline', '1.1', SNAKEFILE_MAIN, args)
 
     @property
     def title(self) -> str:
@@ -40,22 +40,24 @@ class MainStaphylococcusPipeline(ReportPipeline):
         :return: None
         """
         input_files = self._symlink_input()
+        self._validate_input_files()
         config_file = self.__construct_config_file(input_files)
         self._run_snakemake_main(config_file)
+        self._export_assembly()
 
-    def __construct_config_file(self, input_files: List[Dict[str, str]]) -> str:
+    def __construct_config_file(self, input_files: Dict[str, List[Dict[str, str]]]) -> str:
         """
         Constructs the configuration file.
+        :param input_files: Dictionary with the input files (keys can be FASTQ_PE, FASTQ_SE).
         :return: Configuration file
         """
-        config_data = self.get_template_data('fastq_pe', input_files)
+        config_data = self.get_template_data(input_files)
         config_data['analyses'] = [key for key in MainStaphylococcusPipeline.CUSTOM_ANALYSES if vars(self._args)[key]]
         with CONFIG_DATA.open() as handle_in:
             config_data.update(yaml.load(handle_in.read().format(
-                qc_typing_scheme='cgmlst' if self._args.cgmlst else 'mlst',
+                coverage_max=self._args.cov_max,
                 export_fastq='true' if self._args.report_include_fastq else 'false',
-                export_bam='true' if self._args.report_include_bam else 'false',
-                coverage_max=self._args.cov_max
+                qc_typing_scheme='cgmlst' if self._args.cgmlst else 'mlst',
             ), Loader=yaml.SafeLoader))
         return SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir)
 

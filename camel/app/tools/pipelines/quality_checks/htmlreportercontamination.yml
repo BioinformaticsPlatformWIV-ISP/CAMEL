@@ -1,3 +1,5 @@
 dependencies: []
-parameters: {}
+parameters:
+  suffix: { default: false, mandatory: false, option: null, value: null }
+  suffix_title: { default: false, mandatory: false, option: null, value: null }
 tool_command: null

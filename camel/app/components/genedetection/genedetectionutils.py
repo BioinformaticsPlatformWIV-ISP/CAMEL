@@ -1,11 +1,12 @@
 import ast
 import json
-import logging
+import re
 from typing import Tuple, Dict, List
 
 import bs4
-import re
 from Bio import SeqIO
+
+from camel.app.loggers import logger
 
 
 class GeneDetectionUtils(object):
@@ -50,6 +51,7 @@ class GeneDetectionUtils(object):
         content = bs4.BeautifulSoup(html_code, 'html.parser')
         parts = []
         for x in content.find('div').contents:
+            # noinspection PyUnresolvedReferences
             if (include_header is False) and (x.name == 'h3'):
                 continue
             parts.append(str(x))
@@ -94,8 +96,8 @@ class GeneDetectionUtils(object):
                 parts = seq.id.split('__')
                 cluster_by_seq[parts[2]] = parts[1]
         unique_clusters = set(cluster_by_seq.values())
-        logging.info(f"Clustering mapping parsed for {len(cluster_by_seq)} sequences ({len(unique_clusters)} "
-                     f"unique clusters)")
+        logger.info(f"Clustering mapping parsed for {len(cluster_by_seq)} sequences ({len(unique_clusters)} "
+                    f"unique clusters)")
         return cluster_by_seq
 
     @staticmethod
@@ -106,7 +108,7 @@ class GeneDetectionUtils(object):
         :param output_path: Output path
         :return: None
         """
-        logging.info(f"Exporting {len(hits)} hits to: {output_path}")
+        logger.info(f"Exporting {len(hits)} hits to: {output_path}")
         with open(output_path, 'w') as handle:
             if len(hits) < 1:
                 return

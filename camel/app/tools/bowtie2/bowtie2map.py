@@ -46,7 +46,7 @@ class Bowtie2Map(Bowtie2):
         :param camel: Camel instance
         :return: None
         """
-        super(Bowtie2Map, self).__init__('bowtie2 map', '2.4.1', camel)
+        super(Bowtie2Map, self).__init__('bowtie2 map', '2.5.1', camel)
 
         self._mod = None
         self._fastq_inputs_str = ''

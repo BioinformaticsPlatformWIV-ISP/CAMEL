@@ -6,6 +6,9 @@ citations:
   other:
     - Bolger_2014-trimmomatic
     - Bankevich_2012-spades
+    - Kolmogorov_2019-flye
+    - Wick_2022-polypolish
+    - Zimin_2020-polca
     - Gurevich_2013-quast
     - Wood_2019-kraken2
     - Langmead_2012-bowtie2
@@ -25,8 +28,11 @@ downsampling:
   coverage_max: {coverage_max}
   expected_genome_size: {genome_size}
 
+read_trimming:
+  export_fastq: '{export_fastq}'
+
 contamination_check:
-  db: /db/kraken2_full/latest/full
+  db: /db/kraken2_microbial/latest
   expected_species: Bacillus
   level_of_depth: G
 
@@ -34,12 +40,20 @@ quality_checks:
   typing_scheme: {qc_typing_scheme}
   expected_gc_content: {expected_gc_content}
 
+quast:
+  ref:
+    fasta: {ref_fasta}
+    gff3: {ref_gff}
+
 assembly:
   spades:
     cov_cutoff: 10
   min_contig_length: 1000
   canu:
     minimum_input_coverage: 0
+
+confindr:
+  db: /db/confindr/0.8.1
 
 sequence_typing:
   mlst_cereus:
@@ -51,9 +65,12 @@ sequence_typing:
     detection_method: blast
   rmlst:
     path: /db/sequence_typing/various/rmlst
+    message:
+      content: rMLST is only available for noncommercial use, see <a href="https://pubmlst.org/species-id">PubMLST</a> for more info.
+      category: info
 
 amrfinder:
-  db: /db/amrfinder/latest
+  db: /db/amrfinder/by_version/latest
 
 mob_suite:
   db: /db/mob_suite/latest
@@ -63,7 +80,11 @@ fastani:
 
 gene_detection:
   gmo:
-    path: /db/pipelines/bacillus/databaseGMM
+    path: /db/pipelines/bacillus/databaseGMMV2
+    force_detection_method: kma
+    metadata:
+      name: Additional data
+      key: additional
   vfdb_core:
       path: /db/gene_detection/VFDB_core
       perc_identity_cutoff: 90
@@ -83,3 +104,6 @@ gene_detection:
     metadata:
       name: Notes
       key: notes
+    message:
+      content: Additional experimental validation should be required to confirm the presence of plasmids.
+      category: warning

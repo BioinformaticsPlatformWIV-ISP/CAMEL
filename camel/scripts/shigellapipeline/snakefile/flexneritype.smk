@@ -70,7 +70,7 @@ checkpoint flexneri_type_prepare_reference_files:
         if not output_dir.exists():
             output_dir.mkdir()
         loci = [io.value.locus for io in SnakemakeUtils.load_object(Path(input.VAL_hits))]
-        logging.info(f"Hits found for flexneri loci: {loci}")
+        logger.info(f"Hits found for flexneri loci: {loci}")
         fasta_files = []
         dir_by_locus_name = {dir_locus.name: dir_locus for dir_locus in params.FASTA_ROOT.iterdir()}
         for locus in loci:

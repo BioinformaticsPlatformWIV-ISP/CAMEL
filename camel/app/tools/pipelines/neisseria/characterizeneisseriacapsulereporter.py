@@ -76,17 +76,22 @@ class CharacterizeNeisseriaCapsuleReporter(Tool):
         with open(self._tool_inputs['JSON'][0].path) as handle:
             json_info = json.load(handle)
         data_genes = pd.DataFrame(json_info['Serogroup'][0]['genes'])
-        data_genes['color'] = data_genes.apply(
-            lambda x: CharacterizeNeisseriaCapsuleReporter.__get_row_color(x), axis=1)
-        data_genes.sort_values(by='allele_name', inplace=True)
 
-        # Add table with overview of the detected genes
-        table_data = [
-            [HtmlTableCell(col.get('fmt', str)(row[col['key']]), color=row['color']) for col in
-             CharacterizeNeisseriaCapsuleReporter.COLS_GENES] for row in data_genes.to_dict('records')
-        ]
-        section.add_table(
-            table_data, [c['name'] for c in CharacterizeNeisseriaCapsuleReporter.COLS_GENES], [('class', 'data')])
+        # Add the detected genes to the report (if there are any)
+        if len(data_genes) == 0:
+            section.add_paragraph('No capsule genes detected.')
+        else:
+            data_genes['color'] = data_genes.apply(
+                lambda x: CharacterizeNeisseriaCapsuleReporter.__get_row_color(x), axis=1)
+            data_genes.sort_values(by='allele_name', inplace=True)
+
+            # Add table with overview of the detected genes
+            table_data = [
+                [HtmlTableCell(col.get('fmt', str)(row[col['key']]), color=row['color']) for col in
+                 CharacterizeNeisseriaCapsuleReporter.COLS_GENES] for row in data_genes.to_dict('records')
+            ]
+            section.add_table(
+                table_data, [c['name'] for c in CharacterizeNeisseriaCapsuleReporter.COLS_GENES], [('class', 'data')])
 
         # Store the output
         self._tool_outputs['HTML'] = [ToolIOValue(section)]

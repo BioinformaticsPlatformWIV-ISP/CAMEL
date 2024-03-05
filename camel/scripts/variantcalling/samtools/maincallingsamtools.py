@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 import argparse
-import logging
+import shutil
 from pathlib import Path
 from typing import Dict, Any, Optional, Sequence
 
-import shutil
-
 from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.resources.snakefile import variant_calling
@@ -34,7 +33,6 @@ class MainCalling(object):
         argument_parser = argparse.ArgumentParser()
         group = argument_parser.add_mutually_exclusive_group(required=True)
         group.add_argument('--bam', type=Path, help="Input BAM file")
-        group.add_argument('--fastq', type=Path, help="Input Fastq files")
         argument_parser.add_argument('--reference', type=Path, required=True)
         argument_parser.add_argument('--reference-name')
         argument_parser.add_argument('--output', required=True)
@@ -79,7 +77,7 @@ class MainCalling(object):
             self.__generate_consensus_sequence(self._args.output_consensus, config_data)
 
         # Copy output
-        logging.info("Collecting Snakemake output file")
+        logger.info("Collecting Snakemake output file")
         output_vcf_path = SnakemakeUtils.load_object(output_path)[0].path
         shutil.copyfile(output_vcf_path, self._args.output)
 
@@ -89,13 +87,16 @@ class MainCalling(object):
         :return: Config file data
         """
         config_data = {
-            'sample_name': 'Sample', 'working_dir': self._args.working_dir, 'variant_calling': {
+            'sample_name': 'Sample',
+            'working_dir': str(self._args.working_dir),
+            'variant_calling': {
                 'ploidy': self._args.ploidy,
                 'reference': {
                     'name': self._args.reference_name if self._args.reference_name else self._args.reference.name,
                     'path': str(self._args.reference)}
             },
-            'variant_filtering': {}
+            'variant_filtering': {},
+            'input_type': 'illumina'
         }
         for k in ['calling_method', 'skip_variants', 'mutation_rate', 'minimal_bq', 'minimal_mq', 'count_orphans',
                   'disable_baq']:

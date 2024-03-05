@@ -9,7 +9,9 @@ from camel.app.components.html.htmlelement import HtmlElement
 from camel.app.components.html.htmlreport import HtmlReport
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.html.htmltablecell import HtmlTableCell
+from camel.app.components.pipelines.reportpipeline import ReportPipeline
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.app.tools.tool import Tool
 from camel.resources import CSS_STYLE
 from camel.resources.javascript import JQUERY_SRC
@@ -106,12 +108,10 @@ class HybridAssemblyReporter(Tool):
         Adds the information about the input data.
         :return: None
         """
-        input_files = ', '.join(
-            [Path(fastq).name for fastq in self._input_informs['input']['illumina']] +
-            [Path(self._input_informs['input']['ont']).name])
+        input_files = ReportPipeline.format_input_string(self._input_informs['input'])
         table_data = [
             ['Sample:', self._input_informs['sample_name']],
-            ['Analysis date:', datetime.datetime.now()],
+            ['Analysis date:', datetime.datetime.now().strftime(SnakePipelineUtils.DATE_FORMAT)],
             ['Pipeline version:', self._input_informs['pipeline']['version']],
             ['Input files:', input_files]
         ]
@@ -125,27 +125,23 @@ class HybridAssemblyReporter(Tool):
         :return: None
         """
         section = HtmlReportSection('Overview section')
-        assemblies = []
+        rows = []
         for io_fasta in self._tool_inputs['FASTA']:
             fasta_key = io_fasta.path.parent.name
             relative_path = Path('assemblies', f'consensus_{fasta_key}.fasta')
             section.add_file(io_fasta.path, relative_path)
-            assemblies.append({
-                'Assembly step': fasta_key,
-                'Download': HtmlTableCell('Download (FASTA)', link=str(relative_path))})
-        df = pd.DataFrame(assemblies)
-        section.add_table(
-            list(df.itertuples(index=False, name=None)),
-            column_names=df.columns,
-            table_attributes=[('class', 'data')]
-        )
-        section.add_paragraph("""
-            The hybrid assembly pipeline performs long-read first <i>de novo</i> assembly, according to the following 
-            steps: (1) Quality control and pre-processing of the long and short reads; (2) Long-reads assembly using 
-            Flye; (3) polishing using Medaka (long-reads), followed by Polypolish and POLCA (short-reads); (4) Quality
-            assessment using QUAST and several variant callers. An additional short-read first assembly is created 
-            using Unicycler.
-            """)
+            rows.append([
+                fasta_key, HtmlTableCell('Download (FASTA)', link=str(relative_path))
+            ])
+
+        # Add table with download links
+        section.add_table(rows, column_names=['Assembly step', 'Download'], table_attributes=[('class', 'data')])
+        section.add_paragraph(
+            "The hybrid assembly pipeline performs long-read first <i>de novo</i> assembly, according to the following " 
+            "steps: (1) Quality control and pre-processing of the long and short reads; (2) Long-reads assembly using "
+            "Flye; (3) polishing using Medaka (long-reads), followed by Polypolish and POLCA (short-reads); (4) "
+            "Quality assessment using QUAST and several variant callers. An additional short-read first assembly is "
+            "created using Unicycler (optional).")
         section.copy_files(self.report.output_dir)
         self.report.add_html_object(section)
 
@@ -156,7 +152,6 @@ class HybridAssemblyReporter(Tool):
         """
         self.report.add_module_header('Sections')
         section = HtmlReportSection(None)
-
         overview_list = HtmlElement('ul')
         for title, key in HybridAssemblyReporter.REPORT_STRUCTURE:
             list_item = HtmlElement('li')
@@ -276,7 +271,7 @@ class HybridAssemblyReporter(Tool):
         section.add_table(
             output_rows,
             column_names=[
-                'Assembly step', 'Ale score', 'Download depth', 'Download insert', 'Download K-mer', 'Download place'],
+                'Assembly step', 'Ale score', 'Download depth', 'Download K-mer', 'Download insert', 'Download place'],
             table_attributes=[('class', 'data')]
         )
         section.add_paragraph("""
@@ -286,11 +281,11 @@ class HybridAssemblyReporter(Tool):
         section.add_table([
             ['depth', 'Agreement between the observed and expected depth, considering the %GC-content'],
             ['insert', 'Agreement between the observed and expected read pairing'],
-            ['kmer', 'Likelihood of the assembly forumla, in the absence of any read information'],
+            ['kmer', 'Likelihood of the assembly formula, in the absence of any read information'],
             ['place', 'Agreement between the sequences of reads and the assembly'],
         ], ['File', 'Explanation'], [('class', 'data')])
         section.add_paragraph(
             "WIGGLE files can be loaded into genome browser such as IGV to visualize issues with the assembly. More "
-            "information is provided in the ALE manuscript, which is listed below.")
+            "information is provided in the ALE manuscript, which is listed below (Clark et al., 2013).")
         self.report.add_html_object(section)
         section.copy_files(self.report.output_dir)

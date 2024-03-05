@@ -20,7 +20,7 @@ class MOBRecon(Tool):
         Initializes this tool.
         :param camel: CAMEL instance
         """
-        super().__init__('MOB-recon', '3.1.4', camel)
+        super().__init__('MOB-recon', '3.1.8', camel)
 
     def _check_input(self) -> None:
         """

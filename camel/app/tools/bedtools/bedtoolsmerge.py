@@ -1,8 +1,6 @@
-import os
-
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
-from camel.app.tools.bedtools.bedtools import Bedtools
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.tools.bedtools.bedtools import Bedtools
 
 
 class BedtoolsMerge(Bedtools):
@@ -37,7 +35,7 @@ class BedtoolsMerge(Bedtools):
         :param camel: Camel instance
         :return: None
         """
-        super().__init__('bedtools merge', '2.25.0', camel)
+        super().__init__('bedtools merge', '2.31.0', camel)
         self.__input_type = ""
 
     def _execute_tool(self):
@@ -93,11 +91,11 @@ class BedtoolsMerge(Bedtools):
         else:
             raise InvalidInputSpecificationError(
                 "Input file specified with wrong file type ({}). Accepted types are BAM or BED.".format(
-                    self._tool_inputs.keys()[0]))
+                    list(self._tool_inputs.keys())[0]))
 
     def __set_output(self):
         """
         Sets the output of this tool.
         :return: None
         """
-        self._tool_outputs['BED'] = [ToolIOFile(os.path.join(self._folder, self._parameters['output_filename'].value))]
+        self._tool_outputs['BED'] = [ToolIOFile(self._folder / self._parameters['output_filename'].value)]

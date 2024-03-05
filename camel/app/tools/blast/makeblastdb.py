@@ -16,7 +16,7 @@ class MakeBlastDb(Tool):
         Initializes this tool.
         :param camel: CAMEL instance
         """
-        super().__init__('makeblastdb', '2.6.0', camel)
+        super().__init__('makeblastdb', '2.14.0', camel)
 
     def _execute_tool(self) -> None:
         """

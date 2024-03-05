@@ -1,8 +1,8 @@
-import logging
 from typing import List
 
 from camel.app.components.blasthit.blastnhit import BlastnHit
 from camel.app.components.blasthit.indel import Indel
+from camel.app.loggers import logger
 
 
 class BlastnHitIndelScanner(object):
@@ -53,5 +53,5 @@ class BlastnHitIndelScanner(object):
                 indels += BlastnHitIndelScanner.scan_sequence_indels(blastn_hit.sseq, '-', blastn_hit.qstart)
                 return indels
             else:
-                logging.error("Blastnhit without sequences cannot be scanned format indels.")
+                logger.error("Blastnhit without sequences cannot be scanned format indels.")
                 raise ValueError('Blastnhit contain gaps without sequences. IndelScanner fails to extract indels.')

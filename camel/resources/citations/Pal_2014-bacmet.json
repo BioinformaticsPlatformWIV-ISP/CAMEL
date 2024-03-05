@@ -1,0 +1,20 @@
+{
+  "type_of_reference": "JOUR",
+  "primary_title": "BacMet: Antibacterial biocide and metal resistance genes database",
+  "first_authors": [
+    "Pal, Chandan",
+    "Bengtsson-Palme, Johan",
+    "Rensing, Christopher",
+    "Kristiansson, Erik",
+    "Larsson, D. G.Joakim"
+  ],
+  "publication_year": "2014///",
+  "alternate_title3": "Nucleic Acids Research",
+  "volume": "42",
+  "number": "D1",
+  "start_page": "737",
+  "end_page": "743",
+  "doi": "10.1093/nar/gkt1252",
+  "file_attachments1": "file:///D:/articles/Pal et al._2014_BacMet antibacterial biocide and metal resistance genes database.pdf",
+  "abstract": "Antibiotic resistance has become a major human health concern due to widespread use, misuse and overuse of antibiotics. In addition to antibiotics, antibacterial biocides and metals can contribute to the development and maintenance of antibiotic resistance in bacterial communities through co-selection. Information on metal and biocide resistance genes, including their sequences and molecular functions, is, however, scattered. Here, we introduce BacMet (http://bacmet.biomedicine.gu.se) - a manually curated database of antibacterial biocide- and metal-resistance genes based on an in-depth review of the scientific literature. The BacMet database contains 470 experimentally verified resistance genes. In addition, the database also contains 25 477 potential resistance genes collected from public sequence repositories. All resistance genes in the BacMet database have been organized according to their molecular function and induced resistance phenotype. \u00a9 2013 The Author(s). Published by Oxford University Press."
+}

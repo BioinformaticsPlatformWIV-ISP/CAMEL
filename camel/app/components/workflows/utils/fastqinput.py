@@ -26,10 +26,17 @@ class FastqInput:
 
     def to_fq_dict(self) -> Dict[str, List[ToolIOFile]]:
         """
-        Converts the FASTQ input to a input dictionary for the workflow.
+        Converts the FASTQ input to an input dictionary for the workflow.
         :return: FASTQ dictionary
         """
-        if self.is_pe:
+        if self.read_type == 'hybrid':
+            fq_dict = {'PE': self.pe, 'SE': self.se}
+            if self.se_fwd is not None:
+                fq_dict['SE_FWD'] = self.se_fwd
+            if self.se_rev is not None:
+                fq_dict['SE_REV'] = self.se_rev
+            return fq_dict
+        elif self.is_pe:
             fq_dict = {'PE': self.pe}
             if self.se_fwd is not None:
                 fq_dict['SE_FWD'] = self.se_fwd

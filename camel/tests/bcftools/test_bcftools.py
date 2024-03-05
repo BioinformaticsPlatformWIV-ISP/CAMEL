@@ -76,6 +76,9 @@ class TestBcftools(CamelTestSuite):
         bcftools_consensus.run(self.running_dir)
         self.verify_output_files(bcftools_consensus, 'FASTA')
 
+    FILE_FASTA_TOY = ToolIOFile(test_file_dir / 'toy.fasta')
+    FILE_BAM_TOY = ToolIOFile(test_file_dir / 'toy.bam')
+
     def test_bcftools_csq(self) -> None:
         """
         Tests bcftools csq.
@@ -215,6 +218,16 @@ class TestBcftools(CamelTestSuite):
         bcftools_view.update_parameters(output_type='v')
         bcftools_view.run(self.running_dir)
         self.verify_output_files(bcftools_view, 'VCF')
+
+    def test_bcftools_mpileup(self) -> None:
+        """
+        Tests the mpileup function of bcftools.
+        :return: None
+        """
+        samtools_mpileup = BcftoolsMpileup(self.camel)
+        samtools_mpileup.add_input_files({'BAM': [TestBcftools.FILE_BAM_TOY], 'FASTA': [TestBcftools.FILE_FASTA_TOY]})
+        samtools_mpileup.run(self.running_dir)
+        self.verify_output_files(samtools_mpileup, 'VCF')
 
 
 if __name__ == '__main__':

@@ -1,7 +1,8 @@
-import logging
 import re
 from pathlib import Path
 from typing import Dict, Tuple
+
+from camel.app.loggers import logger
 
 
 class AlignmentExtraction(object):
@@ -21,7 +22,7 @@ class AlignmentExtraction(object):
         """
         with open(alignment_file) as handle:
             full_text = handle.read()
-            text_parts = full_text.split('> ')
+            text_parts = full_text.split('>')
 
         alignments = {}
 
@@ -37,7 +38,7 @@ class AlignmentExtraction(object):
             new_query = AlignmentExtraction.__get_query(text_part)
             if new_query is not None:
                 last_query = new_query
-        logging.info(f"{len(alignments)} alignments extracted from '{alignment_file.name}'")
+        logger.info(f"{len(alignments)} alignments extracted from '{alignment_file.name}'")
         return alignments
 
     @staticmethod

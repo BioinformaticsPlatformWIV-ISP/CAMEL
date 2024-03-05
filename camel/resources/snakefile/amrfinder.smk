@@ -19,12 +19,15 @@ rule amrfinder_run:
         TSV = Path(config['working_dir']) / 'amrfinder' / 'tsv.io',
         INFORMS = Path(config['working_dir']) / 'amrfinder' / 'informs.io'
     params:
-        dir_ = Path(config['working_dir']) / 'amrfinder'
+        dir_ = Path(config['working_dir']) / 'amrfinder',
+        organism = config['amrfinder'].get('species')
     run:
         from camel.app.tools.amrfinder.amrfinder import AMRFinder
         amrfinder = AMRFinder(Camel.get_instance())
         SnakemakeUtils.add_pickle_input(amrfinder, 'FASTA', Path(input.FASTA))
         amrfinder.add_input_files({'DIR': [ToolIODirectory(Path(input.DIR))]})
+        if params.organism is not None:
+            amrfinder.update_parameters(organism=params.organism)
         step = Step(str(rule), amrfinder, Camel.get_instance(), params.dir_)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(amrfinder, output)
@@ -63,22 +66,31 @@ rule amrfinder_dump_summary_info:
     Dumps the summary information for the ResFinder workflow in tabular format.
     """
     input:
-        TSV = rules.amrfinder_run.output.TSV
+        TSV = rules.amrfinder_run.output.TSV,
+        INFORMS = rules.amrfinder_run.output.INFORMS
     output:
         TSV = Path(config['working_dir']) / 'amrfinder' / 'summary_amrfinder.tsv'
     run:
         path_tsv = SnakemakeUtils.load_object(Path(input.TSV))[0].path
         data_amr = pd.read_table(path_tsv)
 
+        # Extract the informs
+        informs = SnakemakeUtils.load_object(Path(input.INFORMS))
+
         # Parse perfect & other hits
         data_amr['is_perfect'] = data_amr.apply(lambda x:
             x['% Coverage of reference sequence'] == 100.0 and x['% Identity to reference sequence'] == 100.0, axis=1)
-        hits_perfect = list(data_amr[data_amr['is_perfect']]['Gene symbol'])
-        hits_other = list(data_amr[~data_amr['is_perfect']]['Gene symbol'])
+
+        hits_perfect = list(data_amr[data_amr['is_perfect']]['Gene symbol']) if sum(data_amr['is_perfect']) > 0 else []
+        hits_other = list(data_amr[~data_amr['is_perfect']]['Gene symbol']) if sum(~data_amr['is_perfect']) > 0 else []
 
         # Write to output file
         with open(output.TSV, 'w') as handle:
-            handle.write('amrfinder_perfect\t{}'.format(', '.join(hits_perfect) if len(hits_perfect) > 0 else '-'))
+            handle.write('amrfinder_hits_perfect\t{}'.format(', '.join(hits_perfect) if len(hits_perfect) > 0 else '-'))
             handle.write('\n')
-            handle.write('amrfinder_other\t{}'.format(', '.join(hits_other) if len(hits_other) > 0 else '-'))
+            handle.write('amrfinder_hits_other\t{}'.format(', '.join(hits_other) if len(hits_other) > 0 else '-'))
+            handle.write('\n')
+            handle.write(f"amrfinder_tool_version\t{informs['_name']}")
+            handle.write('\n')
+            handle.write(f"amrfinder_db_version\t{informs['db_version']}")
             handle.write('\n')

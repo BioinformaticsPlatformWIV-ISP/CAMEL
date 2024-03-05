@@ -20,7 +20,7 @@ class Sniffles(Tool):
         :param camel: CAMEL instance
         :return: None
         """
-        super().__init__('Sniffles', '2.0.7', camel)
+        super().__init__('Sniffles', '2.2', camel)
 
     def _check_input(self) -> None:
         """
@@ -55,6 +55,7 @@ class Sniffles(Tool):
     def _set_output(self) -> None:
         """
         Collects the tool output.
+        :return: None
         """
         self._tool_outputs['VCF'] = [ToolIOFile(self.folder / Path('variants.vcf'))]
 

@@ -16,3 +16,43 @@ citations:
     - Wick_2017-unicycler
     - Wick_2022-polypolish
     - Zimin_2020-polca
+
+#########################
+# Tool specific options #
+#########################
+downsampling:
+  coverage_max: 1000000000000
+  expected_genome_size: 1
+
+filtlong:
+  keep_percent: {keep_percent}
+
+assembly:
+  flye:
+    genome_size: {genome_size}
+    meta: {is_meta}
+    nano_corr: {nano_corr}
+    nano_hq: {nano_hq}
+    nano_raw: {nano_raw}
+  min_contig_length: 1000
+  no_alt_contigs: true
+
+polishing:
+  medaka:
+    consensus:
+      model: {medaka_model}
+
+freebayes:
+  min_alternate_count: {freebayes_min_alternate_count}
+  min_alternate_fraction: {freebayes_min_alternate_fraction}
+  ploidy: {freebayes_ploidy}
+
+clair3:
+  haploid_precise: {clair3_haploid_precise}
+  long_indel: {clair3_long_indel}
+  model_path: {clair3_model_path}
+
+sniffles:
+  mapq: {sniffles_mapq}
+  min_support: {sniffles_min_support}
+  min_svlen: {sniffles_min_svlen}

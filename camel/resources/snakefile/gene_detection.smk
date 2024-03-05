@@ -120,7 +120,7 @@ rule gene_detection_get_column_names:
 
         # Create empty hit
         if params.detection_method == 'blast':
-            empty_hit = GeneDetectionBlastHit('Locus', None, BlastHitStatistics('subject', 0, '', 'query', 0, 0, 0.0))
+            empty_hit = GeneDetectionBlastHit('Locus', None, BlastHitStatistics('subject', 0, '', 'query', 0, 0, '', 0.0, '+'))
         elif params.detection_method == 'srst2':
             empty_hit = GeneDetectionSRST2Hit('DB_cluster', 'Locus', None, 0, '', '', 0.0, 0.0, 0.0)
         elif params.detection_method == 'kma':
@@ -147,17 +147,28 @@ rule gene_detection_report:
         INFORMS_db_info = rules.gene_detection_db_manager.output.INFORMS,
         INFORMS_detection = rules.gene_detection_get_hits.output.INFORMS
     output:
-        VAL_HTML = Path(config['working_dir']) / gene_detection.OUTPUT_GENE_DETECTION_REPORT,
+        VAL_HTML = Path(config['working_dir']) / gene_detection.OUTPUT_GENE_DETECTION_REPORT
     params:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'gene_detection' / wildcards.db / 'report',
         config_data = lambda wildcards: config['gene_detection'][wildcards.db]
     run:
-        from camel.app.io.tooliovalue import ToolIOValue
         from camel.app.tools.pipelines.genedetection.htmlreportergenedetection import HtmlReporterGeneDetection
+
+        # Create step
         reporter = HtmlReporterGeneDetection(camel)
         step = Step(str(rule), reporter, camel, Path(str(params.running_dir)), wildcards)
+
+        # Forced detection method
         if 'force_detection_method' in params.config_data:
             reporter.update_parameters(forced_detection_method = params.config_data['force_detection_method'])
+
+        # Optional message
+        if 'message' in params.config_data:
+            reporter.update_parameters(message=params.config_data['message']['content'])
+        if ('message' in params.config_data) and ('category' in params.config_data['message']):
+            reporter.update_parameters(message_category=params.config_data['message']['category'])
+
+        # Run tool
         SnakemakeUtils.add_pickle_inputs(reporter, input)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
@@ -185,7 +196,7 @@ rule gene_detection_dump_summary_info:
     Dumps the summary information from the gene detection in tabular format.
     """
     input:
-        INFORMS_hits=Path(config['working_dir']) / 'gene_detection' / '{db}' / 'hit_selection' / 'selected-hits.io',
+        INFORMS_hits = Path(config['working_dir']) / 'gene_detection' / '{db}' / 'hit_selection' / 'selected-hits.io'
     output:
         TSV = Path(config['working_dir']) / gene_detection.OUTPUT_GENE_DETECTION_SUMMARY
     run:

@@ -12,4 +12,4 @@ class Blastp(Blast):
         Initialize tool.
         :return: None
         """
-        super().__init__('blastp', '2.6.0', camel)
+        super().__init__('blastp', '2.14.0', camel)

@@ -1,4 +1,4 @@
-import logging
+from camel.app.loggers import logger
 from itertools import chain
 
 from camel.app.camel import Camel
@@ -23,7 +23,7 @@ class Pipeline(object):
         self._job_id = None
         self._keep_config = keep_config
         self._keep_error_log = keep_error_log
-        logging.info(f"Initialized pipeline '{self._name}'")
+        logger.info(f"Initialized pipeline '{self._name}'")
 
     @property
     def name(self) -> str:
@@ -77,4 +77,4 @@ class Pipeline(object):
             for index, io in enumerate(files):
                 if not io.is_logged:
                     continue
-                logging.info(f"Pipeline input log: type={io.type_name} key={key} index={index} hash={io.hash}")
+                logger.info(f"Pipeline input log: type={io.type_name} key={key} index={index} hash={io.hash}")

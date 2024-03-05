@@ -1,4 +1,4 @@
-dependencies: [bcftools/1.9]
+dependencies: [bcftools/1.17]
 parameters:
   min_mapping_quality: {default: true, mandatory: true, option: null, value: '30'}
   output_filename: {default: true, mandatory: true, option: null, value: variants_mapping_quality_filtered.vcf.gz}

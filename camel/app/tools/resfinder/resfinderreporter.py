@@ -1,6 +1,5 @@
 import logging
 from pathlib import Path
-from typing import Dict, List, Tuple
 
 import pandas as pd
 
@@ -180,21 +179,6 @@ class ResFinderReporter(Tool):
         self.__add_explanation_matches(section)
         section.add_paragraph(f"Database version: {self._input_informs['resfinder']['db_version_resfinder']}")
         self._tool_outputs['VAL_HTML'] = [ToolIOValue(section)]
-
-    def __parse_input_file(self) -> Tuple[Dict[str, List[str]], Dict[str, List[List[str]]]]:
-        """
-        Parses the input file.
-        :return: Input file header, input file data
-        """
-        header, data = {}, {}
-        for key in ['TSV_genes', 'TSV_pheno_general', 'TSV_point', 'TSV_pheno_species']:
-            if key not in self._tool_inputs:
-                continue
-            input_file = self._tool_inputs[key][0]
-            with open(input_file.path) as handle:
-                header[key] = handle.readline().strip().split('\t')
-                data[key] = [line.strip().split('\t') for line in handle.readlines()]
-        return header, data
 
     def __add_explanation_matches(self, section: HtmlReportSection) -> None:
         """

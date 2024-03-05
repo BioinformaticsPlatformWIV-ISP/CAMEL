@@ -1,0 +1,30 @@
+{
+  "type_of_reference": "JOUR",
+  "primary_title": "BUSCO Update: Novel and Streamlined Workflows along with Broader and Deeper Phylogenetic Coverage for Scoring of Eukaryotic, Prokaryotic, and Viral Genomes",
+  "first_authors": [
+    "Manni, Mos\u00e8",
+    "Berkeley, Matthew R.",
+    "Seppey, Mathieu",
+    "Sim\u00e3o, Felipe A.",
+    "Zdobnov, Evgeny M."
+  ],
+  "publication_year": "2021///",
+  "keywords": [
+    "completeness",
+    "eukaryotes",
+    "genome",
+    "metagenomes",
+    "microbes",
+    "prokaryotes",
+    "quality assessment",
+    "transcriptome",
+    "viruses"
+  ],
+  "alternate_title3": "Molecular Biology and Evolution",
+  "volume": "38",
+  "number": "10",
+  "start_page": "4647",
+  "end_page": "4654",
+  "doi": "10.1093/molbev/msab199",
+  "url": "https://doi.org/10.1093/molbev/msab199"
+}

@@ -1,4 +1,4 @@
-dependencies: [bedtools/2.25.0]
+dependencies: [bedtools/2.31.0]
 parameters:
   force_merge_one_strand: {default: false, mandatory: false, option: -S, p_index: 0,
     value: null}

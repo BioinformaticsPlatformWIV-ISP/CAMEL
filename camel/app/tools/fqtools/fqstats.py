@@ -19,8 +19,8 @@ class FqStats(Tool):
         :param camel: Camel instance
         """
         warnings.warn(
-            "This class will be depracated because it cannot handle really long reads, use FastqStats instead.",
-            DeprecationWarning)
+            "This class will be deprecated because it cannot handle really long reads, use FastqStats or seqtk size "
+            "instead.", DeprecationWarning)
         super().__init__('fqstats', '1.1',  camel)
 
     def _check_input(self) -> None:

@@ -1,5 +1,7 @@
 from pathlib import Path
 
+from pandas.errors import EmptyDataError
+
 from camel.app.camel import Camel
 from camel.app.io.tooliodirectory import ToolIODirectory
 from camel.app.pipeline.step import Step
@@ -74,35 +76,46 @@ rule mobsuite_create_summary:
         TSV = Path(config['working_dir']) / 'mob_suite' / 'summary_mob_suite.tsv'
     run:
         import pandas as pd
+
+        # Parse TSV output
         path_tsv = SnakemakeUtils.load_object(Path(input.TSV))[0].path
-        data_mobsuite = pd.read_table(path_tsv)
+        try:
+            data_mobsuite = pd.read_table(path_tsv)
+            if 'primary_cluster_id' not in data_mobsuite.columns:
+                raise EmptyDataError
+            primary_cluster_ids = list(data_mobsuite['primary_cluster_id'])
+        except EmptyDataError:
+            logger.info(f'No plasmids detected by MOB-suite')
+            primary_cluster_ids = []
 
+        # Parse informs
         informs_in = SnakemakeUtils.load_object(Path(input.INFORMS))
-        with open(output.TSV, 'w') as handle:
-            # Primary cluster id
-            try:
-                handle.write('\t'.join([
-                    'mob_suite_primary_cluster_ids', ', '.join(list(data_mobsuite['primary_cluster_id']))]))
-                handle.write('\n')
 
-                # Contigs classified as plasmids
-                handle.write('\t'.join([
-                    'mob_suite_predicted_plasmid_contigs',
-                    ', '.join(ctg for ctg, status in informs_in['contig_report'].items() if status is not None)
-                ]))
-                handle.write('\n')
-            except KeyError:
-                handle.write('No plasmids found.')
-                handle.write('\n')
+        # Create summary output
+        with open(output.TSV, 'w') as handle:
+            # Cluster IDs
+            handle.write('\t'.join([
+                'mob_suite_primary_cluster_ids',
+                ', '.join(primary_cluster_ids) if len(primary_cluster_ids) > 0 else '-']))
+            handle.write('\n')
+
+            # Contigs classified as plasmids
+            handle.write('\t'.join([
+                'mob_suite_predicted_plasmid_contigs',
+                ', '.join(ctg for ctg, status in informs_in['contig_report'].items() if status is not None)]))
+            handle.write('\n')
+
+            # Tool info
+            handle.write('\t'.join(['mob_suite_tool_version', informs_in['_name']]))
+            handle.write('\n')
 
 rule mobsuite_report_genomic_context:
     """
     Reports the genomic context for detected genes.
     """
     input:
-        TSV_amrfinder = Path(config['working_dir']) / 'amrfinder' / 'tsv.io' if 'amrfinder' in config['analyses'] else [],
-        TSV_bacmet = Path(config['working_dir']) / 'bacmet' / 'hit_filtering' / 'tsv.io' if 'bacmet' in config['analyses'] else [],
-        TSV_vfdb = Path(config['working_dir']) / 'gene_detection' / 'vfdb_core' / 'metadata' / 'tsv.io' if 'vfdb_core' in config['analyses'] else [],
+        TSV = Path(config['working_dir']) / 'mob_suite' / 'genomic_context' / 'input' / 'tsv.io',
+        INFORMS = Path(config['working_dir']) / 'mob_suite' / 'genomic_context' / 'input' / 'informs.io',
         INFORMS_mob_recon = rules.mobsuite_mob_recon.output.INFORMS
     output:
         HTML = Path(config['working_dir']) / 'mob_suite' / 'genomic_context' / 'html.io'
@@ -111,23 +124,14 @@ rule mobsuite_report_genomic_context:
         detection_method = config['detection_method'],
         read_type = config.get('read_type', 'illumina')
     run:
-        from camel.app.tools.pipelines.klebsiella.genomiccontext import GenomicContext
+        from camel.app.tools.mobsuite.genomiccontext import GenomicContext
+
         genomic_context = GenomicContext(Camel.get_instance())
-        informs = {
-            'TSV_amrfinder': {'key': 'amrfinder', 'title': 'AMRFinder', 'contig': 'Contig id', 'gene': 'Gene symbol'},
-            'TSV_bacmet': {'key': 'bacmet', 'title': 'BacMet', 'contig': 'qseqid', 'gene': 'Gene_name'},
-            'TSV_vfdb': {'key': 'vfdb', 'title': 'VFDB core', 'contig': 'Contig', 'gene': 'Gene'}
-        }
-        db_informs_to_add = []
-        for k, v in input.items():
-            if not v:
-                continue
-            if 'TSV' in k:
-                db_informs_to_add.append(informs[k])
-                SnakemakeUtils.add_pickle_input(genomic_context, k, Path(v))
+        genomic_context.add_input_files({'TSV': SnakemakeUtils.load_object(Path(input.TSV))})
         genomic_context.add_input_informs({
             'mob_recon': SnakemakeUtils.load_object(Path(input.INFORMS_mob_recon)),
-            'dbs': db_informs_to_add})
+            'dbs': SnakemakeUtils.load_object(Path(input.INFORMS))
+        })
         genomic_context.update_parameters(
             detection_method=str(params.detection_method), read_type=str(params.read_type))
         step = Step(str(rule), genomic_context, Camel.get_instance(), params.dir_)
@@ -142,4 +146,4 @@ rule mobsuite_report_genomic_context_empty:
         VAL_HTML = Path(config['working_dir']) / 'mob_suite' / 'genomic_context' / 'html-empty.io'
     run:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-        SnakePipelineUtils.create_empty_report_section('Genomic context', Path(output.VAL_HTML), 3)
+        SnakePipelineUtils.create_empty_report_section('Genomic context', Path(output.VAL_HTML), 2)

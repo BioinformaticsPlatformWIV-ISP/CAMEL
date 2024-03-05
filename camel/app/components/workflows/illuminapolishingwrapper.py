@@ -1,11 +1,11 @@
+import shutil
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Dict, Optional
+from typing import Dict, Optional
 
-from camel.app.io.tooliofile import ToolIOFile
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-from camel.resources.snakefile import short_read_polishing
+from camel.resources.snakefile import polish_assembly_short
 
 
 class ShortReadPolishingWrapper(object):
@@ -15,7 +15,7 @@ class ShortReadPolishingWrapper(object):
 
     @dataclass
     class PolishingOutput:
-        fasta_contigs: List[ToolIOFile]
+        fasta_contigs: Path
         log_file: Optional[Path] = None
 
     def __init__(self, working_dir: Path) -> None:
@@ -27,30 +27,29 @@ class ShortReadPolishingWrapper(object):
         self._working_dir = Path(working_dir)
         self._output = None
 
-    def run_workflow(self, pe_reads: Path, reference: Path = None, threads: int = 8) -> None:
+    def run_workflow(self, pe_reads: Path, reference: Path, threads: int = 8) -> None:
         """
         Runs the read polishing workflow.
-        :param pe_reads: Input PE FASTQ reads
-        :param reference: genome to polish
+        :param pe_reads: Path to the PE FASTQ reads io file
+        :param reference: Path to the genome to polish io file
         :param threads: Number of threads to use
         :return: None
         """
         # Create config file
         config_data = {
-            'working_dir': str(self._working_dir),
-            'polishing': {'polypolish': [], 'polca': []},
+            'working_dir': str(self._working_dir)
         }
-        config_file = SnakePipelineUtils.generate_config_file(config_data, self._working_dir)
+        config_file = SnakePipelineUtils.generate_config_file(config_data, Path(self._working_dir, 'polishing'))
 
         # Dump the input files in an IO file
         io_pickle_in = Path(self._working_dir / short_read_polishing.INPUT_READS_FASTQ)
         io_pickle_in.parent.mkdir(exist_ok=True, parents=True)
-        SnakemakeUtils.dump_object([ToolIOFile(pe_reads)], io_pickle_in)
+        shutil.copyfile(pe_reads, io_pickle_in)
 
         # Dump the reference file in an IO file
         io_pickle_fasta_in = Path(self._working_dir / short_read_polishing.INPUT_ASSEMBLY_FASTA)
         io_pickle_fasta_in.parent.mkdir(exist_ok=True, parents=True)
-        SnakemakeUtils.dump_object([ToolIOFile(reference)], io_pickle_in)
+        shutil.copyfile(reference, io_pickle_fasta_in)
 
         # Output files
         output_files = {
@@ -69,7 +68,7 @@ class ShortReadPolishingWrapper(object):
         """
         log_path = self._working_dir / 'camel.log'
         self._output = ShortReadPolishingWrapper.PolishingOutput(
-            fasta_contigs=SnakemakeUtils.load_object(output_files['FASTA']),
+            fasta_contigs=SnakemakeUtils.load_object(output_files['FASTA']).path,
             log_file=log_path if log_path.exists() else None
         )
 

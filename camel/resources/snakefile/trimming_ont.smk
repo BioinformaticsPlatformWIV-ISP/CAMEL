@@ -62,15 +62,17 @@ rule trimming_ont_filtlong:
     priority: 1
     params:
         running_dir = Path(config['working_dir']) / 'trimming_ont' / 'filtlong',
-        sample_name = config.get('sample_name', 'reads')
+        sample_name = config.get('sample_name', 'reads'),
+        min_len = 500,
+        min_q = 7
     run:
         from camel.app.tools.filtlong.filtlong import Filtlong
         filtlong = Filtlong(camel)
+        filtlong.update_parameters(min_length=params.min_len, min_mean_q=params.min_q)
         SnakemakeUtils.add_pickle_inputs(filtlong, input)
         step = Step(str(rule), filtlong, camel, params.running_dir)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(filtlong, output)
-
 
 rule trimming_ont_nanoplot_post:
     """
@@ -92,7 +94,6 @@ rule trimming_ont_nanoplot_post:
         step = Step(str(rule), nanoplot, camel, params.running_dir)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(nanoplot, output)
-
 
 rule trimming_ont_report:
     """
@@ -119,7 +120,6 @@ rule trimming_ont_report:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
 
-
 rule trimming_ont_dump_summary_info:
     """
     Dumps the summary information from the read trimming pipeline.
@@ -133,8 +133,9 @@ rule trimming_ont_dump_summary_info:
     run:
         filtlong_informs = SnakemakeUtils.load_object(Path(input.INFORMS_trimming))
         summary_data = [
-            ('nb_reads_in', filtlong_informs['nb_reads_in']),
-            ('nb_reads_out', filtlong_informs['nb_reads_out'])
+            ('trim_ont_reads_in', filtlong_informs['nb_reads_in']),
+            ('trim_ont_reads_out', filtlong_informs['nb_reads_out']),
+            ('trim_ont_tool_version', filtlong_informs['_name'])
         ]
         with open(output[0], 'w') as handle:
             for key, value in summary_data:

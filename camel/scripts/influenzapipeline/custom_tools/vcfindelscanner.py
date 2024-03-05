@@ -67,7 +67,7 @@ class VCFIndelScanner(Tool):
 
         vcf_reader = vcf.Reader(filename=str(self._tool_inputs['VCF'][0].path))
 
-        logging.debug(f" VCF metadata: keys {vcf_reader.metadata.keys()} \n data {vcf_reader.metadata}")
+        logger.debug(f" VCF metadata: keys {vcf_reader.metadata.keys()} \n data {vcf_reader.metadata}")
 
         if 'bcftools_callCommand' in vcf_reader.metadata.keys():
             return 'samtools'
@@ -115,8 +115,8 @@ class VCFIndelScanner(Tool):
         simplified_indel = self._simplify_samtools_indel(indel)
         str_indel_simplified = str(simplified_indel)
         if str_indel_before != str_indel_simplified:
-            logging.debug("  samtools indels - before \t{!r}".format(str_indel_before))
-            logging.debug("  samtools indels - simplified \t{!r}".format(str_indel_simplified))
+            logger.debug("  samtools indels - before \t{!r}".format(str_indel_before))
+            logger.debug("  samtools indels - simplified \t{!r}".format(str_indel_simplified))
         return self._convert_indel_into_tuple(simplified_indel)
 
     def _convert_indel_into_tuple(self, indel: vcf.model._Record) -> Indel:
@@ -146,7 +146,7 @@ class VCFIndelScanner(Tool):
         #     ('indel', 'del', 19755, 19756, 19774, 19774)
         #
         if len(indel.ALT) > 1:
-            logging.warning("INDEL with multiple alternative alleles found: type {!r}, {!r}".format(
+            logger.warning("INDEL with multiple alternative alleles found: type {!r}, {!r}".format(
                 indel.var_subtype, str(indel)))
 
         if indel.is_deletion:

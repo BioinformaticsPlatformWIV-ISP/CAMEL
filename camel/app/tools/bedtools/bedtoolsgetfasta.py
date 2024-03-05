@@ -19,7 +19,7 @@ class BedtoolsGetFasta(Bedtools):
         :param camel: Camel instance
         :return: None
         """
-        super().__init__('bedtools getfasta', '2.25.0', camel)
+        super().__init__('bedtools getfasta', '2.31.0', camel)
         self._required_inputs = ['BED', 'FASTA']
 
     def _execute_tool(self) -> None:

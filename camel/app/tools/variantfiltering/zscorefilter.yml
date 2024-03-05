@@ -1,4 +1,4 @@
-dependencies: [bcftools/1.9, samtools/1.9]
+dependencies: [bcftools/1.17, samtools/1.17]
 parameters:
   min_zscore: {default: true, mandatory: false, option: null, value: '1.96'}
   output_filename: {default: true, mandatory: true, option: null, value: variants_zscore_filtered.vcf.gz}

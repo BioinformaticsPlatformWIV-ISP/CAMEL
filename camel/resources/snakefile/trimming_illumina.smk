@@ -30,7 +30,6 @@ rule trimming_illumina_fastqc_pre:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(fastqc, output)
 
-
 rule trimming_illumina_trimmomatic:
     """
     Read trimming using trimmomatic.
@@ -60,7 +59,6 @@ rule trimming_illumina_trimmomatic:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(trimmomatic, output)
 
-
 rule trimming_illumina_fastqc_post:
     """
     Creates FastQC reports of the trimmed reads.
@@ -81,7 +79,6 @@ rule trimming_illumina_fastqc_post:
         fastqc.update_parameters(threads=threads)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(fastqc, output)
-
 
 rule trimming_illumina_report:
     """
@@ -108,7 +105,6 @@ rule trimming_illumina_report:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
 
-
 rule trimming_illumina_dump_summary_info:
     """
     Dumps the summary information from the read trimming pipeline.
@@ -122,17 +118,17 @@ rule trimming_illumina_dump_summary_info:
     run:
         trimmomatic_informs = SnakemakeUtils.load_object(Path(input.INFORMS_trimming))
         summary_data = [
-            ('trimming_pairs_in', trimmomatic_informs['paired_reads_in']),
-            ('trimming_pairs_out', trimmomatic_informs['paired_reads_out'].split(' ')[0]),
-            ('trimming_fwd_only_surviving', trimmomatic_informs['forward_only_reads'].split(' ')[0]),
-            ('trimming_rev_only_surviving', trimmomatic_informs['reverse_only_reads'].split(' ')[0]),
-            ('trimming_pairs_both_dropped', trimmomatic_informs['reads_drop'].split(' ')[0])
+            ('trim_ilmn_pairs_in', trimmomatic_informs['paired_reads_in']),
+            ('trim_ilmn_pairs_out', trimmomatic_informs['paired_reads_out'].split(' ')[0]),
+            ('trim_ilmn_fwd_only_surviving', trimmomatic_informs['forward_only_reads'].split(' ')[0]),
+            ('trim_ilmn_rev_only_surviving', trimmomatic_informs['reverse_only_reads'].split(' ')[0]),
+            ('trim_ilmn_pairs_both_dropped', trimmomatic_informs['reads_drop'].split(' ')[0]),
+            ('trim_ilmn_tool_version', trimmomatic_informs['_name'])
         ]
         with open(output[0], 'w') as handle:
             for key, value in summary_data:
                 handle.write(f'{key}\t{value}')
                 handle.write('\n')
-
 
 rule trimming_illumina_to_dict:
     """

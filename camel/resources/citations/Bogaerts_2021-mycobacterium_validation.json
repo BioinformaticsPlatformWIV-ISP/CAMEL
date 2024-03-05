@@ -1,0 +1,32 @@
+{
+  "type_of_reference": "JOUR",
+  "primary_title": "A bioinformatics whole-genome sequencing workflow for clinical <i>Mycobacterium tuberculosis</i> complex isolate analysis, validated using a reference collection extensively characterized with conventional methods and <i>in silico</i> approaches",
+  "first_authors": [
+    "Bogaerts, Bert",
+    "Delcourt, Thomas",
+    "Soetaert, Karine",
+    "Boarbi, Samira",
+    "Ceyssens, Pieter Jan",
+    "Winand, Raf",
+    "Van Braekel, Julien",
+    "De Keersmaecker, Sigrid C.J.",
+    "Roosens, Nancy H.C.",
+    "Marchal, Kathleen",
+    "Mathys, Vanessa",
+    "Vanneste, Kevin"
+  ],
+  "publication_year": "2021///",
+  "keywords": [
+    "Antimicrobial resistance",
+    "Mycobacterium tuberculosis",
+    "National reference center",
+    "Public health",
+    "Single nucleotide polymorphism",
+    "Validation",
+    "Whole genome sequencing"
+  ],
+  "alternate_title3": "Journal of Clinical Microbiology",
+  "volume": "59",
+  "number": "6",
+  "doi": "10.1128/JCM.00202-21"
+}

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 from camel.app.camel import Camel
 from camel.app.components.html.htmlelement import HtmlElement
@@ -15,6 +15,8 @@ class HtmlReporterContamination(Tool):
     HTML reporter for the contamination check step.
     """
 
+    TITLE = 'Contamination check'
+
     ABBREVIATIONS = {
         'U': 'Unclassified',
         'D': 'Domain',
@@ -27,16 +29,33 @@ class HtmlReporterContamination(Tool):
         'S': 'Species'
     }
 
-    TITLE = 'Contamination check'
-
     def __init__(self, camel: Camel) -> None:
         """
         Initializes this tool.
         :param camel: CAMEL instance
         """
         super().__init__('HTML Reporter: Contamination', '0.1', camel)
-        self._sub_folder = Path('contamination_check')
         self._report_section = None
+
+    @property
+    def _dir_out(self) -> Path:
+        """
+        Returns the relative path to the output directory.
+        :return: Relative path to output directory
+        """
+        if 'suffix' not in self._parameters:
+            return Path('contamination_check')
+        return Path('contamination_check', str(self._parameters['suffix'].value))
+
+    @property
+    def _title(self) -> str:
+        """
+        Returns the title for the output report.
+        :return: Report title
+        """
+        if 'suffix_title' not in self._parameters:
+            return 'Contamination check'
+        return f"Contamination  check - {self._parameters['suffix_title'].value}"
 
     def _execute_tool(self) -> None:
         """
@@ -44,8 +63,8 @@ class HtmlReporterContamination(Tool):
         :return: None
         """
         self._report_section = HtmlReportSection(
-            HtmlReporterContamination.TITLE, subtitle=self._input_informs['kraken2']['_name'])
-        self.__add_database_info(self._input_informs['kraken2'])
+            self._title, subtitle=self._input_informs['kraken2']['_name'])
+        self.__add_database_info()
         self.__add_filtering_info(self._input_informs['species'])
         self.__add_species_table()
         self.__add_detailed_table(self._tool_inputs['TSV'][0].path)
@@ -66,13 +85,12 @@ class HtmlReporterContamination(Tool):
             raise InvalidInputSpecificationError("Kraken report input (TSV) is required")
         super()._check_input()
 
-    def __add_database_info(self, informs: Dict[str, Any]) -> None:
+    def __add_database_info(self) -> None:
         """
-        Adds the date of the last update.
-        :param informs: KRAKEN2 informs
+        Adds the database information to the report.
         :return: None
         """
-        db_informs = informs.get('database')
+        db_informs = self._input_informs['kraken2'].get('database')
         self._report_section.add_table([
             ['Database:', db_informs['name'] if db_informs is not None else 'NA'],
             ['Last update:', db_informs['last_update'] if db_informs is not None else 'NA']
@@ -95,8 +113,7 @@ class HtmlReporterContamination(Tool):
         Adds a table containing the detected species and corresponding percentages.
         :return: None
         """
-        header = ['{}'.format('Species' if 'S' in self._input_informs['species']['level_of_depth'] else 'Genus'),
-                  'Percentage']
+        header = ['Species' if 'S' in self._input_informs['species']['level_of_depth'] else 'Genus', 'Percentage']
         expected_name, expected_perc = self._input_informs['species']['expected']
         expected_perc = '{:.2f}'.format(float(expected_perc))
         table_data = [
@@ -143,9 +160,10 @@ class HtmlReporterContamination(Tool):
         Adds a download link to the Krona report.
         :return: None
         """
-        relative_path = self._sub_folder / 'krona_report.html'
+        relative_path = self._dir_out / 'krona_report.html'
         self._report_section.add_file(self._tool_inputs['HTML_Krona'][0].path, relative_path)
         self._report_section.add_link_to_file('Krona Report', relative_path)
+        self._report_section.add_file(self._tool_inputs['TSV'][0].path, self._dir_out / 'kraken2_report.tsv')
 
     def __add_warnings(self) -> None:
         """
@@ -162,11 +180,14 @@ class HtmlReporterContamination(Tool):
                           self._input_informs['species']['contaminants_fail'])))
 
     @staticmethod
-    def generate_empty_section() -> HtmlReportSection:
+    def generate_empty_section(suffix_title: Optional[str] = None) -> HtmlReportSection:
         """
-        Returns a report that is used when this analysis is disabled.
+        Returns a report used when this analysis is disabled.
+        :param suffix_title: (Optional) suffix for the title
         :return: Report section
         """
-        section = HtmlReportSection(HtmlReporterContamination.TITLE)
+        section = HtmlReportSection(
+            HtmlReporterContamination.TITLE if suffix_title is None else
+            f'{HtmlReporterContamination.TITLE} - {suffix_title}')
         section.add_paragraph('Analysis disabled')
         return section

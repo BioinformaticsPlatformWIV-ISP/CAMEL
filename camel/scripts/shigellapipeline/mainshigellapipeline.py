@@ -15,15 +15,16 @@ class MainShigellaPipeline(ReportPipeline):
     Main class to run the Shigella pipeline.
     """
 
-    CUSTOM_ANALYSES = ['kraken', 'resfinder', 'argannot', 'card', 'ncbi_amr', 'mlst_pasteur', 'mlst_warwick', 'cgmlst',
-                       'pointfinder', 'plasmidfinder', 'virulencefinder', 'identification']
+    CUSTOM_ANALYSES = [
+        'kraken', 'confindr', 'resfinder', 'argannot', 'card', 'ncbi_amr', 'mlst_pasteur', 'mlst_warwick', 'cgmlst',
+        'pointfinder', 'plasmidfinder', 'virulencefinder', 'identification']
 
     def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """
         Initializes the main class.
         :param args: Arguments (optional)
         """
-        super().__init__('Shigella pipeline', '0.5', SNAKEFILE_MAIN, args)
+        super().__init__('Shigella pipeline', '0.6', SNAKEFILE_MAIN, args)
 
     @property
     def title(self) -> str:
@@ -39,6 +40,7 @@ class MainShigellaPipeline(ReportPipeline):
         :return: None
         """
         input_files = self._symlink_input()
+        self._validate_input_files()
         config_file = self.__construct_config_file(input_files)
         self._run_snakemake_main(config_file)
 

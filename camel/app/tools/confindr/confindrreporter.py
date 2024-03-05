@@ -34,11 +34,11 @@ class ConFindrReporter(Tool):
         Executes this tool.
         :return: None
         """
-        section = HtmlReportSection('ConFindr')
+        section = HtmlReportSection('ConFindr', subtitle=self._input_informs['confindr']['_name'])
 
         # Main table
         cell = HtmlTableCell('No', 'green') if \
-            self._input_informs['confindr']['ContamStatus'] is False else HtmlTableCell('Yes', 'red')
+            self._input_informs['confindr']['NumContamSNVs'] < 20 else HtmlTableCell('Yes', 'red')
         section.add_header('Output', 3)
         if self._input_informs['confindr']['Genus'] == 'Error processing sample':
             section.add_alert('Error processing sample, species might be missing from rMLST database', 'warning')
@@ -47,12 +47,9 @@ class ConFindrReporter(Tool):
                 [cell,
                  f"<i>{self._input_informs['confindr']['Genus']}</i>",
                  self._input_informs['confindr']['NumContamSNVs'],
-                 self._input_informs['confindr']['BasesExamined'],
-                 self._input_informs['confindr']['PercentContam'],
-                 self._input_informs['confindr']['PercentContamStandardDeviation']
+                 f"{self._input_informs['confindr']['BasesExamined']:,}"
                  ]],
-                ['Contaminated', 'Genus', 'Contaminated SNPs', 'Bases examined', 'Percent contaminated (%)',
-                 'Std. deviation (%)'],
+                ['Contaminated', 'Genus', 'Contaminated SNPs', 'Bases examined'],
                 table_attributes=[('class', 'data')]
             )
 

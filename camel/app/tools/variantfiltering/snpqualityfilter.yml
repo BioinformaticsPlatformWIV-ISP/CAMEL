@@ -1,4 +1,4 @@
-dependencies: [bcftools/1.9]
+dependencies: [bcftools/1.17]
 parameters:
   min_snp_quality: {default: true, mandatory: true, option: null, value: '25'}
   output_filename: {default: true, mandatory: true, option: null, value: variants_snp_quality_filtered.vcf.gz}

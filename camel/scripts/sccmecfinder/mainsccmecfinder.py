@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 import argparse
-import logging
+import json
 from pathlib import Path
 from typing import Optional, List, Dict, Sequence
 
-import json
 import yaml
 
 from camel.app.camel import Camel
@@ -12,6 +11,7 @@ from camel.app.components import mainscriptutils
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.workflows.genedetectionwrapper import GeneDetectionWrapper
 from camel.app.components.workflows.readtype import helper_by_read_type
+from camel.app.loggers import logger
 
 
 class MainSCCmecFinder(object):
@@ -57,7 +57,7 @@ class MainSCCmecFinder(object):
         for complex_, genes in genes_by_complex.items():
             if all(g in detected_genes for g in genes):
                 return complex_
-        logging.debug("No complex found")
+        logger.debug("No complex found")
 
     def run(self) -> None:
         """
@@ -82,7 +82,7 @@ class MainSCCmecFinder(object):
         if self._args.output_json is not None:
             with self._args.output_json.open('w') as handle:
                 json.dump(self._informs, handle, indent=2)
-            logging.info(f'Informs exported to: {self._args.output_json}')
+            logger.info(f'Informs exported to: {self._args.output_json}')
 
     def __run_blast(self, fasta_file: Path) -> List[str]:
         """
@@ -92,7 +92,7 @@ class MainSCCmecFinder(object):
         """
         wrapper = GeneDetectionWrapper(self._args.working_dir / 'meca')
         wrapper.run_workflow_blast(
-          fasta_file, self._sample_name, {'path': self._args.db_mec_genes}, self._args.threads)
+          fasta_file, self._sample_name, {'path': str(self._args.db_mec_genes)}, self._args.threads)
         self._report.add_html_object(wrapper.output.report_section)
         wrapper.output.report_section.copy_files(self._report.output_dir)
         self._helper.informs.append(wrapper.output.informs)

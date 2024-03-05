@@ -1,0 +1,6 @@
+dependencies: null
+parameters:
+  genome_size: {default: true, mandatory: true, option: '', value: '4411532'}
+  scale: {default: true, mandatory: true, option: null, value: '100'}
+  spacing: {default: true, mandatory: true, option: null, value: '150'}
+tool_command: ''

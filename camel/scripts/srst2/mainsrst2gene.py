@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 import argparse
-import logging
+import shutil
 from pathlib import Path
 from typing import Optional, Dict, List, Sequence
 
-import shutil
-
 from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.tools.srst2.srst2gene import Srst2Gene
 
 
@@ -102,7 +101,7 @@ class MainSrst2Gene(object):
         if 'TSV' in srst2.tool_outputs:
             shutil.copyfile(srst2.tool_outputs['TSV'][0].path, self._args.output_tsv)
         else:
-            logging.info("No genes detected")
+            logger.info("No genes detected")
 
 
 if __name__ == '__main__':

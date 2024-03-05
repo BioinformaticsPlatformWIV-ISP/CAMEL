@@ -1,0 +1,11 @@
+Pillow==9.5.0
+PuLP==2.7.0
+PyVCF3
+biopython
+bs4
+humanize
+pandas
+pydotplus
+screed
+snakemake
+yattag

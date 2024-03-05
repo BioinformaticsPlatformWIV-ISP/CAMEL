@@ -7,8 +7,7 @@ _dir_variant_filtering = Path('variant_filtering')
 OUTPUT_VARIANT_FILTERING_STATS = _dir_variant_filtering / 'stats' / 'json.io'
 OUTPUT_VARIANT_FILTERING_INFORMS_ALL = _dir_variant_filtering / 'informs_all.io'
 OUTPUT_VARIANT_FILTERING_SUMMARY = _dir_variant_filtering / 'summary.tsv'
-OUTPUT_VARIANT_FILTERING_VCF = _dir_variant_filtering / 'regions' / 'vcf.io'
-OUTPUT_VARIANT_FILTERING_VCF_GZ = _dir_variant_filtering / 'zscore' / 'vcf_gz.io'
+OUTPUT_VARIANT_FILTERING_VCF = _dir_variant_filtering / '06-regions' / 'vcf.io'
 
 
 def get_filtering_param(config: Dict[str, Any], filter_key: str, param_name: str) -> Any:

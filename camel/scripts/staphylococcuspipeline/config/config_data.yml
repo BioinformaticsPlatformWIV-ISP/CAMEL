@@ -2,25 +2,27 @@
 # Pipeline settings #
 #####################
 citations:
-  main: null
+  main: Timmermans_2021-enterococcus
   other:
     - Bolger_2014-trimmomatic
     - Bankevich_2012-spades
     - Gurevich_2013-quast
     - Wood_2019-kraken2
+    - Low_2019-confindr
+    - Manni_2021-busco
     - Langmead_2012-bowtie2
     - Li_2009-samtools
     - Camacho_2009-blast
     - Clausen_2018-kma
     - Inouye_2014-srst2
-    - Zankari_2012-resfinder
+    - Bortolaia_2020-resfinder_4.0
     - Feldgarden_2019-ndaro
-    - Zankari_2017-pointfinder
     - Joensen_2014-virulencefinder
     - Chen_2016-vfdb
     - Carattoli_2020-plasmidfinder
-    - Antipov_2016-plasmidspades
     - Jolley_2010-bigsdb
+    - Hyatt_2010-prodigal
+    - Pal_2014-bacmet
 
 #########################
 # Tool specific options #
@@ -33,15 +35,20 @@ read_trimming:
   export_fastq: '{export_fastq}'
 
 contamination_check:
-  db: /db/kraken2_full/latest/full
+  db: /db/kraken2_microbial/latest
   expected_species: Staphylococcus aureus
 
 quality_checks:
   typing_scheme: {qc_typing_scheme}
   expected_gc_content: 32.7
 
-srst2:
-  max_unaligned_overlap: 141
+quast:
+  ref:
+    fasta: /db/refgenomes/Staphylococcus_aureus/NC_007795.1.fasta
+    gff3: /db/refgenomes/Staphylococcus_aureus/NC_007795.1.gff3
+
+confindr:
+  db: /db/confindr/0.8.1
 
 assembly:
   spades:
@@ -49,14 +56,25 @@ assembly:
   min_contig_length: 1000
 
 spa_typing:
-  db: /db/pipelines/saureus/profiles.fasta
-  profiles: /db/pipelines/saureus/spatypes.csv
+  db: /db/pipelines/saureus/spatyping/profiles.fasta
+  profiles: /db/pipelines/saureus/spatyping/spatypes.csv
 
 sccmec_typing:
   profiles: /db/pipelines/saureus/SCCmec_genes/profiles.yml
 
-pointfinder:
-  db: staphylococcus_aureus
+amrfinder:
+  db: /db/amrfinder/by_version/latest
+  species: Staphylococcus_aureus
+
+resfinder4:
+  db: /db/resfinder4
+  species: Staphylococcus aureus
+
+mob_suite:
+  db: /db/mob_suite/latest
+
+bacmet:
+  db: /db/bacmet/latest
 
 ############################
 # Gene detection databases #
@@ -120,6 +138,9 @@ gene_detection:
     metadata:
       name: Notes
       key: notes
+    message:
+      content: The presence of a replicon does not mean that the corresponding plasmid is present.
+      category: warning
 
   se_toxins:
     path: /db/gene_detection/saureus_se_toxins
@@ -133,3 +154,8 @@ sequence_typing:
   cgmlst:
     path: /db/sequence_typing/staphylococcus/cgmlst
     detection_method: blast
+  rmlst:
+    path: /db/sequence_typing/various/rmlst
+    message:
+      content: rMLST is only available for noncommercial use, see <a href="https://pubmlst.org/species-id">PubMLST</a> for more info.
+      category: info

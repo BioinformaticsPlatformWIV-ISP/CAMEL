@@ -1,5 +1,6 @@
 import json
 import logging
+from pathlib import Path
 from typing import Tuple, Any, Dict
 
 from camel.app.camel import Camel
@@ -46,26 +47,34 @@ class SpoTyping(Tool):
         Executes this tool.
         :return: None
         """
+        # Run command
         self._command.command = ' '.join([
             self._tool_command,
             ' '.join([str(f.path) for f in self._tool_inputs['FASTQ']]),
             ' '.join(self._build_options())
         ])
         self._execute_command()
-        type_binary, type_octal = self._parse_output_file()
+
+        # Parse output
+        type_binary, type_octal = SpoTyping._parse_output_file(
+            Path(self._folder) / self._parameters['output_basename'].value)
+
+        # Set output
         self._tool_outputs['VAL_type_binary'] = [ToolIOValue(type_binary)]
         self._tool_outputs['VAL_type_octal'] = [ToolIOValue(type_octal)]
-        self._tool_outputs['LOG'] = [ToolIOFile(self._folder / f"{self._parameters['output_basename'].value}.log")]
+        self._tool_outputs['LOG'] = [ToolIOFile(Path(self._folder) / '{}.log'.format(
+            self._parameters['output_basename'].value))]
+        self._informs['metadata'] = self._extract_metadata(type_octal)
 
-    def _parse_output_file(self) -> Tuple[str, str]:
+    @staticmethod
+    def _parse_output_file(output_file: Path) -> Tuple[str, str]:
         """
         Parses the output file.
         :return: Spoligotype (Binary), Spoligotype (Octal)
         """
-        output_file_path = self._folder / self._parameters['output_basename'].value
-        if not output_file_path.exists():
-            raise ToolExecutionError(f'Output file not found: {output_file_path}')
-        with open(output_file_path, 'r') as handle:
+        if not output_file.exists():
+            raise ToolExecutionError("Output file not found")
+        with output_file.open('r') as handle:
             try:
                 _, type_binary, type_octal = handle.readlines()[-1].strip().split('\t')
                 return type_binary, type_octal
@@ -89,11 +98,18 @@ class SpoTyping(Tool):
         Extracts the metadata for the detected Spoligotype.
         :return: Spoligotype metadata
         """
+        # Get location of metadata file
         command = Command(f'{self._build_dependencies()} echo $SPOTYPING_METADATA')
         command.run(self._folder)
         metadata_path = command.stdout.strip()
+        if not Path(metadata_path).exists():
+            raise FileNotFoundError("No spoligotype metadata found")
+
+        # Parse info
         with open(metadata_path) as handle:
             metadata = json.load(handle)
+
+        # Extract metadata
         keys = ('SIT', 'geo', 'label', 'total')
         if type_octal in metadata:
             return {k: metadata[type_octal][k] for k in keys}

@@ -1,0 +1,30 @@
+from pathlib import Path
+
+from camel.resources.snakefile import trimming_illumina, trimming_ont
+
+SNAKEFILE_CORE = f'{Path(__file__).parent / Path(__file__).stem}.smk'
+INPUT_FASTA_IO = Path('input', 'fasta.io')
+OUTPUT_TSV_SUMMARY_INIT = Path('summary', 'summary-init.tsv')
+OUTPUT_HTML_CITATIONS = Path('report', 'html-citations.io')
+
+
+def get_fq_input(input_type: str, dir_: Path):
+    """
+    Returns the FQ input (which is unpacked into the Snakemake input).
+    :param input_type: Input type
+    :param dir_: Working directory
+    :return: Dictionary with strings as keys and paths as values
+    """
+    if input_type == 'fasta':
+        return {}
+    elif input_type == 'illumina':
+        return {'FASTQ_PE': dir_ / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_DICT}
+    elif input_type == 'ont':
+        return {'FASTQ_SE': dir_ / trimming_ont.OUTPUT_TRIMMING_ONT_DICT}
+    elif input_type == 'hybrid':
+        return {
+            'FASTQ_PE': dir_ / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_DICT,
+            'FASTQ_SE': dir_ / trimming_ont.OUTPUT_TRIMMING_ONT_DICT
+        }
+    else:
+        raise ValueError(f'Invalid input type: {input_type}')
