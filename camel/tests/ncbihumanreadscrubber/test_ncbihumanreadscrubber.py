@@ -50,7 +50,7 @@ class TestNcbiHumanReadScrubber(CamelTestSuite):
             '--output-dir', str(path_report_out.parent),
             '--working-dir', str(self.running_dir),
             '--output-tsv', "None",
-            '--read-type', 'illumina'
+            '--input-type', 'illumina'
         ]
         main = MainNcbiHumanReadScrubber(args)
         main.run()

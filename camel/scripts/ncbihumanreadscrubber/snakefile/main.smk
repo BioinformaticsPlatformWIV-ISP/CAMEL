@@ -23,16 +23,14 @@ rule link_scrubbing_input:
     output:
         FASTQ = Path(config['working_dir']) / human_read_scrubbing.INPUT_SCRUBBING_FASTQ if not 'fasta' in config['input'] else [],
         FASTA = Path(config['working_dir']) / human_read_scrubbing.INPUT_SCRUBBING_FASTA if 'fasta' in config['input'] else []
-    params:
-        read_type = config.get('read_type', 'illumina')
     run:
         from camel.app.snakemake.snakemakeutils import SnakemakeUtils
         from camel.app.io.tooliofile import ToolIOFile
         if 'fasta' in config['input']:
             SnakemakeUtils.dump_object([ToolIOFile(Path(config['input']['fasta'][0]['path']))], Path(output.FASTA))
-        elif params.read_type == 'illumina':
+        elif 'fastq_pe' in config['input']:
             SnakemakeUtils.dump_object([ToolIOFile(Path(f['path'])) for f in config['input']['fastq_pe']], Path(output.FASTQ))
-        elif params.read_type == 'iontorrent' or params.read_type == 'nanopore':
+        elif 'fastq_se' in config['input']:
             SnakemakeUtils.dump_object([ToolIOFile(Path(f['path'])) for f in config['input']['fastq_se']], Path(output.FASTQ))
 
 
@@ -76,7 +74,8 @@ rule report_combine_all:
         config_input = config['input'],
         output_dir = config['output_dir'],
         pipeline_info = config['pipeline'],
-        citation_keys = config['citations']
+        citation_keys = config['citations'],
+        input_type = config['input_type']
     run:
         import datetime
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
@@ -87,9 +86,10 @@ rule report_combine_all:
         report.add_html_object(SnakePipelineUtils.create_input_section(
             params.sample_name,
             datetime.datetime.now(),
-            params.pipeline_info['version'],', '.join(
+            params.pipeline_info['version'],
+            ', '.join(
                 input_file['name'] for _, input_files in params.config_input.items() for input_file in input_files),
-            [('', '')],
+            params.input_type,
             params.citation_keys['main']
         ))
 
