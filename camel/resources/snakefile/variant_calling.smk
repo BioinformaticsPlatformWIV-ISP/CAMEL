@@ -142,10 +142,9 @@ rule variant_calling_bcftools_call:
         SnakemakeUtils.add_pickle_inputs(variant_caller, input)
         step = Step(str(rule), variant_caller, camel, params.dir_)
         variant_caller.update_parameters(
-            output_format='VCF',
+            output_type='z',
             output_filename='variants.vcf.gz',
             variants_only=True,
-            compress_output=True,
             ploidy=params.ploidy
         )
         if params.calling_method is not None:
@@ -175,7 +174,7 @@ rule variant_calling_normalize_indels:
         bcftools_norm = BcftoolsNorm(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(bcftools_norm, input)
         step = Step(str(rule), bcftools_norm, camel, params.dir_)
-        bcftools_norm.update_parameters(output_format='z')
+        bcftools_norm.update_parameters(output_type='z')
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(bcftools_norm, output)
 
@@ -215,7 +214,7 @@ rule variant_calling_unzip_vcf:
         SnakemakeUtils.add_pickle_inputs(bcftools_view, input)
         step = Step(str(rule), bcftools_view, camel, params.dir_)
         output_filename = f'variants-{FileSystemHelper.make_valid(params.sample_name)}.vcf'
-        bcftools_view.update_parameters(output_format='VCF', compress_output=False, output_filename=output_filename)
+        bcftools_view.update_parameters(output_type='v', output_filename=output_filename)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(bcftools_view, output)
 
