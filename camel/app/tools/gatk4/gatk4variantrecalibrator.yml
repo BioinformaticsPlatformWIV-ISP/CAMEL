@@ -1,4 +1,4 @@
-dependencies: [java/1.8.0_172, gatk/4.1.9.0, R/3.6.3, R_packages/3.6/ggplot2/3.3.3]
+dependencies: [java/1.8.0_172, gatk/4.1.9.0, R/4.3.1, R_packages/4.3/ggplot2/3.4.3]
 parameters:
   output: {default: true, mandatory: true, option: --output, p_index: 0, value: recalibrationData.tabl}
   tranches: {default: true, mandatory: true, option: --tranches-file, p_index: 0, value: output.tranches}
