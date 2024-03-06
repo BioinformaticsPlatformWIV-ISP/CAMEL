@@ -78,14 +78,17 @@ rule bwa_map_reads_se:
         dir_ = lambda wildcards: f'bwa/map_se_{wildcards.key}',
         key = lambda wildcards: wildcards.key
     run:
+        from camel.app.components.files.sambamutils import SAMBAMutils
         from camel.app.components.workflows.utils.fastqinput import FastqInput
         from camel.app.tools.bwa.bwamap import BWAMap
+
         fq_dict = FastqInput.from_fq_dict(Path(input.FASTQ), 'illumina')
         fq_in = fq_dict.se_fwd if params.key == 'fwd' else fq_dict.se_rev
         if fq_in is None:
             # If there are no SE reads -> create empty output file
             path_out = Path(str(params.dir_), 'empty.sam')
-            path_out.touch()
+            path_fasta = SnakemakeUtils.load_object(Path(input.FASTA))[0].value
+            SAMBAMutils.create_empty(path_out, path_fasta, compress=False)
             SnakemakeUtils.dump_object([ToolIOFile(path_out)], Path(output.SAM))
             Path(output.INFORMS).touch()
         else:
@@ -113,14 +116,21 @@ rule bwa_map_merge_sam:
     params:
         dir_ = 'bwa/map'
     run:
+        from camel.app.components.files.sambamutils import SAMBAMutils
         from camel.app.tools.samtools.samtoolsmerge import SamtoolsMerge
         merge = SamtoolsMerge(Camel.get_instance())
         merge.update_parameters(output_filename='bwa_merged.sam')
-        merge.add_input_files({'SAM':
-            SnakemakeUtils.load_object(Path(input.SAM_pe)) +
-            SnakemakeUtils.load_object(Path(input.SAM_se_fwd)) +
-            SnakemakeUtils.load_object(Path(input.SAM_se_rev))
-        })
+
+        # Collect non-empty SAM files
+        sam_input = SnakemakeUtils.load_object(Path(input.SAM_pe)) \
+                    + SnakemakeUtils.load_object(Path(input.SAM_se_fwd)) \
+                    + SnakemakeUtils.load_object(Path(input.SAM_se_rev))
+        sam_input = [io for io in sam_input if not SAMBAMutils.is_empty(io.path)]
+        if len(sam_input) == 0:
+            raise RuntimeError(f'All SAM files are empty')
+
+        # Run samtools merge
+        merge.add_input_files({'SAM': sam_input})
         merge.run(Path(str(params.dir_)))
         SnakemakeUtils.dump_tool_output(merge, 'SAM', Path(output.SAM))
 
