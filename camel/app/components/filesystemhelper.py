@@ -1,6 +1,5 @@
 import binascii
 import datetime
-import logging
 import re
 from pathlib import Path
 from typing import List
@@ -93,7 +92,7 @@ class FileSystemHelper(object):
         :param output_gz_file: Output path
         :return: None
         """
-        logging.info(f"Extracting: {input_file}")
+        logger.info(f"Extracting: {input_file}")
         command = Command(f'gzip -c {input_file} > {output_gz_file}')
         command.run(Path.cwd())
         if not command.returncode == 0:
