@@ -22,18 +22,10 @@ class MainYersiniaPipeline(ReportPipeline):
     DATA_BY_SPECIES = {
         'enterocolitica': {
             'full_name': 'Yersinia enterocolitica',
-            'gc_content': 47,
-            'genome_size': 4_548_822,
-            'quast_fasta': '/db/refgenomes/Yersinia_enterocolitica/NC_GCA_02575835.1.fasta',
-            'quast_gff': '/db/refgenomes/Yersinia_enterocolitica/NC_GCA_02575835.1.gff3',
             'cgmlst_species': '/db/sequence_typing/yersinia/cgmlst_yersinia_enterocolitica'
         },
         'pseudotuberculosis': {
             'full_name': 'Yersinia pseudotuberculosis',
-            'gc_content': 47.5,
-            'genome_size': 4_839_430,
-            'quast_fasta': '/db/refgenomes/Yersinia_pseudotuberculosis/NC_GCA_000834295.1.fasta',
-            'quast_gff': '/db/refgenomes/Yersinia_pseudotuberculosis/NC_GCA_000834295.1.gff3',
             'cgmlst_species': '/db/sequence_typing/yersinia/cgmlst_yersinia_pseudotuberculosis'
         }
     }
@@ -59,7 +51,7 @@ class MainYersiniaPipeline(ReportPipeline):
         :return: None
         """
         input_files = self._symlink_input()
-        self._validate_fastq_input()
+        self._validate_input_files()
         config_file = self.__construct_config_file(input_files)
         self._run_snakemake_main(config_file)
         self._export_assembly()
@@ -75,15 +67,12 @@ class MainYersiniaPipeline(ReportPipeline):
         with open(CONFIG_DATA) as handle_in:
             mainscriptutils.dict_merge(
                 config_data, yaml.safe_load(handle_in.read().format(
-                    coverage_max=self._args.cov_max,
-                    expected_species=MainYersiniaPipeline.DATA_BY_SPECIES[self._args.species]['full_name'],
-                    export_fastq='true' if self._args.report_include_fastq else 'false',
-                    gc_content=MainYersiniaPipeline.DATA_BY_SPECIES[self._args.species]['gc_content'],
-                    genome_size=MainYersiniaPipeline.DATA_BY_SPECIES[self._args.species]['genome_size'],
                     qc_typing_scheme='cgmlst' if self._args.cgmlst else 'mlst',
-                    quast_fasta=MainYersiniaPipeline.DATA_BY_SPECIES[self._args.species]['quast_fasta'],
-                    quast_gff=MainYersiniaPipeline.DATA_BY_SPECIES[self._args.species]['quast_gff'],
-                    cgmlst_species=MainYersiniaPipeline.DATA_BY_SPECIES[self._args.species]['cgmlst_species']
+                    export_fastq='true' if self._args.report_include_fastq else 'false',
+                    export_bam='true' if self._args.report_include_bam else 'false',
+                    coverage_max=self._args.cov_max,
+                    cgmlst_species=MainYersiniaPipeline.DATA_BY_SPECIES[self._args.species]['cgmlst_species'],
+                    expected_species=MainYersiniaPipeline.DATA_BY_SPECIES[self._args.species]['full_name'],
                 )))
 
             #set the species

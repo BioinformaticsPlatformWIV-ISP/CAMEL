@@ -28,7 +28,7 @@ citations:
 
 downsampling:
   coverage_max: {coverage_max}
-  expected_genome_size: {genome_size}
+  expected_genome_size: 4_548_822
 
 read_trimming:
   export_fastq: '{export_fastq}'
@@ -39,12 +39,13 @@ contamination_check:
 
 quality_checks:
   typing_scheme: {qc_typing_scheme}
-  expected_gc_content: {gc_content}
+  expected_gc_content: 47
 
 quast:
   ref:
-    fasta: {quast_fasta}
-    gff3: {quast_gff}
+    #TODO: verify if using this for both species is ok?
+    fasta: '/db/refgenomes/Yersinia_enterocolitica/NC_GCA_02575835.1.fasta'
+    gff3: '/db/refgenomes/Yersinia_enterocolitica/NC_GCA_02575835.1.gff3'
 
 srst2:
   max_unaligned_overlap: 141

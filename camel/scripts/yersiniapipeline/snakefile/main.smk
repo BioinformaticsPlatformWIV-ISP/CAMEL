@@ -1,7 +1,5 @@
 from pathlib import Path
 
-from camel.app.camel import Camel
-from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile import trimming, trimming_illumina, quality_checks, \
     contamination_check_kraken, gene_detection, sequence_typing, downsampling, confindr, quast, core, trimming_ont, mobsuite, resfinder4, amrfinder, \
     assembly
@@ -81,7 +79,7 @@ rule combine_reports:
         report_adv_qc=Path(config['working_dir']) / str(quality_checks.OUTPUT_QUALITY_CHECKS_REPORT).format(
             input_type=config['input_type']),
         # AMR detection
-        report_amrfinder = Path(config['working_dir']) / (amrfinder.OUTPUT_AMRFINDER_REPORT if config['analyses'] else amrfinder.OUTPUT_AMRFINDER_REPORT_EMPTY),
+        report_amrfinder = Path(config['working_dir']) / (amrfinder.OUTPUT_AMRFINDER_REPORT if 'amrfinder' in config['analyses'] else amrfinder.OUTPUT_AMRFINDER_REPORT_EMPTY),
         report_resfinder = gene_detection.get_gene_detection_report('resfinder', config),
         # Virulence gene detection
         report_vfdb_core= gene_detection.get_gene_detection_report('vfdb_core',config),

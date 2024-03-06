@@ -1,10 +1,10 @@
-# Overview
+# Overview (TODO rewrite after new requirements)
 The *Yersinia* pipeline performs complete characterization of *Yersinia enterocolitica* and *Yersinia pseudotuberculosis* isolates.
 
 version: **1.0**
 
 ## 1. Coverage check
-The workflow starts by checking the coverage of the input FASTQ datasets. Coverage is estimated by dividing the total number of bases by the average size of either the `NC_GCA_02575835.1` *Y. enterocolitica* or the `NC_GCA_000834295.1` *Y. pseudotuberculosis* reference genome, depending on the species. The total number of bases in the FASTQ file is determined using the `size` function of `seqtk 1.4`.
+The workflow starts by checking the coverage of the input FASTQ datasets. Coverage is estimated by dividing the total number of bases by the size of the `NC_GCA_02575835.1` *Y. enterocolitica* reference genome. The total number of bases in the FASTQ file is determined using the `size` function of `seqtk 1.4`.
 
 Datasets with an estimated coverage >=100x are downsampled to ~100x using the `subsample` funcion of `seqtk 1.4`.
 
