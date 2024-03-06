@@ -83,7 +83,7 @@ class MainFiltering(object):
                 'y_multiplier': self._args.y_mult},
         }
         if self._args.bed is not None:
-            filtering_opts['region'] = {'bed_file': self._args.bed}
+            filtering_opts['region'] = {'bed_file': str(self._args.bed)}
         return filtering_opts
 
 
