@@ -23,12 +23,13 @@ class SeqSero2(Tool):
 
     def _execute_tool(self) -> None:
         """
-        Execute the tool
+        Execute the tool.
         :return: None
         """
-        self.__set_output()
-        self.build_command()
+        self._informs['_tag'] = self._tool_inputs['MODE'][0].value
+        self.build_command(self._informs['_tag'])
         self._execute_command()
+        self.__set_output()
         input_folder = self._tool_inputs['DIR'][0].path
         self.__add_informs(input_folder)
 
@@ -52,22 +53,22 @@ class SeqSero2(Tool):
 
     def __set_output(self) -> None:
         """
-        Sets the name of the output files
+        Collects the tool output files.
         :return: None
         """
         self._tool_outputs['TXT'] = [ToolIOFile(self.folder / 'SeqSero_result.txt')]
 
-    def build_command(self) -> None:
+    def build_command(self, mode: str) -> None:
         """
-        Concatenates required parameters and options to build the command
+        Concatenates required parameters and options to build the command.
+        :param mode: seqsero2 execution mode; 'Allele' or 'Kmer'
         :return: None
         """
         command_parts = [self._tool_command, '-d', str(self.folder), " ".join(self._build_options())]
-        self._informs['_tag'] = self._tool_inputs['MODE'][0].value
-        if self._tool_inputs['MODE'][0].value == 'Kmer':
+        if mode == 'Kmer':
             command_parts.extend(['-t 4 -m k', '-i', str(self._tool_inputs['FASTA'][0])])
         else:
-            if self._tool_inputs['MODE'][0].value == 'Allele':
+            if mode == 'Allele':
                 command_parts.append('-m a')
             else:  # if self._tool_inputs['MODE'][0].value == 'Kmerread':
                 command_parts.append('-m k')

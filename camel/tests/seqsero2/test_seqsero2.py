@@ -6,6 +6,7 @@ from camel.app.io.tooliodirectory import ToolIODirectory
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.tools.pipelines.salmonella.seqsero2 import SeqSero2
+from camel.app.tools.pipelines.salmonella.seqsero2reporter import SeqSero2Reporter
 
 
 class TestSeqsero2(CamelTestSuite):
@@ -17,50 +18,85 @@ class TestSeqsero2(CamelTestSuite):
     test_file_dir = CamelTestSuite.get_test_file_dir('salmonella')
     input_pe_reads = [test_file_dir / "SRR493330_1.fastq.gz", test_file_dir / "SRR493330_2.fastq.gz"]
     input_fasta_file = test_file_dir / 'assembly_filtered.fasta'
-    db_path = Path('/db/pipelines/salmonella/seqsero2/1.2.1/seqsero2_db')
+    db_path = Path(CamelTestSuite.camel.config['db_root']) / 'pipelines/salmonella/seqsero2/1.2.1/seqsero2_db'
 
     def test_seqsero2_kmer(self) -> None:
         """
         Tests basic seqsero2 run in Kmer mode.
         :return: None
         """
-        seqserotool = SeqSero2(self.camel)
-        seqserotool.add_input_files({
+        seqsero2_tool = SeqSero2(self.camel)
+        seqsero2_tool.add_input_files({
             'FASTA': [ToolIOFile(Path(self.input_fasta_file))],
             'DIR': [ToolIODirectory(self.db_path)],
             'MODE': [ToolIOValue('Kmer')]
         })
-        seqserotool.run(self.running_dir)
-        self.verify_output_files(seqserotool, 'TXT')
+        seqsero2_tool.run(self.running_dir)
+        self.verify_output_files(seqsero2_tool, 'TXT')
+        self.assertIn('_name', seqsero2_tool.informs)
 
     def test_seqsero2_allele(self) -> None:
         """
         Tests basic seqsero2 run in Allele mode.
         :return: None
         """
-        seqserotool = SeqSero2(self.camel)
-        seqserotool.add_input_files({
+        seqsero2_tool = SeqSero2(self.camel)
+        seqsero2_tool.add_input_files({
             'FASTQ_PE': [ToolIOFile(x) for x in self.input_pe_reads],
             'DIR': [ToolIODirectory(self.db_path)],
             'MODE': [ToolIOValue('Allele')]
         })
-        seqserotool.run(self.running_dir)
-        self.verify_output_files(seqserotool, 'TXT')
+        seqsero2_tool.run(self.running_dir)
+        self.verify_output_files(seqsero2_tool, 'TXT')
+        self.verify_output_files(seqsero2_tool, 'INFORMS')
+        self.assertIn('_name', seqsero2_tool.informs)
 
     def test_seqsero2_kmerread(self) -> None:
         """
         Tests basic seqsero2 run in Kmerread mode.
         :return: None
         """
-        seqserotool = SeqSero2(self.camel)
-        seqserotool.add_input_files({
+        seqsero2_tool = SeqSero2(self.camel)
+        seqsero2_tool.add_input_files({
             'FASTQ_PE': [ToolIOFile(x) for x in self.input_pe_reads],
             'DIR': [ToolIODirectory(self.db_path)],
             'MODE': [ToolIOValue('Kmerread')]
         })
-        seqserotool.run(self.running_dir)
-        self.verify_output_files(seqserotool, 'TXT')
+        seqsero2_tool.run(self.running_dir)
+        self.verify_output_files(seqsero2_tool, 'TXT')
+        self.verify_output_files(seqsero2_tool, 'INFORMS')
+        self.assertIn('_name', seqsero2_tool.informs)
 
+    def test_seqsero2_reporter(self) -> None:
+        """
+        Tests seqsero2 reporter.
+        :return: None
+        """
+        seqsero2_tool = SeqSero2(self.camel)
+        seqsero2_tool.add_input_files({
+            'FASTA': [ToolIOFile(Path(self.input_fasta_file))],
+            'DIR': [ToolIODirectory(self.db_path)],
+            'MODE': [ToolIOValue('Kmer')]
+        })
+        seqsero2_tool.run(self.running_dir)
+        self.verify_output_files(seqsero2_tool, 'TXT')
+        self.assertIn('_name', seqsero2_tool.informs)
 
+        seqsero2_reporter = SeqSero2Reporter(self.camel)
+
+        # add dummy tsv because it is generated outside of tool
+        dummy_tsv_seqsero2 = Path('./dummy.tsv')
+        dummy_tsv_seqsero2.touch()
+
+        seqsero2_reporter = SeqSero2Reporter(self.camel)
+        seqsero2_reporter.add_input_files({'TXT_seqsero2_kmer': seqsero2_tool.tool_outputs['TXT'],
+                                           'TSV_output': [ToolIOFile(dummy_tsv_seqsero2)],
+                                           'DIR_seqsero2': [ToolIODirectory(self.db_path)]})
+        seqsero2_reporter.add_input_informs({'serotyping_seqsero2': seqsero2_tool.informs})
+        seqsero2_reporter.run(self.running_dir)
+        output_section = seqsero2_reporter.tool_outputs['VAL_HTML'][0].value
+        self.assertGreater(len(output_section.to_html()), 0)
+
+    
 if __name__ == '__main__':
     unittest.main()

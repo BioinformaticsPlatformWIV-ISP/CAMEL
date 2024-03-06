@@ -10,8 +10,8 @@ from camel.app.tools.tool import Tool
 
 class Sistr(Tool):
     """
-    Serovar predictions from whole-genome sequence assemblies by determination of antigen
-    gene and cgMLST gene alleles using BLAST.
+    Serovar predictions from whole-genome sequence assemblies by determination of antigen gene and
+    cgMLST gene alleles using BLAST.
     """
     def __init__(self, camel: Camel) -> None:
         """
@@ -22,9 +22,12 @@ class Sistr(Tool):
         super().__init__('SISTR', '1.1.1', camel)
 
     def _execute_tool(self):
-        self.__set_output()
+        """
+        Execute the tool.
+        """
         self.__build_command()
         self._execute_command()
+        self.__set_output()
         db_dir = self._tool_inputs['DIR'][0].path
         self.__add_informs(db_dir)
 
@@ -33,7 +36,7 @@ class Sistr(Tool):
         Checks if the provided input is valid.
         :return: None
         """
-        super(Sistr, self)._check_input()
+        super()._check_input()
         if 'FASTA' not in self._tool_inputs:
             raise InvalidInputSpecificationError("FASTA input is required")
         if 'DIR' not in self._tool_inputs:
@@ -53,13 +56,13 @@ class Sistr(Tool):
         """
         self._command.command = ' '.join([
             self._tool_command,
-            '-f json',
+            '--output-format json',
             '--use-full-cgmlst-db',
             '--qc',
-            '-v',
+            '--verbose',
             *self._build_options(),
             str(self._tool_inputs['FASTA'][0].path)
-            ])
+        ])
 
     def _check_command_output(self) -> None:
         """
