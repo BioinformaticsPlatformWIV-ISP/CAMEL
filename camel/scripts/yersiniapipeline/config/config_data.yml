@@ -35,7 +35,7 @@ read_trimming:
 
 contamination_check:
   db: /db/kraken2_microbial/latest
-  expected_species: {expected_species}
+  expected_species: 'Yersinia'
 
 quality_checks:
   typing_scheme: {qc_typing_scheme}

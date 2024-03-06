@@ -72,7 +72,6 @@ class MainYersiniaPipeline(ReportPipeline):
                     export_bam='true' if self._args.report_include_bam else 'false',
                     coverage_max=self._args.cov_max,
                     cgmlst_species=MainYersiniaPipeline.DATA_BY_SPECIES[self._args.species]['cgmlst_species'],
-                    expected_species=MainYersiniaPipeline.DATA_BY_SPECIES[self._args.species]['full_name'],
                 )))
 
             #set the species
