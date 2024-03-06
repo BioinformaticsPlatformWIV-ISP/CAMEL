@@ -1,5 +1,4 @@
 import dataclasses
-import logging
 from pathlib import Path
 from typing import Dict, Any, List
 
@@ -7,6 +6,7 @@ import vcf
 
 from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.tools.bcftools.bcftoolscall import BcftoolsCall
 from camel.app.tools.bcftools.bcftoolsmpileup import BcftoolsMpileup
 from camel.app.tools.bcftools.bcftoolsview import BcftoolsView
@@ -38,7 +38,7 @@ class CallVariants(object):
         """
         self._dir = dir_
         if not self._dir.exists():
-            logging.info(f'Creating working directory: {self._dir}')
+            logger.info(f'Creating working directory: {self._dir}')
             self._dir.mkdir(parents=True)
         self._informs = []
 
@@ -170,5 +170,5 @@ class CallVariants(object):
         samtools_faidx.add_input_files({'FASTA': [ToolIOFile(path_symlink)]})
         samtools_faidx.update_parameters(symlink_input=False)
         samtools_faidx.run(self._dir)
-        logging.info(f'Reference FASTA file indexed: {path_symlink.name}')
+        logger.info(f'Reference FASTA file indexed: {path_symlink.name}')
         return path_symlink

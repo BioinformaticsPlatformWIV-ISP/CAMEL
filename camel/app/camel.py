@@ -1,10 +1,9 @@
-import logging
 from pathlib import Path
 from typing import Union
 
 import yaml
 
-from camel.app.loggers import initialize_logging
+from camel.app.loggers import initialize_logging, logger
 from camel.config import MAIN_CONFIG
 
 
@@ -29,7 +28,7 @@ class Camel(object):
             self._config['tool_parameter_loc'] = tool_parameter_loc
 
         commit_hash = Camel.get_commit_hash()
-        logging.debug(f"CAMEL commit hash: {commit_hash if commit_hash is not None else 'Not available'}")
+        logger.debug(f"CAMEL commit hash: {commit_hash if commit_hash is not None else 'Not available'}")
 
     @property
     def config(self) -> dict:

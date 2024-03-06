@@ -1,5 +1,4 @@
 import json
-import logging
 from pathlib import Path
 
 import pandas as pd
@@ -138,7 +137,7 @@ rule bwa_map_merge_sam:
         informs = []
         for path_inform in [Path(x) for x in (input.INFORMS_pe, input.INFORMS_se_fwd, input.INFORMS_se_rev)]:
             if path_inform.stat().st_size == 0:
-                logging.info(f'Skipping empty informs: {path_inform}')
+                logger.info(f'Skipping empty informs: {path_inform}')
                 continue
             informs.append(SnakemakeUtils.load_object(path_inform))
         informs.append(merge.informs)

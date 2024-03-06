@@ -1,5 +1,4 @@
 import dataclasses
-import logging
 import tempfile
 from pathlib import Path
 from typing import List, Dict
@@ -8,6 +7,7 @@ from Bio import SeqIO
 
 from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.tools.bcftools.bcftoolsconsensus import BcftoolsConsensus
 from camel.app.tools.bcftools.bcftoolsindex import BcftoolsIndex
 from camel.app.tools.bcftools.bcftoolsview import BcftoolsView
@@ -35,7 +35,7 @@ class ApplyVariants(object):
         """
         self._dir = dir_
         if not self._dir.exists():
-            logging.info(f'Creating working directory: {self._dir}')
+            logger.info(f'Creating working directory: {self._dir}')
             self._dir.mkdir(parents=True)
         self._informs = []
 
@@ -111,6 +111,6 @@ class ApplyVariants(object):
         for s in seqs:
             s.id = f"{name}-{s.id.split('-')[-1]}"
             s.description = description
-        logging.debug(f'Saving updated header to: {path_fasta}')
+        logger.debug(f'Saving updated header to: {path_fasta}')
         with path_fasta.open('w') as handle:
             SeqIO.write(seqs, handle, 'fasta')

@@ -1,12 +1,12 @@
 import dataclasses
 import json
-import logging
 from pathlib import Path
 from typing import Optional, Any, Dict, List
 
 import pkg_resources
 
 from camel.app.components.workflows.utils.fastqinput import FastqInput
+from camel.app.loggers import logger
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 
@@ -37,7 +37,7 @@ class ReadMappingWorkflow(object):
         """
         self._dir = dir_
         if not self._dir.exists():
-            logging.info(f'Creating working directory: {self._dir}')
+            logger.info(f'Creating working directory: {self._dir}')
             self._dir.mkdir(parents=True)
 
     def run(self, fastq_in: FastqInput, fasta_ref: Path, threads: int = 8, prefix: Optional[str] = 'mapping',
