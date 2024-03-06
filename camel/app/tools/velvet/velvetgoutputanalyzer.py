@@ -1,7 +1,8 @@
 import re
-import logging
 
 import subprocess
+
+from camel.app.loggers import logger
 
 
 class VelvetgOutputAnalyzer(object):
@@ -30,7 +31,7 @@ class VelvetgOutputAnalyzer(object):
             informs['reads_used'] = res_data[4]
             informs['reads_total'] = res_data[5]
         else:
-            logging.warning(
+            logger.warning(
                 'Fail to extra the basic assembly statistics of velvetg from Log file {}.'.format(log_file))
 
         return informs
@@ -47,10 +48,10 @@ class VelvetgOutputAnalyzer(object):
         :return: informs (dictionary)
         """
         if 'kmer' not in input_informs:
-            logging.warning("Require kmer information is missing, Velvetg stats file analysis abort!")
+            logger.warning("Require kmer information is missing, Velvetg stats file analysis abort!")
             return {}
         if 'cov_cutoff' not in input_informs:
-            logging.warning("Require coverage cutoff information is missing, Velvetg stats file analysis abort!")
+            logger.warning("Require coverage cutoff information is missing, Velvetg stats file analysis abort!")
             return {}
 
         ctg_count = 0

@@ -1,11 +1,10 @@
-import logging
-import shutil
-
 import os
+import shutil
 
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -115,7 +114,7 @@ class Interproscan(Tool):
         :return: None
         """
         if 'Unfortunately the web service has failed.' in self.stdout:
-            logging.warning('The local lookup webservice was not reachable by InterProScan!')
+            logger.warning('The local lookup webservice was not reachable by InterProScan!')
         if self._command.returncode != 0:
             raise ToolExecutionError("Command execution failed for InterProScan (Exit code: {})".format(self._command.returncode))
 

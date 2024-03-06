@@ -1,5 +1,4 @@
 import datetime
-import logging
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -75,7 +74,7 @@ class SNPLineageDetector(Tool):
         lineage_snps = self.__parse_lineage_snps()
         variants = SNPLineageDetector.__parse_vcf(self._tool_inputs['VCF'][0].path)
         variants_filtered = SNPLineageDetector.__parse_vcf(self._tool_inputs['VCF_filt'][0].path)
-        logging.info(f"{len(variants_filtered)}/{len(variants)} (filtered) variants parsed.")
+        logger.info(f"{len(variants_filtered)}/{len(variants)} (filtered) variants parsed.")
 
         # Check if variants are present in the database
         self._informs['detected_snps'] = self.__get_detected_snps(lineage_snps, variants, variants_filtered)
@@ -108,7 +107,7 @@ class SNPLineageDetector(Tool):
         lineage_snps = [LineageSNP(
             r['chr'], r['start'], r['end'], lineage_by_id[r['lineage']], r['ref'], r['alt'])
             for r in data_lineage_snps.to_dict('records')]
-        logging.info(f"{len(lineage_snps)} lineage SNPs parsed")
+        logger.info(f"{len(lineage_snps)} lineage SNPs parsed")
         return lineage_snps
 
     @staticmethod

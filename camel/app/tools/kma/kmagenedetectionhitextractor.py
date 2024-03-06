@@ -1,4 +1,3 @@
-import logging
 from pathlib import Path
 from typing import List, Dict
 
@@ -6,6 +5,7 @@ from camel.app.camel import Camel
 from camel.app.components.genedetection.genedetectionkmahit import GeneDetectionKMAHit
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliovalue import ToolIOValue
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -79,12 +79,12 @@ class KMAGeneDetectionHitExtractor(Tool):
         # Percent identity filtering
         min_percent_identity = float(self._parameters['min_percent_identity'].value)
         hits_filtered_identity = [h for h in hits if h.percent_identity >= min_percent_identity]
-        logging.info(f"{len(hits_filtered_identity)}/{len(hits)} hits passed identity filtering")
+        logger.info(f"{len(hits_filtered_identity)}/{len(hits)} hits passed identity filtering")
 
         # Percent coverage filtering
         min_percent_coverage = float(self._parameters['min_percent_coverage'].value)
         hits_filtered_coverage = [h for h in hits_filtered_identity if h.subject_coverage >= min_percent_coverage]
-        logging.info(f"{len(hits_filtered_coverage)}/{len(hits_filtered_identity)} hits passed identity filtering")
+        logger.info(f"{len(hits_filtered_coverage)}/{len(hits_filtered_identity)} hits passed identity filtering")
 
         return hits_filtered_coverage
 
@@ -101,7 +101,7 @@ class KMAGeneDetectionHitExtractor(Tool):
             if cluster not in hits_by_cluster:
                 hits_by_cluster[cluster] = []
             hits_by_cluster[cluster].append(hit)
-        logging.info(f"{len(hits_by_cluster)} clusters with hits found")
+        logger.info(f"{len(hits_by_cluster)} clusters with hits found")
         return hits_by_cluster
 
     @staticmethod

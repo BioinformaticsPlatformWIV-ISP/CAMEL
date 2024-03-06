@@ -1,4 +1,3 @@
-import logging
 from typing import List
 
 import pandas as pd
@@ -10,6 +9,7 @@ from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.html.htmltablecell import HtmlTableCell
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliovalue import ToolIOValue
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -61,7 +61,7 @@ class GenomicContext(Tool):
 
         # Check if the detection method is BLAST
         if self._parameters['detection_method'].value != 'blast':
-            logging.warning('Genomic context can only be predicted with blast as detection method')
+            logger.warning('Genomic context can only be predicted with blast as detection method')
             section.add_paragraph('Predicting genomic context is only performed when the detection method is blast.')
         elif len(self._input_informs['dbs']) == 0:
             section.add_paragraph('No compatible databases selected.')

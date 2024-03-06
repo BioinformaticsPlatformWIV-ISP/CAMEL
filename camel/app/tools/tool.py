@@ -1,6 +1,5 @@
 import abc
 import inspect
-import logging
 from pathlib import Path
 from typing import Dict, Optional, List, Union
 
@@ -13,6 +12,7 @@ from camel.app.io.toolio import ToolIO
 from camel.app.io.tooliodirectory import ToolIODirectory
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.io.tooliovalue import ToolIOValue
+from camel.app.loggers import logger
 from camel.app.services.basetoolservice import BaseToolService
 from camel.app.services.yamltoolservice import YAMLToolService
 
@@ -26,7 +26,7 @@ class Tool(object, metaclass=abc.ABCMeta):
         """
         Initializes a tool.
         """
-        logging.debug("Initializing tool: {} {}".format(name, version))
+        logger.debug("Initializing tool: {} {}".format(name, version))
         self._name = name
         self._version = version
         self._tool_inputs: Dict[str, List[Union[ToolIOFile, ToolIOValue, ToolIODirectory, ToolIO]]] = {}
@@ -170,9 +170,9 @@ class Tool(object, metaclass=abc.ABCMeta):
                 raise InvalidParameterError("{} has no parameter '{}'".format(self._name, parameter_name))
             if new_value is False:
                 if parameter_name not in self._parameters:
-                    logging.warning("Cannot disable parameter '{}' (not present in parameters)".format(parameter_name))
+                    logger.warning("Cannot disable parameter '{}' (not present in parameters)".format(parameter_name))
                     continue
-                logging.info("Disabling parameter: {}".format(parameter_name))
+                logger.info("Disabling parameter: {}".format(parameter_name))
                 del(self._parameters[parameter_name])
             else:
                 if new_value is True or new_value is None:
@@ -180,10 +180,10 @@ class Tool(object, metaclass=abc.ABCMeta):
                 else:
                     parameter.value = str(new_value)
                 if parameter_name not in self._parameters:
-                    logging.info("Parameter '{}' added, value: {}".format(parameter_name, parameter.value))
+                    logger.info("Parameter '{}' added, value: {}".format(parameter_name, parameter.value))
                 else:
                     old_value = self._parameters[parameter_name].value
-                    logging.info("Parameter '{}' value '{}' changed to '{}'".format(
+                    logger.info("Parameter '{}' value '{}' changed to '{}'".format(
                         parameter_name, old_value, new_value))
                 self._parameters[parameter_name] = parameter
 
@@ -192,7 +192,7 @@ class Tool(object, metaclass=abc.ABCMeta):
         Clears all the parameters of the given tool.
         :return: None
         """
-        logging.info("Removing {} parameters".format(len(self._parameters)))
+        logger.info("Removing {} parameters".format(len(self._parameters)))
         self._parameters.clear()
 
     def run(self, folder: Path = Path.cwd()) -> None:
@@ -202,9 +202,9 @@ class Tool(object, metaclass=abc.ABCMeta):
         :return: None
         """
         self._folder = folder
-        logging.info(f'Running tool {self.name}')
-        logging.info(f'Working directory: {self._folder}')
-        logging.info(f'Tool parameters: {self.parameter_overview}')
+        logger.info(f'Running tool {self.name}')
+        logger.info(f'Working directory: {self._folder}')
+        logger.info(f'Tool parameters: {self.parameter_overview}')
         self._check_parameters()
         self._check_input()
         self._execute_tool()
@@ -237,7 +237,7 @@ class Tool(object, metaclass=abc.ABCMeta):
         :return: Tool service
         """
         source = self._camel.config.get('tool_service', 'yaml')
-        logging.debug(f'Retrieving tool service. Source = {source}')
+        logger.debug(f'Retrieving tool service. Source = {source}')
         if source == 'db':
             raise DeprecationWarning("Parameter loading from database is deprecated, use YAML instead.")
         elif source == 'yaml':

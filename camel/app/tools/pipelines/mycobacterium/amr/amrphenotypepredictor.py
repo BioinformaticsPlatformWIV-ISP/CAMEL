@@ -1,5 +1,4 @@
 import json
-import logging
 from pathlib import Path
 from typing import List, Dict, Union
 
@@ -11,6 +10,7 @@ from camel.app.components.mycobacterium.amrutils import ConfidenceLevel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -96,7 +96,7 @@ class AMRPhenotypePredictor(Tool):
             })
 
         if len(mutations_by_ab) > 0:
-            logging.error(f'Unparsed mutations for: {mutations_by_ab.keys()}')
+            logger.error(f'Unparsed mutations for: {mutations_by_ab.keys()}')
             raise ToolExecutionError('unparsed mutations')
 
         # Predict phenotype

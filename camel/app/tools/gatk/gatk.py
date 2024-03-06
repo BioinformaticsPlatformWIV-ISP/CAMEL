@@ -1,4 +1,3 @@
-import logging
 import os
 import re
 import abc
@@ -6,6 +5,7 @@ import abc
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -114,7 +114,7 @@ class GATK(Tool, metaclass=abc.ABCMeta):
         # log WARNINGS in info.log
         for l in self.stdout.split('\n'):
             if re.match('WARNING', l):
-                logging.info(" GATK - {}".format(l))
+                logger.info(" GATK - {}".format(l))
 
             # E.g., The Genome Analysis Toolkit (GATK) v3.4-0-g7e26428
             match = re.search('The Genome Analysis Toolkit (GATK) (.+),', l)

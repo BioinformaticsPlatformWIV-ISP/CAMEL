@@ -1,5 +1,4 @@
 import json
-import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -126,7 +125,7 @@ class SpaTyping(Tool):
             percent_covered = self.__calculate_percent_covered(h)
             hits.append(SpaTypingHit(h['sseqid'], profiles[h['sseqid']], h['slen'], h['pident'], percent_covered, h))
         hits.sort(reverse=True, key=lambda x: (x.percent_covered, x.percent_identity))
-        logging.debug(f"{len(hits)} hits detected")
+        logger.debug(f"{len(hits)} hits detected")
         return hits
 
     def __set_output(self, spa_type_hits: List[SpaTypingHit], profiles: Dict[str, List[int]]) -> None:
@@ -137,7 +136,7 @@ class SpaTyping(Tool):
         :return: None
         """
         perfect_hits = [h for h in spa_type_hits if h.is_perfect()]
-        logging.debug(f"{len(perfect_hits)} perfect hits found")
+        logger.debug(f"{len(perfect_hits)} perfect hits found")
         if len(perfect_hits) == 1:
             self._informs['spa_type'] = perfect_hits[0].spa_type
             self._informs['genomic_coordinates'] = perfect_hits[0].genomic_coordinates

@@ -1,9 +1,9 @@
-import logging
 from dataclasses import dataclass, field
 from typing import List, Dict, Tuple, Optional
 
 from camel.app.components.sequencetyping.sequencetypinghitbase import SequenceTypingHitBase
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -112,7 +112,7 @@ class SequenceTypeDetector(Tool):
         if 'allele_absent_symbol' in self._parameters:
             self._symbol_allele_absent = self._parameters['allele_absent_symbol'].value
         self._wildcards = self._parameters['allele_wildcards'].value.split(',')
-        logging.debug("Wildcards: [{}]¸ Symbol allele absent: {}".format(
+        logger.debug("Wildcards: [{}]¸ Symbol allele absent: {}".format(
             ', '.join(self._wildcards), self._symbol_allele_absent))
 
         nb_matches_by_profile = {}

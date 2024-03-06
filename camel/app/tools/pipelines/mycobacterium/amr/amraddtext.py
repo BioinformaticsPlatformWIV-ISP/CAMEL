@@ -1,4 +1,3 @@
-import logging
 from typing import Tuple, List, Dict
 
 from PIL import Image, ImageDraw, ImageFont
@@ -6,6 +5,7 @@ from PIL import Image, ImageDraw, ImageFont
 from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 from camel.resources import FONT_SANS_BOLD, FONT_SANS
 
@@ -45,7 +45,7 @@ class AMRAddText(Tool):
         # Setup image
         img = Image.open(self._tool_inputs['PNG'][0].path)
         img_width, img_height = img.size
-        logging.info(f"Image width: {img_width}, image height: {img_height}")
+        logger.info(f"Image width: {img_width}, image height: {img_height}")
         draw = ImageDraw.Draw(img)
 
         # Get fonts
@@ -66,7 +66,7 @@ class AMRAddText(Tool):
 
         # Save output file
         output_path = self._folder / 'img_edited.png'
-        logging.info(f"Saving image to: {output_path}")
+        logger.info(f"Saving image to: {output_path}")
         img.save(str(output_path))
         self._tool_outputs['PNG'] = [ToolIOFile(output_path)]
 
@@ -81,7 +81,7 @@ class AMRAddText(Tool):
         """
         height_by_msg = {msg: font.getsize(msg)[1] for msg, font, _ in messages}
         spacing_by_msg = {msg: spacing for msg, _, spacing in messages}
-        logging.info(f"Height per message: {height_by_msg} - spacing: {spacing_by_msg}")
+        logger.info(f"Height per message: {height_by_msg} - spacing: {spacing_by_msg}")
         total_height = sum(height_by_msg.values()) + sum([spacing for _, _, spacing in messages])
 
         # Align vertically
@@ -91,7 +91,7 @@ class AMRAddText(Tool):
             height_added_components = sum([height_by_msg[m] for m in y_by_msg.keys()])
             spacing_added_components = sum([spacing_by_msg[m] for m in y_by_msg.keys()])
             y_by_msg[message] = int(height_y0 + height_added_components + spacing_added_components)
-        logging.info(f"Calculated y-coordinates: {y_by_msg}")
+        logger.info(f"Calculated y-coordinates: {y_by_msg}")
 
         # Align horizontally
         x_by_msg = {msg: 0.5 * (img_width - font.getsize(msg)[0]) for msg, font, _ in messages}

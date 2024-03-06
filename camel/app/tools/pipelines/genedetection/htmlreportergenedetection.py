@@ -1,4 +1,3 @@
-import logging
 from pathlib import Path
 from typing import List, Dict
 
@@ -8,6 +7,7 @@ from camel.app.components.genedetection.genedetectionhitbase import GeneDetectio
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliovalue import ToolIOValue
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -61,7 +61,7 @@ class HtmlReporterGeneDetection(Tool):
         if 'db_info' not in self._input_informs:
             raise InvalidInputSpecificationError("No database info found")
         if 'VAL_Hits' not in self._tool_inputs:
-            logging.warning("No blast hits found")
+            logger.warning("No blast hits found")
         if ('VAL_Hits' in self._tool_inputs) and (len(self._tool_inputs['VAL_Hits']) > 0) and \
                 ('TSV' not in self._tool_inputs):
             raise InvalidInputSpecificationError("TSV input is required when hits were detected.")

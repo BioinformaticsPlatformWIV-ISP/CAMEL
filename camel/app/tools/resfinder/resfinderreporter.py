@@ -1,4 +1,3 @@
-import logging
 from pathlib import Path
 
 import pandas as pd
@@ -9,6 +8,7 @@ from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.html.htmltablecell import HtmlTableCell
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliovalue import ToolIOValue
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -108,7 +108,7 @@ class ResFinderReporter(Tool):
         """
         # Parse input
         data_genes = pd.read_table(self._tool_inputs['TSV_genes'][0].path, na_values=['NA..NA'])
-        logging.info(f'{len(data_genes)} genes parsed')
+        logger.info(f'{len(data_genes)} genes parsed')
         cols_original = list(data_genes.columns)
         data_genes['perc_cov'] = data_genes['Alignment Length/Gene Length'].apply(
             lambda x: 100 * int(x.split('/')[0]) / int(x.split('/')[1]))
@@ -137,7 +137,7 @@ class ResFinderReporter(Tool):
         :return: None
         """
         data_mutations = pd.read_table(self._tool_inputs['TSV_point'][0].path)
-        logging.info(f'{len(data_mutations)} mutations parsed')
+        logger.info(f'{len(data_mutations)} mutations parsed')
         section.add_header('Detected AMR mutations', 3)
         section.add_table([[
             *[HtmlTableCell(f'{row[col]:.2f}' if isinstance(row[col], float) else row[col], color='green')

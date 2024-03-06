@@ -1,5 +1,4 @@
 import json
-import logging
 from pathlib import Path
 from typing import Tuple, Any, Dict
 
@@ -9,6 +8,7 @@ from camel.app.error.invalidinputspecificationerror import InvalidInputSpecifica
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.io.tooliovalue import ToolIOValue
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -89,7 +89,7 @@ class SpoTyping(Tool):
         if self._command.returncode != 0:
             last_line = self._command.stderr.splitlines()[-1]
             if last_line.startswith('urllib2.URLError'):
-                logging.warning('Could not contact SITVIT server')
+                logger.warning('Could not contact SITVIT server')
             else:
                 raise ToolExecutionError(last_line)
 

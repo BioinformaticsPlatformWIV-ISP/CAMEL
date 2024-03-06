@@ -1,10 +1,10 @@
-import logging
 from pathlib import Path
 
 from camel.app.camel import Camel
 from camel.app.error.invalidparametererror import InvalidParameterError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.tools.samtools.samtoolsbase import SamtoolsBase
 
 
@@ -77,7 +77,7 @@ class SamtoolsFastaIndex(SamtoolsBase):
         """
         self._command.command = ' '.join([self._tool_command, str(fasta_file)])
         if 'output_filename' in self._parameters and 'regions' in self._parameters:
-            logging.info("Extracting regions from FASTA file, file should already be indexed.")
+            logger.info("Extracting regions from FASTA file, file should already be indexed.")
             self._command.command += f" {self._parameters['regions'].value} > {self._parameters['output_filename'].value}"
 
     def _check_stderr(self) -> None:

@@ -1,4 +1,3 @@
-import logging
 from pathlib import Path
 
 import os
@@ -10,6 +9,7 @@ from camel.app.error.invalidinputspecificationerror import InvalidInputSpecifica
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.io.tooliovalue import ToolIOValue
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -62,7 +62,7 @@ class CfsanSnpPipeline(Tool):
         :return: Path to reference FASTA
         """
         link_path = self.folder / self._tool_inputs['FASTA'][0].path.name
-        logging.info("Creating symlink for reference FASTA file: {}".format(link_path))
+        logger.info("Creating symlink for reference FASTA file: {}".format(link_path))
         if not os.path.exists(link_path):
             os.symlink(self._tool_inputs['FASTA'][0].path, link_path)
         return link_path
@@ -79,7 +79,7 @@ class CfsanSnpPipeline(Tool):
             forward_reads = Path(self._tool_inputs['FASTQ'][i].path)
             reverse_reads = Path(self._tool_inputs['FASTQ'][i + 1].path)
             sample_name_valid = FileSystemHelper.make_valid(io_sample.value)
-            logging.info("Adding sample '{}' as input".format(sample_name_valid))
+            logger.info("Adding sample '{}' as input".format(sample_name_valid))
             dir_sample = dir_reads / sample_name_valid
             if dir_sample.is_dir():
                 shutil.rmtree(str(dir_sample))

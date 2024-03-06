@@ -1,8 +1,7 @@
-import logging
-
 import vcf
 
 from camel.app.camel import Camel
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -76,7 +75,7 @@ class SpeciesDetector(Tool):
             for variant in vcf.Reader(handle):
                 if not (SpeciesDetector.SPEG_START_POSITION <= variant.POS <= SpeciesDetector.SPEG_END_POSITION):
                     continue
-                logging.debug(f"Variant in speG: {variant}")
+                logger.debug(f"Variant in speG: {variant}")
                 if variant.POS == SpeciesDetector.SPEG_INDEL_POSITION and variant.ALT[0] == 'AGT':
                     return True
         return False

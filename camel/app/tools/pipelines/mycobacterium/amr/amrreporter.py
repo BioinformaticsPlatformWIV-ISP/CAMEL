@@ -1,6 +1,5 @@
 import itertools
 import json
-import logging
 import re
 from pathlib import Path
 from typing import List, Any, Optional, Dict
@@ -13,6 +12,7 @@ from camel.app.components.html.htmltablecell import HtmlTableCell
 from camel.app.components.mycobacterium import amrutils
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliovalue import ToolIOValue
+from camel.app.loggers import logger
 from camel.app.tools.pipelines.mycobacterium.amr import amrtypedetermination
 from camel.app.tools.tool import Tool
 
@@ -172,7 +172,7 @@ class AMRReporter(Tool):
 
             # Skip synonymous mutations
             if row['effect'] == 'synonymous':
-                logging.info(f"Skipping synonymous mutation: {row}")
+                logger.info(f"Skipping synonymous mutation: {row}")
                 continue
 
             # Combine associations

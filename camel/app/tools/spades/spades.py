@@ -1,4 +1,3 @@
-import logging
 import re
 from pathlib import Path
 from typing import List, Dict
@@ -6,6 +5,7 @@ from typing import List, Dict
 from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -199,7 +199,7 @@ class SPAdes(Tool):
         :return: None
         """
         if not output_file.is_file():
-            logging.warning(f"{output_key} file not generated.")
+            logger.warning(f"{output_key} file not generated.")
         else:
             self._tool_outputs[output_key] = [ToolIOFile(output_file)]
 

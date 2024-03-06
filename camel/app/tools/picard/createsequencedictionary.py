@@ -1,8 +1,8 @@
-import logging
 from pathlib import Path
 from camel.app.camel import Camel
 from camel.app.components.files.fileutils import FileUtils
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.tools.picard.picard import Picard
 
 
@@ -44,12 +44,12 @@ class CreateSequenceDictionary(Picard):
         :return: None
         """
         if 'symlink' in self._parameters:
-            logging.info('Creating a symlink for the FASTA_REF input to generate SequenceDictionary locally.')
+            logger.info('Creating a symlink for the FASTA_REF input to generate SequenceDictionary locally.')
             self._fasta_file = self.__symlink_input()
         else:
             self._fasta_file = self._tool_inputs['FASTA_REF'][0].path
 
-        logging.debug(f'symlink {self._fasta_file}')
+        logger.debug(f'symlink {self._fasta_file}')
 
         self._input_string += f'R={self._fasta_file} '
 

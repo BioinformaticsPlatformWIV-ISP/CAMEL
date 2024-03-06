@@ -1,4 +1,3 @@
-import logging
 from typing import List, Dict, Any
 
 import pandas as pd
@@ -7,6 +6,7 @@ import vcf
 from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -36,7 +36,7 @@ class CallMultiAllelicSites(Tool):
         Executes this tool.
         """
         records_out = []
-        logging.info(f"Calling multi-allelic sites from: {self._tool_inputs['BCF'][0].path}")
+        logger.info(f"Calling multi-allelic sites from: {self._tool_inputs['BCF'][0].path}")
         with self._tool_inputs['BCF'][0].path.open() as handle:
             for variant in vcf.Reader(handle):
                 # Skip invariant & low depth sites
@@ -81,6 +81,6 @@ class CallMultiAllelicSites(Tool):
         pd.DataFrame(records_out).to_csv(path_out, sep='\t', index=False)
         self._tool_outputs['TSV'] = [ToolIOFile(path_out)]
         self._informs['nb_sites'] = len(records_out)
-        logging.info(f'{len(records_out):,} multi-allelic sites detected')
+        logger.info(f'{len(records_out):,} multi-allelic sites detected')
         self._informs['min_freq_minor_allele'] = self._parameters['min_freq_minor_allele'].value
         self._informs['min_dp'] = int(self._parameters['min_dp'].value)

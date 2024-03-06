@@ -1,10 +1,10 @@
-import logging
 from pathlib import Path
 
 from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.tools.samtools.samtoolsbase import SamtoolsBase
 
 
@@ -87,7 +87,7 @@ class SamtoolsMerge(SamtoolsBase):
             filetype = "SAM"
         else:
             filetype = "BAM"
-            logging.info("Output file format not BAM or SAM. Assuming BAM and continuing.")
+            logger.info("Output file format not BAM or SAM. Assuming BAM and continuing.")
         return filetype
 
     def _check_command_output(self) -> None:

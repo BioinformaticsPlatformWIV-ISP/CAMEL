@@ -1,5 +1,4 @@
 import abc
-import logging
 import re
 from pathlib import Path
 from typing import Optional
@@ -8,6 +7,7 @@ from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.tools.toolpipeable import ToolPipeable
 
 
@@ -44,7 +44,7 @@ class Picard(ToolPipeable, metaclass=abc.ABCMeta):
         Returns the formatted java options of this tool.
         :return: Name
         """
-        logging.info(f"Java options updated: '{java_options}'")
+        logger.info(f"Java options updated: '{java_options}'")
         self._java_options = f'{java_options}'
 
     def _execute_tool(self) -> None:
@@ -149,7 +149,7 @@ class Picard(ToolPipeable, metaclass=abc.ABCMeta):
         # log WARNINGs
         for line in self.stdout.splitlines():
             if re.match('WARNING', line):
-                logging.warning(f' Picard - {line}')
+                logger.warning(f' Picard - {line}')
 
     def _before_pipe(self, dir_: Path, pipe_in: bool, pipe_out: bool) -> None:
         """

@@ -1,9 +1,9 @@
-import logging
 from pathlib import Path
 
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.invalidparametererror import InvalidParameterError
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.tools.bcftools.bcftoolsbase import BcftoolsBase
 
 
@@ -27,7 +27,7 @@ class BcftoolsCall(BcftoolsBase):
         if self._parameters['calling_method'].value not in ('consensus', 'multiallelic'):
             raise InvalidParameterError(f"Unrecognized snp calling method: {self._parameters['calling_method'].value}")
         if 'ploidy' not in self._parameters:
-            logging.warning("Ploidy not specified will assume all sites are diploid.")
+            logger.warning("Ploidy not specified will assume all sites are diploid.")
 
     def _check_input(self) -> None:
         """

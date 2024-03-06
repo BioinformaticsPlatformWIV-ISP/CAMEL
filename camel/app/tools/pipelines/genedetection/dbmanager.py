@@ -1,5 +1,4 @@
 import json
-import logging
 from pathlib import Path
 from typing import Union
 
@@ -10,6 +9,7 @@ from camel.app.error.invalidinputspecificationerror import InvalidInputSpecifica
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliodirectory import ToolIODirectory
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -85,13 +85,13 @@ class DBManager(Tool):
         # Parse the updated mapping
         path_mapping_new = dir_in / 'mapping_full.json'
         if path_mapping_new.exists():
-            logging.debug(f'Parsing sequence mapping from: {path_mapping_new}')
+            logger.debug(f'Parsing sequence mapping from: {path_mapping_new}')
             with path_mapping_new.open() as handle:
                 return MappingJSON(json.load(handle))
 
         # Parse the legacy mapping
         try:
-            logging.warning(f"The 'mapping.txt' file will become deprecated, please use the 'mapping_full.json' file")
+            logger.warning(f"The 'mapping.txt' file will become deprecated, please use the 'mapping_full.json' file")
             return Mapping.parse((dir_in / 'mapping.txt'))
         except FileNotFoundError:
             raise ToolExecutionError(f'No mapping found in {dir_in}')

@@ -1,10 +1,10 @@
-import logging
 from pathlib import Path
 
 from camel.app.camel import Camel
 from camel.app.components.files.fastqutils import FastqUtils
 from camel.app.components.files.fileutils import FileUtils
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.tools.seqtk.seqtk import Seqtk
 
 
@@ -32,7 +32,7 @@ class SeqtkSubsample(Seqtk):
         :return: None
         """
         self.__set_cmd_output()
-        logging.debug(f"Seqtk Subsample input informs: input_mode {self.input_mode}, input_file_type {self.input_file_type}")
+        logger.debug(f"Seqtk Subsample input informs: input_mode {self.input_mode}, input_file_type {self.input_file_type}")
         for idx, infile in enumerate(self._tool_inputs[self.input_type]):
             self.__build_command_with_iofiles(infile.path, self._output_files[idx])
             self._execute_command()

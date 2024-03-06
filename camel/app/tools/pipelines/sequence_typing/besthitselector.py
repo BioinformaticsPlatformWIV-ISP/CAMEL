@@ -1,4 +1,3 @@
-import logging
 from pathlib import Path
 from typing import List, Dict, Any
 
@@ -9,6 +8,7 @@ from camel.app.components.sequencetyping.sequencetypingblasthit import SequenceT
 from camel.app.components.sequencetyping.sequencetypingutils import SequenceTypingUtils
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliovalue import ToolIOValue
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -80,7 +80,7 @@ class BestHitSelector(Tool):
         :return: Detected hit
         """
         if len(hits) == 0:
-            logging.info("No hit passed filtering")
+            logger.info("No hit passed filtering")
             return SequenceTypingBlastHit.create_empty_hit(metadata_locus['name'], metadata_locus['type'])
         else:
             best_hits = BlastHitFilteringHelper.detect_best_hits(hits)

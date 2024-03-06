@@ -1,4 +1,3 @@
-import logging
 import pandas as pd
 
 from pathlib import Path
@@ -6,6 +5,7 @@ from fractions import Fraction
 from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -43,11 +43,11 @@ class MenDeVAR(Tool):
         # Parse input file
         tsv_in = self._tool_inputs['TSV'][0].path
         if 'typing-bast-peptide' not in tsv_in.stem:
-            logging.warning('Cannot determine sample name from TSV input, using default sample id')
+            logger.warning('Cannot determine sample name from TSV input, using default sample id')
             sample_id = 'sample'
         else:
             sample_id = tsv_in.stem.replace('typing-bast-peptide-', '')
-        logging.info(f'Sample ID: {sample_id}')
+        logger.info(f'Sample ID: {sample_id}')
         antigen_info = self.__parse_input_file(tsv_in)
 
         # Check allele integrity
@@ -216,5 +216,5 @@ class MenDeVAR(Tool):
         output_file = output_dir / f'{sample_id}_mendevar.tsv'
         antigen_info.drop(['Type'], axis=1, inplace=True)
         antigen_info.to_csv(output_file, sep='\t', index=False)
-        logging.info(f'Output file created: {output_file}')
+        logger.info(f'Output file created: {output_file}')
         self._tool_outputs['TSV'] = [ToolIOFile(output_file)]

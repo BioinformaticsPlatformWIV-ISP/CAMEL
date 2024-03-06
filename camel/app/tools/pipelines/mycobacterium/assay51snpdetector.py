@@ -1,4 +1,3 @@
-import logging
 from typing import List, Dict
 
 from vcf import VCFReader
@@ -49,10 +48,10 @@ class Assay51SnpDetector(Tool):
         """
         with open(self._tool_inputs['VCF'][0].path) as handle:
             records_by_pos = {v.POS: v for v in VCFReader(handle)}
-            logging.debug(f'{len(records_by_pos)} SNPs parsed')
+            logger.debug(f'{len(records_by_pos)} SNPs parsed')
         with open(self._tool_inputs['VCF_filt'][0].path) as handle:
             records_filt_by_pos = {v.POS: v for v in VCFReader(handle)}
-            logging.debug(f'{len(records_filt_by_pos)} filtered SNPs parsed')
+            logger.debug(f'{len(records_filt_by_pos)} filtered SNPs parsed')
         for snp_position in snp_positions:
             if snp_position.pos in records_by_pos:
                 snp_position.vcf_record = records_by_pos[snp_position.pos]
