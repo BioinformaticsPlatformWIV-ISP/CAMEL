@@ -17,7 +17,7 @@ class MainYersiniaPipeline(ReportPipeline):
     """
 
     CUSTOM_ANALYSES = ['kraken2', 'confindr', 'amrfinder', 'resfinder', 'vfdb_core', 'cgmlst',
-                       'mlst', 'mlst_mcnally', 'cgmlst_species', 'cgmlst_yersinia', 'mob_suite']
+                       'mlst', 'mlst_mcnally', 'cgmlst_species', 'cgmlst_yersinia', 'rmlst', 'mob_suite']
 
     DATA_BY_SPECIES = {
         'enterocolitica': {

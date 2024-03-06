@@ -107,5 +107,7 @@ The following typing schemes are available:
 | cgMLST-YE       | BigSDB     |
 | cgMLST-YP       | BigSDB     |
 | cgMLST-Yersinia | Enterobase |
+| rMLST           | PubMLST    |
+
 
 
