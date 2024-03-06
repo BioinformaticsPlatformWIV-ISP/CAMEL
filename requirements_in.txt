@@ -6,7 +6,8 @@ bs4
 humanize
 pandas
 pydotplus
+pysam
+scipy
 screed
 snakemake
 yattag
-scipy

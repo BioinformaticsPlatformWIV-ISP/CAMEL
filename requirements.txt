@@ -60,6 +60,7 @@ numpy==1.26.4
     # via
     #   biopython
     #   pandas
+    #   scipy
 packaging==23.2
     # via snakemake
 pandas==2.2.1
@@ -78,9 +79,11 @@ pulp==2.7.0
     #   snakemake
 pydotplus==2.0.2
     # via -r requirements_in.txt
-pyparsing==3.1.1
+pyparsing==3.1.2
     # via pydotplus
-python-dateutil==2.8.2
+pysam==0.22.0
+    # via -r requirements_in.txt
+python-dateutil==2.9.0.post0
     # via pandas
 pytz==2024.1
     # via pandas
@@ -102,6 +105,8 @@ rpds-py==0.18.0
     # via
     #   jsonschema
     #   referencing
+scipy==1.12.0
+    # via -r requirements_in.txt
 screed==1.1.3
     # via -r requirements_in.txt
 six==1.16.0
