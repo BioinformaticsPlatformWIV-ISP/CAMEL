@@ -167,6 +167,7 @@ class AMRScreen(Tool):
                         record['associations'].append({
                             'antibiotic': association['drug'],
                             'antibiotic_short': self._ab_short_by_name[association['drug']],
+                            'comment': association['comment'] if not pd.isna(association['comment']) else None,
                             'confidence': association['confidence'],
                             'effect': association['effect'],
                             'locus': association['gene'],

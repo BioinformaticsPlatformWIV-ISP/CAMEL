@@ -18,12 +18,12 @@ from camel.app.loggers import logger
 # Example usage:
 # update_amr_db.py \
 #   --version '2023.6'
-#   --tsv-coords /db/pipelines/mycobacterium/amr/who_2023.6/mutation_locations.tsv
-#   --tsv-catalogue /db/pipelines/mycobacterium/amr/who_2023.6/amr_associations_who.tsv
-#   --tsv-inhouse /db/pipelines/mycobacterium/amr/who_2023.6/amr_associations_inhouse.tsv
-#   --tsv-abs /db/pipelines/mycobacterium/amr/who_2023.6/antibiotics.tsv
+#   --tsv-coords /db/pipelines/mycobacterium/amr/who_2023.6/input/mutation_locations_who.tsv
+#   --tsv-catalogue /db/pipelines/mycobacterium/amr/who_2023.6/input/amr_associations_who.tsv
+#   --tsv-inhouse /db/pipelines/mycobacterium/amr/who_2023.6/input/amr_associations_inhouse.tsv
+#   --tsv-abs /db/pipelines/mycobacterium/amr/who_2023.6/input/antibiotics.tsv
 #   --ref-fasta /db/refgenomes/Mycobacterium_tuberculosis/H37Rv.fasta
-#   --ref-gff3 /db/refgenomes/Mycobacterium_tuberculosis/H37Rv.gff
+#   --ref-gff /db/refgenomes/Mycobacterium_tuberculosis/H37Rv.gff
 
 class UpdateAMRDB(object):
     """
@@ -200,7 +200,7 @@ class UpdateAMRDB(object):
         self._data_amr_inhouse['source'] = 'NRC'
 
         # Return concatenated dataframe
-        target_columns = ['drug', 'gene', 'mutation', 'effect', 'confidence', 'source']
+        target_columns = ['drug', 'gene', 'mutation', 'effect', 'confidence', 'source', 'comment']
         data_concat = pd.concat([self._data_amr_catalogue[target_columns], self._data_amr_inhouse[target_columns]])
         data_concat['variant'] = data_concat.apply(lambda row: f"{row['gene']}_{row['mutation']}", axis=1)
         return data_concat

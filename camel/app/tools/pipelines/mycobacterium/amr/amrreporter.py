@@ -157,6 +157,34 @@ class AMRReporter(Tool):
             "pass the variant filtering are indicated with a '*'. ")
         self._section.add_html_object(div)
 
+    def __add_mutation_notes(self, div: HtmlElement, mutations: List[Dict]) -> None:
+        """
+        Adds an overview with the notes for the mutations (if there are any).
+        :param div: Section with mutation table
+        :param mutations: List of mutations
+        :return: None
+        """
+        # Group comments by index
+        comment_by_idx_ab = {}
+        for idx, m in enumerate(mutations):
+            for association in m['associations']:
+                if association['comment'] is None:
+                    continue
+                key = (idx, association['antibiotic_short'])
+                comment_by_idx_ab[key] = association['comment']
+
+        # Don't add anything if there are no notes
+        if len(comment_by_idx_ab) == 0:
+            return
+
+        # Add table with notes
+        div.add_header('Notes', 4)
+        table_data = []
+        for (idx, ab), comment in comment_by_idx_ab.items():
+            table_data.append([mutations[idx]['name_full'], ab, comment])
+        div.add_table(table_data, ['Mutation', 'Antibiotic', 'Note'], [('class', 'data')])
+
+
     def __add_mutations_table(self, suffix: str, mutations: List[Dict[str, Any]]) -> None:
         """
         Adds a mutation table.
@@ -200,7 +228,7 @@ class AMRReporter(Tool):
         div.add_table(table_data, header, [('class', 'data')])
         relative_path = self.__save_table(table_data, header, f'amr-variants-{suffix}.tsv')
         div.add_link_to_file('Download (TSV)', relative_path)
-
+        self.__add_mutation_notes(div, mutations)
         self._section.add_html_object(div)
 
     def __add_resistance_type_overview(self) -> None:
