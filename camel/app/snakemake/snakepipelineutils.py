@@ -41,7 +41,8 @@ class SnakePipelineUtils(object):
     @staticmethod
     def create_input_section(
             sample_name: str, date: datetime, pipeline_version: str, input_files: str, input_type: str,
-            extra_data: Optional[List[Tuple[str, str]]] = None, key_citation: str = None) -> HtmlReportSection:
+            detection_method: Optional[str] = None, extra_data: Optional[List[Tuple[str, str]]] = None,
+            key_citation: str = None) -> HtmlReportSection:
         """
         Creates the input section for the HTML report.
         :param sample_name: Sample name
@@ -49,6 +50,7 @@ class SnakePipelineUtils(object):
         :param pipeline_version: Pipeline version
         :param input_files: Input files
         :param input_type: Input type
+        :param detection_method: Detection method
         :param extra_data: Extra data to include in the input section
         :param key_citation: Citation for the pipeline.
         :return: Input report section
@@ -60,6 +62,8 @@ class SnakePipelineUtils(object):
             ['Input files:', input_files],
             ['Input type:', input_type]
         ]
+        if detection_method is not None:
+            table_data.append(['Detection method:', detection_method])
         if extra_data is not None:
             for key, value in extra_data:
                 table_data.append([f'{key}:', value])

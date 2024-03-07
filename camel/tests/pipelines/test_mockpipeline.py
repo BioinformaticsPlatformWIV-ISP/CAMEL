@@ -35,6 +35,27 @@ class TestMocksPipeline(CamelTestSuite):
         pipeline.run()
         self.assertGreater(path_report_out.stat().st_size, 0)
 
+    def test_mock_pipeline_illumina_kma(self) -> None:
+        """
+        Tests the mock pipeline with Illumina input data and KMA detection.
+        :return: None
+        """
+        path_report_out = Path(self.running_dir) / 'out' / 'report.html'
+        path_summary_out = Path(self.running_dir) / 'out' / 'summary.tsv'
+        pipeline = MainMockPipeline([
+            '--input-type', 'illumina',
+            '--fastq-pe', *[str(x) for x in TestMocksPipeline.input_ilmn_pe],
+            '--output-html', str(path_report_out),
+            '--output-dir', str(path_report_out.parent),
+            '--output-tsv', str(path_summary_out),
+            '--working-dir', str(self.running_dir),
+            '--detection-method', 'kma',
+            '--ncbi-amr',
+            '--threads', '8'
+        ])
+        pipeline.run()
+        self.assertGreater(path_report_out.stat().st_size, 0)
+
     def test_mock_pipeline_ont(self) -> None:
         """
         Tests the mock pipeline with ONT input data.
