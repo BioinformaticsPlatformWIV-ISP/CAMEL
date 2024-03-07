@@ -30,14 +30,6 @@ rule all:
         config['output_report'],
         config['output_tabular']
 
-rule copy_assemblies_to_medaka_input:
-    input:
-        FASTA_flye = Path(config['working_dir']) / assembly_flye.OUTPUT_ASSEMBLY_FASTA
-    output:
-        FASTA_medaka_flye = str(Path(config['working_dir']) / polish_assembly_long.INPUT_ASSEMBLY_FASTA).format(assembly_type='flye')
-    run:
-        shutil.copyfile(input.FASTA_flye, output.FASTA_medaka_flye)
-
 rule report_create_command_section:
     """
     Creates the report section containing the tool commands.

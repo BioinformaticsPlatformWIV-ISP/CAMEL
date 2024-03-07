@@ -1,9 +1,10 @@
+import shutil
 from pathlib import Path
 
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.resources.snakefile import trimming_illumina, trimming_ont, assembly, gene_detection, downsampling, core, \
-    sequence_typing, amrfinder, mobsuite, assembly_flye, polish_assembly_short
+    sequence_typing, amrfinder, mobsuite, assembly_flye, polish_assembly_short, polish_assembly_long
 
 rule core_link_downsampling_input:
     """
@@ -186,3 +187,15 @@ rule core_link_fasta_to_polishing:
         """
         cp {input.FASTA} {output.FASTA};
         """
+
+rule core_link_flye_assembly_to_medaka_input:
+    """
+    Links the long-read assembly to the medaka polishing.
+    """
+    input:
+        FASTA_flye = Path(config['working_dir']) / assembly_flye.OUTPUT_ASSEMBLY_FASTA
+    output:
+        FASTA_medaka_flye = str(Path(config['working_dir']) / polish_assembly_long.INPUT_ASSEMBLY_FASTA).format(
+            assembly_type='flye')
+    run:
+        shutil.copyfile(input.FASTA_flye, output.FASTA_medaka_flye)

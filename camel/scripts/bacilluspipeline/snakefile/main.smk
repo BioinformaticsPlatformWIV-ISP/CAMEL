@@ -5,7 +5,7 @@ from camel.app.components.pipelines.reportpipeline import ReportPipeline
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile import core, assembly, downsampling, quast, confindr, trimming, trimming_illumina, \
     quality_checks, contamination_check_kraken, sequence_typing, amrfinder, trimming_ont, gene_detection, \
-    mobsuite, polish_assembly_long, polish_assembly_short
+    mobsuite
 from camel.scripts.bacilluspipeline.snakefile import btyper, ani
 
 #######################
@@ -15,11 +15,11 @@ include: core.SNAKEFILE_CORE
 include: downsampling.SNAKEFILE_DOWNSAMPLING
 include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
 include: trimming_ont.SNAKEFILE_TRIMMING_ONT
-include: contamination_check_kraken.SNAKEFILE_CONTAMINATION_CHECK_KRAKEN
-include: quality_checks.SNAKEFILE_QUALITY_CHECKS
 include: assembly.SNAKEFILE_ASSEMBLY
 include: quast.SNAKEFILE_QUAST
+include: contamination_check_kraken.SNAKEFILE_CONTAMINATION_CHECK_KRAKEN
 include: confindr.SNAKEFILE_CONFINDR
+include: quality_checks.SNAKEFILE_QUALITY_CHECKS
 include: sequence_typing.SNAKEFILE_SEQUENCE_TYPING
 include: btyper.SNAKEFILE_BTYPER
 include: amrfinder.SNAKEFILE_AMRFINDER
@@ -41,19 +41,6 @@ rule all:
 #####################################
 # Linking workflow inputs & outputs #
 #####################################
-# rule link_fasta_to_tools_all:
-#     """
-#     This rule links the output of the assembly workflow to the amrfinder and mobsuite workflows.
-#     """
-#     input:
-#         FASTA = Path(config['working_dir'], assembly.get_fasta(config))
-#     output:
-#         FASTA_amrfinder = Path(config['working_dir']) / amrfinder.INPUT_AMRFINDER_FASTA,
-#         FASTA_mobsuite = Path(config['working_dir']) / mobsuite.INPUT_MOBSUITE_FASTA
-#     run:
-#         shutil.copyfile(Path(input.FASTA),Path(output.FASTA_amrfinder))
-#         shutil.copyfile(Path(input.FASTA),Path(output.FASTA_mobsuite))
-
 rule link_fasta_to_tools_subtilis:
     """
     This rule links the output of the assembly workflow to the fastANI workflow if the species is B. subtilis.
@@ -232,7 +219,7 @@ rule report_content_subtilis:
         report_rmlst = sequence_typing.get_sequence_typing_report('rmlst', config),
         report_mlst = sequence_typing.get_sequence_typing_report('mlst_subtilis', config),
         report_citations = Path(config['working_dir'],core.OUTPUT_HTML_CITATIONS),
-        report_commands = rules.report_create_commands_section.output.HTML,
+        report_commands = rules.report_create_commands_section.output.HTML
     output:
         HTML = Path(config['working_dir']) / 'report' / 'report_subtilis.html'
     params:
@@ -325,7 +312,7 @@ rule link_genomic_context:
         TSV_amrfinder = Path(config['working_dir']) / 'amrfinder' / 'tsv.io' if 'amrfinder' in config['analyses'] else [],
         # Virulence
         TSV_gd_vfdb = Path(config['working_dir']) / 'gene_detection' / 'vfdb_core' / 'metadata' / 'tsv.io' if 'vfdb_core' in config['analyses'] else [],
-        INFORMS_gd_vfdb = Path(config['working_dir']) / 'gene_detection' / 'vfdb_core' / 'db_manager' / 'informs.io' if 'vfdb_core' in config['analyses'] else [],
+        INFORMS_gd_vfdb = Path(config['working_dir']) / 'gene_detection' / 'vfdb_core' / 'db_manager' / 'informs.io' if 'vfdb_core' in config['analyses'] else []
     output:
         TSV = Path(config['working_dir']) / 'mob_suite' / 'genomic_context' / 'input' / 'tsv.io',
         INFORMS = Path(config['working_dir']) / 'mob_suite' / 'genomic_context' / 'input' / 'informs.io'

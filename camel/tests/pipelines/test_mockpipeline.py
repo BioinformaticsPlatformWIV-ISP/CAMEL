@@ -5,7 +5,7 @@ from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.scripts.mockpipeline.mainmockpipeline import MainMockPipeline
 
 
-class TestMocksPipeline(CamelTestSuite):
+class TestMockPipeline(CamelTestSuite):
     """
     Tests for the mock pipeline.
     """
@@ -23,7 +23,7 @@ class TestMocksPipeline(CamelTestSuite):
         path_summary_out = Path(self.running_dir) / 'out' / 'summary.tsv'
         pipeline = MainMockPipeline([
             '--input-type', 'illumina',
-            '--fastq-pe', *[str(x) for x in TestMocksPipeline.input_ilmn_pe],
+            '--fastq-pe', *[str(x) for x in TestMockPipeline.input_ilmn_pe],
             '--output-html', str(path_report_out),
             '--output-dir', str(path_report_out.parent),
             '--output-tsv', str(path_summary_out),
@@ -44,7 +44,7 @@ class TestMocksPipeline(CamelTestSuite):
         path_summary_out = Path(self.running_dir) / 'out' / 'summary.tsv'
         pipeline = MainMockPipeline([
             '--input-type', 'illumina',
-            '--fastq-pe', *[str(x) for x in TestMocksPipeline.input_ilmn_pe],
+            '--fastq-pe', *[str(x) for x in TestMockPipeline.input_ilmn_pe],
             '--output-html', str(path_report_out),
             '--output-dir', str(path_report_out.parent),
             '--output-tsv', str(path_summary_out),
@@ -65,7 +65,7 @@ class TestMocksPipeline(CamelTestSuite):
         path_summary_out = Path(self.running_dir) / 'out' / 'summary.tsv'
 
         pipeline = MainMockPipeline([
-            '--fastq-se', str(TestMocksPipeline.input_ont_se),
+            '--fastq-se', str(TestMockPipeline.input_ont_se),
             '--input-type', 'ont',
             '--output-html', str(path_report_out),
             '--output-dir', str(path_report_out.parent),
@@ -87,8 +87,8 @@ class TestMocksPipeline(CamelTestSuite):
         path_summary_out = Path(self.running_dir) / 'out' / 'summary.tsv'
 
         pipeline = MainMockPipeline([
-            '--fastq-se', str(TestMocksPipeline.input_ont_se),
-            '--fastq-pe', *[str(x) for x in TestMocksPipeline.input_ilmn_pe],
+            '--fastq-se', str(TestMockPipeline.input_ont_se),
+            '--fastq-pe', *[str(x) for x in TestMockPipeline.input_ilmn_pe],
             '--input-type', 'hybrid',
             '--output-html', str(path_report_out),
             '--output-dir', str(path_report_out.parent),
@@ -110,7 +110,7 @@ class TestMocksPipeline(CamelTestSuite):
         path_summary_out = Path(self.running_dir) / 'out' / 'summary.tsv'
 
         pipeline = MainMockPipeline([
-            '--fasta', str(TestMocksPipeline.input_fasta),
+            '--fasta', str(TestMockPipeline.input_fasta),
             '--input-type', 'fasta',
             '--output-html', str(path_report_out),
             '--output-dir', str(path_report_out.parent),
