@@ -1,7 +1,8 @@
 from pathlib import Path
 from typing import Dict, Any, List
 
-from camel.resources.snakefile import assembly_spades, assembly_flye, polish_assembly_short, polish_assembly_long, core
+from camel.resources.snakefile import assembly_spades, assembly_flye, polish_assembly_short, polish_assembly_long, \
+    human_read_scrubbing
 
 SNAKEFILE_ASSEMBLY = f'{Path(__file__).parent / Path(__file__).stem}.smk'
 OUTPUT_ASSEMBLY_FASTA = Path('assembly', 'filtering', 'fasta.io')
@@ -17,8 +18,10 @@ def get_fasta_raw(config: Dict[str, Any]) -> Path:
     """
     Returns the assembly FASTA output IO object path (before filtering).
     """
-    if config['input_type'] == 'fasta':
-        return core.INPUT_FASTA_IO
+    if (config['input_type'] == 'fasta') and ('human_read_scrubbing' not in config['analyses']):
+        return Path(str(human_read_scrubbing.INPUT_SCRUBBING_FASTA).format(input_format='fasta'))
+    if (config['input_type'] == 'fasta') and ('human_read_scrubbing' in config['analyses']):
+        return Path(str(human_read_scrubbing.OUTPUT_SCRUBBING_FASTA).format(input_format='fasta'))
     if config['input_type'] == 'illumina':
         return assembly_spades.OUTPUT_ASSEMBLY_FASTA
     if config['input_type'] == 'ont':

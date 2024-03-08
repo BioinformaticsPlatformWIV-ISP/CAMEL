@@ -181,6 +181,39 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         logger.info(f'Command exported to: {path_out}')
 
     @staticmethod
+    def add_content_scrubbing(
+            structure: List[Tuple], input_type: str, reports_scrubbing: List[Union[Path, str]]) -> None:
+        """
+        Adds the report content for the human read scrubbing.
+        :param structure: Report structure
+        :param input_type: Input type
+        :param reports_scrubbing: Human read scrubbing output report(s)
+        :return: None
+        """
+        # Create dictionaries with the technology as key and the reports as values
+        report_scrubbing_by_input_format = {
+            p_html.parents[1].name: p_html for p_html in [Path(x) for x in reports_scrubbing]}
+
+        # Add the report content
+        if input_type == 'fasta':
+            structure.append(
+                ('Human read removal', 'human read removal', [
+                    report_scrubbing_by_input_format['fasta']]))
+        elif input_type == 'illumina':
+            structure.append(
+                ('Human read removal', 'human read removal', [
+                    report_scrubbing_by_input_format['fastq_pe']]))
+        elif input_type == 'ont':
+            structure.append(
+                ('Human read removal', 'human read removal', [report_scrubbing_by_input_format['fastq_se']]))
+        elif input_type == 'hybrid':
+            structure.append(
+                ('Human read removal', 'human read removal',
+                 [report_scrubbing_by_input_format['fastq_pe'], report_scrubbing_by_input_format['fastq_se']]))
+        else:
+            raise ValueError(f'Invalid input type: {input_type}')
+
+    @staticmethod
     def add_content_trim_basic_qc(
             structure: List[Tuple], input_type: str, reports_ds: List[Union[Path, str]],
             reports_trim: List[Union[Path, str]]) -> None:

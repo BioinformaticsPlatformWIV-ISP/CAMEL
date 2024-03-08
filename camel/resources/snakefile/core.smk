@@ -1,18 +1,19 @@
-import shutil
 from pathlib import Path
 
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.resources.snakefile import trimming_illumina, trimming_ont, assembly, gene_detection, downsampling, core, \
-    sequence_typing, amrfinder, mobsuite, assembly_flye, polish_assembly_short, polish_assembly_long
+    sequence_typing, amrfinder, mobsuite, assembly_flye, polish_assembly_short, polish_assembly_long, \
+    human_read_scrubbing
 
-rule core_link_downsampling_input:
+
+rule core_link_fastq_scrubbing_input:
     """
-    Creates the FASTQ input for the downsampling step. 
+    Creates the FASTQ input for the human read scrubbing step.
     """
     output:
-        FASTQ_PE = Path(config['working_dir']) / str(downsampling.INPUT_DOWNSAMPLING_FASTQ).format(read_key='fastq_pe'),
-        FASTQ_SE = Path(config['working_dir']) / str(downsampling.INPUT_DOWNSAMPLING_FASTQ).format(read_key='fastq_se')
+        FASTQ_PE = Path(config['working_dir']) / str(human_read_scrubbing.INPUT_SCRUBBING_FASTQ).format(input_format='fastq_pe'),
+        FASTQ_SE = Path(config['working_dir']) / str(human_read_scrubbing.INPUT_SCRUBBING_FASTQ).format(input_format='fastq_se')
     params:
         input_dict = config['input']
     run:
@@ -29,6 +30,32 @@ rule core_link_downsampling_input:
             SnakemakeUtils.dump_object([ToolIOFile(Path(params.input_dict['fastq_se'][0]['path']))], Path(output.FASTQ_SE))
         else:
             SnakemakeUtils.dump_object([], Path(output.FASTQ_SE))
+
+rule core_link_fastq_pe_downsampling_input:
+    """
+    Links the human read scrubbing input or output to the input of the downsampling workflow.
+    """
+    input:
+        FASTQ = core.get_fastq_input_downsampling(config, 'fastq_pe')
+    output:
+        FASTQ = Path(config['working_dir']) / str(downsampling.INPUT_DOWNSAMPLING_FASTQ).format(read_key='fastq_pe')
+    shell:
+        """
+        cp {input.FASTQ} {output.FASTQ};
+        """
+
+rule core_link_fastq_se_downsampling_input:
+    """
+    Links the human read scrubbing input or output to the input of the downsampling workflow.
+    """
+    input:
+        FASTQ = core.get_fastq_input_downsampling(config, 'fastq_se')
+    output:
+        FASTQ = Path(config['working_dir']) / str(downsampling.INPUT_DOWNSAMPLING_FASTQ).format(read_key='fastq_se')
+    shell:
+        """
+        cp {input.FASTQ} {output.FASTQ};
+        """
 
 rule core_link_trimmomatic_input:
     """
@@ -56,18 +83,18 @@ rule core_link_ont_input:
         cp {input.FASTQ} {output.FASTQ};
         """
 
-rule core_pickle_fasta_input:
+rule core_link_fasta_scrubbing_input:
     """
-    Creates a pickle with the FASTA input.
+    Creates the FASTA input for the human read scrubbing step.
     """
     params:
         fasta_in = config.get('input', {}).get('fasta')
     output:
-        FASTA = Path(config['working_dir']) / core.INPUT_FASTA_IO
+        FASTA = Path(config['working_dir']) / str(human_read_scrubbing.INPUT_SCRUBBING_FASTA).format(input_format='fasta')
     run:
-        from camel.app.io.tooliofile import ToolIOFile
-        path_fasta_in = Path(params.fasta_in[0]['path'])
-        SnakemakeUtils.dump_object([ToolIOFile(path_fasta_in)], Path(output.FASTA))
+         from camel.app.io.tooliofile import ToolIOFile
+         path_fasta_in = Path(params.fasta_in[0]['path'])
+         SnakemakeUtils.dump_object([ToolIOFile(path_fasta_in)], Path(output.FASTA))
 
 rule core_select_fasta:
     """

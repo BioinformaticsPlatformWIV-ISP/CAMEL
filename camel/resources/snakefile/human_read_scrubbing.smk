@@ -16,11 +16,11 @@ rule scrubbing_fasta_fa2fq:
     Convert the input FASTA to FASTQ to be able to be used by the scrubber, it only accepts FASTQ.
     """
     input:
-        FASTA = Path(config['working_dir']) / 'human_read_scrubbing' / 'input' / 'fasta.io'
+        FASTA = Path(config['working_dir']) / human_read_scrubbing.INPUT_SCRUBBING_FASTA
     output:
-        FASTQ_from_fasta = Path(config['working_dir']) / 'human_read_scrubbing' / 'input' / 'fasta2fastq.io'
+        FASTQ_from_fasta = Path(config['working_dir']) / 'human_read_scrubbing' / '{input_format}' / 'input' / 'fasta2fastq.io'
     params:
-        running_dir = Path(config['working_dir']) / 'human_read_scrubbing' / 'input'
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'human_read_scrubbing' / wildcards.input_format / 'input'
     run:
         from camel.app.components.files.fastautils import FastaUtils
 
@@ -38,9 +38,9 @@ rule scrubbing_fastq_interleave_and_gunzip:
     input:
         FASTQ = Path(config['working_dir']) / human_read_scrubbing.INPUT_SCRUBBING_FASTQ
     output:
-        FASTQ_SINGLE_GUNZIP = Path(config['working_dir']) / 'human_read_scrubbing' / 'input' / 'fastq_gunzip_interleaved.io'
+        FASTQ_SINGLE_GUNZIP = Path(config['working_dir']) / 'human_read_scrubbing' / '{input_format}' / 'input' / 'fastq_gunzip_interleaved.io'
     params:
-        running_dir = Path(config['working_dir']) / 'human_read_scrubbing' / 'input'
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'human_read_scrubbing' / wildcards.input_format / 'input'
     run:
         from camel.app.components.filesystemhelper import FileSystemHelper
         from camel.app.components.files.fastqutils import FastqUtils
@@ -64,13 +64,13 @@ rule scrubbing_run_scrubber:
     Runs the NCBI human read scrubber on the input FASTQ, only accepts single gunzipped FASTQ files.
     """
     input:
-        FASTQ = Path(config['working_dir']) / human_read_scrubbing.INPUT_SCRUBBING_FASTQ if not 'fasta' in config['input'] else [],
-        FASTQ_SINGLE_GUNZIP = rules.scrubbing_fastq_interleave_and_gunzip.output.FASTQ_SINGLE_GUNZIP if not 'fasta' in config['input'] else rules.scrubbing_fasta_fa2fq.output.FASTQ_from_fasta
+        FASTQ = Path(config['working_dir']) / human_read_scrubbing.INPUT_SCRUBBING_FASTQ if 'fasta' not in config['input'] else [],
+        FASTQ_SINGLE_GUNZIP = rules.scrubbing_fastq_interleave_and_gunzip.output.FASTQ_SINGLE_GUNZIP if 'fasta' not in config['input'] else rules.scrubbing_fasta_fa2fq.output.FASTQ_from_fasta
     output:
-        FASTQ_SCRUBBED = Path(config['working_dir']) / 'human_read_scrubbing' / 'scrubbing' / 'fastq_scrubbed.io',
-        INFORMS = Path(config['working_dir']) / human_read_scrubbing.OUTPUT_SCRUBBING_INFORMS
+        FASTQ_SCRUBBED = Path(config['working_dir']) / 'human_read_scrubbing' / '{input_format}' / 'scrubbing' / 'fastq_scrubbed.io',
+        INFORMS = Path(config['working_dir']) / 'human_read_scrubbing' / '{input_format}' / 'scrubbing' / 'informs.io'
     params:
-        running_dir = Path(config['working_dir']) / 'human_read_scrubbing' / 'scrubbing'
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'human_read_scrubbing' / wildcards.input_format / 'scrubbing',
     run:
         from camel.app.tools.ncbihumanreadscrubber.ncbihumanreadscrubber import NcbiHumanReadScrubber
         if 'fasta' not in config['input']:
@@ -81,8 +81,8 @@ rule scrubbing_run_scrubber:
         else:
             interleaved = 'false'
         scrubber = NcbiHumanReadScrubber(camel)
-        step = Step(str(rule), scrubber, camel, params.running_dir)
-        outputfile_scrubbing = str(Path(output.FASTQ_SCRUBBED).with_suffix('.fastq')) if not 'fasta' in config['input'] \
+        step = Step(str(rule), scrubber, camel, Path(str(params.running_dir)))
+        outputfile_scrubbing = str(Path(output.FASTQ_SCRUBBED).with_suffix('.fastq')) if 'fasta' not in config['input'] \
             else str(params.running_dir / (SnakemakeUtils.load_object(Path(input.FASTQ_SINGLE_GUNZIP)))[0].path.name)
         scrubber.update_parameters(interleaved=interleaved, outputfile=outputfile_scrubbing)
         SnakemakeUtils.add_pickle_inputs(scrubber, input, excluded_keys=['FASTQ'])
@@ -97,9 +97,9 @@ rule scrubbing_fasta_fq2fa:
     input:
         FASTQ_SCRUBBED = rules.scrubbing_run_scrubber.output.FASTQ_SCRUBBED
     output:
-        FASTA = Path(config['working_dir']) / human_read_scrubbing.OUTPUT_SCRUBBING_FASTA
+        FASTA = Path(config['working_dir']) / 'human_read_scrubbing' / '{input_format}' / 'output' / 'fasta.io'
     params:
-        running_dir = Path(config['working_dir']) / 'human_read_scrubbing' / 'output'
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'human_read_scrubbing' / wildcards.input_format / 'output'
     run:
         from Bio import SeqIO
         path_in = (SnakemakeUtils.load_object(Path(input.FASTQ_SCRUBBED)))[0].path
@@ -119,9 +119,9 @@ rule scrubbing_fastq_deinterleave_and_gzip:
         FASTQ = Path(config['working_dir']) / human_read_scrubbing.INPUT_SCRUBBING_FASTQ,
         FASTQ_SCRUBBED = rules.scrubbing_run_scrubber.output.FASTQ_SCRUBBED
     output:
-        FASTQ_DEINTERLEAVED_GZIPPED = Path(config['working_dir']) / human_read_scrubbing.OUTPUT_SCRUBBING_FASTQ
+        FASTQ_DEINTERLEAVED_GZIPPED = Path(config['working_dir']) / 'human_read_scrubbing' / '{input_format}' / 'output' / 'fastq.io'
     params:
-        running_dir = Path(config['working_dir']) / 'human_read_scrubbing' / 'output'
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'human_read_scrubbing' / wildcards.input_format / 'output'
     run:
         from camel.app.components.filesystemhelper import FileSystemHelper
         from camel.app.components.files.fastqutils import FastqUtils
@@ -150,10 +150,10 @@ rule scrubbing_report:
         INFORMS_tools = Path(config['working_dir']) / human_read_scrubbing.OUTPUT_SCRUBBING_INFORMS
     output:
         # JSON = Path(config['working_dir']) / human_read_scrubbing.OUTPUT_SCRUBBING_SUMMARY_JSON, # todo json output for hera
-        VAL_HTML = Path(config['working_dir']) / human_read_scrubbing.OUTPUT_SCRUBBING_REPORT,
-        TSV = Path(config['working_dir']) / human_read_scrubbing.OUTPUT_SCRUBBING_SUMMARY
+        VAL_HTML = Path(config['working_dir']) / 'human_read_scrubbing' / '{input_format}' / 'output' / 'html.io',
+        TSV = Path(config['working_dir']) / 'human_read_scrubbing' / '{input_format}' / 'output' / 'summary_out.tsv'
     params:
-        running_dir = Path(config['working_dir']) / 'human_read_scrubbing' / 'output'
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'human_read_scrubbing' / wildcards.input_format / 'output'
     run:
         from camel.app.components.html.htmlreportsection import HtmlReportSection
 
@@ -168,13 +168,25 @@ rule scrubbing_report:
 
         # Create the report section
         section = HtmlReportSection('Human Read Removal', subtitle=hrrt_informs['_name'])
-        subject = 'reads' if 'fasta' not in config['input'] or 'fasta_wo_vcf' in config['input'] else 'contigs'
+        subject = 'reads' if 'fasta' not in config['input'] else 'contigs'
         section.add_paragraph(f"Removed {count_out:,} out of {count_in:,} {subject}.")
         SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output.VAL_HTML))
 
         # Create the summary output
-        data_summary = {'scrubbing_{subject}_in': count_in, 'scrubbing_{subject}_out': count_out}
+        data_summary = {'scrubbing_tool_version': hrrt_informs['_name'], f'scrubbing_{subject}_in': count_in,
+                        f'scrubbing_{subject}_out': count_out}
         with Path(output.TSV).open('w') as handle:
             for k, v in data_summary.items():
                 handle.write('\t'.join([k, str(v)]))
                 handle.write('\n')
+
+rule scrubbing_report_empty:
+    """
+    Creates an empty report when this analysis is disabled.
+    """
+    output:
+        VAL_HTML = Path(config['working_dir']) / 'human_read_scrubbing' / '{input_format}' / 'output' / 'html-empty.io'
+    run:
+        from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
+        SnakePipelineUtils.create_empty_report_section('Human read removal',Path(output.VAL_HTML))
+

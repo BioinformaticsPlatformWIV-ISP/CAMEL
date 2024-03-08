@@ -16,7 +16,7 @@ class MainMockPipeline(ReportPipeline):
     Base-class for the mock pipeline.
     """
 
-    CUSTOM_ANALYSES = ['kraken2', 'confindr', 'ncbi_amr']
+    CUSTOM_ANALYSES = ['human_read_scrubbing', 'kraken2', 'confindr', 'ncbi_amr']
 
     def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """

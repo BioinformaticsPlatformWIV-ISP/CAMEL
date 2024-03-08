@@ -1,11 +1,25 @@
 from pathlib import Path
+from typing import Dict, Any
 
-from camel.resources.snakefile import trimming_illumina, trimming_ont
+from camel.resources.snakefile import trimming_illumina, trimming_ont, human_read_scrubbing
 
 SNAKEFILE_CORE = f'{Path(__file__).parent / Path(__file__).stem}.smk'
 INPUT_FASTA_IO = Path('input', 'fasta.io')
 OUTPUT_TSV_SUMMARY_INIT = Path('summary', 'summary-init.tsv')
 OUTPUT_HTML_CITATIONS = Path('report', 'html-citations.io')
+
+
+def get_fastq_input_downsampling(config: Dict[str, Any], read_key: str) -> Path:
+    """
+    Returns the fastq input for the downsampling step.
+    :param config: Snakemake configuration
+    :param read_key: fastq_se or fastq_pe
+    :return: Path to the input file
+    """
+    if 'human_read_scrubbing' in config['analyses']:
+        return Path(config['working_dir']) / str(human_read_scrubbing.OUTPUT_SCRUBBING_FASTQ).format(input_format=read_key)
+    else:
+        return Path(config['working_dir']) / str(human_read_scrubbing.INPUT_SCRUBBING_FASTQ).format(input_format=read_key)
 
 
 def get_fq_input(input_type: str, dir_: Path):
