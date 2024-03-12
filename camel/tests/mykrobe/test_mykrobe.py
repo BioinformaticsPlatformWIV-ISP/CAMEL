@@ -16,6 +16,8 @@ class TestMykrobe(CamelTestSuite):
     """
     # Input files
     test_file_dir = CamelTestSuite.get_test_file_dir('salmonella')
+    db_dir = Path('/db/pipelines/salmonella/mykrobe/20220331')
+
     typhi_pe_reads = [test_file_dir / "SRR493330_1.fastq.gz",
                       test_file_dir / "SRR493330_2.fastq.gz"]
     typhi_ont = [Path('/testdata/camel/pipelines/Salmonella_ERR11177482.fastq.gz')]
@@ -37,7 +39,7 @@ class TestMykrobe(CamelTestSuite):
         tool = Mykrobe(self.camel)
         tool.add_input_files({
             'FASTQ_PE': [ToolIOFile(x) for x in self.typhi_pe_reads],
-            'DIR': [ToolIODirectory(Path('/db/pipelines/salmonella/mykrobe/20220331'))],
+            'DIR': [ToolIODirectory(self.db_dir)],
             'SPECIES': [ToolIOValue('typhi')]
         })
         tool.run(self.running_dir)
@@ -51,7 +53,7 @@ class TestMykrobe(CamelTestSuite):
         tool = Mykrobe(self.camel)
         tool.add_input_files({
             'ONT': [ToolIOFile(x) for x in self.typhi_ont],
-            'DIR': [ToolIODirectory(Path('/db/pipelines/salmonella/mykrobe/20220331'))],
+            'DIR': [ToolIODirectory(self.db_dir)],
             'SPECIES': [ToolIOValue('typhi')]
         })
         tool.run(self.running_dir)
@@ -65,7 +67,7 @@ class TestMykrobe(CamelTestSuite):
         tool = Mykrobe(self.camel)
         tool.add_input_files({
             'FASTQ_PE': [ToolIOFile(x) for x in self.shigella_pe_reads],
-            'DIR': [ToolIODirectory(Path('/db/pipelines/salmonella/mykrobe/20220331'))],
+            'DIR': [ToolIODirectory(self.db_dir)],
             'SPECIES': [ToolIOValue('sonnei')]
         })
         tool.run(self.running_dir)
@@ -79,7 +81,7 @@ class TestMykrobe(CamelTestSuite):
         tool = Mykrobe(self.camel)
         tool.add_input_files({
             'FASTA': [ToolIOFile(x) for x in self.shigella_fasta],
-            'DIR': [ToolIODirectory(Path('/db/pipelines/salmonella/mykrobe/20220331'))],
+            'DIR': [ToolIODirectory(self.db_dir)],
             'SPECIES': [ToolIOValue('sonnei')]
         })
         tool.run(self.running_dir)
@@ -93,7 +95,7 @@ class TestMykrobe(CamelTestSuite):
         tool = Mykrobe(self.camel)
         tool.add_input_files({
             'FASTQ_PE': [ToolIOFile(x) for x in self.staph_pe_reads],
-            'DIR': [ToolIODirectory(Path('/db/pipelines/salmonella/mykrobe/20220331'))],
+            'DIR': [ToolIODirectory(self.db_dir)],
             'SPECIES': [ToolIOValue('staph')]
         })
         tool.run(self.running_dir)
@@ -107,12 +109,11 @@ class TestMykrobe(CamelTestSuite):
         tool = Mykrobe(self.camel)
         tool.add_input_files({
             'FASTQ_PE': [ToolIOFile(x) for x in self.myco_pe_reads],
-            'DIR': [ToolIODirectory(Path('/db/pipelines/salmonella/mykrobe/20220331'))],
+            'DIR': [ToolIODirectory(self.db_dir)],
             'SPECIES': [ToolIOValue('tb')]
         })
         tool.run(self.running_dir)
         self.verify_output_files(tool, 'CSV')
-
 
     def test_salmonella_reporter(self) -> None:
         """
@@ -123,7 +124,7 @@ class TestMykrobe(CamelTestSuite):
         mykrobe = Mykrobe(self.camel)
         mykrobe.add_input_files({
             'FASTQ_PE': [ToolIOFile(x) for x in self.typhi_pe_reads],
-            'DIR': [ToolIODirectory(Path('/db/pipelines/salmonella/mykrobe/20220331'))],
+            'DIR': [ToolIODirectory(self.db_dir)],
             'SPECIES': [ToolIOValue('typhi')]
         })
         mykrobe.run(self.running_dir)
@@ -151,7 +152,7 @@ class TestMykrobe(CamelTestSuite):
         mykrobe = Mykrobe(self.camel)
         mykrobe.add_input_files({
             'ONT': [ToolIOFile(x) for x in self.typhi_ont],
-            'DIR': [ToolIODirectory(Path('/db/pipelines/salmonella/mykrobe/20220331'))],
+            'DIR': [ToolIODirectory(self.db_dir)],
             'SPECIES': [ToolIOValue('typhi')]
         })
         mykrobe.run(self.running_dir)
@@ -179,7 +180,7 @@ class TestMykrobe(CamelTestSuite):
         mykrobe = Mykrobe(self.camel)
         mykrobe.add_input_files({
             'FASTQ_PE': [ToolIOFile(x) for x in self.shigella_pe_reads],
-            'DIR': [ToolIODirectory(Path('/db/pipelines/salmonella/mykrobe/20220331'))],
+            'DIR': [ToolIODirectory(self.db_dir)],
             'SPECIES': [ToolIOValue('sonnei')]
         })
         mykrobe.run(self.running_dir)
@@ -207,7 +208,7 @@ class TestMykrobe(CamelTestSuite):
         mykrobe = Mykrobe(self.camel)
         mykrobe.add_input_files({
             'FASTA': [ToolIOFile(x) for x in self.shigella_fasta],
-            'DIR': [ToolIODirectory(Path('/db/pipelines/salmonella/mykrobe/20220331'))],
+            'DIR': [ToolIODirectory(self.db_dir)],
             'SPECIES': [ToolIOValue('sonnei')]
         })
         mykrobe.run(self.running_dir)
@@ -235,7 +236,7 @@ class TestMykrobe(CamelTestSuite):
         mykrobe = Mykrobe(self.camel)
         mykrobe.add_input_files({
             'FASTQ_PE': [ToolIOFile(x) for x in self.staph_pe_reads],
-            'DIR': [ToolIODirectory(Path('/db/pipelines/salmonella/mykrobe/20220331'))],
+            'DIR': [ToolIODirectory(self.db_dir)],
             'SPECIES': [ToolIOValue('staph')]
         })
         mykrobe.run(self.running_dir)
@@ -263,7 +264,7 @@ class TestMykrobe(CamelTestSuite):
         mykrobe = Mykrobe(self.camel)
         mykrobe.add_input_files({
             'FASTQ_PE': [ToolIOFile(x) for x in self.myco_pe_reads],
-            'DIR': [ToolIODirectory(Path('/db/pipelines/salmonella/mykrobe/20220331'))],
+            'DIR': [ToolIODirectory(self.db_dir)],
             'SPECIES': [ToolIOValue('tb')]
         })
         mykrobe.run(self.running_dir)
