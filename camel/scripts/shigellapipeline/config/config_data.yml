@@ -17,17 +17,13 @@ citations:
     - Camacho_2009-blast
     - Clausen_2018-kma
     - Inouye_2014-srst2
-    - Gupta_2014-argannot
-    - McArthur_2013-card
-    - Zankari_2012-resfinder
-    - Feldgarden_2019-ndaro
-    - Zankari_2017-pointfinder
+    - Bortolaia_2020-resfinder_4.0
     - Joensen_2014-virulencefinder
-    - Joensen_2015-serotypefinder
-    - Carattoli_2020-plasmidfinder
     - Jaureguy_2008-pasteur
     - Zhou_2020-enterobase
     - Jolley_2010-bigsdb
+    - Zhang_2021-shigeifinder
+    - Wu_2019-shigatyper
 
 
 #########################
@@ -45,62 +41,37 @@ contamination_check:
   expected_species: Shigella
   level_of_depth: G
 
+quast:
+  ref:
+    fasta: /db/refgenomes/Escherichia_coli/NC_002695.2.fasta
+    gff3: /db/refgenomes/Escherichia_coli/NC_002695.2.gff
+
 quality_checks:
   expected_gc_content: 50.5
 
-variant_calling:
-  ploidy: 1
-  eport_bam: {export_bam}
-  reference:
-    path: /db/refgenomes/Escherichia_coli/NC_002695.2.fasta
-    name: <i>Escherichia coli</i> O157:H7 (NC_002695.2)
-    url: https://www.ncbi.nlm.nih.gov/nuccore/NC_002695.2
-
 confindr:
   db: /db/confindr/0.8.1
-
-variant_filtering: {variant_filtering}
 
 assembly:
   spades:
     cov_cutoff: 10
   min_contig_length: 1000
 
-##################
-# Identification #
-##################
-subspecies_identification:
-  bed_speG: /db/pipelines/shigella/speG/speG.bed
-  threshold_speG_depth: 10
-
-flexneri_type:
-  fasta_gtr_promotor: /db/pipelines/shigella/flexneri_gtr_promotor/promotor.fasta
-  fasta_separate: /db/pipelines/shigella/flexneri_type_separate/
-  fasta_combined: /db/pipelines/shigella/flexneri_type/
-  tsv_profiles: /db/pipelines/shigella/flexneri_type_profiles/serotype_profiles.tsv
-
 ############################
 # Gene detection databases #
 ############################
+amrfinder:
+  db: /db/amrfinder/by_version/latest
+  species: Escherichia
+
+resfinder4:
+  db: /db/resfinder4
+  species: Escherichia coli
+
+mob_suite:
+  db: /db/mob_suite/latest
+
 gene_detection:
-  argannot:
-    path: /db/gene_detection/ARG-ANNOT
-
-  resfinder:
-    path: /db/gene_detection/ResFinder
-    metadata:
-      name: Antibiotic(s)
-      key: antibiotics
-
-  card:
-    path: /db/gene_detection/CARD
-
-  ncbi_amr:
-    path: /db/gene_detection/NCBI_AMR
-    metadata:
-      name: Antibiotic(s)
-      key: subclass
-
   virulencefinder:
     path: /db/gene_detection/VirulenceFinder-Ecoli
     metadata:
@@ -112,26 +83,6 @@ gene_detection:
     metadata:
       name: stx variant
       key: stx_variant
-
-  plasmidfinder:
-    path: /db/gene_detection/PlasmidFinder-entero
-    params:
-      blastn:
-        min_percent_identity: 95
-        min_coverage: 60
-      srst2:
-        max_divergence: 5
-        min_coverage: 60
-    message:
-      content: The presence of a replicon does not mean that the corresponding plasmid is present.
-      category: warning
-
-  subspecies_identification:
-    path: /db/pipelines/shigella/subspecies_identification/
-    force_detection_method: srst2
-
-  flexneri_type:
-    path: /db/pipelines/shigella/flexneri_type
 
 ###################
 # Sequence typing #
@@ -145,3 +96,8 @@ sequence_typing:
     path: /db/sequence_typing/ecoli/cgmlst
     detection_method: blast
     blast_task: blastn
+  rmlst:
+    path: /db/sequence_typing/various/rmlst
+    message:
+      content: rMLST is only available for noncommercial use, see <a href="https://pubmlst.org/species-id">PubMLST</a> for more info.
+      category: info
