@@ -6,6 +6,8 @@ import yaml
 from camel.app.camel import Camel
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.io.tooliodirectory import ToolIODirectory
+from camel.app.io.tooliofile import ToolIOFile
+from camel.app.tools.pipelines.mycobacterium.bamaddcustomtag import BAMAddCustomTag
 from camel.scripts.mycobacteriumpipeline import CONFIG_DATA
 from camel.scripts.mycobacteriumpipeline.mainmycobacteriumpipeline import MainMycobacteriumPipeline
 from camel.tests import longRunningTest
@@ -50,17 +52,20 @@ class TestMycobacteriumPipeline(CamelTestSuite):
         """
         path_report_out = self.running_dir / 'out' / 'report.html'
         path_summary_out = self.running_dir / 'out' / 'summary.tsv'
+        path_bam_out = self.running_dir / 'out' / 'mapping.bam'
         args = [
             '--fastq-pe', str(TestMycobacteriumPipeline.input_fastq_pe[0]),
             str(TestMycobacteriumPipeline.input_fastq_pe[1]),
             '--output-html', str(path_report_out),
             '--output-dir', str(path_report_out.parent),
             '--output-tsv', str(path_summary_out),
+            '--output-bam', str(path_bam_out),
             '--working-dir', str(self.running_dir)
         ] + [f"--{a.replace('_', '-')}" for a in MainMycobacteriumPipeline.CUSTOM_ANALYSES if a != 'cgmlst']
         main = MainMycobacteriumPipeline(args)
         main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)
+        self.assertGreater(path_bam_out.stat().st_size, 0)
 
     @longRunningTest()
     def test_mycobacterium_pipeline_srst2(self) -> None:
@@ -103,6 +108,18 @@ class TestMycobacteriumPipeline(CamelTestSuite):
         main = MainMycobacteriumPipeline(args)
         main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)
+
+    def test_add_custom_tag(self) -> None:
+        """
+        Tests the tool that adds a custom tag to the BAM output (used for using the BAM output in PACU).
+        :return: None
+        """
+        path_test = TestMycobacteriumPipeline.test_file_dir / 'components' / 'toy.bam'
+        add_tag = BAMAddCustomTag(self.camel)
+        add_tag.add_input_files({'BAM': [ToolIOFile(path_test)]})
+        add_tag.update_parameters(output='custom_tag.bam', name='CT', value='my_value')
+        add_tag.run(self.running_dir)
+        self.verify_output_files(add_tag, 'BAM')
 
 
 if __name__ == '__main__':

@@ -1,12 +1,18 @@
 #!/usr/bin/env python
 import argparse
+import tempfile
+from pathlib import Path
 from typing import Optional, Dict, List, Sequence
 
 import yaml
 
 from camel.app.camel import Camel
 from camel.app.components.pipelines.reportpipeline import ReportPipeline
+from camel.app.loggers import logger
+from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
+from camel.app.tools.pipelines.mycobacterium.bamaddcustomtag import BAMAddCustomTag
+from camel.resources.snakefile import variant_calling
 from camel.scripts.mycobacteriumpipeline import SNAKEFILE_MAIN, CONFIG_DATA
 
 
@@ -44,6 +50,26 @@ class MainMycobacteriumPipeline(ReportPipeline):
         config_file = self.__construct_config_file(input_files)
         self._run_snakemake_main(config_file)
         self._export_assembly()
+        self._export_bam()
+
+    def _export_bam(self) -> None:
+        """
+        Exports the BAM output to the specified output location (optional).
+        :return: None
+        """
+        if self._args.output_bam is None:
+            logger.debug(f'Not exporting BAM output')
+            return
+        path_io = self._args.working_dir / variant_calling.OUTPUT_VARIANT_CALLING_BAM
+        bam_input = SnakemakeUtils.load_object(path_io)
+
+        # Add custom tag with the sample name for PACU
+        with tempfile.TemporaryDirectory(prefix='camel_', dir=Camel.get_instance().config['temp_dir']) as dir_:
+            add_tag = BAMAddCustomTag(Camel.get_instance())
+            add_tag.add_input_files({'BAM': bam_input})
+            add_tag.update_parameters(output=str(self._args.output_bam), name='PACU_name', value=self.sample_name)
+            add_tag.run(Path(str(dir_)))
+        logger.info(f'Output BAM file copied to: {self._args.output_bam}')
 
     @staticmethod
     def _parse_arguments(args: Optional[Sequence[str]]) -> argparse.Namespace:
@@ -54,6 +80,8 @@ class MainMycobacteriumPipeline(ReportPipeline):
         """
         parser = argparse.ArgumentParser()
         ReportPipeline.add_common_arguments(parser)
+        parser.add_argument(
+            '--output-bam', type=Path, help='Output path for the mapping to the reference genome (BAM)')
         for analysis_key in MainMycobacteriumPipeline.CUSTOM_ANALYSES:
             parser.add_argument(f"--{analysis_key.replace('_', '-')}", action='store_true')
         return parser.parse_args(args)
