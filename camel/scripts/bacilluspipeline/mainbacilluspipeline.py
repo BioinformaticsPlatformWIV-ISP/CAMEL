@@ -20,7 +20,7 @@ class MainBacillusPipeline(ReportPipeline):
     """
 
     CUSTOM_ANALYSES = {
-        'common': ['rmlst', 'plasmidfinder', 'mobsuite', 'vfdb_core', 'amrfinder', 'kraken2', 'confindr'],
+        'common': ['rmlst', 'plasmidfinder', 'mobsuite', 'vfdb_core', 'amrfinder', 'kraken2', 'confindr', 'straingst'],
         'cereus': ['btyper', 'mlst_cereus', 'cgmlst_cereus'],
         'subtilis': ['fastani', 'mlst_subtilis', 'gmo']
     }
@@ -93,6 +93,7 @@ class MainBacillusPipeline(ReportPipeline):
                     continue
                 if group != 'common' and group != self._args.species:
                     logger.warning(f"Analysis '{key}' not supported for species '{self._args.species}'")
+                    continue
                 config_data['analyses'].append(key)
 
         # Parse template
@@ -107,7 +108,7 @@ class MainBacillusPipeline(ReportPipeline):
                 genome_size=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['genome_size'],
                 wildcards_assembly='long_read_assembly',
                 ref_fasta=Path(Camel.get_instance().config['db_root'], 'refgenomes', 'Bacillus',
-                          f'{MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]["ref_species"]}.fasta'),
+                               f'{MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]["ref_species"]}.fasta'),
                 ref_gff=Path(Camel.get_instance().config['db_root'], 'refgenomes', 'Bacillus',
                              f'{MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]["ref_species"]}.gff3')
             ), Loader=yaml.SafeLoader))
@@ -133,6 +134,7 @@ class MainBacillusPipeline(ReportPipeline):
     def _parse_arguments(args: Optional[Sequence[str]] = None) -> argparse.Namespace:
         """
         Parses the command line arguments.
+        :param args: command line arguments
         :return: Arguments
         """
         parser = argparse.ArgumentParser()
