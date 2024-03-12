@@ -73,3 +73,5 @@ rule shigeifinder_create_summary:
         with open(output.TSV, 'w') as handle:
             handle.write(f"shigeifinder_serotype\t{informs['species']}")
             handle.write('\n')
+            handle.write(f"shigeifinder_tool_version\t{informs['_name']}")
+            handle.write('\n')
