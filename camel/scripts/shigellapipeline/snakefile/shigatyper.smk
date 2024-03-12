@@ -26,12 +26,8 @@ rule shigatyper_run:
         typer = ShigaTyper(Camel.get_instance())
 
         # Extract FASTQ paths to add them as ShigaTyper input
-        key_reads = 'PE' if params.input_type == 'illumina' else 'SE' # TODO : Add statement for ONT reads
-        fq_input_dict = SnakePipelineUtils.extracts_fq_input(
-            Path(input.IO), key_pe='FASTQ_PE', key_se='FASTQ_PE', read_type=key_reads)
         fq_in = FastqInput.from_fq_dict(Path(input.IO),'illumina')
-        typer.add_input_files({'FASTQ_FWD': [fq_in.pe[0]],
-                               'FASTQ_REV': [fq_in.pe[1]]})
+        typer.add_input_files({'FASTQ_PE': [fq_in.pe[0], fq_in.pe[1]]})
 
         # Run tool
         step = Step(str(rule), typer, Camel.get_instance(), params.dir_)
@@ -83,4 +79,6 @@ rule shigatyper_create_summary:
         # Create TSV output
         with open(output.TSV, 'w') as handle:
             handle.write(f"shigatyper_prediction\t{informs['species']}")
+            handle.write('\n')
+            handle.write(f"shigatyper_tool_version\t{informs['_name']}")
             handle.write('\n')
