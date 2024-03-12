@@ -55,6 +55,9 @@ assembly:
 confindr:
   db: /db/confindr/0.8.1
 
+straingst:
+  db: /db/pipelines/bacillus/bacillus_straingst/bacillus_database.hdf5
+
 sequence_typing:
   mlst_cereus:
     path: /db/sequence_typing/bacillus_cereus/mlst
