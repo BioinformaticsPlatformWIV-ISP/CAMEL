@@ -5,6 +5,7 @@ from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.seqtk.seqtksize import SeqtkSize
 from camel.app.tools.seqtk.seqtkconvert import SeqtkConvert
 
+
 class TestSeqtk(CamelTestSuite):
     """
     Initializes the seqtk tool.
@@ -18,6 +19,7 @@ class TestSeqtk(CamelTestSuite):
     def test_seqtk_size(self) -> None:
         """
         Testing SeqKit seq with contigs file.
+        :return: None
         """
         seqtk_size = SeqtkSize(self.camel)
         seqtk_size.add_input_files({'FASTQ': [TestSeqtk.FILE_FASTQ_A, TestSeqtk.FILE_FASTQ_B]})
@@ -28,12 +30,14 @@ class TestSeqtk(CamelTestSuite):
     def test_seqtk_convert(self) -> None:
         """
         Testing Seqtk seq -a with fastq file.
+        :return: None
         """
         seqtk_convert = SeqtkConvert(self.camel)
         seqtk_convert.add_input_files({'FASTQ': [TestSeqtk.FILE_FASTQ_A]})
         seqtk_convert.update_parameters(output_file='sequences.fasta')
         seqtk_convert.run(self.running_dir)
         self.verify_output_files(seqtk_convert, 'FASTA')
+
 
 if __name__ == '__main__':
     unittest.main()
