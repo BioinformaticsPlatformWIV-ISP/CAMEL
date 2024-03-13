@@ -165,7 +165,7 @@ class ResFinderReporter(Tool):
             self.__add_phenotype_table(section, key)
         section.add_warning_message(
             "The phenotype 'no resistance' should be interpreted with caution, as genes or mutations may be missing " 
-            "from the database. In addition, these are WGS-based predictions that may not be reflected in the" 
+            "from the database. In addition, these are WGS-based predictions that may not be reflected in the "
             "phenotype.")
         section.add_horizontal_line()
 
