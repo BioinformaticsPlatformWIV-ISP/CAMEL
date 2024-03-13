@@ -1,6 +1,6 @@
 import argparse
 from pathlib import Path
-from typing import Union, List, Dict
+from typing import Union
 
 import logging
 from camel.app.camel import Camel
@@ -15,6 +15,7 @@ from camel.app.io.tooliofile import ToolIOFile
 from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.loggers import logger
 from camel.app.tools.seqtk.seqtkconvert import SeqtkConvert
+
 
 class NanoporeHelper(BaseReadTypeHelper):
     """
@@ -80,13 +81,12 @@ class NanoporeHelper(BaseReadTypeHelper):
         else:
             return FastqInput(args.read_type, se=[ToolIOFile(Path(fq_input_se))], is_pe=False)
 
-    def prepare_fasta_read_input(self, report: HtmlReport, args: argparse.Namespace) -> dict[
-        str, list[Union[ToolIOFile, ToolIOValue, ToolIODirectory, ToolIO]]]:
+    def prepare_fasta_read_input(self, report: HtmlReport, args: argparse.Namespace) -> Path:
         """
-        Prepares the FASTA input by converting FASTQ to FASTA with Seqtk
+        Prepares the FASTA input by converting FASTQ to FASTA with Seqtk.
         :param report: HTML report
         :param args: Command-line arguments
-        :return: FASTA file
+        :return: Path to FASTA file
         """
         fq_input_se = self.__symlink_nanopore_reads(Path(args.fastq_se), self._sample_name)
         fastq_input = FastqInput(args.read_type, se=[ToolIOFile(Path(fq_input_se))], is_pe=False)

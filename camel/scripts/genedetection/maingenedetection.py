@@ -48,7 +48,7 @@ class MainGeneDetection(object):
         argument_parser.add_argument('--blast-filtering-method', type=str, choices=['cluster', 'score'], default='cluster')
         argument_parser.add_argument('--blast-score-nb-of-hits', type=int, default=5)
         argument_parser.add_argument('--blast-reads', action='store_true', default=None,
-                                     help='perform blast search of the reads directly instead of on the assembly' )
+                                     help='perform blast search on the reads directly instead of on the assembly')
 
         # SRST2 specific parameters
         argument_parser.add_argument('--srst2-min-cov', type=int, default=90)
