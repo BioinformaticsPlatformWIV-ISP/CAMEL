@@ -1,4 +1,0 @@
-dependencies: []
-parameters:
-  threshold_speG_depth: {default: true, mandatory: false, option: null, value: '10'}
-tool_command: null

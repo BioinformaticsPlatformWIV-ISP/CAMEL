@@ -131,7 +131,7 @@ rule combine_reports:
             report_structure,params.input_type,input.reports_contamination,input.report_confindr)
         report_structure.append(('Advanced QC', 'adv_qc', [Path(input.report_adv_qc)]))
         report_structure.extend([
-            ('Shigella typing', 'typing', [Path(x) for x in (
+            ('<i>Shigella</i> typing', 'shigella_typing', [Path(x) for x in (
                 input.report_shigeifinder, input.report_shigatyper)]),
             ('AMR detection', 'amr', [Path(x) for x in (
                 input.report_amrfinder, input.report_resfinder4)]),
