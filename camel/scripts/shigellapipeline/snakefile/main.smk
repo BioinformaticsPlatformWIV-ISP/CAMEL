@@ -83,9 +83,11 @@ rule combine_reports:
         report_resfinder4 = Path(config['working_dir']) / (resfinder4.OUTPUT_RESFINDER4_REPORT if config['analyses'] else resfinder4.OUTPUT_RESFINDER4_REPORT_EMPTY),
         report_virulence = gene_detection.get_gene_detection_report('virulencefinder', config),
         report_virulence_shiga = gene_detection.get_gene_detection_report('virulencefinder_shiga', config, 'virulencefinder'),
-        report_mob_suite= Path(config['working_dir']) / (mobsuite.OUTPUT_MOB_SUITE_REPORT if 'mob_suite' in config['analyses'] else mobsuite.OUTPUT_MOB_SUITE_REPORT_EMPTY),
+        # Plasmid characterization
+        report_mob_suite = Path(config['working_dir']) / (mobsuite.OUTPUT_MOB_SUITE_REPORT if 'mob_suite' in config['analyses'] else mobsuite.OUTPUT_MOB_SUITE_REPORT_EMPTY),
+        report_genomic_context=Path(config['working_dir']) / (mobsuite.OUTPUT_MOB_SUITE_CONTEXT_REPORT if 'mob_suite' in config['analyses'] else mobsuite.OUTPUT_MOB_SUITE_CONTEXT_REPORT_EMPTY),
         # Shigella typing
-        report_rmlst= sequence_typing.get_sequence_typing_report('rmlst',config),
+        report_rmlst = sequence_typing.get_sequence_typing_report('rmlst',config),
         report_shigeifinder = Path(config['working_dir']) / (shigeifinder.OUTPUT_SHIGEIFINDER_REPORT if 'shigeifinder' in config['analyses'] else shigeifinder.OUTPUT_SHIGEIFINDER_REPORT_EMPTY),
         report_shigatyper = Path(config['working_dir']) / (shigatyper.OUTPUT_SHIGATYPER_REPORT if 'shigatyper' in config['analyses'] else shigatyper.OUTPUT_SHIGATYPER_REPORT_EMPTY),
         # Sequence typing
@@ -97,10 +99,10 @@ rule combine_reports:
     output:
         HTML = config['output_report']
     params:
-        sample_name = config['sample_name'],
-        output_dir = config['output_dir'],
-        pipeline_info = config['pipeline'],
-        input_dict= config['input'],
+        sample_name=config['sample_name'],
+        output_dir=config['output_dir'],
+        pipeline_info=config['pipeline'],
+        input_dict=config['input'],
         input_type=config['input_type'],
         detection_method=config['detection_method'],
         citation_keys=config['citations']
@@ -137,7 +139,8 @@ rule combine_reports:
                 input.report_amrfinder, input.report_resfinder4)]),
             ('Virulence characterization', 'viru', [Path(x) for x in (
                 input.report_virulence, input.report_virulence_shiga)]),
-            ('Plasmid replicon detection', 'plasmid', [Path(input.report_mob_suite)]),
+            ('Plasmid replicon detection', 'plasmid', [Path(x) for x in (
+                input.report_mob_suite, input.report_genomic_context)]),
             ('Sequence typing', 'st', [Path(x) for x in (
                 input.report_mlst_warwick, input.report_mlst_pasteur, input.report_cgmlst, input.report_rmlst)]),
             ('Citations', 'citations', [Path(input.report_citations)]),
@@ -181,3 +184,19 @@ rule combine_summary_files:
             for summary_input in input:
                 with open(summary_input) as handle_in:
                     handle_out.write(handle_in.read())
+
+rule link_genomic_context:
+    """
+    Links the input databases to the genomic context assay.
+    """
+    input:
+        # AMR
+        TSV_amrfinder = Path(config['working_dir']) / 'amrfinder' / 'tsv.io' if 'amrfinder' in config['analyses'] else [],
+        # Virulence
+        TSV_gd_vfdb = Path(config['working_dir']) / 'gene_detection' / 'vfdb_core' / 'metadata' / 'tsv.io' if 'vfdb_core' in config['analyses'] else [],
+        INFORMS_gd_vfdb = Path(config['working_dir']) / 'gene_detection' / 'vfdb_core' / 'db_manager' / 'informs.io' if 'vfdb_core' in config['analyses'] else [],
+    output:
+        TSV = Path(config['working_dir']) / 'mob_suite' / 'genomic_context' / 'input' / 'tsv.io',
+        INFORMS = Path(config['working_dir']) / 'mob_suite' / 'genomic_context' / 'input' / 'informs.io'
+    run:
+        mobsuite.collect_genomic_context_input(input, Path(output.TSV), Path(output.INFORMS))
