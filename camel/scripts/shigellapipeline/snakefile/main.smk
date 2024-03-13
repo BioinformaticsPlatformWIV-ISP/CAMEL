@@ -85,7 +85,7 @@ rule combine_reports:
         report_virulence_shiga = gene_detection.get_gene_detection_report('virulencefinder_shiga', config, 'virulencefinder'),
         # Plasmid characterization
         report_mob_suite = Path(config['working_dir']) / (mobsuite.OUTPUT_MOB_SUITE_REPORT if 'mob_suite' in config['analyses'] else mobsuite.OUTPUT_MOB_SUITE_REPORT_EMPTY),
-        report_genomic_context=Path(config['working_dir']) / (mobsuite.OUTPUT_MOB_SUITE_CONTEXT_REPORT if 'mob_suite' in config['analyses'] else mobsuite.OUTPUT_MOB_SUITE_CONTEXT_REPORT_EMPTY),
+        report_genomic_context = Path(config['working_dir']) / (mobsuite.OUTPUT_MOB_SUITE_CONTEXT_REPORT if 'mob_suite' in config['analyses'] else mobsuite.OUTPUT_MOB_SUITE_CONTEXT_REPORT_EMPTY),
         # Shigella typing
         report_rmlst = sequence_typing.get_sequence_typing_report('rmlst',config),
         report_shigeifinder = Path(config['working_dir']) / (shigeifinder.OUTPUT_SHIGEIFINDER_REPORT if 'shigeifinder' in config['analyses'] else shigeifinder.OUTPUT_SHIGEIFINDER_REPORT_EMPTY),
