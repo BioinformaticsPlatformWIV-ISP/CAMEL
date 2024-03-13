@@ -27,7 +27,7 @@ rule shigatyper_run:
 
         # Extract FASTQ paths to add them as ShigaTyper input
         fq_in = FastqInput.from_fq_dict(Path(input.IO),'illumina')
-        typer.add_input_files({'FASTQ_PE': [fq_in.pe[0], fq_in.pe[1]]})
+        typer.add_input_files({'FASTQ_PE': fq_in.pe})
 
         # Run tool
         step = Step(str(rule), typer, Camel.get_instance(), params.dir_)
