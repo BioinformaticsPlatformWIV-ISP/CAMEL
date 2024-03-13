@@ -24,7 +24,7 @@ class SPIFinderReporter(Tool):
         """
         super().__init__('SPIFinder Reporter', '0.1', camel)
         self._section = None
-        self._fastq_results_present = True if 'spifinder_fastq' in self._input_informs else False
+        self._fastq_results_present = True
 
     def _check_input(self) -> None:
         """
@@ -32,8 +32,10 @@ class SPIFinderReporter(Tool):
         :return: None
         """
         super(SPIFinderReporter, self)._check_input()
+        if 'spifinder_fastq' not in self._input_informs:
+            self._fastq_results_present = False
         if self._fastq_results_present and 'JSON_FASTQ' not in self._tool_inputs:
-            raise InvalidInputSpecificationError("Fastq analysis results were found in the input informs; "
+            raise InvalidInputSpecificationError("FASTQ analysis results were found in the input informs; "
                                                  "JSON_FASTQ is required as input for this tool.")
         if 'JSON_FASTA' not in self._tool_inputs:
             raise InvalidInputSpecificationError("JSON_FASTA is missing but always required as input for this tool.")
@@ -50,14 +52,14 @@ class SPIFinderReporter(Tool):
         """
         self._section = HtmlReportSection(SPIFinderReporter.TITLE,
                                           subtitle=self._input_informs['spifinder_fasta']['_name'])
-        # Add Fastq results 'section'
+        # Add FASTQ results 'section'
         self._section.add_header('HITS - KMA on raw reads (FASTQ)', 3)
         if self._fastq_results_present:
             self.__add_hits_results(self._tool_inputs['JSON_FASTQ'][0].path, 'fastq')
         else:
             self._section.add_paragraph('SPIFinder raw reads results not available in FASTA-input mode')
         self._section.add_horizontal_line()
-        # Add mandatory Fasta results 'section'
+        # Add mandatory FASTA results 'section'
         self._section.add_header('HITS - BLAST on the assembly (FASTA)', 3)
         self.__add_hits_results(self._tool_inputs['JSON_FASTA'][0].path, 'fasta')
 

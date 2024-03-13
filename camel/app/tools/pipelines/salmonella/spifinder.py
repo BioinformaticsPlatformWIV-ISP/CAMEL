@@ -20,15 +20,16 @@ class SPIFinder(Tool):
         :return: None
         """
         super().__init__('SPIFinder', '0.1', camel)
+        self._input_key = None
 
     def _execute_tool(self) -> None:
         """
         Executes the tool
         :return: None
         """
-        self.__set_output()
         self.__build_command()
         self._execute_command()
+        self.__set_output()
         db_dir = self._tool_inputs['DIR'][0].path
         self.__add_informs(db_dir)
 
@@ -62,7 +63,6 @@ class SPIFinder(Tool):
         Concatenates required parameters and options to build the command
         :return: None
         """
-        self._informs['_tag'] = 'FASTA' if self._input_key == 'FASTA' else 'FASTQ'
         if self._input_key == 'FASTQ_PE':
             inputs_str = ' '.join([
                 str(self._tool_inputs[self._input_key][0].path),
