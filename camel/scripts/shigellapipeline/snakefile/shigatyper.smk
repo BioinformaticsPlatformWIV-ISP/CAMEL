@@ -19,7 +19,6 @@ rule shigatyper_run:
         dir_ = Path(config['working_dir']) / 'shigatyper',
         input_type = config['input_type']
     run:
-        from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         from camel.app.tools.pipelines.shigella.shigatyper import ShigaTyper
         from camel.app.components.workflows.utils.fastqinput import FastqInput
 
