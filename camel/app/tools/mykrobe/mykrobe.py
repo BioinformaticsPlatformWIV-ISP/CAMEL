@@ -22,7 +22,7 @@ class Mykrobe(Tool):
         Initializes Mykrobe.
         :param camel: Camel instance
         """
-        super().__init__('mykrobe', 'v0.10.0', camel)
+        super().__init__('mykrobe', 'v0.13.0', camel)
 
     def _execute_tool(self) -> None:
         """
@@ -41,7 +41,7 @@ class Mykrobe(Tool):
         Checks if the provided input is valid.
         :return: None
         """
-        input_types = {'FASTQ_PE', 'FASTA', 'ONT'}
+        input_types = {'FASTQ_PE', 'FASTA', 'FASTQ_SE'}
 
         super(Mykrobe, self)._check_input()
         if 'SPECIES' not in self._tool_inputs:
@@ -49,21 +49,22 @@ class Mykrobe(Tool):
                                                  "to be specified")
         if 'DIR' not in self._tool_inputs:
             raise InvalidInputSpecificationError("Database path needs to be specified")
-        if len(input_types.intersection(set(self._tool_inputs))) == 0:
-            raise InvalidInputSpecificationError("'FASTQ_PE', 'FASTA' or 'ONT' input is required")
+        if len(input_types.intersection(set(self._tool_inputs))) != 1:
+            raise InvalidInputSpecificationError(f"One input type (i.e. 'FASTQ_PE', 'FASTA' or 'FASTQ_SE') is required "
+                                                 "and accepted")
 
     @staticmethod
     def __prepare_input_str(input_type: dict) -> str:
         """
-        Builds input based on format (i.e. 'FASTQ_PE', 'FASTA' or 'ONT').
+        Builds input based on format (i.e. 'FASTQ_PE', 'FASTA' or 'FASTQ_SE').
         :return: None
         """
         if 'FASTQ_PE' in input_type:
             return f"{str(input_type['FASTQ_PE'][0].path)} {str(input_type['FASTQ_PE'][1].path)}"
         elif 'FASTA' in input_type:
             return str(input_type['FASTA'][0].path)
-        elif 'ONT' in input_type:
-            return str(input_type["ONT"][0].path) + ' --ont'
+        elif 'FASTQ_SE' in input_type:
+            return str(input_type["FASTQ_SE"][0].path) + ' --ont'
 
     def __build_command(self) -> None:
         """
