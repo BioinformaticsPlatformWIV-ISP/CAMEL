@@ -20,11 +20,12 @@ class MykrobeReporter(Tool):
 
     TITLE = 'Mykrobe'
 
-    COLS = [{'key': 'level'},
-            {'key': 'id'},
-            {'key': 'percent', 'fmt': lambda x: f'{x:.2f}' if isinstance(x, float) else x},
-            {'key': 'depth', 'fmt': lambda x: f'{int(x):,}' if isinstance(x, float) else x}
-            ]
+    COLS = [
+        {'key': 'level'},
+        {'key': 'id'},
+        {'key': 'percent', 'fmt': lambda x: f'{x:.2f}' if isinstance(x, float) else x},
+        {'key': 'depth', 'fmt': lambda x: f'{int(x):,}' if isinstance(x, float) else x}
+    ]
 
     def __init__(self, camel: Camel) -> None:
         """
