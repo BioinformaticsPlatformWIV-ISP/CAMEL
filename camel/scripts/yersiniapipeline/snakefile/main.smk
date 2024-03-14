@@ -201,3 +201,15 @@ rule link_genomic_context:
         INFORMS=Path(config['working_dir']) / 'mob_suite' / 'genomic_context' / 'input' / 'informs.io'
     run:
         mobsuite.collect_genomic_context_input(input, Path(output.TSV),Path(output.INFORMS))
+
+rule link_species:
+    """
+    Links the cgST profile matches to the species determination tool.
+    """
+    input:
+        TSV_profile_matches = Path(config['working_dir']) / 'typing' / 'cgmlst' / 'tsv_profile_matches.io'
+    output:
+        TSV_species_input = Path(config['working_dir']) / 'species_determination' / 'input' / 'tsv.io'
+    run:
+        from camel.app.snakemake.snakemakeutils import SnakemakeUtils
+        SnakemakeUtils.dump_object(input.TSV_profile_matches, output.TSV_species_input)

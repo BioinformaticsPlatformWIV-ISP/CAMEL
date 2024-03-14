@@ -10,7 +10,7 @@ rule species_determination_analysis:
     This rule is used to determine the species based on the cgST.
     """
     input:
-        TSV_ST = expand(Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_ALL_MATCHES), scheme='cgmlst')
+        TSV_ST = Path(config['working_dir']) / 'species_determination' / 'input' / 'tsv.io'
     output:
         INFORMS= Path(config['working_dir']) / species_determination.OUTPUT_SPECIES_DETERMINATION_INFORMS,
         TSV = Path(config['working_dir']) / species_determination.OUTPUT_SPECIES_DETERMINATION_TSV
