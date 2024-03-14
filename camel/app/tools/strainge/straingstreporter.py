@@ -1,5 +1,7 @@
 from pathlib import Path
-from typing import List, Tuple, Union
+from typing import List, Union
+
+import pandas as pd
 
 from camel.app.camel import Camel
 from camel.app.components.html.htmlreportsection import HtmlReportSection
@@ -47,8 +49,8 @@ class StrainGSTReporter(Tool):
             suffix_read_type = 'Nanopore'
 
         # Add output tables
-        header, data = self.__parse_input_file()
-        self.__add_output_table(section, header, data,
+        output_table = self.__parse_input_file()
+        self.__add_output_table(section, output_table.columns, output_table.values.tolist(),
                                 f'StrainGST strain identification - {suffix_read_type}')
 
         # Add link to TSV file
@@ -59,19 +61,15 @@ class StrainGSTReporter(Tool):
         # Tool output
         self._tool_outputs['VAL_HTML'] = [ToolIOValue(section)]
 
-    def __parse_input_file(self) -> Union[bool, Tuple[List[str], List[List[str]]]]:
+    def __parse_input_file(self) -> pd.DataFrame:
         """
         Parses the input file.
-        :return: Input file header, input file data
+        :return: pd dataframe with relevant columns
         """
-        with open(self._tool_inputs['TSV'][0].path) as handle:
-            handle.readline()
-            header = ['Strain', 'Coverage', 'Evenness', 'Relative abundance', 'Score']
-            output_table = []
-            for line in handle.readlines():
-                spl = line.strip().split('\t')
-                output_table.append([spl[1], spl[5], spl[9], spl[11], spl[14]])
-        return header, output_table
+        to_return = pd.read_table(self._tool_inputs['TSV'][0].path,
+                                  usecols=[1, 5, 9, 11, 14],
+                                  names=['Strain', 'Coverage', 'Evenness', 'Relative abundance', 'Score'])
+        return to_return
 
     def __generate_output_filename(self, prefix: str) -> str:
         """
