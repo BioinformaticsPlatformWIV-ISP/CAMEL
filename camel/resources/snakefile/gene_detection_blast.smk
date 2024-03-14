@@ -18,7 +18,7 @@ rule gene_detection_blast_blastn:
     params:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'gene_detection' / wildcards.db / 'blastn',
         task = lambda wildcards: config['gene_detection'][wildcards.db].get('params', {}).get('blastn', {}).get('task', 'megablast'),
-        blast_reads= lambda wildcards: config['gene_detection'][wildcards.db].get('params',{}).get('blastn',{}).get('blast_reads', False),
+        blast_reads = lambda wildcards: config['gene_detection'][wildcards.db].get('params', {}).get('blastn', {}).get('blast_reads', False),
     run:
         from camel.app.tools.blast.blastn import Blastn
         blastn = Blastn(Camel.get_instance())
