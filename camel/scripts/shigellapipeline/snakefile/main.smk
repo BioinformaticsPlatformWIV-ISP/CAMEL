@@ -193,8 +193,10 @@ rule link_genomic_context:
         # AMR
         TSV_amrfinder = Path(config['working_dir']) / 'amrfinder' / 'tsv.io' if 'amrfinder' in config['analyses'] else [],
         # Virulence
-        TSV_gd_vfdb = Path(config['working_dir']) / 'gene_detection' / 'vfdb_core' / 'metadata' / 'tsv.io' if 'vfdb_core' in config['analyses'] else [],
-        INFORMS_gd_vfdb = Path(config['working_dir']) / 'gene_detection' / 'vfdb_core' / 'db_manager' / 'informs.io' if 'vfdb_core' in config['analyses'] else [],
+        TSV_gd_coli = Path(config['working_dir']) / 'gene_detection' / 'virulencefinder' / 'metadata' / 'tsv.io' if 'virulencefinder' in config['analyses'] else [],
+        INFORMS_gd_coli = Path(config['working_dir']) / 'gene_detection' / 'virulencefinder' / 'db_manager' / 'informs.io' if 'virulencefinder' in config['analyses'] else [],
+        TSV_gd_shiga = Path(config['working_dir']) / 'gene_detection' / 'virulencefinder_shiga' / 'metadata' / 'tsv.io' if 'virulencefinder' in config['analyses'] else[],
+        INFORMS_gd_shiga = Path(config['working_dir']) / 'gene_detection' / 'virulencefinder_shiga' / 'db_manager' / 'informs.io' if 'virulencefinder' in config['analyses'] else[]
     output:
         TSV = Path(config['working_dir']) / 'mob_suite' / 'genomic_context' / 'input' / 'tsv.io',
         INFORMS = Path(config['working_dir']) / 'mob_suite' / 'genomic_context' / 'input' / 'informs.io'
