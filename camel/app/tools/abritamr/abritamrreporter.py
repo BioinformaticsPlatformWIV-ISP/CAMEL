@@ -69,21 +69,24 @@ class AbriTAMRReporter(Tool):
 
     def ___add_summary_file_table(self, summary_file: Path) -> None:
         """
-        Parses an AbriTAMR output summary file ( TXT_PARTIALS or TXT_MATCHES ) and
+        Parses an AbriTAMR output summary file (TXT_PARTIALS or TXT_MATCHES) and
         adds the table to the section.
         :param summary_file: TXT_PARTIALS or TXT_MATCHES
         :return: None
         """
         header = ['Functional drug class', 'Genes']
         data = []
-        with summary_file.open('r') as handle:
-            lines = handle.readlines()
-            file_header = lines[0].strip().split('\t')
-            if len(file_header) > 1:
-                line1 = file_header[1:]
-                line2 = lines[1].strip().split('\t')[1:]
-                for index, functional_drug_class in enumerate(line1):
-                    data.append([functional_drug_class, line2[index]])
+
+        # Read the summary file into a pandas DataFrame
+        df = pd.read_csv(summary_file, sep='\t')
+
+        # Extract relevant data from DataFrame
+        if len(df.columns) > 1:
+            line1 = df.columns[1:]
+            line2 = df.iloc[0, 1:].tolist()
+            for functional_drug_class, gene in zip(line1, line2):
+                data.append([functional_drug_class, gene])
+
         self._section.add_table(data, header, [('class', 'data')])
 
     def __add_antibiogram(self) -> None:
@@ -101,7 +104,7 @@ class AbriTAMRReporter(Tool):
         # ...
         results = pd.read_csv(self._tool_inputs['TSV_output'][0].path, delimiter='\t', header=None)
         # replace all nan by dashes
-        results.replace(np.nan, '-', inplace=True)
+        results.fillna('-', inplace=True)
         for i in range(0, results.shape[0]-1, 2):
             data.append([re.sub("_ResMech|abritamr_", "", results.iloc[i, 0]),
                          results.iloc[i, 1],

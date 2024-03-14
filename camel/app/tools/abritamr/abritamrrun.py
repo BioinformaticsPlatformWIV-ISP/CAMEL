@@ -10,7 +10,7 @@ from camel.app.tools.tool import Tool
 
 class AbriTAMRRun(Tool):
     """
-    AbritAMR: AbriTAMR is an AMR gene detection pipeline that runs AMRFinderPlus on a single (or list ) of given
+    AbritAMR: AbriTAMR is an AMR gene detection pipeline that runs AMRFinderPlus on a single (or list) of given
     isolates and collates the results into a table, separating genes identified into functionally relevant groups.
     This is the first part of the AbriTAMR pipeline (run).
     """
@@ -30,9 +30,10 @@ class AbriTAMRRun(Tool):
         """
         self.__build_command()
         self._execute_command()
+        self.__set_output()
         amrfinder_db_folder = self._tool_inputs['DIR_AMRF'][0].path
         self.__add_database_information(amrfinder_db_folder)
-        self.__set_output()
+        self._informs['_tag'] = 'RUN'
 
     def _check_input(self) -> None:
         """
@@ -58,7 +59,6 @@ class AbriTAMRRun(Tool):
         Concatenates required parameters and options to build the command.
         :return: None
         """
-        self._informs['_tag'] = 'RUN'
         self._command.command = ' '.join([
             self._tool_command,
             '--contigs', str(self._tool_inputs['FASTA'][0]),

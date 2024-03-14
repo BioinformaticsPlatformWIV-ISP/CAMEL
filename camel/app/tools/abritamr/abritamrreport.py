@@ -27,9 +27,10 @@ class AbriTAMRReport(Tool):
         Executes the tool
         :return: None
         """
-        self.__set_output()
         self.__build_command()
         self._execute_command()
+        self.__set_output()
+        self._informs['_tag'] = 'REPORT'
 
     def _check_input(self) -> None:
         """
@@ -57,7 +58,6 @@ class AbriTAMRReport(Tool):
         Concatenates required parameters and options to build the command
         :return: None
         """
-        self._informs['_tag'] = 'REPORT'
         sop = 'plus' if str(self._tool_inputs['VAL_SPECIES'][0]) == 'Salmonella' else 'general'
         self._command.command = ' '.join([
             self._tool_command,
