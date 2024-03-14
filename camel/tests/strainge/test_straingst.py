@@ -2,6 +2,7 @@ import unittest
 
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.tools.strainge.straingstreporter import StrainGSTReporter
 from camel.app.tools.strainge.straingstrun import StrainGSTRun
 from camel.app.tools.strainge.straingstkmerize import StrainGSTKmerize
 
@@ -35,6 +36,26 @@ class TestStrainGST(CamelTestSuite):
         straingst_run.add_input_files({'HDF5': [TestStrainGST.FILE_HDF5], 'DB_HDF5': [TestStrainGST.DB_HDF5]})
         straingst_run.run(self.running_dir)
         self.verify_output_files(straingst_run, 'TSV_STATS')
+
+    def test_straingst_reporter(self) -> None:
+        """
+        Tests StrainGST followed by the reporter.
+        :return: None
+        """
+        # First run straingst
+        straingst_run = StrainGSTRun(self.camel)
+        straingst_run.add_input_files({'HDF5': [TestStrainGST.FILE_HDF5], 'DB_HDF5': [TestStrainGST.DB_HDF5]})
+        straingst_run.run(self.running_dir)
+        self.verify_output_files(straingst_run, 'TSV_STATS')
+
+        # Then run the reporter
+        reporter = StrainGSTReporter(self.camel)
+        reporter.add_input_files({'TSV': straingst_run.tool_outputs['TSV_STRAINS']})
+        reporter.add_input_informs({'straingst': straingst_run.informs})
+        reporter.update_parameters(suffix='ont')
+        reporter.run(self.running_dir)
+        output_section = reporter.tool_outputs['VAL_HTML'][0].value
+        self.assertGreater(len(output_section.to_html()), 0)
 
 
 if __name__ == '__main__':
