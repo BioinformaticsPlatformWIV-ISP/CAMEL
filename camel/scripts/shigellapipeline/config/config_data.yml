@@ -73,13 +73,6 @@ mob_suite:
   db: /db/mob_suite/latest
 
 gene_detection:
-  vfdb_core:
-    path: /db/gene_detection/VFDB_core
-    perc_identity_cutoff: 90
-    metadata:
-      name: Gene
-      key: gene
-
   virulencefinder:
     path: /db/gene_detection/VirulenceFinder-Ecoli
     metadata:

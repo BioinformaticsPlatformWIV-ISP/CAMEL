@@ -195,8 +195,8 @@ rule link_genomic_context:
         # Virulence
         TSV_gd_coli = Path(config['working_dir']) / 'gene_detection' / 'virulencefinder' / 'metadata' / 'tsv.io' if 'virulencefinder' in config['analyses'] else [],
         INFORMS_gd_coli = Path(config['working_dir']) / 'gene_detection' / 'virulencefinder' / 'db_manager' / 'informs.io' if 'virulencefinder' in config['analyses'] else [],
-        TSV_gd_shiga = Path(config['working_dir']) / 'gene_detection' / 'virulencefinder_shiga' / 'metadata' / 'tsv.io' if 'virulencefinder' in config['analyses'] else[],
-        INFORMS_gd_shiga = Path(config['working_dir']) / 'gene_detection' / 'virulencefinder_shiga' / 'db_manager' / 'informs.io' if 'virulencefinder' in config['analyses'] else[]
+        TSV_gd_shiga = Path(config['working_dir']) / 'gene_detection' / 'virulencefinder_shiga' / 'metadata' / 'tsv.io' if 'virulencefinder' in config['analyses'] else [],
+        INFORMS_gd_shiga = Path(config['working_dir']) / 'gene_detection' / 'virulencefinder_shiga' / 'db_manager' / 'informs.io' if 'virulencefinder' in config['analyses'] else []
     output:
         TSV = Path(config['working_dir']) / 'mob_suite' / 'genomic_context' / 'input' / 'tsv.io',
         INFORMS = Path(config['working_dir']) / 'mob_suite' / 'genomic_context' / 'input' / 'informs.io'
