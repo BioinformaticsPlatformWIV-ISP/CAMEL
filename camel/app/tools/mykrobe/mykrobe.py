@@ -22,7 +22,7 @@ class Mykrobe(Tool):
         Initializes Mykrobe.
         :param camel: Camel instance
         """
-        super().__init__('mykrobe', 'v0.13.0', camel)
+        super().__init__('mykrobe', '0.13.0', camel)
 
     def _execute_tool(self) -> None:
         """
