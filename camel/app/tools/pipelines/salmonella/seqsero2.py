@@ -26,11 +26,11 @@ class SeqSero2(Tool):
         Execute the tool.
         :return: None
         """
-        self._informs['_tag'] = self._tool_inputs['MODE'][0].value
-        self.build_command(self._informs['_tag'])
+        self.build_command(self._parameters['mode'].value)
         self._execute_command()
         self.__set_output()
         input_folder = self._tool_inputs['DIR'][0].path
+        self._informs['_tag'] = self._parameters['mode'].value
         self.__add_informs(input_folder)
 
     def _check_input(self) -> None:
@@ -64,13 +64,13 @@ class SeqSero2(Tool):
         :param mode: seqsero2 execution mode; 'Allele' or 'Kmer'
         :return: None
         """
-        command_parts = [self._tool_command, '-d', str(self.folder), " ".join(self._build_options())]
+        command_parts = [self._tool_command, '-d', str(self.folder), " ".join(self._build_options(excluded_parameters=['mode']))]
         if mode == 'Kmer':
             command_parts.extend(['-t 4 -m k', '-i', str(self._tool_inputs['FASTA'][0])])
         else:
             if mode == 'Allele':
                 command_parts.append('-m a')
-            else:  # if self._tool_inputs['MODE'][0].value == 'Kmerread':
+            else:  # if mode == 'Kmerread':
                 command_parts.append('-m k')
 
             if 'FASTQ' in self._tool_inputs:
