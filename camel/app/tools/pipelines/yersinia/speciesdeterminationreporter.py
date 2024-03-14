@@ -44,7 +44,6 @@ class SpeciesDeterminationReporter(Tool):
         :return: None
         """
         table_html = []
-        #TODO: color code?
         for _, r in table_df.iterrows():
             match = r['match']
             threshold = r['threshold']

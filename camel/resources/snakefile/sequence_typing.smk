@@ -229,7 +229,8 @@ rule typing_detect_sequence_type:
             step.run_step()
             SnakemakeUtils.dump_tool_outputs(sequence_type_detector, output)
             if params.write_all_matches:
-                SnakemakeUtils.dump_tool_output(sequence_type_detector, 'TSV_all_matches', Path(config['working_dir']) / 'typing' / params.scheme_name / 'tsv_profile_matches.io')
+                SnakemakeUtils.dump_tool_output(sequence_type_detector, 'TSV_all_matches',
+                    Path(config['working_dir']) / 'typing' / params.scheme_name / 'tsv_profile_matches.io')
 
 rule typing_get_cgmlst_stats:
     """

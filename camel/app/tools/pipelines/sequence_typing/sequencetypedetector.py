@@ -132,30 +132,3 @@ class SequenceTypeDetector(Tool):
                 self.__alleles_match(hit, profile.alleles[gene_name]) for gene_name, hit in hit_by_locus.items()])
             nb_matches_by_profile[profile] = nb_matching
         return nb_matches_by_profile
-
-# # TODO: remove
-# if __name__ == '__main__':
-#     from camel.app.camel import Camel
-#     from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-#     camel = Camel.get_instance()
-#
-#     ## Enterocolitica
-#     hits_nucl = Path('/home/fistrijthaegen/PycharmProjects/camel_yersinia/test/enterocolitica/typing/cgmlst/DNA/hits.io')
-#     hits_pept = Path('/home/fistrijthaegen/PycharmProjects/camel_yersinia/test/enterocolitica/typing/cgmlst/peptide/hits.io')
-#     tsv = Path('/home/fistrijthaegen/PycharmProjects/camel_yersinia/test/enterocolitica/typing/cgmlst/tsv-profiles.io')
-#
-#     # Pseudotuberculosis
-#     # hits_nucl = Path('/home/fistrijthaegen/PycharmProjects/camel_yersinia/test/pseudotuberculosis/typing/cgmlst/DNA/hits.io')
-#     # hits_pept = Path('/home/fistrijthaegen/PycharmProjects/camel_yersinia/test/pseudotuberculosis/typing/cgmlst/peptide/hits.io')
-#     # tsv = Path('/home/fistrijthaegen/PycharmProjects/camel_yersinia/test/pseudotuberculosis/typing/cgmlst/tsv-profiles.io')
-#
-#     # Neisseria meningitidis
-#     # hits_nucl = Path('/home/fistrijthaegen/PycharmProjects/camel_yersinia/test/neisseria/typing/cgmlst/DNA/hits.io')
-#     # hits_pept = Path('/home/fistrijthaegen/PycharmProjects/camel_yersinia/test/neisseria/typing/cgmlst/peptide/hits.io')
-#     # tsv = Path('/home/fistrijthaegen/PycharmProjects/camel_yersinia/test/neisseria/typing/cgmlst/tsv-profiles.io')
-#
-#     detector = SequenceTypeDetector(camel)
-#     SnakemakeUtils.add_pickle_inputs(detector, {'hits_nucl':hits_nucl, 'hits_pept': hits_pept,'TSV':tsv})
-#     detector.update_parameters(write_tsv='True', output_filename='profile_matches.tsv')
-#     detector.run()
-#     SnakemakeUtils.dump_tool_output(detector, 'TSV_matches', Path('tsv_profile_matches.io'))

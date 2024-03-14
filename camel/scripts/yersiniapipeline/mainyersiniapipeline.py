@@ -61,9 +61,10 @@ class MainYersiniaPipeline(ReportPipeline):
                     export_bam='true' if self._args.report_include_bam else 'false',
                     coverage_max=self._args.cov_max
                 )))
-            # Write all profile matches from cgmlst to tsv file for species identification
-            # TODO: check if cgmlst in args
             if 'species' in self._args:
+                if 'cgmlst' not in self._args:
+                    # cgMLST has to be performed to identify the species
+                    config_data['analyses'].append('cgmlst')
                 config_data['sequence_typing']['cgmlst']['write_all_matches'] = True
         return SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir)
 
@@ -74,7 +75,6 @@ class MainYersiniaPipeline(ReportPipeline):
         :param args: Command line arguments
         :return: Parsed arguments
         """
-        #TODO: check if cgmlst enabled when species
         parser = argparse.ArgumentParser()
         ReportPipeline.add_common_arguments(parser)
         for analysis_key in MainYersiniaPipeline.CUSTOM_ANALYSES:

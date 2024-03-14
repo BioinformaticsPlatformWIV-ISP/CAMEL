@@ -145,7 +145,7 @@ rule combine_reports:
                 input.report_mob_suite, input.report_genomic_context)]),
             ('Sequence typing', 'st', [Path(x) for x in (
                 input.report_mlst, input.report_mlst_mcnally, input.report_cgmlst, input.report_cgmlst_ye, input.report_cgmlst_yp, input.report_cgmlst_yersinia, input.report_rmlst)]),
-            ('Species determination', 'species', [Path(input.report_species), Path(input.report_species)]),
+            ('Species determination', 'species', [Path(input.report_species)]),
             ('Citations', 'citations', [Path(input.report_citations)]),
             ('Commands', 'commands', [Path(input.report_commands)])
         ])
