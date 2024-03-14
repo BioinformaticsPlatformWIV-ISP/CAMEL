@@ -3,6 +3,7 @@ from pathlib import Path
 from camel.resources.snakefile import trimming, trimming_illumina, quality_checks, \
     contamination_check_kraken, gene_detection, sequence_typing, downsampling, confindr, quast, core, trimming_ont, mobsuite, resfinder4, amrfinder, \
     assembly
+from camel.scripts.yersiniapipeline.snakefile import species_determination
 
 #######################
 # Included Snakefiles #
@@ -22,6 +23,7 @@ include: resfinder4.SNAKEFILE_RESFINDER4
 include: gene_detection.SNAKEFILE_GENE_DETECTION
 include: mobsuite.SNAKEFILE_MOB_SUITE
 include: sequence_typing.SNAKEFILE_SEQUENCE_TYPING
+include: species_determination.SNAKEFILE_SPECIES_DETERMINATION
 
 #########
 # Rules #
@@ -56,7 +58,8 @@ rule report_create_command_section:
         INFORMS_mlst_mcnally= Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='mlst_mcnally') if 'mlst_mcnally' in config['analyses'] else[],
         INFORMS_amr= Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='resistance_genes') if 'resistance_genes' in config['analyses'] else[],
         INFORMS_cgmlst= Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='cgmlst') if 'cgmlst' in config['analyses'] else[],
-        INFORMS_cgmlst_species= Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='cgmlst_species') if 'cgmlst_species' in config['analyses'] else[],
+        INFORMS_cgmlst_ye= Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='cgmlst_ye') if 'cgmlst_ye' in config['analyses'] else[],
+        INFORMS_cgmlst_yp= Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='cgmlst_yp') if 'cgmlst_yp' in config['analyses'] else[],
         INFORMS_cgmlst_yersinia= Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='cgmlst_yersinia') if 'cgmlst_yersinia' in config['analyses'] else[],
         INFORMS_rmlst = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='rmlst') if 'rmlst' in config['analyses'] else[],
     output:
@@ -91,9 +94,12 @@ rule combine_reports:
         report_mlst= sequence_typing.get_sequence_typing_report('mlst',config),
         report_mlst_mcnally= sequence_typing.get_sequence_typing_report('mlst_mcnally',config),
         report_cgmlst= sequence_typing.get_sequence_typing_report('cgmlst',config),
-        report_cgmlst_species= sequence_typing.get_sequence_typing_report('cgmlst_species',config),
+        report_cgmlst_ye= sequence_typing.get_sequence_typing_report('cgmlst_ye',config),
+        report_cgmlst_yp= sequence_typing.get_sequence_typing_report('cgmlst_yp',config),
         report_cgmlst_yersinia= sequence_typing.get_sequence_typing_report('cgmlst_yersinia',config),
         report_rmlst = sequence_typing.get_sequence_typing_report('rmlst', config),
+        # Species determination
+        report_species = Path(config['working_dir']) / (species_determination.OUTPUT_SPECIES_DETERMINATION_REPORT if 'species' in config['analyses'] else species_determination.OUTPUT_SPECIES_DETERMINATION_REPORT_EMPTY),
         # Report
         report_citations = Path(config['working_dir'], core.OUTPUT_HTML_CITATIONS),
         report_commands = rules.report_create_command_section.output.HTML
@@ -103,7 +109,6 @@ rule combine_reports:
         sample_name = config['sample_name'],
         output_dir = config['output_dir'],
         pipeline_info = config['pipeline'],
-        species = config['selected_species'],
         input_dict = config['input'],
         input_type = config['input_type'],
         citation_keys = config['citations']
@@ -121,7 +126,6 @@ rule combine_reports:
             pipeline_version=params.pipeline_info['version'],
             input_files=ReportPipeline.format_input_string(params.input_dict),
             input_type=params.input_type,
-            extra_data=[('Selected species', f'<i>{params.species}</i>')],
             key_citation=params.citation_keys['main']
         ))
 
@@ -140,7 +144,8 @@ rule combine_reports:
             ('Genomic context', 'mob_suite', [Path(x) for x in(
                 input.report_mob_suite, input.report_genomic_context)]),
             ('Sequence typing', 'st', [Path(x) for x in (
-                input.report_mlst, input.report_mlst_mcnally, input.report_cgmlst, input.report_cgmlst_species, input.report_cgmlst_yersinia, input.report_rmlst)]),
+                input.report_mlst, input.report_mlst_mcnally, input.report_cgmlst, input.report_cgmlst_ye, input.report_cgmlst_yp, input.report_cgmlst_yersinia, input.report_rmlst)]),
+            ('Species determination', 'species', [Path(input.report_species), Path(input.report_species)]),
             ('Citations', 'citations', [Path(input.report_citations)]),
             ('Commands', 'commands', [Path(input.report_commands)])
         ])
@@ -168,9 +173,11 @@ rule combine_summary_files:
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='mlst') if 'mlst' in config['analyses'] else [],
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='mlst_mcnally') if 'mlst_mcnally' in config['analyses'] else [],
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='cgmlst') if 'cgmlst' in config['analyses'] else [],
-        Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='cgmlst_species') if 'cgmlst_species' in config['analyses'] else [],
+        Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='cgmlst_ye') if 'cgmlst_ye' in config['analyses'] else [],
+        Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='cgmlst_yp') if 'cgmlst_yp' in config['analyses'] else [],
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='cgmlst_yersinia') if 'cgmlst_yersinia' in config['analyses'] else [],
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='rmlst') if 'rmlst' in config['analyses'] else [],
+        Path(config['working_dir']) / species_determination.OUTPUT_SPECIES_DETERMINATION_SUMMARY if 'species' in config['analyses'] else []
     output:
         TSV = config.get('output_tabular')
     run:

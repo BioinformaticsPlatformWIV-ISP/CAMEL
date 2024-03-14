@@ -1,0 +1,5 @@
+dependencies: null
+parameters:
+  taxonomic_file: {default: true, mandatory: true, option: null, value: /home/fistrijthaegen/PycharmProjects/RD_FS/transform_cgST_excel/cgMLST_taxonomic.tsv}
+  summary_filename: {default: true, mandatory: true, option: null, value: summary_species_determination.tsv}
+tool_command: null

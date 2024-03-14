@@ -1,10 +1,13 @@
 import logging
+import pandas as pd
 from dataclasses import dataclass, field
 from typing import List, Dict, Tuple, Optional
+from pathlib import Path
 
 from camel.app.components.sequencetyping.sequencetypinghitbase import SequenceTypingHitBase
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.tools.tool import Tool
+from camel.app.io.tooliofile import ToolIOFile
 
 
 @dataclass(frozen=True, unsafe_hash=True)
@@ -47,6 +50,14 @@ class SequenceTypeDetector(Tool):
         best_profile = sorted(nb_matches_by_profile.items(), key=lambda x: -x[-1])[0][0]
         percent_matching = 100 * nb_matches_by_profile[best_profile] / len(best_profile.alleles)
         is_detected = percent_matching >= int(self._parameters['min_percent_detected'].value)
+
+        # Write all profiles to a tsv file
+        if ('write_tsv' in self._parameters.keys()) and self._parameters['write_tsv'].value:
+            num_alleles = len(list(nb_matches_by_profile.keys())[0].alleles)
+            all_matches = pd.DataFrame([(stprofile.name, hits / num_alleles) for stprofile, hits in
+                                        nb_matches_by_profile.items()], columns=["ST", "proportion_match"])
+            all_matches.to_csv(self._folder / Path(self._parameters['output_filename'].value), sep="\t", index=False)
+            self._tool_outputs['TSV_all_matches'] = [ToolIOFile(self._folder / Path(self._parameters['output_filename'].value))]
 
         # Save output data
         self._informs.update({
@@ -121,3 +132,30 @@ class SequenceTypeDetector(Tool):
                 self.__alleles_match(hit, profile.alleles[gene_name]) for gene_name, hit in hit_by_locus.items()])
             nb_matches_by_profile[profile] = nb_matching
         return nb_matches_by_profile
+
+# # TODO: remove
+# if __name__ == '__main__':
+#     from camel.app.camel import Camel
+#     from camel.app.snakemake.snakemakeutils import SnakemakeUtils
+#     camel = Camel.get_instance()
+#
+#     ## Enterocolitica
+#     hits_nucl = Path('/home/fistrijthaegen/PycharmProjects/camel_yersinia/test/enterocolitica/typing/cgmlst/DNA/hits.io')
+#     hits_pept = Path('/home/fistrijthaegen/PycharmProjects/camel_yersinia/test/enterocolitica/typing/cgmlst/peptide/hits.io')
+#     tsv = Path('/home/fistrijthaegen/PycharmProjects/camel_yersinia/test/enterocolitica/typing/cgmlst/tsv-profiles.io')
+#
+#     # Pseudotuberculosis
+#     # hits_nucl = Path('/home/fistrijthaegen/PycharmProjects/camel_yersinia/test/pseudotuberculosis/typing/cgmlst/DNA/hits.io')
+#     # hits_pept = Path('/home/fistrijthaegen/PycharmProjects/camel_yersinia/test/pseudotuberculosis/typing/cgmlst/peptide/hits.io')
+#     # tsv = Path('/home/fistrijthaegen/PycharmProjects/camel_yersinia/test/pseudotuberculosis/typing/cgmlst/tsv-profiles.io')
+#
+#     # Neisseria meningitidis
+#     # hits_nucl = Path('/home/fistrijthaegen/PycharmProjects/camel_yersinia/test/neisseria/typing/cgmlst/DNA/hits.io')
+#     # hits_pept = Path('/home/fistrijthaegen/PycharmProjects/camel_yersinia/test/neisseria/typing/cgmlst/peptide/hits.io')
+#     # tsv = Path('/home/fistrijthaegen/PycharmProjects/camel_yersinia/test/neisseria/typing/cgmlst/tsv-profiles.io')
+#
+#     detector = SequenceTypeDetector(camel)
+#     SnakemakeUtils.add_pickle_inputs(detector, {'hits_nucl':hits_nucl, 'hits_pept': hits_pept,'TSV':tsv})
+#     detector.update_parameters(write_tsv='True', output_filename='profile_matches.tsv')
+#     detector.run()
+#     SnakemakeUtils.dump_tool_output(detector, 'TSV_matches', Path('tsv_profile_matches.io'))

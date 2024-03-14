@@ -211,7 +211,9 @@ rule typing_detect_sequence_type:
     output:
         INFORMS = Path(config['working_dir']) / 'typing' / '{scheme}' / 'informs-st.io'
     params:
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'typing' / wildcards.scheme
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'typing' / wildcards.scheme,
+        write_all_matches = lambda wildcards: config['sequence_typing'][wildcards.scheme]['write_all_matches'] if 'write_all_matches' in config['sequence_typing'][wildcards.scheme] else False,
+        scheme_name= lambda wildcards: wildcards.scheme
     run:
         from camel.app.tools.pipelines.sequence_typing.sequencetypedetector import SequenceTypeDetector
         data_profiles = SnakemakeUtils.load_object(Path(input.TSV))
@@ -222,8 +224,12 @@ rule typing_detect_sequence_type:
             SnakemakeUtils.add_pickle_inputs(sequence_type_detector, input)
             step = Step(str(rule), sequence_type_detector, Camel.get_instance(), Path(str(params.running_dir)), wildcards)
             sequence_type_detector.update_parameters(allele_wildcards='N', allele_absent_symbol='0')
+            if params.write_all_matches:
+                 sequence_type_detector.update_parameters(write_tsv='True', output_filename='profile_matches.tsv')
             step.run_step()
             SnakemakeUtils.dump_tool_outputs(sequence_type_detector, output)
+            if params.write_all_matches:
+                SnakemakeUtils.dump_tool_output(sequence_type_detector, 'TSV_all_matches', Path(config['working_dir']) / 'typing' / params.scheme_name / 'tsv_profile_matches.io')
 
 rule typing_get_cgmlst_stats:
     """

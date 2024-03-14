@@ -16,19 +16,8 @@ class MainYersiniaPipeline(ReportPipeline):
     Main class to run the Yersinia pipeline.
     """
 
-    CUSTOM_ANALYSES = ['kraken2', 'confindr', 'amrfinder', 'resfinder', 'vfdb_core', 'cgmlst',
-                       'mlst', 'mlst_mcnally', 'cgmlst_species', 'cgmlst_yersinia', 'rmlst', 'mob_suite']
-
-    DATA_BY_SPECIES = {
-        'enterocolitica': {
-            'full_name': 'Yersinia enterocolitica',
-            'cgmlst_species': '/db/sequence_typing/yersinia/cgmlst_yersinia_enterocolitica'
-        },
-        'pseudotuberculosis': {
-            'full_name': 'Yersinia pseudotuberculosis',
-            'cgmlst_species': '/db/sequence_typing/yersinia/cgmlst_yersinia_pseudotuberculosis'
-        }
-    }
+    CUSTOM_ANALYSES = ['kraken2', 'confindr', 'amrfinder', 'resfinder', 'vfdb_core', 'mob_suite', 'cgmlst',
+                       'mlst', 'mlst_mcnally', 'cgmlst_ye', 'cgmlst_yp', 'cgmlst_yersinia', 'rmlst', 'species']
 
     def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """
@@ -70,13 +59,12 @@ class MainYersiniaPipeline(ReportPipeline):
                     qc_typing_scheme='cgmlst' if self._args.cgmlst else 'mlst',
                     export_fastq='true' if self._args.report_include_fastq else 'false',
                     export_bam='true' if self._args.report_include_bam else 'false',
-                    coverage_max=self._args.cov_max,
-                    cgmlst_species=MainYersiniaPipeline.DATA_BY_SPECIES[self._args.species]['cgmlst_species'],
+                    coverage_max=self._args.cov_max
                 )))
-
-            #set the species
-            config_data['selected_species'] = MainYersiniaPipeline.DATA_BY_SPECIES[self._args.species]['full_name']
-
+            # Write all profile matches from cgmlst to tsv file for species identification
+            # TODO: check if cgmlst in args
+            if 'species' in self._args:
+                config_data['sequence_typing']['cgmlst']['write_all_matches'] = True
         return SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir)
 
     @staticmethod
@@ -86,11 +74,11 @@ class MainYersiniaPipeline(ReportPipeline):
         :param args: Command line arguments
         :return: Parsed arguments
         """
+        #TODO: check if cgmlst enabled when species
         parser = argparse.ArgumentParser()
         ReportPipeline.add_common_arguments(parser)
         for analysis_key in MainYersiniaPipeline.CUSTOM_ANALYSES:
             parser.add_argument(f"--{analysis_key.replace('_','-')}", action='store_true')
-        parser.add_argument('--species', required=True, choices=['enterocolitica', 'pseudotuberculosis'])
         return parser.parse_args(args)
 
 if __name__ == '__main__':
