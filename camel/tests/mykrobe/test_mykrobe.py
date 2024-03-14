@@ -16,18 +16,22 @@ class TestMykrobe(CamelTestSuite):
     """
     # Input files
     test_file_dir = CamelTestSuite.get_test_file_dir('salmonella')
+    testdata_dir = '/testdata/camel/pipelines'
     db_dir = Path('/db/pipelines/salmonella/mykrobe/20220331')
 
     typhi_pe_reads = [test_file_dir / "SRR493330_1.fastq.gz",
                       test_file_dir / "SRR493330_2.fastq.gz"]
-    typhi_ont = [Path('/testdata/camel/pipelines/Salmonella_ERR11177482.fastq.gz')]
-    shigella_pe_reads = [Path('/testdata/camel/pipelines/Shigella-S17BD07654_1.fastq.gz'),
-                         Path('/testdata/camel/pipelines/Shigella-S17BD07654_2.fastq.gz')]
-    shigella_fasta = [Path('/testdata/camel/pipelines/Shigella-S17BD07654.fasta')]
-    staph_pe_reads = [Path('/testdata/camel/pipelines/Saureus-SRR10393587-ds_1.fastq.gz'),
-                      Path('/testdata/camel/pipelines/Saureus-SRR10393587-ds_2.fastq.gz')]
-    myco_pe_reads = [Path('/testdata/camel/pipelines/Myco-DRR041783-ds_1.fastq.gz'),
-                     Path('/testdata/camel/pipelines/Myco-DRR041783-ds_2.fastq.gz')]
+    typhi_ont = [Path(f'{testdata_dir}/Salmonella_ERR11177482.fastq.gz')]
+
+    shigella_pe_reads = [Path(f'{testdata_dir}/Shigella-S17BD07654_1.fastq.gz'),
+                         Path(f'{testdata_dir}/Shigella-S17BD07654_2.fastq.gz')]
+    shigella_fasta = [Path(f'{testdata_dir}/Shigella-S17BD07654.fasta')]
+
+    staph_pe_reads = [Path(f'{testdata_dir}/Saureus-SRR10393587-ds_1.fastq.gz'),
+                      Path(f'{testdata_dir}/Saureus-SRR10393587-ds_2.fastq.gz')]
+
+    myco_pe_reads = [Path(f'{testdata_dir}/Myco-DRR041783-ds_1.fastq.gz'),
+                     Path(f'{testdata_dir}/Myco-DRR041783-ds_2.fastq.gz')]
     # Output file
     output_csv = test_file_dir / 'mykrobe.csv'
 
@@ -52,7 +56,7 @@ class TestMykrobe(CamelTestSuite):
         """
         tool = Mykrobe(self.camel)
         tool.add_input_files({
-            'ONT': [ToolIOFile(x) for x in self.typhi_ont],
+            'FASTQ_SE': [ToolIOFile(x) for x in self.typhi_ont],
             'DIR': [ToolIODirectory(self.db_dir)],
             'SPECIES': [ToolIOValue('typhi')]
         })
@@ -143,7 +147,7 @@ class TestMykrobe(CamelTestSuite):
             handle.write(mykrobereporter.tool_outputs['HTML'][0].value.to_html())
         logging.info(f'Output report created: {html_out}')
 
-    def test_salmonella_ont_reporter(self) -> None:
+    def test_typhi_ont_reporter(self) -> None:
         """
         Tests Mykrobe reporter tool
         :return: None
@@ -151,7 +155,7 @@ class TestMykrobe(CamelTestSuite):
         # Run Mykrobe
         mykrobe = Mykrobe(self.camel)
         mykrobe.add_input_files({
-            'ONT': [ToolIOFile(x) for x in self.typhi_ont],
+            'FASTQ_SE': [ToolIOFile(x) for x in self.typhi_ont],
             'DIR': [ToolIODirectory(self.db_dir)],
             'SPECIES': [ToolIOValue('typhi')]
         })
