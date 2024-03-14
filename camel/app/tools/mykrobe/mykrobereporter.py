@@ -115,14 +115,14 @@ class MykrobeReporter(Tool):
                   'Average depth\nacross probe']
         section.add_table(table_list, header, [('class', 'data')])
 
-    @staticmethod
-    def __add_output_table_link(section: HtmlReportSection) -> None:
+    def __add_output_table_link(self, section: HtmlReportSection) -> None:
         """
         Adds link to the output table (tsv) for this assay.
         :return: None
         """
         relative_path = Path('mykrobe', 'summary_out.tsv')
-        section.add_link_to_file("Download (TSV)", relative_path)
+        section.add_file(self._tool_inputs['CSV'][0].path, relative_path)
+        section.add_link_to_file("Download (CSV)", relative_path)
 
     def __add_database_information(self, section: HtmlReportSection) -> None:
         """
@@ -133,7 +133,7 @@ class MykrobeReporter(Tool):
             'last_update_date', '{LAST_UPDATE_DATE}')))
 
     @staticmethod
-    def __format_cell(value: Any, col: Dict) -> HtmlTableCell:
+    def __format_cell(value: Any, col: Dict[str, Any]) -> HtmlTableCell:
         """
         Formats the corresponding table cell.
         :param value: Input value
