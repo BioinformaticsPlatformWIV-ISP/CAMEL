@@ -3,7 +3,6 @@ from pathlib import Path
 from camel.app.camel import Camel
 from camel.app.pipeline.step import Step
 from camel.scripts.yersiniapipeline.snakefile import species_determination
-from camel.resources.snakefile import sequence_typing
 
 rule species_determination_analysis:
     """
@@ -12,7 +11,7 @@ rule species_determination_analysis:
     input:
         TSV_ST = Path(config['working_dir']) / 'species_determination' / 'input' / 'tsv.io'
     output:
-        INFORMS= Path(config['working_dir']) / species_determination.OUTPUT_SPECIES_DETERMINATION_INFORMS,
+        INFORMS = Path(config['working_dir']) / species_determination.OUTPUT_SPECIES_DETERMINATION_INFORMS,
         TSV = Path(config['working_dir']) / species_determination.OUTPUT_SPECIES_DETERMINATION_TSV
     params:
         working_dir = Path(config['working_dir']) / 'species_determination'
@@ -55,3 +54,13 @@ rule species_determination_report_empty:
     run:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         SnakePipelineUtils.create_empty_report_section('Species determination', Path(output.VAL_HTML))
+
+rule species_determination_create_summary:
+    """
+    Creates the tabular summary output for the species determination.
+    """
+    output:
+        TSV = Path(config['working_dir']) / species_determination.OUTPUT_SPECIES_DETERMINATION_SUMMARY
+    run:
+        # TODO: Add summary information
+        Path(output.TSV).touch()
