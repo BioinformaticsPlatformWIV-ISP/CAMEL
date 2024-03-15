@@ -29,8 +29,8 @@ class SpeciesDetermination(Tool):
         output = self.__find_matches(taxonomic, profile_matches)
 
         # Save output data
-        output.to_csv(self._folder / self._parameters['summary_filename'].value, sep="\t", index=False)
-        self._tool_outputs['TSV'] = [ToolIOFile(self.folder / Path(self._parameters['summary_filename'].value))]
+        output.to_csv(self._folder / self._parameters['output_filename'].value, sep="\t", index=False)
+        self._tool_outputs['TSV'] = [ToolIOFile(self.folder / Path(self._parameters['output_filename'].value))]
         if output.shape[0] == 0:
             self._informs.update({'found_match': False})
         else:

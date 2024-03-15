@@ -57,12 +57,17 @@ rule species_determination_report_empty:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         SnakePipelineUtils.create_empty_report_section('Species determination', Path(output.VAL_HTML))
 
-# rule species_determination_create_summary:
-#     """
-#     Creates the tabular summary output for the species determination.
-#     """
-#     output:
-#         TSV = Path(config['working_dir']) / species_determination.OUTPUT_SPECIES_DETERMINATION_SUMMARY
-#     run:
-#         # TODO: Add summary information
-#         #Path(output.TSV).touch()
+rule species_determination_create_summary:
+    """
+    Creates the tabular summary output for the species determination.
+    """
+    input:
+        INFORMS = Path(config['working_dir']) / species_determination.OUTPUT_SPECIES_DETERMINATION_INFORMS
+    output:
+        TSV = Path(config['working_dir']) / species_determination.OUTPUT_SPECIES_DETERMINATION_SUMMARY
+    run:
+        informs = SnakemakeUtils.load_object(Path(input.INFORMS))['best_match']
+        with open(output.TSV, 'w') as handle:
+            for k, v in informs.items():
+                handle.write('\t'.join(["species_determination_"+k, str(v)]))
+                handle.write('\n')
