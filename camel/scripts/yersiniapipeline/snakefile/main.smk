@@ -207,9 +207,15 @@ rule link_species:
     Links the cgST profile matches to the species determination tool.
     """
     input:
-        TSV_profile_matches = Path(config['working_dir']) / 'typing' / 'cgmlst' / 'detect_st' / 'tsv.io'
+        TSV = Path(config['working_dir']) / 'typing' / 'cgmlst' / 'detect_st' / 'tsv.io'
     output:
-        TSV_species_input = Path(config['working_dir']) / 'species_determination' / 'input' / 'tsv.io'
+        TSV_profile_matches = Path(config['working_dir']) / 'species_determination' / 'input' / 'tsv_profile_matches.io',
+        TSV_taxonomic = Path(config['working_dir']) / 'species_determination' / 'input' / 'tsv_taxonomic.io'
+    params:
+        TSV = Path(config['species_determination']['tsv'])
     run:
         import shutil
-        shutil.copyfile(input.TSV_profile_matches, output.TSV_species_input)
+        from camel.app.snakemake.snakemakeutils import SnakemakeUtils
+        from camel.app.io.tooliofile import ToolIOFile
+        shutil.copyfile(input.TSV, output.TSV_profile_matches)
+        SnakemakeUtils.dump_object([ToolIOFile(params.TSV)], Path(output.TSV_taxonomic))

@@ -57,7 +57,7 @@ class SequenceTypeDetector(Tool):
             all_matches = pd.DataFrame([(stprofile.name, hits / num_alleles) for stprofile, hits in
                                         nb_matches_by_profile.items()], columns=["ST", "proportion_match"])
             all_matches.to_csv(self._folder / Path(self._parameters['output_filename'].value), sep="\t", index=False)
-            self._tool_outputs['TSV_all_matches'] = [ToolIOFile(self._folder / Path(self._parameters['output_filename'].value))]
+            self._tool_outputs['TSV'] = [ToolIOFile(self._folder / Path(self._parameters['output_filename'].value))]
 
         # Save output data
         self._informs.update({

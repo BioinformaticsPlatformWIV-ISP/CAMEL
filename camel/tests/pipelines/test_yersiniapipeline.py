@@ -85,7 +85,6 @@ class TestYersiniaPipeline(unittest.TestCase):
         path_summary_out = self.running_dir / 'out' / 'summary.tsv'
         args = [
             '--fastq-pe', str(TestYersiniaPipeline.input_enterocolitica_fastq_pe[0]), str(TestYersiniaPipeline.input_enterocolitica_fastq_pe[1]),
-            '--species', 'enterocolitica',
             '--output-html', str(path_report_out),
             '--output-dir', str(path_report_out.parent),
             '--output-tsv', str(path_summary_out),
@@ -107,7 +106,6 @@ class TestYersiniaPipeline(unittest.TestCase):
         path_summary_out = self.running_dir / 'out' / 'summary.tsv'
         args = [
             '--fastq-pe', str(TestYersiniaPipeline.input_enterocolitica_fastq_pe[0]), str(TestYersiniaPipeline.input_enterocolitica_fastq_pe[1]),
-            '--species', 'enterocolitica',
             '--output-html', str(path_report_out),
             '--output-dir', str(path_report_out.parent),
             '--output-tsv', str(path_summary_out),
@@ -128,7 +126,6 @@ class TestYersiniaPipeline(unittest.TestCase):
         path_summary_out = self.running_dir / 'out' / 'summary.tsv'
         args = [
             '--fastq-pe', str(TestYersiniaPipeline.input_enterocolitica_fastq_pe[0]), str(TestYersiniaPipeline.input_enterocolitica_fastq_pe[1]),
-            '--species', 'enterocolitica',
             '--output-html', str(path_report_out),
             '--output-dir', str(path_report_out.parent),
             '--output-tsv', str(path_summary_out),
@@ -152,7 +149,6 @@ class TestYersiniaPipeline(unittest.TestCase):
         args = [
                 '--fastq-pe', str(TestYersiniaPipeline.input_enterocolitica_fastq_pe[0]),
                 str(TestYersiniaPipeline.input_enterocolitica_fastq_pe[1]),
-                '--species', 'enterocolitica',
                 '--output-html', str(path_report_out),
                 '--output-dir', str(path_report_out.parent),
                 '--output-tsv', str(path_summary_out),
@@ -175,7 +171,6 @@ class TestYersiniaPipeline(unittest.TestCase):
         path_summary_out = self.running_dir / 'out' / 'summary.tsv'
         args = [
             '--fastq-pe', str(TestYersiniaPipeline.input_pseudotuberculosis_fastq_pe[0]), str(TestYersiniaPipeline.input_pseudotuberculosis_fastq_pe[1]),
-            '--species', 'pseudotuberculosis',
             '--output-html', str(path_report_out),
             '--output-dir', str(path_report_out.parent),
             '--output-tsv', str(path_summary_out),
@@ -197,7 +192,6 @@ class TestYersiniaPipeline(unittest.TestCase):
         path_summary_out = self.running_dir / 'out' / 'summary.tsv'
         args = [
             '--fastq-pe', str(TestYersiniaPipeline.input_pseudotuberculosis_fastq_pe[0]), str(TestYersiniaPipeline.input_pseudotuberculosis_fastq_pe[1]),
-            '--species', 'pseudotuberculosis',
             '--output-html', str(path_report_out),
             '--output-dir', str(path_report_out.parent),
             '--output-tsv', str(path_summary_out),
@@ -221,7 +215,6 @@ class TestYersiniaPipeline(unittest.TestCase):
         args = [
                 '--fastq-pe', str(TestYersiniaPipeline.input_pseudotuberculosis_fastq_pe[0]),
                 str(TestYersiniaPipeline.input_pseudotuberculosis_fastq_pe[1]),
-                '--species', 'pseudotuberculosis',
                 '--output-html', str(path_report_out),
                 '--output-dir', str(path_report_out.parent),
                 '--output-tsv', str(path_summary_out),

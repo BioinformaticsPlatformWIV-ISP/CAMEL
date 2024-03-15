@@ -47,7 +47,7 @@ The completeness of the assembly is checked using `BUSCO 5.5.0` with the followi
 
 ### Kraken 2
 
-The trimmed paired-end reads are checked for contamination using `kraken2 2.1.1` against an in-house database with microbial genomes. The date of the last database update is included in the output report.
+The trimmed paired-end reads are checked for contamination using `kraken2 2.1.1` against an in-house database with microbial genomes. The date of the last database update is included in the output report. The contamination check is at the genus level.
 
 ### ConFindr
 
@@ -109,5 +109,6 @@ The following typing schemes are available:
 | cgMLST-Yersinia | Enterobase |
 | rMLST           | PubMLST    |
 
-
+## 8. Species determination
+Based on the BigSDB core-genome sequence type matches found during sequence typing, species and lineage determination is performed. If cgMLST is enabled, species identification will automatically be performed. Species designations are based on [Savin *et al*](https://www.microbiologyresearch.org/content/journal/mgen/10.1099/mgen.0.000301).
 

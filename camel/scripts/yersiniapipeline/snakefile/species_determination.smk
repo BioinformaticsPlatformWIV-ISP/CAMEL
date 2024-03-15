@@ -9,7 +9,8 @@ rule species_determination_analysis:
     This rule is used to determine the species based on the cgST.
     """
     input:
-        TSV_ST = Path(config['working_dir']) / 'species_determination' / 'input' / 'tsv.io'
+        TSV_profile_matches = Path(config['working_dir']) / 'species_determination' / 'input' / 'tsv_profile_matches.io',
+        TSV_taxonomic = Path(config['working_dir']) / 'species_determination' / 'input' / 'tsv_taxonomic.io'
     output:
         INFORMS = Path(config['working_dir']) / species_determination.OUTPUT_SPECIES_DETERMINATION_INFORMS,
         TSV = Path(config['working_dir']) / species_determination.OUTPUT_SPECIES_DETERMINATION_TSV
@@ -19,7 +20,8 @@ rule species_determination_analysis:
         from camel.app.tools.pipelines.yersinia.speciesdetermination import SpeciesDetermination
         from camel.app.snakemake.snakemakeutils import SnakemakeUtils
         detector = SpeciesDetermination(Camel.get_instance())
-        detector.add_input_files({'profile_matches': SnakemakeUtils.load_object(Path(str(input.TSV_ST)))})
+        detector.add_input_files({'profile_matches': SnakemakeUtils.load_object(Path(str(input.TSV_profile_matches))),
+                                  'taxonomic_file': SnakemakeUtils.load_object(Path(str(input.TSV_taxonomic)))})
         step = Step(str(rule), detector, Camel.get_instance(), params.working_dir)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(detector, output)
@@ -55,12 +57,12 @@ rule species_determination_report_empty:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         SnakePipelineUtils.create_empty_report_section('Species determination', Path(output.VAL_HTML))
 
-rule species_determination_create_summary:
-    """
-    Creates the tabular summary output for the species determination.
-    """
-    output:
-        TSV = Path(config['working_dir']) / species_determination.OUTPUT_SPECIES_DETERMINATION_SUMMARY
-    run:
-        # TODO: Add summary information
-        Path(output.TSV).touch()
+# rule species_determination_create_summary:
+#     """
+#     Creates the tabular summary output for the species determination.
+#     """
+#     output:
+#         TSV = Path(config['working_dir']) / species_determination.OUTPUT_SPECIES_DETERMINATION_SUMMARY
+#     run:
+#         # TODO: Add summary information
+#         #Path(output.TSV).touch()

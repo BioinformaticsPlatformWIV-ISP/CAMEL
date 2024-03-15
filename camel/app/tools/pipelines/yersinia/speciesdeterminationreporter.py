@@ -25,16 +25,17 @@ class SpeciesDeterminationReporter(Tool):
         :return: None
         """
         if self._input_informs['analysis']['found_match']:
+            self._section.add_header("Best match", level=3)
             table_df = pd.read_csv(self._tool_inputs['TSV_analysis'][0].path, sep="\t", header=0).fillna('NA')
             species, lineage, biotype, serotype, match, threshold = self._input_informs['analysis']['best_match'].values()
-            self._section.add_paragraph(f'<b>Species:</b> {species}')
-            self._section.add_paragraph(f'<b>Lineage:</b> {lineage}')
-            self._section.add_paragraph(f'<b>Biotype:</b> {biotype}')
-            self._section.add_paragraph(f'<b>Serotype:</b> {serotype}')
-            self._section.add_paragraph('All matches:')
+            self._section.add_table(data=[['Species:', f'<i>{species}</i>'],['Lineage:', f'{lineage}'],
+                                     ['Biotype:', f'{biotype}'],['Serotype:', f'{serotype}']], column_names=None,
+                                    table_attributes=[('class', 'information')])
+            self._section.add_horizontal_line()
+            self._section.add_header("All matches", level=3)
             self.__add_table_detected_species(table_df)
         else:
-            self._section.add_paragraph('No Yersinia species found.')
+            self._section.add_paragraph('No <i>Yersinia</i> species found.')
         self._section.add_paragraph("Species and lineage designations as defined by <a href=\"https://doi.org/10.1099%2Fmgen.0.000301\">Savin et al</a>.")
         self._tool_outputs['VAL_HTML'] = [ToolIOValue(self._section)]
 

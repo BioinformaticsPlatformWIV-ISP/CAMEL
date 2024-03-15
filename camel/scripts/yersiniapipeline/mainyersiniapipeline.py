@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import argparse
 from typing import Optional, List, Dict, Sequence
+import logging
 
 import yaml
 
@@ -17,7 +18,7 @@ class MainYersiniaPipeline(ReportPipeline):
     """
 
     CUSTOM_ANALYSES = ['kraken2', 'confindr', 'amrfinder', 'resfinder', 'vfdb_core', 'mob_suite', 'cgmlst',
-                       'mlst', 'mlst_mcnally', 'cgmlst_ye', 'cgmlst_yp', 'cgmlst_yersinia', 'rmlst', 'species']
+                       'mlst', 'mlst_mcnally', 'cgmlst_ye', 'cgmlst_yp', 'cgmlst_yersinia', 'rmlst']
 
     def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """
@@ -61,11 +62,10 @@ class MainYersiniaPipeline(ReportPipeline):
                     export_bam='true' if self._args.report_include_bam else 'false',
                     coverage_max=self._args.cov_max
                 )))
-            if 'species' in self._args:
-                if 'cgmlst' not in self._args:
-                    # cgMLST has to be performed to identify the species
-                    config_data['analyses'].append('cgmlst')
-                config_data['sequence_typing']['cgmlst']['write_all_matches'] = True
+            if 'cgmlst' in self._args:
+                config_data['analyses'].append('species')
+            else:
+                logging.warning("CgMLST is disabled, so species determination will not run.")
         return SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir)
 
     @staticmethod

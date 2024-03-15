@@ -69,6 +69,8 @@ resfinder4:
   point: False
   db: /db/gene_detection/Resfinder
 
+species_determination:
+  tsv: /db/pipelines/yersinia/cgMLST_taxonomic.tsv
 
 ############################
 # Gene detection databases #
@@ -95,6 +97,7 @@ sequence_typing:
   cgmlst:
     path: '/db/sequence_typing/yersinia/cgmlst_yersinia_spp'
     detection_method: blast
+    write_all_matches: True
   mlst:
     path: '/db/sequence_typing/yersinia/mlst_achtman'
   mlst_mcnally:

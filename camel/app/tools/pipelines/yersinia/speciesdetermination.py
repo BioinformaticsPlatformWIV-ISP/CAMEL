@@ -24,9 +24,8 @@ class SpeciesDetermination(Tool):
         :return: None
         """
         # Find species matching to sequence types and over the species-specific threshold
-        taxonomic = pd.read_csv(self._parameters['taxonomic_file'].value, sep='\t', header=0)
-        profile_matches = pd.read_csv(self._tool_inputs['profile_matches'][0].path,
-                                      sep="\t", header=0, dtype={'ST':int, 'proportion_match':float})
+        taxonomic = pd.read_table(self._tool_inputs['taxonomic_file'][0].path)
+        profile_matches = pd.read_table(self._tool_inputs['profile_matches'][0].path, dtype={'ST':int, 'proportion_match':float})
         output = self.__find_matches(taxonomic, profile_matches)
 
         # Save output data
