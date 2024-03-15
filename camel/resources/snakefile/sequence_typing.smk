@@ -229,7 +229,7 @@ rule typing_detect_sequence_type:
             step.run_step()
             SnakemakeUtils.dump_object(sequence_type_detector.informs, Path(output.INFORMS))
             SnakemakeUtils.dump_object(
-                sequence_type_detector.tool_outputs['TSV'] if params.write_all_matches else [], Path(output.TSV))
+                sequence_type_detector.tool_outputs['TSV_all_matches'] if params.write_all_matches else [], Path(output.TSV))
 
 rule typing_get_cgmlst_stats:
     """
