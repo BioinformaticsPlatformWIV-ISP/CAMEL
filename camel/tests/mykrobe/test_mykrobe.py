@@ -16,22 +16,22 @@ class TestMykrobe(CamelTestSuite):
     """
     # Input files
     test_file_dir = CamelTestSuite.get_test_file_dir('salmonella')
-    testdata_dir = '/testdata/camel/pipelines'
-    db_dir = Path('/db/pipelines/salmonella/mykrobe/20220331')
+    testdata_dir = Path('/testdata/camel/pipelines')
+    db_dir = Path('/db/mykrobe/latest/')
 
     typhi_pe_reads = [test_file_dir / "SRR493330_1.fastq.gz",
                       test_file_dir / "SRR493330_2.fastq.gz"]
-    typhi_ont = [Path(f'{testdata_dir}/Salmonella_ERR11177482.fastq.gz')]
+    typhi_ont = [testdata_dir / 'Salmonella_ERR11177482.fastq.gz']
 
-    shigella_pe_reads = [Path(f'{testdata_dir}/Shigella-S17BD07654_1.fastq.gz'),
-                         Path(f'{testdata_dir}/Shigella-S17BD07654_2.fastq.gz')]
-    shigella_fasta = [Path(f'{testdata_dir}/Shigella-S17BD07654.fasta')]
+    shigella_pe_reads = [testdata_dir / 'Shigella-S17BD07654_1.fastq.gz',
+                         testdata_dir / 'Shigella-S17BD07654_2.fastq.gz']
+    shigella_fasta = [testdata_dir / 'Shigella-S17BD07654.fasta']
 
-    staph_pe_reads = [Path(f'{testdata_dir}/Saureus-SRR10393587-ds_1.fastq.gz'),
-                      Path(f'{testdata_dir}/Saureus-SRR10393587-ds_2.fastq.gz')]
+    staph_pe_reads = [testdata_dir / 'Saureus-SRR10393587-ds_1.fastq.gz',
+                      testdata_dir / 'Saureus-SRR10393587-ds_2.fastq.gz']
 
-    myco_pe_reads = [Path(f'{testdata_dir}/Myco-DRR041783-ds_1.fastq.gz'),
-                     Path(f'{testdata_dir}/Myco-DRR041783-ds_2.fastq.gz')]
+    myco_pe_reads = [testdata_dir / 'Myco-DRR041783-ds_1.fastq.gz',
+                     testdata_dir / 'Myco-DRR041783-ds_2.fastq.gz']
     # Output file
     output_csv = test_file_dir / 'mykrobe.csv'
 
