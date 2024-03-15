@@ -47,7 +47,7 @@ class SpeciesDeterminationReporter(Tool):
         for _, r in table_df.iterrows():
             match = r['match']
             threshold = r['threshold']
-            row = [r['species'],r['lineage'],r['biotype'],r['serotype'], f'{match:.2f}', f'{threshold:.2f}']
+            row = [f"<i>{r['species']}</i>", r['lineage'], r['biotype'], r['serotype'], f'{match:.2f}', f'{threshold:.2f}']
             table_html.append(row)
         header = ['Species', 'Lineage', 'Biotype', 'Serotype', 'Proportion of loci matched', 'Threshold for species and lineage']
         self._section.add_table(table_html, header, [('class', 'data')])
