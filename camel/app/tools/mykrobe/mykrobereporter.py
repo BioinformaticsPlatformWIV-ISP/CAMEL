@@ -56,6 +56,9 @@ class MykrobeReporter(Tool):
         # Antibiotic sensitivity
         section.add_header('Antibiotic susceptibility', 3)
         self.__add_antibiotic_sensitivity(section)
+        section.add_html_object(
+            HtmlElement('a', 'Description of the fields of the tables',
+                        [('href', 'https://github.com/Mykrobe-tools/mykrobe/wiki/AMR-prediction-output')]))
 
         # Genotyping
         section.add_header('Lineage information', 3)
@@ -79,14 +82,17 @@ class MykrobeReporter(Tool):
         Adds the table with the antibiotic sensitivity.
         :return: None
         """
-        header = ['Antibiotic', 'Susceptibility', 'Variant', 'Genes']
+        header = ['Antibiotic', 'Susceptibility', 'Variants', 'Genes']
         data = []
         results = pd.read_csv(self._tool_inputs['CSV'][0].path)
 
         # Replace all nan by dashes
         results.replace(np.nan, '-', inplace=True)
         for i in range(results.shape[0]):
-            data.append([results.iloc[i, 1], results.iloc[i, 2], results.iloc[i, 3], results.iloc[i, 4]])
+            data.append([results.iloc[i, 1],
+                         results.iloc[i, 2],
+                         ', '.join(results.iloc[i, 3].split(';')),
+                         ', '.join(results.iloc[i, 4].split(';'))])
 
         # Start writing in the report the table and the headers
         section.add_table(data, header, [('class', 'data')])
