@@ -211,5 +211,5 @@ rule link_species:
     output:
         TSV_species_input = Path(config['working_dir']) / 'species_determination' / 'input' / 'tsv.io'
     run:
-        from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-        SnakemakeUtils.dump_object(input.TSV_profile_matches, output.TSV_species_input)
+        import shutil
+        shutil.copyfile(input.TSV_profile_matches, output.TSV_species_input)
