@@ -19,7 +19,7 @@ rule mykrobe_run:
         INFORMS = Path(config['working_dir']) / 'mykrobe' / 'informs.io'
     params:
         dir_ = Path(config['working_dir']) / 'mykrobe',
-        db_dir = Path('/db/mykrobe/latest/'),
+        db_dir = Path(config['mykrobe']['db']),
         input_type = config['input_type']
     run:
         from camel.app.components.workflows.utils.fastqinput import FastqInput
