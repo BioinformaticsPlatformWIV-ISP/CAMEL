@@ -61,7 +61,7 @@ rule report_create_command_section:
         INFORMS_cgmlst = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='cgmlst') if 'cgmlst' in config['analyses'] else [],
         INFORMS_cgmlst_ye = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='cgmlst_ye') if 'cgmlst_ye' in config['analyses'] else [],
         INFORMS_cgmlst_yp = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='cgmlst_yp') if 'cgmlst_yp' in config['analyses'] else [],
-        INFORMS_cgmlst_enterobase = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='cgmlst_yersinia') if 'cgmlst_yersinia' in config['analyses'] else [],
+        INFORMS_cgmlst_enterobase = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='cgmlst_enterobase') if 'cgmlst_enterobase' in config['analyses'] else [],
         INFORMS_rmlst = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='rmlst') if 'rmlst' in config['analyses'] else []
     output:
         HTML = Path(config['working_dir']) / 'report' / 'html-commands.io'
@@ -97,7 +97,7 @@ rule combine_reports:
         report_cgmlst = sequence_typing.get_sequence_typing_report('cgmlst',config),
         report_cgmlst_ye = sequence_typing.get_sequence_typing_report('cgmlst_ye',config),
         report_cgmlst_yp = sequence_typing.get_sequence_typing_report('cgmlst_yp',config),
-        report_cgmlst_enterobase = sequence_typing.get_sequence_typing_report('cgmlst_yersinia',config),
+        report_cgmlst_enterobase = sequence_typing.get_sequence_typing_report('cgmlst_enterobase',config),
         report_rmlst = sequence_typing.get_sequence_typing_report('rmlst', config),
         # Species determination
         report_species = Path(config['working_dir']) / (species_determination.OUTPUT_SPECIES_DETERMINATION_REPORT if 'species' in config['analyses'] else species_determination.OUTPUT_SPECIES_DETERMINATION_REPORT_EMPTY),

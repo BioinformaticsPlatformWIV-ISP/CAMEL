@@ -67,7 +67,8 @@ confindr:
 
 resfinder4:
   point: False
-  db: /db/gene_detection/Resfinder
+  db: /db/resfinder4
+
 
 species_determination:
   tsv: /db/pipelines/yersinia/cgMLST_taxonomic.tsv
