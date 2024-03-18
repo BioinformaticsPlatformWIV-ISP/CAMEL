@@ -57,11 +57,12 @@ rule resfinder4_reporter:
     output:
         VAL_HTML = Path(config['working_dir']) / 'resfinder4' / 'html.io'
     params:
-        dir_ = Path(config['working_dir']) / 'resfinder4'
+        dir_ = Path(config['working_dir']) / 'resfinder4',
+        point= config['resfinder4'].get('point',True)
     run:
         from camel.app.tools.resfinder.resfinderreporter import ResFinderReporter
         reporter = ResFinderReporter(Camel.get_instance())
-        SnakemakeUtils.add_pickle_inputs(reporter, input)
+        SnakemakeUtils.add_pickle_inputs(reporter, input, excluded_keys = None if params.point else ['TSV_point', 'TSV_pheno_species'])
         step = Step(str(rule), reporter, Camel.get_instance(), params.dir_)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)

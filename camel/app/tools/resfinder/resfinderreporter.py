@@ -160,7 +160,7 @@ class ResFinderReporter(Tool):
 
         # Phenotype overviews
         for key in ('species', 'general'):
-            if f'TSV_pheno_{key}' not in self._tool_inputs or not self._tool_inputs[f'TSV_pheno_{key}']:
+            if f'TSV_pheno_{key}' not in self._tool_inputs:
                 continue
             self.__add_phenotype_table(section, key)
         section.add_warning_message(
@@ -171,7 +171,7 @@ class ResFinderReporter(Tool):
 
         # Genes & mutations
         self.__add_genes_table(section)
-        if 'TSV_point' in self._tool_inputs and self._tool_inputs['TSV_point']:
+        if 'TSV_point' in self._tool_inputs:
             self.__add_mutations_table(section)
         section.add_horizontal_line()
 
