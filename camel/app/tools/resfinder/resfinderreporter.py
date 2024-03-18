@@ -160,18 +160,18 @@ class ResFinderReporter(Tool):
 
         # Phenotype overviews
         for key in ('species', 'general'):
-            if f'TSV_pheno_{key}' not in self._tool_inputs:
+            if f'TSV_pheno_{key}' not in self._tool_inputs or not self._tool_inputs[f'TSV_pheno_{key}']:
                 continue
             self.__add_phenotype_table(section, key)
         section.add_warning_message(
             "The phenotype 'no resistance' should be interpreted with caution, as genes or mutations may be missing " 
-            "from the database. In addition, these are WGS-based predictions that may not be reflected in the" 
+            "from the database. In addition, these are WGS-based predictions that may not be reflected in the " 
             "phenotype.")
         section.add_horizontal_line()
 
         # Genes & mutations
         self.__add_genes_table(section)
-        if 'TSV_point' in self._tool_inputs:
+        if 'TSV_point' in self._tool_inputs and self._tool_inputs['TSV_point']:
             self.__add_mutations_table(section)
         section.add_horizontal_line()
 

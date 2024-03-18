@@ -36,7 +36,13 @@ rule resfinder4_run:
             resfinder.update_parameters(species=f'"{params.species}"')
         step = Step(str(rule), resfinder, Camel.get_instance(), params.dir_)
         step.run_step()
-        SnakemakeUtils.dump_tool_outputs(resfinder, output)
+        if params.point:
+            SnakemakeUtils.dump_tool_outputs(resfinder, output)
+        else:
+            SnakemakeUtils.dump_tool_outputs(resfinder, output,
+                keys=[key for key in output.keys() if key not in ('TSV_point', 'TSV_pheno_species')])
+            SnakemakeUtils.dump_object([], Path(output.TSV_point))
+            SnakemakeUtils.dump_object([], Path(output.TSV_pheno_species))
 
 rule resfinder4_reporter:
     """
@@ -80,17 +86,21 @@ rule resfinder4_create_summary:
         TSV_point = rules.resfinder4_run.output.TSV_point
     output:
         TSV = Path(config['working_dir']) / 'resfinder4' / 'summary_resfinder.tsv'
+    params:
+        point = config['resfinder4'].get('point',True)
     run:
         tsv_genes = SnakemakeUtils.load_object(Path(input.TSV_genes))[0].path
-        tsv_point = SnakemakeUtils.load_object(Path(input.TSV_point))[0].path
+        if params.point:
+            tsv_point = SnakemakeUtils.load_object(Path(input.TSV_point))[0].path
         informs = SnakemakeUtils.load_object(Path(input.INFORMS))
         with open(output.TSV, 'w') as handle:
             data_genes = pd.read_table(tsv_genes)
             handle.write(f"resfinder4_genes\t{', '.join(list(data_genes['Resistance gene']))}")
             handle.write('\n')
-            data_mutations = pd.read_table(tsv_point)
-            handle.write(f"resfinder4_mutations\t{', '.join(list(data_mutations['Mutation']))}")
-            handle.write('\n')
+            if params.point:
+                data_mutations = pd.read_table(tsv_point)
+                handle.write(f"resfinder4_mutations\t{', '.join(list(data_mutations['Mutation']))}")
+                handle.write('\n')
             handle.write(f"resfinder4_tool_version\t{informs['_name']}")
             handle.write('\n')
             handle.write(f"resfinder4_db_version\t{informs['db_version_resfinder']}")
