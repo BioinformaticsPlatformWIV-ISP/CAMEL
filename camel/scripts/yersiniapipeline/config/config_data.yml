@@ -76,12 +76,6 @@ species_determination:
 # Gene detection databases #
 ############################
 gene_detection:
-  resfinder:
-    path: /db/gene_detection/ResFinder
-    metadata:
-      name: Antibiotic(s)
-      key: antibiotics
-
   vfdb_core:
     path: /db/gene_detection/VFDB_core
     perc_identity_cutoff: 90
@@ -107,7 +101,7 @@ sequence_typing:
     detection_method: blast
   cgmlst_yp:
     path: '/db/sequence_typing/yersinia/cgmlst_yersinia_pseudotuberculosis'
-  cgmlst_yersinia:
+  cgmlst_enterobase:
     path: '/db/sequence_typing/yersinia/cgmlst_enterobase'
   rmlst:
     path: '/db/sequence_typing/various/rmlst'

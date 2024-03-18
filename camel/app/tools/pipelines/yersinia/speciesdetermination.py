@@ -4,6 +4,7 @@ from pathlib import Path
 from camel.app.camel import Camel
 from camel.app.tools.tool import Tool
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 
 
 class SpeciesDetermination(Tool):
@@ -24,8 +25,8 @@ class SpeciesDetermination(Tool):
         :return: None
         """
         # Find species matching to sequence types and over the species-specific threshold
-        taxonomic = pd.read_table(self._tool_inputs['taxonomic_file'][0].path)
-        profile_matches = pd.read_table(self._tool_inputs['profile_matches'][0].path, dtype={'ST':int, 'proportion_match':float})
+        taxonomic = pd.read_table(self._tool_inputs['TSV_taxonomic'][0].path)
+        profile_matches = pd.read_table(self._tool_inputs['TSV_profile_matches'][0].path, dtype={'ST':int, 'proportion_match':float})
         output = self.__find_matches(taxonomic, profile_matches)
 
         # Save output data
@@ -36,6 +37,17 @@ class SpeciesDetermination(Tool):
         else:
             best_match = output.loc[0]
             self._informs.update({'found_match': True, 'best_match': dict(best_match)})
+
+    def _check_input(self) -> None:
+        """
+        Check input for species determination tool.
+        :return: None
+        """
+        if 'TSV_taxonomic' not in self._tool_inputs:
+            raise InvalidInputSpecificationError("TSV taxonomic file is required")
+        if 'TSV_profile_matches' not in self._tool_inputs:
+            raise InvalidInputSpecificationError("TSV profile matches file is required")
+        super()._check_input()
 
     def __find_matches(self, taxonomic: pd.DataFrame, profile_matches: pd.DataFrame) -> pd.DataFrame:
         """

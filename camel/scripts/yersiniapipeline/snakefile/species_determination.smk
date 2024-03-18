@@ -20,8 +20,8 @@ rule species_determination_analysis:
         from camel.app.tools.pipelines.yersinia.speciesdetermination import SpeciesDetermination
         from camel.app.snakemake.snakemakeutils import SnakemakeUtils
         detector = SpeciesDetermination(Camel.get_instance())
-        detector.add_input_files({'profile_matches': SnakemakeUtils.load_object(Path(str(input.TSV_profile_matches))),
-                                  'taxonomic_file': SnakemakeUtils.load_object(Path(str(input.TSV_taxonomic)))})
+        detector.add_input_files({'TSV_profile_matches': SnakemakeUtils.load_object(Path(str(input.TSV_profile_matches))),
+                                  'TSV_taxonomic': SnakemakeUtils.load_object(Path(str(input.TSV_taxonomic)))})
         step = Step(str(rule), detector, Camel.get_instance(), params.working_dir)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(detector, output)

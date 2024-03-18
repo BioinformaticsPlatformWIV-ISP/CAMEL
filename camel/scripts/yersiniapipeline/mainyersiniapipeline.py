@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import argparse
 from typing import Optional, List, Dict, Sequence
-import logging
 
 import yaml
 
@@ -10,15 +9,15 @@ from camel.app.components import mainscriptutils
 from camel.app.components.pipelines.reportpipeline import ReportPipeline
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.scripts.yersiniapipeline import SNAKEFILE_MAIN, CONFIG_DATA
-
+from camel.app.loggers import logger
 
 class MainYersiniaPipeline(ReportPipeline):
     """
     Main class to run the Yersinia pipeline.
     """
 
-    CUSTOM_ANALYSES = ['kraken2', 'confindr', 'amrfinder', 'resfinder', 'vfdb_core', 'mob_suite', 'cgmlst',
-                       'mlst', 'mlst_mcnally', 'cgmlst_ye', 'cgmlst_yp', 'cgmlst_yersinia', 'rmlst']
+    CUSTOM_ANALYSES = ['kraken2', 'confindr', 'amrfinder', 'resfinder4', 'vfdb_core', 'mob_suite', 'cgmlst',
+                       'mlst', 'mlst_mcnally', 'cgmlst_ye', 'cgmlst_yp', 'cgmlst_enterobase', 'rmlst']
 
     def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """
@@ -65,7 +64,7 @@ class MainYersiniaPipeline(ReportPipeline):
             if 'cgmlst' in self._args:
                 config_data['analyses'].append('species')
             else:
-                logging.warning("CgMLST is disabled, so species determination will not run.")
+                logger.warning("CgMLST is disabled, so species determination will not run.")
         return SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir)
 
     @staticmethod
