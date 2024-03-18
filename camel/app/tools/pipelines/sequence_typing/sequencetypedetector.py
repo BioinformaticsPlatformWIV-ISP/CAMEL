@@ -1,8 +1,12 @@
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import List, Dict, Tuple, Optional
+
+import pandas as pd
 
 from camel.app.components.sequencetyping.sequencetypinghitbase import SequenceTypingHitBase
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from camel.app.io.tooliofile import ToolIOFile
 from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
@@ -47,6 +51,14 @@ class SequenceTypeDetector(Tool):
         best_profile = sorted(nb_matches_by_profile.items(), key=lambda x: -x[-1])[0][0]
         percent_matching = 100 * nb_matches_by_profile[best_profile] / len(best_profile.alleles)
         is_detected = percent_matching >= int(self._parameters['min_percent_detected'].value)
+
+        # Write all profiles to a tsv file
+        if ('write_tsv' in self._parameters.keys()) and self._parameters['write_tsv'].value:
+            num_alleles = len(list(nb_matches_by_profile.keys())[0].alleles)
+            all_matches = pd.DataFrame([(stprofile.name, hits / num_alleles) for stprofile, hits in
+                                        nb_matches_by_profile.items()], columns=["ST", "proportion_match"])
+            all_matches.to_csv(self._folder / Path(self._parameters['output_filename'].value), sep="\t", index=False)
+            self._tool_outputs['TSV'] = [ToolIOFile(self._folder / Path(self._parameters['output_filename'].value))]
 
         # Save output data
         self._informs.update({

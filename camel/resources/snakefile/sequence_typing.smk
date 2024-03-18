@@ -175,7 +175,6 @@ rule typing_export_hits_tabular:
         scheme = lambda wildcards: FileSystemHelper.make_valid(wildcards.scheme),
         locus_type = lambda wildcards: wildcards.locus_type
     run:
-        import sys
         from camel.app.io.tooliofile import ToolIOFile
         import pandas as pd
 
@@ -205,25 +204,32 @@ rule typing_detect_sequence_type:
     Detects the sequence type based on the detected alleles.
     """
     input:
-         hits_nucl = rules.typing_get_hits.output.HITS_NUCL,
-         hits_pept = rules.typing_get_hits.output.HITS_PEPT,
-         TSV = rules.typing_pickle_profiles.output.TSV
+        hits_nucl = rules.typing_get_hits.output.HITS_NUCL,
+        hits_pept = rules.typing_get_hits.output.HITS_PEPT,
+        TSV = rules.typing_pickle_profiles.output.TSV
     output:
-        INFORMS = Path(config['working_dir']) / 'typing' / '{scheme}' / 'informs-st.io'
+        TSV = Path(config['working_dir']) / 'typing' / '{scheme}' / 'detect_st' / 'tsv.io',
+        INFORMS = Path(config['working_dir']) / 'typing' / '{scheme}' / 'detect_st' / 'informs-st.io'
     params:
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'typing' / wildcards.scheme
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'typing' / wildcards.scheme / 'detect_st',
+        write_all_matches = lambda wildcards: config['sequence_typing'][wildcards.scheme].get('write_all_matches', False)
     run:
         from camel.app.tools.pipelines.sequence_typing.sequencetypedetector import SequenceTypeDetector
         data_profiles = SnakemakeUtils.load_object(Path(input.TSV))
         if len(data_profiles) == 0:
             SnakemakeUtils.dump_object([], Path(output.INFORMS))
+            SnakemakeUtils.dump_object([], Path(output.TSV))
         else:
             sequence_type_detector = SequenceTypeDetector(Camel.get_instance())
             SnakemakeUtils.add_pickle_inputs(sequence_type_detector, input)
             step = Step(str(rule), sequence_type_detector, Camel.get_instance(), Path(str(params.running_dir)), wildcards)
             sequence_type_detector.update_parameters(allele_wildcards='N', allele_absent_symbol='0')
+            if params.write_all_matches:
+                 sequence_type_detector.update_parameters(write_tsv='True', output_filename='profile_matches.tsv')
             step.run_step()
-            SnakemakeUtils.dump_tool_outputs(sequence_type_detector, output)
+            SnakemakeUtils.dump_object(sequence_type_detector.informs, Path(output.INFORMS))
+            SnakemakeUtils.dump_object(
+                sequence_type_detector.tool_outputs['TSV'] if params.write_all_matches else [], Path(output.TSV))
 
 rule typing_get_cgmlst_stats:
     """
