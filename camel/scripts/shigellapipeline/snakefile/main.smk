@@ -3,7 +3,7 @@ from pathlib import Path
 from camel.resources.snakefile import trimming, trimming_illumina, \
     quality_checks, contamination_check_kraken, gene_detection, sequence_typing, \
     downsampling, confindr, quast, core, assembly, amrfinder, resfinder4, mobsuite
-from camel.scripts.shigellapipeline.snakefile import shigeifinder, shigatyper
+from camel.scripts.shigellapipeline.snakefile import shigeifinder, shigatyper, mykrobe
 
 #######################
 # Included Snakefiles #
@@ -23,6 +23,7 @@ include: mobsuite.SNAKEFILE_MOB_SUITE
 include: sequence_typing.SNAKEFILE_SEQUENCE_TYPING
 include: shigeifinder.SNAKEFILE_SHIGEIFINDER
 include: shigatyper.SNAKEFILE_SHIGATYPER
+include: mykrobe.SNAKEFILE_MYKROBE
 
 
 #########
@@ -52,6 +53,7 @@ rule report_command_section:
         INFORMS_assembly_map = assembly.get_qc_informs(config,config['input_type']),
         INFORMS_shigeifinder = Path(config['working_dir']) / shigeifinder.OUTPUT_SHIGEIFINDER_INFORMS if 'shigeifinder' in config['analyses'] else [],
         INFORMS_shigatyper = Path(config['working_dir']) / shigatyper.OUTPUT_SHIGATYPER_INFORMS if 'shigatyper' in config['analyses'] else[],
+        INFORMS_mykrobe= Path(config['working_dir']) / mykrobe.OUTPUT_MYKROBE_INFORMS if 'mykrobe' in config['analyses'] else[],
         INFORMS_amrfinder = Path(config['working_dir']) / amrfinder.OUTPUT_AMRFINDER_INFORMS if 'amrfinder' in config['analyses'] else [],
         INFORMS_resfinder4 = Path(config['working_dir']) / resfinder4.OUTPUT_RESFINDER4_INFORMS if 'resfinder4' in config['analyses'] else [],
         INFORMS_virulence = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='virulencefinder') if 'virulencefinder' in config['analyses'] else [],
@@ -86,10 +88,11 @@ rule combine_reports:
         # Plasmid characterization
         report_mob_suite = Path(config['working_dir']) / (mobsuite.OUTPUT_MOB_SUITE_REPORT if 'mob_suite' in config['analyses'] else mobsuite.OUTPUT_MOB_SUITE_REPORT_EMPTY),
         report_genomic_context = Path(config['working_dir']) / (mobsuite.OUTPUT_MOB_SUITE_CONTEXT_REPORT if 'mob_suite' in config['analyses'] else mobsuite.OUTPUT_MOB_SUITE_CONTEXT_REPORT_EMPTY),
-        # Shigella typing
+        # Shigella serotyping
         report_rmlst = sequence_typing.get_sequence_typing_report('rmlst',config),
         report_shigeifinder = Path(config['working_dir']) / (shigeifinder.OUTPUT_SHIGEIFINDER_REPORT if 'shigeifinder' in config['analyses'] else shigeifinder.OUTPUT_SHIGEIFINDER_REPORT_EMPTY),
         report_shigatyper = Path(config['working_dir']) / (shigatyper.OUTPUT_SHIGATYPER_REPORT if 'shigatyper' in config['analyses'] else shigatyper.OUTPUT_SHIGATYPER_REPORT_EMPTY),
+        report_mykrobe = Path(config['working_dir']) / (mykrobe.OUTPUT_MYKROBE_REPORT if 'mykrobe' in config['analyses'] else mykrobe.OUTPUT_MYKROBE_REPORT_EMPTY),
         # Sequence typing
         report_mlst_warwick = sequence_typing.get_sequence_typing_report('mlst_warwick', config),
         report_mlst_pasteur = sequence_typing.get_sequence_typing_report('mlst_pasteur', config),
@@ -133,8 +136,8 @@ rule combine_reports:
             report_structure,params.input_type,input.reports_contamination,input.report_confindr)
         report_structure.append(('Advanced QC', 'adv_qc', [Path(input.report_adv_qc)]))
         report_structure.extend([
-            ('<i>Shigella</i> typing', 'shigella_typing', [Path(x) for x in (
-                input.report_shigeifinder, input.report_shigatyper)]),
+            ('<i>Shigella</i> serotyping', 'shigella_typing', [Path(x) for x in (
+                input.report_shigeifinder, input.report_shigatyper, input.report_mykrobe)]),
             ('AMR detection', 'amr', [Path(x) for x in (
                 input.report_amrfinder, input.report_resfinder4)]),
             ('Virulence characterization', 'viru', [Path(x) for x in (
@@ -163,9 +166,9 @@ rule combine_summary_files:
         Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY,
         # Shigella typing
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='rmlst') if 'rmlst' in config['analyses'] else [],
-        Path(config['working_dir']) / shigeifinder.OUTPUT_SHIGEIFINDER_SUMMARY if 'shigeifinder' in config[
-            'analyses'] else [],
+        Path(config['working_dir']) / shigeifinder.OUTPUT_SHIGEIFINDER_SUMMARY if 'shigeifinder' in config['analyses'] else [],
         Path(config['working_dir']) / shigatyper.OUTPUT_SHIGATYPER_SUMMARY if 'shigatyper' in config['analyses'] else [],
+        Path(config['working_dir']) / mykrobe.OUTPUT_MYKROBE_SUMMARY if 'mykrobe' in config['analyses'] else [],
         # Gene detection
         Path(config['working_dir']) / amrfinder.OUTPUT_AMRFINDER_SUMMARY if 'amrfinder' in config['analyses'] else [],
         Path(config['working_dir']) / resfinder4.OUTPUT_RESFINDER4_SUMMARY if 'resfinder4' in config['analyses'] else [],
