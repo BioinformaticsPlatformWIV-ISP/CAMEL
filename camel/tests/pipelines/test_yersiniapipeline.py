@@ -90,8 +90,7 @@ class TestYersiniaPipeline(unittest.TestCase):
             '--output-tsv', str(path_summary_out),
             '--working-dir', str(self.running_dir),
             '--cov-max', '5.0',
-        ] + [f"--{a.replace('_', '-')}" for a in MainYersiniaPipeline.CUSTOM_ANALYSES if a not in
-             ['cgmlst', 'cgmlst-species', 'cgmlst-yersinia']]
+        ] + [f"--{a.replace('_', '-')}" for a in MainYersiniaPipeline.CUSTOM_ANALYSES if not a.startswith('cgmlst')]
         main = MainYersiniaPipeline(args)
         main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)
