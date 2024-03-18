@@ -96,11 +96,14 @@ rule resfinder4_create_summary:
         informs = SnakemakeUtils.load_object(Path(input.INFORMS))
         with open(output.TSV, 'w') as handle:
             data_genes = pd.read_table(tsv_genes)
-            handle.write(f"resfinder4_genes\t{', '.join(list(data_genes['Resistance gene']))}")
+            handle.write('\t'.join([
+                f'resfinder4_genes', ', '.join(list(data_genes['Resistance gene'])) if not data_genes.empty else '-']))
             handle.write('\n')
             if params.point:
                 data_mutations = pd.read_table(tsv_point)
-                handle.write(f"resfinder4_mutations\t{', '.join(list(data_mutations['Mutation']))}")
+                handle.write('\t'.join([
+                    'resfinder4_mutations',
+                    ', '.join(list(data_mutations['Mutation'])) if not data_mutations.empty else '-']))
                 handle.write('\n')
             handle.write(f"resfinder4_tool_version\t{informs['_name']}")
             handle.write('\n')

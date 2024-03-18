@@ -110,25 +110,28 @@ class ResFinderReporter(Tool):
         data_genes = pd.read_table(self._tool_inputs['TSV_genes'][0].path, na_values=['NA..NA'])
         logging.info(f'{len(data_genes)} genes parsed')
         cols_original = list(data_genes.columns)
-        data_genes['perc_cov'] = data_genes['Alignment Length/Gene Length'].apply(
-            lambda x: 100 * int(x.split('/')[0]) / int(x.split('/')[1]))
-        data_genes['color'] = data_genes.apply(lambda row: ResFinderReporter.__get_row_color(row), axis=1)
+        if not data_genes.empty:
+            data_genes['perc_cov'] = data_genes['Alignment Length/Gene Length'].apply(
+                lambda x: 100 * int(x.split('/')[0]) / int(x.split('/')[1]))
+            data_genes['color'] = data_genes.apply(lambda row: ResFinderReporter.__get_row_color(row), axis=1)
 
-        # Add table
-        section.add_header('Detected AMR genes', 3)
-        section.add_table([[
-            *[HtmlTableCell(
-                f'{row[col]:.2f}' if isinstance(row[col], float) else row[col],
-                color=row['color']
-            ) for col in cols_original if col != 'Accession no.'],
-            ResFinderReporter.__get_accession_cell(row['Accession no.'], row['color'])
-        ] for row in data_genes.fillna('-').to_dict('records')], cols_original, [('class', 'data')])
+            # Add table
+            section.add_header('Detected AMR genes', 3)
+            section.add_table([[
+                *[HtmlTableCell(
+                    f'{row[col]:.2f}' if isinstance(row[col], float) else row[col],
+                    color=row['color']
+                ) for col in cols_original if col != 'Accession no.'],
+                ResFinderReporter.__get_accession_cell(row['Accession no.'], row['color'])
+            ] for row in data_genes.fillna('-').to_dict('records')], cols_original, [('class', 'data')])
 
-        # Add download link
-        if len(data_genes) > 0:
-            relative_path = Path('resfinder4', self._tool_inputs['TSV_genes'][0].path.name)
-            section.add_file(self._tool_inputs['TSV_genes'][0].path, relative_path)
-            section.add_link_to_file('Download (TSV)', relative_path)
+            # Add download link
+            if len(data_genes) > 0:
+                relative_path = Path('resfinder4', self._tool_inputs['TSV_genes'][0].path.name)
+                section.add_file(self._tool_inputs['TSV_genes'][0].path, relative_path)
+                section.add_link_to_file('Download (TSV)', relative_path)
+        else:
+            section.add_paragraph('No genes detected.')
 
     def __add_mutations_table(self, section: HtmlReportSection) -> None:
         """
