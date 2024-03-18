@@ -15,7 +15,7 @@ class TestYersiniaPipeline(unittest.TestCase):
     Tests for the Yersinia pipeline.
     """
 
-    camel = Camel()
+    camel = Camel.get_instance()
     running_dir = None
 
     #Input files
