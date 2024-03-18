@@ -111,6 +111,7 @@ class Mykrobe(Tool):
         with path_metadata.open('r') as handle:
             metadata = json.load(handle)
         self._informs.update(metadata)
+        self._informs['db_version'] = metadata['last_update_date']
 
     def _parse_csv(self, path_csv: Path) -> None:
         """
@@ -119,4 +120,8 @@ class Mykrobe(Tool):
         :return: None
         """
         data = pd.read_csv(path_csv)
-        self._informs['phylo_group'] = data['phylo_group'][0].replace('_', ' ')
+        self._informs['phylo_group'] = data['phylo_group'][0]
+        self._informs['species'] = data['species'][0]
+        self._informs['lineage'] = data['lineage'][0]
+        self._informs['drug_susceptibility'] = data.iloc[:, 1:5].values.tolist()
+
