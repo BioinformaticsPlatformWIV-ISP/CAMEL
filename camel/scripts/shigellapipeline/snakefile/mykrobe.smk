@@ -18,6 +18,7 @@ rule mykrobe_run:
         INFORMS = Path(config['working_dir']) / 'mykrobe' / 'informs.io'
     params:
         dir_ = Path(config['working_dir']) / 'mykrobe',
+        species = Path(config['mykrobe']['species']),
         db_dir = Path(config['mykrobe']['db']),
         input_type = config['input_type']
     run:
@@ -31,7 +32,7 @@ rule mykrobe_run:
         typer.add_input_files({
             'FASTQ_PE': fq_in.pe,
             'DIR': [ToolIODirectory(params.db_dir)],
-            'SPECIES': [ToolIOValue('sonnei')]
+            'SPECIES': [ToolIOValue(params.species)]
         })
 
         # Run tool

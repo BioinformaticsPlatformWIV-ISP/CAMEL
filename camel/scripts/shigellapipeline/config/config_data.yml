@@ -63,6 +63,7 @@ assembly:
 ############################
 mykrobe:
   db: /db/mykrobe/latest/
+  species: sonnei
 
 amrfinder:
   db: /db/amrfinder/by_version/latest
