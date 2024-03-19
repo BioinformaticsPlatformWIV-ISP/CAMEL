@@ -53,7 +53,7 @@ rule report_command_section:
         INFORMS_assembly_map = assembly.get_qc_informs(config,config['input_type']),
         INFORMS_shigeifinder = Path(config['working_dir']) / shigeifinder.OUTPUT_SHIGEIFINDER_INFORMS if 'shigeifinder' in config['analyses'] else [],
         INFORMS_shigatyper = Path(config['working_dir']) / shigatyper.OUTPUT_SHIGATYPER_INFORMS if 'shigatyper' in config['analyses'] else[],
-        INFORMS_mykrobe= Path(config['working_dir']) / mykrobe.OUTPUT_MYKROBE_INFORMS if 'mykrobe' in config['analyses'] else[],
+        INFORMS_mykrobe = Path(config['working_dir']) / mykrobe.OUTPUT_MYKROBE_INFORMS if 'mykrobe' in config['analyses'] else[],
         INFORMS_amrfinder = Path(config['working_dir']) / amrfinder.OUTPUT_AMRFINDER_INFORMS if 'amrfinder' in config['analyses'] else [],
         INFORMS_resfinder4 = Path(config['working_dir']) / resfinder4.OUTPUT_RESFINDER4_INFORMS if 'resfinder4' in config['analyses'] else [],
         INFORMS_virulence = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='virulencefinder') if 'virulencefinder' in config['analyses'] else [],
