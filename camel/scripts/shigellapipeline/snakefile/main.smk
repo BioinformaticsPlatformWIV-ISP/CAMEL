@@ -2,8 +2,8 @@ from pathlib import Path
 
 from camel.resources.snakefile import trimming, trimming_illumina, \
     quality_checks, contamination_check_kraken, gene_detection, sequence_typing, \
-    downsampling, confindr, quast, core, assembly, amrfinder, resfinder4, mobsuite
-from camel.scripts.shigellapipeline.snakefile import shigeifinder, shigatyper, mykrobe
+    downsampling, confindr, quast, core, assembly, amrfinder, resfinder4, mobsuite, mykrobe
+from camel.scripts.shigellapipeline.snakefile import shigeifinder, shigatyper
 
 #######################
 # Included Snakefiles #

@@ -5,7 +5,7 @@ from camel.app.io.tooliodirectory import ToolIODirectory
 from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.scripts.shigellapipeline.snakefile import mykrobe
+from camel.resources.snakefile import mykrobe
 
 rule mykrobe_run:
     """
