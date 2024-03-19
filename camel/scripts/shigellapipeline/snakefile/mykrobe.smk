@@ -5,7 +5,6 @@ from camel.app.io.tooliodirectory import ToolIODirectory
 from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.app.tools.mykrobe.mykrobe import Mykrobe
 from camel.scripts.shigellapipeline.snakefile import mykrobe
 
 rule mykrobe_run:
@@ -23,6 +22,7 @@ rule mykrobe_run:
         input_type = config['input_type']
     run:
         from camel.app.components.workflows.utils.fastqinput import FastqInput
+        from camel.app.tools.mykrobe.mykrobe import Mykrobe
 
         typer = Mykrobe(Camel.get_instance())
 
