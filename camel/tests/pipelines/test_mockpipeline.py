@@ -30,6 +30,7 @@ class TestMockPipeline(CamelTestSuite):
             '--working-dir', str(self.running_dir),
             '--detection-method', 'blast',
             '--ncbi-amr',
+            '--human-read-scrubbing',
             '--threads', '8'
         ])
         pipeline.run()
@@ -96,6 +97,7 @@ class TestMockPipeline(CamelTestSuite):
             '--working-dir', str(self.running_dir),
             '--detection-method', 'blast',
             '--ncbi-amr',
+            '--human-read-scrubbing',
             '--threads', '8',
         ])
         pipeline.run()
@@ -118,6 +120,7 @@ class TestMockPipeline(CamelTestSuite):
             '--working-dir', str(self.running_dir),
             '--detection-method', 'blast',
             '--ncbi-amr',
+            '--human-read-scrubbing',
             '--threads', '8',
         ])
         pipeline.run()

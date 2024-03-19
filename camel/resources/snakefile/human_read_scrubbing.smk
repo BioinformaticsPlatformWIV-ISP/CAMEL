@@ -25,7 +25,7 @@ rule scrubbing_fasta_fa2fq:
         from camel.app.components.files.fastautils import FastaUtils
 
         fasta_path_in = (SnakemakeUtils.load_object(Path(input.FASTA)))[0].path
-        fastq_path_out = params.running_dir / f"{fasta_path_in.stem}.fastq"
+        fastq_path_out = Path(str(params.running_dir), f"{fasta_path_in.stem}.fastq")
 
         FastaUtils.convert_fasta_to_fastq(fasta_path_in, fastq_path_out)
         SnakemakeUtils.dump_object([ToolIOFile(fastq_path_out)], Path(output.FASTQ_from_fasta))
@@ -51,12 +51,12 @@ rule scrubbing_fastq_interleave_and_gunzip:
 
         if nb_of_fq_files == 1:
             path_in = fastq_in[0].path
-            path_out = params.running_dir / path_in.name.replace('.gz', '')
+            path_out = Path(str(params.running_dir), path_in.name.replace('.gz', ''))
             FileSystemHelper.gzip_extract(path_in, path_out)
             SnakemakeUtils.dump_object([ToolIOFile(path_out)], Path(output.FASTQ_SINGLE_GUNZIP))
         else:
-            interleaved_out = params.running_dir / f"{fastq_in[0].path.stem}_interleaved.fastq"
-            FastqUtils.convert_fastqs_to_interleaved_fastq(fastq_in[0].path, fastq_in[1].path, params.running_dir / f"{fastq_in[0].path.stem}_interleaved.fastq")
+            interleaved_out = Path(str(params.running_dir), f"{fastq_in[0].path.stem}_interleaved.fastq")
+            FastqUtils.convert_fastqs_to_interleaved_fastq(fastq_in[0].path, fastq_in[1].path, Path(str(params.running_dir), f"{fastq_in[0].path.stem}_interleaved.fastq"))
             SnakemakeUtils.dump_object([ToolIOFile(interleaved_out)], Path(output.FASTQ_SINGLE_GUNZIP))
 
 rule scrubbing_run_scrubber:
@@ -71,9 +71,10 @@ rule scrubbing_run_scrubber:
         INFORMS = Path(config['working_dir']) / 'human_read_scrubbing' / '{input_format}' / 'scrubbing' / 'informs.io'
     params:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'human_read_scrubbing' / wildcards.input_format / 'scrubbing',
+        input_format = lambda wildcards: wildcards.input_format
     run:
         from camel.app.tools.ncbihumanreadscrubber.ncbihumanreadscrubber import NcbiHumanReadScrubber
-        if 'fasta' not in config['input']:
+        if params.input_format != 'fasta':
             # Get the FASTQ file(s)
             fastq_in = SnakemakeUtils.load_object(Path(input.FASTQ))
             fqfile_number = len(fastq_in)
@@ -82,11 +83,16 @@ rule scrubbing_run_scrubber:
             interleaved = 'false'
         scrubber = NcbiHumanReadScrubber(camel)
         step = Step(str(rule), scrubber, camel, Path(str(params.running_dir)))
-        outputfile_scrubbing = str(Path(output.FASTQ_SCRUBBED).with_suffix('.fastq')) if 'fasta' not in config['input'] \
-            else str(params.running_dir / (SnakemakeUtils.load_object(Path(input.FASTQ_SINGLE_GUNZIP)))[0].path.name)
+        outputfile_scrubbing = str(Path(output.FASTQ_SCRUBBED).with_suffix('.fastq')) if params.input_format != 'fasta' \
+            else str(Path(str(params.running_dir), (SnakemakeUtils.load_object(Path(input.FASTQ_SINGLE_GUNZIP)))[0].path.name))
         scrubber.update_parameters(interleaved=interleaved, outputfile=outputfile_scrubbing)
         SnakemakeUtils.add_pickle_inputs(scrubber, input, excluded_keys=['FASTQ'])
         step.run_step()
+        if config['input_type'] == 'hybrid':
+            if params.input_format == 'fastq_pe':
+                scrubber.informs['_tag'] = 'Illumina'
+            else:
+                scrubber.informs['_tag'] = 'ONT'
         SnakemakeUtils.dump_tool_outputs(scrubber, output, keys=['FASTQ_SCRUBBED', 'INFORMS'])
 
 rule scrubbing_fasta_fq2fa:
@@ -103,7 +109,7 @@ rule scrubbing_fasta_fq2fa:
     run:
         from Bio import SeqIO
         path_in = (SnakemakeUtils.load_object(Path(input.FASTQ_SCRUBBED)))[0].path
-        path_out = params.running_dir / f"{path_in.stem}.fasta"
+        path_out = Path(str(params.running_dir), f"{path_in.stem}.fasta")
 
         with path_in.open('r') as fastq_file, path_out.open('w') as fasta_file:
             # Write the FASTQ SeqRecords in FASTA format, not using SeqIO.write directly because it writes multine fasta's
@@ -121,24 +127,24 @@ rule scrubbing_fastq_deinterleave_and_gzip:
     output:
         FASTQ_DEINTERLEAVED_GZIPPED = Path(config['working_dir']) / 'human_read_scrubbing' / '{input_format}' / 'output' / 'fastq.io'
     params:
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'human_read_scrubbing' / wildcards.input_format / 'output'
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'human_read_scrubbing' / wildcards.input_format / 'output',
+        is_paired = lambda wildcards: wildcards.input_format == 'fastq_pe'
     run:
         from camel.app.components.filesystemhelper import FileSystemHelper
         from camel.app.components.files.fastqutils import FastqUtils
 
         # Get the FASTQ file(s)
         fastq_in = SnakemakeUtils.load_object(Path(input.FASTQ))
-        fqfile_number = len(fastq_in)
-        if fqfile_number == 1:
+        if not params.is_paired:
             output.FASTQ_SINGLE_GUNZIP = input.FASTQ_SCRUBBED
             path_in = (SnakemakeUtils.load_object(Path(input.FASTQ_SCRUBBED)))[0].path
-            path_out = params.running_dir / f"{fastq_in[0].path.stem.split('.fastq')[0].split('.fq')[0]}.fastq.gz"
+            path_out = Path(str(params.running_dir), f"{fastq_in[0].path.stem.split('.fastq')[0].split('.fq')[0]}.fastq.gz")
             FileSystemHelper.gzip_file(path_in, path_out)
             SnakemakeUtils.dump_object([ToolIOFile(path_out)], Path(output.FASTQ_DEINTERLEAVED_GZIPPED))
         else:
             params.running_dir.mkdir(parents=True, exist_ok=True)
-            fastq_1 = params.running_dir / f"{FastqUtils.get_sample_name(fastq_in[0].path, pattern=FastqUtils.PATTERN_FQ_SE)}_1.fastq.gz"
-            fastq_2 = params.running_dir / f"{FastqUtils.get_sample_name(fastq_in[1].path, pattern=FastqUtils.PATTERN_FQ_SE)}_2.fastq.gz"
+            fastq_1 = Path(str(params.running_dir), f"{FastqUtils.get_sample_name(fastq_in[0].path, pattern=FastqUtils.PATTERN_FQ_SE)}_1.fastq.gz")
+            fastq_2 = Path(str(params.running_dir), f"{FastqUtils.get_sample_name(fastq_in[1].path, pattern=FastqUtils.PATTERN_FQ_SE)}_2.fastq.gz")
             FastqUtils.split_interleaved_fastq((SnakemakeUtils.load_object(Path(input.FASTQ_SCRUBBED)))[0].path, fastq_1,  fastq_2, gzip_output=True)
             SnakemakeUtils.dump_object([ToolIOFile(fastq_1), ToolIOFile(fastq_2)], Path(output.FASTQ_DEINTERLEAVED_GZIPPED))
 
@@ -153,13 +159,14 @@ rule scrubbing_report:
         VAL_HTML = Path(config['working_dir']) / 'human_read_scrubbing' / '{input_format}' / 'output' / 'html.io',
         TSV = Path(config['working_dir']) / 'human_read_scrubbing' / '{input_format}' / 'output' / 'summary_out.tsv'
     params:
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'human_read_scrubbing' / wildcards.input_format / 'output'
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'human_read_scrubbing' / wildcards.input_format / 'output',
+        input_format = lambda wildcards: wildcards.input_format
     run:
         from camel.app.components.html.htmlreportsection import HtmlReportSection
 
         # Parse informs
         hrrt_informs = SnakemakeUtils.load_object(Path(input.INFORMS_tools))
-        count_out = hrrt_informs['statistics']['count_removed']
+        count_removed = hrrt_informs['statistics']['count_removed']
         count_in = hrrt_informs['statistics']['count_total']
         if hrrt_informs['statistics']['count_removed'] == hrrt_informs['statistics']['count_total']:
             raise PipelineExecutionError(
@@ -167,14 +174,18 @@ rule scrubbing_report:
                 'try disabling the human read scrubbing step.')
 
         # Create the report section
-        section = HtmlReportSection('Human Read Removal', subtitle=hrrt_informs['_name'])
-        subject = 'reads' if 'fasta' not in config['input'] else 'contigs'
-        section.add_paragraph(f"Removed {count_out:,} out of {count_in:,} {subject}.")
+        section = HtmlReportSection('Human read removal', subtitle=hrrt_informs['_name'])
+        subject = 'read_pairs' if params.input_format == 'fastq_pe' else 'reads' if params.input_format == 'fastq_se' else 'contigs'
+        section.add_table([
+            [f'Total {subject}', f'{count_in:,}'],
+            [f'Removed {subject}', f'{count_removed:,}'],
+            [f'Removed %', f'{100 * count_removed / count_in:.2f}'],
+        ],['Category', 'Number'],[('class', 'data')])
         SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output.VAL_HTML))
 
         # Create the summary output
         data_summary = {'scrubbing_tool_version': hrrt_informs['_name'], f'scrubbing_{subject}_in': count_in,
-                        f'scrubbing_{subject}_out': count_out}
+                        f'scrubbing_{subject}_out': count_removed}
         with Path(output.TSV).open('w') as handle:
             for k, v in data_summary.items():
                 handle.write('\t'.join([k, str(v)]))
@@ -188,5 +199,4 @@ rule scrubbing_report_empty:
         VAL_HTML = Path(config['working_dir']) / 'human_read_scrubbing' / '{input_format}' / 'output' / 'html-empty.io'
     run:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-        SnakePipelineUtils.create_empty_report_section('Human read removal',Path(output.VAL_HTML))
-
+        SnakePipelineUtils.create_empty_report_section('Human read removal', Path(output.VAL_HTML))

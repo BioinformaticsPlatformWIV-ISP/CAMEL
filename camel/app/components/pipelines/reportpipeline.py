@@ -208,8 +208,12 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
                 ('Human read removal', 'human read removal', [report_scrubbing_by_input_format['fastq_se']]))
         elif input_type == 'hybrid':
             structure.append(
-                ('Human read removal', 'human read removal',
-                 [report_scrubbing_by_input_format['fastq_pe'], report_scrubbing_by_input_format['fastq_se']]))
+                ('Human read removal - Illumina', 'human_read_removal_ilmn',
+                 [report_scrubbing_by_input_format['fastq_pe']]))
+            structure.append(
+                ('Human read removal - ONT', 'human_read_removal_ont',
+                 [report_scrubbing_by_input_format['fastq_se']]))
+
         else:
             raise ValueError(f'Invalid input type: {input_type}')
 
