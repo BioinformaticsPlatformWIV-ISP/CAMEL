@@ -124,4 +124,3 @@ class Mykrobe(Tool):
         self._informs['species'] = data['species'][0]
         self._informs['lineage'] = data['lineage'][0]
         self._informs['drug_susceptibility'] = data.iloc[:, 1:5].values.tolist()
-
