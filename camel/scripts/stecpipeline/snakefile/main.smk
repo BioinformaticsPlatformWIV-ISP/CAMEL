@@ -83,14 +83,14 @@ rule report_combine_all:
         # AMR
         report_amrfinder= Path(config['working_dir']) / (amrfinder.OUTPUT_AMRFINDER_REPORT if 'amrfinder' in config['analyses'] else amrfinder.OUTPUT_AMRFINDER_REPORT_EMPTY),
         report_resfinder4 = Path(config['working_dir']) / (resfinder4.OUTPUT_RESFINDER4_REPORT if 'resfinder4' in config['analyses'] else resfinder4.OUTPUT_RESFINDER4_REPORT_EMPTY),
-        report_ncbi_stress = gene_detection.get_gene_detection_report('ncbi_stress',config),
+        report_ncbi_stress = gene_detection.get_gene_detection_report('ncbi_stress', config),
         # Gene detection
         report_virulence = gene_detection.get_gene_detection_report('virulencefinder', config),
         report_virulence_shiga = gene_detection.get_gene_detection_report('virulencefinder_shiga', config, 'virulencefinder'),
         report_serotype_o_type = gene_detection.get_gene_detection_report('serotype_o', config, 'serotype'),
         report_serotype_h_type = gene_detection.get_gene_detection_report('serotype_h', config, 'serotype'),
         # Plasmid characterization
-        report_plasmidfinder = gene_detection.get_gene_detection_report('plasmidfinder',config),
+        report_plasmidfinder = gene_detection.get_gene_detection_report('plasmidfinder', config),
         report_mob_suite = Path(config['working_dir']) / (mobsuite.OUTPUT_MOB_SUITE_REPORT if 'mob_suite' in config['analyses'] else mobsuite.OUTPUT_MOB_SUITE_REPORT_EMPTY),
         report_genomic_context = Path(config['working_dir']) / (mobsuite.OUTPUT_MOB_SUITE_CONTEXT_REPORT if 'mob_suite' in config['analyses'] else mobsuite.OUTPUT_MOB_SUITE_CONTEXT_REPORT_EMPTY),
         # Typing

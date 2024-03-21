@@ -52,7 +52,7 @@ rule report_command_section:
         INFORMS_busco = Path(config['working_dir']) / quast.OUTPUT_BUSCO_INFORMS,
         INFORMS_contamination = contamination_check_kraken.get_command_informs(config),
         INFORMS_confindr = Path(config['working_dir']) / confindr.OUTPUT_CONFINDR_INFORMS if 'confindr' in config['analyses'] else [],
-        INFORMS_assembly_map = assembly.get_qc_informs(config,config['input_type']),
+        INFORMS_assembly_map = assembly.get_qc_informs(config, config['input_type']),
         INFORMS_variant_calling_all = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_INFORMS_ALL,
         INFORMS_variant_filtering_all = Path(config['working_dir']) / variant_filtering.OUTPUT_VARIANT_FILTERING_INFORMS_ALL,
         INFORMS_snpit = Path(config['working_dir']) / snpit.OUTPUT_SNPIT_INFORMS if 'snpit' in config['analyses'] else [],

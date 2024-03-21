@@ -49,7 +49,7 @@ rule report_create_command_section:
         INFORMS_busco = Path(config['working_dir']) / quast.OUTPUT_BUSCO_INFORMS,
         INFORMS_contamination = contamination_check_kraken.get_command_informs(config),
         INFORMS_confindr = confindr.get_command_informs(config),
-        INFORMS_assembly_map = assembly.get_qc_informs(config,config['input_type']),
+        INFORMS_assembly_map = assembly.get_qc_informs(config, config['input_type']),
         INFORMS_amrfinder = Path(config['working_dir']) / amrfinder.OUTPUT_AMRFINDER_INFORMS if 'amrfinder' in config['analyses'] else [],
         INFORMS_resfinder4=Path(config['working_dir']) / resfinder4.OUTPUT_RESFINDER4_INFORMS if 'resfinder4' in config[
             'analyses'] else [],
@@ -87,17 +87,17 @@ rule combine_reports:
         report_amrfinder = Path(config['working_dir']) / (amrfinder.OUTPUT_AMRFINDER_REPORT if 'amrfinder' in config['analyses'] else amrfinder.OUTPUT_AMRFINDER_REPORT_EMPTY),
         report_resfinder4 = Path(config['working_dir']) / (resfinder4.OUTPUT_RESFINDER4_REPORT if 'resfinder4' in config['analyses'] else resfinder4.OUTPUT_RESFINDER4_REPORT_EMPTY),
         # Virulence gene detection
-        report_vfdb_core = gene_detection.get_gene_detection_report('vfdb_core',config),
+        report_vfdb_core = gene_detection.get_gene_detection_report('vfdb_core', config),
         # Genomic context investigation
         report_mob_suite = Path(config['working_dir']) / (mobsuite.OUTPUT_MOB_SUITE_REPORT if 'mob_suite' in config['analyses'] else mobsuite.OUTPUT_MOB_SUITE_REPORT_EMPTY),
         report_genomic_context = Path(config['working_dir']) / (mobsuite.OUTPUT_MOB_SUITE_CONTEXT_REPORT if 'mob_suite' in config['analyses'] else mobsuite.OUTPUT_MOB_SUITE_CONTEXT_REPORT_EMPTY),
         # Sequence typing
-        report_mlst = sequence_typing.get_sequence_typing_report('mlst',config),
-        report_mlst_mcnally = sequence_typing.get_sequence_typing_report('mlst_mcnally',config),
-        report_cgmlst = sequence_typing.get_sequence_typing_report('cgmlst',config),
-        report_cgmlst_ye = sequence_typing.get_sequence_typing_report('cgmlst_ye',config),
-        report_cgmlst_yp = sequence_typing.get_sequence_typing_report('cgmlst_yp',config),
-        report_cgmlst_enterobase = sequence_typing.get_sequence_typing_report('cgmlst_enterobase',config),
+        report_mlst = sequence_typing.get_sequence_typing_report('mlst', config),
+        report_mlst_mcnally = sequence_typing.get_sequence_typing_report('mlst_mcnally', config),
+        report_cgmlst = sequence_typing.get_sequence_typing_report('cgmlst', config),
+        report_cgmlst_ye = sequence_typing.get_sequence_typing_report('cgmlst_ye', config),
+        report_cgmlst_yp = sequence_typing.get_sequence_typing_report('cgmlst_yp', config),
+        report_cgmlst_enterobase = sequence_typing.get_sequence_typing_report('cgmlst_enterobase', config),
         report_rmlst = sequence_typing.get_sequence_typing_report('rmlst', config),
         # Species determination
         report_species = Path(config['working_dir']) / (species_determination.OUTPUT_SPECIES_DETERMINATION_REPORT if 'species' in config['analyses'] else species_determination.OUTPUT_SPECIES_DETERMINATION_REPORT_EMPTY),

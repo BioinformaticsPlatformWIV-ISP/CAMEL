@@ -50,7 +50,7 @@ rule report_command_section:
         INFORMS_busco = Path(config['working_dir']) /quast.OUTPUT_BUSCO_INFORMS,
         INFORMS_contamination = contamination_check_kraken.get_command_informs(config),
         INFORMS_confindr = Path(config['working_dir']) / confindr.OUTPUT_CONFINDR_INFORMS if 'confindr' in config['analyses'] else [],
-        INFORMS_assembly_map = assembly.get_qc_informs(config,config['input_type']),
+        INFORMS_assembly_map = assembly.get_qc_informs(config, config['input_type']),
         INFORMS_shigeifinder = Path(config['working_dir']) / shigeifinder.OUTPUT_SHIGEIFINDER_INFORMS if 'shigeifinder' in config['analyses'] else [],
         INFORMS_shigatyper = Path(config['working_dir']) / shigatyper.OUTPUT_SHIGATYPER_INFORMS if 'shigatyper' in config['analyses'] else[],
         INFORMS_mykrobe = Path(config['working_dir']) / mykrobe.OUTPUT_MYKROBE_INFORMS if 'mykrobe' in config['analyses'] else[],
@@ -89,7 +89,7 @@ rule combine_reports:
         report_mob_suite = Path(config['working_dir']) / (mobsuite.OUTPUT_MOB_SUITE_REPORT if 'mob_suite' in config['analyses'] else mobsuite.OUTPUT_MOB_SUITE_REPORT_EMPTY),
         report_genomic_context = Path(config['working_dir']) / (mobsuite.OUTPUT_MOB_SUITE_CONTEXT_REPORT if 'mob_suite' in config['analyses'] else mobsuite.OUTPUT_MOB_SUITE_CONTEXT_REPORT_EMPTY),
         # Shigella serotyping
-        report_rmlst = sequence_typing.get_sequence_typing_report('rmlst',config),
+        report_rmlst = sequence_typing.get_sequence_typing_report('rmlst', config),
         report_shigeifinder = Path(config['working_dir']) / (shigeifinder.OUTPUT_SHIGEIFINDER_REPORT if 'shigeifinder' in config['analyses'] else shigeifinder.OUTPUT_SHIGEIFINDER_REPORT_EMPTY),
         report_shigatyper = Path(config['working_dir']) / (shigatyper.OUTPUT_SHIGATYPER_REPORT if 'shigatyper' in config['analyses'] else shigatyper.OUTPUT_SHIGATYPER_REPORT_EMPTY),
         report_mykrobe = Path(config['working_dir']) / (mykrobe.OUTPUT_MYKROBE_REPORT if 'mykrobe' in config['analyses'] else mykrobe.OUTPUT_MYKROBE_REPORT_EMPTY),
