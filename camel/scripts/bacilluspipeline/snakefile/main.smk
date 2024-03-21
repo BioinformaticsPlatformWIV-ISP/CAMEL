@@ -64,6 +64,34 @@ rule link_fasta_to_tools_cereus:
     run:
         shutil.copyfile(Path(input.FASTA), Path(output.FASTA_btyper))
 
+rule main_update_gmm_report:
+    """
+    This rule updates the report of the GMM detection assay with an interpretation paragraph.
+    """
+    input:
+        VAL_HTML = gene_detection.get_gene_detection_report('gmo', config),
+        TSV_STRAINS = straingst.get_summaries(config),
+        TSV_GMM = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='gmo') if 'gmo' in config['analyses'] else []
+    output:
+        VAL_HTML = Path(config['working_dir']) / 'gene_detection' / 'gmo' / 'updated_html_report.io'
+    params:
+        TSV_GMM_DB = config['gene_detection']['gmo']['known_gmm_constructs'],
+        running_dir = Path(config['working_dir']) / 'gene_detection' / 'gmo'
+    run:
+        from camel.scripts.bacilluspipeline.scripts.update_gmm_report import UpdateGMMReport
+        from camel.app.camel import Camel
+        from camel.app.io.tooliofile import ToolIOFile
+        from camel.app.pipeline.step import Step
+        camel = Camel.get_instance()
+        gmmupdater = UpdateGMMReport(camel)
+        SnakemakeUtils.add_pickle_inputs(gmmupdater, input, excluded_keys=['TSV_STRAINS', 'TSV_GMM'])
+        gmmupdater.add_input_files({'TSV_STRAINS': [ToolIOFile(Path(x)) for x in input.TSV_STRAINS],
+                                    'TSV_GMM_DB': [ToolIOFile(Path(params.TSV_GMM_DB))],
+                                    'TSV_GMM': [ToolIOFile(Path(input.TSV_GMM))]})
+        step = Step(str(rule), gmmupdater, camel, params.running_dir, config)
+        step.run_step()
+        SnakemakeUtils.dump_tool_outputs(gmmupdater, output)
+
 ##########
 # Report #
 ##########
@@ -208,7 +236,8 @@ rule report_content_subtilis:
             input_type=config['input_type']),
         report_fastani = Path(config['working_dir']) / (ani.OUTPUT_ANI_REPORT if 'fastani' in config['analyses'] else ani.OUTPUT_ANI_REPORT_EMPTY),
         report_amrfinder = Path(config['working_dir']) / (amrfinder.OUTPUT_AMRFINDER_REPORT if 'amrfinder' in config['analyses'] else amrfinder.OUTPUT_AMRFINDER_REPORT_EMPTY),
-        report_gmo = gene_detection.get_gene_detection_report('gmo', config),
+        # report_gmo = gene_detection.get_gene_detection_report('gmo', config),
+        report_gmo = rules.main_update_gmm_report.output.VAL_HTML,
         report_vfdb_core = gene_detection.get_gene_detection_report('vfdb_core', config),
         report_plasmidfinder = gene_detection.get_gene_detection_report('plasmidfinder', config),
         report_mob_suite = Path(config['working_dir']) / (mobsuite.OUTPUT_MOB_SUITE_REPORT if 'mobsuite' in config['analyses'] else mobsuite.OUTPUT_MOB_SUITE_REPORT_EMPTY),

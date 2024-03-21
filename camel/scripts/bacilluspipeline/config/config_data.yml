@@ -51,6 +51,8 @@ assembly:
   min_contig_length: 1000
   canu:
     minimum_input_coverage: 0
+  flye:
+    meta: ''
 
 confindr:
   db: /db/confindr/0.8.1
@@ -83,7 +85,8 @@ fastani:
 
 gene_detection:
   gmo:
-    path: /db/pipelines/bacillus/databaseGMMV2
+    known_gmm_constructs: /db/pipelines/bacillus/list_of_constructs.tsv
+    path: /db/pipelines/bacillus/databaseGMMV5
     force_detection_method: kma
     metadata:
       name: Additional data
