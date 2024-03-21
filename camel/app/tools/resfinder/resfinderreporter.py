@@ -60,12 +60,18 @@ class ResFinderReporter(Tool):
         header = ['Class', 'Antimicrobial', 'WGS-predicted phenotype', 'Genetic background']
         section.add_header(f'Predicted phenotype ({overview_type})', 3)
         div = HtmlExpandableDiv(f'pheno_{key}', 'overview')
-        div.add_table([(
-            row['Class'],
-            row['Antimicrobial'],
-            HtmlTableCell(row['WGS-predicted phenotype'], color=ResFinderReporter.MATCH_COLORS[row['Match']]),
-            row['Genetic background'] if not pd.isna(row['Genetic background']) else '-'
-        ) for row in data_pheno.to_dict('records')], header, [('class', 'data')])
+        table_data = []
+        for row in data_pheno.to_dict('records'):
+            if pd.isna(row['WGS-predicted phenotype']):
+                logger.warning(f'Skipping unknown mutation: {row}')
+                continue
+            table_data.append((
+                    row['Class'],
+                    row['Antimicrobial'],
+                    HtmlTableCell(row['WGS-predicted phenotype'], color=ResFinderReporter.MATCH_COLORS[row['Match']]),
+                    row['Genetic background'] if not pd.isna(row['Genetic background']) else '-'
+                ))
+        div.add_table(table_data, header, [('class', 'data')])
         section.add_html_object(div)
 
         # Add download link
