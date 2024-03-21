@@ -84,8 +84,8 @@ rule report_combine_all:
         report_sccmec_typing = Path(config['working_dir']) / (sccmectyping.OUTPUT_SCCMEC_TYPING_REPORT if 'sccmec_typing' in config['analyses'] else sccmectyping.OUTPUT_SCCMEC_TYPING_REPORT_EMPTY),
         # AMR detection
         report_lrefinder = Path(config['working_dir']) / (lrefinder.OUTPUT_LREFINDER_REPORT if 'lrefinder' in config['analyses'] else lrefinder.OUTPUT_LREFINDER_REPORT_EMPTY),
-        report_amrfinder = Path(config['working_dir']) / (amrfinder.OUTPUT_AMRFINDER_REPORT if config['analyses'] else amrfinder.OUTPUT_AMRFINDER_REPORT_EMPTY),
-        report_resfinder4 = Path(config['working_dir']) / (resfinder4.OUTPUT_RESFINDER4_REPORT if config['analyses'] else resfinder4.OUTPUT_RESFINDER4_REPORT_EMPTY),
+        report_amrfinder = Path(config['working_dir']) / (amrfinder.OUTPUT_AMRFINDER_REPORT if 'amrfinder' in config['analyses'] else amrfinder.OUTPUT_AMRFINDER_REPORT_EMPTY),
+        report_resfinder4 = Path(config['working_dir']) / (resfinder4.OUTPUT_RESFINDER4_REPORT if 'resfinder4' in config['analyses'] else resfinder4.OUTPUT_RESFINDER4_REPORT_EMPTY),
         # Virulence detection
         report_vf_exoenzyme = gene_detection.get_gene_detection_report('vf_exoenzyme', config, 'virulencefinder'),
         report_vf_hostimm = gene_detection.get_gene_detection_report('vf_hostimm', config, 'virulencefinder'),

@@ -85,7 +85,7 @@ rule combine_reports:
             input_type=config['input_type']),
         # AMR detection
         report_amrfinder = Path(config['working_dir']) / (amrfinder.OUTPUT_AMRFINDER_REPORT if 'amrfinder' in config['analyses'] else amrfinder.OUTPUT_AMRFINDER_REPORT_EMPTY),
-        report_resfinder4 = Path(config['working_dir']) / (resfinder4.OUTPUT_RESFINDER4_REPORT if config['analyses'] else resfinder4.OUTPUT_RESFINDER4_REPORT_EMPTY),
+        report_resfinder4 = Path(config['working_dir']) / (resfinder4.OUTPUT_RESFINDER4_REPORT if 'resfinder4' in config['analyses'] else resfinder4.OUTPUT_RESFINDER4_REPORT_EMPTY),
         # Virulence gene detection
         report_vfdb_core = gene_detection.get_gene_detection_report('vfdb_core',config),
         # Genomic context investigation

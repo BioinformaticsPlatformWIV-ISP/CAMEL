@@ -81,8 +81,8 @@ rule report_combine_all:
         # Serotype
         report_serotype = Path(config['working_dir']) / serotype_detection.OUTPUT_SEROTYPE_REPORT,
         # AMR
-        report_amrfinder= Path(config['working_dir']) / (amrfinder.OUTPUT_AMRFINDER_REPORT if config['analyses'] else amrfinder.OUTPUT_AMRFINDER_REPORT_EMPTY),
-        report_resfinder4 = Path(config['working_dir']) / (resfinder4.OUTPUT_RESFINDER4_REPORT if config['analyses'] else resfinder4.OUTPUT_RESFINDER4_REPORT_EMPTY),
+        report_amrfinder= Path(config['working_dir']) / (amrfinder.OUTPUT_AMRFINDER_REPORT if 'amrfinder' in config['analyses'] else amrfinder.OUTPUT_AMRFINDER_REPORT_EMPTY),
+        report_resfinder4 = Path(config['working_dir']) / (resfinder4.OUTPUT_RESFINDER4_REPORT if 'resfinder4' in config['analyses'] else resfinder4.OUTPUT_RESFINDER4_REPORT_EMPTY),
         report_ncbi_stress = gene_detection.get_gene_detection_report('ncbi_stress',config),
         # Gene detection
         report_virulence = gene_detection.get_gene_detection_report('virulencefinder', config),
