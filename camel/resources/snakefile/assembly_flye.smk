@@ -19,7 +19,7 @@ rule assembly_flye_run:
     params:
         dir_ = Path(config['working_dir']) / 'assembly' / 'flye',
         flye_options = config.get('assembly', {}).get('flye', {})
-    threads: 8
+    threads: 16
     priority: 1
     run:
         from camel.app.tools.flye.flye import Flye

@@ -116,7 +116,6 @@ class MainBacillusPipeline(ReportPipeline):
         # Nanopore settings
         if self._args.input_type in ['nanopore', 'hybrid']:
             config_data['assembly']['flye'] = {
-                'genome_size': MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['genome_size'],
                 **config_data['assembly'].get('flye', {})}
 
         # Disable KMA for hybrid data
