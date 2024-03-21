@@ -56,7 +56,7 @@ class HtmlReporterQualityChecks(Tool):
             inf['fmt_string_value'].format(inf['threshold_warn']),
             inf['fmt_string_value'].format(inf['threshold_fail'])
         ] for inf in self._input_informs['qc_checks']]
-        self._section.add_header(f'Overview - {self._input_informs.get("read_type", "illumina").capitalize()} reads', 3)
+        self._section.add_header('Overview', 3)
         self._section.add_table(data, header, [('class', 'data')])
 
     def _check_input(self) -> None:
