@@ -18,14 +18,14 @@ rule gene_detection_blast_blastn:
     params:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'gene_detection' / wildcards.db / 'blastn',
         task = lambda wildcards: config['gene_detection'][wildcards.db].get('params', {}).get('blastn', {}).get('task', 'megablast'),
-        blast_reads= lambda wildcards: config['gene_detection'][wildcards.db].get('params',{}).get('blastn',{}).get('blast_reads', False),
+        blast_reads = lambda wildcards: config['gene_detection'][wildcards.db].get('params', {}).get('blastn', {}).get('blast_reads', False),
     run:
         from camel.app.tools.blast.blastn import Blastn
         blastn = Blastn(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(blastn, input)
         step = Step(str(rule), blastn, Camel.get_instance(), Path(str(params.running_dir)), wildcards)
         if params.blast_reads:
-            blastn.update_parameters(threads=1,task=str(params.task),max_target_seqs=1) #report only 1 hit per read
+            blastn.update_parameters(threads=1, task=str(params.task), max_target_seqs=1) # report only 1 hit per read
         else:
             blastn.update_parameters(threads=1, task=str(params.task), max_target_seqs=20000)
         step.run_step()
