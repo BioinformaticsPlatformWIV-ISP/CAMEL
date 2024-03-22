@@ -22,7 +22,7 @@ class ShigaTyperReporter(Tool):
         {'key': 'reference length', 'fmt': lambda x: f'{x:,}'},
         {'key': '% covered', 'fmt': lambda x: f'{x:.2f}'},
         {'key': 'Number of variants', 'fmt': lambda x: f'{int(x):,}'},
-        {'key': '% accuracy', 'fmt': lambda x: f'{x:.2f}'},
+        {'key': '% accuracy', 'fmt': lambda x: f'{x:.2f}'}
     ]
 
     def __init__(self, camel: Camel) -> None:
@@ -73,7 +73,7 @@ class ShigaTyperReporter(Tool):
         :param col: Column metadata
         :return: HTML table cell
         """
-        if 'fmt' not in col:
+        if 'fmt' not in col or value == '-':
             return HtmlTableCell(str(value))
         return HtmlTableCell(col['fmt'](value))
 
@@ -88,6 +88,12 @@ class ShigaTyperReporter(Tool):
 
         # Remove the sample ID column
         gene_hits.pop('Unnamed: 0')
+
+        # Add potentially missing columns
+        col_list = ['Hit', 'Number of reads', 'Length Covered', 'reference length',
+                    '% covered', 'Number of variants', '% accuracy']
+        missing_columns = [col for col in col_list if col not in gene_hits.columns]
+        gene_hits[missing_columns] = '-'
 
         # Create table data
         hits_table = []
