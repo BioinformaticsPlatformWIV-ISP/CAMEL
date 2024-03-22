@@ -1,8 +1,6 @@
 import argparse
 from pathlib import Path
-from typing import Union, List, Dict
-
-import logging
+from typing import Union
 
 from camel.app.camel import Camel
 from camel.app.components.filesystemhelper import FileSystemHelper
@@ -10,10 +8,8 @@ from camel.app.components.html.htmlreport import HtmlReport
 from camel.app.components.workflows.readtype.basereadtypehelper import BaseReadTypeHelper
 from camel.app.components.workflows.trimmingontwrapper import TrimmingONTWrapper
 from camel.app.components.workflows.utils.fastqinput import FastqInput
-from camel.app.io.toolio import ToolIO
-from camel.app.io.tooliodirectory import ToolIODirectory
 from camel.app.io.tooliofile import ToolIOFile
-from camel.app.io.tooliovalue import ToolIOValue
+from camel.app.loggers import logger
 from camel.app.tools.seqtk.seqtkconvert import SeqtkConvert
 
 class NanoporeHelper(BaseReadTypeHelper):
@@ -96,5 +92,7 @@ class NanoporeHelper(BaseReadTypeHelper):
         camel = Camel.get_instance()
         convert = SeqtkConvert(camel)
         convert.add_input_files({'FASTQ': convert_input.se})
-        convert.run(self._working_dir)
-        return Path(convert._output_string)
+        working_dir = Path(self._working_dir / 'conversion')
+        working_dir.mkdir(parents=True, exist_ok=True)
+        convert.run(working_dir)
+        return Path(convert._tool_outputs['FASTA'][0].path)
