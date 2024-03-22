@@ -95,4 +95,4 @@ class NanoporeHelper(BaseReadTypeHelper):
         working_dir = Path(self._working_dir / 'conversion')
         working_dir.mkdir(parents=True, exist_ok=True)
         convert.run(working_dir)
-        return Path(convert._tool_outputs['FASTA'][0].path)
+        return Path(convert.tool_outputs['FASTA'][0].path)
