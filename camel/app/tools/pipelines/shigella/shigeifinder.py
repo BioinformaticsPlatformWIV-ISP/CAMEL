@@ -101,7 +101,11 @@ class ShigEiFinder(Tool):
             coli_serotype = serotype_abbrev.split()[1]
             return f'Enteroinvasive Escherichia coli {coli_serotype}'
 
-        raise ValueError(f'Cannot determine isolate species (serotype={serotype_abbrev})')
+        if serotype_abbrev.startswith('Not Shigella/EIEC'):
+            return f'Not Shigella/EIEC'
+
+        else:
+            return f'{serotype_abbrev}'
 
     def _parse_tsv(self, path_tsv: Path) -> None:
         """
