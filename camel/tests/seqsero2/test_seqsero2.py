@@ -4,7 +4,6 @@ from pathlib import Path
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.io.tooliodirectory import ToolIODirectory
 from camel.app.io.tooliofile import ToolIOFile
-from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.tools.pipelines.salmonella.seqsero2 import SeqSero2
 from camel.app.tools.pipelines.salmonella.seqsero2reporter import SeqSero2Reporter
 
@@ -30,7 +29,7 @@ class TestSeqsero2(CamelTestSuite):
             'FASTA': [ToolIOFile(Path(self.input_fasta_file))],
             'DIR': [ToolIODirectory(self.db_path)]
         })
-        seqsero2_tool.update_parameters(mode=str('Kmer'))
+        seqsero2_tool.update_parameters(mode='Kmer')
         seqsero2_tool.run(self.running_dir)
         self.verify_output_files(seqsero2_tool, 'TXT')
         self.assertIn('db_path', seqsero2_tool.informs)
@@ -45,7 +44,7 @@ class TestSeqsero2(CamelTestSuite):
             'FASTQ_PE': [ToolIOFile(x) for x in self.input_pe_reads],
             'DIR': [ToolIODirectory(self.db_path)]
         })
-        seqsero2_tool.update_parameters(mode=str('Allele'))
+        seqsero2_tool.update_parameters(mode='Allele')
         seqsero2_tool.run(self.running_dir)
         self.verify_output_files(seqsero2_tool, 'TXT')
         self.assertIn('db_path', seqsero2_tool.informs)
@@ -60,7 +59,7 @@ class TestSeqsero2(CamelTestSuite):
             'FASTQ_PE': [ToolIOFile(x) for x in self.input_pe_reads],
             'DIR': [ToolIODirectory(self.db_path)]
         })
-        seqsero2_tool.update_parameters(mode=str('Kmerread'))
+        seqsero2_tool.update_parameters(mode='Kmerread')
         seqsero2_tool.run(self.running_dir)
         self.verify_output_files(seqsero2_tool, 'TXT')
         self.assertIn('db_path', seqsero2_tool.informs)
@@ -75,7 +74,7 @@ class TestSeqsero2(CamelTestSuite):
             'FASTA': [ToolIOFile(Path(self.input_fasta_file))],
             'DIR': [ToolIODirectory(self.db_path)]
         })
-        seqsero2_tool.update_parameters(mode=str('Kmer'))
+        seqsero2_tool.update_parameters(mode='Kmer')
         seqsero2_tool.run(self.running_dir)
         self.verify_output_files(seqsero2_tool, 'TXT')
         self.assertIn('db_path', seqsero2_tool.informs)
