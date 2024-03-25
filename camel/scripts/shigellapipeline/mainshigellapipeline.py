@@ -16,7 +16,8 @@ class MainShigellaPipeline(ReportPipeline):
     """
 
     CUSTOM_ANALYSES = ['kraken2', 'confindr', 'rmlst', 'shigeifinder', 'shigatyper', 'amrfinder', 'resfinder4',
-                       'mlst_pasteur', 'mlst_warwick', 'cgmlst', 'virulencefinder', 'mob_suite', 'vfdb_core', 'mykrobe']
+                       'mlst_pasteur', 'mlst_warwick', 'cgmlst', 'virulencefinder', 'mob_suite', 'vfdb_core', 'mykrobe',
+                       'human_read_scrubbing']
 
     def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """

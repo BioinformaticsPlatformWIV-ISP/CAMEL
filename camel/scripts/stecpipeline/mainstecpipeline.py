@@ -19,7 +19,7 @@ class MainSTECPipeline(ReportPipeline):
 
     CUSTOM_ANALYSES = [
         'kraken2', 'confindr', 'rmlst', 'amrfinder', 'resfinder4', 'ncbi_stress', 'mlst_pasteur', 'mlst_warwick',
-        'cgmlst', 'plasmidfinder', 'mob_suite', 'serotype', 'virulencefinder', 'innuendo_cgmlst']
+        'cgmlst', 'plasmidfinder', 'mob_suite', 'serotype', 'virulencefinder', 'innuendo_cgmlst', 'human_read_scrubbing']
 
     def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """

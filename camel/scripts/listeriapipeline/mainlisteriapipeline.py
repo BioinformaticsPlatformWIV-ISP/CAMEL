@@ -17,7 +17,8 @@ class MainListeriaPipeline(ReportPipeline):
 
     CUSTOM_ANALYSES = [
         'kraken2', 'confindr', 'rmlst', 'mlst', 'cgmlst', 'species_confirmation', 'amrfinder', 'resfinder',
-        'virulencefinder', 'vfdb_core', 'plasmidfinder', 'typing_amr', 'typing_virulence', 'pcr_serogroup']
+        'virulencefinder', 'vfdb_core', 'plasmidfinder', 'typing_amr', 'typing_virulence', 'pcr_serogroup',
+        'human_read_scrubbing']
 
     def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """

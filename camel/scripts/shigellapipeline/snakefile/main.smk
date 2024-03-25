@@ -2,13 +2,14 @@ from pathlib import Path
 
 from camel.resources.snakefile import trimming, trimming_illumina, \
     quality_checks, contamination_check_kraken, gene_detection, sequence_typing, \
-    downsampling, confindr, quast, core, assembly, amrfinder, resfinder4, mobsuite, mykrobe
+    downsampling, confindr, quast, core, assembly, amrfinder, resfinder4, mobsuite, mykrobe, human_read_scrubbing
 from camel.scripts.shigellapipeline.snakefile import shigeifinder, shigatyper
 
 #######################
 # Included Snakefiles #
 #######################
 include: core.SNAKEFILE_CORE
+include: human_read_scrubbing.SNAKEFILE_SCRUBBING
 include: downsampling.SNAKEFILE_DOWNSAMPLING
 include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
 include: assembly.SNAKEFILE_ASSEMBLY
@@ -43,6 +44,7 @@ rule report_command_section:
     Creates a report section with the commands used in the pipeline. 
     """
     input:
+        INFORMS_scrubbing = human_read_scrubbing.get_command_informs(config),
         INFORMS_downsampling = downsampling.get_command_informs(config),
         INFORMS_trimming = trimming.get_command_informs(config),
         INFORMS_assembly = assembly.get_command_informs(config),
@@ -74,6 +76,7 @@ rule combine_reports:
     Rule to combine report sections into a single output report.
     """
     input:
+        reports_scrubbing = human_read_scrubbing.get_reports(config),
         reports_downsampling = downsampling.get_reports(config),
         reports_trimming = trimming.get_reports(config),
         report_quast = Path(config['working_dir']) / quast.OUTPUT_QUAST_REPORT,
@@ -129,6 +132,8 @@ rule combine_reports:
 
         # Add output sections
         report_structure = []
+        ReportPipeline.add_content_scrubbing(
+            report_structure, params.input_type, input.reports_scrubbing)
         ReportPipeline.add_content_trim_basic_qc(
             report_structure,params.input_type,input.reports_downsampling,input.reports_trimming)
         report_structure.append(('Assembly', 'assembly', [Path(input.report_quast)]))
@@ -158,6 +163,7 @@ rule combine_summary_files:
     """
     input:
         Path(config['working_dir'], core.OUTPUT_TSV_SUMMARY_INIT),
+        human_read_scrubbing.get_summaries(config),
         downsampling.get_summaries(config),
         trimming.get_summaries(config),
         Path(config['working_dir']) / quast.OUTPUT_QUAST_SUMMARY,

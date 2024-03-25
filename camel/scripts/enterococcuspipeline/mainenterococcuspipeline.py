@@ -18,7 +18,7 @@ class MainEnterococcusPipeline(ReportPipeline):
 
     CUSTOM_ANALYSES = [
         'kraken2', 'confindr', 'rmlst', 'lrefinder', 'amrfinder', 'resfinder4', 'vfdb_core', 'virulencefinder', 'mlst',
-        'cgmlst', 'plasmidfinder', 'mob_suite', 'bacmet']
+        'cgmlst', 'plasmidfinder', 'mob_suite', 'bacmet', 'human_read_scrubbing']
 
     DATA_BY_SPECIES = {
         'faecalis': {

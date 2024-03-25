@@ -18,7 +18,7 @@ class MainKlebsiellaPipeline(ReportPipeline):
 
     CUSTOM_ANALYSES = [
         'kraken2', 'confindr', 'amrfinder', 'resfinder4', 'vfdb_core', 'kleborate', 'plasmidfinder', 'mob_suite',
-        'bacmet', 'cgmlst', 'mlst', 'scgmlst']
+        'bacmet', 'cgmlst', 'mlst', 'scgmlst', 'human_read_scrubbing']
 
     def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """

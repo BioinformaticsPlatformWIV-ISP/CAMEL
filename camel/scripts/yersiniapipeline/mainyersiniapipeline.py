@@ -17,7 +17,8 @@ class MainYersiniaPipeline(ReportPipeline):
     """
 
     CUSTOM_ANALYSES = ['kraken2', 'confindr', 'amrfinder', 'resfinder4', 'vfdb_core', 'mob_suite', 'cgmlst',
-                       'mlst', 'mlst_mcnally', 'cgmlst_ye', 'cgmlst_yp', 'cgmlst_enterobase', 'rmlst']
+                       'mlst', 'mlst_mcnally', 'cgmlst_ye', 'cgmlst_yp', 'cgmlst_enterobase', 'rmlst',
+                       'human_read_scrubbing']
 
     def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """
