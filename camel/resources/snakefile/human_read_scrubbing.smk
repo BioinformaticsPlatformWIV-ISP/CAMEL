@@ -155,7 +155,6 @@ rule scrubbing_report:
     input:
         INFORMS_tools = Path(config['working_dir']) / human_read_scrubbing.OUTPUT_SCRUBBING_INFORMS
     output:
-        # JSON = Path(config['working_dir']) / human_read_scrubbing.OUTPUT_SCRUBBING_SUMMARY_JSON, # todo json output for hera
         VAL_HTML = Path(config['working_dir']) / 'human_read_scrubbing' / '{input_format}' / 'output' / 'html.io',
         TSV = Path(config['working_dir']) / 'human_read_scrubbing' / '{input_format}' / 'output' / 'summary_out.tsv'
     params:
@@ -177,8 +176,8 @@ rule scrubbing_report:
         section = HtmlReportSection('Human read removal', subtitle=hrrt_informs['_name'])
         subject = 'read_pairs' if params.input_format == 'fastq_pe' else 'reads' if params.input_format == 'fastq_se' else 'contigs'
         section.add_table([
-            [f'Total {subject}', f'{count_in:,}'],
-            [f'Removed {subject}', f'{count_removed:,}'],
+            [f'Total {subject.replace("_", " ")}', f'{count_in:,}'],
+            [f'Removed {subject.replace("_", " ")}', f'{count_removed:,}'],
             [f'Removed %', f'{100 * count_removed / count_in:.2f}'],
         ],['Category', 'Number'],[('class', 'data')])
         SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output.VAL_HTML))
