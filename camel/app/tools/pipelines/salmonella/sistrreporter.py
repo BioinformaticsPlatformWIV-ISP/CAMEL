@@ -14,7 +14,7 @@ class SistrReporter(Tool):
     """
     Parses Sistr's JSON output results  and returns an HTML report.
     """
-    TITLE = 'Sistr'
+    TITLE = 'SISTR'
 
     def __init__(self, camel: Camel) -> None:
         """
