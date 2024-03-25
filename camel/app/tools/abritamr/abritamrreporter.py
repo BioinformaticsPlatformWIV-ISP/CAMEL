@@ -109,7 +109,7 @@ class AbriTAMRReporter(Tool):
                          results.iloc[i, 1],
                          results.iloc[i+1, 1]])
         # start writing in the report the table and the headers
-        self._section.add_header('Antibiogram for <i>Salmonella<i>', 3)
+        self._section.add_header('Antibiogram for <i>Salmonella</i>', 3)
         self._section.add_table(data, header, [('class', 'data')])
         self.__add_database_information()
 
