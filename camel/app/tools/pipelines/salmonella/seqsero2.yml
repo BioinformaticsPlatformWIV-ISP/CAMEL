@@ -1,4 +1,4 @@
-dependencies: [samtools/1.9, bedtools/2.25.0, bwa/0.7.17, SPAdes/3.13.0, blast/2.7.1, seqsero2/1.2.1]
+dependencies: [samtools/1.17, bedtools/2.31.0, bwa/0.7.17, SPAdes/3.15.5, blast/2.14.0, seqsero2/1.2.1]
 parameters:
   threads: {default: true, mandatory: false, option: -p, value: '1'}
   mode: {default: false, mandatory: true, option: null, value: null}
