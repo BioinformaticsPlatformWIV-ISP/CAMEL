@@ -65,7 +65,7 @@ class TestAbriTAMR(CamelTestSuite):
             'VAL_SPECIES': [ToolIOValue('Salmonella')]
         })
         from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-        informs_seqtk = {'_name': 'test', }
+        informs_seqtk = {'_name': 'test'}
         SnakemakeUtils.dump_object(informs_seqtk, Path('./informs.dummy'))
         abritamrreporter.add_input_informs({'ABRITAMR_RUN': informs_seqtk})
         abritamrreporter.run(self.running_dir)

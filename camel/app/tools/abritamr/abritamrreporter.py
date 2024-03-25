@@ -1,7 +1,6 @@
 import re
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 
 from camel.app.camel import Camel
@@ -78,7 +77,7 @@ class AbriTAMRReporter(Tool):
         data = []
 
         # Read the summary file into a pandas DataFrame
-        df = pd.read_csv(summary_file, sep='\t')
+        df = pd.read_table(summary_file)
 
         # Extract relevant data from DataFrame
         if len(df.columns) > 1:
@@ -110,7 +109,7 @@ class AbriTAMRReporter(Tool):
                          results.iloc[i, 1],
                          results.iloc[i+1, 1]])
         # start writing in the report the table and the headers
-        self._section.add_header('Antibiogram for Salmonella', 3)
+        self._section.add_header('Antibiogram for <i>Salmonella<i>', 3)
         self._section.add_table(data, header, [('class', 'data')])
         self.__add_database_information()
 
@@ -137,4 +136,4 @@ class AbriTAMRReporter(Tool):
         :return: None
         """
         self._section.add_paragraph('Last updated: {}'.format(self._input_informs['ABRITAMR_RUN'].get(
-            'last_update_date', 'Unknown')))
+            'last_update_date', 'n/a')))

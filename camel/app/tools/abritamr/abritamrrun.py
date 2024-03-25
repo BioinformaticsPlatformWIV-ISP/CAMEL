@@ -40,7 +40,7 @@ class AbriTAMRRun(Tool):
         Checks if the provided input is valid.
         :return: None
         """
-        super(AbriTAMRRun, self)._check_input()
+        super()._check_input()
         if 'FASTA' not in self._tool_inputs:
             raise InvalidInputSpecificationError("FASTA input is required")
         if 'DIR_AMRF' not in self._tool_inputs:
@@ -80,12 +80,12 @@ class AbriTAMRRun(Tool):
     def __add_database_information(self, amrfinder_folder: Path) -> None:
         """
         Add the update info of the two databases in the informs of the tool for further reporting.
-        amrfinder_folder: the path to the folder of amrfinderplus database used in this tool.
+        :param amrfinder_folder: the path to the folder of AMRFinder+ database used by this tool.
         return: None
         """
         db_metadata_file = amrfinder_folder / 'db_update_info.json'
         if not db_metadata_file.is_file():
             raise FileNotFoundError(f'Database metadata not found: {db_metadata_file}')
-        with db_metadata_file .open() as handle:
+        with db_metadata_file.open() as handle:
             metadata = json.load(handle)
             self._informs.update(metadata)
