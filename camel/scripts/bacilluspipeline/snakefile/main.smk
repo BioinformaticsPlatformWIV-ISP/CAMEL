@@ -78,7 +78,7 @@ rule main_update_gmm_report:
         TSV_GMM_DB = config['gene_detection']['gmo']['known_gmm_constructs'],
         running_dir = Path(config['working_dir']) / 'gene_detection' / 'gmo'
     run:
-        from camel.scripts.bacilluspipeline.scripts.update_gmm_report import UpdateGMMReport
+        from camel.app.tools.pipelines.bacillus.updategmmreport import UpdateGMMReport
         from camel.app.camel import Camel
         from camel.app.io.tooliofile import ToolIOFile
         from camel.app.pipeline.step import Step
@@ -88,7 +88,7 @@ rule main_update_gmm_report:
         gmmupdater.add_input_files({'TSV_STRAINS': [ToolIOFile(Path(x)) for x in input.TSV_STRAINS],
                                     'TSV_GMM_DB': [ToolIOFile(Path(params.TSV_GMM_DB))],
                                     'TSV_GMM': [ToolIOFile(Path(input.TSV_GMM))]})
-        step = Step(str(rule), gmmupdater, camel, params.running_dir, config)
+        step = Step(str(rule), gmmupdater, camel, params.running_dir)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(gmmupdater, output)
 
@@ -122,7 +122,7 @@ rule report_init:
             input_files=ReportPipeline.format_input_string(params.config_input),
             input_type=params.input_type,
             extra_data=[('Detection method', params.detection_method),
-             ('Species', f'<i>{params.species}</i>')],
+             ('Selected species', f'<i>{params.species}</i>')],
             key_citation=params.citation_keys['main']
         )
         SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output.HTML))

@@ -50,6 +50,7 @@ class StrainGSTReporter(Tool):
 
         # Add output tables
         output_table = self.__parse_input_file()
+        output_table = output_table.round(2)
         self.__add_output_table(section, output_table.columns, output_table.values.tolist()[1:],
                                 f'StrainGST strain identification - {suffix_read_type}')
 
