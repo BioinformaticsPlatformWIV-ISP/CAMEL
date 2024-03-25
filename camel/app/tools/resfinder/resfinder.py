@@ -70,7 +70,7 @@ class ResFinder(Tool):
             self._tool_outputs['TSV_genes'] = [ToolIOFile(dir_out / Path('ResFinder_results_tab.txt'))]
         if 'point' in self._parameters:
             self._tool_outputs['TSV_point'] = [ToolIOFile(dir_out / Path('PointFinder_results.txt'))]
-            self._tool_outputs['TSV_pheno_species'] = [ToolIOFile(next(dir_out.glob('pheno_table*.txt')))]
+            self._tool_outputs['TSV_pheno_species'] = [ToolIOFile(next(dir_out.glob('pheno_table_*.txt')))]
 
     def __collect_db_version(self) -> None:
         """
