@@ -48,12 +48,20 @@ class ResFinderReporter(Tool):
         :return: None
         """
         # Parse input
-        data_pheno = pd.read_table(
-            self._tool_inputs[f'TSV_pheno_{key}'][0].path,
-            names=['Antimicrobial', 'Class', 'WGS-predicted phenotype', 'Match', 'Genetic background'],
-            comment='#'
-        )
-        data_pheno.sort_values(by=['Class', 'Antimicrobial'], inplace=True)
+        try:
+            data_pheno = pd.read_table(
+                self._tool_inputs[f'TSV_pheno_{key}'][0].path,
+                names=['Antimicrobial', 'Class', 'WGS-predicted phenotype', 'Match', 'Genetic background'],
+                comment='#'
+            )
+            data_pheno.sort_values(by=['Class', 'Antimicrobial'], inplace=True)
+        except IndexError:
+            overview_type = 'species-specific' if key == 'species' else 'general'
+            section.add_header(f'Predicted phenotype ({overview_type})', 3)
+            section.add_warning_message(f"{overview_type} phenotype table is missing. "
+                                        f"No panel is available for species "
+                                        f"{self._input_informs['resfinder']['species']}.")
+            return
 
         # Add table to report
         overview_type = 'species-specific' if key == 'species' else 'general'
