@@ -1,9 +1,9 @@
 from pathlib import Path
 
-from camel.resources.snakefile import trimming_illumina, assembly_spades, gene_detection, trimming, \
+from camel.resources.snakefile import trimming_illumina, gene_detection, trimming, \
     contamination_check_kraken, quality_checks, sequence_typing, downsampling, amrfinder, mobsuite, quast, confindr, \
-    core, trimming_ont, assembly_flye, assembly, human_read_scrubbing
-from camel.scripts.klebsiellapipeline.snakefile import kleborate, bacmet, resfinder4
+    core, trimming_ont, assembly, human_read_scrubbing, resfinder4, bacmet
+from camel.scripts.klebsiellapipeline.snakefile import kleborate
 
 #######################
 # Included Snakefiles #
@@ -13,8 +13,7 @@ include: human_read_scrubbing.SNAKEFILE_SCRUBBING
 include: downsampling.SNAKEFILE_DOWNSAMPLING
 include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
 include: trimming_ont.SNAKEFILE_TRIMMING_ONT
-include: assembly_spades.SNAKEFILE_ASSEMBLY_SPADES
-include: assembly_flye.SNAKEFILE_ASSEMBLY_FLYE
+include: assembly.SNAKEFILE_ASSEMBLY
 include: quast.SNAKEFILE_QUAST
 include: contamination_check_kraken.SNAKEFILE_CONTAMINATION_CHECK_KRAKEN
 include: confindr.SNAKEFILE_CONFINDR
@@ -38,18 +37,6 @@ rule all:
     input:
         HTML = config['output_report'],
         TSV = config['output_tabular']
-
-rule select_fasta_to_tools:
-    """
-    This rules links the output of the assembly workflow to the other workflows.
-    """
-    input:
-        FASTA_spades = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA
-    output:
-        FASTA_mobsuite = Path(config['working_dir']) / mobsuite.INPUT_MOBSUITE_FASTA,
-        FASTA_amrfinder = Path(config['working_dir']) / amrfinder.INPUT_AMRFINDER_FASTA
-    shell:
-        "cp {input.FASTA_spades} {output.FASTA_amrfinder} && cp {input.FASTA_spades} {output.FASTA_mobsuite}"
 
 rule report_command_section:
     """
@@ -200,3 +187,21 @@ rule summary_combine_all:
             for summary_input in input:
                 with open(summary_input) as handle_in:
                     handle_out.write(handle_in.read())
+
+rule link_genomic_context:
+    """
+    Links the input databases to the genomic context assay.
+    """
+    input:
+        # AMR
+        TSV_amrfinder = Path(config['working_dir']) / 'amrfinder' / 'tsv.io' if 'amrfinder' in config['analyses'] else [],
+        # Virulence
+        TSV_gd_vfdb = Path(config['working_dir']) / 'gene_detection' / 'vfdb_core' / 'metadata' / 'tsv.io' if 'vfdb_core' in config['analyses'] else [],
+        INFORMS_gd_vfdb = Path(config['working_dir']) / 'gene_detection' / 'vfdb_core' / 'db_manager' / 'informs.io' if 'vfdb_core' in config['analyses'] else [],
+        # BacMet
+        TSV_bacmet = Path(config['working_dir']) / 'bacmet' / 'hit_filtering' / 'tsv.io' if 'bacmet' in config['analyses'] else []
+    output:
+        TSV = Path(config['working_dir']) / 'mob_suite' / 'genomic_context' / 'input' / 'tsv.io',
+        INFORMS = Path(config['working_dir']) / 'mob_suite' / 'genomic_context' / 'input' / 'informs.io'
+    run:
+        mobsuite.collect_genomic_context_input(input, Path(output.TSV), Path(output.INFORMS))
