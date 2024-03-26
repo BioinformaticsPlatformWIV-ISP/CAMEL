@@ -65,7 +65,10 @@ class ResFinder(Tool):
         """
         dir_out = self.folder / self._parameters['output_path'].value
         self._tool_outputs['TSV_pheno_general'] = [ToolIOFile(dir_out / Path('pheno_table.txt'))]
-        self._informs['species'] = self._parameters['species'].value
+        try:
+            self._informs['species'] = self._parameters['species'].value
+        except KeyError:
+            self._informs['species'] = ''
 
         if 'acquired' in self._parameters:
             self._tool_outputs['TSV_genes'] = [ToolIOFile(dir_out / Path('ResFinder_results_tab.txt'))]
