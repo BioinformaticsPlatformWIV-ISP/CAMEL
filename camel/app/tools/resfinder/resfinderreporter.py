@@ -57,6 +57,7 @@ class ResFinderReporter(Tool):
             data_pheno.sort_values(by=['Class', 'Antimicrobial'], inplace=True)
         except IndexError:
             overview_type = 'species-specific' if key == 'species' else 'general'
+            logger.warning(f'Skipping {overview_type} phenotype since table is missing.')
             section.add_header(f'Predicted phenotype ({overview_type})', 3)
             section.add_warning_message(f"{overview_type} phenotype table is missing. "
                                         f"No panel is available for species "
