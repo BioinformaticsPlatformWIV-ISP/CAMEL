@@ -61,7 +61,7 @@ assembly:
   min_contig_length: 1000
 
 amrfinder:
-  db: /db/amrfinder/latest
+  db: /db/amrfinder/by_version/latest
 
 resfinder4:
   db: /db/resfinder4

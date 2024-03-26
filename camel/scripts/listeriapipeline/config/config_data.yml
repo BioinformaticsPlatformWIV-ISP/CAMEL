@@ -53,7 +53,7 @@ quast:
     gff3: /db/refgenomes/Listeria_monocytogenes/NC_003210.1.gff3
 
 amrfinder:
-  db: /db/amrfinder/latest
+  db: /db/amrfinder/by_version/latest
 
 ############################
 # Gene detection databases #
