@@ -47,6 +47,8 @@ class MainGeneDetection(object):
         argument_parser.add_argument('--blast-task', type=str, choices=['blastn', 'megablast'], default='megablast')
         argument_parser.add_argument('--blast-filtering-method', type=str, choices=['cluster', 'score'], default='cluster')
         argument_parser.add_argument('--blast-score-nb-of-hits', type=int, default=5)
+        argument_parser.add_argument('--blast-reads', action='store_true', default=None,
+                                     help='perform blast search of the reads directly instead of on the assembly' )
 
         # SRST2 specific parameters
         argument_parser.add_argument('--srst2-min-cov', type=int, default=90)
@@ -80,7 +82,10 @@ class MainGeneDetection(object):
 
         # Run wrapper
         if self._args.detection_method == 'blast':
-            fasta_input = self._helper.prepare_fasta_input(report, self._args)
+            if self._args.blast_reads:
+                fasta_input = self._helper.prepare_fasta_read_input(report, self._args)
+            else:
+                fasta_input = self._helper.prepare_fasta_input(report, self._args)
             # Save assembly if specified
             if self._args.output_fasta is not None:
                 shutil.copyfile(str(fasta_input), self._args.output_fasta)
@@ -109,6 +114,7 @@ class MainGeneDetection(object):
                 'min_percent_identity': self._args.blast_min_percent_identity,
                 'min_coverage': self._args.blast_min_percent_coverage,
                 'task': self._args.blast_task,
+                'blast_reads': True if self._args.blast_reads else False,
                 'filtering_method': self._args.blast_filtering_method,
                 'score_nb_of_hits': self._args.blast_score_nb_of_hits
             }}})

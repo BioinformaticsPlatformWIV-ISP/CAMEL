@@ -26,7 +26,7 @@ class BlastHitFiltering(Tool):
     Important parameters:
     - extra_column_key & extra_column_name: If set, an extra metadata column is added to the detected hits. The key
       needs to match the key in the metadata dictionary.
-    - filtering_method: Determines how the hits are filters. There are two options supported:
+    - filtering_method: Determines how the hits are filtered. There are two options supported:
         * 'cluster' (default): The best hit for each cluster is reported.
         * 'score': The n best hits according to hit score are reported (controlled by the 'score_limit' parameter).
     """
@@ -90,6 +90,7 @@ class BlastHitFiltering(Tool):
         elif self._parameters['filtering_method'].value == 'score':
             if 'score_nb_of_hits' not in self._parameters:
                 raise ToolExecutionError("'score_nb_of_hits' needs to be set when the filtering method is 'score'")
+            hits.sort(key=lambda h: (h.blast_stats.percent_identity, h.locus), reverse=True)
             hits = hits[:int(self._parameters['score_nb_of_hits'].value)]
         return hits
 

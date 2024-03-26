@@ -2,6 +2,7 @@ import argparse
 from pathlib import Path
 from typing import Union
 
+from camel.app.camel import Camel
 from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.components.html.htmlreport import HtmlReport
 from camel.app.components.workflows.readtype.basereadtypehelper import BaseReadTypeHelper
@@ -9,7 +10,7 @@ from camel.app.components.workflows.trimmingontwrapper import TrimmingONTWrapper
 from camel.app.components.workflows.utils.fastqinput import FastqInput
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.loggers import logger
-
+from camel.app.tools.seqtk.seqtkconvert import SeqtkConvert
 
 class NanoporeHelper(BaseReadTypeHelper):
     """
@@ -24,7 +25,7 @@ class NanoporeHelper(BaseReadTypeHelper):
         :return: Path to renamed file
         """
         if fastq_file is None:
-            raise ValueError("IonTorrent data should be SE")
+            raise ValueError("Nanopore data should be SE")
         new_name = f"{sample_name}.fastq{'.gz' if FileSystemHelper.is_gzipped(fastq_file) else ''}"
         return self.symlink_input_files([Path(fastq_file)], [new_name])[0]
 
@@ -74,3 +75,24 @@ class NanoporeHelper(BaseReadTypeHelper):
             return self.trim_reads(fastq_input, report, args.report_include_fastq, args.threads)
         else:
             return FastqInput(args.read_type, se=[ToolIOFile(Path(fq_input_se))], is_pe=False)
+
+    def prepare_fasta_read_input(self, report: HtmlReport, args: argparse.Namespace) -> Path:
+        """
+        Prepares the FASTA input by converting FASTQ to FASTA with Seqtk.
+        :param report: HTML report
+        :param args: Command-line arguments
+        :return: Path to FASTA file
+        """
+        fq_input_se = self.__symlink_nanopore_reads(Path(args.fastq_se), self._sample_name)
+        fastq_input = FastqInput(args.read_type, se=[ToolIOFile(Path(fq_input_se))], is_pe=False)
+        if args.trim_reads:
+            convert_input = self.trim_reads(fastq_input, report, args.report_include_fastq, args.threads)
+        else:
+            convert_input = fastq_input
+        camel = Camel.get_instance()
+        convert = SeqtkConvert(camel)
+        convert.add_input_files({'FASTQ': convert_input.se})
+        working_dir = Path(self._working_dir / 'conversion')
+        working_dir.mkdir(parents=True, exist_ok=True)
+        convert.run(working_dir)
+        return Path(convert.tool_outputs['FASTA'][0].path)
