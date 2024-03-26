@@ -68,9 +68,6 @@ class UpdateGMMReport(Tool):
         else:
             current_report_section.add_paragraph('No transgenic constructs from the database were detected in the strain.')
 
-        if matches['strain'] and matches['construct']:
-            current_report_section.add_paragraph('<b>IMPORTANT: A transgenic construct was detected in your sample.</b>')
-
         current_report_section.add_warning_message('The pipeline uses a targeted approach, which means that constructs '
                                                    'and/or strains that are not in the database will be missed.')
 
