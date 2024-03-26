@@ -118,11 +118,6 @@ class MainBacillusPipeline(ReportPipeline):
             config_data['assembly']['flye'] = {
                 **config_data['assembly'].get('flye', {})}
 
-        # Disable KMA for hybrid data
-        if self._args.input_type == 'hybrid' and self._args.species == 'subtilis':
-            config_data['gene_detection']['gmo'].pop('force_detection_method')
-            logger.warning('KMA Gene detection is temporary obsolete for hybrid data - reverting to default method')
-
         # Illumina settings
         if self._args.library is not None:
             config_data['read_trimming']['adapter'] = self._args.library
