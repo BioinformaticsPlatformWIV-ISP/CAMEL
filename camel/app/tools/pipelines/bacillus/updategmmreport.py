@@ -1,7 +1,10 @@
+from typing import List
+
 import pandas as pd
 
 from camel.app.camel import Camel
 from camel.app.components.html.htmlreportsection import HtmlReportSection
+from camel.app.components.html.htmltablecell import HtmlTableCell
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.tools.tool import Tool
@@ -12,7 +15,7 @@ class UpdateGMMReport(Tool):
     Updates the GMM gene detection report with warning about detected GMMs.
     """
     INPUT_KEYS = ['TSV_STRAINS', 'TSV_GMM', 'VAL_HTML', 'TSV_GMM_DB']
-    color_code = {'STRAIN_MATCH': 'green', 'GMM_MATCH': 'yellow', 'BOTH_MATCH': 'red'}
+    COLOR_CODE = {'STRAIN_MATCH': 'green', 'GMM_MATCH': 'yellow', 'BOTH_MATCH': 'red'}
 
     def __init__(self, camel: Camel) -> None:
         """
@@ -55,7 +58,8 @@ class UpdateGMMReport(Tool):
 
         table_to_add = list(zip(matches['strain'], matches['construct']))
         column_names = ['strain', 'construct']
-        current_report_section.add_table(table_to_add, column_names, [('class', 'data')])
+        table_with_colors = self._generate_table_with_colors(table_to_add)
+        current_report_section.add_table(table_with_colors, column_names, [('class', 'data')])
 
         if matches['strain']:
             current_report_section.add_paragraph(f'The strain matches closely to <b>{matches["strain"][0]}</b> '
@@ -70,7 +74,7 @@ class UpdateGMMReport(Tool):
 
         current_report_section.add_warning_message('The pipeline uses a targeted approach, which means that constructs '
                                                    'and/or strains that are not in the database will be missed.')
-
+        self.__add_explanation_matches(current_report_section)
         return current_report_section
 
     def _parse_tsv_files(self) -> dict:
@@ -99,3 +103,34 @@ class UpdateGMMReport(Tool):
 
         return {'strain': strain_hits,
                 'construct': gmm_hits}
+
+    def _generate_table_with_colors(self, table_as_list: List) -> List:
+        """
+        Generates a table with rows colored.
+        :param table_as_list: List of table to be colored
+        :return: Colored table
+        """
+        color = None
+        if len(table_as_list[0][0]) > 0 and len(table_as_list[0][1]) == 0:
+            color = UpdateGMMReport.COLOR_CODE['STRAIN_MATCH']
+        if len(table_as_list[0][0]) == 0 and len(table_as_list[0][1]) > 0:
+            color = UpdateGMMReport.COLOR_CODE['GMM_MATCH']
+        if len(table_as_list[0][0]) > 0 and len(table_as_list[0][1]) > 0:
+            color = UpdateGMMReport.COLOR_CODE['BOTH_MATCH']
+        temp_table = [HtmlTableCell(text, color=color) for text in table_as_list[0]]
+        to_return = [(temp_table[0], temp_table[1])]
+        return to_return
+
+    def __add_explanation_matches(self, section: HtmlReportSection) -> None:
+        """
+        Adds information about the different type of matches to the bottom of the report.
+        :param section: Report section
+        :return: None
+        """
+        section.add_header('Extra information', 3)
+        section.add_paragraph('The following colors are used to denote the different type of hits:')
+        section.add_table([
+            [HtmlTableCell('', color='green'), 'Matching frequent GMM strain'],
+            [HtmlTableCell('', color='yellow'), 'Matching GMM construct'],
+            [HtmlTableCell('', color='red'), 'Both GMM strain and construct detected'],
+        ], None, [('class', 'data')])

@@ -52,7 +52,7 @@ assembly:
   canu:
     minimum_input_coverage: 0
   flye:
-    meta: true
+    asm_coverage: 50
 
 confindr:
   db: /db/confindr/0.8.1

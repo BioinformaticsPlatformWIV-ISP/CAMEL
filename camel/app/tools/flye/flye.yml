@@ -11,4 +11,5 @@ parameters:
   min_overlap: {default: false, mandatory: false, option: --min-overlap, value: ''}
   keep_haplotypes: {default: false, mandatory: false, option: --keep-haplotypes, value: ''}
   no_alt_contigs: {default: false, mandatory: false, option: --no-alt-contigs, value: ''}
+  asm_coverage: {default: false, mandatory: false, option: --asm-coverage, value: '50'}
 tool_command: flye
