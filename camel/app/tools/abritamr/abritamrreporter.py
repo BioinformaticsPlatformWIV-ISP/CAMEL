@@ -44,7 +44,7 @@ class AbriTAMRReporter(Tool):
         self._section = HtmlReportSection(AbriTAMRReporter.TITLE,
                                           subtitle=self._input_informs['ABRITAMR_RUN']['_name'])
         self.__add_summaries_tables()
-        if self._tool_inputs['VAL_SPECIES'][0] == 'Salmonella':
+        if str(self._tool_inputs['VAL_SPECIES'][0]) == 'Salmonella':
             self.__add_antibiogram()
         else:
             self._section.add_header('Antibiogram', 3)
@@ -120,7 +120,7 @@ class AbriTAMRReporter(Tool):
         """
         relative_path = Path('abritamr', 'summary_out.tsv')
         self._section.add_file(self._tool_inputs['TSV_output'][0].path, relative_path)
-        if self._tool_inputs['VAL_SPECIES'][0] == 'Salmonella':
+        if str(self._tool_inputs['VAL_SPECIES'][0]) == 'Salmonella':
             relative_path = Path('abritamr', 'summary_out.tsv')
             self._section.add_link_to_file("Download (TSV)", relative_path)
         relative_path_matches = Path('abritamr', 'summary_matches.txt')
