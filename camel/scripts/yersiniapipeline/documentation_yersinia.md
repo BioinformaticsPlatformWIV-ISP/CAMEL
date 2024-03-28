@@ -1,5 +1,5 @@
 # Overview
-The *Yersinia* pipeline performs complete characterization of *Yersinia enterocolitica* and *Yersinia pseudotuberculosis* isolates.
+The *Yersinia* pipeline performs complete characterization of *Yersinia* isolates.
 
 version: **1.0**
 
