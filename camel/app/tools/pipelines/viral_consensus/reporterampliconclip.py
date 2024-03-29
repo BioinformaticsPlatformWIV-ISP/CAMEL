@@ -1,0 +1,51 @@
+from camel.app.camel import Camel
+from camel.app.components.html.htmlreportsection import HtmlReportSection
+from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from camel.app.io.tooliovalue import ToolIOValue
+from camel.app.tools.tool import Tool
+
+
+class ReporterAmpliconClip(Tool):
+    """
+    Reporting class for the amplicon clipping.
+    """
+
+    COLUMNS = [
+        {'title': 'Reads mapped', 'key': 'TOTAL READS'},
+        {'title': 'Both clipped', 'key': 'BOTH CLIPPED'},
+        {'title': 'Forward clipped', 'key': 'FORWARD CLIPPED'},
+        {'title': 'Reverse clipped', 'key': 'REVERSE CLIPPED'},
+        {'title': 'Not clipped', 'key': 'NOT CLIPPED'}
+    ]
+
+    def __init__(self, camel: Camel) -> None:
+        """
+        Initializes the tool.
+        :param camel: CAMEL instance.
+        """
+        super().__init__('Reporter: ampliconclip', '0.1', camel)
+
+    def _check_input(self) -> None:
+        """
+        Checks if the provided input is valid.
+        :return: None
+        """
+        if 'ampliconclip' not in self._input_informs:
+            raise InvalidInputSpecificationError('ampliconclip informs are required')
+        super()._check_input()
+
+    def _execute_tool(self) -> None:
+        """
+        Executes this tool.
+        :return: None
+        """
+        # Create report section
+        section = HtmlReportSection('Primer removal', 3, subtitle=self._input_informs['ampliconclip']['_name'])
+
+        # Information table
+        section.add_table([
+            [f"{self._input_informs['ampliconclip']['stats'][c['key']]:,}" for c in ReporterAmpliconClip.COLUMNS]],
+            [c['title'] for c in ReporterAmpliconClip.COLUMNS], [('class', 'data')])
+
+        # Set the tool outputs
+        self._tool_outputs['HTML'] = [ToolIOValue(section)]
