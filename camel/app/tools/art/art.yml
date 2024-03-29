@@ -1,9 +1,9 @@
-dependencies: []
+dependencies: [art/2.5.8]
 parameters:
-  sequencing_system: {default: true, mandatory: true, option: null, value: 'HS25'}
-  read_length: {default: true, mandatory: true, option: null, value: '150'}
-  fold_coverage: { default: true, mandatory: true, option: null, value: '30'}
-  mean_size: { default: true, mandatory: true, option: null, value: '200'}
-  standard_deviation: {default: true, mandatory: true, option: null, value: '10'}
-  out: {default: true, mandatory: true, option: null, value: 'art_output'}
-tool_command: /home/fistrijthaegen/art_bin_MountRainier/art_illumina #TODO: via ansible
+  sequencing_system: {default: true, mandatory: true, option: -ss, value: 'HS25'}
+  read_length: {default: true, mandatory: true, option: -l, value: 150}
+  fold_coverage: {default: true, mandatory: true, option: -f, value: 30}
+  mean_size: {default: true, mandatory: true, option: -m, value: 200}
+  standard_deviation: {default: true, mandatory: true, option: -s, value: 10}
+  out: {default: true, mandatory: true, option: -o, value: 'art_output'}
+tool_command: art_illumina
