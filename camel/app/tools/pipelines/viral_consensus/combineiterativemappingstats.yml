@@ -1,0 +1,5 @@
+dependencies: []
+parameters:
+  nb_iter: {default: false, mandatory: true, option: null, value: null}
+  output_filename: {default: true, mandatory: false, option: null, value: stats.json}
+tool_command: null

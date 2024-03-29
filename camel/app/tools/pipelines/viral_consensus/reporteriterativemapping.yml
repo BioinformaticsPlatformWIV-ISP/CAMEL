@@ -1,0 +1,7 @@
+dependencies: []
+parameters:
+  max_iter: {default: false, mandatory: false, option: null, p_index: 0, value: 1}
+  gap_depth_cutoff: {default: false, mandatory: false, option: null, p_index: 0, value: 10}
+  gap_len_cutoff: {default: false, mandatory: false, option: null, p_index: 0, value: 10}
+  name: {default: false, mandatory: true, option: null, p_index: 0, value: dataset}
+tool_command: null
