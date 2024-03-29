@@ -1,0 +1,308 @@
+import logging
+from pathlib import Path
+from typing import List, Dict
+
+from camel.app.camel import Camel
+from camel.app.snakemake.snakemakeutils import SnakemakeUtils
+from camel.scripts.viralconsensuspipeline.snakefile import preprocess, iterativemapping, nextclade3
+
+
+rule nextclade3_detect_subtype_mash:
+    """
+    Uses mash to determine the best matching subtype.
+    """
+    input:
+        FASTQ = Path(config['working_dir']) / preprocess.OUTPUT_PRE_PROCESS_FASTQ
+    output:
+        TSV = Path(config['working_dir']) / 'nextclade' / 'subtype_determination' / 'mash' / 'tsv.io',
+        INFORMS = Path(config['working_dir']) / 'nextclade' / 'subtype_determination' / 'mash' / 'informs.io'
+    params:
+        dir_ = Path(config['working_dir']) / 'nextclade' / 'subtype_determination' / 'mash',
+        input_type = config['input_type'],
+        db = config['nextclade'].get('db_mash')
+    run:
+        from camel.app.error.toolexecutionerror import ToolExecutionError
+        from camel.app.io.tooliofile import ToolIOFile
+        from camel.app.tools.mash.mashscreen import MashScreen
+        from camel.app.components.workflows.utils.fastqinput import FastqInput
+
+        mash_screen = MashScreen(Camel.get_instance())
+        fq_in = FastqInput.from_fq_dict(Path(input.FASTQ), params.input_type)
+        fq_all = []
+        for _, tool_io_files in fq_in.to_fq_dict().items():
+            fq_all.extend([ToolIOFile(io.path) for io in tool_io_files])
+        mash_screen.add_input_files({'FASTQ': fq_all})
+        path_db = next(Path(params.db).glob('*.msh'))
+        logging.info(f'Mash database found: {path_db}')
+        mash_screen.add_input_files({'DB': [ToolIOFile(path_db)]})
+        try:
+            mash_screen.run(Path(params.dir_))
+            SnakemakeUtils.dump_tool_outputs(mash_screen,output)
+        except ToolExecutionError as err:
+            logging.info(f'Error executing {mash_screen.name}')
+            SnakemakeUtils.dump_object([], Path(output.TSV))
+            SnakemakeUtils.dump_object(mash_screen.informs, Path(output.INFORMS))
+
+checkpoint nextclade3_detect_subtype_report:
+    """
+    Creates the output report with the mash results.
+    """
+    input:
+        TSV = rules.nextclade3_detect_subtype_mash.output.TSV if config['nextclade'].get('dbs') is None else [],
+        INFORMS_mash = rules.nextclade3_detect_subtype_mash.output.INFORMS if config['nextclade'].get('dbs') is None else []
+    output:
+        HTML = Path(config['working_dir']) / 'nextclade' / 'subtype_determination' / 'report' / 'html.io',
+        INFORMS = Path(config['working_dir']) / 'nextclade' / 'subtype_determination' / 'report' / 'informs.io'
+    params:
+        dir_ = Path(config['working_dir']) / 'nextclade' / 'subtype_determination' / 'report',
+        db = config['nextclade'].get('db_mash')
+    run:
+        from camel.app.io.tooliodirectory import ToolIODirectory
+        from camel.app.tools.nextclade.nextcladesubtypereporter import NextcladeSubTypeReporter
+        from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
+
+        if params.db is not None:
+            reporter = NextcladeSubTypeReporter(Camel.get_instance())
+            SnakemakeUtils.add_pickle_inputs(reporter, input)
+            reporter.add_input_files({'DB': [ToolIODirectory(Path(params.db))]})
+            reporter.run(Path(params.dir_))
+            SnakemakeUtils.dump_tool_outputs(reporter, output)
+        else:
+            SnakePipelineUtils.create_empty_report_section('Subtype determination', Path(output.HTML))
+            SnakemakeUtils.dump_object({}, Path(output.INFORMS))
+
+rule nextclade3_detect_subtype_report_empty:
+    """
+    Creates an empty output report when subtype detection is not performed.
+    """
+    output:
+        HTML = Path(config['working_dir']) / 'nextclade' / 'subtype_determination' / 'report' / 'html-empty.io'
+    params:
+        dir_ = Path(config['working_dir']) / 'nextclade' / 'subtype_determination' / 'report'
+    run:
+        from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
+        SnakePipelineUtils.create_empty_report_section('Subtype determination', Path(output.HTML))
+
+rule nextclade3_extract_segment:
+    """
+    Extracts the given segment from the consensus FASTA file.
+    """
+    input:
+        FASTA = Path(config['working_dir']) / iterativemapping.OUTPUT_ITERATIVE_MAPPING_FASTA_CONSENSUS_FINAL
+    output:
+        FASTA = Path(config['working_dir']) / 'nextclade' / '{segment}' / 'input' / 'fasta.io'
+    params:
+        dir_ = lambda wildcards: Path(config['working_dir']) / 'nextclade' / wildcards.segment / 'input',
+        segment_name = lambda wildcards: wildcards.segment
+    run:
+        from Bio import SeqIO
+        from camel.app.io.tooliofile import ToolIOFile
+
+        fasta_in = SnakemakeUtils.load_object(Path(input.FASTA))[0].path
+        with fasta_in.open() as handle:
+            seq_segment = next(
+                s for s in SeqIO.parse(handle, 'fasta') if s.id.lower().endswith(f'-{params.segment_name}'.lower()))
+        path_fasta_out = Path(str(params.dir_), fasta_in.name.replace('.fasta', f'-{params.segment_name}.fasta'))
+        with path_fasta_out.open('w') as handle:
+            SeqIO.write([seq_segment], handle, 'fasta')
+        SnakemakeUtils.dump_object([ToolIOFile(path_fasta_out)], Path(output.FASTA))
+
+rule nextclade3_run:
+    """
+    Runs Nextclade on a single sample.
+    """
+    input:
+        FASTA = rules.nextclade3_extract_segment.output.FASTA,
+        DB = lambda wildcards: get_nextclade_db(wildcards, segment=wildcards.segment, config=config)
+    output:
+        TSV = Path(config['working_dir']) / 'nextclade' / '{segment}' / 'tsv.io',
+        INFORMS = Path(config['working_dir']) / 'nextclade' / '{segment}' / 'informs.io'
+    params:
+        dir_ = lambda wildcards: Path(config['working_dir']) / 'nextclade' / wildcards.segment
+    run:
+        from camel.app.io.tooliodirectory import ToolIODirectory
+        from camel.app.tools.nextclade3.nextclade3 import Nextclade3
+
+        # Check if database input is valid
+        # db_in = SnakemakeUtils.load_object(Path(input.DB))
+        db_in = [ToolIODirectory(Path(str(input.DB)))]
+        if len(db_in) == 0:
+            SnakemakeUtils.dump_object([], Path(output.TSV))
+            SnakemakeUtils.dump_object([], Path(output.INFORMS))
+        else:
+            # Run nextclade
+            nextclade = Nextclade3(Camel.get_instance())
+            nextclade.add_input_files({
+                'FASTA': SnakemakeUtils.load_object(Path(input.FASTA)),
+                'DB': [ToolIODirectory(Path(str(input.DB)))]
+            })
+            nextclade.run(Path(str(params.dir_)))
+            SnakemakeUtils.dump_tool_outputs(nextclade, output)
+
+def get_nextclade_db(wildcards, segment: str, config: Dict) -> str:
+    """
+    Returns the path to the Nextclade database.
+    :param wildcards: Rule wildcards
+    :param segment: Segment
+    :param config: Snakemake config
+    :return: Path to the database
+    """
+    if config['nextclade'].get('dbs') is not None:
+        return config['nextclade']['dbs'][segment]
+
+    # Get data from subtype determination
+    # noinspection PyUnresolvedReferences
+    path_informs = Path(checkpoints.nextclade3_detect_subtype_report.get().output['INFORMS'])
+    informs_subtype = SnakemakeUtils.load_object(path_informs)
+    return informs_subtype['nextclade_dbs'][segment]
+
+def get_nextclade_output(wildcards, key: str, config: Dict = None) -> List[str]:
+    """
+    Aggregates the Nextclade output based on the database information.
+    :param wildcards: Rule wildcards
+    :param config: Configuration
+    :param key: Output key (TSV / INFORMS)
+    :return: List of Nextclade outputs
+    """
+    # Extract segments
+    if config['nextclade'].get('dbs') is not None:
+        segments = list(config['nextclade']['dbs'].keys())
+    else:
+        # noinspection PyUnresolvedReferences
+        path_informs = Path(checkpoints.nextclade3_detect_subtype_report.get().output['INFORMS'])
+        informs_subtype = SnakemakeUtils.load_object(path_informs)
+        segments = list(informs_subtype['nextclade_dbs'].keys())
+
+    # Determine output
+    if key == 'TSV':
+        base_output = rules.nextclade3_run.output.TSV
+    elif key == 'INFORMS':
+        base_output = rules.nextclade3_run.output.INFORMS
+
+    # Return list of outputs
+    return [str(base_output).format(segment=segment) for segment in segments]
+
+rule nextclade3_reporter:
+    """
+    Creates an output report for nextclade.
+    """
+    input:
+        TSV = lambda wildcards: get_nextclade_output(wildcards, key='TSV', config=config),
+        INFORMS_nextclade = lambda wildcards: get_nextclade_output(wildcards, key='INFORMS', config=config)
+    output:
+        HTML = Path(config['working_dir']) / 'nextclade' / 'html.io'
+    params:
+        dir_ = Path(config['working_dir']) / 'nextclade',
+        name = config['sample_name'],
+        capitalize_segment_names = config['nextclade'].get('capitalize', False)
+    run:
+        from camel.app.tools.nextclade3.nextclade3reporter import Nextclade3Reporter
+
+        reporter = Nextclade3Reporter(Camel.get_instance())
+
+        # TSV input
+        inputs_tsv = []
+        # noinspection PyTypeChecker
+        for path_io in [Path(x) for x in input.TSV]:
+            inputs_tsv.append(SnakemakeUtils.load_object(path_io)[0])
+
+        # Nextclade informs
+        informs_nextclade = []
+        # noinspection PyTypeChecker
+        for path_io in [Path(x) for x in input.INFORMS_nextclade]:
+            informs_nextclade.append(SnakemakeUtils.load_object(path_io))
+
+        # Run the reporter
+        reporter.add_input_files({'TSV': inputs_tsv})
+        reporter.add_input_informs({'nextclade': informs_nextclade})
+        reporter.update_parameters(name=params.name, capitalize_segment_names=params.capitalize_segment_names)
+        reporter.run(Path(str(params.dir_)))
+        SnakemakeUtils.dump_tool_outputs(reporter, output)
+
+rule nextclade_dump_informs:
+    """
+    Dumps the nextclade informs for the first segment so only a single command is reported, even when multiple segments
+    are analyzed.
+    """
+    input:
+        INFORMS_nextclade = lambda wildcards: get_nextclade_output(wildcards, key='INFORMS', config=config)
+    output:
+        INFORMS = Path(config['working_dir']) / 'nextclade' / 'informs.io'
+    run:
+        # noinspection PyUnresolvedReferences
+        informs_first = SnakemakeUtils.load_object(Path(input.INFORMS_nextclade[0]))
+        SnakemakeUtils.dump_object(informs_first, Path(output.INFORMS))
+
+rule nextclade3_report_empty:
+    """
+    Creates an empty report when nextclade is disabled.
+    """
+    output:
+        HTML = Path(config['working_dir']) / 'nextclade' / 'html-empty.io'
+    run:
+        from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
+        SnakePipelineUtils.create_empty_report_section('Nextclade', Path(output.HTML))
+
+rule nextclade3_create_summary:
+    """
+    Creates the summary output for the nextclade workflow.
+    """
+    input:
+        TSV_nextclade = lambda wildcards: get_nextclade_output(wildcards, 'TSV', config),
+        INFORMS_nextclade = lambda wildcards: get_nextclade_output(wildcards,'INFORMS',config),
+        INFORMS_subtype_determination = Path(config['working_dir']) / 'nextclade' / 'subtype_determination' / 'report' / 'informs.io' if (config['nextclade'].get('db') is None) and ('nextclade' in config['analyses']) else []
+    output:
+        TSV = Path(config['working_dir']) / nextclade3.OUTPUT_NEXTCLADE_SUMMARY
+    run:
+        import pandas as pd
+
+        # create the results dictionary:
+        assay = 'nextclade'
+        results_dict = {}
+
+        # Add subtype determination informs (if available)
+        if input.INFORMS_subtype_determination:
+           informs_subtype_determination = SnakemakeUtils.load_object(Path(input.INFORMS_subtype_determination))
+           results_dict[f'{assay}_detected_subtype'] = informs_subtype_determination.get('subtype')
+
+        # Nextclade output
+        keys_kept = [
+            'qc.frameShifts.status',
+            'qc.mixedSites.status',
+            'qc.mixedSites.status',
+            'qc.overallScore',
+            'qc.overallStatus',
+            'qc.privateMutations.status',
+            'qc.stopCodons.status',
+        ]
+        # noinspection PyTypeChecker
+        for path_io, path_informs in zip(
+                [Path(x) for x in input.TSV_nextclade],
+                [Path(x) for x in input.INFORMS_nextclade]):
+
+            # Determine prefix
+            path_tsv = SnakemakeUtils.load_object(path_io)[0].path
+            segment_name = path_tsv.parent.name
+            # noinspection PyTypeChecker
+            base_key = assay if len(input.TSV_nextclade) == 1 else f'{assay}_{segment_name}'
+
+            # Add results data
+            data_in = pd.read_table(path_tsv).fillna('-')
+            for key in keys_kept:
+                results_dict[f'{base_key}_{key}'] = data_in.iloc[0][key]
+
+            # Add informs data
+            informs = SnakemakeUtils.load_object(path_informs)
+            results_dict[f'{base_key}_reference'] = informs['db']['reference']
+            results_dict[f'{base_key}_version'] = informs['db']['version']
+
+            # Add metadata
+            if informs['db'].get('metadata_columns') is not None:
+                for row in informs['db']['metadata_columns']:
+                    results_dict[f"{base_key}_{row['key']}"] = data_in.iloc[0][row['key']]
+
+        # Save in TSV format
+        with open(output.TSV,'w') as handle:
+            for key, value in results_dict.items():
+                handle.write(f'{key}\t{value}')
+                handle.write('\n')
