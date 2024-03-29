@@ -5,4 +5,5 @@ parameters:
   fold_coverage: { default: true, mandatory: true, option: null, value: '30'}
   mean_size: { default: true, mandatory: true, option: null, value: '200'}
   standard_deviation: {default: true, mandatory: true, option: null, value: '10'}
-tool_command: /home/fistrijthaegen/art_bin_MountRainier/art_illumina
+  out: {default: true, mandatory: true, option: null, value: 'art_output'}
+tool_command: /home/fistrijthaegen/art_bin_MountRainier/art_illumina #TODO: via ansible
