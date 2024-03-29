@@ -1,5 +1,6 @@
 dependencies: [bcftools/1.17]
 parameters:
+  annotate: {default: false, mandatory: false, option: --annotate, value: null}
   adjust_mapping_quality: {default: false, mandatory: false, option: --adjust-MQ,
     value: '50'}
   count_orphans: {default: false, mandatory: false, option: --count-orphans, value: null}
