@@ -44,8 +44,8 @@ contamination_check:
 
 quast:
   ref:
-    fasta: /db/refgenomes/Escherichia_coli/NC_002695.2.fasta
-    gff3: /db/refgenomes/Escherichia_coli/NC_002695.2.gff
+    fasta: /db/refgenomes/Shigella_sonnei/GCA_000092525.1.fasta
+    gff3: /db/refgenomes/Shigella_sonnei/GCA_000092525.1.gff
 
 quality_checks:
   expected_gc_content: 50.5
