@@ -44,7 +44,7 @@ class MainViralConsensusPipeline(ReportPipeline):
             'name': 'SARS-CoV-2',
             'k2_name': 'Severe acute respiratory syndrome-related coronavirus',
             'nextclade_dbs': {
-                'genome': Path(Camel.get_instance().config['db_root'], 'nextclade3', 'sars-cov-2')
+                'genome': str(Path(Camel.get_instance().config['db_root'], 'nextclade3', 'sars-cov-2'))
             }
         }
     }
