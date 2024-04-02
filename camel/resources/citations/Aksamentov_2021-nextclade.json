@@ -1,0 +1,17 @@
+{
+  "type_of_reference": "JOUR",
+  "primary_title": "Nextclade: clade assignment, mutation calling and quality control for viral genomes",
+  "first_authors": [
+    "Aksamentov, Ivan",
+    "Roemer, Cornelius",
+    "Hodcroft, Emma",
+    "Neher, Richard"
+  ],
+  "publication_year": "2021///",
+  "alternate_title3": "Journal of Open Source Software",
+  "volume": "6",
+  "number": "67",
+  "start_page": "3773",
+  "end_page": "3773",
+  "doi": "10.21105/joss.03773"
+}

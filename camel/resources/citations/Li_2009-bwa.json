@@ -1,0 +1,15 @@
+{
+  "type_of_reference": "JOUR",
+  "primary_title": "Fast and accurate short read alignment with Burrows-Wheeler transform",
+  "first_authors": [
+    "Li, Heng",
+    "Durbin, Richard"
+  ],
+  "publication_year": "2009/07//",
+  "alternate_title3": "Bioinformatics",
+  "volume": "25",
+  "number": "14",
+  "start_page": "1754",
+  "end_page": "1760",
+  "doi": "10.1093/bioinformatics/btp324"
+}
