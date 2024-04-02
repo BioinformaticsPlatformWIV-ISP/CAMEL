@@ -43,7 +43,9 @@ class NcbiHumanReadScrubber(Tool):
         Builds the command line call to execute HRRT.
         :return: None
         """
+        dir_temp = self._camel.config['temp_dir']
         self._command.command = ' '.join([
+            f'export TMPDIR={dir_temp};',
             self._tool_command,
             *self._build_options(excluded_parameters=['interleaved']),
             self._parameters['interleaved'].option if self._parameters['interleaved'].value == 'true' else '',
