@@ -24,22 +24,20 @@ class MainViralConsensusPipeline(ReportPipeline):
     Main script for the viral consensus pipeline.
     """
 
+    DB_ROOT = Path(Camel.get_instance().config['db_root'], 'pipelines', 'viral_consensus', 'version_1.1')
+
     SUPPORTED_SPECIES = {
         'influenza_a': {
             'name': 'Influenza A',
             'k2_name': 'Influenza A virus',
-            'nextclade_mash_db': Path(
-                Camel.get_instance().config['db_root'], 'pipelines', 'viral_consensus', 'nextclade3',
-                'influenza_a'),
+            'nextclade_mash_db': str(DB_ROOT / 'subtype_mash' / 'influenza_a'),
             'nextclade_capitalize': True
         },
         'influenza_b': {
             'name': 'Influenza B',
             'k2_name': 'Influenza B virus',
             'nextclade_segments': [],
-            'nextclade_mash_db': Path(
-                Camel.get_instance().config['db_root'], 'pipelines', 'viral_consensus', 'nextclade3',
-                'influenza_b'),
+            'nextclade_mash_db': str(DB_ROOT / 'subtype_mash' / 'influenza_b'),
             'nextclade_capitalize': True
         },
         'sars_cov_2': {
@@ -84,6 +82,8 @@ class MainViralConsensusPipeline(ReportPipeline):
         parser.add_argument('--fasta-ref-name', help='Name of the reference genome FASTA file')
         parser.add_argument('--ref-genome-db', type=Path,
                             help='Database with reference genomes (for automatic reference genome selection)')
+        # Human read scrubbing
+        parser.add_argument('--human-read-scrubbing', action='store_true', help='Remove human reads at the start of the pipeline')
         # Primer removal
         parser.add_argument('--fasta-primers', type=Path, help='Path to FASTA file with primer sequences')
         parser.add_argument('--fasta-primers-name', type=str, help='Name of the FASTA file with primer sequences')
