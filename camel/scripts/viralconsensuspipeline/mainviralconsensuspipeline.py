@@ -295,7 +295,7 @@ class MainViralConsensusPipeline(ReportPipeline):
 
         # Reference genome / reference selection
         config_data['fasta_ref'] = str(self._args.fasta_ref) if self._args.fasta_ref is not None else None
-        config_data['ref_selection'] = {'db': self._args.ref_genome_db if self._args.fasta_ref is None else None}
+        config_data['ref_selection'] = {'db': str(self._args.ref_genome_db) if self._args.fasta_ref is None else None}
 
         # Other assays
         self.__config_add_coverage_data(config_data)
