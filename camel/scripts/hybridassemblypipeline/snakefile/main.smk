@@ -25,6 +25,8 @@ include: trimming_ont.SNAKEFILE_TRIMMING_ONT
 include: assembly.SNAKEFILE_ASSEMBLY
 include: qc_hybrid.SNAKEFILE_QC
 
+ruleorder: copy_medaka_unicycler_to_short_read_polishing > core_link_fasta_to_polishing
+
 #########
 # Rules #
 #########
@@ -75,14 +77,6 @@ rule copy_medaka_unicycler_to_short_read_polishing:
         FASTA_unicycler = str(Path(config['working_dir']) / polish_assembly_short.INPUT_ASSEMBLY_FASTA).format(assembly_type='unicycler')
     run:
         shutil.copyfile(input.FASTA_unicycler, output.FASTA_unicycler)
-
-rule copy_assemblies_to_medaka_input:
-    input:
-        FASTA_flye = Path(config['working_dir']) / assembly_flye.OUTPUT_ASSEMBLY_FASTA
-    output:
-        FASTA_medaka_flye = str(Path(config['working_dir']) / polish_assembly_long.INPUT_ASSEMBLY_FASTA).format(assembly_type='flye')
-    run:
-        shutil.copyfile(input.FASTA_flye, output.FASTA_medaka_flye)
 
 rule combine_informs_quast:
     """

@@ -450,7 +450,7 @@ rule qc_hybrid_unzip_clair3_vcf:
         dir_working = Path(str(params.running_dir)).absolute()
         bcftools_view = BcftoolsView(camel)
         SnakemakeUtils.add_pickle_inputs(bcftools_view, input)
-        bcftools_view.update_parameters(output_format='VCF', compress_output=False, output_filename='variants.vcf')
+        bcftools_view.update_parameters(compress_output=False, output_filename='variants.vcf')
         step = Step(str(rule), bcftools_view, camel, dir_working)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(bcftools_view, output)
