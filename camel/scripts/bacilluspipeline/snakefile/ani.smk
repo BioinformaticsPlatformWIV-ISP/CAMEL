@@ -41,12 +41,13 @@ rule fastani_report:
         HTML = Path(config['working_dir']) / ani.OUTPUT_ANI_REPORT
     params:
         running_dir = Path(config['working_dir']) / 'ani',
-        sample_name = config['sample_name']
+        sample_name = config['sample_name'],
+        species = config['species']
     run:
         from camel.app.tools.fastani.fastanireporter import FastANIReporter
         ani_report = FastANIReporter(camel)
         SnakemakeUtils.add_pickle_inputs(ani_report, input)
-        ani_report.update_parameters(sample_name=params.sample_name)
+        ani_report.update_parameters(sample_name=params.sample_name, species=params.species)
         step = Step(str(rule), ani_report, camel, params.running_dir, config)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(ani_report, output)
