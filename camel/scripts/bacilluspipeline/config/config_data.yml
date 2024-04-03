@@ -81,7 +81,7 @@ mob_suite:
   db: /db/mob_suite/latest
 
 fastani:
-  path: /db/pipelines/bacillus/ref_list.txt
+  path: /db/pipelines/bacillus/ref_list_complete.txt
 
 gene_detection:
   gmo:

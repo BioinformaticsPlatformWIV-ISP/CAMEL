@@ -64,6 +64,8 @@ class FastANIReporter(Tool):
             output_table = []
             for line in handle.readlines():
                 output_table.append(self.__format_output_table_line(line.strip().split()[1:]))
+                if len(output_table) == 10:
+                    break
             return header, output_table
 
     def __format_output_table_line(self, table_line: List[str]) -> List[str]:
@@ -72,8 +74,15 @@ class FastANIReporter(Tool):
         :table_line: input split line from the FastANI output table.
         :return: formatted split line
         """
-        # Remove directories from filenames
-        table_line[0] = Path(table_line[0]).name
+        if 'species' in self._parameters and self._parameters['species'].value == 'subtilis':
+            # return a clean species name if bacillus is used (well formatted table)
+            species = Path(table_line[0]).parent.parent.parent.name
+            subspecies = Path(table_line[0]).parent.parent.name
+            strain = Path(table_line[0]).parent.name
+            table_line[0] = f'{species}_{subspecies}_str_{strain}'
+        else:
+            # Remove directories from filenames
+            table_line[0] = Path(table_line[0]).name
 
         # Format ANI percentage to two significant digits
         table_line[1] = '{:.2f}'.format(float(table_line[1]))
