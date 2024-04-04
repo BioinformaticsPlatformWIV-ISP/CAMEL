@@ -9,7 +9,7 @@ from camel.app.io.tooliofile import ToolIOFile
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile import core, downsampling, polish_assembly_long, polish_assembly_short, \
-    trimming_illumina, trimming_ont, assembly, assembly_flye
+    trimming_illumina, trimming_ont, assembly
 from camel.scripts.hybridassemblypipeline.snakefile import qc_hybrid
 
 camel = Camel.get_instance()
