@@ -6,6 +6,7 @@ bs4
 humanize
 openpyxl
 pandas
+plotnine
 pydotplus
 pysam
 scipy
