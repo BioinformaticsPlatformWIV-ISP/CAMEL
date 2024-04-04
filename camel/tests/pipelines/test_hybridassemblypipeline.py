@@ -30,7 +30,8 @@ class TestHybridAssemblyPipeline(CamelTestSuite):
             '--fastq-se-name', 'ont.fastq.gz',
             '--working-dir', str(self.running_dir),
             '--expected-genome-size', '4.5m',
-            '--ont-qual', 'nano-corr'
+            '--ont-qual', 'nano-corr',
+            '--input-type', 'hybrid'
         ]
         main = MainHybridAssemblyPipeline(args)
         self.assertEqual(main._sample_name, 'illumina')
@@ -77,6 +78,7 @@ class TestHybridAssemblyPipeline(CamelTestSuite):
         main = MainHybridAssemblyPipeline(args)
         main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)
+
 
 if __name__ == '__main__':
     unittest.main()
