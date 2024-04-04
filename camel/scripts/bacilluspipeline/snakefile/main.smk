@@ -5,13 +5,14 @@ from camel.app.components.pipelines.reportpipeline import ReportPipeline
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile import core, assembly, downsampling, quast, confindr, trimming, trimming_illumina, \
     quality_checks, contamination_check_kraken, sequence_typing, amrfinder, trimming_ont, gene_detection, \
-    mobsuite
+    mobsuite, human_read_scrubbing
 from camel.scripts.bacilluspipeline.snakefile import btyper, ani, straingst
 
 #######################
 # Included Snakefiles #
 #######################
 include: core.SNAKEFILE_CORE
+include: human_read_scrubbing.SNAKEFILE_SCRUBBING
 include: downsampling.SNAKEFILE_DOWNSAMPLING
 include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
 include: trimming_ont.SNAKEFILE_TRIMMING_ONT
