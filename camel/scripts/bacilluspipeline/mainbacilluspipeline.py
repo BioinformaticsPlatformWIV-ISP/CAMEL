@@ -94,6 +94,7 @@ class MainBacillusPipeline(ReportPipeline):
                     continue
                 if group != 'common' and group != self._args.species:
                     logger.warning(f"Analysis '{key}' not supported for species '{self._args.species}'")
+                    continue
                 config_data['analyses'].append(key)
 
         # Parse template
@@ -128,6 +129,7 @@ class MainBacillusPipeline(ReportPipeline):
     def _parse_arguments(args: Optional[Sequence[str]] = None) -> argparse.Namespace:
         """
         Parses the command line arguments.
+        :param args: command line arguments
         :return: Arguments
         """
         parser = argparse.ArgumentParser()
