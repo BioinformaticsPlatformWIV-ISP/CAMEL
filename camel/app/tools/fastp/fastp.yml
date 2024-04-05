@@ -1,0 +1,6 @@
+dependencies: [fastp/0.23.4]
+parameters:
+  disable_adapter_trimming: {default: false, mandatory: false, option: --disable_adapter_trimming, value: null}
+  output_name: {default: true, mandatory: true, option: null, value: 'trimmed'}
+  threads: {default: false, mandatory: false, option: --thread, value: '4'}
+tool_command: fastp
