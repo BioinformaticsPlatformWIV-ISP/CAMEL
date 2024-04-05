@@ -25,7 +25,9 @@ rule resfinder4_run:
     params:
         dir_ = Path(config['working_dir']) / 'resfinder4',
         species = config['resfinder4'].get('species'),
-        point = config['resfinder4'].get('point', True)
+        point = config['resfinder4'].get('point', True),
+        min_id = config['resfinder4'].get('min_identity'),
+        min_cov = config['resfinder4'].get('min_cov')
     run:
         from camel.app.tools.resfinder.resfinder import ResFinder
         resfinder = ResFinder(Camel.get_instance())
@@ -34,6 +36,10 @@ rule resfinder4_run:
         resfinder.update_parameters(min_cov=0.9, acquired=True, point=params.point)
         if params.species is not None:
             resfinder.update_parameters(species=f'"{params.species}"')
+        if params.min_id is not None:
+            resfinder.update_parameters(threshold=params.min_id)
+        if params.min_cov is not None:
+            resfinder.update_parameters(min_cov=params.min_cov)
         step = Step(str(rule), resfinder, Camel.get_instance(), params.dir_)
         step.run_step()
         if params.point:

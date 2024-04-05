@@ -99,4 +99,15 @@ class ResFinder(Tool):
         self._build_command()
         self._execute_command()
         self._set_output()
+        self._set_informs()
         self.__collect_db_version()
+
+    def _set_informs(self) -> None:
+        """
+        Collects the tool informs.
+        :return: None
+        """
+        self._informs['parameters'] = {
+            'threshold': float(self._parameters['threshold'].value) if 'threshold' in self._parameters else 'default',
+            'min_cov': float(self._parameters['min_cov'].value) if 'min_cov' in self._parameters else 'default',
+        }
