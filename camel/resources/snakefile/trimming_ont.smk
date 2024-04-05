@@ -8,31 +8,13 @@ from camel.resources.snakefile import trimming_ont
 
 camel = Camel.get_instance()
 
-rule trimming_ont_pickle_fastq_input:
-    """
-    Creates a pickle for the fastq input files.
-    """
-    output:
-        FASTQ_SE = Path(config['working_dir']) / 'trimming_ont' / 'input' / 'fastq-se.io'
-    params:
-        config_input = config['input']
-    run:
-        from camel.app.io.tooliofile import ToolIOFile
-        if trimming_ont.INPUT_ONT_FASTQ.exists():
-            shutil.copyfile(trimming_ont.INPUT_ONT_FASTQ, Path(output.FASTQ_SE))
-        else:
-            fastq_se_in = Path(
-                [params.config_input[fastq_key][0]['path'] for fastq_key in ['fastq_se', 'fastq'] if
-                 fastq_key in params.config_input][0])
-            SnakemakeUtils.dump_object([ToolIOFile(fastq_se_in)], Path(output.FASTQ_SE))
-
 
 rule trimming_ont_nanoplot_pre:
     """
     Creates NanoPlot reports for the raw reads. 
     """
     input:
-        FASTQ = rules.trimming_ont_pickle_fastq_input.output.FASTQ_SE
+        FASTQ = Path(config['working_dir']) / trimming_ont.INPUT_ONT_FASTQ
     output:
         HTML = Path(config['working_dir']) / trimming_ont.OUTPUT_TRIMMING_ONT_NANOPLOT_HTML_PRE,
         TSV = Path(config['working_dir']) / trimming_ont.OUTPUT_TRIMMING_ONT_NANOPLOT_TXT_PRE,
@@ -54,7 +36,7 @@ rule trimming_ont_filtlong:
     Read trimming using filtlong.
     """
     input:
-        FASTQ = rules.trimming_ont_pickle_fastq_input.output.FASTQ_SE
+        FASTQ = Path(config['working_dir']) / trimming_ont.INPUT_ONT_FASTQ
     output:
         FASTQ = Path(config['working_dir']) / trimming_ont.OUTPUT_TRIMMING_ONT_READS,
         INFORMS = Path(config['working_dir']) / trimming_ont.OUTPUT_TRIMMING_ONT_INFORMS
