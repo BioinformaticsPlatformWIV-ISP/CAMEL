@@ -54,7 +54,7 @@ class ReporterTrimmingONT(Tool):
             {'title': 'Number of reads', 'key': 'number_of_reads', 'format': '{:,}', 'type': int},
             {'title': 'Number of bases', 'key': 'number_of_bases', 'format': '{:,.0f}', 'type': float},
             {'title': 'Mean read quality', 'key': 'mean_qual', 'format': '{:.2f}', 'type': float},
-            {'title': 'Median read quality', 'key': 'mean_qual', 'format': '{:.2f}', 'type': float},
+            {'title': 'Median read quality', 'key': 'median_qual', 'format': '{:.2f}', 'type': float},
             {'title': 'Mean read length', 'key': 'mean_read_length', 'format': '{:,.0f}', 'type': float},
             {'title': 'Median read length', 'key': 'median_read_length', 'format': '{:,.0f}', 'type': float},
             {'title': 'N50', 'key': 'n50', 'format': '{:,.0f}', 'type': float},

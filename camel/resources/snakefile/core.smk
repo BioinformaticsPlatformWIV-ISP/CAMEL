@@ -83,6 +83,21 @@ rule core_link_ont_input:
         cp {input.FASTQ} {output.FASTQ};
         """
 
+rule core_collect_trimmed_fastq_data:
+    """
+    This rule core_creates an IO object with the trimmed FASTQ files.
+    Other workflows such as 'Kraken' or 'Assembly' rely on this dictionary to get input files (PE or SE).
+    """
+    input:
+        unpack(lambda _: core.get_fq_input(config['input_type'], config['working_dir']))
+    output:
+        IO_FASTQ = Path(config['working_dir']) / 'fq_dict.io'
+    params:
+        input_type = config['input_type']
+    run:
+        from camel.app.components.pipelines.reportpipeline import ReportPipeline
+        ReportPipeline.construct_fq_dict(input, params.input_type, Path(output.IO_FASTQ))
+
 rule core_link_fasta_scrubbing_input:
     """
     Creates the FASTA input for the human read scrubbing step.
@@ -145,21 +160,6 @@ rule core_link_fasta_to_mob_suite:
         """
         cp {input.FASTA} {output.FASTA};
         """
-
-rule core_collect_trimmed_fastq_data:
-    """
-    This rule core_creates an IO object with the trimmed FASTQ files.
-    Other workflows such as 'Kraken' or 'Assembly' rely on this dictionary to get input files (PE or SE).
-    """
-    input:
-        unpack(lambda _: core.get_fq_input(config['input_type'], config['working_dir']))
-    output:
-        IO_FASTQ = Path(config['working_dir']) / 'fq_dict.io'
-    params:
-        input_type = config['input_type']
-    run:
-        from camel.app.components.pipelines.reportpipeline import ReportPipeline
-        ReportPipeline.construct_fq_dict(input, params.input_type, Path(output.IO_FASTQ))
 
 rule core_init_summary:
     """

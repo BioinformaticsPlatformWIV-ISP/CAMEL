@@ -69,6 +69,8 @@ amrfinder:
 resfinder4:
   db: /db/resfinder4
   species: Staphylococcus aureus
+  min_identity: 0.90
+  min_cov: 0.60
 
 mob_suite:
   db: /db/mob_suite/latest

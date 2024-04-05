@@ -62,6 +62,8 @@ amrfinder:
 resfinder4:
   db: /db/resfinder4
   species: {resfinder4_species}
+  min_identity: 0.90
+  min_cov: 0.60
 
 mob_suite:
   db: /db/mob_suite/latest

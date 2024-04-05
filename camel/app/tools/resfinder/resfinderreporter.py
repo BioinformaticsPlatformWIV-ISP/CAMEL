@@ -40,6 +40,27 @@ class ResFinderReporter(Tool):
             raise InvalidInputSpecificationError('ResFinder informs are required.')
         super()._check_input()
 
+    def __add_parameter_section(self, section: HtmlReportSection) -> None:
+        """
+        Adds the parameter section to the report.
+        :param section: Report section
+        :return: None
+        """
+        # Format strings
+        min_cov_value = self._input_informs['resfinder']['parameters']['min_cov']
+        min_cov_str = f'{100 * min_cov_value:.2f}%' if isinstance(min_cov_value, float) else min_cov_value
+        min_id_value = self._input_informs['resfinder']['parameters']['threshold']
+        min_id_str = f'{100 * min_id_value:.2f}%' if isinstance(min_id_value, float) else min_id_value
+
+        # Add table
+        section.add_header('Parameters', 3)
+        section.add_table([
+            ['Min. coverage:', min_cov_str],
+            ['Min. identity:', min_id_str],
+        ], table_attributes=[('class', 'information')])
+        section.add_horizontal_line()
+
+
     def __add_phenotype_table(self, section: HtmlReportSection, key: str) -> None:
         """
         Adds the table with the phenotype overview.
@@ -124,6 +145,7 @@ class ResFinderReporter(Tool):
         # Parse input
         data_genes = pd.read_table(self._tool_inputs['TSV_genes'][0].path, na_values=['NA..NA'])
         logger.info(f'{len(data_genes)} genes parsed')
+        section.add_header('Detected AMR genes', 3)
         cols_original = list(data_genes.columns)
         if not data_genes.empty:
             data_genes['perc_cov'] = data_genes['Alignment Length/Gene Length'].apply(
@@ -131,7 +153,6 @@ class ResFinderReporter(Tool):
             data_genes['color'] = data_genes.apply(lambda row: ResFinderReporter.__get_row_color(row), axis=1)
 
             # Add table
-            section.add_header('Detected AMR genes', 3)
             section.add_table([[
                 *[HtmlTableCell(
                     f'{row[col]:.2f}' if isinstance(row[col], float) else row[col],
@@ -157,17 +178,20 @@ class ResFinderReporter(Tool):
         data_mutations = pd.read_table(self._tool_inputs['TSV_point'][0].path)
         logger.info(f'{len(data_mutations)} mutations parsed')
         section.add_header('Detected AMR mutations', 3)
-        section.add_table([[
-            *[HtmlTableCell(f'{row[col]:.2f}' if isinstance(row[col], float) else row[col], color='green')
-              for col in data_mutations.columns if col != 'PMID'],
-            ResFinderReporter.__get_accession_cell(str(row['PMID']), 'green', is_pmid=True)
-        ] for row in data_mutations.fillna('-').to_dict('records')], list(data_mutations.columns), [('class', 'data')])
 
-        # Download link
         if len(data_mutations) > 0:
+            section.add_table([[
+                *[HtmlTableCell(f'{row[col]:.2f}' if isinstance(row[col], float) else row[col], color='green')
+                for col in data_mutations.columns if col != 'PMID'],
+                ResFinderReporter.__get_accession_cell(str(row['PMID']), 'green', is_pmid=True)
+            ] for row in data_mutations.fillna('-').to_dict('records')], list(data_mutations.columns), [('class', 'data')])
+
+            # Download link
             relative_path = Path('resfinder4', self._tool_inputs['TSV_point'][0].path.name)
             section.add_file(self._tool_inputs['TSV_point'][0].path, relative_path)
             section.add_link_to_file('Download (TSV)', relative_path)
+        else:
+            section.add_paragraph('No mutations detected.')
 
     def _execute_tool(self) -> None:
         """
@@ -175,6 +199,9 @@ class ResFinderReporter(Tool):
         :return: None
         """
         section = HtmlReportSection(ResFinderReporter.TITLE, subtitle=self._input_informs['resfinder']['_name'])
+
+        # Parameters
+        self.__add_parameter_section(section)
 
         # Phenotype overviews
         for key in ('species', 'general'):
