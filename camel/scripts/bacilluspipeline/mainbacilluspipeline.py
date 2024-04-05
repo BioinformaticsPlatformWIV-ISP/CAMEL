@@ -21,7 +21,7 @@ class MainBacillusPipeline(ReportPipeline):
 
     CUSTOM_ANALYSES = {
         'common': ['rmlst', 'plasmidfinder', 'mobsuite', 'vfdb_core', 'amrfinder', 'kraken2', 'confindr',
-                   'human_read_scrubbing'],
+                   'human_read_scrubbing', 'straingst'],
         'cereus': ['btyper', 'mlst_cereus', 'cgmlst_cereus'],
         'subtilis': ['fastani', 'mlst_subtilis', 'gmo']
     }
@@ -108,7 +108,7 @@ class MainBacillusPipeline(ReportPipeline):
                 genome_size=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['genome_size'],
                 wildcards_assembly='long_read_assembly',
                 ref_fasta=Path(Camel.get_instance().config['db_root'], 'refgenomes', 'Bacillus',
-                          f'{MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]["ref_species"]}.fasta'),
+                               f'{MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]["ref_species"]}.fasta'),
                 ref_gff=Path(Camel.get_instance().config['db_root'], 'refgenomes', 'Bacillus',
                              f'{MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]["ref_species"]}.gff3')
             ), Loader=yaml.SafeLoader))
@@ -116,7 +116,6 @@ class MainBacillusPipeline(ReportPipeline):
         # Nanopore settings
         if self._args.input_type in ['nanopore', 'hybrid']:
             config_data['assembly']['flye'] = {
-                'genome_size': MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['genome_size'],
                 **config_data['assembly'].get('flye', {})}
 
         # Illumina settings

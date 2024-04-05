@@ -6,7 +6,7 @@ from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile import core, assembly, downsampling, quast, confindr, trimming, trimming_illumina, \
     quality_checks, contamination_check_kraken, sequence_typing, amrfinder, trimming_ont, gene_detection, \
     mobsuite, human_read_scrubbing
-from camel.scripts.bacilluspipeline.snakefile import btyper, ani
+from camel.scripts.bacilluspipeline.snakefile import btyper, ani, straingst
 
 #######################
 # Included Snakefiles #
@@ -27,6 +27,7 @@ include: amrfinder.SNAKEFILE_AMRFINDER
 include: gene_detection.SNAKEFILE_GENE_DETECTION
 include: mobsuite.SNAKEFILE_MOB_SUITE
 include: ani.SNAKEFILE_ANI
+include: straingst.SNAKEFILE_STRAINGST
 
 #########
 # Rules #
@@ -143,6 +144,7 @@ rule report_create_commands_section:
         INFORMS_assembly_map = assembly.get_qc_informs(config, config['input_type']),
         INFORMS_btyper = Path(config['working_dir']) / btyper.OUTPUT_INFORMS_BTYPER if 'btyper' in config['analyses'] else [],
         INFORMS_fastani = Path(config['working_dir']) / ani.OUTPUT_INFORMS_ANI if 'fastani' in config['analyses'] else [],
+        INFORMS_straingst = straingst.get_command_informs(config),
         INFORMS_amrfinder = Path(config['working_dir']) / str(amrfinder.OUTPUT_AMRFINDER_INFORMS) if 'amrfinder' in config['analyses'] else [],
         INFORMS_vfdb_core = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='vfdb_core') if 'vfdb_core' in config['analyses'] else [],
         INFORMS_plasmidfinder= Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='plasmidfinder') if 'plasmidfinder' in config['analyses'] else [],
@@ -177,6 +179,7 @@ rule report_content_cereus:
         report_plasmidfinder = gene_detection.get_gene_detection_report('plasmidfinder', config),
         report_mob_suite = Path(config['working_dir']) / (mobsuite.OUTPUT_MOB_SUITE_REPORT if 'mobsuite' in config['analyses'] else mobsuite.OUTPUT_MOB_SUITE_REPORT_EMPTY),
         report_genomic_context = Path(config['working_dir']) / (mobsuite.OUTPUT_MOB_SUITE_CONTEXT_REPORT if 'mobsuite' in config['analyses'] else mobsuite.OUTPUT_MOB_SUITE_CONTEXT_REPORT_EMPTY),
+        reports_straingst = straingst.get_reports(config),
         report_rmlst = sequence_typing.get_sequence_typing_report('rmlst', config),
         report_mlst = sequence_typing.get_sequence_typing_report('mlst_cereus', config),
         report_cgmlst = sequence_typing.get_sequence_typing_report('cgmlst_cereus', config),
@@ -208,6 +211,7 @@ rule report_content_cereus:
 
         # Custom assays (B. cereus)
         report_structure.extend([
+            ('StrainGST', 'straingst', [Path(x) for x in input.reports_straingst]),
             ('BTyper3', 'btyper3', [Path(input.report_btyper)]),
             ('Virulence detection', 'virulence', [Path(x) for x in (input.report_vfdb_core,)]),
             ('AMRFinder results', 'amrfinder', [Path(input.report_amrfinder)]),
@@ -236,12 +240,12 @@ rule report_content_subtilis:
             input_type=config['input_type']),
         report_fastani = Path(config['working_dir']) / (ani.OUTPUT_ANI_REPORT if 'fastani' in config['analyses'] else ani.OUTPUT_ANI_REPORT_EMPTY),
         report_amrfinder = Path(config['working_dir']) / (amrfinder.OUTPUT_AMRFINDER_REPORT if 'amrfinder' in config['analyses'] else amrfinder.OUTPUT_AMRFINDER_REPORT_EMPTY),
-        # report_gmo = gene_detection.get_gene_detection_report('gmo', config),
         report_gmo = rules.main_update_gmm_report.output.VAL_HTML,
         report_vfdb_core = gene_detection.get_gene_detection_report('vfdb_core', config),
         report_plasmidfinder = gene_detection.get_gene_detection_report('plasmidfinder', config),
         report_mob_suite = Path(config['working_dir']) / (mobsuite.OUTPUT_MOB_SUITE_REPORT if 'mobsuite' in config['analyses'] else mobsuite.OUTPUT_MOB_SUITE_REPORT_EMPTY),
         report_genomic_context = Path(config['working_dir']) / (mobsuite.OUTPUT_MOB_SUITE_CONTEXT_REPORT if 'mobsuite' in config['analyses'] else mobsuite.OUTPUT_MOB_SUITE_CONTEXT_REPORT_EMPTY),
+        reports_straingst = straingst.get_reports(config),
         report_rmlst = sequence_typing.get_sequence_typing_report('rmlst', config),
         report_mlst = sequence_typing.get_sequence_typing_report('mlst_subtilis', config),
         report_citations = Path(config['working_dir'],core.OUTPUT_HTML_CITATIONS),
@@ -272,6 +276,7 @@ rule report_content_subtilis:
 
         # B. subtilis assays
         report_structure.extend([
+            ('StrainGST', 'straingst', [Path(x) for x in input.reports_straingst]),
             ('FastANI', 'fastani', [Path(input.report_fastani)]),
             ('GMO detection', 'gmo', [Path(input.report_gmo)]),
             ('Virulence detection', 'virulence', [Path(x) for x in (input.report_vfdb_core,)]),
@@ -313,6 +318,7 @@ rule summary_combine_all:
         Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY,
         contamination_check_kraken.get_summaries(config),
         confindr.get_summary(config),
+        straingst.get_summaries(config),
         Path(config['working_dir']) / btyper.OUTPUT_BTYPER_SUMMARY if 'btyper' in config['analyses'] else [],
         Path(config['working_dir']) / amrfinder.OUTPUT_AMRFINDER_SUMMARY if 'amrfinder' in config['analyses'] else [],
         Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='vfdb_core') if 'vfdb_core' in config['analyses'] else [],
