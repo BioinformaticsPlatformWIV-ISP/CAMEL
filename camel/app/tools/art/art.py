@@ -3,6 +3,7 @@ from pathlib import Path
 from camel.app.camel import Camel
 from camel.app.command.command import Command
 from camel.app.components.filesystemhelper import FileSystemHelper
+from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.loggers import logger
@@ -47,7 +48,7 @@ class ART(Tool):
         super()._check_input()
         if 'FASTA' in self._tool_inputs:
             if len(self._tool_inputs['FASTA']) != 1:
-                raise ValueError("FASTA input requires exactly 1 file.")
+                raise InvalidInputSpecificationError("FASTA input requires exactly 1 file.")
         else:
             raise ValueError("FASTA input is required")
 
@@ -59,8 +60,6 @@ class ART(Tool):
         self._command.command = ' '.join([
             self._tool_command,
             f"-i {self._tool_inputs['FASTA'][0].path}",
-            "-p",  # paired-end
-            "-na",  # do not generate an ALN alignment file,
             *self._build_options()]
         )
 
@@ -78,7 +77,7 @@ class ART(Tool):
         """
         Returns the path for the output file with the given suffix.
         :param suffix: suffix for the filename
-        :return: Path
+        :return: Path to the generated reads
         """
         basename = self._parameters['out'].value
         return self.folder / f"{FileSystemHelper.make_valid(basename)}{suffix}.fq"
@@ -88,13 +87,13 @@ class ART(Tool):
         Sets the output of this tool.
         :return: None
         """
-        self._tool_outputs['FASTQ'] = [
+        self._tool_outputs['FASTQ_PE'] = [
             ToolIOFile(Path(f"{self.__get_output_path('1')}.gz")), ToolIOFile(Path(f"{self.__get_output_path('2')}.gz"))]
 
     @staticmethod
     def __remove_file(input_file: Path) -> None:
         """
-        Removes a file.
+        Removes the uncompressed FASTQ files as these are not needed for further analyses.
         :param input_file: Input file
         :return: None
         """

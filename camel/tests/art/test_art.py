@@ -24,7 +24,7 @@ class TestART(CamelTestSuite):
             'FASTA': [ToolIOFile(Path(TestART.input_fasta))]
         })
         art.run(self.running_dir)
-        self.verify_output_files(art, 'FASTQ', 2)
+        self.verify_output_files(art, 'FASTQ_PE', 2)
 
 
 if __name__ == '__main__':
