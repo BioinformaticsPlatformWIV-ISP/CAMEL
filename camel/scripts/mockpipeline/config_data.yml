@@ -39,3 +39,17 @@ gene_detection:
     metadata:
       name: Antibiotic(s)
       key: subclass
+
+variant_calling:
+  ploidy: 1
+  report_include_bam: {export_bam}
+  reference:
+    path: /db/refgenomes/Escherichia_coli/NC_002695.2.fasta
+    name: NC_002695.2
+    url: https://www.ncbi.nlm.nih.gov/nuccore/NC_002695.2/
+    annotation_gff: /db/refgenomes/Escherichia_coli/NC_002695.2.gff
+
+variant_filtering:
+  depth:
+    min_fwd_depth: 1
+    min_rev_depth: 1

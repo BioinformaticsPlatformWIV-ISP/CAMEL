@@ -12,7 +12,7 @@ rule snpit_report:
     Creates the report for the snpit assay.
     """
     input:
-        VCF = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_UNFILTERED_VCF
+        VCF = Path(config['working_dir']) / variant_calling.get_vcf(config)
     output:
         VAL_HTML = Path(config['working_dir']) / snpit_workflow.OUTPUT_SNPIT_REPORT,
         INFORMS = Path(config['working_dir']) / snpit_workflow.OUTPUT_SNPIT_INFORMS

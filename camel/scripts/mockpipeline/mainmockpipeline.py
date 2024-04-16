@@ -5,6 +5,7 @@ from typing import Optional, Sequence, List, Dict
 
 import yaml
 
+from camel.app.camel import Camel
 from camel.app.components import mainscriptutils
 from camel.app.components.pipelines.reportpipeline import ReportPipeline
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
@@ -16,7 +17,7 @@ class MainMockPipeline(ReportPipeline):
     Base-class for the mock pipeline.
     """
 
-    CUSTOM_ANALYSES = ['human_read_scrubbing', 'kraken2', 'confindr', 'ncbi_amr']
+    CUSTOM_ANALYSES = ['human_read_scrubbing', 'kraken2', 'confindr', 'ncbi_amr', 'snpit']
 
     def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """
@@ -68,6 +69,7 @@ class MainMockPipeline(ReportPipeline):
         with open(CONFIG_DATA) as handle_in:
             mainscriptutils.dict_merge(
                 config_data, yaml.safe_load(handle_in.read().format(
-                    coverage_max=self._args.cov_max
+                    coverage_max=self._args.cov_max,
+                    export_bam='true' if self._args.report_include_bam else 'false'
                 )))
         return Path(SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir))

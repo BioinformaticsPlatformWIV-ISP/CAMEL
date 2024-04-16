@@ -144,6 +144,7 @@ class TestMockPipeline(CamelTestSuite):
             '--working-dir', str(self.running_dir),
             '--detection-method', 'blast',
             '--ncbi-amr',
+            '--snpit',
             '--human-read-scrubbing',
             '--threads', '8',
         ])

@@ -14,7 +14,7 @@ rule amr_extract_variant_positions:
     Extracts positions from the VCF file that are located in regions linked to AMR.
     """
     input:
-        VCF_GZ = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_UNFILTERED_VCF_GZ
+        VCF_GZ = Path(config['working_dir']) / variant_calling.get_vcf_gz(config)
     output:
         VCF = Path(config['working_dir']) / 'amr' / 'filtering' / 'vcf.io'
     params:
@@ -38,7 +38,7 @@ rule amr_annotate_variants_csq:
         FASTA = Path(config['working_dir']) / 'variant_calling' / 'reference' / 'fasta.io'
     output:
         VCF = Path(config['working_dir'])  / 'amr' / 'csq' / 'vcf.io',
-        INFORMS =Path(config['working_dir']) / amrdetection.OUTPUT_INFORMS_CSQ
+        INFORMS = Path(config['working_dir']) / amrdetection.OUTPUT_INFORMS_CSQ
     params:
         dir_ = Path(config['working_dir']) / 'amr' / 'csq',
         gff = config['variant_calling']['reference']['annotation_gff']
@@ -225,7 +225,9 @@ rule amr_visualization_add_text:
     """
     input:
         PNG = rules.amr_visualization_circos.output.PNG,
-        INFORMS_coverage = Path(config['working_dir'] / assembly.get_depth_inform('fastq_pe')),
+        INFORMS_coverage = Path(config['working_dir'] / assembly.get_depth_inform('fastq_pe'))
+                            if 'fasta' not in config['input_type'] and 'fasta_vcf' not in config['input_type']
+                            else Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_DEPTH_INFORMS,
         INFORMS_lineage = Path(config['working_dir']) / snplineage.OUTPUT_SNP_LINEAGE_INFORMS
     output:
         PNG = Path(config['working_dir']) / 'amr' / 'visualization' / 'png-text.io'

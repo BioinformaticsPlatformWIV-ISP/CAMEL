@@ -12,7 +12,7 @@ rule snp_lineage_detection:
     Detects the SNP lineage based on the variants detected in the sample.
     """
     input:
-        VCF = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_UNFILTERED_VCF,
+        VCF = Path(config['working_dir']) / variant_calling.get_vcf(config),
         VCF_filt = Path(config['working_dir']) / variant_filtering.OUTPUT_VARIANT_FILTERING_VCF
     output:
         INFORMS = Path(config['working_dir']) / snplineage.OUTPUT_SNP_LINEAGE_INFORMS

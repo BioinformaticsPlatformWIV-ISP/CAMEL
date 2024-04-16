@@ -111,6 +111,19 @@ rule core_link_fasta_scrubbing_input:
          path_fasta_in = Path(params.fasta_in[0]['path'])
          SnakemakeUtils.dump_object([ToolIOFile(path_fasta_in)], Path(output.FASTA))
 
+rule core_link_vcf_input:
+    """
+    Creates the VCF input for the variant filtering.
+    """
+    params:
+        vcf_in = config.get('input', {}).get('vcf_unfiltered')
+    output:
+        VCF = Path(config['working_dir']) / 'input' / 'vcf.io',
+    run:
+         from camel.app.io.tooliofile import ToolIOFile
+         path_vcf_in = Path(params.vcf_in[0]['path'])
+         SnakemakeUtils.dump_object([ToolIOFile(path_vcf_in)], Path(output.VCF))
+
 rule core_select_fasta:
     """
     This rules links the output of the assembly workflow to the other workflows. 

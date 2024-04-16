@@ -85,7 +85,7 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         logger.info(f"Checking input files (type: '{self._args.input_type}')")
 
         # FASTA input
-        if self._args.input_type == 'fasta':
+        if self._args.input_type in ('fasta', 'fasta_vcf'):
             with open(self._args.fasta) as handle:
                 try:
                     seqs = list(SeqIO.parse(handle, 'fasta'))
@@ -139,7 +139,7 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         :return: None
         """
         # FASTA input
-        if input_type == 'fasta':
+        if input_type in ('fasta', 'fasta_vcf'):
             SnakemakeUtils.dump_object(None, path_out)
 
         # PE reads (illumina)
@@ -195,7 +195,7 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
             p_html.parents[1].name: p_html for p_html in [Path(x) for x in reports_scrubbing]}
 
         # Add the report content
-        if input_type == 'fasta':
+        if input_type in ('fasta', 'fasta_vcf'):
             structure.append(
                 ('Human read removal', 'human read removal', [
                     report_scrubbing_by_input_format['fasta']]))
@@ -237,7 +237,7 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
             p_html.parent.name: p_html for p_html in [Path(x) for x in reports_ds]}
 
         # Add the report content
-        if input_type == 'fasta':
+        if input_type in ('fasta', 'fasta_vcf'):
             pass
         elif input_type == 'illumina':
             structure.append(('Read trimming and basic QC', 'trim', [
@@ -268,7 +268,7 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
             p_html.parents[1].name: p_html for p_html in [Path(x) for x in reports_contamination]}
 
         # Add the report content
-        if input_type == 'fasta':
+        if input_type in ('fasta', 'fasta_vcf'):
             structure.append(
                 ('Contamination check', 'contamination', [report_k2_by_input_format['fasta']]))
         elif input_type == 'illumina':

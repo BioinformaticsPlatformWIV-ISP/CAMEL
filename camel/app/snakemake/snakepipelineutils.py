@@ -73,6 +73,9 @@ class SnakePipelineUtils(object):
             section.add_header('Disclaimer', 2)
             section.add_paragraph('If you use this pipeline for your scientific work, please cite:')
             section.add_html_object(HtmlCitation.parse_from_json(key_citation))
+        if input_type == 'fasta':
+            section.add_warning_message(
+                'A genomic assembly (FASTA) was used as input. Be careful when interpreting the results!')
         return section
 
     @staticmethod
