@@ -98,7 +98,6 @@ class ART(Tool):
         :return: None
         """
         logger.info(f"Removing: {input_file}")
-        command = Command(f"rm {input_file}")
-        command.run(Path.cwd())
-        if not command.returncode == 0:
-            raise RuntimeError(f"Cannot remove '{input_file}': {command.stderr}")
+        if not input_file.exists():
+            raise FileNotFoundError(f'Output file: {input_file} does not exist')
+        input_file.unlink()
