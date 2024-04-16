@@ -11,8 +11,8 @@ class TestART(CamelTestSuite):
     Tests the ART tool.
     """
     # Input files
-    test_file_dir = CamelTestSuite.get_test_file_dir('snippy')
-    input_fasta = test_file_dir / 'S32BD03301_contigs_unfilt.fasta'
+    test_file_dir = CamelTestSuite.get_test_file_dir('art')
+    input_fasta = test_file_dir / 'example_contigs.fasta'
 
     def test_art(self) -> None:
         """
