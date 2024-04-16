@@ -1,7 +1,7 @@
 # Overview
-The *Listeria* pipeline performs complete characterization of *Listeria monocytogenes* isolates.
+The *Mycobacterium* pipeline performs complete characterization of *Mycobacterium tuberculosis* complex (MTBC) isolates.
 
-Version: **1.3**
+Version: **1.2**
 
 # Components
 
@@ -12,8 +12,8 @@ The tool is executed with default options.
 
 ## 2. Coverage check
 The workflow starts by checking the coverage of the input FASTQ datasets. 
-Coverage is estimated by dividing the total number of bases by the size of the `NC_003210.1` *L. monocytogenes* 
-EGD-e reference genome. The total number of bases in the FASTQ files is determined using the `size` function of 
+Coverage is estimated by dividing the total number of bases by the size of the `NZ_CP021520.1` *N. meningitidis* 
+11-7 reference genome. The total number of bases in the FASTQ files is determined using the `size` function of 
 `seqtk 1.4`.
 
 Datasets with an estimated coverage >=100x are downsampled to ~100x using the `subsample` function of `seqtk 1.4`.
@@ -74,7 +74,7 @@ the pipeline execution.
 
 | **metric**                             | **warning threshold**  | **fail threshold**   | **description**                                                                                                                                                                                                                 |
 |----------------------------------------|------------------------|----------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Kraken: contaminants                   | 1.00%                  | 5.00%                | Percentage of reads assigned to species other than *L. monocytogenes*                                                                                                                                                           |
+| Kraken: contaminants                   | 1.00%                  | 5.00%                | Percentage of reads assigned to species other than *N. meningitidis*                                                                                                                                                            |
 | Typing loci detected (%)               | 90%                    | 95%                  | Percentage of cgMLST loci detected (or MLST loci when cgMLST is disabled)                                                                                                                                                       |
 | Coverage against assembled contigs     | 20x                    | 10x                  | Coverage of the reads mapped to the assembly (determined by QUAST)                                                                                                                                                              |
 | Reads mapping to the assembled contigs | 95%                    | 90%                  | Percentage of reads mapping back to the assembly (determined by QUAST)                                                                                                                                                          |
@@ -90,23 +90,69 @@ the pipeline execution.
 
 **Note:** FastQC metrics are evaluated separately for the forward and reverse reads.
 
-## 6. Gene detection
+## 6. Variant calling & filtering
 
-Gene detection is performed as described in [Bogaerts *et al.*](https://pubmed.ncbi.nlm.nih.gov/30894839/) using an 
-updated version of blast (`blast 2.14.0`).
-Alternative detection using `kma 1.4.12a` or `srst2 0.2.0` is available by changing the `--detection-method` parameter.
+Reads are mapped against the H37Rv reference genome using `Bowtie2 2.5.1`. Variants are then called using `bcftools mpileup` followed by `bcftools call`
 
-The following databases are available: 
+```
+bcftools mpileup samtools_sort.bam --fasta-ref H37Rv.fasta --output-type z --count-orphans --output out.pileup;
+bcftools call out.pileup --consensus-caller --output variants.vcf.gz --output-type z --variants-only --ploidy 1;
+```
 
-| **name**       | **origin**                                                               |
-|----------------|--------------------------------------------------------------------------|
-| NDARO          | Antimicrobial resistance genes from the NCBI NDARO database              |
-| PlasmidFinder  | Plasmid replicons from the PlasmidFinder tool maintained by DTU          |
-| ResFinder      | Antimicrobial resistance genes from the ResFinder tool maintained by DTU |
-| VFDB core      | Databases from the VirulenceFactor Core database                         | 
-| VirulenceFiner | Virulence genes from the VirulenceFinder tool maintained by DTU          |
+The following variant filters then applied, with threshold values listed in the output report.
 
-## 7. Sequence typing
+- Depth (see command in the output report)
+- Quality (see command in the output report)
+- Mapping quality (see command in the output report)
+- Distance (in-house script to remove SNPs located within 10 bp of another SNP)
+- Z-score (in-house script to filter based on Z-score & Y-multiplier as described by [Kaas et al.](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4128722/))
+
+## 7. Species identification
+
+Species identification consists of several independent assays that provide partially overlapping information on the (sub)species. The pipeline does not provide a combined prediction, but the end user should be able to make an informed assessment of the species based on the output generated.
+
+- 16S rRNA species identification
+- SNP-IT
+- csb / regions of difference classification
+- hsp65 species differentiation
+- 51 SNP
+
+These assays are explained in more detail in the [publication](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8316078/) of the workflow.
+
+## 8. Spoligotyping and lineage determination
+
+Spoligotyping is performed using a local installation of the [SpoTyping](https://github.com/xiaeryu/SpoTyping-v2.0) 2.1 tool on the trimmed reads. 
+Datasets with a coverage >50X are first downsampled to 50X to avoid false positive detection of spacer sequences.
+
+Lineage detection is performed based on the VCF file generated in the variant calling workflow with the database from [TB-profiler](https://github.com/jodyphelan/tbdb).
+The date on which the database was downloaded is included in the output report.
+
+## 9. AMR prediction
+
+AMR prediction is performed using an in-house workflow that queries the detected variants against the WHO catalogue.
+The version of the catalogue is included in the output report.
+The database is completed with a set of mutations provided by the NRC.
+
+### Resistance type
+
+The type of resistance is determined based on the predicted resistances as follows:
+
+The following definitions were used to group resistances:
+
+- First line-resistant is defined as resistant to both isoniazid and rifampicin.
+- Second-line resistant (group A) is defined as resistant to any of the fluoroquinolones.
+- Second-line resistant (group B) is defined as resistant to any of amikacin, capreomycin, kanamycin or streptomycin.
+
+Using these definitions, isolates are classified as:
+
+- Not resistant: no resistance to any of the antibiotics
+- Mono resistant: resistance to a single antibiotic
+- Multi-drug resistant (MDR): first-line resistance
+- Pre-extensive drug resistant (pre-XDR): first-line resistant and second line (group A) or second line (group B) resistance
+- Extensively drug resistant (XDR): first line resistant, second-line (group A), and second-line (group B) resistance
+- Other: a combination of resistances which does not fit with any of the above
+
+## 10. Sequence typing
 
 Sequence typing is performed as described in [Bogaerts *et al.*](https://pubmed.ncbi.nlm.nih.gov/30894839/) with an 
 updated version of blast (`blast 2.14.0`). 
@@ -114,12 +160,7 @@ Alternative detection using `kma 1.4.12a` or `srst2 0.2.0` is available by chang
 
 The following typing schemes are available:
 
-| **name**             | **origin**                |
-|----------------------|---------------------------|
-| rMLST                | BIGSdb (Institut Pasteur) |
-| Classic MLST         | BIGSdb (Institut Pasteur) |
-| cgMLST               | BIGSdb (Institut Pasteur) |
-| PCR-serogroup        | BIGSdb (Institut Pasteur) |
-| Species confirmation | BIGSdb (Institut Pasteur) |
-| AMR typing           | BIGSdb (Institut Pasteur) |
-| Virulence typing     | BIGSdb (Institut Pasteur) |
+| **name**                 | **origin** |
+|--------------------------|------------|
+| Classic MLST             | PubMLST    |
+| cgMLST                   | PubMLST    |

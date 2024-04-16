@@ -5,7 +5,12 @@ Version: **1.0**
 
 # Components
 
-## 1. Coverage check
+## 1. Human read removal (optional) 
+
+If enabled, human reads are removed using the NCBI Human Read Removal Tool (HRRT) 2.2.1.
+The tool is executed with default options.
+
+## 2. Coverage check
 The workflow starts by checking the coverage of the input FASTQ datasets. 
 Coverage is estimated by dividing the total number of bases by the size of the `NC_016845.1` *K. pneumoniae* 
 HS11286 reference genome. The total number of bases in the FASTQ files is determined using the `size` function of 
@@ -13,7 +18,7 @@ HS11286 reference genome. The total number of bases in the FASTQ files is determ
 
 Datasets with an estimated coverage >=100x are downsampled to ~100x using the `subsample` function of `seqtk 1.4`.
 
-## 2. Read trimming
+## 3. Read trimming
 
 Afterwards, reads are trimmed using `trimmomatic 0.39` with the following options:
 ```
@@ -27,7 +32,7 @@ MINLEN:40
 
 Quality reports are generated before and after trimming using `fastqc 0.11.7`.
 
-## 3. Assembly
+## 4. Assembly
 
 Processed reads are assembled using `SPAdes 3.15.5` with the following options:
 ```
@@ -50,7 +55,7 @@ The completeness of the assembly is checked using `BUSCO 5.5.0` with the followi
 --lineage_dataset bacteria_odb10
 ```
 
-## 4. Advanced QC
+## 5. Advanced QC
 
 ### Kraken 2
 
@@ -85,7 +90,7 @@ the pipeline execution.
 
 **Note:** FastQC metrics are evaluated separately for the forward and reverse reads.
 
-## 5. Gene detection
+## 6. Gene detection
 
 Gene detection is performed as described in [Bogaerts *et al.*](https://pubmed.ncbi.nlm.nih.gov/30894839/) using an 
 updated version of blast (`blast 2.14.0`).
@@ -98,7 +103,7 @@ The following databases are available:
 | ResFinder | Antimicrobial resistance genes from the ResFinder tool maintained by DTU |
 | NDARO     | Antimicrobial resistance genes from the NCBI NDARO database              |
 
-## 6. Sequence typing
+## 7. Sequence typing
 
 Sequence typing is performed as described in [Bogaerts *et al.*](https://pubmed.ncbi.nlm.nih.gov/30894839/) with an 
 updated version of blast (`blast 2.14.0`). 
@@ -113,7 +118,7 @@ The following typing schemes are available:
 | cgMLST       | PubMLST    |
 | scgMLST      | PubMLST    |
 
-## 7. Biocide and metal resistance
+## 8. Biocide and metal resistance
 
 `Prodigal 2.6.3` is first used with default options to extract CDS from the assembled contigs. Then `blastp 2.14.0` is 
 used to align the translated CDS against the protein sequences from the 'Experimentally confirmed genes' of the BacMet 
@@ -124,12 +129,12 @@ database (not automatically updated). The following filtering is then performed:
 | Min % identity (AA)  | 75.00%        |
 | Min % covered (AA)   | 90.00%        |
 
-## 8. Kleborate
+## 9. Kleborate
 
 `Kleborate 2.3.2` is used with default options on the filtered assembly. A selection of the main output is shown in the
 output report. The complete output file is available in the pipeline output directory.
 
-## 9. Genomic context
+## 10. Genomic context
 
 The `MOB-recon` function of `MOB-suite 3.1.4` is used to reconstruct putative plasmids. The contigs assigned to putative
 plasmids are cross-checked against the gene detection results for the virulence genes, AMR genes and BacMet genes.
