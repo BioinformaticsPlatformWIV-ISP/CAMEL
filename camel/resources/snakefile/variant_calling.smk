@@ -32,7 +32,7 @@ rule variant_calling_fastq_from_fasta:
     input:
         FASTA = Path(config['working_dir']) / assembly.get_fasta_raw(config)
     output:
-        FASTQ = Path(config['working_dir']) / 'variant_calling' / 'ART' / 'fastq.io',
+        FASTQ_PE = Path(config['working_dir']) / 'variant_calling' / 'ART' / 'fastq.io',
         INFORMS = Path(config['working_dir']) / 'variant_calling' / 'ART' / 'informs.io'
     params:
         running_dir = Path(config['working_dir']) / 'variant_calling' / 'ART'
@@ -50,7 +50,7 @@ rule variant_calling_map_reads:
     Maps the trimmed reads to the reference sequence.
     """
     input:
-        IO = Path(config['working_dir']) / 'fq_dict.io' if config['input_type'] not in ['fasta', 'fasta_vcf'] else rules.variant_calling_fastq_from_fasta.output.FASTQ if 'fasta' in config['input_type'] else [],
+        IO = Path(config['working_dir']) / 'fq_dict.io' if config['input_type'] not in ['fasta', 'fasta_vcf'] else rules.variant_calling_fastq_from_fasta.output.FASTQ_PE if 'fasta' in config['input_type'] else [],
         INDEX_GENOME_PREFIX = rules.variant_calling_prep_reference.output.INDEX_GENOME_PREFIX
     output:
         BAM = Path(config['working_dir']) / 'variant_calling' / 'read_mapping' / 'bam.io',
