@@ -1,7 +1,6 @@
 from pathlib import Path
 
 from camel.app.camel import Camel
-from camel.app.command.command import Command
 from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
