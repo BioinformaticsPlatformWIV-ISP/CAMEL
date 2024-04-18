@@ -45,8 +45,8 @@ quality_checks:
 
 quast:
   ref:
-    fasta: '/db/refgenomes/Yersinia_enterocolitica/NC_GCA_02575835.1.fasta'
-    gff3: '/db/refgenomes/Yersinia_enterocolitica/NC_GCA_02575835.1.gff3'
+    fasta: '/db/refgenomes/Yersinia_enterocolitica/GCF_025758635.1.fasta'
+    gff3: '/db/refgenomes/Yersinia_enterocolitica/GCF_025758635.1.gff3'
 
 srst2:
   max_unaligned_overlap: 141
