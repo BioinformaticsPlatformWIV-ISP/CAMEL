@@ -29,13 +29,10 @@ class SistrReporter(Tool):
         Executes this tool.
         :return: None
         """
-        self._section = HtmlReportSection(SistrReporter.TITLE,
-                                          subtitle=self._input_informs['serotyping_sistr']['_name'])
-
+        self._section = HtmlReportSection(
+            SistrReporter.TITLE, subtitle=self._input_informs['serotyping_sistr']['_name'])
         self.__add_section_sistr()
-
         self.__add_file_output()
-
         self._tool_outputs['VAL_HTML'] = [ToolIOValue(self._section)]
 
     def __add_section_sistr(self) -> None:
@@ -93,17 +90,15 @@ class SistrReporter(Tool):
             if str(best_hit['is_missing']) == 'False':
                 any_best_hits_found = True
                 color = self._get_hit_color(best_hit)
-
-                row = [HtmlTableCell(x, color) for x in
-                       [locus_full[index], format(best_hit['top_result']['pident'], '.2f'),
-                        '/'.join([str(best_hit['top_result']['length']),
-                                  str(best_hit['top_result']['qlen'])]),
-                        best_hit['top_result']['stitle'],
-                        '...'.join([str(best_hit['top_result']['sstart']),
-                                    str(best_hit['top_result']['send'])]),
-                        best_hit[locus_short[0]]
-                        ]
-                       ]
+                row = [
+                    locus_full[index], format(best_hit['top_result']['pident'], '.2f'),
+                    '/'.join([str(best_hit['top_result']['length']),
+                              str(best_hit['top_result']['qlen'])]),
+                    best_hit['top_result']['stitle'],
+                    '...'.join([str(best_hit['top_result']['sstart']), str(best_hit['top_result']['send'])]),
+                    best_hit[locus_short[0]]
+                ]
+                row = [HtmlTableCell(x, color) for x in row]
                 table_data.append(row)
             else:
                 if antigen == 'o':
