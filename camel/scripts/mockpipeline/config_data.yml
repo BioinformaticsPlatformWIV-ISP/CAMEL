@@ -1,0 +1,41 @@
+####################
+# Pipeline options #
+####################
+citations:
+  main: null
+  other:
+    - Bolger_2014-trimmomatic
+    - Bankevich_2012-spades
+    - Gurevich_2013-quast
+    - Wood_2019-kraken2
+
+downsampling:
+  coverage_max: {coverage_max}
+  expected_genome_size: 10_000
+
+contamination_check:
+  db: /db/kraken2/latest/abfhpv/
+  expected_species: Escherichia coli
+
+confindr:
+  db: /db/confindr/0.8.1
+
+assembly:
+  flye:
+    min_overlap: 1000
+
+quality_checks:
+  typing_scheme: null
+  expected_gc_content: 50.5
+
+quast:
+  ref:
+    fasta: /db/refgenomes/Escherichia_coli/NC_002695.2.fasta
+    gff3: /db/refgenomes/Escherichia_coli/NC_002695.2.gff
+
+gene_detection:
+  ncbi_amr:
+    path: /db/gene_detection/NCBI_AMR/
+    metadata:
+      name: Antibiotic(s)
+      key: subclass

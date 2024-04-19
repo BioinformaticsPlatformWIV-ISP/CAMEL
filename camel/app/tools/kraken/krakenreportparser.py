@@ -1,6 +1,5 @@
-import logging
-
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -22,7 +21,7 @@ class KrakenReportParser(Tool):
         :return: None
         """
         if self._parameters['level_of_depth'].value not in ['S', 'G']:
-            logging.error('Please choose either "G" or "S" for parameter level_of_depth')
+            logger.error('Please choose either "G" or "S" for parameter level_of_depth')
         self._informs['contaminants_warn'] = []
         self._informs['contaminants_fail'] = []
         with open(self._tool_inputs['TSV'][0].path) as handle:
@@ -42,7 +41,7 @@ class KrakenReportParser(Tool):
                     self._informs['contaminants_fail'].append((species_name, percentage,))
 
         if 'expected' not in self._informs:
-            logging.warning("No reads matching the expected species found!")
+            logger.warning("No reads matching the expected species found!")
             self._informs['expected'] = (self._parameters['expected_species'].value, 0)
 
         self._informs['contaminants_warn'].sort(key=lambda x: -x[1])

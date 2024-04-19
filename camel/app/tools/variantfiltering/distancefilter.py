@@ -1,4 +1,3 @@
-import logging
 from pathlib import Path
 from typing import List, Tuple
 
@@ -11,6 +10,7 @@ from vcf.parser import _Filter as Filter
 
 from camel.app.camel import Camel
 from camel.app.command.command import Command
+from camel.app.loggers import logger
 from camel.app.tools.variantfiltering.basefilter import BaseFilter
 
 
@@ -74,7 +74,7 @@ class DistanceFilter(BaseFilter):
             seed = self._parameters['seed'].value
         else:
             seed = random.random()
-        logging.info("Seed: {}".format(seed))
+        logger.info("Seed: {}".format(seed))
         self._informs['seed'] = seed
         random.seed(seed)
 

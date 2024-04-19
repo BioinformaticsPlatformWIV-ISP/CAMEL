@@ -1,4 +1,3 @@
-import logging
 from pathlib import Path
 
 import pandas as pd
@@ -7,6 +6,7 @@ from camel.app.camel import Camel
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliovalue import ToolIOValue
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -34,7 +34,7 @@ class NextcladeReporter(Tool):
         if 'nextclade' not in self._input_informs:
             raise InvalidInputSpecificationError('Nextclade informs are required')
         if len(self._input_informs['nextclade']['results']) != 1:
-            logging.warning(f'{self.name} only supports a single nextclade result')
+            logger.warning(f'{self.name} only supports a single nextclade result')
         super()._check_input()
 
     def _execute_tool(self) -> None:

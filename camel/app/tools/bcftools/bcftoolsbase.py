@@ -1,10 +1,9 @@
 import abc
-import logging
 from pathlib import Path
 
-from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.error.invalidparametererror import InvalidParameterError
 from camel.app.error.toolexecutionerror import ToolExecutionError
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -37,7 +36,7 @@ class BcftoolsBase(Tool, metaclass=abc.ABCMeta):
         """
         if 'output_filename' in self._parameters:
             return self.folder / str(self._parameters['output_filename'].value)
-        logging.info("Output filename not set, reverting to default.")
+        logger.info("Output filename not set, reverting to default.")
         return self.folder / f"bcftools_out.{self._get_output_key().lower().replace('_', '.')}"
 
     def _check_command_output(self) -> None:

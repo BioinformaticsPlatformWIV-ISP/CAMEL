@@ -20,6 +20,7 @@ from camel.app.tools.picard.samtofastq import SamToFastq
 from camel.app.tools.picard.setnmmdanduqtags import SetNmMdAndUqTags
 from camel.app.tools.picard.sortsam import SortSam
 from camel.app.tools.picard.validatesamfile import ValidateSamFile
+from camel.tests import minOSVersion
 
 
 class TestPicard(CamelTestSuite):
@@ -42,7 +43,6 @@ class TestPicard(CamelTestSuite):
     FILE_VCF_human = ToolIOFile(test_file_dir / 'NA12877_chr22.g.vcf.gz')
     FILE_BAM_human = ToolIOFile(test_file_dir / 'readgroup_updated.bam')
     FILE_REF_human = ToolIOFile(test_file_dir / 'Homo_sapiens_assembly38_chr22.fasta')
-
 
     def test_picard_addorreplacereadgroups(self) -> None:
         """
@@ -68,6 +68,7 @@ class TestPicard(CamelTestSuite):
         picard_calculatereadgroupchecksum.run(self.running_dir)
         self.verify_output_files(picard_calculatereadgroupchecksum, 'TXT_checksum')
 
+    @minOSVersion('jammy')
     def test_picard_collectmultiplemetrics(self) -> None:
         """
         Test Picard CollectMultipleMetrics
@@ -79,25 +80,27 @@ class TestPicard(CamelTestSuite):
             'FASTA_REF': [TestPicard.FILE_REF_human],
         })
         picard_collectmultiplemetrics.update_parameters(
-            assume_sorted = 'true',
-            reset_metrics = 'null',
-            metrics_CollectAlignmentSummaryMetrics = 'CollectAlignmentSummaryMetrics',
-            metrics_CollectGcBiasMetrics = 'CollectGcBiasMetrics',
-            metrics_CollectInsertSizeMetrics = 'CollectInsertSizeMetrics',
-            metrics_QualityScoreDistribution  = 'QualityScoreDistribution ',
-            metrics_MeanQualityByCycle = 'MeanQualityByCycle',
-            metrics_CollectBaseDistributionByCycle = 'CollectBaseDistributionByCycle',
-            metrics_CollectSequencingArtifactMetrics = 'CollectSequencingArtifactMetrics',
-            metrics_CollectQualityYieldMetrics = 'CollectQualityYieldMetrics'
+            assume_sorted='true',
+            reset_metrics='null',
+            metrics_CollectAlignmentSummaryMetrics='CollectAlignmentSummaryMetrics',
+            metrics_CollectGcBiasMetrics='CollectGcBiasMetrics',
+            metrics_CollectInsertSizeMetrics='CollectInsertSizeMetrics',
+            metrics_QualityScoreDistribution='QualityScoreDistribution ',
+            metrics_MeanQualityByCycle='MeanQualityByCycle',
+            metrics_CollectBaseDistributionByCycle='CollectBaseDistributionByCycle',
+            metrics_CollectSequencingArtifactMetrics='CollectSequencingArtifactMetrics',
+            metrics_CollectQualityYieldMetrics='CollectQualityYieldMetrics'
         )
         picard_collectmultiplemetrics.run(self.running_dir)
 
-        expected_output = ['TXT_AlignmentSummary', 'TXT_GcBias', 'TXT_GcBiasSummary', 'TXT_GcBiasFigure', 'TXT_InsertSize',
-                           'TXT_InsertSizeFigure', 'TXT_QualityDistribution', 'TXT_QualityDistributionFigure', 'TXT_QualityByCycle',
-                           'TXT_QualityByCycleFigure', 'TXT_BaseDistributionByCycle', 'TXT_BaseDistributionByCycleFigure',
-                           'TXT_SequencingArtefactDetail', 'TXT_SequencingArtefactSummary', 'TXT_SequencingArtefactErrorSummary',
-                           'TXT_SequencingArtefactPreAdapterDetail', 'TXT_SequencingArtefactPreAdapterSummary', 'TXT_QualityYield']
-
+        expected_output = ['TXT_AlignmentSummary', 'TXT_GcBias', 'TXT_GcBiasSummary', 'TXT_GcBiasFigure',
+                           'TXT_InsertSize', 'TXT_InsertSizeFigure', 'TXT_QualityDistribution',
+                           'TXT_QualityDistributionFigure', 'TXT_QualityByCycle',
+                           'TXT_QualityByCycleFigure', 'TXT_BaseDistributionByCycle',
+                           'TXT_BaseDistributionByCycleFigure', 'TXT_SequencingArtefactDetail',
+                           'TXT_SequencingArtefactSummary', 'TXT_SequencingArtefactErrorSummary',
+                           'TXT_SequencingArtefactPreAdapterDetail', 'TXT_SequencingArtefactPreAdapterSummary',
+                           'TXT_QualityYield']
 
         for expected_file in expected_output:
             self.verify_output_files(picard_collectmultiplemetrics, expected_file)
@@ -124,7 +127,7 @@ class TestPicard(CamelTestSuite):
             'BAM': [TestPicard.FILE_BAM],
             'FASTA_REF': [TestPicard.FILE_FASTA_REF]
         })
-        picard_collectrawwgsmetrics.update_parameters(sample_size = 10)
+        picard_collectrawwgsmetrics.update_parameters(sample_size=10)
         picard_collectrawwgsmetrics.run(self.running_dir)
         self.verify_output_files(picard_collectrawwgsmetrics, 'TXT_metrics')
 
@@ -138,7 +141,7 @@ class TestPicard(CamelTestSuite):
             'BAM': [TestPicard.FILE_BAM],
             'FASTA_REF': [TestPicard.FILE_FASTA_REF]
         })
-        picard_collectwgsmetrics.update_parameters(sample_size = 10)
+        picard_collectwgsmetrics.update_parameters(sample_size=10)
         picard_collectwgsmetrics.run(self.running_dir)
         self.verify_output_files(picard_collectwgsmetrics, 'TXT_metrics')
 
@@ -230,7 +233,7 @@ class TestPicard(CamelTestSuite):
             'FASTA_REF': [TestPicard.FILE_FASTA_REF]
         })
         picard_mergebamalignment.update_parameters(
-            attributes_to_remove_multi = "NM,MD"
+            attributes_to_remove_multi="NM,MD"
         )
         picard_mergebamalignment.run(self.running_dir)
         self.verify_output_files(picard_mergebamalignment, 'BAM')
@@ -297,6 +300,7 @@ class TestPicard(CamelTestSuite):
         })
         picard_validatesamfile.run(self.running_dir)
         self.verify_output_files(picard_validatesamfile, 'TXT_report')
+
 
 if __name__ == '__main__':
     unittest.main()

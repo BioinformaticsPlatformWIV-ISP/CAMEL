@@ -1,4 +1,3 @@
-import logging
 import random
 from pathlib import Path
 from typing import Union, Dict
@@ -12,6 +11,7 @@ from camel.app.components.seqid.seqidparser import SeqIDParser
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.invalidparametererror import InvalidParameterError
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -119,7 +119,7 @@ class GenomeTyping(Tool):
             self._random_seed = self._parameters['random_seed'].value
         else:
             self._random_seed = random.randint(1, 10000000)
-            logging.info(f'Random seed for SegmentTyping not provided, setting seed to: {self._random_seed}')
+            logger.info(f'Random seed for SegmentTyping not provided, setting seed to: {self._random_seed}')
 
     def _quality_check(self) -> None:
         """
@@ -173,7 +173,6 @@ class GenomeTyping(Tool):
         Sets the tool outputs
         :return: None
         """
-        print(self._informs['segment_informs'])
         self._tool_outputs['FASTA'] = [ToolIOFile(self._obtain_reference_genome())]
 
     def _extract_influenza_a_subtype(self) -> None:
@@ -205,7 +204,7 @@ class GenomeTyping(Tool):
         for segment in ['HA', 'NA']:
             if segment in self._informs['segment_coverage']['segment_covered']:
                 subtype = SeqIDParser(self._informs['segment_informs'][segment]['refseqid'], self._parameters['seqIDParser_type'].value).subtype
-                logging.debug(f"Refseqid: {self._informs['segment_informs'][segment]['refseqid']} -- parser_type: {self._parameters['seqIDParser_type'].value}")
+                logger.debug(f"Refseqid: {self._informs['segment_informs'][segment]['refseqid']} -- parser_type: {self._parameters['seqIDParser_type'].value}")
                 if segment == 'HA':
                     parts['HA'] = subtype[:2]
                 elif segment == 'NA':

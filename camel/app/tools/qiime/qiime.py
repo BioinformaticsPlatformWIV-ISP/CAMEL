@@ -1,10 +1,9 @@
-import logging
-
 import abc
 import os
 
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -106,7 +105,7 @@ class Qiime(Tool):
         log_files = [ToolIOFile(os.path.join(self._folder, f)) for f in os.listdir(self._folder) if f.startswith('log_')]
         if len(log_files) > 0:
             self._tool_outputs['LOG'] = log_files
-            logging.debug('Added log file to outputs: {}'.format(self._tool_outputs))
+            logger.debug('Added log file to outputs: {}'.format(self._tool_outputs))
 
     def _check_command_output(self):
         """

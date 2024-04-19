@@ -1,4 +1,4 @@
-dependencies: [bcftools/1.9]
+dependencies: [bcftools/1.17]
 parameters:
   min_depth: {default: true, mandatory: false, option: null, value: '10'}
   min_forward_depth: {default: false, mandatory: false, option: null, value: '1'}

@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import argparse
-import logging
 import shutil
 from pathlib import Path
 from typing import Optional, Sequence
@@ -10,6 +9,7 @@ import yaml
 from camel.app.camel import Camel
 from camel.app.error.snakemakeexecutionerror import SnakemakeExecutionError
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.pipeline.pipeline import Pipeline
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
@@ -66,13 +66,13 @@ class MainBroadWGSPipeline(object):
 
         try:
             if self._args.slurm:
-                logging.info("Running pipeline with Slurm: resources and threads input parameters ignored.")
+                logger.info("Running pipeline with Slurm: resources and threads input parameters ignored.")
                 threads = 1
                 resources = None
                 slurm_args = {'cluster': self._args.slurm}
                 if self._args.slurm == f'python3 {SLURM_SUBMIT} {{dependencies}}':
                    slurm_args.update(config_data["slurm"]["slurm_args"])
-                logging.debug(slurm_args)
+                logger.debug(slurm_args)
                 SnakePipelineUtils.run_snakemake(self._snakefile, config_file, [], self._working_dir, threads,
                                                  resources, slurm_args)
             else:
@@ -82,7 +82,7 @@ class MainBroadWGSPipeline(object):
             log_file = self._working_dir / 'camel.log'
             if log_file.exists():
                 shutil.copyfile(str(log_file), str(Path(self._final_output_dir) / 'camel.log'))
-            logging.info("Pipeline finished successfully")
+            logger.info("Pipeline finished successfully")
         except SnakemakeExecutionError as err:
             if self._pipeline.keep_error_log:
                 self._pipeline.log_error_to_file(err)
@@ -117,7 +117,7 @@ class MainBroadWGSPipeline(object):
         for path_orig in links:
             link_name = path_orig.name
             path_new = dir_links / link_name
-            logging.debug(f"Symlinking input file: {link_name}")
+            logger.debug(f"Symlinking input file: {link_name}")
             if path_new.is_symlink():
                 path_new.unlink()
             path_new.symlink_to(path_orig)
@@ -211,6 +211,7 @@ class MainBroadWGSPipeline(object):
         parser.set_defaults(debug = False)
 
         return parser.parse_args(args)
+
 
 if __name__ == '__main__':
     Camel.get_instance()

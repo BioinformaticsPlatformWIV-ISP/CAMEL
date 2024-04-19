@@ -1,9 +1,9 @@
-import logging
 from pathlib import Path
 
 from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.tools.bcftools.bcftoolsbase import BcftoolsBase
 
 
@@ -52,7 +52,7 @@ class BcftoolsIndex(BcftoolsBase):
         """
         path_link = self._folder / self._tool_inputs[key][0].path.name
         if not path_link.is_file():
-            logging.info(f'Creating symlink for input file: {path_link}')
+            logger.info(f'Creating symlink for input file: {path_link}')
             path_link.symlink_to(self._tool_inputs[key][0].path)
         return path_link
 

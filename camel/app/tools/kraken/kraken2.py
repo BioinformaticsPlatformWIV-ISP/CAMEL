@@ -25,7 +25,7 @@ class Kraken2(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super().__init__('kraken2', '2.0.7', camel)
+        super().__init__('kraken2', '2.1.1', camel)
         self._input_key = None
 
     def _execute_tool(self) -> None:

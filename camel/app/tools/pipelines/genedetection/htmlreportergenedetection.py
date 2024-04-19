@@ -1,4 +1,3 @@
-import logging
 from pathlib import Path
 from typing import List, Dict
 
@@ -8,6 +7,7 @@ from camel.app.components.genedetection.genedetectionhitbase import GeneDetectio
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliovalue import ToolIOValue
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -44,6 +44,13 @@ class HtmlReporterGeneDetection(Tool):
             self._report_section.add_alert(
                 f"Detection for this DB is always done using '{self._parameters['forced_detection_method'].value}', "
                 f"regardless of pipeline setting.", 'info')
+
+        # Add a custom message (if specified in the parameters)
+        if 'message' in self._parameters:
+            self._report_section.add_alert(
+                self._parameters['message'].value, self._parameters['message_category'].value)
+
+        # Create output
         self._tool_outputs['VAL_HTML'] = [ToolIOValue(self._report_section)]
 
     def _check_input(self) -> None:
@@ -54,7 +61,7 @@ class HtmlReporterGeneDetection(Tool):
         if 'db_info' not in self._input_informs:
             raise InvalidInputSpecificationError("No database info found")
         if 'VAL_Hits' not in self._tool_inputs:
-            logging.warning("No blast hits found")
+            logger.warning("No blast hits found")
         if ('VAL_Hits' in self._tool_inputs) and (len(self._tool_inputs['VAL_Hits']) > 0) and \
                 ('TSV' not in self._tool_inputs):
             raise InvalidInputSpecificationError("TSV input is required when hits were detected.")
@@ -97,5 +104,8 @@ class HtmlReporterGeneDetection(Tool):
         Adds the database information to the report.
         :return: None
         """
-        self._report_section.add_paragraph('Last updated: {}'.format(self._input_informs['db_info'].get(
-            'last_updated', '{LAST_UPDATED}')))
+        self._report_section.add_header('Database info', level=4)
+        self._report_section.add_table([
+            ('Last database update', self._input_informs['db_info']['last_updated']),
+            ('Last database change', self._input_informs['db_info'].get('last_change', 'n/a'))
+        ], ['Field', 'Value'], [('class', 'data')])

@@ -1,11 +1,13 @@
-import logging
+import json
 from dataclasses import dataclass
-from typing import Any, Dict, List
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 from camel.app.camel import Camel
 from camel.app.components.blast.blastformat7parser import BlastFormat7Parser
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliovalue import ToolIOValue
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -81,7 +83,7 @@ class SpaTyping(Tool):
         self.__set_output(spa_type_hits, profiles)
 
     @staticmethod
-    def __parse_spa_type_profiles(profiles_tsv: str) -> Dict[str, List[int]]:
+    def __parse_spa_type_profiles(profiles_tsv: Path) -> Dict[str, List[int]]:
         """
         Parses the spa types from the tabular profiles file.
         :return: Dictionary of spa types.
@@ -95,7 +97,7 @@ class SpaTyping(Tool):
                 profiles[profile] = [int(x) for x in repeats.split('-')]
         return profiles
 
-    def __parse_blast_output(self, blast_output_path: str) -> List[Dict]:
+    def __parse_blast_output(self, blast_output_path: Path) -> List[Dict]:
         """
         Parses the tabular blast output, returns a list of hits sorted by percent covered and percent identity.
         Hits that cover less than 90% or have less than 90% identity are filtered out.
@@ -123,7 +125,7 @@ class SpaTyping(Tool):
             percent_covered = self.__calculate_percent_covered(h)
             hits.append(SpaTypingHit(h['sseqid'], profiles[h['sseqid']], h['slen'], h['pident'], percent_covered, h))
         hits.sort(reverse=True, key=lambda x: (x.percent_covered, x.percent_identity))
-        logging.debug(f"{len(hits)} hits detected")
+        logger.debug(f"{len(hits)} hits detected")
         return hits
 
     def __set_output(self, spa_type_hits: List[SpaTypingHit], profiles: Dict[str, List[int]]) -> None:
@@ -134,7 +136,7 @@ class SpaTyping(Tool):
         :return: None
         """
         perfect_hits = [h for h in spa_type_hits if h.is_perfect()]
-        logging.debug(f"{len(perfect_hits)} perfect hits found")
+        logger.debug(f"{len(perfect_hits)} perfect hits found")
         if len(perfect_hits) == 1:
             self._informs['spa_type'] = perfect_hits[0].spa_type
             self._informs['genomic_coordinates'] = perfect_hits[0].genomic_coordinates
@@ -145,6 +147,7 @@ class SpaTyping(Tool):
         else:
             self._informs['spa_type'] = 'NA'
         self._informs['spa_type_repeats'] = profiles.get(self._informs['spa_type'])
+        self._informs['db_info'] = SpaTyping.__get_db_info(self._tool_inputs['CSV_profiles'][0].path.parent)
         self._tool_outputs['VAL_hits'] = [ToolIOValue(h) for h in spa_type_hits]
 
     @staticmethod
@@ -155,3 +158,17 @@ class SpaTyping(Tool):
         :return: Percentage covered
         """
         return min(100 * blast_data['length'] / blast_data['slen'], 100.0)
+
+    @staticmethod
+    def __get_db_info(dir_db: Path) -> Optional[Dict]:
+        """
+        Returns the date of the last database update.
+        :param dir_db: Database directory
+        :return: Database information
+        """
+        path_json = dir_db / 'db_update_info.json'
+        if not path_json.exists():
+            logger.info(f'No database update file found: {path_json}')
+            return
+        with path_json.open() as handle:
+            return json.load(handle)

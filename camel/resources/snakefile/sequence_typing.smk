@@ -170,49 +170,66 @@ rule typing_export_hits_tabular:
     output:
         TSV = Path(config['working_dir']) / sequence_typing.OUTPUT_TYPING_TSV
     params:
-        working_dir = lambda wildcards: Path(config['working_dir']) / 'typing' / wildcards.scheme / wildcards.locus_type / 'tabular',
+        dir_ = lambda wildcards: Path(config['working_dir']) / 'typing' / wildcards.scheme / wildcards.locus_type / 'tabular',
         sample_name = FileSystemHelper.make_valid(config['sample_name']),
         scheme = lambda wildcards: FileSystemHelper.make_valid(wildcards.scheme),
         locus_type = lambda wildcards: wildcards.locus_type
     run:
         from camel.app.io.tooliofile import ToolIOFile
-        hits = SnakemakeUtils.load_object(Path(input.hits))
-        output_file = params.working_dir / f'typing-{params.scheme}-{params.locus_type}-{params.sample_name}.tsv'
+        import pandas as pd
+
+        hits = [h.value for h in SnakemakeUtils.load_object(Path(input.hits))]
+
+        # No hits detected -> no TSV file is generated
         if len(hits) == 0:
             SnakemakeUtils.dump_object([], Path(output.TSV))
-        else:
-            with output_file.open('w') as handle_out:
-                handle_out.write('\t'.join(hits[0].value.table_column_names()))
-                handle_out.write('\n')
-                for h in hits:
-                    handle_out.write('\t'.join(h.value.to_table_row()))
-                    handle_out.write('\n')
-            SnakemakeUtils.dump_object([ToolIOFile(output_file)], Path(output.TSV))
+            return
+
+        # Export TSV file
+        path_out = Path(str(params.dir_), f'typing-{params.scheme}-{params.locus_type}-{params.sample_name}.tsv')
+        data_hits = pd.DataFrame(data=[h.to_table_row() for h in hits], columns=hits[0].table_column_names())
+        data_hits.to_csv(path_out, sep='\t', index=False)
+        SnakemakeUtils.dump_object([ToolIOFile(path_out)], Path(output.TSV))
+
+        # Export hashed TSV file if there are any novel alleles
+        if not any([h.is_new_allele() for h in hits]):
+            return
+        path_out_hash = Path(str(params.dir_), f'typing-{params.scheme}-{params.locus_type}-{params.sample_name}-hashes.tsv')
+        data_hits = pd.DataFrame(
+            data=[h.to_table_row(hash_allele_ids=True) for h in hits], columns=hits[0].table_column_names())
+        data_hits.to_csv(path_out_hash, sep='\t', index=False)
 
 rule typing_detect_sequence_type:
     """
     Detects the sequence type based on the detected alleles.
     """
     input:
-         hits_nucl = rules.typing_get_hits.output.HITS_NUCL,
-         hits_pept = rules.typing_get_hits.output.HITS_PEPT,
-         TSV = rules.typing_pickle_profiles.output.TSV
+        hits_nucl = rules.typing_get_hits.output.HITS_NUCL,
+        hits_pept = rules.typing_get_hits.output.HITS_PEPT,
+        TSV = rules.typing_pickle_profiles.output.TSV
     output:
-        INFORMS = Path(config['working_dir']) / 'typing' / '{scheme}' / 'informs-st.io'
+        TSV = Path(config['working_dir']) / 'typing' / '{scheme}' / 'detect_st' / 'tsv.io',
+        INFORMS = Path(config['working_dir']) / 'typing' / '{scheme}' / 'detect_st' / 'informs-st.io'
     params:
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'typing' / wildcards.scheme
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'typing' / wildcards.scheme / 'detect_st',
+        write_all_matches = lambda wildcards: config['sequence_typing'][wildcards.scheme].get('write_all_matches', False)
     run:
         from camel.app.tools.pipelines.sequence_typing.sequencetypedetector import SequenceTypeDetector
         data_profiles = SnakemakeUtils.load_object(Path(input.TSV))
         if len(data_profiles) == 0:
             SnakemakeUtils.dump_object([], Path(output.INFORMS))
+            SnakemakeUtils.dump_object([], Path(output.TSV))
         else:
             sequence_type_detector = SequenceTypeDetector(Camel.get_instance())
             SnakemakeUtils.add_pickle_inputs(sequence_type_detector, input)
             step = Step(str(rule), sequence_type_detector, Camel.get_instance(), Path(str(params.running_dir)), wildcards)
             sequence_type_detector.update_parameters(allele_wildcards='N', allele_absent_symbol='0')
+            if params.write_all_matches:
+                 sequence_type_detector.update_parameters(write_tsv='True', output_filename='profile_matches.tsv')
             step.run_step()
-            SnakemakeUtils.dump_tool_outputs(sequence_type_detector, output)
+            SnakemakeUtils.dump_object(sequence_type_detector.informs, Path(output.INFORMS))
+            SnakemakeUtils.dump_object(
+                sequence_type_detector.tool_outputs['TSV'] if params.write_all_matches else [], Path(output.TSV))
 
 rule typing_get_cgmlst_stats:
     """
@@ -278,7 +295,8 @@ rule typing_create_report:
     params:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'typing' / wildcards.scheme,
         sample_name = config['sample_name'],
-        detection_method = lambda wildcards: SequenceTypingUtils.get_detection_method(config, wildcards.scheme)
+        detection_method = lambda wildcards: SequenceTypingUtils.get_detection_method(config, wildcards.scheme),
+        config_data = lambda wildcards: config['sequence_typing'][wildcards.scheme]
     run:
         from camel.app.io.tooliovalue import ToolIOValue
         from camel.app.tools.pipelines.sequence_typing.htmlreportertyping import HtmlReporterTyping
@@ -294,6 +312,12 @@ rule typing_create_report:
         reporter.add_input_files({'VAL_SAMPLE': [ToolIOValue(params.sample_name)]})
         if params.detection_method != config['detection_method']:
             reporter.update_parameters(forced_detection_method=str(params.detection_method))
+
+        # Optional message
+        if 'message' in params.config_data:
+            reporter.update_parameters(message=params.config_data['message']['content'])
+        if ('message' in params.config_data) and ('category' in params.config_data['message']):
+            reporter.update_parameters(message_category=params.config_data['message']['category'])
 
         # Run the reporter
         step = Step(str(rule), reporter, Camel.get_instance(), Path(str(params.running_dir)), wildcards)

@@ -61,7 +61,9 @@ rule gene_detection_blast_hit_filtering:
     params:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'gene_detection' / wildcards.db / 'hit_filtering',
         min_percent_identity = lambda wildcards: config['gene_detection'][wildcards.db].get('params', {}).get('blastn', {}).get('min_percent_identity', 90),
-        min_coverage = lambda wildcards: config['gene_detection'][wildcards.db].get('params', {}).get('blastn', {}).get('min_coverage', 60)
+        min_coverage = lambda wildcards: config['gene_detection'][wildcards.db].get('params', {}).get('blastn', {}).get('min_coverage', 60),
+        filtering_method = lambda wildcards: config['gene_detection'][wildcards.db].get('params',{}).get('blastn',{}).get('filtering_method', 'cluster'),
+        score_nb_of_hits = lambda wildcards: config['gene_detection'][wildcards.db].get('params', {}).get('blastn', {}).get('score_nb_of_hits', 5)
     run:
         from camel.app.tools.pipelines.genedetection.blasthitfiltering import BlastHitFiltering
         hit_filtering = BlastHitFiltering(Camel.get_instance())
@@ -71,7 +73,9 @@ rule gene_detection_blast_hit_filtering:
         # Update parameters
         hit_filtering.update_parameters(
             min_percent_identity=str(params.min_percent_identity),
-            min_coverage=str(params.min_coverage)
+            min_coverage=str(params.min_coverage),
+            filtering_method=str(params.filtering_method),
+            score_nb_of_hits=str(params.score_nb_of_hits)
         )
         # Run tool
         step.run_step()

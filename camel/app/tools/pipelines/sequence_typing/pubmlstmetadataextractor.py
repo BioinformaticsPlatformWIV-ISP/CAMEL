@@ -1,8 +1,6 @@
-import logging
-
-from camel.app.tools.tool import Tool
-
 from camel.app.components.pubmlst.pubmlstparser import PubMLSTParser
+from camel.app.loggers import logger
+from camel.app.tools.tool import Tool
 
 
 class PubmlstMetadataExtractor(Tool):
@@ -28,7 +26,7 @@ class PubmlstMetadataExtractor(Tool):
         :return: None
         """
         if 'hits' not in self._input_informs:
-            logging.info("No best hits found in informs")
+            logger.info("No best hits found in informs")
             return
 
         checked_loci = self._parameters['loci'].value.split(', ')
@@ -50,7 +48,7 @@ class PubmlstMetadataExtractor(Tool):
             label, value = PubMLSTParser.parse_linked_data(allele_url)
             self.informs[allele_name] = ['{} ({})'.format(label, allele_name), value]
         except RuntimeError as err:
-            logging.warning('Cannot retrieve linked data for {} ({}, {})'.format(name, err, allele_url))
+            logger.warning('Cannot retrieve linked data for {} ({}, {})'.format(name, err, allele_url))
 
     @staticmethod
     def __clean_allele_id(allele_id: str) -> str:

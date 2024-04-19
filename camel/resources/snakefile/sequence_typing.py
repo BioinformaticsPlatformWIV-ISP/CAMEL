@@ -11,9 +11,9 @@ OUTPUT_TYPING_TSV = _dir_typing / '{locus_type}' / 'tabular' / 'tsv.io'
 OUTPUT_TYPING_HITS = _dir_typing / '{locus_type}' / '{detection_method}' / 'hits.io'
 OUTPUT_TYPING_SUMMARY = _dir_typing / 'summary_out.tsv'
 OUTPUT_TYPING_INFORMS = _dir_typing / 'informs.io'
+OUTPUT_TYPING_ALL_MATCHES = _dir_typing / 'tsv_profile_matches.io'
 
-
-def get_sequence_typing_report(scheme_key: str, config: Dict[str, Any], analysis_name: Optional[str] = None) -> str:
+def get_sequence_typing_report(scheme_key: str, config: Dict[str, Any], analysis_name: Optional[str] = None) -> Path:
     """
     Returns the report input for the given database key.
     :param scheme_key: Database key

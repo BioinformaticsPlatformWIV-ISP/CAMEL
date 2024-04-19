@@ -2,13 +2,17 @@ import json
 from pathlib import Path
 from typing import List, Optional
 
+from Bio import SeqIO
+
 from camel.app.camel import Camel
 from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.components.html.htmlexpandablediv import HtmlExpandableDiv
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.html.htmltablecell import HtmlTableCell
+from camel.app.components.sequencetyping.sequencetypinghitbase import SequenceTypingHitBase
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliovalue import ToolIOValue
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -26,6 +30,7 @@ class HtmlReporterTyping(Tool):
     """
 
     INFO_FILENAME = 'sequence_typing.json'
+    NEW_ALLELES_FILENAME = 'new_alleles.fasta'
 
     def __init__(self, camel: Camel) -> None:
         """
@@ -54,10 +59,18 @@ class HtmlReporterTyping(Tool):
         if len(self._tool_inputs['hits_pept']) != 0:
             self.__add_output_table(self._tool_inputs['TSV_pept'][0].path, self._tool_inputs['hits_pept'],
                                     'Peptide loci' if add_subtitle else None)
+
         if 'forced_detection_method' in self._parameters:
             self._report_section.add_alert(
                 f"Allele detection performed with <b>{self._parameters['forced_detection_method'].value}</b>.", 'info')
-        self._report_section.add_paragraph('Last updated: {}'.format(self._input_informs['scheme']['last_updated']))
+        self._add_novel_alleles_section()
+        self.add_scheme_info_section()
+
+        # Add a custom message (if specified in the parameters)
+        if 'message' in self._parameters:
+            self._report_section.add_alert(
+                self._parameters['message'].value, self._parameters['message_category'].value)
+        
         self._tool_outputs['VAL_HTML'] = [ToolIOValue(self._report_section)]
         self.__export_analysis_metadata()
 
@@ -115,9 +128,17 @@ class HtmlReporterTyping(Tool):
         else:
             self._report_section.add_table(table_data, table_header, [('class', 'data')])
 
+        # Add regular TSV file
         relative_path = self._sub_folder / output_tsv.name
         self._report_section.add_file(output_tsv, relative_path)
         self._report_section.add_link_to_file("Download (TSV)", relative_path)
+
+        # Add TSV with hashes (if it exists)
+        output_tsv_hashes = output_tsv.parent / output_tsv.name.replace('.tsv', '-hashes.tsv')
+        if not output_tsv_hashes.exists():
+            return
+        relative_path_hashes = self._sub_folder / output_tsv_hashes.name
+        self._report_section.add_file(output_tsv_hashes, relative_path_hashes)
 
     def _check_input(self) -> None:
         """
@@ -131,7 +152,7 @@ class HtmlReporterTyping(Tool):
     def __export_analysis_metadata(self) -> None:
         """
         Exports the analysis metadata file. The information can be used for further processing of the sequence typing
-        output (e.g. for generating MLST trees).
+        output (e.g., for generating MLST trees).
         :return: None
         """
         path = self.folder / HtmlReporterTyping.INFO_FILENAME
@@ -141,3 +162,68 @@ class HtmlReporterTyping(Tool):
                 'sample': self._tool_inputs['VAL_SAMPLE'][0].value
             }, handle)
         self._report_section.add_file(path, self._sub_folder / HtmlReporterTyping.INFO_FILENAME)
+
+    def add_scheme_info_section(self) -> None:
+        """
+        Adds the section with information about the typing scheme.
+        :return: None
+        """
+        self._report_section.add_header('Scheme info', level=4)
+        table_data = [
+            ('Last scheme update', self._input_informs['scheme']['last_updated']),
+            ('Last scheme change', self._input_informs['scheme'].get('last_change')),
+            ('Origin', self._input_informs['scheme'].get('origin')),
+        ]
+        for i in range(0, len(table_data)):
+            if table_data[i][-1] is not None:
+                continue
+            table_data[i] = (table_data[i][0], 'n/a')
+        self._report_section.add_table(table_data, ['Field', 'Value'], [('class', 'data')])
+
+    def __generate_novel_allele_fasta(self, hits_novel: List[SequenceTypingHitBase]) -> Path:
+        """
+        Generates a FASTA file with the novel alleles.
+        :param hits_novel: Hits with novel alleles
+        :return: Path to FASTA file
+        """
+        # Collect sequences
+        seqs_out = []
+        for hit in hits_novel:
+            seqs_out.append(SeqIO.SeqRecord(
+                seq=hit.new_allele_sequence,
+                id=hit.locus,
+                description='potential novel allele'
+            ))
+
+        # Save in FASTA format
+        basename = f"novel-{self._tool_inputs['VAL_SAMPLE'][0].value}-{self._input_informs['scheme']['name']}.fasta"
+        path_out = self.folder / FileSystemHelper.make_valid(basename)
+        with path_out.open('w') as handle:
+            SeqIO.write(seqs_out, handle, 'fasta')
+        return path_out
+
+    def _add_novel_alleles_section(self) -> None:
+        """
+        Adds the section with the novel alleles (if there are any).
+        :return: None
+        """
+        # Check if there are (potential) novel alleles
+        hits_all = [h.value for h in self._tool_inputs.get('hits_nucl', []) + self._tool_inputs.get('hits_pept', [])]
+        hits_novel_allele = [h for h in hits_all if h.is_new_allele()]
+        if len(hits_novel_allele) == 0:
+            return
+        logger.info(f'{len(hits_novel_allele)} potential novel alleles detected')
+
+        # Create a FASTA file and add it to the report
+        path_fasta = self.__generate_novel_allele_fasta(hits_novel_allele)
+        relative_path = self._sub_folder / path_fasta.name
+
+        # Add the novel allele information
+        self._report_section.add_header('Novel alleles (*)', level=4)
+        self._report_section.add_paragraph('Potentially novel alleles were detected for the following loci: {}'.format(
+            ', '.join(f'<b>{h.locus}</b>' for h in hits_novel_allele)))
+        self._report_section.add_paragraph(
+            'These allele sequences can be submitted to the corresponding database after verification (intact open-'
+            'reading frames, etc). Note that not all novel alleles might have been detected by this screening.')
+        self._report_section.add_file(path_fasta, relative_path)
+        self._report_section.add_link_to_file('Download consensus sequence(s) (FASTA)', relative_path)

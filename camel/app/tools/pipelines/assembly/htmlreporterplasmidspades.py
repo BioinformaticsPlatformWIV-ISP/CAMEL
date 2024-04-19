@@ -2,7 +2,6 @@ from pathlib import Path
 
 from camel.app.camel import Camel
 from camel.app.components.html.htmlreportsection import HtmlReportSection
-from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.tools.tool import Tool
 
@@ -36,6 +35,6 @@ class HTMLReporterPlasmidSpades(Tool):
             ], table_attributes=[('class', 'information')])
 
             relative_path = Path('plasmidspades') / Path(self._tool_inputs['FASTA'][0].path).name
-            section.add_link_to_file('Assembly - plasmidSPAdes (FASTA)', str(relative_path))
+            section.add_link_to_file('Assembly - plasmidSPAdes (FASTA)', relative_path)
             section.add_file(self._tool_inputs['FASTA'][0].path, relative_path)
         self._tool_outputs['HTML'] = [ToolIOValue(section)]

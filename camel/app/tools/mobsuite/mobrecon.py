@@ -1,4 +1,3 @@
-import logging
 from pathlib import Path
 
 import pandas as pd
@@ -7,6 +6,7 @@ from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -20,7 +20,7 @@ class MOBRecon(Tool):
         Initializes this tool.
         :param camel: CAMEL instance
         """
-        super().__init__('MOB-recon', '3.1.4', camel)
+        super().__init__('MOB-recon', '3.1.8', camel)
 
     def _check_input(self) -> None:
         """
@@ -80,11 +80,11 @@ class MOBRecon(Tool):
         self._informs['detected_plasmids'] = []
         if path_out.exists():
             data_plasmids = pd.read_table(path_out)
-            logging.info(f'{len(data_plasmids)} plasmids detected')
+            logger.info(f'{len(data_plasmids)} plasmids detected')
             for record in data_plasmids.to_dict('records'):
                 self._informs['detected_plasmids'].append(record)
         else:
-            logging.info('No plasmids detected, creating empty output file')
+            logger.info('No plasmids detected, creating empty output file')
             path_out.touch()
 
     def _parse_contig_report(self, path_out: Path) -> None:
@@ -95,7 +95,7 @@ class MOBRecon(Tool):
         """
         data_in = pd.read_table(path_out)
         self._informs['contig_report'] = {
-            ctg: cluster_id if cluster_id is not '-' else None for
+            ctg: cluster_id if cluster_id != '-' else None for
             ctg, cluster_id in zip(data_in['contig_id'], data_in['primary_cluster_id'])}
 
     def _check_command_output(self) -> None:

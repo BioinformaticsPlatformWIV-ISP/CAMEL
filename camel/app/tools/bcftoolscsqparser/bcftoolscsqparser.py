@@ -1,5 +1,3 @@
-import logging
-
 import vcf
 # noinspection PyProtectedMember
 from vcf.model import _Record as VcfRecord
@@ -12,10 +10,10 @@ from camel.app.components.csq.mutations.frameshiftmutation import FrameshiftMuta
 from camel.app.components.csq.mutations.nucelotidemutation import NucleotideMutation
 from camel.app.components.csq.mutations.stopmutation import StopMutation
 from camel.app.components.csq.mutations.unknownmutation import UnknownMutation
-
 from camel.app.components.tabix import tabixparser
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliovalue import ToolIOValue
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -47,7 +45,7 @@ class CsqParser(Tool):
         if 'VCF' not in self._tool_inputs:
             raise InvalidInputSpecificationError("VCF input is required")
         if 'TSV' not in self._tool_inputs:
-            logging.warning("TABIX annotation ('TSV') is missing, nucleotide mutations will be skipped.")
+            logger.warning("TABIX annotation ('TSV') is missing, nucleotide mutations will be skipped.")
         super()._check_input()
 
     def _execute_tool(self) -> None:
@@ -68,7 +66,7 @@ class CsqParser(Tool):
                 m = self.__parse_vcf_record(v)
                 muts.append(m)
             except CsqParsingError as err:
-                logging.warning(f"Unparsed mutation '{v}': {err}")
+                logger.warning(f"Unparsed mutation '{v}': {err}")
                 self._informs['unparsed'] += 1
 
         self._informs['counts'] = {}
@@ -79,7 +77,7 @@ class CsqParser(Tool):
             except KeyError:
                 self._informs['counts'][key] = 1
 
-        logging.info(f"Parsed CSQ mutations: {self._informs['counts']}")
+        logger.info(f"Parsed CSQ mutations: {self._informs['counts']}")
         self._tool_outputs['VAL_mut'] = [ToolIOValue(m) for m in muts]
 
     def __parse_vcf_record(self, record: VcfRecord) -> BaseMutation:

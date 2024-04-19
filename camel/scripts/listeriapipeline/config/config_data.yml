@@ -7,14 +7,14 @@ citations:
     - Bolger_2014-trimmomatic
     - Bankevich_2012-spades
     - Gurevich_2013-quast
+    - Manni_2021-busco
     - Wood_2019-kraken2
+    - Low_2019-confindr
     - Langmead_2012-bowtie2
     - Li_2009-samtools
     - Camacho_2009-blast
     - Clausen_2018-kma
     - Inouye_2014-srst2
-    - Gupta_2014-argannot
-    - McArthur_2013-card
     - Zankari_2012-resfinder
     - Feldgarden_2019-ndaro
     - Joensen_2014-virulencefinder
@@ -32,7 +32,7 @@ read_trimming:
   export_fastq: '{export_fastq}'
 
 contamination_check:
-  db: /db/kraken2_full/latest/full
+  db: /db/kraken2_microbial/latest
   expected_species: Listeria monocytogenes
 
 quality_checks:
@@ -44,17 +44,22 @@ assembly:
     cov_cutoff: 10
   min_contig_length: 1000
 
+confindr:
+  db: /db/confindr/0.8.1
+
+quast:
+  ref:
+    fasta: /db/refgenomes/Listeria_monocytogenes/NC_003210.1.fasta
+    gff3: /db/refgenomes/Listeria_monocytogenes/NC_003210.1.gff3
+
+amrfinder:
+  db: /db/amrfinder/latest
+
 ############################
 # Gene detection databases #
 ############################
 gene_detection:
   # AMR
-  argannot:
-    path: /db/gene_detection/ARG-ANNOT
-
-  card:
-    path: /db/gene_detection/CARD
-
   ncbi_amr:
     path: /db/gene_detection/NCBI_AMR/
     perc_identity_cutoff: 90
@@ -97,23 +102,29 @@ gene_detection:
     metadata:
       name: Notes
       key: notes
+    message:
+      content: The presence of a replicon does not mean that the corresponding plasmid is present.
+      category: warning
 
 ###################
 # Sequence typing #
 ###################
 sequence_typing:
-  mlst:
-    path: /db/sequence_typing/listeria/mlst
   cgmlst:
     path: /db/sequence_typing/listeria/cgmlst
     detection_method: blast
+  mlst:
+    path: /db/sequence_typing/listeria/mlst
+  pcr_serogroup:
+    path: /db/sequence_typing/listeria/serogroup
+  rmlst:
+    path: /db/sequence_typing/various/rmlst
+    message:
+      content: rMLST is only available for noncommercial use, see <a href="https://pubmlst.org/species-id">PubMLST</a> for more info.
+      category: info
   species_confirmation:
     path: /db/sequence_typing/listeria/species_confirmation
   typing_amr:
     path: /db/sequence_typing/listeria/antibiotic_resistance
   typing_virulence:
     path: /db/sequence_typing/listeria/virulence
-  metal_detergent:
-    path: /db/sequence_typing/listeria/metal_detergent_resistance
-  pcr_serogroup:
-    path: /db/sequence_typing/listeria/serogroup

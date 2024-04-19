@@ -1,7 +1,7 @@
+import datetime
 from typing import List, Any
 
 from camel.app.camel import Camel
-from camel.app.components.html.htmlelement import HtmlElement
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.html.htmltablecell import HtmlTableCell
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
@@ -78,12 +78,18 @@ class SpaTypingReporter(Tool):
         Adds the database information to the report.
         :return: None
         """
-        self._section.add_header('Database', 4)
-        self._section.add_html_object(
-            HtmlElement('a', 'Spa types (Ridom)', [('href', 'https://spa.ridom.de/spatypes.shtml')]))
-        self._section.add_line_break()
-        self._section.add_html_object(
-            HtmlElement('a', 'Repeat sequences (Ridom)', [('href', 'https://spa.ridom.de/repeats.shtml')]))
+        self._section.add_header('Database info', level=4)
+        date = datetime.datetime.fromisoformat(self._input_informs['spa_typing']['db_info']['last_update_date'])
+        table_data = [
+            ('Last database update', date.strftime('%d-%m-%Y')),
+            ('Last database change', self._input_informs['spa_typing']['db_info'].get('last_change')),
+            ('Origin', self._input_informs['spa_typing']['db_info'].get('origin')),
+        ]
+        for i in range(0, len(table_data)):
+            if table_data[i][-1] is not None:
+                continue
+            table_data[i] = (table_data[i][0], 'n/a')
+        self._section.add_table(table_data, ['Field', 'Value'], [('class', 'data')])
 
     HTML_COLUMNS = ['<i>spa</i> type', 'Repeats', 'Length', '% covered', '% identity']
 

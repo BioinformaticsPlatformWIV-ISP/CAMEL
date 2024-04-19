@@ -1,9 +1,9 @@
-import logging
 from pathlib import Path
 
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.io.tooliovalue import ToolIOValue
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -82,7 +82,7 @@ class Srst2Mlst(Tool):
         if 'FASTA' not in self._tool_inputs:
             raise IOError('No FASTA file with MLST alleles found.')
         if 'TSV' not in self._tool_inputs:
-            logging.info("No MLST definitions found. Only performing allele detection.")
+            logger.info("No MLST definitions found. Only performing allele detection.")
 
     def _get_output_file_key(self, path_in: Path) -> str:
         """

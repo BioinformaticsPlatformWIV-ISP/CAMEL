@@ -1,11 +1,22 @@
-from pathlib import Path
-from typing import Dict, Any, List
-
 import abc
 import argparse
+import shutil
+from pathlib import Path
+from typing import Dict, Any, List, Tuple, Union
+
+from Bio import SeqIO
 
 from camel.app.components import mainscriptutils
+from camel.app.components.files.fastqutils import FastqUtils
+from camel.app.components.files.fileutils import FileUtils
+from camel.app.components.phylogeny.snpphylogenyutils import InvalidInputError
 from camel.app.components.pipelines.basepipeline import BasePipeline
+from camel.app.components.workflows.utils.fastqinput import FastqInput
+from camel.app.io.tooliovalue import ToolIOValue
+from camel.app.loggers import logger
+from camel.app.snakemake.snakemakeutils import SnakemakeUtils
+from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
+from camel.resources.snakefile import assembly_spades
 
 
 class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
@@ -26,6 +37,7 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         argument_parser.add_argument('--output-dir', required=True, type=Path)
         argument_parser.add_argument('--output-html', required=True, type=Path)
         argument_parser.add_argument('--output-tsv', help="Output file for the summary", required=True, type=Path)
+        argument_parser.add_argument('--output-fasta', type=Path, help='output path for assembled contigs')
 
         # Options
         argument_parser.add_argument(
@@ -41,24 +53,197 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
             '--cov-max', default=100.0, type=float,
             help='Maximum coverage (datasets with higher estimated coverage will be downsampled to the given value)')
 
-    def get_template_data(self, input_key: str, input_data: [List[Dict[str, str]]]) -> Dict[str, Any]:
+    def get_template_data(self, dict_input: Dict) -> Dict[str, Any]:
         """
-        Returns the template data that is common to all pipeline.
-        :param input_key: FASTQ input key
-        :param input_data: FASTQ input files
+        Returns the template data that is common to all pipelines.
+        :param dict_input: Dictionary with pipeline input files
         :return: Template data
         """
-        # Convert Path objects to string in the config file
-        config_data = super().get_template_data(input_key, [{
-            k: str(v) if isinstance(v, Path) else v for k, v in fq_entry.items()} for fq_entry in input_data])
+        # Add common entries
+        config_data = super().get_template_data(dict_input)
+
+        # Add report specific entries
         mainscriptutils.dict_merge(config_data, {
             'output_dir': str(self._args.output_dir),
             'output_report': str(self._args.output_html),
             'output_tabular': str(self._args.output_tsv),
-            'read_type': self._args.read_type,
             'detection_method': self._args.detection_method,
             'read_trimming': {'export_fastq': self._args.report_include_fastq}
         })
-        if self._args.library is not None:
+
+        # Technology-specific options
+        if (self._args.input_type == 'illumina') and (self._args.library is not None):
             config_data['read_trimming']['adapter'] = self._args.library
+
         return config_data
+
+    def _validate_input_files(self) -> None:
+        """
+        Checks if the provided input files are valid.
+        :return: None
+        """
+        logger.info(f'Checking input files')
+
+        # FASTA input
+        if self._args.input_type == 'fasta':
+            with open(self._args.fasta) as handle:
+                try:
+                    seqs = list(SeqIO.parse(handle, 'fasta'))
+                    logger.info(f'Valid FASTA file ({len(seqs):,} sequences)')
+                except BaseException as err:
+                    raise InvalidInputError(f'Invalid FASTA input: {err}')
+
+        # FASTQ PE inputs
+        elif self._args.input_type in ('illumina', 'hybrid'):
+            nb_reads_fwd = FastqUtils.count_reads(self._args.fastq_pe[0])
+            nb_reads_rev = FastqUtils.count_reads(self._args.fastq_pe[1])
+            if not nb_reads_fwd == nb_reads_rev:
+                raise InvalidInputError(
+                    f'The number of forward ({nb_reads_fwd:,}) and reverse ({nb_reads_rev:,}) reads should be equal, '
+                    'check that the input files provided are complete and correctly paired.')
+            logger.info(f'FASTQ input is valid')
+            logger.info(f'PE forward FASTQ hash: {FileUtils.hash_file(self._args.fastq_pe[0])}')
+            logger.info(f'PE reverse FASTQ hash: {FileUtils.hash_file(self._args.fastq_pe[1])}')
+        else:
+            logger.debug(f"FASTQ checking not implemented yet for input type '{self._args.input_type}'")
+
+    def _export_assembly(self) -> None:
+        """
+        Exports the assembly to the specified output location (optional).
+        :return: None
+        """
+        if self._args.output_fasta is None:
+            logger.debug(f'Not exporting assembly')
+            return
+        path_io = self._args.working_dir / assembly_spades.OUTPUT_ASSEMBLY_FASTA
+        path_fasta = SnakemakeUtils.load_object(path_io)[0].path
+        shutil.copyfile(path_fasta, self._args.output_fasta)
+        logger.info(f'Output FASTA file copied to: {self._args.output_fasta}')
+
+    @staticmethod
+    def format_input_string(dict_in: Dict[str, Any]) -> str:
+        """
+        Formats the input string based on the dictionary with pipeline input files.
+        :param dict_in: Pipeline input dictionary
+        :return: Formatted input string
+        """
+        return ', '.join([entry['name'] for key, entries in dict_in.items() for entry in entries])
+
+    @staticmethod
+    def construct_fq_dict(snake_in: Any, input_type: str, path_out: Path) -> None:
+        """
+        Constructs a dictionary with the FASTQ input based on the snakemake input.
+        :param snake_in: Snakemake input
+        :param input_type: Input type
+        :param path_out: Path to store dictionary
+        :return: None
+        """
+        # FASTA input
+        if input_type == 'fasta':
+            SnakemakeUtils.dump_object(None, path_out)
+
+        # PE reads (illumina)
+        elif input_type == 'illumina':
+            shutil.copyfile(snake_in.FASTQ_PE, path_out)
+
+        # SE reads (iontorrent, ont)
+        elif input_type in ('iontorrent', 'ont'):
+            shutil.copyfile(snake_in.FASTQ_SE, path_out)
+
+        # Hybrid reads
+        elif input_type == 'hybrid':
+            fq_pe = FastqInput.from_fq_dict(Path(snake_in.FASTQ_PE), 'illumina')
+            fq_se = FastqInput.from_fq_dict(Path(snake_in.FASTQ_SE), 'ont')
+            SnakemakeUtils.dump_object(FastqInput(
+                'hybrid', pe=fq_pe.pe, se_fwd=fq_pe.se_fwd, se_rev=fq_pe.se_rev, se=fq_se.se, is_pe=True,
+                is_trimmed=True).to_fq_dict(), path_out)
+        else:
+            raise ValueError(f'Invalid input type: {input_type}')
+        logger.info(f'FASTQ dict object created: {path_out}')
+
+    @staticmethod
+    def export_command_section(snake_in: Any, path_out: Path, dir_: Path) -> None:
+        """
+        Generates the command report section and exports it to the target path.
+        :param snake_in: Snakemake input
+        :param path_out: Output path
+        :param dir_: Working directory (used to mask absolute paths)
+        :return :None
+        """
+        informs = []
+        for content in [SnakemakeUtils.load_object(Path(io)) for io in snake_in]:
+            if type(content) is dict:
+                informs.append(content)
+            elif type(content) is list:
+                informs.extend(content)
+        section = SnakePipelineUtils.create_commands_section(informs, dir_)
+        SnakemakeUtils.dump_object([ToolIOValue(section)], path_out)
+        logger.info(f'Command exported to: {path_out}')
+
+    @staticmethod
+    def add_content_trim_basic_qc(
+            structure: List[Tuple], input_type: str, reports_ds: List[Union[Path, str]],
+            reports_trim: List[Union[Path, str]]) -> None:
+        """
+        Adds the report content for the downsampling, basic QC, and read trimming.
+        :param structure: Report structure
+        :param input_type: Input type
+        :param reports_ds: Downsampling output reports
+        :param reports_trim: Trimming output reports
+        :return: None
+        """
+        # Create dictionaries with the technology as key and the reports as values
+        report_trim_by_tech = {
+            next(p.name.replace('trimming_', '') for p in p_html.parents if p.name.startswith('trimming_')):
+                p_html for p_html in [Path(x) for x in reports_trim]}
+        report_ds_by_read_key = {
+            p_html.parent.name: p_html for p_html in [Path(x) for x in reports_ds]}
+
+        # Add the report content
+        if input_type == 'fasta':
+            pass
+        elif input_type == 'illumina':
+            structure.append(('Read trimming and basic QC', 'trim', [
+                report_ds_by_read_key['fastq_pe'], report_trim_by_tech['illumina']]))
+        elif input_type == 'ont':
+            structure.append(('Read trimming and basic QC', 'trim', [
+                report_ds_by_read_key['fastq_se'], report_trim_by_tech['ont']]))
+        elif input_type == 'hybrid':
+            structure.append(('Read trimming and basic QC - Illumina', 'trim_ilmn', [
+                report_ds_by_read_key['fastq_pe'], report_trim_by_tech['illumina']]))
+            structure.append(('Read trimming and basic QC - ONT', 'trim_ont', [
+                report_ds_by_read_key['fastq_se'], report_trim_by_tech['ont']]))
+
+    @staticmethod
+    def add_content_contamination_check(
+            structure: List[Tuple], input_type: str, reports_contamination: List[Union[Path, str]],
+            report_confindr: Union[Path, str]) -> None:
+        """
+        Adds the report content for the contamination check.
+        :param structure: Report structure
+        :param input_type: Input type
+        :param reports_contamination: Contamination check output report(s)
+        :param report_confindr: ConFindr report
+        :return: None
+        """
+        # Create dictionaries with the technology as key and the reports as values
+        report_k2_by_read_key = {
+            p_html.parents[1].name: p_html for p_html in [Path(x) for x in reports_contamination]}
+
+        # Add the report content
+        if input_type == 'fasta':
+            # TODO: To execute Kraken2 on the input FASTA file
+            pass
+        elif input_type == 'illumina':
+            structure.append(
+                ('Contamination check', 'contamination', [
+                    report_k2_by_read_key['fastq_pe'], Path(report_confindr)]))
+        elif input_type == 'ont':
+            structure.append(
+                ('Contamination check', 'contamination', [report_k2_by_read_key['fastq_se']]))
+        elif input_type == 'hybrid':
+            structure.append(
+                ('Contamination check', 'contamination',
+                 [report_k2_by_read_key['fastq_pe'], report_k2_by_read_key['fastq_se'], Path(report_confindr)]))
+        else:
+            raise ValueError(f'Invalid input type: {input_type}')

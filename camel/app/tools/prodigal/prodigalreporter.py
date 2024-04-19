@@ -39,7 +39,7 @@ class ProdigalReporter(Tool):
 
         # Stats
         section.add_table(
-            [[int(self._input_informs['prodigal']['cds'][k]) for k in ('nb', 'avg_len', 'std')]],
+            [[f"{int(self._input_informs['prodigal']['cds'][k]):,}" for k in ('nb', 'avg_len', 'std')]],
             ['Nb. predicted CDS', 'Avg. length', 'Std. deviation'], [('class', 'data')])
 
         # Download link

@@ -51,7 +51,7 @@ class ReporterDownsampling(Tool):
         text_downsample = 'No downsampling required' if (stats['downsample_factor'] is None) else \
             f"{stats['downsample_factor']:.2f}"
         section.add_table([
-            [f"{int(stats['total_bases']):,}", str(int(stats['mean_read_length'])),
+            [f"{int(stats['total_bases']):,}", f"{int(stats['mean_read_length']):,}",
              f"{stats['coverage_estimated']:.2f}", text_downsample]],
             ['Total bases (fwd. + rev.)' if reads_are_paired else 'Total bases', 'Read length (avg.)',
              'Estimated coverage', 'Downsample factor'],

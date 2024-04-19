@@ -1,4 +1,3 @@
-import logging
 from pathlib import Path
 
 from camel.app.camel import Camel
@@ -6,6 +5,7 @@ from camel.app.components.files.fileutils import FileUtils
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliovalue import ToolIOValue
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -23,7 +23,7 @@ class Bowtie2Index(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super().__init__('bowtie2 index', '2.4.1', camel)
+        super().__init__('bowtie2 index', '2.5.1', camel)
 
     def _execute_tool(self) -> None:
         """
@@ -62,14 +62,14 @@ class Bowtie2Index(Tool):
         """
         nb_of_inputs = len(self._tool_inputs['FASTA_REF'])
         if nb_of_inputs > 1:
-            logging.info(f'Creating concatenated FASTA file ({nb_of_inputs} files)')
+            logger.info(f'Creating concatenated FASTA file ({nb_of_inputs} files)')
             path_multi_fasta = self.folder / Bowtie2Index.MULTI_FASTA_GENOME_FILE
             FileUtils.concatenate_files(path_multi_fasta, [f.path for f in self._tool_inputs['FASTA_REF']])
             return path_multi_fasta
         else:
             path_fasta = self._folder / self._tool_inputs['FASTA_REF'][0].path.name
             if not path_fasta.exists():
-                logging.info(f'Creating symlink for input FASTA file: {path_fasta}')
+                logger.info(f'Creating symlink for input FASTA file: {path_fasta}')
                 path_fasta.symlink_to(self._tool_inputs['FASTA_REF'][0].path)
             return path_fasta
 

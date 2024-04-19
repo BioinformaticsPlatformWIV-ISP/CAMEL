@@ -1,12 +1,15 @@
 import json
 from pathlib import Path
+from typing import Union
 
 from camel.app.camel import Camel
 from camel.app.components.genedetection.mapping import Mapping
+from camel.app.components.genedetection.mappingjson import MappingJSON
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliodirectory import ToolIODirectory
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -73,16 +76,25 @@ class DBManager(Tool):
         self._informs['mapping'] = self.__get_mapping(input_folder)
 
     @staticmethod
-    def __get_mapping(input_folder: Path) -> Mapping:
+    def __get_mapping(dir_in: Path) -> Union[Mapping, MappingJSON]:
         """
         Returns the mapping of the standardized header to the original header.
-        :param input_folder: Input folder
+        :param dir_in: Input folder
         :return: Header mapping
         """
+        # Parse the updated mapping
+        path_mapping_new = dir_in / 'mapping_full.json'
+        if path_mapping_new.exists():
+            logger.debug(f'Parsing sequence mapping from: {path_mapping_new}')
+            with path_mapping_new.open() as handle:
+                return MappingJSON(json.load(handle))
+
+        # Parse the legacy mapping
         try:
-            return Mapping.parse((input_folder / 'mapping.txt'))
+            logger.warning(f"The 'mapping.txt' file will become deprecated, please use the 'mapping_full.json' file")
+            return Mapping.parse((dir_in / 'mapping.txt'))
         except FileNotFoundError:
-            raise ToolExecutionError(f'No mapping found in {input_folder}')
+            raise ToolExecutionError(f'No mapping found in {dir_in}')
 
     def __set_database_files(self, folder: Path) -> None:
         """

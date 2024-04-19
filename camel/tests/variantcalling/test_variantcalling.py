@@ -1,7 +1,4 @@
-import argparse
 import unittest
-
-import os
 
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.components.vcf.vcfutils import VCFUtils

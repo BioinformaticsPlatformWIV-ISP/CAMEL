@@ -1,4 +1,3 @@
-import logging
 import os
 import re
 import shutil
@@ -11,6 +10,7 @@ from camel.app.components.files.fileutils import FileUtils
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -315,7 +315,7 @@ class Deconseq(Tool):
             outputs = [os.path.basename(f.path) for x in self._db_outputs[self._db].values() for f in x]
             for f in os.listdir(self._folder):
                 if f.endswith('.fq') and f not in outputs:
-                    logging.debug("Intermedaite file {} cleaned.".format(f))
+                    logger.debug("Intermedaite file {} cleaned.".format(f))
                     FileUtils.silent_remove(os.path.join(self._folder, f))
 
     def __update_final_informs(self) -> None:

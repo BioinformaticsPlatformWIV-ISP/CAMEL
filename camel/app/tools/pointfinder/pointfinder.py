@@ -1,5 +1,3 @@
-
-import logging
 import re
 from pathlib import Path
 
@@ -7,6 +5,7 @@ from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -66,7 +65,7 @@ class PointFinder(Tool):
         Determines the blastn path based on the dependencies.
         :return: blastn path
         """
-        logging.debug('Retrieving blastn path')
+        logger.debug('Retrieving blastn path')
         self._command.command = 'echo $PATH'
         self._execute_command()
         for path in self._command.stdout.split(':'):
@@ -80,7 +79,7 @@ class PointFinder(Tool):
         Returns the date of the last update.
         :return: Date of the last update.
         """
-        logging.debug("Retrieving date of the last update.")
+        logger.debug("Retrieving date of the last update.")
         self._command.command = 'echo $POINTFINDER_DB'
         self._execute_command()
         db_path = Path(self._command.stdout.strip())

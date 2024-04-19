@@ -1,6 +1,6 @@
-import logging
 from pathlib import Path
 from camel.app.camel import Camel
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
@@ -17,7 +17,7 @@ class BTyper(Tool):
         Initializes this tool.
         :param camel: CAMEL instance
         """
-        super().__init__('BTyper', '3.3.4', camel)
+        super().__init__('BTyper', '3.4.0', camel)
 
     def _check_input(self) -> None:
         """
@@ -58,10 +58,10 @@ class BTyper(Tool):
         # Symlink the input FASTA file
         fasta_input = self._folder / Path(str(self._tool_inputs['FASTA'][0])).name
         try:
-            logging.info(f'Creating symlink for input FASTA file: {fasta_input}')
+            logger.info(f'Creating symlink for input FASTA file: {fasta_input}')
             fasta_input.symlink_to(self._tool_inputs["FASTA"][0].path)
         except FileExistsError:
-            logging.info(f'Symlink for input FASTA file ({fasta_input}) already exists.')
+            logger.info(f'Symlink for input FASTA file ({fasta_input}) already exists.')
 
         # Building the command
         self._build_command(fasta_input)

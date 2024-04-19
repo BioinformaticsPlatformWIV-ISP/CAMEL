@@ -3,7 +3,6 @@ from pathlib import Path
 from camel.app.camel import Camel
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.scripts.bacilluspipeline.snakefile import assembly_flye
 
 camel = Camel.get_instance()
 
@@ -15,12 +14,11 @@ rule assembly_flye_run:
     input:
         IO = Path(config['working_dir']) / 'fq_dict.io'
     output:
-        FASTA = Path(config['working_dir']) / 'assembly_flye' / 'flye' / 'fasta.io',
-        INFORMS = Path(config['working_dir']) / assembly_flye.OUTPUT_ASSEMBLY_INFORMS
+        FASTA = Path(config['working_dir']) / 'assembly' / 'flye' / 'fasta.io',
+        INFORMS = Path(config['working_dir']) / 'assembly' / 'flye' / 'informs.io'
     params:
-        running_dir = Path(config['working_dir']) / 'assembly_flye' / 'flye',
-        flye_options = config.get('assembly', {}).get('flye', {}),
-        read_type = 'SE'
+        dir_ = Path(config['working_dir']) / 'assembly' / 'flye',
+        flye_options = config.get('assembly', {}).get('flye', {})
     threads: 8
     priority: 1
     run:
@@ -29,114 +27,10 @@ rule assembly_flye_run:
         flye = Flye(camel)
 
         # Reformat FASTQ dictionary
-        fq_dict = SnakePipelineUtils.extracts_fq_input(Path(input.IO), key_se='FASTQ', read_type=params.read_type)
+        fq_dict = SnakePipelineUtils.extracts_fq_input(Path(input.IO), key_se='FASTQ', read_type='SE')
         flye.add_input_files(fq_dict)
-        step = Step(str(rule), flye, camel, params.running_dir)
+        step = Step(str(rule), flye, camel, params.dir_)
         flye.update_parameters(**params.flye_options)
         flye.update_parameters(threads=threads)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(flye, output)
-
-rule assembly_flye_filter_contig_length:
-    """
-    Filters out the small contigs.
-    """
-    input:
-        FASTA = rules.assembly_flye_run.output.FASTA
-    output:
-        FASTA = Path(config['working_dir']) / 'assembly_flye' / 'filtering' / 'fasta.io',
-        INFORMS = Path(config['working_dir']) / assembly_flye.OUTPUT_ASSEMBLY_FILTERING_INFORMS
-    params:
-        running_dir = Path(config['working_dir']) / 'assembly_flye' / 'filtering',
-        min_contig_length = config['assembly'].get('min_contig_length', 0) if 'assembly' in config else 0
-    run:
-        from camel.app.tools.seqtk.seqtkseq import SeqtkSeq
-        seqtk = SeqtkSeq(camel)
-        SnakemakeUtils.add_pickle_inputs(seqtk, input)
-        step = Step(str(rule), seqtk, camel, params.running_dir)
-        seqtk.update_parameters(output_filename='assembly_filtered.fasta', min_length=params.min_contig_length)
-        step.run_step()
-        SnakemakeUtils.dump_tool_outputs(seqtk, output)
-
-rule assembly_flye_quast:
-    """
-    Generates assembly statistics using QUAST.
-    """
-    input:
-        FASTA = rules.assembly_flye_filter_contig_length.output.FASTA
-    output:
-        TSV = Path(config['working_dir']) / 'assembly_flye' / 'quast' / 'tsv.io'
-    params:
-        running_dir = Path(config['working_dir']) / 'assembly_flye' / 'quast'
-    run:
-        from camel.app.tools.quast.quast import Quast
-        quast = Quast(camel)
-        SnakemakeUtils.add_pickle_inputs(quast, input)
-        step = Step(str(rule), quast, camel, params.running_dir)
-        step.run_step()
-        SnakemakeUtils.dump_tool_outputs(quast, output)
-
-rule assembly_flye_quast_extract_informs:
-    """
-    Extracts the information from the QUAST output file.
-    """
-    input:
-        TSV = rules.assembly_flye_quast.output.TSV
-    output:
-        INFORMS = Path(config['working_dir']) / 'assembly_flye' / 'quast' / 'informs.io'
-    params:
-        running_dir = Path(config['working_dir']) / 'assembly_flye' / 'quast'
-    run:
-        from camel.app.tools.quast.quastinformextractor import QuastInformExtractor
-        quast_inform_extractor = QuastInformExtractor(camel)
-        SnakemakeUtils.add_pickle_inputs(quast_inform_extractor, input)
-        step = Step(str(rule), quast_inform_extractor, camel, params.running_dir)
-        step.run_step()
-        SnakemakeUtils.dump_tool_outputs(quast_inform_extractor, output)
-
-rule assembly_flye_report:
-    """
-    Creates the HTML report for the assembly.
-    """
-    input:
-        FASTA_Raw = rules.assembly_flye_run.output.FASTA,
-        FASTA_Contig = rules.assembly_flye_filter_contig_length.output.FASTA,
-        INFORMS_spades = rules.assembly_flye_run.output.INFORMS,
-        INFORMS_quast = rules.assembly_flye_quast_extract_informs.output.INFORMS
-    output:
-        VAL_HTML = Path(config['working_dir']) / assembly_flye.OUTPUT_ASSEMBLY_REPORT
-    params:
-        running_dir = Path(config['working_dir']) / 'assembly_flye' / 'report',
-        sample_name = config['sample_name']
-    run:
-        from camel.app.tools.pipelines.assembly.htmlreporterassembly import HtmlReporterAssembly
-        from camel.app.io.tooliovalue import ToolIOValue
-        reporter = HtmlReporterAssembly(camel)
-        reporter.add_input_files({'SAMPLE_NAME': [ToolIOValue(params.sample_name)],
-                                  'ASSEMBLER': [ToolIOValue('Flye')]})
-        SnakemakeUtils.add_pickle_inputs(reporter, input)
-        step = Step(str(rule), reporter, camel, params.running_dir)
-        step.run_step()
-        SnakemakeUtils.dump_tool_outputs(reporter, output)
-
-rule assembly_flye_dump_summary_info:
-    """
-    Dumps the summary information from the assembly pipeline.
-    """
-    input:
-        INFORMS_quast = rules.assembly_flye_quast_extract_informs.output.INFORMS
-    output:
-        Path(config['working_dir']) / assembly_flye.OUTPUT_ASSEMBLY_SUMMARY
-    params:
-        running_dir = Path(config['working_dir']) / 'assembly_flye' / 'summary'
-    run:
-        quast_informs = SnakemakeUtils.load_object(Path(input.INFORMS_quast))
-        summary_data = [
-            ('assembly_n50', quast_informs['contig']['N50']),
-            ('assembly_nb_contigs', quast_informs['contig']['# contigs']),
-            ('assembly_total_length', quast_informs['genome']['Total length'])
-        ]
-        with open(output[0], 'w') as handle:
-            for key, value in summary_data:
-                handle.write(f'{key}\t{value}')
-                handle.write('\n')

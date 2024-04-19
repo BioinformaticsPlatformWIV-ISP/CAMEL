@@ -1,9 +1,9 @@
-import logging
 from collections import Counter
 from typing import List, Dict, Any
 
 from camel.app.components.blasthit.blastnhit import BlastnHit
 from camel.app.components.segmenttyping.segmenttyping import SegmentTyping
+from camel.app.loggers import logger
 
 
 class SegmentTypingReads(SegmentTyping):
@@ -64,15 +64,15 @@ class SegmentTypingReads(SegmentTyping):
         """
         # low max hit
         if self._max_cnt < 10:
-            logging.warning(f"Subtyping: number of top hits is less than 10, only {self._max_cnt} hits.")
+            logger.warning(f"Subtyping: number of top hits is less than 10, only {self._max_cnt} hits.")
 
         # multiple best targets
         if 1 < len(self._best_candidate_targets) < 6:
-            logging.debug(f"Subtyping: segment {self._segment} has more than one target sequences "
-                          f"({self._best_candidate_targets}) with the maximal hit count {self._max_cnt}.")
+            logger.debug(f"Subtyping: segment {self._segment} has more than one target sequences "
+                         f"({self._best_candidate_targets}) with the maximal hit count {self._max_cnt}.")
             self._ambiguous = True
         elif len(self._best_candidate_targets) >= 6:
-            logging.warning(f"Subtyping: segment {self._segment} has too many target sequences ({self._best_candidate_targets}) with the maximal hit count {self._max_cnt}.")
+            logger.warning(f"Subtyping: segment {self._segment} has too many target sequences ({self._best_candidate_targets}) with the maximal hit count {self._max_cnt}.")
             self._ambiguous = True
         else:
             self._ambiguous = False

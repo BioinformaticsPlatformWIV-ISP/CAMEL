@@ -2,11 +2,48 @@
 # This YAML file contains the additional configuration data for the Mycobacterium pipeline #
 # The values are added to the configuration data constructed by the BasePipeline class.    #
 ############################################################################################
+####################
+# Pipeline options #
+####################
+citations:
+  main: Bogaerts_2021-mycobacterium_validation
+  other:
+    - Bolger_2014-trimmomatic
+    - Bankevich_2012-spades
+    - Gurevich_2013-quast
+    - Wood_2019-kraken2
+    - Low_2019-confindr
+    - Manni_2021-busco
+    - Langmead_2012-bowtie2
+    - Li_2009-samtools
+    - Li_2011-bcftools
+    - Kaas_2014-csi_phylogeny
+    - Ezewudo_2018-reseqtb_uvp
+    - Camacho_2009-blast
+    - Clausen_2018-kma
+    - Inouye_2014-srst2
+    - Xia_2016-spotyping
+    - Lipworth_2019-snpit
+    - Coll_2014-myco_snp_lineage
+    - Dai_2011-myco_hsp65
+    - Srilohasin_2014-myco_51snp
+    - Zankari_2017-pointfinder
+    - Danecek_2017-bcftools_csq
+    - Miotto_2017-myco_amr
+    - Jolley_2010-bigsdb
+
+################
+# Tool options #
+################
+downsampling:
+  coverage_max: {coverage_max}
+  expected_genome_size: 4_411_532
+
 read_trimming:
   export_fastq: '{export_fastq}'
 
 contamination_check:
-  db: /db/kraken/latest/abfhpv_lite/
+  db: /db/kraken2_microbial/latest
   expected_species: Mycobacterium tuberculosis
 
 quality_checks:
@@ -14,13 +51,21 @@ quality_checks:
   expected_gc_content: 65.6
   coverage_mode: ref
 
+confindr:
+  db: /db/confindr/0.8.1
+
+quast:
+  ref:
+    fasta: /db/refgenomes/Mycobacterium_tuberculosis/H37Rv.fasta
+    gff3: /db/refgenomes/Mycobacterium_tuberculosis/H37Rv.gff
+
 variant_calling:
   ploidy: 1
-  eport_bam: '{export_bam}'
+  report_include_bam: {export_bam}
   reference:
     path: /db/refgenomes/Mycobacterium_tuberculosis/H37Rv.fasta
     name: H37Rv
-    url: http://bacteria.ensembl.org/Mycobacterium_tuberculosis_h37rv/Info/Index
+    url: https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_000195955.2
     annotation_gff: /db/refgenomes/Mycobacterium_tuberculosis/H37Rv.gff
     annotation_tab: /db/refgenomes/Mycobacterium_tuberculosis/H37Rv.tab.ann.gz
 
@@ -32,17 +77,23 @@ assembly:
 variant_filtering:
   region:
     bed_file: /db/pipelines/mycobacterium/variant_filtering/excluded_regions.bed
+  depth:
+    min_fwd_depth: 1
+    min_rev_depth: 1
 
 snp_lineage:
-  bed: /db/pipelines/mycobacterium/snp_lineage/lineage_snp_locations.bed
+  bed: /db/pipelines/mycobacterium/snp_lineage/tbdb-2024_02_23.bed
 
 amr:
-  bed_regions: /db/pipelines/mycobacterium/amr/amr_regions.bed
-  mutation_db: /db/pipelines/mycobacterium/amr/mutation_db
+  bed_regions: /db/pipelines/mycobacterium/amr/who_2023.6/amr_regions.bed
+  mutation_db: /db/pipelines/mycobacterium/amr/who_2023.6
 
 sequence_typing:
-  mlst: /db/sequence_typing/mycobacterium/mlst
-  cgmlst: /db/sequence_typing/mycobacterium/cgmlst
+  mlst:
+    path: /db/sequence_typing/mycobacterium/mlst
+  cgmlst:
+    path: /db/sequence_typing/mycobacterium/cgmlst
+    detection_method: blast
 
 51snp:
   bed: /db/pipelines/mycobacterium/51snp/51snp_locations.bed
@@ -51,32 +102,36 @@ sequence_typing:
 gene_detection:
   csb_rd:
     path: /db/pipelines/mycobacterium/csb_rd
-    perc_identity_cutoff: 90
-    min_coverage: 60
     force_detection_method: srst2
 
   ncbi_16s:
     path: /db/gene_detection/NCBI_16S
-    perc_identitiy_cutoff: 90
-    min_coverage: 90
+    params:
+      blastn:
+        min_percent_identity: 95
+        min_coverage: 90
     filtering_method: score
     force_detection_method: blast
-    extra_column:
+    metadata:
       name: Species
       key: species
 
   hsp65:
     path: /db/pipelines/mycobacterium/hsp65
-    perc_identitiy_cutoff: 90
-    min_coverage: 60
-    extra_column:
+    metadata:
       name: Species
       key: species_name
 
   amr:
     path: /db/pipelines/mycobacterium/amr/gene_detection
-    perc_identity_cutoff: 90
-    min_coverage: 90
+    params:
+      blastn:
+        min_percent_identity: 95
+        min_coverage: 90
+        task: blastn
+      srst2:
+        max_divergence: 5
+        min_coverage: 90
 
 pointfinder:
   db: mycobacterium_tuberculosis

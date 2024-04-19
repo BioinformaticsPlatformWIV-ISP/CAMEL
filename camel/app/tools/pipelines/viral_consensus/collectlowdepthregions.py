@@ -1,4 +1,3 @@
-import logging
 from pathlib import Path
 
 import pandas as pd
@@ -9,6 +8,7 @@ from camel.app.command.command import Command
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -60,7 +60,7 @@ class CollectLowDepthRegions(Tool):
         self._execute_command()
         if not self._command.returncode == 0:
             raise ToolExecutionError(f'Error running bedtools genome cov: {self._command.stderr}')
-        logging.info(f'bedtools genome cov output file generated: {path_bed_gcov}')
+        logger.info(f'bedtools genome cov output file generated: {path_bed_gcov}')
         return path_bed_gcov
 
     def _extract_low_coverage_regions(self, path_bed: Path) -> Path:
@@ -71,14 +71,14 @@ class CollectLowDepthRegions(Tool):
         """
         data_depth = pd.read_table(
             path_bed, names=['chr', 'start', 'stop', 'depth'], keep_default_na=False, na_values='-')
-        logging.info(f'Depth data parsed ({len(data_depth):,} rows)')
+        logger.info(f'Depth data parsed ({len(data_depth):,} rows)')
         is_low_cov = data_depth['depth'] < int(self._parameters['gap_depth_cutoff'].value)
         data_depth_low_cov = data_depth[is_low_cov].copy()
         data_depth_low_cov.sort_values(by=['chr', 'start'], inplace=True)
         path_bed_low_cov = self.folder / 'low_cov.bed'
         data_depth_low_cov.to_csv(path_bed_low_cov, sep='\t', index=False, header=False)
-        logging.info(f'{len(data_depth_low_cov):,}/{len(data_depth):,} rows below depth threshold')
-        logging.info(f'BED file with low depth regions created: {path_bed_low_cov}')
+        logger.info(f'{len(data_depth_low_cov):,}/{len(data_depth):,} rows below depth threshold')
+        logger.info(f'BED file with low depth regions created: {path_bed_low_cov}')
         return path_bed_low_cov
 
     def _merge_intervals(self, path_bed: Path) -> Path:
@@ -93,7 +93,7 @@ class CollectLowDepthRegions(Tool):
         command.run(self.folder)
         if not command.returncode == 0:
             raise ToolExecutionError(f'Error executing bedtools: {command.stderr}')
-        logging.info(f'BED file with merged regions created: {path_bed_merged}')
+        logger.info(f'BED file with merged regions created: {path_bed_merged}')
         return path_bed_merged
 
     def _remove_small_intervals(self, path_bed: Path, min_size: int) -> Path:
@@ -106,7 +106,7 @@ class CollectLowDepthRegions(Tool):
         data_intervals = pd.read_table(path_bed, names=['chr', 'start', 'end'], keep_default_na=False, na_values='-')
         interval_size = data_intervals['end'] - data_intervals['start']
         data_intervals_filt = data_intervals[interval_size >= min_size]
-        logging.info(f'{len(data_intervals_filt)}/{len(data_intervals)} intervals above size limit (>={min_size})')
+        logger.info(f'{len(data_intervals_filt)}/{len(data_intervals)} intervals above size limit (>={min_size})')
         path_out = self.folder / 'low_cov_merged_filt.bed'
         data_intervals_filt.to_csv(path_out, sep='\t', index=False, header=False)
         return path_out

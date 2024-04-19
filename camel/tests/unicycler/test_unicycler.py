@@ -44,8 +44,9 @@ class TestUnicycler(CamelTestSuite):
         Tests Unicycler 0.5.0.
         """
         unicycler = Unicycler(self.camel)
-        unicycler.add_input_files({'FASTQ_SE': [TestUnicycler.FILE_FQ],
-                                   'FASTQ_PE': [TestUnicycler.FILE_FQ_1, TestUnicycler.FILE_FQ_2]})
+        unicycler.add_input_files({
+            'FASTQ_SE': [TestUnicycler.FILE_FQ],
+            'FASTQ_PE': [TestUnicycler.FILE_FQ_1, TestUnicycler.FILE_FQ_2]})
         unicycler.run(self.running_dir)
         self.verify_output_files(unicycler, 'FASTA')
 

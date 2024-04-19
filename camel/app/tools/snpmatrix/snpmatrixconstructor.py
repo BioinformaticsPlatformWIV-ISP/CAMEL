@@ -1,4 +1,3 @@
-import logging
 from dataclasses import dataclass
 from typing import Dict, List
 
@@ -12,6 +11,7 @@ from vcf.model import _Record as VCFRecord
 from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -49,7 +49,7 @@ class SnpMatrixConstructor(Tool):
         :return: None
         """
         sample_names = [io.value for io in self._tool_inputs['SAMPLE_NAME']]
-        logging.info(f"{len(sample_names)} samples provided")
+        logger.info(f"{len(sample_names)} samples provided")
         nucleotide_by_sample_by_position = self.__get_nucleotides_per_position()
         include_ref = 'include_ref' in self._parameters
         self._tool_outputs['FASTA'] = [self.__generate_matrix(
@@ -75,7 +75,7 @@ class SnpMatrixConstructor(Tool):
         nucl_by_position = {pos: nucl for pos, nucl in nucl_by_position.items() if not all(
             [x == 'N' for x in nucl.values()])}
 
-        logging.info("{} SNP positions found across all samples".format(len(nucl_by_position)))
+        logger.info("{} SNP positions found across all samples".format(len(nucl_by_position)))
         return nucl_by_position
 
     @staticmethod
@@ -96,7 +96,7 @@ class SnpMatrixConstructor(Tool):
                 if (not include_filtered) and len(record.FILTER) > 0:
                     continue
                 vcf_records.append(record)
-        logging.info(f"{vcf_path} parsed: {len(vcf_records)} variant positions")
+        logger.info(f"{vcf_path} parsed: {len(vcf_records)} variant positions")
         return vcf_records
 
     def __generate_matrix(self, sample_names: List[str], nucl_by_pos: Dict[SNPPosition, Dict[str, str]],

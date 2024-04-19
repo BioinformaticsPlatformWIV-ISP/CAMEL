@@ -1,9 +1,9 @@
-import logging
 from typing import Optional, List, Dict
 
 import yaml
 
 from camel.app.camel import Camel
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -62,4 +62,4 @@ class SCCmecTyping(Tool):
         for complex_, genes in genes_by_complex.items():
             if all(g in detected_genes for g in genes):
                 return complex_
-        logging.debug("No complex found")
+        logger.debug("No complex found")

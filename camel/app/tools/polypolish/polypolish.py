@@ -10,7 +10,6 @@ from camel.app.tools.tool import Tool
 
 
 class Polypolish(Tool):
-
     """
     Polishing assembly with short reads using polypolish.
 
@@ -29,7 +28,7 @@ class Polypolish(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super().__init__('Polypolish', '0.5.0', camel)
+        super().__init__('Polypolish', '0.6.0', camel)
 
     def _execute_tool(self) -> None:
         """
@@ -67,11 +66,12 @@ class Polypolish(Tool):
         :param fasta_output: Polished assembly
         :return: None
         """
-        self._command.command = ' '.join([self._tool_command,
-                                          *self._build_options(),
-                                          str(fasta_input),
-                                          ' '.join(str(sam_file) for sam_file in sam_input),
-                                          f'> {fasta_output}'])
+        self._command.command = ' '.join([
+            self._tool_command,
+            *self._build_options(),
+            str(fasta_input),
+            *[str(sam_file) for sam_file in sam_input],
+            f'> {fasta_output}'])
 
     def _check_command_output(self) -> None:
         """

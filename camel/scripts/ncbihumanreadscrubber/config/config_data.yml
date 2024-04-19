@@ -1,0 +1,6 @@
+####################
+# Pipeline options #
+####################
+citations:
+  main: null
+  other: null

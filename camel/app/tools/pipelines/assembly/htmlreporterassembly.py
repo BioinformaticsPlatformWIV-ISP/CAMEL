@@ -27,7 +27,7 @@ class HtmlReporterAssembly(Tool):
         Executes this tool.
         :return: None
         """
-        self._report_section = HtmlReportSection('Assembly', subtitle=self._input_informs['spades']['_name'])
+        self._report_section = HtmlReportSection('Assembly', subtitle=self._input_informs['assembler']['_name'])
         self.__add_assembly_info()
         self.__add_assembly_download_link()
         self._tool_outputs['VAL_HTML'] = [ToolIOValue(self._report_section, False)]
@@ -37,16 +37,16 @@ class HtmlReporterAssembly(Tool):
         Checks if the input is valid.
         :return: None
         """
-        if 'FASTA_Contig' not in self._tool_inputs:
-            raise InvalidInputSpecificationError("No assembly input found ('FASTA_Contig')")
+        if 'FASTA_raw' not in self._tool_inputs:
+            raise InvalidInputSpecificationError("No assembly input found ('FASTA_raw')")
+        if 'FASTA_filt' not in self._tool_inputs:
+            raise InvalidInputSpecificationError("No filtered assembly input found ('FASTA_filt')")
         if 'SAMPLE_NAME' not in self._tool_inputs:
             raise InvalidInputSpecificationError("No sample name input found ('SAMPLE_NAME')")
-        if 'ASSEMBLER' not in self._tool_inputs:
-            raise InvalidInputSpecificationError("No assembler input found ('ASSEMBLER')")
         if 'quast' not in self._input_informs:
             raise InvalidInputSpecificationError("Quast informs are required ('quast')")
-        if 'spades' not in self._input_informs:
-            raise InvalidInputSpecificationError("SPAdes informs are required ('spades')")
+        if 'assembler' not in self._input_informs:
+            raise InvalidInputSpecificationError("Assembler informs are required ('assembler')")
         super()._check_input()
 
     def __add_assembly_info(self) -> None:
@@ -56,7 +56,7 @@ class HtmlReporterAssembly(Tool):
         """
         quast_informs = self._input_informs['quast']
         table_data = [
-            ('Assembler:', self._tool_inputs['ASSEMBLER'][0].value),
+            ('Assembler:', self._input_informs['assembler']['_name']),
             ('N50:', '{:,}'.format(int(quast_informs['contig']['N50']))),
             ('Number of contigs:', '{:,}'.format(int(quast_informs['contig']['# contigs (>= 1000 bp)']))),
             ('Total length:', '{:,}'.format(int(quast_informs['genome']['Total length'])))
@@ -72,9 +72,9 @@ class HtmlReporterAssembly(Tool):
 
         # Add filtered assembly
         relative_path = self.__subfolder / f'{sample_name_valid}_contigs.fasta'
-        self._report_section.add_file(self._tool_inputs['FASTA_Contig'][0].path, relative_path)
+        self._report_section.add_file(self._tool_inputs['FASTA_filt'][0].path, relative_path)
         self._report_section.add_link_to_file('Assembly (FASTA)', relative_path)
 
         # Add unfiltered assembly
         relative_path_raw = self.__subfolder / f'{sample_name_valid}_contigs_unfilt.fasta'
-        self._report_section.add_file(self._tool_inputs['FASTA_Raw'][0].path, relative_path_raw)
+        self._report_section.add_file(self._tool_inputs['FASTA_raw'][0].path, relative_path_raw)

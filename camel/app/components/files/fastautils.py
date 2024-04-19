@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import List, Union, Optional
 
 from Bio import SeqIO
+from Bio.SeqRecord import SeqRecord
 
 from camel.app.command.command import Command
 
@@ -177,3 +178,20 @@ class FastaUtils(object):
         # Create the output file
         with fasta_out.open('w') as handle:
             SeqIO.write(seqs_in, handle, 'fasta')
+
+    @staticmethod
+    def convert_fasta_to_fastq(fasta_input_file: Path, fastq_output_file: Path) -> None:
+        """
+        Converts a FASTA file to a FASTQ file with perfect Phred quality scores.
+        :return: None
+        """
+        with fasta_input_file.open('r') as fasta_file, fastq_output_file.open('w') as fastq_file:
+            for record in SeqIO.parse(fasta_file, 'fasta'):
+                # Create a fake quality score string of the same length as the sequence
+                fake_quality = [40] * len(record.seq)
+
+                # Create a SeqRecord with the same sequence and a fake quality string
+                fake_record = SeqRecord(record.seq, id=record.id, description=record.description, letter_annotations={
+                    "phred_quality": fake_quality})
+                # Write the SeqRecord in FASTQ format
+                SeqIO.write(fake_record, fastq_file, 'fastq')

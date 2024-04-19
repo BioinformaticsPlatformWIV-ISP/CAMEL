@@ -21,7 +21,7 @@ class Trimmomatic(Tool):
         Initializes Trimmomatic.
         :param camel: Camel instance
         """
-        super().__init__('Trimmomatic', '0.38', camel)
+        super().__init__('Trimmomatic', '0.39', camel)
         self._mode = None
 
     def _execute_tool(self) -> None:

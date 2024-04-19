@@ -37,7 +37,7 @@ class BedtoolsBamToBed(Bedtools):
         :param camel: a camel instance.
         :return: None
         """
-        super().__init__('bedtools bamtobed', '2.25.0', camel)
+        super().__init__('bedtools bamtobed', '2.31.0', camel)
         self._required_inputs = ['BAM']
 
     def _execute_tool(self):

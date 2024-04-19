@@ -1,6 +1,6 @@
 import abc
 import argparse
-import logging
+from camel.app.loggers import logger
 from typing import Optional, List, Dict, Sequence
 
 from camel.app.components.phylogeny.snpphylogenyutils import SnpPhylogenyUtils, InvalidInputError, Sample, MappingInput
@@ -51,7 +51,7 @@ class BasePhylo(object, metaclass=abc.ABCMeta):
         try:
             return SnpPhylogenyUtils.extract_samples(self._args)
         except InvalidInputError as err:
-            logging.error(f"Invalid input: {err}")
+            logger.error(f"Invalid input: {err}")
             self._report.add_error_message(str(err))
             self._report.save()
             exit(0)

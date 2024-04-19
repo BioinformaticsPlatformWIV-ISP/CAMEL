@@ -1,9 +1,9 @@
-import logging
 from typing import Optional
 
 from camel.app.camel import Camel
 from camel.app.components.pubmlst.pubmlstparser import PubMLSTParser, PubMLSTParsingError
 from camel.app.io.tooliovalue import ToolIOValue
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -32,12 +32,12 @@ class ResistanceMetadataExtractor(Tool):
                 continue
             allele_url = self.__get_allele_url(h.value.locus, h.value.allele_id)
             if allele_url is None:
-                logging.warning("Cannot determine valid url for: {}_{}".format(h.value.locus, h.value.allele_id))
+                logger.warning("Cannot determine valid url for: {}_{}".format(h.value.locus, h.value.allele_id))
                 continue
             try:
                 key, value = PubMLSTParser.parse_linked_data(allele_url)
             except PubMLSTParsingError as err:
-                logging.warning(f"Cannot parse: {allele_url}: {err}")
+                logger.warning(f"Cannot parse: {allele_url}: {err}")
                 continue
             table_data.append(['{} ({}_{}):'.format(key, h.value.locus, h.value.allele_id), value])
 

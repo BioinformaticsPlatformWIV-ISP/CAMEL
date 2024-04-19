@@ -1,0 +1,4 @@
+dependencies: null
+parameters:
+  hit_type: {default: true, mandatory: true, option: null, p_index: 0, value: blast}
+tool_command: null

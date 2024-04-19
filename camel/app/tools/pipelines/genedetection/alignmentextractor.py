@@ -1,4 +1,3 @@
-import logging
 from pathlib import Path
 
 from camel.app.camel import Camel
@@ -7,6 +6,7 @@ from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.components.genedetection.genedetectionblasthit import GeneDetectionBlastHit
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -52,7 +52,7 @@ class AlignmentExtractor(Tool):
         if 'TXT' not in self._tool_inputs:
             raise InvalidInputSpecificationError("No TXT input found.")
         if 'VAL_Hits' not in self._tool_inputs:
-            logging.warning("No blast hits input found")
+            logger.warning("No blast hits input found")
         super(AlignmentExtractor, self)._check_input()
 
     def __save_alignment(self, hit: GeneDetectionBlastHit, alignment: str) -> Path:

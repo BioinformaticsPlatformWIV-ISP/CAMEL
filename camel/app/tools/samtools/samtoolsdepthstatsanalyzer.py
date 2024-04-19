@@ -1,9 +1,9 @@
-import logging
 from typing import Dict, List, Union, Tuple, Any
 
 from camel.app.components.files.fastautils import FastaUtils
 from camel.app.components.statisticsutils import StatisticsUtils
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -17,7 +17,7 @@ class SamtoolsDepthStatsAnalyzer(Tool):
         Initializes this tool
         :param camel: Camel instance
         """
-        super().__init__('samtools depth stats analyzer', '1.9', camel)
+        super().__init__('samtools depth stats analyzer', '1.17', camel)
 
     def _execute_tool(self) -> None:
         """
@@ -50,10 +50,10 @@ class SamtoolsDepthStatsAnalyzer(Tool):
         if 'FASTA_REF' in self._tool_inputs:
             for ref_seq_id, seq in FastaUtils.read_as_dict(self._tool_inputs['FASTA_REF'][0].path).items():
                 refseq_length[ref_seq_id] = len(seq)
-            logging.debug('FASTA_REF refseq length: {}'.format(refseq_length))
+            logger.debug('FASTA_REF refseq length: {}'.format(refseq_length))
             self.informs['refseq_length'] = refseq_length
         else:
-            logging.warning(
+            logger.warning(
                 "No FASTA_REF input, reference sequence length unknown. An end gap will be reported for each covered reference sequence, and base coverage calculation skipped.")
 
         coverages, segment_coverages, segment_gaps, segment_base_count = SamtoolsDepthStatsAnalyzer.collect_inform(
@@ -113,7 +113,7 @@ class SamtoolsDepthStatsAnalyzer(Tool):
             if seq_id in refseq_length:
                 segment_base_cov[seq_id] = 100.0 * segment_base_count[seq_id] / refseq_length[seq_id]
             else:
-                logging.warning("Refseq {!r} length unknown, base coverage and genome coverage skipped.".format(seq_id))
+                logger.warning("Refseq {!r} length unknown, base coverage and genome coverage skipped.".format(seq_id))
                 segment_base_cov[seq_id] = 'NA'
                 genome_base_cov = 'NA'
 
@@ -227,7 +227,7 @@ class SamtoolsDepthStatsAnalyzer(Tool):
                     last_gap = (last_pos + 1, refseq_length[seq_id])
 
             else:
-                logging.warning("Reference sequence with id {!r} is missing from FASTA_REF input.".format(seq_id))
+                logger.warning("Reference sequence with id {!r} is missing from FASTA_REF input.".format(seq_id))
                 last_gap = (last_pos + 1, 'end')
 
         else:

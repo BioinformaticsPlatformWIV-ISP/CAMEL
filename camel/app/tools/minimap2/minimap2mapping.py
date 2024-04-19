@@ -1,12 +1,13 @@
 from pathlib import Path
+from typing import Optional
 
 from camel.app.camel import Camel
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
-from camel.app.tools.tool import Tool
+from camel.app.tools.toolpipeable import ToolPipeable
 
 
-class Minimap2Mapping(Tool):
+class Minimap2Mapping(ToolPipeable):
     """
     A versatile pairwise aligner for genomic and spliced nucleotide sequences.
     """
@@ -28,10 +29,11 @@ class Minimap2Mapping(Tool):
         self._execute_command()
         self.__set_output(path_out)
 
-    def __build_command(self, path_out: Path) -> None:
+    def __build_command(self, path_out: Optional[Path], pipe_out: bool = False) -> None:
         """
         Builds the command line call.
         :param path_out: Output filename
+        :param pipe_out: If true, the output is redirected to stdout
         :return: None
         """
         parts = [
@@ -40,8 +42,9 @@ class Minimap2Mapping(Tool):
             str(self._tool_inputs['FASTA'][0].path),
             str(self._tool_inputs['FASTQ'][0].path),
             ' '.join(self._build_options(excluded_parameters=['output_filename'])),
-            f'> {path_out}'
         ]
+        if not pipe_out:
+            parts.append(f'> {path_out}')
         self._command.command = ' '.join(parts)
 
     def _check_command_output(self) -> None:
@@ -59,3 +62,22 @@ class Minimap2Mapping(Tool):
         :return: None
         """
         self._tool_outputs['SAM'] = [ToolIOFile(Path(path_out))]
+
+    def _before_pipe(self, path_pipe_in: Path, pipe_in: bool, pipe_out: bool) -> None:
+        """
+        Prepares the command that will be piped.
+        :param path_pipe_in: Path to the input pipe
+        :param pipe_in: True if tool receives piped input
+        :param pipe_out: True if tool generates piped output
+        :return: None
+        """
+        self.__build_command(None, pipe_out)
+
+    def _after_pipe(self, stderr: str, is_last_in_pipe: bool) -> None:
+        """
+        Performs the required steps after executing the tool as part of a pipe.
+        :param stderr: Stderr for this command in the pipe
+        :param is_last_in_pipe: Boolean to indicate if this is the last step in the pipe
+        :return: None
+        """
+        pass

@@ -1,9 +1,9 @@
-import logging
 import re
 from typing import Optional
 
 from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.tools.picard.picard import Picard
 
 
@@ -95,7 +95,7 @@ class CollectMultipleMetrics(Picard):
                         output_file = self.folder / (self._parameters['output_prefix'].value + suffix_value)
                         self._tool_outputs['TXT_' + suffix_key] = [ToolIOFile(output_file)]
                 except KeyError:
-                    logging.warning(f'Picard CollectMultipleMetrics unsupported metrics {key}, its results will not be analyzed or returned.')
+                    logger.warning(f'Picard CollectMultipleMetrics unsupported metrics {key}, its results will not be analyzed or returned.')
 
     def _set_informs(self, stderr: Optional[str] = None) -> None:
         """
@@ -123,7 +123,7 @@ class CollectMultipleMetrics(Picard):
                     # No output to analyze, set to prevent going to 'else' case
                     continue
                 else:  # RnaSeqMetrics, CollectSequencingArtifactMetrics, CollectQualityYieldMetrics
-                    logging.warning(
+                    logger.warning(
                         f'Picard CollectMultipleMetrics unsupported metrics {key}, its results will not be analyzed or returned.')
 
     def _build_command(self, pipe_in: bool = False, pipe_out: bool = False) -> None:
@@ -199,7 +199,7 @@ class CollectMultipleMetrics(Picard):
                         self.informs['InsertSize_stats']['MEAN_INSERT_SIZE'] = informs[col_nbs['MEAN_INSERT_SIZE']]
                         self.informs['InsertSize_stats']['STANDARD_DEVIATION'] = informs[col_nbs['STANDARD_DEVIATION']]
                     else:
-                        logging.warning(
+                        logger.warning(
                             f'Picard CollectMultipleMetrics unsupported READS ORIENTATION {informs[col_nbs["PAIR_ORIENTATION"]]} for InsertSize analysis')
 
     def __analyze_gc_bias(self) -> None:

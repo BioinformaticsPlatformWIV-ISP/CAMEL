@@ -1,15 +1,16 @@
-import os
-import sys
-import yaml
 import argparse
-import subprocess
 import bz2
+import datetime
+import os
+import subprocess
+import sys
+
+import yaml
 
 from camel.app.camel import Camel
 from camel.app.command.command import Command
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.pipeline.pipeline import Pipeline
-import datetime
 
 
 class GATKSomaticMain(object):
@@ -209,7 +210,7 @@ class GATKSomaticMain(object):
         self._ap.add_argument('--dryrun', dest='dryrun', action="store_const", const="--dryrun", help='Snakemake dryrun; generates the list of jobs.', default="")
 
         # job id
-        self._ap.add_argument('--job_id', dest='job_id', metavar='job_id', help='Job ID for debugging and logging.',
+        self._ap.add_argument('--job_id', dest='job_id', metavar='job_id', help='Job ID for debugging and logger.',
                               default=datetime.datetime.now().strftime("%Y%m%d_%H%M%S-%f"))
         # mutect threads (mainly for testing)
         self._ap.add_argument('--test_mutect_nct', dest='test_mutect_nct', metavar='test_mutect_nct', help='Threads to use for mutect2. Multithreading leads to longer runtime on targeted data.')

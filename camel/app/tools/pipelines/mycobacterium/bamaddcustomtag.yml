@@ -1,0 +1,6 @@
+dependencies: [ samtools/1.17 ]
+parameters:
+  name: { default: false, mandatory: true, option: null, value: 'CUSTOM' }
+  value: { default: false, mandatory: true, option: null, value: '10' }
+  output: { default: true, mandatory: true, option: null, value: 'updated.bam' }
+tool_command: null

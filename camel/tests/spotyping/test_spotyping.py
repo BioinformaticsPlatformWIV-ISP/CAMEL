@@ -36,6 +36,25 @@ class TestSpoTyping(CamelTestSuite):
         self.assertIn('VAL_type_binary', spotyping.tool_outputs)
         self.verify_output_files(spotyping, 'LOG')
 
+    def test_spotyping_swift_off(self) -> None:
+        """
+        Tests the SpoTyping tool with the 'swift' parameter disabled..
+        :return: None
+        """
+        spotyping = SpoTyping(self.camel)
+        spotyping.add_input_files({
+            'FASTQ': [ToolIOFile(file_) for file_ in self.input_fastq_pe],
+            'INFORMS_spoligo_param': [ToolIOValue({
+                'min_strict': 3,
+                'min_relaxed': 3,
+                'downsample_factor': 'NA'
+            })]
+        })
+        spotyping.update_parameters(swift='off')
+        spotyping.run(self.running_dir)
+        self.assertIn('VAL_type_binary', spotyping.tool_outputs)
+        self.verify_output_files(spotyping, 'LOG')
+
 
 if __name__ == '__main__':
     unittest.main()

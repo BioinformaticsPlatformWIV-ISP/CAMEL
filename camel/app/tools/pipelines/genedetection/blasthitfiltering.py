@@ -1,4 +1,4 @@
-import logging
+from pathlib import Path
 from typing import List
 
 from camel.app.camel import Camel
@@ -8,6 +8,7 @@ from camel.app.components.genedetection.genedetectionblasthit import GeneDetecti
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliovalue import ToolIOValue
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -56,7 +57,7 @@ class BlastHitFiltering(Tool):
             raise InvalidInputSpecificationError("No 'TSV' input found.")
         super(BlastHitFiltering, self)._check_input()
 
-    def __parse_tabular_blast_output(self, tsv_file: str) -> List[GeneDetectionBlastHit]:
+    def __parse_tabular_blast_output(self, tsv_file: Path) -> List[GeneDetectionBlastHit]:
         """
         Parses the tabular input file.
         :param tsv_file: TSV input file
@@ -66,7 +67,7 @@ class BlastHitFiltering(Tool):
         for stats in BlastHitStatistics.parse_blast_output(tsv_file):
             seq_id = stats.subject_id.split('__')[2]
             hits.append(GeneDetectionBlastHit(seq_id, None, stats))
-        logging.info(f"{len(hits)} hits parsed")
+        logger.info(f"{len(hits)} hits parsed")
         return hits
 
     def __filter_hits(self, hits: List[GeneDetectionBlastHit]) -> List[GeneDetectionBlastHit]:
@@ -78,7 +79,7 @@ class BlastHitFiltering(Tool):
         hits = BlastHitFilteringHelper.filter_percent_identity(hits, float(
             self._parameters['min_percent_identity'].value))
         hits = BlastHitFilteringHelper.filter_coverage(hits, float(self._parameters['min_coverage'].value))
-        logging.info("Filtering method: '{}'".format(self._parameters['filtering_method'].value))
+        logger.info("Filtering method: '{}'".format(self._parameters['filtering_method'].value))
 
         # Report best hit(s) for each database cluster
         if self._parameters['filtering_method'].value == 'cluster':
@@ -105,7 +106,7 @@ class BlastHitFiltering(Tool):
             if cluster not in hits_per_cluster:
                 hits_per_cluster[cluster] = []
             hits_per_cluster[cluster].append(hit)
-        logging.debug('{} cluster(s) with hits'.format(len(hits_per_cluster)))
+        logger.debug('{} cluster(s) with hits'.format(len(hits_per_cluster)))
 
         reported_hits = []
         for _, hits in hits_per_cluster.items():

@@ -1,5 +1,4 @@
 import dataclasses
-import logging
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -7,6 +6,7 @@ import vcf
 
 from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.tools.bcftools.bcftoolsfilter import BcftoolsFilter
 
 
@@ -48,7 +48,7 @@ class FilterVariants(object):
         """
         self._dir = dir_
         if not self._dir.exists():
-            logging.info(f'Creating working directory: {self._dir}')
+            logger.info(f'Creating working directory: {self._dir}')
             self._dir.mkdir(parents=True)
         self._informs = []
 
@@ -56,12 +56,12 @@ class FilterVariants(object):
         """
         Runs the variant filtering workflow.
         """
-        logging.info(f"Applying filters: {', '.join(filters.keys())}")
+        logger.info(f"Applying filters: {', '.join(filters.keys())}")
         path_vcf = vcf_in
         for filter_key, filter_value in filters.items():
             if filter_key not in FilterVariants.PARAMS_BY_CALLER[calling_method]:
                 raise ValueError(f"Filter '{filter_key}' not supported for {calling_method}")
-            logging.info(f'Applying filter: {filter_key} (value={filter_value})')
+            logger.info(f'Applying filter: {filter_key} (value={filter_value})')
             path_vcf = self.__apply_filter(path_vcf, calling_method, filter_key, filter_value)
         return FilterVariantsOutput(path_vcf, FilterVariants.__extract_stats(path_vcf), self._informs)
 

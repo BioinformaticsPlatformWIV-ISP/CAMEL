@@ -1,11 +1,10 @@
-import logging
 from pathlib import Path
-from typing import Optional, Union
+from typing import Union
 
 import yaml
 
-from camel.app.loggers.logmanager import LogManager
-from camel.config import LOGGING_CONFIG, MAIN_CONFIG
+from camel.app.loggers import initialize_logging, logger
+from camel.config import MAIN_CONFIG
 
 
 class Camel(object):
@@ -16,16 +15,12 @@ class Camel(object):
     _current_instance = None
     _logger_is_initialized = False
 
-    def __init__(self, logging_config: Optional[Path] = LOGGING_CONFIG, tool_parameter_loc: str = None) -> None:
+    def __init__(self, tool_parameter_loc: str = None) -> None:
         """
         Initializes a CAMEL system.
-        :param logging_config: Location of logging config file
         :param tool_parameter_loc: Location of tool parameter YAML files
         """
-        if not Camel._logger_is_initialized and logging_config is not None:
-            LogManager.initialize(logging_config)
-            Camel._logger_is_initialized = True
-
+        initialize_logging()
         with open(MAIN_CONFIG) as f:
             self._config = yaml.safe_load(f)
 
@@ -33,7 +28,7 @@ class Camel(object):
             self._config['tool_parameter_loc'] = tool_parameter_loc
 
         commit_hash = Camel.get_commit_hash()
-        logging.debug(f"CAMEL commit hash: {commit_hash if commit_hash is not None else 'Not available'}")
+        logger.debug(f"CAMEL commit hash: {commit_hash if commit_hash is not None else 'Not available'}")
 
     @property
     def config(self) -> dict:

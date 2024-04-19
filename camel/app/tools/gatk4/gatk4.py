@@ -1,5 +1,4 @@
 import abc
-import logging
 import re
 import shutil
 import tempfile
@@ -8,6 +7,7 @@ from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -39,7 +39,7 @@ class GATK4(Tool, metaclass=abc.ABCMeta):
         Returns the formatted java options of this tool.
         :return: Name
         """
-        logging.info(f"Java options updated: '{java_options}'")
+        logger.info(f"Java options updated: '{java_options}'")
         self._java_options = f'"{java_options} -Djava.io.tmpdir={self._temp_dir}"'
 
     def _execute_tool(self) -> None:
@@ -124,7 +124,7 @@ class GATK4(Tool, metaclass=abc.ABCMeta):
         # log WARNINGS in info.log
         for line in self.stdout.split('\n'):
             if re.match('WARN', line):
-                logging.info(f" GATK - {line}")
+                logger.info(f" GATK - {line}")
 
             # E.g., The Genome Analysis Toolkit (GATK) v3.4-0-g7e26428
             match = re.search('The Genome Analysis Toolkit (GATK) (.+),', line)

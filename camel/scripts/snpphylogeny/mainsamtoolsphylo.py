@@ -129,7 +129,7 @@ class MainSamtoolsPhylo(BasePhylo):
         if link_path.is_symlink():
             link_path.unlink()
         link_path.symlink_to(self._args.reference)
-        bt2_index = Bowtie2Index(Camel(logging_config=None))
+        bt2_index = Bowtie2Index(Camel.get_instance())
         bt2_index.add_input_files({'FASTA_REF': [ToolIOFile(link_path)]})
         bt2_index.run(dir_ref)
         return bt2_index.tool_outputs['INDEX_GENOME_PREFIX'][0].value

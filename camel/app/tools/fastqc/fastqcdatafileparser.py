@@ -1,9 +1,9 @@
-import logging
 from pathlib import Path
 from typing import Dict, List
 
 from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -237,7 +237,7 @@ class FastQCDataFileParser(Tool):
         """
         max_difference = 0.0
         last_base = int(data[-1].split('\t')[0].split('-')[-1])
-        logging.debug("Checking A-T, G-C difference between base {} and {}".format(
+        logger.debug("Checking A-T, G-C difference between base {} and {}".format(
             nb_of_skipped_bases, last_base - nb_of_skipped_bases_end))
         for row in data[1:]:
             base, freq_g, freq_a, freq_t, freq_c = row.split('\t')

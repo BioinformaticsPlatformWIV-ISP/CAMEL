@@ -1,4 +1,4 @@
-dependencies: [samtools/1.9]
+dependencies: [samtools/1.17]
 parameters:
   header_only: {default: false, mandatory: false, option: -H, value: null}
   keep_header: {default: true, mandatory: false, option: -h, value: null}

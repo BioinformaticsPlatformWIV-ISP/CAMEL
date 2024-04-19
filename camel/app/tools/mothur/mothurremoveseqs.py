@@ -1,9 +1,8 @@
-import logging
-
 import os
 
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.tools.mothur.mothur import Mothur
 
 
@@ -96,4 +95,4 @@ class MothurRemoveSeqs(Mothur):
         if os.path.getsize(self._tool_inputs['TSV_Accnos'][0].path) == 0:
             with open(self._tool_inputs['TSV_Accnos'][0].path, 'wt', encoding='utf-8') as outf:
                 outf.write('adding_dummy_entry_as_original_file_is_empty\n')
-                logging.warning('WARNING: ACCNOS file was empty, added a dummy record!')
+                logger.warning('WARNING: ACCNOS file was empty, added a dummy record!')

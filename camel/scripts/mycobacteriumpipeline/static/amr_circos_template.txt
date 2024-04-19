@@ -1,0 +1,76 @@
+# -------------------------#
+# Mycobacterium resistance #
+# -------------------------#
+
+# Karyotype
+karyotype = {karyo}
+chromosomes_units = 1000
+
+# Ideogram
+<ideogram>
+<spacing>
+default = 0u
+break = 0u
+</spacing>
+radius    = 1r
+thickness = 5p
+show_label = yes
+label_font = default
+label_radius = 1r + 50p
+label_size = 30
+label_parallel = yes
+</ideogram>
+
+
+<colors>
+sciensano_green = 190,205,45
+sciensano_dgreen = 105,170,65
+sciensano_lgreen = 195,232,189
+
+# Region coverage
+plot_data=56,108,176
+plot_bg=232,248,255
+
+# Regions
+myellow = 255,217,47
+mbrown = 229,196,148
+mpink = 231,138,195
+morange = 252,141,98
+
+</colors>
+
+##############
+# Highlights #
+##############
+<highlights>
+{highlights}
+</highlights>
+#########
+# Plots #
+#########
+<plots>
+{plots}
+</plots>
+
+
+################################################################
+# The remaining content is standard and required. It is imported
+# from default files in the Circos distribution.
+#
+# These should be present in every Circos configuration file and
+# overridden as required. To see the content of these files,
+# look in etc/ in the Circos distribution.
+
+<image>
+# Included from Circos distribution.
+<<include etc/image.conf>>
+</image>
+
+# RGB/HSV color definitions, color lists, location of fonts, fill patterns.
+# Included from Circos distribution.
+<<include etc/colors_fonts_patterns.conf>>
+
+# Debugging, I/O an dother system parameters
+# Included from Circos distribution.
+<<include etc/housekeeping.conf>>
+

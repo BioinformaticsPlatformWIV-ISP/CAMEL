@@ -1,22 +1,25 @@
 import shutil
 from pathlib import Path
 
-from camel.resources.snakefile import trimming, trimming_illumina, assembly_spades, \
-    quality_checks, contamination_check_kraken, sequence_typing, downsampling, amrfinder, trimming_ont, gene_detection, \
-    mobsuite, assembly_flye, medaka_polishing
+from camel.app.components.pipelines.reportpipeline import ReportPipeline
+from camel.app.snakemake.snakemakeutils import SnakemakeUtils
+from camel.resources.snakefile import core, assembly, downsampling, quast, confindr, trimming, trimming_illumina, \
+    quality_checks, contamination_check_kraken, sequence_typing, amrfinder, trimming_ont, gene_detection, \
+    mobsuite
 from camel.scripts.bacilluspipeline.snakefile import btyper, ani
 
 #######################
 # Included Snakefiles #
 #######################
+include: core.SNAKEFILE_CORE
 include: downsampling.SNAKEFILE_DOWNSAMPLING
 include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
 include: trimming_ont.SNAKEFILE_TRIMMING_ONT
+include: assembly.SNAKEFILE_ASSEMBLY
+include: quast.SNAKEFILE_QUAST
 include: contamination_check_kraken.SNAKEFILE_CONTAMINATION_CHECK_KRAKEN
+include: confindr.SNAKEFILE_CONFINDR
 include: quality_checks.SNAKEFILE_QUALITY_CHECKS
-include: assembly_spades.SNAKEFILE_ASSEMBLY_SPADES
-include: assembly_flye.SNAKEFILE_ASSEMBLY_FLYE
-include: medaka_polishing.SNAKEFILE_MEDAKA_POLISHING
 include: sequence_typing.SNAKEFILE_SEQUENCE_TYPING
 include: btyper.SNAKEFILE_BTYPER
 include: amrfinder.SNAKEFILE_AMRFINDER
@@ -35,201 +38,30 @@ rule all:
         HTML = config['output_report'],
         TSV = config['output_tabular']
 
-####################################
-# Linking workflow inputs & output #
-####################################
-
-rule link_downsampling_input:
-    """
-    Creates the FASTQ input for the downsampling step.
-    """
-    output:
-        FASTQ = Path(config['working_dir']) / downsampling.INPUT_DOWNSAMPLING_FASTQ
-    params:
-        config_input = config['input'],
-        read_type = config['read_type']
-    run:
-        from camel.app.io.tooliofile import ToolIOFile
-        from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-        if params.read_type == 'illumina':
-            SnakemakeUtils.dump_object([ToolIOFile(Path(x['path'])) for x in config['input']['fastq_pe']],
-                Path(output.FASTQ))
-        elif params.read_type == 'nanopore':
-            SnakemakeUtils.dump_object([ToolIOFile(Path(x['path'])) for x in config['input']['fastq_se']],
-                Path(output.FASTQ))
-        else:
-            raise ValueError(f'Unsupported read type: {params.read_type}')
-
-rule link_downsampling_to_trimming_workflows:
-    """
-    Links the downsampling output to the input of the ONT trimming workflow.  
-    """
-    input:
-        FASTQ = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_FASTQ
-    output:
-        FASTQ_ilmn = Path(config['working_dir']) / trimming_illumina.INPUT_TRIMMOMATIC_FASTQ if config['read_type'] == 'illumina' else [],
-        FASTQ_ont = Path(config['working_dir']) / trimming_ont.INPUT_ONT_FASTQ if config['read_type'] == 'nanopore' else []
-    params:
-        read_type = config['read_type']
-    run:
-        if params.read_type == 'nanopore':
-            shutil.copyfile(Path(input.FASTQ),Path(output.FASTQ_ont))
-        elif params.read_type == 'illumina':
-            shutil.copyfile(Path(input.FASTQ),Path(output.FASTQ_ilmn))
-        else:
-            raise ValueError(f'Unsupported read type: {params.read_type}')
-
-rule link_fastq_to_fq_dict:
-    """
-    Creates an IO object with the trimmed FASTQ files.
-    Other workflows such as Kraken or de novo assembly rely on this dictionary to get input files (PE or SE).
-    """
-    input:
-        FASTQ_ilmn = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_DICT if config['read_type'] == 'illumina' else [],
-        FASTQ_ont = Path(config['working_dir']) / trimming_ont.OUTPUT_TRIMMING_ONT_DICT if config['read_type'] == 'nanopore' else []
-    output:
-        IO_FASTQ = Path(config['working_dir']) / 'fq_dict.io'
-    params:
-        read_type = config['read_type']
-    run:
-        if params.read_type == 'illumina':
-            shutil.copyfile(Path(input.FASTQ_ilmn), Path(output.IO_FASTQ))
-        elif params.read_type == 'nanopore':
-            shutil.copyfile(Path(input.FASTQ_ont), Path(output.IO_FASTQ))
-        else:
-            raise ValueError(f'Unsupported read type: {params.read_type}')
-
-rule short_read_polishing:
-    """
-    This rule runs the short read polishing wrapper if necessary.
-    """
-    input:
-        FASTQ_ilmn = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_DICT,
-        FASTA = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_FASTA
-    output:
-        FASTA = Path(config['working_dir']) / 'polished.fasta'
-    params:
-        dir_ = Path(config['working_dir']) / 'trimming' / 'illumina'
-    threads: 4
-    run:
-        from camel.app.components.workflows.illuminapolishingwrapper import ShortReadPolishingWrapper
-        wrapper = ShortReadPolishingWrapper(Path(params.dir_))
-        wrapper.run_workflow(Path(input.FASTQ_ilmn), reference=Path(input.FASTA), threads=threads)
-        wrapper.output.fasta_contigs[0].path.rename(Path(output.FASTA))
-
-rule select_fasta_file:
-    """
-    This rule selects the fasta file to send to other workflows.
-    """
-    input:
-        FASTA_spades = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'illumina' else [],
-        FASTA_medaka = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_FASTA if config['read_type'] == 'nanopore' else [],
-        FASTA_polished = Path(config['working_dir']) / 'polished.fasta' if config['read_type'] == 'hybrid' else []
-    output:
-        FASTA = Path(config['working_dir']) / 'fasta.io'
-    params:
-        read_type=config['read_type']
-    run:
-        if params.read_type == 'illumina':
-            shutil.copyfile(Path(input.FASTA_spades),Path(output.FASTA))
-        elif params.read_type == 'nanopore':
-            shutil.copyfile(Path(input.FASTA_medaka),Path(output.FASTA))
-        elif params.read_type == 'hybrid':
-            SnakemakeUtils.dump_object(Path(input.FASTA_polished), output.FASTA)
-        else:
-            raise ValueError(f'Unsupported read type: {params.read_type}')
-
-rule link_fasta_to_gene_detection:
-    """
-    This rule links the output of the assembly workflows to the gene detection workflow.
-    """
-    input:
-        FASTA = rules.select_fasta_file.output.FASTA
-    output:
-        FASTA_genedetection = Path(config['working_dir']) / gene_detection.INPUT_GENE_DETECTION_FASTA
-    params:
-        read_type = config['read_type']
-    run:
-        shutil.copyfile(Path(input.FASTA), Path(output.FASTA_genedetection))
-
-rule link_fasta_to_typing:
-    """
-    This rule links the output of the assembly workflows to the sequence typing workflow.
-    """
-    input:
-        FASTA = rules.select_fasta_file.output.FASTA
-    output:
-        FASTA_typing = Path(config['working_dir']) / sequence_typing.INPUT_FASTA
-    params:
-        read_type = config['read_type']
-    run:
-        shutil.copyfile(Path(input.FASTA), output.FASTA_typing)
-
-rule link_fasta_to_tools_all:
-    """
-    This rule links the output of the assembly workflow to the amrfinder and mobsuite workflows.
-    """
-    input:
-        FASTA = rules.select_fasta_file.output.FASTA
-    output:
-        FASTA_amrfinder = Path(config['working_dir']) / amrfinder.INPUT_AMRFINDER_FASTA,
-        FASTA_mobsuite = Path(config['working_dir']) / mobsuite.INPUT_MOBSUITE_FASTA
-    params:
-        read_type = config['read_type']
-    run:
-        shutil.copyfile(Path(input.FASTA),Path(output.FASTA_amrfinder))
-        shutil.copyfile(Path(input.FASTA),Path(output.FASTA_mobsuite))
-
+#####################################
+# Linking workflow inputs & outputs #
+#####################################
 rule link_fasta_to_tools_subtilis:
     """
     This rule links the output of the assembly workflow to the fastANI workflow if the species is B. subtilis.
     """
     input:
-        FASTA = rules.select_fasta_file.output.FASTA
+        FASTA = Path(config['working_dir'], assembly.OUTPUT_ASSEMBLY_FASTA)
     output:
         FASTA_ani = Path(config['working_dir']) / ani.INPUT_FASTA_ANI
-    params:
-        read_type = config['read_type']
     run:
-        shutil.copyfile(Path(input.FASTA),Path(output.FASTA_ani))
+        shutil.copyfile(Path(input.FASTA), Path(output.FASTA_ani))
 
 rule link_fasta_to_tools_cereus:
     """
     This rule links the output of the assembly workflow to the BTyper workflow if the species is B. cereus.
     """
     input:
-        FASTA = rules.select_fasta_file.output.FASTA
+        FASTA = Path(config['working_dir'], assembly.OUTPUT_ASSEMBLY_FASTA)
     output:
         FASTA_btyper = Path(config['working_dir']) / btyper.INPUT_BTYPER_FASTA
-    params:
-        read_type = config['read_type']
     run:
-        shutil.copyfile(Path(input.FASTA),Path(output.FASTA_btyper))
-
-#############
-# Read type #
-#############
-rule select_assembly_output:
-    """
-    Selects the assembly output based on the read type.
-    """
-    input:
-        HTML = Path(config['working_dir']) / (assembly_spades.OUTPUT_ASSEMBLY_REPORT if config['read_type'] == 'illumina' else assembly_flye.OUTPUT_ASSEMBLY_REPORT),
-        TSV = Path(config['working_dir']) / (assembly_spades.OUTPUT_ASSEMBLY_SUMMARY if config['read_type'] == 'illumina' else assembly_flye.OUTPUT_ASSEMBLY_SUMMARY),
-        INFORMS = Path(config['working_dir']) / (assembly_spades.OUTPUT_ASSEMBLY_INFORMS if config['read_type'] == 'illumina' else assembly_flye.OUTPUT_ASSEMBLY_INFORMS),
-        INFORMS_filt = Path(config['working_dir']) / (assembly_spades.OUTPUT_ASSEMBLY_FILTERING_INFORMS if config['read_type'] == 'illumina' else assembly_flye.OUTPUT_ASSEMBLY_FILTERING_INFORMS)
-    output:
-        HTML = Path(config['working_dir']) / 'read_type' / 'assembly' / 'html.io',
-        TSV = Path(config['working_dir']) / 'read_type' / 'assembly' / 'summary.tsv',
-        INFORMS = Path(config['working_dir']) / 'read_type' / 'assembly' / 'informs.io',
-        INFORMS_filt = Path(config['working_dir']) / 'read_type' / 'assembly' / 'informs-filt.io'
-    shell:
-        """
-        cp {input.HTML} {output.HTML};
-        cp {input.TSV} {output.TSV};
-        cp {input.INFORMS} {output.INFORMS};
-        cp {input.INFORMS_filt} {output.INFORMS_filt};
-        """
+        shutil.copyfile(Path(input.FASTA), Path(output.FASTA_btyper))
 
 ##########
 # Report #
@@ -244,7 +76,7 @@ rule report_init:
         sample_name = config['sample_name'],
         config_input = config['input'],
         species = config['species'],
-        read_type = config['read_type'],
+        input_type = config['input_type'],
         pipeline_info = config['pipeline'],
         detection_method = config['detection_method'],
         citation_keys = config['citations']
@@ -253,34 +85,17 @@ rule report_init:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         from camel.app.io.tooliovalue import ToolIOValue
 
-        # Create header section
+        # Create the header section
         section = SnakePipelineUtils.create_input_section(
-            params.sample_name,
-            datetime.datetime.now(),
-            params.pipeline_info['version'], ', '.join(
-                input_file['name'] for _, input_files in params.config_input.items() for input_file in input_files),
-            [('Detection method', params.detection_method),
-             ('Read type', str(params.read_type)),
+            sample_name=params.sample_name,
+            date=datetime.datetime.now(),
+            pipeline_version=params.pipeline_info['version'],
+            input_files=ReportPipeline.format_input_string(params.config_input),
+            input_type=params.input_type,
+            extra_data=[('Detection method', params.detection_method),
              ('Species', f'<i>{params.species}</i>')],
-            params.citation_keys['main']
+            key_citation=params.citation_keys['main']
         )
-        SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output.HTML))
-
-rule report_pickle_citations:
-    """
-    This rule creates a pickle with a report section containing the citations.
-    """
-    output:
-        HTML = Path(config['working_dir']) / 'report' / 'html-citations.io'
-    params:
-        citation_keys = config['citations']
-    run:
-        from camel.app.io.tooliovalue import ToolIOValue
-        from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-        from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-
-        section = SnakePipelineUtils.create_citations_section(
-            params.citation_keys['other'], params.citation_keys['main'])
         SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output.HTML))
 
 rule report_create_commands_section:
@@ -288,20 +103,20 @@ rule report_create_commands_section:
     Creates the section with the commands.
     """
     input:
-        INFORMS_downsampling = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_INFORMS,
-        INFORMS_trimming = trimming.get_trimming_command_informs(config),
-        INFORMS_assembly = rules.select_assembly_output.output.INFORMS,
-        INFORMS_assembly_filt = rules.select_assembly_output.output.INFORMS_filt,
-        INFORMS_medaka = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_MAPPING_RATE_INFORMS if config['read_type'] == 'nanopore' else [],
-        INFORMS_kraken = Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_KRAKEN_INFORMS,
-        INFORMS_mapping = quality_checks.get_mapping_rate_informs(config),
-        INFORMS_depth = quality_checks.get_depth_informs(config),
+        INFORMS_downsampling = downsampling.get_command_informs(config),
+        INFORMS_trimming = trimming.get_command_informs(config),
+        INFORMS_assembly = assembly.get_command_informs(config),
+        INFORMS_quast = Path(config['working_dir']) / quast.OUTPUT_QUAST_INFORMS,
+        INFORMS_busco = Path(config['working_dir']) / quast.OUTPUT_BUSCO_INFORMS,
+        INFORMS_contamination = contamination_check_kraken.get_command_informs(config),
+        # INFORMS_confindr = Path(config['working_dir']) / confindr.OUTPUT_CONFINDR_INFORMS if 'confindr' in config['analyses'] else [],
+        INFORMS_assembly_map = assembly.get_qc_informs(config, config['input_type']),
         INFORMS_btyper = Path(config['working_dir']) / btyper.OUTPUT_INFORMS_BTYPER if 'btyper' in config['analyses'] else [],
         INFORMS_fastani = Path(config['working_dir']) / ani.OUTPUT_INFORMS_ANI if 'fastani' in config['analyses'] else [],
         INFORMS_amrfinder = Path(config['working_dir']) / str(amrfinder.OUTPUT_AMRFINDER_INFORMS) if 'amrfinder' in config['analyses'] else [],
         INFORMS_vfdb_core = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='vfdb_core') if 'vfdb_core' in config['analyses'] else [],
         INFORMS_plasmidfinder= Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='plasmidfinder') if 'plasmidfinder' in config['analyses'] else [],
-        INFORMS_mob_suite = Path(config['working_dir']) / mobsuite.OUTPUT_MOB_SUITE_INFORMS if 'mob_suite' in config['analyses'] else [],
+        INFORMS_mob_suite = Path(config['working_dir']) / mobsuite.OUTPUT_MOB_SUITE_INFORMS if 'mobsuite' in config['analyses'] else [],
         INFORMS_mlst_cereus = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='mlst_cereus') if 'mlst_cereus' in config['analyses'] else [],
         INFORMS_mlst_subtilis = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='mlst_subtilis') if 'mlst_subtilis' in config['analyses'] else []
     output:
@@ -309,17 +124,8 @@ rule report_create_commands_section:
     params:
         working_dir = config['working_dir']
     run:
-        from camel.app.io.tooliovalue import ToolIOValue
-        from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-        from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-        informs = []
-        for content in [SnakemakeUtils.load_object(Path(io)) for io in input]:
-            if type(content) is dict:
-                informs.append(content)
-            elif type(content) is list:
-                informs.extend(content)
-        section = SnakePipelineUtils.create_commands_section(informs, params.working_dir)
-        SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output.HTML))
+        from camel.app.components.pipelines.reportpipeline import ReportPipeline
+        ReportPipeline.export_command_section(input, Path(output.HTML), params.working_dir)
 
 rule report_content_cereus:
     """
@@ -327,12 +133,13 @@ rule report_content_cereus:
     """
     input:
         report_init = rules.report_init.output.HTML,
-        report_downsampling = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_REPORT,
-        report_trimming = trimming.get_trimming_report(config),
-        report_assembly = rules.select_assembly_output.output.HTML,
-        report_medaka = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_REPORT if config['read_type'] == 'nanopore' else Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_REPORT_EMPTY,
-        report_kraken = Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT,
-        report_adv_qc = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_REPORT,
+        reports_downsampling = downsampling.get_reports(config),
+        reports_trimming = trimming.get_reports(config),
+        report_quast = Path(config['working_dir']) / quast.OUTPUT_QUAST_REPORT,
+        reports_contamination = contamination_check_kraken.get_reports(config),
+        report_confindr = confindr.get_report(config),
+        report_adv_qc = Path(config['working_dir']) / str(quality_checks.OUTPUT_QUALITY_CHECKS_REPORT).format(
+            input_type=config['input_type']),
         report_btyper = Path(config['working_dir']) / (btyper.OUTPUT_BTYPER_REPORT if 'btyper' in config['analyses'] else btyper.OUTPUT_BTYPER_REPORT_EMPTY),
         report_amrfinder = Path(config['working_dir']) / (amrfinder.OUTPUT_AMRFINDER_REPORT if 'amrfinder' in config['analyses'] else amrfinder.OUTPUT_AMRFINDER_REPORT_EMPTY),
         report_vfdb_core = gene_detection.get_gene_detection_report('vfdb_core', config),
@@ -343,21 +150,31 @@ rule report_content_cereus:
         report_mlst = sequence_typing.get_sequence_typing_report('mlst_cereus', config),
         report_cgmlst = sequence_typing.get_sequence_typing_report('cgmlst_cereus', config),
         report_commands = rules.report_create_commands_section.output.HTML,
-        report_citations = rules.report_pickle_citations.output.HTML
+        report_citations = Path(config['working_dir'],core.OUTPUT_HTML_CITATIONS)
     output:
         HTML = Path(config['working_dir']) / 'report' / 'report_cereus.html'
     params:
         output_dir = config['output_dir'],
-        pipeline_info = config['pipeline']
+        pipeline_info = config['pipeline'],
+        input_type = config['input_type']
     run:
+        # Initialize the report
+        Path(params.output_dir).mkdir(exist_ok=True, parents=True)
         report = SnakePipelineUtils.init_pipeline_report(
             Path(output.HTML), Path(params.output_dir), params.pipeline_info)
-        Path(params.output_dir).mkdir(exist_ok=True)
         report.add_html_object(SnakemakeUtils.load_object(Path(input.report_init))[0].value)
-        report_structure = [
-            ('Read trimming and basic QC', 'trim', [Path(input.report_downsampling), Path(input.report_trimming)]),
-            ('Assembly', 'assembly', [Path(input.report_assembly), Path(input.report_medaka)]),
-            ('Advanced QC', 'adv_qc', [Path(x) for x in (input.report_adv_qc, input.report_kraken)]),
+        report_structure = []
+
+        # Core sections (shared)
+        ReportPipeline.add_content_trim_basic_qc(
+            report_structure, params.input_type, input.reports_downsampling, input.reports_trimming)
+        report_structure.append(('Assembly', 'assembly', [Path(input.report_quast)]))
+        ReportPipeline.add_content_contamination_check(
+            report_structure, params.input_type, input.reports_contamination, input.report_confindr)
+        report_structure.append(('Advanced QC', 'adv_qc', [Path(input.report_adv_qc)]))
+
+        # Custom assays (B. cereus)
+        report_structure.extend([
             ('BTyper3', 'btyper3', [Path(input.report_btyper)]),
             ('Virulence detection', 'virulence', [Path(x) for x in (input.report_vfdb_core,)]),
             ('AMRFinder results', 'amrfinder', [Path(input.report_amrfinder)]),
@@ -366,7 +183,7 @@ rule report_content_cereus:
             ('Sequence typing', 'st', [Path(x) for x in (input.report_rmlst, input.report_mlst, input.report_cgmlst)]),
             ('Citations', 'citations', [Path(input.report_citations)]),
             ('Commands', 'commands', [Path(input.report_commands)])
-        ]
+        ])
         SnakePipelineUtils.add_report_content(report, report_structure)
         report.save()
 
@@ -376,36 +193,48 @@ rule report_content_subtilis:
     """
     input:
         report_init = rules.report_init.output.HTML,
-        report_downsampling = Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_REPORT,
-        report_trimming = trimming.get_trimming_report(config),
-        report_assembly = rules.select_assembly_output.output.HTML,
-        report_medaka = Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_REPORT if config['read_type'] == 'nanopore' else Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_REPORT_EMPTY,
-        report_kraken = Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_REPORT,
-        report_adv_qc = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_REPORT,
+        reports_downsampling = downsampling.get_reports(config),
+        reports_trimming = trimming.get_reports(config),
+        report_quast = Path(config['working_dir']) / quast.OUTPUT_QUAST_REPORT,
+        reports_contamination = contamination_check_kraken.get_reports(config),
+        report_confindr = confindr.get_report(config),
+        report_adv_qc = Path(config['working_dir']) / str(quality_checks.OUTPUT_QUALITY_CHECKS_REPORT).format(
+            input_type=config['input_type']),
         report_fastani = Path(config['working_dir']) / (ani.OUTPUT_ANI_REPORT if 'fastani' in config['analyses'] else ani.OUTPUT_ANI_REPORT_EMPTY),
         report_amrfinder = Path(config['working_dir']) / (amrfinder.OUTPUT_AMRFINDER_REPORT if 'amrfinder' in config['analyses'] else amrfinder.OUTPUT_AMRFINDER_REPORT_EMPTY),
         report_gmo = gene_detection.get_gene_detection_report('gmo', config),
         report_vfdb_core = gene_detection.get_gene_detection_report('vfdb_core', config),
         report_plasmidfinder = gene_detection.get_gene_detection_report('plasmidfinder', config),
         report_mob_suite = Path(config['working_dir']) / (mobsuite.OUTPUT_MOB_SUITE_REPORT if 'mobsuite' in config['analyses'] else mobsuite.OUTPUT_MOB_SUITE_REPORT_EMPTY),
-        report_genomic_context = Path(config['working_dir']) / 'mob_suite' / 'genomic_context' / 'html.io',
+        report_genomic_context = Path(config['working_dir']) / (mobsuite.OUTPUT_MOB_SUITE_CONTEXT_REPORT if 'mobsuite' in config['analyses'] else mobsuite.OUTPUT_MOB_SUITE_CONTEXT_REPORT_EMPTY),
         report_rmlst = sequence_typing.get_sequence_typing_report('rmlst', config),
         report_mlst = sequence_typing.get_sequence_typing_report('mlst_subtilis', config),
-        report_citations = rules.report_pickle_citations.output.HTML,
+        report_citations = Path(config['working_dir'],core.OUTPUT_HTML_CITATIONS),
         report_commands = rules.report_create_commands_section.output.HTML
     output:
         HTML = Path(config['working_dir']) / 'report' / 'report_subtilis.html'
     params:
         output_dir = config['output_dir'],
-        pipeline_info = config['pipeline']
+        pipeline_info = config['pipeline'],
+        input_type = config['input_type']
     run:
+        # Init report
+        Path(params.output_dir).mkdir(exist_ok=True, parents=True)
         report = SnakePipelineUtils.init_pipeline_report(
             Path(output.HTML), Path(params.output_dir), params.pipeline_info)
         report.add_html_object(SnakemakeUtils.load_object(Path(input.report_init))[0].value)
-        report_structure = [
-            ('Read trimming and basic QC', 'trim', [Path(input.report_downsampling), Path(input.report_trimming)]),
-            ('Assembly', 'assembly', [Path(input.report_assembly), Path(input.report_medaka)]),
-            ('Advanced QC', 'adv_qc', [Path(x) for x in (input.report_adv_qc, input.report_kraken)]),
+        report_structure = []
+
+        # Core sections
+        ReportPipeline.add_content_trim_basic_qc(
+            report_structure, params.input_type, input.reports_downsampling, input.reports_trimming)
+        report_structure.append(('Assembly', 'assembly', [Path(input.report_quast)]))
+        ReportPipeline.add_content_contamination_check(
+            report_structure, params.input_type, input.reports_contamination, input.report_confindr)
+        report_structure.append(('Advanced QC', 'adv_qc', [Path(input.report_adv_qc)]))
+
+        # B. subtilis assays
+        report_structure.extend([
             ('FastANI', 'fastani', [Path(input.report_fastani)]),
             ('GMO detection', 'gmo', [Path(input.report_gmo)]),
             ('Virulence detection', 'virulence', [Path(x) for x in (input.report_vfdb_core,)]),
@@ -415,8 +244,8 @@ rule report_content_subtilis:
             ('Sequence typing', 'st', [Path(x) for x in (input.report_rmlst, input.report_mlst)]),
             ('Citations', 'citations', [Path(input.report_citations)]),
             ('Commands', 'commands', [Path(input.report_commands)])
-        ]
-        SnakePipelineUtils.add_report_content(report,report_structure)
+        ])
+        SnakePipelineUtils.add_report_content(report, report_structure)
         report.save()
 
 rule report_select_by_species:
@@ -431,45 +260,21 @@ rule report_select_by_species:
         output_dir = config['output_dir']
     shell:
         """
-        cp {input.HTML} {output.HTML}
+        cp {input.HTML} {output.HTML};
         """
-
-rule summary_init:
-    """
-    Initializes the summary output file.
-    """
-    output:
-        TSV = Path(config['working_dir']) / 'summary' / 'summary-init.tsv'
-    run:
-        import datetime
-        from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-        analysis_date = datetime.datetime.now().strftime(SnakePipelineUtils.DATE_FORMAT)
-        input_filenames = ', '.join(
-            input_file['name'] for _, input_files in config['input'].items() for input_file in input_files)
-        with open(output.TSV, 'w') as handle:
-            for kv_pair in [
-                ('pipeline_name', config['pipeline']['name']),
-                ('pipeline_version', config['pipeline']['version']),
-                ('sample', config['sample_name']),
-                ('input_files', input_filenames),
-                ('analysis_date', analysis_date),
-                ('detection_method', config['detection_method'])]:
-                handle.write('\t'.join(kv_pair))
-                handle.write('\n')
 
 rule summary_combine_all:
     """
     In this rule all summary files are combined into a complete summary output file.
     """
     input:
-        rules.summary_init.output.TSV,
-        Path(config['working_dir']) / downsampling.OUTPUT_DOWNSAMPLING_SUMMARY,
-        trimming.get_trimming_summary(config),
-        Path(config['working_dir']) / rules.select_assembly_output.output.TSV,
-        Path(config['working_dir']) / medaka_polishing.OUTPUT_ASSEMBLY_SUMMARY if config['read_type'] == 'nanopore' else [],
-        Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_SUMMARY if 'kraken' in config['analyses'] else [],
+        Path(config['working_dir'],core.OUTPUT_TSV_SUMMARY_INIT),
+        downsampling.get_summaries(config),
+        trimming.get_summaries(config),
+        Path(config['working_dir']) / quast.OUTPUT_QUAST_SUMMARY,
         Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY,
-        Path(config['working_dir']) / contamination_check_kraken.OUTPUT_CONTAMINATION_SUMMARY,
+        contamination_check_kraken.get_summaries(config),
+        confindr.get_summary(config),
         Path(config['working_dir']) / btyper.OUTPUT_BTYPER_SUMMARY if 'btyper' in config['analyses'] else [],
         Path(config['working_dir']) / amrfinder.OUTPUT_AMRFINDER_SUMMARY if 'amrfinder' in config['analyses'] else [],
         Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='vfdb_core') if 'vfdb_core' in config['analyses'] else [],
@@ -482,9 +287,25 @@ rule summary_combine_all:
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='mlst_subtilis') if 'mlst_subtilis' in config['analyses'] else [],
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='cgmlst_cereus') if 'cgmlst_cereus' in config['analyses'] else []
     output:
-        config.get('output_tabular')
+        TSV = config.get('output_tabular')
     run:
-        with open(output[0], 'w') as handle_out:
+        with open(output.TSV, 'w') as handle_out:
             for summary_input in input:
                 with open(summary_input) as handle_in:
                     handle_out.write(handle_in.read())
+
+rule link_genomic_context:
+    """
+    Links the input databases to the genomic context assay.
+    """
+    input:
+        # AMR
+        TSV_amrfinder = Path(config['working_dir']) / 'amrfinder' / 'tsv.io' if 'amrfinder' in config['analyses'] else [],
+        # Virulence
+        TSV_gd_vfdb = Path(config['working_dir']) / 'gene_detection' / 'vfdb_core' / 'metadata' / 'tsv.io' if 'vfdb_core' in config['analyses'] else [],
+        INFORMS_gd_vfdb = Path(config['working_dir']) / 'gene_detection' / 'vfdb_core' / 'db_manager' / 'informs.io' if 'vfdb_core' in config['analyses'] else []
+    output:
+        TSV = Path(config['working_dir']) / 'mob_suite' / 'genomic_context' / 'input' / 'tsv.io',
+        INFORMS = Path(config['working_dir']) / 'mob_suite' / 'genomic_context' / 'input' / 'informs.io'
+    run:
+        mobsuite.collect_genomic_context_input(input, Path(output.TSV), Path(output.INFORMS))

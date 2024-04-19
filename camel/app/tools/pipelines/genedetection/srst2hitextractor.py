@@ -1,4 +1,3 @@
-import logging
 from pathlib import Path
 from typing import List
 
@@ -6,6 +5,7 @@ from camel.app.camel import Camel
 from camel.app.components.genedetection.genedetectionsrst2hit import GeneDetectionSRST2Hit
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliovalue import ToolIOValue
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -67,5 +67,5 @@ class SRST2HitExtractor(Tool):
                     float(parts[header_indices['divergence']]),
                     float(parts[header_indices['depth']])
                 ))
-        logging.info(f"{len(hits)} hits parsed")
+        logger.info(f"{len(hits)} hits parsed")
         return hits

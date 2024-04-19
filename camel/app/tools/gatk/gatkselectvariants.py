@@ -1,8 +1,8 @@
-import logging
 import re
 
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.invalidparametererror import InvalidParameterError
+from camel.app.loggers import logger
 from camel.app.tools.gatk.gatk import GATK
 
 
@@ -37,7 +37,7 @@ class GATKSelectVariants(GATK):
                 raise InvalidParameterError(
                     "No space in the 'select' option JEXL expression. e.g., 'DQ>100', not 'DQ > 100'. Expression specified {}.".format(select_exp))
         else:
-            logging.warning("GATK SelectVariants run without specify variant selection criterion.")
+            logger.warning("GATK SelectVariants run without specify variant selection criterion.")
 
     def _check_input(self):
         """

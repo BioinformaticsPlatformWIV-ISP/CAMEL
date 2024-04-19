@@ -3,4 +3,6 @@ parameters:
   allele_absent_symbol: {default: false, mandatory: false, option: null, value: '0'}
   allele_wildcards: {default: true, mandatory: true, option: null, value: N}
   min_percent_detected: {default: true, mandatory: true, option: null, value: 60}
+  write_tsv: {default: false, mandatory: false, option: null, value: False}
+  output_filename: {default: false, mandatory: false, option: null, value: profile_matches.tsv}
 tool_command: null

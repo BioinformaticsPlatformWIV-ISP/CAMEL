@@ -1,4 +1,3 @@
-import logging
 from pathlib import Path
 from typing import List
 
@@ -7,6 +6,7 @@ import abc
 from camel.app.components.vcf.vcfutils import VCFUtils
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -58,7 +58,7 @@ class BaseFilter(Tool, metaclass=abc.ABCMeta):
         nb_of_variants_pre = VCFUtils.count_variants(self._tool_inputs['VCF_GZ'][0].path)
         self._apply_filter()
         nb_of_variants_post = VCFUtils.count_variants(self.output_path)
-        logging.info('{}/{} variants passed {} filtering'.format(nb_of_variants_post, nb_of_variants_pre, self._name))
+        logger.info('{}/{} variants passed {} filtering'.format(nb_of_variants_post, nb_of_variants_pre, self._name))
         self._informs['variants_in'] = nb_of_variants_pre
         self._informs['variants_out'] = nb_of_variants_post
         self._informs['full_name'] = self.full_name

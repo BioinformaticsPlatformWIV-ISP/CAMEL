@@ -1,16 +1,16 @@
 import binascii
 import datetime
-import logging
 import re
 from pathlib import Path
 from typing import List
 
 from camel.app.command.command import Command
+from camel.app.loggers import logger
 
 
 class FileSystemHelper(object):
     """
-    This class contains utility function to work with the file system.
+    This class contains utility functions to work with the file system.
     """
 
     TIMESTAMP_FILENAME = "%Y%m%d-%H%M%S"
@@ -78,8 +78,22 @@ class FileSystemHelper(object):
         :param output_gz_file: Output path
         :return: None
         """
-        logging.info(f"Extracting: {input_gz_file}")
+        logger.info(f"Extracting: {input_gz_file}")
         command = Command(f'gunzip -k -c {input_gz_file} > {output_gz_file}')
         command.run(Path.cwd())
         if not command.returncode == 0:
             raise RuntimeError(f"Cannot extract '{input_gz_file}': {command.stderr}")
+
+    @staticmethod
+    def gzip_file(input_file: Path, output_gz_file: Path) -> None:
+        """
+        Extracts a GZIP compressed file, the original file is left untouched.
+        :param input_file: Input non GZ file
+        :param output_gz_file: Output path
+        :return: None
+        """
+        logger.info(f"Extracting: {input_file}")
+        command = Command(f'gzip -c {input_file} > {output_gz_file}')
+        command.run(Path.cwd())
+        if not command.returncode == 0:
+            raise RuntimeError(f"Cannot gzip '{input_file}': {command.stderr}")

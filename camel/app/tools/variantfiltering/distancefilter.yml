@@ -1,4 +1,4 @@
-dependencies: [bcftools/1.9]
+dependencies: [bcftools/1.17]
 parameters:
   keep_best: {default: true, mandatory: false, option: null, value: null}
   min_distance: {default: true, mandatory: true, option: null, value: '10'}

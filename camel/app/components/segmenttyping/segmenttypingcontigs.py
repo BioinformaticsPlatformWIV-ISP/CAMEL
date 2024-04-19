@@ -1,9 +1,9 @@
-import logging
 import pprint
 from typing import List, Dict, Any
 
 from camel.app.components.blasthit.blastnhit import BlastnHit
 from camel.app.components.segmenttyping.segmenttyping import SegmentTyping
+from camel.app.loggers import logger
 
 
 class SegmentTypingContigs(SegmentTyping):
@@ -47,10 +47,10 @@ class SegmentTypingContigs(SegmentTyping):
         """
         # multiple best targets
         if 1 < len(self.best_candidate_targets) < 4:
-            logging.debug(f"Segment {self._segment} has more than one best target sequence ({self.best_candidate_targets}) with hits statistics {self._normalized_stats[self.best_target]}.")
+            logger.debug(f"Segment {self._segment} has more than one best target sequence ({self.best_candidate_targets}) with hits statistics {self._normalized_stats[self.best_target]}.")
             self._ambiguous = True
         elif len(self.best_candidate_targets) >= 4:
-            logging.warning(f"Segment {self._segment} has too many best target sequences ({self.best_candidate_targets}) with hits statistics {self._normalized_stats[self.best_target]}.")
+            logger.warning(f"Segment {self._segment} has too many best target sequences ({self.best_candidate_targets}) with hits statistics {self._normalized_stats[self.best_target]}.")
             self._ambiguous = True
 
     def _collect_target_hits(self):
@@ -63,7 +63,7 @@ class SegmentTypingContigs(SegmentTyping):
                 self._target_hits[hit.qseqid].append(hit)
             else:
                 self._target_hits[hit.qseqid] = [hit]
-        logging.debug(f'Segment typing: blast hits collected for segment {self._segment}: \n{self._target_hits}')
+        logger.debug(f'Segment typing: blast hits collected for segment {self._segment}: \n{self._target_hits}')
 
     def _process_target_stats(self) -> None:
         """
@@ -176,7 +176,7 @@ class SegmentTypingContigs(SegmentTyping):
         Nicely formatted normalized hit stats output
         :return: None
         """
-        logging.debug("Segment refseq hits statistics (sum out of blastn hits):")
+        logger.debug("Segment refseq hits statistics (sum out of blastn hits):")
         stats_keys = sorted(self._normalized_stats[next(iter(self._normalized_stats))].keys())
         table_data = []
         for refseq, stats in self._normalized_stats.items():
@@ -184,8 +184,8 @@ class SegmentTypingContigs(SegmentTyping):
             for key in stats_keys:
                 row_data.append(str(stats[key]))
             table_data.append(row_data)
-        logging.debug(['Refseq ID'] + stats_keys)
-        logging.debug(pprint.pformat(table_data, indent=2, width=160))
+        logger.debug(['Refseq ID'] + stats_keys)
+        logger.debug(pprint.pformat(table_data, indent=2, width=160))
 
     def _calculate_corrected_counts(self, refseq: str, max_alignment_length: int) -> float:
         """
@@ -226,8 +226,8 @@ class SegmentTypingContigs(SegmentTyping):
             elif variant_rate == best_variant_rate:
                 self._best_candidate_targets.append(refseq)
 
-        logging.info(f"Best reference {self.best_candidate_targets}:")
-        logging.info(f"Reference statistics: {self._normalized_stats[best_refseq]})")
+        logger.info(f"Best reference {self.best_candidate_targets}:")
+        logger.info(f"Reference statistics: {self._normalized_stats[best_refseq]})")
 
     def _select_top_20(self) -> None:
         """
@@ -243,7 +243,7 @@ class SegmentTypingContigs(SegmentTyping):
             self._calculate_corrected_counts(refseq, max_alignment_length)
             variant_rate_refseq.append((seq_stats['variant_rate'], refseq))
         top20 = sorted(variant_rate_refseq)[:20]
-        logging.debug(f"Top 20 targets: {top20}")
+        logger.debug(f"Top 20 targets: {top20}")
         for entry in top20:
             self._top20[entry[1]] = {'summarized_stats': self._summarized_stats[entry[1]],
                                      'normalized_stats': self._normalized_stats[entry[1]]}

@@ -1,5 +1,4 @@
-import logging
-
+from camel.app.loggers import logger
 from camel.app.tools.gatk.gatk import GATK
 
 
@@ -19,7 +18,7 @@ class GATKRealignerTargetCreator(GATK):
 
         self._required_inputs = ['BAM', 'FASTA_REF']
         self._output_type = 'TXT_realign_intervals'
-        logging.info(""" NOTE: From GATK 3.6 on, Indel realignment is no longer necessary for variant discovery if you plan to use a variant
+        logger.info(""" NOTE: From GATK 3.6 on, Indel realignment is no longer necessary for variant discovery if you plan to use a variant
             caller that performs a haplotype assembly step, such as HaplotypeCaller or MuTect2. However it is still
             required when using legacy callers such as UnifiedGenotyper or the original MuTect. """)
 

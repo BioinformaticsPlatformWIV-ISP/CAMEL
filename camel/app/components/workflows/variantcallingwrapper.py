@@ -92,9 +92,10 @@ class VariantCallingWrapper(object):
         }
         return {
             'sample_name': sample_name,
-            'working_dir': self._working_dir,
+            'working_dir': str(self._working_dir),
             'variant_calling': options,
-            'variant_filtering': {}
+            'variant_filtering': {},
+            'input_type': 'illumina'
         }
 
     def __collect_output(self, output_files: Dict[str, Path]) -> None:

@@ -16,7 +16,7 @@ class MedakaConsensus(Medaka):
         :param camel: Camel instance
         :return: None
         """
-        super().__init__('medaka consensus', '1.7.3', camel)
+        super().__init__('medaka consensus', '1.11.3', camel)
 
         self._required_inputs = ['BAM']
         self._output_type = 'HDF'

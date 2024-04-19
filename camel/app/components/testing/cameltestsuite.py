@@ -1,12 +1,11 @@
-import logging
 import os
+import shutil
+import tempfile
 import unittest
 from pathlib import Path
 
-import shutil
-import tempfile
-
 from camel.app.camel import Camel
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -47,7 +46,7 @@ class CamelTestSuite(unittest.TestCase):
         :return: None
         """
         self.running_dir = Path(tempfile.mkdtemp(None, 'camel_', CamelTestSuite.camel.config['temp_dir']))
-        logging.debug(f"Directory for testing: {self.running_dir}")
+        logger.debug(f"Directory for testing: {self.running_dir}")
 
     def tearDown(self) -> None:
         """
@@ -55,10 +54,10 @@ class CamelTestSuite(unittest.TestCase):
         :return: None
         """
         if os.environ.get('CAMEL_KEEP_TEST_DIRS') == '1':
-            logging.debug("Keeping working directory (CAMEL_KEEP_TEST_DIRS)")
+            logger.debug("Keeping working directory (CAMEL_KEEP_TEST_DIRS)")
             return
         if Path(self.running_dir).exists():
-            logging.debug(f"Removing working directory: {self.running_dir}")
+            logger.debug(f"Removing working directory: {self.running_dir}")
             shutil.rmtree(self.running_dir)
 
     def verify_output_files(self, tool: Tool, key: str, nb_files: int = 1) -> None:

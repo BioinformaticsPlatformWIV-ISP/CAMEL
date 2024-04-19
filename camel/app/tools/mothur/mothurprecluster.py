@@ -1,7 +1,6 @@
-import logging
-
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.tools.mothur.mothur import Mothur
 
 
@@ -121,4 +120,4 @@ class MothurPreCluster(Mothur):
             self._symlink_cleanup()
         else:
             self._set_output()
-            logging.warning("Skipping the precluster step as requested by setting the skip_step parameter!")
+            logger.warning("Skipping the precluster step as requested by setting the skip_step parameter!")

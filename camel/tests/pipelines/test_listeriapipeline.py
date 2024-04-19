@@ -65,27 +65,30 @@ class TestListeriaPipeline(CamelTestSuite):
     @longRunningTest()
     def test_listeria_pipeline_blast(self) -> None:
         """
-        Tests the Neisseria pipeline with all assays except for cgMLST.
+        Tests the Listeria pipeline with all assays except for cgMLST.
         :return: None
         """
         path_report_out = self.running_dir / 'out' / 'report.html'
         path_summary_out = self.running_dir / 'out' / 'summary.tsv'
+        path_fasta_out = self.running_dir / 'out' / 'assembly.fasta'
         args = [
             '--fastq-pe', str(TestListeriaPipeline.input_fastq_pe[0]),
             str(TestListeriaPipeline.input_fastq_pe[1]),
             '--output-html', str(path_report_out),
             '--output-dir', str(path_report_out.parent),
+            '--output-fasta', str(path_fasta_out),
             '--output-tsv', str(path_summary_out),
             '--working-dir', str(self.running_dir)
         ] + [f"--{a.replace('_', '-')}" for a in MainListeriaPipeline.CUSTOM_ANALYSES if a != 'cgmlst']
         main = MainListeriaPipeline(args)
         main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)
+        self.assertGreater(path_fasta_out.stat().st_size, 0)
 
     @longRunningTest()
     def test_listeria_pipeline_srst2(self) -> None:
         """
-        Tests the Neisseria pipeline with all assays except for cgMLST.
+        Tests the Listeria pipeline with all assays except for cgMLST.
         :return: None
         """
         path_report_out = self.running_dir / 'out' / 'report.html'
@@ -107,7 +110,7 @@ class TestListeriaPipeline(CamelTestSuite):
     @longRunningTest()
     def test_listeria_pipeline_kma(self) -> None:
         """
-        Tests the Neisseria pipeline with all assays except for cgMLST.
+        Tests the Listeria pipeline with all assays except for cgMLST.
         :return: None
         """
         path_report_out = self.running_dir / 'out' / 'report.html'

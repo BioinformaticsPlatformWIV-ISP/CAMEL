@@ -1,4 +1,3 @@
-import logging
 import random
 import tempfile
 
@@ -6,6 +5,7 @@ import abc
 import os
 
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -26,7 +26,7 @@ class Mothur(Tool):
         super().__init__(name, version, camel)
         # For reproducibility a seed is specified for each operation
         self._seed = random.randint(1, 10000000)
-        logging.debug('Set seed to: {}'.format(self._seed))
+        logger.debug('Set seed to: {}'.format(self._seed))
         self.__symlinks = []
         self.__temp_dir = tempfile.mkdtemp(dir='/scratch/temp')
 

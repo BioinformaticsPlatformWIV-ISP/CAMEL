@@ -1,5 +1,6 @@
 import os
 import re
+from pathlib import Path
 
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
@@ -68,7 +69,7 @@ class Kraken(Tool):
         :return: None
         """
         basename = self.__get_basename()
-        self._tool_outputs['TSV'] = [ToolIOFile(basename + '.output.tsv')]
+        self._tool_outputs['TSV'] = [ToolIOFile(Path(basename + '.output.tsv'))]
 
     def __build_input_string(self):
         """
@@ -102,7 +103,7 @@ class Kraken(Tool):
         :param options: Option string to check
         :return: Option string
         """
-        if self._tool_inputs['DB'][0].path.startswith('/dev/shm'):
+        if self._tool_inputs['DB'][0].path.name.startswith('/dev/shm'):
             return re.sub(r'--preload\s', '', options)
         elif 'preload' not in options:
             return '--preload ' + options

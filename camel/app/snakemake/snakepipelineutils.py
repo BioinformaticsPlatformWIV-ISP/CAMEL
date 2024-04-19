@@ -1,7 +1,7 @@
-import logging
+import re
 from datetime import datetime
 from pathlib import Path
-from typing import List, Tuple, Any, Dict, Optional
+from typing import List, Tuple, Any, Dict, Optional, Union
 
 import yaml
 
@@ -14,6 +14,7 @@ from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.error.snakemakeexecutionerror import SnakemakeExecutionError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.io.tooliovalue import ToolIOValue
+from camel.app.loggers import logger
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources import CSS_STYLE
 from camel.resources.javascript import JQUERY_SRC
@@ -38,14 +39,18 @@ class SnakePipelineUtils(object):
         return report
 
     @staticmethod
-    def create_input_section(sample_name: str, date: datetime, pipeline_version: str, input_files: str,
-                             extra_data: List[Tuple[str, str]], key_citation: str = None) -> HtmlReportSection:
+    def create_input_section(
+            sample_name: str, date: datetime, pipeline_version: str, input_files: str, input_type: str,
+            detection_method: Optional[str] = None, extra_data: Optional[List[Tuple[str, str]]] = None,
+            key_citation: str = None) -> HtmlReportSection:
         """
         Creates the input section for the HTML report.
         :param sample_name: Sample name
         :param date: Analysis date
         :param pipeline_version: Pipeline version
         :param input_files: Input files
+        :param input_type: Input type
+        :param detection_method: Detection method
         :param extra_data: Extra data to include in the input section
         :param key_citation: Citation for the pipeline.
         :return: Input report section
@@ -55,9 +60,13 @@ class SnakePipelineUtils(object):
             ['Analysis date:', date.strftime(SnakePipelineUtils.DATE_FORMAT)],
             ['Pipeline version:', pipeline_version],
             ['Input files:', input_files],
+            ['Input type:', input_type]
         ]
-        for key, value in extra_data:
-            table_data.append([f'{key}:', value])
+        if detection_method is not None:
+            table_data.append(['Detection method:', detection_method])
+        if extra_data is not None:
+            for key, value in extra_data:
+                table_data.append([f'{key}:', value])
         section = HtmlReportSection('Input')
         section.add_table(table_data, table_attributes=[('class', 'information')])
         if key_citation is not None:
@@ -149,7 +158,7 @@ class SnakePipelineUtils(object):
             output_dir.mkdir(parents=True)
         with config_path.open('w') as handle:
             yaml.dump(config_data, handle)
-        logging.info(f"Configuration file created: {config_path}")
+        logger.info(f"Configuration file created: {config_path}")
         return str(config_path)
 
     @staticmethod
@@ -195,11 +204,23 @@ class SnakePipelineUtils(object):
         # Create and run command
         command = Command(' '.join(command_parts))
         command.run(working_dir)
-        print(f'- Stdout: -\n{command.stdout}')
-        print(f'- Stderr: -\n{command.stderr}')
         if command.returncode != 0:
-            raise SnakemakeExecutionError(command.stdout, command.stderr)
+            rule_failed = SnakePipelineUtils.__get_failed_rule(command.stderr)
+            logger.error(f"Failed at rule: {rule_failed if rule_failed is not None else 'n/a'}")
+            raise SnakemakeExecutionError(command.stdout, command.stderr, rule_failed)
         return command
+
+    @staticmethod
+    def __get_failed_rule(stderr: str) -> Union[str, None]:
+        """
+        Returns the name of the rule that failed during Snakemake execution.
+        :return: Name of the failed rule
+        """
+        for line in reversed(stderr.splitlines()):
+            m = re.match(r'Error in rule (\w+):', line.strip())
+            if not m:
+                continue
+            return m.group(1)
 
     @staticmethod
     def create_commands_section(tool_informs: List[Dict[str, Any]], working_dir: Path) -> HtmlReportSection:
@@ -210,7 +231,7 @@ class SnakePipelineUtils(object):
         :return: Commands section
         """
         section = HtmlReportSection('Commands')
-        logging.debug(f"Exporting command for {len(tool_informs)} tools")
+        logger.debug(f"Exporting command for {len(tool_informs)} tools")
         for informs in tool_informs:
             header = f"{informs['_name']} - {informs['_tag']}" if '_tag' in informs else informs['_name']
             section.add_header(header, 3)
@@ -250,19 +271,19 @@ class SnakePipelineUtils(object):
                 try:
                     output_dict[key_new] = io[key_orig]
                 except KeyError:
-                    logging.warning(f"No '{key_orig}' input found")
+                    logger.warning(f"No '{key_orig}' input found")
         elif key_se is not None:
             se_reads = io.get('SE_FWD', []) + io.get('SE_REV', [])
             output_dict[key_se] = se_reads
         else:
-            logging.debug(f"No key(s) provided for SE reads")
+            logger.debug(f"No key(s) provided for SE reads")
 
         # Remove keys that are empty
         if drop_empty:
             for key in list(output_dict.keys()):
                 if (output_dict[key] is not None) and (len(output_dict[key]) > 0):
                     continue
-                logging.debug(f'Removing empty input: {key}')
+                logger.debug(f'Removing empty input: {key}')
                 output_dict.pop(key)
 
         # Return the reformatted dictionary
