@@ -15,7 +15,7 @@ citations:
     - Camacho_2009-blast
     - Clausen_2018-kma
     - Inouye_2014-srst2
-    - Zankari_2012-resfinder
+    - Bortolaia_2020-resfinder_4.0
     - Feldgarden_2019-ndaro
     - Joensen_2014-virulencefinder
     - Jaureguy_2008-pasteur
@@ -55,6 +55,10 @@ quast:
 amrfinder:
   db: /db/amrfinder/by_version/latest
 
+resfinder4:
+  db: /db/resfinder4
+  point: false
+
 ############################
 # Gene detection databases #
 ############################
@@ -66,13 +70,6 @@ gene_detection:
     metadata:
       name: Antibiotic(s)
       key: subclass
-
-  resfinder:
-    path: /db/gene_detection/ResFinder
-    perc_identity_cutoff: 90
-    metadata:
-      name: Antibiotic(s)
-      key: antibiotics
 
   # Virulence
   virulencefinder:

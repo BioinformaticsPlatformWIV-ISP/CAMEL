@@ -2,7 +2,7 @@ from pathlib import Path
 
 from camel.resources.snakefile import trimming_illumina, gene_detection, trimming, contamination_check_kraken, \
     quality_checks, sequence_typing, downsampling, confindr, quast, amrfinder, core, trimming_ont, assembly, \
-    human_read_scrubbing
+    human_read_scrubbing, resfinder4
 
 #######################
 # Included Snakefiles #
@@ -18,6 +18,7 @@ include: contamination_check_kraken.SNAKEFILE_CONTAMINATION_CHECK_KRAKEN
 include: confindr.SNAKEFILE_CONFINDR
 include: quality_checks.SNAKEFILE_QUALITY_CHECKS
 include: amrfinder.SNAKEFILE_AMRFINDER
+include: resfinder4.SNAKEFILE_RESFINDER4
 include: gene_detection.SNAKEFILE_GENE_DETECTION
 include: sequence_typing.SNAKEFILE_SEQUENCE_TYPING
 
@@ -48,6 +49,7 @@ rule report_command_section:
         INFORMS_assembly_map = assembly.get_qc_informs(config, config['input_type']),
         # AMRFinder
         INFORMS_amrfnder = Path(config['working_dir']) / amrfinder.OUTPUT_AMRFINDER_INFORMS if 'amrfinder' in config['analyses'] else [],
+        INFORMS_resfinder4 = Path(config['working_dir']) / resfinder4.OUTPUT_RESFINDER4_INFORMS if 'resfinder4' in config['analyses'] else [],
         # Gene detection
         INFORMS_resfinder = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='resfinder') if 'resfinder' in config['analyses'] else [],
         INFORMS_virulencefinder = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='virulencefinder') if 'virulencefinder' in config['analyses'] else [],
@@ -84,7 +86,7 @@ rule report_combine_all:
             input_type=config['input_type']),
         # AMR detection
         report_amrfinder = Path(config['working_dir']) / (amrfinder.OUTPUT_AMRFINDER_REPORT if 'amrfinder' in config['analyses'] else amrfinder.OUTPUT_AMRFINDER_REPORT_EMPTY),
-        report_resfinder = gene_detection.get_gene_detection_report('resfinder', config),
+        report_resfinder4 = Path(config['working_dir']) / (resfinder4.OUTPUT_RESFINDER4_REPORT if 'resfinder4' in config['analyses'] else resfinder4.OUTPUT_RESFINDER4_REPORT_EMPTY),
         # Virulence detection
         report_virulence = gene_detection.get_gene_detection_report('virulencefinder', config),
         report_vfdb_core = gene_detection.get_gene_detection_report('vfdb_core', config),
@@ -138,7 +140,7 @@ rule report_combine_all:
         report_structure.extend([
             ('Species identification', 'species', [Path(x) for x in (
                 input.report_rmlst, input.report_species, input.report_mlst)]),
-            ('AMR detection', 'amr', [Path(x) for x in (input.report_amrfinder, input.report_resfinder)]),
+            ('AMR detection', 'amr', [Path(x) for x in (input.report_amrfinder, input.report_resfinder4)]),
             ('Virulence detection', 'virulence', [Path(x) for x in (input.report_virulence, input.report_vfdb_core)]),
             ('Plasmid replicon detection', 'plasmid', [Path(input.report_plasmidfinder)]),
             ('Sequence typing', 'typing', [Path(x) for x in (
@@ -163,7 +165,7 @@ rule summary_combine_all:
         confindr.get_summary(config),
         # AMR detection
         Path(config['working_dir']) / amrfinder.OUTPUT_AMRFINDER_SUMMARY if 'amrfinder' in config['analyses'] else [],
-        Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='resfinder') if 'resfinder' in config['analyses'] else [],
+        Path(config['working_dir']) / resfinder4.OUTPUT_RESFINDER4_SUMMARY if 'resfinder4' in config['analyses'] else [],
         # Virulence detection
         Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='virulencefinder') if 'virulencefinder' in config['analyses'] else [],
         Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='vfdb_core') if 'vfdb_core' in config['analyses'] else [],
