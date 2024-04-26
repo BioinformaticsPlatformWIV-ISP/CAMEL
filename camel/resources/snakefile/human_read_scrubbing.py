@@ -25,7 +25,7 @@ def get_reports(config: Dict[str, Any]) -> List[Path]:
     paths = []
 
     # FASTA input
-    if input_type in ('fasta', 'fasta_vcf'):
+    if input_type in ('fasta', 'fasta_with_vcf'):
         if 'human_read_scrubbing' in config['analyses']:
             paths.append(str(OUTPUT_SCRUBBING_REPORT).format(input_format='fasta'))
         else:
@@ -61,7 +61,7 @@ def get_command_informs(config: Dict[str, Any]) -> List[Path]:
         return []
 
     # FASTA input
-    if (input_type in ('fasta', 'fasta_vcf')) and ('human_read_scrubbing' in config['analyses']):
+    if (input_type in ('fasta', 'fasta_with_vcf')) and ('human_read_scrubbing' in config['analyses']):
         paths.append(str(OUTPUT_SCRUBBING_INFORMS).format(input_format='fasta'))
 
     # PE reads
@@ -87,7 +87,7 @@ def get_summaries(config: Dict[str, Any]) -> List[Path]:
         return []
 
     # FASTA input
-    if (input_type in ('fasta', 'fasta_vcf')) and ('human_read_scrubbing' in config['analyses']):
+    if (input_type in ('fasta', 'fasta_with_vcf')) and ('human_read_scrubbing' in config['analyses']):
         paths.append(str(OUTPUT_SCRUBBING_SUMMARY).format(input_format='fasta'))
 
     # PE reads

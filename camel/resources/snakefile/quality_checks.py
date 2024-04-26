@@ -132,7 +132,7 @@ QC_CHECKS_BY_KEY = {qc.key: qc for qc in [
         full_name='Total assembly length deviation',
         threshold_warn=10,
         threshold_fail=20,
-        supported_input_types=['fasta', 'fasta_vcf', 'hybrid', 'illumina', 'ont'],
+        supported_input_types=['fasta', 'fasta_with_vcf', 'hybrid', 'illumina', 'ont'],
         fmt_string_value='{:.2f}%',
         value_should_exceed=False,
         explanation='Percent deviation from the expected genome size.'),
@@ -142,7 +142,7 @@ QC_CHECKS_BY_KEY = {qc.key: qc for qc in [
         threshold_warn=90.0,
         threshold_fail=80.0,
         fmt_string_value='{:.2f}%',
-        supported_input_types=['fasta', 'fasta_vcf', 'hybrid', 'illumina', 'ont'],
+        supported_input_types=['fasta', 'fasta_with_vcf', 'hybrid', 'illumina', 'ont'],
         explanation='BUSCO Benchmarking Universal Single-Copy Orthologs) can be used to estimate the completeness of '
                     'an assembly.'),
     QCCheck(

@@ -65,7 +65,7 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
             '--fastq-se-name', help="Input SE FASTQ filename (for Galaxy)")
         argument_parser.add_argument(
             '--input-type', help='Input type',
-            choices=['illumina', 'iontorrent', 'ont', 'hybrid', 'fasta', 'fasta_vcf'], default='illumina')
+            choices=['illumina', 'iontorrent', 'ont', 'hybrid', 'fasta', 'fasta_with_vcf'], default='illumina')
 
         # Output
         argument_parser.add_argument('--working-dir', type=Path, default=Path.cwd())
@@ -91,7 +91,7 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         if args.sample_name is not None:
             return FileSystemHelper.make_valid(args.sample_name)
         # FASTA input
-        elif args.input_type in ('fasta', 'fasta_vcf'):
+        elif args.input_type in ('fasta', 'fasta_with_vcf'):
             if args.fasta_name is not None:
                 return FileSystemHelper.make_valid(Path(args.fasta_name).stem)
             return FileSystemHelper.make_valid(Path(args.fasta).stem)
@@ -155,12 +155,11 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         links = []
 
         # FASTA input
-        if self._args.input_type == 'fasta':
+        if self._args.input_type in ('fasta', 'fasta_with_vcf'):
             links.append(['fasta', self._args.fasta, f'{self.sample_name}.fasta'])
 
         # FASTA + VCF input (Mycobacterium HERA)
-        if self._args.input_type == 'fasta_vcf':
-            links.append(['fasta', self._args.fasta, f'{self.sample_name}.fasta'])
+        if self._args.input_type == 'fasta_with_vcf':
             links.append(['vcf_unfiltered', self._args.vcf_unfiltered, f'{self.sample_name}.vcf'])
 
         # PE reads

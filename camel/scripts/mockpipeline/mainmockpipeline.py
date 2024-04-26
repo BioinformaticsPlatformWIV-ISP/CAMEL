@@ -69,7 +69,6 @@ class MainMockPipeline(ReportPipeline):
         with open(CONFIG_DATA) as handle_in:
             mainscriptutils.dict_merge(
                 config_data, yaml.safe_load(handle_in.read().format(
-                    coverage_max=self._args.cov_max,
-                    export_bam='true' if self._args.report_include_bam else 'false'
+                    coverage_max=self._args.cov_max
                 )))
         return Path(SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir))

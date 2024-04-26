@@ -75,7 +75,8 @@ class SnakePipelineUtils(object):
             section.add_html_object(HtmlCitation.parse_from_json(key_citation))
         if input_type == 'fasta':
             section.add_warning_message(
-                'A genomic assembly (FASTA) was used as input. Be careful when interpreting the results!')
+                'The input file is in FASTA format, which is not compatible with some of the QC checks. '
+                'Care should be taken when interpreting the results.')
         return section
 
     @staticmethod

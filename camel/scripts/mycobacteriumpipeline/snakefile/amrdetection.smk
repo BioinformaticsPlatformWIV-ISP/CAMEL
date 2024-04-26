@@ -107,7 +107,7 @@ rule amr_pileup_variant_positions:
     """
     input:
         FASTA = Path(config['working_dir']) / 'variant_calling' / 'reference' / 'fasta.io',
-        BAM = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_BAM,
+        BAM = variant_calling.get_bam(config),
         TXT_POS = rules.amr_export_positions.output.TXT
     output:
         PILEUP = Path(config['working_dir']) / 'amr' / 'pileup' / 'pileup.io'
