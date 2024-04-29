@@ -6,6 +6,7 @@ from typing import Tuple, Optional, Sequence, Dict, Any
 
 from camel.app.camel import Camel
 from camel.app.components import mainscriptutils
+from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.loggers import logger
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
@@ -89,7 +90,7 @@ class MainCheckM(object):
         self._args.working_dir.mkdir(parents=True, exist_ok=True)
         input_dict = {'FASTA': []}
         for fasta_file, fasta_name in self._args.fasta:
-            path_new = self._args.working_dir / fasta_name
+            path_new = self._args.working_dir / FileSystemHelper.make_valid(fasta_name)
             path_new.symlink_to(fasta_file)
             input_dict['FASTA'].append(ToolIOFile(path_new))
         input_str = ', '.join([fasta_name for _, fasta_name in self._args.fasta])
