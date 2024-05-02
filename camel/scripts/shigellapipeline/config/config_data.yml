@@ -49,6 +49,7 @@ quast:
     gff3: /db/refgenomes/Shigella_sonnei/GCA_000092525.1.gff
 
 quality_checks:
+  typing_scheme: {qc_typing_scheme}
   expected_gc_content: 50.5
 
 confindr:
