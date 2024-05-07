@@ -54,11 +54,16 @@ rule mykrobe_report:
     output:
         HTML = Path(config['working_dir']) / mykrobe.OUTPUT_MYKROBE_REPORT
     params:
-        dir_ = Path(config['working_dir']) / 'mykrobe' / 'report'
+        dir_ = Path(config['working_dir']) / 'mykrobe' / 'report',
+        skip_amr = config['mykrobe'].get('skip_amr', False)
     run:
         from camel.app.tools.mykrobe.mykrobereporter import MykrobeReporter
 
         reporter = MykrobeReporter(Camel.get_instance())
+        if params.skip_amr:
+            reporter.add_input_files({
+                'SKIP_AMR': [ToolIOValue(params.skip_amr)]
+            })
         step = Step(str(rule), reporter, Camel.get_instance(), params.dir_)
         SnakemakeUtils.add_pickle_inputs(reporter, input)
         step.run_step()
@@ -82,6 +87,8 @@ rule mykrobe_create_summary:
         INFORMS_mykrobe = rules.mykrobe_run.output.INFORMS
     output:
         TSV = Path(config['working_dir']) / mykrobe.OUTPUT_MYKROBE_SUMMARY
+    params:
+        skip_amr = config['mykrobe'].get('skip_amr',False)
     run:
         # Collect informs
         informs = SnakemakeUtils.load_object(Path(input.INFORMS_mykrobe))
@@ -94,8 +101,9 @@ rule mykrobe_create_summary:
             handle.write('\n')
             handle.write(f"mykrobe_lineage\t{informs['lineage']}")
             handle.write('\n')
-            handle.write(f"mykrobe_drug_susceptibility\t{informs['drug_susceptibility']}")
-            handle.write('\n')
+            if str(params.skip_amr) == 'False':
+                handle.write(f"mykrobe_drug_susceptibility\t{informs['drug_susceptibility']}")
+                handle.write('\n')
             handle.write(f"mykrobe_tool_version\t{informs['_name']}")
             handle.write('\n')
             handle.write(f"mykrobe_db_version\t{informs['db_version']}")
