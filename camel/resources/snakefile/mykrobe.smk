@@ -12,7 +12,7 @@ rule mykrobe_run:
     Runs the Mykrobe assay.
     """
     input:
-        IO = Path(config['working_dir']) / 'fq_dict.io'
+        IO = mykrobe.get_input(config)
     output:
         CSV = Path(config['working_dir']) / 'mykrobe' / 'csv.io',
         INFORMS = Path(config['working_dir']) / 'mykrobe' / 'informs.io'
@@ -28,9 +28,12 @@ rule mykrobe_run:
         typer = Mykrobe(Camel.get_instance())
 
         # Extract FASTQ paths to add them as Mykrobe input
-        fq_in = FastqInput.from_fq_dict(Path(input.IO),'illumina')
+        if params.input_type == 'illumina':
+            fq_in = FastqInput.from_fq_dict(Path(input.IO), params.input_type)
+            typer.add_input_files({'FASTQ_PE': fq_in.pe})
+        if params.input_type == 'fasta':
+            SnakemakeUtils.add_pickle_input(typer, 'FASTA', Path(input.IO))
         typer.add_input_files({
-            'FASTQ_PE': fq_in.pe,
             'DIR': [ToolIODirectory(params.db_dir)],
             'SPECIES': [ToolIOValue(params.species)]
         })

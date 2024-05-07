@@ -264,23 +264,23 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         :return: None
         """
         # Create dictionaries with the technology as key and the reports as values
-        report_k2_by_read_key = {
+        report_k2_by_input_format = {
             p_html.parents[1].name: p_html for p_html in [Path(x) for x in reports_contamination]}
 
         # Add the report content
         if input_type == 'fasta':
-            # TODO: To execute Kraken2 on the input FASTA file
-            pass
+            structure.append(
+                ('Contamination check', 'contamination', [report_k2_by_input_format['fasta']]))
         elif input_type == 'illumina':
             structure.append(
                 ('Contamination check', 'contamination', [
-                    report_k2_by_read_key['fastq_pe'], Path(report_confindr)]))
+                    report_k2_by_input_format['fastq_pe'], Path(report_confindr)]))
         elif input_type == 'ont':
             structure.append(
-                ('Contamination check', 'contamination', [report_k2_by_read_key['fastq_se']]))
+                ('Contamination check', 'contamination', [report_k2_by_input_format['fastq_se']]))
         elif input_type == 'hybrid':
             structure.append(
                 ('Contamination check', 'contamination',
-                 [report_k2_by_read_key['fastq_pe'], report_k2_by_read_key['fastq_se'], Path(report_confindr)]))
+                 [report_k2_by_input_format['fastq_pe'], report_k2_by_input_format['fastq_se'], Path(report_confindr)]))
         else:
             raise ValueError(f'Invalid input type: {input_type}')
