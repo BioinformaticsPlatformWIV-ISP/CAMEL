@@ -21,7 +21,7 @@ class TrimmingIlluminaWrapper(object):
         trimmed_reads_pe: List[ToolIOFile]
         trimmed_reads_se_fwd: List[ToolIOFile]
         trimmed_reads_se_rev: List[ToolIOFile]
-        informs_trimmomatic: Dict[str, Any]
+        informs_trimming: Dict[str, Any]
         fastq_reports_pre: List[ToolIOFile]
         fastq_reports_post: List[ToolIOFile]
         log_file: Optional[Path] = None
@@ -35,13 +35,14 @@ class TrimmingIlluminaWrapper(object):
         self._output = None
 
     def run_workflow(self, pe_reads: List[Path], adapter: Optional[str] = None, threads: int = 8,
-                     export_fastq: bool = False) -> None:
+                     export_fastq: bool = False, method: Optional[str] = None) -> None:
         """
         Runs the read trimming workflow.
         :param pe_reads: Input PE FASTQ reads
         :param adapter: Adapter to trim
         :param threads: Number of threads to use
         :param export_fastq: If True, FASTQ files are included in the report
+        :param method: Trimming method ('trimmomatic' or 'fastp')
         :return: None
         """
         # Create config file
@@ -50,6 +51,10 @@ class TrimmingIlluminaWrapper(object):
             'input': {'fastq_pe': [{'name': p.name, 'path': str(p)} for p in pe_reads]},
             'read_trimming': {'export_fastq': str(export_fastq)}
         }
+        # Add the method (if specified)
+        if method is not None:
+            config_data['read_trimming']['method'] = method
+
         if adapter is not None:
             config_data['read_trimming']['adapter'] = adapter
         config_file = SnakePipelineUtils.generate_config_file(config_data, self._working_dir)
@@ -61,32 +66,32 @@ class TrimmingIlluminaWrapper(object):
 
         # Output files
         output_files = {
+            'FASTQ': self._working_dir / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_DICT,
             'HTML': self._working_dir / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_REPORT,
             'TSV': self._working_dir / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_SUMMARY
         }
         SnakePipelineUtils.run_snakemake(
             trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA, config_file, list(output_files.values()), self._working_dir,
             threads)
-        self.__set_output(output_files)
+        self.__set_output(output_files, config_data)
 
-    def __set_output(self, output_files: Dict[str, Path]) -> None:
+    def __set_output(self, output_files: Dict[str, Path], config_data: Dict[str, Any]) -> None:
         """
         Sets the output of this tool.
         :param output_files: Output files by key.
+        :param config_data: Configuration data
         :return: None
         """
         log_path = self._working_dir / 'camel.log'
+        fq_dict = SnakemakeUtils.load_object(output_files['FASTQ'])
         self._output = TrimmingIlluminaWrapper.ReadTrimmingOutput(
             report_section=SnakemakeUtils.load_object(output_files['HTML'])[0].value,
             tsv_summary=output_files['TSV'],
-            trimmed_reads_pe=SnakemakeUtils.load_object(
-                self._working_dir / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_READS_PE),
-            trimmed_reads_se_fwd=SnakemakeUtils.load_object(
-                self._working_dir / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_READS_SE_FWD),
-            trimmed_reads_se_rev=SnakemakeUtils.load_object(
-                self._working_dir / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_READS_SE_REV),
-            informs_trimmomatic=SnakemakeUtils.load_object(
-                self._working_dir / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_INFORMS),
+            trimmed_reads_pe=fq_dict['PE'],
+            trimmed_reads_se_fwd=fq_dict['SE_FWD'] if 'SE_FWD' in fq_dict else [],
+            trimmed_reads_se_rev=fq_dict['SE_REV'] if 'SE_REV' in fq_dict else [],
+            informs_trimming=SnakemakeUtils.load_object(
+                self._working_dir / trimming_illumina.select_informs(config_data)),
             fastq_reports_pre=SnakemakeUtils.load_object(
                 self._working_dir / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_FASTQC_HTML_PRE),
             fastq_reports_post=SnakemakeUtils.load_object(
