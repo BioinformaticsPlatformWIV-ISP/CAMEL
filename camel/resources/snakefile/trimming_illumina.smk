@@ -296,3 +296,16 @@ rule trimming_illumina_to_dict_select:
         """
         cp {input.IO} {output.IO};
         """
+
+rule trimming_illumina_informs_select:
+    """
+    Selects the informs based on the selected trimming method.
+    """
+    input:
+        INFORMS = Path(config['working_dir']) / 'trimming_illumina' / config['read_trimming'].get('method', 'trimmomatic') / 'informs.io'
+    output:
+        INFORMS = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_INFORMS
+    shell:
+        """
+        cp {input.INFORMS} {output.INFORMS};
+        """
