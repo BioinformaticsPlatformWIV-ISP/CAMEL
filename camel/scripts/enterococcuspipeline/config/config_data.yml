@@ -36,7 +36,8 @@ read_trimming:
 
 contamination_check:
   db: /db/kraken2_microbial/latest
-  expected_species: {expected_species}
+  expected_species: {k2_name}
+  level_of_depth: {k2_level}
 
 quality_checks:
   typing_scheme: {qc_typing_scheme}

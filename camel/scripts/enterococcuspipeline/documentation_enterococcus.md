@@ -4,6 +4,11 @@ isolates. The species should be specified on the command line or in the interfac
 
 Version: **1.1**
 
+## Species *Enterococcus spp.*
+
+If *Enterococcus spp.* is selected as species, the mlst, cgMLST, and species-specific AMR detection assays are always 
+disabled.
+
 # Components
 
 ## 1. Human read removal (optional) 
@@ -19,10 +24,13 @@ total number of bases in the FASTQ files is determined using the `size` function
 
 Datasets with an estimated coverage >=100x are downsampled to ~100x using the `subsample` function of `seqtk 1.4`.
 
-| **Species**   | **Ref. genome accession** | **% GC-content** | 
-|---------------|---------------------------|------------------|
-| *E. faecalis* | KB944666.1                | 37.4             |
-| *E. faecium*  | CP038996. 1               | 38.1             |
+| **Species**         | **Ref. genome accession** | **% GC-content** | 
+|---------------------|---------------------------|------------------|
+| *E. faecalis*       | KB944666.1                | 37.4             |
+| *E. faecium*        | CP038996. 1               | 38.1             |
+| *E. spp.* (generic) | KB944666.1                | 37.4             |
+
+If *Enterococcus spp.* is selected as species, the *E. faecalis* reference genome length and %GC-content are used. 
 
 ## 3. Read trimming
 

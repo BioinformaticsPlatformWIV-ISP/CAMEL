@@ -92,9 +92,9 @@ rule report_combine_all:
         report_bacmet = Path(config['working_dir']) / (bacmet.OUTPUT_BACMET_REPORT if 'bacmet' in config['analyses'] else bacmet.OUTPUT_BACMET_REPORT_EMPTY),
         # Typing
         report_rmlst = sequence_typing.get_sequence_typing_report('rmlst', config),
-        report_mlst = sequence_typing.get_sequence_typing_report('mlst', config),
-        report_mlst_bezdicek = sequence_typing.get_sequence_typing_report('mlst_bezdicek', config),
-        report_cgmlst = sequence_typing.get_sequence_typing_report('cgmlst', config),
+        report_mlst = sequence_typing.get_sequence_typing_report('mlst', config) if not config['is_generic'] else [],
+        report_mlst_bezdicek = sequence_typing.get_sequence_typing_report('mlst_bezdicek', config) if not config['is_generic'] else [],
+        report_cgmlst = sequence_typing.get_sequence_typing_report('cgmlst', config) if not config['is_generic'] else [],
         # Report
         report_citations = Path(config['working_dir'], core.OUTPUT_HTML_CITATIONS),
         report_commands = rules.report_command_section.output.HTML
@@ -142,8 +142,10 @@ rule report_combine_all:
         # Typing (additional MLST scheme for E. faecium)
         if params.species == 'Enterococcus faecalis':
             reports_typing = (input.report_rmlst, input.report_mlst, input.report_cgmlst)
-        else:
+        elif params.species == 'Enterococcus faecium':
             reports_typing = (input.report_rmlst, input.report_mlst, input.report_mlst_bezdicek, input.report_cgmlst)
+        else:
+            reports_typing = (input.report_rmlst,)
 
         report_structure.extend([
             ('AMR detection', 'amr', [Path(x) for x in (

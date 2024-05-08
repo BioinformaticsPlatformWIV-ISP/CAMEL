@@ -26,6 +26,10 @@ class TestEnterococcusPipeline(CamelTestSuite):
         test_file_dir / 'pipelines' / 'Enterococcus_faecium-SRR12388968-ds_1.fastq.gz',
         test_file_dir / 'pipelines' / 'Enterococcus_faecium-SRR12388968-ds_2.fastq.gz'
     ]
+    input_gallinarum_fastq_pe = [
+        test_file_dir / 'pipelines' / 'Enterococcus_gallinarum-SRR16344675-ds_1.fastq.gz',
+        test_file_dir / 'pipelines' / 'Enterococcus_gallinarum-SRR16344675-ds_2.fastq.gz'
+    ]
 
     def test_enterococcus_gene_detection_db(self):
         """
@@ -172,6 +176,27 @@ class TestEnterococcusPipeline(CamelTestSuite):
             '--output-tsv', str(path_summary_out),
             '--working-dir', str(self.running_dir),
             '--detection-method', 'kma'
+        ] + [f"--{a.replace('_', '-')}" for a in MainEnterococcusPipeline.CUSTOM_ANALYSES if a != 'cgmlst']
+        main = MainEnterococcusPipeline(args)
+        main.run()
+        self.assertGreater(path_report_out.stat().st_size, 0)
+
+    @longRunningTest()
+    def test_enterococcus_pipeline_spp_blast(self) -> None:
+        """
+        Tests the Enterococcus pipeline for generic Enterococcus with all assays except for cgMLST.
+        :return: None
+        """
+        path_report_out = self.running_dir / 'out' / 'report.html'
+        path_summary_out = self.running_dir / 'out' / 'summary.tsv'
+        args = [
+            '--fastq-pe', str(TestEnterococcusPipeline.input_gallinarum_fastq_pe[0]),
+            str(TestEnterococcusPipeline.input_gallinarum_fastq_pe[1]),
+            '--species', 'spp',
+            '--output-html', str(path_report_out),
+            '--output-dir', str(path_report_out.parent),
+            '--output-tsv', str(path_summary_out),
+            '--working-dir', str(self.running_dir)
         ] + [f"--{a.replace('_', '-')}" for a in MainEnterococcusPipeline.CUSTOM_ANALYSES if a != 'cgmlst']
         main = MainEnterococcusPipeline(args)
         main.run()
