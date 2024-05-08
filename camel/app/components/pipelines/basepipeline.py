@@ -75,6 +75,8 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         argument_parser.add_argument(
             '--library', help="Adapter library that was used for the sequencing",
             choices=['NexteraPE', 'TruSeq2', 'TruSeq3'], default='NexteraPE')
+        argument_parser.add_argument(
+            '--trimming-method', help='Trimming method', choices=['trimmomatic', 'fastp'])
 
         # Logging
         argument_parser.add_argument(
@@ -265,4 +267,6 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
             'working_dir': str(self._args.working_dir),
             'read_trimming': {'adapter': self._args.library}
         }
+        if self._args.trimming_method is not None:
+            template_data['read_trimming']['method'] = self._args.trimming_method
         return template_data
