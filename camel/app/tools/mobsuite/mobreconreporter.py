@@ -21,6 +21,7 @@ class MOBReconReporter(Tool):
         'num_contigs': {'title': 'Nb. of contigs'},
         'size': {'title': 'Size', 'fmt': lambda x: f'{x:,}'},
         'gc': {'title': '% GC-content', 'fmt': lambda x: f'{x * 100:.2f}'},
+        'predicted_mobility': {'title': 'Pred. mobility'},
         'rep_type(s)': {'title': 'Rep. types', 'fmt': lambda x: x.replace(',', ', ')},
         'relaxase_type(s)': {'title': 'Relaxase types', 'fmt': lambda x: x.replace(',', ', ')}
     }
@@ -60,6 +61,7 @@ class MOBReconReporter(Tool):
             return
 
         data_overview['id'] = data_overview['sample_id'].apply(lambda x: re.search('.*:(.*)', x).group(1))
+        data_overview['id'] = data_overview['id'].apply(lambda x: MOBReconReporter.__format_plasmid_id(x))
         section.add_header('Overview', 3)
         table_data = [
             [d.get('fmt', lambda x: x)(row[col]) for
@@ -99,3 +101,15 @@ class MOBReconReporter(Tool):
 
         # Tool output
         self._tool_outputs['HTML'] = [ToolIOValue(section)]
+
+    @staticmethod
+    def __format_plasmid_id(str_in: str) -> str:
+        """
+        Formats the plasmid id (reduces the length for novel plasmid clusters).
+        :param str_in: Input string
+        :return: Formatted string
+        """
+        m = re.match(r'novel_(\w+)', str_in)
+        if not m:
+            return str_in
+        return f'novel_{m.group(1)[:4]}'
