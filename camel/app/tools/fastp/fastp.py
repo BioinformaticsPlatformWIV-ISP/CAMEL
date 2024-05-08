@@ -81,6 +81,13 @@ class Fastp(Tool):
                 ToolIOFile(self.__get_output_path(orientation='1P')),
                 ToolIOFile(self.__get_output_path(orientation='2P')),
             ]
+            # Add SE reads
+            if self.__get_output_path(orientation='1U').exists():
+                self._tool_outputs['FASTQ_SE_FWD'] = [ToolIOFile(self.__get_output_path(orientation='1U'))]
+            if self.__get_output_path(orientation='2U').exists():
+                self._tool_outputs['FASTQ_SE_REV'] = [ToolIOFile(self.__get_output_path(orientation='2U'))]
+
+        # General output files (these are always created)
         self._tool_outputs['JSON'] = [ToolIOFile(self.folder / 'fastp.json')]
         self._tool_outputs['HTML'] = [ToolIOFile(self.folder / 'fastp.html')]
 
