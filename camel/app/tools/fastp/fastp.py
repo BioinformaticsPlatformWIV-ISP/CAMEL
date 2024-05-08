@@ -30,16 +30,17 @@ class Fastp(Tool):
             raise InvalidInputSpecificationError(f'FASTQ input is required')
         super()._check_input()
 
-    def __get_output_path(self, orientation: Optional[str]) -> Path:
+    def __get_output_path(self, orientation: Optional[str], compress: bool = True) -> Path:
         """
         Returns the output filename.
         :param orientation: Read orientation
+        :param compress: If True, output file is compressed
         :return: Path to output file
         """
         if orientation is None:
-            return self.folder / f"{self._parameters['output_name'].value}.fastq"
-        return self.folder / f"{self._parameters['output_name'].value}_{orientation}.fastq"
-
+            return self.folder / (f"{self._parameters['output_name'].value}.fastq" + ('.gz' if compress else ''))
+        return self.folder / (f"{self._parameters['output_name'].value}_{orientation}.fastq" + (
+            '.gz' if compress else ''))
 
     def _build_command(self) -> None:
         """
@@ -55,9 +56,11 @@ class Fastp(Tool):
             parts.append(f"--out1 {self.__get_output_path(orientation='1P')}")
             parts.append(f"--in2 {self._tool_inputs['FASTQ'][1].path}")
             parts.append(f"--out2 {self.__get_output_path(orientation='2P')}")
+            parts.append(f"--unpaired1 {self.__get_output_path(orientation='1U')}")
+            parts.append(f"--unpaired2 {self.__get_output_path(orientation='2U')}")
         else:
             raise InvalidInputSpecificationError(f'Invalid number of FASTQ input files (1 or 2 expected)')
-        self._command.command = ' '.join(parts)
+        self._command.command = ' '.join([*parts, *self._build_options(excluded_parameters=['output_name'])])
 
     def _check_command_output(self) -> None:
         """
@@ -79,6 +82,7 @@ class Fastp(Tool):
                 ToolIOFile(self.__get_output_path(orientation='2P')),
             ]
         self._tool_outputs['JSON'] = [ToolIOFile(self.folder / 'fastp.json')]
+        self._tool_outputs['HTML'] = [ToolIOFile(self.folder / 'fastp.html')]
 
     def _set_informs(self) -> None:
         """
