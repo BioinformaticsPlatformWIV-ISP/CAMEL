@@ -10,6 +10,7 @@ from camel.app.components.html.htmltablecell import HtmlTableCell
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.loggers import logger
+from camel.app.tools.mobsuite.mobreconreporter import MOBReconReporter
 from camel.app.tools.tool import Tool
 
 
@@ -91,10 +92,12 @@ class GenomicContext(Tool):
                     div = HtmlExpandableDiv(f"genomic_context-{db['key']}", f'{len(data_hits)} rows.')
                 else:
                     div = HtmlElement('div')
+
+                header = ['Key', 'Chromosome', *[MOBReconReporter.format_plasmid_id(p) for p in plasmids]]
                 div.add_table([
                     [f"<i>{row[db['gene']]}</i>",
                      *self._get_plasmid_status(row[db['contig']], plasmids)] for row in data_hits.to_dict('records')
-                ], ['Key', 'Chromosome', *plasmids], [('class', 'data')])
+                ], header, [('class', 'data')])
                 section.add_html_object(div)
 
         # Tool output
