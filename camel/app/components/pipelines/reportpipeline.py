@@ -82,7 +82,7 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         Checks if the provided input files are valid.
         :return: None
         """
-        logger.info(f'Checking input files')
+        logger.info(f"Checking input files (type: '{self._args.input_type}')")
 
         # FASTA input
         if self._args.input_type == 'fasta':
