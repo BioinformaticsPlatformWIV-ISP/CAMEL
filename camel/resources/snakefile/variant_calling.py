@@ -1,6 +1,8 @@
 from pathlib import Path
 from typing import Dict, Any, List
 
+from camel.app.loggers import logger
+
 SNAKEFILE_VARIANT_CALLING = f'{Path(__file__).parent / Path(__file__).stem}.smk'
 _dir_variant_calling = Path('variant_calling')
 
@@ -29,7 +31,9 @@ def get_mapping_fq_input(config: Dict[str, Any]) -> Path:
         return Path(config['working_dir']) / 'fq_dict.io'
     if config['input_type'] == 'fasta':
         return Path(config['working_dir']) / 'variant_calling' / 'art' / 'fastq.io'
-    if config['input_type'] == 'fasta_with_vcf': # was added because otherwise some tests of the mockpipeline fail
+    if config['input_type'] == 'fasta_with_vcf':  # was added because otherwise some tests of the mockpipeline fail
+        logger.warning("This is not supported. The mapping step should not be carried out if a FASTA file and VCF file"
+                       " are given as input.")
         return Path('')
 
 

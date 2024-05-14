@@ -1,3 +1,4 @@
+import shutil
 from pathlib import Path
 
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
@@ -118,7 +119,7 @@ rule core_link_vcf_input:
     params:
         vcf_in = config.get('input', {}).get('vcf_unfiltered')
     output:
-        VCF = Path(config['working_dir']) / 'input' / 'vcf.io',
+        VCF = Path(config['working_dir']) / 'input' / 'vcf.io'
     run:
          from camel.app.io.tooliofile import ToolIOFile
          path_vcf_in = Path(params.vcf_in[0]['path'])
