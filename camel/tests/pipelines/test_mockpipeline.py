@@ -3,6 +3,7 @@ from pathlib import Path
 
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.scripts.mockpipeline.mainmockpipeline import MainMockPipeline
+from camel.tests import longRunningTest
 
 
 class TestMockPipeline(CamelTestSuite):
@@ -142,6 +143,31 @@ class TestMockPipeline(CamelTestSuite):
             '--output-tsv', str(path_summary_out),
             '--working-dir', str(self.running_dir),
             '--detection-method', 'blast',
+            '--ncbi-amr',
+            '--human-read-scrubbing',
+            '--threads', '8',
+        ])
+        pipeline.run()
+        self.assertGreater(path_report_out.stat().st_size, 0)
+
+    @longRunningTest()
+    def test_mock_pipeline_fasta_with_kraken2(self) -> None:
+        """
+        Tests the mock pipeline with FASTA input data with the Kraken2 analysis enabled.
+        :return: None
+        """
+        path_report_out = Path(self.running_dir) / 'out' / 'report.html'
+        path_summary_out = Path(self.running_dir) / 'out' / 'summary.tsv'
+
+        pipeline = MainMockPipeline([
+            '--fasta', str(TestMockPipeline.input_fasta),
+            '--input-type', 'fasta',
+            '--output-html', str(path_report_out),
+            '--output-dir', str(path_report_out.parent),
+            '--output-tsv', str(path_summary_out),
+            '--working-dir', str(self.running_dir),
+            '--detection-method', 'blast',
+            '--kraken2',
             '--ncbi-amr',
             '--human-read-scrubbing',
             '--threads', '8',

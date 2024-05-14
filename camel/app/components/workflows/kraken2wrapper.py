@@ -4,6 +4,7 @@ from typing import List, Optional, Dict, Any, Union
 
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.workflows.utils.fastqinput import FastqInput
+from camel.app.io.tooliofile import ToolIOFile
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.resources.snakefile import contamination_check_kraken
@@ -33,11 +34,12 @@ class Kraken2Wrapper(object):
         self._output = None
 
     def run_workflow(
-            self, sample_name: str, fastq_input: FastqInput, expected_species: str, db: Path, level_of_depth: str = 'S',
+            self, sample_name: str, input_path: Union[Path, List[Path]], input_type: str, expected_species: str, db: Path, level_of_depth: str = 'S',
             threads: int = 8) -> None:
         """
-        Runs the read trimming workflow.
-        :param fastq_input: FASTQ input
+        Runs the kraken2 workflow.
+        :param input_path: Path to the input
+        :param input_type: input type
         :param sample_name: Sample name
         :param expected_species: Expected species
         :param db: Database
@@ -47,8 +49,16 @@ class Kraken2Wrapper(object):
         """
         if not self._working_dir.exists():
             self._working_dir.mkdir(parents=True)
-        SnakemakeUtils.dump_object(fastq_input.to_fq_dict(), self._working_dir / 'fq_dict.io')
-
+        if input_type == 'illumina':
+            fastq_input = FastqInput('illumina', pe=[ToolIOFile(x) for x in input_path])
+            SnakemakeUtils.dump_object(fastq_input.to_fq_dict(), self._working_dir / 'fq_dict.io')
+        elif input_type == 'ont':
+            fastq_input = FastqInput('nanopore', se=[ToolIOFile(input_path)], is_pe=False)
+            SnakemakeUtils.dump_object(fastq_input.to_fq_dict(), self._working_dir / 'fq_dict.io')
+        else:
+            fasta_path = self._working_dir / 'assembly' / 'filtering'
+            fasta_path.mkdir(parents=True)
+            SnakemakeUtils.dump_object([ToolIOFile(input_path)], fasta_path / 'fasta.io')
         # Config file
         config_data = {
             'contamination_check': {
@@ -57,7 +67,7 @@ class Kraken2Wrapper(object):
                 'level_of_depth': level_of_depth},
             'sample_name': sample_name,
             'working_dir': str(self._working_dir),
-            'input_type': fastq_input.read_type,
+            'input_type': input_type
         }
         config_file = SnakePipelineUtils.generate_config_file(config_data, self._working_dir)
 
@@ -68,11 +78,11 @@ class Kraken2Wrapper(object):
             'INFORMS': self._working_dir / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_INFORMS,
             'INFORMS_KRAKEN': self._working_dir / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_KRAKEN_INFORMS,
         }
-        read_key = 'fastq_pe' if fastq_input.read_type == 'illumina' else 'fastq_se'
+        input_format = 'fastq_pe' if input_type == 'illumina' else 'fastq_se' if input_type == 'ont' else 'fasta'
         for k, p in output_files.items():
-            if '{read_key}' not in str(p):
+            if '{input_format}' not in str(p):
                 continue
-            output_files[k] = Path(str(p).format(read_key=read_key))
+            output_files[k] = Path(str(p).format(input_format=input_format))
 
         # Run Snakemake
         SnakePipelineUtils.run_snakemake(

@@ -66,7 +66,7 @@ QC_CHECKS_BY_KEY = {qc.key: qc for qc in [
         threshold_warn=1.0,
         threshold_fail=5.0,
         fmt_string_value='{:.2f}%',
-        supported_input_types='fasta',
+        supported_input_types=['fasta'],
         value_should_exceed=False),
     QCCheck(
         key='confindr',
