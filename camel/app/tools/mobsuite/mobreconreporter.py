@@ -82,6 +82,25 @@ class MOBReconReporter(Tool):
             table_data, [c['title'] for c in MOBReconReporter.COLUMN_MAPPING.values()] + ['Sequence'],
             [('class', 'data')])
 
+    def _add_contig_report(self, section: HtmlReportSection) -> None:
+        """
+        Adds a contig report to the report.
+        :param section: Report section
+        :return: None
+        """
+        contig_data = pd.read_table(self._tool_inputs['TSV_contigs'][0].path, usecols=['contig_id', 'molecule_type',
+                                                                                       'primary_cluster_id',
+                                                                                       'secondary_cluster_id',
+                                                                                       'size', 'gc'])
+        reordered_contig_data = contig_data[['contig_id', 'molecule_type', 'primary_cluster_id',
+                                             'secondary_cluster_id', 'size', 'gc']]
+        reordered_contig_data['gc'] = reordered_contig_data['gc'].apply(lambda x: f'{x * 100:.2f}')
+        reordered_contig_data['size'] = reordered_contig_data['size'].apply(lambda x: f'{x:,}')
+        table_data = reordered_contig_data.values.tolist()
+        section.add_header('Contig overview', 3)
+        section.add_table(table_data, ['Contig ID', 'Molecule', 'Prim. Cluster ID',
+                                       'Sec. Cluster ID2', 'Size', '% GC-content'], [('class', 'data')])
+
     def _execute_tool(self) -> None:
         """
         Executes this tool.
@@ -89,6 +108,8 @@ class MOBReconReporter(Tool):
         """
         section = HtmlReportSection('MOB-recon', subtitle=self._input_informs['mob_recon']['_name'])
         self._add_overview_table(section)
+        if 'contig_report' in self._parameters:
+            self._add_contig_report(section)
 
         # Download overview
         relative_path = Path('mob-suite', 'mob_recon.tsv')

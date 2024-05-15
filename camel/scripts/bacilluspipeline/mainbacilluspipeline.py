@@ -102,15 +102,16 @@ class MainBacillusPipeline(ReportPipeline):
                 species=self._args.species,
                 qc_typing_scheme=self.__get_qc_typing_scheme(),
                 coverage_max=self._args.cov_max,
+                mobsuite_contig_report=self._args.mobsuite_contig_report,
                 export_fastq='true' if self._args.report_include_fastq else 'false',
                 export_bam='true' if self._args.report_include_bam else 'false',
                 expected_gc_content=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['gc_content'],
                 genome_size=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['genome_size'],
                 wildcards_assembly='long_read_assembly',
                 ref_fasta=Path(Camel.get_instance().config['db_root'], 'refgenomes', 'Bacillus',
-                          f'{MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]["ref_species"]}.fasta'),
+                               f'{MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]["ref_species"]}.fasta'),
                 ref_gff=Path(Camel.get_instance().config['db_root'], 'refgenomes', 'Bacillus',
-                             f'{MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]["ref_species"]}.gff3')
+                             f'{MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]["ref_species"]}.gff3'),
             ), Loader=yaml.SafeLoader))
 
         # Nanopore settings
@@ -139,6 +140,7 @@ class MainBacillusPipeline(ReportPipeline):
         parser = argparse.ArgumentParser()
         ReportPipeline.add_common_arguments(parser)
         parser.add_argument('--species', type=str, choices=['cereus', 'subtilis'], required=True)
+        parser.add_argument('--mobsuite-contig-report', action='store_true')
         for _, keys in MainBacillusPipeline.CUSTOM_ANALYSES.items():
             for analysis_key in keys:
                 parser.add_argument(f"--{analysis_key.replace('_', '-')}", action='store_true')

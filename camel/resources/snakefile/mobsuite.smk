@@ -46,11 +46,13 @@ rule mobsuite_mob_recon_reporter:
     output:
         HTML = Path(config['working_dir']) / 'mob_suite' / 'html.io'
     params:
-        dir_ = Path(config['working_dir']) / 'mob_suite'
+        dir_ = Path(config['working_dir']) / 'mob_suite',
+        mobsuite_parameters = config.get('mob_suite', {}).get('params', {})
     run:
         from camel.app.tools.mobsuite.mobreconreporter import MOBReconReporter
         reporter = MOBReconReporter(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(reporter, input)
+        reporter.update_parameters(**params.mobsuite_parameters)
         step = Step(str(rule), reporter, Camel.get_instance(), params.dir_)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)

@@ -88,7 +88,8 @@ class TestBacillusPipeline(CamelTestSuite):
             '--working-dir', str(self.running_dir),
             '--detection-method', 'blast',
             '--threads', '8',
-            '--species', 'cereus'
+            '--species', 'cereus',
+            '--mobsuite-contig-report'
         ] + [f"--{a.replace('_', '-')}" for a in tested_analyses if 'cgmlst' not in a]
         main = MainBacillusPipeline(args)
         main.run()

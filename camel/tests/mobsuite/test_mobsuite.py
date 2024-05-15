@@ -72,6 +72,7 @@ class TestMOBSuite(CamelTestSuite):
             'TSV_contigs': mob_recon.tool_outputs['TSV_contigs'],
             'FASTA': mob_recon.tool_outputs['FASTA']})
         reporter.add_input_informs({'mob_recon': mob_recon.informs})
+        reporter.update_parameters(contig_report=True)
         reporter.run(self.running_dir)
 
         # Check the output

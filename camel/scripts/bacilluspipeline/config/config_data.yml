@@ -74,6 +74,8 @@ amrfinder:
 
 mob_suite:
   db: /db/mob_suite/latest
+  params:
+    contig_report: {mobsuite_contig_report}
 
 fastani:
   path: /db/pipelines/bacillus/ref_list.txt
