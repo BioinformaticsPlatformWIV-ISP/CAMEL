@@ -26,7 +26,6 @@ citations:
 #########################
 # Tool specific options #
 #########################
-
 downsampling:
   coverage_max: {coverage_max}
   expected_genome_size: 4_548_822
@@ -83,11 +82,11 @@ gene_detection:
     metadata:
       name: Gene
       key: gene
+    hidden: true
 
 ###################
 # Sequence typing #
 ###################
-
 sequence_typing:
   cgmlst:
     path: '/db/sequence_typing/yersinia/cgmlst_yersinia_spp'

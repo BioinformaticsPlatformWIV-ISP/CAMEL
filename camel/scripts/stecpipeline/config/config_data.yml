@@ -114,6 +114,7 @@ gene_detection:
     metadata:
       name: Protein function
       key: protein_function
+    hidden: true
   virulencefinder_shiga:
     path: /db/gene_detection/VirulenceFinder-Shiga
     metadata:
