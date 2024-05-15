@@ -55,5 +55,6 @@ class TestSeqkit(CamelTestSuite):
         seqkit_split.run(self.running_dir)
         self.verify_output_files(seqkit_split, 'FASTA', nb_files=5)
 
+
 if __name__ == '__main__':
     unittest.main()
