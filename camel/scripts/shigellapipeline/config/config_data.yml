@@ -26,7 +26,6 @@ citations:
     - Zhang_2021-shigeifinder
     - Wu_2019-shigatyper
 
-
 #########################
 # Tool specific options #
 #########################
@@ -40,6 +39,8 @@ read_trimming:
 contamination_check:
   db: /db/kraken2_microbial/latest
   expected_species: Shigella
+  allowed_species:
+    - Escherichia
   level_of_depth: G
 
 quast:

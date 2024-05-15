@@ -5,9 +5,6 @@ from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 
 
-camel = Camel.get_instance()
-
-
 rule contamination_check_kraken2_run:
     """
     Assigns taxonomic labels to reads using KRAKEN2.
@@ -29,13 +26,13 @@ rule contamination_check_kraken2_run:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         from camel.app.tools.kraken.kraken2 import Kraken2
 
-        kraken2 = Kraken2(camel)
+        kraken2 = Kraken2(Camel.get_instance())
         if params.read_key == 'fastq_pe':
             kraken2.add_input_files(SnakePipelineUtils.extracts_fq_input(Path(input.IO), key_pe='FASTQ_PE'))
         else:
             kraken2.add_input_files(SnakePipelineUtils.extracts_fq_input(Path(input.IO), key_se='FASTQ', read_type='SE'))
         kraken2.add_input_files({'DB': [ToolIODirectory(Path(input.DB))]})
-        step = Step(str(rule), kraken2, camel, Path(str(params.dir_)), config)
+        step = Step(str(rule), kraken2, Camel.get_instance(), Path(str(params.dir_)))
         kraken2.update_parameters(threads=threads)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(kraken2, output)
@@ -51,15 +48,18 @@ rule contamination_check_kraken_report_parser:
     params:
         dir_ = lambda wildcards: Path(config['working_dir']) / 'contamination_check' / wildcards.read_key / 'kraken2',
         expected_species = config['contamination_check']['expected_species'],
+        allowed_species = config['contamination_check'].get('allowed_species', None),
         level_of_depth = config['contamination_check'].get('level_of_depth', 'S')
     run:
         from camel.app.tools.kraken.krakenreportparser import KrakenReportParser
-        report_parser = KrakenReportParser(camel)
+        report_parser = KrakenReportParser(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(report_parser, input)
-        step = Step(str(rule), report_parser, camel, Path(str(params.dir_)), config)
+        step = Step(str(rule), report_parser, Camel.get_instance(), Path(str(params.dir_)))
         report_parser.update_parameters(expected_species=params.expected_species)
         if params.level_of_depth is not None:
             report_parser.update_parameters(level_of_depth=params.level_of_depth)
+        if params.allowed_species is not None:
+            report_parser.update_parameters(allowed_species=','.join(params.allowed_species))
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(report_parser, output)
 
@@ -75,9 +75,9 @@ rule contamination_check_krona:
         dir_ = lambda wildcards: Path(config['working_dir']) / 'contamination_check' / wildcards.read_key / 'krona'
     run:
         from camel.app.tools.krona.krona import Krona
-        krona = Krona(camel)
+        krona = Krona(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(krona, input)
-        step = Step(str(rule), krona, camel, Path(str(params.dir_)), config)
+        step = Step(str(rule), krona, Camel.get_instance(), Path(str(params.dir_)))
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(krona, output)
 
@@ -98,7 +98,7 @@ rule contamination_check_report:
         input_type = config['input_type']
     run:
         from camel.app.tools.pipelines.quality_checks.htmlreportercontamination import HtmlReporterContamination
-        reporter = HtmlReporterContamination(camel)
+        reporter = HtmlReporterContamination(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(reporter, input)
 
         # Update report title + output files for hybrid data
@@ -109,7 +109,7 @@ rule contamination_check_report:
             )
 
         # Run the tool
-        step = Step(str(rule), reporter, camel, Path(str(params.dir_)), config)
+        step = Step(str(rule), reporter, Camel.get_instance(), Path(str(params.dir_)))
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
 
@@ -147,21 +147,26 @@ rule contamination_check_dump_summary_info:
     params:
         dir_ = lambda wildcards: Path(config['working_dir']) / 'contamination_check' / wildcards.read_key / 'summary',
         input_type = config['input_type'],
-        read_key = lambda wildcards: wildcards.read_key
+        read_key = lambda wildcards: wildcards.read_key,
+        allowed_species = config['contamination_check'].get('allowed_species', None)
     run:
         informs_kraken2 = SnakemakeUtils.load_object(Path(input.INFORMS_kraken))
         informs = SnakemakeUtils.load_object(Path(input.INFORMS_species))
 
         suffix = f'_{params.read_key}' if params.input_type == 'hybrid' else ''
         summary_data = [
-            (f'kraken2{suffix}_expected_species', informs['expected'][0]),
-            (f'kraken2{suffix}_expected_species_occurrence', informs['expected'][1]),
+            (f'kraken2{suffix}_expected_taxon', informs['expected'][0]),
+            (f'kraken2{suffix}_expected_taxon_occurrence', informs['expected'][1]),
             (f'kraken2{suffix}_contaminants_warn', str(informs['contaminants_warn'])),
             (f'kraken2{suffix}_contaminants_fail', str(informs['contaminants_fail'])),
-            (f'kraken2{suffix}_tool_version', informs_kraken2['_name']),
-            (f'kraken2{suffix}_db',informs_kraken2['database']['name']),
-            (f'kraken2{suffix}_last_update',informs_kraken2['database']['last_update'])
         ]
+        if params.allowed_species is not None:
+            summary_data.append((f'kraken2{suffix}_allowed', str(informs['allowed'])))
+        summary_data.extend([
+            (f'kraken2{suffix}_tool_version', informs_kraken2['_name']),
+            (f'kraken2{suffix}_db', informs_kraken2['database']['name']),
+            (f'kraken2{suffix}_last_update', informs_kraken2['database']['last_update'])
+        ])
         with open(output.TSV, 'w') as handle:
             for key, value in summary_data:
                 handle.write(f'{key}\t{value}')

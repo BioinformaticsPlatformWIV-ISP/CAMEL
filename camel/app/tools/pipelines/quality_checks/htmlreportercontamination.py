@@ -72,7 +72,7 @@ class HtmlReporterContamination(Tool):
         self.__add_warnings()
         self._tool_outputs['VAL_HTML'] = [ToolIOValue(self._report_section)]
 
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
         Checks if the provided input is valid.
         :return: None
@@ -119,8 +119,18 @@ class HtmlReporterContamination(Tool):
         table_data = [
             [HtmlElement('th', 'Expected', [('colspan', 2)])],
             [HtmlTableCell('<i>{}</i>'.format(expected_name), 'green'), HtmlTableCell(expected_perc, 'green')],
-            [HtmlElement('th', 'Contaminants', [('colspan', 2)])]
         ]
+        # Allowed species
+        if len(self._input_informs['species']['allowed']) > 0:
+            table_data.append([HtmlElement('th', 'Allowed', attributes=[('colspan', 2)])])
+            for species_name, percentage in self._input_informs['species']['allowed']:
+                table_data.append([
+                    HtmlTableCell('<i>{}</i>'.format(species_name), 'yellow'),
+                    HtmlTableCell(f'{percentage:.2f}', 'yellow')
+                ])
+
+        # Failed contaminants
+        table_data.append([HtmlElement('th', 'Contaminants', [('colspan', 2)])])
         if (len(self._input_informs['species']['contaminants_fail']) +
                 len(self._input_informs['species']['contaminants_warn']) == 0):
             table_data.append([HtmlTableCell('None found', attributes=[('colspan', 2)])])
@@ -128,10 +138,12 @@ class HtmlReporterContamination(Tool):
             table_data.append([
                 HtmlTableCell('<i>{}</i>'.format(species_name), 'red'),
                 HtmlTableCell(f'{percentage:.2f}', 'red')])
+        # Warning contaminants
         for species_name, percentage in self._input_informs['species']['contaminants_warn']:
             table_data.append([
                 HtmlTableCell('<i>{}</i>'.format(species_name), 'orange'),
                 HtmlTableCell(f'{percentage:.2f}', 'orange')])
+
         self._report_section.add_table(table_data, header, [('class', 'data')])
 
     def __add_detailed_table(self, kraken_report_path: Path) -> None:

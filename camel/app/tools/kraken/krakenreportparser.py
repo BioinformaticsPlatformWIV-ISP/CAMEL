@@ -15,15 +15,18 @@ class KrakenReportParser(Tool):
         """
         super().__init__('Kraken Report Parser', '0.1', camel)
 
-    def _execute_tool(self):
+    def _execute_tool(self) -> None:
         """
         Executes this tool.
         :return: None
         """
+        allowed_species = (
+            self._parameters['allowed_species'].value.split(',')) if 'allowed_species' in self._parameters else []
         if self._parameters['level_of_depth'].value not in ['S', 'G']:
             logger.error('Please choose either "G" or "S" for parameter level_of_depth')
         self._informs['contaminants_warn'] = []
         self._informs['contaminants_fail'] = []
+        self._informs['allowed'] = []
         with open(self._tool_inputs['TSV'][0].path) as handle:
             for line in handle.readlines():
                 parts = line.split('\t')
@@ -34,6 +37,10 @@ class KrakenReportParser(Tool):
                     continue
                 species_name = parts[-1].strip()
                 if species_name == self._parameters['expected_species'].value:
+                    self._informs['expected'] = (species_name, percentage)
+                elif species_name in allowed_species:
+                    self._informs['allowed'].append((species_name, percentage))
+                elif species_name in self._parameters['expected_species'].value:
                     self._informs['expected'] = (species_name, percentage)
                 elif percentage < float(self._parameters['threshold_fail'].value):
                     self._informs['contaminants_warn'].append((species_name, percentage,))
@@ -46,11 +53,12 @@ class KrakenReportParser(Tool):
 
         self._informs['contaminants_warn'].sort(key=lambda x: -x[1])
         self._informs['contaminants_fail'].sort(key=lambda x: -x[1])
+        self._informs['allowed'].sort(key=lambda x: -x[1])
         self._informs['level_of_depth'] = self._parameters['level_of_depth'].value
         self._informs['threshold_fail'] = self._parameters['threshold_fail'].value
         self._informs['threshold_warn'] = self._parameters['threshold_warn'].value
 
-    def _check_input(self):
+    def _check_input(self) -> None:
         """
         Checks the tool input.
         :return: None
