@@ -207,6 +207,7 @@ rule combine_summary_files:
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='vaccine_targets') if 'vaccine_targets' in config['analyses'] else [],
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='cgmlst') if 'cgmlst' in config['analyses'] else [],
         Path(config['working_dir']) / gmats.OUTPUT_GMATS_SUMMARY if 'gmats' in config['analyses'] else [],
+        Path(config['working_dir']) / mendevar.OUTPUT_MENDEVAR_SUMMARY if 'mendevar' in config['analyses'] else [],
         Path(config['working_dir']) / serogroup_determination.OUTPUT_SEROGROUP_DETERMINATION_SUMMARY if 'serogroup' in config['analyses'] else []
     output:
         TSV = config.get('output_tabular')
