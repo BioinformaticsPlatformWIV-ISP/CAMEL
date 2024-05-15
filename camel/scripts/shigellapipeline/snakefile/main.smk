@@ -38,7 +38,6 @@ rule all:
         HTML = config['output_report'],
         TSV = config['output_tabular']
 
-
 rule report_command_section:
     """
     Creates a report section with the commands used in the pipeline. 
@@ -66,7 +65,7 @@ rule report_command_section:
     output:
         HTML = Path(config['working_dir']) / 'report' / 'html-commands.io'
     params:
-        dir_=config['working_dir']
+        dir_ = config['working_dir']
     run:
         from camel.app.components.pipelines.reportpipeline import ReportPipeline
         ReportPipeline.export_command_section(input,Path(output.HTML),Path(params.dir_))
@@ -83,6 +82,8 @@ rule combine_reports:
         reports_contamination = contamination_check_kraken.get_reports(config),
         report_confindr = Path(config['working_dir']) / (confindr.OUTPUT_CONFINDR_REPORT if 'confindr' in config['analyses'] else confindr.OUTPUT_CONFINDR_REPORT_EMPTY),
         report_adv_qc = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_REPORT,
+        # Species identification
+        report_rmlst = sequence_typing.get_sequence_typing_report('rmlst',config),
         # Gene detection
         report_amrfinder = Path(config['working_dir']) / (amrfinder.OUTPUT_AMRFINDER_REPORT if 'amrfinder' in config['analyses'] else amrfinder.OUTPUT_AMRFINDER_REPORT_EMPTY),
         report_resfinder4 = Path(config['working_dir']) / (resfinder4.OUTPUT_RESFINDER4_REPORT if 'resfinder4' in config['analyses'] else resfinder4.OUTPUT_RESFINDER4_REPORT_EMPTY),
@@ -92,7 +93,6 @@ rule combine_reports:
         report_mob_suite = Path(config['working_dir']) / (mobsuite.OUTPUT_MOB_SUITE_REPORT if 'mob_suite' in config['analyses'] else mobsuite.OUTPUT_MOB_SUITE_REPORT_EMPTY),
         report_genomic_context = Path(config['working_dir']) / (mobsuite.OUTPUT_MOB_SUITE_CONTEXT_REPORT if 'mob_suite' in config['analyses'] else mobsuite.OUTPUT_MOB_SUITE_CONTEXT_REPORT_EMPTY),
         # Shigella serotyping
-        report_rmlst = sequence_typing.get_sequence_typing_report('rmlst', config),
         report_shigeifinder = Path(config['working_dir']) / (shigeifinder.OUTPUT_SHIGEIFINDER_REPORT if 'shigeifinder' in config['analyses'] else shigeifinder.OUTPUT_SHIGEIFINDER_REPORT_EMPTY),
         report_shigatyper = Path(config['working_dir']) / (shigatyper.OUTPUT_SHIGATYPER_REPORT if 'shigatyper' in config['analyses'] else shigatyper.OUTPUT_SHIGATYPER_REPORT_EMPTY),
         report_mykrobe = Path(config['working_dir']) / (mykrobe.OUTPUT_MYKROBE_REPORT if 'mykrobe' in config['analyses'] else mykrobe.OUTPUT_MYKROBE_REPORT_EMPTY),
@@ -138,9 +138,10 @@ rule combine_reports:
             report_structure,params.input_type,input.reports_downsampling,input.reports_trimming)
         report_structure.append(('Assembly', 'assembly', [Path(input.report_quast)]))
         ReportPipeline.add_content_contamination_check(
-            report_structure,params.input_type,input.reports_contamination,input.report_confindr)
-        report_structure.append(('Advanced QC', 'adv_qc', [Path(input.report_adv_qc)]))
+            report_structure, params.input_type, input.reports_contamination, input.report_confindr)
         report_structure.extend([
+            ('Advanced QC', 'adv_qc', [Path(input.report_adv_qc)]),
+            ('Species identification', 'species', [Path(input.report_rmlst)]),
             ('<i>Shigella</i> serotyping', 'shigella_typing', [Path(x) for x in (
                 input.report_shigeifinder, input.report_shigatyper, input.report_mykrobe)]),
             ('AMR detection', 'amr', [Path(x) for x in (
@@ -150,12 +151,11 @@ rule combine_reports:
             ('Plasmid replicon detection', 'plasmid', [Path(x) for x in (
                 input.report_mob_suite, input.report_genomic_context)]),
             ('Sequence typing', 'st', [Path(x) for x in (
-                input.report_mlst_warwick, input.report_mlst_pasteur, input.report_cgmlst, input.report_rmlst)]),
+                input.report_mlst_warwick, input.report_mlst_pasteur, input.report_cgmlst)]),
             ('Citations', 'citations', [Path(input.report_citations)]),
             ('Commands', 'commands', [Path(input.report_commands)])
         ])
         SnakePipelineUtils.add_report_content(report, report_structure)
-
 
 rule combine_summary_files:
     """
@@ -170,8 +170,8 @@ rule combine_summary_files:
         contamination_check_kraken.get_summaries(config),
         confindr.get_summary(config),
         Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY,
-        # Shigella typing
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='rmlst') if 'rmlst' in config['analyses'] else [],
+        # Shigella typing
         Path(config['working_dir']) / shigeifinder.OUTPUT_SHIGEIFINDER_SUMMARY if 'shigeifinder' in config['analyses'] else [],
         Path(config['working_dir']) / shigatyper.OUTPUT_SHIGATYPER_SUMMARY if 'shigatyper' in config['analyses'] else [],
         Path(config['working_dir']) / mykrobe.OUTPUT_MYKROBE_SUMMARY if 'mykrobe' in config['analyses'] else [],

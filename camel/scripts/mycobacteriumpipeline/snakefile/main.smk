@@ -30,7 +30,6 @@ include: spoligotyping.SNAKEFILE_SPOLIGOTYPING
 include: snplineage.SNAKEFILE_SNP_LINEAGE
 include: amrdetection.SNAKEFILE_AMR
 
-
 #########
 # Rules #
 #########
@@ -84,15 +83,20 @@ rule report_combine_all:
         reports_contamination = contamination_check_kraken.get_reports(config),
         report_confindr = Path(config['working_dir']) / (confindr.OUTPUT_CONFINDR_REPORT if 'confindr' in config['analyses'] else confindr.OUTPUT_CONFINDR_REPORT_EMPTY),
         report_adv_qc = Path(config['working_dir']) / str(quality_checks.OUTPUT_QUALITY_CHECKS_REPORT).format(input_type=config['input_type']),
-        report_variant = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_REPORT,
+        report_variant= Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_REPORT,
+        # Species identification
+        report_rmlst = sequence_typing.get_sequence_typing_report('rmlst', config),
         report_ncbi_16s = gene_detection.get_gene_detection_report('ncbi_16s', config),
         report_51snp = Path(config['working_dir']) / (assay51snp.OUTPUT_51SNP_REPORT if '51snp' in config['analyses'] else assay51snp.OUTPUT_51SNP_REPORT_EMPTY),
         report_csb_rd = Path(config['working_dir']) / (csb_rd.OUTPUT_CSB_RD_REPORT if 'csb_rd' in config['analyses'] else csb_rd.OUTPUT_CSB_RD_REPORT_EMPTY),
         report_hsp65 = Path(config['working_dir']) / (hsp65.OUTPUT_HSP65_REPORT if 'hsp65' in config['analyses'] else hsp65.OUTPUT_HSP65_REPORT_EMPTY),
         report_snpit = Path(config['working_dir']) / (snpit.OUTPUT_SNPIT_REPORT if 'snpit' in config['analyses'] else snpit.OUTPUT_SNPIT_REPORT_EMPTY),
+        # Spoligotyping & lineage determination
         report_spoligo = Path(config['working_dir']) / (spoligotyping.OUTPUT_SPOLIGOTYPING_REPORT if 'spoligotyping' in config['analyses'] else spoligotyping.OUTPUT_SPOLIGOTYPING_REPORT_EMPTY),
         report_snp_lineage = Path(config['working_dir']) / (snplineage.OUTPUT_SNP_LINEAGE_REPORT if 'snp_lineage' in config['analyses'] else snplineage.OUTPUT_SNP_LINEAGE_REPORT_EMPTY),
+        # AMR
         report_amr = Path(config['working_dir']) / (amrdetection.OUTPUT_AMR_REPORT if 'amr' in config['analyses'] else amrdetection.OUTPUT_AMR_REPORT_EMPTY),
+        # Typing
         report_mlst = sequence_typing.get_sequence_typing_report('mlst', config),
         report_cgmlst = sequence_typing.get_sequence_typing_report('cgmlst', config),
         # Report
@@ -139,8 +143,8 @@ rule report_combine_all:
         report_structure.extend([
             ('Variant calling', 'variant', [Path(input.report_variant)]),
             ('Species identification', 'identification', [
-                Path(input.report_ncbi_16s), Path(input.report_snpit), Path(input.report_csb_rd),
-                Path(input.report_hsp65), Path(input.report_51snp)]),
+                Path(input.report_rmlst), Path(input.report_ncbi_16s), Path(input.report_snpit),
+                Path(input.report_csb_rd), Path(input.report_hsp65), Path(input.report_51snp)]),
             ('Spoligotyping and lineage', 'spoligotyping', [
                 Path(input.report_spoligo), Path(input.report_snp_lineage)]),
             ('AMR detection', 'amr', [Path(input.report_amr)]),
@@ -174,6 +178,7 @@ rule summary_combine_all:
         Path(config['working_dir']) / snplineage.OUTPUT_SNP_LINEAGE_SUMMARY if 'snp_lineage' in config['analyses'] else [],
         Path(config['working_dir']) / amrdetection.OUTPUT_AMR_SUMMARY if 'amr' in config['analyses'] else [],
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='mlst') if 'mlst' in config['analyses'] else [],
+        Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='rmlst') if 'rmlst' in config['analyses'] else [],
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='cgmlst') if 'cgmlst' in config['analyses'] else []
     output:
         TSV = config['output_tabular']

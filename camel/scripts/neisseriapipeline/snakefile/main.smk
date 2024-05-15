@@ -111,9 +111,9 @@ rule combine_reports:
         report_confindr = confindr.get_report(config),
         report_adv_qc=Path(config['working_dir']) / str(quality_checks.OUTPUT_QUALITY_CHECKS_REPORT).format(
             input_type=config['input_type']),
+        report_rmlst = sequence_typing.get_sequence_typing_report('rmlst', config),
         report_resfinder = gene_detection.get_gene_detection_report('resfinder', config),
         report_ncbi_amr = gene_detection.get_gene_detection_report('ncbi_amr', config),
-        report_rmlst = sequence_typing.get_sequence_typing_report('rmlst', config),
         report_mlst = sequence_typing.get_sequence_typing_report('mlst', config),
         report_cgmlst = sequence_typing.get_sequence_typing_report('cgmlst', config),
         report_pora = sequence_typing.get_sequence_typing_report('pora', config),
@@ -167,11 +167,11 @@ rule combine_reports:
             report_structure, params.input_type, input.reports_contamination, input.report_confindr)
         report_structure.append(('Advanced QC', 'adv_qc', [Path(input.report_adv_qc)]))
         report_structure.extend([
+            ('Species identification', 'species', [Path(input.report_rmlst)]),
             ('Resistance characterization', 'res', [Path(x) for x in (input.report_resfinder, input.report_ncbi_amr)]),
             ('Sequence typing', 'st', [Path(x) for x in (
-                input.report_rmlst, input.report_mlst, input.report_rplf, input.report_pora, input.report_porb,
-                input.report_feta, input.report_resistance_genes, input.report_vaccine_targets, input.report_fhbp,
-                input.report_cgmlst)]),
+                input.report_mlst, input.report_rplf, input.report_pora, input.report_porb, input.report_feta,
+                input.report_resistance_genes, input.report_vaccine_targets, input.report_fhbp, input.report_cgmlst)]),
             ('Antigen typing', 'at', [Path(x) for x in (input.report_bast, input.report_gmats, input.report_mendevar)]),
             ('Serogroup determination', 'serogroup', [Path(
                 input.report_serogroup), Path(input.report_serogroup_legacy)]),

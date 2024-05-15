@@ -76,6 +76,8 @@ rule report_combine_all:
         reports_contamination = contamination_check_kraken.get_reports(config),
         report_confindr = Path(config['working_dir']) / (confindr.OUTPUT_CONFINDR_REPORT if 'confindr' in config['analyses'] else confindr.OUTPUT_CONFINDR_REPORT_EMPTY),
         report_adv_qc = Path(config['working_dir']) / str(quality_checks.OUTPUT_QUALITY_CHECKS_REPORT).format(input_type=config['input_type']),
+        # Species identification
+        report_rmlst = sequence_typing.get_sequence_typing_report('rmlst', config),
         # AMR detection
         report_lrefinder = Path(config['working_dir']) / (lrefinder.OUTPUT_LREFINDER_REPORT if 'lrefinder' in config['analyses'] else lrefinder.OUTPUT_LREFINDER_REPORT_EMPTY),
         report_amrfinder = Path(config['working_dir']) / (amrfinder.OUTPUT_AMRFINDER_REPORT if 'amrfinder' in config['analyses'] else amrfinder.OUTPUT_AMRFINDER_REPORT_EMPTY),
@@ -91,7 +93,6 @@ rule report_combine_all:
         report_prodigal = Path(config['working_dir']) / (bacmet.OUTPUT_PRODIGAL_REPORT if 'bacmet' in config['analyses'] else bacmet.OUTPUT_PRODIGAL_REPORT_EMPTY),
         report_bacmet = Path(config['working_dir']) / (bacmet.OUTPUT_BACMET_REPORT if 'bacmet' in config['analyses'] else bacmet.OUTPUT_BACMET_REPORT_EMPTY),
         # Typing
-        report_rmlst = sequence_typing.get_sequence_typing_report('rmlst', config),
         report_mlst = sequence_typing.get_sequence_typing_report('mlst', config) if not config['is_generic'] else [],
         report_mlst_bezdicek = sequence_typing.get_sequence_typing_report('mlst_bezdicek', config) if not config['is_generic'] else [],
         report_cgmlst = sequence_typing.get_sequence_typing_report('cgmlst', config) if not config['is_generic'] else [],
@@ -141,21 +142,25 @@ rule report_combine_all:
 
         # Typing (additional MLST scheme for E. faecium)
         if params.species == 'Enterococcus faecalis':
-            reports_typing = (input.report_rmlst, input.report_mlst, input.report_cgmlst)
+            reports_typing = (input.report_mlst, input.report_cgmlst)
         elif params.species == 'Enterococcus faecium':
-            reports_typing = (input.report_rmlst, input.report_mlst, input.report_mlst_bezdicek, input.report_cgmlst)
+            reports_typing = (input.report_mlst, input.report_mlst_bezdicek, input.report_cgmlst)
         else:
-            reports_typing = (input.report_rmlst,)
+            reports_typing = ()
 
         report_structure.extend([
+            ('Species identification', 'species', [Path(input.report_rmlst)]),
             ('AMR detection', 'amr', [Path(x) for x in (
                 input.report_lrefinder, input.report_amrfinder, input.report_resfinder4)]),
             ('Virulence detection', 'virulence', [Path(x) for x in (
                 input.report_virulencefinder, input.report_vfdb_core)]),
             ('Plasmid characterization', 'plasmid', [Path(x) for x in (
                 input.report_plasmidfinder, input.report_mob_suite, input.report_genomic_context)]),
-            ('Biocide and metal resistance', 'bacmet', [Path(input.report_prodigal), Path(input.report_bacmet)]),
-            ('Sequence typing', 'st', [Path(x) for x in reports_typing]),
+            ('Biocide and metal resistance', 'bacmet', [Path(input.report_prodigal), Path(input.report_bacmet)])
+        ])
+        if len(reports_typing) > 0:
+            report_structure.append(('Sequence typing', 'typing', reports_typing))
+        report_structure.extend([
             ('Citations', 'citations', [Path(input.report_citations)]),
             ('Commands', 'commands', [Path(input.report_commands)])
         ])
