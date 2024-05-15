@@ -312,6 +312,9 @@ rule typing_create_report:
         reporter.add_input_files({'VAL_SAMPLE': [ToolIOValue(params.sample_name)]})
         if params.detection_method != config['detection_method']:
             reporter.update_parameters(forced_detection_method=str(params.detection_method))
+        # noinspection PyUnresolvedReferences
+        if params.config_data.get('hidden', False) is True:
+            reporter.update_parameters(hidden=True)
 
         # Optional message
         if 'message' in params.config_data:

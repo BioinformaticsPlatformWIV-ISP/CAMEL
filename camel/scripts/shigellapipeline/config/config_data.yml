@@ -96,6 +96,7 @@ gene_detection:
 sequence_typing:
   mlst_pasteur:
     path: /db/sequence_typing/ecoli/mlst_pasteur
+    hidden: true
   mlst_warwick:
     path: /db/sequence_typing/ecoli/mlst_warwick
   cgmlst:

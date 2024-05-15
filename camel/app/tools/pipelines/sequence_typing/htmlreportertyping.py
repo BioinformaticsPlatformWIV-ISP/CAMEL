@@ -120,7 +120,8 @@ class HtmlReporterTyping(Tool):
             self._report_section.add_header(sub_header, 4)
 
         # Add slider for big tables
-        if len(hits_io) > 12:
+        is_hidden = len(hits_io) > 12 or ('hidden' in self._parameters)
+        if is_hidden:
             div = HtmlExpandableDiv('table-{}'.format(
                 self._input_informs['scheme']['name'].lower()), f'alleles ({len(hits_io)})')
             div.add_table(table_data, table_header, [('class', 'data')])
