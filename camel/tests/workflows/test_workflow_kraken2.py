@@ -4,6 +4,8 @@ from pathlib import Path
 from camel.app.camel import Camel
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.components.workflows.kraken2wrapper import Kraken2Wrapper
+from camel.app.components.workflows.utils.fastqinput import FastqInput
+from camel.app.io.tooliofile import ToolIOFile
 
 
 class TestWorkflowKraken2(CamelTestSuite):
@@ -33,9 +35,9 @@ class TestWorkflowKraken2(CamelTestSuite):
         :return: None
         """
         wrapper = Kraken2Wrapper(self.running_dir)
+        fq_in = FastqInput('PE', pe=[ToolIOFile(fq) for fq in TestWorkflowKraken2.fastq_pe])
         expected_species = 'Neisseria meningitidis'
-        wrapper.run_workflow(
-            'test_sample', TestWorkflowKraken2.fastq_pe, 'illumina', expected_species, db=TestWorkflowKraken2.path_db)
+        wrapper.run_workflow_fastq('test_sample', fq_in, 'illumina', expected_species, TestWorkflowKraken2.path_db)
         self.assertGreater(len(wrapper.output.report_section.to_html()), 0)
         self.assertGreater(wrapper.output.tsv_summary.stat().st_size, 0)
 
@@ -46,8 +48,8 @@ class TestWorkflowKraken2(CamelTestSuite):
         """
         wrapper = Kraken2Wrapper(self.running_dir)
         expected_species = 'Influenza A virus'
-        wrapper.run_workflow(
-            'test_sample', TestWorkflowKraken2.fastq_se_nanopore, 'ont', expected_species, db=TestWorkflowKraken2.path_db)
+        fq_in = FastqInput('SE', se=[ToolIOFile(TestWorkflowKraken2.fastq_se_nanopore)], is_pe=False)
+        wrapper.run_workflow_fastq('test_sample', fq_in, 'ont', expected_species, db=TestWorkflowKraken2.path_db)
         self.assertGreater(len(wrapper.output.report_section.to_html()), 0)
         self.assertGreater(wrapper.output.tsv_summary.stat().st_size, 0)
 
@@ -57,9 +59,9 @@ class TestWorkflowKraken2(CamelTestSuite):
         :return: None
         """
         wrapper = Kraken2Wrapper(self.running_dir)
+        fq_in = FastqInput('PE', pe=[ToolIOFile(fq) for fq in TestWorkflowKraken2.fastq_pe_contamination])
         expected_species = 'Escherichia coli'
-        wrapper.run_workflow(
-            'test_sample', TestWorkflowKraken2.fastq_pe_contamination, 'illumina', expected_species, db=TestWorkflowKraken2.path_db)
+        wrapper.run_workflow_fastq('test_sample', fq_in, 'illumina', expected_species, db=TestWorkflowKraken2.path_db)
         self.assertGreater(len(wrapper.output.report_section.to_html()), 0)
         self.assertGreater(wrapper.output.tsv_summary.stat().st_size, 0)
         list_contaminants_to_test = \
@@ -73,8 +75,8 @@ class TestWorkflowKraken2(CamelTestSuite):
         """
         wrapper = Kraken2Wrapper(self.running_dir)
         expected_species = 'Influenza A virus'
-        wrapper.run_workflow(
-            'test_sample', TestWorkflowKraken2.fastq_se_nanopore_contamination, 'ont', expected_species, db=TestWorkflowKraken2.path_db)
+        fq_in = FastqInput('SE', se=[ToolIOFile(TestWorkflowKraken2.fastq_se_nanopore_contamination)], is_pe=False)
+        wrapper.run_workflow_fastq('test_sample', fq_in, 'ont', expected_species, db=TestWorkflowKraken2.path_db)
         self.assertGreater(len(wrapper.output.report_section.to_html()), 0)
         self.assertGreater(wrapper.output.tsv_summary.stat().st_size, 0)
 
@@ -84,9 +86,10 @@ class TestWorkflowKraken2(CamelTestSuite):
         :return: None
         """
         wrapper = Kraken2Wrapper(self.running_dir)
-        expected_species = 'Neisseria'
-        wrapper.run_workflow(
-            'test_sample', TestWorkflowKraken2.fastq_pe, 'illumina', expected_species, db=TestWorkflowKraken2.path_db, level_of_depth='G')
+        expected_genus = 'Neisseria'
+        fq_in = FastqInput('PE', pe=[ToolIOFile(fq) for fq in TestWorkflowKraken2.fastq_pe])
+        wrapper.run_workflow_fastq(
+            'test_sample', fq_in, 'illumina', expected_genus, db=TestWorkflowKraken2.path_db, level_of_depth='G')
         self.assertGreater(len(wrapper.output.report_section.to_html()), 0)
         self.assertGreater(wrapper.output.tsv_summary.stat().st_size, 0)
 
@@ -96,9 +99,10 @@ class TestWorkflowKraken2(CamelTestSuite):
         :return: None
         """
         wrapper = Kraken2Wrapper(self.running_dir)
-        expected_species = 'Escherichia'
-        wrapper.run_workflow(
-            'test_sample', TestWorkflowKraken2.fastq_pe_contamination, 'illumina', expected_species, db=TestWorkflowKraken2.path_db, level_of_depth='G')
+        expected_genus = 'Escherichia'
+        fq_in = FastqInput('PE', pe=[ToolIOFile(fq) for fq in TestWorkflowKraken2.fastq_pe_contamination])
+        wrapper.run_workflow_fastq(
+            'test_sample', fq_in, 'illumina', expected_genus, db=TestWorkflowKraken2.path_db, level_of_depth='G')
         self.assertGreater(len(wrapper.output.report_section.to_html()), 0)
         self.assertGreater(wrapper.output.tsv_summary.stat().st_size, 0)
         list_contaminants_to_test = \
@@ -112,8 +116,8 @@ class TestWorkflowKraken2(CamelTestSuite):
         """
         wrapper = Kraken2Wrapper(self.running_dir)
         expected_species = 'Escherichia'
-        wrapper.run_workflow(
-            'test_sample', TestWorkflowKraken2.fasta, 'fasta', expected_species, db=TestWorkflowKraken2.path_db)
+        wrapper.run_workflow_fasta(
+            'test_sample', TestWorkflowKraken2.fasta, expected_species, db=TestWorkflowKraken2.path_db)
         self.assertGreater(len(wrapper.output.report_section.to_html()), 0)
         self.assertGreater(wrapper.output.tsv_summary.stat().st_size, 0)
 
@@ -124,8 +128,8 @@ class TestWorkflowKraken2(CamelTestSuite):
         """
         wrapper = Kraken2Wrapper(self.running_dir)
         expected_species = 'Neisseria'
-        wrapper.run_workflow(
-            'test_sample', TestWorkflowKraken2.fasta, 'fasta', expected_species, db=TestWorkflowKraken2.path_db)
+        wrapper.run_workflow_fasta(
+            'test_sample', TestWorkflowKraken2.fasta, expected_species, db=TestWorkflowKraken2.path_db)
         self.assertGreater(len(wrapper.output.report_section.to_html()), 0)
         self.assertGreater(wrapper.output.tsv_summary.stat().st_size, 0)
         list_contaminants_to_test = \
