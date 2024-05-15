@@ -67,7 +67,7 @@ class GenomicContext(Tool):
         elif len(self._input_informs['dbs']) == 0:
             section.add_paragraph('No compatible databases selected.')
         else:
-            if self._parameters['read_type'] == 'illumina':
+            if self._parameters['input_type'] == 'illumina':
                 section.add_warning_message(
                     'Predicting genomic context based solely on short-read data is error-prone and should only be '
                     'considered as an indication.')
