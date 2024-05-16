@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import argparse
-from typing import Optional, List, Dict, Sequence
+from typing import Optional, List, Dict, Sequence, Any
 
 import yaml
 
@@ -114,13 +114,7 @@ class MainEnterococcusPipeline(ReportPipeline):
         # Disable species-specific assays for generic Enterococcus
         config_data['is_generic'] = self._args.species == 'spp'
         if self._args.species == 'spp':
-            disabled_assays = MainEnterococcusPipeline.DATA_BY_SPECIES['spp']['disabled_assays']
-            config_data['analyses'] = [a for a in config_data['analyses'] if a not in disabled_assays]
-            logger.warning(f"Generic 'Enterococcus' selected as species, disabling assays: {', '.join(disabled_assays)}")
-            # Disable species specific AMR detection
-            config_data['amrfinder']['species'] = None
-            config_data['resfinder4']['species'] = None
-            config_data['resfinder4']['point'] = False
+            self._update_config_for_generic_spp(config_data)
 
         # Set the species
         config_data['selected_species'] = MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species]['full_name']
@@ -144,6 +138,25 @@ class MainEnterococcusPipeline(ReportPipeline):
         parser.add_argument('--species', required=True, choices=['faecium', 'faecalis', 'spp'])
         return parser.parse_args(args)
 
+    def _update_config_for_generic_spp(self, config_data: Dict[str, Any]) -> None:
+        """
+        Updates the config file with specific adaptation for generic enterococcus.
+        :param config_data: Configuration data
+        :return: None
+        """
+        # Disable incompatible assays
+        disabled_assays = MainEnterococcusPipeline.DATA_BY_SPECIES['spp']['disabled_assays']
+        config_data['analyses'] = [a for a in config_data['analyses'] if a not in disabled_assays]
+        logger.warning(f"Generic 'Enterococcus' selected as species, disabling assays: {', '.join(disabled_assays)}")
+
+        # Disable species specific AMR detection
+        config_data['amrfinder']['species'] = None
+        config_data['resfinder4']['species'] = None
+        config_data['resfinder4']['point'] = False
+
+        # Change the typing scheme for the QC check (no cgMLST is available)
+        logger.warning(f"cgMLST is not available for generic 'Enterococcus', using rMLST for the QC check.")
+        config_data['quality_checks']['typing_scheme'] = 'rmlst'
 
 if __name__ == '__main__':
     Camel.get_instance()
