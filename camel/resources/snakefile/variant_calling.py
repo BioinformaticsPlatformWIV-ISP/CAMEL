@@ -32,8 +32,7 @@ def get_mapping_fq_input(config: Dict[str, Any]) -> Path:
     if config['input_type'] == 'fasta':
         return Path(config['working_dir']) / 'variant_calling' / 'art' / 'fastq.io'
     if config['input_type'] == 'fasta_with_vcf':  # was added because otherwise some tests of the mockpipeline fail
-        logger.warning("This is not supported. The mapping step should not be carried out if a FASTA file and VCF file"
-                       " are given as input.")
+        logger.warning(f"Variant calling is not supported for input type '{config['input_type']}'")
         return Path('')
 
 
