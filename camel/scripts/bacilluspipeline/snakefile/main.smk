@@ -207,17 +207,18 @@ rule report_content_cereus:
         report_structure.append(('Assembly', 'assembly', [Path(input.report_quast)]))
         ReportPipeline.add_content_contamination_check(
             report_structure, params.input_type, input.reports_contamination, input.report_confindr)
-        report_structure.append(('Advanced QC', 'adv_qc', [Path(input.report_adv_qc)]))
 
         # Custom assays (B. cereus)
         report_structure.extend([
+            ('Advanced QC', 'adv_qc', [Path(input.report_adv_qc)]),
+            ('Species identification', 'species', [Path(input.report_rmlst)]),
             ('StrainGST', 'straingst', [Path(x) for x in input.reports_straingst]),
             ('BTyper3', 'btyper3', [Path(input.report_btyper)]),
             ('Virulence detection', 'virulence', [Path(x) for x in (input.report_vfdb_core,)]),
             ('AMRFinder results', 'amrfinder', [Path(input.report_amrfinder)]),
             ('Plasmid characterization', 'plasmid', [Path(x) for x in (
                 input.report_plasmidfinder, input.report_mob_suite, input.report_genomic_context)]),
-            ('Sequence typing', 'st', [Path(x) for x in (input.report_rmlst, input.report_mlst, input.report_cgmlst)]),
+            ('Sequence typing', 'st', [Path(x) for x in (input.report_mlst, input.report_cgmlst)]),
             ('Citations', 'citations', [Path(input.report_citations)]),
             ('Commands', 'commands', [Path(input.report_commands)])
         ])
