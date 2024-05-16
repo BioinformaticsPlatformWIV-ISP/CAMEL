@@ -79,6 +79,8 @@ rule report_combine_all:
         reports_contamination = contamination_check_kraken.get_reports(config),
         report_confindr = Path(config['working_dir']) / (confindr.OUTPUT_CONFINDR_REPORT if 'confindr' in config['analyses'] else confindr.OUTPUT_CONFINDR_REPORT_EMPTY),
         report_adv_qc = Path(config['working_dir']) / str(quality_checks.OUTPUT_QUALITY_CHECKS_REPORT).format(input_type=config['input_type']),
+        # Species identification
+        report_rmlst = sequence_typing.get_sequence_typing_report('rmlst', config),
         # spa typing
         report_spa_typing = Path(config['working_dir']) / (spatyping.OUTPUT_SPATYPING_REPORT if 'spa_typing' in config['analyses'] else spatyping.OUTPUT_SPATYPING_REPORT_EMPTY),
         # SCCmec typing
@@ -103,7 +105,6 @@ rule report_combine_all:
         report_prodigal = Path(config['working_dir']) / (bacmet.OUTPUT_PRODIGAL_REPORT if 'bacmet' in config['analyses'] else bacmet.OUTPUT_PRODIGAL_REPORT_EMPTY),
         report_bacmet = Path(config['working_dir']) / (bacmet.OUTPUT_BACMET_REPORT if 'bacmet' in config['analyses'] else bacmet.OUTPUT_BACMET_REPORT_EMPTY),
         # Typing
-        report_rmlst = sequence_typing.get_sequence_typing_report('rmlst', config),
         report_mlst = sequence_typing.get_sequence_typing_report('mlst', config),
         report_cgmlst = sequence_typing.get_sequence_typing_report('cgmlst', config),
         # Report
@@ -146,8 +147,9 @@ rule report_combine_all:
         report_structure.append(('Assembly', 'assembly', [Path(input.report_quast)]))
         ReportPipeline.add_content_contamination_check(
             report_structure,params.input_type,input.reports_contamination,input.report_confindr)
-        report_structure.append(('Advanced QC', 'adv_qc', [Path(input.report_adv_qc)]))
         report_structure.extend([
+            ('Advanced QC', 'adv_qc', [Path(input.report_adv_qc)]),
+            ('Species identification', 'species', [Path(input.report_rmlst)]),
             ('AMR detection', 'amr', [Path(x) for x in (
                 input.report_lrefinder, input.report_amrfinder, input.report_resfinder4)]),
             ('Virulence detection', 'virulence', [Path(x) for x in (
@@ -159,7 +161,7 @@ rule report_combine_all:
             ('<i>spa</i> typing', 'spa', [Path(input.report_spa_typing)]),
             ('SCC<i>mec</i> typing', 'sccmec', [Path(x) for x in (
                 input.report_sccmec_genes, input.report_sccmec_cassette, input.report_sccmec_typing)]),
-            ('Sequence typing', 'st', [Path(x) for x in (input.report_rmlst, input.report_mlst, input.report_cgmlst)]),
+            ('Sequence typing', 'st', [Path(x) for x in (input.report_mlst, input.report_cgmlst)]),
             ('Citations', 'citations', [Path(input.report_citations)]),
             ('Commands', 'commands', [Path(input.report_commands)])
         ])

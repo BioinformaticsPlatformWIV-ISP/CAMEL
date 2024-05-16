@@ -60,7 +60,6 @@ class ResFinderReporter(Tool):
         ], table_attributes=[('class', 'information')])
         section.add_horizontal_line()
 
-
     def __add_phenotype_table(self, section: HtmlReportSection, key: str) -> None:
         """
         Adds the table with the phenotype overview.
@@ -222,8 +221,18 @@ class ResFinderReporter(Tool):
 
         # Extra information
         self.__add_explanation_matches(section)
-        section.add_paragraph(f"Database version: {self._input_informs['resfinder']['db_version_resfinder']}")
+        section.add_paragraph(f"Database version: {self.__format_db_version()}")
         self._tool_outputs['VAL_HTML'] = [ToolIOValue(section)]
+
+    def __format_db_version(self) -> str:
+        """
+        Formats the string with the database version.
+        :return: Formatted string
+        """
+        informs_rf = self._input_informs['resfinder']
+        if 'db_version_name' in informs_rf:
+            return f"{informs_rf['db_version_name']} ({informs_rf['db_version_resfinder']})"
+        return informs_rf['db_version_resfinder']
 
     def __add_explanation_matches(self, section: HtmlReportSection) -> None:
         """

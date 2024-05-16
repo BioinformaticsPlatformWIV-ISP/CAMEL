@@ -49,8 +49,8 @@ rule report_command_section:
         INFORMS_assembly = assembly.get_command_informs(config),
         INFORMS_quast = Path(config['working_dir']) /quast.OUTPUT_QUAST_INFORMS,
         INFORMS_busco = Path(config['working_dir']) / quast.OUTPUT_BUSCO_INFORMS,
-        INFORMS_contamination=contamination_check_kraken.get_command_informs(config),
-        INFORMS_confindr=confindr.get_command_informs(config),
+        INFORMS_contamination = contamination_check_kraken.get_command_informs(config),
+        INFORMS_confindr = confindr.get_command_informs(config),
         # INFORMS_mapping = quality_checks.get_mapping_rate_informs(config),
         # INFORMS_depth = quality_checks.get_depth_informs(config),
         INFORMS_amrfnder = Path(config['working_dir']) / amrfinder.OUTPUT_AMRFINDER_INFORMS if 'amrfinder' in config['analyses'] else [],
@@ -79,8 +79,10 @@ rule report_combine_all:
         report_quast = Path(config['working_dir']) / quast.OUTPUT_QUAST_REPORT,
         reports_contamination = contamination_check_kraken.get_reports(config),
         report_confindr = confindr.get_report(config),
-        report_adv_qc=Path(config['working_dir']) / str(quality_checks.OUTPUT_QUALITY_CHECKS_REPORT).format(
+        report_adv_qc = Path(config['working_dir']) / str(quality_checks.OUTPUT_QUALITY_CHECKS_REPORT).format(
             input_type=config['input_type']),
+        # Species identification
+        report_rmlst = sequence_typing.get_sequence_typing_report('rmlst', config),
         # AMR detection
         report_amrfinder = Path(config['working_dir']) / (amrfinder.OUTPUT_AMRFINDER_REPORT if 'amrfinder' in config['analyses'] else amrfinder.OUTPUT_AMRFINDER_REPORT_EMPTY),
         report_resfinder4 = Path(config['working_dir']) / (resfinder4.OUTPUT_RESFINDER4_REPORT if 'resfinder4' in config['analyses'] else resfinder4.OUTPUT_RESFINDER4_REPORT_EMPTY),
@@ -133,12 +135,13 @@ rule report_combine_all:
         ReportPipeline.add_content_scrubbing(
             report_structure, params.input_type, input.reports_scrubbing)
         ReportPipeline.add_content_trim_basic_qc(
-            report_structure,params.input_type,input.reports_downsampling,input.reports_trimming)
+            report_structure,params.input_type,input.reports_downsampling, input.reports_trimming)
         report_structure.append(('Assembly', 'assembly', [Path(input.report_quast)]))
         ReportPipeline.add_content_contamination_check(
-            report_structure,params.input_type,input.reports_contamination,input.report_confindr)
-        report_structure.append(('Advanced QC', 'adv_qc', [Path(input.report_adv_qc)]))
+            report_structure,params.input_type,input.reports_contamination, input.report_confindr)
         report_structure.extend([
+            ('Advanced QC', 'adv_qc', [Path(input.report_adv_qc)]),
+            ('Species identification', 'species', [Path(input.report_rmlst)]),
             ('AMR detection', 'amr', [Path(input.report_amrfinder), Path(input.report_resfinder4)]),
             ('Virulence detection', 'virulence', [Path(x) for x in (input.report_vfdb_core,)]),
             ('Kleborate', 'kleborate', [Path(input.report_kleborate)]),
@@ -178,6 +181,7 @@ rule summary_combine_all:
         Path(config['working_dir']) / bacmet.OUTPUT_BACMET_SUMMARY if 'bacmet' in config['analyses'] else [],
         # Sequence typing
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='mlst') if 'mlst' in config['analyses'] else [],
+        Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='rmlst') if 'rmlst' in config['analyses'] else [],
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='scgmlst') if 'scgmlst' in config['analyses'] else [],
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='cgmlst') if 'cgmlst' in config['analyses'] else []
     output:

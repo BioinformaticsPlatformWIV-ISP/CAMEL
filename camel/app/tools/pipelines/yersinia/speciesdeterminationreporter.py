@@ -1,9 +1,11 @@
 import pandas as pd
+from pathlib import Path
 
 from camel.app.camel import Camel
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.tools.tool import Tool
+from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 
 
 class SpeciesDeterminationReporter(Tool):
@@ -37,7 +39,19 @@ class SpeciesDeterminationReporter(Tool):
         else:
             self._section.add_paragraph('No <i>Yersinia</i> species found.')
         self._section.add_paragraph("Species and lineage designations as defined by <a href=\"https://doi.org/10.1099%2Fmgen.0.000301\">Savin et al</a>.")
+        relative_path = Path('species_determination') / self._tool_inputs['TSV_analysis'][0].path.name
+        self._section.add_link_to_file('Download results (TSV)', relative_path)
+        self._section.add_file(self._tool_inputs['TSV_analysis'][0].path, relative_path)
         self._tool_outputs['VAL_HTML'] = [ToolIOValue(self._section)]
+
+    def _check_input(self) -> None:
+        """
+        Checks if the provided tool input is valid.
+        :return: None
+        """
+        if 'TSV_analysis' not in self._tool_inputs:
+            raise InvalidInputSpecificationError("TSV file with analysis results is required.")
+        super()._check_input()
 
     def __add_table_detected_species(self, table_df) -> None:
         """

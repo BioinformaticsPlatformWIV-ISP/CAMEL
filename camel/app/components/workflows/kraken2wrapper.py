@@ -4,6 +4,8 @@ from typing import List, Optional, Dict, Any, Union
 
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.workflows.utils.fastqinput import FastqInput
+from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.resources.snakefile import contamination_check_kraken
@@ -32,12 +34,47 @@ class Kraken2Wrapper(object):
         self._working_dir = Path(working_dir)
         self._output = None
 
-    def run_workflow(
-            self, sample_name: str, fastq_input: FastqInput, expected_species: str, db: Path, level_of_depth: str = 'S',
+    def run_workflow_fastq(
+            self, sample_name: str, fastq_input: FastqInput, read_type: str, expected_species: str, db: Path,
+            level_of_depth: str = 'S', threads: int = 8) -> None:
+        """
+        Runs the workflow on FASTQ input data.
+        :param sample_name: Sample name
+        :param fastq_input: FASTQ input
+        :param read_type: Read type
+        :param expected_species: Expected species
+        :param db: Database
+        :param level_of_depth: Species ('S') or Genus ('G') level of contamination check
+        :param threads: Number of threads
+        :return: None
+        """
+        SnakemakeUtils.dump_object(fastq_input.to_fq_dict(), self._working_dir / 'fq_dict.io')
+        self.__run_workflow(read_type, sample_name, db, expected_species, level_of_depth, threads)
+
+    def run_workflow_fasta(
+            self, sample_name: str, fasta_in: Path, expected_species: str, db: Path, level_of_depth: str = 'S',
             threads: int = 8) -> None:
         """
-        Runs the read trimming workflow.
-        :param fastq_input: FASTQ input
+        Runs the workflow on FASTA input data.
+        :param sample_name: Sample name
+        :param fasta_in: FASTA input
+        :param expected_species: Expected species
+        :param db: Database
+        :param level_of_depth: Species ('S') or Genus ('G') level of contamination check
+        :param threads: Number of threads
+        :return: None
+        """
+        dir_fasta_in = self._working_dir / 'assembly' / 'filtering'
+        dir_fasta_in.mkdir(parents=True, exist_ok=True)
+        SnakemakeUtils.dump_object([ToolIOFile(fasta_in)], dir_fasta_in / 'fasta.io')
+        self.__run_workflow('fasta', sample_name, db, expected_species, level_of_depth, threads)
+
+    def __run_workflow(
+            self, input_type: str, sample_name: str, db: Path, expected_species: str, level_of_depth: str = 'S',
+            threads: int = 8) -> None:
+        """
+        Runs the kraken2 workflow.
+        :param input_type: input type
         :param sample_name: Sample name
         :param expected_species: Expected species
         :param db: Database
@@ -45,10 +82,6 @@ class Kraken2Wrapper(object):
         :param threads: Number of threads
         :return: None
         """
-        if not self._working_dir.exists():
-            self._working_dir.mkdir(parents=True)
-        SnakemakeUtils.dump_object(fastq_input.to_fq_dict(), self._working_dir / 'fq_dict.io')
-
         # Config file
         config_data = {
             'contamination_check': {
@@ -57,7 +90,7 @@ class Kraken2Wrapper(object):
                 'level_of_depth': level_of_depth},
             'sample_name': sample_name,
             'working_dir': str(self._working_dir),
-            'input_type': fastq_input.read_type,
+            'input_type': input_type
         }
         config_file = SnakePipelineUtils.generate_config_file(config_data, self._working_dir)
 
@@ -68,11 +101,15 @@ class Kraken2Wrapper(object):
             'INFORMS': self._working_dir / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_INFORMS,
             'INFORMS_KRAKEN': self._working_dir / contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_KRAKEN_INFORMS,
         }
-        read_key = 'fastq_pe' if fastq_input.read_type == 'illumina' else 'fastq_se'
+        try:
+            input_format = {'fasta': 'fasta', 'illumina': 'fastq_pe', 'ont': 'fastq_se'}[input_type]
+        except KeyError as err:
+            logger.error(f'Unsupported input type: {input_type}')
+            raise err
         for k, p in output_files.items():
-            if '{read_key}' not in str(p):
+            if '{input_format}' not in str(p):
                 continue
-            output_files[k] = Path(str(p).format(read_key=read_key))
+            output_files[k] = Path(str(p).format(input_format=input_format))
 
         # Run Snakemake
         SnakePipelineUtils.run_snakemake(

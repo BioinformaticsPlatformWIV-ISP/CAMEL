@@ -90,6 +90,11 @@ class ResFinder(Tool):
             db_version_json_pointfinder = json.load(handle)
         self._informs['db_version_resfinder'] = db_version_json_resfinder['last_update_date']
         self._informs['db_version_pointfinder'] = db_version_json_pointfinder['last_update_date']
+        path_version_file = Path(self._tool_inputs['DIR'][0].path, 'resfinder', 'VERSION')
+        if path_version_file.exists():
+            with path_version_file.open() as handle:
+                db_version = handle.readline().strip()
+        self._informs['db_version_name'] = db_version if path_version_file.exists() else 'n/a'
 
     def _execute_tool(self) -> None:
         """

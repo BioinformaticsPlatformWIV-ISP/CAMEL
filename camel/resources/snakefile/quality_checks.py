@@ -61,6 +61,14 @@ QC_CHECKS_BY_KEY = {qc.key: qc for qc in [
         supported_input_types=['hybrid', 'ont'],
         value_should_exceed=False),
     QCCheck(
+        key='kraken_fasta',
+        full_name='Kraken: contaminants (FASTA)',
+        threshold_warn=1.0,
+        threshold_fail=5.0,
+        fmt_string_value='{:.2f}%',
+        supported_input_types=['fasta'],
+        value_should_exceed=False),
+    QCCheck(
         key='confindr',
         full_name='ConFindr: number of contaminating SNPs',
         threshold_warn=10,

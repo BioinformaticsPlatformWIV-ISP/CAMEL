@@ -5,7 +5,12 @@ Version: **1.3**
 
 # Components
 
-## 1. Coverage check
+## 1. Human read removal (optional) 
+
+If enabled, human reads are removed using the NCBI Human Read Removal Tool (HRRT) 2.2.1.
+The tool is executed with default options.
+
+## 2. Coverage check
 The workflow starts by checking the coverage of the input FASTQ datasets. 
 Coverage is estimated by dividing the total number of bases by the size of the `NZ_CP021520.1` *N. meningitidis* 
 11-7 reference genome. The total number of bases in the FASTQ files is determined using the `size` function of 
@@ -13,7 +18,7 @@ Coverage is estimated by dividing the total number of bases by the size of the `
 
 Datasets with an estimated coverage >=100x are downsampled to ~100x using the `subsample` function of `seqtk 1.4`.
 
-## 2. Read trimming
+## 3. Read trimming
 
 Afterwards, reads are trimmed using `trimmomatic 0.39` with the following options:
 ```
@@ -27,7 +32,7 @@ MINLEN:40
 
 Quality reports are generated before and after trimming using `fastqc 0.11.7`.
 
-## 3. Assembly
+## 4. Assembly
 
 Processed reads are assembled using `SPAdes 3.15.5` with the following options:
 ```
@@ -50,7 +55,7 @@ The completeness of the assembly is checked using `BUSCO 5.5.0` with the followi
 --lineage_dataset bacteria_odb10
 ```
 
-## 4. Advanced QC
+## 5. Advanced QC
 
 ### Kraken 2
 
@@ -85,7 +90,7 @@ the pipeline execution.
 
 **Note:** FastQC metrics are evaluated separately for the forward and reverse reads.
 
-## 5. Gene detection
+## 6. Gene detection
 
 Gene detection is performed as described in [Bogaerts *et al.*](https://pubmed.ncbi.nlm.nih.gov/30894839/) using an 
 updated version of blast (`blast 2.14.0`).
@@ -98,7 +103,7 @@ The following databases are available:
 | ResFinder | Antimicrobial resistance genes from the ResFinder tool maintained by DTU |
 | NDARO     | Antimicrobial resistance genes from the NCBI NDARO database              |
 
-## 6. Sequence typing
+## 7. Sequence typing
 
 Sequence typing is performed as described in [Bogaerts *et al.*](https://pubmed.ncbi.nlm.nih.gov/30894839/) with an 
 updated version of blast (`blast 2.14.0`). 
@@ -119,7 +124,7 @@ The following typing schemes are available:
 | Factor-H binding protein | PubMLST    |
 | cgMLST                   | PubMLST    |
 
-## 7. Antigen typing
+## 8. Antigen typing
 
 
 ### Bexsero antigen sequence typing (BAST)
@@ -132,7 +137,7 @@ Antigen typing is based on typing using the BAST scheme from PubMLST, using the 
 gMATS is used to predict the efficacy of the Bexsero vaccine. It works by matching the alleles of the BAST typing 
 scheme to a database collected from [literature](https://doi.org/10.1016/j.vaccine.2018.12.061).
 
-## 8. Serotype determination
+## 9. Serotype determination
 
 Serotype is determined using the [characterize_neisseria_capsule](https://github.com/ntopaz/characterize_neisseria_capsule) 
 script (commit `a75a009`).

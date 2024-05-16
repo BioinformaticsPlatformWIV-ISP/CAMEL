@@ -26,7 +26,6 @@ citations:
 #########################
 # Tool specific options #
 #########################
-
 downsampling:
   coverage_max: {coverage_max}
   expected_genome_size: 4_548_822
@@ -45,8 +44,8 @@ quality_checks:
 
 quast:
   ref:
-    fasta: '/db/refgenomes/Yersinia_enterocolitica/NC_GCA_02575835.1.fasta'
-    gff3: '/db/refgenomes/Yersinia_enterocolitica/NC_GCA_02575835.1.gff3'
+    fasta: '/db/refgenomes/Yersinia_enterocolitica/GCF_025758635.1.fasta'
+    gff3: '/db/refgenomes/Yersinia_enterocolitica/GCF_025758635.1.gff3'
 
 srst2:
   max_unaligned_overlap: 141
@@ -83,11 +82,11 @@ gene_detection:
     metadata:
       name: Gene
       key: gene
+    hidden: true
 
 ###################
 # Sequence typing #
 ###################
-
 sequence_typing:
   cgmlst:
     path: '/db/sequence_typing/yersinia/cgmlst_yersinia_spp'

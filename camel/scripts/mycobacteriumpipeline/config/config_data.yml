@@ -94,6 +94,11 @@ sequence_typing:
   cgmlst:
     path: /db/sequence_typing/mycobacterium/cgmlst
     detection_method: blast
+  rmlst:
+    path: /db/sequence_typing/various/rmlst
+    message:
+      content: rMLST is only available for noncommercial use, see <a href="https://pubmlst.org/species-id">PubMLST</a> for more info.
+      category: info
 
 51snp:
   bed: /db/pipelines/mycobacterium/51snp/51snp_locations.bed

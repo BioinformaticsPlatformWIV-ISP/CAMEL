@@ -158,9 +158,11 @@ rule gene_detection_report:
         reporter = HtmlReporterGeneDetection(camel)
         step = Step(str(rule), reporter, camel, Path(str(params.running_dir)), wildcards)
 
-        # Forced detection method
+        # Parameters
         if 'force_detection_method' in params.config_data:
             reporter.update_parameters(forced_detection_method = params.config_data['force_detection_method'])
+        if params.config_data.get('hidden', False) is True:
+            reporter.update_parameters(hidden=True)
 
         # Optional message
         if 'message' in params.config_data:

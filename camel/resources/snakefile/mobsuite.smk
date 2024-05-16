@@ -122,7 +122,7 @@ rule mobsuite_report_genomic_context:
     params:
         dir_ = Path(config['working_dir']) / 'mob_suite' / 'genomic_context',
         detection_method = config['detection_method'],
-        read_type = config.get('read_type', 'illumina')
+        input_type = config.get('input_type', 'illumina')
     run:
         from camel.app.tools.mobsuite.genomiccontext import GenomicContext
 
@@ -133,7 +133,7 @@ rule mobsuite_report_genomic_context:
             'dbs': SnakemakeUtils.load_object(Path(input.INFORMS))
         })
         genomic_context.update_parameters(
-            detection_method=str(params.detection_method), read_type=str(params.read_type))
+            detection_method=str(params.detection_method), input_type=str(params.input_type))
         step = Step(str(rule), genomic_context, Camel.get_instance(), params.dir_)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(genomic_context, output)

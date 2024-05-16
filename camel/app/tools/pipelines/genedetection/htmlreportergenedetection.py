@@ -4,6 +4,7 @@ from typing import List, Dict
 from camel.app.camel import Camel
 from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.components.genedetection.genedetectionhitbase import GeneDetectionHitBase
+from camel.app.components.html.htmlexpandablediv import HtmlExpandableDiv
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliovalue import ToolIOValue
@@ -94,7 +95,13 @@ class HtmlReporterGeneDetection(Tool):
         """
         table_data = [hit.to_html_row(self._report_section, self._sub_folder) for hit in sorted(
             hits, key=lambda x: x.locus)]
-        self._report_section.add_table(table_data, hits[0].html_column_names, [('class', 'data')])
+        if 'hidden' in self._parameters:
+            div = HtmlExpandableDiv('table-{}'.format(
+                self._input_informs['db_info']['name']), f'hits ({len(hits):,})')
+            div.add_table(table_data, hits[0].html_column_names, [('class', 'data')])
+            self._report_section.add_html_object(div)
+        else:
+            self._report_section.add_table(table_data, hits[0].html_column_names, [('class', 'data')])
         relative_path = self._sub_folder / Path(self._tool_inputs['TSV'][0].path).name
         self._report_section.add_file(self._tool_inputs['TSV'][0].path, relative_path)
         self._report_section.add_link_to_file("Download (TSV)", relative_path)

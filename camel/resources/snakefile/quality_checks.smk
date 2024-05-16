@@ -22,11 +22,16 @@ def _get_kraken2_informs(config, tech) -> Union[Path, List]:
     # Illumina
     if tech == 'illumina':
         return Path(config['working_dir'], str(contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_INFORMS).format(
-            read_key='fastq_pe'))
+            input_format='fastq_pe'))
     # ONT
     elif tech == 'ont':
         return Path(config['working_dir'], str(contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_INFORMS).format(
-            read_key='fastq_se'))
+            input_format='fastq_se'))
+
+    # FASTA
+    elif tech == 'fasta':
+        return Path(config['working_dir'],str(contamination_check_kraken.OUTPUT_CONTAMINATION_CHECK_INFORMS).format(
+            input_format='fasta'))
     else:
         raise ValueError(f"Invalid 'tech' wildcard: {tech}")
 

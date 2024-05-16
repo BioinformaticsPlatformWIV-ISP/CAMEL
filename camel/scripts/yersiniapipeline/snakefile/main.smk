@@ -8,7 +8,6 @@ from camel.scripts.yersiniapipeline.snakefile import species_determination
 #######################
 # Included Snakefiles #
 #######################
-
 include: core.SNAKEFILE_CORE
 include: human_read_scrubbing.SNAKEFILE_SCRUBBING
 include: downsampling.SNAKEFILE_DOWNSAMPLING
@@ -29,7 +28,6 @@ include: species_determination.SNAKEFILE_SPECIES_DETERMINATION
 #########
 # Rules #
 #########
-
 rule all:
     """
     This rule ensures that the required output files are generated.
@@ -53,7 +51,7 @@ rule report_create_command_section:
         INFORMS_confindr = confindr.get_command_informs(config),
         INFORMS_assembly_map = assembly.get_qc_informs(config, config['input_type']),
         INFORMS_amrfinder = Path(config['working_dir']) / amrfinder.OUTPUT_AMRFINDER_INFORMS if 'amrfinder' in config['analyses'] else [],
-        INFORMS_resfinder4=Path(config['working_dir']) / resfinder4.OUTPUT_RESFINDER4_INFORMS if 'resfinder4' in config[
+        INFORMS_resfinder4 = Path(config['working_dir']) / resfinder4.OUTPUT_RESFINDER4_INFORMS if 'resfinder4' in config[
             'analyses'] else [],
         INFORMS_mob_suite = Path(config['working_dir']) / mobsuite.OUTPUT_MOB_SUITE_INFORMS if 'mob_suite' in config['analyses'] else [],
         INFORMS_vfdb_core = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='vfdb_core') if 'vfdb_core' in config['analyses'] else [],
@@ -144,15 +142,17 @@ rule combine_reports:
         report_structure.append(('Assembly', 'assembly', [Path(input.report_quast)]))
         ReportPipeline.add_content_contamination_check(
             report_structure, params.input_type, input.reports_contamination, input.report_confindr)
-        report_structure.append(('Advanced QC', 'adv_qc', [Path(input.report_adv_qc)]))
         report_structure.extend([
+            ('Advanced QC', 'adv_qc', [Path(input.report_adv_qc)]),
+            ('Species identification', 'species', [Path(input.report_rmlst)]),
             ('AMR detection', 'amr', [Path(x) for x in (
                 input.report_amrfinder, input.report_resfinder4)]),
             ('Virulence detection', 'virulence', [Path(input.report_vfdb_core)]),
             ('Genomic context', 'mob_suite', [Path(x) for x in(
                 input.report_mob_suite, input.report_genomic_context)]),
             ('Sequence typing', 'st', [Path(x) for x in (
-                input.report_mlst, input.report_mlst_mcnally, input.report_cgmlst, input.report_cgmlst_ye, input.report_cgmlst_yp, input.report_cgmlst_enterobase, input.report_rmlst)]),
+                input.report_mlst, input.report_mlst_mcnally, input.report_cgmlst, input.report_cgmlst_ye,
+                input.report_cgmlst_yp, input.report_cgmlst_enterobase)]),
             ('Species determination', 'species', [Path(input.report_species)]),
             ('Citations', 'citations', [Path(input.report_citations)]),
             ('Commands', 'commands', [Path(input.report_commands)])

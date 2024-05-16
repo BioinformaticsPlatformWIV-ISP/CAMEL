@@ -21,6 +21,7 @@ class MOBReconReporter(Tool):
         'num_contigs': {'title': 'Nb. of contigs'},
         'size': {'title': 'Size', 'fmt': lambda x: f'{x:,}'},
         'gc': {'title': '% GC-content', 'fmt': lambda x: f'{x * 100:.2f}'},
+        'predicted_mobility': {'title': 'Pred. mobility'},
         'rep_type(s)': {'title': 'Rep. types', 'fmt': lambda x: x.replace(',', ', ')},
         'relaxase_type(s)': {'title': 'Relaxase types', 'fmt': lambda x: x.replace(',', ', ')}
     }
@@ -60,18 +61,20 @@ class MOBReconReporter(Tool):
             return
 
         data_overview['id'] = data_overview['sample_id'].apply(lambda x: re.search('.*:(.*)', x).group(1))
+        data_overview['id'] = data_overview['id'].apply(lambda x: MOBReconReporter.format_plasmid_id(x))
         section.add_header('Overview', 3)
         table_data = [
             [d.get('fmt', lambda x: x)(row[col]) for
              col, d in MOBReconReporter.COLUMN_MAPPING.items()] for row in data_overview.to_dict('records')
         ]
 
-        # Add column with download link for FASTA files
+        # Add column with a download link for FASTA files
         for row in table_data:
             id_ = row[0]
             path_fasta = next(io.path for io in self._tool_inputs['FASTA'] if id_ in io.path.name)
             relative_path = Path('mob-suite', path_fasta.name)
             section.add_file(path_fasta, relative_path)
+            # noinspection PyTypeChecker
             row.append(HtmlTableCell('Download (FASTA)', link=str(relative_path)))
 
         # Add table
@@ -99,3 +102,15 @@ class MOBReconReporter(Tool):
 
         # Tool output
         self._tool_outputs['HTML'] = [ToolIOValue(section)]
+
+    @staticmethod
+    def format_plasmid_id(str_in: str) -> str:
+        """
+        Formats the plasmid id (reduces the length for novel plasmid clusters).
+        :param str_in: Input string
+        :return: Formatted string
+        """
+        m = re.match(r'novel_(\w+)', str_in)
+        if not m:
+            return str_in
+        return f'novel_{m.group(1)[:4]}'

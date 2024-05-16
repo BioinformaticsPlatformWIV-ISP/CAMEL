@@ -113,5 +113,7 @@ rule resfinder4_create_summary:
                 handle.write('\n')
             handle.write(f"resfinder4_tool_version\t{informs['_name']}")
             handle.write('\n')
-            handle.write(f"resfinder4_db_version\t{informs['db_version_resfinder']}")
+            handle.write(f"resfinder4_db_version_date\t{informs['db_version_resfinder']}")
+            handle.write('\n')
+            handle.write(f"resfinder4_db_version_name\t{informs['db_version_name']}")
             handle.write('\n')

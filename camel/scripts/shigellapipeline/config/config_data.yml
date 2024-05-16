@@ -26,7 +26,6 @@ citations:
     - Zhang_2021-shigeifinder
     - Wu_2019-shigatyper
 
-
 #########################
 # Tool specific options #
 #########################
@@ -40,6 +39,8 @@ read_trimming:
 contamination_check:
   db: /db/kraken2_microbial/latest
   expected_species: Shigella
+  allowed_species:
+    - Escherichia
   level_of_depth: G
 
 quast:
@@ -82,6 +83,7 @@ gene_detection:
     metadata:
       name: Protein function
       key: protein_function
+    hidden: true
 
   virulencefinder_shiga:
     path: /db/gene_detection/VirulenceFinder-Shiga
@@ -95,6 +97,7 @@ gene_detection:
 sequence_typing:
   mlst_pasteur:
     path: /db/sequence_typing/ecoli/mlst_pasteur
+    hidden: true
   mlst_warwick:
     path: /db/sequence_typing/ecoli/mlst_warwick
   cgmlst:

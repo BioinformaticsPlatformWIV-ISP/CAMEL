@@ -1,6 +1,7 @@
 dependencies: []
 parameters:
   forced_detection_method: {default: false, mandatory: false, option: null, value: blast}
+  hidden: { default: false, mandatory: false, option: null, value: null }
   message: { default: false, mandatory: false, option: null, value: null }
   message_category: { default: true, mandatory: true, option: null, value: info }
 tool_command: ''
