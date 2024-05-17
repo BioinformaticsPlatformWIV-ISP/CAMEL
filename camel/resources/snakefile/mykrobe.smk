@@ -89,7 +89,7 @@ rule mykrobe_create_summary:
     output:
         TSV = Path(config['working_dir']) / mykrobe.OUTPUT_MYKROBE_SUMMARY
     params:
-        show_amr = config['mykrobe'].get('show_amr', 'True')
+        show_amr = config['mykrobe'].get('show_amr', True)
     run:
         # Collect informs
         informs = SnakemakeUtils.load_object(Path(input.INFORMS_mykrobe))
@@ -102,7 +102,7 @@ rule mykrobe_create_summary:
             handle.write('\n')
             handle.write(f"mykrobe_lineage\t{informs['lineage']}")
             handle.write('\n')
-            if str(params.show_amr) == 'True':
+            if params.show_amr is True:
                 handle.write(f"mykrobe_drug_susceptibility\t{informs['drug_susceptibility']}")
                 handle.write('\n')
             handle.write(f"mykrobe_tool_version\t{informs['_name']}")
