@@ -62,7 +62,7 @@ class MykrobeReporter(Tool):
                             [('href', 'https://github.com/Mykrobe-tools/mykrobe/wiki/AMR-prediction-output')]))
 
         # Genotyping
-        section.add_header('Lineage information', 3)
+        section.add_header(self._tool_inputs['custom_header'][0], 3)
         group = self._input_informs['mykrobe']['phylo_group']
         section.add_table(
             [[HtmlTableCell(group)]], ['High level identification'], [('class', 'data')])

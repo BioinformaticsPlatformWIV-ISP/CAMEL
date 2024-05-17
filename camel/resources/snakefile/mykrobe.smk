@@ -55,14 +55,16 @@ rule mykrobe_report:
         HTML = Path(config['working_dir']) / mykrobe.OUTPUT_MYKROBE_REPORT
     params:
         dir_ = Path(config['working_dir']) / 'mykrobe' / 'report',
-        skip_amr = config['mykrobe'].get('skip_amr', False)
+        skip_amr = config['mykrobe'].get('skip_amr', False),
+        title = config['mykrobe'].get('title', 'Lineage information')
     run:
         from camel.app.tools.mykrobe.mykrobereporter import MykrobeReporter
 
         reporter = MykrobeReporter(Camel.get_instance())
         if params.skip_amr:
             reporter.add_input_files({
-                'SKIP_AMR': [ToolIOValue(params.skip_amr)]
+                'SKIP_AMR': [ToolIOValue(params.skip_amr)],
+                'custom_header': [ToolIOValue(params.title)]
             })
         step = Step(str(rule), reporter, Camel.get_instance(), params.dir_)
         SnakemakeUtils.add_pickle_inputs(reporter, input)
