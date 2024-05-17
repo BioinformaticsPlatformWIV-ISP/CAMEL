@@ -16,9 +16,9 @@ class TestMockPipeline(CamelTestSuite):
     input_fasta = test_file_dir / 'ecoli_10k.fasta'
     input_vcf = test_file_dir / 'variants-ecoli_10k_ilmn-all.vcf'
 
-    def test_mock_pipeline_illumina(self) -> None:
+    def test_mock_pipeline_illumina_trimmomatic(self) -> None:
         """
-        Tests the mock pipeline with Illumina input data.
+        Tests the mock pipeline with Illumina input data and trimmomatic.
         :return: None
         """
         path_report_out = Path(self.running_dir) / 'out' / 'report.html'
@@ -30,6 +30,7 @@ class TestMockPipeline(CamelTestSuite):
             '--output-dir', str(path_report_out.parent),
             '--output-tsv', str(path_summary_out),
             '--working-dir', str(self.running_dir),
+            '--trimming-method', 'trimmomatic',
             '--detection-method', 'blast',
             '--ncbi-amr',
             '--human-read-scrubbing',
