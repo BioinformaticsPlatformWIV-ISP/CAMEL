@@ -54,7 +54,7 @@ class MykrobeReporter(Tool):
         section = HtmlReportSection(MykrobeReporter.TITLE,
                                     subtitle=self._input_informs['mykrobe']['_name'])
         # Antibiotic sensitivity
-        if 'SKIP_AMR' not in self._tool_inputs:
+        if eval(str(self._parameters['show_amr'].value)):
             section.add_header('Antibiotic susceptibility', 3)
             self.__add_antibiotic_sensitivity(section)
             section.add_html_object(
@@ -62,7 +62,7 @@ class MykrobeReporter(Tool):
                             [('href', 'https://github.com/Mykrobe-tools/mykrobe/wiki/AMR-prediction-output')]))
 
         # Genotyping
-        section.add_header(self._tool_inputs['custom_header'][0], 3)
+        section.add_header(self._parameters['custom_header'].value, 3)
         group = self._input_informs['mykrobe']['phylo_group']
         section.add_table(
             [[HtmlTableCell(group)]], ['High level identification'], [('class', 'data')])
