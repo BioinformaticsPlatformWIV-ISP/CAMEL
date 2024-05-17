@@ -66,6 +66,8 @@ assembly:
 mykrobe:
   db: /db/mykrobe/latest/
   species: sonnei
+  skip_amr: true
+  title: Lineage determination of <i>S. sonnei</i>
 
 amrfinder:
   db: /db/amrfinder/by_version/latest
@@ -91,6 +93,19 @@ gene_detection:
     metadata:
       name: stx variant
       key: stx_variant
+
+  serotype_o:
+    path: /db/gene_detection/SerotypeFinder-O_type
+    params:
+      blastn:
+        min_percent_identity: 85
+        min_coverage: 60
+      srst2:
+        max_divergence: 15
+        min_coverage: 60
+    metadata:
+      name: Predicted serotype
+      key: predicted_serotype
 
 ###################
 # Sequence typing #
