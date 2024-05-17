@@ -48,7 +48,7 @@ def get_reports(config: Dict[str, Any]) -> List[Path]:
             paths.append(str(OUTPUT_CONTAMINATION_CHECK_REPORT_EMPTY).format(input_format='fastq_se'))
 
     # FASTA input
-    if input_type in ('fasta', 'fasta_wo_vcf'):
+    if input_type in ('fasta', 'fasta_with_vcf'):
         if 'kraken2' in config['analyses']:
             paths.append(str(OUTPUT_CONTAMINATION_CHECK_REPORT).format(input_format='fasta'))
         else:

@@ -11,7 +11,7 @@ rule contamination_check_kraken2_run:
     Assigns taxonomic labels to reads using KRAKEN2.
     """
     input:
-        IO = contamination_check_kraken.get_input(config),
+        IO = str(contamination_check_kraken.get_input(config)),
         DB = config['contamination_check']['db']
     output:
         TSV = Path(config['working_dir']) / 'contamination_check' / '{input_format}' / 'kraken2' / 'tsv.io',
