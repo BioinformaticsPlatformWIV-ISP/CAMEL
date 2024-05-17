@@ -92,6 +92,8 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
                     logger.info(f'Valid FASTA file ({len(seqs):,} sequences)')
                 except BaseException as err:
                     raise InvalidInputError(f'Invalid FASTA input: {err}')
+            if self._args.detection_method != 'blast':
+                raise InvalidInputError(f'For FASTA input, only BLAST-based detection is available.')
 
         # FASTQ PE inputs
         elif self._args.input_type in ('illumina', 'hybrid'):
