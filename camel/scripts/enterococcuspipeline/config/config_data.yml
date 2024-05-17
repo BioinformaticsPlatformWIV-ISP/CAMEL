@@ -82,6 +82,7 @@ gene_detection:
     metadata:
       name: Gene
       key: gene
+    hidden: true
 
   virulencefinder:
     path: /db/gene_detection/VirulenceFinder-Enterococcus

@@ -102,6 +102,7 @@ gene_detection:
     metadata:
       name: Gene
       key: gene
+    hidden: true
 
   vf_exoenzyme:
     path: /db/gene_detection/VirulenceFinder-Saureus-exoenzyme
