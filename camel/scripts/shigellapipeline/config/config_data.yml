@@ -66,7 +66,7 @@ assembly:
 mykrobe:
   db: /db/mykrobe/latest/
   species: sonnei
-  skip_amr: true
+  show_amr: false
   title: Lineage determination of <i>S. sonnei</i>
 
 amrfinder:
