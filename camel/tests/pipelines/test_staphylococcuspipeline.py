@@ -22,6 +22,7 @@ class TestStaphylococcusPipeline(CamelTestSuite):
         test_file_dir / 'pipelines' / 'Saureus-SRR10393587-ds_1.fastq.gz',
         test_file_dir / 'pipelines' / 'Saureus-SRR10393587-ds_2.fastq.gz'
     ]
+    input_fasta = test_file_dir / 'pipelines' / 'Saureus-SRR10393587-ds.fasta'
 
     def test_staphylococcus_typing_db(self) -> None:
         """
@@ -118,6 +119,26 @@ class TestStaphylococcusPipeline(CamelTestSuite):
             '--working-dir', str(self.running_dir),
             '--detection-method', 'kma'
         ] + [f"--{a.replace('_', '-')}" for a in MainStaphylococcusPipeline.CUSTOM_ANALYSES if a != 'cgmlst']
+        main = MainStaphylococcusPipeline(args)
+        main.run()
+        self.assertGreater(path_report_out.stat().st_size, 0)
+
+    @longRunningTest()
+    def test_staphylococcus_pipeline_fasta(self) -> None:
+        """
+        Tests the Staphylococcus pipeline using FASTA as input with all assays except for cgMLST.
+        :return: None
+        """
+        path_report_out = self.running_dir / 'out' / 'report.html'
+        path_summary_out = self.running_dir / 'out' / 'summary.tsv'
+        args = [
+                   '--fasta', str(TestStaphylococcusPipeline.input_fasta),
+                   '--input-type', 'fasta',
+                   '--output-html', str(path_report_out),
+                   '--output-dir', str(path_report_out.parent),
+                   '--output-tsv', str(path_summary_out),
+                   '--working-dir', str(self.running_dir)
+               ] + [f"--{a.replace('_', '-')}" for a in MainStaphylococcusPipeline.CUSTOM_ANALYSES if a != 'cgmlst']
         main = MainStaphylococcusPipeline(args)
         main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)

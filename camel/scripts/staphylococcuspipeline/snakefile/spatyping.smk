@@ -3,7 +3,7 @@ from pathlib import Path
 from camel.app.camel import Camel
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.resources.snakefile import assembly_spades
+from camel.resources.snakefile import assembly
 from camel.scripts.staphylococcuspipeline.snakefile import spatyping as spatyping_workflow
 
 rule spa_typing_blastn:
@@ -11,7 +11,7 @@ rule spa_typing_blastn:
     Runs BLASTN to align the sequences against the spa typing database.
     """
     input:
-        FASTA = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA,
+        FASTA = Path(config['working_dir']) / assembly.OUTPUT_ASSEMBLY_FASTA,
         DB_BLAST = config['spa_typing']['db']
     output:
         TSV = Path(config['working_dir']) / 'spa_typing' / 'blastn' / 'blast_hits.tsv'

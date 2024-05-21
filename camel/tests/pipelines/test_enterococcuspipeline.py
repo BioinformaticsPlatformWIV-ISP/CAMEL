@@ -30,6 +30,9 @@ class TestEnterococcusPipeline(CamelTestSuite):
         test_file_dir / 'pipelines' / 'Enterococcus_gallinarum-SRR16344675-ds_1.fastq.gz',
         test_file_dir / 'pipelines' / 'Enterococcus_gallinarum-SRR16344675-ds_2.fastq.gz'
     ]
+    input_faecalis_fasta = test_file_dir / 'pipelines' / 'Enterococcus_faecalis-SRR12362697-ds.fasta'
+    input_faecium_fasta = test_file_dir / 'pipelines' / 'Enterococcus_faecium-SRR12388968-ds.fasta'
+    input_gallinarum_fasta = test_file_dir / 'pipelines' / 'Enterococcus_gallinarum-SRR16344675-ds.fasta'
 
     def test_enterococcus_gene_detection_db(self):
         """
@@ -198,6 +201,69 @@ class TestEnterococcusPipeline(CamelTestSuite):
             '--output-tsv', str(path_summary_out),
             '--working-dir', str(self.running_dir)
         ] + [f"--{a.replace('_', '-')}" for a in MainEnterococcusPipeline.CUSTOM_ANALYSES if a != 'cgmlst']
+        main = MainEnterococcusPipeline(args)
+        main.run()
+        self.assertGreater(path_report_out.stat().st_size, 0)
+
+    @longRunningTest()
+    def test_enterococcus_pipeline_faecalis_fasta(self) -> None:
+        """
+        Tests the Enterococcus pipeline using FASTA as input with all assays except for cgMLST.
+        :return: None
+        """
+        path_report_out = self.running_dir / 'out' / 'report.html'
+        path_summary_out = self.running_dir / 'out' / 'summary.tsv'
+        args = [
+                   '--fasta', str(TestEnterococcusPipeline.input_faecalis_fasta),
+                   '--input-type', 'fasta',
+                   '--species', 'faecalis',
+                   '--output-html', str(path_report_out),
+                   '--output-dir', str(path_report_out.parent),
+                   '--output-tsv', str(path_summary_out),
+                   '--working-dir', str(self.running_dir)
+               ] + [f"--{a.replace('_', '-')}" for a in MainEnterococcusPipeline.CUSTOM_ANALYSES if a != 'cgmlst']
+        main = MainEnterococcusPipeline(args)
+        main.run()
+        self.assertGreater(path_report_out.stat().st_size, 0)
+
+    @longRunningTest()
+    def test_enterococcus_pipeline_faecium_blast(self) -> None:
+        """
+        Tests the Enterococcus pipeline using FASTA as input with all assays except for cgMLST.
+        :return: None
+        """
+        path_report_out = self.running_dir / 'out' / 'report.html'
+        path_summary_out = self.running_dir / 'out' / 'summary.tsv'
+        args = [
+                   '--fasta', str(TestEnterococcusPipeline.input_faecium_fasta),
+                   '--input-type', 'fasta',
+                   '--species', 'faecium',
+                   '--output-html', str(path_report_out),
+                   '--output-dir', str(path_report_out.parent),
+                   '--output-tsv', str(path_summary_out),
+                   '--working-dir', str(self.running_dir)
+               ] + [f"--{a.replace('_', '-')}" for a in MainEnterococcusPipeline.CUSTOM_ANALYSES if a != 'cgmlst']
+        main = MainEnterococcusPipeline(args)
+        main.run()
+        self.assertGreater(path_report_out.stat().st_size, 0)
+
+    @longRunningTest()
+    def test_enterococcus_pipeline_spp_blast(self) -> None:
+        """
+        Tests the Enterococcus pipeline for generic Enterococcus using FASTA as input with all assays except for cgMLST.
+        :return: None
+        """
+        path_report_out = self.running_dir / 'out' / 'report.html'
+        path_summary_out = self.running_dir / 'out' / 'summary.tsv'
+        args = [
+                   '--fasta', str(TestEnterococcusPipeline.input_gallinarum_fasta),
+                   '--input-type', 'fasta',
+                   '--species', 'spp',
+                   '--output-html', str(path_report_out),
+                   '--output-dir', str(path_report_out.parent),
+                   '--output-tsv', str(path_summary_out),
+                   '--working-dir', str(self.running_dir)
+               ] + [f"--{a.replace('_', '-')}" for a in MainEnterococcusPipeline.CUSTOM_ANALYSES if a != 'cgmlst']
         main = MainEnterococcusPipeline(args)
         main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)
