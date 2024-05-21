@@ -6,7 +6,7 @@ from camel.app.camel import Camel
 from camel.app.io.tooliodirectory import ToolIODirectory
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.resources.snakefile import assembly_spades
+from camel.resources.snakefile import assembly
 
 
 rule resfinder4_run:
@@ -14,7 +14,7 @@ rule resfinder4_run:
     Runs the ResFinder4 tool.
     """
     input:
-        FASTA = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA,
+        FASTA = Path(config['working_dir']) / assembly.OUTPUT_ASSEMBLY_FASTA,
         DIR = config['resfinder4']['db']
     output:
         TSV_genes = Path(config['working_dir']) / 'resfinder4' / 'tsv-genes.io',
