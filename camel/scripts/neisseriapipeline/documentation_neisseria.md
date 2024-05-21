@@ -5,6 +5,8 @@ Version: **1.3**
 
 # Components
 
+**Note:** If the input type is `fasta`, pre-processing steps 1 to 4 are skipped.
+
 ## 1. Human read removal (optional) 
 
 If enabled, human reads are removed using the NCBI Human Read Removal Tool (HRRT) 2.2.1.
@@ -59,22 +61,25 @@ The completeness of the assembly is checked using `BUSCO 5.5.0` with the followi
 
 ### Kraken 2
 
-The trimmed paired-end reads are checked for contamination using `kraken2 2.1.1` against an in-house database with 
-microbial genomes. The date of the last database update is included in the output report.
+The trimmed paired-end reads or contigs are checked for contamination using `kraken2 2.1.1` against an in-house database
+with microbial genomes. The date of the last database update is included in the output report.
 
 ### ConFindr
 
 The samples are screened for inter- and intra-species contamination using `ConFindr 0.8.1` with the ribosomal MLST 
 database.
 
+Note: ConFindr is only executed when the input type is `illumina`.
+
 ### Quality checks
 
 An overview of the quality checks is provided below. Warnings are included for quality checks that fail but do not stop 
 the pipeline execution. 
 
+
 | **metric**                             | **warning threshold**  | **fail threshold**   | **description**                                                                                                                                                                                                                 |
 |----------------------------------------|------------------------|----------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Kraken: contaminants                   | 1.00%                  | 5.00%                | Percentage of reads assigned to species other than *N. meningitidis*                                                                                                                                                            |
+| Kraken: contaminants                   | 1.00%                  | 5.00%                | Percentage of reads / contigs assigned to species other than *N. meningitidis*                                                                                                                                                  |
 | Typing loci detected (%)               | 90%                    | 95%                  | Percentage of cgMLST loci detected (or MLST loci when cgMLST is disabled)                                                                                                                                                       |
 | Coverage against assembled contigs     | 20x                    | 10x                  | Coverage of the reads mapped to the assembly (determined by QUAST)                                                                                                                                                              |
 | Reads mapping to the assembled contigs | 95%                    | 90%                  | Percentage of reads mapping back to the assembly (determined by QUAST)                                                                                                                                                          |
@@ -89,6 +94,25 @@ the pipeline execution.
 | FastQC: Sequence length distribution   | 66.67%                 | 40.00%               | checks if the median read length of the trimmed reads is below a threshold compared to the mode length of the raw input reads (251).                                                                                            |
 
 **Note:** FastQC metrics are evaluated separately for the forward and reverse reads.
+
+The QC checks enabled for the supported input types are listed in the table below.
+
+| **metric**                             | **illumina** | **fasta** |
+|----------------------------------------|--------------|-----------|
+| Kraken: contaminants                   | Yes          | Yes       | 
+| Typing loci detected (%)               | Yes          | Yes       | 
+| Coverage against assembled contigs     | Yes          | No        | 
+| Reads mapping to the assembled contigs | Yes          | No        | 
+| Total assembly length deviation        | Yes          | Yes       | 
+| ConFindr: number of contaminating SNPs | Yes          | No        |  
+| Percentage of complete BUSCO genes     | Yes          | Yes       | 
+| FastQC: Average quality score          | Yes          | No        | 
+| FastQC: GC-content deviation           | Yes          | No        | 
+| FastQC: Max. N-fraction                | Yes          | No        | 
+| FastQC: Per-base sequence content      | Yes          | No        | 
+| FastQC: Q-score drop                   | Yes          | No        | 
+| FastQC: Sequence length distribution   | Yes          | No        |
+
 
 ## 6. Gene detection
 
@@ -125,7 +149,6 @@ The following typing schemes are available:
 | cgMLST                   | PubMLST    |
 
 ## 8. Antigen typing
-
 
 ### Bexsero antigen sequence typing (BAST)
 
