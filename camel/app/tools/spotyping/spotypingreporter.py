@@ -54,7 +54,8 @@ class SpoTypingReporter(Tool):
 
         if 'LOG' in self._tool_inputs:
             self.__add_spacer_section()
-        self.__add_parameter_section()
+        if 'spoligo_param' in self._tool_inputs:
+            self.__add_parameter_section()
 
     def __add_spacer_section(self):
         """

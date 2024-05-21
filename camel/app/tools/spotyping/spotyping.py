@@ -14,10 +14,12 @@ from camel.app.tools.tool import Tool
 
 class SpoTyping(Tool):
     """
-    SpoTyping: fast and accurate in silico Mycobacterium spoligotyping from sequence reads.
+    SpoTyping: fast and accurate in silico Mycobacterium spoligotyping from sequence reads or assembled contigs.
 
     Input:
         - FASTQ: 1 (SE) or 2 (PE) FASTQ files
+        or
+        - FASTA
 
     Output:
         - VAL_type_binary: Binary spoligotype
@@ -30,16 +32,20 @@ class SpoTyping(Tool):
         :param camel: CAMEL instance
         """
         super().__init__('SpoTyping', '2.1', camel)
+        self._input_key = None
 
     def _check_input(self) -> None:
         """
         Checks if the provided input is valid.
         :return: None
         """
-        if 'FASTQ' not in self._tool_inputs:
-            raise InvalidInputSpecificationError("FASTQ input is required")
-        elif not (0 < len(self._tool_inputs['FASTQ']) <= 2):
-            raise InvalidInputSpecificationError("Only 1 (SE) or 2 (PE) FASTQ inputs are supported")
+        if not any(key in self._tool_inputs for key in ('FASTA', 'FASTQ')):
+            raise InvalidInputSpecificationError('FASTA/Q input is required')
+        for key, value in self._tool_inputs.items():
+            if key == 'FASTQ' and not (0 < len(value) <= 2):
+                raise InvalidInputSpecificationError("Only 1 (SE) or 2 (PE) FASTQ inputs are supported")
+            if key == 'FASTA' and len(value) != 1:
+                raise InvalidInputSpecificationError("Only 1 FASTA input is supported")
         super()._check_input()
 
     def _execute_tool(self) -> None:
@@ -48,9 +54,11 @@ class SpoTyping(Tool):
         :return: None
         """
         # Run command
+        self._input_key = 'FASTQ' if 'FASTQ' in self._tool_inputs else 'FASTA'
+        self._symlink_input()
         self._command.command = ' '.join([
             self._tool_command,
-            ' '.join([str(f.path) for f in self._tool_inputs['FASTQ']]),
+            ' '.join([str(f) for f in self._new_input_paths]),
             ' '.join(self._build_options())
         ])
         self._execute_command()
@@ -115,3 +123,15 @@ class SpoTyping(Tool):
             return {k: metadata[type_octal][k] for k in keys}
         else:
             return {k: 'NA' for k in keys}
+
+    def _symlink_input(self) -> None:
+        """
+        Symlinks the input file(s).
+        :return: None
+        """
+        self._new_input_paths = [self._folder / f.path.name for f in self._tool_inputs[self._input_key]]
+        for path_new, path_old in zip(self._new_input_paths, self._tool_inputs[self._input_key]):
+            if path_new.is_symlink():
+                path_new.unlink()
+            path_new.symlink_to(path_old.path)
+

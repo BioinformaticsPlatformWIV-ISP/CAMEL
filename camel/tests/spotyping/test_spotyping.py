@@ -17,6 +17,7 @@ class TestSpoTyping(CamelTestSuite):
         test_file_dir / 'pipelines' / 'Myco-DRR041783-ds_1.fastq.gz',
         test_file_dir / 'pipelines' / 'Myco-DRR041783-ds_2.fastq.gz'
     ]
+    input_fasta = test_file_dir / 'pipelines' / 'Myco-DRR041783-ds.fasta'
 
     def test_spotyping(self) -> None:
         """
@@ -38,7 +39,7 @@ class TestSpoTyping(CamelTestSuite):
 
     def test_spotyping_swift_off(self) -> None:
         """
-        Tests the SpoTyping tool with the 'swift' parameter disabled..
+        Tests the SpoTyping tool with the 'swift' parameter disabled.
         :return: None
         """
         spotyping = SpoTyping(self.camel)
@@ -51,6 +52,20 @@ class TestSpoTyping(CamelTestSuite):
             })]
         })
         spotyping.update_parameters(swift='off')
+        spotyping.run(self.running_dir)
+        self.assertIn('VAL_type_binary', spotyping.tool_outputs)
+        self.verify_output_files(spotyping, 'LOG')
+
+    def test_spotyping_fasta(self) -> None:
+        """
+        Tests the SpoTyping tool with FASTA input.
+        :return: None
+        """
+        spotyping = SpoTyping(self.camel)
+        spotyping.add_input_files({
+            'FASTA': [ToolIOFile(self.input_fasta)]
+        })
+        spotyping.update_parameters(fasta=None)
         spotyping.run(self.running_dir)
         self.assertIn('VAL_type_binary', spotyping.tool_outputs)
         self.verify_output_files(spotyping, 'LOG')
