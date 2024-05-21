@@ -82,7 +82,7 @@ QC_CHECKS_BY_KEY = {qc.key: qc for qc in [
         threshold_warn=95.0,
         threshold_fail=90.0,
         fmt_string_value='{:.2f}%',
-        supported_input_types=['hybrid', 'illumina', 'ont']),
+        supported_input_types=['hybrid', 'illumina', 'ont', 'fasta', 'fasta_with_vcf']),
     QCCheck(
         key='map_rate_ref_illumina',
         full_name='Reads mapping to reference genome (Illumina)',
