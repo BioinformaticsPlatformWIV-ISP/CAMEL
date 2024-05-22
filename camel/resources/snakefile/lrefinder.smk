@@ -26,7 +26,7 @@ rule run_lrefinder:
         else:
             # When the input type is FASTA the simulated reads are used as input
             SnakemakeUtils.add_pickle_input(lrefinder, 'FASTQ_PE', Path(input.IO))
-        step = Step(rule, lrefinder, Camel.get_instance(), params.running_dir, config)
+        step = Step(str(rule), lrefinder, Camel.get_instance(), params.running_dir)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(lrefinder, output)
 
@@ -47,7 +47,7 @@ rule lre_finder_report:
         SnakemakeUtils.add_pickle_inputs(reporter, input)
         if params.input_type == 'fasta':
             reporter.update_parameters(pseudo_reads=True)
-        step = Step(rule, reporter, Camel.get_instance(), params.running_dir, config)
+        step = Step(str(rule), reporter, Camel.get_instance(), params.running_dir)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
 
