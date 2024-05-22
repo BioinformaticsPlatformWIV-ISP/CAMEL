@@ -80,7 +80,7 @@ rule report_combine_all:
         reports_trimming = trimming.get_reports(config),
         report_quast = Path(config['working_dir']) / quast.OUTPUT_QUAST_REPORT,
         reports_contamination = contamination_check_kraken.get_reports(config),
-        report_confindr = Path(config['working_dir']) / (confindr.OUTPUT_CONFINDR_REPORT if 'confindr' in config['analyses'] else confindr.OUTPUT_CONFINDR_REPORT_EMPTY),
+        report_confindr = confindr.get_report(config),
         report_adv_qc = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_REPORT,
         # Species identification
         report_rmlst = sequence_typing.get_sequence_typing_report('rmlst',config),

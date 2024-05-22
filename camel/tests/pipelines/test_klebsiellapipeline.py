@@ -26,6 +26,7 @@ class TestKlebsiellaPipeline(unittest.TestCase):
         test_file_dir / 'pipelines' / 'Kpneumoniae-SRR4046826-ds_1.fastq.gz',
         test_file_dir / 'pipelines' / 'Kpneumoniae-SRR4046826-ds_2.fastq.gz'
     ]
+    input_fasta = test_file_dir / 'pipelines' / 'Kpneumoniae-SRR4046826-ds.fasta'
 
     def setUp(self):
         """
@@ -93,6 +94,30 @@ class TestKlebsiellaPipeline(unittest.TestCase):
             '--threads', '8'
         ] + [
             f"--{a.replace('_', '-')}" for a in MainKlebsiellaPipeline.CUSTOM_ANALYSES if a not in (
+                'cgmlst', 'scgmlst')]
+        main = MainKlebsiellaPipeline(args)
+        main.run()
+        self.assertGreater(path_report_out.stat().st_size, 0)
+
+    @longRunningTest()
+    def test_klebsiella_pipeline_fasta(self) -> None:
+        """
+        Tests the Klebsiella pipeline using FASTA as input.
+        :return: None
+        """
+        path_report_out = self.running_dir / 'out' / 'report.html'
+        path_summary_out = self.running_dir / 'out' / 'summary.tsv'
+        args = [
+                   '--fasta', str(TestKlebsiellaPipeline.input_fasta),
+                   '--input-type', 'fasta',
+                   '--output-html', str(path_report_out),
+                   '--output-dir', str(path_report_out.parent),
+                   '--output-tsv', str(path_summary_out),
+                   '--working-dir', str(self.running_dir),
+                   '--detection-method', 'blast',
+                   '--threads', '8'
+               ] + [
+                   f"--{a.replace('_', '-')}" for a in MainKlebsiellaPipeline.CUSTOM_ANALYSES if a not in (
                 'cgmlst', 'scgmlst')]
         main = MainKlebsiellaPipeline(args)
         main.run()

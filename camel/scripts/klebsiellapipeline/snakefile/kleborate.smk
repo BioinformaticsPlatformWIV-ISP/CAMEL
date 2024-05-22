@@ -3,14 +3,14 @@ from pathlib import Path
 from camel.app.camel import Camel
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.resources.snakefile import assembly_spades
+from camel.resources.snakefile import assembly
 
 rule kleborate_run:
     """
     Runs the Kleborate tool.
     """
     input:
-        FASTA = Path(config['working_dir']) / assembly_spades.OUTPUT_ASSEMBLY_FASTA
+        FASTA = Path(config['working_dir']) / assembly.OUTPUT_ASSEMBLY_FASTA
     output:
         TSV = Path(config['working_dir']) / 'kleborate' / 'tsv.io',
         INFORMS = Path(config['working_dir']) / 'kleborate' / 'informs.io'
