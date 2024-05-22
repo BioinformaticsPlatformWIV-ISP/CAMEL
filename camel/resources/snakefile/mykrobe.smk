@@ -43,7 +43,6 @@ rule mykrobe_run:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(typer, output)
 
-
 rule mykrobe_report:
     """
     Creates an output report for the Mykrobe analysis.

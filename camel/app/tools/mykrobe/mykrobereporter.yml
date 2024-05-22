@@ -1,4 +1,4 @@
-dependencies: null
+dependencies: []
 parameters:
    output_filename: {default: true, mandatory: true, option: null, value: mykrobe.csv}
    show_amr: {default: true, mandatory: false, option: null, value: True}
