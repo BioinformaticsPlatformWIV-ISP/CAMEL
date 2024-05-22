@@ -31,6 +31,8 @@ class MainEnterococcusPipeline(ReportPipeline):
             'mlst_db': '/db/sequence_typing/enterococcus_faecalis/mlst',
             'quast_fasta': '/db/refgenomes/Enterococcus_faecalis/KB944666.1.fasta',
             'quast_gff': '/db/refgenomes/Enterococcus_faecalis/KB944666.1.gff3',
+            'reference_name': 'KB944666.1',
+            'reference_url': 'https://www.ncbi.nlm.nih.gov/nuccore/KB944666.1',
             'resfinder4_species': 'Enterococcus faecalis'
         },
         'faecium': {
@@ -42,6 +44,8 @@ class MainEnterococcusPipeline(ReportPipeline):
             'mlst_db': '/db/sequence_typing/enterococcus_faecium/mlst',
             'quast_fasta': '/db/refgenomes/Enterococcus_faecium/CP038996.1.fasta',
             'quast_gff': '/db/refgenomes/Enterococcus_faecium/CP038996.1.gff3',
+            'reference_name': 'CP038996.1',
+            'reference_url': 'https://www.ncbi.nlm.nih.gov/nuccore/CP038996.1/',
             'resfinder4_species': 'Enterococcus faecium'
         },
         'spp': {
@@ -104,6 +108,8 @@ class MainEnterococcusPipeline(ReportPipeline):
                 qc_typing_scheme='cgmlst' if self._args.cgmlst else 'rmlst',
                 quast_fasta=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species].get('quast_fasta', 'null'),
                 quast_gff=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species].get('quast_gff', 'null'),
+                reference_name=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species].get('reference_name', 'null'),
+                reference_url=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species].get('reference_url', 'null'),
                 resfinder4_species=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species]['resfinder4_species'],
             ), Loader=yaml.SafeLoader))
 
@@ -157,6 +163,7 @@ class MainEnterococcusPipeline(ReportPipeline):
         # Change the typing scheme for the QC check (no cgMLST is available)
         logger.warning(f"cgMLST is not available for generic 'Enterococcus', using rMLST for the QC check.")
         config_data['quality_checks']['typing_scheme'] = 'rmlst'
+
 
 if __name__ == '__main__':
     Camel.get_instance()

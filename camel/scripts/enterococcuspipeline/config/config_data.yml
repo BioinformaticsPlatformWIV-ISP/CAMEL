@@ -122,3 +122,20 @@ sequence_typing:
   cgmlst:
     path: {cgmlst_db}
     detection_method: blast
+
+###################
+# Variant calling/filtering #
+###################
+variant_calling:
+  ploidy: 1
+  report_include_bam: false
+  reference:
+    path: {quast_fasta}
+    name: {reference_name}
+    url: {reference_url}
+    annotation_gff: {quast_gff}
+
+variant_filtering:
+  depth:
+    min_fwd_depth: 1
+    min_rev_depth: 1

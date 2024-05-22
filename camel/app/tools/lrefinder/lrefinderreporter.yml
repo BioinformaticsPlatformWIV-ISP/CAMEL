@@ -1,3 +1,4 @@
 dependencies: []
-parameters: {}
+parameters:
+  pseudo_reads: {default: false, mandatory: false, option: null, value: null}
 tool_command: null

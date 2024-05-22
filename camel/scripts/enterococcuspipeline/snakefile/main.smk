@@ -2,7 +2,7 @@ from pathlib import Path
 
 from camel.resources.snakefile import trimming_illumina, gene_detection, trimming, contamination_check_kraken, \
     quality_checks, sequence_typing, lrefinder, downsampling, confindr, quast, core, assembly, amrfinder, resfinder4, \
-    bacmet, mobsuite, human_read_scrubbing
+    bacmet, mobsuite, human_read_scrubbing, variant_calling
 
 #######################
 # Included Snakefiles #
@@ -23,6 +23,7 @@ include: gene_detection.SNAKEFILE_GENE_DETECTION
 include: mobsuite.SNAKEFILE_MOB_SUITE
 include: bacmet.SNAKEFILE_BACMET
 include: sequence_typing.SNAKEFILE_SEQUENCE_TYPING
+include: variant_calling.SNAKEFILE_VARIANT_CALLING
 
 
 rule all:

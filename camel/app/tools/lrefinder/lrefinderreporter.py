@@ -59,4 +59,6 @@ class LREFinderReporter(Tool):
         section.add_table([
             [LREFinderReporter.__format_value(row[col]) for col in data_mutations.columns] for
             row in data_mutations.to_dict('records')], data_mutations.columns, [('class', 'data')])
+        if 'pseudo_reads' in self._parameters:
+            section.add_warning_message("The tool is executed on simulated reads.")
         self._tool_outputs['HTML'] = [ToolIOValue(section)]

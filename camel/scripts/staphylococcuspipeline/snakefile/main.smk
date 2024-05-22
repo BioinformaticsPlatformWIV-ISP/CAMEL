@@ -2,7 +2,7 @@ from pathlib import Path
 
 from camel.resources.snakefile import trimming_illumina, gene_detection, trimming, contamination_check_kraken, \
     quality_checks, sequence_typing, lrefinder, downsampling, quast, confindr, core, assembly, amrfinder, resfinder4, \
-    mobsuite, bacmet, human_read_scrubbing
+    mobsuite, bacmet, human_read_scrubbing, variant_calling
 from camel.scripts.staphylococcuspipeline.snakefile import spatyping, sccmectyping
 
 #######################
@@ -26,6 +26,7 @@ include: bacmet.SNAKEFILE_BACMET
 include: sequence_typing.SNAKEFILE_SEQUENCE_TYPING
 include: spatyping.SNAKEFILE_SPATYPING
 include: sccmectyping.SNAKEFILE_SCCMEC_TYPING
+include: variant_calling.SNAKEFILE_VARIANT_CALLING
 
 
 rule all:
