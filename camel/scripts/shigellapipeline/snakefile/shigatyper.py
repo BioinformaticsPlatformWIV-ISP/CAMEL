@@ -20,3 +20,4 @@ def get_input(config: Dict[str, Any]) -> Path:
         return Path(config['working_dir']) / 'fq_dict.io'
     if config['input_type'] == 'fasta':
         return Path(config['working_dir']) / 'variant_calling' / 'art' / 'fastq.io'
+    
