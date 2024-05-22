@@ -54,7 +54,7 @@ class MykrobeReporter(Tool):
         section = HtmlReportSection(MykrobeReporter.TITLE,
                                     subtitle=self._input_informs['mykrobe']['_name'])
         # Antibiotic sensitivity
-        if eval(str(self._parameters['show_amr'].value)):
+        if 'show_amr' in self._parameters:
             section.add_header('Antibiotic susceptibility', 3)
             self.__add_antibiotic_sensitivity(section)
             section.add_html_object(
