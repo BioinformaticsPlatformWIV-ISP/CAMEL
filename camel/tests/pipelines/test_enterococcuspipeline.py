@@ -227,7 +227,7 @@ class TestEnterococcusPipeline(CamelTestSuite):
         self.assertGreater(path_report_out.stat().st_size, 0)
 
     @longRunningTest()
-    def test_enterococcus_pipeline_faecium_blast(self) -> None:
+    def test_enterococcus_pipeline_faecium_fasta(self) -> None:
         """
         Tests the Enterococcus pipeline using FASTA as input with all assays except for cgMLST.
         :return: None
@@ -248,7 +248,7 @@ class TestEnterococcusPipeline(CamelTestSuite):
         self.assertGreater(path_report_out.stat().st_size, 0)
 
     @longRunningTest()
-    def test_enterococcus_pipeline_spp_blast(self) -> None:
+    def test_enterococcus_pipeline_spp_fasta(self) -> None:
         """
         Tests the Enterococcus pipeline for generic Enterococcus using FASTA as input with all assays except for cgMLST.
         :return: None
