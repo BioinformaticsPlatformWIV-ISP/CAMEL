@@ -61,10 +61,14 @@ rule mykrobe_report:
         from camel.app.tools.mykrobe.mykrobereporter import MykrobeReporter
 
         reporter = MykrobeReporter(Camel.get_instance())
-        reporter.update_parameters(
-                show_amr = str(params.show_amr),
+        if params.show_amr is False:
+            reporter.update_parameters(
+                show_amr=False,
                 custom_header = params.title
-        )
+            )
+        else:
+            reporter.update_parameters(custom_header = params.title)
+
         step = Step(str(rule), reporter, Camel.get_instance(), params.dir_)
         SnakemakeUtils.add_pickle_inputs(reporter, input)
         step.run_step()
