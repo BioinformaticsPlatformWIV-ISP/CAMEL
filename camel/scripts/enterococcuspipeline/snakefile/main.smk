@@ -142,9 +142,9 @@ rule report_combine_all:
 
         # Typing (additional MLST scheme for E. faecium)
         if params.species == 'Enterococcus faecalis':
-            reports_typing = (input.report_mlst, input.report_cgmlst)
+            reports_typing = (Path(input.report_mlst), Path(input.report_cgmlst))
         elif params.species == 'Enterococcus faecium':
-            reports_typing = (input.report_mlst, input.report_mlst_bezdicek, input.report_cgmlst)
+            reports_typing = (Path(input.report_mlst), Path(input.report_mlst_bezdicek), Path(input.report_cgmlst))
         else:
             reports_typing = ()
 
