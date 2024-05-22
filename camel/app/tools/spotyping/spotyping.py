@@ -58,8 +58,8 @@ class SpoTyping(Tool):
         self._symlink_input()
         self._command.command = ' '.join([
             self._tool_command,
-            ' '.join([str(f) for f in self._new_input_paths]),
-            ' '.join(self._build_options())
+            *[str(f) for f in self._new_input_paths],
+            * self._build_options()
         ])
         self._execute_command()
 
@@ -91,7 +91,7 @@ class SpoTyping(Tool):
 
     def _check_command_output(self) -> None:
         """
-        Checks the command output to checks if the tool executed successfully.
+        Checks the command output to check if the tool executed successfully.
         :return: None
         """
         if self._command.returncode != 0:
@@ -134,4 +134,3 @@ class SpoTyping(Tool):
             if path_new.is_symlink():
                 path_new.unlink()
             path_new.symlink_to(path_old.path)
-

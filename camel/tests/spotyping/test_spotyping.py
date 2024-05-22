@@ -4,6 +4,7 @@ from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.tools.spotyping.spotyping import SpoTyping
+from camel.app.tools.spotyping.spotypingreporter import SpoTypingReporter
 
 
 class TestSpoTyping(CamelTestSuite):
@@ -69,6 +70,60 @@ class TestSpoTyping(CamelTestSuite):
         spotyping.run(self.running_dir)
         self.assertIn('VAL_type_binary', spotyping.tool_outputs)
         self.verify_output_files(spotyping, 'LOG')
+
+    def test_spotyping_reporter(self) -> None:
+        """
+        Tests the SpoTyping tool and reporter
+        :return None
+        """
+        # Run the tool
+        spotyping = SpoTyping(self.camel)
+        informs_spoligo_param = [ToolIOValue({
+                'min_strict': 3,
+                'min_relaxed': 3,
+                'downsample_factor': 'NA'
+            })]
+        spotyping.add_input_files({
+            'FASTQ': [ToolIOFile(file_) for file_ in self.input_fastq_pe],
+            'INFORMS_spoligo_param': informs_spoligo_param
+        })
+        spotyping.run(self.running_dir)
+
+        # Run the reporter
+        reporter = SpoTypingReporter(self.camel)
+        reporter.add_input_files({
+            'VAL_type_binary': spotyping.tool_outputs['VAL_type_binary'],
+            'VAL_type_octal': spotyping.tool_outputs['VAL_type_octal'],
+        })
+        reporter.add_input_informs({
+            'spotyping': spotyping.informs,
+            'spoligo_param': informs_spoligo_param
+        })
+        reporter.run(self.running_dir)
+        self.assertGreater(len(reporter.tool_outputs['VAL_HTML'][0].value.to_html()), 0)
+
+    def test_spotyping_reporter_fasta(self) -> None:
+        """
+        Tests the SpoTyping tool and reporter with FASTA input
+        :return None
+        """
+        # Run the tool
+        spotyping = SpoTyping(self.camel)
+        spotyping.add_input_files({
+            'FASTA': [ToolIOFile(self.input_fasta)]
+        })
+        spotyping.update_parameters(fasta=None)
+        spotyping.run(self.running_dir)
+
+        # Run the reporter
+        reporter = SpoTypingReporter(self.camel)
+        reporter.add_input_files({
+            'VAL_type_binary': spotyping.tool_outputs['VAL_type_binary'],
+            'VAL_type_octal': spotyping.tool_outputs['VAL_type_octal'],
+        })
+        reporter.add_input_informs({'spotyping': spotyping.informs})
+        reporter.run(self.running_dir)
+        self.assertGreater(len(reporter.tool_outputs['VAL_HTML'][0].value.to_html()), 0)
 
 
 if __name__ == '__main__':
