@@ -42,3 +42,15 @@ def get_gene_detection_report(db_key: str, config: Dict[str, Any], analysis_name
     if search_key not in config['analyses']:
         return Path(config['working_dir']) / str(OUTPUT_GENE_DETECTION_REPORT_EMPTY).format(db=db_key)
     return Path(config['working_dir']) / str(OUTPUT_GENE_DETECTION_REPORT).format(db=db_key)
+
+
+def get_input_gene_detection_srst2(config: Dict[str, Any]) -> Path:
+    """
+    Returns the input for the gene detection with detection method srst2.
+    :param config: Snakemake configuration
+    :return: Path to the input file
+    """
+    if config['input_type'] in ('illumina', 'ont', 'hybrid'):
+        return Path(config['working_dir']) / 'fq_dict.io'
+    if config['input_type'] in ('fasta', 'fasta_with_vcf'):
+        return Path(config['working_dir']) / 'variant_calling' / 'art' / 'fastq.io'

@@ -54,6 +54,7 @@ class RdCsbReporter(Tool):
         self.__set_informs(self._tool_inputs['HITS'])
         self.__add_visualization()
         self.__add_output_tables(self._tool_inputs['HITS'])
+        self.__add_warning()
         self.__add_database(self._tool_inputs['FASTA'][0].path)
         self._tool_outputs['VAL_HTML'] = [ToolIOValue(self._report_section)]
 
@@ -186,6 +187,14 @@ class RdCsbReporter(Tool):
         relative_path = self._sub_directory / fasta_path.name
         self._report_section.add_file(fasta_path, relative_path)
         self._report_section.add_link_to_file('Database (FASTA)', relative_path)
+
+    def __add_warning(self) -> None:
+        """
+        Adds a warning to the report when pseudo-reads were used as input.
+        :return: None
+        """
+        if 'pseudo_reads' in self._parameters:
+            self._report_section.add_warning_message("The tool is executed on simulated reads")
 
     @staticmethod
     def generate_empty_section() -> HtmlReportSection:

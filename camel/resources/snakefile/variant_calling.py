@@ -29,11 +29,8 @@ def get_mapping_fq_input(config: Dict[str, Any]) -> Path:
     """
     if config['input_type'] in ('illumina', 'ont', 'hybrid'): # Ont and hybrid were added because otherwise some tests of the mockpipeline fail
         return Path(config['working_dir']) / 'fq_dict.io'
-    if config['input_type'] == 'fasta':
+    if config['input_type'] in ('fasta', 'fasta_with_vcf'):
         return Path(config['working_dir']) / 'variant_calling' / 'art' / 'fastq.io'
-    if config['input_type'] == 'fasta_with_vcf':  # was added because otherwise some tests of the mockpipeline fail
-        logger.warning(f"Variant calling is not supported for input type '{config['input_type']}'")
-        return Path('')
 
 
 def get_bam(config: Dict[str, Any]) -> Path:
