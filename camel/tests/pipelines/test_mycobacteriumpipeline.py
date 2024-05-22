@@ -24,6 +24,8 @@ class TestMycobacteriumPipeline(CamelTestSuite):
         test_file_dir / 'pipelines' / 'Myco-DRR041783-ds_1.fastq.gz',
         test_file_dir / 'pipelines' / 'Myco-DRR041783-ds_2.fastq.gz'
     ]
+    input_fasta = test_file_dir / 'pipelines' / 'Myco-DRR041783-ds.fasta'
+    input_vcf = test_file_dir / 'pipelines' / 'variants-Myco-DRR041783-ds-all.vcf'
 
     def test_mycobacterium_pipeline_typing_db(self) -> None:
         """
@@ -47,7 +49,7 @@ class TestMycobacteriumPipeline(CamelTestSuite):
     @longRunningTest()
     def test_mycobacterium_pipeline_blast(self) -> None:
         """
-        Tests the Neisseria pipeline with all assays except for cgMLST.
+        Tests the Mycobacterium pipeline with all assays except for cgMLST.
         :return: None
         """
         path_report_out = self.running_dir / 'out' / 'report.html'
@@ -70,7 +72,7 @@ class TestMycobacteriumPipeline(CamelTestSuite):
     @longRunningTest()
     def test_mycobacterium_pipeline_srst2(self) -> None:
         """
-        Tests the Neisseria pipeline with all assays except for cgMLST.
+        Tests the Mycobacterium pipeline with all assays except for cgMLST.
         :return: None
         """
         path_report_out = self.running_dir / 'out' / 'report.html'
@@ -91,7 +93,7 @@ class TestMycobacteriumPipeline(CamelTestSuite):
     @longRunningTest()
     def test_mycobacterium_pipeline_kma(self) -> None:
         """
-        Tests the Neisseria pipeline with all assays except for cgMLST.
+        Tests the Mycobacterium pipeline with all assays except for cgMLST.
         :return: None
         """
         path_report_out = self.running_dir / 'out' / 'report.html'
@@ -105,6 +107,47 @@ class TestMycobacteriumPipeline(CamelTestSuite):
             '--working-dir', str(self.running_dir),
             '--detection-method', 'kma'
         ] + [f"--{a.replace('_', '-')}" for a in MainMycobacteriumPipeline.CUSTOM_ANALYSES if a != 'cgmlst']
+        main = MainMycobacteriumPipeline(args)
+        main.run()
+        self.assertGreater(path_report_out.stat().st_size, 0)
+
+    @longRunningTest()
+    def test_mycobacterium_pipeline_fasta(self) -> None:
+        """
+        Tests the Mycobacterium pipeline using FASTA as input with all assays except for cgMLST.
+        :return: None
+        """
+        path_report_out = self.running_dir / 'out' / 'report.html'
+        path_summary_out = self.running_dir / 'out' / 'summary.tsv'
+        args = [
+                   '--fasta', str(TestMycobacteriumPipeline.input_fasta),
+                   '--input-type', 'fasta',
+                   '--output-html', str(path_report_out),
+                   '--output-dir', str(path_report_out.parent),
+                   '--output-tsv', str(path_summary_out),
+                   '--working-dir', str(self.running_dir)
+               ] + [f"--{a.replace('_', '-')}" for a in MainMycobacteriumPipeline.CUSTOM_ANALYSES if a != 'cgmlst']
+        main = MainMycobacteriumPipeline(args)
+        main.run()
+        self.assertGreater(path_report_out.stat().st_size, 0)
+
+    @longRunningTest()
+    def test_mycobacterium_pipeline_fasta_with_vcf(self) -> None:
+        """
+        Tests the Mycobacterium pipeline using FASTA with VCF as input with all assays except for cgMLST.
+        :return: None
+        """
+        path_report_out = self.running_dir / 'out' / 'report.html'
+        path_summary_out = self.running_dir / 'out' / 'summary.tsv'
+        args = [
+                   '--fasta', str(TestMycobacteriumPipeline.input_fasta),
+                   '--vcf-unfiltered', str(TestMycobacteriumPipeline.input_vcf),
+                   '--input-type', 'fasta_with_vcf',
+                   '--output-html', str(path_report_out),
+                   '--output-dir', str(path_report_out.parent),
+                   '--output-tsv', str(path_summary_out),
+                   '--working-dir', str(self.running_dir)
+               ] + [f"--{a.replace('_', '-')}" for a in MainMycobacteriumPipeline.CUSTOM_ANALYSES if a != 'cgmlst']
         main = MainMycobacteriumPipeline(args)
         main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)

@@ -53,7 +53,7 @@ rule report_command_section:
         INFORMS_quast = Path(config['working_dir']) /quast.OUTPUT_QUAST_INFORMS,
         INFORMS_busco = Path(config['working_dir']) / quast.OUTPUT_BUSCO_INFORMS,
         INFORMS_contamination = contamination_check_kraken.get_command_informs(config),
-        INFORMS_confindr = Path(config['working_dir']) / confindr.OUTPUT_CONFINDR_INFORMS if 'confindr' in config['analyses'] else [],
+        INFORMS_confindr = confindr.get_command_informs(config),
         INFORMS_assembly_map = assembly.get_qc_informs(config, config['input_type']),
         INFORMS_variant_calling_all = variant_calling.get_command_informs(config),
         INFORMS_variant_filtering_all = Path(config['working_dir']) / variant_filtering.OUTPUT_VARIANT_FILTERING_INFORMS_ALL,
@@ -81,7 +81,7 @@ rule report_combine_all:
         reports_trimming = trimming.get_reports(config),
         report_quast = Path(config['working_dir']) / quast.OUTPUT_QUAST_REPORT,
         reports_contamination = contamination_check_kraken.get_reports(config),
-        report_confindr = Path(config['working_dir']) / (confindr.OUTPUT_CONFINDR_REPORT if 'confindr' in config['analyses'] else confindr.OUTPUT_CONFINDR_REPORT_EMPTY),
+        report_confindr = confindr.get_report(config),
         report_adv_qc = Path(config['working_dir']) / str(quality_checks.OUTPUT_QUALITY_CHECKS_REPORT).format(input_type=config['input_type']),
         report_variant= variant_calling.get_reports(config),
         # Species identification
