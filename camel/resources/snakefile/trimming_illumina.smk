@@ -223,6 +223,11 @@ rule trimming_illumina_summary_fastp:
         summary_data = [
             ('trim_ilmn_pairs_in', informs_fastp['summary']['before_filtering']['total_reads']),
             ('trim_ilmn_pairs_out', informs_fastp['summary']['after_filtering']['total_reads']),
+            ('trim_ilmn_bases_in', informs_fastp['summary']['before_filtering']['total_bases']),
+            ('trim_ilmn_bases_out', informs_fastp['summary']['after_filtering']['total_bases']),
+            ('trim_ilmn_q30_rate_in', informs_fastp['summary']['before_filtering']['q30_rate']),
+            ('trim_ilmn_q30_rate_out', informs_fastp['summary']['after_filtering']['q30_rate']),
+            ('trim_ilmn_tool_version', informs_fastp['_name'])
         ]
         with open(output.TSV, 'w') as handle:
             for key, value in summary_data:
