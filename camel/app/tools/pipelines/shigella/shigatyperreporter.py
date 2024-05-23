@@ -120,9 +120,10 @@ class ShigaTyperReporter(Tool):
         # Create table with hits
         section.add_header('Overview', 3)
         self.__add_main_output(section)
-        self.__add_shigatyper_hits(section)
+        if species != 'Not Shigella or EIEC':
+            self.__add_shigatyper_hits(section)
 
-        # Add warning when pseudoreads were used for the execution of the tool
+            # Add warning when pseudoreads were used for the execution of the tool
         if 'pseudo_reads' in self._parameters:
             section.add_warning_message("The tool is executed on simulated reads.")
 
