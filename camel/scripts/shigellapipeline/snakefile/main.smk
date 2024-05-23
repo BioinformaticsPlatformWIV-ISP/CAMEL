@@ -3,7 +3,7 @@ from pathlib import Path
 from camel.resources.snakefile import trimming, trimming_illumina, \
     quality_checks, contamination_check_kraken, gene_detection, sequence_typing, \
     downsampling, confindr, quast, core, assembly, amrfinder, resfinder4, mobsuite, mykrobe, human_read_scrubbing, \
-    variant_calling
+    read_simulation
 from camel.scripts.shigellapipeline.snakefile import shigeifinder, shigatyper
 
 #######################
@@ -12,6 +12,7 @@ from camel.scripts.shigellapipeline.snakefile import shigeifinder, shigatyper
 include: core.SNAKEFILE_CORE
 include: human_read_scrubbing.SNAKEFILE_SCRUBBING
 include: downsampling.SNAKEFILE_DOWNSAMPLING
+include: read_simulation.SNAKEFILE_READ_SIMULATION
 include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
 include: assembly.SNAKEFILE_ASSEMBLY
 include: quast.SNAKEFILE_QUAST
@@ -26,7 +27,6 @@ include: sequence_typing.SNAKEFILE_SEQUENCE_TYPING
 include: shigeifinder.SNAKEFILE_SHIGEIFINDER
 include: shigatyper.SNAKEFILE_SHIGATYPER
 include: mykrobe.SNAKEFILE_MYKROBE
-include: variant_calling.SNAKEFILE_VARIANT_CALLING
 
 
 #########
@@ -47,10 +47,11 @@ rule report_command_section:
     input:
         INFORMS_scrubbing = human_read_scrubbing.get_command_informs(config),
         INFORMS_downsampling = downsampling.get_command_informs(config),
+        INFORMS_simulation = Path(config['working_dir']) / read_simulation.OUTPUT_SIMULATION_INFORMS if config['input_type'] == 'fasta' else [],
         INFORMS_trimming = trimming.get_command_informs(config),
         INFORMS_assembly = assembly.get_command_informs(config),
-        INFORMS_quast = Path(config['working_dir']) /quast.OUTPUT_QUAST_INFORMS,
-        INFORMS_busco = Path(config['working_dir']) /quast.OUTPUT_BUSCO_INFORMS,
+        INFORMS_quast = Path(config['working_dir']) / quast.OUTPUT_QUAST_INFORMS,
+        INFORMS_busco = Path(config['working_dir']) / quast.OUTPUT_BUSCO_INFORMS,
         INFORMS_contamination = contamination_check_kraken.get_command_informs(config),
         INFORMS_confindr = confindr.get_command_informs(config),
         INFORMS_assembly_map = assembly.get_qc_informs(config, config['input_type']),
@@ -61,10 +62,10 @@ rule report_command_section:
         INFORMS_resfinder4 = Path(config['working_dir']) / resfinder4.OUTPUT_RESFINDER4_INFORMS if 'resfinder4' in config['analyses'] else [],
         INFORMS_virulence = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='virulencefinder') if 'virulencefinder' in config['analyses'] else [],
         INFORMS_virulence_shiga = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='virulencefinder_shiga') if 'virulencefinder' in config['analyses'] else [],
-        INFORMS_serotype_o = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='serotype_o') if 'serotype_o' in config['analyses'] else[],
-        INFORMS_mob_suite = Path(config['working_dir']) / mobsuite.OUTPUT_MOB_SUITE_INFORMS if 'mob_suite' in config['analyses'] else[],
-        INFORMS_mlst = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='mlst') if 'mlst' in config['analyses'] else[],
-        INFORMS_rmlst = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='rmlst') if 'rmlst' in config['analyses'] else[]
+        INFORMS_serotype_o = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='serotype_o') if 'serotype_o' in config['analyses'] else [],
+        INFORMS_mob_suite = Path(config['working_dir']) / mobsuite.OUTPUT_MOB_SUITE_INFORMS if 'mob_suite' in config['analyses'] else [],
+        INFORMS_mlst = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='mlst') if 'mlst' in config['analyses'] else [],
+        INFORMS_rmlst = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='rmlst') if 'rmlst' in config['analyses'] else []
     output:
         HTML = Path(config['working_dir']) / 'report' / 'html-commands.io'
     params:
@@ -130,7 +131,7 @@ rule combine_reports:
             pipeline_version=params.pipeline_info['version'],
             input_files=ReportPipeline.format_input_string(params.input_dict),
             input_type=params.input_type,
-            extra_data=[('Detection method', params.detection_method)],
+            detection_method=params.detection_method,
             key_citation=params.citation_keys['main']
         ))
 
