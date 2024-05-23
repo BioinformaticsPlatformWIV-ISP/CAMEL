@@ -1,6 +1,8 @@
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+from camel.resources.snakefile import read_simulation
+
 SNAKEFILE_GENE_DETECTION = f'{Path(__file__).parent / Path(__file__).stem}.smk'
 SNAKEFILE_GENE_DETECTION_BLAST = f'{Path(__file__).parent / Path(__file__).stem}_blast.smk'
 SNAKEFILE_GENE_DETECTION_KMA = f'{Path(__file__).parent / Path(__file__).stem}_kma.smk'
@@ -30,7 +32,7 @@ OUTPUT_GENE_DETECTION_REPORT_EMPTY = _dir_gene_detection / 'report' / 'html-empt
 OUTPUT_GENE_DETECTION_SUMMARY = _dir_gene_detection / 'report' / 'summary_out.tsv'
 
 
-def get_gene_detection_report(db_key: str, config: Dict[str, Any], analysis_name: Optional[str] = None) -> str:
+def get_gene_detection_report(db_key: str, config: Dict[str, Any], analysis_name: Optional[str] = None) -> Path:
     """
     Returns the report input for the given database key.
     :param db_key: Database key
@@ -53,4 +55,4 @@ def get_input_gene_detection_srst2(config: Dict[str, Any]) -> Path:
     if config['input_type'] in ('illumina', 'ont', 'hybrid'):
         return Path(config['working_dir']) / 'fq_dict.io'
     if config['input_type'] in ('fasta', 'fasta_with_vcf'):
-        return Path(config['working_dir']) / 'variant_calling' / 'art' / 'fastq.io'
+        return Path(config['working_dir']) / read_simulation.OUTPUT_SIMULATION_FASTQ
