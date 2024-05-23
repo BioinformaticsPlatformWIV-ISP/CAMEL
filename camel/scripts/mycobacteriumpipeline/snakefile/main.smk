@@ -2,7 +2,7 @@ from pathlib import Path
 
 from camel.resources.snakefile import trimming_illumina, contamination_check_kraken, quality_checks, variant_calling, \
     variant_filtering, gene_detection, sequence_typing, trimming, downsampling, confindr, quast, core, assembly, \
-    human_read_scrubbing
+    human_read_scrubbing, read_simulation
 from camel.scripts.mycobacteriumpipeline.snakefile import csb_rd, snpit, hsp65, spoligotyping, snplineage, assay51snp, \
     amrdetection
 
@@ -11,6 +11,7 @@ from camel.scripts.mycobacteriumpipeline.snakefile import csb_rd, snpit, hsp65, 
 #######################
 include: core.SNAKEFILE_CORE
 include: human_read_scrubbing.SNAKEFILE_SCRUBBING
+include: read_simulation.SNAKEFILE_READ_SIMULATION
 include: downsampling.SNAKEFILE_DOWNSAMPLING
 include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
 include: assembly.SNAKEFILE_ASSEMBLY
@@ -83,7 +84,7 @@ rule report_combine_all:
         reports_contamination = contamination_check_kraken.get_reports(config),
         report_confindr = confindr.get_report(config),
         report_adv_qc = Path(config['working_dir']) / str(quality_checks.OUTPUT_QUALITY_CHECKS_REPORT).format(input_type=config['input_type']),
-        report_variant= variant_calling.get_reports(config),
+        report_variant = variant_calling.get_reports(config),
         # Species identification
         report_rmlst = sequence_typing.get_sequence_typing_report('rmlst', config),
         report_ncbi_16s = gene_detection.get_gene_detection_report('ncbi_16s', config),
