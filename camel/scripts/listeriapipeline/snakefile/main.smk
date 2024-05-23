@@ -109,7 +109,8 @@ rule report_combine_all:
         output_dir = config['output_dir'],
         pipeline_info = config['pipeline'],
         input_dict = config['input'],
-        input_type = config['input_type']
+        input_type = config['input_type'],
+        detection_method = config['detection_method']
     run:
         import datetime
         from camel.app.components.pipelines.reportpipeline import ReportPipeline
@@ -123,7 +124,8 @@ rule report_combine_all:
             date=datetime.datetime.now(),
             pipeline_version=params.pipeline_info['version'],
             input_files=ReportPipeline.format_input_string(params.input_dict),
-            input_type=params.input_type
+            input_type=params.input_type,
+            detection_method=params.detection_method
         ))
 
         # Set up the report content structure
