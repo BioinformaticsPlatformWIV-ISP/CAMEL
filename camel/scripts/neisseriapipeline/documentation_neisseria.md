@@ -22,7 +22,25 @@ Datasets with an estimated coverage >=100x are downsampled to ~100x using the `s
 
 ## 3. Read trimming
 
-Afterwards, reads are trimmed using `trimmomatic 0.39` with the following options:
+Read trimming is performed using `fastp 0.23.4` (default) or `trimmomatic 0.39`.
+
+For `fastp` the following options are used:
+```
+--compression 4
+--detect_adapter_for_pe
+--cut_front
+--cut_front_window_size 1
+--cut_front_mean_quality 10
+--cut_tail
+--cut_tail_window_size 1
+--cut_tail_mean_quality 10
+--cut_right
+--cut_right_window_size 4
+--cut_right_mean_quality 20
+--length_required 40
+```
+
+For `trimmomatic` the following options are used:
 ```
 -phred33
 ILLUMINACLIP:NexteraPE-PE.fa:2:30:10
