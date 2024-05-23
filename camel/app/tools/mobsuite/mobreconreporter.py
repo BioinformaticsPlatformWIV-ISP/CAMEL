@@ -4,6 +4,8 @@ from pathlib import Path
 import pandas as pd
 
 from camel.app.camel import Camel
+from camel.app.components.html.htmlelement import HtmlElement
+from camel.app.components.html.htmlexpandablediv import HtmlExpandableDiv
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.html.htmltablecell import HtmlTableCell
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
@@ -24,6 +26,15 @@ class MOBReconReporter(Tool):
         'predicted_mobility': {'title': 'Pred. mobility'},
         'rep_type(s)': {'title': 'Rep. types', 'fmt': lambda x: x.replace(',', ', ')},
         'relaxase_type(s)': {'title': 'Relaxase types', 'fmt': lambda x: x.replace(',', ', ')}
+    }
+
+    CONTIG_COLUMN_MAPPING = {
+        'contig_id': {'title': 'ID'},
+        'molecule_type': {'title': 'Mol. type'},
+        'primary_cluster_id': {'title': 'Prim. cluster ID'},
+        'secondary_cluster_id': {'title': 'Sec. cluster ID'},
+        'size': {'title': 'Size', 'fmt': lambda x: f'{x:,}'},
+        'gc': {'title': '% GC-content', 'fmt': lambda x: f'{x * 100:.2f}'}
     }
 
     def __init__(self, camel: Camel) -> None:
@@ -88,18 +99,24 @@ class MOBReconReporter(Tool):
         :param section: Report section
         :return: None
         """
-        contig_data = pd.read_table(self._tool_inputs['TSV_contigs'][0].path, usecols=['contig_id', 'molecule_type',
-                                                                                       'primary_cluster_id',
-                                                                                       'secondary_cluster_id',
-                                                                                       'size', 'gc'])
-        reordered_contig_data = contig_data[['contig_id', 'molecule_type', 'primary_cluster_id',
-                                             'secondary_cluster_id', 'size', 'gc']]
-        reordered_contig_data['gc'] = reordered_contig_data['gc'].apply(lambda x: f'{x * 100:.2f}')
-        reordered_contig_data['size'] = reordered_contig_data['size'].apply(lambda x: f'{x:,}')
-        table_data = reordered_contig_data.values.tolist()
+        contig_data = pd.read_table(self._tool_inputs['TSV_contigs'][0].path,
+                                    usecols=list(MOBReconReporter.CONTIG_COLUMN_MAPPING.keys()))
+        reordered_contig_data = contig_data[list(MOBReconReporter.CONTIG_COLUMN_MAPPING.keys())]
+        table_data = [
+            [d.get('fmt', lambda x: x)(row[col])
+             for col, d in MOBReconReporter.CONTIG_COLUMN_MAPPING.items()]
+            for row in reordered_contig_data.to_dict('records')
+        ]
+
+        if len(table_data) > 10:
+            div = HtmlExpandableDiv("contig-overview", f'{len(table_data)} rows.')
+        else:
+            div = HtmlElement('div')
+
         section.add_header('Contig overview', 3)
-        section.add_table(table_data, ['Contig ID', 'Molecule', 'Prim. Cluster ID',
-                                       'Sec. Cluster ID2', 'Size', '% GC-content'], [('class', 'data')])
+        div.add_table(table_data, [c['title'] for c in MOBReconReporter.CONTIG_COLUMN_MAPPING.values()],
+                      [('class', 'data')])
+        section.add_html_object(div)
 
     def _execute_tool(self) -> None:
         """
