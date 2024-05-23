@@ -2,7 +2,7 @@ from pathlib import Path
 
 from camel.resources.snakefile import trimming_illumina, downsampling, trimming_ont, trimming, quast, \
     contamination_check_kraken, quality_checks, confindr, gene_detection, assembly, core, human_read_scrubbing, \
-    variant_calling, variant_filtering
+    read_simulation, variant_calling, variant_filtering
 from camel.scripts.mycobacteriumpipeline.snakefile import snpit
 
 #######################
@@ -10,6 +10,7 @@ from camel.scripts.mycobacteriumpipeline.snakefile import snpit
 #######################
 include: core.SNAKEFILE_CORE
 include: human_read_scrubbing.SNAKEFILE_SCRUBBING
+include: read_simulation.SNAKEFILE_READ_SIMULATION
 include: downsampling.SNAKEFILE_DOWNSAMPLING
 include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
 include: trimming_ont.SNAKEFILE_TRIMMING_ONT
@@ -40,6 +41,7 @@ rule report_create_command_section:
     """
     input:
         INFORMS_scrubbing = human_read_scrubbing.get_command_informs(config),
+        INFORMS_simulation = Path(config['working_dir']) / read_simulation.OUTPUT_SIMULATION_INFORMS if config['input_type'] == 'fasta' else [],
         INFORMS_downsampling = downsampling.get_command_informs(config),
         INFORMS_trimming = trimming.get_command_informs(config),
         INFORMS_assembly = assembly.get_command_informs(config),
