@@ -323,7 +323,8 @@ rule variant_calling_report:
         dir_ = Path(config['working_dir']) / 'variant_calling' / 'report',
         regions_bed_file = variant_filtering.get_filtering_param(config, 'region', 'bed_file'),
         include_bam = config.get('variant_calling').get('report_include_bam', False),
-        sample_name = config['sample_name']
+        sample_name = config['sample_name'],
+        input_type = config['input_type']
     run:
         from camel.app.io.tooliovalue import ToolIOValue
         from camel.app.tools.pipelines.variant_calling.variantcallingreporter import VariantCallingReporter
@@ -336,6 +337,8 @@ rule variant_calling_report:
             reporter.add_input_files({'BED': [ToolIOFile(Path(params.regions_bed_file))]})
             SnakemakeUtils.add_pickle_input(reporter, 'VCF_filt_regions', Path(input.VCF_filt_regions))
         reporter.update_parameters(export_bam='true' if params.include_bam else 'false')
+        if params.input_type == 'fasta':
+            reporter.update_parameters(pseudo_reads=True)
         reporter.add_input_files({'VAL_Sample': [ToolIOValue(params.sample_name)]})
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)

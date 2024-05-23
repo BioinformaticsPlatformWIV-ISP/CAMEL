@@ -194,7 +194,7 @@ class RdCsbReporter(Tool):
         :return: None
         """
         if 'pseudo_reads' in self._parameters:
-            self._report_section.add_warning_message("The tool is executed on simulated reads")
+            self._report_section.add_warning_message("The tool is executed on simulated reads.")
 
     @staticmethod
     def generate_empty_section() -> HtmlReportSection:
