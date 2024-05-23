@@ -131,13 +131,13 @@ class TestShigellaPipeline(CamelTestSuite):
         path_report_out = self.running_dir / 'out' / 'report.html'
         path_summary_out = self.running_dir / 'out' / 'summary.tsv'
         args = [
-                   '--fasta', str(TestShigellaPipeline.input_fasta),
-                   '--input-type', 'fasta',
-                   '--output-html', str(path_report_out),
-                   '--output-dir', str(path_report_out.parent),
-                   '--output-tsv', str(path_summary_out),
-                   '--working-dir', str(self.running_dir)
-               ] + [f"--{a.replace('_', '-')}" for a in MainShigellaPipeline.CUSTOM_ANALYSES if a != 'cgmlst']
+            '--fasta', str(TestShigellaPipeline.input_fasta),
+            '--input-type', 'fasta',
+            '--output-html', str(path_report_out),
+            '--output-dir', str(path_report_out.parent),
+            '--output-tsv', str(path_summary_out),
+            '--working-dir', str(self.running_dir)
+        ] + [f"--{a.replace('_', '-')}" for a in MainShigellaPipeline.CUSTOM_ANALYSES if a != 'cgmlst']
         main = MainShigellaPipeline(args)
         main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)
