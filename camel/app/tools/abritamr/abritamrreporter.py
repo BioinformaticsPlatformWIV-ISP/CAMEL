@@ -113,7 +113,9 @@ class AbriTAMRReporter(Tool):
         results = pd.read_csv(self._tool_inputs['TSV_output'][0].path, delimiter='\t', header=None)
         # replace all nan by dashes
         results.fillna('-', inplace=True)
-        for i in range(0, results.shape[0]-1, 2):
+        for i in range(0, results.shape[0], 2):
+            if results.iloc[i, 0] in ['abritamr_tool_version', 'abritamr_db_version']:
+                continue
             interpretation = results.iloc[i+1, 1]
             color = self.___get_interpretation_color(interpretation)
             row = [re.sub("_ResMech|abritamr_", "", results.iloc[i, 0]),
@@ -137,7 +139,7 @@ class AbriTAMRReporter(Tool):
         elif interpretation == 'Resistant':
             color = 'red'
         else:
-            color = None
+            color = 'grey'
         return color
 
     def __add_output_table_link(self) -> None:
