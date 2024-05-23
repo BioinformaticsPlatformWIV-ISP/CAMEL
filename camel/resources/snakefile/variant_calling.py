@@ -1,7 +1,6 @@
 from pathlib import Path
 from typing import Dict, Any, List
 
-from camel.app.loggers import logger
 from camel.resources.snakefile import read_simulation
 
 SNAKEFILE_VARIANT_CALLING = f'{Path(__file__).parent / Path(__file__).stem}.smk'
@@ -28,15 +27,11 @@ def get_mapping_fq_input(config: Dict[str, Any]) -> Path:
     :param config: Snakemake configuration
     :return: Path to the mapping fq input file
     """
-    if config['input_type'] in ('illumina', 'ont', 'hybrid'): # Ont and hybrid were added because otherwise some tests of the mockpipeline fail
+    # ONT and hybrid were added because otherwise some tests of the MockPipeline fail
+    if config['input_type'] in ('illumina', 'ont', 'hybrid'):
         return Path(config['working_dir']) / 'fq_dict.io'
-    if config['input_type'] == 'fasta':
-        return Path(config['working_dir']) / read_simulation.OUTPUT_SIMULATION_FASTQ
-    if config['input_type'] == 'fasta_with_vcf':  # was added because otherwise some tests of the mockpipeline fail
-        logger.warning(f"Variant calling is not supported for input type '{config['input_type']}'")
-        return Path('')
     if config['input_type'] in ('fasta', 'fasta_with_vcf'):
-        return Path(config['working_dir']) / 'variant_calling' / 'art' / 'fastq.io'
+        return Path(config['working_dir']) / read_simulation.OUTPUT_SIMULATION_FASTQ
 
 
 def get_bam(config: Dict[str, Any]) -> Path:
@@ -45,7 +40,8 @@ def get_bam(config: Dict[str, Any]) -> Path:
     :param config: Snakemake configuration
     :return: Path to the BAM file
     """
-    if config['input_type'] in ('illumina', 'fasta', 'ont', 'hybrid'): # Ont and hybrid were added because otherwise some tests of the mockpipeline fail
+    # ONT and hybrid were added because otherwise some tests of the MockPipeline fail
+    if config['input_type'] in ('illumina', 'fasta', 'ont', 'hybrid'):
         return Path(config['working_dir']) / OUTPUT_VARIANT_CALLING_BAM
     if config['input_type'] == 'fasta_with_vcf':
         return Path(config['working_dir']) / 'variant_calling' / 'dummy_bam' / 'bam.io'

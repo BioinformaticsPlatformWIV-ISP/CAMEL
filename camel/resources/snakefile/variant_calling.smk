@@ -349,7 +349,7 @@ rule variant_calling_collect_command_informs:
     This rule is used to collect the commands that were used.
     """
     input:
-        INFORMS_read_simulation = Path(config['working_dir']) / read_simulation.OUTPUT_SIMULATION_FASTQ if config['input_type'] == 'fasta' else [],
+        INFORMS_read_simulation = Path(config['working_dir']) / read_simulation.OUTPUT_SIMULATION_INFORMS if config['input_type'] == 'fasta' else [],
         INFORMS_mapping = rules.variant_calling_map_reads.output.INFORMS,
         INFORMS_mpileup = rules.variant_calling_mpileup.output.INFORMS,
         INFORMS_calling = rules.variant_calling_bcftools_call.output.INFORMS
