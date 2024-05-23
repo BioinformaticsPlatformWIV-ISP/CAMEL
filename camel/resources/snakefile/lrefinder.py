@@ -1,6 +1,8 @@
 from pathlib import Path
 from typing import Dict, Any
 
+from camel.resources.snakefile import read_simulation
+
 SNAKEFILE_LREFINDER = f'{Path(__file__).parent / Path(__file__).stem}.smk'
 OUTPUT_LREFINDER_REPORT = Path('lrefinder') / 'html.io'
 OUTPUT_LREFINDER_REPORT_EMPTY = Path('lrefinder') / 'html_empty.io'
@@ -17,4 +19,4 @@ def get_input(config: Dict[str, Any]) -> Path:
     if config['input_type'] == 'illumina':
         return Path(config['working_dir']) / 'fq_dict.io'
     if config['input_type'] == 'fasta':
-        return Path(config['working_dir']) / 'variant_calling' / 'art' / 'fastq.io'
+        return Path(config['working_dir']) / read_simulation.OUTPUT_SIMULATION_FASTQ

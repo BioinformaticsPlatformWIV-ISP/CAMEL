@@ -2,13 +2,14 @@ from pathlib import Path
 
 from camel.resources.snakefile import trimming_illumina, gene_detection, trimming, contamination_check_kraken, \
     quality_checks, sequence_typing, lrefinder, downsampling, confindr, quast, core, assembly, amrfinder, resfinder4, \
-    bacmet, mobsuite, human_read_scrubbing, variant_calling
+    bacmet, mobsuite, human_read_scrubbing, read_simulation
 
 #######################
 # Included Snakefiles #
 #######################
 include: core.SNAKEFILE_CORE
 include: human_read_scrubbing.SNAKEFILE_SCRUBBING
+include: read_simulation.SNAKEFILE_READ_SIMULATION
 include: downsampling.SNAKEFILE_DOWNSAMPLING
 include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
 include: assembly.SNAKEFILE_ASSEMBLY
@@ -23,7 +24,6 @@ include: gene_detection.SNAKEFILE_GENE_DETECTION
 include: mobsuite.SNAKEFILE_MOB_SUITE
 include: bacmet.SNAKEFILE_BACMET
 include: sequence_typing.SNAKEFILE_SEQUENCE_TYPING
-include: variant_calling.SNAKEFILE_VARIANT_CALLING
 
 
 rule all:
@@ -40,6 +40,7 @@ rule report_command_section:
     """
     input:
         INFORMS_scrubbing = human_read_scrubbing.get_command_informs(config),
+        INFORMS_simulation = Path(config['working_dir']) / read_simulation.OUTPUT_SIMULATION_INFORMS if config['input_type'] == 'fasta' else [],
         INFORMS_downsampling = downsampling.get_command_informs(config),
         INFORMS_trimming = trimming.get_command_informs(config),
         INFORMS_assembly = assembly.get_command_informs(config),

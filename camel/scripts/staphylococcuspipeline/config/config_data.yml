@@ -162,20 +162,3 @@ sequence_typing:
     message:
       content: rMLST is only available for noncommercial use, see <a href="https://pubmlst.org/species-id">PubMLST</a> for more info.
       category: info
-
-###################
-# Variant calling/filtering #
-###################
-variant_calling:
-  ploidy: 1
-  report_include_bam: false
-  reference:
-    path: /db/refgenomes/Staphylococcus_aureus/NC_007795.1.fasta
-    name: NC_007795.1
-    url: https://www.ncbi.nlm.nih.gov/nuccore/NC_007795.1/
-    annotation_gff: /db/refgenomes/Staphylococcus_aureus/NC_007795.1.gff3
-
-variant_filtering:
-  depth:
-    min_fwd_depth: 1
-    min_rev_depth: 1
