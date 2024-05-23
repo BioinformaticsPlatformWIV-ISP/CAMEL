@@ -13,7 +13,7 @@ include: human_read_scrubbing.SNAKEFILE_SCRUBBING
 rule all:
     input:
         HTML = config['output_report'],
-        OUT = Path(config['working_dir']) / 'human_read_scrubbing' / 'fasta' / 'output' / 'fasta.io' if 'fasta' in config['input'] else Path(config['working_dir']) / 'human_read_scrubbing' / ('fastq_pe' if 'fastq_pe' in config['input'] else 'fastq_se') / 'output' / 'fastq.io'
+        OUT = human_read_scrubbing.get_output_io(config)
 
 
 rule link_scrubbing_input:
