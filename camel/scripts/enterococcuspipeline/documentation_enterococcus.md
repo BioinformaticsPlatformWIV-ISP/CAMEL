@@ -11,6 +11,8 @@ disabled.
 
 # Components
 
+**Note:** If the input type is `fasta`, pre-processing steps 1 to 4 are skipped.
+
 ## 1. Human read removal (optional) 
 
 If enabled, human reads are removed using the NCBI Human Read Removal Tool (HRRT) 2.2.1.
@@ -34,7 +36,25 @@ If *Enterococcus spp.* is selected as species, the *E. faecalis* reference genom
 
 ## 3. Read trimming
 
-Afterwards, reads are trimmed using `trimmomatic 0.39` with the following options:
+Read trimming is performed using `fastp 0.23.4` (default) or `trimmomatic 0.39`.
+
+For `fastp` the following options are used:
+```
+--compression 4
+--detect_adapter_for_pe
+--cut_front
+--cut_front_window_size 1
+--cut_front_mean_quality 10
+--cut_tail
+--cut_tail_window_size 1
+--cut_tail_mean_quality 10
+--cut_right
+--cut_right_window_size 4
+--cut_right_mean_quality 20
+--length_required 40
+```
+
+For `trimmomatic` the following options are used:
 ```
 -phred33
 ILLUMINACLIP:NexteraPE-PE.fa:2:30:10
@@ -73,13 +93,15 @@ The completeness of the assembly is checked using `BUSCO 5.5.0` with the followi
 
 ### Kraken 2
 
-The trimmed paired-end reads are checked for contamination using `kraken2 2.1.1` against an in-house database with 
-microbial genomes. The date of the last database update is included in the output report.
+The trimmed paired-end reads or contigs are checked for contamination using `kraken2 2.1.1` against an in-house database
+with microbial genomes. The date of the last database update is included in the output report.
 
 ### ConFindr
 
 The samples are screened for inter- and intra-species contamination using `ConFindr 0.8.1` with the ribosomal MLST 
 database.
+
+Note: ConFindr is only executed when the input type is `illumina`.
 
 ### Quality checks
 
@@ -88,7 +110,7 @@ the pipeline execution.
 
 | **metric**                             | **warning threshold**  | **fail threshold**   | **description**                                                                                                                                                                                                                 |
 |----------------------------------------|------------------------|----------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Kraken: contaminants                   | 1.00%                  | 5.00%                | Percentage of reads assigned to species other than *E. faecium* or *E. faecalis* (depending on pipeline setting)                                                                                                                |
+| Kraken: contaminants                   | 1.00%                  | 5.00%                | Percentage of reads / contigs assigned to species other than *N. meningitidis*                                                                                                                                                  |
 | Typing loci detected (%)               | 90%                    | 95%                  | Percentage of cgMLST loci detected (or MLST loci when cgMLST is disabled)                                                                                                                                                       |
 | Coverage against assembled contigs     | 20x                    | 10x                  | Coverage of the reads mapped to the assembly (determined by QUAST)                                                                                                                                                              |
 | Reads mapping to the assembled contigs | 95%                    | 90%                  | Percentage of reads mapping back to the assembly (determined by QUAST)                                                                                                                                                          |
@@ -104,9 +126,58 @@ the pipeline execution.
 
 **Note:** FastQC metrics are evaluated separately for the forward and reverse reads.
 
-## 6. Gene detection
+The QC checks enabled for the supported input types are listed in the table below.
 
-Gene detection is performed as described in [Bogaerts *et al.*](https://pubmed.ncbi.nlm.nih.gov/30894839/) using an 
+| **metric**                             | **illumina** | **fasta** |
+|----------------------------------------|--------------|-----------|
+| Kraken: contaminants                   | Yes          | Yes       | 
+| Typing loci detected (%)               | Yes          | Yes       | 
+| Coverage against assembled contigs     | Yes          | No        | 
+| Reads mapping to the assembled contigs | Yes          | No        | 
+| Total assembly length deviation        | Yes          | Yes       | 
+| ConFindr: number of contaminating SNPs | Yes          | No        |  
+| Percentage of complete BUSCO genes     | Yes          | Yes       | 
+| FastQC: Average quality score          | Yes          | No        | 
+| FastQC: GC-content deviation           | Yes          | No        | 
+| FastQC: Max. N-fraction                | Yes          | No        | 
+| FastQC: Per-base sequence content      | Yes          | No        | 
+| FastQC: Q-score drop                   | Yes          | No        | 
+| FastQC: Sequence length distribution   | Yes          | No        |
+
+
+## 6. Antimicrobial resistance (AMR) detection
+
+### LRE-finder
+
+`LRE-finder v20200812` is used with default options to detect mutations and genes associated with linezolid resistance.
+
+### NCBI AMRFinder+
+
+`NCBI AMRFinder+ 3.11.26` is used with default options to detect genes and mutation associated with AMR.
+
+The database version is indicated in the output report and summary output file.
+
+If the selected species is *Enterococcus faecalis* or *Enterococcus faecium*, the `--organism` option is set to the 
+corresponding value.
+
+### ResFinder4
+
+`ResFinder4 4.4.2` is used with the following options to detect genes and mutation associated with AMR:
+
+The database version is indicated in the output report and summary output file.
+
+```
+--min_cov 0.6
+--acquired
+--threshold 0.9
+```
+
+If the selected species is *Enterococcus faecalis* or *Enterococcus faecium*, the `--species` option is set to the 
+corresponding value.
+
+## 7. Virulence detection
+
+Virulence gene detection is performed as described in [Bogaerts *et al.*](https://pubmed.ncbi.nlm.nih.gov/30894839/) using an 
 updated version of blast (`blast 2.14.0`).
 Alternative detection using `kma 1.4.12a` or `srst2 0.2.0` is available by changing the `--detection-method` parameter.
 
@@ -114,13 +185,34 @@ The following databases are available:
 
 | **name**        | **origin**                                                               |
 |-----------------|--------------------------------------------------------------------------|
-| ResFinder       | Antimicrobial resistance genes from the ResFinder tool maintained by DTU |
-| NDARO           | Antimicrobial resistance genes from the NCBI NDARO database              |
-| PlasmidFinder   | Plasmid replicons from the PlasmidFinder tool maintained by DTU          |
 | VFDB core       | Databases from the VirulenceFactor Core database                         | 
 | VirulenceFinder | Virulence genes from the VirulenceFinder tool maintained by DTU          |
 
-## 7. Sequence typing
+## 8. Plasmid characterization
+
+### PlasmidFinder
+
+Plasmid replicon detection is performed on the `DTU PlasmidFinder` plasmid replicon database as described in
+[Bogaerts *et al.*](https://pubmed.ncbi.nlm.nih.gov/30894839/).
+
+### MOB-suite
+
+The `MOB-recon` function of `MOB-suite 3.1.4` is used to reconstruct putative plasmids. The contigs assigned to putative
+plasmids are cross-checked against the gene detection results for the virulence genes and AMR genes.
+
+## 9. Biocide and metal resistance
+
+`Prodigal 2.6.3` is first used with default options to extract CDS from the assembled contigs. Then `blastp 2.14.0` is 
+used to align the translated CDS against the protein sequences from the 'Experimentally confirmed genes' of the BacMet 
+database (not automatically updated). The following filtering is then performed:
+
+| **name**             | **threshold** |
+|----------------------|---------------|
+| Min % identity (AA)  | 75.00%        |
+| Min % covered (AA)   | 90.00%        |
+
+
+## 10. Sequence typing
 
 Sequence typing is performed as described in [Bogaerts *et al.*](https://pubmed.ncbi.nlm.nih.gov/30894839/) with an 
 updated version of blast (`blast 2.14.0`). 

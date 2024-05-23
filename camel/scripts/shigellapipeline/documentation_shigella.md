@@ -1,5 +1,5 @@
 # Overview
-The *Staphylococcus* pipeline performs complete characterization of *Staphylococcus aureus* isolates.
+The *Shigella* pipeline performs complete characterization of Shigella isolates.
 
 Version: **1.1**
 
@@ -79,15 +79,13 @@ The completeness of the assembly is checked using `BUSCO 5.5.0` with the followi
 
 ### Kraken 2
 
-The trimmed paired-end reads are checked for contamination using `kraken2 2.1.1` against an in-house database with 
-microbial genomes. The date of the last database update is included in the output report.
+The trimmed paired-end reads or contigs are checked for contamination using `kraken2 2.1.1` against an in-house database
+with microbial genomes. The date of the last database update is included in the output report.
 
 ### ConFindr
 
 The samples are screened for inter- and intra-species contamination using `ConFindr 0.8.1` with the ribosomal MLST 
 database.
-
-Note: ConFindr is only executed when the input type is `illumina`.
 
 ### Quality checks
 
@@ -104,13 +102,14 @@ the pipeline execution.
 | ConFindr: number of contaminating SNPs | 10                     | 20                   | Number of SNPs flagged as contaminant by ConFindr                                                                                                                                                                               | 
 | Percentage of complete BUSCO genes     | 90%                    | 95%                  | Percentage of complete BUSCO genes identified                                                                                                                                                                                   |
 | FastQC: Average quality score          | 30                     | 25                   | Checks if the average read quality is above the given threshold.                                                                                                                                                                |
-| FastQC: GC-content deviation           | 2.00%                  | 4.00%                | checks if the detected GC content is close enough to the expected GC content for this organism (32.70%).                                                                                                                        |
+| FastQC: GC-content deviation           | 2.00%                  | 4.00%                | checks if the detected GC content is close enough to the expected GC content for this organism (50.50%).                                                                                                                        |
 | FastQC: Max. N-fraction                | 0.0050                 | 0.0100               | checks if the maximal N fraction at any read position is below the given threshold.                                                                                                                                             |
 | FastQC: Per-base sequence content      | 3.00%                  | 6.00%                | checks if the difference between A-T and C-G is below the given threshold at every position. The first 20 and last 5 bases of the reads are skipped, as the peaks there can be caused by the library kit or trimming artifacts. |
 | FastQC: Q-score drop                   | 200                    | 150                  | checks whether the average position in the reads where the mean Q-score drops below 30 is above the given threshold.                                                                                                            |
 | FastQC: Sequence length distribution   | 66.67%                 | 40.00%               | checks if the median read length of the trimmed reads is below a threshold compared to the mode length of the raw input reads (251).                                                                                            |
 
 **Note:** FastQC metrics are evaluated separately for the forward and reverse reads.
+**Note:** *Escherichia* is not considered a contaminant for the Kraken 2 QC check.
 
 The QC checks enabled for the supported input types are listed in the table below.
 
@@ -131,11 +130,25 @@ The QC checks enabled for the supported input types are listed in the table belo
 | FastQC: Sequence length distribution   | Yes          | No        |
 
 
-## 6. Antimicrobial resistance (AMR) detection
+## 6. *Shigella* serotyping
 
-### LRE-finder
+### ShigEiFinder
 
-`LRE-finder v20200812` is used with default options to detect mutations and genes associated with linezolid resistance.
+`ShigEiFinder (v1.3.5)` is able to serotype over 59 *Shigella* serotypes and 22 EIEC serotypes and provides a high 
+specificity by using [cluster-specific gene marker sets](https://doi.org/10.1099/mgen.0.000704).
+
+### ShigaTyper
+
+`ShigaTyper (v2.0.5)` accurately and rapidly determines 59 *Shigella* serotypes by using *Shigella* serotype 
+determinants and species-specific diagnostic markers  available via a 
+[curated reference sequence database](https://doi.org/10.1128/AEM.00165-19).
+
+### Mykrobe
+
+`Mykrobe (v0.13.0)` has a genotyping scheme for *Shigella sonnei*. It efficiently identifies the genotype and resistance
+determinants from WGS data. See [here](https://www.nature.com/articles/s41467-021-22700-4) for more details.
+
+## 7. Antimicrobial resistance (AMR) detection
 
 ### NCBI AMRFinder+
 
@@ -143,89 +156,47 @@ The QC checks enabled for the supported input types are listed in the table belo
 
 The database version is indicated in the output report and summary output file.
 
-If the selected species is *Enterococcus faecalis* or *Enterococcus faecium*, the `--organism` option is set to the 
-corresponding value.
+The `--organism` option is set to `Escherichia`.
 
 ### ResFinder4
 
 `ResFinder4 4.4.2` is used with the following options to detect genes and mutation associated with AMR:
 
-The database version is indicated in the output report and summary output file.
-
 ```
 --min_cov 0.6
 --acquired
 --threshold 0.9
+--species "Escherichia coli"
 ```
 
-If the selected species is *Enterococcus faecalis* or *Enterococcus faecium*, the `--species` option is set to the 
-corresponding value.
+The database version is indicated in the output report and summary output file.
 
-## 7. Virulence detection
+## 8. Virulence characterization
 
-Virulence gene detection is performed as described in [Bogaerts *et al.*](https://pubmed.ncbi.nlm.nih.gov/30894839/) using an 
-updated version of blast (`blast 2.14.0`).
-Alternative detection using `kma 1.4.12a` or `srst2 0.2.0` is available by changing the `--detection-method` parameter.
+Gene detection is performed as described in [Bogaerts *et al.*](https://pubmed.ncbi.nlm.nih.gov/30894839/) using an 
+updated version of blast (`blast 2.14.0`). Alternative detection using `kma 1.4.12a` or `srst2 0.2.0` is available by 
+changing the `--detection-method` parameter.
 
 The following databases are available: 
 
-| **name**                       | **origin**                                                            |
-|--------------------------------|-----------------------------------------------------------------------|
-| VFDB core                      | Databases from the VirulenceFactor Core database                      | 
-| VirulenceFinder - *S. aureus** | Virulence genes from the VirulenceFinder tool maintained by DTU       |
-| *S. aureus se* toxins          | Custom database described in Nouws et al. (10.3389/fmicb.2021.750278) |
+| **name**              | **origin**                                    |
+|-----------------------|-----------------------------------------------|
+| VirulenceFinder-Shiga | Shiga-toxin DB  maintained by DTU             |
+| VirulenceFinder-Ecoli | _E. coli_ virulence gene DB maintained by DTU |
 
-(*) The *S. aureus* VirulenceFinder database is split into three sub-databases: exoenzyme, host immunity, and toxins.
-
-## 8. Plasmid characterization
+## 9. Plasmid characterization
 
 ### PlasmidFinder
 
-Plasmid replicon detection is performed on the `DTU PlasmidFinder` plasmid replicon database as described in
+Gene detection is performed on the `DTU PlasmidFinder` plasmid replicon database as described in
 [Bogaerts *et al.*](https://pubmed.ncbi.nlm.nih.gov/30894839/).
 
-### MOB-suite
+### MOB-suite & genomic context
 
 The `MOB-recon` function of `MOB-suite 3.1.4` is used to reconstruct putative plasmids. The contigs assigned to putative
 plasmids are cross-checked against the gene detection results for the virulence genes and AMR genes.
 
-## 9. Biocide and metal resistance
-
-`Prodigal 2.6.3` is first used with default options to extract CDS from the assembled contigs. Then `blastp 2.14.0` is 
-used to align the translated CDS against the protein sequences from the 'Experimentally confirmed genes' of the BacMet 
-database (not automatically updated). The following filtering is then performed:
-
-| **name**             | **threshold** |
-|----------------------|---------------|
-| Min % identity (AA)  | 75.00%        |
-| Min % covered (AA)   | 90.00%        |
-
-## 10. *spa* typing
-
-*spa* typing is performed by blasting the assembled contigs to a database of spa-profiles obtained from Ridom with
-`blastn 2.14.0` and the following options:
-
-```
--num_alignments 100000
--dust no
--task blastn
-```
-
-The date of the last database update is included in the output report and tabular summary file.
-
-## 11. SCC*mec* typing
-
-SCCmec typing is performed by gene detection as described in the 'Virulence gene detection' section using the SCC*mec* 
-genes database from the SCC*mec*Finder tool.
-
-In addition, gene detection is performed using SRST2-based detection against the full SCC*mec* cassettes from the 
-SCC*mec*Finder tool.
-
-Finally, a custom script is used to determine the best matching ccr gene complex, mec gene complex and SCCmec type.
-
-Note: SCC*mec* is only executed when the input type is `illumina` (SRST2 requires FASTQ input).
-
-## 12. Sequence typing
+## 10. Sequence typing
 
 Sequence typing is performed as described in [Bogaerts *et al.*](https://pubmed.ncbi.nlm.nih.gov/30894839/) with an 
 updated version of blast (`blast 2.14.0`). 
@@ -233,8 +204,9 @@ Alternative detection using `kma 1.4.12a` or `srst2 0.2.0` is available by chang
 
 The following typing schemes are available:
 
-| **name**     | **origin** |
-|--------------|------------|
-| rMLST        | PubMLST    |
-| Classic MLST | PubMLST    |
-| cgMLST       | PubMLST    |
+| **name**               | **origin**     |
+|------------------------|----------------|
+| Classic MLST (Warwick) | EnteroBase     |
+| Classic MLST (Pasteur) | BIGsDB Pasteur |
+| cgMLST                 | EnteroBase     |
+| rMLST                  | PubMLST        |
