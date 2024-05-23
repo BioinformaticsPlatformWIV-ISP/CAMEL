@@ -14,7 +14,8 @@ rule spa_typing_blastn:
         FASTA = Path(config['working_dir']) / assembly.OUTPUT_ASSEMBLY_FASTA,
         DB_BLAST = config['spa_typing']['db']
     output:
-        TSV = Path(config['working_dir']) / 'spa_typing' / 'blastn' / 'blast_hits.tsv'
+        TSV = Path(config['working_dir']) / 'spa_typing' / 'blastn' / 'blast_hits.tsv',
+        INFORMS = Path(config['working_dir']) / 'spa_typing' / 'blastn' / 'informs.io'
     params:
         running_dir = Path(config['working_dir']) / 'spa_typing' / 'blastn'
     run:

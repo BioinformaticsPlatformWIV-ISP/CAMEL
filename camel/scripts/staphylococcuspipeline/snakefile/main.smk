@@ -60,6 +60,7 @@ rule report_command_section:
         INFORMS_se_toxins = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='se_toxins') if 'se_toxins' in config['analyses'] else [],
         IFNORMS_bacmet = Path(config['working_dir']) / bacmet.OUTPUT_BACMET_INFORMS if 'bacmet' in config['analyses'] else [],
         INFORMS_prodigal = Path(config['working_dir']) / bacmet.OUTPUT_PRODIGAL_INFORMS if 'bacmet' in config['analyses'] else [],
+        INFORMS_spatyping = Path(config['working_dir']) / spatyping.OUTPUT_SPATYPING_INFORMS if 'spa_typing' in config['analyses'] else [],
         INFORMS_mlst = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='mlst') if 'mlst' in config['analyses'] else []
     output:
         HTML = Path(config['working_dir']) / 'report' / 'html-commands.io'
