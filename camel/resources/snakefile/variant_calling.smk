@@ -3,7 +3,7 @@ from pathlib import Path
 from camel.app.camel import Camel
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.resources.snakefile import variant_calling, variant_filtering, assembly
+from camel.resources.snakefile import variant_calling, variant_filtering, read_simulation
 
 camel = Camel.get_instance()
 
@@ -24,26 +24,6 @@ rule variant_calling_prep_reference:
         SnakemakeUtils.dump_object([ToolIOValue(params.reference['path'])], Path(output.INDEX_GENOME_PREFIX))
         SnakemakeUtils.dump_object([ToolIOFile(Path(params.reference['path']))], Path(output.FASTA))
         SnakemakeUtils.dump_object(params.reference, Path(output.INFORMS))
-
-rule variant_calling_fastq_from_fasta:
-    """
-    Simulates illumina reads from the input FASTA file.
-    This rule is executed when the input type is FASTA and no VCF input file has been provided.
-    """
-    input:
-        FASTA = Path(config['working_dir']) / assembly.get_fasta_raw(config)
-    output:
-        FASTQ_PE = Path(config['working_dir']) / 'variant_calling' / 'art' / 'fastq.io',
-        INFORMS = Path(config['working_dir']) / 'variant_calling' / 'art' / 'informs.io'
-    params:
-        running_dir = Path(config['working_dir']) / 'variant_calling' / 'art'
-    run:
-        from camel.app.tools.art.art import ART
-        art = ART(camel)
-        step = Step(str(rule), art, camel, params.running_dir)
-        SnakemakeUtils.add_pickle_inputs(art, input)
-        step.run_step()
-        SnakemakeUtils.dump_tool_outputs(art, output)
 
 rule variant_calling_map_reads:
     """
@@ -369,7 +349,7 @@ rule variant_calling_collect_command_informs:
     This rule is used to collect the commands that were used.
     """
     input:
-        INFORMS_read_simulation = rules.variant_calling_fastq_from_fasta.output.INFORMS if config['input_type'] == 'fasta' else [],
+        INFORMS_read_simulation = Path(config['working_dir']) / read_simulation.OUTPUT_SIMULATION_FASTQ if config['input_type'] == 'fasta' else [],
         INFORMS_mapping = rules.variant_calling_map_reads.output.INFORMS,
         INFORMS_mpileup = rules.variant_calling_mpileup.output.INFORMS,
         INFORMS_calling = rules.variant_calling_bcftools_call.output.INFORMS
