@@ -99,3 +99,24 @@ def get_summaries(config: Dict[str, Any]) -> List[Path]:
         paths.append(str(OUTPUT_SCRUBBING_SUMMARY).format(input_format='fastq_se'))
 
     return [Path(config['working_dir']) / p for p in paths]
+
+
+def get_output_io(config: Dict[str, Any]) -> Path:
+    """
+    Returns the paths to the human read scrubbing output io file(s).
+    :param config: Snakemake configuration
+    :return: Summary file path(s)
+    """
+    input_type = config['input_type']
+
+    # FASTA input
+    if (input_type in ('fasta', 'fasta_with_vcf')) and ('human_read_scrubbing' in config['analyses']):
+        return Path(config['working_dir']) / str(OUTPUT_SCRUBBING_FASTA).format(input_format='fasta')
+
+    # PE reads
+    if (input_type in ('illumina', 'hybrid')) and ('human_read_scrubbing' in config['analyses']):
+        return Path(config['working_dir']) / str(OUTPUT_SCRUBBING_FASTQ).format(input_format='fastq_pe')
+
+    # SE reads
+    if (input_type in ('ont', 'hybrid')) and ('human_read_scrubbing' in config['analyses']):
+        return Path(config['working_dir']) / str(OUTPUT_SCRUBBING_FASTQ).format(input_format='fastq_se')

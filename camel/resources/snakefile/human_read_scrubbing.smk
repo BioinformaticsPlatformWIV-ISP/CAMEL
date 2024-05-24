@@ -72,6 +72,7 @@ rule scrubbing_run_scrubber:
     params:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'human_read_scrubbing' / wildcards.input_format / 'scrubbing',
         input_format = lambda wildcards: wildcards.input_format
+    threads: max(16, workflow.cores * 0.75)
     run:
         from camel.app.tools.ncbihumanreadscrubber.ncbihumanreadscrubber import NcbiHumanReadScrubber
         if params.input_format != 'fasta':
@@ -85,7 +86,7 @@ rule scrubbing_run_scrubber:
         step = Step(str(rule), scrubber, camel, Path(str(params.running_dir)))
         outputfile_scrubbing = str(Path(output.FASTQ_SCRUBBED).with_suffix('.fastq')) if params.input_format != 'fasta' \
             else str(Path(str(params.running_dir), (SnakemakeUtils.load_object(Path(input.FASTQ_SINGLE_GUNZIP)))[0].path.name))
-        scrubber.update_parameters(interleaved=interleaved, outputfile=outputfile_scrubbing)
+        scrubber.update_parameters(interleaved=interleaved, outputfile=outputfile_scrubbing, threads=threads)
         SnakemakeUtils.add_pickle_inputs(scrubber, input, excluded_keys=['FASTQ'])
         step.run_step()
         if config['input_type'] == 'hybrid':
