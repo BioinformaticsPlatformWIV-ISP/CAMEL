@@ -371,4 +371,4 @@ rule variant_calling_report_empty:
         HTML = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_REPORT_EMPTY
     run:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-        SnakePipelineUtils.create_empty_report_section('Variant Calling', Path(output.HTML))
+        SnakePipelineUtils.create_empty_report_section('Variant calling', Path(output.HTML))
