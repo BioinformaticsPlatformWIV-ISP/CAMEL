@@ -46,6 +46,9 @@ class HtmlReporterGeneDetection(Tool):
                 f"Detection for this DB is always done using '{self._parameters['forced_detection_method'].value}', "
                 f"regardless of pipeline setting.", 'info')
 
+        if 'pseudo_reads' in self._parameters:
+            self._report_section.add_warning_message("The tool is executed on simulated reads.")
+
         # Add a custom message (if specified in the parameters)
         if 'message' in self._parameters:
             self._report_section.add_alert(
