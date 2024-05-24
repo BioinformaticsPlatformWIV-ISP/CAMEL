@@ -120,14 +120,19 @@ rule report_combine_all:
         # Add the header section
         report = SnakePipelineUtils.init_pipeline_report(
             Path(output.HTML), Path(params.output_dir), params.pipeline_info)
-        report.add_html_object(SnakePipelineUtils.create_input_section(
+        section = SnakePipelineUtils.create_input_section(
             sample_name=params.sample_name,
             date=datetime.datetime.now(),
             pipeline_version=params.pipeline_info['version'],
             input_files=ReportPipeline.format_input_string(params.input_dict),
             input_type=params.input_type,
             key_citation=params.citation_keys['main']
-        ))
+        )
+        if params.input_type == 'fasta':
+            section.add_warning_message(
+                'SNP-based assays are run on simulated reads from the assembled contigs, which may differ from the '
+                'original reads.')
+        report.add_html_object(section)
 
         # Add report content
         report_structure = []
