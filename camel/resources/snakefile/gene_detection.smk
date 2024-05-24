@@ -152,7 +152,7 @@ rule gene_detection_report:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'gene_detection' / wildcards.db / 'report',
         config_data = lambda wildcards: config['gene_detection'][wildcards.db],
         input_type = config['input_type'],
-        db = lambda wildcards: wildcards.db
+        detection_method = lambda wildcards: GeneDetectionUtils.get_detection_method_key(config, wildcards.db),
     run:
         from camel.app.tools.pipelines.genedetection.htmlreportergenedetection import HtmlReporterGeneDetection
 
@@ -165,7 +165,7 @@ rule gene_detection_report:
             reporter.update_parameters(forced_detection_method = params.config_data['force_detection_method'])
         if params.config_data.get('hidden', False) is True:
             reporter.update_parameters(hidden=True)
-        if params.input_type == 'fasta' and params.db == 'sccmec_cassette':
+        if params.input_type == 'fasta' and params.detection_method in ('kma', 'srst2'):
             reporter.update_parameters(pseudo_reads=True)
 
         # Optional message
