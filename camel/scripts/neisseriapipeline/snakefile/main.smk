@@ -3,8 +3,8 @@ from pathlib import Path
 from camel.app.camel import Camel
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile import trimming, trimming_illumina, quality_checks, \
-    contamination_check_kraken, gene_detection, sequence_typing, downsampling, confindr, quast, core, trimming_ont, \
-    assembly, human_read_scrubbing
+    contamination_check_kraken, sequence_typing, downsampling, confindr, quast, core, trimming_ont, \
+    assembly, human_read_scrubbing, amrfinder, resfinder4
 from camel.scripts.neisseriapipeline.snakefile import serogroup_determination, gmats, mendevar
 
 
@@ -21,8 +21,9 @@ include: quast.SNAKEFILE_QUAST
 include: contamination_check_kraken.SNAKEFILE_CONTAMINATION_CHECK_KRAKEN
 include: confindr.SNAKEFILE_CONFINDR
 include: quality_checks.SNAKEFILE_QUALITY_CHECKS
-include: gene_detection.SNAKEFILE_GENE_DETECTION
 include: sequence_typing.SNAKEFILE_SEQUENCE_TYPING
+include: amrfinder.SNAKEFILE_AMRFINDER
+include: resfinder4.SNAKEFILE_RESFINDER4
 include: gmats.SNAKEFILE_GMATS
 include: mendevar.SNAKEFILE_MENDEVAR
 include: serogroup_determination.SNAKEFILE_SEROGROUP_DETERMINATION
@@ -52,8 +53,8 @@ rule report_create_command_section:
         INFORMS_contamination = contamination_check_kraken.get_command_informs(config),
         INFORMS_confindr = confindr.get_command_informs(config),
         INFORMS_assembly_map = assembly.get_qc_informs(config, config['input_type']),
-        INFORMS_resfinder = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='resfinder') if 'resfinder' in config['analyses'] else [],
-        INFORMS_ncbi_amr = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='ncbi_amr') if 'ncbi_amr' in config['analyses'] else [],
+        INFORMS_amrfnder = Path(config['working_dir']) / amrfinder.OUTPUT_AMRFINDER_INFORMS if 'amrfinder' in config['analyses'] else [],
+        INFORMS_resfinder4 = Path(config['working_dir']) / resfinder4.OUTPUT_RESFINDER4_INFORMS if 'resfinder4' in config['analyses'] else [],
         INFORMS_rmlst = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='rmlst') if 'rmlst' in config['analyses'] else [],
         INFORMS_mlst = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='mlst') if 'mlst' in config['analyses'] else [],
         INFORMS_rplf = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='rplf') if 'rplf' in config['analyses'] else [],
@@ -112,8 +113,10 @@ rule combine_reports:
         report_adv_qc=Path(config['working_dir']) / str(quality_checks.OUTPUT_QUALITY_CHECKS_REPORT).format(
             input_type=config['input_type']),
         report_rmlst = sequence_typing.get_sequence_typing_report('rmlst', config),
-        report_resfinder = gene_detection.get_gene_detection_report('resfinder', config),
-        report_ncbi_amr = gene_detection.get_gene_detection_report('ncbi_amr', config),
+        # AMR detection
+        report_amrfinder = Path(config['working_dir']) / (amrfinder.OUTPUT_AMRFINDER_REPORT if 'amrfinder' in config['analyses'] else amrfinder.OUTPUT_AMRFINDER_REPORT_EMPTY),
+        report_resfinder4 = Path(config['working_dir']) / (resfinder4.OUTPUT_RESFINDER4_REPORT if 'resfinder4' in config['analyses'] else resfinder4.OUTPUT_RESFINDER4_REPORT_EMPTY),
+        # Sequence typing
         report_mlst = sequence_typing.get_sequence_typing_report('mlst', config),
         report_cgmlst = sequence_typing.get_sequence_typing_report('cgmlst', config),
         report_pora = sequence_typing.get_sequence_typing_report('pora', config),
@@ -170,7 +173,8 @@ rule combine_reports:
         report_structure.append(('Advanced QC', 'adv_qc', [Path(input.report_adv_qc)]))
         report_structure.extend([
             ('Species identification', 'species', [Path(input.report_rmlst)]),
-            ('Resistance characterization', 'res', [Path(x) for x in (input.report_resfinder, input.report_ncbi_amr)]),
+            ('Antimicrobial resistance characterization', 'amr', [Path(x) for x in (
+                input.report_amrfinder, input.report_resfinder4)]),
             ('Sequence typing', 'st', [Path(x) for x in (
                 input.report_mlst, input.report_rplf, input.report_pora, input.report_porb, input.report_feta,
                 input.report_resistance_genes, input.report_vaccine_targets, input.report_fhbp, input.report_cgmlst)]),
@@ -195,8 +199,8 @@ rule combine_summary_files:
         Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY,
         contamination_check_kraken.get_summaries(config),
         confindr.get_summary(config),
-        Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='resfinder') if 'resfinder' in config['analyses'] else [],
-        Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='ncbi_amr') if 'ncbi_amr' in config['analyses'] else [],
+        Path(config['working_dir']) / amrfinder.OUTPUT_AMRFINDER_SUMMARY if 'amrfinder' in config['analyses'] else [],
+        Path(config['working_dir']) / resfinder4.OUTPUT_RESFINDER4_SUMMARY if 'resfinder4' in config['analyses'] else [],
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='rmlst') if 'rmlst' in config['analyses'] else [],
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='mlst') if 'mlst' in config['analyses'] else [],
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='rplf') if 'rplf' in config['analyses'] else [],
