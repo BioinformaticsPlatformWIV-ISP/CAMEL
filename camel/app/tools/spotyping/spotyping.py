@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Tuple, Any, Dict
+from typing import Tuple, Any, Dict, List
 
 from camel.app.camel import Camel
 from camel.app.command.command import Command
@@ -55,10 +55,10 @@ class SpoTyping(Tool):
         """
         # Run command
         self._input_key = 'FASTQ' if 'FASTQ' in self._tool_inputs else 'FASTA'
-        self._symlink_input()
+        path_inputs = self._symlink_input()
         self._command.command = ' '.join([
             self._tool_command,
-            *[str(f) for f in self._new_input_paths],
+            *[str(f) for f in path_inputs],
             * self._build_options()
         ])
         self._execute_command()
@@ -124,13 +124,14 @@ class SpoTyping(Tool):
         else:
             return {k: 'NA' for k in keys}
 
-    def _symlink_input(self) -> None:
+    def _symlink_input(self) -> List[Path]:
         """
         Symlinks the input file(s).
-        :return: None
+        :return: Paths to symlinked input files
         """
-        self._new_input_paths = [self._folder / f.path.name for f in self._tool_inputs[self._input_key]]
-        for path_new, path_old in zip(self._new_input_paths, self._tool_inputs[self._input_key]):
+        path_inputs = [self._folder / f.path.name for f in self._tool_inputs[self._input_key]]
+        for path_new, path_old in zip(path_inputs, self._tool_inputs[self._input_key]):
             if path_new.is_symlink():
                 path_new.unlink()
             path_new.symlink_to(path_old.path)
+        return path_inputs

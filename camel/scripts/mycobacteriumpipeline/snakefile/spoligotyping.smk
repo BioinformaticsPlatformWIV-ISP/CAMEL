@@ -7,6 +7,7 @@ from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.resources.snakefile import assembly
 from camel.scripts.mycobacteriumpipeline.snakefile import spoligotyping
 
+
 rule spoligotyping_downsample:
     """
     Optional downsampling if the coverage is too high.
@@ -15,10 +16,10 @@ rule spoligotyping_downsample:
         IO_FASTQ = Path(config['working_dir']) / 'fq_dict.io',
         INFORMS_coverage = Path(config['working_dir']) / assembly.get_depth_inform('fastq_pe')
     output:
-        FASTQ_PE = Path(config['working_dir']) / 'spoligotyping' / 'fastq-ds.io',
-        INFORMS_spoligo_param = Path(config['working_dir']) / 'spoligotyping' / 'informs-param.io'
+        FASTQ_PE = Path(config['working_dir']) / 'spoligotyping' / 'downsampling' / 'fastq-ds.io',
+        INFORMS_spoligo_param = Path(config['working_dir']) / 'spoligotyping' / 'downsampling' / 'informs-param.io'
     params:
-        dir_ = Path(config['working_dir']) / 'spoligotyping'
+        dir_ = Path(config['working_dir']) / 'spoligotyping' / 'downsampling'
     run:
         import logging
         from camel.app.tools.seqtk.seqtksubsample import SeqtkSubsample
