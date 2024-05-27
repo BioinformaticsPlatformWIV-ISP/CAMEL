@@ -56,7 +56,6 @@ class MainKlebsiellaPipeline(ReportPipeline):
             mainscriptutils.dict_merge(config_data, yaml.load(handle_in.read().format(
                 coverage_max=self._args.cov_max,
                 export_bam='true' if self._args.report_include_bam else 'false',
-                export_fastq='true' if self._args.report_include_fastq else 'false',
                 qc_typing_scheme='cgmlst' if self._args.cgmlst else 'mlst'
             ), Loader=yaml.SafeLoader))
 

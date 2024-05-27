@@ -30,9 +30,6 @@ downsampling:
   coverage_max: {coverage_max}
   expected_genome_size: 4_548_822
 
-read_trimming:
-  export_fastq: '{export_fastq}'
-
 contamination_check:
   db: /db/kraken2_microbial/latest
   expected_species: 'Yersinia'

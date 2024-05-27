@@ -101,7 +101,6 @@ class MainEnterococcusPipeline(ReportPipeline):
                 k2_name=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species]['full_name']
                     if self._args.species != 'spp' else 'Enterococcus',
                 k2_level = 'S' if self._args.species != 'spp' else 'G',
-                export_fastq='true' if self._args.report_include_fastq else 'false',
                 gc_content=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species]['gc_content'],
                 genome_size=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species]['genome_size'],
                 mlst_db=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species].get('mlst_db'),

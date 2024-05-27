@@ -59,7 +59,6 @@ class MainNeisseriaPipeline(ReportPipeline):
             mainscriptutils.dict_merge(
                 config_data, yaml.safe_load(handle_in.read().format(
                     qc_typing_scheme='cgmlst' if self._args.cgmlst else 'mlst',
-                    export_fastq='true' if self._args.report_include_fastq else 'false',
                     export_bam='true' if self._args.report_include_bam else 'false',
                     coverage_max=self._args.cov_max
                 )))

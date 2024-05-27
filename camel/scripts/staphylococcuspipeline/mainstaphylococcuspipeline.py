@@ -59,7 +59,6 @@ class MainStaphylococcusPipeline(ReportPipeline):
         with CONFIG_DATA.open() as handle_in:
             config_data.update(yaml.load(handle_in.read().format(
                 coverage_max=self._args.cov_max,
-                export_fastq='true' if self._args.report_include_fastq else 'false',
                 qc_typing_scheme='cgmlst' if self._args.cgmlst else 'mlst',
             ), Loader=yaml.SafeLoader))
         return SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir)

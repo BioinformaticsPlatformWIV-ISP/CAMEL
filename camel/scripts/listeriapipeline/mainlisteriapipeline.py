@@ -57,7 +57,6 @@ class MainListeriaPipeline(ReportPipeline):
         with CONFIG_DATA.open() as handle_in:
             config_data.update(yaml.load(handle_in.read().format(
                 qc_typing_scheme='cgmlst' if self._args.cgmlst else 'mlst',
-                export_fastq='true' if self._args.report_include_fastq else 'false',
                 export_bam='true' if self._args.report_include_bam else 'false',
                 coverage_max=self._args.cov_max
             ), Loader=yaml.SafeLoader))

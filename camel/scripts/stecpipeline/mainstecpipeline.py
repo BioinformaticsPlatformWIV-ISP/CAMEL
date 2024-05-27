@@ -49,7 +49,6 @@ class MainSTECPipeline(ReportPipeline):
         with open(CONFIG_DATA) as handle_in:
             config_data.update(yaml.safe_load(handle_in.read().format(
                 coverage_max=self._args.cov_max,
-                export_fastq='true' if self._args.report_include_fastq else 'false',
                 qc_typing_scheme='cgmlst' if self._args.cgmlst else 'mlst_warwick'
             )))
 
