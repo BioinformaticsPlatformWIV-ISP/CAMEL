@@ -265,7 +265,7 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
             'input_type': self._args.input_type,
             'sample_name': self.sample_name,
             'working_dir': str(self._args.working_dir),
-            'read_trimming': {'adapter': self._args.library}
+            'read_trimming': {}
         }
         if self._args.trimming_method is not None:
             template_data['read_trimming']['method'] = self._args.trimming_method

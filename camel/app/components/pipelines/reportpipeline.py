@@ -68,8 +68,11 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
             'output_report': str(self._args.output_html),
             'output_tabular': str(self._args.output_tsv),
             'detection_method': self._args.detection_method,
-            'read_trimming': {'export_fastq': self._args.report_include_fastq}
         })
+
+        # FASTQ export
+        if self._args.report_include_fastq is True:
+            config_data['read_trimming']['export_fastq'] = True
 
         # Technology-specific options
         if (self._args.input_type == 'illumina') and (self._args.library is not None):
