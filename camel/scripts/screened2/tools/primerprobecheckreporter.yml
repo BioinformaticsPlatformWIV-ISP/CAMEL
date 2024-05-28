@@ -1,0 +1,9 @@
+dependencies: []
+parameters:
+  output_stat: { default: true, mandatory: true, option: null, value: "output_stat.csv" }
+  output_full_report: { default: true, mandatory: true, option: null, value: "output_fullreport.csv" }
+  primer: { default: false, mandatory: true, option: null, 10, value: 'ATGC' }
+  fasta_primer_name: { default: false, mandatory: true, option: null, value: 'Primer_Name' }
+  end_mismatch: { default: false, mandatory: true, option: null, value: '0' }
+  perc_mismatch: { default: false, mandatory: true, option: null, value: '0' }
+tool_command: None
