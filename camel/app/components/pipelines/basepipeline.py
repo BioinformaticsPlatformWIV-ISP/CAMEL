@@ -54,6 +54,7 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         """
         # Input
         argument_parser.add_argument('--fasta', type=Path, help="Input FASTA file")
+        argument_parser.add_argument('--vcf-unfiltered', type=Path, help="Input VCF file (only in combination with FASTA file)")
         argument_parser.add_argument('--fasta-name', type=str, help="Input FASTA file name (for Galaxy)")
         argument_parser.add_argument('--sample-name', type=str)
         argument_parser.add_argument('--fastq-pe', nargs=2, type=Path, help="Input PE FASTQ files")
@@ -64,7 +65,7 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
             '--fastq-se-name', help="Input SE FASTQ filename (for Galaxy)")
         argument_parser.add_argument(
             '--input-type', help='Input type',
-            choices=['illumina', 'iontorrent', 'ont', 'hybrid', 'fasta'], default='illumina')
+            choices=['illumina', 'iontorrent', 'ont', 'hybrid', 'fasta', 'fasta_with_vcf'], default='illumina')
 
         # Output
         argument_parser.add_argument('--working-dir', type=Path, default=Path.cwd())
@@ -74,6 +75,8 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         argument_parser.add_argument(
             '--library', help="Adapter library that was used for the sequencing",
             choices=['NexteraPE', 'TruSeq2', 'TruSeq3'], default='NexteraPE')
+        argument_parser.add_argument(
+            '--trimming-method', help='Trimming method', choices=['trimmomatic', 'fastp'], default='fastp')
 
         # Logging
         argument_parser.add_argument(
@@ -90,7 +93,7 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         if args.sample_name is not None:
             return FileSystemHelper.make_valid(args.sample_name)
         # FASTA input
-        elif args.input_type == 'fasta':
+        elif args.input_type in ('fasta', 'fasta_with_vcf'):
             if args.fasta_name is not None:
                 return FileSystemHelper.make_valid(Path(args.fasta_name).stem)
             return FileSystemHelper.make_valid(Path(args.fasta).stem)
@@ -154,8 +157,12 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         links = []
 
         # FASTA input
-        if self._args.input_type == 'fasta':
+        if self._args.input_type in ('fasta', 'fasta_with_vcf'):
             links.append(['fasta', self._args.fasta, f'{self.sample_name}.fasta'])
+
+        # FASTA + VCF input (Mycobacterium HERA)
+        if self._args.input_type == 'fasta_with_vcf':
+            links.append(['vcf_unfiltered', self._args.vcf_unfiltered, f'{self.sample_name}.vcf'])
 
         # PE reads
         if self._args.input_type in ('illumina', 'hybrid'):
@@ -258,6 +265,8 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
             'input_type': self._args.input_type,
             'sample_name': self.sample_name,
             'working_dir': str(self._args.working_dir),
-            'read_trimming': {'adapter': self._args.library}
+            'read_trimming': {}
         }
+        if self._args.trimming_method is not None:
+            template_data['read_trimming']['method'] = self._args.trimming_method
         return template_data

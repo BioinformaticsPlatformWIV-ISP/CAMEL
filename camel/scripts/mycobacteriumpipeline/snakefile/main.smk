@@ -2,7 +2,7 @@ from pathlib import Path
 
 from camel.resources.snakefile import trimming_illumina, contamination_check_kraken, quality_checks, variant_calling, \
     variant_filtering, gene_detection, sequence_typing, trimming, downsampling, confindr, quast, core, assembly, \
-    human_read_scrubbing
+    human_read_scrubbing, read_simulation
 from camel.scripts.mycobacteriumpipeline.snakefile import csb_rd, snpit, hsp65, spoligotyping, snplineage, assay51snp, \
     amrdetection
 
@@ -11,6 +11,7 @@ from camel.scripts.mycobacteriumpipeline.snakefile import csb_rd, snpit, hsp65, 
 #######################
 include: core.SNAKEFILE_CORE
 include: human_read_scrubbing.SNAKEFILE_SCRUBBING
+include: read_simulation.SNAKEFILE_READ_SIMULATION
 include: downsampling.SNAKEFILE_DOWNSAMPLING
 include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
 include: assembly.SNAKEFILE_ASSEMBLY
@@ -53,9 +54,9 @@ rule report_command_section:
         INFORMS_quast = Path(config['working_dir']) /quast.OUTPUT_QUAST_INFORMS,
         INFORMS_busco = Path(config['working_dir']) / quast.OUTPUT_BUSCO_INFORMS,
         INFORMS_contamination = contamination_check_kraken.get_command_informs(config),
-        INFORMS_confindr = Path(config['working_dir']) / confindr.OUTPUT_CONFINDR_INFORMS if 'confindr' in config['analyses'] else [],
+        INFORMS_confindr = confindr.get_command_informs(config),
         INFORMS_assembly_map = assembly.get_qc_informs(config, config['input_type']),
-        INFORMS_variant_calling_all = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_INFORMS_ALL,
+        INFORMS_variant_calling_all = variant_calling.get_command_informs(config),
         INFORMS_variant_filtering_all = Path(config['working_dir']) / variant_filtering.OUTPUT_VARIANT_FILTERING_INFORMS_ALL,
         INFORMS_snpit = Path(config['working_dir']) / snpit.OUTPUT_SNPIT_INFORMS if 'snpit' in config['analyses'] else [],
         INFORMS_16s = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='ncbi_16s') if 'ncbi_16s' in config['analyses'] else [],
@@ -81,9 +82,9 @@ rule report_combine_all:
         reports_trimming = trimming.get_reports(config),
         report_quast = Path(config['working_dir']) / quast.OUTPUT_QUAST_REPORT,
         reports_contamination = contamination_check_kraken.get_reports(config),
-        report_confindr = Path(config['working_dir']) / (confindr.OUTPUT_CONFINDR_REPORT if 'confindr' in config['analyses'] else confindr.OUTPUT_CONFINDR_REPORT_EMPTY),
+        report_confindr = confindr.get_report(config),
         report_adv_qc = Path(config['working_dir']) / str(quality_checks.OUTPUT_QUALITY_CHECKS_REPORT).format(input_type=config['input_type']),
-        report_variant= Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_REPORT,
+        report_variant = variant_calling.get_reports(config),
         # Species identification
         report_rmlst = sequence_typing.get_sequence_typing_report('rmlst', config),
         report_ncbi_16s = gene_detection.get_gene_detection_report('ncbi_16s', config),
@@ -119,14 +120,19 @@ rule report_combine_all:
         # Add the header section
         report = SnakePipelineUtils.init_pipeline_report(
             Path(output.HTML), Path(params.output_dir), params.pipeline_info)
-        report.add_html_object(SnakePipelineUtils.create_input_section(
+        section = SnakePipelineUtils.create_input_section(
             sample_name=params.sample_name,
             date=datetime.datetime.now(),
             pipeline_version=params.pipeline_info['version'],
             input_files=ReportPipeline.format_input_string(params.input_dict),
             input_type=params.input_type,
             key_citation=params.citation_keys['main']
-        ))
+        )
+        if params.input_type == 'fasta':
+            section.add_warning_message(
+                'SNP-based assays are run on simulated reads from the assembled contigs, which may differ from the '
+                'original reads.')
+        report.add_html_object(section)
 
         # Add report content
         report_structure = []
@@ -167,7 +173,7 @@ rule summary_combine_all:
         contamination_check_kraken.get_summaries(config),
         confindr.get_summary(config),
         Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY,
-        Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_SUMMARY,
+        variant_calling.get_summaries(config),
         Path(config['working_dir']) / variant_filtering.OUTPUT_VARIANT_FILTERING_SUMMARY,
         Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='ncbi_16s') if 'ncbi_16s' in config['analyses'] else [],
         Path(config['working_dir']) / csb_rd.OUTPUT_CSB_RD_SUMMARY if 'csb_rd' in config['analyses'] else [],

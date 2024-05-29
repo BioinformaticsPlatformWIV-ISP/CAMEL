@@ -29,7 +29,7 @@ def get_fq_input(input_type: str, dir_: Path):
     :param dir_: Working directory
     :return: Dictionary with strings as keys and paths as values
     """
-    if input_type == 'fasta':
+    if input_type in ('fasta', 'fasta_with_vcf'):
         return {}
     elif input_type == 'illumina':
         return {'FASTQ_PE': dir_ / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_DICT}

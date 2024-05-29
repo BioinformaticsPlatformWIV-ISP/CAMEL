@@ -108,6 +108,7 @@ rule quast_report:
         SnakemakeUtils.add_pickle_inputs(reporter, input, excluded_keys=['INFORMS_assembler'])
         reporter.add_input_informs({
             'assembler': ', '.join(SnakemakeUtils.load_object(Path(x))['_name'] for x in input.INFORMS_assembler)
+            if input.INFORMS_assembler else 'n/a'
         })
         step = Step(str(rule), reporter, Camel.get_instance(), params.running_dir)
         step.run_step()
@@ -142,7 +143,7 @@ rule quast_create_summary_out:
                 data_quast[key] = value
 
         # Add assembler version
-        tool_names = [SnakemakeUtils.load_object(Path(x))['_name'] for x in input.INFORMS]
+        tool_names = [SnakemakeUtils.load_object(Path(x))['_name'] for x in input.INFORMS] if input.INFORMS else ['n/a']
         data_quast['tool_version'] = ', '.join(tool_names)
 
         # Create TSV output

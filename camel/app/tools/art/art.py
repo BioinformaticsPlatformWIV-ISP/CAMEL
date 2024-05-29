@@ -31,8 +31,8 @@ class ART(Tool):
         self.__build_command()
         self._execute_command()
         # Compress the two output files
-        FileSystemHelper.gzip_file(self.__get_output_path('1'), Path(f"{self.__get_output_path('1')}.gz"))
-        FileSystemHelper.gzip_file(self.__get_output_path('2'), Path(f"{self.__get_output_path('2')}.gz"))
+        FileSystemHelper.gzip_file(self.__get_output_path('1'), Path(f"{self.__get_output_path('_1')}.gz"))
+        FileSystemHelper.gzip_file(self.__get_output_path('2'), Path(f"{self.__get_output_path('_2')}.gz"))
         # Remove the uncompressed FASTQ files
         self.__remove_file(self.__get_output_path('1'))
         self.__remove_file(self.__get_output_path('2'))
@@ -87,7 +87,7 @@ class ART(Tool):
         :return: None
         """
         self._tool_outputs['FASTQ_PE'] = [
-            ToolIOFile(Path(f"{self.__get_output_path('1')}.gz")), ToolIOFile(Path(f"{self.__get_output_path('2')}.gz"))]
+            ToolIOFile(Path(f"{self.__get_output_path('_1')}.gz")), ToolIOFile(Path(f"{self.__get_output_path('_2')}.gz"))]
 
     @staticmethod
     def __remove_file(input_file: Path) -> None:

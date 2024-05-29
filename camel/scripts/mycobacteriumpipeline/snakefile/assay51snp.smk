@@ -55,7 +55,7 @@ rule assay_51snp_detect_info:
     input:
         BED = rules.assay_51snp_init_db.output.BED,
         TSV = rules.assay_51snp_init_db.output.TSV,
-        VCF = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_UNFILTERED_VCF,
+        VCF = Path(config['working_dir']) / variant_calling.get_vcf(config),
         VCF_filt = Path(config['working_dir']) / variant_filtering.OUTPUT_VARIANT_FILTERING_VCF
     output:
         INFORMS = Path(config['working_dir']) / '51snp' / 'informs.io'

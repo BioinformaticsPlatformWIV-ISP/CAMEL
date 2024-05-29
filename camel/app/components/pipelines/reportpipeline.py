@@ -68,8 +68,11 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
             'output_report': str(self._args.output_html),
             'output_tabular': str(self._args.output_tsv),
             'detection_method': self._args.detection_method,
-            'read_trimming': {'export_fastq': self._args.report_include_fastq}
         })
+
+        # FASTQ export
+        if self._args.report_include_fastq is True:
+            config_data['read_trimming']['export_fastq'] = True
 
         # Technology-specific options
         if (self._args.input_type == 'illumina') and (self._args.library is not None):
@@ -85,13 +88,15 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         logger.info(f"Checking input files (type: '{self._args.input_type}')")
 
         # FASTA input
-        if self._args.input_type == 'fasta':
+        if self._args.input_type in ('fasta', 'fasta_with_vcf'):
             with open(self._args.fasta) as handle:
                 try:
                     seqs = list(SeqIO.parse(handle, 'fasta'))
                     logger.info(f'Valid FASTA file ({len(seqs):,} sequences)')
                 except BaseException as err:
                     raise InvalidInputError(f'Invalid FASTA input: {err}')
+            if self._args.detection_method != 'blast':
+                raise InvalidInputError(f'For FASTA input, only BLAST-based detection is available.')
 
         # FASTQ PE inputs
         elif self._args.input_type in ('illumina', 'hybrid'):
@@ -139,7 +144,7 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         :return: None
         """
         # FASTA input
-        if input_type == 'fasta':
+        if input_type in ('fasta', 'fasta_with_vcf'):
             SnakemakeUtils.dump_object(None, path_out)
 
         # PE reads (illumina)
@@ -195,7 +200,7 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
             p_html.parents[1].name: p_html for p_html in [Path(x) for x in reports_scrubbing]}
 
         # Add the report content
-        if input_type == 'fasta':
+        if input_type in ('fasta', 'fasta_with_vcf'):
             structure.append(
                 ('Human read removal', 'human read removal', [
                     report_scrubbing_by_input_format['fasta']]))
@@ -237,7 +242,7 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
             p_html.parent.name: p_html for p_html in [Path(x) for x in reports_ds]}
 
         # Add the report content
-        if input_type == 'fasta':
+        if input_type in ('fasta', 'fasta_with_vcf'):
             pass
         elif input_type == 'illumina':
             structure.append(('Read trimming and basic QC', 'trim', [
@@ -268,7 +273,7 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
             p_html.parents[1].name: p_html for p_html in [Path(x) for x in reports_contamination]}
 
         # Add the report content
-        if input_type == 'fasta':
+        if input_type in ('fasta', 'fasta_with_vcf'):
             structure.append(
                 ('Contamination check', 'contamination', [report_k2_by_input_format['fasta']]))
         elif input_type == 'illumina':

@@ -17,8 +17,9 @@ class MainNeisseriaPipeline(ReportPipeline):
     """
 
     CUSTOM_ANALYSES = [
-        'kraken2', 'confindr', 'resfinder', 'ncbi_amr', 'rmlst', 'mlst', 'rplf', 'bast', 'pora', 'porb', 'feta', 'fhbp',
-        'resistance_genes', 'vaccine_targets', 'cgmlst', 'gmats', 'mendevar', 'serogroup', 'human_read_scrubbing']
+        'kraken2', 'confindr', 'resfinder4', 'amrfinder', 'rmlst', 'mlst', 'rplf', 'bast', 'pora', 'porb', 'feta',
+        'fhbp', 'resistance_genes', 'vaccine_targets', 'cgmlst', 'gmats', 'mendevar', 'serogroup',
+        'human_read_scrubbing']
 
     def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """
@@ -58,7 +59,6 @@ class MainNeisseriaPipeline(ReportPipeline):
             mainscriptutils.dict_merge(
                 config_data, yaml.safe_load(handle_in.read().format(
                     qc_typing_scheme='cgmlst' if self._args.cgmlst else 'mlst',
-                    export_fastq='true' if self._args.report_include_fastq else 'false',
                     export_bam='true' if self._args.report_include_bam else 'false',
                     coverage_max=self._args.cov_max
                 )))

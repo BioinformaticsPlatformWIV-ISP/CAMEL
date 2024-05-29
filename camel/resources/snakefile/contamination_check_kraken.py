@@ -20,7 +20,7 @@ def get_input(config: Dict[str, Any]) -> Path:
     """
     if config['input_type'] in ('illumina', 'ont', 'hybrid'):
         return Path(config['working_dir']) / 'fq_dict.io'
-    if config['input_type'] in ('fasta', 'fasta_wo_vcf'):
+    if config['input_type'] in ('fasta', 'fasta_with_vcf'):
         return Path(config['working_dir']) / assembly.OUTPUT_ASSEMBLY_FASTA
 
 
@@ -48,7 +48,7 @@ def get_reports(config: Dict[str, Any]) -> List[Path]:
             paths.append(str(OUTPUT_CONTAMINATION_CHECK_REPORT_EMPTY).format(input_format='fastq_se'))
 
     # FASTA input
-    if input_type in ('fasta', 'fasta_wo_vcf'):
+    if input_type in ('fasta', 'fasta_with_vcf'):
         if 'kraken2' in config['analyses']:
             paths.append(str(OUTPUT_CONTAMINATION_CHECK_REPORT).format(input_format='fasta'))
         else:
@@ -74,7 +74,7 @@ def get_summaries(config: Dict[str, Any]) -> List[Path]:
         paths.append(str(OUTPUT_CONTAMINATION_SUMMARY).format(input_format='fastq_se'))
 
     # FASTA input
-    if (input_type in ('fasta', 'fasta_wo_vcf')) and ('kraken2' in config['analyses']):
+    if (input_type in ('fasta', 'fasta_with_vcf')) and ('kraken2' in config['analyses']):
         paths.append(str(OUTPUT_CONTAMINATION_SUMMARY).format(input_format='fasta'))
     return [Path(config['working_dir']) / p for p in paths]
 
@@ -100,6 +100,6 @@ def get_command_informs(config: Dict[str, Any]) -> List[Path]:
     if input_type in ('ont', 'hybrid'):
         paths.append(str(OUTPUT_CONTAMINATION_CHECK_KRAKEN_INFORMS).format(input_format='fastq_se'))
 
-    if input_type == 'fasta':
+    if input_type in ('fasta', 'fasta_with_vcf'):
         paths.append(str(OUTPUT_CONTAMINATION_CHECK_KRAKEN_INFORMS).format(input_format='fasta'))
     return [Path(config['working_dir']) / p for p in paths]

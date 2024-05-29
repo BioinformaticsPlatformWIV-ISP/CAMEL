@@ -2,7 +2,7 @@ from pathlib import Path
 
 from camel.resources.snakefile import trimming_illumina, gene_detection, trimming, contamination_check_kraken, \
     quality_checks, sequence_typing, lrefinder, downsampling, quast, confindr, core, assembly, amrfinder, resfinder4, \
-    mobsuite, bacmet, human_read_scrubbing
+    mobsuite, bacmet, human_read_scrubbing, read_simulation
 from camel.scripts.staphylococcuspipeline.snakefile import spatyping, sccmectyping
 
 #######################
@@ -10,6 +10,7 @@ from camel.scripts.staphylococcuspipeline.snakefile import spatyping, sccmectypi
 #######################
 include: core.SNAKEFILE_CORE
 include: human_read_scrubbing.SNAKEFILE_SCRUBBING
+include: read_simulation.SNAKEFILE_READ_SIMULATION
 include: downsampling.SNAKEFILE_DOWNSAMPLING
 include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
 include: assembly.SNAKEFILE_ASSEMBLY
@@ -42,13 +43,14 @@ rule report_command_section:
     """
     input:
         INFORMS_scrubbing = human_read_scrubbing.get_command_informs(config),
+        INFORMS_simulation = Path(config['working_dir']) / read_simulation.OUTPUT_SIMULATION_INFORMS if config['input_type'] == 'fasta' else [],
         INFORMS_downsampling = downsampling.get_command_informs(config),
         INFORMS_trimming = trimming.get_command_informs(config),
         INFORMS_assembly = assembly.get_command_informs(config),
         INFORMS_quast = Path(config['working_dir']) /quast.OUTPUT_QUAST_INFORMS,
         INFORMS_busco = Path(config['working_dir']) / quast.OUTPUT_BUSCO_INFORMS,
         INFORMS_contamination = contamination_check_kraken.get_command_informs(config),
-        INFORMS_confindr = Path(config['working_dir']) / confindr.OUTPUT_CONFINDR_INFORMS if 'confindr' in config['analyses'] else [],
+        INFORMS_confindr = confindr.get_command_informs(config),
         INFORMS_assembly_map = assembly.get_qc_informs(config, config['input_type']),
         INFORMS_lrefinder = Path(config['working_dir']) / lrefinder.OUTPUT_LREFINDER_INFORMS if 'lrefinder' in config['analyses'] else [],
         INFORMS_amrfinder = Path(config['working_dir']) / amrfinder.OUTPUT_AMRFINDER_INFORMS if 'amrfinder' in config['analyses'] else [],
@@ -58,6 +60,7 @@ rule report_command_section:
         INFORMS_se_toxins = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='se_toxins') if 'se_toxins' in config['analyses'] else [],
         IFNORMS_bacmet = Path(config['working_dir']) / bacmet.OUTPUT_BACMET_INFORMS if 'bacmet' in config['analyses'] else [],
         INFORMS_prodigal = Path(config['working_dir']) / bacmet.OUTPUT_PRODIGAL_INFORMS if 'bacmet' in config['analyses'] else [],
+        INFORMS_spatyping = Path(config['working_dir']) / spatyping.OUTPUT_SPATYPING_INFORMS if 'spa_typing' in config['analyses'] else [],
         INFORMS_mlst = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='mlst') if 'mlst' in config['analyses'] else []
     output:
         HTML = Path(config['working_dir']) / 'report' / 'html-commands.io'
@@ -77,7 +80,7 @@ rule report_combine_all:
         reports_trimming = trimming.get_reports(config),
         report_quast = Path(config['working_dir']) / quast.OUTPUT_QUAST_REPORT,
         reports_contamination = contamination_check_kraken.get_reports(config),
-        report_confindr = Path(config['working_dir']) / (confindr.OUTPUT_CONFINDR_REPORT if 'confindr' in config['analyses'] else confindr.OUTPUT_CONFINDR_REPORT_EMPTY),
+        report_confindr = confindr.get_report(config),
         report_adv_qc = Path(config['working_dir']) / str(quality_checks.OUTPUT_QUALITY_CHECKS_REPORT).format(input_type=config['input_type']),
         # Species identification
         report_rmlst = sequence_typing.get_sequence_typing_report('rmlst', config),

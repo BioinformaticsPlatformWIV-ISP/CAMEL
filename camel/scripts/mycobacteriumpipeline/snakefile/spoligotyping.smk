@@ -7,6 +7,7 @@ from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.resources.snakefile import assembly
 from camel.scripts.mycobacteriumpipeline.snakefile import spoligotyping
 
+
 rule spoligotyping_downsample:
     """
     Optional downsampling if the coverage is too high.
@@ -15,10 +16,10 @@ rule spoligotyping_downsample:
         IO_FASTQ = Path(config['working_dir']) / 'fq_dict.io',
         INFORMS_coverage = Path(config['working_dir']) / assembly.get_depth_inform('fastq_pe')
     output:
-        FASTQ_PE = Path(config['working_dir']) / 'spoligotyping' / 'fastq-ds.io',
-        INFORMS_spoligo_param = Path(config['working_dir']) / 'spoligotyping' / 'informs-param.io'
+        FASTQ_PE = Path(config['working_dir']) / 'spoligotyping' / 'downsampling' / 'fastq-ds.io',
+        INFORMS_spoligo_param = Path(config['working_dir']) / 'spoligotyping' / 'downsampling' / 'informs-param.io'
     params:
-        dir_ = Path(config['working_dir']) / 'spoligotyping'
+        dir_ = Path(config['working_dir']) / 'spoligotyping' / 'downsampling'
     run:
         import logging
         from camel.app.tools.seqtk.seqtksubsample import SeqtkSubsample
@@ -51,23 +52,29 @@ rule spoligotyping_spotyping:
     Runs the SpoTyping tool.
     """
     input:
-        FASTQ = rules.spoligotyping_downsample.output.FASTQ_PE,
-        INFORMS_spoligo_param = rules.spoligotyping_downsample.output.INFORMS_spoligo_param
+        FASTQ = rules.spoligotyping_downsample.output.FASTQ_PE if config['input_type'] == 'illumina' else [],
+        FASTA = Path(config['working_dir']) / assembly.OUTPUT_ASSEMBLY_FASTA if config['input_type'] in ('fasta', 'fasta_with_vcf') else [],
+        INFORMS_spoligo_param = rules.spoligotyping_downsample.output.INFORMS_spoligo_param if config['input_type'] == 'illumina' else []
     output:
         VAL_type_binary = Path(config['working_dir']) / 'spoligotyping' / 'VAL_binary.io',
         VAL_type_octal = Path(config['working_dir']) / 'spoligotyping' / 'VAL_octal.io',
         LOG = Path(config['working_dir']) / 'spoligotyping' / 'log.io',
         INFORMS = Path(config['working_dir']) / spoligotyping.OUTPUT_SPOLIGOTYPING_INFORMS
     params:
-        dir_ = Path(config['working_dir']) / 'spoligotyping'
+        dir_ = Path(config['working_dir']) / 'spoligotyping',
+        key = 'FASTQ' if config['input_type'] == 'illumina' else 'FASTA'
     run:
         from camel.app.tools.spotyping.spotyping import SpoTyping
-        spotyping_params = SnakemakeUtils.load_object(Path(input.INFORMS_spoligo_param))
         spotyping = SpoTyping(Camel.get_instance())
-        SnakemakeUtils.add_pickle_input(spotyping, 'FASTQ', Path(input.FASTQ))
+        if params.key == 'FASTQ':
+            SnakemakeUtils.add_pickle_input(spotyping, params.key, Path(input.FASTQ))
+            spotyping_params = SnakemakeUtils.load_object(Path(input.INFORMS_spoligo_param))
+            spotyping.update_parameters(
+                swift='off', min_strict=spotyping_params['min_strict'], min_relaxed=spotyping_params['min_relaxed'])
+        else:
+            SnakemakeUtils.add_pickle_input(spotyping, params.key, Path(input.FASTA))
+            spotyping.update_parameters(swift='off', fasta=None)
         step = Step(str(rule), spotyping, Camel.get_instance(), Path(params.dir_))
-        spotyping.update_parameters(
-            swift='off', min_strict=spotyping_params['min_strict'], min_relaxed=spotyping_params['min_relaxed'])
         step.run_step()
         spotyping.informs['_tag'] = 'Spoligotyping'
         SnakemakeUtils.dump_tool_outputs(spotyping, output)
@@ -81,16 +88,21 @@ rule spoligotyping_report:
         VAL_type_octal = rules.spoligotyping_spotyping.output.VAL_type_octal,
         LOG = rules.spoligotyping_spotyping.output.LOG,
         INFORMS_spotyping = rules.spoligotyping_spotyping.output.INFORMS,
-        INFORMS_spoligo_param = rules.spoligotyping_downsample.output.INFORMS_spoligo_param
+        INFORMS_spoligo_param = rules.spoligotyping_downsample.output.INFORMS_spoligo_param if config['input_type'] not in ('fasta', 'fasta_with_vcf') else []
     output:
         VAL_HTML = Path(config['working_dir']) / spoligotyping.OUTPUT_SPOLIGOTYPING_REPORT,
         INFORMS = Path(config['working_dir']) / 'spoligotyping' / 'informs-report.io'
     params:
-        dir_ = Path(config['working_dir'], 'spoligotyping')
+        dir_ = Path(config['working_dir'], 'spoligotyping'),
+        input_type = config['input_type']
     run:
         from camel.app.tools.spotyping.spotypingreporter import SpoTypingReporter
         reporter = SpoTypingReporter(Camel.get_instance())
-        SnakemakeUtils.add_pickle_inputs(reporter, input)
+        if params.input_type not in ('fasta', 'fasta_with_vcf'):
+            SnakemakeUtils.add_pickle_inputs(reporter, input)
+        else:
+            keys = [k for k in input.keys() if k != 'INFORMS_spoligo_param']
+            SnakemakeUtils.add_pickle_inputs(reporter, input, keys=keys)
         step = Step(str(rule), reporter, Camel.get_instance(), Path(params.dir_))
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)

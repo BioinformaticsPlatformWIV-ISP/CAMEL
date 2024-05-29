@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import argparse
-from typing import Optional, List, Dict, Sequence
+from typing import Optional, List, Dict, Sequence, Any
 
 import yaml
 
@@ -31,6 +31,8 @@ class MainEnterococcusPipeline(ReportPipeline):
             'mlst_db': '/db/sequence_typing/enterococcus_faecalis/mlst',
             'quast_fasta': '/db/refgenomes/Enterococcus_faecalis/KB944666.1.fasta',
             'quast_gff': '/db/refgenomes/Enterococcus_faecalis/KB944666.1.gff3',
+            'reference_name': 'KB944666.1',
+            'reference_url': 'https://www.ncbi.nlm.nih.gov/nuccore/KB944666.1',
             'resfinder4_species': 'Enterococcus faecalis'
         },
         'faecium': {
@@ -42,6 +44,8 @@ class MainEnterococcusPipeline(ReportPipeline):
             'mlst_db': '/db/sequence_typing/enterococcus_faecium/mlst',
             'quast_fasta': '/db/refgenomes/Enterococcus_faecium/CP038996.1.fasta',
             'quast_gff': '/db/refgenomes/Enterococcus_faecium/CP038996.1.gff3',
+            'reference_name': 'CP038996.1',
+            'reference_url': 'https://www.ncbi.nlm.nih.gov/nuccore/CP038996.1/',
             'resfinder4_species': 'Enterococcus faecium'
         },
         'spp': {
@@ -97,13 +101,14 @@ class MainEnterococcusPipeline(ReportPipeline):
                 k2_name=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species]['full_name']
                     if self._args.species != 'spp' else 'Enterococcus',
                 k2_level = 'S' if self._args.species != 'spp' else 'G',
-                export_fastq='true' if self._args.report_include_fastq else 'false',
                 gc_content=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species]['gc_content'],
                 genome_size=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species]['genome_size'],
                 mlst_db=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species].get('mlst_db'),
                 qc_typing_scheme='cgmlst' if self._args.cgmlst else 'rmlst',
                 quast_fasta=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species].get('quast_fasta', 'null'),
                 quast_gff=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species].get('quast_gff', 'null'),
+                reference_name=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species].get('reference_name', 'null'),
+                reference_url=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species].get('reference_url', 'null'),
                 resfinder4_species=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species]['resfinder4_species'],
             ), Loader=yaml.SafeLoader))
 
@@ -114,13 +119,7 @@ class MainEnterococcusPipeline(ReportPipeline):
         # Disable species-specific assays for generic Enterococcus
         config_data['is_generic'] = self._args.species == 'spp'
         if self._args.species == 'spp':
-            disabled_assays = MainEnterococcusPipeline.DATA_BY_SPECIES['spp']['disabled_assays']
-            config_data['analyses'] = [a for a in config_data['analyses'] if a not in disabled_assays]
-            logger.warning(f"Generic 'Enterococcus' selected as species, disabling assays: {', '.join(disabled_assays)}")
-            # Disable species specific AMR detection
-            config_data['amrfinder']['species'] = None
-            config_data['resfinder4']['species'] = None
-            config_data['resfinder4']['point'] = False
+            self._update_config_for_generic_spp(config_data)
 
         # Set the species
         config_data['selected_species'] = MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species]['full_name']
@@ -143,6 +142,26 @@ class MainEnterococcusPipeline(ReportPipeline):
             parser.add_argument(f"--{analysis_key.replace('_', '-')}", action='store_true')
         parser.add_argument('--species', required=True, choices=['faecium', 'faecalis', 'spp'])
         return parser.parse_args(args)
+
+    def _update_config_for_generic_spp(self, config_data: Dict[str, Any]) -> None:
+        """
+        Updates the config file with specific adaptation for generic enterococcus.
+        :param config_data: Configuration data
+        :return: None
+        """
+        # Disable incompatible assays
+        disabled_assays = MainEnterococcusPipeline.DATA_BY_SPECIES['spp']['disabled_assays']
+        config_data['analyses'] = [a for a in config_data['analyses'] if a not in disabled_assays]
+        logger.warning(f"Generic 'Enterococcus' selected as species, disabling assays: {', '.join(disabled_assays)}")
+
+        # Disable species specific AMR detection
+        config_data['amrfinder']['species'] = None
+        config_data['resfinder4']['species'] = None
+        config_data['resfinder4']['point'] = False
+
+        # Change the typing scheme for the QC check (no cgMLST is available)
+        logger.warning(f"cgMLST is not available for generic 'Enterococcus', using rMLST for the QC check.")
+        config_data['quality_checks']['typing_scheme'] = 'rmlst'
 
 
 if __name__ == '__main__':

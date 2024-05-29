@@ -3,7 +3,7 @@ from pathlib import Path
 from camel.app.camel import Camel
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.resources.snakefile import variant_calling, variant_filtering
+from camel.resources.snakefile import variant_calling, variant_filtering, read_simulation
 
 camel = Camel.get_instance()
 
@@ -30,7 +30,7 @@ rule variant_calling_map_reads:
     Maps the trimmed reads to the reference sequence.
     """
     input:
-        IO = Path(config['working_dir']) / 'fq_dict.io',
+        IO = variant_calling.get_mapping_fq_input(config),
         INDEX_GENOME_PREFIX = rules.variant_calling_prep_reference.output.INDEX_GENOME_PREFIX
     output:
         BAM = Path(config['working_dir']) / 'variant_calling' / 'read_mapping' / 'bam.io',
@@ -49,11 +49,14 @@ rule variant_calling_map_reads:
 
         # Bowtie 2
         bowtie2_map = Bowtie2Map(Camel.get_instance())
-        key_reads = 'PE' if params.input_type == 'illumina' else 'SE'
-        bowtie2_map.add_input_files(SnakePipelineUtils.extracts_fq_input(
-            Path(input.IO), key_se='FASTQ_SE', drop_empty=True, read_type=key_reads))
+        if params.input_type != 'fasta':
+            key_reads = 'PE' if params.input_type == 'illumina' else 'SE'
+            bowtie2_map.add_input_files(SnakePipelineUtils.extracts_fq_input(
+                Path(input.IO), key_se='FASTQ_SE', drop_empty=True, read_type=key_reads))
+        else:
+            SnakemakeUtils.add_pickle_input(bowtie2_map, 'FASTQ_PE', Path(input.IO))
         bowtie2_map.update_parameters(threads=threads)
-        SnakemakeUtils.add_pickle_input(bowtie2_map,'INDEX_GENOME_PREFIX',Path(input.INDEX_GENOME_PREFIX))
+        SnakemakeUtils.add_pickle_input(bowtie2_map, 'INDEX_GENOME_PREFIX', Path(input.INDEX_GENOME_PREFIX))
 
         # Initialize tools
         samtools_view = SamtoolsView(Camel.get_instance())
@@ -62,15 +65,36 @@ rule variant_calling_map_reads:
         pipeutils.run_as_pipe([bowtie2_map, samtools_view, samtools_sort], Path(params.dir_))
 
         # Save output
-        SnakemakeUtils.dump_tool_output(samtools_sort,'BAM', Path(output.BAM))
+        SnakemakeUtils.dump_tool_output(samtools_sort, 'BAM', Path(output.BAM))
         SnakemakeUtils.dump_object(bowtie2_map.informs, Path(output.INFORMS))
+
+rule variant_calling_generate_dummy_bam:
+    """
+    Generates a dummy bam.
+    This rule is executed when the input type is FASTA with VCF.
+    """
+    output:
+        BAM = Path(config['working_dir']) / 'variant_calling' / 'dummy_bam' / 'bam.io'
+    params:
+        dir_ = Path(config['working_dir']) / 'variant_calling' / 'dummy_bam'
+    run:
+        import pysam
+
+        header = {
+            'HD': {'VN': '1.6'},
+            'SQ': []  # No sequences
+        }
+        filename = params.dir_ / 'empty.bam'
+        with pysam.AlignmentFile(filename, 'wb', header=header) as bamfile:
+            pass
+        SnakemakeUtils.dump_object([ToolIOFile(filename)], Path(output.BAM))
 
 rule variant_calling_calculate_depth:
     """
     Calculates the median depth of the alignment.
     """
     input:
-        BAM = rules.variant_calling_map_reads.output.BAM
+        BAM = variant_calling.get_bam(config)
     output:
         TSV = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_DEPTH_TSV,
         INFORMS = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_DEPTH_INFORMS
@@ -91,7 +115,7 @@ rule variant_calling_mpileup:
     """
     input:
         FASTA = rules.variant_calling_prep_reference.output.FASTA,
-        BAM = rules.variant_calling_map_reads.output.BAM
+        BAM = variant_calling.get_bam(config)
     output:
         VCF_GZ = Path(config['working_dir']) / 'variant_calling' / 'mpileup' / 'vcf_gz.io',
         INFORMS = Path(config['working_dir']) / 'variant_calling' / 'mpileup' / 'informs.io'
@@ -218,6 +242,25 @@ rule variant_calling_unzip_vcf:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(bcftools_view, output)
 
+rule zip_input_vcf:
+    """
+    Zips the input VCF file to be used by certain assays (e.g. amr detection) in case FASTA/VCF is used as input.
+    """
+    input:
+        VCF = Path(config['working_dir']) / 'input' / 'vcf.io'
+    output:
+        VCF_GZ = Path(config['working_dir']) / 'variant_calling' / 'gzip' / 'vcf_gz.io'
+    params:
+        running_dir = Path(config['working_dir']) / 'variant_calling' / 'gzip'
+    run:
+        from camel.app.tools.bcftools.bcftoolsview import BcftoolsView
+        bcftools_view = BcftoolsView(camel)
+        SnakemakeUtils.add_pickle_inputs(bcftools_view, input)
+        step = Step(str(rule), bcftools_view, camel, params.running_dir)
+        bcftools_view.update_parameters(output_type='z')
+        step.run_step()
+        SnakemakeUtils.dump_tool_outputs(bcftools_view, output)
+
 rule variant_calling_create_consensus:
     """
     Creates the consensus sequence by applying the detected variants to the reference genome.
@@ -260,7 +303,8 @@ rule variant_calling_report:
         dir_ = Path(config['working_dir']) / 'variant_calling' / 'report',
         regions_bed_file = variant_filtering.get_filtering_param(config, 'region', 'bed_file'),
         include_bam = config.get('variant_calling').get('report_include_bam', False),
-        sample_name = config['sample_name']
+        sample_name = config['sample_name'],
+        input_type = config['input_type']
     run:
         from camel.app.io.tooliovalue import ToolIOValue
         from camel.app.tools.pipelines.variant_calling.variantcallingreporter import VariantCallingReporter
@@ -273,6 +317,8 @@ rule variant_calling_report:
             reporter.add_input_files({'BED': [ToolIOFile(Path(params.regions_bed_file))]})
             SnakemakeUtils.add_pickle_input(reporter, 'VCF_filt_regions', Path(input.VCF_filt_regions))
         reporter.update_parameters(export_bam='true' if params.include_bam else 'false')
+        if params.input_type == 'fasta':
+            reporter.update_parameters(pseudo_reads=True)
         reporter.add_input_files({'VAL_Sample': [ToolIOValue(params.sample_name)]})
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
@@ -303,6 +349,7 @@ rule variant_calling_collect_command_informs:
     This rule is used to collect the commands that were used.
     """
     input:
+        INFORMS_read_simulation = Path(config['working_dir']) / read_simulation.OUTPUT_SIMULATION_INFORMS if config['input_type'] == 'fasta' else [],
         INFORMS_mapping = rules.variant_calling_map_reads.output.INFORMS,
         INFORMS_mpileup = rules.variant_calling_mpileup.output.INFORMS,
         INFORMS_calling = rules.variant_calling_bcftools_call.output.INFORMS
@@ -315,3 +362,13 @@ rule variant_calling_collect_command_informs:
             informs['_tag'] = 'Variant calling'
             all_informs.append(informs)
         SnakemakeUtils.dump_object(all_informs, Path(output.INFORMS_ALL))
+
+rule variant_calling_report_empty:
+    """
+    Creates an empty variant calling report when a VCF file is given as input.
+    """
+    output:
+        HTML = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_REPORT_EMPTY
+    run:
+        from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
+        SnakePipelineUtils.create_empty_report_section('Variant calling', Path(output.HTML))

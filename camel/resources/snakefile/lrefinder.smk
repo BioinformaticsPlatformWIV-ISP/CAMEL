@@ -10,18 +10,23 @@ rule run_lrefinder:
     Runs the LRE-Finder tool.
     """
     input:
-        IO = Path(config['working_dir']) / 'fq_dict.io',
+        IO = lrefinder_workflow.get_input(config)
     output:
         INFORMS = Path(config['working_dir']) / 'lrefinder' / 'informs.io'
     params:
-        running_dir = Path(config['working_dir']) / 'lrefinder'
+        running_dir = Path(config['working_dir']) / 'lrefinder',
+        input_type = config['input_type']
     run:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         from camel.app.tools.lrefinder.lrefinder import LREFinder
         lrefinder = LREFinder(Camel.get_instance())
-        fq_dict = SnakePipelineUtils.extracts_fq_input(Path(input.IO), key_pe='FASTQ_PE')
-        lrefinder.add_input_files(fq_dict)
-        step = Step(rule, lrefinder, Camel.get_instance(), params.running_dir, config)
+        if params.input_type != 'fasta':
+            fq_dict = SnakePipelineUtils.extracts_fq_input(Path(input.IO), key_pe='FASTQ_PE')
+            lrefinder.add_input_files(fq_dict)
+        else:
+            # When the input type is FASTA the simulated reads are used as input
+            SnakemakeUtils.add_pickle_input(lrefinder, 'FASTQ_PE', Path(input.IO))
+        step = Step(str(rule), lrefinder, Camel.get_instance(), params.running_dir)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(lrefinder, output)
 
@@ -34,12 +39,15 @@ rule lre_finder_report:
     output:
         HTML = Path(config['working_dir']) / lrefinder_workflow.OUTPUT_LREFINDER_REPORT
     params:
-        running_dir = Path(config['working_dir']) / 'lrefinder'
+        running_dir = Path(config['working_dir']) / 'lrefinder',
+        input_type = config['input_type']
     run:
         from camel.app.tools.lrefinder.lrefinderreporter import LREFinderReporter
         reporter = LREFinderReporter(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(reporter, input)
-        step = Step(rule, reporter, Camel.get_instance(), params.running_dir, config)
+        if params.input_type == 'fasta':
+            reporter.update_parameters(pseudo_reads=True)
+        step = Step(str(rule), reporter, Camel.get_instance(), params.running_dir)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
 

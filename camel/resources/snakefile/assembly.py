@@ -18,9 +18,9 @@ def get_fasta_raw(config: Dict[str, Any]) -> Path:
     """
     Returns the assembly FASTA output IO object path (before filtering).
     """
-    if (config['input_type'] == 'fasta') and ('human_read_scrubbing' not in config['analyses']):
+    if (config['input_type'] in ('fasta', 'fasta_with_vcf')) and ('human_read_scrubbing' not in config['analyses']):
         return Path(str(human_read_scrubbing.INPUT_SCRUBBING_FASTA).format(input_format='fasta'))
-    if (config['input_type'] == 'fasta') and ('human_read_scrubbing' in config['analyses']):
+    if (config['input_type'] in ('fasta', 'fasta_with_vcf')) and ('human_read_scrubbing' in config['analyses']):
         return Path(str(human_read_scrubbing.OUTPUT_SCRUBBING_FASTA).format(input_format='fasta'))
     if config['input_type'] == 'illumina':
         return assembly_spades.OUTPUT_ASSEMBLY_FASTA
@@ -36,7 +36,7 @@ def get_command_informs(config: Dict[str, Any]) -> List[Path]:
     Returns the assembly informs output IO object paths.
     :return: Assembly informs path
     """
-    if config['input_type'] == 'fasta':
+    if config['input_type'] in ('fasta', 'fasta_with_vcf'):
         return []
     if config['input_type'] == 'illumina':
         return [Path(config['working_dir'], assembly_spades.OUTPUT_ASSEMBLY_INFORMS)]

@@ -22,13 +22,16 @@ rule rd_csb_report:
         INFORMS = Path(config['working_dir']) / 'csb_rd' / 'informs.io'
     params:
         dir_ = Path(config['working_dir']) / 'csb_rd',
-        detection_method = config['detection_method']
+        detection_method = config['detection_method'],
+        input_type = config['input_type']
     run:
         from camel.app.tools.pipelines.mycobacterium.rdcsbreporter import RdCsbReporter
         reporter = RdCsbReporter(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(reporter, input)
         step = Step(str(rule), reporter, Camel.get_instance(), Path(params.dir_))
         reporter.update_parameters(hit_type=params.detection_method)
+        if params.input_type in ('fasta', 'fasta_with_vcf'):
+            reporter.update_parameters(pseudo_reads=True)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
 

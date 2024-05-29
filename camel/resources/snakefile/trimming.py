@@ -14,7 +14,7 @@ def get_reports(config: Dict[str, Any]) -> List[Path]:
     input_type = config['input_type']
 
     # FASTA input
-    if config['input_type'] == 'fasta':
+    if input_type in ('fasta', 'fasta_with_vcf'):
         return []
 
     # FASTQ input
@@ -39,7 +39,7 @@ def get_summaries(config: Dict[str, Any]) -> List[Path]:
     input_type = config['input_type']
 
     # FASTA input
-    if config['input_type'] == 'fasta':
+    if input_type in ('fasta', 'fasta_with_vcf'):
         return []
 
     # FASTQ input

@@ -46,6 +46,7 @@ class MainNcbiHumanReadScrubber(ReportPipeline):
         :return: Configuration file
         """
         config_data = self.get_template_data(input_files)
+        config_data['analyses'] = ['human_read_scrubbing']
         # Add existing config data
         with open(CONFIG_DATA) as handle_in:
             config_data.update(yaml.safe_load(handle_in.read()))

@@ -33,9 +33,6 @@ downsampling:
   coverage_max: {coverage_max}
   expected_genome_size: 4_762_774
 
-read_trimming:
-  export_fastq: {export_fastq}
-
 contamination_check:
   db: /db/kraken2_microbial/latest
   expected_species: Shigella
@@ -49,6 +46,7 @@ quast:
     gff3: /db/refgenomes/Shigella_sonnei/GCA_000092525.1.gff
 
 quality_checks:
+  typing_scheme: {qc_typing_scheme}
   expected_gc_content: 50.5
 
 confindr:
@@ -65,6 +63,8 @@ assembly:
 mykrobe:
   db: /db/mykrobe/latest/
   species: sonnei
+  show_amr: false
+  title: Lineage determination of <i>S. sonnei</i>
 
 amrfinder:
   db: /db/amrfinder/by_version/latest
@@ -90,6 +90,19 @@ gene_detection:
     metadata:
       name: stx variant
       key: stx_variant
+
+  serotype_o:
+    path: /db/gene_detection/SerotypeFinder-O_type
+    params:
+      blastn:
+        min_percent_identity: 85
+        min_coverage: 60
+      srst2:
+        max_divergence: 15
+        min_coverage: 60
+    metadata:
+      name: Predicted serotype
+      key: predicted_serotype
 
 ###################
 # Sequence typing #

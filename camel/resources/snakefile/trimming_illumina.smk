@@ -1,12 +1,9 @@
-import shutil
 from pathlib import Path
 
 from camel.app.camel import Camel
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile import trimming_illumina
 from camel.app.pipeline.step import Step
-
-camel = Camel.get_instance()
 
 
 rule trimming_illumina_fastqc_pre:
@@ -23,9 +20,9 @@ rule trimming_illumina_fastqc_pre:
     threads: 4
     run:
         from camel.app.tools.fastqc.fastqc import FastQC
-        fastqc = FastQC(camel)
+        fastqc = FastQC(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(fastqc, input)
-        step = Step(str(rule), fastqc, camel, params.running_dir)
+        step = Step(str(rule), fastqc, Camel.get_instance(), params.running_dir)
         fastqc.update_parameters(threads=threads)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(fastqc, output)
@@ -37,10 +34,10 @@ rule trimming_illumina_trimmomatic:
     input:
         FASTQ_PE = Path(config['working_dir']) / trimming_illumina.INPUT_TRIMMOMATIC_FASTQ
     output:
-        FASTQ_PE = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_READS_PE,
-        FASTQ_SE_FORWARD = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_READS_SE_FWD,
-        FASTQ_SE_REVERSE = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_READS_SE_REV,
-        INFORMS = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_INFORMS
+        FASTQ_PE = Path(config['working_dir']) / 'trimming_illumina' / 'trimmomatic' / 'fastq-pe.io',
+        FASTQ_SE_FORWARD = Path(config['working_dir']) / 'trimming_illumina' / 'trimmomatic' / 'fastq-se-fwd.io',
+        FASTQ_SE_REVERSE = Path(config['working_dir']) / 'trimming_illumina' / 'trimmomatic' / 'fastq-se-rev.io',
+        INFORMS = Path(config['working_dir']) / 'trimming_illumina' / 'trimmomatic' / 'informs.io'
     threads: 4
     priority: 1
     params:
@@ -49,22 +46,68 @@ rule trimming_illumina_trimmomatic:
         sample_name = config.get('sample_name', 'reads')
     run:
         from camel.app.tools.trimmomatic.trimmomatic import Trimmomatic
-        trimmomatic = Trimmomatic(camel)
+        trimmomatic = Trimmomatic(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(trimmomatic, input)
         trimmomatic.update_parameters(baseout=f'{params.sample_name}-trimmed.fastq.gz')
         if params.adapter is not None:
             trimmomatic.update_parameters(illuminaclip_PE=f'$TRIMMOMATIC_ADAPTER_DIR/{params.adapter}-PE.fa:2:30:10')
-        step = Step(str(rule), trimmomatic, camel, params.running_dir)
+        step = Step(str(rule), trimmomatic, Camel.get_instance(), params.running_dir)
         trimmomatic.update_parameters(threads=threads)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(trimmomatic, output)
+
+rule trimming_illumina_fastp:
+    """
+    Read trimming using fastp.
+    """
+    input:
+        FASTQ = Path(config['working_dir']) / trimming_illumina.INPUT_TRIMMOMATIC_FASTQ
+    output:
+        FASTQ_PE = Path(config['working_dir']) / 'trimming_illumina' / 'fastp' / 'fastq-pe.io',
+        FASTQ_SE_FWD = Path(config['working_dir']) / 'trimming_illumina' / 'fastp' / 'fastq-se-fwd.io',
+        FASTQ_SE_REV = Path(config['working_dir']) / 'trimming_illumina' / 'fastp' / 'fastq-se-rev.io',
+        HTML = Path(config['working_dir']) / 'trimming_illumina' / 'fastp' / 'html.io',
+        INFORMS = Path(config['working_dir']) / 'trimming_illumina' / 'fastp' / 'informs.io'
+    threads: 4
+    priority: 1
+    params:
+        dir_ = Path(config['working_dir']) / 'trimming_illumina' / 'fastp',
+        sample_name = config.get('sample_name', 'reads')
+    run:
+        from camel.app.tools.fastp.fastp import Fastp
+        fastp = Fastp(Camel.get_instance())
+        SnakemakeUtils.add_pickle_inputs(fastp, input)
+        fastp.update_parameters(
+            output_name=f'{params.sample_name}-trimmed',
+            # Adapter trimming
+            detect_adapter_for_pe=True,
+            # Leading
+            cut_front=True,
+            cut_front_window_size=1,
+            cut_front_mean_quality=10,
+            # Trailing
+            cut_tail=True,
+            cut_tail_window_size=1,
+            cut_tail_mean_quality=10,
+            # Sliding window
+            cut_right=True,
+            cut_right_window_size=4,
+            cut_right_mean_quality=20,
+            # Minimum length
+            length_required=40,
+            # Threads
+            threads=threads
+        )
+        step = Step(str(rule), fastp, Camel.get_instance(), params.dir_)
+        step.run_step()
+        SnakemakeUtils.dump_tool_outputs(fastp, output)
 
 rule trimming_illumina_fastqc_post:
     """
     Creates FastQC reports of the trimmed reads.
     """
     input:
-        FASTQ = rules.trimming_illumina_trimmomatic.output.FASTQ_PE
+        FASTQ = Path(config['working_dir']) / trimming_illumina.select_fastq_output(config)
     output:
         HTML = Path(config['working_dir']) /  trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_FASTQC_HTML_POST,
         TXT = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_FASTQC_TXT_POST
@@ -73,16 +116,16 @@ rule trimming_illumina_fastqc_post:
     threads: 4
     run:
         from camel.app.tools.fastqc.fastqc import FastQC
-        fastqc = FastQC(camel)
+        fastqc = FastQC(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(fastqc, input)
-        step = Step(str(rule), fastqc, camel, params.running_dir)
+        step = Step(str(rule), fastqc, Camel.get_instance(), params.running_dir)
         fastqc.update_parameters(threads=threads)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(fastqc, output)
 
-rule trimming_illumina_report:
+rule trimming_illumina_report_trimmomatic:
     """
-    Creates the HTML report with the trimming output files and statistics.
+    Creates the HTML report with the trimming output files and statistics for Trimmomatic.
     """
     input:
         HTML_PRE = rules.trimming_illumina_fastqc_pre.output.HTML,
@@ -92,58 +135,132 @@ rule trimming_illumina_report:
         FASTQ_SE_REVERSE = rules.trimming_illumina_trimmomatic.output.FASTQ_SE_REVERSE,
         INFORMS_trimming = rules.trimming_illumina_trimmomatic.output.INFORMS
     output:
-        VAL_HTML = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_REPORT
+        VAL_HTML = Path(config['working_dir']) / 'trimming_illumina' / 'report' / 'trimmomatic' / 'html.io'
     params:
-        running_dir = Path(config['working_dir']) / 'trimming_illumina' / 'report',
+        running_dir = Path(config['working_dir']) / 'trimming_illumina' / 'report' / 'trimmomatic',
         export_fastq = config['read_trimming'].get('export_fastq', 'false')
     run:
         from camel.app.tools.pipelines.read_trimming.reportertrimming import ReporterTrimming
-        reporter = ReporterTrimming(camel)
+        reporter = ReporterTrimming(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(reporter, input)
-        step = Step(str(rule), reporter, camel, params.running_dir)
+        step = Step(str(rule), reporter, Camel.get_instance(), params.running_dir)
         reporter.update_parameters(export_fastq=str(params.export_fastq))
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
 
-rule trimming_illumina_dump_summary_info:
+rule trimming_illumina_report_fastp:
     """
-    Dumps the summary information from the read trimming pipeline.
+    Creates the HTML report with the trimming output files and statistics for fastp.
     """
     input:
-        INFORMS_trimming = rules.trimming_illumina_trimmomatic.output.INFORMS
+        HTML = rules.trimming_illumina_fastp.output.HTML,
+        HTML_pre = rules.trimming_illumina_fastqc_pre.output.HTML,
+        HTML_post = rules.trimming_illumina_fastqc_post.output.HTML,
+        FASTQ_PE = rules.trimming_illumina_fastp.output.FASTQ_PE,
+        FASTQ_SE_FWD = rules.trimming_illumina_fastp.output.FASTQ_SE_FWD,
+        FASTQ_SE_REV = rules.trimming_illumina_fastp.output.FASTQ_SE_REV,
+        INFORMS_fastp = rules.trimming_illumina_fastp.output.INFORMS
     output:
-        TSV = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_SUMMARY
+        VAL_HTML = Path(config['working_dir']) / 'trimming_illumina' / 'report' / 'fastp' / 'html.io'
     params:
-        running_dir = Path(config['working_dir']) / 'trimming_illumina' / 'summary'
+        running_dir = Path(config['working_dir']) / 'trimming_illumina' / 'report' / 'fastp',
+        export_fastq = config['read_trimming'].get('export_fastq', 'false')
     run:
-        trimmomatic_informs = SnakemakeUtils.load_object(Path(input.INFORMS_trimming))
+        from camel.app.tools.fastp.fastpreporter import FastpReporter
+        reporter = FastpReporter(Camel.get_instance())
+        SnakemakeUtils.add_pickle_inputs(reporter, input)
+        step = Step(str(rule), reporter, Camel.get_instance(), params.running_dir)
+        reporter.update_parameters(export_fastq=str(params.export_fastq))
+        step.run_step()
+        SnakemakeUtils.dump_tool_outputs(reporter, output)
+
+rule trimming_illumina_report_select:
+    """
+    Selects the report output based on the selected trimming method.
+    """
+    input:
+        HTML = Path(config['working_dir']) / 'trimming_illumina' / 'report' / config['read_trimming'].get('method', 'trimmomatic') / 'html.io'
+    output:
+        HTML = Path(config['working_dir']) / 'trimming_illumina' / 'report' / 'html.io'
+    shell:
+        """
+        cp {input.HTML} {output.HTML};
+        """
+
+rule trimming_illumina_summary_trimmomatic:
+    """
+    Dumps the summary information for trimming with trimmomatic. 
+    """
+    input:
+        INFORMS = rules.trimming_illumina_trimmomatic.output.INFORMS
+    output:
+        TSV = Path(config['working_dir']) / 'trimming_illumina' / 'summary' / 'trimmomatic' / 'summary.tsv'
+    run:
+        informs_trimmomatic = SnakemakeUtils.load_object(Path(input.INFORMS))
         summary_data = [
-            ('trim_ilmn_pairs_in', trimmomatic_informs['paired_reads_in']),
-            ('trim_ilmn_pairs_out', trimmomatic_informs['paired_reads_out'].split(' ')[0]),
-            ('trim_ilmn_fwd_only_surviving', trimmomatic_informs['forward_only_reads'].split(' ')[0]),
-            ('trim_ilmn_rev_only_surviving', trimmomatic_informs['reverse_only_reads'].split(' ')[0]),
-            ('trim_ilmn_pairs_both_dropped', trimmomatic_informs['reads_drop'].split(' ')[0]),
-            ('trim_ilmn_tool_version', trimmomatic_informs['_name'])
+            ('trim_ilmn_pairs_in', informs_trimmomatic['paired_reads_in']),
+            ('trim_ilmn_pairs_out', informs_trimmomatic['paired_reads_out'].split(' ')[0]),
+            ('trim_ilmn_fwd_only_surviving', informs_trimmomatic['forward_only_reads'].split(' ')[0]),
+            ('trim_ilmn_rev_only_surviving', informs_trimmomatic['reverse_only_reads'].split(' ')[0]),
+            ('trim_ilmn_pairs_both_dropped', informs_trimmomatic['reads_drop'].split(' ')[0]),
+            ('trim_ilmn_tool_version', informs_trimmomatic['_name'])
         ]
-        with open(output[0], 'w') as handle:
+        with open(output.TSV, 'w') as handle:
             for key, value in summary_data:
                 handle.write(f'{key}\t{value}')
                 handle.write('\n')
 
-rule trimming_illumina_to_dict:
+rule trimming_illumina_summary_fastp:
     """
-    Combines the trimmed reads into a dictionary.
+    Dumps the summary information for trimming with fastp.
+    """
+    input:
+        INFORMS = rules.trimming_illumina_fastp.output.INFORMS
+    output:
+        TSV = Path(config['working_dir']) / 'trimming_illumina' / 'summary' / 'fastp' / 'summary.tsv'
+    run:
+        informs_fastp = SnakemakeUtils.load_object(Path(input.INFORMS))
+        summary_data = [
+            ('trim_ilmn_pairs_in', informs_fastp['summary']['before_filtering']['total_reads']),
+            ('trim_ilmn_pairs_out', informs_fastp['summary']['after_filtering']['total_reads']),
+            ('trim_ilmn_bases_in', informs_fastp['summary']['before_filtering']['total_bases']),
+            ('trim_ilmn_bases_out', informs_fastp['summary']['after_filtering']['total_bases']),
+            ('trim_ilmn_q30_rate_in', informs_fastp['summary']['before_filtering']['q30_rate']),
+            ('trim_ilmn_q30_rate_out', informs_fastp['summary']['after_filtering']['q30_rate']),
+            ('trim_ilmn_tool_version', informs_fastp['_name'])
+        ]
+        with open(output.TSV, 'w') as handle:
+            for key, value in summary_data:
+                handle.write(f'{key}\t{value}')
+                handle.write('\n')
+
+rule trimming_illumina_summary_select:
+    """
+    Select the summary output depending on the selected trimming method.
+    """
+    input:
+        TSV = Path(config['working_dir']) / 'trimming_illumina' / 'summary' / config['read_trimming'].get('method', 'trimmomatic') / 'summary.tsv'
+    output:
+        TSV = Path(config['working_dir']) / 'trimming_illumina' / 'summary' / 'summary_trim.tsv'
+    params:
+        running_dir = Path(config['working_dir']) / 'trimming_illumina' / 'summary'
+    shell:
+        """
+        cp {input.TSV} {output.TSV};
+        """
+
+rule trimming_illumina_to_dict_trimmomatic:
+    """
+    Combines the reads trimmed by Trimmomatic into a dictionary.
     """
     input:
         FASTQ_PE = rules.trimming_illumina_trimmomatic.output.FASTQ_PE,
         FASTQ_SE_FWD = rules.trimming_illumina_trimmomatic.output.FASTQ_SE_FORWARD,
         FASTQ_SE_REV = rules.trimming_illumina_trimmomatic.output.FASTQ_SE_REVERSE
     output:
-        IO = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_DICT
+        IO = Path(config['working_dir']) / 'trimming_illumina' / 'trimmomatic' / 'fq_dict.io'
     run:
-        output_dict = {
-            'PE': SnakemakeUtils.load_object(Path(input.FASTQ_PE))
-        }
+        output_dict = {'PE': SnakemakeUtils.load_object(Path(input.FASTQ_PE))}
         se_fwd = SnakemakeUtils.load_object(Path(input.FASTQ_SE_FWD))
         if len(se_fwd) > 0:
             output_dict['SE_FWD'] = se_fwd
@@ -151,3 +268,49 @@ rule trimming_illumina_to_dict:
         if len(se_rev) > 0:
             output_dict['SE_REV'] = se_rev
         SnakemakeUtils.dump_object(output_dict, Path(output.IO))
+
+rule trimming_illumina_to_dict_fastp:
+    """
+    Combines the reads trimmed by fastp into a dictionary.
+    """
+    input:
+        FASTQ_PE = rules.trimming_illumina_fastp.output.FASTQ_PE,
+        FASTQ_SE_FWD = rules.trimming_illumina_fastp.output.FASTQ_SE_FWD,
+        FASTQ_SE_REV = rules.trimming_illumina_fastp.output.FASTQ_SE_REV
+    output:
+        IO = Path(config['working_dir']) / 'trimming_illumina' / 'fastp' / 'fq_dict.io'
+    run:
+        output_dict = {'PE': SnakemakeUtils.load_object(Path(input.FASTQ_PE))}
+        se_fwd = SnakemakeUtils.load_object(Path(input.FASTQ_SE_FWD))
+        if len(se_fwd) > 0:
+            output_dict['SE_FWD'] = se_fwd
+        se_rev = SnakemakeUtils.load_object(Path(input.FASTQ_SE_REV))
+        if len(se_rev) > 0:
+            output_dict['SE_REV'] = se_rev
+        SnakemakeUtils.dump_object(output_dict, Path(output.IO))
+
+rule trimming_illumina_to_dict_select:
+    """
+    Selects the FASTQ dictionary based on the trimming method.
+    """
+    input:
+        IO = Path(config['working_dir']) / 'trimming_illumina' / config['read_trimming'].get('method', 'trimmomatic') / 'fq_dict.io'
+    output:
+        IO = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_DICT
+    shell:
+        """
+        cp {input.IO} {output.IO};
+        """
+
+rule trimming_illumina_informs_select:
+    """
+    Selects the informs based on the selected trimming method.
+    """
+    input:
+        INFORMS = Path(config['working_dir']) / 'trimming_illumina' / config['read_trimming'].get('method', 'trimmomatic') / 'informs.io'
+    output:
+        INFORMS = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_INFORMS
+    shell:
+        """
+        cp {input.INFORMS} {output.INFORMS};
+        """

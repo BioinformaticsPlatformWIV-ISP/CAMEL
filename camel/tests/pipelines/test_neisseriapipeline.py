@@ -25,8 +25,9 @@ class TestNeisseriaPipeline(unittest.TestCase):
         test_file_dir / 'pipelines' / 'Neisseria-2011-006_S6-ds_1.fastq.gz',
         test_file_dir / 'pipelines' / 'Neisseria-2011-006_S6-ds_2.fastq.gz'
     ]
+    input_fasta = test_file_dir / 'pipelines' / 'Neisseria-2011-006_S6-ds.fasta'
 
-    def setUp(self):
+    def setUp(self) -> None:
         """
         Sets up the resources before running the test.
         :return: None
@@ -52,7 +53,7 @@ class TestNeisseriaPipeline(unittest.TestCase):
             manager.run(self.running_dir)
             self.assertGreater(len(manager.informs), 0)
 
-    def test_neisseria_pipeline_gene_detection_db(self):
+    def test_neisseria_pipeline_gene_detection_db(self) -> None:
         """
         Checks if the databases for the gene detection are available.
         :return: None
@@ -82,6 +83,26 @@ class TestNeisseriaPipeline(unittest.TestCase):
         path_summary_out = self.running_dir / 'out' / 'summary.tsv'
         args = [
             '--fastq-pe', str(TestNeisseriaPipeline.input_fastq_pe[0]), str(TestNeisseriaPipeline.input_fastq_pe[1]),
+            '--output-html', str(path_report_out),
+            '--output-dir', str(path_report_out.parent),
+            '--output-tsv', str(path_summary_out),
+            '--working-dir', str(self.running_dir)
+        ] + [f"--{a.replace('_', '-')}" for a in MainNeisseriaPipeline.CUSTOM_ANALYSES if a != 'cgmlst']
+        main = MainNeisseriaPipeline(args)
+        main.run()
+        self.assertGreater(path_report_out.stat().st_size, 0)
+
+    @longRunningTest()
+    def test_neisseria_pipeline_blast_fastp(self) -> None:
+        """
+        Tests the Neisseria pipeline with fastp trimming and all assays except for cgMLST.
+        :return: None
+        """
+        path_report_out = self.running_dir / 'out' / 'report.html'
+        path_summary_out = self.running_dir / 'out' / 'summary.tsv'
+        args = [
+            '--fastq-pe', str(TestNeisseriaPipeline.input_fastq_pe[0]), str(TestNeisseriaPipeline.input_fastq_pe[1]),
+            '--trimming-method', 'fastp',
             '--output-html', str(path_report_out),
             '--output-dir', str(path_report_out.parent),
             '--output-tsv', str(path_summary_out),
@@ -126,7 +147,7 @@ class TestNeisseriaPipeline(unittest.TestCase):
             '--output-tsv', str(path_summary_out),
             '--working-dir', str(self.running_dir),
             '--detection-method', 'srst2'
-        ] + [f"--{a.replace('_', '-')}" for a in MainNeisseriaPipeline.CUSTOM_ANALYSES if a != 'cgmlst']
+        ] + [f"--{a.replace('_', '-')}" for a in MainNeisseriaPipeline.CUSTOM_ANALYSES if a not in ('rmlst', 'cgmlst')]
         main = MainNeisseriaPipeline(args)
         main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)
@@ -147,6 +168,27 @@ class TestNeisseriaPipeline(unittest.TestCase):
             '--working-dir', str(self.running_dir),
             '--detection-method', 'kma',
             '--library', 'TruSeq2'
+        ] + [f"--{a.replace('_', '-')}" for a in MainNeisseriaPipeline.CUSTOM_ANALYSES if a != 'cgmlst']
+        main = MainNeisseriaPipeline(args)
+        main.run()
+        self.assertGreater(path_report_out.stat().st_size, 0)
+
+    @longRunningTest()
+    def test_neisseria_pipeline_fasta(self) -> None:
+        """
+        Tests the Neisseria pipeline with all assays except for cgMLST.
+        :return: None
+        """
+        path_report_out = self.running_dir / 'out' / 'report.html'
+        path_summary_out = self.running_dir / 'out' / 'summary.tsv'
+        args = [
+            '--fasta', str(TestNeisseriaPipeline.input_fasta),
+            '--output-html', str(path_report_out),
+            '--output-dir', str(path_report_out.parent),
+            '--output-tsv', str(path_summary_out),
+            '--working-dir', str(self.running_dir),
+            '--input-type', 'fasta',
+            '--detection-method', 'blast',
         ] + [f"--{a.replace('_', '-')}" for a in MainNeisseriaPipeline.CUSTOM_ANALYSES if a != 'cgmlst']
         main = MainNeisseriaPipeline(args)
         main.run()

@@ -6,4 +6,5 @@ parameters:
   output_basename: {default: true, mandatory: true, option: --output, p_index: 0,
     value: spotyping_out}
   swift: {default: false, mandatory: false, option: --swift, p_index: 0, value: 'on'}
+  fasta: {default: false, mandatory: false, option: --seq, value: null}
 tool_command: SpoTyping

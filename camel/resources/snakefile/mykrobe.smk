@@ -43,7 +43,6 @@ rule mykrobe_run:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(typer, output)
 
-
 rule mykrobe_report:
     """
     Creates an output report for the Mykrobe analysis.
@@ -54,11 +53,21 @@ rule mykrobe_report:
     output:
         HTML = Path(config['working_dir']) / mykrobe.OUTPUT_MYKROBE_REPORT
     params:
-        dir_ = Path(config['working_dir']) / 'mykrobe' / 'report'
+        dir_ = Path(config['working_dir']) / 'mykrobe' / 'report',
+        show_amr = config['mykrobe'].get('show_amr', True),
+        title = config['mykrobe'].get('title', 'Lineage information')
     run:
         from camel.app.tools.mykrobe.mykrobereporter import MykrobeReporter
 
         reporter = MykrobeReporter(Camel.get_instance())
+        if params.show_amr is False:
+            reporter.update_parameters(
+                show_amr=False,
+                custom_header = params.title
+            )
+        else:
+            reporter.update_parameters(custom_header = params.title)
+
         step = Step(str(rule), reporter, Camel.get_instance(), params.dir_)
         SnakemakeUtils.add_pickle_inputs(reporter, input)
         step.run_step()
@@ -82,6 +91,8 @@ rule mykrobe_create_summary:
         INFORMS_mykrobe = rules.mykrobe_run.output.INFORMS
     output:
         TSV = Path(config['working_dir']) / mykrobe.OUTPUT_MYKROBE_SUMMARY
+    params:
+        show_amr = config['mykrobe'].get('show_amr', True)
     run:
         # Collect informs
         informs = SnakemakeUtils.load_object(Path(input.INFORMS_mykrobe))
@@ -94,8 +105,9 @@ rule mykrobe_create_summary:
             handle.write('\n')
             handle.write(f"mykrobe_lineage\t{informs['lineage']}")
             handle.write('\n')
-            handle.write(f"mykrobe_drug_susceptibility\t{informs['drug_susceptibility']}")
-            handle.write('\n')
+            if params.show_amr is True:
+                handle.write(f"mykrobe_drug_susceptibility\t{informs['drug_susceptibility']}")
+                handle.write('\n')
             handle.write(f"mykrobe_tool_version\t{informs['_name']}")
             handle.write('\n')
             handle.write(f"mykrobe_db_version\t{informs['db_version']}")

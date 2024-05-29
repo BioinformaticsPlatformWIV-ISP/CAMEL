@@ -1,5 +1,6 @@
-dependencies: [mykrobe/0.13.0]
+dependencies: []
 parameters:
-   threads: {default: true, mandatory: false, option: -t, value: '1'}
-   output_filename: {default: true, mandatory: true, option: --out, value: mykrobe.csv}
+   output_filename: {default: true, mandatory: true, option: null, value: mykrobe.csv}
+   show_amr: {default: true, mandatory: false, option: null, value: True}
+   custom_header: {default: true, mandatory: true, option: null, value: 'Lineage information'}
 tool_command: mykrobe

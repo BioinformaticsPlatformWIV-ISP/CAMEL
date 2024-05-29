@@ -31,9 +31,6 @@ downsampling:
   coverage_max: {coverage_max}
   expected_genome_size: {genome_size}
 
-read_trimming:
-  export_fastq: '{export_fastq}'
-
 contamination_check:
   db: /db/kraken2_microbial/latest
   expected_species: {k2_name}
@@ -82,6 +79,7 @@ gene_detection:
     metadata:
       name: Gene
       key: gene
+    hidden: true
 
   virulencefinder:
     path: /db/gene_detection/VirulenceFinder-Enterococcus

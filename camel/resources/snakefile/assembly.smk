@@ -226,7 +226,8 @@ rule assembly_quast_report:
         from camel.app.io.tooliovalue import ToolIOValue
         reporter = HtmlReporterAssembly(Camel.get_instance())
         reporter.add_input_files({'SAMPLE_NAME': [ToolIOValue(params.sample_name)]})
-        assembler_name = ', '.join(SnakemakeUtils.load_object(Path(x))['_name'] for x in input.INFORMS_assembler)
+        assembler_name = ', '.join(SnakemakeUtils.load_object(Path(x))['_name'] for x in input.INFORMS_assembler) \
+            if input.INFORMS_assembler else 'n/a'
         reporter.add_input_informs({'assembler': {'_name': assembler_name}})
         SnakemakeUtils.add_pickle_inputs(reporter, input, excluded_keys=['INFORMS_assembler'])
         step = Step(str(rule), reporter, Camel.get_instance(), params.dir_)

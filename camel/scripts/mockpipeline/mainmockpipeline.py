@@ -5,6 +5,7 @@ from typing import Optional, Sequence, List, Dict
 
 import yaml
 
+from camel.app.camel import Camel
 from camel.app.components import mainscriptutils
 from camel.app.components.pipelines.reportpipeline import ReportPipeline
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
@@ -16,7 +17,7 @@ class MainMockPipeline(ReportPipeline):
     Base-class for the mock pipeline.
     """
 
-    CUSTOM_ANALYSES = ['human_read_scrubbing', 'kraken2', 'confindr', 'ncbi_amr']
+    CUSTOM_ANALYSES = ['human_read_scrubbing', 'kraken2', 'confindr', 'ncbi_amr', 'snpit']
 
     def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """

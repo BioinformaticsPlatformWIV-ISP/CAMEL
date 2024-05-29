@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from camel.app.camel import Camel
+from camel.app.io.tooliofile import ToolIOFile
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.scripts.shigellapipeline.snakefile import shigatyper
@@ -10,7 +11,7 @@ rule shigatyper_run:
     Runs the ShigaTyper assay.
     """
     input:
-        IO = Path(config['working_dir']) / 'fq_dict.io'
+        IO = shigatyper.get_input(config)
     output:
         TSV = Path(config['working_dir']) / 'shigatyper' / 'tsv.io',
         TSV_HITS = Path(config['working_dir']) / 'shigatyper' / 'tsv_hits.io',
@@ -25,8 +26,12 @@ rule shigatyper_run:
         typer = ShigaTyper(Camel.get_instance())
 
         # Extract FASTQ paths to add them as ShigaTyper input
-        fq_in = FastqInput.from_fq_dict(Path(input.IO),'illumina')
-        typer.add_input_files({'FASTQ_PE': fq_in.pe})
+        if params.input_type != 'fasta':
+            fq_in = FastqInput.from_fq_dict(Path(input.IO),'illumina')
+            typer.add_input_files({'FASTQ_PE': fq_in.pe})
+        else:
+            # When the input type is FASTA the simulated reads are used as input
+            SnakemakeUtils.add_pickle_input(typer, 'FASTQ_PE', Path(input.IO))
 
         # Run tool
         step = Step(str(rule), typer, Camel.get_instance(), params.dir_)
@@ -44,12 +49,15 @@ rule shigatyper_report:
     output:
         HTML = Path(config['working_dir']) / shigatyper.OUTPUT_SHIGATYPER_REPORT
     params:
-        dir_ = Path(config['working_dir']) / 'shigatyper' / 'report'
+        dir_ = Path(config['working_dir']) / 'shigatyper' / 'report',
+        input_type = config['input_type']
     run:
         from camel.app.tools.pipelines.shigella.shigatyperreporter import ShigaTyperReporter
         reporter = ShigaTyperReporter(Camel.get_instance())
         step = Step(str(rule), reporter, Camel.get_instance(), params.dir_)
         SnakemakeUtils.add_pickle_inputs(reporter, input)
+        if params.input_type == 'fasta':
+            reporter.update_parameters(pseudo_reads=True)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
 

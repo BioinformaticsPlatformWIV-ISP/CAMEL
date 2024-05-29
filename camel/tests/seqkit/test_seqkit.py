@@ -4,6 +4,7 @@ from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.seqkit.seqkitseq import SeqkitSeq
 from camel.app.tools.seqkit.seqkitstats import SeqkitStats
+from camel.app.tools.seqkit.seqkitsplit2 import SeqkitSplit2
 
 
 class TestSeqkit(CamelTestSuite):
@@ -43,6 +44,16 @@ class TestSeqkit(CamelTestSuite):
         seqkit_stats.add_input_files({'FASTQ': [TestSeqkit.FILE_FASTQ]})
         seqkit_stats.run(self.running_dir)
         self.verify_output_files(seqkit_stats, 'TSV')
+
+    def test_seqkit_split2_fasta(self) -> None:
+        """
+        Testing SeqKit split2 with fasta file.
+        """
+        seqkit_split = SeqkitSplit2(self.camel)
+        seqkit_split.add_input_files({'FASTA': [TestSeqkit.FILE_FASTA]})
+        seqkit_split.update_parameters(by_part=5, output_dir=self.running_dir / 'parts')
+        seqkit_split.run(self.running_dir)
+        self.verify_output_files(seqkit_split, 'FASTA', nb_files=5)
 
 
 if __name__ == '__main__':

@@ -25,6 +25,7 @@ class TestSTECPipeline(CamelTestSuite):
         test_file_dir / 'STEC-591_S13-ds_2.fastq.gz'
     ]
     input_fastq_iontorrent = test_file_dir / 'Ecoli-iontorrent-ERR2019997-ds.fastq.gz'
+    input_fasta = test_file_dir / 'STEC-591_S13-ds.fasta'
 
     def test_stec_pipeline_typing_db(self) -> None:
         """
@@ -148,6 +149,26 @@ class TestSTECPipeline(CamelTestSuite):
             '--mlst-warwick',
             '--cov-max', '5.0'
         ]
+        main = MainSTECPipeline(args)
+        main.run()
+        self.assertGreater(path_report_out.stat().st_size, 0)
+
+    @longRunningTest()
+    def test_stec_pipeline_fasta(self) -> None:
+        """
+        Tests the STEC pipeline using FASTA as input with all assays except for cgMLST.
+        :return: None
+        """
+        path_report_out = self.running_dir / 'out' / 'report.html'
+        path_summary_out = self.running_dir / 'out' / 'summary.tsv'
+        args = [
+                   '--fasta', str(TestSTECPipeline.input_fasta),
+                   '--input-type', 'fasta',
+                   '--output-html', str(path_report_out),
+                   '--output-dir', str(path_report_out.parent),
+                   '--output-tsv', str(path_summary_out),
+                   '--working-dir', str(self.running_dir)
+               ] + [f"--{a.replace('_', '-')}" for a in MainSTECPipeline.CUSTOM_ANALYSES if 'cgmlst' not in a]
         main = MainSTECPipeline(args)
         main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)

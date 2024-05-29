@@ -17,7 +17,7 @@ class MainShigellaPipeline(ReportPipeline):
 
     CUSTOM_ANALYSES = ['kraken2', 'confindr', 'rmlst', 'shigeifinder', 'shigatyper', 'amrfinder', 'resfinder4',
                        'mlst_pasteur', 'mlst_warwick', 'cgmlst', 'virulencefinder', 'mob_suite', 'vfdb_core', 'mykrobe',
-                       'human_read_scrubbing']
+                       'human_read_scrubbing', 'serotype_o']
 
     def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """
@@ -56,7 +56,7 @@ class MainShigellaPipeline(ReportPipeline):
         with open(CONFIG_DATA) as handle_in:
             config_data.update(yaml.load(handle_in.read().format(
                 coverage_max=self._args.cov_max,
-                export_fastq='true' if self._args.report_include_fastq else 'false'
+                qc_typing_scheme='cgmlst' if self._args.cgmlst else 'mlst_warwick'
             ), Loader=yaml.SafeLoader))
         return SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir)
 

@@ -56,16 +56,9 @@ class MainStaphylococcusPipeline(ReportPipeline):
         config_data = self.get_template_data(input_files)
         config_data['analyses'] = [key for key in MainStaphylococcusPipeline.CUSTOM_ANALYSES if vars(self._args)[key]]
 
-        # Disable SCCmec for FASTA input
-        if self._args.input_type in ('fasta', 'fasta_with_vcf') and self._args.sccmec_typing is True:
-            logger.warning(
-                f'SCCmec typing is not supported for FASTA input (FASTQ data is required for SRST2-based detection)')
-            config_data['analyses'] = [key for key in config_data['analyses'] if key != 'sccmec_typing']
-
         with CONFIG_DATA.open() as handle_in:
             config_data.update(yaml.load(handle_in.read().format(
                 coverage_max=self._args.cov_max,
-                export_fastq='true' if self._args.report_include_fastq else 'false',
                 qc_typing_scheme='cgmlst' if self._args.cgmlst else 'mlst',
             ), Loader=yaml.SafeLoader))
         return SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir)

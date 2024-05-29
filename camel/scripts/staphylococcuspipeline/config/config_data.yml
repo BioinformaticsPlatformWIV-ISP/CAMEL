@@ -31,9 +31,6 @@ downsampling:
   coverage_max: {coverage_max}
   expected_genome_size: 2_821_361
 
-read_trimming:
-  export_fastq: '{export_fastq}'
-
 contamination_check:
   db: /db/kraken2_microbial/latest
   expected_species: Staphylococcus aureus
@@ -102,6 +99,7 @@ gene_detection:
     metadata:
       name: Gene
       key: gene
+    hidden: true
 
   vf_exoenzyme:
     path: /db/gene_detection/VirulenceFinder-Saureus-exoenzyme

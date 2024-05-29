@@ -62,6 +62,7 @@ class VariantCallingReporter(Tool):
         if 'BED' in self._tool_inputs:
             self.__add_regions_section(filtering_informs['region'])
         self.__add_output_files_table(filtering_informs)
+        self.__add_warning()
         self._tool_outputs['VAL_HTML'] = [ToolIOValue(self._section)]
 
     def __add_filtering_table(self, filtering_informs: Dict[str, Dict[str, Any]]) -> None:
@@ -171,3 +172,11 @@ class VariantCallingReporter(Tool):
         relative_path = Path(VariantCallingReporter.SUB_FOLDER, 'regions_variant_calling.bed')
         self._section.add_file(self._tool_inputs['BED'][0].path, relative_path)
         self._section.add_link_to_file('Excluded regions (BED)', relative_path)
+
+    def __add_warning(self) -> None:
+        """
+        Adds a warning to the report when pseudo-reads were used as input.
+        :return: None
+        """
+        if 'pseudo_reads' in self._parameters:
+            self._section.add_warning_message("The variant calling is executed on simulated reads.")

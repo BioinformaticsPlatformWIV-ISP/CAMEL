@@ -3,6 +3,7 @@ import pandas as pd
 from pathlib import Path
 
 from camel.app.camel import Camel
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
@@ -69,11 +70,20 @@ class ShigaTyper(Tool):
         self.__build_command(fwd_reads, rev_reads, 'shigatyper_out')
         self._execute_command()
 
+        # Create dummy output for isolates not covered by the tool
+        create_dummy_output = False
+        if 'Checkpoint 1 failed' in self.stderr:
+            create_dummy_output = True
+
         # Collect the output
         for key, basename in zip(('TSV', 'TSV_HITS'), ('shigatyper_out.tsv', 'shigatyper_out-hits.tsv')):
             path_out = self.folder / basename
             if not path_out.exists():
-                raise ToolExecutionError(f'{path_out} not generated ({key})')
+                if key == 'TSV_HITS' and create_dummy_output is True:
+                    logger.info(f'Creating dummy output file: {path_out}')
+                    path_out.touch()
+                else:
+                    raise ToolExecutionError(f'{path_out} not generated ({key})')
             self._tool_outputs[key] = [ToolIOFile(path_out)]
 
         # Parse TSV output file
