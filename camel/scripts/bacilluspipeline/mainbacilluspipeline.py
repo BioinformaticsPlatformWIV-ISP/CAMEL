@@ -140,18 +140,6 @@ class MainBacillusPipeline(ReportPipeline):
                 parser.add_argument(f"--{analysis_key.replace('_', '-')}", action='store_true')
         return parser.parse_args(args)
 
-    @property
-    def sample_name(self) -> str:
-        """
-        Returns the sample name.
-        :return: Sample name
-        """
-        if self._args.fastq_pe is not None:
-            return super().sample_name
-        else:
-            name = self._args.fastq_se_name if (self._args.fastq_se_name is not None) else self._args.fastq_se
-            return FastqUtils.get_sample_name(name, FastqUtils.PATTERN_FQ_SE)
-
 
 if __name__ == '__main__':
     Camel.get_instance()
