@@ -86,8 +86,17 @@ class BestHitSelector(Tool):
             best_hits = BlastHitFilteringHelper.detect_best_hits(hits)
             if len(best_hits) == 1:
                 return best_hits[0]
+            # Multiple perfect hits with same allele
+            elif all(h.is_perfect_hit() for h in best_hits) and all(
+                    h.allele_id == best_hits[0].allele_id for h in best_hits):
+                logger.debug(f"Multiple matching perfect hits found for {metadata_locus['name']} ({len(best_hits)})")
+                return best_hits[0]
+
+            # Multi hit
             elif len(best_hits) > 1:
                 return SequenceTypingBlastHit.create_multi_hit(
                     metadata_locus['name'], metadata_locus['type'], best_hits[0].blast_stats)
+
+            # Locus is absent
             else:
                 return SequenceTypingBlastHit.create_empty_hit(metadata_locus['name'], metadata_locus['type'])
