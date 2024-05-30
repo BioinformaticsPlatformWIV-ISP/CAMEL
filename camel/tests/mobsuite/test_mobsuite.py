@@ -78,6 +78,7 @@ class TestMOBSuite(CamelTestSuite):
         # Check the output
         output_section = reporter.tool_outputs['HTML'][0].value
         self.assertGreater(len(output_section.to_html()), 0)
+        self.export_report_section(reporter.tool_outputs['HTML'][0].value, self.running_dir / 'report')
 
     def test_mob_recon_reporter_with_contig_report(self) -> None:
         """
@@ -106,6 +107,7 @@ class TestMOBSuite(CamelTestSuite):
         # Check the output
         output_section = reporter.tool_outputs['HTML'][0].value
         self.assertGreater(len(output_section.to_html()), 0)
+        self.export_report_section(reporter.tool_outputs['HTML'][0].value, self.running_dir / 'report')
 
     def test_mob_recon_assembly_no_plasmid(self) -> None:
         """
