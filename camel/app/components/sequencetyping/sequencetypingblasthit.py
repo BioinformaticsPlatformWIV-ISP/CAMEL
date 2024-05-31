@@ -51,11 +51,17 @@ class SequenceTypingBlastHit(SequenceTypingHitBase):
         else:
             allele_id = f'{self.allele_id}*'
 
+        # Determine the % identity
+        if self.is_new_allele() and hash_allele_ids is True:
+            perc_identity = 100.0
+        else:
+            perc_identity = self._blast_stats.percent_identity if self.blast_stats else None
+
         # Return the output data
         return [
             self.locus,
             allele_id,
-            '{:.2f}'.format(self._blast_stats.percent_identity) if self.blast_stats else '-',
+            '{:.2f}'.format(perc_identity) if perc_identity is not None else '-',
             self.blast_stats.length_statistic if self.blast_stats else '-',
             self._type
         ]
