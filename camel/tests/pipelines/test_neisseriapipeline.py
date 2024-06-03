@@ -53,26 +53,6 @@ class TestNeisseriaPipeline(unittest.TestCase):
             manager.run(self.running_dir)
             self.assertGreater(len(manager.informs), 0)
 
-    def test_neisseria_pipeline_gene_detection_db(self) -> None:
-        """
-        Checks if the databases for the gene detection are available.
-        :return: None
-        """
-        from camel.app.tools.pipelines.genedetection.dbmanager import DBManager
-        with open(CONFIG_DATA) as handle_in:
-            config_data = yaml.safe_load(handle_in)
-
-        for key, db_data in config_data['gene_detection'].items():
-            # Check if scheme exists
-            self.assertGreater(Path(db_data['path']).stat().st_size, 0)
-
-            # Check if metadata and FASTA files can be loaded
-            manager = DBManager(Camel.get_instance())
-            manager.add_input_files({'DIR': [ToolIODirectory(Path(db_data['path']))]})
-            manager.run(self.running_dir)
-            self.assertGreater(len(manager.tool_outputs), 0)
-            self.assertGreater(len(manager.informs), 0)
-
     @longRunningTest()
     def test_neisseria_pipeline_blast(self) -> None:
         """

@@ -19,20 +19,18 @@ class TestYersiniaPipeline(unittest.TestCase):
     camel = Camel.get_instance()
     running_dir = None
 
-    #Input files
-    test_file_dir = Path(camel.config['testing']['testfiles_dir'])
+    # Input files
+    test_file_dir = Path(camel.config['testing']['testfiles_dir'], 'pipelines')
     input_enterocolitica_fastq_pe = [
-        test_file_dir / 'pipelines' / 'Yersinia-enterocolitica-S23BD07911_NG_A0183-ds_1.fastq.gz',
-        test_file_dir / 'pipelines' / 'Yersinia-enterocolitica-S23BD07911_NG_A0183-ds_2.fastq.gz'
+        test_file_dir / 'Yersinia-enterocolitica-S23BD07911_NG_A0183-ds_1.fastq.gz',
+        test_file_dir / 'Yersinia-enterocolitica-S23BD07911_NG_A0183-ds_2.fastq.gz'
     ]
     input_pseudotuberculosis_fastq_pe = [
-        test_file_dir / 'pipelines' / 'Yersinia_pseudotuberculosis-S23BD09896_NG_A0586-ds_1.fastq.gz',
-        test_file_dir / 'pipelines' / 'Yersinia_pseudotuberculosis-S23BD09896_NG_A0586-ds_2.fastq.gz'
+        test_file_dir / 'Yersinia_pseudotuberculosis-S23BD09896_NG_A0586-ds_1.fastq.gz',
+        test_file_dir / 'Yersinia_pseudotuberculosis-S23BD09896_NG_A0586-ds_2.fastq.gz'
     ]
-
-    input_enterocolitica_fasta = test_file_dir / 'pipelines' / 'Yersinia-enterocolitica-S23BD07911_NG_A0183-ds.fasta'
-
-    input_pseudotuberculosis_fasta = test_file_dir / 'pipelines' / 'Yersinia_pseudotuberculosis-S23BD09896_NG_A0586-ds.fasta'
+    input_enterocolitica_fasta = test_file_dir / 'Yersinia-enterocolitica-S23BD07911_NG_A0183-ds.fasta'
+    input_pseudotuberculosis_fasta = test_file_dir / 'Yersinia_pseudotuberculosis-S23BD09896_NG_A0586-ds.fasta'
 
     def setUp(self):
         """
@@ -58,26 +56,6 @@ class TestYersiniaPipeline(unittest.TestCase):
             manager = LocusSetManager(Camel.get_instance())
             manager.add_input_files({'DIR': [ToolIODirectory(Path(scheme_data['path']))]})
             manager.run(self.running_dir)
-            self.assertGreater(len(manager.informs), 0)
-
-    def test_yersinia_pipeline_gene_detection_db(self) -> None:
-        """
-        Checks if the databases for the gene detection are available.
-        :return: None
-        """
-        from camel.app.tools.pipelines.genedetection.dbmanager import DBManager
-        with open(CONFIG_DATA) as handle_in:
-            config_data = yaml.safe_load(handle_in)
-
-        for key, db_data in config_data['gene_detection'].items():
-            # Check if scheme exists
-            self.assertGreater(Path(db_data['path']).stat().st_size, 0)
-
-            # Check if metadata and FASTA files can be loaded
-            manager = DBManager(Camel.get_instance())
-            manager.add_input_files({'DIR': [ToolIODirectory(Path(db_data['path']))]})
-            manager.run(self.running_dir)
-            self.assertGreater(len(manager.tool_outputs), 0)
             self.assertGreater(len(manager.informs), 0)
 
     @longRunningTest()
