@@ -7,6 +7,7 @@ from camel.app.io.tooliofile import ToolIOFile
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.resources.snakefile import trimming_ont
+from camel.resources.snakefile.trimming_ont import INPUT_ONT_FASTQ
 
 
 class TrimmingONTWrapper(object):
@@ -37,9 +38,11 @@ class TrimmingONTWrapper(object):
         :param export_fastq: If True, FASTQ files are included in the report
         :return: None
         """
+        path_io = self._working_dir / INPUT_ONT_FASTQ
+        path_io.parent.mkdir(exist_ok=True, parents=True)
+        SnakemakeUtils.dump_object([ToolIOFile(se_reads)], path_io)
         config_data = {
             'working_dir': str(self._working_dir),
-            'input': {'fastq_se': [{'name': se_reads.name, 'path': str(se_reads)}]},
             'read_trimming': {'export_fastq': str(export_fastq)},
             'read_type': 'ont'
         }

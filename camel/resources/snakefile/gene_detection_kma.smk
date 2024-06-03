@@ -37,28 +37,28 @@ rule gene_detection_kma:
         INFORMS = Path(config['working_dir']) / 'gene_detection' / '{db}' / 'kma' / 'informs_pre.io'
     params:
         dir_ = lambda wildcards: Path(config['working_dir']) / 'gene_detection' / wildcards.db / 'kma',
-        read_type = config.get('read_type', 'illumina'),
-        ont = lambda wildcards: config['gene_detection'][wildcards.db].get('params', {}).get('kma',{}).get('ont'),
-        apm = lambda wildcards: config['gene_detection'][wildcards.db].get('params',{}).get('kma',{}).get('apm'),
-        cge = lambda wildcards: config['gene_detection'][wildcards.db].get('params',{}).get('kma',{}).get('cge'),
+        input_type = config.get('input_type', 'illumina'),
+        ont = lambda wildcards: config['gene_detection'][wildcards.db].get('params', {}).get('kma', {}).get('ont'),
+        apm = lambda wildcards: config['gene_detection'][wildcards.db].get('params', {}).get('kma', {}).get('apm'),
+        cge = lambda wildcards: config['gene_detection'][wildcards.db].get('params', {}).get('kma', {}).get('cge'),
     run:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         from camel.app.tools.kma.kma import KMA
         kma = KMA(Camel.get_instance())
         SnakemakeUtils.add_pickle_input(kma, 'DB', Path(input.DB))
-        key_reads = 'PE' if params.read_type == 'illumina' else 'SE'
+        key_reads = 'PE' if params.input_type == 'illumina' else 'SE'
         fq_input_dict = SnakePipelineUtils.extracts_fq_input(
             Path(input.IO), key_pe='FASTQ_PE', key_se='FASTQ_SE', read_type=key_reads)
         kma.add_input_files(fq_input_dict)
         step = Step(str(rule), kma, Camel.get_instance(), Path(str(params.dir_)))
-        if params.read_type == 'nanopore':
+        if params.input_type == 'ont':
             kma.update_parameters(bc_nano=None, basecalls='0.7')
         if params.ont:
             kma.update_parameters(ont=None)
         if params.cge:
             kma.update_parameters(cge=None)
         if params.apm is not None:
-            kma.update_parameters(apm=params.apm)
+            kma.update_parameters(apm=str(params.apm))
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(kma, output)
 

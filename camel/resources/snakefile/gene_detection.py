@@ -56,3 +56,4 @@ def get_input_gene_detection_srst2(config: Dict[str, Any]) -> Path:
         return Path(config['working_dir']) / 'fq_dict.io'
     if config['input_type'] in ('fasta', 'fasta_with_vcf'):
         return Path(config['working_dir']) / read_simulation.OUTPUT_SIMULATION_FASTQ
+    raise ValueError(f"Invalid input type: {config['input_type']}")

@@ -12,7 +12,7 @@ from camel.app.io.tooliofile import ToolIOFile
 from camel.app.loggers import logger
 from camel.app.tools.seqtk.seqtkconvert import SeqtkConvert
 
-class NanoporeHelper(BaseReadTypeHelper):
+class ONTHelper(BaseReadTypeHelper):
     """
     Helper class for Nanopore reads.
     """
@@ -39,9 +39,9 @@ class NanoporeHelper(BaseReadTypeHelper):
         :param threads: Nb. of threads
         :return: FastqInput object with trimmed reads
         """
-        logger.info("Trimming reads (Nanopore data)")
+        logger.info("Trimming reads (ONT data)")
         if fastq_input.is_pe or fastq_input.se is None:
-            raise ValueError("Nanopore input should be SE")
+            raise ValueError("ONT input should be SE")
         # Run workflow
         trimming = TrimmingONTWrapper(self._working_dir / 'trimming')
         trimming.run_workflow(Path(fastq_input.se[0].path), include_fastq, threads)
@@ -51,7 +51,7 @@ class NanoporeHelper(BaseReadTypeHelper):
         report.add_html_object(report_section_trimming)
         report_section_trimming.copy_files(report.output_dir)
         self._log_files['trimming'] = trimming.output.log_file
-        return FastqInput('nanopore', se=trimming.output.trimmed_reads, is_pe=False)
+        return FastqInput('ont', se=trimming.output.trimmed_reads, is_pe=False)
 
     def prepare_fasta_input(self, report: HtmlReport, args: argparse.Namespace) -> Path:
         """
@@ -70,11 +70,11 @@ class NanoporeHelper(BaseReadTypeHelper):
         :return: FASTQ input
         """
         fq_input_se = self.__symlink_nanopore_reads(Path(args.fastq_se), self._sample_name)
-        fastq_input = FastqInput(args.read_type, se=[ToolIOFile(Path(fq_input_se))], is_pe=False)
+        fastq_input = FastqInput('ont', se=[ToolIOFile(Path(fq_input_se))], is_pe=False)
         if args.trim_reads:
             return self.trim_reads(fastq_input, report, args.report_include_fastq, args.threads)
         else:
-            return FastqInput(args.read_type, se=[ToolIOFile(Path(fq_input_se))], is_pe=False)
+            return FastqInput('ont', se=[ToolIOFile(Path(fq_input_se))], is_pe=False)
 
     def prepare_fasta_read_input(self, report: HtmlReport, args: argparse.Namespace) -> Path:
         """
@@ -84,7 +84,7 @@ class NanoporeHelper(BaseReadTypeHelper):
         :return: Path to FASTA file
         """
         fq_input_se = self.__symlink_nanopore_reads(Path(args.fastq_se), self._sample_name)
-        fastq_input = FastqInput(args.read_type, se=[ToolIOFile(Path(fq_input_se))], is_pe=False)
+        fastq_input = FastqInput(args.input_type, se=[ToolIOFile(Path(fq_input_se))], is_pe=False)
         if args.trim_reads:
             convert_input = self.trim_reads(fastq_input, report, args.report_include_fastq, args.threads)
         else:
