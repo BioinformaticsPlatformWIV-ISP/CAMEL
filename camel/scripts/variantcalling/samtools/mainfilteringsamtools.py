@@ -67,6 +67,7 @@ class MainFiltering(object):
         """
         filtering_opts = {
             'soft_filter': self._args.soft_filter,
+            'input_type': 'illumina',
             'depth': {
                 'min_total_depth': self._args.min_total_depth,
                 'min_fwd_depth': self._args.min_forward_depth,

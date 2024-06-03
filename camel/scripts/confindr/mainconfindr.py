@@ -73,7 +73,7 @@ class MainConFindr(object):
             base_cutoff=self._args.base_cutoff,
             base_fraction_cutoff=self._args.base_percentage_cutoff / 100,
             min_matching_hashes=self._args.min_matching_hashes,
-            data_type=self._args.read_type.title(),
+            data_type={'ont': 'Nanopore', 'illumina': 'Illumina'}[self._args.input_type],
             threads=self._args.threads
         )
         if self._args.rmlst:

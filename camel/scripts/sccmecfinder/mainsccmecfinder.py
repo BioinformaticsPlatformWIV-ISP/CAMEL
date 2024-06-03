@@ -10,7 +10,7 @@ from camel.app.camel import Camel
 from camel.app.components import mainscriptutils
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.workflows.genedetectionwrapper import GeneDetectionWrapper
-from camel.app.components.workflows.readtype import helper_by_read_type
+from camel.app.components.workflows.readtype import helper_by_input_type
 from camel.app.loggers import logger
 
 
@@ -27,7 +27,7 @@ class MainSCCmecFinder(object):
         self._camel = Camel()
         self._args = MainSCCmecFinder._parse_arguments(args)
         self._sample_name = mainscriptutils.determine_sample_name(self._args)
-        self._helper = helper_by_read_type[self._args.read_type](self._args.working_dir, self._sample_name)
+        self._helper = helper_by_input_type[self._args.input_type](self._args.working_dir, self._sample_name)
         self._report = None
         self._informs = {}
 

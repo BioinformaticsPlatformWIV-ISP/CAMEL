@@ -79,20 +79,6 @@ bacmet:
 # Gene detection databases #
 ############################
 gene_detection:
-  resfinder:
-    path: /db/gene_detection/ResFinder
-    perc_identity_cutoff: 90
-    metadata:
-      name: Antibiotic(s)
-      key: antibiotics
-
-  ncbi_amr:
-    path: /db/gene_detection/NCBI_AMR/
-    perc_identity_cutoff: 90
-    metadata:
-      name: Antibiotic(s)
-      key: subclass
-
   vfdb_core:
     path: /db/gene_detection/VFDB_core
     perc_identity_cutoff: 90
