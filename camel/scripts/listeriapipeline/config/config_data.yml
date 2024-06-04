@@ -56,6 +56,9 @@ resfinder4:
   db: /db/resfinder4
   point: false
 
+mob_suite:
+  db: /db/mob_suite/latest
+
 ############################
 # Gene detection databases #
 ############################
