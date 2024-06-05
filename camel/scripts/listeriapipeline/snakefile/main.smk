@@ -151,7 +151,7 @@ rule report_combine_all:
             ('Virulence detection', 'virulence', [Path(x) for x in (input.report_virulence, input.report_vfdb_core, input.report_viru_typing)]),
             ('Plasmid replicon detection', 'plasmid', [Path(x) for x in (
                 input.report_plasmidfinder, input.report_mob_suite, input.report_genomic_context)]),
-            ('Sequence typing', 'typing', [Path(x) for x in (input.report_cgmlst, input.report_mlst)]),
+            ('Sequence typing', 'typing', [Path(x) for x in (input.report_mlst, input.report_cgmlst)]),
             ('Citations', 'citations', [Path(input.report_citations)]),
             ('Commands', 'commands', [Path(input.report_commands)])
         ])
