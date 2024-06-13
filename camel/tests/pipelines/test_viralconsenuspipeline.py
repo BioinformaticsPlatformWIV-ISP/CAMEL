@@ -1,8 +1,11 @@
 import unittest
 from pathlib import Path
 
+from Bio import SeqIO
+
 from camel.app.camel import Camel
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
+from camel.app.loggers import logger
 from camel.scripts.viralconsensuspipeline.mainviralconsensuspipeline import MainViralConsensusPipeline
 from camel.tests import longRunningTest
 
@@ -43,6 +46,36 @@ class TestViralConsensusPipeline(CamelTestSuite):
         main = MainViralConsensusPipeline(args)
         main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)
+
+    @longRunningTest()
+    def test_viral_consensus_illumina_fasta_ref_influenza_a_h1n1_with_fasta_export(self) -> None:
+        """
+        Tests the viral consensus pipeline with Illumina data.
+        :return: None
+        """
+        path_report_out = self.running_dir / 'out' / 'report.html'
+        path_summary_out = self.running_dir / 'out' / 'summary.tsv'
+        path_fasta_out = self.running_dir / 'out' / 'consensus.fasta'
+        args = [
+            '--species', 'influenza_a',
+            '--fasta-ref', str(TestViralConsensusPipeline.dir_db / 'ref_genomes' / 'influenza_a-H1N1.fasta'),
+            '--fastq-pe',
+            str(TestViralConsensusPipeline.dir_testdata / 'ESIB_EQA_2023.INFL2.01-H1N1_R1.fastq.gz'),
+            str(TestViralConsensusPipeline.dir_testdata / 'ESIB_EQA_2023.INFL2.01-H1N1_R2.fastq.gz'),
+            '--cov-max', '5000',
+            '--cov-max-segment', '500',
+            '--output-html', str(path_report_out),
+            '--output-dir', str(path_report_out.parent),
+            '--output-tsv', str(path_summary_out),
+            '--output-fasta', str(path_fasta_out),
+            '--working-dir', str(self.running_dir)
+        ]
+        main = MainViralConsensusPipeline(args)
+        main.run()
+        self.assertGreater(path_report_out.stat().st_size, 0)
+        with open(path_fasta_out) as handle:
+            seqs = list(SeqIO.parse(handle, 'fasta'))
+            logger.info(f'{len(seqs)} sequences parsed')
 
     @longRunningTest()
     def test_viral_consensus_illumina_fasta_ref_influenza_a_h1n1_with_scrubbing(self) -> None:

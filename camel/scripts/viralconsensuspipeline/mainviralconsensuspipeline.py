@@ -14,6 +14,7 @@ from camel.app.camel import Camel
 from camel.app.components import mainscriptutils
 from camel.app.components.pipelines.reportpipeline import ReportPipeline
 from camel.app.loggers import logger
+from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.scripts.viralconsensuspipeline import SNAKEFILE_MAIN
 from camel.scripts.viralconsensuspipeline.snakefile import iterativemapping
@@ -191,9 +192,9 @@ class MainViralConsensusPipeline(ReportPipeline):
 
         # Copy the FASTA file of the consensus sequence (if specified)
         if self._args.output_fasta is not None:
-            shutil.copyfile(
-                Path(self._args.working_dir, iterativemapping.OUTPUT_ITERATIVE_MAPPING_FASTA_CONSENSUS_FINAL),
-                self._args.output_fasta)
+            output_io_list = SnakemakeUtils.load_object(Path(
+                self._args.working_dir, iterativemapping.OUTPUT_ITERATIVE_MAPPING_FASTA_CONSENSUS_FINAL))
+            shutil.copyfile(output_io_list[0].path, self._args.output_fasta)
 
     def __config_add_yaml_data(self, config_data: Dict) -> None:
         """
