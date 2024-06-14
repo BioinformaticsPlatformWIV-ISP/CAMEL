@@ -230,7 +230,10 @@ rule nextclade_dump_informs:
         INFORMS = Path(config['working_dir']) / 'nextclade' / 'informs.io'
     run:
         # noinspection PyUnresolvedReferences
-        informs_first = SnakemakeUtils.load_object(Path(input.INFORMS_nextclade[0]))
+        try:
+            informs_first = SnakemakeUtils.load_object(Path(input.INFORMS_nextclade[0]))
+        except IndexError:
+            informs_first = []
         SnakemakeUtils.dump_object(informs_first, Path(output.INFORMS))
 
 rule nextclade3_report_empty:

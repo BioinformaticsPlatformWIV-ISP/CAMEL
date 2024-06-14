@@ -155,32 +155,36 @@ class Nextclade3Reporter(Tool):
         Executes this tool.
         :return: None
         """
-        section = HtmlReportSection('Nextclade', subtitle=self._input_informs['nextclade'][0]['_name'])
-        data_nextclade = self.__parse_tsv_input()
-        self.__add_table_qc(section, data_nextclade)
-        self.__add_table_mutations(section, data_nextclade)
-        self.__add_table_metadata(section, data_nextclade)
+        if len(self._input_informs['nextclade']) > 0:
+            section = HtmlReportSection('Nextclade', subtitle=self._input_informs['nextclade'][0]['_name'])
+            data_nextclade = self.__parse_tsv_input()
+            self.__add_table_qc(section, data_nextclade)
+            self.__add_table_mutations(section, data_nextclade)
+            self.__add_table_metadata(section, data_nextclade)
 
-        # Add download links
-        section.add_header('Downloads', 4)
-        header = ['Segment', 'Download (TSV)']
-        table_data = []
-        for i, segment in enumerate(data_nextclade['segment']):
-            relative_path = Path(self.DIR, self.__get_output_name(segment))
-            section.add_file(self._tool_inputs['TSV'][i].path, relative_path)
-            segment_name = segment.upper() if 'capitalize_segment_names' in self._parameters else segment
-            table_data.append([segment_name, HtmlTableCell('Download (TSV)', link=str(relative_path))])
-        section.add_table(table_data, header, [('class', 'data')])
+            # Add download links
+            section.add_header('Downloads', 4)
+            header = ['Segment', 'Download (TSV)']
+            table_data = []
+            for i, segment in enumerate(data_nextclade['segment']):
+                relative_path = Path(self.DIR, self.__get_output_name(segment))
+                section.add_file(self._tool_inputs['TSV'][i].path, relative_path)
+                segment_name = segment.upper() if 'capitalize_segment_names' in self._parameters else segment
+                table_data.append([segment_name, HtmlTableCell('Download (TSV)', link=str(relative_path))])
+            section.add_table(table_data, header, [('class', 'data')])
 
-        # Add database information
-        section.add_header('Database information', 4)
-        header = ['Segment', 'Version', 'Reference']
-        section.add_table([[
-            segment.upper() if 'capitalize_segment_names' in self._parameters else segment,
-            informs['db']['version'],
-            informs['db']['reference']
-        ] for segment, informs in zip(data_nextclade['segment'], self._input_informs['nextclade'])],
-            header, [('class', 'data')])
+            # Add database information
+            section.add_header('Database information', 4)
+            header = ['Segment', 'Version', 'Reference']
+            section.add_table([[
+                segment.upper() if 'capitalize_segment_names' in self._parameters else segment,
+                informs['db']['version'],
+                informs['db']['reference']
+            ] for segment, informs in zip(data_nextclade['segment'], self._input_informs['nextclade'])],
+                header, [('class', 'data')])
+        else:
+            section = HtmlReportSection('Nextclade')
+            section.add_paragraph('No matching nextclade databases found.')
 
         # Tool output
         self._tool_outputs['HTML'] = [ToolIOValue(section)]
