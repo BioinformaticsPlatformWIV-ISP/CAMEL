@@ -1,5 +1,4 @@
 import json
-import os
 
 from camel.app.camel import Camel
 from camel.app.components.sequencetyping.sequencetypingutils import LocusMetadataHolder
@@ -40,11 +39,20 @@ class LocusSetManager(Tool):
         Executes this tool.
         :return: None
         """
-        locus_set_folder = self._tool_inputs['DIR'][0].path
-        metadata_path = os.path.join(locus_set_folder, 'scheme_metadata.txt')
-        if not os.path.isfile(metadata_path):
-            raise ToolExecutionError("No scheme metadata found in '{}'".format(metadata_path))
-        with open(metadata_path) as handle:
+        path_dir_scheme = self._tool_inputs['DIR'][0].path
+
+        # Parse metadata
+        path_metadata = path_dir_scheme / 'scheme_metadata.txt'
+        if not path_metadata.exists():
+            raise ToolExecutionError(f"No scheme metadata found in '{path_metadata}'")
+        with open(path_metadata) as handle:
             metadata = json.load(handle)
             metadata['loci'] = LocusMetadataHolder(metadata['loci'])
-            self._informs = metadata
+            self._informs.update(metadata)
+
+        # Parse updating information
+        path_json_update = path_dir_scheme / 'db_update_info.json'
+        if not path_json_update.exists():
+            raise FileNotFoundError(f'No database update JSON file found: {path_json_update}')
+        with path_json_update.open() as handle:
+            self._informs['update'] = json.load(handle)

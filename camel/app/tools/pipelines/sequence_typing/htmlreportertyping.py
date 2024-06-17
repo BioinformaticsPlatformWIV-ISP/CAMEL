@@ -171,9 +171,9 @@ class HtmlReporterTyping(Tool):
         """
         self._report_section.add_header('Scheme info', level=4)
         table_data = [
-            ('Last scheme update', self._input_informs['scheme']['last_updated']),
-            ('Last scheme change', self._input_informs['scheme'].get('last_change')),
-            ('Origin', self._input_informs['scheme'].get('origin')),
+            ('Last scheme update', self._input_informs['scheme']['update']['last_update_date']),
+            ('Last scheme change', self._input_informs['scheme']['update'].get('last_change_date')),
+            ('Origin', self._input_informs['scheme']['update'].get('origin')),
         ]
         for i in range(0, len(table_data)):
             if table_data[i][-1] is not None:
