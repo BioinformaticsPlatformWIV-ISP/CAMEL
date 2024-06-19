@@ -41,7 +41,8 @@ class MainSpaTyping(object):
         mainscriptutils.add_input_files_arguments(argument_parser)
         mainscriptutils.add_assembly_arguments(argument_parser)
         argument_parser.add_argument(
-            '--db-path', type=Path, help="Path to the database", default=Path('/db/pipelines/saureus'))
+            '--db-path', type=Path, help="Path to the database",
+            default=Path('/db/pipelines/saureus/spatyping'))
         argument_parser.add_argument('--output-json', type=Path, help='Export output in JSON format')
         return argument_parser.parse_args(args)
 
