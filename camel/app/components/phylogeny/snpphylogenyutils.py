@@ -75,11 +75,11 @@ class MappingInput:
         Return the mapping input as a dictionary
         :return: Mapping input in YAML format
         """
-        mapping_data = {'PE': [x.path for x in self.pe]}
+        mapping_data = {'PE': [str(x.path) for x in self.pe]}
         if self.se_fwd is not None:
-            mapping_data['SE_FWD'] = self.se_fwd.path
+            mapping_data['SE_FWD'] = str(self.se_fwd.path)
         if self.se_rev is not None:
-            mapping_data['SE_REV'] = self.se_rev.path
+            mapping_data['SE_REV'] = str(self.se_rev.path)
         return mapping_data
 
 
@@ -245,7 +245,7 @@ class SnpPhylogenyUtils(object):
         table_data = []
         for sample, trimming_output in trimming_output_by_sample.items():
             # Add stats
-            stats = trimming_output.informs_trimmomatic
+            stats = trimming_output.informs_trimming
             row = [sample.name_full, stats['paired_reads_in'], stats['paired_reads_out'], stats['forward_only_reads'],
                    stats['reverse_only_reads'], stats['reads_drop']]
 

@@ -73,7 +73,7 @@ class BasePhylo(object, metaclass=abc.ABCMeta):
                     se_fwd=output.trimmed_reads_se_fwd[0] if len(output.trimmed_reads_se_fwd) > 0 else None,
                     se_rev=output.trimmed_reads_se_rev[0] if len(output.trimmed_reads_se_rev) > 0 else None
                 )
-            self._informs.append(trimming_output_by_sample[self._samples[0]].informs_trimmomatic)
+            self._informs.append(trimming_output_by_sample[self._samples[0]].informs_trimming)
             return mapping_input_by_sample
         else:
             SnpPhylogenyUtils.add_trimming_section_empty(self._report)
