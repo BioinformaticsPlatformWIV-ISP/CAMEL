@@ -67,15 +67,15 @@ class SamtoolsFlagstat(SamtoolsBasePipeable):
             lines = filehandle.readlines()
 
             self._informs['total'] = SamtoolsFlagstat.__parse_output_line(lines[0])
-            self._informs['secondary'] = SamtoolsFlagstat.__parse_output_line(lines[1])
-            self._informs['supplementary'] = SamtoolsFlagstat.__parse_output_line(lines[2])
-            self._informs['duplicates'] = SamtoolsFlagstat.__parse_output_line(lines[3])
-            self._informs['mapped'] = SamtoolsFlagstat.__parse_output_line(lines[4])
-            self._informs['paired'] = SamtoolsFlagstat.__parse_output_line(lines[5])
-            self._informs['read1'] = SamtoolsFlagstat.__parse_output_line(lines[6])
-            self._informs['read2'] = SamtoolsFlagstat.__parse_output_line(lines[7])
-            self._informs['properly_paired'] = SamtoolsFlagstat.__parse_output_line(lines[8])
-            self._informs['singletons'] = SamtoolsFlagstat.__parse_output_line(lines[10])
+            self._informs['secondary'] = SamtoolsFlagstat.__parse_output_line(lines[2])
+            self._informs['supplementary'] = SamtoolsFlagstat.__parse_output_line(lines[3])
+            self._informs['duplicates'] = SamtoolsFlagstat.__parse_output_line(lines[4])
+            self._informs['mapped'] = SamtoolsFlagstat.__parse_output_line(lines[6])
+            self._informs['paired'] = SamtoolsFlagstat.__parse_output_line(lines[8])
+            self._informs['read1'] = SamtoolsFlagstat.__parse_output_line(lines[9])
+            self._informs['read2'] = SamtoolsFlagstat.__parse_output_line(lines[10])
+            self._informs['properly_paired'] = SamtoolsFlagstat.__parse_output_line(lines[11])
+            self._informs['singletons'] = SamtoolsFlagstat.__parse_output_line(lines[13])
 
     @staticmethod
     def __parse_output_line(line: str) -> Tuple[int, int]:
