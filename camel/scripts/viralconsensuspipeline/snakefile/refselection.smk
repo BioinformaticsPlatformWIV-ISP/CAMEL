@@ -27,7 +27,7 @@ rule ref_selection_mash_screen:
         from camel.app.io.tooliofile import ToolIOFile
 
         # Load FASTQ data
-        if params.input_type == 'nanopore':
+        if params.input_type == 'ont':
             fq_in = [f.path for f in SnakemakeUtils.load_object(Path(input.IO_FASTQ))['SE']]
         else:
             fq_in = [f.path for f in SnakemakeUtils.load_object(Path(input.IO_FASTQ))['PE']]

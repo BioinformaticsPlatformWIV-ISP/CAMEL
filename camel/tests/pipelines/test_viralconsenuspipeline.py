@@ -391,6 +391,35 @@ class TestViralConsensusPipeline(CamelTestSuite):
         main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)
 
+    #######################################
+    # ONT + automatic reference selection #
+    #######################################
+    @longRunningTest()
+    def test_viral_consensus_ont_ref_selection_sars_cov_2(self) -> None:
+        """
+        Tests the viral consensus pipeline with ONT data & automatic reference selection.
+        :return: None
+        """
+
+        path_report_out = self.running_dir / 'out' / 'report.html'
+        path_summary_out = self.running_dir / 'out' / 'summary.tsv'
+        args = [
+            '--species', 'sars_cov_2',
+            '--fastq-se', str(TestViralConsensusPipeline.dir_testdata / 'ESIB_EQA_2023.SARS1.01.fastq.gz'),
+            '--ref-genome-db', str(TestViralConsensusPipeline.dir_db / 'ref_mash_dbs' / 'sars_cov_2-ncbi'),
+            '--input-type', 'ont',
+            '--clair3-model', str(Path(self.camel.config['db_root'], 'clair3', 'models', 'ont')),
+            '--cov-max', '5000',
+            '--cov-max-segment', '500',
+            '--output-html', str(path_report_out),
+            '--output-dir', str(path_report_out.parent),
+            '--output-tsv', str(path_summary_out),
+            '--working-dir', str(self.running_dir)
+        ]
+        main = MainViralConsensusPipeline(args)
+        main.run()
+        self.assertGreater(path_report_out.stat().st_size, 0)
+
 
 if __name__ == '__main__':
     unittest.main()

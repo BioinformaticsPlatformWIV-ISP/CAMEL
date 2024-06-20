@@ -112,9 +112,7 @@ rule report_combine_all:
         # Add header section
         report = SnakePipelineUtils.init_pipeline_report(
             Path(output.HTML), Path(params.output_dir), params.pipeline_info)
-        extra_info = [
-            ('Reference genome', Path(params.ref_genome).name if params.ref_genome is not None else '-'),
-            ('Read type', params.input_type)]
+        extra_info = [('Reference genome', Path(params.ref_genome).name if params.ref_genome is not None else '-')]
         input_file_str = ', '.join(f['name'] for _, input_files in params.config_input.items() for f in input_files)
         report.add_html_object(SnakePipelineUtils.create_input_section(
             params.sample_name,
