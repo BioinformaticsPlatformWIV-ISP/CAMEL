@@ -15,7 +15,7 @@ class TestFlye(CamelTestSuite):
 
     def test_flye(self) -> None:
         """
-        Tests Flye 2.9.1 with ONT data as input.
+        Tests Flye 2.9.4 with ONT data as input.
         """
         flye = Flye(self.camel)
         flye.add_input_files({'FASTQ': [TestFlye.FILE_FQ]})
