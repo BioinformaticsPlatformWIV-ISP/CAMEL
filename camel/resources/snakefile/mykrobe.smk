@@ -31,6 +31,9 @@ rule mykrobe_run:
         if params.input_type == 'illumina':
             fq_in = FastqInput.from_fq_dict(Path(input.IO), params.input_type)
             typer.add_input_files({'FASTQ_PE': fq_in.pe})
+        if params.input_type == 'ont':
+            fq_in = FastqInput.from_fq_dict(Path(input.IO), params.input_type)
+            typer.add_input_files({'FASTQ_SE': fq_in.se})
         if params.input_type == 'fasta':
             SnakemakeUtils.add_pickle_input(typer, 'FASTA', Path(input.IO))
         typer.add_input_files({
