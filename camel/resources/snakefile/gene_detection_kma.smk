@@ -51,7 +51,7 @@ rule gene_detection_kma:
             Path(input.IO), key_pe='FASTQ_PE', key_se='FASTQ_SE', read_type=key_reads)
         kma.add_input_files(fq_input_dict)
         step = Step(str(rule), kma, Camel.get_instance(), Path(str(params.dir_)))
-        if params.input_type == 'nanopore':
+        if params.input_type == 'ont':
             kma.update_parameters(bc_nano=None, basecalls='0.7')
         if params.ont:
             kma.update_parameters(ont=None)
