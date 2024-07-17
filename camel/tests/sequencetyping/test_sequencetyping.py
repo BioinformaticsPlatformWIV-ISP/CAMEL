@@ -244,7 +244,7 @@ class TestSequenceTyping(CamelTestSuite):
             '--output-dir', str(output_file_report.parent),
             '--working-dir', str(self.running_dir),
             '--detection-method', 'kma',
-            '--read-type', 'nanopore',
+            '--input-type', 'ont',
             '--threads', '8'
         ]
         main = MainSequenceTyping(args)
@@ -264,7 +264,7 @@ class TestSequenceTyping(CamelTestSuite):
             '--output-dir', str(output_file_report.parent),
             '--working-dir', str(self.running_dir),
             '--detection-method', 'kma',
-            '--read-type', 'nanopore',
+            '--input-type', 'ont',
             '--threads', '8',
             '--trim-reads'
         ]

@@ -7,7 +7,7 @@ from typing import Optional, Sequence
 from camel.app.camel import Camel
 from camel.app.components import mainscriptutils
 from camel.app.components.html.htmlreport import HtmlReport
-from camel.app.components.workflows.readtype import helper_by_read_type
+from camel.app.components.workflows.readtype import helper_by_input_type
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.loggers import logger
 from camel.app.tools.blast.blastn import Blastn
@@ -28,7 +28,7 @@ class MainSpaTyping(object):
         self._camel = Camel.get_instance()
         self._args = MainSpaTyping._parse_arguments(args)
         self._sample_name = mainscriptutils.determine_sample_name(self._args)
-        self._helper = helper_by_read_type[self._args.read_type](self._args.working_dir, self._sample_name)
+        self._helper = helper_by_input_type[self._args.input_type](self._args.working_dir, self._sample_name)
 
     @staticmethod
     def _parse_arguments(args: Optional[Sequence[str]] = None) -> argparse.Namespace:
@@ -41,7 +41,8 @@ class MainSpaTyping(object):
         mainscriptutils.add_input_files_arguments(argument_parser)
         mainscriptutils.add_assembly_arguments(argument_parser)
         argument_parser.add_argument(
-            '--db-path', type=Path, help="Path to the database", default=Path('/db/pipelines/saureus'))
+            '--db-path', type=Path, help="Path to the database",
+            default=Path('/db/pipelines/saureus/spatyping'))
         argument_parser.add_argument('--output-json', type=Path, help='Export output in JSON format')
         return argument_parser.parse_args(args)
 

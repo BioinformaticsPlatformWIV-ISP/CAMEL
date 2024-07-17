@@ -146,7 +146,7 @@ class MainSamtoolsPhylo(BasePhylo):
         config_data = {
             'working_dir': str(working_dir),
             'samples': {s.name_valid: v.as_dict() for s, v in mapping_input.items()},
-            'reference_info': {'name': self._args.reference_name, 'path': reference},
+            'reference_info': {'name': self._args.reference_name, 'path': str(reference)},
             'options': {
                 'ploidy': 1 if self._args.ploidy == 'haploid' else False,
                 'calling_method': self._args.calling_method,

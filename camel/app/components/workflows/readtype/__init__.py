@@ -1,7 +1,7 @@
 from camel.app.components.workflows.readtype.illuminahelper import IlluminaHelper
-from camel.app.components.workflows.readtype.nanoporehelper import NanoporeHelper
+from camel.app.components.workflows.readtype.onthelper import ONTHelper
 
-helper_by_read_type = {
+helper_by_input_type = {
     'illumina': IlluminaHelper,
-    'nanopore': NanoporeHelper
+    'ont': ONTHelper
 }

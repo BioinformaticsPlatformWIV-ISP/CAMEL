@@ -6,7 +6,7 @@ from typing import Optional, Sequence
 from camel.app.camel import Camel
 from camel.app.components import mainscriptutils
 from camel.app.components.html.htmlreportsection import HtmlReportSection
-from camel.app.components.workflows.readtype import helper_by_read_type
+from camel.app.components.workflows.readtype import helper_by_input_type
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.app.tools.pointfinder.pointfinder import PointFinder
@@ -25,7 +25,7 @@ class MainPointFinder(object):
         """
         self._args = MainPointFinder.parse_arguments(args)
         self._sample_name = mainscriptutils.determine_sample_name(self._args)
-        self._helper = helper_by_read_type[self._args.read_type](self._args.working_dir, self._sample_name)
+        self._helper = helper_by_input_type[self._args.input_type](self._args.working_dir, self._sample_name)
 
     @staticmethod
     def parse_arguments(args: Optional[Sequence[str]] = None) -> argparse.Namespace:
@@ -95,5 +95,5 @@ class MainPointFinder(object):
 
 if __name__ == '__main__':
     Camel.get_instance()
-    pointfinder = MainPointFinder()
-    pointfinder.run()
+    pointfinder_ = MainPointFinder()
+    pointfinder_.run()

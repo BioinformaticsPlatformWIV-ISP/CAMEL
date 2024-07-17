@@ -45,7 +45,7 @@ def add_input_files_arguments(argument_parser: argparse.ArgumentParser, fasta_in
     argument_parser.add_argument('--fastq-se', help="Input SE FASTQ file", type=Path)
     argument_parser.add_argument('--fastq-se-name', help="Input SE FASTQ file name")
     argument_parser.add_argument(
-        '--read-type', help='Read type', choices=['illumina', 'iontorrent', 'nanopore'], default='illumina')
+        '--input-type', help='Read type', choices=['illumina', 'ont'], default='illumina')
     argument_parser.add_argument('--trim-reads', help="Perform read trimming", action='store_true')
     argument_parser.add_argument(
         '--adapter', choices=['NexteraPE', 'TruSeq2', 'TruSeq3'],

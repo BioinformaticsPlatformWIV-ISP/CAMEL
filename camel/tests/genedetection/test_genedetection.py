@@ -194,7 +194,7 @@ class TestGeneDetection(CamelTestSuite):
             '--output-html', str(path_report_out),
             '--output-dir', str(path_report_out.parent),
             '--working-dir', str(self.running_dir),
-            '--read-type', 'nanopore',
+            '--input-type', 'ont',
             '--trim-reads',
             '--blast-reads',
             '--blast-filtering-method', 'score',
@@ -218,7 +218,7 @@ class TestGeneDetection(CamelTestSuite):
             '--output-html', str(path_report_out),
             '--output-dir', str(path_report_out.parent),
             '--working-dir', str(self.running_dir),
-            '--read-type', 'illumina',
+            '--input-type', 'illumina',
             '--detection-method', 'kma',
         ]
         main = MainGeneDetection(args)
@@ -238,7 +238,7 @@ class TestGeneDetection(CamelTestSuite):
             '--output-html', str(path_report_out),
             '--output-dir', str(path_report_out.parent),
             '--working-dir', str(self.running_dir),
-            '--read-type', 'illumina',
+            '--input-type', 'illumina',
             '--detection-method', 'kma',
             '--adapter', 'TruSeq3',
             '--trim-reads'
@@ -259,7 +259,7 @@ class TestGeneDetection(CamelTestSuite):
             '--output-html', str(path_report_out),
             '--output-dir', str(path_report_out.parent),
             '--working-dir', str(self.running_dir),
-            '--read-type', 'nanopore',
+            '--input-type', 'ont',
             '--detection-method', 'kma'
         ]
         main = MainGeneDetection(args)
@@ -278,7 +278,7 @@ class TestGeneDetection(CamelTestSuite):
             '--output-html', str(path_report_out),
             '--output-dir', str(path_report_out.parent),
             '--working-dir', str(self.running_dir),
-            '--read-type', 'nanopore',
+            '--input-type', 'ont',
             '--detection-method', 'kma',
             '--trim-reads'
         ]
@@ -298,7 +298,7 @@ class TestGeneDetection(CamelTestSuite):
             '--output-html', str(path_report_out),
             '--output-dir', str(path_report_out.parent),
             '--working-dir', str(self.running_dir),
-            '--read-type', 'nanopore',
+            '--input-type', 'ont',
             '--detection-method', 'kma',
             '--kma-ont'
         ]
@@ -319,7 +319,7 @@ class TestGeneDetection(CamelTestSuite):
             '--output-html', str(path_report_out),
             '--output-dir', str(path_report_out.parent),
             '--working-dir', str(self.running_dir),
-            '--read-type', 'illumina',
+            '--input-type', 'illumina',
             '--detection-method', 'kma',
             '--kma-apm', 'p'
         ]
@@ -342,7 +342,7 @@ class TestGeneDetection(CamelTestSuite):
             '--output-html', str(path_report_out),
             '--output-dir', str(path_report_out.parent),
             '--working-dir', str(self.running_dir),
-            '--read-type', 'illumina',
+            '--input-type', 'illumina',
             '--detection-method', 'srst2'
         ]
         main = MainGeneDetection(args)
@@ -362,7 +362,7 @@ class TestGeneDetection(CamelTestSuite):
             '--output-html', str(path_report_out),
             '--output-dir', str(path_report_out.parent),
             '--working-dir', str(self.running_dir),
-            '--read-type', 'illumina',
+            '--input-type', 'illumina',
             '--detection-method', 'srst2',
             '--trim-reads'
         ]
@@ -394,7 +394,7 @@ class TestGeneDetection(CamelTestSuite):
             '--output-html', str(path_report_out),
             '--output-dir', str(path_report_out.parent),
             '--working-dir', str(self.running_dir),
-            '--read-type', 'illumina',
+            '--input-type', 'illumina',
             '--detection-method', 'srst2'
         ]
         main = MainGeneDetection(args)

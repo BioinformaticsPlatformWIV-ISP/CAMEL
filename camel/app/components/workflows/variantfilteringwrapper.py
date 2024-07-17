@@ -93,6 +93,7 @@ class VariantFilteringWrapper(object):
         config_path = SnakePipelineUtils.generate_config_file({
             'working_dir': str(self._working_dir),
             'variant_filtering': filtering_options,
+            'input_type': 'illumina',
             'sample_name': sample_name
         }, self._working_dir)
 

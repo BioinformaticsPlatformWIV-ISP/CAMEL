@@ -116,13 +116,14 @@ class GeneDetectionWrapper(object):
             fq_dict = {'SE': fastq_input.se}
         SnakemakeUtils.dump_object(fq_dict, path)
 
-    def __get_config_data(self, sample_name: str, db_data: Dict[str, Any], detection_method: str, read_type: str)\
+    def __get_config_data(self, sample_name: str, db_data: Dict[str, Any], detection_method: str, input_type: str)\
             -> Dict[str, Any]:
         """
         Returns the configuration data for Snakemake.
         :param sample_name: Sample name
         :param db_data: Database information
         :param detection_method: Detection method
+        :param input_type: Input type
         :return: Config data
         """
         return {
@@ -130,7 +131,7 @@ class GeneDetectionWrapper(object):
             'sample_name': sample_name,
             'detection_method': detection_method,
             'gene_detection': {'db': db_data},
-            'read_type': read_type
+            'input_type': input_type
         }
 
     def __set_output(self, output_files: Dict[str, Path]) -> None:

@@ -90,7 +90,7 @@ class TestConFindr(CamelTestSuite):
             '--base-cutoff', '5',
             '--base-percentage-cutoff', '10',
             '--min-matching-hashes', '200',
-            '--read-type', 'nanopore',
+            '--input-type', 'ont',
             '--rmlst'
         ])
         confindr_main.run()
@@ -113,7 +113,7 @@ class TestConFindr(CamelTestSuite):
             '--base-cutoff', '5',
             '--base-percentage-cutoff', '10',
             '--min-matching-hashes', '200',
-            '--read-type', 'illumina',
+            '--input-type', 'illumina',
             '--rmlst'
         ])
         confindr_main.run()

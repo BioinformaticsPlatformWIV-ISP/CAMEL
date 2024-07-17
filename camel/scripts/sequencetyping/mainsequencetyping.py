@@ -8,7 +8,7 @@ from camel.app.camel import Camel
 from camel.app.components import mainscriptutils
 from camel.app.components.html.htmlreport import HtmlReport
 from camel.app.components.sequencetyping.sequencetypingutils import SequenceTypingUtils
-from camel.app.components.workflows.readtype import helper_by_read_type
+from camel.app.components.workflows.readtype import helper_by_input_type
 from camel.app.components.workflows.sequencetypingwrapper import SequenceTypingWrapper, SequenceTypingInput, \
     SequenceTypingOutput
 from camel.app.components.workflows.utils.fastqinput import FastqInput
@@ -27,7 +27,7 @@ class MainSequenceTyping(object):
         """
         self._args = MainSequenceTyping._parse_arguments(args)
         self._sample_name = mainscriptutils.determine_sample_name(self._args)
-        self._helper = helper_by_read_type[self._args.read_type](self._args.working_dir, self._sample_name)
+        self._helper = helper_by_input_type[self._args.input_type](self._args.working_dir, self._sample_name)
 
     @staticmethod
     def _parse_arguments(args: Optional[Sequence[str]]) -> argparse.Namespace:

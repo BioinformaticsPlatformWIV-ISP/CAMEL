@@ -67,45 +67,13 @@ class TestWorkflowGeneDetection(CamelTestSuite):
         wrapper.run_workflow_kma(fastq_input, 'test sample', db_data)
         self.assertGreater(len(wrapper.output.report_section.to_html()), 0)
 
-    def test_gene_detection_iontorrent_srst2(self) -> None:
-        """
-        Tests the gene detection workflow with SRST2 detection and IonTorrent data.
-        :return: None
-        """
-        wrapper = GeneDetectionWrapper(self.running_dir)
-        fastq_input = FastqInput('iontorrent', se=[
-            ToolIOFile(TestWorkflowGeneDetection.input_fastq_by_key['iontorrent'][0])], is_pe=False)
-        db_data = {
-            'path': str(TestWorkflowGeneDetection.gene_db),
-            'min_percent_identity': 80,
-            'min_coverage': 80
-        }
-        wrapper.run_workflow_srst2(fastq_input, 'test sample', db_data)
-        self.assertGreater(len(wrapper.output.report_section.to_html()), 0)
-
-    def test_gene_detection_iontorrent_kma(self) -> None:
-        """
-        Tests the gene detection workflow with KMA detection and IonTorrent data.
-        :return: None
-        """
-        wrapper = GeneDetectionWrapper(self.running_dir)
-        fastq_input = FastqInput('iontorrent', se=[
-            ToolIOFile(TestWorkflowGeneDetection.input_fastq_by_key['iontorrent'][0])], is_pe=False)
-        db_data = {
-            'path': str(TestWorkflowGeneDetection.gene_db),
-            'min_percent_identity': 80,
-            'min_coverage': 80
-        }
-        wrapper.run_workflow_kma(fastq_input, 'test sample', db_data)
-        self.assertGreater(len(wrapper.output.report_section.to_html()), 0)
-
     def test_gene_detection_nanopore_kma(self) -> None:
         """
         Tests the gene detection workflow with KMA detection and IonTorrent data.
         :return: None
         """
         wrapper = GeneDetectionWrapper(self.running_dir)
-        fastq_input = FastqInput('nanopore', se=[
+        fastq_input = FastqInput('ont', se=[
             ToolIOFile(TestWorkflowGeneDetection.input_fastq_by_key['nanopore'][0])], is_pe=False)
         db_data = {
             'path': str(TestWorkflowGeneDetection.gene_db),

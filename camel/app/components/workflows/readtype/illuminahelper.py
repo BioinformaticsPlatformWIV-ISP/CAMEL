@@ -52,7 +52,7 @@ class IlluminaHelper(BaseReadTypeHelper):
         report_section_trimming = trimming.output.report_section
         report.add_html_object(report_section_trimming)
         report_section_trimming.copy_files(report.output_dir)
-        self._informs.append(trimming.output.informs_trimmomatic)
+        self._informs.append(trimming.output.informs_trimming)
         self._log_files['trimming'] = trimming.output.log_file
         return FastqInput('illumina', trimming.output.trimmed_reads_pe, se_fwd=trimming.output.trimmed_reads_se_fwd,
                           se_rev=trimming.output.trimmed_reads_se_rev)

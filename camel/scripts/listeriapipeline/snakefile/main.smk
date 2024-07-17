@@ -2,7 +2,7 @@ from pathlib import Path
 
 from camel.resources.snakefile import trimming_illumina, gene_detection, trimming, contamination_check_kraken, \
     quality_checks, sequence_typing, downsampling, confindr, quast, amrfinder, core, trimming_ont, assembly, \
-    human_read_scrubbing, resfinder4
+    human_read_scrubbing, resfinder4, mobsuite
 
 #######################
 # Included Snakefiles #
@@ -19,6 +19,7 @@ include: confindr.SNAKEFILE_CONFINDR
 include: quality_checks.SNAKEFILE_QUALITY_CHECKS
 include: amrfinder.SNAKEFILE_AMRFINDER
 include: resfinder4.SNAKEFILE_RESFINDER4
+include: mobsuite.SNAKEFILE_MOB_SUITE
 include: gene_detection.SNAKEFILE_GENE_DETECTION
 include: sequence_typing.SNAKEFILE_SEQUENCE_TYPING
 
@@ -62,7 +63,10 @@ rule report_command_section:
         INFORMS_cgmlst = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='cgmlst') if 'cgmlst' in config['analyses'] else [],
         INFORMS_typing_amr = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='typing_amr') if 'typing_amr' in config['analyses'] else [],
         INFORMS_virulence = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='typing_virulence') if 'typing_virulence' in config['analyses'] else [],
-        INFORMS_pcr_sero = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='pcr_serogroup') if 'pcr_serogroup' in config['analyses'] else []
+        INFORMS_pcr_sero = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='pcr_serogroup') if 'pcr_serogroup' in config['analyses'] else [],
+        # Plasmid replicon detection
+        INFORMS_mob_suite= Path(config['working_dir']) / mobsuite.OUTPUT_MOB_SUITE_INFORMS if 'mob_suite' in config['analyses'] else[]
+
     output:
         HTML = Path(config['working_dir']) / 'report' / 'html-commands.io'
     params:
@@ -91,6 +95,8 @@ rule report_combine_all:
         report_vfdb_core = gene_detection.get_gene_detection_report('vfdb_core', config),
         # Plasmid replicon detection
         report_plasmidfinder = gene_detection.get_gene_detection_report('plasmidfinder', config),
+        report_mob_suite = Path(config['working_dir']) / (mobsuite.OUTPUT_MOB_SUITE_REPORT if 'mob_suite' in config['analyses'] else mobsuite.OUTPUT_MOB_SUITE_REPORT_EMPTY),
+        report_genomic_context= Path(config['working_dir']) / (mobsuite.OUTPUT_MOB_SUITE_CONTEXT_REPORT if 'mob_suite' in config['analyses'] else mobsuite.OUTPUT_MOB_SUITE_CONTEXT_REPORT_EMPTY),
         # Typing
         report_rmlst = sequence_typing.get_sequence_typing_report('rmlst', config),
         report_mlst = sequence_typing.get_sequence_typing_report('mlst', config),
@@ -140,12 +146,12 @@ rule report_combine_all:
         report_structure.append(('Advanced QC', 'adv_qc', [Path(input.report_adv_qc)]))
         report_structure.extend([
             ('Species identification', 'species', [Path(x) for x in (
-                input.report_rmlst, input.report_species, input.report_mlst)]),
-            ('AMR detection', 'amr', [Path(x) for x in (input.report_amrfinder, input.report_resfinder4)]),
-            ('Virulence detection', 'virulence', [Path(x) for x in (input.report_virulence, input.report_vfdb_core)]),
-            ('Plasmid replicon detection', 'plasmid', [Path(input.report_plasmidfinder)]),
-            ('Sequence typing', 'typing', [Path(x) for x in (
-                input.report_amr_typing, input.report_cgmlst, input.report_pcr_serogroup, input.report_viru_typing)]),
+                input.report_rmlst, input.report_species, input.report_pcr_serogroup)]),
+            ('AMR detection', 'amr', [Path(x) for x in (input.report_amrfinder, input.report_resfinder4, input.report_amr_typing)]),
+            ('Virulence detection', 'virulence', [Path(x) for x in (input.report_virulence, input.report_vfdb_core, input.report_viru_typing)]),
+            ('Plasmid replicon detection', 'plasmid', [Path(x) for x in (
+                input.report_plasmidfinder, input.report_mob_suite, input.report_genomic_context)]),
+            ('Sequence typing', 'typing', [Path(x) for x in (input.report_mlst, input.report_cgmlst)]),
             ('Citations', 'citations', [Path(input.report_citations)]),
             ('Commands', 'commands', [Path(input.report_commands)])
         ])
@@ -172,6 +178,7 @@ rule summary_combine_all:
         Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='vfdb_core') if 'vfdb_core' in config['analyses'] else [],
         # Plasmid replicon detection
         Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='plasmidfinder') if 'plasmidfinder' in config['analyses'] else [],
+        Path(config['working_dir']) / mobsuite.OUTPUT_MOB_SUITE_SUMMARY if 'mob_suite' in config['analyses'] else [],
         # Sequence typing
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='rmlst') if 'rmlst' in config['analyses'] else [],
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='mlst') if 'mlst' in config['analyses'] else [],
@@ -187,3 +194,19 @@ rule summary_combine_all:
             for summary_input in input:
                 with open(summary_input) as handle_in:
                     handle_out.write(handle_in.read())
+
+rule link_genomic_context:
+    """
+    Links the input databases to the genomic context assay.
+    """
+    input:
+        # AMR
+        TSV_amrfinder = Path(config['working_dir']) / 'amrfinder' / 'tsv.io' if 'amrfinder' in config['analyses'] else [],
+        # Virulence
+        TSV_gd_virulencefinder = Path(config['working_dir']) / 'gene_detection' / 'virulencefinder' / 'metadata' / 'tsv.io' if 'virulencefinder' in config['analyses'] else [],
+        INFORMS_gd_virulencefinder = Path(config['working_dir']) / 'gene_detection' / 'virulencefinder' / 'db_manager' / 'informs.io' if 'virulencefinder' in config['analyses'] else []
+    output:
+        TSV = Path(config['working_dir']) / 'mob_suite' / 'genomic_context' / 'input' / 'tsv.io',
+        INFORMS = Path(config['working_dir']) / 'mob_suite' / 'genomic_context' / 'input' / 'informs.io'
+    run:
+        mobsuite.collect_genomic_context_input(input, Path(output.TSV), Path(output.INFORMS))
