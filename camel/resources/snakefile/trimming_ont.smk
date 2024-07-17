@@ -45,8 +45,8 @@ rule trimming_ont_filtlong:
     params:
         running_dir = Path(config['working_dir']) / 'trimming_ont' / 'filtlong',
         sample_name = config.get('sample_name', 'reads'),
-        min_len = 500,
-        min_q = 7
+        min_len = config.get('filtlong', {}).get('min_len', 500),
+        min_q = config.get('filtlong', {}).get('min_q', 10)
     run:
         from camel.app.tools.filtlong.filtlong import Filtlong
         filtlong = Filtlong(camel)
