@@ -31,6 +31,10 @@ downsampling:
 read_trimming:
   export_fastq: '{export_fastq}'
 
+filtlong:
+  min_len: 500
+  min_q: 10
+
 contamination_check:
   db: /db/kraken2_microbial/latest
   expected_species: Bacillus
