@@ -100,10 +100,10 @@ def __get_typing_output_dir(dir_report: Path, html_key: str) -> Path:
     # Return the directory that matches the input key
     try:
         return next(d for d in iter(dirs_typing) if d.name.lower() == html_key.lower())
-    except KeyError:
+    except StopIteration:
         dir_names = [dir_.name for dir_ in dirs_typing]
         raise FileNotFoundError(
-            f"Sequence typing output '{html_key}' not found in: {dir_report} (found: {', '.join(dir_names)})")
+            f"Scheme with key '{html_key}' not found in: {dir_report} (available schemes: {', '.join(dir_names)})")
 
 
 def parse_html_typing_list(dirs_in: List[Path], html_key: str, detection_method: Optional[str] = 'blast') -> \
