@@ -453,7 +453,10 @@ rule quality_checks_combine_all:
     """
     input:
         JSON = [Path(config['working_dir'], path_json) for path_json in quality_checks.get_qc_checks(
-            config['input_type'], config.get('quality_checks', {}).get('skipped', []))]
+            config['input_type'],
+            config.get('quality_checks', {}).get('skipped', []),
+            config.get('quality_checks', {}).get('forced'),
+        )]
     output:
         JSON = Path(config['working_dir']) / 'quality_checks' / 'all.json'
     run:

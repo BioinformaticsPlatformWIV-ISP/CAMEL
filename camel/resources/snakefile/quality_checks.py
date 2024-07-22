@@ -4,6 +4,8 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Optional, Dict, Any, List
 
+from camel.app.loggers import logger
+
 SNAKEFILE_QUALITY_CHECKS = f'{Path(__file__).parent / Path(__file__).stem}.smk'
 _dir_qc = Path('quality_checks')
 OUTPUT_QUALITY_CHECKS_REPORT = _dir_qc / 'report' / 'html.io'
@@ -121,6 +123,13 @@ QC_CHECKS_BY_KEY = {qc.key: qc for qc in [
         supported_input_types=['hybrid', 'illumina'],
         fmt_string_value='{:.2f}x'),
     QCCheck(
+        key='cov_ref_illumina',
+        full_name='Coverage against the reference genome (Illumina)',
+        threshold_warn=20,
+        threshold_fail=10,
+        supported_input_types=['hybrid', 'illumina'],
+        fmt_string_value='{:.2f}x'),
+    QCCheck(
         key='cov_assembly_ont',
         full_name='Coverage against the assembled contigs (ONT)',
         threshold_warn=20,
@@ -228,14 +237,18 @@ QC_CHECKS_BY_KEY = {qc.key: qc for qc in [
 ]}
 
 
-def get_qc_checks(input_type: str, skipped_checks: List[str] = None) -> List[Path]:
+def get_qc_checks(input_type: str, skipped_checks: List[str] = None, forced_checks: Optional[List[str]] = None) \
+        -> List[Path]:
     """
     Returns the output paths for the QC checks of the corresponding input type.
     :param input_type: Input type
     :param skipped_checks: (Optional) list of skipped QC checks
+    :param forced_checks: (Optional list of QC checks that are forced
     :return: List of paths with the enabled QC checks
     """
     paths = []
+
+    # Add defaults
     for key, qc_check in QC_CHECKS_BY_KEY.items():
         if input_type not in qc_check.supported_input_types:
             continue
@@ -246,5 +259,14 @@ def get_qc_checks(input_type: str, skipped_checks: List[str] = None) -> List[Pat
         if '{ori}' in key:
             paths.extend([Path(_dir_qc, f'{key.format(ori=ori)}.json') for ori in ('fwd', 'rev')])
         else:
+            paths.append(Path(_dir_qc, f'{key}.json'))
+
+    # Add forced QC checks
+    if forced_checks is not None:
+        for key in forced_checks:
+            qc_check = QC_CHECKS_BY_KEY[key]
+            if input_type not in qc_check.supported_input_types:
+                logger.info(f"Forced QC check '{key}' not supported for input {input_type}")
+                continue
             paths.append(Path(_dir_qc, f'{key}.json'))
     return paths
