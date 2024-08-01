@@ -5,7 +5,7 @@ from camel.app.camel import Camel
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile import quality_checks, contamination_check_kraken, trimming_ont, \
-    quast, confindr, trimming_illumina, assembly
+    quast, confindr, trimming_illumina, assembly, variant_calling
 
 
 def _get_kraken2_informs(config, tech) -> Union[Path, List]:
@@ -149,17 +149,25 @@ rule quality_checks_depth_pe:
     Checks the coverage against the assembled contigs.
     """
     input:
-        INFORMS = lambda wildcards: Path(config['working_dir'], assembly.get_depth_inform('fastq_pe'))
+        INFORMS_assembly = lambda wildcards: Path(config['working_dir'], assembly.get_depth_inform('fastq_pe')) if wildcards.mode == 'assembly' else [],
+        INFORMS_ref = lambda wildcards: Path(config['working_dir'], variant_calling.OUTPUT_VARIANT_CALLING_DEPTH_INFORMS) if wildcards.mode == 'ref' else [],
     output:
         JSON = Path(config['working_dir']) / 'quality_checks' / 'cov_{mode}_illumina.json'
     params:
         qc_check = lambda wildcards: quality_checks.QC_CHECKS_BY_KEY[f'cov_{wildcards.mode}_illumina'],
-        running_dir = Path(config['working_dir']) / 'quality_checks'
+        running_dir = Path(config['working_dir']) / 'quality_checks',
+        mode = lambda wildcards: wildcards.mode
     run:
         import json
 
-        # noinspection PyTypeChecker
-        samtools_depth_informs = SnakemakeUtils.load_object(Path(input.INFORMS))
+        if params.mode == 'assembly':
+            # noinspection PyTypeChecker
+            samtools_depth_informs = SnakemakeUtils.load_object(Path(input.INFORMS_assembly))
+        elif params.mode == 'ref':
+            # noinspection PyTypeChecker
+            samtools_depth_informs = SnakemakeUtils.load_object(Path(input.INFORMS_ref))
+        else:
+            raise ValueError(f'Invalid mode: {params.mode}')
         median_depth = samtools_depth_informs['median_depth']
         with open(output.JSON, 'w') as handle:
             # noinspection PyUnresolvedReferences
