@@ -363,5 +363,5 @@ class MainMLSTPhylogeny(object):
 
 if __name__ == '__main__':
     Camel.get_instance()
-    mlst_tree = MainMLSTPhylogeny()
-    mlst_tree.run()
+    mlst_phylo = MainMLSTPhylogeny()
+    mlst_phylo.run()
