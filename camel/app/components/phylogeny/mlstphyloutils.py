@@ -58,9 +58,9 @@ def parse_tsv_typing(tsv_path: Path, detection_method: str, use_temp: bool = Tru
     allele_data = pd.read_table(tsv_path)
     allele_data['is_perfect_hit'] = allele_data.apply(lambda x: is_perfect(x, detection_method), axis=1)
     # When the hashed TSV file is provided -> check for allele id length
-    if tsv_path.name.endswith('-hashes.tsv') and use_temp is True:
+    if use_temp is True:
         allele_data['is_perfect_hit'] = allele_data.apply(
-            lambda x: x['is_perfect_hit'] or len(x['Allele']) == 6, axis=1)
+            lambda x: x['is_perfect_hit'] or len(str(x['Allele'])) == 6, axis=1)
     return {r['Locus']: r['Allele'] if r['is_perfect_hit'] else '-' for _, r in allele_data.iterrows()}
 
 
@@ -82,7 +82,9 @@ def parse_tsv_typing_list(tsv_in: List[Tuple[Path, str]], detection_method: Opti
             logger.debug(f'Sample name: {isolate_name}')
         except IndexError:
             raise ValueError(f'Cannot determine sample name from: {file_name}')
-        allele_data.append(parse_tsv_typing(tabular_file, detection_method, use_temp))
+        alleles_parsed = parse_tsv_typing(tabular_file, detection_method, use_temp)
+        logger.debug(f"{sum(v != '-' for _, v in alleles_parsed.items()):,}/{len(alleles_parsed):,} perfect hits")
+        allele_data.append(alleles_parsed)
         sample_names.append(isolate_name)
     return pd.DataFrame(allele_data, index=sample_names, dtype=str)
 
@@ -142,5 +144,8 @@ def parse_html_typing_list(dirs_in: List[Path], html_key: str, detection_method:
         # Hashing disabled or no hash allele TSv file found
         if tsv_typing is None:
             tsv_typing = next(path_json_meta.parent.glob('typing-*.tsv'))
-        allele_data.append(parse_tsv_typing(tsv_typing, detection_method))
+
+        alleles_parsed = parse_tsv_typing(tsv_typing, detection_method)
+        logger.debug(f"{sum(v != '-' for _, v in alleles_parsed.items()):,}/{len(alleles_parsed):,} perfect hits")
+        allele_data.append(alleles_parsed)
     return pd.DataFrame(allele_data, index=sample_names, dtype=str)
