@@ -46,7 +46,7 @@ class QCCheck:
 QC_CHECKS_BY_KEY = {qc.key: qc for qc in [
     QCCheck(
         key='kraken_illumina',
-        full_name='Kraken: contaminants (Illumina)',
+        full_name='Kraken 2: contaminants (Illumina)',
         threshold_warn=1.0,
         threshold_fail=5.0,
         fmt_string_value='{:.2f}%',
@@ -54,7 +54,7 @@ QC_CHECKS_BY_KEY = {qc.key: qc for qc in [
         value_should_exceed=False),
     QCCheck(
         key='kraken_ont',
-        full_name='Kraken: contaminants (ONT)',
+        full_name='Kraken 2: contaminants (ONT)',
         threshold_warn=1.0,
         threshold_fail=5.0,
         fmt_string_value='{:.2f}%',
@@ -62,7 +62,7 @@ QC_CHECKS_BY_KEY = {qc.key: qc for qc in [
         value_should_exceed=False),
     QCCheck(
         key='kraken_fasta',
-        full_name='Kraken: contaminants (FASTA)',
+        full_name='Kraken 2: contaminants (FASTA)',
         threshold_warn=1.0,
         threshold_fail=5.0,
         fmt_string_value='{:.2f}%',
