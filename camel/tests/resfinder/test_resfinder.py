@@ -18,6 +18,7 @@ class TestResFinder(CamelTestSuite):
     FILE_FASTA_1 = ToolIOFile(test_file_dir / 'ref_ecoli.fasta')
     FILE_FASTA_2 = ToolIOFile(test_file_dir / 'salmonella_lt2_ref.fasta')
     FILE_FASTA_3 = ToolIOFile(test_file_dir / 'assembly-VAR305.fasta')
+    FILE_FASTA_4 = ToolIOFile(test_file_dir / 'enterococcus_unkown_amr_muts.fasta')
     FILE_FASTQ_1 = ToolIOFile(test_file_dir / 'reads_illumina_1.fastq')
     FILE_FASTQ_2 = ToolIOFile(test_file_dir / 'reads_illumina_2.fastq')
     FILE_FASTA_ENTERO = ToolIOFile(test_file_dir / 'assembly_entero.fasta')
@@ -41,6 +42,26 @@ class TestResFinder(CamelTestSuite):
             '--min-cov', '60',
             '--threshold', '80',
             '--species', 'Staphylococcus_aureus'
+        ]
+        main = MainResFinder(args)
+        main.run()
+        self.assertGreater(output_file_report.stat().st_size, 0)
+
+    def test_resfinder_main_fasta_unknown_phenotypes(self) -> None:
+        """
+        Tests the ResFinder main script with mutations with unknown phenotypes..
+        :return: None
+        """
+        output_file_report = self.running_dir / 'report' / 'report.html'
+        args = [
+            '--fasta', str(self.FILE_FASTA_4),
+            '--output-html', str(output_file_report),
+            '--output-dir', str(output_file_report.parent),
+            '--working-dir', str(self.running_dir),
+            '--db-directory', str(self.DB_RESFINDER),
+            '--acquired',
+            '--min-cov', '60',
+            '--threshold', '80',
         ]
         main = MainResFinder(args)
         main.run()
