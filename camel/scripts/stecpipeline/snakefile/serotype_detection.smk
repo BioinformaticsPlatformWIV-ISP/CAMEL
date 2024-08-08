@@ -38,7 +38,7 @@ rule serotype_detection_report:
         from camel.app.snakemake.snakemakeutils import SnakemakeUtils
         from camel.app.components.html.htmlreportsection import HtmlReportSection
         from camel.app.io.tooliovalue import ToolIOValue
-        if ('VAL_serotype' in input) and len(input['VAL_serotype']) > 0:
+        if len(input['VAL_serotype']) > 0:
             serotype = SnakemakeUtils.load_object(Path(input.VAL_serotype))[0].value
         else:
             serotype = 'NA'
