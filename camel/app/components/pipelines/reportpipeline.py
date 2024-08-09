@@ -7,6 +7,7 @@ from typing import Dict, Any, List, Tuple, Union
 from Bio import SeqIO
 
 from camel.app.components import mainscriptutils
+from camel.app.components.files import fastautils
 from camel.app.components.files.fastqutils import FastqUtils
 from camel.app.components.files.fileutils import FileUtils
 from camel.app.components.phylogeny.snpphylogenyutils import InvalidInputError
@@ -122,8 +123,9 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
             return
         path_io = self._args.working_dir / assembly_spades.OUTPUT_ASSEMBLY_FASTA
         path_fasta = SnakemakeUtils.load_object(path_io)[0].path
-        shutil.copyfile(path_fasta, self._args.output_fasta)
-        logger.info(f'Output FASTA file copied to: {self._args.output_fasta}')
+        fastautils.FastaUtils.rename_sequences_regex(
+            path_fasta, self._args.output_fasta, '', '', description=self.sample_name)
+        logger.info(f'Output FASTA file exported to: {self._args.output_fasta}')
 
     @staticmethod
     def format_input_string(dict_in: Dict[str, Any]) -> str:
