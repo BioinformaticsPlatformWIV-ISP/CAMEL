@@ -21,6 +21,11 @@ def get_command_informs(config: Dict[str, Any]) -> List[Path]:
     :return: List of informs IO files
     """
     paths = []
+
+    # Straingst is disabled -> return empty list
+    if 'straingst' not in config['analyses']:
+        return []
+
     input_type = config['input_type']
     if input_type in ('illumina', 'hybrid'):
         paths.append(Path(str(OUTPUT_INFORMS_STRAINGST).format(read_type='illumina')))
@@ -75,8 +80,8 @@ def get_summaries(config: Dict[str, Any]) -> List[Path]:
 
     # FASTQ input
     paths = []
-    if input_type in ('illumina', 'hybrid'):
+    if (input_type in ('illumina', 'hybrid')) and ('straingst' in config['analyses']):
         paths.append(Path(str(OUTPUT_STRAINGST_SUMMARY).format(read_type='illumina')))
-    if input_type in ('ont', 'hybrid'):
+    if (input_type in ('ont', 'hybrid')) and ('straingst' in config['analyses']):
         paths.append(Path(str(OUTPUT_STRAINGST_SUMMARY).format(read_type='ont')))
     return [Path(config['working_dir']) / p for p in paths]

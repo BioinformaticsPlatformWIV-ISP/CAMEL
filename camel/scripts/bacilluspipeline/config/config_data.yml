@@ -36,7 +36,7 @@ filtlong:
   min_q: 10
 
 contamination_check:
-  db: /db/kraken2_microbial/latest
+  db: /db/kraken2_full/latest
   expected_species: Bacillus
   level_of_depth: G
 

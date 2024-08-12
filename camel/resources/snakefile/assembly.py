@@ -25,7 +25,7 @@ def get_fasta_raw(config: Dict[str, Any]) -> Path:
     if config['input_type'] == 'illumina':
         return assembly_spades.OUTPUT_ASSEMBLY_FASTA
     if config['input_type'] == 'ont':
-        return assembly_flye.OUTPUT_ASSEMBLY_FASTA
+        return Path(str(polish_assembly_long.OUTPUT_ASSEMBLY_FASTA).format(assembly_type='flye'))
     if config['input_type'] == 'hybrid':
         return Path(str(polish_assembly_short.OUTPUT_POLISHING_FASTA).format(assembly_type='flye'))
     raise ValueError(f"Invalid input type: {config['input_type']}")
@@ -41,13 +41,17 @@ def get_command_informs(config: Dict[str, Any]) -> List[Path]:
     if config['input_type'] == 'illumina':
         return [Path(config['working_dir'], assembly_spades.OUTPUT_ASSEMBLY_INFORMS)]
     if config['input_type'] == 'ont':
-        return [Path(config['working_dir'], assembly_flye.OUTPUT_ASSEMBLY_INFORMS)]
+        return [Path(config['working_dir'],
+                     str(polish_assembly_long.OUTPUT_POLISH_MEDAKA_INFORMS).format(assembly_type='flye'))]
     if config['input_type'] == 'hybrid':
         return [
             Path(config['working_dir'], assembly_flye.OUTPUT_ASSEMBLY_INFORMS),
-            Path(config['working_dir'], str(polish_assembly_long.OUTPUT_POLISH_MEDAKA_INFORMS).format(assembly_type='flye')),
-            Path(config['working_dir'], str(polish_assembly_short.OUTPUT_POLYPOLISH_INFORMS).format(assembly_type='flye')),
-            Path(config['working_dir'], str(polish_assembly_short.OUTPUT_POLCA_INFORMS).format(assembly_type='flye'))
+            Path(config['working_dir'],
+                 str(polish_assembly_long.OUTPUT_POLISH_MEDAKA_INFORMS).format(assembly_type='flye')),
+            Path(config['working_dir'],
+                 str(polish_assembly_short.OUTPUT_POLYPOLISH_INFORMS).format(assembly_type='flye')),
+            Path(config['working_dir'],
+                 str(polish_assembly_short.OUTPUT_POLCA_INFORMS).format(assembly_type='flye'))
         ]
     raise ValueError(f"Invalid input type: {config['input_type']}")
 
