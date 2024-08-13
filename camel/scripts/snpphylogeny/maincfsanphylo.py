@@ -1,11 +1,9 @@
 #!/usr/bin/env python
 import argparse
 import itertools
-import logging
+import shutil
 from pathlib import Path
 from typing import Optional, List, Sequence
-
-import shutil
 
 from camel.app.camel import Camel
 from camel.app.components.phylogeny.snpphylogenyutils import SnpPhylogenyUtils
@@ -112,8 +110,8 @@ class MainCfsanPhylo(BasePhylo):
             cfsan.informs[s.name_valid]['Number_of_Reads'],
             cfsan.informs[s.name_valid]['Percent_of_Reads_Mapped'],
             cfsan.informs[s.name_valid]['Average_Pileup_Depth'],
-            cfsan.informs[s.name_valid]['Phase2_SNPs'],
-            cfsan.informs[s.name_valid]['Phase2_Preserved_SNPs']
+            cfsan.informs[s.name_valid]['Phase1_SNPs'],
+            cfsan.informs[s.name_valid]['Phase1_Preserved_SNPs']
         ] for s in self._samples}
         header = ['Sample', 'Total reads', 'Mapping rate (%)', 'Avg. pileup depth', 'Nb. of SNPs (unfiltered)',
                   'Nb. of SNPs (filtered)']
