@@ -49,7 +49,7 @@ class TestResFinder(CamelTestSuite):
 
     def test_resfinder_main_fasta_unknown_phenotypes(self) -> None:
         """
-        Tests the ResFinder main script with mutations with unknown phenotypes..
+        Tests the ResFinder main script with mutations with unknown phenotypes.
         :return: None
         """
         output_file_report = self.running_dir / 'report' / 'report.html'
