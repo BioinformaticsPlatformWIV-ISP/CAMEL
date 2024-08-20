@@ -225,7 +225,7 @@ rule amr_visualization_add_text:
     """
     input:
         PNG = rules.amr_visualization_circos.output.PNG,
-        INFORMS_coverage = Path(config['working_dir'] / assembly.get_depth_inform('fastq_pe'))
+        INFORMS_coverage = Path(config['working_dir'] / assembly.get_depth_inform('fastq_pe', 'ref'))
                             if 'fasta' not in config['input_type'] and 'fasta_vcf' not in config['input_type']
                             else Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_DEPTH_INFORMS,
         INFORMS_lineage = Path(config['working_dir']) / snplineage.OUTPUT_SNP_LINEAGE_INFORMS

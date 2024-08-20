@@ -4,8 +4,6 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Optional, Dict, Any, List
 
-from camel.app.loggers import logger
-
 SNAKEFILE_QUALITY_CHECKS = f'{Path(__file__).parent / Path(__file__).stem}.smk'
 _dir_qc = Path('quality_checks')
 OUTPUT_QUALITY_CHECKS_REPORT = _dir_qc / 'report' / 'html.io'
@@ -128,7 +126,8 @@ QC_CHECKS_BY_KEY = {qc.key: qc for qc in [
         threshold_warn=20,
         threshold_fail=10,
         supported_input_types=['hybrid', 'illumina'],
-        fmt_string_value='{:.2f}x'),
+        fmt_string_value='{:.2f}x',
+        is_default=False),
     QCCheck(
         key='cov_assembly_ont',
         full_name='Coverage against the assembled contigs (ONT)',
@@ -247,26 +246,23 @@ def get_qc_checks(input_type: str, skipped_checks: List[str] = None, forced_chec
     :return: List of paths with the enabled QC checks
     """
     paths = []
+    if forced_checks is None:
+        forced_checks = []
 
     # Add defaults
     for key, qc_check in QC_CHECKS_BY_KEY.items():
         if input_type not in qc_check.supported_input_types:
             continue
-        if qc_check.is_default is False:
+        elif key in skipped_checks:
             continue
-        if key in skipped_checks:
+        elif (qc_check.is_default is False) and (key not in forced_checks):
             continue
+
+        # Add orientation for PE QC checks
         if '{ori}' in key:
             paths.extend([Path(_dir_qc, f'{key.format(ori=ori)}.json') for ori in ('fwd', 'rev')])
         else:
             paths.append(Path(_dir_qc, f'{key}.json'))
 
     # Add forced QC checks
-    if forced_checks is not None:
-        for key in forced_checks:
-            qc_check = QC_CHECKS_BY_KEY[key]
-            if input_type not in qc_check.supported_input_types:
-                logger.info(f"Forced QC check '{key}' not supported for input {input_type}")
-                continue
-            paths.append(Path(_dir_qc, f'{key}.json'))
     return paths
