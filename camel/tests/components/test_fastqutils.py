@@ -503,6 +503,33 @@ class TestFastqUtils(CamelTestSuite):
         count = FastqUtils.count_bases(TestFastqUtils.test_file_dir / 'fq-pe.fq.gz')
         self.assertEqual(count, 1502)
 
+    def test_is_fastq_with_fastq(self) -> None:
+        """
+        Tests the function that checks whether the input file is a FASTQ file using a FASTQ file as input.
+        :return: None
+        """
+        input_file = TestFastqUtils.test_file_dir / 'fq-file.fastq'
+        is_fastq = FastqUtils.is_fastq(input_file)
+        self.assertTrue(is_fastq)
+
+    def test_is_fastq_with_gzip_fastq(self) -> None:
+        """
+        Tests the function that checks whether the input file is a FASTQ file using a gzipped FASTQ file as input.
+        :return: None
+        """
+        input_file = TestFastqUtils.test_file_dir / 'fq-file.fastq.gz'
+        is_fastq = FastqUtils.is_fastq(input_file)
+        self.assertTrue(is_fastq)
+
+    def test_is_fastq_with_fasta(self) -> None:
+        """
+        Tests the function that checks whether the input file is a FASTQ file using a FASTA file as input.
+        :return: None
+        """
+        input_file = TestFastqUtils.test_file_dir / 'toy.fasta'
+        is_fastq = FastqUtils.is_fastq(input_file)
+        self.assertFalse(is_fastq)
+
 
 if __name__ == '__main__':
     unittest.main()

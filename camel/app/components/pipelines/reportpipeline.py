@@ -8,6 +8,7 @@ from Bio import SeqIO
 
 from camel.app.components import mainscriptutils
 from camel.app.components.files import fastautils
+from camel.app.components.files.fastautils import FastaUtils
 from camel.app.components.files.fastqutils import FastqUtils
 from camel.app.components.files.fileutils import FileUtils
 from camel.app.components.phylogeny.snpphylogenyutils import InvalidInputError
@@ -95,9 +96,9 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
                     seqs = list(SeqIO.parse(handle, 'fasta'))
                 except BaseException as err:
                     raise InvalidInputError(f'Invalid FASTA input: {err}')
-            if self.__is_fastq():
-                raise InvalidInputError(f'The input file is not a FASTA file.')
-            if self.__duplicate_seq_ids():
+            if FastqUtils.is_fastq(self._args.fasta):
+                raise InvalidInputError(f'Expected a FASTA file, but a FASTQ file was detected')
+            if FastaUtils.has_duplicates(self._args.fasta):
                 raise InvalidInputError(f'The input FASTA file contains duplicate sequence IDs.')
             if self._args.detection_method != 'blast':
                 raise InvalidInputError(f'For FASTA input, only BLAST-based detection is available.')
@@ -116,32 +117,6 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
             logger.info(f'PE reverse FASTQ hash: {FileUtils.hash_file(self._args.fastq_pe[1])}')
         else:
             logger.debug(f"FASTQ checking not implemented yet for input type '{self._args.input_type}'")
-
-    def __is_fastq(self) -> bool:
-        """
-        Checks whether the input file is a FASTQ file.
-        :return bool: boolean indicating whether the input file is a FASTQ file or not
-        """
-        with open(self._args.fasta) as handle:
-            fastq = SeqIO.parse(handle, 'fastq')
-            try:
-                return any(fastq)
-            except ValueError:
-                return False
-
-    def __duplicate_seq_ids(self) -> bool:
-        """
-        Checks if there are duplicate sequence IDs in the input FASTA file.
-        :return: boolean indicating whether the input FASTA file contains duplicate IDs or not
-        """
-        seq_ids = set()
-        with open(self._args.fasta) as handle:
-            for record in SeqIO.parse(handle, 'fasta'):
-                if record.id in seq_ids:
-                    return True
-                else:
-                    seq_ids.add(record.id)
-        return False
 
     def _export_assembly(self) -> None:
         """

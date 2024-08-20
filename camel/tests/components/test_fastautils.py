@@ -97,6 +97,24 @@ class TestFastaUtils(CamelTestSuite):
         self.assertTrue(output_file.exists())
         self.assertGreater(output_file.stat().st_size, 0)
 
+    def test_has_duplicates_false(self) -> None:
+        """
+        Tests the function that checks whether a FASTA file has duplicate seq IDs.
+        :return: None
+        """
+        input_file = TestFastaUtils.test_file_dir / 'toy.fasta'
+        has_duplicates = FastaUtils.has_duplicates(input_file)
+        self.assertFalse(has_duplicates)
+
+    def test_has_duplicates_true(self) -> None:
+        """
+        Tests the function that checks whether a FASTA file has duplicate seq IDs.
+        :return: None
+        """
+        input_file = TestFastaUtils.test_file_dir / 'toy_with_duplicates.fasta'
+        has_duplicates = FastaUtils.has_duplicates(input_file)
+        self.assertTrue(has_duplicates)
+
 
 if __name__ == '__main__':
     unittest.main()
