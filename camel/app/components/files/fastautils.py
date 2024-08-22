@@ -195,3 +195,18 @@ class FastaUtils(object):
                     "phred_quality": fake_quality})
                 # Write the SeqRecord in FASTQ format
                 SeqIO.write(fake_record, fastq_file, 'fastq')
+
+    @staticmethod
+    def has_duplicates(fasta: Path) -> bool:
+        """
+        Checks if there are duplicate sequence IDs in the FASTA file.
+        :param fasta: FASTA file that has to be checked for duplicate sequence IDs
+        :return: boolean indicating whether the FASTA file contains duplicate IDs or not
+        """
+        seq_ids = set()
+        with open(fasta) as handle:
+            for record in SeqIO.parse(handle, 'fasta'):
+                if record.id in seq_ids:
+                    return True
+                seq_ids.add(record.id)
+        return False

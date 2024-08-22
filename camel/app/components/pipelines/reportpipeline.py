@@ -8,6 +8,7 @@ from Bio import SeqIO
 
 from camel.app.components import mainscriptutils
 from camel.app.components.files import fastautils
+from camel.app.components.files.fastautils import FastaUtils
 from camel.app.components.files.fastqutils import FastqUtils
 from camel.app.components.files.fileutils import FileUtils
 from camel.app.components.phylogeny.snpphylogenyutils import InvalidInputError
@@ -93,11 +94,15 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
             with open(self._args.fasta) as handle:
                 try:
                     seqs = list(SeqIO.parse(handle, 'fasta'))
-                    logger.info(f'Valid FASTA file ({len(seqs):,} sequences)')
                 except BaseException as err:
                     raise InvalidInputError(f'Invalid FASTA input: {err}')
+            if FastqUtils.is_fastq(self._args.fasta):
+                raise InvalidInputError(f'Expected a FASTA file, but a FASTQ file was detected')
+            if FastaUtils.has_duplicates(self._args.fasta):
+                raise InvalidInputError(f'The input FASTA file contains duplicate sequence IDs.')
             if self._args.detection_method != 'blast':
                 raise InvalidInputError(f'For FASTA input, only BLAST-based detection is available.')
+            logger.info(f'Valid FASTA file ({len(seqs):,} sequences)')
 
         # FASTQ PE inputs
         elif self._args.input_type in ('illumina', 'hybrid'):
