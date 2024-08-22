@@ -105,7 +105,7 @@ rule resfinder4_create_summary:
             handle.write('\t'.join([
                 f'resfinder4_genes', ', '.join(list(data_genes['Resistance gene'])) if not data_genes.empty else '-']))
             handle.write('\n')
-            data_genes_list = data_genes.values.tolist()
+            data_genes_list = data_genes.astype(str).values.tolist()
             handle.write(f'resfinder4_genes_hits\t{data_genes_list if not data_genes.empty else "-"}\n')
             if params.point:
                 data_mutations = pd.read_table(tsv_point)
