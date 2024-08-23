@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pandas as pd
+import json
 
 from camel.app.camel import Camel
 from camel.app.io.tooliodirectory import ToolIODirectory
@@ -92,6 +93,9 @@ rule amrfinder_dump_summary_info:
             handle.write('amrfinder_hits_perfect\t{}'.format(', '.join(hits_perfect) if len(hits_perfect) > 0 else '-'))
             handle.write('\n')
             handle.write('amrfinder_hits_other\t{}'.format(', '.join(hits_other) if len(hits_other) > 0 else '-'))
+            handle.write('\n')
+            handle.write('amrfinder_genes_hits\t{}'.format(json.dumps(data_amr.iloc[:,1:-3].astype(str).values.tolist())
+                                                           if not data_amr.empty else []))
             handle.write('\n')
             handle.write(f"amrfinder_tool_version\t{informs['_name']}")
             handle.write('\n')
