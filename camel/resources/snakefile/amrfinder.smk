@@ -94,7 +94,7 @@ rule amrfinder_dump_summary_info:
             handle.write('\n')
             handle.write('amrfinder_hits_other\t{}'.format(', '.join(hits_other) if len(hits_other) > 0 else '-'))
             handle.write('\n')
-            handle.write('amrfinder_genes_hits\t{}'.format(json.dumps(data_amr.iloc[:,1:-3].astype(str).values.tolist())
+            handle.write('amrfinder_genes_hits\t{}'.format(json.dumps(data_amr.drop(columns=['is_perfect']).astype(str).values.tolist())
                                                            if not data_amr.empty else []))
             handle.write('\n')
             handle.write(f"amrfinder_tool_version\t{informs['_name']}")
