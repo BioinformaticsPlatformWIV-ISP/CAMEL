@@ -65,7 +65,6 @@ resfinder4:
   point: False
   db: /db/resfinder4
 
-
 species_determination:
   tsv: /db/pipelines/yersinia/cgMLST_taxonomic.tsv
 
@@ -80,6 +79,8 @@ gene_detection:
       name: Gene
       key: gene
     hidden: true
+  ampc_gene_detection:
+    path: /db/pipelines/yersinia/gene_detection-ampc
 
 ###################
 # Sequence typing #
