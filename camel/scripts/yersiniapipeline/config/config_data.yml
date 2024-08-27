@@ -74,13 +74,19 @@ species_determination:
 gene_detection:
   vfdb_core:
     path: /db/gene_detection/VFDB_core
-    perc_identity_cutoff: 90
     metadata:
       name: Gene
       key: gene
     hidden: true
   ampc_gene_detection:
     path: /db/pipelines/yersinia/gene_detection-ampc
+    params:
+      blastn:
+        min_percent_identity: 95
+        min_coverage: 60
+    metadata:
+      name: Antibiotics
+      key: antibiotics
 
 ###################
 # Sequence typing #
