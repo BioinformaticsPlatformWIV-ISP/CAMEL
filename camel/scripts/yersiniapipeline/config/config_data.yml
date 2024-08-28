@@ -78,10 +78,13 @@ gene_detection:
       name: Gene
       key: gene
     hidden: true
-  ampc_gene_detection:
+  ampc:
     path: /db/pipelines/yersinia/gene_detection-ampc
     params:
       blastn:
+        min_percent_identity: 95
+        min_coverage: 60
+      kma:
         min_percent_identity: 95
         min_coverage: 60
     metadata:

@@ -58,7 +58,7 @@ rule report_create_command_section:
         INFORMS_mlst = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='mlst') if 'mlst' in config['analyses'] else [],
         INFORMS_mlst_mcnally = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='mlst_mcnally') if 'mlst_mcnally' in config['analyses'] else [],
         INFORMS_amr = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='resistance_genes') if 'resistance_genes' in config['analyses'] else [],
-        INFORMS_ampc_amr = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='ampc_gene_detection') if 'ampc_gene_detection' in config['analyses'] else[],
+        INFORMS_ampc = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='ampc') if 'ampc' in config['analyses'] else[],
         INFORMS_cgmlst = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='cgmlst') if 'cgmlst' in config['analyses'] else [],
         INFORMS_cgmlst_ye = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='cgmlst_ye') if 'cgmlst_ye' in config['analyses'] else [],
         INFORMS_cgmlst_yp = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='cgmlst_yp') if 'cgmlst_yp' in config['analyses'] else [],
@@ -88,7 +88,7 @@ rule combine_reports:
         # AMR detection
         report_amrfinder = Path(config['working_dir']) / (amrfinder.OUTPUT_AMRFINDER_REPORT if 'amrfinder' in config['analyses'] else amrfinder.OUTPUT_AMRFINDER_REPORT_EMPTY),
         report_resfinder4 = Path(config['working_dir']) / (resfinder4.OUTPUT_RESFINDER4_REPORT if 'resfinder4' in config['analyses'] else resfinder4.OUTPUT_RESFINDER4_REPORT_EMPTY),
-        report_ampc_amr = gene_detection.get_gene_detection_report('ampc_gene_detection',config),
+        report_ampc_amr = gene_detection.get_gene_detection_report('ampc', config),
         # Virulence gene detection
         report_vfdb_core = gene_detection.get_gene_detection_report('vfdb_core', config),
         # Genomic context investigation
@@ -177,7 +177,7 @@ rule combine_summary_files:
         confindr.get_summary(config),
         Path(config['working_dir']) / amrfinder.OUTPUT_AMRFINDER_SUMMARY if 'amrfinder' in config['analyses'] else [],
         Path(config['working_dir']) / resfinder4.OUTPUT_RESFINDER4_SUMMARY if 'resfinder4' in config['analyses'] else [],
-        Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='ampc_gene_detection') if 'ampc_gene_detection' in config['analyses'] else [],
+        Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='ampc') if 'ampc' in config['analyses'] else [],
         Path(config['working_dir']) / mobsuite.OUTPUT_MOB_SUITE_SUMMARY if 'mob_suite' in config['analyses'] else [],
         # Virulence detection
         Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='vfdb_core') if 'vfdb_core' in config['analyses'] else [],
