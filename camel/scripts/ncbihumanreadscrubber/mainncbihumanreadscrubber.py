@@ -47,6 +47,7 @@ class MainNcbiHumanReadScrubber(ReportPipeline):
         """
         config_data = self.get_template_data(input_files)
         config_data['analyses'] = ['human_read_scrubbing']
+        config_data['output_removed_reads'] = 'true' if self._args.export_removed_reads else 'false'
         # Add existing config data
         with open(CONFIG_DATA) as handle_in:
             config_data.update(yaml.safe_load(handle_in.read()))
@@ -60,8 +61,10 @@ class MainNcbiHumanReadScrubber(ReportPipeline):
         """
         argument_parser = argparse.ArgumentParser()
         ReportPipeline.add_common_arguments(argument_parser)
+        argument_parser.add_argument(
+            '--export-removed-reads', help="Export the removed reads", action='store_true')
         arguments = argument_parser.parse_args(args)
-        # add this input_type line so as to not have to modify the galaxy wrapper for this tool
+                # add this input_type line so as to not have to modify the galaxy wrapper for this tool
         arguments.input_type = 'fasta' if arguments.fasta else 'ont' if arguments.fastq_se else arguments.input_type
         return arguments
 

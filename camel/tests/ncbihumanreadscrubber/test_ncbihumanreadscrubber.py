@@ -23,9 +23,11 @@ class TestNcbiHumanReadScrubber(CamelTestSuite):
         scrubber.add_input_files({
             'FASTQ_SINGLE_GUNZIP': [ToolIOFile(TestNcbiHumanReadScrubber.path_fq_in)]
         })
-        scrubber.update_parameters(interleaved='false', outputfile=self.running_dir / 'test_scrubber_output.fastq')
+        scrubber.update_parameters(interleaved='false', keep='true', outputfile=self.running_dir / 'test_scrubber_output.fastq', outputfile_removed=self.running_dir / 'test_scrubber_reads_removed.fastq')
+        #updated in the ncbi.py as excluded
         scrubber.run(self.running_dir)
         self.verify_output_files(scrubber, 'FASTQ_SCRUBBED', 1)
+        self.verify_output_files(scrubber, 'FASTQ_REMOVED', 1)
 
         # Check that the input file is larger than the output file
         self.assertGreater(
@@ -51,7 +53,8 @@ class TestNcbiHumanReadScrubber(CamelTestSuite):
             '--working-dir', str(self.running_dir),
             '--output-tsv', "None",
             '--input-type', 'illumina',
-            '--threads', '2'
+            '--threads', '2',
+            '--export-removed-reads'
         ]
         main = MainNcbiHumanReadScrubber(args)
         main.run()

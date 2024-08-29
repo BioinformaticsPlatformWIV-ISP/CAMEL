@@ -26,8 +26,9 @@ class NcbiHumanReadScrubber(Tool):
         """
         self.__build_command()
         self._execute_command()
-        self.__set_output()
         self._parse_stderr()
+        self.__set_output()
+
 
     def _check_input(self) -> None:
         """
@@ -47,9 +48,12 @@ class NcbiHumanReadScrubber(Tool):
         self._command.command = ' '.join([
             f'export TMPDIR={dir_temp};',
             self._tool_command,
-            *self._build_options(excluded_parameters=['interleaved']),
+            *self._build_options(excluded_parameters=['interleaved', 'keep', 'outputfile_removed']),
             self._parameters['interleaved'].option if self._parameters['interleaved'].value == 'true' else '',
+            self._parameters['keep'].option if self._parameters['keep'].value == 'true' else '',
+            (self._parameters['outputfile_removed'].option + ' ' + self._parameters['outputfile_removed'].value) if self._parameters['keep'].value == 'true' else '',
             '-i', str(self._tool_inputs['FASTQ_SINGLE_GUNZIP'][0].path)])
+          #keep and outputfile_removed linked, adds args -r -u and path if keep = true
 
     def _check_command_output(self) -> None:
         """
@@ -65,7 +69,12 @@ class NcbiHumanReadScrubber(Tool):
         :return: None
         """
         path_out = self.folder / self._parameters['outputfile'].value
+        path_removed = self.folder / self._parameters['outputfile_removed'].value if self._parameters['keep'].value == 'true' else []
         self._tool_outputs['FASTQ_SCRUBBED'] = [ToolIOFile(path_out)]
+        if self._informs.get('statistics').get('count_removed') != 0 and self._parameters['keep'].value == 'true':
+            self._tool_outputs['FASTQ_REMOVED'] = [ToolIOFile(path_removed)]
+        else:
+            self.tool_outputs['FASTQ_REMOVED'] = []
 
     def _parse_stderr(self) -> None:
         """
