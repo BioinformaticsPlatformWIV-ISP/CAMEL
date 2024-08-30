@@ -1,7 +1,7 @@
 dependencies: [ncbi-sra-human-scrubber/2.2.1]
 parameters:
   remove: {default: true, mandatory: false, option: -x, value: null}
-  keep: {default: false, mandatory: false, option: -r, value: null}
+  export_human_reads: {default: false, mandatory: false, option: -r, value: null}
   outputfile_removed : {default: false, mandatory: false, option: -u, value: null}
   interleaved: {default: false, mandatory: false, option: -s, value: null}
   threads: {default: true, mandatory: false, option: -p, value: 1}

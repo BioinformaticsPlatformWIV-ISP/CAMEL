@@ -29,7 +29,6 @@ class NcbiHumanReadScrubber(Tool):
         self._parse_stderr()
         self.__set_output()
 
-
     def _check_input(self) -> None:
         """
         Checks if the input is valid.
@@ -48,12 +47,12 @@ class NcbiHumanReadScrubber(Tool):
         self._command.command = ' '.join([
             f'export TMPDIR={dir_temp};',
             self._tool_command,
-            *self._build_options(excluded_parameters=['interleaved', 'keep', 'outputfile_removed']),
+            *self._build_options(excluded_parameters=['interleaved', 'export_human_reads', 'outputfile_removed']),
             self._parameters['interleaved'].option if self._parameters['interleaved'].value == 'true' else '',
-            self._parameters['keep'].option if self._parameters['keep'].value == 'true' else '',
-            (self._parameters['outputfile_removed'].option + ' ' + self._parameters['outputfile_removed'].value) if self._parameters['keep'].value == 'true' else '',
+            self._parameters['export_human_reads'].option if self._parameters['export_human_reads'].value == 'true' else '',
+            (self._parameters['outputfile_removed'].option + ' ' + self._parameters['outputfile_removed'].value) if self._parameters['export_human_reads'].value == 'true' else '',
             '-i', str(self._tool_inputs['FASTQ_SINGLE_GUNZIP'][0].path)])
-          #keep and outputfile_removed linked, adds args -r -u and path if keep = true
+          #export_human_reads and outputfile_removed linked, adds args -r -u and path if export_human_reads = true
 
     def _check_command_output(self) -> None:
         """
@@ -69,9 +68,9 @@ class NcbiHumanReadScrubber(Tool):
         :return: None
         """
         path_out = self.folder / self._parameters['outputfile'].value
-        path_removed = self.folder / self._parameters['outputfile_removed'].value if self._parameters['keep'].value == 'true' else []
+        path_removed = self.folder / self._parameters['outputfile_removed'].value if self._parameters['export_human_reads'].value == 'true' else []
         self._tool_outputs['FASTQ_SCRUBBED'] = [ToolIOFile(path_out)]
-        if self._informs.get('statistics').get('count_removed') != 0 and self._parameters['keep'].value == 'true':
+        if self._informs.get('statistics').get('count_removed') != 0 and self._parameters['export_human_reads'].value == 'true':
             self._tool_outputs['FASTQ_REMOVED'] = [ToolIOFile(path_removed)]
         else:
             self.tool_outputs['FASTQ_REMOVED'] = []

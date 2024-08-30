@@ -13,8 +13,6 @@ OUTPUT_SCRUBBING_SUMMARY = _dir_scrubbing / 'output' / 'summary_out.tsv'
 OUTPUT_SCRUBBING_SUMMARY_JSON = _dir_scrubbing / 'output' / 'summary_out.json'
 OUTPUT_SCRUBBING_FASTQ = _dir_scrubbing / 'output' / 'fastq.io'
 OUTPUT_SCRUBBING_FASTA = _dir_scrubbing / 'output' / 'fasta.io'
-OUTPUT_REMOVED_READS = _dir_scrubbing / 'scrubbing' / 'fastq.io'
-
 
 def get_reports(config: Dict[str, Any]) -> List[Path]:
     """
