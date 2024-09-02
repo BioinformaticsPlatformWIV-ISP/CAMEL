@@ -53,8 +53,11 @@ rule scrubbing_fastq_interleave_and_gunzip:
             path_in = fastq_in[0].path
             path_out = Path(str(params.running_dir), path_in.name.replace('.gz', ''))
 
-            path_out = path_in if not FileSystemHelper.is_gzipped(path_in) else FileSystemHelper.gzip_extract(path_in, path_out)
-            SnakemakeUtils.dump_object([ToolIOFile(Path(str(params.running_dir), path_in.name.replace('.gz', '')))], Path(output.FASTQ_SINGLE_GUNZIP))
+            if not FileSystemHelper.is_gzipped(path_in):
+                SnakemakeUtils.dump_object([ToolIOFile(path_in)], Path(output.FASTQ_SINGLE_GUNZIP))
+            else:
+                FileSystemHelper.gzip_extract(path_in, path_out)
+                SnakemakeUtils.dump_object([ToolIOFile(path_out)], Path(output.FASTQ_SINGLE_GUNZIP))
 
         else:
             interleaved_out = Path(str(params.running_dir), f"{fastq_in[0].path.stem}_interleaved.fastq")
@@ -133,7 +136,7 @@ rule scrubbing_fasta_fq2fa:
         SnakemakeUtils.dump_object([ToolIOFile(path_out)], Path(output.FASTA))
 
         #Create removed reads file if required in fasta format if export_removed_reads enabled
-        if tool_inform['statistics']['count_removed'] != 0 and config['output_removed_reads']=='true':
+        if tool_inform['statistics']['count_removed'] != 0 and config['output_removed_reads'] == 'true':
             path_removed_in = (SnakemakeUtils.load_object(Path(input.FASTQ_REMOVED)))[0].path
             path_removed_out = Path(str(params.running_dir), f"{path_removed_in.stem}.fasta")
 
@@ -152,7 +155,7 @@ rule scrubbing_fastq_deinterleave_and_gzip:
     input:
         FASTQ = Path(config['working_dir']) / human_read_scrubbing.INPUT_SCRUBBING_FASTQ,
         FASTQ_SCRUBBED = rules.scrubbing_run_scrubber.output.FASTQ_SCRUBBED,
-        FASTQ_REMOVED = rules.scrubbing_run_scrubber.output.FASTQ_REMOVED if config['output_removed_reads'] =='true' else [],
+        FASTQ_REMOVED = rules.scrubbing_run_scrubber.output.FASTQ_REMOVED if config['output_removed_reads'] == 'true' else [],
         INFORMS_SCRUBBER = rules.scrubbing_run_scrubber.output.INFORMS
     output:
         FASTQ_DEINTERLEAVED_GZIPPED = Path(config['working_dir']) / 'human_read_scrubbing' / '{input_format}' / 'output' / 'fastq.io',
@@ -242,8 +245,8 @@ rule scrubbing_report:
             format = 'fasta' if 'fasta' in config['input'] else 'fastq.gz'
 
             for n in range(files):
-                relative_path = Path(config['output_dir'], 'human_read_scrubbing', (SnakemakeUtils.load_object(Path(input.GZIP_REMOVED)))[n].path.name)
-                section.add_link_to_file(f'Download {format} file', relative_path)
+                relative_path = Path('human_read_scrubbing', (SnakemakeUtils.load_object(Path(input.GZIP_REMOVED)))[n].path.name)
+                section.add_link_to_file(f'Download {format} file ({n + 1})', relative_path)
                 section.add_file((SnakemakeUtils.load_object(Path(input.GZIP_REMOVED)))[n].path, relative_path)
 
         SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output.VAL_HTML))

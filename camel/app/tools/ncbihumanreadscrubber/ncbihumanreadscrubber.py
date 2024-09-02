@@ -52,7 +52,7 @@ class NcbiHumanReadScrubber(Tool):
             self._parameters['export_human_reads'].option if self._parameters['export_human_reads'].value == 'true' else '',
             (self._parameters['outputfile_removed'].option + ' ' + self._parameters['outputfile_removed'].value) if self._parameters['export_human_reads'].value == 'true' else '',
             '-i', str(self._tool_inputs['FASTQ_SINGLE_GUNZIP'][0].path)])
-          #export_human_reads and outputfile_removed linked, adds args -r -u and path if export_human_reads = true
+            # Export_human_reads and outputfile_removed linked, adds args -r -u and path if export_human_reads = true
 
     def _check_command_output(self) -> None:
         """

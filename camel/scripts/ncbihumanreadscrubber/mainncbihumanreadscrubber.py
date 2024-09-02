@@ -64,7 +64,7 @@ class MainNcbiHumanReadScrubber(ReportPipeline):
         argument_parser.add_argument(
             '--export-removed-reads', help="Export the removed reads", action='store_true')
         arguments = argument_parser.parse_args(args)
-                # add this input_type line so as to not have to modify the galaxy wrapper for this tool
+        # add this input_type line so as to not have to modify the galaxy wrapper for this tool
         arguments.input_type = 'fasta' if arguments.fasta else 'ont' if arguments.fastq_se else arguments.input_type
         return arguments
 
