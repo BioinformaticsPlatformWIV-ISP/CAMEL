@@ -53,15 +53,19 @@ class TestNcbiHumanReadScrubber(CamelTestSuite):
 
     def test_scrubbing_paired(self) -> None:
         """
-        Tests the NCBI human read scrubbing standalone pipeline.
+        Tests the NCBI human read scrubbing standalone pipeline with illumina files.
         :return: None
         """
         path_report_out = self.running_dir / 'out' / 'report.html'
-        for name in ['', 'nh_']:
+        #_nh: files without human reads
+        hum_reads =  ['', 'nh_', '', 'nh_']
+        extension = ['', '', '.gz', '.gz']
+
+        for hr, ext in zip(hum_reads, extension):
             args = [
                 '--fastq-pe',
-                str(TestNcbiHumanReadScrubber.test_file_dir / f'{name}reads_illumina_1.fastq'),
-                str(TestNcbiHumanReadScrubber.test_file_dir / f'{name}reads_illumina_2.fastq'),
+                str(TestNcbiHumanReadScrubber.test_file_dir / f'{hr}reads_illumina_1.fastq{ext}'),
+                str(TestNcbiHumanReadScrubber.test_file_dir / f'{hr}reads_illumina_2.fastq{ext}'),
                 '--output-html', str(path_report_out),
                 '--output-dir', str(path_report_out.parent),
                 '--working-dir', str(self.running_dir),
@@ -76,7 +80,7 @@ class TestNcbiHumanReadScrubber(CamelTestSuite):
 
     def test_scrubbing_fasta(self) -> None:
         """
-        Tests the NCBI human read scrubbing standalone pipeline.
+        Tests the NCBI human read scrubbing standalone pipeline with fasta files.
         :return: None
         """
         path_report_out = self.running_dir / 'out' / 'report.html'
