@@ -1,14 +1,16 @@
 dependencies: [bakta/1.9.4]
 parameters:
-  database: {default: false, mandatory: false, option: -d, p_index: 0, value: null}
-  outputfile: {default: false, mandatory: false, option: -o , p_index: 0, value: null}
-  proteome: {default: false, mandatory: false, option: --proteins, p_index: 0, value: null}
-  #genus: {default: false, mandatory: false, option: --species, p_index: 0, value: null}
-  #gram: {default: false, mandatory: false, option: --species, p_index: 0, value: null}
-  #species: {default: false, mandatory: false, option: --species, p_index: 0, value: null}
-  #strain: {default: false, mandatory: false, option: --strain, p_index: 0, value: null}
-  #plasmid: {default: false, mandatory: false, option: --plasmid, p_index: 0, value: null}
-  complete: {default: false, mandatory: false, option: --complete, p_index: 0, value: null}
-  metagenome: {default: false, mandatory: false, option: --meta, p_index: 0, value: null}
-  threads: {default: true, mandatory: false, option: -p, value: 1}
+  database: {default: true, mandatory: true, option: -d, value: '/db/bakta/latest'}
+  outputfile: {default: false, mandatory: false, option: -o , value: null}
+  proteome: {default: false, mandatory: false, option: --proteins, value: null}
+  gram: {default: false, mandatory: false, option: --gram, value: null}
+  genus: {default: false, mandatory: false, option: --genus, value: null}
+  species: {default: false, mandatory: false, option: --species, value: null}
+  strain: {default: false, mandatory: false, option: --strain, value: null}
+  plasmid: {default: false, mandatory: false, option: --plasmid, value: null}
+  annotation: {default: false, mandatory: false, option: --complete, value: null}
+  metagenome: {default: false, mandatory: false, option: --meta, value: null}
+  compliance: {default: false, mandatory: false, option: --compliant, value: null}
+  locus: {default: false, mandatory: false, option: --locus-tag, value: null}
+  threads: {default: true, mandatory: false, option: --threads, value: 2}
 tool_command: bakta
