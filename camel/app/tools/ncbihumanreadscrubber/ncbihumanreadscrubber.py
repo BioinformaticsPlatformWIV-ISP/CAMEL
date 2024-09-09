@@ -41,6 +41,7 @@ class NcbiHumanReadScrubber(Tool):
     def __build_command(self) -> None:
         """
         Builds the command line call to execute HRRT.
+        Export_human_reads and outputfile_removed linked, adds args -r -u and path if export_human_reads = true
         :return: None
         """
         dir_temp = self._camel.config['temp_dir']
@@ -50,9 +51,9 @@ class NcbiHumanReadScrubber(Tool):
             *self._build_options(excluded_parameters=['interleaved', 'export_human_reads', 'outputfile_removed']),
             self._parameters['interleaved'].option if self._parameters['interleaved'].value == 'true' else '',
             self._parameters['export_human_reads'].option if self._parameters['export_human_reads'].value == 'true' else '',
-            (self._parameters['outputfile_removed'].option + ' ' + self._parameters['outputfile_removed'].value) if self._parameters['export_human_reads'].value == 'true' else '',
-            '-i', str(self._tool_inputs['FASTQ_SINGLE_GUNZIP'][0].path)])
-            # Export_human_reads and outputfile_removed linked, adds args -r -u and path if export_human_reads = true
+            self._parameters['outputfile_removed'].option + ' ' + self._parameters['outputfile_removed'].value if self._parameters['export_human_reads'].value == 'true' else '',
+            '-i', str(self._tool_inputs['FASTQ_SINGLE_GUNZIP'][0].path)
+            ])
 
     def _check_command_output(self) -> None:
         """

@@ -77,7 +77,8 @@ rule scrubbing_run_scrubber:
         INFORMS = Path(config['working_dir']) / 'human_read_scrubbing' / '{input_format}' / 'scrubbing' / 'informs.io'
     params:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'human_read_scrubbing' / wildcards.input_format / 'scrubbing',
-        input_format = lambda wildcards: wildcards.input_format
+        input_format = lambda wildcards: wildcards.input_format,
+        export_human_reads = config['output_removed_reads']
     threads: max(16, workflow.cores * 0.75)
     run:
         from camel.app.tools.ncbihumanreadscrubber.ncbihumanreadscrubber import NcbiHumanReadScrubber
@@ -89,15 +90,14 @@ rule scrubbing_run_scrubber:
         else:
             interleaved = 'false'
 
-        export_human_reads = config['output_removed_reads']
-        outputfile_removed_reads = str(Path(output.FASTQ_REMOVED).with_suffix('.fastq')) if export_human_reads == 'true' else ''
+        outputfile_removed_reads = str(Path(output.FASTQ_REMOVED).with_suffix('.fastq')) if params.export_human_reads == 'true' else ''
 
         scrubber = NcbiHumanReadScrubber(camel)
         step = Step(str(rule), scrubber, camel, Path(str(params.running_dir)))
         outputfile_scrubbing = str(Path(output.FASTQ_SCRUBBED).with_suffix('.fastq')) if params.input_format != 'fasta' \
             else str(Path(str(params.running_dir), f"{SnakemakeUtils.load_object(Path(input.FASTQ_SINGLE_GUNZIP))[0].path.name}_scrubbed.fastq"))
 
-        scrubber.update_parameters(interleaved=interleaved, outputfile=outputfile_scrubbing, threads=threads, export_human_reads=export_human_reads, outputfile_removed=outputfile_removed_reads)
+        scrubber.update_parameters(interleaved=interleaved, outputfile=outputfile_scrubbing, threads=threads, export_human_reads=params.export_human_reads, outputfile_removed=outputfile_removed_reads)
 
         SnakemakeUtils.add_pickle_inputs(scrubber, input, excluded_keys=['FASTQ'])
         step.run_step()
@@ -107,7 +107,7 @@ rule scrubbing_run_scrubber:
             else:
                 scrubber.informs['_tag'] = 'ONT'
         SnakemakeUtils.dump_tool_outputs(scrubber, output, keys=['FASTQ_SCRUBBED', 'INFORMS'])
-        SnakemakeUtils.dump_tool_outputs(scrubber, output, keys=['FASTQ_REMOVED'], ignore_missing_output=True) if config['output_removed_reads']=='true' else ''
+        SnakemakeUtils.dump_tool_outputs(scrubber, output, keys=['FASTQ_REMOVED'], ignore_missing_output=True) if params.export_human_reads == 'true' else ''
 
 rule scrubbing_fasta_fq2fa:
     """

@@ -56,7 +56,7 @@ class TestNcbiHumanReadScrubber(CamelTestSuite):
         path_report_out = self.running_dir / 'out' / 'report.html'
         path_removed_reads = self.running_dir / 'out' / 'human_read_scrubbing'
         # _nh: files without human reads
-        hum_reads =  ['', 'nh_', '', 'nh_']
+        hum_reads = ['', 'nh_', '', 'nh_']
         extension = ['', '', '.gz', '.gz']
 
         for hr, ext in zip(hum_reads, extension):
@@ -103,7 +103,11 @@ class TestNcbiHumanReadScrubber(CamelTestSuite):
             (self.assertTrue(path_removed_reads.exists()) and self.assertGreater(path_removed_reads.stat().st_size, 0)) if hum == '' else not self.assertTrue(path_removed_reads.exists())
             self.assertGreater(path_report_html.stat().st_size, 0)
 
-    def test_scrubbing_default (self) -> None:
+    def test_scrubbing_default(self) -> None:
+        """
+        Tests the NCBI human read scrubbing standalone pipeline with the default args
+        :return: None
+        """
         for fastq, val in zip(TestNcbiHumanReadScrubber.files_list, TestNcbiHumanReadScrubber.output):
             scrubber_def = NcbiHumanReadScrubber(self.camel)
             scrubber_def.add_input_files({
@@ -126,5 +130,7 @@ class TestNcbiHumanReadScrubber(CamelTestSuite):
 
             # Check if the informs were added
             self.assertIn('statistics', scrubber_def.informs)
+
+
 if __name__ == '__main__':
     unittest.main()

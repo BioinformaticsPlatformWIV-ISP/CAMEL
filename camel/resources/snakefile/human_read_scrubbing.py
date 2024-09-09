@@ -14,6 +14,7 @@ OUTPUT_SCRUBBING_SUMMARY_JSON = _dir_scrubbing / 'output' / 'summary_out.json'
 OUTPUT_SCRUBBING_FASTQ = _dir_scrubbing / 'output' / 'fastq.io'
 OUTPUT_SCRUBBING_FASTA = _dir_scrubbing / 'output' / 'fasta.io'
 
+
 def get_reports(config: Dict[str, Any]) -> List[Path]:
     """
     Returns the paths to the human read scrubbing reports.
