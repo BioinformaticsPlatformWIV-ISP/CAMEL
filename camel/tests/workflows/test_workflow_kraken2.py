@@ -115,7 +115,7 @@ class TestWorkflowKraken2(CamelTestSuite):
         :return: None
         """
         wrapper = Kraken2Wrapper(self.running_dir)
-        expected_species = 'Escherichia'
+        expected_species = 'Escherichia coli'
         wrapper.run_workflow_fasta(
             'test_sample', TestWorkflowKraken2.fasta, expected_species, db=TestWorkflowKraken2.path_db)
         self.assertGreater(len(wrapper.output.report_section.to_html()), 0)
@@ -127,7 +127,7 @@ class TestWorkflowKraken2(CamelTestSuite):
         :return: None
         """
         wrapper = Kraken2Wrapper(self.running_dir)
-        expected_species = 'Neisseria'
+        expected_species = 'Neisseria meningitidis'
         wrapper.run_workflow_fasta(
             'test_sample', TestWorkflowKraken2.fasta, expected_species, db=TestWorkflowKraken2.path_db)
         self.assertGreater(len(wrapper.output.report_section.to_html()), 0)

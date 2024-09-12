@@ -27,7 +27,7 @@ class Kraken2Wrapper(object):
 
     def __init__(self, working_dir: Union[str, Path]) -> None:
         """
-        Initializes the read trimming helper.
+        Initializes the kraken2wrapper.
         :param working_dir: Working directory
         :return: None
         """
