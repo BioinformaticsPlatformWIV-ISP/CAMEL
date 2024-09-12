@@ -5,7 +5,7 @@ from camel.app.tools.tool import Tool
 
 class KrakenReportParser(Tool):
     """
-    Parses Kraken output reports.
+    Parses Kraken output reports for fastq files.
     """
 
     def __init__(self, camel):
