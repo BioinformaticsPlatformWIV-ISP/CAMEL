@@ -60,6 +60,8 @@ class TestNcbiHumanReadScrubber(CamelTestSuite):
         extension = ['', '', '.gz', '.gz']
 
         for hr, ext in zip(hum_reads, extension):
+            output_file_1 = self.running_dir / 'human_read_scrubbing' / 'fastq_pe' / 'output' / f'fastq_removed_1.fastq.gz'
+            output_file_2 = self.running_dir / 'human_read_scrubbing' / 'fastq_pe' / 'output' / f'fastq_removed_2.fastq.gz'
             args = [
                 '--fastq-pe',
                 str(TestNcbiHumanReadScrubber.test_file_dir / f'{hr}reads_illumina_1.fastq{ext}'),
@@ -75,7 +77,8 @@ class TestNcbiHumanReadScrubber(CamelTestSuite):
             main = MainNcbiHumanReadScrubber(args)
             main.run()
             self.assertGreater(path_report_out.stat().st_size, 0)
-            (self.assertTrue(path_removed_reads.exists()) and self.assertGreater(path_removed_reads.stat().st_size, 0)) if hr == '' else not self.assertTrue(path_removed_reads.exists())
+            self.assertGreater(output_file_1.stat().st_size, 0) and self.assertGreater(output_file_2.stat().st_size, 0) if hr == '' else not self.assertTrue(path_removed_reads.exists())
+
 
     def test_scrubbing_fasta(self) -> None:
         """
@@ -85,6 +88,7 @@ class TestNcbiHumanReadScrubber(CamelTestSuite):
         path_report_html = self.running_dir / 'out' / 'report.html'
         path_removed_reads = self.running_dir / 'out' / 'human_read_scrubbing'
         human_reads = ['', 'no_']
+        output_file = self.running_dir / 'human_read_scrubbing' / 'fasta' / 'output' / f'fastq_removed.fasta'
 
         for hum in human_reads:
             args = [
@@ -100,12 +104,12 @@ class TestNcbiHumanReadScrubber(CamelTestSuite):
             ]
             main = MainNcbiHumanReadScrubber(args)
             main.run()
-            (self.assertTrue(path_removed_reads.exists()) and self.assertGreater(path_removed_reads.stat().st_size, 0)) if hum == '' else not self.assertTrue(path_removed_reads.exists())
             self.assertGreater(path_report_html.stat().st_size, 0)
+            self.assertGreater(output_file.stat().st_size, 0) if hum == '' else not self.assertTrue(path_removed_reads.exists())
 
     def test_scrubbing_default(self) -> None:
         """
-        Tests the NCBI human read scrubbing standalone pipeline with the default args
+        Tests the NCBI human read scrubbing standalone pipeline with the default args.
         :return: None
         """
         for fastq, val in zip(TestNcbiHumanReadScrubber.files_list, TestNcbiHumanReadScrubber.output):
@@ -113,8 +117,11 @@ class TestNcbiHumanReadScrubber(CamelTestSuite):
             scrubber_def.add_input_files({
                 'FASTQ_SINGLE_GUNZIP': [ToolIOFile(fastq)]
             })
-            scrubber_def.update_parameters(interleaved='false', export_human_reads='false',
-                                       outputfile=self.running_dir / 'test_scrubber_output.fastq')
+            scrubber_def.update_parameters(
+                interleaved='false',
+                export_human_reads='false',
+                outputfile=self.running_dir / 'test_scrubber_output.fastq'
+            )
             # Updated in the ncbi.py as excluded
             scrubber_def.run(self.running_dir)
             self.verify_output_files(scrubber_def, 'FASTQ_SCRUBBED', 1)
