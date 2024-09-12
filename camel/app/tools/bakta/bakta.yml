@@ -1,14 +1,12 @@
 dependencies: [bakta/1.9.4]
 parameters:
-  database: {default: true, mandatory: true, option: -d, value: '/db/bakta/latest'}
-  outputfile: {default: false, mandatory: false, option: -o , value: null}
   proteome: {default: false, mandatory: false, option: --proteins, value: null}
   gram: {default: false, mandatory: false, option: --gram, value: null}
   genus: {default: false, mandatory: false, option: --genus, value: null}
   species: {default: false, mandatory: false, option: --species, value: null}
   strain: {default: false, mandatory: false, option: --strain, value: null}
   plasmid: {default: false, mandatory: false, option: --plasmid, value: null}
-  annotation: {default: false, mandatory: false, option: --complete, value: null}
+  complete_annotation: {default: false, mandatory: false, option: --complete, value: null}
   metagenome: {default: false, mandatory: false, option: --meta, value: null}
   compliance: {default: false, mandatory: false, option: --compliant, value: null}
   locus: {default: false, mandatory: false, option: --locus-tag, value: null}

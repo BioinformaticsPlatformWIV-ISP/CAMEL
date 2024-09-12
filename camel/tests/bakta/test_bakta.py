@@ -4,9 +4,10 @@ from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.bakta.bakta import Bakta
 
+
 class TestBakta(CamelTestSuite):
     """
-    Tests the ART tool.
+    Tests the BAKTA tool.
     """
     # Input files
     test_file_dir = CamelTestSuite.get_test_file_dir('bakta')
@@ -29,7 +30,7 @@ class TestBakta(CamelTestSuite):
         self.verify_output_files(bakta, 'GFF3_FILE', 1)
         self.verify_output_files(bakta, 'GBFF_FILE', 1)
 
-    def test_bakta_args(self):
+    def test_bakta_args(self) -> None:
         """
         Tests the Bakta tool with added arguments.
         :return: None
@@ -44,7 +45,7 @@ class TestBakta(CamelTestSuite):
         self.verify_output_files(bakta, 'GFF3_FILE', 1)
         self.verify_output_files(bakta, 'GBFF_FILE', 1)
 
-    def test_bakta_meta(self):
+    def test_bakta_meta(self) -> None:
         """
         Tests the Bakta tool in metagenome mode.
         :return: None
