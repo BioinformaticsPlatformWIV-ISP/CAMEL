@@ -1,5 +1,7 @@
 dependencies: [bakta/1.9.4]
 parameters:
+  database: {default: true, mandatory: true, option: --db, value: '/db/bakta/latest'}
+  output_dir: {default: true, mandatory: true, option: -o, value: 'outdir'}
   proteome: {default: false, mandatory: false, option: --proteins, value: null}
   gram: {default: false, mandatory: false, option: --gram, value: null}
   genus: {default: false, mandatory: false, option: --genus, value: null}

@@ -10,7 +10,7 @@ from camel.app.tools.tool import Tool
 class Bakta(Tool):
     """
     Bakta is a tool for the rapid & standardized annotation of bacterial genomes
-    and plasmids from both isolates and MAGs
+    and plasmids from both isolates and MAGs.
     """
 
     def __init__(self, camel: Camel) -> None:
@@ -26,14 +26,6 @@ class Bakta(Tool):
         Executes this tool.
         :return: None
         """
-        if 'FASTA' in self._tool_inputs:
-            fasta_file = self._tool_inputs['FASTA'][0]
-            self._filename = fasta_file.path.stem
-            if len(self._tool_inputs['FASTA']) != 1:
-                raise InvalidInputSpecificationError("FASTA input requires exactly 1 file.")
-        else:
-            raise ValueError("FASTA input is required")
-
         # Build the Bakta command and execute it
         self.__build_command()
         self._execute_command()
@@ -45,6 +37,13 @@ class Bakta(Tool):
         Checks the input.
         :return: None
         """
+        if 'FASTA' in self._tool_inputs:
+            fasta_file = self._tool_inputs['FASTA'][0]
+            self._filename = fasta_file.path.stem
+            if len(self._tool_inputs['FASTA']) != 1:
+                raise InvalidInputSpecificationError("FASTA input requires exactly 1 file.")
+        else:
+            raise ValueError("FASTA input is required")
         super()._check_input()
 
     def __build_command(self) -> None:
@@ -52,13 +51,9 @@ class Bakta(Tool):
         Builds the command.
         :return: None
         """
-        dir_out = Path(self._folder) / 'output'
-        dir_db = '/db/bakta/latest'
         self._command.command = ' '.join([
             self._tool_command,
-            '--db', dir_db,
             str(self._tool_inputs['FASTA'][0].path),
-            '-o', str(dir_out),
             *self._build_options()]
         )
 
@@ -81,5 +76,5 @@ class Bakta(Tool):
         :return: None
         """
         self._tool_outputs['FAA_FILE'] = [ToolIOFile(self.folder / 'output' / f'{self._filename}.faa')]
-        self._tool_outputs['GFF3_FILE'] = [ToolIOFile(self.folder / 'output' /f'{self._filename}.gff3')]
+        self._tool_outputs['GFF3_FILE'] = [ToolIOFile(self.folder / 'output' / f'{self._filename}.gff3')]
         self._tool_outputs['GBFF_FILE'] = [ToolIOFile(self.folder / 'output' / f'{self._filename}.gbff')]
