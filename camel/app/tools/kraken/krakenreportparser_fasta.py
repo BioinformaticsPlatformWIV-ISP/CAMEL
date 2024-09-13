@@ -4,7 +4,7 @@ from camel.app.tools.tool import Tool
 
 class KrakenReportParserFasta(Tool):
     """
-    Parses Kraken output reports for fasta input.
+    Parses Kraken output reports for fasta input to the species (S) level.
     """
 
     def __init__(self, camel):
@@ -63,8 +63,9 @@ class KrakenReportParserFasta(Tool):
                     if class_ != 'S' and 'S' in class_:
                         expected_percent += percent
                         continue
-                    self._informs['expected'] = (expected_spp, round(expected_percent, 2))
-                    expected = False
+                    else:
+                        self._informs['expected'] = (expected_spp, round(expected_percent, 2))
+                        expected = False
 
                 if class_ == self._parameters['level_of_depth'].value and taxa in allowed_species:
                     allowed = True
@@ -91,10 +92,20 @@ class KrakenReportParserFasta(Tool):
                         continue
                     other = False
                     if other_percent > float(self._parameters['threshold_warn'].value):
-                        if percent >= float(self._parameters['threshold_fail'].value):
+                        if percent <= float(self._parameters['threshold_fail'].value):
                             self._informs['contaminants_warn'].append((other_spp, round(other_percent, 2),))
                         else:
                             self._informs['contaminants_fail'].append((other_spp, round(other_percent, 2),))
+        if expected:
+            self._informs['expected'] = (expected_spp, round(expected_percent, 2))
+        elif allowed:
+            self._informs['allowed'].append((allowed_spp, round(allowed_percent, 2)))
+        elif other:
+            if other_percent > float(self._parameters['threshold_warn'].value):
+                if percent <= float(self._parameters['threshold_fail'].value):
+                    self._informs['contaminants_warn'].append((other_spp, round(other_percent, 2),))
+                else:
+                    self._informs['contaminants_fail'].append((other_spp, round(other_percent, 2),))
 
         if 'expected' not in self._informs:
             logger.warning("No reads matching the expected species found! ")
