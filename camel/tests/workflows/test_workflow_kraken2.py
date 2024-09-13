@@ -26,7 +26,7 @@ class TestWorkflowKraken2(CamelTestSuite):
     fastq_se_nanopore = test_file_dir / 'kraken2' / 'reads_nanopore_1.fastq.gz'
     fastq_se_nanopore_contamination = test_file_dir / 'kraken2' / 'reads_nanopore_1.fastq.gz'
 
-    fasta = test_file_dir / 'NC_002695.1.fasta'
+    fasta = test_file_dir / 'contigs.fasta'
     path_db = Path(Camel.get_instance().config['db_root'], 'kraken2_microbial', 'latest')
 
     def test_kraken2_illumina_paired_end(self) -> None:
