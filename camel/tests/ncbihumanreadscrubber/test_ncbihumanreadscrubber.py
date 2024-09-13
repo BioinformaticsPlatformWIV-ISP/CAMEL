@@ -55,13 +55,13 @@ class TestNcbiHumanReadScrubber(CamelTestSuite):
         """
         path_report_out = self.running_dir / 'out' / 'report.html'
         path_removed_reads = self.running_dir / 'out' / 'human_read_scrubbing'
+        output_file_1 = self.running_dir / 'human_read_scrubbing' / 'fastq_pe' / 'output' / f'fastq_removed_1.fastq.gz'
+        output_file_2 = self.running_dir / 'human_read_scrubbing' / 'fastq_pe' / 'output' / f'fastq_removed_2.fastq.gz'
         # _nh: files without human reads
         hum_reads = ['', 'nh_', '', 'nh_']
         extension = ['', '', '.gz', '.gz']
 
         for hr, ext in zip(hum_reads, extension):
-            output_file_1 = self.running_dir / 'human_read_scrubbing' / 'fastq_pe' / 'output' / f'fastq_removed_1.fastq.gz'
-            output_file_2 = self.running_dir / 'human_read_scrubbing' / 'fastq_pe' / 'output' / f'fastq_removed_2.fastq.gz'
             args = [
                 '--fastq-pe',
                 str(TestNcbiHumanReadScrubber.test_file_dir / f'{hr}reads_illumina_1.fastq{ext}'),
@@ -78,7 +78,6 @@ class TestNcbiHumanReadScrubber(CamelTestSuite):
             main.run()
             self.assertGreater(path_report_out.stat().st_size, 0)
             self.assertGreater(output_file_1.stat().st_size, 0) and self.assertGreater(output_file_2.stat().st_size, 0) if hr == '' else not self.assertTrue(path_removed_reads.exists())
-
 
     def test_scrubbing_fasta(self) -> None:
         """
