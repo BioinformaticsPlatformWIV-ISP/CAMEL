@@ -75,6 +75,6 @@ class Bakta(Tool):
         - gbff file
         :return: None
         """
-        self._tool_outputs['FAA_FILE'] = [ToolIOFile(self.folder / 'output' / f'{self._filename}.faa')]
-        self._tool_outputs['GFF3_FILE'] = [ToolIOFile(self.folder / 'output' / f'{self._filename}.gff3')]
-        self._tool_outputs['GBFF_FILE'] = [ToolIOFile(self.folder / 'output' / f'{self._filename}.gbff')]
+        self._tool_outputs['FAA_FILE'] = [ToolIOFile(self.folder / 'outdir' / f'{self._filename}.faa')]
+        self._tool_outputs['GFF3_FILE'] = [ToolIOFile(self.folder / 'outdir' / f'{self._filename}.gff3')]
+        self._tool_outputs['GBFF_FILE'] = [ToolIOFile(self.folder / 'outdir' / f'{self._filename}.gbff')]
