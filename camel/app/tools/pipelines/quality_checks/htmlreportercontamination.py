@@ -165,17 +165,18 @@ class HtmlReporterContamination(Tool):
                     table_data.append(['{:.2f}'.format(percentage), HtmlReporterContamination.ABBREVIATIONS.get(
                         parts[3], '-'), name])
         header = ['Percentage', 'Level', 'Name']
-        self._report_section.add_table(table_data, header, [('class', 'data')])
+        self._report_section.add_table(table_data, header, [('class', 'data')]) if self._parameters["file_format"].value != 'fasta' else []
 
     def __add_krona_report(self) -> None:
         """
         Adds a download link to the Krona report.
         :return: None
         """
-        relative_path = self._dir_out / 'krona_report.html'
-        self._report_section.add_file(self._tool_inputs['HTML_Krona'][0].path, relative_path)
-        self._report_section.add_link_to_file('Krona Report', relative_path)
-        self._report_section.add_file(self._tool_inputs['TSV'][0].path, self._dir_out / 'kraken2_report.tsv')
+        if self._parameters["file_format"].value != 'fasta':
+            relative_path = self._dir_out / 'krona_report.html'
+            self._report_section.add_file(self._tool_inputs['HTML_Krona'][0].path, relative_path)
+            self._report_section.add_link_to_file('Krona Report', relative_path)
+            self._report_section.add_file(self._tool_inputs['TSV'][0].path, self._dir_out / 'kraken2_report.tsv')
 
     def __add_warnings(self) -> None:
         """
