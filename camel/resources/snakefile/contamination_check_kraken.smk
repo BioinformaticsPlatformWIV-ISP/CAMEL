@@ -113,10 +113,12 @@ rule contamination_check_report:
                 suffix='illumina' if params.input_format == 'fastq_pe' else 'ont',
                 suffix_title='Illumina' if params.input_format == 'fastq_pe' else 'ONT',
             )
+        reporter.update_parameters(file_format = params.input_type,)
 
         # Run the tool
         step = Step(str(rule), reporter, Camel.get_instance(), Path(str(params.dir_)))
         step.run_step()
+        #For fasta files the html report is removed as it's based on read count percentage
         SnakemakeUtils.dump_tool_outputs(reporter, output)
 
 rule contamination_check_report_empty:
