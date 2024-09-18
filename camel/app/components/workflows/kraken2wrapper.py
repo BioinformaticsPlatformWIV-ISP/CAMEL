@@ -27,7 +27,7 @@ class Kraken2Wrapper(object):
 
     def __init__(self, working_dir: Union[str, Path]) -> None:
         """
-        Initializes the kraken2wrapper.
+        Initializes the Kraken 2 wrapper.
         :param working_dir: Working directory
         :return: None
         """

@@ -34,7 +34,7 @@ class TestKraken2(CamelTestSuite):
 
     def test_kraken2_fasta(self) -> None:
         """
-        Tests kraken2 with paired-end input.
+        Tests kraken2 with fasta input.
         :return: None
         """
         kraken2 = Kraken2(TestKraken2.camel)
