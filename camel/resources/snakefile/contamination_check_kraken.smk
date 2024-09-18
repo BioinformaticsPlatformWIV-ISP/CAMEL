@@ -57,7 +57,7 @@ rule contamination_check_kraken_report_parser:
         input_format = lambda wildcards: wildcards.input_format
     run:
         from camel.app.tools.kraken.krakenreportparser import KrakenReportParser
-        from camel.app.tools.kraken.krakenreportparser_fasta import KrakenReportParserFasta
+        from camel.app.tools.kraken.krakenreportparserfasta import KrakenReportParserFasta
         report_parser = KrakenReportParserFasta(Camel.get_instance()) if params.input_format == 'fasta' else KrakenReportParser(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(report_parser, input)
         step = Step(str(rule), report_parser, Camel.get_instance(), Path(str(params.dir_)))

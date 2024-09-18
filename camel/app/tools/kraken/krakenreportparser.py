@@ -1,3 +1,5 @@
+import pandas as pd
+
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
@@ -8,7 +10,7 @@ class KrakenReportParser(Tool):
     Parses Kraken output reports for fastq files.
     """
 
-    def __init__(self, camel):
+    def __init__(self, camel) -> None:
         """
         Initializes this tool.
         :param camel: CAMEL instance
@@ -27,25 +29,25 @@ class KrakenReportParser(Tool):
         self._informs['contaminants_warn'] = []
         self._informs['contaminants_fail'] = []
         self._informs['allowed'] = []
-        with open(self._tool_inputs['TSV'][0].path) as handle:
-            for line in handle.readlines():
-                parts = line.split('\t')
-                if parts[3] != self._parameters['level_of_depth'].value:
-                    continue
-                percentage = float(parts[0])
-                if percentage < float(self._parameters['threshold_warn'].value):
-                    continue
-                species_name = parts[-1].strip()
-                if species_name == self._parameters['expected_species'].value:
-                    self._informs['expected'] = (species_name, percentage)
-                elif species_name in allowed_species:
-                    self._informs['allowed'].append((species_name, percentage))
-                elif species_name in self._parameters['expected_species'].value:
-                    self._informs['expected'] = (species_name, percentage)
-                elif percentage < float(self._parameters['threshold_fail'].value):
-                    self._informs['contaminants_warn'].append((species_name, percentage,))
-                else:
-                    self._informs['contaminants_fail'].append((species_name, percentage,))
+
+        handle = pd.read_table(self._tool_inputs['TSV'][0].path, header=None)
+        for parts in handle.itertuples():
+            if parts[4] != self._parameters['level_of_depth'].value:
+                continue
+            percentage = float(parts[1])
+            if percentage < float(self._parameters['threshold_warn'].value):
+                continue
+            species_name = parts[-1].strip()
+            if species_name == self._parameters['expected_species'].value:
+                self._informs['expected'] = (species_name, percentage)
+            elif species_name in allowed_species:
+                self._informs['allowed'].append((species_name, percentage))
+            elif species_name in self._parameters['expected_species'].value:
+                self._informs['expected'] = (species_name, percentage)
+            elif percentage < float(self._parameters['threshold_fail'].value):
+                self._informs['contaminants_warn'].append((species_name, percentage,))
+            else:
+                self._informs['contaminants_fail'].append((species_name, percentage,))
 
         if 'expected' not in self._informs:
             logger.warning("No reads matching the expected species found!")
