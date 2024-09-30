@@ -20,7 +20,7 @@ class AbriTAMRReport(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super().__init__('AbriTAMR report', '1.0.14', camel)
+        super().__init__('AbriTAMR report', '1.0.19', camel)
 
     def _execute_tool(self) -> None:
         """
