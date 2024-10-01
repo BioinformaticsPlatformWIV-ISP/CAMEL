@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
@@ -17,7 +15,7 @@ class Bakta(Tool):
         """
         Initializes this tool.
         :param camel: Camel instance
-        return: None
+        :return: None
         """
         super().__init__('Bakta', '1.9.4', camel)
 
@@ -26,10 +24,8 @@ class Bakta(Tool):
         Executes this tool.
         :return: None
         """
-        # Build the Bakta command and execute it
         self.__build_command()
         self._execute_command()
-        # Set the output
         self.__set_output()
 
     def _check_input(self) -> None:
@@ -38,12 +34,10 @@ class Bakta(Tool):
         :return: None
         """
         if 'FASTA' in self._tool_inputs:
-            fasta_file = self._tool_inputs['FASTA'][0]
-            self._filename = fasta_file.path.stem
             if len(self._tool_inputs['FASTA']) != 1:
                 raise InvalidInputSpecificationError("FASTA input requires exactly 1 file.")
         else:
-            raise ValueError("FASTA input is required")
+            raise InvalidInputSpecificationError("FASTA input is required")
         super()._check_input()
 
     def __build_command(self) -> None:
@@ -69,12 +63,11 @@ class Bakta(Tool):
 
     def __set_output(self) -> None:
         """
-        Collects the output files of interest:
-        - faa file
-        - gff3 file
-        - gbff file
+        Collects the output files of interest.
         :return: None
         """
-        self._tool_outputs['FAA_FILE'] = [ToolIOFile(self.folder / 'outdir' / f'{self._filename}.faa')]
-        self._tool_outputs['GFF3_FILE'] = [ToolIOFile(self.folder / 'outdir' / f'{self._filename}.gff3')]
-        self._tool_outputs['GBFF_FILE'] = [ToolIOFile(self.folder / 'outdir' / f'{self._filename}.gbff')]
+        fasta_file = self._tool_inputs['FASTA'][0]
+        filename = fasta_file.path.stem
+        self._tool_outputs['FAA'] = [ToolIOFile(self.folder / self._parameters['output_dir'].value / f'{filename}.faa')]
+        self._tool_outputs['GFF3'] = [ToolIOFile(self.folder / self._parameters['output_dir'].value / f'{filename}.gff3')]
+        self._tool_outputs['GBFF'] = [ToolIOFile(self.folder / self._parameters['output_dir'].value / f'{filename}.gbff')]

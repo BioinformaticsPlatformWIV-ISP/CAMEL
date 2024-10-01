@@ -24,11 +24,10 @@ class TestBakta(CamelTestSuite):
         bakta.add_input_files({
             'FASTA': [ToolIOFile(Path(TestBakta.input_fasta))]
         })
-        bakta.update_parameters(threads=8)
         bakta.run(self.running_dir)
-        self.verify_output_files(bakta, 'FAA_FILE', 1)
-        self.verify_output_files(bakta, 'GFF3_FILE', 1)
-        self.verify_output_files(bakta, 'GBFF_FILE', 1)
+        self.verify_output_files(bakta, 'FAA', 1)
+        self.verify_output_files(bakta, 'GFF3', 1)
+        self.verify_output_files(bakta, 'GBFF', 1)
 
     def test_bakta_args(self) -> None:
         """
@@ -39,11 +38,11 @@ class TestBakta(CamelTestSuite):
         bakta.add_input_files({
             'FASTA': [ToolIOFile(Path(TestBakta.input_spp))]
         })
-        bakta.update_parameters(genus='bacillus', species='subtilis', strain='168', threads=8)
+        bakta.update_parameters(genus='bacillus', species='subtilis', strain='168')
         bakta.run(self.running_dir)
-        self.verify_output_files(bakta, 'FAA_FILE', 1)
-        self.verify_output_files(bakta, 'GFF3_FILE', 1)
-        self.verify_output_files(bakta, 'GBFF_FILE', 1)
+        self.verify_output_files(bakta, 'FAA', 1)
+        self.verify_output_files(bakta, 'GFF3', 1)
+        self.verify_output_files(bakta, 'GBFF', 1)
 
     def test_bakta_meta(self) -> None:
         """
@@ -54,11 +53,11 @@ class TestBakta(CamelTestSuite):
         bakta.add_input_files({
             'FASTA': [ToolIOFile(Path(TestBakta.input_meta_fasta))]
         })
-        bakta.update_parameters(metagenome=None, threads=8)
+        bakta.update_parameters(meta=None)
         bakta.run(self.running_dir)
-        self.verify_output_files(bakta, 'FAA_FILE', 1)
-        self.verify_output_files(bakta, 'GFF3_FILE', 1)
-        self.verify_output_files(bakta, 'GBFF_FILE', 1)
+        self.verify_output_files(bakta, 'FAA', 1)
+        self.verify_output_files(bakta, 'GFF3', 1)
+        self.verify_output_files(bakta, 'GBFF', 1)
 
 
 if __name__ == '__main__':
