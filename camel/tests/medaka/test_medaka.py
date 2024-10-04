@@ -2,8 +2,8 @@ import unittest
 
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.io.tooliofile import ToolIOFile
-from camel.app.tools.medaka.medakaconsensus import MedakaConsensus
-from camel.app.tools.medaka.medakastitch import MedakaStitch
+from camel.app.tools.medaka.medakainference import MedakaInference
+from camel.app.tools.medaka.medakasequence import MedakaSequence
 
 
 class TestMedaka(CamelTestSuite):
@@ -18,28 +18,28 @@ class TestMedaka(CamelTestSuite):
     FILE_FASTA_REF = ToolIOFile(test_file_dir / 'contig_1.fasta')
     FILE_HDF = ToolIOFile(test_file_dir / 'consensus_probs_subsample.hdf')
 
-    def test_medaka_consensus(self) -> None:
+    def test_medaka_inference(self) -> None:
         """
-        Tests MedakaConsensus.
+        Tests MedakaInference.
         :return: None
         """
-        consensus = MedakaConsensus(self.camel)
-        consensus.add_input_files({'BAM': [TestMedaka.FILE_BAM]})
-        consensus.run(self.running_dir)
-        self.verify_output_files(consensus, 'HDF')
+        inference = MedakaInference(self.camel)
+        inference.add_input_files({'BAM': [TestMedaka.FILE_BAM]})
+        inference.run(self.running_dir)
+        self.verify_output_files(inference, 'HDF')
 
-    def test_medaka_stitch(self) -> None:
+    def test_medaka_sequence(self) -> None:
         """
-        Tests MedakaStitch.
+        Tests MedakaSequence.
         :return: None
         """
-        stitch = MedakaStitch(self.camel)
-        stitch.add_input_files({
+        sequence = MedakaSequence(self.camel)
+        sequence.add_input_files({
             'HDF': [TestMedaka.FILE_HDF],
             'FASTA': [TestMedaka.FILE_FASTA_REF]
         })
-        stitch.run(self.running_dir)
-        self.verify_output_files(stitch, 'FASTA')
+        sequence.run(self.running_dir)
+        self.verify_output_files(sequence, 'FASTA')
 
 
 if __name__ == '__main__':
