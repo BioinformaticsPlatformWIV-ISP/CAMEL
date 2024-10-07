@@ -100,8 +100,13 @@ rule nextclade3_extract_segment:
 
         fasta_in = SnakemakeUtils.load_object(Path(input.FASTA))[0].path
         with fasta_in.open() as handle:
-            seq_segment = next(
-                s for s in SeqIO.parse(handle, 'fasta') if s.id.lower().endswith(f'-{params.segment_name}'.lower()))
+            seqs = list(SeqIO.parse(handle, 'fasta'))
+            try:
+                seq_segment = next(
+                    s for s in seqs if s.id.lower().endswith(f'-{params.segment_name}'.lower()))
+            except StopIteration:
+                segments = [s.id.split('-')[-1].lower() for s in seqs]
+                raise RuntimeError(f"Cannot find segment: {params.segment_name} (found: {', '.join(segments)})")
         path_fasta_out = Path(str(params.dir_), fasta_in.name.replace('.fasta', f'-{params.segment_name}.fasta'))
         with path_fasta_out.open('w') as handle:
             SeqIO.write([seq_segment], handle, 'fasta')
