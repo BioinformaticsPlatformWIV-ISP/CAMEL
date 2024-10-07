@@ -4,6 +4,7 @@ from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.medaka.medakainference import MedakaInference
 from camel.app.tools.medaka.medakasequence import MedakaSequence
+from camel.app.tools.medaka.medakavcf import MedakaVcf
 
 
 class TestMedaka(CamelTestSuite):
@@ -40,6 +41,19 @@ class TestMedaka(CamelTestSuite):
         })
         sequence.run(self.running_dir)
         self.verify_output_files(sequence, 'FASTA')
+
+    def test_medaka_vcf(self) -> None:
+        """
+        Tests MedakaVcf.
+        :return: None
+        """
+        sequence = MedakaVcf(self.camel)
+        sequence.add_input_files({
+            'HDF': [TestMedaka.FILE_HDF],
+            'FASTA': [TestMedaka.FILE_FASTA_REF]
+        })
+        sequence.run(self.running_dir)
+        self.verify_output_files(sequence, 'VCF')
 
 
 if __name__ == '__main__':
