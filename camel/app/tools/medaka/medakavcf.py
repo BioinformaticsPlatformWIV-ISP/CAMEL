@@ -30,4 +30,3 @@ class MedakaVcf(Medaka):
         hdf_file = self._tool_inputs['HDF'][0].path
         fasta_file = self._tool_inputs['FASTA'][0].path
         self._input_string = f'{hdf_file} {fasta_file}'
-
