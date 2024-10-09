@@ -2,28 +2,28 @@ from camel.app.camel import Camel
 from camel.app.tools.medaka.medaka import Medaka
 
 
-class MedakaStitch(Medaka):
+class MedakaVcf(Medaka):
 
     """
-    Class for Medaka stitch function.
+    Class for Medaka vcf function.
 
-    Medaka stitch reads the output of Medaka consensus and outputs a consensus fasta sequence.
+    Runs the medaka vcf/variant algorithm and outputs a VCF file.
     """
 
     def __init__(self, camel: Camel) -> None:
         """
-        Initializes Medaka stitch.
+        Initializes Medaka vcf.
         :param camel: Camel instance
         :return: None
         """
-        super().__init__('medaka stitch', '1.11.3', camel)
+        super().__init__('medaka vcf', '2.0.0', camel)
 
         self._required_inputs = ['HDF', 'FASTA']
-        self._output_type = 'FASTA'
+        self._output_type = 'VCF'
 
     def _set_input(self) -> None:
         """
-        Sets the input specification and the input string.
+        Sets the input specifications and the input string.
         :return: None
         """
         super()._set_input()
