@@ -33,11 +33,10 @@ class Bakta(Tool):
         Checks the input.
         :return: None
         """
-        if 'FASTA' in self._tool_inputs:
-            if len(self._tool_inputs['FASTA']) != 1:
-                raise InvalidInputSpecificationError("FASTA input requires exactly 1 file.")
-        else:
+        if 'FASTA' not in self._tool_inputs:
             raise InvalidInputSpecificationError("FASTA input is required")
+        if len(self._tool_inputs['FASTA']) != 1:
+            raise InvalidInputSpecificationError("FASTA input requires exactly 1 file.")
         super()._check_input()
 
     def __build_command(self) -> None:
