@@ -1,15 +1,16 @@
 #!/usr/bin/env python
 import argparse
-#import json
+import shutil
+# import json
 from pathlib import Path
 from typing import Tuple, Optional, Sequence, Dict, Any
 
 from camel.app.camel import Camel
-from camel.app.components import mainscriptutils
+# from camel.app.components import mainscriptutils
 from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.loggers import logger
-#from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
+# from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.app.tools.medaka.medakainference import MedakaInference
 from camel.app.tools.medaka.medakavcf import MedakaVcf
 from camel.app.tools.samtools.samtoolsindex import SamtoolsIndex
@@ -36,9 +37,9 @@ class MainCallingMedaka(object):
         argument_parser = argparse.ArgumentParser()
         argument_parser.add_argument('--bam', type=Path, help="InputBAMfile", required=True)
         argument_parser.add_argument('--reference', help="The reference fasta file to use", type=Path, required=True)
-        #argument_parser.add_argument('--reference-name')
+        # argument_parser.add_argument('--reference-name')
         argument_parser.add_argument('--output-dir', type=Path, help='Output directory')
-        argument_parser.add_argument('--output-html', type=Path, help='Report output')
+        # argument_parser.add_argument('--output-html', type=Path, help='Report output')
         argument_parser.add_argument('--working-dir', help='Working directory', type=Path, default=Path.cwd())
         argument_parser.add_argument('--threads', type=int, default=4)
 
@@ -51,11 +52,12 @@ class MainCallingMedaka(object):
         """
         input_dict, input_files_str = self.__prepare_input()
 
+        """
         # Initialize report
         report = mainscriptutils.init_report(self._args.output_html, self._args.output_dir, 'MedakaVariantCalling', 'MedakaVariantCalling')
         #report.add_html_object(mainscriptutils.generate_analysis_info_section(self._args))
         report.save()
-
+        """
         # Index BAM file
         logger.info('Using samtools to index input BAM file')
         samtools_index = SamtoolsIndex(Camel.get_instance())
@@ -72,11 +74,13 @@ class MainCallingMedaka(object):
         medaka_inference.run(self._args.working_dir)
 
         # Run Medaka VCF
-        logger.info('Running Medaka VCF to call the variants based on ref fasta and hdf file')
+        logger.info('Running Medaka VCF to call the variants based on reference fasta and hdf file')
         medaka_vcf = MedakaVcf(Camel.get_instance())
         medaka_vcf.add_input_files({'HDF': [ToolIOFile(Path(hdf_file))], 'FASTA': input_dict['REFERENCE']})
-        medaka_vcf.update_parameters(output=Path(hdf_file).stem + '.vcf')
+        vcf_file = Path(hdf_file).stem + '.vcf'
+        medaka_vcf.update_parameters(output=vcf_file)
         medaka_vcf.run(self._args.working_dir)
+
         """
         # Create output report
         checkm_reporter = CheckMReporter(Camel.get_instance())
@@ -91,7 +95,13 @@ class MainCallingMedaka(object):
         report.add_html_object(SnakePipelineUtils.create_commands_section([checkm.informs], self._args.working_dir))
         report.add_html_object(SnakePipelineUtils.create_citations_section(['Parks_2015-checkm']))
         report.save()
-"""
+        """
+        # copy vcf file to output-dir if set
+        if self._args.output_dir is not None:
+            self._args.output_dir.mkdir(parents=True, exist_ok=True)
+            logger.info('Copying output VCF file to output-dir')
+            shutil.copyfile(vcf_file, self._args.output_dir / vcf_file)
+
     def __prepare_input(self) -> Tuple[Dict[str, Any], str]:
         """
         Prepares the input for the Medaka variant tool.
