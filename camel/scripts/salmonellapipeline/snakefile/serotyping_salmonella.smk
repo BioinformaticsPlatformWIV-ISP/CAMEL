@@ -1,6 +1,5 @@
 import json
 from pathlib import Path
-from typing import Any, Dict
 
 from camel.app.camel import Camel
 from camel.app.io.tooliodirectory import ToolIODirectory
@@ -86,14 +85,12 @@ rule serotyping_dump_summary_info:
         INFORMS_seqsero2_kmerread = lambda wildcards: str(rules.serotyping_seqsero2_wildcards.output.INFORMS).format(mode='Kmerread', input_format=wildcards.input_format) if 'fasta' not in config['input'] else []
     output:
         VAL_TSV_sistr = Path(config['working_dir']) / 'serotyping' / '{input_format}' / 'summary_out_sistr.tsv',
-        VAL_TSV_seqsero2 = Path(config['working_dir']) / 'serotyping' / '{input_format}' / 'summary_out_seqsero2.tsv',
-        JSON = Path(config['working_dir']) / 'serotyping' / '{input_format}' / 'summary_out.json'
+        VAL_TSV_seqsero2 = Path(config['working_dir']) / 'serotyping' / '{input_format}' / 'summary_out_seqsero2.tsv'
     params:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'serotyping' / wildcards.input_format
     threads: 8
     run:
         import copy
-        meta_json_dict = {}
 
         # parse obligate Sistr output
         with SnakemakeUtils.load_object(Path(str(input.JSON_sistr)))[0].path.open('r') as handle:
@@ -119,10 +116,8 @@ rule serotyping_dump_summary_info:
                             'serotype_consensus': '-',
                              'qc_status': 'FAIL'
                              }
-            hits_dict_json: Dict[str, Any] = copy.deepcopy(hits_dict_tsv)
             for variable in ['hits_serotype_h1_fliC', 'hits_serotype_h2_fljB', 'hits_serotype_o_wzx', 'hits_serotype_o_wzy']:
                 hits_dict_tsv[variable] = '-'
-                hits_dict_json[variable] = {item: '-' for item in header_locus}
 
         informs_sistr = SnakemakeUtils.load_object(Path(str(input.INFORMS_sistr)))
         with Path(output.VAL_TSV_sistr).open('w') as handle:
@@ -132,20 +127,9 @@ rule serotyping_dump_summary_info:
             handle.write(f"sistr_tool_version\t{informs_sistr['_name']}\n")
             handle.write(f"sistr_db_version\t{informs_sistr['last_update_date']}\n")
 
-        meta_json_dict.update({
-            'sistr' : {
-                **hits_dict_json,
-                'informs_tools' : { informs_sistr.get('_tool', informs_sistr['_name']): {
-                    '_name': informs_sistr['_name'], '_version': informs_sistr['_version'],
-                    '_command': informs_sistr['_command']}},
-                'informs_dbs' : {
-                    'last_updated': informs_sistr['last_update_date'], 'name': informs_sistr['key'],
-                    'title': informs_sistr['key']} }})
-
         # parse obligate seqsero2 output
         informs_seqsero2_kmer = SnakemakeUtils.load_object(Path(str(input.INFORMS_seqsero2_kmer)))
         inter_json_dict, tsv_results = serotyping_salmonella.seqsero2_output_parser(SnakemakeUtils.load_object(Path(str(input.TXT_seqsero2_kmer)))[0].path, 'seqsero2_kmer', informs_seqsero2_kmer)
-        meta_json_dict.update(inter_json_dict)
         with Path(output.VAL_TSV_seqsero2).open('w') as handle:
             handle.writelines(item + '\n' for item in tsv_results)
 
@@ -154,8 +138,6 @@ rule serotyping_dump_summary_info:
             for args_tuple in [(SnakemakeUtils.load_object(Path(str(input.TXT_seqsero2_allele)))[0].path, 'seqsero2_allele', SnakemakeUtils.load_object(Path(str(input.INFORMS_seqsero2_allele)))),
                                (SnakemakeUtils.load_object(Path(str(input.TXT_seqsero2_kmerread)))[0].path, 'seqsero2_kmerread', SnakemakeUtils.load_object(Path(str(input.INFORMS_seqsero2_kmerread))))
                                 ]:
-                inter_json_dict, tsv_results = serotyping_salmonella.seqsero2_output_parser(args_tuple[0], args_tuple[1], args_tuple[2])
-                meta_json_dict.update(inter_json_dict)
                 with Path(output.VAL_TSV_seqsero2).open('a') as handle:
                     for item in tsv_results:
                         handle.write(item + '\n')
@@ -163,9 +145,6 @@ rule serotyping_dump_summary_info:
         with Path(output.VAL_TSV_seqsero2).open('a') as handle:
             handle.write(f"seqsero2_tool_version\t{informs_seqsero2_kmer['_name']}\n")
             handle.write(f"seqsero2_db_version\t{informs_seqsero2_kmer['last_update_date']}\n")
-
-        with Path(output.JSON).open('w') as handle:
-            handle.write(json.dumps(meta_json_dict))
 
 rule create_output_report_serotyping_sistr:
     """

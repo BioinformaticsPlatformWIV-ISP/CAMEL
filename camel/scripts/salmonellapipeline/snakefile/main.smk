@@ -2,6 +2,7 @@ from pathlib import Path
 from camel.resources.snakefile import (trimming, trimming_illumina, trimming_ont, quality_checks,
 contamination_check_kraken, gene_detection, sequence_typing, downsampling, quast, confindr, core, assembly, resfinder4,
 mobsuite, abritamr, mykrobe, human_read_scrubbing)
+from camel.scripts.salmonellapipeline import add_content_serotyping_salmonella, add_content_spifinder
 from camel.scripts.salmonellapipeline.snakefile import spifinder, serotyping_salmonella
 
 #######################
@@ -32,8 +33,7 @@ include: abritamr.SNAKEFILE_ABRITAMR
 rule all:
     input:
         HTML = config['output_report'],
-        TSV = config['output_tabular'],
-        #JSON = config['output_json']
+        TSV = config['output_tabular']
 
 rule report_command_section:
     input:
@@ -137,14 +137,14 @@ rule report_combine_all:
             ('Advanced QC', 'adv_qc', [Path(input.report_adv_qc)]),
             ('Species identification', 'species', [Path(input.report_rmlst)]),
             ])
-        ReportPipeline.add_content_serotyping_salmonella(
+        add_content_serotyping_salmonella(
             report_structure,params.input_type,input.reports_serotyping)
         report_structure.extend([
             ('Lineage identification', 'mykrobe', [Path(input.report_mykrobe)]),
             ('AMR detection', 'amr', [Path(x) for x in (
                 input.report_abritamr, input.report_resfinder4)])
              ])
-        ReportPipeline.add_content_spifinder(
+        add_content_spifinder(
             report_structure,params.input_type,input.reports_spifinder)
         report_structure.extend([
             ('Virulence characterization', 'virulence', [Path(input.report_vfdb_core)]),
@@ -205,43 +205,3 @@ rule link_genomic_context:
         INFORMS = Path(config['working_dir']) / 'mob_suite' / 'genomic_context' / 'input' / 'informs.io'
     run:
         mobsuite.collect_genomic_context_input(input, Path(output.TSV), Path(output.INFORMS))
-
-
-# rule summary_json_combine_all:
-#     """
-#     Combines the summary information of several steps into a single JSON file.
-#     """
-#     input:
-#         Path(config['working_dir'], core.OUTPUT_JSON_SUMMARY_INIT),
-#         human_read_scrubbing.get_jsons(config),
-#         downsampling.get_jsons(config),
-#         trimming.get_jsons(config),
-#         Path(config['working_dir']) / assembly.OUTPUT_ASSEMBLY_SUMMARY_JSON,
-#         Path(config['working_dir']) / quast.OUTPUT_QUAST_SUMMARY_JSON,
-#         contamination_check_kraken.get_jsons(config),
-#         confindr.get_json(config),
-#         Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY_JSON,
-#         #Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_SUMMARY_JSON if 'fasta' not in config['input'] else [],
-#         #Path(config['working_dir']) / variant_filtering.OUTPUT_VARIANT_FILTERING_SUMMARY_JSON if 'fasta' not in config['input'] else [],
-#         Path(config['working_dir']) / resfinder4.OUTPUT_RESFINDER4_SUMMARY_JSON if 'resfinder4' in config['analyses'] else [],
-#         Path(config['working_dir']) / mobsuite.OUTPUT_MOB_SUITE_SUMMARY_JSON if 'mob_suite' in config['analyses'] else [],
-#         Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY_JSON).format(db='ncbi_amr') if 'ncbi_amr' in config['analyses'] else [],
-#         Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY_JSON).format(db='vfdb_core') if 'vfdb_core' in config['analyses'] else [],
-#         spifinder.get_jsons(config),
-#         Path(config['working_dir']) / mykrobe.OUTPUT_MYKROBE_SUMMARY_JSON if 'mykrobe' in config['analyses'] else [],
-#         Path(config['working_dir']) / abritamr.OUTPUT_ABRITAMR_SUMMARY_JSON if 'abritamr' in config['analyses'] else [],
-#         serotyping_salmonella.get_jsons(config),
-#         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY_JSON).format(scheme='mlst') if 'mlst' in config['analyses'] else [],
-#         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY_JSON).format(scheme='cgmlst') if 'cgmlst' in config['analyses'] else [],
-#         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY_JSON).format(scheme='rmlst') if 'rmlst' in config['analyses'] else []
-#     output:
-#         JSON = config['output_json']
-#     run:
-#         import json
-#         with open(output.JSON, 'w') as handle_out:
-#             with open(input[0], 'r') as summary_metadata:
-#                 mega_dict = json.load(summary_metadata)
-#                 for summary_input in input[1:]:
-#                     with open(summary_input, 'r') as assay_results_dictionary:
-#                         mega_dict.update(json.load(assay_results_dictionary))
-#                 handle_out.write(json.dumps(mega_dict))

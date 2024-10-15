@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 
 import pandas as pd
@@ -83,28 +82,22 @@ rule create_output_summary_spifinder:
         INFORMS_spifinder_fasta = rules.spifinder_fasta_run.output.INFORMS
     output:
         TSV = Path(config['working_dir']) / 'spifinder' / '{input_format}' / 'summary_out.tsv',
-        TSV_documentation = Path(config['working_dir']) / 'spifinder' / '{input_format}' / 'spifinder_function_category.tsv',
-        JSON = Path(config['working_dir']) / 'spifinder' / '{input_format}' / 'summary_out.json'
+        TSV_documentation = Path(config['working_dir']) / 'spifinder' / '{input_format}' / 'spifinder_function_category.tsv'
     params:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'spifinder' / wildcards.input_format
     run:
         informs_fasta = SnakemakeUtils.load_object(Path(input.INFORMS_spifinder_fasta))
         with Path(output.TSV).open('w') as handle:
-            meta_json_dict = {}
             if 'fasta' not in config['input']:
                 informs_fastq = SnakemakeUtils.load_object(Path(input.INFORMS_spifinder_fastq))
                 results_fastq_tsv, results_fastq_json = spifinder.spifinder_json_parser(SnakemakeUtils.load_object(Path(input.JSON_FASTQ))[0].path,
                     informs_fastq, 'fastq')
-                meta_json_dict.update(results_fastq_json)
                 handle.write(f"spifinder_fastq\t{results_fastq_tsv}\n")
             results_fasta, results_fasta_json = spifinder.spifinder_json_parser(SnakemakeUtils.load_object(Path(input.JSON_FASTA))[0].path,
                 informs_fasta, 'fasta')
-            meta_json_dict.update(results_fasta_json)
             handle.write(f"spifinder_fasta\t{results_fasta}\n")
             handle.write(f"spifinder_tool_version\t{informs_fasta['_name']}\n")
             handle.write(f"spifinder_db_version\t{informs_fasta['last_update_date']}\n")
-            with Path(output.JSON).open('w') as handle2:
-                handle2.write(json.dumps(meta_json_dict))
 
         # Generate a tsv which documents the meaning of the function categories in the fasta results
         file = pd.read_csv(config['spifinder']['metadata'], delimiter=';')
