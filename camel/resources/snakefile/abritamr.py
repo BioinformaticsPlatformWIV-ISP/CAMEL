@@ -19,14 +19,13 @@ OUTPUT_ABRITAMR_SUMMARY_JSON = _dir_abritamr / 'summary_out.json'
 
 def get_command_informs(config: Dict[str, Any]) -> List[Path]:
     """
-    Returns the paths to the abritamr informs.
+    Returns the paths to the AbriTAMR informs.
     :param config: config
-    :return: Path(s) to the abritamr informs
+    :return: Path(s) to the AbriTAMR informs
     """
-    input_type = config['input_type']
     paths = []
 
-    # Kraken 2 is disabled -> return empty list
+    # AbriTAMR is disabled -> return empty list
     if 'abritamr' not in config['analyses']:
         return []
     else:

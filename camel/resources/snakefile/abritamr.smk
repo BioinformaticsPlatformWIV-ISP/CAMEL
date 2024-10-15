@@ -19,7 +19,7 @@ camel = Camel.get_instance()
 
 rule abritamr_run:
     """
-    This rule executes abritamr run and gets the results
+    This rule executes AbriTAMR run and gets the results.
     """
     input:
         FASTA = Path(config['working_dir']) / assembly.OUTPUT_ASSEMBLY_FASTA
@@ -44,7 +44,7 @@ rule abritamr_run:
 
 rule generate_dummy_mdu_qc_file:
     """
-    This rule creates a qc file required by abritamr report in order to make it work as expected
+    This rule creates a dummy QC file required by AbriTAMR report in order to make it work as expected.
     """
     output:
         TXT_MDU_QC = Path(config['working_dir']) /  abritamr.OUTPUT_QC_ABRITAMR
@@ -58,7 +58,7 @@ rule generate_dummy_mdu_qc_file:
 
 rule abritamr_report_run:
     """
-    This rule will run abritamr report to generate the final files
+    This rule will run AbriTAMR report to generate the final files.
     """
     input:
         TXT_MDU_QC = rules.generate_dummy_mdu_qc_file.output.TXT_MDU_QC,
@@ -82,21 +82,19 @@ rule abritamr_report_run:
 
 rule create_output_summary_abritamr:
     """
-    This rule creates the output summary to generate the summary tsv and the json for the tool results
+    This rule creates the output summary to generate the summary TSV for the tool results.
     """
     input:
         REPORT_ABRITAMR = rules.abritamr_report_run.output.REPORT_ABRITAMR,
         INFORMS_ABRITAMR_RUN = rules.abritamr_run.output.INFORMS,
         INFORMS_ABRITAMR_REPORT = rules.abritamr_report_run.output.INFORMS
     output:
-        VAL_TSV = Path(config['working_dir']) / abritamr.OUTPUT_ABRITAMR_SUMMARY,
-        JSON = Path(config['working_dir']) / abritamr.OUTPUT_ABRITAMR_SUMMARY_JSON
+        VAL_TSV = Path(config['working_dir']) / abritamr.OUTPUT_ABRITAMR_SUMMARY
     params:
         species = config['abritamr']['species']
     run:
-        import pandas, json
+        import pandas
 
-        json_dict = {}
         informs_abritamr_run = SnakemakeUtils.load_object(Path(input.INFORMS_ABRITAMR_RUN))
         informs_abritamr_report = SnakemakeUtils.load_object(Path(input.INFORMS_ABRITAMR_REPORT))
         df_abritamr = pandas.read_excel(
@@ -108,31 +106,12 @@ rule create_output_summary_abritamr:
                 key = f'abritamr_{df_abritamr.columns[column].replace(" - ","_")}'
                 value = df_abritamr.iloc[0, column]
                 file_tsv.write(f"{key}\t{value}\n")
-                json_dict[key] = value
             file_tsv.write(f"abritamr_tool_version\tAbriTAMR {informs_abritamr_report['_version']}\n")
             file_tsv.write(f"abritamr_db_version\t{informs_abritamr_run['last_update_date']}\n")
-        meta_json_dict = {'abritamr': {'results': json_dict,
-                                       'informs_tools': {
-                                           informs_abritamr_report.get('_tool',informs_abritamr_report['_name']): {
-                                               '_name': informs_abritamr_report['_name'],
-                                               '_version': informs_abritamr_report['_version'],
-                                               '_command': informs_abritamr_report['_command']},
-                                           informs_abritamr_run.get('_tool',informs_abritamr_run['_name']): {
-                                               '_name': informs_abritamr_run['_name'],
-                                               '_version': informs_abritamr_run['_version'],
-                                               '_command': informs_abritamr_run['_command']}
-                                       },
-                                       'informs_dbs': {'last_updated': informs_abritamr_run['last_update_date'],
-                                                       'name': informs_abritamr_run['key'],
-                                                       'title': informs_abritamr_run['key']}
-                                       }
-                          }
-        with Path(output.JSON).open('w') as handle:
-            handle.write(json.dumps(meta_json_dict))
 
 rule create_output_report_abritamr:
     """
-    This rule creates a simple html output report for the AbriTAMR tool.
+    This rule creates a simple HTML output report for the AbriTAMR tool.
     """
     input:
         VAL_TSV = rules.create_output_summary_abritamr.output.VAL_TSV,
@@ -163,4 +142,3 @@ rule abritamr_report_empty:
     run:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         SnakePipelineUtils.create_empty_report_section(AbriTAMRReporter.TITLE, Path(output.VAL_HTML))
-
