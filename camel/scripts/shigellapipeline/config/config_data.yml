@@ -5,6 +5,7 @@ citations:
   main: Bogaerts_2021-shigella
   other:
     - Bolger_2014-trimmomatic
+    - Bradley_2015-mykrobe
     - Bankevich_2012-spades
     - Gurevich_2013-quast
     - Wood_2019-kraken2
@@ -24,6 +25,7 @@ citations:
     - Zhou_2020-enterobase
     - Jolley_2010-bigsdb
     - Zhang_2021-shigeifinder
+    - Wong_2016-genotyphi
     - Wu_2019-shigatyper
 
 #########################

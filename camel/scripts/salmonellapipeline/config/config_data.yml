@@ -5,6 +5,7 @@ citations:
   main: null
   other:
     - Bolger_2014-trimmomatic
+    - Bradley_2015-mykrobe
     - Bankevich_2012-spades
     - Gurevich_2013-quast
     - Wood_2019-kraken2
