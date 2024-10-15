@@ -53,6 +53,7 @@ class AbriTAMRRun(Tool):
         """
         self._tool_outputs['TXT_MATCHES'] = [ToolIOFile(self.folder / 'summary_matches.txt')]
         self._tool_outputs['TXT_PARTIALS'] = [ToolIOFile(self.folder / 'summary_partials.txt')]
+        self._tool_outputs['AMRFINDER_OUT'] = [ToolIOFile(self.folder / 'amrfinder.out')]
 
     def __build_command(self) -> None:
         """
