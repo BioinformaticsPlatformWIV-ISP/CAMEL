@@ -1,0 +1,26 @@
+{
+  "type_of_reference": "JOUR",
+  "primary_title": "The Salmonella In Silico Typing Resource (SISTR): An Open Web-Accessible Tool for Rapidly Typing and Subtyping Draft Salmonella Genome Assemblies",
+  "first_authors": [
+    "Yoshida, Catherine E.",
+    "Kruczkiewicz, Peter",
+    "Laing, Chad R.",
+    "Lingohr, Erika J.",
+    "Gannon, Victor P. J. ",
+    "Nash, John H. E.",
+    "Taboada, Eduardo N."
+  ],
+  "publication_year": "2016/01//",
+  "keywords": [
+    "Salmonella enterica",
+    "whole genome sequencing",
+    "foodborne pathogens",
+    "serotyping",
+    "cgMLST"
+  ],
+  "alternate_title3": "PLOS ONE",
+  "doi": "10.1371/journal.pone.0147101",
+  "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0147101",
+  "volume": "11",
+  "number": "1"
+}
