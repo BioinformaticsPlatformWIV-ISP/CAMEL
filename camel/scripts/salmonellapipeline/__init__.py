@@ -9,10 +9,10 @@ SNAKEFILE_MAIN = _current_dir / 'snakefile' / 'main.smk'
 def add_content_spifinder(
         structure: List[Tuple], input_type: str, reports_spifinder: List[Union[Path, str]]) -> None:
     """
-    Adds the report content for spifinder.
+    Adds the report content for SPIFinder.
     :param structure: Report structure
     :param input_type: Input type
-    :param reports_spifinder: Spifinder output reports
+    :param reports_spifinder: SPIFinder output reports
     :return: None
     """
     # Create dictionaries with the technology as key and the reports as values
@@ -36,10 +36,10 @@ def add_content_spifinder(
 def add_content_serotyping_salmonella(
         structure: List[Tuple], input_type: str, reports_serotyping: List[Union[Path, str]]) -> None:
     """
-    Adds the report content for serotyping Salmonella.
+    Adds the report content for the Salmonella serotyping assays SISTR and SeqSero2.
     :param structure: Report structure
     :param input_type: Input type
-    :param reports_serotyping: Serotyping output reports
+    :param reports_serotyping: Salmonella serotyping output reports
     :return: None
     """
     from collections import defaultdict
