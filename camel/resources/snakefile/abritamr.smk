@@ -1,16 +1,10 @@
 from pathlib import Path
 
-import numpy as np
-
 from camel.app.camel import Camel
 from camel.app.io.tooliodirectory import ToolIODirectory
 from camel.app.io.tooliofile import ToolIOFile
-from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.app.tools.abritamr.abritamrreport import AbriTAMRReport
-from camel.app.tools.abritamr.abritamrreporter import AbriTAMRReporter
-from camel.app.tools.abritamr.abritamrrun import AbriTAMRRun
 from camel.resources.snakefile import abritamr, assembly
 
 
@@ -24,112 +18,118 @@ rule abritamr_run:
     input:
         FASTA = Path(config['working_dir']) / assembly.OUTPUT_ASSEMBLY_FASTA
     output:
-        TXT_MATCHES = Path(config['working_dir']) /  abritamr.OUTPUT_MATCHES_ABRITAMR,
-        TXT_PARTIALS = Path(config['working_dir']) / abritamr.OUTPUT_PARTIALS_ABRITAMR,
-        AMRFINDER_OUT = Path(config['working_dir']) / abritamr.OUTPUT_AMRFINDER_ABRITAMR,
+        TXT_MATCHES = Path(config['working_dir']) / abritamr.OUTPUT_ABRITAMR_MATCHES,
+        TXT_PARTIALS = Path(config['working_dir']) / abritamr.OUTPUT_ABRITAMR_PARTIALS,
+        TSV_amrfinder = Path(config['working_dir']) / abritamr.OUTPUT_ABRITAMR_AMRFINDER,
         INFORMS = Path(config['working_dir']) / abritamr.OUTPUT_ABRITAMR_RUN_INFORMS
     params:
         running_dir = Path(config['working_dir']) / 'abritamr' ,
         db_path_amrf = config['abritamr']['amrfinderplus']['path'],
-        species = config['abritamr']['species'],
-        jobs = 4
+        species = config['abritamr']['species']
     run:
-        abritamrruntool = AbriTAMRRun(camel)
-        abritamrruntool.add_input_files({'DIR_AMRF': [ToolIODirectory(Path(str(params.db_path_amrf)))]})
-        SnakemakeUtils.add_pickle_input(abritamrruntool,'FASTA',Path(input.FASTA))
-        step = Step(str(rule),abritamrruntool,camel,params.running_dir,config)
-        abritamrruntool.update_parameters(jobs=params.jobs,species=params.species)
-        step.run_step()
-        SnakemakeUtils.dump_tool_outputs(abritamrruntool,output)
+        from camel.app.tools.abritamr.abritamrrun import AbriTAMRRun
 
-rule generate_dummy_mdu_qc_file:
+        abritamr_run_tool = AbriTAMRRun(camel)
+        abritamr_run_tool.add_input_files({'DIR_AMRF': [ToolIODirectory(Path(str(params.db_path_amrf)))]})
+        SnakemakeUtils.add_pickle_input(abritamr_run_tool, 'FASTA', Path(input.FASTA))
+        step = Step(str(rule), abritamr_run_tool, camel, params.running_dir)
+        abritamr_run_tool.update_parameters(species=params.species)
+        step.run_step()
+        SnakemakeUtils.dump_tool_outputs(abritamr_run_tool, output)
+
+rule abritamr_generate_dummy_mdu_qc_file:
     """
     This rule creates a dummy QC file required by AbriTAMR report in order to make it work as expected.
     """
     output:
-        TXT_MDU_QC = Path(config['working_dir']) /  abritamr.OUTPUT_QC_ABRITAMR
+        TXT_MDU_QC = Path(config['working_dir']) / abritamr.OUTPUT_ABRITAMR_QC
     params:
         species = config['abritamr']['species'],
         running_dir = Path(config['working_dir']) / 'abritamr'
     run:
         species = params.species if not params.species == 'Salmonella' else 'Salmonella enterica'
-        with Path(output.TXT_MDU_QC).open('w') as handle:
-            handle.write(f'ISOLATE,SPECIES_EXP,SPECIES_OBS,TEST_QC\n{params.running_dir},{species},{species},PASS\n')
+        qc_file_txt = params.running_dir / 'qc_file.txt'
+        with qc_file_txt.open('w') as handle:
+            handle.write(f'ISOLATE,SPECIES_EXP,SPECIES_OBS,TEST_QC\n'
+                         f'{params.running_dir},{species},{species},PASS\n')
+        SnakemakeUtils.dump_object([ToolIOFile(qc_file_txt)], output.TXT_MDU_QC)
+
 
 rule abritamr_report_run:
     """
-    This rule will run AbriTAMR report to generate the final files.
+    This rule will run AbriTAMR report to generate an antibiogram in case the species is Salmonella, 
+    else it will create a summary of the TXT_MATCHES and TXT_PARTIALS that will not actually be used in the 
+    abritamr_report rule.
     """
     input:
-        TXT_MDU_QC = rules.generate_dummy_mdu_qc_file.output.TXT_MDU_QC,
+        TXT_MDU_QC = rules.abritamr_generate_dummy_mdu_qc_file.output.TXT_MDU_QC,
         TXT_MATCHES = rules.abritamr_run.output.TXT_MATCHES,
-        TXT_PARTIALS = rules.abritamr_run.output.TXT_PARTIALS
+        TXT_PARTIALS = rules.abritamr_run.output.TXT_PARTIALS,
+        INFORMS_ABRITAMR_RUN = rules.abritamr_run.output.INFORMS
     output:
-        REPORT_ABRITAMR = Path(config['working_dir']) / abritamr.OUTPUT_REPORT_ABRITAMR,
-        INFORMS = Path(config['working_dir']) / abritamr.OUTPUT_REPORT_ABRITAMR_INFORMS
+        REPORT_ABRITAMR = Path(config['working_dir']) / abritamr.OUTPUT_ABRITAMR_REPORT_REPORT,
+        INFORMS = Path(config['working_dir']) / abritamr.OUTPUT_ABRITAMR_REPORT_REPORT_INFORMS
     params:
-        running_dir=Path(config['working_dir']) / 'abritamr',
-        species = config['abritamr']['species']
+        running_dir = Path(config['working_dir']) / 'abritamr',
     run:
-        abritamrreporttool = AbriTAMRReport(camel)
-        SnakemakeUtils.add_pickle_input(abritamrreporttool, 'TXT_MATCHES', Path(input.TXT_MATCHES))
-        SnakemakeUtils.add_pickle_input(abritamrreporttool, 'TXT_PARTIALS', Path(input.TXT_PARTIALS))
-        abritamrreporttool.add_input_files({'TXT_MDU_QC': [ToolIOFile(Path(input.TXT_MDU_QC))],
-                                            'VAL_SPECIES': [ToolIOValue(params.species)]})
-        step = Step(str(rule), abritamrreporttool, camel, params.running_dir, config)
-        step.run_step()
-        SnakemakeUtils.dump_tool_outputs(abritamrreporttool, output)
+        from camel.app.tools.abritamr.abritamrreport import AbriTAMRReport
 
-rule create_output_summary_abritamr:
+        abritamr_report_tool = AbriTAMRReport(camel)
+        SnakemakeUtils.add_pickle_inputs(abritamr_report_tool, input)
+        step = Step(str(rule), abritamr_report_tool, camel, params.running_dir)
+        step.run_step()
+        SnakemakeUtils.dump_tool_outputs(abritamr_report_tool, output)
+
+rule abritamr_create_summary:
     """
-    This rule creates the output summary to generate the summary TSV for the tool results.
+    Creates the tabular summary output for the AbritAMR assay.
     """
     input:
         REPORT_ABRITAMR = rules.abritamr_report_run.output.REPORT_ABRITAMR,
         INFORMS_ABRITAMR_RUN = rules.abritamr_run.output.INFORMS,
         INFORMS_ABRITAMR_REPORT = rules.abritamr_report_run.output.INFORMS
     output:
-        VAL_TSV = Path(config['working_dir']) / abritamr.OUTPUT_ABRITAMR_SUMMARY
-    params:
-        species = config['abritamr']['species']
+        TSV = Path(config['working_dir']) / abritamr.OUTPUT_ABRITAMR_SUMMARY
     run:
-        import pandas
+        import pandas as pd
 
-        informs_abritamr_run = SnakemakeUtils.load_object(Path(input.INFORMS_ABRITAMR_RUN))
-        informs_abritamr_report = SnakemakeUtils.load_object(Path(input.INFORMS_ABRITAMR_REPORT))
-        df_abritamr = pandas.read_excel(
-            SnakemakeUtils.load_object(Path(input.REPORT_ABRITAMR))[0].path,engine='openpyxl')
-        #replace all nan by dashes
-        df_abritamr.replace(np.nan,'-',inplace=True)
-        with Path(output.VAL_TSV).open('w') as file_tsv:
-            for column in range(2,len(df_abritamr.columns)):
-                key = f'abritamr_{df_abritamr.columns[column].replace(" - ","_")}'
-                value = df_abritamr.iloc[0, column]
-                file_tsv.write(f"{key}\t{value}\n")
-            file_tsv.write(f"abritamr_tool_version\tAbriTAMR {informs_abritamr_report['_version']}\n")
-            file_tsv.write(f"abritamr_db_version\t{informs_abritamr_run['last_update_date']}\n")
+        df_abritamr = pd.read_excel(
+            SnakemakeUtils.load_object(Path(input.REPORT_ABRITAMR))[0].path, engine='openpyxl')
+        df_abritamr.fillna('-', inplace=True)  # replace all missing values by dashes
+        with Path(output.TSV).open('w') as handle:
+            for column in df_abritamr.columns[2:]:
+                key = f'abritamr_{column.replace(" - ","_")}'
+                value = df_abritamr.iloc[0][column]
+                handle.write(f"{key}\t{value}\n")
 
-rule create_output_report_abritamr:
+            informs_abritamr_run = SnakemakeUtils.load_object(Path(input.INFORMS_ABRITAMR_RUN))
+            informs_abritamr_report = SnakemakeUtils.load_object(Path(input.INFORMS_ABRITAMR_REPORT))
+            handle.write(f"abritamr_tool_version\tAbriTAMR {informs_abritamr_report['_version']}\n")
+            handle.write(f"abritamr_db_version\t{informs_abritamr_run['last_update_date']}\n")
+
+rule abritamr_report:
     """
     This rule creates a simple HTML output report for the AbriTAMR tool.
     """
     input:
-        VAL_TSV = rules.create_output_summary_abritamr.output.VAL_TSV,
+        TSV = rules.abritamr_create_summary.output.TSV,
+        REPORT_ABRITAMR = rules.abritamr_report_run.output.REPORT_ABRITAMR,
         INFORMS_ABRITAMR_RUN = rules.abritamr_run.output.INFORMS,
         TXT_MATCHES = rules.abritamr_run.output.TXT_MATCHES,
         TXT_PARTIALS = rules.abritamr_run.output.TXT_PARTIALS
     output:
         VAL_HTML = Path(config['working_dir']) / abritamr.OUTPUT_ABRITAMR_REPORT
     params:
-        species = config['abritamr']['species'],
         running_dir = Path(config['working_dir']) / 'abritamr'
     run:
-        reportertool = AbriTAMRReporter(camel)
-        SnakemakeUtils.add_pickle_inputs(reportertool, input, excluded_keys=['VAL_TSV'])
-        reportertool.add_input_files({'TSV_output': [ToolIOFile(Path(input.VAL_TSV))], 'VAL_SPECIES': [ToolIOValue(params.species)]})
-        step = Step(str(rule), reportertool, camel, params.running_dir, config)
+        from camel.app.tools.abritamr.abritamrreporter import AbriTAMRReporter
+
+        reporter = AbriTAMRReporter(camel)
+        SnakemakeUtils.add_pickle_inputs(reporter, input, excluded_keys=['TSV'])
+        reporter.add_input_files({'TSV': [ToolIOFile(Path(input.TSV))]})
+        step = Step(str(rule), reporter, camel, params.running_dir)
         step.run_step()
-        SnakemakeUtils.dump_tool_outputs(reportertool, output)
+        SnakemakeUtils.dump_tool_outputs(reporter, output)
 
 rule abritamr_report_empty:
     """
@@ -137,8 +137,6 @@ rule abritamr_report_empty:
     """
     output:
         VAL_HTML = Path(config['working_dir']) / abritamr.OUTPUT_ABRITAMR_REPORT_EMPTY
-    params:
-        running_dir = Path(config['working_dir']) / 'abritamr'
     run:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         SnakePipelineUtils.create_empty_report_section(AbriTAMRReporter.TITLE, Path(output.VAL_HTML))

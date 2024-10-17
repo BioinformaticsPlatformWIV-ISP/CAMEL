@@ -55,7 +55,7 @@ rule spifinder_fasta_run:
     input:
         FASTA = Path(config['working_dir']) / assembly.OUTPUT_ASSEMBLY_FASTA
     output:
-        JSON = Path(config['working_dir']) / spifinder.OUTPUT_JSON_SPIFINDER_FASTA,
+        JSON = Path(config['working_dir']) / spifinder.OUTPUT_SPIFINDER_FASTA_JSON,
         INFORMS = Path(config['working_dir']) / spifinder.OUTPUT_SPIFINDER_FASTA_INFORMS
     params:
         running_dir = Path(config['working_dir']) / 'spifinder' / 'spifinder_fasta',
@@ -71,7 +71,7 @@ rule spifinder_fasta_run:
         spifindertool.informs['_tag'] = 'FASTA'
         SnakemakeUtils.dump_tool_outputs(spifindertool, output)
 
-rule create_output_summary_spifinder:
+rule spifinder_create_summary:
     """
     This rule creates a summary output for the hits of SPIFinder in fastq and fasta mode.
     """
@@ -103,15 +103,15 @@ rule create_output_summary_spifinder:
         file = pd.read_csv(config['spifinder']['metadata'], delimiter=';')
         file.to_csv(output.TSV_documentation, sep='\t')
 
-rule create_output_report_spifinder:
+rule spifinder_report:
     """
     This rule creates a simple output report, combining both SPIFinder tables in one report.
     """
     input:
         JSON_FASTQ = rules.spifinder_fastq_run.output.JSON if 'fasta' not in config['input'] else [],
         JSON_FASTA = rules.spifinder_fasta_run.output.JSON,
-        TSV = rules.create_output_summary_spifinder.output.TSV,
-        TSV_documentation = rules.create_output_summary_spifinder.output.TSV_documentation,
+        TSV = rules.spifinder_create_summary.output.TSV,
+        TSV_documentation = rules.spifinder_create_summary.output.TSV_documentation,
         INFORMS_spifinder_fastq = rules.spifinder_fastq_run.output.INFORMS if 'fasta' not in config['input'] else [],
         INFORMS_spifinder_fasta = rules.spifinder_fasta_run.output.INFORMS
     output:

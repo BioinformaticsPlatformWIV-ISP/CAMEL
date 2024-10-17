@@ -4,18 +4,17 @@ from typing import Any, Dict, List, Tuple
 
 SNAKEFILE_SEROTYPE = f'{Path(__file__).parent / Path(__file__).stem}.smk'
 _dir_serotype = Path('serotyping', '{input_format}')
-OUTPUT_SISTR_SEROTYPE = _dir_serotype / 'serotyping_sistr' / 'sistr_output.io'
+OUTPUT_SEROTYPE_SISTR = _dir_serotype / 'serotyping_sistr' / 'sistr_output.io'
 OUTPUT_SEROTYPE_SISTR_INFORMS = _dir_serotype / 'serotyping_sistr' / 'informs.io'
-OUTPUT_SEQSERO2_SEROTYPE_KMER_INFORMS = _dir_serotype / 'serotyping_seqsero2_Kmer' / 'informs.io'
-OUTPUT_SEQSERO2_SEROTYPE_ALLELE_INFORMS = _dir_serotype / 'serotyping_seqsero2_Allele' / 'informs.io'
-OUTPUT_SEQSERO2_SEROTYPE_KMERREAD_INFORMS = _dir_serotype / 'serotyping_seqsero2_Kmerread' / 'informs.io'
-OUTPUT_SEROTYPE_REPORT_SISTR = _dir_serotype / 'html_sistr.io'
-OUTPUT_SEROTYPE_REPORT_SEQSERO2 = _dir_serotype / 'html_seqsero2.io'
-OUTPUT_SEROTYPE_REPORT_SISTR_EMPTY = _dir_serotype / 'html_sistr-empty.io'
-OUTPUT_SEROTYPE_REPORT_SEQSERO2_EMPTY = _dir_serotype / 'html_seqsero2-empty.io'
-OUTPUT_SEROTYPE_SUMMARY_SISTR = _dir_serotype / 'summary_out_sistr.tsv'
-OUTPUT_SEROTYPE_SUMMARY_SEQSERO2 = _dir_serotype / 'summary_out_seqsero2.tsv'
-OUTPUT_SEROTYPE_SUMMARY_JSON = _dir_serotype / 'summary_out.json'
+OUTPUT_SEROTYPE_SEQSERO2_KMER_INFORMS = _dir_serotype / 'serotyping_seqsero2_Kmer' / 'informs.io'
+OUTPUT_SEROTYPE_SEQSERO2_ALLELE_INFORMS = _dir_serotype / 'serotyping_seqsero2_Allele' / 'informs.io'
+OUTPUT_SEROTYPE_SEQSERO2_KMERREAD_INFORMS = _dir_serotype / 'serotyping_seqsero2_Kmerread' / 'informs.io'
+OUTPUT_SEROTYPE_SISTR_REPORT = _dir_serotype / 'html_sistr.io'
+OUTPUT_SEROTYPE_SEQSERO2_REPORT = _dir_serotype / 'html_seqsero2.io'
+OUTPUT_SEROTYPE_SISTR_REPORT_EMPTY = _dir_serotype / 'html_sistr-empty.io'
+OUTPUT_SEROTYPE_SEQSERO2_REPORT_EMPTY = _dir_serotype / 'html_seqsero2-empty.io'
+OUTPUT_SEROTYPE_SISTR_SUMMARY = _dir_serotype / 'summary_out_sistr.tsv'
+OUTPUT_SEROTYPE_SEQSERO2_SUMMARY = _dir_serotype / 'summary_out_seqsero2.tsv'
 
 
 def get_reports(config: Dict[str, Any]) -> List[Path]:
@@ -29,29 +28,29 @@ def get_reports(config: Dict[str, Any]) -> List[Path]:
 
     if input_type == 'fasta':
         if 'serotype' in config['analyses']:
-            paths.append(str(OUTPUT_SEROTYPE_REPORT_SISTR).format(input_format='fasta'))
-            paths.append(str(OUTPUT_SEROTYPE_REPORT_SEQSERO2).format(input_format='fasta'))
+            paths.append(str(OUTPUT_SEROTYPE_SISTR_REPORT).format(input_format='fasta'))
+            paths.append(str(OUTPUT_SEROTYPE_SEQSERO2_REPORT).format(input_format='fasta'))
         else:
-            paths.append(str(OUTPUT_SEROTYPE_REPORT_SISTR_EMPTY).format(input_format='fasta'))
-            paths.append(str(OUTPUT_SEROTYPE_REPORT_SEQSERO2_EMPTY).format(input_format='fasta'))
+            paths.append(str(OUTPUT_SEROTYPE_SISTR_REPORT_EMPTY).format(input_format='fasta'))
+            paths.append(str(OUTPUT_SEROTYPE_SEQSERO2_REPORT_EMPTY).format(input_format='fasta'))
 
     # PE reads
     if input_type in ('illumina', 'hybrid'):
         if 'serotype' in config['analyses']:
-            paths.append(str(OUTPUT_SEROTYPE_REPORT_SISTR).format(input_format='fastq_pe'))
-            paths.append(str(OUTPUT_SEROTYPE_REPORT_SEQSERO2).format(input_format='fastq_pe'))
+            paths.append(str(OUTPUT_SEROTYPE_SISTR_REPORT).format(input_format='fastq_pe'))
+            paths.append(str(OUTPUT_SEROTYPE_SEQSERO2_REPORT).format(input_format='fastq_pe'))
         else:
-            paths.append(str(OUTPUT_SEROTYPE_REPORT_SISTR_EMPTY).format(input_format='fastq_pe'))
-            paths.append(str(OUTPUT_SEROTYPE_REPORT_SEQSERO2_EMPTY).format(input_format='fastq_pe'))
+            paths.append(str(OUTPUT_SEROTYPE_SISTR_REPORT_EMPTY).format(input_format='fastq_pe'))
+            paths.append(str(OUTPUT_SEROTYPE_SEQSERO2_REPORT_EMPTY).format(input_format='fastq_pe'))
 
     # SE reads
     if input_type in ('ont', 'hybrid'):
         if 'serotype' in config['analyses']:
-            paths.append(str(OUTPUT_SEROTYPE_REPORT_SISTR).format(input_format='fastq_se'))
-            paths.append(str(OUTPUT_SEROTYPE_REPORT_SEQSERO2).format(input_format='fastq_se'))
+            paths.append(str(OUTPUT_SEROTYPE_SISTR_REPORT).format(input_format='fastq_se'))
+            paths.append(str(OUTPUT_SEROTYPE_SEQSERO2_REPORT).format(input_format='fastq_se'))
         else:
-            paths.append(str(OUTPUT_SEROTYPE_REPORT_SISTR_EMPTY).format(input_format='fastq_se'))
-            paths.append(str(OUTPUT_SEROTYPE_REPORT_SEQSERO2_EMPTY).format(input_format='fastq_se'))
+            paths.append(str(OUTPUT_SEROTYPE_SISTR_REPORT_EMPTY).format(input_format='fastq_se'))
+            paths.append(str(OUTPUT_SEROTYPE_SEQSERO2_REPORT_EMPTY).format(input_format='fastq_se'))
 
     return [Path(config['working_dir']) / p for p in paths]
 
@@ -71,21 +70,21 @@ def get_command_informs(config: Dict[str, Any]) -> List[Path]:
     # FASTA input
     if (input_type == 'fasta') and ('serotype' in config['analyses']):
         paths.append(str(OUTPUT_SEROTYPE_SISTR_INFORMS).format(input_format='fasta'))
-        paths.append(str(OUTPUT_SEQSERO2_SEROTYPE_KMER_INFORMS).format(input_format='fasta'))
+        paths.append(str(OUTPUT_SEROTYPE_SEQSERO2_KMER_INFORMS).format(input_format='fasta'))
 
     # PE reads
     if (input_type in ('illumina', 'hybrid')) and ('serotype' in config['analyses']):
         paths.append(str(OUTPUT_SEROTYPE_SISTR_INFORMS).format(input_format='fastq_pe'))
-        paths.append(str(OUTPUT_SEQSERO2_SEROTYPE_KMER_INFORMS).format(input_format='fastq_pe'))
-        paths.append(str(OUTPUT_SEQSERO2_SEROTYPE_ALLELE_INFORMS).format(input_format='fastq_pe'))
-        paths.append(str(OUTPUT_SEQSERO2_SEROTYPE_KMERREAD_INFORMS).format(input_format='fastq_pe'))
+        paths.append(str(OUTPUT_SEROTYPE_SEQSERO2_KMER_INFORMS).format(input_format='fastq_pe'))
+        paths.append(str(OUTPUT_SEROTYPE_SEQSERO2_ALLELE_INFORMS).format(input_format='fastq_pe'))
+        paths.append(str(OUTPUT_SEROTYPE_SEQSERO2_KMERREAD_INFORMS).format(input_format='fastq_pe'))
 
     # SE reads
     if (input_type in ('ont', 'hybrid')) and ('serotype' in config['analyses']):
         paths.append(str(OUTPUT_SEROTYPE_SISTR_INFORMS).format(input_format='fastq_se'))
-        paths.append(str(OUTPUT_SEQSERO2_SEROTYPE_KMER_INFORMS).format(input_format='fastq_se'))
-        paths.append(str(OUTPUT_SEQSERO2_SEROTYPE_ALLELE_INFORMS).format(input_format='fastq_se'))
-        paths.append(str(OUTPUT_SEQSERO2_SEROTYPE_KMERREAD_INFORMS).format(input_format='fastq_se'))
+        paths.append(str(OUTPUT_SEROTYPE_SEQSERO2_KMER_INFORMS).format(input_format='fastq_se'))
+        paths.append(str(OUTPUT_SEROTYPE_SEQSERO2_ALLELE_INFORMS).format(input_format='fastq_se'))
+        paths.append(str(OUTPUT_SEROTYPE_SEQSERO2_KMERREAD_INFORMS).format(input_format='fastq_se'))
 
     return [Path(config['working_dir']) / p for p in paths]
 
@@ -104,45 +103,18 @@ def get_summaries(config: Dict[str, Any]) -> List[Path]:
 
     # FASTA input
     if (input_type == 'fasta') and ('serotype' in config['analyses']):
-        paths.append(str(OUTPUT_SEROTYPE_SUMMARY_SISTR).format(input_format='fasta'))
-        paths.append(str(OUTPUT_SEROTYPE_SUMMARY_SEQSERO2).format(input_format='fasta'))
+        paths.append(str(OUTPUT_SEROTYPE_SISTR_SUMMARY).format(input_format='fasta'))
+        paths.append(str(OUTPUT_SEROTYPE_SEQSERO2_SUMMARY).format(input_format='fasta'))
 
     # PE reads
     if (input_type in ('illumina', 'hybrid')) and ('serotype' in config['analyses']):
-        paths.append(str(OUTPUT_SEROTYPE_SUMMARY_SISTR).format(input_format='fastq_pe'))
-        paths.append(str(OUTPUT_SEROTYPE_SUMMARY_SEQSERO2).format(input_format='fastq_pe'))
+        paths.append(str(OUTPUT_SEROTYPE_SISTR_SUMMARY).format(input_format='fastq_pe'))
+        paths.append(str(OUTPUT_SEROTYPE_SEQSERO2_SUMMARY).format(input_format='fastq_pe'))
 
     # SE reads
     if (input_type in ('ont', 'hybrid')) and ('serotype' in config['analyses']):
-        paths.append(str(OUTPUT_SEROTYPE_SUMMARY_SISTR).format(input_format='fastq_se'))
-        paths.append(str(OUTPUT_SEROTYPE_SUMMARY_SEQSERO2).format(input_format='fastq_se'))
-
-    return [Path(config['working_dir']) / p for p in paths]
-
-
-def get_jsons(config: Dict[str, Any]) -> List[Path]:
-    """
-    Returns the paths to the serotyping json file(s).
-    :param config: Snakemake configuration
-    :return: Summary file path(s)
-    """
-    input_type = config['input_type']
-    paths = []
-
-    if 'serotype' not in config['analyses']:
-        return []
-
-    # FASTA input
-    if (input_type == 'fasta') and ('serotype' in config['analyses']):
-        paths.append(str(OUTPUT_SEROTYPE_SUMMARY_JSON).format(input_format='fasta'))
-
-    # PE reads
-    if (input_type in ('illumina', 'hybrid')) and ('serotype' in config['analyses']):
-        paths.append(str(OUTPUT_SEROTYPE_SUMMARY_JSON).format(input_format='fastq_pe'))
-
-    # SE reads
-    if (input_type in ('ont', 'hybrid')) and ('serotype' in config['analyses']):
-        paths.append(str(OUTPUT_SEROTYPE_SUMMARY_JSON).format(input_format='fastq_se'))
+        paths.append(str(OUTPUT_SEROTYPE_SISTR_SUMMARY).format(input_format='fastq_se'))
+        paths.append(str(OUTPUT_SEROTYPE_SEQSERO2_SUMMARY).format(input_format='fastq_se'))
 
     return [Path(config['working_dir']) / p for p in paths]
 

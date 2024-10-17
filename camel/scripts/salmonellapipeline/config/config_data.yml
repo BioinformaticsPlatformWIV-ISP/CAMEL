@@ -5,28 +5,28 @@ citations:
   main: null
   other:
     - Bolger_2014-trimmomatic
-    - Bradley_2015-mykrobe
-    - Bankevich_2012-spades
-    - Gurevich_2013-quast
     - Wood_2019-kraken2
     - Low_2019-confindr
     - Manni_2021-busco
+    - Bankevich_2012-spades
+    - Gurevich_2013-quast
     - Langmead_2012-bowtie2
     - Li_2009-samtools
     - Camacho_2009-blast
     - Clausen_2018-kma
     - Inouye_2014-srst2
     - Bortolaia_2020-resfinder_4.0
+    - Roer_2016-spifinder
+    - Wong_2016-genotyphi
+    - Bradley_2015-mykrobe
+    - Sherry_2023-abritamr
+    - Yoshida_2016-sistr
+    - Zhang_2019-seqsero2
+    - Chen_2016-vfdb
+    - Robertson_2018-mob_suite
     - Feldgarden_2019-ndaro
     - Zhou_2020-enterobase
     - Jolley_2010-bigsdb
-    - Yoshida_2016-sistr
-    - Robertson_2018-mob_suite
-    - Chen_2016-vfdb
-    - Roer_2016-spifinder
-    - Wong_2016-genotyphi
-    - Zhang_2019-seqsero2
-    - Sherry_2023-abritamr
 
 #########################
 # Tool specific options #
@@ -77,7 +77,6 @@ mykrobe:
 # Gene detection databases #
 ############################
 gene_detection:
-
   resfinder:
     path: /db/gene_detection/ResFinder
     metadata:
@@ -102,7 +101,6 @@ gene_detection:
 ###################
 # Sequence typing #
 ###################
-#enterobase.warwick is used for both MLST and cgMLST
 sequence_typing:
   mlst:
     path: /db/sequence_typing/salmonella/mlst

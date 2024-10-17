@@ -1,4 +1,3 @@
-import re
 from pathlib import Path
 from typing import Optional
 
@@ -26,6 +25,7 @@ class AbriTAMRReporter(Tool):
         """
         super().__init__('AbriTAMR Reporter', '0.1', camel)
         self._section = None
+        self._species = self._input_informs['ABRITAMR_RUN']['species']
 
     def _check_input(self) -> None:
         """
@@ -33,9 +33,7 @@ class AbriTAMRReporter(Tool):
         :return: None
         """
         super(AbriTAMRReporter, self)._check_input()
-        if 'VAL_SPECIES' not in self._tool_inputs:
-            raise InvalidInputSpecificationError("VAL_SPECIES is required")
-        elif not all(key in self._tool_inputs for key in ('TXT_MATCHES', 'TXT_PARTIALS')):
+        if not all(key in self._tool_inputs for key in ('TXT_MATCHES', 'TXT_PARTIALS')):
             raise InvalidInputSpecificationError("AbriTAMR run output files must be provided")
 
     def _execute_tool(self) -> None:
@@ -46,11 +44,11 @@ class AbriTAMRReporter(Tool):
         self._section = HtmlReportSection(AbriTAMRReporter.TITLE,
                                           subtitle=self._input_informs['ABRITAMR_RUN']['_name'])
         self.__add_summaries_tables()
-        if str(self._tool_inputs['VAL_SPECIES'][0]) == 'Salmonella':
+        if self._species == 'Salmonella':
             self.__add_antibiogram()
         else:
             self._section.add_header('Antibiogram', 3)
-            self._section.add_paragraph(f"Not available for species '{self._tool_inputs['VAL_SPECIES'][0]}'")
+            self._section.add_paragraph(f"Not available for species '{self._species}'")
         self.__add_output_table_link()
         self.__add_database_information()
         self._tool_outputs['VAL_HTML'] = [ToolIOValue(self._section)]
@@ -102,25 +100,29 @@ class AbriTAMRReporter(Tool):
         Add the antibiogram to the report for Salmonella.
         :return: None
         """
+        # Create useable dictionary from REPORT_ABRITAMR for html_table
+        antibiogram_dict = {}
+        df_abritamr = pd.read_excel(self._tool_inputs['REPORT_ABRITAMR'][0].path, engine='openpyxl')
+        df_abritamr.fillna('-', inplace=True)  # replace all missing values by dashes
+        for column in df_abritamr.columns[2:]:
+            key_parts = column.replace(" - ", "_").split('_')
+            value = df_abritamr.iloc[0][column]
+            if key_parts[-1] in {'ResMech', 'Interpretation'}:
+                antibiotic = '_'.join(key_parts[:-2])
+                antibiotic_property = key_parts[:-1]
+
+                # Initialize or update the sub dictionary in one step instead of checking with .get()
+                antibiogram_dict.setdefault(antibiotic, {})[antibiotic_property] = value
+
+        # Create html table
         header = ['Antibiotic', 'Resistance mechanisms detected', 'Interpretation']
         data = []
-        # looks like this:
-        # abritamr_Ampicillin_ResMech     None detected
-        # abritamr_Ampicillin_Interpretation      Susceptible
-        # abritamr_Cefotaxime (ESBL)_ResMech      None detected
-        # abritamr_Cefotaxime (ESBL)_Interpretation       Susceptible
-        # ...
-        results = pd.read_csv(self._tool_inputs['TSV_output'][0].path, delimiter='\t', header=None)
-        # replace all nan by dashes
-        results.fillna('-', inplace=True)
-        for i in range(0, results.shape[0], 2):
-            if results.iloc[i, 0] in ['abritamr_tool_version', 'abritamr_db_version']:
-                continue
-            interpretation = results.iloc[i+1, 1]
-            color = self.___get_interpretation_color(interpretation)
-            row = [re.sub("_ResMech|abritamr_", "", results.iloc[i, 0]),
-                   results.iloc[i, 1],
-                   results.iloc[i+1, 1]]
+        for antibiotic, antibiotic_properties in antibiogram_dict.items():
+            antibiotic_properties: dict[str, str]  # add typing to silence PyCharm warnings
+            color = self.___get_interpretation_color(antibiotic_properties['Interpretation'])
+            row = [antibiotic,
+                   antibiotic_properties['ResMech'],
+                   antibiotic_properties['Interpretation']]
             row = [HtmlTableCell(x, color) for x in row]
             data.append(row)
         # start writing in the report the table and the headers
@@ -148,7 +150,7 @@ class AbriTAMRReporter(Tool):
         :return: None
         """
         relative_path = Path('abritamr', 'summary_out.tsv')
-        self._section.add_file(self._tool_inputs['TSV_output'][0].path, relative_path)
+        self._section.add_file(self._tool_inputs['TSV'][0].path, relative_path)
         if str(self._tool_inputs['VAL_SPECIES'][0]) == 'Salmonella':
             relative_path = Path('abritamr', 'summary_out.tsv')
             self._section.add_link_to_file("Download (TSV)", relative_path)

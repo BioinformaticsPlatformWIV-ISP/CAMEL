@@ -1,4 +1,5 @@
 from pathlib import Path
+from collections import defaultdict
 from typing import List, Tuple, Union
 
 _current_dir = Path(__file__).parent
@@ -42,8 +43,6 @@ def add_content_serotyping_salmonella(
     :param reports_serotyping: Salmonella serotyping output reports
     :return: None
     """
-    from collections import defaultdict
-
     report_ds_by_input_format = defaultdict(list)
 
     for report_path in reports_serotyping:

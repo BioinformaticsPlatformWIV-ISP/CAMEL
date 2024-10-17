@@ -16,7 +16,7 @@ from camel.scripts.salmonellapipeline.snakefile import serotyping_salmonella
 
 camel = Camel.get_instance()
 
-rule serotyping_sistr:
+rule serotyping_sistr_run:
     """
     This rule executes SISTR to obtain serotpying results using cgMLST.
     """
@@ -36,9 +36,9 @@ rule serotyping_sistr:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(sistrtool, output)
 
-rule serotyping_seqsero2_wildcards:
+rule serotyping_seqsero2_run:
     """
-    This rule executes SeqSero2 in kmer mode.
+    This rule executes SeqSero2 in the appropriate modes depending on if input is fasta or not.
     """
     input:
         FASTA = Path(config['working_dir']) / assembly.OUTPUT_ASSEMBLY_FASTA,
@@ -75,14 +75,14 @@ rule serotyping_dump_summary_info:
     This rule creates a simple output report for SISTR and SeqSero2.
     """
     input:
-        JSON_sistr = rules.serotyping_sistr.output.JSON,
+        JSON_sistr = rules.serotyping_sistr_run.output.JSON,
         INFORMS_sistr = Path(config['working_dir']) / serotyping_salmonella.OUTPUT_SEROTYPE_SISTR_INFORMS,
-        TXT_seqsero2_kmer = lambda wildcards: str(rules.serotyping_seqsero2_wildcards.output.TXT).format(mode='Kmer', input_format=wildcards.input_format),
-        INFORMS_seqsero2_kmer = lambda wildcards: str(rules.serotyping_seqsero2_wildcards.output.INFORMS).format(mode='Kmer', input_format=wildcards.input_format),
-        TXT_seqsero2_allele = lambda wildcards: str(rules.serotyping_seqsero2_wildcards.output.TXT).format(mode='Allele', input_format=wildcards.input_format) if 'fasta' not in config['input'] else [],
-        INFORMS_seqsero2_allele = lambda wildcards: str(rules.serotyping_seqsero2_wildcards.output.INFORMS).format(mode='Allele', input_format=wildcards.input_format) if 'fasta' not in config['input'] else [],
-        TXT_seqsero2_kmerread = lambda wildcards: str(rules.serotyping_seqsero2_wildcards.output.TXT).format(mode='Kmerread', input_format=wildcards.input_format) if 'fasta' not in config['input'] else [],
-        INFORMS_seqsero2_kmerread = lambda wildcards: str(rules.serotyping_seqsero2_wildcards.output.INFORMS).format(mode='Kmerread', input_format=wildcards.input_format) if 'fasta' not in config['input'] else []
+        TXT_seqsero2_kmer = lambda wildcards: str(rules.serotyping_seqsero2_run.output.TXT).format(mode='Kmer', input_format=wildcards.input_format),
+        INFORMS_seqsero2_kmer = lambda wildcards: str(rules.serotyping_seqsero2_run.output.INFORMS).format(mode='Kmer', input_format=wildcards.input_format),
+        TXT_seqsero2_allele = lambda wildcards: str(rules.serotyping_seqsero2_run.output.TXT).format(mode='Allele', input_format=wildcards.input_format) if 'fasta' not in config['input'] else [],
+        INFORMS_seqsero2_allele = lambda wildcards: str(rules.serotyping_seqsero2_run.output.INFORMS).format(mode='Allele', input_format=wildcards.input_format) if 'fasta' not in config['input'] else [],
+        TXT_seqsero2_kmerread = lambda wildcards: str(rules.serotyping_seqsero2_run.output.TXT).format(mode='Kmerread', input_format=wildcards.input_format) if 'fasta' not in config['input'] else [],
+        INFORMS_seqsero2_kmerread = lambda wildcards: str(rules.serotyping_seqsero2_run.output.INFORMS).format(mode='Kmerread', input_format=wildcards.input_format) if 'fasta' not in config['input'] else []
     output:
         VAL_TSV_sistr = Path(config['working_dir']) / 'serotyping' / '{input_format}' / 'summary_out_sistr.tsv',
         VAL_TSV_seqsero2 = Path(config['working_dir']) / 'serotyping' / '{input_format}' / 'summary_out_seqsero2.tsv'
@@ -146,14 +146,14 @@ rule serotyping_dump_summary_info:
             handle.write(f"seqsero2_tool_version\t{informs_seqsero2_kmer['_name']}\n")
             handle.write(f"seqsero2_db_version\t{informs_seqsero2_kmer['last_update_date']}\n")
 
-rule create_output_report_serotyping_sistr:
+rule serotyping_sistr_report:
     """
     This rule creates a simple output report, combining both serotyping tools
     """
     input:
-        JSON_SISTR = rules.serotyping_sistr.output.JSON,
+        JSON_SISTR = rules.serotyping_sistr_run.output.JSON,
         VAL_TSV = rules.serotyping_dump_summary_info.output.VAL_TSV_sistr,
-        INFORMS_serotyping_sistr = rules.serotyping_sistr.output.INFORMS
+        INFORMS_serotyping_sistr = rules.serotyping_sistr_run.output.INFORMS
     output:
         VAL_HTML = Path(config['working_dir']) / 'serotyping' / '{input_format}' / 'html_sistr.io'
     params:
@@ -168,16 +168,16 @@ rule create_output_report_serotyping_sistr:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reportertool, output)
 
-rule create_output_report_serotyping_seqsero2:
+rule serotyping_seqsero2_report:
     """
     This rule creates a simple output report, combining both serotyping tools
     """
     input:
-        TXT_seqsero2_kmer = lambda wildcards: str(rules.serotyping_seqsero2_wildcards.output.TXT).format(mode='Kmer', input_format=wildcards.input_format),
-        TXT_seqsero2_allele = lambda wildcards: str(rules.serotyping_seqsero2_wildcards.output.TXT).format(mode='Allele', input_format=wildcards.input_format) if 'fasta' not in config['input'] else [],
-        TXT_seqsero2_kmerread = lambda wildcards: str(rules.serotyping_seqsero2_wildcards.output.TXT).format(mode='Kmerread', input_format=wildcards.input_format) if 'fasta' not in config['input'] else [],
+        TXT_seqsero2_kmer = lambda wildcards: str(rules.serotyping_seqsero2_run.output.TXT).format(mode='Kmer', input_format=wildcards.input_format),
+        TXT_seqsero2_allele = lambda wildcards: str(rules.serotyping_seqsero2_run.output.TXT).format(mode='Allele', input_format=wildcards.input_format) if 'fasta' not in config['input'] else [],
+        TXT_seqsero2_kmerread = lambda wildcards: str(rules.serotyping_seqsero2_run.output.TXT).format(mode='Kmerread', input_format=wildcards.input_format) if 'fasta' not in config['input'] else [],
         VAL_TSV = rules.serotyping_dump_summary_info.output.VAL_TSV_seqsero2,
-        INFORMS_serotyping_seqsero2 = lambda wildcards: str(rules.serotyping_seqsero2_wildcards.output.INFORMS).format(mode='Kmer', input_format=wildcards.input_format)
+        INFORMS_serotyping_seqsero2 = lambda wildcards: str(rules.serotyping_seqsero2_run.output.INFORMS).format(mode='Kmer', input_format=wildcards.input_format)
     output:
         VAL_HTML = Path(config['working_dir']) / 'serotyping' / '{input_format}' / 'html_seqsero2.io'
     params:
@@ -196,7 +196,7 @@ rule create_output_report_serotyping_seqsero2:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reportertool, output)
 
-rule serotyping_report_empty_sistr:
+rule serotyping_sistr_report_empty:
     """
     Creates an empty HTML report for the sistr analysis.
     """
@@ -208,7 +208,7 @@ rule serotyping_report_empty_sistr:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         SnakePipelineUtils.create_empty_report_section(SistrReporter.TITLE, Path(output.VAL_HTML))
 
-rule serotyping_report_empty_seqsero2:
+rule serotyping_seqsero2_report_empty:
     """
     Creates an empty HTML report for the seqsero2 analysis.
     """
