@@ -25,7 +25,7 @@ class AbriTAMRReporter(Tool):
         """
         super().__init__('AbriTAMR Reporter', '0.1', camel)
         self._section = None
-        self._species = self._input_informs['ABRITAMR_RUN']['species']
+        self._species = None
 
     def _check_input(self) -> None:
         """
@@ -43,6 +43,7 @@ class AbriTAMRReporter(Tool):
         """
         self._section = HtmlReportSection(AbriTAMRReporter.TITLE,
                                           subtitle=self._input_informs['ABRITAMR_RUN']['_name'])
+        self._species = self._input_informs['ABRITAMR_RUN']['species']
         self.__add_summaries_tables()
         if self._species == 'Salmonella':
             self.__add_antibiogram()
@@ -108,8 +109,8 @@ class AbriTAMRReporter(Tool):
             key_parts = column.replace(" - ", "_").split('_')
             value = df_abritamr.iloc[0][column]
             if key_parts[-1] in {'ResMech', 'Interpretation'}:
-                antibiotic = '_'.join(key_parts[:-2])
-                antibiotic_property = key_parts[:-1]
+                antibiotic = '_'.join(key_parts[:-1])  # = join all except last value: counter intuitive
+                antibiotic_property = key_parts[-1]
 
                 # Initialize or update the sub dictionary in one step instead of checking with .get()
                 antibiogram_dict.setdefault(antibiotic, {})[antibiotic_property] = value
@@ -151,7 +152,7 @@ class AbriTAMRReporter(Tool):
         """
         relative_path = Path('abritamr', 'summary_out.tsv')
         self._section.add_file(self._tool_inputs['TSV'][0].path, relative_path)
-        if str(self._tool_inputs['VAL_SPECIES'][0]) == 'Salmonella':
+        if self._species == 'Salmonella':
             relative_path = Path('abritamr', 'summary_out.tsv')
             self._section.add_link_to_file("Download (TSV)", relative_path)
 

@@ -21,14 +21,14 @@ class AbriTAMRReport(Tool):
         :return: None
         """
         super().__init__('AbriTAMR report', '1.0.19', camel)
-
-        self._species = self._input_informs['ABRITAMR_RUN']['species']
+        self._species = None
 
     def _execute_tool(self) -> None:
         """
         Executes the tool
         :return: None
         """
+        self._species = self._input_informs['ABRITAMR_RUN']['species']
         self.__build_command()
         self._execute_command()
         self.__set_output()

@@ -52,7 +52,7 @@ rule abritamr_generate_dummy_mdu_qc_file:
         with qc_file_txt.open('w') as handle:
             handle.write(f'ISOLATE,SPECIES_EXP,SPECIES_OBS,TEST_QC\n'
                          f'{params.running_dir},{species},{species},PASS\n')
-        SnakemakeUtils.dump_object([ToolIOFile(qc_file_txt)], output.TXT_MDU_QC)
+        SnakemakeUtils.dump_object([ToolIOFile(qc_file_txt)], Path(output.TXT_MDU_QC))
 
 
 rule abritamr_report_run:

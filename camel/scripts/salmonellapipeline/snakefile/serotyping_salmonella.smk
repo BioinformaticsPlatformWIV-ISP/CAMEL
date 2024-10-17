@@ -29,12 +29,12 @@ rule serotyping_sistr_run:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'serotyping' / wildcards.input_format / 'serotyping_sistr',
         db_path_sistr = config['serotyping']['sistr']['path']
     run:
-        sistrtool = Sistr(camel)
-        sistrtool.add_input_files({'DIR': [ToolIODirectory(Path(str(params.db_path_sistr)))]})
-        SnakemakeUtils.add_pickle_input(sistrtool, 'FASTA', Path(input.FASTA))
-        step = Step(str(rule), sistrtool, camel, Path(str(params.running_dir)), config)
+        sistr_tool = Sistr(camel)
+        sistr_tool.add_input_files({'DIR': [ToolIODirectory(Path(str(params.db_path_sistr)))]})
+        SnakemakeUtils.add_pickle_input(sistr_tool, 'FASTA', Path(input.FASTA))
+        step = Step(str(rule), sistr_tool, camel, Path(str(params.running_dir)), config)
         step.run_step()
-        SnakemakeUtils.dump_tool_outputs(sistrtool, output)
+        SnakemakeUtils.dump_tool_outputs(sistr_tool, output)
 
 rule serotyping_seqsero2_run:
     """
@@ -50,29 +50,29 @@ rule serotyping_seqsero2_run:
         mode = lambda wildcards: wildcards.mode,
         running_dir = lambda wildcards: Path(config['working_dir']) / 'serotyping' / wildcards.input_format / f'serotyping_seqsero2_{wildcards.mode}',
         db_path_seqsero2 = config['serotyping']['seqsero2']['path'],
-        read_key = lambda wildcards: wildcards.input_format, # todo change to include ont
+        read_key = lambda wildcards: wildcards.input_format
     run:
-        seqserotool = SeqSero2(camel)
-        seqserotool.add_input_files({'DIR': [ToolIODirectory(Path(str(params.db_path_seqsero2)))]})
-        SnakemakeUtils.add_pickle_input(seqserotool, 'FASTA', Path(input.FASTA))
+        seqsero_tool = SeqSero2(camel)
+        seqsero_tool.add_input_files({'DIR': [ToolIODirectory(Path(str(params.db_path_seqsero2)))]})
+        SnakemakeUtils.add_pickle_input(seqsero_tool, 'FASTA', Path(input.FASTA))
         if params.read_key == 'fastq_pe':
-            seqserotool.add_input_files(SnakePipelineUtils.extracts_fq_input(Path(input.IO), key_pe='FASTQ_PE'))
+            seqsero_tool.add_input_files(SnakePipelineUtils.extracts_fq_input(Path(input.IO), key_pe='FASTQ_PE'))
         if params.read_key == 'fastq_se':
-            seqserotool.add_input_files(SnakePipelineUtils.extracts_fq_input(
+            seqsero_tool.add_input_files(SnakePipelineUtils.extracts_fq_input(
                 Path(input.IO), key_se='FASTQ', read_type='SE'))
-        seqserotool.update_parameters(mode=str(params.mode))
-        step = Step(str(rule), seqserotool, camel, Path(str(params.running_dir)), config)
+        seqsero_tool.update_parameters(mode=str(params.mode))
+        step = Step(str(rule), seqsero_tool, camel, Path(str(params.running_dir)), config)
         step.run_step()
         if config['input_type'] == 'hybrid':
             if params.read_key == 'fastq_pe':
-                seqserotool.informs['_tag'] = f"{params.mode} - Illumina"
+                seqsero_tool.informs['_tag'] = f"{params.mode} - Illumina"
             else:
-                seqserotool.informs['_tag'] = f"{params.mode} - ONT"
-        SnakemakeUtils.dump_tool_outputs(seqserotool, output)
+                seqsero_tool.informs['_tag'] = f"{params.mode} - ONT"
+        SnakemakeUtils.dump_tool_outputs(seqsero_tool, output)
 
 rule serotyping_dump_summary_info:
     """
-    This rule creates a simple output report for SISTR and SeqSero2.
+    This rule creates a simple output summaries for the SISTR and SeqSero2 serotyping analyses.
     """
     input:
         JSON_sistr = rules.serotyping_sistr_run.output.JSON,
@@ -148,7 +148,7 @@ rule serotyping_dump_summary_info:
 
 rule serotyping_sistr_report:
     """
-    This rule creates a simple output report, combining both serotyping tools
+    This rule creates a simple output report for the SISTR serotyping analysis.
     """
     input:
         JSON_SISTR = rules.serotyping_sistr_run.output.JSON,
@@ -158,19 +158,19 @@ rule serotyping_sistr_report:
         VAL_HTML = Path(config['working_dir']) / 'serotyping' / '{input_format}' / 'html_sistr.io'
     params:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'serotyping' / wildcards.input_format,
-        db_path_sistr = config['serotyping']['sistr']['path'],
+        db_path_sistr = config['serotyping']['sistr']['path']
     run:
-        reportertool = SistrReporter(camel)
-        reportertool.add_input_files({'DIR_sistr': [ToolIODirectory(Path(str(params.db_path_sistr)))]})
-        SnakemakeUtils.add_pickle_inputs(reportertool, input, excluded_keys=['VAL_TSV'])
-        reportertool.add_input_files({'TSV_output': [ToolIOFile(Path(str(input.VAL_TSV)))]})
-        step = Step(str(rule), reportertool, camel, Path(str(params.running_dir)), config)
+        reporter = SistrReporter(camel)
+        reporter.add_input_files({'DIR_sistr': [ToolIODirectory(Path(str(params.db_path_sistr)))]})
+        SnakemakeUtils.add_pickle_inputs(reporter, input, excluded_keys=['VAL_TSV'])
+        reporter.add_input_files({'TSV_output': [ToolIOFile(Path(str(input.VAL_TSV)))]})
+        step = Step(str(rule), reporter, camel, Path(str(params.running_dir)), config)
         step.run_step()
-        SnakemakeUtils.dump_tool_outputs(reportertool, output)
+        SnakemakeUtils.dump_tool_outputs(reporter, output)
 
 rule serotyping_seqsero2_report:
     """
-    This rule creates a simple output report, combining both serotyping tools
+    This rule creates a simple output report for the SeqSero2 serotyping analysis.
     """
     input:
         TXT_seqsero2_kmer = lambda wildcards: str(rules.serotyping_seqsero2_run.output.TXT).format(mode='Kmer', input_format=wildcards.input_format),
@@ -184,21 +184,21 @@ rule serotyping_seqsero2_report:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'serotyping' / wildcards.input_format,
         db_path_seqsero2 = config['serotyping']['seqsero2']['path']
     run:
-        reportertool = SeqSero2Reporter(camel)
-        reportertool.add_input_files({'DIR_seqsero2': [ToolIODirectory(Path(str(params.db_path_seqsero2)))]})
-        SnakemakeUtils.add_pickle_inputs(reportertool, input, excluded_keys=['VAL_TSV', 'TXT_seqsero2_allele', 'TXT_seqsero2_kmerread'])
-        reportertool.add_input_files({'TSV_output': [ToolIOFile(Path(input.VAL_TSV))]})
+        reporter = SeqSero2Reporter(camel)
+        reporter.add_input_files({'DIR_seqsero2': [ToolIODirectory(Path(str(params.db_path_seqsero2)))]})
+        SnakemakeUtils.add_pickle_inputs(reporter, input, excluded_keys=['VAL_TSV', 'TXT_seqsero2_allele', 'TXT_seqsero2_kmerread'])
+        reporter.add_input_files({'TSV_output': [ToolIOFile(Path(input.VAL_TSV))]})
         if input.TXT_seqsero2_allele:
-            SnakemakeUtils.add_pickle_input(reportertool, 'TXT_seqsero2_allele', Path(str(input.TXT_seqsero2_allele)))
+            SnakemakeUtils.add_pickle_input(reporter, 'TXT_seqsero2_allele', Path(str(input.TXT_seqsero2_allele)))
         if input.TXT_seqsero2_kmerread:
-            SnakemakeUtils.add_pickle_input(reportertool, 'TXT_seqsero2_kmerread', Path(str(input.TXT_seqsero2_kmerread)))
-        step = Step(str(rule), reportertool, camel, Path(str(params.running_dir)), config)
+            SnakemakeUtils.add_pickle_input(reporter, 'TXT_seqsero2_kmerread', Path(str(input.TXT_seqsero2_kmerread)))
+        step = Step(str(rule), reporter, camel, Path(str(params.running_dir)), config)
         step.run_step()
-        SnakemakeUtils.dump_tool_outputs(reportertool, output)
+        SnakemakeUtils.dump_tool_outputs(reporter, output)
 
 rule serotyping_sistr_report_empty:
     """
-    Creates an empty HTML report for the sistr analysis.
+    Creates an empty HTML report for the SISTR serotyping analysis.
     """
     output:
         VAL_HTML = Path(config['working_dir']) / 'serotyping' / '{input_format}' / 'html_sistr-empty.io'
@@ -210,7 +210,7 @@ rule serotyping_sistr_report_empty:
 
 rule serotyping_seqsero2_report_empty:
     """
-    Creates an empty HTML report for the seqsero2 analysis.
+    Creates an empty HTML report for the SeqSero2 serotyping analysis.
     """
     output:
         VAL_HTML = Path(config['working_dir']) / 'serotyping' / '{input_format}' / 'html_seqsero2-empty.io'
