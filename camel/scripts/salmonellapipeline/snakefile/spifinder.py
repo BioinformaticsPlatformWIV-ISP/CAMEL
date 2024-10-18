@@ -60,16 +60,16 @@ def get_command_informs(config: Dict[str, Any]) -> List[Path]:
         return []
 
     # FASTA input
-    if (input_type == 'fasta') and ('spifinder' in config['analyses']):
+    if input_type == 'fasta':
         paths.append(OUTPUT_SPIFINDER_FASTA_INFORMS)
 
     # PE reads
-    if (input_type in ('illumina', 'hybrid')) and ('spifinder' in config['analyses']):
+    if input_type in ('illumina', 'hybrid'):
         paths.append(OUTPUT_SPIFINDER_FASTA_INFORMS)
         paths.append(str(OUTPUT_SPIFINDER_FASTQ_INFORMS).format(input_format='fastq_pe'))
 
     # SE reads
-    if (input_type in ('ont', 'hybrid')) and ('spifinder' in config['analyses']):
+    if input_type in ('ont', 'hybrid'):
         paths.append(OUTPUT_SPIFINDER_FASTA_INFORMS)
         paths.append(str(OUTPUT_SPIFINDER_FASTQ_INFORMS).format(input_format='fastq_se'))
     return [Path(config['working_dir']) / p for p in paths]
@@ -88,27 +88,25 @@ def get_summaries(config: Dict[str, Any]) -> List[Path]:
         return []
 
     # FASTA input
-    if (input_type == 'fasta') and ('spifinder' in config['analyses']):
+    if input_type == 'fasta':
         paths.append(str(OUTPUT_SPIFINDER_SUMMARY).format(input_format='fasta'))
 
     # PE reads
-    if (input_type in ('illumina', 'hybrid')) and ('spifinder' in config['analyses']):
+    if input_type in ('illumina', 'hybrid'):
         paths.append(str(OUTPUT_SPIFINDER_SUMMARY).format(input_format='fastq_pe'))
 
     # SE reads
-    if (input_type in ('ont', 'hybrid')) and ('spifinder' in config['analyses']):
+    if input_type in ('ont', 'hybrid'):
         paths.append(str(OUTPUT_SPIFINDER_SUMMARY).format(input_format='fastq_se'))
 
     return [Path(config['working_dir']) / p for p in paths]
 
 
-def spifinder_json_parser(json_file_path: Path, tool_informs: Dict[str, Any], mode: str) -> (
-        Tuple)[List[Union[str, int, float]], Dict[str, Any]]:
+def spifinder_json_parser(json_file_path: Path, mode: str) -> List[Union[str, int, float]]:
     """
     This function is able to parse the output json files of the spifinder tool and returns more favorable outputs
-    for the TSV and the camel JSON for HERA.
+    for the TSV.
     :param json_file_path: Path of the json file to be parsed
-    :param tool_informs: tool informs corresponding to the run of which json_file_path was the output
     :param mode: fasta or fastq
     :return: a list of hits to be added in the output tsv, a dictionary of hits and metadata to be added to the
     output json
@@ -128,31 +126,13 @@ def spifinder_json_parser(json_file_path: Path, tool_informs: Dict[str, Any], mo
 
     results_tsv = []
     spi = json_file['spifinder']["results"]['Salmonella Pathogenicity Islands']['SPI']
-    if spi == "No hit found":
-        inter_json_dict = {f"spifinder_{mode}": {'results': results_tsv}}
-    else:
-        hit_dictionary_list = []
+    if not spi == "No hit found":
         for hit in spi.keys():
-            json_dict = {}
-
             # Add coverage to spi hit dictionary because it doesn't exist
             spi[hit]['coverage'] = f"{spi[hit]['HSP_length']}/{spi[hit]['template_length']}"
 
             for hit_property in header_part1 + header_part2:
                 # add to tsv
                 results_tsv.append(spi[hit][hit_property])
-                # add to json
-                json_dict[hit_property] = spi[hit][hit_property]
 
-            hit_dictionary_list.append(json_dict)
-        inter_json_dict = {f"spifinder_{mode}": {'results': hit_dictionary_list}}
-
-    # Add tool and db metadata to json dictionary
-    inter_json_dict[f"spifinder_{mode}"]['informs_tools'] = {
-        tool_informs.get('_tool', tool_informs['_name']): {'_name': tool_informs['_name'],
-                                                           '_version': tool_informs['_version'],
-                                                           '_command': tool_informs['_command'],
-                                                           '_tag': tool_informs['_tag']}}
-    inter_json_dict[f"spifinder_{mode}"]['informs_dbs'] = {'last_updated': tool_informs['last_update_date'],
-                                                           'name': tool_informs['key'], 'title': tool_informs['key']}
-    return results_tsv, inter_json_dict
+    return results_tsv

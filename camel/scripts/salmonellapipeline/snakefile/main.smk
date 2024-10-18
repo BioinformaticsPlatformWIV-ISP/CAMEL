@@ -46,8 +46,6 @@ rule report_command_section:
         INFORMS_contamination = contamination_check_kraken.get_command_informs(config),
         INFORMS_confindr = confindr.get_command_informs(config),
         INFORMS_assembly_map = assembly.get_qc_informs(config,config['input_type']),
-        #INFORMS_variant_calling_all = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_INFORMS_ALL,
-        #INFORMS_variant_filtering_all = Path(config['working_dir']) / variant_filtering.OUTPUT_VARIANT_FILTERING_INFORMS_ALL,
         INFORMS_serotyping = serotyping_salmonella.get_command_informs(config),
         INFORMS_mykrobe = Path(config['working_dir']) / mykrobe.OUTPUT_MYKROBE_INFORMS if 'mykrobe' in config['analyses'] else [],
         INFORMS_abritamr_run =  abritamr.get_command_informs(config),
@@ -64,7 +62,7 @@ rule report_command_section:
         dir_ = config['working_dir']
     run:
         from camel.app.components.pipelines.reportpipeline import ReportPipeline
-        ReportPipeline.export_command_section(input,Path(output.HTML),Path(params.dir_))
+        ReportPipeline.export_command_section(input, Path(output.HTML), Path(params.dir_))
 
 
 rule report_combine_all:
@@ -79,7 +77,6 @@ rule report_combine_all:
         reports_contamination = contamination_check_kraken.get_reports(config),
         report_confindr = confindr.get_report(config),
         report_adv_qc = Path(config['working_dir']) / str(quality_checks.OUTPUT_QUALITY_CHECKS_REPORT).format(input_type=config['input_type']),
-        #report_variant = Path(config['working_dir']) /variant_calling.OUTPUT_VARIANT_CALLING_REPORT,
         # Gene detection
         report_resfinder4 = Path(config['working_dir']) / (resfinder4.OUTPUT_RESFINDER4_REPORT if 'resfinder4' in config['analyses'] else resfinder4.OUTPUT_RESFINDER4_REPORT_EMPTY),
         reports_spifinder = spifinder.get_reports(config),
@@ -169,8 +166,6 @@ rule summary_combine_all:
         contamination_check_kraken.get_summaries(config),
         confindr.get_summary(config),
         Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY,
-        #Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_SUMMARY,
-        #Path(config['working_dir']) / variant_filtering.OUTPUT_VARIANT_FILTERING_SUMMARY,
         serotyping_salmonella.get_summaries(config),
         Path(config['working_dir']) / mykrobe.OUTPUT_MYKROBE_SUMMARY if 'mykrobe' in config['analyses'] else [],
         Path(config['working_dir']) / abritamr.OUTPUT_ABRITAMR_SUMMARY if 'abritamr' in config['analyses'] else [],
@@ -182,9 +177,9 @@ rule summary_combine_all:
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='cgmlst') if 'cgmlst' in config['analyses'] else [],
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='rmlst') if 'rmlst' in config['analyses'] else []
     output:
-        config.get('output_tabular')
+        TSV = config.get('output_tabular')
     run:
-        with open(output[0], 'w') as handle_out:
+        with open(output.TSV, 'w') as handle_out:
             for summary_input in input:
                 with open(summary_input) as handle_in:
                     handle_out.write(handle_in.read())

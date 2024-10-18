@@ -70,7 +70,7 @@ rule abritamr_report_run:
         REPORT_ABRITAMR = Path(config['working_dir']) / abritamr.OUTPUT_ABRITAMR_REPORT_REPORT,
         INFORMS = Path(config['working_dir']) / abritamr.OUTPUT_ABRITAMR_REPORT_REPORT_INFORMS
     params:
-        running_dir = Path(config['working_dir']) / 'abritamr',
+        running_dir = Path(config['working_dir']) / 'abritamr'
     run:
         from camel.app.tools.abritamr.abritamrreport import AbriTAMRReport
 

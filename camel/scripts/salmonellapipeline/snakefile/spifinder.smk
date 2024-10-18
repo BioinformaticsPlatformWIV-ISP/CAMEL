@@ -15,7 +15,7 @@ from camel.scripts.salmonellapipeline.snakefile import spifinder
 camel = Camel.get_instance()
 
 
-rule spifinder_fastq_run :
+rule spifinder_fastq_run:
     """
     This rule executes SPIFinder and returns the results.
     """
@@ -31,21 +31,18 @@ rule spifinder_fastq_run :
     run:
         from camel.app.tools.pipelines.salmonella.spifinder import SPIFinder
 
-        spifindertool = SPIFinder(camel)
-        spifindertool.add_input_files({'DIR': [ToolIODirectory(Path(str(params.db_path)))]})
+        spifindier_tool = SPIFinder(camel)
+        spifindier_tool.add_input_files({'DIR': [ToolIODirectory(Path(str(params.db_path)))]})
         if params.read_key == 'fastq_pe':
-            spifindertool.add_input_files(SnakePipelineUtils.extracts_fq_input(Path(input.IO), key_pe='FASTQ_PE'))
+            spifindier_tool.add_input_files(SnakePipelineUtils.extracts_fq_input(Path(input.IO), key_pe='FASTQ_PE'))
         else:
-            spifindertool.add_input_files(SnakePipelineUtils.extracts_fq_input(
+            spifindier_tool.add_input_files(SnakePipelineUtils.extracts_fq_input(
                 Path(input.IO), key_se='FASTQ', read_type='SE'))
-        step = Step(str(rule), spifindertool, camel, Path(str(params.running_dir)))
+        step = Step(str(rule), spifindier_tool, camel, Path(str(params.running_dir)))
         step.run_step()
         if config['input_type'] == 'hybrid':
-            if params.read_key == 'fastq_pe':
-                spifindertool.informs['_tag'] = 'Illumina'
-            else:
-                spifindertool.informs['_tag'] = 'ONT'
-        SnakemakeUtils.dump_tool_outputs(spifindertool, output)
+            spifindier_tool.informs['_tag'] = f"{'Illumina' if params.read_key == 'fastq_pe' else 'ONT'}"
+        SnakemakeUtils.dump_tool_outputs(spifindier_tool, output)
 
 
 rule spifinder_fasta_run:
@@ -63,13 +60,13 @@ rule spifinder_fasta_run:
     run:
         from camel.app.tools.pipelines.salmonella.spifinder import SPIFinder
 
-        spifindertool = SPIFinder(camel)
-        spifindertool.add_input_files({'DIR': [ToolIODirectory(Path(str(params.db_path)))]})
-        SnakemakeUtils.add_pickle_input(spifindertool, 'FASTA', Path(input.FASTA))
-        step = Step(str(rule), spifindertool, camel, params.running_dir)
+        spifindier_tool = SPIFinder(camel)
+        spifindier_tool.add_input_files({'DIR': [ToolIODirectory(Path(str(params.db_path)))]})
+        SnakemakeUtils.add_pickle_input(spifindier_tool, 'FASTA', Path(input.FASTA))
+        step = Step(str(rule), spifindier_tool, camel, params.running_dir)
         step.run_step()
-        spifindertool.informs['_tag'] = 'FASTA'
-        SnakemakeUtils.dump_tool_outputs(spifindertool, output)
+        spifindier_tool.informs['_tag'] = 'FASTA'
+        SnakemakeUtils.dump_tool_outputs(spifindier_tool, output)
 
 rule spifinder_create_summary:
     """
@@ -90,11 +87,9 @@ rule spifinder_create_summary:
         with Path(output.TSV).open('w') as handle:
             if 'fasta' not in config['input']:
                 informs_fastq = SnakemakeUtils.load_object(Path(input.INFORMS_spifinder_fastq))
-                results_fastq_tsv, results_fastq_json = spifinder.spifinder_json_parser(SnakemakeUtils.load_object(Path(input.JSON_FASTQ))[0].path,
-                    informs_fastq, 'fastq')
+                results_fastq_tsv = spifinder.spifinder_json_parser(SnakemakeUtils.load_object(Path(input.JSON_FASTQ))[0].path, 'fastq')
                 handle.write(f"spifinder_fastq\t{results_fastq_tsv}\n")
-            results_fasta, results_fasta_json = spifinder.spifinder_json_parser(SnakemakeUtils.load_object(Path(input.JSON_FASTA))[0].path,
-                informs_fasta, 'fasta')
+            results_fasta = spifinder.spifinder_json_parser(SnakemakeUtils.load_object(Path(input.JSON_FASTA))[0].path, 'fasta')
             handle.write(f"spifinder_fasta\t{results_fasta}\n")
             handle.write(f"spifinder_tool_version\t{informs_fasta['_name']}\n")
             handle.write(f"spifinder_db_version\t{informs_fasta['last_update_date']}\n")
@@ -118,21 +113,20 @@ rule spifinder_report:
         VAL_HTML = Path(config['working_dir']) / 'spifinder' / '{input_format}' / 'html.io'
     params:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'spifinder' / wildcards.input_format
-    threads: 8
     run:
         from camel.app.tools.pipelines.salmonella.spifinderreporter import SPIFinderReporter
 
-        spifinder_reporter = SPIFinderReporter(camel)
-        SnakemakeUtils.add_pickle_inputs(spifinder_reporter, input, excluded_keys=['TSV', 'TSV_documentation', 'JSON_FASTQ', 'INFORMS_spifinder_fastq'])
-        spifinder_reporter.add_input_files({'TSV_output': [ToolIOFile(Path(input.TSV))],
+        reporter = SPIFinderReporter(camel)
+        SnakemakeUtils.add_pickle_inputs(reporter, input, excluded_keys=['TSV', 'TSV_documentation', 'JSON_FASTQ', 'INFORMS_spifinder_fastq'])
+        reporter.add_input_files({'TSV_output': [ToolIOFile(Path(input.TSV))],
                                             'TSV_documentation': [ToolIOFile(Path(input.TSV_documentation))]})
         if input.JSON_FASTQ:
-            SnakemakeUtils.add_pickle_input(spifinder_reporter, 'JSON_FASTQ', Path(input.JSON_FASTQ))
+            SnakemakeUtils.add_pickle_input(reporter, 'JSON_FASTQ', Path(input.JSON_FASTQ))
         if input.INFORMS_spifinder_fastq:
-            spifinder_reporter.add_input_informs({'spifinder_fastq': SnakemakeUtils.load_object(Path(str(input.INFORMS_spifinder_fastq)))})
-        step = Step(str(rule), spifinder_reporter, camel, Path(str(params.running_dir)))
+            reporter.add_input_informs({'spifinder_fastq': SnakemakeUtils.load_object(Path(str(input.INFORMS_spifinder_fastq)))})
+        step = Step(str(rule), reporter, camel, Path(str(params.running_dir)))
         step.run_step()
-        SnakemakeUtils.dump_tool_outputs(spifinder_reporter, output)
+        SnakemakeUtils.dump_tool_outputs(reporter, output)
 
 rule spifinder_report_empty:
     """
@@ -144,6 +138,6 @@ rule spifinder_report_empty:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'spifinder' / wildcards.input_format
     run:
         from camel.app.tools.pipelines.salmonella.spifinderreporter import SPIFinderReporter
-
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
+
         SnakePipelineUtils.create_empty_report_section(SPIFinderReporter.TITLE, Path(output.VAL_HTML))

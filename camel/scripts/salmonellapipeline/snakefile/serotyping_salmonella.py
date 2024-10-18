@@ -1,6 +1,6 @@
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 
 SNAKEFILE_SEROTYPE = f'{Path(__file__).parent / Path(__file__).stem}.smk'
 _dir_serotype = Path('serotyping', '{input_format}')
@@ -68,19 +68,19 @@ def get_command_informs(config: Dict[str, Any]) -> List[Path]:
         return []
 
     # FASTA input
-    if (input_type == 'fasta') and ('serotype' in config['analyses']):
+    if input_type == 'fasta':
         paths.append(str(OUTPUT_SEROTYPE_SISTR_INFORMS).format(input_format='fasta'))
         paths.append(str(OUTPUT_SEROTYPE_SEQSERO2_KMER_INFORMS).format(input_format='fasta'))
 
     # PE reads
-    if (input_type in ('illumina', 'hybrid')) and ('serotype' in config['analyses']):
+    if input_type in ('illumina', 'hybrid'):
         paths.append(str(OUTPUT_SEROTYPE_SISTR_INFORMS).format(input_format='fastq_pe'))
         paths.append(str(OUTPUT_SEROTYPE_SEQSERO2_KMER_INFORMS).format(input_format='fastq_pe'))
         paths.append(str(OUTPUT_SEROTYPE_SEQSERO2_ALLELE_INFORMS).format(input_format='fastq_pe'))
         paths.append(str(OUTPUT_SEROTYPE_SEQSERO2_KMERREAD_INFORMS).format(input_format='fastq_pe'))
 
     # SE reads
-    if (input_type in ('ont', 'hybrid')) and ('serotype' in config['analyses']):
+    if input_type in ('ont', 'hybrid'):
         paths.append(str(OUTPUT_SEROTYPE_SISTR_INFORMS).format(input_format='fastq_se'))
         paths.append(str(OUTPUT_SEROTYPE_SEQSERO2_KMER_INFORMS).format(input_format='fastq_se'))
         paths.append(str(OUTPUT_SEROTYPE_SEQSERO2_ALLELE_INFORMS).format(input_format='fastq_se'))
@@ -102,41 +102,35 @@ def get_summaries(config: Dict[str, Any]) -> List[Path]:
         return []
 
     # FASTA input
-    if (input_type == 'fasta') and ('serotype' in config['analyses']):
+    if input_type == 'fasta':
         paths.append(str(OUTPUT_SEROTYPE_SISTR_SUMMARY).format(input_format='fasta'))
         paths.append(str(OUTPUT_SEROTYPE_SEQSERO2_SUMMARY).format(input_format='fasta'))
 
     # PE reads
-    if (input_type in ('illumina', 'hybrid')) and ('serotype' in config['analyses']):
+    if input_type in ('illumina', 'hybrid'):
         paths.append(str(OUTPUT_SEROTYPE_SISTR_SUMMARY).format(input_format='fastq_pe'))
         paths.append(str(OUTPUT_SEROTYPE_SEQSERO2_SUMMARY).format(input_format='fastq_pe'))
 
     # SE reads
-    if (input_type in ('ont', 'hybrid')) and ('serotype' in config['analyses']):
+    if input_type in ('ont', 'hybrid'):
         paths.append(str(OUTPUT_SEROTYPE_SISTR_SUMMARY).format(input_format='fastq_se'))
         paths.append(str(OUTPUT_SEROTYPE_SEQSERO2_SUMMARY).format(input_format='fastq_se'))
 
     return [Path(config['working_dir']) / p for p in paths]
 
 
-def sistr_output_parser(prediction: Dict[str, Any], locus: str, antigen: str, hits_dict_tsv: Dict[str, str], 
-                        hits_dict_json: Dict[str, Any], header_locus: List[str]) -> None:
+def sistr_output_parser(prediction: Dict[str, Any], locus: str, antigen: str, hits_dict_tsv: Dict[str, str]) -> None:
     """
-    Parses the Sistr output for a specific locus (the o antigen has 2 loci, and the h antigens each have one locus).
+    Parses the SISTR output for a specific locus (the o antigen has 2 loci, and the h antigens each have one locus).
     Updates the hits dictionaries in place without returning any output.
     :param prediction: the dictionary of the results of the specific locus
     :param locus: locus name, either fliC, fljB, wzx, or wzy
     :param antigen: antigen name, either h1, h2, or o
     :param hits_dict_tsv: the dictionary of the results for the tsv file
-    :param hits_dict_json: the nested dictionary of the results for the json file
-    :param header_locus: the header for both the tsv and json dictionary values
     :return: None
     """
     is_missing = prediction['is_missing']
-    if is_missing:
-        json_dict = {item: "-" for item in header_locus}
-        hits_dict_json[f'hits_serotype_{antigen}_{locus}'] = json_dict
-    else:
+    if not is_missing:
         hit_properties = [
             locus,
             prediction[antigen if antigen != 'o' else 'serogroup'].replace(',', ';'),
@@ -147,37 +141,20 @@ def sistr_output_parser(prediction: Dict[str, Any], locus: str, antigen: str, hi
             '...'.join([str(prediction['top_result']['sstart']),
                         str(prediction['top_result']['send'])])
         ]
-        json_dict = {header_locus[i]: hit_properties[i] for i in range(len(header_locus))}
 
         hits_dict_tsv[f'hits_serotype_{antigen}_{locus}'] = ','.join(hit_properties)
-        hits_dict_json[f'hits_serotype_{antigen}_{locus}'] = json_dict
 
 
-def seqsero2_output_parser(seqsero2_file: Path, seqsero2_mode: str, informs_dict: Dict[str, str]) -> \
-        Tuple[Dict[str, Any], List[str]]:
+def seqsero2_output_parser(seqsero2_file: Path, seqsero2_mode: str) -> List[str]:
     """
     Parses the output file of a SeqSero2 run, uniform over all three modes.
     :param seqsero2_file: path of the output file
     :param seqsero2_mode: mode of the SeqSero2 run, either seqsero2_kmer, seqsero2_allele, or seqsero2_kmerread
-    :param informs_dict: corresponding informs dictionary of the given seqsero2_file and mode
-    :return: tuple of 1. intermediate dictionary to be combined and then written to json file and
     2. List of result string to be written to tsv file
     """
-    json_dict = {}
     with seqsero2_file.open('r') as handle:
         tsv_results = handle.readlines()[2:8]
     tsv_results = [re.sub(r'([^ ]) ([^ ])', r'\1_\2', res).strip("\n") for res in tsv_results]
     tsv_results = [res.replace(':\t', '\t') for res in tsv_results]
     tsv_results = [seqsero2_mode + "_" + x for x in tsv_results]
-    for res in tsv_results:
-        json_dict[res.split('\t')[0]] = res.split('\t')[1]
-    inter_json_dict = {
-        seqsero2_mode: {
-            **json_dict,
-            'informs_tools': {informs_dict.get('_tool', informs_dict['_name']): {
-                '_name': informs_dict['_name'], '_version': informs_dict['_version'],
-                '_command': informs_dict['_command'], '_tag': informs_dict['_tag']}},
-            'informs_dbs': {
-                'last_updated': informs_dict['last_update_date'], 'name': informs_dict['key'],
-                'title': informs_dict['key']}}}
-    return inter_json_dict, tsv_results
+    return tsv_results
