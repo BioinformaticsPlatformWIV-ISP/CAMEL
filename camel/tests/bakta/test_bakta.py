@@ -3,6 +3,7 @@ from pathlib import Path
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.bakta.bakta import Bakta
+from camel.tests import longRunningTest
 
 
 class TestBakta(CamelTestSuite):
@@ -15,6 +16,7 @@ class TestBakta(CamelTestSuite):
     input_spp = test_file_dir / 'B_subtilis_168_subset.fasta'
     input_meta_fasta = test_file_dir / 'metagenome_subset.fasta'
 
+    @longRunningTest()
     def test_bakta(self) -> None:
         """
         Tests the Bakta tool.
