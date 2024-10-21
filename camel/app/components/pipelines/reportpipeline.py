@@ -79,6 +79,10 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         if (self._args.input_type == 'illumina') and (self._args.library is not None):
             config_data['read_trimming']['adapter'] = self._args.library
 
+        # Human read scrubbing
+        if 'human_read_scrubbing' in self._args:
+            config_data['read_scrubbing'] = {}
+
         return config_data
 
     def _validate_input_files(self) -> None:

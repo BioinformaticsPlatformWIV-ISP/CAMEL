@@ -97,3 +97,31 @@ class FileSystemHelper(object):
         command.run(Path.cwd())
         if not command.returncode == 0:
             raise RuntimeError(f"Cannot gzip '{input_file}': {command.stderr}")
+
+    @staticmethod
+    def pigz_extract(input_gz_file: Path, output_gz_file: Path) -> None:
+        """
+        Extracts a GZIP compressed file using pigz, the original file is left untouched.
+        :param input_gz_file: Input GZ file
+        :param output_gz_file: Output path
+        :return: None
+        """
+        logger.info(f"Extracting: {input_gz_file}")
+        command = Command(f'pigz -k -dc {input_gz_file} > {output_gz_file}')
+        command.run(Path.cwd())
+        if not command.returncode == 0:
+            raise RuntimeError(f"Cannot extract '{input_gz_file}': {command.stderr}")
+
+    @staticmethod
+    def pigz_file(input_file: Path, output_gz_file: Path) -> None:
+        """
+        Compresses a non GZ file using pigz, the original file is left untouched.
+        :param input_file: Input non GZ file
+        :param output_gz_file: Output path
+        :return: None
+        """
+        logger.info(f"Compressing: {input_file}")
+        command = Command(f'pigz -c {input_file} > {output_gz_file}')
+        command.run(Path.cwd())
+        if not command.returncode == 0:
+            raise RuntimeError(f"Cannot gzip '{input_file}': {command.stderr}")

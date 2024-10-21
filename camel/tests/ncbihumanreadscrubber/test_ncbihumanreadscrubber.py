@@ -4,6 +4,7 @@ from camel.app.components.files.fastqutils import FastqUtils
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.ncbihumanreadscrubber.ncbihumanreadscrubber import NcbiHumanReadScrubber
+from camel.app.tools.ncbihumanreadscrubber.ncbihumanreadscrubberreporter import NcbiHumanReadScrubberReporter
 from camel.scripts.ncbihumanreadscrubber.mainncbihumanreadscrubber import MainNcbiHumanReadScrubber
 
 
@@ -30,7 +31,7 @@ class TestNcbiHumanReadScrubber(CamelTestSuite):
             scrubber.add_input_files({
                 'FASTQ_SINGLE_GUNZIP': [ToolIOFile(file)]
             })
-            scrubber.update_parameters(interleaved='false', export_human_reads='true', outputfile=self.running_dir / 'test_scrubber_output.fastq', outputfile_removed=self.running_dir / 'test_scrubber_reads_removed.fastq')
+            scrubber.update_parameters(interleaved=False, export_human_reads=True, outputfile=self.running_dir / 'test_scrubber_output.fastq', outputfile_removed=self.running_dir / 'test_scrubber_reads_removed.fastq')
             # Updated in the ncbi.py as excluded
             scrubber.run(self.running_dir)
             self.verify_output_files(scrubber, 'FASTQ_SCRUBBED', 1)
@@ -47,6 +48,28 @@ class TestNcbiHumanReadScrubber(CamelTestSuite):
 
             # Check if the informs were added
             self.assertIn('statistics', scrubber.informs)
+
+    def test_scrubber_reporter_fq_se(self) -> None:
+        """
+        Tests the NCBI human read scrubber reporter class on a not gzipped single end FASTQ file.
+        :return: None
+        """
+        for file, out in zip(TestNcbiHumanReadScrubber.files_list, TestNcbiHumanReadScrubber.output):
+            scrubber = NcbiHumanReadScrubber(self.camel)
+            scrubber.add_input_files({
+                'FASTQ_SINGLE_GUNZIP': [ToolIOFile(file)]
+            })
+            scrubber.update_parameters(interleaved=False, export_human_reads=True, outputfile=self.running_dir / 'test_scrubber_output.fastq', outputfile_removed=self.running_dir / 'test_scrubber_reads_removed.fastq')
+            # Updated in the ncbi.py as excluded
+            scrubber.run(self.running_dir)
+
+            reporter = NcbiHumanReadScrubberReporter(self.camel)
+            reporter.add_input_informs({'SCRUBBER': scrubber.informs})
+            reporter.add_input_files({'REMOVED': scrubber.tool_outputs['FASTQ_REMOVED']})
+            reporter.update_parameters(input_format='fastq_se')
+            reporter.run(self.running_dir)
+            output_section = reporter.tool_outputs['HTML'][0].value
+            self.assertGreater(len(output_section.to_html()), 0)
 
     def test_scrubbing_paired(self) -> None:
         """
@@ -117,14 +140,13 @@ class TestNcbiHumanReadScrubber(CamelTestSuite):
                 'FASTQ_SINGLE_GUNZIP': [ToolIOFile(fastq)]
             })
             scrubber_def.update_parameters(
-                interleaved='false',
-                export_human_reads='false',
+                interleaved=False,
+                export_human_reads=False,
                 outputfile=self.running_dir / 'test_scrubber_output.fastq'
             )
             # Updated in the ncbi.py as excluded
             scrubber_def.run(self.running_dir)
             self.verify_output_files(scrubber_def, 'FASTQ_SCRUBBED', 1)
-            self.verify_output_files(scrubber_def, 'FASTQ_REMOVED', 0)
 
             # Check that the input file is larger than the output file
             self.assertEqual(

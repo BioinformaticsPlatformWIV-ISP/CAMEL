@@ -1,8 +1,12 @@
 import re
+import tempfile
+from pathlib import Path
 
 from camel.app.camel import Camel
+from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -24,10 +28,11 @@ class NcbiHumanReadScrubber(Tool):
         Runs the HRRT.
         :return: None
         """
-        self.__build_command()
-        self._execute_command()
-        self._parse_stderr()
-        self.__set_output()
+        with tempfile.TemporaryDirectory(prefix='hrrt_', dir=self._camel.config['temp_dir']) as dir_temp:
+            self.__build_command(Path(dir_temp))
+            self._execute_command()
+            self._parse_stderr()
+            self.__set_output()
 
     def _check_input(self) -> None:
         """
@@ -35,25 +40,30 @@ class NcbiHumanReadScrubber(Tool):
         :return: None
         """
         if 'FASTQ_SINGLE_GUNZIP' not in self._tool_inputs or len(self._tool_inputs['FASTQ_SINGLE_GUNZIP']) == 0:
-            raise ValueError("Required FASTQ input file is missing for human read scrubber.")
+            raise InvalidInputSpecificationError("Required FASTQ input file is missing for human read scrubber.")
         super()._check_input()
 
-    def __build_command(self) -> None:
+    def __build_command(self, dir_temp: Path) -> None:
         """
         Builds the command line call to execute HRRT.
         Export_human_reads and outputfile_removed linked, adds args -r -u and path if export_human_reads = true
+        :param dir_temp: path to the temporary directory
         :return: None
         """
-        dir_temp = self._camel.config['temp_dir']
-        self._command.command = ' '.join([
+        parts = [
             f'export TMPDIR={dir_temp};',
             self._tool_command,
             *self._build_options(excluded_parameters=['interleaved', 'export_human_reads', 'outputfile_removed']),
-            self._parameters['interleaved'].option if self._parameters['interleaved'].value == 'true' else '',
-            self._parameters['export_human_reads'].option if self._parameters['export_human_reads'].value == 'true' else '',
-            self._parameters['outputfile_removed'].option + ' ' + self._parameters['outputfile_removed'].value if self._parameters['export_human_reads'].value == 'true' else '',
-            '-i', str(self._tool_inputs['FASTQ_SINGLE_GUNZIP'][0].path)
+            self._parameters['interleaved'].option if 'interleaved' in self._parameters else '',
+            '-i',  str(self._tool_inputs['FASTQ_SINGLE_GUNZIP'][0].path)
+        ]
+        if 'export_human_reads' in self._parameters:
+            parts.extend([
+                self._parameters['export_human_reads'].option,
+                self._parameters['outputfile_removed'].option,
+                str(Path(self._folder, self._parameters['outputfile_removed'].value))
             ])
+        self._command.command = ' '.join(parts)
 
     def _check_command_output(self) -> None:
         """
@@ -68,13 +78,18 @@ class NcbiHumanReadScrubber(Tool):
         Set the output of HRRT.
         :return: None
         """
+        # Scrubbed reads
         path_out = self.folder / self._parameters['outputfile'].value
-        path_removed = self.folder / self._parameters['outputfile_removed'].value if self._parameters['export_human_reads'].value == 'true' else []
         self._tool_outputs['FASTQ_SCRUBBED'] = [ToolIOFile(path_out)]
-        if self._informs.get('statistics').get('count_removed') != 0 and self._parameters['export_human_reads'].value == 'true':
-            self._tool_outputs['FASTQ_REMOVED'] = [ToolIOFile(path_removed)]
-        else:
-            self.tool_outputs['FASTQ_REMOVED'] = []
+
+        # Human reads
+        if 'export_human_reads' in self._parameters:
+            if self._informs.get('statistics').get('count_removed') == 0:
+                logger.warning(f'Human read export enabled, but no human reads found')
+                self._tool_outputs['FASTQ_REMOVED'] = []
+            else:
+                path_removed = self.folder / self._parameters['outputfile_removed'].value
+                self._tool_outputs['FASTQ_REMOVED'] = [ToolIOFile(path_removed)]
 
     def _parse_stderr(self) -> None:
         """
@@ -83,7 +98,7 @@ class NcbiHumanReadScrubber(Tool):
         """
         count_removed = None
         count_total = None
-        for line in self._command.stderr.split('\n'):
+        for line in self._command.stderr.splitlines():
             # Define the regular expression pattern
             pattern_reads_removed = r'^(\d+)\s+spot\(s\) masked or removed\.$'
             pattern_reads_total = r'total spot count: (\d+)'
@@ -97,4 +112,7 @@ class NcbiHumanReadScrubber(Tool):
                 count_total = int((re.search(pattern_reads_total, line)).group(1))
             elif count_removed is not None and count_total is not None:
                 break
-        self._informs['statistics'] = {'count_removed': count_removed, 'count_total': count_total}
+        if count_removed is None or count_total is None:
+            raise ValueError("The statistics of the human read scrubbing could not be obtained.")
+        else:
+            self._informs['statistics'] = {'count_removed': count_removed, 'count_total': count_total}
