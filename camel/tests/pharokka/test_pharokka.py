@@ -26,8 +26,10 @@ class TestPharokka(CamelTestSuite):
         pharokka.add_input_files({'FASTA': [ToolIOFile(Path(TestPharokka.fasta))]})
         pharokka.run(self.running_dir)
         self.verify_output_files(pharokka, 'GBK')
+        self.verify_output_files(pharokka, 'STATS')
         self.verify_output_files(pharokka, 'CARD')
         self.verify_output_files(pharokka, 'VFDB')
+        self.verify_output_files(pharokka, 'INPHARED')
 
     @minOSVersion('jammy')
     def test_pharokka_reporter(self) -> None:
