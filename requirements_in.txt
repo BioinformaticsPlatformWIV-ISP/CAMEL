@@ -4,6 +4,7 @@ PyVCF3
 biopython
 bs4
 humanize
+openpyxl
 pandas
 pydotplus
 pysam
