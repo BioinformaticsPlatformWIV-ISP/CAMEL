@@ -37,20 +37,19 @@ class PharokkaReporter(Tool):
         :param camel: CAMEL instance
         """
         super().__init__('Pharokka Reporter', '0.1', camel)
-        self._section = None
 
     def _check_input(self) -> None:
         """
         Checks if the provided input is valid.
         :return: None
         """
-        if 'STATS' not in self._tool_inputs:
+        if 'TSV_STATS' not in self._tool_inputs:
             raise InvalidInputSpecificationError("Pharokka output is required ('pharokka_cds_functions.tsv')")
-        if 'CARD' not in self._tool_inputs:
+        if 'TSV_CARD' not in self._tool_inputs:
             raise InvalidInputSpecificationError("Pharokka output is required ('CARD hits')")
-        if 'VFDB' not in self._tool_inputs:
+        if 'TSV_VFDB' not in self._tool_inputs:
             raise InvalidInputSpecificationError("Pharokka output is required ('VFDB hits')")
-        if 'INPHARED' not in self._tool_inputs:
+        if 'TSV_INPHARED' not in self._tool_inputs:
             raise InvalidInputSpecificationError("Pharokka output is required ('pharokka_top_hits_mash_inphared.tsv')")
         if 'pharokka' not in self._input_informs:
             raise InvalidInputSpecificationError("Pharokka informs are required")
@@ -61,8 +60,7 @@ class PharokkaReporter(Tool):
         Executes this tool.
         :return: None
         """
-        section = HtmlReportSection(PharokkaReporter.TITLE,
-                                    subtitle=self._input_informs['pharokka']['_name'])
+        section = HtmlReportSection(PharokkaReporter.TITLE, subtitle=self._input_informs['pharokka']['_name'])
 
         # Summary metrics
         section.add_header('Annotation summary metrics', 3)
@@ -82,7 +80,7 @@ class PharokkaReporter(Tool):
             self.__add_virulence_factors(section)
 
         # Phage identification
-        if 'inphared' in self._parameters:
+        if 'show_inphared' in self._parameters:
             section.add_header('Phage identification (INPHARED database)', 3)
             self.__add_identification(section)
 
@@ -92,9 +90,10 @@ class PharokkaReporter(Tool):
     def __add_stats(self, section: HtmlReportSection) -> None:
         """
         Adds the table with the summary metrics.
+        :param section: Report output section
         :return: None
         """
-        data = pd.read_table(self._tool_inputs['STATS'][0].path)
+        data = pd.read_table(self._tool_inputs['TSV_STATS'][0].path)
 
         stats = []
         for values in data.itertuples(index=False, name=None):
@@ -108,9 +107,10 @@ class PharokkaReporter(Tool):
     def __add_antibiotic_sensitivity(self, section: HtmlReportSection) -> None:
         """
         Adds the table with CARD AMR hits.
+        :param section: Report output section
         :return: None
         """
-        data_hits = pd.read_table(self._tool_inputs['CARD'][0].path)
+        data_hits = pd.read_table(self._tool_inputs['TSV_CARD'][0].path)
 
         if data_hits.empty:
             section.add_paragraph(self._input_informs['pharokka'].get('card_hits'))
@@ -128,9 +128,10 @@ class PharokkaReporter(Tool):
     def __add_virulence_factors(self, section: HtmlReportSection) -> None:
         """
         Adds the table with VFDB hits.
+        :param section: Report output section
         :return: None
         """
-        data_hits = pd.read_table(self._tool_inputs['VFDB'][0].path)
+        data_hits = pd.read_table(self._tool_inputs['TSV_VFDB'][0].path)
 
         if data_hits.empty:
             section.add_paragraph(self._input_informs['pharokka'].get('vfdb_hits'))
@@ -148,9 +149,10 @@ class PharokkaReporter(Tool):
     def __add_identification(self, section: HtmlReportSection) -> None:
         """
         Adds the table with the INPHARED information.
+        :param section: Report output section
         :return: None
         """
-        data = pd.read_table(self._tool_inputs['INPHARED'][0].path)
+        data = pd.read_table(self._tool_inputs['TSV_INPHARED'][0].path)
 
         # Create table data
         info_table = []
@@ -159,7 +161,7 @@ class PharokkaReporter(Tool):
             info_table.append(row)
 
         # Rename columns
-        header = ['Contig','Accession', 'mash_distance', 'mash_pval', 'mash_matching_hashes',
+        header = ['Contig', 'Accession', 'mash_distance', 'mash_pval', 'mash_matching_hashes',
                   'Descriptio', 'Classification', 'Genome_Length_(bp)',
                   'Jumbophage', 'molGC_(%)', 'Molecule', 'Modification_Date', 'Number_CDS',
                   'Positive_Strand_(%)', 'Negative_Strand_(%)', 'Coding_Capacity_(%)',
@@ -172,6 +174,7 @@ class PharokkaReporter(Tool):
     def __add_output_table_link(self, section: HtmlReportSection) -> None:
         """
         Adds link to the genbank annotation file.
+        :param section: Report output section
         :return: None
         """
         relative_path = Path('pharokka', 'pharokka.gbk')
