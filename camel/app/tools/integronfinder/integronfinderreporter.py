@@ -1,10 +1,10 @@
 from pathlib import Path
-from typing import Union
 
 import pandas as pd
 
 from camel.app.camel import Camel
 from camel.app.components.html.htmlreportsection import HtmlReportSection
+from camel.app.components.html.htmltableformatter import HtmlTableFormatter
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.tools.tool import Tool
@@ -46,17 +46,6 @@ class IntegronFinderReporter(Tool):
             raise InvalidInputSpecificationError('IntegronFinder output file is required (TSV)')
         super()._check_input()
 
-    @staticmethod
-    def __format_value(value: Union[str, float]) -> str:
-        """
-        Formats a value for the output table.
-        :param value: Input value
-        :return: Formatted value
-        """
-        if type(value) is float:
-            return f'{value:.2f}'
-        return value
-
     def _execute_tool(self) -> None:
         """
         Executes this tool.
@@ -69,9 +58,8 @@ class IntegronFinderReporter(Tool):
             data_integrons = pd.read_table(self._tool_inputs['TSV'][0].path, comment='#')
             data_integrons.fillna('-')
             data_integrons['strand'] = data_integrons['strand'].apply(lambda x: '-' if x == -1 else '+')
-            section.add_table([
-                [row[col['key']] for col in IntegronFinderReporter.COLUMNS] for
-                row in data_integrons.to_dict('records')],
+            section.add_table(
+                HtmlTableFormatter.format_table_data(data_integrons, IntegronFinderReporter.COLUMNS),
                 [c['title'] for c in IntegronFinderReporter.COLUMNS],
                 [('class', 'data')])
         except pd.errors.EmptyDataError:
