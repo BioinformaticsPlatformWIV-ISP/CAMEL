@@ -16,7 +16,6 @@ class TestPharokka(CamelTestSuite):
     # fasta = test_file_dir / 'S_20_721_prophage.fasta'
     fasta = test_file_dir / 'pBAD33.fasta'
 
-    @minOSVersion('jammy')
     def test_pharokka(self) -> None:
         """
         Tests the Pharokka tool.
@@ -26,12 +25,11 @@ class TestPharokka(CamelTestSuite):
         pharokka.add_input_files({'FASTA': [ToolIOFile(Path(TestPharokka.fasta))]})
         pharokka.run(self.running_dir)
         self.verify_output_files(pharokka, 'GBK')
-        self.verify_output_files(pharokka, 'STATS')
-        self.verify_output_files(pharokka, 'CARD')
-        self.verify_output_files(pharokka, 'VFDB')
-        self.verify_output_files(pharokka, 'INPHARED')
+        self.verify_output_files(pharokka, 'TSV_STATS')
+        self.verify_output_files(pharokka, 'TSV_CARD')
+        self.verify_output_files(pharokka, 'TSV_VFDB')
+        self.verify_output_files(pharokka, 'TSV_INPHARED')
 
-    @minOSVersion('jammy')
     def test_pharokka_reporter(self) -> None:
         """
         Tests the PharokkaReporter tool.
@@ -44,10 +42,10 @@ class TestPharokka(CamelTestSuite):
 
         # Run the reporter
         reporter = PharokkaReporter(self.camel)
-        reporter.add_input_files({'STATS': pharokka.tool_outputs['STATS'],
-                                  'CARD': pharokka.tool_outputs['CARD'],
-                                  'VFDB': pharokka.tool_outputs['VFDB'],
-                                  'INPHARED': pharokka.tool_outputs['INPHARED'],
+        reporter.add_input_files({'TSV_STATS': pharokka.tool_outputs['TSV_STATS'],
+                                  'TSV_CARD': pharokka.tool_outputs['TSV_CARD'],
+                                  'TSV_VFDB': pharokka.tool_outputs['TSV_VFDB'],
+                                  'TSV_INPHARED': pharokka.tool_outputs['TSV_INPHARED'],
                                   'GBK': pharokka.tool_outputs['GBK']
                                   })
         reporter.add_input_informs({'pharokka': pharokka.informs})
