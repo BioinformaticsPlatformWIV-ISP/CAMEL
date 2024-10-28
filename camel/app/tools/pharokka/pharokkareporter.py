@@ -154,22 +154,25 @@ class PharokkaReporter(Tool):
         """
         data = pd.read_table(self._tool_inputs['TSV_INPHARED'][0].path)
 
-        # Create table data
-        info_table = []
+        # Create data tables
+        assembly_metrics = []
+        identity_table = []
         for values in data.itertuples(index=False, name=None):
             row = list(values)
-            info_table.append(row)
+            assembly_metrics.append(row[0:18])
+            identity_table.append(row[19:])
 
         # Rename columns
-        header = ['Contig', 'Accession', 'mash_distance', 'mash_pval', 'mash_matching_hashes',
-                  'Descriptio', 'Classification', 'Genome_Length_(bp)',
-                  'Jumbophage', 'molGC_(%)', 'Molecule', 'Modification_Date', 'Number_CDS',
-                  'Positive_Strand_(%)', 'Negative_Strand_(%)', 'Coding_Capacity_(%)',
-                  'Low_Coding_Capacity_Warning', 'tRNAs', 'Host', 'Lowest_Taxa',
+        header = ['Contig', 'Accession', 'mash_distance', 'mash pvalue', 'mash matching hashes',
+                  'Description', 'Classification', 'Genome Length (bp)',
+                  'Jumbophage', 'GC (%)', 'Molecule', 'Modification Date', 'Number CDS',
+                  'Positive Strand (%)', 'Negative Strand (%)', 'Coding Capacity (%)',
+                  'Low Coding Capacity Warning', 'tRNAs', 'Host', 'Lowest Taxa',
                   'Genus', 'Sub-family', 'Family', 'Order', 'Class', 'Phylum',
-                  'Kingdom', 'Realm', 'Baltimore_Group', 'Genbank_Division',
-                  'Isolation_Host_(beware_inconsistent_and_nonsense_values)']
-        section.add_table(info_table, header, [('class', 'data')])
+                  'Kingdom', 'Realm', 'Baltimore Group', 'Genbank Division',
+                  'Isolation Host\n(beware inconsistent and nonsense values)']
+        section.add_table(assembly_metrics, header[0:18], [('class', 'data')])
+        section.add_table(identity_table, header[19:], [('class', 'data')])
 
     def __add_output_table_link(self, section: HtmlReportSection) -> None:
         """
