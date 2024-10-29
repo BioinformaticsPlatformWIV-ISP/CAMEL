@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from camel.app.camel import Camel
@@ -13,8 +14,8 @@ class PharokkaMultiplotter(Tool):
     """
 
     OUTPUT_DICT = {
-        'PNG_PLOT': 'pharokka.png',
-        'SVG_PLOT': 'pharokka.svg'
+        'PNG': '.png',
+        'SVG': '.svg'
     }
 
     def __init__(self, camel: Camel) -> None:
@@ -33,11 +34,16 @@ class PharokkaMultiplotter(Tool):
         self._execute_command()
 
         # Collect the output
-        for key, basename in PharokkaMultiplotter.OUTPUT_DICT.items():
-            path_out = Path(self.folder, self._parameters['outdir'].value, basename)
-            if not path_out.exists():
-                raise ToolExecutionError(f'{path_out} not generated ({key})')
-            self._tool_outputs[key] = [ToolIOFile(path_out)]
+        path_out = Path(self.folder, self._parameters['outdir'].value)
+        plots = os.listdir(path_out)
+        extensions = PharokkaMultiplotter.OUTPUT_DICT.values()
+
+        for file in plots:
+            file_extension = os.path.splitext(file)[1]
+            if file_extension not in extensions:
+                raise ToolExecutionError(f'{file} not found in {path_out}')
+            file_key = [key for key, ext in PharokkaMultiplotter.OUTPUT_DICT.items() if ext == file_extension][0]
+            self._tool_outputs[file_key] = [ToolIOFile(Path(path_out, file))]
 
     def _check_input(self) -> None:
         """
