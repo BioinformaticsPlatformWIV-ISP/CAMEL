@@ -13,8 +13,9 @@ class TestPharokka(CamelTestSuite):
     Tests the Pharokka tool.
     """
     test_file_dir = CamelTestSuite.get_test_file_dir('pharokka')
-    # fasta = test_file_dir / 'S_20_721_prophage.fasta'
-    fasta = test_file_dir / 'pBAD33.fasta'
+    #fasta = test_file_dir / 'S_20_721_prophage.fasta'
+    #fasta = test_file_dir / 'pBAD33.fasta'
+    fasta='/scratch/nagoeders/PyCharmProjects/Pharokka/data/scaffolds.fasta'
 
     def test_pharokka(self) -> None:
         """
@@ -44,18 +45,23 @@ class TestPharokka(CamelTestSuite):
         multiplotter = PharokkaMultiplotter(self.camel)
         multiplotter.add_input_files({'GBK': pharokka.tool_outputs['GBK']})
         multiplotter.run(self.running_dir)
-        self.verify_output_files(multiplotter, 'PNG_PLOT')
-        self.verify_output_files(multiplotter, 'SVG_PLOT')
+        self.verify_output_files(multiplotter, 'PNG')
+        self.verify_output_files(multiplotter, 'SVG')
 
     def test_pharokka_reporter(self) -> None:
         """
         Tests the PharokkaReporter tool.
         :return: None
         """
-        # Run the tool
+        # Run Pharokka
         pharokka = Pharokka(self.camel)
         pharokka.add_input_files({'FASTA': [ToolIOFile(Path(TestPharokka.fasta))]})
         pharokka.run(self.running_dir)
+
+        # Run the multiplotter
+        multiplotter = PharokkaMultiplotter(self.camel)
+        multiplotter.add_input_files({'GBK': pharokka.tool_outputs['GBK']})
+        multiplotter.run(self.running_dir)
 
         # Run the reporter
         reporter = PharokkaReporter(self.camel)
@@ -64,7 +70,8 @@ class TestPharokka(CamelTestSuite):
             'TSV_STATS': pharokka.tool_outputs['TSV_STATS'],
             'TSV_CARD': pharokka.tool_outputs['TSV_CARD'],
             'TSV_VFDB': pharokka.tool_outputs['TSV_VFDB'],
-            'TSV_INPHARED': pharokka.tool_outputs['TSV_INPHARED']
+            'TSV_INPHARED': pharokka.tool_outputs['TSV_INPHARED'],
+            'PNG': multiplotter.tool_outputs['PNG']
         })
         reporter.add_input_informs({'pharokka': pharokka.informs})
         reporter.run(self.running_dir)

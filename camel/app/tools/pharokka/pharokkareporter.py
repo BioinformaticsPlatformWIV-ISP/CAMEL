@@ -25,7 +25,7 @@ class PharokkaReporter(Tool):
         {'key': 'gene', 'title': 'Gene'},
         {'key': 'hit', 'title': 'Hit'},
         {'key': 'alnScore', 'title': 'Alignment score'},
-        {'key': 'seqIdentity', 'title': 'Sequence identity (%)', 'fmt': lambda x: f'{x*100:.2f}'},
+        {'key': 'seqIdentity', 'title': 'Sequence identity (%)', 'fmt': lambda x: f'{x * 100:.2f}'},
         {'key': 'start', 'title': 'Start'},
         {'key': 'stop', 'title': 'Stop'},
         {'key': 'frame', 'title': 'Frame'},
@@ -47,7 +47,8 @@ class PharokkaReporter(Tool):
         {'key': 'Genome_Length_(bp)', 'title': 'Length', 'fmt': HtmlTableFormatter.INT_FMT},
         {'key': 'molGC_(%)', 'title': '%GC', 'fmt': HtmlTableFormatter.FLOAT_FMT},
         {'key': 'Coding_Capacity_(%)', 'title': 'Coding capacity (%)', 'fmt': HtmlTableFormatter.FLOAT_FMT},
-        {'key': 'Low_Coding_Capacity_Warning', 'title': 'Low coding capacity warning', 'fmt': lambda x: 'Yes' if not pd.isna(x) else 'No'},
+        {'key': 'Low_Coding_Capacity_Warning', 'title': 'Low coding capacity warning',
+         'fmt': lambda x: 'Yes' if not pd.isna(x) else 'No'},
         {'key': 'Positive_Strand_(%)', 'title': 'Pos. strand (%)', 'fmt': HtmlTableFormatter.FLOAT_FMT},
         {'key': 'Negative_Strand_(%)', 'title': 'Neg. strand (%)', 'fmt': HtmlTableFormatter.FLOAT_FMT},
         {'key': 'Number_CDS', 'title': 'Nb. of CDS', 'fmt': HtmlTableFormatter.INT_FMT},
@@ -57,7 +58,7 @@ class PharokkaReporter(Tool):
 
     COLS_HOST = [
         {'key': 'contig', 'title': 'Contig'},
-        {'key': 'Host', 'title': 'Host' },
+        {'key': 'Host', 'title': 'Host'},
         {'key': 'Isolation_Host_(beware_inconsistent_and_nonsense_values)', 'title': 'Isolation host*'}
     ]
 
@@ -95,6 +96,10 @@ class PharokkaReporter(Tool):
             raise InvalidInputSpecificationError("Pharokka output is required ('VFDB hits')")
         if 'TSV_INPHARED' not in self._tool_inputs:
             raise InvalidInputSpecificationError("Pharokka output is required ('pharokka_top_hits_mash_inphared.tsv')")
+        if 'GBK' not in self._tool_inputs:
+            raise InvalidInputSpecificationError("Pharokka output is required ('Genbank file')")
+        if 'PNG' not in self._tool_inputs:
+            raise InvalidInputSpecificationError("Pharokka Multiplotter output is required ('PNG')")
         if 'pharokka' not in self._input_informs:
             raise InvalidInputSpecificationError("Pharokka informs are required")
         super()._check_input()
@@ -134,7 +139,7 @@ class PharokkaReporter(Tool):
 
     def _add_download_table(self, section: HtmlReportSection) -> None:
         """
-        Adds the table with the summary metrics.
+        Adds links to the summary metrics, the genbank file and the genomic map.
         :param section: Report output section
         :return: None
         """
@@ -143,13 +148,15 @@ class PharokkaReporter(Tool):
         section.add_file(self._tool_inputs['TSV_STATS'][0].path, rel_path_stats)
         rel_path_gbk = Path(PharokkaReporter.SUB_DIR, self._tool_inputs['GBK'][0].path.name)
         section.add_file(self._tool_inputs['GBK'][0].path, rel_path_gbk)
+        rel_path_png = Path(PharokkaReporter.SUB_DIR, '/pharokka_plots/', self._tool_inputs['PNG'][0].path.name)
+        section.add_file(self._tool_inputs['PNG'][0].path, rel_path_png)
 
         # Add table
         section.add_table([
             ['Annotation stats', HtmlTableCell('Download (TSV)', link=str(rel_path_stats))],
-            ['Genbank file', HtmlTableCell('Download (GBK)', link=str(rel_path_gbk))]
+            ['Genbank file', HtmlTableCell('Download (GBK)', link=str(rel_path_gbk))],
+            ['Genomic map', HtmlTableCell('Download (PNG)', link=str(rel_path_png))]
         ], ['File', 'Download'], [('class', 'data')])
-
 
     def __add_antibiotic_sensitivity(self, section: HtmlReportSection) -> None:
         """
@@ -193,11 +200,13 @@ class PharokkaReporter(Tool):
         # Add output table (split by category)
         section.add_header('General information', 4)
         section.add_table(HtmlTableFormatter.format_table_data(
-            data, PharokkaReporter.COLS_GENERAL), [c['title'] for c in PharokkaReporter.COLS_GENERAL], [('class', 'data')])
+            data, PharokkaReporter.COLS_GENERAL), [c['title'] for c in PharokkaReporter.COLS_GENERAL],
+            [('class', 'data')])
 
         section.add_header('Genomic properties', 4)
         section.add_table(HtmlTableFormatter.format_table_data(
-            data, PharokkaReporter.COLS_GENOMIC_PROPERTIES), [c['title'] for c in PharokkaReporter.COLS_GENOMIC_PROPERTIES], [('class', 'data')])
+            data, PharokkaReporter.COLS_GENOMIC_PROPERTIES),
+            [c['title'] for c in PharokkaReporter.COLS_GENOMIC_PROPERTIES], [('class', 'data')])
 
         section.add_header('Host', 4)
         section.add_table(HtmlTableFormatter.format_table_data(
@@ -206,7 +215,8 @@ class PharokkaReporter(Tool):
 
         section.add_header('Taxonomy', 4)
         section.add_table(HtmlTableFormatter.format_table_data(
-            data, PharokkaReporter.COLS_TAXONOMY), [c['title'] for c in PharokkaReporter.COLS_TAXONOMY], [('class', 'data')])
+            data, PharokkaReporter.COLS_TAXONOMY), [c['title'] for c in PharokkaReporter.COLS_TAXONOMY],
+            [('class', 'data')])
 
         section.add_header('Download', 4)
         path_rel = Path('pharokka', 'inphared.tsv')
