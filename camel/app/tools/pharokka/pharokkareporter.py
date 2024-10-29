@@ -163,7 +163,6 @@ class PharokkaReporter(Tool):
         else:
             # Update column names
             data_hits.columns = [col.split('_')[-1] for col in data_hits.columns]
-            print(data_hits.columns)
             header = [c['title'] for c in PharokkaReporter.COLS_HITS]
             section.add_table(HtmlTableFormatter.format_table_data(
                 data_hits, PharokkaReporter.COLS_HITS), header, [('class', 'data')])
