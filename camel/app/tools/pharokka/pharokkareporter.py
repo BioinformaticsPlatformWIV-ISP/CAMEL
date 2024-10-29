@@ -148,15 +148,30 @@ class PharokkaReporter(Tool):
         section.add_file(self._tool_inputs['TSV_STATS'][0].path, rel_path_stats)
         rel_path_gbk = Path(PharokkaReporter.SUB_DIR, self._tool_inputs['GBK'][0].path.name)
         section.add_file(self._tool_inputs['GBK'][0].path, rel_path_gbk)
-        rel_path_png = Path(PharokkaReporter.SUB_DIR, '/pharokka_plots/', self._tool_inputs['PNG'][0].path.name)
-        section.add_file(self._tool_inputs['PNG'][0].path, rel_path_png)
+
+        # Add plot(s)
+        rel_paths_png = {}
+        for file in self._tool_inputs['PNG']:
+            rel_paths_png[file] = Path(PharokkaReporter.SUB_DIR, '/pharokka_plots/', file.path.name)
+        for file, rel_path in rel_paths_png.items():
+            section.add_file(file.path, rel_path)
+
+        gen_map_table = []
+        for i in range(len(rel_paths_png)):
+            rel_path_png = list(rel_paths_png.values())[i]
+            if i == 0:
+                new_map = ['Genomic map', HtmlTableCell('Download (PNG)', link=str(rel_path_png))]
+            else:
+                new_map = ['Genomic map ' + str(i+1), HtmlTableCell('Download (PNG)', link=str(rel_path_png))]
+            gen_map_table.append(new_map)
 
         # Add table
-        section.add_table([
+        TODO
+        download_table = [
             ['Annotation stats', HtmlTableCell('Download (TSV)', link=str(rel_path_stats))],
             ['Genbank file', HtmlTableCell('Download (GBK)', link=str(rel_path_gbk))],
-            ['Genomic map', HtmlTableCell('Download (PNG)', link=str(rel_path_png))]
-        ], ['File', 'Download'], [('class', 'data')])
+            ].extend(gen_map_table)
+        section.add_table(download_table, ['File', 'Download'], [('class', 'data')])
 
     def __add_antibiotic_sensitivity(self, section: HtmlReportSection) -> None:
         """

@@ -43,7 +43,10 @@ class PharokkaMultiplotter(Tool):
             if file_extension not in extensions:
                 raise ToolExecutionError(f'{file} not found in {path_out}')
             file_key = [key for key, ext in PharokkaMultiplotter.OUTPUT_DICT.items() if ext == file_extension][0]
-            self._tool_outputs[file_key] = [ToolIOFile(Path(path_out, file))]
+            try:
+                self._tool_outputs[file_key] = self._tool_outputs[file_key] + [ToolIOFile(Path(path_out, file))]
+            except:
+                self._tool_outputs[file_key] = [ToolIOFile(Path(path_out, file))]
 
     def _check_input(self) -> None:
         """
