@@ -21,10 +21,11 @@ class Pharokka(Tool):
         'TSV_INPHARED': 'pharokka_top_hits_mash_inphared.tsv'
     }
 
-    def __init__(self, camel: Camel.get_instance()) -> None:
+    def __init__(self, camel: Camel) -> None:
         """
         Initializes this tool.
         :param camel: Camel instance
+        :return: None
         """
         super().__init__('Pharokka', '1.7.3', camel)
 
@@ -97,7 +98,7 @@ class Pharokka(Tool):
         """
         data = pd.read_table(path_tsv)
         if data.empty:
-            self._informs['card_hits'] = 'No AMR gene was detected.'
+            self._informs['card_hits'] = 'No AMR genes were detected.'
         else:
             self._informs['card_hits'] = f'{len(data)} AMR genes were detected.'
 
@@ -109,6 +110,6 @@ class Pharokka(Tool):
         """
         data = pd.read_table(path_tsv)
         if data.empty:
-            self._informs['vfdb_hits'] = 'No virulence gene was detected.'
+            self._informs['vfdb_hits'] = 'No virulence genes were detected.'
         else:
             self._informs['vfdb_hits'] = f'{len(data)} virulence genes were detected.'

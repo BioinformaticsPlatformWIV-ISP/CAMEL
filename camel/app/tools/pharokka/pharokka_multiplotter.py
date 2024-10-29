@@ -1,9 +1,8 @@
-import pandas as pd
 from pathlib import Path
 
 from camel.app.camel import Camel
-from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.tool import Tool
 
@@ -18,7 +17,7 @@ class PharokkaMultiplotter(Tool):
         'SVG_PLOT': 'pharokka.svg'
     }
 
-    def __init__(self, camel: Camel.get_instance()) -> None:
+    def __init__(self, camel: Camel) -> None:
         """
         Initializes this tool.
         :param camel: Camel instance
@@ -34,7 +33,7 @@ class PharokkaMultiplotter(Tool):
         self._execute_command()
 
         # Collect the output
-        for key, basename in Pharokka.OUTPUT_DICT.items():
+        for key, basename in PharokkaMultiplotter.OUTPUT_DICT.items():
             path_out = Path(self.folder, self._parameters['outdir'].value, basename)
             if not path_out.exists():
                 raise ToolExecutionError(f'{path_out} not generated ({key})')
