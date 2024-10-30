@@ -1,9 +1,6 @@
 from pathlib import Path
 
 from camel.app.camel import Camel
-from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
-from camel.app.io.tooliodirectory import ToolIODirectory
-from camel.app.io.tooliofile import ToolIOFile
 from camel.app.loggers import logger
 from camel.app.tools.star.star import Star
 
@@ -23,7 +20,7 @@ class StarIndex(Star):
         self._required_inputs = ['FASTA']
         self._input_string = "--runMode genomeGenerate"
 
-    def _set_input(self):
+    def _set_input(self) -> None:
         """
         Set the input specification and the input string
         :return: None
