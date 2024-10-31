@@ -1,10 +1,10 @@
 from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
-from camel.app.tools.tool import Tool
+from camel.app.tools.toolpipeable import ToolPipeable
 
 
-class Star(Tool):
+class Star(ToolPipeable):
     """
     Super class for STAR indexing of reference genomes and alignment of spliced transcripts
     """
@@ -20,6 +20,7 @@ class Star(Tool):
         super().__init__(tool_name, version, camel)
         self._required_inputs = []
         self._input_string = ""
+        self._output_string = ""
 
     def _check_input(self) -> None:
         """
@@ -43,7 +44,9 @@ class Star(Tool):
         Builds the command to run STAR
         :return: None
         """
-        self._command.command = ' '.join([self._tool_command, self._input_string, *self._build_options()])
+        self._command.command = ' '.join([self._tool_command, self._input_string,
+                                          *self._build_options(excluded_parameters=['filename_output']),
+                                          self._output_string])
 
     def _execute_tool(self) -> None:
         """
@@ -51,8 +54,16 @@ class Star(Tool):
         :return: None
         """
         self._set_input()
+        self._set_output()
         self._build_command()
         self._execute_command()
+
+    def _set_output(self) -> None:
+        """
+        Set the output specification
+        :return: None
+        """
+        raise NotImplementedError("Method should be implemented by subclass.")
 
     def _check_command_output(self) -> None:
         """
