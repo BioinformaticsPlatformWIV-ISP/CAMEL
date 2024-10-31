@@ -135,6 +135,8 @@ traitlets==5.14.1
     # via
     #   jupyter-core
     #   nbformat
+typing-extensions==4.12.2
+    # via -r requirements_in.txt
 tzdata==2024.1
     # via pandas
 urllib3==2.2.1

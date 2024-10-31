@@ -11,4 +11,5 @@ pysam
 scipy
 screed
 snakemake
+typing-extensions
 yattag
