@@ -60,7 +60,7 @@ class Star(ToolPipeable):
 
     def _set_output(self) -> None:
         """
-        Set the output specification
+        Set the output specification and the output string
         :return: None
         """
         raise NotImplementedError("Method should be implemented by subclass.")

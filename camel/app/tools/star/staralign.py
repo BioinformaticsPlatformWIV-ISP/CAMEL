@@ -12,7 +12,7 @@ class StarAlign(Star):
 
     def __init__(self, camel: Camel) -> None:
         """
-        Initializes STAR 2.7.11b mapping
+        Initializes STAR 2.7.11b alignment
         :param camel: CAMEL instance
         :return: None
         """
@@ -45,7 +45,7 @@ class StarAlign(Star):
 
     def _set_output(self) -> None:
         """
-        Set the output specification
+        Set the output specification and the output string
         :return: None
         """
         filename_output = self._parameters['filename_output'].value
