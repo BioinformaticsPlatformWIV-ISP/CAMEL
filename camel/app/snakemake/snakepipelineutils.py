@@ -285,7 +285,7 @@ class SnakePipelineUtils(object):
         # Remove keys that are empty
         if drop_empty:
             for key in list(output_dict.keys()):
-                if (output_dict[key] is not None) and (len(output_dict[key]) > 0) and not (len(output_dict[key]) == 1 and output_dict[key][0].size > 0):
+                if (output_dict[key] is not None) and (len(output_dict[key]) > 0) and not (len(output_dict[key]) == 1 and output_dict[key][0].size == 0):
                     continue
                 logger.debug(f'Removing empty input: {key}')
                 output_dict.pop(key)
