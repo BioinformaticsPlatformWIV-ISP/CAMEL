@@ -1,8 +1,8 @@
 dependencies: [flye/2.9.4]
 parameters:
-  nano_corr: {default: true, mandatory: false, option: --nano-corr, value: ''}
+  nano_corr: {default: false, mandatory: false, option: --nano-corr, value: ''}
   nano_hq: {default: false, mandatory: false, option: --nano-hq, value: ''}
-  nano_raw: {default: false, mandatory: false, option: --nano-raw, value: ''}
+  nano_raw: {default: true, mandatory: false, option: --nano-raw, value: ''}
   genome_size: {default: false, mandatory: false, option: --genome-size, p_index: 0, value: '4.8g'}
   output_directory: {default: true, mandatory: true, option: --out-dir, p_index: 0, value: assembly_out}
   threads: {default: true, mandatory: false, option: --threads, value: '4'}
