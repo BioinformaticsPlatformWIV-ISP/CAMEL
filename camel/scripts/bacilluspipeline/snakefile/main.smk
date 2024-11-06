@@ -275,8 +275,8 @@ rule report_content_subtilis:
 
         # B. subtilis assays
         report_structure.extend([
-            ('StrainGST', 'straingst', [Path(x) for x in input.reports_straingst]),
             ('FastANI', 'fastani', [Path(input.report_fastani)]),
+            ('StrainGST', 'straingst', [Path(x) for x in input.reports_straingst]),
             ('GMO detection', 'gmo', [Path(input.report_gmo)]),
             ('Virulence detection', 'virulence', [Path(x) for x in (input.report_vfdb_core,)]),
             ('AMRFinder results', 'amrfinder', [Path(input.report_amrfinder)]),
