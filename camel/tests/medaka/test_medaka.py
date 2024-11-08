@@ -5,6 +5,7 @@ from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.medaka.medakainference import MedakaInference
 from camel.app.tools.medaka.medakasequence import MedakaSequence
 from camel.app.tools.medaka.medakavcf import MedakaVcf
+from camel.scripts.variantcalling.medaka.maincallingmedaka import MainCallingMedaka
 
 
 class TestMedaka(CamelTestSuite):
@@ -16,6 +17,7 @@ class TestMedaka(CamelTestSuite):
 
     # Create ToolIOFile input files
     FILE_BAM = ToolIOFile(test_file_dir / 'calls_to_draft_subsampled.bam')
+    FILE_VCF = ToolIOFile(test_file_dir / 'calls_to_draft_subsampled.vcf')
     FILE_FASTA_REF = ToolIOFile(test_file_dir / 'contig_1.fasta')
     FILE_HDF = ToolIOFile(test_file_dir / 'consensus_probs_subsample.hdf')
 
@@ -26,7 +28,7 @@ class TestMedaka(CamelTestSuite):
         """
         inference = MedakaInference(self.camel)
         inference.add_input_files({'BAM': [TestMedaka.FILE_BAM]})
-        inference.run(self.running_dir)
+        inference.run()
         self.verify_output_files(inference, 'HDF')
 
     def test_medaka_sequence(self) -> None:
@@ -39,7 +41,7 @@ class TestMedaka(CamelTestSuite):
             'HDF': [TestMedaka.FILE_HDF],
             'FASTA': [TestMedaka.FILE_FASTA_REF]
         })
-        sequence.run(self.running_dir)
+        sequence.run()
         self.verify_output_files(sequence, 'FASTA')
 
     def test_medaka_vcf(self) -> None:
@@ -52,8 +54,24 @@ class TestMedaka(CamelTestSuite):
             'HDF': [TestMedaka.FILE_HDF],
             'FASTA': [TestMedaka.FILE_FASTA_REF]
         })
-        sequence.run(self.running_dir)
+        sequence.run()
         self.verify_output_files(sequence, 'VCF')
+
+    def test_medaka_main_variant_calling(self) -> None:
+        """
+        Tests the variant calling main script.
+        :return: None
+        """
+        output_file_vcf = self.running_dir / 'calls_to_draft_subsampled.vcf'
+        args = [
+            '--bam', str(TestMedaka.FILE_BAM),
+            '--reference', str(TestMedaka.FILE_FASTA_REF),
+            '--working-dir', str(self.running_dir),
+            '--output-dir', str(self.running_dir)
+        ]
+        main_calling_variant = MainCallingMedaka(args)
+        main_calling_variant.run()
+        self.assertGreater(output_file_vcf.stat().st_size, 0)
 
 
 if __name__ == '__main__':
