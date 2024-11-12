@@ -59,7 +59,7 @@ class MainCallingMedaka(object):
         logger.info(f'Running {medaka_inference.name} to get hdf file')
         medaka_inference.add_input_files(input_dict)
         medaka_inference.update_parameters(threads=self._args.threads)
-        hdf_file = Path(self._args.bam).stem + '.hdf'
+        hdf_file = self._args.working_dir / Path(Path(self._args.bam).stem + '.hdf')
         medaka_inference.update_parameters(output=hdf_file)
         medaka_inference.run(self._args.working_dir)
 
@@ -67,7 +67,7 @@ class MainCallingMedaka(object):
         medaka_vcf = MedakaVcf(Camel.get_instance())
         logger.info(f'Running {medaka_vcf.name} to call the variants based on reference fasta and hdf file')
         medaka_vcf.add_input_files({'HDF': [ToolIOFile(Path(hdf_file))], 'FASTA': input_dict['FASTA']})
-        vcf_file = Path(hdf_file).stem + '.vcf'
+        vcf_file = self._args.working_dir / Path(Path(hdf_file).stem + '.vcf')
         medaka_vcf.update_parameters(output=vcf_file)
         medaka_vcf.run(self._args.working_dir)
 
