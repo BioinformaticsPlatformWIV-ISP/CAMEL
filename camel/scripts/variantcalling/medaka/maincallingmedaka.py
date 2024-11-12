@@ -66,7 +66,7 @@ class MainCallingMedaka(object):
         # Run Medaka VCF
         medaka_vcf = MedakaVcf(Camel.get_instance())
         logger.info(f'Running {medaka_vcf.name} to call the variants based on reference fasta and hdf file')
-        medaka_vcf.add_input_files({'HDF': [ToolIOFile(Path(hdf_file))], 'FASTA': input_dict['REFERENCE']})
+        medaka_vcf.add_input_files({'HDF': [ToolIOFile(Path(hdf_file))], 'FASTA': input_dict['FASTA']})
         vcf_file = Path(hdf_file).stem + '.vcf'
         medaka_vcf.update_parameters(output=vcf_file)
         medaka_vcf.run(self._args.working_dir)
@@ -83,7 +83,7 @@ class MainCallingMedaka(object):
         :return: Input dictionary
         """
         self._args.working_dir.mkdir(parents=True, exist_ok=True)
-        input_dict = {'BAM': None, 'REFERENCE': None}
+        input_dict = {'BAM': None, 'FASTA': None}
 
         # input BAM file
         bam_file = Path(self._args.bam)
@@ -95,7 +95,7 @@ class MainCallingMedaka(object):
         reference_file = Path(self._args.reference)
         path_ref = self._args.working_dir / FileSystemHelper.make_valid(reference_file.name)
         path_ref.symlink_to(reference_file)
-        input_dict['REFERENCE'] = [ToolIOFile(path_ref)]
+        input_dict['FASTA'] = [ToolIOFile(path_ref)]
 
         return input_dict
 
