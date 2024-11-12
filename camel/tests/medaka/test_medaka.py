@@ -17,7 +17,6 @@ class TestMedaka(CamelTestSuite):
 
     # Create ToolIOFile input files
     FILE_BAM = ToolIOFile(test_file_dir / 'calls_to_draft_subsampled.bam')
-    FILE_VCF = ToolIOFile(test_file_dir / 'calls_to_draft_subsampled.vcf')
     FILE_FASTA_REF = ToolIOFile(test_file_dir / 'contig_1.fasta')
     FILE_HDF = ToolIOFile(test_file_dir / 'consensus_probs_subsample.hdf')
 
@@ -67,7 +66,7 @@ class TestMedaka(CamelTestSuite):
             '--bam', str(TestMedaka.FILE_BAM),
             '--reference', str(TestMedaka.FILE_FASTA_REF),
             '--working-dir', str(self.running_dir),
-            '--output-dir', str(self.running_dir)
+            '--output', str(output_file_vcf)
         ]
         main_calling_variant = MainCallingMedaka(args)
         main_calling_variant.run()

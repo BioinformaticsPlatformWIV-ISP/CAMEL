@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import argparse
-import shutil
+
 from pathlib import Path
 from typing import Optional, Sequence, Dict, Any
 
@@ -35,7 +35,7 @@ class MainCallingMedaka(object):
         argument_parser.add_argument('--bam', type=Path, help="Input BAM file", required=True)
         argument_parser.add_argument('--reference', help="The reference fasta file to use", type=Path, required=True)
         argument_parser.add_argument('--reference-name')
-        argument_parser.add_argument('--output-dir', type=Path, help='Output directory')
+        argument_parser.add_argument('--output', required=True)
         argument_parser.add_argument('--working-dir', help='Working directory', type=Path, default=Path.cwd())
         argument_parser.add_argument('--threads', type=int, default=4)
 
@@ -70,12 +70,6 @@ class MainCallingMedaka(object):
         vcf_file = Path(hdf_file).stem + '.vcf'
         medaka_vcf.update_parameters(output=vcf_file)
         medaka_vcf.run(self._args.working_dir)
-
-        # copy vcf file to output-dir if set
-        if self._args.output_dir is not None:
-            self._args.output_dir.mkdir(parents=True, exist_ok=True)
-            logger.info('Copying output VCF file to output-dir')
-            shutil.copyfile(vcf_file, self._args.output_dir / vcf_file)
 
     def __prepare_input(self) -> Dict[str, Any]:
         """
