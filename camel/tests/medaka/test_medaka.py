@@ -27,7 +27,7 @@ class TestMedaka(CamelTestSuite):
         """
         inference = MedakaInference(self.camel)
         inference.add_input_files({'BAM': [TestMedaka.FILE_BAM]})
-        inference.run(self.running_dir)
+        inference.run()
         self.verify_output_files(inference, 'HDF')
 
     def test_medaka_sequence(self) -> None:
@@ -40,7 +40,7 @@ class TestMedaka(CamelTestSuite):
             'HDF': [TestMedaka.FILE_HDF],
             'FASTA': [TestMedaka.FILE_FASTA_REF]
         })
-        sequence.run(self.running_dir)
+        sequence.run()
         self.verify_output_files(sequence, 'FASTA')
 
     def test_medaka_vcf(self) -> None:
@@ -53,7 +53,7 @@ class TestMedaka(CamelTestSuite):
             'HDF': [TestMedaka.FILE_HDF],
             'FASTA': [TestMedaka.FILE_FASTA_REF]
         })
-        sequence.run(self.running_dir)
+        sequence.run()
         self.verify_output_files(sequence, 'VCF')
 
     def test_medaka_main_variant_calling(self) -> None:
