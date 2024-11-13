@@ -53,7 +53,7 @@ class TestMedaka(CamelTestSuite):
             'HDF': [TestMedaka.FILE_HDF],
             'FASTA': [TestMedaka.FILE_FASTA_REF]
         })
-        sequence.run()
+        vcf.run()
         self.verify_output_files(sequence, 'VCF')
 
     def test_medaka_main_variant_calling(self) -> None:
