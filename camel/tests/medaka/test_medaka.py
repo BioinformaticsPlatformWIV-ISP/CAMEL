@@ -56,5 +56,6 @@ class TestMedaka(CamelTestSuite):
         vcf.run(self.running_dir)
         self.verify_output_files(vcf, 'VCF')
 
+
 if __name__ == '__main__':
     unittest.main()
