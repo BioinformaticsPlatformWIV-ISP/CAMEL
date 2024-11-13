@@ -5,6 +5,7 @@ from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.medaka.medakainference import MedakaInference
 from camel.app.tools.medaka.medakasequence import MedakaSequence
 from camel.app.tools.medaka.medakavcf import MedakaVcf
+from camel.scripts.variantcalling.medaka.maincallingmedaka import MainCallingMedaka
 
 
 class TestMedaka(CamelTestSuite):
