@@ -12,7 +12,7 @@ class TestMedaka(CamelTestSuite):
     """
     Tests the Medaka tool suite.
     """
-    # Get test file and reference file directories
+    # Get test files and reference files directories
     test_file_dir = CamelTestSuite.get_test_file_dir('medaka')
 
     # Create ToolIOFile input files
