@@ -48,8 +48,8 @@ class TestMedaka(CamelTestSuite):
         Tests MedakaVcf.
         :return: None
         """
-        vcf = MedakaVcf(self.camel)
-        vcf.add_input_files({
+        sequence = MedakaVcf(self.camel)
+        sequence.add_input_files({
             'HDF': [TestMedaka.FILE_HDF],
             'FASTA': [TestMedaka.FILE_FASTA_REF]
         })
