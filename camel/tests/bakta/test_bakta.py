@@ -47,6 +47,7 @@ class TestBakta(CamelTestSuite):
         self.verify_output_files(bakta, 'GFF3', 1)
         self.verify_output_files(bakta, 'GBFF', 1)
 
+    @longRunningTest()
     def test_bakta_meta(self) -> None:
         """
         Tests the Bakta tool in metagenome mode.
