@@ -1,4 +1,4 @@
-import os
+from os import listdir, path
 from pathlib import Path
 
 from camel.app.camel import Camel
@@ -35,11 +35,11 @@ class PharokkaMultiplotter(Tool):
 
         # Collect the output
         path_out = Path(self.folder, self._parameters['outdir'].value)
-        plots = os.listdir(path_out)
+        plots = listdir(path_out)
         extensions = PharokkaMultiplotter.OUTPUT_DICT.values()
 
         for file in plots:
-            file_extension = os.path.splitext(file)[1]
+            file_extension = path.splitext(file)[1]
             if file_extension not in extensions:
                 raise ToolExecutionError(f'{file} not found in {path_out}')
             file_key = [key for key, ext in PharokkaMultiplotter.OUTPUT_DICT.items() if ext == file_extension][0]
