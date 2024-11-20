@@ -112,8 +112,13 @@ class PharokkaReporter(Tool):
         section = HtmlReportSection(PharokkaReporter.TITLE, subtitle=self._input_informs['pharokka']['_name'])
 
         # Summary metrics
-        section.add_header('Output', 3)
+        section.add_header('Annotation and stats', 3)
         self._add_download_table(section)
+        section.add_horizontal_line()
+
+        # Genomic maps
+        section.add_header('Genomic map(s)', 3)
+        self._add_download_plots_table(section)
         section.add_horizontal_line()
 
         # Antibiotic sensitivity
@@ -139,7 +144,7 @@ class PharokkaReporter(Tool):
 
     def _add_download_table(self, section: HtmlReportSection) -> None:
         """
-        Adds links to the summary metrics, the genbank file and the genomic map.
+        Adds links to the summary metrics and the genbank file.
         :param section: Report output section
         :return: None
         """
@@ -149,6 +154,19 @@ class PharokkaReporter(Tool):
         rel_path_gbk = Path(PharokkaReporter.SUB_DIR, self._tool_inputs['GBK'][0].path.name)
         section.add_file(self._tool_inputs['GBK'][0].path, rel_path_gbk)
 
+        # Add table
+        download_table = [
+            ['Genbank file', HtmlTableCell('Download (GBK)', link=str(rel_path_gbk))],
+            ['Annotation stats', HtmlTableCell('Download (TSV)', link=str(rel_path_stats))]
+            ]
+        section.add_table(download_table, ['File', 'Download'], [('class', 'data')])
+
+    def _add_download_plots_table(self, section: HtmlReportSection) -> None:
+        """
+        Adds links to the genomic map(s).
+        :param section: Report output section
+        :return: None
+        """
         # Add plot(s)
         rel_paths_png = {}
         for file in self._tool_inputs['PNG']:
@@ -162,16 +180,12 @@ class PharokkaReporter(Tool):
             if i == 0:
                 new_map = ['Genomic map', HtmlTableCell('Download (PNG)', link=str(rel_path_png))]
             else:
-                new_map = ['Genomic map ' + str(i+1), HtmlTableCell('Download (PNG)', link=str(rel_path_png))]
+                new_name = 'Genomic map ' + str(i+1)
+                new_map = [new_name, HtmlTableCell('Download (PNG)', link=str(rel_path_png))]
             gen_map_table.append(new_map)
 
         # Add table
-        TODO
-        download_table = [
-            ['Annotation stats', HtmlTableCell('Download (TSV)', link=str(rel_path_stats))],
-            ['Genbank file', HtmlTableCell('Download (GBK)', link=str(rel_path_gbk))],
-            ].extend(gen_map_table)
-        section.add_table(download_table, ['File', 'Download'], [('class', 'data')])
+        section.add_table(gen_map_table, ['File', 'Download'], [('class', 'data')])
 
     def __add_antibiotic_sensitivity(self, section: HtmlReportSection) -> None:
         """
