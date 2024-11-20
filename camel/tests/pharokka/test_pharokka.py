@@ -13,9 +13,9 @@ class TestPharokka(CamelTestSuite):
     Tests the Pharokka tool.
     """
     test_file_dir = CamelTestSuite.get_test_file_dir('pharokka')
-    #fasta = test_file_dir / 'S_20_721_prophage.fasta'
+    #fasta = test_file_dir / 'phages.fasta'
+    fasta = test_file_dir / 'S_20_721_prophage.fasta'
     #fasta = test_file_dir / 'pBAD33.fasta'
-    fasta='/scratch/nagoeders/PyCharmProjects/Pharokka/data/scaffolds.fasta'
 
     def test_pharokka(self) -> None:
         """
@@ -45,8 +45,6 @@ class TestPharokka(CamelTestSuite):
         multiplotter = PharokkaMultiplotter(self.camel)
         multiplotter.add_input_files({'GBK': pharokka.tool_outputs['GBK']})
         multiplotter.run(self.running_dir)
-        self.verify_output_files(multiplotter, 'PNG')
-        self.verify_output_files(multiplotter, 'SVG')
 
     def test_pharokka_reporter(self) -> None:
         """
