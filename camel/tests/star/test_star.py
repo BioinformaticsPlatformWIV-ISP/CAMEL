@@ -48,10 +48,7 @@ class TestStar(CamelTestSuite):
             'INDEX_DIR': [TestStar.INDEX_DIR]
         })
         star_align.run(self.running_dir)
-        self.assertTrue('ALIGNMENT' in star_align.tool_outputs, "No SAM output generated")
-        output_file = Path(star_align.tool_outputs['ALIGNMENT'][0].path)
-        self.assertTrue(output_file.exists())
-        self.assertGreater(output_file.stat().st_size, 0)
+        self.verify_output_files(star_align,'SAM')
 
 
 if __name__ == '__main__':

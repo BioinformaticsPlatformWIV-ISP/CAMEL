@@ -7,12 +7,12 @@ from camel.app.tools.star.star import Star
 
 class StarAlign(Star):
     """
-    align spliced transcripts with STAR
+    Align spliced transcripts with STAR.
     """
 
     def __init__(self, camel: Camel) -> None:
         """
-        Initializes STAR 2.7.11b alignment
+        Initializes STAR 2.7.11b alignment.
         :param camel: CAMEL instance
         :return: None
         """
@@ -25,13 +25,13 @@ class StarAlign(Star):
         Checks if the provided input files are valid.
         :return: None
         """
+        super()._check_input()
         if len(self._tool_inputs['FASTQ']) > 2:
             raise ValueError("Too many inputs of type 'FASTQ'")
-        super()._check_input()
 
     def _set_input(self) -> None:
         """
-        Set the input specification and the input string
+        Sets the input specification and the input string.
         :return: None
         """
         self._input_string += " --readFilesIn"
@@ -45,9 +45,9 @@ class StarAlign(Star):
 
     def _set_output(self) -> None:
         """
-        Set the output specification and the output string
+        Sets the output specification and the output string.
         :return: None
         """
         filename_output = self._parameters['filename_output'].value
         self._output_string += f" > {filename_output}"
-        self._tool_outputs['ALIGNMENT'] = [ToolIOFile(self.folder / filename_output)]
+        self._tool_outputs['SAM'] = [ToolIOFile(self.folder / filename_output)]

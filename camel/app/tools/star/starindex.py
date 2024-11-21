@@ -13,7 +13,7 @@ class StarIndex(Star):
 
     def __init__(self, camel: Camel) -> None:
         """
-        Initializes STAR 2.7.11b indexing
+        Initializes STAR 2.7.11b indexing.
         :param camel: CAMEL instance
         :return: None
         """
@@ -24,7 +24,7 @@ class StarIndex(Star):
 
     def _set_input(self) -> None:
         """
-        Set the input specification and the input string
+        Sets the input specification and the input string.
         :return: None
         """
         self._input_string += " --genomeFastaFiles"
@@ -44,7 +44,7 @@ class StarIndex(Star):
 
     def _set_output(self) -> None:
         """
-        Set the output specification
+        Sets the output specification.
         :return: None
         """
         self._tool_outputs['INDEX_DIR'] = [ToolIODirectory(Path(self._index_dir))]
@@ -55,5 +55,5 @@ class StarIndex(Star):
         :return: None
         """
         if not any(Path(str(self._tool_outputs['INDEX_DIR'][0])).iterdir()):
-            raise IOError("'INDEX_DIR' is empty - index has not been created.")
+            raise IOError("INDEX_DIR is empty - index has not been created.")
         super()._check_output()

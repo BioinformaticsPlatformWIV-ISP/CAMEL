@@ -6,7 +6,7 @@ from camel.app.tools.toolpipeable import ToolPipeable
 
 class Star(ToolPipeable):
     """
-    Super class for STAR indexing of reference genomes and alignment of spliced transcripts
+    Super class for STAR indexing of reference genomes and alignment of spliced transcripts.
     """
 
     def __init__(self, tool_name: str, version: str, camel: Camel) -> None:
@@ -34,14 +34,14 @@ class Star(ToolPipeable):
 
     def _set_input(self) -> None:
         """
-        Set the input specification
+        Sets the input specification.
         :return: None
         """
         raise NotImplementedError("Method should be implemented by subclass.")
 
     def _build_command(self) -> None:
         """
-        Builds the command to run STAR
+        Builds the command to run STAR.
         :return: None
         """
         self._command.command = ' '.join([self._tool_command, self._input_string,
@@ -50,7 +50,7 @@ class Star(ToolPipeable):
 
     def _execute_tool(self) -> None:
         """
-        Executes STAR
+        Executes STAR.
         :return: None
         """
         self._set_input()
@@ -60,14 +60,14 @@ class Star(ToolPipeable):
 
     def _set_output(self) -> None:
         """
-        Set the output specification and the output string
+        Sets the output specification and the output string.
         :return: None
         """
         raise NotImplementedError("Method should be implemented by subclass.")
 
     def _check_command_output(self) -> None:
         """
-        Parse stderr message of STAR to check whether it runs successfully
+        Parses stderr message of STAR to check whether it runs successfully.
         :return: None
         """
         if any(err in self.stderr.lower() for err in ('error', 'fail')):

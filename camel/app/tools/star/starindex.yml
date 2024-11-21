@@ -1,6 +1,6 @@
 dependencies: [star/2.7.11b]
 parameters:
-  threads: {default: true, mandatory: true, option: --runThreadN, value: '8'}
   overhang: {default: false, mandatory: false, option: --sjdbOverhang, value: '100'}
   SA_index: {default: false, mandatory: false, option: --genomeSAindexNbases, value: '14'}
+  threads: {default: true, mandatory: true, option: --runThreadN, value: '8'}
 tool_command: STAR
