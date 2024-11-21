@@ -55,6 +55,8 @@ assembly:
   min_contig_length: 1000
   canu:
     minimum_input_coverage: 0
+  flye:
+    nano_raw: True
 
 confindr:
   db: /db/confindr/0.8.1
