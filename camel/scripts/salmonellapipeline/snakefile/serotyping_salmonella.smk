@@ -214,6 +214,8 @@ rule serotyping_sistr_report_empty:
     params:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'serotyping' / wildcards.input_format
     run:
+        from camel.app.tools.pipelines.salmonella.sistrreporter import SistrReporter
+
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         SnakePipelineUtils.create_empty_report_section(SistrReporter.TITLE, Path(output.VAL_HTML))
 
@@ -226,5 +228,7 @@ rule serotyping_seqsero2_report_empty:
     params:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'serotyping' / wildcards.input_format
     run:
+        from camel.app.tools.pipelines.salmonella.seqsero2reporter import SeqSero2Reporter
+
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         SnakePipelineUtils.create_empty_report_section(SeqSero2Reporter.TITLE, Path(output.VAL_HTML))

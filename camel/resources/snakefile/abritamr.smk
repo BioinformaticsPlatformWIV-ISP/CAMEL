@@ -138,5 +138,7 @@ rule abritamr_report_empty:
     output:
         VAL_HTML = Path(config['working_dir']) / abritamr.OUTPUT_ABRITAMR_REPORT_EMPTY
     run:
+        from camel.app.tools.abritamr.abritamrreporter import AbriTAMRReporter
+
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         SnakePipelineUtils.create_empty_report_section(AbriTAMRReporter.TITLE, Path(output.VAL_HTML))
