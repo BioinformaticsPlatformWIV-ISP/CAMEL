@@ -18,7 +18,7 @@ class StarAlign(Star):
         """
         super().__init__('STAR', '2.7.11b', camel)
         self._required_inputs = ['FASTQ', 'INDEX_DIR']
-        self._input_string = "--runMode alignReads"
+        self._input_string = "--runMode alignReads "
 
     def _check_input(self) -> None:
         """
@@ -34,14 +34,19 @@ class StarAlign(Star):
         Sets the input specification and the input string.
         :return: None
         """
-        self._input_string += " --readFilesIn"
+        option_fastq = "--readFilesIn"
         for fastq in self._tool_inputs['FASTQ']:
-            self._input_string += f" {Path(str(fastq))}"
+            option_fastq += f" {Path(str(fastq))}"
 
+        option_gtf = ""
         if 'GTF' in self._tool_inputs:
-            self._input_string += f" --sjdbGGTFfile {Path(str(self._tool_inputs['GTF'][0]))}"
+            option_gtf = f" --sjdbGGTFfile {Path(str(self._tool_inputs['GTF'][0]))}"
 
-        self._input_string += f" --genomeDir {Path(str(self._tool_inputs['INDEX_DIR'][0]))}"
+        option_index_dir = f"--genomeDir {Path(str(self._tool_inputs['INDEX_DIR'][0]))}"
+
+        self._input_string += " ".join([option_fastq,
+                                        option_gtf,
+                                        option_index_dir])
 
     def _set_output(self) -> None:
         """

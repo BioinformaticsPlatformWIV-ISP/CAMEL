@@ -2,6 +2,7 @@ from pathlib import Path
 
 from camel.app.camel import Camel
 from camel.app.io.tooliodirectory import ToolIODirectory
+from camel.app.io.tooliofile import ToolIOFile
 from camel.app.loggers import logger
 from camel.app.tools.star.star import Star
 
@@ -19,7 +20,7 @@ class StarIndex(Star):
         """
         super().__init__('STAR', '2.7.11b', camel)
         self._required_inputs = ['FASTA']
-        self._input_string = "--runMode genomeGenerate"
+        self._input_string = "--runMode genomeGenerate "
         self._index_dir = ""
 
     def _set_input(self) -> None:
@@ -27,9 +28,9 @@ class StarIndex(Star):
         Sets the input specification and the input string.
         :return: None
         """
-        self._input_string += " --genomeFastaFiles"
+        option_fasta = "--genomeFastaFiles"
         for fasta in self._tool_inputs['FASTA']:
-            self._input_string += f" {Path(str(fasta))}"
+            option_fasta += f" {Path(str(fasta))}"
 
         if 'INDEX_DIR' not in self._tool_inputs:
             logger.warning("INDEX_DIR not specified; creating 'STAR_index' directory in same directory as FASTA input")
@@ -37,10 +38,15 @@ class StarIndex(Star):
         else:
             self._index_dir = Path(str(self._tool_inputs['INDEX_DIR'][0]))
         self._index_dir.mkdir(parents=True, exist_ok=True)
-        self._input_string += f" --genomeDir {self._index_dir}"
+        option_index_dir = f"--genomeDir {self._index_dir}"
 
+        option_gtf = ""
         if 'GTF' in self._tool_inputs:
-            self._input_string += f" --sjdbGGTFfile {Path(str(self._tool_inputs['GTF'][0]))}"
+            option_gtf = f"--sjdbGGTFfile {Path(str(self._tool_inputs['GTF'][0]))}"
+
+        self._input_string += " ".join([option_fasta,
+                                        option_index_dir,
+                                        option_gtf])
 
     def _set_output(self) -> None:
         """
