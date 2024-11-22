@@ -20,7 +20,7 @@ class StarIndex(Star):
         """
         super().__init__('STAR', '2.7.11b', camel)
         self._required_inputs = ['FASTA']
-        self._input_string = "--runMode genomeGenerate "
+        self._input_string = "--runMode genomeGenerate"
         self._index_dir = ""
 
     def _set_input(self) -> None:
@@ -37,7 +37,8 @@ class StarIndex(Star):
         if 'GTF' in self._tool_inputs:
             option_gtf = f"--sjdbGGTFfile {Path(str(self._tool_inputs['GTF'][0]))}"
 
-        self._input_string += " ".join([option_fasta,
+        self._input_string = " ".join([self._input_string,
+                                        option_fasta,
                                         option_gtf])
 
     def _set_output(self) -> None:
@@ -68,14 +69,3 @@ class StarIndex(Star):
             logger.info(f'Creating symlink for input file: {path_link}')
             path_link.symlink_to(fasta)
         return path_link
-
-
-if __name__ == '__main__':
-    star = StarIndex(Camel.get_instance())
-    # star.add_input_files({'FASTA': [ToolIOFile(Path('/testdata/camel/star/S_20_721_prophage.fasta')),
-    #                                 ToolIOFile(Path('/testdata/camel/star/pBAD33.fasta'))],
-    #                       'INDEX_DIR': [ToolIODirectory(Path('/scratch/grdeclercq/star/index'))],
-    #                       })
-    star.add_input_files({'FASTA': [ToolIOFile(Path('/scratch/grdeclercq/star/test/S_20_721_prophage.fasta'))]})
-    star.update_parameters(SA_index=7)
-    star.run(Path('/scratch/grdeclercq/star/test'))

@@ -18,7 +18,7 @@ class StarAlign(Star):
         """
         super().__init__('STAR', '2.7.11b', camel)
         self._required_inputs = ['FASTQ', 'INDEX_DIR']
-        self._input_string = "--runMode alignReads "
+        self._input_string = "--runMode alignReads"
 
     def _check_input(self) -> None:
         """
@@ -44,7 +44,8 @@ class StarAlign(Star):
 
         option_index_dir = f"--genomeDir {Path(str(self._tool_inputs['INDEX_DIR'][0]))}"
 
-        self._input_string += " ".join([option_fastq,
+        self._input_string = " ".join([self._input_string,
+                                        option_fastq,
                                         option_gtf,
                                         option_index_dir])
 

@@ -45,7 +45,7 @@ class Star(ToolPipeable):
         :return: None
         """
         self._command.command = ' '.join([self._tool_command, self._input_string,
-                                          *self._build_options(excluded_parameters=['filename_output']),
+                                          *self._build_options(excluded_parameters=['filename_output', 'symlink_input']),
                                           self._output_string])
 
     def _execute_tool(self) -> None:
