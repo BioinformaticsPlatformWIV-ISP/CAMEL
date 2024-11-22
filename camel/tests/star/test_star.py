@@ -43,7 +43,7 @@ class TestStar(CamelTestSuite):
             'INDEX_DIR': [TestStar.INDEX_DIR]
         })
         star_align.run(self.running_dir)
-        self.verify_output_files(star_align,'SAM')
+        self.verify_output_files(star_align, 'SAM')
 
 
 if __name__ == '__main__':
