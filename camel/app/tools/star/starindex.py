@@ -30,22 +30,14 @@ class StarIndex(Star):
         """
         option_fasta = "--genomeFastaFiles"
         for fasta in self._tool_inputs['FASTA']:
-            option_fasta += f" {Path(str(fasta))}"
-
-        if 'INDEX_DIR' not in self._tool_inputs:
-            logger.warning("INDEX_DIR not specified; creating 'STAR_index' directory in same directory as FASTA input")
-            self._index_dir = Path(str(self._tool_inputs['FASTA'][0])).parent / "STAR_index"
-        else:
-            self._index_dir = Path(str(self._tool_inputs['INDEX_DIR'][0]))
-        self._index_dir.mkdir(parents=True, exist_ok=True)
-        option_index_dir = f"--genomeDir {self._index_dir}"
+            input_fasta = self._symlink_fasta(Path(str(fasta))) if 'symlink_input' in self._parameters else (Path(str(fasta)))
+            option_fasta += f" {input_fasta}"
 
         option_gtf = ""
         if 'GTF' in self._tool_inputs:
             option_gtf = f"--sjdbGGTFfile {Path(str(self._tool_inputs['GTF'][0]))}"
 
         self._input_string += " ".join([option_fasta,
-                                        option_index_dir,
                                         option_gtf])
 
     def _set_output(self) -> None:
@@ -53,7 +45,8 @@ class StarIndex(Star):
         Sets the output specification.
         :return: None
         """
-        self._tool_outputs['INDEX_DIR'] = [ToolIODirectory(Path(self._index_dir))]
+        index_dir = Path(str(self._tool_inputs['FASTA'][0])).parent / "GenomeDir"
+        self._tool_outputs['INDEX_DIR'] = [ToolIODirectory(index_dir)]
 
     def _check_output(self) -> None:
         """
@@ -63,3 +56,26 @@ class StarIndex(Star):
         if not any(Path(str(self._tool_outputs['INDEX_DIR'][0])).iterdir()):
             raise IOError("INDEX_DIR is empty - index has not been created.")
         super()._check_output()
+
+    def _symlink_fasta(self, fasta: Path) -> Path:
+        """
+        Creates a symlink for the fasta input. This avoids errors when there are no writing permissions on the directory of the input fasta.
+        :param key: Input key
+        :return: Path to symlink input
+        """
+        path_link = self._folder / fasta.name
+        if not path_link.is_file():
+            logger.info(f'Creating symlink for input file: {path_link}')
+            path_link.symlink_to(fasta)
+        return path_link
+
+
+if __name__ == '__main__':
+    star = StarIndex(Camel.get_instance())
+    # star.add_input_files({'FASTA': [ToolIOFile(Path('/testdata/camel/star/S_20_721_prophage.fasta')),
+    #                                 ToolIOFile(Path('/testdata/camel/star/pBAD33.fasta'))],
+    #                       'INDEX_DIR': [ToolIODirectory(Path('/scratch/grdeclercq/star/index'))],
+    #                       })
+    star.add_input_files({'FASTA': [ToolIOFile(Path('/scratch/grdeclercq/star/test/S_20_721_prophage.fasta'))]})
+    star.update_parameters(SA_index=7)
+    star.run(Path('/scratch/grdeclercq/star/test'))

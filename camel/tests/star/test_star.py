@@ -16,21 +16,16 @@ class TestStar(CamelTestSuite):
     test_file_dir = CamelTestSuite.get_test_file_dir("star")
     FILE_REF_GENOME = ToolIOFile(test_file_dir / "reference.fasta")
     FILE_FASTQ = ToolIOFile(test_file_dir / "reads.fastq")
-    INDEX_DIR = ToolIODirectory(test_file_dir / "index")
+    INDEX_DIR = ToolIODirectory(test_file_dir / "GenomeDir")
 
     def test_star_index(self) -> None:
         """
         Tests StarIndex.
         :return: None
         """
-        # set index path explicitly to avoid Permission Denied error on /testdata/camel/star
-        path_index_dir = Path(self.running_dir) / "STAR_index"
-        path_index_dir.mkdir(parents=True, exist_ok=True)
-
         star_index = StarIndex(self.camel)
         star_index.add_input_files({
             'FASTA': [TestStar.FILE_REF_GENOME],
-            'INDEX_DIR': [ToolIODirectory(path_index_dir)]
         })
         star_index.run(self.running_dir)
         self.assertTrue('INDEX_DIR' in star_index.tool_outputs, "No index generated")
