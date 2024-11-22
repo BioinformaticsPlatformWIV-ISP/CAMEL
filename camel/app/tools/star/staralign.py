@@ -45,9 +45,9 @@ class StarAlign(Star):
         option_index_dir = f"--genomeDir {Path(str(self._tool_inputs['INDEX_DIR'][0]))}"
 
         self._input_string = " ".join([self._input_string,
-                                        option_fastq,
-                                        option_gtf,
-                                        option_index_dir])
+                                       option_fastq,
+                                       option_gtf,
+                                       option_index_dir])
 
     def _set_output(self) -> None:
         """

@@ -38,8 +38,8 @@ class StarIndex(Star):
             option_gtf = f"--sjdbGGTFfile {Path(str(self._tool_inputs['GTF'][0]))}"
 
         self._input_string = " ".join([self._input_string,
-                                        option_fasta,
-                                        option_gtf])
+                                       option_fasta,
+                                       option_gtf])
 
     def _set_output(self) -> None:
         """

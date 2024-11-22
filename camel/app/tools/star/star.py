@@ -44,9 +44,12 @@ class Star(ToolPipeable):
         Builds the command to run STAR.
         :return: None
         """
-        self._command.command = ' '.join([self._tool_command, self._input_string,
-                                          *self._build_options(excluded_parameters=['filename_output', 'symlink_input']),
-                                          self._output_string])
+        self._command.command = ' '.join([
+          self._tool_command, 
+          self._input_string,
+          *self._build_options(excluded_parameters=['filename_output', 'symlink_input']),
+          self._output_string
+        ])
 
     def _execute_tool(self) -> None:
         """
