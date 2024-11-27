@@ -26,8 +26,10 @@ class StarAlign(Star):
         :return: None
         """
         super()._check_input()
-        if len(self._tool_inputs['FASTQ']) > 2:
-            raise ValueError("Too many inputs of type 'FASTQ'")
+        if len(self._tool_inputs['FASTQ']) == 0:
+            raise ValueError("No FASTQ input provided")
+        elif len(self._tool_inputs['FASTQ']) > 2:
+            raise ValueError("Too many inputs of type FASTQ")
 
     def _set_input(self) -> None:
         """
@@ -36,13 +38,13 @@ class StarAlign(Star):
         """
         option_fastq = "--readFilesIn"
         for fastq in self._tool_inputs['FASTQ']:
-            option_fastq += f" {Path(str(fastq))}"
+            option_fastq += f" {fastq.path}"
 
         option_gtf = ""
         if 'GTF' in self._tool_inputs:
-            option_gtf = f" --sjdbGGTFfile {Path(str(self._tool_inputs['GTF'][0]))}"
+            option_gtf = f" --sjdbGGTFfile {self._tool_inputs['GTF'][0].path}"
 
-        option_index_dir = f"--genomeDir {Path(str(self._tool_inputs['INDEX_DIR'][0]))}"
+        option_index_dir = f"--genomeDir {self._tool_inputs['INDEX_DIR'][0].path}"
 
         self._input_string = " ".join([self._input_string,
                                        option_fastq,
