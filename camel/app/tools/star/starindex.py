@@ -48,15 +48,6 @@ class StarIndex(Star):
         index_dir = self._tool_inputs['FASTA'][0].path.parent / "GenomeDir"
         self._tool_outputs['INDEX_DIR'] = [ToolIODirectory(index_dir)]
 
-    def _check_output(self) -> None:
-        """
-        Checks if the output is valid.
-        :return: None
-        """
-        if not any(self._tool_outputs['INDEX_DIR'][0].path.iterdir()):
-            raise IOError("INDEX_DIR is empty - index has not been created.")
-        super()._check_output()
-
     def _symlink_fasta(self, fasta: Path) -> Path:
         """
         Creates a symlink for the fasta input. This avoids errors when there are no writing permissions
