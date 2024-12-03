@@ -1,5 +1,0 @@
-dependencies: []
-parameters:
-  sequence_id: {default: true, mandatory: false, option: null, value: qseqid}
-  seqIDParser_type: {default: false, mandatory: false, option: null, value: null}
-tool_command: None
