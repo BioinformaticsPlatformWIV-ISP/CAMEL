@@ -11,9 +11,9 @@ from camel.app.components.files import fastautils
 from camel.app.components.files.fastautils import FastaUtils
 from camel.app.components.files.fastqutils import FastqUtils
 from camel.app.components.files.fileutils import FileUtils
-from camel.app.components.phylogeny.snpphylogenyutils import InvalidInputError
 from camel.app.components.pipelines.basepipeline import BasePipeline
 from camel.app.components.workflows.utils.fastqinput import FastqInput
+from camel.app.error.invalidinputerror import InvalidInputError
 from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.loggers import logger
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
