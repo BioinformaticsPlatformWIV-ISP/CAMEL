@@ -60,7 +60,7 @@ class TrimmingIlluminaWrapper(object):
         config_file = SnakePipelineUtils.generate_config_file(config_data, self._working_dir)
 
         # Dump the input files in an IO file
-        io_pickle_in = Path(self._working_dir / trimming_illumina.INPUT_TRIMMOMATIC_FASTQ)
+        io_pickle_in = Path(self._working_dir / trimming_illumina.INPUT_TRIMMING_FASTQ)
         io_pickle_in.parent.mkdir(exist_ok=True, parents=True)
         SnakemakeUtils.dump_object([ToolIOFile(x) for x in pe_reads], io_pickle_in)
 
