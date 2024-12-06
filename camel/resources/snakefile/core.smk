@@ -65,7 +65,7 @@ rule core_link_trimmomatic_input:
     input:
         FASTQ = Path(config['working_dir']) / str(downsampling.OUTPUT_DOWNSAMPLING_FASTQ).format(read_key='fastq_pe')
     output:
-        FASTQ = Path(config['working_dir']) / trimming_illumina.INPUT_TRIMMOMATIC_FASTQ
+        FASTQ = Path(config['working_dir']) / trimming_illumina.INPUT_TRIMMING_FASTQ
     shell:
         """
         cp {input.FASTQ} {output.FASTQ};

@@ -11,7 +11,7 @@ rule trimming_illumina_fastqc_pre:
     Creates FastQC reports for the raw reads. 
     """
     input:
-        FASTQ = Path(config['working_dir']) / trimming_illumina.INPUT_TRIMMOMATIC_FASTQ
+        FASTQ = Path(config['working_dir']) / trimming_illumina.INPUT_TRIMMING_FASTQ
     output:
         HTML = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_FASTQC_HTML_PRE,
         TXT = Path(config['working_dir']) / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_FASTQC_TXT_PRE
@@ -32,7 +32,7 @@ rule trimming_illumina_trimmomatic:
     Read trimming using trimmomatic.
     """
     input:
-        FASTQ_PE = Path(config['working_dir']) / trimming_illumina.INPUT_TRIMMOMATIC_FASTQ
+        FASTQ_PE = Path(config['working_dir']) / trimming_illumina.INPUT_TRIMMING_FASTQ
     output:
         FASTQ_PE = Path(config['working_dir']) / 'trimming_illumina' / 'trimmomatic' / 'fastq-pe.io',
         FASTQ_SE_FORWARD = Path(config['working_dir']) / 'trimming_illumina' / 'trimmomatic' / 'fastq-se-fwd.io',
@@ -61,7 +61,7 @@ rule trimming_illumina_fastp:
     Read trimming using fastp.
     """
     input:
-        FASTQ = Path(config['working_dir']) / trimming_illumina.INPUT_TRIMMOMATIC_FASTQ
+        FASTQ = Path(config['working_dir']) / trimming_illumina.INPUT_TRIMMING_FASTQ
     output:
         FASTQ_PE = Path(config['working_dir']) / 'trimming_illumina' / 'fastp' / 'fastq-pe.io',
         FASTQ_SE_FWD = Path(config['working_dir']) / 'trimming_illumina' / 'fastp' / 'fastq-se-fwd.io',
