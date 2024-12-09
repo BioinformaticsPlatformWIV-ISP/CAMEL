@@ -4,7 +4,7 @@ from pathlib import Path
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.pharokka.pharokka import Pharokka
-from camel.app.tools.pharokka.pharokka_multiplotter import PharokkaMultiplotter
+from camel.app.tools.pharokka.pharokkamultiplotter import PharokkaMultiplotter
 from camel.app.tools.pharokka.pharokkareporter import PharokkaReporter
 
 
