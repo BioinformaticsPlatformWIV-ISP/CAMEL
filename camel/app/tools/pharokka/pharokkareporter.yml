@@ -1,0 +1,7 @@
+dependencies: []
+parameters:
+   show_card: {default: true, mandatory: false, option: null, value: True}
+   show_vfdb: {default: true, mandatory: false, option: null, value: True}
+   show_inphared: {default: true, mandatory: false, option: null, value: True}
+   custom_header: {default: true, mandatory: true, option: null, value: 'Pharokka genome annotation'}
+tool_command: pharokka.py
