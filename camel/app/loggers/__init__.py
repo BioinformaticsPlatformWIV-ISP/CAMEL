@@ -48,8 +48,11 @@ def detach_step_handlers() -> None:
     """
     Detaches & closes the handlers used for this step.
     """
+    to_remove = []
     for handler in logger.handlers:
         if (handler.name is None) or (not handler.name.startswith('step_')):
             continue
-        logger.removeHandler(handler)
+        to_remove.append(handler)
         handler.close()
+    for handler in to_remove:
+        logger.removeHandler(handler)
