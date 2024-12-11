@@ -20,7 +20,6 @@ class StarIndex(Star):
         super().__init__('STAR', '2.7.11b', camel)
         self._required_inputs = ['FASTA']
         self._input_string = "--runMode genomeGenerate"
-        self._index_dir = ""
 
     def _set_input(self) -> None:
         """
@@ -29,7 +28,7 @@ class StarIndex(Star):
         """
         option_fasta = "--genomeFastaFiles"
         for fasta in self._tool_inputs['FASTA']:
-            input_fasta = self._symlink_fasta(fasta.path)
+            input_fasta = self._symlink_fasta(Path(str(fasta))) if 'symlink_input' in self._parameters else (Path(str(fasta)))
             option_fasta += f" {input_fasta}"
 
         option_gtf = ""
@@ -45,7 +44,8 @@ class StarIndex(Star):
         Sets the output specification.
         :return: None
         """
-        index_dir = self._tool_inputs['FASTA'][0].path.parent / "GenomeDir"
+        index_dir = self._folder / "GenomeDir" if "symlink_input" in self._parameters else (
+                self._tool_inputs['FASTA'][0].path.parent / "GenomeDir")
         self._tool_outputs['INDEX_DIR'] = [ToolIODirectory(index_dir)]
 
     def _symlink_fasta(self, fasta: Path) -> Path:

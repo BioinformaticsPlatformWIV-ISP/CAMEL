@@ -1,6 +1,5 @@
-from pathlib import Path
-
 from camel.app.camel import Camel
+from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.star.star import Star
 
@@ -27,9 +26,9 @@ class StarAlign(Star):
         """
         super()._check_input()
         if len(self._tool_inputs['FASTQ']) == 0:
-            raise ValueError("No FASTQ input provided")
+            raise InvalidInputSpecificationError("No FASTQ input provided")
         elif len(self._tool_inputs['FASTQ']) > 2:
-            raise ValueError("Too many inputs of type FASTQ")
+            raise InvalidInputSpecificationError("Too many inputs of type FASTQ")
 
     def _set_input(self) -> None:
         """
