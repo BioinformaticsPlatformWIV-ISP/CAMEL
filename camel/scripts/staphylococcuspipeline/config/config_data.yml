@@ -52,6 +52,16 @@ assembly:
     cov_cutoff: 10
   min_contig_length: 1000
 
+variant_calling:
+  ploidy: 1
+  report_include_bam: {export_bam}
+  reference:
+    path: /db/refgenomes/Staphylococcus_aureus/NC_007795.1.fasta
+    name: <i>Staphylococcus aureus subsp. aureus</i> NCTC 8325 (NC_007795.1)
+    url: https://www.ncbi.nlm.nih.gov/nuccore/NC_007795.1
+
+variant_filtering: {{}}
+
 spa_typing:
   db: /db/pipelines/saureus/spatyping/profiles.fasta
   profiles: /db/pipelines/saureus/spatyping/spatypes.csv

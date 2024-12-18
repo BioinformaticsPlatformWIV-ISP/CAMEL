@@ -4,7 +4,7 @@ from camel.app.camel import Camel
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile import trimming, trimming_illumina, quality_checks, variant_calling, variant_filtering, \
     contamination_check_kraken, sequence_typing, downsampling, confindr, quast, core, trimming_ont, \
-    assembly, human_read_scrubbing, amrfinder, resfinder4
+    assembly, human_read_scrubbing, amrfinder, resfinder4, read_simulation
 from camel.scripts.neisseriapipeline.snakefile import serogroup_determination, gmats, mendevar
 
 
@@ -13,6 +13,7 @@ from camel.scripts.neisseriapipeline.snakefile import serogroup_determination, g
 #######################
 include: core.SNAKEFILE_CORE
 include: human_read_scrubbing.SNAKEFILE_SCRUBBING
+include: read_simulation.SNAKEFILE_READ_SIMULATION
 include: downsampling.SNAKEFILE_DOWNSAMPLING
 include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
 include: trimming_ont.SNAKEFILE_TRIMMING_ONT

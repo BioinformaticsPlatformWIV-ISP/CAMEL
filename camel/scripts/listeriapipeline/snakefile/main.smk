@@ -2,13 +2,14 @@ from pathlib import Path
 
 from camel.resources.snakefile import trimming_illumina, gene_detection, trimming, contamination_check_kraken, \
     quality_checks, variant_calling, variant_filtering, sequence_typing, downsampling, confindr, quast, amrfinder, \
-    core, trimming_ont, assembly, human_read_scrubbing, resfinder4, mobsuite
+    core, trimming_ont, assembly, human_read_scrubbing, resfinder4, mobsuite, read_simulation
 
 #######################
 # Included Snakefiles #
 #######################
 include: core.SNAKEFILE_CORE
 include: human_read_scrubbing.SNAKEFILE_SCRUBBING
+include: read_simulation.SNAKEFILE_READ_SIMULATION
 include: downsampling.SNAKEFILE_DOWNSAMPLING
 include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
 include: trimming_ont.SNAKEFILE_TRIMMING_ONT

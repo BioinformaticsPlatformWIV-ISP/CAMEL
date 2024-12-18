@@ -2,7 +2,7 @@ from pathlib import Path
 
 from camel.resources.snakefile import trimming_illumina, gene_detection, trimming, variant_calling, variant_filtering, \
     contamination_check_kraken, quality_checks, sequence_typing, downsampling, amrfinder, mobsuite, quast, confindr, \
-    core, trimming_ont, assembly, human_read_scrubbing, resfinder4, bacmet
+    core, trimming_ont, assembly, human_read_scrubbing, resfinder4, bacmet, read_simulation
 from camel.scripts.klebsiellapipeline.snakefile import kleborate
 
 #######################
@@ -10,6 +10,7 @@ from camel.scripts.klebsiellapipeline.snakefile import kleborate
 #######################
 include: core.SNAKEFILE_CORE
 include: human_read_scrubbing.SNAKEFILE_SCRUBBING
+include: read_simulation.SNAKEFILE_READ_SIMULATION
 include: downsampling.SNAKEFILE_DOWNSAMPLING
 include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
 include: trimming_ont.SNAKEFILE_TRIMMING_ONT
