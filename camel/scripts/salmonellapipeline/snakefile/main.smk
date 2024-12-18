@@ -1,7 +1,7 @@
 from pathlib import Path
-from camel.resources.snakefile import (trimming, trimming_illumina, trimming_ont, quality_checks,
-contamination_check_kraken, gene_detection, sequence_typing, downsampling, quast, confindr, core, assembly, resfinder4,
-mobsuite, abritamr, mykrobe, human_read_scrubbing)
+from camel.resources.snakefile import trimming, trimming_illumina, trimming_ont, quality_checks, variant_calling, variant_filtering, \
+    contamination_check_kraken, gene_detection, sequence_typing, downsampling, quast, confindr, core, assembly, resfinder4, \
+    mobsuite, abritamr, mykrobe, human_read_scrubbing
 from camel.scripts.salmonellapipeline import add_content_serotyping_salmonella, add_content_spifinder
 from camel.scripts.salmonellapipeline.snakefile import spifinder, serotyping_salmonella
 
@@ -18,6 +18,8 @@ include: quast.SNAKEFILE_QUAST
 include: contamination_check_kraken.SNAKEFILE_CONTAMINATION_CHECK_KRAKEN
 include: confindr.SNAKEFILE_CONFINDR
 include: quality_checks.SNAKEFILE_QUALITY_CHECKS
+include: variant_calling.SNAKEFILE_VARIANT_CALLING
+include: variant_filtering.SNAKEFILE_VARIANT_FILTERING
 include: gene_detection.SNAKEFILE_GENE_DETECTION
 include: resfinder4.SNAKEFILE_RESFINDER4
 include: mobsuite.SNAKEFILE_MOB_SUITE
@@ -46,6 +48,8 @@ rule report_command_section:
         INFORMS_contamination = contamination_check_kraken.get_command_informs(config),
         INFORMS_confindr = confindr.get_command_informs(config),
         INFORMS_assembly_map = assembly.get_qc_informs(config,config['input_type']),
+        INFORMS_variant_calling_all = variant_calling.get_command_informs(config) if 'variant_calling' in config['analyses'] else [],
+        INFORMS_variant_filtering_all = Path(config['working_dir']) / variant_filtering.OUTPUT_VARIANT_FILTERING_INFORMS_ALL if 'variant_calling' in config['analyses'] else [],
         INFORMS_serotyping = serotyping_salmonella.get_command_informs(config),
         INFORMS_mykrobe = Path(config['working_dir']) / mykrobe.OUTPUT_MYKROBE_INFORMS if 'mykrobe' in config['analyses'] else [],
         INFORMS_abritamr_run =  abritamr.get_command_informs(config),
@@ -77,6 +81,7 @@ rule report_combine_all:
         reports_contamination = contamination_check_kraken.get_reports(config),
         report_confindr = confindr.get_report(config),
         report_adv_qc = Path(config['working_dir']) / str(quality_checks.OUTPUT_QUALITY_CHECKS_REPORT).format(input_type=config['input_type']),
+        report_variant = variant_calling.get_reports(config) if 'variant_calling' in config['analyses'] else [],
         # Gene detection
         report_resfinder4 = Path(config['working_dir']) / (resfinder4.OUTPUT_RESFINDER4_REPORT if 'resfinder4' in config['analyses'] else resfinder4.OUTPUT_RESFINDER4_REPORT_EMPTY),
         reports_spifinder = spifinder.get_reports(config),
@@ -134,6 +139,8 @@ rule report_combine_all:
             ('Advanced QC', 'adv_qc', [Path(input.report_adv_qc)]),
             ('Species identification', 'species', [Path(input.report_rmlst)]),
             ])
+        if 'variant_calling' in config['analyses']:
+            report_structure.append(('Variant calling', 'variant', [Path(input.report_variant)]))
         add_content_serotyping_salmonella(
             report_structure,params.input_type,input.reports_serotyping)
         report_structure.extend([
@@ -166,6 +173,7 @@ rule summary_combine_all:
         contamination_check_kraken.get_summaries(config),
         confindr.get_summary(config),
         Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY,
+        variant_calling.get_summaries(config) if 'variant_calling' in config['analyses'] else [],
         serotyping_salmonella.get_summaries(config),
         Path(config['working_dir']) / mykrobe.OUTPUT_MYKROBE_SUMMARY if 'mykrobe' in config['analyses'] else [],
         Path(config['working_dir']) / abritamr.OUTPUT_ABRITAMR_SUMMARY if 'abritamr' in config['analyses'] else [],
