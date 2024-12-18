@@ -1,8 +1,8 @@
 from pathlib import Path
 
 from camel.resources.snakefile import trimming, trimming_illumina, quality_checks, contamination_check_kraken, \
-    gene_detection, sequence_typing, downsampling, quast, confindr, core, assembly, resfinder4, amrfinder, mobsuite, \
-    human_read_scrubbing
+    variant_calling, variant_filtering, gene_detection, sequence_typing, downsampling, quast, confindr, core, assembly, \
+    resfinder4, amrfinder, mobsuite, human_read_scrubbing
 from camel.scripts.stecpipeline.snakefile import serotype_detection
 
 #######################
@@ -17,6 +17,8 @@ include: quast.SNAKEFILE_QUAST
 include: contamination_check_kraken.SNAKEFILE_CONTAMINATION_CHECK_KRAKEN
 include: confindr.SNAKEFILE_CONFINDR
 include: quality_checks.SNAKEFILE_QUALITY_CHECKS
+include: variant_calling.SNAKEFILE_VARIANT_CALLING
+include: variant_filtering.SNAKEFILE_VARIANT_FILTERING
 include: amrfinder.SNAKEFILE_AMRFINDER
 include: resfinder4.SNAKEFILE_RESFINDER4
 include: gene_detection.SNAKEFILE_GENE_DETECTION
@@ -49,6 +51,8 @@ rule report_command_section:
         INFORMS_contamination = contamination_check_kraken.get_command_informs(config),
         INFORMS_confindr = confindr.get_command_informs(config),
         INFORMS_assembly_map = assembly.get_qc_informs(config, config['input_type']),
+        INFORMS_variant_calling_all = variant_calling.get_command_informs(config) if 'variant_calling' in config['analyses'] else [],
+        INFORMS_variant_filtering_all = Path(config['working_dir']) / variant_filtering.OUTPUT_VARIANT_FILTERING_INFORMS_ALL if 'variant_calling' in config['analyses'] else [],
         INFORMS_amrfinder = Path(config['working_dir']) / amrfinder.OUTPUT_AMRFINDER_INFORMS if 'amrfinder' in config['analyses'] else [],
         INFORMS_resfinder4 = Path(config['working_dir']) / resfinder4.OUTPUT_RESFINDER4_INFORMS if 'resfinder4' in config['analyses'] else [],
         INFORMS_ncbi_stress = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='ncbi_stress') if 'ncbi_stress' in config['analyses'] else [],
@@ -82,6 +86,7 @@ rule report_combine_all:
         reports_contamination = contamination_check_kraken.get_reports(config),
         report_confindr = confindr.get_report(config),
         report_adv_qc = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_REPORT,
+        report_variant = variant_calling.get_reports(config) if 'variant_calling' in config['analyses'] else [],
         # Species identification
         report_rmlst = sequence_typing.get_sequence_typing_report('rmlst',config),
         # Serotype
@@ -144,10 +149,11 @@ rule report_combine_all:
         report_structure.append(('Assembly', 'assembly', [Path(input.report_quast)]))
         ReportPipeline.add_content_contamination_check(
             report_structure,params.input_type,input.reports_contamination,input.report_confindr)
-
+        report_structure.append(('Advanced QC', 'adv_qc', [Path(input.report_adv_qc)]))
+        if 'variant_calling' in config['analyses']:
+            report_structure.append(('Variant calling', 'variant', [Path(input.report_variant)]))
         # Add content
         report_structure.extend([
-            ('Advanced QC', 'adv_qc', [Path(input.report_adv_qc)]),
             ('Species identification', 'species', [Path(input.report_rmlst)]),
             ('AMR detection', 'amr', [Path(x) for x in (
                 input.report_amrfinder, input.report_resfinder4, input.report_ncbi_stress)]),
@@ -177,6 +183,7 @@ rule summary_combine_all:
         contamination_check_kraken.get_summaries(config),
         confindr.get_summary(config),
         Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY,
+        variant_calling.get_summaries(config) if 'variant_calling' in config['analyses'] else [],
         # AMR detection
         Path(config['working_dir']) / amrfinder.OUTPUT_AMRFINDER_SUMMARY if 'amrfinder' in config['analyses'] else [],
         Path(config['working_dir']) / resfinder4.OUTPUT_RESFINDER4_SUMMARY if 'resfinder4' in config['analyses'] else [],

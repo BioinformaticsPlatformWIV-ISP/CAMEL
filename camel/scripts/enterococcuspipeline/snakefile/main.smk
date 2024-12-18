@@ -1,8 +1,8 @@
 from pathlib import Path
 
 from camel.resources.snakefile import trimming_illumina, gene_detection, trimming, contamination_check_kraken, \
-    quality_checks, sequence_typing, lrefinder, downsampling, confindr, quast, core, assembly, amrfinder, resfinder4, \
-    bacmet, mobsuite, human_read_scrubbing, read_simulation
+    quality_checks, variant_calling, variant_filtering, sequence_typing, lrefinder, downsampling, confindr, quast, \
+    core, assembly, amrfinder, resfinder4, bacmet, mobsuite, human_read_scrubbing, read_simulation
 
 #######################
 # Included Snakefiles #
@@ -17,6 +17,8 @@ include: quast.SNAKEFILE_QUAST
 include: contamination_check_kraken.SNAKEFILE_CONTAMINATION_CHECK_KRAKEN
 include: confindr.SNAKEFILE_CONFINDR
 include: quality_checks.SNAKEFILE_QUALITY_CHECKS
+include: variant_calling.SNAKEFILE_VARIANT_CALLING
+include: variant_filtering.SNAKEFILE_VARIANT_FILTERING
 include: lrefinder.SNAKEFILE_LREFINDER
 include: amrfinder.SNAKEFILE_AMRFINDER
 include: resfinder4.SNAKEFILE_RESFINDER4
@@ -49,7 +51,9 @@ rule report_command_section:
         INFORMS_contamination = contamination_check_kraken.get_command_informs(config),
         INFORMS_confindr = confindr.get_command_informs(config),
         INFORMS_assembly_map = assembly.get_qc_informs(config, config['input_type']),
-        INFORMS_lrefinder= Path(config['working_dir']) / lrefinder.OUTPUT_LREFINDER_INFORMS if 'lrefinder' in config['analyses'] else [],
+        INFORMS_variant_calling_all = variant_calling.get_command_informs(config) if 'variant_calling' in config['analyses'] else [],
+        INFORMS_variant_filtering_all = Path(config['working_dir']) / variant_filtering.OUTPUT_VARIANT_FILTERING_INFORMS_ALL if 'variant_calling' in config['analyses'] else [],
+        INFORMS_lrefinder = Path(config['working_dir']) / lrefinder.OUTPUT_LREFINDER_INFORMS if 'lrefinder' in config['analyses'] else [],
         INFORMS_amrfinder = Path(config['working_dir']) / amrfinder.OUTPUT_AMRFINDER_INFORMS if 'amrfinder' in config['analyses'] else [],
         INFORMS_resfinder4 = Path(config['working_dir']) / resfinder4.OUTPUT_RESFINDER4_INFORMS if 'resfinder4' in config['analyses'] else [],
         INFORMS_mob_suite = Path(config['working_dir']) / mobsuite.OUTPUT_MOB_SUITE_INFORMS if 'mob_suite' in config['analyses'] else [],
@@ -78,6 +82,7 @@ rule report_combine_all:
         reports_contamination = contamination_check_kraken.get_reports(config),
         report_confindr = confindr.get_report(config),
         report_adv_qc = Path(config['working_dir']) / str(quality_checks.OUTPUT_QUALITY_CHECKS_REPORT).format(input_type=config['input_type']),
+        report_variant = variant_calling.get_reports(config) if 'variant_calling' in config['analyses'] else [],
         # Species identification
         report_rmlst = sequence_typing.get_sequence_typing_report('rmlst', config),
         # AMR detection
@@ -141,6 +146,8 @@ rule report_combine_all:
         ReportPipeline.add_content_contamination_check(
             report_structure, params.input_type,input.reports_contamination,input.report_confindr)
         report_structure.append(('Advanced QC', 'adv_qc', [Path(input.report_adv_qc)]))
+        if 'variant_calling' in config['analyses']:
+            report_structure.append(('Variant calling', 'variant', [Path(input.report_variant)]))
 
         # Typing (additional MLST scheme for E. faecium)
         if params.species == 'Enterococcus faecalis':
@@ -181,6 +188,7 @@ rule summary_combine_all:
         contamination_check_kraken.get_summaries(config),
         confindr.get_summary(config),
         Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY,
+        variant_calling.get_summaries(config) if 'variant_calling' in config['analyses'] else [],
         # AMR detection
         Path(config['working_dir']) / lrefinder.OUTPUT_LREFINDER_SUMMARY if 'lrefinder' in config['analyses'] else [],
         Path(config['working_dir']) / amrfinder.OUTPUT_AMRFINDER_SUMMARY if 'amrfinder' in config['analyses'] else [],
