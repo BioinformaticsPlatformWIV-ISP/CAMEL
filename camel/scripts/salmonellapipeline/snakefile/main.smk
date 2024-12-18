@@ -1,7 +1,7 @@
 from pathlib import Path
 from camel.resources.snakefile import trimming, trimming_illumina, trimming_ont, quality_checks, variant_calling, variant_filtering, \
     contamination_check_kraken, gene_detection, sequence_typing, downsampling, quast, confindr, core, assembly, resfinder4, \
-    mobsuite, abritamr, mykrobe, human_read_scrubbing
+    mobsuite, abritamr, mykrobe, human_read_scrubbing, read_simulation
 from camel.scripts.salmonellapipeline import add_content_serotyping_salmonella, add_content_spifinder
 from camel.scripts.salmonellapipeline.snakefile import spifinder, serotyping_salmonella
 
@@ -10,6 +10,7 @@ from camel.scripts.salmonellapipeline.snakefile import spifinder, serotyping_sal
 #######################
 include: core.SNAKEFILE_CORE
 include: human_read_scrubbing.SNAKEFILE_SCRUBBING
+include: read_simulation.SNAKEFILE_READ_SIMULATION
 include: downsampling.SNAKEFILE_DOWNSAMPLING
 include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
 include: trimming_ont.SNAKEFILE_TRIMMING_ONT
