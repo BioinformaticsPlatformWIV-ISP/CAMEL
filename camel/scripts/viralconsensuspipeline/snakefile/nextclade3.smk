@@ -12,7 +12,8 @@ rule nextclade3_detect_subtype_mash:
     Uses mash to determine the best matching subtype.
     """
     input:
-        FASTQ = Path(config['working_dir']) / preprocess.OUTPUT_PRE_PROCESS_FASTQ
+        FASTQ = Path(config['working_dir']) / preprocess.OUTPUT_PRE_PROCESS_FASTQ if 'fasta' not in config['input'] else [],
+        FASTA = Path(config['working_dir']) / 'fasta.io' if 'fasta' in config['input'] else []
     output:
         TSV = Path(config['working_dir']) / 'nextclade' / 'subtype_determination' / 'mash' / 'tsv.io',
         INFORMS = Path(config['working_dir']) / 'nextclade' / 'subtype_determination' / 'mash' / 'informs.io'
@@ -27,11 +28,14 @@ rule nextclade3_detect_subtype_mash:
         from camel.app.components.workflows.utils.fastqinput import FastqInput
 
         mash_screen = MashScreen(Camel.get_instance())
-        fq_in = FastqInput.from_fq_dict(Path(input.FASTQ), params.input_type)
-        fq_all = []
-        for _, tool_io_files in fq_in.to_fq_dict().items():
-            fq_all.extend([ToolIOFile(io.path) for io in tool_io_files])
-        mash_screen.add_input_files({'FASTQ': fq_all})
+        if input.FASTQ:
+            fq_in = FastqInput.from_fq_dict(Path(input.FASTQ), params.input_type)
+            fq_all = []
+            for _, tool_io_files in fq_in.to_fq_dict().items():
+                fq_all.extend([ToolIOFile(io.path) for io in tool_io_files])
+            mash_screen.add_input_files({'FASTQ': fq_all})
+        elif input.FASTA:
+            mash_screen.add_input_files({'FASTA': SnakemakeUtils.load_object(Path(input.FASTA))})
         path_db = next(Path(params.db).glob('*.msh'))
         logging.info(f'Mash database found: {path_db}')
         mash_screen.add_input_files({'DB': [ToolIOFile(path_db)]})
@@ -88,7 +92,7 @@ rule nextclade3_extract_segment:
     Extracts the given segment from the consensus FASTA file.
     """
     input:
-        FASTA = Path(config['working_dir']) / iterativemapping.OUTPUT_ITERATIVE_MAPPING_FASTA_CONSENSUS_FINAL
+        FASTA = Path(config['working_dir']) / 'fasta.io'
     output:
         FASTA = Path(config['working_dir']) / 'nextclade' / '{segment}' / 'input' / 'fasta.io'
     params:
@@ -102,8 +106,11 @@ rule nextclade3_extract_segment:
         with fasta_in.open() as handle:
             seqs = list(SeqIO.parse(handle, 'fasta'))
             try:
-                seq_segment = next(
-                    s for s in seqs if s.id.lower().endswith(f'-{params.segment_name}'.lower()))
+                if config['input'].get('fasta') and config['species'] == 'sars_cov_2':
+                    seq_segment = next(s for s in seqs)
+                else:
+                    seq_segment = next(
+                        s for s in seqs if s.id.lower().endswith(f'-{params.segment_name}'.lower()))
             except StopIteration:
                 segments = [s.id.split('-')[-1].lower() for s in seqs]
                 raise RuntimeError(f"Cannot find segment: {params.segment_name} (found: {', '.join(segments)})")

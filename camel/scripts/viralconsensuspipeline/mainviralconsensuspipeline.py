@@ -283,6 +283,7 @@ class MainViralConsensusPipeline(ReportPipeline):
         # YAML data
         self.__config_add_yaml_data(config_data)
         config_data['analyses'] = ['kraken2']
+        config_data['species'] = self._args.species
 
         # Nanopore trimming settings
         if self._args.input_type == 'nanopore':
