@@ -136,14 +136,12 @@ rule report_combine_all:
         report_structure.append(('Assembly', 'assembly', [Path(input.report_quast)]))
         ReportPipeline.add_content_contamination_check(
             report_structure,params.input_type,input.reports_contamination,input.report_confindr)
-        report_structure.extend([
-            ('Advanced QC', 'adv_qc', [Path(input.report_adv_qc)]),
-            ('Species identification', 'species', [Path(input.report_rmlst)]),
-            ])
+        report_structure.append(('Advanced QC', 'adv_qc', [Path(input.report_adv_qc)]))
         if 'variant_calling' in config['analyses']:
             report_structure.append(('Variant calling', 'variant', [Path(input.report_variant)]))
+        report_structure.append(('Species identification', 'species', [Path(input.report_rmlst)]))
         add_content_serotyping_salmonella(
-            report_structure,params.input_type,input.reports_serotyping)
+            report_structure, params.input_type, input.reports_serotyping)
         report_structure.extend([
             ('Lineage identification', 'mykrobe', [Path(input.report_mykrobe)]),
             ('AMR detection', 'amr', [Path(x) for x in (
