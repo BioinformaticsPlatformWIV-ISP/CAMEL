@@ -285,7 +285,6 @@ class MainViralConsensusPipeline(ReportPipeline):
         config_data['analyses'] = ['kraken2']
         if self._args.human_read_scrubbing:
             config_data['analyses'].append('human_read_scrubbing')
-        config_data['species'] = self._args.species
 
         # Nanopore trimming settings
         if self._args.input_type == 'nanopore':

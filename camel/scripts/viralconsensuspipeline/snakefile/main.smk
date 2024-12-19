@@ -33,7 +33,7 @@ rule all:
     input:
         HTML = config['output_report'],
         TSV = config['output_tabular'],
-        TSV_stats = Path(config['working_dir']) / 'preprocess' / 'stats.tsv' if 'fasta' not in config['input'] else []
+        TSV_stats = Path(config['working_dir']) / 'preprocess' / 'stats.tsv' if config['input_type'] != 'fasta' else []
 
 rule link_fasta_to_iterative_mapping:
     """
@@ -74,10 +74,10 @@ rule report_create_command_section:
         INFORMS_trimming = trimming.get_command_informs(config),
         INFORMS_contamination = contamination_check_kraken.get_command_informs(config),
         INFORMS_reference_selection = Path(config['working_dir']) / 'ref_selection' / 'mash_screen' / refselection.get_segments(
-            Path(config['ref_selection']['db']))[0] / 'informs.io' if config['fasta_ref'] is None and 'fasta' not in config['input'] and config['ref_selection'].get('db') is not None else [],
-        INFORMS_preprocess = Path(config['working_dir']) / preprocess.OUTPUT_PRE_PROCESS_INFORMS if 'fasta' not in config['input'] else [],
-        INFORMS_iterative_mapping = Path(config['working_dir']) / iterativemapping.OUTPUT_ITERATIVE_MAPPING_INFORMS if 'fasta' not in config['input'] else [],
-        INFORMS_mash = Path(config['working_dir']) / 'nextclade' / 'subtype_determination' / 'mash' / 'informs.io' if config['nextclade'].get('db_mash') is not None and 'fasta' not in config['input'] else [],
+            Path(config['ref_selection']['db']))[0] / 'informs.io' if config['fasta_ref'] is None and config['input_type'] != 'fasta' and config['ref_selection'].get('db') is not None else [],
+        INFORMS_preprocess = Path(config['working_dir']) / preprocess.OUTPUT_PRE_PROCESS_INFORMS if config['input_type'] != 'fasta' else [],
+        INFORMS_iterative_mapping = Path(config['working_dir']) / iterativemapping.OUTPUT_ITERATIVE_MAPPING_INFORMS if config['input_type'] != 'fasta' else [],
+        INFORMS_mash = Path(config['working_dir']) / 'nextclade' / 'subtype_determination' / 'mash' / 'informs.io' if config['nextclade'].get('db_mash') is not None and config['input_type'] != 'fasta' else [],
         INFORMS_nextclade = Path(config['working_dir']) / nextclade3.OUTPUT_NEXTCLADE_INFORMS if 'nextclade' in config['analyses'] else []
     output:
         HTML = Path(config['working_dir']) / 'report' / 'html-commands.io'
@@ -96,14 +96,14 @@ rule report_combine_all:
         reports_downsampling = downsampling.get_reports(config),
         reports_trimming = trimming.get_reports(config),
         reports_contamination = contamination_check_kraken.get_reports(config),
-        report_reference_selection = Path(config['working_dir']) / (refselection.OUTPUT_REF_SELECTION_REPORT if config['fasta_ref'] is None and 'fasta' not in config['input'] else refselection.OUTPUT_REF_SELECTION_REPORT_EMPTY),
-        report_preprocess_ampligone = Path(config['working_dir']) / (preprocess.OUTPUT_PRE_PROCESS_AMPLIGONE_REPORT if 'ampligone' in config['analyses'] and 'fasta' not in config['input'] else preprocess.OUTPUT_PRE_PROCESS_AMPLIGONE_REPORT_EMPTY),
-        report_preprocess_clipping = Path(config['working_dir']) / (preprocess.OUTPUT_PRE_PROCESS_CLIPPING_REPORT if 'ampligone' in config['analyses'] and 'fasta' not in config['input'] else preprocess.OUTPUT_PRE_PROCESS_CLIPPING_REPORT_EMPTY),
-        report_preprocess = Path(config['working_dir']) / preprocess.OUTPUT_PRE_PROCESS_REPORT if 'fasta' not in config['input'] else [],
-        report_iterative_mapping = Path(config['working_dir']) / iterativemapping.OUTPUT_ITERATIVE_MAPPING_REPORT if 'fasta' not in config['input'] else [],
-        report_nexclade_subtype = Path(config['working_dir']) / (nextclade3.OUTPUT_NEXTCLADE_SUBTYPE_REPORT if (config['nextclade'].get('db') is None) and ('nextclade' in config['analyses']) and 'fasta' not in config['input'] else nextclade3.OUTPUT_NEXTCLADE_SUBTYPE_REPORT_EMPTY),
+        report_reference_selection = Path(config['working_dir']) / (refselection.OUTPUT_REF_SELECTION_REPORT if config['fasta_ref'] is None and config['input_type'] != 'fasta' else refselection.OUTPUT_REF_SELECTION_REPORT_EMPTY),
+        report_preprocess_ampligone = Path(config['working_dir']) / (preprocess.OUTPUT_PRE_PROCESS_AMPLIGONE_REPORT if 'ampligone' in config['analyses'] and config['input_type'] != 'fasta' else preprocess.OUTPUT_PRE_PROCESS_AMPLIGONE_REPORT_EMPTY),
+        report_preprocess_clipping = Path(config['working_dir']) / (preprocess.OUTPUT_PRE_PROCESS_CLIPPING_REPORT if 'ampligone' in config['analyses'] and config['input_type'] != 'fasta' else preprocess.OUTPUT_PRE_PROCESS_CLIPPING_REPORT_EMPTY),
+        report_preprocess = Path(config['working_dir']) / preprocess.OUTPUT_PRE_PROCESS_REPORT if config['input_type'] != 'fasta' else [],
+        report_iterative_mapping = Path(config['working_dir']) / iterativemapping.OUTPUT_ITERATIVE_MAPPING_REPORT if config['input_type'] != 'fasta' else [],
+        report_nexclade_subtype = Path(config['working_dir']) / (nextclade3.OUTPUT_NEXTCLADE_SUBTYPE_REPORT if (config['nextclade'].get('db') is None) and ('nextclade' in config['analyses']) and config['input_type'] != 'fasta' else nextclade3.OUTPUT_NEXTCLADE_SUBTYPE_REPORT_EMPTY),
         report_nextclade = Path(config['working_dir']) / (nextclade3.OUTPUT_NEXTCLADE_REPORT if 'nextclade' in config['analyses'] else nextclade3.OUTPUT_NEXTCLADE_REPORT_EMPTY),
-        report_multi_allelic = Path(config['working_dir']) / multiallelicsites.OUTPUT_MULTI_ALLELIC_REPORT if 'fasta' not in config['input'] else [],
+        report_multi_allelic = Path(config['working_dir']) / multiallelicsites.OUTPUT_MULTI_ALLELIC_REPORT if config['input_type'] != 'fasta' else [],
         report_commands = Path(config['working_dir']) / 'report' / 'html-commands.io',
         report_citations = Path(config['working_dir'],core.OUTPUT_HTML_CITATIONS)
     output:
@@ -142,7 +142,7 @@ rule report_combine_all:
             report_structure, params.input_type, input.reports_contamination, None)
 
         # Add output sections
-        if 'fasta' not in config['input']:
+        if params.input_type != 'fasta':
             report_structure.extend([
                 ('Reference selection', 'ref_selection', [Path(input.report_reference_selection)]),
                 ('Pre-processing', 'pre_process', [Path(x) for x in (
@@ -167,10 +167,10 @@ rule summary_combine_all:
         downsampling.get_summaries(config),
         trimming.get_summaries(config),
         contamination_check_kraken.get_summaries(config),
-        Path(config['working_dir']) / refselection.OUTPUT_REF_SELECTION_SUMMARY if config['fasta_ref'] is None and 'fasta' not in config['input'] else [],
-        Path(config['working_dir']) / preprocess.OUTPUT_PRE_PROCESS_SUMMARY if 'fasta' not in config['input'] else [],
-        Path(config['working_dir']) / iterativemapping.OUTPUT_ITERATIVE_MAPPING_SUMMARY if 'fasta' not in config['input'] else [],
-        Path(config['working_dir']) / multiallelicsites.OUTPUT_MULTI_ALLELIC_SUMMARY if 'fasta' not in config['input'] else [],
+        Path(config['working_dir']) / refselection.OUTPUT_REF_SELECTION_SUMMARY if config['fasta_ref'] is None and config['input_type'] != 'fasta' else [],
+        Path(config['working_dir']) / preprocess.OUTPUT_PRE_PROCESS_SUMMARY if config['input_type'] != 'fasta' else [],
+        Path(config['working_dir']) / iterativemapping.OUTPUT_ITERATIVE_MAPPING_SUMMARY if config['input_type'] != 'fasta' else [],
+        Path(config['working_dir']) / multiallelicsites.OUTPUT_MULTI_ALLELIC_SUMMARY if config['input_type'] != 'fasta' else [],
         Path(config['working_dir']) / nextclade3.OUTPUT_NEXTCLADE_SUMMARY if 'nextclade' in config['analyses'] else []
     output:
         config.get('output_tabular')

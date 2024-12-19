@@ -12,8 +12,8 @@ rule nextclade3_detect_subtype_mash:
     Uses mash to determine the best matching subtype.
     """
     input:
-        FASTQ = Path(config['working_dir']) / preprocess.OUTPUT_PRE_PROCESS_FASTQ if 'fasta' not in config['input'] else [],
-        FASTA = Path(config['working_dir']) / 'fasta.io' if 'fasta' in config['input'] else []
+        FASTQ = Path(config['working_dir']) / preprocess.OUTPUT_PRE_PROCESS_FASTQ if config['input_type'] != 'fasta' else [],
+        FASTA = Path(config['working_dir']) / 'fasta.io' if config['input_type'] == 'fasta' else []
     output:
         TSV = Path(config['working_dir']) / 'nextclade' / 'subtype_determination' / 'mash' / 'tsv.io',
         INFORMS = Path(config['working_dir']) / 'nextclade' / 'subtype_determination' / 'mash' / 'informs.io'
@@ -28,13 +28,13 @@ rule nextclade3_detect_subtype_mash:
         from camel.app.components.workflows.utils.fastqinput import FastqInput
 
         mash_screen = MashScreen(Camel.get_instance())
-        if input.FASTQ:
+        if params.input_type != 'fasta':
             fq_in = FastqInput.from_fq_dict(Path(input.FASTQ), params.input_type)
             fq_all = []
             for _, tool_io_files in fq_in.to_fq_dict().items():
                 fq_all.extend([ToolIOFile(io.path) for io in tool_io_files])
             mash_screen.add_input_files({'FASTQ': fq_all})
-        elif input.FASTA:
+        else:
             mash_screen.add_input_files({'FASTA': SnakemakeUtils.load_object(Path(input.FASTA))})
         path_db = next(Path(params.db).glob('*.msh'))
         logging.info(f'Mash database found: {path_db}')
@@ -97,23 +97,27 @@ rule nextclade3_extract_segment:
         FASTA = Path(config['working_dir']) / 'nextclade' / '{segment}' / 'input' / 'fasta.io'
     params:
         dir_ = lambda wildcards: Path(config['working_dir']) / 'nextclade' / wildcards.segment / 'input',
-        segment_name = lambda wildcards: wildcards.segment
+        segment_name = lambda wildcards: wildcards.segment,
+        input_type = config['input_type']
     run:
         from Bio import SeqIO
         from camel.app.io.tooliofile import ToolIOFile
 
+        # Retrieve the sequence of the corresponding segment
         fasta_in = SnakemakeUtils.load_object(Path(input.FASTA))[0].path
         with fasta_in.open() as handle:
             seqs = list(SeqIO.parse(handle, 'fasta'))
-            try:
-                if config['input'].get('fasta') and config['species'] == 'sars_cov_2':
-                    seq_segment = next(s for s in seqs)
-                else:
+            if len(seqs) == 0:
+                seq_segment = seqs[0]
+            else:
+                try:
                     seq_segment = next(
                         s for s in seqs if s.id.lower().endswith(f'-{params.segment_name}'.lower()))
-            except StopIteration:
-                segments = [s.id.split('-')[-1].lower() for s in seqs]
-                raise RuntimeError(f"Cannot find segment: {params.segment_name} (found: {', '.join(segments)})")
+                except StopIteration:
+                    segments = [s.id.split('-')[-1].lower() for s in seqs]
+                    raise RuntimeError(f"Cannot find segment: {params.segment_name} (found: {', '.join(segments)})")
+2
+        # Save the output file
         path_fasta_out = Path(str(params.dir_), fasta_in.name.replace('.fasta', f'-{params.segment_name}.fasta'))
         with path_fasta_out.open('w') as handle:
             SeqIO.write([seq_segment], handle, 'fasta')
@@ -317,7 +321,7 @@ rule nextclade3_create_summary:
                     results_dict[f"{base_key}_{row['key']}"] = data_in.iloc[0][row['key']]
 
         # Save in TSV format
-        with open(output.TSV,'w') as handle:
+        with open(output.TSV, 'w') as handle:
             for key, value in results_dict.items():
                 handle.write(f'{key}\t{value}')
                 handle.write('\n')

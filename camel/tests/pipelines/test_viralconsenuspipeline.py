@@ -231,6 +231,28 @@ class TestViralConsensusPipeline(CamelTestSuite):
         main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)
 
+    @longRunningTest()
+    def test_viral_consensus_fasta_ref_fasta_input(self) -> None:
+        """
+        Tests the viral consensus pipeline with Illumina data.
+        :return: None
+        """
+        path_report_out = self.running_dir / 'out' / 'report.html'
+        path_summary_out = self.running_dir / 'out' / 'summary.tsv'
+        args = [
+            '--species', 'influenza_a',
+            '--fasta-ref', str(TestViralConsensusPipeline.dir_db / 'ref_genomes' / 'influenza_a-H1N1.fasta'),
+            '--fasta', str(TestViralConsensusPipeline.dir_testdata / 'influenza_a-full_genome.fasta'),
+            '--input-type', 'fasta',
+            '--output-html', str(path_report_out),
+            '--output-dir', str(path_report_out.parent),
+            '--output-tsv', str(path_summary_out),
+            '--working-dir', str(self.running_dir)
+        ]
+        main = MainViralConsensusPipeline(args)
+        main.run()
+        self.assertGreater(path_report_out.stat().st_size, 0)
+
     ############################################
     # Illumina - Automatic reference selection #
     ############################################
@@ -382,6 +404,27 @@ class TestViralConsensusPipeline(CamelTestSuite):
             '--clair3-model', str(Path(self.camel.config['db_root'], 'clair3', 'models', 'ont')),
             '--cov-max', '5000',
             '--cov-max-segment', '500',
+            '--output-html', str(path_report_out),
+            '--output-dir', str(path_report_out.parent),
+            '--output-tsv', str(path_summary_out),
+            '--working-dir', str(self.running_dir)
+        ]
+        main = MainViralConsensusPipeline(args)
+        main.run()
+        self.assertGreater(path_report_out.stat().st_size, 0)
+
+    def test_viral_consensus_fasta_ref_fasta_input_sars_cov_2(self) -> None:
+        """
+        Tests the viral consensus pipeline with Illumina data.
+        :return: None
+        """
+        path_report_out = self.running_dir / 'out' / 'report.html'
+        path_summary_out = self.running_dir / 'out' / 'summary.tsv'
+        args = [
+            '--species', 'sars_cov_2',
+            '--fasta-ref', str(TestViralConsensusPipeline.dir_db / 'ref_genomes' / 'sars_cov_2-Wuhan-Hu-1.fasta'),
+            '--fasta', str(TestViralConsensusPipeline.dir_testdata / 'sars_cov_2-BS004897.1.fasta'),
+            '--input-type', 'fasta',
             '--output-html', str(path_report_out),
             '--output-dir', str(path_report_out.parent),
             '--output-tsv', str(path_summary_out),

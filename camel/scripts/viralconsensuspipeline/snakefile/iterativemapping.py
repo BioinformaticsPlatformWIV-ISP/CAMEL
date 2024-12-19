@@ -16,7 +16,7 @@ OUTPUT_ITERATIVE_MAPPING_FASTA_CONSENSUS_FINAL = _dir_iterative_mapping / 'outpu
 
 def get_fasta(config: Dict[str, Any]) -> Path:
     """
-    Returns the consensus sequence output IO object path .
+    Returns the consensus sequence output IO object path.
     """
     if (config['input_type'] == 'fasta') and ('human_read_scrubbing' not in config['analyses']):
         return Path(str(human_read_scrubbing.INPUT_SCRUBBING_FASTA).format(input_format='fasta'))
