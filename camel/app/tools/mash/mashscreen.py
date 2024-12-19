@@ -34,11 +34,12 @@ class MashScreen(Tool):
         Executes this tool.
         :return: None
         """
+        key_input = 'FASTQ' if 'FASTQ' in self._tool_inputs else 'FASTA'
         path_tsv_out = self.folder / 'mash_screen.tsv'
         self._command.command = ' '.join([
             self._tool_command,
             str(self._tool_inputs['DB'][0].path),
-            ' '.join(str(x.path) for x in self._tool_inputs['FASTQ']) if 'FASTQ' in self._tool_inputs else str(self._tool_inputs['FASTA'][0].path),
+            *(str(x.path) for x in self._tool_inputs[key_input]),
             *self._build_options(),
             f'> {path_tsv_out}'
         ])
