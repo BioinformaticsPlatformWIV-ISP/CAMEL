@@ -4,7 +4,7 @@ from typing import List, Dict
 
 from camel.app.camel import Camel
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.scripts.viralconsensuspipeline.snakefile import preprocess, iterativemapping, nextclade3
+from camel.scripts.viralconsensuspipeline.snakefile import preprocess, nextclade3
 
 
 rule nextclade3_detect_subtype_mash:
@@ -116,7 +116,7 @@ rule nextclade3_extract_segment:
                 except StopIteration:
                     segments = [s.id.split('-')[-1].lower() for s in seqs]
                     raise RuntimeError(f"Cannot find segment: {params.segment_name} (found: {', '.join(segments)})")
-2
+
         # Save the output file
         path_fasta_out = Path(str(params.dir_), fasta_in.name.replace('.fasta', f'-{params.segment_name}.fasta'))
         with path_fasta_out.open('w') as handle:
