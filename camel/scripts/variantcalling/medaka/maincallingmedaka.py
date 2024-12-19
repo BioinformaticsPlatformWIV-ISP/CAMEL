@@ -35,7 +35,7 @@ class MainCallingMedaka(object):
         argument_parser.add_argument('--bam', type=Path, help="Input BAM file", required=True)
         argument_parser.add_argument('--reference', help="The reference fasta file to use", type=Path, required=True)
         argument_parser.add_argument('--reference-name')
-        argument_parser.add_argument('--output', required=True)
+        argument_parser.add_argument('--output', help="Define custom output file in stead of default generated one")
         argument_parser.add_argument('--working-dir', help='Working directory', type=Path, default=Path.cwd())
         argument_parser.add_argument('--threads', type=int, default=4)
 
@@ -68,9 +68,12 @@ class MainCallingMedaka(object):
         medaka_vcf = MedakaVcf(Camel.get_instance())
         logger.info(f'Running {medaka_vcf.name} to call the variants based on reference fasta and hdf file')
         medaka_vcf.add_input_files({'HDF': [ToolIOFile(Path(hdf_file))], 'FASTA': input_dict['FASTA']})
-        vcf_base = Path(hdf_file).stem
-        vcf_file = self._args.working_dir / Path(vcf_base + '.vcf')
-        medaka_vcf.update_parameters(output=vcf_file)
+        if self._args.output is not None:
+            medaka_vcf.update_parameters(output=self._args.output)
+        else:
+            vcf_base = Path(hdf_file).stem
+            vcf_file = self._args.working_dir / Path(vcf_base + '.vcf')
+            medaka_vcf.update_parameters(output=vcf_file)
         medaka_vcf.run(self._args.working_dir)
 
     def __prepare_input(self) -> Dict[str, Any]:
