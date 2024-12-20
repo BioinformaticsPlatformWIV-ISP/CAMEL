@@ -26,7 +26,7 @@ class TestWorkflowKraken2(CamelTestSuite):
     fastq_se_nanopore = test_file_dir / 'kraken2' / 'reads_nanopore_1.fastq.gz'
     fastq_se_nanopore_contamination = test_file_dir / 'kraken2' / 'reads_nanopore_1.fastq.gz'
 
-    fasta = Path('/testdata/camel/pipelines/Enterococcus_faecium-SRR12388968-ds.fasta')
+    fasta = test_file_dir / 'contigs.fasta'
     path_db = Path(Camel.get_instance().config['db_root'], 'kraken2_microbial', 'latest')
 
     def test_kraken2_illumina_paired_end(self) -> None:
@@ -123,7 +123,7 @@ class TestWorkflowKraken2(CamelTestSuite):
         wrapper = Kraken2Wrapper(self.running_dir)
         expected_species = 'Escherichia coli'
         wrapper.run_workflow_fasta(
-            'test_sample', TestWorkflowKraken2.fasta, expected_species, db=TestWorkflowKraken2.path_db)
+            'test_sample', Path('/testdata/camel/pipelines/Neisseria-2011-006_S6-ds.fasta'), expected_species, db=TestWorkflowKraken2.path_db)
         self.assertGreater(len(wrapper.output.report_section.to_html()), 0)
         self.assertGreater(wrapper.output.tsv_summary.stat().st_size, 0)
         CamelTestSuite.export_report_section(wrapper.output.report_section, self.running_dir / 'report')
