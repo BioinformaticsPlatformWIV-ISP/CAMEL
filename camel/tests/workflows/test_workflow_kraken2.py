@@ -123,7 +123,7 @@ class TestWorkflowKraken2(CamelTestSuite):
         wrapper = Kraken2Wrapper(self.running_dir)
         expected_species = 'Escherichia coli'
         wrapper.run_workflow_fasta(
-            'test_sample', Path('/testdata/camel/pipelines/Neisseria-2011-006_S6-ds.fasta'), expected_species, db=TestWorkflowKraken2.path_db)
+            'test_sample', TestWorkflowKraken2.fasta, expected_species, db=TestWorkflowKraken2.path_db)
         self.assertGreater(len(wrapper.output.report_section.to_html()), 0)
         self.assertGreater(wrapper.output.tsv_summary.stat().st_size, 0)
         CamelTestSuite.export_report_section(wrapper.output.report_section, self.running_dir / 'report')
