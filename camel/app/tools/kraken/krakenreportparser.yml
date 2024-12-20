@@ -3,6 +3,7 @@ parameters:
   allowed_species: {default: false, mandatory: false, option: null, value: 'Escherichia,Shigella'}
   expected_species: {default: true, mandatory: false, option: null, value: 'Neisseria meningitidis'}
   level_of_depth: {default: true, mandatory: false, option: null, value: 'S'}
+  normalize_for_len: {default: false, mandatory: false, option: null, value: null}
   threshold_fail: {default: true, mandatory: false, option: null, value: '5'}
   threshold_warn: {default: true, mandatory: false, option: null, value: '1'}
 tool_command: null

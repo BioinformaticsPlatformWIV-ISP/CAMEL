@@ -1,5 +1,8 @@
 from pathlib import Path
 from typing import Dict, Any, Optional
+from unicodedata import is_normalized
+
+import pandas as pd
 
 from camel.app.camel import Camel
 from camel.app.components.html.htmlelement import HtmlElement
@@ -7,6 +10,7 @@ from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.html.htmltablecell import HtmlTableCell
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliovalue import ToolIOValue
+from camel.app.loggers import logger
 from camel.app.tools.tool import Tool
 
 
@@ -67,7 +71,12 @@ class HtmlReporterContamination(Tool):
         self.__add_database_info()
         self.__add_filtering_info(self._input_informs['species'])
         self.__add_species_table()
+        logger.info(self._input_informs)
         self.__add_detailed_table(self._tool_inputs['TSV'][0].path)
+        if self._input_informs['species']['normalize_for_len']:
+            self._report_section.add_alert(
+                '(*) These percentages have been normalised to take into account the length of the reads / contigs.'
+                ' This normalisation is not performed for the Krona report.', 'info')
         self.__add_krona_report()
         self.__add_warnings()
         self._tool_outputs['VAL_HTML'] = [ToolIOValue(self._report_section)]
@@ -151,21 +160,21 @@ class HtmlReporterContamination(Tool):
         Adds a table with the detailed information from the tabular KRAKEN output.
         :return: None
         """
+        data_report = pd.read_table(kraken_report_path)
+        perc_is_normalized = 'perc_orig' in data_report.columns
         table_data = []
-        with kraken_report_path.open() as handle:
-            for line in handle.readlines():
-                parts = line.strip().split('\t')
-                percentage = float(parts[0])
-                if percentage > 1:
-                    # Add genus / species in italics
-                    if parts[3] in ('G', 'S'):
-                        name = '<i>{}</i>'.format(parts[5].strip())
-                    else:
-                        name = parts[5]
-                    table_data.append(['{:.2f}'.format(percentage), HtmlReporterContamination.ABBREVIATIONS.get(
-                        parts[3], '-'), name])
-        header = ['Percentage', 'Level', 'Name']
-        self._report_section.add_table(table_data, header, [('class', 'data')]) if self._parameters["file_format"].value != 'fasta' else []
+        for row in data_report.to_dict('records'):
+            if row['perc'] < 1.0:
+                continue
+            name = f'<i>{row["name"].strip()}</i>' if row['rank'] in ('G', 'S') else row['name'].strip()
+            table_data.append([
+                f"{row['perc']:.2f}",
+                HtmlReporterContamination.ABBREVIATIONS.get(row['rank'], '-'),
+                name])
+            if perc_is_normalized:
+                table_data[-1].insert(1, row['perc_orig'])
+        header = ['Percentage', 'Level', 'Name'] if not perc_is_normalized else ['Perc. (*)', 'Perc. orig.', 'Level', 'Name']
+        self._report_section.add_table(table_data, header, [('class', 'data')])
 
     def __add_krona_report(self) -> None:
         """
@@ -173,12 +182,9 @@ class HtmlReporterContamination(Tool):
         :return: None
         """
         relative_path = self._dir_out / 'krona_report.html'
-        if self._parameters["file_format"].value != 'fasta':
-            self._report_section.add_file(self._tool_inputs['HTML_Krona'][0].path, relative_path)
-            self._report_section.add_link_to_file('Krona Report', relative_path)
-            self._report_section.add_file(self._tool_inputs['TSV'][0].path, self._dir_out / 'kraken2_report.tsv')
-        else:
-            self._report_section.add_text("Krona2 report is not available for FASTA input")
+        self._report_section.add_file(self._tool_inputs['HTML_Krona'][0].path, relative_path)
+        self._report_section.add_link_to_file('Krona Report', relative_path)
+        self._report_section.add_file(self._tool_inputs['TSV'][0].path, self._dir_out / 'kraken2_report.tsv')
 
     def __add_warnings(self) -> None:
         """
