@@ -29,8 +29,8 @@ class TestKraken2(CamelTestSuite):
             'DB': [ToolIODirectory(TestKraken2.input_db)]
         })
         kraken2.run(self.running_dir)
-        self.assertGreater(Path(kraken2.tool_outputs['TSV'][0].path).stat().st_size, 0)
-        self.assertGreater(Path(kraken2.tool_outputs['TSV_report'][0].path).stat().st_size, 0)
+        self.verify_output_files(kraken2, 'TSV')
+        self.verify_output_files(kraken2, 'TSV_report')
 
     def test_kraken2_fasta(self) -> None:
         """
@@ -43,8 +43,8 @@ class TestKraken2(CamelTestSuite):
             'DB': [ToolIODirectory(TestKraken2.input_db)]
         })
         kraken2.run(self.running_dir)
-        self.assertGreater(Path(kraken2.tool_outputs['TSV'][0].path).stat().st_size, 0)
-        self.assertGreater(Path(kraken2.tool_outputs['TSV_report'][0].path).stat().st_size, 0)
+        self.verify_output_files(kraken2, 'TSV')
+        self.verify_output_files(kraken2, 'TSV_report')
 
 
 if __name__ == '__main__':
