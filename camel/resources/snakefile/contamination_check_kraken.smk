@@ -46,8 +46,9 @@ rule contamination_check_kraken_report_parser:
     """
     input:
         TSV = rules.contamination_check_kraken2_run.output.TSV_report,
-        TSV_out = rules.contamination_check_kraken2_run.output.TSV
+        TSV_full = rules.contamination_check_kraken2_run.output.TSV
     output:
+        TSV = Path(config['working_dir']) / 'contamination_check' / '{input_format}' / 'kraken2' / 'tsv-normalized.io',
         INFORMS = Path(config['working_dir']) / 'contamination_check' / '{input_format}' / 'kraken2' / 'informs-contamination.io'
     params:
         dir_ = lambda wildcards: Path(config['working_dir']) / 'contamination_check' / wildcards.input_format / 'kraken2',
@@ -57,8 +58,7 @@ rule contamination_check_kraken_report_parser:
         input_format = lambda wildcards: wildcards.input_format
     run:
         from camel.app.tools.kraken.krakenreportparser import KrakenReportParser
-        from camel.app.tools.kraken.krakenreportparserfasta import KrakenReportParserFasta
-        report_parser = KrakenReportParserFasta(Camel.get_instance()) if params.input_format == 'fasta' else KrakenReportParser(Camel.get_instance())
+        report_parser = KrakenReportParser(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(report_parser, input)
         step = Step(str(rule), report_parser, Camel.get_instance(), Path(str(params.dir_)))
         report_parser.update_parameters(expected_species=params.expected_species)
@@ -66,6 +66,8 @@ rule contamination_check_kraken_report_parser:
             report_parser.update_parameters(level_of_depth=params.level_of_depth)
         if params.allowed_species is not None:
             report_parser.update_parameters(allowed_species=','.join(params.allowed_species))
+        if params.input_format == 'fasta':
+            report_parser.update_parameters(normalize_for_len=True)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(report_parser, output)
 
@@ -95,7 +97,7 @@ rule contamination_check_report:
         HTML_Krona = rules.contamination_check_krona.output.HTML,
         INFORMS_species = rules.contamination_check_kraken_report_parser.output.INFORMS,
         INFORMS_kraken2 = rules.contamination_check_kraken2_run.output.INFORMS,
-        TSV = rules.contamination_check_kraken2_run.output.TSV_report
+        TSV = rules.contamination_check_kraken_report_parser.output.TSV
     output:
         VAL_HTML = Path(config['working_dir']) / 'contamination_check' / '{input_format}' / 'report' / 'html.io'
     params:
@@ -107,18 +109,16 @@ rule contamination_check_report:
         reporter = HtmlReporterContamination(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(reporter, input)
 
-        # Update report title + output files for hybrid data
+        # Update report title and output files for hybrid data
         if params.input_type == 'hybrid':
             reporter.update_parameters(
                 suffix='illumina' if params.input_format == 'fastq_pe' else 'ont',
                 suffix_title='Illumina' if params.input_format == 'fastq_pe' else 'ONT',
             )
-        reporter.update_parameters(file_format = params.input_type,)
 
         # Run the tool
         step = Step(str(rule), reporter, Camel.get_instance(), Path(str(params.dir_)))
         step.run_step()
-        #For fasta files the html report is removed as it's based on read count percentage
         SnakemakeUtils.dump_tool_outputs(reporter, output)
 
 rule contamination_check_report_empty:
