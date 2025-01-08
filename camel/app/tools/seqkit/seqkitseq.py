@@ -51,6 +51,8 @@ class SeqkitSeq(Tool):
         self._execute_command()
         self.__set_output(output_path)
         self.__collect_stats(output_path)
+        self._informs['min_length'] = self._parameters['min_length'].value
+        self._informs['min_qual'] = self._parameters['min_qual'].value
 
     def __build_command(self) -> None:
         """
