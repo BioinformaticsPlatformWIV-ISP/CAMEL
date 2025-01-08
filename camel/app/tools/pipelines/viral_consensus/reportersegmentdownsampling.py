@@ -1,5 +1,7 @@
 import logging
 logging.getLogger('matplotlib').setLevel(logging.WARNING)
+import matplotlib
+matplotlib.use('agg')
 from pathlib import Path
 from typing import Dict
 
