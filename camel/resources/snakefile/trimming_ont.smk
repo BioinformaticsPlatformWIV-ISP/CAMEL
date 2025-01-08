@@ -1,5 +1,4 @@
 from pathlib import Path
-import shutil
 
 from camel.app.camel import Camel
 from camel.app.pipeline.step import Step
@@ -30,10 +29,9 @@ rule trimming_ont_nanoplot_pre:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(nanoplot, output)
 
-
-rule trimming_ont_filtlong:
+rule trimming_ont_seqkit:
     """
-    Read trimming using filtlong.
+    Read trimming using seqkit.
     """
     input:
         FASTQ = Path(config['working_dir']) / trimming_ont.INPUT_ONT_FASTQ
@@ -43,25 +41,30 @@ rule trimming_ont_filtlong:
     threads: 4
     priority: 1
     params:
-        running_dir = Path(config['working_dir']) / 'trimming_ont' / 'filtlong',
+        running_dir = Path(config['working_dir']) / 'trimming_ont' / 'seqkit',
         sample_name = config.get('sample_name', 'reads'),
-        min_len = 500,
-        min_q = 7
+        min_length = config.get('read_trimming', {}).get('ont', {}).get('min_length', 500),
+        min_qual = config.get('read_trimming', {}).get('ont', {}).get('min_qual', 7),
     run:
-        from camel.app.tools.filtlong.filtlong import Filtlong
-        filtlong = Filtlong(camel)
-        filtlong.update_parameters(min_length=params.min_len, min_mean_q=params.min_q)
-        SnakemakeUtils.add_pickle_inputs(filtlong, input)
-        step = Step(str(rule), filtlong, camel, params.running_dir)
+        from camel.app.tools.seqkit.seqkitseq import SeqkitSeq
+        seqkit = SeqkitSeq(Camel.get_instance())
+        seqkit.update_parameters(
+            min_length=params.min_length,
+            min_qual=params.min_qual,
+            output_filename=f'{params.sample_name}-filtered.fastq',
+            threads=threads
+        )
+        SnakemakeUtils.add_pickle_inputs(seqkit, input)
+        step = Step(str(rule), seqkit, Camel.get_instance(), params.running_dir)
         step.run_step()
-        SnakemakeUtils.dump_tool_outputs(filtlong, output)
+        SnakemakeUtils.dump_tool_outputs(seqkit, output)
 
 rule trimming_ont_nanoplot_post:
     """
     Creates NanoPlot reports of the trimmed reads.
     """
     input:
-        FASTQ = rules.trimming_ont_filtlong.output.FASTQ
+        FASTQ = rules.trimming_ont_seqkit.output.FASTQ
     output:
         HTML = Path(config['working_dir']) /  trimming_ont.OUTPUT_TRIMMING_ONT_NANOPLOT_HTML_POST,
         TSV = Path(config['working_dir']) / trimming_ont.OUTPUT_TRIMMING_ONT_NANOPLOT_TXT_POST,
@@ -84,8 +87,8 @@ rule trimming_ont_report:
     input:
         HTML_PRE = rules.trimming_ont_nanoplot_pre.output.HTML,
         HTML_POST = rules.trimming_ont_nanoplot_post.output.HTML,
-        FASTQ_PE = rules.trimming_ont_filtlong.output.FASTQ,
-        INFORMS_trimming = rules.trimming_ont_filtlong.output.INFORMS,
+        FASTQ_PE = rules.trimming_ont_seqkit.output.FASTQ,
+        INFORMS_trimming = rules.trimming_ont_seqkit.output.INFORMS,
         INFORMS_nanoplot_pre = rules.trimming_ont_nanoplot_pre.output.INFORMS,
         INFORMS_nanoplot_post= rules.trimming_ont_nanoplot_post.output.INFORMS
     output:
@@ -107,30 +110,29 @@ rule trimming_ont_dump_summary_info:
     Dumps the summary information from the read trimming pipeline.
     """
     input:
-        INFORMS_trimming = rules.trimming_ont_filtlong.output.INFORMS
+        INFORMS_trimming = rules.trimming_ont_seqkit.output.INFORMS
     output:
         TSV = Path(config['working_dir']) / trimming_ont.OUTPUT_TRIMMING_ONT_SUMMARY
     params:
         running_dir = Path(config['working_dir']) / 'trimming_ont' / 'summary'
     run:
-        filtlong_informs = SnakemakeUtils.load_object(Path(input.INFORMS_trimming))
+        informs_filtering = SnakemakeUtils.load_object(Path(input.INFORMS_trimming))
         summary_data = [
-            ('trim_ont_reads_in', filtlong_informs['nb_reads_in']),
-            ('trim_ont_reads_out', filtlong_informs['nb_reads_out']),
-            ('trim_ont_tool_version', filtlong_informs['_name'])
+            ('trim_ont_reads_in', informs_filtering['nb_seqs_in']),
+            ('trim_ont_reads_out', informs_filtering['nb_seqs_out']),
+            ('trim_ont_tool_version', informs_filtering['_name'])
         ]
-        with open(output[0], 'w') as handle:
+        with open(output.TSV, 'w') as handle:
             for key, value in summary_data:
                 handle.write(f'{key}\t{value}')
                 handle.write('\n')
-
 
 rule trimming_ont_to_dict:
     """
     Combines the trimmed reads into a dictionary.
     """
     input:
-        FASTQ = rules.trimming_ont_filtlong.output.FASTQ
+        FASTQ = rules.trimming_ont_seqkit.output.FASTQ
     output:
         IO = Path(config['working_dir']) / trimming_ont.OUTPUT_TRIMMING_ONT_DICT
     run:

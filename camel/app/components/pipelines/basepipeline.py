@@ -77,6 +77,8 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
             choices=['NexteraPE', 'TruSeq2', 'TruSeq3'], default='NexteraPE')
         argument_parser.add_argument(
             '--trimming-method', help='Trimming method', choices=['trimmomatic', 'fastp'], default='fastp')
+        argument_parser.add_argument('--ont-min-qual', default=7, help='Minimum median quality for ONT input data')
+        argument_parser.add_argument('--ont-min-length', default=500, help='Minimum read length for ONT input data')
 
         # Logging
         argument_parser.add_argument(
@@ -269,4 +271,9 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         }
         if self._args.trimming_method is not None:
             template_data['read_trimming']['method'] = self._args.trimming_method
+        if self._args.input_type == 'ont':
+            template_data['read_trimming']['ont'] = {
+                'min_length': self._args.ont_min_length,
+                'min_qual': self._args.ont_min_qual,
+            }
         return template_data
