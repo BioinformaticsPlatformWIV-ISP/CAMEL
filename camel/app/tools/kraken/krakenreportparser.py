@@ -98,8 +98,6 @@ class KrakenReportParser(Tool):
         perc_by_node = {}
         for node in TaxonNode.traverse_dfs(taxon_tree):
             perc_by_node[node.name] = node.total_perc()
-        import pprint
-        pprint.pprint(perc_by_node)
 
         # Unclassified
         perc_by_node[0] = data_raw[data_raw['tax_id'] == 0]['perc_corrected'].sum()
@@ -139,7 +137,7 @@ class KrakenReportParser(Tool):
         :param data_report: Data parsed from the report
         :return: Taxon node with the root node
         """
-        root = TaxonNode(1, 100.0)
+        root = TaxonNode(1, None)
         stack = [(root, -1)]
         for row in data_report.to_dict('records')[1:]:
             # Skip unclassified
