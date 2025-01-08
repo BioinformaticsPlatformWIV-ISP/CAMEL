@@ -44,7 +44,7 @@ rule trimming_ont_seqkit:
         running_dir = Path(config['working_dir']) / 'trimming_ont' / 'seqkit',
         sample_name = config.get('sample_name', 'reads'),
         min_length = config.get('read_trimming', {}).get('ont', {}).get('min_length', 500),
-        min_qual = config.get('read_trimming', {}).get('ont', {}).get('min_qual', 7),
+        min_qual = config.get('read_trimming', {}).get('ont', {}).get('min_qual', 7)
     run:
         from camel.app.tools.seqkit.seqkitseq import SeqkitSeq
         seqkit = SeqkitSeq(Camel.get_instance())
