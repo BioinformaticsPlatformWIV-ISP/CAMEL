@@ -107,7 +107,7 @@ rule nextclade3_extract_segment:
         fasta_in = SnakemakeUtils.load_object(Path(input.FASTA))[0].path
         with fasta_in.open() as handle:
             seqs = list(SeqIO.parse(handle, 'fasta'))
-            if len(seqs) == 0:
+            if len(seqs) == 1:
                 seq_segment = seqs[0]
             else:
                 try:
