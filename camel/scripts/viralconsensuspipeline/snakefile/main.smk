@@ -3,7 +3,7 @@ from pathlib import Path
 
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile import trimming_illumina, trimming_ont, trimming, downsampling, \
-    contamination_check_kraken, core, human_read_scrubbing
+    contamination_check_kraken, core, human_read_scrubbing, assembly
 from camel.scripts.viralconsensuspipeline.snakefile import iterativemapping, refselection, preprocess, \
     multiallelicsites, nextclade3
 
@@ -11,6 +11,7 @@ from camel.scripts.viralconsensuspipeline.snakefile import iterativemapping, ref
 # Included snakefiles #
 #######################
 include: core.SNAKEFILE_CORE
+include: assembly.SNAKEFILE_ASSEMBLY
 include: human_read_scrubbing.SNAKEFILE_SCRUBBING
 include: downsampling.SNAKEFILE_DOWNSAMPLING
 include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
@@ -173,9 +174,9 @@ rule summary_combine_all:
         Path(config['working_dir']) / multiallelicsites.OUTPUT_MULTI_ALLELIC_SUMMARY if config['input_type'] != 'fasta' else [],
         Path(config['working_dir']) / nextclade3.OUTPUT_NEXTCLADE_SUMMARY if 'nextclade' in config['analyses'] else []
     output:
-        config.get('output_tabular')
+        TSV = config.get('output_tabular')
     run:
-        with open(output[0], 'w') as handle_out:
+        with open(output.TSV, 'w') as handle_out:
             for summary_input in input:
                 with open(summary_input) as handle_in:
                     handle_out.write(handle_in.read())

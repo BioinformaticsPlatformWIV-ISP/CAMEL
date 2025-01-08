@@ -2,6 +2,7 @@ import gzip
 import re
 from pathlib import Path
 
+import pysam
 import vcf
 
 from camel.app.camel import Camel
@@ -100,8 +101,9 @@ class Clair3(Tool):
 
         # Parsing is not OK -> remove problematic lines
         lines_out = []
-        with gzip.open(vcf_in, 'rt') as handle:
-            for line in handle.readlines():
+        with pysam.BGZFile(vcf_in, 'r', index=None) as handle:
+            for line in handle:
+                line = line.decode('utf-8')
                 # Header lines
                 if line.startswith('#'):
                     lines_out.append(line)

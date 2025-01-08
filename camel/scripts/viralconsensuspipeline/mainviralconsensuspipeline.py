@@ -97,10 +97,6 @@ class MainViralConsensusPipeline(ReportPipeline):
         parser.add_argument(
             '--gap-len-cutoff', type=int, default=10, help='Minimum length to mark a region as a gap')
 
-        # Read trimming (ONT)
-        parser.add_argument('--ont-min-qual', type=int, default=7, help='Minimum average read quality for ONT data')
-        parser.add_argument('--ont-min-length', type=int, default=1000, help='Minimum read length for ONT data')
-
         # Iterative mapping & variant filtering
         parser.add_argument('--max-iter', type=int, default=6, help='Maximum number of iterations')
         parser.add_argument('--variant-min-af', type=float, default=0.5, help='Minimum allele frequency')
@@ -285,11 +281,6 @@ class MainViralConsensusPipeline(ReportPipeline):
         config_data['analyses'] = ['kraken2']
         if self._args.human_read_scrubbing:
             config_data['analyses'].append('human_read_scrubbing')
-
-        # Nanopore trimming settings
-        if self._args.input_type == 'nanopore':
-            config_data['read_trimming']['min_qual'] = self._args.ont_min_qual
-            config_data['read_trimming']['min_length'] = self._args.ont_min_length
 
         # Amplicon primer clipping
         if self._args.fasta_primers is not None:
