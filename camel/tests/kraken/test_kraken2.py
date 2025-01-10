@@ -15,11 +15,12 @@ class TestKraken2(CamelTestSuite):
     # Input files
     test_file_dir = CamelTestSuite.get_test_file_dir('kraken')
     input_pe_reads = [test_file_dir / f'lm1_1.fastq', test_file_dir / f'lm1_2.fastq']
+    input_fasta_reads = test_file_dir / 'reads_test.fasta'
     input_db = Path(CamelTestSuite.camel.config['db_root'], 'kraken2_microbial', 'latest')
 
     def test_kraken2_paired(self) -> None:
         """
-        Tests krqken2 with paired-end input.
+        Tests kraken2 with paired-end input.
         :return: None
         """
         kraken2 = Kraken2(TestKraken2.camel)
@@ -28,8 +29,22 @@ class TestKraken2(CamelTestSuite):
             'DB': [ToolIODirectory(TestKraken2.input_db)]
         })
         kraken2.run(self.running_dir)
-        self.assertGreater(Path(kraken2.tool_outputs['TSV'][0].path).stat().st_size, 0)
-        self.assertGreater(Path(kraken2.tool_outputs['TSV_report'][0].path).stat().st_size, 0)
+        self.verify_output_files(kraken2, 'TSV')
+        self.verify_output_files(kraken2, 'TSV_report')
+
+    def test_kraken2_fasta(self) -> None:
+        """
+        Tests kraken2 with fasta input.
+        :return: None
+        """
+        kraken2 = Kraken2(TestKraken2.camel)
+        kraken2.add_input_files({
+            'FASTA': [ToolIOFile(self.input_fasta_reads) ],
+            'DB': [ToolIODirectory(TestKraken2.input_db)]
+        })
+        kraken2.run(self.running_dir)
+        self.verify_output_files(kraken2, 'TSV')
+        self.verify_output_files(kraken2, 'TSV_report')
 
 
 if __name__ == '__main__':
