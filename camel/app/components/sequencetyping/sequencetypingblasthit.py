@@ -179,6 +179,15 @@ class SequenceTypingBlastHit(SequenceTypingHitBase):
             return False
         return self._blast_stats.is_perfect_hit()
 
+    def is_new_allele(self) -> bool:
+        """
+        Checks if this hit is potentially a novel allele of the locus in the database.
+        :return: True if the allele is new, False otherwise
+        """
+        if self._blast_stats is None:
+            return False
+        return self._blast_stats.is_new_allele()
+
     def is_full_length(self) -> bool:
         """
         Function to check if this is a full length hit.
