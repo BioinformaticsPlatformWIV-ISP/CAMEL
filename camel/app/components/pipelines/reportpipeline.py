@@ -115,6 +115,12 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
             logger.info(f'FASTQ input is valid')
             logger.info(f'PE forward FASTQ hash: {FileUtils.hash_file(self._args.fastq_pe[0])}')
             logger.info(f'PE reverse FASTQ hash: {FileUtils.hash_file(self._args.fastq_pe[1])}')
+
+        # FASTQ SE input (== nanopore)
+        elif self._args.input_type == 'ont':
+            nb_reads = FastqUtils.count_reads(self._args.fastq_se)
+            logger.info(f'SE FASTQ input is valid: {nb_reads} reads')
+            logger.info(f'SE FASTQ hash: {FileUtils.hash_file(self._args.fastq_se)}')
         else:
             logger.debug(f"FASTQ checking not implemented yet for input type '{self._args.input_type}'")
 
