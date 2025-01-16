@@ -12,7 +12,7 @@ from camel.scripts.salmonellapipeline import SNAKEFILE_MAIN, CONFIG_DATA
 
 class MainSalmonellaPipeline(ReportPipeline):
     """
-    Main class to run the Listeria pipeline.
+    Main class to run the Salmonella pipeline.
     """
 
     CUSTOM_ANALYSES = [
