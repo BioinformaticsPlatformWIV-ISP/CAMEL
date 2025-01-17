@@ -40,6 +40,7 @@ rule scrubbing_fastq_interleave_and_gunzip:
         FASTQ_SINGLE_GUNZIP = Path(config['working_dir']) / 'human_read_scrubbing' / '{input_format}' / 'input' / 'fastq_gunzip_interleaved.io'
     params:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'human_read_scrubbing' / wildcards.input_format / 'input'
+    threads: 8
     run:
         from camel.app.components.filesystemhelper import FileSystemHelper
         from camel.app.components.files.fastqutils import FastqUtils
@@ -55,7 +56,7 @@ rule scrubbing_fastq_interleave_and_gunzip:
             if not FileSystemHelper.is_gzipped(path_in):
                 SnakemakeUtils.dump_object([ToolIOFile(path_in)], Path(output.FASTQ_SINGLE_GUNZIP))
             else:
-                FileSystemHelper.pigz_extract(path_in, path_out)
+                FileSystemHelper.pigz_extract(path_in, path_out, threads=threads)
                 SnakemakeUtils.dump_object([ToolIOFile(path_out)], Path(output.FASTQ_SINGLE_GUNZIP))
 
         else:
@@ -171,6 +172,7 @@ rule scrubbing_fastq_deinterleave_and_gzip:
     params:
         running_dir = lambda wildcards: Path(config['working_dir']) / 'human_read_scrubbing' / wildcards.input_format / 'output',
         is_paired = lambda wildcards: wildcards.input_format == 'fastq_pe'
+    threads: 8
     run:
         from camel.app.components.filesystemhelper import FileSystemHelper
         from camel.app.components.files.fastqutils import FastqUtils
@@ -182,7 +184,7 @@ rule scrubbing_fastq_deinterleave_and_gzip:
             output.FASTQ_SINGLE_GUNZIP = input.FASTQ_SCRUBBED
             path_in = (SnakemakeUtils.load_object(Path(input.FASTQ_SCRUBBED)))[0].path
             path_out = Path(str(params.running_dir), f"{fastq_in[0].path.stem.split('.fastq')[0].split('.fq')[0]}.fastq.gz")
-            FileSystemHelper.pigz_file(path_in, path_out)
+            FileSystemHelper.pigz_file(path_in, path_out, threads=threads)
             SnakemakeUtils.dump_object([ToolIOFile(path_out)], Path(output.FASTQ_DEINTERLEAVED_GZIPPED))
         else:
             params.running_dir.mkdir(parents=True, exist_ok=True)

@@ -11,7 +11,6 @@ from camel.app.tools.tool import Tool
 
 
 class NcbiHumanReadScrubber(Tool):
-
     """
     NCBI human read scrubbing tool, also called HRRT or human read removal tool.
     """
@@ -85,7 +84,7 @@ class NcbiHumanReadScrubber(Tool):
         # Human reads
         if 'export_human_reads' in self._parameters:
             if self._informs.get('statistics').get('count_removed') == 0:
-                logger.warning(f'Human read export enabled, but no human reads found')
+                logger.warning('Human read export enabled, but no human reads found')
                 self._tool_outputs['FASTQ_REMOVED'] = []
             else:
                 path_removed = self.folder / self._parameters['outputfile_removed'].value

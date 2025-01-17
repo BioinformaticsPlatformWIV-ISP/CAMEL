@@ -46,7 +46,7 @@ class NcbiHumanReadScrubberReporter(Tool):
         section.add_table([
             [f'Total {subject}', f'{count_total:,}'],
             [f'Removed {subject}', f'{count_removed:,}'],
-            [f'Removed %', f'{100 * count_removed / count_total:.2f}'],
+            ['Removed %', f'{100 * count_removed / count_total:.2f}'],
         ], ['Category', 'Number'], [('class', 'data')])
 
         if 'REMOVED' in self._tool_inputs:

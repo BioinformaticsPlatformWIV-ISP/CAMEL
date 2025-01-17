@@ -31,6 +31,7 @@ def get_removed(config: Dict[str, Any], input_format: str) -> Path:
         return Path(config['working_dir']) / str(OUTPUT_SCRUBBING_FASTQ_REMOVED).format(input_format='fastq_se')
     if input_format == 'fasta':
         return Path(config['working_dir']) / str(OUTPUT_SCRUBBING_FASTA_REMOVED).format(input_format='fasta')
+    raise ValueError(f'Invalid input format for human reads scrubbing: {input_format}')
 
 
 def get_reports(config: Dict[str, Any]) -> List[Path]:
@@ -63,6 +64,10 @@ def get_reports(config: Dict[str, Any]) -> List[Path]:
         else:
             paths.append(str(OUTPUT_SCRUBBING_REPORT_EMPTY).format(input_format='fastq_se'))
 
+    # Check if at least one path was added
+    if len(paths) == 0:
+        raise ValueError(f'Invalid input type for human reads scrubbing: {input_type}')
+
     return [Path(config['working_dir']) / p for p in paths]
 
 
@@ -89,6 +94,11 @@ def get_command_informs(config: Dict[str, Any]) -> List[Path]:
     # SE reads
     if (input_type in ('ont', 'hybrid')) and ('human_read_scrubbing' in config['analyses']):
         paths.append(str(OUTPUT_SCRUBBING_INFORMS).format(input_format='fastq_se'))
+
+    # Check if at least one path was added
+    if len(paths) == 0:
+        raise ValueError(f'Invalid input type for human reads scrubbing: {input_type}')
+
     return [Path(config['working_dir']) / p for p in paths]
 
 
@@ -115,6 +125,10 @@ def get_summaries(config: Dict[str, Any]) -> List[Path]:
     # SE reads
     if (input_type in ('ont', 'hybrid')) and ('human_read_scrubbing' in config['analyses']):
         paths.append(str(OUTPUT_SCRUBBING_SUMMARY).format(input_format='fastq_se'))
+
+    # Check if at least one path was added
+    if len(paths) == 0:
+        raise ValueError(f'Invalid input type for human reads scrubbing: {input_type}')
 
     return [Path(config['working_dir']) / p for p in paths]
 

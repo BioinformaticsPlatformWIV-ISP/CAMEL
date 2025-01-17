@@ -102,7 +102,7 @@ class FastqUtils(object):
         :return: None
         """
         cat = 'zcat' if FileSystemHelper.is_gzipped(interleaved_file) else 'cat'
-        gzip_ = '| gzip ' if gzip_output and not pigz else '| pigz ' if gzip_output and pigz else ''
+        gzip_ = f"| {'pigz' if pigz else 'gzip'} " if gzip_output else ''
         cmd = f"{cat} {interleaved_file} | paste - - - - - - - - | tee >(cut -f 1-4 | tr '\t' '\n' {gzip_}> {pe_1_file}) |" \
               f" cut -f 5-8 | tr '\t' '\n' {gzip_}> {pe_2_file}"
         command = Command()
