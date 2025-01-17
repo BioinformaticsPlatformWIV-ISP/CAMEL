@@ -49,13 +49,14 @@ class AMRPhenotypePredictor(Tool):
             data_mutations = json.load(handle)
 
         for mutation in data_mutations:
-            for association in mutation['associations']:
-                if association['antibiotic'] not in mutations_by_ab:
-                    mutations_by_ab[association['antibiotic']] = {}
-                confidence = ConfidenceLevel(association['confidence'])
-                if confidence.value not in mutations_by_ab[association['antibiotic']]:
-                    mutations_by_ab[association['antibiotic']][confidence.value] = []
-                mutations_by_ab[association['antibiotic']][confidence.value].append(mutation)
+            if mutation['lofreq'] is False:
+                for association in mutation['associations']:
+                    if association['antibiotic'] not in mutations_by_ab:
+                        mutations_by_ab[association['antibiotic']] = {}
+                    confidence = ConfidenceLevel(association['confidence'])
+                    if confidence.value not in mutations_by_ab[association['antibiotic']]:
+                        mutations_by_ab[association['antibiotic']][confidence.value] = []
+                    mutations_by_ab[association['antibiotic']][confidence.value].append(mutation)
         return mutations_by_ab
 
     @staticmethod

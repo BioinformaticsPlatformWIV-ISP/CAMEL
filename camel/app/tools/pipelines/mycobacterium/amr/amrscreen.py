@@ -37,6 +37,8 @@ class AMRScreen(Tool):
             raise InvalidInputSpecificationError("Mutation input is required (VCF)")
         if 'VCF_filt' not in self._tool_inputs:
             raise InvalidInputSpecificationError("Filtered mutation input is required (VCF_filt)")
+        if 'VCF_lofreq' not in self._tool_inputs:
+            raise InvalidInputSpecificationError("Lofreq mutation input is required (VCF_lofreq)")
         if 'DB' not in self._tool_inputs:
             raise InvalidInputSpecificationError("Database input is required (DB)")
         if 'BED' not in self._tool_inputs:
@@ -131,13 +133,15 @@ class AMRScreen(Tool):
             return
         return parts[0]
 
-    def __cross_check_muts_to_db(self) -> List[Dict]:
+    def __cross_check_muts_to_db(self, vcf_input: Path, is_lofreq: bool = False) -> List[Dict]:
         """
         Cross-checks the detected mutations to the database.
+        :param vcf_input: Input VCF
+        :param is_lofreq: is the vcf input from lofreq
         :return: List of detected AMR associations
         """
         mutations_out = []
-        with self._tool_inputs['VCF'][0].path.open() as handle:
+        with vcf_input.open() as handle:
             variants = list(vcf.Reader(handle))
             logger.info(f"{len(variants):,} variants parsed from '{self._tool_inputs['VCF'][0].path.name}'")
 
@@ -151,7 +155,9 @@ class AMRScreen(Tool):
                     'position': vcf_record.POS,
                     'ref': vcf_record.REF,
                     'region': region,
-                    'variant_type': vcf_record.var_type
+                    'variant_type': vcf_record.var_type,
+                    'lofreq': is_lofreq,
+                    'passes_filt': False,
                 }
                 for alt in vcf_record.ALT:
                     # Query the database
@@ -185,8 +191,12 @@ class AMRScreen(Tool):
         self.__parse_db_files(self._tool_inputs['DB'][0].path)
 
         # Cross-check variants in VCF with DB
-        mutations_out = self.__cross_check_muts_to_db()
+        mutations_out = self.__cross_check_muts_to_db(self._tool_inputs['VCF'][0].path)
         logger.info(f"{sum(len(m['associations']) for m in mutations_out):,} AMR associations found")
+
+        # Cross-check variants in VCF with DB separately for Lofreq variants
+        mutations_lofreq = self.__cross_check_muts_to_db(self._tool_inputs['VCF_lofreq'][0].path, is_lofreq=True)
+        logger.info(f"{sum(len(m['associations']) for m in mutations_lofreq):,} AMR associations found")
 
         # Check if mutations passed filtering and if they were synonymous
         with open(self._tool_inputs['VCF_filt'][0].path) as handle:
@@ -197,13 +207,6 @@ class AMRScreen(Tool):
         } for mut in mutations_out]
         logger.info(f"{sum(m['passes_filt'] for m in mutations_out):,}/{len(mutations_out):,} passed filtering")
 
-        # Extract mutation name
-        mutations_out = [{
-            **row,
-            'name': AMRScreen.__extracts_mutation_name(row),
-            'name_full': AMRScreen.__extracts_mutation_name(row, full=True),
-        } for row in mutations_out]
-
         # Create text file with mutation positions
         path_bed_out = self.folder / 'mutation_positions.tsv'
         with path_bed_out.open('w') as handle:
@@ -211,6 +214,16 @@ class AMRScreen(Tool):
                 handle.write('\t'.join(['Chromosome', str(pos)]))
                 handle.write('\n')
         self._tool_outputs['TSV'] = [ToolIOFile(path_bed_out)]
+
+        # Include the lofreq mutations
+        mutations_out.extend(mutations_lofreq)
+
+        # Extract mutation name
+        mutations_out = [{
+            **row,
+            'name': AMRScreen.__extracts_mutation_name(row),
+            'name_full': AMRScreen.__extracts_mutation_name(row, full=True),
+        } for row in mutations_out]
 
         # Create JSON output file
         path_json = self.folder / 'amr_screen.json'
