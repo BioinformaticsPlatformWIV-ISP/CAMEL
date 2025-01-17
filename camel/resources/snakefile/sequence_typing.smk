@@ -244,9 +244,9 @@ rule typing_get_cgmlst_stats:
         scheme_name = lambda wildcards: wildcards.scheme
     run:
         all_hits = SnakemakeUtils.load_object(Path(input.HITS))
-        nb_perfect = len([v for v in all_hits if v.value.is_perfect_hit()])
+        nb_found = len([v for v in all_hits if v.value.is_perfect_hit() or v.value.is_new_allele()])
         SnakemakeUtils.dump_object(
-            {'hits_found': nb_perfect,
+            {'hits_found': nb_found,
              'nb_of_loci': len(all_hits),
              'scheme_name': params.scheme_name},
             Path(output.INFORMS))
