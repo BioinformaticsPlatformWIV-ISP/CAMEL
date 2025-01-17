@@ -42,8 +42,8 @@ quality_checks:
 
 quast:
   ref:
-    fasta: {ref_fasta}
-    gff3: {ref_gff}
+    fasta: {quast_fasta}
+    gff3: {quast_gff}
 
 assembly:
   spades:
@@ -51,6 +51,16 @@ assembly:
   min_contig_length: 1000
   canu:
     minimum_input_coverage: 0
+
+variant_calling:
+  ploidy: 1
+  report_include_bam: {export_bam}
+  reference:
+    path: {quast_fasta}
+    name: {reference_name}
+    url: {reference_url}
+
+variant_filtering: {{}}
 
 confindr:
   db: /db/confindr/0.8.1
