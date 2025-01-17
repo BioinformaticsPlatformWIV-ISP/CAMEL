@@ -8,24 +8,40 @@ from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile import variant_calling, assembly, variant_filtering
 from camel.scripts.mycobacteriumpipeline.snakefile import snplineage, amrdetection
 
+rule run_lofreq:
+    input:
+        BAM = variant_calling.get_bam(config),
+        FASTA = Path(config['working_dir']) / 'variant_calling' / 'reference' / 'fasta.io'
+    output:
+        VCF = Path(config['working_dir']) / 'lofreq' / 'vcf' / 'vcf.io'
+    params:
+        dir_ = Path(config['working_dir']) / 'lofreq' / 'vcf'
+    run:
+        from camel.app.tools.lofreq.lofreqcall import LofreqCall
+        lofreq_call = LofreqCall(Camel.get_instance())
+        SnakemakeUtils.add_pickle_inputs(lofreq_call, input)
+        step = Step(str(rule), lofreq_call, Camel.get_instance(), Path(params.dir_))
+        step.run_step()
+        SnakemakeUtils.dump_tool_outputs(lofreq_call, output)
 
 rule amr_extract_variant_positions:
     """
     Extracts positions from the VCF file that are located in regions linked to AMR.
     """
     input:
-        VCF_GZ = Path(config['working_dir']) / variant_calling.get_vcf_gz(config)
+        VCF_GZ = lambda wildcards: Path(config['working_dir']) / variant_calling.get_vcf_gz(config) if wildcards.variant_caller == 'bcftools' else rules.run_lofreq.output.VCF
     output:
-        VCF = Path(config['working_dir']) / 'amr' / 'filtering' / 'vcf.io'
+        VCF = Path(config['working_dir']) / 'amr' / 'filtering' / '{variant_caller}' /  'vcf.io'
     params:
-        dir_ = Path(config['working_dir']) / 'amr' / 'filtering',
-        bed_regions = config['amr']['bed_regions']
+        dir_ = lambda wildcards: Path(config['working_dir']) / 'amr' / 'filtering'/ f'{wildcards.variant_caller}',
+        bed_regions = config['amr']['bed_regions'],
+        variant_caller = lambda wildcards: wildcards.variant_caller
     run:
         from camel.app.tools.bcftools.bcftoolsfilter import BcftoolsFilter
         bcf_filter = BcftoolsFilter(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(bcf_filter, input)
         bcf_filter.add_input_files({'BED_include': [ToolIOFile(Path(params.bed_regions))]})
-        step = Step(str(rule), bcf_filter, Camel.get_instance(), Path(params.dir_))
+        step = Step(str(rule), bcf_filter, Camel.get_instance(), Path(str(params.dir_)))
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(bcf_filter, output)
 
@@ -37,17 +53,18 @@ rule amr_annotate_variants_csq:
         VCF = rules.amr_extract_variant_positions.output.VCF,
         FASTA = Path(config['working_dir']) / 'variant_calling' / 'reference' / 'fasta.io'
     output:
-        VCF = Path(config['working_dir'])  / 'amr' / 'csq' / 'vcf.io',
-        INFORMS = Path(config['working_dir']) / amrdetection.OUTPUT_INFORMS_CSQ
+        VCF = Path(config['working_dir'])  / 'amr' / 'csq' / '{variant_caller}' / 'vcf.io',
+        INFORMS = Path(config['working_dir'])  / 'amr' / 'csq' / '{variant_caller}' / 'informs.io'
     params:
-        dir_ = Path(config['working_dir']) / 'amr' / 'csq',
-        gff = config['variant_calling']['reference']['annotation_gff']
+        dir_ = lambda wildcards: Path(config['working_dir']) / 'amr' / 'csq' / f'{wildcards.variant_caller}',
+        gff = config['variant_calling']['reference']['annotation_gff'],
+        variant_caller = lambda wildcards: wildcards.variant_caller
     run:
         from camel.app.tools.bcftools.bcftoolscsq import BcftoolsCsq
         csq = BcftoolsCsq(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(csq, input)
         csq.add_input_files({'GFF': [ToolIOFile(Path(params.gff))]})
-        step = Step(str(rule), csq, Camel.get_instance(), Path(params.dir_))
+        step = Step(str(rule), csq, Camel.get_instance(), Path(str(params.dir_)))
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(csq, output)
 
@@ -56,7 +73,8 @@ rule amr_screen_mutations:
     Screens the mutations detected in the AMR regions against the DB. 
     """
     input:
-        VCF = rules.amr_annotate_variants_csq.output.VCF,
+        VCF = str(rules.amr_annotate_variants_csq.output.VCF).format(variant_caller='bcftools'),
+        VCF_lofreq = str(rules.amr_annotate_variants_csq.output.VCF).format(variant_caller='lofreq'),
         VCF_filt = Path(config['working_dir']) / variant_filtering.OUTPUT_VARIANT_FILTERING_VCF
     output:
         JSON = Path(config['working_dir']) / 'amr' / 'screen' / 'json.io',
@@ -86,18 +104,26 @@ rule amr_export_positions:
     with pileup).
     """
     input:
-        VCF = rules.amr_extract_variant_positions.output.VCF
+        VCF_bcftools = str(rules.amr_extract_variant_positions.output.VCF).format(variant_caller='bcftools'),
+        VCF_lofreq = str(rules.amr_extract_variant_positions.output.VCF).format(variant_caller='lofreq')
     output:
         TXT = Path(config['working_dir']) / 'amr' / 'filtering' / 'txt.io'
     params:
         dir_ = Path(config['working_dir']) / 'amr' / 'filtering'
     run:
         import vcf
-        input_vcf = SnakemakeUtils.load_object(Path(input.VCF))[0].path
+        variants = []
+        for vcf_file in input.keys():
+            input_vcf = SnakemakeUtils.load_object(Path(input[vcf_file]))[0].path
+            with open(input_vcf) as handle_in:
+                for variant in vcf.VCFReader(handle_in):
+                    variants.append([variant.CHROM, str(variant.POS)])
+        # Removing duplicates
+        variants_to_write = [list(item) for item in set(tuple(row) for row in variants)]
         output_path = Path(params.dir_, 'amr_positions.txt')
-        with open(output_path, 'w') as handle_out, open(input_vcf) as handle_in:
-            for variant in vcf.VCFReader(handle_in):
-                handle_out.write('\t'.join([variant.CHROM, str(variant.POS)]))
+        with open(output_path, 'w') as handle_out:
+            for variant in variants_to_write:
+                handle_out.write('\t'.join(variant))
                 handle_out.write('\n')
         SnakemakeUtils.dump_object([ToolIOFile(output_path)], Path(output.TXT))
 
