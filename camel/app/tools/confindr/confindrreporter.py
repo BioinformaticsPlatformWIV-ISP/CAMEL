@@ -13,14 +13,12 @@ class ConFindrReporter(Tool):
     Tool to generate reports for the ConFindr tool.
     """
 
-    def __init__(self, camel: Camel, input_type='illumina') -> None:
+    def __init__(self, camel: Camel) -> None:
         """
         Initializes this tool.
         :param camel: CAMEL instance
-        :param input_type: define the input data type of the analysis, defaults to illumina
         """
         super().__init__('ConFindr reporter', '0.1', camel)
-        self._input_type = input_type
 
     def _check_input(self) -> None:
         """
@@ -39,8 +37,8 @@ class ConFindrReporter(Tool):
         section = HtmlReportSection('ConFindr', subtitle=self._input_informs['confindr']['_name'])
 
         # add message for ONT input
-        if self._input_type in ('ont', 'hybrid'):
-            section.add_warning_message('BE AWARE: running confindr with ONT data input is experimental! Results should be interpreted with the necessary caution!')
+        if 'input_type' in self._parameters and self._parameters['input_type'].value in ('ont', 'hybrid'):
+            section.add_warning_message('BE AWARE: running ConFindr with ONT data input is experimental! Results should be interpreted with the necessary caution!')
         # Main table
         cell = HtmlTableCell('No', 'green') if \
             self._input_informs['confindr']['NumContamSNVs'] < 20 else HtmlTableCell('Yes', 'red')
