@@ -88,8 +88,9 @@ class MainConFindr(object):
                 logger.info(f'ConFindr informs saved to {self._args.output_json}')
 
         # Create output report
-        confindr_reporter = ConFindrReporter(Camel.get_instance(), self._args.input_type)
+        confindr_reporter = ConFindrReporter(Camel.get_instance())
         confindr_reporter.add_input_informs({'confindr': confindr.informs})
+        confindr_reporter.update_parameters(input_type=self._args.input_type)
         confindr_reporter.run(self._args.working_dir)
         report.add_html_object(confindr_reporter.tool_outputs['HTML'][0].value)
 

@@ -59,11 +59,11 @@ rule confindr_report:
     output:
         HTML = Path(config['working_dir']) / confindr.OUTPUT_CONFINDR_REPORT
     params:
-        dir_ = Path(config['working_dir']) / 'confindr' / 'report' ,
-        input_type = config['input_type']
+        dir_ = Path(config['working_dir']) / 'confindr' / 'report'
     run:
         from camel.app.tools.confindr.confindrreporter import ConFindrReporter
-        reporter = ConFindrReporter(Camel.get_instance(), params.input_type)
+        reporter = ConFindrReporter(Camel.get_instance())
+        reporter.update_parameters(input_type=config['input_type'])
         step = Step(str(rule), reporter, Camel.get_instance(), params.dir_)
         SnakemakeUtils.add_pickle_inputs(reporter, input)
         step.run_step()
