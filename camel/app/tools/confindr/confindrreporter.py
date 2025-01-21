@@ -36,6 +36,9 @@ class ConFindrReporter(Tool):
         """
         section = HtmlReportSection('ConFindr', subtitle=self._input_informs['confindr']['_name'])
 
+        # add message for ONT input
+        if 'input_type' in self._parameters and self._parameters['input_type'].value in ('ont', 'hybrid'):
+            section.add_warning_message('BE AWARE: running ConFindr with ONT data input is experimental! Results should be interpreted with the necessary caution!')
         # Main table
         cell = HtmlTableCell('No', 'green') if \
             self._input_informs['confindr']['NumContamSNVs'] < 20 else HtmlTableCell('Yes', 'red')

@@ -115,6 +115,12 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
             logger.info(f'FASTQ input is valid')
             logger.info(f'PE forward FASTQ hash: {FileUtils.hash_file(self._args.fastq_pe[0])}')
             logger.info(f'PE reverse FASTQ hash: {FileUtils.hash_file(self._args.fastq_pe[1])}')
+
+        # FASTQ SE input (== nanopore)
+        elif self._args.input_type == 'ont':
+            nb_reads = FastqUtils.count_reads(self._args.fastq_se)
+            logger.info(f'SE FASTQ input is valid: {nb_reads} reads')
+            logger.info(f'SE FASTQ hash: {FileUtils.hash_file(self._args.fastq_se)}')
         else:
             logger.debug(f"FASTQ checking not implemented yet for input type '{self._args.input_type}'")
 
@@ -279,17 +285,19 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         report_k2_by_input_format = {
             p_html.parents[1].name: p_html for p_html in [Path(x) for x in reports_contamination]}
 
-        # Add the report content
         if input_type in ('fasta', 'fasta_with_vcf'):
+            # FASTA input -> only Kraken2
             structure.append(
                 ('Contamination check', 'contamination', [report_k2_by_input_format['fasta']]))
         elif input_type == 'illumina':
+            # Illumina or ONT input -> Kraken2 and ConFindr
             structure.append(
                 ('Contamination check', 'contamination', [
                     report_k2_by_input_format['fastq_pe'], Path(report_confindr)]))
         elif input_type == 'ont':
+            # ONT input -> Kraken2 and ConFindr
             structure.append(
-                ('Contamination check', 'contamination', [report_k2_by_input_format['fastq_se']]))
+                ('Contamination check', 'contamination', [report_k2_by_input_format['fastq_se'], Path(report_confindr)]))
         elif input_type == 'hybrid':
             structure.append(
                 ('Contamination check', 'contamination',
