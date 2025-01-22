@@ -8,14 +8,17 @@ from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile import variant_calling, assembly, variant_filtering
 from camel.scripts.mycobacteriumpipeline.snakefile import snplineage, amrdetection
 
-rule run_lofreq:
+rule amr_lofreq:
+    """
+    Runs lofreq for the detection of low-frequency mutations.
+    """
     input:
         BAM = variant_calling.get_bam(config),
         FASTA = Path(config['working_dir']) / 'variant_calling' / 'reference' / 'fasta.io'
     output:
-        VCF = Path(config['working_dir']) / 'lofreq' / 'vcf' / 'vcf.io'
+        VCF = Path(config['working_dir']) / 'amr' / 'lofreq' / 'vcf' / 'vcf.io'
     params:
-        dir_ = Path(config['working_dir']) / 'lofreq' / 'vcf'
+        dir_ = Path(config['working_dir']) / 'amr' / 'lofreq' / 'vcf'
     run:
         from camel.app.tools.lofreq.lofreqcall import LofreqCall
         lofreq_call = LofreqCall(Camel.get_instance())
@@ -29,13 +32,12 @@ rule amr_extract_variant_positions:
     Extracts positions from the VCF file that are located in regions linked to AMR.
     """
     input:
-        VCF_GZ = lambda wildcards: Path(config['working_dir']) / variant_calling.get_vcf_gz(config) if wildcards.variant_caller == 'bcftools' else rules.run_lofreq.output.VCF
+        VCF_GZ = lambda wildcards: Path(config['working_dir']) / variant_calling.get_vcf_gz(config) if wildcards.variant_caller == 'bcftools' else rules.amr_lofreq.output.VCF
     output:
         VCF = Path(config['working_dir']) / 'amr' / 'filtering' / '{variant_caller}' /  'vcf.io'
     params:
         dir_ = lambda wildcards: Path(config['working_dir']) / 'amr' / 'filtering'/ f'{wildcards.variant_caller}',
-        bed_regions = config['amr']['bed_regions'],
-        variant_caller = lambda wildcards: wildcards.variant_caller
+        bed_regions = config['amr']['bed_regions']
     run:
         from camel.app.tools.bcftools.bcftoolsfilter import BcftoolsFilter
         bcf_filter = BcftoolsFilter(Camel.get_instance())
@@ -56,7 +58,7 @@ rule amr_annotate_variants_csq:
         VCF = Path(config['working_dir'])  / 'amr' / 'csq' / '{variant_caller}' / 'vcf.io',
         INFORMS = Path(config['working_dir'])  / 'amr' / 'csq' / '{variant_caller}' / 'informs.io'
     params:
-        dir_ = lambda wildcards: Path(config['working_dir']) / 'amr' / 'csq' / f'{wildcards.variant_caller}',
+        dir_ = lambda wildcards: Path(config['working_dir']) / 'amr' / 'csq' / wildcards.variant_caller,
         gff = config['variant_calling']['reference']['annotation_gff'],
         variant_caller = lambda wildcards: wildcards.variant_caller
     run:
@@ -143,7 +145,7 @@ rule amr_pileup_variant_positions:
         from camel.app.tools.samtools.samtoolsmpileup import SamtoolsMPileup
         samtools_mpileup = SamtoolsMPileup(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(samtools_mpileup, input)
-        samtools_mpileup.update_parameters(count_orphans=True)
+        samtools_mpileup.update_parameters(count_orphans=True, min_base_quality=0)
         step = Step(str(rule), samtools_mpileup, Camel.get_instance(), params.dir_)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(samtools_mpileup, output)

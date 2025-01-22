@@ -13,6 +13,7 @@ from camel.app.tools.tool import Tool
 # noinspection PyProtectedMember
 from vcf.model import _Record as VcfRecord
 
+
 class AMRScreen(Tool):
     """
     Screens the mutations from a VCF file against a database with mutations.
@@ -182,6 +183,17 @@ class AMRScreen(Tool):
                 mutations_out.append(record)
         return mutations_out
 
+    @staticmethod
+    def __remove_bcftools_mutations_from_lofreq(input_lofreq: List[Dict], input_bcftools: List[Dict]) -> List[Dict]:
+        """
+        :param input_lofreq: List of mutations identified by LoFreq
+        :param input_bcftools: List of mutations identified by BCFtools
+        :return: List of mutations unique to LoFreq
+        """
+        keys_bcf = {(m['position'], m['alt']) for m in input_bcftools}
+        muts_lofreq = [m for m in input_lofreq if (m['position'], m['alt']) not in keys_bcf]
+        return muts_lofreq
+
     def _execute_tool(self) -> None:
         """
         Executes this tool.
@@ -196,7 +208,9 @@ class AMRScreen(Tool):
 
         # Cross-check variants in VCF with DB separately for Lofreq variants
         mutations_lofreq = self.__cross_check_muts_to_db(self._tool_inputs['VCF_lofreq'][0].path, is_lofreq=True)
-        logger.info(f"{sum(len(m['associations']) for m in mutations_lofreq):,} AMR associations found")
+        mutations_lofreq = self.__remove_bcftools_mutations_from_lofreq(mutations_lofreq, mutations_out)
+        logger.info(
+            f"{sum(len(m['associations']) for m in mutations_lofreq):,} AMR associations found for Lofreq variants")
 
         # Check if mutations passed filtering and if they were synonymous
         with open(self._tool_inputs['VCF_filt'][0].path) as handle:

@@ -9,7 +9,7 @@ from camel.app.tools.lofreq.lofreq import Lofreq
 class LofreqCall(Lofreq):
 
     """
-    Calls low-frequency variants in BAM file from illumina data.
+    LoFreq is a fast and sensitive variant-caller for inferring SNVs and indels from next-generation sequencing data.
     """
 
     def __init__(self, camel: Camel) -> None:

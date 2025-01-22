@@ -25,12 +25,12 @@ class Lofreq(Tool, metaclass=abc.ABCMeta):
         Executes this tool.
         :return: None
         """
-        super(Lofreq, self)._execute_tool()
+        super()._execute_tool()
 
     def _check_command_output(self) -> None:
         """
         Validates if the program ran correctly by checking the standard error.
         :return: None
         """
-        if 'FATAL' in self._command.stderr.lower():
+        if 'FATAL' in self._command.stderr:
             raise ToolExecutionError(f"{self.name} failed: '{self._command.stderr}'")
