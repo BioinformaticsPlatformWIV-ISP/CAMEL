@@ -108,6 +108,13 @@ sequence_typing:
   profiles: /db/pipelines/mycobacterium/51snp/profiles.tsv
 
 gene_detection:
+  amr_cds:
+    path: /db/pipelines/mycobacterium/amr/gene_detection/myco_amr_cds
+    force_detection_method: kma
+    metadata:
+      name: Antibiotics
+      key: antibiotics
+
   csb_rd:
     path: /db/pipelines/mycobacterium/csb_rd
     force_detection_method: srst2
@@ -129,17 +136,6 @@ gene_detection:
     metadata:
       name: Species
       key: species_name
-
-  amr:
-    path: /db/pipelines/mycobacterium/amr/gene_detection
-    params:
-      blastn:
-        min_percent_identity: 95
-        min_coverage: 90
-        task: blastn
-      srst2:
-        max_divergence: 5
-        min_coverage: 90
 
 pointfinder:
   db: mycobacterium_tuberculosis

@@ -1,4 +1,4 @@
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 
 
 class MappingJSON(object):
@@ -21,6 +21,18 @@ class MappingJSON(object):
         :return: Representation
         """
         return f'Mapping({len(self._content):,} items)'
+
+    def __len__(self) -> int:
+        """
+        Returns the length of the mapping.
+        """
+        return len(self._content)
+
+    def keys(self) -> List[str]:
+        """
+        Returns the keys of the mapping.
+        """
+        return list(self._content.keys())
 
     def get(self, seq_id: str) -> None:
         """
