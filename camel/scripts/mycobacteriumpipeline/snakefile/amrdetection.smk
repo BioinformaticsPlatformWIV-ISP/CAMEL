@@ -5,7 +5,7 @@ from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.resources.snakefile import variant_calling, assembly, variant_filtering
+from camel.resources.snakefile import variant_calling, assembly, variant_filtering, gene_detection
 from camel.scripts.mycobacteriumpipeline.snakefile import snplineage, amrdetection
 
 
@@ -300,6 +300,26 @@ rule amr_create_report:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)
 
+rule amr_check_completeness_cds:
+    """
+    Checks if the CDSs of the AMR associated genes are complete.
+    """
+    input:
+        INFORMS_DB = Path(config['working_dir']) / 'gene_detection' / 'amr_cds' / 'db_manager' / 'informs.io',
+        VAL_HITS = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_ALL_HITS).format(db='amr_cds')
+    output:
+        VAL_HTML = Path(config['working_dir']) / 'amr' / 'cds' / 'html.io',
+        INFORMS = Path(config['working_dir']) / 'amr' / 'cds' / 'informs.io'
+    params:
+        dir_ = Path(config['working_dir']) / 'amr' / 'cds'
+    run:
+        from camel.app.tools.pipelines.mycobacterium.amr.amrcdscompletenessreporter import AMRCDSCompletenessReporter
+        reporter = AMRCDSCompletenessReporter(Camel.get_instance())
+        SnakemakeUtils.add_pickle_inputs(reporter, input)
+        step = Step(str(rule), reporter, Camel.get_instance(), Path(params.dir_))
+        step.run_step()
+        SnakemakeUtils.dump_tool_outputs(reporter,output)
+
 rule amr_create_report_empty:
     """
     Creates an empty report section for the AMR workflow when it is disabled.
@@ -319,7 +339,8 @@ rule amr_dump_summary_info:
     input:
         INFORMS_screening = rules.amr_screen_mutations.output.INFORMS,
         INFORMS_type = rules.amr_determine_resistance_type.output.JSON,
-        INFORMS_pheno = rules.amr_predict_phenotype.output.JSON
+        INFORMS_pheno = rules.amr_predict_phenotype.output.JSON,
+        INFORMS_cds = rules.amr_check_completeness_cds.output.INFORMS
     output:
         TSV = Path(config['working_dir']) / amrdetection.OUTPUT_AMR_SUMMARY
     run:
@@ -352,6 +373,10 @@ rule amr_dump_summary_info:
                     f"amr_mutations_{row['abbreviation']}_{level.value.replace(' ', '_')}",
                     ', '.join([f"{m['name_full']}" for m in mutations]) if len(mutations) > 0 else '-']
                 )
+
+        # Incomplete CDSs
+        informs_cds = SnakemakeUtils.load_object(Path(input.INFORMS_cds))
+        output_data.append(['amr_missing_loci', ','.join(informs_cds['missing_loci'])])
 
         # Save output
         with open(output.TSV, 'w') as handle:
