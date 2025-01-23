@@ -29,6 +29,7 @@ CONFIDENCE_LEVEL_DATA = {
     ConfidenceLevel.NOT_IN_DB: {'color': 'grey', 'priority': 0}
 }
 
+
 def shorten_nucleotide_str(nucleotide_str, max_length: int = 5) -> str:
     """
     Shortens a nucleotide string when it is necessary.
@@ -43,6 +44,7 @@ def shorten_nucleotide_str(nucleotide_str, max_length: int = 5) -> str:
 def parse_pileup(path_pileup: Path) -> Dict[int, List[int]]:
     """
     Parses the pileup input.
+    :param path_pileup: Path to the pileup file
     :return: Dictionary with ACTG counts per position
     """
     logger.info(f'Parsing pileup file: {path_pileup}')
@@ -51,8 +53,11 @@ def parse_pileup(path_pileup: Path) -> Dict[int, List[int]]:
     data_pileup['read_bases'] = data_pileup['read_bases'].apply(lambda x: x.upper())
     logger.info(f'{len(data_pileup):,} positions parsed from pileup')
     actg_counts = {}
+    base_list = ('A', 'C', 'T', 'G')
     for row in data_pileup.to_dict('records'):
-        counts = [row['read_bases'].count(nt) for nt in ('A', 'C', 'T', 'G')]
+        counts_ref_allele = [row['read_bases'].count(ref_symbol) for ref_symbol in ('.', ',')]
+        counts = [row['read_bases'].count(nt) for nt in base_list]
+        counts[base_list.index(row['ref'])] = sum(counts_ref_allele)
         actg_counts[row['pos']] = counts
     return actg_counts
 

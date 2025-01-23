@@ -13,7 +13,7 @@ class TestLofreq(CamelTestSuite):
 
     test_file_dir = CamelTestSuite.get_test_file_dir('lofreq')
     FILE_FASTA = ToolIOFile(test_file_dir / 'H37Rv.fasta')
-    FILE_BAM = ToolIOFile(test_file_dir / 'aln.bam')
+    FILE_BAM = ToolIOFile(test_file_dir / 'aln_subsampled.bam')
 
     def test_lofreq_call(self) -> None:
         """
