@@ -101,14 +101,15 @@ class AMRCircosTemplateGeneration(Tool):
             mutation_data = json.load(handle)
 
         for idx, row in enumerate(mutation_data):
-            if row['lofreq'] is False:
-                associations = row['associations']
-                if not any(amrutils.ConfidenceLevel(a['confidence']) in (
-                        amrutils.ConfidenceLevel.ASSOC_R, amrutils.ConfidenceLevel.ASSOC_R_int) for a in associations):
-                    continue
-                self._mutations_by_idx[idx] = row
-                if row['region']['locus'] not in self._regions_by_name:
-                    self._regions_by_name[row['region']['locus']] = row['region']
+            if row['lofreq'] is True:
+                continue
+            associations = row['associations']
+            if not any(amrutils.ConfidenceLevel(a['confidence']) in (
+                    amrutils.ConfidenceLevel.ASSOC_R, amrutils.ConfidenceLevel.ASSOC_R_int) for a in associations):
+                continue
+            self._mutations_by_idx[idx] = row
+            if row['region']['locus'] not in self._regions_by_name:
+                self._regions_by_name[row['region']['locus']] = row['region']
 
         # Calculate region positions in the novel coordinate system
         current_pos = 0

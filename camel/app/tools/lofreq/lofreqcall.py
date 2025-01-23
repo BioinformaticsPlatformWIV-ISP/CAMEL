@@ -28,7 +28,6 @@ class LofreqCall(Lofreq):
             raise InvalidInputSpecificationError('FASTA reference is required')
         if 'BAM' not in self._tool_inputs:
             raise InvalidInputSpecificationError('BAM alignment file is required')
-
         if len(self._tool_inputs['BAM']) != 1:
             raise ValueError("Exactly one BAM input file expected")
         super()._check_input()
@@ -54,8 +53,8 @@ class LofreqCall(Lofreq):
         self._command.command = ' '.join([
             self._tool_command, f'--ref {fasta_input}',
             *self._build_options(),
-            f'{bam_input}'
-            ])
+            str(bam_input)
+        ])
 
     def __set_output(self) -> None:
         """

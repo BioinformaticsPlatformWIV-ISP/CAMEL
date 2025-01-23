@@ -8,9 +8,10 @@ from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile import variant_calling, assembly, variant_filtering
 from camel.scripts.mycobacteriumpipeline.snakefile import snplineage, amrdetection
 
+
 rule amr_lofreq:
     """
-    Runs lofreq for the detection of low-frequency mutations.
+    Runs LoFreq for the detection of low-frequency mutations.
     """
     input:
         BAM = variant_calling.get_bam(config),
