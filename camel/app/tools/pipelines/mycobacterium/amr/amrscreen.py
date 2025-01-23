@@ -148,7 +148,11 @@ class AMRScreen(Tool):
 
             for vcf_record in variants:
                 effect = AMRScreen.__parse_effect(vcf_record)
-                region = AMRScreen.__get_matching_region(vcf_record.POS, self._data_regions)
+                try:
+                    region = AMRScreen.__get_matching_region(vcf_record.POS, self._data_regions)
+                except ValueError:
+                    logger.info(f'No matching region for mutation at position {vcf_record.POS}, retrying affected end')
+                    region = AMRScreen.__get_matching_region(vcf_record.affected_end, self._data_regions)
                 record = {
                     'alt': ';'.join(str(x) for x in vcf_record.ALT),
                     'effect': effect,

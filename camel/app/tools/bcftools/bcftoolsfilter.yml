@@ -5,4 +5,5 @@ parameters:
   output_filename: { default: true, mandatory: true, option: --output, value: variants_filtered.vcf }
   output_type: { default: true, mandatory: true, option: --output-type, value: v }
   soft_filter: { default: false, mandatory: false, option: --soft-filter, value: 'name' }
+  targets_overlap: { default: false, mandatory: false, option: '--targets-overlap', value: '0' }
 tool_command: bcftools filter
