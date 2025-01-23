@@ -101,6 +101,8 @@ class AMRCircosTemplateGeneration(Tool):
             mutation_data = json.load(handle)
 
         for idx, row in enumerate(mutation_data):
+            if row['lofreq'] is True:
+                continue
             associations = row['associations']
             if not any(amrutils.ConfidenceLevel(a['confidence']) in (
                     amrutils.ConfidenceLevel.ASSOC_R, amrutils.ConfidenceLevel.ASSOC_R_int) for a in associations):
