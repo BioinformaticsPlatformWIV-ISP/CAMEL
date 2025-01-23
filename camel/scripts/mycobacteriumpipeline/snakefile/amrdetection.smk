@@ -18,11 +18,13 @@ rule amr_lofreq:
     output:
         VCF = Path(config['working_dir']) / 'amr' / 'lofreq' / 'vcf' / 'vcf.io'
     params:
-        dir_ = Path(config['working_dir']) / 'amr' / 'lofreq' / 'vcf'
+        dir_ = Path(config['working_dir']) / 'amr' / 'lofreq' / 'vcf',
+        bed_regions = config['amr']['bed_regions']
     run:
         from camel.app.tools.lofreq.lofreqcall import LofreqCall
         lofreq_call = LofreqCall(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(lofreq_call, input)
+        lofreq_call.update_parameters(bed=params.bed_regions)
         step = Step(str(rule), lofreq_call, Camel.get_instance(), Path(params.dir_))
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(lofreq_call, output)

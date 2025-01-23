@@ -4,6 +4,6 @@ parameters:
   call_indels: { default: false, mandatory: false, option: --call-indels, value: null }
   only_indels: { default: false, mandatory: false, option: --only-indels, value: null }
   output_filename: { default: true, mandatory: true, option: --out, value: 'lofreq_variants.vcf' }
-  no_default_filter: { default: false, mandatory: false, option: --no-default-filter, value: null }
+  no_default_filter: { default: true, mandatory: false, option: --no-default-filter, value: null }
   region: { default: false, mandatory: false, option: --region, value: null }
 tool_command: lofreq call
