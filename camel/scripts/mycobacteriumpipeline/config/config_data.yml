@@ -83,6 +83,8 @@ variant_filtering:
   depth:
     min_fwd_depth: 1
     min_rev_depth: 1
+  distance:
+    min_distance: 0
 
 snp_lineage:
   bed: /db/pipelines/mycobacterium/snp_lineage/tbdb-2024_02_23.bed

@@ -47,7 +47,7 @@ rule amr_extract_variant_positions:
         SnakemakeUtils.add_pickle_inputs(bcf_filter, input)
         bcf_filter.add_input_files({'BED_include': [ToolIOFile(Path(params.bed_regions))]})
         bcf_filter.update_parameters(targets_overlap='2')
-        step = Step(str(rule), bcf_filter, Camel.get_instance(), Path(params.dir_))
+        step = Step(str(rule), bcf_filter, Camel.get_instance(), Path(str(params.dir_)))
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(bcf_filter, output)
 
