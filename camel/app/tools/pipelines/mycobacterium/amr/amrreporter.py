@@ -93,16 +93,17 @@ class AMRReporter(Tool):
         self.__add_antibiotics_table()
 
         # Add tables with mutations
-        self.__add_mutations_table('filtered', [m for m in self._mutations if m['passes_filt'] is True
-                                                and m['lofreq'] is False],
-                                   header='Mutations in resistance regions (filtered)')
-        self.__add_mutations_table('unfiltered', [m for m in self._mutations if m['passes_filt'] is False
-                                                  and m['lofreq'] is False],
-                                   header='Mutations in resistance regions (unfiltered)')
+        self.__add_mutations_table(
+            'filtered', [m for m in self._mutations if m['passes_filt'] is True and m['lofreq'] is False],
+            header='Mutations in resistance regions (filtered)')
+        self.__add_mutations_table(
+            'unfiltered', [m for m in self._mutations if m['passes_filt'] is False and m['lofreq'] is False],
+            header='Mutations in resistance regions (unfiltered)')
 
         # Add table with low frequency mutations
-        self.__add_mutations_table('lofreq', [m for m in self._mutations if m['lofreq'] is True],
-                                   header='Additional mutations in resistance regions detected by LoFreq')
+        self.__add_mutations_table(
+            'lofreq', [m for m in self._mutations if m['lofreq'] is True],
+            header='Additional mutations in resistance regions detected by LoFreq')
 
         # Add visualization and DB info
         self.__add_visualization(self._tool_inputs['PNG'][0].path)
