@@ -19,10 +19,10 @@ class TestSalmonellaPipeline(CamelTestSuite):
     # Input files
     test_file_dir = CamelTestSuite.get_test_file_dir()
     input_fastq_illumina_pe = [
-        test_file_dir / "Salmonella-MB6391-ds_1.fastq.gz",
-        test_file_dir / "Salmonella-MB6391-ds_2.fastq.gz"
+        test_file_dir / 'pipelines' / "Salmonella-MB6391-ds_1.fastq.gz",
+        test_file_dir / 'pipelines' / "Salmonella-MB6391-ds_2.fastq.gz"
     ]
-    input_fasta = test_file_dir / "Salmonella-MB6391-ds.fasta"
+    input_fasta = test_file_dir / 'pipelines' / "Salmonella-MB6391-ds.fasta"
 
     def test_salmonella_pipeline_typing_db(self) -> None:
         """
