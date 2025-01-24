@@ -38,12 +38,13 @@ class AMRScreen(Tool):
             raise InvalidInputSpecificationError("Mutation input is required (VCF)")
         if 'VCF_filt' not in self._tool_inputs:
             raise InvalidInputSpecificationError("Filtered mutation input is required (VCF_filt)")
-        if 'VCF_lofreq' not in self._tool_inputs:
-            raise InvalidInputSpecificationError("Lofreq mutation input is required (VCF_lofreq)")
         if 'DB' not in self._tool_inputs:
             raise InvalidInputSpecificationError("Database input is required (DB)")
         if 'BED' not in self._tool_inputs:
             raise InvalidInputSpecificationError("AMR region input is required (BED)")
+        if 'VCF_lofreq' not in self._tool_inputs:
+            logger.info("Lofreq mutation input ('VCF_lofreq') was not supplied. "
+                        "Low-frequency mutations will not be reported.")
         super()._check_input()
 
     @staticmethod
@@ -210,12 +211,6 @@ class AMRScreen(Tool):
         mutations_out = self.__cross_check_muts_to_db(self._tool_inputs['VCF'][0].path)
         logger.info(f"{sum(len(m['associations']) for m in mutations_out):,} AMR associations found")
 
-        # Cross-check variants in VCF with DB separately for Lofreq variants
-        mutations_lofreq = self.__cross_check_muts_to_db(self._tool_inputs['VCF_lofreq'][0].path, is_lofreq=True)
-        mutations_lofreq = self.__remove_bcftools_mutations_from_lofreq(mutations_lofreq, mutations_out)
-        logger.info(
-            f"{sum(len(m['associations']) for m in mutations_lofreq):,} AMR associations found for Lofreq variants")
-
         # Check if mutations passed filtering and if they were synonymous
         with open(self._tool_inputs['VCF_filt'][0].path) as handle:
             positions_passing_filt = [record.POS for record in vcf.Reader(handle)]
@@ -233,8 +228,15 @@ class AMRScreen(Tool):
                 handle.write('\n')
         self._tool_outputs['TSV'] = [ToolIOFile(path_bed_out)]
 
-        # Include the lofreq mutations
-        mutations_out.extend(mutations_lofreq)
+        if 'VCF_lofreq' in self._tool_inputs:
+            # Cross-check variants in VCF with DB separately for Lofreq variants
+            mutations_lofreq = self.__cross_check_muts_to_db(self._tool_inputs['VCF_lofreq'][0].path, is_lofreq=True)
+            mutations_lofreq = self.__remove_bcftools_mutations_from_lofreq(mutations_lofreq, mutations_out)
+            logger.info(
+                f"{sum(len(m['associations']) for m in mutations_lofreq):,} AMR associations found for Lofreq variants")
+
+            # Include the lofreq mutations
+            mutations_out.extend(mutations_lofreq)
 
         # Extract mutation name
         mutations_out = [{
