@@ -11,6 +11,7 @@ from camel.app.components.files import fastautils
 from camel.app.components.files.fastautils import FastaUtils
 from camel.app.components.files.fastqutils import FastqUtils
 from camel.app.components.files.fileutils import FileUtils
+from camel.app.components.pipelines import absolute_path_by_pathlib
 from camel.app.components.pipelines.basepipeline import BasePipeline
 from camel.app.components.workflows.utils.fastqinput import FastqInput
 from camel.app.error.invalidinputerror import InvalidInputError
@@ -36,10 +37,15 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         BasePipeline.add_common_arguments(argument_parser)
 
         # Output
-        argument_parser.add_argument('--output-dir', required=True, type=Path)
-        argument_parser.add_argument('--output-html', required=True, type=Path)
-        argument_parser.add_argument('--output-tsv', help="Output file for the summary", required=True, type=Path)
-        argument_parser.add_argument('--output-fasta', type=Path, help='output path for assembled contigs')
+        argument_parser.add_argument('--output-dir', type=absolute_path_by_pathlib,
+                                     default=Path(Path.cwd(), 'out'))
+        argument_parser.add_argument('--output-html', type=absolute_path_by_pathlib,
+                                     default=Path(Path.cwd(), 'out', 'report.html'))
+        argument_parser.add_argument('--output-tsv', help="Output file for the summary",
+                                     type=absolute_path_by_pathlib,
+                                     default=Path(Path.cwd(), 'out', 'report.tsv'))
+        argument_parser.add_argument('--output-fasta', type=absolute_path_by_pathlib,
+                                     help='output path for assembled contigs')
 
         # Options
         argument_parser.add_argument(
