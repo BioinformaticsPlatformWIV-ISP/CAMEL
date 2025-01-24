@@ -31,7 +31,7 @@ class Command(object):
     @property
     def stdout(self) -> str:
         """
-        Returns the stderr from the command execution.
+        Returns the stdout from the command execution.
         :return: Standard error
         """
         return self._stdout
