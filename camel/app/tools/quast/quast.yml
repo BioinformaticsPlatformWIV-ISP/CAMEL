@@ -1,4 +1,4 @@
-dependencies: [quast/5.2.0]
+dependencies: [quast/5.2.0, bedtools/2.31.0]
 parameters:
   conserved_genes_finding: { default: false, mandatory: false, option: --conserved-genes-finding, value: null }
   contig_thresholds: { default: false, mandatory: false, option: --contig-thresholds, value: '0,1000' }
