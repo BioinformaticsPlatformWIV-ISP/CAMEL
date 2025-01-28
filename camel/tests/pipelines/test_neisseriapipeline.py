@@ -178,7 +178,7 @@ class TestNeisseriaPipeline(unittest.TestCase):
     @longRunningTest()
     def test_neisseria_pipeline_ont(self) -> None:
         """
-        Tests the Neisseria pipeline with all assays except for cgMLST with ONT input
+        Tests the Neisseria pipeline with all assays except for cgMLST with ONT input.
         :return: None
         """
         path_report_out = self.running_dir / 'out' / 'report.html'
@@ -198,7 +198,7 @@ class TestNeisseriaPipeline(unittest.TestCase):
 
     def test_neisseria_pipeline_kma_ont(self) -> None:
         """
-        Tests the Neisseria pipeline with all assays except for cgMLST, kma with ont input
+        Tests the Neisseria pipeline with all assays except for cgMLST, KMA with ONT input.
         :return: None
         """
         path_report_out = self.running_dir / 'out' / 'report.html'
