@@ -53,6 +53,16 @@ assembly:
     cov_cutoff: 10
   min_contig_length: 1000
 
+variant_calling:
+  ploidy: 1
+  report_include_bam: {export_bam}
+  reference:
+    path: {quast_fasta}
+    name: {reference_name}
+    url: {reference_url}
+
+variant_filtering: {{}}
+
 amrfinder:
   db: /db/amrfinder/by_version/latest
   species: {amrfinder_species}

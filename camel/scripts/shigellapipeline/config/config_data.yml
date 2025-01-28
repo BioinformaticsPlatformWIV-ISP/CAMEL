@@ -59,6 +59,16 @@ assembly:
     cov_cutoff: 10
   min_contig_length: 1000
 
+variant_calling:
+  ploidy: 1
+  report_include_bam: {export_bam}
+  reference:
+    path: /db/refgenomes/Shigella_sonnei/GCA_000092525.1.fasta
+    name: <i>Shigella sonnei</i> Ss046 (CP000038.1)
+    url: https://www.ncbi.nlm.nih.gov/nuccore/CP000038.1
+
+variant_filtering: {{}}
+
 ############################
 # Gene detection databases #
 ############################

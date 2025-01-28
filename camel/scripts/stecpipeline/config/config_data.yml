@@ -41,6 +41,16 @@ assembly:
     cov_cutoff: 10
   min_contig_length: 1000
 
+variant_calling:
+  ploidy: 1
+  report_include_bam: {export_bam}
+  reference:
+    path: /db/refgenomes/Escherichia_coli/NC_002695.2.fasta
+    name: <i>Escherichia coli</i> O157:H7 (NC_002695.2)
+    url: https://www.ncbi.nlm.nih.gov/nuccore/NC_002695.2
+
+variant_filtering: {{}}
+
 quality_checks:
   expected_gc_content: 50.5
   typing_scheme: {qc_typing_scheme}
