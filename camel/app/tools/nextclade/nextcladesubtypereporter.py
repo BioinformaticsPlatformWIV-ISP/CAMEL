@@ -1,5 +1,3 @@
-import json
-
 import pandas as pd
 import yaml
 
@@ -54,6 +52,7 @@ class NextcladeSubTypeReporter(Tool):
             if len(data_in) == 0:
                 section.add_alert('Subtype determination failed', 'error')
                 subtype = None
+                self.informs['nextclade_dbs'] = {}
             else:
                 # Extract the best matching subtype
                 data_in.sort_values(by='identity', inplace=True, ascending=False)
