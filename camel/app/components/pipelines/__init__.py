@@ -1,11 +1,10 @@
 from pathlib import Path
-from typing import Union
 
 
-def absolute_path_by_pathlib(relative_path: Union[str, Path]) -> Path:
+def absolute_path_by_pathlib(path: str) -> Path:
     """
     Takes a relative path and returns the absolute path.
-    :param relative_path: relative path
-    :return: absolute path
+    :param path: Relative or absolute path
+    :return: The resolved absolute Path object
     """
-    return Path(relative_path).absolute()
+    return Path(path).expanduser().resolve()
