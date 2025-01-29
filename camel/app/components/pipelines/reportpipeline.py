@@ -125,7 +125,7 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         # FASTQ SE input (== nanopore)
         elif self._args.input_type == 'ont':
             nb_reads = FastqUtils.count_reads(self._args.fastq_se)
-            logger.info(f'SE FASTQ input is valid: {nb_reads} reads')
+            logger.info(f'SE FASTQ input is valid: {nb_reads:,} reads')
             logger.info(f'SE FASTQ hash: {FileUtils.hash_file(self._args.fastq_se)}')
         else:
             logger.debug(f"FASTQ checking not implemented yet for input type '{self._args.input_type}'")
