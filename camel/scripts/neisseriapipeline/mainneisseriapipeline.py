@@ -26,7 +26,7 @@ class MainNeisseriaPipeline(ReportPipeline):
         Initializes the main class.
         :param args: Arguments (optional)
         """
-        super().__init__('Neisseria pipeline', '1.3', SNAKEFILE_MAIN, args)
+        super().__init__('Neisseria pipeline', '1.4', SNAKEFILE_MAIN, args)
 
     @property
     def title(self) -> str:

@@ -91,7 +91,7 @@ rule typing_async:
         detection_method = lambda wildcards: wildcards.detection_method,
         locus_type = lambda wildcards: wildcards.locus_type,
         blastn_task = lambda wildcards: config['sequence_typing'][wildcards.scheme].get('blastn_task', 'megablast'),
-        read_type = 'PE' if config.get('read_type', 'illumina') == 'illumina' else 'SE'
+        read_type = 'PE' if config.get('input_type', 'illumina') == 'illumina' else 'SE'
     threads: max(16, workflow.cores * 0.75)
     run:
         from camel.app.tools.pipelines.sequence_typing.typeasync import TypeAsync
