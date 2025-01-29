@@ -37,15 +37,15 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         BasePipeline.add_common_arguments(argument_parser)
 
         # Output
-        argument_parser.add_argument('--output-dir', type=absolute_path_by_pathlib,
-                                     default=Path(Path.cwd(), 'out'))
-        argument_parser.add_argument('--output-html', type=absolute_path_by_pathlib,
-                                     default=Path(Path.cwd(), 'out', 'report.html'))
-        argument_parser.add_argument('--output-tsv', help="Output file for the summary",
-                                     type=absolute_path_by_pathlib,
-                                     default=Path(Path.cwd(), 'out', 'report.tsv'))
-        argument_parser.add_argument('--output-fasta', type=absolute_path_by_pathlib,
-                                     help='output path for assembled contigs')
+        argument_parser.add_argument(
+            '--output-dir', type=absolute_path_by_pathlib, default=Path(Path.cwd(), 'out'))
+        argument_parser.add_argument(
+            '--output-html', type=absolute_path_by_pathlib, default=Path(Path.cwd(), 'out', 'report.html'))
+        argument_parser.add_argument(
+            '--output-tsv', help="Output file for the summary", type=absolute_path_by_pathlib,
+            default=Path(Path.cwd(), 'out', 'report.tsv'))
+        argument_parser.add_argument(
+            '--output-fasta', type=absolute_path_by_pathlib, help='output path for assembled contigs')
 
         # Options
         argument_parser.add_argument(
@@ -70,7 +70,7 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         # Add common entries
         config_data = super().get_template_data(dict_input)
 
-        # Add report specific entries
+        # Add report-specific entries
         mainscriptutils.dict_merge(config_data, {
             'output_dir': str(self._args.output_dir),
             'output_report': str(self._args.output_html),
