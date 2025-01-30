@@ -12,12 +12,12 @@ from camel.scripts.salmonellapipeline import SNAKEFILE_MAIN, CONFIG_DATA
 
 class MainSalmonellaPipeline(ReportPipeline):
     """
-    Main class to run the Listeria pipeline.
+    Main class to run the Salmonella pipeline.
     """
 
     CUSTOM_ANALYSES = [
         'kraken2', 'confindr', 'mlst', 'cgmlst', 'rmlst', 'resfinder4', 'serotype', 'vfdb_core', 'spifinder',
-        'mykrobe', 'abritamr', 'mob_suite', 'human_read_scrubbing']
+        'mykrobe', 'abritamr', 'mob_suite', 'human_read_scrubbing', 'variant_calling']
 
     def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """

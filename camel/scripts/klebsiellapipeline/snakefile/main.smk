@@ -1,8 +1,8 @@
 from pathlib import Path
 
-from camel.resources.snakefile import trimming_illumina, gene_detection, trimming, \
+from camel.resources.snakefile import trimming_illumina, gene_detection, trimming, variant_calling, variant_filtering, \
     contamination_check_kraken, quality_checks, sequence_typing, downsampling, amrfinder, mobsuite, quast, confindr, \
-    core, trimming_ont, assembly, human_read_scrubbing, resfinder4, bacmet
+    core, trimming_ont, assembly, human_read_scrubbing, resfinder4, bacmet, read_simulation
 from camel.scripts.klebsiellapipeline.snakefile import kleborate
 
 #######################
@@ -10,6 +10,7 @@ from camel.scripts.klebsiellapipeline.snakefile import kleborate
 #######################
 include: core.SNAKEFILE_CORE
 include: human_read_scrubbing.SNAKEFILE_SCRUBBING
+include: read_simulation.SNAKEFILE_READ_SIMULATION
 include: downsampling.SNAKEFILE_DOWNSAMPLING
 include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
 include: trimming_ont.SNAKEFILE_TRIMMING_ONT
@@ -18,6 +19,8 @@ include: quast.SNAKEFILE_QUAST
 include: contamination_check_kraken.SNAKEFILE_CONTAMINATION_CHECK_KRAKEN
 include: confindr.SNAKEFILE_CONFINDR
 include: quality_checks.SNAKEFILE_QUALITY_CHECKS
+include: variant_calling.SNAKEFILE_VARIANT_CALLING
+include: variant_filtering.SNAKEFILE_VARIANT_FILTERING
 include: gene_detection.SNAKEFILE_GENE_DETECTION
 include: sequence_typing.SNAKEFILE_SEQUENCE_TYPING
 include: amrfinder.SNAKEFILE_AMRFINDER
@@ -53,6 +56,8 @@ rule report_command_section:
         INFORMS_confindr = confindr.get_command_informs(config),
         # INFORMS_mapping = quality_checks.get_mapping_rate_informs(config),
         # INFORMS_depth = quality_checks.get_depth_informs(config),
+        INFORMS_variant_calling_all = variant_calling.get_command_informs(config) if 'variant_calling' in config['analyses'] else [],
+        INFORMS_variant_filtering_all = Path(config['working_dir']) / variant_filtering.OUTPUT_VARIANT_FILTERING_INFORMS_ALL if 'variant_calling' in config['analyses'] else [],
         INFORMS_amrfnder = Path(config['working_dir']) / amrfinder.OUTPUT_AMRFINDER_INFORMS if 'amrfinder' in config['analyses'] else [],
         INFORMS_resfinder4 = Path(config['working_dir']) / resfinder4.OUTPUT_RESFINDER4_INFORMS if 'resfinder4' in config['analyses'] else [],
         INFORMS_mob_suite = Path(config['working_dir']) / mobsuite.OUTPUT_MOB_SUITE_INFORMS  if 'mob_suite' in config['analyses'] else [],
@@ -81,6 +86,7 @@ rule report_combine_all:
         report_confindr = confindr.get_report(config),
         report_adv_qc = Path(config['working_dir']) / str(quality_checks.OUTPUT_QUALITY_CHECKS_REPORT).format(
             input_type=config['input_type']),
+        report_variant = variant_calling.get_reports(config) if 'variant_calling' in config['analyses'] else [],
         # Species identification
         report_rmlst = sequence_typing.get_sequence_typing_report('rmlst', config),
         # AMR detection
@@ -139,8 +145,10 @@ rule report_combine_all:
         report_structure.append(('Assembly', 'assembly', [Path(input.report_quast)]))
         ReportPipeline.add_content_contamination_check(
             report_structure,params.input_type,input.reports_contamination, input.report_confindr)
+        report_structure.append(('Advanced QC', 'adv_qc', [Path(input.report_adv_qc)]))
+        if 'variant_calling' in config['analyses']:
+            report_structure.append(('Variant calling', 'variant', [Path(input.report_variant)]))
         report_structure.extend([
-            ('Advanced QC', 'adv_qc', [Path(input.report_adv_qc)]),
             ('Species identification', 'species', [Path(input.report_rmlst)]),
             ('AMR detection', 'amr', [Path(input.report_amrfinder), Path(input.report_resfinder4)]),
             ('Virulence detection', 'virulence', [Path(x) for x in (input.report_vfdb_core,)]),
@@ -168,6 +176,7 @@ rule summary_combine_all:
         Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY,
         contamination_check_kraken.get_summaries(config),
         confindr.get_summary(config),
+        variant_calling.get_summaries(config) if 'variant_calling' in config['analyses'] else [],
         # AMR detection
         Path(config['working_dir']) / amrfinder.OUTPUT_AMRFINDER_SUMMARY if 'amrfinder' in config['analyses'] else [],
         Path(config['working_dir']) / resfinder4.OUTPUT_RESFINDER4_SUMMARY if 'resfinder4' in config['analyses'] else [],

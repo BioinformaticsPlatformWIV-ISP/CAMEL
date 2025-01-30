@@ -16,7 +16,7 @@ def get_report(config) -> Path:
     :param config: Snakemake configuration
     :return: Path to report
     """
-    if ('confindr' not in config['analyses']) or (config['input_type'] not in ['illumina', 'hybrid']):
+    if ('confindr' not in config['analyses']) or (config['input_type'] not in ['illumina', 'hybrid', 'ont']):
         return Path(config['working_dir'], OUTPUT_CONFINDR_REPORT_EMPTY)
     return Path(config['working_dir'], OUTPUT_CONFINDR_REPORT)
 
@@ -27,7 +27,7 @@ def get_command_informs(config) -> List[Path]:
     :param config: Snakemake configuration
     :return: Path to informs IO object
     """
-    if ('confindr' not in config['analyses']) or (config['input_type'] not in ['illumina', 'hybrid']):
+    if ('confindr' not in config['analyses']) or (config['input_type'] not in ['illumina', 'hybrid', 'ont']):
         return []
     return [Path(config['working_dir'], OUTPUT_CONFINDR_INFORMS)]
 
@@ -38,6 +38,6 @@ def get_summary(config) -> List[Path]:
     :param config: Snakemake configuration
     :return: Path to summary TSV
     """
-    if ('confindr' not in config['analyses']) or (config['input_type'] not in ['illumina', 'hybrid']):
+    if ('confindr' not in config['analyses']) or (config['input_type'] not in ['illumina', 'hybrid', 'ont']):
         return []
     return [Path(config['working_dir'], OUTPUT_CONFINDR_SUMMARY)]

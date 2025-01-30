@@ -93,8 +93,17 @@ class AMRReporter(Tool):
         self.__add_antibiotics_table()
 
         # Add tables with mutations
-        self.__add_mutations_table('filtered', [m for m in self._mutations if m['passes_filt'] is True])
-        self.__add_mutations_table('unfiltered', [m for m in self._mutations if m['passes_filt'] is False])
+        self.__add_mutations_table(
+            'filtered', [m for m in self._mutations if m['passes_filt'] is True and m['lofreq'] is False],
+            header='Mutations in resistance regions (filtered)')
+        self.__add_mutations_table(
+            'unfiltered', [m for m in self._mutations if m['passes_filt'] is False and m['lofreq'] is False],
+            header='Mutations in resistance regions (unfiltered)')
+
+        # Add table with low frequency mutations
+        self.__add_mutations_table(
+            'lofreq', [m for m in self._mutations if m['lofreq'] is True],
+            header='Additional mutations in resistance regions detected by LoFreq')
 
         # Add visualization and DB info
         self.__add_visualization(self._tool_inputs['PNG'][0].path)
@@ -184,16 +193,16 @@ class AMRReporter(Tool):
             table_data.append([mutations[idx]['name_full'], ab, comment])
         div.add_table(table_data, ['Mutation', 'Antibiotic', 'Note'], [('class', 'data')])
 
-
-    def __add_mutations_table(self, suffix: str, mutations: List[Dict[str, Any]]) -> None:
+    def __add_mutations_table(self, suffix: str, mutations: List[Dict[str, Any]], header: str) -> None:
         """
         Adds a mutation table.
         :param mutations: Mutation data
         :param suffix: Suffix for the table name (e.g. 'filtered')
+        :param header: Header for the table
         :return: None
         """
         div = HtmlElement('div', attributes=[('class', 'border_bottom')])
-        div.add_header(f'Mutations in resistance regions ({suffix})', 4)
+        div.add_header(header, 4)
 
         table_data = []
         for row in mutations:
@@ -213,7 +222,7 @@ class AMRReporter(Tool):
                 amrutils.shorten_nucleotide_str(row['alt']),
                 row['name'],
                 ', '.join([str(x) for x in self._actg_counts_by_pos.get(row['position'], ['-'])]) if
-                    row['variant_type'] == 'snp' else 'n/a',
+                row['variant_type'] == 'snp' else 'n/a',
                 ab_str,
                 conf_str
             ])

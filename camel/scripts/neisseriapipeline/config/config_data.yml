@@ -50,6 +50,16 @@ assembly:
     cov_cutoff: 'off'
   min_contig_length: 0
 
+variant_calling:
+  ploidy: 1
+  report_include_bam: {export_bam}
+  reference:
+    path: /db/refgenomes/Neisseria_meningitidis/NZ_CP021520.1.fasta
+    name: <i>Neisseria meningitidis</i> (NZ_CP021520.1)
+    url: https://www.ncbi.nlm.nih.gov/nuccore/NZ_CP021520.1
+
+variant_filtering: {{}}
+
 confindr:
   db: /db/confindr/0.8.1
 

@@ -21,7 +21,7 @@ class MainBacillusPipeline(ReportPipeline):
 
     CUSTOM_ANALYSES = {
         'common': ['rmlst', 'plasmidfinder', 'mobsuite', 'vfdb_core', 'amrfinder', 'kraken2', 'confindr',
-                   'human_read_scrubbing'],
+                   'human_read_scrubbing', 'variant_calling'],
         'cereus': ['btyper', 'mlst_cereus', 'cgmlst_cereus'],
         'subtilis': ['fastani', 'mlst_subtilis', 'gmo']
     }
@@ -31,13 +31,19 @@ class MainBacillusPipeline(ReportPipeline):
             'gc_content': 35,
             'genome_size': 5_800_000,
             'full_name': 'Bacillus cereus',
-            'ref_species': 'NZ_CP017060.1'
+            'reference_name': 'NZ_CP017060.1',
+            'quast_fasta': '/db/refgenomes/Bacillus/NZ_CP017060.1.fasta',
+            'quast_gff': '/db/refgenomes/Bacillus/NZ_CP017060.1.gff3',
+            'reference_url': 'https://www.ncbi.nlm.nih.gov/nuccore/NZ_CP017060.1'
         },
         'subtilis': {
             'gc_content': 43,
             'genome_size': 4_200_000,
             'full_name': 'Bacillus subtilis',
-            'ref_species': 'NC_000964.3'
+            'reference_name': 'NC_000964.3',
+            'quast_fasta': '/db/refgenomes/Bacillus/NC_000964.3.fasta',
+            'quast_gff': '/db/refgenomes/Bacillus/NC_000964.3.gff3',
+            'reference_url': 'https://www.ncbi.nlm.nih.gov/nuccore/NC_000964.3'
         }
     }
 
@@ -108,10 +114,10 @@ class MainBacillusPipeline(ReportPipeline):
                 expected_gc_content=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['gc_content'],
                 genome_size=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['genome_size'],
                 wildcards_assembly='long_read_assembly',
-                ref_fasta=Path(Camel.get_instance().config['db_root'], 'refgenomes', 'Bacillus',
-                               f'{MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]["ref_species"]}.fasta'),
-                ref_gff=Path(Camel.get_instance().config['db_root'], 'refgenomes', 'Bacillus',
-                             f'{MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]["ref_species"]}.gff3'),
+                quast_fasta=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species].get('quast_fasta', 'null'),
+                quast_gff=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species].get('quast_gff', 'null'),
+                reference_name=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species].get('reference_name', 'null'),
+                reference_url=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species].get('reference_url', 'null'),
             ), Loader=yaml.SafeLoader))
 
         # Nanopore settings

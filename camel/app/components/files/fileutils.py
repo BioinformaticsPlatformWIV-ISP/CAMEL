@@ -24,14 +24,12 @@ class FileUtils(object):
         :return: String of the hash with alphanumeric symbols
         """
         if not file_path.is_file():
-            raise IOError(f"'{file_path}' is not a file")
+            raise FileNotFoundError(f"'{file_path}' is not a file")
         hasher = hashlib.sha256()
         with file_path.open('rb') as file_to_hash:
-            buf = file_to_hash.read(block_size)
-            while len(buf) > 0:
-                hasher.update(buf)
-                buf = file_to_hash.read(block_size)
-            return hasher.hexdigest()
+            for chunk in iter(lambda: file_to_hash.read(block_size), b''):
+                hasher.update(chunk)
+        return hasher.hexdigest()
 
     @staticmethod
     def get_all_files(directory_path: Path) -> List[Path]:

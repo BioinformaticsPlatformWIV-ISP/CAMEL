@@ -41,6 +41,16 @@ assembly:
     cov_cutoff: 10
   min_contig_length: 1000
 
+variant_calling:
+  ploidy: 1
+  report_include_bam: {export_bam}
+  reference:
+    path: /db/refgenomes/Listeria_monocytogenes/NC_003210.1.fasta
+    name: <i>Listeria monocytogenes</i> (NC_003210.1)
+    url: https://www.ncbi.nlm.nih.gov/nuccore/NC_003210.1
+
+variant_filtering: {{}}
+
 confindr:
   db: /db/confindr/0.8.1
 

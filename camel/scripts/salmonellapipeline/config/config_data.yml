@@ -56,6 +56,16 @@ assembly:
     cov_cutoff: 10
   min_contig_length: 1000
 
+variant_calling:
+  ploidy: 1
+  report_include_bam: {export_bam}
+  reference:
+    path: /db/refgenomes/Salmonella_enterica/NC_003197.2.fasta
+    name: <i>Salmonella enterica subsp. enterica</i> serovar Typhimurium str. LT2 (NC_003197.2)
+    url: https://www.ncbi.nlm.nih.gov/nuccore/NC_003197.2
+
+variant_filtering: {{}}
+
 amrfinder:
   db: /db/amrfinder/by_version/latest
   species: Salmonella enterica

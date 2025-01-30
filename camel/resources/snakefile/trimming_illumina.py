@@ -4,7 +4,7 @@ from typing import Dict
 FOLDER_TRIMMING_ILLUMINA = Path('trimming_illumina')
 SNAKEFILE_TRIMMING_ILLUMINA = f'{Path(__file__).parent / Path(__file__).stem}.smk'
 
-INPUT_TRIMMOMATIC_FASTQ = FOLDER_TRIMMING_ILLUMINA / 'input' / 'fastq.io'
+INPUT_TRIMMING_FASTQ = FOLDER_TRIMMING_ILLUMINA / 'input' / 'fastq.io'
 
 # Report and summary
 OUTPUT_TRIMMING_ILLUMINA_REPORT = FOLDER_TRIMMING_ILLUMINA / 'report' / 'html.io'

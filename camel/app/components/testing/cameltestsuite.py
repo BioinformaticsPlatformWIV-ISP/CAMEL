@@ -76,7 +76,7 @@ class CamelTestSuite(unittest.TestCase):
             nb_files, len(tool.tool_outputs[key]),
             f"Unexpected number of tools outputs found: {len(tool.tool_outputs[key])}, expected {nb_files}")
         for i in range(0, nb_files):
-            output_file_path = tool.tool_outputs[key][0].path
+            output_file_path = tool.tool_outputs[key][i].path
             self.assertTrue(output_file_path.exists(), f"Output file '{key}' (index: {i}) does not exist")
             self.assertGreater(output_file_path.stat().st_size, 0, f"Output file '{key}' (index: {i}) is empty")
 
