@@ -110,6 +110,7 @@ class MainEnterococcusPipeline(ReportPipeline):
                 reference_name=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species].get('reference_name', 'null'),
                 reference_url=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species].get('reference_url', 'null'),
                 resfinder4_species=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species]['resfinder4_species'],
+                export_bam='true' if self._args.report_include_bam else 'false',
             ), Loader=yaml.SafeLoader))
 
         # Additional MLST scheme for E. faecium

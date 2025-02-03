@@ -61,7 +61,7 @@ variant_calling:
     name: {reference_name}
     url: {reference_url}
 
-variant_filtering: {{}}
+variant_filtering: {}
 
 amrfinder:
   db: /db/amrfinder/by_version/latest
