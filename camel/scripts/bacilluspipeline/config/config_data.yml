@@ -60,8 +60,6 @@ variant_calling:
     name: {reference_name}
     url: {reference_url}
 
-variant_filtering: {}
-
 confindr:
   db: /db/confindr/0.8.1
 
