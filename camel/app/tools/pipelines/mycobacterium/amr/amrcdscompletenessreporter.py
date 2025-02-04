@@ -45,20 +45,28 @@ class AMRCDSCompletenessReporter(Tool):
         for seq_id in mapping.keys():
             locus = mapping.get(seq_id)
             if locus in hit_by_locus:
-                continue
-            missing_loci.append((f'<i>{locus}</i>', mapping.get_metadata(seq_id, 'antibiotics')))
+                if hit_by_locus[locus].subject_coverage >= 90:
+                    continue
+                else:
+                    missing_loci.append((f'<i>{locus}</i>', mapping.get_metadata(
+                        seq_id, 'antibiotics', f'{hit_by_locus[locus].subject_coverage}%')))
+                    self._informs['missing_loci'].append(locus)
+            missing_loci.append((f'<i>{locus}</i>', mapping.get_metadata(seq_id, 'antibiotics'), f'<20%'))
             self._informs['missing_loci'].append(locus)
 
         # Create output report section
         section = HtmlReportSection('CDS completeness')
         nb_targets = len(mapping)
         section.add_paragraph(
-            f'{nb_targets - len(missing_loci)}/{nb_targets} coding regions in the resistance regions BED file are covered at >90% with >90% identity (screening with KMA).')
+            f'{nb_targets - len(missing_loci)}/{nb_targets} coding regions '
+            f'in the resistance regions BED file are covered at >90% with >90% identity (screening with KMA).')
 
         # Add table with missing loci
         if len(missing_loci) > 0:
             section.add_header('Missing loci', 4)
-            section.add_table([l for l in sorted(missing_loci)], ['Locus', 'Antibiotic(s)'], [('class', 'data')])
+            section.add_table([locus for locus in sorted(missing_loci)],
+                              ['Locus', 'Antibiotic(s)', 'Coverage'],
+                              [('class', 'data')])
             section.add_paragraph(
                 'These CDSs are (partially) missing, and this must be taken into account when interpreting the AMR results.')
 
