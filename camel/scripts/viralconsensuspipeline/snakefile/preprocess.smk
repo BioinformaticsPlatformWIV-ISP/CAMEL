@@ -303,7 +303,7 @@ rule preprocess_create_summary_out:
         rows_out = []
         for row in data_in.to_dict('records'):
             rows_out.extend([
-                [f"preprocess_{row['segment']}_{k}", row['depth_median_pre']]
+                [f"preprocess_{row['segment']}_{k}", row[k]]
             for k in ('depth_median_pre', 'depth_median_post', 'covered_rate_pre', 'covered_rate_post')])
 
         # Save in TSV format
