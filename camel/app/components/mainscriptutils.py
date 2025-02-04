@@ -1,17 +1,18 @@
-"""
-Contains helper function for main scripts with a report output.
-"""
 import argparse
-from collections.abc import Mapping
 import datetime
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Optional, List, Any, Dict
 
+from Bio import SeqIO
+
+from camel.app.components.files.fastautils import FastaUtils
 from camel.app.components.files.fastqutils import FastqUtils
+from camel.app.components.files.fileutils import FileUtils
 from camel.app.components.galaxy.galaxyutils import GalaxyUtils
 from camel.app.components.html.htmlreport import HtmlReport
 from camel.app.components.html.htmlreportsection import HtmlReportSection
-from camel.app.components.pipelines import absolute_path_by_pathlib
+from camel.app.error.invalidinputerror import InvalidInputError
 from camel.app.loggers import logger
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.resources import CSS_STYLE
@@ -25,12 +26,9 @@ def add_common_arguments(argument_parser: argparse.ArgumentParser) -> None:
     :return: None
     """
     argument_parser.add_argument('--sample-name', type=str)
-    argument_parser.add_argument('--output-dir', type=absolute_path_by_pathlib,
-                                 default=Path(Path.cwd(), 'out'))
-    argument_parser.add_argument('--working-dir', type=absolute_path_by_pathlib,
-                                 default=Path(Path.cwd(), 'working'))
-    argument_parser.add_argument('--output-html', type=absolute_path_by_pathlib,
-                                 default=Path(Path.cwd(), 'out', 'report.html'))
+    argument_parser.add_argument('--output-dir', required=True, type=Path)
+    argument_parser.add_argument('--working-dir', default=Path.cwd(), type=Path)
+    argument_parser.add_argument('--output-html', required=True, type=Path)
     argument_parser.add_argument('--threads', default=8, type=int)
 
 
@@ -42,14 +40,14 @@ def add_input_files_arguments(argument_parser: argparse.ArgumentParser, fasta_in
     :return: None
     """
     if fasta_input_enabled:
-        argument_parser.add_argument('--fasta', help="Input FASTA file", type=absolute_path_by_pathlib)
+        argument_parser.add_argument('--fasta', help="Input FASTA file", type=Path)
         argument_parser.add_argument('--fasta-name', help="Input FASTA file name", type=str)
-    argument_parser.add_argument('--fastq-pe', help="Input PE FASTQ files", nargs=2, type=absolute_path_by_pathlib)
+    argument_parser.add_argument('--fastq-pe', help="Input PE FASTQ files", nargs=2, type=Path)
     argument_parser.add_argument('--fastq-pe-names', help="Input PE FASTQ file names", nargs=2, type=Path)
-    argument_parser.add_argument('--fastq-se', help="Input SE FASTQ file", type=absolute_path_by_pathlib)
+    argument_parser.add_argument('--fastq-se', help="Input SE FASTQ file", type=Path)
     argument_parser.add_argument('--fastq-se-name', help="Input SE FASTQ file name")
     argument_parser.add_argument(
-        '--input-type', help='Read type', choices=['illumina', 'ont'], default='illumina')
+        '--input-type', help='Input type', choices=['illumina', 'ont', 'fasta'], default='illumina')
     argument_parser.add_argument('--trim-reads', help="Perform read trimming", action='store_true')
     argument_parser.add_argument(
         '--adapter', choices=['NexteraPE', 'TruSeq2', 'TruSeq3'],
@@ -64,11 +62,16 @@ def add_assembly_arguments(argument_parser: argparse.ArgumentParser) -> None:
     :param argument_parser: Argument parser
     :return: None
     """
+    # SPAdes
     argument_parser.add_argument('--assembly-kmers', help="Kmers to use for assembly", type=str)
     argument_parser.add_argument(
         '--assembly-cov-cutoff', help="Minimal k-mer coverage for assembled contigs", type=int)
+    # Flye
     argument_parser.add_argument(
-        '--assembly-min-contig-length', help="Minimal length for assembled contigs", type=int)
+        '--assembly-flye-meta', help="Enable the --meta option for Flye", action='store_true')
+    # General
+    argument_parser.add_argument(
+        '--assembly-min-contig-length', help="Minimal length for assembled contigs", type=int, default=1000)
 
 
 def determine_input_file_str(args: argparse.Namespace) -> str:
@@ -108,6 +111,7 @@ def generate_analysis_info_section(
     data = [
         ('Analysis date:', datetime.datetime.now().strftime(SnakePipelineUtils.DATE_FORMAT)),
         ('Input file(s):', input_files),
+        ('Input type:', args.input_type),
     ]
     if ('read_type' in args) and (args.read_type is not None):
         read_type = args.read_type if ('fasta' in args) and (args.fasta is None) else 'NA'
@@ -191,3 +195,47 @@ def dict_merge(dct: Dict[str, Any], merge_dct) -> None:
             dict_merge(dct[k], merge_dct[k])
         else:
             dct[k] = merge_dct[k]
+
+
+def validate_input_files(args: argparse.Namespace) -> None:
+    """
+    Checks if the provided input files are valid.
+    :param args: Command line arguments
+    :return: None
+    """
+    logger.info(f"Checking input files (type: '{args.input_type}')")
+
+    # FASTA input
+    if args.input_type in ('fasta', 'fasta_with_vcf'):
+        with open(args.fasta) as handle:
+            try:
+                seqs = list(SeqIO.parse(handle, 'fasta'))
+            except BaseException as err:
+                raise InvalidInputError(f'Invalid FASTA input: {err}')
+        if FastqUtils.is_fastq(args.fasta):
+            raise InvalidInputError('Expected a FASTA file, but a FASTQ file was detected')
+        if FastaUtils.has_duplicates(args.fasta):
+            raise InvalidInputError('The input FASTA file contains duplicate sequence IDs.')
+        if args.detection_method != 'blast':
+            raise InvalidInputError('For FASTA input, only BLAST-based detection is available.')
+        logger.info(f'Valid FASTA file ({len(seqs):,} sequences)')
+
+    # FASTQ PE inputs
+    elif args.input_type in ('illumina', 'hybrid'):
+        nb_reads_fwd = FastqUtils.count_reads(args.fastq_pe[0])
+        nb_reads_rev = FastqUtils.count_reads(args.fastq_pe[1])
+        if not nb_reads_fwd == nb_reads_rev:
+            raise InvalidInputError(
+                f'The number of forward ({nb_reads_fwd:,}) and reverse ({nb_reads_rev:,}) reads should be equal, '
+                'check that the input files provided are complete and correctly paired.')
+        logger.info('FASTQ input is valid')
+        logger.info(f'PE forward FASTQ hash: {FileUtils.hash_file(args.fastq_pe[0])}')
+        logger.info(f'PE reverse FASTQ hash: {FileUtils.hash_file(args.fastq_pe[1])}')
+
+    # FASTQ SE input (== ONT)
+    elif args.input_type == 'ont':
+        nb_reads = FastqUtils.count_reads(args.fastq_se)
+        logger.info(f'SE FASTQ input is valid: {nb_reads} reads')
+        logger.info(f'SE FASTQ hash: {FileUtils.hash_file(args.fastq_se)}')
+    else:
+        logger.debug(f"FASTQ checking not implemented yet for input type '{args.input_type}'")
