@@ -235,7 +235,7 @@ def validate_input_files(args: argparse.Namespace) -> None:
     # FASTQ SE input (== ONT)
     elif args.input_type == 'ont':
         nb_reads = FastqUtils.count_reads(args.fastq_se)
-        logger.info(f'SE FASTQ input is valid: {nb_reads} reads')
+        logger.info(f'SE FASTQ input is valid: {nb_reads:,} reads')
         logger.info(f'SE FASTQ hash: {FileUtils.hash_file(args.fastq_se)}')
     else:
         logger.debug(f"FASTQ checking not implemented yet for input type '{args.input_type}'")
