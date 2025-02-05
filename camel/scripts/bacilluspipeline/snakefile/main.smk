@@ -319,6 +319,7 @@ rule summary_combine_all:
         Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY,
         contamination_check_kraken.get_summaries(config),
         confindr.get_summary(config),
+        variant_calling.get_summaries(config) if 'variant_calling' in config['analyses'] else [],
         straingst.get_summaries(config),
         Path(config['working_dir']) / btyper.OUTPUT_BTYPER_SUMMARY if 'btyper' in config['analyses'] else [],
         Path(config['working_dir']) / amrfinder.OUTPUT_AMRFINDER_SUMMARY if 'amrfinder' in config['analyses'] else [],
