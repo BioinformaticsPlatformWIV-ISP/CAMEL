@@ -8,9 +8,9 @@ from camel.app.camel import Camel
 from camel.app.components import mainscriptutils
 from camel.app.components.files.fastqutils import FastqUtils
 from camel.app.components.filesystemhelper import FileSystemHelper
+from camel.app.components.pipelines import absolute_path_by_pathlib
 from camel.app.error.snakemakeexecutionerror import SnakemakeExecutionError
-from camel.app.loggers import fileloggerutils
-from camel.app.loggers import logger
+from camel.app.loggers import fileloggerutils, logger
 from camel.app.pipeline.pipeline import Pipeline
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 
@@ -53,14 +53,18 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         :return: None
         """
         # Input
-        argument_parser.add_argument('--fasta', type=Path, help="Input FASTA file")
-        argument_parser.add_argument('--vcf-unfiltered', type=Path, help="Input VCF file (only in combination with FASTA file)")
+        argument_parser.add_argument(
+            '--fasta', type=absolute_path_by_pathlib, help="Input FASTA file")
+        argument_parser.add_argument(
+            '--vcf-unfiltered', type=absolute_path_by_pathlib, help="Input VCF file (only in combination with FASTA file)")
         argument_parser.add_argument('--fasta-name', type=str, help="Input FASTA file name (for Galaxy)")
         argument_parser.add_argument('--sample-name', type=str)
-        argument_parser.add_argument('--fastq-pe', nargs=2, type=Path, help="Input PE FASTQ files")
+        argument_parser.add_argument(
+            '--fastq-pe', nargs=2, type=absolute_path_by_pathlib, help="Input PE FASTQ files")
         argument_parser.add_argument(
             '--fastq-pe-names', nargs=2, help="Input PE FASTQ filenames (for Galaxy)")
-        argument_parser.add_argument('--fastq-se', type=Path, help="Input SE FASTQ file")
+        argument_parser.add_argument(
+            '--fastq-se', type=absolute_path_by_pathlib, help="Input SE FASTQ file")
         argument_parser.add_argument(
             '--fastq-se-name', help="Input SE FASTQ filename (for Galaxy)")
         argument_parser.add_argument(
@@ -68,7 +72,8 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
             choices=['illumina', 'iontorrent', 'ont', 'hybrid', 'fasta', 'fasta_with_vcf'], default='illumina')
 
         # Output
-        argument_parser.add_argument('--working-dir', type=Path, default=Path.cwd())
+        argument_parser.add_argument(
+            '--working-dir', type=absolute_path_by_pathlib, default=Path(Path.cwd(), 'working'))
 
         # Options
         argument_parser.add_argument('--threads', default=8, type=int)

@@ -72,3 +72,9 @@ class MainMockPipeline(ReportPipeline):
                     coverage_max=self._args.cov_max
                 )))
         return Path(SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir))
+
+
+if __name__ == '__main__':
+    Camel.get_instance()
+    main = MainMockPipeline()
+    main.run()
