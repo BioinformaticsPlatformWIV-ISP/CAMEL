@@ -84,13 +84,20 @@ class InputTypeHelperBase(object, metaclass=abc.ABCMeta):
         :param args: Command-line arguments
         :return: None
         """
+        options = {}
+
+        # Coverage cut-off
         if args.assembly_cov_cutoff is None:
-            cov_cutoff = 'off'
+            options['cov_cutoff'] = 'off'
         elif args.assembly_cov_cutoff == 0:
-            cov_cutoff = 'auto'
+            options['cov_cutoff'] = 'auto'
         else:
-            cov_cutoff = str(args.assembly_cov_cutoff)
-        return {'cov_cutoff': cov_cutoff}
+            options['cov_cutoff'] = str(args.assembly_cov_cutoff)
+
+        # Kmers
+        if args.assembly_kmers is not None:
+            options['kmers'] = args.assembly_kmers
+        return options
 
     def __get_assembly_ont_args(self, args: argparse.Namespace) -> dict[str, Any]:
         """
@@ -114,7 +121,7 @@ class InputTypeHelperBase(object, metaclass=abc.ABCMeta):
         logger.info("Starting de-novo assembly")
         assembly = AssemblyWrapper(self._working_dir / 'assembly', assembly_input.read_type)
 
-        # Cov-cutoff parameter
+        # Additional assembler options
         if assembly_input.read_type == 'illumina':
             assembler_opts = self.__get_assembly_illumina_args(args)
         elif assembly_input.read_type == 'ont':
