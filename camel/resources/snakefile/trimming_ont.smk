@@ -30,7 +30,6 @@ rule trimming_ont_nanoplot_pre:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(nanoplot, output)
 
-
 rule trimming_ont_seqkit:
     """
     Read trimming using seqkit.

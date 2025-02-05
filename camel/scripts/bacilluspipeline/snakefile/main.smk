@@ -4,8 +4,8 @@ from pathlib import Path
 from camel.app.components.pipelines.reportpipeline import ReportPipeline
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile import core, assembly, downsampling, quast, confindr, trimming, trimming_illumina, \
-    quality_checks, contamination_check_kraken, sequence_typing, amrfinder, trimming_ont, gene_detection, \
-    mobsuite, human_read_scrubbing
+    quality_checks, variant_calling, variant_filtering, contamination_check_kraken, sequence_typing, amrfinder, \
+    trimming_ont, gene_detection, mobsuite, human_read_scrubbing, read_simulation
 from camel.scripts.bacilluspipeline.snakefile import btyper, ani, straingst
 
 #######################
