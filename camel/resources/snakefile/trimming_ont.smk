@@ -31,9 +31,9 @@ rule trimming_ont_nanoplot_pre:
         SnakemakeUtils.dump_tool_outputs(nanoplot, output)
 
 
-rule trimming_ont_filtlong:
+rule trimming_ont_seqkit:
     """
-    Read trimming using filtlong.
+    Read trimming using seqkit.
     """
     input:
         FASTQ = Path(config['working_dir']) / trimming_ont.INPUT_ONT_FASTQ
@@ -43,18 +43,23 @@ rule trimming_ont_filtlong:
     threads: 4
     priority: 1
     params:
-        running_dir = Path(config['working_dir']) / 'trimming_ont' / 'filtlong',
+        running_dir = Path(config['working_dir']) / 'trimming_ont' / 'seqkit',
         sample_name = config.get('sample_name', 'reads'),
-        min_len = config.get('filtlong', {}).get('min_len', 500),
-        min_q = config.get('filtlong', {}).get('min_q', 10)
+        min_length = config.get('read_trimming', {}).get('ont', {}).get('min_length', 500),
+        min_qual = config.get('read_trimming', {}).get('ont', {}).get('min_qual', 7)
     run:
-        from camel.app.tools.filtlong.filtlong import Filtlong
-        filtlong = Filtlong(camel)
-        filtlong.update_parameters(min_length=params.min_len, min_mean_q=params.min_q)
-        SnakemakeUtils.add_pickle_inputs(filtlong, input)
-        step = Step(str(rule), filtlong, camel, params.running_dir)
+        from camel.app.tools.seqkit.seqkitseq import SeqkitSeq
+        seqkit = SeqkitSeq(Camel.get_instance())
+        seqkit.update_parameters(
+            min_length=params.min_length,
+            min_qual=params.min_qual,
+            output_filename=f'{params.sample_name}-filtered.fastq',
+            threads=threads
+        )
+        SnakemakeUtils.add_pickle_inputs(seqkit, input)
+        step = Step(str(rule), seqkit, Camel.get_instance(), params.running_dir)
         step.run_step()
-        SnakemakeUtils.dump_tool_outputs(filtlong, output)
+        SnakemakeUtils.dump_tool_outputs(seqkit, output)
 
 rule trimming_ont_nanoplot_post:
     """
