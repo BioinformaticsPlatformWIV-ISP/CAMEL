@@ -1,0 +1,4 @@
+dependencies: null
+parameters:
+  min_cov: {default: true, mandatory: true, option: null, value: '95'}
+tool_command: null

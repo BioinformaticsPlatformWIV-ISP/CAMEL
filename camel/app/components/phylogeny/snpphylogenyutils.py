@@ -18,6 +18,7 @@ from camel.app.components.html.htmltablecell import HtmlTableCell
 from camel.app.components.phylogeny.megautils import MEGAUtils
 from camel.app.components.phylogeny.newickutils import NewickUtils
 from camel.app.components.workflows.trimmingilluminawrapper import TrimmingIlluminaWrapper
+from camel.app.error.invalidinputerror import InvalidInputError
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.loggers import logger
@@ -29,10 +30,6 @@ from camel.app.tools.snpmatrix.snpmatrixconstructor import SnpMatrixConstructor
 from camel.resources import CSS_STYLE
 from camel.scripts.snpphylogeny import SNAKEFILE_TRIMMING_ALL
 from camel.scripts.snpphylogeny.snakefile.trimming_all import TRIMMING_ALL
-
-
-class InvalidInputError(ValueError):
-    pass
 
 
 @dataclass(frozen=True)

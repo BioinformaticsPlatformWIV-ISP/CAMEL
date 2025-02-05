@@ -82,8 +82,11 @@ class SNPLineageDetector(Tool):
         self._informs['counts_by_lineage'] = counts_by_lineage
         self._informs['detected_lineage_by_level'] = {i: self.__select_best_lineage_for_level(
             counts_by_lineage, i) for i in range(0, 5)}
-        top_defined_lvl = max([k for k, l in self._informs['detected_lineage_by_level'].items() if l is not None])
-        self._informs['detected_lineage'] = self._informs['detected_lineage_by_level'][top_defined_lvl]['lineage']
+        try:
+            top_defined_lvl = max([k for k, l in self._informs['detected_lineage_by_level'].items() if l is not None])
+            self._informs['detected_lineage'] = self._informs['detected_lineage_by_level'][top_defined_lvl]['lineage']
+        except ValueError:
+            self._informs['detected_lineage'] = Lineage('na', 'n/a', 'n/a', 'n/a')
 
         # Get the database version
         self._informs['db_version'] = self.__get_db_version()

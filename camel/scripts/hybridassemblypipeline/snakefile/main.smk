@@ -197,8 +197,8 @@ rule report_command_section:
     input:
         unicycler_commands = Path(config['working_dir']) / 'unicycler' / 'commands.io' if 'unicycler' in config['base_assemblies'] else [],
         flye_commands = assembly.get_command_informs(config),
-        medaka_consensus_commands = [Path(config['working_dir']) / 'polish' / 'long_reads' / name / 'consensus' / 'commands-consensus.io' for name in config['base_assemblies']],
-        medaka_stitch_commands = [Path(config['working_dir']) / 'polish' / 'long_reads' / name / 'stitch' / 'commands-stitch.io' for name in config['base_assemblies']],
+        medaka_inference_commands = [Path(config['working_dir']) / 'polish' / 'long_reads' / name / 'inference' / 'commands-inference.io' for name in config['base_assemblies']],
+        medaka_sequence_commands = [Path(config['working_dir']) / 'polish' / 'long_reads' / name / 'sequence' / 'commands-sequence.io' for name in config['base_assemblies']],
         polypolish_commands = [Path(config['working_dir']) / 'polish' / 'short_reads' / name / 'polypolish' / 'informs.io' for name in config['base_assemblies']],
         polca_commands = [Path(config['working_dir']) / 'polish' / 'short_reads' / name / 'polca' / 'informs.io' for name in config['base_assemblies']],
         quast_commands = [Path(config['working_dir']) / 'qc_hybrid' / name / 'quast' / 'commands.io' for name in config['assembly_steps']],

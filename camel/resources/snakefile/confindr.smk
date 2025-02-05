@@ -35,10 +35,15 @@ rule confindr_run:
         confindr_.update_parameters(rmlst=True, databases=str(path_db))
 
         # Add input files
-        if params.input_type not in ('hybrid', 'illumina'):
-            raise ValueError('ConFindr currently only support Illumina input')
-        fq_in = FastqInput.from_fq_dict(Path(input.IO_FASTQ), 'illumina')
-        confindr_.add_input_files({'FASTQ_PE': fq_in.pe})
+        #if params.input_type not in ('hybrid', 'illumina'):
+        #    raise ValueError('ConFindr currently only support Illumina input')
+        if params.input_type in ('hybrid', 'illumina'):
+            fq_in = FastqInput.from_fq_dict(Path(input.IO_FASTQ), 'illumina')
+            confindr_.add_input_files({'FASTQ_PE': fq_in.pe})
+        else:
+            fq_in = FastqInput.from_fq_dict(Path(input.IO_FASTQ),'ont')
+            confindr_.add_input_files({'FASTQ_SE': fq_in.se})
+            confindr_.update_parameters(data_type='Nanopore',quality_cutoff=12)
 
         # Run the tool
         step = Step(str(rule), confindr_, Camel.get_instance(), params.dir_)
@@ -58,6 +63,7 @@ rule confindr_report:
     run:
         from camel.app.tools.confindr.confindrreporter import ConFindrReporter
         reporter = ConFindrReporter(Camel.get_instance())
+        reporter.update_parameters(input_type=config['input_type'])
         step = Step(str(rule), reporter, Camel.get_instance(), params.dir_)
         SnakemakeUtils.add_pickle_inputs(reporter, input)
         step.run_step()

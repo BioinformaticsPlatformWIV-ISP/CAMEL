@@ -23,7 +23,7 @@ class MainMycobacteriumPipeline(ReportPipeline):
 
     CUSTOM_ANALYSES = [
         'kraken2', 'ncbi_16s', 'csb_rd', 'hsp65', '51snp', 'snpit', 'spoligotyping', 'snp_lineage', 'amr', 'mlst',
-        'cgmlst', 'confindr', 'human_read_scrubbing']
+        'cgmlst', 'rmlst', 'confindr', 'human_read_scrubbing']
 
     def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """

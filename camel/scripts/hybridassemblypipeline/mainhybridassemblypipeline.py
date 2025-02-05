@@ -75,8 +75,9 @@ class MainHybridAssemblyPipeline(BasePipeline):
             'r1041_e82_260bps_fast_g632', 'r1041_e82_260bps_hac_g632', 'r1041_e82_260bps_sup_g632',
             'r1041_e82_400bps_fast_g615', 'r1041_e82_400bps_fast_g632', 'r1041_e82_400bps_hac_g615',
             'r1041_e82_400bps_hac_g632', 'r1041_e82_400bps_sup_g615', 'r104_e81_hac_g5015', 'r104_e81_sup_g5015',
-            'r104_e81_sup_g610', 'r941_min_hac_g507', 'r941_min_high_g360', 'r941_min_sup_g507', 'r941_prom_hac_g507',
-            'r941_prom_high_g360', 'r941_prom_sup_g507'], default='r941_prom_sup_g507')
+            'r104_e81_sup_g610', 'r1041_e82_400bps_sup_v5.0.0', 'r941_min_hac_g507', 'r941_min_high_g360',
+            'r941_min_sup_g507', 'r941_prom_hac_g507', 'r941_prom_high_g360', 'r941_prom_sup_g507'],
+                                     default='r941_prom_sup_g507')
         argument_parser.add_argument('--filtlong-keep-percent', type=int)
 
         # Variant calling

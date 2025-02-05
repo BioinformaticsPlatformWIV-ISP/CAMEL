@@ -4,10 +4,12 @@ PyVCF3
 biopython
 bs4
 humanize
+openpyxl
 pandas
 pydotplus
 pysam
 scipy
 screed
 snakemake
+typing-extensions
 yattag

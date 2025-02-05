@@ -1,8 +1,11 @@
 from pathlib import Path
 from typing import Dict, Any, List
 
+from camel.app.loggers import logger
 from camel.resources.snakefile import assembly_spades, assembly_flye, polish_assembly_short, polish_assembly_long, \
     human_read_scrubbing
+from camel.resources.snakefile.variant_calling import OUTPUT_VARIANT_CALLING_MAPPING_INFORMS, \
+    OUTPUT_VARIANT_CALLING_DEPTH_INFORMS
 
 SNAKEFILE_ASSEMBLY = f'{Path(__file__).parent / Path(__file__).stem}.smk'
 OUTPUT_ASSEMBLY_FASTA = Path('assembly', 'filtering', 'fasta.io')
@@ -56,29 +59,41 @@ def get_command_informs(config: Dict[str, Any]) -> List[Path]:
     raise ValueError(f"Invalid input type: {config['input_type']}")
 
 
-def get_mapping_inform(read_key: str) -> Path:
+def get_mapping_inform(read_key: str, mode: str) -> Path:
     """
     Returns the mapping informs.
     :param read_key: Read key
+    :param mode: Reference mode ('assembly' or 'ref')
     :return: Path to mapping informs
     """
     if read_key == 'fastq_pe':
-        return Path(str(OUTPUT_ASSEMBLY_MAPPING_INFORMS).format(mapper='bowtie2'))
+        if mode == 'assembly':
+            return Path(str(OUTPUT_ASSEMBLY_MAPPING_INFORMS).format(mapper='bowtie2'))
+        elif mode == 'ref':
+            return Path(str(OUTPUT_VARIANT_CALLING_MAPPING_INFORMS))
     elif read_key == 'fastq_se':
+        if mode == 'ref':
+            logger.warning(f'Reference mapping for single-end data is not implemented yet')
         return Path(str(OUTPUT_ASSEMBLY_MAPPING_INFORMS).format(mapper='minimap2'))
     else:
         raise ValueError(f'Invalid read key: {read_key}')
 
 
-def get_depth_inform(read_key: str) -> Path:
+def get_depth_inform(read_key: str, mode: str) -> Path:
     """
     Returns the depth informs.
     :param read_key: Read key
+    :param mode: Reference mode ('assembly' or 'ref')
     :return: Path to depth informs
     """
     if read_key == 'fastq_pe':
-        return Path(str(OUTPUT_ASSEMBLY_DEPTH_INFORMS).format(mapper='bowtie2'))
+        if mode == 'assembly':
+            return Path(str(OUTPUT_ASSEMBLY_DEPTH_INFORMS).format(mapper='bowtie2'))
+        else:
+            return Path(str(OUTPUT_VARIANT_CALLING_DEPTH_INFORMS))
     elif read_key == 'fastq_se':
+        if mode == 'ref':
+            logger.warning(f'Reference mapping for single-end data is not implemented yet')
         return Path(str(OUTPUT_ASSEMBLY_DEPTH_INFORMS).format(mapper='minimap2'))
     else:
         raise ValueError(f'Invalid read key: {read_key}')
@@ -98,18 +113,19 @@ def get_mapping_rate_inform(read_key: str) -> Path:
         raise ValueError(f'Invalid read key: {read_key}')
 
 
-def get_qc_informs(config: Dict[str, Any], input_type: str) -> List[Path]:
+def get_qc_informs(config: Dict[str, Any], input_type: str, mode: str = 'assembly') -> List[Path]:
     """
     Returns the QC informs based on the input type.
     :param config: Snakemake configuration
     :param input_type: Input type
+    :param mode: Reference mode (assembly or ref)
     :return: List of paths to QC informs
     """
     informs = []
     if input_type in ('hybrid', 'illumina'):
-        informs.append(get_mapping_inform('fastq_pe'))
-        informs.append(get_depth_inform('fastq_pe'))
+        informs.append(get_mapping_inform('fastq_pe', mode))
+        informs.append(get_depth_inform('fastq_pe', mode))
     if input_type in ('hybrid', 'ont'):
-        informs.append(get_mapping_inform('fastq_se'))
-        informs.append(get_depth_inform('fastq_se'))
+        informs.append(get_mapping_inform('fastq_se', mode))
+        informs.append(get_depth_inform('fastq_se', mode))
     return [Path(config['working_dir'], p) for p in informs]

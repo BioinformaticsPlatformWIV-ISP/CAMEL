@@ -14,7 +14,7 @@ rule spoligotyping_downsample:
     """
     input:
         IO_FASTQ = Path(config['working_dir']) / 'fq_dict.io',
-        INFORMS_coverage = Path(config['working_dir']) / assembly.get_depth_inform('fastq_pe')
+        INFORMS_coverage = Path(config['working_dir']) / assembly.get_depth_inform('fastq_pe', 'ref')
     output:
         FASTQ_PE = Path(config['working_dir']) / 'spoligotyping' / 'downsampling' / 'fastq-ds.io',
         INFORMS_spoligo_param = Path(config['working_dir']) / 'spoligotyping' / 'downsampling' / 'informs-param.io'

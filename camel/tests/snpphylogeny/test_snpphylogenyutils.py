@@ -2,7 +2,8 @@ import argparse
 import unittest
 
 from camel.app.camel import Camel
-from camel.app.components.phylogeny.snpphylogenyutils import SnpPhylogenyUtils, InvalidInputError
+from camel.app.components.phylogeny.snpphylogenyutils import SnpPhylogenyUtils
+from camel.app.error.invalidinputerror import InvalidInputError
 
 
 class TestSnpPhylogenyUtils(unittest.TestCase):

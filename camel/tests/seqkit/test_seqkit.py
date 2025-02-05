@@ -25,6 +25,9 @@ class TestSeqkit(CamelTestSuite):
         seqkit_seq.update_parameters(output_filename='sequences.fasta', max_length=100000)
         seqkit_seq.run(self.running_dir)
         self.verify_output_files(seqkit_seq, 'FASTA')
+        self.assertIn('nb_seqs_in', seqkit_seq.informs)
+        self.assertIn('nb_seqs_out', seqkit_seq.informs)
+        self.assertGreater(seqkit_seq.informs['nb_seqs_in'], seqkit_seq.informs['nb_seqs_out'])
 
     def test_seqkit_seq_fastq(self) -> None:
         """
@@ -35,6 +38,9 @@ class TestSeqkit(CamelTestSuite):
         seqkit_seq.update_parameters(max_length=150, min_qual=7)
         seqkit_seq.run(self.running_dir)
         self.verify_output_files(seqkit_seq, 'FASTQ')
+        self.assertIn('nb_seqs_in', seqkit_seq.informs)
+        self.assertIn('nb_seqs_out', seqkit_seq.informs)
+        self.assertGreater(seqkit_seq.informs['nb_seqs_in'], seqkit_seq.informs['nb_seqs_out'])
 
     def test_seqkit_stats_fastq(self) -> None:
         """

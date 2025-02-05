@@ -91,7 +91,7 @@ rule typing_async:
         detection_method = lambda wildcards: wildcards.detection_method,
         locus_type = lambda wildcards: wildcards.locus_type,
         blastn_task = lambda wildcards: config['sequence_typing'][wildcards.scheme].get('blastn_task', 'megablast'),
-        read_type = 'PE' if config.get('read_type', 'illumina') == 'illumina' else 'SE'
+        read_type = 'PE' if config.get('input_type', 'illumina') == 'illumina' else 'SE'
     threads: max(16, workflow.cores * 0.75)
     run:
         from camel.app.tools.pipelines.sequence_typing.typeasync import TypeAsync
@@ -244,9 +244,9 @@ rule typing_get_cgmlst_stats:
         scheme_name = lambda wildcards: wildcards.scheme
     run:
         all_hits = SnakemakeUtils.load_object(Path(input.HITS))
-        nb_perfect = len([v for v in all_hits if v.value.is_perfect_hit()])
+        nb_found = len([v for v in all_hits if v.value.is_perfect_hit() or v.value.is_new_allele()])
         SnakemakeUtils.dump_object(
-            {'hits_found': nb_perfect,
+            {'hits_found': nb_found,
              'nb_of_loci': len(all_hits),
              'scheme_name': params.scheme_name},
             Path(output.INFORMS))

@@ -19,7 +19,7 @@ class MainEnterococcusPipeline(ReportPipeline):
 
     CUSTOM_ANALYSES = [
         'kraken2', 'confindr', 'rmlst', 'lrefinder', 'amrfinder', 'resfinder4', 'vfdb_core', 'virulencefinder', 'mlst',
-        'cgmlst', 'plasmidfinder', 'mob_suite', 'bacmet', 'human_read_scrubbing']
+        'cgmlst', 'plasmidfinder', 'mob_suite', 'bacmet', 'human_read_scrubbing', 'variant_calling']
 
     DATA_BY_SPECIES = {
         'faecalis': {
@@ -50,7 +50,7 @@ class MainEnterococcusPipeline(ReportPipeline):
         },
         'spp': {
             'amrfinder_species': None,
-            'disabled_assays': ['mlst', 'cgmlst'],
+            'disabled_assays': ['mlst', 'cgmlst', 'variant_calling'],
             'full_name': 'Enterococcus spp.',
             'gc_content': 37.4,
             'genome_size': 2_973_380,

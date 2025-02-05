@@ -46,8 +46,8 @@ quality_checks:
 
 quast:
   ref:
-    fasta: {ref_fasta}
-    gff3: {ref_gff}
+    fasta: {quast_fasta}
+    gff3: {quast_gff}
 
 assembly:
   spades:
@@ -57,6 +57,16 @@ assembly:
     minimum_input_coverage: 0
   flye:
     nano_raw: True
+
+variant_calling:
+  ploidy: 1
+  report_include_bam: {export_bam}
+  reference:
+    path: {quast_fasta}
+    name: {reference_name}
+    url: {reference_url}
+
+variant_filtering: {{}}
 
 confindr:
   db: /db/confindr/0.8.1

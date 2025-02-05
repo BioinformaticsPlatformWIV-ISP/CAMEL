@@ -100,6 +100,8 @@ class MainMLSTPhylogeny(object):
         ap.add_argument(
             '--keep-all-loci', action='store_true',
             help='If true, all loci are retained in the allele matrix output (including loci absent in all datasets')
+        ap.add_argument('--no-temp-allele-ids', action='store_true',
+                        help='If enabled, the temporary (hashed) allele ids are not used')
 
         # Output files
         ap.add_argument('--dir-working', type=Path, help='Working directory', default=Path.cwd())
@@ -162,10 +164,12 @@ class MainMLSTPhylogeny(object):
         """
         if self._args.input_html:
             allele_data = mlstphyloutils.parse_html_typing_list(
-                self._args.input_html, self._args.html_key, self._args.detection_method)
+                self._args.input_html, self._args.html_key, self._args.detection_method,
+                not self._args.no_temp_allele_ids)
         elif self._args.input_tsv:
             allele_data = mlstphyloutils.parse_tsv_typing_list(
-                [(Path(path), name) for path, name in self._args.input_tsv], self._args.detection_method)
+                [(Path(path), name) for path, name in self._args.input_tsv], self._args.detection_method,
+                not self._args.no_temp_allele_ids)
         else:
             raise ValueError("No input files specified")
         if len(allele_data) < 3:
@@ -359,5 +363,5 @@ class MainMLSTPhylogeny(object):
 
 if __name__ == '__main__':
     Camel.get_instance()
-    mlst_tree = MainMLSTPhylogeny()
-    mlst_tree.run()
+    mlst_phylo = MainMLSTPhylogeny()
+    mlst_phylo.run()

@@ -1,10 +1,9 @@
-from typing import Dict, Any
-
 import pandas as pd
 
 from camel.app.camel import Camel
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.html.htmltablecell import HtmlTableCell
+from camel.app.components.html.htmltableformatter import HtmlTableFormatter
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.tools.tool import Tool
@@ -16,13 +15,13 @@ class ShigaTyperReporter(Tool):
     """
 
     COLS = [
-        {'key': 'Hit'},
-        {'key': 'Number of reads', 'fmt': lambda x: f'{x:,}'},
-        {'key': 'Length Covered', 'fmt': lambda x: f'{x:,}'},
-        {'key': 'reference length', 'fmt': lambda x: f'{x:,}'},
-        {'key': '% covered', 'fmt': lambda x: f'{x:.2f}'},
-        {'key': 'Number of variants', 'fmt': lambda x: f'{int(x):,}'},
-        {'key': '% accuracy', 'fmt': lambda x: f'{x:.2f}'}
+        {'key': 'Hit', 'title': 'Hit'},
+        {'key': 'Number of reads', 'title': 'Nb. of reads', 'fmt': HtmlTableFormatter.INT_FMT},
+        {'key': 'Length Covered', 'title': 'Length covered', 'fmt': HtmlTableFormatter.INT_FMT},
+        {'key': 'reference length', 'title': 'Reference length', 'fmt': HtmlTableFormatter.INT_FMT},
+        {'key': '% covered', 'title': '% covered', 'fmt': HtmlTableFormatter.FLOAT_FMT},
+        {'key': 'Number of variants', 'title': 'Nb. of variants', 'fmt': HtmlTableFormatter.INT_FMT},
+        {'key': '% accuracy', 'title': '% accuracy', 'fmt': HtmlTableFormatter.FLOAT_FMT}
     ]
 
     def __init__(self, camel: Camel) -> None:
@@ -66,18 +65,6 @@ class ShigaTyperReporter(Tool):
 
         section.add_table(main_table, header, [('class', 'data')])
 
-    @staticmethod
-    def __format_cell(value: Any, col: Dict) -> HtmlTableCell:
-        """
-        Formats the corresponding table cell.
-        :param value: Input value
-        :param col: Column metadata
-        :return: HTML table cell
-        """
-        if 'fmt' not in col or value == '-':
-            return HtmlTableCell(str(value))
-        return HtmlTableCell(col['fmt'](value))
-
     def __add_shigatyper_hits(self, section: HtmlReportSection) -> None:
         """
         Adds a table with the ShigaTyper hits details to the report section.
@@ -86,6 +73,7 @@ class ShigaTyperReporter(Tool):
         """
         # Parse the input files
         gene_hits = pd.read_table(self._tool_inputs['TSV_HITS'][0].path)
+        gene_hits['color'] = gene_hits.apply(lambda x: ShigaTyperReporter.get_color(x), axis=1)
 
         # Remove the sample ID column
         gene_hits.pop('Unnamed: 0')
@@ -96,15 +84,10 @@ class ShigaTyperReporter(Tool):
         missing_columns = [col for col in col_list if col not in gene_hits.columns]
         gene_hits[missing_columns] = '-'
 
-        # Create table data
-        hits_table = []
-        for row in gene_hits.to_dict('records'):
-            hits_table.append([ShigaTyperReporter.__format_cell(
-                row[col['key']], col) for col in ShigaTyperReporter.COLS])
-
         # Rename columns
-        header = [c['key'].title() for c in ShigaTyperReporter.COLS]
-        section.add_table(hits_table, header, [('class', 'data')])
+        header = [c['title'] for c in ShigaTyperReporter.COLS]
+        section.add_table(HtmlTableFormatter.format_table_data(
+            gene_hits, ShigaTyperReporter.COLS, use_colors=True), header, [('class', 'data')])
 
     def _execute_tool(self) -> None:
         """
@@ -129,3 +112,16 @@ class ShigaTyperReporter(Tool):
 
         # Store the output
         self._tool_outputs['HTML'] = [ToolIOValue(section)]
+
+    @staticmethod
+    def get_color(row_in: pd.Series) -> str:
+        """
+        Colors the rows based on the statistics.
+        :param row_in: Input row
+        :return: Color of the row
+        """
+        if row_in['% covered'] == 100.0 and row_in['% accuracy'] == 100.0:
+            return 'green'
+        if row_in['% covered'] == 100.0:
+            return 'lgreen'
+        return 'grey'

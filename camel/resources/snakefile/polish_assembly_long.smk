@@ -46,22 +46,22 @@ rule medaka_polishing_map_ont_reads:
         # Export output
         SnakemakeUtils.dump_tool_output(samtools_index, 'BAM', Path(output.BAM))
 
-rule medaka_polishing_medaka_consensus:
+rule medaka_polishing_medaka_inference:
     """
-    Runs the medaka consensus algorithm.
+    Runs the medaka inference algorithm.
     """
     input:
         BAM = rules.medaka_polishing_map_ont_reads.output.BAM
     output:
-        HDF = Path(config['working_dir']) / 'polish' / 'long_reads' / '{assembly_type}' / 'consensus' / 'raw_hdf.io',
-        INFORMS = Path(config['working_dir']) / 'polish' / 'long_reads' / '{assembly_type}' / 'consensus' / 'commands-consensus.io'
+        HDF = Path(config['working_dir']) / 'polish' / 'long_reads' / '{assembly_type}' / 'inference' / 'raw_hdf.io',
+        INFORMS = Path(config['working_dir']) / 'polish' / 'long_reads' / '{assembly_type}' / 'inference' / 'commands-inference.io'
     params:
-        dir_ =  lambda wildcards: Path(config['working_dir']) / 'polish' / 'long_reads' / wildcards.assembly_type / 'consensus',
-        medaka_options = config.get('polishing', {}).get('medaka', {}).get('consensus', {})
+        dir_ =  lambda wildcards: Path(config['working_dir']) / 'polish' / 'long_reads' / wildcards.assembly_type / 'inference',
+        medaka_options = config.get('polishing', {}).get('medaka', {}).get('inference', {})
     threads: 8
     run:
-        from camel.app.tools.medaka.medakaconsensus import MedakaConsensus
-        medaka = MedakaConsensus(Camel.get_instance())
+        from camel.app.tools.medaka.medakainference import MedakaInference
+        medaka = MedakaInference(Camel.get_instance())
         SnakemakeUtils.add_pickle_input(medaka, 'BAM', Path(input.BAM))
         medaka.update_parameters(**params.medaka_options)
         medaka.update_parameters(threads=threads)
@@ -69,23 +69,23 @@ rule medaka_polishing_medaka_consensus:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(medaka, output)
 
-rule medaka_polishing_medaka_stitch:
+rule medaka_polishing_medaka_sequence:
     """
-    Runs the medaka stitch algorithm.
+    Runs the medaka sequence algorithm.
     """
     input:
-        HDF = rules.medaka_polishing_medaka_consensus.output.HDF,
+        HDF = rules.medaka_polishing_medaka_inference.output.HDF,
         FASTA = Path(config['working_dir']) / polish_assembly_long.INPUT_ASSEMBLY_FASTA
     output:
-        FASTA = Path(config['working_dir']) / 'polish' / 'long_reads' / '{assembly_type}' / 'stitch' / 'fasta.io',
-        INFORMS = Path(config['working_dir']) / 'polish' / 'long_reads' / '{assembly_type}' / 'stitch' / 'commands-stitch.io'
+        FASTA = Path(config['working_dir']) / 'polish' / 'long_reads' / '{assembly_type}' / 'sequence' / 'fasta.io',
+        INFORMS = Path(config['working_dir']) / 'polish' / 'long_reads' / '{assembly_type}' / 'sequence' / 'commands-sequence.io'
     params:
-        dir_ = lambda wildcards: Path(config['working_dir']) / 'polish' / 'long_reads' / wildcards.assembly_type / 'stitch',
-        medaka_options = config.get('polishing', {}).get('medaka', {}).get('stitch', {})
+        dir_ = lambda wildcards: Path(config['working_dir']) / 'polish' / 'long_reads' / wildcards.assembly_type / 'sequence',
+        medaka_options = config.get('polishing', {}).get('medaka', {}).get('sequence', {})
     threads: 8
     run:
-        from camel.app.tools.medaka.medakastitch import MedakaStitch
-        medaka = MedakaStitch(Camel.get_instance())
+        from camel.app.tools.medaka.medakasequence import MedakaSequence
+        medaka = MedakaSequence(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(medaka, input)
         medaka.update_parameters(**params.medaka_options, threads=threads)
         step = Step(str(rule), medaka, Camel.get_instance(), Path(str(params.dir_)))

@@ -1,3 +1,4 @@
+from io import StringIO
 from pathlib import Path
 
 import pandas as pd
@@ -60,6 +61,37 @@ class ResFinderReporter(Tool):
         ], table_attributes=[('class', 'information')])
         section.add_horizontal_line()
 
+    def __parse_phenotype_table(self, key: str) -> pd.DataFrame:
+        """
+        Parses the input phenotype table.
+        :param key: Table key
+        :return: Parsed data
+        """
+        path_tsv = self._tool_inputs[f'TSV_pheno_{key}'][0].path
+        logger.info(f'Parsing: {path_tsv}')
+
+        # Parse the file as raw lines
+        with open(path_tsv) as handle:
+            lines = list(handle.readlines())
+
+        # Check if unknown phenotypes are present
+        try:
+            idx = next(
+                i for i, line in enumerate(lines) if line.strip() == '# WARNING: Features with unknown phenotype')
+            logger.warning(f'Unknown phenotype mutations found (index: {idx})!')
+        except StopIteration:
+            idx = None
+
+        # Parse the regular table
+        data_pheno = pd.read_table(
+            StringIO(''.join(lines[:idx] if idx is not None else lines)),
+            names=['Antimicrobial', 'Class', 'WGS-predicted phenotype', 'Match', 'Genetic background'],
+            comment='#'
+        )
+        data_pheno.sort_values(by=['Class', 'Antimicrobial'], inplace=True)
+        logger.debug(f'Phenotype data parsed ({len(data_pheno)} rows)')
+        return data_pheno
+
     def __add_phenotype_table(self, section: HtmlReportSection, key: str) -> None:
         """
         Adds the table with the phenotype overview.
@@ -69,19 +101,14 @@ class ResFinderReporter(Tool):
         """
         # Parse input
         try:
-            data_pheno = pd.read_table(
-                self._tool_inputs[f'TSV_pheno_{key}'][0].path,
-                names=['Antimicrobial', 'Class', 'WGS-predicted phenotype', 'Match', 'Genetic background'],
-                comment='#'
-            )
-            data_pheno.sort_values(by=['Class', 'Antimicrobial'], inplace=True)
+            data_pheno = self.__parse_phenotype_table(key)
         except IndexError:
             overview_type = 'species-specific' if key == 'species' else 'general'
             logger.warning(f'Skipping {overview_type} phenotype since table is missing.')
             section.add_header(f'Predicted phenotype ({overview_type})', 3)
-            section.add_warning_message(f"{overview_type} phenotype table is missing. "
-                                        f"No panel is available for species "
-                                        f"{self._input_informs['resfinder']['species']}.")
+            section.add_warning_message(
+                f"{overview_type} phenotype table is missing. No panel is available for species "
+                f"{self._input_informs['resfinder']['species']}.")
             return
 
         # Add table to report
@@ -104,7 +131,7 @@ class ResFinderReporter(Tool):
         section.add_html_object(div)
 
         # Add download link
-        relative_path = Path('resfinder', self._tool_inputs[f'TSV_pheno_{key}'][0].path.name)
+        relative_path = Path('resfinder4', self._tool_inputs[f'TSV_pheno_{key}'][0].path.name)
         section.add_file(self._tool_inputs[f'TSV_pheno_{key}'][0].path, relative_path)
         section.add_link_to_file(f'Download {overview_type} overview (TSV)', relative_path)
 

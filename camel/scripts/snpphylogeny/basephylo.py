@@ -1,11 +1,12 @@
 import abc
 import argparse
-from camel.app.loggers import logger
 from typing import Optional, List, Dict, Sequence
 
-from camel.app.components.phylogeny.snpphylogenyutils import SnpPhylogenyUtils, InvalidInputError, Sample, MappingInput
+from camel.app.components.phylogeny.snpphylogenyutils import SnpPhylogenyUtils, Sample, MappingInput
+from camel.app.error.invalidinputerror import InvalidInputError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
 from camel.app.tools.mega.modelselection import ModelSelection
 
 

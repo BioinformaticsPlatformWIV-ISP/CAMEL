@@ -107,7 +107,9 @@ class TestFastp(CamelTestSuite):
         reporter.add_input_informs({'fastp': fastp.informs})
         reporter.run(self.running_dir)
         output_section = reporter.tool_outputs['VAL_HTML'][0].value
-        self.assertGreater(len(output_section.to_html()), 0)
+
+        # Save the report in the current directory
+        CamelTestSuite.export_report_section(output_section, self.running_dir / 'report')
 
 
 if __name__ == '__main__':

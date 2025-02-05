@@ -23,7 +23,7 @@ class CfsanSnpPipeline(Tool):
         Initializes this tool.
         :param camel: CAMEL instance
         """
-        super().__init__('CFSAN SNP Pipeline', '2.0.2', camel)
+        super().__init__('CFSAN SNP Pipeline', '2.2.1', camel)
 
     def _check_input(self) -> None:
         """

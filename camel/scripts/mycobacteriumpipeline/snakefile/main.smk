@@ -51,11 +51,11 @@ rule report_command_section:
         INFORMS_downsampling = downsampling.get_command_informs(config),
         INFORMS_trimming = trimming.get_command_informs(config),
         INFORMS_assembly = assembly.get_command_informs(config),
-        INFORMS_quast = Path(config['working_dir']) /quast.OUTPUT_QUAST_INFORMS,
+        INFORMS_quast = Path(config['working_dir']) / quast.OUTPUT_QUAST_INFORMS,
         INFORMS_busco = Path(config['working_dir']) / quast.OUTPUT_BUSCO_INFORMS,
         INFORMS_contamination = contamination_check_kraken.get_command_informs(config),
         INFORMS_confindr = confindr.get_command_informs(config),
-        INFORMS_assembly_map = assembly.get_qc_informs(config, config['input_type']),
+        INFORMS_assembly_map = assembly.get_qc_informs(config, config['input_type'], mode='ref'),
         INFORMS_variant_calling_all = variant_calling.get_command_informs(config),
         INFORMS_variant_filtering_all = Path(config['working_dir']) / variant_filtering.OUTPUT_VARIANT_FILTERING_INFORMS_ALL,
         INFORMS_snpit = Path(config['working_dir']) / snpit.OUTPUT_SNPIT_INFORMS if 'snpit' in config['analyses'] else [],
@@ -63,7 +63,6 @@ rule report_command_section:
         INFORMS_csb_rd = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='csb_rd') if 'csb_rd' in config['analyses'] else [],
         INFORMS_hsp65 = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='hsp65') if 'hsp65' in config['analyses'] else [],
         INFORMS_spoligo = Path(config['working_dir']) / spoligotyping.OUTPUT_SPOLIGOTYPING_INFORMS if 'spoligotyping' in config['analyses'] else [],
-        INFORMS_amr_gene_detection = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='amr') if 'amr' in config['analyses'] else []
     output:
         HTML = Path(config['working_dir']) / 'report' / 'html-commands.io'
     params:
@@ -97,6 +96,7 @@ rule report_combine_all:
         report_snp_lineage = Path(config['working_dir']) / (snplineage.OUTPUT_SNP_LINEAGE_REPORT if 'snp_lineage' in config['analyses'] else snplineage.OUTPUT_SNP_LINEAGE_REPORT_EMPTY),
         # AMR
         report_amr = Path(config['working_dir']) / (amrdetection.OUTPUT_AMR_REPORT if 'amr' in config['analyses'] else amrdetection.OUTPUT_AMR_REPORT_EMPTY),
+        report_amr_genes = Path(config['working_dir']) / 'amr' / 'cds' / 'html.io',
         # Typing
         report_mlst = sequence_typing.get_sequence_typing_report('mlst', config),
         report_cgmlst = sequence_typing.get_sequence_typing_report('cgmlst', config),
@@ -153,7 +153,7 @@ rule report_combine_all:
                 Path(input.report_csb_rd), Path(input.report_hsp65), Path(input.report_51snp)]),
             ('Spoligotyping and lineage', 'spoligotyping', [
                 Path(input.report_spoligo), Path(input.report_snp_lineage)]),
-            ('AMR detection', 'amr', [Path(input.report_amr)]),
+            ('AMR detection', 'amr', [Path(input.report_amr), Path(input.report_amr_genes)]),
             ('Sequence typing', 'typing', [Path(input.report_mlst), Path(input.report_cgmlst)]),
             ('Citations', 'citations', [Path(input.report_citations)]),
             ('Commands', 'commands', [Path(input.report_commands)])

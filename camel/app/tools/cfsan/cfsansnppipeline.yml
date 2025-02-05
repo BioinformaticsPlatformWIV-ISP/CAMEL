@@ -1,4 +1,4 @@
-dependencies: [java/1.8.0_172, bowtie2/2.3.0, varscan/2.3.9, picard/2.8.3, gatk/3.7, bcftools/1.9, samtools/1.9,
-               CFSAN/2.0.2]
+dependencies: [java/1.8.0_172, bowtie2/2.5.1, varscan/2.3.9, picard/2.23.3, gatk/3.7, bcftools/1.17, samtools/1.17,
+               CFSAN/2.2.1]
 parameters: {}
 tool_command: run_snp_pipeline.sh

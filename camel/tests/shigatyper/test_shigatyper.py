@@ -23,8 +23,8 @@ class TestShigaTyper(CamelTestSuite):
         :return: None
         """
         shigatyper = ShigaTyper(self.camel)
-        shigatyper.add_input_files({'FASTQ_PE': [ToolIOFile(Path(TestShigaTyper.fastq_fwd)),
-                                                 ToolIOFile(Path(TestShigaTyper.fastq_rev))]})
+        shigatyper.add_input_files({
+            'FASTQ_PE': [ToolIOFile(Path(TestShigaTyper.fastq_fwd)), ToolIOFile(Path(TestShigaTyper.fastq_rev))]})
         shigatyper.run(self.running_dir)
         self.verify_output_files(shigatyper, 'TSV')
         self.verify_output_files(shigatyper, 'TSV_HITS')
@@ -37,16 +37,20 @@ class TestShigaTyper(CamelTestSuite):
         """
         # Run the tool
         shigatyper = ShigaTyper(self.camel)
-        shigatyper.add_input_files({'FASTQ_PE': [ToolIOFile(Path(TestShigaTyper.fastq_fwd)),
-                                                 ToolIOFile(Path(TestShigaTyper.fastq_rev))]})
+        shigatyper.add_input_files({
+            'FASTQ_PE': [ToolIOFile(Path(TestShigaTyper.fastq_fwd)), ToolIOFile(Path(TestShigaTyper.fastq_rev))]})
         shigatyper.run(self.running_dir)
 
         # Run the reporter
         reporter = ShigaTyperReporter(self.camel)
-        reporter.add_input_files({'TSV': shigatyper.tool_outputs['TSV'],
-                                  'TSV_HITS': shigatyper.tool_outputs['TSV_HITS']})
+        reporter.add_input_files({
+            'TSV': shigatyper.tool_outputs['TSV'],
+            'TSV_HITS': shigatyper.tool_outputs['TSV_HITS']
+        })
         reporter.add_input_informs({'shigatyper': shigatyper.informs})
         reporter.run(self.running_dir)
+
+        # Check the output
         self.assertGreater(len(reporter.tool_outputs['HTML'][0].value.to_html()), 0)
         CamelTestSuite.export_report_section(reporter.tool_outputs['HTML'][0].value, self.running_dir / 'report')
 
