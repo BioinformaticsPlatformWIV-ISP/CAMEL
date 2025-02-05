@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Union
 
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.io.tooliofile import ToolIOFile
@@ -30,12 +30,14 @@ class TrimmingONTWrapper(object):
         self._working_dir = Path(working_dir)
         self._output = None
 
-    def run_workflow(self, se_reads: Path, export_fastq: bool = False, threads: int = 8) -> None:
+    def run_workflow(self, se_reads: Path, export_fastq: bool = False, additional_opts: Union[dict, None] = None,
+                     threads: int = 8) -> None:
         """
         Runs the read trimming workflow.
         :param se_reads: Input SE FASTQ reads
-        :param threads: Number of threads to use
         :param export_fastq: If True, FASTQ files are included in the report
+        :param additional_opts: Additional options
+        :param threads: Number of threads to use
         :return: None
         """
         path_io = self._working_dir / INPUT_ONT_FASTQ
@@ -43,7 +45,9 @@ class TrimmingONTWrapper(object):
         SnakemakeUtils.dump_object([ToolIOFile(se_reads)], path_io)
         config_data = {
             'working_dir': str(self._working_dir),
-            'read_trimming': {'export_fastq': str(export_fastq)},
+            'read_trimming': {
+                'export_fastq': str(export_fastq),
+                'ont': additional_opts if additional_opts is not None else {}},
             'read_type': 'ont'
         }
         config_file = SnakePipelineUtils.generate_config_file(config_data, self._working_dir)

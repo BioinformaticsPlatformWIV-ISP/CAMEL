@@ -334,7 +334,9 @@ class TestGeneDetection(CamelTestSuite):
             '--working-dir', str(self.running_dir),
             '--input-type', 'ont',
             '--detection-method', 'kma',
-            '--trim-reads'
+            '--trim-reads',
+            '--ont-min-length', '666',
+            '--ont-min-qual', '12'
         ]
         main = MainGeneDetection(args)
         main.run()

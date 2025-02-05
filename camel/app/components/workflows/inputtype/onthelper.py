@@ -45,7 +45,16 @@ class ONTHelper(InputTypeHelperBase):
 
         # Run workflow
         trimming = TrimmingONTWrapper(self._working_dir / 'trimming')
-        trimming.run_workflow(Path(fastq_input.se[0].path), include_fastq, threads=threads)
+        additional_opts = {}
+        if 'min_length' in kwargs:
+            additional_opts['min_length'] = kwargs['min_length']
+        if 'min_qual' in kwargs:
+            additional_opts['min_qual'] = kwargs['min_qual']
+        trimming.run_workflow(
+            se_reads=Path(fastq_input.se[0].path),
+            export_fastq=include_fastq,
+            additional_opts=additional_opts,
+            threads=threads)
 
         # Save output
         report_section_trimming = trimming.output.report_section
@@ -67,9 +76,14 @@ class ONTHelper(InputTypeHelperBase):
         fq_input_se = self.__symlink_ont_reads(args.fastq_se, self._sample_name)
         fastq_input = FastqInput('ont', se=[ToolIOFile(fq_input_se)], is_pe=False)
         if args.trim_reads:
-            # TODO: add ont trimming options
             fastq_input = self.trim_reads(
-                fastq_input, report, args.report_include_fastq, threads=args.threads)
+                fastq_input=fastq_input,
+                report=report,
+                include_fastq=args.report_include_fastq,
+                min_length=args.ont_min_length,
+                min_qual=args.ont_min_qual,
+                threads=args.threads
+            )
 
         # De novo assembly
         return self.assemble_fastq_reads(fastq_input, args, report)
@@ -84,9 +98,15 @@ class ONTHelper(InputTypeHelperBase):
         fq_input_se = self.__symlink_ont_reads(Path(args.fastq_se), self._sample_name)
         fastq_input = FastqInput('ont', se=[ToolIOFile(Path(fq_input_se))], is_pe=False)
         if args.trim_reads:
-            return self.trim_reads(fastq_input, report, args.report_include_fastq, args.threads)
-        else:
-            return FastqInput('ont', se=[ToolIOFile(Path(fq_input_se))], is_pe=False)
+            return self.trim_reads(
+                fastq_input=fastq_input,
+                report=report,
+                include_fastq=args.report_include_fastq,
+                min_length=args.ont_min_length,
+                min_qual=args.ont_min_qual,
+                threads=args.threads
+            )
+        return FastqInput('ont', se=[ToolIOFile(Path(fq_input_se))], is_pe=False)
 
     def prepare_fasta_read_input(self, report: HtmlReport, args: argparse.Namespace) -> Path:
         """
