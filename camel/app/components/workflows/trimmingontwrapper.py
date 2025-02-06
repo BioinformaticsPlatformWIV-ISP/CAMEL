@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Dict, Optional, Union
+from typing import Optional, Union, Any
 
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.io.tooliofile import ToolIOFile
@@ -10,16 +10,20 @@ from camel.resources.snakefile import trimming_ont
 from camel.resources.snakefile.trimming_ont import INPUT_ONT_FASTQ
 
 
-class TrimmingONTWrapper(object):
+class TrimmingONTWrapper:
     """
     This class is used as a wrapper class around the ONT read trimming Snakemake workflow.
     """
 
     @dataclass
     class ReadTrimmingOutput:
+        """
+        Class that holds the output of the read trimming workflow.
+        """
         report_section: HtmlReportSection
         tsv_summary: Path
-        trimmed_reads: List[ToolIOFile]
+        trimmed_reads: list[ToolIOFile]
+        informs_trimming: dict[str, Any]
         log_file: Optional[Path] = None
 
     def __init__(self, working_dir: Path) -> None:
@@ -54,13 +58,14 @@ class TrimmingONTWrapper(object):
         output_files = {
             'HTML': self._working_dir / trimming_ont.OUTPUT_TRIMMING_ONT_REPORT,
             'TSV': self._working_dir / trimming_ont.OUTPUT_TRIMMING_ONT_SUMMARY,
+            'INFORMS': self._working_dir / trimming_ont.OUTPUT_TRIMMING_ONT_INFORMS,
         }
         SnakePipelineUtils.run_snakemake(
             trimming_ont.SNAKEFILE_TRIMMING_ONT, config_file, list(output_files.values()),
             self._working_dir, threads)
         self.__set_output(output_files)
 
-    def __set_output(self, output_files: Dict[str, Path]) -> None:
+    def __set_output(self, output_files: dict[str, Path]) -> None:
         """
         Sets the output of this tool.
         :param output_files: Output files by key.
@@ -72,6 +77,7 @@ class TrimmingONTWrapper(object):
             tsv_summary=output_files['TSV'],
             trimmed_reads=SnakemakeUtils.load_object(
                 self._working_dir / trimming_ont.OUTPUT_TRIMMING_ONT_READS),
+            informs_trimming=SnakemakeUtils.load_object(output_files['INFORMS']),
             log_file=log_path if log_path.exists() else None
         )
 

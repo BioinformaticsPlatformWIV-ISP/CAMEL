@@ -61,6 +61,7 @@ class ONTHelper(InputTypeHelperBase):
         report.add_html_object(report_section_trimming)
         report_section_trimming.copy_files(report.output_dir)
         self._log_files['trimming'] = trimming.output.log_file
+        self._informs.append(trimming.output.informs_trimming)
         return FastqInput('ont', se=trimming.output.trimmed_reads, is_pe=False)
 
     def prepare_fasta_input(self, report: HtmlReport, args: argparse.Namespace) -> Path:

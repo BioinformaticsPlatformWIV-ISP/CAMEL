@@ -1,6 +1,5 @@
 import argparse
 from pathlib import Path
-from typing import List
 
 from camel.app.components.workflows.inputtype.inputtypehelperbase import InputTypeHelperBase
 
@@ -17,7 +16,7 @@ class IlluminaHelper(InputTypeHelperBase):
     Helper class for Illumina reads.
     """
 
-    def __symlink_fastq_files(self, fastq_files: List[Path], sample_name: str) -> List[Path]:
+    def __symlink_fastq_files(self, fastq_files: list[Path], sample_name: str) -> list[Path]:
         """
         Symlinks the input files to a standardized format based on the sample name.
         :param fastq_files: Input FASTQ files
@@ -47,7 +46,12 @@ class IlluminaHelper(InputTypeHelperBase):
             raise ValueError("Illumina FASTQ input should be paired")
 
         # Run workflow
-        trimming.run_workflow([Path(x.path) for x in fastq_input.pe], kwargs.get('adapter'), threads, include_fastq)
+        trimming.run_workflow(
+            pe_reads=[Path(x.path) for x in fastq_input.pe],
+            threads=threads,
+            export_fastq=include_fastq,
+            method='fastp'
+        )
 
         # Save output
         report_section_trimming = trimming.output.report_section
