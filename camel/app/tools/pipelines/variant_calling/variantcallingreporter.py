@@ -136,7 +136,7 @@ class VariantCallingReporter(Tool):
         """
         self._section.add_header('Read mapping', 4)
         table_data = [
-            ['{}%'.format(self._input_informs['mapping']['stats_map_rate']),
+            ['{}%'.format(self._input_informs['map_rate']['mapping_rate']),
              '{:.0f}'.format(self._input_informs['depth']['median_depth'])]
         ]
         self._section.add_table(table_data, ['Mapping rate', 'Median depth'], [('class', 'data')])
