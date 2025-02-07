@@ -9,7 +9,8 @@ _dir_variant_calling = Path('variant_calling')
 OUTPUT_VARIANT_CALLING_REPORT = _dir_variant_calling / 'report' / 'html.io'
 OUTPUT_VARIANT_CALLING_REPORT_EMPTY = _dir_variant_calling / 'report' / 'html-empty.io'
 OUTPUT_VARIANT_CALLING_SUMMARY = _dir_variant_calling / 'summary' / 'summary_out.tsv'
-OUTPUT_VARIANT_CALLING_BAM = _dir_variant_calling / 'read_mapping' / 'bam.io'
+OUTPUT_VARIANT_CALLING_BAM_ILLUMINA = _dir_variant_calling / 'read_mapping' / 'illumina' / 'bam.io'
+OUTPUT_VARIANT_CALLING_BAM_ONT = _dir_variant_calling / 'read_mapping' / 'ont' / 'bam.io'
 OUTPUT_VARIANT_CALLING_DEPTH_INFORMS = _dir_variant_calling / 'depth' / 'informs.io'
 OUTPUT_VARIANT_CALLING_DEPTH_TSV = _dir_variant_calling / 'depth' / 'tsv.io'
 OUTPUT_VARIANT_CALLING_UNFILTERED_VCF = _dir_variant_calling / 'unzip_vcf' / 'vcf.io'
@@ -17,6 +18,7 @@ OUTPUT_VARIANT_CALLING_UNFILTERED_VCF_GZ = _dir_variant_calling / 'norm' / 'vcf_
 OUTPUT_VARIANT_CALLING_CONSENSUS = _dir_variant_calling / 'consensus' / 'fasta.io'
 OUTPUT_VARIANT_CALLING_FILTERED_VCF = _dir_variant_calling / 'unzip_vcf_filtered' / 'vcf.io'
 OUTPUT_VARIANT_CALLING_FILTERED_VCF_GZ = _dir_variant_calling / 'filter_zscore' / 'vcf_gz-indexed.io'
+OUTPUT_VARIANT_CALLING_MAPPING_RATE_INFORMS = _dir_variant_calling / 'rate' / 'informs.io'
 OUTPUT_VARIANT_CALLING_MAPPING_INFORMS = _dir_variant_calling / 'read_mapping' / 'informs.io'
 OUTPUT_VARIANT_CALLING_INFORMS_ALL = _dir_variant_calling / 'informs_all.io'
 
@@ -41,8 +43,10 @@ def get_bam(config: Dict[str, Any]) -> Path:
     :return: Path to the BAM file
     """
     # ONT and hybrid were added because otherwise some tests of the MockPipeline fail
-    if config['input_type'] in ('illumina', 'fasta', 'ont', 'hybrid'):
-        return Path(config['working_dir']) / OUTPUT_VARIANT_CALLING_BAM
+    if config['input_type'] in ('illumina', 'fasta', 'hybrid'):
+        return Path(config['working_dir']) / OUTPUT_VARIANT_CALLING_BAM_ILLUMINA
+    if config['input_type'] == 'ont':
+        return Path(config['working_dir']) / OUTPUT_VARIANT_CALLING_BAM_ONT
     if config['input_type'] == 'fasta_with_vcf':
         return Path(config['working_dir']) / 'variant_calling' / 'dummy_bam' / 'bam.io'
 
@@ -79,12 +83,22 @@ def get_reports(config: Dict[str, Any]) -> Path:
     """
     input_type = config['input_type']
 
-    if input_type in ('illumina', 'fasta'):
+    if input_type in ('illumina', 'fasta', 'ont'):
         return Path(config['working_dir']) / OUTPUT_VARIANT_CALLING_REPORT
 
     if input_type == 'fasta_with_vcf':
         return Path(config['working_dir']) / OUTPUT_VARIANT_CALLING_REPORT_EMPTY
 
+def get_mapping_informs(config: Dict[str, Any]) -> Path:
+    """
+    Returns the paths to the variant calling mapping informs.
+    :param config: config
+    :return: Path(s) to the variant calling mapping informs
+    """
+    input_type = config['input_type']
+
+    if input_type in ('illumina', 'fasta', 'ont'):
+        return Path(config['working_dir']) / OUTPUT_VARIANT_CALLING_MAPPING_INFORMS
 
 def get_summaries(config: Dict[str, Any]) -> List[Path]:
     """
@@ -94,10 +108,9 @@ def get_summaries(config: Dict[str, Any]) -> List[Path]:
     """
     input_type = config['input_type']
     paths = []
-    if input_type in ('illumina', 'fasta'):
+    if input_type in ('illumina', 'fasta', 'ont'):
         paths.append(OUTPUT_VARIANT_CALLING_SUMMARY)
     return [Path(config['working_dir']) / p for p in paths]
-
 
 def get_command_informs(config: Dict[str, Any]) -> List[Path]:
     """
@@ -107,6 +120,6 @@ def get_command_informs(config: Dict[str, Any]) -> List[Path]:
     """
     input_type = config['input_type']
     paths = []
-    if input_type in ('illumina', 'fasta'):
+    if input_type in ('illumina', 'fasta', 'ont'):
         paths.append(OUTPUT_VARIANT_CALLING_INFORMS_ALL)
     return [Path(config['working_dir']) / p for p in paths]
