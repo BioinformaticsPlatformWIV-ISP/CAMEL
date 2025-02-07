@@ -49,8 +49,6 @@ variant_calling:
     name: <i>Listeria monocytogenes</i> (NC_003210.1)
     url: https://www.ncbi.nlm.nih.gov/nuccore/NC_003210.1
 
-variant_filtering: {{}}
-
 confindr:
   db: /db/confindr/0.8.1
 

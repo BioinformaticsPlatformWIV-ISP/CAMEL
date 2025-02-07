@@ -6,7 +6,7 @@ import yaml
 
 from camel.app.camel import Camel
 from camel.app.io.tooliodirectory import ToolIODirectory
-from camel.scripts.neisseriapipeline import CONFIG_DATA
+from camel.scripts.yersiniapipeline import CONFIG_DATA
 from camel.scripts.yersiniapipeline.mainyersiniapipeline import MainYersiniaPipeline
 from camel.tests import longRunningTest
 
