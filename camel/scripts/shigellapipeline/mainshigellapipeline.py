@@ -25,7 +25,7 @@ class MainShigellaPipeline(ReportPipeline):
         Initializes the main class.
         :param args: Arguments (optional)
         """
-        super().__init__('Shigella pipeline', '1.1', SNAKEFILE_MAIN, args)
+        super().__init__('Shigella pipeline', '1.2', SNAKEFILE_MAIN, args)
 
     @property
     def title(self) -> str:
