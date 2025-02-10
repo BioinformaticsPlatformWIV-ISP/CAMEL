@@ -2,7 +2,7 @@ import argparse
 import datetime
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Optional, List, Any, Dict
+from typing import Optional, Any
 
 from Bio import SeqIO
 
@@ -103,7 +103,7 @@ def determine_input_file_str(args: argparse.Namespace) -> str:
 
 
 def generate_analysis_info_section(
-        args: argparse.Namespace, additional_info: Optional[List[List[str]]] = None,
+        args: argparse.Namespace, additional_info: Optional[list[list[str]]] = None,
         input_file_str: str = None) -> HtmlReportSection:
     """
     Generates the report section with the analysis info.
@@ -117,11 +117,9 @@ def generate_analysis_info_section(
     data = [
         ('Analysis date:', datetime.datetime.now().strftime(SnakePipelineUtils.DATE_FORMAT)),
         ('Input file(s):', input_files),
-        ('Input type:', args.input_type),
     ]
-    if ('read_type' in args) and (args.read_type is not None):
-        read_type = args.read_type if ('fasta' in args) and (args.fasta is None) else 'NA'
-        data.append(('Read type:', read_type))
+    if ('input_type' in args) and (args.input_type is not None):
+        data.append(('Input type:', args.input_type))
     if additional_info is not None:
         data.extend(additional_info)
     section.add_table(data, table_attributes=[('class', 'information')])
@@ -187,7 +185,7 @@ def prepare_galaxy_output(output_dir: Path, output_html: Path) -> None:
         output_html.unlink()
 
 
-def dict_merge(dct: Dict[str, Any], merge_dct) -> None:
+def dict_merge(dct: dict[str, Any], merge_dct: dict) -> None:
     """
     Recursive dict merge. Inspired by :meth:``dict.update()``, instead of updating only top-level keys,
     dict_merge recurses down into dicts nested to an arbitrary depth, updating keys. The ``merge_dct`` is merged into
@@ -203,13 +201,15 @@ def dict_merge(dct: Dict[str, Any], merge_dct) -> None:
             dct[k] = merge_dct[k]
 
 
-def validate_input_files(args: argparse.Namespace) -> None:
+def validate_input_files(args: argparse.Namespace, input_type: Optional[str] = None) -> None:
     """
     Checks if the provided input files are valid.
     :param args: Command line arguments
+    :param input_type: Input file type
     :return: None
     """
-    logger.info(f"Checking input files (type: '{args.input_type}')")
+    if input_type is not None:
+        args.input_type = input_type
 
     # FASTA input
     if args.input_type in ('fasta', 'fasta_with_vcf'):
