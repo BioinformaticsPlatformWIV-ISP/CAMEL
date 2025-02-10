@@ -15,6 +15,7 @@ class TestShigaTyper(CamelTestSuite):
     test_file_dir = CamelTestSuite.get_test_file_dir('pipelines')
     fastq_fwd = test_file_dir / 'Shigella-S17BD07654_1.fastq.gz'
     fastq_rev = test_file_dir / 'Shigella-S17BD07654_2.fastq.gz'
+    fastq_ont = test_file_dir / 'Shigella-SRR29782656_ont-ds.fastq.gz'
 
     @minOSVersion('jammy')
     def test_shigatyper(self) -> None:
@@ -25,6 +26,18 @@ class TestShigaTyper(CamelTestSuite):
         shigatyper = ShigaTyper(self.camel)
         shigatyper.add_input_files({
             'FASTQ_PE': [ToolIOFile(Path(TestShigaTyper.fastq_fwd)), ToolIOFile(Path(TestShigaTyper.fastq_rev))]})
+        shigatyper.run(self.running_dir)
+        self.verify_output_files(shigatyper, 'TSV')
+        self.verify_output_files(shigatyper, 'TSV_HITS')
+
+    @minOSVersion('jammy')
+    def test_shigatyper_ont_input(self) -> None:
+        """
+        Tests the ShigaTyper tool with ONT input.
+        :return: None
+        """
+        shigatyper = ShigaTyper(self.camel)
+        shigatyper.add_input_files({'FASTQ_SE': [ToolIOFile(TestShigaTyper.fastq_ont)]})
         shigatyper.run(self.running_dir)
         self.verify_output_files(shigatyper, 'TSV')
         self.verify_output_files(shigatyper, 'TSV_HITS')
