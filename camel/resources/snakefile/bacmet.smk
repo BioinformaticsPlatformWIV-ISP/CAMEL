@@ -120,7 +120,7 @@ rule bacmet_filter_blastp:
         data_in = pd.read_table(tsv_in, names=params.cols.split(' '))
         data_in['perc_covered'] = data_in.apply(lambda x: 100.0 * float(len(x['sseq'])) / x['slen'], axis=1)
         data_in_filt = data_in[data_in['pident'] > params.min_id].copy()
-        data_in_filt = data_in_filt[data_in_filt['pident'] > params.min_cov].copy()
+        data_in_filt = data_in_filt[data_in_filt['perc_covered'] > params.min_cov].copy()
         data_in_filt['BacMet_ID'] = data_in_filt['sseqid'].apply(lambda x: x.split('|')[0])
 
         # Parse metadata

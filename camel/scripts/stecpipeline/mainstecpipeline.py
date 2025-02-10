@@ -50,7 +50,8 @@ class MainSTECPipeline(ReportPipeline):
         with open(CONFIG_DATA) as handle_in:
             config_data.update(yaml.safe_load(handle_in.read().format(
                 coverage_max=self._args.cov_max,
-                qc_typing_scheme='cgmlst' if self._args.cgmlst else 'mlst_warwick'
+                qc_typing_scheme='cgmlst' if self._args.cgmlst else 'mlst_warwick',
+                export_bam='true' if self._args.report_include_bam else 'false',
             )))
 
         # Read trimming

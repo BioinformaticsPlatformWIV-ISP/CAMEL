@@ -60,6 +60,7 @@ class MainStaphylococcusPipeline(ReportPipeline):
             config_data.update(yaml.load(handle_in.read().format(
                 coverage_max=self._args.cov_max,
                 qc_typing_scheme='cgmlst' if self._args.cgmlst else 'mlst',
+                export_bam='true' if self._args.report_include_bam else 'false',
             ), Loader=yaml.SafeLoader))
         return SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir)
 

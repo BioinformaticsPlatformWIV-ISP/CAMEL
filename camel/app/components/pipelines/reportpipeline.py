@@ -11,6 +11,7 @@ from camel.app.components.files import fastautils
 from camel.app.components.files.fastautils import FastaUtils
 from camel.app.components.files.fastqutils import FastqUtils
 from camel.app.components.files.fileutils import FileUtils
+from camel.app.components.pipelines import absolute_path_by_pathlib
 from camel.app.components.pipelines.basepipeline import BasePipeline
 from camel.app.components.workflows.utils.fastqinput import FastqInput
 from camel.app.error.invalidinputerror import InvalidInputError
@@ -36,10 +37,15 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         BasePipeline.add_common_arguments(argument_parser)
 
         # Output
-        argument_parser.add_argument('--output-dir', required=True, type=Path)
-        argument_parser.add_argument('--output-html', required=True, type=Path)
-        argument_parser.add_argument('--output-tsv', help="Output file for the summary", required=True, type=Path)
-        argument_parser.add_argument('--output-fasta', type=Path, help='output path for assembled contigs')
+        argument_parser.add_argument(
+            '--output-dir', type=absolute_path_by_pathlib, default=Path(Path.cwd(), 'out'))
+        argument_parser.add_argument(
+            '--output-html', type=absolute_path_by_pathlib, default=Path(Path.cwd(), 'out', 'report.html'))
+        argument_parser.add_argument(
+            '--output-tsv', help="Output file for the summary", type=absolute_path_by_pathlib,
+            default=Path(Path.cwd(), 'out', 'report.tsv'))
+        argument_parser.add_argument(
+            '--output-fasta', type=absolute_path_by_pathlib, help='output path for assembled contigs')
 
         # Options
         argument_parser.add_argument(
@@ -64,7 +70,7 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         # Add common entries
         config_data = super().get_template_data(dict_input)
 
-        # Add report specific entries
+        # Add report-specific entries
         mainscriptutils.dict_merge(config_data, {
             'output_dir': str(self._args.output_dir),
             'output_report': str(self._args.output_html),
@@ -79,6 +85,9 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         # Technology-specific options
         if (self._args.input_type == 'illumina') and (self._args.library is not None):
             config_data['read_trimming']['adapter'] = self._args.library
+
+        # Empty variant filtering config
+        config_data['variant_filtering'] = {}
 
         return config_data
 
@@ -119,7 +128,7 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         # FASTQ SE input (== nanopore)
         elif self._args.input_type == 'ont':
             nb_reads = FastqUtils.count_reads(self._args.fastq_se)
-            logger.info(f'SE FASTQ input is valid: {nb_reads} reads')
+            logger.info(f'SE FASTQ input is valid: {nb_reads:,} reads')
             logger.info(f'SE FASTQ hash: {FileUtils.hash_file(self._args.fastq_se)}')
         else:
             logger.debug(f"FASTQ checking not implemented yet for input type '{self._args.input_type}'")

@@ -7,6 +7,7 @@ from typing import Sequence, Optional
 from camel.app.camel import Camel
 from camel.app.components import mainscriptutils
 from camel.app.components.html.htmlreport import HtmlReport
+from camel.app.components.pipelines import absolute_path_by_pathlib
 from camel.app.components.sequencetyping.sequencetypingutils import SequenceTypingUtils
 from camel.app.components.workflows.readtype import helper_by_input_type
 from camel.app.components.workflows.sequencetypingwrapper import SequenceTypingWrapper, SequenceTypingInput, \
@@ -40,11 +41,11 @@ class MainSequenceTyping(object):
         mainscriptutils.add_common_arguments(argument_parser)
         mainscriptutils.add_assembly_arguments(argument_parser)
         mainscriptutils.add_input_files_arguments(argument_parser)
-        argument_parser.add_argument('--scheme-dir', required=True, type=Path)
+        argument_parser.add_argument('--scheme-dir', required=True, type=absolute_path_by_pathlib)
         argument_parser.add_argument('--detection-method', type=str, choices=['blast', 'srst2', 'kma'], default='blast')
-        argument_parser.add_argument(
-            '--output-fasta', type=Path, help='output path for assembled contigs (only used for BLAST-based detection)')
-        argument_parser.add_argument('--output-tsv', type=Path,
+        argument_parser.add_argument('--output-fasta', type=absolute_path_by_pathlib,
+                                     help='output path for assembled contigs (only used for BLAST-based detection)')
+        argument_parser.add_argument('--output-tsv', type=absolute_path_by_pathlib,
                                      help='Output path for the tabular output file (does not work with mixed schemes)')
         argument_parser.add_argument('--blastn-task', type=str, choices=['blastn', 'megablast'], default='megablast')
         argument_parser.add_argument('--srst2-max-unaligned-overlap', type=int, default=100)
