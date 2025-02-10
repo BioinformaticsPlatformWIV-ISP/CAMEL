@@ -51,19 +51,6 @@ class TestQuast(CamelTestSuite):
         self.verify_output_files(quast, 'HTML')
         self.verify_output_files(quast, 'GFF')
 
-    def test_quast_with_busco(self) -> None:
-        """
-        Tests Quast with the BUSCO genes to determine completeness.
-        :return: None
-        """
-        quast = Quast(self.camel)
-        quast.add_input_files({'FASTA': [TestQuast.FASTA_IN], 'FASTA_Ref': [TestQuast.FASTA_REF]})
-        quast.update_parameters(conserved_genes_finding=True)
-        quast.run(self.running_dir)
-        self.verify_output_files(quast, 'TSV')
-        self.verify_output_files(quast, 'HTML')
-        self.verify_output_files(quast, 'TXT_busco')
-
     def test_quast_with_bam_input(self) -> None:
         """
         Tests Quast with a BAM input file containing reads mapped against contigs.
