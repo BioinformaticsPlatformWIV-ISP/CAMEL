@@ -2,7 +2,7 @@
 import argparse
 import shutil
 from pathlib import Path
-from typing import Sequence, Optional
+from typing import Optional, Sequence
 
 from camel.app.components.workflows.inputtype import helper_by_input_type
 
@@ -17,7 +17,7 @@ from camel.app.components.workflows.utils.fastqinput import FastqInput
 from camel.app.io.tooliofile import ToolIOFile
 
 
-class MainSequenceTyping(object):
+class MainSequenceTyping:
     """
     Class to run sequence typing tool, it supports both BLAST+ and SRST2 as detection methods for alleles.
     """
