@@ -28,6 +28,7 @@ rule gene_detection_kma_get_db:
 rule gene_detection_kma:
     """
     Runs KMA on a database with the gene detection.
+    Note: for FASTA input, the simulated reads are used
     """
     input:
         IO = Path(config['working_dir']) / 'fq_dict.io',
@@ -46,7 +47,7 @@ rule gene_detection_kma:
         from camel.app.tools.kma.kma import KMA
         kma = KMA(Camel.get_instance())
         SnakemakeUtils.add_pickle_input(kma, 'DB', Path(input.DB))
-        key_reads = 'PE' if params.input_type == 'illumina' else 'SE'
+        key_reads = 'PE' if params.input_type in ('illumina', 'fasta') else 'SE'
         fq_input_dict = SnakePipelineUtils.extracts_fq_input(
             Path(input.IO), key_pe='FASTQ_PE', key_se='FASTQ_SE', read_type=key_reads)
         kma.add_input_files(fq_input_dict)

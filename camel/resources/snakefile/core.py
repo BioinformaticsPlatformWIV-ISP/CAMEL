@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Dict, Any
 
-from camel.resources.snakefile import trimming_illumina, trimming_ont, human_read_scrubbing
+from camel.resources.snakefile import trimming_illumina, trimming_ont, human_read_scrubbing, read_simulation
 
 SNAKEFILE_CORE = f'{Path(__file__).parent / Path(__file__).stem}.smk'
 INPUT_FASTA_IO = Path('input', 'fasta.io')
@@ -30,7 +30,7 @@ def get_fq_input(input_type: str, dir_: Path):
     :return: Dictionary with strings as keys and paths as values
     """
     if input_type in ('fasta', 'fasta_with_vcf'):
-        return {}
+        return {'FASTQ_PE': dir_ / read_simulation.OUTPUT_SIMULATION_FASTQ}
     elif input_type == 'illumina':
         return {'FASTQ_PE': dir_ / trimming_illumina.OUTPUT_TRIMMING_ILLUMINA_DICT}
     elif input_type == 'ont':
