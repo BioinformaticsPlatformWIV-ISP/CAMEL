@@ -21,6 +21,7 @@ class TestSCCmecFinder(CamelTestSuite):
         output_file_report = self.running_dir / 'report' / 'report.html'
         args = [
             '--fasta', str(TestSCCmecFinder.input_fasta_file),
+            '--input-type', 'fasta',
             '--output-html', str(output_file_report),
             '--output-dir', str(output_file_report.parent),
             '--working-dir', str(self.running_dir),
@@ -40,6 +41,7 @@ class TestSCCmecFinder(CamelTestSuite):
         output_json = self.running_dir / 'report' / 'informs.json'
         args = [
             '--fasta', str(TestSCCmecFinder.input_fasta_file),
+            '--input-type', 'fasta',
             '--output-html', str(output_file_report),
             '--output-dir', str(output_file_report.parent),
             '--output-json', str(output_json),
