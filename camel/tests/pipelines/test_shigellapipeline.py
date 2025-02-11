@@ -153,8 +153,8 @@ class TestShigellaPipeline(CamelTestSuite):
         path_report_out = self.running_dir / 'out' / 'report.html'
         path_summary_out = self.running_dir / 'out' / 'summary.tsv'
         args = [
-            '--fastq-pe', str(TestShigellaPipeline.input_fastq_pe[0]), str(TestShigellaPipeline.input_fastq_pe[1]),
-           '--input-type', 'ont',
+            '--fastq-se', str(TestShigellaPipeline.input_fastq_ont),
+            '--input-type', 'ont',
             '--output-html', str(path_report_out),
             '--output-dir', str(path_report_out.parent),
             '--output-tsv', str(path_summary_out),
@@ -173,7 +173,7 @@ class TestShigellaPipeline(CamelTestSuite):
         path_report_out = self.running_dir / 'out' / 'report.html'
         path_summary_out = self.running_dir / 'out' / 'summary.tsv'
         args = [
-            '--fastq-pe', str(TestShigellaPipeline.input_fastq_pe[0]),
+            '--fastq-se', str(TestShigellaPipeline.input_fastq_ont),
             '--input-type', 'ont',
             '--output-html', str(path_report_out),
             '--output-dir', str(path_report_out.parent),
