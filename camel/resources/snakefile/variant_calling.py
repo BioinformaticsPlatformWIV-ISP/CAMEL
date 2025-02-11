@@ -57,7 +57,7 @@ def get_vcf(config: Dict[str, Any]) -> Path:
     :param config: Snakemake configuration
     :return: Path to the unfiltered VCF file
     """
-    if config['input_type'] in ('fasta', 'illumina', 'ont', 'hybrid'): # Ont and hybrid were added because otherwise some tests of the mockpipeline fail
+    if config['input_type'] in ('fasta', 'illumina', 'ont', 'hybrid'):  # Ont and hybrid were added because otherwise some tests of the mockpipeline fail
         return OUTPUT_VARIANT_CALLING_UNFILTERED_VCF
     if config['input_type'] == 'fasta_with_vcf':
         return Path(config['working_dir']) / 'input' / 'vcf.io'
@@ -69,7 +69,7 @@ def get_vcf_gz(config: Dict[str, Any]) -> Path:
     :param config: Snakemake configuration
     :return: Path to the unfiltered gzipped VCF file
     """
-    if config['input_type'] in ('fasta', 'illumina', 'ont', 'hybrid'): # Ont and hybrid were added because otherwise some tests of the mockpipeline fail
+    if config['input_type'] in ('fasta', 'illumina', 'ont', 'hybrid'):  # Ont and hybrid were added because otherwise some tests of the mockpipeline fail
         return OUTPUT_VARIANT_CALLING_UNFILTERED_VCF_GZ
     if config['input_type'] == 'fasta_with_vcf':
         return Path(config['working_dir']) / 'variant_calling' / 'gzip' / 'vcf_gz.io'
@@ -89,6 +89,7 @@ def get_reports(config: Dict[str, Any]) -> Path:
     if input_type == 'fasta_with_vcf':
         return Path(config['working_dir']) / OUTPUT_VARIANT_CALLING_REPORT_EMPTY
 
+
 def get_mapping_informs(config: Dict[str, Any]) -> Path:
     """
     Returns the paths to the variant calling mapping informs.
@@ -99,6 +100,7 @@ def get_mapping_informs(config: Dict[str, Any]) -> Path:
 
     if input_type in ('illumina', 'fasta', 'ont'):
         return Path(config['working_dir']) / OUTPUT_VARIANT_CALLING_MAPPING_INFORMS
+
 
 def get_summaries(config: Dict[str, Any]) -> List[Path]:
     """
@@ -111,6 +113,7 @@ def get_summaries(config: Dict[str, Any]) -> List[Path]:
     if input_type in ('illumina', 'fasta', 'ont'):
         paths.append(OUTPUT_VARIANT_CALLING_SUMMARY)
     return [Path(config['working_dir']) / p for p in paths]
+
 
 def get_command_informs(config: Dict[str, Any]) -> List[Path]:
     """
