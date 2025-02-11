@@ -2,13 +2,10 @@ import abc
 import argparse
 import shutil
 from pathlib import Path
-from typing import Dict, Any, List, Tuple, Union
+from typing import Any, Union
 
 from camel.app.components import mainscriptutils
 from camel.app.components.files import fastautils
-from camel.app.components.files.fastautils import FastaUtils
-from camel.app.components.files.fastqutils import FastqUtils
-from camel.app.components.files.fileutils import FileUtils
 from camel.app.components.pipelines import absolute_path_by_pathlib
 from camel.app.components.pipelines.basepipeline import BasePipeline
 from camel.app.components.workflows.utils.fastqinput import FastqInput
@@ -58,7 +55,7 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
             '--cov-max', default=100.0, type=float,
             help='Maximum coverage (datasets with higher estimated coverage will be downsampled to the given value)')
 
-    def get_template_data(self, dict_input: Dict) -> Dict[str, Any]:
+    def get_template_data(self, dict_input: dict) -> dict[str, Any]:
         """
         Returns the template data that is common to all pipelines.
         :param dict_input: Dictionary with pipeline input files
@@ -110,7 +107,7 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         logger.info(f'Output FASTA file exported to: {self._args.output_fasta}')
 
     @staticmethod
-    def format_input_string(dict_in: Dict[str, Any]) -> str:
+    def format_input_string(dict_in: dict[str, Any]) -> str:
         """
         Formats the input string based on the dictionary with pipeline input files.
         :param dict_in: Pipeline input dictionary
@@ -129,7 +126,8 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         """
         # FASTA input
         if input_type in ('fasta', 'fasta_with_vcf'):
-            SnakemakeUtils.dump_object(None, path_out)
+            fq_pe = SnakemakeUtils.load_object(Path(snake_in.FASTQ_PE))
+            SnakemakeUtils.dump_object(FastqInput('illumina', fq_pe, is_pe=True).to_fq_dict(), path_out)
 
         # PE reads (illumina)
         elif input_type == 'illumina':
@@ -171,7 +169,7 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
 
     @staticmethod
     def add_content_scrubbing(
-            structure: List[Tuple], input_type: str, reports_scrubbing: List[Union[Path, str]]) -> None:
+            structure: list[tuple], input_type: str, reports_scrubbing: list[Union[Path, str]]) -> None:
         """
         Adds the report content for the human read scrubbing.
         :param structure: Report structure
@@ -208,8 +206,8 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
 
     @staticmethod
     def add_content_trim_basic_qc(
-            structure: List[Tuple], input_type: str, reports_ds: List[Union[Path, str]],
-            reports_trim: List[Union[Path, str]]) -> None:
+            structure: list[tuple], input_type: str, reports_ds: list[Union[Path, str]],
+            reports_trim: list[Union[Path, str]]) -> None:
         """
         Adds the report content for the downsampling, basic QC, and read trimming.
         :param structure: Report structure
@@ -242,7 +240,7 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
 
     @staticmethod
     def add_content_contamination_check(
-            structure: List[Tuple], input_type: str, reports_contamination: List[Union[Path, str]],
+            structure: list[tuple], input_type: str, reports_contamination: list[Union[Path, str]],
             report_confindr: Union[Path, str]) -> None:
         """
         Adds the report content for the contamination check.
