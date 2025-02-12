@@ -17,6 +17,7 @@ class TestSeqsero2(CamelTestSuite):
     test_file_dir = CamelTestSuite.get_test_file_dir('salmonella')
     input_pe_reads = [test_file_dir / "SRR493330_1.fastq.gz", test_file_dir / "SRR493330_2.fastq.gz"]
     input_fasta_file = test_file_dir / 'assembly_filtered.fasta'
+    input_fastq_se = test_file_dir / 'Salmonella_S23BD05337-RBK_ont-ds-ds.fastq'
     db_path = Path(CamelTestSuite.camel.config['db_root']) / 'pipelines/salmonella/seqsero2/1.2.1/seqsero2_db'
 
     def test_seqsero2_kmer(self) -> None:
@@ -57,6 +58,21 @@ class TestSeqsero2(CamelTestSuite):
         seqsero2_tool = SeqSero2(self.camel)
         seqsero2_tool.add_input_files({
             'FASTQ_PE': [ToolIOFile(x) for x in self.input_pe_reads],
+            'DIR': [ToolIODirectory(self.db_path)]
+        })
+        seqsero2_tool.update_parameters(mode='Kmerread')
+        seqsero2_tool.run(self.running_dir)
+        self.verify_output_files(seqsero2_tool, 'TXT')
+        self.assertIn('db_path', seqsero2_tool.informs)
+
+    def test_seqsero2_ont(self) -> None:
+        """
+        Tests basic seqsero2 run in Kmer mode with ont data input
+        :return: None
+        """
+        seqsero2_tool = SeqSero2(self.camel)
+        seqsero2_tool.add_input_files({
+            'FASTQ_ONT': [ToolIOFile(Path(self.input_fastq_se))],
             'DIR': [ToolIODirectory(self.db_path)]
         })
         seqsero2_tool.update_parameters(mode='Kmerread')

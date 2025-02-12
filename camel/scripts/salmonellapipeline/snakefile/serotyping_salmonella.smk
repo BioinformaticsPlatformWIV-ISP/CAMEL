@@ -58,8 +58,12 @@ rule serotyping_seqsero2_run:
         if params.read_key == 'fastq_pe':
             seqsero_tool.add_input_files(SnakePipelineUtils.extracts_fq_input(Path(input.IO), key_pe='FASTQ_PE'))
         if params.read_key == 'fastq_se':
-            seqsero_tool.add_input_files(SnakePipelineUtils.extracts_fq_input(
-                Path(input.IO), key_se='FASTQ', read_type='SE'))
+            if config['input_type'] == 'ont':
+                seqsero_tool.add_input_files(SnakePipelineUtils.extracts_fq_input(
+                    Path(input.IO),key_se='FASTQ_ONT',read_type='SE'))
+            else:
+                seqsero_tool.add_input_files(SnakePipelineUtils.extracts_fq_input(
+                    Path(input.IO), key_se='FASTQ', read_type='SE'))
         seqsero_tool.update_parameters(mode=str(params.mode))
         step = Step(str(rule), seqsero_tool, camel, Path(str(params.running_dir)))
         step.run_step()
