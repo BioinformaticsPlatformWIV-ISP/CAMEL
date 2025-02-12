@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 from camel.app.camel import Camel
+from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
@@ -50,6 +51,8 @@ class SeqSero2(Tool):
             if sum(x in self._tool_inputs for x in ('FASTQ', 'FASTQ_PE', 'FASTQ_ONT')) != 1:  # not exactly one
                 raise InvalidInputSpecificationError(f"Exactly one FASTQ input is required in "
                                                      f"{self._parameters['mode'].value} mode")
+            if self._parameters['mode'].value == 'Allele' and 'FASTQ_ONT' in self._tool_inputs:
+                raise InvalidInputSpecificationError("Allele mode is not available for nanopore FQ input.")
 
     def __set_output(self) -> None:
         """
@@ -66,30 +69,23 @@ class SeqSero2(Tool):
         """
         command_parts = [self._tool_command, '-d', str(self.folder), " ".join(self._build_options(excluded_parameters=['mode']))]
         if mode == 'Kmer':
-            if 'FASTQ_ONT' in self._tool_inputs:
-                command_parts.extend(['-t 5 -m k', '-i', str(self._tool_inputs['FASTQ_ONT'][0].path)])
-            else:
-                command_parts.extend(['-t 4 -m k', '-i', str(self._tool_inputs['FASTA'][0])])
+            command_parts.extend(['-t 4 -m k', '-i', str(self._tool_inputs['FASTA'][0])])
         else:
             if mode == 'Allele':
                 command_parts.append('-m a')
-                if 'FASTQ' in self._tool_inputs:
-                    command_parts.extend(['-t 3', '-i', str(self._tool_inputs['FASTQ'][0].path)])
-                else:  # if 'FASTQ_PE' in self._tool_inputs:
-                    command_parts.extend(['-t 2', '-i',
-                                          str(self._tool_inputs['FASTQ_PE'][0].path),
-                                          str(self._tool_inputs['FASTQ_PE'][1].path)])
             else:  # if mode == 'Kmerread':
                 command_parts.append('-m k')
 
-                if 'FASTQ' in self._tool_inputs:
-                    command_parts.extend(['-t 3', '-i', str(self._tool_inputs['FASTQ'][0].path)])
-                elif 'FASTQ_ONT' in self._tool_inputs:  #in case of ONT input data
-                     command_parts.extend(['-t 5', '-i', str(self._tool_inputs['FASTQ_ONT'][0].path)])
-                else:  # if 'FASTQ_PE' in self._tool_inputs:
-                    command_parts.extend(['-t 2', '-i',
-                                    str(self._tool_inputs['FASTQ_PE'][0].path),
-                                    str(self._tool_inputs['FASTQ_PE'][1].path)])
+            if 'FASTQ' in self._tool_inputs:
+                command_parts.extend(['-t 3', '-i', str(self._tool_inputs['FASTQ'][0].path)])
+            elif 'FASTQ_ONT' in self._tool_inputs:  # in case of ONT input data
+                fastq_gunzipped = self.folder / ''.join([self._tool_inputs['FASTQ_ONT'][0].path.stem, '.fastq'])
+                FileSystemHelper.gzip_extract(self._tool_inputs['FASTQ_ONT'][0].path, fastq_gunzipped)
+                command_parts.extend(['-t 5', '-i', str(fastq_gunzipped)])
+            else:  # if 'FASTQ_PE' in self._tool_inputs:
+                command_parts.extend(['-t 2', '-i',
+                                      str(self._tool_inputs['FASTQ_PE'][0].path),
+                                      str(self._tool_inputs['FASTQ_PE'][1].path)])
 
         self._command.command = ' '.join(command_parts)
 

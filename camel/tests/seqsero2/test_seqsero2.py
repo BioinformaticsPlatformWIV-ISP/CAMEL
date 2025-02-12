@@ -1,6 +1,7 @@
 import unittest
 from pathlib import Path
 
+from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.io.tooliodirectory import ToolIODirectory
 from camel.app.io.tooliofile import ToolIOFile
@@ -71,8 +72,10 @@ class TestSeqsero2(CamelTestSuite):
         :return: None
         """
         seqsero2_tool = SeqSero2(self.camel)
+        fastq_gunzipped = self.running_dir / ''.join([self.input_fastq_se, '.fastq'])
+        FileSystemHelper.gzip_extract(self.input_fastq_se, fastq_gunzipped)
         seqsero2_tool.add_input_files({
-            'FASTQ_ONT': [ToolIOFile(Path(self.input_fastq_se))],
+            'FASTQ_ONT': [ToolIOFile(fastq_gunzipped)],
             'DIR': [ToolIODirectory(self.db_path)]
         })
         seqsero2_tool.update_parameters(mode='Kmerread')
