@@ -79,7 +79,10 @@ class SeqSero2(Tool):
             if 'FASTQ' in self._tool_inputs:
                 command_parts.extend(['-t 3', '-i', str(self._tool_inputs['FASTQ'][0].path)])
             elif 'FASTQ_ONT' in self._tool_inputs:  # in case of ONT input data
-                fastq_gunzipped = self.folder / ''.join([self._tool_inputs['FASTQ_ONT'][0].path.stem, '.fastq'])
+                # create intermediary input dir because Seqsero2 needs a different input than output dir
+                (self.folder / 'in').mkdir()
+                # Gunzip file because in -t 5 the input needs to be gunzipped.
+                fastq_gunzipped = self.folder / 'in' / self._tool_inputs['FASTQ_ONT'][0].path.stem
                 FileSystemHelper.gzip_extract(self._tool_inputs['FASTQ_ONT'][0].path, fastq_gunzipped)
                 command_parts.extend(['-t 5', '-i', str(fastq_gunzipped)])
             else:  # if 'FASTQ_PE' in self._tool_inputs:

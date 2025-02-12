@@ -18,7 +18,7 @@ class TestSeqsero2(CamelTestSuite):
     test_file_dir = CamelTestSuite.get_test_file_dir('salmonella')
     input_pe_reads = [test_file_dir / "SRR493330_1.fastq.gz", test_file_dir / "SRR493330_2.fastq.gz"]
     input_fasta_file = test_file_dir / 'assembly_filtered.fasta'
-    input_fastq_se = test_file_dir / 'Salmonella_S23BD05337-RBK_ont-ds-ds.fastq'
+    input_fastq_se = test_file_dir / 'Salmonella_S23BD05337-RBK_ont-ds-ds.fastq.gz'
     db_path = Path(CamelTestSuite.camel.config['db_root']) / 'pipelines/salmonella/seqsero2/1.2.1/seqsero2_db'
 
     def test_seqsero2_kmer(self) -> None:
@@ -72,10 +72,8 @@ class TestSeqsero2(CamelTestSuite):
         :return: None
         """
         seqsero2_tool = SeqSero2(self.camel)
-        fastq_gunzipped = self.running_dir / ''.join([self.input_fastq_se, '.fastq'])
-        FileSystemHelper.gzip_extract(self.input_fastq_se, fastq_gunzipped)
         seqsero2_tool.add_input_files({
-            'FASTQ_ONT': [ToolIOFile(fastq_gunzipped)],
+            'FASTQ_ONT': [ToolIOFile(self.input_fastq_se)],
             'DIR': [ToolIODirectory(self.db_path)]
         })
         seqsero2_tool.update_parameters(mode='Kmerread')
