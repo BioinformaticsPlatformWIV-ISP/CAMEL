@@ -21,7 +21,9 @@ rule run_lrefinder:
         from camel.app.tools.lrefinder.lrefinder import LREFinder
         lrefinder = LREFinder(Camel.get_instance())
         if params.input_type != 'fasta':
-            fq_dict = SnakePipelineUtils.extracts_fq_input(Path(input.IO), key_pe='FASTQ_PE')
+            key_reads = 'PE' if params.input_type == 'illumina' else 'SE'
+            fq_dict = SnakePipelineUtils.extracts_fq_input(Path(input.IO), key_se = 'FASTQ_SE', drop_empty = True, read_type = key_reads)
+            #fq_dict = SnakePipelineUtils.extracts_fq_input(Path(input.IO), key_pe='FASTQ_PE')
             lrefinder.add_input_files(fq_dict)
         else:
             # When the input type is FASTA the simulated reads are used as input

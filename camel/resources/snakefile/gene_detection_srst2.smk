@@ -35,8 +35,9 @@ rule gene_detection_srst2:
         srst2 = Srst2Gene(camel)
         SnakemakeUtils.add_pickle_input(srst2, 'FASTA', Path(input.FASTA))
         if params.input_type not in ('fasta', 'fasta_with_vcf'):
+            key_reads = 'PE' if params.input_type == 'illumina' else 'SE'
             fq_input_dict = SnakePipelineUtils.extracts_fq_input(
-                Path(input.IO), key_pe='FASTQ_PE', key_se='FASTQ_SE', read_type=params.read_type)
+                Path(input.IO), key_pe='FASTQ_PE', key_se='FASTQ_SE', read_type=key_reads)
             srst2.add_input_files(fq_input_dict)
             if 'FASTQ_PE' in fq_input_dict:
                 fwd_read_path = fq_input_dict['FASTQ_PE'][0].path
@@ -78,7 +79,7 @@ rule gene_detection_srst2_hit_extraction:
     output:
         VAL_Hits = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_HITS_METHOD).format(db='{db}', method='srst2')
     params:
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'gene_detection' / wildcards.db / 'srst2',
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'gene_detection' / wildcards.db / 'srst2'
     run:
         from camel.app.tools.pipelines.genedetection.srst2hitextractor import SRST2HitExtractor
         extractor = SRST2HitExtractor(camel)

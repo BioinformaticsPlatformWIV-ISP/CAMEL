@@ -28,8 +28,8 @@ class LREFinder(Tool):
         Checks if the provided input is valid.
         :return: None
         """
-        if 'FASTQ_PE' not in self._tool_inputs:
-            raise InvalidInputSpecificationError('FASTQ_PE input is required')
+        if not any(x in self._tool_inputs for x in ('FASTQ_SE', 'FASTQ_PE')):
+            raise InvalidInputSpecificationError('FASTQ_(SE/PE) input is required')
         super()._check_input()
 
     def _execute_tool(self) -> None:
@@ -38,12 +38,20 @@ class LREFinder(Tool):
         :return: None
         """
         output_path = self.folder / 'lrefinder_out.tsv'
-        self._command.command = ' '.join([
-            self._tool_command,
-            '-ipe', *[str(f.path) for f in self._tool_inputs['FASTQ_PE']],
-            '-t_db', '$LREFINDER_DB',
-            '-o', str(output_path)
-        ])
+        if 'FASTQ_SE' in self._tool_inputs:
+            self._command.command = ' '.join([
+                self._tool_command,
+                '-i', str(self._tool_inputs['FASTQ_SE'][0].path),
+                '-t_db', '$LREFINDER_DB',
+                '-o', str(output_path)
+            ])
+        else:
+            self._command.command = ' '.join([
+                self._tool_command,
+                '-ipe', *[str(f.path) for f in self._tool_inputs['FASTQ_PE']],
+                '-t_db', '$LREFINDER_DB',
+                '-o', str(output_path)
+            ])
         self._execute_command()
         self._informs.update(self.__parse_html_output(self._command.stdout))
 

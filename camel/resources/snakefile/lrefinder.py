@@ -16,7 +16,7 @@ def get_input(config: Dict[str, Any]) -> Path:
     :param config: Snakemake configuration
     :return: Path to the input file
     """
-    if config['input_type'] == 'illumina':
+    if config['input_type'] in ('illumina', 'ont', 'hybrid'):
         return Path(config['working_dir']) / 'fq_dict.io'
     if config['input_type'] == 'fasta':
         return Path(config['working_dir']) / read_simulation.OUTPUT_SIMULATION_FASTQ
