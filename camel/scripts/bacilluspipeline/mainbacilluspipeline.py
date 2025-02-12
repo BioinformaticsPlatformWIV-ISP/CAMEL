@@ -101,6 +101,8 @@ class MainBacillusPipeline(ReportPipeline):
                 if group != 'common' and group != self._args.species:
                     logger.warning(f"Analysis '{key}' not supported for species '{self._args.species}'")
                     continue
+                if key == 'variant_calling' and self._args.input_type not in ('illumina', 'fasta'):
+                    continue
                 config_data['analyses'].append(key)
 
         # Parse template
@@ -114,7 +116,6 @@ class MainBacillusPipeline(ReportPipeline):
                 export_bam='true' if self._args.report_include_bam else 'false',
                 expected_gc_content=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['gc_content'],
                 genome_size=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['genome_size'],
-                wildcards_assembly='long_read_assembly',
                 quast_fasta=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species].get('quast_fasta', 'null'),
                 quast_gff=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species].get('quast_gff', 'null'),
                 reference_name=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species].get('reference_name', 'null'),

@@ -57,6 +57,7 @@ assembly:
     minimum_input_coverage: 0
   flye:
     nano_raw: True
+    nano_corr: False
 
 variant_calling:
   ploidy: 1
@@ -99,13 +100,19 @@ fastani:
   path: /db/pipelines/bacillus/ref_list_complete.txt
 
 gene_detection:
-  gmo:
+  gmm_genes_vectors:
     known_gmm_constructs: /db/pipelines/bacillus/list_of_constructs.csv
-    path: /db/pipelines/bacillus/databaseGMMV5
+    path: /db/gene_detection/GMM/V6/genes-vectors/
     force_detection_method: kma
-    metadata:
-      name: Additional data
-      key: additional
+#    metadata:
+#      name: Additional data
+#      key: additional
+  gmm_junctions:
+    path: /db/gene_detection/GMM/V6/junctions/
+    force_detection_method: kma
+#    metadata:
+#      name: Additional data
+#      key: additional
   vfdb_core:
       path: /db/gene_detection/VFDB_core
       perc_identity_cutoff: 90

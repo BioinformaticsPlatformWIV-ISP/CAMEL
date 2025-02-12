@@ -1,3 +1,4 @@
+import ast
 from typing import List
 
 import pandas as pd
@@ -14,7 +15,7 @@ class UpdateGMMReport(Tool):
     """
     Updates the GMM gene detection report with warning about detected GMMs.
     """
-    INPUT_KEYS = ['TSV_STRAINS', 'TSV_GMM', 'VAL_HTML', 'TSV_GMM_DB']
+    INPUT_KEYS = ['TSV_STRAINS', 'TSV_GMM_VECTORS', 'TSV_GMM_JUNCTIONS', 'VAL_HTML_VECTORS', 'VAL_HTML_JUNCTIONS', 'TSV_GMM_DB']
     COLOR_CODE = {'STRAIN_MATCH': 'green', 'GMM_MATCH': 'yellow', 'BOTH_MATCH': 'red'}
 
     def __init__(self, camel: Camel) -> None:
@@ -30,6 +31,8 @@ class UpdateGMMReport(Tool):
         Checks the input.
         :return: None
         """
+        print("HERE!!!!")
+        print(self._tool_inputs)
         if any(key not in self._tool_inputs for key in self.INPUT_KEYS):
             raise InvalidInputSpecificationError(
                 "Tool requires {} inputs".format(', '.join(UpdateGMMReport.INPUT_KEYS)))
@@ -40,6 +43,14 @@ class UpdateGMMReport(Tool):
         Executes the tool.
         :return: None
         """
+        print("HERE!!!")
+        with open(self._tool_inputs['TSV_GMM_VECTORS'][0].path) as handle:
+            all_lines = handle.readlines()
+        print(all_lines)
+        with open(self._tool_inputs['TSV_GMM_JUNCTIONS'][0].path) as handle:
+            all_lines = handle.readlines()
+        print(all_lines)
+        # exit()
         self._parse_tsv_files()
         output_report = self._update_report()
         self._tool_outputs['VAL_HTML'] = [ToolIOValue(output_report)]
@@ -50,13 +61,17 @@ class UpdateGMMReport(Tool):
         :return: Updated report section
         """
         matches = self._parse_tsv_files()
-        current_report_section = self._tool_inputs['VAL_HTML'][0].value
+        current_report_section = self._tool_inputs['VAL_HTML_JUNCTIONS'][0].value
         current_report_section.add_header('Interpretation', level=4)
         if not (matches['strain'] and matches['construct']):
             current_report_section.add_paragraph('No GMM construct detected')
             return current_report_section
 
+        print(matches)
         table_to_add = list(zip(matches['strain'], matches['construct']))
+        table_to_add = [matches['strain'], matches['construct']]
+        print(table_to_add)
+        # exit()
         column_names = ['strain', 'construct']
         table_with_colors = self._generate_table_with_colors(table_to_add)
         current_report_section.add_table(table_with_colors, column_names, [('class', 'data')])
@@ -82,7 +97,34 @@ class UpdateGMMReport(Tool):
         Parses the TSV files passed as input.
         :return: Dictionary with match, or False if no match is found
         """
-        tsv_gmm_db = pd.read_csv(self._tool_inputs['TSV_GMM_DB'][0].path)
+        tsv_gmm_db = pd.read_csv(self._tool_inputs['TSV_GMM_DB'][0].path).to_dict(orient='records')
+
+        known_constructs = {
+            'GMM_protease': {
+                'hits': ['GMMprotease1_L', 'GMMprotease1_R'],
+                'strain': 'Baci_velezensis_10075'
+            },
+            'pGM-rib': {
+                'hits': ['GMMvitb2_558', 'GMMvitb2_690', 'GMMvitb2_691', 'GMMvitb2_804', 'GMMvitb2_693', 'GMMvitb2_694'],
+                'strain': 'Baci_subtilis_LBUM979'
+            }
+        }
+
+        # gmm_hits_list = ['GMMprotease1_L', 'GMMprotease1_R']
+        # strains = ['Baci_velezensis_10075', 'Baci_subtilis_LBUM979']
+
+        # print("HERE!!!")
+        # print(self._tool_inputs['TSV_STRAINS'])
+        # print(tsv_gmm_db)
+        # for f in self._tool_inputs['TSV_STRAINS']:
+        #     tsv_strain = pd.read_table(f.path, sep='\t', header=None, names=['param', 'value'])
+        #     rows_of_interest = [r for r in tsv_strain['param'] if 'closest_strain' in r]
+        #     subtable = tsv_strain[tsv_strain['param'] in rows_of_interest]
+            # print(subtable)
+            # print(rows_of_interest)
+            # print(tsv_strain)
+            # print(tsv_strain['value'])
+            # exit()
 
         strain_hits = []
         for f in self._tool_inputs['TSV_STRAINS']:
@@ -90,16 +132,37 @@ class UpdateGMMReport(Tool):
                 for line in handle:
                     spl = line.strip().split()
                     if 'closest_strain' in spl[0]:
-                        if spl[1] in tsv_gmm_db['strain'].tolist():
-                            strain_hits.append(spl[1])
+                        strain_hits.append(spl[1])
 
         gmm_hits = []
-        with open(self._tool_inputs['TSV_GMM'][0].path) as handle:
+        with open(self._tool_inputs['TSV_GMM_JUNCTIONS'][0].path) as handle:
             all_lines = handle.readlines()
-            gmm_hits_list = eval(all_lines[0].strip().split('\t')[1])
-            for entry in gmm_hits_list:
-                if entry[1] in tsv_gmm_db['construct'].tolist():
-                    gmm_hits.append(entry[1])
+            gmm_hits_list = ast.literal_eval(all_lines[0].strip().split('\t')[1])
+            hit_junctions = [k[1] for k in gmm_hits_list]
+            # print(gmm_hits_list)
+            # print(hit_junctions)
+            for construct in known_constructs.keys():
+                strain = known_constructs[construct]['strain']
+                hits = known_constructs[construct]['hits']
+                # print(strain)
+                # print(hits)
+                # all_hits_per_construct = len(hits)
+                all_hits_in_data = [k for k in hit_junctions if k in hits]
+                if len(hits) == len(all_hits_in_data) and strain in strain_hits:
+                    return {'strain': '_'.join(strain_hits),
+                            'construct': '_'.join(all_hits_in_data)}
+                # print([k for k in hit_junctions if k in hits])
+                # print(strain_hits)
+                # print(strain in strain_hits)
+
+            # exit()
+            # for entry in gmm_hits_list:
+            #
+            #     print("HERE!!!")
+            #     print([(k, l, known_constructs[k][l]) for k in known_constructs.keys() for l in known_constructs[k].keys()])
+            #     exit()
+            #     if entry[1] in tsv_gmm_db['construct'].tolist():
+            #         gmm_hits.append(entry[1])
 
         return {'strain': strain_hits,
                 'construct': gmm_hits}
