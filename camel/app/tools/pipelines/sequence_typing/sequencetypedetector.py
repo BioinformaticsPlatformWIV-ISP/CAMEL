@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Dict, Tuple, Optional
+from typing import Optional
 
 import pandas as pd
 
@@ -13,9 +13,12 @@ from camel.app.tools.tool import Tool
 
 @dataclass(frozen=True, unsafe_hash=True)
 class STProfile:
+    """
+    Dataclass to hold ST profile data.
+    """
     name: str
-    metadata: List[Tuple[str, str]] = field(hash=False)
-    alleles: Optional[Dict[str, str]] = field(hash=False)
+    metadata: list[tuple[str, str]] = field(hash=False)
+    alleles: Optional[dict[str, str]] = field(hash=False)
 
 
 class SequenceTypeDetector(Tool):
@@ -79,25 +82,32 @@ class SequenceTypeDetector(Tool):
             raise InvalidInputSpecificationError("Sequence type profiles ('TSV') are required.")
         if len(self._tool_inputs['hits_nucl']) + len(self._tool_inputs['hits_pept']) == 0:
             raise InvalidInputSpecificationError("Typing hits are required.")
-        super(SequenceTypeDetector, self)._check_input()
+        super()._check_input()
 
-    def __parse_profiles(self, gene_names: List[str]) -> List[STProfile]:
+    def __parse_profiles(self, gene_names: list[str]) -> list[STProfile]:
         """
         Parses the sequence type profiles.
         :param gene_names: Name of the genes
         :return: List of profiles
         """
+        # Parse input data
+        data_in = pd.read_table(self._tool_inputs['TSV'][0].path, dtype=str)
+
+        # Note: The first column contains the ST name
+        cols_metadata = [c for c in data_in.columns[1:] if c not in gene_names]
+        logger.info(f'Metadata columns: {cols_metadata}')
+        cols_alleles = [c for c in data_in.columns[1:] if c in gene_names]
+        logger.info(f'Gene columns: {cols_alleles}')
+
+        # Construct the profiles
         profiles = []
-        with open(self._tool_inputs['TSV'][0].path) as handle:
-            header = handle.readline().strip().split('\t')
-            gene_indices = {gene_name: header.index(gene_name) for gene_name in gene_names}
-            self._metadata_columns = [(p, header.index(p)) for p in header if p not in gene_names]
-            for line in handle.readlines():
-                parts = line.split('\t')
-                parts[-1] = parts[-1].strip()
-                alleles = {gene_name: parts[gene_indices[gene_name]] for gene_name in gene_names}
-                metadata = [(name, parts[i]) for name, i in self._metadata_columns]
-                profiles.append(STProfile(name=parts[0], alleles=alleles, metadata=metadata))
+        for row in data_in.to_dict('records'):
+            profiles.append(STProfile(
+                name=row[data_in.columns[0]],
+                alleles={c: row[c] for c in cols_alleles},
+                metadata=[(c, row[c]) for c in cols_metadata],
+            ))
+        logger.info(f'Parsed {len(profiles):,} profiles')
         return profiles
 
     def __alleles_match(self, detected_hit: SequenceTypingHitBase, profile_allele: str) -> bool:
@@ -114,7 +124,7 @@ class SequenceTypeDetector(Tool):
         return (detected_hit.is_perfect_hit()) and (detected_hit.allele_id == profile_allele)
 
     def __get_nb_matches_by_profile(
-            self, profiles: List[STProfile], hit_by_locus: Dict[str, SequenceTypingHitBase]) -> Dict:
+            self, profiles: list[STProfile], hit_by_locus: dict[str, SequenceTypingHitBase]) -> dict:
         """
         Returns the number of matches per profile.
         :param profiles: Sequence type profiles
