@@ -22,7 +22,7 @@ class TestListeriaPipeline(CamelTestSuite):
         test_file_dir / 'pipelines' / 'Listeria-S16BD02199_1.fastq.gz',
         test_file_dir / 'pipelines' / 'Listeria-S16BD02199_2.fastq.gz'
     ]
-    input_fastq_se = test_file_dir / 'pipelines' / 'Listeria_SRR17965220_ont-ds.fastq.gz'
+    input_fastq_se = test_file_dir / 'pipelines' / 'Listeria-SRR17965220_ont-ds.fastq.gz'
     input_fasta = test_file_dir / 'pipelines' / 'Listeria-S16BD02199.fasta'
 
     def test_listeria_typing_db(self) -> None:

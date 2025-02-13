@@ -22,7 +22,7 @@ class TestStaphylococcusPipeline(CamelTestSuite):
         test_file_dir / 'pipelines' / 'Saureus-SRR10393587-ds_1.fastq.gz',
         test_file_dir / 'pipelines' / 'Saureus-SRR10393587-ds_2.fastq.gz'
     ]
-    input_fastq_se = test_file_dir / 'pipelines' / 'Saureus_SRR14933399_ont-ds.fastq.gz'
+    input_fastq_se = test_file_dir / 'pipelines' / 'Saureus-SRR14933399_ont-ds.fastq.gz'
     input_fasta = test_file_dir / 'pipelines' / 'Saureus-SRR10393587-ds.fasta'
 
     def test_staphylococcus_typing_db(self) -> None:
