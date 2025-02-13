@@ -22,6 +22,7 @@ class TestSalmonellaPipeline(CamelTestSuite):
         test_file_dir / 'pipelines' / "Salmonella-MB6391-ds_1.fastq.gz",
         test_file_dir / 'pipelines' / "Salmonella-MB6391-ds_2.fastq.gz"
     ]
+    input_fastq_se = test_file_dir / 'pipelines' / 'Salmonella-S23BD05337-RBK_ont-ds.fastq.gz'
     input_fasta = test_file_dir / 'pipelines' / "Salmonella-MB6391-ds.fasta"
 
     def test_salmonella_pipeline_typing_db(self) -> None:
@@ -144,6 +145,47 @@ class TestSalmonellaPipeline(CamelTestSuite):
                    '--output-tsv', str(path_summary_out),
                    '--working-dir', str(self.running_dir)
                ] + [f"--{a.replace('_', '-')}" for a in MainSalmonellaPipeline.CUSTOM_ANALYSES if 'cgmlst' not in a]
+        main = MainSalmonellaPipeline(args)
+        main.run()
+        self.assertGreater(path_report_out.stat().st_size, 0)
+
+    @longRunningTest()
+    def test_salmonella_pipeline_ont(self) -> None:
+        """
+        Tests the Salmonella pipeline with all assays except for cgMLST , ONT input
+        :return: None
+        """
+        path_report_out = self.running_dir / 'out' / 'report.html'
+        path_summary_out = self.running_dir / 'out' / 'summary.tsv'
+        args = [
+                   '--fastq-se', str(TestSalmonellaPipeline.input_fastq_se),
+                   '--input-type', 'ont',
+                   '--output-html', str(path_report_out),
+                   '--output-dir', str(path_report_out.parent),
+                   '--output-tsv', str(path_summary_out),
+                   '--working-dir', str(self.running_dir)
+               ] + [f"--{a.replace('_', '-')}" for a in MainSalmonellaPipeline.CUSTOM_ANALYSES if 'cgmlst' not in a]
+        main = MainSalmonellaPipeline(args)
+        main.run()
+        self.assertGreater(path_report_out.stat().st_size, 0)
+
+    @longRunningTest()
+    def test_salmonella_pipeline_kma_ont(self) -> None:
+        """
+        Tests the Salmonella pipeline with all assays except for cgMLST, using KMA and ONT input
+        :return: None
+        """
+        path_report_out = self.running_dir / 'out' / 'report.html'
+        path_summary_out = self.running_dir / 'out' / 'summary.tsv'
+        args = [
+            '--fastq-se', str(TestSalmonellaPipeline.input_fastq_se),
+            '--input-type', 'ont',
+            '--output-html', str(path_report_out),
+            '--output-dir', str(path_report_out.parent),
+            '--output-tsv', str(path_summary_out),
+            '--working-dir', str(self.running_dir),
+            '--detection-method', 'kma',
+        ] + [f"--{a.replace('_', '-')}" for a in MainSalmonellaPipeline.CUSTOM_ANALYSES if 'cgmlst' not in a]
         main = MainSalmonellaPipeline(args)
         main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)

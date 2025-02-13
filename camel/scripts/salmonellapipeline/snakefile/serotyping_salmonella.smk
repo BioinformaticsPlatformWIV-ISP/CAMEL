@@ -143,9 +143,17 @@ rule serotyping_seqsero2_dump_summary_info:
 
         # parse facultative SeqSero2 output
         if 'fasta' not in config['input']:
-            for args_tuple in [(SnakemakeUtils.load_object(Path(str(input.TXT_seqsero2_allele)))[0].path, 'seqsero2_allele'),
-                               (SnakemakeUtils.load_object(Path(str(input.TXT_seqsero2_kmerread)))[0].path, 'seqsero2_kmerread')
-                                ]:
+            files = []
+            if config['input_type'] == 'ont':
+                #files = [(SnakemakeUtils.load_object(Path(str(input.TXT_seqsero2_kmerread)))[0].path, 'seqsero2_kmerread')]
+                files.append((SnakemakeUtils.load_object(Path(str(input.TXT_seqsero2_kmerread)))[0].path, 'seqsero2_kmerread'))
+            else:
+                files.append((SnakemakeUtils.load_object(Path(str(input.TXT_seqsero2_allele)))[0].path, 'seqsero2_allele'))
+                files.append((SnakemakeUtils.load_object(Path(str(input.TXT_seqsero2_kmerread)))[0].path, 'seqsero2_kmerread'))
+                #files = [(SnakemakeUtils.load_object(Path(str(input.TXT_seqsero2_allele)))[0].path, 'seqsero2_allele'),
+                #         (SnakemakeUtils.load_object(Path(str(input.TXT_seqsero2_kmerread)))[0].path, 'seqsero2_kmerread')
+                #         ]
+            for args_tuple in files:
                 tsv_results = serotyping_salmonella.seqsero2_output_parser(*args_tuple)
                 with Path(output.VAL_TSV_seqsero2).open('a') as handle:
                     for item in tsv_results:

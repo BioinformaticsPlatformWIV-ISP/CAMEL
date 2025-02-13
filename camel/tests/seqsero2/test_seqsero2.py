@@ -68,7 +68,7 @@ class TestSeqsero2(CamelTestSuite):
 
     def test_seqsero2_ont(self) -> None:
         """
-        Tests basic seqsero2 run in Kmer mode with ont data input
+        Tests basic seqsero2 run in Kmerread mode with ont data input
         :return: None
         """
         seqsero2_tool = SeqSero2(self.camel)

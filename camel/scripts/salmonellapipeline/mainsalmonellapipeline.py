@@ -24,7 +24,7 @@ class MainSalmonellaPipeline(ReportPipeline):
         Initializes the main class.
         :param args: Arguments (optional)
         """
-        super().__init__('Salmonella pipeline', '0.3', SNAKEFILE_MAIN, args)
+        super().__init__('Salmonella pipeline', '0.4', SNAKEFILE_MAIN, args)
 
     @property
     def title(self) -> str:
