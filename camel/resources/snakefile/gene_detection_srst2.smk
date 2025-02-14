@@ -34,6 +34,8 @@ rule gene_detection_srst2:
             dir_working.mkdir(parents=True)
         srst2 = Srst2Gene(camel)
         SnakemakeUtils.add_pickle_input(srst2, 'FASTA', Path(input.FASTA))
+        if params.input_type == 'ont':
+            raise RuntimeError("SRST2 is not supported for ONT input")
         if params.input_type not in ('fasta', 'fasta_with_vcf'):
             key_reads = 'PE' if params.input_type == 'illumina' else 'SE'
             fq_input_dict = SnakePipelineUtils.extracts_fq_input(

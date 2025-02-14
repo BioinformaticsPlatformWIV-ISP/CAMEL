@@ -33,10 +33,10 @@ rule variant_calling_map_reads_illumina:
         IO = variant_calling.get_mapping_fq_input(config),
         INDEX_GENOME_PREFIX = rules.variant_calling_prep_reference.output.INDEX_GENOME_PREFIX
     output:
-        BAM= Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_BAM_ILLUMINA,
-        INFORMS= variant_calling.get_mapping_informs(config)
+        BAM= Path(config['working_dir']) / 'variant_calling' / 'read_mapping' / 'illumina' / 'bam.io',
+        INFORMS= Path(config['working_dir']) / 'variant_calling' / 'read_mapping' / 'illumina' / 'informs.io'
     params:
-        dir_ = Path(config['working_dir']) / 'variant_calling' / 'read_mapping' / 'illumina' ,
+        dir_ = Path(config['working_dir']) / 'variant_calling' / 'read_mapping' / 'illumina',
         input_type = config['input_type']
     threads: 4
     priority: 1
@@ -76,10 +76,10 @@ rule variant_calling_map_reads_ont:
         IO = variant_calling.get_mapping_fq_input(config),
         FASTA = rules.variant_calling_prep_reference.output.FASTA
     output:
-        BAM = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_BAM_ONT,
-        INFORMS= variant_calling.get_mapping_informs(config)
+        BAM = Path(config['working_dir']) / 'variant_calling' / 'read_mapping' / 'ont' / 'bam.io',
+        INFORMS = Path(config['working_dir']) / 'variant_calling' / 'read_mapping' / 'ont' / 'informs.io'
     params:
-        dir_ = Path(config['working_dir']) / 'variant_calling' / 'read_mapping' / 'ont' ,
+        dir_ = Path(config['working_dir']) / 'variant_calling' / 'read_mapping' / 'ont',
         input_type = config['input_type']
     threads: 4
     priority: 1
@@ -90,7 +90,7 @@ rule variant_calling_map_reads_ont:
         from camel.app.tools.samtools.samtoolssort import SamtoolsSort
         from camel.app.tools.samtools.samtoolsview import SamtoolsView
 
-        # Minimap 2
+        # Minimap2
         minimap2_map = Minimap2Mapping(Camel.get_instance())
         SnakemakeUtils.add_pickle_input(minimap2_map, 'FASTA', Path(input.FASTA))
         minimap2_map.add_input_files(SnakePipelineUtils.extracts_fq_input(Path(input.IO), key_se='FASTQ', read_type='SE'))
@@ -350,9 +350,9 @@ rule variant_calling_report:
         VCF = rules.variant_calling_unzip_vcf.output.VCF,
         VCF_filt = Path(config['working_dir']) / variant_filtering.OUTPUT_VARIANT_FILTERING_VCF,
         VCF_filt_regions = Path(config['working_dir'], 'variant_filtering', '06-regions', 'vcf.io') if variant_filtering.get_filtering_param(config, 'region', 'bed_file') is not None else [],
-        BAM = rules.variant_calling_map_reads_ont.output.BAM if config['input_type'] == 'ont' else rules.variant_calling_map_reads_illumina.output.BAM,
+        BAM = variant_calling.get_bam(config),
         INFORMS_reference = rules.variant_calling_prep_reference.output.INFORMS,
-        INFORMS_mapping = rules.variant_calling_map_reads_ont.output.INFORMS if config['input_type'] == 'ont' else rules.variant_calling_map_reads_illumina.output.INFORMS,
+        INFORMS_mapping = variant_calling.get_mapping_informs(config),
         INFORMS_calling = rules.variant_calling_bcftools_call.output.INFORMS,
         INFORMS_depth = rules.variant_calling_calculate_depth.output.INFORMS,
         INFORMS_map_rate = rules.variant_calling_calculate_mapping_rate.output.INFORMS,
@@ -411,11 +411,12 @@ rule variant_calling_collect_command_informs:
     """
     input:
         INFORMS_read_simulation = Path(config['working_dir']) / read_simulation.OUTPUT_SIMULATION_INFORMS if config['input_type'] == 'fasta' else [],
-        INFORMS_mapping = rules.variant_calling_map_reads_ont.output.INFORMS if config['input_type'] == 'ont' else rules.variant_calling_map_reads_illumina.output.INFORMS,
+        INFORMS_mapping = variant_calling.get_mapping_informs(config),
         INFORMS_mpileup = rules.variant_calling_mpileup.output.INFORMS,
         INFORMS_calling = rules.variant_calling_bcftools_call.output.INFORMS
     output:
-        INFORMS_ALL = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_INFORMS_ALL
+        INFORMS_ALL = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_INFORMS_ALL,
+        INFORMS = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_MAPPING_INFORMS
     run:
         all_informs = []
         for io_file in input:
@@ -423,6 +424,9 @@ rule variant_calling_collect_command_informs:
             informs['_tag'] = 'Variant calling'
             all_informs.append(informs)
         SnakemakeUtils.dump_object(all_informs, Path(output.INFORMS_ALL))
+        # dump the mapping informs to file (needed in assembly.py)
+        informs_map = SnakemakeUtils.load_object(Path(input.INFORMS_mapping))
+        SnakemakeUtils.dump_object(informs_map, Path(output.INFORMS))
 
 rule variant_calling_report_empty:
     """

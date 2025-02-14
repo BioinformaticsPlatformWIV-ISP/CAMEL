@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any
 
 from camel.resources.snakefile import read_simulation
 
@@ -10,7 +10,7 @@ OUTPUT_LREFINDER_INFORMS = Path('lrefinder') / 'informs.io'
 OUTPUT_LREFINDER_SUMMARY = Path('lrefinder') / 'summary.tsv'
 
 
-def get_input(config: Dict[str, Any]) -> Path:
+def get_input(config: dict[str, Any]) -> Path:
     """
     Returns the input for the LREFinder tool.
     :param config: Snakemake configuration
@@ -20,3 +20,4 @@ def get_input(config: Dict[str, Any]) -> Path:
         return Path(config['working_dir']) / 'fq_dict.io'
     if config['input_type'] == 'fasta':
         return Path(config['working_dir']) / read_simulation.OUTPUT_SIMULATION_FASTQ
+    raise ValueError(f"Input type '{config['input_type']}' is not supported by LRE-finder")

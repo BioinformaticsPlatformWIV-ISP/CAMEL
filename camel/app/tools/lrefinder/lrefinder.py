@@ -1,5 +1,5 @@
 import re
-from typing import Dict, Any, List
+from typing import Any
 
 import bs4
 
@@ -39,24 +39,21 @@ class LREFinder(Tool):
         """
         output_path = self.folder / 'lrefinder_out.tsv'
         if 'FASTQ_SE' in self._tool_inputs:
-            self._command.command = ' '.join([
-                self._tool_command,
-                '-i', str(self._tool_inputs['FASTQ_SE'][0].path),
-                '-t_db', '$LREFINDER_DB',
-                '-o', str(output_path)
-            ])
+            fq_in = f"-i {self._tool_inputs['FASTQ_SE'][0].path}"
         else:
-            self._command.command = ' '.join([
+            fq_in = f"-ipe {' '.join(str(io.path) for io in self._tool_inputs['FASTQ_PE'])}"
+        # create command itself
+        self._command.command = ' '.join([
                 self._tool_command,
-                '-ipe', *[str(f.path) for f in self._tool_inputs['FASTQ_PE']],
+                fq_in,
                 '-t_db', '$LREFINDER_DB',
                 '-o', str(output_path)
-            ])
+        ])
         self._execute_command()
         self._informs.update(self.__parse_html_output(self._command.stdout))
 
     # noinspection PyTypeChecker
-    def __parse_html_output(self, html_code: str) -> Dict[str, Any]:
+    def __parse_html_output(self, html_code: str) -> dict[str, Any]:
         """
         Parses the HTML output reported by the tool.
         :param html_code: HTML code
@@ -64,16 +61,16 @@ class LREFinder(Tool):
         """
         info = {}
         soup = bs4.BeautifulSoup(html_code, 'html.parser')
-        info['species'] = soup.find('b', text='Species identified:').findNext('table').find('th').text
-        info['genes'] = LREFinder.__parse_html_table(soup.find('b', text='Genes Identified:').findNext('table'))
+        info['species'] = soup.find('b', string='Species identified:').findNext('table').find('th').text
+        info['genes'] = LREFinder.__parse_html_table(soup.find('b', string='Genes Identified:').findNext('table'))
         info['mutations'] = LREFinder.__parse_html_table(
-            soup.find('b', text='Identified mutations in 23s:').findNext('table'))
+            soup.find('b', string='Identified mutations in 23s:').findNext('table'))
         return info
 
     @staticmethod
-    def __parse_html_table(html_table: bs4.ResultSet) -> List[Dict[str, Any]]:
+    def __parse_html_table(html_table: bs4.ResultSet) -> list[dict[str, Any]]:
         """
-        Parses a HTML table.
+        Parses an HTML table.
         :param html_table: HTML table
         :return: Parsed information
         """
