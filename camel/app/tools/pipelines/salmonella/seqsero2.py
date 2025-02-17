@@ -76,9 +76,7 @@ class SeqSero2(Tool):
             else:  # if mode == 'Kmerread':
                 command_parts.append('-m k')
 
-            if 'FASTQ' in self._tool_inputs:
-                command_parts.extend(['-t 3', '-i', str(self._tool_inputs['FASTQ'][0].path)])
-            elif 'FASTQ_ONT' in self._tool_inputs:  # in case of ONT input data
+            if 'FASTQ_ONT' in self._tool_inputs:  # in case of ONT input data
                 # create intermediary input dir because Seqsero2 needs a different input than output dir
                 (self.folder / 'in').mkdir()
                 if self._tool_inputs['FASTQ_ONT'][0].path.suffix == '.gz':
