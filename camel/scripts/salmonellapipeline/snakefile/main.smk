@@ -2,7 +2,6 @@ from pathlib import Path
 from camel.resources.snakefile import trimming, trimming_illumina, trimming_ont, quality_checks, variant_calling, variant_filtering, \
     contamination_check_kraken, gene_detection, sequence_typing, downsampling, quast, confindr, core, assembly, resfinder4, \
     mobsuite, abritamr, mykrobe, human_read_scrubbing, read_simulation
-from camel.scripts.salmonellapipeline import add_content_serotyping_salmonella, add_content_spifinder
 from camel.scripts.salmonellapipeline.snakefile import spifinder, serotyping_salmonella
 
 #######################
@@ -85,7 +84,7 @@ rule report_combine_all:
         report_variant = variant_calling.get_reports(config) if 'variant_calling' in config['analyses'] else [],
         # Gene detection
         report_resfinder4 = Path(config['working_dir']) / (resfinder4.OUTPUT_RESFINDER4_REPORT if 'resfinder4' in config['analyses'] else resfinder4.OUTPUT_RESFINDER4_REPORT_EMPTY),
-        reports_spifinder = spifinder.get_reports(config),
+        report_spifinder = Path(config['working_dir']) / (spifinder.OUTPUT_SPIFINDER_REPORT if 'spifinder' in config['analyses'] else spifinder.OUTPUT_SPIFINDER_REPORT_EMPTY),
         report_mykrobe = Path(config['working_dir']) / (mykrobe.OUTPUT_MYKROBE_REPORT if 'mykrobe' in config['analyses'] else mykrobe.OUTPUT_MYKROBE_REPORT_EMPTY),
         report_abritamr = Path(config['working_dir']) / (abritamr.OUTPUT_ABRITAMR_REPORT if 'abritamr' in config['analyses'] else abritamr.OUTPUT_ABRITAMR_REPORT_EMPTY),
         reports_serotyping = serotyping_salmonella.get_reports(config),
@@ -140,16 +139,12 @@ rule report_combine_all:
         if 'variant_calling' in config['analyses']:
             report_structure.append(('Variant calling', 'variant', [Path(input.report_variant)]))
         report_structure.append(('Species identification', 'species', [Path(input.report_rmlst)]))
-        add_content_serotyping_salmonella(
-            report_structure, params.input_type, input.reports_serotyping)
         report_structure.extend([
+            ('Serotyping', 'sero', [Path(x) for x in input.reports_serotyping]),
             ('Lineage identification', 'mykrobe', [Path(input.report_mykrobe)]),
             ('AMR detection', 'amr', [Path(x) for x in (
-                input.report_abritamr, input.report_resfinder4)])
-             ])
-        add_content_spifinder(
-            report_structure,params.input_type,input.reports_spifinder)
-        report_structure.extend([
+                input.report_abritamr, input.report_resfinder4)]),
+            ('Pathogenicity island determination', params.input_type, [Path(input.report_spifinder)]),
             ('Virulence characterization', 'virulence', [Path(input.report_vfdb_core)]),
             ('Plasmid characterization', 'plasmid', [Path(x) for x in (
                 input.report_mob_suite, input.report_genomic_context)]),
