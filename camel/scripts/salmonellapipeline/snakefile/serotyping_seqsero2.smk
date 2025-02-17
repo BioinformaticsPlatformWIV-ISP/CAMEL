@@ -14,16 +14,16 @@ camel = Camel.get_instance()
 rule serotyping_seqsero2_run_fasta:
     """
     Runs SeqSero2 to perform serotyping on FASTA input.
-    Note: The detection method is always (genome assembly) 'Kmer' for FASTA input.
+    Note: The detection method is always (genome assembly) 'kmer' for FASTA input.
     """
     input:
         FASTA = Path(config['working_dir']) / assembly.OUTPUT_ASSEMBLY_FASTA
     output:
-        TXT = Path(config['working_dir']) / 'serotyping_seqsero2' / 'serotyping_seqsero2_Kmer' / 'SeqSero2_result.io',
-        INFORMS = Path(config['working_dir']) / 'serotyping_seqsero2' / 'serotyping_seqsero2_Kmer' / 'informs.io'
+        TXT = Path(config['working_dir']) / 'serotyping_seqsero2' / 'serotyping_seqsero2_kmer' / 'SeqSero2_result.io',
+        INFORMS = Path(config['working_dir']) / 'serotyping_seqsero2' / 'serotyping_seqsero2_kmer' / 'informs.io'
     params:
-        mode = 'Kmer',
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'serotyping_seqsero2' / f'serotyping_seqsero2_Kmer',
+        mode = 'kmer',
+        running_dir = lambda wildcards: Path(config['working_dir']) / 'serotyping_seqsero2' / f'serotyping_seqsero2_kmer',
         db_path_seqsero2 = config['serotyping']['seqsero2']['path']
     run:
         from camel.app.tools.pipelines.salmonella.seqsero2 import SeqSero2
@@ -39,7 +39,7 @@ rule serotyping_seqsero2_run_fasta:
 rule serotyping_seqsero2_run_fastq:
     """
     Runs SeqSero2 to perform serotyping on FASTQ input.
-    Note: The detection method can be 'Allele' or 'Kmerread' for FASTQ input.
+    Note: The detection method can be 'allele' or 'kmerread' for FASTQ input.
     """
     input:
         IO = Path(config['working_dir']) / 'fq_dict.io'
@@ -72,10 +72,10 @@ rule serotyping_seqsero2_dump_summary_info:
     input:
         TXT_seqsero2_kmer = lambda wildcards: str(rules.serotyping_seqsero2_run_fasta.output.TXT),
         INFORMS_seqsero2_kmer = lambda wildcards: str(rules.serotyping_seqsero2_run_fasta.output.INFORMS),
-        TXT_seqsero2_allele = lambda wildcards: str(rules.serotyping_seqsero2_run_fastq.output.TXT).format(mode='Allele') if config['input_type'] == 'illumina' else [],  # exclude fasta, ONT & hybrid
-        INFORMS_seqsero2_allele = lambda wildcards: str(rules.serotyping_seqsero2_run_fastq.output.INFORMS).format(mode='Allele') if config['input_type'] == 'illumina' else [],  # exclude fasta, ONT & hybrid
-        TXT_seqsero2_kmerread = lambda wildcards: str(rules.serotyping_seqsero2_run_fastq.output.TXT).format(mode='Kmerread') if config['input_type'] in ('ont', 'illumina') else [],
-        INFORMS_seqsero2_kmerread = lambda wildcards: str(rules.serotyping_seqsero2_run_fastq.output.INFORMS).format(mode='Kmerread') if config['input_type'] in ('ont', 'illumina') else []
+        TXT_seqsero2_allele = lambda wildcards: str(rules.serotyping_seqsero2_run_fastq.output.TXT).format(mode='allele') if config['input_type'] == 'illumina' else [],  # exclude fasta, ONT & hybrid
+        INFORMS_seqsero2_allele = lambda wildcards: str(rules.serotyping_seqsero2_run_fastq.output.INFORMS).format(mode='allele') if config['input_type'] == 'illumina' else [],  # exclude fasta, ONT & hybrid
+        TXT_seqsero2_kmerread = lambda wildcards: str(rules.serotyping_seqsero2_run_fastq.output.TXT).format(mode='kmerread') if config['input_type'] in ('ont', 'illumina') else [],
+        INFORMS_seqsero2_kmerread = lambda wildcards: str(rules.serotyping_seqsero2_run_fastq.output.INFORMS).format(mode='kmerread') if config['input_type'] in ('ont', 'illumina') else []
     output:
         VAL_TSV_seqsero2 = Path(config['working_dir']) / 'serotyping_seqsero2' / 'summary_out_seqsero2.tsv'
     params:
@@ -106,14 +106,14 @@ rule serotyping_seqsero2_report:
     """
     Creates the HTML report for SeqSero2.
     If Illumina FASTQ data is available, all three modes are executed.
-    If ONT FASTQ data is available, the Allele mode is not executed because although the tool supposedly provides 
+    If ONT FASTQ data is available, the allele mode is not executed because although the tool supposedly provides 
     support, it doesn't actually work.
     For FASTA and hybrid input, only the FASTA input is used.
     """
     input:
         TXT_seqsero2_kmer = lambda wildcards: str(rules.serotyping_seqsero2_run_fasta.output.TXT),
-        TXT_seqsero2_allele = lambda wildcards: str(rules.serotyping_seqsero2_run_fastq.output.TXT).format(mode='Allele') if config['input_type'] == 'illumina' else [],  # exclude fasta, ONT & hybrid
-        TXT_seqsero2_kmerread = lambda wildcards: str(rules.serotyping_seqsero2_run_fastq.output.TXT).format(mode='Kmerread') if config['input_type'] in ('ont', 'illumina') else [],
+        TXT_seqsero2_allele = lambda wildcards: str(rules.serotyping_seqsero2_run_fastq.output.TXT).format(mode='allele') if config['input_type'] == 'illumina' else [],  # exclude fasta, ONT & hybrid
+        TXT_seqsero2_kmerread = lambda wildcards: str(rules.serotyping_seqsero2_run_fastq.output.TXT).format(mode='kmerread') if config['input_type'] in ('ont', 'illumina') else [],
         VAL_TSV = rules.serotyping_seqsero2_dump_summary_info.output.VAL_TSV_seqsero2,
         INFORMS_serotyping_seqsero2 = lambda wildcards: str(rules.serotyping_seqsero2_run_fasta.output.INFORMS)
     output:

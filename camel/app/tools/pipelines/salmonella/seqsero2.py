@@ -41,18 +41,18 @@ class SeqSero2(Tool):
         """
         super(SeqSero2, self)._check_input()
         if not self._parameters.get('mode') \
-                or self._parameters['mode'].value not in ('Kmer', 'Allele', 'Kmerread'):
+                or self._parameters['mode'].value not in ('kmer', 'allele', 'kmerread'):
             raise InvalidInputSpecificationError("A Seqsero2 processing mode must be passed to the tool, "
-                                                 "choose from Kmer, Allele, or Kmerread")
-        if self._parameters['mode'].value == 'Kmer':
+                                                 "choose from kmer, allele, or kmerread")
+        if self._parameters['mode'].value == 'kmer':
             if 'FASTA' not in self._tool_inputs:
-                raise InvalidInputSpecificationError("FASTA input is required in Kmer mode")
+                raise InvalidInputSpecificationError("FASTA input is required in kmer mode")
         else:
             if sum(x in self._tool_inputs for x in ('FASTQ', 'FASTQ_PE', 'FASTQ_ONT')) != 1:  # not exactly one
                 raise InvalidInputSpecificationError(f"Exactly one FASTQ input is required in "
                                                      f"{self._parameters['mode'].value} mode")
-            if self._parameters['mode'].value == 'Allele' and 'FASTQ_ONT' in self._tool_inputs:
-                raise InvalidInputSpecificationError("Allele mode is not available for nanopore FQ input.")
+            if self._parameters['mode'].value == 'allele' and 'FASTQ_ONT' in self._tool_inputs:
+                raise InvalidInputSpecificationError("allele mode is not available for nanopore FQ input.")
 
     def __set_output(self) -> None:
         """
@@ -64,16 +64,16 @@ class SeqSero2(Tool):
     def build_command(self, mode: str) -> None:
         """
         Concatenates required parameters and options to build the command.
-        :param mode: seqsero2 execution mode; 'Allele' or 'Kmer'
+        :param mode: seqsero2 execution mode; 'allele' or 'kmer' or 'kmerread'
         :return: None
         """
         command_parts = [self._tool_command, '-d', str(self.folder), " ".join(self._build_options(excluded_parameters=['mode']))]
-        if mode == 'Kmer':
+        if mode == 'kmer':
             command_parts.extend(['-t 4 -m k', '-i', str(self._tool_inputs['FASTA'][0])])
         else:
-            if mode == 'Allele':
+            if mode == 'allele':
                 command_parts.append('-m a')
-            else:  # if mode == 'Kmerread':
+            else:  # if mode == 'kmerread':
                 command_parts.append('-m k')
 
             if 'FASTQ_ONT' in self._tool_inputs:  # in case of ONT input data

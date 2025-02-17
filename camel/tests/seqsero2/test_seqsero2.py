@@ -23,7 +23,7 @@ class TestSeqsero2(CamelTestSuite):
 
     def test_seqsero2_kmer(self) -> None:
         """
-        Tests basic seqsero2 run in Kmer mode.
+        Tests basic seqsero2 run in kmer mode.
         :return: None
         """
         seqsero2_tool = SeqSero2(self.camel)
@@ -31,14 +31,14 @@ class TestSeqsero2(CamelTestSuite):
             'FASTA': [ToolIOFile(Path(self.input_fasta_file))],
             'DIR': [ToolIODirectory(self.db_path)]
         })
-        seqsero2_tool.update_parameters(mode='Kmer')
+        seqsero2_tool.update_parameters(mode='kmer')
         seqsero2_tool.run(self.running_dir)
         self.verify_output_files(seqsero2_tool, 'TXT')
         self.assertIn('db_path', seqsero2_tool.informs)
 
     def test_seqsero2_allele(self) -> None:
         """
-        Tests basic seqsero2 run in Allele mode.
+        Tests basic seqsero2 run in allele mode.
         :return: None
         """
         seqsero2_tool = SeqSero2(self.camel)
@@ -46,14 +46,14 @@ class TestSeqsero2(CamelTestSuite):
             'FASTQ_PE': [ToolIOFile(x) for x in self.input_pe_reads],
             'DIR': [ToolIODirectory(self.db_path)]
         })
-        seqsero2_tool.update_parameters(mode='Allele')
+        seqsero2_tool.update_parameters(mode='allele')
         seqsero2_tool.run(self.running_dir)
         self.verify_output_files(seqsero2_tool, 'TXT')
         self.assertIn('db_path', seqsero2_tool.informs)
 
     def test_seqsero2_kmerread(self) -> None:
         """
-        Tests basic seqsero2 run in Kmerread mode.
+        Tests basic seqsero2 run in kmerread mode.
         :return: None
         """
         seqsero2_tool = SeqSero2(self.camel)
@@ -61,14 +61,14 @@ class TestSeqsero2(CamelTestSuite):
             'FASTQ_PE': [ToolIOFile(x) for x in self.input_pe_reads],
             'DIR': [ToolIODirectory(self.db_path)]
         })
-        seqsero2_tool.update_parameters(mode='Kmerread')
+        seqsero2_tool.update_parameters(mode='kmerread')
         seqsero2_tool.run(self.running_dir)
         self.verify_output_files(seqsero2_tool, 'TXT')
         self.assertIn('db_path', seqsero2_tool.informs)
 
     def test_seqsero2_ont(self) -> None:
         """
-        Tests basic seqsero2 run in Kmerread mode with ont data input
+        Tests basic seqsero2 run in kmerread mode with ont data input
         :return: None
         """
         seqsero2_tool = SeqSero2(self.camel)
@@ -76,7 +76,7 @@ class TestSeqsero2(CamelTestSuite):
             'FASTQ_ONT': [ToolIOFile(self.input_fastq_se)],
             'DIR': [ToolIODirectory(self.db_path)]
         })
-        seqsero2_tool.update_parameters(mode='Kmerread')
+        seqsero2_tool.update_parameters(mode='kmerread')
         seqsero2_tool.run(self.running_dir)
         self.verify_output_files(seqsero2_tool, 'TXT')
         self.assertIn('db_path', seqsero2_tool.informs)
@@ -91,7 +91,7 @@ class TestSeqsero2(CamelTestSuite):
             'FASTA': [ToolIOFile(Path(self.input_fasta_file))],
             'DIR': [ToolIODirectory(self.db_path)]
         })
-        seqsero2_tool.update_parameters(mode='Kmer')
+        seqsero2_tool.update_parameters(mode='kmer')
         seqsero2_tool.run(self.running_dir)
         self.verify_output_files(seqsero2_tool, 'TXT')
         self.assertIn('db_path', seqsero2_tool.informs)

@@ -4,9 +4,9 @@ from typing import Any
 
 SNAKEFILE_SEROTYPE_SEQSERO2 = f'{Path(__file__).parent / Path(__file__).stem}.smk'
 _dir_serotype = Path('serotyping_seqsero2')
-OUTPUT_SEROTYPE_SEQSERO2_KMER_INFORMS = _dir_serotype / 'serotyping_seqsero2_Kmer' / 'informs.io'
-OUTPUT_SEROTYPE_SEQSERO2_ALLELE_INFORMS = _dir_serotype / 'serotyping_seqsero2_Allele' / 'informs.io'
-OUTPUT_SEROTYPE_SEQSERO2_KMERREAD_INFORMS = _dir_serotype / 'serotyping_seqsero2_Kmerread' / 'informs.io'
+OUTPUT_SEROTYPE_SEQSERO2_KMER_INFORMS = _dir_serotype / 'serotyping_seqsero2_kmer' / 'informs.io'
+OUTPUT_SEROTYPE_SEQSERO2_ALLELE_INFORMS = _dir_serotype / 'serotyping_seqsero2_allele' / 'informs.io'
+OUTPUT_SEROTYPE_SEQSERO2_KMERREAD_INFORMS = _dir_serotype / 'serotyping_seqsero2_kmerread' / 'informs.io'
 OUTPUT_SEROTYPE_SEQSERO2_REPORT = _dir_serotype / 'html_seqsero2.io'
 OUTPUT_SEROTYPE_SEQSERO2_REPORT_EMPTY = _dir_serotype / 'html_seqsero2-empty.io'
 OUTPUT_SEROTYPE_SEQSERO2_SUMMARY = _dir_serotype / 'summary_out_seqsero2.tsv'
