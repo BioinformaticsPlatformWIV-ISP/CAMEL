@@ -2,7 +2,7 @@ from pathlib import Path
 from camel.resources.snakefile import trimming, trimming_illumina, trimming_ont, quality_checks, variant_calling, variant_filtering, \
     contamination_check_kraken, gene_detection, sequence_typing, downsampling, quast, confindr, core, assembly, resfinder4, \
     mobsuite, abritamr, mykrobe, human_read_scrubbing, read_simulation
-from camel.scripts.salmonellapipeline.snakefile import spifinder, serotyping_salmonella
+from camel.scripts.salmonellapipeline.snakefile import spifinder, serotyping_sistr, serotyping_seqsero2
 
 #######################
 # Included Snakefiles #
@@ -24,7 +24,8 @@ include: gene_detection.SNAKEFILE_GENE_DETECTION
 include: resfinder4.SNAKEFILE_RESFINDER4
 include: mobsuite.SNAKEFILE_MOB_SUITE
 include: sequence_typing.SNAKEFILE_SEQUENCE_TYPING
-include: serotyping_salmonella.SNAKEFILE_SEROTYPE
+include: serotyping_sistr.SNAKEFILE_SEROTYPE_SISTR
+include: serotyping_seqsero2.SNAKEFILE_SEROTYPE_SEQSERO2
 include: mykrobe.SNAKEFILE_MYKROBE
 include: spifinder.SNAKEFILE_SPIFINDER
 include: abritamr.SNAKEFILE_ABRITAMR
@@ -50,7 +51,8 @@ rule report_command_section:
         INFORMS_assembly_map = assembly.get_qc_informs(config,config['input_type']),
         INFORMS_variant_calling_all = variant_calling.get_command_informs(config) if 'variant_calling' in config['analyses'] else [],
         INFORMS_variant_filtering_all = Path(config['working_dir']) / variant_filtering.OUTPUT_VARIANT_FILTERING_INFORMS_ALL if 'variant_calling' in config['analyses'] else [],
-        INFORMS_serotyping = serotyping_salmonella.get_command_informs(config),
+        INFORMS_serotyping_sistr = Path(config['working_dir']) / serotyping_sistr.OUTPUT_SEROTYPE_SISTR_INFORMS if 'serotype' in config['analyses'] else [],
+        INFORMS_serotyping_seqsero2 = serotyping_seqsero2.get_command_informs(config),
         INFORMS_mykrobe = Path(config['working_dir']) / mykrobe.OUTPUT_MYKROBE_INFORMS if 'mykrobe' in config['analyses'] else [],
         INFORMS_abritamr_run =  abritamr.get_command_informs(config),
         INFORMS_resfinder4 = Path(config['working_dir']) / resfinder4.OUTPUT_RESFINDER4_INFORMS if 'resfinder4' in config['analyses'] else [],
@@ -87,7 +89,8 @@ rule report_combine_all:
         report_spifinder = Path(config['working_dir']) / (spifinder.OUTPUT_SPIFINDER_REPORT if 'spifinder' in config['analyses'] else spifinder.OUTPUT_SPIFINDER_REPORT_EMPTY),
         report_mykrobe = Path(config['working_dir']) / (mykrobe.OUTPUT_MYKROBE_REPORT if 'mykrobe' in config['analyses'] else mykrobe.OUTPUT_MYKROBE_REPORT_EMPTY),
         report_abritamr = Path(config['working_dir']) / (abritamr.OUTPUT_ABRITAMR_REPORT if 'abritamr' in config['analyses'] else abritamr.OUTPUT_ABRITAMR_REPORT_EMPTY),
-        reports_serotyping = serotyping_salmonella.get_reports(config),
+        report_serotyping_sistr = Path(config['working_dir']) / (serotyping_sistr.OUTPUT_SEROTYPE_SISTR_REPORT if 'serotype' in config['analyses'] else serotyping_sistr.OUTPUT_SEROTYPE_SISTR_REPORT_EMPTY),
+        report_serotyping_seqsero2 = Path(config['working_dir']) / (serotyping_seqsero2.OUTPUT_SEROTYPE_SEQSERO2_REPORT if 'serotype' in config['analyses'] else serotyping_seqsero2.OUTPUT_SEROTYPE_SEQSERO2_REPORT_EMPTY),
         report_vfdb_core = gene_detection.get_gene_detection_report('vfdb_core', config),
         report_mob_suite = Path(config['working_dir']) / (mobsuite.OUTPUT_MOB_SUITE_REPORT if 'mob_suite' in config['analyses'] else mobsuite.OUTPUT_MOB_SUITE_REPORT_EMPTY),
         report_genomic_context = Path(config['working_dir']) / (mobsuite.OUTPUT_MOB_SUITE_CONTEXT_REPORT if 'mob_suite' in config['analyses'] else mobsuite.OUTPUT_MOB_SUITE_CONTEXT_REPORT_EMPTY),
@@ -140,7 +143,7 @@ rule report_combine_all:
             report_structure.append(('Variant calling', 'variant', [Path(input.report_variant)]))
         report_structure.append(('Species identification', 'species', [Path(input.report_rmlst)]))
         report_structure.extend([
-            ('Serotyping', 'sero', [Path(x) for x in input.reports_serotyping]),
+            ('Serotyping', 'sero', [Path(x) for x in (input.report_serotyping_sistr, input.report_serotyping_seqsero2)]),
             ('Lineage identification', 'mykrobe', [Path(input.report_mykrobe)]),
             ('AMR detection', 'amr', [Path(x) for x in (
                 input.report_abritamr, input.report_resfinder4)]),
@@ -168,7 +171,8 @@ rule summary_combine_all:
         confindr.get_summary(config),
         Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY,
         variant_calling.get_summaries(config) if 'variant_calling' in config['analyses'] else [],
-        serotyping_salmonella.get_summaries(config),
+        Path(config['working_dir']) / serotyping_sistr.OUTPUT_SEROTYPE_SISTR_SUMMARY if 'serotype' in config['analyses'] else [],
+        Path(config['working_dir']) / serotyping_seqsero2.OUTPUT_SEROTYPE_SEQSERO2_SUMMARY if 'serotype' in config['analyses'] else [],
         Path(config['working_dir']) / mykrobe.OUTPUT_MYKROBE_SUMMARY if 'mykrobe' in config['analyses'] else [],
         Path(config['working_dir']) / abritamr.OUTPUT_ABRITAMR_SUMMARY if 'abritamr' in config['analyses'] else [],
         Path(config['working_dir']) / resfinder4.OUTPUT_RESFINDER4_SUMMARY if 'resfinder4' in config['analyses'] else [],
