@@ -1,17 +1,16 @@
 #!/usr/bin/env python
 import argparse
 import json
+import shutil
 from pathlib import Path
 from typing import Any, Dict, Optional, Sequence
-
-import shutil
 
 from camel.app.camel import Camel
 from camel.app.components import mainscriptutils
 from camel.app.components.html.htmlreport import HtmlReport
 from camel.app.components.pipelines import absolute_path_by_pathlib
 from camel.app.components.workflows.genedetectionwrapper import GeneDetectionWrapper, GeneDetectionOutput
-from camel.app.components.workflows.readtype import helper_by_input_type
+from camel.app.components.workflows.inputtype import helper_by_input_type
 
 
 class MainGeneDetection(object):
@@ -70,6 +69,8 @@ class MainGeneDetection(object):
         Runs the main script.
         :return: None
         """
+        mainscriptutils.validate_input_files(self._args)
+
         # Initialize report
         report = mainscriptutils.init_report(
             self._args.output_html, self._args.output_dir, 'Gene detection report',

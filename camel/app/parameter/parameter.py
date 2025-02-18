@@ -1,8 +1,7 @@
-from distutils.util import strtobool
 from typing import Any
 
 
-class Parameter(object):
+class Parameter:
     """
     Represents a tool parameter.
     """
@@ -85,4 +84,8 @@ class Parameter(object):
         Raises and error when the string cannot be converted.
         :return: Boolean value
         """
-        return bool(strtobool(self._value))
+        if str(self._value).lower() in ('yes', 'true', 't', '1'):
+            return True
+        if str(self._value).lower() in ('no', 'false', 'f', '0'):
+            return False
+        raise ValueError(f'Invalid boolean value: {self.value}')

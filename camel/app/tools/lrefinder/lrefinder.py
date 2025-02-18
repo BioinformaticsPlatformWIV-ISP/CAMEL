@@ -1,5 +1,5 @@
 import re
-from typing import Dict, Any, List
+from typing import Any
 
 import bs4
 
@@ -48,7 +48,7 @@ class LREFinder(Tool):
         self._informs.update(self.__parse_html_output(self._command.stdout))
 
     # noinspection PyTypeChecker
-    def __parse_html_output(self, html_code: str) -> Dict[str, Any]:
+    def __parse_html_output(self, html_code: str) -> dict[str, Any]:
         """
         Parses the HTML output reported by the tool.
         :param html_code: HTML code
@@ -56,14 +56,14 @@ class LREFinder(Tool):
         """
         info = {}
         soup = bs4.BeautifulSoup(html_code, 'html.parser')
-        info['species'] = soup.find('b', text='Species identified:').findNext('table').find('th').text
-        info['genes'] = LREFinder.__parse_html_table(soup.find('b', text='Genes Identified:').findNext('table'))
+        info['species'] = soup.find('b', string='Species identified:').findNext('table').find('th').text
+        info['genes'] = LREFinder.__parse_html_table(soup.find('b', string='Genes Identified:').findNext('table'))
         info['mutations'] = LREFinder.__parse_html_table(
-            soup.find('b', text='Identified mutations in 23s:').findNext('table'))
+            soup.find('b', string='Identified mutations in 23s:').findNext('table'))
         return info
 
     @staticmethod
-    def __parse_html_table(html_table: bs4.ResultSet) -> List[Dict[str, Any]]:
+    def __parse_html_table(html_table: bs4.ResultSet) -> list[dict[str, Any]]:
         """
         Parses a HTML table.
         :param html_table: HTML table

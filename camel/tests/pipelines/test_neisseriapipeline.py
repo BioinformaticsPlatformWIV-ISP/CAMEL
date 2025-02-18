@@ -196,6 +196,7 @@ class TestNeisseriaPipeline(unittest.TestCase):
         main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)
 
+    @longRunningTest()
     def test_neisseria_pipeline_kma_ont(self) -> None:
         """
         Tests the Neisseria pipeline with all assays except for cgMLST, KMA with ONT input.

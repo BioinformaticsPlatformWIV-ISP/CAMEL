@@ -96,7 +96,7 @@ class TestAMRFinder(CamelTestSuite):
         path_report_out = self.running_dir / 'report' / 'report.html'
         args = [
             '--fasta', str(TestAMRFinder.FILE_FASTA),
-            '--fasta-name', str('assembly name with spaces.fasta'),
+            '--fasta-name', 'assembly name with spaces.fasta',
             '--db', str(TestAMRFinder.DIR_DB),
             '--output-html', str(path_report_out),
             '--output-dir', str(path_report_out.parent),

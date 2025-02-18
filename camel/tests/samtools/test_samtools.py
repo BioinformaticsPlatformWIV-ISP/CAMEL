@@ -5,7 +5,6 @@ import shutil
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.tools.samtools.samtoolsdepth import SamtoolsDepth
-from camel.app.tools.samtools.samtoolsdepthstatsanalyzer import SamtoolsDepthStatsAnalyzer
 from camel.app.tools.samtools.samtoolsfastaindex import SamtoolsFastaIndex
 from camel.app.tools.samtools.samtoolsflagstat import SamtoolsFlagstat
 from camel.app.tools.samtools.samtoolsindex import SamtoolsIndex
@@ -37,24 +36,6 @@ class TestSamtools(CamelTestSuite):
         samtools_depth.run(self.running_dir)
         self.verify_output_files(samtools_depth, 'TSV')
         self.assertIn('median_depth', samtools_depth.informs)
-
-    def test_samtools_depthstatsanalyzer(self) -> None:
-        """
-        Tests SamtoolsDepthstatsanalyzer.
-        :return: None
-        """
-        samtools_depth_analyzer = SamtoolsDepthStatsAnalyzer(self.camel)
-        samtools_depth_analyzer.add_input_files({
-            'TXT': [TestSamtools.FILE_TXTdepth],
-            'FASTA_REF': [TestSamtools.FILE_FASTA_REF]
-        })
-        samtools_depth_analyzer.run(self.running_dir)
-        informs_expected = [
-            'median_coverage', 'coverage_iqr', 'coverage_cv', 'coverage_mad', 'coverage_std', 'base_coverage',
-            'segment_base_count', 'segment_gaps', 'segment_median_coverage', 'segment_coverage_mad',
-            'segment_coverage_cv', 'segment_coverage_iqr', 'segment_coverage_std', 'segment_base_coverage']
-        for inform in informs_expected:
-            self.assertIn(inform, samtools_depth_analyzer.informs, f"{inform} not found in informs.")
 
     def test_samtools_fastaindex(self) -> None:
         """

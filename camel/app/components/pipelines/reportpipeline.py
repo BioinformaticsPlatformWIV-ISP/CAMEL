@@ -2,19 +2,13 @@ import abc
 import argparse
 import shutil
 from pathlib import Path
-from typing import Dict, Any, List, Tuple, Union
-
-from Bio import SeqIO
+from typing import Any, Union
 
 from camel.app.components import mainscriptutils
 from camel.app.components.files import fastautils
-from camel.app.components.files.fastautils import FastaUtils
-from camel.app.components.files.fastqutils import FastqUtils
-from camel.app.components.files.fileutils import FileUtils
 from camel.app.components.pipelines import absolute_path_by_pathlib
 from camel.app.components.pipelines.basepipeline import BasePipeline
 from camel.app.components.workflows.utils.fastqinput import FastqInput
-from camel.app.error.invalidinputerror import InvalidInputError
 from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.loggers import logger
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
@@ -61,7 +55,7 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
             '--cov-max', default=100.0, type=float,
             help='Maximum coverage (datasets with higher estimated coverage will be downsampled to the given value)')
 
-    def get_template_data(self, dict_input: Dict) -> Dict[str, Any]:
+    def get_template_data(self, dict_input: dict) -> dict[str, Any]:
         """
         Returns the template data that is common to all pipelines.
         :param dict_input: Dictionary with pipeline input files
@@ -86,6 +80,9 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         if (self._args.input_type == 'illumina') and (self._args.library is not None):
             config_data['read_trimming']['adapter'] = self._args.library
 
+        # Empty variant filtering config
+        config_data['variant_filtering'] = {}
+
         return config_data
 
     def _validate_input_files(self) -> None:
@@ -93,42 +90,7 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         Checks if the provided input files are valid.
         :return: None
         """
-        logger.info(f"Checking input files (type: '{self._args.input_type}')")
-
-        # FASTA input
-        if self._args.input_type in ('fasta', 'fasta_with_vcf'):
-            with open(self._args.fasta) as handle:
-                try:
-                    seqs = list(SeqIO.parse(handle, 'fasta'))
-                except BaseException as err:
-                    raise InvalidInputError(f'Invalid FASTA input: {err}')
-            if FastqUtils.is_fastq(self._args.fasta):
-                raise InvalidInputError(f'Expected a FASTA file, but a FASTQ file was detected')
-            if FastaUtils.has_duplicates(self._args.fasta):
-                raise InvalidInputError(f'The input FASTA file contains duplicate sequence IDs.')
-            if self._args.detection_method != 'blast':
-                raise InvalidInputError(f'For FASTA input, only BLAST-based detection is available.')
-            logger.info(f'Valid FASTA file ({len(seqs):,} sequences)')
-
-        # FASTQ PE inputs
-        elif self._args.input_type in ('illumina', 'hybrid'):
-            nb_reads_fwd = FastqUtils.count_reads(self._args.fastq_pe[0])
-            nb_reads_rev = FastqUtils.count_reads(self._args.fastq_pe[1])
-            if not nb_reads_fwd == nb_reads_rev:
-                raise InvalidInputError(
-                    f'The number of forward ({nb_reads_fwd:,}) and reverse ({nb_reads_rev:,}) reads should be equal, '
-                    'check that the input files provided are complete and correctly paired.')
-            logger.info(f'FASTQ input is valid')
-            logger.info(f'PE forward FASTQ hash: {FileUtils.hash_file(self._args.fastq_pe[0])}')
-            logger.info(f'PE reverse FASTQ hash: {FileUtils.hash_file(self._args.fastq_pe[1])}')
-
-        # FASTQ SE input (== nanopore)
-        elif self._args.input_type == 'ont':
-            nb_reads = FastqUtils.count_reads(self._args.fastq_se)
-            logger.info(f'SE FASTQ input is valid: {nb_reads:,} reads')
-            logger.info(f'SE FASTQ hash: {FileUtils.hash_file(self._args.fastq_se)}')
-        else:
-            logger.debug(f"FASTQ checking not implemented yet for input type '{self._args.input_type}'")
+        mainscriptutils.validate_input_files(self._args)
 
     def _export_assembly(self) -> None:
         """
@@ -136,7 +98,7 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         :return: None
         """
         if self._args.output_fasta is None:
-            logger.debug(f'Not exporting assembly')
+            logger.debug('Not exporting assembly')
             return
         path_io = self._args.working_dir / assembly_spades.OUTPUT_ASSEMBLY_FASTA
         path_fasta = SnakemakeUtils.load_object(path_io)[0].path
@@ -145,7 +107,7 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         logger.info(f'Output FASTA file exported to: {self._args.output_fasta}')
 
     @staticmethod
-    def format_input_string(dict_in: Dict[str, Any]) -> str:
+    def format_input_string(dict_in: dict[str, Any]) -> str:
         """
         Formats the input string based on the dictionary with pipeline input files.
         :param dict_in: Pipeline input dictionary
@@ -164,7 +126,8 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         """
         # FASTA input
         if input_type in ('fasta', 'fasta_with_vcf'):
-            SnakemakeUtils.dump_object(None, path_out)
+            fq_pe = SnakemakeUtils.load_object(Path(snake_in.FASTQ_PE))
+            SnakemakeUtils.dump_object(FastqInput('illumina', fq_pe, is_pe=True).to_fq_dict(), path_out)
 
         # PE reads (illumina)
         elif input_type == 'illumina':
@@ -206,7 +169,7 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
 
     @staticmethod
     def add_content_scrubbing(
-            structure: List[Tuple], input_type: str, reports_scrubbing: List[Union[Path, str]]) -> None:
+            structure: list[tuple], input_type: str, reports_scrubbing: list[Union[Path, str]]) -> None:
         """
         Adds the report content for the human read scrubbing.
         :param structure: Report structure
@@ -243,8 +206,8 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
 
     @staticmethod
     def add_content_trim_basic_qc(
-            structure: List[Tuple], input_type: str, reports_ds: List[Union[Path, str]],
-            reports_trim: List[Union[Path, str]]) -> None:
+            structure: list[tuple], input_type: str, reports_ds: list[Union[Path, str]],
+            reports_trim: list[Union[Path, str]]) -> None:
         """
         Adds the report content for the downsampling, basic QC, and read trimming.
         :param structure: Report structure
@@ -277,7 +240,7 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
 
     @staticmethod
     def add_content_contamination_check(
-            structure: List[Tuple], input_type: str, reports_contamination: List[Union[Path, str]],
+            structure: list[tuple], input_type: str, reports_contamination: list[Union[Path, str]],
             report_confindr: Union[Path, str]) -> None:
         """
         Adds the report content for the contamination check.

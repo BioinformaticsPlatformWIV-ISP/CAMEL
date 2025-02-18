@@ -20,6 +20,7 @@ class TestSpaTyping(CamelTestSuite):
         output_file_report = self.running_dir / 'report' / 'report.html'
         args = [
             '--fasta', str(TestSpaTyping.input_fasta_file),
+            '--input-type', 'fasta',
             '--output-html', str(output_file_report),
             '--output-dir', str(output_file_report.parent),
             '--working-dir', str(self.running_dir),
