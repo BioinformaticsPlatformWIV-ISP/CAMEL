@@ -75,10 +75,8 @@ rule main_update_gmm_report:
     This rule updates the report of the GMM detection assay with an interpretation paragraph.
     """
     input:
-        # VAL_HTML_VECTORS = gene_detection.get_gene_detection_report('gmm_genes_vectors', config),
-        # VAL_HTML_JUNCTIONS = gene_detection.get_gene_detection_report('gmm_junctions', config),
-        VAL_HTML_VECTORS = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_REPORT).format(db='gmm_genes_vectors'),
-        VAL_HTML_JUNCTIONS = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_REPORT).format(db='gmm_junctions'),
+        VAL_HTML_VECTORS = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_REPORT).format(db='gmm_genes_vectors') if 'gmo' in config['analyses'] else gene_detection.get_gene_detection_report('gmm_genes_vectors', config),
+        VAL_HTML_JUNCTIONS = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_REPORT).format(db='gmm_junctions') if 'gmo' in config['analyses'] else gene_detection.get_gene_detection_report('gmm_junctions', config),
         TSV_STRAINS = straingst.get_summaries(config),
         TSV_GMM_VECTORS = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='gmm_genes_vectors') if 'gmo' in config['analyses'] else [],
         TSV_GMM_JUNCTIONS = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='gmm_junctions') if 'gmo' in config['analyses'] else []
@@ -152,7 +150,7 @@ rule report_create_commands_section:
         INFORMS_quast = Path(config['working_dir']) / quast.OUTPUT_QUAST_INFORMS,
         INFORMS_busco = Path(config['working_dir']) / quast.OUTPUT_BUSCO_INFORMS,
         INFORMS_contamination = contamination_check_kraken.get_command_informs(config),
-        # INFORMS_confindr = Path(config['working_dir']) / confindr.OUTPUT_CONFINDR_INFORMS if 'confindr' in config['analyses'] else [],
+        INFORMS_confindr = Path(config['working_dir']) / confindr.OUTPUT_CONFINDR_INFORMS if 'confindr' in config['analyses'] else [],
         INFORMS_variant_calling_all = variant_calling.get_command_informs(config) if 'variant_calling' in config['analyses'] else [],
         INFORMS_variant_filtering_all = Path(config['working_dir']) / variant_filtering.OUTPUT_VARIANT_FILTERING_INFORMS_ALL if 'variant_calling' in config['analyses'] else [],
         INFORMS_assembly_map = assembly.get_qc_informs(config, config['input_type']),
@@ -257,6 +255,7 @@ rule report_content_subtilis:
         report_fastani = Path(config['working_dir']) / (ani.OUTPUT_ANI_REPORT if 'fastani' in config['analyses'] else ani.OUTPUT_ANI_REPORT_EMPTY),
         report_amrfinder = Path(config['working_dir']) / (amrfinder.OUTPUT_AMRFINDER_REPORT if 'amrfinder' in config['analyses'] else amrfinder.OUTPUT_AMRFINDER_REPORT_EMPTY),
         report_gmo = rules.main_update_gmm_report.output.VAL_HTML if 'gmo' in config['analyses'] else gene_detection.get_gene_detection_report('gmm_genes_vectors', config),
+        report_junctions = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_REPORT).format(db='gmm_junctions') if 'gmo' in config['analyses'] else gene_detection.get_gene_detection_report('gmm_junctions', config),
         report_vfdb_core = gene_detection.get_gene_detection_report('vfdb_core', config),
         report_plasmidfinder = gene_detection.get_gene_detection_report('plasmidfinder', config),
         report_mob_suite = Path(config['working_dir']) / (mobsuite.OUTPUT_MOB_SUITE_REPORT if 'mobsuite' in config['analyses'] else mobsuite.OUTPUT_MOB_SUITE_REPORT_EMPTY),
@@ -295,7 +294,8 @@ rule report_content_subtilis:
         report_structure.extend([
             ('FastANI', 'fastani', [Path(input.report_fastani)]),
             ('StrainGST', 'straingst', [Path(x) for x in input.reports_straingst]),
-            ('GMO detection', 'gmo', [Path(input.report_gmo)]),
+            ('GMO detection', 'gmo', [Path(input.report_junctions), Path(input.report_gmo)]),
+            # ('GMO detection', 'gmo', [Path(x) for x in (input.report_gmo,)]),
             ('Virulence detection', 'virulence', [Path(x) for x in (input.report_vfdb_core,)]),
             ('AMRFinder results', 'amrfinder', [Path(input.report_amrfinder)]),
             ('Plasmid characterization', 'plasmid', [Path(x) for x in (
@@ -341,6 +341,7 @@ rule summary_combine_all:
         Path(config['working_dir']) / amrfinder.OUTPUT_AMRFINDER_SUMMARY if 'amrfinder' in config['analyses'] else [],
         Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='vfdb_core') if 'vfdb_core' in config['analyses'] else [],
         Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='gmm_genes_vectors') if 'gmo' in config['analyses'] else [],
+        Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='gmm_junctions') if 'gmo' in config['analyses'] else [],
         Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='plasmidfinder') if 'plasmidfinder' in config['analyses'] else [],
         Path(config['working_dir']) / ani.OUTPUT_ANI_SUMMARY if 'fastani' in config['analyses'] else [],
         Path(config['working_dir']) / mobsuite.OUTPUT_MOB_SUITE_SUMMARY if 'mobsuite' in config['analyses'] else [],
