@@ -104,15 +104,15 @@ gene_detection:
     known_gmm_constructs: /db/pipelines/bacillus/list_of_constructs.csv
     path: /db/gene_detection/GMM/V6/genes-vectors/
     force_detection_method: kma
-#    metadata:
-#      name: Additional data
-#      key: additional
+    metadata:
+      name: Additional data
+      key: allele
   gmm_junctions:
     path: /db/gene_detection/GMM/V6/junctions/
     force_detection_method: kma
-#    metadata:
-#      name: Additional data
-#      key: additional
+    metadata:
+      name: Additional data
+      key: allele
   vfdb_core:
       path: /db/gene_detection/VFDB_core
       perc_identity_cutoff: 90
