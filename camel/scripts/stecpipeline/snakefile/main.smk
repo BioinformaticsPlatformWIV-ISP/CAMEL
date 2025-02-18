@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from camel.resources.snakefile import trimming, trimming_illumina, quality_checks, contamination_check_kraken, \
+from camel.resources.snakefile import trimming, trimming_illumina, trimming_ont, quality_checks, contamination_check_kraken, \
     variant_calling, variant_filtering, gene_detection, sequence_typing, downsampling, quast, confindr, core, assembly, \
     resfinder4, amrfinder, mobsuite, human_read_scrubbing, read_simulation
 from camel.scripts.stecpipeline.snakefile import serotype_detection
@@ -13,6 +13,7 @@ include: human_read_scrubbing.SNAKEFILE_SCRUBBING
 include: read_simulation.SNAKEFILE_READ_SIMULATION
 include: downsampling.SNAKEFILE_DOWNSAMPLING
 include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
+include: trimming_ont.SNAKEFILE_TRIMMING_ONT
 include: assembly.SNAKEFILE_ASSEMBLY
 include: quast.SNAKEFILE_QUAST
 include: contamination_check_kraken.SNAKEFILE_CONTAMINATION_CHECK_KRAKEN
