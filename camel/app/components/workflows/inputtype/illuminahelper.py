@@ -1,22 +1,22 @@
 import argparse
 from pathlib import Path
-from typing import List
+
+from camel.app.components.workflows.inputtype.inputtypehelperbase import InputTypeHelperBase
 
 from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.components.html.htmlreport import HtmlReport
-from camel.app.components.workflows.readtype.basereadtypehelper import BaseReadTypeHelper
 from camel.app.components.workflows.trimmingilluminawrapper import TrimmingIlluminaWrapper
 from camel.app.components.workflows.utils.fastqinput import FastqInput
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.loggers import logger
 
 
-class IlluminaHelper(BaseReadTypeHelper):
+class IlluminaHelper(InputTypeHelperBase):
     """
     Helper class for Illumina reads.
     """
 
-    def __symlink_fastq_files(self, fastq_files: List[Path], sample_name: str) -> List[Path]:
+    def __symlink_fastq_files(self, fastq_files: list[Path], sample_name: str) -> list[Path]:
         """
         Symlinks the input files to a standardized format based on the sample name.
         :param fastq_files: Input FASTQ files
@@ -46,7 +46,12 @@ class IlluminaHelper(BaseReadTypeHelper):
             raise ValueError("Illumina FASTQ input should be paired")
 
         # Run workflow
-        trimming.run_workflow([Path(x.path) for x in fastq_input.pe], kwargs.get('adapter'), threads, include_fastq)
+        trimming.run_workflow(
+            pe_reads=[Path(x.path) for x in fastq_input.pe],
+            threads=threads,
+            export_fastq=include_fastq,
+            method='fastp'
+        )
 
         # Save output
         report_section_trimming = trimming.output.report_section
@@ -65,9 +70,6 @@ class IlluminaHelper(BaseReadTypeHelper):
         :return: FASTA file
         """
         logger.info("Preparing FASTA input (Illumina data)")
-        if args.fasta is not None:
-            fasta_file = self.symlink_input_files([Path(args.fasta)], [args.fasta_name])[0]
-            return Path(fasta_file)
         fq_input_pe = self.__symlink_fastq_files([Path(x) for x in args.fastq_pe], self._sample_name)
         fastq_input = FastqInput('illumina', pe=[ToolIOFile(x) for x in fq_input_pe])
         if args.trim_reads:

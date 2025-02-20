@@ -1,7 +1,6 @@
-from typing import List, Union, TypedDict, Callable
+from typing import Union, TypedDict, Callable, Optional
 
 import pandas as pd
-from typing_extensions import NotRequired
 
 from camel.app.components.html.htmltablecell import HtmlTableCell
 from camel.app.loggers import logger
@@ -13,9 +12,9 @@ class FormatEntry(TypedDict):
     """
     title: str
     key: str
-    fmt: NotRequired[Callable]
+    fmt: Optional[Callable]
 
-class HtmlTableFormatter(object):
+class HtmlTableFormatter:
     """
     This class can be used to format Pandas dataframes as tables for the HTML output report.
     """
@@ -23,7 +22,7 @@ class HtmlTableFormatter(object):
     INT_FMT = lambda x: f'{int(x):,}'
 
     @staticmethod
-    def _check_columns(data_in: pd.DataFrame, format_dict: List[FormatEntry], use_colors: bool) -> bool:
+    def _check_columns(data_in: pd.DataFrame, format_dict: list[FormatEntry], use_colors: bool) -> bool:
         """
         Checks if the specified columns are present in the input dataframe.
         :param data_in: Input dataframe
@@ -37,12 +36,12 @@ class HtmlTableFormatter(object):
             raise ValueError(f"Expected column '{column['key']}' not found in dataframe.")
         if use_colors:
             if 'color' not in data_in.columns:
-                raise ValueError(f"Expected column 'color' not found in dataframe.")
+                raise ValueError("Expected column 'color' not found in dataframe.")
         return True
 
     @staticmethod
-    def format_table_data(data_in: pd.DataFrame, format_dict: List[FormatEntry], use_colors: bool=False) -> \
-            List[List[Union[HtmlTableCell, str]]]:
+    def format_table_data(data_in: pd.DataFrame, format_dict: list[FormatEntry], use_colors: bool=False) -> \
+            list[list[Union[HtmlTableCell, str]]]:
         """
         Formats the table data.
         :param data_in: Input dataframe

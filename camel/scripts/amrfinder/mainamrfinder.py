@@ -14,7 +14,7 @@ from camel.app.tools.amrfinder.amrfinder import AMRFinder
 from camel.app.tools.amrfinder.amrfinderreporter import AMRFinderReporter
 
 
-class MainAMRFinder(object):
+class MainAMRFinder:
     """
     Main script for the AMRFinder tool.
     """

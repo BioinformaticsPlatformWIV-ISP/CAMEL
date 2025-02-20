@@ -2,7 +2,7 @@ import abc
 import argparse
 import shutil
 from pathlib import Path
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Any
 
 from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.components.html.htmlreport import HtmlReport
@@ -13,9 +13,9 @@ from camel.app.loggers import logger
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 
 
-class BaseReadTypeHelper(object, metaclass=abc.ABCMeta):
+class InputTypeHelperBase(object, metaclass=abc.ABCMeta):
     """
-    Base class for read-type specific helper classes.
+    Base class for input type-specific helper classes.
     """
 
     def __init__(self, working_dir: Path, sample_name: str) -> None:
@@ -78,6 +78,37 @@ class BaseReadTypeHelper(object, metaclass=abc.ABCMeta):
             linked_files.append(new_symlink)
         return linked_files
 
+    def __get_assembly_illumina_args(self, args: argparse.Namespace) -> dict[str, Any]:
+        """
+        Adds the options for the Illumina assembly.
+        :param args: Command-line arguments
+        :return: None
+        """
+        options = {}
+
+        # Coverage cut-off
+        if args.assembly_cov_cutoff is None:
+            options['cov_cutoff'] = 'off'
+        elif args.assembly_cov_cutoff == 0:
+            options['cov_cutoff'] = 'auto'
+        else:
+            options['cov_cutoff'] = str(args.assembly_cov_cutoff)
+
+        # Kmers
+        if args.assembly_kmers is not None:
+            options['kmers'] = args.assembly_kmers
+        return options
+
+    def __get_assembly_ont_args(self, args: argparse.Namespace) -> dict[str, Any]:
+        """
+        Adds the options for the ONT assembly.
+        :param args: Command-line arguments
+        :return: None
+        """
+        if args.assembly_flye_meta is True:
+            return {'meta': True}
+        return {}
+
     def assemble_fastq_reads(
             self, assembly_input: FastqInput, args: argparse.Namespace, report: Optional[HtmlReport] = None) -> Path:
         """
@@ -90,23 +121,21 @@ class BaseReadTypeHelper(object, metaclass=abc.ABCMeta):
         logger.info("Starting de-novo assembly")
         assembly = AssemblyWrapper(self._working_dir / 'assembly', assembly_input.read_type)
 
-        # Cov-cutoff parameter
-        assembly_opts = {}
-        if args.assembly_cov_cutoff is None:
-            cov_cutoff = 'off'
-        elif args.assembly_cov_cutoff == 0:
-            cov_cutoff = 'auto'
+        # Additional assembler options
+        if assembly_input.read_type == 'illumina':
+            assembler_opts = self.__get_assembly_illumina_args(args)
+        elif assembly_input.read_type == 'ont':
+            assembler_opts = self.__get_assembly_ont_args(args)
         else:
-            cov_cutoff = str(args.assembly_cov_cutoff)
-        assembly_opts['cov_cutoff'] = cov_cutoff
-
-        # K-mers
-        if args.assembly_kmers is not None:
-            assembly_opts['kmers'] = args.assembly_kmers
+            assembler_opts = {}
 
         # Perform the assembly
         assembly.run(
-            self._sample_name, assembly_input, args.assembly_min_contig_length, assembly_opts, threads=args.threads)
+            self._sample_name,
+            fastq_in=assembly_input,
+            min_ctg_len=args.assembly_min_contig_length,
+            assembler_opts=assembler_opts,
+            threads=args.threads)
 
         # Save output to the report
         if report is not None:

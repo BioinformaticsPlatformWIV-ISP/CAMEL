@@ -4,19 +4,16 @@ import shutil
 from pathlib import Path
 from typing import Any, Union
 
-from Bio import SeqIO
-
 from camel.app.components import mainscriptutils
 from camel.app.components.files import fastautils
 from camel.app.components.pipelines import absolute_path_by_pathlib
 from camel.app.components.pipelines.basepipeline import BasePipeline
 from camel.app.components.workflows.utils.fastqinput import FastqInput
-from camel.app.error.invalidinputerror import InvalidInputError
 from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.loggers import logger
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-from camel.resources.snakefile import assembly
+from camel.resources.snakefile import assembly_spades
 
 
 class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
@@ -93,42 +90,7 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         Checks if the provided input files are valid.
         :return: None
         """
-        logger.info(f"Checking input files (type: '{self._args.input_type}')")
-
-        # FASTA input
-        if self._args.input_type in ('fasta', 'fasta_with_vcf'):
-            with open(self._args.fasta) as handle:
-                try:
-                    seqs = list(SeqIO.parse(handle, 'fasta'))
-                except BaseException as err:
-                    raise InvalidInputError(f'Invalid FASTA input: {err}')
-            if FastqUtils.is_fastq(self._args.fasta):
-                raise InvalidInputError(f'Expected a FASTA file, but a FASTQ file was detected')
-            if FastaUtils.has_duplicates(self._args.fasta):
-                raise InvalidInputError(f'The input FASTA file contains duplicate sequence IDs.')
-            if self._args.detection_method != 'blast':
-                raise InvalidInputError(f'For FASTA input, only BLAST-based detection is available.')
-            logger.info(f'Valid FASTA file ({len(seqs):,} sequences)')
-
-        # FASTQ PE inputs
-        elif self._args.input_type in ('illumina', 'hybrid'):
-            nb_reads_fwd = FastqUtils.count_reads(self._args.fastq_pe[0])
-            nb_reads_rev = FastqUtils.count_reads(self._args.fastq_pe[1])
-            if not nb_reads_fwd == nb_reads_rev:
-                raise InvalidInputError(
-                    f'The number of forward ({nb_reads_fwd:,}) and reverse ({nb_reads_rev:,}) reads should be equal, '
-                    'check that the input files provided are complete and correctly paired.')
-            logger.info(f'FASTQ input is valid')
-            logger.info(f'PE forward FASTQ hash: {FileUtils.hash_file(self._args.fastq_pe[0])}')
-            logger.info(f'PE reverse FASTQ hash: {FileUtils.hash_file(self._args.fastq_pe[1])}')
-
-        # FASTQ SE input (== nanopore)
-        elif self._args.input_type == 'ont':
-            nb_reads = FastqUtils.count_reads(self._args.fastq_se)
-            logger.info(f'SE FASTQ input is valid: {nb_reads:,} reads')
-            logger.info(f'SE FASTQ hash: {FileUtils.hash_file(self._args.fastq_se)}')
-        else:
-            logger.debug(f"FASTQ checking not implemented yet for input type '{self._args.input_type}'")
+        mainscriptutils.validate_input_files(self._args)
 
     def _export_assembly(self) -> None:
         """
@@ -136,9 +98,9 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         :return: None
         """
         if self._args.output_fasta is None:
-            logger.debug(f'Not exporting assembly')
+            logger.debug('Not exporting assembly')
             return
-        path_io = self._args.working_dir / assembly.OUTPUT_ASSEMBLY_FASTA
+        path_io = self._args.working_dir / assembly_spades.OUTPUT_ASSEMBLY_FASTA
         path_fasta = SnakemakeUtils.load_object(path_io)[0].path
         fastautils.FastaUtils.rename_sequences_regex(
             path_fasta, self._args.output_fasta, '', '', description=self.sample_name)
