@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import argparse
-from typing import Optional, List, Dict, Sequence, Any
+from typing import Optional, Sequence, Any
 
 import yaml
 
@@ -63,7 +63,7 @@ class MainEnterococcusPipeline(ReportPipeline):
         Initializes the main class.
         :param args: Arguments (optional)
         """
-        super().__init__('Enterococcus pipeline', '1.1', SNAKEFILE_MAIN, args)
+        super().__init__('Enterococcus pipeline', '1.2', SNAKEFILE_MAIN, args)
 
     @property
     def title(self) -> str:
@@ -84,7 +84,7 @@ class MainEnterococcusPipeline(ReportPipeline):
         self._run_snakemake_main(config_file)
         self._export_assembly()
 
-    def __construct_config_file(self, input_files: Dict[str, List[Dict[str, str]]]) -> str:
+    def __construct_config_file(self, input_files: dict[str, list[dict[str, str]]]) -> str:
         """
         Constructs the configuration file.
         :param input_files: Dictionary with the input files (keys can be FASTQ_PE, FASTQ_SE).
@@ -144,7 +144,7 @@ class MainEnterococcusPipeline(ReportPipeline):
         parser.add_argument('--species', required=True, choices=['faecium', 'faecalis', 'spp'])
         return parser.parse_args(args)
 
-    def _update_config_for_generic_spp(self, config_data: Dict[str, Any]) -> None:
+    def _update_config_for_generic_spp(self, config_data: dict[str, Any]) -> None:
         """
         Updates the config file with specific adaptation for generic enterococcus.
         :param config_data: Configuration data
