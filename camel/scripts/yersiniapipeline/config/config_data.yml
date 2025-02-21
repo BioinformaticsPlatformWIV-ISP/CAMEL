@@ -5,7 +5,7 @@
 citations:
   main: null
   other:
-    - CHen_2023-fastp
+    - Chen_2023-fastp
     - Shen_2024-seqkit2
     - Bankevich_2012-spades
     - Kolmogorov_2019-flye
