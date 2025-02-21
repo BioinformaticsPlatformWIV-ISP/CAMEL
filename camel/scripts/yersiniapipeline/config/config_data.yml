@@ -5,13 +5,16 @@
 citations:
   main: null
   other:
-    - Bolger_2014-trimmomatic
+    - CHen_2023-fastp
+    - Shen_2024-seqkit2
     - Bankevich_2012-spades
+    - Kolmogorov_2019-flye
     - Gurevich_2013-quast
     - Wood_2019-kraken2
     - Low_2019-confindr
     - Manni_2021-busco
     - Langmead_2012-bowtie2
+    - Li_2021-minimap2
     - Danecek_2021-samtools
     - Camacho_2009-blast
     - Clausen_2018-kma
@@ -21,7 +24,6 @@ citations:
     - Jolley_2010-bigsdb
     - Chen_2016-vfdb
     - Savin_2019-yersinia_cgmlst
-
 
 #########################
 # Tool specific options #

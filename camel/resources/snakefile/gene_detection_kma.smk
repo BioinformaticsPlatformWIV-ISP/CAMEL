@@ -41,13 +41,13 @@ rule gene_detection_kma:
         input_type = config.get('input_type', 'illumina'),
         ont = lambda wildcards: config['gene_detection'][wildcards.db].get('params', {}).get('kma', {}).get('ont'),
         apm = lambda wildcards: config['gene_detection'][wildcards.db].get('params', {}).get('kma', {}).get('apm'),
-        cge = lambda wildcards: config['gene_detection'][wildcards.db].get('params', {}).get('kma', {}).get('cge'),
+        cge = lambda wildcards: config['gene_detection'][wildcards.db].get('params', {}).get('kma', {}).get('cge')
     run:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         from camel.app.tools.kma.kma import KMA
         kma = KMA(Camel.get_instance())
         SnakemakeUtils.add_pickle_input(kma, 'DB', Path(input.DB))
-        key_reads = 'PE' if params.input_type in ('illumina', 'fasta') else 'SE'
+        key_reads = 'PE' if params.input_type in ('illumina', 'fasta', 'fasta_with_vcf') else 'SE'
         fq_input_dict = SnakePipelineUtils.extracts_fq_input(
             Path(input.IO), key_pe='FASTQ_PE', key_se='FASTQ_SE', read_type=key_reads)
         kma.add_input_files(fq_input_dict)

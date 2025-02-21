@@ -28,8 +28,8 @@ class LREFinder(Tool):
         Checks if the provided input is valid.
         :return: None
         """
-        if 'FASTQ_PE' not in self._tool_inputs:
-            raise InvalidInputSpecificationError('FASTQ_PE input is required')
+        if not any(x in self._tool_inputs for x in ('FASTQ_SE', 'FASTQ_PE')):
+            raise InvalidInputSpecificationError('FASTQ_(SE/PE) input is required')
         super()._check_input()
 
     def _execute_tool(self) -> None:
@@ -38,11 +38,16 @@ class LREFinder(Tool):
         :return: None
         """
         output_path = self.folder / 'lrefinder_out.tsv'
+        if 'FASTQ_SE' in self._tool_inputs:
+            fq_in = f"-i {self._tool_inputs['FASTQ_SE'][0].path}"
+        else:
+            fq_in = f"-ipe {' '.join(str(io.path) for io in self._tool_inputs['FASTQ_PE'])}"
+        # create command itself
         self._command.command = ' '.join([
-            self._tool_command,
-            '-ipe', *[str(f.path) for f in self._tool_inputs['FASTQ_PE']],
-            '-t_db', '$LREFINDER_DB',
-            '-o', str(output_path)
+                self._tool_command,
+                fq_in,
+                '-t_db', '$LREFINDER_DB',
+                '-o', str(output_path)
         ])
         self._execute_command()
         self._informs.update(self.__parse_html_output(self._command.stdout))
@@ -65,7 +70,7 @@ class LREFinder(Tool):
     @staticmethod
     def __parse_html_table(html_table: bs4.ResultSet) -> list[dict[str, Any]]:
         """
-        Parses a HTML table.
+        Parses an HTML table.
         :param html_table: HTML table
         :return: Parsed information
         """

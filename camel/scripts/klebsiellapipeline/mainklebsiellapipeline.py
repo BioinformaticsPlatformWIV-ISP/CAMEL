@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import argparse
-from typing import Optional, List, Dict, Sequence
+from typing import Optional, Sequence
 
 import yaml
 
@@ -25,7 +25,7 @@ class MainKlebsiellaPipeline(ReportPipeline):
         Initializes the main class.
         :param args: Arguments (optional)
         """
-        super().__init__('Klebsiella pipeline', '1.0', SNAKEFILE_MAIN, args)
+        super().__init__('Klebsiella pipeline', '1.1', SNAKEFILE_MAIN, args)
 
     @property
     def title(self) -> str:
@@ -44,7 +44,7 @@ class MainKlebsiellaPipeline(ReportPipeline):
         config_file = self.__construct_config_file(input_files)
         self._run_snakemake_main(config_file)
 
-    def __construct_config_file(self, input_files: Dict[str, List[Dict[str, str]]]) -> str:
+    def __construct_config_file(self, input_files: dict[str, list[dict[str, str]]]) -> str:
         """
         Constructs the configuration file.
         :param input_files: Dictionary with the input files (keys can be FASTQ_PE, FASTQ_SE).

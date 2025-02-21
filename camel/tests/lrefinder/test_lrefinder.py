@@ -11,6 +11,7 @@ class TestLREFinder(CamelTestSuite):
 
     test_file_dir = CamelTestSuite.get_test_file_dir('lrefinder')
     input_fastq_pe = [test_file_dir / f'SRR12362697-ds_1.fastq.gz', test_file_dir / f'SRR12362697-ds_2.fastq.gz']
+    input_fastq_se = test_file_dir / f'SRR17731943_ont-ds.fastq.gz'
 
     def test_lrefinder(self) -> None:
         """
@@ -20,6 +21,19 @@ class TestLREFinder(CamelTestSuite):
         lrefinder = LREFinder(self.camel)
         lrefinder.add_input_files({
             'FASTQ_PE': [ToolIOFile(x) for x in TestLREFinder.input_fastq_pe]
+        })
+        lrefinder.run(self.running_dir)
+        for key in ['species', 'genes', 'mutations']:
+            self.assertIn(key, lrefinder.informs)
+
+    def test_lrefinder_se(self) -> None:
+        """
+        Tests the LREFinder tool with FASTQ_SE input (like ont)
+        :return: None
+        """
+        lrefinder = LREFinder(self.camel)
+        lrefinder.add_input_files({
+            'FASTQ_SE': [ToolIOFile(TestLREFinder.input_fastq_se)]
         })
         lrefinder.run(self.running_dir)
         for key in ['species', 'genes', 'mutations']:

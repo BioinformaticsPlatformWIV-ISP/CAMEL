@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import argparse
 from pathlib import Path
-from typing import List, Dict, Optional, Sequence
+from typing import Optional, Sequence
 
 import yaml
 
@@ -27,7 +27,7 @@ class MainSTECPipeline(ReportPipeline):
         Initializes the main class.
         :param args: Arguments (optional)
         """
-        super().__init__('STEC pipeline', '1.1', SNAKEFILE_MAIN, args)
+        super().__init__('STEC pipeline', '1.2', SNAKEFILE_MAIN, args)
 
     def run(self) -> None:
         """
@@ -40,7 +40,7 @@ class MainSTECPipeline(ReportPipeline):
         self._run_snakemake_main(str(path_config))
         self._export_assembly()
 
-    def __construct_config_file(self, input_files: Dict[str, List[Dict[str, str]]]) -> Path:
+    def __construct_config_file(self, input_files: dict[str, list[dict[str, str]]]) -> Path:
         """
         Constructs the configuration file.
         :return: Configuration file
