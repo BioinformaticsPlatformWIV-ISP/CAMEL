@@ -58,8 +58,8 @@ rule report_command_section:
         INFORMS_contamination = contamination_check_kraken.get_command_informs(config),
         INFORMS_confindr = confindr.get_command_informs(config),
         INFORMS_assembly_map = assembly.get_qc_informs(config, config['input_type']),
-        # INFORMS_variant_calling_all = variant_calling.get_command_informs(config) if 'variant_calling' in config['analyses'] else [],
-        # INFORMS_variant_filtering_all = Path(config['working_dir']) / variant_filtering.OUTPUT_VARIANT_FILTERING_INFORMS_ALL if 'variant_calling' in config['analyses'] else [],
+        INFORMS_variant_calling_all = variant_calling.get_command_informs(config) if 'variant_calling' in config['analyses'] else [],
+        INFORMS_variant_filtering_all = Path(config['working_dir']) / variant_filtering.OUTPUT_VARIANT_FILTERING_INFORMS_ALL if 'variant_calling' in config['analyses'] else [],
         INFORMS_shigeifinder = Path(config['working_dir']) / shigeifinder.OUTPUT_SHIGEIFINDER_INFORMS if 'shigeifinder' in config['analyses'] else [],
         INFORMS_shigatyper = Path(config['working_dir']) / shigatyper.OUTPUT_SHIGATYPER_INFORMS if 'shigatyper' in config['analyses'] else[],
         INFORMS_mykrobe = Path(config['working_dir']) / mykrobe.OUTPUT_MYKROBE_INFORMS if 'mykrobe' in config['analyses'] else[],
@@ -91,7 +91,7 @@ rule combine_reports:
         reports_contamination = contamination_check_kraken.get_reports(config),
         report_confindr = confindr.get_report(config),
         report_adv_qc = Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_REPORT,
-        # report_variant = variant_calling.get_reports(config) if 'variant_calling' in config['analyses'] else [],
+        report_variant = variant_calling.get_reports(config) if 'variant_calling' in config['analyses'] else [],
         # Species identification
         report_rmlst = sequence_typing.get_sequence_typing_report('rmlst',config),
         # # Gene detection
@@ -151,8 +151,8 @@ rule combine_reports:
         ReportPipeline.add_content_contamination_check(
             report_structure, params.input_type, input.reports_contamination, input.report_confindr)
         report_structure.append(('Advanced QC', 'adv_qc', [Path(input.report_adv_qc)]))
-        # if 'variant_calling' in config['analyses']:
-        #     report_structure.append(('Variant calling', 'variant', [Path(input.report_variant)]))
+        if 'variant_calling' in config['analyses']:
+            report_structure.append(('Variant calling', 'variant', [Path(input.report_variant)]))
         report_structure.extend([
             ('Species identification', 'species', [Path(input.report_rmlst)]),
             ('<i>Shigella</i> serotyping', 'shigella_typing', [Path(x) for x in (
@@ -183,7 +183,7 @@ rule combine_summary_files:
         contamination_check_kraken.get_summaries(config),
         confindr.get_summary(config),
         Path(config['working_dir']) / quality_checks.OUTPUT_QUALITY_CHECKS_SUMMARY,
-        # variant_calling.get_summaries(config) if 'variant_calling' in config['analyses'] else [],
+        variant_calling.get_summaries(config) if 'variant_calling' in config['analyses'] else [],
         Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_SUMMARY).format(scheme='rmlst') if 'rmlst' in config['analyses'] else [],
         # Shigella typing
         Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='serotype_o') if 'serotype_o' in config['analyses'] else [],
