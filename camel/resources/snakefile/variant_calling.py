@@ -96,7 +96,7 @@ def get_mapping_informs(config: dict[str, Any]) -> Path:
     """
     input_type = config['input_type']
 
-    if input_type in ('illumina', 'fasta'):
+    if input_type in ('illumina', 'fasta', 'fasta_with_vcf'):
         return Path(config['working_dir']) / 'variant_calling' / 'read_mapping' / 'illumina' / 'informs.io'
     elif input_type == 'ont':
         return Path(config['working_dir']) / 'variant_calling' / 'read_mapping' / 'ont' / 'informs.io'
