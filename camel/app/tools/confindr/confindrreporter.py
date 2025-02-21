@@ -36,9 +36,6 @@ class ConFindrReporter(Tool):
         """
         section = HtmlReportSection('ConFindr', subtitle=self._input_informs['confindr']['_name'])
 
-        # add message for ONT input
-        if 'input_type' in self._parameters and self._parameters['input_type'].value in ('ont', 'hybrid'):
-            section.add_warning_message('BE AWARE: running ConFindr with ONT data input is experimental! Results should be interpreted with the necessary caution!')
         # Main table
         cell = HtmlTableCell('No', 'green') if \
             self._input_informs['confindr']['NumContamSNVs'] < 20 else HtmlTableCell('Yes', 'red')
@@ -65,6 +62,10 @@ class ConFindrReporter(Tool):
         section.add_paragraph(f"Last database update: {update_date_str}")
         section.add_paragraph(
             '<b>Note:</b> Samples with multiple detected genera are always classified as contaminated.')
+
+        # add message for ONT input
+        if 'input_type' in self._parameters and self._parameters['input_type'].value in ('ont', 'hybrid'):
+            section.add_warning_message('ConFindr on ONT input data is experimental. Results should be interpreted with caution.')
 
         # Set output
         self._tool_outputs['HTML'] = [ToolIOValue(section)]
