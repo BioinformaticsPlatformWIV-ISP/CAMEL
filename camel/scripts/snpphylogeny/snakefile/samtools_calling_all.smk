@@ -28,7 +28,7 @@ rule run_variant_calling_workflow:
         )
         wrapper = VariantCallingWrapper(Path(str(params.working_dir)) / 'variant_calling')
         wrapper.run_workflow(
-            params.ref_info, str(params.sample_name), fastq_input, params.calling_options, int(str(threads)))
+            params.ref_info, str(params.sample_name), fastq_input, 'illumina', params.calling_options, int(str(threads)))
         SnakemakeUtils.dump_object(wrapper.output, Path(output.IO))
 
 rule collect_variant_calling_output:

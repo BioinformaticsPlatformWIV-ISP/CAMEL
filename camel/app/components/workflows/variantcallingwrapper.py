@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import Any
 
 from camel.app.components.vcf.vcfutils import VCFUtils
 from camel.app.components.workflows.utils.fastqinput import FastqInput
@@ -18,11 +18,11 @@ class VariantCallingOutput:
     bam_file: ToolIOFile
     vcf_unfiltered: ToolIOFile
     nb_of_variants: int
-    informs_mapping: Dict[str, str]
-    informs_all: List[Dict[str, Any]]
+    informs_mapping: dict[str, str]
+    informs_all: list[dict[str, Any]]
 
 
-class VariantCallingWrapper(object):
+class VariantCallingWrapper:
     """
     This class is used as a wrapper class around the variant calling Snakemake workflow.
     """
@@ -43,13 +43,14 @@ class VariantCallingWrapper(object):
         """
         return self._output
 
-    def run_workflow(self, reference_info: Dict[str, any], sample_name: str, fastq_input: FastqInput,
-                     options: Dict[str, Any], cores: int = 8) -> None:
+    def run_workflow(self, reference_info: dict[str, Any], sample_name: str, fastq_input: FastqInput, input_type: str,
+                     options: dict[str, Any], cores: int = 8) -> None:
         """
         Runs the variant calling workflow.
         :param reference_info: Reference information
         :param sample_name: Sample name
         :param fastq_input: FASTQ input files
+        :param input_type: Input type
         :param options: Variant calling options
         :param cores: Number of cores
         :return: None
@@ -59,12 +60,12 @@ class VariantCallingWrapper(object):
             self._working_dir.mkdir(parents=True)
         SnakemakeUtils.dump_object(fastq_input.to_fq_dict(), self._working_dir / 'fq_dict.io')
         config_data = self.__get_config_data(sample_name, reference_info, options)
-        config_data['read_type'] = fastq_input.read_type
+        config_data['input_type'] = input_type
         config_file = SnakePipelineUtils.generate_config_file(config_data, self._working_dir)
 
         # Execute Snakemake
         output_files = {
-            'BAM': self._working_dir / variant_calling.OUTPUT_VARIANT_CALLING_BAM,
+            'BAM': variant_calling.get_bam({'input_type': input_type, 'working_dir': self._working_dir}),
             'VCF': self._working_dir / variant_calling.OUTPUT_VARIANT_CALLING_UNFILTERED_VCF,
             'INFORMS_MAPPING': self._working_dir / variant_calling.OUTPUT_VARIANT_CALLING_MAPPING_INFORMS,
             'INFORMS_ALL': self._working_dir / variant_calling.OUTPUT_VARIANT_CALLING_INFORMS_ALL
@@ -76,8 +77,8 @@ class VariantCallingWrapper(object):
         # Collect output
         self.__collect_output(output_files)
 
-    def __get_config_data(self, sample_name: str, reference_info: Dict[str, Any], options: Dict[str, Any]) -> \
-            Dict[str, Any]:
+    def __get_config_data(self, sample_name: str, reference_info: dict[str, Any], options: dict[str, Any]) -> \
+            dict[str, Any]:
         """
         Returns the config data.
         :param sample_name: Sample name
@@ -98,7 +99,7 @@ class VariantCallingWrapper(object):
             'input_type': 'illumina'
         }
 
-    def __collect_output(self, output_files: Dict[str, Path]) -> None:
+    def __collect_output(self, output_files: dict[str, Path]) -> None:
         """
         Collects the output files of the workflow.
         :param output_files: Output files dictionary by key
