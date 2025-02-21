@@ -1,0 +1,17 @@
+{
+  "type_of_reference": "JOUR",
+  "primary_title": "SeqKit: A cross-platform and ultrafast toolkit for FASTA/Q file manipulation",
+  "first_authors": [
+    "Shen, Wei",
+    "Le, Shuai",
+    "Li, Yan",
+    "Hu, Fuquan"
+  ],
+  "publication_year": "2016///",
+  "alternate_title3": "PLoS ONE",
+  "volume": "11",
+  "number": "10",
+  "start_page": "1",
+  "end_page": "10",
+  "doi": "10.1371/journal.pone.0163962"
+}
