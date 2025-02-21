@@ -33,8 +33,8 @@ rule variant_calling_map_reads_illumina:
         IO = variant_calling.get_mapping_fq_input(config),
         INDEX_GENOME_PREFIX = rules.variant_calling_prep_reference.output.INDEX_GENOME_PREFIX
     output:
-        BAM= Path(config['working_dir']) / 'variant_calling' / 'read_mapping' / 'illumina' / 'bam.io',
-        INFORMS= Path(config['working_dir']) / 'variant_calling' / 'read_mapping' / 'illumina' / 'informs.io'
+        BAM = Path(config['working_dir']) / 'variant_calling' / 'read_mapping' / 'illumina' / 'bam.io',
+        INFORMS = Path(config['working_dir']) / 'variant_calling' / 'read_mapping' / 'illumina' / 'informs.io'
     params:
         dir_ = Path(config['working_dir']) / 'variant_calling' / 'read_mapping' / 'illumina',
         input_type = config['input_type']
@@ -302,7 +302,7 @@ rule variant_calling_unzip_vcf:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(bcftools_view, output)
 
-rule zip_input_vcf:
+rule variant_calling_zip_input_vcf:
     """
     Zips the input VCF file to be used by certain assays (e.g. amr detection) in case FASTA/VCF is used as input.
     """
