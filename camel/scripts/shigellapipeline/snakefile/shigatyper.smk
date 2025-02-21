@@ -1,7 +1,6 @@
 from pathlib import Path
 
 from camel.app.camel import Camel
-from camel.app.io.tooliofile import ToolIOFile
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.scripts.shigellapipeline.snakefile import shigatyper
@@ -26,9 +25,12 @@ rule shigatyper_run:
         typer = ShigaTyper(Camel.get_instance())
 
         # Extract FASTQ paths to add them as ShigaTyper input
-        if params.input_type != 'fasta':
-            fq_in = FastqInput.from_fq_dict(Path(input.IO),'illumina')
+        if params.input_type == 'illumina':
+            fq_in = FastqInput.from_fq_dict(Path(input.IO), 'illumina')
             typer.add_input_files({'FASTQ_PE': fq_in.pe})
+        elif params.input_type == 'ont':
+            fq_in = FastqInput.from_fq_dict(Path(input.IO),'ont')
+            typer.add_input_files({'FASTQ_SE': fq_in.se})
         else:
             # When the input type is FASTA the simulated reads are used as input
             SnakemakeUtils.add_pickle_input(typer, 'FASTQ_PE', Path(input.IO))

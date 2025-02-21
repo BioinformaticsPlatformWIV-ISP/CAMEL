@@ -22,7 +22,9 @@ class TestShigellaPipeline(CamelTestSuite):
         test_file_dir / 'Shigella-S17BD07654_1.fastq.gz',
         test_file_dir / 'Shigella-S17BD07654_2.fastq.gz'
     ]
+    input_fastq_ont = test_file_dir / 'Shigella-SRR29782656_ont-ds.fastq.gz'
     input_fasta = test_file_dir / 'Shigella-S17BD07654.fasta'
+
 
     def test_shigella_pipeline_typing_db(self) -> None:
         """
@@ -137,6 +139,47 @@ class TestShigellaPipeline(CamelTestSuite):
             '--output-dir', str(path_report_out.parent),
             '--output-tsv', str(path_summary_out),
             '--working-dir', str(self.running_dir)
+        ] + [f"--{a.replace('_', '-')}" for a in MainShigellaPipeline.CUSTOM_ANALYSES if a != 'cgmlst']
+        main = MainShigellaPipeline(args)
+        main.run()
+        self.assertGreater(path_report_out.stat().st_size, 0)
+
+    @longRunningTest()
+    def test_shigella_pipeline_ont_blast(self) -> None:
+        """
+        Tests the Shigella pipeline with ONT input with all assays except for cgMLST.
+        :return: None
+        """
+        path_report_out = self.running_dir / 'out' / 'report.html'
+        path_summary_out = self.running_dir / 'out' / 'summary.tsv'
+        args = [
+            '--fastq-se', str(TestShigellaPipeline.input_fastq_ont),
+            '--input-type', 'ont',
+            '--output-html', str(path_report_out),
+            '--output-dir', str(path_report_out.parent),
+            '--output-tsv', str(path_summary_out),
+            '--working-dir', str(self.running_dir)
+        ] + [f"--{a.replace('_', '-')}" for a in MainShigellaPipeline.CUSTOM_ANALYSES if a != 'cgmlst']
+        main = MainShigellaPipeline(args)
+        main.run()
+        self.assertGreater(path_report_out.stat().st_size, 0)
+
+    @longRunningTest()
+    def test_shigella_pipeline_ont_kma(self) -> None:
+        """
+        Tests the Shigella pipeline with ONT input and KMA-based detection with all assays except for cgMLST.
+        :return: None
+        """
+        path_report_out = self.running_dir / 'out' / 'report.html'
+        path_summary_out = self.running_dir / 'out' / 'summary.tsv'
+        args = [
+            '--fastq-se', str(TestShigellaPipeline.input_fastq_ont),
+            '--input-type', 'ont',
+            '--output-html', str(path_report_out),
+            '--output-dir', str(path_report_out.parent),
+            '--output-tsv', str(path_summary_out),
+            '--working-dir', str(self.running_dir),
+            '--detection-method', 'kma'
         ] + [f"--{a.replace('_', '-')}" for a in MainShigellaPipeline.CUSTOM_ANALYSES if a != 'cgmlst']
         main = MainShigellaPipeline(args)
         main.run()
