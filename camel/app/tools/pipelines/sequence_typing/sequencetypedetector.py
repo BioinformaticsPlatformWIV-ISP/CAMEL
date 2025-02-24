@@ -104,7 +104,7 @@ class SequenceTypeDetector(Tool):
             profiles.append(STProfile(
                 name=row[data_in.columns[0]],
                 alleles={c: row[c] for c in cols_alleles},
-                metadata=[(c, row[c]) for c in cols_metadata],
+                metadata=[(c, row[c] if not pd.isna(row[c]) else '-') for c in cols_metadata],
             ))
         logger.info(f'Parsed {len(profiles):,} profiles')
         return profiles
