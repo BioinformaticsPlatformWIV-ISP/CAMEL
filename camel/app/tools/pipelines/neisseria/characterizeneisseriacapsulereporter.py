@@ -16,7 +16,7 @@ class CharacterizeNeisseriaCapsuleReporter(Tool):
     """
 
     COLS_GENES = [
-        {'key': 'allele_name', 'name': 'Gene'},
+        {'key': 'allele_name', 'name': 'Gene', 'fmt': lambda x: f'<i>{x}</i>'},
         {'key': 'identity', 'name': '% identity', 'fmt': lambda x: f'{x:.2f}'},
         {'key': 'cov', 'name': '% covered', 'fmt': lambda x: f'{x*100:.2f}'},
         {'key': 'contig', 'name': 'Contig'},
