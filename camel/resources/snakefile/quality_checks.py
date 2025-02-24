@@ -2,7 +2,7 @@ import dataclasses
 import operator
 from dataclasses import asdict
 from pathlib import Path
-from typing import Optional, Dict, Any, List
+from typing import Optional, Any
 
 SNAKEFILE_QUALITY_CHECKS = f'{Path(__file__).parent / Path(__file__).stem}.smk'
 _dir_qc = Path('quality_checks')
@@ -23,7 +23,7 @@ class QCCheck:
     explanation: Optional[str] = None
     is_default: bool = True
 
-    def to_dict(self, value: Optional[float] = None) -> Dict[Any, str]:
+    def to_dict(self, value: Optional[float] = None) -> dict[Any, str]:
         """
         Converts the QC check to a dictionary.
         :param value: Metric value
@@ -236,8 +236,8 @@ QC_CHECKS_BY_KEY = {qc.key: qc for qc in [
 ]}
 
 
-def get_qc_checks(input_type: str, skipped_checks: List[str] = None, forced_checks: Optional[List[str]] = None) \
-        -> List[Path]:
+def get_qc_checks(input_type: str, skipped_checks: list[str] = None, forced_checks: Optional[list[str]] = None) \
+        -> list[Path]:
     """
     Returns the output paths for the QC checks of the corresponding input type.
     :param input_type: Input type
