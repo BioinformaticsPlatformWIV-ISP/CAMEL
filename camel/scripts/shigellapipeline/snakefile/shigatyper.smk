@@ -30,6 +30,7 @@ rule shigatyper_run:
             typer.add_input_files({'FASTQ_PE': fq_in.pe})
         elif params.input_type == 'ont':
             fq_in = FastqInput.from_fq_dict(Path(input.IO),'ont')
+            typer.update_parameters(ont=True)
             typer.add_input_files({'FASTQ_SE': fq_in.se})
         else:
             # When the input type is FASTA the simulated reads are used as input

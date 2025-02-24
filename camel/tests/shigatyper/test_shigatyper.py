@@ -38,6 +38,7 @@ class TestShigaTyper(CamelTestSuite):
         """
         shigatyper = ShigaTyper(self.camel)
         shigatyper.add_input_files({'FASTQ_SE': [ToolIOFile(TestShigaTyper.fastq_ont)]})
+        shigatyper.update_parameters(ont=True)
         shigatyper.run(self.running_dir)
         self.verify_output_files(shigatyper, 'TSV')
         self.verify_output_files(shigatyper, 'TSV_HITS')
