@@ -2,7 +2,7 @@ from pathlib import Path
 
 from camel.resources.snakefile import trimming_illumina, downsampling, trimming_ont, trimming, quast, \
     contamination_check_kraken, quality_checks, confindr, gene_detection, assembly, core, human_read_scrubbing, \
-    read_simulation, variant_calling, variant_filtering
+    read_simulation
 from camel.scripts.mycobacteriumpipeline.snakefile import snpit
 
 #######################
@@ -20,8 +20,6 @@ include: contamination_check_kraken.SNAKEFILE_CONTAMINATION_CHECK_KRAKEN
 include: confindr.SNAKEFILE_CONFINDR
 include: quality_checks.SNAKEFILE_QUALITY_CHECKS
 include: gene_detection.SNAKEFILE_GENE_DETECTION
-include: variant_calling.SNAKEFILE_VARIANT_CALLING
-include: variant_filtering.SNAKEFILE_VARIANT_FILTERING
 include: snpit.SNAKEFILE_SNPIT
 
 #########s
