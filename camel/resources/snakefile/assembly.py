@@ -88,9 +88,10 @@ def get_depth_inform(read_key: str, mode: str) -> Path:
         else:
             return Path(str(OUTPUT_VARIANT_CALLING_DEPTH_INFORMS))
     elif read_key == 'fastq_se':
-        if mode == 'ref':
-            logger.warning(f'Reference mapping for single-end data is not implemented yet')
-        return Path(str(OUTPUT_ASSEMBLY_DEPTH_INFORMS).format(mapper='minimap2'))
+        return Path(str(OUTPUT_VARIANT_CALLING_DEPTH_INFORMS))
+#         if mode == 'ref':
+#             logger.warning(f'Reference mapping for single-end data is not implemented yet')
+#         return Path(str(OUTPUT_ASSEMBLY_DEPTH_INFORMS).format(mapper='minimap2'))
     else:
         raise ValueError(f'Invalid read key: {read_key}')
 

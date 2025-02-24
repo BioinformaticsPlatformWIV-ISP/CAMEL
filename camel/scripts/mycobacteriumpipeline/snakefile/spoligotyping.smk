@@ -19,7 +19,8 @@ rule spoligotyping_downsample:
         FASTQ_PE = Path(config['working_dir']) / 'spoligotyping' / 'downsampling' / 'fastq-ds.io',
         INFORMS_spoligo_param = Path(config['working_dir']) / 'spoligotyping' / 'downsampling' / 'informs-param.io'
     params:
-        dir_ = Path(config['working_dir']) / 'spoligotyping' / 'downsampling'
+        dir_ = Path(config['working_dir']) / 'spoligotyping' / 'downsampling',
+        read_key = 'SE' if config['input_type'] == 'ont' else 'PE'
     run:
         import logging
         from camel.app.tools.seqtk.seqtksubsample import SeqtkSubsample
@@ -40,7 +41,7 @@ rule spoligotyping_downsample:
             SnakemakeUtils.dump_object(seqtk.tool_outputs['FASTQ_PE'], Path(output.FASTQ_PE))
         else:
             fq_dict = SnakemakeUtils.load_object(Path(input.IO_FASTQ))
-            SnakemakeUtils.dump_object(fq_dict['PE'], Path(output.FASTQ_PE))
+            SnakemakeUtils.dump_object(fq_dict[params.read_key], Path(output.FASTQ_PE))
             SnakemakeUtils.dump_object({
                 'min_strict': max(round(estimated_coverage / 10), 3),
                 'min_relaxed': max(round(estimated_coverage / 10), 3),
@@ -52,9 +53,9 @@ rule spoligotyping_spotyping:
     Runs the SpoTyping tool.
     """
     input:
-        FASTQ = rules.spoligotyping_downsample.output.FASTQ_PE if config['input_type'] == 'illumina' else [],
+        FASTQ = rules.spoligotyping_downsample.output.FASTQ_PE if config['input_type'] in ( 'illumina', 'ont') else [],
         FASTA = Path(config['working_dir']) / assembly.OUTPUT_ASSEMBLY_FASTA if config['input_type'] in ('fasta', 'fasta_with_vcf') else [],
-        INFORMS_spoligo_param = rules.spoligotyping_downsample.output.INFORMS_spoligo_param if config['input_type'] == 'illumina' else []
+        INFORMS_spoligo_param = rules.spoligotyping_downsample.output.INFORMS_spoligo_param if config['input_type'] in ('illumina', 'ont') else []
     output:
         VAL_type_binary = Path(config['working_dir']) / 'spoligotyping' / 'VAL_binary.io',
         VAL_type_octal = Path(config['working_dir']) / 'spoligotyping' / 'VAL_octal.io',
@@ -62,7 +63,7 @@ rule spoligotyping_spotyping:
         INFORMS = Path(config['working_dir']) / spoligotyping.OUTPUT_SPOLIGOTYPING_INFORMS
     params:
         dir_ = Path(config['working_dir']) / 'spoligotyping',
-        key = 'FASTQ' if config['input_type'] == 'illumina' else 'FASTA'
+        key = 'FASTQ' if config['input_type'] in ('illumina', 'ont') else 'FASTA'
     run:
         from camel.app.tools.spotyping.spotyping import SpoTyping
         spotyping = SpoTyping(Camel.get_instance())

@@ -25,6 +25,7 @@ class TestMycobacteriumPipeline(CamelTestSuite):
         test_file_dir / 'pipelines' / 'Myco-DRR041783-ds_2.fastq.gz'
     ]
     input_fasta = test_file_dir / 'pipelines' / 'Myco-DRR041783-ds.fasta'
+    input_fastq_se = test_file_dir / 'pipelines' / 'Myco-SRR8948399_ont-ds.fastq.gz'
     input_vcf = test_file_dir / 'pipelines' / 'variants-Myco-DRR041783-ds-all.vcf'
 
     def test_mycobacterium_pipeline_typing_db(self) -> None:
@@ -147,6 +148,47 @@ class TestMycobacteriumPipeline(CamelTestSuite):
                    '--output-dir', str(path_report_out.parent),
                    '--output-tsv', str(path_summary_out),
                    '--working-dir', str(self.running_dir)
+               ] + [f"--{a.replace('_', '-')}" for a in MainMycobacteriumPipeline.CUSTOM_ANALYSES if a != 'cgmlst']
+        main = MainMycobacteriumPipeline(args)
+        main.run()
+        self.assertGreater(path_report_out.stat().st_size, 0)
+
+    @longRunningTest()
+    def test_mycobacterium_pipeline_ont(self) -> None:
+        """
+        Tests the Mycobacterium pipeline using ONT as input with all assays except for cgMLST.
+        :return: None
+        """
+        path_report_out = self.running_dir / 'out' / 'report.html'
+        path_summary_out = self.running_dir / 'out' / 'summary.tsv'
+        args = [
+                   '--fastq-se', str(TestMycobacteriumPipeline.input_fastq_se),
+                   '--input-type', 'ont',
+                   '--output-html', str(path_report_out),
+                   '--output-dir', str(path_report_out.parent),
+                   '--output-tsv', str(path_summary_out),
+                   '--working-dir', str(self.running_dir)
+               ] + [f"--{a.replace('_', '-')}" for a in MainMycobacteriumPipeline.CUSTOM_ANALYSES if a != 'cgmlst']
+        main = MainMycobacteriumPipeline(args)
+        main.run()
+        self.assertGreater(path_report_out.stat().st_size, 0)
+
+    @longRunningTest()
+    def test_mycobacterium_pipeline_kma_ont(self) -> None:
+        """
+        Tests the Mycobacterium pipeline with all assays except for cgMLST, ONT input and kma as detection method
+        :return: None
+        """
+        path_report_out = self.running_dir / 'out' / 'report.html'
+        path_summary_out = self.running_dir / 'out' / 'summary.tsv'
+        args = [
+                   '--fastq-se', str(TestMycobacteriumPipeline.input_fastq_se),
+                   '--input-type', 'ont',
+                   '--output-html', str(path_report_out),
+                   '--output-dir', str(path_report_out.parent),
+                   '--output-tsv', str(path_summary_out),
+                   '--working-dir', str(self.running_dir),
+                   '--detection-method', 'kma'
                ] + [f"--{a.replace('_', '-')}" for a in MainMycobacteriumPipeline.CUSTOM_ANALYSES if a != 'cgmlst']
         main = MainMycobacteriumPipeline(args)
         main.run()

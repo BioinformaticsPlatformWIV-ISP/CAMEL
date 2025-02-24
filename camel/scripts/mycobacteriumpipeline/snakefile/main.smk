@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from camel.resources.snakefile import trimming_illumina, contamination_check_kraken, quality_checks, variant_calling, \
+from camel.resources.snakefile import trimming_illumina, trimming_ont, contamination_check_kraken, quality_checks, variant_calling, \
     variant_filtering, gene_detection, sequence_typing, trimming, downsampling, confindr, quast, core, assembly, \
     human_read_scrubbing, read_simulation
 from camel.scripts.mycobacteriumpipeline.snakefile import csb_rd, snpit, hsp65, spoligotyping, snplineage, assay51snp, \
@@ -14,6 +14,7 @@ include: human_read_scrubbing.SNAKEFILE_SCRUBBING
 include: read_simulation.SNAKEFILE_READ_SIMULATION
 include: downsampling.SNAKEFILE_DOWNSAMPLING
 include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
+include: trimming_ont.SNAKEFILE_TRIMMING_ONT
 include: assembly.SNAKEFILE_ASSEMBLY
 include: confindr.SNAKEFILE_CONFINDR
 include: contamination_check_kraken.SNAKEFILE_CONTAMINATION_CHECK_KRAKEN
@@ -62,7 +63,7 @@ rule report_command_section:
         INFORMS_16s = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='ncbi_16s') if 'ncbi_16s' in config['analyses'] else [],
         INFORMS_csb_rd = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='csb_rd') if 'csb_rd' in config['analyses'] else [],
         INFORMS_hsp65 = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='hsp65') if 'hsp65' in config['analyses'] else [],
-        INFORMS_spoligo = Path(config['working_dir']) / spoligotyping.OUTPUT_SPOLIGOTYPING_INFORMS if 'spoligotyping' in config['analyses'] else [],
+        INFORMS_spoligo = Path(config['working_dir']) / spoligotyping.OUTPUT_SPOLIGOTYPING_INFORMS if 'spoligotyping' in config['analyses'] else []
     output:
         HTML = Path(config['working_dir']) / 'report' / 'html-commands.io'
     params:
