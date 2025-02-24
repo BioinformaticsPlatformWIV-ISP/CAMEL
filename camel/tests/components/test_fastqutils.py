@@ -58,6 +58,14 @@ class TestFastqUtils(CamelTestSuite):
         """
         self.assertEqual(FastqUtils.get_sample_name(Path('/data/temp/S18BD02705_R1.fastq.gz')), 'S18BD02705')
 
+
+    def test_get_sample_name_ont_bacdis(self) -> None:
+        """
+        Tests the get sample name function for the bacdis ONT format.
+        :return: None
+        """
+        self.assertEqual(FastqUtils.get_sample_name(Path('/data/temp/S22BD04543_SQK-RBK114-96_SUPv5-0-0_2025_run0113_B25.fastq.gz'), FastqUtils.PATTERN_FQ_ONT), 'S22BD04543')
+
     def test_get_sample_name_invalid_fmt(self) -> None:
         """
         Tests the get sample name function for an invalid filename.
