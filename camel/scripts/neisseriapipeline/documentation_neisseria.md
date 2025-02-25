@@ -64,6 +64,8 @@ Read filtering is performed using `seqkit 2.3.1` using the following options:
 --min-qual 7
 ```
 
+Note: these values can be changed using the command-line options.
+
 ## 4. Assembly
 
 ### Illumina
