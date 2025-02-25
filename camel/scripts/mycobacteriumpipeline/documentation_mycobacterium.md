@@ -152,6 +152,25 @@ Using these definitions, isolates are classified as:
 - Extensively drug resistant (XDR): first line resistant, second-line (group A), and second-line (group B) resistance
 - Other: a combination of resistances which does not fit with any of the above
 
+### Low frequency variant detection
+
+An additional screening with `LoFreq v2.1.3.1` is included to screen for low-frequency variants associated with 
+antimicrobial resistance. The `--no-default-filter` option is enabled.
+
+**Note:** these mutations are **NOT** used for predicting the resistance phenotype. 
+
+### CDS completeness check
+
+As missing or partially missing CDS of genes associated with AMR can affect the phenotype. An additional 
+screening is performed using the gene detection workflow using `KMA v1.4.12a` detection. 
+For other regions that do are not present, the percentage coverage is reported.
+
+Cutoffs for a region to be considered present:
+
+| Min. coverage | Min. identity |
+|---------------|---------------|
+|  >90%         | >90%          |
+
 ## 10. Sequence typing
 
 Sequence typing is performed as described in [Bogaerts *et al.*](https://pubmed.ncbi.nlm.nih.gov/30894839/) with an 
@@ -160,7 +179,8 @@ Alternative detection using `kma 1.4.12a` or `srst2 0.2.0` is available by chang
 
 The following typing schemes are available:
 
-| **name**                 | **origin** |
-|--------------------------|------------|
-| Classic MLST             | PubMLST    |
-| cgMLST                   | PubMLST    |
+| **name**     | **origin** |
+|--------------|------------|
+| Classic MLST | PubMLST    |
+| cgMLST       | PubMLST    |
+| rgMLST       | PubMLST    |
