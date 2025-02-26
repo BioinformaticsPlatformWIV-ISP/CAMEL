@@ -118,6 +118,7 @@ Species identification consists of several independent assays that provide parti
 - 51 SNP
 
 These assays are explained in more detail in the [publication](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8316078/) of the workflow.
+Note that csb / RD detection now uses `KMA` instead of `SRST2`.
 
 ## 8. Spoligotyping and lineage determination
 
