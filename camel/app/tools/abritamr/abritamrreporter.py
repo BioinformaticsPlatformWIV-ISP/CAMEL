@@ -150,11 +150,10 @@ class AbriTAMRReporter(Tool):
         Add link to the output table (tsv) for this assay.
         :return: None
         """
-        relative_path = Path('abritamr', 'summary_out.tsv')
-        self._section.add_file(self._tool_inputs['TSV'][0].path, relative_path)
         if self._species == 'Salmonella':
-            relative_path = Path('abritamr', 'summary_out.tsv')
-            self._section.add_link_to_file("Download (TSV)", relative_path)
+            relative_path = Path('abritamr', 'summary_out.xlsx')
+            self._section.add_file(self._tool_inputs['REPORT_ABRITAMR'][0].path, relative_path)
+            self._section.add_link_to_file("Download (xlsx)", relative_path)
 
     def __add_database_information(self) -> None:
         """

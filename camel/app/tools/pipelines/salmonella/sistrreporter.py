@@ -150,9 +150,9 @@ class SistrReporter(Tool):
         Add the output tsv file to the html.
         :return: None
         """
-        relative_path = Path('serotyping', 'sistr', 'summary_out.tsv')
-        self._section.add_link_to_file("Download (TSV)", relative_path)
-        self._section.add_file(self._tool_inputs['TSV_output'][0].path, relative_path)
+        relative_path = Path('serotyping', 'sistr', 'summary_out.json')
+        self._section.add_link_to_file("Download (JSON)", relative_path)
+        self._section.add_file(self._tool_inputs['JSON_SISTR'][0].path, relative_path)
 
     def ___add_database_information(self, db_dir: Path) -> None:
         """

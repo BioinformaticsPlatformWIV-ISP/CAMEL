@@ -102,7 +102,6 @@ rule spifinder_report:
     input:
         JSON_FASTQ = rules.spifinder_fastq_run.output.JSON if config['input_type'] in ('ont', 'illumina') else [],
         JSON_FASTA = rules.spifinder_fasta_run.output.JSON,
-        TSV = rules.spifinder_create_summary.output.TSV,
         TSV_documentation = rules.spifinder_create_summary.output.TSV_documentation,
         INFORMS_spifinder_fastq = rules.spifinder_fastq_run.output.INFORMS if config['input_type'] in ('ont', 'illumina') else [],
         INFORMS_spifinder_fasta = rules.spifinder_fasta_run.output.INFORMS
@@ -114,9 +113,8 @@ rule spifinder_report:
         from camel.app.tools.pipelines.salmonella.spifinderreporter import SPIFinderReporter
 
         reporter = SPIFinderReporter(camel)
-        SnakemakeUtils.add_pickle_inputs(reporter, input, excluded_keys=['TSV', 'TSV_documentation', 'JSON_FASTQ', 'INFORMS_spifinder_fastq'])
-        reporter.add_input_files({'TSV_output': [ToolIOFile(Path(input.TSV))],
-                                            'TSV_documentation': [ToolIOFile(Path(input.TSV_documentation))]})
+        SnakemakeUtils.add_pickle_inputs(reporter, input, excluded_keys=['TSV_documentation', 'JSON_FASTQ', 'INFORMS_spifinder_fastq'])
+        reporter.add_input_files({'TSV_documentation': [ToolIOFile(Path(input.TSV_documentation))]})
         if input.JSON_FASTQ:
             SnakemakeUtils.add_pickle_input(reporter, 'JSON_FASTQ', Path(input.JSON_FASTQ))
         if input.INFORMS_spifinder_fastq:

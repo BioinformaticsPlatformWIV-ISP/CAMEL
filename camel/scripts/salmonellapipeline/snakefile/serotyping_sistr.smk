@@ -87,7 +87,6 @@ rule serotyping_sistr_report:
     """
     input:
         JSON_SISTR = rules.serotyping_sistr_run.output.JSON,
-        VAL_TSV = rules.serotyping_sistr_dump_summary_info.output.VAL_TSV_sistr,
         INFORMS_serotyping_sistr = rules.serotyping_sistr_run.output.INFORMS
     output:
         VAL_HTML = Path(config['working_dir']) / 'serotyping_sistr' / 'html_sistr.io'
@@ -99,8 +98,7 @@ rule serotyping_sistr_report:
 
         reporter = SistrReporter(camel)
         reporter.add_input_files({'DIR_sistr': [ToolIODirectory(Path(str(params.db_path_sistr)))]})
-        SnakemakeUtils.add_pickle_inputs(reporter, input, excluded_keys=['VAL_TSV'])
-        reporter.add_input_files({'TSV_output': [ToolIOFile(Path(str(input.VAL_TSV)))]})
+        SnakemakeUtils.add_pickle_inputs(reporter, input)
         step = Step(str(rule), reporter, camel, Path(str(params.running_dir)))
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)

@@ -114,7 +114,6 @@ rule serotyping_seqsero2_report:
         TXT_seqsero2_kmer = lambda wildcards: str(rules.serotyping_seqsero2_run_fasta.output.TXT),
         TXT_seqsero2_allele = lambda wildcards: str(rules.serotyping_seqsero2_run_fastq.output.TXT).format(mode='allele') if config['input_type'] == 'illumina' else [],  # exclude fasta, ONT & hybrid
         TXT_seqsero2_kmerread = lambda wildcards: str(rules.serotyping_seqsero2_run_fastq.output.TXT).format(mode='kmerread') if config['input_type'] in ('ont', 'illumina') else [],
-        VAL_TSV = rules.serotyping_seqsero2_dump_summary_info.output.VAL_TSV_seqsero2,
         INFORMS_serotyping_seqsero2 = lambda wildcards: str(rules.serotyping_seqsero2_run_fasta.output.INFORMS)
     output:
         VAL_HTML = Path(config['working_dir']) / 'serotyping_seqsero2' / 'html_seqsero2.io'
@@ -126,8 +125,7 @@ rule serotyping_seqsero2_report:
 
         reporter = SeqSero2Reporter(camel)
         reporter.add_input_files({'DIR_seqsero2': [ToolIODirectory(Path(str(params.db_path_seqsero2)))]})
-        SnakemakeUtils.add_pickle_inputs(reporter, input, excluded_keys=['VAL_TSV', 'TXT_seqsero2_allele', 'TXT_seqsero2_kmerread'])
-        reporter.add_input_files({'TSV_output': [ToolIOFile(Path(input.VAL_TSV))]})
+        SnakemakeUtils.add_pickle_inputs(reporter, input, excluded_keys=['TXT_seqsero2_allele', 'TXT_seqsero2_kmerread'])
         if input.TXT_seqsero2_allele:
             SnakemakeUtils.add_pickle_input(reporter, 'TXT_seqsero2_allele', Path(str(input.TXT_seqsero2_allele)))
         if input.TXT_seqsero2_kmerread:
