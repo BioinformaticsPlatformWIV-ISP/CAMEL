@@ -83,6 +83,10 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         # Empty variant filtering config
         config_data['variant_filtering'] = {}
 
+        # Human read scrubbing
+        if 'human_read_scrubbing' in self._args:
+            config_data['read_scrubbing'] = {}
+
         return config_data
 
     def _validate_input_files(self) -> None:

@@ -1,0 +1,4 @@
+dependencies: []
+parameters:
+  input_format: {default: false, mandatory: true, option: null, value: null}
+tool_command: null
