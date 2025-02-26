@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional, Dict, Any, Union
+from typing import Optional, Any, Union
 
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.workflows.utils.fastqinput import FastqInput
@@ -11,15 +11,18 @@ from camel.resources.snakefile import assembly
 
 @dataclass
 class AssemblyOutput:
+    """
+    Holds the assembly output data.
+    """
     report_section: HtmlReportSection
     tsv_summary: Path
     fasta_contigs: Path
     log_file: Optional[Path]
-    informs: List[Dict[str, Any]]
-    qc_stats: Optional[Dict[str, Any]] = None
+    informs: list[dict[str, Any]]
+    qc_stats: Optional[dict[str, Any]] = None
 
 
-class AssemblyWrapper(object):
+class AssemblyWrapper:
     """
     This class is used as a wrapper class around the assembly Snakemake workflow.
     """
@@ -49,7 +52,7 @@ class AssemblyWrapper(object):
         raise ValueError(f'Invalid read type: {self._input_type}')
 
     def run(self, name: str, fastq_in: FastqInput, min_ctg_len: Optional[int] = None,
-            assembler_opts: Optional[Dict] = None, calc_qc_stats: bool = False, threads: int = 8) -> None:
+            assembler_opts: Optional[dict] = None, calc_qc_stats: bool = False, threads: int = 8) -> None:
         """
         Runs the assembly workflow for paired-end input.
         :param name: Dataset name
@@ -72,7 +75,7 @@ class AssemblyWrapper(object):
         self.__run_workflow(name, min_ctg_len, assembler_opts, calc_qc_stats, threads)
 
     def __run_workflow(
-            self, name: str, min_ctg_len: Optional[int] = None, assembler_opts: Optional[Dict] = None,
+            self, name: str, min_ctg_len: Optional[int] = None, assembler_opts: Optional[dict] = None,
             calc_qc_stats: bool = False, threads: int = 8) -> None:
         """
         Runs the underlying workflow.
@@ -93,7 +96,7 @@ class AssemblyWrapper(object):
         self.__set_output(output_files)
 
     def __get_output_files_dict(
-            self, config_data: Dict[str, Any], min_ctg_len: Union[int, None], calc_qc_stats: bool) -> Dict[str, Path]:
+            self, config_data: dict[str, Any], min_ctg_len: Union[int, None], calc_qc_stats: bool) -> dict[str, Path]:
         """
         Returns the dictionary with output files.
         :param config_data: Configuration data
@@ -112,12 +115,12 @@ class AssemblyWrapper(object):
             output_files['INFORMS_seqtk'] = self._working_dir / assembly.OUTPUT_ASSEMBLY_FILTERING_INFORMS
         if calc_qc_stats is True:
             key_fq = 'fastq_pe' if self._input_type == 'illumina' else 'fastq_se'
-            output_files['INFORMS_mapper'] = self._working_dir / assembly.get_mapping_inform(key_fq, 'assembly')
-            output_files['INFORMS_depth'] = self._working_dir / assembly.get_depth_inform(key_fq, 'assembly')
+            output_files['INFORMS_mapper'] = self._working_dir / assembly.get_mapping_inform(key_fq)
+            output_files['INFORMS_depth'] = self._working_dir / assembly.get_depth_inform(key_fq)
         return output_files
 
-    def __get_config_data(self, name: str, min_ctg_len: Union[int, None], assembler_opts: Optional[Dict] = None) -> \
-            Dict[str, Any]:
+    def __get_config_data(self, name: str, min_ctg_len: Union[int, None], assembler_opts: Optional[dict] = None) -> \
+            dict[str, Any]:
         """
         Builds the configuration file to run the assembly workflow.
         :param name: Dataset name
@@ -140,7 +143,7 @@ class AssemblyWrapper(object):
             config_data['assembly']['min_contig_length'] = min_ctg_len
         return config_data
 
-    def __set_output(self, output_files: Dict[str, Path]) -> None:
+    def __set_output(self, output_files: dict[str, Path]) -> None:
         """
         Runs the Snakemake workflow.
         :param output_files: Output files dictionary

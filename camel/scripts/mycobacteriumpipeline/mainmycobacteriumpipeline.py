@@ -100,6 +100,15 @@ class MainMycobacteriumPipeline(ReportPipeline):
                 export_bam='true' if self._args.report_include_bam else 'false',
                 coverage_max=self._args.cov_max
             ), Loader=yaml.SafeLoader))
+
+        # Disable QC checks based on mapping to assembly -> map to reference instead
+        if self._args.input_type == 'illumina':
+            config_data['quality_checks']['forced'] = ['map_rate_ref_illumina', 'cov_ref_illumina']
+            config_data['quality_checks']['skipped'] = ['map_rate_assembly_illumina', 'cov_assembly_illumina']
+        if self._args.input_type == 'ont':
+            config_data['quality_checks']['forced'] = ['map_rate_ref_ont', 'cov_ref_ont']
+            config_data['quality_checks']['skipped'] = ['map_rate_assembly_ont', 'cov_assembly_ont']
+
         return SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir)
 
 

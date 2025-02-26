@@ -1,11 +1,8 @@
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Any
 
-from camel.app.loggers import logger
 from camel.resources.snakefile import assembly_spades, assembly_flye, polish_assembly_short, polish_assembly_long, \
     human_read_scrubbing
-from camel.resources.snakefile.variant_calling import OUTPUT_VARIANT_CALLING_MAPPING_INFORMS, \
-    OUTPUT_VARIANT_CALLING_DEPTH_INFORMS
 
 SNAKEFILE_ASSEMBLY = f'{Path(__file__).parent / Path(__file__).stem}.smk'
 OUTPUT_ASSEMBLY_FASTA = Path('assembly', 'filtering', 'fasta.io')
@@ -17,7 +14,7 @@ OUTPUT_ASSEMBLY_DEPTH_INFORMS = Path('assembly', 'samtools_depth', '{mapper}', '
 OUTPUT_ASSEMBLY_MAPPING_RATE_INFORMS = Path('assembly', 'samtools_flagstat', '{mapper}', 'informs.io')
 
 
-def get_fasta_raw(config: Dict[str, Any]) -> Path:
+def get_fasta_raw(config: dict[str, Any]) -> Path:
     """
     Returns the assembly FASTA output IO object path (before filtering).
     """
@@ -34,7 +31,7 @@ def get_fasta_raw(config: Dict[str, Any]) -> Path:
     raise ValueError(f"Invalid input type: {config['input_type']}")
 
 
-def get_command_informs(config: Dict[str, Any]) -> List[Path]:
+def get_command_informs(config: dict[str, Any]) -> list[Path]:
     """
     Returns the assembly informs output IO object paths.
     :return: Assembly informs path
@@ -55,27 +52,20 @@ def get_command_informs(config: Dict[str, Any]) -> List[Path]:
     raise ValueError(f"Invalid input type: {config['input_type']}")
 
 
-def get_mapping_inform(read_key: str, mode: str) -> Path:
+def get_mapping_inform(read_key: str) -> Path:
     """
     Returns the mapping informs.
     :param read_key: Read key
-    :param mode: Reference mode ('assembly' or 'ref')
     :return: Path to mapping informs
     """
     if read_key == 'fastq_pe':
-        if mode == 'assembly':
-            return Path(str(OUTPUT_ASSEMBLY_MAPPING_INFORMS).format(mapper='bowtie2'))
-        elif mode == 'ref':
-            return Path(str(OUTPUT_VARIANT_CALLING_MAPPING_INFORMS))
+        return Path(str(OUTPUT_ASSEMBLY_MAPPING_INFORMS).format(mapper='bowtie2'))
     elif read_key == 'fastq_se':
-        if mode == 'ref':
-            logger.warning(f'Reference mapping for single-end data is not implemented yet')
         return Path(str(OUTPUT_ASSEMBLY_MAPPING_INFORMS).format(mapper='minimap2'))
-    else:
-        raise ValueError(f'Invalid read key: {read_key}')
+    raise ValueError(f'Invalid read key: {read_key}')
 
 
-def get_depth_inform(read_key: str, mode: str) -> Path:
+def get_depth_inform(read_key: str) -> Path:
     """
     Returns the depth informs.
     :param read_key: Read key
@@ -83,17 +73,10 @@ def get_depth_inform(read_key: str, mode: str) -> Path:
     :return: Path to depth informs
     """
     if read_key == 'fastq_pe':
-        if mode == 'assembly':
             return Path(str(OUTPUT_ASSEMBLY_DEPTH_INFORMS).format(mapper='bowtie2'))
-        else:
-            return Path(str(OUTPUT_VARIANT_CALLING_DEPTH_INFORMS))
     elif read_key == 'fastq_se':
-        return Path(str(OUTPUT_VARIANT_CALLING_DEPTH_INFORMS))
-#         if mode == 'ref':
-#             logger.warning(f'Reference mapping for single-end data is not implemented yet')
-#         return Path(str(OUTPUT_ASSEMBLY_DEPTH_INFORMS).format(mapper='minimap2'))
-    else:
-        raise ValueError(f'Invalid read key: {read_key}')
+        return Path(str(OUTPUT_ASSEMBLY_DEPTH_INFORMS).format(mapper='minimap2'))
+    raise ValueError(f'Invalid read key: {read_key}')
 
 
 def get_mapping_rate_inform(read_key: str) -> Path:
@@ -106,11 +89,10 @@ def get_mapping_rate_inform(read_key: str) -> Path:
         return Path(str(OUTPUT_ASSEMBLY_MAPPING_RATE_INFORMS).format(mapper='bowtie2'))
     elif read_key == 'fastq_se':
         return Path(str(OUTPUT_ASSEMBLY_MAPPING_RATE_INFORMS).format(mapper='minimap2'))
-    else:
-        raise ValueError(f'Invalid read key: {read_key}')
+    raise ValueError(f'Invalid read key: {read_key}')
 
 
-def get_qc_informs(config: Dict[str, Any], input_type: str, mode: str = 'assembly') -> List[Path]:
+def get_qc_informs(config: dict[str, Any], input_type: str, mode: str = 'assembly') -> list[Path]:
     """
     Returns the QC informs based on the input type.
     :param config: Snakemake configuration
@@ -120,9 +102,11 @@ def get_qc_informs(config: Dict[str, Any], input_type: str, mode: str = 'assembl
     """
     informs = []
     if input_type in ('hybrid', 'illumina'):
-        informs.append(get_mapping_inform('fastq_pe', mode))
-        informs.append(get_depth_inform('fastq_pe', mode))
+        informs.append(get_mapping_inform('fastq_pe'))
+        if mode == 'assembly':
+            informs.append(get_depth_inform('fastq_pe'))
     if input_type in ('hybrid', 'ont'):
-        informs.append(get_mapping_inform('fastq_se', mode))
-        informs.append(get_depth_inform('fastq_se', mode))
+        informs.append(get_mapping_inform('fastq_se'))
+        if mode == 'assembly':
+            informs.append(get_depth_inform('fastq_se'))
     return [Path(config['working_dir'], p) for p in informs]

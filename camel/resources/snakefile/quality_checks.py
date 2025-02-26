@@ -136,6 +136,14 @@ QC_CHECKS_BY_KEY = {qc.key: qc for qc in [
         supported_input_types=['hybrid', 'ont'],
         fmt_string_value='{:.2f}x'),
     QCCheck(
+        key='cov_ref_ont',
+        full_name='Coverage against the reference genome (ONT)',
+        threshold_warn=20,
+        threshold_fail=10,
+        supported_input_types=['hybrid', 'ont'],
+        fmt_string_value='{:.2f}x',
+        is_default=False),
+    QCCheck(
         key='assembly_total_len',
         full_name='Total assembly length deviation',
         threshold_warn=10,

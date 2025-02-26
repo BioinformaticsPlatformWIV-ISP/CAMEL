@@ -2,17 +2,17 @@ import gzip
 import re
 from itertools import zip_longest
 from pathlib import Path
-from typing import Set, Iterable, AbstractSet, BinaryIO, Dict, Union, Sequence
+from typing import Iterable, AbstractSet, BinaryIO, Union
 
 import screed
 from Bio import SeqIO
 
 from camel.app.command.command import Command
 from camel.app.components.filesystemhelper import FileSystemHelper
+from camel.app.loggers import logger
 
 
-class FastqUtils(object):
-
+class FastqUtils:
     """
     This class contains utility functions to work with FASTQ files.
     """
@@ -52,8 +52,8 @@ class FastqUtils(object):
             raise RuntimeError(command.stderr, cmd)
 
     @staticmethod
-    def convert_fastqs_to_interleaved_fastq(pe_1_file: Path, pe_2_file: Path, interleaved_file: Path,
-                                            gzip_output: bool = False) -> None:
+    def convert_fastqs_to_interleaved_fastq(
+            pe_1_file: Path, pe_2_file: Path, interleaved_file: Path, gzip_output: bool = False) -> None:
         """
         Convert two ordered fastq file into a interleaved fastq file, NO CHECKS are performed. If checks are needed,
         call 'create_paired_end' instead.
@@ -75,8 +75,8 @@ class FastqUtils(object):
             raise RuntimeError(command.stderr, cmd)
 
     @staticmethod
-    def convert_interleaved_fastq_to_individual_fastqs(interleaved_file: Path, pe_1_file: Path, pe_2_file: Path,
-                                                       gzip_output: bool = False) -> None:
+    def convert_interleaved_fastq_to_individual_fastqs(
+            interleaved_file: Path, pe_1_file: Path, pe_2_file: Path, gzip_output: bool = False) -> None:
         """
         Convert an interleaved fastq file into two fastq files each containing one group of reads. Input interleaved
         fastq file must be sorted. No CHECKS are performed.
@@ -89,8 +89,8 @@ class FastqUtils(object):
         FastqUtils.split_interleaved_fastq(interleaved_file, pe_1_file, pe_2_file, gzip_output)
 
     @staticmethod
-    def split_interleaved_fastq(interleaved_file: Path, pe_1_file: Path, pe_2_file: Path,
-                                gzip_output: bool = False) -> None:
+    def split_interleaved_fastq(
+            interleaved_file: Path, pe_1_file: Path, pe_2_file: Path, gzip_output: bool = False) -> None:
         """
         Split an interleaved fastq file into two fastq files each containing one group of reads. Input interleaved fastq
         file must be sorted. No CHECKS are performed.
@@ -127,7 +127,7 @@ class FastqUtils(object):
         elif rhs.endswith('/1') or rhs.endswith('/2'):
             return rhs.split('/', 1)[0]
         else:
-            raise Exception("Read name is in an illegal format: {}".format(read.name))
+            raise Exception(f"Read name is in an illegal format: {read.name}")
 
     @staticmethod
     def _write_read_to_file(read: screed.Record, outfile: BinaryIO):
@@ -137,14 +137,14 @@ class FastqUtils(object):
         :param outfile: File to write to
         :return: None
         """
-        outfile.write(f'@{read.name}\n{read.sequence}\n+\n{read.quality}\n'.encode(encoding='utf-8'))
+        outfile.write(f'@{read.name}\n{read.sequence}\n+\n{read.quality}\n'.encode())
 
     @staticmethod
-    def _flush_se_reads(read_dict: Dict[str, screed.Record], outfile: BinaryIO):
+    def _flush_se_reads(read_dict: dict[str, screed.Record], outfile: BinaryIO):
         """
         Remove all the reads from a dictionary after writing them to a file. As the files are sorted these will be the
         orphaned reads.
-        :param read_dict: Dictionary containing reads
+        :param read_dict: dictionary containing reads
         :param outfile: File to write to
         :return:
         """
@@ -153,7 +153,7 @@ class FastqUtils(object):
             read_dict.pop(key)
 
     @staticmethod
-    def _found_read(read: screed.Record, other_dict: Dict[str, screed.Record]) -> bool:
+    def _found_read(read: screed.Record, other_dict: dict[str, screed.Record]) -> bool:
         """
         Checks whether the given read was already found in the dictionary of reads from the other file
         :param read: Read to check
@@ -163,7 +163,7 @@ class FastqUtils(object):
         return read is not None and FastqUtils._get_read_name(read) in other_dict
 
     @staticmethod
-    def _process_reads(read: screed.Record, read_dict: Dict[str, screed.Record], other_dict: Dict[str, screed.Record],
+    def _process_reads(read: screed.Record, read_dict: dict[str, screed.Record], other_dict: dict[str, screed.Record],
                        pe_outf: BinaryIO, se_outf: BinaryIO) -> None:
         """
         Writes the paired reads to the paired output file and flushes the dictionary the read came from. As the files
@@ -234,7 +234,7 @@ class FastqUtils(object):
         raise ValueError(f"Cannot determine sample name from: {basename}")
 
     @staticmethod
-    def get_all_read_names(fastq_path: Path) -> Set[str]:
+    def get_all_read_names(fastq_path: Path) -> set[str]:
         """
         Retrieves all read names from the given fastq file
         :param fastq_path: Path to the fastq file
@@ -248,90 +248,14 @@ class FastqUtils(object):
         return read_names
 
     @staticmethod
-    def process_paired_end(pe_1_files: Sequence[Path], pe_2_files: Sequence[Path], se_files: Sequence[Path],
-                           pe_out_1: Path, pe_out_2: Path, se_out: Path, gzip_output: bool = False) -> None:
-        """
-        Function to extract paired end reads from multiple (filtered) paired-end input files and output all
-        other and orphaned reads to a single output file.
-        :param pe_1_files: Iterable with forward read paired end files
-        :param pe_2_files: Iterable with reverse read paired end files
-        :param se_files: Iterable with single end files
-        :param pe_out_1: File with all paired forward reads
-        :param pe_out_2: File with all paired reverse reads
-        :param se_out: File with all single end and orphaned reads
-        :param gzip_output: gzip the output file
-        :return: None
-        """
-        open_fn_in = gzip.open if FileSystemHelper.is_gzipped(pe_1_files[0]) else open
-        open_fn_out = gzip.open if gzip_output else open
-        fwd_reads = set()
-        for file in pe_1_files:
-            fwd_reads = fwd_reads | FastqUtils.get_all_read_names(file)
-        rev_reads = set()
-        for file in pe_2_files:
-            rev_reads = rev_reads | FastqUtils.get_all_read_names(file)
-        paired_reads = fwd_reads & rev_reads
-        open_fn_out(se_out, 'wt').close()  # Initialize SE file so that append can be used without issues
-        for infiles, outfile in [(pe_1_files, pe_out_1), (pe_2_files, pe_out_2)]:
-            with open_fn_out(outfile, 'wt') as pe_outhandle, open_fn_out(se_out, 'at') as se_outhandle:
-                for file in infiles:
-                    for record in SeqIO.parse(open_fn_in(file, 'rt'), 'fastq'):
-                        if record.id in paired_reads:
-                            SeqIO.write(record, pe_outhandle, 'fastq')
-                        else:
-                            SeqIO.write(record, se_outhandle, 'fastq')
-        with open_fn_out(se_out, 'at') as outhandle:
-            for file in se_files:
-                with open_fn_in(file, 'rt') as inhandle:
-                    for line in inhandle:
-                        outhandle.write(line)
-
-    @staticmethod
-    def process_paired_end_se(pe_1_files: Sequence[Path], pe_2_files: Sequence[Path], se_1_files: Sequence[Path], se_2_files: Sequence[Path],
-                              pe_out_1: Path, pe_out_2: Path, se_out_1: Path, se_out_2: Path, gzip_output: bool = False) -> None:
-        """
-        Function to extract paired end reads from multiple (filtered) paired-end input files and output other and orphaned reads
-        to single end output files.
-        :param pe_1_files: Iterable with forward read paired end files
-        :param pe_2_files: Iterable with reverse read paired end files
-        :param se_1_files: Iterable with forward single end files
-        :param se_2_files: Iterable with forward single end files
-        :param pe_out_1: File with all paired forward reads
-        :param pe_out_2: File with all paired reverse reads
-        :param se_out_1: File with forward single end and orphaned reads
-        :param se_out_2: File with reverse single end and orphaned reads
-        :param gzip_output: gzip the output file
-        :return: None
-        """
-        open_fn_in = gzip.open if FileSystemHelper.is_gzipped(pe_1_files[0]) else open
-        open_fn_out = gzip.open if gzip_output else open
-        fwd_reads = FastqUtils._get_read_names(pe_1_files)
-        rev_reads = FastqUtils._get_read_names(pe_2_files)
-        paired_reads = fwd_reads & rev_reads
-        open_fn_out(se_out_1, 'w').close()  # Initialize SE file so that append can be used without issues
-        open_fn_out(se_out_2, 'w').close()
-        for infiles, outfile_pe, outfile_se in [(pe_1_files, pe_out_1, se_out_1), (pe_2_files, pe_out_2, se_out_2)]:
-            with open_fn_out(outfile_pe, 'wt') as pe_outhandle, open_fn_out(outfile_se, 'at') as se_outhandle:
-                for file in infiles:
-                    for record in SeqIO.parse(open_fn_in(file, 'rt'), 'fastq'):
-                        if record.id in paired_reads:
-                            SeqIO.write(record, pe_outhandle, 'fastq')
-                        else:
-                            SeqIO.write(record, se_outhandle, 'fastq')
-        for infile, outfile in [(se_1_files, se_out_1), (se_2_files, se_out_2)]:
-            with open_fn_out(outfile, 'at') as outhandle:
-                for file in infile:
-                    with open_fn_in(file, 'rt') as inhandle:
-                        for line in inhandle:
-                            outhandle.write(line)
-
-    @staticmethod
+    @DeprecationWarning
     def _get_read_names(files: Iterable[Path]) -> AbstractSet[str]:
         """
         Returns a set with all the read names in the given files
         :param files: Files for which the read names need to be extracted
         :return: Set of read names
         """
+        logger.warning('This function is deprecated')
         read_names = set()
         for file in files:
             read_names = read_names | FastqUtils.get_all_read_names(file)
