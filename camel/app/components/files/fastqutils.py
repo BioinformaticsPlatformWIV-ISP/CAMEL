@@ -350,3 +350,19 @@ class FastqUtils(object):
         command.command = cmd
         command.run(Path.cwd())
         return int(command.stdout)
+
+    @staticmethod
+    def is_fastq(input_file: Path) -> bool:
+        """
+        Checks whether the input file is a FASTQ file.
+        :param input_file: input file
+        :return bool: boolean indicating whether the input file is a FASTQ file or not
+        """
+        is_gzipped = FileSystemHelper.is_gzipped(input_file)
+        open_file = gzip.open(input_file, 'rt') if is_gzipped else open(input_file)
+        with open_file as handle:
+            fastq = SeqIO.parse(handle, 'fastq')
+            try:
+                return any(fastq)
+            except ValueError:
+                return False

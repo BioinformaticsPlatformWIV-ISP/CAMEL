@@ -26,6 +26,7 @@ class TestKlebsiellaPipeline(unittest.TestCase):
         test_file_dir / 'pipelines' / 'Kpneumoniae-SRR4046826-ds_1.fastq.gz',
         test_file_dir / 'pipelines' / 'Kpneumoniae-SRR4046826-ds_2.fastq.gz'
     ]
+    input_fastq_se = test_file_dir / 'pipelines' / 'Kpneumoniae-FAZ63816_ont-ds.fastq.gz'
     input_fasta = test_file_dir / 'pipelines' / 'Kpneumoniae-SRR4046826-ds.fasta'
 
     def setUp(self):
@@ -118,6 +119,54 @@ class TestKlebsiellaPipeline(unittest.TestCase):
                    '--threads', '8'
                ] + [
                    f"--{a.replace('_', '-')}" for a in MainKlebsiellaPipeline.CUSTOM_ANALYSES if a not in (
+                    'cgmlst', 'scgmlst')]
+        main = MainKlebsiellaPipeline(args)
+        main.run()
+        self.assertGreater(path_report_out.stat().st_size, 0)
+
+    @longRunningTest()
+    def test_klebsiella_pipeline_ont(self) -> None:
+        """
+        Tests the Klebsiella pipeline using ONT as input.
+        :return: None
+        """
+        path_report_out = self.running_dir / 'out' / 'report.html'
+        path_summary_out = self.running_dir / 'out' / 'summary.tsv'
+        args = [
+                   '--fastq-se', str(TestKlebsiellaPipeline.input_fastq_se),
+                   '--input-type', 'ont',
+                   '--output-html', str(path_report_out),
+                   '--output-dir', str(path_report_out.parent),
+                   '--output-tsv', str(path_summary_out),
+                   '--working-dir', str(self.running_dir),
+                   '--detection-method', 'blast',
+                   '--threads', '8'
+               ] + [
+                   f"--{a.replace('_', '-')}" for a in MainKlebsiellaPipeline.CUSTOM_ANALYSES if a not in (
+                    'cgmlst', 'scgmlst')]
+        main = MainKlebsiellaPipeline(args)
+        main.run()
+        self.assertGreater(path_report_out.stat().st_size, 0)
+
+    @longRunningTest()
+    def test_klebsiella_pipeline_ont_kma(self) -> None:
+        """
+        Tests the Klebsiella pipeline using ONT as input and kma as detection method
+        :return: None
+        """
+        path_report_out = self.running_dir / 'out' / 'report.html'
+        path_summary_out = self.running_dir / 'out' / 'summary.tsv'
+        args = [
+               '--fastq-se', str(TestKlebsiellaPipeline.input_fastq_se),
+               '--input-type', 'ont',
+               '--output-html', str(path_report_out),
+               '--output-dir', str(path_report_out.parent),
+               '--output-tsv', str(path_summary_out),
+               '--working-dir', str(self.running_dir),
+               '--detection-method', 'kma',
+               '--threads', '8'
+           ] + [
+               f"--{a.replace('_', '-')}" for a in MainKlebsiellaPipeline.CUSTOM_ANALYSES if a not in (
                 'cgmlst', 'scgmlst')]
         main = MainKlebsiellaPipeline(args)
         main.run()

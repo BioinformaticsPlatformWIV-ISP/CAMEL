@@ -20,13 +20,15 @@ class AbriTAMRReport(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super().__init__('AbriTAMR report', '1.0.14', camel)
+        super().__init__('AbriTAMR report', '1.0.19', camel)
+        self._species = None
 
     def _execute_tool(self) -> None:
         """
         Executes the tool
         :return: None
         """
+        self._species = self._input_informs['ABRITAMR_RUN']['species']
         self.__build_command()
         self._execute_command()
         self.__set_output()
@@ -40,8 +42,6 @@ class AbriTAMRReport(Tool):
         super(AbriTAMRReport, self)._check_input()
         if 'TXT_MDU_QC' not in self._tool_inputs:
             raise InvalidInputSpecificationError("MDU QC file is required")
-        if 'VAL_SPECIES' not in self._tool_inputs:
-            raise InvalidInputSpecificationError("VAL_SPECIES is required")
         elif not any(key in self._tool_inputs for key in ('TXT_MATCHES', 'TXT_PARTIALS')):
             raise InvalidInputSpecificationError("AbriTAMR run outputs files must be provided")
 
@@ -58,7 +58,7 @@ class AbriTAMRReport(Tool):
         Concatenates required parameters and options to build the command
         :return: None
         """
-        sop = 'plus' if str(self._tool_inputs['VAL_SPECIES'][0]) == 'Salmonella' else 'general'
+        sop = 'plus' if self._species == 'Salmonella' else 'general'
         self._command.command = ' '.join([
             self._tool_command,
             '--matches', str(self._tool_inputs['TXT_MATCHES'][0]),

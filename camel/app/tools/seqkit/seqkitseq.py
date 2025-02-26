@@ -1,6 +1,8 @@
 from pathlib import Path
 
 from camel.app.camel import Camel
+from camel.app.components.files.fastautils import FastaUtils
+from camel.app.components.files.fastqutils import FastqUtils
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.error.toolexecutionerror import ToolExecutionError
 from camel.app.io.tooliofile import ToolIOFile
@@ -23,6 +25,13 @@ class SeqkitSeq(Tool):
         """
         super().__init__('Seqkit seq', '2.3.1', camel)
 
+    def __get_input_key(self) -> str:
+        """
+        Returns the key for the input file.
+        :return: Input key
+        """
+        return 'FASTQ' if 'FASTQ' in self._tool_inputs else 'FASTA'
+
     def _check_input(self) -> None:
         """
         Checks if the provided input is valid.
@@ -41,13 +50,16 @@ class SeqkitSeq(Tool):
         self.__build_command()
         self._execute_command()
         self.__set_output(output_path)
+        self.__collect_stats(output_path)
+        self._informs['min_length'] = self._parameters['min_length'].value if 'min_length' in self._parameters else None
+        self._informs['min_qual'] = self._parameters['min_qual'].value if 'min_qual' in self._parameters else None
 
     def __build_command(self) -> None:
         """
         Builds the command line call.
         :return: None
         """
-        input_key = 'FASTQ' if 'FASTQ' in self._tool_inputs else 'FASTA'
+        input_key = self.__get_input_key()
         self._command.command = ' '.join([
             self._tool_command,
             ' '.join([str(f.path) for f in self._tool_inputs[input_key]]),
@@ -70,3 +82,16 @@ class SeqkitSeq(Tool):
         """
         if self._command.returncode != 0:
             raise ToolExecutionError("Command execution failed (Exit code: {})".format(self._command.returncode))
+
+    def __collect_stats(self, path_out: Path) -> None:
+        """
+        Collect statistics and stores them in the informs.
+        :param path_out: Path to output file
+        :return: None
+        """
+        if self.__get_input_key() == 'FASTQ':
+            self._informs['nb_seqs_in'] = FastqUtils.count_reads(self._tool_inputs['FASTQ'][0].path)
+            self._informs['nb_seqs_out'] = FastqUtils.count_reads(path_out)
+        else:
+            self._informs['nb_seqs_in'] = FastaUtils.count_reads(self._tool_inputs['FASTA'][0].path)
+            self._informs['nb_seqs_out'] = FastaUtils.count_reads(path_out)

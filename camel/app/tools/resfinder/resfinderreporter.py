@@ -131,7 +131,7 @@ class ResFinderReporter(Tool):
         section.add_html_object(div)
 
         # Add download link
-        relative_path = Path('resfinder', self._tool_inputs[f'TSV_pheno_{key}'][0].path.name)
+        relative_path = Path('resfinder4', self._tool_inputs[f'TSV_pheno_{key}'][0].path.name)
         section.add_file(self._tool_inputs[f'TSV_pheno_{key}'][0].path, relative_path)
         section.add_link_to_file(f'Download {overview_type} overview (TSV)', relative_path)
 

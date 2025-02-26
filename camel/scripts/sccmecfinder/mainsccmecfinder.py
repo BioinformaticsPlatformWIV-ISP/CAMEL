@@ -2,7 +2,7 @@
 import argparse
 import json
 from pathlib import Path
-from typing import Optional, List, Dict, Sequence
+from typing import Optional, Sequence
 
 import yaml
 
@@ -10,11 +10,11 @@ from camel.app.camel import Camel
 from camel.app.components import mainscriptutils
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.workflows.genedetectionwrapper import GeneDetectionWrapper
-from camel.app.components.workflows.readtype import helper_by_input_type
+from camel.app.components.workflows.inputtype import helper_by_input_type
 from camel.app.loggers import logger
 
 
-class MainSCCmecFinder(object):
+class MainSCCmecFinder:
     """
     This tool is used to run the SCCmecFinder tool.
     """
@@ -47,7 +47,7 @@ class MainSCCmecFinder(object):
         return argument_parser.parse_args(args)
 
     @staticmethod
-    def __get_matching_complex(detected_genes: List[str], genes_by_complex: Dict[str, List[str]]) -> \
+    def __get_matching_complex(detected_genes: list[str], genes_by_complex: dict[str, list[str]]) -> \
             Optional[str]:
         """
         Returns the matching complex (if there is one).
@@ -84,7 +84,7 @@ class MainSCCmecFinder(object):
                 json.dump(self._informs, handle, indent=2)
             logger.info(f'Informs exported to: {self._args.output_json}')
 
-    def __run_blast(self, fasta_file: Path) -> List[str]:
+    def __run_blast(self, fasta_file: Path) -> list[str]:
         """
         Runs BLAST on the mec genes database.
         :param fasta_file: Input FASTA file
@@ -99,7 +99,7 @@ class MainSCCmecFinder(object):
         self._report.save()
         return [d.locus.split(':')[0] for d in wrapper.output.detected_hits]
 
-    def __get_mec_type_overview(self, detected_genes: List[str]) -> HtmlReportSection:
+    def __get_mec_type_overview(self, detected_genes: list[str]) -> HtmlReportSection:
         """
         Determines the mec type based on the detected genes and adds it to the report.
         :param detected_genes: Detected genes

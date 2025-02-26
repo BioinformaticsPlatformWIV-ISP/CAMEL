@@ -2,15 +2,11 @@ import abc
 import argparse
 import shutil
 from pathlib import Path
-from typing import Dict, Any, List, Tuple, Union
-
-from Bio import SeqIO
+from typing import Any, Union
 
 from camel.app.components import mainscriptutils
 from camel.app.components.files import fastautils
-from camel.app.components.files.fastqutils import FastqUtils
-from camel.app.components.files.fileutils import FileUtils
-from camel.app.components.phylogeny.snpphylogenyutils import InvalidInputError
+from camel.app.components.pipelines import absolute_path_by_pathlib
 from camel.app.components.pipelines.basepipeline import BasePipeline
 from camel.app.components.workflows.utils.fastqinput import FastqInput
 from camel.app.io.tooliovalue import ToolIOValue
@@ -35,10 +31,15 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         BasePipeline.add_common_arguments(argument_parser)
 
         # Output
-        argument_parser.add_argument('--output-dir', required=True, type=Path)
-        argument_parser.add_argument('--output-html', required=True, type=Path)
-        argument_parser.add_argument('--output-tsv', help="Output file for the summary", required=True, type=Path)
-        argument_parser.add_argument('--output-fasta', type=Path, help='output path for assembled contigs')
+        argument_parser.add_argument(
+            '--output-dir', type=absolute_path_by_pathlib, default=Path(Path.cwd(), 'out'))
+        argument_parser.add_argument(
+            '--output-html', type=absolute_path_by_pathlib, default=Path(Path.cwd(), 'out', 'report.html'))
+        argument_parser.add_argument(
+            '--output-tsv', help="Output file for the summary", type=absolute_path_by_pathlib,
+            default=Path(Path.cwd(), 'out', 'report.tsv'))
+        argument_parser.add_argument(
+            '--output-fasta', type=absolute_path_by_pathlib, help='output path for assembled contigs')
 
         # Options
         argument_parser.add_argument(
@@ -54,7 +55,7 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
             '--cov-max', default=100.0, type=float,
             help='Maximum coverage (datasets with higher estimated coverage will be downsampled to the given value)')
 
-    def get_template_data(self, dict_input: Dict) -> Dict[str, Any]:
+    def get_template_data(self, dict_input: dict) -> dict[str, Any]:
         """
         Returns the template data that is common to all pipelines.
         :param dict_input: Dictionary with pipeline input files
@@ -63,7 +64,7 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         # Add common entries
         config_data = super().get_template_data(dict_input)
 
-        # Add report specific entries
+        # Add report-specific entries
         mainscriptutils.dict_merge(config_data, {
             'output_dir': str(self._args.output_dir),
             'output_report': str(self._args.output_html),
@@ -79,6 +80,9 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         if (self._args.input_type == 'illumina') and (self._args.library is not None):
             config_data['read_trimming']['adapter'] = self._args.library
 
+        # Empty variant filtering config
+        config_data['variant_filtering'] = {}
+
         # Human read scrubbing
         if 'human_read_scrubbing' in self._args:
             config_data['read_scrubbing'] = {}
@@ -90,32 +94,7 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         Checks if the provided input files are valid.
         :return: None
         """
-        logger.info(f"Checking input files (type: '{self._args.input_type}')")
-
-        # FASTA input
-        if self._args.input_type in ('fasta', 'fasta_with_vcf'):
-            with open(self._args.fasta) as handle:
-                try:
-                    seqs = list(SeqIO.parse(handle, 'fasta'))
-                    logger.info(f'Valid FASTA file ({len(seqs):,} sequences)')
-                except BaseException as err:
-                    raise InvalidInputError(f'Invalid FASTA input: {err}')
-            if self._args.detection_method != 'blast':
-                raise InvalidInputError(f'For FASTA input, only BLAST-based detection is available.')
-
-        # FASTQ PE inputs
-        elif self._args.input_type in ('illumina', 'hybrid'):
-            nb_reads_fwd = FastqUtils.count_reads(self._args.fastq_pe[0])
-            nb_reads_rev = FastqUtils.count_reads(self._args.fastq_pe[1])
-            if not nb_reads_fwd == nb_reads_rev:
-                raise InvalidInputError(
-                    f'The number of forward ({nb_reads_fwd:,}) and reverse ({nb_reads_rev:,}) reads should be equal, '
-                    'check that the input files provided are complete and correctly paired.')
-            logger.info(f'FASTQ input is valid')
-            logger.info(f'PE forward FASTQ hash: {FileUtils.hash_file(self._args.fastq_pe[0])}')
-            logger.info(f'PE reverse FASTQ hash: {FileUtils.hash_file(self._args.fastq_pe[1])}')
-        else:
-            logger.debug(f"FASTQ checking not implemented yet for input type '{self._args.input_type}'")
+        mainscriptutils.validate_input_files(self._args)
 
     def _export_assembly(self) -> None:
         """
@@ -123,7 +102,7 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         :return: None
         """
         if self._args.output_fasta is None:
-            logger.debug(f'Not exporting assembly')
+            logger.debug('Not exporting assembly')
             return
         path_io = self._args.working_dir / assembly_spades.OUTPUT_ASSEMBLY_FASTA
         path_fasta = SnakemakeUtils.load_object(path_io)[0].path
@@ -132,7 +111,7 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         logger.info(f'Output FASTA file exported to: {self._args.output_fasta}')
 
     @staticmethod
-    def format_input_string(dict_in: Dict[str, Any]) -> str:
+    def format_input_string(dict_in: dict[str, Any]) -> str:
         """
         Formats the input string based on the dictionary with pipeline input files.
         :param dict_in: Pipeline input dictionary
@@ -151,7 +130,8 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         """
         # FASTA input
         if input_type in ('fasta', 'fasta_with_vcf'):
-            SnakemakeUtils.dump_object(None, path_out)
+            fq_pe = SnakemakeUtils.load_object(Path(snake_in.FASTQ_PE))
+            SnakemakeUtils.dump_object(FastqInput('illumina', fq_pe, is_pe=True).to_fq_dict(), path_out)
 
         # PE reads (illumina)
         elif input_type == 'illumina':
@@ -193,7 +173,7 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
 
     @staticmethod
     def add_content_scrubbing(
-            structure: List[Tuple], input_type: str, reports_scrubbing: List[Union[Path, str]]) -> None:
+            structure: list[tuple], input_type: str, reports_scrubbing: list[Union[Path, str]]) -> None:
         """
         Adds the report content for the human read scrubbing.
         :param structure: Report structure
@@ -230,8 +210,8 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
 
     @staticmethod
     def add_content_trim_basic_qc(
-            structure: List[Tuple], input_type: str, reports_ds: List[Union[Path, str]],
-            reports_trim: List[Union[Path, str]]) -> None:
+            structure: list[tuple], input_type: str, reports_ds: list[Union[Path, str]],
+            reports_trim: list[Union[Path, str]]) -> None:
         """
         Adds the report content for the downsampling, basic QC, and read trimming.
         :param structure: Report structure
@@ -264,7 +244,7 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
 
     @staticmethod
     def add_content_contamination_check(
-            structure: List[Tuple], input_type: str, reports_contamination: List[Union[Path, str]],
+            structure: list[tuple], input_type: str, reports_contamination: list[Union[Path, str]],
             report_confindr: Union[Path, str]) -> None:
         """
         Adds the report content for the contamination check.
@@ -278,17 +258,19 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         report_k2_by_input_format = {
             p_html.parents[1].name: p_html for p_html in [Path(x) for x in reports_contamination]}
 
-        # Add the report content
         if input_type in ('fasta', 'fasta_with_vcf'):
+            # FASTA input -> only Kraken2
             structure.append(
                 ('Contamination check', 'contamination', [report_k2_by_input_format['fasta']]))
         elif input_type == 'illumina':
+            # Illumina or ONT input -> Kraken2 and ConFindr
             structure.append(
                 ('Contamination check', 'contamination', [
                     report_k2_by_input_format['fastq_pe'], Path(report_confindr)]))
         elif input_type == 'ont':
+            # ONT input -> Kraken2 and ConFindr
             structure.append(
-                ('Contamination check', 'contamination', [report_k2_by_input_format['fastq_se']]))
+                ('Contamination check', 'contamination', [report_k2_by_input_format['fastq_se'], Path(report_confindr)]))
         elif input_type == 'hybrid':
             structure.append(
                 ('Contamination check', 'contamination',

@@ -20,8 +20,7 @@ class TestSequenceTyping(CamelTestSuite):
     input_fasta_multi_perfect = test_file_dir / 'neisseria_multi_perfect.fasta'
     input_typing_reads = {
         'illumina': [test_file_dir / 'S15BD05018_S58_L001_1.fastq', test_file_dir / 'S15BD05018_S58_L001_2.fastq'],
-        'iontorrent': [test_file_dir / 'ERR1447913_ds.fastq'],
-        'nanopore': [test_file_dir / 'ERR2259087.fastq.gz']
+        'ont': [test_file_dir / 'Z1269_RPB-subset.fastq.gz']
     }
 
     def test_typing_illumina_blast_nucl(self) -> None:
@@ -32,6 +31,7 @@ class TestSequenceTyping(CamelTestSuite):
         output_file_report = Path(self.running_dir) / 'report' / 'report.html'
         args = [
             '--fasta', str(self.input_fasta),
+            '--input-type', 'fasta',
             '--scheme-dir', str(self.input_db_nucl),
             '--output-html', str(output_file_report),
             '--output-dir', str(output_file_report.parent),
@@ -53,6 +53,7 @@ class TestSequenceTyping(CamelTestSuite):
         output_file_tsv = Path(self.running_dir) / 'report' / 'typing_out.tsv'
         args = [
             '--fasta', str(self.input_fasta),
+            '--input-type', 'fasta',
             '--scheme-dir', str(self.input_db_nucl),
             '--output-html', str(output_file_report),
             '--output-dir', str(output_file_report.parent),
@@ -78,6 +79,7 @@ class TestSequenceTyping(CamelTestSuite):
         output_file_report = Path(self.running_dir) / 'report' / 'report.html'
         args = [
             '--fasta', str(self.input_fasta_new_allele),
+            '--input-type', 'fasta',
             '--scheme-dir', str(self.input_db_nucl),
             '--output-html', str(output_file_report),
             '--output-dir', str(output_file_report.parent),
@@ -101,6 +103,7 @@ class TestSequenceTyping(CamelTestSuite):
         output_file_report = Path(self.running_dir) / 'report' / 'report.html'
         args = [
             '--fasta', str(self.input_fasta_multi_perfect),
+            '--input-type', 'fasta',
             '--scheme-dir', str(self.input_db_nucl),
             '--output-html', str(output_file_report),
             '--output-dir', str(output_file_report.parent),
@@ -120,6 +123,7 @@ class TestSequenceTyping(CamelTestSuite):
         output_file_report = Path(self.running_dir) / 'report' / 'report.html'
         args = [
             '--fasta', str(self.input_fasta),
+            '--input-type', 'fasta',
             '--scheme-dir', str(self.input_db_protein),
             '--output-html', str(output_file_report),
             '--output-dir', str(output_file_report.parent),
@@ -139,6 +143,7 @@ class TestSequenceTyping(CamelTestSuite):
         output_file_report = Path(self.running_dir) / 'report' / 'report.html'
         args = [
             '--fasta', str(self.input_fasta),
+            '--input-type', 'fasta',
             '--scheme-dir', str(self.input_db_mixed),
             '--output-html', str(output_file_report),
             '--output-dir', str(output_file_report.parent),
@@ -158,6 +163,7 @@ class TestSequenceTyping(CamelTestSuite):
         output_file_report = Path(self.running_dir) / 'report' / 'report.html'
         args = [
             '--fastq-pe', str(self.input_typing_reads['illumina'][0]), str(self.input_typing_reads['illumina'][1]),
+            '--input-type', 'illumina',
             '--scheme-dir', str(self.input_db_nucl),
             '--output-html', str(output_file_report),
             '--output-dir', str(output_file_report.parent),
@@ -181,6 +187,7 @@ class TestSequenceTyping(CamelTestSuite):
         args = [
             '--fasta', str(self.input_fasta),
             '--fastq-pe', str(self.input_typing_reads['illumina'][0]), str(self.input_typing_reads['illumina'][1]),
+            '--input-type', 'illumina',
             '--scheme-dir', str(self.input_db_mixed),
             '--output-html', str(output_file_report),
             '--output-dir', str(output_file_report.parent),
@@ -200,6 +207,7 @@ class TestSequenceTyping(CamelTestSuite):
         output_file_report = Path(self.running_dir) / 'report' / 'report.html'
         args = [
             '--fastq-pe', str(self.input_typing_reads['illumina'][0]), str(self.input_typing_reads['illumina'][1]),
+            '--input-type', 'illumina',
             '--scheme-dir', str(self.input_db_nucl),
             '--output-html', str(output_file_report),
             '--output-dir', str(output_file_report.parent),
@@ -220,6 +228,7 @@ class TestSequenceTyping(CamelTestSuite):
         args = [
             '--fasta', str(self.input_fasta),
             '--fastq-pe', str(self.input_typing_reads['illumina'][0]), str(self.input_typing_reads['illumina'][1]),
+            '--input-type', 'illumina',
             '--scheme-dir', str(self.input_db_mixed),
             '--output-html', str(output_file_report),
             '--output-dir', str(output_file_report.parent),
@@ -231,40 +240,61 @@ class TestSequenceTyping(CamelTestSuite):
         main.run()
         self.assertGreater(output_file_report.stat().st_size, 0)
 
-    def test_typing_nanopore_kma_nucl(self) -> None:
+    def test_typing_ont_blast_nucl(self) -> None:
         """
-        Tests sequence typing using KMA with a nucleotide scheme (including ST definitions).
+        Tests sequence typing using BLAST with a nucleotide scheme (including ST definitions).
+        Includes de novo assembly
         :return: None
         """
         output_file_report = Path(self.running_dir) / 'report' / 'report.html'
         args = [
-            '--fastq-se', str(self.input_typing_reads['nanopore'][0]),
+            '--fastq-se', str(self.input_typing_reads['ont'][0]),
+            '--input-type', 'ont',
             '--scheme-dir', str(self.input_db_nucl),
             '--output-html', str(output_file_report),
             '--output-dir', str(output_file_report.parent),
             '--working-dir', str(self.running_dir),
-            '--detection-method', 'kma',
-            '--input-type', 'ont',
+            '--detection-method', 'blast',
             '--threads', '8'
         ]
         main = MainSequenceTyping(args)
         main.run()
         self.assertGreater(output_file_report.stat().st_size, 0)
 
-    def test_typing_nanopore_kma_nucl_trim(self) -> None:
+    def test_typing_ont_kma_nucl(self) -> None:
         """
         Tests sequence typing using KMA with a nucleotide scheme (including ST definitions).
         :return: None
         """
         output_file_report = Path(self.running_dir) / 'report' / 'report.html'
         args = [
-            '--fastq-se', str(self.input_typing_reads['nanopore'][0]),
+            '--fastq-se', str(self.input_typing_reads['ont'][0]),
+            '--input-type', 'ont',
             '--scheme-dir', str(self.input_db_nucl),
             '--output-html', str(output_file_report),
             '--output-dir', str(output_file_report.parent),
             '--working-dir', str(self.running_dir),
             '--detection-method', 'kma',
+            '--threads', '8'
+        ]
+        main = MainSequenceTyping(args)
+        main.run()
+        self.assertGreater(output_file_report.stat().st_size, 0)
+
+    def test_typing_ont_kma_nucl_trim(self) -> None:
+        """
+        Tests sequence typing using KMA with a nucleotide scheme (including ST definitions).
+        :return: None
+        """
+        output_file_report = Path(self.running_dir) / 'report' / 'report.html'
+        args = [
+            '--fastq-se', str(self.input_typing_reads['ont'][0]),
             '--input-type', 'ont',
+            '--scheme-dir', str(self.input_db_nucl),
+            '--output-html', str(output_file_report),
+            '--output-dir', str(output_file_report.parent),
+            '--working-dir', str(self.running_dir),
+            '--detection-method', 'kma',
             '--threads', '8',
             '--trim-reads'
         ]

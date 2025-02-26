@@ -112,8 +112,8 @@ class AssemblyWrapper(object):
             output_files['INFORMS_seqtk'] = self._working_dir / assembly.OUTPUT_ASSEMBLY_FILTERING_INFORMS
         if calc_qc_stats is True:
             key_fq = 'fastq_pe' if self._input_type == 'illumina' else 'fastq_se'
-            output_files['INFORMS_mapper'] = self._working_dir / assembly.get_mapping_inform(key_fq)
-            output_files['INFORMS_depth'] = self._working_dir / assembly.get_depth_inform(key_fq)
+            output_files['INFORMS_mapper'] = self._working_dir / assembly.get_mapping_inform(key_fq, 'assembly')
+            output_files['INFORMS_depth'] = self._working_dir / assembly.get_depth_inform(key_fq, 'assembly')
         return output_files
 
     def __get_config_data(self, name: str, min_ctg_len: Union[int, None], assembler_opts: Optional[Dict] = None) -> \

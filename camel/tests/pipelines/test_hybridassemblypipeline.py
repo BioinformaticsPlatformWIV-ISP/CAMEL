@@ -51,7 +51,8 @@ class TestHybridAssemblyPipeline(CamelTestSuite):
             '--input-type', 'hybrid',
             '--threads', '16',
             '--expected-genome-size', '4.5m',
-            '--ont-qual', 'nano-corr'
+            '--ont-qual', 'nano-corr',
+            '--ont-basecalling-model', 'r1041_e82_400bps_sup_v5.0.0'
         ]
         main = MainHybridAssemblyPipeline(args)
         main.run()

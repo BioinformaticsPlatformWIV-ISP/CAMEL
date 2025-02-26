@@ -5,13 +5,16 @@
 citations:
   main: null
   other:
-    - Bolger_2014-trimmomatic
+    - CHen_2023-fastp
+    - Shen_2024-seqkit2
     - Bankevich_2012-spades
+    - Kolmogorov_2019-flye
     - Gurevich_2013-quast
     - Wood_2019-kraken2
     - Low_2019-confindr
     - Manni_2021-busco
     - Langmead_2012-bowtie2
+    - Li_2021-minimap2
     - Danecek_2021-samtools
     - Camacho_2009-blast
     - Clausen_2018-kma
@@ -21,7 +24,6 @@ citations:
     - Jolley_2010-bigsdb
     - Chen_2016-vfdb
     - Savin_2019-yersinia_cgmlst
-
 
 #########################
 # Tool specific options #
@@ -65,7 +67,6 @@ resfinder4:
   point: False
   db: /db/resfinder4
 
-
 species_determination:
   tsv: /db/pipelines/yersinia/cgMLST_taxonomic.tsv
 
@@ -75,11 +76,22 @@ species_determination:
 gene_detection:
   vfdb_core:
     path: /db/gene_detection/VFDB_core
-    perc_identity_cutoff: 90
     metadata:
       name: Gene
       key: gene
     hidden: true
+  ampc:
+    path: /db/pipelines/yersinia/gene_detection-ampc
+    params:
+      blastn:
+        min_percent_identity: 95
+        min_coverage: 60
+      kma:
+        min_percent_identity: 95
+        min_coverage: 60
+    metadata:
+      name: Antibiotics
+      key: antibiotics
 
 ###################
 # Sequence typing #

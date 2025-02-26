@@ -2,6 +2,8 @@ import unittest
 
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.loggers import logger
+from camel.app.tools.seqtk.seqtkseq import SeqtkSeq
 from camel.app.tools.seqtk.seqtksize import SeqtkSize
 from camel.app.tools.seqtk.seqtkconvert import SeqtkConvert
 
@@ -37,6 +39,36 @@ class TestSeqtk(CamelTestSuite):
         seqtk_convert.update_parameters(output_file='sequences.fasta')
         seqtk_convert.run(self.running_dir)
         self.verify_output_files(seqtk_convert, 'FASTA')
+
+    def test_seqtk_seq_fastq(self) -> None:
+        """
+        Tests seqtk seq with FASTQ input.
+        :return: None
+        """
+        seqtk_seq = SeqtkSeq(self.camel)
+        seqtk_seq.add_input_files({'FASTQ': [TestSeqtk.FILE_FASTQ_A]})
+        seqtk_seq.update_parameters(output_filename='sequences.fastq', sample_fraction='0.5')
+        seqtk_seq.run(self.running_dir)
+        logger.info(seqtk_seq.tool_outputs)
+        self.verify_output_files(seqtk_seq, 'FASTQ')
+        self.assertIn('nb_seqs_in', seqtk_seq.informs)
+        self.assertIn('nb_seqs_out', seqtk_seq.informs)
+        self.assertGreater(seqtk_seq.informs['nb_seqs_in'], seqtk_seq.informs['nb_seqs_out'])
+
+    def test_seqtk_seq_fasta(self) -> None:
+        """
+        Tests seqtk seq with FASTA input.
+        :return: None
+        """
+        seqtk_seq = SeqtkSeq(self.camel)
+        seqtk_seq.add_input_files({'FASTQ': [TestSeqtk.FILE_FASTA]})
+        seqtk_seq.update_parameters(output_filename='sequences.fasta', sample_fraction='0.5')
+        seqtk_seq.run(self.running_dir)
+        logger.info(seqtk_seq.tool_outputs)
+        self.verify_output_files(seqtk_seq, 'FASTA')
+        self.assertIn('nb_seqs_in', seqtk_seq.informs)
+        self.assertIn('nb_seqs_out', seqtk_seq.informs)
+        self.assertGreater(seqtk_seq.informs['nb_seqs_in'], seqtk_seq.informs['nb_seqs_out'])
 
 
 if __name__ == '__main__':

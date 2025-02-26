@@ -31,7 +31,7 @@ class Command(object):
     @property
     def stdout(self) -> str:
         """
-        Returns the stderr from the command execution.
+        Returns the stdout from the command execution.
         :return: Standard error
         """
         return self._stdout
@@ -79,12 +79,10 @@ class Command(object):
             stderr=stderr_handle,
             shell=True,
             executable='/bin/bash',
-            cwd=folder)
-        self._stdout = self._procedure.stdout.decode('utf-8')
-        if self._procedure.stderr is not None:
-            self._stderr = self._procedure.stderr.decode('utf-8')
-        else:
-            self._stderr = ''
+            cwd=folder,
+            text=True)
+        self._stdout = self._procedure.stdout or ''
+        self._stderr = self._procedure.stderr or ''
         self._return_code = self._procedure.returncode
         if disable_logging is False:
             logger.debug(f'stdout: {self._stdout}')

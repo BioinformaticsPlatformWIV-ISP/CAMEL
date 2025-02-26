@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import argparse
-from typing import Optional, List, Dict, Sequence, Any
+from typing import Optional, Sequence, Any
 
 import yaml
 
@@ -19,7 +19,7 @@ class MainEnterococcusPipeline(ReportPipeline):
 
     CUSTOM_ANALYSES = [
         'kraken2', 'confindr', 'rmlst', 'lrefinder', 'amrfinder', 'resfinder4', 'vfdb_core', 'virulencefinder', 'mlst',
-        'cgmlst', 'plasmidfinder', 'mob_suite', 'bacmet', 'human_read_scrubbing']
+        'cgmlst', 'plasmidfinder', 'mob_suite', 'bacmet', 'human_read_scrubbing', 'variant_calling']
 
     DATA_BY_SPECIES = {
         'faecalis': {
@@ -50,7 +50,7 @@ class MainEnterococcusPipeline(ReportPipeline):
         },
         'spp': {
             'amrfinder_species': None,
-            'disabled_assays': ['mlst', 'cgmlst'],
+            'disabled_assays': ['mlst', 'cgmlst', 'variant_calling'],
             'full_name': 'Enterococcus spp.',
             'gc_content': 37.4,
             'genome_size': 2_973_380,
@@ -63,7 +63,7 @@ class MainEnterococcusPipeline(ReportPipeline):
         Initializes the main class.
         :param args: Arguments (optional)
         """
-        super().__init__('Enterococcus pipeline', '1.1', SNAKEFILE_MAIN, args)
+        super().__init__('Enterococcus pipeline', '1.2', SNAKEFILE_MAIN, args)
 
     @property
     def title(self) -> str:
@@ -84,7 +84,7 @@ class MainEnterococcusPipeline(ReportPipeline):
         self._run_snakemake_main(config_file)
         self._export_assembly()
 
-    def __construct_config_file(self, input_files: Dict[str, List[Dict[str, str]]]) -> str:
+    def __construct_config_file(self, input_files: dict[str, list[dict[str, str]]]) -> str:
         """
         Constructs the configuration file.
         :param input_files: Dictionary with the input files (keys can be FASTQ_PE, FASTQ_SE).
@@ -110,6 +110,7 @@ class MainEnterococcusPipeline(ReportPipeline):
                 reference_name=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species].get('reference_name', 'null'),
                 reference_url=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species].get('reference_url', 'null'),
                 resfinder4_species=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species]['resfinder4_species'],
+                export_bam='true' if self._args.report_include_bam else 'false',
             ), Loader=yaml.SafeLoader))
 
         # Additional MLST scheme for E. faecium
@@ -143,7 +144,7 @@ class MainEnterococcusPipeline(ReportPipeline):
         parser.add_argument('--species', required=True, choices=['faecium', 'faecalis', 'spp'])
         return parser.parse_args(args)
 
-    def _update_config_for_generic_spp(self, config_data: Dict[str, Any]) -> None:
+    def _update_config_for_generic_spp(self, config_data: dict[str, Any]) -> None:
         """
         Updates the config file with specific adaptation for generic enterococcus.
         :param config_data: Configuration data

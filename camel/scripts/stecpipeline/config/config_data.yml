@@ -4,13 +4,16 @@
 citations:
   main: Bogaerts_2021-stec_pipeline
   other:
-    - Bolger_2014-trimmomatic
+    - CHen_2023-fastp
+    - Shen_2024-seqkit2
     - Bankevich_2012-spades
+    - Kolmogorov_2019-flye
     - Gurevich_2013-quast
     - Wood_2019-kraken2
     - Low_2019-confindr
     - Manni_2021-busco
     - Langmead_2012-bowtie2
+    - Li_2021-minimap2
     - Li_2009-samtools
     - Li_2011-bcftools
     - Camacho_2009-blast
@@ -40,6 +43,14 @@ assembly:
   spades:
     cov_cutoff: 10
   min_contig_length: 1000
+
+variant_calling:
+  ploidy: 1
+  report_include_bam: {export_bam}
+  reference:
+    path: /db/refgenomes/Escherichia_coli/NC_002695.2.fasta
+    name: <i>Escherichia coli</i> O157:H7 (NC_002695.2)
+    url: https://www.ncbi.nlm.nih.gov/nuccore/NC_002695.2
 
 quality_checks:
   expected_gc_content: 50.5

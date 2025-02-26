@@ -19,14 +19,14 @@ class MainStaphylococcusPipeline(ReportPipeline):
     CUSTOM_ANALYSES = [
         'kraken2', 'confindr', 'rmlst', 'lrefinder', 'amrfinder', 'resfinder4', 'vfdb_core', 'virulencefinder', 'mlst',
         'cgmlst', 'spa_typing', 'sccmec_typing', 'plasmidfinder', 'mob_suite', 'se_toxins', 'bacmet',
-        'human_read_scrubbing']
+        'human_read_scrubbing', 'variant_calling']
 
     def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """
         Initializes the main class.
         :param args: Arguments (optional)
         """
-        super().__init__('Staphylococcus pipeline', '1.1', SNAKEFILE_MAIN, args)
+        super().__init__('Staphylococcus pipeline', '1.2', SNAKEFILE_MAIN, args)
 
     @property
     def title(self) -> str:
@@ -60,6 +60,7 @@ class MainStaphylococcusPipeline(ReportPipeline):
             config_data.update(yaml.load(handle_in.read().format(
                 coverage_max=self._args.cov_max,
                 qc_typing_scheme='cgmlst' if self._args.cgmlst else 'mlst',
+                export_bam='true' if self._args.report_include_bam else 'false',
             ), Loader=yaml.SafeLoader))
         return SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir)
 

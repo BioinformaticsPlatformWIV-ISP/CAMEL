@@ -18,14 +18,14 @@ class MainListeriaPipeline(ReportPipeline):
     CUSTOM_ANALYSES = [
         'kraken2', 'confindr', 'rmlst', 'mlst', 'cgmlst', 'species_confirmation', 'amrfinder', 'resfinder4',
         'virulencefinder', 'vfdb_core', 'plasmidfinder', 'typing_amr', 'typing_virulence', 'pcr_serogroup',
-        'human_read_scrubbing', 'mob_suite']
+        'human_read_scrubbing', 'mob_suite', 'variant_calling']
 
     def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """
         Initializes the main class.
         :param args: Arguments (optional)
         """
-        super().__init__('Listeria pipeline', '1.3', SNAKEFILE_MAIN, args)
+        super().__init__('Listeria pipeline', '1.4', SNAKEFILE_MAIN, args)
 
     @property
     def title(self) -> str:

@@ -4,7 +4,7 @@ from pathlib import Path
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.io.tooliodirectory import ToolIODirectory
 from camel.app.io.tooliofile import ToolIOFile
-from camel.app.io.tooliovalue import ToolIOValue
+from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.tools.abritamr.abritamrreport import AbriTAMRReport
 from camel.app.tools.abritamr.abritamrreporter import AbriTAMRReporter
 from camel.app.tools.abritamr.abritamrrun import AbriTAMRRun
@@ -37,37 +37,34 @@ class TestAbriTAMR(CamelTestSuite):
         self.verify_output_files(abritamr, 'TXT_MATCHES')
         self.verify_output_files(abritamr, 'TXT_PARTIALS')
 
-    def test_abritamr_report(self) -> None:
+    def test_abritamr_report_and_reporter(self) -> None:
         """
-        Tests basic AbriTAMR report, abritamr report is a commandline tool and therefore not the camel reporter.
+        Tests basic AbriTAMR report and reporter.
+        (abritamr report is a commandline tool and therefore not the camel reporter.)
         :return: None
         """
+        # test abritamr report
         abritamr = AbriTAMRReport(self.camel)
         abritamr.add_input_files({
             'TXT_MDU_QC': [ToolIOFile(self.qc_file)],
             'TXT_MATCHES': [ToolIOFile(self.summary_matches)],
-            'TXT_PARTIALS': [ToolIOFile(self.summary_partials)],
-            'VAL_SPECIES': [ToolIOValue('Salmonella')]
+            'TXT_PARTIALS': [ToolIOFile(self.summary_partials)]
         })
+        informs_abritamr = {'_name': 'test', 'species': 'Salmonella'}
+        SnakemakeUtils.dump_object(informs_abritamr, Path('./informs.dummy'))
+        abritamr.add_input_informs({'ABRITAMR_RUN': informs_abritamr})
         abritamr.run(self.running_dir)
         self.verify_output_files(abritamr, 'REPORT_ABRITAMR')
 
-    def test_abritamr_reporter(self) -> None:
-        """
-        Tests AbriTAMR reporter including the antibiogram.
-        :return: None
-        """
+        # test abritamr reporter
         abritamrreporter = AbriTAMRReporter(self.camel)
         abritamrreporter.add_input_files({
-            'TSV_output': [ToolIOFile(self.summary_out)],
+            'TSV': [ToolIOFile(self.summary_out)],
             'TXT_MATCHES': [ToolIOFile(self.summary_matches)],
             'TXT_PARTIALS': [ToolIOFile(self.summary_partials)],
-            'VAL_SPECIES': [ToolIOValue('Salmonella')]
+            'REPORT_ABRITAMR':  abritamr.tool_outputs['REPORT_ABRITAMR']
         })
-        from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-        informs_seqtk = {'_name': 'test'}
-        SnakemakeUtils.dump_object(informs_seqtk, Path('./informs.dummy'))
-        abritamrreporter.add_input_informs({'ABRITAMR_RUN': informs_seqtk})
+        abritamrreporter.add_input_informs({'ABRITAMR_RUN': informs_abritamr})
         abritamrreporter.run(self.running_dir)
         output_section = abritamrreporter.tool_outputs['VAL_HTML'][0].value
         self.assertGreater(len(output_section.to_html()), 0)

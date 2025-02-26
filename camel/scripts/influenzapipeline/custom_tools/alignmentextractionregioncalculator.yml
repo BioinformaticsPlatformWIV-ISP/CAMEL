@@ -1,4 +1,0 @@
-dependencies: []
-parameters:
-  output: {default: true, mandatory: true, option: null, p_index: 10, value: extraction_regions.intervals}
-tool_command: None

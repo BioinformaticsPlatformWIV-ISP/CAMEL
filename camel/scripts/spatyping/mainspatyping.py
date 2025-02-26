@@ -7,7 +7,7 @@ from typing import Optional, Sequence
 from camel.app.camel import Camel
 from camel.app.components import mainscriptutils
 from camel.app.components.html.htmlreport import HtmlReport
-from camel.app.components.workflows.readtype import helper_by_input_type
+from camel.app.components.workflows.inputtype import helper_by_input_type
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.loggers import logger
 from camel.app.tools.blast.blastn import Blastn
@@ -15,7 +15,7 @@ from camel.app.tools.spatyping.spatyping import SpaTyping
 from camel.app.tools.spatyping.spatypingreporter import SpaTypingReporter
 
 
-class MainSpaTyping(object):
+class MainSpaTyping:
     """
     This tool is used to run the Spa typing tool.
     """

@@ -4,13 +4,16 @@
 citations:
   main: Timmermans_2021-enterococcus
   other:
-    - Bolger_2014-trimmomatic
+    - CHen_2023-fastp
+    - Shen_2024-seqkit2
     - Bankevich_2012-spades
+    - Kolmogorov_2019-flye
     - Gurevich_2013-quast
     - Wood_2019-kraken2
     - Low_2019-confindr
     - Manni_2021-busco
     - Langmead_2012-bowtie2
+    - Li_2021-minimap2
     - Li_2009-samtools
     - Camacho_2009-blast
     - Clausen_2018-kma
@@ -52,6 +55,14 @@ assembly:
   spades:
     cov_cutoff: 10
   min_contig_length: 1000
+
+variant_calling:
+  ploidy: 1
+  report_include_bam: {export_bam}
+  reference:
+    path: {quast_fasta}
+    name: {reference_name}
+    url: {reference_url}
 
 amrfinder:
   db: /db/amrfinder/by_version/latest

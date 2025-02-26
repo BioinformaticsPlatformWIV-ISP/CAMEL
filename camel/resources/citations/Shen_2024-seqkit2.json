@@ -1,0 +1,17 @@
+{
+  "type_of_reference": "JOUR",
+  "primary_title": "SeqKit2: A Swiss army knife for sequence and alignment processing.",
+  "first_authors": [
+    "Shen, Wei",
+    "Sipos, Botond",
+    "Zhao, Liuyang"
+  ],
+  "publication_year": "2024/06//",
+  "alternate_title3": "iMeta",
+  "volume": "3",
+  "language": "eng",
+  "number": "3",
+  "start_page": "e191",
+  "end_page": "e191",
+  "doi": "10.1002/imt2.191"
+}

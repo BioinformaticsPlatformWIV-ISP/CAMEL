@@ -49,6 +49,8 @@ class AMRPhenotypePredictor(Tool):
             data_mutations = json.load(handle)
 
         for mutation in data_mutations:
+            if mutation['lofreq'] is True:
+                continue
             for association in mutation['associations']:
                 if association['antibiotic'] not in mutations_by_ab:
                     mutations_by_ab[association['antibiotic']] = {}

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import argparse
 from pathlib import Path
-from typing import List, Dict, Optional, Sequence
+from typing import Optional, Sequence
 
 import yaml
 
@@ -19,14 +19,15 @@ class MainSTECPipeline(ReportPipeline):
 
     CUSTOM_ANALYSES = [
         'kraken2', 'confindr', 'rmlst', 'amrfinder', 'resfinder4', 'ncbi_stress', 'mlst_pasteur', 'mlst_warwick',
-        'cgmlst', 'plasmidfinder', 'mob_suite', 'serotype', 'virulencefinder', 'innuendo_cgmlst', 'human_read_scrubbing']
+        'cgmlst', 'plasmidfinder', 'mob_suite', 'serotype', 'virulencefinder', 'innuendo_cgmlst',
+        'human_read_scrubbing', 'variant_calling']
 
     def __init__(self, args: Optional[Sequence[str]] = None) -> None:
         """
         Initializes the main class.
         :param args: Arguments (optional)
         """
-        super().__init__('STEC pipeline', '1.1', SNAKEFILE_MAIN, args)
+        super().__init__('STEC pipeline', '1.2', SNAKEFILE_MAIN, args)
 
     def run(self) -> None:
         """
@@ -39,7 +40,7 @@ class MainSTECPipeline(ReportPipeline):
         self._run_snakemake_main(str(path_config))
         self._export_assembly()
 
-    def __construct_config_file(self, input_files: Dict[str, List[Dict[str, str]]]) -> Path:
+    def __construct_config_file(self, input_files: dict[str, list[dict[str, str]]]) -> Path:
         """
         Constructs the configuration file.
         :return: Configuration file
@@ -49,7 +50,8 @@ class MainSTECPipeline(ReportPipeline):
         with open(CONFIG_DATA) as handle_in:
             config_data.update(yaml.safe_load(handle_in.read().format(
                 coverage_max=self._args.cov_max,
-                qc_typing_scheme='cgmlst' if self._args.cgmlst else 'mlst_warwick'
+                qc_typing_scheme='cgmlst' if self._args.cgmlst else 'mlst_warwick',
+                export_bam='true' if self._args.report_include_bam else 'false',
             )))
 
         # Read trimming

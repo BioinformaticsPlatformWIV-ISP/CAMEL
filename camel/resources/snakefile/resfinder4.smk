@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pandas as pd
+import json
 
 from camel.app.camel import Camel
 from camel.app.io.tooliodirectory import ToolIODirectory
@@ -105,6 +106,7 @@ rule resfinder4_create_summary:
             handle.write('\t'.join([
                 f'resfinder4_genes', ', '.join(list(data_genes['Resistance gene'])) if not data_genes.empty else '-']))
             handle.write('\n')
+            handle.write('resfinder4_genes_hits\t{}\n'.format(json.dumps(data_genes.astype(str).values.tolist())))
             if params.point:
                 data_mutations = pd.read_table(tsv_point)
                 handle.write('\t'.join([

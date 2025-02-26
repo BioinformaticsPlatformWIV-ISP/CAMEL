@@ -20,6 +20,7 @@ class SequenceTypingInput:
     """
     sample_name: str
     db_path: Path
+    input_type: str
     fasta: Optional[ToolIOFile] = None
     fastq: Optional[FastqInput] = None
     db_key: str = 'mlst'
@@ -53,7 +54,7 @@ class SequenceTypingWrapper(object):
             self, workflow_input: SequenceTypingInput, blast_task: Optional[str] = None,
             threads: Optional[int] = 8) -> None:
         """
-        Runs the BLAST based sequence typing workflow.
+        Runs the BLAST-based sequence typing workflow.
         :param workflow_input: Workflow input
         :param blast_task: blast task
         :param threads: Number of threads to use
@@ -66,7 +67,13 @@ class SequenceTypingWrapper(object):
         self.__create_blast_input(workflow_input.fasta.path, workflow_input.db_key)
         options = {'blastn_task': blast_task} if blast_task is not None else None
         config_path = self.__create_config_file(
-            workflow_input.sample_name, 'blast', 'illumina', workflow_input.db_key, workflow_input.db_path, options)
+            sample_name=workflow_input.sample_name,
+            detection_method='blast',
+            input_type=workflow_input.input_type,
+            db_key=workflow_input.db_key,
+            db_path=workflow_input.db_path,
+            additional_options=options
+        )
         self.__run_snakefile(config_path, workflow_input, threads)
 
     def run_workflow_srst2(
@@ -90,10 +97,14 @@ class SequenceTypingWrapper(object):
             else:
                 self.__create_blast_input(workflow_input.fasta.path, workflow_input.db_key)
         SnakemakeUtils.dump_object(workflow_input.fastq.to_fq_dict(), self._working_dir / 'fq_dict.io')
-        additional_options = srst2_options if srst2_options else None
         config_path = self.__create_config_file(
-            workflow_input.sample_name, 'srst2', workflow_input.fastq.read_type, workflow_input.db_key,
-            workflow_input.db_path, additional_options)
+            sample_name=workflow_input.sample_name,
+            detection_method='srst2',
+            input_type=workflow_input.input_type,
+            db_key=workflow_input.db_key,
+            db_path=workflow_input.db_path,
+            additional_options=srst2_options if srst2_options else None
+        )
         self.__run_snakefile(config_path, workflow_input, threads)
 
     def run_workflow_kma(self, workflow_input: SequenceTypingInput, threads: Optional[int] = 8) -> None:
@@ -114,19 +125,24 @@ class SequenceTypingWrapper(object):
             else:
                 self.__create_blast_input(workflow_input.fasta.path, workflow_input.db_key)
         SnakemakeUtils.dump_object(workflow_input.fastq.to_fq_dict(), self._working_dir / 'fq_dict.io')
-        config_path = self.__create_config_file(
-            workflow_input.sample_name, 'kma', workflow_input.fastq.read_type, workflow_input.db_key,
-            workflow_input.db_path, {})
+        config_path=self.__create_config_file(
+            sample_name=workflow_input.sample_name,
+            detection_method='kma',
+            input_type=workflow_input.input_type,
+            db_key=workflow_input.db_key,
+            db_path=workflow_input.db_path,
+            additional_options={}
+        )
         self.__run_snakefile(config_path, workflow_input, threads)
 
     def __create_config_file(
-            self, sample_name: str, detection_method: str, read_type: str, db_key: str, db_path: Path,
+            self, sample_name: str, detection_method: str, input_type: str, db_key: str, db_path: Path,
             additional_options: Dict[str, Any]) -> str:
         """
         Creates the configuration file for the sequence typing workflow.
         :param sample_name: Sample name
         :param detection_method: Detection method ('blast', 'srst2)
-        :param read_type: Read type
+        :param input_type: Input type
         :param db_key: Database key (e.g. 'mlst')
         :param db_path: Database path
         :param additional_options: Additional options to add to the configuration file.
@@ -136,7 +152,7 @@ class SequenceTypingWrapper(object):
             'working_dir': str(self._working_dir),
             'sample_name': sample_name,
             'detection_method': detection_method,
-            'read_type': read_type,
+            'input_type': input_type,
             'sequence_typing': {
                 db_key: {
                     'path': str(db_path),

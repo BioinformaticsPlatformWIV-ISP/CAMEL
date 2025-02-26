@@ -131,6 +131,32 @@ class TestMockPipeline(CamelTestSuite):
         pipeline.run()
         self.assertGreater(path_report_out.stat().st_size, 0)
 
+    def test_mock_pipeline_ont_with_scrubbing_and_filters_params(self) -> None:
+        """
+        Tests the mock pipeline with ONT input data and read scrubbing enabled and alternate read filtering parameters.
+        :return: None
+        """
+        path_report_out = Path(self.running_dir) / 'out' / 'report.html'
+        path_summary_out = Path(self.running_dir) / 'out' / 'summary.tsv'
+
+        pipeline = MainMockPipeline([
+            '--fastq-se', str(TestMockPipeline.input_ont_se),
+            '--input-type', 'ont',
+            '--cov-max', '50',
+            '--output-html', str(path_report_out),
+            '--output-dir', str(path_report_out.parent),
+            '--output-tsv', str(path_summary_out),
+            '--working-dir', str(self.running_dir),
+            '--detection-method', 'blast',
+            '--ncbi-amr',
+            '--human-read-scrubbing',
+            '--ont-min-qual', '11',
+            '--ont-min-length', '750',
+            '--threads', '8',
+        ])
+        pipeline.run()
+        self.assertGreater(path_report_out.stat().st_size, 0)
+
     def test_mock_pipeline_hybrid(self) -> None:
         """
         Tests the mock pipeline with hybrid input data (Illumina + ONT).

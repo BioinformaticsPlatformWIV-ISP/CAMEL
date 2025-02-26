@@ -1,0 +1,15 @@
+{
+  "type_of_reference": "JOUR",
+  "primary_title": "Ultrafast one-pass FASTQ data preprocessing, quality control, and deduplication  using fastp.",
+  "first_authors": [
+    "Chen, Shifu"
+  ],
+  "publication_year": "2023/05//",
+  "alternate_title3": "iMeta",
+  "volume": "2",
+  "language": "eng",
+  "number": "2",
+  "start_page": "e107",
+  "end_page": "e107",
+  "doi": "10.1002/imt2.107"
+}

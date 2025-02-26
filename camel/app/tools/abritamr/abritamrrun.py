@@ -21,7 +21,7 @@ class AbriTAMRRun(Tool):
         :param camel: Camel instance
         :return: None
         """
-        super().__init__('AbriTAMR run', '1.0.14', camel)
+        super().__init__('AbriTAMR run', '1.0.19', camel)
 
     def _execute_tool(self) -> None:
         """
@@ -34,6 +34,7 @@ class AbriTAMRRun(Tool):
         amrfinder_db_folder = self._tool_inputs['DIR_AMRF'][0].path
         self.__add_database_information(amrfinder_db_folder)
         self._informs['_tag'] = 'RUN'
+        self._informs['species'] = self._parameters['species'].value
 
     def _check_input(self) -> None:
         """
@@ -53,6 +54,7 @@ class AbriTAMRRun(Tool):
         """
         self._tool_outputs['TXT_MATCHES'] = [ToolIOFile(self.folder / 'summary_matches.txt')]
         self._tool_outputs['TXT_PARTIALS'] = [ToolIOFile(self.folder / 'summary_partials.txt')]
+        self._tool_outputs['TSV_amrfinder'] = [ToolIOFile(self.folder / 'amrfinder.out')]
 
     def __build_command(self) -> None:
         """

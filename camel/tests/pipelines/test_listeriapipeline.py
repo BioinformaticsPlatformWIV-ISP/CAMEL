@@ -22,6 +22,7 @@ class TestListeriaPipeline(CamelTestSuite):
         test_file_dir / 'pipelines' / 'Listeria-S16BD02199_1.fastq.gz',
         test_file_dir / 'pipelines' / 'Listeria-S16BD02199_2.fastq.gz'
     ]
+    input_fastq_se = test_file_dir / 'pipelines' / 'Listeria-SRR17965220_ont-ds.fastq.gz'
     input_fasta = test_file_dir / 'pipelines' / 'Listeria-S16BD02199.fasta'
 
     def test_listeria_typing_db(self) -> None:
@@ -145,6 +146,47 @@ class TestListeriaPipeline(CamelTestSuite):
                    '--output-tsv', str(path_summary_out),
                    '--working-dir', str(self.running_dir)
                ] + [f"--{a.replace('_', '-')}" for a in MainListeriaPipeline.CUSTOM_ANALYSES if a != 'cgmlst']
+        main = MainListeriaPipeline(args)
+        main.run()
+        self.assertGreater(path_report_out.stat().st_size, 0)
+
+    @longRunningTest()
+    def test_listeria_pipeline_ont(self) -> None:
+        """
+        Tests the Listeria pipeline using FASTA as input with all assays except for cgMLST with ONT input
+        :return: None
+        """
+        path_report_out = self.running_dir / 'out' / 'report.html'
+        path_summary_out = self.running_dir / 'out' / 'summary.tsv'
+        args = [
+                   '--fastq-se', str(TestListeriaPipeline.input_fastq_se),
+                   '--input-type', 'ont',
+                   '--output-html', str(path_report_out),
+                   '--output-dir', str(path_report_out.parent),
+                   '--output-tsv', str(path_summary_out),
+                   '--working-dir', str(self.running_dir)
+               ] + [f"--{a.replace('_', '-')}" for a in MainListeriaPipeline.CUSTOM_ANALYSES if a != 'cgmlst']
+        main = MainListeriaPipeline(args)
+        main.run()
+        self.assertGreater(path_report_out.stat().st_size, 0)
+
+    @longRunningTest()
+    def test_listeria_pipeline_kma_ont(self) -> None:
+        """
+        Tests the Listeria pipeline with all assays except for cgMLST, using KMA with ONT input
+        :return: None
+        """
+        path_report_out = self.running_dir / 'out' / 'report.html'
+        path_summary_out = self.running_dir / 'out' / 'summary.tsv'
+        args = [
+            '--fastq-se', str(TestListeriaPipeline.input_fastq_se),
+            '--input-type', 'ont',
+            '--output-html', str(path_report_out),
+            '--output-dir', str(path_report_out.parent),
+            '--output-tsv', str(path_summary_out),
+            '--working-dir', str(self.running_dir),
+            '--detection-method', 'kma'
+        ] + [f"--{a.replace('_', '-')}" for a in MainListeriaPipeline.CUSTOM_ANALYSES if a != 'cgmlst']
         main = MainListeriaPipeline(args)
         main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)

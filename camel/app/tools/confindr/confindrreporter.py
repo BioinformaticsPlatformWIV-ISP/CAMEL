@@ -63,5 +63,9 @@ class ConFindrReporter(Tool):
         section.add_paragraph(
             '<b>Note:</b> Samples with multiple detected genera are always classified as contaminated.')
 
+        # add message for ONT input
+        if 'input_type' in self._parameters and self._parameters['input_type'].value in ('ont', 'hybrid'):
+            section.add_warning_message('ConFindr on ONT input data is experimental. Results should be interpreted with caution.')
+
         # Set output
         self._tool_outputs['HTML'] = [ToolIOValue(section)]

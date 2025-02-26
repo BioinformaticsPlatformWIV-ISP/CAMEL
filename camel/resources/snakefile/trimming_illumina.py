@@ -1,10 +1,9 @@
 from pathlib import Path
-from typing import Dict
 
 FOLDER_TRIMMING_ILLUMINA = Path('trimming_illumina')
 SNAKEFILE_TRIMMING_ILLUMINA = f'{Path(__file__).parent / Path(__file__).stem}.smk'
 
-INPUT_TRIMMOMATIC_FASTQ = FOLDER_TRIMMING_ILLUMINA / 'input' / 'fastq.io'
+INPUT_TRIMMING_FASTQ = FOLDER_TRIMMING_ILLUMINA / 'input' / 'fastq.io'
 
 # Report and summary
 OUTPUT_TRIMMING_ILLUMINA_REPORT = FOLDER_TRIMMING_ILLUMINA / 'report' / 'html.io'
@@ -24,7 +23,7 @@ OUTPUT_TRIMMING_ILLUMINA_FASTQC_TXT_POST = FOLDER_TRIMMING_ILLUMINA / 'fastqc-po
 OUTPUT_TRIMMING_ILLUMINA_FASTQC_HTML_POST = FOLDER_TRIMMING_ILLUMINA / 'fastqc-post' / 'html.io'
 
 
-def select_fastq_output(config: Dict) -> Path:
+def select_fastq_output(config: dict) -> Path:
     """
     Selects the PE FASTQ output based on the Snakemake configuration.
     :param config: Config data
@@ -36,7 +35,7 @@ def select_fastq_output(config: Dict) -> Path:
     else:
         return Path('trimming_illumina') / 'fastp' / 'fastq-pe.io'
 
-def select_informs(config: Dict) -> Path:
+def select_informs(config: dict) -> Path:
     """
     Selects the trimming informs based on the Snakemake configuration.
     :param config: Config data
@@ -48,7 +47,7 @@ def select_informs(config: Dict) -> Path:
     else:
         return Path('trimming_illumina') / 'fastp' / 'informs.io'
 
-def select_report_output(config: Dict) -> Path:
+def select_report_output(config: dict) -> Path:
     """
     Selects the trimming report based on the Snakemake configuration.
     :param config: Config data

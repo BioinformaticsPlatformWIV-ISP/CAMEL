@@ -2,20 +2,22 @@
 import argparse
 import shutil
 from pathlib import Path
-from typing import Sequence, Optional
+from typing import Optional, Sequence
+
+from camel.app.components.workflows.inputtype import helper_by_input_type
 
 from camel.app.camel import Camel
 from camel.app.components import mainscriptutils
 from camel.app.components.html.htmlreport import HtmlReport
+from camel.app.components.pipelines import absolute_path_by_pathlib
 from camel.app.components.sequencetyping.sequencetypingutils import SequenceTypingUtils
-from camel.app.components.workflows.readtype import helper_by_input_type
 from camel.app.components.workflows.sequencetypingwrapper import SequenceTypingWrapper, SequenceTypingInput, \
     SequenceTypingOutput
 from camel.app.components.workflows.utils.fastqinput import FastqInput
 from camel.app.io.tooliofile import ToolIOFile
 
 
-class MainSequenceTyping(object):
+class MainSequenceTyping:
     """
     Class to run sequence typing tool, it supports both BLAST+ and SRST2 as detection methods for alleles.
     """
@@ -40,11 +42,11 @@ class MainSequenceTyping(object):
         mainscriptutils.add_common_arguments(argument_parser)
         mainscriptutils.add_assembly_arguments(argument_parser)
         mainscriptutils.add_input_files_arguments(argument_parser)
-        argument_parser.add_argument('--scheme-dir', required=True, type=Path)
+        argument_parser.add_argument('--scheme-dir', required=True, type=absolute_path_by_pathlib)
         argument_parser.add_argument('--detection-method', type=str, choices=['blast', 'srst2', 'kma'], default='blast')
-        argument_parser.add_argument(
-            '--output-fasta', type=Path, help='output path for assembled contigs (only used for BLAST-based detection)')
-        argument_parser.add_argument('--output-tsv', type=Path,
+        argument_parser.add_argument('--output-fasta', type=absolute_path_by_pathlib,
+                                     help='output path for assembled contigs (only used for BLAST-based detection)')
+        argument_parser.add_argument('--output-tsv', type=absolute_path_by_pathlib,
                                      help='Output path for the tabular output file (does not work with mixed schemes)')
         argument_parser.add_argument('--blastn-task', type=str, choices=['blastn', 'megablast'], default='megablast')
         argument_parser.add_argument('--srst2-max-unaligned-overlap', type=int, default=100)
@@ -55,6 +57,8 @@ class MainSequenceTyping(object):
         Runs the workflow.
         :return: None
         """
+        mainscriptutils.validate_input_files(self._args)
+
         # Initialize report
         report = mainscriptutils.init_report(self._args.output_html, self._args.output_dir, 'Sequence typing report',
                                              f'Sequence typing {self._args.detection_method}')
@@ -89,7 +93,12 @@ class MainSequenceTyping(object):
         """
         wrapper = SequenceTypingWrapper(self._args.working_dir)
         workflow_input = SequenceTypingInput(
-            sample_name=self._sample_name, fasta=ToolIOFile(fasta_file), db_path=db_path, db_key=db_key)
+            sample_name=self._sample_name,
+            fasta=ToolIOFile(fasta_file),
+            input_type='fasta',
+            db_path=db_path,
+            db_key=db_key
+        )
         wrapper.run_workflow_blast(workflow_input, self._args.blastn_task, self._args.threads)
         return wrapper.output
 
@@ -105,7 +114,12 @@ class MainSequenceTyping(object):
         wrapper = SequenceTypingWrapper(self._args.working_dir)
         workflow_input = SequenceTypingInput(
             fasta=ToolIOFile(self._args.fasta) if self._args.fasta else None,
-            sample_name=self._sample_name, fastq=fastq_input, db_key=db_key, db_path=db_path)
+            sample_name=self._sample_name,
+            fastq=fastq_input,
+            db_key=db_key,
+            db_path=db_path,
+            input_type=self._args.input_type,
+        )
         srst2_options = {'max_unaligned_overlap': self._args.srst2_max_unaligned_overlap}
         wrapper.run_workflow_srst2(workflow_input, srst2_options, self._args.threads)
         return wrapper.output
@@ -122,7 +136,12 @@ class MainSequenceTyping(object):
         wrapper = SequenceTypingWrapper(self._args.working_dir)
         workflow_input = SequenceTypingInput(
             fasta=ToolIOFile(self._args.fasta) if self._args.fasta else None,
-            sample_name=self._sample_name, fastq=fastq_input, db_key=db_key, db_path=db_path)
+            sample_name=self._sample_name,
+            fastq=fastq_input,
+            db_key=db_key,
+            db_path=db_path,
+            input_type=self._args.input_type,
+        )
         wrapper.run_workflow_kma(workflow_input, self._args.threads)
         return wrapper.output
 

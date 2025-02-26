@@ -73,7 +73,7 @@ QC_CHECKS_BY_KEY = {qc.key: qc for qc in [
         full_name='ConFindr: number of contaminating SNPs',
         threshold_warn=10,
         threshold_fail=20,
-        supported_input_types=['hybrid', 'illumina'],
+        supported_input_types=['hybrid', 'illumina', 'ont'],
         fmt_string_value='{:,}',
         value_should_exceed=False),
     QCCheck(
@@ -120,6 +120,14 @@ QC_CHECKS_BY_KEY = {qc.key: qc for qc in [
         threshold_fail=10,
         supported_input_types=['hybrid', 'illumina'],
         fmt_string_value='{:.2f}x'),
+    QCCheck(
+        key='cov_ref_illumina',
+        full_name='Coverage against the reference genome (Illumina)',
+        threshold_warn=20,
+        threshold_fail=10,
+        supported_input_types=['hybrid', 'illumina'],
+        fmt_string_value='{:.2f}x',
+        is_default=False),
     QCCheck(
         key='cov_assembly_ont',
         full_name='Coverage against the assembled contigs (ONT)',
@@ -228,23 +236,33 @@ QC_CHECKS_BY_KEY = {qc.key: qc for qc in [
 ]}
 
 
-def get_qc_checks(input_type: str, skipped_checks: List[str] = None) -> List[Path]:
+def get_qc_checks(input_type: str, skipped_checks: List[str] = None, forced_checks: Optional[List[str]] = None) \
+        -> List[Path]:
     """
     Returns the output paths for the QC checks of the corresponding input type.
     :param input_type: Input type
     :param skipped_checks: (Optional) list of skipped QC checks
+    :param forced_checks: (Optional list of QC checks that are forced
     :return: List of paths with the enabled QC checks
     """
     paths = []
+    if forced_checks is None:
+        forced_checks = []
+
+    # Add defaults
     for key, qc_check in QC_CHECKS_BY_KEY.items():
         if input_type not in qc_check.supported_input_types:
             continue
-        if qc_check.is_default is False:
+        elif key in skipped_checks:
             continue
-        if key in skipped_checks:
+        elif (qc_check.is_default is False) and (key not in forced_checks):
             continue
+
+        # Add orientation for PE QC checks
         if '{ori}' in key:
             paths.extend([Path(_dir_qc, f'{key.format(ori=ori)}.json') for ori in ('fwd', 'rev')])
         else:
             paths.append(Path(_dir_qc, f'{key}.json'))
+
+    # Add forced QC checks
     return paths

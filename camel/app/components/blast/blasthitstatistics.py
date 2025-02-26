@@ -47,7 +47,7 @@ class BlastHitStatistics:
                 str(info['qseqid']),
                 int(info['qstart']),
                 int(info['qend']),
-                str(info['qseq']) if 'qseq' in info else None,
+                str(info['qseq']).replace('-', '') if 'qseq' in info else None,
                 float(info['pident']),
                 str(info['sstrand']) if 'sstrand' in info else None
             )

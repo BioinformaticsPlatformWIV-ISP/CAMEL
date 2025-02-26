@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 import argparse
 import json
+import shutil
 from pathlib import Path
 from typing import Any, Dict, Optional, Sequence
-
-import shutil
 
 from camel.app.camel import Camel
 from camel.app.components import mainscriptutils
 from camel.app.components.html.htmlreport import HtmlReport
+from camel.app.components.pipelines import absolute_path_by_pathlib
 from camel.app.components.workflows.genedetectionwrapper import GeneDetectionWrapper, GeneDetectionOutput
-from camel.app.components.workflows.readtype import helper_by_input_type
+from camel.app.components.workflows.inputtype import helper_by_input_type
 
 
 class MainGeneDetection(object):
@@ -37,11 +37,11 @@ class MainGeneDetection(object):
         mainscriptutils.add_common_arguments(argument_parser)
         mainscriptutils.add_assembly_arguments(argument_parser)
         mainscriptutils.add_input_files_arguments(argument_parser)
-        argument_parser.add_argument('--database-dir', type=Path, required=True)
+        argument_parser.add_argument('--database-dir', type=absolute_path_by_pathlib, required=True)
         argument_parser.add_argument('--detection-method', type=str, choices=['blast', 'srst2', 'kma'], default='blast')
 
         # BLAST specific parameters
-        argument_parser.add_argument('--output-fasta', type=Path, help='output path for assembled contigs')
+        argument_parser.add_argument('--output-fasta', type=absolute_path_by_pathlib, help='output path for assembled contigs')
         argument_parser.add_argument('--blast-min-percent-identity', type=int, default=90)
         argument_parser.add_argument('--blast-min-percent-coverage', type=int, default=60)
         argument_parser.add_argument('--blast-task', type=str, choices=['blastn', 'megablast'], default='megablast')
@@ -69,6 +69,8 @@ class MainGeneDetection(object):
         Runs the main script.
         :return: None
         """
+        mainscriptutils.validate_input_files(self._args)
+
         # Initialize report
         report = mainscriptutils.init_report(
             self._args.output_html, self._args.output_dir, 'Gene detection report',

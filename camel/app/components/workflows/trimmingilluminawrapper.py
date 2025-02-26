@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import Any, Optional
 
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.io.tooliofile import ToolIOFile
@@ -9,21 +9,24 @@ from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.resources.snakefile import trimming_illumina
 
 
-class TrimmingIlluminaWrapper(object):
+class TrimmingIlluminaWrapper:
     """
     This class is used as a wrapper class around the Illumina read trimming Snakemake workflow.
     """
 
     @dataclass
     class ReadTrimmingOutput:
+        """
+        Class that holds the output of the read trimming workflow.
+        """
         report_section: HtmlReportSection
         tsv_summary: Path
-        trimmed_reads_pe: List[ToolIOFile]
-        trimmed_reads_se_fwd: List[ToolIOFile]
-        trimmed_reads_se_rev: List[ToolIOFile]
-        informs_trimming: Dict[str, Any]
-        fastq_reports_pre: List[ToolIOFile]
-        fastq_reports_post: List[ToolIOFile]
+        trimmed_reads_pe: list[ToolIOFile]
+        trimmed_reads_se_fwd: list[ToolIOFile]
+        trimmed_reads_se_rev: list[ToolIOFile]
+        informs_trimming: dict[str, Any]
+        fastq_reports_pre: list[ToolIOFile]
+        fastq_reports_post: list[ToolIOFile]
         log_file: Optional[Path] = None
 
     def __init__(self, working_dir: Path) -> None:
@@ -34,7 +37,7 @@ class TrimmingIlluminaWrapper(object):
         self._working_dir = Path(working_dir)
         self._output = None
 
-    def run_workflow(self, pe_reads: List[Path], adapter: Optional[str] = None, threads: int = 8,
+    def run_workflow(self, pe_reads: list[Path], adapter: Optional[str] = None, threads: int = 8,
                      export_fastq: bool = False, method: Optional[str] = None) -> None:
         """
         Runs the read trimming workflow.
@@ -60,7 +63,7 @@ class TrimmingIlluminaWrapper(object):
         config_file = SnakePipelineUtils.generate_config_file(config_data, self._working_dir)
 
         # Dump the input files in an IO file
-        io_pickle_in = Path(self._working_dir / trimming_illumina.INPUT_TRIMMOMATIC_FASTQ)
+        io_pickle_in = Path(self._working_dir / trimming_illumina.INPUT_TRIMMING_FASTQ)
         io_pickle_in.parent.mkdir(exist_ok=True, parents=True)
         SnakemakeUtils.dump_object([ToolIOFile(x) for x in pe_reads], io_pickle_in)
 
@@ -76,7 +79,7 @@ class TrimmingIlluminaWrapper(object):
             threads)
         self.__set_output(output_files)
 
-    def __set_output(self, output_files: Dict[str, Path]) -> None:
+    def __set_output(self, output_files: dict[str, Path]) -> None:
         """
         Sets the output of this tool.
         :param output_files: Output files by key.
