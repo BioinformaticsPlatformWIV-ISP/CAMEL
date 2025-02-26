@@ -96,13 +96,8 @@ class TestSeqsero2(CamelTestSuite):
         self.verify_output_files(seqsero2_tool, 'TXT')
         self.assertIn('db_path', seqsero2_tool.informs)
 
-        # add dummy tsv because it is generated outside of tool
-        dummy_tsv_seqsero2 = Path('./dummy.tsv')
-        dummy_tsv_seqsero2.touch()
-
         seqsero2_reporter = SeqSero2Reporter(self.camel)
         seqsero2_reporter.add_input_files({'TXT_seqsero2_kmer': seqsero2_tool.tool_outputs['TXT'],
-                                           'TSV_output': [ToolIOFile(dummy_tsv_seqsero2)],
                                            'DIR_seqsero2': [ToolIODirectory(self.db_path)]})
         seqsero2_reporter.add_input_informs({'serotyping_seqsero2': seqsero2_tool.informs})
         seqsero2_reporter.run(self.running_dir)
