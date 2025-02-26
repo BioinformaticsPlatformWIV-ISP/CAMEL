@@ -54,8 +54,8 @@ rule spoligotyping_spotyping:
     """
     input:
         FASTQ = rules.spoligotyping_downsample.output.FASTQ_PE if config['input_type'] in ( 'illumina', 'ont') else [],
-        FASTA = Path(config['working_dir']) / assembly.OUTPUT_ASSEMBLY_FASTA if config['input_type'] in ('fasta', 'fasta_with_vcf') else [],
-        INFORMS_spoligo_param = rules.spoligotyping_downsample.output.INFORMS_spoligo_param if config['input_type'] in ('illumina', 'ont') else []
+        FASTA = Path(config['working_dir']) / assembly.OUTPUT_ASSEMBLY_FASTA if config['input_type'] in ('fasta', 'fasta_with_vcf', 'ont') else [],
+        INFORMS_spoligo_param = rules.spoligotyping_downsample.output.INFORMS_spoligo_param if config['input_type'] == 'illumina' else []
     output:
         VAL_type_binary = Path(config['working_dir']) / 'spoligotyping' / 'VAL_binary.io',
         VAL_type_octal = Path(config['working_dir']) / 'spoligotyping' / 'VAL_octal.io',
@@ -63,7 +63,7 @@ rule spoligotyping_spotyping:
         INFORMS = Path(config['working_dir']) / spoligotyping.OUTPUT_SPOLIGOTYPING_INFORMS
     params:
         dir_ = Path(config['working_dir']) / 'spoligotyping',
-        key = 'FASTQ' if config['input_type'] in ('illumina', 'ont') else 'FASTA'
+        key = 'FASTQ' if config['input_type'] == 'illumina' else 'FASTA'
     run:
         from camel.app.tools.spotyping.spotyping import SpoTyping
         spotyping = SpoTyping(Camel.get_instance())
@@ -74,7 +74,7 @@ rule spoligotyping_spotyping:
                 swift='off', min_strict=spotyping_params['min_strict'], min_relaxed=spotyping_params['min_relaxed'])
         else:
             SnakemakeUtils.add_pickle_input(spotyping, params.key, Path(input.FASTA))
-            spotyping.update_parameters(swift='off', fasta=None)
+            spotyping.update_parameters(swift='off', fasta=True)
         step = Step(str(rule), spotyping, Camel.get_instance(), Path(params.dir_))
         step.run_step()
         spotyping.informs['_tag'] = 'Spoligotyping'

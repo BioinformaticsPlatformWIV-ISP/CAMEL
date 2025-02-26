@@ -110,10 +110,10 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
                 return FastqUtils.get_sample_name(args.fastq_pe_names[0], FastqUtils.PATTERN_FQ_PE)
             return FastqUtils.get_sample_name(args.fastq_pe[0], FastqUtils.PATTERN_FQ_PE)
         # SE reads (ont / iontorrent)
-        elif args.input_type in ('ont', 'iontorrent'):
+        elif args.input_type in ('ont'):  #, 'iontorrent'):
             if args.fastq_se_name is not None:
-                return FastqUtils.get_sample_name(args.fastq_se_name, FastqUtils.PATTERN_FQ_SE)
-            return FastqUtils.get_sample_name(args.fastq_se, FastqUtils.PATTERN_FQ_SE)
+                return FastqUtils.get_sample_name(args.fastq_se_name, FastqUtils.PATTERN_FQ_ONT)
+            return FastqUtils.get_sample_name(args.fastq_se, FastqUtils.PATTERN_FQ_ONT)
         raise ValueError(f'Cannot determine sample name')
 
     @property
@@ -236,6 +236,9 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
 
         # Path to the logfile
         log_file = self._args.working_dir / 'camel.log'
+        if self._args.input_type == 'ont' and self._args.detection_method == 'srst2':
+            logger.error("ONT input data with the srst2 detection method is a non-supported parameter combination. Please change your input parameters")
+            raise RuntimeError(f"Error executing Snakemake. Pipeline did not start due to non-supported parameter combination ( ONT & SRST2 )")
         try:
             # Run snakemake
             SnakePipelineUtils.run_snakemake(
