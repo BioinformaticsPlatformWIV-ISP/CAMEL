@@ -102,11 +102,11 @@ def get_qc_informs(config: dict[str, Any], input_type: str, mode: str = 'assembl
     """
     informs = []
     if input_type in ('hybrid', 'illumina'):
-        informs.append(get_mapping_inform('fastq_pe', mode))
+        informs.append(get_mapping_inform('fastq_pe'))
         if mode == 'assembly':
             informs.append(get_depth_inform('fastq_pe'))
     if input_type in ('hybrid', 'ont'):
-        informs.append(get_mapping_inform('fastq_se', mode))
+        informs.append(get_mapping_inform('fastq_se'))
         if mode == 'assembly':
             informs.append(get_depth_inform('fastq_se'))
     return [Path(config['working_dir'], p) for p in informs]
