@@ -90,16 +90,21 @@ rule quality_checks_mapping_rate_se:
     Checks the mapping rate against the reference genome / assembled contigs for the SE reads (if available).
     """
     input:
-        INFORMS = Path(config['working_dir'], assembly.get_mapping_rate_inform('fastq_se'))
+        INFORMS_assembly = lambda wildcards: Path(config['working_dir'], assembly.get_mapping_rate_inform('fastq_se')) if wildcards.mode == 'assembly' else [],
+        INFORMS_ref = lambda wildcards: Path(config['working_dir'], variant_calling.OUTPUT_VARIANT_CALLING_MAPPING_RATE_INFORMS) if wildcards.mode == 'ref' else []
     output:
         JSON = Path(config['working_dir']) / 'quality_checks' / 'map_rate_{mode}_ont.json'
     params:
         qc_check = lambda wildcards: quality_checks.QC_CHECKS_BY_KEY[f'map_rate_{wildcards.mode}_ont'],
-        key = 'mapping_perc'
+        key = 'mapping_rate',
+        mode = lambda wildcards: wildcards.mode
     run:
         import json
-        informs_mapping = SnakemakeUtils.load_object(Path(input.INFORMS))
-        mapping_rate = float(informs_mapping[params.key])
+
+        path_in = input.INFORMS_assembly if params.mode == 'assembly' else input.INFORMS_ref
+        # noinspection PyTypeChecker
+        informs_mapping = SnakemakeUtils.load_object(Path(path_in))
+        mapping_rate = float(100 * informs_mapping[params.key])
         with open(output.JSON, 'w') as handle:
             # noinspection PyUnresolvedReferences
             json.dump(params.qc_check.to_dict(mapping_rate), handle, indent=2)
@@ -109,17 +114,20 @@ rule quality_checks_mapping_rate_pe:
     Checks the mapping rate against the reference genome / assembled contigs for the PE reads (if available).
     """
     input:
-        INFORMS = lambda wildcards: Path(config['working_dir'], assembly.get_mapping_inform(
-            'fastq_pe', wildcards.mode))
+        INFORMS_assembly = lambda wildcards: Path(config['working_dir'], assembly.get_mapping_rate_inform('fastq_pe')) if wildcards.mode == 'assembly' else [],
+        INFORMS_ref = lambda wildcards: Path(config['working_dir'], variant_calling.OUTPUT_VARIANT_CALLING_MAPPING_RATE_INFORMS) if wildcards.mode == 'ref' else []
     output:
         JSON = Path(config['working_dir']) / 'quality_checks' / 'map_rate_{mode}_illumina.json'
     params:
         qc_check = lambda wildcards: quality_checks.QC_CHECKS_BY_KEY[f'map_rate_{wildcards.mode}_illumina'],
-        key = 'stats_map_rate'
+        key = 'mapping_rate',
+        mode = lambda wildcards: wildcards.mode
     run:
         import json
-        informs_mapping = SnakemakeUtils.load_object(Path(str(input.INFORMS)))
-        mapping_rate = float(informs_mapping[params.key])
+        path_in = input.INFORMS_assembly if params.mode == 'assembly' else input.INFORMS_ref
+        # noinspection PyTypeChecker
+        informs_mapping = SnakemakeUtils.load_object(Path(path_in))
+        mapping_rate = float(100 * informs_mapping[params.key])
         with open(output.JSON, 'w') as handle:
             # noinspection PyUnresolvedReferences
             json.dump(params.qc_check.to_dict(mapping_rate), handle, indent=2)
@@ -129,17 +137,19 @@ rule quality_checks_depth_se:
     Checks the coverage against the assembled contigs.
     """
     input:
-        INFORMS = lambda wildcards: Path(config['working_dir'], assembly.get_depth_inform('fastq_se', wildcards.mode))
+        INFORMS_assembly = lambda wildcards: Path(config['working_dir'], assembly.get_depth_inform('fastq_se')) if wildcards.mode == 'assembly' else [],
+        INFORMS_ref = lambda wildcards: Path(config['working_dir'], variant_calling.OUTPUT_VARIANT_CALLING_DEPTH_INFORMS) if wildcards.mode == 'ref' else []
     output:
         JSON = Path(config['working_dir']) / 'quality_checks' / 'cov_{mode}_ont.json'
     params:
         qc_check = lambda wildcards: quality_checks.QC_CHECKS_BY_KEY[f'cov_{wildcards.mode}_ont'],
-        running_dir = Path(config['working_dir']) / 'quality_checks'
+        running_dir = Path(config['working_dir']) / 'quality_checks',
+        mode = lambda wildcards: wildcards.mode
     run:
         import json
-
+        path_in = input.INFORMS_assembly if params.mode == 'assembly' else input.INFORMS_ref
         # noinspection PyTypeChecker
-        samtools_depth_informs = SnakemakeUtils.load_object(Path(input.INFORMS))
+        samtools_depth_informs = SnakemakeUtils.load_object(Path(path_in))
         median_depth = samtools_depth_informs['median_depth']
         with open(output.JSON, 'w') as handle:
             # noinspection PyUnresolvedReferences
@@ -153,16 +163,19 @@ rule quality_checks_depth_pe:
     - 'assembly': mapping against the assembled contigs using the assembly workflow
     """
     input:
-        INFORMS = lambda wildcards: Path(config['working_dir'], assembly.get_depth_inform('fastq_pe', wildcards.mode))
+        INFORMS_assembly = lambda wildcards: Path(config['working_dir'], assembly.get_depth_inform('fastq_pe')) if wildcards.mode == 'assembly' else [],
+        INFORMS_ref = lambda wildcards: Path(config['working_dir'], variant_calling.OUTPUT_VARIANT_CALLING_DEPTH_INFORMS) if wildcards.mode == 'ref' else []
     output:
         JSON = Path(config['working_dir']) / 'quality_checks' / 'cov_{mode}_illumina.json'
     params:
         qc_check = lambda wildcards: quality_checks.QC_CHECKS_BY_KEY[f'cov_{wildcards.mode}_illumina'],
-        running_dir = Path(config['working_dir']) / 'quality_checks'
+        running_dir = Path(config['working_dir']) / 'quality_checks',
+        mode = lambda wildcards: wildcards.mode
     run:
         import json
-
-        samtools_depth_informs = SnakemakeUtils.load_object(Path(str(input.INFORMS)))
+        path_in = input.INFORMS_assembly if params.mode == 'assembly' else input.INFORMS_ref
+        # noinspection PyTypeChecker
+        samtools_depth_informs = SnakemakeUtils.load_object(Path(path_in))
         median_depth = samtools_depth_informs['median_depth']
         with open(output.JSON, 'w') as handle:
             # noinspection PyUnresolvedReferences
