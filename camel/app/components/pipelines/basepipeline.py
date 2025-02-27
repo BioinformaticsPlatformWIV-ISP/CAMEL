@@ -82,8 +82,8 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
             choices=['NexteraPE', 'TruSeq2', 'TruSeq3'], default='NexteraPE')
         argument_parser.add_argument(
             '--trimming-method', help='Trimming method', choices=['trimmomatic', 'fastp'], default='fastp')
-        argument_parser.add_argument('--ont-min-qual', default=7, help='Minimum median quality for ONT input data')
-        argument_parser.add_argument('--ont-min-length', default=500, help='Minimum read length for ONT input data')
+        argument_parser.add_argument('--ont-min-qual', default=10, help='Minimum median quality for ONT input data')
+        argument_parser.add_argument('--ont-min-length', default=1000, help='Minimum read length for ONT input data')
 
         # Logging
         argument_parser.add_argument(
@@ -110,7 +110,7 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
                 return FastqUtils.get_sample_name(args.fastq_pe_names[0], FastqUtils.PATTERN_FQ_PE)
             return FastqUtils.get_sample_name(args.fastq_pe[0], FastqUtils.PATTERN_FQ_PE)
         # SE reads (ont / iontorrent)
-        elif args.input_type in ('ont'):  #, 'iontorrent'):
+        elif args.input_type == 'ont':  # ('ont', 'iontorrent'):
             if args.fastq_se_name is not None:
                 return FastqUtils.get_sample_name(args.fastq_se_name, FastqUtils.PATTERN_FQ_ONT)
             return FastqUtils.get_sample_name(args.fastq_se, FastqUtils.PATTERN_FQ_ONT)
