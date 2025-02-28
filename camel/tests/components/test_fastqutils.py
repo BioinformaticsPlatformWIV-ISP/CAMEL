@@ -65,6 +65,9 @@ class TestFastqUtils(CamelTestSuite):
             Path('/data/temp/S22BD04543_SQK-RBK114-96_SUPv5-0-0_2025_run0113_B25.fastq.gz'), FastqUtils.PATTERN_FQ_ONT), 'S22BD04543')
         self.assertEqual(FastqUtils.get_sample_name(
             Path('/data/temp/S22BD04543_SQK-RPB114-24_HACv5-0-0_2025_run0113_B25.fastq'), FastqUtils.PATTERN_FQ_ONT), 'S22BD04543')
+        # Regular filename (not matching the format)
+        self.assertEqual(FastqUtils.get_sample_name(
+            Path('/data/temp/S22BD04543_ont.fastq'), FastqUtils.PATTERN_FQ_ONT),'S22BD04543_ont')
 
     def test_get_sample_name_invalid_fmt(self) -> None:
         """
