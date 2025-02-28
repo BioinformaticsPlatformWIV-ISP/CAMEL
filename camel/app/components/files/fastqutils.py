@@ -90,7 +90,7 @@ class FastqUtils:
 
     @staticmethod
     def split_interleaved_fastq(
-            interleaved_file: Path, pe_1_file: Path, pe_2_file: Path, gzip_output: bool = False) -> None:
+            interleaved_file: Path, pe_1_file: Path, pe_2_file: Path, gzip_output: bool = False, pigz: bool = False) -> None:
         """
         Split an interleaved fastq file into two fastq files each containing one group of reads. Input interleaved fastq
         file must be sorted. No CHECKS are performed.
@@ -98,10 +98,11 @@ class FastqUtils:
         :param pe_1_file: fastq file will hold the first group of reads
         :param pe_2_file: fastq file will hold the second group of reads
         :param gzip_output: gzip the output file
+        :param pigz: use pigz instead of gzip
         :return: None
         """
         cat = 'zcat' if FileSystemHelper.is_gzipped(interleaved_file) else 'cat'
-        gzip_ = '| gzip ' if gzip_output else ''
+        gzip_ = f"| {'pigz' if pigz else 'gzip'} " if gzip_output else ''
         cmd = f"{cat} {interleaved_file} | paste - - - - - - - - | tee >(cut -f 1-4 | tr '\t' '\n' {gzip_}> {pe_1_file}) |" \
               f" cut -f 5-8 | tr '\t' '\n' {gzip_}> {pe_2_file}"
         command = Command()
