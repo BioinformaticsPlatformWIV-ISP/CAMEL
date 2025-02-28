@@ -3,7 +3,7 @@ import itertools
 import re
 import shutil
 from pathlib import Path
-from typing import Optional, Sequence, Union, List, Dict, Any
+from typing import Optional, Sequence, Union, Any
 
 import pandas as pd
 from Bio import SeqIO
@@ -88,7 +88,7 @@ class UpdateAMRDB(object):
         return parser.parse_args(args)
 
     @staticmethod
-    def get_mutations(codon_in: str, codon_targets: List[str]) -> List:
+    def get_mutations(codon_in: str, codon_targets: list[str]) -> list:
         """
         Returns all possible mutations that turn the input codon into any of the target codons.
         :param codon_in: Input codon
@@ -129,7 +129,7 @@ class UpdateAMRDB(object):
             logger.debug(f'{len(mutations_out)} mutations found')
         return mutations_out
 
-    def __get_locus_annotation(self, gene_name: str) -> Dict[str, Any]:
+    def __get_locus_annotation(self, gene_name: str) -> dict[str, Any]:
         """
         Returns the annotation for the input locus.
         :param gene_name: Gene name
@@ -346,7 +346,7 @@ class UpdateAMRDB(object):
         return pd.DataFrame(records_out)
 
     @staticmethod
-    def __get_matching_region(position: int, regions: List[Dict]) -> Union[str, None]:
+    def __get_matching_region(position: int, regions: list[dict]) -> Union[str, None]:
         """
         Returns the region matching that covers the input position (if available).
         :param position: Genome position

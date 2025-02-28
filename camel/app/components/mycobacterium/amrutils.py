@@ -1,6 +1,7 @@
+import csv
 from enum import Enum
 from pathlib import Path
-from typing import List, Dict, Tuple, Any
+from typing import Any
 
 import pandas as pd
 
@@ -41,7 +42,7 @@ def shorten_nucleotide_str(nucleotide_str, max_length: int = 5) -> str:
         f'{nucleotide_str[:max_length]}... ({len(nucleotide_str)} bp)'
 
 
-def parse_pileup(path_pileup: Path) -> Dict[int, List[int]]:
+def parse_pileup(path_pileup: Path) -> dict[int, list[int]]:
     """
     Parses the pileup input.
     :param path_pileup: Path to the pileup file
@@ -49,7 +50,8 @@ def parse_pileup(path_pileup: Path) -> Dict[int, List[int]]:
     """
     logger.info(f'Parsing pileup file: {path_pileup}')
     data_pileup = pd.read_table(
-        path_pileup, names=['chr', 'pos', 'ref', 'count', 'read_bases', 'qual'], index_col=False)
+        path_pileup, names=['chr', 'pos', 'ref', 'count', 'read_bases'],
+        usecols=range(5), index_col=False, quoting=csv.QUOTE_NONE)
     data_pileup['read_bases'] = data_pileup['read_bases'].apply(lambda x: x.upper())
     logger.info(f'{len(data_pileup):,} positions parsed from pileup')
     actg_counts = {}
@@ -62,7 +64,7 @@ def parse_pileup(path_pileup: Path) -> Dict[int, List[int]]:
     return actg_counts
 
 
-def combine_associations(amr_associations: List[Dict[str, Any]]) -> Tuple[str, HtmlTableCell]:
+def combine_associations(amr_associations: list[dict[str, Any]]) -> tuple[str, HtmlTableCell]:
     """
     Combines the AMR associations.
     :param amr_associations: AMR associations

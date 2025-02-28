@@ -2,7 +2,7 @@
 import argparse
 import tempfile
 from pathlib import Path
-from typing import Optional, Dict, List, Sequence
+from typing import Optional, Sequence
 
 import yaml
 
@@ -30,7 +30,7 @@ class MainMycobacteriumPipeline(ReportPipeline):
         Initializes the main class.
         :param args: Arguments (optional)
         """
-        super().__init__('Mycobacterium pipeline', '1.2', SNAKEFILE_MAIN, args)
+        super().__init__('Mycobacterium pipeline', '1.3', SNAKEFILE_MAIN, args)
 
     @property
     def title(self) -> str:
@@ -60,7 +60,7 @@ class MainMycobacteriumPipeline(ReportPipeline):
         if self._args.output_bam is None:
             logger.debug(f'Not exporting BAM output')
             return
-        path_io = self._args.working_dir / variant_calling.OUTPUT_VARIANT_CALLING_BAM
+        path_io = variant_calling.get_bam({'input_type': self._args.input_type, 'working_dir': self._args.working_dir})
         bam_input = SnakemakeUtils.load_object(path_io)
 
         # Add custom tag with the sample name for PACU
@@ -86,7 +86,7 @@ class MainMycobacteriumPipeline(ReportPipeline):
             parser.add_argument(f"--{analysis_key.replace('_', '-')}", action='store_true')
         return parser.parse_args(args)
 
-    def __construct_config_file(self, input_files: Dict[str, List[Dict[str, str]]]) -> str:
+    def __construct_config_file(self, input_files: dict[str, list[dict[str, str]]]) -> str:
         """
         Constructs the configuration file.
         :param input_files: Dictionary with the input files (keys can be FASTQ_PE, FASTQ_SE).
@@ -100,6 +100,15 @@ class MainMycobacteriumPipeline(ReportPipeline):
                 export_bam='true' if self._args.report_include_bam else 'false',
                 coverage_max=self._args.cov_max
             ), Loader=yaml.SafeLoader))
+
+        # Disable QC checks based on mapping to assembly -> map to reference instead
+        if self._args.input_type == 'illumina':
+            config_data['quality_checks']['forced'] = ['map_rate_ref_illumina', 'cov_ref_illumina']
+            config_data['quality_checks']['skipped'] = ['map_rate_assembly_illumina', 'cov_assembly_illumina']
+        if self._args.input_type == 'ont':
+            config_data['quality_checks']['forced'] = ['map_rate_ref_ont', 'cov_ref_ont']
+            config_data['quality_checks']['skipped'] = ['map_rate_assembly_ont', 'cov_assembly_ont']
+
         return SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir)
 
 
