@@ -32,6 +32,7 @@ def get_mapping_fq_input(config: dict[str, Any]) -> Path:
         return Path(config['working_dir']) / 'fq_dict.io'
     if config['input_type'] in ('fasta', 'fasta_with_vcf'):
         return Path(config['working_dir']) / read_simulation.OUTPUT_SIMULATION_FASTQ
+    raise ValueError(f'Input type {config["input_type"]} is not supported.')
 
 
 def get_bam(config: dict[str, Any]) -> Path:
@@ -47,6 +48,7 @@ def get_bam(config: dict[str, Any]) -> Path:
         return Path(config['working_dir']) / 'variant_calling' / 'read_mapping' / 'ont' / 'bam.io'  # OUTPUT_VARIANT_CALLING_BAM_ONT
     if config['input_type'] == 'fasta_with_vcf':
         return Path(config['working_dir']) / 'variant_calling' / 'dummy_bam' / 'bam.io'
+    raise ValueError(f'Input type {config["input_type"]} is not supported.')
 
 
 def get_vcf(config: dict[str, Any]) -> Path:
@@ -55,10 +57,11 @@ def get_vcf(config: dict[str, Any]) -> Path:
     :param config: Snakemake configuration
     :return: Path to the unfiltered VCF file
     """
-    if config['input_type'] in ('fasta', 'illumina', 'ont', 'hybrid'):  # Ont and hybrid were added because otherwise some tests of the mockpipeline fail
+    if config['input_type'] in ('fasta', 'illumina', 'ont', 'hybrid'):
         return OUTPUT_VARIANT_CALLING_UNFILTERED_VCF
     if config['input_type'] == 'fasta_with_vcf':
         return Path(config['working_dir']) / 'input' / 'vcf.io'
+    raise ValueError(f'Input type {config["input_type"]} is not supported.')
 
 
 def get_vcf_gz(config: dict[str, Any]) -> Path:
@@ -67,10 +70,11 @@ def get_vcf_gz(config: dict[str, Any]) -> Path:
     :param config: Snakemake configuration
     :return: Path to the unfiltered gzipped VCF file
     """
-    if config['input_type'] in ('fasta', 'illumina', 'ont', 'hybrid'):  # Ont and hybrid were added because otherwise some tests of the mockpipeline fail
+    if config['input_type'] in ('fasta', 'illumina', 'ont', 'hybrid'):
         return OUTPUT_VARIANT_CALLING_UNFILTERED_VCF_GZ
     if config['input_type'] == 'fasta_with_vcf':
         return Path(config['working_dir']) / 'variant_calling' / 'gzip' / 'vcf_gz.io'
+    raise ValueError(f'Input type {config["input_type"]} is not supported.')
 
 
 def get_reports(config: dict[str, Any]) -> Path:
@@ -80,12 +84,11 @@ def get_reports(config: dict[str, Any]) -> Path:
     :return: Report path
     """
     input_type = config['input_type']
-
     if input_type in ('illumina', 'fasta', 'ont'):
         return Path(config['working_dir']) / OUTPUT_VARIANT_CALLING_REPORT
-
     if input_type == 'fasta_with_vcf':
         return Path(config['working_dir']) / OUTPUT_VARIANT_CALLING_REPORT_EMPTY
+    raise ValueError(f'Input type {config["input_type"]} is not supported.')
 
 
 def get_mapping_informs(config: dict[str, Any]) -> Path:
@@ -97,11 +100,11 @@ def get_mapping_informs(config: dict[str, Any]) -> Path:
     input_type = config['input_type']
 
     if input_type in ('illumina', 'fasta', 'fasta_with_vcf', 'hybrid'):
+        # For hybrid, Illumina reads are used for now
         return Path(config['working_dir']) / 'variant_calling' / 'read_mapping' / 'illumina' / 'informs.io'
     elif input_type == 'ont':
         return Path(config['working_dir']) / 'variant_calling' / 'read_mapping' / 'ont' / 'informs.io'
-    else:
-        raise ValueError(f"No read mapping for input {input_type}")
+    raise ValueError(f'Input type {config["input_type"]} is not supported.')
 
 def get_summaries(config: dict[str, Any]) -> list[Path]:
     """

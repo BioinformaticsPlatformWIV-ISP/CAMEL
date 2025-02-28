@@ -1,7 +1,7 @@
 import json
 from distutils.util import strtobool
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any
 
 from camel.app.camel import Camel
 from camel.app.components.filesystemhelper import FileSystemHelper
@@ -65,7 +65,7 @@ class VariantCallingReporter(Tool):
         self.__add_warning()
         self._tool_outputs['VAL_HTML'] = [ToolIOValue(self._section)]
 
-    def __add_filtering_table(self, filtering_informs: Dict[str, Dict[str, Any]]) -> None:
+    def __add_filtering_table(self, filtering_informs: dict[str, dict[str, Any]]) -> None:
         """
         Adds a table with the filtering information.
         :param filtering_informs: Filtering informs
@@ -88,7 +88,7 @@ class VariantCallingReporter(Tool):
             [filtering_informs[key]['variants_out'] for key in filtering_informs])
         self._section.add_table(filtering_table_data, ['Filter', 'Variants passed', 'Description'], [('class', 'data')])
 
-    def __parse_filtering_json(self, json_path: Path) -> Dict[str, Dict[str, int]]:
+    def __parse_filtering_json(self, json_path: Path) -> dict[str, dict[str, int]]:
         """
         Parses the JSON file with the filtering statistics.
         :param json_path: JSON path
@@ -97,7 +97,7 @@ class VariantCallingReporter(Tool):
         with json_path.open() as handle:
             return json.load(handle)
 
-    def __add_output_files_table(self, filtering_informs: Dict[str, Dict[str, Any]]) -> None:
+    def __add_output_files_table(self, filtering_informs: dict[str, dict[str, Any]]) -> None:
         """
         Adds a table containing the output files.
         :param filtering_informs: Filtering informs
@@ -135,11 +135,11 @@ class VariantCallingReporter(Tool):
         :return: None
         """
         self._section.add_header('Read mapping', 4)
-        table_data = [
-            ['{}%'.format(self._input_informs['map_rate']['mapping_rate']),
-             '{:.0f}'.format(self._input_informs['depth']['median_depth'])]
-        ]
-        self._section.add_table(table_data, ['Mapping rate', 'Median depth'], [('class', 'data')])
+        table_data = [[
+            f"{100 * self._input_informs['map_rate']['mapping_rate']:.2f}",
+            f"{self._input_informs['depth']['median_depth']:.0f}"
+        ]]
+        self._section.add_table(table_data, ['Mapping rate (%)', 'Median depth'], [('class', 'data')])
         if bool(strtobool(self._parameters['export_bam'].value)) is True:
             relative_path = Path('variant_calling', 'alignment-{}.bam'.format(
                 FileSystemHelper.make_valid(self._tool_inputs['VAL_Sample'][0].value)))
@@ -160,7 +160,7 @@ class VariantCallingReporter(Tool):
         self._section.add_file(path, relative_path)
         return HtmlTableCell('Download', link=str(relative_path))
 
-    def __add_regions_section(self, region_informs: Dict[str, Any]) -> None:
+    def __add_regions_section(self, region_informs: dict[str, Any]) -> None:
         """
         Adds the section with the regions that are included.
         :param region_informs: Filtering informs

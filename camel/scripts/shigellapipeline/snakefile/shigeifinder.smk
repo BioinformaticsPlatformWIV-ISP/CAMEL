@@ -70,8 +70,10 @@ rule shigeifinder_create_summary:
         informs = SnakemakeUtils.load_object(Path(input.INFORMS_shigeifinder))
 
         # Create TSV output
+        keys = ['species', 'serotype', 'O_antigen', 'H_antigen', 'cluster']
         with open(output.TSV, 'w') as handle:
-            handle.write(f"shigeifinder_serotype\t{informs['species']}")
-            handle.write('\n')
+            for key in keys:
+                handle.write(f"shigeifinder_{key}\t{informs[key]}")
+                handle.write('\n')
             handle.write(f"shigeifinder_tool_version\t{informs['_name']}")
             handle.write('\n')

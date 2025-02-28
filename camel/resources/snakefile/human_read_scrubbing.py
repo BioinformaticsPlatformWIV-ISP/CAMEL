@@ -13,6 +13,25 @@ OUTPUT_SCRUBBING_SUMMARY = _dir_scrubbing / 'output' / 'summary_out.tsv'
 OUTPUT_SCRUBBING_SUMMARY_JSON = _dir_scrubbing / 'output' / 'summary_out.json'
 OUTPUT_SCRUBBING_FASTQ = _dir_scrubbing / 'output' / 'fastq.io'
 OUTPUT_SCRUBBING_FASTA = _dir_scrubbing / 'output' / 'fasta.io'
+OUTPUT_SCRUBBING_FASTQ_REMOVED = _dir_scrubbing / 'output' / 'fastq_removed.io'
+OUTPUT_SCRUBBING_FASTA_REMOVED = _dir_scrubbing / 'output' / 'fasta_removed.io'
+
+
+def get_removed(config: Dict[str, Any], input_format: str) -> Path:
+    """
+    Returns gzipped fastq(s) of the removed reads or the fasta of the removed contigs that serves as input for the
+    HRRT reporter.
+    :param config: Snakemake configuration
+    :param input_format: input format, either fastq_pe, fastq_se or fasta
+    :return: Path to the removed reads/contigs or None
+    """
+    if input_format == 'fastq_pe':
+        return Path(config['working_dir']) / str(OUTPUT_SCRUBBING_FASTQ_REMOVED).format(input_format='fastq_pe')
+    if input_format == 'fastq_se':
+        return Path(config['working_dir']) / str(OUTPUT_SCRUBBING_FASTQ_REMOVED).format(input_format='fastq_se')
+    if input_format == 'fasta':
+        return Path(config['working_dir']) / str(OUTPUT_SCRUBBING_FASTA_REMOVED).format(input_format='fasta')
+    raise ValueError(f'Invalid input format for human reads scrubbing: {input_format}')
 
 
 def get_reports(config: Dict[str, Any]) -> List[Path]:
@@ -45,6 +64,10 @@ def get_reports(config: Dict[str, Any]) -> List[Path]:
         else:
             paths.append(str(OUTPUT_SCRUBBING_REPORT_EMPTY).format(input_format='fastq_se'))
 
+    # Check if at least one path was added
+    if len(paths) == 0:
+        raise ValueError(f'Invalid input type for human reads scrubbing: {input_type}')
+
     return [Path(config['working_dir']) / p for p in paths]
 
 
@@ -71,6 +94,11 @@ def get_command_informs(config: Dict[str, Any]) -> List[Path]:
     # SE reads
     if (input_type in ('ont', 'hybrid')) and ('human_read_scrubbing' in config['analyses']):
         paths.append(str(OUTPUT_SCRUBBING_INFORMS).format(input_format='fastq_se'))
+
+    # Check if at least one path was added
+    if len(paths) == 0:
+        raise ValueError(f'Invalid input type for human reads scrubbing: {input_type}')
+
     return [Path(config['working_dir']) / p for p in paths]
 
 
@@ -97,6 +125,10 @@ def get_summaries(config: Dict[str, Any]) -> List[Path]:
     # SE reads
     if (input_type in ('ont', 'hybrid')) and ('human_read_scrubbing' in config['analyses']):
         paths.append(str(OUTPUT_SCRUBBING_SUMMARY).format(input_format='fastq_se'))
+
+    # Check if at least one path was added
+    if len(paths) == 0:
+        raise ValueError(f'Invalid input type for human reads scrubbing: {input_type}')
 
     return [Path(config['working_dir']) / p for p in paths]
 

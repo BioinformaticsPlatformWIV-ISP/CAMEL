@@ -105,7 +105,7 @@ class ShigEiFinder(Tool):
             return f'Not Shigella/EIEC'
 
         else:
-            return f'{serotype_abbrev}'
+            return str(serotype_abbrev)
 
     def _parse_tsv(self, path_tsv: Path) -> None:
         """
@@ -114,5 +114,9 @@ class ShigEiFinder(Tool):
         :return: None
         """
         data_serotype = pd.read_table(path_tsv)
-        output_dict = data_serotype.to_dict('records')[0]
+        output_dict = data_serotype.fillna('-').to_dict('records')[0]
         self._informs['species'] = self.__extract_species(output_dict['SEROTYPE'])
+        self._informs['serotype'] = output_dict['SEROTYPE']
+        self._informs['O_antigen'] = output_dict['O_ANTIGEN']
+        self._informs['H_antigen'] = output_dict['H_ANTIGEN']
+        self._informs['cluster'] = output_dict['CLUSTER']
