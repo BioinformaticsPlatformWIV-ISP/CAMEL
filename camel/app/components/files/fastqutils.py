@@ -217,7 +217,7 @@ class FastqUtils:
 
     PATTERN_FQ_PE = r'(.+?)(_S\d+)?(_L\d{3})?[_.]R?1P?(_\d+)?.(fastq|fq)(.gz)?'
     PATTERN_FQ_SE = r'(.+?)(_S\d+)?(_L\d{3})?(_\d+)?.(fastq|fq)(.gz)?'
-    PATTERN_FQ_ONT = r'^(S.+)_([A-Z0-9-]+)_([A-Z]+v[\d-]+)_(\d+)_(run\d+)_(B\d+).(fastq|fq)(.gz)?'
+    PATTERN_FQ_ONT = r'(.+?)(?:_([A-Z0-9-]+)_([A-Z]+v[\d-]+)_(\d+)_(run\d+)_(B\d+))?(?:\.(fastq|fq)(?:\.gz)?)?$'
 
     @staticmethod
     def get_sample_name(fastq_path: Union[Path, str], pattern: str = PATTERN_FQ_PE) -> str:
