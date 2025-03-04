@@ -1,8 +1,9 @@
 from camel.app.components.blasttyping.cluster import Cluster
+from camel.app.components.genedetection.genedetectionblasthit import GeneDetectionBlastHit
 from camel.app.loggers import logger
 
 
-class BlastHitClustering(object):
+class BlastHitClustering:
     """
     Class that clusters overlapping BlastHit objects.
     Hits are considered overlapping if:
@@ -11,11 +12,11 @@ class BlastHitClustering(object):
     """
 
     @staticmethod
-    def cluster_overlapping(hits):
+    def cluster_overlapping(hits: list[GeneDetectionBlastHit]) -> list[Cluster]:
         """
         Clusters the given blast hits into groups of overlapping hits.
         :param hits: Hits
-        :return: Clusters
+        :return: List of clusters
         """
         clusters = []
         while len(hits) > 0:
