@@ -1,8 +1,8 @@
 from pathlib import Path
-from typing import List
 
 from camel.app.camel import Camel
 from camel.app.components.blast.blasthitstatistics import BlastHitStatistics
+from camel.app.components.blasttyping import blasthitclustering
 from camel.app.components.blasttyping.blasthitfilteringhelper import BlastHitFilteringHelper
 from camel.app.components.genedetection.genedetectionblasthit import GeneDetectionBlastHit
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
@@ -55,9 +55,9 @@ class BlastHitFiltering(Tool):
         """
         if 'TSV' not in self._tool_inputs:
             raise InvalidInputSpecificationError("No 'TSV' input found.")
-        super(BlastHitFiltering, self)._check_input()
+        super()._check_input()
 
-    def __parse_tabular_blast_output(self, tsv_file: Path) -> List[GeneDetectionBlastHit]:
+    def __parse_tabular_blast_output(self, tsv_file: Path) -> list[GeneDetectionBlastHit]:
         """
         Parses the tabular input file.
         :param tsv_file: TSV input file
@@ -70,7 +70,7 @@ class BlastHitFiltering(Tool):
         logger.info(f"{len(hits)} hits parsed")
         return hits
 
-    def __filter_hits(self, hits: List[GeneDetectionBlastHit]) -> List[GeneDetectionBlastHit]:
+    def __filter_hits(self, hits: list[GeneDetectionBlastHit]) -> list[GeneDetectionBlastHit]:
         """
         Filters hits based on the given tool parameters.
         :param hits: Input BLAST hits
@@ -85,17 +85,20 @@ class BlastHitFiltering(Tool):
         if self._parameters['filtering_method'].value == 'cluster':
             hits = BlastHitFiltering.__get_best_hit_per_cluster(hits)
             hits.sort(key=lambda h: (h.locus, h.blast_stats.query_start))
-
         # Report best N hits based on BLAST score
         elif self._parameters['filtering_method'].value == 'score':
             if 'score_nb_of_hits' not in self._parameters:
                 raise ToolExecutionError("'score_nb_of_hits' needs to be set when the filtering method is 'score'")
             hits.sort(key=lambda h: (h.blast_stats.percent_identity, h.locus), reverse=True)
             hits = hits[:int(self._parameters['score_nb_of_hits'].value)]
+        # Return best hit(s) for each cluster over overlapping loci
+        elif self._parameters['filtering_method'].value == 'overlap':
+            hits = BlastHitFiltering.__filter_overlapping_hits(hits)
+            hits.sort(key=lambda h: (h.locus, h.blast_stats.query_start))
         return hits
 
     @staticmethod
-    def __get_best_hit_per_cluster(hits: List[GeneDetectionBlastHit]) -> List[GeneDetectionBlastHit]:
+    def __get_best_hit_per_cluster(hits: list[GeneDetectionBlastHit]) -> list[GeneDetectionBlastHit]:
         """
         Returns the best hit for each cluster.
         :param hits: All hits
@@ -107,13 +110,26 @@ class BlastHitFiltering(Tool):
             if cluster not in hits_per_cluster:
                 hits_per_cluster[cluster] = []
             hits_per_cluster[cluster].append(hit)
-        logger.debug('{} cluster(s) with hits'.format(len(hits_per_cluster)))
+        logger.debug(f'{len(hits_per_cluster)} cluster(s) with hits')
 
         reported_hits = []
-        for _, hits in hits_per_cluster.items():
-            selected_hits = BlastHitFilteringHelper.detect_best_hits(hits)
+        for _, hits_cluster in hits_per_cluster.items():
+            selected_hits = BlastHitFilteringHelper.detect_best_hits(hits_cluster)
             reported_hits.extend(selected_hits)
         return reported_hits
+
+    @staticmethod
+    def __filter_overlapping_hits(hits: list[GeneDetectionBlastHit]) -> list[GeneDetectionBlastHit]:
+        """
+        Only retains the best hit(s) when the coordinates overlap.
+        :param hits: List of input hits
+        :return: List of filtered hits
+        """
+        clusters = blasthitclustering.BlastHitClustering.cluster_overlapping(hits)
+        hits_out = []
+        for cluster in clusters:
+            hits_out.extend(BlastHitFilteringHelper.detect_best_hits(cluster.hits))
+        return hits_out
 
     def __set_informs(self) -> None:
         """
