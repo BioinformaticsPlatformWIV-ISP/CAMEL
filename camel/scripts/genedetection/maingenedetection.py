@@ -2,8 +2,7 @@
 import argparse
 import json
 import shutil
-from pathlib import Path
-from typing import Any, Dict, Optional, Sequence
+from typing import Any, Optional, Sequence
 
 from camel.app.camel import Camel
 from camel.app.components import mainscriptutils
@@ -13,7 +12,7 @@ from camel.app.components.workflows.genedetectionwrapper import GeneDetectionWra
 from camel.app.components.workflows.inputtype import helper_by_input_type
 
 
-class MainGeneDetection(object):
+class MainGeneDetection:
     """
     This class is used to run the gene detection tool.
     """
@@ -45,7 +44,7 @@ class MainGeneDetection(object):
         argument_parser.add_argument('--blast-min-percent-identity', type=int, default=90)
         argument_parser.add_argument('--blast-min-percent-coverage', type=int, default=60)
         argument_parser.add_argument('--blast-task', type=str, choices=['blastn', 'megablast'], default='megablast')
-        argument_parser.add_argument('--blast-filtering-method', type=str, choices=['cluster', 'score'], default='cluster')
+        argument_parser.add_argument('--blast-filtering-method', type=str, choices=['cluster', 'score', 'overlap'], default='cluster')
         argument_parser.add_argument('--blast-score-nb-of-hits', type=int, default=5)
         argument_parser.add_argument('--blast-reads', action='store_true', default=None,
                                      help='perform blast search of the reads directly instead of on the assembly' )
@@ -103,7 +102,7 @@ class MainGeneDetection(object):
         # Export all output
         self.__export_output(report, wrapper.output)
 
-    def __get_db_metadata(self) -> Dict[str, Any]:
+    def __get_db_metadata(self) -> dict[str, Any]:
         """
         Returns the database information dictionary.
         :return: Database information dictionary
@@ -113,19 +112,19 @@ class MainGeneDetection(object):
         # Add specific options
         if self._args.detection_method == 'blast':
             config_data.update({'params': {'blastn': {
-                'min_percent_identity': self._args.blast_min_percent_identity,
-                'min_coverage': self._args.blast_min_percent_coverage,
-                'task': self._args.blast_task,
                 'blast_reads': True if self._args.blast_reads else False,
                 'filtering_method': self._args.blast_filtering_method,
-                'score_nb_of_hits': self._args.blast_score_nb_of_hits
+                'min_coverage': self._args.blast_min_percent_coverage,
+                'min_percent_identity': self._args.blast_min_percent_identity,
+                'score_nb_of_hits': self._args.blast_score_nb_of_hits,
+                'task': self._args.blast_task,
             }}})
         elif self._args.detection_method == 'srst2':
             config_data.update({'params': {'srst2': {
-                'min_coverage': self._args.srst2_min_cov,
                 'max_divergence': self._args.srst2_max_div,
+                'max_mismatch': self._args.srst2_max_mismatch,
                 'max_unaligned_overlap': self._args.srst2_max_unaligned_overlap,
-                'max_mismatch': self._args.srst2_max_mismatch
+                'min_coverage': self._args.srst2_min_cov,
             }}})
         elif self._args.detection_method == 'kma':
             config_data.update({'params': {'kma': {
