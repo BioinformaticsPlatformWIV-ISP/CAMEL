@@ -113,6 +113,27 @@ class TestGeneDetection(CamelTestSuite):
         main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)
 
+    def test_gene_detection_blast_fasta_overlap(self) -> None:
+        """
+        Tests the gene detection workflow with BLAST detection on FASTA input with 'overlap' as blast filtering method.
+        :return: None
+        """
+        path_report_out = self.running_dir / 'report' / 'report.html'
+        args = [
+            '--fasta', str(TestGeneDetection.input_fasta),
+            '--input-type', 'fasta',
+            '--database-dir', str(TestGeneDetection.input_gene_detection_db),
+            '--output-html', str(path_report_out),
+            '--output-dir', str(path_report_out.parent),
+            '--working-dir', str(self.running_dir),
+            '--blast-min-percent-identity', '95',
+            '--blast-min-percent-coverage', '99',
+            '--blast-filtering-method', 'overlap',
+        ]
+        main = MainGeneDetection(args)
+        main.run()
+        self.assertGreater(path_report_out.stat().st_size, 0)
+
     ###############
     # FASTQ input #
     ###############
