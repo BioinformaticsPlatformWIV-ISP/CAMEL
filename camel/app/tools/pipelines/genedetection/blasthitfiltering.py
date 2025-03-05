@@ -47,6 +47,8 @@ class BlastHitFiltering(Tool):
         filtered_hits = self.__filter_hits(hits)
         self._tool_outputs['VAL_Hits'] = [ToolIOValue(hit) for hit in filtered_hits]
         self.__set_informs()
+        if self._parameters['filtering_method'].value != 'cluster':
+            self._informs['Filtering method'] = self._parameters['filtering_method'].value
 
     def _check_input(self) -> None:
         """
