@@ -1,7 +1,7 @@
 # Overview
 The *Salmonella* pipeline performs complete characterization of Salmonella isolates.
 
-Version: **0.3**
+Version: **1.0**
 
 # Components
 
@@ -24,6 +24,7 @@ Datasets with an estimated coverage >=100x are downsampled to ~100x using the `s
 
 Read trimming is performed using `fastp 0.23.4` (default) or `trimmomatic 0.39`.
 
+### Illumina
 For `fastp` the following options are used:
 ```
 --compression 4
@@ -49,17 +50,29 @@ TRAILING:10
 SLIDINGWINDOW:4:20 
 MINLEN:40
 ```
+### ONT
+Read filtering is performed using `seqkit 2.3.1` using the following options:
+```
+--min-len 1000
+--min-qual 10
+```
+**Note:** these values can be changed using the command-line options.
 
 Quality reports are generated before and after trimming using `fastqc 0.11.7`.
 
 ## 4. Assembly
 
+#### Illumina
 Processed reads are assembled using `SPAdes 3.15.5` with the following options:
 ```
 --cov-cutoff 10
 --isolate
 ```
+#### ONT
+Filtered reads are assembled using `Flye 2.9.4` with default options providing the filtered reads using the 
+`--nano-corr` option.
 
+### QUAST
 `QUAST 5.2.0` is then used to check the quality of the resulting assembly with the following options:
 ```
 -r {ref_genome_fasta}
@@ -67,7 +80,9 @@ Processed reads are assembled using `SPAdes 3.15.5` with the following options:
 --pe1 {forward_reads}
 --pe2 {reverse_reads}
 ```
+(--pe1 and --pe2 are replaced with --nanopore when input is ONT)
 
+### BUSCO
 The completeness of the assembly is checked using `BUSCO 5.5.0` with the following options:
 ```
 --mode genome
@@ -79,13 +94,17 @@ The completeness of the assembly is checked using `BUSCO 5.5.0` with the followi
 
 ### Kraken 2
 
-The trimmed paired-end reads or contigs are checked for contamination using `kraken2 2.1.1` against an in-house database
+The trimmed reads or contigs are checked for contamination using `kraken2 2.1.1` against an in-house database
 with microbial genomes. The date of the last database update is included in the output report.
 
 ### ConFindr
 
-The samples are screened for inter- and intra-species contamination using `ConFindr 0.8.1` with the ribosomal MLST 
+The samples are screened for inter- and intra-species contamination using `ConFindr 0.8.2` with the ribosomal MLST 
 database.
+
+**Note:** ConFindr is not executed when the input type is `fasta`.
+
+**Note:** ConFindr on ONT input data is experimental.
 
 ### Quality checks
 
@@ -107,30 +126,53 @@ the pipeline execution.
 | FastQC: Per-base sequence content      | 3.00%                  | 6.00%                | checks if the difference between A-T and C-G is below the given threshold at every position. The first 20 and last 5 bases of the reads are skipped, as the peaks there can be caused by the library kit or trimming artifacts. |
 | FastQC: Q-score drop                   | 200                    | 150                  | checks whether the average position in the reads where the mean Q-score drops below 30 is above the given threshold.                                                                                                            |
 | FastQC: Sequence length distribution   | 66.67%                 | 40.00%               | checks if the median read length of the trimmed reads is below a threshold compared to the mode length of the raw input reads (251).                                                                                            |
+| NanoPlot: Median read length           | 500                    | 250                 | Checks if the median read length of the trimmed reads is below a threshold compared to the mode length of the raw input reads (251).                                                                                            |
+| NanoPlot: Median read quality          | 10                     | 8                   | Checks if the median read length of the trimmed reads is below a threshold compared to the mode length of the raw input reads (251).                                                                                            |
+| seqkit: GC-content deviation           | 2.00%                  | 4.00%               | Checks if the median read length of the trimmed reads is below a threshold compared to the mode length of the raw input reads (251).                                                                                            |
 
 **Note:** FastQC metrics are evaluated separately for the forward and reverse reads.
 **Note:** *Escherichia* is not considered a contaminant for the Kraken 2 QC check.
 
 The QC checks enabled for the supported input types are listed in the table below.
 
-| **metric**                             | **illumina** | **fasta** |
-|----------------------------------------|--------------|-----------|
-| Kraken: contaminants                   | Yes          | Yes       | 
-| Typing loci detected (%)               | Yes          | Yes       | 
-| Coverage against assembled contigs     | Yes          | No        | 
-| Reads mapping to the assembled contigs | Yes          | No        | 
-| Total assembly length deviation        | Yes          | Yes       | 
-| ConFindr: number of contaminating SNPs | Yes          | No        |  
-| Percentage of complete BUSCO genes     | Yes          | Yes       | 
-| FastQC: Average quality score          | Yes          | No        | 
-| FastQC: GC-content deviation           | Yes          | No        | 
-| FastQC: Max. N-fraction                | Yes          | No        | 
-| FastQC: Per-base sequence content      | Yes          | No        | 
-| FastQC: Q-score drop                   | Yes          | No        | 
-| FastQC: Sequence length distribution   | Yes          | No        |
+| **metric**                             | **illumina** | **fasta** | **ont** |
+|----------------------------------------|--------------|-----------|---------|
+| Kraken: contaminants                   | Yes          | Yes       | Yes     |
+| Typing loci detected (%)               | Yes          | Yes       | Yes     |  
+| Coverage against assembled contigs     | Yes          | No        | Yes     |
+| Reads mapping to the assembled contigs | Yes          | No        | Yes     |
+| Total assembly length deviation        | Yes          | Yes       | Yes     |
+| ConFindr: number of contaminating SNPs | Yes          | No        | Yes     | 
+| Percentage of complete BUSCO genes     | Yes          | Yes       | Yes     |
+| FastQC: Average quality score          | Yes          | No        | No      |
+| FastQC: GC-content deviation           | Yes          | No        | No      |
+| FastQC: Max. N-fraction                | Yes          | No        | No      |
+| FastQC: Per-base sequence content      | Yes          | No        | No      |
+| FastQC: Q-score drop                   | Yes          | No        | No      |
+| FastQC: Sequence length distribution   | Yes          | No        | No      |
+| NanoPlot: Median read length           | No           | No        | Yes     |
+| NanoPlot: Median read quality          | No           | No        | Yes     |
+| seqkit: GC-content deviation           | No           | No        | Yes     |
 
+## 6. Variant calling & filtering
 
-## 6. *Salmonella* serotyping
+Reads are mapped against the H37Rv reference genome using `Bowtie2 2.5.1`, in case of illumina input and `minimap2 2.26`, for ONT data input.
+Variants are then called using `bcftools 1.17`, specifically `bcftools mpileup` followed by `bcftools call`
+
+```
+bcftools mpileup samtools_sort.bam --fasta-ref H37Rv.fasta --output-type z --count-orphans --output out.pileup;
+bcftools call out.pileup --consensus-caller --output variants.vcf.gz --output-type z --variants-only --ploidy 1;
+```
+
+The following variant filters then applied, with threshold values listed in the output report.
+
+- Depth (see command in the output report)
+- Quality (see command in the output report)
+- Mapping quality (see command in the output report)
+- Distance (in-house script to remove SNPs located within 10 bp of another SNP)
+- Z-score (in-house script to filter based on Z-score & Y-multiplier as described by [Kaas et al.](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4128722/))
+
+## 7. *Salmonella* serotyping
 
 ### SISTR
 
@@ -144,21 +186,14 @@ assemblies. See [here](https://journals.plos.org/plosone/article?id=10.1371/jour
 
 Based on the input type, both modes (reads + assembly) or only one mode (assembly) is carried out.
 
-### Mykrobe
-
-`Mykrobe (v0.13.0)` has a genotyping scheme for *Salmonella typhi*. It efficiently identifies the genotypes, AMR and 
-plasmid markers from WGS data or assemblies. See [here](https://github.com/Mykrobe-tools/mykrobe?tab=readme-ov-file) 
-for more details.
-
-## 7. Antimicrobial resistance (AMR) detection
+## 8. Antimicrobial resistance (AMR) characterization
 
 ### AbriTAMR
 
-`AbriTAMR 1.0.14` utilises NCBI’s AMRFinderPlus to detect genes associated with AMR. A validated antibiogram is 
+`AbriTAMR 1.0.19` utilises NCBI’s AMRFinderPlus to detect genes associated with AMR. A validated antibiogram is 
 reported for *Salmonella*.
 
 The database version is indicated in the output report and summary output file.
-
 
 ### ResFinder4
 
@@ -168,12 +203,21 @@ The database version is indicated in the output report and summary output file.
 --min_cov 0.6
 --acquired
 --threshold 0.9
---species "Escherichia coli"
+--species "Salmonella enterica"
 ```
 
 The database version is indicated in the output report and summary output file.
 
-## 8. Pathogenicity island determination
+## 9. Lineage identification
+
+### Mykrobe
+
+`Mykrobe (v0.13.0)` has a genotyping scheme for *Salmonella typhi*. It efficiently identifies the genotypes, AMR and 
+plasmid markers from WGS data or assemblies. See [here](https://github.com/Mykrobe-tools/mykrobe?tab=readme-ov-file) 
+for more details.
+
+
+## 10. Pathogenicity island determination
 
 ### SPIFinder
 `SPIFinder 1.4.12a` identifies *Salmonella* Pathogenicity Islands in sequencing data or assemblies.
@@ -182,13 +226,15 @@ Based on the input type, both modes (reads + assembly) or only one mode (assembl
 
 The database version is indicated in the output report and summary output file.
 
-## 9. Virulence characterization
+## 11. Virulence characterization
 
 ### Gene detection
 
 Gene detection is performed as described in [Bogaerts *et al.*](https://pubmed.ncbi.nlm.nih.gov/30894839/) using an 
 updated version of blast (`blast 2.14.0`). Alternative detection using `kma 1.4.12a` or `srst2 0.2.0` is available by 
 changing the `--detection-method` parameter.
+
+**Note:** srst2 is not available for ONT data input
 
 The following databases are available: 
 
@@ -197,18 +243,20 @@ The following databases are available:
 | VFDB core | Databases from the VirulenceFactor Core database |
 
 
-## 10. Plasmid characterization
+## 12. Plasmid characterization
 
 ### MOB-suite & genomic context
 
-The `MOB-recon` function of `MOB-suite 3.1.4` is used to reconstruct putative plasmids. The contigs assigned to putative
+The `MOB-recon` function of `MOB-suite 3.1.8` is used to reconstruct putative plasmids. The contigs assigned to putative
 plasmids are cross-checked against the gene detection results for the virulence genes and AMR genes.
 
-## 11. Sequence typing
+## 13. Sequence typing
 
 Sequence typing is performed as described in [Bogaerts *et al.*](https://pubmed.ncbi.nlm.nih.gov/30894839/) with an 
 updated version of blast (`blast 2.14.0`). 
 Alternative detection using `kma 1.4.12a` or `srst2 0.2.0` is available by changing the `--detection-method` parameter.
+
+**Note:** srst2 is not available for ONT data input
 
 The following typing schemes are available:
 

@@ -60,15 +60,14 @@ Quality reports are generated before and after trimming using `fastqc 0.11.7`.
 Read filtering is performed using `seqkit 2.3.1` using the following options:
 
 ```
---min-len 500
---min-qual 7
+--min-len 1000
+--min-qual 10
 ```
-
-Note: these values can be changed using the command-line options.
+**Note:** these values can be changed using the command-line options.
 
 ## 4. Assembly
 
-### Illumina
+#### Illumina
 
 Processed reads are assembled using `SPAdes 3.15.5` with the following options:
 ```
@@ -76,8 +75,7 @@ Processed reads are assembled using `SPAdes 3.15.5` with the following options:
 --isolate
 ```
 
-### ONT
-
+#### ONT
 Filtered reads are assembled using `Flye 2.9.4` with default options providing the filtered reads using the 
 `--nano-corr` option.
 
@@ -90,7 +88,9 @@ Filtered reads are assembled using `Flye 2.9.4` with default options providing t
 --pe1 {forward_reads}
 --pe2 {reverse_reads}
 ```
+(--pe1 and --pe2 are replaced with --nanopore when input is ONT)
 
+### BUSCO
 The completeness of the assembly is checked using `BUSCO 5.5.0` with the following options:
 ```
 --mode genome
@@ -108,7 +108,7 @@ The date of the last database update is included in the output report.
 
 ### ConFindr
 
-The samples are screened for inter- and intra-species contamination using `ConFindr 0.8.1` with the ribosomal MLST 
+The samples are screened for inter- and intra-species contamination using `ConFindr 0.8.2` with the ribosomal MLST 
 database.
 
 **Note:** ConFindr is not executed when the input type is `fasta`.
@@ -163,25 +163,51 @@ The QC checks enabled for the supported input types are listed in the table belo
 | NanoPlot: Median read quality          | No           | No        | Yes     |
 | seqkit: GC-content deviation           | No           | No        | Yes     |
 
+## 6. Variant calling & filtering
 
-## 6. Gene detection
+Reads are mapped against the H37Rv reference genome using `Bowtie2 2.5.1`, in case of illumina input and `minimap2 2.26`, for ONT data input.
+Variants are then called using `bcftools 1.17`, specifically `bcftools mpileup` followed by `bcftools call`
 
-Gene detection is performed as described in [Bogaerts *et al.*](https://pubmed.ncbi.nlm.nih.gov/30894839/) using an 
-updated version of blast (`blast 2.14.0`).
-Alternative detection using `kma 1.4.12a` or `srst2 0.2.0` is available by changing the `--detection-method` parameter.
+```
+bcftools mpileup samtools_sort.bam --fasta-ref H37Rv.fasta --output-type z --count-orphans --output out.pileup;
+bcftools call out.pileup --consensus-caller --output variants.vcf.gz --output-type z --variants-only --ploidy 1;
+```
 
-The following databases are available: 
+The following variant filters then applied, with threshold values listed in the output report.
 
-| **name**  | **origin**                                                               |
-|-----------|--------------------------------------------------------------------------|
-| ResFinder | Antimicrobial resistance genes from the ResFinder tool maintained by DTU |
-| NDARO     | Antimicrobial resistance genes from the NCBI NDARO database              |
+- Depth (see command in the output report)
+- Quality (see command in the output report)
+- Mapping quality (see command in the output report)
+- Distance (in-house script to remove SNPs located within 10 bp of another SNP)
+- Z-score (in-house script to filter based on Z-score & Y-multiplier as described by [Kaas et al.](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4128722/))
 
-## 7. Sequence typing
+## 7. Antimicrobial resistance (AMR) characterization
+### NCBI AMRFinder+
+
+`NCBI AMRFinder+ 3.11.26` is used with default options to detect genes and mutation associated with AMR.
+
+The `--organism` option is set to 'Neisseria meningitidis'
+
+The database version is indicated in the output report and summary output file.
+
+### ResFinder4
+
+`ResFinder4 4.4.2` is used with the following options to detect genes and mutation associated with AMR:
+
+```
+--min_cov 0.6
+--acquired
+--threshold 0.9
+```
+The database version is indicated in the output report and summary output file.
+
+## 8. Sequence typing
 
 Sequence typing is performed as described in [Bogaerts *et al.*](https://pubmed.ncbi.nlm.nih.gov/30894839/) with an 
 updated version of blast (`blast 2.14.0`). 
 Alternative detection using `kma 1.4.12a` or `srst2 0.2.0` is available by changing the `--detection-method` parameter.
+
+**Note:** srst2 is not available for ONT data input
 
 The following typing schemes are available:
 
@@ -198,7 +224,7 @@ The following typing schemes are available:
 | Factor-H binding protein | PubMLST    |
 | cgMLST                   | PubMLST    |
 
-## 8. Antigen typing
+## 9. Antigen typing
 
 ### Bexsero antigen sequence typing (BAST)
 
@@ -210,7 +236,7 @@ Antigen typing is based on typing using the BAST scheme from PubMLST, using the 
 gMATS is used to predict the efficacy of the Bexsero vaccine. It works by matching the alleles of the BAST typing 
 scheme to a database collected from [literature](https://doi.org/10.1016/j.vaccine.2018.12.061).
 
-## 9. Serotype determination
+## 10. Serotype determination
 
 Serotype is determined using the [characterize_neisseria_capsule](https://github.com/ntopaz/characterize_neisseria_capsule) 
 script (commit `a75a009`).
