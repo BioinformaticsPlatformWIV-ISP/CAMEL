@@ -70,7 +70,7 @@ rule report_command_section:
         INFORMS_typing_amr = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='typing_amr') if 'typing_amr' in config['analyses'] else [],
         INFORMS_virulence = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='typing_virulence') if 'typing_virulence' in config['analyses'] else [],
         INFORMS_pcr_sero = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='pcr_serogroup') if 'pcr_serogroup' in config['analyses'] else [],
-        # Plasmid replicon detection
+        # Plasmid characterization
         INFORMS_mob_suite= Path(config['working_dir']) / mobsuite.OUTPUT_MOB_SUITE_INFORMS if 'mob_suite' in config['analyses'] else[]
 
     output:
@@ -100,7 +100,7 @@ rule report_combine_all:
         # Virulence detection
         report_virulence = gene_detection.get_gene_detection_report('virulencefinder', config),
         report_vfdb_core = gene_detection.get_gene_detection_report('vfdb_core', config),
-        # Plasmid replicon detection
+        # Plasmid characterization
         report_plasmidfinder = gene_detection.get_gene_detection_report('plasmidfinder', config),
         report_mob_suite = Path(config['working_dir']) / (mobsuite.OUTPUT_MOB_SUITE_REPORT if 'mob_suite' in config['analyses'] else mobsuite.OUTPUT_MOB_SUITE_REPORT_EMPTY),
         report_genomic_context= Path(config['working_dir']) / (mobsuite.OUTPUT_MOB_SUITE_CONTEXT_REPORT if 'mob_suite' in config['analyses'] else mobsuite.OUTPUT_MOB_SUITE_CONTEXT_REPORT_EMPTY),
@@ -158,7 +158,7 @@ rule report_combine_all:
                 input.report_rmlst, input.report_species, input.report_pcr_serogroup)]),
             ('AMR detection', 'amr', [Path(x) for x in (input.report_amrfinder, input.report_resfinder4, input.report_amr_typing)]),
             ('Virulence detection', 'virulence', [Path(x) for x in (input.report_virulence, input.report_vfdb_core, input.report_viru_typing)]),
-            ('Plasmid replicon detection', 'plasmid', [Path(x) for x in (
+            ('Plasmid characterization', 'plasmid', [Path(x) for x in (
                 input.report_plasmidfinder, input.report_mob_suite, input.report_genomic_context)]),
             ('Sequence typing', 'typing', [Path(x) for x in (input.report_mlst, input.report_cgmlst)]),
             ('Citations', 'citations', [Path(input.report_citations)]),
@@ -186,7 +186,7 @@ rule summary_combine_all:
         # Virulence detection
         Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='virulencefinder') if 'virulencefinder' in config['analyses'] else [],
         Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='vfdb_core') if 'vfdb_core' in config['analyses'] else [],
-        # Plasmid replicon detection
+        # Plasmid characterization
         Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='plasmidfinder') if 'plasmidfinder' in config['analyses'] else [],
         Path(config['working_dir']) / mobsuite.OUTPUT_MOB_SUITE_SUMMARY if 'mob_suite' in config['analyses'] else [],
         # Sequence typing
