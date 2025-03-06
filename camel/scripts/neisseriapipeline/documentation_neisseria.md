@@ -178,8 +178,8 @@ Variants are then called with `bcftools 1.17`, using the `bcftools mpileup` foll
 following options:
 
 ```
-bcftools mpileup samtools_sort.bam --fasta-ref H37Rv.fasta --output-type z --count-orphans --output out.pileup;
-bcftools call out.pileup --consensus-caller --output variants.vcf.gz --output-type z --variants-only --ploidy 1;
+bcftools mpileup {BAM in} --fasta-ref {FASTA ref} --output-type z --count-orphans --output {PILEUP out};
+bcftools call {PILEUP out} --consensus-caller --output {VCF_GZ out} --output-type z --variants-only --ploidy 1;
 ```
 
 The following variant filters then applied, with threshold values listed in the output report.
