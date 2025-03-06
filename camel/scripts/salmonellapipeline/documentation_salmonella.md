@@ -204,7 +204,7 @@ The following variant filters then applied, with threshold values listed in the 
 SeqSero2 has two modes:
 
 - the 'K-mer' mode, available for both FASTQ and FASTA input.
-- the 'Allele' mode, only available for FASTQ input (but not long reads).
+- the 'Allele' mode, only available for FASTQ input (but not for ONT reads).
 
 The 'K-mer' mode with FASTA input is executed for every input type, because every input type starts from or yields an assembly.
 The following parameters are used:
@@ -291,9 +291,9 @@ plasmids are cross-checked against the gene detection results for the virulence 
 
 Sequence typing is performed as described in [Bogaerts *et al.*](https://pubmed.ncbi.nlm.nih.gov/30894839/) with an 
 updated version of blast (`blast 2.14.0`). 
-Alternative detection using `kma 1.4.12a` or `srst2 0.2.0` is available by changing the `--detection-method` parameter.
+Alternative detection using `kma 1.4.12a` or `SRST2 0.2.0` is available by changing the `--detection-method` parameter.
 
-**Note:** srst2 is not available for ONT data input
+**Note:** SRST2 is not available for ONT data input
 
 The following typing schemes are available:
 

@@ -35,9 +35,9 @@ If *Enterococcus spp.* is selected as species, the *E. faecalis* reference genom
 
 ## 3. Read trimming
 
-Read trimming is performed using `fastp 0.23.4` (default) or `trimmomatic 0.39`.
-
 ### Illumina
+
+Read trimming is performed using `fastp 0.23.4` (default) or `trimmomatic 0.39`.
 
 For `fastp` the following options are used:
 ```
@@ -64,6 +64,9 @@ TRAILING:10
 SLIDINGWINDOW:4:20 
 MINLEN:40
 ```
+
+Quality reports are generated before and after trimming using `fastqc 0.11.7`.
+
 ### ONT
 
 Read filtering is performed using `seqkit 2.3.1` using the following options:
@@ -74,17 +77,20 @@ Read filtering is performed using `seqkit 2.3.1` using the following options:
 
 **Note:** these values can be changed using the command-line options.
 
-Quality reports are generated before and after trimming using `fastqc 0.11.7`.
+Quality reports are generated before and after filtering using `NanoPlot 1.41.6`.
 
 ## 4. Assembly
 
-#### Illumina
+### Illumina
+
 Processed reads are assembled using `SPAdes 3.15.5` with the following options:
 ```
 --cov-cutoff 10
 --isolate
 ```
-#### ONT
+
+### ONT
+
 Filtered reads are assembled using `Flye 2.9.4` with default options providing the filtered reads using the 
 `--nano-corr` option.
 
@@ -97,7 +103,10 @@ Filtered reads are assembled using `Flye 2.9.4` with default options providing t
 --pe1 {forward_reads}
 --pe2 {reverse_reads}
 ```
-(--pe1 and --pe2 are replaced with --nanopore when input is ONT)
+
+For ONT input, the `--pe1` and `--pe2` options are replaced by `--nanopore`.
+
+For FASTA input, these options are omitted.
 
 ### BUSCO
 The completeness of the assembly is checked using `BUSCO 5.5.0` with the following options:
@@ -171,22 +180,23 @@ The QC checks enabled for the supported input types are listed in the table belo
 | NanoPlot: Median read quality          | No           | No        | Yes     |
 | seqkit: GC-content deviation           | No           | No        | Yes     |
 
-## 6. Variant calling & filtering
+## 6. Variant calling & filtering (optional)
 
-Reads are mapped against the reference genome using `Bowtie2 2.5.1`, in case of illumina input and `minimap2 2.26`, for ONT data input.
-Variants are then called using `bcftools 1.17`, specifically `bcftools mpileup` followed by `bcftools call`
+Reads are mapped against the reference genome using `Bowtie2 2.5.1`, for illumina data and `minimap2 2.26` for ONT data.
+Variants are then called with `bcftools 1.17`, using the `bcftools mpileup` followed by `bcftools call` with the 
+following options:
 
 ```
-bcftools mpileup samtools_sort.bam --fasta-ref reference.fasta --output-type z --count-orphans --output out.pileup;
-bcftools call out.pileup --consensus-caller --output variants.vcf.gz --output-type z --variants-only --ploidy 1;
+bcftools mpileup {BAM in} --fasta-ref {FASTA ref} --output-type z --count-orphans --output {PILEUP out};
+bcftools call {PILEUP out} --consensus-caller --output {VCF_GZ out} --output-type z --variants-only --ploidy 1;
 ```
 
 The following variant filters then applied, with threshold values listed in the output report.
 
 - Depth (see command in the output report)
-- Quality (see command in the output report)
+- SNP/indel quality (see command in the output report)
 - Mapping quality (see command in the output report)
-- Distance (in-house script to remove SNPs located within 10 bp of another SNP)
+- Distance (in-house script to filter SNPs located within 10 bp of another SNP)
 - Z-score (in-house script to filter based on Z-score & Y-multiplier as described by [Kaas et al.](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4128722/))
 
 ## 7. Antimicrobial resistance (AMR) characterization
