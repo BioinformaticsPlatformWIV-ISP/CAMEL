@@ -71,8 +71,7 @@ rule report_command_section:
         INFORMS_virulence = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='typing_virulence') if 'typing_virulence' in config['analyses'] else [],
         INFORMS_pcr_sero = Path(config['working_dir']) / str(sequence_typing.OUTPUT_TYPING_INFORMS).format(scheme='pcr_serogroup') if 'pcr_serogroup' in config['analyses'] else [],
         # Plasmid characterization
-        INFORMS_mob_suite= Path(config['working_dir']) / mobsuite.OUTPUT_MOB_SUITE_INFORMS if 'mob_suite' in config['analyses'] else[]
-
+        INFORMS_mob_suite = Path(config['working_dir']) / mobsuite.OUTPUT_MOB_SUITE_INFORMS if 'mob_suite' in config['analyses'] else[]
     output:
         HTML = Path(config['working_dir']) / 'report' / 'html-commands.io'
     params:
