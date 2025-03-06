@@ -1,5 +1,6 @@
 # Overview
-The *Shigella* pipeline performs complete characterization of Shigella isolates.
+
+The *Shigella* pipeline performs complete characterization of *Shigella* isolates.
 
 Version: **1.2**
 
@@ -13,18 +14,19 @@ If enabled, human reads are removed using the NCBI Human Read Removal Tool (HRRT
 The tool is executed with default options.
 
 ## 2. Coverage check
+
 The workflow starts by checking the coverage of the input FASTQ datasets. 
 Coverage is estimated by dividing the total number of bases by the size of the `GCA_000092525.1` *S sonnei*
-reference genome. The total number of bases in the FASTQ files is determined using the `size` function of 
-`seqtk 1.4`.
+reference genome. The total number of bases in the FASTQ files is determined using the `size` function of `seqtk 1.4`.
 
 Datasets with an estimated coverage >=100x are downsampled to ~100x using the `subsample` function of `seqtk 1.4`.
 
 ## 3. Read trimming
 
+### Illumina
+
 Read trimming is performed using `fastp 0.23.4` (default) or `trimmomatic 0.39`.
 
-### Illumina
 For `fastp` the following options are used:
 ```
 --compression 4
@@ -51,28 +53,35 @@ SLIDINGWINDOW:4:20
 MINLEN:40
 ```
 ### ONT
+
 Read filtering is performed using `seqkit 2.3.1` using the following options:
+
 ```
 --min-len 1000
 --min-qual 10
 ```
+
 **Note:** these values can be changed using the command-line options.
 
-Quality reports are generated before and after trimming using `fastqc 0.11.7`.
+Quality reports are generated before and after filtering using `NanoPlot 1.41.6`.
 
 ## 4. Assembly
 
-#### Illumina
+### Illumina
+
 Processed reads are assembled using `SPAdes 3.15.5` with the following options:
 ```
 --cov-cutoff 10
 --isolate
 ```
-#### ONT
+
+### ONT
+
 Filtered reads are assembled using `Flye 2.9.4` with default options providing the filtered reads using the 
 `--nano-corr` option.
 
 ### QUAST
+
 `QUAST 5.2.0` is then used to check the quality of the resulting assembly with the following options:
 ```
 -r {ref_genome_fasta}
@@ -80,9 +89,13 @@ Filtered reads are assembled using `Flye 2.9.4` with default options providing t
 --pe1 {forward_reads}
 --pe2 {reverse_reads}
 ```
-(--pe1 and --pe2 are replaced with --nanopore when input is ONT)
+
+For ONT input, the `--pe1` and `--pe2` options are replaced by `--nanopore`.
+
+For FASTA input, these options are omitted.
 
 ### BUSCO
+
 The completeness of the assembly is checked using `BUSCO 5.5.0` with the following options:
 ```
 --mode genome
@@ -156,39 +169,43 @@ The QC checks enabled for the supported input types are listed in the table belo
 
 ## 6. Variant calling & filtering
 
-Reads are mapped against the H37Rv reference genome using `Bowtie2 2.5.1`, in case of illumina input and `minimap2 2.26`, for ONT data input.
-Variants are then called using `bcftools 1.17`, specifically `bcftools mpileup` followed by `bcftools call`
+Reads are mapped against the reference genome using `Bowtie2 2.5.1`, for illumina data and `minimap2 2.26` for 
+ONT data.
+Variants are then called with `bcftools 1.17`, using the `bcftools mpileup` followed by `bcftools call` with the 
+following options:
 
 ```
-bcftools mpileup samtools_sort.bam --fasta-ref H37Rv.fasta --output-type z --count-orphans --output out.pileup;
-bcftools call out.pileup --consensus-caller --output variants.vcf.gz --output-type z --variants-only --ploidy 1;
+bcftools mpileup {BAM in} --fasta-ref {FASTA ref} --output-type z --count-orphans --output {PILEUP out};
+bcftools call {PILEUP out} --consensus-caller --output {VCF_GZ out} --output-type z --variants-only --ploidy 1;
 ```
 
 The following variant filters then applied, with threshold values listed in the output report.
 
 - Depth (see command in the output report)
-- Quality (see command in the output report)
+- SNP/indel quality (see command in the output report)
 - Mapping quality (see command in the output report)
-- Distance (in-house script to remove SNPs located within 10 bp of another SNP)
+- Distance (in-house script to filter SNPs located within 10 bp of another SNP)
 - Z-score (in-house script to filter based on Z-score & Y-multiplier as described by [Kaas et al.](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4128722/))
 
 ## 7. *Shigella* serotyping
 
 ### ShigEiFinder
 
-`ShigEiFinder (v1.3.5)` is able to serotype over 59 *Shigella* serotypes and 22 EIEC serotypes and provides a high 
-specificity by using [cluster-specific gene marker sets](https://doi.org/10.1099/mgen.0.000704).
+`ShigEiFinder 1.3.5` is used with default options to detect *Shigella* and EIEC serotypes.
+Additional information on the presence of the `ipaH` gene and antigens is provided. 
 
 ### ShigaTyper
 
-`ShigaTyper (v2.0.5)` accurately and rapidly determines 59 *Shigella* serotypes by using *Shigella* serotype 
-determinants and species-specific diagnostic markers  available via a 
-[curated reference sequence database](https://doi.org/10.1128/AEM.00165-19).
+`ShigaTyper 2.0.5` is used for species determination and *Shigella* serotyping.
+
+For ONT input, the `--ont` option is used.
 
 ### Mykrobe
 
-`Mykrobe (v0.13.0)` has a genotyping scheme for *Shigella sonnei*. It efficiently identifies the genotype and resistance
-determinants from WGS data. See [here](https://www.nature.com/articles/s41467-021-22700-4) for more details.
+The `predict` function of `Mykrobe 0.13.0` is used for species determination and *Shigella sonnei* typing.
+The `--species` option is set to `sonnei`.
+
+For ONT input, the `--ont` option is additionally used.
 
 ## 8. Antimicrobial resistance (AMR) detection
 
@@ -216,10 +233,10 @@ The database version is indicated in the output report and summary output file.
 ## 9. Virulence characterization
 
 Gene detection is performed as described in [Bogaerts *et al.*](https://pubmed.ncbi.nlm.nih.gov/30894839/) using an 
-updated version of blast (`blast 2.14.0`). Alternative detection using `kma 1.4.12a` or `srst2 0.2.0` is available by 
+updated version of blast (`blast 2.14.0`). Alternative detection using `KMA 1.4.12a` or `SRST2 0.2.0` is available by 
 changing the `--detection-method` parameter.
 
-**Note:** srst2 is not available for ONT data input
+**Note:** SRST2 is not available for ONT input
 
 The following databases are available: 
 
@@ -241,7 +258,7 @@ Sequence typing is performed as described in [Bogaerts *et al.*](https://pubmed.
 updated version of blast (`blast 2.14.0`). 
 Alternative detection using `kma 1.4.12a` or `srst2 0.2.0` is available by changing the `--detection-method` parameter.
 
-**Note:** srst2 is not available for ONT data input
+**Note:** SRST2 is not available for ONT input
 
 The following typing schemes are available:
 

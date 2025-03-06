@@ -176,7 +176,7 @@ The QC checks enabled for the supported input types are listed in the table belo
 
 ## 6. Variant calling & filtering
 
-Reads are mapped against the H37Rv reference genome using `Bowtie2 2.5.1`, for illumina data and `minimap2 2.26` for 
+Reads are mapped against the reference genome using `Bowtie2 2.5.1`, for illumina data and `minimap2 2.26` for 
 ONT data.
 Variants are then called with `bcftools 1.17`, using the `bcftools mpileup` followed by `bcftools call` with the 
 following options:
@@ -216,9 +216,9 @@ The database version is specified in both the output report and the summary outp
 ## 8. Virulence characterization
 
 Gene detection is performed as described in [Bogaerts *et al.*](https://pubmed.ncbi.nlm.nih.gov/30894839/) using an updated version of blast (`blast 2.14.0`).
-Alternative detection using `kma 1.4.12a` or `srst2 0.2.0` is available by changing the `--detection-method` parameter.
+Alternative detection using `kma 1.4.12a` or `SRST2 0.2.0` is available by changing the `--detection-method` parameter.
 
-**Note:** srst2 is not available for ONT data input.
+**Note:** SRST2 is not available for ONT data input.
 
 The following databases are available: 
 
@@ -231,7 +231,7 @@ The following databases are available:
 
 ### PlasmidFinder
 
-Plasmid replicon detection is performed on the `DTU PlasmidFinder - Enterobacteriales` plasmid replicon database as 
+Plasmid replicon detection is performed on the `DTU PlasmidFinder - Gram positive` plasmid replicon database as 
 described in [Bogaerts *et al.*](https://pubmed.ncbi.nlm.nih.gov/30894839/).
 
 ### MOB-suite
@@ -250,8 +250,9 @@ The following typing schemes are available:
 
 | **name**             | **origin**                |
 |----------------------|---------------------------|
-| rMLST                | BIGSdb (Institut Pasteur) |
-| Classic MLST         | BIGSdb (Institut Pasteur) |
-| cgMLST               | BIGSdb (Institut Pasteur) |
 | AMR typing           | BIGSdb (Institut Pasteur) |
+| Classic MLST         | BIGSdb (Institut Pasteur) |
+| Species confirmation | BIGSdb (Institut Pasteur) |
 | Virulence typing     | BIGSdb (Institut Pasteur) |
+| cgMLST               | BIGSdb (Institut Pasteur) |
+| rMLST                | BIGSdb (Institut Pasteur) |
