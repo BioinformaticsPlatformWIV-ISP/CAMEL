@@ -1,4 +1,5 @@
 # Overview
+
 The *Listeria* pipeline performs complete characterization of *Listeria monocytogenes* isolates.
 
 Version: **1.4**
@@ -22,9 +23,10 @@ Datasets with an estimated coverage >=100x are downsampled to ~100x using the `s
 
 ## 3. Read trimming
 
+### Illumina
+
 Read trimming is performed using `fastp 0.23.4` (default) or `trimmomatic 0.39`.
 
-### Illumina
 For `fastp` the following options are used:
 ```
 --compression 4
@@ -50,40 +52,57 @@ TRAILING:10
 SLIDINGWINDOW:4:20 
 MINLEN:40
 ```
+
+Quality reports are generated before and after trimming using `fastqc 0.11.7`.
+
 ### ONT
+
 Read filtering is performed using `seqkit 2.3.1` using the following options:
+
 ```
 --min-len 1000
 --min-qual 10
 ```
+
 **Note:** these values can be changed using the command-line options.
 
-Quality reports are generated before and after trimming using `fastqc 0.11.7`.
+Quality reports are generated before and after filtering using `NanoPlot 1.41.6`.
 
 ## 4. Assembly
 
-#### Illumina
+### Illumina
+
 Processed reads are assembled using `SPAdes 3.15.5` with the following options:
+
 ```
 --cov-cutoff 10
 --isolate
 ```
-#### ONT
+
+### ONT
+
 Filtered reads are assembled using `Flye 2.9.4` with default options providing the filtered reads using the 
 `--nano-corr` option.
 
 ### QUAST
+
 `QUAST 5.2.0` is then used to check the quality of the resulting assembly with the following options:
+
 ```
 -r {ref_genome_fasta}
 --features {ref_genome_gff3}
 --pe1 {forward_reads}
 --pe2 {reverse_reads}
 ```
-(--pe1 and --pe2 are replaced with --nanopore when input is ONT)
+
+For ONT input, the `--pe1` and `--pe2` options are replaced by `--nanopore`.
+
+For FASTA input, these options are omitted.
 
 ### BUSCO
+
 The completeness of the assembly is checked using `BUSCO 5.5.0` with the following options:
+
 ```
 --mode genome
 --offline
@@ -157,20 +176,22 @@ The QC checks enabled for the supported input types are listed in the table belo
 
 ## 6. Variant calling & filtering
 
-Reads are mapped against the H37Rv reference genome using `Bowtie2 2.5.1`, in case of illumina input and `minimap2 2.26`, for ONT data input.
-Variants are then called using `bcftools 1.17`, specifically `bcftools mpileup` followed by `bcftools call`
+Reads are mapped against the H37Rv reference genome using `Bowtie2 2.5.1`, for illumina data and `minimap2 2.26` for 
+ONT data.
+Variants are then called with `bcftools 1.17`, using the `bcftools mpileup` followed by `bcftools call` with the 
+following options:
 
 ```
-bcftools mpileup samtools_sort.bam --fasta-ref H37Rv.fasta --output-type z --count-orphans --output out.pileup;
-bcftools call out.pileup --consensus-caller --output variants.vcf.gz --output-type z --variants-only --ploidy 1;
+bcftools mpileup {BAM in} --fasta-ref {FASTA ref} --output-type z --count-orphans --output {PILEUP out};
+bcftools call {PILEUP out} --consensus-caller --output {VCF_GZ out} --output-type z --variants-only --ploidy 1;
 ```
 
 The following variant filters then applied, with threshold values listed in the output report.
 
 - Depth (see command in the output report)
-- Quality (see command in the output report)
+- SNP/indel quality (see command in the output report)
 - Mapping quality (see command in the output report)
-- Distance (in-house script to remove SNPs located within 10 bp of another SNP)
+- Distance (in-house script to filter SNPs located within 10 bp of another SNP)
 - Z-score (in-house script to filter based on Z-score & Y-multiplier as described by [Kaas et al.](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4128722/))
 
 ## 7. Antimicrobial resistance (AMR) characterization
@@ -179,9 +200,7 @@ The following variant filters then applied, with threshold values listed in the 
 
 `NCBI AMRFinder+ 3.11.26` is used with default options to detect genes and mutation associated with AMR.
 
-The database version is indicated in the output report and summary output file.
-
-The `--organism` option is set to `Escherichia`.
+The database version is specified in both the output report and the summary output file.
 
 ### ResFinder4
 
@@ -191,15 +210,15 @@ The `--organism` option is set to `Escherichia`.
 --acquired
 --threshold 0.9
 ```
-The database version is indicated in the output report and summary output file.
+
+The database version is specified in both the output report and the summary output file.
 
 ## 8. Virulence characterization
 
-Gene detection is performed as described in [Bogaerts *et al.*](https://pubmed.ncbi.nlm.nih.gov/30894839/) using an 
-updated version of blast (`blast 2.14.0`). Alternative detection using `kma 1.4.12a` or `srst2 0.2.0` is available by 
-changing the `--detection-method` parameter.
+Gene detection is performed as described in [Bogaerts *et al.*](https://pubmed.ncbi.nlm.nih.gov/30894839/) using an updated version of blast (`blast 2.14.0`).
+Alternative detection using `kma 1.4.12a` or `srst2 0.2.0` is available by changing the `--detection-method` parameter.
 
-**Note:** srst2 is not available for ONT data input
+**Note:** srst2 is not available for ONT data input.
 
 The following databases are available: 
 
@@ -215,10 +234,14 @@ The following databases are available:
 Plasmid replicon detection is performed on the `DTU PlasmidFinder - Enterobacteriales` plasmid replicon database as 
 described in [Bogaerts *et al.*](https://pubmed.ncbi.nlm.nih.gov/30894839/).
 
+### MOB-suite
+
+The `MOB-recon` function of `MOB-suite 3.1.8` is used to reconstruct putative plasmids. The contigs assigned to putative
+plasmids are cross-checked against the gene detection results for the virulence genes and AMR genes.
+
 ## 10. Sequence typing
 
-Sequence typing is performed as described in [Bogaerts *et al.*](https://pubmed.ncbi.nlm.nih.gov/30894839/) with an 
-updated version of blast (`blast 2.14.0`). 
+Sequence typing is performed as described in [Bogaerts *et al.*](https://pubmed.ncbi.nlm.nih.gov/30894839/) with an updated version of blast (`blast 2.14.0`). 
 Alternative detection using `kma 1.4.12a` or `srst2 0.2.0` is available by changing the `--detection-method` parameter.
 
 **Note:** srst2 is not available for ONT data input
