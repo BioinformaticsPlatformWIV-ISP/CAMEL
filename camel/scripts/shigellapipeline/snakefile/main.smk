@@ -161,7 +161,7 @@ rule combine_reports:
                 input.report_amrfinder, input.report_resfinder4)]),
             ('Virulence characterization', 'viru', [Path(x) for x in (
                 input.report_virulence, input.report_virulence_shiga)]),
-            ('Plasmid replicon detection', 'plasmid', [Path(x) for x in (
+            ('Plasmid characterization', 'plasmid', [Path(x) for x in (
                 input.report_mob_suite, input.report_genomic_context)]),
             ('Sequence typing', 'st', [Path(x) for x in (
                 input.report_mlst_warwick, input.report_mlst_pasteur, input.report_cgmlst)]),
