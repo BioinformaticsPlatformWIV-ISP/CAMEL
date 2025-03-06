@@ -201,9 +201,29 @@ The following variant filters then applied, with threshold values listed in the 
 
 `Seqsero 1.2.1` is used on the reads and/or assembly input for serotype determination.
 
-For Illumina input, 
-For ONT input,
-For hybrid input,
+SeqSero2 has two modes:
+
+- the 'K-mer' mode, available for both FASTQ and FASTA input.
+- the 'Allele' mode, only available for FASTQ input (but not long reads).
+
+The 'K-mer' mode with FASTA input is executed for every input type, because every input type starts from or yields an assembly.
+The following parameters are used:
+```
+-m k
+-t 4
+```
+
+The 'K-mer' mode with FASTQ input is executed for Illumina input, ONT input, and hybrid input with the following parameters:
+```
+-m k
+-t 2 or -t 5 or -t 2 and -t 5 respectively
+```
+
+The 'Allele' mode is executed on Illumina input and on hybrid. If hybrid, only its Illumina input is used. The following options are used:
+```
+-m a
+-t 2
+```
 
 ## 8. Antimicrobial resistance (AMR) characterization
 
@@ -239,7 +259,7 @@ The `--species` option is set to `typhi`.
 
 `SPIFinder 1.4.12a` is used to identify pathogenicity islands.
 
-Based on the input type, both modes (reads + assembly) or only one mode (assembly) is carried out.
+Based on the input type, both modes (reads + assembly) or only one mode (assembly) is carried out; if the input type is FASTA, then only the assembly mode is carried out, in every other case, both modes are carried out. No specific additional options are used.
 
 The database version is indicated in the output report and summary output file.
 
