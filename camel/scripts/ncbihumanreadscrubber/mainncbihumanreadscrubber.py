@@ -48,7 +48,8 @@ class MainNcbiHumanReadScrubber(ReportPipeline):
         config_data = self.get_template_data(input_files)
         config_data['analyses'] = ['human_read_scrubbing']
         config_data['read_scrubbing'] = {}
-        config_data['read_scrubbing']['export_removed_reads'] = True if self._args.export_removed_reads else False
+        if self._args.export_removed_reads:
+            config_data['read_scrubbing']['export_removed_reads'] = True
         # Add existing config data
         with open(CONFIG_DATA) as handle_in:
             config_data.update(yaml.safe_load(handle_in.read()))

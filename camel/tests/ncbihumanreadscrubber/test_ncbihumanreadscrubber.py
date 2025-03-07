@@ -102,6 +102,32 @@ class TestNcbiHumanReadScrubber(CamelTestSuite):
             self.assertGreater(path_report_out.stat().st_size, 0)
             self.assertGreater(output_file_1.stat().st_size, 0) and self.assertGreater(output_file_2.stat().st_size, 0) if hr == '' else not self.assertTrue(path_removed_reads.exists())
 
+    def test_scrubbing_paired_wo_removed_reads(self) -> None:
+        """
+        Tests the NCBI human read scrubbing standalone pipeline with illumina files.
+        :return: None
+        """
+        path_report_out = self.running_dir / 'out' / 'report.html'
+        # _nh: files without human reads
+        hum_reads = ['', 'nh_', '', 'nh_']
+        extension = ['', '', '.gz', '.gz']
+
+        for hr, ext in zip(hum_reads, extension):
+            args = [
+                '--fastq-pe',
+                str(TestNcbiHumanReadScrubber.test_file_dir / f'{hr}reads_illumina_1.fastq{ext}'),
+                str(TestNcbiHumanReadScrubber.test_file_dir / f'{hr}reads_illumina_2.fastq{ext}'),
+                '--output-html', str(path_report_out),
+                '--output-dir', str(path_report_out.parent),
+                '--working-dir', str(self.running_dir),
+                '--output-tsv', "None",
+                '--input-type', 'illumina',
+                '--threads', '2',
+            ]
+            main = MainNcbiHumanReadScrubber(args)
+            main.run()
+            self.assertGreater(path_report_out.stat().st_size, 0)
+
     def test_scrubbing_fasta(self) -> None:
         """
         Tests the NCBI human read scrubbing standalone pipeline with fasta files.
