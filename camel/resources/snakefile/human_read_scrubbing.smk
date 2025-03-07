@@ -90,13 +90,15 @@ rule scrubbing_run_scrubber:
         else:
             interleaved = False
 
-        outputfile_removed_reads = str(Path(output.FASTQ_REMOVED).with_suffix('.fastq')) if params.export_removed_reads else ''
         outputfile_scrubbing = str(Path(output.FASTQ_SCRUBBED).with_suffix('.fastq')) if params.input_format != 'fasta' \
             else str(Path(str(params.running_dir), f"{SnakemakeUtils.load_object(Path(input.FASTQ_SINGLE_GUNZIP))[0].path.name}_scrubbed.fastq"))
 
         scrubber = NcbiHumanReadScrubber(camel)
         step = Step(str(rule), scrubber, camel, Path(str(params.running_dir)))
-        scrubber.update_parameters(interleaved=interleaved, outputfile=outputfile_scrubbing, threads=threads, export_human_reads=params.export_removed_reads, outputfile_removed=outputfile_removed_reads)
+        scrubber.update_parameters(interleaved=interleaved, outputfile=outputfile_scrubbing, threads=threads)
+        if params.export_removed_reads:
+            outputfile_removed_reads = str(Path(output.FASTQ_REMOVED).with_suffix('.fastq'))
+            scrubber.update_parameters(export_human_reads=params.export_removed_reads, outputfile_removed=outputfile_removed_reads)
         SnakemakeUtils.add_pickle_inputs(scrubber, input, excluded_keys=['FASTQ'])
         step.run_step()
 
