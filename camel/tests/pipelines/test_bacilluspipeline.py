@@ -23,7 +23,7 @@ class TestBacillusPipeline(CamelTestSuite):
         test_file_dir / 'Bsubtilis-SRR10568181_1.fastq.gz',
         test_file_dir / 'Bsubtilis-SRR10568181_2.fastq.gz'
     ]
-    input_fastq_se_cereus = test_file_dir / 'Bcereus-DRR206405-ds.fastq.gz'
+    input_fastq_se_cereus = test_file_dir / 'Bcereus-DRR206405_ont-ds.fastq.gz'
     input_fastq_se_subtilis = test_file_dir / 'Bsubtilis-SRR23725160.fastq.gz'
     input_fasta_subtilis = test_file_dir / 'Bsubtilis-SRR10260289.fasta'
 

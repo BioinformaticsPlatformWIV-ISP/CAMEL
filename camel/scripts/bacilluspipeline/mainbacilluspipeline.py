@@ -1,13 +1,11 @@
 #!/usr/bin/env python
 import argparse
-from pathlib import Path
 from typing import List, Dict, Optional, Sequence
 
 import yaml
 
 from camel.app.camel import Camel
 from camel.app.components import mainscriptutils
-from camel.app.components.files.fastqutils import FastqUtils
 from camel.app.components.pipelines.reportpipeline import ReportPipeline
 from camel.app.loggers import logger
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
@@ -102,6 +100,8 @@ class MainBacillusPipeline(ReportPipeline):
                     logger.warning(f"Analysis '{key}' not supported for species '{self._args.species}'")
                     continue
                 if key == 'variant_calling' and self._args.input_type not in ('illumina', 'fasta'):
+                    continue
+                if key == 'confindr' and self._args.input_type not in ('illumina', 'ont', 'hybrid'):
                     continue
                 config_data['analyses'].append(key)
 
