@@ -12,6 +12,7 @@ from camel.app.components.files.fileutils import FileUtils
 from camel.app.components.galaxy.galaxyutils import GalaxyUtils
 from camel.app.components.html.htmlreport import HtmlReport
 from camel.app.components.html.htmlreportsection import HtmlReportSection
+from camel.app.components.pipelines import absolute_path_by_pathlib
 from camel.app.error.invalidinputerror import InvalidInputError
 from camel.app.loggers import logger
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
@@ -26,9 +27,12 @@ def add_common_arguments(argument_parser: argparse.ArgumentParser) -> None:
     :return: None
     """
     argument_parser.add_argument('--sample-name', type=str)
-    argument_parser.add_argument('--output-dir', required=True, type=Path)
-    argument_parser.add_argument('--working-dir', default=Path.cwd(), type=Path)
-    argument_parser.add_argument('--output-html', required=True, type=Path)
+    argument_parser.add_argument(
+        '--output-dir', type=absolute_path_by_pathlib, default=Path(Path.cwd(), 'out'))
+    argument_parser.add_argument(
+        '--output-html', type=absolute_path_by_pathlib, default=Path(Path.cwd(), 'out', 'report.html'))
+    argument_parser.add_argument(
+        '--working-dir', type=absolute_path_by_pathlib, default=Path(Path.cwd(), 'work'))
     argument_parser.add_argument('--threads', default=8, type=int)
 
 
@@ -40,11 +44,11 @@ def add_input_files_arguments(argument_parser: argparse.ArgumentParser, fasta_in
     :return: None
     """
     if fasta_input_enabled:
-        argument_parser.add_argument('--fasta', help="Input FASTA file", type=Path)
+        argument_parser.add_argument('--fasta', help="Input FASTA file", type=absolute_path_by_pathlib)
         argument_parser.add_argument('--fasta-name', help="Input FASTA file name", type=str)
-    argument_parser.add_argument('--fastq-pe', help="Input PE FASTQ files", nargs=2, type=Path)
+    argument_parser.add_argument('--fastq-pe', help="Input PE FASTQ files", nargs=2, type=absolute_path_by_pathlib)
     argument_parser.add_argument('--fastq-pe-names', help="Input PE FASTQ file names", nargs=2, type=Path)
-    argument_parser.add_argument('--fastq-se', help="Input SE FASTQ file", type=Path)
+    argument_parser.add_argument('--fastq-se', help="Input SE FASTQ file", type=absolute_path_by_pathlib)
     argument_parser.add_argument('--fastq-se-name', help="Input SE FASTQ file name")
     argument_parser.add_argument(
         '--input-type', help='Input type', choices=['illumina', 'ont', 'fasta'], default='illumina')

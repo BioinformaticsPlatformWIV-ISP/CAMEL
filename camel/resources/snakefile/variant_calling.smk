@@ -25,18 +25,18 @@ rule variant_calling_prep_reference:
         SnakemakeUtils.dump_object([ToolIOFile(Path(params.reference['path']))], Path(output.FASTA))
         SnakemakeUtils.dump_object(params.reference, Path(output.INFORMS))
 
-rule variant_calling_map_reads:
+rule variant_calling_map_reads_illumina:
     """
-    Maps the trimmed reads to the reference sequence.
+    Maps the trimmed illumina reads to the reference sequence.
     """
     input:
         IO = variant_calling.get_mapping_fq_input(config),
         INDEX_GENOME_PREFIX = rules.variant_calling_prep_reference.output.INDEX_GENOME_PREFIX
     output:
-        BAM = Path(config['working_dir']) / 'variant_calling' / 'read_mapping' / 'bam.io',
-        INFORMS = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_MAPPING_INFORMS
+        BAM = Path(config['working_dir']) / 'variant_calling' / 'read_mapping' / 'illumina' / 'bam.io',
+        INFORMS = Path(config['working_dir']) / 'variant_calling' / 'read_mapping' / 'illumina' / 'informs.io'
     params:
-        dir_ = Path(config['working_dir']) / 'variant_calling' / 'read_mapping',
+        dir_ = Path(config['working_dir']) / 'variant_calling' / 'read_mapping' / 'illumina',
         input_type = config['input_type']
     threads: 4
     priority: 1
@@ -68,6 +68,44 @@ rule variant_calling_map_reads:
         SnakemakeUtils.dump_tool_output(samtools_sort, 'BAM', Path(output.BAM))
         SnakemakeUtils.dump_object(bowtie2_map.informs, Path(output.INFORMS))
 
+rule variant_calling_map_reads_ont:
+    """
+    Maps the trimmed nanopore reads to the reference sequence.
+    """
+    input:
+        IO = variant_calling.get_mapping_fq_input(config),
+        FASTA = rules.variant_calling_prep_reference.output.FASTA
+    output:
+        BAM = Path(config['working_dir']) / 'variant_calling' / 'read_mapping' / 'ont' / 'bam.io',
+        INFORMS = Path(config['working_dir']) / 'variant_calling' / 'read_mapping' / 'ont' / 'informs.io'
+    params:
+        dir_ = Path(config['working_dir']) / 'variant_calling' / 'read_mapping' / 'ont',
+        input_type = config['input_type']
+    threads: 4
+    priority: 1
+    run:
+        from camel.app.components.pipelines import pipeutils
+        from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
+        from camel.app.tools.minimap2.minimap2mapping import Minimap2Mapping
+        from camel.app.tools.samtools.samtoolssort import SamtoolsSort
+        from camel.app.tools.samtools.samtoolsview import SamtoolsView
+
+        # Minimap2
+        minimap2_map = Minimap2Mapping(Camel.get_instance())
+        SnakemakeUtils.add_pickle_input(minimap2_map, 'FASTA', Path(input.FASTA))
+        minimap2_map.add_input_files(SnakePipelineUtils.extracts_fq_input(Path(input.IO), key_se='FASTQ', read_type='SE'))
+        minimap2_map.update_parameters(threads=threads)
+
+        # Initialize tools
+        samtools_view = SamtoolsView(Camel.get_instance())
+        samtools_sort = SamtoolsSort(Camel.get_instance())
+        samtools_sort.update_parameters(threads=threads)
+        pipeutils.run_as_pipe([minimap2_map, samtools_view, samtools_sort], Path(params.dir_))
+
+        # Save output
+        SnakemakeUtils.dump_tool_output(samtools_sort, 'BAM', Path(output.BAM))
+        SnakemakeUtils.dump_object(minimap2_map.informs, Path(output.INFORMS))
+
 rule variant_calling_generate_dummy_bam:
     """
     Generates a dummy bam.
@@ -88,6 +126,25 @@ rule variant_calling_generate_dummy_bam:
         with pysam.AlignmentFile(filename, 'wb', header=header) as bamfile:
             pass
         SnakemakeUtils.dump_object([ToolIOFile(filename)], Path(output.BAM))
+
+rule variant_calling_calculate_mapping_rate:
+    """
+    Calculates the mapping rate of the input reads.
+    """
+    input:
+        BAM = variant_calling.get_bam(config)
+    output:
+        INFORMS = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_MAPPING_RATE_INFORMS
+    params:
+        dir_ = Path(config['working_dir']) / 'variant_calling' / 'rate'
+    run:
+        from camel.app.tools.samtools.samtoolsflagstat import SamtoolsFlagstat
+        samtools_flag = SamtoolsFlagstat(camel)
+        step = Step(str(rule), samtools_flag, camel, params.dir_)
+        SnakemakeUtils.add_pickle_inputs(samtools_flag, input)
+        step.run_step()
+
+        SnakemakeUtils.dump_tool_outputs(samtools_flag, output)
 
 rule variant_calling_calculate_depth:
     """
@@ -125,7 +182,8 @@ rule variant_calling_mpileup:
         count_orphans = config['variant_calling'].get('count_orphans', True),
         min_mapping_quality = config['variant_calling'].get('minimal_mq'),
         min_base_quality = config['variant_calling'].get('minimal_bq'),
-        disable_baq = config['variant_calling'].get('disable_baq')
+        disable_baq = config['variant_calling'].get('disable_baq'),
+        input_type = config['input_type']
     threads: 1
     run:
         from camel.app.tools.bcftools.bcftoolsmpileup import BcftoolsMpileup
@@ -133,6 +191,8 @@ rule variant_calling_mpileup:
         SnakemakeUtils.add_pickle_inputs(bcftools_mpileup, input)
         step = Step(str(rule), bcftools_mpileup, camel, params.dir_)
         bcftools_mpileup.update_parameters(output_type='z')
+        if params.input_type == 'ont':
+            bcftools_mpileup.update_parameters(config='ont')
         if params.count_orphans is not None:
             bcftools_mpileup.update_parameters(count_orphans=params.count_orphans)
         if params.min_mapping_quality is not None:
@@ -242,7 +302,7 @@ rule variant_calling_unzip_vcf:
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(bcftools_view, output)
 
-rule zip_input_vcf:
+rule variant_calling_zip_input_vcf:
     """
     Zips the input VCF file to be used by certain assays (e.g. amr detection) in case FASTA/VCF is used as input.
     """
@@ -290,11 +350,12 @@ rule variant_calling_report:
         VCF = rules.variant_calling_unzip_vcf.output.VCF,
         VCF_filt = Path(config['working_dir']) / variant_filtering.OUTPUT_VARIANT_FILTERING_VCF,
         VCF_filt_regions = Path(config['working_dir'], 'variant_filtering', '06-regions', 'vcf.io') if variant_filtering.get_filtering_param(config, 'region', 'bed_file') is not None else [],
-        BAM = rules.variant_calling_map_reads.output.BAM,
+        BAM = variant_calling.get_bam(config),
         INFORMS_reference = rules.variant_calling_prep_reference.output.INFORMS,
-        INFORMS_mapping = rules.variant_calling_map_reads.output.INFORMS,
+        INFORMS_mapping = variant_calling.get_mapping_informs(config),
         INFORMS_calling = rules.variant_calling_bcftools_call.output.INFORMS,
         INFORMS_depth = rules.variant_calling_calculate_depth.output.INFORMS,
+        INFORMS_map_rate = rules.variant_calling_calculate_mapping_rate.output.INFORMS,
         JSON = Path(config['working_dir']) / variant_filtering.OUTPUT_VARIANT_FILTERING_STATS
     output:
         VAL_HTML = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_REPORT,
@@ -328,15 +389,15 @@ rule variant_calling_dump_summary_info:
     Dumps the summary information from the variant calling workflow.
     """
     input:
-        INFORMS_mapping = rules.variant_calling_map_reads.output.INFORMS,
+        INFORMS_map_rate = rules.variant_calling_calculate_mapping_rate.output.INFORMS,
         INFORMS_depth = rules.variant_calling_calculate_depth.output.INFORMS
     output:
         TSV = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_SUMMARY
     run:
-        informs_mapping = SnakemakeUtils.load_object(Path(input.INFORMS_mapping))
+        informs_map_rate = SnakemakeUtils.load_object(Path(input.INFORMS_map_rate))
         informs_depth = SnakemakeUtils.load_object(Path(input.INFORMS_depth))
         summary_data = [
-            ['vc-mapping_rate', informs_mapping['stats_map_rate']],
+            ['vc-mapping_rate', informs_map_rate['mapping_rate']],
             ['vc-median_depth', informs_depth['median_depth']]
         ]
         with open(output.TSV, 'w') as handle:
@@ -350,11 +411,12 @@ rule variant_calling_collect_command_informs:
     """
     input:
         INFORMS_read_simulation = Path(config['working_dir']) / read_simulation.OUTPUT_SIMULATION_INFORMS if config['input_type'] == 'fasta' else [],
-        INFORMS_mapping = rules.variant_calling_map_reads.output.INFORMS,
+        INFORMS_mapping = variant_calling.get_mapping_informs(config),
         INFORMS_mpileup = rules.variant_calling_mpileup.output.INFORMS,
         INFORMS_calling = rules.variant_calling_bcftools_call.output.INFORMS
     output:
-        INFORMS_ALL = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_INFORMS_ALL
+        INFORMS_ALL = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_INFORMS_ALL,
+        INFORMS = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_MAPPING_INFORMS
     run:
         all_informs = []
         for io_file in input:
@@ -362,6 +424,9 @@ rule variant_calling_collect_command_informs:
             informs['_tag'] = 'Variant calling'
             all_informs.append(informs)
         SnakemakeUtils.dump_object(all_informs, Path(output.INFORMS_ALL))
+        # dump the mapping informs to file (needed in assembly.py)
+        informs_map = SnakemakeUtils.load_object(Path(input.INFORMS_mapping))
+        SnakemakeUtils.dump_object(informs_map, Path(output.INFORMS))
 
 rule variant_calling_report_empty:
     """

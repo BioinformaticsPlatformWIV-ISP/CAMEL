@@ -58,8 +58,9 @@ class SequenceTypeDetector(Tool):
         # Write all profiles to a tsv file
         if ('write_tsv' in self._parameters.keys()) and self._parameters['write_tsv'].value:
             num_alleles = len(list(nb_matches_by_profile.keys())[0].alleles)
-            all_matches = pd.DataFrame([(stprofile.name, hits / num_alleles) for stprofile, hits in
-                                        nb_matches_by_profile.items()], columns=["ST", "proportion_match"])
+            all_matches = pd.DataFrame([(
+                profile.name, hits / num_alleles) for profile, hits in nb_matches_by_profile.items()],
+                columns=['ST', 'proportion_match'])
             all_matches.to_csv(self._folder / Path(self._parameters['output_filename'].value), sep="\t", index=False)
             self._tool_outputs['TSV'] = [ToolIOFile(self._folder / Path(self._parameters['output_filename'].value))]
 
@@ -92,11 +93,9 @@ class SequenceTypeDetector(Tool):
         """
         # Parse input data
         data_in = pd.read_table(self._tool_inputs['TSV'][0].path, dtype=str)
-
-        # Note: The first column contains the ST name
-        cols_metadata = [c for c in data_in.columns[1:] if c not in gene_names]
+        cols_metadata = [c for c in data_in.columns if c not in gene_names]
         logger.info(f'Metadata columns: {cols_metadata}')
-        cols_alleles = [c for c in data_in.columns[1:] if c in gene_names]
+        cols_alleles = [c for c in data_in.columns if c in gene_names]
         logger.info(f'Gene columns: {cols_alleles}')
 
         # Construct the profiles
@@ -105,7 +104,7 @@ class SequenceTypeDetector(Tool):
             profiles.append(STProfile(
                 name=row[data_in.columns[0]],
                 alleles={c: row[c] for c in cols_alleles},
-                metadata=[(c, row[c]) for c in cols_metadata],
+                metadata=[(c, row[c] if not pd.isna(row[c]) else '-') for c in cols_metadata],
             ))
         logger.info(f'Parsed {len(profiles):,} profiles')
         return profiles

@@ -29,22 +29,26 @@ class ShigaTyper(Tool):
         :param: fastq_pe : List of forward and reverse fastq files
         :return: None
         """
-        if 'FASTQ_PE' not in self._tool_inputs:
-            raise InvalidInputSpecificationError('Paired-end reads are required')
+        if not any(x in self._tool_inputs for x in ('FASTQ_PE', 'FASTQ_SE')):
+            raise InvalidInputSpecificationError('FASTQ_PE or FASTQ_SE input is required.')
         super()._check_input()
 
-    def __build_command(self, input_fwd: Path, input_rev: Path, sample_name: str) -> None:
+    def __build_command(self, sample_name: str) -> None:
         """
         Concatenates required parameters and options to build the command.
-        :param input_fwd: Path to forward fastq
-        :param input_rev: Path to reverse fastq
         :param sample_name: Sample ID
         :return: None
         """
+        # Construct the read arguments
+        if 'FASTQ_PE' in self._tool_inputs:
+            read_args = f"--R1 {self._tool_inputs['FASTQ_PE'][0].path} --R2 {self._tool_inputs['FASTQ_PE'][1].path}"
+        else:
+            read_args = f"--SE {self._tool_inputs['FASTQ_SE'][0].path}"
+
+        # Create the full command
         self._command.command = ' '.join([
             self._tool_command,
-            f'--R1 {input_fwd}',
-            f'--R2 {input_rev}',
+            read_args,
             f'--name {sample_name}',
             *self._build_options()
         ])
@@ -62,12 +66,8 @@ class ShigaTyper(Tool):
         Executes this tool.
         :return: None
         """
-        # Symlink the input FASTQ files
-        fwd_reads = self._tool_inputs['FASTQ_PE'][0].path
-        rev_reads = self._tool_inputs['FASTQ_PE'][1].path
-
         # Run the command
-        self.__build_command(fwd_reads, rev_reads, 'shigatyper_out')
+        self.__build_command('shigatyper_out')
         self._execute_command()
 
         # Create dummy output for isolates not covered by the tool

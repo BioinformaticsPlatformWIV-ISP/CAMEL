@@ -26,7 +26,7 @@ class MainStaphylococcusPipeline(ReportPipeline):
         Initializes the main class.
         :param args: Arguments (optional)
         """
-        super().__init__('Staphylococcus pipeline', '1.1', SNAKEFILE_MAIN, args)
+        super().__init__('Staphylococcus pipeline', '1.2', SNAKEFILE_MAIN, args)
 
     @property
     def title(self) -> str:

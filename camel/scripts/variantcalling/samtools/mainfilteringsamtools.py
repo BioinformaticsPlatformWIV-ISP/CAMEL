@@ -2,7 +2,7 @@
 import argparse
 import shutil
 from pathlib import Path
-from typing import Any, Dict, Optional, Sequence
+from typing import Any, Optional, Sequence
 
 import yaml
 
@@ -10,7 +10,7 @@ from camel.app.camel import Camel
 from camel.app.components.workflows.variantfilteringwrapper import VariantFilteringWrapper
 
 
-class MainFiltering(object):
+class MainFiltering:
     """
     Class to run the samtools variant filtering using CAMEL.
     """
@@ -44,6 +44,7 @@ class MainFiltering(object):
         argument_parser.add_argument('--min-zscore', default=1.96, type=float)
         argument_parser.add_argument('--y-mult', default=10, type=float)
         argument_parser.add_argument('--soft-filter', action='store_true')
+        argument_parser.add_argument('--input-type', choices=['illumina', 'ont'], default='illumina')
         return argument_parser.parse_args(args)
 
     def run(self) -> None:
@@ -54,13 +55,13 @@ class MainFiltering(object):
         wrapper = VariantFilteringWrapper(self._args.working_dir)
         wrapper.run_workflow(
             sample_name=self._args.vcf.stem, vcf_file=self._args.vcf, bam_file=self._args.bam,
-            filtering_options=self.__get_filtering_options())
+            filtering_options=self.__get_filtering_options(), input_type=self._args.input_type)
         shutil.copyfile(wrapper.output.vcf_filtered.path, self._args.output_vcf)
         if self._args.output_stats is not None:
             with open(self._args.output_stats, 'w') as handle:
                 yaml.dump(wrapper.output.stats, handle)
 
-    def __get_filtering_options(self) -> Dict[str, Any]:
+    def __get_filtering_options(self) -> dict[str, Any]:
         """
         Returns the dictionary with filtering options.
         :return: Filtering options

@@ -1,7 +1,7 @@
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Any
 
 from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
@@ -17,12 +17,12 @@ class VariantFilteringOutput:
     This dataclass holds the output of the variant filtering workflow.
     """
     vcf_filtered: ToolIOFile
-    stats: Dict
+    stats: dict
     nb_of_variants: int
-    informs: List[Dict[str, Any]]
+    informs: list[dict[str, Any]]
 
 
-class VariantFilteringWrapper(object):
+class VariantFilteringWrapper:
     """
     This class is used as a wrapper class around the variant filtering Snakemake workflow.
     """
@@ -49,8 +49,7 @@ class VariantFilteringWrapper(object):
         :param vcf_file: Input VCF file
         :return: Indexed VCF_GZ file
         """
-        c = Camel()
-        bcftools_view = BcftoolsView(c)
+        bcftools_view = BcftoolsView(Camel.get_instance())
         bcftools_view.add_input_files({'VCF': [ToolIOFile(vcf_file)]})
         input_dir = Path(self._working_dir, 'input')
         if not input_dir.is_dir():
@@ -59,27 +58,31 @@ class VariantFilteringWrapper(object):
         bcftools_view.run(input_dir)
         return bcftools_view.tool_outputs['VCF_GZ'][0].path
 
-    def __create_input(self, vcf_gz_file: Path, bam_file: Path) -> None:
+    def __create_input(self, vcf_gz_file: Path, bam_file: Path, input_type: str) -> None:
         """
         Creates the input files for the workflow.
         :param vcf_gz_file: Input VCF GZ file
         :param bam_file: Input BAM file
+        :param input_type: Input type
         :return: None
         """
-        for path, destination in [(vcf_gz_file, variant_calling.OUTPUT_VARIANT_CALLING_UNFILTERED_VCF_GZ),
-                                  (bam_file, variant_calling.OUTPUT_VARIANT_CALLING_BAM)]:
+        for path, destination in [
+            (vcf_gz_file, variant_calling.OUTPUT_VARIANT_CALLING_UNFILTERED_VCF_GZ),
+            (bam_file, variant_calling.get_bam({'working_dir': self._working_dir, 'input_type': input_type}))]:
             target_file = Path(self._working_dir, destination)
             if not target_file.parent.exists():
                 target_file.parent.mkdir(parents=True)
             SnakemakeUtils.dump_object([ToolIOFile(path)] if path is not None else [], target_file)
 
     def run_workflow(
-            self, sample_name: str, vcf_file: Path, bam_file: Path, filtering_options: Dict, cores: int = 8) -> None:
+            self, sample_name: str, vcf_file: Path, bam_file: Path, input_type: str = 'illumina',
+            filtering_options: dict = None, cores: int = 8) -> None:
         """
         Runs the variant calling workflow.
         :param sample_name: Sample name
         :param vcf_file: Input VCF file
         :param bam_file: Input BAM file
+        :param input_type: Input type ('illumina' or 'ont')
         :param cores: Number of cores
         :param filtering_options: Dict
         :return: None
@@ -87,13 +90,13 @@ class VariantFilteringWrapper(object):
         if not self._working_dir.exists():
             self._working_dir.mkdir(parents=True)
         vcf_gz_file = self.__convert_to_vcf_gz(vcf_file)
-        self.__create_input(vcf_gz_file, bam_file)
+        self.__create_input(vcf_gz_file, bam_file, input_type)
 
         # Create config
         config_path = SnakePipelineUtils.generate_config_file({
             'working_dir': str(self._working_dir),
             'variant_filtering': filtering_options,
-            'input_type': 'illumina',
+            'input_type': input_type,
             'sample_name': sample_name
         }, self._working_dir)
 
@@ -108,7 +111,7 @@ class VariantFilteringWrapper(object):
             cores)
         self.__set_output(output_files)
 
-    def __set_output(self, output_files: Dict[str, Path]) -> None:
+    def __set_output(self, output_files: dict[str, Path]) -> None:
         """
         Collects the output of the workflow.
         :param output_files: Output files

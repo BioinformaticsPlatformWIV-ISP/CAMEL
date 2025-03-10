@@ -5,7 +5,7 @@ from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-from camel.resources.snakefile import variant_calling, assembly, variant_filtering, gene_detection
+from camel.resources.snakefile import variant_calling, variant_filtering, gene_detection
 from camel.scripts.mycobacteriumpipeline.snakefile import snplineage, amrdetection
 
 
@@ -257,9 +257,7 @@ rule amr_visualization_add_text:
     """
     input:
         PNG = rules.amr_visualization_circos.output.PNG,
-        INFORMS_coverage = Path(config['working_dir'] / assembly.get_depth_inform('fastq_pe', 'ref'))
-                            if 'fasta' not in config['input_type'] and 'fasta_vcf' not in config['input_type']
-                            else Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_DEPTH_INFORMS,
+        INFORMS_coverage = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_DEPTH_INFORMS,
         INFORMS_lineage = Path(config['working_dir']) / snplineage.OUTPUT_SNP_LINEAGE_INFORMS
     output:
         PNG = Path(config['working_dir']) / 'amr' / 'visualization' / 'png-text.io'

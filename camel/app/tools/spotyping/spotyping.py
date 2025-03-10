@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Tuple, Any, Dict, List
+from typing import Tuple, Any
 
 from camel.app.camel import Camel
 from camel.app.command.command import Command
@@ -101,7 +101,7 @@ class SpoTyping(Tool):
             else:
                 raise ToolExecutionError(last_line)
 
-    def _extract_metadata(self, type_octal: str) -> Dict[str, Any]:
+    def _extract_metadata(self, type_octal: str) -> dict[str, Any]:
         """
         Extracts the metadata for the detected Spoligotype.
         :return: Spoligotype metadata
@@ -124,7 +124,7 @@ class SpoTyping(Tool):
         else:
             return {k: 'NA' for k in keys}
 
-    def _symlink_input(self) -> List[Path]:
+    def _symlink_input(self) -> list[Path]:
         """
         Symlinks the input file(s).
         :return: Paths to symlinked input files

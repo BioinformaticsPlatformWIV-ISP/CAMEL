@@ -2,7 +2,7 @@ import abc
 import argparse
 import shutil
 from pathlib import Path
-from typing import Optional, Any, Dict, List, Tuple, Sequence, Union
+from typing import Optional, Any, Sequence, Union
 
 from camel.app.camel import Camel
 from camel.app.components import mainscriptutils
@@ -15,7 +15,7 @@ from camel.app.pipeline.pipeline import Pipeline
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 
 
-class BasePipeline(object, metaclass=abc.ABCMeta):
+class BasePipeline(metaclass=abc.ABCMeta):
     """
     This class is the base class for pipelines.
     """
@@ -82,8 +82,8 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
             choices=['NexteraPE', 'TruSeq2', 'TruSeq3'], default='NexteraPE')
         argument_parser.add_argument(
             '--trimming-method', help='Trimming method', choices=['trimmomatic', 'fastp'], default='fastp')
-        argument_parser.add_argument('--ont-min-qual', default=7, help='Minimum median quality for ONT input data')
-        argument_parser.add_argument('--ont-min-length', default=500, help='Minimum read length for ONT input data')
+        argument_parser.add_argument('--ont-min-qual', default=10, help='Minimum median quality for ONT input data')
+        argument_parser.add_argument('--ont-min-length', default=1000, help='Minimum read length for ONT input data')
 
         # Logging
         argument_parser.add_argument(
@@ -110,11 +110,11 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
                 return FastqUtils.get_sample_name(args.fastq_pe_names[0], FastqUtils.PATTERN_FQ_PE)
             return FastqUtils.get_sample_name(args.fastq_pe[0], FastqUtils.PATTERN_FQ_PE)
         # SE reads (ont / iontorrent)
-        elif args.input_type in ('ont', 'iontorrent'):
+        elif args.input_type == 'ont':  # ('ont', 'iontorrent'):
             if args.fastq_se_name is not None:
-                return FastqUtils.get_sample_name(args.fastq_se_name, FastqUtils.PATTERN_FQ_SE)
-            return FastqUtils.get_sample_name(args.fastq_se, FastqUtils.PATTERN_FQ_SE)
-        raise ValueError(f'Cannot determine sample name')
+                return FastqUtils.get_sample_name(args.fastq_se_name, FastqUtils.PATTERN_FQ_ONT)
+            return FastqUtils.get_sample_name(args.fastq_se, FastqUtils.PATTERN_FQ_ONT)
+        raise ValueError('Cannot determine sample name')
 
     @property
     def name(self) -> str:
@@ -156,7 +156,7 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         """
         return self._args.galaxy_job_id if 'galaxy_job_id' in self._args else None
 
-    def _get_input_links(self) -> List[List[Tuple[str, Path, str]]]:
+    def _get_input_links(self) -> list[list[tuple[str, Path, str]]]:
         """
         Returns the links to the input FASTQ files.
         :return: Links (key, path, name)
@@ -187,7 +187,7 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
             raise ValueError(f'Invalid input files for input type: {self._args.input_type}')
         return links
 
-    def _symlink_input(self) -> Dict[str, List[Dict[str, Any]]]:
+    def _symlink_input(self) -> dict[str, list[dict[str, Any]]]:
         """
         Symlinks the input files.
         :return: List of FASTQ input dictionaries
@@ -236,6 +236,9 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
 
         # Path to the logfile
         log_file = self._args.working_dir / 'camel.log'
+        if self._args.input_type == 'ont' and self._args.detection_method == 'srst2':
+            logger.error("SRST2-based detection is not available for ONT input")
+            raise RuntimeError("SRST2-based detection is not available for ONT input")
         try:
             # Run snakemake
             SnakePipelineUtils.run_snakemake(
@@ -256,7 +259,7 @@ class BasePipeline(object, metaclass=abc.ABCMeta):
         if self._keep_logs and log_file.exists():
             fileloggerutils.store_log_file(log_file, self._name, self.galaxy_job_id)
 
-    def get_template_data(self, input_dict: Dict[str, List[Dict[str, str]]]) -> Dict[str, Any]:
+    def get_template_data(self, input_dict: dict[str, list[dict[str, str]]]) -> dict[str, Any]:
         """
         Returns the template data that is common to all pipelines.
         :param input_dict: Dictionary with pipeline input files

@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import List, Dict
 
 from camel.app.camel import Camel
 from camel.app.components.filesystemhelper import FileSystemHelper
@@ -69,7 +68,7 @@ class HtmlReporterGeneDetection(Tool):
         if ('VAL_Hits' in self._tool_inputs) and (len(self._tool_inputs['VAL_Hits']) > 0) and \
                 ('TSV' not in self._tool_inputs):
             raise InvalidInputSpecificationError("TSV input is required when hits were detected.")
-        super(HtmlReporterGeneDetection, self)._check_input()
+        super()._check_input()
 
     def __initialize_report(self) -> None:
         """
@@ -80,7 +79,7 @@ class HtmlReporterGeneDetection(Tool):
         self._report_section = HtmlReportSection(self._input_informs['db_info']['title'], 3)
         self._sub_folder = Path('gene_detection') / FileSystemHelper.make_valid(db_name)
 
-    def __add_parameter_table(self, informs_detection: Dict[str, str]) -> None:
+    def __add_parameter_table(self, informs_detection: dict[str, str]) -> None:
         """
         Adds a tables with the parameters used for the detection.
         :param informs_detection: Informs from the detection
@@ -90,7 +89,7 @@ class HtmlReporterGeneDetection(Tool):
             [f'{key}:', value] for key, value in sorted(informs_detection.items()) if not key.startswith('_')
         ], None, [('class', 'information')])
 
-    def __add_output_table(self, hits: List[GeneDetectionHitBase]) -> None:
+    def __add_output_table(self, hits: list[GeneDetectionHitBase]) -> None:
         """
         Adds the output table.
         :param hits: Detected hits

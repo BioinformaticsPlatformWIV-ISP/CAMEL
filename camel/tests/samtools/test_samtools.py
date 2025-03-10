@@ -74,7 +74,7 @@ class TestSamtools(CamelTestSuite):
         self.verify_output_files(samtools_flagstat, 'TXT')
         informs_expected = [
             'total', 'secondary', 'supplementary', 'duplicates', 'mapped', 'paired', 'read1', 'read2',
-            'properly_paired', 'singletons']
+            'properly_paired', 'singletons', 'mapping_rate']
         for inform in informs_expected:
             self.assertIn(inform, samtools_flagstat.informs, f"{inform} not found in informs.")
 

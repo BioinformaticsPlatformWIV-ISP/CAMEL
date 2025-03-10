@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import argparse
 from pathlib import Path
-from typing import Optional, Sequence, List, Dict
+from typing import Optional, Sequence
 
 import yaml
 
@@ -58,7 +58,7 @@ class MainMockPipeline(ReportPipeline):
         self._run_snakemake_main(str(config_file))
         self._export_assembly()
 
-    def __construct_config_file(self, input_files: Dict[str, List[Dict[str, str]]]) -> Path:
+    def __construct_config_file(self, input_files: dict[str, list[dict[str, str]]]) -> Path:
         """
         Constructs the configuration file
         :param input_files: Dictionary with the input files (keys can be FASTQ_PE, FASTQ_SE).

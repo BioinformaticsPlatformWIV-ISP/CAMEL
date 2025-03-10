@@ -13,7 +13,7 @@ from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.loggers import logger
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-from camel.resources.snakefile import assembly_spades
+from camel.resources.snakefile import assembly
 
 
 class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
@@ -83,6 +83,10 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         # Empty variant filtering config
         config_data['variant_filtering'] = {}
 
+        # Human read scrubbing
+        if 'human_read_scrubbing' in self._args:
+            config_data['read_scrubbing'] = {}
+
         return config_data
 
     def _validate_input_files(self) -> None:
@@ -100,7 +104,7 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
         if self._args.output_fasta is None:
             logger.debug('Not exporting assembly')
             return
-        path_io = self._args.working_dir / assembly_spades.OUTPUT_ASSEMBLY_FASTA
+        path_io = self._args.working_dir / assembly.OUTPUT_ASSEMBLY_FASTA
         path_fasta = SnakemakeUtils.load_object(path_io)[0].path
         fastautils.FastaUtils.rename_sequences_regex(
             path_fasta, self._args.output_fasta, '', '', description=self.sample_name)

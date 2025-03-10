@@ -3,7 +3,7 @@ from pathlib import Path
 from camel.resources.snakefile import trimming, trimming_illumina, \
     quality_checks, contamination_check_kraken, variant_calling, variant_filtering, gene_detection, sequence_typing, \
     downsampling, confindr, quast, core, assembly, amrfinder, resfinder4, mobsuite, mykrobe, human_read_scrubbing, \
-    read_simulation
+    read_simulation, trimming_ont
 from camel.scripts.shigellapipeline.snakefile import shigeifinder, shigatyper
 
 #######################
@@ -14,6 +14,7 @@ include: human_read_scrubbing.SNAKEFILE_SCRUBBING
 include: downsampling.SNAKEFILE_DOWNSAMPLING
 include: read_simulation.SNAKEFILE_READ_SIMULATION
 include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
+include: trimming_ont.SNAKEFILE_TRIMMING_ONT
 include: assembly.SNAKEFILE_ASSEMBLY
 include: quast.SNAKEFILE_QUAST
 include: contamination_check_kraken.SNAKEFILE_CONTAMINATION_CHECK_KRAKEN
@@ -93,7 +94,7 @@ rule combine_reports:
         report_variant = variant_calling.get_reports(config) if 'variant_calling' in config['analyses'] else [],
         # Species identification
         report_rmlst = sequence_typing.get_sequence_typing_report('rmlst',config),
-        # Gene detection
+        # # Gene detection
         report_amrfinder = Path(config['working_dir']) / (amrfinder.OUTPUT_AMRFINDER_REPORT if 'amrfinder' in config['analyses'] else amrfinder.OUTPUT_AMRFINDER_REPORT_EMPTY),
         report_resfinder4 = Path(config['working_dir']) / (resfinder4.OUTPUT_RESFINDER4_REPORT if 'resfinder4' in config['analyses'] else resfinder4.OUTPUT_RESFINDER4_REPORT_EMPTY),
         report_virulence = gene_detection.get_gene_detection_report('virulencefinder', config),
@@ -102,11 +103,11 @@ rule combine_reports:
         # Plasmid characterization
         report_mob_suite = Path(config['working_dir']) / (mobsuite.OUTPUT_MOB_SUITE_REPORT if 'mob_suite' in config['analyses'] else mobsuite.OUTPUT_MOB_SUITE_REPORT_EMPTY),
         report_genomic_context = Path(config['working_dir']) / (mobsuite.OUTPUT_MOB_SUITE_CONTEXT_REPORT if 'mob_suite' in config['analyses'] else mobsuite.OUTPUT_MOB_SUITE_CONTEXT_REPORT_EMPTY),
-        # Shigella serotyping
+        # # Shigella serotyping
         report_shigeifinder = Path(config['working_dir']) / (shigeifinder.OUTPUT_SHIGEIFINDER_REPORT if 'shigeifinder' in config['analyses'] else shigeifinder.OUTPUT_SHIGEIFINDER_REPORT_EMPTY),
         report_shigatyper = Path(config['working_dir']) / (shigatyper.OUTPUT_SHIGATYPER_REPORT if 'shigatyper' in config['analyses'] else shigatyper.OUTPUT_SHIGATYPER_REPORT_EMPTY),
         report_mykrobe = Path(config['working_dir']) / (mykrobe.OUTPUT_MYKROBE_REPORT if 'mykrobe' in config['analyses'] else mykrobe.OUTPUT_MYKROBE_REPORT_EMPTY),
-        # Sequence typing
+        # # Sequence typing
         report_mlst_warwick = sequence_typing.get_sequence_typing_report('mlst_warwick', config),
         report_mlst_pasteur = sequence_typing.get_sequence_typing_report('mlst_pasteur', config),
         report_cgmlst = sequence_typing.get_sequence_typing_report('cgmlst', config),
@@ -160,7 +161,7 @@ rule combine_reports:
                 input.report_amrfinder, input.report_resfinder4)]),
             ('Virulence characterization', 'viru', [Path(x) for x in (
                 input.report_virulence, input.report_virulence_shiga)]),
-            ('Plasmid replicon detection', 'plasmid', [Path(x) for x in (
+            ('Plasmid characterization', 'plasmid', [Path(x) for x in (
                 input.report_mob_suite, input.report_genomic_context)]),
             ('Sequence typing', 'st', [Path(x) for x in (
                 input.report_mlst_warwick, input.report_mlst_pasteur, input.report_cgmlst)]),

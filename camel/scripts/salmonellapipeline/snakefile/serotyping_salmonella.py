@@ -1,6 +1,6 @@
 import re
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 SNAKEFILE_SEROTYPE = f'{Path(__file__).parent / Path(__file__).stem}.smk'
 _dir_serotype = Path('serotyping', '{input_format}')
@@ -17,7 +17,7 @@ OUTPUT_SEROTYPE_SISTR_SUMMARY = _dir_serotype / 'summary_out_sistr.tsv'
 OUTPUT_SEROTYPE_SEQSERO2_SUMMARY = _dir_serotype / 'summary_out_seqsero2.tsv'
 
 
-def get_reports(config: Dict[str, Any]) -> List[Path]:
+def get_reports(config: dict[str, Any]) -> list[Path]:
     """
     Returns the paths to the serotyping reports.
     :param config: Snakemake configuration
@@ -55,7 +55,7 @@ def get_reports(config: Dict[str, Any]) -> List[Path]:
     return [Path(config['working_dir']) / p for p in paths]
 
 
-def get_command_informs(config: Dict[str, Any]) -> List[Path]:
+def get_command_informs(config: dict[str, Any]) -> list[Path]:
     """
     Returns a list of informs IO files for serotyping.
     :param config: Snakemake configuration
@@ -80,16 +80,22 @@ def get_command_informs(config: Dict[str, Any]) -> List[Path]:
         paths.append(str(OUTPUT_SEROTYPE_SEQSERO2_KMERREAD_INFORMS).format(input_format='fastq_pe'))
 
     # SE reads
-    if input_type in ('ont', 'hybrid'):
+    if input_type == 'hybrid':
         paths.append(str(OUTPUT_SEROTYPE_SISTR_INFORMS).format(input_format='fastq_se'))
         paths.append(str(OUTPUT_SEROTYPE_SEQSERO2_KMER_INFORMS).format(input_format='fastq_se'))
         paths.append(str(OUTPUT_SEROTYPE_SEQSERO2_ALLELE_INFORMS).format(input_format='fastq_se'))
         paths.append(str(OUTPUT_SEROTYPE_SEQSERO2_KMERREAD_INFORMS).format(input_format='fastq_se'))
 
+    # SE reads
+    if input_type == 'ont':
+        paths.append(str(OUTPUT_SEROTYPE_SISTR_INFORMS).format(input_format='fastq_se'))
+        paths.append(str(OUTPUT_SEROTYPE_SEQSERO2_KMER_INFORMS).format(input_format='fastq_se'))
+        paths.append(str(OUTPUT_SEROTYPE_SEQSERO2_KMERREAD_INFORMS).format(input_format='fastq_se'))
+
     return [Path(config['working_dir']) / p for p in paths]
 
 
-def get_summaries(config: Dict[str, Any]) -> List[Path]:
+def get_summaries(config: dict[str, Any]) -> list[Path]:
     """
     Returns the paths to the serotyping summary file(s).
     :param config: Snakemake configuration
@@ -119,7 +125,7 @@ def get_summaries(config: Dict[str, Any]) -> List[Path]:
     return [Path(config['working_dir']) / p for p in paths]
 
 
-def sistr_output_parser(prediction: Dict[str, Any], locus: str, antigen: str, hits_dict_tsv: Dict[str, str]) -> None:
+def sistr_output_parser(prediction: dict[str, Any], locus: str, antigen: str, hits_dict_tsv: dict[str, str]) -> None:
     """
     Parses the SISTR output for a specific locus (the o antigen has 2 loci, and the h antigens each have one locus).
     Updates the hits dictionaries in place without returning any output.
@@ -145,7 +151,7 @@ def sistr_output_parser(prediction: Dict[str, Any], locus: str, antigen: str, hi
         hits_dict_tsv[f'hits_serotype_{antigen}_{locus}'] = ','.join(hit_properties)
 
 
-def seqsero2_output_parser(seqsero2_file: Path, seqsero2_mode: str) -> List[str]:
+def seqsero2_output_parser(seqsero2_file: Path, seqsero2_mode: str) -> list[str]:
     """
     Parses the output file of a SeqSero2 run, uniform over all three modes.
     :param seqsero2_file: path of the output file

@@ -58,8 +58,12 @@ rule serotyping_seqsero2_run:
         if params.read_key == 'fastq_pe':
             seqsero_tool.add_input_files(SnakePipelineUtils.extracts_fq_input(Path(input.IO), key_pe='FASTQ_PE'))
         if params.read_key == 'fastq_se':
-            seqsero_tool.add_input_files(SnakePipelineUtils.extracts_fq_input(
-                Path(input.IO), key_se='FASTQ', read_type='SE'))
+            if config['input_type'] == 'ont':
+                seqsero_tool.add_input_files(SnakePipelineUtils.extracts_fq_input(
+                    Path(input.IO), key_se='FASTQ_ONT', read_type='SE'))
+            else:
+                seqsero_tool.add_input_files(SnakePipelineUtils.extracts_fq_input(
+                    Path(input.IO), key_se='FASTQ', read_type='SE'))
         seqsero_tool.update_parameters(mode=str(params.mode))
         step = Step(str(rule), seqsero_tool, camel, Path(str(params.running_dir)))
         step.run_step()
@@ -122,8 +126,8 @@ rule serotyping_seqsero2_dump_summary_info:
     input:
         TXT_seqsero2_kmer = lambda wildcards: str(rules.serotyping_seqsero2_run.output.TXT).format(mode='Kmer', input_format=wildcards.input_format),
         INFORMS_seqsero2_kmer = lambda wildcards: str(rules.serotyping_seqsero2_run.output.INFORMS).format(mode='Kmer', input_format=wildcards.input_format),
-        TXT_seqsero2_allele = lambda wildcards: str(rules.serotyping_seqsero2_run.output.TXT).format(mode='Allele', input_format=wildcards.input_format) if 'fasta' not in config['input'] else [],
-        INFORMS_seqsero2_allele = lambda wildcards: str(rules.serotyping_seqsero2_run.output.INFORMS).format(mode='Allele', input_format=wildcards.input_format) if 'fasta' not in config['input'] else [],
+        TXT_seqsero2_allele = lambda wildcards: str(rules.serotyping_seqsero2_run.output.TXT).format(mode='Allele', input_format=wildcards.input_format) if 'fasta' not in config['input'] and not config['input_type'] == 'ont' else [],
+        INFORMS_seqsero2_allele = lambda wildcards: str(rules.serotyping_seqsero2_run.output.INFORMS).format(mode='Allele', input_format=wildcards.input_format) if 'fasta' not in config['input'] and not config['input_type'] == 'ont' else [],
         TXT_seqsero2_kmerread = lambda wildcards: str(rules.serotyping_seqsero2_run.output.TXT).format(mode='Kmerread', input_format=wildcards.input_format) if 'fasta' not in config['input'] else [],
         INFORMS_seqsero2_kmerread = lambda wildcards: str(rules.serotyping_seqsero2_run.output.INFORMS).format(mode='Kmerread', input_format=wildcards.input_format) if 'fasta' not in config['input'] else []
     output:
@@ -139,9 +143,17 @@ rule serotyping_seqsero2_dump_summary_info:
 
         # parse facultative SeqSero2 output
         if 'fasta' not in config['input']:
-            for args_tuple in [(SnakemakeUtils.load_object(Path(str(input.TXT_seqsero2_allele)))[0].path, 'seqsero2_allele'),
-                               (SnakemakeUtils.load_object(Path(str(input.TXT_seqsero2_kmerread)))[0].path, 'seqsero2_kmerread')
-                                ]:
+            files = []
+            if config['input_type'] == 'ont':
+                #files = [(SnakemakeUtils.load_object(Path(str(input.TXT_seqsero2_kmerread)))[0].path, 'seqsero2_kmerread')]
+                files.append((SnakemakeUtils.load_object(Path(str(input.TXT_seqsero2_kmerread)))[0].path, 'seqsero2_kmerread'))
+            else:
+                files.append((SnakemakeUtils.load_object(Path(str(input.TXT_seqsero2_allele)))[0].path, 'seqsero2_allele'))
+                files.append((SnakemakeUtils.load_object(Path(str(input.TXT_seqsero2_kmerread)))[0].path, 'seqsero2_kmerread'))
+                #files = [(SnakemakeUtils.load_object(Path(str(input.TXT_seqsero2_allele)))[0].path, 'seqsero2_allele'),
+                #         (SnakemakeUtils.load_object(Path(str(input.TXT_seqsero2_kmerread)))[0].path, 'seqsero2_kmerread')
+                #         ]
+            for args_tuple in files:
                 tsv_results = serotyping_salmonella.seqsero2_output_parser(*args_tuple)
                 with Path(output.VAL_TSV_seqsero2).open('a') as handle:
                     for item in tsv_results:
@@ -181,7 +193,7 @@ rule serotyping_seqsero2_report:
     """
     input:
         TXT_seqsero2_kmer = lambda wildcards: str(rules.serotyping_seqsero2_run.output.TXT).format(mode='Kmer', input_format=wildcards.input_format),
-        TXT_seqsero2_allele = lambda wildcards: str(rules.serotyping_seqsero2_run.output.TXT).format(mode='Allele', input_format=wildcards.input_format) if 'fasta' not in config['input'] else [],
+        TXT_seqsero2_allele = lambda wildcards: str(rules.serotyping_seqsero2_run.output.TXT).format(mode='Allele', input_format=wildcards.input_format) if 'fasta' not in config['input'] and not config['input_type'] == 'ont' else [],
         TXT_seqsero2_kmerread = lambda wildcards: str(rules.serotyping_seqsero2_run.output.TXT).format(mode='Kmerread', input_format=wildcards.input_format) if 'fasta' not in config['input'] else [],
         VAL_TSV = rules.serotyping_seqsero2_dump_summary_info.output.VAL_TSV_seqsero2,
         INFORMS_serotyping_seqsero2 = lambda wildcards: str(rules.serotyping_seqsero2_run.output.INFORMS).format(mode='Kmer', input_format=wildcards.input_format)

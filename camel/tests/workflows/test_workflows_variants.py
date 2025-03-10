@@ -36,7 +36,7 @@ class TestWorkflowsVariants(CamelTestSuite):
             'name': TestWorkflowsVariants.input_fasta_ref.name,
             'path': str(TestWorkflowsVariants.input_fasta_ref)
         }
-        wrapper.run_workflow(ref_info, 'test_sample', fastq_input, {}, 1)
+        wrapper.run_workflow(ref_info, 'test_sample', fastq_input, 'illumina',{}, 1)
         self.assertGreater(wrapper.output.bam_file.size, 0)
         self.assertGreater(wrapper.output.vcf_unfiltered.size, 0)
 
@@ -46,7 +46,8 @@ class TestWorkflowsVariants(CamelTestSuite):
         :return: None
         """
         wrapper = VariantFilteringWrapper(self.running_dir)
-        wrapper.run_workflow('test_sample', TestWorkflowsVariants.input_vcf, TestWorkflowsVariants.input_bam, {}, 1)
+        wrapper.run_workflow(
+            'test_sample', TestWorkflowsVariants.input_vcf, TestWorkflowsVariants.input_bam, 'illumina', {}, 1)
         self.assertGreater(Path(wrapper.output.vcf_filtered.path).stat().st_size, 0)
 
 

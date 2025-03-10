@@ -47,12 +47,6 @@ quality_checks:
   typing_scheme: {qc_typing_scheme}
   expected_gc_content: 65.6
   coverage_mode: ref
-  skipped:
-    - map_rate_assembly_illumina
-    - cov_assembly_illumina
-  forced:
-    - map_rate_ref_illumina
-    - cov_ref_illumina
 
 confindr:
   db: /db/confindr/0.8.1
@@ -121,7 +115,7 @@ gene_detection:
 
   csb_rd:
     path: /db/pipelines/mycobacterium/csb_rd
-    force_detection_method: srst2
+    force_detection_method: kma
 
   ncbi_16s:
     path: /db/gene_detection/NCBI_16S

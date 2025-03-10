@@ -160,7 +160,7 @@ rule variant_filtering_zscore:
     """
     input:
         VCF_GZ = rules.variant_filtering_zscore_index.output.VCF_GZ,
-        BAM = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_BAM if config['input_type'] != 'fasta_with_vcf' else []
+        BAM = Path(config['working_dir']) / variant_calling.get_bam(config) if config['input_type'] != 'fasta_with_vcf' else []
     output:
         VCF_GZ = Path(config['working_dir']) / 'variant_filtering' / '05-zscore' / 'vcf_gz.io',
         INFORMS = Path(config['working_dir']) / 'variant_filtering' / '05-zscore' / 'informs.io'

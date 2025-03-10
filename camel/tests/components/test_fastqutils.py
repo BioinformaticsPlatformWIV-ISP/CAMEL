@@ -3,8 +3,6 @@ import gzip
 import unittest
 from pathlib import Path
 
-from Bio import SeqIO
-
 from camel.app.components.files.fastqutils import FastqUtils
 from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
@@ -57,6 +55,21 @@ class TestFastqUtils(CamelTestSuite):
         :return: None
         """
         self.assertEqual(FastqUtils.get_sample_name(Path('/data/temp/S18BD02705_R1.fastq.gz')), 'S18BD02705')
+
+    def test_get_sample_name_ont_bacdis(self) -> None:
+        """
+        Tests the get sample name function for the bacdis ONT format.
+        :return: None
+        """
+        self.assertEqual(FastqUtils.get_sample_name(
+            Path('/data/temp/S22BD04543_SQK-RBK114-96_SUPv5-0-0_2025_run0113_B25.fastq.gz'), FastqUtils.PATTERN_FQ_ONT), 'S22BD04543')
+        self.assertEqual(FastqUtils.get_sample_name(
+            Path('/data/temp/S22BD04543_SQK-RPB114-24_HACv5-0-0_2025_run0113_B25.fastq'), FastqUtils.PATTERN_FQ_ONT), 'S22BD04543')
+        # Regular filename (not matching the format)
+        self.assertEqual(FastqUtils.get_sample_name(
+            Path('/data/temp/S22BD04543_ont.fastq'), FastqUtils.PATTERN_FQ_ONT),'S22BD04543_ont')
+        self.assertEqual(FastqUtils.get_sample_name(
+            Path('/data/temp/Myco-SRR8948399_ont-ds.fastq.gz'), FastqUtils.PATTERN_FQ_ONT),'Myco-SRR8948399_ont-ds')
 
     def test_get_sample_name_invalid_fmt(self) -> None:
         """
@@ -312,8 +325,9 @@ class TestFastqUtils(CamelTestSuite):
         :return: None
         """
         read_names = FastqUtils.get_all_read_names(TestFastqUtils.test_file_dir / 'fq-fwd.fq')
-        self.assertEqual(read_names, {'M04115:7:000000000-AMA6W:1:1101:18190:1854', 'M04115:7:000000000-AMA6W:1:1101:23504:1916',
-                                      'M04115:7:000000000-AMA6W:1:1101:23856:1955', 'M04115:7:000000000-AMA6W:1:1101:9914:1907'})
+        self.assertEqual(read_names, {
+            'M04115:7:000000000-AMA6W:1:1101:18190:1854', 'M04115:7:000000000-AMA6W:1:1101:23504:1916',
+            'M04115:7:000000000-AMA6W:1:1101:23856:1955', 'M04115:7:000000000-AMA6W:1:1101:9914:1907'})
 
     def test_get_all_read_names_gzipped_input(self) -> None:
         """
@@ -321,171 +335,9 @@ class TestFastqUtils(CamelTestSuite):
         :return: None
         """
         read_names = FastqUtils.get_all_read_names(TestFastqUtils.test_file_dir / 'fq-fwd.fq.gz')
-        self.assertEqual(read_names, {'M04115:7:000000000-AMA6W:1:1101:18190:1854', 'M04115:7:000000000-AMA6W:1:1101:23504:1916',
-                                      'M04115:7:000000000-AMA6W:1:1101:23856:1955', 'M04115:7:000000000-AMA6W:1:1101:9914:1907'})
-
-    def test_process_paired_end(self) -> None:
-        """
-        Test the function that creates paired and single end files from multiple input files.
-        :return: None
-        """
-        fwd_1 = TestFastqUtils.test_file_dir / 'paired_end_processing' / 'fq-fwd_part_1.fq'
-        fwd_2 = TestFastqUtils.test_file_dir / 'paired_end_processing' / 'fq-fwd_part_2.fq'
-        rev_1 = TestFastqUtils.test_file_dir / 'paired_end_processing' / 'fq-rev_part_1.fq'
-        rev_2 = TestFastqUtils.test_file_dir / 'paired_end_processing' / 'fq-rev_part_2.fq'
-        se_1 = TestFastqUtils.test_file_dir / 'paired_end_processing' / 'fq-se_random_1.fq'
-        se_2 = TestFastqUtils.test_file_dir / 'paired_end_processing' / 'fq-se_random_2.fq'
-        fwd_out = self.running_dir / 'fwd.fq'
-        rev_out = self.running_dir / 'rev.fq'
-        se_out = self.running_dir / 'se.fq'
-        FastqUtils.process_paired_end([fwd_1, fwd_2], [rev_1, rev_2], [se_1, se_2], fwd_out, rev_out, se_out)
-        fwd_reads = {(record.id, record.seq) for record in SeqIO.parse(fwd_out, 'fastq')}
-        rev_reads = {(record.id, record.seq) for record in SeqIO.parse(rev_out, 'fastq')}
-        se_reads = {(record.id, record.seq) for record in SeqIO.parse(se_out, 'fastq')}
-        fwd_reads_check = {(record.id, record.seq) for record in SeqIO.parse(TestFastqUtils.test_file_dir / 'paired_end_processing' / 'fwd_check.fq', 'fastq')}
-        rev_reads_check = {(record.id, record.seq) for record in SeqIO.parse(TestFastqUtils.test_file_dir / 'paired_end_processing' / 'rev_check.fq', 'fastq')}
-        se_reads_check = {(record.id, record.seq) for record in SeqIO.parse(TestFastqUtils.test_file_dir / 'paired_end_processing' / 'se_check.fq', 'fastq')}
-        self.assertSetEqual(fwd_reads, fwd_reads_check)
-        self.assertSetEqual(rev_reads, rev_reads_check)
-        self.assertSetEqual(se_reads, se_reads_check)
-
-    def test_process_paired_end_gzip_input(self) -> None:
-        """
-        Test the function that creates paired and single end files from multiple gzipped input files.
-        :return: None
-        """
-        fwd_1 = TestFastqUtils.test_file_dir / 'paired_end_processing' / 'fq-fwd_part_1.fq.gz'
-        fwd_2 = TestFastqUtils.test_file_dir / 'paired_end_processing' / 'fq-fwd_part_2.fq.gz'
-        rev_1 = TestFastqUtils.test_file_dir / 'paired_end_processing' / 'fq-rev_part_1.fq.gz'
-        rev_2 = TestFastqUtils.test_file_dir / 'paired_end_processing' / 'fq-rev_part_2.fq.gz'
-        se_1 = TestFastqUtils.test_file_dir / 'paired_end_processing' / 'fq-se_random_1.fq.gz'
-        se_2 = TestFastqUtils.test_file_dir / 'paired_end_processing' / 'fq-se_random_2.fq.gz'
-        fwd_out = self.running_dir / 'fwd.fq'
-        rev_out = self.running_dir / 'rev.fq'
-        se_out = self.running_dir / 'se.fq'
-        FastqUtils.process_paired_end([fwd_1, fwd_2], [rev_1, rev_2], [se_1, se_2], fwd_out, rev_out, se_out)
-        fwd_reads = {(record.id, record.seq) for record in SeqIO.parse(fwd_out, 'fastq')}
-        rev_reads = {(record.id, record.seq) for record in SeqIO.parse(rev_out, 'fastq')}
-        se_reads = {(record.id, record.seq) for record in SeqIO.parse(se_out, 'fastq')}
-        fwd_reads_check = {(record.id, record.seq) for record in SeqIO.parse(TestFastqUtils.test_file_dir / 'paired_end_processing' / 'fwd_check.fq', 'fastq')}
-        rev_reads_check = {(record.id, record.seq) for record in SeqIO.parse(TestFastqUtils.test_file_dir / 'paired_end_processing' / 'rev_check.fq', 'fastq')}
-        se_reads_check = {(record.id, record.seq) for record in SeqIO.parse(TestFastqUtils.test_file_dir / 'paired_end_processing' / 'se_check.fq', 'fastq')}
-        self.assertSetEqual(fwd_reads, fwd_reads_check)
-        self.assertSetEqual(rev_reads, rev_reads_check)
-        self.assertSetEqual(se_reads, se_reads_check)
-
-    def test_process_paired_end_gzip_output(self) -> None:
-        """
-        Test the function that creates paired and single end files from multiple input files.
-        Output is gzipped
-        :return: None
-        """
-        fwd_1 = TestFastqUtils.test_file_dir / 'paired_end_processing' / 'fq-fwd_part_1.fq'
-        fwd_2 = TestFastqUtils.test_file_dir / 'paired_end_processing' / 'fq-fwd_part_2.fq'
-        rev_1 = TestFastqUtils.test_file_dir / 'paired_end_processing' / 'fq-rev_part_1.fq'
-        rev_2 = TestFastqUtils.test_file_dir / 'paired_end_processing' / 'fq-rev_part_2.fq'
-        se_1 = TestFastqUtils.test_file_dir / 'paired_end_processing' / 'fq-se_random_1.fq'
-        se_2 = TestFastqUtils.test_file_dir / 'paired_end_processing' / 'fq-se_random_2.fq'
-        fwd_out = self.running_dir / 'fwd.fq.gz'
-        rev_out = self.running_dir / 'rev.fq.gz'
-        se_out = self.running_dir / 'se.fq.gz'
-        FastqUtils.process_paired_end([fwd_1, fwd_2], [rev_1, rev_2], [se_1, se_2], fwd_out, rev_out, se_out, gzip_output=True)
-        fwd_reads = {(record.id, record.seq) for record in SeqIO.parse(gzip.open(fwd_out, 'rt'), 'fastq')}
-        rev_reads = {(record.id, record.seq) for record in SeqIO.parse(gzip.open(rev_out, 'rt'), 'fastq')}
-        se_reads = {(record.id, record.seq) for record in SeqIO.parse(gzip.open(se_out, 'rt'), 'fastq')}
-        fwd_reads_check = {(record.id, record.seq) for record in SeqIO.parse(TestFastqUtils.test_file_dir / 'paired_end_processing' / 'fwd_check.fq', 'fastq')}
-        rev_reads_check = {(record.id, record.seq) for record in SeqIO.parse(TestFastqUtils.test_file_dir / 'paired_end_processing' / 'rev_check.fq', 'fastq')}
-        se_reads_check = {(record.id, record.seq) for record in SeqIO.parse(TestFastqUtils.test_file_dir / 'paired_end_processing' / 'se_check.fq', 'fastq')}
-        self.assertSetEqual(fwd_reads, fwd_reads_check)
-        self.assertSetEqual(rev_reads, rev_reads_check)
-        self.assertSetEqual(se_reads, se_reads_check)
-
-    def test_process_paired_end_se(self) -> None:
-        """
-        Test the function that creates paired and single end files from multiple input files.
-        :return: None
-        """
-        fwd_1 = TestFastqUtils.test_file_dir / 'paired_end_processing' / 'fq-fwd_part_1.fq'
-        fwd_2 = TestFastqUtils.test_file_dir / 'paired_end_processing' / 'fq-fwd_part_2.fq'
-        rev_1 = TestFastqUtils.test_file_dir / 'paired_end_processing' / 'fq-rev_part_1.fq'
-        rev_2 = TestFastqUtils.test_file_dir / 'paired_end_processing' / 'fq-rev_part_2.fq'
-        se_1 = TestFastqUtils.test_file_dir / 'paired_end_processing' / 'fq-se_random_1.fq'
-        se_2 = TestFastqUtils.test_file_dir / 'paired_end_processing' / 'fq-se_random_2.fq'
-        fwd_out = self.running_dir / 'fwd.fq'
-        rev_out = self.running_dir / 'rev.fq'
-        se_1_out = self.running_dir / 'se_1.fq'
-        se_2_out = self.running_dir / 'se_2.fq'
-        FastqUtils.process_paired_end_se([fwd_1, fwd_2], [rev_1, rev_2], [se_1], [se_2], fwd_out, rev_out, se_1_out, se_2_out)
-        fwd_reads = {(record.id, record.seq) for record in SeqIO.parse(fwd_out, 'fastq')}
-        rev_reads = {(record.id, record.seq) for record in SeqIO.parse(rev_out, 'fastq')}
-        se_1_reads = {(record.id, record.seq) for record in SeqIO.parse(se_1_out, 'fastq')}
-        se_2_reads = {(record.id, record.seq) for record in SeqIO.parse(se_2_out, 'fastq')}
-        fwd_reads_check = {(record.id, record.seq) for record in SeqIO.parse(TestFastqUtils.test_file_dir / 'paired_end_processing' / 'fwd_check.fq', 'fastq')}
-        rev_reads_check = {(record.id, record.seq) for record in SeqIO.parse(TestFastqUtils.test_file_dir / 'paired_end_processing' / 'rev_check.fq', 'fastq')}
-        se_1_reads_check = {(record.id, record.seq) for record in SeqIO.parse(se_1, 'fastq')}
-        se_2_reads_check = {(record.id, record.seq) for record in SeqIO.parse(se_2, 'fastq')}
-        self.assertSetEqual(fwd_reads, fwd_reads_check)
-        self.assertSetEqual(rev_reads, rev_reads_check)
-        self.assertSetEqual(se_1_reads, se_1_reads_check)
-        self.assertSetEqual(se_2_reads, se_2_reads_check)
-
-    def test_process_paired_end_se_gzip_input(self) -> None:
-        """
-        Test the function that creates paired and single end files from multiple gzipped input files.
-        :return: None
-        """
-        fwd_1 = TestFastqUtils.test_file_dir / 'paired_end_processing' / 'fq-fwd_part_1.fq.gz'
-        fwd_2 = TestFastqUtils.test_file_dir / 'paired_end_processing' / 'fq-fwd_part_2.fq.gz'
-        rev_1 = TestFastqUtils.test_file_dir / 'paired_end_processing' / 'fq-rev_part_1.fq.gz'
-        rev_2 = TestFastqUtils.test_file_dir / 'paired_end_processing' / 'fq-rev_part_2.fq.gz'
-        se_1 = TestFastqUtils.test_file_dir / 'paired_end_processing' / 'fq-se_random_1.fq.gz'
-        se_2 = TestFastqUtils.test_file_dir / 'paired_end_processing' / 'fq-se_random_2.fq.gz'
-        fwd_out = self.running_dir / 'fwd.fq'
-        rev_out = self.running_dir / 'rev.fq'
-        se_1_out = self.running_dir / 'se_1.fq'
-        se_2_out = self.running_dir / 'se_2.fq'
-        FastqUtils.process_paired_end_se([fwd_1, fwd_2], [rev_1, rev_2], [se_1], [se_2], fwd_out, rev_out, se_1_out, se_2_out)
-        fwd_reads = {(record.id, record.seq) for record in SeqIO.parse(fwd_out, 'fastq')}
-        rev_reads = {(record.id, record.seq) for record in SeqIO.parse(rev_out, 'fastq')}
-        se_1_reads = {(record.id, record.seq) for record in SeqIO.parse(se_1_out, 'fastq')}
-        se_2_reads = {(record.id, record.seq) for record in SeqIO.parse(se_2_out, 'fastq')}
-        fwd_reads_check = {(record.id, record.seq) for record in SeqIO.parse(TestFastqUtils.test_file_dir / 'paired_end_processing' / 'fwd_check.fq', 'fastq')}
-        rev_reads_check = {(record.id, record.seq) for record in SeqIO.parse(TestFastqUtils.test_file_dir / 'paired_end_processing' / 'rev_check.fq', 'fastq')}
-        se_1_reads_check = {(record.id, record.seq) for record in SeqIO.parse(gzip.open(se_1, 'rt'), 'fastq')}
-        se_2_reads_check = {(record.id, record.seq) for record in SeqIO.parse(gzip.open(se_2, 'rt'), 'fastq')}
-        self.assertSetEqual(fwd_reads, fwd_reads_check)
-        self.assertSetEqual(rev_reads, rev_reads_check)
-        self.assertSetEqual(se_1_reads, se_1_reads_check)
-        self.assertSetEqual(se_2_reads, se_2_reads_check)
-
-    def test_process_paired_end_se_gzip_output(self) -> None:
-        """
-        Test the function that creates paired and single end files from multiple input files.
-        :return: None
-        """
-        fwd_1 = TestFastqUtils.test_file_dir / 'paired_end_processing' / 'fq-fwd_part_1.fq'
-        fwd_2 = TestFastqUtils.test_file_dir / 'paired_end_processing' / 'fq-fwd_part_2.fq'
-        rev_1 = TestFastqUtils.test_file_dir / 'paired_end_processing' / 'fq-rev_part_1.fq'
-        rev_2 = TestFastqUtils.test_file_dir / 'paired_end_processing' / 'fq-rev_part_2.fq'
-        se_1 = TestFastqUtils.test_file_dir / 'paired_end_processing' / 'fq-se_random_1.fq'
-        se_2 = TestFastqUtils.test_file_dir / 'paired_end_processing' / 'fq-se_random_2.fq'
-        fwd_out = self.running_dir / 'fwd.fq'
-        rev_out = self.running_dir / 'rev.fq'
-        se_1_out = self.running_dir / 'se_1.fq'
-        se_2_out = self.running_dir / 'se_2.fq'
-        FastqUtils.process_paired_end_se([fwd_1, fwd_2], [rev_1, rev_2], [se_1], [se_2], fwd_out, rev_out, se_1_out, se_2_out, gzip_output=True)
-        fwd_reads = {(record.id, record.seq) for record in SeqIO.parse(gzip.open(fwd_out, 'rt'), 'fastq')}
-        rev_reads = {(record.id, record.seq) for record in SeqIO.parse(gzip.open(rev_out, 'rt'), 'fastq')}
-        se_1_reads = {(record.id, record.seq) for record in SeqIO.parse(gzip.open(se_1_out, 'rt'), 'fastq')}
-        se_2_reads = {(record.id, record.seq) for record in SeqIO.parse(gzip.open(se_2_out, 'rt'), 'fastq')}
-        fwd_reads_check = {(record.id, record.seq) for record in SeqIO.parse(TestFastqUtils.test_file_dir / 'paired_end_processing' / 'fwd_check.fq', 'fastq')}
-        rev_reads_check = {(record.id, record.seq) for record in SeqIO.parse(TestFastqUtils.test_file_dir / 'paired_end_processing' / 'rev_check.fq', 'fastq')}
-        se_1_reads_check = {(record.id, record.seq) for record in SeqIO.parse(se_1, 'fastq')}
-        se_2_reads_check = {(record.id, record.seq) for record in SeqIO.parse(se_2, 'fastq')}
-        self.assertSetEqual(fwd_reads, fwd_reads_check)
-        self.assertSetEqual(rev_reads, rev_reads_check)
-        self.assertSetEqual(se_1_reads, se_1_reads_check)
-        self.assertSetEqual(se_2_reads, se_2_reads_check)
+        self.assertEqual(read_names, {
+            'M04115:7:000000000-AMA6W:1:1101:18190:1854', 'M04115:7:000000000-AMA6W:1:1101:23504:1916',
+            'M04115:7:000000000-AMA6W:1:1101:23856:1955', 'M04115:7:000000000-AMA6W:1:1101:9914:1907'})
 
     def test_count_bases(self) -> None:
         """

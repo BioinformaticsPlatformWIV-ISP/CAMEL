@@ -1,8 +1,8 @@
 from pathlib import Path
 
 from camel.resources.snakefile import trimming, trimming_illumina, quality_checks, \
-    contamination_check_kraken, gene_detection, sequence_typing, downsampling, confindr, quast, core, trimming_ont, mobsuite, resfinder4, amrfinder, \
-    assembly, human_read_scrubbing
+    contamination_check_kraken, gene_detection, sequence_typing, downsampling, confindr, quast, core, trimming_ont, \
+    mobsuite, resfinder4, amrfinder, assembly, human_read_scrubbing, read_simulation
 from camel.scripts.yersiniapipeline.snakefile import species_determination
 
 #######################
@@ -10,6 +10,7 @@ from camel.scripts.yersiniapipeline.snakefile import species_determination
 #######################
 include: core.SNAKEFILE_CORE
 include: human_read_scrubbing.SNAKEFILE_SCRUBBING
+include: read_simulation.SNAKEFILE_READ_SIMULATION
 include: downsampling.SNAKEFILE_DOWNSAMPLING
 include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
 include: trimming_ont.SNAKEFILE_TRIMMING_ONT

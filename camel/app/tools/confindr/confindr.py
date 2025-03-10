@@ -21,7 +21,7 @@ class ConFindr(Tool):
         Initializes this tool.
         :param camel: CAMEL instance
         """
-        super().__init__('ConFindr', '0.8.1', camel)
+        super().__init__('ConFindr', '0.8.2', camel)
 
     def _check_input(self) -> None:
         """

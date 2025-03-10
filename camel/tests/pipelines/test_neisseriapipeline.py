@@ -25,7 +25,7 @@ class TestNeisseriaPipeline(unittest.TestCase):
         test_file_dir / 'pipelines' / 'Neisseria-2011-006_S6-ds_1.fastq.gz',
         test_file_dir / 'pipelines' / 'Neisseria-2011-006_S6-ds_2.fastq.gz'
     ]
-    input_fastq_se = test_file_dir / 'pipelines' / 'Neisseria-S16BD06814-RPB-ONT.fastq.gz'
+    input_fastq_se = test_file_dir / 'pipelines' / 'Neisseria-S16BD06814-RPB_ont-ds.fastq.gz'
     input_fasta = test_file_dir / 'pipelines' / 'Neisseria-2011-006_S6-ds.fasta'
 
     def setUp(self) -> None:

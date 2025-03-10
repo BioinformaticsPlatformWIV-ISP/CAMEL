@@ -15,13 +15,14 @@ include: downsampling.SNAKEFILE_DOWNSAMPLING
 include: trimming_illumina.SNAKEFILE_TRIMMING_ILLUMINA
 include: trimming_ont.SNAKEFILE_TRIMMING_ONT
 include: assembly.SNAKEFILE_ASSEMBLY
+include: variant_calling.SNAKEFILE_VARIANT_CALLING
+include: variant_filtering.SNAKEFILE_VARIANT_FILTERING
 include: quast.SNAKEFILE_QUAST
 include: contamination_check_kraken.SNAKEFILE_CONTAMINATION_CHECK_KRAKEN
 include: confindr.SNAKEFILE_CONFINDR
 include: quality_checks.SNAKEFILE_QUALITY_CHECKS
 include: gene_detection.SNAKEFILE_GENE_DETECTION
-include: variant_calling.SNAKEFILE_VARIANT_CALLING
-include: variant_filtering.SNAKEFILE_VARIANT_FILTERING
+
 include: snpit.SNAKEFILE_SNPIT
 
 #########s

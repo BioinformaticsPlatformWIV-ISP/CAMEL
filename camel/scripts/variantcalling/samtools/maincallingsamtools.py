@@ -2,7 +2,7 @@
 import argparse
 import shutil
 from pathlib import Path
-from typing import Dict, Any, Optional, Sequence
+from typing import Any, Optional, Sequence
 
 from camel.app.camel import Camel
 from camel.app.io.tooliofile import ToolIOFile
@@ -12,7 +12,7 @@ from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.resources.snakefile import variant_calling
 
 
-class MainCalling(object):
+class MainCalling:
     """
     Class to run samtools variant calling using CAMEL.
     """
@@ -49,6 +49,7 @@ class MainCalling(object):
         argument_parser.add_argument('--count-orphans', action='store_true')
         argument_parser.add_argument('--disable-baq', action='store_true')
         argument_parser.add_argument('--threads', type=int, default=8)
+        argument_parser.add_argument('--input-type', choices=['illumina', 'ont'], default='illumina')
         return argument_parser.parse_args(args)
 
     def run(self) -> None:
@@ -61,7 +62,7 @@ class MainCalling(object):
         config_file = SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir)
 
         # Copy input BAM file to the right location
-        target_dir = self._args.working_dir / 'variant_calling' / 'read_mapping'
+        target_dir = self._args.working_dir / 'variant_calling' / 'read_mapping' / self._args.input_type
         if not target_dir.exists():
             target_dir.mkdir(parents=True)
         SnakemakeUtils.dump_object([ToolIOFile(self._args.bam)], target_dir / 'bam.io')
@@ -81,7 +82,7 @@ class MainCalling(object):
         output_vcf_path = SnakemakeUtils.load_object(output_path)[0].path
         shutil.copyfile(output_vcf_path, self._args.output)
 
-    def __create_snakemake_config_data(self) -> Dict:
+    def __create_snakemake_config_data(self) -> dict:
         """
         Creates a Snakemake configuration file.
         :return: Config file data
@@ -96,7 +97,7 @@ class MainCalling(object):
                     'path': str(self._args.reference)}
             },
             'variant_filtering': {},
-            'input_type': 'illumina'
+            'input_type': self._args.input_type,
         }
         for k in ['calling_method', 'skip_variants', 'mutation_rate', 'minimal_bq', 'minimal_mq', 'count_orphans',
                   'disable_baq']:
@@ -106,7 +107,7 @@ class MainCalling(object):
             config_data['variant_calling']['variants_only'] = False
         return config_data
 
-    def __generate_consensus_sequence(self, output_path: Path, config_data: Dict[str, Any]) -> None:
+    def __generate_consensus_sequence(self, output_path: Path, config_data: dict[str, Any]) -> None:
         """
         Generates the consensus sequence by applying the detected variants to the reference sequence.
         :param output_path: Output path to save the consensus sequence

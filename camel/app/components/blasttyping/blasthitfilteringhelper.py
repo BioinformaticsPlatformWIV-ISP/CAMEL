@@ -1,11 +1,11 @@
-from typing import List, Union
+from typing import Union
 
 from camel.app.components.genedetection.genedetectionblasthit import GeneDetectionBlastHit
 from camel.app.components.sequencetyping.sequencetypingblasthit import SequenceTypingBlastHit
 from camel.app.loggers import logger
 
 
-class BlastHitFilteringHelper(object):
+class BlastHitFilteringHelper:
     """
     Class that filters list of BlastHit objects.
     """
@@ -13,7 +13,7 @@ class BlastHitFilteringHelper(object):
     BlastHit = Union[GeneDetectionBlastHit, SequenceTypingBlastHit]
 
     @staticmethod
-    def detect_best_hits(hits: List[BlastHit]) -> List[BlastHit]:
+    def detect_best_hits(hits: list[BlastHit]) -> list[BlastHit]:
         """
         Detects the best hits out of a list of BLAST hits.
         Cases:
@@ -24,7 +24,7 @@ class BlastHitFilteringHelper(object):
         :param hits: Hits
         :return: Best hit(s)
         """
-        logger.debug("Detecting best from list of {} hit(s)".format(len(hits)))
+        logger.debug(f"Detecting best from list of {len(hits)} hit(s)")
         if len(hits) == 0:
             raise ValueError("Input list is empty")
         perfect_hits = [h for h in hits if h.blast_stats.is_perfect_hit()]
@@ -40,7 +40,7 @@ class BlastHitFilteringHelper(object):
             return best_hits
 
     @staticmethod
-    def __get_best_imperfect_hits(hits: List[BlastHit]) -> List[BlastHit]:
+    def __get_best_imperfect_hits(hits: list[BlastHit]) -> list[BlastHit]:
         """
         Returns the best imperfect hits from a list of blast hits. If there are multiple equivalent imperfect hits,
         all of them are returned.
@@ -76,7 +76,7 @@ class BlastHitFilteringHelper(object):
         return hit.blast_stats.subject_length - hit.blast_stats.alignment_length + hit.blast_stats.gaps
 
     @staticmethod
-    def filter_percent_identity(hits: List[BlastHit], min_percent_identity: float) -> List[BlastHit]:
+    def filter_percent_identity(hits: list[BlastHit], min_percent_identity: float) -> list[BlastHit]:
         """
         Filters a list of BLAST hits based on percent identity.
         :param hits: List of BLAST hits
@@ -84,12 +84,11 @@ class BlastHitFilteringHelper(object):
         :return: Filtered hits
         """
         filtered_hits = [hit for hit in hits if hit.blast_stats.percent_identity >= min_percent_identity]
-        logger.info('{}/{} hits passed percent identity filtering ({} %)'.format(
-            len(filtered_hits), len(hits), min_percent_identity))
+        logger.info(f'{len(filtered_hits)}/{len(hits)} hits passed percent identity filtering ({min_percent_identity} %)')
         return filtered_hits
 
     @staticmethod
-    def filter_coverage(hits: List[BlastHit], min_coverage: float) -> List[BlastHit]:
+    def filter_coverage(hits: list[BlastHit], min_coverage: float) -> list[BlastHit]:
         """
         Filters a list of BLAST hits based on coverage.
         :param hits: List of BLAST hits
@@ -97,6 +96,5 @@ class BlastHitFilteringHelper(object):
         :return: Filtered hits
         """
         filtered_hits = [hit for hit in hits if hit.blast_stats.subject_coverage >= min_coverage]
-        logger.info('{}/{} hits passed length coverage filtering ({} %)'.format(
-            len(filtered_hits), len(hits), min_coverage))
+        logger.info(f'{len(filtered_hits)}/{len(hits)} hits passed length coverage filtering ({min_coverage} %)')
         return filtered_hits

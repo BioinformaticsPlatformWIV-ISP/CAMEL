@@ -4,7 +4,7 @@ from camel.app.camel import Camel
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-from camel.resources.snakefile import assembly
+from camel.resources.snakefile import assembly, variant_calling
 from camel.scripts.mycobacteriumpipeline.snakefile import spoligotyping
 
 
@@ -14,12 +14,13 @@ rule spoligotyping_downsample:
     """
     input:
         IO_FASTQ = Path(config['working_dir']) / 'fq_dict.io',
-        INFORMS_coverage = Path(config['working_dir']) / assembly.get_depth_inform('fastq_pe', 'ref')
+        INFORMS_coverage = Path(config['working_dir']) / variant_calling.OUTPUT_VARIANT_CALLING_DEPTH_INFORMS
     output:
         FASTQ_PE = Path(config['working_dir']) / 'spoligotyping' / 'downsampling' / 'fastq-ds.io',
         INFORMS_spoligo_param = Path(config['working_dir']) / 'spoligotyping' / 'downsampling' / 'informs-param.io'
     params:
-        dir_ = Path(config['working_dir']) / 'spoligotyping' / 'downsampling'
+        dir_ = Path(config['working_dir']) / 'spoligotyping' / 'downsampling',
+        read_key = 'SE' if config['input_type'] == 'ont' else 'PE'
     run:
         import logging
         from camel.app.tools.seqtk.seqtksubsample import SeqtkSubsample
@@ -40,7 +41,7 @@ rule spoligotyping_downsample:
             SnakemakeUtils.dump_object(seqtk.tool_outputs['FASTQ_PE'], Path(output.FASTQ_PE))
         else:
             fq_dict = SnakemakeUtils.load_object(Path(input.IO_FASTQ))
-            SnakemakeUtils.dump_object(fq_dict['PE'], Path(output.FASTQ_PE))
+            SnakemakeUtils.dump_object(fq_dict[params.read_key], Path(output.FASTQ_PE))
             SnakemakeUtils.dump_object({
                 'min_strict': max(round(estimated_coverage / 10), 3),
                 'min_relaxed': max(round(estimated_coverage / 10), 3),
@@ -52,8 +53,8 @@ rule spoligotyping_spotyping:
     Runs the SpoTyping tool.
     """
     input:
-        FASTQ = rules.spoligotyping_downsample.output.FASTQ_PE if config['input_type'] == 'illumina' else [],
-        FASTA = Path(config['working_dir']) / assembly.OUTPUT_ASSEMBLY_FASTA if config['input_type'] in ('fasta', 'fasta_with_vcf') else [],
+        FASTQ = rules.spoligotyping_downsample.output.FASTQ_PE if config['input_type'] in ( 'illumina', 'ont') else [],
+        FASTA = Path(config['working_dir']) / assembly.OUTPUT_ASSEMBLY_FASTA if config['input_type'] in ('fasta', 'fasta_with_vcf', 'ont') else [],
         INFORMS_spoligo_param = rules.spoligotyping_downsample.output.INFORMS_spoligo_param if config['input_type'] == 'illumina' else []
     output:
         VAL_type_binary = Path(config['working_dir']) / 'spoligotyping' / 'VAL_binary.io',
@@ -73,7 +74,7 @@ rule spoligotyping_spotyping:
                 swift='off', min_strict=spotyping_params['min_strict'], min_relaxed=spotyping_params['min_relaxed'])
         else:
             SnakemakeUtils.add_pickle_input(spotyping, params.key, Path(input.FASTA))
-            spotyping.update_parameters(swift='off', fasta=None)
+            spotyping.update_parameters(swift='off', fasta=True)
         step = Step(str(rule), spotyping, Camel.get_instance(), Path(params.dir_))
         step.run_step()
         spotyping.informs['_tag'] = 'Spoligotyping'
