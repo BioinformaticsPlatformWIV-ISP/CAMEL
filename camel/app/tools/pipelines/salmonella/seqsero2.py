@@ -79,7 +79,7 @@ class SeqSero2(Tool):
             if 'FASTQ_ONT' in self._tool_inputs:  # in case of ONT input data
                 # create intermediary input dir because Seqsero2 needs a different input than output dir
                 (self.folder / 'in').mkdir()
-                if self._tool_inputs['FASTQ_ONT'][0].path.suffix == '.gz':
+                if FileSystemHelper.is_gzipped(self._tool_inputs['FASTQ_ONT'][0].path):
                     # Gunzip file because in -t 5 the input needs to be gunzipped.
                     fastq_gunzipped = self.folder / 'in' / self._tool_inputs['FASTQ_ONT'][0].path.stem
                     FileSystemHelper.gzip_extract(self._tool_inputs['FASTQ_ONT'][0].path, fastq_gunzipped)
