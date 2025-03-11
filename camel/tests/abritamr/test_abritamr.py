@@ -19,7 +19,6 @@ class TestAbriTAMR(CamelTestSuite):
     qc_file = test_file_dir / 'qc_file.txt'
     summary_matches = test_file_dir / 'summary_matches.txt'
     summary_partials = test_file_dir / 'summary_partials.txt'
-    summary_out = test_file_dir / 'summary_out_abritamr.tsv'
     input_fasta_file = test_file_dir / 'assembly_filtered.fasta'
 
     def test_abritamr_run(self) -> None:
@@ -59,7 +58,6 @@ class TestAbriTAMR(CamelTestSuite):
         # test abritamr reporter
         abritamrreporter = AbriTAMRReporter(self.camel)
         abritamrreporter.add_input_files({
-            'TSV': [ToolIOFile(self.summary_out)],
             'TXT_MATCHES': [ToolIOFile(self.summary_matches)],
             'TXT_PARTIALS': [ToolIOFile(self.summary_partials)],
             'REPORT_ABRITAMR':  abritamr.tool_outputs['REPORT_ABRITAMR']

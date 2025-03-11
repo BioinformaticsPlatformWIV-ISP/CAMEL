@@ -112,7 +112,6 @@ rule abritamr_report:
     This rule creates a simple HTML output report for the AbriTAMR tool.
     """
     input:
-        TSV = rules.abritamr_create_summary.output.TSV,
         REPORT_ABRITAMR = rules.abritamr_report_run.output.REPORT_ABRITAMR,
         INFORMS_ABRITAMR_RUN = rules.abritamr_run.output.INFORMS,
         TXT_MATCHES = rules.abritamr_run.output.TXT_MATCHES,
@@ -125,8 +124,7 @@ rule abritamr_report:
         from camel.app.tools.abritamr.abritamrreporter import AbriTAMRReporter
 
         reporter = AbriTAMRReporter(camel)
-        SnakemakeUtils.add_pickle_inputs(reporter, input, excluded_keys=['TSV'])
-        reporter.add_input_files({'TSV': [ToolIOFile(Path(input.TSV))]})
+        SnakemakeUtils.add_pickle_inputs(reporter, input)
         step = Step(str(rule), reporter, camel, params.running_dir)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(reporter, output)

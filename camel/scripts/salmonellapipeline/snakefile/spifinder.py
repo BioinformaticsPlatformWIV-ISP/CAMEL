@@ -1,50 +1,18 @@
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Union
 
 SNAKEFILE_SPIFINDER = f'{Path(__file__).parent / Path(__file__).stem}.smk'
 _dir_spifinder = Path('spifinder')
-OUTPUT_SPIFINDER_FASTQ_JSON = _dir_spifinder / 'spifinder_fastq' / '{input_format}' / 'spifinder_output.io'
+OUTPUT_SPIFINDER_FASTQ_JSON = _dir_spifinder / 'spifinder_fastq' / 'spifinder_output.io'
 OUTPUT_SPIFINDER_FASTA_JSON = _dir_spifinder / 'spifinder_fasta' / 'spifinder_output.io'
-OUTPUT_SPIFINDER_REPORT = _dir_spifinder / '{input_format}' / 'html.io'
-OUTPUT_SPIFINDER_FASTQ_INFORMS = _dir_spifinder / 'spifinder_fastq' / '{input_format}' / 'informs.io'
+OUTPUT_SPIFINDER_REPORT = _dir_spifinder / 'html.io'
+OUTPUT_SPIFINDER_FASTQ_INFORMS = _dir_spifinder / 'spifinder_fastq' / 'informs.io'
 OUTPUT_SPIFINDER_FASTA_INFORMS = _dir_spifinder / 'spifinder_fasta' / 'informs.io'
-OUTPUT_SPIFINDER_REPORT_EMPTY = _dir_spifinder / '{input_format}' / 'html-empty.io'
-OUTPUT_SPIFINDER_SUMMARY = _dir_spifinder / '{input_format}' / 'summary_out.tsv'
-OUTPUT_SPIFINDER_DOC = _dir_spifinder / '{input_format}' / 'spifinder_function_category.tsv'
-OUTPUT_SPIFINDER_SUMMARY_IO = _dir_spifinder / '{input_format}' / 'summary_out.io'
-
-
-def get_reports(config: Dict[str, Any]) -> List[Path]:
-    """
-    Returns the paths to the spifinder reports.
-    :param config: Snakemake configuration
-    :return: Report path(s)
-    """
-    input_type = config['input_type']
-    paths = []
-
-    if input_type == 'fasta':
-        if 'spifinder' in config['analyses']:
-            paths.append(str(OUTPUT_SPIFINDER_REPORT).format(input_format='fasta'))
-        else:
-            paths.append(str(OUTPUT_SPIFINDER_REPORT_EMPTY).format(input_format='fasta'))
-
-    # PE reads
-    if input_type in ('illumina', 'hybrid'):
-        if 'spifinder' in config['analyses']:
-            paths.append(str(OUTPUT_SPIFINDER_REPORT).format(input_format='fastq_pe'))
-        else:
-            paths.append(str(OUTPUT_SPIFINDER_REPORT_EMPTY).format(input_format='fastq_pe'))
-
-    # SE reads
-    if input_type in ('ont', 'hybrid'):
-        if 'spifinder' in config['analyses']:
-            paths.append(str(OUTPUT_SPIFINDER_REPORT).format(input_format='fastq_se'))
-        else:
-            paths.append(str(OUTPUT_SPIFINDER_REPORT_EMPTY).format(input_format='fastq_se'))
-
-    return [Path(config['working_dir']) / p for p in paths]
+OUTPUT_SPIFINDER_REPORT_EMPTY = _dir_spifinder / 'html-empty.io'
+OUTPUT_SPIFINDER_SUMMARY = _dir_spifinder / 'summary_out.tsv'
+OUTPUT_SPIFINDER_DOC = _dir_spifinder / 'spifinder_function_category.tsv'
+OUTPUT_SPIFINDER_SUMMARY_IO = _dir_spifinder / 'summary_out.io'
 
 
 def get_command_informs(config: Dict[str, Any]) -> List[Path]:
@@ -60,18 +28,18 @@ def get_command_informs(config: Dict[str, Any]) -> List[Path]:
         return []
 
     # FASTA input
-    if input_type == 'fasta':
+    if input_type in ('fasta', 'hybrid'):
         paths.append(OUTPUT_SPIFINDER_FASTA_INFORMS)
 
     # PE reads
-    if input_type in ('illumina', 'hybrid'):
+    if input_type == 'illumina':
         paths.append(OUTPUT_SPIFINDER_FASTA_INFORMS)
-        paths.append(str(OUTPUT_SPIFINDER_FASTQ_INFORMS).format(input_format='fastq_pe'))
+        paths.append(str(OUTPUT_SPIFINDER_FASTQ_INFORMS))
 
     # SE reads
-    if input_type in ('ont', 'hybrid'):
+    if input_type == 'ont':
         paths.append(OUTPUT_SPIFINDER_FASTA_INFORMS)
-        paths.append(str(OUTPUT_SPIFINDER_FASTQ_INFORMS).format(input_format='fastq_se'))
+        paths.append(str(OUTPUT_SPIFINDER_FASTQ_INFORMS))
     return [Path(config['working_dir']) / p for p in paths]
 
 
@@ -89,15 +57,15 @@ def get_summaries(config: Dict[str, Any]) -> List[Path]:
 
     # FASTA input
     if input_type == 'fasta':
-        paths.append(str(OUTPUT_SPIFINDER_SUMMARY).format(input_format='fasta'))
+        paths.append(str(OUTPUT_SPIFINDER_SUMMARY))
 
     # PE reads
     if input_type in ('illumina', 'hybrid'):
-        paths.append(str(OUTPUT_SPIFINDER_SUMMARY).format(input_format='fastq_pe'))
+        paths.append(str(OUTPUT_SPIFINDER_SUMMARY))
 
     # SE reads
     if input_type in ('ont', 'hybrid'):
-        paths.append(str(OUTPUT_SPIFINDER_SUMMARY).format(input_format='fastq_se'))
+        paths.append(str(OUTPUT_SPIFINDER_SUMMARY))
 
     return [Path(config['working_dir']) / p for p in paths]
 
