@@ -104,6 +104,7 @@ class TestMockPipeline(CamelTestSuite):
             '--detection-method', 'blast',
             '--ncbi-amr',
             '--threads', '8',
+            '--confindr'
         ])
         pipeline.run()
         self.assertGreater(path_report_out.stat().st_size, 0)

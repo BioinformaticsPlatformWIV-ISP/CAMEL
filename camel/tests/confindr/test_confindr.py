@@ -73,6 +73,13 @@ class TestConFindr(CamelTestSuite):
         self.assertGreater(Path(confindr.tool_outputs['CSV'][0].path).stat().st_size, 0)
         self.assertIn('ContamStatus', confindr.informs)
 
+        # Run the reporter
+        reporter = ConFindrReporter(Camel.get_instance())
+        reporter.add_input_informs({'confindr': confindr.informs})
+        reporter.run(self.running_dir)
+        self.assertIn('HTML', reporter.tool_outputs)
+        self.assertGreater(len(reporter.tool_outputs['HTML'][0].value.to_html()), 0)
+
     def test_confindr_main_script_se(self) -> None:
         """
         Tests the ConFinder main script.

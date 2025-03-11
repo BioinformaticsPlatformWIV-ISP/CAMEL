@@ -46,6 +46,7 @@ class ConFindr(Tool):
         ] + self._build_options())
         self._execute_command()
         self.__set_output(dir_out)
+        self._check_output_content()
 
     def __symlink_input_files(self) -> Path:
         """
@@ -73,6 +74,15 @@ class ConFindr(Tool):
         csv_file = dir_out / 'confindr_report.csv'
         self._tool_outputs['CSV'] = [ToolIOFile(csv_file)]
         self._informs.update(pd.read_csv(csv_file).to_dict('records')[0])
+
+    def _check_output_content(self) -> None:
+        """
+        Check the tool output content for errors.
+        :return: None
+        """
+        if self._informs['Genus'] == 'Error processing sample':
+            self._informs['has_error'] = True  # set be not used for now, perhaps in future
+            self._informs['NumContamSNVs'] = None  # important, will cause the tool to be noted as skipped in the overview
 
     def _check_command_output(self) -> None:
         """
