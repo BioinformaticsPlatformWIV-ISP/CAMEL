@@ -25,7 +25,7 @@ rule spifinder_fastq_run:
         JSON = Path(config['working_dir']) / 'spifinder' / 'spifinder_fastq' / 'spifinder_output.io',
         INFORMS = Path(config['working_dir']) / 'spifinder' / 'spifinder_fastq' / 'informs.io'
     params:
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'spifinder'/ 'spifinder_fastq',
+        running_dir = Path(config['working_dir']) / 'spifinder'/ 'spifinder_fastq',
         db_path = config['spifinder']['path']
     run:
         from camel.app.tools.pipelines.salmonella.spifinder import SPIFinder
@@ -78,7 +78,7 @@ rule spifinder_create_summary:
         TSV = Path(config['working_dir']) / 'spifinder' / 'summary_out.tsv',
         TSV_documentation = Path(config['working_dir']) / 'spifinder' / 'spifinder_function_category.tsv'
     params:
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'spifinder'
+        running_dir = Path(config['working_dir']) / 'spifinder'
     run:
         informs_fasta = SnakemakeUtils.load_object(Path(input.INFORMS_spifinder_fasta))
         with Path(output.TSV).open('w') as handle:
@@ -108,7 +108,7 @@ rule spifinder_report:
     output:
         VAL_HTML = Path(config['working_dir']) / 'spifinder' / 'html.io'
     params:
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'spifinder'
+        running_dir = Path(config['working_dir']) / 'spifinder'
     run:
         from camel.app.tools.pipelines.salmonella.spifinderreporter import SPIFinderReporter
 
@@ -130,7 +130,7 @@ rule spifinder_report_empty:
     output:
         VAL_HTML = Path(config['working_dir']) / 'spifinder' / 'html-empty.io'
     params:
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'spifinder'
+        running_dir = Path(config['working_dir']) / 'spifinder'
     run:
         from camel.app.tools.pipelines.salmonella.spifinderreporter import SPIFinderReporter
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils

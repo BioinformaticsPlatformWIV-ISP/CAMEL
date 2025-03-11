@@ -21,7 +21,7 @@ rule serotyping_sistr_run:
         JSON = Path(config['working_dir']) / 'serotyping_sistr' / 'sistr_output.io',
         INFORMS = Path(config['working_dir']) / 'serotyping_sistr' / 'informs.io'
     params:
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'serotyping_sistr',
+        running_dir = Path(config['working_dir']) / 'serotyping_sistr',
         db_path_sistr = config['serotyping']['sistr']['path']
     run:
         from camel.app.tools.pipelines.salmonella.sistr import Sistr
@@ -43,7 +43,7 @@ rule serotyping_sistr_dump_summary_info:
     output:
         VAL_TSV_sistr = Path(config['working_dir']) / 'serotyping_sistr'/ 'summary_out_sistr.tsv'
     params:
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'serotyping_sistr'
+        running_dir = Path(config['working_dir']) / 'serotyping_sistr'
     run:
         import copy
 
@@ -91,7 +91,7 @@ rule serotyping_sistr_report:
     output:
         VAL_HTML = Path(config['working_dir']) / 'serotyping_sistr' / 'html_sistr.io'
     params:
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'serotyping_sistr' ,
+        running_dir = Path(config['working_dir']) / 'serotyping_sistr' ,
         db_path_sistr = config['serotyping']['sistr']['path']
     run:
         from camel.app.tools.pipelines.salmonella.sistrreporter import SistrReporter
@@ -110,7 +110,7 @@ rule serotyping_sistr_report_empty:
     output:
         VAL_HTML = Path(config['working_dir']) / 'serotyping_sistr' / 'html_sistr-empty.io'
     params:
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'serotyping_sistr'
+        running_dir = Path(config['working_dir']) / 'serotyping_sistr'
     run:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         from camel.app.tools.pipelines.salmonella.sistrreporter import SistrReporter

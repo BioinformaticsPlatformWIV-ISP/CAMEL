@@ -23,7 +23,7 @@ rule serotyping_seqsero2_run_fasta:
         INFORMS = Path(config['working_dir']) / 'serotyping_seqsero2' / 'serotyping_seqsero2_kmer' / 'informs.io'
     params:
         mode = 'kmer',
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'serotyping_seqsero2' / f'serotyping_seqsero2_kmer',
+        running_dir = Path(config['working_dir']) / 'serotyping_seqsero2' / f'serotyping_seqsero2_kmer',
         db_path_seqsero2 = config['serotyping']['seqsero2']['path']
     run:
         from camel.app.tools.pipelines.salmonella.seqsero2 import SeqSero2
@@ -70,8 +70,8 @@ rule serotyping_seqsero2_dump_summary_info:
     This rule creates a simple output summary for the SeqSero2 serotyping analysis.
     """
     input:
-        TXT_seqsero2_kmer = lambda wildcards: str(rules.serotyping_seqsero2_run_fasta.output.TXT),
-        INFORMS_seqsero2_kmer = lambda wildcards: str(rules.serotyping_seqsero2_run_fasta.output.INFORMS),
+        TXT_seqsero2_kmer = rules.serotyping_seqsero2_run_fasta.output.TXT,
+        INFORMS_seqsero2_kmer = rules.serotyping_seqsero2_run_fasta.output.INFORMS,
         TXT_seqsero2_allele = lambda wildcards: str(rules.serotyping_seqsero2_run_fastq.output.TXT).format(mode='allele') if config['input_type'] == 'illumina' else [],  # exclude fasta, ONT & hybrid
         INFORMS_seqsero2_allele = lambda wildcards: str(rules.serotyping_seqsero2_run_fastq.output.INFORMS).format(mode='allele') if config['input_type'] == 'illumina' else [],  # exclude fasta, ONT & hybrid
         TXT_seqsero2_kmerread = lambda wildcards: str(rules.serotyping_seqsero2_run_fastq.output.TXT).format(mode='kmerread') if config['input_type'] in ('ont', 'illumina') else [],
@@ -79,7 +79,7 @@ rule serotyping_seqsero2_dump_summary_info:
     output:
         VAL_TSV_seqsero2 = Path(config['working_dir']) / 'serotyping_seqsero2' / 'summary_out_seqsero2.tsv'
     params:
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'serotyping_seqsero2' 
+        running_dir = Path(config['working_dir']) / 'serotyping_seqsero2'
     run:
         # parse obligate SeqSero2 output
         informs_seqsero2_kmer = SnakemakeUtils.load_object(Path(str(input.INFORMS_seqsero2_kmer)))
@@ -111,14 +111,14 @@ rule serotyping_seqsero2_report:
     For FASTA and hybrid input, only the FASTA input is used.
     """
     input:
-        TXT_seqsero2_kmer = lambda wildcards: str(rules.serotyping_seqsero2_run_fasta.output.TXT),
+        TXT_seqsero2_kmer = rules.serotyping_seqsero2_run_fasta.output.TXT,
         TXT_seqsero2_allele = lambda wildcards: str(rules.serotyping_seqsero2_run_fastq.output.TXT).format(mode='allele') if config['input_type'] == 'illumina' else [],  # exclude fasta, ONT & hybrid
         TXT_seqsero2_kmerread = lambda wildcards: str(rules.serotyping_seqsero2_run_fastq.output.TXT).format(mode='kmerread') if config['input_type'] in ('ont', 'illumina') else [],
-        INFORMS_serotyping_seqsero2 = lambda wildcards: str(rules.serotyping_seqsero2_run_fasta.output.INFORMS)
+        INFORMS_serotyping_seqsero2 = rules.serotyping_seqsero2_run_fasta.output.INFORMS
     output:
         VAL_HTML = Path(config['working_dir']) / 'serotyping_seqsero2' / 'html_seqsero2.io'
     params:
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'serotyping_seqsero2',
+        running_dir = Path(config['working_dir']) / 'serotyping_seqsero2',
         db_path_seqsero2 = config['serotyping']['seqsero2']['path']
     run:
         from camel.app.tools.pipelines.salmonella.seqsero2reporter import SeqSero2Reporter
@@ -141,7 +141,7 @@ rule serotyping_seqsero2_report_empty:
     output:
         VAL_HTML = Path(config['working_dir']) / 'serotyping_seqsero2' / 'html_seqsero2-empty.io'
     params:
-        running_dir = lambda wildcards: Path(config['working_dir']) / 'serotyping_seqsero2'
+        running_dir = Path(config['working_dir']) / 'serotyping_seqsero2'
     run:
         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         from camel.app.tools.pipelines.salmonella.seqsero2reporter import SeqSero2Reporter
