@@ -16,7 +16,7 @@ class UpdateGMMReport(Tool):
     """
     INPUT_KEYS = ['TSV_STRAINS', 'TSV_GMM_VECTORS', 'TSV_GMM_JUNCTIONS', 'VAL_HTML_VECTORS', 'VAL_HTML_JUNCTIONS',
                   'TSV_GMM_DB']
-    COLOR_CODE = {'STRAIN_MATCH': 'green', 'GMM_MATCH': 'yellow', 'BOTH_MATCH': 'red', 'UNKNOWN_MATCH': 'purple'}
+    COLOR_CODE = {'STRAIN_MATCH': 'green', 'GMM_MATCH': 'yellow', 'BOTH_MATCH': 'red', 'UNKNOWN_MATCH': 'grey'}
 
     def __init__(self, camel: Camel) -> None:
         """
@@ -54,31 +54,29 @@ class UpdateGMMReport(Tool):
         current_report_section = self._tool_inputs['VAL_HTML_VECTORS'][0].value
 
         new_section = HtmlReportSection('Interpretation')
-        new_section.add_header('Interpretation', level=4)
 
         if not (colored_matches['raw_table']['strain'] and colored_matches['raw_table']['construct']):
             new_section.add_paragraph('No GMM construct detected.')
-            return new_section
-
-        column_names = ['strain', 'construct']
-        new_section.add_table(colored_matches['colored_table'], column_names, [('class', 'data')])
-
-        if matches['strain']:
-            new_section.add_paragraph(f'The strain matches closely to <b>{matches["strain"]}</b> '
-                                      f'which has been used in GMMs.')
         else:
-            new_section.add_paragraph('The strain does not match any known GMM strains in the database.')
-        if matches['construct']:
-            new_section.add_paragraph(f'The <b>{matches["construct"]}</b> transgenic construct '
-                                      f'was detected in the strain.')
-        else:
-            new_section.add_paragraph(
-                'No transgenic constructs from the database were detected in the strain.')
+            column_names = ['strain', 'construct']
+            new_section.add_table(colored_matches['colored_table'], column_names, [('class', 'data')])
+
+            if matches['strain']:
+                new_section.add_paragraph(f'The strain matches closely to '
+                                          f'<b>{colored_matches["raw_table"]["strain"]}</b> '
+                                          f'which has been used in GMMs.')
+            else:
+                new_section.add_paragraph('The strain does not match any known GMM strains in the database.')
+            if matches['construct']:
+                new_section.add_paragraph(f'The <b>{colored_matches["raw_table"]["construct"]}</b> '
+                                          f'transgenic construct was detected in the strain.')
+            else:
+                new_section.add_paragraph(
+                    'No transgenic constructs from the database were detected in the strain.')
+            self.__add_explanation_matches(new_section)
 
         new_section.add_warning_message('The pipeline uses a targeted approach, which means that constructs '
                                         'and/or strains that are not in the database will be missed.')
-        self.__add_explanation_matches(new_section)
-
         current_report_section.add_html_object(new_section)
         return current_report_section
 
@@ -117,8 +115,8 @@ class UpdateGMMReport(Tool):
         identified_constructs = [x['construct'] for x in tsv_gmm_db]
         identified_strains = [x['strain'] for x in tsv_gmm_db]
 
-        strain_hit = [s for s in match_table['strain'] if s in identified_strains]
-        gmm_hit = [s for s in match_table['construct'] if s in identified_constructs]
+        strain_hit = [s for s in match_table['strain'] if s in identified_strains][0]
+        gmm_hit = [s for s in match_table['construct'] if s in identified_constructs][0]
 
         color = None
         if strain_hit and not gmm_hit:
@@ -129,7 +127,7 @@ class UpdateGMMReport(Tool):
             color = UpdateGMMReport.COLOR_CODE['BOTH_MATCH']
         else:
             color = UpdateGMMReport.COLOR_CODE['UNKNOWN_MATCH']
-        temp_table = [HtmlTableCell(text, color=color) for text in [strain_hit, gmm_hit]]
+        temp_table = [HtmlTableCell(text, color=color) for text in (strain_hit, gmm_hit)]
         table_to_return = {'colored_table': [(temp_table[0], temp_table[1])],
                            'raw_table': {'strain': strain_hit, 'construct': gmm_hit}}
         return table_to_return
@@ -147,5 +145,6 @@ class UpdateGMMReport(Tool):
             [HtmlTableCell('', color=UpdateGMMReport.COLOR_CODE['GMM_MATCH']), 'Matching GMM construct'],
             [HtmlTableCell('', color=UpdateGMMReport.COLOR_CODE['BOTH_MATCH']),
              'Both GMM strain and construct detected'],
-            [HtmlTableCell('', color=UpdateGMMReport.COLOR_CODE['UNKNOWN_MATCH']), 'Unknown combination detected'],
+            [HtmlTableCell('', color=UpdateGMMReport.COLOR_CODE['UNKNOWN_MATCH']),
+             'GMM strain and construct detected - Unknown combination'],
         ], None, [('class', 'data')])
