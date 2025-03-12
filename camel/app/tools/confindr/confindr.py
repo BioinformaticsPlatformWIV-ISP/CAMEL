@@ -83,7 +83,7 @@ class ConFindr(Tool):
         """
         if self._informs['Genus'] == 'Error processing sample':
             self._informs['has_error'] = True  # set, but not used for now, perhaps in future
-            # important, setting #SNVs to None will cause the tool to be noted as skipped in the overview
+            # important, setting NumContamSNVs to None will cause the tool to be noted as skipped in the overview
             self._informs['NumContamSNVs'] = None
 
     def _check_command_output(self) -> None:
