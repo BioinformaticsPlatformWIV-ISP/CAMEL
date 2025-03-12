@@ -17,6 +17,7 @@ class ConFindrReporter(Tool):
         """
         Initializes this tool.
         :param camel: CAMEL instance
+        :return: None
         """
         super().__init__('ConFindr reporter', '0.1', camel)
 

@@ -20,6 +20,7 @@ class ConFindr(Tool):
         """
         Initializes this tool.
         :param camel: CAMEL instance
+        :return: None
         """
         super().__init__('ConFindr', '0.8.2', camel)
 
@@ -77,12 +78,13 @@ class ConFindr(Tool):
 
     def _check_output_content(self) -> None:
         """
-        Check the tool output content for errors.
+        Checks the tool output content for errors.
         :return: None
         """
         if self._informs['Genus'] == 'Error processing sample':
-            self._informs['has_error'] = True  # set be not used for now, perhaps in future
-            self._informs['NumContamSNVs'] = None  # important, will cause the tool to be noted as skipped in the overview
+            self._informs['has_error'] = True  # set, but not used for now, perhaps in future
+            # important, setting #SNVs to None will cause the tool to be noted as skipped in the overview
+            self._informs['NumContamSNVs'] = None
 
     def _check_command_output(self) -> None:
         """
