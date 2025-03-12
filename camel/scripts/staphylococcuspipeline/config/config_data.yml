@@ -121,7 +121,7 @@ gene_detection:
 
   sccmec_cassette:
     path: /db/gene_detection/SCCmec_cassette
-    force_detection_method: srst2
+    force_detection_method: kma
 
   plasmidfinder:
     path: /db/gene_detection/PlasmidFinder-gram_positive
