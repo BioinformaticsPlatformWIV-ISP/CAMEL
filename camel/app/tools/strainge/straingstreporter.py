@@ -50,8 +50,7 @@ class StrainGSTReporter(Tool):
 
         # Add output tables
         output_table = self.__parse_input_file()
-        output_table = output_table.round(2)
-        self.__add_output_table(section, output_table.columns, output_table.values.tolist()[1:],
+        self.__add_output_table(section, output_table.columns, output_table.values.tolist(),
                                 f'StrainGST strain identification - {suffix_read_type}')
 
         # Add link to TSV file
@@ -65,11 +64,17 @@ class StrainGSTReporter(Tool):
     def __parse_input_file(self) -> pd.DataFrame:
         """
         Parses the input file.
-        :return: pd dataframe with relevant columns
+        :return: Dataframe with relevant columns
         """
-        to_return = pd.read_table(self._tool_inputs['TSV'][0].path,
+        to_return = pd.read_table(self._tool_inputs['TSV'][0].path, header=0,
                                   usecols=[1, 5, 9, 11, 14],
                                   names=['Strain', 'Coverage', 'Evenness', 'Relative abundance', 'Score'])
+        to_return['Coverage'] = pd.Series(["{0:.2f}%".format(float(val) * 100) for val in to_return['Coverage']],
+                                          index=to_return.index)
+        to_return['Evenness'] = pd.Series(["{0:.2f}%".format(float(val) * 100) for val in to_return['Evenness']],
+                                          index=to_return.index)
+        to_return['Relative abundance'] = pd.Series(
+            ["{0:.2f}%".format(float(val)) for val in to_return['Relative abundance']], index=to_return.index)
         return to_return
 
     def __generate_output_filename(self, prefix: str) -> str:

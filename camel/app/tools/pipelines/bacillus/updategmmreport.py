@@ -52,30 +52,34 @@ class UpdateGMMReport(Tool):
         matches = self._parse_tsv_files()
         colored_matches = self._generate_table_with_colors(matches)
         current_report_section = self._tool_inputs['VAL_HTML_VECTORS'][0].value
-        current_report_section.add_header('Interpretation', level=4)
+
+        new_section = HtmlReportSection('Interpretation')
+        new_section.add_header('Interpretation', level=4)
 
         if not (colored_matches['raw_table']['strain'] and colored_matches['raw_table']['construct']):
-            current_report_section.add_paragraph('No GMM construct detected')
-            return current_report_section
+            new_section.add_paragraph('No GMM construct detected.')
+            return new_section
 
         column_names = ['strain', 'construct']
-        current_report_section.add_table(colored_matches['colored_table'], column_names, [('class', 'data')])
+        new_section.add_table(colored_matches['colored_table'], column_names, [('class', 'data')])
 
         if matches['strain']:
-            current_report_section.add_paragraph(f'The strain matches closely to <b>{matches["strain"]}</b> '
-                                                 f'which has been used in GMMs.')
+            new_section.add_paragraph(f'The strain matches closely to <b>{matches["strain"]}</b> '
+                                      f'which has been used in GMMs.')
         else:
-            current_report_section.add_paragraph('The strain does not match any known GMM strains in the database.')
+            new_section.add_paragraph('The strain does not match any known GMM strains in the database.')
         if matches['construct']:
-            current_report_section.add_paragraph(f'The <b>{matches["construct"]}</b> transgenic construct '
-                                                 f'was detected in the strain.')
+            new_section.add_paragraph(f'The <b>{matches["construct"]}</b> transgenic construct '
+                                      f'was detected in the strain.')
         else:
-            current_report_section.add_paragraph(
+            new_section.add_paragraph(
                 'No transgenic constructs from the database were detected in the strain.')
 
-        current_report_section.add_warning_message('The pipeline uses a targeted approach, which means that constructs '
-                                                   'and/or strains that are not in the database will be missed.')
-        self.__add_explanation_matches(current_report_section)
+        new_section.add_warning_message('The pipeline uses a targeted approach, which means that constructs '
+                                        'and/or strains that are not in the database will be missed.')
+        self.__add_explanation_matches(new_section)
+
+        current_report_section.add_html_object(new_section)
         return current_report_section
 
     def _parse_tsv_files(self) -> dict:
@@ -141,6 +145,7 @@ class UpdateGMMReport(Tool):
         section.add_table([
             [HtmlTableCell('', color=UpdateGMMReport.COLOR_CODE['STRAIN_MATCH']), 'Matching frequent GMM strain'],
             [HtmlTableCell('', color=UpdateGMMReport.COLOR_CODE['GMM_MATCH']), 'Matching GMM construct'],
-            [HtmlTableCell('', color=UpdateGMMReport.COLOR_CODE['BOTH_MATCH']), 'Both GMM strain and construct detected'],
+            [HtmlTableCell('', color=UpdateGMMReport.COLOR_CODE['BOTH_MATCH']),
+             'Both GMM strain and construct detected'],
             [HtmlTableCell('', color=UpdateGMMReport.COLOR_CODE['UNKNOWN_MATCH']), 'Unknown combination detected'],
         ], None, [('class', 'data')])
