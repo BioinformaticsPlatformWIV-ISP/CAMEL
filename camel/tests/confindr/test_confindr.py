@@ -88,7 +88,7 @@ class TestConFindr(CamelTestSuite):
         dir_out = self.running_dir / 'out'
         dir_out.mkdir()
         confindr_main = MainConFindr([
-            '--fastq-se', str(TestConFindr.input_pe_reads[0]),
+            '--fastq-se', str(TestConFindr.input_se_reads),
             '--db', str(TestConFindr.db),
             '--working-dir', str(self.running_dir),
             '--output-html', str(dir_out / 'report.html'),
