@@ -132,9 +132,6 @@ class UpdateGMMReport(Tool):
             color = UpdateGMMReport.COLOR_CODE['BOTH_MATCH']
         if strain_hit and gmm_hit and (gmm_hit, strain_hit) not in perfect_matches:
             color = UpdateGMMReport.COLOR_CODE['UNKNOWN_MATCH']
-        print("HERE!!")
-        print(strain_hit)
-        print(gmm_hit)
         temp_table = [HtmlTableCell(text, color=color) for text in (strain_hit, gmm_hit)]
         table_to_return = {'colored_table': [(temp_table[0], temp_table[1])],
                            'raw_table': {'strain': strain_hit[0], 'construct': gmm_hit[0]}}
