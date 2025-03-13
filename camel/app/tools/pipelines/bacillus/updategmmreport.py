@@ -115,21 +115,29 @@ class UpdateGMMReport(Tool):
         identified_constructs = [x['construct'] for x in tsv_gmm_db]
         identified_strains = [x['strain'] for x in tsv_gmm_db]
 
-        strain_hit = [s for s in match_table['strain'] if s in identified_strains][0]
-        gmm_hit = [s for s in match_table['construct'] if s in identified_constructs][0]
+        strain_hit = [s for s in match_table['strain'] if s in identified_strains]
+        gmm_hit = [s for s in match_table['construct'] if s in identified_constructs]
+
+        if not (strain_hit and gmm_hit):
+            return {'raw_table': {'strain': [], 'construct': gmm_hit}}
 
         color = None
         if strain_hit and not gmm_hit:
             color = UpdateGMMReport.COLOR_CODE['STRAIN_MATCH']
+            gmm_hit = [None]
         if gmm_hit and not strain_hit:
             color = UpdateGMMReport.COLOR_CODE['GMM_MATCH']
+            strain_hit = [None]
         if strain_hit and gmm_hit and (gmm_hit, strain_hit) in perfect_matches:
             color = UpdateGMMReport.COLOR_CODE['BOTH_MATCH']
-        else:
+        if strain_hit and gmm_hit and (gmm_hit, strain_hit) not in perfect_matches:
             color = UpdateGMMReport.COLOR_CODE['UNKNOWN_MATCH']
+        print("HERE!!")
+        print(strain_hit)
+        print(gmm_hit)
         temp_table = [HtmlTableCell(text, color=color) for text in (strain_hit, gmm_hit)]
         table_to_return = {'colored_table': [(temp_table[0], temp_table[1])],
-                           'raw_table': {'strain': strain_hit, 'construct': gmm_hit}}
+                           'raw_table': {'strain': strain_hit[0], 'construct': gmm_hit[0]}}
         return table_to_return
 
     def __add_explanation_matches(self, section: HtmlReportSection) -> None:
