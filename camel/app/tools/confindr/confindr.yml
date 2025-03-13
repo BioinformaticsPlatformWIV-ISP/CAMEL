@@ -8,5 +8,5 @@ parameters:
   rmlst: {default: false, mandatory: false, option: --rmlst, value: null}
   quality_cutoff: {default: false, mandatory: false, option: --quality_cutoff, value: 20}
   threads: {default: true, mandatory: true, option: --threads, value: 4}
-  xmx: {default: true, mandatory: false, option: --Xmx, value: '4g'}
+  xmx: {default: true, mandatory: false, option: --Xmx, value: '20g'}
 tool_command: confindr.py
