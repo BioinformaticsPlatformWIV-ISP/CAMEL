@@ -147,7 +147,7 @@ rule combine_reports:
             report_structure, params.input_type, input.reports_contamination, input.report_confindr)
         report_structure.extend([
             ('Advanced QC', 'adv_qc', [Path(input.report_adv_qc)]),
-            ('Species identification', 'species', [Path(input.report_rmlst)]),
+            ('Species identification', 'species_id', [Path(input.report_rmlst)]),
             ('AMR detection', 'amr', [Path(x) for x in (
                 input.report_amrfinder, input.report_resfinder4, input.report_ampc_amr)]),
             ('Virulence detection', 'virulence', [Path(input.report_vfdb_core)]),
@@ -156,7 +156,7 @@ rule combine_reports:
             ('Sequence typing', 'st', [Path(x) for x in (
                 input.report_mlst, input.report_mlst_mcnally, input.report_cgmlst, input.report_cgmlst_ye,
                 input.report_cgmlst_yp, input.report_cgmlst_enterobase)]),
-            ('Species determination', 'species', [Path(input.report_species)]),
+            ('Lineage and biotype determination', 'lineage', [Path(input.report_species)]),
             ('Citations', 'citations', [Path(input.report_citations)]),
             ('Commands', 'commands', [Path(input.report_commands)])
         ])
