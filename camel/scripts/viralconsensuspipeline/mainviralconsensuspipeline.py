@@ -4,7 +4,7 @@ import json
 import re
 import shutil
 from pathlib import Path
-from typing import Optional, Sequence, List, Dict
+from typing import Optional, Sequence
 
 import pkg_resources
 import yaml
@@ -192,7 +192,7 @@ class MainViralConsensusPipeline(ReportPipeline):
                 self._args.working_dir, iterativemapping.OUTPUT_ITERATIVE_MAPPING_FASTA_CONSENSUS_FINAL_TRIMMED))
             shutil.copyfile(output_io_list[0].path, self._args.output_fasta)
 
-    def __config_add_yaml_data(self, config_data: Dict) -> None:
+    def __config_add_yaml_data(self, config_data: dict) -> None:
         """
         Adds the data from parsing the config YAML file.
         :param config_data: Configuration data
@@ -212,7 +212,7 @@ class MainViralConsensusPipeline(ReportPipeline):
                     self._args.species != 'other' else self._args.species_name
                 )))
 
-    def __config_add_nextclade_data(self, config_data: Dict) -> None:
+    def __config_add_nextclade_data(self, config_data: dict) -> None:
         """
         Adds the config data for the nextclade assay.
         :param config_data: Configuration data
@@ -229,7 +229,7 @@ class MainViralConsensusPipeline(ReportPipeline):
         if data_by_species.get(self._args.species, {}).get('nextclade_capitalize', False) is True:
             config_data['nextclade']['capitalize'] = True
 
-    def __config_add_iterative_mapping_data(self, config_data: Dict) -> None:
+    def __config_add_iterative_mapping_data(self, config_data: dict) -> None:
         """
         Adds the config data for the iterative mapping assay.
         :param config_data: Configuration data
@@ -239,10 +239,10 @@ class MainViralConsensusPipeline(ReportPipeline):
         if self._args.clair3_model is not None:
             clair3_model = self._args.clair3_model
         elif self._args.input_type == 'illumina':
-            logger.info(f'Clair3 model not specified, using default model for Illumina data')
+            logger.info("Clair3 model not specified, using default model for Illumina data")
             clair3_model = Path(Camel.get_instance().config['db_root'], 'clair3', 'models', 'ilmn')
         else:
-            logger.info(f'Clair3 model not specified, using default model for ONT data')
+            logger.info("Clair3 model not specified, using default model for ONT data")
             clair3_model = Path(Camel.get_instance().config['db_root'], 'clair3', 'models', 'ont')
 
         # Other values
@@ -256,7 +256,7 @@ class MainViralConsensusPipeline(ReportPipeline):
             'clair3': {'model': str(clair3_model)}
         }
 
-    def __config_add_coverage_data(self, config_data: Dict) -> None:
+    def __config_add_coverage_data(self, config_data: dict) -> None:
         """
         Adds the config data for the downsampling & gap identification.
         :param config_data: Configuration data
@@ -267,7 +267,7 @@ class MainViralConsensusPipeline(ReportPipeline):
             'gap_len_cutoff': self._args.gap_len_cutoff
         }
 
-    def __construct_config_file(self, input_files: Dict[str, List[Dict[str, str]]]) -> Path:
+    def __construct_config_file(self, input_files: dict[str, list[dict[str, str]]]) -> Path:
         """
         Constructs the Snakemake configuration file.
         :param input_files Input FASTQ files

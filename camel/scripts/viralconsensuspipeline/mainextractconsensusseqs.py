@@ -84,7 +84,7 @@ class MainExtractConsensusSeqs(object):
 
         # Check if segment was specified
         if segment is None:
-            raise ValueError(f"'--segment' needs to be specified for FASTA files with multiple sequences")
+            raise ValueError("'--segment' needs to be specified for FASTA files with multiple sequences")
 
         # Multiple sequences in FASTA file
         try:

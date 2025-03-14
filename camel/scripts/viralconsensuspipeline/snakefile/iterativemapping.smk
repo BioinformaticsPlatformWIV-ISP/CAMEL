@@ -2,7 +2,7 @@ import json
 import logging
 import shutil
 from pathlib import Path
-from typing import List, Union
+from typing import Union
 
 import pandas as pd
 
@@ -304,7 +304,7 @@ checkpoint iterative_mapping_collect_stats:
         combiner.update_parameters(nb_iter=str(params.nb_iter), output_filename=str(output.JSON))
         combiner.run(Path(str(params.dir_)))
 
-def _check_if_converged(wildcards) -> Union[Path, List[Path]]:
+def _check_if_converged(wildcards) -> Union[Path, list[Path]]:
     """
     Checks if the consensus sequence converged (no changes in the last two iterations).
     :return: Path / list of paths to generate
