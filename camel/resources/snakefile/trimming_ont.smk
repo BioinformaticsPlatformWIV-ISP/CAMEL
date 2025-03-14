@@ -123,6 +123,8 @@ rule trimming_ont_dump_summary_info:
         summary_data = [
             ('trim_ont_reads_in', informs_filtering['nb_seqs_in']),
             ('trim_ont_reads_out', informs_filtering['nb_seqs_out']),
+            ('trim_ont_min_length', informs_filtering['min_length']),
+            ('trim_ont_min_qual', informs_filtering['min_qual']),
             ('trim_ont_tool_version', informs_filtering['_name'])
         ]
         with open(output.TSV, 'w') as handle:
