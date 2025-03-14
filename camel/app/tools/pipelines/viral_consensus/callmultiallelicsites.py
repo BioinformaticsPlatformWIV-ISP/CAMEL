@@ -1,4 +1,4 @@
-from typing import List, Dict, Any
+from typing import Any
 
 import pandas as pd
 import vcf
@@ -72,7 +72,7 @@ class CallMultiAllelicSites(Tool):
                 })
         self._set_output(records_out)
 
-    def _set_output(self, records_out: List[Dict[str, Any]]) -> None:
+    def _set_output(self, records_out: list[dict[str, Any]]) -> None:
         """
         Collects the tool output.
         :param records_out: Output records with multi-allelic sites.

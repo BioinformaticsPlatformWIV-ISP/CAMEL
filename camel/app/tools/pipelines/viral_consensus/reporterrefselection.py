@@ -2,7 +2,6 @@ import json
 import logging
 import re
 from pathlib import Path
-from typing import Dict, List
 
 import pandas as pd
 
@@ -57,7 +56,7 @@ class ReporterRefSelection(Tool):
         super()._check_input()
 
     @staticmethod
-    def _parse_mash_output(mash_output: List[Path]) -> Dict[str, pd.DataFrame]:
+    def _parse_mash_output(mash_output: list[Path]) -> dict[str, pd.DataFrame]:
         """
         Parses the mash output for the input files.
         :param mash_output: mash output files
@@ -76,7 +75,7 @@ class ReporterRefSelection(Tool):
             data_mash['ref_id_fmt'] = data_mash['ref_id'].apply(lambda x: x.split('-')[0].replace('_', ' '))
         return mash_out_by_segment
 
-    def _parse_database_info(self, dir_db: Path) -> Dict:
+    def _parse_database_info(self, dir_db: Path) -> dict:
         """
         Parses the database information.
         :param dir_db: Database directory
@@ -85,7 +84,7 @@ class ReporterRefSelection(Tool):
         with path_metadata.open() as handle:
             return json.load(handle)
 
-    def _add_table_ref_metadata(self, section: HtmlReportSection, dir_db: Path, ref_by_seg: Dict[str, pd.Series]) -> \
+    def _add_table_ref_metadata(self, section: HtmlReportSection, dir_db: Path, ref_by_seg: dict[str, pd.Series]) -> \
             None:
         """
         Adds a table with metadata for the selected reference.
@@ -119,7 +118,7 @@ class ReporterRefSelection(Tool):
         # noinspection PyTypeChecker
         section.add_table(table_data, column_names, [('class', 'data')])
 
-    def __add_overview_table(self, section: HtmlReportSection, ref_by_segment: Dict[str, pd.Series]) -> None:
+    def __add_overview_table(self, section: HtmlReportSection, ref_by_segment: dict[str, pd.Series]) -> None:
         """
         Adds a table with an overview.
         :param section: Report section

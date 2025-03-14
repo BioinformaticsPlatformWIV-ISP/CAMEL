@@ -1,5 +1,4 @@
 import logging
-from typing import Dict
 
 import pandas as pd
 from Bio import SeqIO
@@ -83,7 +82,7 @@ class TrimFastaEdges(Tool):
             seq_records_out.append(SeqRecord(Seq(sequence.strip('N')), id=id_, description=''))
 
         # Create output FASTA file
-        path_fasta_out = self.folder / f'reference_masked.fasta'
+        path_fasta_out = self.folder / 'reference_masked.fasta'
         with path_fasta_out.open('w') as handle:
             SeqIO.write(seq_records_out, handle, 'fasta')
         self._informs['len_by_seq_id_out'] = {s.id: len(s) for s in seq_records_out}
@@ -103,7 +102,7 @@ class TrimFastaEdges(Tool):
             return True
         return False
 
-    def __extract_genome_data(self, seq_record_by_id: Dict[str, SeqIO.SeqRecord]) -> pd.DataFrame:
+    def __extract_genome_data(self, seq_record_by_id: dict[str, SeqIO.SeqRecord]) -> pd.DataFrame:
         """
         Creates a genome file needed by bedtools.
         :return: Path to genome file

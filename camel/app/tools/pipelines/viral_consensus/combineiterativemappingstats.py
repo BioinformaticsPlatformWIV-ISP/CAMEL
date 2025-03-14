@@ -2,7 +2,6 @@ import hashlib
 import json
 import logging
 from pathlib import Path
-from typing import List, Dict
 
 import vcf
 from Bio import SeqIO
@@ -29,13 +28,13 @@ class CollectIterativeMappingStats(Tool):
         Checks if the provided input is valid.
         """
         if 'FASTA' not in self._tool_inputs:
-            raise InvalidInputSpecificationError(f"Consensus FASTA input is required ('FASTA')")
+            raise InvalidInputSpecificationError("Consensus FASTA input is required ('FASTA')")
         if 'JSON_depth' not in self._tool_inputs:
-            raise InvalidInputSpecificationError(f"Depth information is required ('JSON_depth')")
+            raise InvalidInputSpecificationError("Depth information is required ('JSON_depth')")
         if 'VCF_p1' not in self._tool_inputs:
-            raise InvalidInputSpecificationError(f"Phase 1 VCF input is required ('VCF_p1')")
+            raise InvalidInputSpecificationError("Phase 1 VCF input is required ('VCF_p1')")
         if 'VCF_p2' not in self._tool_inputs:
-            raise InvalidInputSpecificationError(f"Phase 2 VCF input is required ('VCF_p2')")
+            raise InvalidInputSpecificationError("Phase 2 VCF input is required ('VCF_p2')")
         super()._check_input()
 
     def _execute_tool(self) -> None:
@@ -87,7 +86,7 @@ class CollectIterativeMappingStats(Tool):
             return hashlib.md5(full_seq.encode('ascii')).hexdigest()
 
     @staticmethod
-    def _count_variant_types(variants: List) -> Dict[str, int]:
+    def _count_variant_types(variants: list) -> dict[str, int]:
         """
         Counts the different variant types in the input list.
         :param variants: List of variants
@@ -101,7 +100,7 @@ class CollectIterativeMappingStats(Tool):
             'nb_indels_filt': sum(v.is_indel for v in variants if (v.FILTER is None) or (len(v.FILTER) == 0))
         }
 
-    def _collect_variant_stats(self, path_vcf: Path, phase: int, seq_ids: List[str]) -> None:
+    def _collect_variant_stats(self, path_vcf: Path, phase: int, seq_ids: list[str]) -> None:
         """
         Collects stats concerning the detected variants.
         :param path_vcf: Input VCF file

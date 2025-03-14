@@ -1,6 +1,5 @@
 import logging
 from pathlib import Path
-from typing import List, Dict
 
 from camel.app.camel import Camel
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
@@ -155,7 +154,7 @@ rule nextclade3_run:
             nextclade.run(Path(str(params.dir_)))
             SnakemakeUtils.dump_tool_outputs(nextclade, output)
 
-def get_nextclade_db(wildcards, segment: str, config: Dict) -> str:
+def get_nextclade_db(wildcards, segment: str, config: dict) -> str:
     """
     Returns the path to the Nextclade database.
     :param wildcards: Rule wildcards
@@ -172,7 +171,7 @@ def get_nextclade_db(wildcards, segment: str, config: Dict) -> str:
     informs_subtype = SnakemakeUtils.load_object(path_informs)
     return informs_subtype['nextclade_dbs'][segment]
 
-def get_nextclade_output(wildcards, key: str, config: Dict = None) -> List[str]:
+def get_nextclade_output(wildcards, key: str, config: dict = None) -> list[str]:
     """
     Aggregates the Nextclade output based on the database information.
     :param wildcards: Rule wildcards

@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import pandas as pd
 from pandas.errors import EmptyDataError
@@ -79,7 +79,7 @@ class Nextclade3(Tool):
             self._informs['results'].append(row)
 
     @staticmethod
-    def _get_database_info(dir_db: Path) -> Dict[str, Any]:
+    def _get_database_info(dir_db: Path) -> dict[str, Any]:
         """
         Returns the Nextclade database information.
         :return: Database information
@@ -96,7 +96,7 @@ class Nextclade3(Tool):
         try:
             data_db = pd.read_table(dir_db / 'report_clade_cols.tsv')
         except EmptyDataError:
-            logger.info(f'No metadata columns found')
+            logger.info('No metadata columns found')
             data_db = None
 
         # Return information

@@ -2,7 +2,7 @@ import json
 import logging
 from io import StringIO
 from pathlib import Path
-from typing import List, Dict, Union, Any
+from typing import Union, Any
 
 import pandas as pd
 from Bio import SeqIO
@@ -69,7 +69,7 @@ class RefSelection(Tool):
         self._tool_outputs['JSON'] = [ToolIOFile(path_out)]
 
     @staticmethod
-    def _parse_mash_output(mash_output: List[Path]) -> Dict[str, pd.DataFrame]:
+    def _parse_mash_output(mash_output: list[Path]) -> dict[str, pd.DataFrame]:
         """
         Parses the mash output for the input files.
         :param mash_output: mash output files
@@ -89,7 +89,7 @@ class RefSelection(Tool):
         return mash_out_by_segment
 
     @staticmethod
-    def _parse_database_info(dir_db: Path) -> Dict:
+    def _parse_database_info(dir_db: Path) -> dict:
         """
         Parses the database information.
         :param dir_db: Database directory
@@ -98,7 +98,7 @@ class RefSelection(Tool):
         with path_metadata.open() as handle:
             return json.load(handle)
 
-    def _merge_mash_output(self, mash_out_by_segment: Dict[str, pd.DataFrame]) -> Path:
+    def _merge_mash_output(self, mash_out_by_segment: dict[str, pd.DataFrame]) -> Path:
         """
         Merges the mash output for all segments.
         :param mash_out_by_segment: mash output by segment
@@ -113,7 +113,7 @@ class RefSelection(Tool):
         return path_out
 
     def _filter_mutually_exclusive_segments(
-            self, ref_by_segment: Dict[str, Union[pd.Series, None]], mut_exclusive_segments: List[str]) -> None:
+            self, ref_by_segment: dict[str, Union[pd.Series, None]], mut_exclusive_segments: list[str]) -> None:
         """
         Filters the mutually exclusive segments.
         :param ref_by_segment: Reference by segment
@@ -132,7 +132,7 @@ class RefSelection(Tool):
             for key in keys_discarded:
                 ref_by_segment[key] = None
 
-    def __create_fasta(self, ref_by_segment: Dict[str, Dict[str, Any]], dir_db: Path) -> Path:
+    def __create_fasta(self, ref_by_segment: dict[str, dict[str, Any]], dir_db: Path) -> Path:
         """
         Creates a FASTA file by combining the sequences of the selected references for each segment.
         :param ref_by_segment: Information on the selected reference genome by segment
@@ -140,7 +140,7 @@ class RefSelection(Tool):
         :return: Path to merged FASTA
         """
         if not (dir_db / 'fasta_by_segment').exists():
-            raise FileNotFoundError(f"Segment folder does not exist ('fasta_by_segment')")
+            raise FileNotFoundError("Segment folder does not exist ('fasta_by_segment')")
 
         # Collect corresponding FASTA records
         records_out = []
