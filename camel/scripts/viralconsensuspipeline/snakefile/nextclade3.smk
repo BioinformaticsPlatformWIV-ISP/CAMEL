@@ -128,7 +128,7 @@ rule nextclade3_run:
     """
     input:
         FASTA = rules.nextclade3_extract_segment.output.FASTA,
-        DB = lambda wildcards: get_nextclade_db(wildcards, segment=wildcards.segment, config=config)
+        DB = lambda wildcards: nextclade3.get_nextclade_db(wildcards, checkpoints, segment=wildcards.segment, config=config)
     output:
         TSV = Path(config['working_dir']) / 'nextclade' / '{segment}' / 'tsv.io',
         INFORMS = Path(config['working_dir']) / 'nextclade' / '{segment}' / 'informs.io'
@@ -154,48 +154,48 @@ rule nextclade3_run:
             nextclade.run(Path(str(params.dir_)))
             SnakemakeUtils.dump_tool_outputs(nextclade, output)
 
-def get_nextclade_db(wildcards, segment: str, config: dict) -> str:
-    """
-    Returns the path to the Nextclade database.
-    :param wildcards: Rule wildcards
-    :param segment: Segment
-    :param config: Snakemake config
-    :return: Path to the database
-    """
-    if config['nextclade'].get('dbs') is not None:
-        return config['nextclade']['dbs'][segment]
+# def get_nextclade_db(wildcards, segment: str, config: dict) -> str:
+#     """
+#     Returns the path to the Nextclade database.
+#     :param wildcards: Rule wildcards
+#     :param segment: Segment
+#     :param config: Snakemake config
+#     :return: Path to the database
+#     """
+#     if config['nextclade'].get('dbs') is not None:
+#         return config['nextclade']['dbs'][segment]
+#
+#     # Get data from subtype determination
+#     # noinspection PyUnresolvedReferences
+#     path_informs = Path(checkpoints.nextclade3_detect_subtype_report.get().output['INFORMS'])
+#     informs_subtype = SnakemakeUtils.load_object(path_informs)
+#     return informs_subtype['nextclade_dbs'][segment]
 
-    # Get data from subtype determination
-    # noinspection PyUnresolvedReferences
-    path_informs = Path(checkpoints.nextclade3_detect_subtype_report.get().output['INFORMS'])
-    informs_subtype = SnakemakeUtils.load_object(path_informs)
-    return informs_subtype['nextclade_dbs'][segment]
-
-def get_nextclade_output(wildcards, key: str, config: dict = None) -> list[str]:
-    """
-    Aggregates the Nextclade output based on the database information.
-    :param wildcards: Rule wildcards
-    :param config: Configuration
-    :param key: Output key (TSV / INFORMS)
-    :return: List of Nextclade outputs
-    """
-    # Extract segments
-    if config['nextclade'].get('dbs') is not None:
-        segments = list(config['nextclade']['dbs'].keys())
-    else:
-        # noinspection PyUnresolvedReferences
-        path_informs = Path(checkpoints.nextclade3_detect_subtype_report.get().output['INFORMS'])
-        informs_subtype = SnakemakeUtils.load_object(path_informs)
-        segments = list(informs_subtype['nextclade_dbs'].keys())
-
-    # Determine output
-    if key == 'TSV':
-        base_output = rules.nextclade3_run.output.TSV
-    elif key == 'INFORMS':
-        base_output = rules.nextclade3_run.output.INFORMS
-
-    # Return list of outputs
-    return [str(base_output).format(segment=segment) for segment in segments]
+# def get_nextclade_output(wildcards, key: str, config: dict = None) -> list[str]:
+#     """
+#     Aggregates the Nextclade output based on the database information.
+#     :param wildcards: Rule wildcards
+#     :param config: Configuration
+#     :param key: Output key (TSV / INFORMS)
+#     :return: List of Nextclade outputs
+#     """
+#     # Extract segments
+#     if config['nextclade'].get('dbs') is not None:
+#         segments = list(config['nextclade']['dbs'].keys())
+#     else:
+#         # noinspection PyUnresolvedReferences
+#         path_informs = Path(checkpoints.nextclade3_detect_subtype_report.get().output['INFORMS'])
+#         informs_subtype = SnakemakeUtils.load_object(path_informs)
+#         segments = list(informs_subtype['nextclade_dbs'].keys())
+#
+#     # Determine output
+#     if key == 'TSV':
+#         base_output = rules.nextclade3_run.output.TSV
+#     elif key == 'INFORMS':
+#         base_output = rules.nextclade3_run.output.INFORMS
+#
+#     # Return list of outputs
+#     return [str(base_output).format(segment=segment) for segment in segments]
 
 rule nextclade3_reporter:
     """

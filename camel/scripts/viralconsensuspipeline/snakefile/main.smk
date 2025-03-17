@@ -5,7 +5,7 @@ from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile import trimming_illumina, trimming_ont, trimming, downsampling, \
     contamination_check_kraken, core, human_read_scrubbing, assembly
 from camel.scripts.viralconsensuspipeline.snakefile import iterativemapping, refselection, preprocess, \
-    multiallelicsites, nextclade3
+    multiallelicsites, nextclade3, antivirals
 
 #######################
 # Included snakefiles #
@@ -22,6 +22,7 @@ include: preprocess.SNAKEFILE_PREPROCESS
 include: iterativemapping.SNAKEFILE_ITERATIVE_MAPPING
 include: nextclade3.SNAKEFILE_NEXTCLADE
 include: multiallelicsites.SNAKEFILE_MULTI_ALLELIC
+include: antivirals.SNAKEFILE_ANTIVIRALS
 
 
 #########
@@ -105,6 +106,7 @@ rule report_combine_all:
         report_nexclade_subtype = Path(config['working_dir']) / (nextclade3.OUTPUT_NEXTCLADE_SUBTYPE_REPORT if (config['nextclade'].get('db') is None) and ('nextclade' in config['analyses']) and config['input_type'] != 'fasta' else nextclade3.OUTPUT_NEXTCLADE_SUBTYPE_REPORT_EMPTY),
         report_nextclade = Path(config['working_dir']) / (nextclade3.OUTPUT_NEXTCLADE_REPORT if 'nextclade' in config['analyses'] else nextclade3.OUTPUT_NEXTCLADE_REPORT_EMPTY),
         report_multi_allelic = Path(config['working_dir']) / multiallelicsites.OUTPUT_MULTI_ALLELIC_REPORT if config['input_type'] != 'fasta' else [],
+        report_antivirals = Path(config['working_dir']) / (antivirals.OUTPUT_REPORT if 'antivirals' in config['analyses'] else antivirals.OUTPUT_REPORT_EMPTY),
         report_commands = Path(config['working_dir']) / 'report' / 'html-commands.io',
         report_citations = Path(config['working_dir'],core.OUTPUT_HTML_CITATIONS)
     output:
@@ -149,10 +151,11 @@ rule report_combine_all:
                 ('Pre-processing', 'pre_process', [Path(x) for x in (
                     input.report_preprocess_ampligone, input.report_preprocess_clipping, input.report_preprocess)]),
                 ('Consensus extraction', 'consensus', [Path(input.report_iterative_mapping)]),
-                ('Multi-allelic sites', 'multi_allelic', [Path(input.report_multi_allelic)])
+                ('Multi-allelic sites', 'multi_allelic', [Path(input.report_multi_allelic)]),
             ])
         report_structure.extend([
             ('Nextclade', 'nextclade', [Path(input.report_nexclade_subtype), Path(input.report_nextclade)]),
+            ('Antiviral resistance', 'antiviral', [Path(input.report_antivirals)]),
             ('Commands', 'commands', [Path(input.report_commands)]),
             ('Citations', 'citations', [Path(input.report_citations)]),
         ])
@@ -172,7 +175,8 @@ rule summary_combine_all:
         Path(config['working_dir']) / preprocess.OUTPUT_PRE_PROCESS_SUMMARY if config['input_type'] != 'fasta' else [],
         Path(config['working_dir']) / iterativemapping.OUTPUT_ITERATIVE_MAPPING_SUMMARY if config['input_type'] != 'fasta' else [],
         Path(config['working_dir']) / multiallelicsites.OUTPUT_MULTI_ALLELIC_SUMMARY if config['input_type'] != 'fasta' else [],
-        Path(config['working_dir']) / nextclade3.OUTPUT_NEXTCLADE_SUMMARY if 'nextclade' in config['analyses'] else []
+        Path(config['working_dir']) / nextclade3.OUTPUT_NEXTCLADE_SUMMARY if 'nextclade' in config['analyses'] else [],
+        Path(config['working_dir']) / antivirals.OUTPUT_SUMMARY if 'antivirals' in config['analyses'] else []
     output:
         TSV = config.get('output_tabular')
     run:

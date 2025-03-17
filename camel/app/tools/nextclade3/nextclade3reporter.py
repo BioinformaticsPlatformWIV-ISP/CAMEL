@@ -119,7 +119,7 @@ class Nextclade3Reporter(Tool):
         section.add_table([[
             row['segment'].upper() if 'capitalize_segment_names' in self._parameters else row['segment'],
             *[row[k] for k, _ in Nextclade3Reporter.KEYS_MUTS]
-        ] for row in data_nextclade.to_dict('records')], header, [('class', 'data')])
+        ] for row in data_nextclade.fillna('n/a').to_dict('records')], header, [('class', 'data')])
         section.add_paragraph('A complete overview of all detected mutations is available in the TSV output.')
 
     def __add_table_metadata(self, section: HtmlReportSection, data_nextclade: pd.DataFrame) -> None:
