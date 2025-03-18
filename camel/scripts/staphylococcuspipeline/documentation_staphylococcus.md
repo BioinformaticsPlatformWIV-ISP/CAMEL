@@ -200,12 +200,12 @@ The date of the last database update is included in the output report and tabula
 SCCmec typing is performed by gene detection as described in the 'Virulence gene detection' section using the SCC*mec* 
 genes database from the SCC*mec*Finder tool.
 
-In addition, gene detection is performed using SRST2-based detection against the full SCC*mec* cassettes from the 
+In addition, gene detection is performed using KMA-based detection against the full SCC*mec* cassettes from the 
 SCC*mec*Finder tool.
 
 Finally, a custom script is used to determine the best matching ccr gene complex, mec gene complex and SCCmec type.
 
-Note: SCC*mec* is only executed when the input type is `illumina` (SRST2 requires FASTQ input).
+Note: SCC*mec* is only executed when the input type is `illumina` or `ONT` (KMA requires FASTQ input).
 
 
 ## 8. Antimicrobial resistance (AMR) characterization

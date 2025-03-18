@@ -272,9 +272,11 @@ rule scrubbing_create_summary:
         count_total = informs['statistics']['count_total']
         count_removed = informs['statistics']['count_removed']
 
-        data_summary = {'scrubbing_tool_version': informs['_name'],
-                        f'scrubbing_{subject}_in': count_total,
-                        f'scrubbing_{subject}_out': count_removed}
+        data_summary = {
+            'scrubbing_tool_version': informs['_name'],
+            f'scrubbing_{subject}_in': count_total,
+            f'scrubbing_{subject}_removed': count_removed
+        }
 
         with Path(output.TSV).open('w') as handle:
             for k, v in data_summary.items():

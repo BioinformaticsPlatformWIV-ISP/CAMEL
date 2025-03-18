@@ -10,7 +10,6 @@ from camel.app.tools.tool import Tool
 
 
 class SeqkitSeq(Tool):
-
     """
     Seqkit seq performs common transformations of FASTA / FASTQ files.
     """
@@ -81,7 +80,7 @@ class SeqkitSeq(Tool):
         :return: None
         """
         if self._command.returncode != 0:
-            raise ToolExecutionError("Command execution failed (Exit code: {})".format(self._command.returncode))
+            raise ToolExecutionError(f"Command execution failed (Exit code: {self._command.returncode})")
 
     def __collect_stats(self, path_out: Path) -> None:
         """

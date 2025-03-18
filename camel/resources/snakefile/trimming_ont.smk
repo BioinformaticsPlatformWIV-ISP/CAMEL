@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from camel.app.camel import Camel
+from camel.app.error.pipelineexecutionerror import PipelineExecutionError
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile import trimming_ont
@@ -57,6 +58,8 @@ rule trimming_ont_seqkit:
         SnakemakeUtils.add_pickle_inputs(seqkit, input)
         step = Step(str(rule), seqkit, Camel.get_instance(), params.running_dir)
         step.run_step()
+        if seqkit.informs['nb_seqs_out'] == 0:
+            raise PipelineExecutionError('No reads left after filtering.')
         SnakemakeUtils.dump_tool_outputs(seqkit, output)
 
 rule trimming_ont_nanoplot_post:
@@ -120,6 +123,8 @@ rule trimming_ont_dump_summary_info:
         summary_data = [
             ('trim_ont_reads_in', informs_filtering['nb_seqs_in']),
             ('trim_ont_reads_out', informs_filtering['nb_seqs_out']),
+            ('trim_ont_min_length', informs_filtering['min_length']),
+            ('trim_ont_min_qual', informs_filtering['min_qual']),
             ('trim_ont_tool_version', informs_filtering['_name'])
         ]
         with open(output.TSV, 'w') as handle:

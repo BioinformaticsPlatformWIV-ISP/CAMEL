@@ -21,7 +21,7 @@ class MainNcbiHumanReadScrubber(ReportPipeline):
         Initializes the main class.
         :param args: Arguments (optional)
         """
-        super().__init__('NCBI human read scrubber stand alone', '0.2', SNAKEFILE_MAIN, args)
+        super().__init__('NCBI human read scrubber stand alone', '0.3', SNAKEFILE_MAIN, args)
 
     @property
     def title(self) -> str:

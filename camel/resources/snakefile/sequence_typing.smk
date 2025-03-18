@@ -359,11 +359,9 @@ rule typing_dump_summary_info:
         if len(data_st) == 0:
             st_metadata = []
         else:
-            if data_st['percent_detected'] == 100:
-                st_metadata = data_st['metadata']
-            else:
-                st_metadata = [(k, '-') for k, _ in data_st['metadata']]
+            st_metadata = data_st['metadata']
             st_metadata.append(('percent_detected', data_st['percent_detected']))
+
         hits = SnakemakeUtils.load_object(Path(input.HITS_NUCL)) + SnakemakeUtils.load_object(Path(input.HITS_PEPT))
         with open(output.TSV, 'w') as handle:
             for k, v in st_metadata:

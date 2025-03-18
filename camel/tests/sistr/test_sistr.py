@@ -44,13 +44,8 @@ class TestSistr(CamelTestSuite):
         sistr_tool.run(self.running_dir)
         self.verify_output_files(sistr_tool, 'JSON')
 
-        # add dummy tsv because it is generated outside of tool
-        dummy_tsv_sistr = Path('./dummy.tsv')
-        dummy_tsv_sistr.touch()
-
         sistr_reporter = SistrReporter(self.camel)
         sistr_reporter.add_input_files({'JSON_SISTR': sistr_tool.tool_outputs['JSON'],
-                                        'TSV_output': [ToolIOFile(dummy_tsv_sistr)],
                                         'DIR_sistr': [ToolIODirectory(self.db_path)]})
         sistr_reporter.add_input_informs({'serotyping_sistr': sistr_tool.informs})
         sistr_reporter.run(self.running_dir)

@@ -83,9 +83,20 @@ class SeqSero2Reporter(Tool):
         Add the output tsv file to the html.
         :return: None
         """
-        relative_path = Path('serotyping', 'seqsero2', 'summary_out.tsv')
-        self._section.add_link_to_file("Download (TSV)", relative_path)
-        self._section.add_file(self._tool_inputs['TSV_output'][0].path, relative_path)
+        # Mandatory seqsero assay (from FASTA)
+        relative_path = Path('serotyping', 'seqsero2', 'summary_out_seqsero2_kmer.tsv')
+        self._section.add_link_to_file("Download SeqSero2 Kmer mode (TSV)", relative_path)
+        self._section.add_file(self._tool_inputs['TXT_seqsero2_kmer'][0].path, relative_path)
+
+        # Optional seqsero assays (from FASTQ)
+        if 'TXT_seqsero2_allele' in self._tool_inputs:
+            relative_path = Path('serotyping', 'seqsero2', 'summary_out_seqsero2_allele.tsv')
+            self._section.add_link_to_file("Download SeqSero2 Allele mode (TSV)", relative_path)
+            self._section.add_file(self._tool_inputs['TXT_seqsero2_allele'][0].path, relative_path)
+        if 'TXT_seqsero2_kmerread' in self._tool_inputs:
+            relative_path = Path('serotyping', 'seqsero2', 'summary_out_seqsero2_kmerread.tsv')
+            self._section.add_link_to_file("Download SeqSero2 Kmer reads mode (TSV)", relative_path)
+            self._section.add_file(self._tool_inputs['TXT_seqsero2_kmerread'][0].path, relative_path)
 
     def ___add_database_information(self, db_dir: Path) -> None:
         """

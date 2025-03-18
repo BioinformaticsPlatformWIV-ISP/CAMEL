@@ -39,8 +39,6 @@ class SPIFinderReporter(Tool):
                                                  "JSON_FASTQ is required as input for this tool.")
         if 'JSON_FASTA' not in self._tool_inputs:
             raise InvalidInputSpecificationError("JSON_FASTA is missing but always required as input for this tool.")
-        if 'TSV_output' not in self._tool_inputs:
-            raise InvalidInputSpecificationError("TSV_output is missing but always required as input for this tool.")
         if 'TSV_documentation' not in self._tool_inputs:
             raise InvalidInputSpecificationError("TSV_documentation is missing but always required as input for "
                                                  "this tool.")
@@ -122,7 +120,8 @@ class SPIFinderReporter(Tool):
 
         self._section.add_table(table_data, [table_header[index] for index in column_to_keep], [('class', 'data')])
 
-    def ___assign_hit_color(self, percentage_identity: int) -> str:
+    @staticmethod
+    def ___assign_hit_color(percentage_identity: int) -> str:
         """
         Assigns a color according to percentage thresholds.
         :param percentage_identity: percentage identity for a hit.
@@ -149,9 +148,13 @@ class SPIFinderReporter(Tool):
         Add the output tsv files to the output report section.
         :return: None
         """
-        relative_path = Path('spifinder', 'summary_out.tsv')
-        self._section.add_link_to_file("Download (TSV)", relative_path)
-        self._section.add_file(self._tool_inputs['TSV_output'][0].path, relative_path)
+        if 'JSON_FASTQ' in self._tool_inputs:
+            relative_path = Path('spifinder', 'summary_out_fastq.json')
+            self._section.add_link_to_file("Download SPIFinder fastq mode (JSON)", relative_path)
+            self._section.add_file(self._tool_inputs['JSON_FASTQ'][0].path, relative_path)
+        relative_path_fasta = Path('spifinder', 'summary_out_fasta.json')
+        self._section.add_link_to_file("Download SPIFinder fasta mode (JSON)", relative_path_fasta)
+        self._section.add_file(self._tool_inputs['JSON_FASTA'][0].path, relative_path_fasta)
         relative_path_doc = Path('spifinder', 'spifinder_function_category.tsv')
         self._section.add_link_to_file("Category function definition table (TSV)", relative_path_doc)
         self._section.add_file(self._tool_inputs['TSV_documentation'][0].path, relative_path_doc)
