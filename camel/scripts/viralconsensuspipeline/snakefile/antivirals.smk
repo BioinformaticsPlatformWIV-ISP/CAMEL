@@ -19,7 +19,7 @@ rule antivirals_check_mutations:
         JSON = Path(config['working_dir']) / 'antivirals' / 'json.io',
     params:
         dir_ = Path(config['working_dir']) / 'antivirals',
-        species = config.get('antivirals').get('species')
+        species = config.get('antivirals', {}).get('species')
     run:
         from camel.app.tools.pipelines.viral_consensus.antiviralsdetection import AntiviralsDetection
         detection = AntiviralsDetection(Camel.get_instance())
