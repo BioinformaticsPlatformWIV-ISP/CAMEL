@@ -24,13 +24,11 @@ def get_command_informs(config: Dict[str, Any]) -> List[Path]:
 
     # Straingst is disabled -> return empty list
     if not (any([an for an in config['analyses'] if an in ['straingst', 'gmo']])):
-    # if 'straingst' not in config['analyses']:
         return []
 
     input_type = config['input_type']
     if input_type in ('illumina', 'hybrid'):
         paths.append(Path(str(OUTPUT_INFORMS_STRAINGST).format(read_type='illumina')))
-    # if input_type in ('ont', 'hybrid'):
     if input_type == 'ont':
         paths.append(Path(str(OUTPUT_INFORMS_STRAINGST).format(read_type='ont')))
     return [Path(config['working_dir']) / p for p in paths]
@@ -55,7 +53,6 @@ def get_reports(config: Dict[str, Any]) -> List[Path]:
             paths.append(Path(str(OUTPUT_STRAINGST_REPORT).format(read_type='illumina')))
         else:
             paths.append(Path(str(OUTPUT_STRAINGST_REPORT_EMPTY).format(read_type='illumina')))
-    # if input_type in ('ont', 'hybrid'):
     if input_type == 'ont':
         if (any([an for an in config['analyses'] if an in ['straingst', 'gmo']])):
             paths.append(Path(str(OUTPUT_STRAINGST_REPORT).format(read_type='ont')))
@@ -83,12 +80,8 @@ def get_summaries(config: Dict[str, Any]) -> List[Path]:
 
     # FASTQ input
     paths = []
-    # if (input_type in ('illumina', 'hybrid')) and ('straingst' in config['analyses']):
     if (input_type in ('illumina', 'hybrid')) and (any([an for an in config['analyses'] if an in ['straingst', 'gmo']])):
         paths.append(Path(str(OUTPUT_STRAINGST_SUMMARY).format(read_type='illumina')))
-    # if (input_type in ('ont', 'hybrid')) and (any([an for an in config['analyses'] if an in ['straingst', 'gmo']])):
     if (input_type == 'ont') and (any([an for an in config['analyses'] if an in ['straingst', 'gmo']])):
-    # if (input_type in ('ont', 'hybrid')) and ('straingst' in config['analyses']):
         paths.append(Path(str(OUTPUT_STRAINGST_SUMMARY).format(read_type='ont')))
-        # pass
     return [Path(config['working_dir']) / p for p in paths]
