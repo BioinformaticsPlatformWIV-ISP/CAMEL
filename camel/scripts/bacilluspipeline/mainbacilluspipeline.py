@@ -123,7 +123,7 @@ class MainBacillusPipeline(ReportPipeline):
             ), Loader=yaml.SafeLoader))
 
         # Nanopore settings
-        if self._args.input_type in ['nanopore', 'hybrid']:
+        if self._args.input_type in ['ont', 'hybrid']:
             config_data['assembly']['flye'] = {
                 **config_data['assembly'].get('flye', {})}
 

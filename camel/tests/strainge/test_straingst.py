@@ -2,9 +2,9 @@ import unittest
 
 from camel.app.components.testing.cameltestsuite import CamelTestSuite
 from camel.app.io.tooliofile import ToolIOFile
+from camel.app.tools.strainge.straingstkmerize import StrainGSTKmerize
 from camel.app.tools.strainge.straingstreporter import StrainGSTReporter
 from camel.app.tools.strainge.straingstrun import StrainGSTRun
-from camel.app.tools.strainge.straingstkmerize import StrainGSTKmerize
 
 
 class TestStrainGST(CamelTestSuite):

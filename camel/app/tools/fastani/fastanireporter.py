@@ -94,7 +94,7 @@ class FastANIReporter(Tool):
         if 'sample_name' in self._parameters:
             return f"fastani-{self._parameters['sample_name'].value}.tsv"
         else:
-            return f'fastani.tsv'
+            return 'fastani.tsv'
 
     def __add_output_table(
             self, section: HtmlReportSection, header: List[str],
