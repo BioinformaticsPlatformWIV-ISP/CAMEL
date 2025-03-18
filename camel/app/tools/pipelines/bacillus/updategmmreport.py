@@ -77,6 +77,7 @@ class UpdateGMMReport(Tool):
 
         new_section.add_warning_message('The pipeline uses a targeted approach, which means that constructs '
                                         'and/or strains that are not in the database will be missed.')
+        current_report_section.add_horizontal_line()
         current_report_section.add_html_object(new_section)
         return current_report_section
 
