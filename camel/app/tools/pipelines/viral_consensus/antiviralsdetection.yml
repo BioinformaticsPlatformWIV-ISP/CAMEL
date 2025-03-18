@@ -1,0 +1,5 @@
+dependencies: []
+parameters:
+  species: {default: false, mandatory: true, option: null, value: 'influenza A'}
+  subtype: {default: false, mandatory: true, option: null, value: 'H1N1'}
+tool_command: null

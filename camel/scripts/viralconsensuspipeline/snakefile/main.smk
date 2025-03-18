@@ -103,7 +103,7 @@ rule report_combine_all:
         report_preprocess_clipping = Path(config['working_dir']) / (preprocess.OUTPUT_PRE_PROCESS_CLIPPING_REPORT if 'ampligone' in config['analyses'] and config['input_type'] != 'fasta' else preprocess.OUTPUT_PRE_PROCESS_CLIPPING_REPORT_EMPTY),
         report_preprocess = Path(config['working_dir']) / preprocess.OUTPUT_PRE_PROCESS_REPORT if config['input_type'] != 'fasta' else [],
         report_iterative_mapping = Path(config['working_dir']) / iterativemapping.OUTPUT_ITERATIVE_MAPPING_REPORT if config['input_type'] != 'fasta' else [],
-        report_nexclade_subtype = Path(config['working_dir']) / (nextclade3.OUTPUT_NEXTCLADE_SUBTYPE_REPORT if (config['nextclade'].get('db') is None) and ('nextclade' in config['analyses']) and config['input_type'] != 'fasta' else nextclade3.OUTPUT_NEXTCLADE_SUBTYPE_REPORT_EMPTY),
+        report_nexclade_subtype = Path(config['working_dir']) / (nextclade3.OUTPUT_NEXTCLADE_SUBTYPE_REPORT if (config['nextclade'].get('db') is None) and ('nextclade' in config['analyses']) else nextclade3.OUTPUT_NEXTCLADE_SUBTYPE_REPORT_EMPTY),
         report_nextclade = Path(config['working_dir']) / (nextclade3.OUTPUT_NEXTCLADE_REPORT if 'nextclade' in config['analyses'] else nextclade3.OUTPUT_NEXTCLADE_REPORT_EMPTY),
         report_multi_allelic = Path(config['working_dir']) / multiallelicsites.OUTPUT_MULTI_ALLELIC_REPORT if config['input_type'] != 'fasta' else [],
         report_antivirals = Path(config['working_dir']) / (antivirals.OUTPUT_REPORT if 'antivirals' in config['analyses'] else antivirals.OUTPUT_REPORT_EMPTY),

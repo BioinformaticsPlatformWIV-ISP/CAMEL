@@ -1,0 +1,98 @@
+import json
+
+import pandas as pd
+
+from camel.app.camel import Camel
+from camel.app.components.html.htmlreportsection import HtmlReportSection
+from camel.app.components.html.htmltablecell import HtmlTableCell
+from camel.app.components.html.htmltableformatter import HtmlTableFormatter
+from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from camel.app.io.tooliovalue import ToolIOValue
+from camel.app.tools.tool import Tool
+
+
+def get_color(inhibition: str) -> HtmlTableCell:
+    """
+    Returns a colored cell for the target inhibition level.
+    :return: Formated table cell
+    """
+    if inhibition == 'NI':
+        return HtmlTableCell(inhibition, color='green')
+    return HtmlTableCell(inhibition, color='red')
+
+
+class AntiviralsReporter(Tool):
+    """
+    Reporter class for the antiviral mutation detection.
+    """
+    COLS_MUTS = [
+        {'key': 'subtype', 'title': 'Subtype'},
+        {'key': 'segment', 'title': 'Segment'},
+        {'key': 'mutation', 'title': 'Mutation'},
+    ]
+
+    COLS_ASSOCIATIONS = [
+        {'key': 'category', 'title': 'Category'},
+        {'key': 'key', 'title': 'Key'},
+        {'key': 'antiviral', 'title': 'Antiviral'},
+        {'key': 'resistance', 'title': 'Resistance', 'fmt': get_color},
+    ]
+
+    def __init__(self, camel: Camel) -> None:
+        """
+        Initializes this tool.
+        :param camel: CAMEL instance
+        :return: None
+        """
+        super().__init__('antiviral reporter', '0.1', camel)
+
+    def _check_input(self) -> None:
+        """
+        Checks if the provided input is valid.
+        :return: None
+        """
+        if 'JSON' not in self._tool_inputs:
+            raise InvalidInputSpecificationError('JSON input is required')
+        super()._check_input()
+
+    def _execute_tool(self) -> None:
+        """
+        Executes the tool.
+        :return: None
+        """
+        with self._tool_inputs['JSON'][0].path.open() as handle:
+            data_detection = json.load(handle)
+
+        # Initialize the report section
+        section = HtmlReportSection('Antiviral resistance')
+
+        # Add table with mutations
+        section.add_header('Detected mutations', 4)
+        if len(data_detection['mutations']) == 0:
+            section.add_paragraph('No mutations associated with antiviral resistance detected.')
+        else:
+            section.add_table(
+                HtmlTableFormatter.format_table_data(
+                    pd.DataFrame(data_detection['mutations']), AntiviralsReporter.COLS_MUTS),
+                [col['title'] for col in AntiviralsReporter.COLS_MUTS], [('class', 'data')]
+            )
+
+        # Add table with associations
+        section.add_header('Associations', 4)
+        if len(data_detection['associations']) == 0:
+            section.add_paragraph('No antiviral resistance associations detected.')
+        else:
+            section.add_table(
+                HtmlTableFormatter.format_table_data(
+                    pd.DataFrame(data_detection['associations']), AntiviralsReporter.COLS_ASSOCIATIONS),
+                [col['title'] for col in AntiviralsReporter.COLS_ASSOCIATIONS], [('class', 'data')]
+            )
+
+        # Add a paragraph with additional information
+        section.add_header('Additional information', 4)
+        section.add_paragraph(
+            "The mutations are extracted from the Nextclade output. Abbreviations: normal inhibition (<b>NI</b>), "
+            "reduced inhibition (<b>RI</b>), highly reduced inhibition (<b>HRI</b>).")
+
+        # Save output
+        self._tool_outputs['VAL_HTML'] = [ToolIOValue(section)]

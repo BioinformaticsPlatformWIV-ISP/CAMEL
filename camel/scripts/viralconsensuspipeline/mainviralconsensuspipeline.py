@@ -25,29 +25,39 @@ class MainViralConsensusPipeline(ReportPipeline):
     Main script for the viral consensus pipeline.
     """
 
+    CUSTOM_ANALYSES = ['antivirals']
     DB_ROOT = Path(Camel.get_instance().config['db_root'], 'pipelines', 'viral_consensus', 'version_1.1')
 
     SUPPORTED_SPECIES = {
         'influenza_a': {
+            'antivirals_species': 'A',
             'name': 'Influenza A',
             'k2_name': 'Influenza A virus',
             'nextclade_mash_db': str(DB_ROOT / 'subtype_mash' / 'influenza_a'),
-            'nextclade_capitalize': True
+            'nextclade_capitalize': True,
         },
         'influenza_b': {
+            'antivirals_species': 'B',
             'name': 'Influenza B',
             'k2_name': 'Influenza B virus',
             'nextclade_segments': [],
             'nextclade_mash_db': str(DB_ROOT / 'subtype_mash' / 'influenza_b'),
-            'nextclade_capitalize': True
+            'nextclade_capitalize': True,
         },
         'sars_cov_2': {
+            'antivirals_species': None,
             'name': 'SARS-CoV-2',
             'k2_name': 'Severe acute respiratory syndrome-related coronavirus',
             'nextclade_dbs': {
-                'genome': str(Path(Camel.get_instance().config['db_root'], 'nextclade3', 'sars-cov-2'))
-            }
-        }
+                'genome': str(
+                    Path(
+                        Camel.get_instance().config['db_root'],
+                        'nextclade3',
+                        'sars-cov-2',
+                    )
+                )
+            },
+        },
     }
 
     def __init__(self, args: Optional[Sequence[str]] = None) -> None:
@@ -104,6 +114,11 @@ class MainViralConsensusPipeline(ReportPipeline):
         parser.add_argument('--variant-min-qual', type=int, default=10, help='Minimum variant quality')
         parser.add_argument('--variant-min-mq', type=int, default=30, help='Minimum mapping quality')
         parser.add_argument('--clair3-model', type=Path, help='Clair3 variant calling model')
+
+        # Custom analyses
+        for analysis_key in MainViralConsensusPipeline.CUSTOM_ANALYSES:
+            parser.add_argument(f"--{analysis_key.replace('_', '-')}", action='store_true')
+
         return parser.parse_args(args)
 
     @staticmethod
@@ -281,6 +296,17 @@ class MainViralConsensusPipeline(ReportPipeline):
         config_data['analyses'] = ['kraken2']
         if self._args.human_read_scrubbing:
             config_data['analyses'].append('human_read_scrubbing')
+
+        # Antiviral mutation detection
+        if vars(self._args)['antivirals']:
+            if self._args.species is None:
+                logger.warning('Species needs to be set to enable antiviral screening')
+            elif MainViralConsensusPipeline.SUPPORTED_SPECIES.get(self._args.species, {}).get('antivirals_species') is None:
+                logger.warning(f'Antivirals not supported for species: {self._args.species}')
+            else:
+                config_data['analyses'].append('antivirals')
+                config_data['antivirals'] = {
+                    'species': MainViralConsensusPipeline.SUPPORTED_SPECIES.get(self._args.species, {}).get('antivirals_species')}
 
         # Amplicon primer clipping
         if self._args.fasta_primers is not None:
