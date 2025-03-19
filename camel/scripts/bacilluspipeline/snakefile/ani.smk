@@ -48,7 +48,7 @@ rule fastani_report:
         ani_report = FastANIReporter(camel)
         SnakemakeUtils.add_pickle_inputs(ani_report, input)
         ani_report.update_parameters(sample_name=params.sample_name, species=params.species)
-        step = Step(str(rule), ani_report, camel, params.running_dir, config)
+        step = Step(str(rule), ani_report, camel, params.running_dir)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(ani_report, output)
 
