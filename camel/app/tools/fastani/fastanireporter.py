@@ -107,7 +107,7 @@ class FastANIReporter(Tool):
         :return: None
         """
         if len(data) > 0:
-            section.add_header(f'FastANI results', level=3)
+            section.add_header('FastANI results', level=3)
             section.add_table(data, header, [('class', 'data')])
         else:
             section.add_paragraph('No results.')
