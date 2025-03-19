@@ -52,7 +52,7 @@ def get_reports(config: Dict[str, Any]) -> List[Path]:
         else:
             paths.append(Path(str(OUTPUT_STRAINGST_REPORT_EMPTY).format(read_type='illumina')))
     if input_type == 'ont':
-        if (any([an for an in config['analyses'] if an in ['straingst', 'gmo']])):
+        if any([an for an in config['analyses'] if an in ['straingst', 'gmo']]):
             paths.append(Path(str(OUTPUT_STRAINGST_REPORT).format(read_type='ont')))
         else:
             paths.append(Path(str(OUTPUT_STRAINGST_REPORT_EMPTY).format(read_type='ont')))
