@@ -78,7 +78,7 @@ def get_summaries(config: Dict[str, Any]) -> List[Path]:
 
     # FASTQ input
     paths = []
-    if (input_type in ('illumina', 'hybrid')) and (any([an for an in config['analyses'] if an in ['straingst', 'gmo']])):
+    if (input_type in ('illumina', 'hybrid')) and any([an for an in config['analyses'] if an in ['straingst', 'gmo']]):
         paths.append(Path(str(OUTPUT_STRAINGST_SUMMARY).format(read_type='illumina')))
     if (input_type == 'ont') and (any([an for an in config['analyses'] if an in ['straingst', 'gmo']])):
         paths.append(Path(str(OUTPUT_STRAINGST_SUMMARY).format(read_type='ont')))
