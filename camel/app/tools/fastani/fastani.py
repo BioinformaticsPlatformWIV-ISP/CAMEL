@@ -68,7 +68,7 @@ class FastANI(Tool):
 
     def _set_output(self) -> None:
         """
-        set the output file to check
+        Collects the tool output.
         """
         output_filename = self._parameters['output_file'].value
         self._tool_outputs['TSV'] = [ToolIOFile(self.folder / Path(output_filename))]
