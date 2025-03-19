@@ -109,7 +109,6 @@ class TestViralConsensusPipeline(CamelTestSuite):
         Tests the viral consensus pipeline with Illumina data.
         :return: None
         """
-
         path_report_out = self.running_dir / 'out' / 'report.html'
         path_summary_out = self.running_dir / 'out' / 'summary.tsv'
         args = [
@@ -185,7 +184,6 @@ class TestViralConsensusPipeline(CamelTestSuite):
         Tests the viral consensus pipeline with Illumina data.
         :return: None
         """
-
         path_report_out = self.running_dir / 'out' / 'report.html'
         path_summary_out = self.running_dir / 'out' / 'summary.tsv'
         args = [
@@ -234,7 +232,7 @@ class TestViralConsensusPipeline(CamelTestSuite):
     @longRunningTest()
     def test_viral_consensus_fasta_ref_fasta_input(self) -> None:
         """
-        Tests the viral consensus pipeline with Illumina data.
+        Tests the viral consensus pipeline with FASTA input.
         :return: None
         """
         path_report_out = self.running_dir / 'out' / 'report.html'
@@ -243,6 +241,27 @@ class TestViralConsensusPipeline(CamelTestSuite):
             '--species', 'influenza_a',
             '--fasta-ref', str(TestViralConsensusPipeline.dir_db / 'ref_genomes' / 'influenza_a-H1N1.fasta'),
             '--fasta', str(TestViralConsensusPipeline.dir_testdata / 'influenza_a-full_genome.fasta'),
+            '--input-type', 'fasta',
+            '--output-html', str(path_report_out),
+            '--output-dir', str(path_report_out.parent),
+            '--output-tsv', str(path_summary_out),
+            '--working-dir', str(self.running_dir)
+        ]
+        main = MainViralConsensusPipeline(args)
+        main.run()
+        self.assertGreater(path_report_out.stat().st_size, 0)
+
+    def test_viral_consensus_fasta_ref_fasta_input_with_antivirals(self) -> None:
+        """
+        Tests the viral consensus pipeline with FASTA input and antiviral mutation detection.
+        :return: None
+        """
+        path_report_out = self.running_dir / 'out' / 'report.html'
+        path_summary_out = self.running_dir / 'out' / 'summary.tsv'
+        args = [
+            '--species', 'influenza_a',
+            '--fasta-ref', str(TestViralConsensusPipeline.dir_db / 'ref_genomes' / 'influenza_a-H1N1.fasta'),
+            '--fasta', str(TestViralConsensusPipeline.dir_testdata / 'influenza_a-h3n2-with_antivirals.fasta'),
             '--input-type', 'fasta',
             '--output-html', str(path_report_out),
             '--output-dir', str(path_report_out.parent),
@@ -366,7 +385,6 @@ class TestViralConsensusPipeline(CamelTestSuite):
         Tests the viral consensus pipeline with Illumina data.
         :return: None
         """
-
         path_report_out = self.running_dir / 'out' / 'report.html'
         path_summary_out = self.running_dir / 'out' / 'summary.tsv'
         args = [
@@ -392,7 +410,6 @@ class TestViralConsensusPipeline(CamelTestSuite):
         Tests the viral consensus pipeline with Illumina data.
         :return: None
         """
-
         path_report_out = self.running_dir / 'out' / 'report.html'
         path_summary_out = self.running_dir / 'out' / 'summary.tsv'
         args = [
@@ -443,7 +460,6 @@ class TestViralConsensusPipeline(CamelTestSuite):
         Tests the viral consensus pipeline with ONT data & automatic reference selection.
         :return: None
         """
-
         path_report_out = self.running_dir / 'out' / 'report.html'
         path_summary_out = self.running_dir / 'out' / 'summary.tsv'
         args = [
