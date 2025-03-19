@@ -21,7 +21,7 @@ def get_command_informs(config: Dict[str, Any]) -> List[Path]:
     paths = []
 
     # Straingst is disabled -> return empty list
-    if not (any([an for an in config['analyses'] if an in ['straingst', 'gmo']])):
+    if not any([an for an in config['analyses'] if an in ['straingst', 'gmo']]):
         return []
 
     input_type = config['input_type']
