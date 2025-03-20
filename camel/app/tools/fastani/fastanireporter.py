@@ -64,7 +64,7 @@ class FastANIReporter(Tool):
         with open(self._tool_inputs['TSV'][0].path) as handle:
             header = ['Query', 'ANI', 'Orthologous matches', 'Total seq fragments']
             fastani_table = pd.read_table(handle, sep='\t', header=0, names=header)
-            fastani_table['ANI'] = fastani_table['ANI'].map("{:.2f}".format)
+            fastani_table['ANI (%)'] = fastani_table['ANI'].map("{:.2f}".format)
             fastani_table['Query'] = fastani_table.apply(lambda row: self.__format_output_table_line(row['Query']),
                                                          axis=1)
             return fastani_table.head(10)
