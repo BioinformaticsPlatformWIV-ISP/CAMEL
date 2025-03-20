@@ -28,6 +28,7 @@ class AntiviralsReporter(Tool):
     COLS_MUTS = [
         {'key': 'subtype', 'title': 'Subtype'},
         {'key': 'segment', 'title': 'Segment'},
+        {'key': 'type', 'title': 'Category'},
         {'key': 'mutation', 'title': 'Mutation'},
     ]
 
@@ -76,6 +77,9 @@ class AntiviralsReporter(Tool):
                     pd.DataFrame(data_detection['mutations']), AntiviralsReporter.COLS_MUTS),
                 [col['title'] for col in AntiviralsReporter.COLS_MUTS], [('class', 'data')]
             )
+            section.add_paragraph(
+                'Note: Only mutations from the database, associated with antivirals, are shown here. A complete list '
+                'of all mutations is included in the Nextclade output.')
 
         # Add table with associations
         section.add_header('Associations', 4)
