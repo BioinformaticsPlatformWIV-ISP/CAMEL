@@ -79,11 +79,11 @@ rule main_update_gmm_report:
         VAL_HTML_JUNCTIONS = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_REPORT).format(db='gmm_junctions') if 'gmo' in config['analyses'] else gene_detection.get_gene_detection_report('gmm_junctions', config),
         TSV_STRAINS = straingst.get_summaries(config),
         TSV_GMM_VECTORS = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='gmm_genes_vectors') if 'gmo' in config['analyses'] else [],
-        TSV_GMM_JUNCTIONS = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='gmm_junctions') if 'gmo' in config['analyses'] else []
+        TSV_GMM_JUNCTIONS = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='gmm_junctions') if 'gmo' in config['analyses'] else [],
+        TSV_GMM_DB = config['gene_detection']['gmm_genes_vectors']['known_gmm_constructs']
     output:
         VAL_HTML = Path(config['working_dir']) / 'gene_detection' / 'gmo' / 'updated_html_report.io'
     params:
-        TSV_GMM_DB = config['gene_detection']['gmm_genes_vectors']['known_gmm_constructs'],
         running_dir = Path(config['working_dir']) / 'gene_detection' / 'gmo'
     run:
         from camel.app.tools.pipelines.bacillus.updategmmreport import UpdateGMMReport
@@ -92,10 +92,10 @@ rule main_update_gmm_report:
         from camel.app.pipeline.step import Step
         camel = Camel.get_instance()
         gmmupdater = UpdateGMMReport(camel)
-        SnakemakeUtils.add_pickle_inputs(gmmupdater, input, excluded_keys=['TSV_STRAINS', 'TSV_GMM_VECTORS', 'TSV_GMM_JUNCTIONS'])
+        SnakemakeUtils.add_pickle_inputs(gmmupdater, input, excluded_keys=['TSV_STRAINS', 'TSV_GMM_VECTORS', 'TSV_GMM_JUNCTIONS', 'TSV_GMM_DB'])
         gmmupdater.add_input_files({
             'TSV_STRAINS': [ToolIOFile(Path(x)) for x in input.TSV_STRAINS],
-            'TSV_GMM_DB': [ToolIOFile(Path(params.TSV_GMM_DB))],
+            'TSV_GMM_DB': [ToolIOFile(Path(input.TSV_GMM_DB))],
             'TSV_GMM_VECTORS': [ToolIOFile(Path(input.TSV_GMM_VECTORS))],
             'TSV_GMM_JUNCTIONS': [ToolIOFile(Path(input.TSV_GMM_JUNCTIONS))]
              })
