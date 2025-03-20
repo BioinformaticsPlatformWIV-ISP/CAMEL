@@ -25,7 +25,7 @@ def get_fasta_raw(config: dict[str, Any]) -> Path:
     if config['input_type'] == 'illumina':
         return assembly_spades.OUTPUT_ASSEMBLY_FASTA
     if config['input_type'] == 'ont':
-        return Path(str(polish_assembly_long.OUTPUT_ASSEMBLY_FASTA).format(assembly_type='flye'))
+        return assembly_flye.OUTPUT_ASSEMBLY_FASTA
     if config['input_type'] == 'hybrid':
         return Path(str(polish_assembly_short.OUTPUT_POLISHING_FASTA).format(assembly_type='flye'))
     raise ValueError(f"Invalid input type: {config['input_type']}")
@@ -41,8 +41,7 @@ def get_command_informs(config: dict[str, Any]) -> list[Path]:
     if config['input_type'] == 'illumina':
         return [Path(config['working_dir'], assembly_spades.OUTPUT_ASSEMBLY_INFORMS)]
     if config['input_type'] == 'ont':
-        return [Path(config['working_dir'],
-                     str(polish_assembly_long.OUTPUT_POLISH_MEDAKA_INFORMS).format(assembly_type='flye'))]
+        return [Path(config['working_dir'], assembly_flye.OUTPUT_ASSEMBLY_INFORMS)]
     if config['input_type'] == 'hybrid':
         return [
             Path(config['working_dir'], assembly_flye.OUTPUT_ASSEMBLY_INFORMS),

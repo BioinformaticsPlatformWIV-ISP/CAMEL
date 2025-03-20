@@ -43,10 +43,7 @@ class StrainGSTReporter(Tool):
         :return: None
         """
         section = HtmlReportSection(StrainGSTReporter.TITLE, subtitle=self._input_informs['straingst']['_name'])
-
-        suffix_read_type = self._parameters["suffix"].value.capitalize()
-        if suffix_read_type == 'Ont':
-            suffix_read_type = 'Nanopore'
+        suffix_read_type = self._parameters["suffix"].value.upper()
 
         # Add output tables
         output_table = self.__parse_input_file()

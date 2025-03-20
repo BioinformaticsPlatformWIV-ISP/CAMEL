@@ -122,7 +122,7 @@ class MainBacillusPipeline(ReportPipeline):
                 reference_url=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species].get('reference_url', 'null'),
             ), Loader=yaml.SafeLoader))
 
-        # Nanopore settings
+        # ONT settings
         if self._args.input_type in ['ont', 'hybrid']:
             config_data['assembly']['flye'] = {
                 **config_data['assembly'].get('flye', {})}

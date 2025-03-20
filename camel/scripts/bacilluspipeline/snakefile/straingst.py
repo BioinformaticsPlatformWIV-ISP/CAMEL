@@ -78,6 +78,9 @@ def get_summaries(config: Dict[str, Any]) -> List[Path]:
 
     # FASTQ input
     paths = []
+    # StrainGST is for now ran on Illumina reads due to parallelization issues
+    # Also, can be part of the GMO assay or can also be ran independently, hence the following conditions cover that
+    # scenario.
     if (input_type in ('illumina', 'hybrid')) and any([an for an in config['analyses'] if an in ['straingst', 'gmo']]):
         paths.append(Path(str(OUTPUT_STRAINGST_SUMMARY).format(read_type='illumina')))
     if (input_type == 'ont') and any([an for an in config['analyses'] if an in ['straingst', 'gmo']]):
