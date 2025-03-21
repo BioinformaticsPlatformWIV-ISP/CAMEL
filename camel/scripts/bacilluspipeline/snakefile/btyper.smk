@@ -25,7 +25,7 @@ rule btyper_run:
         btyper = BTyper(camel)
         btyper.update_parameters(output_dir=str(params.running_dir))
         SnakemakeUtils.add_pickle_inputs(btyper, input)
-        step = Step(str(rule), btyper, camel, params.running_dir, config)
+        step = Step(str(rule), btyper, camel, params.running_dir)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(btyper, output)
 
@@ -46,7 +46,7 @@ rule btyper_report:
         btyper_reporter = BTyperReporter(camel)
         SnakemakeUtils.add_pickle_inputs(btyper_reporter, input)
         btyper_reporter.update_parameters(sample_name=params.sample_name)
-        step = Step(str(rule), btyper_reporter, camel, params.running_dir, config)
+        step = Step(str(rule), btyper_reporter, camel, params.running_dir)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(btyper_reporter, output)
 

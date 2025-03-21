@@ -26,7 +26,7 @@ rule fastani_run:
         fastani = FastANI(camel)
         SnakemakeUtils.add_pickle_inputs(fastani, input)
         fastani.add_input_files({'TSV_FASTA_R': [ToolIOFile(Path(config['fastani']['path']))]})
-        step = Step(str(rule), fastani, camel, params.running_dir, config)
+        step = Step(str(rule), fastani, camel, params.running_dir)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(fastani, output)
 

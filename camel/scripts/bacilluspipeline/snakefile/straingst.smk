@@ -30,7 +30,7 @@ rule straingst_kmerize:
             straingst_kmerize_.add_input_files({'FASTQ': [fq_in.se[0]]})
         if params.read_type == 'illumina':
             straingst_kmerize_.add_input_files({'FASTQ': [fq_in.pe[0], fq_in.pe[1]]})
-        step = Step(str(rule), straingst_kmerize_, camel, Path(str(params.running_dir)), config)
+        step = Step(str(rule), straingst_kmerize_, camel, Path(str(params.running_dir)))
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(straingst_kmerize_, output)
 
@@ -52,7 +52,7 @@ rule straingst_run:
         straingst_run_ = StrainGSTRun(camel)
         SnakemakeUtils.add_pickle_inputs(straingst_run_, input)
         straingst_run_.add_input_files({'DB_HDF5': [ToolIOFile(Path(params.straingst_db))]})
-        step = Step(str(rule), straingst_run_, camel, Path(str(params.running_dir)), config)
+        step = Step(str(rule), straingst_run_, camel, Path(str(params.running_dir)))
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(straingst_run_, output)
 
@@ -74,7 +74,7 @@ rule straingst_report:
         straingst_reporter = StrainGSTReporter(camel)
         SnakemakeUtils.add_pickle_inputs(straingst_reporter, input)
         straingst_reporter.update_parameters(sample_name=params.sample_name, suffix=str(params.read_type))
-        step = Step(str(rule), straingst_reporter, camel, Path(str(params.running_dir)), config)
+        step = Step(str(rule), straingst_reporter, camel, Path(str(params.running_dir)))
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(straingst_reporter, output)
 
