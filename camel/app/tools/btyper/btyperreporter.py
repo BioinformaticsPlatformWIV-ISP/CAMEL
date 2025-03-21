@@ -99,15 +99,15 @@ class BTyperReporter(Tool):
         :param input_table: input species subtable
         :return: formatted species subtable
         """
-        species_regex = r'\d+\.\d+'
-        ani_regex = r'[a-z]+ ?[a-z]*\.?[a-z]*\.?'
-        ani_species_match = re.findall(species_regex, str(input_table['Species'].values[0]))
+        ani_regex = r'\d+\.\d+'
+        species_regex = r'[a-z]+ ?[a-z]*\.?[a-z]*\.?'
+        ani_species_match = re.findall(ani_regex, str(input_table['Species'].values[0]))
         if ani_species_match:
-            species_match = re.findall(ani_regex, str(input_table['Species'].values[0]))[0]
+            species_match = re.findall(species_regex, str(input_table['Species'].values[0]))[0]
             ani_species_match = '{:.2f}'.format(float(ani_species_match[0]))
-        ani_subspecies_match = re.findall(species_regex, str(input_table['Sub-species'].values[0]))
+        ani_subspecies_match = re.findall(ani_regex, str(input_table['Sub-species'].values[0]))
         if ani_subspecies_match:
-            subspecies_match = re.findall(ani_regex, str(input_table['Sub-species'].values[0]))[0]
+            subspecies_match = re.findall(species_regex, str(input_table['Sub-species'].values[0]))[0]
             ani_subspecies_match = '{:.2f}'.format(float(ani_subspecies_match[0]))
         table_dictionary = {'Species': ['n/a' if not ani_species_match else species_match,
                                         'n/a' if not ani_species_match else ani_species_match],
