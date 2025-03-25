@@ -17,7 +17,7 @@ class FastpReporter(Tool):
         {'key': 'q20_bases', 'name': 'Q20 bases', 'fmt': lambda x: f'{x:,}'},
         {'key': 'q20_rate', 'name': 'Q20 rate', 'fmt': lambda x: f'{x:.2f}'},
         {'key': 'q30_bases', 'name': 'Q30 bases', 'fmt': lambda x: f'{x:,}'},
-        {'key': 'q30_rate', 'name': 'Q20 rate', 'fmt': lambda x: f'{x:.2f}'},
+        {'key': 'q30_rate', 'name': 'Q30 rate', 'fmt': lambda x: f'{x:.2f}'},
         {'key': 'read1_mean_length', 'name': 'Fwd. mean length', 'fmt': lambda x: f'{x:,}'},
         {'key': 'read2_mean_length', 'name': 'Rev. mean length', 'fmt': lambda x: f'{x:,}'},
         {'key': 'total_bases', 'name': 'Total bases', 'fmt': lambda x: f'{x:,}'},
