@@ -20,6 +20,7 @@ class ConFindr(Tool):
         """
         Initializes this tool.
         :param camel: CAMEL instance
+        :return: None
         """
         super().__init__('ConFindr', '0.8.2', camel)
 
@@ -46,6 +47,7 @@ class ConFindr(Tool):
         ] + self._build_options())
         self._execute_command()
         self.__set_output(dir_out)
+        self._check_output_content()
 
     def __symlink_input_files(self) -> Path:
         """
@@ -73,6 +75,16 @@ class ConFindr(Tool):
         csv_file = dir_out / 'confindr_report.csv'
         self._tool_outputs['CSV'] = [ToolIOFile(csv_file)]
         self._informs.update(pd.read_csv(csv_file).to_dict('records')[0])
+
+    def _check_output_content(self) -> None:
+        """
+        Checks the tool output content for errors.
+        :return: None
+        """
+        if self._informs['Genus'] == 'Error processing sample':
+            self._informs['has_error'] = True  # set, but not used for now, perhaps in future
+            # important, setting NumContamSNVs to None will cause the tool to be noted as skipped in the overview
+            self._informs['NumContamSNVs'] = None
 
     def _check_command_output(self) -> None:
         """

@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import List
 
 SNAKEFILE_CONFINDR = f'{Path(__file__).parent / Path(__file__).stem}.smk'
 
@@ -21,7 +20,7 @@ def get_report(config) -> Path:
     return Path(config['working_dir'], OUTPUT_CONFINDR_REPORT)
 
 
-def get_command_informs(config) -> List[Path]:
+def get_command_informs(config) -> list[Path]:
     """
     Returns the path to the ConFindr informs io file.
     :param config: Snakemake configuration
@@ -32,7 +31,7 @@ def get_command_informs(config) -> List[Path]:
     return [Path(config['working_dir'], OUTPUT_CONFINDR_INFORMS)]
 
 
-def get_summary(config) -> List[Path]:
+def get_summary(config) -> list[Path]:
     """
     Returns the path to the ConFindr summay file.
     :param config: Snakemake configuration
