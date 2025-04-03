@@ -100,11 +100,11 @@ class SequenceTypeDetector(Tool):
 
         # Construct the profiles
         profiles = []
-        for row in data_in.to_dict('records'):
+        for row in data_in.fillna('n/a').to_dict('records'):
             profiles.append(STProfile(
                 name=row[data_in.columns[0]],
                 alleles={c: row[c] for c in cols_alleles},
-                metadata=[(c, row[c] if not (pd.isna(row[c]) or row[c] == 'nan') else '-') for c in cols_metadata],
+                metadata=[(c, row[c] if not pd.isna(row[c]) else '-') for c in cols_metadata],
             ))
         logger.info(f'Parsed {len(profiles):,} profiles')
         return profiles
