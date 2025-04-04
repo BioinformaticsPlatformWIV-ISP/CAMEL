@@ -100,7 +100,7 @@ class SequenceTypeDetector(Tool):
 
         # Construct the profiles
         profiles = []
-        for row in data_in.to_dict('records'):
+        for row in data_in.fillna('n/a').to_dict('records'):
             profiles.append(STProfile(
                 name=row[data_in.columns[0]],
                 alleles={c: row[c] for c in cols_alleles},
