@@ -16,8 +16,9 @@ class AMRFinder(Tool):
         """
         Initializes this tool.
         :param camel: CAMEL instance
+        :return: None
         """
-        super().__init__('AMRFinder', '3.11.26', camel)
+        super().__init__('AMRFinder', '4.0.19', camel)
 
     def _check_input(self) -> None:
         """

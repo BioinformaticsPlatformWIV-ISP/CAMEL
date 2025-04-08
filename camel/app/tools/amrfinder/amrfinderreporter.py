@@ -18,17 +18,18 @@ class AMRFinderReporter(Tool):
 
     URL_ACCESSION_BASE = f'https://www.ncbi.nlm.nih.gov/protein/'
     OUTPUT_COLS_OVERVIEW = [
-        'Gene symbol', 'Element type', 'Element subtype', 'Class', 'Subclass', 'Method',
-        'Accession of closest sequence']
+        'Element symbol', 'Type', 'Subtype', 'Class', 'Subclass', 'Method',
+        'Closest reference accession']
     OUTPUT_COLS_ALN = [
-        'Gene symbol', 'Contig id', 'Start', 'Stop', 'Strand', 'Target length', 'Alignment length',
-        'Reference sequence length', '% Coverage of reference sequence', '% Identity to reference sequence']
-    OUTPUT_COL_ACCESSION = 'Accession of closest sequence'
+        'Element symbol', 'Contig id', 'Start', 'Stop', 'Strand', 'Target length', 'Alignment length',
+        'Reference sequence length', '% Coverage of reference', '% Identity to reference']
+    OUTPUT_COL_ACCESSION = 'Closest reference accession'
 
     def __init__(self, camel: Camel) -> None:
         """
         Initializes the tool.
         :param camel: CAMEL instance.
+        :return: None
         """
         super().__init__('AMRFinder reporter', '0.1', camel)
 
@@ -77,9 +78,9 @@ class AMRFinderReporter(Tool):
         :param row_data: Row data
         :return: Color
         """
-        if all(row_data[x] == 100.0 for x in ('% Identity to reference sequence', '% Coverage of reference sequence')):
+        if all(row_data[x] == 100.0 for x in ('% Identity to reference', '% Coverage of reference')):
             return 'green'
-        elif row_data['% Coverage of reference sequence'] == 100.0:
+        elif row_data['% Coverage of reference'] == 100.0:
             return 'lightgreen'
         else:
             return 'grey'
