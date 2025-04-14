@@ -131,6 +131,14 @@ class TestFastaUtils(CamelTestSuite):
         input_file = TestFastaUtils.test_file_dir / 'toy_with_duplicates.fasta'
         self.assertGreater(FastaUtils.count_bases(input_file), 0)
 
+    def test_gc(self) -> None:
+        """
+        Tests the count_bases function.
+        :return: None
+        """
+        input_file = TestFastaUtils.test_file_dir / 'toy_with_duplicates.fasta'
+        self.assertGreater(FastaUtils.gc(input_file), 0)
+
 
 if __name__ == '__main__':
     unittest.main()

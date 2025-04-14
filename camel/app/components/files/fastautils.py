@@ -3,8 +3,10 @@ import re
 from pathlib import Path
 from typing import Union, Optional
 
+import numpy as np
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
+from Bio.SeqUtils import GC
 
 from camel.app.command.command import Command
 
@@ -71,6 +73,22 @@ class FastaUtils:
         for seq in SeqIO.parse(infile, 'fasta'):
             total_size += len(seq)
         return total_size
+
+    @staticmethod
+    def gc(infile: Path) -> float:
+        """
+        Calculates the %GC-content across all sequences.
+        The value is weighted by sequence length.
+        :param infile: Input FASTA file
+        :return: GC content (as percentage)
+        """
+        weights = []
+        gcs = []
+        for seq in SeqIO.parse(infile, 'fasta'):
+            weights.append(len(seq))
+            gcs.append(GC(seq.seq))
+        return float(np.average(gcs, weights=weights))
+
 
     @staticmethod
     def batch_iterator(iterator, batch_size: int) -> list[any]:
