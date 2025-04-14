@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import List, Union
 
 from camel.app.camel import Camel
+from camel.app.components.files.fastautils import FastaUtils
 from camel.app.pipeline.step import Step
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.resources.snakefile import quality_checks, contamination_check_kraken, trimming_ont, \
@@ -236,17 +237,21 @@ rule quality_checks_fqc_gc_content:
         JSON = Path(config['working_dir']) / 'quality_checks' / 'fqc_gc_{ori}.json'
     params:
         qc_check = quality_checks.QC_CHECKS_BY_KEY['fqc_gc_{ori}'],
-        gc_content_ref = config['quality_checks']['expected_gc_content'],
+        fasta_ref = config['reference'].get('fasta'),
         index = lambda wildcards: 0 if (wildcards.ori == 'fwd') else 1
     run:
         import json
         import dataclasses
         informs = SnakemakeUtils.load_object(Path(input.INFORMS))
-        gc_diff = abs(params.gc_content_ref - informs['by_file']['gc_content'][params.index])
+
+        if params.fasta_ref is None:
+            raise KeyError('Reference FASTA file is required to calculate expected %GC-content')
+        gc_ref = FastaUtils.gc(params.fasta_ref)
+        gc_diff = abs(gc_ref - informs['by_file']['gc_content'][params.index])
 
         # Fill in expected GC content in explanation
         qc_check = dataclasses.replace(params.qc_check,
-            explanation=params.qc_check.explanation.format(params.gc_content_ref))
+            explanation=params.qc_check.explanation.format(gc_ref))
 
         with open(output.JSON, 'w') as handle:
             json.dump(qc_check.to_dict(gc_diff), handle, indent=2)
@@ -415,17 +420,20 @@ rule quality_checks_seqkit_gc:
         JSON = Path(config['working_dir']) / 'quality_checks' / 'seqkit_gc.json'
     params:
         qc_check = quality_checks.QC_CHECKS_BY_KEY['seqkit_gc'],
-        gc_content_ref = config['quality_checks']['expected_gc_content']
+        fasta_ref = config['reference'].get('fasta')
     run:
         import json
         import dataclasses
 
         informs = SnakemakeUtils.load_object(Path(input.INFORMS))
-        gc_diff = abs(params.gc_content_ref - informs['GC(%)'])
+        if params.fasta_ref is None:
+            raise KeyError('Reference FASTA file is required to calculate expected %GC-content')
+        gc_ref = FastaUtils.gc(params.fasta_ref)
+
+        gc_diff = abs(gc_ref - informs['GC(%)'])
 
         # Fill in value in parameter explanation
-        qc_check = dataclasses.replace(params.qc_check, explanation=params.qc_check.explanation.format(
-            params.gc_content_ref))
+        qc_check = dataclasses.replace(params.qc_check, explanation=params.qc_check.explanation.format(params.gc_ref))
 
         with open(output.JSON, 'w') as handle:
             json.dump(qc_check.to_dict(gc_diff), handle, indent=2)
