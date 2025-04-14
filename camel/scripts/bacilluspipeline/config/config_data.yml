@@ -78,7 +78,7 @@ sequence_typing:
       category: info
 
 amrfinder:
-  db: /db/amrfinder/by_version/latest
+  db: /db/amrfinder/by_version/v3/latest
 
 mob_suite:
   db: /db/mob_suite/latest

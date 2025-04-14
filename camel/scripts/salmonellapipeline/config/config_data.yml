@@ -68,7 +68,7 @@ variant_calling:
     url: https://www.ncbi.nlm.nih.gov/nuccore/NC_003197.2
 
 amrfinder:
-  db: /db/amrfinder/by_version/latest
+  db: /db/amrfinder/by_version/v3/latest
   species: Salmonella enterica
 
 resfinder4:

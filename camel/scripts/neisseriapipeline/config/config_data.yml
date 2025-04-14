@@ -71,7 +71,7 @@ mendevar:
   db: /db/pipelines/neisseria/mendevar_DB.txt
 
 amrfinder:
-  db: /db/amrfinder/by_version/latest
+  db: /db/amrfinder/by_version/v3/latest
   organism: Neisseria_meningitidis
 
 resfinder4:
