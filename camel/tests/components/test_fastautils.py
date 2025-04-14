@@ -115,6 +115,22 @@ class TestFastaUtils(CamelTestSuite):
         has_duplicates = FastaUtils.has_duplicates(input_file)
         self.assertTrue(has_duplicates)
 
+    def test_count_reads(self) -> None:
+        """
+        Tests the count_reads function.
+        :return: None
+        """
+        input_file = TestFastaUtils.test_file_dir / 'toy_with_duplicates.fasta'
+        self.assertGreater(FastaUtils.count_reads(input_file), 0)
+
+    def test_count_bases(self) -> None:
+        """
+        Tests the count_bases function.
+        :return: None
+        """
+        input_file = TestFastaUtils.test_file_dir / 'toy_with_duplicates.fasta'
+        self.assertGreater(FastaUtils.count_bases(input_file), 0)
+
 
 if __name__ == '__main__':
     unittest.main()

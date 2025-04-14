@@ -1,7 +1,7 @@
 import math
 import re
 from pathlib import Path
-from typing import List, Union, Optional
+from typing import Union, Optional
 
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
@@ -9,14 +9,13 @@ from Bio.SeqRecord import SeqRecord
 from camel.app.command.command import Command
 
 
-class FastaUtils(object):
-
+class FastaUtils:
     """
-    Helper to perform FASTA file related functions
+    Utility functions for FASTA files.
     """
 
     @staticmethod
-    def read_as_index_dict(fasta: Path):
+    def read_as_index_dict(fasta: Path) -> dict:
         """
         Read in fasta file as an index dictionary of SeqRecord keyed by sequence id. Handle big files, as the complete
         sequence is retrieved when access a SeqRecord.
@@ -36,7 +35,7 @@ class FastaUtils(object):
             return SeqIO.to_dict(SeqIO.parse(handle, "fasta"))
 
     @staticmethod
-    def write(sequences: List[Union[SeqIO.SeqRecord, str]], fasta: Path) -> None:
+    def write(sequences: list[Union[SeqIO.SeqRecord, str]], fasta: Path) -> None:
         """
         Write a list of sequence records into fasta file
         :param sequences: list of sequences as SeqRecord object
@@ -49,9 +48,9 @@ class FastaUtils(object):
     @staticmethod
     def count_reads(infile: Path) -> int:
         """
-        Count how many reads in a fasta file
-        :param infile: file name of the fasta file to count
-        :return: number of reads in fasta file
+        Counts the number of reads in a FASTA file.
+        :param infile: Input FASTA file
+        :return: Number of reads
         """
         cmd = f'grep -c "^>" {infile}'
         command = Command()
@@ -62,7 +61,19 @@ class FastaUtils(object):
         return int(command.stdout.rstrip())
 
     @staticmethod
-    def batch_iterator(iterator, batch_size: int) -> List[any]:
+    def count_bases(infile: Path) -> int:
+        """
+        Counts the number of bases in a FASTA file.
+        :param infile: Input FASTA file
+        :return: Number of bases
+        """
+        total_size = 0
+        for seq in SeqIO.parse(infile, 'fasta'):
+            total_size += len(seq)
+        return total_size
+
+    @staticmethod
+    def batch_iterator(iterator, batch_size: int) -> list[any]:
         """
         Returns lists of length batch_size. This is a generator function, and it
         returns lists of the entries from the supplied iterator.  Each list will
@@ -87,7 +98,7 @@ class FastaUtils(object):
                 yield batch
 
     @staticmethod
-    def split_fasta(fasta: Path, outdir: Path, n_parts: int = None, parts_size: int = None) -> List[str]:
+    def split_fasta(fasta: Path, outdir: Path, n_parts: int = None, parts_size: int = None) -> list[str]:
         """
         Splits a fasta file in the given number of parts or in parts of the given size.
         :param fasta: Fasta file to split
