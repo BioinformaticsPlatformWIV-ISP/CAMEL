@@ -25,12 +25,21 @@ citations:
     - Marjuki_2019-neisseria_serogroup
     - Bratcher_2014-neisseria_cgmlst
 
+####################
+# Reference genome #
+####################
+reference:
+  name: <i>Neisseria meningitidis</i> (NZ_CP021520.1)
+  fasta: /db/refgenomes/Neisseria_meningitidis/NZ_CP021520.1.fasta
+  gff3: /db/refgenomes/Neisseria_meningitidis/NZ_CP021520.1.gff3
+  url: https://www.ncbi.nlm.nih.gov/nuccore/NZ_CP021520.1
+  expected_gc: 51.5
+
 #########################
 # Tool specific options #
 #########################
 downsampling:
   coverage_max: {coverage_max}
-  expected_genome_size: 2_157_444
 
 contamination_check:
   db: /db/kraken2_microbial/latest
@@ -38,12 +47,6 @@ contamination_check:
 
 quality_checks:
   typing_scheme: {qc_typing_scheme}
-  expected_gc_content: 51.5
-
-quast:
-  ref:
-    fasta: /db/refgenomes/Neisseria_meningitidis/NZ_CP021520.1.fasta
-    gff3: /db/refgenomes/Neisseria_meningitidis/NZ_CP021520.1.gff3
 
 srst2:
   max_unaligned_overlap: 141
@@ -56,10 +59,6 @@ assembly:
 variant_calling:
   ploidy: 1
   report_include_bam: {export_bam}
-  reference:
-    path: /db/refgenomes/Neisseria_meningitidis/NZ_CP021520.1.fasta
-    name: <i>Neisseria meningitidis</i> (NZ_CP021520.1)
-    url: https://www.ncbi.nlm.nih.gov/nuccore/NZ_CP021520.1
 
 confindr:
   db: /db/confindr/0.8.1
