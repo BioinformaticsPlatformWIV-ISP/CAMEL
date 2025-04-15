@@ -229,7 +229,9 @@ rule quality_checks_parse_fastqc:
 
 rule quality_checks_fqc_gc_content:
     """
-    Checks the additional QC checks based on the FastQC output.
+    Checks the %GC-content deviation for Illumina data. 
+    The reference %GC content is retrieved from the config file, if 'expected_gc' is present this value is used, 
+    otherwise the %GC content is calculated from the reference genome ('fasta').
     """
     input:
         INFORMS = rules.quality_checks_parse_fastqc.output.INFORMS
@@ -238,15 +240,24 @@ rule quality_checks_fqc_gc_content:
     params:
         qc_check = quality_checks.QC_CHECKS_BY_KEY['fqc_gc_{ori}'],
         fasta_ref = config['reference'].get('fasta'),
+        expected_gc = config['reference'].get('expected_gc'),
         index = lambda wildcards: 0 if (wildcards.ori == 'fwd') else 1
     run:
         import json
         import dataclasses
         informs = SnakemakeUtils.load_object(Path(input.INFORMS))
 
-        if params.fasta_ref is None:
-            raise KeyError('Reference FASTA file is required to calculate expected %GC-content')
-        gc_ref = FastaUtils.gc(params.fasta_ref)
+        # Determine reference %GC-content
+        if params.expected_gc is not None:
+            gc_ref = float(params.expected_gc)
+        elif params.fasta_ref is not None:
+            gc_ref = FastaUtils.gc(params.fasta_ref)
+        else:
+            raise ValueError(
+                "Unable to determine the reference %GC content. Please specify either 'expected_gc' or 'fasta' in the "
+                "'reference' section of the config file.")
+
+        # Calculate difference
         gc_diff = abs(gc_ref - informs['by_file']['gc_content'][params.index])
 
         # Fill in expected GC content in explanation
@@ -412,7 +423,9 @@ rule quality_checks_seqkit_stats:
 
 rule quality_checks_seqkit_gc:
     """
-    Checks the %GC-content on the seqkit output.
+    Checks the %GC-content deviation for ONT data. 
+    The reference %GC content is retrieved from the config file, if 'expected_gc' is present this value is used, 
+    otherwise the %GC content is calculated from the reference genome ('fasta').
     """
     input:
         INFORMS = rules.quality_checks_seqkit_stats.output.INFORMS
@@ -420,16 +433,24 @@ rule quality_checks_seqkit_gc:
         JSON = Path(config['working_dir']) / 'quality_checks' / 'seqkit_gc.json'
     params:
         qc_check = quality_checks.QC_CHECKS_BY_KEY['seqkit_gc'],
-        fasta_ref = config['reference'].get('fasta')
+        fasta_ref = config['reference'].get('fasta'),
+        expected_gc = config['reference'].get('expected_gc')
     run:
         import json
         import dataclasses
 
-        informs = SnakemakeUtils.load_object(Path(input.INFORMS))
-        if params.fasta_ref is None:
-            raise KeyError('Reference FASTA file is required to calculate expected %GC-content')
-        gc_ref = FastaUtils.gc(params.fasta_ref)
+        # Determine reference %GC-content
+        if params.expected_gc is not None:
+            gc_ref = float(params.expected_gc)
+        elif params.fasta_ref is not None:
+            gc_ref = FastaUtils.gc(params.fasta_ref)
+        else:
+            raise ValueError(
+                "Unable to determine the reference %GC content. Please specify either 'expected_gc' or 'fasta' in the "
+                "'reference' section of the config file.")
 
+        # Calculate %GC difference
+        informs = SnakemakeUtils.load_object(Path(input.INFORMS))
         gc_diff = abs(gc_ref - informs['GC(%)'])
 
         # Fill in value in parameter explanation
