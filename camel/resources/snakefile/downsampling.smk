@@ -36,6 +36,7 @@ rule downsampling_calculate:
     params:
         dir_ = lambda wildcards: Path(config['working_dir']) / 'downsampling' / wildcards.read_key / 'calculate_stats',
         fasta_ref = config['reference'].get('fasta'),
+        expected_size = config['reference'].get('expected_size'),
         cov_target = config['downsampling']['coverage_max'],
         is_paired = lambda wildcards: wildcards.read_key == 'fastq_pe'
     run:
@@ -44,12 +45,18 @@ rule downsampling_calculate:
         ds_calc = DownsampleCalculation(Camel.get_instance())
         step = Step(str(rule), ds_calc, Camel.get_instance(), Path(str(params.dir_)))
 
-        if params.fasta_ref is None:
-            raise KeyError('Reference FASTA file is required to estimate genome size')
-        size_ref_genome = FastaUtils.count_bases(Path(params.fasta_ref))
+        # Determine the expected size
+        if params.expected_size is not None:
+            size_ref = int(params.expected_size)
+        elif params.fasta_ref is not None:
+            size_ref = FastaUtils.count_bases(params.fasta_ref)
+        else:
+            raise ValueError(
+                "Unable to determine the expected size. Please specify either 'expected_size' or 'fasta' in the "
+                "'reference' section of the config file.")
 
         SnakemakeUtils.add_pickle_inputs(ds_calc, input)
-        ds_calc.update_parameters(size_ref_genome=size_ref_genome, cov_target=params.cov_target)
+        ds_calc.update_parameters(size_ref_genome=size_ref, cov_target=params.cov_target)
         if params.is_paired is True:
             ds_calc.update_parameters(is_paired=None)
         step.run_step()
