@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import List, Tuple
 
 import vcf
 # noinspection PyProtectedMember
@@ -60,7 +59,7 @@ class DistanceFilter(BaseFilter):
         logger.info(f'Filtered positions: {len(positions_to_filter):,}')
         bed_file = self.folder / 'positions_to_filter.bed'
         self.__create_bed_file(positions_to_filter, bed_file)
-        logger.info(f'Created bed file of variants to filter')
+        logger.info('Created bed file of variants to filter.')
         self.__build_command(bed_file)
         self._execute_command()
 
@@ -70,23 +69,26 @@ class DistanceFilter(BaseFilter):
         :param bed_file: Path to the BED file of the positions to soft-filter or filter.
         :return: None
         """
-        file_parameter = '--targets-file ^' if 'soft_filter' not in self._parameters else '--mask-file^'
+        file_parameter = '--targets-file ^' if 'soft_filter' not in self._parameters else '--mask-file'
         self._command.command = ' '.join([
             self._tool_command,
             str(self._tool_inputs['VCF_GZ'][0].path),
             '--output-type z',
-            '--output {}'.format(self.output_path),
+            f'--output {self.output_path}',
             f"{file_parameter}{str(bed_file)}"
         ] + self._get_soft_filter_options())
 
     @staticmethod
-    def __create_bed_file(positions_to_filter: List[Tuple[str, int]], bed_file: Path) -> None:
+    def __create_bed_file(positions_to_filter: list[tuple[str, int]], bed_file: Path) -> None:
         """
         Creates a BED file of variants to filter to pass to the bcftools filter command.
         :param positions_to_filter: The positions that need to be (soft-)filtered out.
         :param bed_file: Path to the BED file
         :return: None
         """
+        # Sort positions_to_filter by chromosome and then by position
+        positions_to_filter.sort(key=lambda x: (x[0], x[1]))
+
         with bed_file.open('w') as handle:
             for chrom, pos in positions_to_filter:
                 # Convert 1-based position to 0-based
@@ -94,7 +96,7 @@ class DistanceFilter(BaseFilter):
                 end_pos = pos  # BED format is 0-based, half-open interval
                 handle.write(f"{chrom}\t{start_pos}\t{end_pos}\t.\t0\t+\n")
 
-    def __get_positions_to_filter(self, vcf_reader: vcf.Reader, variants: List[Record]) -> List[Tuple[str, int]]:
+    def __get_positions_to_filter(self, vcf_reader: vcf.Reader, variants: list[Record]) -> list[tuple[str, int]]:
         """
         Returns a list with positions that should be filtered.
         :param vcf_reader: VCF reader
