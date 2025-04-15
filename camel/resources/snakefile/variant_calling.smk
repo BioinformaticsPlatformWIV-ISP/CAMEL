@@ -17,13 +17,15 @@ rule variant_calling_prep_reference:
         FASTA = Path(config['working_dir']) / 'variant_calling' / 'reference' / 'fasta.io',
         INFORMS = Path(config['working_dir']) / 'variant_calling' / 'reference' / 'informs.io'
     params:
-        reference = config['variant_calling'].get('reference')
+        ref_fasta = config['reference'].get('fasta'),
+        ref_url = config['reference'].get('url'),
+        ref_name = config['reference'].get('name')
     run:
         from camel.app.io.tooliovalue import ToolIOValue
         from camel.app.io.tooliofile import ToolIOFile
-        SnakemakeUtils.dump_object([ToolIOValue(params.reference['path'])], Path(output.INDEX_GENOME_PREFIX))
-        SnakemakeUtils.dump_object([ToolIOFile(Path(params.reference['path']))], Path(output.FASTA))
-        SnakemakeUtils.dump_object(params.reference, Path(output.INFORMS))
+        SnakemakeUtils.dump_object([ToolIOValue(params.ref_fasta)], Path(output.INDEX_GENOME_PREFIX))
+        SnakemakeUtils.dump_object([ToolIOFile(Path(params.ref_fasta))], Path(output.FASTA))
+        SnakemakeUtils.dump_object({'name': params.ref_name, 'url': params.ref_url}, Path(output.INFORMS))
 
 rule variant_calling_map_reads_illumina:
     """
