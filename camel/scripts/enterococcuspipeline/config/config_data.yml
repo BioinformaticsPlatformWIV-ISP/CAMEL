@@ -30,9 +30,16 @@ citations:
 #########################
 # Tool specific options #
 #########################
+reference:
+  name: {ref_name}
+  url: {ref_url}
+  fasta: {ref_fasta}
+  gff3: {ref_gff3}
+  expected_gc: {ref_gc}
+  expected_size: {ref_size}
+
 downsampling:
   coverage_max: {coverage_max}
-  expected_genome_size: {genome_size}
 
 contamination_check:
   db: /db/kraken2_microbial/latest
@@ -41,12 +48,6 @@ contamination_check:
 
 quality_checks:
   typing_scheme: {qc_typing_scheme}
-  expected_gc_content: {gc_content}
-
-quast:
-  ref:
-    fasta: {quast_fasta}
-    gff3: {quast_gff}
 
 confindr:
   db: /db/confindr/0.8.1
@@ -59,10 +60,6 @@ assembly:
 variant_calling:
   ploidy: 1
   report_include_bam: {export_bam}
-  reference:
-    path: {quast_fasta}
-    name: {reference_name}
-    url: {reference_url}
 
 amrfinder:
   db: /db/amrfinder/v3/latest

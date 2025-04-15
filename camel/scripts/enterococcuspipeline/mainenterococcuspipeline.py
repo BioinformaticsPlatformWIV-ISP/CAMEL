@@ -26,36 +26,38 @@ class MainEnterococcusPipeline(ReportPipeline):
             'amrfinder_species': 'Enterococcus_faecalis',
             'cgmlst_db': '/db/sequence_typing/enterococcus_faecalis/cgmlst',
             'full_name': 'Enterococcus faecalis',
-            'gc_content': 37.4,
-            'genome_size': 2_973_380,
+            'reference': {
+                'fasta': '/db/refgenomes/Enterococcus_faecalis/KB944666.1.fasta',
+                'gff3': '/db/refgenomes/Enterococcus_faecalis/KB944666.1.gff3',
+                'name': 'KB944666.1',
+                'url': 'https://www.ncbi.nlm.nih.gov/nuccore/KB944666.1',
+            },
             'mlst_db': '/db/sequence_typing/enterococcus_faecalis/mlst',
-            'quast_fasta': '/db/refgenomes/Enterococcus_faecalis/KB944666.1.fasta',
-            'quast_gff': '/db/refgenomes/Enterococcus_faecalis/KB944666.1.gff3',
-            'reference_name': 'KB944666.1',
-            'reference_url': 'https://www.ncbi.nlm.nih.gov/nuccore/KB944666.1',
-            'resfinder4_species': 'Enterococcus faecalis'
+            'resfinder4_species': 'Enterococcus faecalis',
         },
         'faecium': {
             'amrfinder_species': 'Enterococcus_faecium',
             'cgmlst_db': '/db/sequence_typing/enterococcus_faecium/cgmlst',
             'full_name': 'Enterococcus faecium',
-            'gc_content': 38.1,
-            'genome_size': 2_796_178,
+            'reference': {
+                'fasta': '/db/refgenomes/Enterococcus_faecium/CP038996.1.fasta',
+                'gff3': '/db/refgenomes/Enterococcus_faecium/CP038996.1.gff3',
+                'name': 'CP038996.1',
+                'url': 'https://www.ncbi.nlm.nih.gov/nuccore/CP038996.1/',
+            },
             'mlst_db': '/db/sequence_typing/enterococcus_faecium/mlst',
-            'quast_fasta': '/db/refgenomes/Enterococcus_faecium/CP038996.1.fasta',
-            'quast_gff': '/db/refgenomes/Enterococcus_faecium/CP038996.1.gff3',
-            'reference_name': 'CP038996.1',
-            'reference_url': 'https://www.ncbi.nlm.nih.gov/nuccore/CP038996.1/',
-            'resfinder4_species': 'Enterococcus faecium'
+            'resfinder4_species': 'Enterococcus faecium',
         },
         'spp': {
             'amrfinder_species': None,
             'disabled_assays': ['mlst', 'cgmlst', 'variant_calling'],
             'full_name': 'Enterococcus spp.',
-            'gc_content': 37.4,
-            'genome_size': 2_973_380,
-            'resfinder4_species': None
-        }
+            'reference': {
+                'gc': 37.4,
+                'size': 2_973_380
+            },
+            'resfinder4_species': None,
+        },
     }
 
     def __init__(self, args: Optional[Sequence[str]] = None) -> None:
@@ -98,19 +100,18 @@ class MainEnterococcusPipeline(ReportPipeline):
                 amrfinder_species=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species]['amrfinder_species'],
                 cgmlst_db=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species].get('cgmlst_db'),
                 coverage_max=self._args.cov_max,
-                k2_name=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species]['full_name']
-                    if self._args.species != 'spp' else 'Enterococcus',
+                export_bam='true' if self._args.report_include_bam else 'false',
                 k2_level = 'S' if self._args.species != 'spp' else 'G',
-                gc_content=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species]['gc_content'],
-                genome_size=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species]['genome_size'],
+                k2_name=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species]['full_name'] if self._args.species != 'spp' else 'Enterococcus',
                 mlst_db=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species].get('mlst_db'),
                 qc_typing_scheme='cgmlst' if self._args.cgmlst else 'rmlst',
-                quast_fasta=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species].get('quast_fasta', 'null'),
-                quast_gff=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species].get('quast_gff', 'null'),
-                reference_name=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species].get('reference_name', 'null'),
-                reference_url=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species].get('reference_url', 'null'),
+                ref_fasta=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species].get('reference', {}).get('fasta', 'null'),
+                ref_gc=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species].get('reference', {}).get('gc', 'null'),
+                ref_gff3=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species].get('reference', {}).get('gff3', 'null'),
+                ref_name=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species].get('reference', {}).get('name', 'null'),
+                ref_size=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species].get('reference', {}).get('size', 'null'),
+                ref_url=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species].get('reference', {}).get('url', 'null'),
                 resfinder4_species=MainEnterococcusPipeline.DATA_BY_SPECIES[self._args.species]['resfinder4_species'],
-                export_bam='true' if self._args.report_include_bam else 'false',
             ), Loader=yaml.SafeLoader))
 
         # Additional MLST scheme for E. faecium
@@ -161,7 +162,7 @@ class MainEnterococcusPipeline(ReportPipeline):
         config_data['resfinder4']['point'] = False
 
         # Change the typing scheme for the QC check (no cgMLST is available)
-        logger.warning(f"cgMLST is not available for generic 'Enterococcus', using rMLST for the QC check.")
+        logger.warning("cgMLST is not available for generic 'Enterococcus', using rMLST for the QC check.")
         config_data['quality_checks']['typing_scheme'] = 'rmlst'
 
 
