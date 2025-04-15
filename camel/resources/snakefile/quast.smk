@@ -22,8 +22,8 @@ rule quast_quast:
     params:
         running_dir = Path(config['working_dir']) / 'quast' / 'output',
         input_type = config['input_type'],
-        fasta = config.get('quast', {}).get('ref', {}).get('fasta'),
-        gff = config.get('quast', {}).get('ref', {}).get('gff3')
+        fasta = config.get('reference', {}).get('fasta'),
+        gff = config.get('reference', {}).get('gff3')
     run:
         from camel.app.io.tooliofile import ToolIOFile
         from camel.app.tools.quast.quast import Quast
@@ -64,7 +64,7 @@ rule quast_quast:
 rule quast_busco:
     """
     Runs BUSCO on the assembly to check completeness.
-    BUSCO is ran outside of QUAST because of dependency issues with the BUSCO installation bundles with QUAST.
+    BUSCO is ran outside of QUAST because of dependency issues with the BUSCO installation bundled with QUAST.
     """
     input:
         FASTA = Path(config['working_dir']) / assembly.OUTPUT_ASSEMBLY_FASTA
