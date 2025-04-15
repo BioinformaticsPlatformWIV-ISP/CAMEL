@@ -454,7 +454,7 @@ rule quality_checks_seqkit_gc:
         gc_diff = abs(gc_ref - informs['GC(%)'])
 
         # Fill in value in parameter explanation
-        qc_check = dataclasses.replace(params.qc_check, explanation=params.qc_check.explanation.format(params.gc_ref))
+        qc_check = dataclasses.replace(params.qc_check, explanation=params.qc_check.explanation.format(gc_ref))
 
         with open(output.JSON, 'w') as handle:
             json.dump(qc_check.to_dict(gc_diff), handle, indent=2)
