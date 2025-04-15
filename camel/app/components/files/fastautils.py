@@ -6,7 +6,7 @@ from typing import Union, Optional
 import numpy as np
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
-from Bio.SeqUtils import GC
+from Bio.SeqUtils import gc_fraction
 
 from camel.app.command.command import Command
 
@@ -86,7 +86,7 @@ class FastaUtils:
         gcs = []
         for seq in SeqIO.parse(infile, 'fasta'):
             weights.append(len(seq))
-            gcs.append(GC(seq.seq))
+            gcs.append(100 * gc_fraction(seq.seq))
         return float(np.average(gcs, weights=weights))
 
 
