@@ -65,7 +65,7 @@ confindr:
   db: /db/confindr/0.8.1
 
 amrfinder:
-  db: /db/amrfinder/by_version/v3/latest
+  db: /db/amrfinder/v3/latest
   species: Escherichia
 
 resfinder4:

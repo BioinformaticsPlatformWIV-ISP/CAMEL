@@ -65,7 +65,7 @@ variant_calling:
     url: {reference_url}
 
 amrfinder:
-  db: /db/amrfinder/by_version/v3/latest
+  db: /db/amrfinder/v3/latest
   species: {amrfinder_species}
 
 resfinder4:

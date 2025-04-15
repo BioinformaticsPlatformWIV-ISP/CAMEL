@@ -80,7 +80,7 @@ mykrobe:
   title: Lineage determination of <i>S. sonnei</i>
 
 amrfinder:
-  db: /db/amrfinder/by_version/v3/latest
+  db: /db/amrfinder/v3/latest
   species: Escherichia
 
 resfinder4:
