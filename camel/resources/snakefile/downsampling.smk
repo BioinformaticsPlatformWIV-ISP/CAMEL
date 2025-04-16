@@ -37,7 +37,8 @@ rule downsampling_calculate:
         dir_ = lambda wildcards: Path(config['working_dir']) / 'downsampling' / wildcards.read_key / 'calculate_stats',
         fasta_ref = config['reference'].get('fasta'),
         expected_size = config['reference'].get('expected_size'),
-        cov_target = config['downsampling']['coverage_max'],
+        cov_target = config['downsampling'].get('coverage_max'),
+        is_disabled = config['downsampling'].get('disabled', False),
         is_paired = lambda wildcards: wildcards.read_key == 'fastq_pe'
     run:
         from camel.app.components.files.fastautils import FastaUtils
@@ -45,8 +46,14 @@ rule downsampling_calculate:
         ds_calc = DownsampleCalculation(Camel.get_instance())
         step = Step(str(rule), ds_calc, Camel.get_instance(), Path(str(params.dir_)))
 
+        print(params.is_disabled)
+        print(type(params.is_disabled))
+        print(params.is_disabled)
+
         # Determine the expected size
-        if params.expected_size is not None:
+        if params.is_disabled is True:
+            size_ref = None
+        elif params.expected_size is not None:
             size_ref = int(params.expected_size)
         elif params.fasta_ref is not None:
             size_ref = FastaUtils.count_bases(params.fasta_ref)

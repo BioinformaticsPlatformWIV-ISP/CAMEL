@@ -1,6 +1,6 @@
 import json
 import statistics
-from typing import Any, Dict, List
+from typing import Any
 
 from camel.app.camel import Camel
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
@@ -29,27 +29,34 @@ class DownsampleCalculation(Tool):
             raise InvalidInputSpecificationError("Stats input is required")
         super()._check_input()
 
-    def __calculate_stats(self, fq_stats: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def __calculate_stats(self, fq_stats: list[dict[str, Any]]) -> dict[str, Any]:
         """
         Calculates the downsampling statistics.
         :param fq_stats: FASTQ stats.
         :return: statistics as a dictionary
         """
+        key_nb_reads = 'nb_read_pairs' if 'is_paired' in self._parameters else 'nb_reads'
+        data_out = {
+            'total_bases': sum([fq['nb_of_bases'] for fq in fq_stats]),
+            'mean_read_length': statistics.mean([fq['nb_of_bases'] / fq['nb_of_sequences'] for fq in fq_stats]),
+            f'{key_nb_reads}_in': next(iter(fq_stats))['nb_of_sequences'],
+        }
+        # Reference genome size is unknown -> cov. calculation is not possible
+        if self._parameters['size_ref_genome'].value is None:
+            data_out['downsample_factor'] = None
+            return data_out
+
+        # Calculate coverage
         ref_genome_size = int(self._parameters['size_ref_genome'].value)
         cov_est = sum(fq['nb_of_bases'] for fq in fq_stats) / ref_genome_size
         cov_target = float(self._parameters['cov_target'].value)
         downsample_factor = float(f"{cov_target / cov_est:.6f}")
-        key_nb_reads = 'nb_read_pairs' if 'is_paired' in self._parameters else 'nb_reads'
-        data_out = {
-            'total_bases': sum([fq['nb_of_bases'] for fq in fq_stats]),
-            'mean_read_length': statistics.mean([
-                fq['nb_of_bases'] / fq['nb_of_sequences'] for fq in fq_stats]),
+        data_out.update({
             'coverage_estimated': cov_est,
             'coverage_target': cov_target,
             'downsample_factor': cov_target / cov_est if downsample_factor < 1 else None,
             'size_ref_genome': ref_genome_size,
-            f'{key_nb_reads}_in': next(iter(fq_stats))['nb_of_sequences']
-        }
+        })
         return data_out
 
     def _execute_tool(self) -> None:
