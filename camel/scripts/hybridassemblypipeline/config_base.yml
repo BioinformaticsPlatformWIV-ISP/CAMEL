@@ -17,19 +17,22 @@ citations:
     - Wick_2022-polypolish
     - Zimin_2020-polca
 
+####################
+# Reference genome #
+####################
+reference:
+  expected_gc: null
+  expected_size: null
+
 #########################
 # Tool specific options #
 #########################
 downsampling:
-  coverage_max: 1000000000000
-  expected_genome_size: 1
-
-filtlong:
-  keep_percent: {keep_percent}
+  disabled: true
 
 assembly:
   flye:
-    genome_size: {genome_size}
+    genome_size: {expected_size}
     meta: {is_meta}
     nano_corr: {nano_corr}
     nano_hq: {nano_hq}

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import argparse
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence
+from typing import Optional, Sequence
 
 import pandas as pd
 import pkg_resources
@@ -102,7 +102,7 @@ class MainHybridAssemblyPipeline(BasePipeline):
         path_config = self.__create_snakemake_config_data(input_files)
         self._run_snakemake_main(path_config)
 
-    def __create_snakemake_config_data(self, input_files: Dict[str, List[Dict[str, str]]]) -> str:
+    def __create_snakemake_config_data(self, input_files: dict[str, list[dict[str, str]]]) -> str:
         """
         Creates a Snakemake configuration file.
         :input_files: Dictionary with the input files (keys can be FASTQ_PE, FASTQ_SE).
@@ -110,7 +110,7 @@ class MainHybridAssemblyPipeline(BasePipeline):
         """
         config_data = self.get_template_data(input_files)
 
-        # Add report specific entries
+        # Add report-specific entries
         mainscriptutils.dict_merge(config_data, {
             'output_dir': str(self._args.output_dir.absolute()),
             'output_html': str(self._args.output_html.absolute())
@@ -126,25 +126,21 @@ class MainHybridAssemblyPipeline(BasePipeline):
         with open(CONFIG_DATA) as handle_in:
             mainscriptutils.dict_merge(
                 config_data, yaml.safe_load(handle_in.read().format(
-                    keep_percent=self._args.filtlong_keep_percent if self._args.filtlong_keep_percent is not None
-                    else 95,
-                    genome_size=self._args.expected_genome_size if self._args.expected_genome_size else False,
-                    is_meta=True if self._args.flye_meta else False,
-                    nano_corr=True if self._args.ont_qual == 'nano-corr' else False,
-                    nano_hq=True if self._args.ont_qual == 'nano-hq' else False,
-                    nano_raw=True if self._args.ont_qual == 'nano-raw' else False,
-                    medaka_model=self._args.ont_basecalling_model,
-                    freebayes_min_alternate_count=self._args.freebayes_min_alternate_count,
-                    freebayes_min_alternate_fraction=self._args.freebayes_min_alternate_fraction,
-                    freebayes_ploidy=self._args.ploidy,
                     clair3_haploid_precise=True if self._args.ploidy == 1 else False,
                     clair3_long_indel=True if self._args.clair3_long_indel is not None else False,
                     clair3_model_path=str(self._get_clair3_model(self._args.ont_basecalling_model)),
+                    freebayes_min_alternate_count=self._args.freebayes_min_alternate_count,
+                    freebayes_min_alternate_fraction=self._args.freebayes_min_alternate_fraction,
+                    freebayes_ploidy=self._args.ploidy,
+                    expected_size=self._args.expected_genome_size if self._args.expected_genome_size else False,
+                    is_meta=True if self._args.flye_meta else False,
+                    medaka_model=self._args.ont_basecalling_model,
+                    nano_corr=True if self._args.ont_qual == 'nano-corr' else False,
+                    nano_hq=True if self._args.ont_qual == 'nano-hq' else False,
+                    nano_raw=True if self._args.ont_qual == 'nano-raw' else False,
                     sniffles_mapq=self._args.sniffles_mapq if self._args.sniffles_mapq is not None else 40,
-                    sniffles_min_support=self._args.sniffles_min_support if self._args.sniffles_min_support is not None
-                    else 'auto',
-                    sniffles_min_svlen=self._args.sniffles_min_svlen if self._args.sniffles_min_svlen is not None
-                    else 35
+                    sniffles_min_support=self._args.sniffles_min_support if self._args.sniffles_min_support is not None else 'auto',
+                    sniffles_min_svlen=self._args.sniffles_min_svlen if self._args.sniffles_min_svlen is not None else 35
                 )))
         return SnakePipelineUtils.generate_config_file(config_data, self._args.working_dir)
 
@@ -154,7 +150,7 @@ class MainHybridAssemblyPipeline(BasePipeline):
         From documentation: the medaka model with the highest version equal to or less than the guppy version should
         be selected.
         :param medaka_model: Medaka basecalling model
-        :return: Path to clair3 model
+        :return: Path to the Clair3 model
         """
         clair3_model = next(
             r['clair3_model'] for r in self._data_models.to_dict('records') if r['medaka_model'] == medaka_model)

@@ -212,18 +212,10 @@ rule report_command_section:
     output:
         HTML = Path(config['working_dir']) / 'report' / 'html-commands.io'
     params:
-        working_dir = config['working_dir']
+        dir_ = config['working_dir']
     run:
-        from camel.app.io.tooliovalue import ToolIOValue
-        from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-        informs = []
-        for content in [SnakemakeUtils.load_object(Path(io)) for io in input]:
-            if isinstance(content, dict):
-                informs.append(content)
-            elif isinstance(content, list):
-                informs.extend(content)
-        section = SnakePipelineUtils.create_commands_section(informs, params.working_dir)
-        SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output.HTML))
+        from camel.app.components.pipelines.reportpipeline import ReportPipeline
+        ReportPipeline.export_command_section(input, Path(output.HTML), Path(params.dir_))
 
 rule report_create_sections:
     """
