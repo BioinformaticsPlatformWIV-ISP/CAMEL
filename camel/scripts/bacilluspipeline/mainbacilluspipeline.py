@@ -1,13 +1,11 @@
 #!/usr/bin/env python
 import argparse
-from pathlib import Path
 from typing import List, Dict, Optional, Sequence
 
 import yaml
 
 from camel.app.camel import Camel
 from camel.app.components import mainscriptutils
-from camel.app.components.files.fastqutils import FastqUtils
 from camel.app.components.pipelines.reportpipeline import ReportPipeline
 from camel.app.loggers import logger
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
@@ -23,7 +21,7 @@ class MainBacillusPipeline(ReportPipeline):
         'common': ['rmlst', 'plasmidfinder', 'mobsuite', 'vfdb_core', 'amrfinder', 'kraken2', 'confindr',
                    'human_read_scrubbing', 'variant_calling'],
         'cereus': ['btyper', 'mlst_cereus', 'cgmlst_cereus'],
-        'subtilis': ['fastani', 'mlst_subtilis', 'gmo']
+        'subtilis': ['fastani', 'mlst_subtilis', 'gmo', 'straingst']
     }
 
     DATA_BY_SPECIES = {
@@ -100,6 +98,11 @@ class MainBacillusPipeline(ReportPipeline):
                     continue
                 if group != 'common' and group != self._args.species:
                     logger.warning(f"Analysis '{key}' not supported for species '{self._args.species}'")
+                    continue
+                if key == 'variant_calling' and self._args.input_type not in ('illumina', 'fasta'):
+                    continue
+                if key == 'confindr' and self._args.input_type not in ('illumina', 'ont', 'hybrid'):
+                    continue
                 config_data['analyses'].append(key)
 
         # Parse template
@@ -113,23 +116,16 @@ class MainBacillusPipeline(ReportPipeline):
                 export_bam='true' if self._args.report_include_bam else 'false',
                 expected_gc_content=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['gc_content'],
                 genome_size=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['genome_size'],
-                wildcards_assembly='long_read_assembly',
                 quast_fasta=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species].get('quast_fasta', 'null'),
                 quast_gff=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species].get('quast_gff', 'null'),
                 reference_name=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species].get('reference_name', 'null'),
                 reference_url=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species].get('reference_url', 'null'),
             ), Loader=yaml.SafeLoader))
 
-        # Nanopore settings
-        if self._args.input_type in ['nanopore', 'hybrid']:
+        # ONT settings
+        if self._args.input_type in ['ont', 'hybrid']:
             config_data['assembly']['flye'] = {
-                'genome_size': MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['genome_size'],
                 **config_data['assembly'].get('flye', {})}
-
-        # Disable KMA for hybrid data
-        if self._args.input_type == 'hybrid' and self._args.species == 'subtilis':
-            config_data['gene_detection']['gmo'].pop('force_detection_method')
-            logger.warning('KMA Gene detection is temporary obsolete for hybrid data - reverting to default method')
 
         # Illumina settings
         if self._args.library is not None:
@@ -141,6 +137,7 @@ class MainBacillusPipeline(ReportPipeline):
     def _parse_arguments(args: Optional[Sequence[str]] = None) -> argparse.Namespace:
         """
         Parses the command line arguments.
+        :param args: command line arguments
         :return: Arguments
         """
         parser = argparse.ArgumentParser()
@@ -151,18 +148,6 @@ class MainBacillusPipeline(ReportPipeline):
             for analysis_key in keys:
                 parser.add_argument(f"--{analysis_key.replace('_', '-')}", action='store_true')
         return parser.parse_args(args)
-
-    @property
-    def sample_name(self) -> str:
-        """
-        Returns the sample name.
-        :return: Sample name
-        """
-        if self._args.fastq_pe is not None:
-            return super().sample_name
-        else:
-            name = self._args.fastq_se_name if (self._args.fastq_se_name is not None) else self._args.fastq_se
-            return FastqUtils.get_sample_name(name, FastqUtils.PATTERN_FQ_SE)
 
 
 if __name__ == '__main__':

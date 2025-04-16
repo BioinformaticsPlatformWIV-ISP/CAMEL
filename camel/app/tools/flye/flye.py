@@ -34,7 +34,7 @@ class Flye(Tool):
         self._command.command = ' '.join([
             self._tool_command,
             *self._build_options(['genome_size', 'output_directory', 'threads', 'meta', 'read_error', 'min_overlap',
-                                  'keep_haplotypes', 'no_alt_contigs']),
+                                  'keep_haplotypes', 'no_alt_contigs', 'asm_coverage']),
             str(self._tool_inputs['FASTQ'][0].path),
             *self._build_options(['nano_corr', 'nano_hq', 'nano_raw'])
         ])

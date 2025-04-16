@@ -1,8 +1,11 @@
-from pathlib import Path
-from typing import List, Tuple, Union
 import re
+from pathlib import Path
+from typing import List, Union
+
+import pandas as pd
 
 from camel.app.camel import Camel
+from camel.app.components.html.htmlelement import HtmlElement
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.html.htmltablecell import HtmlTableCell
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
@@ -44,10 +47,20 @@ class BTyperReporter(Tool):
         section = HtmlReportSection(BTyperReporter.TITLE, subtitle=self._input_informs['btyper']['_name'])
 
         # Add output tables
-        headers, data = self.__parse_input_file()
-        self.__add_output_table(section, headers[0], data[0], 'Identification (ANI)')
-        self.__add_output_table(section, headers[1], data[1], 'Virulence genes')
-        self.__add_output_table(section, headers[2], data[2], 'Typing')
+        formatted_tables = self.__parse_input_file()
+
+        # Add species table
+        section.add_header('Identification (ANI) analysis', level=3)
+        species_table = formatted_tables['species']
+        row_names = [HtmlElement('th', species_table.index.tolist()[k]) for k in range(len(species_table.index))]
+        species_table_data = [[row_names[k], *species_table.values.tolist()[k]] for k in range(len(species_table.index))]
+        section.add_table(species_table_data, ['', *species_table.columns], [('class', 'data')])
+
+        # Add other tables
+        self.__add_output_table(section, formatted_tables['virulence'].columns,
+                                formatted_tables['virulence'].values.tolist(), 'Virulence genes')
+        self.__add_output_table(section, formatted_tables['typing'].columns,
+                                formatted_tables['typing'].values.tolist(), 'Typing')
 
         # Add link to TSV file
         relative_path = Path('btyper') / self._tool_inputs['TSV'][0].path.name
@@ -57,7 +70,7 @@ class BTyperReporter(Tool):
         # Tool output
         self._tool_outputs['VAL_HTML'] = [ToolIOValue(section)]
 
-    def __sanitize_table_line(self, input_list: List[str]) -> List[str]:
+    def __sanitize_table_lines(self, input_list: List[str]) -> List[str]:
         """
         Format nicely the entries in the HTML output table
         :input_list: split line from the raw output table
@@ -80,27 +93,62 @@ class BTyperReporter(Tool):
                     input_list[k][:3], '; '.join(['<i>{}</i>'.format(gene) for gene in match_re]))
         return input_list
 
-    def __parse_input_file(self) -> Tuple[List[List[str]], List[List[List[str]]]]:
+    def _format_species_subtable(self, input_table: pd.DataFrame) -> pd.DataFrame:
         """
-        Parses the input file.
-        :return: Input file header, input file data
+        Formats nicely the species subtable in two rows
+        :param input_table: input species subtable
+        :return: formatted species subtable
         """
-        with open(self._tool_inputs['TSV'][0].path) as handle:
-            handle.readline()
-            header_part1 = ['Species', 'Sub-species']
-            header_part2 = ['Anthrax toxin genes', 'Emetic toxin genes', 'Diarrheal toxin <b>Nhe</b> genes',
-                            'Diarrheal toxin <b>Hbl</b> genes', 'Diarrheal toxin <b>CytK</b>',
-                            'Sphingomyelinase <b>Sph</b>', 'Capsule <b>Cap</b> genes', 'Capsule <b>Has</b> genes',
-                            'Capsule <b>Bps</b> genes', '<b>Bt</b> toxin genes']
-            header_part3 = ['PubMLST ST', 'Adjusted <i>panC</i> group', 'Final taxon name']
-            header_table = [header_part1, header_part2, header_part3]
-            output_table = [[], [], []]
-            for line in handle.readlines():
-                spl = self.__sanitize_table_line(line.strip().split('\t'))
-                output_table[0].append(spl[2:4])
-                output_table[1].append(spl[6:16])
-                output_table[2].append(spl[16:19])
-            return header_table, output_table
+        ani_regex = r'\d+\.\d+'
+        species_regex = r'[a-z]+ ?[a-z]*\.?[a-z]*\.?'
+        ani_species_match = re.findall(ani_regex, str(input_table['Species'].values[0]))
+        if ani_species_match:
+            species_match = re.findall(species_regex, str(input_table['Species'].values[0]))[0]
+            ani_species_match = '{:.2f}'.format(float(ani_species_match[0]))
+        ani_subspecies_match = re.findall(ani_regex, str(input_table['Sub-species'].values[0]))
+        if ani_subspecies_match:
+            subspecies_match = re.findall(species_regex, str(input_table['Sub-species'].values[0]))[0]
+            ani_subspecies_match = '{:.2f}'.format(float(ani_subspecies_match[0]))
+        table_dictionary = {'Species': ['n/a' if not ani_species_match else species_match,
+                                        'n/a' if not ani_species_match else ani_species_match],
+                            'Sub-species': ['n/a' if not ani_subspecies_match else subspecies_match,
+                                            'n/a' if not ani_subspecies_match else ani_subspecies_match]}
+        output_table = pd.DataFrame.from_dict(table_dictionary)
+        output_table.index = ['Value', 'ANI (%)']
+        return output_table
+
+    def __parse_input_file(self) -> dict[str, pd.DataFrame]:
+        """
+        Parses the input file
+        :return: Output tables
+        """
+        header_mapper = {'species(ANI)': 'Species', 'subspecies(ANI)': 'Sub-species',
+                         'anthrax_toxin(genes)': 'Anthrax toxin genes',
+                         'emetic_toxin_cereulide(genes)': 'Emetic toxin genes',
+                         'diarrheal_toxin_Nhe(genes)': 'Diarrheal toxin <b>Nhe</b> genes',
+                         'diarrheal_toxin_Hbl(genes)': 'Diarrheal toxin <b>Hbl</b> genes',
+                         'diarrheal_toxin_CytK(top_hit)': 'Diarrheal toxin <b>CytK</b>',
+                         'sphingomyelinase_Sph(gene)': 'Sphingomyelinase <b>Sph</b>',
+                         'capsule_Cap(genes)': 'Capsule <b>Cap</b> genes',
+                         'capsule_Has(genes)': 'Capsule <b>Has</b> genes',
+                         'capsule_Bps(genes)': 'Capsule <b>Bps</b> genes', 'Bt(genes)': '<b>Bt</b> toxin genes',
+                         'PubMLST_ST[clonal_complex](perfect_matches)': 'PubMLST ST',
+                         'Adjusted_panC_Group(predicted_species)': 'Adjusted <i>panC</i> group',
+                         'final_taxon_names': 'Final taxon name'}
+        btyper_table = pd.read_table(self._tool_inputs['TSV'][0].path, sep='\t', usecols=list(header_mapper.keys()))
+        btyper_table_values_sanitized = self.__sanitize_table_lines(btyper_table.values.tolist()[0])
+        btyper_table = pd.DataFrame(btyper_table_values_sanitized).T
+        btyper_table.columns = list(header_mapper.values())
+        subtable_species = self._format_species_subtable(btyper_table[['Species', 'Sub-species']])
+        subtable_virulence = btyper_table[
+            ['Anthrax toxin genes', 'Emetic toxin genes', 'Diarrheal toxin <b>Nhe</b> genes',
+             'Diarrheal toxin <b>Hbl</b> genes', 'Diarrheal toxin <b>CytK</b>',
+             'Sphingomyelinase <b>Sph</b>', 'Capsule <b>Cap</b> genes', 'Capsule <b>Has</b> genes',
+             'Capsule <b>Bps</b> genes', '<b>Bt</b> toxin genes']]
+        subtable_typing = btyper_table[['PubMLST ST', 'Adjusted <i>panC</i> group', 'Final taxon name']]
+        return {'species': subtable_species,
+                'virulence': subtable_virulence,
+                'typing': subtable_typing}
 
     def __generate_output_filename(self, prefix: str) -> str:
         """

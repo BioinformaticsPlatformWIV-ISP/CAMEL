@@ -45,9 +45,12 @@ def get_command_informs(config: dict[str, Any]) -> list[Path]:
     if config['input_type'] == 'hybrid':
         return [
             Path(config['working_dir'], assembly_flye.OUTPUT_ASSEMBLY_INFORMS),
-            Path(config['working_dir'], str(polish_assembly_long.OUTPUT_POLISH_MEDAKA_INFORMS).format(assembly_type='flye')),
-            Path(config['working_dir'], str(polish_assembly_short.OUTPUT_POLYPOLISH_INFORMS).format(assembly_type='flye')),
-            Path(config['working_dir'], str(polish_assembly_short.OUTPUT_POLCA_INFORMS).format(assembly_type='flye'))
+            Path(config['working_dir'],
+                 str(polish_assembly_long.OUTPUT_POLISH_MEDAKA_INFORMS).format(assembly_type='flye')),
+            Path(config['working_dir'],
+                 str(polish_assembly_short.OUTPUT_POLYPOLISH_INFORMS).format(assembly_type='flye')),
+            Path(config['working_dir'],
+                 str(polish_assembly_short.OUTPUT_POLCA_INFORMS).format(assembly_type='flye'))
         ]
     raise ValueError(f"Invalid input type: {config['input_type']}")
 

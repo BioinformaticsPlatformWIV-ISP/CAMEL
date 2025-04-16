@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 import argparse
 import shutil
-import pandas as pd
 from pathlib import Path
 from typing import Optional, Sequence
+
+import pandas as pd
 
 from camel.app.camel import Camel
 from camel.app.components import mainscriptutils
