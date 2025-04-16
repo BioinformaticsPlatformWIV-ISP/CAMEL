@@ -87,7 +87,7 @@ class DistanceFilter(BaseFilter):
         :return: None
         """
         # Sort positions_to_filter by chromosome and then by position
-        positions_to_filter.sort(key=lambda x: (x[0], x[1]))
+        positions_to_filter.sort()
 
         with bed_file.open('w') as handle:
             for chrom, pos in positions_to_filter:
