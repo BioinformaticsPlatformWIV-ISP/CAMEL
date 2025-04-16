@@ -86,12 +86,12 @@ class VariantCallingWrapper:
         :param options: Dictionary with variant calling options
         :return: Config data
         """
-        options['reference'] = {
-            'name': reference_info['name'],
-            'path': reference_info['path'],
-            'url': reference_info.get('url', None)
-        }
         return {
+            'reference': {
+                'name': reference_info['name'],
+                'fasta': reference_info['path'],
+                'url': reference_info.get('url', None)
+            },
             'sample_name': sample_name,
             'working_dir': str(self._working_dir),
             'variant_calling': options,
