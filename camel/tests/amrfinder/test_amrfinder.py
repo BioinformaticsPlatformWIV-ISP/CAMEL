@@ -17,7 +17,7 @@ class TestAMRFinder(CamelTestSuite):
 
     test_file_dir = CamelTestSuite.get_test_file_dir('amrfinder')
     FILE_FASTA = ToolIOFile(test_file_dir / 'test_dna.fa')
-    DIR_DB = Path(Camel.get_instance().config['db_root']) / 'amrfinder' / 'v3' / 'latest'
+    DIR_DB = Path(Camel.get_instance().config['db_root']) / 'amrfinder' / 'v4' / 'latest'
 
     def test_amrfinder(self) -> None:
         """
