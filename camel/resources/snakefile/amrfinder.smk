@@ -77,13 +77,16 @@ rule amrfinder_dump_summary_info:
 
         # Extract the informs
         informs = SnakemakeUtils.load_object(Path(input.INFORMS))
+        print(data_amr)
+        import pprint
+        pprint.pprint(list(data_amr.columns))
 
         # Parse perfect & other hits
         if not data_amr.empty:
-            data_amr['is_perfect'] = data_amr.apply(lambda x:
-                x['% Coverage of reference sequence'] == 100.0 and x['% Identity to reference sequence'] == 100.0, axis=1)
-            hits_perfect = list(data_amr[data_amr['is_perfect']]['Gene symbol']) if sum(data_amr['is_perfect']) > 0 else []
-            hits_other = list(data_amr[~data_amr['is_perfect']]['Gene symbol']) if sum(~data_amr['is_perfect']) > 0 else []
+            data_amr['is_perfect'] = data_amr.apply(
+                lambda x: x['% Coverage of reference'] == 100.0 and x['% Identity to reference'] == 100.0, axis=1)
+            hits_perfect = list(data_amr[data_amr['is_perfect']]['Element symbol']) if sum(data_amr['is_perfect']) > 0 else []
+            hits_other = list(data_amr[~data_amr['is_perfect']]['Element symbol']) if sum(~data_amr['is_perfect']) > 0 else []
         else:
             hits_perfect = []
             hits_other = []

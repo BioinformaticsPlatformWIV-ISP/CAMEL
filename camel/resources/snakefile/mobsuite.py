@@ -20,7 +20,7 @@ OUTPUT_MOB_SUITE_CONTEXT_REPORT = DIR_MOB_SUITE / 'genomic_context' / 'html.io'
 OUTPUT_MOB_SUITE_CONTEXT_REPORT_EMPTY = DIR_MOB_SUITE / 'genomic_context' / 'html-empty.io'
 
 GENOMIC_CONTEXT_DB = {
-    'amrfinder': {'key': 'amrfinder', 'title': 'AMRFinder', 'contig': 'Contig id', 'gene': 'Gene symbol'},
+    'amrfinder': {'key': 'amrfinder', 'title': 'AMRFinder', 'contig': 'Contig id', 'gene': 'Element symbol'},
     'bacmet': {'key': 'bacmet', 'title': 'BacMet', 'contig': 'qseqid', 'gene': 'Gene_name'},
     'gene_detection': {'contig': 'Sequence (read or contig)', 'gene': 'Locus'},
     'resfinder4': {'key': 'resfinder4', 'title': 'ResFinder4', 'contig': 'qseqid', 'gene': 'Gene_name'},

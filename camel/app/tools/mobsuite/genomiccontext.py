@@ -1,5 +1,3 @@
-from typing import List
-
 import pandas as pd
 
 from camel.app.camel import Camel
@@ -35,7 +33,7 @@ class GenomicContext(Tool):
             raise InvalidInputSpecificationError('Database informs input is required')
         super()._check_input()
 
-    def _get_plasmid_status(self, contig_name: str, plasmids: List[str]) -> List[HtmlTableCell]:
+    def _get_plasmid_status(self, contig_name: str, plasmids: list[str]) -> list[HtmlTableCell]:
         """
         Returns the plasmid status for the given contig.
         :param contig_name: Name of the contig
