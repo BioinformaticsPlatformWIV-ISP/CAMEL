@@ -28,12 +28,21 @@ citations:
     - Zhou_2020-enterobase
     - Jolley_2010-bigsdb
 
+####################
+# Reference genome #
+####################
+reference:
+  name: <i>Escherichia coli</i> O157:H7 (NC_002695.2)
+  fasta: /db/refgenomes/Escherichia_coli/NC_002695.2.fasta
+  gff3: /db/refgenomes/Escherichia_coli/NC_002695.2.gff
+  url: https://www.ncbi.nlm.nih.gov/nuccore/NC_002695.2
+  expected_gc: 50.5
+
 #########################
 # Tool specific options #
 #########################
 downsampling:
   coverage_max: {coverage_max}
-  expected_genome_size: 5_498_578
 
 contamination_check:
   db: /db/kraken2_microbial/latest
@@ -47,19 +56,9 @@ assembly:
 variant_calling:
   ploidy: 1
   report_include_bam: {export_bam}
-  reference:
-    path: /db/refgenomes/Escherichia_coli/NC_002695.2.fasta
-    name: <i>Escherichia coli</i> O157:H7 (NC_002695.2)
-    url: https://www.ncbi.nlm.nih.gov/nuccore/NC_002695.2
 
 quality_checks:
-  expected_gc_content: 50.5
   typing_scheme: {qc_typing_scheme}
-
-quast:
-  ref:
-    fasta: /db/refgenomes/Escherichia_coli/NC_002695.2.fasta
-    gff3: /db/refgenomes/Escherichia_coli/NC_002695.2.gff
 
 confindr:
   db: /db/confindr/0.8.1

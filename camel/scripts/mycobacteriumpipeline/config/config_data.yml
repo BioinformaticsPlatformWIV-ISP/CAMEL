@@ -32,6 +32,17 @@ citations:
     - Miotto_2017-myco_amr
     - Jolley_2010-bigsdb
 
+####################
+# Reference genome #
+####################
+reference:
+  expected_gc: 51.5
+  fasta: /db/refgenomes/Mycobacterium_tuberculosis/H37Rv.fasta
+  gff3: /db/refgenomes/Mycobacterium_tuberculosis/H37Rv.gff
+  name: H37Rv
+  tabix: /db/refgenomes/Mycobacterium_tuberculosis/H37Rv.tab.ann.gz
+  url: https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_000195955.2
+
 ################
 # Tool options #
 ################
@@ -51,20 +62,9 @@ quality_checks:
 confindr:
   db: /db/confindr/0.8.1
 
-quast:
-  ref:
-    fasta: /db/refgenomes/Mycobacterium_tuberculosis/H37Rv.fasta
-    gff3: /db/refgenomes/Mycobacterium_tuberculosis/H37Rv.gff
-
 variant_calling:
   ploidy: 1
   report_include_bam: {export_bam}
-  reference:
-    path: /db/refgenomes/Mycobacterium_tuberculosis/H37Rv.fasta
-    name: H37Rv
-    url: https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_000195955.2
-    annotation_gff: /db/refgenomes/Mycobacterium_tuberculosis/H37Rv.gff
-    annotation_tab: /db/refgenomes/Mycobacterium_tuberculosis/H37Rv.tab.ann.gz
 
 assembly:
   spades:

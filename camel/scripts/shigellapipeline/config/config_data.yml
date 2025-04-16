@@ -31,6 +31,15 @@ citations:
     - Wong_2016-genotyphi
     - Bradley_2015-mykrobe
 
+####################
+# Reference genome #
+####################
+reference:
+  name: <i>Shigella sonnei</i> Ss046 (CP000038.1)
+  fasta: /db/refgenomes/Shigella_sonnei/GCA_000092525.1.fasta
+  gff3: /db/refgenomes/Shigella_sonnei/GCA_000092525.1.gff
+  url: https://www.ncbi.nlm.nih.gov/datasets/genome/GCA_000092525.1/
+
 #########################
 # Tool specific options #
 #########################
@@ -44,11 +53,6 @@ contamination_check:
   allowed_species:
     - Escherichia
   level_of_depth: G
-
-quast:
-  ref:
-    fasta: /db/refgenomes/Shigella_sonnei/GCA_000092525.1.fasta
-    gff3: /db/refgenomes/Shigella_sonnei/GCA_000092525.1.gff
 
 quality_checks:
   typing_scheme: {qc_typing_scheme}
@@ -65,10 +69,6 @@ assembly:
 variant_calling:
   ploidy: 1
   report_include_bam: {export_bam}
-  reference:
-    path: /db/refgenomes/Shigella_sonnei/GCA_000092525.1.fasta
-    name: <i>Shigella sonnei</i> Ss046 (CP000038.1)
-    url: https://www.ncbi.nlm.nih.gov/nuccore/CP000038.1
 
 ############################
 # Gene detection databases #

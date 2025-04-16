@@ -29,6 +29,15 @@ citations:
     - Hyatt_2010-prodigal
     - Pal_2014-bacmet
 
+####################
+# Reference genome #
+####################
+reference:
+  name: <i>Klebsiella pneumoniae subsp. pneumoniae</i> HS11286 (NC_016845.1)
+  fasta: /db/refgenomes/Klebsiella_pneumoniae/NC_016845.1.fasta
+  gff3: /db/refgenomes/Klebsiella_pneumoniae/NC_016845.1.gff3
+  url: https://www.ncbi.nlm.nih.gov/nuccore/NC_016845.1
+
 #########################
 # Tool specific options #
 #########################
@@ -42,12 +51,6 @@ contamination_check:
 
 quality_checks:
   typing_scheme: {qc_typing_scheme}
-  expected_gc_content: 57.5
-
-quast:
-  ref:
-    fasta: /db/refgenomes/Klebsiella_pneumoniae/NC_016845.1.fasta
-    gff3: /db/refgenomes/Klebsiella_pneumoniae/NC_016845.1.gff3
 
 confindr:
   db: /db/confindr/0.8.1
@@ -63,10 +66,6 @@ assembly:
 variant_calling:
   ploidy: 1
   report_include_bam: {export_bam}
-  reference:
-    path: /db/refgenomes/Klebsiella_pneumoniae/NC_016845.1.fasta
-    name: <i>Klebsiella pneumoniae subsp. pneumoniae</i> HS11286 (NC_016845.1)
-    url: https://www.ncbi.nlm.nih.gov/nuccore/NC_016845.1
 
 amrfinder:
   db: /db/amrfinder/v3/latest

@@ -31,12 +31,20 @@ citations:
     - Zhou_2020-enterobase
     - Jolley_2010-bigsdb
 
+####################
+# Reference genome #
+####################
+reference:
+  name: <i>Salmonella enterica subsp. enterica</i> serovar Typhimurium str. LT2 (NC_003197.2)
+  fasta: //db/refgenomes/Salmonella_enterica/NC_003197.2.fasta
+  gff3: /db/refgenomes/Salmonella_enterica/NC_003197.2.gff3
+  url: https://www.ncbi.nlm.nih.gov/nuccore/NC_003197.2
+
 #########################
 # Tool specific options #
 #########################
 downsampling:
   coverage_max: {coverage_max}
-  expected_genome_size: 5_027_649
 
 contamination_check:
   db: /db/kraken2_microbial/latest
@@ -44,12 +52,6 @@ contamination_check:
 
 quality_checks:
   typing_scheme: {qc_typing_scheme}
-  expected_gc_content: 52.2
-
-quast:
-  ref:
-    fasta: /db/refgenomes/Salmonella_enterica/NC_003197.2.fasta
-    gff3: /db/refgenomes/Salmonella_enterica/NC_003197.2.gff3
 
 confindr:
   db: /db/confindr/0.8.1
@@ -62,10 +64,6 @@ assembly:
 variant_calling:
   ploidy: 1
   report_include_bam: {export_bam}
-  reference:
-    path: /db/refgenomes/Salmonella_enterica/NC_003197.2.fasta
-    name: <i>Salmonella enterica subsp. enterica</i> serovar Typhimurium str. LT2 (NC_003197.2)
-    url: https://www.ncbi.nlm.nih.gov/nuccore/NC_003197.2
 
 amrfinder:
   db: /db/amrfinder/v3/latest

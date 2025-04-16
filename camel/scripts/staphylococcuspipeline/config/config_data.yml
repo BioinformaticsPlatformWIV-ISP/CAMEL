@@ -27,6 +27,15 @@ citations:
     - Hyatt_2010-prodigal
     - Pal_2014-bacmet
 
+####################
+# Reference genome #
+####################
+reference:
+  name: <i>Staphylococcus aureus subsp. aureus</i> NCTC 8325 (NC_007795.1)
+  fasta: /db/refgenomes/Staphylococcus_aureus/NC_007795.1.fasta
+  gff3: /db/refgenomes/Staphylococcus_aureus/NC_007795.1.gff3
+  url: https://www.ncbi.nlm.nih.gov/nuccore/NC_007795.1
+
 #########################
 # Tool specific options #
 #########################
@@ -40,12 +49,6 @@ contamination_check:
 
 quality_checks:
   typing_scheme: {qc_typing_scheme}
-  expected_gc_content: 32.7
-
-quast:
-  ref:
-    fasta: /db/refgenomes/Staphylococcus_aureus/NC_007795.1.fasta
-    gff3: /db/refgenomes/Staphylococcus_aureus/NC_007795.1.gff3
 
 confindr:
   db: /db/confindr/0.8.1
@@ -58,10 +61,6 @@ assembly:
 variant_calling:
   ploidy: 1
   report_include_bam: {export_bam}
-  reference:
-    path: /db/refgenomes/Staphylococcus_aureus/NC_007795.1.fasta
-    name: <i>Staphylococcus aureus subsp. aureus</i> NCTC 8325 (NC_007795.1)
-    url: https://www.ncbi.nlm.nih.gov/nuccore/NC_007795.1
 
 spa_typing:
   db: /db/pipelines/saureus/spatyping/profiles.fasta

@@ -1,4 +1,14 @@
 ####################
+# Reference genome #
+####################
+reference:
+  name: NC_002695.2
+  fasta: /db/refgenomes/Escherichia_coli/NC_002695.2.fasta
+  gff3: /db/refgenomes/Escherichia_coli/NC_002695.2.gff
+  url: https://www.ncbi.nlm.nih.gov/nuccore/NC_002695.2/
+  expected_size: 10_000
+
+####################
 # Pipeline options #
 ####################
 citations:
@@ -11,7 +21,6 @@ citations:
 
 downsampling:
   coverage_max: {coverage_max}
-  expected_genome_size: 10_000
 
 contamination_check:
   db: /db/kraken2_microbial/latest
@@ -26,12 +35,6 @@ assembly:
 
 quality_checks:
   typing_scheme: null
-  expected_gc_content: 50.5
-
-quast:
-  ref:
-    fasta: /db/refgenomes/Escherichia_coli/NC_002695.2.fasta
-    gff3: /db/refgenomes/Escherichia_coli/NC_002695.2.gff
 
 gene_detection:
   ncbi_amr:
@@ -43,11 +46,6 @@ gene_detection:
 variant_calling:
   ploidy: 1
   report_include_bam: false
-  reference:
-    path: /db/refgenomes/Escherichia_coli/NC_002695.2.fasta
-    name: NC_002695.2
-    url: https://www.ncbi.nlm.nih.gov/nuccore/NC_002695.2/
-    annotation_gff: /db/refgenomes/Escherichia_coli/NC_002695.2.gff
 
 variant_filtering:
   depth:

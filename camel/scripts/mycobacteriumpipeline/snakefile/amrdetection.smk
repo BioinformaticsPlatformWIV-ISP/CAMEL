@@ -63,7 +63,7 @@ rule amr_annotate_variants_csq:
         INFORMS = Path(config['working_dir'])  / 'amr' / 'csq' / '{variant_caller}' / 'informs.io'
     params:
         dir_ = lambda wildcards: Path(config['working_dir']) / 'amr' / 'csq' / wildcards.variant_caller,
-        gff = config['variant_calling']['reference']['annotation_gff'],
+        gff = config['reference']['gff3'],
         variant_caller = lambda wildcards: wildcards.variant_caller
     run:
         from camel.app.tools.bcftools.bcftoolscsq import BcftoolsCsq
