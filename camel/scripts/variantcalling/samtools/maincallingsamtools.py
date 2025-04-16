@@ -88,16 +88,17 @@ class MainCalling:
         :return: Config file data
         """
         config_data = {
-            'sample_name': 'Sample',
-            'working_dir': str(self._args.working_dir),
-            'variant_calling': {
-                'ploidy': self._args.ploidy,
-                'reference': {
-                    'name': self._args.reference_name if self._args.reference_name else self._args.reference.name,
-                    'path': str(self._args.reference)}
-            },
-            'variant_filtering': {},
             'input_type': self._args.input_type,
+            'reference': {
+                'name': self._args.reference_name
+                if self._args.reference_name
+                else self._args.reference.name,
+                'fasta': str(self._args.reference),
+            },
+            'sample_name': 'Sample',
+            'variant_calling': {'ploidy': self._args.ploidy},
+            'variant_filtering': {},
+            'working_dir': str(self._args.working_dir),
         }
         for k in ['calling_method', 'skip_variants', 'mutation_rate', 'minimal_bq', 'minimal_mq', 'count_orphans',
                   'disable_baq']:
