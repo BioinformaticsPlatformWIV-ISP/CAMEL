@@ -69,7 +69,7 @@ class DistanceFilter(BaseFilter):
         :param bed_file: Path to the BED file of the positions to soft-filter or filter.
         :return: None
         """
-        file_parameter = '--targets-file ^' if 'soft_filter' not in self._parameters else '--mask-file'
+        file_parameter = '--targets-file ^' if 'soft_filter' not in self._parameters else '--mask-file '
         self._command.command = ' '.join([
             self._tool_command,
             str(self._tool_inputs['VCF_GZ'][0].path),
