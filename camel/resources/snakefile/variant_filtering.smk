@@ -131,7 +131,7 @@ rule variant_filtering_distance:
             distance_filter.update_parameters(min_distance=params.min_distance)
         if params.keep_best is not None:
             distance_filter.update_parameters(keep_best=params.keep_best)
-        distance_filter.update_parameters(soft_filter=params.soft_filter, seed=0)
+        distance_filter.update_parameters(soft_filter=params.soft_filter)
         SnakemakeUtils.add_pickle_inputs(distance_filter, input)
         step.run_step()
         SnakemakeUtils.dump_tool_outputs(distance_filter, output)

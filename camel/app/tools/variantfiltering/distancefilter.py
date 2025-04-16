@@ -1,15 +1,10 @@
 from pathlib import Path
-from typing import List, Tuple
 
-import random
 import vcf
 # noinspection PyProtectedMember
 from vcf.model import _Record as Record
-# noinspection PyProtectedMember
-from vcf.parser import _Filter as Filter
 
 from camel.app.camel import Camel
-from camel.app.command.command import Command
 from camel.app.loggers import logger
 from camel.app.tools.variantfiltering.basefilter import BaseFilter
 
@@ -56,49 +51,52 @@ class DistanceFilter(BaseFilter):
         Applies the filtering on the variants.
         :return: None
         """
-        self.__set_seed()
         with open(self._tool_inputs['VCF_GZ'][0].path, 'rb') as handle:
             vcf_reader = vcf.Reader(handle)
             all_variants = list(vcf_reader)
-        filtered_positions = self.__get_filtered_positions(vcf_reader, all_variants)
-        output_uncompressed = self.__create_output_file(vcf_reader, all_variants, filtered_positions)
-        self._command = Command(f'bgzip {output_uncompressed}')
+        logger.info(f'Parsed {len(all_variants):,} variants')
+        positions_to_filter = self.__get_positions_to_filter(vcf_reader, all_variants)
+        logger.info(f'Filtered positions: {len(positions_to_filter):,}')
+        bed_file = self.folder / 'positions_to_filter.bed'
+        self.__create_bed_file(positions_to_filter, bed_file)
+        logger.info('Created bed file of variants to filter.')
+        self.__build_command(bed_file)
         self._execute_command()
 
-    def __set_seed(self) -> None:
+    def __build_command(self, bed_file: Path) -> None:
         """
-        Sets a random seed.
+        Builds the command for this tool.
+        :param bed_file: Path to the BED file of the positions to soft-filter or filter.
         :return: None
         """
-        if 'seed' in self._parameters:
-            seed = self._parameters['seed'].value
-        else:
-            seed = random.random()
-        logger.info("Seed: {}".format(seed))
-        self._informs['seed'] = seed
-        random.seed(seed)
+        file_parameter = '--targets-file ^' if 'soft_filter' not in self._parameters else '--mask-file'
+        self._command.command = ' '.join([
+            self._tool_command,
+            str(self._tool_inputs['VCF_GZ'][0].path),
+            '--output-type z',
+            f'--output {self.output_path}',
+            f"{file_parameter}{str(bed_file)}"
+        ] + self._get_soft_filter_options())
 
-    def __create_output_file(self, vcf_reader: vcf.Reader, all_variants: List[Record],
-                             filtered_positions: List[Tuple[str, int]]) -> Path:
+    @staticmethod
+    def __create_bed_file(positions_to_filter: list[tuple[str, int]], bed_file: Path) -> None:
         """
-        Creates the output file.
-        :return: Output file (uncompressed VCF)
+        Creates a BED file of variants to filter to pass to the bcftools filter command.
+        :param positions_to_filter: The positions that need to be (soft-)filtered out.
+        :param bed_file: Path to the BED file
+        :return: None
         """
-        vcf_reader.filters['distance'] = Filter('distance', 'minimal distance between SNPs (custom)')
-        output_uncompressed = self.output_path.parent / self.output_path.name.replace('.gz', '')
-        with output_uncompressed.open('w') as handle:
-            writer = vcf.Writer(handle, vcf_reader)
-            for variant in all_variants:
-                if (variant.CHROM, variant.POS) in filtered_positions:
-                    if 'soft_filter' in self._parameters:
-                        variant.FILTER = 'distance'
-                    else:
-                        continue
-                writer.write_record(variant)
-            writer.close()
-        return output_uncompressed
+        # Sort positions_to_filter by chromosome and then by position
+        positions_to_filter.sort()
 
-    def __get_filtered_positions(self, vcf_reader: vcf.Reader, variants: List[Record]) -> List[Tuple[str, int]]:
+        with bed_file.open('w') as handle:
+            for chrom, pos in positions_to_filter:
+                # Convert 1-based position to 0-based
+                start_pos = pos - 1
+                end_pos = pos  # BED format is 0-based, half-open interval
+                handle.write(f"{chrom}\t{start_pos}\t{end_pos}\t.\t0\t+\n")
+
+    def __get_positions_to_filter(self, vcf_reader: vcf.Reader, variants: list[Record]) -> list[tuple[str, int]]:
         """
         Returns a list with positions that should be filtered.
         :param vcf_reader: VCF reader
