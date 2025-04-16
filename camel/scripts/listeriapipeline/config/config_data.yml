@@ -62,7 +62,7 @@ confindr:
   db: /db/confindr/0.8.1
 
 amrfinder:
-  db: /db/amrfinder/v3/latest
+  db: /db/amrfinder/v4/latest
 
 resfinder4:
   db: /db/resfinder4

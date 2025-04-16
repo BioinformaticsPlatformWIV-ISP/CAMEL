@@ -62,7 +62,7 @@ variant_calling:
   report_include_bam: {export_bam}
 
 amrfinder:
-  db: /db/amrfinder/v3/latest
+  db: /db/amrfinder/v4/latest
   species: {amrfinder_species}
 
 resfinder4:

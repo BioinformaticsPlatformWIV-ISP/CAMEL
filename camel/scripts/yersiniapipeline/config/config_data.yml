@@ -56,7 +56,7 @@ assembly:
   min_contig_length: 1000
 
 amrfinder:
-  db: /db/amrfinder/v3/latest
+  db: /db/amrfinder/v4/latest
 
 mob_suite:
   db: /db/mob_suite/latest
