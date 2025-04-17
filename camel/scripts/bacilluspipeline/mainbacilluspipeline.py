@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import argparse
-from typing import List, Dict, Optional, Sequence
+from typing import Optional, Sequence
 
 import yaml
 
@@ -26,22 +26,18 @@ class MainBacillusPipeline(ReportPipeline):
 
     DATA_BY_SPECIES = {
         'cereus': {
-            'gc_content': 35,
-            'genome_size': 5_800_000,
             'full_name': 'Bacillus cereus',
-            'reference_name': 'NZ_CP017060.1',
-            'quast_fasta': '/db/refgenomes/Bacillus/NZ_CP017060.1.fasta',
-            'quast_gff': '/db/refgenomes/Bacillus/NZ_CP017060.1.gff3',
-            'reference_url': 'https://www.ncbi.nlm.nih.gov/nuccore/NZ_CP017060.1'
+            'ref_name': 'NZ_CP017060.1',
+            'ref_fasta': '/db/refgenomes/Bacillus/NZ_CP017060.1.fasta',
+            'ref_gff3': '/db/refgenomes/Bacillus/NZ_CP017060.1.gff3',
+            'ref_url': 'https://www.ncbi.nlm.nih.gov/nuccore/NZ_CP017060.1'
         },
         'subtilis': {
-            'gc_content': 43,
-            'genome_size': 4_200_000,
             'full_name': 'Bacillus subtilis',
-            'reference_name': 'NC_000964.3',
-            'quast_fasta': '/db/refgenomes/Bacillus/NC_000964.3.fasta',
-            'quast_gff': '/db/refgenomes/Bacillus/NC_000964.3.gff3',
-            'reference_url': 'https://www.ncbi.nlm.nih.gov/nuccore/NC_000964.3'
+            'ref_name': 'NC_000964.3',
+            'ref_fasta': '/db/refgenomes/Bacillus/NC_000964.3.fasta',
+            'ref_gff3': '/db/refgenomes/Bacillus/NC_000964.3.gff3',
+            'ref_url': 'https://www.ncbi.nlm.nih.gov/nuccore/NC_000964.3'
         }
     }
 
@@ -82,7 +78,7 @@ class MainBacillusPipeline(ReportPipeline):
         else:
             return 'mlst_subtilis'
 
-    def __construct_config_file(self, input_files: Dict[str, List[Dict[str, str]]]) -> str:
+    def __construct_config_file(self, input_files: dict[str, list[dict[str, str]]]) -> str:
         """
         Constructs the configuration file.
         :input_files: Dictionary with the input files (keys can be FASTQ_PE, FASTQ_SE).
@@ -96,7 +92,7 @@ class MainBacillusPipeline(ReportPipeline):
             for key in keys:
                 if not vars(self._args)[key]:
                     continue
-                if group != 'common' and group != self._args.species:
+                if group not in ('common', self._args.species):
                     logger.warning(f"Analysis '{key}' not supported for species '{self._args.species}'")
                     continue
                 if key == 'variant_calling' and self._args.input_type not in ('illumina', 'fasta'):
@@ -108,18 +104,16 @@ class MainBacillusPipeline(ReportPipeline):
         # Parse template
         with open(CONFIG_DATA) as handle_in:
             mainscriptutils.dict_merge(config_data, yaml.load(handle_in.read().format(
-                species=self._args.species,
-                qc_typing_scheme=self.__get_qc_typing_scheme(),
                 coverage_max=self._args.cov_max,
-                mobsuite_contig_report=self._args.mobsuite_contig_report,
-                export_fastq='true' if self._args.report_include_fastq else 'false',
                 export_bam='true' if self._args.report_include_bam else 'false',
-                expected_gc_content=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['gc_content'],
-                genome_size=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species]['genome_size'],
-                quast_fasta=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species].get('quast_fasta', 'null'),
-                quast_gff=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species].get('quast_gff', 'null'),
-                reference_name=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species].get('reference_name', 'null'),
-                reference_url=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species].get('reference_url', 'null'),
+                export_fastq='true' if self._args.report_include_fastq else 'false',
+                mobsuite_contig_report=self._args.mobsuite_contig_report,
+                qc_typing_scheme=self.__get_qc_typing_scheme(),
+                ref_fasta=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species].get('ref_fasta', 'null'),
+                ref_gff=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species].get('ref_gff', 'null'),
+                ref_name=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species].get('ref_name', 'null'),
+                ref_url=MainBacillusPipeline.DATA_BY_SPECIES[self._args.species].get('ref_url', 'null'),
+                species=self._args.species,
             ), Loader=yaml.SafeLoader))
 
         # ONT settings

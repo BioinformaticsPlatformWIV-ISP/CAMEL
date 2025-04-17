@@ -1,6 +1,7 @@
 ####################
 # Pipeline options #
 ####################
+species: {species}
 citations:
   main: null
   other:
@@ -27,14 +28,20 @@ citations:
     - Carroll_2020a-btyper3
     - Carroll_2020b-btyper3
 
-species: {species}
+####################
+# Reference genome #
+####################
+reference:
+  fasta: {ref_fasta}
+  gff3: {ref_gff}
+  name: {ref_name}
+  url: {ref_url}
 
 #########################
 # Tool specific options #
 #########################
 downsampling:
   coverage_max: {coverage_max}
-  expected_genome_size: {genome_size}
 
 read_trimming:
   export_fastq: '{export_fastq}'
@@ -46,12 +53,6 @@ contamination_check:
 
 quality_checks:
   typing_scheme: {qc_typing_scheme}
-  expected_gc_content: {expected_gc_content}
-
-quast:
-  ref:
-    fasta: {quast_fasta}
-    gff3: {quast_gff}
 
 assembly:
   spades:
@@ -66,10 +67,6 @@ assembly:
 variant_calling:
   ploidy: 1
   report_include_bam: {export_bam}
-  reference:
-    path: {quast_fasta}
-    name: {reference_name}
-    url: {reference_url}
 
 confindr:
   db: /db/confindr/0.8.1
@@ -92,7 +89,7 @@ sequence_typing:
       category: info
 
 amrfinder:
-  db: /db/amrfinder/by_version/v3/latest
+  db: /db/amrfinder/v4/latest
 
 mob_suite:
   db: /db/mob_suite/latest

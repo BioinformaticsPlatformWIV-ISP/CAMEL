@@ -46,7 +46,7 @@ class TestBacillusPipeline(CamelTestSuite):
             self.assertGreater(len(manager.informs), 0)
 
     @longRunningTest()
-    def test_bacillus_subtilis_pipeline_blast(self) -> None:
+    def test_bacillus_pipeline_subtilis_blast_illumina(self) -> None:
         """
         Tests the Bacillus pipeline with blast-based detection.
         :return: None
@@ -71,7 +71,7 @@ class TestBacillusPipeline(CamelTestSuite):
         self.assertGreater(path_report_out.stat().st_size, 0)
 
     @longRunningTest()
-    def test_bacillus_cereus_pipeline_blast_illumina(self) -> None:
+    def test_bacillus_pipeline_cereus_blast_illumina(self) -> None:
         """
         Tests the Bacillus pipeline with blast-based detection.
         :return: None
@@ -97,32 +97,7 @@ class TestBacillusPipeline(CamelTestSuite):
         self.assertGreater(path_report_out.stat().st_size, 0)
 
     @longRunningTest()
-    def test_bacillus_cereus_pipeline_blast_ont(self) -> None:
-        """
-        Tests the Bacillus pipeline with blast-based detection and ONT data.
-        :return: None
-        """
-        path_report_out = Path(self.running_dir) / 'out' / 'report.html'
-        path_summary_out = Path(self.running_dir) / 'out' / 'summary.tsv'
-        tested_analyses = \
-            MainBacillusPipeline.CUSTOM_ANALYSES['common'] + MainBacillusPipeline.CUSTOM_ANALYSES['cereus']
-        args = [
-            '--fastq-se', str(TestBacillusPipeline.input_fastq_se_cereus),
-            '--input-type', 'ont',
-            '--output-html', str(path_report_out),
-            '--output-dir', str(path_report_out.parent),
-            '--output-tsv', str(path_summary_out),
-            '--working-dir', str(self.running_dir),
-            '--detection-method', 'blast',
-            '--threads', '8',
-            '--species', 'cereus'
-        ] + [f"--{a.replace('_', '-')}" for a in tested_analyses if 'cgmlst' not in a]
-        main = MainBacillusPipeline(args)
-        main.run()
-        self.assertGreater(path_report_out.stat().st_size, 0)
-
-    @longRunningTest()
-    def test_bacillus_subtilis_pipeline_blast_ont(self) -> None:
+    def test_bacillus_pipeline_subtilis_blast_ont(self) -> None:
         """
         Tests the Bacillus pipeline with blast based detection and ONT data.
         :return: None
@@ -147,7 +122,32 @@ class TestBacillusPipeline(CamelTestSuite):
         self.assertGreater(path_report_out.stat().st_size, 0)
 
     @longRunningTest()
-    def test_bacillus_subtilis_pipeline_blast_hybrid(self) -> None:
+    def test_bacillus_pipeline_cereus_blast_ont(self) -> None:
+        """
+        Tests the Bacillus pipeline with blast-based detection and ONT data.
+        :return: None
+        """
+        path_report_out = Path(self.running_dir) / 'out' / 'report.html'
+        path_summary_out = Path(self.running_dir) / 'out' / 'summary.tsv'
+        tested_analyses = \
+            MainBacillusPipeline.CUSTOM_ANALYSES['common'] + MainBacillusPipeline.CUSTOM_ANALYSES['cereus']
+        args = [
+            '--fastq-se', str(TestBacillusPipeline.input_fastq_se_cereus),
+            '--input-type', 'ont',
+            '--output-html', str(path_report_out),
+            '--output-dir', str(path_report_out.parent),
+            '--output-tsv', str(path_summary_out),
+            '--working-dir', str(self.running_dir),
+            '--detection-method', 'blast',
+            '--threads', '8',
+            '--species', 'cereus'
+        ] + [f"--{a.replace('_', '-')}" for a in tested_analyses if 'cgmlst' not in a]
+        main = MainBacillusPipeline(args)
+        main.run()
+        self.assertGreater(path_report_out.stat().st_size, 0)
+
+    @longRunningTest()
+    def test_bacillus_pipeline_subtilis_blast_hybrid(self) -> None:
         """
         Tests the Bacillus pipeline with blast-based detection and ONT data.
         :return: None
@@ -174,7 +174,7 @@ class TestBacillusPipeline(CamelTestSuite):
         main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)
 
-    def test_bacillus_subtilis_fasta(self) -> None:
+    def test_bacillus_pipeline_subtilis_fasta(self) -> None:
         """
         Tests the Bacillus pipeline with blast-based detection and FASTA data.
         :return: None
