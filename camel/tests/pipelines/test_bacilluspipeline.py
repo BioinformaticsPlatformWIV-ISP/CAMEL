@@ -26,6 +26,7 @@ class TestBacillusPipeline(CamelTestSuite):
     input_fastq_se_cereus = test_file_dir / 'Bcereus-DRR206405_ont-ds.fastq.gz'
     input_fastq_se_subtilis = test_file_dir / 'Bsubtilis-SRR23725160_ont-ds.fastq.gz'
     input_fasta_subtilis = test_file_dir / 'Bsubtilis-SRR10260289.fasta'
+    input_fasta_cereus = test_file_dir / 'Bcereus-D12.fasta'
 
     def test_bacillus_pipeline_typing_db(self) -> None:
         """
@@ -174,25 +175,51 @@ class TestBacillusPipeline(CamelTestSuite):
         main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)
 
+    @longRunningTest()
     def test_bacillus_pipeline_subtilis_fasta(self) -> None:
         """
-        Tests the Bacillus pipeline with blast-based detection and FASTA data.
+        Tests the Bacillus pipeline on B. subtilis with blast-based detection and FASTA data.
         :return: None
         """
         path_report_out = Path(self.running_dir) / 'out' / 'report.html'
         path_summary_out = Path(self.running_dir) / 'out' / 'summary.tsv'
         tested_analyses = MainBacillusPipeline.CUSTOM_ANALYSES['common']
         args = [
-                   '--fasta', str(TestBacillusPipeline.test_file_dir / 'Bsubtilis-SRR10260289.fasta'),
-                   '--input-type', 'fasta',
-                   '--output-html', str(path_report_out),
-                   '--output-dir', str(path_report_out.parent),
-                   '--output-tsv', str(path_summary_out),
-                   '--working-dir', str(self.running_dir),
-                   '--detection-method', 'blast',
-                   '--threads', '8',
-                   '--species', 'subtilis'
-               ] + [f"--{a.replace('_', '-')}" for a in tested_analyses if 'cgmlst' not in a]
+           '--fasta', str(TestBacillusPipeline.test_file_dir / 'Bsubtilis-SRR10260289.fasta'),
+           '--input-type', 'fasta',
+           '--output-html', str(path_report_out),
+           '--output-dir', str(path_report_out.parent),
+           '--output-tsv', str(path_summary_out),
+           '--working-dir', str(self.running_dir),
+           '--detection-method', 'blast',
+           '--threads', '8',
+           '--species', 'subtilis'
+        ] + [f"--{a.replace('_', '-')}" for a in tested_analyses if 'cgmlst' not in a]
+        main = MainBacillusPipeline(args)
+        main.run()
+        self.assertGreater(path_report_out.stat().st_size, 0)
+
+    @longRunningTest()
+    def test_bacillus_pipeline_cereus_fasta(self) -> None:
+        """
+        Tests the Bacillus pipeline on B. cereus with blast-based detection and FASTA data.
+        :return: None
+        """
+        path_report_out = Path(self.running_dir) / 'out' / 'report.html'
+        path_summary_out = Path(self.running_dir) / 'out' / 'summary.tsv'
+        tested_analyses = MainBacillusPipeline.CUSTOM_ANALYSES['common']
+        args = [
+           '--fasta', str(TestBacillusPipeline.input_fasta_cereus),
+           '--input-type', 'fasta',
+           '--output-html', str(path_report_out),
+           '--output-dir', str(path_report_out.parent),
+           '--output-tsv', str(path_summary_out),
+           '--working-dir', str(self.running_dir),
+           '--detection-method', 'blast',
+           '--threads', '8',
+           '--species', 'cereus',
+           '--btyper'
+        ] + [f"--{a.replace('_', '-')}" for a in tested_analyses if 'cgmlst' not in a]
         main = MainBacillusPipeline(args)
         main.run()
         self.assertGreater(path_report_out.stat().st_size, 0)
