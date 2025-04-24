@@ -1,0 +1,13 @@
+####################
+# Pipeline options #
+####################
+citations:
+  main: null
+  other:
+    - Sherry_2023-abritamr
+#############
+# abritAMR #
+#############
+abritamr:
+  amrfinderplus:
+    path: /db/abritamr_2/amrfinderplus_data
