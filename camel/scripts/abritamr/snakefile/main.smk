@@ -34,9 +34,12 @@ rule report_pickle_citations:
         SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output.HTML))
 
 rule report_command_section:
+    """
+    Creates the report section containing the tool commands.
+    """
     input:
         INFORMS_abritamr_run =  Path(config['working_dir']) / str(abritamr.OUTPUT_ABRITAMR_RUN_INFORMS),
-        INFORMS_abritamr_report=  Path(config['working_dir']) / str(abritamr.OUTPUT_REPORT_ABRITAMR_INFORMS)
+        INFORMS_abritamr_report=  Path(config['working_dir']) / str(abritamr.OUTPUT_ABRITAMR_REPORT_REPORT_INFORMS)
     output:
         HTML = Path(config['working_dir']) / 'report' / 'html-commands.io'
     params:
@@ -86,8 +89,7 @@ rule report_combine_all:
             pipeline_version=params.pipeline_info['version'],
             input_files=ReportPipeline.format_input_string(params.input_dict),
             input_type=params.input_type,
-            key_citation=params.citation_keys['main'],
-            warning=False
+            key_citation=params.citation_keys['main']
         ))
 
         # Add report content
@@ -98,55 +100,13 @@ rule report_combine_all:
                             ]
         SnakePipelineUtils.add_report_content(report, report_structure)
 
-# rule summary_init:
-#     """
-#     Initializes the summary output file.
-#     """
-#     output:
-#         TSV = Path(config['working_dir']) / 'summary' / 'summary-init.tsv',
-#     run:
-#         import datetime
-#         from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-#         analysis_date = datetime.datetime.now().strftime(SnakePipelineUtils.DATE_FORMAT)
-#         input_filenames = ', '.join(
-#             input_file['name'] for _, input_files in config['input'].items() for input_file in input_files)
-#         with open(output.TSV, 'w') as handle:
-#             for kv_pair in [
-#                 ('pipeline_name', config['pipeline']['name']),
-#                 ('pipeline_version', config['pipeline']['version']),
-#                 ('sample', config['sample_name']),
-#                 ('input_files', input_filenames),
-#                 ('analysis_date', analysis_date)]:
-#                 handle.write('\t'.join(kv_pair))
-#                 handle.write('\n')
-#                 json_dict[kv_pair[0]] = kv_pair[1]
-#
-# rule summary_combine_all:
-#     """
-#     In this rule all summary files are combined into a complete summary output file.
-#     """
-#     input:
-#         rules.summary_init.output.TSV,
-#         Path(config['working_dir']) / abritamr.OUTPUT_ABRITAMR_SUMMARY,
-#     output:
-#         config.get('output_tabular')
-#     run:
-#         with open(output[0], 'w') as handle_out:
-#             for summary_input in input:
-#                 with open(summary_input) as handle_in:
-#                     handle_out.write(handle_in.read())
-
-
 rule summary_combine_all:
     """
-    In this rule all summary files are combined into a complete summary output file.
+    This rule hard links the resources output summary to the config output summary.
     """
     input:
-        Path(config['working_dir']) / abritamr.OUTPUT_ABRITAMR_SUMMARY
+        TSV = Path(config['working_dir']) / 'abritamr' / 'summary_out.tsv'
     output:
-        config.get('output_tabular')
+        TSV = config.get('output_tabular')
     run:
-        with open(output[0],'w') as handle_out:
-            for summary_input in input:
-                with open(summary_input) as handle_in:
-                    handle_out.write(handle_in.read())
+        Path(input.TSV).link_to(Path(output.TSV))
