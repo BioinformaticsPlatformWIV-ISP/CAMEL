@@ -107,6 +107,7 @@ rule summary_combine_all:
     input:
         TSV = Path(config['working_dir']) / 'abritamr' / 'summary_out.tsv'
     output:
-        TSV = config.get('output_tabular')
+        TSV = config['output_tabular']
     run:
-        Path(input.TSV).link_to(Path(output.TSV))
+        import shutil
+        shutil.copyfile(input.TSV, output.TSV)

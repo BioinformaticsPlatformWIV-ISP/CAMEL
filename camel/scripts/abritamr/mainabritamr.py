@@ -1,14 +1,13 @@
 #!/usr/bin/env python
 import argparse
-from typing import List, Dict, Optional, Sequence
+from typing import Optional, Sequence
 
 import yaml
 
 from camel.app.camel import Camel
 from camel.app.components.pipelines.reportpipeline import ReportPipeline
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
-from camel.scripts.abritamr import CONFIG_DATA
-from camel.scripts.abritamr import SNAKEFILE_MAIN
+from camel.scripts.abritamr import CONFIG_DATA, SNAKEFILE_MAIN
 
 
 class MainAbriTAMR(ReportPipeline):
@@ -20,8 +19,9 @@ class MainAbriTAMR(ReportPipeline):
         """
         Initializes the main class.
         :param args: Arguments (optional)
+        :return: None
         """
-        super().__init__('AbriTAMR stand alone', '0.2', SNAKEFILE_MAIN, args)
+        super().__init__('AbriTAMR standalone', '0.2', SNAKEFILE_MAIN, args)
 
     @property
     def title(self) -> str:
@@ -40,9 +40,10 @@ class MainAbriTAMR(ReportPipeline):
         config_file = self.__construct_config_file(input_files)
         self._run_snakemake_main(config_file)
 
-    def __construct_config_file(self, input_files: Dict[str, List[Dict[str, str]]]) -> str:
+    def __construct_config_file(self, input_files: dict[str, list[dict[str, str]]]) -> str:
         """
         Constructs the configuration file.
+        :input_files: Dictionary with the input files (key can only be FASTA).
         :return: Configuration file
         """
 
@@ -58,6 +59,7 @@ class MainAbriTAMR(ReportPipeline):
     def _parse_arguments(args: Optional[Sequence[str]] = None) -> argparse.Namespace:
         """
         Parses the command line arguments.
+        :param args: Arguments (optional)
         :return: Parsed arguments
         """
         argument_parser = argparse.ArgumentParser()
@@ -72,6 +74,6 @@ class MainAbriTAMR(ReportPipeline):
 
 
 if __name__ == '__main__':
-    Camel.get_instance()  # logging.basicConfig(level=logging.DEBUG)
+    Camel.get_instance()
     main = MainAbriTAMR()
     main.run()
