@@ -38,8 +38,8 @@ rule report_command_section:
     Creates the report section containing the tool commands.
     """
     input:
-        INFORMS_abritamr_run =  Path(config['working_dir']) / str(abritamr.OUTPUT_ABRITAMR_RUN_INFORMS),
-        INFORMS_abritamr_report=  Path(config['working_dir']) / str(abritamr.OUTPUT_ABRITAMR_REPORT_REPORT_INFORMS)
+        INFORMS_abritamr_run =  Path(config['working_dir']) / abritamr.OUTPUT_ABRITAMR_RUN_INFORMS,
+        INFORMS_abritamr_report=  Path(config['working_dir']) / abritamr.OUTPUT_ABRITAMR_REPORT_REPORT_INFORMS
     output:
         HTML = Path(config['working_dir']) / 'report' / 'html-commands.io'
     params:

@@ -71,7 +71,7 @@ class TestAbriTAMR(CamelTestSuite):
 
     def test_abritamr_standalone(self) -> None:
         """
-        Tests the NCBI human read scrubbing standalone pipeline with fasta files.
+        Tests the AbriTAMR standalone pipeline with fasta files.
         :return: None
         """
         path_report_html = self.running_dir / 'out' / 'report.html'

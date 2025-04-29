@@ -12,7 +12,7 @@ from camel.scripts.abritamr import CONFIG_DATA, SNAKEFILE_MAIN
 
 class MainAbriTAMR(ReportPipeline):
     """
-    Main class to run the Salmonella pipeline.
+    Main class to run the AbriTAMR standalone pipeline.
     """
 
     def __init__(self, args: Optional[Sequence[str]] = None) -> None:
