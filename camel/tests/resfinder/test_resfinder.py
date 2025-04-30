@@ -113,6 +113,28 @@ class TestResFinder(CamelTestSuite):
         main.run()
         self.assertGreater(output_file_report.stat().st_size, 0)
 
+    def test_resfinder_main_fastq_kleb_only_pointfinder(self) -> None:
+        """
+        Tests the ResFinder main script (point mutations only) with FASTQ files for species klebsiella.
+        :return: None
+        """
+        output_file_report = self.running_dir / 'report' / 'report.html'
+        args = [
+            '--fastq-pe', str(self.FILE_FASTQ_1), str(self.FILE_FASTQ_2),
+            '--output-html', str(output_file_report),
+            '--output-dir', str(output_file_report.parent),
+            '--working-dir', str(self.running_dir),
+            '--db-directory', str(self.DB_RESFINDER),
+            '--point',
+            '--acq-overlap', '45',
+            '--min-cov', '60',
+            '--threshold', '80',
+            '--species', 'Klebsiella'
+        ]
+        main = MainResFinder(args)
+        main.run()
+        self.assertGreater(output_file_report.stat().st_size, 0)
+
     def test_resfinder_fasta(self) -> None:
         """
         Actually testing ResFinder with contigs file.

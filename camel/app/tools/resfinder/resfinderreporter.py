@@ -27,6 +27,7 @@ class ResFinderReporter(Tool):
         """
         Initializes the tool.
         :param camel: CAMEL instance
+        :return: None
         """
         super().__init__('ResFinder Reporter', '0.1', camel)
 
@@ -122,11 +123,11 @@ class ResFinderReporter(Tool):
                 logger.warning(f'Skipping unknown mutation: {row}')
                 continue
             table_data.append((
-                    row['Class'],
-                    row['Antimicrobial'],
-                    HtmlTableCell(row['WGS-predicted phenotype'], color=ResFinderReporter.MATCH_COLORS[row['Match']]),
-                    row['Genetic background'] if not pd.isna(row['Genetic background']) else '-'
-                ))
+                row['Class'],
+                row['Antimicrobial'],
+                HtmlTableCell(row['WGS-predicted phenotype'], color=ResFinderReporter.MATCH_COLORS[row['Match']]),
+                row['Genetic background'] if not pd.isna(row['Genetic background']) else '-'
+            ))
         div.add_table(table_data, header, [('class', 'data')])
         section.add_html_object(div)
 
@@ -164,14 +165,18 @@ class ResFinderReporter(Tool):
 
     def __add_genes_table(self, section: HtmlReportSection) -> None:
         """
-        Adds the table wit the detected AMR genes.
+        Adds the table with the detected AMR genes.
         :param section: Report section
         :return: None
         """
         # Parse input
-        data_genes = pd.read_table(self._tool_inputs['TSV_genes'][0].path, na_values=['NA..NA'])
-        logger.info(f'{len(data_genes)} genes parsed')
         section.add_header('Detected AMR genes', 3)
+        try:
+            data_genes = pd.read_table(self._tool_inputs['TSV_genes'][0].path, na_values=['NA..NA'])
+        except KeyError:
+            section.add_paragraph('Analysis deactivated.')
+            return
+        logger.info(f'{len(data_genes)} genes parsed')
         cols_original = list(data_genes.columns)
         if not data_genes.empty:
             data_genes['perc_cov'] = data_genes['Alignment Length/Gene Length'].apply(
@@ -197,20 +202,25 @@ class ResFinderReporter(Tool):
 
     def __add_mutations_table(self, section: HtmlReportSection) -> None:
         """
-        Adds the table wit the detected AMR mutations.
+        Adds the table with the detected AMR mutations.
         :param section: Report section
         :return: None
         """
-        data_mutations = pd.read_table(self._tool_inputs['TSV_point'][0].path)
-        logger.info(f'{len(data_mutations)} mutations parsed')
         section.add_header('Detected AMR mutations', 3)
+        try:
+            data_mutations = pd.read_table(self._tool_inputs['TSV_point'][0].path)
+        except KeyError:
+            section.add_paragraph('Analysis deactivated.')
+            return
+        logger.info(f'{len(data_mutations)} mutations parsed')
 
         if len(data_mutations) > 0:
             section.add_table([[
                 *[HtmlTableCell(f'{row[col]:.2f}' if isinstance(row[col], float) else row[col], color='green')
-                for col in data_mutations.columns if col != 'PMID'],
+                  for col in data_mutations.columns if col != 'PMID'],
                 ResFinderReporter.__get_accession_cell(str(row['PMID']), 'green', is_pmid=True)
-            ] for row in data_mutations.fillna('-').to_dict('records')], list(data_mutations.columns), [('class', 'data')])
+            ] for row in data_mutations.fillna('-').to_dict('records')], list(data_mutations.columns),
+                [('class', 'data')])
 
             # Download link
             relative_path = Path('resfinder4', self._tool_inputs['TSV_point'][0].path.name)
@@ -235,15 +245,14 @@ class ResFinderReporter(Tool):
                 continue
             self.__add_phenotype_table(section, key)
         section.add_warning_message(
-            "The phenotype 'no resistance' should be interpreted with caution, as genes or mutations may be missing " 
+            "The phenotype 'no resistance' should be interpreted with caution, as genes or mutations may be missing "
             "from the database. In addition, these are WGS-based predictions that may not be reflected in the "
             "phenotype.")
         section.add_horizontal_line()
 
         # Genes & mutations
         self.__add_genes_table(section)
-        if 'TSV_point' in self._tool_inputs:
-            self.__add_mutations_table(section)
+        self.__add_mutations_table(section)
         section.add_horizontal_line()
 
         # Extra information
