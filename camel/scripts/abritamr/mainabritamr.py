@@ -43,7 +43,7 @@ class MainAbriTAMR(ReportPipeline):
     def __construct_config_file(self, input_files: dict[str, list[dict[str, str]]]) -> str:
         """
         Constructs the configuration file.
-        :input_files: Dictionary with the input files (key can only be FASTA).
+        :param input_files: Dictionary with the input files (key can only be FASTA).
         :return: Configuration file
         """
 

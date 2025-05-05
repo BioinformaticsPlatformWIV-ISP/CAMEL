@@ -1,4 +1,8 @@
 from pathlib import Path
+
+from camel.app.io.tooliovalue import ToolIOValue
+from camel.app.snakemake.snakemakeutils import SnakemakeUtils
+from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.resources.snakefile import abritamr, assembly, core
 
 #######################
@@ -26,9 +30,6 @@ rule report_pickle_citations:
     params:
         citation_keys = config['citations']
     run:
-        from camel.app.io.tooliovalue import ToolIOValue
-        from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-        from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         section = SnakePipelineUtils.create_citations_section(
             params.citation_keys['other'], params.citation_keys['main'])
         SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output.HTML))
@@ -45,9 +46,6 @@ rule report_command_section:
     params:
         working_dir = config['working_dir']
     run:
-        from camel.app.io.tooliovalue import ToolIOValue
-        from camel.app.snakemake.snakemakeutils import SnakemakeUtils
-        from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
         informs = []
         for content in [SnakemakeUtils.load_object(Path(io)) for io in input]:
             if type(content) is dict:
@@ -78,7 +76,6 @@ rule report_combine_all:
     run:
         import datetime
         from camel.app.components.pipelines.reportpipeline import ReportPipeline
-        from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 
         # Add header section
         report = SnakePipelineUtils.init_pipeline_report(
@@ -102,12 +99,13 @@ rule report_combine_all:
 
 rule summary_combine_all:
     """
-    This rule hard links the resources output summary to the config output summary.
+    This rule copies the resources output summary to the config output summary.
     """
     input:
-        TSV = Path(config['working_dir']) / 'abritamr' / 'summary_out.tsv'
+        TSV = Path(config['working_dir']) / abritamr.OUTPUT_ABRITAMR_SUMMARY
     output:
         TSV = config['output_tabular']
-    run:
-        import shutil
-        shutil.copyfile(input.TSV, output.TSV)
+    shell:
+		"""
+        cp {input.TSV} {output.TSV}
+        """
