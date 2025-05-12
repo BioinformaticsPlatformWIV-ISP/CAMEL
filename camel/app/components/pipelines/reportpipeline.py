@@ -245,7 +245,7 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
     @staticmethod
     def add_content_contamination_check(
             structure: list[tuple], input_type: str, reports_contamination: list[Union[Path, str]],
-            report_confindr: Union[Path, str]) -> None:
+            report_confindr: Union[Path, str, None]) -> None:
         """
         Adds the report content for the contamination check.
         :param structure: Report structure
