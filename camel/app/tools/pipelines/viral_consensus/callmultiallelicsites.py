@@ -1,4 +1,4 @@
-from typing import List, Dict, Any
+from typing import Any
 
 import pandas as pd
 import vcf
@@ -12,7 +12,7 @@ from camel.app.tools.tool import Tool
 
 class CallMultiAllelicSites(Tool):
     """
-    Calls multi-allelic sites in the input pileup in BCF format.
+    Calls multi-allelic sites in the input pileup in VCF format.
     """
 
     AMBIGUITY_BASES = {'AC': 'M', 'AG': 'R', 'AT': 'W', 'CG': 'S', 'CT': 'Y', 'GT': 'K'}
@@ -27,8 +27,8 @@ class CallMultiAllelicSites(Tool):
         """
         Checks if the provided input is valid.
         """
-        if 'BCF' not in self._tool_inputs:
-            raise InvalidInputSpecificationError('Pileup input is required (BCF)')
+        if 'VCF' not in self._tool_inputs:
+            raise InvalidInputSpecificationError('Pileup input is required (VCF)')
         super()._check_input()
 
     def _execute_tool(self) -> None:
@@ -36,8 +36,8 @@ class CallMultiAllelicSites(Tool):
         Executes this tool.
         """
         records_out = []
-        logger.info(f"Calling multi-allelic sites from: {self._tool_inputs['BCF'][0].path}")
-        with self._tool_inputs['BCF'][0].path.open() as handle:
+        logger.info(f"Calling multi-allelic sites from: {self._tool_inputs['VCF'][0].path}")
+        with self._tool_inputs['VCF'][0].path.open() as handle:
             for variant in vcf.Reader(handle):
                 # Skip invariant & low depth sites
                 if len(variant.ALT) == 1 or variant.INFO['DP'] < int(self._parameters['min_dp'].value):
@@ -72,7 +72,7 @@ class CallMultiAllelicSites(Tool):
                 })
         self._set_output(records_out)
 
-    def _set_output(self, records_out: List[Dict[str, Any]]) -> None:
+    def _set_output(self, records_out: list[dict[str, Any]]) -> None:
         """
         Collects the tool output.
         :param records_out: Output records with multi-allelic sites.

@@ -245,7 +245,7 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
     @staticmethod
     def add_content_contamination_check(
             structure: list[tuple], input_type: str, reports_contamination: list[Union[Path, str]],
-            report_confindr: Union[Path, str]) -> None:
+            report_confindr: Union[Path, str, None]) -> None:
         """
         Adds the report content for the contamination check.
         :param structure: Report structure
@@ -263,14 +263,16 @@ class ReportPipeline(BasePipeline, metaclass=abc.ABCMeta):
             structure.append(
                 ('Contamination check', 'contamination', [report_k2_by_input_format['fasta']]))
         elif input_type == 'illumina':
-            # Illumina or ONT input -> Kraken2 and ConFindr
-            structure.append(
-                ('Contamination check', 'contamination', [
-                    report_k2_by_input_format['fastq_pe'], Path(report_confindr)]))
+            reports = [report_k2_by_input_format['fastq_pe']]
+            if report_confindr is not None:
+                reports.append(Path(report_confindr))
+            structure.append(('Contamination check', 'contamination', reports))
         elif input_type == 'ont':
             # ONT input -> Kraken2 and ConFindr
-            structure.append(
-                ('Contamination check', 'contamination', [report_k2_by_input_format['fastq_se'], Path(report_confindr)]))
+            reports = [report_k2_by_input_format['fastq_se']]
+            if report_confindr is not None:
+                reports.append(Path(report_confindr))
+            structure.append(('Contamination check', 'contamination', reports))
         elif input_type == 'hybrid':
             structure.append(
                 ('Contamination check', 'contamination',

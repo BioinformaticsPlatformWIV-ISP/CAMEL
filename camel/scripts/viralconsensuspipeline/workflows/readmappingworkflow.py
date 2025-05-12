@@ -1,12 +1,13 @@
 import dataclasses
 import json
+import logging
 from pathlib import Path
 from typing import Optional, Any, Dict, List
 
 import pkg_resources
 
+from camel.app.camel import Camel
 from camel.app.components.workflows.utils.fastqinput import FastqInput
-from camel.app.loggers import logger
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 
@@ -24,9 +25,7 @@ class ReadMappingOutput:
 
 class ReadMappingWorkflow(object):
     """
-    Maps reads to an input FASTA file and extracts depth statistics.
-    Illumina data: BWA (separately mapping SE and PE reads and merges them afterward).
-    ONT data: Minimap2
+    Maps reads to an input FASTA file.
     """
 
     def __init__(self, dir_: Path) -> None:
@@ -37,7 +36,7 @@ class ReadMappingWorkflow(object):
         """
         self._dir = dir_
         if not self._dir.exists():
-            logger.info(f'Creating working directory: {self._dir}')
+            logging.info(f'Creating working directory: {self._dir}')
             self._dir.mkdir(parents=True)
 
     def run(self, fastq_in: FastqInput, fasta_ref: Path, threads: int = 8, prefix: Optional[str] = 'mapping',
@@ -52,7 +51,7 @@ class ReadMappingWorkflow(object):
         :param gap_depth_cutoff: Min gap coverage
         :return: Output holder
         """
-        # Create config file
+        Camel.get_instance()
         path_config = SnakePipelineUtils.generate_config_file({
             'input': {
                 'prefix': prefix,
@@ -61,13 +60,9 @@ class ReadMappingWorkflow(object):
             'mapper': 'bwa' if fastq_in.read_type == 'illumina' else 'minimap2',
             'low_depth': {'gap_depth_cutoff': gap_depth_cutoff, 'gap_len_cutoff': gap_len_cutoff}
         }, self._dir)
-
-        # Create input directory
         dir_input = self._dir / 'input'
         dir_input.mkdir(exist_ok=True)
         SnakemakeUtils.dump_object(fastq_in.to_fq_dict(), dir_input / 'fq_dict.io')
-
-        # Run Snakefile
         path_snakefile = pkg_resources.resource_filename(
             'camel', 'scripts/viralconsensuspipeline/workflows/readmappingworkflow.smk')
         SnakePipelineUtils.run_snakemake(path_snakefile, str(path_config), [], working_dir=self._dir, threads=threads)

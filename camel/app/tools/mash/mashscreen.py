@@ -25,8 +25,8 @@ class MashScreen(Tool):
         """
         if 'DB' not in self._tool_inputs:
             raise InvalidInputSpecificationError('Database input is required')
-        if 'FASTQ' not in self._tool_inputs:
-            raise InvalidInputSpecificationError('FASTQ input is required')
+        if 'FASTQ' not in self._tool_inputs and 'FASTA' not in self._tool_inputs:
+            raise InvalidInputSpecificationError('FASTQ or FASTA input is required')
         super()._check_input()
 
     def _execute_tool(self) -> None:
@@ -34,11 +34,12 @@ class MashScreen(Tool):
         Executes this tool.
         :return: None
         """
+        key_input = 'FASTQ' if 'FASTQ' in self._tool_inputs else 'FASTA'
         path_tsv_out = self.folder / 'mash_screen.tsv'
         self._command.command = ' '.join([
             self._tool_command,
             str(self._tool_inputs['DB'][0].path),
-            ' '.join(str(x.path) for x in self._tool_inputs['FASTQ']),
+            *(str(x.path) for x in self._tool_inputs[key_input]),
             *self._build_options(),
             f'> {path_tsv_out}'
         ])

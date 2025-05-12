@@ -1,0 +1,35 @@
+####################
+# Pipeline options #
+####################
+citations:
+  main: null
+  other:
+    - Bolger_2014-trimmomatic
+    - Coster_2023-nanoplot
+    - Shen_2016-seqkit
+    - Wood_2019-kraken2
+    - Ondov_2016-mash
+    - Li_2009-bwa
+    - Li_2018-minimap2
+    - Li_2009-samtools
+    - Li_2011-bcftools
+    - Zheng_2021-clair3
+    - Aksamentov_2021-nextclade
+
+#########################
+# Tool specific options #
+#########################
+downsampling:
+  coverage_max: {cov_max}
+  coverage_max_by_segment: {cov_max_segment}
+  expected_genome_size: {genome_size}
+
+read_trimming:
+  export_fastq: '{export_fastq}'
+
+contamination_check:
+  db: /db/kraken2_full/latest/full/
+  expected_species: {expected_species}
+
+quality_checks:
+  expected_gc_content: 51.5

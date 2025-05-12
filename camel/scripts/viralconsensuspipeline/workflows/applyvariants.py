@@ -1,4 +1,5 @@
 import dataclasses
+import logging
 import tempfile
 from pathlib import Path
 from typing import List, Dict
@@ -6,11 +7,7 @@ from typing import List, Dict
 from Bio import SeqIO
 
 from camel.app.camel import Camel
-from camel.app.io.tooliofile import ToolIOFile
-from camel.app.loggers import logger
-from camel.app.tools.bcftools.bcftoolsconsensus import BcftoolsConsensus
-from camel.app.tools.bcftools.bcftoolsindex import BcftoolsIndex
-from camel.app.tools.bcftools.bcftoolsview import BcftoolsView
+from camel.app.command.command import Command
 
 
 @dataclasses.dataclass
@@ -35,7 +32,7 @@ class ApplyVariants(object):
         """
         self._dir = dir_
         if not self._dir.exists():
-            logger.info(f'Creating working directory: {self._dir}')
+            logging.info(f'Creating working directory: {self._dir}')
             self._dir.mkdir(parents=True)
         self._informs = []
 
@@ -59,26 +56,18 @@ class ApplyVariants(object):
 
     def __index_vcf(self, path_vcf_in: Path, dir_: Path) -> Path:
         """
-        Creates an indexed VCF file containing only the sites that passed filtering.
+        Creates an indexed VCF file.
         :param path_vcf_in: Input VCF file
         :param dir_: Working directory
         :return: Path to indexed VCF file
         """
-        # Create gzipped VCF file with positions that pass filtering
         path_vcf_out = Path(dir_, f'{path_vcf_in.name}.gz')
-        bcftools_view = BcftoolsView(Camel.get_instance())
-        bcftools_view.add_input_files({'VCF': [ToolIOFile(path_vcf_in)]})
-        bcftools_view.update_parameters(output_type='z', apply_filters='"PASS,."', output_filename=str(path_vcf_out))
-        bcftools_view.run(self._dir)
-        self._informs.append(bcftools_view)
-
-        # Index VCF file
-        bcftools_index = BcftoolsIndex(Camel.get_instance())
-        bcftools_index.add_input_files({'VCF_GZ': bcftools_view.tool_outputs['VCF_GZ'] })
-        bcftools_index.update_parameters(symlink_input=False)
-        bcftools_index.run(self._dir)
-        self._informs.append(bcftools_index)
-
+        command = Command(' '.join([
+            'module load bcftools/1.17;',
+            f'bcftools view --output-type z --apply-filters "PASS,." {path_vcf_in} > {path_vcf_out};',
+            f'bcftools index -f {path_vcf_out};'
+        ]))
+        command.run(dir_)
         return path_vcf_out
 
     def __apply_variants(self, fasta_in: Path, vcf_in: Path, fasta_out: Path) -> None:
@@ -89,14 +78,14 @@ class ApplyVariants(object):
         :param fasta_out: Output FASTA file
         :return: Path to updated consensus
         """
-        bcftools_consensus = BcftoolsConsensus(Camel.get_instance())
-        bcftools_consensus.add_input_files({
-            'FASTA': [ToolIOFile(Path(fasta_in))],
-            'VCF': [ToolIOFile(Path(vcf_in))]
-        })
-        bcftools_consensus.update_parameters(output_filename=str(fasta_out))
-        bcftools_consensus.run(self._dir)
-        self._informs.append(bcftools_consensus.informs)
+        command = Command(' '.join([
+            'module load bcftools/1.17;'
+            f'bcftools consensus --fasta-ref {fasta_in} {vcf_in} > {fasta_out};'
+        ]))
+        command.run(self._dir)
+        if not command.returncode == 0:
+            raise RuntimeError(f'Error applying variants: {command.stderr}')
+        self._informs.append({'_name': 'bcftools consensus 1.17', '_version': '1.17', '_command': command.command})
 
     def __update_headers(self, path_fasta: Path, name: str, description: str = '') -> None:
         """
@@ -111,6 +100,5 @@ class ApplyVariants(object):
         for s in seqs:
             s.id = f"{name}-{s.id.split('-')[-1]}"
             s.description = description
-        logger.debug(f'Saving updated header to: {path_fasta}')
         with path_fasta.open('w') as handle:
             SeqIO.write(seqs, handle, 'fasta')
