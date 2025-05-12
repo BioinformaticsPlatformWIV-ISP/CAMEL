@@ -111,7 +111,7 @@ class Clair3(Tool):
 
         # Parsing is OK -> return original file
         if format_ok:
-            logger.debug(f'No problematic positions found in Clair3 output')
+            logger.debug('No problematic positions found in Clair3 output')
             return path_out_uncompressed
 
         # Parsing is not OK -> remove problematic lines
@@ -127,10 +127,9 @@ class Clair3(Tool):
                 if not m:
                     lines_out.append(line)
                     continue
-                print('>', parts)
                 logger.warning(f'Skipping variant at position {parts[1]} - incorrect format')
 
-        # Create output file
+        # Create the output file
         path_out = vcf_in.parent / vcf_in.name.replace('.vcf', '-fixed.vcf')
         with open(path_out, 'w') as handle:
             handle.write(''.join(lines_out))
