@@ -18,6 +18,7 @@ def get_nextclade_db(wildcards, cps, segment: str, config: dict) -> str:
     """
     Returns the path to the Nextclade database.
     :param wildcards: Snakemake wildcards
+    :param cps: Snakemake checkpoints
     :param segment: Segment
     :param config: Snakemake config
     :return: Path to the database

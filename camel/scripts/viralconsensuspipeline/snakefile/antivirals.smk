@@ -16,7 +16,7 @@ rule antivirals_check_mutations:
         TSV = lambda wildcards: nextclade3.get_nextclade_output(wildcards, checkpoints, 'TSV', config),
         INFORMS_subtype = lambda wildcards: nextclade3.get_informs_subtype(wildcards, checkpoints)
     output:
-        JSON = Path(config['working_dir']) / 'antivirals' / 'json.io',
+        JSON = Path(config['working_dir']) / 'antivirals' / 'json.io'
     params:
         dir_ = Path(config['working_dir']) / 'antivirals',
         species = config.get('antivirals', {}).get('species')

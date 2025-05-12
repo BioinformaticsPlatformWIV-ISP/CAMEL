@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 from camel.resources.snakefile import human_read_scrubbing
 
@@ -15,7 +15,7 @@ OUTPUT_ITERATIVE_MAPPING_FASTA_CONSENSUS_FINAL = _dir_iterative_mapping / 'outpu
 OUTPUT_ITERATIVE_MAPPING_FASTA_CONSENSUS_FINAL_TRIMMED = _dir_iterative_mapping / 'trim_edges' / 'fasta-trim.io'
 
 
-def get_fasta(config: Dict[str, Any]) -> Path:
+def get_fasta(config: dict[str, Any]) -> Path:
     """
     Returns the consensus sequence output IO object path.
     """

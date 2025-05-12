@@ -3,10 +3,11 @@ import argparse
 import json
 import re
 import shutil
+from collections.abc import Sequence
+from importlib.resources import files
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import Optional
 
-import pkg_resources
 import yaml
 from Bio import SeqIO
 
@@ -213,8 +214,7 @@ class MainViralConsensusPipeline(ReportPipeline):
         :param config_data: Configuration data
         :return: None
         """
-        path_config_template = Path(pkg_resources.resource_filename(
-            'camel', 'scripts/viralconsensuspipeline/config_data.yml'))
+        path_config_template = Path(str(files('camel').joinpath('scripts/viralconsensuspipeline/config_data.yml')))
         logger.info(f'Adding config data from: {path_config_template}')
         with path_config_template.open() as handle_in:
             mainscriptutils.dict_merge(
