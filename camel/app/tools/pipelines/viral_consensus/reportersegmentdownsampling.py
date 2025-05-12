@@ -1,9 +1,10 @@
 import logging
+# Disable logging for matplotlib
 logging.getLogger('matplotlib').setLevel(logging.WARNING)
 import matplotlib
+# Disable interactive plots
 matplotlib.use('agg')
 from pathlib import Path
-from typing import Dict
 
 import pandas as pd
 import plotnine
@@ -101,15 +102,15 @@ class ReporterSegmentDownsampling(Tool):
         # Add description
         column_data = ReporterSegmentDownsampling.COLUMN_DATA
         section.add_paragraph("""
-            This plot illustrates the rate of each segment covered with at least <b>{}x</b> depth and the median depth. 
-            The left plot includes horizontal lines representing the 90% and 95% cutoffs (warning and fail threshold, 
-            respectively), while the right plot displays the maximum coverage used for per segment downsampling 
+            This plot illustrates the rate of each segment covered with at least <b>{}x</b> depth and the median depth.
+            The left plot includes horizontal lines representing the 90% and 95% cutoffs (warning and fail threshold,
+            respectively), while the right plot displays the maximum coverage used for per segment downsampling
             (<b>{}x</b>).""".format(
             column_data['depth_median']['fmt'](self._parameters['gap_depth_cutoff'].value),
             column_data['depth_median']['fmt'](self._parameters['max_depth'].value)))
 
     @staticmethod
-    def get_table_cell(value: float, col_data: Dict) -> HtmlTableCell:
+    def get_table_cell(value: float, col_data: dict) -> HtmlTableCell:
         """
         Formats the target value for the output table.
         :param value: Value

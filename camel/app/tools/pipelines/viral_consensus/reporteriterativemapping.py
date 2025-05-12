@@ -11,6 +11,7 @@ from camel.app.error.invalidinputspecificationerror import InvalidInputSpecifica
 from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.snakemake.snakemakeutils import SnakemakeUtils
 from camel.app.tools.tool import Tool
+from camel.app.components.html.htmltableformatter import HtmlTableFormatter, FormatEntry
 
 
 class ReporterIterativeMapping(Tool):
@@ -18,21 +19,21 @@ class ReporterIterativeMapping(Tool):
     Class to generate reports for the iterative mapping consensus workflow.
     """
 
-    COLS_READ_MAPPING = [
+    COLS_READ_MAPPING: list[FormatEntry] = [
         {'key': 'iter', 'title': 'Iteration'},
-        {'key': 'length', 'title': 'Length', 'fmt': lambda x: f'{x:,}'},
-        {'key': 'depth_median', 'title': 'Median depth', 'fmt': lambda x: f'{int(x):,}'},
-        {'key': 'depth_iqr', 'title': 'Depth IQR', 'fmt': lambda x: f'{int(x):,}'},
+        {'key': 'length', 'title': 'Length', 'fmt': HtmlTableFormatter.INT_FMT},
+        {'key': 'depth_median', 'title': 'Median depth', 'fmt': HtmlTableFormatter.INT_FMT},
+        {'key': 'depth_iqr', 'title': 'Depth IQR', 'fmt': HtmlTableFormatter.INT_FMT},
         {'key': 'mapping_rate', 'title': 'Mapping rate (%)', 'fmt': lambda x: f'{100 * x:.2f}'},
         {'key': 'covered_rate', 'title': 'Covered (%)', 'fmt': lambda x: f'{100 * x:.2f}'}
     ]
 
-    COLS_LOW_DEPTH = [
+    COLS_LOW_DEPTH: list[FormatEntry] = [
         {'key': 'iter', 'title': 'Iteration'},
-        {'key': 'length', 'title': 'Length', 'fmt': lambda x: f'{x:,}'},
-        {'key': 'low_cov_regions', 'title': '# low depth regions', 'fmt': lambda x: int(x)},
-        {'key': 'low_cov_total_bp', 'title': '# low depth positions', 'fmt': lambda x: f'{int(x):,}'},
-        {'key': 'low_cov_perc', 'title': 'Low depth positions (%)', 'fmt': lambda x: f'{x:.2f}'},
+        {'key': 'length', 'title': 'Length', 'fmt': HtmlTableFormatter.INT_FMT},
+        {'key': 'low_cov_regions', 'title': '# low depth regions', 'fmt': HtmlTableFormatter.INT_FMT},
+        {'key': 'low_cov_total_bp', 'title': '# low depth positions', 'fmt': HtmlTableFormatter.INT_FMT},
+        {'key': 'low_cov_perc', 'title': 'Low depth positions (%)', 'fmt': HtmlTableFormatter.FLOAT_FMT},
     ]
 
     REPORT_FILES = [
@@ -136,10 +137,11 @@ class ReporterIterativeMapping(Tool):
 
         # Read mapping
         div.add_header('Read mapping', level=4)
-        rows = [[ReporterIterativeMapping.__format_value(r.get(col['key']), col.get('fmt')) for col in
-                 ReporterIterativeMapping.COLS_READ_MAPPING] for r in data_stats.to_dict('records')]
-        header = [col['title'] for col in ReporterIterativeMapping.COLS_READ_MAPPING]
-        div.add_table(rows, header, [('class', 'data')])
+        div.add_table(
+            HtmlTableFormatter.format_table_data(data_stats, ReporterIterativeMapping.COLS_LOW_DEPTH),
+            [col['title'] for col in ReporterIterativeMapping.COLS_READ_MAPPING],
+            [('class', 'data')]
+        )
 
         # Per segment stats
         relative_path = Path('iterative_mapping/stats_by_segment.tsv')
@@ -200,10 +202,11 @@ class ReporterIterativeMapping(Tool):
         ], None, table_attributes=[('class', 'information')])
 
         # Add table with low coverage stats
-        rows = [[ReporterIterativeMapping.__format_value(r.get(col['key']), col.get('fmt')) for col in
-                 ReporterIterativeMapping.COLS_LOW_DEPTH] for r in data_stats.to_dict('records')]
-        header = [col['title'] for col in ReporterIterativeMapping.COLS_LOW_DEPTH]
-        div.add_table(rows, header, [('class', 'data')])
+        div.add_table(
+            HtmlTableFormatter.format_table_data(data_stats, ReporterIterativeMapping.COLS_LOW_DEPTH),
+            [col['title'] for col in ReporterIterativeMapping.COLS_LOW_DEPTH],
+            [('class', 'data')]
+        )
 
         # Add link to the BED file
         nb_iter = data_stats['iter'].iloc[-1]

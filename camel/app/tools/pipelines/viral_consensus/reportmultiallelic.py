@@ -63,7 +63,7 @@ class ReporterMultiAllelic(Tool):
             ['File', 'Download'], [('class', 'data')]
         )
 
-        # Add information section
+        # Add the information section
         section.add_header('Additional information', 4)
         section.add_paragraph(
             'Multi-allelic sites are identified by creating a pileup using <i>bcftools</i>. Positions where the '

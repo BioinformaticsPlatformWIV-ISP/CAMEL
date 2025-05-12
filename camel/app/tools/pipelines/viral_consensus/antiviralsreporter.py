@@ -5,7 +5,7 @@ import pandas as pd
 from camel.app.camel import Camel
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.html.htmltablecell import HtmlTableCell
-from camel.app.components.html.htmltableformatter import HtmlTableFormatter
+from camel.app.components.html.htmltableformatter import HtmlTableFormatter, FormatEntry
 from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.tools.tool import Tool
@@ -25,14 +25,14 @@ class AntiviralsReporter(Tool):
     """
     Reporter class for the antiviral mutation detection.
     """
-    COLS_MUTS = [
+    COLS_MUTS: list[FormatEntry] = [
         {'key': 'subtype', 'title': 'Subtype'},
         {'key': 'segment', 'title': 'Segment'},
         {'key': 'type', 'title': 'Category'},
         {'key': 'mutation', 'title': 'Mutation'},
     ]
 
-    COLS_ASSOCIATIONS = [
+    COLS_ASSOCIATIONS: list[FormatEntry] = [
         {'key': 'category', 'title': 'Category'},
         {'key': 'key', 'title': 'Key'},
         {'key': 'antiviral', 'title': 'Antiviral'},
