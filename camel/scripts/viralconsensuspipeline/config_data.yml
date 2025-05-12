@@ -16,13 +16,17 @@ citations:
     - Zheng_2021-clair3
     - Aksamentov_2021-nextclade
 
+####################
+# Reference genome #
+####################
+reference: {{}}
+
 #########################
 # Tool specific options #
 #########################
 downsampling:
-  coverage_max: {cov_max}
+  disabled: true
   coverage_max_by_segment: {cov_max_segment}
-  expected_genome_size: {genome_size}
 
 read_trimming:
   export_fastq: '{export_fastq}'
