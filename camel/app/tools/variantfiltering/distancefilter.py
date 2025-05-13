@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Union
 
 import vcf
 # noinspection PyProtectedMember
@@ -60,10 +61,10 @@ class DistanceFilter(BaseFilter):
         bed_file = self.folder / 'positions_to_filter.bed'
         self.__create_bed_file(positions_to_filter, bed_file)
         logger.info('Created bed file of variants to filter.')
-        self.__build_command(bed_file)
+        self.__build_command(bed_file if len(positions_to_filter) > 0 else None)
         self._execute_command()
 
-    def __build_command(self, bed_file: Path) -> None:
+    def __build_command(self, bed_file: Union[Path, None]) -> None:
         """
         Builds the command for this tool.
         :param bed_file: Path to the BED file of the positions to soft-filter or filter.
@@ -75,7 +76,7 @@ class DistanceFilter(BaseFilter):
             str(self._tool_inputs['VCF_GZ'][0].path),
             '--output-type z',
             f'--output {self.output_path}',
-            f"{file_parameter}{str(bed_file)}"
+            *(f"{file_parameter}{str(bed_file)}" if bed_file is not None else ())
         ] + self._get_soft_filter_options())
 
     @staticmethod
