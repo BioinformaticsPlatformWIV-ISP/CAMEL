@@ -4,6 +4,7 @@ PyVCF3
 biopython
 bs4
 humanize
+matplotlib==3.10.1
 openpyxl
 pandas
 plotnine
