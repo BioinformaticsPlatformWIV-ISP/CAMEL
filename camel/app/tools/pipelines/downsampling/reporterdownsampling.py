@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 from camel.app.camel import Camel
 from camel.app.components.html.htmlreportsection import HtmlReportSection
@@ -28,7 +28,7 @@ class ReporterDownsampling(Tool):
             raise InvalidInputSpecificationError("Statistics input is required")
         super()._check_input()
 
-    def __add_table_params(self, section: HtmlReportSection, stats: Dict[str, Any]) -> None:
+    def __add_table_params(self, section: HtmlReportSection, stats: dict[str, Any]) -> None:
         """
         Adds the table with parameters.
         :param section: HTML report section
@@ -36,11 +36,11 @@ class ReporterDownsampling(Tool):
         :return: None
         """
         section.add_table([
-            [f'Reference genome size:', f"{stats['size_ref_genome']:,} bases"],
-            [f'Maximum coverage:', f"{stats['coverage_target']:.2f}"],
+            ['Reference genome size:', f"{stats['size_ref_genome']:,} bases" if 'size_ref_genome' in stats else 'n/a'],
+            ['Maximum coverage:', f"{stats['coverage_target']:.2f}" if 'coverage_target' in stats else 'n/a'],
         ], table_attributes=[('class', 'information')])
 
-    def __add_table_stats(self, section: HtmlReportSection, stats: Dict[str, Any], reads_are_paired: bool) -> None:
+    def __add_table_stats(self, section: HtmlReportSection, stats: dict[str, Any], reads_are_paired: bool) -> None:
         """
         Adds the table with downsampling statistics.
         :param section: HTML report section
@@ -48,17 +48,17 @@ class ReporterDownsampling(Tool):
         :param reads_are_paired: True if reads are paired, False otherwise
         :return: None
         """
-        text_downsample = 'No downsampling required' if (stats['downsample_factor'] is None) else \
+        text_downsample = 'No downsampling required' if (stats.get('downsample_factor') is None) else \
             f"{stats['downsample_factor']:.2f}"
         section.add_table([
             [f"{int(stats['total_bases']):,}", f"{int(stats['mean_read_length']):,}",
-             f"{stats['coverage_estimated']:.2f}", text_downsample]],
+             f"{stats['coverage_estimated']:.2f}" if 'coverage_estimated' in stats else 'n/a', text_downsample]],
             ['Total bases (fwd. + rev.)' if reads_are_paired else 'Total bases', 'Read length (avg.)',
              'Estimated coverage', 'Downsample factor'],
             [('class', 'data')]
         )
 
-    def __add_table_downsampling(self, section: HtmlReportSection, stats: Dict[str, Any], reads_are_paired: bool) -> None:
+    def __add_table_downsampling(self, section: HtmlReportSection, stats: dict[str, Any], reads_are_paired: bool) -> None:
         """
         Adds the table with the downsampling information.
         :param section: HTML report section

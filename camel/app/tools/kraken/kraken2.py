@@ -48,15 +48,14 @@ class Kraken2(Tool):
         :return: None
         """
         if not any(key in self._tool_inputs for key in ('FASTA', 'FASTQ', 'FASTQ_PE')) or 'DB' not in self._tool_inputs:
-            raise InvalidInputSpecificationError('FASTA/Q input or DB input missing for Kraken: {!r}'.format(
-                self._tool_inputs))
+            raise InvalidInputSpecificationError(f'FASTA/Q input or DB input missing for Kraken: {self._tool_inputs!r}')
         for key, value in self._tool_inputs.items():
             if (key != 'FASTQ_PE' and len(value) > 1) or (key == 'FASTQ_PE' and len(value) != 2):
-                raise InvalidInputSpecificationError('There is more than 1 FASTA/Q file or more/less than two FASTQ_PE '
-                                                     'files given for Kraken: {!r}'.format(self._tool_inputs))
+                raise InvalidInputSpecificationError(
+                    f'There is more than 1 FASTA/Q file or more/less than two FASTQ_PE files given for Kraken: {self._tool_inputs!r}')
         if len(self._tool_inputs.keys()) > 2:
-            raise InvalidInputSpecificationError('Too many input keys given for Kraken ((FASTA or FASTQ or FASTQ_PE) '
-                                                 'and DB): {!r}'.format(self._tool_inputs))
+            raise InvalidInputSpecificationError(
+                f'Too many input keys given for Kraken ((FASTA or FASTQ or FASTQ_PE) and DB): {self._tool_inputs!r}')
 
     def __get_basename(self) -> str:
         """
@@ -105,7 +104,7 @@ class Kraken2(Tool):
 
     def __set_informs(self, stderr: str) -> None:
         """
-        Sets the informs based in the input database.
+        Sets the informs based on the input database.
         :return: None
         """
         for line in stderr.splitlines():
@@ -113,6 +112,8 @@ class Kraken2(Tool):
             if m:
                 date_update = datetime.strptime(m.group(2), '%Y%m%d').strftime('%d-%m-%Y')
                 self._informs['database'] = {'name': m.group(1), 'last_update': date_update}
+                return
+        self._informs['database'] = {'name': 'n/a', 'last_update': 'n/a'}
 
     def __build_command(self) -> None:
         """
@@ -120,7 +121,7 @@ class Kraken2(Tool):
         :return: None
         """
         options_string = ' '.join(self._build_options())
-        self._command.command = '{} {} {}'.format(self._tool_command, self.__build_input_string(), options_string)
+        self._command.command = f'{self._tool_command} {self.__build_input_string()} {options_string}'
 
     def _check_command_output(self) -> None:
         """

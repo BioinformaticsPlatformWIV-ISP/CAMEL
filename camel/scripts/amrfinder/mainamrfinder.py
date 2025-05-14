@@ -79,6 +79,7 @@ class MainAMRFinder:
             amrfinder.update_parameters(min_ident=self._args.min_id / 100.0)
         if self._args.organism is not None:
             amrfinder.update_parameters(organism=self._args.organism)
+        self._args.working_dir.mkdir(parents=True, exist_ok=True)
         amrfinder.run(self._args.working_dir)
 
         # Create output section

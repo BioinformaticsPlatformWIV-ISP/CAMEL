@@ -32,7 +32,7 @@ read_trimming:
   export_fastq: '{export_fastq}'
 
 contamination_check:
-  db: /db/kraken2_full/latest/full/
+  db: /db/kraken2_full/latest/
   expected_species: {expected_species}
 
 quality_checks:
