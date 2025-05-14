@@ -26,7 +26,7 @@ class MainViralConsensusPipeline(ReportPipeline):
     Main script for the viral consensus pipeline.
     """
 
-    CUSTOM_ANALYSES = ['antivirals']
+    CUSTOM_ANALYSES = []
     DB_ROOT = Path(Camel.get_instance().config['db_root'], 'pipelines', 'viral_consensus', 'version_1.1')
 
     SUPPORTED_SPECIES = {
@@ -297,16 +297,11 @@ class MainViralConsensusPipeline(ReportPipeline):
         if self._args.human_read_scrubbing:
             config_data['analyses'].append('human_read_scrubbing')
 
-        # Antiviral mutation detection
-        if vars(self._args)['antivirals']:
-            if self._args.species is None:
-                logger.warning('Species needs to be set to enable antiviral screening')
-            elif MainViralConsensusPipeline.SUPPORTED_SPECIES.get(self._args.species, {}).get('antivirals_species') is None:
-                logger.warning(f'Antivirals not supported for species: {self._args.species}')
-            else:
-                config_data['analyses'].append('antivirals')
-                config_data['antivirals'] = {
-                    'species': MainViralConsensusPipeline.SUPPORTED_SPECIES.get(self._args.species, {}).get('antivirals_species')}
+        # Antiviral mutation detection (only for selected species)
+        species_antivirals = MainViralConsensusPipeline.SUPPORTED_SPECIES.get(self._args.species, {}).get('antivirals_species')
+        if species_antivirals is not None:
+            config_data['analyses'].append('antivirals')
+            config_data['antivirals'] = {'species': species_antivirals}
 
         # Amplicon primer clipping
         if self._args.fasta_primers is not None:
