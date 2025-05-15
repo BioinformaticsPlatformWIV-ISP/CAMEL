@@ -55,14 +55,14 @@ class MainViralConsensusPipeline(ReportPipeline):
         },
         'rsv_a': {
             'name': 'Respiratory syncytial virus (A)',
-            'k2_name': 'Respiratory syncytial virus',
+            'k2_name': 'Orthopneumovirus hominis',
             'nextclade_dbs': {
                 'genome': str(Path(Camel.get_instance().config['db_root'], 'nextclade3', 'rsv_a'))
             }
         },
         'rsv_b': {
             'name': 'Respiratory syncytial virus (B)',
-            'k2_name': 'Respiratory syncytial virus',
+            'k2_name': 'Orthopneumovirus hominis',
             'nextclade_dbs': {
                 'genome': str(Path(Camel.get_instance().config['db_root'], 'nextclade3', 'rsv_b'))
             }
