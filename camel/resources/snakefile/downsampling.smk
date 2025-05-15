@@ -46,10 +46,6 @@ rule downsampling_calculate:
         ds_calc = DownsampleCalculation(Camel.get_instance())
         step = Step(str(rule), ds_calc, Camel.get_instance(), Path(str(params.dir_)))
 
-        print(params.is_disabled)
-        print(type(params.is_disabled))
-        print(params.is_disabled)
-
         # Determine the expected size
         if params.is_disabled is True:
             size_ref = None

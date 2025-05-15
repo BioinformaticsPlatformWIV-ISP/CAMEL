@@ -77,9 +77,6 @@ rule amrfinder_dump_summary_info:
 
         # Extract the informs
         informs = SnakemakeUtils.load_object(Path(input.INFORMS))
-        print(data_amr)
-        import pprint
-        pprint.pprint(list(data_amr.columns))
 
         # Parse perfect & other hits
         if not data_amr.empty:
