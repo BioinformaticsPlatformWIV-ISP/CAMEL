@@ -61,7 +61,8 @@ rule contamination_check_kraken_report_parser:
         report_parser = KrakenReportParser(Camel.get_instance())
         SnakemakeUtils.add_pickle_inputs(report_parser, input)
         step = Step(str(rule), report_parser, Camel.get_instance(), Path(str(params.dir_)))
-        report_parser.update_parameters(expected_species=params.expected_species)
+        report_parser.update_parameters(
+            expected_species=params.expected_species if params.expected_species is not None else 'n/a')
         if params.level_of_depth is not None:
             report_parser.update_parameters(level_of_depth=params.level_of_depth)
         if params.allowed_species is not None:
