@@ -50,14 +50,22 @@ class MainViralConsensusPipeline(ReportPipeline):
             'name': 'SARS-CoV-2',
             'k2_name': 'Severe acute respiratory syndrome-related coronavirus',
             'nextclade_dbs': {
-                'genome': str(
-                    Path(
-                        Camel.get_instance().config['db_root'],
-                        'nextclade3',
-                        'sars-cov-2',
-                    )
-                )
+                'genome': str(Path(Camel.get_instance().config['db_root'], 'nextclade3', 'sars-cov-2',))
             },
+        },
+        'rsv_a': {
+            'name': 'Respiratory syncytial virus (A)',
+            'k2_name': 'Respiratory syncytial virus',
+            'nextclade_dbs': {
+                'genome': str(Path(Camel.get_instance().config['db_root'], 'nextclade3', 'rsv_a'))
+            }
+        },
+        'rsv_b': {
+            'name': 'Respiratory syncytial virus (B)',
+            'k2_name': 'Respiratory syncytial virus',
+            'nextclade_dbs': {
+                'genome': str(Path(Camel.get_instance().config['db_root'], 'nextclade3', 'rsv_b'))
+            }
         },
     }
 
@@ -285,8 +293,8 @@ class MainViralConsensusPipeline(ReportPipeline):
     def __construct_config_file(self, input_files: dict[str, list[dict[str, str]]]) -> Path:
         """
         Constructs the Snakemake configuration file.
-        :param input_files Input FASTQ files
-        :return: Path to config file
+        :param input_files: Input FASTQ files
+        :return: Path to the config file
         """
         # Input files & read type
         config_data = self.get_template_data(input_files)
