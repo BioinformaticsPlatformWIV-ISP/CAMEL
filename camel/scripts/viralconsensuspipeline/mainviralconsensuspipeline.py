@@ -33,14 +33,14 @@ class MainViralConsensusPipeline(ReportPipeline):
         'influenza_a': {
             'antivirals_species': 'A',
             'name': 'Influenza A',
-            'k2_name': 'Influenza A virus',
+            'k2_name': 'Alphainfluenzavirus influenzae',
             'nextclade_mash_db': str(DB_ROOT / 'subtype_mash' / 'influenza_a'),
             'nextclade_capitalize': True,
         },
         'influenza_b': {
             'antivirals_species': 'B',
             'name': 'Influenza B',
-            'k2_name': 'Influenza B virus',
+            'k2_name': 'Betainfluenzavirus influenzae',
             'nextclade_segments': [],
             'nextclade_mash_db': str(DB_ROOT / 'subtype_mash' / 'influenza_b'),
             'nextclade_capitalize': True,

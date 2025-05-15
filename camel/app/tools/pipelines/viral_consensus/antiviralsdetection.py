@@ -46,7 +46,10 @@ class AntiviralsDetection(Tool):
 
         # Parse the detected mutations
         data_detected_muts = self.__parse_detected_mutations()
-        detected_muts_as_tuple = list(data_detected_muts[['segment', 'mutation']].itertuples(index=False, name=None))
+        if not data_detected_muts.empty:
+            detected_muts_as_tuple = list(data_detected_muts[['segment', 'mutation']].itertuples(index=False, name=None))
+        else:
+            detected_muts_as_tuple = []
 
         # Cross-check with mutations in the database
         detected = data_db_muts.apply(lambda x: (x['segment'], x['mutation']) in detected_muts_as_tuple, axis=1)
