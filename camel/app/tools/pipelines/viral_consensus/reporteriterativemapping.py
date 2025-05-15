@@ -138,7 +138,7 @@ class ReporterIterativeMapping(Tool):
         # Read mapping
         div.add_header('Read mapping', level=4)
         div.add_table(
-            HtmlTableFormatter.format_table_data(data_stats, ReporterIterativeMapping.COLS_LOW_DEPTH),
+            HtmlTableFormatter.format_table_data(data_stats, ReporterIterativeMapping.COLS_READ_MAPPING),
             [col['title'] for col in ReporterIterativeMapping.COLS_READ_MAPPING],
             [('class', 'data')]
         )

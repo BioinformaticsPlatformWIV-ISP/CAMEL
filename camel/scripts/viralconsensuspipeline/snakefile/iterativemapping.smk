@@ -57,7 +57,7 @@ rule iterative_mapping_phase_1_map_reads:
             fasta_ref=SnakemakeUtils.load_object(Path(str(input.FASTA)))[0].path,
             gap_len_cutoff=params.gap_len_cutoff,
             gap_depth_cutoff=params.gap_depth_cutoff,
-            threads = threads)
+            threads=threads)
 
         # Save output
         SnakemakeUtils.dump_object([ToolIOFile(out.path_bam)], Path(output.BAM))
