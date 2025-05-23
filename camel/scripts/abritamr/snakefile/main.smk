@@ -40,20 +40,14 @@ rule report_command_section:
     """
     input:
         INFORMS_abritamr_run =  Path(config['working_dir']) / abritamr.OUTPUT_ABRITAMR_RUN_INFORMS,
-        INFORMS_abritamr_report=  Path(config['working_dir']) / abritamr.OUTPUT_ABRITAMR_REPORT_REPORT_INFORMS
+        INFORMS_abritamr_report = Path(config['working_dir']) / abritamr.OUTPUT_ABRITAMR_REPORT_REPORT_INFORMS
     output:
         HTML = Path(config['working_dir']) / 'report' / 'html-commands.io'
     params:
         working_dir = config['working_dir']
     run:
-        informs = []
-        for content in [SnakemakeUtils.load_object(Path(io)) for io in input]:
-            if type(content) is dict:
-                informs.append(content)
-            elif type(content) is list:
-                informs.extend(content)
-        section = SnakePipelineUtils.create_commands_section(informs, params.working_dir)
-        SnakemakeUtils.dump_object([ToolIOValue(section)], Path(output.HTML))
+        from camel.app.components.pipelines.reportpipeline import ReportPipeline
+        ReportPipeline.export_command_section(input, Path(output.HTML), Path(params.working_dir))
 
 rule report_combine_all:
     """
@@ -61,7 +55,6 @@ rule report_combine_all:
     """
     input:
         report_abritamr = Path(config['working_dir']) / abritamr.OUTPUT_ABRITAMR_REPORT,
-        # Report
         report_citations = rules.report_pickle_citations.output.HTML,
         report_commands = rules.report_command_section.output.HTML
     output:
@@ -94,7 +87,7 @@ rule report_combine_all:
             ('AbriTAMR', 'abrit', [Path(input.report_abritamr)]),
             ('Citations', 'citations', [Path(input.report_citations)]),
             ('Commands', 'commands', [Path(input.report_commands)])
-                            ]
+        ]
         SnakePipelineUtils.add_report_content(report, report_structure)
 
 rule summary_combine_all:
@@ -106,6 +99,6 @@ rule summary_combine_all:
     output:
         TSV = config['output_tabular']
     shell:
-		"""
+        """
         cp {input.TSV} {output.TSV}
         """

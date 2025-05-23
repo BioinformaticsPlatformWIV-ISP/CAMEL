@@ -6,6 +6,7 @@ import yaml
 
 from camel.app.camel import Camel
 from camel.app.components.pipelines.reportpipeline import ReportPipeline
+from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
 from camel.app.snakemake.snakepipelineutils import SnakePipelineUtils
 from camel.scripts.abritamr import CONFIG_DATA, SNAKEFILE_MAIN
 
@@ -36,6 +37,8 @@ class MainAbriTAMR(ReportPipeline):
         Runs the pipeline.
         :return: None
         """
+        if self._args.input_type != 'fasta':
+            raise InvalidInputSpecificationError('The input type for this tool has to be fasta')
         input_files = self._symlink_input()
         config_file = self.__construct_config_file(input_files)
         self._run_snakemake_main(config_file)
@@ -46,7 +49,6 @@ class MainAbriTAMR(ReportPipeline):
         :param input_files: Dictionary with the input files (key can only be FASTA).
         :return: Configuration file
         """
-
         config_data = self.get_template_data(input_files)
         # Add existing config data
         with open(CONFIG_DATA) as handle_in:
@@ -65,11 +67,14 @@ class MainAbriTAMR(ReportPipeline):
         argument_parser = argparse.ArgumentParser()
         ReportPipeline.add_common_arguments(argument_parser)
         argument_parser.add_argument('--species', required=True, choices=[
-            'Burkholderia_cepacia', 'Acinetobacter_baumannii', 'Streptococcus_pyogenes',
-            'Streptococcus_agalactiae', 'Streptococcus_pneumoniae', 'Enterococcus_faecium',
-            'Pseudomonas_aeruginosa', 'Staphylococcus_pseudintermedius', 'Clostridioides_difficile',
-            'Klebsiella', 'Neisseria', 'Campylobacter', 'Salmonella', 'Escherichia',
-            'Staphylococcus_aureus', 'Burkholderia_pseudomallei', 'Enterococcus_faecalis'])
+            'Acinetobacter_baumannii', 'Burkholderia_cepacia', 'Burkholderia_pseudomallei', 'Burkholderia_mallei',
+            'Campylobacter', 'Citrobacter_freundii', 'Clostridioides_difficile', 'Corynebacterium_diphtheriae',
+            'Enterobacter_asburiae', 'Enterobacter_cloacae', 'Enterococcus_faecalis', 'Enterococcus_faecium',
+            'Escherichia', 'Klebsiella_oxytoca', 'Klebsiella_pneumoniae', 'Neisseria_gonorrhoeae',
+            'Neisseria_meningitidis', 'Pseudomonas_aeruginosa', 'Salmonella', 'Serratia_marcescens',
+            'Staphylococcus_aureus', 'Staphylococcus_pseudintermedius', 'Streptococcus_agalactiae',
+            'Streptococcus_pneumoniae', 'Streptococcus_pyogenes', 'Vibrio_cholerae', 'Vibrio_vulfinicus',
+            'Vibrio_parahaemolyticus'])
         return argument_parser.parse_args(args)
 
 
