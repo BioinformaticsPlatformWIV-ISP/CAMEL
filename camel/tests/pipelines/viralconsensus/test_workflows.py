@@ -148,7 +148,7 @@ class TestWorkflows(CamelTestSuite):
         self.assertGreater(len(out.informs), 0)
         self.assertGreater(VCFUtils.count_variants(out.path_vcf), 0)
 
-  	@longRunningTest()
+    @longRunningTest()
     def test_call_variants_ont_clair3(self) -> None:
         """
         Runs the variant calling workflow with ONT data using bcftools.
@@ -164,7 +164,7 @@ class TestWorkflows(CamelTestSuite):
         self.assertGreater(len(output.informs), 0)
         logging.info(f'Stats: {output.stats}')
 
-  	@longRunningTest()
+    @longRunningTest()
     def test_call_variants_illumina_clair3(self) -> None:
         """
         Runs the variant calling workflow with ONT data using bcftools.
