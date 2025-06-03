@@ -233,6 +233,13 @@ The 'Allele' mode is executed on Illumina input and on hybrid. If hybrid, only i
 
 The database version is indicated in the output report and summary output file.
 
+### NCBI AMRFinder+
+`NCBI AMRFinder+ 3.11.26` is used with default options to detect genes and mutation associated with AMR.
+
+The database version is indicated in the output report and summary output file.
+
+The --organism option is set to Salmonella.
+
 ### ResFinder4
 
 `ResFinder4 4.4.2` is used with the following options to detect genes and mutation associated with AMR:
