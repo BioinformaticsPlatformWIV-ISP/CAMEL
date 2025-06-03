@@ -38,6 +38,7 @@ class AMRFinder(Tool):
         """
         output_path = Path(self.folder) / Path(self._parameters['output_path'].value)
         self._command.command = ' '.join([
+            f'export TMPDIR={self._camel.config["temp_dir"]} &&',
             self._tool_command,
             '--nucleotide', str(self._tool_inputs['FASTA'][0].path),
             '--database', str(self._tool_inputs['DIR'][0].path),
