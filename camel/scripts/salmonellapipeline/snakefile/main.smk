@@ -1,7 +1,7 @@
 from pathlib import Path
 from camel.resources.snakefile import trimming, trimming_illumina, trimming_ont, quality_checks, variant_calling, variant_filtering, \
     contamination_check_kraken, gene_detection, sequence_typing, downsampling, quast, confindr, core, assembly, resfinder4, \
-    mobsuite, abritamr, mykrobe, human_read_scrubbing, read_simulation
+    mobsuite, abritamr, mykrobe, human_read_scrubbing, read_simulation, amrfinder
 from camel.scripts.salmonellapipeline.snakefile import spifinder, serotyping_sistr, serotyping_seqsero2
 
 #######################
@@ -29,6 +29,7 @@ include: serotyping_seqsero2.SNAKEFILE_SEROTYPE_SEQSERO2
 include: mykrobe.SNAKEFILE_MYKROBE
 include: spifinder.SNAKEFILE_SPIFINDER
 include: abritamr.SNAKEFILE_ABRITAMR
+include: amrfinder.SNAKEFILE_AMRFINDER
 
 #########
 # Rules #
@@ -55,6 +56,7 @@ rule report_command_section:
         INFORMS_serotyping_seqsero2 = serotyping_seqsero2.get_command_informs(config),
         INFORMS_mykrobe = Path(config['working_dir']) / mykrobe.OUTPUT_MYKROBE_INFORMS if 'mykrobe' in config['analyses'] else [],
         INFORMS_abritamr_run =  abritamr.get_command_informs(config),
+        INFORMS_amrfinder = Path(config['working_dir']) / amrfinder.OUTPUT_AMRFINDER_INFORMS if 'amrfinder' in config['analyses'] else [],
         INFORMS_resfinder4 = Path(config['working_dir']) / resfinder4.OUTPUT_RESFINDER4_INFORMS if 'resfinder4' in config['analyses'] else [],
         INFORMS_spifinder = spifinder.get_command_informs(config),
         INFORMS_vfdb_core = Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_INFORMS).format(db='vfdb_core') if 'vfdb_core' in config['analyses'] else [],
@@ -85,6 +87,7 @@ rule report_combine_all:
         report_adv_qc = Path(config['working_dir']) / str(quality_checks.OUTPUT_QUALITY_CHECKS_REPORT).format(input_type=config['input_type']),
         report_variant = variant_calling.get_reports(config) if 'variant_calling' in config['analyses'] else [],
         # Gene detection
+        report_amrfinder = Path(config['working_dir']) / (amrfinder.OUTPUT_AMRFINDER_REPORT if 'amrfinder' in config['analyses'] else amrfinder.OUTPUT_AMRFINDER_REPORT_EMPTY),
         report_resfinder4 = Path(config['working_dir']) / (resfinder4.OUTPUT_RESFINDER4_REPORT if 'resfinder4' in config['analyses'] else resfinder4.OUTPUT_RESFINDER4_REPORT_EMPTY),
         report_spifinder = Path(config['working_dir']) / (spifinder.OUTPUT_SPIFINDER_REPORT if 'spifinder' in config['analyses'] else spifinder.OUTPUT_SPIFINDER_REPORT_EMPTY),
         report_mykrobe = Path(config['working_dir']) / (mykrobe.OUTPUT_MYKROBE_REPORT if 'mykrobe' in config['analyses'] else mykrobe.OUTPUT_MYKROBE_REPORT_EMPTY),
@@ -146,7 +149,7 @@ rule report_combine_all:
             ('Serotyping', 'sero', [Path(x) for x in (input.report_serotyping_sistr, input.report_serotyping_seqsero2)]),
             ('Lineage identification', 'mykrobe', [Path(input.report_mykrobe)]),
             ('AMR detection', 'amr', [Path(x) for x in (
-                input.report_abritamr, input.report_resfinder4)]),
+                input.report_abritamr, input.report_amrfinder, input.report_resfinder4)]),
             ('Pathogenicity island determination', params.input_type, [Path(input.report_spifinder)]),
             ('Virulence characterization', 'virulence', [Path(input.report_vfdb_core)]),
             ('Plasmid characterization', 'plasmid', [Path(x) for x in (
@@ -175,6 +178,7 @@ rule summary_combine_all:
         Path(config['working_dir']) / serotyping_seqsero2.OUTPUT_SEROTYPE_SEQSERO2_SUMMARY if 'serotype' in config['analyses'] else [],
         Path(config['working_dir']) / mykrobe.OUTPUT_MYKROBE_SUMMARY if 'mykrobe' in config['analyses'] else [],
         Path(config['working_dir']) / abritamr.OUTPUT_ABRITAMR_SUMMARY if 'abritamr' in config['analyses'] else [],
+        Path(config['working_dir']) / amrfinder.OUTPUT_AMRFINDER_SUMMARY if 'amrfinder' in config['analyses'] else [],
         Path(config['working_dir']) / resfinder4.OUTPUT_RESFINDER4_SUMMARY if 'resfinder4' in config['analyses'] else [],
         spifinder.get_summaries(config),
         Path(config['working_dir']) / str(gene_detection.OUTPUT_GENE_DETECTION_SUMMARY).format(db='vfdb_core') if 'vfdb_core' in config['analyses'] else [],
@@ -197,7 +201,7 @@ rule link_genomic_context:
     """
     input:
         # AMR
-        TSV_amrfinder = Path(config['working_dir']) / 'abritamr' / 'abritamr_output_amrfinder.io',
+        TSV_amrfinder = Path(config['working_dir']) / 'amrfinder' / 'tsv.io' if 'amrfinder' in config['analyses'] else [],
         # Virulence
         TSV_gd_vfdb = Path(config['working_dir']) / 'gene_detection' / 'vfdb_core' / 'metadata' / 'tsv.io' if 'vfdb_core' in config['analyses'] else [],
         INFORMS_gd_vfdb = Path(config['working_dir']) / 'gene_detection' / 'vfdb_core' / 'db_manager' / 'informs.io' if 'vfdb_core' in config['analyses'] else []

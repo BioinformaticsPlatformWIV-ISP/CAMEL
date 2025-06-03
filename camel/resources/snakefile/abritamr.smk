@@ -20,7 +20,6 @@ rule abritamr_run:
     output:
         TXT_MATCHES = Path(config['working_dir']) / abritamr.OUTPUT_ABRITAMR_MATCHES,
         TXT_PARTIALS = Path(config['working_dir']) / abritamr.OUTPUT_ABRITAMR_PARTIALS,
-        TSV_amrfinder = Path(config['working_dir']) / abritamr.OUTPUT_ABRITAMR_AMRFINDER,
         INFORMS = Path(config['working_dir']) / abritamr.OUTPUT_ABRITAMR_RUN_INFORMS
     params:
         running_dir = Path(config['working_dir']) / 'abritamr' ,

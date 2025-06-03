@@ -5,7 +5,6 @@ SNAKEFILE_ABRITAMR = Path(__file__).parent / f'{Path(__file__).stem}.smk'
 _dir_abritamr = Path('abritamr')
 OUTPUT_ABRITAMR_MATCHES = _dir_abritamr / 'abritamr_output_matches.io'
 OUTPUT_ABRITAMR_PARTIALS = _dir_abritamr / 'abritamr_output_partials.io'
-OUTPUT_ABRITAMR_AMRFINDER = _dir_abritamr / 'abritamr_output_amrfinder.io'
 OUTPUT_ABRITAMR_COMBINED = _dir_abritamr / 'abritamr_output_combined.io'
 OUTPUT_ABRITAMR_QC = _dir_abritamr / 'qc_file.io'
 OUTPUT_ABRITAMR_RUN_INFORMS = _dir_abritamr / 'informs_run.io'
