@@ -11,6 +11,7 @@ from camel.scripts.viralconsensuspipeline.workflows.callvariants import CallVari
 from camel.scripts.viralconsensuspipeline.workflows.filtervariants import FilterVariants
 from camel.scripts.viralconsensuspipeline.workflows.readmappingworkflow import ReadMappingWorkflow
 from camel.scripts.viralconsensuspipeline.workflows.segmentdownsampling import SegmentDownsamplingWorkflow
+from camel.tests import longRunningTest
 
 
 class TestWorkflows(CamelTestSuite):
