@@ -59,7 +59,6 @@ def parse_tsv_typing(tsv_path: Path, detection_method: str, use_temp: bool = Tru
     :param use_temp: If enabled, temporary allele ids are used
     :return: Parsed alleles (key: locus, value: allele as a string)
     """
-    print(detection_method)
     allele_data = pd.read_table(tsv_path)
     allele_data['is_perfect_hit'] = allele_data.apply(lambda x: is_perfect(x, detection_method), axis=1)
     # When the hashed TSV file is provided -> check for allele id length
