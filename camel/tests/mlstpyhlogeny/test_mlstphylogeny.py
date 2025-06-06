@@ -19,6 +19,7 @@ class TestMLSTPhylogeny(CamelTestSuite):
     dir_dataset_large_kma = test_file_dir / 'dataset_large_kma'
     dir_dataset_large_srst2 = test_file_dir / 'dataset_large_srst2'
     dir_dataset_small_blast = test_file_dir / 'dataset_small_blast'
+    dir_dataset_small_rapid = test_file_dir / 'dataset_small_rapid'
     dir_dataset_small_blast_html = test_file_dir / 'dataset_html_small_blast'
     dir_dataset_small_blast_novel_alleles = test_file_dir / 'dataset_small_blast-novel_alleles'
 
@@ -222,6 +223,25 @@ class TestMLSTPhylogeny(CamelTestSuite):
             '--min-perc-samples', '50',
             '--min-perc-loci', '50',
             '--no-temp-allele-ids',
+        ])
+        mlst_phylo.run()
+        self.assertGreater(output_html.stat().st_size, 0)
+
+    def test_mlst_phylogeny_small_rapid(self) -> None:
+        """
+        Tests the MLST phylogeny tool with standard options and a small dataset called with the 'rapid' method.
+        :return: None
+        """
+        output_html = self.running_dir / 'out' / 'report.html'
+        output_html.parent.mkdir(exist_ok=True, parents=True)
+        mlst_phylo = MainMLSTPhylogeny([
+            *TestMLSTPhylogeny.generate_tsv_input_arguments(TestMLSTPhylogeny.dir_dataset_small_rapid),
+            '--output-html', str(output_html),
+            '--output-dir', str(output_html.parent),
+            '--dir-working', str(self.running_dir),
+            '--detection-method', 'rapid',
+            '--min-perc-loci', '75',
+            '--min-perc-samples', '0',
         ])
         mlst_phylo.run()
         self.assertGreater(output_html.stat().st_size, 0)

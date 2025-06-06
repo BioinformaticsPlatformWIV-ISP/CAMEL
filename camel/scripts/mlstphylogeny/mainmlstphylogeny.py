@@ -3,8 +3,9 @@ import argparse
 import itertools
 import shutil
 import tempfile
+from importlib.resources import files
 from pathlib import Path
-from typing import Optional, Sequence, Tuple
+from typing import Optional, Sequence
 
 import pandas as pd
 import pkg_resources
@@ -23,7 +24,7 @@ from camel.app.tools.figtree.figtree import FigTree
 from camel.app.tools.grapetree.grapetree import GrapeTree
 
 
-class MainMLSTPhylogeny(object):
+class MainMLSTPhylogeny:
     """
     Creates phylogenies based on the sequence typing output.
     """
@@ -65,7 +66,7 @@ class MainMLSTPhylogeny(object):
                     nwk_out:
                 figtree = NewickUtils.create_image_figtree(
                     grapetree.tool_outputs['NWK'][0].path,
-                    Path(pkg_resources.resource_filename('camel', 'resources/figtree/template_cgmlst_tree.txt')),
+                    Path(str(files('camel').joinpath('resources/figtree/template_cgmlst_tree.txt'))),
                     Path(nwk_out.name), self._args.image_width,
                     NewickUtils.calculate_tree_image_height(self._args.image_min_height, len(allele_data_filtered))
                 )
@@ -85,7 +86,7 @@ class MainMLSTPhylogeny(object):
         grp_input.add_argument('--input-html', type=Path, action='append')
         grp_input.add_argument('--input-tsv', nargs=2, action='append')
         ap.add_argument('--html-key', help='Key for the scheme to use for the HTML input', default='cgmlst')
-        ap.add_argument('--detection-method', type=str, choices=['blast', 'kma', 'srst2'], default='blast')
+        ap.add_argument('--detection-method', type=str, choices=['blast', 'kma', 'rapid', 'srst2'], default='blast')
         ap.add_argument(
             '--tree-method', type=str, choices=['MSTreeV2', 'MSTree', 'NJ', 'RapidNJ', 'ninja', 'distance'],
             help='Tree building method for GrapeTree', default='MSTreeV2')
@@ -177,7 +178,7 @@ class MainMLSTPhylogeny(object):
         logger.info(f"Alleles parsed for {len(allele_data)} input files ({len(allele_data.columns)} loci)")
         return allele_data
 
-    def __filter_allele_matrix(self, allele_data: pd.DataFrame) -> Tuple[pd.DataFrame, int, int]:
+    def __filter_allele_matrix(self, allele_data: pd.DataFrame) -> tuple[pd.DataFrame, int, int]:
         """
         Filters the allele matrix by removing:
         - Datasets with less than x% of loci detected
@@ -230,10 +231,10 @@ class MainMLSTPhylogeny(object):
         """
         section_filtering = HtmlReportSection('Allele matrix filtering')
         section_filtering.add_table([
-            [f'Loci required (%):', f'{self._args.min_perc_loci}%'],
-            [f'Loci required:', str(cutoff_loci)],
-            [f'Present in datasets (%):', f'{self._args.min_perc_samples}%'],
-            [f'Present in datasets', str(cutoff_datasets)]
+            ['Loci required (%):', f'{self._args.min_perc_loci}%'],
+            ['Loci required:', str(cutoff_loci)],
+            ['Present in datasets (%):', f'{self._args.min_perc_samples}%'],
+            ['Present in datasets', str(cutoff_datasets)]
         ], None, [('class', 'information')])
         section_filtering.add_table([
             ['Before filtering', len(allele_data), len(allele_data.columns)],
