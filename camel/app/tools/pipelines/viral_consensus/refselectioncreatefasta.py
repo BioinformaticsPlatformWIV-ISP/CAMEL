@@ -1,5 +1,7 @@
 import json
 import logging
+import math
+from collections import defaultdict
 from io import StringIO
 from pathlib import Path
 from typing import Union, Any
@@ -42,7 +44,12 @@ class RefSelection(Tool):
         """
         # Parse input
         db_info = self._parse_database_info(self._tool_inputs['DB'][0].path)
-        mash_out_by_segment = RefSelection._parse_mash_output([p.path for p in self._tool_inputs['TSV']])
+
+        # Parse the length information
+        len_by_segment = RefSelection._parse_seq_lengths(self._tool_inputs['DB'][0].path)
+
+        # Parse the mash output
+        mash_out_by_segment = RefSelection._parse_mash_output([p.path for p in self._tool_inputs['TSV']], len_by_segment)
 
         # Select the best reference for each segment
         ref_by_segment = {}
@@ -69,7 +76,27 @@ class RefSelection(Tool):
         self._tool_outputs['JSON'] = [ToolIOFile(path_out)]
 
     @staticmethod
-    def _parse_mash_output(mash_output: list[Path]) -> dict[str, pd.DataFrame]:
+    def calc_score(row: pd.Series) -> float:
+        """
+        Calculates the score for the mash output.
+        It considers:
+        - % identity
+        - coverage (median multiplicity)
+        - total hashes (otherwise shorter sequences are benefited)
+        - percentage of hash matches
+        :param row: Input row
+        :return: Score
+        """
+        # noinspection PyTypeChecker
+        return (
+            (0.3 * row['identity']) +
+            (0.2 * row['hashes_pct']) +
+            (0.2 * math.log2(int(row['median_mult']) + 1)) +
+            (0.2 * math.log2(int(row['length']) + 1))
+         )
+
+    @staticmethod
+    def _parse_mash_output(mash_output: list[Path], len_by_segment: dict[str, dict[str, int]]) -> dict[str, pd.DataFrame]:
         """
         Parses the mash output for the input files.
         :param mash_output: mash output files
@@ -83,8 +110,11 @@ class RefSelection(Tool):
             mash_out_by_segment[segment] = data_mash
             data_mash['hashes_pct'] = data_mash['hashes'].apply(
                 lambda x: 100 * int(x.split('/')[0]) / max(int(x.split('/')[1]), 1))
-            data_mash['hashes_nb'] = data_mash['hashes'].apply(lambda x: int(x.split('/')[1]))
-            data_mash.sort_values(by=['hashes_pct', 'hashes_nb'], inplace=True, ascending=[False, False])
+            data_mash['hashes_nb'] = data_mash['hashes'].apply(
+                lambda x: int(x.split('/')[1]))
+            data_mash['length'] = data_mash['ref_id'].map(len_by_segment[segment])
+            data_mash['score_final'] = data_mash.apply(RefSelection.calc_score, axis=1)
+            data_mash.sort_values(by=['score_final'], inplace=True, ascending=False)
             data_mash['ref_id_fmt'] = data_mash['ref_id'].apply(lambda x: x.split('-')[0].replace('_', ' '))
         return mash_out_by_segment
 
@@ -97,6 +127,20 @@ class RefSelection(Tool):
         path_metadata = dir_db / 'genome_info.json'
         with path_metadata.open() as handle:
             return json.load(handle)
+
+    @staticmethod
+    def _parse_seq_lengths(dir_db: Path) -> dict[str, dict[str, int]]:
+        """
+        Parse the lenghts of the sequences in the database.
+        :param dir_db: Database directory
+        :return: Sequence length by segment
+        """
+        len_by_segment = defaultdict(dict)
+        for path_fai in (dir_db / 'fasta_by_segment').glob('*.fai'):
+            data_length = pd.read_table(path_fai, usecols=[0, 1], names=['seq_id', 'length'])
+            for seq_id, length in data_length.itertuples(index=False, name=None):
+                len_by_segment[path_fai.name.split('.')[0]][seq_id] = length
+        return len_by_segment
 
     def _merge_mash_output(self, mash_out_by_segment: dict[str, pd.DataFrame]) -> Path:
         """
