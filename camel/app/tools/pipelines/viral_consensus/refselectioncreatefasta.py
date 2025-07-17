@@ -76,7 +76,7 @@ class RefSelection(Tool):
         self._tool_outputs['JSON'] = [ToolIOFile(path_out)]
 
     @staticmethod
-    def calc_score(row: pd.Series) -> float:
+    def calc_score(row: pd.Series, max_len: int) -> float:
         """
         Calculates the score for the mash output.
         It considers:
@@ -85,15 +85,15 @@ class RefSelection(Tool):
         - total hashes (otherwise shorter sequences are benefited)
         - percentage of hash matches
         :param row: Input row
+        :param max_len: Maximum sequence length
         :return: Score
         """
         # noinspection PyTypeChecker
         return (
-            (0.3 * row['identity']) +
-            (0.2 * row['hashes_pct']) +
-            (0.2 * math.log2(int(row['median_mult']) + 1)) +
-            (0.2 * math.log2(int(row['length']) + 1))
-         )
+            (0.4 * 100 * row['identity']) +
+            (0.3 * row['hashes_pct'] * math.log(row['median_mult'])) +
+            (0.3 * 100 * row['length'] / max_len)
+        )
 
     @staticmethod
     def _parse_mash_output(mash_output: list[Path], len_by_segment: dict[str, dict[str, int]]) -> dict[str, pd.DataFrame]:
@@ -113,7 +113,8 @@ class RefSelection(Tool):
             data_mash['hashes_nb'] = data_mash['hashes'].apply(
                 lambda x: int(x.split('/')[1]))
             data_mash['length'] = data_mash['ref_id'].map(len_by_segment[segment])
-            data_mash['score_final'] = data_mash.apply(RefSelection.calc_score, axis=1)
+            data_mash['score_final'] = data_mash.apply(
+                lambda x: RefSelection.calc_score(x, data_mash['length'].max()), axis=1)
             data_mash.sort_values(by=['score_final'], inplace=True, ascending=False)
             data_mash['ref_id_fmt'] = data_mash['ref_id'].apply(lambda x: x.split('-')[0].replace('_', ' '))
         return mash_out_by_segment
