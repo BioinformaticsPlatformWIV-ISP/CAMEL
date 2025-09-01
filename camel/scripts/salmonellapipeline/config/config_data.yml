@@ -144,4 +144,4 @@ spifinder:
 abritamr:
   species: Salmonella
   amrfinderplus:
-    path: /db/abritamr_2/amrfinderplus_data
+    path: /db/abritamr/amrfinderplus_data
