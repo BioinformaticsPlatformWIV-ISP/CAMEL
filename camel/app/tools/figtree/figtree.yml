@@ -1,4 +1,4 @@
-dependencies: [figtree/1.4.4]
+dependencies: [java/18.0.1.1, figtree/1.4.4]
 parameters:
   width: {default: true, mandatory: false, option: -width, value: 640}
   height: {default: true, mandatory: false, option: -height, value: 480}
