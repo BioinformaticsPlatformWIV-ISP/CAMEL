@@ -1,4 +1,4 @@
-dependencies: [java, fastqc/0.11.7]
+dependencies: [java, fastqc/0.12.1]
 parameters:
   extract: {default: true, mandatory: false, option: --extract, value: null}
   quiet: {default: true, mandatory: false, option: --quiet, value: null}
