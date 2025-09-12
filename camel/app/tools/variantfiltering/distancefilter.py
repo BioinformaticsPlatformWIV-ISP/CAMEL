@@ -5,7 +5,6 @@ import vcf
 # noinspection PyProtectedMember
 from vcf.model import _Record as Record
 
-from camel.app.camel import Camel
 from camel.app.loggers import logger
 from camel.app.tools.variantfiltering.basefilter import BaseFilter
 
@@ -19,12 +18,11 @@ class DistanceFilter(BaseFilter):
         in the VCF file.
     """
 
-    def __init__(self, camel: Camel) -> None:
+    def __init__(self) -> None:
         """
         Initializes this tool.
-        :param camel: CAMEL instance
         """
-        super().__init__('Variant Filter: Distance', '0.1', camel)
+        super().__init__('Variant Filter: Distance', '0.1')
 
     @property
     def full_name(self) -> str:
@@ -71,13 +69,14 @@ class DistanceFilter(BaseFilter):
         :return: None
         """
         file_parameter = '--targets-file ^' if 'soft_filter' not in self._parameters else '--mask-file '
-        self._command.command = ' '.join([
-            self._tool_command,
+        parts = [self._tool_command,
             str(self._tool_inputs['VCF_GZ'][0].path),
             '--output-type z',
-            f'--output {self.output_path}',
-            *(f"{file_parameter}{str(bed_file)}" if bed_file is not None else ())
-        ] + self._get_soft_filter_options())
+            f'--output {self.output_path}'
+        ]
+        if bed_file is not None:
+            parts.append(f"{file_parameter}{str(bed_file)}")
+        self._command.command = ' '.join(parts + self._get_soft_filter_options())
 
     @staticmethod
     def __create_bed_file(positions_to_filter: list[tuple[str, int]], bed_file: Path) -> None:

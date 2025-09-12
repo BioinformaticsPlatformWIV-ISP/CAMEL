@@ -5,11 +5,11 @@ from pathlib import Path
 
 import pandas as pd
 
-from camel.app.camel import Camel
 from camel.app.components.html.htmlexpandablediv import HtmlExpandableDiv
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.html.htmltablecell import HtmlTableCell
-from camel.app.error.invalidinputspecificationerror import InvalidInputSpecificationError
+from camel.app.components.html.htmltableformatter import FormatEntry, HtmlTableFormatter
+from camel.app.error import InvalidToolInputError
 from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.tools.tool import Tool
 
@@ -19,12 +19,21 @@ class ReporterRefSelection(Tool):
     Class to generate reports for the reference selection workflow.
     """
 
-    def __init__(self, camel: Camel) -> None:
+    COLS_SEGMENT: list[FormatEntry] = [
+        {'key': 'ref_id_fmt', 'title': 'Reference'},
+        {'key': 'length', 'title': 'Length', 'fmt': HtmlTableFormatter.INT_FMT},
+        {'key': 'identity', 'title': '% Identity'}, # Already formatted
+        {'key': 'p_val', 'title': 'P-value'},
+        {'key': 'median_mult', 'title': 'Median-multiplicity (Cov.)', 'fmt': HtmlTableFormatter.INT_FMT},
+        {'key': 'hashes', 'title': 'Matching hashes'},
+        {'key': 'score_final', 'title': 'Score', 'fmt': HtmlTableFormatter.FLOAT_FMT},
+    ]
+
+    def __init__(self) -> None:
         """
         Initializes this tool.
-        :param camel: Camel instance
         """
-        super().__init__('Reporter: Reference selection', '0.1', camel)
+        super().__init__('Reporter: Reference selection', '0.1')
 
     def _execute_tool(self) -> None:
         """
@@ -34,7 +43,7 @@ class ReporterRefSelection(Tool):
         # Parse input
         with open(self._tool_inputs['JSON'][0].path) as handle:
             ref_info_by_seg = json.load(handle)
-        data_mash = pd.read_table(self._tool_inputs['TSV'][0].path)
+        data_mash = pd.read_table(self._tool_inputs['TSV'][0].path, keep_default_na=False, na_values='-')
 
         # Create the HTML report
         section = HtmlReportSection('Reference selection')
@@ -48,11 +57,11 @@ class ReporterRefSelection(Tool):
         Checks if the provided input is valid.
         """
         if 'JSON' not in self._tool_inputs:
-            raise InvalidInputSpecificationError('Ref. selection JSON input is required (JSON)')
+            raise InvalidToolInputError('Ref. selection JSON input is required (JSON)')
         if 'FASTA' not in self._tool_inputs:
-            raise InvalidInputSpecificationError('Ref. selection FASTA input is required (FASTA)')
+            raise InvalidToolInputError('Ref. selection FASTA input is required (FASTA)')
         if 'DB' not in self._tool_inputs:
-            raise InvalidInputSpecificationError('Database input (DB) is required')
+            raise InvalidToolInputError('Database input (DB) is required')
         super()._check_input()
 
     @staticmethod
@@ -95,19 +104,23 @@ class ReporterRefSelection(Tool):
         # Parse metadata file
         path_meta = dir_db / 'sequence_metadata.tsv'
         logging.info(f'Reading sequence metadata from: {path_meta}')
-        data_meta = pd.read_table(path_meta, keep_default_na=False, na_values='-')
+        data_meta = pd.read_table(path_meta, keep_default_na=False, na_values=['-', ''])
 
         # Create output table
         records_out = []
         for seg, ref in ref_by_seg.items():
             if ref is None:
                 continue
-            accession = re.search(r'(.*)-\w+', ref['ref_id']).group(1)
+            try:
+                accession = re.search(r'(.*)-\w+', str(ref['ref_id'])).group(1)
+            except AttributeError:
+                accession = ref['ref_id']
             metadata = data_meta[data_meta['id'] == accession].iloc[0]
             records_out.append({
                 'Segment': seg,
                 'Accession': accession,
-                **{k: v for k, v in metadata.items() if k not in ('id', 'accession')}
+                **{k.replace('_', ' ').lower().capitalize(): v
+                   for k, v in metadata.fillna('n/a').items() if k not in ('id', 'accession')}
             })
         data_out = pd.DataFrame(records_out)
 
@@ -133,7 +146,7 @@ class ReporterRefSelection(Tool):
             seg,
             HtmlTableCell('Yes', color='green') if data is not None else HtmlTableCell('No', color='red'),
             data['ref_id_fmt'] if data is not None else '-',
-            f"{int(data['median_mult']):,}" if data is not None else '-',
+            f"{int(str(data['median_mult'])):,}" if data is not None else '-',
             data['hashes'] if data is not None else '-'] for seg, data in ref_by_segment.items()
         ]
         header = ['Segment', 'Present', 'Ref. genome', 'Estimated cov.', 'Matching hashes']
@@ -155,9 +168,11 @@ class ReporterRefSelection(Tool):
         div_ = HtmlExpandableDiv('match_by_segment', 'Matches by segment')
         for seg, mash_out in mash_combined.groupby(by='segment'):
             div_.add_header(f'Segment {seg}', 3)
-            column_names = ['Reference', '% Identity', 'P-value', 'Median-multiplicity (Cov.)', 'Matching hashes']
-            column_keys = ['ref_id_fmt', 'identity', 'p_val', 'median_mult', 'hashes']
+            column_keys = [c['key'] for c in ReporterRefSelection.COLS_SEGMENT]
             mash_out['identity'] = mash_out['identity'].apply(lambda x: f'{100 * x:.2f}')
-            table_data = list(mash_out[column_keys].itertuples(index=False, name=None))[:10]
-            div_.add_table(table_data, column_names, [('class', 'data')])
+            table_data = mash_out[column_keys].head(10)
+            div_.add_table(
+                HtmlTableFormatter.format_table_data(table_data, ReporterRefSelection.COLS_SEGMENT),
+                [c['title'] for c in ReporterRefSelection.COLS_SEGMENT],
+                [('class', 'data')])
         section.add_html_object(div_)

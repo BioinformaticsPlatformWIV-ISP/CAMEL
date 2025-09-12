@@ -1,8 +1,9 @@
 import gzip
 import re
+from collections.abc import Iterable, Set
 from itertools import zip_longest
 from pathlib import Path
-from typing import Iterable, AbstractSet, BinaryIO, Union
+from typing import BinaryIO, Union
 
 import screed
 from Bio import SeqIO
@@ -250,7 +251,7 @@ class FastqUtils:
 
     @staticmethod
     @DeprecationWarning
-    def _get_read_names(files: Iterable[Path]) -> AbstractSet[str]:
+    def _get_read_names(files: Iterable[Path]) -> Set[str]:
         """
         Returns a set with all the read names in the given files
         :param files: Files for which the read names need to be extracted
