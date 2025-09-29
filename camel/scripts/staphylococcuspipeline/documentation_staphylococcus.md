@@ -52,7 +52,7 @@ SLIDINGWINDOW:4:20
 MINLEN:40
 ```
 
-Quality reports are generated before and after trimming using `fastqc 0.11.7`.
+Quality reports are generated before and after trimming using `fastqc 0.12.1`.
 
 ### ONT
 Read filtering is performed using `seqkit 2.3.1` using the following options:
