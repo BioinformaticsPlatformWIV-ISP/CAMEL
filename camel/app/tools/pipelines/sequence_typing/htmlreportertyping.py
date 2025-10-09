@@ -8,7 +8,7 @@ from camel.app.components.filesystemhelper import FileSystemHelper
 from camel.app.components.html.htmlexpandablediv import HtmlExpandableDiv
 from camel.app.components.html.htmlreportsection import HtmlReportSection
 from camel.app.components.html.htmltablecell import HtmlTableCell
-from camel.app.components.sequencetyping.sequencetypinghitbase import SequenceTypingHitBase
+from camel.app.components.sequencetyping.typinghitbase import TypingHitBase
 from camel.app.error import InvalidToolInputError
 from camel.app.io.tooliovalue import ToolIOValue
 from camel.app.loggers import logger
@@ -179,7 +179,7 @@ class HtmlReporterTyping(Tool):
             table_data[i] = (table_data[i][0], 'n/a')
         self._report_section.add_table(table_data, ['Field', 'Value'], [('class', 'data')])
 
-    def __generate_novel_allele_fasta(self, hits_novel: list[SequenceTypingHitBase]) -> Path:
+    def __generate_novel_allele_fasta(self, hits_novel: list[TypingHitBase]) -> Path:
         """
         Generates a FASTA file with the novel alleles.
         :param hits_novel: Hits with novel alleles
