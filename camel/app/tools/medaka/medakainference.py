@@ -4,7 +4,7 @@ from camel.app.tools.medaka.medaka import Medaka
 class MedakaInference(Medaka):
     """
     Class for Medaka inference function.
-    Runs the medaka inference algorithm and outputs a HDF file in preparation for building a consensus sequence.
+    Runs the medaka inference algorithm and outputs an HDF file in preparation for building a consensus sequence.
     """
 
     def __init__(self) -> None:
@@ -12,7 +12,7 @@ class MedakaInference(Medaka):
         Initializes Medaka inference.
         :return: None
         """
-        super().__init__('medaka inference', '2.0.0')
+        super().__init__('medaka inference')
 
         self._required_inputs = ['BAM']
         self._output_type = 'HDF'
