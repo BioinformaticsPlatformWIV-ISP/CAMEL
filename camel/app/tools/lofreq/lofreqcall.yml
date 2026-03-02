@@ -26,7 +26,8 @@ parameters:
     option: '--out'
     value: lofreq_variants.vcf
   no_default_filter:
-    default: true
+    default: false
+    mandatory: false
     option: '--no-default-filter'
     flag: true
   region:
