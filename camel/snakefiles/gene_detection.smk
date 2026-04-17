@@ -20,20 +20,31 @@ rule gene_detection_db_manager:
         FASTA_clustered = 'gene_detection/{db}/db_manager/fasta-clust.io',
         INFORMS = 'gene_detection/{db}/db_manager/informs.iob' # gene_detection.OUTPUT_DB_INFORMS
     params:
+        db_name = lambda wildcards: wildcards.db,
         db_path = lambda wildcards: config['gene_detection']['dbs'][wildcards.db]['path'],
         dir_ = lambda wildcards: f'gene_detection/{wildcards.db}'
     run:
         from camel.app.core.io.tooliodirectory import ToolIODirectory
         from camel.app.tools.pipelines.genedetection.dbmanager import DBManager
-        db_manager = DBManager()
-        db_manager.add_input_files({'DIR': [ToolIODirectory(Path(str(params.db_path)))]})
-        step = Step(
-            rule_name=str(rule),
-            tool=db_manager,
-            dir_=Path(str(params.dir_)),
-            wildcards=wildcards)
-        step.run()
-        snakemakeutils.dump_tool_outputs(db_manager, output)
+
+        if Path(str(params.db_path)).exists():
+            db_manager = DBManager()
+            db_manager.add_input_files({'DIR': [ToolIODirectory(Path(str(params.db_path)))]})
+            step = Step(
+                rule_name=str(rule),
+                tool=db_manager,
+                dir_=Path(str(params.dir_)),
+                wildcards=wildcards)
+            step.run()
+            snakemakeutils.dump_io_outputs(db_manager,output)
+        else:
+            snakemakeutils.dump_object([], Path(output.FASTA))
+            snakemakeutils.dump_object([], Path(output.FASTA_clustered))
+            snakemakeutils.dump_object({
+                'name': params.db_name,
+                'title': params.db_name,
+            }, Path(output.INFORMS))
+
 
 rule gene_detection_get_hits:
     """
@@ -172,9 +183,9 @@ rule gene_detection_report:
             reporter.update_parameters(message_category=params.config_data['message']['category'])
 
         # Run tool
-        snakemakeutils.add_pickle_inputs(reporter, input)
+        snakemakeutils.add_io_inputs(reporter, input)
         step.run()
-        snakemakeutils.dump_tool_outputs(reporter, output)
+        snakemakeutils.dump_io_outputs(reporter, output)
 
 rule gene_detection_create_empty_report:
     """
