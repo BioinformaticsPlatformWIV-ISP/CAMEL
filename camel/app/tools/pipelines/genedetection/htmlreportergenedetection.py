@@ -18,7 +18,7 @@ class HtmlReporterGeneDetection(Tool):
     def __init__(self) -> None:
         """
         Initialize this tool.
-                :return: None
+        :return: None
         """
         super().__init__('Gene Detection: Report', '0.1')
         self._sub_folder = None
