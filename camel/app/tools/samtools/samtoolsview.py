@@ -1,7 +1,9 @@
 from pathlib import Path
 
-from camel.app.core.errors import ToolExecutionError, InvalidParameterError
-from camel.app.core.io.tooliofile import ToolIOFile
+from camelcore.app.command import Command
+from camelcore.app.io.tooliofile import ToolIOFile
+
+from camel.app.core.errors import InvalidParameterError, ToolExecutionError
 from camel.app.tools.samtools.samtoolsbasepipeable import SamtoolsBasePipeable
 
 
@@ -16,7 +18,7 @@ class SamtoolsView(SamtoolsBasePipeable):
         Initializes this tool.
         :return: None
         """
-        super().__init__('samtools view', '1.17')
+        super().__init__('samtools view', version=None)
         self.__input_key = None
         self._input_string = ''
 
@@ -53,7 +55,7 @@ class SamtoolsView(SamtoolsBasePipeable):
         self.__build_command()
         self._execute_command()
         self.__set_output()
-        self._check_stderr()
+        self._check_stderr(self._command)
 
     def __build_command(self, pipe_out: bool = False) -> None:
         """
@@ -101,14 +103,15 @@ class SamtoolsView(SamtoolsBasePipeable):
         output_key = self._parameters['output_format'].value.upper()
         self._tool_outputs[output_key] = [ToolIOFile(output_path)]
 
-    def _check_stderr(self) -> None:
+    def _check_stderr(self, command: Command) -> None:
         """
         Validates the stderr.
+        :param command: Command to check
         :return: None
         """
-        if 'only works for indexed' in self._command.stderr:
+        if 'only works for indexed' in command.stderr:
             raise ToolExecutionError(self.name, "Can only extract regions from indexed BAM files")
-        super()._check_stderr()
+        super()._check_stderr(command)
 
     def _before_pipe(self, dir_, pipe_in: bool, pipe_out: bool) -> None:
         """

@@ -4,6 +4,8 @@ import dataclasses
 import click
 import yaml
 
+from camel.app.cli import cliutils
+from camel.app.config import config
 from camel.app.core.snakemake import snakepipelineutils
 from camel.app.loggers import initialize_logging
 from camel.app.scriptutils import model
@@ -15,32 +17,17 @@ from camel.app.scriptutils.basescript.scriptoptions import ScriptOptions
 from camel.app.scriptutils.basescript.scriptoutput import ScriptOutput
 from camel.scripts.staphylococcuspipeline import SNAKEFILE_MAIN, CONFIG_DATA
 
-CUSTOM_ANALYSES = [
-    "amrfinder",
-    "bacmet",
-    "cgmlst",
-    "confindr",
-    "human_read_scrubbing",
-    "kraken2",
-    "lrefinder",
-    "mlst",
-    "mob_suite",
-    "plasmidfinder",
-    "resfinder4",
-    "rmlst",
-    "sccmec_typing",
-    "se_toxins",
-    "spa_typing",
-    "variant_calling",
-    "vfdb_core",
-    "virulencefinder",
-]
 
 @dataclasses.dataclass(frozen=True)
 class Options(model.BaseOptions):
     """
     Pipeline-specific options.
     """
+
+    species: str = dataclasses.field(
+        default='aureus',
+        metadata={'choices': ['aureus', 'spp']}
+    )
     analyses: list[str] = dataclasses.field(default_factory=list)
 
 
@@ -54,7 +41,7 @@ class MainStaphylococcusPipeline(BasePipe):
         in_: ScriptInput,
         out: ScriptOutput,
         opts: ScriptOptions,
-        opts_custom: Options
+        opts_custom: Options,
     ) -> None:
         """
         Initializes the main class.
@@ -67,26 +54,50 @@ class MainStaphylococcusPipeline(BasePipe):
         super().__init__(
             name='Staphylococcus pipeline',
             title='<i>Staphylococcus</i> pipeline',
-            version='1.2',
+            version='1.3.0',
             script_in=in_,
             script_out=out,
             opts=opts,
-            snakefile=SNAKEFILE_MAIN
+            snakefile=SNAKEFILE_MAIN,
         )
         self._opts_custom = opts_custom
 
-    def _execute(self) -> None:
+    def _validate_config_data(self, config_data: dict) -> bool:
         """
-        Runs the pipeline.
-        :return: None
+        Validates the config data.
+        :param config_data: Config data
+        :return: True if valid, False otherwise
+        """
+        if self._opts_custom.species == 'spp':
+            unsupported_assays = {'cgmlst', 'mlst'}
+            for assay in unsupported_assays:
+                if assay in self._opts_custom.analyses:
+                    raise click.UsageError(f"Assay '{assay}' is not supported for generic Staphylococcus")
+        self.check_dbs(config_data)
+        return True
+
+    def _get_qc_typing_scheme(self) -> str:
+        """
+        Returns the key of the typing scheme used for QC.
+        :return: Typing scheme
+        """
+        if self._opts_custom.species == "aureus":
+            return 'cgmlst' if 'cgmlst' in self._opts_custom.analyses else 'mlst'
+        return 'rmlst'
+
+    def _build_config(self) -> dict:
+        """
+        Builds the configuration data for Snakemake.
+        :return: Configuration data
         """
         # Parse template data
         with open(CONFIG_DATA) as handle:
             yaml_text = handle.read()
         yaml_text = yaml_text.format(
             COV_MAX=self._script_opts.cov_max,
-            QC_SCHEME='cgmlst' if 'cgmlst' in  self._opts_custom.analyses else 'mlst',
-            EXPORT_BAM=self._script_opts.include_bam
+            DB_ROOT=config.dir_db,
+            QC_SCHEME=self._get_qc_typing_scheme(),
+            EXPORT_BAM=self._script_opts.include_bam,
         )
         data_template = yaml.safe_load(yaml_text)
         self._script_out.dir.mkdir(parents=True, exist_ok=True)
@@ -94,21 +105,56 @@ class MainStaphylococcusPipeline(BasePipe):
         # Add the base config data
         config_data = self.get_config_data()
         basepipeutils.dict_merge(config_data, data_template)
-        config_data['analyses'] = self._opts_custom.analyses
-        config_data['sequence_typing']['options'] = {'method': self._script_opts.typing_method}
-        config_data['gene_detection']['options'] = {'method': self._script_opts.gene_detection_method}
-        path_config = snakepipelineutils.generate_config_file(config_data, self._script_opts.working_dir)
+        config_data['species_name'] = data_template['species'][
+            self._opts_custom.species
+        ]['full_name']
+        config_data['analyses_selected'] = self._opts_custom.analyses
+        config_data['sequence_typing']['options'] = {
+            'method': self._script_opts.typing_method
+        }
+        config_data['gene_detection']['options'] = {
+            'method': self._script_opts.gene_detection_method
+        }
 
-        # Run the Snakefile
+        # Resolve species specific values
+        config_data = basepipeutils.resolve_config(
+            config_data, self._opts_custom.species
+        )
+        return config_data
+
+    def _execute(self) -> None:
+        """
+        Runs the pipeline.
+        :return: None
+        """
+        # Build and validate the config file
+        config_data = self._build_config()
+        self._validate_config_data(config_data)
+
+        # Create the config file and run snakefile
+        self._script_out.dir.mkdir(parents=True, exist_ok=True)
+        path_config = snakepipelineutils.generate_config_file(
+            config_data, self._script_opts.working_dir
+        )
         self.run_snakefile(path_config)
+
+        # Additional export for the assembly
         self._export_assembly()
 
 
-@click.command(name='staphylococcus_pipeline', short_help='Pipeline for the complete characterization of Staphylococcus aureus isolates')
+@click.command(
+    name='staphylococcus_pipeline',
+    short_help='Pipeline for the complete characterization of Staphylococcus aureus isolates',
+)
 @basescriptutils.add_input_opts()
 @basescriptutils.add_output_opts
 @basescriptutils.add_general_opts
-@click.option('--analyses', type=str, help=f"Comma-separated list of analyses to run ({', '.join(CUSTOM_ANALYSES)})")
+@click.option(
+    '--analyses',
+    type=str,
+    help=f"Comma-separated list of analyses to run ({', '.join(basepipeutils.get_custom_analyses(CONFIG_DATA))})",
+)
+@cliutils.add_click_options_from_dataclass(Options, skip=['analyses'])
 def main(**kwargs) -> None:
     """
     Pipeline for the complete characterization of Staphylococcus aureus isolates.
@@ -118,8 +164,12 @@ def main(**kwargs) -> None:
     script_opts = basescriptutils.parse_script_opts(kwargs)
     custom_opts = Options(
         analyses=kwargs['analyses'].split(',') if kwargs['analyses'] else [],
+        species=kwargs['species'],
     )
-    pipeline = MainStaphylococcusPipeline(script_input, script_out, script_opts, custom_opts)
+    pipeline = MainStaphylococcusPipeline(
+        script_input, script_out, script_opts, custom_opts
+    )
+    pipeline.prepare_input()
     pipeline.run()
 
 

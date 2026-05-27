@@ -1,11 +1,12 @@
 import json
 from pathlib import Path
 
-from camel.app.core.command import Command
-from camel.app.core.utils import toolutils, fileutils
-from camel.app.core.errors import InvalidToolInputError
-from camel.app.core.errors import ToolExecutionError
-from camel.app.core.io.tooliofile import ToolIOFile
+from camelcore.app.command import Command
+from camelcore.app.io.tooliofile import ToolIOFile
+from camelcore.app.utils import fileutils
+
+from camel.app.core import toolutils
+from camel.app.core.errors import InvalidToolInputError, ToolExecutionError
 from camel.app.core.tool import Tool
 
 
@@ -17,9 +18,18 @@ class SeqSero2(Tool):
     def __init__(self) -> None:
         """
         Initialize tool.
-                :return: None
+        :return: None
         """
-        super().__init__('SeqSero2', '1.2.1')
+        super().__init__('SeqSero2', version=None)
+
+    def get_version(self) -> str:
+        """
+        Retrieves the tool version.
+        :return: Tool version
+        """
+        command = Command(f'{self._tool_command} --version')
+        self._execute_command(command, is_version_cmd=True)
+        return command.stdout.split(' ')[-1].strip()
 
     def _execute_tool(self) -> None:
         """

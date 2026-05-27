@@ -1,11 +1,13 @@
 import unittest
 from pathlib import Path
 
+from camelcore.app.io.tooliodirectory import ToolIODirectory
+from camelcore.app.io.tooliofile import ToolIOFile
+
 from camel.app.config import config
 from camel.app.core.cameltestsuite import CamelTestSuite
-from camel.app.core.io.tooliodirectory import ToolIODirectory
-from camel.app.core.io.tooliofile import ToolIOFile
 from camel.app.tools.kraken.kraken2 import Kraken2
+from camel.tests import requires_dependency_service
 
 
 class TestKraken2(CamelTestSuite):
@@ -19,6 +21,7 @@ class TestKraken2(CamelTestSuite):
     input_fasta_reads = test_file_dir / 'reads_test.fasta'
     input_db = Path(config.dir_db, 'kraken2_microbial', 'latest')
 
+    @requires_dependency_service('lmod')
     def test_kraken2_paired(self) -> None:
         """
         Tests kraken2 with paired-end input.
@@ -33,6 +36,7 @@ class TestKraken2(CamelTestSuite):
         self.verify_output_files(kraken2, 'TSV')
         self.verify_output_files(kraken2, 'TSV_report')
 
+    @requires_dependency_service('lmod')
     def test_kraken2_fasta(self) -> None:
         """
         Tests kraken2 with fasta input.

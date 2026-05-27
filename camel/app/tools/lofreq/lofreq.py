@@ -1,6 +1,7 @@
 import abc
 
-from camel.app.core.command import Command
+from camelcore.app.command import Command
+
 from camel.app.core.errors import ToolExecutionError
 from camel.app.core.tool import Tool
 
@@ -40,6 +41,5 @@ class Lofreq(Tool, metaclass=abc.ABCMeta):
         Validates if the program ran correctly by checking the standard error.
         :return: None
         """
-        if self._command.stderr:
-            if 'FATAL' in self._command.stderr:
-                raise ToolExecutionError(self.name, f"{self.name} failed: '{self._command.stderr}'")
+        if 'FATAL' in command.stderr:
+            raise ToolExecutionError(self.name, f"{self.name} failed: '{command.stderr}'")

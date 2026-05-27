@@ -1,9 +1,8 @@
 from pathlib import Path
-
-import pandas as pd
 import json
 
-from camel.app.core.io.tooliodirectory import ToolIODirectory
+from camelcore.app.io.tooliodirectory import ToolIODirectory
+
 from camel.app.core.snakemake.step import Step
 from camel.app.core.snakemake import snakemakeutils
 from camel.snakefiles import amrfinder
@@ -25,13 +24,13 @@ rule amrfinder_run:
     run:
         from camel.app.tools.amrfinder.amrfinder import AMRFinder
         amrfinder = AMRFinder()
-        snakemakeutils.add_pickle_input(amrfinder, 'FASTA', Path(input.FASTA))
+        snakemakeutils.add_io_input(amrfinder,'FASTA', Path(input.FASTA))
         amrfinder.add_input_files({'DIR': [ToolIODirectory(Path(input.DIR))]})
         if params.organism is not None:
             amrfinder.update_parameters(organism=params.organism)
         step = Step(rule_name=str(rule), tool=amrfinder, dir_=Path(params.dir_))
         step.run()
-        snakemakeutils.dump_tool_outputs(amrfinder, output)
+        snakemakeutils.dump_io_outputs(amrfinder, output)
 
 rule amrfinder_reporter:
     """
@@ -47,10 +46,10 @@ rule amrfinder_reporter:
     run:
         from camel.app.tools.amrfinder.amrfinderreporter import AMRFinderReporter
         reporter = AMRFinderReporter()
-        snakemakeutils.add_pickle_inputs(reporter, input)
+        snakemakeutils.add_io_inputs(reporter, input)
         step = Step(rule_name=str(rule), tool=reporter, dir_=Path(params.dir_))
         step.run()
-        snakemakeutils.dump_tool_outputs(reporter, output)
+        snakemakeutils.dump_io_outputs(reporter, output)
 
 rule amrfinder_report_empty:
     """
@@ -74,6 +73,7 @@ rule amrfinder_dump_summary_info:
     params:
         ext = lambda wildcards: wildcards.ext
     run:
+        import pandas as pd
         path_tsv = snakemakeutils.load_object(Path(input.TSV))[0].path
         data_amr = pd.read_table(path_tsv)
 

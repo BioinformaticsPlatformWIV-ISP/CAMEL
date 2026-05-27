@@ -1,6 +1,8 @@
 from pathlib import Path
-from camel.app.core.utils import fileutils
-from camel.app.core.io.tooliofile import ToolIOFile
+
+from camelcore.app.io.tooliofile import ToolIOFile
+from camelcore.app.utils import fileutils
+
 from camel.app.loggers import logger
 from camel.app.tools.picard.picard import Picard
 
@@ -13,7 +15,7 @@ class CreateSequenceDictionary(Picard):
     def __init__(self):
         """
         Initialize a picard tool
-                :return: None
+        :return: None
         """
         super().__init__('Picard CreateSequenceDictionary', '2.23.3')
         self._required_inputs = ['FASTA_REF']

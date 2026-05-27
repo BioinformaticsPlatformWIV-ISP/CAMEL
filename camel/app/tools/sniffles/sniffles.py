@@ -1,9 +1,11 @@
 from pathlib import Path
 
-from camel.app.core.command import Command
-from camel.app.core.utils import toolutils, fastautils
+from camelcore.app.command import Command
+from camelcore.app.io.tooliofile import ToolIOFile
+from camelcore.app.utils import fastautils
+
+from camel.app.core import toolutils
 from camel.app.core.errors import InvalidToolInputError
-from camel.app.core.io.tooliofile import ToolIOFile
 from camel.app.core.tool import Tool
 
 
@@ -16,9 +18,18 @@ class Sniffles(Tool):
     def __init__(self) -> None:
         """
         Initializes Sniffles 2.0.7.
-                :return: None
+        :return: None
         """
-        super().__init__('Sniffles', '2.2')
+        super().__init__('Sniffles', version=None)
+
+    def get_version(self) -> str:
+        """
+        Retrieves the tool version.
+        :return: Tool version
+        """
+        command = Command(f'{self._tool_command} --version')
+        self._execute_command(command, is_version_cmd=True)
+        return command.stdout.split(' ')[-1].strip()
 
     def _check_input(self) -> None:
         """
@@ -39,8 +50,14 @@ class Sniffles(Tool):
         Builds the command to run sniffles.
         :return: None
         """
-        self._command.command = ' '.join([
-            self._tool_command, f'--input {bam_input}', f'--reference {fasta_input}', *self._build_options()])
+        self._command.command = ' '.join(
+            [
+                self._tool_command,
+                f'--input {bam_input}',
+                f'--reference {fasta_input}',
+                *self._build_options(),
+            ]
+        )
 
     def _check_command_output(self, command: Command) -> None:
         """

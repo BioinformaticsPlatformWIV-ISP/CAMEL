@@ -2,9 +2,9 @@ conda:
   name: resfinder
   packages:
     - python=3.12
-    - resfinder=4.4.2
+    - resfinder=4.7.2
 dependencies:
-  - resfinder/4.4.2
+  - resfinder/4.7.2
   - blast/2.14.0
   - kma/1.4.12a
 parameters:
@@ -62,7 +62,7 @@ parameters:
     default: false
     mandatory: false
     option: '--point'
-    value: null
+    flag: true
   species:
     default: false
     mandatory: false

@@ -1,7 +1,9 @@
 from pathlib import Path
 
-from camel.app.core.errors import ToolExecutionError, InvalidParameterError
-from camel.app.core.io.tooliofile import ToolIOFile
+from camelcore.app.command import Command
+from camelcore.app.io.tooliofile import ToolIOFile
+
+from camel.app.core.errors import InvalidParameterError, ToolExecutionError
 from camel.app.loggers import logger
 from camel.app.tools.samtools.samtoolsbase import SamtoolsBase
 
@@ -15,7 +17,7 @@ class SamtoolsFastaIndex(SamtoolsBase):
         """
         Initializes this tool.
         """
-        super().__init__('samtools faidx', '1.17')
+        super().__init__('samtools faidx', version=None)
 
     def _check_input(self) -> None:
         """
@@ -60,7 +62,7 @@ class SamtoolsFastaIndex(SamtoolsBase):
             fasta_file = self._tool_inputs['FASTA'][0].path
         self.__build_command(fasta_file)
         self._execute_command()
-        self._check_stderr()
+        self._check_stderr(self._command)
         if 'regions' in self._parameters:
             self._tool_outputs['FASTA'] = [ToolIOFile(self.folder / self._parameters['output_filename'].value)]
         else:
@@ -77,10 +79,11 @@ class SamtoolsFastaIndex(SamtoolsBase):
             logger.info("Extracting regions from FASTA file, file should already be indexed.")
             self._command.command += f" {self._parameters['regions'].value} > {self._parameters['output_filename'].value}"
 
-    def _check_stderr(self) -> None:
+    def _check_stderr(self, command: Command) -> None:
         """
         Checks the command stderr output.
+        :param command: Command to check
         :return: None
         """
-        if 'build FASTA index' in self._command.stderr:
+        if 'build FASTA index' in command.stderr:
             raise ToolExecutionError(self.name, "Cannot extract regions from an unindexed FASTA file.")

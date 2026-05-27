@@ -22,7 +22,7 @@ rule nextclade3_detect_subtype_mash:
         db = config['nextclade'].get('db_mash')
     run:
         from camel.app.core.errors import ToolExecutionError
-        from camel.app.core.io.tooliofile import ToolIOFile
+        from camelcore.app.io.tooliofile import ToolIOFile
         from camel.app.tools.mash.mashscreen import MashScreen
         from camel.app.scriptutils.basepipe.fastqinput import FastqInput
 
@@ -41,7 +41,7 @@ rule nextclade3_detect_subtype_mash:
         try:
             step = Step(rule_name=str(rule), tool=mash_screen, dir_=Path(Path(params.dir_)))
             step.run()
-            snakemakeutils.dump_tool_outputs(mash_screen, output)
+            snakemakeutils.dump_io_outputs(mash_screen, output)
         except ToolExecutionError as err:
             logging.info(f'Error executing {mash_screen.name}')
             snakemakeutils.dump_object([], Path(output.TSV))
@@ -61,16 +61,16 @@ checkpoint nextclade3_detect_subtype_report:
         dir_ = 'nextclade/subtype_determination/report',
         db = config['nextclade'].get('db_mash')
     run:
-        from camel.app.core.io.tooliodirectory import ToolIODirectory
+        from camelcore.app.io.tooliodirectory import ToolIODirectory
         from camel.app.tools.nextclade3.nextcladesubtypereporter import NextcladeSubTypeReporter
         from camel.app.core.snakemake import snakepipelineutils
 
         if params.db is not None:
             reporter = NextcladeSubTypeReporter()
-            snakemakeutils.add_pickle_inputs(reporter, input)
+            snakemakeutils.add_io_inputs(reporter, input)
             reporter.add_input_files({'DB': [ToolIODirectory(Path(params.db))]})
             reporter.run(Path(params.dir_))
-            snakemakeutils.dump_tool_outputs(reporter, output)
+            snakemakeutils.dump_io_outputs(reporter, output)
         else:
             snakepipelineutils.create_empty_report_section('Subtype determination', Path(output.HTML))
             snakemakeutils.dump_object({}, Path(output.INFORMS))
@@ -102,7 +102,7 @@ rule nextclade3_extract_segment:
     run:
         from Bio import SeqIO
         from Bio.Seq import Seq
-        from camel.app.core.io.tooliofile import ToolIOFile
+        from camelcore.app.io.tooliofile import ToolIOFile
 
         # Retrieve the sequence of the corresponding segment
         fasta_in = snakemakeutils.load_object(Path(input.FASTA))[0].path
@@ -138,7 +138,7 @@ rule nextclade3_run:
     params:
         dir_ = lambda wildcards: f'nextclade/{wildcards.segment}'
     run:
-        from camel.app.core.io.tooliodirectory import ToolIODirectory
+        from camelcore.app.io.tooliodirectory import ToolIODirectory
         from camel.app.tools.nextclade3.nextclade3 import Nextclade3
 
         # Check if database input is valid
@@ -156,7 +156,7 @@ rule nextclade3_run:
             })
             step = Step(rule_name=str(rule), tool=nextclade, dir_=Path(str(params.dir_)))
             step.run()
-            snakemakeutils.dump_tool_outputs(nextclade, output)
+            snakemakeutils.dump_io_outputs(nextclade, output)
 
 rule nextclade3_reporter:
     """
@@ -194,7 +194,7 @@ rule nextclade3_reporter:
         reporter.update_parameters(name=params.name, capitalize_segment_names=params.capitalize_segment_names)
         step = Step(rule_name=str(rule), tool=reporter, dir_=Path(str(params.dir_)))
         step.run()
-        snakemakeutils.dump_tool_outputs(reporter, output)
+        snakemakeutils.dump_io_outputs(reporter, output)
 
 rule nextclade_dump_informs:
     """
@@ -231,7 +231,7 @@ rule nextclade3_create_summary:
         TSV_nextclade = lambda wildcards: nextclade3.get_nextclade_output(wildcards, checkpoints, 'TSV', config),
         INFORMS_nextclade = rules.nextclade_dump_informs.output.INFORMS,
         INFORMS_nextclade_all = lambda wildcards: nextclade3.get_nextclade_output(wildcards, checkpoints, 'INFORMS', config),
-        INFORMS_subtype_determination = 'nextclade/subtype_determination/report/informs.io' if (config['nextclade'].get('db') is None) and ('nextclade' in config['analyses']) else []
+        INFORMS_subtype_determination = 'nextclade/subtype_determination/report/informs.io' if (config['nextclade'].get('db') is None) and ('nextclade' in config['analyses_selected']) else []
     output:
         FILE = 'nextclade/summary_nextclade.{ext}' # nextclade3.OUTPUT_SUMMARY
     params:

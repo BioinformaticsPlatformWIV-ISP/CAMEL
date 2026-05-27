@@ -3,13 +3,14 @@ from distutils.util import strtobool
 from pathlib import Path
 from typing import Any
 
-from camel.app.core.reports.htmlelement import HtmlElement
-from camel.app.core.reports.htmlreportsection import HtmlReportSection
-from camel.app.core.reports.htmltablecell import HtmlTableCell
+from camelcore.app.io.tooliovalue import ToolIOValue
+from camelcore.app.reports.htmlelement import HtmlElement
+from camelcore.app.reports.htmlreportsection import HtmlReportSection
+from camelcore.app.reports.htmltablecell import HtmlTableCell
+from camelcore.app.utils import fileutils
+
 from camel.app.core.errors import InvalidToolInputError
-from camel.app.core.io.tooliovalue import ToolIOValue
 from camel.app.core.tool import Tool
-from camel.app.core.utils import fileutils
 
 
 class VariantCallingReporter(Tool):
@@ -51,7 +52,7 @@ class VariantCallingReporter(Tool):
         :return: None
         """
         tool_versions = ', '.join([
-            self._input_informs['mapping']['_name'], self._input_informs['calling']['_name']])
+            self._input_informs['mapping']['_name_full'], self._input_informs['calling']['_name_full']])
         self._section = HtmlReportSection("Variant calling", subtitle=tool_versions)
         self.__add_reference_link()
         self.__add_mapping_info()

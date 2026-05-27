@@ -7,9 +7,9 @@ from pathlib import Path
 
 import pytest
 import yaml
+from camelcore.app.utils import reportutils
 
 from camel.app.config import config
-from camel.app.core.reports import reportutils
 from camel.app.loggers import logger
 
 
@@ -88,7 +88,7 @@ def export_report_section(report_section, dir_out: Path) -> Path:
     logger.info(f"Report section exported to: {path_out}")
     return path_out
 
-def extract_from_yaml(path_in: Path, key: str, placeholders: dict[str, str] | None = None) -> dict:
+def extract_from_yaml(path_in: Path, key: str, placeholders: dict[str, str] | None = None) -> dict | list:
     """
     Extracts the given top-level section from the input YAML file.
     :param path_in: Input YAML file

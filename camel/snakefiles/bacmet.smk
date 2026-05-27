@@ -15,7 +15,7 @@ rule bacmet_pickle_db:
     output:
         DB = 'bacmet/db.io'
     run:
-        from camel.app.core.io.tooliodirectory import ToolIODirectory
+        from camelcore.app.io.tooliodirectory import ToolIODirectory
         snakemakeutils.dump_object([ToolIODirectory(Path(input.DB))], Path(output.DB))
 
 rule bacmet_prodigal:
@@ -32,10 +32,10 @@ rule bacmet_prodigal:
     run:
         from camel.app.tools.prodigal.prodigal import Prodigal
         prodigal = Prodigal()
-        snakemakeutils.add_pickle_inputs(prodigal, input)
+        snakemakeutils.add_io_inputs(prodigal, input)
         step = Step(rule_name=str(rule), tool=prodigal, dir_=Path(params.dir_))
         step.run()
-        snakemakeutils.dump_tool_outputs(prodigal, output)
+        snakemakeutils.dump_io_outputs(prodigal, output)
 
 rule bacmet_prodigal_report:
     """
@@ -51,10 +51,10 @@ rule bacmet_prodigal_report:
     run:
         from camel.app.tools.prodigal.prodigalreporter import ProdigalReporter
         reporter = ProdigalReporter()
-        snakemakeutils.add_pickle_inputs(reporter, input)
+        snakemakeutils.add_io_inputs(reporter, input)
         step = Step(rule_name=str(rule), tool=reporter, dir_=Path(str(params.dir_)))
         step.run()
-        snakemakeutils.dump_tool_outputs(reporter, output)
+        snakemakeutils.dump_io_outputs(reporter, output)
 
 rule bacmet_prodigal_report_empty:
     """
@@ -83,20 +83,20 @@ rule bacmet_blastp:
         fmt = '6 pident sseqid sseq slen qseqid qstart qend'
     threads: 4
     run:
-        from camel.app.core.io.tooliofile import ToolIOFile
+        from camelcore.app.io.tooliofile import ToolIOFile
         from camel.app.tools.blast.blastp import Blastp
 
         # Create & run tool
         blastp = Blastp()
         blastp.update_parameters(output_format=f'"{params.fmt}"', threads=threads)
-        snakemakeutils.add_pickle_input(blastp, 'FASTA', Path(input.FASTA))
+        snakemakeutils.add_io_input(blastp,'FASTA', Path(input.FASTA))
         path_db = next(snakemakeutils.load_object(Path(input.DB))[0].path.glob('*.fasta'))
         blastp.add_input_files({'DB_BLAST': [ToolIOFile(path_db)]})
         step = Step(rule_name=str(rule), tool=blastp, dir_=Path(str(params.dir_)))
         step.run()
 
         # Dump output
-        snakemakeutils.dump_tool_outputs(blastp, output)
+        snakemakeutils.dump_io_outputs(blastp, output)
 
 rule bacmet_filter_blastp:
     """
@@ -114,7 +114,7 @@ rule bacmet_filter_blastp:
         min_id = 75,
         cols = 'pident sseqid sseq slen qseqid qstart qend'
     run:
-        from camel.app.core.io.tooliofile import ToolIOFile
+        from camelcore.app.io.tooliofile import ToolIOFile
         tsv_in = snakemakeutils.load_object(Path(input.TSV))[0].path
         data_in = pd.read_table(tsv_in, names=params.cols.split(' '))
         data_in['perc_covered'] = data_in.apply(lambda x: 100.0 * float(len(x['sseq'])) / x['slen'], axis=1)
@@ -149,10 +149,10 @@ rule bacmet_report:
     run:
         from camel.app.tools.pipelines.klebsiella.bacmetreporter import BacMetReporter
         reporter = BacMetReporter()
-        snakemakeutils.add_pickle_inputs(reporter, input)
+        snakemakeutils.add_io_inputs(reporter, input)
         step = Step(rule_name=str(rule), tool=reporter, dir_=Path(str(params.dir_)))
         step.run()
-        snakemakeutils.dump_tool_outputs(reporter, output)
+        snakemakeutils.dump_io_outputs(reporter, output)
 
 rule bacmet_report_empty:
     """

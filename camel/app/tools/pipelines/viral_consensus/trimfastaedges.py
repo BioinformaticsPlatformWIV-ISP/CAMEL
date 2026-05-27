@@ -4,9 +4,9 @@ import pandas as pd
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
+from camelcore.app.io.tooliofile import ToolIOFile
 
 from camel.app.core.errors import InvalidToolInputError
-from camel.app.core.io.tooliofile import ToolIOFile
 from camel.app.core.tool import Tool
 
 
@@ -18,7 +18,7 @@ class TrimFastaEdges(Tool):
     def __init__(self) -> None:
         """
         Initializes this tool.
-                :return: None
+        :return: None
         """
         super().__init__('Trim FASTA edges', '0.1')
 

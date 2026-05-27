@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from camel.app.core.io.tooliodirectory import ToolIODirectory
-from camel.app.core.io.tooliovalue import ToolIOValue
+from camelcore.app.io.tooliodirectory import ToolIODirectory
+from camelcore.app.io.tooliovalue import ToolIOValue
 from camel.app.core.snakemake.step import Step
 from camel.app.core.snakemake import snakemakeutils
 from camel.snakefiles import mykrobe
@@ -35,7 +35,7 @@ rule mykrobe_run:
             fq_in = FastqInput.from_fq_dict(Path(input.IO), params.input_type)
             typer.add_input_files({'FASTQ_SE': fq_in.se})
         if params.input_type == 'fasta':
-            snakemakeutils.add_pickle_input(typer, 'FASTA', Path(input.IO))
+            snakemakeutils.add_io_input(typer,'FASTA', Path(input.IO))
         typer.add_input_files({
             'DIR': [ToolIODirectory(params.db_dir)],
             'SPECIES': [ToolIOValue(params.species)]
@@ -44,7 +44,7 @@ rule mykrobe_run:
         # Run tool
         step = Step(rule_name=str(rule), tool=typer, dir_=Path(str(params.dir_)))
         step.run()
-        snakemakeutils.dump_tool_output(typer, 'CSV', Path(output.CSV))
+        snakemakeutils.dump_io_output(typer,'CSV', Path(output.CSV))
         # Informs can contain numpy objects -> sanitize first
         snakemakeutils.dump_object(snakemakeutils.sanitize_numpy(typer.informs), Path(output.INFORMS))
 
@@ -74,9 +74,9 @@ rule mykrobe_report:
             reporter.update_parameters(custom_header = params.title)
 
         step = Step(rule_name=str(rule), tool=reporter, dir_=Path(str(params.dir_)))
-        snakemakeutils.add_pickle_inputs(reporter, input)
+        snakemakeutils.add_io_inputs(reporter, input)
         step.run()
-        snakemakeutils.dump_tool_outputs(reporter, output)
+        snakemakeutils.dump_io_outputs(reporter, output)
 
 rule mykrobe_report_empty:
     """
@@ -106,8 +106,8 @@ rule mykrobe_create_summary:
         # Create TSV output
         data_summary = [
             ('mykrobe_phylo_group', informs['phylo_group']),
-            ('mykrobe_species', informs['phylo_group']),
-            ('mykrobe_lineage', informs['phylo_group']),
+            ('mykrobe_species', informs['species']),
+            ('mykrobe_lineage', informs['lineage']),
         ]
         if params.show_amr is True:
             data_summary.append(('mykrobe_drug_susceptibility', informs['drug_susceptibility']))

@@ -1,13 +1,14 @@
 from pathlib import Path
 
-from camel.app.core.utils import fileutils
-from camel.app.toolkits.genedetection.genedetectionhitbase import GeneDetectionHitBase
-from camel.app.core.reports.htmlexpandablediv import HtmlExpandableDiv
-from camel.app.core.reports.htmlreportsection import HtmlReportSection
+from camelcore.app.io.tooliovalue import ToolIOValue
+from camelcore.app.reports.htmlexpandablediv import HtmlExpandableDiv
+from camelcore.app.reports.htmlreportsection import HtmlReportSection
+from camelcore.app.utils import fileutils
+
 from camel.app.core.errors import InvalidToolInputError
-from camel.app.core.io.tooliovalue import ToolIOValue
-from camel.app.loggers import logger
 from camel.app.core.tool import Tool
+from camel.app.loggers import logger
+from camel.app.toolkits.genedetection.genedetectionhitbase import GeneDetectionHitBase
 
 
 class HtmlReporterGeneDetection(Tool):
@@ -18,7 +19,7 @@ class HtmlReporterGeneDetection(Tool):
     def __init__(self) -> None:
         """
         Initialize this tool.
-                :return: None
+        :return: None
         """
         super().__init__('Gene Detection: Report', '0.1')
         self._sub_folder = None
@@ -95,7 +96,7 @@ class HtmlReporterGeneDetection(Tool):
         """
         table_data = [hit.to_html_row(self._report_section, self._sub_folder) for hit in sorted(
             hits, key=lambda x: x.locus)]
-        if 'hidden' in self._parameters:
+        if self.get_param_value('hidden') is True:
             div = HtmlExpandableDiv('table-{}'.format(
                 self._input_informs['db_info']['name']), f'hits ({len(hits):,})')
             div.add_table(table_data, hits[0].html_column_names, [('class', 'data')])

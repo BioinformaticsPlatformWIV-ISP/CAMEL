@@ -1,9 +1,10 @@
 import json
 from pathlib import Path
 
-from camel.app.core.command import Command
+from camelcore.app.command import Command
+from camelcore.app.io.tooliofile import ToolIOFile
+
 from camel.app.core.errors import InvalidToolInputError, ToolExecutionError
-from camel.app.core.io.tooliofile import ToolIOFile
 from camel.app.core.tool import Tool
 
 
@@ -16,10 +17,10 @@ class AbriTAMRRun(Tool):
 
     def __init__(self) -> None:
         """
-        Initialize tool.
+        Initializes tool.
         :return: None
         """
-        super().__init__('AbriTAMR run', '1.0.19')
+        super().__init__('AbriTAMR run', '1.1.0')
 
     def _execute_tool(self) -> None:
         """

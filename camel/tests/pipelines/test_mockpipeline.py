@@ -17,7 +17,7 @@ class TestMockPipeline(CamelTestSuite):
     input_fasta = test_file_dir / 'ecoli_10k.fasta'
     input_vcf = test_file_dir / 'variants-ecoli_10k_ilmn-all.vcf'
 
-    def test_mock_pipeline_illumina_trimmomatic(self) -> None:
+    def test_illumina_trimmomatic(self) -> None:
         """
         Tests the mock pipeline with Illumina input data and trimmomatic.
         :return: None
@@ -34,13 +34,13 @@ class TestMockPipeline(CamelTestSuite):
             '--trimming-method', 'trimmomatic',
             '--typing-method', 'blast',
             '--gene-detection-method', 'blast',
-            '--analyses', 'ncbi-amr,human-read-scrubbing',
+            '--analyses', 'ncbi_amr,human_read_scrubbing',
             '--threads', '8'
         ])
         self.assertEqual(result.exit_code, 0)
         self.assertGreater(path_report_out.stat().st_size, 0)
 
-    def test_mock_pipeline_illumina_fastp(self) -> None:
+    def test_illumina_fastp(self) -> None:
         """
         Tests the mock pipeline with Illumina input data and fastp trimming.
         :return: None
@@ -59,14 +59,14 @@ class TestMockPipeline(CamelTestSuite):
             '--trimming-method', 'fastp',
             '--typing-method', 'blast',
             '--gene-detection-method', 'blast',
-            '--analyses', 'ncbi-amr,human-read-scrubbing',
+            '--analyses', 'ncbi_amr,human_read_scrubbing',
             '--threads', '8'
         ])
         self.assertEqual(result.exit_code, 0)
         self.assertGreater(path_report_out.stat().st_size, 0)
         self.assertGreater(path_fasta_out.stat().st_size, 0)
 
-    def test_mock_pipeline_illumina_fastp_with_json(self) -> None:
+    def test_illumina_fastp_with_json(self) -> None:
         """
         Tests the mock pipeline with Illumina input data and fastp trimming and JSON export.
         :return: None
@@ -85,14 +85,14 @@ class TestMockPipeline(CamelTestSuite):
             '--trimming-method', 'fastp',
             '--typing-method', 'blast',
             '--gene-detection-method', 'blast',
-            '--analyses', 'ncbi-amr,human-read-scrubbing',
+            '--analyses', 'ncbi_amr,human_read_scrubbing',
             '--threads', '8'
         ])
         self.assertEqual(result.exit_code, 0)
         self.assertGreater(path_report_out.stat().st_size, 0)
         self.assertGreater(path_json_out.stat().st_size, 0)
 
-    def test_mock_pipeline_illumina_kma(self) -> None:
+    def test_illumina_kma(self) -> None:
         """
         Tests the mock pipeline with Illumina input data and KMA detection.
         :return: None
@@ -108,13 +108,13 @@ class TestMockPipeline(CamelTestSuite):
             '--working-dir', str(self.running_dir),
             '--typing-method', 'kma',
             '--gene-detection-method', 'kma',
-            '--analyses', 'ncbi-amr',
+            '--analyses', 'ncbi_amr',
             '--threads', '8'
         ])
         self.assertEqual(result.exit_code, 0)
         self.assertGreater(path_report_out.stat().st_size, 0)
 
-    def test_mock_pipeline_ont(self) -> None:
+    def test_ont(self) -> None:
         """
         Tests the mock pipeline with ONT input data.
         :return: None
@@ -131,13 +131,13 @@ class TestMockPipeline(CamelTestSuite):
             '--working-dir', str(self.running_dir),
             '--typing-method', 'blast',
             '--gene-detection-method', 'blast',
-            '--analyses', 'ncbi-amr,confindr',
+            '--analyses', 'ncbi_amr,confindr',
             '--threads', '8',
         ])
         self.assertEqual(result.exit_code, 0)
         self.assertGreater(path_report_out.stat().st_size, 0)
 
-    def test_mock_pipeline_ont_with_downsampling(self) -> None:
+    def test_ont_with_downsampling(self) -> None:
         """
         Tests the mock pipeline with ONT input data.
         :return: None
@@ -155,13 +155,13 @@ class TestMockPipeline(CamelTestSuite):
             '--working-dir', str(self.running_dir),
             '--typing-method', 'blast',
             '--gene-detection-method', 'blast',
-            '--analyses', 'ncbi-amr',
+            '--analyses', 'ncbi_amr',
             '--threads', '8',
         ])
         self.assertEqual(result.exit_code, 0)
         self.assertGreater(path_report_out.stat().st_size, 0)
 
-    def test_mock_pipeline_ont_with_scrubbing_and_filters_params(self) -> None:
+    def test_ont_with_scrubbing_and_filters_params(self) -> None:
         """
         Tests the mock pipeline with ONT input data and read scrubbing enabled and alternate read filtering parameters.
         :return: None
@@ -179,7 +179,7 @@ class TestMockPipeline(CamelTestSuite):
             '--working-dir', str(self.running_dir),
             '--typing-method', 'blast',
             '--gene-detection-method', 'blast',
-            '--analyses', 'ncbi-amr,human-read-scrubbing',
+            '--analyses', 'ncbi_amr,human_read_scrubbing',
             '--ont-min-qual', '11',
             '--ont-min-length', '750',
             '--threads', '8',
@@ -187,7 +187,7 @@ class TestMockPipeline(CamelTestSuite):
         self.assertEqual(result.exit_code, 0)
         self.assertGreater(path_report_out.stat().st_size, 0)
 
-    def test_mock_pipeline_hybrid(self) -> None:
+    def test_hybrid(self) -> None:
         """
         Tests the mock pipeline with hybrid input data (Illumina + ONT).
         :return: None
@@ -205,13 +205,13 @@ class TestMockPipeline(CamelTestSuite):
             '--working-dir', str(self.running_dir),
             '--typing-method', 'blast',
             '--gene-detection-method', 'blast',
-            '--analyses', 'kraken2,ncbi-amr,human-read-scrubbing',
+            '--analyses', 'kraken2,ncbi_amr,human_read_scrubbing',
             '--threads', '8',
         ])
         self.assertEqual(result.exit_code, 0)
         self.assertGreater(path_report_out.stat().st_size, 0)
 
-    def test_mock_pipeline_fasta(self) -> None:
+    def test_fasta(self) -> None:
         """
         Tests the mock pipeline with FASTA input data.
         :return: None
@@ -228,14 +228,38 @@ class TestMockPipeline(CamelTestSuite):
             '--working-dir', str(self.running_dir),
             '--typing-method', 'blast',
             '--gene-detection-method', 'blast',
-            '--analyses', 'kraken2,ncbi-amr,human-read-scrubbing',
+            '--analyses', 'kraken2,ncbi_amr,human_read_scrubbing',
+            '--threads', '8',
+        ])
+        self.assertEqual(result.exit_code, 0)
+        self.assertGreater(path_report_out.stat().st_size, 0)
+
+    def test_fasta_invalid_name(self) -> None:
+        """
+        Tests the mock pipeline with FASTA input data and an invalid name.
+        :return: None
+        """
+        path_report_out = Path(self.running_dir) / 'out' / 'report.html'
+        path_summary_out = Path(self.running_dir) / 'out' / 'summary.tsv'
+
+        result = cliutils.invoke(main, [
+            '--fasta', str(TestMockPipeline.input_fasta),
+            '--fasta-name', 'my fasta file with (brackets) and spaces.fasta',
+            '--input-type', 'fasta',
+            '--output-html', str(path_report_out),
+            '--output-dir', str(path_report_out.parent),
+            '--output-tsv', str(path_summary_out),
+            '--working-dir', str(self.running_dir),
+            '--typing-method', 'blast',
+            '--gene-detection-method', 'blast',
+            '--analyses', 'kraken2,ncbi_amr,human_read_scrubbing',
             '--threads', '8',
         ])
         self.assertEqual(result.exit_code, 0)
         self.assertGreater(path_report_out.stat().st_size, 0)
 
     @longRunningTest()
-    def test_mock_pipeline_fasta_with_kraken2(self) -> None:
+    def test_fasta_with_kraken2(self) -> None:
         """
         Tests the mock pipeline with FASTA input data with the Kraken2 analysis enabled.
         :return: None
@@ -252,13 +276,13 @@ class TestMockPipeline(CamelTestSuite):
             '--working-dir', str(self.running_dir),
             '--typing-method', 'blast',
             '--gene-detection-method', 'blast',
-            '--analyses', 'kraken2,ncbi-amr,human-read-scrubbing',
+            '--analyses', 'kraken2,ncbi_amr,human_read_scrubbing',
             '--threads', '8',
         ])
         self.assertEqual(result.exit_code, 0)
         self.assertGreater(path_report_out.stat().st_size, 0)
 
-    def test_mock_pipeline_fasta_with_vcf(self) -> None:
+    def test_fasta_with_vcf(self) -> None:
         """
         Tests the mock pipeline with FASTA and VCF input data.
         :return: None
@@ -276,7 +300,7 @@ class TestMockPipeline(CamelTestSuite):
             '--working-dir', str(self.running_dir),
             '--typing-method', 'blast',
             '--gene-detection-method', 'blast',
-            '--analyses', 'kraken2,ncbi-amr,human-read-scrubbing',
+            '--analyses', 'kraken2,ncbi_amr,human_read_scrubbing',
             '--threads', '8',
         ])
         self.assertEqual(result.exit_code, 0)

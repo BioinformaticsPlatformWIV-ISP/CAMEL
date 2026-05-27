@@ -23,7 +23,7 @@ rule ref_selection_mash_screen:
         input_type = config['input']['type'],
         segment = lambda wildcards: wildcards.segment
     run:
-        from camel.app.core.io.tooliofile import ToolIOFile
+        from camelcore.app.io.tooliofile import ToolIOFile
 
         # Load FASTQ data
         if params.input_type == 'ont':
@@ -39,7 +39,7 @@ rule ref_selection_mash_screen:
         mash.update_parameters(threads=threads)
         step = Step(rule_name=str(rule), tool=mash, dir_=Path(str(params.dir_)))
         step.run()
-        snakemakeutils.dump_tool_outputs(mash, output)
+        snakemakeutils.dump_io_outputs(mash, output)
 
 rule ref_selection_create_fasta:
     """
@@ -57,14 +57,14 @@ rule ref_selection_create_fasta:
         dir_ = 'ref_selection/create_fasta'
     run:
         import itertools
-        from camel.app.core.io.tooliodirectory import ToolIODirectory
+        from camelcore.app.io.tooliodirectory import ToolIODirectory
         from camel.app.tools.pipelines.viral_consensus.refselectioncreatefasta import RefSelection
         ref_selection = RefSelection()
         tsv_in = list(itertools.chain(*[snakemakeutils.load_object(Path(io)) for io in input.TSV]))
         ref_selection.add_input_files({'TSV': tsv_in, 'DB': [ToolIODirectory(Path(input.DB))]})
         step = Step(rule_name=str(rule), tool=ref_selection, dir_=Path(str(params.dir_)))
         step.run()
-        snakemakeutils.dump_tool_outputs(ref_selection, output)
+        snakemakeutils.dump_io_outputs(ref_selection, output)
 
 rule ref_selection_report:
     """
@@ -80,14 +80,14 @@ rule ref_selection_report:
     params:
         dir_ = 'ref_selection/report'
     run:
-        from camel.app.core.io.tooliodirectory import ToolIODirectory
+        from camelcore.app.io.tooliodirectory import ToolIODirectory
         from camel.app.tools.pipelines.viral_consensus.reporterrefselection import ReporterRefSelection
         reporter = ReporterRefSelection()
         step = Step(rule_name=str(rule), tool=reporter, dir_=Path(str(params.dir_)))
-        snakemakeutils.add_pickle_inputs(reporter, input, excluded_keys=['DB'])
+        snakemakeutils.add_io_inputs(reporter, input, excluded_keys=['DB'])
         reporter.add_input_files({'DB': [ToolIODirectory(Path(input.DB))]})
         step.run()
-        snakemakeutils.dump_tool_outputs(reporter, output)
+        snakemakeutils.dump_io_outputs(reporter, output)
 
 rule ref_selection_report_empty:
     """

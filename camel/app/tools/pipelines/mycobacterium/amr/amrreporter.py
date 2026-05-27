@@ -4,16 +4,17 @@ import re
 from pathlib import Path
 from typing import Any, Optional
 
-from camel.app.core.reports.htmlelement import HtmlElement
-from camel.app.core.reports.htmlreportsection import HtmlReportSection
-from camel.app.core.reports.htmltablecell import HtmlTableCell
+from camelcore.app.io.tooliovalue import ToolIOValue
+from camelcore.app.reports.htmlelement import HtmlElement
+from camelcore.app.reports.htmlreportsection import HtmlReportSection
+from camelcore.app.reports.htmltablecell import HtmlTableCell
+
 from camel.app.core.errors import InvalidToolInputError
-from camel.app.core.io.tooliovalue import ToolIOValue
-from camel.app.loggers import logger
-from camel.app.tools.pipelines.mycobacterium.amr import amrtypedetermination
 from camel.app.core.tool import Tool
+from camel.app.loggers import logger
 from camel.app.toolkits.export.tsvexporter import TsvExporter
 from camel.app.toolkits.mycobacterium import amrutils
+from camel.app.tools.pipelines.mycobacterium.amr import amrtypedetermination
 
 
 class AMRReporter(Tool):
@@ -213,7 +214,6 @@ class AMRReporter(Tool):
 
             # Combine associations
             ab_str, conf_str = amrutils.combine_associations(row['associations'])
-
             table_data.append([
                 AMRReporter.__format_locus_name(row['region']['locus']),
                 row['position'],
@@ -222,10 +222,11 @@ class AMRReporter(Tool):
                 row['name'],
                 ', '.join([str(x) for x in self._actg_counts_by_pos.get(row['position'], ['-'])]) if
                 row['variant_type'] == 'snp' else 'n/a',
+                f"{row['af']:.2f}",
                 ab_str,
                 conf_str
             ])
-        header = ['Locus', 'Position', 'Ref', 'Alt', 'Mutation', 'ACTG counts', 'Antibiotic', 'Level']
+        header = ['Locus', 'Position', 'Ref', 'Alt', 'Mutation', 'ACTG counts', 'AF', 'Antibiotic', 'Level']
 
         if len(table_data) == 0:
             div.add_paragraph('No mutations found.')

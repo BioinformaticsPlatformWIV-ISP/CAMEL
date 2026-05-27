@@ -5,17 +5,17 @@ from typing import Any
 
 import click
 import yaml
+from camelcore.app.io.tooliofile import ToolIOFile
 
 from camel.app.cli import cliutils
-from camel.app.core.io.tooliofile import ToolIOFile
-from camel.app.core.snakemake import snakepipelineutils, snakemakeutils
+from camel.app.core.snakemake import snakemakeutils, snakepipelineutils
 from camel.app.loggers import initialize_logging
 from camel.app.scriptutils import model
 from camel.app.scriptutils.basescript.basescript import BaseScript
 from camel.app.scriptutils.basescript.fastainput import FastaInput
 from camel.app.scriptutils.model import BaseOptions, BaseOutput
-from camel.snakefiles import assembly
 from camel.scripts.abritamr import CONFIG_DATA, SNAKEFILE_MAIN
+from camel.snakefiles import assembly
 
 SUPPORTED_SPECIES = [
     'Acinetobacter_baumannii',
@@ -55,6 +55,7 @@ class Options(BaseOptions):
         'show_default': True})
     working_dir: Path = dataclasses.field(default=Path('working'), metadata={'help': 'Working directory'})
 
+
 @dataclasses.dataclass(frozen=True)
 class Output(BaseOutput):
     """
@@ -64,16 +65,17 @@ class Output(BaseOutput):
     output_dir: Path | None = dataclasses.field(metadata={'help': 'Output directory'})
     output_tsv: Path | None = dataclasses.field(default=None, metadata={'help': 'Output TSV file'})
 
+
 class MainAbriTAMR(BaseScript[FastaInput, Output, Options]):
     """
     Main class to run the AbriTAMR standalone pipeline.
     """
 
     def __init__(
-        self,
-        in_: FastaInput,
-        out: BaseOutput,
-        opts: Options,
+            self,
+            in_: FastaInput,
+            out: BaseOutput,
+            opts: Options,
     ) -> None:
         """
         Initializes the main class.
@@ -135,7 +137,7 @@ class MainAbriTAMR(BaseScript[FastaInput, Output, Options]):
         with open(CONFIG_DATA) as handle_in:
             config_data.update(yaml.safe_load(handle_in.read()))
         config_data['abritamr']['species'] = self._script_opts.species
-        config_data['analyses'] = ['abritamr']
+        config_data['analyses_selected'] =['abritamr']
         return snakepipelineutils.generate_config_file(config_data, self._script_opts.working_dir)
 
 

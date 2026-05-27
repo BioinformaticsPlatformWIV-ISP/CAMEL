@@ -1,9 +1,10 @@
 import shutil
 from pathlib import Path
 
-from camel.app.core.io.tooliofile import ToolIOFile
+from camelcore.app.io.tooliofile import ToolIOFile
 from camel.app.core.snakemake.step import Step
 from camel.app.core.snakemake import snakemakeutils
+from camel.app.loggers import logger as camel_logger
 from camel.snakefiles import human_read_scrubbing
 from camel.snakefiles.human_read_scrubbing import get_removed
 
@@ -20,7 +21,7 @@ rule scrubbing_fasta_fa2fq:
     params:
         dir_ = 'human_read_scrubbing/fasta/input'
     run:
-        from camel.app.core.utils import fastautils
+        from camelcore.app.utils import fastautils
         fasta_path_in = (snakemakeutils.load_object(Path(input.FASTA)))[0].path
         fastq_path_out = Path(str(params.dir_), f"{fasta_path_in.stem}.fastq")
         fastautils.convert_fasta_to_fastq(fasta_path_in, fastq_path_out)
@@ -39,10 +40,10 @@ rule scrubbing_decompress_fastq_se:
         name = config['input']['sample_name']
     threads: 4
     run:
-        from camel.app.core.utils import fileutils
+        from camelcore.app.utils import fileutils
         path_fq = snakemakeutils.load_object(Path(input.FASTQ))[0].path
         if not fileutils.is_gzipped(path_fq):
-            logger.info(f'Input FASTQ file is already decompressed')
+            camel_logger.info('Input FASTQ file is already decompressed')
             path_out = path_fq
         else:
             path_out = Path(params.dir_, f'{params.name}.fastq').absolute()
@@ -68,7 +69,7 @@ rule scrubbing_interleave_fastq_pe:
         })
         step = Step(rule_name=str(rule), tool=merge_pe, dir_=Path(params.dir_))
         step.run()
-        snakemakeutils.dump_tool_outputs(merge_pe, output)
+        snakemakeutils.dump_io_outputs(merge_pe, output)
 
 rule scrubbing_select_input:
     """
@@ -129,7 +130,7 @@ rule scrubbing_run_scrubber:
             )
 
         # Add input files and run tool
-        snakemakeutils.add_pickle_input(scrubber, 'FASTQ_SE', Path(input.FASTQ_SE))
+        snakemakeutils.add_io_input(scrubber,'FASTQ_SE', Path(input.FASTQ_SE))
         if len(input.DB) > 0:
             scrubber.add_input_files({'DB': [ToolIOFile(Path(input.DB))]})
         step.run()
@@ -142,7 +143,7 @@ rule scrubbing_run_scrubber:
                 scrubber.informs['_tag'] = 'ONT'
 
         # Store the output
-        snakemakeutils.dump_tool_outputs(scrubber, output, keys=['FASTQ_SCRUBBED', 'INFORMS'])
+        snakemakeutils.dump_io_outputs(scrubber, output, keys=['FASTQ_SCRUBBED', 'INFORMS'])
         if 'FASTQ_REMOVED' not in scrubber.tool_outputs:
             snakemakeutils.dump_object([], Path(output.FASTQ_REMOVED))
         else:
@@ -231,11 +232,11 @@ rule scrubbing_deinterleave_fastq_pe:
             snakemakeutils.dump_object([], Path(output.FASTQ))
         else:
             split2 = SeqkitSplit2()
-            snakemakeutils.add_pickle_inputs(split2, input)
+            snakemakeutils.add_io_inputs(split2, input)
             split2.update_parameters(by_part=2)
             step = Step(rule_name=str(rule), tool=split2, dir_=Path(str(params.dir_)))
             step.run()
-            snakemakeutils.dump_tool_outputs(split2, output)
+            snakemakeutils.dump_io_outputs(split2, output)
 
 rule scrubbing_fastq_gzip:
     """
@@ -251,7 +252,7 @@ rule scrubbing_fastq_gzip:
         FASTQ_GZ = 'human_read_scrubbing/{input_format}/compress/{group}/fastq_gz.io'
     threads: 4
     run:
-        from camel.app.core.utils import fileutils
+        from camelcore.app.utils import fileutils
         output_io = []
         for io in snakemakeutils.load_object(Path(str(input.FASTQ))):
             path_out = io.path.parent / f'{io.path.name}.gz'
@@ -277,12 +278,12 @@ rule scrubbing_report:
 
         reporter = NcbiHumanReadScrubberReporter()
         if params.export_removed_reads:
-            snakemakeutils.add_pickle_inputs(reporter, input, keys=['REMOVED'])
-        snakemakeutils.add_pickle_inputs(reporter, input, keys=['INFORMS_SCRUBBER'])
+            snakemakeutils.add_io_inputs(reporter, input, keys=['REMOVED'])
+        snakemakeutils.add_io_inputs(reporter, input, keys=['INFORMS_SCRUBBER'])
         reporter.update_parameters(input_format=str(params.input_format))
         step = Step(rule_name=str(rule), tool=reporter, dir_=Path(str(params.running_dir)))
         step.run()
-        snakemakeutils.dump_tool_outputs(reporter, output)
+        snakemakeutils.dump_io_outputs(reporter, output)
 
 rule scrubbing_create_summary:
     """

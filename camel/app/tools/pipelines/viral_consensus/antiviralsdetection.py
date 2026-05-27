@@ -2,11 +2,11 @@ import json
 from pathlib import Path
 
 import pandas as pd
+from camelcore.app.io.tooliofile import ToolIOFile
 
 from camel.app.core.errors import InvalidToolInputError
-from camel.app.core.io.tooliofile import ToolIOFile
-from camel.app.loggers import logger
 from camel.app.core.tool import Tool
+from camel.app.loggers import logger
 
 
 class AntiviralsDetection(Tool):
@@ -17,7 +17,7 @@ class AntiviralsDetection(Tool):
     def __init__(self) -> None:
         """
         Initializes this tool.
-                :return: None
+        :return: None
         """
         super().__init__('antiviral detection', '0.1')
 

@@ -18,12 +18,12 @@ rule gmats_run:
         dir_ = 'gmats/tool',
         db = config.get('gmats', {}).get('db')
     run:
-        from camel.app.core.io.tooliofile import ToolIOFile
+        from camelcore.app.io.tooliofile import ToolIOFile
         from camel.app.tools.pipelines.neisseria.gmats import GMats
 
         gmats_ = GMats()
         step = Step(rule_name=str(rule), tool=gmats_, dir_=Path(str(params.dir_)))
-        snakemakeutils.add_pickle_inputs(gmats_,input)
+        snakemakeutils.add_io_inputs(gmats_, input)
 
         # Add database
         if params.db is None:
@@ -35,7 +35,7 @@ rule gmats_run:
 
         # Run tool
         step.run()
-        snakemakeutils.dump_tool_outputs(gmats_, output)
+        snakemakeutils.dump_io_outputs(gmats_, output)
 
 rule gmats_report:
     """
@@ -52,9 +52,9 @@ rule gmats_report:
         from camel.app.tools.pipelines.neisseria.gmatsreporter import GMatsReporter
         reporter = GMatsReporter()
         step = Step(rule_name=str(rule), tool=reporter, dir_=Path(str(params.dir_)))
-        snakemakeutils.add_pickle_inputs(reporter, input)
+        snakemakeutils.add_io_inputs(reporter, input)
         step.run()
-        snakemakeutils.dump_tool_outputs(reporter, output)
+        snakemakeutils.dump_io_outputs(reporter, output)
 
 rule gmats_report_empty:
     """

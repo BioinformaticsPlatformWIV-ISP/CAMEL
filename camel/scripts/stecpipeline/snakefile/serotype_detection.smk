@@ -19,22 +19,22 @@ rule serotype_detection_run:
         from camel.app.tools.pipelines.stec.serotypedetector import SerotypeDetectorEcoli
         from camel.app.core.snakemake.step import Step
         detector = SerotypeDetectorEcoli()
-        snakemakeutils.add_pickle_inputs(detector, input)
+        snakemakeutils.add_io_inputs(detector, input)
         step = Step(rule_name=str(rule), tool=detector, dir_=Path(str(params.dir_)))
         step.run()
-        snakemakeutils.dump_tool_outputs(detector, output)
+        snakemakeutils.dump_io_outputs(detector, output)
 
 rule serotype_detection_report:
     """
     Creates a simple report section for the detected serotype.
     """
     input:
-        VAL_serotype = rules.serotype_detection_run.output.VAL_serotype if 'serotype' in config['analyses'] else []
+        VAL_serotype = rules.serotype_detection_run.output.VAL_serotype if 'serotype' in config['analyses_selected'] else []
     output:
         HTML = 'serotype_detection/report/html.iob' # serotype_detection.OUTPUT_REPORT
     run:
-        from camel.app.core.reports.htmlreportsection import HtmlReportSection
-        from camel.app.core.io.tooliovalue import ToolIOValue
+        from camelcore.app.reports.htmlreportsection import HtmlReportSection
+        from camelcore.app.io.tooliovalue import ToolIOValue
         if len(input['VAL_serotype']) > 0:
             serotype = snakemakeutils.load_object(Path(input.VAL_serotype))[0].value
         else:
@@ -48,7 +48,7 @@ rule serotype_detection_dump_summary_info:
     Dumps the summary information from the serotype detection.
     """
     input:
-        VAL_serotype = rules.serotype_detection_run.output.VAL_serotype if 'serotype' in config['analyses'] else []
+        VAL_serotype = rules.serotype_detection_run.output.VAL_serotype if 'serotype' in config['analyses_selected'] else []
     output:
          FILE = 'serotype_detection/summary/summary_out.{ext}' # serotype_detection.OUTPUT_SUMMARY
     params:

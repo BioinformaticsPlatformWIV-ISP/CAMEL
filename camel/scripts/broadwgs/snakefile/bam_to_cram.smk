@@ -1,6 +1,7 @@
 from pathlib import Path
 
-from camel.app.core.command import Command
+from camelcore.app.command import Command
+
 from camel.app.core.errors import SnakemakeExecutionError
 from camel.app.core.snakemake.step import Step
 from camel.app.core.snakemake import snakemakeutils
@@ -29,8 +30,8 @@ rule samtools_convert_to_cram:
         Path(params.working_dir).mkdir(exist_ok=True)
 
         bam_to_cram = SamtoolsView()
-        snakemakeutils.add_pickle_input(bam_to_cram, "BAM", Path(input.BAM))
-        snakemakeutils.add_pickle_input(bam_to_cram, "FASTA_REF", Path(input.FASTA_REF))
+        snakemakeutils.add_io_input(bam_to_cram,"BAM", Path(input.BAM))
+        snakemakeutils.add_io_input(bam_to_cram,"FASTA_REF", Path(input.FASTA_REF))
         step = Step(rule_name=str(rule), tool=bam_to_cram, dir_=params.working_dir)
         bam_to_cram.update_parameters(
             output_filename = params.output_file,
@@ -39,7 +40,7 @@ rule samtools_convert_to_cram:
             **config['rule_params']['bam_to_cram'][rule]
         )
         step.run()
-        snakemakeutils.dump_tool_output(bam_to_cram, 'CRAM', Path(output.CRAM))
+        snakemakeutils.dump_io_output(bam_to_cram,'CRAM', Path(output.CRAM))
 
 rule checksum_cram:
     """
@@ -59,7 +60,7 @@ rule checksum_cram:
 
         cmd_checksum = Command(f"md5sum {cram_file} > {output.CRAM_checksum}")
         cmd_checksum.run(params.working_dir)
-        if cmd_checksum.returncode != 0:
+        if cmd_checksum.exit_code != 0:
             raise SnakemakeExecutionError(cmd_checksum.stdout, cmd_checksum.stderr)
 
 rule samtools_index_cram:
@@ -83,8 +84,8 @@ rule samtools_index_cram:
         Path(params.working_dir).mkdir(exist_ok=True)
 
         cram_index = SamtoolsIndexCram()
-        snakemakeutils.add_pickle_inputs(cram_index, input)
+        snakemakeutils.add_io_inputs(cram_index, input)
         step = Step(rule_name=str(rule), tool=cram_index, dir_=params.working_dir)
         cram_index.update_parameters(output_filename = params.working_dir / params.output_file)
         step.run()
-        snakemakeutils.dump_tool_output(cram_index, 'CRAI', Path(output.CRAI))
+        snakemakeutils.dump_io_output(cram_index,'CRAI', Path(output.CRAI))

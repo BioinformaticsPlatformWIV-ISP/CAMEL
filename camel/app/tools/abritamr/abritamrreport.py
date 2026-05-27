@@ -1,6 +1,7 @@
-from camel.app.core.command import Command
+from camelcore.app.command import Command
+from camelcore.app.io.tooliofile import ToolIOFile
+
 from camel.app.core.errors import InvalidToolInputError, ToolExecutionError
-from camel.app.core.io.tooliofile import ToolIOFile
 from camel.app.core.tool import Tool
 
 
@@ -14,10 +15,10 @@ class AbriTAMRReport(Tool):
 
     def __init__(self) -> None:
         """
-        Initialize tool.
+        Initializes tool.
         :return: None
         """
-        super().__init__('AbriTAMR report', '1.0.19')
+        super().__init__('AbriTAMR report', '1.1.0')
         self._species = None
 
     def _execute_tool(self) -> None:
@@ -72,5 +73,5 @@ class AbriTAMRReport(Tool):
         """
         if 'error' in command.stderr.lower():
             raise ToolExecutionError(self.name, f"Command execution failed (stderr: {command.stderr}).")
-        if command.returncode != 0:
+        if command.exit_code != 0:
             raise ToolExecutionError(self.name, f"Command execution failed (Exit code: {command.exit_code})")

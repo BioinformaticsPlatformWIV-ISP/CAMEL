@@ -1,7 +1,8 @@
 import abc
 
+from camelcore.app.command import Command
+
 from camel.app.core.tool import Tool
-from camel.app.core.command import Command
 
 
 class SeqkitBase(Tool, metaclass=abc.ABCMeta):

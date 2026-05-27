@@ -1,9 +1,10 @@
 from pathlib import Path
 
-from camel.app.core.command import Command
-from camel.app.core.utils import toolutils
+from camelcore.app.command import Command
+from camelcore.app.io.tooliofile import ToolIOFile
+
+from camel.app.core import toolutils
 from camel.app.core.errors import InvalidToolInputError
-from camel.app.core.io.tooliofile import ToolIOFile
 from camel.app.loggers import logger
 from camel.app.tools.samtools.samtoolsbase import SamtoolsBase
 
@@ -27,7 +28,7 @@ class SamtoolsMerge(SamtoolsBase):
         Initializes this tool.
         :return: None
         """
-        super().__init__('samtools merge', '1.17')
+        super().__init__('samtools merge', version=None)
 
     def _check_input(self) -> None:
         """
@@ -94,5 +95,5 @@ class SamtoolsMerge(SamtoolsBase):
         Checks the command output.
         Supersedes function in Tool class because warnings printed to stderr can cause false abort.
         """
-        self._check_stderr()
+        self._check_stderr(command)
         toolutils.check_tool_execution(self, command, exit_code=0)

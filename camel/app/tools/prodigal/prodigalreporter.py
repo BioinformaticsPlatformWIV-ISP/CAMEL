@@ -1,8 +1,9 @@
 from pathlib import Path
 
-from camel.app.core.reports.htmlreportsection import HtmlReportSection
+from camelcore.app.io.tooliovalue import ToolIOValue
+from camelcore.app.reports.htmlreportsection import HtmlReportSection
+
 from camel.app.core.errors import InvalidToolInputError
-from camel.app.core.io.tooliovalue import ToolIOValue
 from camel.app.core.tool import Tool
 
 
@@ -33,7 +34,7 @@ class ProdigalReporter(Tool):
         Executes this tool.
         :return: None
         """
-        section = HtmlReportSection('Prodigal', subtitle=self._input_informs['prodigal']['_name'])
+        section = HtmlReportSection('Prodigal', subtitle=self._input_informs['prodigal']['_name_full'])
 
         # Stats
         section.add_table(

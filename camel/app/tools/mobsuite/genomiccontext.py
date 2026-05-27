@@ -1,14 +1,14 @@
 import pandas as pd
+from camelcore.app.io.tooliovalue import ToolIOValue
+from camelcore.app.reports.htmlelement import HtmlElement
+from camelcore.app.reports.htmlexpandablediv import HtmlExpandableDiv
+from camelcore.app.reports.htmlreportsection import HtmlReportSection
+from camelcore.app.reports.htmltablecell import HtmlTableCell
 
-from camel.app.core.reports.htmlelement import HtmlElement
-from camel.app.core.reports.htmlexpandablediv import HtmlExpandableDiv
-from camel.app.core.reports.htmlreportsection import HtmlReportSection
-from camel.app.core.reports.htmltablecell import HtmlTableCell
 from camel.app.core.errors import InvalidToolInputError
-from camel.app.core.io.tooliovalue import ToolIOValue
+from camel.app.core.tool import Tool
 from camel.app.loggers import logger
 from camel.app.tools.mobsuite.mobreconreporter import MOBReconReporter
-from camel.app.core.tool import Tool
 
 
 class GenomicContext(Tool):
@@ -78,7 +78,7 @@ class GenomicContext(Tool):
                     continue
 
                 # Parse hits
-                data_hits = pd.read_table(self._tool_inputs['TSV'][db['idx']].path)
+                data_hits = pd.read_table(self._tool_inputs['TSV'][db['idx']].path, dtype={db['contig']: str})
                 if len(data_hits) == 0:
                     section.add_paragraph('No hits found.')
                     continue

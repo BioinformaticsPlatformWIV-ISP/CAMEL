@@ -1,10 +1,11 @@
 import os
 from pathlib import Path
 
-from camel.app.core.command import Command
-from camel.app.core.utils import toolutils
+from camelcore.app.command import Command
+from camelcore.app.io.tooliofile import ToolIOFile
+
+from camel.app.core import toolutils
 from camel.app.core.errors import InvalidToolInputError
-from camel.app.core.io.tooliofile import ToolIOFile
 from camel.app.core.tool import Tool
 
 
@@ -40,11 +41,11 @@ class MetaGeneAnnotator(Tool):
         super(MetaGeneAnnotator, self)._check_input()
         if 'FASTA' not in self._tool_inputs:
             raise InvalidToolInputError('Invalid input keys given for MetaGeneAnnotator, '
-                                                 'only FASTA allowed: {!r}'.format(self._tool_inputs))
+                                                 f'only FASTA allowed: {self._tool_inputs!r}')
         if len(self._tool_inputs['FASTA']) != 1:
-            raise InvalidToolInputError('Only 1 input file allowed for MetaGeneAnnotator: {!r}'.format(self._tool_inputs))
+            raise InvalidToolInputError(f'Only 1 input file allowed for MetaGeneAnnotator: {self._tool_inputs!r}')
         if len(self._tool_inputs.keys()) != 1:
-            raise InvalidToolInputError('Only FASTA allowed as input key for MetaGeneAnnotator: {!r}'.format(self._tool_inputs))
+            raise InvalidToolInputError(f'Only FASTA allowed as input key for MetaGeneAnnotator: {self._tool_inputs!r}')
 
     def __get_basename(self):
         """
@@ -68,7 +69,7 @@ class MetaGeneAnnotator(Tool):
         input_string = self._tool_inputs['FASTA'][0].path
         options_string = ' '.join(self._build_options())
         outfile = self.__get_basename() + '.out'
-        self._command.command = '{} {} {} > {}'.format(self._tool_command, input_string, options_string, outfile)
+        self._command.command = f'{self._tool_command} {input_string} {options_string} > {outfile}'
 
     def _check_command_output(self, command: Command) -> None:
         """

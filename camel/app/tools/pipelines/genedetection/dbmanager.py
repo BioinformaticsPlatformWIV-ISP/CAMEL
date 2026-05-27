@@ -2,14 +2,14 @@ import json
 from pathlib import Path
 from typing import Union
 
+from camelcore.app.io.tooliodirectory import ToolIODirectory
+from camelcore.app.io.tooliofile import ToolIOFile
+
+from camel.app.core.errors import InvalidToolInputError, ToolExecutionError
+from camel.app.core.tool import Tool
+from camel.app.loggers import logger
 from camel.app.toolkits.genedetection.mapping import Mapping
 from camel.app.toolkits.genedetection.mappingjson import MappingJSON
-from camel.app.core.errors import InvalidToolInputError
-from camel.app.core.errors import ToolExecutionError
-from camel.app.core.io.tooliodirectory import ToolIODirectory
-from camel.app.core.io.tooliofile import ToolIOFile
-from camel.app.loggers import logger
-from camel.app.core.tool import Tool
 
 
 class DBManager(Tool):
@@ -35,7 +35,7 @@ class DBManager(Tool):
     def __init__(self) -> None:
         """
         Initialize this tool.
-                :return: None
+        :return: None
         """
         super().__init__('Gene Detection: DB Manager', '0.1')
 
