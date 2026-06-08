@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 import dataclasses
 import shutil
 from pathlib import Path
@@ -168,7 +167,7 @@ class MainCalling(BaseScript[ScriptInput, ScriptOutput, Options]):
         return config_data
 
 
-@click.command(name='LFV_pipeline', short_help='Detection of low frequency variants.')
+@click.command(name='lfv_pipeline', short_help='Detection of low frequency variants.')
 @basescriptutils.add_input_opts()
 @basescriptutils.add_output_opts
 @cliutils.add_click_options_from_dataclass(Options)
